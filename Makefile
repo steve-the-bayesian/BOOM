@@ -160,7 +160,7 @@ install: libboom.a
 	install libboom.a /usr/local/lib
 	rm -rf /usr/local/include/BOOM
 	mkdir -p /usr/local/include/BOOM
-	./install_headers.py $(HDRS) /usr/local/include/BOOM
+	./install/install_headers.py $(HDRS) /usr/local/include/BOOM
 
 .PHONY: clean
 clean:
