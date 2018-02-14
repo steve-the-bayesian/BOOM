@@ -2,13 +2,23 @@ TOP_SRCS = glob(["*.cpp"])
 
 TOP_HDRS = glob(["*.hpp"])
 
+BMATH_HDRS = glob(["Bmath/*.hpp"])
+
+BMATH_SRCS = glob(["Bmath/*.cpp"])
+
 LINALG_SRCS = glob(["LinAlg/*.cpp"])
 
 LINALG_HDRS = glob(["LinAlg/*.hpp"])
 
-SAMPLER_SRCS = glob(["Samplers/*.cpp"])
+SAMPLER_SRCS = glob([
+    "Samplers/*.cpp",
+    "Samplers/Gilks/arms.cpp",
+])
 
-SAMPLER_HDRS = glob(["Samplers/*.hpp"])
+SAMPLER_HDRS = glob([
+    "Samplers/*.hpp",
+    "Samplers/Gilks/arms.hpp",
+])
 
 TARGETFUN_SRCS = glob(["TargetFun/*.cpp"])
 
@@ -45,7 +55,7 @@ NUMOPT_HDRS = glob(["numopt/*.hpp"])
 
 STATS_SRCS = glob(["stats/*.cpp"])
 
-STATS_HDRS = glob(["stats/*.cpp"])
+STATS_HDRS = glob(["stats/*.hpp"])
 
 GLM_SRCS = glob([
     "Models/Glm/*.cpp",
@@ -132,6 +142,7 @@ TIMESERIES_HDRS = glob([
 ])
 
 BOOM_SRCS = TOP_SRCS + \
+            BMATH_SRCS + \
             LINALG_SRCS + \
             SAMPLER_SRCS + \
             TARGETFUN_SRCS + \
@@ -150,6 +161,7 @@ BOOM_SRCS = TOP_SRCS + \
             TIMESERIES_SRCS
 
 BOOM_HDRS = TOP_HDRS + \
+            BMATH_HDRS + \
             LINALG_HDRS + \
             SAMPLER_HDRS + \
             TARGETFUN_HDRS + \
@@ -172,8 +184,8 @@ cc_library(
     srcs = BOOM_SRCS,
     hdrs = BOOM_HDRS,
     copts = [
+        "-I.",
         "-I/usr/local/include",
-        "-I/usr/local/include/BOOM",
         "-std=c++11",
     ],
     linkopts = [
@@ -182,5 +194,7 @@ cc_library(
         "-llapack",
         "-lblas",
         "-lm",
+        "-lboost_thread-mt",
     ],
+    visibility = ["//visibility:public"],
 )
