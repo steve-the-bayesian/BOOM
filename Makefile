@@ -63,7 +63,7 @@ MODELS_HDRS := $(wildcard Models/*.hpp Models/Policies/*.hpp) \
 	$(wildcard Models/PosteriorSamplers/*.hpp)
 
 NUMOPT_SRCS := $(wildcard numopt/*.cpp)
-NUMOPT_SRCS := $(wildcard numopt/*.hpp)
+NUMOPT_HDRS := $(wildcard numopt/*.hpp)
 
 POINTPROCESS_SRCS := $(wildcard Models/PointProcess/*.cpp) \
 		  $(wildcard Models/PointProcess/PosteriorSamplers/*.cpp)
