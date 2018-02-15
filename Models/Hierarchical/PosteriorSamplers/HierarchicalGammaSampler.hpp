@@ -19,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalGammaModel.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalGammaModel.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

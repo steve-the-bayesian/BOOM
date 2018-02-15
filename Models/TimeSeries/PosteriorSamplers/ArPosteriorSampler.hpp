@@ -19,10 +19,10 @@
 #ifndef BOOM_ARP_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ARP_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

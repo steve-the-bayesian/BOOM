@@ -16,7 +16,7 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#include <cpputil/compare_vector_bool.hpp>
+#include "cpputil/compare_vector_bool.hpp"
 
  namespace BOOM{
    typedef std::vector<bool> VB;

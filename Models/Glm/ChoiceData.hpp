@@ -19,9 +19,9 @@
 #ifndef BOOM_CHOICE_DATA_HPP
 #define BOOM_CHOICE_DATA_HPP
 
-#include <Models/CategoricalData.hpp>
-#include <Models/DataTypes.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/CategoricalData.hpp"
+#include "Models/DataTypes.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
 

@@ -18,12 +18,12 @@
 #ifndef BOOM_UNIFORM_MODEL_HPP
 #define BOOM_UNIFORM_MODEL_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Sufstat.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Sufstat.hpp"
 #include <vector>
 
 namespace BOOM{

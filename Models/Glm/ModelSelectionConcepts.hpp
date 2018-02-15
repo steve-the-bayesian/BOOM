@@ -18,8 +18,8 @@
 #ifndef BOOM_MODEL_SELECTION_CONCEPTS_HPP
 #define BOOM_MODEL_SELECTION_CONCEPTS_HPP
 
-#include <Models/BinomialModel.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/BinomialModel.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
   class GlmCoefs;

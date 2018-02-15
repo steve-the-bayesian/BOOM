@@ -20,7 +20,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <iosfwd>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
   using std::ostream;

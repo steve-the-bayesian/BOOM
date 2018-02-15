@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/CumulativeProbitSampler.hpp>
+#include "Models/Glm/PosteriorSamplers/CumulativeProbitSampler.hpp"
 #include <functional>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 

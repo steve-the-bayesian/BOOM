@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/ThreadTools.hpp>
+#include "cpputil/ThreadTools.hpp"
 
 namespace BOOM {
 

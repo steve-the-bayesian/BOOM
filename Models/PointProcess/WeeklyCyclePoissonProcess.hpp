@@ -18,12 +18,12 @@
 #ifndef BOOM_WEEKLY_CYCLE_POISSON_PROCESS_HPP_
 #define BOOM_WEEKLY_CYCLE_POISSON_PROCESS_HPP_
 
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/PointProcess/PointProcess.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/ParamPolicy_4.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/PointProcess/PointProcess.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/ParamPolicy_4.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 #include <functional>
 
 namespace BOOM{

@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/ArStateModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/StateSpace/StateModels/ArStateModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

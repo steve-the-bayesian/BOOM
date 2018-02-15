@@ -18,11 +18,11 @@
 
 #ifndef BOOM_COMPOSITE_MODEL_HPP
 #define BOOM_COMPOSITE_MODEL_HPP
-#include <Models/ModelTypes.hpp>
-#include <Models/CompositeData.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/CompositeData.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

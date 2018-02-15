@@ -19,13 +19,13 @@
 #ifndef WISHART_MODEL_H
 #define WISHART_MODEL_H
 
-#include <Models/ModelTypes.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/SpdModel.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/SpdModel.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
 namespace BOOM{
   class WishartSuf : public SufstatDetails<SpdData> {

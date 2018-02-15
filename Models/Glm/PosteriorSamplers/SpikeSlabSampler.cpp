@@ -1,7 +1,7 @@
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/seq.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/seq.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

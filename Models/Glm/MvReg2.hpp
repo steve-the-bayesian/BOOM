@@ -17,13 +17,13 @@
 */
 #ifndef BOOM_MVREG_HPP
 #define BOOM_MVREG_HPP
-#include <Models/Sufstat.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <LinAlg/QR.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Sufstat.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "LinAlg/QR.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

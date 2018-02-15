@@ -18,8 +18,8 @@
 #ifndef BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP
 #define BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ProductDirichletModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ProductDirichletModel.hpp"
 
 namespace BOOM{
 class ProductDirichletPosteriorSampler

@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Bart/GaussianBartModel.hpp>
-#include <stats/moments.hpp>
+#include "Models/Bart/GaussianBartModel.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   GaussianBartModel::GaussianBartModel(int number_of_trees, double mean)

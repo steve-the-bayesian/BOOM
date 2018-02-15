@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Models/BinomialModel.hpp>
-#include <distributions.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "cpputil/math_utils.hpp"
+#include "Models/BinomialModel.hpp"
+#include "distributions.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM {
   namespace {

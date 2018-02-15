@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/HMM/HmmFilter.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Models/HMM/hmm_tools.hpp>
+#include "Models/HMM/HmmFilter.hpp"
+#include "cpputil/math_utils.hpp"
+#include "Models/HMM/hmm_tools.hpp"
 
-#include <Models/ModelTypes.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/MarkovModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/MarkovModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

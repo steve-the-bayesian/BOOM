@@ -15,10 +15,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/MnpBetaSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Glm/MultinomialProbitModel.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/PosteriorSamplers/MnpBetaSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Glm/MultinomialProbitModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef MnpBetaSampler MBS;

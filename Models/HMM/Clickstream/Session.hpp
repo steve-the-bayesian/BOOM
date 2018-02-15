@@ -1,8 +1,8 @@
 #ifndef CLICKSTREAM_SESSION_HPP
 #define CLICKSTREAM_SESSION_HPP
 
-#include <Models/HMM/Clickstream/Event.hpp>
-#include <Models/TimeSeries/TimeSeries.hpp>
+#include "Models/HMM/Clickstream/Event.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
 
 namespace BOOM {
   namespace Clickstream{

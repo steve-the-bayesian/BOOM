@@ -18,10 +18,10 @@
 #ifndef BOOM_BETA_BINOMIAL_MODEL_HPP
 #define BOOM_BETA_BINOMIAL_MODEL_HPP
 
-#include <Models/BinomialModel.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/BinomialModel.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
   // BetaBinomialModel describes a setting were binomial data occurs

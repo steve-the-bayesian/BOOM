@@ -16,22 +16,22 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/IRT/IrtModel.hpp>
+#include "Models/IRT/IrtModel.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <functional>
 #include <iomanip>
 
-#include <LinAlg/CorrelationMatrix.hpp>
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/IRT/SubjectPrior.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/random_element.hpp>
-#include <cpputil/string_utils.hpp>
+#include "LinAlg/CorrelationMatrix.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/IRT/SubjectPrior.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/random_element.hpp"
+#include "cpputil/string_utils.hpp"
 
 namespace BOOM{
   namespace IRT{

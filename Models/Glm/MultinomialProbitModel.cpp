@@ -15,12 +15,12 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/MultinomialProbitModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <Samplers/SliceSampler.hpp>
-#include <LinAlg/SWEEP.hpp>
+#include "Models/Glm/MultinomialProbitModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "Samplers/SliceSampler.hpp"
+#include "LinAlg/SWEEP.hpp"
 
 #include <functional>
 

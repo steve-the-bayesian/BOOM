@@ -19,7 +19,7 @@
 #ifndef BOOM_KALMAN_TOOLS_HPP
 #define BOOM_KALMAN_TOOLS_HPP
 
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
 
 namespace BOOM{

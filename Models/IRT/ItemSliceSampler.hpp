@@ -17,8 +17,8 @@
 */
 #ifndef BOOM_IRT_ITEM_SLICE_SAMPLER_HPP
 #define BOOM_IRT_ITEM_SLICE_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/IRT/Item.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/IRT/Item.hpp"
 
 namespace BOOM{
   class SliceSampler;

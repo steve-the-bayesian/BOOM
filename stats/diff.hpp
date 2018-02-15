@@ -18,8 +18,8 @@
 #ifndef BOOM_DIFF_HPP_
 #define BOOM_DIFF_HPP_
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
 
 namespace BOOM{

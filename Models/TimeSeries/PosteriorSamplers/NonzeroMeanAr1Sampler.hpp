@@ -18,11 +18,11 @@
 #ifndef BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_
 #define BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_
 
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/GaussianModelBase.hpp>
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/GaussianModelBase.hpp"
 
 namespace BOOM{
 

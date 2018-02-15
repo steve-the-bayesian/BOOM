@@ -19,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_DIRICHLET_MODEL_HPP_
 #define BOOM_HIERARCHICAL_DIRICHLET_MODEL_HPP_
 
-#include <Models/MultinomialModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/Hierarchical/HierarchicalModel.hpp>
-#include <Models/PosteriorSamplers/MultinomialDirichletSampler.hpp>
+#include "Models/MultinomialModel.hpp"
+#include "Models/DirichletModel.hpp"
+#include "Models/Hierarchical/HierarchicalModel.hpp"
+#include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
 
 namespace BOOM {
 

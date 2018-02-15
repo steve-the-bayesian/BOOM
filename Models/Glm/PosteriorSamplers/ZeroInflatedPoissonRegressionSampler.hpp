@@ -18,11 +18,11 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_REGRESSION_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/Glm/ZeroInflatedPoissonRegression.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitCompositeSpikeSlabSampler.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/ZeroInflatedPoissonRegression.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitCompositeSpikeSlabSampler.hpp"
 
 namespace BOOM {
 

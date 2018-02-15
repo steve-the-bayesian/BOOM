@@ -21,15 +21,15 @@
 
 #include <string>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/Array.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/Array.hpp"
 
-#include <Models/CategoricalData.hpp>
+#include "Models/CategoricalData.hpp"
 
-#include <stats/DataTable.hpp>
+#include "stats/DataTable.hpp"
 
 //======================================================================
 // Note that the functions listed here throw exceptions.  Code that

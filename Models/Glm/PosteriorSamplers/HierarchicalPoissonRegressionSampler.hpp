@@ -19,18 +19,18 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_POISSON_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/HierarchicalPoissonRegression.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/ZeroMeanMvnModel.hpp>
-#include <Models/PosteriorSamplers/MvnVarSampler.hpp>
-#include <Models/PosteriorSamplers/MvnMeanSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnConjSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/HierarchicalPoissonRegression.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/ZeroMeanMvnModel.hpp"
+#include "Models/PosteriorSamplers/MvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/MvnMeanSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
-#include <Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp>
-#include <Models/SpdModel.hpp>
+#include "Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp"
+#include "Models/SpdModel.hpp"
 
 namespace BOOM {
 

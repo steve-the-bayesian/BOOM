@@ -19,8 +19,8 @@
 #ifndef BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_
 #define BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <distributions/rng.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
   namespace SplitMerge {

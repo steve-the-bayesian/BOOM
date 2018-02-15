@@ -18,11 +18,11 @@
 #ifndef BOOM_TREGRESSION_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_TREGRESSION_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/PosteriorSamplers/TRegressionSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/Glm/PosteriorSamplers/TRegressionSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM {
 

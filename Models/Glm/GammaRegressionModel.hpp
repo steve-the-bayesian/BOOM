@@ -18,12 +18,12 @@
 #ifndef BOOM_GAMMA_REGRESSION_MODEL_HPP_
 #define BOOM_GAMMA_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM {
 

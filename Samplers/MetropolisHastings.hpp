@@ -17,8 +17,8 @@
 */
 #ifndef BOOM_METROPOLIS_HASTINGS_HPP_
 #define BOOM_METROPOLIS_HASTINGS_HPP_
-#include <Samplers/Sampler.hpp>
-#include <Samplers/MH_Proposals.hpp>
+#include "Samplers/Sampler.hpp"
+#include "Samplers/MH_Proposals.hpp"
 #include <functional>
 
 namespace BOOM{

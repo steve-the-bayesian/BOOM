@@ -16,20 +16,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 #include <sstream>
 
 #include <functional>
-#include <cpputil/lse.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/index_table.hpp>
-#include <cpputil/apply_permutation.hpp>
-#include <distributions.hpp>
-#include <numopt/Brent.hpp>
-#include <numopt/Integral.hpp>
-#include <numopt/Powell.hpp>
+#include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/index_table.hpp"
+#include "cpputil/apply_permutation.hpp"
+#include "distributions.hpp"
+#include "numopt/Brent.hpp"
+#include "numopt/Integral.hpp"
+#include "numopt/Powell.hpp"
 #include <iomanip>
 #include <ctime>
 

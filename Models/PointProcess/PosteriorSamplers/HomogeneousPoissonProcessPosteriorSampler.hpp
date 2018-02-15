@@ -18,9 +18,9 @@
 #ifndef BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

@@ -18,13 +18,13 @@
 
 #ifndef BOOM_MVN_MODEL_BASE_HPP
 #define BOOM_MVN_MODEL_BASE_HPP
-#include <LinAlg/Selector.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/VectorModel.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/DataTypes.hpp>
-#include <Models/SpdParams.hpp>
+#include "LinAlg/Selector.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/VectorModel.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/DataTypes.hpp"
+#include "Models/SpdParams.hpp"
 
 namespace BOOM{
 

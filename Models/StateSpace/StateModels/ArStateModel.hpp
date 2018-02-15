@@ -19,8 +19,8 @@
 #ifndef BOOM_AR_STATE_MODEL_HPP_
 #define BOOM_AR_STATE_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
 namespace BOOM{
   // A state space model based on a stationary AR(p) process.  The

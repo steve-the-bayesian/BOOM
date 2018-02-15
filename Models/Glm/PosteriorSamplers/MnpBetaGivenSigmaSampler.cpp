@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/MnpBetaGivenSigmaSampler.hpp>
-#include <Models/Glm/MultinomialProbitModel.hpp>
-#include <distributions.hpp>
-#include <Models/ParamTypes.hpp>
+#include "Models/Glm/PosteriorSamplers/MnpBetaGivenSigmaSampler.hpp"
+#include "Models/Glm/MultinomialProbitModel.hpp"
+#include "distributions.hpp"
+#include "Models/ParamTypes.hpp"
 
 namespace BOOM{
 

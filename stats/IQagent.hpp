@@ -23,8 +23,8 @@
 //
 
 #include <vector>
-#include <stats/ECDF.hpp>
-#include <uint.hpp>
+#include "stats/ECDF.hpp"
+#include "uint.hpp"
 
 namespace BOOM{
   class IQagent{

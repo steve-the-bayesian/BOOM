@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <algorithm>
 
 namespace BOOM{

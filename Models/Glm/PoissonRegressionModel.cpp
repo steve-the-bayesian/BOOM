@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <numopt/initialize_derivatives.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "numopt/initialize_derivatives.hpp"
+#include "TargetFun/TargetFun.hpp"
 #include <functional>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 namespace BOOM {
 

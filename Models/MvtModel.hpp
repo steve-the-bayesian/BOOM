@@ -19,15 +19,15 @@
 #ifndef MVT_MODEL_H
 #define MVT_MODEL_H
 
-#include <Models/ModelTypes.hpp>
-#include <Models/VectorModel.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Models/WeightedMvnModel.hpp>
-#include <distributions/rng.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/VectorModel.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Models/WeightedMvnModel.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM{
   class ScaledChisqModel;

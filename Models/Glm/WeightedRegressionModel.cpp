@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "distributions.hpp"
 
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "cpputil/math_utils.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM{
   typedef WeightedRegressionData WRD;

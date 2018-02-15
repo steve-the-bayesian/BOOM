@@ -19,9 +19,9 @@
 #ifndef BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 #define BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/IndependentMvnModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/IndependentMvnModel.hpp"
 
 namespace BOOM {
 

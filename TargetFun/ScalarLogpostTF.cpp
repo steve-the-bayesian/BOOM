@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <TargetFun/ScalarLogpostTF.hpp>
-#include <TargetFun/Loglike.hpp>
-#include <Models/DoubleModel.hpp>
+#include "TargetFun/ScalarLogpostTF.hpp"
+#include "TargetFun/Loglike.hpp"
+#include "Models/DoubleModel.hpp"
 
 namespace BOOM{
   typedef ScalarLogpostTF SLT;

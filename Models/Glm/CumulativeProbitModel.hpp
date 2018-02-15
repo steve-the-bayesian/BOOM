@@ -19,8 +19,8 @@
 #ifndef CUMULATIVE_PROBIT_MODEL_HPP
 #define CUMULATIVE_PROBIT_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/OrdinalCutpointModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/OrdinalCutpointModel.hpp"
 
 namespace BOOM{
 

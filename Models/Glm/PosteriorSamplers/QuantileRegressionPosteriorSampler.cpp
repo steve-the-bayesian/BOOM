@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp>
-#include <distributions/inverse_gaussian.hpp>
+#include "Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp"
+#include "distributions/inverse_gaussian.hpp"
 
 namespace BOOM {
   namespace {

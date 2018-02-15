@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions/trun_logit.hpp>
-#include <stats/logit.hpp>    // for lope
-#include <distributions.hpp>  // for plogis
-#include <math/special_functions.hpp>  // for dilog
-#include <cpputil/math_utils.hpp>
+#include "distributions/trun_logit.hpp"
+#include "stats/logit.hpp"    // for lope
+#include "distributions.hpp"  // for plogis
+#include "math/special_functions.hpp"  // for dilog
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

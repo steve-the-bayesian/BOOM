@@ -19,11 +19,11 @@
 #ifndef BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
 #define BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/MvnGivenXandSigma.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/MvnGivenXandSigma.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM{
   class RegressionConjSampler

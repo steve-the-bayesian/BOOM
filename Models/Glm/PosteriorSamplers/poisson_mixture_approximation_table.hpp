@@ -19,7 +19,7 @@
 #ifndef BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_
 #define BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM {
   void fill_poisson_mixture_approximation_table(

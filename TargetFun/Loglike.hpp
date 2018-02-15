@@ -19,7 +19,7 @@
 #ifndef MODEL_TF_H
 #define MODEL_TF_H
 
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 
 namespace BOOM{
   class ParamVectorHolder;

@@ -18,9 +18,9 @@
 #ifndef BOOM_IID_SUFSTAT_DATA_POLICY_HPP
 #define BOOM_IID_SUFSTAT_DATA_POLICY_HPP
 
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <cpputil/Ptr.hpp>
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "cpputil/Ptr.hpp"
 
 namespace BOOM{
 

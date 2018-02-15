@@ -18,8 +18,8 @@
 #ifndef BOOM_GAUSSIAN_VARIANCE_METHOD_HPP
 #define BOOM_GAUSSIAN_VARIANCE_METHOD_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM{
   class GaussianModel;

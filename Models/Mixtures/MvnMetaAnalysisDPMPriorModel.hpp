@@ -19,9 +19,9 @@
 #ifndef BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_
 #define BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_
 
-#include <Models/Hierarchical/HierarchicalModel.hpp>
-#include <Models/Mixtures/DirichletProcessMvnModel.hpp>
-#include <Models/MvnModel.hpp>
+#include "Models/Hierarchical/HierarchicalModel.hpp"
+#include "Models/Mixtures/DirichletProcessMvnModel.hpp"
+#include "Models/MvnModel.hpp"
 
 namespace BOOM {
 

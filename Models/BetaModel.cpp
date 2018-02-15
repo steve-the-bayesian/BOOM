@@ -15,15 +15,15 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/BetaModel.hpp>
+#include "Models/BetaModel.hpp"
 #include <cmath>
 #include <sstream>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 

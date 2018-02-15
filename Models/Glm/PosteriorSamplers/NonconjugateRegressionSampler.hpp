@@ -21,18 +21,18 @@
 
 #include <functional>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
-#include <Models/GammaModel.hpp>
-#include <Models/VectorModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/VectorModel.hpp"
 
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/Glm/RegressionModel.hpp"
 
-#include <Samplers/MetropolisHastings.hpp>
-#include <Samplers/MH_Proposals.hpp>
-#include <Samplers/MoveAccounting.hpp>
-#include <Samplers/UnivariateSliceSampler.hpp>
+#include "Samplers/MetropolisHastings.hpp"
+#include "Samplers/MH_Proposals.hpp"
+#include "Samplers/MoveAccounting.hpp"
+#include "Samplers/UnivariateSliceSampler.hpp"
 
 namespace BOOM {
 

@@ -19,11 +19,11 @@
 #ifndef BOOM_NONZERO_MEAN_AR1_MODEL_HPP_
 #define BOOM_NONZERO_MEAN_AR1_MODEL_HPP_
 
-#include <Models/Sufstat.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Sufstat.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

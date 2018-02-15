@@ -19,8 +19,8 @@
 #ifndef BOOM_STATE_SPACE_NORMAL_MIXTURE_HPP_
 #define BOOM_STATE_SPACE_NORMAL_MIXTURE_HPP_
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <Models/Glm/Glm.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/Glm/Glm.hpp"
 
 namespace BOOM {
 

@@ -17,7 +17,7 @@
  */
 
 #include <string>
-#include <cpputil/string_utils.hpp>
+#include "cpputil/string_utils.hpp"
 
 namespace BOOM{
   using std::string;

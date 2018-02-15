@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Bmath/Bmath.hpp>
-#include <cpputil/report_error.hpp>
+#include "Bmath/Bmath.hpp"
+#include "cpputil/report_error.hpp"
 #include <sstream>
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 namespace BOOM{
   double compare_binomial_proportions(double successes1, double successes2,

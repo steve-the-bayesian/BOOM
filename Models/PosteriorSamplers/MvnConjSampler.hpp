@@ -19,10 +19,10 @@
 #ifndef BOOM_MVN_CONJ_SAMPLER_HPP
 #define BOOM_MVN_CONJ_SAMPLER_HPP
 
-#include <Models/MvnModel.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/WishartModel.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
+#include "Models/MvnModel.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/WishartModel.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
 
 namespace BOOM {
 

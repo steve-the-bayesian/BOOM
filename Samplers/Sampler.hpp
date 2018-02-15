@@ -18,9 +18,9 @@
 #ifndef BOOM_SAMPLERS_HPP
 #define BOOM_SAMPLERS_HPP
 
-#include <cpputil/RefCounted.hpp>
-#include <distributions/rng.hpp>
-#include <LinAlg/Vector.hpp>
+#include "cpputil/RefCounted.hpp"
+#include "distributions/rng.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
 

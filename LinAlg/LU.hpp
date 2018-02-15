@@ -21,7 +21,7 @@
 #ifndef BOOM_LU_HPP
 #define BOOM_LU_HPP
 
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 #include <vector>
 
 namespace BOOM{

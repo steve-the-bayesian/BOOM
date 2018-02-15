@@ -19,10 +19,10 @@
 #ifndef BOOM_REGRESSION_COEFFICIENT_SAMPLER_HPP_
 #define BOOM_REGRESSION_COEFFICIENT_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <distributions/rng.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

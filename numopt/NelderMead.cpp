@@ -19,7 +19,7 @@
 // code obtained from
 // http://people.sc.fsu.edu/~jburkardt/cpp_src/asa047/asa047.html
 
-#include <numopt/NelderMead.hpp>
+#include "numopt/NelderMead.hpp"
 
 # include <cstdlib>
 # include <iostream>
@@ -27,9 +27,9 @@
 # include <ctime>
 # include <cmath>
 
-#include <LinAlg/Vector.hpp>
-#include <numopt.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace NelderMeadStatlib{
   using namespace BOOM;

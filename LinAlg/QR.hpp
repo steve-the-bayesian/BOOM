@@ -18,8 +18,8 @@
 #ifndef BOOM_NEWLA_QR_HPP
 #define BOOM_NEWLA_QR_HPP
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   // The QR decomposition of a matrix X.  In the case where the number

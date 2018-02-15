@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/DirichletModel.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/DirichletModel.hpp"
+#include "cpputil/math_utils.hpp"
 
 #include <stdexcept>
 #include <sstream>
-#include <distributions.hpp>  // for rgamma, lgamma, digamma, etc.
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "distributions.hpp"  // for rgamma, lgamma, digamma, etc.
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include <cmath>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM{
 

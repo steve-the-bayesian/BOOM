@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_SCALAR_NEWTON_MAX_HPP_
 #define BOOM_SCALAR_NEWTON_MAX_HPP_
-#include <TargetFun/TargetFun.hpp>
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM{
 

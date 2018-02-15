@@ -19,10 +19,10 @@
 #ifndef BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_
 #define BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_
 
-#include <Models/GaussianModelGivenSigma.hpp>
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/GaussianModelGivenSigma.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

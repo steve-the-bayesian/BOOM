@@ -19,10 +19,10 @@
 #ifndef BOOM_STATE_SPACE_STUDENT_REGRESSION_MODEL_HPP_
 #define BOOM_STATE_SPACE_STUDENT_REGRESSION_MODEL_HPP_
 
-#include <Models/StateSpace/StateSpaceNormalMixture.hpp>
-#include <Models/Glm/TRegression.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
+#include "Models/Glm/TRegression.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   namespace StateSpace {

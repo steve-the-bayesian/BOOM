@@ -14,22 +14,22 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/MultinomialLogitModel.hpp>
+#include "Models/Glm/MultinomialLogitModel.hpp"
 
 #include <cmath>
 #include <functional>
 
-#include <LinAlg/VectorView.hpp>
-#include <Models/Glm/PosteriorSamplers/MLVS.hpp>
-#include <Models/MvnBase.hpp>
-#include <TargetFun/LogPost.hpp>
-#include <TargetFun/Loglike.hpp>
-#include <cpputil/lse.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
-#include <numopt.hpp>
-#include <stats/FreqDist.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "Models/Glm/PosteriorSamplers/MLVS.hpp"
+#include "Models/MvnBase.hpp"
+#include "TargetFun/LogPost.hpp"
+#include "TargetFun/Loglike.hpp"
+#include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
+#include "numopt.hpp"
+#include "stats/FreqDist.hpp"
 
 namespace BOOM{
 

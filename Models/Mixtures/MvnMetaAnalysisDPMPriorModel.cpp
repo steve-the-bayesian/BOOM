@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp"
+#include "Models/MvnBase.hpp"
 #include <utility>
 
 namespace BOOM {

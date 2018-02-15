@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp>
-#include <distributions.hpp>
-#include <distributions/inverse_gaussian.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp"
+#include "distributions.hpp"
+#include "distributions/inverse_gaussian.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   namespace Logit {

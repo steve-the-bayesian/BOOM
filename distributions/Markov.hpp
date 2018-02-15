@@ -18,10 +18,10 @@
 #ifndef BOOM_MARKOV_DIST_HPP
 #define BOOM_MARKOV_DIST_HPP
 
-#include <uint.hpp>
+#include "uint.hpp"
 #include <vector>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
   class Selector;

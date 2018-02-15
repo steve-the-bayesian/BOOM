@@ -19,10 +19,10 @@
 #ifndef BOOM_DISCRETE_UNIFORM_MODEL_HPP_
 #define BOOM_DISCRETE_UNIFORM_MODEL_HPP_
 
-#include <Models/Policies/NullParamPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <distributions/rng.hpp>
+#include "Models/Policies/NullParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <numopt.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "numopt.hpp"
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM{
 

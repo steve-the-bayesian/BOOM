@@ -19,10 +19,10 @@
 #ifndef BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_
 #define BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/WishartModel.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/WishartModel.hpp"
 
 namespace BOOM {
 

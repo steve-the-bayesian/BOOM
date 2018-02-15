@@ -17,11 +17,11 @@
 */
 #ifndef BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP
 #define BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP
-#include <Models/Glm/OrdinalCutpointModel.hpp>
+#include "Models/Glm/OrdinalCutpointModel.hpp"
 
-#include <Models/IRT/IRT.hpp>
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/ItemDataPolicy.hpp>
+#include "Models/IRT/IRT.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/ItemDataPolicy.hpp"
 
 namespace BOOM{
   namespace IRT{

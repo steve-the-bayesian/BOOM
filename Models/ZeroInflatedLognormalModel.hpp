@@ -19,12 +19,12 @@
 #ifndef BOOM_ZERO_INFLATED_LOGNORMAL_MODEL_HPP_
 #define BOOM_ZERO_INFLATED_LOGNORMAL_MODEL_HPP_
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/BinomialModel.hpp>
-#include <Models/GaussianModel.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/BinomialModel.hpp"
+#include "Models/GaussianModel.hpp"
 
 namespace BOOM{
 

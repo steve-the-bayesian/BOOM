@@ -2,7 +2,7 @@
 #define BOOM_NYI_HPP
 
 #include <sstream>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

@@ -18,9 +18,9 @@
 #ifndef BOOM_POISSON_PROCESS_HPP_
 #define BOOM_POISSON_PROCESS_HPP_
 
-#include <Models/ModelTypes.hpp>
-#include <cpputil/DateTime.hpp>
-#include <Models/PointProcess/PointProcess.hpp>
+#include "Models/ModelTypes.hpp"
+#include "cpputil/DateTime.hpp"
+#include "Models/PointProcess/PointProcess.hpp"
 #include <functional>
 
 namespace BOOM{

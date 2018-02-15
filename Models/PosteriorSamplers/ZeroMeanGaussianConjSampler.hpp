@@ -18,8 +18,8 @@
 #ifndef BOOM_ZERO_MEAN_GAUSSIAN_CONJ_SAMPLER_HPP_
 #define BOOM_ZERO_MEAN_GAUSSIAN_CONJ_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM{
    class ZeroMeanGaussianModel;

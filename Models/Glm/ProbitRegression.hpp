@@ -19,14 +19,14 @@
 #ifndef PROBIT_REGRESSION_HPP
 #define PROBIT_REGRESSION_HPP
 
-#include <BOOM.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <numopt.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "BOOM.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "numopt.hpp"
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM{
 

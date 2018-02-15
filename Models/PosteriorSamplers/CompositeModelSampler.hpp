@@ -18,8 +18,8 @@
 #ifndef BOOM_COMPOSITE_MODEL_SAMPLER_HPP_
 #define BOOM_COMPOSITE_MODEL_SAMPLER_HPP_
 
-#include <Models/CompositeModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/CompositeModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 namespace BOOM{
   // A CompositeModelSampler is the default sampling method for a
   // CompositeModel.  It implements logpri() and draw() by passing calls

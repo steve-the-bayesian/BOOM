@@ -19,19 +19,19 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <map>     // for STL's map container
 #include <vector>
 #include <string>
 #include <cmath>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/CorrelationMatrix.hpp>  // for VectorData
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/CorrelationMatrix.hpp"  // for VectorData
 
-#include <cpputil/Ptr.hpp>
-#include <cpputil/RefCounted.hpp>
+#include "cpputil/Ptr.hpp"
+#include "cpputil/RefCounted.hpp"
 #include <functional>
 
 

@@ -20,24 +20,24 @@
 #define BOOM_MARKOV_MODEL_HPP
 
 #include <vector>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 
-#include <Models/ModelTypes.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/CategoricalData.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/CategoricalData.hpp"
 
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-#include <Models/TimeSeries/MarkovLink.hpp>
-#include <Models/TimeSeries/TimeSeries.hpp>
-#include <Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp>
+#include "Models/TimeSeries/MarkovLink.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
+#include "Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp"
 
-#include <Models/Sufstat.hpp>
+#include "Models/Sufstat.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 
 namespace BOOM{

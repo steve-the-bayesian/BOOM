@@ -19,9 +19,9 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 
-#include <Models/ZeroInflatedPoissonModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/BetaModel.hpp>
+#include "Models/ZeroInflatedPoissonModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/BetaModel.hpp"
 
 namespace BOOM{
   class ZeroInflatedPoissonSampler : public PosteriorSampler {

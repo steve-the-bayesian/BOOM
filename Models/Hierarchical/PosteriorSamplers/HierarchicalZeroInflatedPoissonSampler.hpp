@@ -19,13 +19,13 @@
 #ifndef BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalZeroInflatedPoissonModel.hpp>
-#include <Models/PosteriorSamplers/BetaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedPoissonSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalZeroInflatedPoissonModel.hpp"
+#include "Models/PosteriorSamplers/BetaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroInflatedPoissonSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
 

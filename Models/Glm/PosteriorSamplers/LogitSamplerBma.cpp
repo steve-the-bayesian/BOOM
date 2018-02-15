@@ -16,14 +16,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/LogitSamplerBma.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <LinAlg/Selector.hpp>
-#include <cpputil/seq.hpp>
+#include "Models/Glm/PosteriorSamplers/LogitSamplerBma.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "LinAlg/Selector.hpp"
+#include "cpputil/seq.hpp"
 #include <algorithm>
-#include <stats/logit.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
+#include "stats/logit.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 
 namespace BOOM{
 

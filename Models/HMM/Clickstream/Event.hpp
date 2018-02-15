@@ -1,7 +1,7 @@
 #ifndef BOOM_CLICKSTREAM_EVENT_HPP
 #define BOOM_CLICKSTREAM_EVENT_HPP
 
-#include <Models/MarkovModel.hpp>
+#include "Models/MarkovModel.hpp"
 
 namespace BOOM {
   namespace Clickstream{

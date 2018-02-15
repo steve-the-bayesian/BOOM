@@ -15,9 +15,9 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePoissonPosteriorSampler.hpp>
-#include <Models/StateSpace/PosteriorSamplers/SufstatManager.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePoissonPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace StateSpace {

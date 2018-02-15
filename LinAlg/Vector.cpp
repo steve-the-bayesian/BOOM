@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/blas.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -29,11 +29,11 @@
 #include <numeric>
 #include <functional>
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/shift_element.hpp>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/shift_element.hpp"
+#include "cpputil/string_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 #include <sstream>
 
 #include <cstdlib>

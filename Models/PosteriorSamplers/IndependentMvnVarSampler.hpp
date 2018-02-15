@@ -20,10 +20,10 @@
 #define BOOM_INDEPENDENT_MVN_VAR_SAMPLER_HPP_
 
 #include <vector>
-#include <Models/IndependentMvnModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
 

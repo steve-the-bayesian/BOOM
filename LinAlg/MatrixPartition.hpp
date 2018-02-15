@@ -19,10 +19,10 @@
 #ifndef BOOM_MATRIX_PARTITION_HPP_
 #define BOOM_MATRIX_PARTITION_HPP_
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/SubMatrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
 namespace BOOM{
   class MatrixPartition{

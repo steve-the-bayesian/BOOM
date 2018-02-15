@@ -19,11 +19,11 @@
 #ifndef BOOM_REGRESSION_STATE_MODEL_HPP_
 #define BOOM_REGRESSION_STATE_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
 
 namespace BOOM{
 

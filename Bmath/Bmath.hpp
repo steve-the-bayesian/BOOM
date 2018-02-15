@@ -38,7 +38,7 @@
  * Mathlib.h  should contain ALL headers from R's C code in `src/nmath'
    ---------  such that ``the Math library'' can be used by simply
 
-   ``#include <Bmath.hpp> ''
+   ``#include "Bmath.hpp" ''
 
    and nothing else.
 */
@@ -46,10 +46,10 @@
 #define BOOM_BMATH_HPP
 
 #include <cmath>
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 #include <vector>
 #include <boost/math/special_functions/gamma.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 /*-- Mathlib as part of R --  define this for standalone : */
 /* #undef MATHLIB_STANDALONE */

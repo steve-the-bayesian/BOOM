@@ -16,16 +16,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PointProcess/MarkovModulatedPoissonProcess.hpp>
+#include "Models/PointProcess/MarkovModulatedPoissonProcess.hpp"
 
 #include <algorithm>
 #include <iterator>  // for back_inserter
 #include <vector>
 
-#include <cpputil/lse.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
 

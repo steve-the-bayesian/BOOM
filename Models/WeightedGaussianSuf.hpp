@@ -19,9 +19,9 @@
 #ifndef BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_
 #define BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_
 
-#include <Models/Sufstat.hpp>
-#include <Models/DataTypes.hpp>
-#include <Models/WeightedData.hpp>
+#include "Models/Sufstat.hpp"
+#include "Models/DataTypes.hpp"
+#include "Models/WeightedData.hpp"
 
 namespace BOOM {
 

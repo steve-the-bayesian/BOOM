@@ -19,17 +19,17 @@
 #ifndef BOOM_REGRESSION_MODEL_H
 #define BOOM_REGRESSION_MODEL_H
 
-#include <BOOM.hpp>
-#include <uint.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <LinAlg/QR.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "BOOM.hpp"
+#include "uint.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "LinAlg/QR.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
 namespace BOOM{
 

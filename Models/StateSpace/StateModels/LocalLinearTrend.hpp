@@ -19,8 +19,8 @@
 #ifndef BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 #define BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 
-#include <Models/ZeroMeanMvnModel.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
+#include "Models/ZeroMeanMvnModel.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 
 namespace BOOM{
 

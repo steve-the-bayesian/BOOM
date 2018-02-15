@@ -18,7 +18,7 @@
 #ifndef BOOM_COMPOSITE_SAMPLER_HPP
 #define BOOM_COMPOSITE_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
 

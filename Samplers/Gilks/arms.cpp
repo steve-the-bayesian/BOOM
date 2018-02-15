@@ -12,9 +12,9 @@
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 #include <vector>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 /* *********************************************************************** */
 namespace GilksArms{

@@ -19,7 +19,7 @@
 #ifndef ORDERING_HPP
 #define ORDERING_HPP
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <vector>
 #include <map>
 

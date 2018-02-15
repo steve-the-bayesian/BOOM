@@ -18,8 +18,8 @@
 
 #ifndef BOOM_VECTOR_MODEL_HPP
 #define BOOM_VECTOR_MODEL_HPP
-#include <Models/ModelTypes.hpp>
-#include <distributions/rng.hpp>
+#include "Models/ModelTypes.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

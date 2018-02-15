@@ -22,15 +22,15 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/SubMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
 
-#include <Models/ParamTypes.hpp>
+#include "Models/ParamTypes.hpp"
 
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/Ptr.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/Ptr.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   class SparseVector;

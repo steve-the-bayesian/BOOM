@@ -19,9 +19,9 @@
 #ifndef BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_
 #define BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/AggregatedRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
+#include "Models/Glm/AggregatedRegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 
 namespace BOOM{
 

@@ -19,7 +19,7 @@
 #define BOOM_TS_MARKOV_LINK_HPP
 
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
 

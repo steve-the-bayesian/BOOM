@@ -18,8 +18,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
 namespace BOOM{
 

@@ -19,8 +19,8 @@
 #ifndef BOOM_POINT_PROCESS_DATA_HPP_
 #define BOOM_POINT_PROCESS_DATA_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <cpputil/DateTime.hpp>
+#include "Models/DataTypes.hpp"
+#include "cpputil/DateTime.hpp"
 #include <boost/operators.hpp>
 
 namespace BOOM{

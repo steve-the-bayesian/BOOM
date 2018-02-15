@@ -18,9 +18,9 @@
 
 #ifndef BOOM_FIXED_UNIVARIATE_SAMPLER_HPP_
 #define BOOM_FIXED_UNIVARIATE_SAMPLER_HPP_
-#include <Models/ParamTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
   class FixedUnivariateSampler : public PosteriorSampler{

@@ -16,7 +16,7 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#include <cpputil/string_utils.hpp>
+#include "cpputil/string_utils.hpp"
 #include <string>
 #include <iostream>
 #include <sstream>

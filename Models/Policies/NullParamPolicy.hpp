@@ -18,8 +18,8 @@
 #ifndef BOOM_NULL_PARAM_POLICY_HPP
 #define BOOM_NULL_PARAM_POLICY_HPP
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
 
 namespace BOOM{
 

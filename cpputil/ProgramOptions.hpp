@@ -21,7 +21,7 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include <cpputil/string_utils.hpp>
+#include "cpputil/string_utils.hpp"
 
 namespace BOOM{
 

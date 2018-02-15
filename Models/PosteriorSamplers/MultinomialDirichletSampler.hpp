@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP
 #define BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 namespace BOOM{
 
   class MultinomialModel;

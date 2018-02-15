@@ -17,12 +17,12 @@
 */
 #ifndef BOOM_UNIFORM_CORRELATION_MODEL_HPP
 #define BOOM_UNIFORM_CORRELATION_MODEL_HPP
-#include <Models/Policies/NullParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/Policies/NullParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/SpdParams.hpp"
 
-#include <LinAlg/CorrelationMatrix.hpp>
+#include "LinAlg/CorrelationMatrix.hpp"
 
 namespace BOOM{
 

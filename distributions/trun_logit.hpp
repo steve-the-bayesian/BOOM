@@ -18,8 +18,8 @@
 #ifndef BOOM_DISTRIBUTIONS_TRUN_LOGIT_HPP_
 #define BOOM_DISTRIBUTIONS_TRUN_LOGIT_HPP_
 
-#include <distributions/trun_logit.hpp>
-#include <distributions/rng.hpp>
+#include "distributions/trun_logit.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

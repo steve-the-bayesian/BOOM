@@ -20,11 +20,11 @@
 #define BOOM_SAMPLING_METHOD_HPP
 
 
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/Ptr.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <distributions/rng.hpp>
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/Ptr.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM{
 

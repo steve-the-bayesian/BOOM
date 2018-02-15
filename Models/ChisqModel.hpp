@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_CHI_SQUARE_MODEL_HPP
 #define BOOM_CHI_SQUARE_MODEL_HPP
-#include <Models/GammaModel.hpp>
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

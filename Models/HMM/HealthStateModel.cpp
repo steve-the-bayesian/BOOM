@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/HMM/HealthStateModel.hpp>
-#include <distributions.hpp>
-#include <Models/HMM/hmm_tools.hpp>
+#include "Models/HMM/HealthStateModel.hpp"
+#include "distributions.hpp"
+#include "Models/HMM/hmm_tools.hpp"
 
 namespace BOOM{
 

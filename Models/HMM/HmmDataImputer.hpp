@@ -19,8 +19,8 @@
 #ifndef BOOM_HMM_DATA_IMPUTER_HPP
 #define BOOM_HMM_DATA_IMPUTER_HPP
 
-#include <Models/HMM/HMM2.hpp>
-#include <distributions/rng.hpp>
+#include "Models/HMM/HMM2.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

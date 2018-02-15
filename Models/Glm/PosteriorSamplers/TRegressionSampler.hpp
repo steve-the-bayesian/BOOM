@@ -18,14 +18,14 @@
 #ifndef BOOM_TREGRESSION_SAMPLER_HPP_
 #define BOOM_TREGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/TRegression.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/TDataImputer.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/Glm/TRegression.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
   // A posterior sampler for T regression models.  Uses data

@@ -18,9 +18,9 @@
 #ifndef BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP
 #define BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP
 
-#include <TargetFun/TargetFun.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ParamTypes.hpp>
+#include "TargetFun/TargetFun.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ParamTypes.hpp"
 
 namespace BOOM{
   class SliceSampler;

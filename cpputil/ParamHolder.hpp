@@ -18,9 +18,9 @@
 #ifndef BOOM_PARAM_HOLDER_HPP
 #define BOOM_PARAM_HOLDER_HPP
 
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
-#include <cpputil/Ptr.hpp>
+#include "cpputil/Ptr.hpp"
 
 namespace BOOM{
 

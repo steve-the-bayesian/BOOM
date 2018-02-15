@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/BetaBinomialPosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/BetaBinomialPosteriorSampler.hpp"
 #include <functional>
 
-#include <distributions.hpp>
-#include <stats/logit.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
-#include <numopt.hpp>
-#include <numopt/NumericalDerivatives.hpp>
+#include "distributions.hpp"
+#include "stats/logit.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
+#include "numopt.hpp"
+#include "numopt/NumericalDerivatives.hpp"
 
 namespace BOOM{
 

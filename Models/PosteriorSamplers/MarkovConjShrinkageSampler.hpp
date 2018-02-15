@@ -19,9 +19,9 @@
 #ifndef BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP
 #define BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP
 
-#include <Models/ProductDirichletModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/ProductDirichletModel.hpp"
+#include "Models/DirichletModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
 class MarkovConjShrinkageSampler;

@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_INVERSE_GAUSSIAN_HPP_
 #define BOOM_INVERSE_GAUSSIAN_HPP_
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 namespace BOOM{
 

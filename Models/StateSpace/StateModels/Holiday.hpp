@@ -20,22 +20,19 @@
 #define BOOM_HOLIDAY_HPP_
 
 #include <map>
-#include <cpputil/Date.hpp>
+#include "cpputil/Date.hpp"
 
 namespace BOOM{
-
-  //======================================================================
-  // A Holiday is a recurring Date.  It differs from a standard
-  // "season" in that holidays can sometimes move, either because of
-  // complicated religious logic (e.g. Easter), or because of calendar
-  // effects (e.g. when Independence Day falls on a weekend people get
-  // the closest Monday or Friday off).
+  //===========================================================================
+  // A Holiday is a recurring Date.  It differs from a standard "season" in that
+  // holidays can sometimes move, either because of complicated religious logic
+  // (e.g. Easter), or because of calendar effects (e.g. when Independence Day
+  // falls on a weekend people get the closest Monday or Friday off).
   //
-  // A Holiday is defined in terms of a window, specified as the Date
-  // of the holiday, as well as some number of days before or after.
-  // This window might be of different width each year, as holidays
-  // sometimes interact with weekends and other holidays in strange
-  // ways.
+  // A Holiday is defined in terms of a window, specified as the Date of the
+  // holiday, as well as some number of days before or after.  This window might
+  // be of different width each year, as holidays sometimes interact with
+  // weekends and other holidays in strange ways.
   class Holiday{
    public:
     virtual ~Holiday(){}

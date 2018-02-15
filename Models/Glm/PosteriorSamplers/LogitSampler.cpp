@@ -16,12 +16,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/LogitSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <distributions.hpp>
-#include <TargetFun/Loglike.hpp>
-#include <TargetFun/LogPost.hpp>
+#include "Models/Glm/PosteriorSamplers/LogitSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "distributions.hpp"
+#include "TargetFun/Loglike.hpp"
+#include "TargetFun/LogPost.hpp"
 
 namespace BOOM{
 

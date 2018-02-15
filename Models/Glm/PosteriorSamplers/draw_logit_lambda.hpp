@@ -18,7 +18,7 @@
 
 #ifndef BOOM_DRAW_LOGIT_LAMBDA_HPP_
 #define BOOM_DRAW_LOGIT_LAMBDA_HPP_
-#include <distributions.hpp>
+#include "distributions.hpp"
 namespace BOOM{
 
   namespace Logit{

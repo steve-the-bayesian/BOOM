@@ -1,5 +1,5 @@
-#include <Models/HMM/Clickstream/Event.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/HMM/Clickstream/Event.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   namespace Clickstream{

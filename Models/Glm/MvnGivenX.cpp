@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/MvnGivenX.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/LogisticRegressionModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/nyi.hpp>
-#include <LinAlg/SubMatrix.hpp>
+#include "Models/Glm/MvnGivenX.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/LogisticRegressionModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/nyi.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
 namespace BOOM{
 

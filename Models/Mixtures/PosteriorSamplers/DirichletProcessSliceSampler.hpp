@@ -19,10 +19,10 @@
 #ifndef BOOM_DIRICHLET_PROCESS_SLICE_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_SLICE_SAMPLER_HPP_
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/Mixtures/PosteriorSamplers/SplitMerge.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/MoveAccounting.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/Mixtures/PosteriorSamplers/SplitMerge.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM {
   // This class implements the slice sampling algorithm from Kalli, Griffin, and

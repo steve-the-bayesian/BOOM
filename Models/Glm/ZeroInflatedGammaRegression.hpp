@@ -19,10 +19,10 @@
 #ifndef BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_
 #define BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/GammaRegressionModel.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/GammaRegressionModel.hpp"
 
 namespace BOOM {
 

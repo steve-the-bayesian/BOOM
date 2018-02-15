@@ -19,7 +19,7 @@
 #ifndef BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 #define BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 #include <ostream>
 
 namespace BOOM {

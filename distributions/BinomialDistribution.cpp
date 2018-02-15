@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions/BinomialDistribution.hpp>
+#include "distributions/BinomialDistribution.hpp"
 
 namespace BOOM{
 

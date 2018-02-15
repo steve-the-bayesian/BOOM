@@ -19,9 +19,9 @@
 #ifndef TARGET_FUN_H
 #define TARGET_FUN_H
 
-#include <LinAlg/Vector.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/Ptr.hpp>
+#include "LinAlg/Vector.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/Ptr.hpp"
 #include <functional>
 
 namespace BOOM {

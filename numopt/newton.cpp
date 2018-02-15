@@ -17,12 +17,12 @@
 */
 
 
-#include <LinAlg/Matrix.hpp> // includes Vector.hpp as well
-#include <LinAlg/Vector.hpp>
-#include <numopt.hpp>
+#include "LinAlg/Matrix.hpp" // includes Vector.hpp as well
+#include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
 #include <sstream>
 #include <iostream>
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   using std::endl;

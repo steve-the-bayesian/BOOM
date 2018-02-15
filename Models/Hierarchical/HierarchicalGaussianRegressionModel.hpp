@@ -19,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 #define BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

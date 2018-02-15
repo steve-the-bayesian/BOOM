@@ -15,18 +15,18 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/IRT/DafePcr.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/MvtModel.hpp>
+#include "Models/IRT/DafePcr.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/MvtModel.hpp"
 
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/IRT/SubjectPrior.hpp>
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/IRT/SubjectPrior.hpp"
 
-#include <TargetFun/TargetFun.hpp>
-#include <cpputil/ParamHolder.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <distributions.hpp>
+#include "TargetFun/TargetFun.hpp"
+#include "cpputil/ParamHolder.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "distributions.hpp"
 
 
 namespace BOOM{

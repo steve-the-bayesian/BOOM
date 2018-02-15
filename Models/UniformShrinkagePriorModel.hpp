@@ -19,11 +19,11 @@
 #ifndef BOOM_UNIFORM_SHRINKAGE_PRIOR_MODEL_HPP_
 #define BOOM_UNIFORM_SHRINKAGE_PRIOR_MODEL_HPP_
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

@@ -29,22 +29,22 @@
 #include <string>
 
 // other linear algebra
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/DiagonalMatrix.hpp>
-#include <LinAlg/LU.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <LinAlg/QR.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
+#include "LinAlg/LU.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "LinAlg/QR.hpp"
+#include "LinAlg/blas.hpp"
 
 // other BOOM
-#include <distributions.hpp>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/Split.hpp>
-#include <cpputil/report_error.hpp>
+#include "distributions.hpp"
+#include "cpputil/string_utils.hpp"
+#include "cpputil/Split.hpp"
+#include "cpputil/report_error.hpp"
 
 // lapack and blas
 

@@ -20,9 +20,9 @@
 #define BOOM_SAMPLERS_SCALAR_ADAPTIVE_REJECTION_SAMPLER_HPP_
 
 #include <functional>
-#include <LinAlg/Vector.hpp>
-#include <Samplers/Sampler.hpp>
-#include <distributions/rng.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Samplers/Sampler.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

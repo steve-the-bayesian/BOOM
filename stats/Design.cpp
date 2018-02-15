@@ -22,10 +22,10 @@
 #include <set>
 #include <tuple>
 
-#include <BOOM.hpp>
-#include <cpputil/make_unique_preserve_order.hpp>
-#include <cpputil/report_error.hpp>
-#include <stats/Design.hpp>
+#include "BOOM.hpp"
+#include "cpputil/make_unique_preserve_order.hpp"
+#include "cpputil/report_error.hpp"
+#include "stats/Design.hpp"
 
 namespace BOOM{
 

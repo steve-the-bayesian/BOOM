@@ -19,8 +19,8 @@
 #define BOOM_NEWLA_MATRIX_HPP
 #include <vector>
 #include <iosfwd>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   using std::ostream;

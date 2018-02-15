@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp> // rnorm, etc
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp" // rnorm, etc
 #include <cmath>
 
 namespace BOOM{

@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_PARAM_POLICY_2_HPP
 #define BOOM_PARAM_POLICY_2_HPP
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 namespace BOOM{
 
   template <class P1, class P2>

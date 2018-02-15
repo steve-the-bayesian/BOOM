@@ -19,7 +19,7 @@
 #ifndef BOOM_T_DATA_IMPUTER_HPP_
 #define BOOM_T_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

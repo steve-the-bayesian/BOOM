@@ -19,7 +19,7 @@
 #ifndef BOOM_POLYNOMIAL_HPP_
 #define BOOM_POLYNOMIAL_HPP_
 
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 #include <complex>
 
 namespace BOOM{

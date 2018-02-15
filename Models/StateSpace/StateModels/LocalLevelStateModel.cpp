@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/StateModels/LocalLevelStateModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 

@@ -15,13 +15,13 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/CategoricalData.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <cpputil/seq.hpp>
-#include <cpputil/lse.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "cpputil/seq.hpp"
+#include "cpputil/lse.hpp"
+#include "cpputil/report_error.hpp"
 
 #include <functional>
 #include <stdexcept>

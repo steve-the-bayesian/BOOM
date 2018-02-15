@@ -17,7 +17,7 @@
 */
 
 #include <r_interface/boom_r_tools.hpp>
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM {
   namespace RInterface {

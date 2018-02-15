@@ -19,9 +19,9 @@
 #ifndef BOOM_HIERARCHICAL_DIRICHLET_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_DIRICHLET_SAMPLER_HPP_
 
-#include <Models/DirichletModel.hpp>
-#include <Models/PosteriorSamplers/DirichletPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/DirichletModel.hpp"
+#include "Models/PosteriorSamplers/DirichletPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

@@ -20,7 +20,7 @@
 #define BOOM_CPP_MATH_UTILS_H
 
 #include <cmath>
-#include <cpputil/portable_math.hpp>
+#include "cpputil/portable_math.hpp"
 
 namespace BOOM{
   inline int I(int r, int s){ return r==s ? 1:0;}

@@ -18,20 +18,20 @@
 #ifndef BOOM_STATE_SPACE_REGRESSION_HPP_
 #define BOOM_STATE_SPACE_REGRESSION_HPP_
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/Filters/ScalarKalmanStorage.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 #include <vector>
 

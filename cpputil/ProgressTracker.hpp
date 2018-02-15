@@ -1,9 +1,9 @@
 #ifndef BOOM_PROGRESS_TRACKER_CLASS_HPP
 #define BOOM_PROGRESS_TRACKER_CLASS_HPP
 
-#include <BOOM.hpp>
-#include <cpputil/Ptr.hpp>
-#include <cpputil/RefCounted.hpp>
+#include "BOOM.hpp"
+#include "cpputil/Ptr.hpp"
+#include "cpputil/RefCounted.hpp"
 
 namespace BOOM{
   class ProgressTracker:  private RefCounted{

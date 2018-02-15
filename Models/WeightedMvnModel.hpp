@@ -19,13 +19,13 @@
 #define BOOM_WEIGHTED_MVN_MODEL_HPP
 
 
-#include <Models/ModelTypes.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/WeightedData.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/WeightedData.hpp"
 
 namespace BOOM{
 

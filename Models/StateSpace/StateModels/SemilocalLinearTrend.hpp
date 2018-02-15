@@ -18,15 +18,15 @@
 
 #ifndef BOOM_SEMILOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 #define BOOM_SEMILOCAL_LINEAR_TREND_STATE_MODEL_HPP_
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
 namespace BOOM{
 
   // The state transition matrix for the

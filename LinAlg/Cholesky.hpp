@@ -18,8 +18,8 @@
 #ifndef BOOM_CHOL_HPP
 #define BOOM_CHOL_HPP
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
   class Chol {

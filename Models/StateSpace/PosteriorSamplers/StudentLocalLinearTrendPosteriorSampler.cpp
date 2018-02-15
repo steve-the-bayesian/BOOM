@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <distributions/trun_gamma.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
+#include "distributions/trun_gamma.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
 

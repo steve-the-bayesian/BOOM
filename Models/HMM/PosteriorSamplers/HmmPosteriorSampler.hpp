@@ -19,10 +19,10 @@
 #ifndef BOOM_HMM_POSTERIOR_SAMPLER_HPP
 #define BOOM_HMM_POSTERIOR_SAMPLER_HPP
 
-#include <Models/HMM/HMM2.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/ThreadTools.hpp>
-#include <distributions/rng.hpp>
+#include "Models/HMM/HMM2.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/ThreadTools.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

@@ -19,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_MODEL_HPP_
 #define BOOM_HIERARCHICAL_POISSON_MODEL_HPP_
 
-#include <Models/PoissonModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Hierarchical/HierarchicalModel.hpp>
+#include "Models/PoissonModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Hierarchical/HierarchicalModel.hpp"
 
 namespace BOOM {
 

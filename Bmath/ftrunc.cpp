@@ -36,7 +36,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double ftrunc(double x);
  *
  *  DESCRIPTION

@@ -19,13 +19,13 @@
 #ifndef BOOM_VARIABLE_SELECTION_PRIOR_HPP
 #define BOOM_VARIABLE_SELECTION_PRIOR_HPP
 
-#include <Models/Glm/ModelSelectionConcepts.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/Glm/ModelSelectionConcepts.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
+#include "LinAlg/Selector.hpp"
 
 /*************************************************************************
  * A VariableSelectionPrior associates 'variable' with a prior

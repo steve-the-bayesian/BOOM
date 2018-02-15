@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_SVD_HPP
 #define BOOM_SVD_HPP
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 #include <limits>
 
 namespace BOOM{

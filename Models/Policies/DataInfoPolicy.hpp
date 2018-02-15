@@ -19,7 +19,7 @@
 #ifndef BOOM_DATA_INFO_POLICY_HPP
 #define BOOM_DATA_INFO_POLICY_HPP
 
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 namespace BOOM{
   template <class D>
   class DefaultDataInfoPolicy : virtual public Model{

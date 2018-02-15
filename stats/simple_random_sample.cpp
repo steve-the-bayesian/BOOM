@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/simple_random_sample.hpp>
+#include "stats/simple_random_sample.hpp"
 
 namespace BOOM{
   std::vector<bool> SRS_indx(uint N, uint n){

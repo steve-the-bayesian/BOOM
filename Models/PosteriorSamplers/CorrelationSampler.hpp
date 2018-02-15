@@ -17,12 +17,12 @@
 */
 #ifndef BOOM_CORRELATION_SAMPLER_HPP
 #define BOOM_CORRELATION_SAMPLER_HPP
-#include <Samplers/Sampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/MvnModel.hpp>
+#include "Samplers/Sampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/MvnModel.hpp"
 namespace BOOM{
 
   // Draws from the posterior distribution of the correlation matrix

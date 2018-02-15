@@ -26,9 +26,9 @@
 #include <vector>
 #include <functional>
 
-#include <uint.hpp>
+#include "uint.hpp"
 #include <boost/operators.hpp>
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM{
   class SpdMatrix;

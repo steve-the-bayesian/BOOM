@@ -21,13 +21,13 @@
 
 #include <memory>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/Imputer.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp>
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/Imputer.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM{
 

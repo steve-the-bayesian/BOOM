@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/CumulativeLogitModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/CumulativeLogitModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef CumulativeLogitModel CLM;

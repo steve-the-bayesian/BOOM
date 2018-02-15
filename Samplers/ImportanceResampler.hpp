@@ -20,9 +20,9 @@
 #define BOOM_SAMPLERS_IMPORTANCE_RESAMPLER_HPP_
 
 #include <functional>
-#include <Samplers/DirectProposal.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "Samplers/DirectProposal.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
 

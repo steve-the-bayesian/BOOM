@@ -19,10 +19,10 @@
 #ifndef BOOM_SPARSE_KALMAN_TOOLS_HPP
 #define BOOM_SPARSE_KALMAN_TOOLS_HPP
 
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
 
 namespace BOOM{
   // Returns the likelihood contribution of y given previous y's.

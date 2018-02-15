@@ -18,8 +18,8 @@
 #ifndef BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_
 #define BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_
 
-#include <Models/Sufstat.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Sufstat.hpp"
+#include "cpputil/report_error.hpp"
 
 // NOTE:  this file must not be included in another header file.
 namespace BOOM{

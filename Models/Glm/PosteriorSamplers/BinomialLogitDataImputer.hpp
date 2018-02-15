@@ -19,7 +19,7 @@
 #ifndef BOOM_BINOMIAL_LOGIT_DATA_IMPUTER_HPP_
 #define BOOM_BINOMIAL_LOGIT_DATA_IMPUTER_HPP_
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM {
 

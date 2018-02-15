@@ -1,7 +1,7 @@
-#include <LinAlg/SVD.hpp>
+#include "LinAlg/SVD.hpp"
 #include <stdexcept>
 #include <sstream>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 extern "C"{
  void dgesvd_(const char *,  // JOBU

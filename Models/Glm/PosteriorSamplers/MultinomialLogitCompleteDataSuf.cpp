@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/MultinomialLogitCompleteDataSuf.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PosteriorSamplers/MultinomialLogitCompleteDataSuf.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
  namespace MultinomialLogit {

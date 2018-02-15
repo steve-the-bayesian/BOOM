@@ -17,9 +17,9 @@
 */
 #ifndef BOOM_NATURAL_SPLINE_HPP
 #define BOOM_NATURAL_SPLINE_HPP
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/QR.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/QR.hpp"
 
 #include <vector>
 #include <boost/shared_ptr.hpp>

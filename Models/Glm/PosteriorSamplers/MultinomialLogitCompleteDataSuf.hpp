@@ -19,9 +19,9 @@
 #ifndef BOOM_MULTINOMIAL_LOGIT_COMPLETE_DATA_SUF_HPP_
 #define BOOM_MULTINOMIAL_LOGIT_COMPLETE_DATA_SUF_HPP_
 
-#include <LinAlg/SpdMatrix.hpp>
-#include <Models/Glm/ChoiceData.hpp>
-#include <cpputil/RefCounted.hpp>
+#include "LinAlg/SpdMatrix.hpp"
+#include "Models/Glm/ChoiceData.hpp"
+#include "cpputil/RefCounted.hpp"
 
 namespace BOOM {
   namespace MultinomialLogit {

@@ -24,11 +24,11 @@
 
 #include <future>
 
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/ThreadTools.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/ThreadTools.hpp"
 
 // The main class implemented in this file is
 // ParallelLatentDataImputer.

@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
 

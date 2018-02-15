@@ -19,11 +19,11 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MVN_MODEL_HPP_
 #define BOOM_DIRICHLET_PROCESS_MVN_MODEL_HPP_
 
-#include <Models/MvnModel.hpp>
-#include <Models/VectorModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnModel.hpp"
+#include "Models/VectorModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

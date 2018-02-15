@@ -15,11 +15,11 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/MLAuxMixSampler.hpp>
-#include <distributions.hpp>       // for rlexp,dnorm,rmvn
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/ChoiceData.hpp>
+#include "Models/Glm/PosteriorSamplers/MLAuxMixSampler.hpp"
+#include "distributions.hpp"       // for rlexp,dnorm,rmvn
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/ChoiceData.hpp"
 
 namespace BOOM{
   typedef MLAuxMixSampler AUX;

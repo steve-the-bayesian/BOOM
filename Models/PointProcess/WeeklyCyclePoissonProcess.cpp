@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PointProcess/WeeklyCyclePoissonProcess.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/PointProcess/WeeklyCyclePoissonProcess.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 #include <iomanip>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

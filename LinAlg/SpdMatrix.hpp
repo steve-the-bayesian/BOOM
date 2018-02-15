@@ -18,7 +18,7 @@
 
 #ifndef NEW_LA_SPD_MATRIX_H
 #define NEW_LA_SPD_MATRIX_H
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
 

@@ -20,9 +20,9 @@
 #define CPP_STRING_UTILS_H
 #include <vector>
 #include <string>
-#include <BOOM.hpp>
-#include <uint.hpp>
-#include <cpputil/Split.hpp>
+#include "BOOM.hpp"
+#include "uint.hpp"
+#include "cpputil/Split.hpp"
 
 namespace BOOM{
   std::vector<string> split_delimited(const string &s, const string &delim);

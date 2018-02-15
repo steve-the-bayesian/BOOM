@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Cholesky.hpp>
+#include "LinAlg/Cholesky.hpp"
 #include <sstream>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/Vector.hpp>
+#include "cpputil/report_error.hpp"
+#include "LinAlg/Vector.hpp"
 
 extern "C" {
   /*  DPOTRF computes the Cholesky factorization of a real symmetric

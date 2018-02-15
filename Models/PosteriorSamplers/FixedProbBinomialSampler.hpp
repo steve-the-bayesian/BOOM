@@ -18,7 +18,7 @@
 
 #ifndef BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP
 #define BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP
-#include <Models/BinomialModel.hpp>
+#include "Models/BinomialModel.hpp"
 
 namespace BOOM{
   class FixedProbBinomialSampler

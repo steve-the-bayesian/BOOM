@@ -15,13 +15,13 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/GaussianVarSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <Models/GaussianModel.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/PosteriorSamplers/GaussianVarSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "Models/GaussianModel.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

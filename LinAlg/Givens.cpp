@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Givens.hpp>
+#include "LinAlg/Givens.hpp"
 #include <iostream>
 #include <iomanip>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 #include <cmath>
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/blas.hpp"
 
 namespace BOOM{
     using std::setw;

@@ -19,10 +19,10 @@
 #ifndef BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
 #define BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
 
-#include <numopt.hpp>
-#include <LinAlg/Vector.hpp>
-#include <distributions/rng.hpp>
-#include <distributions/Rmath_dist.hpp>
+#include "numopt.hpp"
+#include "LinAlg/Vector.hpp"
+#include "distributions/rng.hpp"
+#include "distributions/Rmath_dist.hpp"
 
 namespace BOOM {
 

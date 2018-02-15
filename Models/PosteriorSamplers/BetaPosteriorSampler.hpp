@@ -19,10 +19,10 @@
 #ifndef BOOM_BETA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_BETA_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/BetaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 #include <stdexcept>
 
 namespace BOOM {

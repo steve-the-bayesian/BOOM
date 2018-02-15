@@ -16,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/PosteriorSamplers/DirichletProcessMvnCollapsedGibbsSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <math/special_functions.hpp>
+#include "Models/Mixtures/PosteriorSamplers/DirichletProcessMvnCollapsedGibbsSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
+#include "math/special_functions.hpp"
 
 namespace BOOM {
   namespace {

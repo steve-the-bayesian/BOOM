@@ -16,16 +16,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/WishartModel.hpp>
+#include "Models/WishartModel.hpp"
 
-#include <LinAlg/Cholesky.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <TargetFun/Loglike.hpp>
+#include "LinAlg/Cholesky.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "TargetFun/Loglike.hpp"
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 namespace BOOM{
 

@@ -19,8 +19,8 @@
 #ifndef BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/FiniteMixtureModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/FiniteMixtureModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class FiniteMixturePosteriorSampler : public PosteriorSampler{

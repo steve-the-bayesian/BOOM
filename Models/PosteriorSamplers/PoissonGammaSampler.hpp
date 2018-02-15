@@ -18,8 +18,8 @@
 #ifndef BOOM_POISSON_GAMMA_METHOD_HPP
 #define BOOM_POISSON_GAMMA_METHOD_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
   class PoissonModel;

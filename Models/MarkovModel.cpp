@@ -16,19 +16,19 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/MarkovModel.hpp>
+#include "Models/MarkovModel.hpp"
 #include <cmath>
 #include <iostream>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/PosteriorSamplers/MarkovConjSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ProductDirichletModel.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions/Markov.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "Models/DirichletModel.hpp"
+#include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ProductDirichletModel.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions/Markov.hpp"
 
 namespace BOOM{
 

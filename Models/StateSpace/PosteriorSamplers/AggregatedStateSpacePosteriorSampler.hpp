@@ -18,8 +18,8 @@
 #ifndef BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/AggregatedStateSpaceRegression.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/StateSpace/AggregatedStateSpaceRegression.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class AggregatedStateSpacePosteriorSampler : public PosteriorSampler {

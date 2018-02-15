@@ -19,12 +19,12 @@
 #ifndef BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
 // A posterior sampler for ArModel's where the prior distribution for
 // the AR coefficients is a spike and slab.

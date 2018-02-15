@@ -19,9 +19,9 @@
 #ifndef BOOM_LOG_POST_H
 #define BOOM_LOG_POST_H
 
-#include <cpputil/Ptr.hpp>
-#include <TargetFun/Loglike.hpp>
-#include <numopt.hpp>
+#include "cpputil/Ptr.hpp"
+#include "TargetFun/Loglike.hpp"
+#include "numopt.hpp"
 #include <functional>
 
 namespace BOOM{

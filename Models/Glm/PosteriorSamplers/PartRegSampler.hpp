@@ -18,9 +18,9 @@
 #ifndef BOOM_PARTICLE_REGRESSION_SAMPLER_HPP
 #define BOOM_PARTICLE_REGRESSION_SAMPLER_HPP
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <distributions.hpp>
-#include <stats/FreqDist.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "distributions.hpp"
+#include "stats/FreqDist.hpp"
 
 namespace BOOM{
 

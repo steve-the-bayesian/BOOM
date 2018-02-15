@@ -17,10 +17,10 @@
 */
 #include <limits>
 #include <cmath>
-#include <numopt/NumericalDerivatives.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "numopt/NumericalDerivatives.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
 
@@ -150,39 +150,41 @@ namespace BOOM {
     return (fp + fm - 2 * f0) / square(h);
   }
 
+  // TODO: put this back once we get the real NumericalDerivatives header back
+  // from Jeffrey.
+  
+  // NumericJacobian::NumericJacobian(const Mapping &inverse_transformation)
+  //     : inverse_transformation_(inverse_transformation)
+  // {}
 
-  NumericJacobian::NumericJacobian(const Mapping &inverse_transformation)
-      : inverse_transformation_(inverse_transformation)
-  {}
+  // namespace {
+  //   class SubFunction {
+  //    public:
+  //     typedef NumericJacobian::Mapping Mapping;
+  //     SubFunction(const Mapping &mapping, int position)
+  //         : mapping_(mapping),
+  //           position_(position)
+  //     {}
 
-  namespace {
-    class SubFunction {
-     public:
-      typedef NumericJacobian::Mapping Mapping;
-      SubFunction(const Mapping &mapping, int position)
-          : mapping_(mapping),
-            position_(position)
-      {}
+  //     double operator()(const Vector &x) {
+  //       return mapping_(x)[position_];
+  //     }
 
-      double operator()(const Vector &x) {
-        return mapping_(x)[position_];
-      }
+  //    private:
+  //     Mapping mapping_;
+  //     int position_;
+  //   };
+  // }  // namespace
 
-     private:
-      Mapping mapping_;
-      int position_;
-    };
-  }  // namespace
-
-  Matrix NumericJacobian::matrix(const Vector &z) {
-    int dim = z.size();
-    Matrix ans(dim, dim);
-    for (int i = 0; i < dim; ++i) {
-      SubFunction f(inverse_transformation_, i);
-      NumericalDerivatives derivatives(f);
-      ans.col(i) = derivatives.gradient(z);
-    }
-    return ans;
-  }
+  // Matrix NumericJacobian::matrix(const Vector &z) {
+  //   int dim = z.size();
+  //   Matrix ans(dim, dim);
+  //   for (int i = 0; i < dim; ++i) {
+  //     SubFunction f(inverse_transformation_, i);
+  //     NumericalDerivatives derivatives(f);
+  //     ans.col(i) = derivatives.gradient(z);
+  //   }
+  //   return ans;
+  // }
 
 }  // namespace BOOM

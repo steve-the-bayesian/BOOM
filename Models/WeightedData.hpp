@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_WEIGHED_DATA_HPP
 #define BOOM_WEIGHED_DATA_HPP
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
   template <class DAT, class WGT=DoubleData>

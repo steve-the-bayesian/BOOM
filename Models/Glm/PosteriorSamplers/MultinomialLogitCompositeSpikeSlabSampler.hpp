@@ -19,10 +19,10 @@
 #ifndef BOOM_MULTINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_MULTINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/PosteriorSamplers/MLVS.hpp>
-#include <Samplers/MoveAccounting.hpp>
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/PosteriorSamplers/MLVS.hpp"
+#include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM {
 

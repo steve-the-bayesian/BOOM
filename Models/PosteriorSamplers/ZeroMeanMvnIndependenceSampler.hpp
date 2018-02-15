@@ -19,10 +19,10 @@
 #ifndef BOOM_ZERO_MEAN_MVN_INDEPDENCE_SAMPLER_HPP_
 #define BOOM_ZERO_MEAN_MVN_INDEPDENCE_SAMPLER_HPP_
 
-#include <Models/ZeroMeanMvnModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/ZeroMeanMvnModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM{
 

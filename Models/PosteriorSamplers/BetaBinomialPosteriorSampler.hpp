@@ -19,14 +19,14 @@
 #ifndef BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/BetaBinomialModel.hpp>
-#include <Models/BetaModel.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <Samplers/MH_Proposals.hpp>
-#include <TargetFun/Transformation.hpp>
+#include "Models/BetaBinomialModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "Samplers/MH_Proposals.hpp"
+#include "TargetFun/Transformation.hpp"
 
 namespace BOOM{
 

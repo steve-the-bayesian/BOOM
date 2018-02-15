@@ -18,12 +18,12 @@
 #ifndef BOOM_BINOMIAL_LOGIT_SAMPLER_RWM_HPP_
 #define BOOM_BINOMIAL_LOGIT_SAMPLER_RWM_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/MvnBase.hpp"
 
-#include <Samplers/MetropolisHastings.hpp>
-#include <Samplers/MH_Proposals.hpp>
+#include "Samplers/MetropolisHastings.hpp"
+#include "Samplers/MH_Proposals.hpp"
 #include <functional>
 
 namespace BOOM{

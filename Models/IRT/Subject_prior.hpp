@@ -21,7 +21,7 @@
 
 #include "IRT.hpp"
 #include "Subject.hpp"
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 #include <models/param_types.hpp>
 #include <models/param_policies.hpp>
 #include <models/sufstat_policies.hpp>

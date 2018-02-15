@@ -19,10 +19,10 @@
 #ifndef BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP
 #define BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Bart/GaussianLinearBartModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
-#include <Models/Bart/PosteriorSamplers/GaussianBartPosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Bart/GaussianLinearBartModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/Bart/PosteriorSamplers/GaussianBartPosteriorSampler.hpp"
 
 namespace BOOM {
 

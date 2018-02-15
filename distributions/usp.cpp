@@ -1,9 +1,9 @@
-#include <distributions.hpp>
-#include <BOOM.hpp>
+#include "distributions.hpp"
+#include "BOOM.hpp"
 #include <stdexcept>
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <sstream>
 
 namespace BOOM{

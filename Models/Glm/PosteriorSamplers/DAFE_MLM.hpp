@@ -18,14 +18,14 @@
 #ifndef BOOM_DAFE_MLM_HPP
 #define BOOM_DAFE_MLM_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/MH_Proposals.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/MH_Proposals.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM{
 

@@ -19,14 +19,14 @@
 #ifndef LOGISTIC_REGRESSION_HPP
 #define LOGISTIC_REGRESSION_HPP
 
-#include <BOOM.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <numopt.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "BOOM.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "numopt.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
 namespace BOOM{
 

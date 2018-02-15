@@ -19,8 +19,8 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalPoissonModel.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalPoissonModel.hpp"
 
 namespace BOOM {
 

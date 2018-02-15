@@ -20,13 +20,13 @@
 #define MVN_MODEL_H
 
 
-#include <Models/ModelTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM {
   class MvnConjSampler;

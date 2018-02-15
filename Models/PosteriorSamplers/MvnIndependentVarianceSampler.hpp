@@ -19,12 +19,12 @@
 #ifndef BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_
 #define BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/MvnModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/MvnModel.hpp"
 #include <vector>
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

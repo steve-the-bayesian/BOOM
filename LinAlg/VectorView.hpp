@@ -23,8 +23,8 @@
 #include <string>
 #include <iterator>
 #include <cassert>
-#include <LinAlg/VectorViewIterator.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/VectorViewIterator.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   class Vector;

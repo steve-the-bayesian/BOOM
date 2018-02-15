@@ -18,10 +18,10 @@
 #ifndef BOOM_MVN_GIVEN_X_HPP
 #define BOOM_MVN_GIVEN_X_HPP
 
-#include <Models/MvnBase.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 namespace BOOM{
 
   std::vector<bool> SRS_indx(unsigned int N, unsigned int n);

@@ -15,10 +15,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/MvtRegModel.hpp>
-#include <LinAlg/QR.hpp>
-#include <distributions.hpp>
-#include <cpputil/nyi.hpp>
+#include "Models/Glm/MvtRegModel.hpp"
+#include "LinAlg/QR.hpp"
+#include "distributions.hpp"
+#include "cpputil/nyi.hpp"
 
 namespace BOOM{
   typedef MvtRegModel MVTR;

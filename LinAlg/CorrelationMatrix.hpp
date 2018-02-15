@@ -18,7 +18,7 @@
 
 #ifndef NEW_LA_CORRELATION_MATRIX_H
 #define NEW_LA_CORRELATION_MATRIX_H
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM{
 

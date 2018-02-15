@@ -15,7 +15,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <distributions.hpp>
+#include "distributions.hpp"
 #include <cmath>
 namespace BOOM{
   int random_int(int lo, int hi){

@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/SepStratSampler.hpp>
-#include <distributions.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <Models/UniformCorrelationModel.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <Samplers/SliceSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/SepStratSampler.hpp"
+#include "distributions.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "Models/UniformCorrelationModel.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "Samplers/SliceSampler.hpp"
+#include "cpputil/math_utils.hpp"
 #include <ctime>
 
 namespace BOOM{

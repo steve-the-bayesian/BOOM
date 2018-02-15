@@ -22,11 +22,11 @@
 #include <cmath>
 #include <numeric>
 
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/blas.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/blas.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   using namespace std;

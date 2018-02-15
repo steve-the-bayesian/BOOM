@@ -19,13 +19,13 @@
 #ifndef BOOM_HMM_HPP
 #define BOOM_HMM_HPP
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <vector>
-#include <cpputil/ThreadTools.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/DataTypes.hpp>
+#include "cpputil/ThreadTools.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
 

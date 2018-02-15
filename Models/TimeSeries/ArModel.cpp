@@ -16,14 +16,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/TimeSeries/ArModel.hpp"
 #include <complex>
 #include <functional>
-#include <LinAlg/Eigen.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <cpputil/Polynomial.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "LinAlg/Eigen.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/Polynomial.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
 
@@ -158,10 +158,10 @@ namespace BOOM{
     //
     // 1 - phi[0]*z - ... - phi[p-1]*z^p.
     //
-    // all lie outside the unit circle.  We can do that by explicitly
-    // finding and checking the roots, but that's kind of expensive.
-    // Before doing that we can do a quick check to see if the
-    // coefficients are within a loose bound.
+    // all lie outside the unit circle.  We can do that by explicitly finding
+    // and checking the roots, but that's kind of expensive.  Before doing that
+    // we can do a quick check to see if the coefficients are within a loose
+    // bound.
     //
     // Based on Rouche's theorem:
     // http://en.wikipedia.org/wiki/Properties_of_polynomial_roots#Based_on_the_Rouch.C3.A9_theorem
@@ -170,9 +170,10 @@ namespace BOOM{
     if(phi.abs_norm() < 1) return true;
 
     // If that didn't work then we're stuck finding roots.
-    // TODO(stevescott): Really we just need to check the smallest
-    // root.  If we had a cheap way of finding just the smallest root
-    // then that would be more efficient than finding them all.
+
+    // TODO(stevescott): Really we just need to check the smallest root.  If we
+    // had a cheap way of finding just the smallest root then that would be more
+    // efficient than finding them all.
     Vector coefficients = concat(1, -1 * phi);
     Polynomial polynomial(coefficients);
     std::vector<std::complex<double> > roots(polynomial.roots());

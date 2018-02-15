@@ -18,9 +18,9 @@
 
 #ifndef BOOM_TIM_HPP
 #define BOOM_TIM_HPP
-#include <Samplers/Sampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <numopt.hpp>
+#include "Samplers/Sampler.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "numopt.hpp"
 #include <functional>
 
 namespace BOOM{

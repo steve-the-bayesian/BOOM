@@ -16,7 +16,7 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 #include <cmath>
 namespace BOOM{
   double safelog(double x){ return x==0.0? negative_infinity() : log(x);}

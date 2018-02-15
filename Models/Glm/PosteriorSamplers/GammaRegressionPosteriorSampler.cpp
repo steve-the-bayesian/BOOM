@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/GammaRegressionPosteriorSampler.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <cpputil/report_error.hpp>
-#include <Samplers/MH_Proposals.hpp>
+#include "Models/Glm/PosteriorSamplers/GammaRegressionPosteriorSampler.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "cpputil/report_error.hpp"
+#include "Samplers/MH_Proposals.hpp"
 
 namespace BOOM {
   namespace {

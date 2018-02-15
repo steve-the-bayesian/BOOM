@@ -18,11 +18,11 @@
 
 #include <cmath>                          // log
 #include <sstream>
-#include <distributions.hpp>              // rgamma, runif
-#include <cpputil/math_utils.hpp>         // infinity
-#include <cpputil/report_error.hpp>
-#include <distributions/trun_gamma.hpp>
-#include <distributions/BoundedAdaptiveRejectionSampler.hpp>
+#include "distributions.hpp"              // rgamma, runif
+#include "cpputil/math_utils.hpp"         // infinity
+#include "cpputil/report_error.hpp"
+#include "distributions/trun_gamma.hpp"
+#include "distributions/BoundedAdaptiveRejectionSampler.hpp"
 
 namespace BOOM{
 

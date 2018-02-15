@@ -19,9 +19,9 @@
 #ifndef BOOM_CATEGORICAL_DATA_HPP
 #define BOOM_CATEGORICAL_DATA_HPP
 
-#include <Models/DataTypes.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <stats/FreqDist.hpp>
+#include "Models/DataTypes.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "stats/FreqDist.hpp"
 #include <vector>
 #include <set>
 

@@ -19,8 +19,8 @@
 #ifndef BOOM_SAMPLERS_DIRECT_PROPOSAL_HPP_
 #define BOOM_SAMPLERS_DIRECT_PROPOSAL_HPP_
 
-#include <Models/MvnModel.hpp>
-#include <Models/MvtModel.hpp>
+#include "Models/MvnModel.hpp"
+#include "Models/MvtModel.hpp"
 
 namespace BOOM {
 

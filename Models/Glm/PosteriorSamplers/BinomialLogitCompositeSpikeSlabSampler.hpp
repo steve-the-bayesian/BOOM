@@ -18,9 +18,9 @@
 
 #ifndef BOOM_BINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_BINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
-#include <Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Samplers/MoveAccounting.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM{
   //======================================================================

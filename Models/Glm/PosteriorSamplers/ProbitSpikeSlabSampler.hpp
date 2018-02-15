@@ -17,8 +17,8 @@
 */
 #ifndef BOOM_PROBIT_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_PROBIT_SPIKE_SLAB_SAMPLER_HPP_
-#include <Models/Glm/PosteriorSamplers/ProbitRegressionSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
+#include "Models/Glm/PosteriorSamplers/ProbitRegressionSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
 namespace BOOM{
 
 class ProbitSpikeSlabSampler : public ProbitRegressionSampler{

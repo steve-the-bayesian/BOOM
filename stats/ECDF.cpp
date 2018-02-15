@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/ECDF.hpp>
-#include <cpputil/report_error.hpp>
+#include "stats/ECDF.hpp"
+#include "cpputil/report_error.hpp"
 #include <algorithm>
 
 namespace BOOM{

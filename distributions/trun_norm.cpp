@@ -17,9 +17,9 @@
  */
 
 #include <cmath>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>

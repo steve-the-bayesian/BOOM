@@ -19,7 +19,7 @@
 #define BOOM_LSE_HPP
 
 #include <cmath>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   double lse(const Vector &v);

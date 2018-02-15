@@ -18,12 +18,12 @@
 #ifndef BOOM_GAUSSIAN_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_GAUSSIAN_BART_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Bart/GaussianBartModel.hpp>
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/ChisqModel.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/Bart/GaussianBartModel.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/ChisqModel.hpp"
 
 namespace BOOM {
   namespace Bart {

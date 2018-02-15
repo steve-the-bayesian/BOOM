@@ -15,9 +15,9 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/ZeroInflatedPoissonModel.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedPoissonSampler.hpp>
-#include <distributions.hpp>
+#include "Models/ZeroInflatedPoissonModel.hpp"
+#include "Models/PosteriorSamplers/ZeroInflatedPoissonSampler.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   ZeroInflatedPoissonSampler::ZeroInflatedPoissonSampler(

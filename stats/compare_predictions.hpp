@@ -18,7 +18,7 @@
 
 #ifndef BOOM_COMPARE_PREDICTIONS_TEST_HPP_
 #define BOOM_COMPARE_PREDICTIONS_TEST_HPP_
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM {
 

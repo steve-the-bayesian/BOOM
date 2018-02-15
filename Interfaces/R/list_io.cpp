@@ -4,8 +4,8 @@
 #include <string>
 #include <r_interface/list_io.hpp>
 #include <r_interface/boom_r_tools.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

@@ -18,11 +18,11 @@
 
 #ifndef BOOM_TIME_SERIES_DATA_POLICY_HPP
 #define BOOM_TIME_SERIES_DATA_POLICY_HPP
-#include <cpputil/Ptr.hpp>
-#include <Models/TimeSeries/TimeSeries.hpp>
-#include <Models/ModelTypes.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
+#include "Models/ModelTypes.hpp"
 #include <vector>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   //======================================================================

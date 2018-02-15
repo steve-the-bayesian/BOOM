@@ -30,9 +30,9 @@
 //    implementation to avoid accidental syntax errors, but the
 //    pointer is never used anywhere.
 
-#include <numopt/Integral.hpp>
+#include "numopt/Integral.hpp"
 #include <functional>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 #include <stdexcept>
 #include <cfloat>
 #include <limits>

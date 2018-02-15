@@ -18,7 +18,7 @@
 #ifndef BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP
 #define BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class ExponentialModel;

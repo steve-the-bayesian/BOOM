@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/Filters/KalmanTools.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/Filters/KalmanTools.hpp"
+#include "distributions.hpp"
 namespace BOOM{
 
   double scalar_kalman_update(double y,

@@ -19,8 +19,8 @@
 #define BOOM_CHI_SQUARE_TEST_HPP_
 
 #include <iostream>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 
 namespace BOOM{

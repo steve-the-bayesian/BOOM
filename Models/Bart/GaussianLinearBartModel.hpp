@@ -19,9 +19,9 @@
 #ifndef BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP
 #define BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Bart/GaussianBartModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Bart/GaussianBartModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
 
 namespace BOOM {
   // A GaussianLinearBartModel is a model relating y to x, where y is a

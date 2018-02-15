@@ -16,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/GammaRegressionModel.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/GammaRegressionModel.hpp"
+#include "distributions.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM {
 

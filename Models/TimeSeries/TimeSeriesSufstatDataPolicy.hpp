@@ -19,8 +19,8 @@
 #ifndef BOOM_TIME_SERIES_SUFSTAT_DATA_POLICY_HPP
 #define BOOM_TIME_SERIES_SUFSTAT_DATA_POLICY_HPP
 
-#include <Models/Sufstat.hpp>
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
+#include "Models/Sufstat.hpp"
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
 
 namespace BOOM{
 

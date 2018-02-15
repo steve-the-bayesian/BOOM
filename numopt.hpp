@@ -20,11 +20,11 @@
 #define BOOM_NUMOPT_HPP
 
 #include <string>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <functional>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

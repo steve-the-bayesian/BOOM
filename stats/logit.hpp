@@ -19,9 +19,9 @@
 #ifndef STATS_LOGIT_HPP
 #define STATS_LOGIT_HPP
 
-#include <distributions/Rmath_dist.hpp>
+#include "distributions/Rmath_dist.hpp"
 #include <cmath>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   inline double logit(double x){ return qlogis(x);}

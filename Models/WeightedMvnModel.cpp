@@ -16,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/WeightedMvnModel.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "Models/WeightedMvnModel.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <distributions.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "distributions.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 #include <cmath>
 
 namespace BOOM{

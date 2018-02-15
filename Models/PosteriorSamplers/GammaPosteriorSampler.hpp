@@ -19,9 +19,9 @@
 #ifndef BOOM_MODELS_POSTERIOR_SAMPLERS_GAMMA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_MODELS_POSTERIOR_SAMPLERS_GAMMA_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
 

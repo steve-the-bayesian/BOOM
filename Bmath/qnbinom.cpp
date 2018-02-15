@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *      #include <Bmath.hpp>
+ *      #include "Bmath.hpp"
  *      double qnbinom(double p, double n, double pr, int lower_tail, int log_p)
  *
  *  DESCRIPTION

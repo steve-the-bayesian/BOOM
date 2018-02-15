@@ -18,8 +18,8 @@
 
 #ifndef BOOM_LINALG_EIGEN_HPP_
 #define BOOM_LINALG_EIGEN_HPP_
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 #include <complex>
 #include <vector>
 

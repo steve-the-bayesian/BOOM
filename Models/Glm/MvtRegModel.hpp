@@ -17,12 +17,12 @@
 */
 #ifndef BOOM_MVT_REG_HPP
 #define BOOM_MVT_REG_HPP
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/SpdParams.hpp>
-#include <cpputil/Ptr.hpp>
-#include <Models/Glm/Glm.hpp>  // for MvRegData
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/SpdParams.hpp"
+#include "cpputil/Ptr.hpp"
+#include "Models/Glm/Glm.hpp"  // for MvRegData
 
 namespace BOOM{
   class MvtRegModel

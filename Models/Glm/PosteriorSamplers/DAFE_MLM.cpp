@@ -16,18 +16,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/DAFE_MLM.hpp>
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/MvtModel.hpp>
+#include "Models/Glm/PosteriorSamplers/DAFE_MLM.hpp"
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/MvtModel.hpp"
 #include <cmath>
-#include <cpputil/math_utils.hpp>  // for lse
-#include <cpputil/lse.hpp>
-#include <distributions.hpp>       // for rlexp
+#include "cpputil/math_utils.hpp"  // for lse
+#include "cpputil/lse.hpp"
+#include "distributions.hpp"       // for rlexp
 
-#include <LinAlg/VectorView.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <TargetFun/LogPost.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "TargetFun/LogPost.hpp"
 
 namespace BOOM{
 

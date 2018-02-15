@@ -19,10 +19,10 @@
 #ifndef BOOM_COSINE_POISSON_PROCESS_HPP_
 #define BOOM_COSINE_POISSON_PROCESS_HPP_
 
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 #include <functional>
 
 namespace BOOM {

@@ -16,17 +16,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/BinomialModel.hpp>
+#include "Models/BinomialModel.hpp"
 
 #include <cassert>
 #include <cmath>
 
-#include <Bmath/Bmath.hpp>
+#include "Bmath/Bmath.hpp"
 
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <Models/PosteriorSamplers/BetaBinomialSampler.hpp>
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
 
 namespace BOOM{
 

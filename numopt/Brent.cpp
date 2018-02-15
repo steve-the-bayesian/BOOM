@@ -19,7 +19,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
-#include <numopt/Brent.hpp>
+#include "numopt/Brent.hpp"
 #include <utility>
 
 namespace BOOM{

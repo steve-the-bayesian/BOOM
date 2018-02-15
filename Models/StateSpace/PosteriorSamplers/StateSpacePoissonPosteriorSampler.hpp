@@ -19,10 +19,10 @@
 #ifndef BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateSpacePoissonModel.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp>
+#include "Models/StateSpace/StateSpacePoissonModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
 
 namespace BOOM {
   class StateSpacePoissonPosteriorSampler

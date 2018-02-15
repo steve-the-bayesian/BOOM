@@ -19,8 +19,8 @@
 #ifndef BOOM_LOGIT_SAMPLER_BMA_HPP
 #define BOOM_LOGIT_SAMPLER_BMA_HPP
 
-#include <Models/Glm/PosteriorSamplers/LogitSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
+#include "Models/Glm/PosteriorSamplers/LogitSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
 
 namespace BOOM{
 

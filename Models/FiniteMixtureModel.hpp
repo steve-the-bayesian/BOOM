@@ -19,12 +19,12 @@
 #ifndef BOOM_FINITE_MIXTURE_MODEL_HPP
 #define BOOM_FINITE_MIXTURE_MODEL_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/MixtureDataPolicy.hpp>
-#include <Models/MultinomialModel.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/MixtureDataPolicy.hpp"
+#include "Models/MultinomialModel.hpp"
 
 namespace BOOM{
 

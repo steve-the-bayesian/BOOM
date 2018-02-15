@@ -19,10 +19,10 @@
 #ifndef BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateSpaceLogitModel.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp>
+#include "Models/StateSpace/StateSpaceLogitModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
 
 namespace BOOM {
   class StateSpaceLogitPosteriorSampler

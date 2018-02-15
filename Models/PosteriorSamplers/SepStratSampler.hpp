@@ -17,10 +17,10 @@
 */
 #ifndef BOOM_SEP_STRAT_SAMPLER_HPP_
 #define BOOM_SEP_STRAT_SAMPLER_HPP_
-#include <Models/MvnModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <LinAlg/Cholesky.hpp>
+#include "Models/MvnModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "LinAlg/Cholesky.hpp"
 
 namespace BOOM{
 

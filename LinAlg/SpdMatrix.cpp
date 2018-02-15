@@ -16,16 +16,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <LinAlg/LU.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "LinAlg/LU.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/blas.hpp"
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 #include <cmath>
 #include <numeric>

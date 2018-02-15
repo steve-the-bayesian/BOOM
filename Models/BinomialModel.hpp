@@ -19,12 +19,12 @@
 #define BOOM_BINOMIAL_MODEL_HPP
 
 #include <cstdint>
-#include <Models/ModelTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

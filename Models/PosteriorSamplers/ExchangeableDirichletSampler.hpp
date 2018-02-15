@@ -19,9 +19,9 @@
 #ifndef BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP
 #define BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/DoubleModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/DirichletModel.hpp"
+#include "Models/DoubleModel.hpp"
 
 namespace BOOM{
 

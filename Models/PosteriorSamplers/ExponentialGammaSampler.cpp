@@ -15,10 +15,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/ExponentialGammaSampler.hpp>
-#include <Models/ExponentialModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <distributions.hpp>
+#include "Models/PosteriorSamplers/ExponentialGammaSampler.hpp"
+#include "Models/ExponentialModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef ExponentialGammaSampler EGS;

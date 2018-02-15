@@ -19,12 +19,12 @@
 #ifndef BOOM_AR_MODEL_HPP_
 #define BOOM_AR_MODEL_HPP_
 
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp>
-#include <Models/TimeSeries/TimeSeries.hpp>
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
 #include <deque>
 
 namespace BOOM {

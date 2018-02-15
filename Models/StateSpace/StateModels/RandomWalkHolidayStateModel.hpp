@@ -20,10 +20,10 @@
 #define BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 
 #include <memory>
-#include <cpputil/Date.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/StateSpace/StateModels/Holiday.hpp>
+#include "cpputil/Date.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
 
 namespace BOOM {
 

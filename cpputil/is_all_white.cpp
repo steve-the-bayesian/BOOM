@@ -17,7 +17,7 @@
 */
 
 #include <cctype>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 namespace BOOM{
 
   bool is_all_white(const string &s){

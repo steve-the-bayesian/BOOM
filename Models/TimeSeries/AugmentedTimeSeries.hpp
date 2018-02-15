@@ -19,7 +19,7 @@
 #ifndef BOOM_AUGMENTED_TIME_SERIES_BASE_CLASS_HPP
 #define BOOM_AUGMENTED_TIME_SERIES_BASE_CLASS_HPP
 
-#include <Models/TimeSeries/TimeSeries.hpp>
+#include "Models/TimeSeries/TimeSeries.hpp"
 
 namespace BOOM{
   template <class D, class FIRST>

@@ -18,12 +18,12 @@
 #ifndef BOOM_PARTIAL_CREDIT_MODEL_HPP
 #define BOOM_PARTIAL_CREDIT_MODEL_HPP
 
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ConstrainedVectorParams.hpp>
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ConstrainedVectorParams.hpp"
 namespace BOOM{
   namespace IRT{
 

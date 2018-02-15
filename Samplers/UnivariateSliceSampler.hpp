@@ -19,11 +19,11 @@
 #ifndef BOOM_SAMPLERS_UNIVARIATE_SLICE_SAMPLER_HPP_
 #define BOOM_SAMPLERS_UNIVARIATE_SLICE_SAMPLER_HPP_
 
-#include <Samplers/Sampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <LinAlg/Vector.hpp>
+#include "Samplers/Sampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "LinAlg/Vector.hpp"
 #include <functional>
-#include <TargetFun/TargetFun.hpp>
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM {
 

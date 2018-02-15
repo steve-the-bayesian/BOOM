@@ -19,11 +19,11 @@
 #include <iostream>
 #include <cmath>
 
-#include <numopt.hpp>
+#include "numopt.hpp"
 
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/report_error.hpp>
-#include <numopt/Powell.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/report_error.hpp"
+#include "numopt/Powell.hpp"
 #include <utility>
 
 namespace BOOM{

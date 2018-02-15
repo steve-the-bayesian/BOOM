@@ -19,13 +19,13 @@
 #ifndef BOOM_BINOMIAL_PROBIT_TIM_SAMPLER_HPP_
 #define BOOM_BINOMIAL_PROBIT_TIM_SAMPLER_HPP_
 
-#include <Models/Glm/BinomialProbitModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <Samplers/TIM.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Glm/BinomialProbitModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "Samplers/TIM.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM {
 

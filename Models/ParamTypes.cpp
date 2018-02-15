@@ -18,9 +18,9 @@
 #include <string>
 #include <algorithm>
 
-#include <cpputil/report_error.hpp>
-#include <Models/ParamTypes.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "cpputil/report_error.hpp"
+#include "Models/ParamTypes.hpp"
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM{
 

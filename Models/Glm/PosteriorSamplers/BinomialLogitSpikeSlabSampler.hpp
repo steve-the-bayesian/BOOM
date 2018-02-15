@@ -18,9 +18,9 @@
 #ifndef BOOM_BINOMIAL_LOGIT_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_BINOMIAL_LOGIT_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
   class BinomialLogitSpikeSlabSampler : public BinomialLogitAuxmixSampler{

@@ -19,8 +19,8 @@
 #ifndef BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_
 #define BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Mixtures/ConditionalFiniteMixtureModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Mixtures/ConditionalFiniteMixtureModel.hpp"
 
 namespace BOOM {
 
