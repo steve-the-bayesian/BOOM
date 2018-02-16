@@ -43,6 +43,16 @@ namespace BOOM{
     std::vector<Complex> roots();
     std::vector<double> real_roots();
     std::ostream & print(std::ostream &out)const;
+
+    const Vector &coefficients() const {return coefficients_;}
+
+    bool operator==(const Polynomial &p2) const {
+      return coefficients_ == p2.coefficients_;
+    }
+    bool operator!=(const Polynomial &p2) const {
+      return coefficients_ != p2.coefficients_;
+    }
+    
    private:
     void find_roots();
 
@@ -58,6 +68,12 @@ namespace BOOM{
     return p.print(out);
   }
 
+  Polynomial operator+(const Polynomial &p1, const Polynomial &p2);
+  Polynomial operator-(const Polynomial &p1, const Polynomial &p2);
+  Polynomial operator*(const Polynomial &p1, const Polynomial &p2);
+
+
+  
 }
 
 #endif //  BOOM_POLYNOMIAL_HPP_

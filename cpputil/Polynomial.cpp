@@ -107,7 +107,7 @@ namespace BOOM{
     }
   }
 
-  std::ostream & Polynomial::print(std::ostream &out)const{
+  std::ostream & Polynomial::print(std::ostream &out) const {
     for (int n = degree(); n >= 0; --n) {
       if (n < degree() && coefficients_[n] > 0) out << " + ";
       if (coefficients_[n] != 0.000) {
@@ -117,7 +117,74 @@ namespace BOOM{
     }
     return out;
   }
-}
+
+  namespace {
+    Vector expand_coefficients(const Vector &coef, int order) {
+      if (coef.size() > order) {
+        report_error("Illegal value for 'order' argument.");
+      }
+      if (coef.size() < order) {
+        Vector ans(coef);
+        ans.concat(Vector(order - coef.size(), 0));
+        return ans;
+      }
+      return coef;
+    }
+  }  // namespace
+  
+  Polynomial operator+(const Polynomial &p1, const Polynomial &p2) {
+    int degree = std::max(p1.degree(), p2.degree());
+    int order = degree + 1;
+    Vector c1 = expand_coefficients(p1.coefficients(), order);
+    Vector c2 = expand_coefficients(p2.coefficients(), order);
+    Vector coefficients = c1 + c2;
+    while (coefficients.back() == 0.0) {
+      coefficients.pop_back();
+    }
+    return Polynomial(coefficients);
+  }
+
+  Polynomial operator-(const Polynomial &p1, const Polynomial &p2) {
+    int degree = std::max(p1.degree(), p2.degree());
+    int order = degree + 1;
+    Vector c1 = expand_coefficients(p1.coefficients(), order);
+    Vector c2 = expand_coefficients(p2.coefficients(), order);
+    Vector coefficients = c1 - c2;
+    while (coefficients.back() == 0.0) {
+      coefficients.pop_back();
+    }
+    return Polynomial(coefficients);
+  }
+
+  namespace {
+    inline double get_coef(const Vector &coef, int i) {
+      return (i >= coef.size() ? 0 : coef[i]);
+    }
+  } // namespace
+  
+  Polynomial operator*(const Polynomial &p1, const Polynomial &p2) {
+    // Ensure that p1 is 'the big polynomial.'
+    if (p1.degree() < p2.degree()) {
+      return p2 * p1;
+    }
+    int degree = p1.degree() + p2.degree();
+    int order = degree + 1;
+
+    const Vector &c1(p1.coefficients());
+    const Vector &c2(p2.coefficients());
+
+    Vector coefficients(order);
+    for (int power = 0; power < order; ++power) {
+      double coef = 0;
+      for (int i = 0; i <= power; ++i) {
+        coef += get_coef(c1, i) * get_coef(c2, power - i);
+      }
+      coefficients[power] = coef;
+    }
+    return Polynomial(coefficients);
+  }
+  
+}  // namespace BOOM
 
 //======================================================================
 // Jenkins Traub algorithm for finding the zeros of a polynomial with
