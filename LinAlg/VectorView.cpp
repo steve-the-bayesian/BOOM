@@ -436,7 +436,7 @@ namespace BOOM{
   {}
 
   CVV::ConstVectorView(const VectorView &v, uint first_element)
-      : V(v.data()),
+      : V(v.data() + first_element * v.stride()),
         nelem_(v.size() - first_element),
         stride_(v.stride())
   {}
@@ -495,4 +495,36 @@ namespace BOOM{
     for(uint i = 0; i<v.size(); ++i) out << v[i] << " ";
     return out; }
 
+  namespace {
+    template <class VECTOR>
+    VectorView tail_impl(VECTOR &v, int size) {
+      if (v.size() <= size) {
+        return VectorView(v);
+      }
+      int n = v.size();
+      return VectorView(v, n - size);
+    }
+
+    template <class VECTOR>
+    ConstVectorView const_tail_impl(const VECTOR &v, int size) {
+      if (v.size() <= size) {
+        return ConstVectorView(v);
+      }
+      int n = v.size();
+      return ConstVectorView(v, n - size);
+    }
+  }  // namespace
+  
+  VectorView tail(Vector &v, int size) { return tail_impl(v, size); }
+  VectorView tail(VectorView &v, int size) {return tail_impl(v, size); }
+
+  ConstVectorView const_tail(const Vector &v, int size) {
+    return const_tail_impl(v, size);
+  }
+  ConstVectorView const_tail(const VectorView &v, int size) {
+    return const_tail_impl(v, size);
+  }
+  ConstVectorView const_tail(const ConstVectorView &v, int size) {
+    return const_tail_impl(v, size);
+  }
 }

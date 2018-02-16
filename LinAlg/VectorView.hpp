@@ -326,5 +326,14 @@ namespace BOOM{
   inline Vector operator/(const ConstVectorView &x, const ConstVectorView &y){
     Vector ans(x); ans/=y; return ans; }
 
+  // Return a view giving the last 'size' elements of the vector or view.  If
+  // the size of the vector or view is less than 'size' then return a view to
+  // the first argument.
+  VectorView tail(Vector &v, int size);
+  VectorView tail(VectorView &v, int size);
+  ConstVectorView const_tail(const Vector &v, int size);
+  ConstVectorView const_tail(const VectorView &v, int size);
+  ConstVectorView const_tail(const ConstVectorView &v, int size);
+  
 }  // namespace BOOM;
 #endif //BOOM_NEWLA_VECTOR_HPP
