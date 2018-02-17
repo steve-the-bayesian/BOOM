@@ -135,15 +135,14 @@ namespace BOOM {
     Vector simulate(int n, const Vector &y0, RNG &rng = GlobalRng::rng)const;
 
    private:
-    // An AR(p) process can be represented as a white noise filter:
-    // y[t] = \sum_{i = 0}^\infty \psi[i] Z_{t-i}, where Z_t is IID
-    // N(0, \sigma^2).  The coefficients "psi" in this filter can be
-    // obtained by the polynomial inversion \psi(z) = 1 / \phi(z).
-    // This inversion can be done by equating coefficients in the
-    // equation \phi(z) \psi(z) = 1.  This implies \psi[0] = 1 and
-    // generates a recurrence relationship for all higher order
-    // coefficients (which must sum to zero).  The "\psi" coefficients
-    // are stored as filter_coefficients_.
+    // An AR(p) process can be represented as a white noise filter: y[t] =
+    // \sum_{i = 0}^\infty \psi[i] Z_{t-i}, where Z_t is IID N(0, \sigma^2).
+    // The coefficients "psi" in this filter can be obtained by the polynomial
+    // inversion \psi(z) = 1 / \phi(z).  This inversion can be done by equating
+    // coefficients in the equation \phi(z) \psi(z) = 1.  This implies \psi[0] =
+    // 1 and generates a recurrence relationship for all higher order
+    // coefficients (which must sum to zero).  The "\psi" coefficients are
+    // stored as filter_coefficients_.
     mutable Vector filter_coefficients_;
     mutable bool filter_coefficients_current_;
 

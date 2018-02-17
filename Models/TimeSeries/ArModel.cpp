@@ -175,6 +175,7 @@ namespace BOOM{
     // had a cheap way of finding just the smallest root then that would be more
     // efficient than finding them all.
     Vector coefficients = concat(1, -1 * phi);
+    
     Polynomial polynomial(coefficients);
     std::vector<std::complex<double> > roots(polynomial.roots());
     for (int i = 0; i < roots.size(); ++i) {
