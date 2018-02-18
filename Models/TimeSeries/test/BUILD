@@ -1,5 +1,6 @@
 COPTS = [
     "-I/usr/local/include",
+    #    "-fsanitize=memory",
 ]
 
 cc_test(

@@ -115,14 +115,18 @@ namespace BOOM {
 
     // phi[0], phi[1], ... phi[p-1].  Might be empty.
     const Vector &ar_coefficients() const;
-
+    void set_ar_coefficients(const Vector &ar_coefficients);
+    
     // theta[0], theta[1], ... theta[q-1].  Might be empty.
     const Vector &ma_coefficients() const;
+    void set_ma_coefficients(const Vector &ma_coefficients);
 
     // Variance and SD of the white noise process.
     double sigsq() const;
     double sigma() const {return sqrt(sigsq());}
-
+    void set_sigsq(double sigsq);
+    void set_sigma(double sigma) { set_sigsq(sigma * sigma); }
+    
     // The number of AR coefficients.
     int ar_dimension() const {return ar_coefficients().size();}
 
