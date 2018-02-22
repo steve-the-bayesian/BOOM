@@ -208,13 +208,21 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix SpdMatrix::inv() const {bool ok = true; return inv(ok);}
+  SpdMatrix SpdMatrix::inv() const {bool ok = true;
+    SpdMatrix ans = inv(ok);
+    if (!ok) {
+      report_error("Matrix not positive definite.");
+    }
+    return ans;
+  }
   SpdMatrix SpdMatrix::inv(bool & ok) const {
     int n = nrow();
     int info = 0;
     SpdMatrix LLT(*this);
     SpdMatrix ans(Id());
-    if (n == 0) return ans;
+    if (n == 0) {
+      return ans;
+    }
     dposv_("U", &n, &n, LLT.data(), &n, ans.data(), &n, &info);
     ok = info == 0;
     return ans;
