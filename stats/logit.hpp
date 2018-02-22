@@ -45,6 +45,25 @@ namespace BOOM{
     if(x>0) return x + ::log1p(exp(-x));
     else return ::log1p(exp(x));
   }
-}
+
+  // Args:
+  //   distribution: A vector of non-negative numbers summing to 1.  The last
+  //     element should be positive.
+  // Returns:
+  //   A vector of dimension one smaller than the argument.  Element i is
+  //     log(distribution[i] / distribution.back());
+  Vector multinomial_logit(const Vector &distribution);
+
+  // The inverse of the multinomial_logit transformation.
+  // Args:
+  //   logits: A vector of real numbers.
+  // Returns:
+  //   A vector of dimension one larger than the argument.  Element [i] contains
+  //   exp(logits[i]) / sum(exp(logits[i])).
+  //
+  // Care is taken to avoid overflow from the exponential.
+  Vector multinomial_logit_inverse(const Vector &logits);
+  
+}  // namespace BOOM
 
 #endif // STATS_LOGIT_HPP
