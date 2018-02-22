@@ -21,31 +21,56 @@
 
 namespace BOOM {
 
+  namespace {
+    template <class VECTOR>
+    Vector multinomial_logit_impl(const VECTOR &distribution) {
+      double total = sum(distribution);
+      if (fabs(total - 1.0) > 1e-8) {
+        report_error("Argument must sum to 1.");
+      }
+      Vector ans(distribution.size() - 1);
+      for (int i = 0; i < ans.size(); ++i) {
+        ans[i] = log(distribution[i] / distribution.back());
+      }
+      return ans;
+    }
+
+    template <class VECTOR>
+    Vector multinomial_logit_inverse_impl(const VECTOR &logits) {
+      double max_logit = std::max<double>(0.0, max(logits));
+      Vector ans(logits.size() + 1);
+      double total = 0;
+      for (int i = 0; i < logits.size(); ++i) {
+        ans[i] = exp(logits[i] - max_logit);
+        total += ans[i];
+      }
+      double last = exp(-max_logit);
+      ans.back() = last;
+      total += last;
+      ans /= total;
+      return ans;
+    }
+
+  } // 
+  
   Vector multinomial_logit(const Vector &distribution) {
-    double total = sum(distribution);
-    if (fabs(total - 1.0) > 1e-8) {
-      report_error("Argument must sum to 1.");
-    }
-    Vector ans(distribution.size() - 1);
-    for (int i = 0; i < ans.size(); ++i) {
-      ans[i] = log(distribution[i] / distribution.back());
-    }
-    return ans;
+    return multinomial_logit_impl(distribution);
+  }
+  Vector multinomial_logit(const VectorView &distribution) {
+    return multinomial_logit_impl(distribution);
+  }
+  Vector multinomial_logit(const ConstVectorView &distribution) {
+    return multinomial_logit_impl(distribution);
   }
 
   Vector multinomial_logit_inverse(const Vector &logits) {
-    double max_logit = std::max<double>(0.0, max(logits));
-    Vector ans(logits.size() + 1);
-    double total = 0;
-    for (int i = 0; i < logits.size(); ++i) {
-      ans[i] = exp(logits[i] - max_logit);
-      total += ans[i];
-    }
-    double last = exp(-max_logit);
-    ans.back() = last;
-    total += last;
-    ans /= total;
-    return ans;
+    return multinomial_logit_inverse_impl(logits);
+  }
+  Vector multinomial_logit_inverse(const VectorView &logits) {
+    return multinomial_logit_inverse_impl(logits);
+  }
+  Vector multinomial_logit_inverse(const ConstVectorView &logits) {
+    return multinomial_logit_inverse_impl(logits);
   }
   
 }  // namespace BOOM
