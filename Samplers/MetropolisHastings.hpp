@@ -28,7 +28,7 @@ namespace BOOM{
     typedef std::function<double(const Vector &)> Target;
     MetropolisHastings(const Target & target,
                        const Ptr<MH_Proposal> &prop,
-                       RNG *rng = 0);
+                       RNG *rng = nullptr);
     Vector draw(const Vector & old) override;
     virtual double logp(const Vector &x)const;
     bool last_draw_was_accepted()const;
@@ -47,7 +47,7 @@ namespace BOOM{
     typedef std::function<double(double)> ScalarTarget;
     ScalarMetropolisHastings(const ScalarTarget &f,
                              const Ptr<MH_ScalarProposal> &prop,
-                             RNG *rng = 0);
+                             RNG *rng = nullptr);
     double draw(double old) override;
     virtual double logp(double x)const;
     bool last_draw_was_accepted()const;
