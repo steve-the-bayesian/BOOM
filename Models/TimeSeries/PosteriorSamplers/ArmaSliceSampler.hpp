@@ -27,6 +27,8 @@
 
 namespace BOOM {
 
+  // A posterior sampler for ARMA models based on the slice sampler.  This is
+  // computationally slow, but other approaches seem to be even slower.
   class ArmaSliceSampler:  public PosteriorSampler {
    public:
     ArmaSliceSampler(ArmaModel *model,
