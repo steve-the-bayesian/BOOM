@@ -58,7 +58,7 @@ namespace BOOM{
     // Returns the number of days that 'arbitrary_date' is into the holiday's
     // influence window.  If arbitrary_date is not in the influence window then
     // -1 is returned.
-    virtual int days_into_influence_window(const Date &arbitrary_date) const {
+    int days_into_influence_window(const Date &arbitrary_date) const {
       if (active(arbitrary_date)) {
         return arbitrary_date - earliest_influence(arbitrary_date);
       } else {
@@ -205,12 +205,28 @@ namespace BOOM{
   // A holiday defined by arbitrary date ranges.
   class DateRangeHoliday : public Holiday {
    public:
-    DateRangeHoliday() : maximum_window_width_(-1) {}
+    // Date ranges will need to be added using add_dates.
+    DateRangeHoliday();
 
-    // The first and last days of each holiday.
+    // Args:
+    //   begin: The start date of each holiday's influence period.  Elements
+    //     must be in increasing order.
+    //   end: The end date of each holiday's influence period.  Must have the
+    //     same number of elements as begin, and end[i] >= begin[i].
     DateRangeHoliday(const std::vector<Date> &begin,
                      const std::vector<Date> &end);
 
+    // Add a date range for specific incidences of the holiday.
+    // Args:
+    //   begin:  The first date of influence for this instance of the holiday.
+    //   end;  The final date of influence for this instance of the holiday.
+    //
+    // Example:
+    //   In 2016 the super bowl was played on Sunday, Feb 7.  If we model the
+    //   super bowl influence as starting on Friday and ending on Monday, then
+    //   add_dates(Date(Feb, 5, 2016), Date(Feb, 8, 2016)) would add the 2016
+    //   super bowl.  Repeat for other years in the data set.  Add years in
+    //   order.
     void add_dates(const Date &begin, const Date &end);
 
     int maximum_window_width() const override {return maximum_window_width_;}

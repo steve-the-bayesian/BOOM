@@ -159,6 +159,10 @@ namespace BOOM{
   {}
 
   //======================================================================
+  DateRangeHoliday::DateRangeHoliday()
+      : maximum_window_width_(-1)
+  {}
+  
   DateRangeHoliday::DateRangeHoliday(const std::vector<Date> &begin,
                                      const std::vector<Date> &end)
       : maximum_window_width_(-1)
@@ -180,8 +184,35 @@ namespace BOOM{
       report_error("Dates must be added in sequential order.  "
                    "Please sort by start date before calling add_dates.");
     }
+    int width = end - begin;
+    if (width > maximum_window_width_) {
+      maximum_window_width_ = width;
+    }
     begin_.push_back(begin);
     end_.push_back(end);
+  }
+
+  bool DateRangeHoliday::active(const Date &arbitrary_date) const {
+    const auto it = std::upper_bound(end_.cbegin(),
+                                     end_.cend(),
+                                     arbitrary_date);
+    // upper_bound returns the first date LARGER THAN arbitrary_date.
+    if (it == end_.cend()) {
+      // If no date was found then arbitrary_date is larger than all the dates
+      // in the date range.
+      return false;
+    }
+    if (arbitrary_date == *it) {
+      // In this case arbitrary_date occurs on the last day of one of the
+      // influence intervals.
+      return true;
+    } else {
+      // Find the start of the interval corresponding to the endpoint referred
+      // to by *it.  If the arbitrary_date >= this time point then it occurs
+      // inside an interval covered by the holiday.  If not then it doesn't.
+      int position = it - end_.cbegin();
+      return arbitrary_date >= begin_[position];
+    }
   }
   
   Date DateRangeHoliday::earliest_influence(const Date &date) const {
