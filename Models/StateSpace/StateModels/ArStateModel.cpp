@@ -70,7 +70,8 @@ namespace BOOM {
   //======================================================================
   void ArStateModel::observe_state(const ConstVectorView then,
                                    const ConstVectorView now,
-                                   int t){
+                                   int t,
+                                   StateSpaceModelBase *) {
     double y = now[0];
     const ConstVectorView &x(then);
     suf()->add_mixture_data(y, x, 1.0);

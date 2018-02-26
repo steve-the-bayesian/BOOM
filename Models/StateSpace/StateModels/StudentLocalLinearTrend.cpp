@@ -90,10 +90,10 @@ namespace BOOM {
     }
   }
 
-  void SLLTSM::observe_state(
-      const ConstVectorView then,
-      const ConstVectorView now,
-      int time_now){
+  void SLLTSM::observe_state(const ConstVectorView then,
+                             const ConstVectorView now,
+                             int time_now,
+                             StateSpaceModelBase *) {
     double level_now = now[0];
     double slope_now = now[1];
     double level_then = then[0];

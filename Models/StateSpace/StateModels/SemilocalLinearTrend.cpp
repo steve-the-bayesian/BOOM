@@ -148,7 +148,8 @@ namespace BOOM{
   // of the slope.
   void SLLT::observe_state(const ConstVectorView then,
                            const ConstVectorView now,
-                           int time_now){
+                           int time_now,
+                           StateSpaceModelBase *model) {
     double change_in_level = now[0] - then[0] - then[1];
     level_->suf()->update_raw(change_in_level);
 

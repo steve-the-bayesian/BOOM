@@ -49,8 +49,9 @@ namespace BOOM{
   LLTSM * LLTSM::clone()const{return new LLTSM(*this);}
 
   void LLTSM::observe_state(const ConstVectorView then,
-                          const ConstVectorView now,
-                          int time_now){
+                            const ConstVectorView now,
+                            int time_now,
+                            StateSpaceModelBase *model) {
     check_dim(then);
     check_dim(now);
 

@@ -74,7 +74,8 @@ namespace BOOM{
     void clear_data() override;
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override {
