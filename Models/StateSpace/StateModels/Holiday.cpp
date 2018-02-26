@@ -184,7 +184,7 @@ namespace BOOM{
       report_error("Dates must be added in sequential order.  "
                    "Please sort by start date before calling add_dates.");
     }
-    int width = end - begin;
+    int width = end - begin + 1;
     if (width > maximum_window_width_) {
       maximum_window_width_ = width;
     }
@@ -193,10 +193,11 @@ namespace BOOM{
   }
 
   bool DateRangeHoliday::active(const Date &arbitrary_date) const {
-    const auto it = std::upper_bound(end_.cbegin(),
+    const auto it = std::lower_bound(end_.cbegin(),
                                      end_.cend(),
                                      arbitrary_date);
-    // upper_bound returns the first date LARGER THAN arbitrary_date.
+    // lower_bound returns the first date greater than or equal to
+    // arbitrary_date.
     if (it == end_.cend()) {
       // If no date was found then arbitrary_date is larger than all the dates
       // in the date range.
