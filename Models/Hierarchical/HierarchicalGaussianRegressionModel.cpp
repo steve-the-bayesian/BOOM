@@ -80,6 +80,13 @@ namespace BOOM {
     initialize_param_policy();
   }
 
+  void HGRM::clear_data_keep_models() {
+    for (int i = 0; i < groups_.size(); ++i) {
+      groups_[i]->clear_data();
+    }
+    prior_->clear_data();
+  }
+  
   void HGRM::combine_data(const Model &rhs, bool) {
     const HierarchicalGaussianRegressionModel *other_model =
         dynamic_cast<const HierarchicalGaussianRegressionModel *>(

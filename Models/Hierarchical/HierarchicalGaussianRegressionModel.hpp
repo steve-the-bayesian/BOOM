@@ -67,6 +67,10 @@ namespace BOOM {
     // their parameters from the global list of model parameters.
     void clear_data() override;
 
+    // Clears the data from the prior and the group level models.  Does not
+    // delete the group level models themselves.
+    void clear_data_keep_models();
+
     // Copies the sufficient statistics from other_model into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
