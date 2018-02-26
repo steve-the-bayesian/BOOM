@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "Samplers/AdaptiveRandomWalkMetropolisSampler.hpp"
 #include "distributions.hpp"
 #include <fstream>
 
