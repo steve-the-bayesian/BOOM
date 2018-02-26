@@ -1,0 +1,89 @@
+#!/bin/bash
+
+BOOM_DIR='rpackage/Boom'
+
+## If there is already a Boom directory then delete it.
+if [ -d "$BOOM_DIR" ]; then
+   rm -rf $BOOM_DIR
+fi
+
+## create a Boom subdirectory and copy the relevant files into it.
+mkdir -p $BOOM_DIR
+cp Interfaces/R/Boom/DESCRIPTION $BOOM_DIR
+cp Interfaces/R/Boom/LICENSE $BOOM_DIR
+cp Interfaces/R/Boom/NAMESPACE $BOOM_DIR
+
+##----------------------------------------------------------------------
+## Source:
+## Create the source directory and copy top-level files.
+mkdir $BOOM_DIR/src
+cp Interfaces/R/Boom/src/*.cpp $BOOM_DIR/src
+cp Interfaces/R/Boom/src/*.R $BOOM_DIR/src
+cp Interfaces/R/Boom/src/Makevars $BOOM_DIR/src
+
+## Populate the various source directories.
+SRCS=`find Bmath -name "*.cpp"`
+SRCS="$SRCS `find cpputil -name "*.cpp"`"
+SRCS="$SRCS `find distributions -name "*.cpp"`"
+SRCS="$SRCS `find LinAlg -name "*.cpp"`"
+SRCS="$SRCS `find math -name "*.cpp"`"
+SRCS="$SRCS `find Models -name "*.cpp"`"
+SRCS="$SRCS `find numopt -name "*.cpp"`"
+SRCS="$SRCS `find Samplers -name "*.cpp"`"
+SRCS="$SRCS `find stats -name "*.cpp"`"
+SRCS="$SRCS `find TargetFun -name "*.cpp"`"
+./install/install_headers.py $SRCS $BOOM_DIR/src
+
+##----------------------------------------------------------------------
+## Copy the R source files
+mkdir $BOOM_DIR/R
+cp Interfaces/R/Boom/R/*.R $BOOM_DIR/R
+
+##----------------------------------------------------------------------
+## Copy the documentation
+mkdir $BOOM_DIR/man
+cp Interfaces/R/Boom/man/*.Rd $BOOM_DIR/man
+
+##----------------------------------------------------------------------
+## Headers:
+## Create the include directory, and add in the top level header files.
+mkdir -p $BOOM_DIR/inst/include
+cp *.hpp $BOOM_DIR/inst/include
+
+## Put a couple of local implementation files in the source directories that
+## expect them.
+cp math/cephes/cephes_impl.hpp $BOOM_DIR/src/math/cephes
+cp Bmath/*.hpp $BOOM_DIR/src/Bmath
+
+## Copy the bulk of the header files to the relevant sub directories.
+HDRS=`find Bmath -name "*.hpp"`
+HDRS="$HDRS `find cpputil -name "*.hpp"`"
+HDRS="$HDRS `find distributions -name "*.hpp"`"
+HDRS="$HDRS `find LinAlg -name "*.hpp"`"
+HDRS="$HDRS `find math -name "*.hpp"`"
+HDRS="$HDRS `find Models -name "*.hpp"`"
+HDRS="$HDRS `find numopt -name "*.hpp"`"
+HDRS="$HDRS `find Samplers -name "*.hpp"`"
+HDRS="$HDRS `find stats -name "*.hpp"`"
+HDRS="$HDRS `find TargetFun -name "*.hpp"`"
+./install/install_headers.py $HDRS $BOOM_DIR/inst/include
+
+## Put the headers from Interfaces/R in the r_interface directory.
+mkdir $BOOM_DIR/inst/include/r_interface
+cp Interfaces/R/*.hpp $BOOM_DIR/inst/include/r_interface
+
+##----------------------------------------------------------------------
+## Build the package:
+
+cd rpackage
+VERSION=`grep 'Version' Boom/DESCRIPTION | awk -F':' '{print $2}' | tr -d [:space:]`
+fname="Boom_$VERSION.tgz"
+tar czf $fname Boom
+
+## To check the package:
+# -k means 'keep going' in the event of an error.
+# -j 8 means use 8 threads in the build.
+#
+# MAKEFLAGS="-k j 8 " R CMD CHECK $fname
+
+
