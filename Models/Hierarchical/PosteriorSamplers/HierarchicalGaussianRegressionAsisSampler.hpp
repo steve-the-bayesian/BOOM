@@ -59,7 +59,11 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-    
+
+    // Reset the hyperprior models used in the sampler.  These have the same
+    // meaning as in the constructor.  The residual_precision_prior can be
+    // nullptr if the residual variance is to be either held fixed or managed by
+    // another class.
     void set_hyperprior(const Ptr<MvnModel> &coefficient_mean_hyperprior,
                         const Ptr<WishartModel> &coefficient_precision_hyperprior,
                         const Ptr<GammaModelBase> &residual_precision_prior);
