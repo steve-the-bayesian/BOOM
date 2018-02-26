@@ -24,6 +24,9 @@ namespace BOOM {
   // Nonparametric models don't have parameters, so parameter_vector() and
   // vectorize_params() return empty objects, and their inverse operations are
   // no-ops.
+  //
+  // TODO: Consider other implementations for this class, like the one from
+  // Google.
   class NonparametricParamPolicy
       : virtual public Model {
    public:
