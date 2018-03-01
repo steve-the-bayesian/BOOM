@@ -181,10 +181,10 @@ bsts.mixed <- function(target.series,
 ##=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 plot.bsts.mixed <- function(x,
                             y = c("state",
-                                "components",
-                                "coefficients",
-                                "predictors",
-                                "size"),
+                                  "components",
+                                  "coefficients",
+                                  "predictors",
+                                  "size"),
                             ...) {
   ## S3 method for plotting bsts.mixed objects.
   ## Args:
