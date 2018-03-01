@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2011 Steven L. Scott
+  Copyright (C) 2005-2018 Steven L. Scott
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,9 @@
 #define BOOM_HOLIDAY_HPP_
 
 #include <map>
+#include <vector>
 #include "cpputil/Date.hpp"
+#include "cpputil/RefCounted.hpp"
 
 namespace BOOM{
   //===========================================================================
@@ -33,34 +35,64 @@ namespace BOOM{
   // holiday, as well as some number of days before or after.  This window might
   // be of different width each year, as holidays sometimes interact with
   // weekends and other holidays in strange ways.
-  class Holiday{
+  class Holiday : private RefCounted {
+    friend void intrusive_ptr_add_ref(Holiday *h) {h->up_count();}
+    friend void intrusive_ptr_release(Holiday *h) {
+      h->down_count();
+      if (h->ref_count() == 0) {
+        delete h;
+      }
+    }
    public:
     virtual ~Holiday(){}
 
-    // The first incidence of the holiday ON or AFTER the given date.
-    // Returns a Date object of 'date' or later.
-    virtual Date date_on_or_after(const Date &arbitrary_date)const=0;
-
-    // The last incidence of the holiday ON or BEFORE the given date.
-    // Returns a Date object of 'date' or before.
-    virtual Date date_on_or_before(const Date &arbitrary_date)const=0;
-
-    // The date of the closest holiday to 'arbitrary_date'.
-    virtual Date nearest(const Date &arbitrary_date)const;
-
-    // Holidays can sometimes (or will usually) exert an influence
-    // before or after the date of the actual holiday.  The number of
-    // days from the earliest influenced day to the last influenced
-    // day (including the end points) is the maximum_window_width.
-    virtual int maximum_window_width()const=0;
-
-    // The dates of earliest and latest influence for a holiday
-    // occurring on 'holiday_date'.
-    virtual Date earliest_influence(const Date &holiday_date)const=0;
-    virtual Date latest_influence(const Date &holiday_date)const=0;
+    // Holidays can sometimes (or will usually) exert an influence before or
+    // after the date of the actual holiday.  The number of days from the
+    // earliest influenced day to the last influenced day (including the end
+    // points) is the maximum_window_width.
+    virtual int maximum_window_width() const = 0;
 
     // Indicates whether this holiday is active on the given date.
-    virtual bool active(const Date &arbitrary_date)const;
+    virtual bool active(const Date &arbitrary_date) const = 0;
+
+    // Returns the number of days that 'arbitrary_date' is into the holiday's
+    // influence window.  If arbitrary_date is not in the influence window then
+    // -1 is returned.
+    int days_into_influence_window(const Date &arbitrary_date) const {
+      if (active(arbitrary_date)) {
+        return arbitrary_date - earliest_influence(arbitrary_date);
+      } else {
+        return -1;
+      }
+    }
+
+   protected:
+    // The dates of earliest and latest influence for a holiday occurring on
+    // 'holiday_date'.  These functions are protected because it is an error to
+    // call this function when active(holiday_date) is false, which is an easy
+    // error to make.
+    virtual Date earliest_influence(const Date &holiday_date) const = 0;
+    virtual Date latest_influence(const Date &holiday_date) const = 0;
+  };
+
+  // A SingleDayHoliday is a holiday associated with a specific date.  Its
+  // influence can extend beyond that date, but (e.g.) February 14 is
+  // Valentine's day.  Most Holidays are SingleDayHolidays, but the Olympics, or
+  // the World Cup are not.
+  class SingleDayHoliday : public Holiday {
+   public:
+    // The first incidence of the holiday ON or AFTER the given date.  Returns a
+    // Date object of 'arbitrary_date' or later.
+    virtual Date date_on_or_after(const Date &arbitrary_date) const = 0;
+
+    // The last incidence of the holiday ON or BEFORE the given date.  Returns a
+    // Date object of 'arbitrary_date' or before.
+    virtual Date date_on_or_before(const Date &arbitrary_date) const = 0;
+
+    // The date of the closest holiday to 'arbitrary_date'.
+    virtual Date nearest(const Date &arbitrary_date) const;
+
+    bool active(const Date &d) const override;
   };
 
   // A factory function that will create a holiday based on its name.
@@ -83,14 +115,12 @@ namespace BOOM{
   // with a fixed-sized window of influence.  An OrdinaryAnnualHoliday
   // keeps track of two integers: days_before and days_after, that
   // define its influence window.
-  class OrdinaryAnnualHoliday : public Holiday{
+  class OrdinaryAnnualHoliday : public SingleDayHoliday {
    public:
     OrdinaryAnnualHoliday(int days_before, int days_after);
-    Date earliest_influence(const Date &holiday_date)const override;
-    Date latest_influence(const Date &holiday_date)const override;
-    int maximum_window_width()const override;
-    Date date_on_or_after(const Date &d)const override;
-    Date date_on_or_before(const Date &d)const override;
+    int maximum_window_width() const override;
+    Date date_on_or_after(const Date &d) const override;
+    Date date_on_or_before(const Date &d) const override;
 
     // The date the holiday occurs on a given year.  For floating
     // holidays, the date() function might be expensive to compute
@@ -98,10 +128,15 @@ namespace BOOM{
     // function compute_date(), and store the results in a table.
     // This class implements the table logic, and requires its
     // children to implement compute_date().
-    virtual Date date(int year)const;
+    virtual Date date(int year) const;
 
     // Compute the date of this holiday in the given year.
-    virtual Date compute_date(int year)const = 0;
+    virtual Date compute_date(int year) const = 0;
+
+   protected:
+    Date earliest_influence(const Date &holiday_date) const override;
+    Date latest_influence(const Date &holiday_date) const override;
+
    private:
     int days_before_;
     int days_after_;
@@ -119,7 +154,8 @@ namespace BOOM{
     // month is an integer between 1 and 12.
     FixedDateHoliday(int month, int day_of_month, int days_before = 1,
                      int days_after = 1);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
+
    private:
     // MonthNames is an enum in the range 1:12 defined in Date.hpp
     const MonthNames month_name_;
@@ -134,7 +170,7 @@ namespace BOOM{
    public:
     NthWeekdayInMonthHoliday(int which_week, DayNames day, MonthNames month,
                              int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
    private:
     int which_week_;
     DayNames day_name_;
@@ -149,7 +185,7 @@ namespace BOOM{
    public:
     LastWeekdayInMonthHoliday(DayNames day, MonthNames month,
                               int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
    private:
     DayNames day_name_;
     MonthNames month_name_;
@@ -164,6 +200,48 @@ namespace BOOM{
     FloatingHoliday(int days_before, int days_after);
   };
 
+
+  //===========================================================================
+  // A holiday defined by arbitrary date ranges.
+  class DateRangeHoliday : public Holiday {
+   public:
+    // Date ranges will need to be added using add_dates.
+    DateRangeHoliday();
+
+    // Args:
+    //   begin: The start date of each holiday's influence period.  Elements
+    //     must be in increasing order.
+    //   end: The end date of each holiday's influence period.  Must have the
+    //     same number of elements as begin, and end[i] >= begin[i].
+    DateRangeHoliday(const std::vector<Date> &begin,
+                     const std::vector<Date> &end);
+
+    // Add a date range for specific incidences of the holiday.
+    // Args:
+    //   begin:  The first date of influence for this instance of the holiday.
+    //   end;  The final date of influence for this instance of the holiday.
+    //
+    // Example:
+    //   In 2016 the super bowl was played on Sunday, Feb 7.  If we model the
+    //   super bowl influence as starting on Friday and ending on Monday, then
+    //   add_dates(Date(Feb, 5, 2016), Date(Feb, 8, 2016)) would add the 2016
+    //   super bowl.  Repeat for other years in the data set.  Add years in
+    //   order.
+    void add_dates(const Date &begin, const Date &end);
+
+    int maximum_window_width() const override {return maximum_window_width_;}
+    bool active(const Date &arbitrary_date) const override;
+
+   protected:
+    Date earliest_influence(const Date &holiday_date) const override;
+    Date latest_influence(const Date &holiday_date) const override;
+    
+   private:
+    std::vector<Date> begin_;
+    std::vector<Date> end_;
+    int maximum_window_width_;
+  };
+  
   //----------------------------------------------------------------------
   // Specific holidays observed in the US
   class NewYearsDay : public FixedDateHoliday{
@@ -183,7 +261,7 @@ namespace BOOM{
   class SuperBowlSunday : public FloatingHoliday{
    public:
     SuperBowlSunday(int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
   };
 
   class PresidentsDay : public NthWeekdayInMonthHoliday{
@@ -210,19 +288,19 @@ namespace BOOM{
   class USDaylightSavingsTimeBegins : public FloatingHoliday{
    public:
     USDaylightSavingsTimeBegins(int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
   };
 
   class USDaylightSavingsTimeEnds : public FloatingHoliday{
    public:
     USDaylightSavingsTimeEnds(int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
   };
 
   class EasterSunday : public FloatingHoliday{
    public:
     EasterSunday(int days_before, int days_after);
-    Date compute_date(int year)const override;
+    Date compute_date(int year) const override;
   };
 
   // The US definition of Mother's day: second Sunday in May.

@@ -52,7 +52,10 @@ namespace BOOM{
   // lies with the state space model that owns it.
   void RegressionStateModel::observe_state(const ConstVectorView then,
                                            const ConstVectorView now,
-                                           int time_now) {}
+                                           int time_now,
+                                           StateSpaceModelBase *model) {
+    ////////////// TODO!!!!!
+  }
 
   uint RegressionStateModel::state_dimension() const {return 1;}
 

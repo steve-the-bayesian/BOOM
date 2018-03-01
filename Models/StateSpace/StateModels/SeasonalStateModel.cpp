@@ -89,7 +89,8 @@ namespace BOOM{
 
   void SSM::observe_state(const ConstVectorView then,
                           const ConstVectorView now,
-                          int t){
+                          int t,
+                          StateSpaceModelBase *) {
     if(new_season(t)){
       if(then.size() != now.size() || then.size() != state_dimension()){
         report_error("wrong size vector given to "

@@ -64,7 +64,7 @@ namespace BOOM {
     bool is_pos_def() const {return pos_def_;}
 
    private:
-    Matrix dcmp_;
+    Matrix lower_cholesky_triangle_;
     bool pos_def_;
     void check()const;
   };

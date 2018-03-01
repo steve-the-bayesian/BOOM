@@ -1,0 +1,13 @@
+exportPattern("^[^\\.]")
+importFrom(MASS, kde2d)
+importFrom("grDevices", "gray")
+importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "barplot",
+           "box", "boxplot", "contour", "hist", "layout", "lcm", "legend",
+           "lines", "mtext", "par", "plot", "points", "polygon", "segments",
+           "strheight", "strwidth", "text", "title")
+importFrom("stats", "acf", "density", "dgamma", "mahalanobis", "pgamma", "qgamma",
+           "quantile", "rchisq", "rgamma", "rnorm", "sd")
+importFrom("utils", "capture.output", "head", "tail")
+
+S3method(ToString, default)
+S3method(ToString, table)

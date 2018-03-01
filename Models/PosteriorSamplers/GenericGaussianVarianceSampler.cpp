@@ -48,6 +48,10 @@ namespace BOOM {
       RNG &rng,
       double data_df,
       double data_ss) const {
+    if (!prior_) {
+      report_error("GenericGaussianVarianceSampler is disabled because it was "
+                   "built with a null prior.");
+    }
     double DF = data_df + 2 * prior_->alpha();
     double SS = data_ss + 2 * prior_->beta();
     if (sigma_max_ == 0.0) {
@@ -61,6 +65,10 @@ namespace BOOM {
 
   double GenericGaussianVarianceSampler::posterior_mode(
       double data_df, double data_ss) const {
+    if (!prior_) {
+      report_error("GenericGaussianVarianceSampler is disabled because it was "
+                   "built with a null prior.");
+    }
     double DF = data_df + 2 * prior_->alpha();
     double SS = data_ss + 2 * prior_->beta();
     double alpha = DF / 2;
@@ -74,6 +82,10 @@ namespace BOOM {
     // Use the prior on 1/sigsq to evaluate the base log density, then
     // add in the log of the Jacobian of the reciprocal
     // transformation.
+    if (!prior_) {
+      report_error("GenericGaussianVarianceSampler is disabled because it was "
+                   "built with a null prior.");
+    }
     return prior_->logp(1.0 / sigsq) - 2 * log(sigsq);
   }
 

@@ -47,7 +47,8 @@ namespace BOOM {
 
   void TrigStateModel::observe_state(const ConstVectorView then,
                                      const ConstVectorView now,
-                                     int time_now) {
+                                     int time_now,
+                                     StateSpaceModelBase *) {
     suf()->update_raw(now - then);
   }
 

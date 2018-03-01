@@ -111,8 +111,10 @@ namespace BOOM {
     }
   }
 
-  void DRSM::observe_state(
-      const ConstVectorView then, const ConstVectorView now, int time_now){
+  void DRSM::observe_state(const ConstVectorView then,
+                           const ConstVectorView now,
+                           int time_now,
+                           StateSpaceModelBase *) {
     check_size(then.size());
     check_size(now.size());
     for(int i = 0; i < then.size(); ++i){

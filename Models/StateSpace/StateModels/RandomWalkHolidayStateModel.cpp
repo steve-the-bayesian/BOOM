@@ -45,11 +45,11 @@ namespace BOOM {
 
   void RWHSM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
-                            int time_now){
+                            int time_now,
+                            StateSpaceModelBase *){
     Date today = time_zero_ + time_now;
     if(holiday_->active(today)){
-      Date holiday_date = holiday_->nearest(today);
-      int position = today - holiday_->earliest_influence(holiday_date);
+      int position = holiday_->days_into_influence_window(today);
       double delta = now[position] - then[position];
       suf()->update_raw(delta);
     }
@@ -63,8 +63,7 @@ namespace BOOM {
     Date now = time_zero_ + t;
     eta = 0;
     if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+      int position = holiday_->days_into_influence_window(now);
       eta[position] = rnorm_mt(rng, 0, sigma());
     }
   }
@@ -76,8 +75,7 @@ namespace BOOM {
   Ptr<SparseMatrixBlock> RWHSM::state_variance_matrix(int t)const{
     Date now = time_zero_ + t;
     if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+      int position = holiday_->days_into_influence_window(now);
       return active_state_variance_matrix_[position];
     }
     return zero_state_variance_matrix_;
@@ -95,8 +93,7 @@ namespace BOOM {
     Date now = time_zero_ + t;
     SparseVector ans(state_dimension());
     if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+      int position = holiday_->days_into_influence_window(now);
       ans[position] = 1.0;
     }
     return ans;

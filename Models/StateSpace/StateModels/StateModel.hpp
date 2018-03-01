@@ -26,6 +26,8 @@
 
 namespace BOOM{
 
+  class StateSpaceModelBase;
+  
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
   // time dependent, an error variance Q, which may be of smaller dimension than
@@ -46,7 +48,7 @@ namespace BOOM{
     };
 
     ~StateModel() override{}
-    StateModel * clone()const override =0;
+    StateModel * clone()const override = 0;
 
     // Some state models need to know the maximum value of t so they can set up
     // space for latent variables, etc.  Many state models do not need this
@@ -58,7 +60,8 @@ namespace BOOM{
     // the current and next state vectors.
     virtual void observe_state(const ConstVectorView then,
                                const ConstVectorView now,
-                               int time_now)=0;
+                               int time_now,
+                               StateSpaceModelBase *model) = 0;
 
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.

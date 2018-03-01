@@ -57,7 +57,8 @@ namespace BOOM{
     // state vector is observed.
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {

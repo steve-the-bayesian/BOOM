@@ -8,6 +8,8 @@ LINALG_SRCS = glob(["LinAlg/*.cpp"])
 
 LINALG_HDRS = glob(["LinAlg/*.hpp"])
 
+EIGEN_HDRS = glob(["Eigen/**"])
+
 SAMPLER_SRCS = glob([
     "Samplers/*.cpp",
     "Samplers/Gilks/arms.cpp",
@@ -161,6 +163,7 @@ BOOM_SRCS = BMATH_SRCS + \
 BOOM_HDRS = TOP_HDRS + \
             BMATH_HDRS + \
             LINALG_HDRS + \
+            EIGEN_HDRS + \
             SAMPLER_HDRS + \
             TARGETFUN_HDRS + \
             CPPUTIL_HDRS + \

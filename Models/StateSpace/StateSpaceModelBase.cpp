@@ -307,7 +307,8 @@ namespace BOOM{
       state_model(s)->observe_state(
           state_component(then, s),
           state_component(now, s),
-          t);
+          t,
+          this);
     }
   }
 

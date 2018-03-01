@@ -18,7 +18,6 @@
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/blas.hpp"
 
 #include "distributions.hpp"
 #include <algorithm>
@@ -27,7 +26,6 @@
 
 namespace BOOM {
 
-  using namespace blas;
   typedef DiagonalMatrix DM;
 
   DM::DiagonalMatrix() {}
