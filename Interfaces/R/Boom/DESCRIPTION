@@ -1,0 +1,24 @@
+Package: Boom
+Version: 0.7
+Date: 2017-05-24
+Title: Bayesian Object Oriented Modeling
+Author: Steven L. Scott is the sole author and creator of the BOOM
+   project.  Some code in the BOOM libraries has been modified from
+   other open source projects.  These include Cephes (obtained from
+   Netlib, written by Stephen L. Moshier), NEWUOA (M.J.D Powell,
+   obtained from Powell's web site), and a modified version of the R
+   math libraries (R core development team).  Original copyright
+   notices have been maintained in all source files.  In these cases,
+   copyright claimed by Steven L. Scott is limited to modifications
+   made to the original code.
+Maintainer: Steve Scott <stevescott@google.com>
+Description: A C++ library for Bayesian modeling, with an emphasis on
+   Markov chain Monte Carlo.  Although boom contains a few R utilities
+   (mainly plotting functions), its primary purpose is to install the
+   BOOM C++ library on your system so that other packages can link
+   against it.
+License: LGPL-2.1 | file LICENSE
+Depends: MASS, R(>= 3.1.0)
+LinkingTo: BH (>= 1.15.0-2)
+Encoding: UTF-8
+SystemRequirements: GNU Make, C++11
