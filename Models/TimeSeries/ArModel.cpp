@@ -19,7 +19,6 @@
 #include "Models/TimeSeries/ArModel.hpp"
 #include <complex>
 #include <functional>
-#include "LinAlg/Eigen.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
 #include "cpputil/Polynomial.hpp"
 #include "cpputil/report_error.hpp"
