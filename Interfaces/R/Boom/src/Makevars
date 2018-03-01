@@ -8,7 +8,6 @@ all:	libboom.a
 
 PKG_CFLAGS = -DADD_ -DR_NO_REMAP
 PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DNO_BOOST_THREADS -DNO_BOOST_FILESYSTEM -DADD_ -DRLANGUAGE
-PKG_LIBS = ${LAPACK_LIBS} ${BLAS_LIBS} ${FLIBS}
 
 ############################################################################
 # Begin the list of all the BOOM source files.
@@ -65,7 +64,6 @@ TIMESERIES_SRCS := $(wildcard Models/TimeSeries/*.cpp) \
 		$(wildcard Models/TimeSeries/PosteriorSamplers/*.cpp)
 
 UTIL_SRCS := $(wildcard cpputil/*.cpp)
-
 
 CXX_SRCS = ${BART_SRCS} \
 	${DISTRIBUTION_SRCS} \
