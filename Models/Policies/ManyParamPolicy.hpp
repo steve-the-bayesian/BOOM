@@ -37,7 +37,6 @@ namespace BOOM{
     ManyParamPolicy(const ManyParamPolicy &rhs);  // components not copied
     ManyParamPolicy & operator=(const ManyParamPolicy &);
 
-
     // the following functions will need to be called during
     // construction of the inheriting Model object
 
@@ -58,10 +57,6 @@ namespace BOOM{
   private:
     ParamVector t_;
   };
-
-
-
-
-}
+}  // namespace BOOM
 
 #endif// BOOM_MANY_PARAM_POLICY_HPP
