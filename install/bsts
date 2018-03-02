@@ -1,0 +1,15 @@
+#!/bin/bash
+
+BSTSDIR='rpackage/bsts'
+## If there is already a Boom directory then delete it.
+if [ -d "$BSTSDIR" ]; then
+   rm -rf $BSTSDIR
+fi
+
+if [ -d rpackage ]; then
+    mkdir rpackage
+fi
+
+cp -r ./Interfaces/R/bsts rpackage
+cd rpackage
+R CMD BUILD bsts
