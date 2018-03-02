@@ -500,11 +500,26 @@ namespace BOOM {
     RMemoryProtector protector;
     SEXP buffer = protector.protect(Rf_alloc3DArray(
         REALSXP, niter, number_of_groups, dim));
+    if (!group_names_.empty()) {
+      set_buffer_group_names(buffer);
+    }
     StoreBuffer(buffer);
     array_view_.reset(data(), Array::index3(niter, number_of_groups, dim));
     return buffer;
   }
 
+  void HierarchicalVectorListElement::set_buffer_group_names(SEXP buffer) {
+    if (group_names_.empty()) return;
+    RMemoryProtector protector;
+    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, 3));
+    // The leading dimension (MCMC iteration number) does not get
+    // names.
+    SET_VECTOR_ELT(r_dimnames, 0, R_NilValue);
+    SET_VECTOR_ELT(r_dimnames, 1, CharacterVector(group_names_));
+    SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
+    Rf_dimnamesgets(buffer, r_dimnames);
+  }
+  
   void HierarchicalVectorListElement::prepare_to_stream(SEXP object) {
     RealValuedRListIoElement::prepare_to_stream(object);
     RMemoryProtector protector;
@@ -538,6 +553,15 @@ namespace BOOM {
     }
   }
 
+  void HierarchicalVectorListElement::set_group_names(
+      const std::vector<std::string> &group_names) {
+    if (group_names.size() != parameters_.size()) {
+      report_error("Vector of group names must be the same size as the "
+                   "number of groups.");
+    }
+    group_names_ = group_names;
+  }
+  
   void HierarchicalVectorListElement::CheckSize() {
     const std::vector<int> &dims(array_view_.dim());
     if (dims[1] != parameters_.size() ||

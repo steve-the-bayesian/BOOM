@@ -384,10 +384,14 @@ namespace BOOM{
     void prepare_to_stream(SEXP object) override;
     void write() override;
     void stream() override;
+    void set_group_names(const std::vector<std::string> &group_names);
+    
    private:
+    void set_buffer_group_names(SEXP buffer);
     void CheckSize();
     std::vector<Ptr<VectorData>> parameters_;
     ArrayView array_view_;
+    std::vector<std::string> group_names_;
   };
 
   //----------------------------------------------------------------------
