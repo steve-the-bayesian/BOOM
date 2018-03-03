@@ -29,35 +29,30 @@ namespace BOOM {
   HRHSM::HierarchicalRegressionHolidayStateModel(
       const Date &time_of_first_observation,
       const Ptr<UnivParams> &residual_variance)
-      : time_of_first_observation_(time_of_first_observation),
-        residual_variance_(residual_variance),
-        state_transition_matrix_(new IdentityMatrix(1)),
-        state_variance_matrix_(new ZeroMatrix(1)),
-        state_error_expander_(new EmptyMatrix),
-        state_error_variance_(new EmptyMatrix),
-        model_(nullptr),
-        initial_state_mean_(1, 1.0),
-        initial_state_variance_(1, 0.0)
+      : impl_(time_of_first_observation,
+              residual_variance),
+        model_(nullptr)
   {}
   
   void HRHSM::add_holiday(const Ptr<Holiday> &holiday) {
-    if (!holidays_.empty()) {
+    const Holiday *first_holiday = impl_.holiday(0);
+    if (first_holiday) {
       if (holiday->maximum_window_width() !=
-          holidays_[0]->maximum_window_width()) {
+          first_holiday->maximum_window_width()) {
         report_error("All holidays must have the same window width.");
       }
+    } else {
+      first_holiday = holiday.get();
     }
-    holidays_.push_back(holiday);
+    impl_.add_holiday(holiday);
     int dim = holiday->maximum_window_width();
     if (!model_) {
       NEW(MvnModel, prior_model)(dim);
       model_.reset(new HierarchicalGaussianRegressionModel(
-          prior_model, residual_variance_));
+          prior_model, impl_.residual_variance()));
     }
-    NEW(RegressionModel, holiday_model)(
-        holidays_.back()->maximum_window_width());
+    NEW(RegressionModel, holiday_model)(first_holiday->maximum_window_width());
     model_->add_model(holiday_model);
-
     if (daily_dummies_.empty()) {
       for (int i = 0; i < dim; ++i) {
         Vector x(dim, 0.0);
@@ -68,31 +63,18 @@ namespace BOOM {
   }
 
   void HRHSM::observe_time_dimension(int max_time) {
-    Date date = time_of_first_observation_;
-    which_holiday_.resize(max_time);
-    which_day_.resize(max_time);
-    for (int t = 0; t < max_time; ++t) {
-      for (int h = 0; h < holidays_.size(); ++h) {
-        if (holidays_[h]->active(date)) {
-          which_holiday_[t] = h;
-          which_day_[t] = holidays_[h]->days_into_influence_window(date);
-        } else {
-          which_holiday_[t] = -1;
-          which_day_[t] = -1;
-        }
-      }
-    }
+    impl_.observe_time_dimension(max_time);
   }
   
   void HRHSM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
                             int time_now,
                             StateSpaceModelBase *model) {
-    int which_model = which_holiday_[time_now];
+    int which_model = impl_.which_holiday(time_now);
     if (which_model < 0) {
       return;
     }
-    int day = which_day_[time_now];
+    int day = impl_.which_day(time_now);
     // The residual contains the observed data minus the contributions from all
     // state models but this one.
     double residual = model->adjusted_observation(time_now) - 
@@ -104,10 +86,11 @@ namespace BOOM {
 
   SparseVector HRHSM::observation_matrix(int t) const {
     SparseVector ans(1);
-    if (which_holiday_[t] < 0) {
+    if (impl_.which_holiday(t) < 0) {
       return ans;
     }
-    ans[0] = model_->data_model(which_holiday_[t])->Beta()[which_day_[t]];
+    ans[0] = model_->data_model(impl_.which_holiday(t))->Beta()[
+        impl_.which_day(t)];
     return ans;
   }
 
