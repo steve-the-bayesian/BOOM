@@ -16,27 +16,26 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/Policies/ManyParamPolicy.hpp"
-namespace BOOM{
-  typedef ManyParamPolicy MPP;
 
-  MPP::ManyParamPolicy(){}
+namespace BOOM {
+  namespace {
+    typedef ManyParamPolicy MPP;
+  }  // namespace
 
-  MPP::ManyParamPolicy(const MPP &rhs)
-    : Model(rhs)
-  {}
+  MPP::ManyParamPolicy() {}
 
-  ManyParamPolicy & MPP::operator=(const ManyParamPolicy &rhs){
-    if(&rhs!=this){
+  MPP::ManyParamPolicy(const MPP &rhs) : Model(rhs) {}
+
+  ManyParamPolicy &MPP::operator=(const ManyParamPolicy &rhs) {
+    if (&rhs != this) {
       clear();
-      setup_params();
     }
     return *this;
   }
 
-  void MPP::add_params(const Ptr<Params> & p){t_.push_back(p);}
-  void MPP::clear(){t_.clear();}
+  void MPP::add_params(const Ptr<Params> &p) { t_.push_back(p); }
+  void MPP::clear() { t_.clear(); }
 
-  ParamVector MPP::parameter_vector(){return t_;}
-  const ParamVector MPP::parameter_vector()const{return t_;}
-
-}
+  ParamVector MPP::parameter_vector() { return t_; }
+  const ParamVector MPP::parameter_vector() const { return t_; }
+}  // namespace BOOM
