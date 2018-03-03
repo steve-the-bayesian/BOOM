@@ -290,6 +290,10 @@ namespace BOOM {
     const Vector &daily_totals(int holiday) const {
       return daily_totals_[holiday];
     }
+
+    Ptr<VectorParams> holiday_pattern_parameter(int i) {
+      return holiday_mean_contributions_[i];
+    }
     
    private:
     RegressionHolidayBaseImpl impl_;

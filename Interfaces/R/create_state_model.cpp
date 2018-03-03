@@ -20,10 +20,13 @@
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
 #include "Models/StateSpace/StateModels/ArStateModel.hpp"
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
@@ -86,26 +89,30 @@ namespace BOOM{
         SEXP list_arg, const std::string &prefix, CallbackVector * callbacks) {
       if (Rf_inherits(list_arg, "LocalLinearTrend")) {
         return CreateLocalLinearTrend(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "Seasonal")) {
-        return CreateSeasonal(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "SemilocalLinearTrend")) {
-        return CreateSemilocalLinearTrend(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "LocalLevel")) {
         return CreateLocalLevel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "Holiday")) {
-        return CreateRandomWalkHolidayStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "DynamicRegression")) {
-        return CreateDynamicRegressionStateModel(list_arg, prefix, callbacks);
+      } else if (Rf_inherits(list_arg, "SemilocalLinearTrend")) {
+        return CreateSemilocalLinearTrend(list_arg, prefix);
+      } else if (Rf_inherits(list_arg, "StudentLocalLinearTrend")) {
+        return CreateStudentLocalLinearTrend(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "AutoAr")) {
         // AutoAr also inherits from ArProcess, so this case must be
         // handled before ArProcess.
         return CreateAutoArStateModel(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "ArProcess")) {
         return CreateArStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "StudentLocalLinearTrend")) {
-        return CreateStudentLocalLinearTrend(list_arg, prefix);
+      } else if (Rf_inherits(list_arg, "DynamicRegression")) {
+        return CreateDynamicRegressionStateModel(list_arg, prefix, callbacks);
+      } else if (Rf_inherits(list_arg, "Seasonal")) {
+        return CreateSeasonal(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "Trig")) {
         return CreateTrigStateModel(list_arg, prefix);
+      } else if (Rf_inherits(list_arg, "RandomWalkHolidayStateModel")) {
+        return CreateRandomWalkHolidayStateModel(list_arg, prefix);
+      } else if (Rf_inherits(list_arg, "HierarchicalRegressionHolidayStateModel")) {
+        return CreateHierarchicalRegressionHolidayStateModel(list_arg, prefix);
+      } else if (Rf_inherits(list_arg, "RegressionHolidayStateModel")) {
+        return CreateRegressionHolidayStateModel(list_arg, prefix);
       }
 
       // Should never get here
@@ -296,6 +303,117 @@ namespace BOOM{
     }
 
     //======================================================================
+    SemilocalLinearTrendStateModel *
+    StateModelFactory::CreateSemilocalLinearTrend(
+        SEXP list_arg, const std::string &prefix) {
+
+      SdPrior level_sigma_prior_spec(getListElement(
+          list_arg, "level.sigma.prior"));
+      NEW(ZeroMeanGaussianModel, level)(level_sigma_prior_spec.initial_value());
+
+      NormalPrior slope_mean_prior_spec(getListElement(
+          list_arg, "slope.mean.prior"));
+      Ar1CoefficientPrior slope_ar1_prior_spec(getListElement(
+          list_arg, "slope.ar1.prior"));
+      SdPrior slope_sd_prior_spec(getListElement(
+          list_arg, "slope.sigma.prior"));
+
+      NEW(NonzeroMeanAr1Model, slope)(slope_mean_prior_spec.initial_value(),
+                                      slope_ar1_prior_spec.initial_value(),
+                                      slope_sd_prior_spec.initial_value());
+
+      SemilocalLinearTrendStateModel *trend
+          = new SemilocalLinearTrendStateModel(level, slope);
+
+      // Create the prior for level model.  This prior is simple,
+      // because it is for a random walk.
+      if (!level_sigma_prior_spec.fixed()) {
+        NEW(ZeroMeanGaussianConjSampler, level_sampler)(
+            level.get(),
+            level_sigma_prior_spec.prior_df(),
+            level_sigma_prior_spec.prior_guess());
+
+        if (level_sigma_prior_spec.upper_limit() > 0) {
+          level_sampler->set_sigma_upper_limit(
+              level_sigma_prior_spec.upper_limit());
+        }
+        trend->set_method(level_sampler);
+      }
+
+      // Now create the prior for the slope model.  The prior has three
+      // components: a prior for the long run mean of the slope, a prior
+      // for the slope's AR coefficient, and a prior for the standard
+      // deviation of the AR1 process.
+      NEW(GaussianModel, slope_mean_prior)(slope_mean_prior_spec.mu(),
+                                           slope_mean_prior_spec.sigma());
+
+      NEW(GaussianModel, slope_ar_prior)(slope_ar1_prior_spec.mu(),
+                                         slope_ar1_prior_spec.sigma());
+      NEW(ChisqModel, slope_sigma_prior)(slope_sd_prior_spec.prior_df(),
+                                         slope_sd_prior_spec.prior_guess());
+
+      // The components have been created, so we can create the overall
+      // prior now.
+      NEW(NonzeroMeanAr1Sampler, slope_sampler)(slope.get(),
+                                                slope_mean_prior,
+                                                slope_ar_prior,
+                                                slope_sigma_prior);
+      // Optional features of the slope prior...
+      // Set an upper limit for sigma, if desired.
+      if (slope_sd_prior_spec.upper_limit() > 0) {
+        slope_sampler->set_sigma_upper_limit(slope_sd_prior_spec.upper_limit());
+      }
+
+      // Force the slope model to be stationarity, if desired.
+      if (slope_ar1_prior_spec.force_stationary()) {
+        slope_sampler->force_stationary();
+      }
+
+      if (slope_ar1_prior_spec.force_positive()) {
+        slope_sampler->force_ar1_positive();
+      }
+
+      // The slope prior is built and configured.  Pack it in to the
+      // trend model.  Note that it goes in the trend model, not the
+      // slope model, because it is the trend model's "sample_posterior"
+      // method that will be called.
+      trend->set_method(slope_sampler);
+
+      NormalPrior level_initial_value_prior(getListElement(
+          list_arg, "initial.level.prior"));
+      NormalPrior slope_initial_value_prior(getListElement(
+          list_arg, "initial.slope.prior"));
+
+      // Finally, the last task is to set the prior for the initial
+      // value of the state
+      trend->set_initial_level_mean(level_initial_value_prior.mu());
+      trend->set_initial_slope_mean(slope_initial_value_prior.mu());
+      trend->set_initial_level_sd(level_initial_value_prior.sigma());
+      trend->set_initial_slope_sd(slope_initial_value_prior.sigma());
+
+      if (io_manager_) {
+        io_manager_->add_list_element(
+            new StandardDeviationListElement(
+                level->Sigsq_prm(),
+                prefix + "trend.level.sd"));
+
+        io_manager_->add_list_element(
+            new UnivariateListElement(
+                slope->Mu_prm(),
+                prefix + "trend.slope.mean"));
+        io_manager_->add_list_element(
+            new UnivariateListElement(
+                slope->Phi_prm(),
+                prefix + "trend.slope.ar.coefficient"));
+        io_manager_->add_list_element(
+            new StandardDeviationListElement(
+                slope->Sigsq_prm(),
+                prefix + "trend.slope.sd"));
+      }
+      return trend;
+    }
+
+    //======================================================================
     // Two callback classes for recording the latent weights in the
     // StudentLocalLinearTrend state model.
 
@@ -423,309 +541,6 @@ namespace BOOM{
 
       return robust_local_linear_trend;
     }
-    //======================================================================
-    TrigStateModel *StateModelFactory::CreateTrigStateModel(
-        SEXP list_arg, const std::string &prefix) {
-      double period = Rf_asReal(getListElement(list_arg, "period"));
-      Vector frequencies = ToBoomVector(getListElement(
-          list_arg, "frequencies"));
-      TrigStateModel * trig_state_model(
-          new TrigStateModel(period, frequencies));
-
-      //-------------- set the prior and the posterior sampler.
-      SdPrior sigma_prior(getListElement(list_arg, "sigma.prior"));
-      int dimension = trig_state_model->dim();
-      NEW(ChisqModel, single_siginv_prior)(
-          sigma_prior.prior_df(),
-          sigma_prior.prior_guess());
-      std::vector<Ptr<GammaModelBase>> priors(dimension, single_siginv_prior);
-      double sigma_upper_limit = sigma_prior.upper_limit();
-      if (sigma_upper_limit < 0) {
-        sigma_upper_limit = infinity();
-      }
-      Vector sd_max_values(dimension, sigma_upper_limit);
-      NEW(IndependentMvnVarSampler, sampler)(
-          trig_state_model,
-          priors,
-          sd_max_values);
-      trig_state_model->set_method(sampler);
-
-      //-------------- set the prior for the initial state
-      MvnPrior initial_prior(getListElement(list_arg, "initial.state.prior"));
-      trig_state_model->set_initial_state_mean(initial_prior.mu());
-      trig_state_model->set_initial_state_variance(initial_prior.Sigma());
-
-      //-------------- adjust the io manager.
-      if (io_manager_) {
-        io_manager_->add_list_element(
-            new SdVectorListElement(trig_state_model->Sigsq_prm(),
-                                    prefix + "trig.coefficient.sd"));
-      }
-      return trig_state_model;
-    }
-    //======================================================================
-    SemilocalLinearTrendStateModel *
-    StateModelFactory::CreateSemilocalLinearTrend(
-        SEXP list_arg, const std::string &prefix) {
-
-      SdPrior level_sigma_prior_spec(getListElement(
-          list_arg, "level.sigma.prior"));
-      NEW(ZeroMeanGaussianModel, level)(level_sigma_prior_spec.initial_value());
-
-      NormalPrior slope_mean_prior_spec(getListElement(
-          list_arg, "slope.mean.prior"));
-      Ar1CoefficientPrior slope_ar1_prior_spec(getListElement(
-          list_arg, "slope.ar1.prior"));
-      SdPrior slope_sd_prior_spec(getListElement(
-          list_arg, "slope.sigma.prior"));
-
-      NEW(NonzeroMeanAr1Model, slope)(slope_mean_prior_spec.initial_value(),
-                                      slope_ar1_prior_spec.initial_value(),
-                                      slope_sd_prior_spec.initial_value());
-
-      SemilocalLinearTrendStateModel *trend
-          = new SemilocalLinearTrendStateModel(level, slope);
-
-      // Create the prior for level model.  This prior is simple,
-      // because it is for a random walk.
-      if (!level_sigma_prior_spec.fixed()) {
-        NEW(ZeroMeanGaussianConjSampler, level_sampler)(
-            level.get(),
-            level_sigma_prior_spec.prior_df(),
-            level_sigma_prior_spec.prior_guess());
-
-        if (level_sigma_prior_spec.upper_limit() > 0) {
-          level_sampler->set_sigma_upper_limit(
-              level_sigma_prior_spec.upper_limit());
-        }
-        trend->set_method(level_sampler);
-      }
-
-      // Now create the prior for the slope model.  The prior has three
-      // components: a prior for the long run mean of the slope, a prior
-      // for the slope's AR coefficient, and a prior for the standard
-      // deviation of the AR1 process.
-      NEW(GaussianModel, slope_mean_prior)(slope_mean_prior_spec.mu(),
-                                           slope_mean_prior_spec.sigma());
-
-      NEW(GaussianModel, slope_ar_prior)(slope_ar1_prior_spec.mu(),
-                                         slope_ar1_prior_spec.sigma());
-      NEW(ChisqModel, slope_sigma_prior)(slope_sd_prior_spec.prior_df(),
-                                         slope_sd_prior_spec.prior_guess());
-
-      // The components have been created, so we can create the overall
-      // prior now.
-      NEW(NonzeroMeanAr1Sampler, slope_sampler)(slope.get(),
-                                                slope_mean_prior,
-                                                slope_ar_prior,
-                                                slope_sigma_prior);
-      // Optional features of the slope prior...
-      // Set an upper limit for sigma, if desired.
-      if (slope_sd_prior_spec.upper_limit() > 0) {
-        slope_sampler->set_sigma_upper_limit(slope_sd_prior_spec.upper_limit());
-      }
-
-      // Force the slope model to be stationarity, if desired.
-      if (slope_ar1_prior_spec.force_stationary()) {
-        slope_sampler->force_stationary();
-      }
-
-      if (slope_ar1_prior_spec.force_positive()) {
-        slope_sampler->force_ar1_positive();
-      }
-
-      // The slope prior is built and configured.  Pack it in to the
-      // trend model.  Note that it goes in the trend model, not the
-      // slope model, because it is the trend model's "sample_posterior"
-      // method that will be called.
-      trend->set_method(slope_sampler);
-
-      NormalPrior level_initial_value_prior(getListElement(
-          list_arg, "initial.level.prior"));
-      NormalPrior slope_initial_value_prior(getListElement(
-          list_arg, "initial.slope.prior"));
-
-      // Finally, the last task is to set the prior for the initial
-      // value of the state
-      trend->set_initial_level_mean(level_initial_value_prior.mu());
-      trend->set_initial_slope_mean(slope_initial_value_prior.mu());
-      trend->set_initial_level_sd(level_initial_value_prior.sigma());
-      trend->set_initial_slope_sd(slope_initial_value_prior.sigma());
-
-      if (io_manager_) {
-        io_manager_->add_list_element(
-            new StandardDeviationListElement(
-                level->Sigsq_prm(),
-                prefix + "trend.level.sd"));
-
-        io_manager_->add_list_element(
-            new UnivariateListElement(
-                slope->Mu_prm(),
-                prefix + "trend.slope.mean"));
-        io_manager_->add_list_element(
-            new UnivariateListElement(
-                slope->Phi_prm(),
-                prefix + "trend.slope.ar.coefficient"));
-        io_manager_->add_list_element(
-            new StandardDeviationListElement(
-                slope->Sigsq_prm(),
-                prefix + "trend.slope.sd"));
-      }
-      return trend;
-    }
-
-    //======================================================================
-    // See comments to CreateStateModel.  This function expects a
-    // list_arg created by R's AddSeasonal.
-    SeasonalStateModel * StateModelFactory::CreateSeasonal(
-        SEXP list_arg, const std::string &prefix) {
-
-      int nseasons = Rf_asInteger(getListElement(
-          list_arg, "nseasons"));
-      int season_duration = Rf_asInteger(getListElement(
-          list_arg, "season.duration"));
-      SdPrior sigma_prior_spec(getListElement(
-          list_arg, "sigma.prior"));
-
-      SeasonalStateModel * seasonal(
-          new SeasonalStateModel(nseasons, season_duration));
-      seasonal->set_sigsq(square(sigma_prior_spec.initial_value()));
-
-      // Set prior distribution for initial state.
-      SEXP r_initial_state_prior(getListElement(
-          list_arg, "initial.state.prior"));
-      if (Rf_inherits(r_initial_state_prior, "NormalPrior")) {
-        NormalPrior initial_value_prior_spec(r_initial_state_prior);
-        seasonal->set_initial_state_variance(
-            square(initial_value_prior_spec.sigma()));
-      } else if (Rf_inherits(r_initial_state_prior, "MvnDiagonalPrior")) {
-        MvnDiagonalPrior initial_value_prior_spec(r_initial_state_prior);
-        seasonal->set_initial_state_mean(
-            initial_value_prior_spec.mean());
-        SpdMatrix variance(initial_value_prior_spec.sd().size());
-        variance.set_diag(pow(initial_value_prior_spec.sd(), 2));
-        seasonal->set_initial_state_variance(variance);
-      }
-
-      // Set prior distribution for variance parameter
-      if (sigma_prior_spec.fixed()) {
-        Ptr<FixedUnivariateSampler> sampler(
-            new FixedUnivariateSampler(
-                seasonal->Sigsq_prm(),
-                seasonal->sigsq()));
-        seasonal->set_method(sampler);
-      } else {
-        Ptr<ZeroMeanGaussianConjSampler> sampler(
-            new ZeroMeanGaussianConjSampler(seasonal,
-                                            sigma_prior_spec.prior_df(),
-                                            sigma_prior_spec.prior_guess()));
-
-        if (sigma_prior_spec.upper_limit() > 0) {
-          sampler->set_sigma_upper_limit(sigma_prior_spec.upper_limit());
-        }
-        seasonal->set_method(sampler);
-      }
-
-      std::ostringstream parameter_name;
-      parameter_name  <<  "sigma.seasonal" << "." << nseasons;
-      if (season_duration > 1) parameter_name << "." << season_duration;
-
-      // Add information about this parameter to the io_manager
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
-            seasonal->Sigsq_prm(),
-            prefix + parameter_name.str()));
-      }
-      return seasonal;
-    }
-
-    //======================================================================
-    // Creates a holiday state model.
-    // Args:
-    //   list_arg: An R object inheriting from class "Holiday".  This
-    //     is a list with a named element "holidays".
-    //   prefix: An optional prefix to be prepended to the name of the
-    //     state component in the io_manager.
-    RandomWalkHolidayStateModel *
-    StateModelFactory::CreateRandomWalkHolidayStateModel(
-        SEXP list_arg, const std::string &prefix) {
-
-      std::string holiday_name = GetStringFromList(list_arg, "name");
-      int days_before = Rf_asInteger(getListElement(list_arg, "days.before"));
-      int days_after = Rf_asInteger(getListElement(list_arg, "days.after"));
-      Holiday *holiday;
-      if (Rf_inherits(list_arg, "NamedHoliday")) {
-        holiday = CreateNamedHoliday(holiday_name, days_before, days_after);
-      } else if (Rf_inherits(list_arg, "FixedDateHoliday")) {
-        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
-        int holiday_day = Rf_asInteger(getListElement(list_arg, "day"));
-        holiday = new FixedDateHoliday(
-            month_name, holiday_day, days_before, days_after);
-      } else if (Rf_inherits(list_arg, "NthWeekdayInMonthHoliday")) {
-        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
-        DayNames day_name = str2day(GetStringFromList(list_arg, "day.of.week"));
-        int which_week = Rf_asInteger(getListElement(list_arg, "which.week"));
-        if (which_week > 0) {
-          holiday = new NthWeekdayInMonthHoliday(
-              which_week, day_name, month_name, days_before, days_after);
-        } else {
-          holiday = new LastWeekdayInMonthHoliday(
-              day_name, month_name, days_before, days_after);
-        }
-      } else {
-        report_error("Unknown type of holiday state model");
-        return NULL;
-      }
-      int month_of_time0 =
-          Rf_asInteger(getListElement(list_arg, "time0.month"));
-      int day_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.day"));
-      int year_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.year"));
-      Date time0(month_of_time0, day_of_time0, year_of_time0);
-      SdPrior sigma_prior_spec(getListElement(
-          list_arg, "sigma.prior"));
-      NormalPrior initial_value_prior_spec(getListElement(
-          list_arg, "initial.state.prior"));
-
-      RandomWalkHolidayStateModel * holiday_model
-          = new RandomWalkHolidayStateModel(holiday, time0);
-      holiday_model->set_sigsq(square(sigma_prior_spec.initial_value()));
-
-      //------------------------------------------------------------
-      // Set prior distribution for initial state
-      Vector initial_state_mean(holiday_model->state_dimension(), 0.0);
-      SpdMatrix initial_state_variance(holiday_model->state_dimension());
-      initial_state_variance.set_diag(square(initial_value_prior_spec.sigma()));
-      holiday_model->set_initial_state_mean(initial_state_mean);
-      holiday_model->set_initial_state_variance(initial_state_variance);
-
-      //------------------------------------------------------------
-      // Set prior distribution for innovation variance parameter
-      if (sigma_prior_spec.fixed()) {
-        Ptr<FixedUnivariateSampler> sampler(
-            new FixedUnivariateSampler(
-                holiday_model->Sigsq_prm(),
-                holiday_model->sigsq()));
-        holiday_model->set_method(sampler);
-      } else {
-        Ptr<ZeroMeanGaussianConjSampler> sampler(
-            new ZeroMeanGaussianConjSampler(
-                holiday_model,
-                sigma_prior_spec.prior_df(),
-                sigma_prior_spec.prior_guess()));
-        holiday_model->set_method(sampler);
-      }
-
-      std::ostringstream parameter_name;
-      parameter_name  <<  "sigma." << holiday_name;
-      // Add information about this parameter to the io_manager
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
-            holiday_model->Sigsq_prm(),
-            prefix + parameter_name.str()));
-      }
-      return holiday_model;
-    }
-
     //======================================================================
     ArStateModel * StateModelFactory::CreateArStateModel(
         SEXP list_arg, const std::string & prefix) {
@@ -967,5 +782,365 @@ namespace BOOM{
       return dynamic_regression;
     }
 
+    // Args:
+    //   holiday_spec: An R list describing a single holiday.  Must inherit from
+    //     class 'Holiday' and from a specific holiday class.  Class membership
+    //     is used to dispatch the right method of object creation.
+    // Returns:
+    //   A raw pointer to a Holiday object of the type specified by the R-class
+    //   attribute of holiday_spec.  The pointer should be immediately caught by
+    //   a Ptr.
+    Holiday * StateModelFactory::CreateHoliday(SEXP holiday_spec) {
+      if (Rf_inherits(holiday_spec, "NthWeekdayInMonthHoliday")) {
+        int week = Rf_asInteger(getListElement(holiday_spec, "week.number"));
+        std::string day = ToString(getListElement(holiday_spec, "day.of.week"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new NthWeekdayInMonthHoliday(
+            week, str2day(day), str2month(month),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "LastWeekdayInMonthHoliday")) {
+        std::string day = ToString(getListElement(holiday_spec, "day.of.week"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new LastWeekdayInMonthHoliday(
+            str2day(day),
+            str2month(month),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "FixedDateHoliday")) {
+        int day = Rf_asInteger(getListElement(holiday_spec, "day"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new FixedDateHoliday(
+            str2month(month),
+            day,
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "DateRangeHoliday")) {
+        std::vector<Date> start_date = ToBoomDateVector(getListElement(
+            holiday_spec, "start.date"));
+        std::vector<Date> end_date = ToBoomDateVector(getListElement(
+            holiday_spec, "end.date"));
+        return new DateRangeHoliday(start_date, end_date);
+      } else if (Rf_inherits(holiday_spec, "NamedHoliday")) {
+        return BOOM::CreateNamedHoliday(
+            ToString(getListElement(holiday_spec, "name")),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else {
+        report_error("Unknown holiday type passed to CreateHoliday.");
+        return nullptr;
+      }
+    }
+
+    //======================================================================
+    // See comments to CreateStateModel.  This function expects a
+    // list_arg created by R's AddSeasonal.
+    SeasonalStateModel * StateModelFactory::CreateSeasonal(
+        SEXP list_arg, const std::string &prefix) {
+
+      int nseasons = Rf_asInteger(getListElement(
+          list_arg, "nseasons"));
+      int season_duration = Rf_asInteger(getListElement(
+          list_arg, "season.duration"));
+      SdPrior sigma_prior_spec(getListElement(
+          list_arg, "sigma.prior"));
+
+      SeasonalStateModel * seasonal(
+          new SeasonalStateModel(nseasons, season_duration));
+      seasonal->set_sigsq(square(sigma_prior_spec.initial_value()));
+
+      // Set prior distribution for initial state.
+      SEXP r_initial_state_prior(getListElement(
+          list_arg, "initial.state.prior"));
+      if (Rf_inherits(r_initial_state_prior, "NormalPrior")) {
+        NormalPrior initial_value_prior_spec(r_initial_state_prior);
+        seasonal->set_initial_state_variance(
+            square(initial_value_prior_spec.sigma()));
+      } else if (Rf_inherits(r_initial_state_prior, "MvnDiagonalPrior")) {
+        MvnDiagonalPrior initial_value_prior_spec(r_initial_state_prior);
+        seasonal->set_initial_state_mean(
+            initial_value_prior_spec.mean());
+        SpdMatrix variance(initial_value_prior_spec.sd().size());
+        variance.set_diag(pow(initial_value_prior_spec.sd(), 2));
+        seasonal->set_initial_state_variance(variance);
+      }
+
+      // Set prior distribution for variance parameter
+      if (sigma_prior_spec.fixed()) {
+        Ptr<FixedUnivariateSampler> sampler(
+            new FixedUnivariateSampler(
+                seasonal->Sigsq_prm(),
+                seasonal->sigsq()));
+        seasonal->set_method(sampler);
+      } else {
+        Ptr<ZeroMeanGaussianConjSampler> sampler(
+            new ZeroMeanGaussianConjSampler(seasonal,
+                                            sigma_prior_spec.prior_df(),
+                                            sigma_prior_spec.prior_guess()));
+
+        if (sigma_prior_spec.upper_limit() > 0) {
+          sampler->set_sigma_upper_limit(sigma_prior_spec.upper_limit());
+        }
+        seasonal->set_method(sampler);
+      }
+
+      std::ostringstream parameter_name;
+      parameter_name  <<  "sigma.seasonal" << "." << nseasons;
+      if (season_duration > 1) parameter_name << "." << season_duration;
+
+      // Add information about this parameter to the io_manager
+      if (io_manager_) {
+        io_manager_->add_list_element(new StandardDeviationListElement(
+            seasonal->Sigsq_prm(),
+            prefix + parameter_name.str()));
+      }
+      return seasonal;
+    }
+
+    //======================================================================
+    TrigStateModel *StateModelFactory::CreateTrigStateModel(
+        SEXP list_arg, const std::string &prefix) {
+      double period = Rf_asReal(getListElement(list_arg, "period"));
+      Vector frequencies = ToBoomVector(getListElement(
+          list_arg, "frequencies"));
+      TrigStateModel * trig_state_model(
+          new TrigStateModel(period, frequencies));
+
+      //-------------- set the prior and the posterior sampler.
+      SdPrior sigma_prior(getListElement(list_arg, "sigma.prior"));
+      int dimension = trig_state_model->dim();
+      NEW(ChisqModel, single_siginv_prior)(
+          sigma_prior.prior_df(),
+          sigma_prior.prior_guess());
+      std::vector<Ptr<GammaModelBase>> priors(dimension, single_siginv_prior);
+      double sigma_upper_limit = sigma_prior.upper_limit();
+      if (sigma_upper_limit < 0) {
+        sigma_upper_limit = infinity();
+      }
+      Vector sd_max_values(dimension, sigma_upper_limit);
+      NEW(IndependentMvnVarSampler, sampler)(
+          trig_state_model,
+          priors,
+          sd_max_values);
+      trig_state_model->set_method(sampler);
+
+      //-------------- set the prior for the initial state
+      MvnPrior initial_prior(getListElement(list_arg, "initial.state.prior"));
+      trig_state_model->set_initial_state_mean(initial_prior.mu());
+      trig_state_model->set_initial_state_variance(initial_prior.Sigma());
+
+      //-------------- adjust the io manager.
+      if (io_manager_) {
+        io_manager_->add_list_element(
+            new SdVectorListElement(trig_state_model->Sigsq_prm(),
+                                    prefix + "trig.coefficient.sd"));
+      }
+      return trig_state_model;
+    }
+
+    //======================================================================
+    // Creates a random walk holiday state model.
+    // Args:
+    //   list_arg: An R object inheriting from class "Holiday".  This is a list
+    //     with a named element "holidays".
+    //   prefix: An optional prefix to be prepended to the name of the state
+    //     component in the io_manager.
+    RandomWalkHolidayStateModel *
+    StateModelFactory::CreateRandomWalkHolidayStateModel(
+        SEXP list_arg, const std::string &prefix) {
+
+      std::string holiday_name = GetStringFromList(list_arg, "name");
+      int days_before = Rf_asInteger(getListElement(list_arg, "days.before"));
+      int days_after = Rf_asInteger(getListElement(list_arg, "days.after"));
+      Holiday *holiday;
+      if (Rf_inherits(list_arg, "NamedHoliday")) {
+        holiday = CreateNamedHoliday(holiday_name, days_before, days_after);
+      } else if (Rf_inherits(list_arg, "FixedDateHoliday")) {
+        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
+        int holiday_day = Rf_asInteger(getListElement(list_arg, "day"));
+        holiday = new FixedDateHoliday(
+            month_name, holiday_day, days_before, days_after);
+      } else if (Rf_inherits(list_arg, "NthWeekdayInMonthHoliday")) {
+        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
+        DayNames day_name = str2day(GetStringFromList(list_arg, "day.of.week"));
+        int which_week = Rf_asInteger(getListElement(list_arg, "which.week"));
+        if (which_week > 0) {
+          holiday = new NthWeekdayInMonthHoliday(
+              which_week, day_name, month_name, days_before, days_after);
+        } else {
+          holiday = new LastWeekdayInMonthHoliday(
+              day_name, month_name, days_before, days_after);
+        }
+      } else {
+        report_error("Unknown type of holiday state model");
+        return NULL;
+      }
+      int month_of_time0 =
+          Rf_asInteger(getListElement(list_arg, "time0.month"));
+      int day_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.day"));
+      int year_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.year"));
+      Date time0(month_of_time0, day_of_time0, year_of_time0);
+      SdPrior sigma_prior_spec(getListElement(
+          list_arg, "sigma.prior"));
+      NormalPrior initial_value_prior_spec(getListElement(
+          list_arg, "initial.state.prior"));
+
+      RandomWalkHolidayStateModel * holiday_model
+          = new RandomWalkHolidayStateModel(holiday, time0);
+      holiday_model->set_sigsq(square(sigma_prior_spec.initial_value()));
+
+      //------------------------------------------------------------
+      // Set prior distribution for initial state
+      Vector initial_state_mean(holiday_model->state_dimension(), 0.0);
+      SpdMatrix initial_state_variance(holiday_model->state_dimension());
+      initial_state_variance.set_diag(square(initial_value_prior_spec.sigma()));
+      holiday_model->set_initial_state_mean(initial_state_mean);
+      holiday_model->set_initial_state_variance(initial_state_variance);
+
+      //------------------------------------------------------------
+      // Set prior distribution for innovation variance parameter
+      if (sigma_prior_spec.fixed()) {
+        Ptr<FixedUnivariateSampler> sampler(
+            new FixedUnivariateSampler(
+                holiday_model->Sigsq_prm(),
+                holiday_model->sigsq()));
+        holiday_model->set_method(sampler);
+      } else {
+        Ptr<ZeroMeanGaussianConjSampler> sampler(
+            new ZeroMeanGaussianConjSampler(
+                holiday_model,
+                sigma_prior_spec.prior_df(),
+                sigma_prior_spec.prior_guess()));
+        holiday_model->set_method(sampler);
+      }
+
+      std::ostringstream parameter_name;
+      parameter_name  <<  "sigma." << holiday_name;
+      // Add information about this parameter to the io_manager
+      if (io_manager_) {
+        io_manager_->add_list_element(new StandardDeviationListElement(
+            holiday_model->Sigsq_prm(),
+            prefix + parameter_name.str()));
+      }
+      return holiday_model;
+    }
+
+    //=========================================================================
+    RegressionHolidayStateModel *
+    StateModelFactory::CreateRegressionHolidayStateModel(
+        SEXP r_state_specification, const std::string &prefix) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      Ptr<UnivParams> residual_variance = GetResidualVarianceParameter();
+      NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
+      NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
+
+      RegressionHolidayStateModel *holiday_model =
+          new RegressionHolidayStateModel(
+              time_zero, residual_variance, prior);
+
+      SEXP r_holidays = getListElement(r_state_specification, "holidays");
+      int number_of_holidays = Rf_length(r_holidays);
+      std::vector<std::string> holiday_names;
+      for (int i = 0; i < number_of_holidays; ++i) {
+        SEXP r_holiday = VECTOR_ELT(r_holidays, i);
+        Ptr<Holiday> holiday = CreateHoliday(r_holiday);
+        holiday_names.push_back(ToString(getListElement(
+            r_state_specification, "name")));
+        holiday_model->add_holiday(holiday);
+      }
+      for (int i = 0; i < number_of_holidays; ++i) {
+        io_manager_->add_list_element(new VectorListElement(
+            holiday_model->holiday_pattern_parameter(i),
+            holiday_names[i]));
+      }
+      return holiday_model;
+    }
+
+    Ptr<UnivParams> StateModelFactory::GetResidualVarianceParameter() {
+      // Get the residual variance from the observation model.  This requires a
+      // cast, and can only be done with observation models that use Gaussian
+      // errors.
+      Ptr<UnivParams> residual_variance;
+      PosteriorModeModel *observation_model = model_->observation_model();
+      if (GaussianModel *gaussian =
+          dynamic_cast<GaussianModel *>(observation_model)) {
+        residual_variance = gaussian->Sigsq_prm();
+      } else if (RegressionModel *regression =
+                 dynamic_cast<RegressionModel *>(observation_model)) {
+        residual_variance = regression->Sigsq_prm();
+      } else {
+        report_error("The HierarchicalRegressionHolidayStateModel can only be "
+                     "used with Gaussian observation errors.  Maybe that will "
+                     "change one day (but what do we say to Death, Arya?).");
+        residual_variance = nullptr;
+      }
+      return residual_variance;
+    }
+          
+    //=========================================================================
+    // Args:
+    //   r_state_specification: An R object of class
+    //     ShrinkageRegressionHolidayModel detailing the model to be built.
+    HierarchicalRegressionHolidayStateModel *
+    StateModelFactory::CreateHierarchicalRegressionHolidayStateModel(
+        SEXP r_state_specification, const std::string &prefix) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      HierarchicalRegressionHolidayStateModel *holiday_model =
+          new HierarchicalRegressionHolidayStateModel(
+              time_zero, GetResidualVarianceParameter());
+      SEXP r_holidays = getListElement(r_state_specification, "holidays");
+      int number_of_holidays = Rf_length(r_holidays);
+      std::vector<std::string> holiday_names;
+      for (int i = 0; i < number_of_holidays; ++i) {
+        SEXP r_holiday = VECTOR_ELT(r_holidays, i);
+        Ptr<Holiday> holiday = CreateHoliday(r_holiday);
+        holiday_names.push_back(ToString(getListElement(
+            r_state_specification, "name")));
+        holiday_model->add_holiday(holiday);
+      }
+
+      // Unpack the priors and set the posterior sampler.
+      MvnPrior coefficient_mean_prior_spec(
+          getListElement(r_state_specification, "coefficient.mean.prior"));
+      NEW(MvnModel, coefficient_mean_prior)(
+          coefficient_mean_prior_spec.mu(),
+          coefficient_mean_prior_spec.Sigma());
+      InverseWishartPrior coefficient_variance_prior_spec(
+          getListElement(r_state_specification, "coefficient.variance.prior"));
+      NEW(WishartModel, coefficient_variance_prior)(
+          coefficient_variance_prior_spec.variance_guess_weight(),
+          coefficient_variance_prior_spec.variance_guess());
+
+      NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
+          holiday_model->model(),
+          coefficient_mean_prior,
+          coefficient_variance_prior,
+          nullptr);
+      holiday_model->model()->set_method(sampler);
+
+      // Set up the io_manager
+      std::vector<Ptr<VectorParams>> holiday_coefficients;
+      for (int i = 0; i < number_of_holidays; ++i) {
+        holiday_coefficients.push_back(
+            holiday_model->model()->data_model(i)->coef_prm());
+      }
+      HierarchicalVectorListElement *coefficient_io =  
+          new HierarchicalVectorListElement(
+              holiday_coefficients,
+              prefix + "holiday.coefficients");
+      coefficient_io->set_group_names(holiday_names);
+      io_manager_->add_list_element(coefficient_io);
+
+      io_manager_->add_list_element(
+          new VectorListElement(holiday_model->model()->prior()->Mu_prm(),
+                                prefix + "holiday.coefficient.mean"));
+      io_manager_->add_list_element(
+          new SpdListElement(holiday_model->model()->prior()->Sigma_prm(),
+                             prefix + "holiday.coefficient.variance"));
+      return holiday_model;
+    }
+    
   }  // namespace RInterface
 }  // namespace BOOM
