@@ -1,3 +1,24 @@
+.SetTimeZero <- function(time0, y) {
+  ## Determine the physical date (and time) of the first observation.
+  ## Args:
+  ##   time0:  
+  if (is.null(time0)) {
+    if (is.null(y)) {
+      stop("You must supply time0 if y is missing.")
+    }
+    if (!inherits(y, "zoo")) {
+      ## Note:  an xts object inherits from zoo.
+      stop("You must supply 'time0' if y is not a zoo or xts object.")
+    }
+    times <- index(as.xts(y))
+    tryCatch(time0 <- as.POSIXct(times)[1],
+      error = simpleError(
+        "The index of y could not be converted to POSIXt."))
+  }
+  stopifnot(inherits(time0, "POSIXt"))
+  return(as.POSIXlt(time0))
+}
+###----------------------------------------------------------------------
 StateSizes <- function(state.specification) {
   ## Returns a vector giving the number of dimensions used by each state
   ## component in the state vector.

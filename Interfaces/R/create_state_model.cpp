@@ -44,7 +44,7 @@
 
 namespace BOOM{
   namespace RInterface{
-
+    using std::endl;
     StateModelFactory::StateModelFactory(RListIoManager * io_manager,
                                          StateSpaceModelBase * model)
         : io_manager_(io_manager),
@@ -109,17 +109,29 @@ namespace BOOM{
         return CreateTrigStateModel(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "RandomWalkHolidayStateModel")) {
         return CreateRandomWalkHolidayStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "HierarchicalRegressionHolidayStateModel")) {
+      } else if (Rf_inherits(
+          list_arg, "HierarchicalRegressionHolidayStateModel")) {
         return CreateHierarchicalRegressionHolidayStateModel(list_arg, prefix);
       } else if (Rf_inherits(list_arg, "RegressionHolidayStateModel")) {
         return CreateRegressionHolidayStateModel(list_arg, prefix);
+      } else {
+        std::ostringstream err;
+        err << "Unknown object passed where state model expected." << endl;
+        std::vector<std::string> class_info = StringVector(
+            Rf_getAttrib(list_arg, R_ClassSymbol));
+        if (class_info.empty()) {
+          err << "Object has no class attribute." << endl;
+        } else if (class_info.size() == 1) {
+          err << "Object is of class " << class_info[0] << "." << endl;
+        } else {
+          err << "Object has class:" << endl;
+          for (int i = 0; i < class_info.size(); ++i) {
+            err << "     " << class_info[i] << endl;
+          }
+        }
+        report_error(err.str());
+        return nullptr;
       }
-
-      // Should never get here
-      report_error("Unknown state model type.");
-
-      Ptr<StateModel> keep_compiler_quiet;
-      return keep_compiler_quiet;
     }
 
     // A callback class for recording the final state that the
@@ -1070,7 +1082,7 @@ namespace BOOM{
                  dynamic_cast<RegressionModel *>(observation_model)) {
         residual_variance = regression->Sigsq_prm();
       } else {
-        report_error("The HierarchicalRegressionHolidayStateModel can only be "
+        report_error("You have specified a state model that can only be "
                      "used with Gaussian observation errors.  Maybe that will "
                      "change one day (but what do we say to Death, Arya?).");
         residual_variance = nullptr;
