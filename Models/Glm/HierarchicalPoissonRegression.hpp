@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -34,7 +35,7 @@ namespace BOOM {
   // The model is y[i, j] ~ Poisson(exp(beta[i] * x[i, j])) with
   // beta[i] ~ Normal(mu, Sigma)
   //
-  // TODO(stevescott): Consider a parallel class with an
+  // TODO: Consider a parallel class with an
   // IndependentMvnModel instead of an MvnModel for the
   // data_parent_model.
   class HierarchicalPoissonRegressionModel

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -25,6 +26,7 @@
 #include <LinAlg/SpdMatrix.hpp>
 #include <LinAlg/SubMatrix.hpp>
 #include <Models/SufstatAbstractCombineImpl.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
@@ -121,15 +123,38 @@ namespace BOOM {
       }
     }
 
-    void increment_loglike(
-        double &ans, Vector &gradient, Matrix &Hessian, int nd,
+    double increment_loglike(
+        Vector &gradient, Matrix &Hessian, int nd,
         const ConstVectorView &x, double sumy, double sumlogy, double n,
         double eta, double mu, double alpha, double log_alpha,
         double lgamma_alpha, double digamma_alpha, double trigamma_alpha) {
-      ans += n * (alpha * (log_alpha - eta) - lgamma_alpha)
+      double ans = 0;
+      if (mu <= 0) {
+        // mu = exp(eta), so it cannot mathematically be less than zero.
+        ans = negative_infinity();
+        // We should adjust the gradient and hessian here, if nd > 0.  However,
+        // we can't really do that without knowing beta.
+      }
+      if (alpha <= 0) {
+        ans = negative_infinity();
+        if (nd > 0) {
+          gradient[0] = -alpha;
+          if (nd > 1) {
+            Hessian = 0.0;
+            Hessian.diag() = 1.0;
+          }
+        }
+      }
+      if (!std::isfinite(ans)) {
+        return ans;
+      }
+      ans = n * (alpha * (log_alpha - eta) - lgamma_alpha)
           + (alpha - 1) * sumlogy
           - alpha * sumy / mu;
       if (nd > 0) {
+        // The derivatives of log likelihood are with respect to its shape
+        // parameter alpha, and the vector of regression coefficients beta, with
+        // alpha in front.
         gradient[0] += n * (1 + log_alpha) - n * eta - n * digamma_alpha
             + sumlogy - sumy / mu;
         VectorView(gradient, 1).axpy(x, alpha * ((sumy / mu) - n));
@@ -144,6 +169,7 @@ namespace BOOM {
           SubMatrix(Hessian, 1, x.size(), 1, x.size()) += beta_hessian;
         }
       }
+      return ans;
     }
   } // namespace
 
@@ -177,13 +203,16 @@ namespace BOOM {
       if (!all_coefficients_included) {
         reduced_x = inc.select(x);
       }
-      ConstVectorView X(all_coefficients_included ? x : reduced_x);
-      double eta = beta.dot(X);
+      ConstVectorView predictors(all_coefficients_included ? x : reduced_x);
+      double eta = beta.dot(predictors);
       double mu = exp(eta);
       double y = data[i]->y();
-      increment_loglike(
-          ans, gradient, Hessian, nd, X, y, log(y), 1, eta, mu,
+      ans += increment_loglike(
+          gradient, Hessian, nd, predictors, y, log(y), 1, eta, mu,
           alpha, log_alpha, lgamma_alpha, digamma_alpha, trigamma_alpha);
+      if (!std::isfinite(ans)) {
+        return ans;
+      }
     }
     if (nd > 1) {
       Hessian.col(0) = Hessian.row(0);
@@ -346,15 +375,15 @@ namespace BOOM {
       if (!all_coefficients_included) {
         reduced_x = inc.select(x);
       }
-      ConstVectorView X(all_coefficients_included ? x : reduced_x);
+      ConstVectorView predictors(all_coefficients_included ? x : reduced_x);
 
-      double eta = beta.dot(X);
+      double eta = beta.dot(predictors);
       double mu = exp(eta);
       double sumy = el.second->sum();
       double sumlogy = el.second->sumlog();
       double n = el.second->n();
-      increment_loglike(
-          ans, gradient, Hessian, nd, X, sumy, sumlogy, n, eta, mu,
+      ans += increment_loglike(
+          gradient, Hessian, nd, predictors, sumy, sumlogy, n, eta, mu,
           alpha, log_alpha, lgamma_alpha, digamma_alpha, trigamma_alpha);
     }
     if (nd > 1) {

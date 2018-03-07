@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -18,25 +19,26 @@
 #include <Models/Glm/PosteriorSamplers/ProbitRegressionSampler.hpp>
 #include <distributions.hpp>
 
-namespace BOOM{
+namespace BOOM {
 
-  typedef ProbitRegressionSampler PRS;
+  namespace {
+    typedef ProbitRegressionSampler PRS;
+  }
 
   PRS::ProbitRegressionSampler(ProbitRegressionModel *model,
                                const Ptr<MvnBase> &prior,
                                RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        mod_(model),
-        pri_(prior),
-        xtx_(mod_->xdim()),
-        xtz_(mod_->xdim()),
-        beta_(mod_->xdim())
+        model_(model),
+        prior_(prior),
+        xtx_(model_->xdim()),
+        xtz_(model_->xdim())
   {
     refresh_xtx();
   }
 
   double PRS::logpri()const{
-    return pri_->logp(mod_->Beta());
+    return prior_->logp(model_->Beta());
   }
 
   void PRS::draw(){
@@ -45,24 +47,21 @@ namespace BOOM{
   }
 
   void PRS::draw_beta(){
-    const SpdMatrix & siginv(pri_->siginv());
-    beta_ = rmvn_suf_mt(rng(),
-                        xtx_ + siginv,
-                        xtz_ + siginv * pri_->mu());
-    mod_->set_Beta(beta_);
+    model_->set_Beta(rmvn_suf_mt(
+        rng(),
+        xtx_ + prior_->siginv(),
+        xtz_ + prior_->siginv() * prior_->mu()));
   }
 
   void PRS::impute_latent_data(){
-    const ProbitRegressionModel::DatasetType & data(mod_->dat());
+    const ProbitRegressionModel::DatasetType & data(model_->dat());
     int n = data.size();
-    const Vector & beta(mod_->Beta());
+    const Vector &beta(model_->Beta());
     xtz_ = 0;
     for(int i = 0; i < n; ++i){
-      const Vector & x(data[i]->x());
-      double eta = x.dot(beta);
-      bool y = data[i]->y();
-      double z = rtrun_norm_mt(rng(), eta, 1, 0, y);
-      xtz_.axpy(x,z);
+      const Vector &x(data[i]->x());
+      double z = imputer_.impute(rng(), 1, data[i]->y(), x.dot(beta));
+      xtz_.axpy(x, z);
     }
   }
 
@@ -70,10 +69,10 @@ namespace BOOM{
   const SpdMatrix & PRS::xtx()const{ return xtx_; }
 
   void PRS::refresh_xtx(){
-    int p = mod_->xdim();
+    int p = model_->xdim();
     xtx_.resize(p);
     xtx_ = 0;
-    const ProbitRegressionModel::DatasetType & data(mod_->dat());
+    const ProbitRegressionModel::DatasetType & data(model_->dat());
     int n = data.size();
     for(int i = 0; i < n; ++i){
       const Vector & x(data[i]->x());
@@ -82,4 +81,4 @@ namespace BOOM{
     xtx_.reflect();
   }
 
-}
+}  // namespace BOOM

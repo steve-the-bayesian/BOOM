@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -24,6 +25,7 @@
 #include <algorithm>
 #include <stats/logit.hpp>
 #include <Models/Glm/WeightedRegressionModel.hpp>
+#include <random>
 
 namespace BOOM{
 
@@ -87,7 +89,7 @@ namespace BOOM{
     }
 
     std::vector<uint> flips = seq<uint>(0, nv-1);
-    std::random_shuffle(flips.begin(), flips.end());
+    std::shuffle(flips.begin(), flips.end(), std::default_random_engine());
     uint hi = std::min<uint>(nv, max_nflips_);
     for(uint i=0; i<hi; ++i){
       uint I = flips[i];

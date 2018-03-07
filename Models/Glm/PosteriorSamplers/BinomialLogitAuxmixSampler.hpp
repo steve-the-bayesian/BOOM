@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -123,7 +124,7 @@ namespace BOOM {
 
     void assign_data_to_workers() override;
 
-    // TODO(stevescott): remove calls to this function and replace
+    // TODO: remove calls to this function and replace
     // them with calls to clear_latent_data().
     //
     // Clear the complete data sufficient statistics.  This is

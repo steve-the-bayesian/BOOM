@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,6 +21,7 @@
 #define BOOM_PROBIT_REGRESSION_SAMPLER_HPP_
 
 #include <Models/Glm/ProbitRegression.hpp>
+#include <Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp>
 #include <Models/MvnBase.hpp>
 #include <Models/PosteriorSamplers/PosteriorSampler.hpp>
 
@@ -34,21 +36,26 @@ namespace BOOM{
     void draw() override;
     double logpri()const override;
 
-    // call refresh_xtx when the model has gained or lost data.
+    // Call refresh_xtx when the model has gained or lost data.
     // Otherwise, it is assumed that xtx_ is fixed between iterations
     void refresh_xtx();
 
     void impute_latent_data();
     const Vector & xtz()const;
     const SpdMatrix & xtx()const;
+
    protected:
     virtual void draw_beta();
+
    private:
-    ProbitRegressionModel *mod_;
-    Ptr<MvnBase> pri_;
+    ProbitRegressionModel *model_;
+    Ptr<MvnBase> prior_;
+
+    BinomialProbitDataImputer imputer_;
+
+    // Complete data sufficient statistics.
     SpdMatrix xtx_;
     Vector xtz_;
-    Vector beta_;
   };
 }
 

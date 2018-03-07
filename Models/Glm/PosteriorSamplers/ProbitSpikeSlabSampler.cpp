@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,6 +21,7 @@
 #include <cpputil/seq.hpp>
 #include <distributions.hpp>
 #include <stats/logit.hpp>
+#include <random>
 
 namespace BOOM{
   typedef ProbitSpikeSlabSampler PSSS;
@@ -108,7 +110,7 @@ namespace BOOM{
 
     // do the sampling in random order
     std::vector<uint> flips = seq<uint>(0, nv-1);
-    std::random_shuffle(flips.begin(), flips.end());
+    std::shuffle(flips.begin(), flips.end(), std::default_random_engine());
 
     uint hi = std::min<uint>(nv, max_nflips());
     for(uint i=0; i<hi; ++i){

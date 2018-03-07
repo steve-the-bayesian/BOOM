@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -121,7 +122,7 @@ namespace BOOM{
                          const std::vector<uint> &parents,
                          const std::string &name = "");
 
-    // TODO(stevescott): This class needs to be split apart.  The bit
+    // TODO: This class needs to be split apart.  The bit
     // about interactions and main effects (which are dependent on one
     // another) is at odds with the notion that there is a vector of
     // prior inclusion probabilities (which implies independence).

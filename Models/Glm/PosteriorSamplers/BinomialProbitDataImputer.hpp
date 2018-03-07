@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -20,7 +21,6 @@
 #define BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 
 #include <distributions/rng.hpp>
-#include <ostream>
 
 namespace BOOM {
 
@@ -54,7 +54,7 @@ namespace BOOM {
     double impute(RNG &rng,
                   double number_of_trials,
                   double number_of_successes,
-                  double log_odds) const;
+                  double eta) const;
 
     // The smallest number_of_trials for which approximate
     // augmentation takes place.

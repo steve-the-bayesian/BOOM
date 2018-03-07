@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -58,10 +59,10 @@ namespace BOOM{
       if(y == 0){
         z = rtrun_norm_mt(rng(), eta, 1, 0, false);
       }else if(y==maxscore){
-        // TODO(stevescott):  check delta parameterization y or y+1?
+        // TODO:  check delta parameterization y or y+1?
         z = rtrun_norm_mt(rng(), eta, 1, m_->delta(maxscore), true);
       }else{
-        // TODO(stevescott):  check delta parameterization
+        // TODO:  check delta parameterization
         double lo = m_->delta(y-1);
         double hi = m_->delta(y);
         z = rtrun_norm_2_mt(rng(), eta, 1, lo, hi);

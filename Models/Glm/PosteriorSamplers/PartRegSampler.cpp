@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,6 +21,7 @@
 #include <cpputil/seq.hpp>
 #include <cpputil/math_utils.hpp>
 #include <algorithm>
+#include <random>
 
 namespace BOOM{
 
@@ -218,7 +220,8 @@ namespace BOOM{
   }
 
   void PRS::mcmc_all_vars(Selector &mod){
-    std::random_shuffle(indices_.begin(), indices_.end());
+    std::shuffle(indices_.begin(), indices_.end(),
+                 std::default_random_engine());
     uint N = mod.nvars_possible();
     for(uint i=0; i<N; ++i){
       uint pos = indices_[i];

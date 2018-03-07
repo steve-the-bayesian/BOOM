@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -87,7 +88,7 @@ namespace BOOM {
       return;
     }
     if (fabs(sum(unit_values_) - total_value_) > .01) {
-      report_error("TODO(stevescott):  need descriptive error here");
+      report_error("TODO:  need descriptive error here");
     }
 
     beta_ = & beta;

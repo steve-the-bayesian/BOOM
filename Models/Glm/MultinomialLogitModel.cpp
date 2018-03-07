@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
   This library is free software; you can redistribute it and/or
@@ -301,7 +302,7 @@ namespace BOOM{
     } else {
       included.sparse_multiply(X, beta, VectorView(ans));
     }
-    // TODO(stevescott): handle restricted choice sets and include an
+    // TODO: handle restricted choice sets and include an
     // offset.
     return ans;
   }

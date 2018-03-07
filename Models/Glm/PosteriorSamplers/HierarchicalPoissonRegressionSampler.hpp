@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -141,7 +142,7 @@ namespace BOOM {
   // to be modeled independently by a set of truncated gamma
   // distributions.
   //
-  // TODO(stevescott): For wide hierarchies, it might not be prudent
+  // TODO: For wide hierarchies, it might not be prudent
   // to use a full variance matrix for the prior or "data_parent"
   // model.  It may be better to replace the MvnModel in the
   // HierarchicalPoissonRegressionModel with an IndependentMvnModel.

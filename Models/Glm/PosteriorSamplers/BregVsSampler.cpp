@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -24,6 +25,7 @@
 #include <Models/ChisqModel.hpp>
 #include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
 #include <Models/MvnGivenScalarSigma.hpp>
+#include <random>
 
 namespace BOOM {
 
@@ -306,7 +308,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void BVS::draw_model_indicators() {
     Selector g = model_->coef().inc();
-    std::random_shuffle(indx.begin(), indx.end());
+    std::shuffle(indx.begin(), indx.end(), std::default_random_engine());
     double logp = log_model_prob(g);
 
     if (!std::isfinite(logp)) {

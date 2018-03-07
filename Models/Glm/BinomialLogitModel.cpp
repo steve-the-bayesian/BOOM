@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -165,8 +166,8 @@ namespace BOOM{
     for(int i = 0; i < data.size(); ++i){
       // y and n had been defined as uint's but y-n*p was computing
       // -n, which overflowed
-      int y = data[i]->y();
-      int n = data[i]->n();
+      double y = data[i]->y();
+      double n = data[i]->n();
       const Vector & x(data[i]->x());
       Vector reduced_x;
       if (!all_coefficients_included) {

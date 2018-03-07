@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -107,7 +108,11 @@ namespace BOOM {
     Vector new_logit_coefficients =
         model_->logit_coefficients().included_coefficients();
     Vector percent_change =
-        abs((new_logit_coefficients - logit_coefficients)/logit_coefficients);
+        abs((new_logit_coefficients - logit_coefficients));
+    for (int i = 0; i < new_logit_coefficients.size(); ++i) {
+      percent_change[i] = logit_coefficients[i] != 0 ?
+          percent_change[i] / logit_coefficients[i] : infinity();
+    }
     double max_percent_change = max(percent_change);
     if (!std::isfinite(max_percent_change)) {
       return infinity();
@@ -126,13 +131,12 @@ namespace BOOM {
   }
 
   void ZIPRS::impute_forced_zeros(bool stochastic) {
-    const std::vector<Ptr<ZeroInflatedPoissonRegressionData> > &data(
+    const std::vector<Ptr<ZeroInflatedPoissonRegressionData>> &data(
         model_->dat());
     ensure_latent_data();
-    const std::vector<Ptr<PoissonRegressionData> > & poisson_data(
+    const std::vector<Ptr<PoissonRegressionData>> &poisson_data(
         poisson_->dat());
-    const std::vector<Ptr<BinomialRegressionData> > & logit_data(
-        logit_->dat());
+    const std::vector<Ptr<BinomialRegressionData>> &logit_data(logit_->dat());
     for (int i = 0; i < data.size(); ++i) {
       int64_t total_number_of_zeros = lround(data[i]->number_of_zero_trials());
       if (total_number_of_zeros > 0) {

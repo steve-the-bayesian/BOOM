@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -189,7 +190,7 @@ namespace BOOM{
     }
   }
   //----------------------------------------------------------------------
-// TODO(stevescott):  This code currently discards the tim_sampler
+// TODO:  This code currently discards the tim_sampler
   void BLCSSS::tim_draw(){
     int nvars = m_->coef().nvars();
     if(nvars == 0) return;

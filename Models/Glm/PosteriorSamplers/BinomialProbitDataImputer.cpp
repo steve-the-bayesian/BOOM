@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -53,7 +54,7 @@ namespace BOOM {
       ans += rnorm_mt(rng, y * mean, sqrt(y * variance));
     } else {
       for (int i = 0; i < y; ++i) {
-        // TODO(stevescott): If y is large-ish but not quite
+        // TODO: If y is large-ish but not quite
         // clt_threshold_ then we might waste some time here
         // constantly rebuilding the same TnSampler object.
         ans += rtrun_norm_mt(rng, eta, 1, 0, true);

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -37,25 +38,23 @@ namespace BOOM{
   //
   //     beta | X,sigsq ~ N(b, sigsq * (Lambda^{-1} + (kappa * V / n)))
   //
-  // where V^{-1} = (1-w) XTX + w Diag(XTX).  The parameters
-  // of this model are the vector b (the prior mean of the regression
-  // coefficients) and the scalar kappa which can be thought of as a
-  // prior sample size.  The matrix Lambda is a diagonal matrix of
-  // postivie numbers, XTX is the cross product matrix from the
-  // regression model, and Diag(XTX) is the diagonal matrix with
+  // where V^{-1} = (1-w) XTX + w Diag(XTX).  The parameters of this model are
+  // the vector b (the prior mean of the regression coefficients) and the scalar
+  // kappa which can be thought of as a prior sample size.  The matrix Lambda is
+  // a diagonal matrix of non-negative numbers, XTX is the cross product matrix
+  // from the regression model, and Diag(XTX) is the diagonal matrix with
   // elements from the diagonal of XTX.
   //
-  // The prior precision of beta is V^{-1} * kappa / (n * sigma^2).
-  // The main component of V^{-1} is XTX, which is the precision (or
-  // information) from the data in a regression model, so dividing by
-  // n gives the average information for a single observation.  If
-  // Lambda = 0 and w = 0 then kappa could be interpreted as the
-  // number of observations worth of data to be assigned as a weight
-  // to the prior guess b.  Moving w away from zero averages XTX with
-  // its diagonal.  This helps keep the prior proper in cases where X
-  // is less than full rank.  Likewise, adding a positive digonal
-  // element Lambda keeps the prior propoer in case some columns of X
-  // have zero variance, or in the case where X contains no data.
+  // The prior precision of beta is V^{-1} * kappa / (n * sigma^2).  The main
+  // component of V^{-1} is XTX, which is the precision (or information) from
+  // the data in a regression model, so dividing by n gives the average
+  // information for a single observation.  If Lambda = 0 and w = 0 then kappa
+  // could be interpreted as the number of observations worth of data to be
+  // assigned as a weight to the prior guess b.  Moving w away from zero
+  // averages XTX with its diagonal.  This helps keep the prior proper in cases
+  // where X is less than full rank.  Likewise, adding a positive digonal
+  // element Lambda keeps the prior propoer in case some columns of X have zero
+  // variance, or in the case where X contains no data.
   class MvnGivenXandSigma
     : public MvnBase,
       public ParamPolicy_2<VectorParams, UnivParams>,
@@ -65,16 +64,15 @@ namespace BOOM{
   public:
     // In this constructor, Lambda is taken to be zero.
     // Args:
-    //   model: The regression model whose coefficients are to be
-    //     modeled.  The model is also the source of the sigsq
-    //     residual variance parameter, and the XTX matrix.
+    //   model: The regression model whose coefficients are to be modeled.  The
+    //     model is also the source of the sigsq residual variance parameter,
+    //     and the XTX matrix.
     //   prior_mean:  The prior mean (denoted 'b' above).
     //   prior_sample_size:  The prior sample size (denoted 'kappa' above).
-    //   additional_prior_precision: The constant to add to the
-    //     diagonal of the prior precision matrix.  Denoted 'Lambda'
-    //     above.
-    //   diagonal_weight: The weight to use on the diagonal of XTX
-    //     when it is averaged with XTX (which gets 1 - diagonal_weight).
+    //   additional_prior_precision: The constant to add to the diagonal of the
+    //     prior precision matrix.  Denoted 'Lambda' above.
+    //   diagonal_weight: The weight to use on the diagonal of XTX when it is
+    //     averaged with XTX (which gets 1 - diagonal_weight).
     MvnGivenXandSigma(RegressionModel *model,
                       const Ptr<VectorParams> &prior_mean,
                       const Ptr<UnivParams> &prior_sample_size,
@@ -84,16 +82,15 @@ namespace BOOM{
     // Use this constructor if you want to specify XTX and sigsq
     // without passing a regression model.
     // Args:
-    //     residual variance parameter, and the XTX matrix.
+    //   residual variance parameter, and the XTX matrix.
     //   prior_mean:  The prior mean (denoted 'b' above).
     //   prior_sample_size:  The prior sample size (denoted 'kappa' above).
     //   sigsq:  The residual variance in the regression model.
     //   XTX:  The cross product matrix from the regression model.
-    //   sample_size: The number of observations contained in X.  This
-    //     is denoted 'n' above.
-    //   additional_prior_precision: The constant to add to the
-    //     diagonal of the prior precision matrix.  Denoted 'Lambda'
-    //     above.
+    //   sample_size: The number of observations contained in X.  This is
+    //     denoted 'n' above.
+    //   additional_prior_precision: The constant to add to the diagonal of the
+    //     prior precision matrix.  Denoted 'Lambda' above.
     //   diagonal_weight: The weight to use on the diagonal of XTX
     MvnGivenXandSigma(const Ptr<VectorParams> & prior_mean,
                       const Ptr<UnivParams> &prior_sample_size,
