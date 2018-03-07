@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -34,7 +35,7 @@
 
 namespace BOOM{
 
-  //TODO(stevescott):  remove the inheritance from vector<bool>
+  //TODO:  remove the inheritance from vector<bool>
   //
   // A Selector models inclusion or exclusion from a set of positions.
   // The job of a Selector is often to extract a subset of elements
@@ -181,6 +182,10 @@ namespace BOOM{
 
     void push_back(bool element);
     void erase(uint which_element);
+
+    // Return the index of the first included value at or before 'position'.  If
+    // no elements in this position or lower are included, then return -1.
+    int first_included_at_or_before(uint position) const;
 
    private:
     // sorted vector of included indices

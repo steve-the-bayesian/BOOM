@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -119,11 +120,12 @@ namespace BOOM{
     assign(v.begin(), v.end()); return *this; }
   Vector & Vector::operator=(const std::initializer_list<double> &v) {
     assign(v.begin(), v.end()); return *this; }
-  Vector & Vector::operator=(double x){
+
+  Vector & Vector::operator=(double x) {
     uint n = size();
-    if(n==0) n=1;
-    else dVector::assign(n, x);
-    return *this; }
+    dVector::assign(n == 0 ? 1 : n, x);
+    return *this;
+  }
 
   bool Vector::operator==(const Vector &rhs)const{
     const dVector &tmp1(*this);
@@ -144,6 +146,10 @@ namespace BOOM{
       }
     }
     return true;
+  }
+
+  void Vector::set_to_zero() {
+    memset(data(), 0 ,size() * sizeof(double));
   }
 
   Vector Vector::zero()const{ return Vector(size(), 0.0);}
@@ -890,7 +896,7 @@ namespace BOOM{
   }
 
   Vector rev(const ConstVectorView &v) {
-    // TODO(stevescott):
+    // TODO:
     // Do this with Vector(v.rbegin(), v.rend().
     // There is a const-related problem with this approach
     // currently.  I think the VectorViewConstIterator class is

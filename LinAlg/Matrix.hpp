@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -50,7 +51,7 @@ namespace BOOM{
 
     Matrix(uint nr, uint nc, double x=0.0);
     Matrix(uint nr, uint nc, const double *m, bool byrow=false);
-    Matrix(uint nr, uint nc, const std::vector<double> &v, bool byrow=false);
+    Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow = false);
     Matrix(const std::string &s, const std::string &row_delim = "|");
 
     template <class FwdIt>
@@ -86,7 +87,13 @@ namespace BOOM{
     uint size() const;  // number of elements in the Matrix
     uint nrow() const ;
     uint ncol() const ;
-    bool is_sym(double tol= 1.0e-9) const;
+
+    // The largest absolute discrepancy between elements (i, j) and (j, i),
+    // relative to the average absolute magnitude of the elements in the matrix.
+    // The distance is taken to be zero if all elements are zero, and infinity
+    // if the matrix is not square.
+    double distance_from_symmetry() const;
+    bool is_sym(double tol= 1.0e-4) const;
     bool same_dim(const Matrix &A) const;
     bool is_square() const;
     bool is_pos_def() const;
@@ -248,6 +255,11 @@ namespace BOOM{
     Matrix & add_outer(const ConstVectorView &x, const ConstVectorView &y,
                        double w = 1.0);
     // *this += w*x*y^T
+
+    // Add the result of coefficient * left * right.transpose() to *this, and
+    // return the result.
+    Matrix &add_outer(const Matrix &left, const Matrix &right,
+                      double coefficient);
 
     //--------  Math
     virtual Matrix & operator+=(double x);

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -103,8 +104,15 @@ namespace BOOM {
   SpdMatrix::SpdMatrix(const Matrix &A, bool check)
       : Matrix(A)
   {
-    if (check && !A.is_sym()) {
-      report_error("Matrix argument to SpdMatrix is not symmetric.");
+    if (check) {
+      double d = A.distance_from_symmetry();
+      if (d > .5) {
+        report_error("Matrix argument to SpdMatrix is not symmetric.");
+      } else if (d > 1e-9) {
+        fix_near_symmetry();
+      }
+      // If the distance from symmetry is less than 1e-9 then don't worry about
+      // it.
     }
   }
 
@@ -132,6 +140,7 @@ namespace BOOM {
                    "RHS argument");
     }
     Matrix::operator=(rhs);
+    fix_near_symmetry();
     return *this;
   }
 
@@ -141,12 +150,17 @@ namespace BOOM {
                    "RHS argument");
     }
     Matrix::operator=(rhs);
+    fix_near_symmetry();
     return *this;
   }
 
   SpdMatrix & SpdMatrix::operator=(const Matrix &rhs) {
-    assert(rhs.is_sym());
+    double d = rhs.distance_from_symmetry();
+    if (d > .5) {
+      report_error("Argument to SpdMatrix is non-symmetric.");
+    }
     Matrix::operator=(rhs);
+    fix_near_symmetry();
     return *this;
   }
 
@@ -218,6 +232,41 @@ namespace BOOM {
     dposv_("U", &n, &n, LLT.data(), &n, ans.data(), &n, &info);
     ok = info == 0;
     return ans;
+  }
+
+  double SpdMatrix::invert_inplace() {
+    int n = nrow();
+    // If n == 0 do nothing and return this empty matrix.
+    double log_det = negative_infinity();
+    if (n == 1) {
+      double x = data()[0];
+      if (x == 0.0) {
+        report_error("Can't invert a zero-matrix.");
+      }
+      data()[0] = 1.0 / x;
+      log_det = std::log(data()[0]);
+    } else if (n > 1) {
+      int info = 0;
+      dpotrf_("U", &n, data(), &n, &info);
+      if (info != 0) {
+        report_error("SpdMatrix::invert_inplace(): Error in the "
+                     "cholesky decomposition.");
+      }
+      log_det = 0;
+      for (int i = 0; i < n; ++i) {
+        log_det += std::log(fabs((*this)(i, i)));
+      }
+      // Now log_det is the log determinant of the cholesky factorization.
+      // Multiply by -2 to get the log determinant of the inverse matrix.
+      log_det *= -2;
+      dpotri_("U", &n, data(), &n, &info);
+      if (info != 0) {
+        report_error("SpdMatrix::invert_inplace(): Error constructing "
+                     "the inverse from the cholesky decomposition.");
+      }
+      reflect();
+    }
+    return log_det;
   }
 
   double SpdMatrix::det() const {
@@ -327,6 +376,15 @@ namespace BOOM {
       double * row = d + pos;          // stride is n, length is n - i
       double * col = d + pos;          // stride is 1, length is n - i
       dcopy(n - i, row, n, col, 1);    // y is column, x is row
+    }
+  }
+
+  void SpdMatrix::fix_near_symmetry() {
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < i; ++j) {
+        double value = .5 * (unchecked(i, j) + unchecked(j, i));
+        unchecked(i, j) = unchecked(j, i) = value;
+      }
     }
   }
 
@@ -554,17 +612,28 @@ namespace BOOM {
     Vector::const_iterator b(x.begin());
     unvectorize(b, minimal);}
 
+  namespace {
+    template <class ITERATOR>
+    ITERATOR unvectorize_impl(SpdMatrix *matrix, ITERATOR &b, bool minimal) {
+      int n = matrix->ncol();
+      for (int i = 0; i < n; ++i) {
+        ITERATOR e = minimal ? b + i + 1 : b + n;
+        std::copy(b, e, matrix->col_begin(i));
+        b = e;
+      }
+      matrix->reflect();
+      return b;
+    }
+  }  // namespace
+
   Vector::const_iterator SpdMatrix::unvectorize
       (Vector::const_iterator &b, bool minimal) {
-    uint n = ncol();
-    for (uint i = 0; i < n; ++i) {
-      Vector::const_iterator e = minimal ? b+i+1 : b+n;
-      dVector::iterator dest = col_begin(i);
-      std::copy(b, e, dest);
-      b = e;
-    }
-    reflect();
-    return b;
+    return unvectorize_impl(this, b, minimal);
+  }
+
+  ConstVectorView::const_iterator SpdMatrix::unvectorize(
+      ConstVectorView::const_iterator b, bool minimal) {
+    return unvectorize_impl(this, b, minimal);
   }
 
   void SpdMatrix::make_symmetric(bool have_upper) {
@@ -640,11 +709,11 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V) {  // AVA^T
-    Matrix tmp(A.nrow(), V.ncol());
+  SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V) {
     if (A.size() == 0 || V.size() == 0) {
       return SpdMatrix(0);
     }
+    Matrix tmp(A.nrow(), V.ncol());
     dsymm(Right,
           Upper,
           tmp.nrow(),

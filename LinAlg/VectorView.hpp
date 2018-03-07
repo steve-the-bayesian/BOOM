@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -209,7 +210,9 @@ namespace BOOM{
           nelem_(rhs.size()),
           stride_(rhs.stride())
     {}
-    // default copy constructor
+
+    ConstVectorView(const ConstVectorView &rhs) = default;
+    ConstVectorView(ConstVectorView &&rhs) = default;
 
     //-------------- STL Vector stuff ---------------------
     const_iterator begin()const;

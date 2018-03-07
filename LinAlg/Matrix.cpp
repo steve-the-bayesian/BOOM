@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -96,7 +97,7 @@ namespace BOOM{
           V[INDX(i,j)]= *m++;}}}
   }
 
-  Matrix::Matrix(uint nr, uint nc, const std::vector<double> &v, bool byrow)
+  Matrix::Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow)
       : V(v),
         nr_(nr),
         nc_(nc)
@@ -207,14 +208,32 @@ namespace BOOM{
   uint Matrix::nrow() const { return nr_;}
   uint Matrix::ncol() const { return nc_;}
 
+  double Matrix::distance_from_symmetry() const {
+    if (nr_ != nc_) return infinity();
+    double num = 0, denom = 0;
+    for (uint i = 0; i < nr_; ++i) {
+      for (uint j = 0; j < i; ++j) {
+        num = std::max<double>(
+            num, fabs(unchecked(i, j) - unchecked(j, i)));
+        denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
+      }
+      // Include the diagonal when figuring the average size of the matrix
+      // elements.
+      denom += fabs(unchecked(i, i));
+    }
+    denom /= (nr_ * nc_);
+
+    // The denominator can't be less than zero, but I don't want actual equality
+    // here.
+    if (denom <= 0.0) {
+      return 0;
+    }
+    return num / denom;
+  }
+
   bool Matrix::is_sym(double tol) const {
-    if (nr_ != nc_) return false;
-    double num=0, denom=0;
-    for (uint i=0; i<nr_; ++i) {
-      for (uint j=0; j<i; ++j) {
-        num+= fabs(unchecked(i,j) - unchecked(j,i));
-        denom+= fabs(unchecked(i,j)) + fabs(unchecked(j,i));}}
-    return (denom < tol || num/denom<=tol) ; }
+    return distance_from_symmetry() < tol;
+  }
 
   bool Matrix::same_dim(const Matrix &A) const {
     return nr_ == A.nr_ && nc_ == A.nc_;
@@ -235,40 +254,39 @@ namespace BOOM{
   }
 
   Matrix & Matrix::rbind(const Matrix &A) {
-    if (nrow()==0) {
+    if (nrow() == 0) {
       *this = A;
       return *this;
+    } else if (A.ncol() != nc_) {
+      report_error("Matrix::rbind called with an incompatible matrix.");
+    } else if (&A == this) {
+      Matrix B(A);
+      return rbind(B);
     }
-    assert(A.ncol()==ncol());
-    uint m = nrow() + A.nrow();
-    uint n = ncol();
-    Matrix tmp(m,n);
-    for (uint i=0; i<n; ++i) {
-      dVector::iterator it =
-        std::copy(col_begin(i), col_end(i), tmp.col_begin(i));
-      std::copy(A.col_begin(i), A.col_end(i), it);
+    V.reserve(nc_* (nr_ + A.nrow()));
+    for (int i = 0; i < nc_; ++i) {
+      // The call to insert dynamically manages V's size.  It also invalidates
+      // iterators, so 'insertion_point' needs to be recomputed each time.
+      auto insertion_point = V.begin() + i * A.nrow() + (i + 1) * nr_;
+      V.insert(insertion_point, A.col_begin(i), A.col_end(i));
     }
-    swap(tmp);
-    //      swap(*this, tmp);
+    nr_ += A.nrow();
     return *this;
   }
 
   Matrix & Matrix::rbind(const Vector &A) {
-    if (nrow()==0) {
+    if (nrow() == 0) {
       resize(1, A.size());
       row(0) = A;
       return *this;
+    } else if (A.size() != ncol()) {
+      report_error("Matrix::rbind called with incompatible vector.");
     }
-    assert(A.size()==ncol());
-    uint m = nrow() + 1;
-    uint n = ncol();
-    Matrix tmp(m,n);
-    for (uint i=0; i<n; ++i) {
-      std::copy(col_begin(i), col_end(i), tmp.col_begin(i));
-      tmp(m-1,i) = A[i];
+    V.reserve((nr_ + 1) * nc_);
+    for (int i = 0; i < A.size(); ++i) {
+      V.insert(V.begin() + i + (i+1) * nr_, A[i]);
     }
-    //      swap(*this, tmp);
-    swap(tmp);
+    ++nr_;
     return *this;
   }
 
@@ -885,6 +903,30 @@ namespace BOOM{
     assert(nrow()==x.size() && ncol() == y.size());
     dger(nrow(), ncol(), w, x.data(), x.stride(),
          y.data(), y.stride(), data(), nrow());
+    return *this;
+  }
+
+  Matrix & Matrix::add_outer(const Matrix &left, const Matrix &right,
+                             double coefficient) {
+    int nr = nrow();
+    int nc = ncol();
+    assert(nr == left.nrow());
+    assert(nc == right.nrow());
+    int inner_product_dimension = left.ncol();
+    assert(inner_product_dimension == right.ncol());
+    dgemm(NoTrans,    // don't transpose left
+          Trans,      // transpose right
+          nr,
+          nc,
+          inner_product_dimension,
+          coefficient,
+          left.data(),
+          nr,
+          right.data(),
+          right.nrow(),
+          1.0,
+          data(),
+          nr);
     return *this;
   }
 
