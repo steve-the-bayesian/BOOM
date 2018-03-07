@@ -18,8 +18,8 @@
 */
 #ifndef BOOM_SCALAR_LOGPOST_TF_HPP
 #define BOOM_SCALAR_LOGPOST_TF_HPP
-#include <cpputil/Ptr.hpp>
-#include <numopt.hpp>
+#include "cpputil/Ptr.hpp"
+#include "numopt.hpp"
 
 namespace BOOM{
   class LoglikeModel;

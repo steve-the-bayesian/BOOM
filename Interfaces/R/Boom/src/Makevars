@@ -1,0 +1,97 @@
+all:	libboom.a
+
+# When compiling remotely (e.g. on CRAN's winbuilder) flags to be
+# passed to make can be specified here.
+# -k:  keep going
+# -j 8: use 8 threads
+# MAKEFLAGS=" -k -j 8 "
+
+PKG_CFLAGS = -DADD_ -DR_NO_REMAP
+PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DNO_BOOST_THREADS -DNO_BOOST_FILESYSTEM -DADD_ -DRLANGUAGE
+
+############################################################################
+# Begin the list of all the BOOM source files.
+
+BART_SRCS := $(wildcard Models/Bart/*.cpp) \
+	  $(wildcard Models/Bart/PosteriorSamplers/*.cpp)
+
+DISTRIBUTION_SRCS := $(wildcard distributions/*.cpp)
+
+GLM_SRCS := $(wildcard Models/Glm/*.cpp Models/Glm/PosteriorSamplers/*.cpp)
+
+HIERARCHICAL_SRCS := $(wildcard Models/Hierarchical/*.cpp) \
+		  $(wildcard Models/Hierarchical/PosteriorSamplers/*.cpp)
+
+HMM_SRCS := $(wildcard Models/HMM/*.cpp) \
+	 $(wildcard Models/HMM/Clickstream/*.cpp) \
+	 $(wildcard Models/HMM/Clickstream/PosteriorSamplers/*.cpp) \
+	 $(wildcard Models/HMM/PosteriorSamplers/*.cpp)
+
+R_INTERFACE_SRCS := $(wildcard *.cpp)
+
+IRT_SRCS := $(wildcard Models/IRT/*.cpp)
+
+LINALG_SRCS := $(wildcard LinAlg/*.cpp)
+
+MATH_SRCS := $(wildcard math/cephes/*.cpp) \
+	     $(wildcard math/*.cpp)
+
+MIXTURE_SRCS := $(wildcard Models/Mixtures/*.cpp) \
+	     $(wildcard Models/Mixtures/PosteriorSamplers/*.cpp)
+
+MODELS_SRCS := $(wildcard Models/*.cpp Models/Policies/*.cpp) \
+	    $(wildcard Models/PosteriorSamplers/*.cpp)
+
+NUMOPT_SRCS := $(wildcard numopt/*.cpp)
+
+POINTPROCESS_SRCS := $(wildcard Models/PointProcess/*.cpp) \
+		  $(wildcard Models/PointProcess/PosteriorSamplers/*.cpp)
+
+RMATH_SRCS := $(wildcard Bmath/*.cpp)
+
+SAMPLERS_SRCS := $(wildcard Samplers/*.cpp Samplers/Gilks/*.cpp)
+
+STATESPACE_SRCS := $(wildcard Models/StateSpace/*.cpp) \
+	$(wildcard Models/StateSpace/Filters/*.cpp) \
+	$(wildcard Models/StateSpace/PosteriorSamplers/*.cpp) \
+	$(wildcard Models/StateSpace/StateModels/*.cpp)
+
+STATS_SRCS := $(wildcard stats/*.cpp)
+
+TARGETFUN_SRCS := $(wildcard TargetFun/*.cpp)
+
+TIMESERIES_SRCS := $(wildcard Models/TimeSeries/*.cpp) \
+		$(wildcard Models/TimeSeries/PosteriorSamplers/*.cpp)
+
+UTIL_SRCS := $(wildcard cpputil/*.cpp)
+
+CXX_SRCS = ${BART_SRCS} \
+	${DISTRIBUTION_SRCS} \
+	${GLM_SRCS} \
+	${HIERARCHICAL_SRCS} \
+	${HMM_SRCS} \
+	${IRT_SRCS} \
+	${LINALG_SRCS} \
+	${MATH_SRCS} \
+	${MIXTURE_SRCS} \
+	${MODELS_SRCS} \
+	${NUMOPT_SRCS} \
+	${POINTPROCESS_SRCS} \
+        ${R_INTERFACE_SRCS} \
+	${RMATH_SRCS} \
+	${SAMPLERS_SRCS} \
+	${STATS_SRCS} \
+	${STATESPACE_SRCS} \
+	${TARGETFUN_SRCS} \
+	${TIMESERIES_SRCS} \
+	${UTIL_SRCS}
+
+CXX_STD = CXX11
+
+OBJECTS = ${CXX_SRCS:.cpp=.o}
+
+# End list of BOOM source files
+############################################################################
+
+libboom.a: ${OBJECTS}
+	   ${AR} rc $@ $^

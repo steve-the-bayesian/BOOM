@@ -19,8 +19,8 @@
 #ifndef BOOM_SLICE_SAMPLER_HPP
 #define BOOM_SLICE_SAMPLER_HPP
 
-#include <Samplers/Sampler.hpp>
-#include <LinAlg/Vector.hpp>
+#include "Samplers/Sampler.hpp"
+#include "LinAlg/Vector.hpp"
 #include <functional>
 
 namespace BOOM{

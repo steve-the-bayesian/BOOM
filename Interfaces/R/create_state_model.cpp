@@ -3,41 +3,41 @@
 
 #include <r_interface/create_state_model.hpp>
 #include <string>
-#include <cpputil/report_error.hpp>
-#include <cpputil/Date.hpp>
+#include "cpputil/report_error.hpp"
+#include "cpputil/Date.hpp"
 
 #include <r_interface/boom_r_tools.hpp>
 #include <r_interface/list_io.hpp>
 #include <r_interface/prior_specification.hpp>
 
-#include <Models/ChisqModel.hpp>
-#include <Models/GaussianModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/PosteriorSamplers/FixedSpdSampler.hpp>
-#include <Models/PosteriorSamplers/FixedUnivariateSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/IndependentMvnVarSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp>
+#include "Models/ChisqModel.hpp"
+#include "Models/GaussianModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/PosteriorSamplers/FixedSpdSampler.hpp"
+#include "Models/PosteriorSamplers/FixedUnivariateSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
-#include <Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp>
-#include <Models/StateSpace/StateModels/ArStateModel.hpp>
-#include <Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp>
-#include <Models/StateSpace/StateModels/Holiday.hpp>
-#include <Models/StateSpace/StateModels/LocalLevelStateModel.hpp>
-#include <Models/StateSpace/StateModels/LocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/SemilocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp>
-#include <Models/StateSpace/StateModels/SeasonalStateModel.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/TrigStateModel.hpp>
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
+#include "Models/StateSpace/StateModels/ArStateModel.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
+#include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp"
+#include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/NonzeroMeanAr1Sampler.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp>
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/NonzeroMeanAr1Sampler.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp"
 
 namespace BOOM{
   namespace RInterface{

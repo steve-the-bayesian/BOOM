@@ -20,9 +20,9 @@
 #ifndef BOOM_UNIVARIATE_LANGEVIN_SAMPLER_HPP_
 #define BOOM_UNIVARIATE_LANGEVIN_SAMPLER_HPP_
 
-#include <Samplers/Sampler.hpp>
-#include <Samplers/ScalarLangevinSampler.hpp>
-#include <LinAlg/Vector.hpp>
+#include "Samplers/Sampler.hpp"
+#include "Samplers/ScalarLangevinSampler.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
 

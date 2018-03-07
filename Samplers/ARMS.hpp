@@ -16,11 +16,11 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Samplers/Sampler.hpp>
-#include <cpputil/Ptr.hpp>
+#include "Samplers/Sampler.hpp"
+#include "cpputil/Ptr.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <numopt.hpp>
+#include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
 
 namespace BOOM{
 

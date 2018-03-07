@@ -19,8 +19,8 @@
 
 #ifndef BOOM_SCALAR_SLICE_SAMPLER_HPP
 #define BOOM_SCALAR_SLICE_SAMPLER_HPP
-#include <Samplers/Sampler.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Samplers/Sampler.hpp"
+#include "TargetFun/TargetFun.hpp"
 #include <iosfwd>
 #include <functional>
 namespace BOOM{

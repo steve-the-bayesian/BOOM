@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <TargetFun/TargetFun.hpp>
+#include "TargetFun/TargetFun.hpp"
 #include <cmath>
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/report_error.hpp"
 #include <functional>
 
 namespace BOOM {

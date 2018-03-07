@@ -17,13 +17,13 @@
 */
 
 #include <algorithm>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
-#include <Models/PointProcess/WeeklyCyclePoissonProcess.hpp>
-#include <Models/PointProcess/PosteriorSamplers/HomogeneousPoissonProcessPosteriorSampler.hpp>
-#include <Models/PointProcess/PosteriorSamplers/WeeklyCyclePoissonProcessSampler.hpp>
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
+#include "Models/PointProcess/WeeklyCyclePoissonProcess.hpp"
+#include "Models/PointProcess/PosteriorSamplers/HomogeneousPoissonProcessPosteriorSampler.hpp"
+#include "Models/PointProcess/PosteriorSamplers/WeeklyCyclePoissonProcessSampler.hpp"
 
 #include <r_interface/prior_specification.hpp>
 #include <r_interface/boom_r_tools.hpp>

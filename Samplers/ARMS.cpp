@@ -16,15 +16,15 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Samplers/ARMS.hpp>
-#include <Samplers/Gilks/arms.hpp>
+#include "Samplers/ARMS.hpp"
+#include "Samplers/Gilks/arms.hpp"
 #include <sstream>
 #include <stdexcept>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <cstdlib>
 #include <limits>
-#include <numopt.hpp>
+#include "numopt.hpp"
 
 namespace BOOM{
 

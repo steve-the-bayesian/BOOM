@@ -19,9 +19,9 @@
 #ifndef BOOM_MH_PROPOSALS_HPP
 #define BOOM_MH_PROPOSALS_HPP
 
-#include <Samplers/Sampler.hpp>
-#include <cpputil/Ptr.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "Samplers/Sampler.hpp"
+#include "cpputil/Ptr.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM{
   // ======================================================================

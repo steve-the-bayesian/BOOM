@@ -22,7 +22,7 @@
 
 #include <functional>
 #include <cstdint>
-#include <Samplers/DirectProposal.hpp>
+#include "Samplers/DirectProposal.hpp"
 
 namespace BOOM {
 

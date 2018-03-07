@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include <r_interface/determine_nthreads.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 #ifdef NO_BOOST_THREADS
 namespace BOOM {

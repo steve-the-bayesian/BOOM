@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Samplers/ScalarAdaptiveRejectionSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/lse.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Samplers/ScalarAdaptiveRejectionSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/lse.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
