@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -404,7 +405,7 @@ namespace BOOM {
       // Re-compute sufficient statistics based on the current values
       // of the residuals assigned to this node.
       //
-      // TODO(stevescott): Check whether this is a bottleneck, and if
+      // TODO: Check whether this is a bottleneck, and if
       // so whether it can be made more efficient using an
       // "is_current" observer.
       const SufficientStatisticsBase & compute_suf();
@@ -713,7 +714,7 @@ namespace BOOM {
     // split).  If no such tree exists, then NULL is returned.
     Bart::Tree *random_stump(RNG &rng);
 
-    // TODO(stevescott): Consider maintaining this in the class
+    // TODO: Consider maintaining this in the class
     // instead of recomputing it.
     GaussianSuf mean_effect_sufstats() const;
 

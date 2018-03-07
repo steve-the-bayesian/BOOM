@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_POISSON_BART_HPP_
 #define BOOM_POISSON_BART_HPP_
 
-// This code is untested.  TODO(stevescott):  test it.
+// This code is untested.  TODO:  test it.
 
 #include <Models/Bart/Bart.hpp>
 #include <Models/Glm/PoissonRegressionData.hpp>

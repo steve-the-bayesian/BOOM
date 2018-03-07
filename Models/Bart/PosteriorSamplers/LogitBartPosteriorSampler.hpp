@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -51,10 +52,6 @@ namespace BOOM {
 
       double information_weighted_sum() const {
         return information_weighted_sum_; }
-      double information_weighted_residual_sum() const {
-        return information_weighted_sum_
-            - prediction_ * sum_of_information_;
-      }
       double sum_of_information() const {
         return sum_of_information_;
       }
