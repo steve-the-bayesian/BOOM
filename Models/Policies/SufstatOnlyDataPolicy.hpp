@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -17,7 +18,7 @@
 */
 #ifndef BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP
 #define BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP
-namesapce BOOM{
+namespace BOOM{
 
   template<class D, class SUF>
       class SufstatOnlyDataPolicy
