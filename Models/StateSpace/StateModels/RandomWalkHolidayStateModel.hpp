@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -27,7 +28,7 @@
 
 namespace BOOM {
 
-  // TODO(stevescott): Need a new class of HolidayStateModel that
+  // TODO(user): Need a new class of HolidayStateModel that
   // adjusts when floating holidays occur on weekends.
 
   // A RandomWalkHolidayStateModel assumes the holiday will produce an
@@ -76,6 +77,14 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
     SparseVector observation_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
+
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
     void update_complete_data_sufficient_statistics(
@@ -88,7 +97,7 @@ namespace BOOM {
     void set_time_zero(const Date &time_zero);
 
    private:
-    // TODO(stevescott): Make this a unique_ptr once available.
+    // TODO(user): Make this a unique_ptr once available.
     std::shared_ptr<Holiday> holiday_;
     Date time_zero_;
     Vector initial_state_mean_;

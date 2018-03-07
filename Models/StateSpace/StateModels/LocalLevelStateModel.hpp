@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
 #define BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
 /*
@@ -46,6 +47,13 @@ namespace BOOM{
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
     SparseVector observation_matrix(int t)const override;
+
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     Vector initial_state_mean()const override;
     SpdMatrix initial_state_variance()const override;

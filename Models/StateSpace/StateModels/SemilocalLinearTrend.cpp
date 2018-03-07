@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -46,6 +47,20 @@ namespace BOOM{
     lhs[0] = rhs[0] + rhs[1];
     lhs[1] = phi * rhs[1] + (1-phi) * rhs[2];
     lhs[2] = rhs[2];
+  }
+
+  void LMAT::multiply_and_add(VectorView lhs,
+                              const ConstVectorView &rhs) const {
+    if (lhs.size() != 3) {
+      report_error("lhs is the wrong size in LMAT::multiply");
+    }
+    if (rhs.size() != 3) {
+      report_error("rhs is the wrong size in LMAT::multiply");
+    }
+    double phi = phi_->value();
+    lhs[0] += rhs[0] + rhs[1];
+    lhs[1] += phi * rhs[1] + (1-phi) * rhs[2];
+    lhs[2] += rhs[2];
   }
 
   void LMAT::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
@@ -127,6 +142,10 @@ namespace BOOM{
         state_transition_matrix_(new LMAT(slope_->Phi_prm())),
         state_variance_matrix_(new UpperLeftDiagonalMatrix(
             get_variances(), 3)),
+        state_error_expander_(new ZeroPaddedIdentityMatrix(
+            3, 2)),
+        state_error_variance_(new UpperLeftDiagonalMatrix(
+            get_variances(), 2)),
         initial_level_mean_(rhs.initial_level_mean_),
         initial_slope_mean_(rhs.initial_slope_mean_),
         initial_state_variance_(rhs.initial_state_variance_)

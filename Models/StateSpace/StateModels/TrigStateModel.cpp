@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -40,6 +41,20 @@ namespace BOOM {
     }
     set_mu(Vector(state_dimension(), 0));
   }
+
+  TrigStateModel::TrigStateModel(const TrigStateModel &rhs)
+      : Model(rhs),
+        StateModel(rhs),
+        IndependentMvnModel(rhs),
+        period_(rhs.period_),
+        frequencies_(rhs.frequencies_),
+        state_transition_matrix_(new IdentityMatrix(state_dimension())),
+        state_variance_matrix_(
+            new DiagonalMatrixBlockVectorParamView(
+                Sigsq_prm())),
+        initial_state_mean_(rhs.initial_state_mean_),
+        initial_state_variance_(rhs.initial_state_variance_)
+  {}
 
   TrigStateModel * TrigStateModel::clone() const {
     return new TrigStateModel(*this);

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -38,7 +39,8 @@ namespace BOOM{
   LLSM::LocalLevelStateModel(const LocalLevelStateModel &rhs)
       : Model(rhs),
         StateModel(rhs),
-        state_transition_matrix_(rhs.state_transition_matrix_),
+        ZeroMeanGaussianModel(rhs),
+        state_transition_matrix_(new IdentityMatrix(1)),
         state_variance_matrix_(
             new ConstantMatrixParamView(1, Sigsq_prm())),
         initial_state_mean_(rhs.initial_state_mean_),
@@ -66,7 +68,7 @@ namespace BOOM{
   void LLSM::simulate_initial_state(RNG &rng, VectorView eta) const {
     eta[0] = rnorm_mt(rng,
                       initial_state_mean_[0],
-                      sqrt(initial_state_variance_(0,0)));
+                      sqrt(initial_state_variance_(0, 0)));
   }
 
   Ptr<SparseMatrixBlock> LLSM::state_transition_matrix(int) const {
@@ -113,7 +115,7 @@ namespace BOOM{
   }
 
   void LLSM::set_initial_state_variance(double v){
-    initial_state_variance_(0,0) = v;
+    initial_state_variance_(0, 0) = v;
   }
 
   void LLSM::update_complete_data_sufficient_statistics(

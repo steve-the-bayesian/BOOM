@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -18,26 +19,27 @@
 
 #include <Models/StateSpace/StateModels/RegressionStateModel.hpp>
 
-namespace BOOM{
+namespace BOOM {
 
   RegressionStateModel::RegressionStateModel(const Ptr<RegressionModel> &rm)
-      : reg_(rm),
+      : regression_(rm),
         transition_matrix_(new IdentityMatrix(1)),
         error_variance_(new ZeroMatrix(1)),
         state_error_expander_(new EmptyMatrix),
         state_error_variance_(new EmptyMatrix)
   {}
 
-  // The copy constructor copies pointers to private data.  Only reg_
+  // The copy constructor copies pointers to private data.  Only regression_
   // is controversial, as all the others are the same across all
   // classes.  They could easily be static members.
   RegressionStateModel::RegressionStateModel(const RegressionStateModel &rhs)
       : StateModel(rhs),
-        reg_(rhs.reg_),
-        transition_matrix_(rhs.transition_matrix_),
-        error_variance_(rhs.error_variance_),
-        state_error_expander_(rhs.state_error_expander_),
-        state_error_variance_(rhs.state_error_variance_)
+        regression_(rhs.regression_->clone()),
+        transition_matrix_(rhs.transition_matrix_->clone()),
+        error_variance_(rhs.error_variance_->clone()),
+        state_error_expander_(rhs.state_error_expander_->clone()),
+        state_error_variance_(rhs.state_error_variance_->clone()),
+        predictors_(rhs.predictors_)
   {}
 
   RegressionStateModel * RegressionStateModel::clone() const {
@@ -45,7 +47,7 @@ namespace BOOM{
   }
 
   void RegressionStateModel::clear_data(){
-    reg_->suf()->clear();
+    regression_->suf()->clear();
   }
 
   // This function is a no-op.  The responsibility for observing state
@@ -88,10 +90,19 @@ namespace BOOM{
   }
 
   SparseVector RegressionStateModel::observation_matrix(int t) const {
-    double eta = reg_->predict(reg_->dat()[t]->x());
+    ConstVectorView x(predictors_.empty()
+                      ? ConstVectorView(regression_->dat()[t]->x())
+                      : predictors_[t].row(0));
     SparseVector ans(1);
-    ans[0] = eta;
+    ans[0] = regression_->predict(x);
     return ans;
+  }
+
+  Ptr<SparseMatrixBlock>
+  RegressionStateModel::dynamic_intercept_regression_observation_coefficients(
+      int t, const StateSpace::MultiplexedData &data_point) const {
+    return new DenseMatrix(Matrix(data_point.total_sample_size(), 1,
+                                  regression_->coef().predict(predictors_[t])));
   }
 
   Vector RegressionStateModel::initial_state_mean() const {
@@ -101,4 +112,20 @@ namespace BOOM{
   SpdMatrix RegressionStateModel::initial_state_variance() const{
     return SpdMatrix(1, 0.0);
   }
-}
+
+  void RegressionStateModel::add_predictor_data(
+      const std::vector<Matrix> &predictors) {
+    if (!regression_) {
+      report_error("Set the regression model first, before adding data.");
+    }
+    predictors_.reserve(predictors_.size() + predictors.size());
+    for (int i = 0; i < predictors.size(); ++i) {
+      if (predictors[i].ncol() != regression_->xdim()) {
+        report_error("The number of columns in predictor matrix does not match "
+                     "the dimension of regression model.");
+      }
+      predictors_.push_back(predictors[i]);
+    }
+  }
+
+}  // namespace BOOM

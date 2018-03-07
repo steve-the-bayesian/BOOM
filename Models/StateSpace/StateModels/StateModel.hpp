@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_STATE_SPACE_STATE_MODEL_HPP
 #define BOOM_STATE_SPACE_STATE_MODEL_HPP
 /*
@@ -22,10 +23,10 @@
 #include <LinAlg/VectorView.hpp>
 #include <Models/StateSpace/Filters/SparseVector.hpp>
 #include <Models/StateSpace/Filters/SparseMatrix.hpp>
+#include <Models/StateSpace/MultiplexedData.hpp>
 #include <uint.hpp>
 
-namespace BOOM{
-
+namespace BOOM {
   // A StateModel describes the propogation rules for one component of
   // state in a StateSpaceModel.  A StateModel has a transition matrix
   // T, which can be time dependent, an error variance Q, which may be
@@ -42,7 +43,7 @@ namespace BOOM{
     // be used as an argument to determine whether they should be
     // viewed as normal mixtures, or as plain old non-normal marginal
     // models.
-    enum Behavior{
+    enum Behavior {
       MARGINAL, // e.g. treat the t-distribution like the t-distribution.
       MIXTURE   // e.g. treat the t-distribution like a normal mixture.
     };
@@ -123,11 +124,25 @@ namespace BOOM{
     // and columns.  This is Durbin and Koopman's Q_t matrix.
     virtual Ptr<SparseMatrixBlock> state_error_variance(int t) const = 0;
 
-    //  For now, limit models to have constant observation matrices.
-    //  This will prevent true DLM's with coefficients in the Kalman
-    //  filter, because this is where the x's would go, but we'll need
-    //  a different API for that case anyway.
+    // State models can have different notions of observation coefficients
+    // depending on the type of model that owns them.  Each state space model
+    // must know which function to call to get the right observation matrix,
+    // observation coefficients, etc.
+
+    // Observation coefficients for a ScalarStateModel(Base).
     virtual SparseVector observation_matrix(int t) const = 0;
+
+    // Observation coefficients for a dynamic intercept regression model.
+    // Args:
+    //   t:  The time point for which coefficients are desired.
+    //   data_point:  The data point managed by the model at time t.
+    // Returns:
+    //   The return value is a sparse number_of_observations X state_dimension
+    //   matrix.  When multiplied by the state it gives the expected value for
+    //   each of the observations at time t.
+    virtual Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const = 0;
 
     virtual Vector initial_state_mean()const = 0;
     virtual SpdMatrix initial_state_variance()const = 0;
@@ -145,8 +160,7 @@ namespace BOOM{
     // (instead of simply conditionally Gaussian), the default
     // behavior for these member functions is a no-op.
     virtual void set_behavior(Behavior) {}
-
   };
-}
+}  // namespace BOOM
 
 #endif// BOOM_STATE_SPACE_STATE_MODEL_HPP

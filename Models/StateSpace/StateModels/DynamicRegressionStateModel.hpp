@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -30,7 +31,7 @@
 #include <LinAlg/VectorView.hpp>
 #include <LinAlg/SpdMatrix.hpp>
 
-namespace BOOM{
+namespace BOOM {
   // A dynamic regression state is an element of state parameterized
   // by a set of time varying regression coefficients.
   //
@@ -62,9 +63,14 @@ namespace BOOM{
         public PriorPolicy
   {
    public:
-    // Each row of X is a predictor vector for an observation.
-    // I.e. rows of X correspond to time points.
+    // Each row of X is a predictor vector for an observation.  This constructor
+    // assumes a single observation for each time point.
     DynamicRegressionStateModel(const Matrix &X);
+
+    // Each element of 'predictors' is the set of time points for that time
+    // period.
+    DynamicRegressionStateModel(const std::vector<Matrix> &predictors);
+
     DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs);
     DynamicRegressionStateModel * clone()const override;
 
@@ -80,6 +86,7 @@ namespace BOOM{
     uint state_error_dimension() const override {
       return state_dimension();
     }
+    uint xdim() const {return state_dimension();}
 
     void update_complete_data_sufficient_statistics(
         int t,
@@ -95,6 +102,10 @@ namespace BOOM{
 
     // The observation matrix is row t of the desing matrix.
     SparseVector observation_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override;
 
     // The initial state is the value of the regression coefficients
     // at time 0.  Zero with a big variance is a good guess.
@@ -113,6 +124,7 @@ namespace BOOM{
     const Ptr<UnivParams> Sigsq_prm(int i) const;
 
     void add_forecast_data(const Matrix &predictors);
+    void add_multiplexed_forecast_data(const std::vector<Matrix> &predictors);
 
     void increment_expected_gradient(
         VectorView gradient,
@@ -123,6 +135,22 @@ namespace BOOM{
    private:
     void check_size(int n) const;
 
+    // Args:
+    //   predictors: A collector of predictor matrices.
+    // Returns:
+    //   If all matrices are either empty or have the same number of columns,
+    //   then the number of columns is returned.  An exception is thrown if
+    //   there is not at least one matrix that contains data, or if any two
+    //   non-empty matrices have different numbers of columns.
+    int check_columns(const std::vector<Matrix> &predictors) const;
+
+    // To be called during construction.  Fills the predictor_variance_ vector.
+    void compute_predictor_variance();
+
+    // To be called during construction.  Constructs the
+    // coefficient_transition_model_ vector and the transition_variance_matrix_.
+    void setup_models_and_transition_variance_matrix();
+
     uint xdim_;
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
@@ -130,15 +158,23 @@ namespace BOOM{
 
     // Each model is the prior for the differences in regression
     // coefficients.
-    std::vector<Ptr<ZeroMeanGaussianModel> > coefficient_transition_model_;
+    std::vector<Ptr<ZeroMeanGaussianModel>> coefficient_transition_model_;
 
-    // Each column of X is a time point, so it is the transpose of the
-    // constructor argument.  X should not contain an intercept.
-    std::vector<SparseVector> X_;
+    // Predictor variables for use with scalar, non-multiplexed state space
+    // models.
+    std::vector<SparseVector> sparse_predictor_vectors_;
+
+    // Predictor variables for use with multiplexed data.
+    std::vector<Ptr<DenseMatrix>> sparse_predictor_matrices_;
+
+    // Each element of predictor_variance_ contains the sample variance (across
+    // observations) of the corresponding predictor variable.
     Vector predictor_variance_;
 
     Ptr<IdentityMatrix> transition_matrix_;
     Ptr<UpperLeftDiagonalMatrix> transition_variance_matrix_;
   };
-}
+
+}  // namespace BOOM
+
 #endif //  BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_

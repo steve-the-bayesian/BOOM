@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008-2011 Steven L. Scott
 
@@ -20,14 +21,15 @@
 #include <distributions.hpp>
 #include <cpputil/math_utils.hpp>
 
-namespace BOOM{
+namespace BOOM {
+  namespace {
+    typedef SeasonalStateModelBase SSMB;
+    typedef SeasonalStateModel SSM;
+  }
 
-  typedef SeasonalStateModel SSM;
-  SSM::SeasonalStateModel(int nseasons, int season_duration)
+  SSMB::SeasonalStateModelBase(int nseasons)
       : ZeroMeanGaussianModel(1.0),  // initial value for sigsq
         nseasons_(nseasons),
-        duration_(season_duration),
-        time_of_first_observation_(0),
         T0_(new SeasonalStateSpaceMatrix(nseasons)),
         RQR0_(new UpperLeftCornerMatrixParamView(
             state_dimension(), Sigsq_prm())),
@@ -41,29 +43,25 @@ namespace BOOM{
         initial_state_mean_(state_dimension(), 0.0),
         initial_state_variance_(0)
   {
-    if(nseasons_ <= 0 || duration_ <= 0){
+    if (nseasons_ <= 0) {
       ostringstream err;
-      err << "'nseasons' and 'season_duration' must both be positive in "
-          << "constructor for SeasonalStateModel" << endl
-          << "nseasons = " << nseasons_ << endl
-          << "season_duration = " << duration_ << endl
-          ;
+      err << "'nseasons' must be positive in "
+          << "constructor for SeasonalStateModelBase" << endl
+          << "nseasons = " << nseasons_ << endl;
       report_error(err.str());
     }
     this->only_keep_sufstats(true);
   }
 
-  SSM::SeasonalStateModel(const SeasonalStateModel &rhs)
+  SSMB::SeasonalStateModelBase(const SeasonalStateModelBase &rhs)
       : ZeroMeanGaussianModel(rhs),
         nseasons_(rhs.nseasons_),
-        duration_(rhs.duration_),
-        time_of_first_observation_(rhs.time_of_first_observation_),
-        T0_(rhs.T0_),
+        T0_(rhs.T0_->clone()),
         RQR0_(rhs.RQR0_->clone()),
         state_error_variance_at_new_season_(
             rhs.state_error_variance_at_new_season_->clone()),
-        T1_(rhs.T1_),
-        RQR1_(rhs.RQR1_),
+        T1_(rhs.T1_->clone()),
+        RQR1_(rhs.RQR1_->clone()),
         state_error_variance_in_season_interior_(
             rhs.state_error_variance_in_season_interior_->clone()),
         state_error_expander_(
@@ -74,24 +72,12 @@ namespace BOOM{
     this->only_keep_sufstats(true);
   }
 
-  SSM * SSM::clone()const{return new SSM(*this);}
 
-  bool SSM::new_season(int t)const{
-    t -= time_of_first_observation_;
-    if (t < 0) {
-      // If t is negative then move an integer number of full seasons
-      // into the future.  Because t is negative, _subtracting_ t *
-      // duration_ will move us |t| cycles into the future.
-      t -= duration_ * t;
-    }
-    return ((t % duration_) == 0);
-  }
-
-  void SSM::observe_state(const ConstVectorView then,
+  void SSMB::observe_state(const ConstVectorView then,
                           const ConstVectorView now,
-                          int t){
-    if(new_season(t)){
-      if(then.size() != now.size() || then.size() != state_dimension()){
+                          int t) {
+    if (new_season(t)) {
+      if (then.size() != now.size() || then.size() != state_dimension()) {
         report_error("wrong size vector given to "
                      "SeasonalStateModel::observe_state");
       }
@@ -101,21 +87,21 @@ namespace BOOM{
     }
   }
 
-  Ptr<SparseMatrixBlock> SSM::state_transition_matrix(int t)const{
-    if(new_season(t+1)) return T0_;
+  Ptr<SparseMatrixBlock> SSMB::state_transition_matrix(int t) const {
+    if (new_season(t+1)) return T0_;
     return T1_;
   }
 
-  Ptr<SparseMatrixBlock> SSM::state_variance_matrix(int t)const{
-    if(new_season(t+1)) return RQR0_;
+  Ptr<SparseMatrixBlock> SSMB::state_variance_matrix(int t) const {
+    if (new_season(t+1)) return RQR0_;
     return RQR1_;
   }
 
-  Ptr<SparseMatrixBlock> SSM::state_error_expander(int t) const {
+  Ptr<SparseMatrixBlock> SSMB::state_error_expander(int t) const {
     return state_error_expander_;
   }
 
-  Ptr<SparseMatrixBlock> SSM::state_error_variance(int t) const {
+  Ptr<SparseMatrixBlock> SSMB::state_error_variance(int t) const {
     if (new_season(t + 1)) {
       return state_error_variance_at_new_season_;
     } else {
@@ -123,46 +109,43 @@ namespace BOOM{
     }
   }
 
-  uint SSM::state_dimension()const{
+  uint SSMB::state_dimension() const {
     return nseasons_ - 1;
   }
 
-  void SSM::simulate_state_error(RNG &rng, VectorView state_error, int t)const{
-    if(initial_state_mean_.size() != state_dimension()
-       || initial_state_variance_.nrow() != state_dimension()){
+  void SSMB::simulate_state_error(RNG &rng,
+                                  VectorView state_error,
+                                  int t) const {
+    if (initial_state_mean_.size() != state_dimension()
+       || initial_state_variance_.nrow() != state_dimension()) {
       ostringstream err;
       err << "initial state mean and/or variance not properly set in "
           << "seasonal_state_model" << endl
           << "required dimension: " << state_dimension() << endl
           << "length(mean)      : " << length(initial_state_mean_) << endl
-          << "nrow(variance)    : " << nrow(initial_state_variance_) << endl
-          ;
+          << "nrow(variance)    : " << nrow(initial_state_variance_) << endl;
       report_error(err.str());
     }
     state_error = 0;
     assert(state_error.size() == state_dimension());
-    if(new_season(t+1)){
+    if (new_season(t+1)) {
       // If next time period is the start of a new season, then an
       // update is needed.  Otherwise, the state error is zero.
       state_error[0] = rnorm_mt(rng, 0, sigma());
     }
   }
 
-  SparseVector SSM::observation_matrix(int)const{
+  SparseVector SSMB::observation_matrix(int) const {
     SparseVector ans(state_dimension());
     ans[0] = 1;
     return ans;
   }
 
-  void SSM::set_time_of_first_observation(int t){
-    time_of_first_observation_ = t;
-  }
-
-  Vector SSM::initial_state_mean()const{
+  Vector SSMB::initial_state_mean() const {
     return initial_state_mean_;}
 
-  SpdMatrix SSM::initial_state_variance()const{
-    if(initial_state_variance_.nrow() != state_dimension()){
+  SpdMatrix SSMB::initial_state_variance() const {
+    if (initial_state_variance_.nrow() != state_dimension()) {
       ostringstream err;
       err << "The initial state variance has the wrong size in "
           << "SeasonalStateModel.  " << endl
@@ -172,8 +155,8 @@ namespace BOOM{
     }
     return initial_state_variance_;}
 
-  void SSM::set_initial_state_mean(const Vector &mu){
-    if(mu.size() != state_dimension()){
+  void SSMB::set_initial_state_mean(const Vector &mu) {
+    if (mu.size() != state_dimension()) {
       ostringstream err;
       err << "wrong size arugment passed to "
           << "SeasonalStateModel::set_initial_state_mean"
@@ -186,25 +169,25 @@ namespace BOOM{
     }
     initial_state_mean_ = mu;}
 
-  void SSM::set_initial_state_variance(const SpdMatrix &v){
-    if(ncol(v) != state_dimension()){
+  void SSMB::set_initial_state_variance(const SpdMatrix &Sigma) {
+    if (ncol(Sigma) != state_dimension()) {
       ostringstream err;
       err << "wrong size arugment passed to "
           << "SeasonalStateModel::set_initial_state_variance"
           << endl
           << "state dimension is " << state_dimension()
           << endl
-          << "argument dimension is " << ncol(v)
+          << "argument dimension is " << ncol(Sigma)
           << endl;
       report_error(err.str());
     }
-    initial_state_variance_ = v;}
+    initial_state_variance_ = Sigma;}
 
-  void SSM::set_initial_state_variance(double sigsq){
+  void SSMB::set_initial_state_variance(double sigsq) {
     SpdMatrix v(state_dimension(), sigsq);
     initial_state_variance_ = v;}
 
-  void SSM::update_complete_data_sufficient_statistics(
+  void SSMB::update_complete_data_sufficient_statistics(
       int t,
       const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
@@ -221,7 +204,7 @@ namespace BOOM{
     }
   }
 
-  void SSM::increment_expected_gradient(
+  void SSMB::increment_expected_gradient(
       VectorView gradient,
       int t,
       const ConstVectorView &state_error_mean,
@@ -239,6 +222,30 @@ namespace BOOM{
       double sigsq = ZeroMeanGaussianModel::sigsq();
       gradient[0] += (-.5 /sigsq) + .5 * (var + mean * mean) / (sigsq * sigsq);
     }
+  }
+
+  //======================================================================
+  SSM::SeasonalStateModel(int nseasons, int season_duration)
+      : SeasonalStateModelBase(nseasons),
+        duration_(season_duration),
+        time_of_first_observation_(0)
+  {}
+
+  SSM * SSM::clone() const {return new SSM(*this);}
+
+  void SSM::set_time_of_first_observation(int t0) {
+    time_of_first_observation_ = t0;
+  }
+
+  bool SSM::new_season(int t) const {
+    t -= time_of_first_observation_;
+    if (t < 0) {
+      // If t is negative then move an integer number of full seasons
+      // into the future.  Because t is negative, _subtracting_ t *
+      // duration_ will move us |t| cycles into the future.
+      t -= duration_ * t;
+    }
+    return ((t % duration_) == 0);
   }
 
 }  // namespace BOOM

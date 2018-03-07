@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -56,9 +57,9 @@ namespace BOOM {
         PriorPolicy(rhs),
         StateModel(rhs),
         observation_matrix_(rhs.observation_matrix_),
-        state_transition_matrix_(rhs.state_transition_matrix_),
+        state_transition_matrix_(new LocalLinearTrendMatrix),
         state_variance_matrix_(rhs.state_variance_matrix_->clone()),
-        state_error_expander_(rhs.state_error_expander_),
+        state_error_expander_(rhs.state_error_expander_->clone()),
         initial_state_mean_(rhs.initial_state_mean_),
         initial_state_variance_(rhs.initial_state_variance_),
         latent_level_scale_factors_(rhs.latent_level_scale_factors_),
@@ -83,7 +84,7 @@ namespace BOOM {
       int old_size = latent_level_scale_factors_.size();
       latent_level_scale_factors_.resize(max_time);
       latent_slope_scale_factors_.resize(max_time);
-      for(int i = old_size; i < max_time; ++i){
+      for (int i = old_size; i < max_time; ++i){
         latent_slope_scale_factors_[i] = 1.0;
         latent_level_scale_factors_[i] = 1.0;
       }
@@ -156,7 +157,7 @@ namespace BOOM {
       RNG &rng, VectorView eta, int t) const {
     eta[0] = rt_mt(rng, nu_level()) * sigma_level();
     eta[1] = rt_mt(rng, nu_slope()) * sigma_slope();
-  };
+  }
 
   void SLLTSM::simulate_conditional_state_error(
       RNG &rng, VectorView eta, int t) const {
@@ -164,7 +165,7 @@ namespace BOOM {
     double slope_weight = latent_slope_scale_factors_[t];
     eta[0] = rnorm_mt(rng, 0, sigma_level() / sqrt(level_weight));
     eta[1] = rnorm_mt(rng, 0, sigma_slope() / sqrt(slope_weight));
-  };
+  }
 
   Ptr<SparseMatrixBlock> SLLTSM::state_transition_matrix(int t) const {
     return state_transition_matrix_;
@@ -217,7 +218,8 @@ namespace BOOM {
     return initial_state_mean_;
   }
 
-  void StudentLocalLinearTrendStateModel::set_initial_state_mean(const Vector &v) {
+  void StudentLocalLinearTrendStateModel::set_initial_state_mean(
+      const Vector &v) {
     initial_state_mean_ = v;
   }
 
@@ -258,7 +260,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  // Accessors for paramter values
+  // Accessors for parameter values
   double SLLTSM::sigma_level() const {
     return sqrt(sigsq_level());
   }
@@ -280,7 +282,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  // Setters for paramter values
+  // Setters for parameter values.
   void SLLTSM::set_sigma_level(double sigma){
     set_sigsq_level(sigma * sigma);
   }
@@ -330,12 +332,12 @@ namespace BOOM {
     return latent_level_scale_factors_;
   }
 
-  const Vector & StudentLocalLinearTrendStateModel::latent_slope_weights() const {
+  const Vector & SLLTSM::latent_slope_weights() const {
     return latent_slope_scale_factors_;
   }
 
-  void SLLTSM::set_behavior(
-      StateModel::Behavior behavior){
+  void SLLTSM::set_behavior(StateModel::Behavior behavior){
     behavior_ = behavior;
   }
-}
+
+}  // namespace BOOM

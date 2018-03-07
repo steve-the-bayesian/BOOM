@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008-2011 Steven L. Scott
 
@@ -22,36 +23,30 @@
 #include <Models/ZeroMeanGaussianModel.hpp>
 #include <Models/StateSpace/Filters/SparseVector.hpp>
 #include <Models/StateSpace/Filters/SparseMatrix.hpp>
+#include <cpputil/Date.hpp>
 
-namespace BOOM{
+namespace BOOM {
 
-  // StateModel for describing evolving seasonal effects.
-  class SeasonalStateModel
+  //======================================================================
+  // Shared based class for different concrete realizations of seasonal state
+  // models.
+  class SeasonalStateModelBase
       : public ZeroMeanGaussianModel,
-        public StateModel
-  {
+        public StateModel {
    public:
-    // Primary constructor.
-    // Args:
-    //   sigsq: variance of the error term at the start of a new season
-    //   nseasons: number of seasons in the model, e.g. 52 for a
-    //     week-of-year effect, or 7 for a day-of-week effect.
-    //   season_duration: length of each season.  For example, with
-    //     daily data the week-of-year effect would have
-    //     season_duration = 7.  A different class will be needed to
-    //     have a month-effect because months have different
-    //     durations.
-    SeasonalStateModel(int nseasons,
-                       int season_duration = 1);
-    SeasonalStateModel(const SeasonalStateModel &rhs);
-    SeasonalStateModel * clone() const override;
+    explicit SeasonalStateModelBase(int nseasons);
+    SeasonalStateModelBase(const SeasonalStateModelBase &rhs);
+    SeasonalStateModelBase * clone() const override = 0;
+    // returns true if t is the start of a new season.
+    virtual bool new_season(int t) const = 0;
 
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
                        int t) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override {return 1;}
-    void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
+    void simulate_state_error(
+        RNG &rng, VectorView state_error, int t) const override;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override;
@@ -59,9 +54,12 @@ namespace BOOM{
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
     SparseVector observation_matrix(int t) const override;
 
-    // If the time series does not start at t0 then you establish the
-    // time of the first observation with this function.
-    void set_time_of_first_observation(int t0);
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &mu);
@@ -71,9 +69,6 @@ namespace BOOM{
     // Sets all diagonal elements of Sigma to sigsq and all
     // off-diagaonal elements to zero.
     void set_initial_state_variance(double sigsq);
-
-    // returns true if t is the start of a new season.
-    bool new_season(int t)const;
 
     void update_complete_data_sufficient_statistics(
         int t,
@@ -87,9 +82,7 @@ namespace BOOM{
         const ConstSubMatrix &state_error_variance) override;
 
    private:
-    uint nseasons_;
-    uint duration_;
-    int time_of_first_observation_;
+    int nseasons_;
 
     // Model matrices at the start of a new season
     Ptr<SeasonalStateSpaceMatrix> T0_;
@@ -112,6 +105,58 @@ namespace BOOM{
     // contribution to y[t] is s[t] (i.e. Z = (1,0,0,0,...)  )
   };
 
-}
+  //======================================================================
+  // StateModel for describing evolving seasonal effects.
+  class SeasonalStateModel : public SeasonalStateModelBase {
+   public:
+    // Primary constructor.
+    // Args:
+    //   sigsq: variance of the error term at the start of a new season
+    //   nseasons: number of seasons in the model, e.g. 52 for a
+    //     week-of-year effect, or 7 for a day-of-week effect.
+    //   season_duration: length of each season.  For example, with
+    //     daily data the week-of-year effect would have
+    //     season_duration = 7.  A different class will be needed to
+    //     have a month-effect because months have different
+    //     durations.
+    explicit SeasonalStateModel(int nseasons,
+                                int season_duration = 1);
+    SeasonalStateModel * clone() const override;
+
+    // If the time series does not start at t0 then you establish the
+    // time of the first observation with this function.
+    void set_time_of_first_observation(int t0);
+
+    // returns true if t is the start of a new season.
+    bool new_season(int t) const override;
+
+   private:
+    uint duration_;
+    int time_of_first_observation_;
+  };
+
+  //======================================================================
+  // A seasonal state model that rotates at the start of each new month.
+  class MonthlyAnnualCycle : public SeasonalStateModelBase {
+   public:
+    explicit MonthlyAnnualCycle(const Date &date_of_first_observation)
+        : SeasonalStateModelBase(12),
+          t0_(date_of_first_observation)
+    {}
+
+    MonthlyAnnualCycle * clone() const override {
+      return new MonthlyAnnualCycle(*this);
+    }
+
+    bool new_season(int t) const override {
+      Date timestamp = t0_ + t;
+      return timestamp.day() == 1;
+    }
+
+   private:
+    Date t0_;
+  };
+
+}  // namespace BOOM
 
 #endif // BOOM_SEASONALSTATE_MODEL_HPP

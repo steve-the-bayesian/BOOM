@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -25,17 +26,11 @@
 #include <Models/Policies/PriorPolicy.hpp>
 #include <Models/Policies/NullDataPolicy.hpp>
 
-namespace BOOM{
+namespace BOOM {
 
-  // A StateModel for a homogeneous regression component.
-  // 'Homogeneous' means that the regression coefficients remain
-  // constant over time.  They can be parameters to be learned from
-  // data, but the learning must take place outside of this class,
-  // using an external pointer to the privately held regression model.
-  // The 'state' is a constant '1' with zero error, and a [1x1]
-  // identity matrix for the state transition matrix.  The single
-  // entry in the observation matrix is x[t] * beta, the predicted
-  // value from the regression at time t.
+  // A StateModel for a static (non-time-varying) regression component.  The
+  // 'state' is a constant '1' with zero error, and a [1x1] identity matrix for
+  // the state transition matrix.
   class RegressionStateModel
       : public StateModel,
         public CompositeParamPolicy,
@@ -45,6 +40,7 @@ namespace BOOM{
    public:
     RegressionStateModel(const Ptr<RegressionModel> &rm);
     RegressionStateModel(const RegressionStateModel &rhs);
+    RegressionStateModel(RegressionStateModel &&rhs) = default;
     RegressionStateModel * clone() const override;
 
     // clears sufficient statistics, but does not erase pointers to data.
@@ -53,7 +49,7 @@ namespace BOOM{
     // 'observe_state' is a no-op for this class because the state
     // model needs too much information in order to make the necessary
     // observations.  A class that contains a RegressionStateModel
-    // should update an externally held pointer to reg_ each time a
+    // should update an externally held pointer to regression_ each time a
     // state vector is observed.
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
@@ -61,7 +57,7 @@ namespace BOOM{
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {
-      return 1;
+      return 0;
     }
 
     // Implementation throws, because this model cannot be part of an
@@ -79,22 +75,35 @@ namespace BOOM{
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override;
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
+    // The single entry in the observation matrix is x[t] * beta, the predicted
+    // value from the regression at time t.  Because the state is a constant
+    // '1', this adds the regression effect to the observation at time t.
     SparseVector observation_matrix(int t) const override;
+
+    // The observation coefficients at time t form a column vector with elements
+    // x[t, i] * beta.  Because the state is a scalar '1' this product adds the
+    // regression effect at time 't' to each element of the observation.
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override;
 
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
 
+    RegressionModel * regression() {return regression_.get();}
+    const RegressionModel * regression()const{return regression_.get();}
+
+    void add_predictor_data(const std::vector<Matrix> &predictors);
+
    private:
-    Ptr<RegressionModel> reg_;
+    Ptr<RegressionModel> regression_;
     Ptr<IdentityMatrix> transition_matrix_;
     Ptr<ZeroMatrix> error_variance_;
     Ptr<EmptyMatrix> state_error_expander_;
     Ptr<EmptyMatrix> state_error_variance_;
 
-   protected:
-    RegressionModel * regression() {return reg_.get();}
-    const RegressionModel * regression()const{return reg_.get();}
+    std::vector<Matrix> predictors_;
   };
 
-}
+}  // namespace BOOM
 #endif // BOOM_REGRESSION_STATE_MODEL_HPP_

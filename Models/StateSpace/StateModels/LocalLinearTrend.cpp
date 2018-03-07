@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -39,18 +40,18 @@ namespace BOOM{
       : ZeroMeanMvnModel(rhs),
         StateModel(rhs),
         observation_matrix_(rhs.observation_matrix_),
-        state_transition_matrix_(rhs.state_transition_matrix_),
+        state_transition_matrix_(new LocalLinearTrendMatrix),
         state_variance_matrix_(rhs.state_variance_matrix_->clone()),
         state_error_expander_(rhs.state_error_expander_->clone()),
         initial_state_mean_(rhs.initial_state_mean_),
         initial_state_variance_(rhs.initial_state_variance_)
   {}
 
-  LLTSM * LLTSM::clone()const{return new LLTSM(*this);}
+  LLTSM * LLTSM::clone() const {return new LLTSM(*this);}
 
   void LLTSM::observe_state(const ConstVectorView then,
                           const ConstVectorView now,
-                          int time_now){
+                          int time_now) {
     check_dim(then);
     check_dim(now);
 
@@ -61,8 +62,8 @@ namespace BOOM{
     suf()->update_raw(err);
   }
 
-  void LLTSM::check_dim(const ConstVectorView &v)const{
-    if(v.size() != 2){
+  void LLTSM::check_dim(const ConstVectorView &v) const {
+    if (v.size() != 2) {
       ostringstream err;
       err << "improper dimesion of ConstVectorView v = :"
           << v << endl
@@ -72,30 +73,31 @@ namespace BOOM{
     }
   }
 
-  void LLTSM::simulate_state_error(RNG &rng, VectorView eta, int t)const{
+  void LLTSM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
     eta = ZeroMeanMvnModel::sim(rng);
   }
 
-  Ptr<SparseMatrixBlock> LLTSM::state_transition_matrix(int t)const{
+  Ptr<SparseMatrixBlock> LLTSM::state_transition_matrix(int t) const {
     return state_transition_matrix_;}
 
-  Ptr<SparseMatrixBlock> LLTSM::state_variance_matrix(int t)const{
+  Ptr<SparseMatrixBlock> LLTSM::state_variance_matrix(int t) const {
     return state_variance_matrix_;}
 
-  Ptr<SparseMatrixBlock> LLTSM::state_error_expander(int t)const{
+  Ptr<SparseMatrixBlock> LLTSM::state_error_expander(int t) const {
     return state_error_expander_;}
 
-  Ptr<SparseMatrixBlock> LLTSM::state_error_variance(int t)const{
+  Ptr<SparseMatrixBlock> LLTSM::state_error_variance(int t) const {
     return state_variance_matrix(t);}
 
-  SparseVector LLTSM::observation_matrix(int)const{
+  SparseVector LLTSM::observation_matrix(int) const {
     return observation_matrix_; }
 
-  Vector LLTSM::initial_state_mean()const{return initial_state_mean_;}
-  SpdMatrix LLTSM::initial_state_variance()const{return initial_state_variance_;}
-  void LLTSM::set_initial_state_mean(const Vector &v){
+  Vector LLTSM::initial_state_mean() const {return initial_state_mean_;}
+  SpdMatrix LLTSM::initial_state_variance() const {
+    return initial_state_variance_;}
+  void LLTSM::set_initial_state_mean(const Vector &v) {
     initial_state_mean_ = v; }
-  void LLTSM::set_initial_state_variance(const SpdMatrix &Sigma){
+  void LLTSM::set_initial_state_variance(const SpdMatrix &Sigma) {
     initial_state_variance_ = Sigma; }
 
   void LLTSM::update_complete_data_sufficient_statistics(
@@ -133,7 +135,7 @@ namespace BOOM{
     SpdMatrix ans = state_error_variance;
     ans.add_outer(state_error_mean);
     ans = sandwich(siginv(), ans) - siginv();
-    // TODO(stevescott): This is a potential bottleneck.  Profile it,
+    // TODO(user): This is a potential bottleneck.  Profile it,
     // and if necessary use the fact that we're only doing 2x2
     // matrices here to work this out by hand.
     gradient += .5 * ans.vectorize(true);
