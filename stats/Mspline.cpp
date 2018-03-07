@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -30,9 +31,12 @@ namespace BOOM {
     } else {
       const Vector &sorted_knots(SplineBase::knots());
       for (int i = 1; i < sorted_knots.size() - 1; ++i) {
-        if (sorted_knots[i] <= sorted_knots[i-1]) {
-          report_error("This Mspline implementation does not allow "
-                       "duplicate knots.");
+        if (sorted_knots[i] <= sorted_knots[i - 1]) {
+          std::ostringstream err;
+          err << "This Mspline implementation does not allow "
+              "duplicate knots.  Knot vector: "
+              << sorted_knots;
+          report_error(err.str());
         }
       }
       basis_dimension_ = std::max<int>(0, number_of_knots() - order_);

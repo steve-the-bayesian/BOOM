@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_DESIGN_HPP
 #define BOOM_DESIGN_HPP
 /*
@@ -449,10 +450,10 @@ namespace BOOM{
                 const std::vector<std::string> & level_names,
                 const std::string &factor_name);
 
-    // TODO(kmillar|stevescott): EffectGroup may one day be changed to
-    // model an additive collection of effects.  When that happens the
-    // following constructor could be changed and renamed:
-    // static EffectGroup Interaction(EffectGroup &first, EffectGroup &second);
+    // TODO: EffectGroup may one day be changed to model an additive collection
+    // of effects.  When that happens the following constructor could be changed
+    // and renamed: static EffectGroup Interaction(EffectGroup &first,
+    // EffectGroup &second);
     //
     // Create an interaction between two effect groups.  Every term in
     // first is multiplied by every term in second.
@@ -598,10 +599,9 @@ namespace BOOM{
       const std::vector<ContextualEffectGroup> & first_set_of_effects,
       const std::vector<ContextualEffectGroup> & second_set_of_effects);
 
-// TODO(kmillar): The notion of an EffectGroup should probably be
-// expanded to mean what is currently std::vector<EffectGroup>, in
-// which case ExpandInteraction should be made part of the EffectGroup
-// class.
+  // TODO: The notion of an EffectGroup should probably be expanded to mean what
+  // is currently std::vector<EffectGroup>, in which case ExpandInteraction
+  // should be made part of the EffectGroup class.
 
   // Produce an interaction of the form (x + y) * z, where x, y, and z
   // are potentially multi-level factors.  The set of effects produced

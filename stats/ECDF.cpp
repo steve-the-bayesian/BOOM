@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -22,25 +23,25 @@
 
 namespace BOOM{
 
-  ECDF::ECDF(const std::vector<double> &unsorted)
-      : sorted_(unsorted)
+  ECDF::ECDF(const ConstVectorView &unsorted_data)
+      : sorted_data_(unsorted_data)
   {
-    if (unsorted.empty()) {
+    if (sorted_data_.empty()) {
       report_error("ECDF cannot be built from empty vector.");
     }
-    std::sort(sorted_.begin(), sorted_.end());
+    std::sort(sorted_data_.begin(), sorted_data_.end());
   }
 
   double ECDF::fplus(double x)const{
-    double ans = std::upper_bound(sorted_.begin(), sorted_.end(), x)
-        - sorted_.begin();
-    return ans / sorted_.size();
+    double ans = std::upper_bound(sorted_data_.begin(), sorted_data_.end(), x)
+        - sorted_data_.begin();
+    return ans / sorted_data_.size();
   }
 
   double ECDF::fminus(double x)const{
-    double ans = std::lower_bound(sorted_.begin(), sorted_.end(), x)
-        - sorted_.begin();
-    return ans / sorted_.size();
+    double ans = std::lower_bound(sorted_data_.begin(), sorted_data_.end(), x)
+        - sorted_data_.begin();
+    return ans / sorted_data_.size();
   }
 
 }  // namespace BOOM

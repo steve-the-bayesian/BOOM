@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,7 +19,8 @@
 #ifndef BOOM_STATS_EMPIRICAL_CDF_HPP_
 #define BOOM_STATS_EMPIRICAL_CDF_HPP_
 
-#include <vector>
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/VectorView.hpp>
 
 namespace BOOM{
 
@@ -26,8 +28,13 @@ namespace BOOM{
   class ECDF {
    public:
     // Args:
-    //   unsorted:  The data set whose ECDF is desired.
-    ECDF(const std::vector<double> &unsorted);
+    //   unsorted:  The data set.
+    explicit ECDF(const ConstVectorView &unsorted_data);
+
+    ECDF(const ECDF &rhs) = default;
+    ECDF(ECDF &&rhs) = default;
+    ECDF &operator=(const ECDF &rhs) = default;
+    ECDF &operator=(ECDF &&rhs) = default;
 
     // The fraction of the data less than or equal to x.
     double fplus(double x) const;
@@ -35,14 +42,14 @@ namespace BOOM{
     // The fraction of the data strictly less than x.
     double fminus(double x) const;
 
-    double operator()(double x, bool leq = true) const {
-      return leq ? fplus(x) : fminus(x);
+    double operator()(double x, bool equality = true) const {
+      return equality ? fplus(x) : fminus(x);
     }
 
-    const std::vector<double> & sorted_data()const{return sorted_;}
+    const Vector sorted_data() const {return sorted_data_;}
 
    private:
-    std::vector<double> sorted_;
+    Vector sorted_data_;
   };
 }  // namespace BOOM
 
