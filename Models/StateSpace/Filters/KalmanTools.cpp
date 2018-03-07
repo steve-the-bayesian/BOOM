@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 

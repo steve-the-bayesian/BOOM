@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -37,7 +38,7 @@
 #include <Models/StateSpace/Filters/SparseVector.hpp>
 #include <Models/Glm/GlmCoefs.hpp>
 
-namespace BOOM{
+namespace BOOM {
   //======================================================================
   // The SparseMatrixBlock classes are designed to be used as elements
   // in a BlockDiagonalMatrix.  They only need to implement the
@@ -54,6 +55,10 @@ namespace BOOM{
     virtual void multiply(VectorView lhs,
                           const ConstVectorView &rhs) const = 0;
 
+    // lhs += this * rhs
+    virtual void multiply_and_add(VectorView lhs,
+                                  const ConstVectorView &rhs) const = 0;
+
     // lhs = this.transpose() * rhs
     virtual void Tmult(VectorView lhs, const ConstVectorView &rhs) const = 0;
 
@@ -67,18 +72,89 @@ namespace BOOM{
     virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
 
     // Add *this to block
-    // TODO(stevescott):  needs unit tests for all derived classes
     virtual void add_to(SubMatrix block) const = 0;
+
+    // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
+
+    // Checks that ncol() == i.  Reports an error if it does not.
     void conforms_to_cols(int i) const;
-    void check_can_add(const SubMatrix &m) const;
+
+    void check_can_add(const SubMatrix &block) const;
+
+    // Returns a dense version of 'this'.
     virtual Matrix dense() const;
+
     int ref_count() const {return RefCounted::ref_count();}
+
    private:
     friend void intrusive_ptr_add_ref(SparseMatrixBlock *m){m->up_count();}
     friend void intrusive_ptr_release(SparseMatrixBlock *m){
       m->down_count();
       if(m->ref_count() == 0) delete m;}
+  };
+
+  //===========================================================================
+  // A sparse matrix block that is, itself, a block diagonal matrix.  Blocks in
+  // this matrix are sparse, and must be square.
+  class BlockDiagonalMatrixBlock : public SparseMatrixBlock {
+   public:
+    BlockDiagonalMatrixBlock() : dim_(0) {}
+    BlockDiagonalMatrixBlock(const BlockDiagonalMatrixBlock &rhs);
+    BlockDiagonalMatrixBlock(BlockDiagonalMatrixBlock &&rhs) = default;
+    BlockDiagonalMatrixBlock * clone() const override;
+    BlockDiagonalMatrixBlock & operator=(const BlockDiagonalMatrixBlock &rhs);
+    BlockDiagonalMatrixBlock & operator=(
+        BlockDiagonalMatrixBlock &&rhs) = default;
+
+    void add_block(const Ptr<SparseMatrixBlock> &block);
+
+    int nrow() const override {return dim_;}
+    int ncol() const override {return dim_;}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void matrix_multiply_inplace(SubMatrix m) const override;
+    void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
+    void add_to(SubMatrix block) const override;
+
+   private:
+    // Checks that this can multiply rhs, and that lhs is correctly sized to
+    // receive the result.  An error is reported if either check fails.
+    void check_can_multiply(const VectorView &lhs,
+                            const ConstVectorView &rhs) const;
+    std::vector<Ptr<SparseMatrixBlock>> blocks_;
+    int dim_;
+  };
+  //===========================================================================
+  // A rectangular matrix formed by stacking a collection of sparse matrices
+  // with the same number of columns.
+  class StackedMatrixBlock : public SparseMatrixBlock {
+   public:
+    StackedMatrixBlock() : nrow_(0), ncol_(0) {}
+    StackedMatrixBlock(const StackedMatrixBlock &rhs);
+    StackedMatrixBlock(StackedMatrixBlock &&rhs) = default;
+    StackedMatrixBlock * clone() const override {
+      return new StackedMatrixBlock(*this);
+    }
+    StackedMatrixBlock & operator=(const StackedMatrixBlock &rhs);
+    StackedMatrixBlock & operator=(StackedMatrixBlock &&rhs) = default;
+    int nrow() const override {return nrow_;}
+    int ncol() const override {return ncol_;}
+
+    void add_block(const Ptr<SparseMatrixBlock> &block);
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void add_to(SubMatrix block) const override;
+
+   private:
+    std::vector<Ptr<SparseMatrixBlock>> blocks_;
+    int nrow_, ncol_;
   };
 
   //======================================================================
@@ -94,8 +170,10 @@ namespace BOOM{
     int nrow() const override {return 2;}
     int ncol() const override {return 2;}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
-    void multiply_inplace(VectorView x) const override;
+    void multiply_inplace(VectorView v) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
   };
@@ -111,10 +189,15 @@ namespace BOOM{
           m_(rhs.m_)
     {}
     DenseMatrix * clone() const override {return new DenseMatrix(*this);}
+    void resize(int rows, int cols) {m_.resize(rows, cols);}
+    VectorView col(int i) {return m_.col(i);}
     int nrow() const override {return m_.nrow();}
     int ncol() const override {return m_.ncol();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = m_ * rhs; }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs += m_ * rhs;}
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = m_.Tmult(rhs); }
     void multiply_inplace(VectorView x) const override { x = m_ * x;}
@@ -132,6 +215,9 @@ namespace BOOM{
     int ncol() const override {return value().ncol();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = value() * rhs; }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs += value() * rhs; }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = value() * rhs; }
     void multiply_inplace(VectorView x) const override { x = value() * x;}
@@ -152,7 +238,7 @@ namespace BOOM{
 
   class DenseSpdParamView : public DenseSpdBase {
    public:
-    DenseSpdParamView(Ptr<SpdParams> matrix) : matrix_(matrix) {}
+    DenseSpdParamView(const Ptr<SpdParams> &matrix) : matrix_(matrix) {}
     DenseSpdParamView *clone() const override {
       return new DenseSpdParamView(*this);
     }
@@ -178,6 +264,10 @@ namespace BOOM{
       lhs = diagonal_elements();
       lhs *= rhs;
     }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs += diagonal_elements() * rhs;
+    }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       multiply(lhs, rhs);
     }
@@ -199,6 +289,8 @@ namespace BOOM{
     }
   };
 
+  //----------------------------------------------------------------------------
+  // A diagonal matrix with elements to be set manually.
   class DiagonalMatrixBlock : public DiagonalMatrixBlockBase {
    public:
     DiagonalMatrixBlock(int size)
@@ -221,10 +313,13 @@ namespace BOOM{
     Vector diagonal_elements_;
   };
 
+  //----------------------------------------------------------------------------
+  // A diagonal matrix obtained by storing a vector of scalar variances in
+  // VectorParams.
   class DiagonalMatrixBlockVectorParamView : public DiagonalMatrixBlockBase {
    public:
     DiagonalMatrixBlockVectorParamView(
-        Ptr<VectorParams> diagonal_elements)
+        const Ptr<VectorParams> &diagonal_elements)
         : diagonal_elements_(diagonal_elements)
     {}
     DiagonalMatrixBlockVectorParamView * clone() const override {
@@ -235,6 +330,66 @@ namespace BOOM{
     }
    private:
     Ptr<VectorParams> diagonal_elements_;
+  };
+
+  //----------------------------------------------------------------------------
+  // A diagonal matrix implemented using a vector of univariate variance
+  // paramters.
+  class DiagonalMatrixParamView : public DiagonalMatrixBlockBase {
+   public:
+    DiagonalMatrixParamView() : current_(false) {}
+    DiagonalMatrixParamView(const DiagonalMatrixParamView &rhs) = default;
+    DiagonalMatrixParamView(DiagonalMatrixParamView &&rhs) = default;
+    DiagonalMatrixParamView * clone() const override {
+      return new DiagonalMatrixParamView(*this);
+    }
+    DiagonalMatrixParamView &operator=(
+        const DiagonalMatrixParamView &rhs) = default;
+    DiagonalMatrixParamView &operator=(DiagonalMatrixParamView &&rhs) = default;
+
+    int nrow() const override {return variances_.size();}
+    int ncol() const override {return variances_.size();}
+
+    const Vector &diagonal_elements() const override {
+      ensure_current();
+      return diagonal_elements_;
+    }
+
+    // Add a variance element to the diagonal, increasing the diagonal dimension
+    // by 1.
+    void add_variance(const Ptr<UnivParams> &variance);
+
+   private:
+    std::vector<Ptr<UnivParams>> variances_;
+    mutable Vector diagonal_elements_;
+    mutable bool current_;
+    void ensure_current() const;
+    void set_observer(const Ptr<UnivParams> &variance);
+  };
+
+  //============================================================================
+  // A diagonal matrix whose elements are stored in a SparseVector.  This class
+  // is similar to the other diagonal matrices, but it does not offer a
+  // diagonal_elements() member returning a dense vector.
+  class SparseDiagonalMatrixBlockParamView : public SparseMatrixBlock {
+   public:
+    SparseDiagonalMatrixBlockParamView(int dim) : dim_(dim) {}
+    SparseDiagonalMatrixBlockParamView * clone() const override;
+    void add_element(const Ptr<UnivParams> &element, int position);
+
+    int nrow() const override {return dim_;}
+    int ncol() const override {return dim_;}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void add_to(SubMatrix block) const override;
+
+   private:
+    std::vector<Ptr<UnivParams>> elements_;
+    std::vector<int> positions_;
+    int dim_;
   };
 
   //======================================================================
@@ -256,6 +411,8 @@ namespace BOOM{
 
     // lhs = (*this) * rhs;
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
     // lhs = this->transpose() * rhs
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     // x = (*this) * x;
@@ -282,6 +439,8 @@ namespace BOOM{
     int ncol() const override;
     // lhs = this * rhs
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     void add_to(SubMatrix block) const override;
@@ -304,6 +463,10 @@ namespace BOOM{
       conforms_to_cols(rhs.size());
       conforms_to_rows(lhs.size());
       lhs = rhs;}
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs += rhs;
+    }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       conforms_to_rows(rhs.size());
       conforms_to_cols(lhs.size());
@@ -312,6 +475,7 @@ namespace BOOM{
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
     void add_to(SubMatrix block) const override { block.diag() += 1.0; }
+
    private:
     int dim_;
   };
@@ -325,6 +489,8 @@ namespace BOOM{
     int nrow() const override {return 0;}
     int ncol() const override {return 0;}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {}
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {}
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {}
     void multiply_inplace(VectorView x) const override{}
     void matrix_multiply_inplace(SubMatrix m) const override {}
@@ -338,6 +504,13 @@ namespace BOOM{
    public:
     ConstantMatrixBase(int dim) : dim_(dim) {}
     virtual double value() const = 0;
+
+    // In most cases the dimension of the matrix will be set in the constructor.
+    // If the dimension is data dependent then it can be set dynamically with
+    // set_dim.
+    void set_dim(int dim) {
+      dim_ = dim;
+    }
     int nrow() const override {return dim_;}
     int ncol() const override {return dim_;}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
@@ -349,6 +522,11 @@ namespace BOOM{
       lhs = rhs;
       lhs *= value();
     }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs.axpy(rhs, value());
+    }
+
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       conforms_to_rows(rhs.size());
       conforms_to_cols(lhs.size());
@@ -381,7 +559,7 @@ namespace BOOM{
   class ConstantMatrixParamView : public ConstantMatrixBase {
    public:
     ConstantMatrixParamView(int dim,
-                            Ptr<UnivParams> value)
+                            const Ptr<UnivParams> &value)
         : ConstantMatrixBase(dim),
           value_(value) {}
     ConstantMatrixParamView * clone() const override {
@@ -417,6 +595,11 @@ namespace BOOM{
       lhs = rhs * 0;
       lhs[0] = rhs[0] * value();
     }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs[0] += rhs[0] * value();
+    }
+
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       // An upper left corner matrix is symmetric, so Tmult is the
       // same as multiply.
@@ -427,6 +610,7 @@ namespace BOOM{
       x[0] = tmp * value();
     }
     void add_to(SubMatrix block) const override { block(0,0) += value(); }
+
    private:
     int dim_;
   };
@@ -447,7 +631,7 @@ namespace BOOM{
 
   class UpperLeftCornerMatrixParamView : public UpperLeftCornerMatrixBase {
    public:
-    UpperLeftCornerMatrixParamView(int dim, Ptr<UnivParams> param)
+    UpperLeftCornerMatrixParamView(int dim, const Ptr<UnivParams> &param)
         : UpperLeftCornerMatrixBase(dim),
           value_(param) {}
     UpperLeftCornerMatrixParamView * clone() const override{
@@ -479,7 +663,10 @@ namespace BOOM{
                   const ConstVectorView &rhs) const override {
       lhs[0] = rhs[0];
     }
-
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      lhs[0] += rhs[0];
+    }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs[0] = rhs[0];
     }
@@ -510,10 +697,10 @@ namespace BOOM{
    private:
     int nrow_;
   };
+
   //======================================================================
-  // A rectangular matrix consisting of an Identity matrix with rows
-  // of zeros appended on bottom.
-  //
+  // A rectangular matrix consisting of an Identity matrix with rows of zeros
+  // appended on bottom.
   class ZeroPaddedIdentityMatrix : public SparseMatrixBlock {
    public:
     ZeroPaddedIdentityMatrix(int nrow, int ncol)
@@ -539,7 +726,14 @@ namespace BOOM{
         lhs[i] = 0.0;
       }
     }
-
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      conforms_to_rows(lhs.size());
+      conforms_to_cols(rhs.size());
+      for (int i = 0; i < ncol_; ++i) {
+        lhs[i] += rhs[i];
+      }
+    }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       conforms_to_cols(lhs.size());
       conforms_to_rows(rhs.size());
@@ -578,7 +772,7 @@ namespace BOOM{
     int ncol_;
   };
 
-  //======================================================================
+  //============================================================================
   // A diagonal matrix that is zero in all but (at most) one element.
   class SingleSparseDiagonalElementMatrixBase : public SparseMatrixBlock{
    public:
@@ -597,6 +791,12 @@ namespace BOOM{
       conforms_to_cols(rhs.size());
       lhs = 0;
       lhs[which_element_] = value() * rhs[which_element_];
+    }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      conforms_to_rows(lhs.size());
+      conforms_to_cols(rhs.size());
+      lhs[which_element_] += value() * rhs[which_element_];
     }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       // Symmetric
@@ -633,7 +833,7 @@ namespace BOOM{
       : public SingleSparseDiagonalElementMatrixBase {
    public:
     SingleSparseDiagonalElementMatrixParamView(
-        int dim, Ptr<UnivParams> value, int which_element)
+        int dim, const Ptr<UnivParams> &value, int which_element)
         : SingleSparseDiagonalElementMatrixBase(dim, which_element),
           value_(value) {}
     SingleSparseDiagonalElementMatrixParamView * clone() const override {
@@ -641,6 +841,37 @@ namespace BOOM{
     double value() const override {return value_->value();}
    private:
     Ptr<UnivParams> value_;
+  };
+
+  //===========================================================================
+  // A possibly rectangular matrix with a single nonzero element in in the first
+  // row, with all other elements equal to zero.  This matrix picks a single
+  // element from a vector it multiplies, puts it in the first position, scales
+  // it, and sets the remaining elements to zero.
+  class SingleElementInFirstRow : public SparseMatrixBlock {
+   public:
+    SingleElementInFirstRow(int nrow, int ncol, int position,
+                            double value = 1.0)
+        : nrow_(nrow), ncol_(ncol), position_(position), value_(value) {}
+    SingleElementInFirstRow * clone() const override {
+      return new SingleElementInFirstRow(*this);
+    }
+    int nrow() const override {return nrow_;}
+    int ncol() const override {return ncol_;}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void matrix_multiply_inplace(SubMatrix m) const override;
+    void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
+    void add_to(SubMatrix block) const override;
+
+   private:
+    int nrow_;
+    int ncol_;
+    int position_;
+    double value_;
   };
 
   //======================================================================
@@ -685,6 +916,14 @@ namespace BOOM{
       }
       for(int i = diagonal_.size(); i < dim_; ++i) lhs[i] = 0;
     }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      conforms_to_cols(rhs.size());
+      conforms_to_rows(lhs.size());
+      for(int i = 0; i < diagonal_.size(); ++i){
+        lhs[i] += rhs[i] * diagonal_[i]->value() * constant_scale_factor_[i];
+      }
+    }
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       multiply(lhs, rhs);
     }
@@ -727,6 +966,137 @@ namespace BOOM{
   };
 
   //======================================================================
+  // A matrix with K identical rows, represented by a single SparseVector.
+  class IdenticalRowsMatrix : public SparseMatrixBlock {
+   public:
+    IdenticalRowsMatrix(const SparseVector &row, int nrows)
+        : row_(row),
+          dense_row_(row_.dense()),
+          nrow_(nrows) {}
+    IdenticalRowsMatrix * clone() const override {
+      return new IdenticalRowsMatrix(*this);
+    }
+    int nrow() const {return nrow_;}
+    int ncol() const {return row_.size();}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      conforms_to_cols(rhs.size());
+      conforms_to_rows(lhs.size());
+      lhs = row_.dot(rhs);
+    }
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      conforms_to_cols(rhs.size());
+      conforms_to_rows(lhs.size());
+      lhs += row_.dot(rhs);
+    }
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      conforms_to_cols(lhs.size());
+      conforms_to_rows(rhs.size());
+      lhs = dense_row_ * rhs.sum();
+    }
+
+    void multiply_inplace(VectorView x) const override {
+      if (nrow() == ncol()) {
+        conforms_to_cols(x.size());
+        multiply(x, x);
+      } else {
+        report_error("multiply_inplace only works for square matrices.");
+      }
+    }
+
+    void add_to(SubMatrix block) const override {
+      conforms_to_cols(block.ncol());
+      conforms_to_rows(block.nrow());
+      for (int i = 0; i < nrow(); ++i) {
+        block.row(i) += dense_row_;
+      }
+    }
+
+   private:
+    SparseVector row_;
+    Vector dense_row_;
+    int nrow_;
+  };
+
+  //===========================================================================
+  // A sparse matrix whose rows and columns are sparse vectors.  This matrix is
+  // somewhat expensive to construct, because a mapping must be constructed
+  // between its row and column representations.
+  class GenericSparseMatrixBlock;
+  class GenericSparseMatrixBlockElementProxy {
+   public:
+    GenericSparseMatrixBlockElementProxy(
+        int row, int col, double value, GenericSparseMatrixBlock *matrix)
+        : row_(row), col_(col), value_(value), matrix_(matrix) {}
+    operator double() const {return value_;}
+    GenericSparseMatrixBlockElementProxy & operator=(double new_value);
+
+   private:
+    int row_;
+    int col_;
+    double value_;
+    GenericSparseMatrixBlock *matrix_;
+  };
+
+  class GenericSparseMatrixBlock : public SparseMatrixBlock {
+   public:
+    GenericSparseMatrixBlock(int nrow = 0, int ncol = 0);
+    GenericSparseMatrixBlock * clone() const override {
+      return new GenericSparseMatrixBlock(*this);
+    }
+
+    // Element access.
+    GenericSparseMatrixBlockElementProxy operator()(int row, int col);
+    double operator()(int row, int col) const;
+
+    // Set a specific row or column of the sparse matrix.  The dimensions of the
+    // inserted row (column) must match ncol() (nrow()).
+    void set_row(const SparseVector &row, int row_number);
+    void set_column(const SparseVector &column, int col_number);
+
+    int nrow() const override {return nrow_;}
+    int ncol() const override {return ncol_;}
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void add_to(SubMatrix block) const override;
+
+    void insert_element(uint row, uint col, double value) {
+      insert_element_in_rows(row, col, value);
+      insert_element_in_columns(row, col, value);
+    }
+
+    const SparseVector &row(int row_number) const;
+    const SparseVector &column(int col_number) const;
+
+   private:
+    void insert_element_in_rows(uint row, uint col, double value);
+    void insert_element_in_columns(uint row, uint col, double value);
+
+    // The notional dimensions of the sparse matrix.
+    int nrow_;
+    int ncol_;
+
+    // The size of the rows_ map, which may be smaller than nrow_.  This is an
+    // optimization, because the standard says that rows_.size() has linear
+    // complexity.  A separate entry for the size of the columns_ map is not
+    // needed.
+    int nrow_compressed_;
+
+    // Data stored in row-major format.
+    std::map<uint, SparseVector> rows_;
+
+    // Identical data stored in column major format (for transpose operations).
+    std::map<uint, SparseVector> columns_;
+
+    SparseVector empty_row_;
+    SparseVector empty_column_;
+  };
+
+  //======================================================================
   // A SparseKalmanMatrix is a sparse matrix that can be used in the
   // Kalman recursions.  This may get expanded to a more full fledged
   // sparse matrix class later on, if need be.
@@ -741,7 +1111,10 @@ namespace BOOM{
     virtual Vector operator*(const VectorView &v) const = 0;
     virtual Vector operator*(const ConstVectorView &v) const = 0;
 
-    virtual Vector Tmult(const Vector &v) const = 0;
+    virtual Matrix operator*(const Matrix &rhs) const;
+
+    virtual Vector Tmult(const ConstVectorView &v) const = 0;
+    virtual Matrix Tmult(const Matrix &rhs) const;
 
     // Replace the argument P with
     //   this * P * this.transpose()
@@ -774,13 +1147,22 @@ namespace BOOM{
     // The default implementation only works for square matrices.
     // Child classes that can be non-square should override.
     virtual Matrix dense() const;
+
+    // Returns this * rhs.transpose().
+    Matrix multT(const Matrix &rhs) const;
   };
+
+  Matrix operator*(const Matrix &lhs, const SparseKalmanMatrix &rhs);
+
+  // Returns lhs * rhs.transpose();
+  Matrix multT(const SpdMatrix &lhs, const SparseKalmanMatrix &rhs);
+
 
   //======================================================================
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will
   // typically be:  SeasonalStateSpaceMatrix, IdentityMatrix, etc.
-  class BlockDiagonalMatrix : public SparseKalmanMatrix{
+  class BlockDiagonalMatrix : public SparseKalmanMatrix {
    public:
     // Start off with an empty matrix.  Use add_block() to add blocks
     // Adds a block to the block diagonal matrix
@@ -797,7 +1179,13 @@ namespace BOOM{
     Vector operator*(const VectorView &v) const override;
     Vector operator*(const ConstVectorView &v) const override;
 
-    Vector Tmult(const Vector &r) const override;
+    // The 'using' statement on the following line exposes the matrix-matrix
+    // multiplication operator from the base class.
+    using SparseKalmanMatrix::operator*;
+
+    using SparseKalmanMatrix::Tmult;
+    Vector Tmult(const ConstVectorView &x) const override;
+
     // P -> this * P * this.transpose()
     void sandwich_inplace(SpdMatrix &P) const override;
     void sandwich_inplace_submatrix(SubMatrix P) const override;
@@ -807,31 +1195,78 @@ namespace BOOM{
 
     Matrix & add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;
+
    private:
     // Replace middle with left * middle * right.transpose()
     void sandwich_inplace_block(const SparseMatrixBlock &left,
                                 const SparseMatrixBlock &right,
                                 SubMatrix middle) const;
 
+    // Fills dest with left * source * right.transpose().
+    void sandwich_block(const SparseMatrixBlock &left,
+                        const SparseMatrixBlock &right,
+                        const ConstSubMatrix &source,
+                        SubMatrix &dest,
+                        Matrix &workspace) const;
+
     // Returns the (i,j) block of the matrix m, with block sizes
     // determined by the rows and columns of the entries in blocks_.
     SubMatrix get_block(Matrix &m, int i, int j) const;
-    SubMatrix get_row_block(Matrix &m, int block) const;
-    SubMatrix get_col_block(Matrix &m, int block) const;
     SubMatrix get_submatrix_block(SubMatrix m, int i, int j) const;
     std::vector<Ptr<SparseMatrixBlock> > blocks_;
 
     int nrow_;
     int ncol_;
 
-    // row_boundaries_[i] contains the one-past-the-end position of
+    // row_boundaries_[i] contains the one-past-the-end position of the upper
+    // row boundary of block i.
     std::vector<int> row_boundaries_;
+
+    // col_boundaries_[i] contains the one-past-the-end position of the upper
+    // column boundary of block i.
     std::vector<int> col_boundaries_;
   };
+  //============================================================================
+  // A SparseKalmanMatrix made of blocks that form vertical strips (analogous to
+  // cbind in R):  [B1 B2 B3...].
+  class SparseVerticalStripMatrix
+      : public SparseKalmanMatrix {
+   public:
+    SparseVerticalStripMatrix() : ncol_(0) {}
+    int nrow() const override {
+      return blocks_.empty() ? 0 : blocks_[0]->nrow();
+    }
+    int ncol() const override {return ncol_;}
+
+    void clear() {
+      blocks_.clear();
+      ncol_ = 0;
+    }
+
+    void add_block(const Ptr<SparseMatrixBlock> &block);
+
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+
+    Vector Tmult(const ConstVectorView &v) const override;
+
+    // P += *this
+    Matrix & add_to(Matrix &P) const override;
+    SubMatrix add_to_submatrix(SubMatrix P) const override;
+
+   private:
+    void check_can_multiply(int vector_size) const;
+    void check_can_Tmult(int vector_size) const;
+    void check_can_add(int rows, int cols) const;
+    int ncol_;
+    std::vector<Ptr<SparseMatrixBlock>> blocks_;
+  };
+
   //======================================================================
 
   Vector operator*(const SparseMatrixBlock &,
-                const Vector &);
+                   const Vector &);
 
   // P += TPK * K.transpose * w
   void add_outer_product(
@@ -843,5 +1278,5 @@ namespace BOOM{
   // P += RQR
   void add_block_diagonal(SpdMatrix &P, const BlockDiagonalMatrix &RQR);
 
-}
+}  // namespace BOOM
 #endif // BOOM_SPARSE_MATRIX_HPP_

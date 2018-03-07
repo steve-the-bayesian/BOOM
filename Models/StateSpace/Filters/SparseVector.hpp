@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -47,7 +48,7 @@ namespace BOOM{
   //======================================================================
   class SparseVector {
    public:
-    explicit SparseVector(int n=0);
+    explicit SparseVector(int n = 0);
 
     // A sparse vector where all elements are filled.
     explicit SparseVector(const Vector &dense);
@@ -64,6 +65,10 @@ namespace BOOM{
     double dot(const VectorView &v)const;
     double dot(const ConstVectorView &v)const;
 
+    bool operator==(const SparseVector &rhs) const {
+      return size_ == rhs.size_  &&
+          elements_ == rhs.elements_;
+    }
     // Replaces x with (x + this * coefficient).
     void add_this_to(Vector &x, double coefficient)const;
     void add_this_to(VectorView x, double coefficient)const;
@@ -80,6 +85,14 @@ namespace BOOM{
 
     // Return the dense vector equivalent to *this.
     Vector dense()const;
+
+    std::map<int, double>::const_iterator begin() const {
+      return elements_.begin();
+    }
+
+    std::map<int, double>::const_iterator end() const {
+      return elements_.end();
+    }
 
    private:
     std::map<int, double> elements_;
