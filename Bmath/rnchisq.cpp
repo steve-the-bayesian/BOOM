@@ -36,7 +36,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rnchisq(double df, double lambda);
  *
  *  DESCRIPTION

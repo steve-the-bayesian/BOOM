@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double fprec(double x, double digits);
  *
  *  DESCRIPTION

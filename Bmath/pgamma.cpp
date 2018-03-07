@@ -38,7 +38,7 @@
  *
  *  SYNOPSIS
  *
- *      #include <Bmath.hpp>
+ *      #include "Bmath.hpp"
  *      double pgamma(double x, double alph, double scale,
  *                    int lower_tail, int log_p)
  *

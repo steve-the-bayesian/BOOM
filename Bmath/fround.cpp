@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double fround(double x, double digits);
  *
  *  DESCRIPTION

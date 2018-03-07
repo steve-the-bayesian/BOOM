@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rlnorm(double logmean, double logsd);
  *
  *  DESCRIPTION
