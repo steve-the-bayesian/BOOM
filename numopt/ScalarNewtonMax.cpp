@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -26,7 +27,7 @@ namespace BOOM{
                            double &h) {
     double y = f(x,g,h);
     double oldy = y;
-    double eps = 1e-5;  // TODO(stevescott):  remove magic numbers
+    double eps = 1e-5;  // TODO:  remove magic numbers
     double dy = eps + 1;
     while(dy > eps){
       double step = g/h;

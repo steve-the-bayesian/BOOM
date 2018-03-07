@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_MODELS_INITIALIZE_DERIVATIVES_HPP_
 #define BOOM_MODELS_INITIALIZE_DERIVATIVES_HPP_
 /*

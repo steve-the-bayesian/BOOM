@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -97,7 +98,8 @@ namespace BOOM {
     happy_ending = true;
     error_message = "";
     try {
-      oldloglike = target(theta, gradient, hessian); ++function_count;
+      oldloglike = target(theta, gradient, hessian);
+      ++function_count;
       while(keep_going(lcrit, leps, iteration, max_iterations, step_halving)) {
         if (!gradient.all_finite() || !hessian.all_finite()) {
           std::ostringstream err;
@@ -112,26 +114,37 @@ namespace BOOM {
         Vector step = hessian.solve(gradient);
         theta -= step;
         double directional_derivative = gradient.dot(step);
-        loglike = target(theta, gradient, hessian); ++function_count;
-        lcrit = oldloglike - loglike;    // should be positive if all is well
+        loglike = target(theta, gradient, hessian);
+        ++function_count;
+        lcrit = oldloglike - loglike;
+        // Likelihood criterion should be positive if all is well.
         step_halving = 0;
         if (BAD(lcrit, leps / 2.0) ) { /* step halving */
-          if (directional_derivative < 0) {
-            // mathematically this is impossible, because step =
-            // -H.inv() * g so the directional derivative is -g*Hinv*g,
-            // which is must be negative.  If you get here, please check
-            // that you have defined your target function correctly
-            if (fabs(directional_derivative) < leps) return loglike;
+          if (std::isfinite(loglike)) {
+            // Only check the directional derivative if the outcome of the
+            // function evaluation was finite.  Otherwise it is likely to be the
+            // case that the function bailed out early before all derivatives
+            // could be computed, or else that at least one derivative element
+            // is also non-finite.
+            if (directional_derivative < 0) {
+              // Mathematically it is impossible to have a negative directional
+              // derivative, because step = -H.inv() * g so the directional
+              // derivative is -g*Hinv*g, which is must be negative.  If code
+              // gets here it is a sign that the target function was coded
+              // incorrectly.
+              if (fabs(directional_derivative) < leps) return loglike;
+            }
           }
           ++total_step_halving;
           Vector oldtheta = theta + step;
           double step_scale_factor = 1.0;
-          while (BAD(lcrit, leps/2) && (step_halving <= max_step_halving)) {
-            ++step_halving;
+          while (BAD(lcrit, leps / 2.0) &&
+                 (step_halving++ <= max_step_halving)) {
             step_scale_factor /= 2.0;
             step *= step_scale_factor;         // halve step size
             theta = oldtheta - step;
-            loglike = target(theta, gradient, hessian); ++ function_count;
+            loglike = target(theta, gradient, hessian);
+            ++function_count;
             lcrit = oldloglike - loglike;
           }
           if (!hessian.is_pos_def()) {

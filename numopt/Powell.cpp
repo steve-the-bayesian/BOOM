@@ -3,7 +3,7 @@ The following copyright notice refers to the additional code required
 to convert Powell's original NEWUOA function to C++.  Copyright for
 the original code (as translated by f2c) appears below.
 
-  Copyright (C) 2005-2012 Steven L. Scott
+  Copyright (C) 2012 Google LLC. All Rights Reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public

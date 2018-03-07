@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -41,7 +42,6 @@ namespace BOOM{
        trace to zero.  sann makes in total maxit function evaluations,
        tmax evaluations at each temperature. Returned quantities are
        pb (the location of the minimum), and yb (the minimum value of
-       the function func).  Author: Adrian Trapletti
     */
     long i, j;
     int k, its, itdoc;

@@ -3,7 +3,7 @@ The following copyright notice refers the C++ interface to this code,
 which was written by Steven L. Scott.  Copyright for the original code
 (as translated by f2c) appears in Powell.cpp.
 
-  Copyright (C) 2005-2012 Steven L. Scott
+  Copyright 2018 Google LLC. All Rights Reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
