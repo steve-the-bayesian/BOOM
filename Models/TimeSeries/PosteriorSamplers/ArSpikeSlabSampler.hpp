@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -39,9 +40,8 @@
 // truncation is ignored by the portion of the spike and slab
 // algorithm that draws inclusion indicators.
 //
-// TODO(stevescott): Consider extending this to use the prior by
-// Huerta and West (1999), who put spike and slab priors on roots of
-// the AR polynomial.
+// TODO: Consider extending this to use the prior by Huerta and West (1999), who
+// put spike and slab priors on roots of the AR polynomial.
 namespace BOOM {
   class ArSpikeSlabSampler
       : public PosteriorSampler {

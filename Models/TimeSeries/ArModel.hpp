@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -117,6 +118,10 @@ namespace BOOM {
     // Returns a vector giving the autocovariance of the model for 0,
     // 1, 2, ..., number_of_lags lags.
     Vector autocovariance(int number_of_lags)const;
+
+    // The variance of a value forecasted far into the future.  The mean of the
+    // forecast is zero.
+    double stationary_variance() const {return autocovariance(0)[0];}
 
     // Returns true if the polynomial \phi(z)
     //

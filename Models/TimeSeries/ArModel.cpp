@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -170,7 +171,7 @@ namespace BOOM{
     if(phi.abs_norm() < 1) return true;
 
     // If that didn't work then we're stuck finding roots.
-    // TODO(stevescott): Really we just need to check the smallest
+    // TODO: Really we just need to check the smallest
     // root.  If we had a cheap way of finding just the smallest root
     // then that would be more efficient than finding them all.
     Vector coefficients = concat(1, -1 * phi);
