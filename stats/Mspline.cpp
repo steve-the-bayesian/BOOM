@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/Mspline.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "stats/Mspline.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   Mspline::Mspline(const Vector &knots, int order)

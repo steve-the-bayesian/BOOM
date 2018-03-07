@@ -16,14 +16,14 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/NaturalSpline.hpp>
+#include "stats/NaturalSpline.hpp"
 #include <stdexcept>
 #include <cstring>
 #include <sstream>
 #include <algorithm>
-#include <BOOM.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/report_error.hpp>
+#include "BOOM.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

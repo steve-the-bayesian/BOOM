@@ -17,13 +17,13 @@
 */
 #ifndef BOOM_RESAMPLER_HPP
 #define BOOM_RESAMPLER_HPP
-#include <BOOM.hpp>
-#include <LinAlg/Vector.hpp>
+#include "BOOM.hpp"
+#include "LinAlg/Vector.hpp"
 
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM{
 

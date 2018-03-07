@@ -21,8 +21,8 @@
 #define BOOM_MOMENTS_HPP
 
 #include <vector>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
 

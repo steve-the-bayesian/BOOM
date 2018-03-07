@@ -20,7 +20,7 @@
 #ifndef BOOM_MSPLINE_HPP_
 #define BOOM_MSPLINE_HPP_
 
-#include <stats/Spline.hpp>
+#include "stats/Spline.hpp"
 
 namespace BOOM {
 

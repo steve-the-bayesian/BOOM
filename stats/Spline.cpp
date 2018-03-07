@@ -16,13 +16,13 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/Spline.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "stats/Spline.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
 #include <cstring>
 #include <sstream>
 #include <algorithm>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 
 namespace BOOM{
 

@@ -16,8 +16,8 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/regression.hpp>
-#include <LinAlg/QR.hpp>
+#include "stats/regression.hpp"
+#include "LinAlg/QR.hpp"
 namespace BOOM{
 
   std::pair<Vector, double> ols(const Matrix &X, const Vector &y){

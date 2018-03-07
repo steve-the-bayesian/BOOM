@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/ChiSquareTest.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "stats/ChiSquareTest.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 OneWayChiSquareTest::OneWayChiSquareTest(const Vector & observed,

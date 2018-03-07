@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_SPLINE_HPP
 #define BOOM_SPLINE_HPP
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
   // A base class providing features shared by different spline bases.

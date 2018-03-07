@@ -20,7 +20,7 @@
 #ifndef BOOM_KS_CRITICAL_VALUES_HPP_
 #define BOOM_KS_CRITICAL_VALUES_HPP_
 #include <cmath>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   // Critical value for the Kolmogorov Smirnoff test statistic

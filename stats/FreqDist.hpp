@@ -21,8 +21,8 @@
 
 #include <vector>
 #include <string>
-#include <uint.hpp>
-#include <LinAlg/Vector.hpp>
+#include "uint.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
 

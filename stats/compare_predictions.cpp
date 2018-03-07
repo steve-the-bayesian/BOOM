@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/compare_predictions.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/RegressionConjSampler.hpp>
-#include <distributions.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "stats/compare_predictions.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionConjSampler.hpp"
+#include "distributions.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
   ostream & operator<<(ostream &out, const ComparePredictionsOutput &cmp) {

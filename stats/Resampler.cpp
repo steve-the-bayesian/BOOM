@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,9 +19,14 @@
 #include <stats/Resampler.hpp>
 #include <LinAlg/Vector.hpp>
 #include <distributions.hpp>
+=======
+#include "stats/Resampler.hpp"
+#include "LinAlg/Vector.hpp"
+#include "distributions.hpp"
+>>>>>>> stable
 #include <stdexcept>
 #include <numeric>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

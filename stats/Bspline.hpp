@@ -20,8 +20,8 @@
 #ifndef BOOM_STATS_BSPLINE_HPP_
 #define BOOM_STATS_BSPLINE_HPP_
 
-#include <LinAlg/Vector.hpp>
-#include <stats/Spline.hpp>
+#include "LinAlg/Vector.hpp"
+#include "stats/Spline.hpp"
 
 namespace BOOM {
 

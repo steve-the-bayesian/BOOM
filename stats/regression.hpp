@@ -19,8 +19,8 @@
 #ifndef BOOM_STATS_OLS_HPP
 #define BOOM_STATS_OLS_HPP
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 
 namespace BOOM{

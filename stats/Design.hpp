@@ -24,9 +24,9 @@
 #include <string>
 #include <vector>
 
-#include <BOOM.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Selector.hpp>
+#include "BOOM.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
   //======================================================================
