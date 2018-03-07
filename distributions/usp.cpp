@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2018 Steven L. Scott
@@ -18,13 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions.hpp>
-#include <BOOM.hpp>
-=======
 #include "distributions.hpp"
 #include "BOOM.hpp"
->>>>>>> stable
-#include <stdexcept>
 #include <cmath>
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+BSS='rpackage/BoomSpikeSlab'
+## If there is already a Boom directory then delete it.
+if [ -d "$BSS" ]; then
+   rm -rf $BSS
+fi
+
+if [ -d rpackage ]; then
+    mkdir rpackage
+fi
+
+cp -r ./Interfaces/R/BoomSpikeSlab rpackage
+cd rpackage
+R CMD BUILD BoomSpikeSlab

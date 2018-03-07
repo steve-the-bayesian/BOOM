@@ -1,5 +1,3 @@
-TOP_SRCS = glob(["*.cpp"])
-
 TOP_HDRS = glob(["*.hpp"])
 
 BMATH_HDRS = glob(["Bmath/*.hpp"])
@@ -9,6 +7,8 @@ BMATH_SRCS = glob(["Bmath/*.cpp"])
 LINALG_SRCS = glob(["LinAlg/*.cpp"])
 
 LINALG_HDRS = glob(["LinAlg/*.hpp"])
+
+EIGEN_HDRS = glob(["Eigen/**"])
 
 SAMPLER_SRCS = glob([
     "Samplers/*.cpp",
@@ -141,8 +141,7 @@ TIMESERIES_HDRS = glob([
     "Models/TimeSeries/PosteriorSamplers/*.hpp",
 ])
 
-BOOM_SRCS = TOP_SRCS + \
-            BMATH_SRCS + \
+BOOM_SRCS = BMATH_SRCS + \
             LINALG_SRCS + \
             SAMPLER_SRCS + \
             TARGETFUN_SRCS + \
@@ -152,7 +151,8 @@ BOOM_SRCS = TOP_SRCS + \
             MODELS_SRCS + \
             NUMOPT_SRCS + \
             STATS_SRCS + \
-            GLM_SRCS + HMM_SRCS + \
+            GLM_SRCS + \
+            HMM_SRCS + \
             HIERARCHICAL_SRCS + \
             IRT_SRCS + \
             MIXTURE_SRCS + \
@@ -163,6 +163,7 @@ BOOM_SRCS = TOP_SRCS + \
 BOOM_HDRS = TOP_HDRS + \
             BMATH_HDRS + \
             LINALG_HDRS + \
+            EIGEN_HDRS + \
             SAMPLER_HDRS + \
             TARGETFUN_HDRS + \
             CPPUTIL_HDRS + \
@@ -171,7 +172,8 @@ BOOM_HDRS = TOP_HDRS + \
             MODELS_HDRS + \
             NUMOPT_HDRS + \
             STATS_HDRS + \
-            GLM_HDRS + HMM_HDRS + \
+            GLM_HDRS + \
+            HMM_HDRS + \
             HIERARCHICAL_HDRS + \
             IRT_HDRS + \
             MIXTURE_HDRS + \
@@ -184,10 +186,11 @@ cc_library(
     srcs = BOOM_SRCS,
     hdrs = BOOM_HDRS,
     copts = [
-        "-I.",
         "-I/usr/local/include",
         "-std=c++11",
+        "-isystem $(GENDIR)",
     ],
+    #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
