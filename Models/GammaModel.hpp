@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -95,6 +96,22 @@ namespace BOOM {
 
     double Logp(double x, double &g, double &h, uint nd) const override ;
     double sim(RNG &rng = GlobalRng::rng) const override;
+
+    //  p(1/sigsq) = beta^alpha * (1/sigsq)^(alpha - 1) * exp(-beta/sigsq)
+    //               -----------------------------------------------------
+    //                                    Gamma(alpha)
+    //
+    // p(sigsq) = beta^alpha * (1/sigsq)^(alpha + 1) * exp(-beta / sigsq)
+    //               -----------------------------------------------------
+    //                                    Gamma(alpha)
+    //
+    // This function returns log(p(sigsq)).  If gradient is non-NULL then it is
+    // filled with the derivative with respect to sigsq.  If the gradient _and_
+    // hessian are both non-NULL then hessian is filled with the second
+    // derivative with respect to sigsq.
+    double logp_reciprocal(double sigsq,
+                           double *gradient = nullptr,
+                           double *hessian = nullptr) const;
   };
   //======================================================================
 

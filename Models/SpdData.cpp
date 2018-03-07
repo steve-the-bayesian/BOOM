@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -23,13 +24,9 @@
 namespace BOOM {
 
   namespace {
-    typedef std::shared_ptr<SPD::SpdStorage>  SpdPtr;
-    typedef std::shared_ptr<SPD::CholStorage> CholPtr;
-    typedef std::shared_ptr<SPD::Storage> StoragePtr;
-
-    // Given four equivalent representations of the data in an SpdData
-    // object, find the current representation, and use it to refresh
-    // the primary representation.
+    // Given four equivalent representations of the data in an SpdData object,
+    // find the current representation, and use it to refresh the primary
+    // representation.
     inline void ensure_current(
         SPD::SpdStorage *sig,
         SPD::CholStorage *sig_chol,
@@ -49,9 +46,9 @@ namespace BOOM {
       }
     }
 
-    // Given four equivalent representations of the data in an SpdData
-    // object, find the current representation, and use it to refresh
-    // the primary representation.
+    // Given four equivalent representations of the data in an SpdData object,
+    // find the current representation, and use it to refresh the primary
+    // representation.
     inline void ensure_chol_current(SPD::CholStorage *chol,
                                     SPD::SpdStorage *sig,
                                     SPD::CholStorage *siginv_chol,
@@ -72,7 +69,7 @@ namespace BOOM {
         report_error(err.str());
       }
     }
-  }
+  }  // namespace
 
   namespace SPD {
 
@@ -245,7 +242,7 @@ namespace BOOM {
   uint SpdData::dim() const { return current_rep_->dim();}
 
   void SpdData::setup_storage() {
-    std::vector<StoragePtr> storage;
+    std::vector<std::shared_ptr<SPD::Storage>> storage;
 
     storage.push_back(var_);
     storage.push_back(ivar_);
@@ -253,10 +250,9 @@ namespace BOOM {
     storage.push_back(var_chol_);
 
     for (uint i = 0; i < storage.size(); ++i) {
-      StoragePtr obs = storage[i];
       for (uint j = 0; j < storage.size(); ++j) {
         if (j != i) {
-          obs->add_observer(storage[j]->create_observer());
+          storage[i]->add_observer(storage[j]->create_observer());
         }
       }
     }
@@ -291,7 +287,8 @@ namespace BOOM {
     ensure_current(ivar_.get(),
                    ivar_chol_.get(),
                    var_.get(),
-                   var_chol_.get());}
+                   var_chol_.get());
+  }
 
   void SpdData::ensure_var_current() const {
     ensure_current(var_.get(),

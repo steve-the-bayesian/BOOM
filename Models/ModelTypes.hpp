@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -309,8 +310,8 @@ namespace BOOM {
   // A mixture component that can also call remove_data, which is an important
   // ability for components assigned to a Dirichlet process.
   //
-  // TODO(stevescott): Remove this class once enough MixtureComponent child
-  // classes have had this ability added,
+  // TODO: Remove this class once enough MixtureComponent child classes have had
+  // this ability added,
   class DirichletProcessMixtureComponent
       : virtual public MixtureComponent {
    public:

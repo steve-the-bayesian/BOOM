@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -21,8 +22,8 @@
 #include <Models/DataTypes.hpp>
 #include <functional>
 
-namespace BOOM{
-  namespace SPD{
+namespace BOOM {
+  namespace SPD {
 
     // Abstract base class for storing the different incarnations of a
     // symmetric positive definite matrix.  The class keeps track of
@@ -30,7 +31,7 @@ namespace BOOM{
     // observers in other Storage objects.  When the user sets the
     // data in a Storage object, it signals the list of observers
     // watching it, so they know that their data needs to be updated.
-    class Storage{
+    class Storage {
      public:
       // Args:
       //   current: A flag indicating whether the data held by storage
@@ -85,7 +86,6 @@ namespace BOOM{
     private:
       Matrix L;
     };
-    typedef std::shared_ptr<CholStorage> CholPtr;
 
     //------------------------------------------------------------
     class SpdStorage : public Storage{
@@ -102,8 +102,7 @@ namespace BOOM{
     private:
       SpdMatrix sig_;
     };
-    typedef std::shared_ptr<SpdStorage> SpdPtr;
-  }
+  }  // namespace SPD
   //____________________________________________________________
 
   // This class stores a SpdMatrix matrix in several different formats.  It
@@ -152,22 +151,17 @@ namespace BOOM{
     void ensure_ivar_chol_current() const;
 
   private:
-    typedef std::shared_ptr<SPD::SpdStorage>  SpdPtr;
-    typedef std::shared_ptr<SPD::CholStorage> CholPtr;
-    typedef std::shared_ptr<SPD::Storage> StoragePtr;
-
-    mutable SpdPtr var_;
-    mutable SpdPtr ivar_;
-    mutable CholPtr var_chol_;
-    mutable CholPtr ivar_chol_;
+    mutable std::shared_ptr<SPD::SpdStorage> var_;
+    mutable std::shared_ptr<SPD::SpdStorage> ivar_;
+    mutable std::shared_ptr<SPD::CholStorage> var_chol_;
+    mutable std::shared_ptr<SPD::CholStorage> ivar_chol_;
 
     // Points to the current representation: variance, inverse
     // variance, cholesky of variance, cholesky of inverse.
-    StoragePtr current_rep_;
+    std::shared_ptr<SPD::Storage> current_rep_;
 
     // Create observers among all the available storage modes.
     void setup_storage();
-
   };
 }  // namespace BOOM
 #endif// BOOM_SPD_STORAGE_HPP

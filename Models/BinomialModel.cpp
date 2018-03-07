@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -230,8 +231,8 @@ namespace BOOM{
   BM * BM::clone()const{return new BM(*this);}
 
   void BM::mle(){
-    double p = suf()->sum() / suf()->nobs();
-    set_prob(p);
+    double n = suf()->nobs();
+    set_prob(n > 0 ? suf()->sum() / n : 0.5);
   }
 
   double BM::prob()const{ return Prob_prm()->value();}

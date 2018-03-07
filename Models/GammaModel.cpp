@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -179,6 +180,26 @@ namespace BOOM {
     suf()->add_mixture_data(y, prob);
   }
 
+  double GammaModelBase::logp_reciprocal(double sigsq,
+                                         double *gradient,
+                                         double *hessian) const {
+    double a = alpha();
+    double b = beta();
+    if (a <= 0 || b <= 0 || sigsq <= 0) {
+      return negative_infinity();
+    }
+    double log_sigsq = log(sigsq);
+    double ans = dgamma(1.0 / sigsq, a, b, true) - 2 * log_sigsq;
+    if (gradient) {
+      double sig4 = sigsq * sigsq;
+      *gradient = -(a + 1) / sigsq + (b / sig4);
+      if (hessian) {
+        *hessian = ((a + 1) / sig4) - 2 * b / (sig4 * sigsq);
+      }
+    }
+    return ans;
+  }
+
   //======================================================================
 
   GammaModel::GammaModel(double a, double b)
@@ -334,13 +355,14 @@ namespace BOOM {
   }
 
   void GammaModel::mle() {
-    // can get good starting values;
+    // Good starting values for the MLE are available from the method of
+    // moments.
     double n = suf()->n();
     double sum = suf()->sum();
     double sumlog = suf()->sumlog();
 
-    double ybar = sum / n;        // arithmetic mean
-    double geometric_mean = exp(sumlog / n);
+    double ybar = n > 0 ? sum / n : 0;        // arithmetic mean
+    double geometric_mean = exp(n > 0 ? sumlog / n : 0);
     double sum_of_squares = 0;
     for (uint i = 0; i < dat().size(); ++i) {
       sum_of_squares += pow(dat()[i]->value() - ybar, 2);

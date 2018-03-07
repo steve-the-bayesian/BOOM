@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
  /*
   Copyright (C) 2007-2010 Steven L. Scott
 
@@ -178,7 +179,7 @@ namespace BOOM{
     this->combine(*s);
   }
 
-  // TODO(stevescott): test this
+  // TODO: test this
   void MvnSuf::combine(const MvnSuf & s) {
     Vector zbar = (sum() + s.sum())/(n() + s.n());
     sumsq_ = center_sumsq(zbar) + s.center_sumsq(zbar);

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -65,16 +66,14 @@ namespace BOOM{
       uint n = signals_.size();
       for(uint i=0; i<n; ++i) signals_[i]();
     }
-    // TODO(stevescott): This implementation of the observer pattern
-    // is broken by assignment.  When an object is created from an old
-    // object by assignment, it should eliminate any observers it has
-    // placed on other objects.  This will require the observing
-    // object to keep a collection of handles to the observers and
-    // mark them as inactive.  The observed objects should check that
-    // the observer is active when calling, and remove inactive
-    // observers from the set of signals.  This fix will require
-    // making changes to all the classes that use the current observer
-    // scheme.
+    // TODO: This implementation of the observer pattern is broken by
+    // assignment.  When an object is created from an old object by assignment,
+    // it should eliminate any observers it has placed on other objects.  This
+    // will require the observing object to keep a collection of handles to the
+    // observers and mark them as inactive.  The observed objects should check
+    // that the observer is active when calling, and remove inactive observers
+    // from the set of signals.  This fix will require making changes to all the
+    // classes that use the current observer scheme.
     void add_observer(std::function<void(void)> f){
       signals_.push_back(f); }
     friend void intrusive_ptr_add_ref(Data *d);
