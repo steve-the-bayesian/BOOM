@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
-  Copyright (C) 2005-2017 Steven L. Scott
+  Copyright (C) 2005-2018 Steven L. Scott
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp>
-#include <Models/PosteriorSamplers/MvnMeanSampler.hpp>
-#include <Models/PosteriorSamplers/MvnVarSampler.hpp>
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp"
+#include "Models/PosteriorSamplers/MvnMeanSampler.hpp"
+#include "Models/PosteriorSamplers/MvnVarSampler.hpp"
 
 namespace BOOM {
   namespace {
@@ -90,27 +90,31 @@ namespace BOOM {
         centered_regression_effects.outer(),
         *coefficient_precision_hyperprior_));
 
-    // Convert centered_regression_effects betas back to betas, using the newly
-    // drawn prior mean.  Accumulate the sufficient statistics needed to draw
-    // the residual_variance.
-    double sample_size = 0;
-    double residual_sum_of_squares = 0;
-    const Vector &prior_mean(model_->prior()->mu());
-    for (int i = 0; i < model_->number_of_groups(); ++i) {
-      RegressionModel *reg = model_->data_model(i);
-      reg->set_Beta(prior_mean + centered_regression_effects.col(i));
-      sample_size += reg->suf()->n();
-      residual_sum_of_squares += reg->suf()->relative_sse(reg->coef());
+    if (!!residual_variance_prior_) {
+      // Convert centered_regression_effects betas back to betas, using the newly
+      // drawn prior mean.  Accumulate the sufficient statistics needed to draw
+      // the residual_variance.
+      double sample_size = 0;
+      double residual_sum_of_squares = 0;
+      const Vector &prior_mean(model_->prior()->mu());
+      for (int i = 0; i < model_->number_of_groups(); ++i) {
+        RegressionModel *reg = model_->data_model(i);
+        reg->set_Beta(prior_mean + centered_regression_effects.col(i));
+        sample_size += reg->suf()->n();
+        residual_sum_of_squares += reg->suf()->relative_sse(reg->coef());
+      }
+      // draw sigsq
+      model_->set_residual_variance(residual_variance_sampler_.draw(
+          rng(), sample_size, residual_sum_of_squares));
     }
-    // draw sigsq
-    model_->set_residual_variance(residual_variance_sampler_.draw(
-        rng(), sample_size, residual_sum_of_squares));
   }
 
   double HGRAS::logpri() const {
     const MvnModel *prior = model_->prior();
-    double ans = residual_variance_sampler_.log_prior(
-        model_->residual_variance());
+    double ans = 0;
+    if (!!residual_variance_prior_) {
+      ans += residual_variance_sampler_.log_prior(model_->residual_variance());
+    }
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       ans += prior->logp(model_->data_model(i)->Beta());
     }
@@ -121,6 +125,17 @@ namespace BOOM {
     return ans;
   }
 
+  void HGRAS::set_hyperprior(
+      const Ptr<MvnModel> &coefficient_mean_hyperprior,
+      const Ptr<WishartModel> &coefficient_precision_hyperprior,
+      const Ptr<GammaModelBase> &residual_precision_prior) {
+    coefficient_mean_hyperprior_ = coefficient_mean_hyperprior;
+    coefficient_precision_hyperprior_ = coefficient_precision_hyperprior;
+    residual_variance_prior_ = residual_precision_prior;
+    residual_variance_sampler_.set_prior(residual_variance_prior_);
+  }
+
+  
   void HGRAS::refresh_working_suf() {
     int xdim = model_->xdim();
     xtx_.resize(xdim);

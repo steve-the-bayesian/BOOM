@@ -20,10 +20,10 @@
 #ifndef BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 #define BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
@@ -67,6 +67,10 @@ namespace BOOM {
     // Clears the subordinate regression models holding the data, and removes
     // their parameters from the global list of model parameters.
     void clear_data() override;
+
+    // Clears the data from the prior and the group level models.  Does not
+    // delete the group level models themselves.
+    void clear_data_keep_models();
 
     // Copies the sufficient statistics from other_model into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;

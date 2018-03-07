@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/HierarchicalDirichletModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Hierarchical/PosteriorSamplers/HierarchicalDirichletPosteriorSampler.hpp>
+#include "Models/Hierarchical/HierarchicalDirichletModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalDirichletPosteriorSampler.hpp"
 
 namespace BOOM {
 

@@ -20,12 +20,12 @@
 #ifndef BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp>
-#include <Models/PosteriorSamplers/BetaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
+#include "Models/PosteriorSamplers/BetaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
 
 namespace BOOM {
 

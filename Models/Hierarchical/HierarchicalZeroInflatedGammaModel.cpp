@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
+#include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

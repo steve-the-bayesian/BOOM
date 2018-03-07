@@ -20,12 +20,12 @@
 #ifndef BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_MODEL_HPP_
 #define BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_MODEL_HPP_
 
-#include <Models/ZeroInflatedPoissonModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/BetaModel.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/ZeroInflatedPoissonModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

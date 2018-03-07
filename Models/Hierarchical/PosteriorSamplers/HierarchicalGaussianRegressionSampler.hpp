@@ -20,10 +20,10 @@
 #ifndef BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_SAMPLER_HPP_
 #define BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM {
 

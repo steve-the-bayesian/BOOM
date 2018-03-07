@@ -21,8 +21,8 @@
 #define BOOM_HIERARCHICAL_MODEL_HPP_
 
 #include <vector>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
