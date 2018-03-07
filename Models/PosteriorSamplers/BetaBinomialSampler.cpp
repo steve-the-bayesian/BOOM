@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -83,7 +84,7 @@ namespace BOOM{
   }
 
   double BBS::log_prior_density(const ConstVectorView &parameters) const {
-    if (parameters.size() != 0) {
+    if (!parameters.empty()) {
       report_error("Wrong size parameters in log_prior_density.");
     }
     return prior_->logp(parameters[0]);

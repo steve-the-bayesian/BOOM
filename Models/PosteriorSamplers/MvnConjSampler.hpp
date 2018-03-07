@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -94,6 +95,7 @@ namespace BOOM {
     void draw_model_parameters(Model &model) override;
     void draw_model_parameters(MvnModel &model);
 
+    double log_prior_density(const ConstVectorView &parameters) const override;
     double log_prior_density(const Model &model) const override;
     double log_prior_density(const MvnModel &model) const;
 

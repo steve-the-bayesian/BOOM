@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -131,13 +132,21 @@ namespace BOOM {
     model.set_mu(mu);
   }
 
+  double MCS::log_prior_density(const ConstVectorView &parameters) const {
+    int dim = mu_->dim();
+    Vector mu(dim);
+    SpdMatrix Sigma(dim);
+    std::copy(parameters.begin(), parameters.end(), mu.begin());
+    Sigma.unvectorize(parameters.begin() + dim, true);
+    return mu_->logp(mu) + siginv_->logp(Sigma.inv());
+  }
+
   double MCS::log_prior_density(const Model &model) const {
     return log_prior_density(dynamic_cast<const MvnModel &>(model));
   }
 
   double MCS::log_prior_density(const MvnModel &model) const {
-    return  siginv_->logp(model.siginv()) +
-        mu_->logp(model.mu());
+    return siginv_->logp(model.siginv()) + mu_->logp(model.mu());
   }
 
   void MCS::draw(){

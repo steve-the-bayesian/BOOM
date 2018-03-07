@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -47,9 +48,11 @@ namespace BOOM {
   double GenericGaussianVarianceSampler::draw(
       RNG &rng,
       double data_df,
-      double data_ss) const {
+      double data_ss,
+      double prior_sigma_guess_scale_factor) const {
     double DF = data_df + 2 * prior_->alpha();
-    double SS = data_ss + 2 * prior_->beta();
+    double SS = data_ss +
+        2 * prior_->beta() * square(prior_sigma_guess_scale_factor);
     if (sigma_max_ == 0.0) {
       return 0.0;
     } else if(sigma_max_ == infinity()){
