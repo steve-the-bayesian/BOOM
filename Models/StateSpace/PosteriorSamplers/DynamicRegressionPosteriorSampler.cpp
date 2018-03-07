@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -21,6 +22,51 @@
 
 namespace BOOM {
 
+  namespace {
+    using DRIPS = DynamicRegressionIndependentPosteriorSampler;
+  }
+
+  DRIPS::DynamicRegressionIndependentPosteriorSampler(
+      DynamicRegressionStateModel *model,
+      const std::vector<Ptr<GammaModelBase>> &innovation_precision_priors,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        priors_(innovation_precision_priors) {
+    if (innovation_precision_priors.size() == 1) {
+      for (int i = 1; i < model_->xdim(); ++i) {
+        priors_.push_back(priors_[0]->clone());
+      }
+    }
+    if (priors_.size() != model_->xdim()) {
+      report_error("The number of prior distributions must be the same "
+                   "as the number of coefficients in the dynamic regression.");
+    }
+    for (int i = 0; i < priors_.size(); ++i) {
+      samplers_.push_back(GenericGaussianVarianceSampler(priors_[i]));
+    }
+  }
+
+  void DRIPS::draw() {
+    for (int i = 0; i < samplers_.size(); ++i) {
+      double sigsq = samplers_[i].draw(
+          rng(), model_->suf(i)->n(), model_->suf(i)->sumsq());
+      model_->set_sigsq(sigsq, i);
+    }
+  }
+
+  double DRIPS::logpri() const {
+    double ans = 0;
+    for (int i = 0; i < samplers_.size(); ++i) {
+      ans += samplers_[i].log_prior(model_->sigsq(i));
+    }
+    return ans;
+  }
+
+  void DRIPS::set_sigma_max(int coefficient, double value) {
+    samplers_[coefficient].set_sigma_max(value);
+  }
+
   DynamicRegressionPosteriorSampler::DynamicRegressionPosteriorSampler(
       DynamicRegressionStateModel *model,
       const Ptr<GammaModel> &siginv_prior,
@@ -43,7 +89,7 @@ namespace BOOM {
       double sumsq = suf->sumsq() * model_->predictor_variance()[i];
       double sigsq = sigsq_sampler_.draw(rng(), suf->n(), sumsq);
       model_->set_sigsq(sigsq, i);
-      siginv_prior_->suf()->update_raw(1.0/sigsq);
+      siginv_prior_->suf()->update_raw(1.0 / sigsq);
     }
     if (!handle_siginv_prior_separately_) {
       siginv_prior_->sample_posterior();

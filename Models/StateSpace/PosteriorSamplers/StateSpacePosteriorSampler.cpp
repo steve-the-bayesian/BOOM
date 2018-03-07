@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -21,26 +22,28 @@
 #include <numopt.hpp>
 #include <TargetFun/TargetFun.hpp>
 
-namespace BOOM{
+namespace BOOM {
 
-  typedef StateSpacePosteriorSampler SSPS;
-  typedef StateSpaceModelBase SSMB;
+  namespace {
+    using SSPS = StateSpacePosteriorSampler;
+  }
 
   SSPS::StateSpacePosteriorSampler(StateSpaceModelBase *model,
                                    RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        latent_data_initialized_(false)
+        latent_data_initialized_(false),
+        pool_(2)
   {}
 
   void SSPS::draw(){
     if (!latent_data_initialized_) {
-      model_->impute_state(rng());
+      model_->impute_state(rng(), &pool_);
       latent_data_initialized_ = true;
       impute_nonstate_latent_data();
     }
     model_->observation_model()->sample_posterior();
-    for(int s = 0; s < model_->nstate(); ++s) {
+    for (int s = 0; s < model_->nstate(); ++s) {
       model_->state_model(s)->sample_posterior();
     }
     // The complete data sufficient statistics for the observation model and the
@@ -48,14 +51,14 @@ namespace BOOM{
     // data should be imputed immediately before that, so the complete data
     // sufficient statistics reflect all the latent data correctly.
     impute_nonstate_latent_data();
-    model_->impute_state(rng());
+    model_->impute_state(rng(), &pool_);
     // End with a call to impute_state() so that the internal state of
     // the Kalman filter matches up with the parameter draws.
   }
 
   double SSPS::logpri()const{
     double ans = model_->observation_model()->logpri();
-    for(int s = 0; s < model_->nstate(); ++s){
+    for (int s = 0; s < model_->nstate(); ++s){
       ans += model_->state_model(s)->logpri();
     }
     return ans;
@@ -80,19 +83,19 @@ namespace BOOM{
     double old_logp = model_->Estep(false) + logpri();
     double crit = 1 + epsilon;
     int em_steps = 0;
-    while((crit > std::min(1.0, epsilon)) &&
+    while ((crit > std::min(1.0, epsilon)) &&
           (em_steps++ < max_steps)) {
       Mstep();
       model_->clear_client_data();
       double logp = model_->Estep(false) + logpri();
       crit = logp - old_logp;
-      old_logp = logp;
       if (crit < -.01) {
         // A small decrease in log posterior might be due to
         // numerical issues, but log posterior should never
         // decrease.
         report_error("EM iteration reduced the log posterior.");
       }
+      old_logp = logp;
     }
   }
 
@@ -101,7 +104,7 @@ namespace BOOM{
         : public dTargetFun {
      public:
       StateSpaceLogPosterior(
-          const StateSpaceModelBase *model,
+          StateSpaceModelBase *model,
           const StateSpacePosteriorSampler *prior)
           : model_(model),
             prior_(prior)
@@ -121,10 +124,10 @@ namespace BOOM{
       }
 
      private:
-      const StateSpaceModelBase *model_;
+      mutable StateSpaceModelBase *model_;
       const StateSpacePosteriorSampler *prior_;
     };
-  }
+  }  // namespace
 
   void SSPS::find_posterior_mode_numerically(double epsilon) {
     StateSpaceLogPosterior log_posterior(model_, this);
