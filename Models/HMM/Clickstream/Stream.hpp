@@ -19,7 +19,7 @@
 
 #include  <string>
 
-#include <Models/HMM/Clickstream/Session.hpp>
+#include "Models/HMM/Clickstream/Session.hpp"
 
 namespace BOOM {
   namespace Clickstream{

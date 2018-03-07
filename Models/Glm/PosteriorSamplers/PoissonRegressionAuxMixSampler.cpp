@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/poisson_mixture_approximation_table.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/poisson_mixture_approximation_table.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 

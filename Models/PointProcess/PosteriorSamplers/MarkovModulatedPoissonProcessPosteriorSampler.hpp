@@ -19,8 +19,8 @@
 #ifndef BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PointProcess/MarkovModulatedPoissonProcess.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PointProcess/MarkovModulatedPoissonProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

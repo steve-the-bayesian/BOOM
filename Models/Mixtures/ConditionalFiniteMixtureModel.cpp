@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/ConditionalFiniteMixtureModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/lse.hpp>  // lse
-#include <cpputil/report_error.hpp>
+#include "Models/Mixtures/ConditionalFiniteMixtureModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/lse.hpp"  // lse
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace {

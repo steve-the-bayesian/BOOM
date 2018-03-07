@@ -20,11 +20,11 @@
 #ifndef BOOM_REGRESSION_SHRINKAGE_SAMPLER_HPP_
 #define BOOM_REGRESSION_SHRINKAGE_SAMPLER_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
 

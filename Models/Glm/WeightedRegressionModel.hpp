@@ -20,8 +20,8 @@
 #ifndef BOOM_WEIGHTED_REGRESSION_MODEL_HPP
 #define BOOM_WEIGHTED_REGRESSION_MODEL_HPP
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/Glm.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/Glm.hpp"
 
 namespace BOOM{
 

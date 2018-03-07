@@ -21,14 +21,14 @@
 
 #include <set>
 
-#include <Models/GammaModel.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitCompositeSpikeSlabSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/ZeroInflatedLognormalRegression.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/MvnGivenScalarSigma.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitCompositeSpikeSlabSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/ZeroInflatedLognormalRegression.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 
 namespace BOOM {

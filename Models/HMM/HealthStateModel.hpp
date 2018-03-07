@@ -20,12 +20,12 @@
 #ifndef BOOM_HEALTH_STATE_MODEL_HPP_
 #define BOOM_HEALTH_STATE_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/MarkovModel.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/MarkovModel.hpp"
 
 namespace BOOM{
 

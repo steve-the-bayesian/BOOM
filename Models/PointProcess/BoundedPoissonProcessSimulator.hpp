@@ -19,7 +19,7 @@
 #ifndef BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_
 #define BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_
 
-#include <Models/PointProcess/PoissonProcess.hpp>
+#include "Models/PointProcess/PoissonProcess.hpp"
 #include <functional>
 
 namespace BOOM {

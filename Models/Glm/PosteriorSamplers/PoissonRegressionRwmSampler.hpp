@@ -20,9 +20,9 @@
 #ifndef BOOM_POISSON_REGRESSION_RWM_SAMPLER_HPP_
 #define BOOM_POISSON_REGRESSION_RWM_SAMPLER_HPP_
 
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM{
 

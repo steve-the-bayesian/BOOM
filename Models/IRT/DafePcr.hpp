@@ -18,11 +18,11 @@
 #ifndef BOOM_DAFE_PCR_HPP
 #define BOOM_DAFE_PCR_HPP
 
-#include <Models/VectorModel.hpp>
-#include <Models/IRT/IRT.hpp>
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
+#include "Models/VectorModel.hpp"
+#include "Models/IRT/IRT.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/MetropolisHastings.hpp"
 #include <map>
 
 namespace BOOM {

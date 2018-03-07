@@ -17,30 +17,28 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/HMM/HMM2.hpp>
-#include <Models/HMM/HmmFilter.hpp>
-#include <Models/HMM/HmmDataImputer.hpp>
+#include "Models/HMM/HMM2.hpp"
+#include "Models/HMM/HmmFilter.hpp"
+#include "Models/HMM/HmmDataImputer.hpp"
 
-#include <Models/MarkovModel.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "Models/MarkovModel.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/string_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 #include <stdexcept>
 #include <cmath>
-
-#ifndef NO_BOOST_THREADS
-#include <boost/thread.hpp>
-#include <boost/ref.hpp>
-#endif
+#include <future>
 
 namespace BOOM{
 
-  typedef HiddenMarkovModel HMM;
+  namespace {
+    using HMM = HiddenMarkovModel;
+  }
 
   //======================================================================
 
@@ -240,15 +238,14 @@ namespace BOOM{
   }
 
   double HMM::impute_latent_data(){
-#ifndef NO_BOOST_THREADS
-    if(nthreads()>0)
+    if(nthreads()>0) {
       return impute_latent_data_with_threads();
-#endif
+    }
 
     clear_client_data();
     double ans=0;
     uint ns = nseries();
-    for(uint series = 0; series<ns; ++series){
+    for(uint series = 0; series < ns; ++series){
       const DataSeriesType & ts(dat(series));
       ans += filter_->fwd(ts);
       filter_->bkwd_sampling(ts);}
@@ -256,7 +253,6 @@ namespace BOOM{
     set_logpost(ans + logpri());
     return ans;
   }
-
 
   double HMM_EM::Estep(bool bayes){
     clear_client_data();
@@ -275,56 +271,74 @@ namespace BOOM{
 
   void HMM_EM::Mstep(bool bayes){
     uint S = mix_.size();
-    for(uint s=0; s<S; ++s){
-      if(bayes) mix_[s]->find_posterior_mode();
-      else mix_[s]->mle();
+    for (uint s = 0; s < S; ++s) {
+      if (bayes) {
+        mix_[s]->find_posterior_mode();
+      } else {
+        mix_[s]->mle();
+      }
     }
-    if(bayes) mark()->find_posterior_mode();
-    else mark()->mle();
+    if (bayes) {
+      mark()->find_posterior_mode();
+    } else {
+      mark()->mle();
+    }
   }
 
   ////////////////////////////////////////////////////////////////////////////
 
-  void HMM::set_nthreads(uint n){
-#ifndef NO_BOOST_THREADS
+  void HMM::set_nthreads(uint n) {
+    thread_pool_.set_number_of_threads(n);
     workers_.clear();
     for(uint i=0; i<n; ++i){
       NEW(HmmDataImputer, imp)(this, i, n);
       workers_.push_back(imp);}
-#endif
-}
+  }
 
   uint HMM::nthreads()const{ return workers_.size();}
 
-#ifndef NO_BOOST_THREADS
+  namespace {
+    class HmmWorkWrapper {
+     public:
+      HmmWorkWrapper(const Ptr<HmmDataImputer> &worker)
+          : worker_(worker) {}
+      void operator()() {
+        worker_->impute_data();
+      }
+     public:
+      Ptr<HmmDataImputer> worker_;
+    }; 
+  }  // namespace
+  
   double HMM::impute_latent_data_with_threads(){
     try{
       clear_client_data();
 
-      boost::thread_group tg;
-      for(uint i = 0; i<nthreads(); ++i){
+      std::vector<std::future<void>> futures;
+      for (int i = 0; i < nthreads(); ++i) {
         workers_[i]->setup(this);
-        tg.add_thread(new boost::thread(boost::ref(*workers_[i])));
+        futures.emplace_back(thread_pool_.submit(
+            HmmWorkWrapper(workers_[i])));
       }
-      tg.join_all();
+      
       uint S = state_space_size();
-      double loglike=0;
-      for(uint i=0; i<nthreads(); ++i){
+      double loglike = 0;
+      for(uint i = 0; i < nthreads(); ++i){
+        futures[i].get();
         loglike += workers_[i]->loglike();
         mark_->combine_data(*workers_[i]->mark(), true);
-        for(uint s=0; s<S; ++s) {
+        for(uint s = 0; s < S; ++s) {
           mix_[s]->combine_data(*workers_[i]->models(s), true);
         }
       }
       return loglike;
-    }catch(const std::exception &e){
+    } catch(const std::exception &e) {
       report_error(e.what());
-    }catch(...){
+    } catch(...) {
       report_error("HMM caught unknown exception from boost::threads");
     }
     return 0;
   }
-#endif
 
 
 } // ends namespace BOOM

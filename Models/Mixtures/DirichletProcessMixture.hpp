@@ -20,10 +20,10 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MIXTURE_HPP_
 #define BOOM_DIRICHLET_PROCESS_MIXTURE_HPP_
 
-#include <Models/CategoricalData.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
+#include "Models/CategoricalData.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
 
 namespace BOOM {
 

@@ -16,12 +16,12 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/ProbitSpikeSlabSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/seq.hpp>
-#include <distributions.hpp>
-#include <stats/logit.hpp>
-#include <random>
+#include "Models/Glm/PosteriorSamplers/ProbitSpikeSlabSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/seq.hpp"
+#include "distributions.hpp"
+#include "stats/logit.hpp"
+#include <random>        
 
 namespace BOOM{
   typedef ProbitSpikeSlabSampler PSSS;
@@ -40,14 +40,14 @@ namespace BOOM{
   {
     if(check_init){
       if(!std::isfinite(this->logpri())){
-    ostringstream err;
-    err << "ProbitSpikeSampler initialized with an a priori "
+        ostringstream err;
+        err << "ProbitSpikeSampler initialized with an a priori "
             << "illegal value" << endl
-        << "the initial Selector vector was: " << endl
-        << m_->coef().inc() << endl
-        << *gamma_prior_ << endl;
+            << "the initial Selector vector was: " << endl
+            << m_->coef().inc() << endl
+            << *gamma_prior_ << endl;
 
-    report_error(err.str());
+        report_error(err.str());
       }
     }
   }

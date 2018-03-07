@@ -20,14 +20,14 @@
 #ifndef BOOM_SPIKE_SLAB_DA_REGRESSION_SAMPLER_HPP_
 #define BOOM_SPIKE_SLAB_DA_REGRESSION_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <Models/IndependentMvnModelGivenScalarSigma.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
   // A posterior sampler for linear models under a spike and slab prior

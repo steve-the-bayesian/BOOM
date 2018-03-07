@@ -20,11 +20,11 @@
 #ifndef BOOM_GLM_ZERO_INFLATED_POISSON_REGRESSION_MODEL_HPP_
 #define BOOM_GLM_ZERO_INFLATED_POISSON_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/PoissonRegressionData.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroInflatedPoissonModel.hpp>
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroInflatedPoissonModel.hpp"
 
 namespace BOOM {
 

@@ -20,10 +20,10 @@
 #ifndef BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 
 namespace BOOM {
 

@@ -20,12 +20,13 @@
 #ifndef BOOM_HMM_HPP
 #define BOOM_HMM_HPP
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 #include <vector>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/DataTypes.hpp>
+#include "cpputil/ThreadTools.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
 
@@ -97,6 +98,7 @@ namespace BOOM{
     void write_loglike(double);  // deprecated
     void write_logpost(double);  // deprecated
     void set_filter(const Ptr<HmmFilter> & f);
+
    private:
     Ptr<MarkovModel> mark_;
     std::vector<Ptr<MixtureComponent>> mix_;
@@ -105,6 +107,8 @@ namespace BOOM{
     Ptr<UnivParams> loglike_;
     Ptr<UnivParams> logpost_;
     std::vector<Ptr<HmmDataImputer>> workers_;
+
+    ThreadWorkerPool thread_pool_;
 
     double impute_latent_data_with_threads();
   };

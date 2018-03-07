@@ -19,11 +19,11 @@
 #ifndef IRT_MODEL_HPP
 #define IRT_MODEL_HPP
 
-#include <Models/IRT/IRT.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/IRT/IRT.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
   class PosteriorSampler;

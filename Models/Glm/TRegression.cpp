@@ -17,16 +17,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/TRegression.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
+#include "Models/Glm/TRegression.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 
 
-#include <distributions.hpp>
-#include <numopt.hpp>
+#include "distributions.hpp"
+#include "numopt.hpp"
 
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 
 #include <iomanip>
 #include <cmath>

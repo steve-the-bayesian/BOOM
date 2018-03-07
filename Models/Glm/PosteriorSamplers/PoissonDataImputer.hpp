@@ -20,8 +20,8 @@
 #ifndef BOOM_POISSON_DATA_IMPUTER_HPP_
 #define BOOM_POISSON_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "distributions/rng.hpp"
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM {
 

@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <numopt.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "numopt.hpp"
+#include "TargetFun/TargetFun.hpp"
 #include <functional>
 
 namespace BOOM {

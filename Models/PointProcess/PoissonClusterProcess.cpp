@@ -16,12 +16,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PointProcess/PoissonClusterProcess.hpp>
-#include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/lse.hpp>
+#include "Models/PointProcess/PoissonClusterProcess.hpp"
+#include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/lse.hpp"
 
 namespace BOOM{
 

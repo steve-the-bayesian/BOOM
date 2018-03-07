@@ -19,8 +19,8 @@
 #ifndef BOOM_HMM_TOOLS_HPP
 #define BOOM_HMM_TOOLS_HPP
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
 

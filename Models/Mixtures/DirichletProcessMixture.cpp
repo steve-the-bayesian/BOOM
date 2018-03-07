@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/Mixtures/PosteriorSamplers/SplitMerge.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/shift_element.hpp>
-#include <distributions.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/Mixtures/PosteriorSamplers/SplitMerge.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/shift_element.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 

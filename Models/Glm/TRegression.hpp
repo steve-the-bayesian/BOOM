@@ -20,11 +20,11 @@
 #ifndef BOOM_T_REGRESSION_HPP
 #define BOOM_T_REGRESSION_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

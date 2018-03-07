@@ -19,13 +19,13 @@
 #ifndef BOOM_POISSON_CLUSTER_PROCESS_HPP_
 #define BOOM_POISSON_CLUSTER_PROCESS_HPP_
 
-#include <Models/PointProcess/PointProcess.hpp>
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/PointProcess/PointProcess.hpp"
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Selector.hpp"
 #include <vector>
 #include <map>
 #include <functional>

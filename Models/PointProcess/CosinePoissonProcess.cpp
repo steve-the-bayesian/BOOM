@@ -17,9 +17,9 @@
 */
 
 #include <cmath>
-#include <cpputil/report_error.hpp>
-#include <Models/PointProcess/CosinePoissonProcess.hpp>
-#include <Models/PointProcess/BoundedPoissonProcessSimulator.hpp>
+#include "cpputil/report_error.hpp"
+#include "Models/PointProcess/CosinePoissonProcess.hpp"
+#include "Models/PointProcess/BoundedPoissonProcessSimulator.hpp"
 
 namespace BOOM {
 

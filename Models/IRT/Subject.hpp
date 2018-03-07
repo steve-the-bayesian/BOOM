@@ -19,10 +19,10 @@
 #ifndef IRT_SUBJECT_HPP
 #define IRT_SUBJECT_HPP
 
-#include <Models/IRT/IRT.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/IRT/IRT.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
   namespace IRT{

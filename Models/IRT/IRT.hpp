@@ -22,11 +22,11 @@
 #include <set>
 #include <vector>
 
-#include <BOOM.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/CategoricalData.hpp>
+#include "BOOM.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/CategoricalData.hpp"
 
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
   namespace IRT {

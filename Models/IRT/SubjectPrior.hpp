@@ -18,10 +18,10 @@
 #ifndef BOOM_SUBJECT_PRIOR_HPP
 #define BOOM_SUBJECT_PRIOR_HPP
 
-#include <Models/IRT/Subject.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/IRT/Subject.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
   class MvnModel;

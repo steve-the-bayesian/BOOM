@@ -15,14 +15,14 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/IRT/SubjectSliceSampler.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/IRT/SubjectPrior.hpp>
+#include "Models/IRT/SubjectSliceSampler.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/IRT/SubjectPrior.hpp"
 
-#include <Samplers/SliceSampler.hpp>
+#include "Samplers/SliceSampler.hpp"
 
-#include <cpputil/ParamHolder.hpp>
-#include <cpputil/math_utils.hpp>
+#include "cpputil/ParamHolder.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
   namespace IRT{

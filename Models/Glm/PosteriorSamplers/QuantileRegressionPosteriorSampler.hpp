@@ -20,13 +20,13 @@
 #ifndef BOOM_QUANTILE_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_QUANTILE_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Glm/QuantileRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/Imputer.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/Glm/QuantileRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/Imputer.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
   // The data augmentation scheme for quantile regression goes

@@ -16,17 +16,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/IRT/DafePcrRwm.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/MvtModel.hpp>
-#include <Models/IRT/PartialCreditModel.hpp>
+#include "Models/IRT/DafePcrRwm.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/MvtModel.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
 
-#include <Samplers/MetropolisHastings.hpp>
+#include "Samplers/MetropolisHastings.hpp"
 
-#include <TargetFun/Loglike.hpp>
+#include "TargetFun/Loglike.hpp"
 
-#include <cpputil/ParamHolder.hpp>
-#include <cpputil/math_utils.hpp>
+#include "cpputil/ParamHolder.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
   namespace IRT{

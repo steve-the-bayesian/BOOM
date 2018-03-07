@@ -19,10 +19,10 @@
 
 #ifndef BOOM_VS_PRIOR_SAMPLER_HPP
 #define BOOM_VS_PRIOR_SAMPLER_HPP
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/BetaModel.hpp>
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/BetaModel.hpp"
 #include <vector>
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
 

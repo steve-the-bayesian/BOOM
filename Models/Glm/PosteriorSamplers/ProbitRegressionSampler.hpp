@@ -20,10 +20,10 @@
 #ifndef BOOM_PROBIT_REGRESSION_SAMPLER_HPP_
 #define BOOM_PROBIT_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/ProbitRegression.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/Glm/ProbitRegression.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class ProbitRegressionSampler

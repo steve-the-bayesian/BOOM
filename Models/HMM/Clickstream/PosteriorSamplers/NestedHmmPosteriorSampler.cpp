@@ -17,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/HMM/Clickstream/PosteriorSamplers/NestedHmmPosteriorSampler.hpp>
+#include "Models/HMM/Clickstream/PosteriorSamplers/NestedHmmPosteriorSampler.hpp"
 
 namespace BOOM {
 

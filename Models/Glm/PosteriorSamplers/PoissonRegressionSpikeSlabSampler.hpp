@@ -20,9 +20,9 @@
 #ifndef BOOM_GLM_POISSON_REGRESSION_SPIKE_SLAB_POSTERIOR_SAMPLER_HPP_
 #define BOOM_GLM_POISSON_REGRESSION_SPIKE_SLAB_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
 
 
 namespace BOOM {

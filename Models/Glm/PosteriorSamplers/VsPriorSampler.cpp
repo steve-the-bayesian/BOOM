@@ -16,10 +16,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/VsPriorSampler.hpp>
-#include <Models/PosteriorSamplers/BetaBinomialSampler.hpp>
-#include <Models/PosteriorSamplers/FixedProbBinomialSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PosteriorSamplers/VsPriorSampler.hpp"
+#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
+#include "Models/PosteriorSamplers/FixedProbBinomialSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
 
 namespace BOOM{

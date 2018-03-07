@@ -20,8 +20,8 @@
 #ifndef BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_
 #define BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/HMM/Clickstream/NestedHmm.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/HMM/Clickstream/NestedHmm.hpp"
 
 namespace BOOM {
 

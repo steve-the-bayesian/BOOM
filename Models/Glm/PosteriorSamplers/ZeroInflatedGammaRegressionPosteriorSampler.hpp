@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/GammaRegressionModel.hpp>
-#include <Models/Glm/ZeroInflatedGammaRegression.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/GammaRegressionModel.hpp"
+#include "Models/Glm/ZeroInflatedGammaRegression.hpp"
 
 namespace BOOM {
 

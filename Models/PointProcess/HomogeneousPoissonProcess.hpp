@@ -19,12 +19,12 @@
 #ifndef BOOM_HOMOGENEOUS_POISSON_PROCESS_HPP_
 #define BOOM_HOMOGENEOUS_POISSON_PROCESS_HPP_
 
-#include <Models/PointProcess/PointProcess.hpp>
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <cpputil/DateTime.hpp>
+#include "Models/PointProcess/PointProcess.hpp"
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "cpputil/DateTime.hpp"
 #include <functional>
 
 namespace BOOM{

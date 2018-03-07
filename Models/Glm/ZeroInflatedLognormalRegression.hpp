@@ -20,13 +20,13 @@
 #ifndef BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_
 #define BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_
 
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp>
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
 
 namespace BOOM {
 

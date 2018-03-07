@@ -16,12 +16,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/IRT/Subject.hpp>
-#include <Models/IRT/Item.hpp>
-#include <Models/Glm/Glm.hpp>
+#include "Models/IRT/Subject.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/Glm/Glm.hpp"
 #include <stdexcept>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   namespace IRT{

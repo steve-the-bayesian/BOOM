@@ -18,7 +18,7 @@
 #ifndef BOOM_PCR_NID_HPP
 #define BOOM_PCR_NID_HPP
 
-#include <Models/IRT/PartialCreditModel.hpp>
+#include "Models/IRT/PartialCreditModel.hpp"
 
 namespace BOOM{
   namespace IRT{

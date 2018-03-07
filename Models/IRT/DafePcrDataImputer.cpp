@@ -18,15 +18,15 @@
 
 #include <functional>
 
-#include <Models/IRT/DafePcr.hpp>
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/IRT/Subject.hpp>
+#include "Models/IRT/DafePcr.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/IRT/Subject.hpp"
 
-#include <cpputil/lse.hpp> // for lse and lse2
-#include <cpputil/report_error.hpp>
+#include "cpputil/lse.hpp" // for lse and lse2
+#include "cpputil/report_error.hpp"
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 namespace BOOM{
   namespace IRT{

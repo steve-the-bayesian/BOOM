@@ -21,17 +21,17 @@
 #ifndef CLICKSTREAM_MODEL_HPP
 #define CLICKSTREAM_MODEL_HPP
 
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <Models/MarkovModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/PosteriorSamplers/MarkovConjSampler.hpp>
-#include <Models/PosteriorSamplers/MarkovConjShrinkageSampler.hpp>
-#include <distributions/rng.hpp>
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "Models/MarkovModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
+#include "Models/PosteriorSamplers/MarkovConjShrinkageSampler.hpp"
+#include "distributions/rng.hpp"
 
-#include <Models/HMM/Clickstream/Stream.hpp>
+#include "Models/HMM/Clickstream/Stream.hpp"
 
 namespace BOOM {
 

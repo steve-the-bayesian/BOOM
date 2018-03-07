@@ -24,12 +24,12 @@
 #include <memory>
 #include <boost/unordered_map.hpp>
 
-#include <Models/PointProcess/PointProcess.hpp>
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <cpputil/RefCounted.hpp>
+#include "Models/PointProcess/PointProcess.hpp"
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "cpputil/RefCounted.hpp"
 
 namespace BOOM{
 

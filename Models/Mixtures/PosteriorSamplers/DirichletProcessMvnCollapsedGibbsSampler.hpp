@@ -20,12 +20,12 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MVN_COLLAPSED_GIBBS_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_MVN_COLLAPSED_GIBBS_SAMPLER_HPP_
 
-#include <Models/Mixtures/DirichletProcessMvnModel.hpp>
+#include "Models/Mixtures/DirichletProcessMvnModel.hpp"
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/MvnConjSampler.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/WishartModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/WishartModel.hpp"
 
 namespace BOOM {
 

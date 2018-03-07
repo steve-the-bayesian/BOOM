@@ -20,8 +20,8 @@
 #ifndef BOOM_DIRICHLET_PROCESS_COLLAPSED_GIBBS_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_COLLAPSED_GIBBS_SAMPLER_HPP_
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

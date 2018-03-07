@@ -18,9 +18,9 @@
 
 #include <algorithm>
 
-#include <Models/PointProcess/PointProcess.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/DateTime.hpp>
+#include "Models/PointProcess/PointProcess.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/DateTime.hpp"
 
 namespace BOOM{
 

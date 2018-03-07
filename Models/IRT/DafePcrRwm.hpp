@@ -17,11 +17,11 @@
 */
 #ifndef BOOM_DAFE_PCR_RWM_HPP
 #define BOOM_DAFE_PCR_RWM_HPP
-#include <BOOM.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/VectorModel.hpp>
-#include <Samplers/MetropolisHastings.hpp>
+#include "BOOM.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/VectorModel.hpp"
+#include "Samplers/MetropolisHastings.hpp"
 
 namespace BOOM {
   class MvnModel;

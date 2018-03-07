@@ -17,12 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/Glm/RegressionModel.hpp"
 
 #include <sstream>
 #include <cmath>
-#include <distributions.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "distributions.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM{
   inline void incompatible_X_and_y(const Matrix &X, const Vector &y) {

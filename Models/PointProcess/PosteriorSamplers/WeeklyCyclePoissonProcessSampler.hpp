@@ -19,10 +19,10 @@
 #ifndef BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PointProcess/WeeklyCyclePoissonProcess.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/DirichletModel.hpp>
+#include "Models/PointProcess/WeeklyCyclePoissonProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/DirichletModel.hpp"
 
 namespace BOOM{
 
