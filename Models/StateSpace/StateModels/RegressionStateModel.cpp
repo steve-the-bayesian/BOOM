@@ -17,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/RegressionStateModel.hpp>
+#include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 
 namespace BOOM {
 
@@ -54,7 +54,10 @@ namespace BOOM {
   // lies with the state space model that owns it.
   void RegressionStateModel::observe_state(const ConstVectorView then,
                                            const ConstVectorView now,
-                                           int time_now) {}
+                                           int time_now,
+                                           StateSpaceModelBase *model) {
+    ////////////// TODO!!!!!
+  }
 
   uint RegressionStateModel::state_dimension() const {return 1;}
 

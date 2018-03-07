@@ -20,8 +20,8 @@
 #ifndef BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 #define BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 
-#include <Models/ZeroMeanMvnModel.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
+#include "Models/ZeroMeanMvnModel.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 
 namespace BOOM{
 
@@ -38,7 +38,8 @@ namespace BOOM{
 
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
     uint state_dimension() const override {return 2;}
     uint state_error_dimension() const override {return 2;}
 

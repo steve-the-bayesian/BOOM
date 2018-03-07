@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp>
-#include <distributions.hpp>
-#include <stats/moments.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "distributions.hpp"
+#include "stats/moments.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   namespace {
@@ -168,8 +168,10 @@ namespace BOOM {
     }
   }
 
-  void DRSM::observe_state(
-      const ConstVectorView then, const ConstVectorView now, int time_now) {
+  void DRSM::observe_state(const ConstVectorView then,
+                           const ConstVectorView now,
+                           int time_now,
+                           StateSpaceModelBase *) {
     check_size(then.size());
     check_size(now.size());
     for (int i = 0; i < then.size(); ++i) {

@@ -20,9 +20,9 @@
 #ifndef BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
 
 namespace BOOM {
 

@@ -23,20 +23,20 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
-#include <Models/ParamTypes.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/SpdParams.hpp"
 
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/Ptr.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/Ptr.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
 
 namespace BOOM {
   //======================================================================

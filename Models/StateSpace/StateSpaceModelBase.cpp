@@ -17,16 +17,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include <functional>
 
-#include <LinAlg/SubMatrix.hpp>
-#include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
-#include <numopt/Powell.hpp>
-#include <stats/moments.hpp>
+#include "LinAlg/SubMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
+#include "numopt/Powell.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   namespace {
@@ -642,7 +642,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void Base::observe_state(int t) {
+  void SSMB::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
       return;
@@ -653,7 +653,8 @@ namespace BOOM {
       state_model(s)->observe_state(
           state_component(then, s),
           state_component(now, s),
-          t);
+          t,
+          this);
     }
   }
 

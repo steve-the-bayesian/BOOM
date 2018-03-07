@@ -20,12 +20,12 @@
 #ifndef BOOM_STATE_SPACE_MODEL_HPP_
 #define BOOM_STATE_SPACE_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
 
 namespace BOOM{
 

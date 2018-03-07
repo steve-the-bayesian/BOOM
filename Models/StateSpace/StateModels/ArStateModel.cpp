@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/ArStateModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/StateSpace/StateModels/ArStateModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -71,7 +71,8 @@ namespace BOOM {
   //======================================================================
   void ArStateModel::observe_state(const ConstVectorView then,
                                    const ConstVectorView now,
-                                   int t){
+                                   int t,
+                                   StateSpaceModelBase *) {
     double y = now[0];
     const ConstVectorView &x(then);
     suf()->add_mixture_data(y, x, 1.0);

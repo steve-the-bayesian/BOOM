@@ -18,12 +18,13 @@
 */
 
 #include <cassert>
-#include <cpputil/report_error.hpp>
-#include <Models/StateSpace/StateModels/Holiday.hpp>
+#include <algorithm>
+#include "cpputil/report_error.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
 
 namespace BOOM{
 
-  Date Holiday::nearest(const Date &d)const{
+  Date SingleDayHoliday::nearest(const Date &d) const {
     Date next_holiday(date_on_or_after(d));
     if (next_holiday == d) {
       return next_holiday;
@@ -36,14 +37,13 @@ namespace BOOM{
     }
   }
 
-  bool Holiday::active(const Date &d)const{
-    Date holiday_date(nearest(d));
-    return d >= earliest_influence(holiday_date)
-        && d <= latest_influence(holiday_date);
+  bool SingleDayHoliday::active(const Date &date) const {
+    Date holiday_date(nearest(date));
+    return date >= earliest_influence(holiday_date)
+        && date <= latest_influence(holiday_date);
   }
-
+  
   //======================================================================
-
   OrdinaryAnnualHoliday::OrdinaryAnnualHoliday(int days_before, int days_after)
       : days_before_(days_before),
         days_after_(days_after)
@@ -159,6 +159,91 @@ namespace BOOM{
       : OrdinaryAnnualHoliday(days_before, days_after)
   {}
 
+  //======================================================================
+  DateRangeHoliday::DateRangeHoliday()
+      : maximum_window_width_(-1)
+  {}
+  
+  DateRangeHoliday::DateRangeHoliday(const std::vector<Date> &begin,
+                                     const std::vector<Date> &end)
+      : maximum_window_width_(-1)
+  {
+    if (begin.size() != end.size()) {
+      report_error("'begin' and 'end' must contain the same number "
+                   "of elements.");
+    }
+    for (int i = 0; i < begin.size(); ++i) {
+      add_dates(begin_[i], end_[i]);
+    }
+  }
+
+  void DateRangeHoliday::add_dates(const Date &begin, const Date &end) {
+    if (end < begin) {
+      report_error("'begin' must come before 'end'.");
+    }
+    if (!begin_.empty() && begin <= begin_.back()) {
+      report_error("Dates must be added in sequential order.  "
+                   "Please sort by start date before calling add_dates.");
+    }
+    int width = end - begin + 1;
+    if (width > maximum_window_width_) {
+      maximum_window_width_ = width;
+    }
+    begin_.push_back(begin);
+    end_.push_back(end);
+  }
+
+  bool DateRangeHoliday::active(const Date &arbitrary_date) const {
+    const auto it = std::lower_bound(end_.cbegin(),
+                                     end_.cend(),
+                                     arbitrary_date);
+    // lower_bound returns the first date greater than or equal to
+    // arbitrary_date.
+    if (it == end_.cend()) {
+      // If no date was found then arbitrary_date is larger than all the dates
+      // in the date range.
+      return false;
+    }
+    if (arbitrary_date == *it) {
+      // In this case arbitrary_date occurs on the last day of one of the
+      // influence intervals.
+      return true;
+    } else {
+      // Find the start of the interval corresponding to the endpoint referred
+      // to by *it.  If the arbitrary_date >= this time point then it occurs
+      // inside an interval covered by the holiday.  If not then it doesn't.
+      int position = it - end_.cbegin();
+      return arbitrary_date >= begin_[position];
+    }
+  }
+  
+  Date DateRangeHoliday::earliest_influence(const Date &date) const {
+    // 'lower_bound' finds the first element >= date.  Use it to find the
+    // endpoint of the interval containing 'date', then return the corresponding
+    // start point for the interval.
+    const auto it = std::lower_bound(end_.cbegin(), end_.cend(), date);
+    if (it != end_.cend()) {
+      int position = it - end_.cbegin();
+      if (begin_[position] <= date) {
+        return begin_[position];
+      }
+    }
+    report_error("Holiday is not active on the given date.");
+    return date;
+  }
+
+  Date DateRangeHoliday::latest_influence(const Date &date) const {
+    const auto it = std::lower_bound(end_.cbegin(), end_.cend(), date);
+    if (it != end_.cend()) {
+      int position = it - end_.cbegin();
+      if (date >= begin_[position]) {
+        return *it;
+      }
+    }
+    report_error("Holiday is not active on the given date.");
+    return date;
+  }
+  
   //======================================================================
   SuperBowlSunday::SuperBowlSunday(int days_before, int days_after)
        : FloatingHoliday(days_before, days_after)

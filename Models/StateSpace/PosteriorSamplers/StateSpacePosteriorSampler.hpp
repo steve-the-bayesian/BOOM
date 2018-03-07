@@ -19,8 +19,8 @@
 #ifndef BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class StateSpacePosteriorSampler : public PosteriorSampler {

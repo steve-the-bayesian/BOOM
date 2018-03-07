@@ -20,11 +20,11 @@
 #ifndef BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 #define BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 
-#include <memory>
-#include <cpputil/Date.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/StateSpace/StateModels/Holiday.hpp>
+#include "cpputil/Date.hpp"
+#include "cpputil/Ptr.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
 
 namespace BOOM {
 
@@ -63,7 +63,8 @@ namespace BOOM {
     RandomWalkHolidayStateModel * clone() const override;
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {
@@ -97,8 +98,7 @@ namespace BOOM {
     void set_time_zero(const Date &time_zero);
 
    private:
-    // TODO: Make this a unique_ptr once available.
-    std::shared_ptr<Holiday> holiday_;
+    Ptr<Holiday> holiday_;
     Date time_zero_;
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;

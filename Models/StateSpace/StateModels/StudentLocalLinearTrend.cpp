@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -91,10 +91,10 @@ namespace BOOM {
     }
   }
 
-  void SLLTSM::observe_state(
-      const ConstVectorView then,
-      const ConstVectorView now,
-      int time_now){
+  void SLLTSM::observe_state(const ConstVectorView then,
+                             const ConstVectorView now,
+                             int time_now,
+                             StateSpaceModelBase *) {
     double level_now = now[0];
     double slope_now = now[1];
     double level_then = then[0];

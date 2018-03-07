@@ -20,11 +20,11 @@
 #ifndef BOOM_STATE_SPACE_POISSON_MODEL_HPP_
 #define BOOM_STATE_SPACE_POISSON_MODEL_HPP_
 
-#include <Models/StateSpace/StateSpaceNormalMixture.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/Glm/PoissonRegressionData.hpp>
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/PoissonRegressionData.hpp"
 
 namespace BOOM {
 

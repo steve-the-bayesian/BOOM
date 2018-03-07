@@ -20,8 +20,8 @@
 #ifndef BOOM_AR_STATE_MODEL_HPP_
 #define BOOM_AR_STATE_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
 namespace BOOM{
   // A state space model based on a stationary AR(p) process.  The
@@ -61,7 +61,8 @@ namespace BOOM{
 
     void observe_state(const ConstVectorView previous_state,
                        const ConstVectorView current_state,
-                       int t) override;
+                       int t,
+                       StateSpaceModelBase *model) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {return 1;}

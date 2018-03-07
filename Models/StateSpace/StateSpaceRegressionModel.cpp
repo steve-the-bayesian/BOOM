@@ -16,14 +16,14 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/StateSpace/StateSpaceRegressionModel.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
-#include <Models/DataTypes.hpp>
-#include <distributions.hpp>
-#include <cpputil/seq.hpp>
+#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "Models/DataTypes.hpp"
+#include "distributions.hpp"
+#include "cpputil/seq.hpp"
 
-namespace BOOM{
+namespace BOOM {
   namespace {
     typedef StateSpaceRegressionModel SSRM;
     typedef StateSpace::MultiplexedRegressionData MRD;

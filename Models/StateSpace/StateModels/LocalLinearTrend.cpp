@@ -16,8 +16,8 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/StateSpace/StateModels/LocalLinearTrend.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   namespace{
@@ -50,8 +50,9 @@ namespace BOOM{
   LLTSM * LLTSM::clone() const {return new LLTSM(*this);}
 
   void LLTSM::observe_state(const ConstVectorView then,
-                          const ConstVectorView now,
-                          int time_now) {
+                            const ConstVectorView now,
+                            int time_now,
+                            StateSpaceModelBase *model) {
     check_dim(then);
     check_dim(now);
 

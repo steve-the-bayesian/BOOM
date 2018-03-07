@@ -19,18 +19,16 @@
 #ifndef BOOM_STATE_SPACE_MODEL_BASE_HPP_
 #define BOOM_STATE_SPACE_MODEL_BASE_HPP_
 
-#include <memory>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <Models/StateSpace/Filters/KalmanStorage.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/MultiplexedData.hpp>
-#include <Models/StateSpace/PosteriorSamplers/SufstatManager.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-
-#include <cpputil/math_utils.hpp>
-#include <cpputil/ThreadTools.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Models/StateSpace/Filters/KalmanStorage.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/MultiplexedData.hpp"
+#include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "cpputil/ThreadTools.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

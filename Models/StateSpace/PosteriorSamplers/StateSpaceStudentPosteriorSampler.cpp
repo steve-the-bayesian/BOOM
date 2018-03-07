@@ -19,8 +19,8 @@
 #ifndef BOOM_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/PosteriorSamplers/StateSpaceStudentPosteriorSampler.hpp>
-#include <Models/StateSpace/PosteriorSamplers/SufstatManager.hpp>
+#include "Models/StateSpace/PosteriorSamplers/StateSpaceStudentPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
 
 namespace BOOM {
 

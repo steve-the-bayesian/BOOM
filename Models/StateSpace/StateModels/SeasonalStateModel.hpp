@@ -19,11 +19,12 @@
 
 #ifndef BOOM_SEASONALSTATE_MODEL_HPP
 #define BOOM_SEASONALSTATE_MODEL_HPP
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <cpputil/Date.hpp>
+
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "cpputil/Date.hpp"
 
 namespace BOOM {
 
@@ -42,7 +43,8 @@ namespace BOOM {
 
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int t) override;
+                       int t,
+                       StateSpaceModelBase *model) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override {return 1;}
     void simulate_state_error(

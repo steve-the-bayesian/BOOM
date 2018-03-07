@@ -20,9 +20,9 @@
 #ifndef BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 #define BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/IndependentMvnModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/IndependentMvnModel.hpp"
 
 namespace BOOM {
 
@@ -53,8 +53,10 @@ namespace BOOM {
     TrigStateModel(TrigStateModel &&rhs) = default;
     TrigStateModel * clone() const override;
 
-    void observe_state(const ConstVectorView then, const ConstVectorView now,
-                       int time_now) override;
+    void observe_state(const ConstVectorView then,
+                       const ConstVectorView now,
+                       int time_now,
+                       StateSpaceModelBase *model) override;
 
     uint state_dimension() const override {return 2 * frequencies_.size();}
     uint state_error_dimension() const override {return state_dimension();}

@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/StateModels/LocalLevelStateModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 
@@ -52,7 +52,8 @@ namespace BOOM{
 
   void LLSM::observe_state(const ConstVectorView then,
                            const ConstVectorView now,
-                           int time_now){
+                           int time_now,
+                           StateSpaceModelBase *) {
     double current_level = now[0];
     double previous_level = then[0];
     double diff = current_level - previous_level;

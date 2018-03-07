@@ -19,53 +19,54 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/ModelTypes.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/MultiplexedData.hpp>
-#include <uint.hpp>
+#include "Models/ModelTypes.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/MultiplexedData.hpp"
+#include "uint.hpp"
 
-namespace BOOM {
-  // A StateModel describes the propogation rules for one component of
-  // state in a StateSpaceModel.  A StateModel has a transition matrix
-  // T, which can be time dependent, an error variance Q, which may be
-  // of smaller dimension than T, and a matrix R that can multiply
-  // draws from N(0, Q) so that the dimension of RQR^T matches the
-  // state dimension.
+namespace BOOM{
+
+  class StateSpaceModelBase;
+  
+  // A StateModel describes the propogation rules for one component of state in
+  // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
+  // time dependent, an error variance Q, which may be of smaller dimension than
+  // T, and a matrix R that can multiply draws from N(0, Q) so that the
+  // dimension of RQR^T matches the state dimension.
   class StateModel
       : virtual public PosteriorModeModel
   {
    public:
-    // Traditional state models are Gaussian, but Bayesian modeling
-    // lets you work with conditionally Gaussian models just as
-    // easily.  For conditionally Gaussian state models this enum can
-    // be used as an argument to determine whether they should be
-    // viewed as normal mixtures, or as plain old non-normal marginal
-    // models.
-    enum Behavior {
+    // Traditional state models are Gaussian, but Bayesian modeling lets you
+    // work with conditionally Gaussian models just as easily.  For
+    // conditionally Gaussian state models this enum can be used as an argument
+    // to determine whether they should be viewed as normal mixtures, or as
+    // plain old non-normal marginal models.
+    enum Behavior{
       MARGINAL, // e.g. treat the t-distribution like the t-distribution.
       MIXTURE   // e.g. treat the t-distribution like a normal mixture.
     };
 
     ~StateModel() override{}
-    StateModel * clone()const override =0;
+    StateModel * clone()const override = 0;
 
-    // Some state models need to know the maximum value of t so they
-    // can set up space for latent variables, etc.  Many state models
-    // do not need this capability, so the default implementation is a
-    // no-op.
+    // Some state models need to know the maximum value of t so they can set up
+    // space for latent variables, etc.  Many state models do not need this
+    // capability, so the default implementation is a no-op.
     virtual void observe_time_dimension(int max_time) {}
 
-    // Add the relevant information from the state vector to the
-    // complete data sufficient statistics for this model.  This is
-    // often a difference between the current and next state vectors.
+    // Add the relevant information from the state vector to the complete data
+    // sufficient statistics for this model.  This is often a difference between
+    // the current and next state vectors.
     virtual void observe_state(const ConstVectorView then,
                                const ConstVectorView now,
-                               int time_now)=0;
+                               int time_now,
+                               StateSpaceModelBase *model) = 0;
 
-    // Many models won't be able to do anything with an initial state,
-    // so the default implementation is a no-op.
+    // Many models won't be able to do anything with an initial state, so the
+    // default implementation is a no-op.
     virtual void observe_initial_state(const ConstVectorView &state);
 
     // The dimension of the state vector.

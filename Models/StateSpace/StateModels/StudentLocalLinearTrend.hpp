@@ -20,12 +20,12 @@
 #ifndef BOOM_STUDENT_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 #define BOOM_STUDENT_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 
-#include <Models/Policies/ParamPolicy_4.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/WeightedGaussianSuf.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/Policies/ParamPolicy_4.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/WeightedGaussianSuf.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
   // This is a 'robust' version of the local linear trend model with T
@@ -67,7 +67,8 @@ namespace BOOM{
 
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
     uint state_dimension() const override{return 2;}
     uint state_error_dimension() const override {return state_dimension();}
 

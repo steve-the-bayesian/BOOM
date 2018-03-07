@@ -19,17 +19,17 @@
 
 #ifndef BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
 #define BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
   // A dynamic regression state is an element of state parameterized
@@ -80,7 +80,8 @@ namespace BOOM {
     void clear_data() override;
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override {

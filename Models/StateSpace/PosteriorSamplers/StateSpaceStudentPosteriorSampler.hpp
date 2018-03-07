@@ -20,10 +20,10 @@
 #ifndef BOOM_SRC_MODELS_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 #define BOOM_SRC_MODELS_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/StateSpace/StateSpaceStudentRegressionModel.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp>
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/StateSpace/StateSpaceStudentRegressionModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
 
 namespace BOOM {
 

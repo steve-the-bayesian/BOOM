@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "cpputil/report_error.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 #include <iostream>
 
 namespace BOOM{

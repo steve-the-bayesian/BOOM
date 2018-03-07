@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/SemilocalLinearTrend.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef SemilocalLinearTrendMatrix LMAT;
@@ -167,7 +167,8 @@ namespace BOOM{
   // of the slope.
   void SLLT::observe_state(const ConstVectorView then,
                            const ConstVectorView now,
-                           int time_now){
+                           int time_now,
+                           StateSpaceModelBase *model) {
     double change_in_level = now[0] - then[0] - then[1];
     level_->suf()->update_raw(change_in_level);
 

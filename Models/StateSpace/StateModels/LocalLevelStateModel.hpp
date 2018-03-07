@@ -19,8 +19,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
 namespace BOOM{
 
@@ -34,7 +34,8 @@ namespace BOOM{
     LocalLevelStateModel * clone() const override;
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       StateSpaceModelBase *model) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {return 1;}
