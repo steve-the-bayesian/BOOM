@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -130,7 +131,7 @@ namespace BOOM {
 
     HierarchicalZeroInflatedGammaModel * clone() const override;
 
-    // TODO(stevescott): Should have a HierarchicalPriorPolicy that
+    // TODO: Should have a HierarchicalPriorPolicy that
     // implements clear_methods() by calling it on the data-level
     // models.
     void clear_methods();

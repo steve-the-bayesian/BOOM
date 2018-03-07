@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -35,7 +36,7 @@ namespace BOOM {
         residual_variance_sampler_(residual_variance_prior_)
   {}
 
-  // TODO(stevescott):  Consider threads here.
+  // TODO:  Consider threads here.
   void HGRS::draw() {
     double sample_size = 0;
     double residual_sum_of_squares = 0;
