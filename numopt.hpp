@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -29,7 +30,7 @@
 namespace BOOM{
 
   // Optimizers work in terms of arbitrary function objects.
-  // TODO(stevescott): Replace these with C++ function templates once
+  // TODO(user): Replace these with C++ function templates once
   // C++11 becomes more widely supported.
   typedef std::function<double(const Vector &) > Target;
   typedef std::function<double(const Vector &x,
@@ -75,7 +76,7 @@ namespace BOOM{
   double max_nd0(Vector &x, Target target);
 
 //======================================================================
-// TODO(stevescott): maxnd1_careful is starting to have too many
+// TODO(user): maxnd1_careful is starting to have too many
 // parameters.  Replace it with an object that hides some of the
 // complexity.
 //======================================================================

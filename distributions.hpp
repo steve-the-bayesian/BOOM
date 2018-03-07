@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -129,6 +130,14 @@ namespace BOOM {
       double mu, double sigma, double cutpoint, bool positive_support,
       double *mean, double *variance);
 
+  // Args:
+  //   mu:  Mean of the (untruncated) normal distribution.
+  //   sigma:  Standard deviation of the (untruncated) normal distribution.
+  //   cutpoint:  The point of truncation.
+  //   positive_support: If true, then draw a deviate from above the cutpoint.
+  //     If false then draw a deviate from below the cutpoint.
+  // Returns:
+  //   A draw from the truncated normal distribution.
   double rtrun_norm(double mu, double sigma,
                     double cutpoint, bool positive_support = true);
   double rtrun_norm_mt(RNG &, double mu, double sigma,
@@ -161,6 +170,17 @@ namespace BOOM {
   // random integer uniform on lo to hi, inclusive
   int random_int(int lo, int hi);
   int random_int_mt(RNG & rng, int lo, int hi);
+
+  // Returns an n-vector of independent normal deviates, each with mean mu and
+  // standard deviation sigma.
+  inline Vector rnorm_vector(int n, double mu, double sigma) {
+    if (n <= 0) return Vector(0);
+    Vector ans(n);
+    for (int i = 0; i < n; ++i) {
+      ans[i] = rnorm_mt(GlobalRng::rng, mu, sigma);
+    }
+    return ans;
+  }
 
   //======================================================================
   // Several varieties of multivariate normal generation.
