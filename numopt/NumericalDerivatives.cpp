@@ -18,10 +18,10 @@
 */
 #include <limits>
 #include <cmath>
-#include <numopt/NumericalDerivatives.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "numopt/NumericalDerivatives.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
 
@@ -150,7 +150,6 @@ namespace BOOM {
     double fm = f_(x - h);
     return (fp + fm - 2 * f0) / square(h);
   }
-
 
   NumericJacobian::NumericJacobian(const Mapping &inverse_transformation)
       : inverse_transformation_(inverse_transformation)

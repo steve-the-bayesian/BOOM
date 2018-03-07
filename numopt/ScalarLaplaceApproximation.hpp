@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_SCALAR_LAPLACE_APPROXIMATION_
 #define BOOM_SCALAR_LAPLACE_APPROXIMATION_
-#include <TargetFun/TargetFun.hpp>
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM{
   class ScalarLaplaceApproximation{

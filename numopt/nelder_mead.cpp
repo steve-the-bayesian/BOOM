@@ -21,13 +21,13 @@
 #include <cstring>
 #include <stdexcept>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <numopt.hpp>
+#include "numopt.hpp"
 /* Nelder-Mead */
 namespace BOOM{
 

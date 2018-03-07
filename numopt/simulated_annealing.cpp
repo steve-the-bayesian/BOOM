@@ -18,13 +18,13 @@
 */
 
 #include <cmath>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 
-#include <distributions.hpp>
-#include <numopt.hpp>
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 // Shamelessly adapted from R by Steven Scott.  The original comment
 // below mentions an argument 'trace', which I removed.

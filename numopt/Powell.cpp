@@ -20,12 +20,12 @@ the original code (as translated by f2c) appears below.
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <numopt/Powell.hpp>
-#include <numopt.hpp>
+#include "numopt/Powell.hpp"
+#include "numopt.hpp"
 #include <cmath>
-#include <LinAlg/Vector.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/Vector.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 using std::min;
 

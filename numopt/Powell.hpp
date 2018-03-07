@@ -23,7 +23,7 @@ which was written by Steven L. Scott.  Copyright for the original code
 #ifndef BOOM_NUMOPT_POWELL_HPP_
 #define BOOM_NUMOPT_POWELL_HPP_
 
-#include <numopt.hpp>
+#include "numopt.hpp"
 
 namespace BOOM{
   // A derivative free minimization routine based on Powell's NEWUOA

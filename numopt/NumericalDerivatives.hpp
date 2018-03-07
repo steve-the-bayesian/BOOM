@@ -21,8 +21,8 @@
 #define BOOM_NUMERICAL_DERIVATIVES_HPP_
 
 #include <functional>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
 

@@ -20,8 +20,8 @@
 #ifndef BOOM_NELDER_MEAD_HPP_
 #define BOOM_NELDER_MEAD_HPP_
 
-#include <numopt.hpp>
-#include <LinAlg/Vector.hpp>
+#include "numopt.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   class NelderMeadMinimizer {

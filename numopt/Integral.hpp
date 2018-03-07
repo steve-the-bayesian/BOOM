@@ -21,7 +21,7 @@
 #define BOOM_NUMERICAL_INTEGRAL_HPP_
 
 #include <functional>
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 #include <vector>
 
 namespace BOOM{

@@ -20,7 +20,7 @@
 #ifndef BOOM_BRENT_MINIMIZER_HPP_
 #define BOOM_BRENT_MINIMIZER_HPP_
 
-#include <numopt.hpp>
+#include "numopt.hpp"
 
 namespace BOOM{
 

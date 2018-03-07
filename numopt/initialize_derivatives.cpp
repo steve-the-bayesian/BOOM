@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/report_error.hpp>
-#include <numopt/initialize_derivatives.hpp>
+#include "cpputil/report_error.hpp"
+#include "numopt/initialize_derivatives.hpp"
 #include <sstream>
 
 namespace BOOM {
@@ -48,8 +48,7 @@ void initialize_derivatives(Vector *gradient,
         Hessian &&
         (Hessian->nrow() != dimension || Hessian->ncol() != dimension)) {
       std::ostringstream err;
-      err << "Error in PoissonRegressionModel::log_likelihood.  "
-          << "Hessian dimensions are ["
+      err << "Hessian dimensions are ["
           << Hessian->nrow() << " x " << Hessian->ncol()
           << "] but there are " << dimension << " variables."
           << std::endl;
