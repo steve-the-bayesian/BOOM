@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -71,14 +72,18 @@ namespace BOOM {
 
   void ThreadWorkerPool::set_number_of_threads(int n) {
     if (n <= 0) {
+      done_ = true;
       threads_.clear();
-    }
-    int current_number_of_joinable_threads = 0;
-    for (int i = 0; i < threads_.size(); ++i) {
-      current_number_of_joinable_threads += threads_[i].joinable();
-    }
-    if (current_number_of_joinable_threads < n) {
-      add_threads(n - current_number_of_joinable_threads);
+      return;
+    } else {
+      int current_number_of_joinable_threads = 0;
+      done_ = false;
+      for (int i = 0; i < threads_.size(); ++i) {
+        current_number_of_joinable_threads += threads_[i].joinable();
+      }
+      if (current_number_of_joinable_threads < n) {
+        add_threads(n - current_number_of_joinable_threads);
+      }
     }
   }
 

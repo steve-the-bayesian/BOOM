@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,6 +19,7 @@
 
 #ifndef BOOM_CPP_MATH_UTILS_H
 #define BOOM_CPP_MATH_UTILS_H
+
 
 #include <cmath>
 #include <cpputil/portable_math.hpp>

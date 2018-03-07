@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -84,7 +85,7 @@ namespace BOOM {
       // Its size must be buffer_size_in_iterations_ *
       // parameter_->size(false);
       //
-      // TODO(stevescott): Consider making this a deque<Vector>.
+      // TODO: Consider making this a deque<Vector>.
       std::deque<double> buffer_;
       int buffer_limit_;
 

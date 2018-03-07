@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -412,8 +413,7 @@ namespace BOOM{
   }
 
   Date & Date::start_next_month(){
-    // TODO(stevescott): test this to make sure days_after_origin_ is
-    // set correctly.
+    // TODO: test this to make sure days_after_origin_ is set correctly.
     days_after_origin_ += (1 + days_left_in_month());
     if(month_ == Dec){
       ++year_;
