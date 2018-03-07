@@ -108,7 +108,7 @@ namespace BOOM {
     for (int i = 0; i < xdim(); ++i) {
       double y = now[pos];
       ConstVectorView x(then, pos, number_of_lags());
-      // TODO(user): There is an implicit conversion from ConstVectorView
+      // TODO: There is an implicit conversion from ConstVectorView
       // to Vector in this function call.  Run this in a profiler, and see if
       // the Vector allocation is a bottleneck.
       coefficient_transition_model_[i]->suf()->add_mixture_data(y, x, 1.0);
@@ -170,7 +170,7 @@ namespace BOOM {
                                    int t,
                                    const ConstVectorView &state_error_mean,
                                    const ConstSubMatrix &state_error_variance) {
-    // TODO(user):  implement this one day.
+    // TODO:  implement this one day.
     report_error("MAP estimation is not supported for dynamic regression "
                  "AR(p) state models.");
   }

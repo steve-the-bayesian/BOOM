@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -22,7 +23,7 @@
 #include <Models/StateSpace/StateModels/StateModel.hpp>
 #include <Models/StateSpace/Filters/SparseVector.hpp>
 #include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/Filters/ScalarKalmanStorage.hpp>
+#include <Models/StateSpace/Filters/KalmanStorage.hpp>
 
 #include <Models/Glm/Glm.hpp>
 #include <Models/Glm/RegressionModel.hpp>
@@ -64,16 +65,19 @@ namespace BOOM{
       // The total number of data points, both missing and observed.
       int total_sample_size() const override {return regression_data_.size();}
 
+      const Matrix &predictors() const {return predictors_;}
+
      private:
       std::vector<Ptr<RegressionData>> regression_data_;
       double state_model_offset_;
+      Matrix predictors_;
     };
   }  // namespace StateSpace
 
   // A contemporaneous regression model, where y[t] =
   // beta.dot(X.row(t)) + state space.
   class StateSpaceRegressionModel
-      : public StateSpaceModelBase,
+      : public ScalarStateSpaceModelBase,
         public IID_DataPolicy<StateSpace::MultiplexedRegressionData>,
         public PriorPolicy
   {
@@ -112,12 +116,34 @@ namespace BOOM{
     // Forecast the next nrow(newX) time steps given the current data,
     // using the Kalman filter.  The first column of Matrix is the mean
     // of the forecast.  The second column is the standard errors.
-    Matrix forecast(const Matrix &newX)const;
+    Matrix forecast(const Matrix &newX);
 
     // Simulate the next nrow(newX) time periods, given current
     // parameters and state.
-    Vector simulate_forecast(RNG &rng, const Matrix &newX, const Vector &final_state);
+    Vector simulate_forecast(RNG &rng,
+                             const Matrix &newX,
+                             const Vector &final_state);
     Vector simulate_forecast(RNG &rng, const Matrix &newX);
+
+    // Simulate a forecast based on multiplexed data, where multiple
+    // observations can have the same timestamp.
+    //
+    // Args:
+    //   rng:  The random number generator.
+    //   newX:  The matrix of predictors where forecasts are needed.
+    //   final_state: Contains the simulated state values for the model as of
+    //     the time of the final observation in the training data.
+    //   timestamps: Each entry corresponds to a row in newX, and gives the
+    //     number of time periods after the end of the training data at which to
+    //     make the prediction.
+    //
+    // Returns:
+    //   A vector of forecasts simulated from the posterior predictive
+    //   distribution.  Each entry corresponds to a row of newX.
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &newX,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
 
     // Contribution of the regression model to the overall mean of y at each
     // time point.  In the case of multiplexed data, the average regression

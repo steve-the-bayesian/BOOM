@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -85,8 +86,8 @@ namespace BOOM {
    public:
     StateSpaceStudentRegressionModel(int xdim);
     StateSpaceStudentRegressionModel(
-        const Vector &y,
-        const Matrix &X,
+        const Vector &response,
+        const Matrix &predictors,
         const std::vector<bool> &observed = std::vector<bool>());
     StateSpaceStudentRegressionModel(
         const StateSpaceStudentRegressionModel &rhs);
@@ -128,6 +129,12 @@ namespace BOOM {
     Vector simulate_forecast(RNG &rng,
                              const Matrix &predictors,
                              const Vector &final_state);
+
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &predictors,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
+
     Vector one_step_holdout_prediction_errors(
         RNG &rng,
         const Vector &response,

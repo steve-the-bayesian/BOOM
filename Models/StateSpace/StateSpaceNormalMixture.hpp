@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -28,7 +29,7 @@ namespace BOOM {
   // models.
 
   class StateSpaceNormalMixture
-      : public StateSpaceModelBase {
+      : public ScalarStateSpaceModelBase {
    public:
     // Args:
     //   has_regression: derived classes should set to 'true' of the

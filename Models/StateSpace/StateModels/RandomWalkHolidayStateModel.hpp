@@ -28,7 +28,7 @@
 
 namespace BOOM {
 
-  // TODO(user): Need a new class of HolidayStateModel that
+  // TODO: Need a new class of HolidayStateModel that
   // adjusts when floating holidays occur on weekends.
 
   // A RandomWalkHolidayStateModel assumes the holiday will produce an
@@ -97,7 +97,7 @@ namespace BOOM {
     void set_time_zero(const Date &time_zero);
 
    private:
-    // TODO(user): Make this a unique_ptr once available.
+    // TODO: Make this a unique_ptr once available.
     std::shared_ptr<Holiday> holiday_;
     Date time_zero_;
     Vector initial_state_mean_;

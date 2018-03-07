@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -55,7 +56,7 @@ namespace BOOM{
   }  // namespace StateSpace
 
   class StateSpaceModel
-      : public StateSpaceModelBase,
+      : public ScalarStateSpaceModelBase,
         public IID_DataPolicy<StateSpace::MultiplexedDoubleData>,
         public PriorPolicy {
    public:

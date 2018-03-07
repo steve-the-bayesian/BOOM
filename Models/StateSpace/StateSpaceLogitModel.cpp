@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -22,6 +23,7 @@
 #include <distributions.hpp>
 #include <cpputil/math_utils.hpp>
 #include <cpputil/Constants.hpp>
+#include <cpputil/seq.hpp>
 
 namespace BOOM {
   namespace {
@@ -177,15 +179,15 @@ namespace BOOM {
 
   SSLM::StateSpaceLogitModel(const Vector &successes,
                              const Vector &trials,
-                             const Matrix &design,
+                             const Matrix &design_matrix,
                              const std::vector<bool> &observed)
-      : StateSpaceNormalMixture(ncol(design)),
-        observation_model_(new BinomialLogitModel(ncol(design)))
+      : StateSpaceNormalMixture(ncol(design_matrix)),
+        observation_model_(new BinomialLogitModel(ncol(design_matrix)))
   {
     setup();
     bool all_observed = observed.empty();
     if (successes.size() != trials.size()
-        || successes.size() != nrow(design)
+        || successes.size() != nrow(design_matrix)
         || (!all_observed && successes.size() != observed.size())) {
       report_error("Data sizes do not match in StateSpaceLogitModel "
                    "constructor");
@@ -193,7 +195,7 @@ namespace BOOM {
     for (int i = 0; i < successes.size(); ++i) {
       NEW(ABRD, dp)(successes[i],
                     trials[i],
-                    design.row(i));
+                    design_matrix.row(i));
       if (!(all_observed || observed[i])) {
         dp->set_missing_status(Data::missing_status::completely_missing);
         dp->binomial_data_ptr(0)->set_missing_status(
@@ -245,16 +247,27 @@ namespace BOOM {
                                  const Matrix &forecast_predictors,
                                  const Vector &trials,
                                  const Vector &final_state) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    return simulate_multiplex_forecast(
+        rng, forecast_predictors, trials, final_state,
+        seq<int>(1, nrow(forecast_predictors)));
+  }
+
+  Vector SSLM::simulate_multiplex_forecast(RNG &rng,
+                                           const Matrix &forecast_predictors,
+                                           const Vector &trials,
+                                           const Vector &final_state,
+                                           const std::vector<int> &timestamps) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
     int t0 = dat().size();
-    for (int t = 0; t < ans.size(); ++t) {
-      state = simulate_next_state(rng, state, t + t0);
-      double eta = observation_matrix(t + t0).dot(state)
-          + observation_model_->predict(forecast_predictors.row(t));
+    int time = 0;
+    for (int i = 0; i < ans.size(); ++i) {
+      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      double eta = observation_matrix(t0 + time).dot(state)
+          + observation_model_->predict(forecast_predictors.row(i));
       double probability = plogis(eta);
-      ans[t] = rbinom_mt(rng, lround(trials[t]), probability);
+      ans[i] = rbinom_mt(rng, lround(trials[i]), probability);
     }
     return ans;
   }

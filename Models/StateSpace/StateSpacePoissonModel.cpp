@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -23,6 +24,7 @@
 #include <distributions.hpp>
 #include <cpputil/math_utils.hpp>
 #include <cpputil/Constants.hpp>
+#include <cpputil/seq.hpp>
 
 namespace BOOM {
   namespace {
@@ -35,10 +37,10 @@ namespace BOOM {
   {}
 
   APRD::AugmentedPoissonRegressionData(
-      double counts, double exposure, const Vector &predictors)
+      double count, double exposure, const Vector &predictors)
       : AugmentedPoissonRegressionData()
   {
-    NEW(PoissonRegressionData, observation)(counts, predictors, exposure);
+    NEW(PoissonRegressionData, observation)(count, predictors, exposure);
     add_data(observation);
   }
 
@@ -131,7 +133,7 @@ namespace BOOM {
       // This will likely lead to an exception later in the program when the
       // variance is square-rooted into a standard deviation.
       //
-      // TODO(stevescott): Should an exception be thrown here?
+      // TODO(user): Should an exception be thrown here?
       return negative_infinity();
     }
     return 1.0 / total_precision;
@@ -149,18 +151,18 @@ namespace BOOM {
 
   SSPM::StateSpacePoissonModel(const Vector &counts,
                                const Vector &exposure,
-                               const Matrix &design,
+                               const Matrix &design_matrix,
                                const std::vector<bool> &observed)
-      : StateSpaceNormalMixture(ncol(design) > 0),
-        observation_model_(new PoissonRegressionModel(ncol(design)))
+      : StateSpaceNormalMixture(ncol(design_matrix) > 0),
+        observation_model_(new PoissonRegressionModel(ncol(design_matrix)))
   {
-    if ((ncol(design) == 1) &&
-        (var(design.col(0)) < std::numeric_limits<double>::epsilon())) {
+    if ((ncol(design_matrix) == 1) &&
+        (var(design_matrix.col(0)) < std::numeric_limits<double>::epsilon())) {
       set_regression_flag(false);
     }
     bool all_observed = observed.empty();
     if (counts.size() != exposure.size()
-        || counts.size() != nrow(design)
+        || counts.size() != nrow(design_matrix)
         || (!all_observed && counts.size() != observed.size())) {
       report_error("Data sizes do not match in StateSpacePoissonModel "
                    "constructor");
@@ -169,7 +171,7 @@ namespace BOOM {
       bool missing = !(all_observed || observed[i]);
       NEW(APRD, dp)(missing ? 0 : counts[i],
                     missing ? 0 : exposure[i],
-                    design.row(i));
+                    design_matrix.row(i));
       if (missing) {
         dp->set_missing_status(Data::missing_status::completely_missing);
         dp->poisson_data_ptr(0)->set_missing_status(
@@ -224,16 +226,27 @@ namespace BOOM {
                                  const Matrix &forecast_predictors,
                                  const Vector &exposure,
                                  const Vector &final_state) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    return simulate_multiplex_forecast(
+        rng, forecast_predictors, exposure, final_state,
+        seq<int>(1, nrow(forecast_predictors)));
+  }
+
+  Vector SSPM::simulate_multiplex_forecast(RNG &rng,
+                                           const Matrix &forecast_predictors,
+                                           const Vector &exposure,
+                                           const Vector &final_state,
+                                           const std::vector<int> &timestamps) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
-    int t0 = dat().size();
-    for (int t = 0; t < ans.size(); ++t) {
-      state = simulate_next_state(rng, state, t + t0);
-      double eta = observation_matrix(t + t0).dot(state)
-          + observation_model_->predict(forecast_predictors.row(t));
+    int t0 = time_dimension();
+    int time = 0;
+    for (int i = 0; i < ans.size(); ++i) {
+      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      double eta = observation_matrix(time + t0).dot(state)
+          + observation_model_->predict(forecast_predictors.row(i));
       double mu = exp(eta);
-      ans[t] = rpois_mt(rng, exposure[t] * mu);
+      ans[i] = rpois_mt(rng, exposure[i] * mu);
     }
     return ans;
   }

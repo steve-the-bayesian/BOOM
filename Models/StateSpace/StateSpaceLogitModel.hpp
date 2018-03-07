@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -196,6 +197,35 @@ namespace BOOM {
                              const Vector &trials,
                              const Vector &final_state);
 
+    // Returns a vector of draws from the posterior predictive distribution for
+    // a multiplexed prediction problem.  That is, a prediction problem where
+    // some time periods to be predicted have more than one observation with
+    // different covariates.
+    //
+    // Args:
+    //   forecast_predictors: A matrix of predictors to use for the
+    //     forecast period.  If no regression component is desired,
+    //     then a single column matrix of 1's (an intercept) should be
+    //     supplied so that the length of the forecast period can be
+    //     determined.
+    //   trials: A vector of non-negative integers giving the number
+    //     of trials that will take place at each point in the
+    //     forecast period.
+    //   final_state: A draw of the value of the state vector at the
+    //     final time period in the training data.
+    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
+    //     gives the number of time periods after the end of the training data
+    //     at which to make the prediction.
+    //
+    // Returns:
+    //   A vector of draws with length equal to nrow(forecast_predictors), from
+    //   the posterior distribution of the conditional state at time t.
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &forecast_predictors,
+                                       const Vector &trials,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
+
     // Args:
     //   rng:  A U(0,1) random number generator.
     //   data_imputer: A data imputer that can be used to unmix the
@@ -216,7 +246,7 @@ namespace BOOM {
     //   data, so it will consist of integers, but it is an error, so
     //   it may be positive or negative.
     //
-    //  TODO(stevescott): consider whether this would make more sense
+    //  TODO(user): consider whether this would make more sense
     //  on the logit scale.
     Vector one_step_holdout_prediction_errors(
         RNG &rng,

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -94,7 +95,7 @@ namespace BOOM {
       // at each time point.
       AugmentedPoissonRegressionData(double count,
                                      double exposure,
-                                     const Vector &x);
+                                     const Vector &predictors);
 
       // A constructor for the multiplexed case, where there are multiple
       // observations at each time point.
@@ -204,10 +205,16 @@ namespace BOOM {
                              const Vector &exposure,
                              const Vector &final_state);
 
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &forecast_predictors,
+                                       const Vector &exposure,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
+
     Vector one_step_holdout_prediction_errors(
         RNG &rng,
         PoissonDataImputer &data_imputer,
-        const Vector &response,
+        const Vector &counts,
         const Vector &exposure,
         const Matrix &predictors,
         const Vector &final_state);

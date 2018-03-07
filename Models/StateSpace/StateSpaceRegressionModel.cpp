@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -20,6 +21,7 @@
 #include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
 #include <Models/DataTypes.hpp>
 #include <distributions.hpp>
+#include <cpputil/seq.hpp>
 
 namespace BOOM{
   namespace {
@@ -61,6 +63,7 @@ namespace BOOM{
   void MRD::add_data(const Ptr<RegressionData> &dp) {
     MultiplexedData::add_data(dp);
     regression_data_.push_back(dp);
+    predictors_.rbind(dp->x());
   }
 
   double MRD::adjusted_observation(const GlmCoefs &coefficients) const {
@@ -132,7 +135,7 @@ namespace BOOM{
 
   SSRM::StateSpaceRegressionModel(const SSRM &rhs)
       : Model(rhs),
-        StateSpaceModelBase(rhs),
+        ScalarStateSpaceModelBase(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         regression_(rhs.regression_->clone())
@@ -206,8 +209,9 @@ namespace BOOM{
     }
   }
 
-  Matrix SSRM::forecast(const Matrix &newX) const {
-    ScalarKalmanStorage ks = filter();
+  Matrix SSRM::forecast(const Matrix &newX) {
+    full_kalman_filter();
+    ScalarKalmanStorage ks = final_kalman_storage();
     Matrix ans(nrow(newX), 2);
     int t0 = time_dimension();
     for (int t = 0; t < nrow(ans); ++t) {
@@ -229,32 +233,46 @@ namespace BOOM{
     return ans;
   }
 
-  // TODO(stevescott):  test simulate_forecast
+  // TODO(user):  test simulate_forecast
   Vector SSRM::simulate_forecast(RNG &rng,
                                  const Matrix &newX,
                                  const Vector &final_state) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    Vector ans(nrow(newX));
-    int t0 = time_dimension();
-    Vector state = final_state;
-    for (int t = 0; t < ans.size(); ++t) {
-      state = simulate_next_state(rng, state, t + t0);
-      ans[t] = rnorm_mt(rng,
-                        observation_matrix(t + t0).dot(state),
-                        sqrt(observation_variance(t + t0)));
-      ans[t] += regression_->predict(newX.row(t));
-    }
-    return ans;
+    return simulate_multiplex_forecast(rng, newX, final_state,
+                                       seq<int>(1, nrow(newX)));
   }
 
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    ScalarKalmanStorage kalman_storage = filter();
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    light_kalman_filter();
+    ScalarKalmanStorage kalman_storage = final_kalman_storage();
     // The Kalman filter produces the forecast distribution for the
     // next time period.  Since the observed data goes from 0 to t-1,
     // kalman_storage contains the forecast distribution for time t.
     Vector final_state = rmvn_robust(kalman_storage.a, kalman_storage.P);
     return simulate_forecast(rng, newX, final_state);
+  }
+
+  Vector SSRM::simulate_multiplex_forecast(RNG &rng,
+                                           const Matrix &newX,
+                                           const Vector &final_state,
+                                           const std::vector<int> &timestamps) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_dimension = timestamps.size();
+    if (nrow(newX) != forecast_dimension) {
+      report_error("Dimensions of timestamps and newX don't agree.");
+    }
+    Vector ans(forecast_dimension);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    int time = 0;
+    for (int i = 0; i < forecast_dimension; ++i) {
+      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      ans[i] = rnorm_mt(rng,
+                        observation_matrix(t0 + time).dot(state),
+                        sqrt(observation_variance(t0 + time)));
+      ans[i] += regression_->predict(newX.row(i));
+    }
+    return ans;
   }
 
   Vector SSRM::one_step_holdout_prediction_errors(

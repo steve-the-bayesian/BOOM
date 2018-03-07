@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -115,7 +116,7 @@ namespace BOOM{
 
   SSM::StateSpaceModel(const SSM &rhs)
       : Model(rhs),
-        StateSpaceModelBase(rhs),
+        ScalarStateSpaceModelBase(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         observation_model_(rhs.observation_model_->clone())
@@ -172,13 +173,14 @@ namespace BOOM{
     }
   }
 
-  // TODO(stevescott): should observation_matrix and
+  // TODO(user): should observation_matrix and
   // observation_variance be called with t + t0 + 1?
   Matrix SSM::forecast(int n) {
-    // TODO(stevescott): This method only works with truly Gaussian
+    // TODO(user): This method only works with truly Gaussian
     // state models.  We should put in a check to make sure that none
     // of the state models are T, normal mixture, etc.
-    ScalarKalmanStorage ks(filter());
+    full_kalman_filter();
+    ScalarKalmanStorage ks(final_kalman_storage());
     Matrix ans(n, 2);
     int t0 = time_dimension();
     for(int t = 0; t < n; ++t) {
@@ -201,7 +203,7 @@ namespace BOOM{
   }
 
   Vector SSM::simulate_forecast(RNG &rng, int n, const Vector &final_state) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(n);
     int t0 = time_dimension();
     Vector state = final_state;
@@ -216,7 +218,7 @@ namespace BOOM{
 
   Vector SSM::simulate_forecast_given_observed_data(
       RNG &rng, int n, const Vector &observed_data) {
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(n);
     int t0 = observed_data.size();
     ScalarKalmanStorage ks(filter_observed_data(observed_data));
@@ -229,7 +231,7 @@ namespace BOOM{
                         sqrt(observation_variance(t + t0)));
       state = simulate_next_state(rng, state, t + t0 + 1);
     }
-    StateSpaceModelBase::set_state_model_behavior(StateModel::MIXTURE);
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MIXTURE);
     return ans;
   }
 

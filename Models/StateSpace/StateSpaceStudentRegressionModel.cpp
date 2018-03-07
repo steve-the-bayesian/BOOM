@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -21,6 +22,7 @@
 #include <Models/Glm/PosteriorSamplers/TDataImputer.hpp>
 #include <distributions.hpp>
 #include <cpputil/math_utils.hpp>
+#include <cpputil/seq.hpp>
 #include <stats/moments.hpp>
 
 
@@ -217,17 +219,27 @@ namespace BOOM {
       RNG &rng,
       const Matrix &predictors,
       const Vector &final_state) {
+    return simulate_multiplex_forecast(
+        rng, predictors, final_state, seq<int>(1, nrow(predictors)));
+  }
+
+  Vector SSSRM::simulate_multiplex_forecast(
+      RNG &rng,
+      const Matrix &predictors,
+      const Vector &final_state,
+      const std::vector<int> &timestamps) {
     set_state_model_behavior(StateModel::MARGINAL);
     Vector state = final_state;
     Vector ans(nrow(predictors));
     int t0 = dat().size();
     double sigma = observation_model_->sigma();
     double nu = observation_model_->nu();
-    for (int t = 0; t < nrow(predictors); ++t) {
-      state = simulate_next_state(rng, state, t + t0);
-      double mu = observation_model_->predict(predictors.row(t))
-          + observation_matrix(t+t0).dot(state);
-      ans[t] = rstudent_mt(rng, mu, sigma, nu);
+    int time = 0;
+    for (int i = 0; i < nrow(predictors); ++i) {
+      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      double mu = observation_model_->predict(predictors.row(i))
+          + observation_matrix(time + t0).dot(state);
+      ans[i] = rstudent_mt(rng, mu, sigma, nu);
     }
     return ans;
   }

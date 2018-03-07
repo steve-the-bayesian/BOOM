@@ -135,7 +135,7 @@ namespace BOOM{
     SpdMatrix ans = state_error_variance;
     ans.add_outer(state_error_mean);
     ans = sandwich(siginv(), ans) - siginv();
-    // TODO(user): This is a potential bottleneck.  Profile it,
+    // TODO: This is a potential bottleneck.  Profile it,
     // and if necessary use the fact that we're only doing 2x2
     // matrices here to work this out by hand.
     gradient += .5 * ans.vectorize(true);
