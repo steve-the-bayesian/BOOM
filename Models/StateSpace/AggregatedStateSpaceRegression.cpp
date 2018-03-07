@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -22,7 +23,7 @@
 #include <cpputil/math_utils.hpp>
 #include <distributions.hpp>
 
-namespace BOOM{
+namespace BOOM {
   //======================================================================
   // One 'week' of data, which may or may not contain an observed
   // monthly total.
@@ -48,10 +49,10 @@ namespace BOOM{
         fraction_in_initial_period_(rhs.fraction_in_initial_period_)
   {}
 
-  FineNowcastingData * FineNowcastingData::clone()const{
+  FineNowcastingData * FineNowcastingData::clone() const {
     return new FineNowcastingData(*this);}
 
-  ostream & FineNowcastingData::display(ostream &out)const{
+  ostream & FineNowcastingData::display(ostream &out) const {
     out << "x = " << x_->x() << endl
         << "   y = " << coarse_observation_ << " ["
         << (coarse_observation_observed_ ?
@@ -67,36 +68,36 @@ namespace BOOM{
     return out;
   }
 
-  Ptr<RegressionData> FineNowcastingData::regression_data()const{
+  Ptr<RegressionData> FineNowcastingData::regression_data() const {
     return x_; }
 
-  double FineNowcastingData::fraction_in_initial_period()const{
+  double FineNowcastingData::fraction_in_initial_period() const {
     return fraction_in_initial_period_;}
 
-  bool FineNowcastingData::contains_end()const{
+  bool FineNowcastingData::contains_end() const {
     return contains_end_;}
 
-  bool FineNowcastingData::coarse_observation_observed()const{
+  bool FineNowcastingData::coarse_observation_observed() const {
     return coarse_observation_observed_;}
 
-  double FineNowcastingData::coarse_observation()const{
+  double FineNowcastingData::coarse_observation() const {
     return coarse_observation_;}
 
   //======================================================================
   AccumulatorTransitionMatrix::AccumulatorTransitionMatrix(
-      const SparseKalmanMatrix *T,
-      const SparseVector &Z,
+      const SparseKalmanMatrix *T_t,
+      const SparseVector &Z_t_plus_1,
       double fraction_in_initial_period,
       bool contains_end,
       bool owns_matrix)
-      : transition_matrix_(T),
-        observation_vector_(Z),
+      : transition_matrix_(T_t),
+        observation_vector_(Z_t_plus_1),
         fraction_in_initial_period_(fraction_in_initial_period),
         contains_end_(contains_end),
         owns_matrix_(owns_matrix)
   {
-    if(fraction_in_initial_period > 1.0
-       || fraction_in_initial_period <= 0.0){
+    if (fraction_in_initial_period > 1.0
+       || fraction_in_initial_period <= 0.0) {
       ostringstream err;
       err << "Error in constructor for AccumulatorTransitionMatrix:"
           << endl
@@ -107,7 +108,7 @@ namespace BOOM{
   }
 
   AccumulatorTransitionMatrix::~AccumulatorTransitionMatrix() {
-    if(transition_matrix_ && owns_matrix_){
+    if (transition_matrix_ && owns_matrix_) {
       delete transition_matrix_;
     }
   }
@@ -115,8 +116,8 @@ namespace BOOM{
   void AccumulatorTransitionMatrix::reset(const SparseKalmanMatrix *T,
                                           const SparseVector &Z,
                                           double fraction_in_initial_period,
-                                          bool contains_end){
-    if(transition_matrix_ && owns_matrix_){
+                                          bool contains_end) {
+    if (transition_matrix_ && owns_matrix_) {
       delete transition_matrix_;
     }
     transition_matrix_ = T;
@@ -125,9 +126,9 @@ namespace BOOM{
     contains_end_ = contains_end;
   }
 
-  int AccumulatorTransitionMatrix::nrow()const{
+  int AccumulatorTransitionMatrix::nrow() const {
     return transition_matrix_->nrow() + 2;}
-  int AccumulatorTransitionMatrix::ncol()const{
+  int AccumulatorTransitionMatrix::ncol() const {
     return transition_matrix_->ncol() + 2;}
 
   //----------------------------------------------------------------------
@@ -136,7 +137,7 @@ namespace BOOM{
                                    const SparseVector &Z,
                                    bool new_time,
                                    double fraction_in_initial_period,
-                                   const VEC &v){
+                                   const VEC &v) {
       ostringstream err;
       int state_dim = T->nrow();
       err << "incompatible sizes in AccumulatorTransitionMatrix multiplication"
@@ -149,7 +150,8 @@ namespace BOOM{
       report_error(err.str());
   }
   //----------------------------------------------------------------------
-  namespace{
+
+  namespace {
     // Keep in mind that you might not be multiplying a state vector.
     // You probably are, but you might be multiplying a random column in
     // a variance matrix, etc.
@@ -159,33 +161,33 @@ namespace BOOM{
                      bool contains_end,
                      double fraction_in_initial_period,
                      const VEC &v) {
-
       int state_dim = T->nrow();
-      if(v.size() != state_dim + 2 || Z.size() != state_dim){
+      if (v.size() != state_dim + 2 || Z.size() != state_dim) {
         report_multiplication_error(
             T, Z, contains_end, fraction_in_initial_period, v);
       }
       ConstVectorView old_state(v.data(), state_dim, v.stride());
       double old_weekly_observation(v[state_dim]);
-      double old_cumulator(v[state_dim+1]);
+      double old_cumulator(v[state_dim + 1]);
 
       Vector ans(v.size());
       VectorView new_state(ans, 0, state_dim);
       double &new_weekly_observation(ans[state_dim]);
-      double &new_cumulator(ans[state_dim+1]);
+      double &new_cumulator(ans[state_dim + 1]);
 
       new_state = (*T) * old_state;
       new_weekly_observation = Z.dot(new_state);
-      if(contains_end){
+      if (contains_end) {
         new_cumulator = (1-fraction_in_initial_period)*old_weekly_observation;
       } else {
         new_cumulator = old_cumulator + old_weekly_observation;
       }
       return ans;
     }
-  }
+  }  // namespace
+
   //----------------------------------------------------------------------
-  Vector AccumulatorTransitionMatrix::operator *(const Vector &v)const{
+  Vector AccumulatorTransitionMatrix::operator *(const Vector &v) const {
     return Multiply(transition_matrix_,
                     observation_vector_,
                     contains_end_,
@@ -193,7 +195,7 @@ namespace BOOM{
                     v);
   }
   //----------------------------------------------------------------------
-  Vector AccumulatorTransitionMatrix::operator *(const VectorView &v)const{
+  Vector AccumulatorTransitionMatrix::operator *(const VectorView &v) const {
     return Multiply(transition_matrix_,
                     observation_vector_,
                     contains_end_,
@@ -201,7 +203,8 @@ namespace BOOM{
                     v);
   }
   //----------------------------------------------------------------------
-  Vector AccumulatorTransitionMatrix::operator *(const ConstVectorView &v)const{
+  Vector AccumulatorTransitionMatrix::operator *(
+      const ConstVectorView &v) const {
     return Multiply(transition_matrix_,
                     observation_vector_,
                     contains_end_,
@@ -209,9 +212,9 @@ namespace BOOM{
                     v);
   }
   //----------------------------------------------------------------------
-  Vector AccumulatorTransitionMatrix::Tmult(const Vector &v)const{
+  Vector AccumulatorTransitionMatrix::Tmult(const ConstVectorView &v) const {
     int state_dim = transition_matrix_->ncol();
-    if(v.size() != state_dim + 2){
+    if (v.size() != state_dim + 2) {
       report_multiplication_error(
           transition_matrix_, observation_vector_, contains_end_,
           fraction_in_initial_period_, v);
@@ -226,7 +229,7 @@ namespace BOOM{
         ConstVectorView(v, 0, state_dim);
     state_component = transition_matrix_->Tmult(arg);
     ans[state_dim] = (1 - fraction_in_initial_period_ * contains_end_) * W;
-    ans[state_dim+1] = (1 - contains_end_) * W;
+    ans[state_dim + 1] = (1 - static_cast<int>(contains_end_)) * W;
     return ans;
   }
   //----------------------------------------------------------------------
@@ -235,14 +238,14 @@ namespace BOOM{
   // | Pa  Pay PaY |
   // | Pya Py  PyY |
   // | PYa PYy PY  |
-  void AccumulatorTransitionMatrix::sandwich_inplace(SpdMatrix &P)const{
+  void AccumulatorTransitionMatrix::sandwich_inplace(SpdMatrix &P) const {
     int state_dim = transition_matrix_->ncol();
-    if(P.ncol() != state_dim+2) report_multiplication_error(
+    if (P.ncol() != state_dim + 2) report_multiplication_error(
            transition_matrix_, observation_vector_,
            contains_end_, fraction_in_initial_period_,
            P.col(0));
 
-    SubMatrix TPT(P, 0, state_dim-1, 0, state_dim-1);
+    SubMatrix TPT(P, 0, state_dim - 1, 0, state_dim - 1);
     transition_matrix_->sandwich_inplace_submatrix(TPT);
 
     double a = 1 - fraction_in_initial_period_ * contains_end_;
@@ -254,39 +257,39 @@ namespace BOOM{
     Vector TPay = (*transition_matrix_) *
         VectorView(P.col(state_dim), 0, state_dim);
     Vector TPaY = (*transition_matrix_) *
-        VectorView(P.col(state_dim+1), 0, state_dim);
+        VectorView(P.col(state_dim + 1), 0, state_dim);
     double zTPay = observation_vector_.dot(TPay);
     double zTPaY = observation_vector_.dot(TPaY);
     double Py = P(state_dim, state_dim);
-    double PY = P(state_dim+1, state_dim+1);
-    double PyY = P(state_dim, state_dim+1);
+    double PY = P(state_dim + 1, state_dim + 1);
+    double PyY = P(state_dim, state_dim + 1);
 
     VectorView(P.col(state_dim), 0, state_dim) = zTPT;
     VectorView(P.row(state_dim), 0, state_dim) = zTPT;
     P(state_dim, state_dim) = zTPTz;
 
-    VectorView tmp(P.col(state_dim+1), 0, state_dim);
+    VectorView tmp(P.col(state_dim + 1), 0, state_dim);
     tmp = a*TPay + b*TPaY;
-    VectorView(P.row(state_dim+1), 0, state_dim) = tmp;
+    VectorView(P.row(state_dim + 1), 0, state_dim) = tmp;
 
-    P(state_dim+1, state_dim) = a*zTPay + b*zTPaY;
-    P(state_dim, state_dim+1) = P(state_dim+1, state_dim);
-    P(state_dim+1, state_dim+1) = a*a*Py + b*b*PY + 2*a*b*PyY;
+    P(state_dim + 1, state_dim) = a*zTPay + b*zTPaY;
+    P(state_dim, state_dim + 1) = P(state_dim + 1, state_dim);
+    P(state_dim + 1, state_dim + 1) = a*a*Py + b*b*PY + 2*a*b*PyY;
   }
   //----------------------------------------------------------------------
-  Matrix & AccumulatorTransitionMatrix::add_to(Matrix &P)const{
+  Matrix & AccumulatorTransitionMatrix::add_to(Matrix &P) const {
     int state_dim = transition_matrix_->nrow();
-    if(P.nrow() != state_dim+2 || P.ncol() != state_dim+2){
+    if (P.nrow() != state_dim + 2 || P.ncol() != state_dim + 2) {
       report_error("wrong sizes in AccumulatorTransitionMatrix::add_to");
     }
-    SubMatrix Pa(P, 0, state_dim-1, 0, state_dim-1);
+    SubMatrix Pa(P, 0, state_dim - 1, 0, state_dim - 1);
     transition_matrix_->add_to_submatrix(Pa);
     Vector tmp = transition_matrix_->Tmult(observation_vector_.dense());
     VectorView(P.row(state_dim), 0, state_dim) += tmp;
     double a = 1 - fraction_in_initial_period_ * contains_end_;
     int b = !contains_end_;
-    P(state_dim+1, state_dim) += a;
-    P(state_dim+1, state_dim+1) += b;
+    P(state_dim + 1, state_dim) += a;
+    P(state_dim + 1, state_dim + 1) += b;
     return P;
   }
   //======================================================================
@@ -301,16 +304,16 @@ namespace BOOM{
         owns_matrix_(owns_matrix)
   {}
 
-  AccumulatorStateVarianceMatrix::~AccumulatorStateVarianceMatrix(){
-    if(state_variance_matrix_ && owns_matrix_){
+  AccumulatorStateVarianceMatrix::~AccumulatorStateVarianceMatrix() {
+    if (state_variance_matrix_ && owns_matrix_) {
       delete state_variance_matrix_;
     }
   }
 
   void AccumulatorStateVarianceMatrix::reset(const SparseKalmanMatrix *RQR,
                                              const SparseVector &Z,
-                                             double observation_variance){
-    if(state_variance_matrix_ && owns_matrix_){
+                                             double observation_variance) {
+    if (state_variance_matrix_ && owns_matrix_) {
       delete state_variance_matrix_;
     }
     state_variance_matrix_ = RQR;
@@ -318,18 +321,18 @@ namespace BOOM{
     observation_variance_ = observation_variance;
   }
 
-  int AccumulatorStateVarianceMatrix::nrow()const{
+  int AccumulatorStateVarianceMatrix::nrow() const {
     return state_variance_matrix_->nrow() + 2;}
-  int AccumulatorStateVarianceMatrix::ncol()const{
+  int AccumulatorStateVarianceMatrix::ncol() const {
     return state_variance_matrix_->ncol() + 2;}
 
   template <class VECTOR>
   Vector RQR_Multiply(const VECTOR &v,
                    const SparseKalmanMatrix &RQR,
                    const SparseVector &Z,
-                   double H){
+                   double H) {
     int state_dim = Z.size();
-    if(v.size() != state_dim + 2){
+    if (v.size() != state_dim + 2) {
       report_error("wrong sizes in RQR_Multiply");
     }
     // Partition v = [eta, epsilon, 0]
@@ -346,36 +349,36 @@ namespace BOOM{
     return ans;
   }
 
-  Vector AccumulatorStateVarianceMatrix::operator*(const Vector &v)const{
+  Vector AccumulatorStateVarianceMatrix::operator*(const Vector &v) const {
     return RQR_Multiply(v,
                         *state_variance_matrix_,
                         observation_vector_,
                         observation_variance_);
   }
-  Vector AccumulatorStateVarianceMatrix::operator*(const VectorView &v)const{
+  Vector AccumulatorStateVarianceMatrix::operator*(const VectorView &v) const {
     return RQR_Multiply(v,
                         *state_variance_matrix_,
                         observation_vector_,
                         observation_variance_);
   }
   Vector AccumulatorStateVarianceMatrix::operator*(
-      const ConstVectorView &v)const{
+      const ConstVectorView &v) const {
     return RQR_Multiply(v,
                         *state_variance_matrix_,
                         observation_vector_,
                         observation_variance_);
   }
 
-  Vector AccumulatorStateVarianceMatrix::Tmult(const Vector &v)const{
+  Vector AccumulatorStateVarianceMatrix::Tmult(const ConstVectorView &v) const {
     return RQR_Multiply(v,
                         *state_variance_matrix_,
                         observation_vector_,
                         observation_variance_);
   }
 
-  Matrix & AccumulatorStateVarianceMatrix::add_to(Matrix &m)const{
+  Matrix & AccumulatorStateVarianceMatrix::add_to(Matrix &m) const {
     int state_dim(state_variance_matrix_->nrow());
-    if(m.nrow()!= state_dim+2){
+    if (m.nrow()!= state_dim + 2) {
       report_error("wrong sizes in AccumulatorStateVarianceMatrix::add_to");
     }
 
@@ -389,21 +392,25 @@ namespace BOOM{
         observation_vector_.dot(ZRQR) + observation_variance_;
     return m;
   }
+
   //======================================================================
-  typedef AggregatedRegressionStateModel ARSM;
+  namespace {
+    using ARSM = AggregatedRegressionStateModel;
+  }  // namespace
+
   ARSM::AggregatedRegressionStateModel(const Ptr<RegressionModel> & m)
       : RegressionStateModel(m),
         final_x_(m->xdim())
   {}
 
-  void ARSM::set_final_x(const Vector &x){
+  void ARSM::set_final_x(const Vector &x) {
     final_x_ = x;
   }
 
-  SparseVector ARSM::observation_matrix(int t)const {
+  SparseVector ARSM::observation_matrix(int t) const {
     int n = regression()->dat().size();
-    if(t < n) return RegressionStateModel::observation_matrix(t);
-    if(t > n) {
+    if (t < n) return RegressionStateModel::observation_matrix(t);
+    if (t > n) {
       report_error("argument too large in "
                    "AggregatedRegressionStateModel::observation_matrix");
     }
@@ -416,59 +423,62 @@ namespace BOOM{
   }
 
   //======================================================================
-  typedef AggregatedStateSpaceRegression ASSR;
+  namespace {
+    using ASSR = AggregatedStateSpaceRegression;
+    using SSSMB = ScalarStateSpaceModelBase;
+  }  // namespace
 
-  ASSR::AggregatedStateSpaceRegression(int predictor_dimension)
-      : regression_(new RegressionModel(predictor_dimension)),
-        observation_model_(new GaussianModel(0, 0)),
-        regression_state_(new AggregatedRegressionStateModel(regression_))
-   {
-     add_state(regression_state_);
-   }
+  ASSR::AggregatedStateSpaceRegression(int number_of_predictors)
+      : regression_(new RegressionModel(number_of_predictors)),
+        observation_model_(new GaussianModel(0, 0))
+  {
+    add_state(new AggregatedRegressionStateModel(regression_));
+  }
 
   ASSR::AggregatedStateSpaceRegression(const ASSR &rhs)
       : Model(rhs),
-        StateSpaceModelBase(),
+        ScalarStateSpaceModelBase(),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         regression_(rhs.regression_->clone()),
-        observation_model_(rhs.observation_model_->clone()),
-        regression_state_(new AggregatedRegressionStateModel(regression_))
+        observation_model_(rhs.observation_model_->clone())
   {
-    add_state(regression_state_);
-    for(int s = 1; s < rhs.nstate(); ++s){
+    add_state(new AggregatedRegressionStateModel(regression_));
+    for (int s = 1; s < rhs.nstate(); ++s) {
       add_state(rhs.state_model(s)->clone());
     }
     clear_data();
     regression_->clear_data();
     const std::vector<Ptr<FineNowcastingData> > & data(rhs.dat());
-    for(int i = 0; i < data.size(); ++i) add_data(data[i]);
+    for (int i = 0; i < data.size(); ++i) add_data(data[i]);
   }
 
-  AggregatedStateSpaceRegression * ASSR::clone()const{
+  AggregatedStateSpaceRegression * ASSR::clone() const {
     return new AggregatedStateSpaceRegression(*this);}
 
-  void ASSR::add_data(const Ptr<Data> & dp){add_data(DAT(dp));}
+  void ASSR::add_data(const Ptr<Data> & dp) {add_data(DAT(dp));}
 
-  void ASSR::add_data(const Ptr<FineNowcastingData> &dp){
+  void ASSR::add_data(const Ptr<FineNowcastingData> &dp) {
     DataPolicy::add_data(dp);
     Ptr<RegressionData> rdp(dp->regression_data());
     regression_->add_data(rdp);  // full of missing values
   }
 
-  Ptr<FineNowcastingData> ASSR::fine_data(int t){ return dat()[t]; }
-  const Ptr<FineNowcastingData> ASSR::fine_data(int t)const{ return dat()[t]; }
+  Ptr<FineNowcastingData> ASSR::fine_data(int t) { return dat()[t]; }
+  const Ptr<FineNowcastingData> ASSR::fine_data(int t) const {
+    return dat()[t];
+  }
 
-  int ASSR::time_dimension()const{return dat().size();}
+  int ASSR::time_dimension() const {return dat().size();}
 
-  int ASSR::state_dimension()const{
-    return 2 + StateSpaceModelBase::state_dimension();}
+  int ASSR::state_dimension() const {
+    return 2 + ScalarStateSpaceModelBase::state_dimension();}
 
-  double ASSR::observation_variance(int t)const{return 0;}
+  double ASSR::observation_variance(int) const {return 0;}
 
-  double ASSR::adjusted_observation(int t)const{
+  double ASSR::adjusted_observation(int t) const {
     return fine_data(t)->coarse_observation(); }
-  bool ASSR::is_missing_observation(int t)const{
+  bool ASSR::is_missing_observation(int t) const {
     return !(fine_data(t)->coarse_observation_observed());}
 
   // Update the sufficient statistics for the regression component of
@@ -482,9 +492,10 @@ namespace BOOM{
 
     Ptr<RegressionData> dp(regression_->dat()[t]);
     // The state_mean is computed using the observation_matrix from
-    // the client model, available from StateSpaceModelBase.
+    // the client model, available from ScalarStateSpaceModelBase.
     double state_mean =
-        StateSpaceModelBase::observation_matrix(t).dot(client_state_error);
+        ScalarStateSpaceModelBase::observation_matrix(t).dot(
+            client_state_error);
 
     // We want y with time series effects subtracted off.  We get this
     // by computing state_mean (which contains the full prediction of
@@ -496,86 +507,102 @@ namespace BOOM{
     regression_->suf()->add_mixture_data(residual + predicted, dp->x(), 1.0);
   }
 
-  // TODO(stevescott): This and other code involving model matrices is
+  // TODO(user): This and other code involving model matrices is
   // an optimization opportunity.  Test it out to see if
   // precomputation makes sense.
-  const AccumulatorTransitionMatrix * ASSR::state_transition_matrix(int t)const{
+  const AccumulatorTransitionMatrix *ASSR::state_transition_matrix(
+      int t, bool supplemental) const {
     Ptr<FineNowcastingData> fine_data(this->fine_data(t));
-    if(!transition_matrix_) {
-      transition_matrix_.reset(new AccumulatorTransitionMatrix(
-          StateSpaceModelBase::state_transition_matrix(t),
-          StateSpaceModelBase::observation_matrix(t+1),
-          fine_data->fraction_in_initial_period(),
-          fine_data->contains_end()));
-    } else {
-      transition_matrix_->reset(
-          StateSpaceModelBase::state_transition_matrix(t),
-          StateSpaceModelBase::observation_matrix(t+1),
-          fine_data->fraction_in_initial_period(),
-          fine_data->contains_end());
-    }
-    return transition_matrix_.get();
+    return fill_state_transition_matrix(
+        t,
+        *fine_data,
+        supplemental ? supplemental_transition_matrix_ : transition_matrix_);
   }
 
-  // TODO(stevescott):  check this
-  SparseVector ASSR::observation_matrix(int t)const{
+  const AccumulatorTransitionMatrix *ASSR::fill_state_transition_matrix(
+      int t,
+      const FineNowcastingData &fine_data,
+      std::unique_ptr<AccumulatorTransitionMatrix> &transition_matrix) const {
+    if (!transition_matrix) {
+      transition_matrix.reset(new AccumulatorTransitionMatrix(
+          SSSMB::state_transition_matrix(t),
+          SSSMB::observation_matrix(t + 1),
+          fine_data.fraction_in_initial_period(),
+          fine_data.contains_end()));
+    } else {
+      transition_matrix->reset(
+          ScalarStateSpaceModelBase::state_transition_matrix(t),
+          ScalarStateSpaceModelBase::observation_matrix(t + 1),
+          fine_data.fraction_in_initial_period(),
+          fine_data.contains_end());
+    }
+    return transition_matrix.get();
+  }
+
+  SparseVector ASSR::observation_matrix(int t, bool) const {
     Ptr<FineNowcastingData> fine_data(this->fine_data(t));
     int p = state_dimension();
     SparseVector ans(p);
-    ans[p-1] = 1;
-    ans[p-2] = fine_data->fraction_in_initial_period();
+    ans[p - 1] = 1;
+    ans[p - 2] = fine_data->fraction_in_initial_period();
     return ans;
   }
 
   const AccumulatorStateVarianceMatrix *
-  ASSR::state_variance_matrix(int t)const{
-    if(!variance_matrix_){
-      variance_matrix_.reset(new AccumulatorStateVarianceMatrix(
-          StateSpaceModelBase::state_variance_matrix(t),
-          StateSpaceModelBase::observation_matrix(t+1),
-          regression_->sigsq()));
-    } else {
-      variance_matrix_->reset(
-          StateSpaceModelBase::state_variance_matrix(t),
-          StateSpaceModelBase::observation_matrix(t+1),
-          regression_->sigsq());
-    }
-    return variance_matrix_.get();
+  ASSR::state_variance_matrix(int t, bool supplemental) const {
+    return fill_state_variance_matrix(
+        t, supplemental ? supplemental_variance_matrix_ : variance_matrix_);
   }
 
-  // TODO(stevescott):  test
-  void ASSR::simulate_initial_state(RNG &rng, VectorView state0)const{
+  const AccumulatorStateVarianceMatrix *
+  ASSR::fill_state_variance_matrix(
+      int t,
+      std::unique_ptr<AccumulatorStateVarianceMatrix> &variance_matrix) const {
+    if (!variance_matrix) {
+      variance_matrix.reset(new AccumulatorStateVarianceMatrix(
+          SSSMB::state_variance_matrix(t),
+          SSSMB::observation_matrix(t + 1),
+          regression_->sigsq()));
+    } else {
+      variance_matrix->reset(SSSMB::state_variance_matrix(t),
+                             SSSMB::observation_matrix(t + 1),
+                             regression_->sigsq());
+    }
+    return variance_matrix.get();
+  }
+
+  void ASSR::simulate_initial_state(RNG &rng,
+                                    VectorView state0,
+                                    bool supplemental) const {
     // First, simulate the initial state of the client state vector.
-    VectorView client_state(state0, 0, state0.size()-2);
-    StateSpaceModelBase::simulate_initial_state(rng, client_state);
+    VectorView client_state(state0, 0, state0.size() - 2);
+    SSSMB::simulate_initial_state(rng, client_state, supplemental);
 
     // Next simulate the initial value of the first latent weekly
     // observation.
-    double mu = StateSpaceModelBase::observation_matrix(0).dot(client_state);
+    double mu = SSSMB::observation_matrix(0, supplemental).dot(client_state);
     state0[state_dimension() - 2] = rnorm_mt(rng, mu, regression_->sigma());
 
     // Finally, the initial state of the cumulator variable is zero.
     state0[state_dimension() - 1] = 0;
   }
 
-  Vector ASSR::simulate_state_error(RNG &rng, int t)const{
+  Vector ASSR::simulate_state_error(RNG &rng, int t, bool supplemental) const {
     int state_dim = state_dimension();
     Vector ans(state_dim, 0);
     VectorView client_state_error(ans, 0, state_dim - 2);
-    client_state_error = StateSpaceModelBase::simulate_state_error(rng, t);
-
-    // TODO(stevescott):  check this
+    client_state_error =
+        ScalarStateSpaceModelBase::simulate_state_error(rng, t, supplemental);
     ans[state_dim - 2] =
-        StateSpaceModelBase::observation_matrix(t).dot(client_state_error)
+        SSSMB::observation_matrix(t, supplemental).dot(client_state_error)
         + rnorm_mt(rng, 0, regression_->sigma());
     ans.back() = 0;
-
     return ans;
   }
 
-  Vector ASSR::initial_state_mean()const{
-    Vector ans = StateSpaceModelBase::initial_state_mean();
-    double y0 = StateSpaceModelBase::observation_matrix(0).dot(ans);
+  Vector ASSR::initial_state_mean(bool supplemental) const {
+    Vector ans = SSSMB::initial_state_mean(supplemental);
+    double y0 = SSSMB::observation_matrix(0, supplemental).dot(ans);
     ans.push_back(y0);
     ans.push_back(0.0);
     return ans;
@@ -584,9 +611,9 @@ namespace BOOM{
   // | V0   Z^T*V0   0 |
   // | V0*Z Z^T*V0*Z 0 |
   // | 0    0        0 |
-  SpdMatrix ASSR::initial_state_variance()const{
-    SpdMatrix V0 = StateSpaceModelBase::initial_state_variance();
-    SparseVector Z0(StateSpaceModelBase::observation_matrix(0));
+  SpdMatrix ASSR::initial_state_variance(bool supplemental) const {
+    SpdMatrix V0 = SSSMB::initial_state_variance(supplemental);
+    SparseVector Z0(SSSMB::observation_matrix(0, supplemental));
     Vector covariance = V0 * Z0;
     double y_variance = Z0.dot(covariance) + regression_->sigsq();
 
@@ -599,8 +626,8 @@ namespace BOOM{
     VectorView covariance_row(ans.row(state_dim - 2), 0, state_dim - 2 );
     covariance_column = covariance;
     covariance_row = covariance;
-    ans(state_dim - 2, state_dim -2) = y_variance;
+    ans(state_dim - 2, state_dim - 2) = y_variance;
     return ans;
   }
 
-}
+}  // namespace BOOM

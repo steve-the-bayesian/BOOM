@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -20,10 +21,10 @@
 
 #include <Models/StateSpace/StateModels/StateModel.hpp>
 #include <Models/StateSpace/StateSpaceRegressionModel.hpp>
+#include <Models/StateSpace/Filters/KalmanStorage.hpp>
 #include <Models/StateSpace/Filters/SparseVector.hpp>
 #include <Models/StateSpace/Filters/SparseMatrix.hpp>
 #include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
-#include <Models/StateSpace/Filters/ScalarKalmanStorage.hpp>
 #include <Models/StateSpace/StateModels/RegressionStateModel.hpp>
 
 #include <Models/GaussianModel.hpp>
@@ -69,7 +70,7 @@
 // same as 'Z', which is the observation matrix for the underlying
 // state space model.
 
-namespace BOOM{
+namespace BOOM {
   //======================================================================
   // FineNowcastingData describes one 'week' in the life of a
   // nowcasting model.  We observe the vector of signals for that week
@@ -87,16 +88,15 @@ namespace BOOM{
    public:
     // Args:
     //   x:  The vector of observables from this week.
-    //   coarse_observation: The observed value for the month
-    //     containing the _start_ of this week.  This will frequently
-    //     be unobserved, in which case an arbitrary value can be
-    //     assigned.
-    //   coarse_observation_observed: True if this week contains the
-    //     end of a month, and the monthly total is known.
+    //   coarse_observation: The observed value for the month containing the
+    //     _start_ of this week.  This will frequently be unobserved, in which
+    //     case an arbitrary value can be assigned.
+    //   coarse_observation_observed: True if this week contains the end of a
+    //     month, and the monthly total is known.
     //   contains_end:  True if this week contains the end of a month.
-    //   fraction_in_initial_period: The fraction of this week's
-    //     output belonging to the month containing the _start_ of the
-    //     week.  This is always positive, and usually 1.
+    //   fraction_of_value_in_initial_period: The fraction of this week's output
+    //     belonging to the month containing the _start_ of the week.  This is
+    //     always positive, and usually 1.
     //
     // Note that 'contains_end' and 'coarse_observation_observed' are
     // almost redundant.  However, 'coarse_observation_observed' can
@@ -107,7 +107,7 @@ namespace BOOM{
                        double coarse_observation,
                        bool coarse_observation_observed,
                        bool contains_end,
-                       double fraction_in_initial_period);
+                       double fraction_of_value_in_initial_period);
     FineNowcastingData(const FineNowcastingData &rhs);
     FineNowcastingData * clone() const override;
     ostream &display(ostream &out) const override;
@@ -134,10 +134,10 @@ namespace BOOM{
     //   T_t: the client state transition matrix at time t. (For the
     //     t->t+1 transistion)
     //   Z_t_plus_1: The client model observation vector at time t+1.
-    //   contains_end: Indicates whether week t contains the end of
-    //     a month.
     //   fraction_in_initial_period: Proportion of output in week t
     //     attributed to the month containing the start of week t.
+    //   contains_end: Indicates whether week t contains the end of
+    //     a month.
     //   owns_matrix: If true then this class will take ownership of
     //     T, which will be deleted by the destructor.
     AccumulatorTransitionMatrix(
@@ -165,7 +165,7 @@ namespace BOOM{
     Vector operator*(const VectorView &v) const override;
     Vector operator*(const ConstVectorView &v) const override;
 
-    Vector Tmult(const Vector &v) const override;
+    Vector Tmult(const ConstVectorView &v) const override;
     void sandwich_inplace(SpdMatrix &P) const override;
     Matrix & add_to(Matrix &P) const override;
    private:
@@ -190,7 +190,7 @@ namespace BOOM{
   //
   // This class describes the rank deficient variance matrix of the
   // initial matrix product.
-  class AccumulatorStateVarianceMatrix : public SparseKalmanMatrix{
+  class AccumulatorStateVarianceMatrix : public SparseKalmanMatrix {
    public:
     // When calling the constructor, the observation matrix and
     // observation variance should be with respect to time t+1, while
@@ -213,8 +213,9 @@ namespace BOOM{
     Vector operator*(const VectorView &v) const override;
     Vector operator*(const ConstVectorView &v) const override;
 
-    Vector Tmult(const Vector &x) const override;
-    Matrix & add_to(Matrix &P) const override;
+    Vector Tmult(const ConstVectorView &v) const override;
+    Matrix & add_to(Matrix &m) const override;
+
    private:
     // See the fragility comments in AccumulatorTransitionMatrix.
     const SparseKalmanMatrix *state_variance_matrix_;
@@ -247,7 +248,7 @@ namespace BOOM{
   // AggregatedStateSpaceRegression models a time series of
   // FineNowcastingData.
   class AggregatedStateSpaceRegression
-      : public StateSpaceModelBase,
+      : public ScalarStateSpaceModelBase,
         public IID_DataPolicy<FineNowcastingData>,
         public PriorPolicy
   {
@@ -299,43 +300,50 @@ namespace BOOM{
 
     // Returns a pointer to the RegressionModel that manages the
     // linear prediction based on contemporaneous covariates.
-    RegressionModel * regression_model(){
-      return regression_.get();}
-    const RegressionModel * regression_model() const{
-      return regression_.get();}
-
-    // Returns a pointer to the RegressionStateModel used in the
-    // Kalman filter.
-    AggregatedRegressionStateModel * regression_state_model() {
-      return regression_state_.get();}
-    const AggregatedRegressionStateModel * regression_state_model() const{
-      return regression_state_.get();}
+    RegressionModel * regression_model() {return regression_.get();}
 
     // This function updates the regression portion of the model.
     void observe_data_given_state(int t) override;
 
     const AccumulatorTransitionMatrix *
-    state_transition_matrix(int t) const override;
+    state_transition_matrix(int t, bool supplemental = false) const override;
 
-    SparseVector observation_matrix(int t) const override;
+    SparseVector observation_matrix(
+        int t, bool supplemental = false) const override;
 
     const AccumulatorStateVarianceMatrix *
-    state_variance_matrix(int t) const override;
+    state_variance_matrix(int t, bool supplemental = false) const override;
 
-    void simulate_initial_state(RNG &rng, VectorView v) const override;
-    Vector simulate_state_error(RNG &rng, int t) const override;
+    void simulate_initial_state(RNG &rng,
+                                VectorView state0,
+                                bool supplemental = false) const override;
+    Vector simulate_state_error(RNG &rng,
+                                int t,
+                                bool supplemental = false) const override;
 
-    Vector initial_state_mean() const override;
-    SpdMatrix initial_state_variance() const override;
+    Vector initial_state_mean(bool supplemental) const override;
+    SpdMatrix initial_state_variance(bool supplemental) const override;
 
    private:
     Ptr<RegressionModel> regression_;
-    std::vector<Ptr<StateModel> > state_models_;
     Ptr<GaussianModel> observation_model_;
-    Ptr<AggregatedRegressionStateModel> regression_state_;
+
     mutable std::unique_ptr<AccumulatorStateVarianceMatrix> variance_matrix_;
+    mutable std::unique_ptr<AccumulatorStateVarianceMatrix>
+    supplemental_variance_matrix_;
+
     mutable std::unique_ptr<AccumulatorTransitionMatrix> transition_matrix_;
+    mutable std::unique_ptr<AccumulatorTransitionMatrix>
+    supplemental_transition_matrix_;
+
+    const AccumulatorStateVarianceMatrix *fill_state_variance_matrix(
+        int t,
+        std::unique_ptr<AccumulatorStateVarianceMatrix> &variance_matrix) const;
+    const AccumulatorTransitionMatrix *fill_state_transition_matrix(
+        int t,
+        const FineNowcastingData &fine_data,
+        std::unique_ptr<AccumulatorTransitionMatrix> &transition_matrix) const;
   };
 
-}
+}  // namespace
 #endif // BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
