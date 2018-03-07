@@ -24,9 +24,9 @@
 #include <cstddef>
 #include <future>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/ThreadTools.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/ThreadTools.hpp"
 
 // The main class implemented in this file is ParallelLatentDataImputer.
 //

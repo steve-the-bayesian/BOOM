@@ -25,9 +25,9 @@
   CompositeParamPolicy, where the parameters are owned by sub-models.
   ======================================================================*/
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
 
 namespace BOOM{
 

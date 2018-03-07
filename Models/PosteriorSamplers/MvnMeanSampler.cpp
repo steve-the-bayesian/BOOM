@@ -16,11 +16,11 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/MvnMeanSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/ParamTypes.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/MvnMeanSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/ParamTypes.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 namespace BOOM{
 
   typedef MvnConjMeanSampler MCS;

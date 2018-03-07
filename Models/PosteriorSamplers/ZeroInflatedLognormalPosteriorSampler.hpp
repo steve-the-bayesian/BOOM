@@ -20,7 +20,7 @@
 #ifndef BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM{
   class ZeroInflatedLognormalModel;

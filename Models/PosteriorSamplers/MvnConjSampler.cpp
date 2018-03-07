@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/MvnConjSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <math/special_functions.hpp>
+#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "math/special_functions.hpp"
 
 namespace BOOM {
 

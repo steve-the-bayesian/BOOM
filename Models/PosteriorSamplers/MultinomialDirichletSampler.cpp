@@ -16,10 +16,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/MultinomialDirichletSampler.hpp>
-#include <Models/MultinomialModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <distributions.hpp>
+#include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
+#include "Models/MultinomialModel.hpp"
+#include "Models/DirichletModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef MultinomialDirichletSampler MDS;

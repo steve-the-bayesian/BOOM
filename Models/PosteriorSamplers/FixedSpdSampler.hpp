@@ -19,9 +19,9 @@
 
 #ifndef BOOM_FIXED_SPD_SAMPLER_HPP_
 #define BOOM_FIXED_SPD_SAMPLER_HPP_
-#include <Models/SpdParams.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/SpdParams.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
   class FixedSpdSampler : public PosteriorSampler{

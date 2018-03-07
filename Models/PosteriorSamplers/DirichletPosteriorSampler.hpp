@@ -21,15 +21,15 @@
 #define BOOM_DIRICHLET_POSTERIOR_SAMPLER_HPP
 
 #include <memory>
-#include <Models/DirichletModel.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/VectorModel.hpp>
-#include <Samplers/ScalarLangevinSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <Samplers/TIM.hpp>
-#include <Samplers/UnivariateLangevinSampler.hpp>
-#include <Samplers/UnivariateSliceSampler.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/DirichletModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/VectorModel.hpp"
+#include "Samplers/ScalarLangevinSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "Samplers/TIM.hpp"
+#include "Samplers/UnivariateLangevinSampler.hpp"
+#include "Samplers/UnivariateSliceSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM{
 

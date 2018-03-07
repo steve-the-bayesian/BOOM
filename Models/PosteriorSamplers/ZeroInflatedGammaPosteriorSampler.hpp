@@ -20,10 +20,10 @@
 #ifndef BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/ZeroInflatedGammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/BetaBinomialSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
+#include "Models/ZeroInflatedGammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
 
 namespace BOOM {
 

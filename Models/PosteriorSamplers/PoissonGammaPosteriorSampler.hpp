@@ -20,10 +20,10 @@
 #ifndef BOOM_POISSON_GAMMA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POISSON_GAMMA_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/PoissonGammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/PoissonGammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
 

@@ -20,9 +20,9 @@
 #ifndef BOOM_BETA_BINOMIAL_SAMPLER_HPP
 #define BOOM_BETA_BINOMIAL_SAMPLER_HPP
 
-#include <Models/BetaModel.hpp>
-#include <Models/BinomialModel.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
+#include "Models/BetaModel.hpp"
+#include "Models/BinomialModel.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
 
 namespace BOOM{
 

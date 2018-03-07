@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp"
 
-#include <distributions.hpp>
-#include <distributions/trun_gamma.hpp>
+#include "distributions.hpp"
+#include "distributions/trun_gamma.hpp"
 
 namespace BOOM {
 

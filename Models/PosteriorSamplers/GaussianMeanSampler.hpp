@@ -19,8 +19,8 @@
 
 #ifndef BOOM_DRAW_GAUSSIAN_MEAN_HPP
 #define BOOM_DRAW_GAUSSIAN_MEAN_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/Ptr.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/Ptr.hpp"
 
 namespace BOOM{
 

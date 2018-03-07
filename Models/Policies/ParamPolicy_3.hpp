@@ -18,8 +18,8 @@
 */
 #ifndef BOOM_PARAM_POLICY_3_HPP
 #define BOOM_PARAM_POLICY_3_HPP
-#include <cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
 namespace BOOM{
 
   template <class P1, class P2, class P3>

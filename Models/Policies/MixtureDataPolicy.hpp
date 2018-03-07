@@ -18,10 +18,10 @@
 */
 #ifndef BOOM_MIXTURE_DATA_POLICIES_HPP
 #define BOOM_MIXTURE_DATA_POLICIES_HPP
-#include <Models/ModelTypes.hpp>
-#include <Models/Policies/DataInfoPolicy.hpp>
-#include <Models/CategoricalData.hpp>
-#include <Models/DataTypes.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/DataInfoPolicy.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
   // A data policy for use with finite mixture and similar models.  Data are

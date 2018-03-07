@@ -18,8 +18,8 @@
 */
 #ifndef BOOM_MVN_VAR_SAMPLER_HPP
 #define BOOM_MVN_VAR_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SpdParams.hpp"
 
 namespace BOOM{
   class MvnModel;

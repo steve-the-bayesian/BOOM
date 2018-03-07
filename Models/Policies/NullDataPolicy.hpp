@@ -18,8 +18,8 @@
 */
 #ifndef BOOM_NULL_DATA_POLICY_HPP
 #define BOOM_NULL_DATA_POLICY_HPP
-#include <Models/ModelTypes.hpp>
-#include <Models/Policies/DataInfoPolicy.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/DataInfoPolicy.hpp"
 #include <fstream>
 #include <list>
 

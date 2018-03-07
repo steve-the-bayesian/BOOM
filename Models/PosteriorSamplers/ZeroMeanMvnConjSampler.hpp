@@ -19,8 +19,8 @@
 
 #ifndef BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_
 #define BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/WishartModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/WishartModel.hpp"
 
 namespace BOOM{
   class ZeroMeanMvnModel;

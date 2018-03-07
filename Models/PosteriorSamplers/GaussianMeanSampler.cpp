@@ -16,10 +16,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/GaussianMeanSampler.hpp>
-#include <Models/GaussianModel.hpp>
+#include "Models/PosteriorSamplers/GaussianMeanSampler.hpp"
+#include "Models/GaussianModel.hpp"
 #include <cmath>
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 namespace BOOM{
   typedef GaussianMeanSampler GMS;

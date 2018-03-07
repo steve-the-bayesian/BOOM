@@ -20,8 +20,8 @@
 #ifndef BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 

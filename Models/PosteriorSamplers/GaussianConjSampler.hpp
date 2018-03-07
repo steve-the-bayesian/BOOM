@@ -20,10 +20,10 @@
 #ifndef BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP
 #define BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP
 
-#include <Models/GaussianModelGivenSigma.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/GaussianModelGivenSigma.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM{
   class GaussianModel;

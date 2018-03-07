@@ -1,7 +1,9 @@
+#ifndef BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
+#define BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
-  Copyright (C) 2005-2013 Steven L. Scott
-
+  Copyright (C) 2005-2018 Steven L. Scott
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -17,26 +19,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#ifndef BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
-#define BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
 #include <Models/ModelTypes.hpp>
 
 namespace BOOM {
-  // This is a dummy mix-in policy to supply no-ops for the virtual
-  // functions required by the Model base class for handling
-  // parameters.  Nonparametric models don't have parameters, so this
-  // class just returns empty parameter vectors.
 
-  class NonparametricParamPolicy : virtual public Model{
+  // Nonparametric models don't have parameters, so parameter_vector() and
+  // vectorize_params() return empty objects, and their inverse operations are
+  // no-ops.
+  class NonparametricParamPolicy
+      : virtual public Model {
    public:
     typedef NonparametricParamPolicy ParamPolicy;
-    // Return an empty vector of parameters.
-    ParamVector parameter_vector() override {
-      return ParamVector();
+    std::vector<Ptr<Params>> parameter_vector() override {
+      return std::vector<Ptr<Params>>();
     }
-    const ParamVector parameter_vector() const override {
-      return ParamVector();
+    const std::vector<Ptr<Params>> parameter_vector() const override {
+      return std::vector<Ptr<Params>>();
     }
+
+    Vector vectorize_params(bool minimal = true) const override {
+      return Vector(0);
+    }
+    void unvectorize_params(const Vector &v, bool minimal = true) override {}
   };
-}
+  
+}  // namespace BOOM
+
 #endif //  BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_

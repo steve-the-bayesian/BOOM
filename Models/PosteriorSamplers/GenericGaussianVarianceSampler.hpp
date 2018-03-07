@@ -20,8 +20,8 @@
 #ifndef BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_
 #define BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <distributions/rng.hpp>
+#include "Models/GammaModel.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

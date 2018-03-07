@@ -25,9 +25,9 @@
   to have many paramters use ManyParamPolicy instead.
   ======================================================================*/
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
 namespace BOOM{
 
   class CompositeParamPolicy

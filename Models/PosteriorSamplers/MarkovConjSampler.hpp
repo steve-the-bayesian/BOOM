@@ -19,11 +19,11 @@
 #ifndef BOOM_MARKOV_CONJUGATE_SAMPLER_HPP
 #define BOOM_MARKOV_CONJUGATE_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MarkovModel.hpp>
-#include <Models/ProductDirichletModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <distributions/rng.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/MarkovModel.hpp"
+#include "Models/ProductDirichletModel.hpp"
+#include "Models/DirichletModel.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM{
   class MarkovConjSampler

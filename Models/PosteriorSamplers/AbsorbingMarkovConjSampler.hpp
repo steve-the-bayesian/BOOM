@@ -20,9 +20,9 @@
 #ifndef BOOM_ABSORBING_MARKOV_CONJUGATE_SAMPLER_HPP
 #define BOOM_ABSORBING_MARKOV_CONJUGATE_SAMPLER_HPP
 
-#include <Models/MarkovModel.hpp>
-#include <Models/PosteriorSamplers/MarkovConjSampler.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/MarkovModel.hpp"
+#include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
 

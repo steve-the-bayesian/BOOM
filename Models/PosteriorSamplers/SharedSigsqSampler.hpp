@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

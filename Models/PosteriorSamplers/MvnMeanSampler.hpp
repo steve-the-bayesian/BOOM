@@ -18,9 +18,9 @@
 */
 #ifndef BOOM_MVN_MEAN_SAMPLER_HPP
 #define BOOM_MVN_MEAN_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM{
   class MvnModel;

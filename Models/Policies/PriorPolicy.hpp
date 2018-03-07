@@ -20,8 +20,8 @@
 #ifndef BOOM_PRIOR_POLICY_HPP
 #define BOOM_PRIOR_POLICY_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include <map>
 
 namespace BOOM{
