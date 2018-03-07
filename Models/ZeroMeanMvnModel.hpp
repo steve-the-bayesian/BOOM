@@ -19,10 +19,10 @@
 
 #ifndef BOOM_ZERO_MEAN_MVN_MODEL_HPP_
 #define BOOM_ZERO_MEAN_MVN_MODEL_HPP_
-#include <Models/MvnBase.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

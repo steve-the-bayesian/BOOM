@@ -16,10 +16,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/MvnGivenSigma.hpp>
-#include <distributions.hpp>
+#include "Models/MvnGivenSigma.hpp"
+#include "distributions.hpp"
 #include <utility>
-#include <Models/SpdData.hpp>
+#include "Models/SpdData.hpp"
 namespace BOOM {
 
   typedef MvnGivenSigma MGS;

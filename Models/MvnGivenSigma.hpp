@@ -19,10 +19,10 @@
 #ifndef BOOM_MVN_GIVEN_SIGMA_HPP
 #define BOOM_MVN_GIVEN_SIGMA_HPP
 
-#include <Models/MvnBase.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
 namespace BOOM{
 

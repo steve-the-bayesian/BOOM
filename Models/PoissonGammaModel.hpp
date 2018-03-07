@@ -20,10 +20,10 @@
 #ifndef BOOM_POISSON_GAMMA_MODEL_HPP_
 #define BOOM_POISSON_GAMMA_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

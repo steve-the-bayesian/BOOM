@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/SpdData.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/SpdData.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

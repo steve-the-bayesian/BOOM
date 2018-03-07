@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/ZeroInflatedPoissonModel.hpp>
+#include "Models/ZeroInflatedPoissonModel.hpp"
 #include <functional>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <distributions.hpp>
-#include <cpputil/lse.hpp>
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "distributions.hpp"
+#include "cpputil/lse.hpp"
 
 namespace BOOM {
   ZeroInflatedPoissonSuf::ZeroInflatedPoissonSuf()

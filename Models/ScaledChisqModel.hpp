@@ -20,8 +20,8 @@
 #ifndef BOOM_SCALED_CHISQ_MODEL_HPP
 #define BOOM_SCALED_CHISQ_MODEL_HPP
 
-#include <Models/GammaModel.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
 
 namespace BOOM{
 

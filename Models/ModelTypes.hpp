@@ -21,12 +21,12 @@
 
 #include <set>
 
-#include <BOOM.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/DataTypes.hpp>
-#include <distributions/rng.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "BOOM.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/DataTypes.hpp"
+#include "distributions/rng.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
 

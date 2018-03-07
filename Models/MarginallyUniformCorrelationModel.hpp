@@ -19,11 +19,11 @@
 #ifndef BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_
 #define BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_
 
-#include <Models/Policies/NullParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/Policies/NullParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/SpdParams.hpp"
 
 namespace BOOM{
 

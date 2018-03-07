@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/IndependentMvnModel.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 #include <limits>
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 namespace BOOM{
 

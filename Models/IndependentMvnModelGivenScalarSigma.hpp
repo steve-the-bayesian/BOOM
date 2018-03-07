@@ -20,8 +20,8 @@
 #ifndef BOOM_INDEPENDENT_MVN_MODEL_GIVEN_SCALAR_SIGMA_HPP_
 #define BOOM_INDEPENDENT_MVN_MODEL_GIVEN_SCALAR_SIGMA_HPP_
 
-#include <Models/MvnGivenScalarSigma.hpp>
-#include <Models/IndependentMvnModel.hpp>
+#include "Models/MvnGivenScalarSigma.hpp"
+#include "Models/IndependentMvnModel.hpp"
 
 namespace BOOM {
 

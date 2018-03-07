@@ -21,11 +21,11 @@
 
 #include <string>
 
-#include <LinAlg/Vector.hpp>
-#include <Models/DataTypes.hpp>
-#include <cpputil/Ptr.hpp>
-#include <cpputil/report_error.hpp>
-#include <uint.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Models/DataTypes.hpp"
+#include "cpputil/Ptr.hpp"
+#include "cpputil/report_error.hpp"
+#include "uint.hpp"
 
 namespace BOOM{
 

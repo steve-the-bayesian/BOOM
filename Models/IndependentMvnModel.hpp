@@ -20,10 +20,10 @@
 #ifndef BOOM_INDEPENDENT_MVN_MODEL_HPP
 #define BOOM_INDEPENDENT_MVN_MODEL_HPP
 
-#include <Models/MvnBase.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
   class IndependentMvnSuf : public SufstatDetails<VectorData> {

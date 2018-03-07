@@ -17,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/MvtModel.hpp>
-#include <Models/WeightedData.hpp>
-#include <Models/WeightedMvnModel.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <distributions.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <numopt.hpp>
+#include "Models/MvtModel.hpp"
+#include "Models/WeightedData.hpp"
+#include "Models/WeightedMvnModel.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "distributions.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "numopt.hpp"
 #include <cmath>
 
 namespace BOOM {

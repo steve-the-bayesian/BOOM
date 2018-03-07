@@ -19,11 +19,11 @@
 #ifndef BOOM_PRODUCT_VECTOR_MODEL_HPP_
 #define BOOM_PRODUCT_VECTOR_MODEL_HPP_
 
-#include <Models/VectorModel.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/VectorModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

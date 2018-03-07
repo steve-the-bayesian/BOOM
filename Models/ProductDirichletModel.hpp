@@ -18,12 +18,12 @@
 */
 #ifndef BOOM_PRODUCT_DIRICHLET_MODEL_HPP
 #define BOOM_PRODUCT_DIRICHLET_MODEL_HPP
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
 
 namespace BOOM{
 

@@ -19,8 +19,8 @@
 #ifndef BOOM_TRUNCATED_GAMMA_MODEL_HPP
 #define BOOM_TRUNCATED_GAMMA_MODEL_HPP
 
-#include <Models/GammaModel.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/GammaModel.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 

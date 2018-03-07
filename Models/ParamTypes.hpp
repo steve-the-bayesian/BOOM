@@ -20,7 +20,7 @@
 #ifndef BOOM_PARAM_TYPES_H
 #define BOOM_PARAM_TYPES_H
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
 

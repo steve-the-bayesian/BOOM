@@ -17,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PoissonModel.hpp>
+#include "Models/PoissonModel.hpp"
 #include <cmath>
-#include <distributions.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PoissonGammaSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <cpputil/math_utils.hpp>
+#include "distributions.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PoissonGammaSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
 

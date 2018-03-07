@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PoissonGammaModel.hpp>
-#include <cpputil/report_error.hpp>
-#include <Bmath/Bmath.hpp>
-#include <stats/moments.hpp>
+#include "Models/PoissonGammaModel.hpp"
+#include "cpputil/report_error.hpp"
+#include "Bmath/Bmath.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   using Rmath::trigamma;

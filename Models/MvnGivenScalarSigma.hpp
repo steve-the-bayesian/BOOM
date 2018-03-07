@@ -20,11 +20,11 @@
 #ifndef BOOM_MVN_GIVEN_SCALAR_SIGMA_HPP_
 #define BOOM_MVN_GIVEN_SCALAR_SIGMA_HPP_
 
-#include <Models/MvnBase.hpp>
-#include <Models/SpdData.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/SpdData.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM{
 

@@ -20,7 +20,7 @@
 #ifndef BOOM_SPD_MODEL_HPP
 #define BOOM_SPD_MODEL_HPP
 
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 
 namespace BOOM{
 

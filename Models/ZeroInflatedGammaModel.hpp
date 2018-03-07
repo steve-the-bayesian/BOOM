@@ -22,11 +22,11 @@
 
 #include <functional>
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/BinomialModel.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/BinomialModel.hpp"
+#include "Models/GammaModel.hpp"
 
 namespace BOOM{
 

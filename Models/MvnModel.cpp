@@ -18,15 +18,15 @@
 */
 
 #include <cmath>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/MvnConjSampler.hpp>
-#include <Models/WishartModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
+#include "Models/WishartModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
 

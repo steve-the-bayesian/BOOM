@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/UniformModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/UniformModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM {
 

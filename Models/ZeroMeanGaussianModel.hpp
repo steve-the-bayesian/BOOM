@@ -19,10 +19,10 @@
 
 #ifndef BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP
 #define BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/GaussianModelBase.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

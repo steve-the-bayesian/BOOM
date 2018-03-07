@@ -20,11 +20,11 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_MODEL_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_MODEL_HPP_
 
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/PoissonModel.hpp>
-#include <Models/BinomialModel.hpp>
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/PoissonModel.hpp"
+#include "Models/BinomialModel.hpp"
 
 namespace BOOM {
 

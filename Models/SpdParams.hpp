@@ -19,8 +19,8 @@
 
 #ifndef BOOM_SPD_PARAMS_HPP
 #define BOOM_SPD_PARAMS_HPP
-#include <Models/SpdData.hpp>
-#include <Models/ParamTypes.hpp>
+#include "Models/SpdData.hpp"
+#include "Models/ParamTypes.hpp"
 
 namespace BOOM{
   /*

@@ -20,11 +20,11 @@
 #ifndef BOOM_LOGNORMAL_MODEL_HPP_
 #define BOOM_LOGNORMAL_MODEL_HPP_
 
-#include <Models/GaussianModelBase.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/GaussianModelBase.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
 namespace BOOM {
 
