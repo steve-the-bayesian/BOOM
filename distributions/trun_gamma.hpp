@@ -20,7 +20,7 @@
 #ifndef BOOM_TRUN_GAMMA_HPP
 #define BOOM_TRUN_GAMMA_HPP
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM{
   // Density of the truncated Gamma(a,b) distribution with support >= cut.

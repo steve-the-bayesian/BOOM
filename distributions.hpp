@@ -20,15 +20,15 @@
 #ifndef BOOM_DISTRIBUTIONS_HPP
 #define BOOM_DISTRIBUTIONS_HPP
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <distributions/Rmath_dist.hpp>
-#include <distributions/rng.hpp>
+#include "distributions/Rmath_dist.hpp"
+#include "distributions/rng.hpp"
 
 #include <vector>
-#include <uint.hpp>
+#include "uint.hpp"
 
 namespace BOOM {
   class VectorView;

@@ -24,7 +24,7 @@
 // bunch of dangerous #define's (e.g. trunc, which is used by C++ as a
 // file input mode.)
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 #include <vector>
 
 namespace BOOM{

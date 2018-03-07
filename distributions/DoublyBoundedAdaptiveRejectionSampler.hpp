@@ -20,7 +20,7 @@
 #define BOOM_DOUBLY_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP
 
 #include <functional>
-#include <distributions.hpp>
+#include "distributions.hpp"
 #include <vector>
 
 namespace BOOM{

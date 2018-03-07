@@ -18,13 +18,13 @@
 */
 #include <cmath>
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 #include <algorithm>
 
 #include <iostream>

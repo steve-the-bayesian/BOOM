@@ -18,12 +18,12 @@
 */
 
 #include <cmath>
-#include <distributions.hpp>
+#include "distributions.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 #include <sstream>
 
 using namespace std;

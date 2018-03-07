@@ -18,9 +18,9 @@
 */
 
 
-#include <distributions/rng.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "distributions/rng.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 #include <ctime>
 
 namespace BOOM{

@@ -19,11 +19,11 @@
 
 #include <algorithm>
 #include <cmath>
-#include <distributions.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/Cholesky.hpp>
+#include "distributions.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Cholesky.hpp"
 
 namespace BOOM {
 

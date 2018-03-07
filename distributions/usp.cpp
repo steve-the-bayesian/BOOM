@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2018 Steven L. Scott
@@ -19,10 +20,14 @@
 
 #include <distributions.hpp>
 #include <BOOM.hpp>
+=======
+#include "distributions.hpp"
+#include "BOOM.hpp"
+>>>>>>> stable
 #include <stdexcept>
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <sstream>
 
 namespace BOOM{

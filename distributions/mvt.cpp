@@ -18,11 +18,11 @@
 */
 
 #include <cmath>
-#include <distributions.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "distributions.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <cpputil/Constants.hpp>
+#include "cpputil/Constants.hpp"
 
 namespace BOOM {
   //======================================================================

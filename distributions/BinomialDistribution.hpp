@@ -20,8 +20,8 @@
 #ifndef BOOM_BINOMIAL_DISTRIBUTION_HPP
 #define BOOM_BINOMIAL_DISTRIBUTION_HPP
 
-#include <distributions/rng.hpp>
-#include <uint.hpp>
+#include "distributions/rng.hpp"
+#include "uint.hpp"
 
 namespace BOOM{
 
