@@ -17,12 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/parse_range.hpp>
+#include "cpputil/parse_range.hpp"
 #include <sstream>
 #include <algorithm>
-#include <cpputil/seq.hpp>
-#include <cpputil/report_error.hpp>
-#include <uint.hpp>
+#include "cpputil/seq.hpp"
+#include "cpputil/report_error.hpp"
+#include "uint.hpp"
 #include <cstdlib>
 
 namespace BOOM{

@@ -18,8 +18,8 @@
 */
 #ifndef BOOM_OUTPUT_TABLE_HPP
 #define BOOM_OUTPUT_TABLE_HPP
-#include <cpputil/string_utils.hpp>
-#include <uint.hpp>
+#include "cpputil/string_utils.hpp"
+#include "uint.hpp"
 
 namespace BOOM{
 

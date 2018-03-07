@@ -21,7 +21,7 @@
 #define BOOM_RANDOM_ELEMENT
 
 #include <algorithm>
-#include <distributions.hpp>
+#include "distributions.hpp"
 namespace BOOM{
   template <class ForwardIt>
   typename ForwardIt::reference

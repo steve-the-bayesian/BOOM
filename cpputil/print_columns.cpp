@@ -18,8 +18,8 @@
 */
 #include <iostream>
 #include <iomanip>
-#include <cpputil/string_utils.hpp>
-#include <uint.hpp>
+#include "cpputil/string_utils.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
   std::ostream & print_columns(

@@ -19,7 +19,7 @@
 
 #ifndef BOOM_DATE_TIME_HPP
 #define BOOM_DATE_TIME_HPP
-#include <cpputil/Date.hpp>
+#include "cpputil/Date.hpp"
 #include <string>
 #include <boost/operators.hpp>
 

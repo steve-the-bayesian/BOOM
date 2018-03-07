@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/Date.hpp>
+#include "cpputil/Date.hpp"
 #include <sstream>
 #include <cmath>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/string_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include <cassert>
 #include <ctime>
 #include <algorithm>

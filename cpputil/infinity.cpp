@@ -18,11 +18,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/math_utils.hpp>
+#include "cpputil/math_utils.hpp"
 #include <limits>
 #include <cmath>
 
-namespace BOOM{
+namespace BOOM {
 
   double infinity(){
     return std::numeric_limits<double>::infinity(); }
@@ -30,4 +30,4 @@ namespace BOOM{
   double negative_infinity(){
     return -1*std::numeric_limits<double>::infinity(); }
 
-}
+}  // namespace BOOM

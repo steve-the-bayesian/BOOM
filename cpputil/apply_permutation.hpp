@@ -20,8 +20,8 @@
 #ifndef BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
 #define BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
 #include <vector>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM {
 
