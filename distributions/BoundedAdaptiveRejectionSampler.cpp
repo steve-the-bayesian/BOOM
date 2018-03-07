@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -120,6 +121,9 @@ namespace BOOM {
     uint n = knots_.size();
     cdf_.resize(n);
     double y0 = log_density_values_[0];
+    if (!std::isfinite(y0)) {
+      report_error("log density value 0 is not finite.");
+    }
     double last = 0;
     for (uint k = 0; k < knots_.size(); ++k) {
       double d = log_density_derivative_values_[k];
@@ -130,6 +134,10 @@ namespace BOOM {
       double inc2 = dinv * exp(y - d * z + d * knots_[k]);
       cdf_[k] = last + inc1 - inc2;
       last = cdf_[k];
+      if (!std::isfinite(last)) {
+        report_error("BoundedAdaptiveRejectionSampler found an illegal value "
+                     "when updating the cdf.");
+      }
     }
   }
   //----------------------------------------------------------------------

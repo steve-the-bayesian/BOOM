@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -119,13 +120,15 @@ namespace BOOM{
   unsigned rbinom_mt(RNG &, int n, double prob);
 
   /* Multinomial distribution */
-  void rmultinom_mt(RNG &, int, const std::vector<double> &prob,
+  void rmultinom_mt(RNG &rng,
+                    int64_t n,
+                    const std::vector<double> &prob,
                     std::vector<int> &result);
-  std::vector<int> rmultinom_mt(RNG &rng, int n,
+  std::vector<int> rmultinom_mt(RNG &rng, int64_t n,
                                 const std::vector<double> &prob);
-  void rmultinom(int n, const std::vector<double> &prob,
+  void rmultinom(int64_t n, const std::vector<double> &prob,
                  std::vector<int> &result);
-  std::vector<int> rmultinom(int n, const std::vector<double> &prob);
+  std::vector<int> rmultinom(int64_t n, const std::vector<double> &prob);
 
   /* Cauchy Distribution */
 

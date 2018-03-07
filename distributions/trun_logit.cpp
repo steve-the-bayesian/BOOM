@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -73,7 +74,7 @@ namespace {
 
 }
 
-// TODO(stevescott): Check this against simulations.
+// TODO: Check this against simulations.
 
 // Let G(x) denote the antiderivative of x * f(x), where f(x) is the
 // logistic density, and let F(x) denote the logistic cumulative
