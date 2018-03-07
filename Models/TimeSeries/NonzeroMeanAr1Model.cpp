@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
-#include <cpputil/report_error.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <stats/moments.hpp>
-#include <distributions.hpp>
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include "cpputil/report_error.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "stats/moments.hpp"
+#include "distributions.hpp"
 
 namespace BOOM{
 

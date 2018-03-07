@@ -20,9 +20,9 @@
 #ifndef BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP
 #define BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP
 
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
-#include <Models/TimeSeries/AugmentedTimeSeries.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
+#include "Models/TimeSeries/AugmentedTimeSeries.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
 

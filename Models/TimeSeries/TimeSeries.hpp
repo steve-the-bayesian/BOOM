@@ -22,8 +22,8 @@
 
 #include <sstream>
 #include <vector>
-#include <Models/DataTypes.hpp>
-#include <Models/TimeSeries/MarkovLink.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/TimeSeries/MarkovLink.hpp"
 #include  <boost/type_traits/is_base_of.hpp>
 
 namespace BOOM{
