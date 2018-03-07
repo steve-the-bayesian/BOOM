@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -54,7 +55,7 @@ namespace BOOM {
     // The KGW paper claims xi[i] can be "any positive sequence", but xi values
     // should be < 1, and decreasing with i.
     //
-    // TODO(stevescott): Investigate sequences other than geometric,
+    // TODO: Investigate sequences other than geometric,
     // e.g. Poisson or NB distributions.
     double mixing_weight_importance(int cluster) const;
     double log_mixing_weight_importance(int cluster) const;

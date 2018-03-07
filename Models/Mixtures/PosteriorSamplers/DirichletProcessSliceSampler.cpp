@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -208,7 +209,7 @@ namespace BOOM {
     split_merge_strategy_.reset(strategy);
   }
 
-  // TODO(stevescott): only do split_merge with some probability, because it is
+  // TODO: only do split_merge with some probability, because it is
   // expensive.
   void DPSS::split_merge_move() {
     if (!split_merge_strategy_) return;

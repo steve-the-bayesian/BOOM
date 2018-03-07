@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -261,7 +262,7 @@ namespace BOOM {
         int data_index,
         bool initialize_parameters,
         RNG &rng) {
-      // TODO(stevescott): Consider getting the component from the buffer of
+      // TODO: Consider getting the component from the buffer of
       // components held by the model if profiling shows the clone operation to
       // be a significant expense.
       Ptr<DpMixtureComponent> component = original_component->clone();

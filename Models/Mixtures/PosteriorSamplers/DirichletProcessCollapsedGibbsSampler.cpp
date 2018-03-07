@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -36,7 +37,7 @@ namespace BOOM {
 
   void DPCGS::draw() {
     collapsed_gibbs_update();
-    // TODO(stevescott):  Add a Jain-Neal split-merge update.
+    // TODO:  Add a Jain-Neal split-merge update.
     // conjugate_split_merge_update();
   }
 
