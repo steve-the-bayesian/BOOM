@@ -47,7 +47,7 @@ namespace BOOM {
   void RWHSM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
                             int time_now,
-                            StateSpaceModelBase *){
+                            ScalarStateSpaceModelBase *){
     Date today = time_zero_ + time_now;
     if(holiday_->active(today)){
       int position = holiday_->days_into_influence_window(today);

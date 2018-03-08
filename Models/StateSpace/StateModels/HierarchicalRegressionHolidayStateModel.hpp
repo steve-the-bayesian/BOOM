@@ -83,7 +83,7 @@ namespace BOOM {
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
                        int time_now,
-                       StateSpaceModelBase *model) override;
+                       ScalarStateSpaceModelBase *model) override;
 
     uint state_dimension() const override {return 1;}
 
@@ -132,6 +132,13 @@ namespace BOOM {
 
     SparseVector observation_matrix(int t) const override;
 
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
+    
     Vector initial_state_mean() const override {return initial_state_mean_;}
 
     SpdMatrix initial_state_variance() const override {

@@ -43,7 +43,7 @@ namespace BOOM {
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
                        int t,
-                       StateSpaceModelBase *model) override;
+                       ScalarStateSpaceModelBase *model) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override {return 1;}
     void simulate_state_error(

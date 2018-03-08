@@ -19,7 +19,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 
 namespace BOOM {
 
@@ -44,7 +44,8 @@ namespace BOOM {
     // There is nothing to do here.
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override {}
+                       int time_now,
+                       ScalarStateSpaceModelBase *model) override {}
 
     uint state_dimension() const override {return 1;}
 

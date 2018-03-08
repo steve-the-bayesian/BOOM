@@ -20,14 +20,14 @@
 #ifndef BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_
 #define BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/Filters/SparseVector.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -101,7 +101,8 @@ namespace BOOM {
 
     void observe_state(const ConstVectorView then,
                        const ConstVectorView now,
-                       int time_now) override;
+                       int time_now,
+                       ScalarStateSpaceModelBase *model) override;
     void observe_initial_state(const ConstVectorView &state) override;
 
     uint state_dimension() const override {

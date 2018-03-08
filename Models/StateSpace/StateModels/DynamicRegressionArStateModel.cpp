@@ -17,16 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
     typedef DynamicRegressionArStateModel DRASM;
-
-    int ncol(const std::vector<Matrix> &predictors) {
-      return predictors.empty() ? 0 : predictors[0].ncol();
-    }
   }  // namespace
 
   DRASM::DynamicRegressionArStateModel(const Matrix &predictors, int lags)
@@ -103,7 +99,8 @@ namespace BOOM {
 
   void DRASM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
-                            int time_now) {
+                            int time_now,
+                            ScalarStateSpaceModelBase *) {
     int pos = 0;
     for (int i = 0; i < xdim(); ++i) {
       double y = now[pos];

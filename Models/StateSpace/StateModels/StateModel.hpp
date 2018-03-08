@@ -28,7 +28,7 @@
 
 namespace BOOM{
 
-  class StateSpaceModelBase;
+  class ScalarStateSpaceModelBase;
   
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
@@ -63,7 +63,7 @@ namespace BOOM{
     virtual void observe_state(const ConstVectorView then,
                                const ConstVectorView now,
                                int time_now,
-                               StateSpaceModelBase *model) = 0;
+                               ScalarStateSpaceModelBase *model) = 0;
 
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.

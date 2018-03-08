@@ -55,7 +55,7 @@ namespace BOOM {
   void RegressionStateModel::observe_state(const ConstVectorView then,
                                            const ConstVectorView now,
                                            int time_now,
-                                           StateSpaceModelBase *model) {
+                                           ScalarStateSpaceModelBase *model) {
     ////////////// TODO!!!!!
   }
 

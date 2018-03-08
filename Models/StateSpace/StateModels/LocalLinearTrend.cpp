@@ -52,7 +52,7 @@ namespace BOOM{
   void LLTSM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
                             int time_now,
-                            StateSpaceModelBase *model) {
+                            ScalarStateSpaceModelBase *model) {
     check_dim(then);
     check_dim(now);
 

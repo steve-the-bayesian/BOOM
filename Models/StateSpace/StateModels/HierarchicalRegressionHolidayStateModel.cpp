@@ -87,7 +87,7 @@ namespace BOOM {
   void HRHSM::observe_state(const ConstVectorView then,
                             const ConstVectorView now,
                             int time_now,
-                            StateSpaceModelBase *model) {
+                            ScalarStateSpaceModelBase *model) {
     int which_model = which_holiday_[time_now];
     if (which_model < 0) {
       return;
