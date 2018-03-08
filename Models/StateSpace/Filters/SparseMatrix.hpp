@@ -976,8 +976,8 @@ namespace BOOM {
     IdenticalRowsMatrix * clone() const override {
       return new IdenticalRowsMatrix(*this);
     }
-    int nrow() const {return nrow_;}
-    int ncol() const {return row_.size();}
+    int nrow() const override {return nrow_;}
+    int ncol() const override {return row_.size();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
       conforms_to_cols(rhs.size());
       conforms_to_rows(lhs.size());

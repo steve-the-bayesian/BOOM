@@ -20,8 +20,8 @@
 #ifndef BOOM_SCALAR_KALMAN_STORAGE_HPP
 #define BOOM_SCALAR_KALMAN_STORAGE_HPP
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM{
 
