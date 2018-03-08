@@ -20,9 +20,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <stats/Mspline.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "stats/Mspline.hpp"
 
 namespace BOOM {
 

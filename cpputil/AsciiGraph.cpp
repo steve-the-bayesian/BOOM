@@ -18,8 +18,8 @@
 */
 
 #include <cmath>
-#include <cpputil/AsciiGraph.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/AsciiGraph.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

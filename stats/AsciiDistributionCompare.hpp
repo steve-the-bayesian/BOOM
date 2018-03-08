@@ -20,8 +20,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Vector.hpp>
-#include <cpputil/AsciiGraph.hpp>
+#include "LinAlg/Vector.hpp"
+#include "cpputil/AsciiGraph.hpp"
 
 namespace BOOM {
   // A primitive method of plotting multiple histograms using ASCII characters.

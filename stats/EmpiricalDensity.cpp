@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/EmpiricalDensity.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <stats/ECDF.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "stats/EmpiricalDensity.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "stats/ECDF.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
 

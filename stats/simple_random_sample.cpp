@@ -18,6 +18,7 @@
 */
 
 #include "stats/simple_random_sample.hpp"
+#include <random>
 
 namespace BOOM{
   std::vector<bool> SRS_indx(uint N, uint n){

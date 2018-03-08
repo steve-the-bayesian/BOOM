@@ -19,8 +19,8 @@
 #ifndef BOOM_STATS_EMPIRICAL_CDF_HPP_
 #define BOOM_STATS_EMPIRICAL_CDF_HPP_
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM{
 

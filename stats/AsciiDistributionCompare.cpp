@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <stats/AsciiDistributionCompare.hpp>
-#include <stats/EmpiricalDensity.hpp>
+#include "stats/AsciiDistributionCompare.hpp"
+#include "stats/EmpiricalDensity.hpp"
 
 namespace BOOM {
   namespace {

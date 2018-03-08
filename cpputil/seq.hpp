@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <cmath>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   // A regular sequence of data.
@@ -43,7 +43,7 @@ namespace BOOM{
       return ans;
     }
     int sign = to > from ? 1 : -1;
-    if (sign > 0 && by < 0 || sign < 0 && by > 0 || by == 0) {
+    if ( (sign > 0 && by < 0) || (sign < 0 && by > 0) || by == 0) {
       std::ostringstream err;
       err << "Illegal combination of arguments.  You can't get from "
           << from << " to " << to << " by adding increments of "
@@ -55,8 +55,8 @@ namespace BOOM{
     ans.reserve(space_needed);
     while (true) {
       NUMERIC tmp = ans.back() + by;
-      if (sign == 1 && tmp > to
-          || sign == -1 && tmp < to) {
+      if ((sign == 1 && tmp > to)
+          || (sign == -1 && tmp < to)) {
         return ans;
       } else {
         ans.push_back(tmp);
