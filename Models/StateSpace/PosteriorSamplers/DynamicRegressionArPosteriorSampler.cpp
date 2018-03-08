@@ -17,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/PosteriorSamplers/DynamicRegressionArPosteriorSampler.hpp>
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionArPosteriorSampler.hpp"
 
 namespace BOOM {
 

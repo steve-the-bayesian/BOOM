@@ -19,8 +19,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/DataTypes.hpp>
-#include <cpputil/Ptr.hpp>
+#include "Models/DataTypes.hpp"
+#include "cpputil/Ptr.hpp"
 
 namespace BOOM {
   namespace StateSpace {

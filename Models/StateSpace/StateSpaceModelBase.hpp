@@ -18,49 +18,8 @@
 */
 #ifndef BOOM_STATE_SPACE_MODEL_BASE_HPP_
 #define BOOM_STATE_SPACE_MODEL_BASE_HPP_
-<<<<<<< HEAD
-=======
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
-#include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
-#include "LinAlg/Matrix.hpp"
-#include "LinAlg/Vector.hpp"
 
-#include "cpputil/math_utils.hpp"
 #include <memory>
-
-namespace BOOM{
-
-  namespace StateSpace {
-    class MultiplexedData : public Data {
-     public:
-      MultiplexedData();
-
-      // The observed sample size is the number of fully observed data points at
-      // the time period described by this object.
-      int observed_sample_size() const {return observed_sample_size_;}
-
-      // The total_sample_size is the number of observed and missing data points
-      // at the time period described by this object.
-      virtual int total_sample_size() const = 0;
-
-     protected:
-      // Adjusts the missing status and observation count of the aggregate
-      // multiplexed data object to reflect the missing status of dp.
-      //
-      // Child classes should call this function to update their missing-data
-      // status and observation count in light of the new observation, but
-      // actually storing the data is left to the class descendants.
-      void add_data(const Ptr<Data> &dp);
-
-     private:
-      int observed_sample_size_;
-    };
-  }  // namespace StateSpace
->>>>>>> stable
-
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "Models/StateSpace/Filters/KalmanStorage.hpp"
@@ -575,7 +534,7 @@ namespace BOOM {
     // The 'observe_state' functions compute the contribution to the
     // complete data sufficient statistics (for the observation and
     // state models) once the state at time 't' has been imputed.
-    virtual void observe_state(int t);
+    virtual void observe_state(int t) = 0;
 
     // The initial state can be treated specially, though the default for this
     // function is a no-op.  The initial state refers to the state at time 0
@@ -630,10 +589,10 @@ namespace BOOM {
     //   state_error_mean: The posterior variance of the state errors
     //     at time t (for the transition to time t+1).
     void update_state_model_gradient(
-      Vector *gradient,
-      int t,
-      const Vector &state_error_mean,
-      const SpdMatrix &state_error_variance);
+        Vector *gradient,
+        int t,
+        const Vector &state_error_mean,
+        const SpdMatrix &state_error_variance);
 
     // Utility function used to implement E-step and log_likelihood_derivatives.
     //
@@ -870,6 +829,11 @@ namespace BOOM {
     Vector observation_error_variances() const;
 
    protected:
+    // Compute the contribution to the complete data sufficient statistics, for
+    // the observation model and all the state models, once the state at time
+    // 't' has been imputed.
+    void observe_state(int t) override;
+
     void update_model_matrices() override;
     void simulate_forward(RNG &rng) override;
     void simulate_forward_and_filter(RNG &rng, bool supplemental) override;

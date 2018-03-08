@@ -642,13 +642,13 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void SSMB::observe_state(int t) {
+  void ScalarStateSpaceModelBase::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
       return;
     }
-    const ConstVectorView now(state_.col(t));
-    const ConstVectorView then(state_.col(t-1));
+    const ConstVectorView now(state().col(t));
+    const ConstVectorView then(state().col(t-1));
     for (int s = 0; s < nstate(); ++s) {
       state_model(s)->observe_state(
           state_component(then, s),

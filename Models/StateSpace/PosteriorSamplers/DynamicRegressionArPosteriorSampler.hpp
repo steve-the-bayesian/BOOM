@@ -20,8 +20,8 @@
 #ifndef BOOM_DYNAMIC_REGRESSION_AUTOREGRESSIVE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_DYNAMIC_REGRESSION_AUTOREGRESSIVE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp>
+#include "Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
 
 namespace BOOM {
 
