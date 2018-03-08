@@ -80,10 +80,16 @@ namespace BOOM {
     // Tabulates the list of dates and which holidays are active when.
     void observe_time_dimension(int max_time) override;
 
-    void observe_state(const ConstVectorView then,
-                       const ConstVectorView now,
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
                        int time_now,
                        ScalarStateSpaceModelBase *model) override;
+
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override {return 1;}
 

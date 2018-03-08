@@ -50,8 +50,8 @@ namespace BOOM{
   LocalLevelStateModel * LLSM::clone() const {
     return new LocalLevelStateModel(*this);}
 
-  void LLSM::observe_state(const ConstVectorView then,
-                           const ConstVectorView now,
+  void LLSM::observe_state(const ConstVectorView &then,
+                           const ConstVectorView &now,
                            int time_now,
                            ScalarStateSpaceModelBase *) {
     double current_level = now[0];

@@ -165,8 +165,8 @@ namespace BOOM{
   // State is (level, slope, slope_mean) The level model expects the
   // error term in level.  The slope model expects the current value
   // of the slope.
-  void SLLT::observe_state(const ConstVectorView then,
-                           const ConstVectorView now,
+  void SLLT::observe_state(const ConstVectorView &then,
+                           const ConstVectorView &now,
                            int time_now,
                            ScalarStateSpaceModelBase *model) {
     double change_in_level = now[0] - then[0] - then[1];

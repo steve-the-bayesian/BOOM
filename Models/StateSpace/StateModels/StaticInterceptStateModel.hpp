@@ -42,10 +42,16 @@ namespace BOOM {
     }
 
     // There is nothing to do here.
-    void observe_state(const ConstVectorView then,
-                       const ConstVectorView now,
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
                        int time_now,
                        ScalarStateSpaceModelBase *model) override {}
+
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) override {}
 
     uint state_dimension() const override {return 1;}
 

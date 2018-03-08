@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/DynamicInterceptRegression.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -50,6 +50,23 @@ namespace BOOM {
     return regression_->regression();
   }
 
+  void DIRM::observe_state(int t) {
+    if (t == 0) {
+      observe_initial_state();
+      return;
+    }
+    const ConstVectorView now(state().col(t));
+    const ConstVectorView then(state().col(t-1));
+    for (int s = 0; s < nstate(); ++s) {
+      report_error("Need to implement observe_dynamic_regression_state in all StateModels.");
+      state_model(s)->observe_dynamic_intercept_regression_state(
+          state_component(then, s),
+          state_component(now, s),
+          t,
+          this);
+    }
+  }
+  
   void DIRM::observe_data_given_state(int t) {
     if (!is_missing_observation(t)) {
       // Unless the data point is completely missing, add the regression
@@ -111,6 +128,24 @@ namespace BOOM {
                      regression_->regression()->sigsq());
   }
 
+  double DIRM::conditional_mean(int time,
+                                int observation) const {
+
+    report_error("Need to implement DynamicInterceptRegressionModel::conditional_mean.");
+    return negative_infinity();
+
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+  }
+  
   //===========================================================================
   // private:
   Vector DIRM::simulate_observation(RNG &rng, int t, bool supplemental) {

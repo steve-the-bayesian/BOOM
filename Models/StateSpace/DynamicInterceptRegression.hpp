@@ -19,12 +19,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <Models/StateSpace/Filters/SparseMatrix.hpp>
-#include <Models/StateSpace/StateModels/RegressionStateModel.hpp>
-#include <Models/StateSpace/StateSpaceRegressionModel.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
+#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   // A DynamicInterceptRegressionModel is a time series regression model where
@@ -44,9 +44,9 @@ namespace BOOM {
   // the same column).  However, dynamic regression models, for example will
   // contribute different predictor values for each element of Y.
   //
-  // TODO(user): Once this works and all GLM's have been implemented,
-  // remove the MultiplexedData concept from StateSpaceModelBase, which should
-  // simplify it considerably.
+  // TODO: Once this works and all GLM's have been implemented, remove the
+  // MultiplexedData concept from StateSpaceModelBase, which should simplify it
+  // considerably.
   class DynamicInterceptRegressionModel
       : public MultivariateStateSpaceModelBase,
         public IID_DataPolicy<StateSpace::MultiplexedRegressionData>,
@@ -89,6 +89,16 @@ namespace BOOM {
       return observations_[t];
     }
 
+    // Returns the conditional mean of a specific observation at time t, given
+    // state and model parameters.
+    // Args:
+    //   time:  The time index of the observation.
+    //   observation:  The specific observation number at the time index.
+    double conditional_mean(int time, int observation) const;    
+
+   protected:
+    void observe_state(int t) override;
+    
    private:
     // Reimplements the logic in the base class, but ???.
     Vector simulate_observation(RNG &rng, int t, bool supplemental) override;

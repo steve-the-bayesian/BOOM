@@ -69,8 +69,8 @@ namespace BOOM {
     return new ArStateModel(*this);}
 
   //======================================================================
-  void ArStateModel::observe_state(const ConstVectorView then,
-                                   const ConstVectorView now,
+  void ArStateModel::observe_state(const ConstVectorView &then,
+                                   const ConstVectorView &now,
                                    int t,
                                    ScalarStateSpaceModelBase *) {
     double y = now[0];

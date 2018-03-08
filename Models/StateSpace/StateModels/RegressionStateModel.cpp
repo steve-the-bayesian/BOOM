@@ -52,10 +52,20 @@ namespace BOOM {
 
   // This function is a no-op.  The responsibility for observing state
   // lies with the state space model that owns it.
-  void RegressionStateModel::observe_state(const ConstVectorView then,
-                                           const ConstVectorView now,
+  void RegressionStateModel::observe_state(const ConstVectorView &then,
+                                           const ConstVectorView &now,
                                            int time_now,
                                            ScalarStateSpaceModelBase *model) {
+    ////////////// TODO!!!!!
+  }
+
+  // This function is a no-op.  The responsibility for observing state
+  // lies with the state space model that owns it.
+  void RegressionStateModel::observe_dynamic_intercept_regression_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      DynamicInterceptRegressionModel *model) {
     ////////////// TODO!!!!!
   }
 

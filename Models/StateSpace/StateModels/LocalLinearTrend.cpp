@@ -1,3 +1,4 @@
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
@@ -49,8 +50,8 @@ namespace BOOM{
 
   LLTSM * LLTSM::clone() const {return new LLTSM(*this);}
 
-  void LLTSM::observe_state(const ConstVectorView then,
-                            const ConstVectorView now,
+  void LLTSM::observe_state(const ConstVectorView &then,
+                            const ConstVectorView &now,
                             int time_now,
                             ScalarStateSpaceModelBase *model) {
     check_dim(then);

@@ -18,6 +18,8 @@
 
 #include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -84,8 +86,8 @@ namespace BOOM {
     }
   }
   
-  void HRHSM::observe_state(const ConstVectorView then,
-                            const ConstVectorView now,
+  void HRHSM::observe_state(const ConstVectorView &then,
+                            const ConstVectorView &now,
                             int time_now,
                             ScalarStateSpaceModelBase *model) {
     int which_model = which_holiday_[time_now];
@@ -100,6 +102,36 @@ namespace BOOM {
         + this->observation_matrix(time_now).dot(now);
     model_->data_model(which_model)->suf()->add_mixture_data(
         residual, daily_dummies(day), 1.0);
+  }
+
+  void HRHSM::observe_dynamic_intercept_regression_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      DynamicInterceptRegressionModel *model) {
+    int which_model = which_holiday_[time_now];
+    if (which_model < 0) {
+      return;
+    }
+    int day = which_day_[time_now];
+    // The residual contains the observed data minus the contributions from all
+    // state models but this one.
+    Ptr<StateSpace::MultiplexedRegressionData>
+        full_data = model->dat()[time_now];
+    if (full_data->missing() == Data::missing_status::completely_missing) {
+      return;
+    }
+    int nobs = full_data->total_sample_size();
+    for (int i = 0; i < nobs; ++i) {
+      if (full_data->regression_data(i).missing() ==
+          Data::missing_status::observed) {
+        double residual = full_data->regression_data(i).y()
+            - model->conditional_mean(time_now, i)
+            + this->observation_matrix(time_now).dot(now);
+        model_->data_model(which_model)->suf()->add_mixture_data(
+            residual, daily_dummies(day), 1.0);
+      }
+    }
   }
 
   SparseVector HRHSM::observation_matrix(int t) const {

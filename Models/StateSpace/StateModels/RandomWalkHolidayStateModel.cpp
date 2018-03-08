@@ -44,8 +44,8 @@ namespace BOOM {
   RandomWalkHolidayStateModel * RWHSM::clone()const{
     return new RandomWalkHolidayStateModel(*this);}
 
-  void RWHSM::observe_state(const ConstVectorView then,
-                            const ConstVectorView now,
+  void RWHSM::observe_state(const ConstVectorView &then,
+                            const ConstVectorView &now,
                             int time_now,
                             ScalarStateSpaceModelBase *){
     Date today = time_zero_ + time_now;

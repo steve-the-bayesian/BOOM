@@ -97,8 +97,8 @@ namespace BOOM {
     }
   }
 
-  void DRASM::observe_state(const ConstVectorView then,
-                            const ConstVectorView now,
+  void DRASM::observe_state(const ConstVectorView &then,
+                            const ConstVectorView &now,
                             int time_now,
                             ScalarStateSpaceModelBase *) {
     int pos = 0;
@@ -113,6 +113,14 @@ namespace BOOM {
     }
   }
 
+  void DRASM::observe_dynamic_intercept_regression_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      DynamicInterceptRegressionModel *) {
+    return observe_state(then, now, time_now, nullptr);
+  }
+  
   void DRASM::observe_initial_state(const ConstVectorView &state) {
     // Nothing to do here.
   }

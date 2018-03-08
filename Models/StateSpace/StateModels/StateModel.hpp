@@ -29,6 +29,7 @@
 namespace BOOM{
 
   class ScalarStateSpaceModelBase;
+  class DynamicInterceptRegressionModel;
   
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
@@ -60,11 +61,23 @@ namespace BOOM{
     // Add the relevant information from the state vector to the complete data
     // sufficient statistics for this model.  This is often a difference between
     // the current and next state vectors.
-    virtual void observe_state(const ConstVectorView then,
-                               const ConstVectorView now,
+    virtual void observe_state(const ConstVectorView &then,
+                               const ConstVectorView &now,
                                int time_now,
                                ScalarStateSpaceModelBase *model) = 0;
 
+    // Add the relevant information from the state vector to the complete data
+    // sufficient statistics for this model, when the observation model is a
+    // DynamicInterceptRegressionModel.
+    //
+    // Concrete classes that can observe the state without reference to the
+    // observation model can implement this method in terms of observe_state.
+    virtual void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) = 0;
+    
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.
     virtual void observe_initial_state(const ConstVectorView &state);

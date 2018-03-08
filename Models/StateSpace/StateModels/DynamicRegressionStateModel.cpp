@@ -168,8 +168,8 @@ namespace BOOM {
     }
   }
 
-  void DRSM::observe_state(const ConstVectorView then,
-                           const ConstVectorView now,
+  void DRSM::observe_state(const ConstVectorView &then,
+                           const ConstVectorView &now,
                            int time_now,
                            ScalarStateSpaceModelBase *) {
     check_size(then.size());
@@ -180,6 +180,14 @@ namespace BOOM {
     }
   }
 
+  void DRSM::observe_dynamic_intercept_regression_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      DynamicInterceptRegressionModel *) {
+    observe_state(then, now, time_now, nullptr);
+  }
+  
   void DRSM::observe_initial_state(
       const ConstVectorView &state) {}
 

@@ -52,10 +52,15 @@ namespace BOOM {
     // observations.  A class that contains a RegressionStateModel
     // should update an externally held pointer to regression_ each time a
     // state vector is observed.
-    void observe_state(const ConstVectorView then,
-                       const ConstVectorView now,
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
                        int time_now,
                        ScalarStateSpaceModelBase *model) override;
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override {

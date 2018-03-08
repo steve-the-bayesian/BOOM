@@ -60,8 +60,8 @@ namespace BOOM {
     return new TrigStateModel(*this);
   }
 
-  void TrigStateModel::observe_state(const ConstVectorView then,
-                                     const ConstVectorView now,
+  void TrigStateModel::observe_state(const ConstVectorView &then,
+                                     const ConstVectorView &now,
                                      int time_now,
                                      ScalarStateSpaceModelBase *) {
     suf()->update_raw(now - then);
