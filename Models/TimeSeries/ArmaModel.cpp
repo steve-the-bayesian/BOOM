@@ -47,6 +47,22 @@ namespace BOOM {
     }
   }
 
+  // lhs += this * rhs
+  void ASSTM::multiply_and_add(VectorView lhs,
+                               const ConstVectorView &rhs) const {
+    
+    if (lhs.size() != ncol()) {
+      report_error("Wrong sized 'lhs' argument.");
+    }
+    if (rhs.size() != nrow()) {
+      report_error("Wrong sized 'rhs' argument.");
+    }
+    int dim = expanded_phi_.size();
+    for (int i = 0; i < dim; ++i) {
+      lhs[i] += expanded_phi_[i] * rhs[0] + (i + 1 < dim ? rhs[i + 1] : 0);
+    }
+  }
+  
   void ASSTM::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
     if (lhs.size() != ncol()) {
       report_error("Wrong sized 'lhs' argument.");
@@ -98,6 +114,12 @@ namespace BOOM {
     lhs *= scale_factor;
   }
 
+  void ASSVM::multiply_and_add(VectorView lhs,
+                               const ConstVectorView &rhs) const {
+    double scale_factor = sigsq_ * theta_.dot(rhs);
+    lhs += theta_ * scale_factor;
+  }
+  
   void ASSVM::multiply_inplace(VectorView x) const {
     x = theta_ * (theta_.dot(x) * sigsq_);
   }

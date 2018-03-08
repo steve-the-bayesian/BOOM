@@ -45,6 +45,9 @@ namespace BOOM {
     int nrow() const override {return expanded_phi_.size();}
     int ncol() const override {return expanded_phi_.size();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     void add_to(SubMatrix block) const override;
@@ -69,6 +72,7 @@ namespace BOOM {
     int ncol() const override {return theta_.size();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     // Because RQR is a symmetric matrix.
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       multiply(lhs, rhs);
     }
