@@ -285,8 +285,6 @@ namespace BOOM{
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-
   void HMM::set_nthreads(uint n) {
     thread_pool_.set_number_of_threads(n);
     workers_.clear();
@@ -335,7 +333,7 @@ namespace BOOM{
     } catch(const std::exception &e) {
       report_error(e.what());
     } catch(...) {
-      report_error("HMM caught unknown exception from boost::threads");
+      report_error("HMM caught unknown exception during threaded imputation.");
     }
     return 0;
   }

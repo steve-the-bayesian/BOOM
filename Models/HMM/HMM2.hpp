@@ -27,11 +27,10 @@
 #include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/DataTypes.hpp"
+#include "Models/MarkovModel.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
 namespace BOOM{
-
-  class MarkovModel;
-  class EmMixtureComponent;
 
   class HmmFilter;
   class HmmEmFilter;

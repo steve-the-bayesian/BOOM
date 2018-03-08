@@ -56,11 +56,9 @@ namespace BOOM {
     }
     filter_ = new HmmFilter(mix_, mark_);
   }
+
   //----------------------------------------------------------------------
-
-
   double HmmDataImputer::loglike()const{return loglike_;}
-
   //----------------------------------------------------------------------
   Ptr<MarkovModel> HmmDataImputer::mark(){return mark_;}
   //----------------------------------------------------------------------
@@ -71,10 +69,8 @@ namespace BOOM {
     uint S = mix_.size();
     for(uint s=0; s<S; ++s) mix_[s]->clear_data();
   }
-
   //----------------------------------------------------------------------
-
-  void HmmDataImputer::setup(HiddenMarkovModel *hmm){
+  void HmmDataImputer::setup(HiddenMarkovModel *hmm) {
     clear_client_data();
     uint ns = hmm->nseries();
     dat_.clear();
@@ -87,29 +83,10 @@ namespace BOOM {
     Vector theta = hmm->mark()->vectorize_params();
     mark_->unvectorize_params(theta);
 
-=======
-  //----------------------------------------------------------------------
-
-  void HmmDataImputer::setup(HiddenMarkovModel *hmm){
-    clear_client_data();
-    uint ns = hmm->nseries();
-    dat_.clear();
-    dat_.reserve(1 + ns/nworkers_);
-    for(uint i=id_; i<ns; i+= nworkers_){
-      TimeSeries<Data> * ts = &(hmm->dat(i));
-      dat_.push_back(ts);
-    }
-
-    Vector theta = hmm->mark()->vectorize_params();
-    mark_->unvectorize_params(theta);
-
->>>>>>> stable
     uint S = hmm->state_space_size();
     for(uint s=0; s<S; ++s){
       theta = hmm->mixture_component(s)->vectorize_params();
       mix_[s]->unvectorize_params(theta);
     }
-
-
   }
-}
+}  // namespace BOOM
