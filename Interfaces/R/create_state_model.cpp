@@ -655,7 +655,7 @@ namespace BOOM{
       virtual int nrow() const {return state_model_->state_dimension(); }
       virtual int ncol() const {return model_->time_dimension();}
       virtual BOOM::Matrix get_matrix() const {
-        return model_->full_state_subcomponent(model_position_);
+        return model_->full_state_subcomponent(model_position_).to_matrix();
       }
 
      private:
