@@ -260,14 +260,12 @@ namespace BOOM{
     else if(year == 1976) return Date(Jan, 18, 1976);
     else if(year == 1972) return Date(Jan, 16, 1972);
     else if(year == 1971) return Date(Jan, 17, 1971);
-
-    if(year >= 2002) {
-      // first Sun in Feb
+    if (year >= 2002) {
+      // After 2002, the Super Bowl is played on the first Sunday in February.
       return nth_weekday_in_month(1, Sun, Feb, year);
     } else if(year >= 1986){
       // Last Sun in Jan
-      Date jan31(Jan, 31, year);
-      return jan31 - jan31.days_after(Sun);
+      return last_weekday_in_month(Sun, Jan, year);
     } else if(year >= 1979){
       // 4th Sun in Jan
       return nth_weekday_in_month(4, Sun, Jan, year);

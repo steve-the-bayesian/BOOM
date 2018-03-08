@@ -34,14 +34,13 @@ namespace BOOM {
   // A RandomWalkHolidayStateModel assumes the holiday will produce an
   // effect of size delta[t], where the state model is
   //
-  //    delta[t] = delta[t-1time_unit] + error,
+  //    delta[t] = delta[t-1] + error,
   //
-  // if t is in the holiday window, and delta[t] = 0 otherwise.  The
-  // notation t-1time_unit indicates the same position in the time
-  // window the last time the holiday occurred.  In other words,
-  // holiday effects are modeled as a random walk (relative to the
-  // last incidence of the holiday) inside the holiday influence
-  // window.
+  // if t is in the holiday window, and delta[t] = 0 otherwise.  The notation
+  // t-1 indicates the same position in the time window the last time the
+  // holiday occurred.  In other words, holiday effects are modeled as a random
+  // walk (relative to the last incidence of the holiday) inside the holiday
+  // influence window.
   //
   // This model allows for arbitrarily shaped 'bumps' in both positive
   // and negative directions.  The state dimension is the holiday

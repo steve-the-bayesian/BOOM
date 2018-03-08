@@ -36,28 +36,35 @@
 
 namespace BOOM{
 
+  // Trend models
   class LocalLevelStateModel;
   class LocalLinearTrendStateModel;
-  class SeasonalStateModel;
   class SemilocalLinearTrendStateModel;
-  class RandomWalkHolidayStateModel;
-  class DynamicRegressionStateModel;
-  class ArStateModel;
   class StudentLocalLinearTrendStateModel;
+  class ArStateModel;
+
+  // Regression models
+  class DynamicRegressionStateModel;
+
+  // Seasonal models
+  class SeasonalStateModel;
   class TrigStateModel;
 
+  // Holiday models
+  class Holiday;
+  class RandomWalkHolidayStateModel;
+  class RegressionHolidayStateModel;
+  class HierarchicalRegressionHolidayStateModel;
+  
   namespace RInterface{
-
     // A factory for creating state components for use with state
     // space models.
     class StateModelFactory {
      public:
       // Args:
-
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
-
       //   model: The model that will receive the state to be added.  If a
       //     nullptr is passed then this factory can still call
       //     CreateStateModel(), but AddState and SaveFinalState() will do
@@ -119,24 +126,36 @@ namespace BOOM{
           SEXP r_state_component, const std::string &prefix);
       LocalLinearTrendStateModel *CreateLocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
-      SeasonalStateModel *CreateSeasonal(
-          SEXP r_state_component, const std::string &prefix);
       SemilocalLinearTrendStateModel *CreateSemilocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
-      RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
+      StudentLocalLinearTrendStateModel *CreateStudentLocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
-      DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
-          SEXP r_state_component, const std::string &prefix,
-          CallbackVector * callbacks);
       ArStateModel *CreateArStateModel(
           SEXP r_state_component, const std::string &prefix);
       ArStateModel *CreateAutoArStateModel(
           SEXP r_state_component, const std::string &prefix);
-      StudentLocalLinearTrendStateModel *CreateStudentLocalLinearTrend(
+
+      DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
+          SEXP r_state_component, const std::string &prefix,
+          CallbackVector * callbacks);
+
+      SeasonalStateModel *CreateSeasonal(
           SEXP r_state_component, const std::string &prefix);
       TrigStateModel *CreateTrigStateModel(
           SEXP r_state_component, const std::string &prefix);
 
+      Holiday *CreateHoliday(SEXP holiday_spec);
+
+      RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
+          SEXP r_state_component, const std::string &prefix);
+      RegressionHolidayStateModel *CreateRegressionHolidayStateModel(
+          SEXP r_state_component, const std::string &prefix);
+      HierarchicalRegressionHolidayStateModel *
+      CreateHierarchicalRegressionHolidayStateModel(
+          SEXP r_state_component, const std::string &prefix);
+
+      Ptr<UnivParams> GetResidualVarianceParameter();
+      
       // A pointer to the object manaaging the R list that will record (or has
       // already recorded) the MCMC output.  This can be a nullptr if IoManager
       // support is not desired.

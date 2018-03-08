@@ -11,7 +11,6 @@
 PlotHolidays(model, ylim = NULL, same.scale = TRUE, ...)
 }
 
-
 \arguments{
   \item{model}{A model fit by \code{\link{bsts}} containing one or more holiday
     state components.}
@@ -39,7 +38,5 @@ PlotHolidays(model, ylim = NULL, same.scale = TRUE, ...)
 
 \seealso{
   \code{\link{bsts}}
-  \code{\link{AddNamedHolidays}}
-  \code{\link{AddFixedDateHoliday}}
-  \code{\link{AddNthWeekdayInMonthHoliday}}
+  \code{\link{AddRandomWalkHoliday}}
 }

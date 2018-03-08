@@ -22,6 +22,7 @@
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
+#include "Models/StateSpace/StateModels/RegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
@@ -34,8 +35,28 @@
 
 namespace BOOM {
 
-  // The state of the model is the number 1.  The model matrices are T = 1, R =
-  // 0, Z = holiday coefficients.
+  // A model for describing groups of holidays with similar but non-identical
+  // effects.  All holidays in this model must have the same window widths.
+  //
+  // If time t is on day d of the influence window associated with holiday h
+  // then the contribution to the mean is beta(h, d).  The vectors beta[h]
+  // follow a hierarchical model
+  //
+  //     beta[h] ~ N( b0,  V )
+  //
+  // where b0 is the typical influence pattern for a holiday, and V describes
+  // how this pattern can vary from one holiday to the next.  This is a static
+  // model in the sense that the effect of a specific holiday (e.g. Valentine's
+  // day) is the same every year.  The model requires a hyperprior distribution
+  // on (b0, V), which is to be handled by a PosteriorSampler designed for a
+  // HierarchicalGaussianRegressionModel.
+  //
+  // This model borrows strength across holidays, which should be especialy
+  // helpful when only a few years of daily data are observed, implying that
+  // each holiday is poorly estimated.
+  //
+  // As with most regression state models, the state of the model is the number
+  // 1.  The model matrices are T = 1, R = 0, Z = holiday coefficients.
   //
   // Usage idiom:
   //   HierarchicalRegressionHolidayStateModel model.(time0, residual_variance);
@@ -43,7 +64,8 @@ namespace BOOM {
   //   model.add_holiday(h1);
   //   model.add_holiday(h2);
   //   model.add_holiday(h3);
-  //   // Set the sampler.
+  //   // Set the sampler.  Use any sampler you like, but this one is a good
+  //   // choice.
   //   NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
   //     model.model(), prior1, prior2, rng);
   //   model.model()->set_method(sampler);
@@ -56,7 +78,6 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-
     // Args:
     //   time_of_first_observation: The date on which the first observed data
     //     point took place.  Data are assumed to occur daily thereafter.
@@ -64,7 +85,8 @@ namespace BOOM {
     //     equation.  NOTE: The fact that this parameter is constant restricts
     //     this state model from being used with observation models that assume
     //     time-dependent variance, including GLM's.
-    // TODO:  Lift the residual variance restriction.
+    // TODO: Lift the residual variance restriction.  It might be easier to
+    //    allow a bit of error back into the state equation
     HierarchicalRegressionHolidayStateModel(const Date &time_of_first_observation,
                                             const Ptr<UnivParams> &residual_variance);
     HierarchicalRegressionHolidayStateModel * clone() const override {
@@ -77,9 +99,7 @@ namespace BOOM {
     // influence window.
     void add_holiday(const Ptr<Holiday> &holiday);
     
-    // Tabulates the list of dates and which holidays are active when.
     void observe_time_dimension(int max_time) override;
-
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
                        int time_now,
@@ -91,11 +111,13 @@ namespace BOOM {
         int time_now,
         DynamicInterceptRegressionModel *model) override;
 
-    uint state_dimension() const override {return 1;}
+    uint state_dimension() const override {return impl_.state_dimension();}
+    uint state_error_dimension() const override {
+      return impl_.state_error_dimension();
+    }
 
-    uint state_error_dimension() const override {return 0;}
-
-    // Calling this throws an exception.
+    // This is a required virtual function needed for MLE/MAP estimation, which
+    // is not supported for this state model.  Calling this throws an exception.
     void update_complete_data_sufficient_statistics(
         int t,
         const ConstVectorView &state_error_mean,
@@ -103,6 +125,8 @@ namespace BOOM {
       report_error("Not implemented.");
     }
 
+    // This is a required virtual function needed for MLE/MAP estimation, which
+    // is not supported for this state model.  Calling this throws an exception.
     void increment_expected_gradient(
         VectorView gradient,
         int t,
@@ -111,31 +135,29 @@ namespace BOOM {
       report_error("Not implemented.");
     }
 
-    //======================================================================
-    // TODO: Iron out what to do in the case of a purely deterministic state
-    // component.
-    //
-    // The state error is zero-dimensional, so calling this does nothing.
+    // The state error is zero-dimensional, so simulation is a no-op.
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override {
+      impl_.simulate_state_error(eta);
     }
-
     void simulate_initial_state(RNG &rng, VectorView eta) const override {
-      eta[0] = 1.0;
+      impl_.simulate_initial_state(eta);
     }
-
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override {
-      return state_transition_matrix_;
+      return impl_.state_transition_matrix(t);
     }
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override {
-      return state_variance_matrix_;
+      return impl_.state_variance_matrix(t);
     }
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override {
-      return state_error_expander_;
+      return impl_.state_error_expander(t);
     }
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override {
-      return state_error_variance_;
+      return impl_.state_error_variance(t);
     }
 
+    // The observation matrix at time t is either 0 (if no holiday is active at
+    // time t), or it contains the active holiday's contribution to the state
+    // mean.
     SparseVector observation_matrix(int t) const override;
 
     Ptr<SparseMatrixBlock>
@@ -145,48 +167,40 @@ namespace BOOM {
                                      data_point.total_sample_size());
     }
     
-    Vector initial_state_mean() const override {return initial_state_mean_;}
-
-    SpdMatrix initial_state_variance() const override {
-      return initial_state_variance_;
+    Vector initial_state_mean() const override {
+      return impl_.initial_state_mean();
     }
 
+    SpdMatrix initial_state_variance() const override {
+      return impl_.initial_state_variance();
+    }
+
+    // Clear all sufficient statistics for the managed holidays.
     void clear_data() override;
 
+    // The hierarchical model describing the state effects.
     HierarchicalGaussianRegressionModel *model() {return model_.get();}
     const HierarchicalGaussianRegressionModel *model() const {
       return model_.get();
     }
 
+    // The regression model used here is based on daily dummy variables
+    // indicating which day of the influence window is being observed.  None of
+    // the dummy variables can co-occur, so this 'regression model' is really a
+    // set of independent means.
+    //
+    // Returns the set of 'predictor variables' indicating the active day of the
+    // influence window.  Element 'day' is 1, all other elements are 0.
     const Vector &daily_dummies(int day) const {
       return daily_dummies_[day];
     }
     
    private:
-    Date time_of_first_observation_;
-    Ptr<UnivParams> residual_variance_;
-    std::vector<Ptr<Holiday>> holidays_;
-
-    // State space model matrices.  These are trivial.
-    Ptr<IdentityMatrix> state_transition_matrix_;      // The 1x1 identity.
-    Ptr<ZeroMatrix> state_variance_matrix_;
-    Ptr<EmptyMatrix> state_error_expander_;
-    Ptr<EmptyMatrix> state_error_variance_;
+    RegressionHolidayBaseImpl impl_;
 
     // The model whose coefficients describe the holiday effects.  The posterior
     // sampler for this model must be set externally.
     Ptr<HierarchicalGaussianRegressionModel> model_;
-
-    // The number 1.
-    Vector initial_state_mean_;
-    // The number 0.
-    SpdMatrix initial_state_variance_;
-
-    // A mapping from integer time t to which holiday is active at time t, and
-    // which day in the holiday is active at time t.  These are filled when
-    // observe_time_dimension is called.
-    std::vector<int> which_holiday_;
-    std::vector<int> which_day_;
 
     // Element d is a dummy variable with a 1 in position d and 0's elsewhere.
     std::vector<Vector> daily_dummies_;

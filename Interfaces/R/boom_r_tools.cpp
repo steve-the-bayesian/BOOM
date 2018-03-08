@@ -389,6 +389,22 @@ namespace BOOM{
     return ans;
   }
 
+  // R's date object is the number of days since Jan 1 1970.
+  Date ToBoomDate(SEXP r_Date) {
+    Date ans;
+    ans.set(lround(Rf_asReal(r_Date)));
+    return ans;
+  }
+
+  std::vector<BOOM::Date> ToBoomDateVector(SEXP r_dates) {
+    Vector date_numbers = ToBoomVector(r_dates);
+    std::vector<BOOM::Date> ans(date_numbers.size());
+    for (int i = 0; i < ans.size(); ++i) {
+      ans[i].set(lround(date_numbers[i]));
+    }
+    return ans;
+  }
+  
   SEXP ToRVector(const Vector &v){
     int n = v.size();
     RMemoryProtector protector;

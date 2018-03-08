@@ -28,9 +28,8 @@
 #include "LinAlg/Array.hpp"
 
 #include "Models/CategoricalData.hpp"
-
 #include "stats/DataTable.hpp"
-
+#include "cpputil/Date.hpp"
 //======================================================================
 // Note that the functions listed here throw exceptions.  Code that
 // uses them should be wrapped in a try-block where the catch
@@ -215,6 +214,10 @@ namespace BOOM{
       SEXP r_int_matrix,
       bool convert_to_zero_offset = false);
 
+  // Convert an R Date object (singleton or vector) to a BOOM Date.
+  Date ToBoomDate(SEXP r_Date);
+  std::vector<Date> ToBoomDateVector(SEXP r_Dates);
+  
   // Convert a BOOM vector, matrix, or array to its R equivalent.
   // Less type checking is needed for these functions than in the
   // other direction because we know the type of the input.
