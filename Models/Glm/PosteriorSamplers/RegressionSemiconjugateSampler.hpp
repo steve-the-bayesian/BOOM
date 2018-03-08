@@ -20,12 +20,12 @@
 #ifndef BOOM_REGRESSION_SEMICONJUGATE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_REGRESSION_SEMICONJUGATE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
 

@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/RegressionSemiconjugateSampler.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
+#include "Models/Glm/PosteriorSamplers/RegressionSemiconjugateSampler.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 namespace BOOM {
   namespace {
