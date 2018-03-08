@@ -20,13 +20,13 @@
 #ifndef ORDINAL_CUTPOINT_MODEL_HPP
 #define ORDINAL_CUTPOINT_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/CategoricalData.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "TargetFun/TargetFun.hpp"
 
 // Model:  Y can be 0... M-1
 // Pr(Y-m) = F(d[m]-btx) - F(d[m-1] - btx)

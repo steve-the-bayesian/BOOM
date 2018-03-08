@@ -20,12 +20,12 @@
 #ifndef BOOM_MULTINOMIAL_LOGIT_MODEL_HPP
 #define BOOM_MULTINOMIAL_LOGIT_MODEL_HPP
 
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/ChoiceData.hpp>
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/ChoiceData.hpp"
 
 namespace BOOM{
 

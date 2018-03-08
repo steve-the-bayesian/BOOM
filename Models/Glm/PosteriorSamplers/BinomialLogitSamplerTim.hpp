@@ -19,11 +19,11 @@
 #ifndef BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_
 #define BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/MvnBase.hpp"
 
-#include <Samplers/TIM.hpp>
+#include "Samplers/TIM.hpp"
 
 namespace BOOM{
 

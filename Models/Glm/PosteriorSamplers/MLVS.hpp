@@ -21,10 +21,10 @@
 #define BOOM_MULTINOMIAL_LOGIT_VARIABLE_SELECTION_HPP
 
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp>
-#include <Models/PosteriorSamplers/Imputer.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp"
+#include "Models/PosteriorSamplers/Imputer.hpp"
 
 namespace BOOM {
 

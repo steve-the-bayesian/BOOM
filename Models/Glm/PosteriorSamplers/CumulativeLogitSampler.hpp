@@ -20,11 +20,11 @@
 #ifndef BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_
 #define BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_
 
-#include <Models/Glm/CumulativeLogitModel.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Glm/CumulativeLogitModel.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM{
 

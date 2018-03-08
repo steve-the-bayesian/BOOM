@@ -19,10 +19,10 @@
 #ifndef BOOM_GAUSSIAN_MODEL_H
 #define BOOM_GAUSSIAN_MODEL_H
 
-#include <Models/GaussianModelBase.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/GaussianModelBase.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
 namespace BOOM{
   class GaussianModelGivenSigma;

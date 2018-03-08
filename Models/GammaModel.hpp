@@ -21,14 +21,14 @@
 #define BOOM_GAMMA_MODEL_HPP
 
 #include <iosfwd>
-#include <cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/EmMixtureComponent.hpp"
 
 //======================================================================
 namespace BOOM {

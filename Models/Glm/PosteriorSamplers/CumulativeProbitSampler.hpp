@@ -20,10 +20,10 @@
 #ifndef BOOM_CUMULATIVE_PROBIT_SAMPLER_HPP_
 #define BOOM_CUMULATIVE_PROBIT_SAMPLER_HPP_
 
-#include <Models/Glm/CumulativeProbitModel.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Glm/CumulativeProbitModel.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM{
 

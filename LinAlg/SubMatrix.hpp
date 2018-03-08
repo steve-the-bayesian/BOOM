@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_SUBMATRIX_HPP
 #define BOOM_SUBMATRIX_HPP
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 namespace BOOM{
   // A Rectangular view into a matrix specified by lower
   // and upper coordinates (inclusive)

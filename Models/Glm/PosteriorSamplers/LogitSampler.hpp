@@ -19,10 +19,10 @@
 #ifndef BOOM_LOGIT_HOLMES_HELD_SAMPLER_HPP
 #define BOOM_LOGIT_HOLMES_HELD_SAMPLER_HPP
 
-#include <Models/Glm/LogisticRegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
+#include "Models/Glm/LogisticRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 namespace BOOM{
 
   class WeightedRegSuf;

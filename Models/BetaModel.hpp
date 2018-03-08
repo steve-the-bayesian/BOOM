@@ -19,13 +19,13 @@
 #ifndef BOOM_BETA_MODEL_HPP
 #define BOOM_BETA_MODEL_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
 namespace BOOM {
   class BetaSuf: public SufstatDetails<DoubleData>{

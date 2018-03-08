@@ -19,7 +19,7 @@
 #ifndef BOOM_DATA_PAIR_HPP
 #define BOOM_DATA_PAIR_HPP
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 namespace BOOM{
 
   template <class D1, class D2>

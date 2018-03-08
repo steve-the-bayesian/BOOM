@@ -20,12 +20,12 @@
 #ifndef BOOM_GAUSSIAN_MODEL_BASE_HPP
 #define BOOM_GAUSSIAN_MODEL_BASE_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/DataTypes.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/DataTypes.hpp"
 
 namespace BOOM {
 

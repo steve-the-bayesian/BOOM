@@ -19,68 +19,73 @@
 
 #ifndef BOOM_LINALG_EIGEN_HPP_
 #define BOOM_LINALG_EIGEN_HPP_
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
 #include <complex>
 #include <vector>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
+  // This file contains tools to buld the eigen decomposition of
+  // (a) A possibly rectangular matrix, and
+  // (b) A symmetric, positive definite matrix.
+  //
+  // The package 'Eigen' is used under the covers to do the heavy lifting, but
+  // these tools are not part of the Eigen package.
+  //
+  // TODO: rename this file to avoid confusion with the Eigen package.
+
   // Eigenstructure of a square, non-symmetric matrix.
-  class Eigen {
+  class EigenDecomposition {
    public:
-    // The constructor will generate all eigenvalues of the matrix
-    // 'mat'.
-    Eigen(const Matrix &mat,
-          bool right_vectors = false,
-          bool left_vectors = false);
+    // Args:
+    //   mat: The (square) matrix for which the eigendecomposition is desired.
+    //   vectors: If 'true' then both eigenvalues and eigenvectors are computed.
+    //     If 'false' then only eigenvalues are computed.
+    EigenDecomposition(const Matrix &mat, bool vectors = true);
 
     // Complex conjugate eigenvalues occur consecutively.  The entry
     // with the positive imaginary part comes first.
-    std::vector<std::complex<double> > eigenvalues()const;
+    std::vector<std::complex<double>> eigenvalues() const { return eigenvalues_; }
 
     // The real and imaginary parts of all the eigenvalues.  If all
     // eigenvalues are real then the imaginary_values() will be a
     // vector of zeros (up to numerical accuracy).
-    const Vector &real_eigenvalues()const;
-    const Vector &imaginary_eigenvalues()const;
+    const Vector & real_eigenvalues() const {return real_eigenvalues_;}
+    const Vector & imaginary_eigenvalues() const {return imaginary_eigenvalues_;}
 
     // Requests for eigenvectors will throw exceptions if eigenvectors
     // were not requested by the constructor.
-    const ConstVectorView right_real_eigenvector(int i)const;
-    Vector right_imaginary_eigenvector(int i)const;
-    std::vector<std::complex<double> > right_eigenvector(int i) const;
+    ConstVectorView real_eigenvector(int i) const;
+    ConstVectorView imaginary_eigenvector(int i) const;
+    std::vector<std::complex<double> > eigenvector(int i) const;
 
-    // Indicates whether eigenvalue i is part of a conjugate pair
-    // relationship.  If imaginary_sign(i) == 0 then the eigenvalue is
-    // fully real.  If imaginary_sign(i) == 1 then the eigenvalue is
-    // part of a conjugate pair, the imaginary component is positive
-    // and eigenvalue i+1 is its conjugate.  If imaginary_sign(i) ==
-    // -1 then the imaginary part is negative, and the eigenvalue is
-    // conjugate to eigenvalue i-1.
-    int imaginary_sign(int i)const;
    private:
+    std::vector<std::complex<double>> eigenvalues_;
     Vector real_eigenvalues_;
     Vector imaginary_eigenvalues_;
 
-    // Entry i of imaginary_sign_ is 0 if eigenvalue i is entirely
-    // real, 1 if part of a conjugate pair with a positive imaginary
-    // component, and -1 if part of a conjugate pair with a negative
-    // imaginary component.  If imaginary_sign_[i] == -1 then
-    // imaginary_sign_[i-1] == 1.
-    std::vector<int> imaginary_sign_;
-    Vector zero_;
-
-    // If requested by the constructor, the eigenvectors are stored in
-    // the columns of left_vectors_ or right_vectors_.  The order is
-    // the same as the eigenvalues.
-    //
-    // If eigenvalues j and j+1 form a conjugate pair then the j'th
-    // vector is v[, j] + i*v[, j+1], and the j+1'st eigenvector is
-    // v[, j] - i*v[, j+1].
-    Matrix left_vectors_;
-    Matrix right_vectors_;
-
+    // The real and imaginary parts of the (right) eigenvectors.  Each column is
+    // (part of) an eigenvector.
+    Matrix real_eigenvectors_;
+    Matrix imaginary_eigenvectors_;
   };
-}
 
-#endif //  BOOM_LINALG_EIGEN_HPP_
+  // Eigenvalues and vectors of an SpdMatrix.
+  class SpdEigen {
+   public:
+    SpdEigen(const SpdMatrix &matrix, bool eigenvalues_only);
+
+    const Vector &eigenvalues() const { return eigenvalues_; }
+    const Matrix &eigenvectors() const { return right_vectors_; }
+
+   private:
+    Vector eigenvalues_;
+
+    // The eigenvectors are the columns of right_vectors.  This matrix will be
+    // of size zero if eigenvalues_only was passed to the constructor.
+    Matrix right_vectors_;
+  };
+}  // namespace BOOM
+
+#endif  //  BOOM_LINALG_EIGEN_HPP_

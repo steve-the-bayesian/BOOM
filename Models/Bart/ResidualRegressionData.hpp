@@ -20,7 +20,7 @@
 #ifndef BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_
 #define BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
   namespace Bart {

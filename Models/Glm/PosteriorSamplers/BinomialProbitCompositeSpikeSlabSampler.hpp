@@ -20,13 +20,13 @@
 #ifndef BOOM_BINOMIAL_PROBIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_BINOMIAL_PROBIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/BinomialProbitModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialProbitTimSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <distributions/rng.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/BinomialProbitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialProbitTimSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

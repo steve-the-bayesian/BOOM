@@ -20,11 +20,11 @@
 #ifndef BOOM_AGGREGATED_REGRESSION_MODEL_HPP_
 #define BOOM_AGGREGATED_REGRESSION_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/RegressionModel.hpp"
 
 #include <memory>
 

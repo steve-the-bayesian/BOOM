@@ -19,7 +19,6 @@
 
 #ifndef BOOM_SEASONALSTATE_MODEL_HPP
 #define BOOM_SEASONALSTATE_MODEL_HPP
-
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"

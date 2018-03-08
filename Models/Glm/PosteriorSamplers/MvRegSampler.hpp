@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_MVREG_SAMPLER_HPP
 #define BOOM_MVREG_SAMPLER_HPP
-#include <Models/Glm/MvReg2.hpp>
+#include "Models/Glm/MvReg2.hpp"
 
 namespace BOOM{
 

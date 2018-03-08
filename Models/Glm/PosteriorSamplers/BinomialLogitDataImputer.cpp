@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp>
-#include <distributions.hpp>
-#include <distributions/trun_logit.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
+#include "distributions.hpp"
+#include "distributions/trun_logit.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

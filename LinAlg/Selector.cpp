@@ -17,15 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <cpputil/seq.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/seq.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 #include <algorithm>
 #include <sstream>

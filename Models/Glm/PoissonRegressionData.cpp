@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PoissonRegressionData.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

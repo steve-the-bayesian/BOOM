@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_MNP_BETA_GIVEN_SIGMA_SAMPLER_HPP
 #define BOOM_MNP_BETA_GIVEN_SIGMA_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 namespace BOOM{
 
   class MultinomialProbitModel;

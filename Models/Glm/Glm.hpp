@@ -19,12 +19,12 @@
 
 #ifndef GLM_MODEL_H
 #define GLM_MODEL_H
-#include <BOOM.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "BOOM.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM{
 

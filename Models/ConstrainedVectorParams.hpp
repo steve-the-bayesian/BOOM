@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_CONSTRAINED_VECTOR_PARAMS
 #define BOOM_CONSTRAINED_VECTOR_PARAMS
-#include <Models/ParamTypes.hpp>
+#include "Models/ParamTypes.hpp"
 namespace BOOM{
 
   class VectorConstraint : private RefCounted{

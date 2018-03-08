@@ -20,14 +20,14 @@
 #ifndef DIRICHLET_MODEL_H
 #define DIRICHLET_MODEL_H
 
-#include <Models/ModelTypes.hpp>
-#include <Models/VectorModel.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/VectorModel.hpp"
 
-#include <Models/ParamTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
 
 namespace BOOM{
 

@@ -22,12 +22,12 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <stats/moments.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   namespace Bart {

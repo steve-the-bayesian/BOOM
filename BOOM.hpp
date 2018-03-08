@@ -24,7 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <uint.hpp>
+#include "uint.hpp"
 
 namespace BOOM{
   using std::string;

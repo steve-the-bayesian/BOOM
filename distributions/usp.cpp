@@ -18,11 +18,13 @@
 */
 
 #include "distributions.hpp"
-#include "BOOM.hpp"
+
 #include <cmath>
+#include <sstream>
+
+#include "BOOM.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
-#include <sstream>
 
 namespace BOOM{
 

@@ -19,7 +19,8 @@
 
 #ifndef NEW_LA_SPD_MATRIX_H
 #define NEW_LA_SPD_MATRIX_H
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include <algorithm>
 
 namespace BOOM{
 
@@ -87,8 +88,8 @@ namespace BOOM{
     SpdMatrix inv() const;
     SpdMatrix inv(bool &ok) const;
 
-    // Invert the matrix without allocating extra storage.  Returns the log of
-    // the determinant of the inverted matrix.
+    // Invert the matrix without allocating extra storage.  Returns the log
+    // determinant of the inverted matrix.
     double invert_inplace();
 
     // Determinant of the matrix.
@@ -130,9 +131,6 @@ namespace BOOM{
                     bool force_sym=true);     // *this+= w*x*x^T
     SpdMatrix & add_outer(const Matrix &X, double w=1.0,
                           bool force_sym = true);   // *this+= w*X*X^T
-
-    SpdMatrix & add_outer_w(const Vector &x, double w = 1.0){
-      return add_outer(x,w); }
 
     SpdMatrix & add_inner(const Matrix &x, double w=1.0);
     SpdMatrix & add_inner(const Matrix &X, const Vector & w,

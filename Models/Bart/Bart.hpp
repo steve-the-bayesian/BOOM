@@ -22,14 +22,14 @@
 
 #include <set>
 
-#include <LinAlg/SubMatrix.hpp>
-#include <Models/GaussianModelBase.hpp>
-#include <Models/Glm/Glm.hpp>            // for RegressionData
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <distributions/rng.hpp>
-#include <cpputil/math_utils.hpp>
+#include "LinAlg/SubMatrix.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/Glm/Glm.hpp"            // for RegressionData
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "distributions/rng.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 

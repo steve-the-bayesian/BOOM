@@ -17,197 +17,98 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Eigen.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/Eigen.hpp"
 #include <sstream>
-
-extern "C" {
-  // LAPACK routine for computing eigenvalues from a square matrix.
-  void dgeev_(const char *,  // JOBVL
-              const char *,  // JOBVR
-              const int *,   // N (order of matrix... number of columns)
-              double *,      // A (matrix data)
-              const int *,   // LDA (number of rows in A)
-              double *,      // WR
-              double *,      // WI
-              double *,      // VL (data for left eigenvectors)
-              const int *,   // nrow(VL)
-              double *,      // VR (data for right eigenvectors)
-              const int *,   // nrow(VR)
-              double *,      // WORK (workspace)
-              const int *,   // size of workspace (or -1 for query)
-              int *);        // INFO (return value)
-}
+#include "Eigen/Eigenvalues"
+#include "LinAlg/EigenMap.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
-
-  Eigen::Eigen(const Matrix &mat,
-               bool right_vectors,
-               bool left_vectors)
-      : real_eigenvalues_(mat.nrow()),
+  namespace {
+    using Eigen::MatrixXd;
+    using std::cout;
+    using std::endl;
+  }  // namespace
+  
+  EigenDecomposition::EigenDecomposition(const Matrix &mat,
+                                         bool vectors)
+      : eigenvalues_(mat.nrow()),
+        real_eigenvalues_(mat.nrow()),
         imaginary_eigenvalues_(mat.nrow()),
-        imaginary_sign_(mat.nrow(), 0),
-        zero_(mat.nrow(), 0.0),
-        left_vectors_(0, 0),
-        right_vectors_(0, 0)
+        real_eigenvectors_(0, 0),
+        imaginary_eigenvectors_(0, 0)
   {
-    int lda = mat.nrow();
-    int n = mat.ncol();
-    if (lda != n) {
-      report_error("Eigenvalues can only be computed for a square matrix.");
+    Eigen::EigenSolver<MatrixXd> eigen(EigenMap(mat), vectors);
+    const auto & eigen_values = eigen.eigenvalues();
+    int dim = mat.nrow();
+    for (int i = 0; i < dim; ++i) {
+      eigenvalues_[i] = eigen_values(i);
+      real_eigenvalues_[i] = eigenvalues_[i].real();
+      imaginary_eigenvalues_[i] = eigenvalues_[i].imag();
     }
-    const char * JOBVL = left_vectors ? "V" : "N";
-    const char * JOBVR = right_vectors ? "V" : "N";
-
-    int left_eigenvector_rows = 1;
-    if (left_vectors) {
-      left_vectors_.resize(n, n);
-      left_eigenvector_rows = n;
-    }
-
-    int right_eigenvector_rows = 1;
-    if (right_vectors) {
-      right_vectors_.resize(n, n);
-      right_eigenvector_rows = n;
-    }
-
-    Matrix tmp(mat);
-    std::vector<double> work(1);
-    int work_query = -1;
-    int info = 0;
-
-    dgeev_(JOBVL,                         // left eigenvectors?
-           JOBVR,                         // right eigenvectors?
-           &n,                            // ncol(A)
-           tmp.data(),                    // data for input matrix
-           &lda,                          // leading dimension of a
-           real_eigenvalues_.data(),      // data for output
-           imaginary_eigenvalues_.data(), // data for output
-           left_vectors_.data(),          // space for left eigenvectors
-           &left_eigenvector_rows,        // number of left ev rows
-           right_vectors_.data(),         // space for right eigenvectors
-           &right_eigenvector_rows,       // number of right ev rows
-           work.data(),                   // data for workspace
-           &work_query,                   // query workspace size
-           &info);                        // exit status.  0 == success
-
-    if (info < 0) {
-      std::ostringstream err;
-      err << "Argument " << -info <<
-          " had an illegal value in the LAPACK routine for finding eigenvalues"
-          << std::endl;
-      report_error(err.str());
-    } else if (info > 0) {
-      report_error("Eigenvalue computation failed for numerical reasons "
-                   "during initial workspace query.");
-    }
-
-    int work_size = work[0];
-    work.resize(work_size);
-    dgeev_(JOBVL,                         // left eigenvectors?
-           JOBVR,                         // right eigenvectors?
-           &n,                            // ncol(A)
-           tmp.data(),                    // data for input matrix
-           &lda,                          // leading dimension of a
-           real_eigenvalues_.data(),      // data for output
-           imaginary_eigenvalues_.data(), // data for output
-           left_vectors_.data(),          // space for left eigenvectors
-           &left_eigenvector_rows,        // number of left ev rows
-           right_vectors_.data(),         // space for right eigenvectors
-           &right_eigenvector_rows,       // number of right ev rows
-           work.data(),                   // data for workspace
-           &work_size,                    // query workspace size
-           &info);                        // exit status.  0 == success
-
-    if (info < 0) {
-      std::ostringstream err;
-      err << "Argument " << -info <<
-          " had an illegal value in the LAPACK routine for finding eigenvalues"
-          << std::endl;
-      report_error(err.str());
-    } else if (info > 0) {
-      report_error("Eigenvalue computation failed for numerical reasons "
-                   "during computation phase.");
-    }
-
-    for (int i = 0; i < n; ++i) {
-      if ((i+1 < n)
-          && (fabs(real_eigenvalues_[i] -
-                   real_eigenvalues_[i+1]) < 1e-8)
-          && (fabs(imaginary_eigenvalues_[i] +
-                   imaginary_eigenvalues_[i+1]) < 1e-8)) {
-          imaginary_sign_[i] = 1;
-          imaginary_sign_[i+1] = -1;
-          ++i;
+    if (vectors) {
+      real_eigenvectors_ = Matrix(dim, dim);
+      imaginary_eigenvectors_ = Matrix(dim, dim);
+      const auto & eigen_vectors = eigen.eigenvectors();
+      for (int i = 0; i < dim; ++i) {
+        for (int j = 0; j < dim; ++j) {
+          real_eigenvectors_(i, j) = eigen_vectors(i, j).real();
+          imaginary_eigenvectors_(i, j) = eigen_vectors(i, j).imag();
+        }
       }
     }
   }
 
-  std::vector<std::complex<double> > Eigen::eigenvalues()const{
-    std::vector<std::complex<double> > ans;
-    int n = real_eigenvalues_.size();
-    ans.reserve(n);
-    for (int i = 0; i < n; ++i) {
-      std::complex<double> value(real_eigenvalues_[i],
-                                 imaginary_eigenvalues_[i]);
-      ans.push_back(value);
+  ConstVectorView EigenDecomposition::real_eigenvector(int i) const {
+    if (real_eigenvectors_.nrow() == 0) {
+      report_error("Eigenvectors were not requested by the constructor.");
     }
-    return ans;
+    return real_eigenvectors_.col(i);
   }
 
-  const Vector & Eigen::real_eigenvalues()const{
-    return real_eigenvalues_;
-  }
-
-  const Vector & Eigen::imaginary_eigenvalues()const{
-    return imaginary_eigenvalues_;
-  }
-
-  const ConstVectorView Eigen::right_real_eigenvector(int i)const{
-    if(right_vectors_.nrow() == 0){
-      report_error("Right eigenvectors were not requested by the constructor.");
+  ConstVectorView EigenDecomposition::imaginary_eigenvector(int i) const {
+    if (imaginary_eigenvectors_.nrow() == 0) {
+      report_error("Eigenvectors were not requested by the constructor.");
     }
-    if (imaginary_sign_[i] > -1) return right_vectors_.col(i);
-    return right_vectors_.col(i-1);
+    return imaginary_eigenvectors_.col(i);
   }
 
-  Vector Eigen::right_imaginary_eigenvector(int i)const{
-    if(right_vectors_.nrow() == 0){
-      report_error("Right eigenvectors were not requested by the constructor.");
-    }
-    if (imaginary_sign_[i] == 0) return zero_;
-    else if(imaginary_sign_[i] == 1) return right_vectors_.col(i+1);
-    else if(imaginary_sign_[i] == -1) return -1 * right_vectors_.col(i);
-    report_error("Should never get here.  "
-                 "The imaginary_sign_ structure contains illegal values");
-    return Vector(0);
-  }
-
-  std::vector<std::complex<double> > Eigen::right_eigenvector(int i)const{
-    std::vector<std::complex<double> > ans;
-    int n = real_eigenvalues_.size();
-    ans.reserve(n);
-    for (int j = 0; j < n; ++j) {
-      double real=0;
-      double imaginary=0;
-      if (imaginary_sign_[i] == 0) {
-        real = right_vectors_(j, i);
-      } else if (imaginary_sign_[i] == 1) {
-        real = right_vectors_(j, i);
-        imaginary = right_vectors_(j, i+1);
-      } else if (imaginary_sign_[i] == -1) {
-        real = right_vectors_(j, i-1);
-        imaginary = -1 * right_vectors_(j, i);
-      } else {
-        report_error("Should never get here.  "
-                     "The imaginary_sign_ structure contains illegal values");
+  namespace {
+    std::vector<std::complex<double>>
+    complex_vector(const ConstVectorView &real, const ConstVectorView &imag) {
+      std::vector<std::complex<double>> ans;
+      if (real.size() != imag.size()) {
+        report_error("Real and imaginary parts must be the same size.");
       }
-      std::complex<double> value(real, imaginary);
-      ans.push_back(value);
+      for (int i = 0; i < real.size(); ++i) {
+        std::complex<double> value(real[i], imag[i]);
+        ans.push_back(value);
+      }
+      return ans;
     }
-    return ans;
+  }  // namespace
+  
+  std::vector<std::complex<double>> EigenDecomposition::eigenvector(
+      int i) const {
+    if (real_eigenvectors_.size() == 0) {
+      report_error("Eigenvectors not requested by the constructor.");
+    }
+    return complex_vector(real_eigenvectors_.col(i),
+                          imaginary_eigenvectors_.col(i));
   }
 
-  int Eigen::imaginary_sign(int i)const{return imaginary_sign_[i];}
+  //======================================================================
+  SpdEigen::SpdEigen(const SpdMatrix &matrix, bool values_only)
+      : eigenvalues_(matrix.nrow()),
+        right_vectors_(0)
 
-}
+  {
+    ::Eigen::SelfAdjointEigenSolver<::Eigen::MatrixXd> solver(
+        EigenMap(matrix),
+        values_only ? ::Eigen::EigenvaluesOnly : ::Eigen::ComputeEigenvectors);
+    if (!values_only) {
+      EigenMap(right_vectors_) = solver.eigenvalues();
+    }
+  }
+
+}  // namespace BOOM

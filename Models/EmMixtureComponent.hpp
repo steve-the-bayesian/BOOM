@@ -19,8 +19,8 @@
 #ifndef BOOM_EM_MIXTURE_COMPONENT_HPP
 #define BOOM_EM_MIXTURE_COMPONENT_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DataTypes.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/DataTypes.hpp"
 
 namespace BOOM{
   class EmMixtureComponent:

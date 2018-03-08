@@ -19,14 +19,14 @@
 
 #ifndef BOOM_BREG_VS_SAMPLER_HPP
 #define BOOM_BREG_VS_SAMPLER_HPP
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/ChisqModel.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/MvnGivenScalarSigma.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/ChisqModel.hpp"
 
 namespace BOOM{
   struct ZellnerPriorParameters {

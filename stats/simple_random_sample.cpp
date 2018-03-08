@@ -17,12 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-<<<<<<< HEAD
-#include <stats/simple_random_sample.hpp>
-#include <random>
-=======
 #include "stats/simple_random_sample.hpp"
->>>>>>> stable
 
 namespace BOOM{
   std::vector<bool> SRS_indx(uint N, uint n){
@@ -32,5 +27,4 @@ namespace BOOM{
     std::shuffle(in.begin(), in.end(), std::default_random_engine());
     return in;
   }
-
-}
+}  // namespace BOOM

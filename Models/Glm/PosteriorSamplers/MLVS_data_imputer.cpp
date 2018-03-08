@@ -17,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp>
+#include "Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp"
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/lse.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/lse.hpp"
 
-#include <stats/logit.hpp>
+#include "stats/logit.hpp"
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 #include <cmath>
 
 namespace BOOM{

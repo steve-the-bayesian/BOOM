@@ -20,12 +20,12 @@
 #ifndef POISSON_REGRESSION_MODEL_HPP
 #define POISSON_REGRESSION_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/PoissonRegressionData.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ModelTypes.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ModelTypes.hpp"
 
 namespace BOOM {
 

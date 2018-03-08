@@ -265,6 +265,26 @@ namespace {
         SpdMatrix(4, 1.0)));
   }
 
+  TEST_F(SpdMatrixTest, InvertInplace) {
+    SpdMatrix Sigma(4);
+    Sigma.randomize();
+
+    double ld_sigma = Sigma.logdet();
+    SpdMatrix original_sigma = Sigma;
+    double ld_siginv = Sigma.invert_inplace();
+    EXPECT_NEAR(ld_sigma, -ld_siginv, 1e-7);
+
+    EXPECT_TRUE(MatrixEquals(
+        Sigma * original_sigma,
+        SpdMatrix(4, 1.0)))
+        << "original_sigma = " << endl
+        << original_sigma << endl
+        << "inverted matrix: " << endl
+        << Sigma << endl
+        << "product: " << endl
+        << original_sigma * Sigma;
+  }
+  
   TEST_F(SpdMatrixTest, Sandwich) {
     SpdMatrix Sigma(4);
     Sigma.randomize();

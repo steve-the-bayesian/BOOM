@@ -19,9 +19,9 @@
 
 #ifndef BOOM_GAUSSIAN_BART_MODEL_HPP_
 #define BOOM_GAUSSIAN_BART_MODEL_HPP_
-#include <Models/Bart/Bart.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   //======================================================================

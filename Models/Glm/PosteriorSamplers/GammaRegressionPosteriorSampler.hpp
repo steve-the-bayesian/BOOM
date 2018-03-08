@@ -20,11 +20,11 @@
 #ifndef BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Glm/GammaRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Samplers/MetropolisHastings.hpp>
+#include "Models/Glm/GammaRegressionModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Samplers/MetropolisHastings.hpp"
 
 namespace BOOM {
 

@@ -19,13 +19,13 @@
 #ifndef BOOM_MVT_REG_SAMPLER_HPP
 #define BOOM_MVT_REG_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/MvtRegModel.hpp>
-#include <Models/Glm/MvReg2.hpp>
-#include <Models/Glm/PosteriorSamplers/MvRegSampler.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Samplers/SliceSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/MvtRegModel.hpp"
+#include "Models/Glm/MvReg2.hpp"
+#include "Models/Glm/PosteriorSamplers/MvRegSampler.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Samplers/SliceSampler.hpp"
 
 namespace BOOM{
   class GammaModel;

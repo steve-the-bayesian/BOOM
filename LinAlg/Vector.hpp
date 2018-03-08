@@ -27,10 +27,10 @@
 #include <vector>
 #include <functional>
 
-#include <uint.hpp>
-#include <boost/operators.hpp>
-#include <distributions/rng.hpp>
-#include <cpputil/math_utils.hpp>
+#include "uint.hpp"
+#include "boost/operators.hpp"
+#include "distributions/rng.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM{
   class SpdMatrix;

@@ -19,8 +19,8 @@
 #ifndef BOOM_GLM_COEFS_HPP
 #define BOOM_GLM_COEFS_HPP
 
-#include <Models/ParamTypes.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/ParamTypes.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
   class GlmCoefs

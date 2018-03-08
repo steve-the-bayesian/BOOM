@@ -19,10 +19,10 @@
 #ifndef BOOM_NEWLA_QR_HPP
 #define BOOM_NEWLA_QR_HPP
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // The QR decomposition of a matrix X.  In the case where the number
   // of rows >= the number of columns, the dimension of Q matches that
   // of X, and R is a square, upper triangular matrix with dimension
@@ -31,33 +31,33 @@ namespace BOOM{
   // If the number of columns > number of rows, then Q is a square
   // matrix of dimension number_of_rows, and R is a trapezoidal
   // matrix of dimension matching X.
-  class QR{
+  class QR {
    public:
     // An empty QR decomposition that can be used to decompose a
     // future matrix with 'decompose', or deserialized using
     // 'unvectorize'.
-    QR(){}
+    QR() {}
 
     // The QR decomposition of the matrix X.
     QR(const Matrix &m);
 
     // Extract the Q and R matrices from the decomposition.
-    Matrix getQ()const;
-    Matrix getR()const;
+    Matrix getQ() const;
+    Matrix getR() const;
 
-    Matrix solve(const Matrix &B)const;
-    Vector solve(const Vector &b)const;
+    Matrix solve(const Matrix &B) const;
+    Vector solve(const Vector &b) const;
 
     // Multiply the vector or matrix y by the transpose of Q.
-    Vector Qty(const Vector &y)const;
-    Matrix QtY(const Matrix &Y)const;
+    Vector Qty(const Vector &y) const;
+    Matrix QtY(const Matrix &Y) const;
 
     // Multiply the argument by R inverse.
-    Vector Rsolve(const Vector &Qty)const;
-    Matrix Rsolve(const Matrix &QtY)const;
+    Vector Rsolve(const Vector &Qty) const;
+    Matrix Rsolve(const Matrix &QtY) const;
 
     // The determinant of the matrix that has been decomposed.
-    double det()const;
+    double det() const;
 
     // Reset *this to the decomposition of the matrix m.
     void decompose(const Matrix &m);
@@ -67,23 +67,19 @@ namespace BOOM{
     // can do anything useful.
     void clear();
 
-    uint nrow()const{return dcmp.nrow();}
-    uint ncol()const{return dcmp.ncol();}
+    uint nrow() const { return Q_.nrow(); }
+    uint ncol() const { return Q_.ncol(); }
 
     // Serialize the contents of 'this' into a Vector.
-    Vector vectorize()const;
+    Vector vectorize() const;
 
     // Resets the contents of *this from a sequence of data.  The
     // inverse operation of 'vectorize'.
     const double *unvectorize(const double *data);
 
    private:
-    // Space for the decomposition and various workspace arrays used
-    // by LAPACK.
-    Matrix dcmp;
-    Vector tau;
-    Vector work;
-    int lwork;
+    Matrix Q_;
+    Matrix R_;
   };
-}
-#endif //BOOM_NEWLA_QR_HPP
+}  // namespace BOOM
+#endif  // BOOM_NEWLA_QR_HPP

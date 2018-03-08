@@ -20,9 +20,9 @@
 #ifndef BOOM_PROBIT_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_PROBIT_BART_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Bart/ProbitBartModel.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
+#include "Models/Bart/ProbitBartModel.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
 
 namespace BOOM {
   namespace Bart {

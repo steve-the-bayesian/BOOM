@@ -87,6 +87,23 @@ namespace BOOM {
     Vector theta = hmm->mark()->vectorize_params();
     mark_->unvectorize_params(theta);
 
+=======
+  //----------------------------------------------------------------------
+
+  void HmmDataImputer::setup(HiddenMarkovModel *hmm){
+    clear_client_data();
+    uint ns = hmm->nseries();
+    dat_.clear();
+    dat_.reserve(1 + ns/nworkers_);
+    for(uint i=id_; i<ns; i+= nworkers_){
+      TimeSeries<Data> * ts = &(hmm->dat(i));
+      dat_.push_back(ts);
+    }
+
+    Vector theta = hmm->mark()->vectorize_params();
+    mark_->unvectorize_params(theta);
+
+>>>>>>> stable
     uint S = hmm->state_space_size();
     for(uint s=0; s<S; ++s){
       theta = hmm->mixture_component(s)->vectorize_params();

@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp>
-#include <cpputil/report_error.hpp>
+#include "distributions.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace {

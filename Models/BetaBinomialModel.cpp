@@ -17,12 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/BetaBinomialModel.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Bmath/Bmath.hpp>
-#include <distributions.hpp>
-#include <stats/moments.hpp>
+#include "Models/BetaBinomialModel.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/math_utils.hpp"
+#include "Bmath/Bmath.hpp"
+#include "distributions.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   using Rmath::lgammafn;

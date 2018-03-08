@@ -19,14 +19,14 @@
 #ifndef BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP
 #define BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 
-#include <Models/GaussianModelBase.hpp>
+#include "Models/GaussianModelBase.hpp"
 
 namespace BOOM{
 

@@ -20,8 +20,8 @@
 #ifndef CUMULATIVE_LOGIT_MODEL_HPP
 #define CUMULATIVE_LOGIT_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/OrdinalCutpointModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/OrdinalCutpointModel.hpp"
 
 namespace BOOM{
   class CumulativeLogitModel

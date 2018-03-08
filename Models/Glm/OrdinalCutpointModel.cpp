@@ -17,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/OrdinalCutpointModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <stats/Design.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/Glm/OrdinalCutpointModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
+#include "cpputil/report_error.hpp"
+#include "stats/Design.hpp"
+#include "TargetFun/TargetFun.hpp"
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 #include <functional>
 #include <cmath>

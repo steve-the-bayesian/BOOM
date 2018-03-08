@@ -17,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp"
 
 namespace BOOM {
 

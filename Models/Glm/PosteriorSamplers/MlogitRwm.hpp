@@ -20,9 +20,9 @@
 #ifndef BOOM_MLOGIT_RWM_SAMPLER_HPP
 #define BOOM_MLOGIT_RWM_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM{
   class MlogitRwm : public PosteriorSampler{

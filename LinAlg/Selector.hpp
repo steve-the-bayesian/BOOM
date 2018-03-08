@@ -20,18 +20,18 @@
 #ifndef BOOM_SELECTOR_HPP
 #define BOOM_SELECTOR_HPP
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 
 #include <vector>
 #include <iostream>
 #include <cassert>
 #include <string>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM{
 

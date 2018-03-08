@@ -19,14 +19,14 @@
 #ifndef BOOM_MVN_GIVEN_X_AND_SIGMA_HPP
 #define BOOM_MVN_GIVEN_X_AND_SIGMA_HPP
 
-#include <Models/ParamTypes.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/RegressionModel.hpp"
 
 #include <functional>
 

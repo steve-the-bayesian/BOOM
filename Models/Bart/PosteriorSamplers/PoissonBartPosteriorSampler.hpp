@@ -20,10 +20,10 @@
 #ifndef BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
-#include <Models/Bart/PoissonBartModel.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp>
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
+#include "Models/Bart/PoissonBartModel.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
 
 // The posterior sampler class defined in this file uses data
 // augmentation to model Poisson errors in the BART model.  These

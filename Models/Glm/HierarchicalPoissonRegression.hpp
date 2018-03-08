@@ -19,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_
 #define BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Glm/PoissonRegressionModel.hpp>
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
 
 namespace BOOM {
   // A HierarchicalPoissonRegressionModel is a single level hierarchy

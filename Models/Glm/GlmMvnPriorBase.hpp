@@ -18,13 +18,13 @@
 */
 
 
-#include <Models/ModelTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
+#include "Models/MvnBase.hpp"
 
 /*
   Base class that can serve as a prior model for GlmCoefs.  Might

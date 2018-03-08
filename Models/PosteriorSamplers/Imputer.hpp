@@ -25,6 +25,8 @@
 #include <future>
 
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/report_error.hpp"
+
 #include "cpputil/RefCounted.hpp"
 #include "cpputil/ThreadTools.hpp"
 

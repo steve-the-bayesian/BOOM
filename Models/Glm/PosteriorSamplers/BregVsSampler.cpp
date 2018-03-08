@@ -17,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/seq.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <distributions/trun_gamma.hpp>
-#include <Models/ChisqModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/seq.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "distributions/trun_gamma.hpp"
+#include "Models/ChisqModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/MvnGivenScalarSigma.hpp"
 #include <random>
 
 namespace BOOM {

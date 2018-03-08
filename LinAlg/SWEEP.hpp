@@ -21,12 +21,12 @@
 #define BOOM_SWEEP_HPP
 
 #include <vector>
-#include<BOOM.hpp>
+#include "BOOM.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM{
 

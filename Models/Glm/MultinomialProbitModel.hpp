@@ -20,12 +20,12 @@
 #ifndef BOOM_MULTINOMIAL_PROBIT_MODEL_HPP
 #define BOOM_MULTINOMIAL_PROBIT_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>   // for GlmCoefs
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Glm/MvReg2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/ChoiceData.hpp>
+#include "Models/Glm/Glm.hpp"   // for GlmCoefs
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Glm/MvReg2.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Glm/ChoiceData.hpp"
 
 namespace BOOM{
   class TrunMvnTF;

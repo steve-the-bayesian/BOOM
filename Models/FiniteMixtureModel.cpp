@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/FiniteMixtureModel.hpp>
-#include <cpputil/lse.hpp>
-#include <distributions.hpp>
+#include "Models/FiniteMixtureModel.hpp"
+#include "cpputil/lse.hpp"
+#include "distributions.hpp"
 
 #include <functional>
 #include <stdexcept>

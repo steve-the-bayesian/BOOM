@@ -17,16 +17,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/AggregatedRegressionModel.hpp>
+#include "Models/Glm/AggregatedRegressionModel.hpp"
 
 #include <iomanip>
 #include <map>
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
   namespace Agreg {

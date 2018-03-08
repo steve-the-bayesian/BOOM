@@ -20,14 +20,14 @@
 #ifndef EXPONENTIAL_MODEL_H
 #define EXPONENTIAL_MODEL_H
 #include <iosfwd>
-#include <cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "cpputil/Ptr.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   class ExpSuf: public SufstatDetails<DoubleData> {

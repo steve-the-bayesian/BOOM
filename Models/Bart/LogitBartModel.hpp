@@ -20,11 +20,11 @@
 #ifndef BOOM_LOGIT_BART_HPP_
 #define BOOM_LOGIT_BART_HPP_
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Glm/BinomialRegressionData.hpp>
-#include <Models/Policies/NonparametricParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Glm/BinomialRegressionData.hpp"
+#include "Models/Policies/NonparametricParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 

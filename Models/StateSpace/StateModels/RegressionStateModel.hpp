@@ -31,6 +31,7 @@ namespace BOOM {
   // A StateModel for a static (non-time-varying) regression component.  The
   // 'state' is a constant '1' with zero error, and a [1x1] identity matrix for
   // the state transition matrix.
+
   class RegressionStateModel
       : public StateModel,
         public CompositeParamPolicy,

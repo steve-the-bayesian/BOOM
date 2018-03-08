@@ -20,7 +20,7 @@
 #define BOOM_COMPOSITE_DATA_HPP
 
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 namespace BOOM{
 
 // CompositeData is a multivariate observation (on a single subject)

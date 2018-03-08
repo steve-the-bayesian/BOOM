@@ -20,8 +20,8 @@
 #define BOOM_NEWLA_MATRIX_HPP
 #include <vector>
 #include <iosfwd>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   using std::ostream;
@@ -234,7 +234,6 @@ namespace BOOM{
     uint rank(double prop=1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
     // the largest
-    virtual Vector real_evals() const;
 
     Matrix & add_outer(const Vector &x, const Vector &y,
                        double w = 1.0);
@@ -463,13 +462,13 @@ namespace BOOM{
     // A and B both square
 
     // routines for lower triangluar matrices
-    Matrix LTmult(const Matrix &L, const Matrix &B);
     Vector Lmult(const Matrix &L, const Vector &y);
     Vector Lsolve(const Matrix &L, const Vector &b); // ans = L^{-1}b
     Vector & LTsolve_inplace(const Matrix &L, Vector &b);
     Vector & Lsolve_inplace(const Matrix &L, Vector &b); // b = L^{-1}b
     Matrix Lsolve(const Matrix &L, const Matrix &B); // ans = L^{-1}B
     Matrix & Lsolve_inplace(const Matrix &L, Matrix &B); // B = L^{-1}B
+    Matrix & LTsolve_inplace(const Matrix &L, Matrix &B); // B = L^{-1}B
     Matrix Linv(const Matrix &L);
 
     Vector Umult(const Matrix &U, const Vector &y);
@@ -480,6 +479,6 @@ namespace BOOM{
     Matrix & Usolve_inplace(const Matrix &U, Matrix &B); // B = U^{-1}B
     Matrix Uinv(const Matrix &U);
 
+}  // namespace BOOOM
 
-}
 #endif // BOOM_NEWLA_MATRIX_HPP

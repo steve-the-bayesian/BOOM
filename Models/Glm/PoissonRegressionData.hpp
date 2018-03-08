@@ -19,7 +19,7 @@
 #ifndef BOOM_POISSON_REGRESSION_DATA_HPP_
 #define BOOM_POISSON_REGRESSION_DATA_HPP_
 
-#include <Models/Glm/Glm.hpp>
+#include "Models/Glm/Glm.hpp"
 
 namespace BOOM {
   class PoissonRegressionData : public GlmData<IntData> {

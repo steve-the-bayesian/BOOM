@@ -19,7 +19,7 @@
 
 
 #include <string>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
   struct matrix_not_positive_definite

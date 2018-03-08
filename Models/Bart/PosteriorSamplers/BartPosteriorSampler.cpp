@@ -17,12 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <LinAlg/Selector.hpp>
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
+#include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace {
   // Returns the log of the integer d.  This is a compiler

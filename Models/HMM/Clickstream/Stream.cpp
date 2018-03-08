@@ -18,7 +18,6 @@
 */
 
 #include "Models/HMM/Clickstream/Stream.hpp"
-
 #include "distributions.hpp"
 #include "cpputil/string_utils.hpp"
 #include <algorithm>

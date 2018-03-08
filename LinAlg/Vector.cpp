@@ -17,11 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/VectorView.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -30,20 +29,21 @@
 #include <numeric>
 #include <functional>
 
-#include <cpputil/math_utils.hpp>
-#include <cpputil/shift_element.hpp>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/shift_element.hpp"
+#include "cpputil/string_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 #include <sstream>
 
 #include <cstdlib>
 #include <utility>
 
+#include "LinAlg/EigenMap.hpp"
+
 using namespace std;
 
 namespace BOOM{
-  using namespace blas;
   typedef std::vector<double> dVector;
 
 #ifndef NDEBUG
@@ -127,7 +127,7 @@ namespace BOOM{
     return *this;
   }
 
-  bool Vector::operator==(const Vector &rhs)const{
+  bool Vector::operator==(const Vector &rhs) const {
     const dVector &tmp1(*this);
     const dVector &tmp2(rhs);
     return tmp1==tmp2;}
@@ -154,7 +154,7 @@ namespace BOOM{
 
   Vector Vector::zero()const{ return Vector(size(), 0.0);}
 
-  Vector Vector::one()const{ return Vector(size(), 1.0);}
+  Vector Vector::one() const { return Vector(size(), 1.0);}
 
   Vector & Vector::randomize(RNG &rng){
     uint n = size();
@@ -179,18 +179,18 @@ namespace BOOM{
     if(empty()) return 0;
     return &((*this)[0]);}
 
-  const double * Vector::data()const{
+  const double * Vector::data() const {
     if(empty()) return 0;
     return &((*this)[0]);}
 
-  uint Vector::length()const{return size();}
+  uint Vector::length() const {return size();}
 
   Vector & Vector::push_back(double x){
     dVector::push_back(x);
     return *this; }
 
   //------------------------------ deprecated functions ---------------
-  const double & Vector::operator()(uint n)const{
+  const double & Vector::operator()(uint n) const {
     check_range(n, size());
     return (*this)[n];}
 
@@ -199,7 +199,7 @@ namespace BOOM{
     return (*this)[n];}
 
   //------------- input/output -----------------------
-  ostream & Vector::write(ostream &out, bool nl)const{
+  ostream & Vector::write(ostream &out, bool nl) const {
     if(!empty()){
       out << operator[](0);
     }
@@ -223,9 +223,9 @@ namespace BOOM{
     return *this += (-x);}
 
   Vector & Vector::operator*=(double x){
-    const int n(size());
-    dscal(n, x, data(), stride());
-    return *this; }
+    EigenMap(*this) *= x;
+    return *this;
+  }
 
   Vector & Vector::operator/=(double x){
     assert(x!=0.0 && "divide by zero error in Vector::operator/=");
@@ -233,8 +233,7 @@ namespace BOOM{
 
   Vector & Vector::operator+=(const ConstVectorView &y){
     assert(y.size()==size());
-    const int n = size();
-    daxpy(n, 1.0, y.data(), y.stride(), data(), stride());
+    EigenMap(*this) += EigenMap(y);
     return *this;
   }
 
@@ -248,8 +247,7 @@ namespace BOOM{
 
   Vector & Vector::operator-=(const ConstVectorView &y){
     assert(y.size()==size());
-    const int n = size();
-    daxpy(n, -1.0, y.data(), y.stride(), data(), stride());
+    EigenMap(*this) -= EigenMap(y);
     return *this;
   }
 
@@ -290,131 +288,119 @@ namespace BOOM{
 
   Vector & Vector::axpy(const Vector &x, double w){
     assert(x.size()==size());
-    const int n =size();
-    daxpy(n, w, x.data(), x.stride(), data(), stride());
+    EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
 
   Vector & Vector::axpy(const VectorView &x, double w){
     assert(x.size()==size());
-    const int n =size();
-    daxpy(n, w, x.data(), x.stride(), data(), stride());
+    EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
   Vector & Vector::axpy(const ConstVectorView &x, double w){
     assert(x.size()==size());
-    const int n =size();
-    daxpy(n, w, x.data(), x.stride(), data(), stride());
+    EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
 
-  Vector & Vector::add_Xty(const Matrix &X, const Vector &y, double wgt){
-    dgemv(Trans, X.nrow(), X.ncol(), wgt,
-          X.data(), X.nrow(), y.data(), y.stride(),
-          1.0, data(), stride());
+  Vector & Vector::add_Xty(const Matrix &X, const Vector &y, double wgt) {
+    EigenMap(*this) += EigenMap(X).transpose() * EigenMap(y) * wgt;
     return *this;
   }
-
 
   //------------- linear algebra ----------------
 
-  Vector & Vector::mult(const Matrix &A, Vector &ans)const{
+  Vector & Vector::mult(const Matrix &A, Vector &ans) const {
     // v^A == (A^Tv)^T
     assert(ans.size()==A.ncol());
     assert(size()==A.nrow());
-    dgemv(Trans, A.nrow(), A.ncol(), 1.0,
-          A.data(), A.nrow(), data(), stride(),
-          0.0, ans.data(), ans.stride());
+    EigenMap(ans) = EigenMap(A).transpose() * EigenMap(*this);
     return ans;
   }
-  Vector Vector::mult(const Matrix &A)const{
+  Vector Vector::mult(const Matrix &A) const {
     Vector ans(A.ncol());
     return mult(A,ans);}
 
-  Vector & Vector::mult(const SpdMatrix &A, Vector &ans)const{
+  Vector & Vector::mult(const SpdMatrix &A, Vector &ans) const {
     // v^A == (A^Tv)^T
     assert(ans.size()==A.ncol());
     assert(size()==A.nrow());
-    dsymv(Upper, A.ncol(), 1.0,
-          A.data(), A.nrow(), data(), stride(),
-          0.0, ans.data(), ans.stride());
+    EigenMap(ans) = EigenMap(A).selfadjointView<Eigen::Upper>()
+        * EigenMap(*this);
     return ans;
   }
-  Vector Vector::mult(const SpdMatrix &S)const{
+  Vector Vector::mult(const SpdMatrix &S) const {
     Vector ans(S.ncol());
     return mult(S,ans);}
 
 
-  SpdMatrix Vector::outer()const{
+  SpdMatrix Vector::outer() const {
     uint n = size();
     SpdMatrix ans(n, 0.0);
     ans.add_outer(*this);
     return ans;
   }
 
-  Matrix Vector::outer(const Vector &y, double a)const{
+  Matrix Vector::outer(const Vector &y, double a) const {
     Matrix ans(size(), y.size());
-    dger(size(), y.size(),
-         a, data(), stride(), y.data(), y.stride(),
-         ans.data(), ans.nrow());
-    return ans;}
-
-  void Vector::outer(const Vector &y, Matrix &ans, double a)const{
-    dger(size(), y.size(),
-         a, data(), stride(), y.data(), y.stride(),
-         ans.data(), ans.nrow());}
-
-  double Vector::normsq()const{
-    double tmp = dnrm2(size(), data(), stride());
-    return tmp*tmp;
+    outer(y, ans, a);
+    return ans;
+  }
+  
+  void Vector::outer(const Vector &y, Matrix &ans, double a) const {
+    EigenMap(ans) = a * EigenMap(*this) * EigenMap(y).transpose();
+  }
+  
+  double Vector::normsq() const {
+    return EigenMap(*this).squaredNorm();
   }
 
   Vector & Vector::normalize_prob(){
-    const int n(size());
-    double s = dasum(n, data(), stride());
-    if(s==0) {
+    double total = this->sum();
+    if (total == 0) {
       report_error("normalizing constant is zero in Vector::normalize_prob");
     }
-    operator/=(s);
+    operator/=(total);
     return *this;
   }
 
   Vector & Vector::normalize_logprob(){
-    double nc=0;
+    double nc = 0;
     Vector &x= *this;
     int n = size();
     if (n == 0) {
       report_error("Vector::normalize_logprob called for empty vector");
     }
     double m = max();
-    for(uint i=0; i<n; ++i){
-      x[i] = std::exp(x[i]-m);
-      nc+=x[i]; }
-    x/=nc;
+    for(uint i = 0; i < n; ++i) {
+      x[i] = std::exp(x[i] - m);
+      nc += x[i];
+    }
+    x /= nc;
     return *this;   // might want to change this
   }
 
-  Vector & Vector::normalize_L2(){
-    double nc = dnrm2(size(), data(), stride());
-    (*this)/=nc;
+  Vector & Vector::normalize_L2() {
+    *this /= EigenMap(*this).norm();
     return *this;
   }
 
-  double Vector::min()const{ return *min_element(begin(), end());}
+  double Vector::min() const { return *min_element(begin(), end());}
   double Vector::max() const { return *std::max_element(begin(), end()); }
 
-  uint Vector::imax()const{
+  uint Vector::imax() const {
     const_iterator it = std::max_element(begin(), end());
     return it-begin();}
 
-  uint Vector::imin()const{
+  uint Vector::imin() const {
     const_iterator it = min_element(begin(), end());
     return it-begin();}
 
-  double Vector::abs_norm()const{
-    return dasum(size(), data(), stride());}
+  double Vector::abs_norm() const {
+    return EigenMap(*this).lpNorm<1>();
+  }
 
-  double Vector::max_abs()const{
+  double Vector::max_abs() const {
     dVector::size_type n = size();
     const double *d = data();
     double m = -1;
@@ -424,7 +410,7 @@ namespace BOOM{
     return m;
   }
 
-  double Vector::sum()const{
+  double Vector::sum() const {
     // Benchmarks indicate that a straight sum based on pointer
     // arithmatic is MUCH faster than iterator based approaches, so
     // don't replace this with std::accumulate().
@@ -438,7 +424,7 @@ namespace BOOM{
   }
 
   inline double mul(double x, double y){return x*y;}
-  double Vector::prod()const{
+  double Vector::prod() const {
     const auto n = this->size();
     double ans = 1.0;
     const double *d = data();
@@ -469,8 +455,7 @@ namespace BOOM{
   namespace {
     template <class V>
     double dot_impl(const Vector &x, const V & y){
-      const int n(x.size());
-      if(y.size() != static_cast<uint>(n)){
+      if (y.size() != x.size()) {
         ostringstream err;
         err << "Dot product between two vectors of different sizes:"
             << endl
@@ -478,46 +463,36 @@ namespace BOOM{
             << "y = " << y << endl;
         report_error(err.str());
       }
-      if(y.stride() > 0)
-        return ddot(n, x.data(), x.stride(), y.data(), y.stride());
-      double ans = 0;
-      for(int i = 0; i < n; ++i){
-        ans += x[i] * y[i];
-      }
-      return ans;
+      return EigenMap(x).dot(EigenMap(y));
     }
 
     template<class V>
     double affdot_impl(const Vector &x, const V & y){
       uint n = x.size();
       uint m = y.size();
-      if(m==n) return x.dot(y);
-      double ans=0.0;
-      const double *v1=0, *v2=0;
-      if(m==n+1){    // y is one unit longer than x
-        ans= y.front();
-        v1 = y.data()+1;
-        v2 = x.data();
-      }else if (n==m+1){   // x is one unit longer than y
-        ans = x.front();
-        v1 = y.data();
-        v2 = x.data()+1;
-      }else{
+      if (m == n) {
+        return x.dot(y);
+      } else if (m == n + 1) {
+        return y[1] + x.dot(ConstVectorView(y, 1));
+      } else if (n == m + 1) {
+        return x[1] + y.dot(ConstVectorView(x, 1));
+      } else {
         report_error("x and y do not conform in affdot");
+        return negative_infinity();
       }
-      const int i(std::min(m,n));
-      return ans + ddot(i, v1, y.stride(), v2, x.stride());
     }
+  }  // namespace
+  double Vector::dot(const Vector &y) const { return dot_impl(*this, y);}
+  double Vector::dot(const VectorView &y) const { return dot_impl(*this,y);}
+  double Vector::dot(const ConstVectorView &y) const {
+    return dot_impl(*this,y);
   }
-  double Vector::dot(const Vector &y)const{ return dot_impl(*this, y);}
-  double Vector::dot(const VectorView &y)const{ return dot_impl(*this,y);}
-  double Vector::dot(const ConstVectorView &y)const{ return dot_impl(*this,y);}
 
-  double Vector::affdot(const Vector &y)const{
+  double Vector::affdot(const Vector &y) const {
     return affdot_impl(*this, y);}
-  double Vector::affdot(const VectorView &y)const{
+  double Vector::affdot(const VectorView &y) const {
     return affdot_impl(*this, y); }
-  double Vector::affdot(const ConstVectorView &y)const{
+  double Vector::affdot(const ConstVectorView &y) const {
     return affdot_impl(*this, y); }
   //============== non member functions from Vector.hpp =============
 

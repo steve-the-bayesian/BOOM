@@ -170,10 +170,9 @@ namespace BOOM{
     if(phi.abs_norm() < 1) return true;
 
     // If that didn't work then we're stuck finding roots.
-    //
-    // TODO: Really we just need to check the smallest root.  If we had a cheap
-    // way of finding just the smallest root then that would be more efficient
-    // than finding them all.
+    // TODO(stevescott): Really we just need to check the smallest root.  If we
+    // had a cheap way of finding just the smallest root then that would be more
+    // efficient than finding them all.
     Vector coefficients = concat(1, -1 * phi);
     
     Polynomial polynomial(coefficients);

@@ -1,9 +1,9 @@
 #ifndef BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
 #define BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
 
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2018 Steven L. Scott
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -19,7 +19,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 
 namespace BOOM {
 

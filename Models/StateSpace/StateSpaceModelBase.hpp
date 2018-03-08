@@ -18,6 +18,48 @@
 */
 #ifndef BOOM_STATE_SPACE_MODEL_BASE_HPP_
 #define BOOM_STATE_SPACE_MODEL_BASE_HPP_
+<<<<<<< HEAD
+=======
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
+#include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+
+#include "cpputil/math_utils.hpp"
+#include <memory>
+
+namespace BOOM{
+
+  namespace StateSpace {
+    class MultiplexedData : public Data {
+     public:
+      MultiplexedData();
+
+      // The observed sample size is the number of fully observed data points at
+      // the time period described by this object.
+      int observed_sample_size() const {return observed_sample_size_;}
+
+      // The total_sample_size is the number of observed and missing data points
+      // at the time period described by this object.
+      virtual int total_sample_size() const = 0;
+
+     protected:
+      // Adjusts the missing status and observation count of the aggregate
+      // multiplexed data object to reflect the missing status of dp.
+      //
+      // Child classes should call this function to update their missing-data
+      // status and observation count in light of the new observation, but
+      // actually storing the data is left to the class descendants.
+      void add_data(const Ptr<Data> &dp);
+
+     private:
+      int observed_sample_size_;
+    };
+  }  // namespace StateSpace
+>>>>>>> stable
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"

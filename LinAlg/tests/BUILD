@@ -53,6 +53,16 @@ cc_test(
 )
 
 cc_test(
+    name = "SVD_test",
+    srcs = ["SVD_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "tail_test",
     srcs = ["tail_test.cc"],
     copts = COPTS,
