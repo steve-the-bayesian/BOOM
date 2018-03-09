@@ -1,5 +1,5 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{estimate.time.scale}
 \title{Intervals between dates}
@@ -17,7 +17,7 @@
   "monthly", "quarterly", or "other".  The value is determined based on
   counting the number of days between successive observations in \code{dates}.}
 
-\author{Steven L. Scott \email{stevescott@google.com}}
+\author{Steven L. Scott \email{steve.the.bayesian@gmail.com}}
 
 \examples{
 weekly.data <- as.Date(c("2011-10-01",

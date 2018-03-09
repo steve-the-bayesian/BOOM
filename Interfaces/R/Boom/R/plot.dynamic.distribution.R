@@ -127,7 +127,10 @@ PlotDynamicDistribution <- function(curves,
   if (is.null(xlim)) {
     xlim <- range(timestamps)
   }
-
+  if (inherits(xlim, "POSIXt")) {
+    xlim <- as.POSIXct(xlim)
+  }
+  
   .FilledPlot(timestamps,
               cbind(lower.quantile, upper.quantile),
               poly.color = gray(1 - 1/number.of.quantile.steps),

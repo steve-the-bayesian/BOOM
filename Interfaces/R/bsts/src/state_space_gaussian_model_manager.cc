@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "state_space_gaussian_model_manager.h"
 #include "model_manager.h"
 #include "utils.h"
@@ -8,7 +24,7 @@
 namespace BOOM {
 namespace bsts {
 
-StateSpaceModelBase * GaussianModelManagerBase::CreateModel(
+ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
     SEXP r_data_list,
     SEXP r_state_specification,
     SEXP r_prior,
@@ -17,7 +33,7 @@ StateSpaceModelBase * GaussianModelManagerBase::CreateModel(
     bool save_state_contribution,
     bool save_prediction_errors,
     RListIoManager *io_manager) {
-  StateSpaceModelBase *model = ModelManager::CreateModel(
+  ScalarStateSpaceModelBase *model = ModelManager::CreateModel(
       r_data_list,
       r_state_specification,
       r_prior,
@@ -75,6 +91,10 @@ StateSpaceModel * StateSpaceModelManager::CreateObservationModel(
 
     Ptr<StateSpacePosteriorSampler> sampler(
         new StateSpacePosteriorSampler(model_.get()));
+    if (!Rf_isNull(r_options)
+        && !Rf_asLogical(getListElement(r_options, "enable.threads"))) {
+      sampler->disable_threads();
+    }
     model_->set_method(sampler);
   }
 
@@ -117,6 +137,7 @@ void StateSpaceModelManager::AddData(
     report_error("Vectors do not match in StateSpaceModelManager::AddData.");
   }
   std::vector<Ptr<StateSpace::MultiplexedDoubleData>> data;
+  data.reserve(NumberOfTimePoints());
   for (int i = 0; i < NumberOfTimePoints(); ++i) {
     data.push_back(new StateSpace::MultiplexedDoubleData);
   }

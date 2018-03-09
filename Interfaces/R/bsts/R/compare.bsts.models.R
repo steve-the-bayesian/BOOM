@@ -1,3 +1,19 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 CompareBstsModels <- function(model.list,
                               burn = SuggestBurn(.1, model.list[[1]]),
                               filename = "",
@@ -5,7 +21,8 @@ CompareBstsModels <- function(model.list,
                               lwd = 2,
                               xlab = "Time",
                               main = "",
-                              grid = TRUE) {
+                              grid = TRUE,
+                              cutpoint = NULL) {
   ## Produce a set of line plots showing the cumulative absolute one
   ## step ahead prediction errors for different models.  This plot not
   ## only shows which model is doing the best job predicting the data,
@@ -24,6 +41,11 @@ CompareBstsModels <- function(model.list,
   ##   xlab: Labels for the horizontal axis.
   ##   main: Main title for the plot.
   ##   grid: Logical.  Should gridlines be drawn in the background?
+  ##   cutpoint: Either NULL, or an integer giving the observation number used
+  ##     to define a holdout sample.  Prediction errors occurring after the
+  ##     cutpoint will be true out of sample errors.  If NULL then all
+  ##     prediction errors are "in sample".  See the discussion in
+  ##     'bsts.prediction.errors'.
   ##
   ## Returns:
   ##   Invisibly returns the matrix of cumulative errors (the lines in
@@ -53,8 +75,13 @@ CompareBstsModels <- function(model.list,
   errors <- bsts.prediction.errors(model.list[[1]], burn = burn)$in.sample
   cumulative.errors <- matrix(nrow = number.of.models, ncol = ncol(errors))
   for (i in 1:number.of.models) {
-    prediction.errors <-
-      bsts.prediction.errors(model.list[[i]], burn = burn)$in.sample
+    if (is.null(cutpoint)) {
+      prediction.errors <- bsts.prediction.errors(
+          model.list[[i]], burn = burn)$in.sample
+    } else {
+      prediction.errors <- bsts.prediction.errors(
+          model.list[[i]], burn = burn, cutpoints = cutpoint)[[1]]
+    }
     cumulative.errors[i, ] <- cumsum(abs(colMeans(prediction.errors)))
   }
   if (is.null(colors)) colors <- c("black", rainbow(number.of.models-1))

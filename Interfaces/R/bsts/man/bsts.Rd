@@ -1,5 +1,18 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 2.1 of the License, or (at your option) any later version.
+%
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+%
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 \alias{bsts}
 \name{bsts}
@@ -80,7 +93,8 @@ bsts(formula,
 
     If no regressors are desired then the formula can be replaced by a
     numeric vector giving the time series to be modeled.  Missing values
-    are not allowed.
+    are not allowed in predictors, but they are allowed in the response
+    variable.
 
     If the response variable is of class \code{\link[zoo]{zoo}},
     \code{\link[xts]{xts}}, or \code{\link{ts}}, then the time series
@@ -270,7 +284,7 @@ bsts(formula,
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott  \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{
@@ -368,7 +382,7 @@ bsts(formula,
   predictors <- matrix(rnorm(total.sample.size * 2), ncol = 2)
   colnames(predictors) <- c("X1", "X2")
   coefficients <- c(-10, 10)
-  regression <- as.numeric(predictors %*% coefficients)
+  regression <- as.numeric(predictors \%*\% coefficients)
   y.hat <- rep(trend, sample.size.per.time.point) + regression
   y <- rnorm(length(y.hat), y.hat, sigma.obs)
 

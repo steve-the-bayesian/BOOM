@@ -1,5 +1,18 @@
-# Copyright 2011 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+# Copyright 2011 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 AddSeasonal <- function(state.specification,
                         y,
@@ -30,13 +43,18 @@ AddSeasonal <- function(state.specification,
   ## Returns:
   ##   state.specification, after appending the information necessary
   ##   to define a seasonal state component.
-
   if (missing(state.specification)) state.specification <- list()
   stopifnot(is.list(state.specification))
   if (!missing(y)) {
     stopifnot(is.numeric(y))
     sdy <- sd(as.numeric(y), na.rm = TRUE)
   }
+  stopifnot(is.numeric(nseasons),
+            length(nseasons) == 1,
+            nseasons == round(nseasons))
+  stopifnot(is.numeric(season.duration),
+            length(season.duration) == 1,
+            season.duration == round(season.duration))
 
   if (is.null(sigma.prior)) {
     ## The prior distribution says that sigma is small, and can be no

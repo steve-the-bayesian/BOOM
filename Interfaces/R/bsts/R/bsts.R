@@ -1,3 +1,19 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 ## This file implements the main bsts function and most of its methods
 ## (plot, print, summary).
 ##
@@ -44,55 +60,49 @@ bsts <- function(formula,
   ## state space time series model.
   ##
   ## Args:
-  ##   formula: A formula describing the regression portion of the
-  ##     relationship between y and X.  See the Details section below
-  ##     about options for y in Poisson or logit models. If no
-  ##     regressors are desired then the formula can be replaced by a
-  ##     numeric vector giving the time series to be modeled.  Missing
-  ##     values are not allowed.  If the response is of class zoo,
-  ##     xts, or ts then time series information it contains will be
-  ##     used in many of the plot methods called by plot.bsts.
-  ##   state.specification: a list with elements created by
-  ##     AddLocalLinearTrend, AddSeasonal, and similar functions for
-  ##     adding components of state.
-  ##   family: The model family of the observation equation.  Standard
-  ##     state space models require the observation family to be
-  ##     Gaussian.  However this requirement can be relaxed to
-  ##     mixtures of Gaussians, which opens the door to several other
-  ##     error distributions such as binomial (logit), Poisson, and T.
-  ##   data: an optional data frame, list or environment (or object
-  ##     coercible by ‘as.data.frame’ to a data frame) containing the
-  ##     variables in the model.  If not found in ‘data’, the
-  ##     variables are taken from ‘environment(formula)’, typically
-  ##     the environment from which ‘bsts’ is called.
+  ##   formula: A formula describing the regression portion of the relationship
+  ##     between y and X.  See the Details section below about options for y in
+  ##     Poisson or logit models. If no regressors are desired then the formula
+  ##     can be replaced by a numeric vector giving the time series to be
+  ##     modeled.  Missing values are not allowed in predictor variables but
+  ##     they are allowed in the response.  If the response is of class zoo,
+  ##     xts, or ts then time series information it contains will be used in
+  ##     many of the plot methods called by plot.bsts.
+  ##   state.specification: a list with elements created by AddLocalLinearTrend,
+  ##     AddSeasonal, and similar functions for adding components of state.
+  ##   family: The model family of the observation equation.  Standard state
+  ##     space models require the observation family to be Gaussian.  However
+  ##     this requirement can be relaxed to mixtures of Gaussians, which opens
+  ##     the door to several other error distributions such as binomial (logit),
+  ##     Poisson, and T.
+  ##   data: an optional data frame, list or environment (or object coercible by
+  ##     ‘as.data.frame’ to a data frame) containing the variables in the model.
+  ##     If not found in ‘data’, the variables are taken from
+  ##     ‘environment(formula)’, typically the environment from which ‘bsts’ is
+  ##     called.
   ##   prior: If a regression component is present then this a prior
-  ##     distribution for the regression component of the model, as
-  ##     created by SpikeSlabPrior.  The prior for the time series
-  ##     component of the model will be specified during the creation
-  ##     of state.specification.  If no regression components are
-  ##     specified then this is a prior for the residual standard
-  ##     deviation, created by SdPrior.  In either case the prior is
-  ##     optional.  A weak default prior will be used if no prior is
+  ##     distribution for the regression component of the model, as created by
+  ##     SpikeSlabPrior.  The prior for the time series component of the model
+  ##     will be specified during the creation of state.specification.  If no
+  ##     regression components are specified then this is a prior for the
+  ##     residual standard deviation, created by SdPrior.  In either case the
+  ##     prior is optional.  A weak default prior will be used if no prior is
   ##     specified explicitly.
-  ##   contrasts: an optional list containing the names of contrast
-  ##     functions to use when converting factors numeric variables in
-  ##     a regression formula.  This argument works exactly as it does
-  ##     in 'lm'.  The names of the list elements correspond to factor
-  ##     variables in your model formula.  The list elements
-  ##     themselves are the names of contrast functions (see
+  ##   contrasts: an optional list containing the names of contrast functions to
+  ##     use when converting factors numeric variables in a regression formula.
+  ##     This argument works exactly as it does in 'lm'.  The names of the list
+  ##     elements correspond to factor variables in your model formula.  The
+  ##     list elements themselves are the names of contrast functions (see
   ##     help(contrast) and the 'contrasts.arg' argument to
-  ##     'model.matrix.default').  This argument is only used if a
-  ##     model formula is specified.  It can usually be ignored even
-  ##     then.
-  ##   na.action: What to do about missing values.  The default is to
-  ##     allow missing responses, but no missing predictors.  Set this
-  ##     to na.omit or na.exclude if you want to omit missing
-  ##     responses altogether, but do so with care, as that will
-  ##     remove observations from the time series.
-  ##   niter: a positive integer giving the desired number of MCMC
-  ##     draws
-  ##   ping: A scalar.  If ping > 0 then the program will print a
-  ##     status message to the screen every 'ping' MCMC iterations.
+  ##     'model.matrix.default').  This argument is only used if a model formula
+  ##     is specified.  It can usually be ignored even then.
+  ##   na.action: What to do about missing values.  The default is to allow
+  ##     missing responses, but no missing predictors.  Set this to na.omit or
+  ##     na.exclude if you want to omit missing responses altogether, but do so
+  ##     with care, as that will remove observations from the time series.
+  ##   niter: a positive integer giving the desired number of MCMC draws
+  ##   ping: A scalar.  If ping > 0 then the program will print a status message
+  ##     to the screen every 'ping' MCMC iterations.
   ##   model.options: An object (list) returned by BstsOptions().  See that
   ##     function for details.
   ##   timestamps: The timestamp associated with each value of the response.
@@ -352,7 +362,8 @@ BstsOptions <- function(save.state.contributions = TRUE,
                         oda.options = list(
                             fallback.probability = 0.0,
                             eigenvalue.fudge.factor = 0.01),
-                        timeout.seconds = Inf) {
+                        timeout.seconds = Inf,
+                        enable.threads = TRUE) {
   ## A collection of somewhat more obscure options that can be used to control a
   ## bsts model.
   ##
@@ -397,6 +408,11 @@ BstsOptions <- function(save.state.contributions = TRUE,
   ##     before the timeout occurred, as if that had been the
   ##     requested value of 'niter'.  A timeout is reported through a
   ##     warning.
+  ##   enable.threads: Logical.  If TRUE then threads can be used as part of the
+  ##     data augmentation algorithm.  Threads are used to process part of the
+  ##     data augmentation algorithm in parallel, potentially making it faster.
+  ##     However, there is some overhead involved in using threads, so there is
+  ##     no guarantee.  If false then single-threaded code will be used.
   bma.method <- match.arg(bma.method)
   stopifnot(is.logical(save.state.contributions),
             length(save.state.contributions) == 1)
@@ -410,11 +426,14 @@ BstsOptions <- function(save.state.contributions = TRUE,
   stopifnot(is.numeric(timeout.seconds),
             length(timeout.seconds) == 1,
             timeout.seconds >= 0)
+  stopifnot(is.logical(enable.threads),
+            length(enable.threads) == 1)
   ans <- list(save.state.contributions = save.state.contributions,
               save.prediction.errors = save.prediction.errors,
               bma.method = bma.method,
               oda.options = oda.options,
-              timeout.seconds = timeout.seconds)
+              timeout.seconds = timeout.seconds,
+              enable.threads = enable.threads)
   class(ans) <- "BstsOptions"
   return(ans)
 }

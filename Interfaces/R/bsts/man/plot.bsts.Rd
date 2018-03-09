@@ -1,5 +1,18 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 2.1 of the License, or (at your option) any later version.
+%
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+%
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 \name{plot.bsts}
 \title{Plotting functions for Bayesian structural time series}
@@ -14,6 +27,7 @@
 \alias{PlotDynamicRegression}
 \alias{PlotBstsForecastDistribution}
 \alias{PlotSeasonalEffect}
+\alias{PlotMonthlyAnnualCycle}
 
 \description{Functions to plot the results of a model fit using
   \code{\link{bsts}}.}
@@ -22,7 +36,8 @@
   \method{plot}{bsts}(x, y = c("state", "components", "residuals",
               "coefficients", "prediction.errors",
               "forecast.distribution",
-              "predictors", "size", "dynamic", "seasonal", "help"),
+              "predictors", "size", "dynamic", "seasonal", "monthly",
+              "help"),
       ...)
 
   PlotBstsCoefficients(bsts.object, burn = SuggestBurn(.1, bsts.object),
@@ -65,6 +80,8 @@
                        c("histogram", "ts"), ...)
   PlotSeasonalEffect(bsts.object, nseasons = 7, season.duration = 1,
                      same.scale = TRUE, ylim = NULL, get.season.name = NULL,
+                     burn = SuggestBurn(.1, bsts.object),  ...)
+  PlotMonthlyAnnualCycle(bsts.object, ylim = NULL, same.scale = TRUE,
                      burn = SuggestBurn(.1, bsts.object),  ...)
 }
 
@@ -186,7 +203,12 @@
   predictors included in the model.
 
   \code{\link{PlotSeasonalEffect}} generates an array of plots showing
-  how the distibution of the seasonal effect changes, for each season.
+  how the distibution of the seasonal effect changes, for each season,
+  for models that include a seasonal state component.
+
+  \code{\link{PlotMonthlyAnnualCycle}} produces an array of plots much
+  like \code{\link{PlotSeasonalEffect}}, for models that include a
+  \code{\link{MonthlyAnnualCycle}} state component.
 }
 
 \value{

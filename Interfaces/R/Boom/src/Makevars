@@ -65,7 +65,8 @@ TIMESERIES_SRCS := $(wildcard Models/TimeSeries/*.cpp) \
 
 UTIL_SRCS := $(wildcard cpputil/*.cpp)
 
-CXX_SRCS = ${BART_SRCS} \
+CXX_SRCS = ${R_INTERFACE_SRCS} \
+	 ${BART_SRCS} \
 	${DISTRIBUTION_SRCS} \
 	${GLM_SRCS} \
 	${HIERARCHICAL_SRCS} \
@@ -77,7 +78,6 @@ CXX_SRCS = ${BART_SRCS} \
 	${MODELS_SRCS} \
 	${NUMOPT_SRCS} \
 	${POINTPROCESS_SRCS} \
-        ${R_INTERFACE_SRCS} \
 	${RMATH_SRCS} \
 	${SAMPLERS_SRCS} \
 	${STATS_SRCS} \

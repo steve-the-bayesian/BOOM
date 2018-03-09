@@ -1,5 +1,5 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{quarter}
 
@@ -27,7 +27,7 @@
   Thus Q1-2000 is 100.00, and Q3-2007 is 107.50.  }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

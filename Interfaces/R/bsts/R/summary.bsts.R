@@ -1,3 +1,19 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 summary.bsts <- function(object, burn = SuggestBurn(.1, object), ...) {
   ## Prints a summary of the supplied bsts object.
   ## Args:
@@ -28,17 +44,18 @@ summary.bsts <- function(object, burn = SuggestBurn(.1, object), ...) {
   ##   coefficients: If the original object had a regression
   ##     component, then 'coef' contains a summary of the regression
   ##     coefficients computed using summary.lm.spike.
-
   stopifnot(inherits(object, "bsts"))
   sigma.obs <- object$sigma.obs
   if (!is.null(sigma.obs)) {
+    if (burn > 0) {
+      sigma.obs <- sigma.obs[-(1:burn)]
+    }
     residual.sd <- mean(sigma.obs)
     original.variance <- var(object$original.series, na.rm = TRUE)
     stopifnot(original.variance > 0)
     rsquare <- 1 - residual.sd^2 / original.variance
   }
 
-  ## TODO(stevescott):  consider camel casing this function.
   prediction.errors <- bsts.prediction.errors(object, burn = burn)$in.sample
   prediction.sse <- sum(colMeans(prediction.errors)^2)
   original.series <- as.numeric(object$original.series)

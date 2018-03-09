@@ -1,24 +1,19 @@
-.SetTimeZero <- function(time0, y) {
-  ## Determine the physical date (and time) of the first observation.
-  ## Args:
-  ##   time0:  
-  if (is.null(time0)) {
-    if (is.null(y)) {
-      stop("You must supply time0 if y is missing.")
-    }
-    if (!inherits(y, "zoo")) {
-      ## Note:  an xts object inherits from zoo.
-      stop("You must supply 'time0' if y is not a zoo or xts object.")
-    }
-    times <- index(as.xts(y))
-    tryCatch(time0 <- as.POSIXct(times)[1],
-      error = simpleError(
-        "The index of y could not be converted to POSIXt."))
-  }
-  stopifnot(inherits(time0, "POSIXt"))
-  return(as.POSIXlt(time0))
-}
-###----------------------------------------------------------------------
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 StateSizes <- function(state.specification) {
   ## Returns a vector giving the number of dimensions used by each state
   ## component in the state vector.
@@ -116,4 +111,29 @@ Shorten <- function(words) {
   }
 
   return(words)
+}
+
+.SetTimeZero <- function(time0, y) {
+  ## Args:
+  ##   time0:  A timestamp to use as the answer, or NULL.
+  ##   y: The time series being modeled.  If time0 is NULL and y is of type zoo
+  ##     then the index of y[1] will be used as time0.
+  ##
+  ## Returns:
+  ##   A timestamp of class POSIXt.
+  if (is.null(time0)) {
+    if (is.null(y)) {
+      stop("You must supply time0 if y is missing.")
+    }
+    if (!inherits(y, "zoo")) {
+      ## Note:  an xts object inherits from zoo.
+      stop("You must supply 'time0' if y is not a zoo or xts object.")
+    }
+    times <- index(as.xts(y))
+    tryCatch(time0 <- as.POSIXct(times)[1],
+             error = simpleError(
+               "The index of y could not be converted to POSIXt."))
+  }
+  stopifnot(inherits(time0, "POSIXt"))
+  return(as.POSIXlt(time0))
 }

@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "state_space_poisson_model_manager.h"
 #include "utils.h"
 
@@ -62,6 +78,7 @@ StateSpacePoissonModel * SSPMM::CreateObservationModel(
     } else {
       model_.reset(new StateSpacePoissonModel(predictors.ncol()));
       std::vector<Ptr<StateSpace::AugmentedPoissonRegressionData>> data;
+      data.reserve(NumberOfTimePoints());
       for (int i = 0; i < NumberOfTimePoints(); ++i) {
         data.push_back(new StateSpace::AugmentedPoissonRegressionData);
       }
@@ -134,6 +151,12 @@ StateSpacePoissonModel * SSPMM::CreateObservationModel(
       new StateSpacePoissonPosteriorSampler(
           model_.get(),
           observation_model_sampler));
+
+  if (!Rf_isNull(r_options)
+      && !Rf_asLogical(getListElement(r_options, "enable.threads"))) {
+    sampler->disable_threads();
+  }
+
   model_->set_method(sampler);
   return model_.get();
 }
@@ -157,6 +180,7 @@ void SSPMM::AddDataFromList(SEXP r_data_list) {
 }
 
 int SSPMM::UnpackForecastData(SEXP r_prediction_data) {
+  UnpackForecastTimestamps(r_prediction_data);
   forecast_exposure_ = ToBoomVector(getListElement(
       r_prediction_data, "exposure"));
   int n = forecast_exposure_.size();
@@ -165,8 +189,14 @@ int SSPMM::UnpackForecastData(SEXP r_prediction_data) {
 }
 
 Vector SSPMM::SimulateForecast(const Vector &final_state) {
-  return model_->simulate_forecast(
-      rng(), forecast_predictors_, forecast_exposure_, final_state);
+  if (ForecastTimestamps().empty()) {
+    return model_->simulate_forecast(
+        rng(), forecast_predictors_, forecast_exposure_, final_state);
+  } else {
+    return model_->simulate_multiplex_forecast(
+        rng(), forecast_predictors_, forecast_exposure_, final_state,
+        ForecastTimestamps());
+  }
 }
 
 void SSPMM::SetPredictorDimension(int xdim) {

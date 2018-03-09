@@ -1,5 +1,5 @@
 % Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{add.local.level}
 \alias{AddLocalLevel}
@@ -41,7 +41,7 @@
 
   \item{initial.state.prior}{An object created using
     \code{\link[Boom]{NormalPrior}}, describing the prior distribution
-    of the the initial state vector (at time 1).}
+    of the initial state vector (at time 1).}
 
   \item{sdy}{The standard deviation of the series to be modeled.  This
     will be ignored if \code{y} is provided, or if all the required
@@ -64,7 +64,7 @@
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{

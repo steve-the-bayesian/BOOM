@@ -1,9 +1,22 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include <string>
-#include <r_interface/list_io.hpp>
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/list_io.hpp"
+#include "r_interface/boom_r_tools.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 
@@ -500,9 +513,6 @@ namespace BOOM {
     RMemoryProtector protector;
     SEXP buffer = protector.protect(Rf_alloc3DArray(
         REALSXP, niter, number_of_groups, dim));
-    if (!group_names_.empty()) {
-      set_buffer_group_names(buffer);
-    }
     StoreBuffer(buffer);
     array_view_.reset(data(), Array::index3(niter, number_of_groups, dim));
     return buffer;
@@ -519,7 +529,7 @@ namespace BOOM {
     SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
     Rf_dimnamesgets(buffer, r_dimnames);
   }
-  
+
   void HierarchicalVectorListElement::prepare_to_stream(SEXP object) {
     RealValuedRListIoElement::prepare_to_stream(object);
     RMemoryProtector protector;
@@ -562,6 +572,7 @@ namespace BOOM {
     group_names_ = group_names;
   }
   
+
   void HierarchicalVectorListElement::CheckSize() {
     const std::vector<int> &dims(array_view_.dim());
     if (dims[1] != parameters_.size() ||

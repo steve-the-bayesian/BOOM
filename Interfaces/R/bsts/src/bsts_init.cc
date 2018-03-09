@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "Rinternals.h"        // for SEXP
 
 // for R_registerRoutines and R_CallMethodDef
@@ -24,7 +40,8 @@ SEXP analysis_common_r_predict_bsts_model_(
     SEXP r_bsts_object,
     SEXP r_prediction_data,
     SEXP r_burn,
-    SEXP r_observed_data);
+    SEXP r_observed_data,
+    SEXP r_seed);
 
 SEXP analysis_common_r_bsts_one_step_prediction_errors_(
     SEXP r_bsts_object,
@@ -50,7 +67,7 @@ SEXP analysis_common_r_bsts_fit_mixed_frequency_model_(
 
 static R_CallMethodDef bsts_arg_description[] = {
   CALLDEF(analysis_common_r_fit_bsts_model_, 11),
-  CALLDEF(analysis_common_r_predict_bsts_model_, 4),
+  CALLDEF(analysis_common_r_predict_bsts_model_, 5),
   CALLDEF(analysis_common_r_bsts_one_step_prediction_errors_, 2),
   CALLDEF(analysis_common_r_bsts_aggregate_time_series_, 3),
   CALLDEF(analysis_common_r_bsts_fit_mixed_frequency_model_, 11),

@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "state_space_regression_model_manager.h"
 #include "state_space_gaussian_model_manager.h"
 #include "utils.h"
@@ -7,7 +23,6 @@
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/SpikeSlabDaRegressionSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpaceRegressionSampler.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "cpputil/report_error.hpp"
@@ -53,6 +68,7 @@ StateSpaceRegressionModel * SSRMF::CreateObservationModel(
       // timestamps are non-trivial.
       model_.reset(new StateSpaceRegressionModel(ncol(predictors)));
       std::vector<Ptr<StateSpace::MultiplexedRegressionData>> data;
+      data.reserve(NumberOfTimePoints());
       for (int i = 0; i < NumberOfTimePoints(); ++i) {
         data.push_back(new StateSpace::MultiplexedRegressionData);
       }
@@ -86,6 +102,10 @@ StateSpaceRegressionModel * SSRMF::CreateObservationModel(
     SetRegressionSampler(r_prior, r_options);
     Ptr<StateSpacePosteriorSampler> sampler(
         new StateSpacePosteriorSampler(model_.get()));
+    if (!Rf_isNull(r_options)
+        && !Rf_asLogical(getListElement(r_options, "enable.threads"))) {
+      sampler->disable_threads();
+    }
     model_->set_method(sampler);
   }
 
@@ -105,21 +125,29 @@ void SSRMF::AddDataFromBstsObject(SEXP r_bsts_object) {
           IsObserved(getListElement(r_bsts_object, "original.series")));
 }
 
-void SSRMF::AddDataFromList(SEXP r_observed_data) {
-  AddData(ToBoomVector(getListElement(r_observed_data, "original.series")),
-          ToBoomMatrix(getListElement(r_observed_data, "predictors")),
-          ToVectorBool(getListElement(r_observed_data,
+void SSRMF::AddDataFromList(SEXP r_data_list) {
+  AddData(ToBoomVector(getListElement(r_data_list, "original.series")),
+          ToBoomMatrix(getListElement(r_data_list, "predictors")),
+          ToVectorBool(getListElement(r_data_list,
                                       "response.is.observed")));
 }
 
 int SSRMF::UnpackForecastData(SEXP r_prediction_data) {
   forecast_predictors_ = ToBoomMatrix(getListElement(
       r_prediction_data, "predictors"));
+  UnpackForecastTimestamps(r_prediction_data);
   return forecast_predictors_.nrow();
 }
 
 Vector SSRMF::SimulateForecast(const Vector &final_state) {
-  return model_->simulate_forecast(rng(), forecast_predictors_, final_state);
+  if (ForecastTimestamps().empty()) {
+    return model_->simulate_forecast(rng(), forecast_predictors_, final_state);
+  } else {
+    return model_->simulate_multiplex_forecast(rng(),
+                                               forecast_predictors_,
+                                               final_state,
+                                               ForecastTimestamps());
+  }
 }
 
 void SSRMF::SetRegressionSampler(SEXP r_regression_prior,
@@ -237,7 +265,7 @@ void ErrorSampler::sample_holdout_prediction_errors() {
 HoldoutErrorSampler StateSpaceRegressionModelManager::CreateHoldoutSampler(
     SEXP r_bsts_object,
     int cutpoint,
-    Matrix *errors) {
+    Matrix *prediction_error_output) {
   RListIoManager io_manager;
   Ptr<StateSpaceRegressionModel> model =
       static_cast<StateSpaceRegressionModel *>(CreateModel(
@@ -274,7 +302,7 @@ HoldoutErrorSampler StateSpaceRegressionModelManager::CreateHoldoutSampler(
   return HoldoutErrorSampler(new ErrorSampler(
       model, holdout_response, holdout_predictors,
       Rf_asInteger(getListElement(r_bsts_object, "niter")),
-      errors));
+      prediction_error_output));
 }
 
 }  // namespace bsts

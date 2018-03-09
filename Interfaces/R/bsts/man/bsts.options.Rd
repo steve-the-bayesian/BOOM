@@ -16,7 +16,8 @@ BstsOptions(save.state.contributions = TRUE,
             oda.options = list(
                 fallback.probability = 0.0,
                 eigenvalue.fudge.factor = 0.01),
-            timeout.seconds = Inf)
+            timeout.seconds = Inf,
+            enable.threads = TRUE)
 
 }
 
@@ -65,6 +66,14 @@ BstsOptions(save.state.contributions = TRUE,
     allowed to run.  If the timeout is exceeded the returned object will
     be truncated to the final draw that took place before the timeout
     occurred, as if that had been the requested number of iterations.}
+
+  \item{enable.threads}{Logical. If \code{TRUE} then threads can be used
+    as part of the data augmentation algorithm.  Threads are used to
+    process part of the data augmentation algorithm in parallel,
+    potentially making it faster.  However, there is some overhead
+    involved in using threads, so there is no guarantee.  If
+    \code{FALSE} then single-threaded code will be used.}
+
 }
 
 \value{
@@ -73,7 +82,7 @@ BstsOptions(save.state.contributions = TRUE,
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \keyword{chron}

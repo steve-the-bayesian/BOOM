@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "state_space_logit_model_manager.h"
 #include "utils.h"
 #include "r_interface/prior_specification.hpp"
@@ -43,6 +59,7 @@ StateSpaceLogitModel * StateSpaceLogitModelManager::CreateObservationModel(
       // Nontrivial timestamps.
       model_.reset(new StateSpaceLogitModel(predictors.ncol()));
       std::vector<Ptr<StateSpace::AugmentedBinomialRegressionData>> data;
+      data.reserve(NumberOfTimePoints());
       for (int i = 0; i < NumberOfTimePoints(); ++i) {
         data.push_back(new StateSpace::AugmentedBinomialRegressionData);
       }
@@ -116,10 +133,11 @@ StateSpaceLogitModel * StateSpaceLogitModelManager::CreateObservationModel(
   } else {
     // In the non-regression (or no sampler necessary) case make a
     // spike and slab prior that never includes anything.
+    int dim = model_->observation_model()->xdim();
     observation_model_sampler = new BinomialLogitSpikeSlabSampler(
         model_->observation_model(),
-        new MvnModel(1),
-        new VariableSelectionPrior(Vector(1, 0.0)),
+        new MvnModel(dim),
+        new VariableSelectionPrior(Vector(dim, 0.0)),
         clt_threshold_);
   }
   // Both the observation_model and the actual model_ need to have
@@ -129,6 +147,10 @@ StateSpaceLogitModel * StateSpaceLogitModelManager::CreateObservationModel(
       new StateSpaceLogitPosteriorSampler(
           model_.get(),
           observation_model_sampler));
+  if (!Rf_isNull(r_options)
+      && !Rf_asLogical(getListElement(r_options, "enable.threads"))) {
+    sampler->disable_threads();
+  }
   model_->set_method(sampler);
   return model_.get();
 }
@@ -165,6 +187,7 @@ int StateSpaceLogitModelManager::UnpackForecastData(SEXP r_prediction_data) {
 
 Vector StateSpaceLogitModelManager::SimulateForecast(
     const Vector &final_state) {
+
   return model_->simulate_forecast(rng(),
                                    forecast_predictors_,
                                    forecast_trials_,

@@ -1,3 +1,19 @@
+% Copyright 2018 Google Inc. All Rights Reserved.
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 2.1 of the License, or (at your option) any later version.
+%
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+%
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 \name{compare.bsts.models}
 
 \alias{CompareBstsModels}
@@ -23,7 +39,8 @@ CompareBstsModels(model.list,
                   lwd = 2,
                   xlab = "Time",
                   main = "",
-                  grid = TRUE)
+                  grid = TRUE,
+                  cutpoint = NULL)
 }
 
 \arguments{
@@ -46,6 +63,12 @@ CompareBstsModels(model.list,
   \item{main}{Main title for the plot.}
 
   \item{grid}{Logical.  Should gridlines be drawn in the background?}
+
+  \item{cutpoint}{Either \code{NULL}, or an integer giving the
+    observation number used to define a holdout sample.  Prediction
+    errors occurring after the cutpoint will be true out of sample
+    errors.  If \code{NULL} then all prediction errors are "in sample".
+    See the discussion in \code{\link{bsts.prediction.errors}}.}
 }
 
 \value{
@@ -55,7 +78,7 @@ CompareBstsModels(model.list,
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott  \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{
@@ -69,6 +92,11 @@ CompareBstsModels(model.list,
 
   CompareBstsModels(list(trend = trend.only,
                          "trend and seasonal" = trend.and.seasonal))
+
+  CompareBstsModels(list(trend = trend.only,
+                         "trend and seasonal" = trend.and.seasonal),
+                          cutpoint = 100)
+
 }
 
 \keyword{chron}

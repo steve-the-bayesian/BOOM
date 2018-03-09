@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include <ctime>
 
 #include "model_manager.h"
@@ -12,12 +28,7 @@
 
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "cpputil/report_error.hpp"
-
-// TODO(stevescott): Remove this macro here and below, and switch to always-on
-// threading once b/37439694 is resolved.
-#ifdef STD_THREADS_OKAY
 #include "cpputil/ThreadTools.hpp"
-#endif
 
 extern "C" {
 using BOOM::Vector;
@@ -54,7 +65,7 @@ SEXP analysis_common_r_fit_bsts_model_(
     }
     std::unique_ptr<ModelManager> model_manager(ModelManager::Create(
         family, xdim));
-    Ptr<BOOM::StateSpaceModelBase> model(model_manager->CreateModel(
+    Ptr<BOOM::ScalarStateSpaceModelBase> model(model_manager->CreateModel(
         r_data_list,
         r_state_specification,
         r_prior,
@@ -161,8 +172,10 @@ SEXP analysis_common_r_predict_bsts_model_(
     SEXP r_bsts_object,
     SEXP r_prediction_data,
     SEXP r_burn,
-    SEXP r_observed_data) {
+    SEXP r_observed_data,
+    SEXP r_seed) {
   try {
+    BOOM::RInterface::seed_rng_from_R(r_seed);
     std::unique_ptr<ModelManager> model_manager(
         ModelManager::Create(r_bsts_object));
     return BOOM::ToRMatrix(model_manager->Forecast(
@@ -198,7 +211,6 @@ SEXP analysis_common_r_bsts_one_step_prediction_errors_(
     std::vector<int> cutpoints = BOOM::ToIntVector(r_cutpoints, true);
     std::vector<BOOM::Matrix> prediction_errors(cutpoints.size());
 
-#ifdef STD_THREADS_OKAY
     std::vector<std::future<void>> futures;
     int desired_threads = std::min<int>(
         cutpoints.size(), std::thread::hardware_concurrency() - 1);
@@ -213,14 +225,6 @@ SEXP analysis_common_r_bsts_one_step_prediction_errors_(
     for (int i = 0; i < futures.size(); ++i) {
       futures[i].get();
     }
-#else
-    for (int i = 0; i < cutpoints.size(); ++i) {
-      std::unique_ptr<ModelManager> model_manager(
-          ModelManager::Create(r_bsts_object));
-      model_manager->CreateHoldoutSampler(
-          r_bsts_object, cutpoints[i], &prediction_errors[i])();
-    }
-#endif
 
     BOOM::RMemoryProtector protector;
     SEXP ans = protector.protect(Rf_allocVector(VECSXP, cutpoints.size()));

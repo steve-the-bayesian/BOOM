@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include <string>
 
 #include "model_manager.h"
@@ -77,7 +93,7 @@ ModelManager * ModelManager::Create(const std::string &family_name,  // NOLINT
   return ans;
 }
 
-StateSpaceModelBase * ModelManager::CreateModel(  // NOLINT
+ScalarStateSpaceModelBase * ModelManager::CreateModel(  // NOLINT
     SEXP r_data_list,
     SEXP r_state_specification,
     SEXP r_prior,
@@ -86,7 +102,7 @@ StateSpaceModelBase * ModelManager::CreateModel(  // NOLINT
     bool save_state_contribution,
     bool save_prediction_errors,
     RListIoManager *io_manager) {
-  StateSpaceModelBase *model = CreateObservationModel(
+  ScalarStateSpaceModelBase *model = CreateObservationModel(
       r_data_list,
       r_prior,
       r_options,
@@ -126,7 +142,7 @@ Matrix ModelManager::Forecast(SEXP r_bsts_object,
   Vector final_state;
   SEXP r_state_specfication = getListElement(
       r_bsts_object, "state.specification");
-  StateSpaceModelBase *model = CreateModel(
+  ScalarStateSpaceModelBase *model = CreateModel(
       R_NilValue,
       r_state_specfication,
       R_NilValue,
@@ -160,7 +176,8 @@ Matrix ModelManager::Forecast(SEXP r_bsts_object,
   for (int i = 0; i < iterations_after_burnin; ++i) {
     io_manager.stream();
     if (refilter) {
-      const ScalarKalmanStorage &storage(model->filter());
+      model->light_kalman_filter();
+      ScalarKalmanStorage storage = model->final_kalman_storage();
       Vector state_mean = storage.a;
       SpdMatrix state_variance = storage.P;
       make_contemporaneous(
@@ -177,7 +194,7 @@ Matrix ModelManager::Forecast(SEXP r_bsts_object,
 }
 
 void ModelManager::UnpackDynamicRegressionForecastData(
-    StateSpaceModelBase *model,
+    ScalarStateSpaceModelBase *model,
     SEXP r_state_specification,
     SEXP r_prediction_data) {
   if (Rf_length(r_state_specification) < model->nstate()) {
@@ -210,6 +227,21 @@ void ModelManager::UnpackTimestampInfo(SEXP r_data_list) {
   if (!timestamps_are_trivial_) {
     timestamp_mapping_ = ToIntVector(getListElement(
         r_timestamp_info, "timestamp.mapping"));
+  }
+}
+
+void ModelManager::UnpackForecastTimestamps(SEXP r_prediction_data) {
+  SEXP r_forecast_timestamps = getListElement(
+      r_prediction_data, "timestamps");
+  if (!Rf_isNull(r_forecast_timestamps)) {
+    forecast_timestamps_ = ToIntVector(getListElement(
+        r_forecast_timestamps, "timestamp.mapping"));
+    for (int i = 1; i < forecast_timestamps_.size(); ++i) {
+      if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
+        report_error("Time stamps for multiplex predictions must be "
+                     "in increasing order.");
+      }
+    }
   }
 }
 

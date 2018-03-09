@@ -1,5 +1,18 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 2.1 of the License, or (at your option) any later version.
+%
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+%
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 \alias{predict.bsts}
 \alias{bsts.prediction}
@@ -11,12 +24,15 @@
 \usage{
 \method{predict}{bsts}(object,
         newdata = NULL,
+        timestamps = NULL,
         horizon = 1,
         burn = SuggestBurn(.1, object),
         na.action = na.exclude,
         olddata = NULL,
+        olddata.timestamps = NULL,
         trials.or.exposure = 1,
         quantiles = c(.025, .975),
+        seed = NULL,
         ...)
 }
 
@@ -27,7 +43,7 @@
 
   \item{newdata}{a vector, matrix, or data frame containing the
     predictor variables to use in making the prediction.  This is only
-    required if \code{object} contains a regression compoent.  If a data
+    required if \code{object} contains a regression component.  If a data
     frame, it must include variables with the same names as the data
     used to fit \code{object}.  The first observation in \code{newdata}
     is assumed to be one time unit after the end of the last observation
@@ -37,7 +53,17 @@
     vector.  If \code{newdata} is passed as a matrix it is the caller's
     responsibility to ensure that it contains the correct number of
     columns and that the columns correspond to those in
-    \code{object$coefficients}.  }
+    \code{object$coefficients}.
+  }
+
+  \item{timestamps}{ A vector of time stamps (of the same type as the
+    timestamps used to fit \code{object}), with one per row of
+    \code{newdata} (or element of \code{newdata}, if \code{newdata} is a
+    vector).  The time stamps give the time points as which each
+    prediction is desired.  They must be interpretable as integer (0 or
+    larger) time steps following the last time stamp in \code{object}.
+    If \code{NULL}, then the requested predictions are interpreted as
+    being at 1, 2, 3, ... steps following the training data.  }
 
   \item{horizon}{An integer specifying the number of periods into the
     future you wish to predict.  If \code{object} contains a regression
@@ -74,6 +100,13 @@
     }
   }
 
+  \item{olddata.timestamps}{ A set of timestamps corresponding to the
+    observations supplied in \code{olddata}.  If \code{olddata} is
+    \code{NULL} then this argument is not used.  If \code{olddata} is
+    supplied and this is \code{NULL} then trivial timestamps (1, 2, ...)
+    will be assumed.  Otherwise this argument behaves like the
+    \code{timestamps} argument to the \code{\link{bsts}} function.  }
+
   \item{trials.or.exposure}{For logit or Poisson models, the number of
     binomial trials (or the exposure time) to assume at each time point
     in the forecast period.  This can either be a scalar (if the number
@@ -86,6 +119,9 @@
     upper quantiles to use for the forecast interval estimate.
   }
 
+  \item{seed}{An integer to use as the C++ random seed.  If \code{NULL}
+  then the C++ seed will be set using the clock.}
+  
   \item{\dots}{This is a dummy argument included to match the signature
     of the generic \code{\link{predict}} function.  It is not used.}
 
@@ -130,7 +166,7 @@
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott
 }
 
 \seealso{

@@ -1,3 +1,19 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 PlotSeasonalEffect <- function(bsts.object,
                                nseasons = 7,
                                season.duration = 1,
@@ -93,6 +109,60 @@ PlotSeasonalEffect <- function(bsts.object,
     } else {
       title(main = paste("Season", season))
     }
+  }
+  return(invisible(NULL))
+}
+
+PlotMonthlyAnnualCycle <- function(bsts.object,
+                                   ylim = NULL,
+                                   same.scale = TRUE,
+                                   burn = SuggestBurn(.1, bsts.object),
+                                   ...) {
+  ## For models with a MonthlyAnnualCycle state component, plot the time series
+  ## of January's, February's, etc.
+  ##
+  ## Args:
+  ##   bsts.object:  The bsts model object containing a MonthlyAnnualCycle.
+  ##   ylim:  The limits of the vertical axis.
+  ##   same.scale: Used only if ylim is NULL.  If TRUE then all figures are
+  ##     plotted on the same scale.  If FALSE then each figure is independently
+  ##     scaled.
+  ##   burn: The number of MCMC iterations to be discarded as burn-in.
+  ##   ...:  Extra arguments passed to PlotDynamicDistribution.
+  ##
+  ## Returns:
+  ##   Draws 12 dynamic distribution plots on the current graphics device (one
+  ##   for each month), then returns invisible NULL.
+  effect <- bsts.object$state.contributions[, "Monthly", ]
+  if (burn > 0) {
+    effect <- effect[-(1:burn), , drop = FALSE]
+  }
+  if (is.null(ylim) && same.scale == TRUE) {
+    ylim <- range(effect)
+  }
+  vary.ylim <- is.null(ylim)
+  time <- bsts.object$timestamp.info$regular.timestamps
+  opar <- par(mfrow = c(4, 3))
+  on.exit(par(opar))
+  time.dimension <- ncol(effect)
+  dt <- effect[, 2:time.dimension] - effect[, 1:(time.dimension - 1)]
+  new.month <- c(TRUE, dt[1, ] != 0)
+  time <- time[new.month]
+  effect <- effect[, new.month]
+  for (m in 1:12) {
+    this.month <- months(time) == month.name[m]
+    month.effect <- effect[, this.month]
+    if (vary.ylim) {
+      ylim <- range(month.effect)
+    }
+    dates <- time[this.month]
+    PlotDynamicDistribution(month.effect,
+                            dates,
+                            ylim = ylim,
+                            xlim = range(time),
+                            ...)
+    lines(dates, apply(month.effect, 2, median), col = "green")
+    title(main = month.name[m])
   }
   return(invisible(NULL))
 }

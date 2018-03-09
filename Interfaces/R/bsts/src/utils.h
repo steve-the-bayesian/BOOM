@@ -1,8 +1,21 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-#ifndef ANALYSIS_COMMON_R_BSTS_SRC_UTILS_H_
-#define ANALYSIS_COMMON_R_BSTS_SRC_UTILS_H_
+#ifndef BSTS_SRC_UTILS_H_
+#define BSTS_SRC_UTILS_H_
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
@@ -22,7 +35,7 @@ namespace bsts {
 //     will record (or has already recorded) the MCMC output
 // Returns:
 //   A BOOM smart pointer to a StateModel that can be added to a
-//   StateSpaceModelBase.
+//   ScalarStateSpaceModelBase.
 Ptr<StateModel> CreateStateModel(
     SEXP list_arg, RListIoManager *io_manager);
 
@@ -47,7 +60,7 @@ std::vector<bool> IsObserved(SEXP r_vector);
 //     regression state component to be recorded.
 //   io_manager: The io_manager in charge of building the list
 //     containing the dynamic regression coefficients.
-void RecordDynamicRegression(StateSpaceModelBase * model,
+void RecordDynamicRegression(ScalarStateSpaceModelBase * model,
                              RListIoManager *io_manager);
 
 //======================================================================
@@ -64,7 +77,7 @@ class GeneralStateContributionCallback
     : public MatrixIoCallback {
  public:
   explicit GeneralStateContributionCallback(
-      StateSpaceModelBase *model)
+      ScalarStateSpaceModelBase *model)
       : model_(model),
         has_regression_(-1) {}
 
@@ -90,7 +103,7 @@ class GeneralStateContributionCallback
   }
 
  private:
-  const StateSpaceModelBase *model_;
+  const ScalarStateSpaceModelBase *model_;
   mutable int has_regression_;
 };
 
@@ -100,7 +113,7 @@ class GeneralStateContributionCallback
 // the Kalman filter.
 class PredictionErrorCallback : public VectorIoCallback {
  public:
-  explicit PredictionErrorCallback(StateSpaceModelBase *model)
+  explicit PredictionErrorCallback(ScalarStateSpaceModelBase *model)
       : model_(model) {}
 
   // Each element is a vector of one step ahead prediction errors, so
@@ -114,22 +127,22 @@ class PredictionErrorCallback : public VectorIoCallback {
   }
 
  private:
-  StateSpaceModelBase *model_;
+  ScalarStateSpaceModelBase *model_;
 };
 
 // A callback class for saving log likelihood values.
 class LogLikelihoodCallback : public ScalarIoCallback {
  public:
-  explicit LogLikelihoodCallback(StateSpaceModelBase *model)
+  explicit LogLikelihoodCallback(ScalarStateSpaceModelBase *model)
       : model_(model) {}
   double get_value() const override {
     return model_->log_likelihood();
   }
  private:
-  StateSpaceModelBase *model_;
+  ScalarStateSpaceModelBase *model_;
 };
 
 }  // namespace bsts
 }  // namespace BOOM
 
-#endif  // ANALYSIS_COMMON_R_BSTS_SRC_UTILS_H_
+#endif  // BSTS_SRC_UTILS_H_

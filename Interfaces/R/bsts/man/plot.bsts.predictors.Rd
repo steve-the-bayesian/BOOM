@@ -1,5 +1,5 @@
 % Copyright 2011 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{plot.bsts.predictors}
 \title{Plot the most likely predictors}

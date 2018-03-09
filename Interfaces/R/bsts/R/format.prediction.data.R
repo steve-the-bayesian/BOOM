@@ -1,3 +1,19 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 .ExtractPredictors <- function(
     object,
     newdata,
@@ -85,17 +101,21 @@
 }
 
 .ExtractResponse <- function(object, dataframe, na.action) {
-  Terms <- delete.response(terms(object))
-  bsts.model.frame <- model.frame(Terms,
-                                  dataframe,
-                                  na.action = na.action,
-                                  xlev = object$xlevels)
-  if (!is.null(data.classes <- attr(Terms, "dataClasses"))) {
-    .checkMFClasses(data.classes, bsts.model.frame)
-  }
-  response <- model.response(bsts.model.frame, "any")
-  if (is.matrix(response)) {
-    stopifnot(ncol(response) == 2)
+  if (object$has.regression) {
+    Terms <- delete.response(terms(object))
+    bsts.model.frame <- model.frame(Terms,
+                                    dataframe,
+                                    na.action = na.action,
+                                    xlev = object$xlevels)
+    if (!is.null(data.classes <- attr(Terms, "dataClasses"))) {
+      .checkMFClasses(data.classes, bsts.model.frame)
+    }
+    response <- model.response(bsts.model.frame, "any")
+    if (is.matrix(response)) {
+      stopifnot(ncol(response) == 2)
+    }
+  } else {
+    response <- object$original.series
   }
   return(response)
 }
@@ -132,6 +152,45 @@
     }
   }
   return(prediction.data)
+}
+
+.ExtractPredictionTimestamps <- function(bsts.object,
+                                         newdata,
+                                         timestamps) {
+  ## Args:
+  ##   bsts.object: The bsts object representing the posterior distribution of
+  ##     the model given training data.
+  ##   newdata:  The covariates passed to the predict method.
+  ##   timestamps: Either a vector of timestamps (of the same type used to fit
+  ##     bsts.object), or NULL.
+  ##
+  ## Returns:
+  ##   If 'timestamps' is non-NULL then a list containing the following
+  ##   elements is returned.
+  ##   * timestamps: the time stamps indexing the newdata object
+  ##   * regular.timestamps: A sequence of time stamps beginning with either
+  ##       timestamps[1], or the first time point after the final time stamp in
+  ##       bsts.object, whichever comes first.
+  ##   * timestamp.mapping: A vector with length equal to nrow(newdata) (or
+  ##       length(newdata), if newdata is a vector), giving time stamp of each
+  ##       row (or element) of newdata, measured as the the number of time steps
+  ##       after the final time stamp in bsts.object.
+  ##
+  ## If timestamps is NULL then NULL is returned.
+  if (!is.null(timestamps)) {
+    last.training.time <- max(bsts.object$timestamp.info$regular.timestamps)
+    regular.timestamps <- RegularizeTimestamps(
+        c(last.training.time, timestamps))
+    timestamp.mapping <- zoo::MATCH(timestamps, regular.timestamps) - 1
+    if (timestamps[1] > last.training.time) {
+      regular.timestamps <- regular.timestamps[-1]
+    }
+    return(list(timestamps = timestamps,
+                regular.timestamps = regular.timestamps,
+                timestamp.mapping = as.integer(timestamp.mapping)))
+  } else {
+    return(NULL)
+  }
 }
 
 .FormatPredictionData <- function(
@@ -241,8 +300,26 @@
   return(arg)
 }
 
-.FormatObservedDataForPredictions <- function(bsts.object, olddata, na.action) {
-  ## If an 'olddata' argument is supplied to predict.bsts
+.FormatObservedDataForPredictions <- function(bsts.object, olddata, na.action,
+                                              olddata.timestamps) {
+  ## Ensures correct formatting of an 'olddata' argument supplied to
+  ## predict.bsts.
+  ##
+  ## Args:
+  ##   bsts.object:  The model object produced by bsts.
+  ##   olddata: The object passed as 'olddata' to predict.bsts.  This is often a
+  ##     data frame containing the predictor variables and response, but it
+  ##     might be just a numeric vector if the model contained no regression
+  ##     component.
+  ##   na.action:  What to do about NA's?
+  ##   olddata.timestamps: The timestamps corresponding to the olddata argument.
+  ##     This can be NULL in which case trivial time stamps are assumed.
+  ##
+  ## Returns:
+  ##   A list containing the values of 'response', 'predictors',
+  ##   'response.is.observed', and 'timestamp.info', as expected by the
+  ##   underlying C++ code.  Additional fields may be added for other model
+  ##   families.
   if (bsts.object$has.regression) {
     predictors <- .ExtractPredictors(bsts.object, olddata,
                                      na.action = na.action)
@@ -280,5 +357,8 @@
   } else {
     stop("Unknown model family in .FormatObservedDataForPredictions")
   }
+  observed.data$response.is.observed <- !is.na(observed.data$response)
+  observed.data$timestamp.info <- .ComputeTimestampInfo(
+      observed.data$response, observed.data$predictors, olddata.timestamps)
   return(observed.data)
 }

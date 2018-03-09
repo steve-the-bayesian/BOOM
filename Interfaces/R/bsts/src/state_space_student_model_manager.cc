@@ -1,3 +1,19 @@
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #include "state_space_student_model_manager.h"
 #include "utils.h"
 
@@ -48,6 +64,7 @@ StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
       int xdim = predictors.ncol();
       model_.reset(new StateSpaceStudentRegressionModel(xdim));
       std::vector<Ptr<StateSpace::AugmentedStudentRegressionData>> data;
+      data.reserve(NumberOfTimePoints());
       for (int i = 0; i < NumberOfTimePoints(); ++i) {
         data.push_back(new StateSpace::AugmentedStudentRegressionData);
       }
@@ -110,6 +127,10 @@ StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
         new StateSpaceStudentPosteriorSampler(
             model_.get(),
             observation_model_sampler));
+    if (!Rf_isNull(r_options)
+        && !Rf_asLogical(getListElement(r_options, "enable.threads"))) {
+      sampler->disable_threads();
+    }
     model_->set_method(sampler);
   }
 
@@ -135,7 +156,7 @@ StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
 HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
     SEXP r_bsts_object,
     int cutpoint,
-    Matrix *errors) {
+    Matrix *prediction_error_output) {
   RListIoManager io_manager;
   Ptr<StateSpaceStudentRegressionModel> model =
       static_cast<StateSpaceStudentRegressionModel *>(CreateModel(
@@ -173,7 +194,7 @@ HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
   return HoldoutErrorSampler(new StateSpaceStudentHoldoutErrorSampler(
       model, holdout_response, holdout_predictors,
       Rf_asInteger(getListElement(r_bsts_object, "niter")),
-      errors));
+      prediction_error_output));
 }
 
 void SSSMM::AddDataFromBstsObject(SEXP r_bsts_object) {
@@ -192,6 +213,7 @@ void SSSMM::AddDataFromList(SEXP r_data_list) {
 }
 
 int SSSMM::UnpackForecastData(SEXP r_prediction_data) {
+  UnpackForecastTimestamps(r_prediction_data);
   SEXP r_horizon = getListElement(r_prediction_data, "horizon");
   if (Rf_isNull(r_horizon)) {
     forecast_predictors_ = ToBoomMatrix(getListElement(
@@ -203,7 +225,12 @@ int SSSMM::UnpackForecastData(SEXP r_prediction_data) {
 }
 
 Vector SSSMM::SimulateForecast(const Vector &final_state) {
-  return model_->simulate_forecast(rng(), forecast_predictors_, final_state);
+  if (ForecastTimestamps().empty()) {
+    return model_->simulate_forecast(rng(), forecast_predictors_, final_state);
+  } else {
+    return model_->simulate_multiplex_forecast(
+        rng(), forecast_predictors_, final_state, ForecastTimestamps());
+  }
 }
 
 void SSSMM::AddData(const Vector &response,

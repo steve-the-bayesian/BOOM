@@ -1,5 +1,18 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include <sstream>
 
@@ -54,7 +67,7 @@ namespace {
 // component.
 class StateContributionCallback : public BOOM::MatrixIoCallback {
  public:
-  explicit StateContributionCallback(BOOM::StateSpaceModelBase *model)
+  explicit StateContributionCallback(BOOM::ScalarStateSpaceModelBase *model)
       : model_(model) {}
   int nrow() const override { return model_->nstate(); }
   int ncol() const override { return model_->time_dimension(); }
@@ -66,12 +79,12 @@ class StateContributionCallback : public BOOM::MatrixIoCallback {
     return ans;
   }
  private:
-  BOOM::StateSpaceModelBase *model_;
+  BOOM::ScalarStateSpaceModelBase *model_;
 };
 
 class StateRowCallback : public BOOM::VectorIoCallback {
  public:
-  StateRowCallback(const BOOM::StateSpaceModelBase *model,
+  StateRowCallback(const BOOM::ScalarStateSpaceModelBase *model,
                    int row_number,
                    bool from_front)
       : model_(model), row_number_(row_number), from_front_(from_front) {}
@@ -86,7 +99,7 @@ class StateRowCallback : public BOOM::VectorIoCallback {
   }
 
  private:
-  const BOOM::StateSpaceModelBase *model_;
+  const BOOM::ScalarStateSpaceModelBase *model_;
   int row_number_;
   bool from_front_;
 };
@@ -202,8 +215,10 @@ RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
   model->set_method(
       new BOOM::AggregatedStateSpacePosteriorSampler(model.get()));
 
-  augmented_model->set_method(
-      new BOOM::StateSpacePosteriorSampler(augmented_model.get()));
+  NEW(BOOM::StateSpacePosteriorSampler, augmented_model_sampler)(
+      augmented_model.get());
+  augmented_model_sampler->disable_threads();
+  augmented_model->set_method(augmented_model_sampler);
 
   // We need to add final.state to io_manager last,
   // because we need to know how big the state vector is.

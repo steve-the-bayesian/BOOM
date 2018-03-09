@@ -1,5 +1,18 @@
-# Copyright 2011 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+# Copyright 2011 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 bsts.mixed <- function(target.series,
                        predictors,
@@ -104,8 +117,8 @@ bsts.mixed <- function(target.series,
   ##   'state.specification', relevant information passed to
   ##   the function call, and other supplemental information.
 
-  ## TODO(stevescott): Consider alternatives to the Date class in case
-  ## people want to do more fine-grained time series modeling.
+  ## TODO: Consider alternatives to the Date class in case people want to do
+  ## more fine-grained time series modeling.
   stopifnot(niter > 0)
 
   stopifnot(is.null(seed) || length(seed) == 1)
@@ -181,10 +194,10 @@ bsts.mixed <- function(target.series,
 ##=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 plot.bsts.mixed <- function(x,
                             y = c("state",
-                                  "components",
-                                  "coefficients",
-                                  "predictors",
-                                  "size"),
+                                "components",
+                                "coefficients",
+                                "predictors",
+                                "size"),
                             ...) {
   ## S3 method for plotting bsts.mixed objects.
   ## Args:

@@ -1,5 +1,21 @@
-#ifndef ANALYSIS_COMMON_R_BSTS_SRC_MODEL_MANAGER_H_
-#define ANALYSIS_COMMON_R_BSTS_SRC_MODEL_MANAGER_H_
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
+#ifndef BSTS_SRC_MODEL_MANAGER_H_
+#define BSTS_SRC_MODEL_MANAGER_H_
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
@@ -62,7 +78,7 @@ class ModelManager {
   //     "gaussian", "logit", "poisson", or "student".
   //   xdim: Dimension of the predictors in the observation model
   //     regression.  This can be zero if there are no regressors.
-  static ModelManager * Create(const std::string &family, int xdim);
+  static ModelManager * Create(const std::string &family_name, int xdim);
 
   // Create a model manager by reinstantiating a previously
   // constructed bsts model.
@@ -114,7 +130,7 @@ class ModelManager {
   // Side Effects:
   //   The returned pointer is also held in a smart pointer owned by
   //   the child class.
-  virtual StateSpaceModelBase * CreateModel(
+  virtual ScalarStateSpaceModelBase * CreateModel(
       SEXP r_data_list,
       SEXP r_state_specification,
       SEXP r_prior,
@@ -193,11 +209,25 @@ class ModelManager {
 
   RNG & rng() {return rng_;}
 
+  const std::vector<int> &ForecastTimestamps() {
+    return forecast_timestamps_;
+  }
+
  protected:
   // Checks to see if r_data_list has a field named timestamp.info, and use it
   // to populate the follwoing fields: number_of_time_points_,
   // timestamps_are_trivial_, and timestamp_mapping_.
   void UnpackTimestampInfo(SEXP r_data_list);
+
+  // Checks to see if r_prediction_data (which is an R list) contains an element
+  // with the name 'timestamps', which is a vector of integers giving the number
+  // of observations after the end of the training data for each data point
+  // where a prediction is desired.
+  //
+  // Timestamps must be non-decreasing, and their length must be the same
+  // dimension as the number of rows in the covariate matrix used for
+  // predictions.
+  void UnpackForecastTimestamps(SEXP r_prediction_data);
 
  private:
   // Create the specific StateSpaceModel suitable for the given model
@@ -212,7 +242,7 @@ class ModelManager {
   //   A pointer to the created model.  The pointer is owned by a Ptr
   //   in the the child class, so working with the raw pointer
   //   privately is exception safe.
-  virtual StateSpaceModelBase * CreateObservationModel(
+  virtual ScalarStateSpaceModelBase * CreateObservationModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,
@@ -247,7 +277,7 @@ class ModelManager {
   //     containing the forecast predictors for the dynamic regression
   //     component.
   void UnpackDynamicRegressionForecastData(
-      StateSpaceModelBase *model,
+      ScalarStateSpaceModelBase *model,
       SEXP r_state_specification,
       SEXP r_prediction_data);
 
@@ -271,9 +301,14 @@ class ModelManager {
   // Indicates the time point (in R's 1-based counting system) to which each
   // observation belongs.
   std::vector<int> timestamp_mapping_;
+
+  // Indicates the number of time points past the end of the training data for
+  // each forecast data point.  If data are not multiplexed then
+  // forecast_timestamps_ will be empty.
+  std::vector<int> forecast_timestamps_;
 };
 
 }  // namespace bsts
 }  // namespace BOOM
 
-#endif  // ANALYSIS_COMMON_R_BSTS_SRC_MODEL_MANAGER_H_
+#endif  // BSTS_SRC_MODEL_MANAGER_H_

@@ -1,55 +1,83 @@
+# Copyright 2018 Google LLC. All Rights Reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 predict.bsts <- function(object,
                          newdata = NULL,
+                         timestamps = NULL,
                          horizon = 1,
                          burn = SuggestBurn(.1, object),
                          na.action = na.exclude,
                          olddata = NULL,
+                         olddata.timestamps = NULL,
                          trials.or.exposure = 1,
                          quantiles = c(.025, .975),
+                         seed = NULL,
                          ...) {
   ## Args:
   ##   object:  an object of class 'bsts' created using the function 'bsts'
-  ##   newdata: a vector, matrix, or data frame containing the
-  ##     predictor variables to use in making the prediction.  This is
-  ##     only required if 'object' contains a regression compoent.  If
-  ##     a data frame, it must include variables with the same names
-  ##     as the data used to fit 'object'.  The first observation in
-  ##     newdata is assumed to be one time unit after the end of the
-  ##     last data used in fitting 'object', and the subsequent
-  ##     observations are sequential time points.  If the regression
-  ##     part of 'object' contains only a single predictor then
-  ##     newdata can be a vector.  If 'newdata' is passed as a matrix
-  ##     it is the caller's responsibility to ensure that it contains
-  ##     the correct number of columns and that the columns correspond
-  ##     to those in object$coefficients.
-  ##   horizon: An integer specifying the number of periods into the
-  ##     future you wish to predict.  If 'object' contains a regression
-  ##     component then the forecast horizon is nrow(X) and this
-  ##     argument is not used.
-  ##   burn: An integer describing the number of MCMC iterations in
-  ##     'object' to be discarded as burn-in.  If burn <= 0 then no
-  ##     burn-in period will be discarded.
-  ##   na.action: A function determining what should be done with
-  ##     missing values in newdata.
-  ##   olddata: An optional data frame including variables with the
-  ##     same names as the data used to fit 'object'.  If 'olddata' is
-  ##     missing then it is assumed that the first entry in 'newdata'
-  ##     immediately follows the last entry in the training data for
-  ##     'object'.  If 'olddata' is supplied then it will be filtered
-  ##     to get the distribution of the next state before a prediction
-  ##     is made, and it is assumed that the first entry in 'newdata'
+  ##   newdata: a vector, matrix, or data frame containing the predictor
+  ##     variables to use in making the prediction.  This is only required if
+  ##     'object' contains a regression component.  If a data frame, it must
+  ##     include variables with the same names as the data used to fit 'object'.
+  ##     The first observation in newdata is assumed to be one time unit after
+  ##     the end of the last data used in fitting 'object', and the subsequent
+  ##     observations are sequential time points.  If the regression part of
+  ##     'object' contains only a single predictor then newdata can be a vector.
+  ##     If 'newdata' is passed as a matrix it is the caller's responsibility to
+  ##     ensure that it contains the correct number of columns and that the
+  ##     columns correspond to those in object$coefficients.
+  ##   timestamps: A vector of time stamps (of the same type as the timestamps
+  ##     used to fit 'object'), with one per row of 'newdata' (or element of
+  ##     'newdata', if 'newdata' is a vector).  The time stamps give the time
+  ##     points as which each prediction is desired.  They must be interpretable
+  ##     as integer (0 or larger) time steps following the last time stamp in
+  ##     'object'.  If NULL, then the requested predictions are interpreted as
+  ##     being at 1, 2, 3, ... steps following the training data.
+  ##   horizon: An integer specifying the number of periods into the future you
+  ##     wish to predict.  If 'object' contains a regression component then the
+  ##     forecast horizon is nrow(X) and this argument is not used.
+  ##   burn: An integer describing the number of MCMC iterations in 'object' to
+  ##     be discarded as burn-in.  If burn <= 0 then no burn-in period will be
+  ##     discarded.
+  ##   na.action: A function determining what should be done with missing values
+  ##     in newdata.
+  ##   olddata: An optional data frame including variables with the same names
+  ##     as the data used to fit 'object'.  If 'olddata' is missing then it is
+  ##     assumed that the first entry in 'newdata' immediately follows the last
+  ##     entry in the training data for 'object'.  If 'olddata' is supplied then
+  ##     it will be filtered to get the distribution of the next state before a
+  ##     prediction is made, and it is assumed that the first entry in 'newdata'
   ##     comes immediately after the last entry in 'olddata'.
-  ##   trials.or.exposure: For logit or Poisson models, the number of
-  ##     binomial trials (or the exposure time) to assume at each time
-  ##     point in the forecast period.  This can either be a scalar
-  ##     (if the number of trials is to be the same for each time
-  ##     period), or it can be a vector with length equal to 'horizon'
-  ##     (if the model contains no regression term) or 'nrow(newdata)'
-  ##     if the model contains a regression term.
-  ##   quantiles: A numeric vector of length 2 giving the lower and
-  ##     upper quantiles to use for the forecast interval estimate.
-  ##   ...: Not used.  Present to match the signature of the default
-  ##     predict method.
+  ##   olddata.timestamps: A set of timestamps corresponding to the observations
+  ##     supplied in olddata.  If olddata is not supplied this is not used.  If
+  ##     olddata is supplied and this is NULL then trivial timestamps (1, 2,
+  ##     ...) will be assumed.  Otherwise this argument behaves like the
+  ##     'timestamps' argument to the 'bsts' function.
+  ##   trials.or.exposure: For logit or Poisson models, the number of binomial
+  ##     trials (or the exposure time) to assume at each time point in the
+  ##     forecast period.  This can either be a scalar (if the number of trials
+  ##     is to be the same for each time period), or it can be a vector with
+  ##     length equal to 'horizon' (if the model contains no regression term) or
+  ##     'nrow(newdata)' if the model contains a regression term.
+  ##   quantiles: A numeric vector of length 2 giving the lower and upper
+  ##     quantiles to use for the forecast interval estimate.
+  ##   seed: An integer to use as the C++ random seed.  If NULL then the C++
+  ##     seed will be set using the clock.
+  ##   ...: Not used.  Present to match the signature of the default predict
+  ##     method.
   ##
   ## Returns:
   ##   An object of class 'bsts.prediction', which is a list with the
@@ -65,24 +93,31 @@ predict.bsts <- function(object,
   ##     This is used by the plot method to plot the original series
   ##     and the prediction together.
   stopifnot(inherits(object, "bsts"))
-
   prediction.data <- .FormatPredictionData(object,
                                            newdata,
                                            horizon,
                                            trials.or.exposure,
                                            na.action)
   prediction.data <- .ExtractDynamicRegressionPredictors(
-        prediction.data, object, newdata)
+      prediction.data, object, newdata)
+  prediction.data$timestamps <- .ExtractPredictionTimestamps(
+      object, newdata, timestamps)
   stopifnot(is.numeric(burn), length(burn) == 1, burn < object$niter)
   if (!is.null(olddata)) {
-    olddata <- .FormatObservedDataForPredictions(object, olddata, na.action)
+    olddata <- .FormatObservedDataForPredictions(object, olddata, na.action,
+                                                 olddata.timestamps)
   }
 
+  stopifnot(is.null(seed) || length(seed) == 1)
+  if (!is.null(seed)) {
+    seed <- as.integer(seed)
+  }
   predictive.distribution <- .Call("analysis_common_r_predict_bsts_model_",
                                    object,
                                    prediction.data,
                                    burn,
                                    olddata,
+                                   seed = seed,
                                    PACKAGE = "bsts")
 
   ans <- list("mean" = colMeans(predictive.distribution),
