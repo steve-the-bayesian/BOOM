@@ -19,7 +19,7 @@
 #ifndef BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
 #define BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
 
-#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
+#include "Models/StateSpace/Filters/KalmanStorage.hpp"
 #include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
