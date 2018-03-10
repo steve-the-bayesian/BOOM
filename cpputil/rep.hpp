@@ -21,9 +21,8 @@
 #define BOOM_REP_HPP
 #include "LinAlg/Vector.hpp"
 
-
-namespace BOOM{
-  Vector rep(const Vector & x, uint n);
-  inline Vector rep(double x, uint n){ return Vector(n,x);}
-}
-#endif// BOOM_REP_HPP
+namespace BOOM {
+  Vector rep(const Vector& x, uint n);
+  inline Vector rep(double x, uint n) { return Vector(n, x); }
+}  // namespace BOOM
+#endif  // BOOM_REP_HPP

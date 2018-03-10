@@ -21,8 +21,8 @@
 #define BOOM_NUMERICAL_DERIVATIVES_HPP_
 
 #include <functional>
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
 
@@ -53,12 +53,12 @@ namespace BOOM {
 
     // Second partial derivative of f with respect to x[i] and x[j].
     // Separate step sizes are used.
-    double scalar_second_derivative(
-        const Vector &x, int i, double hi, int j, double hj) const;
+    double scalar_second_derivative(const Vector &x, int i, double hi, int j,
+                                    double hj) const;
 
     // Second partial derivative of f with respect to x[i].
-    double homogeneous_scalar_second_derivative(
-        const Vector &x, int pos, double h) const;
+    double homogeneous_scalar_second_derivative(const Vector &x, int pos,
+                                                double h) const;
 
     Target f_;
   };
@@ -99,7 +99,6 @@ namespace BOOM {
     Mapping inverse_transformation_;
   };
 
-
 }  // namespace BOOM
 
-#endif //  BOOM_NUMERICAL_DERIVATIVES_HPP_
+#endif  //  BOOM_NUMERICAL_DERIVATIVES_HPP_

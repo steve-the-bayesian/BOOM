@@ -22,12 +22,12 @@
 #include <sstream>
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  inline void nyi(const std::string & thing){
+  inline void nyi(const std::string& thing) {
     std::ostringstream err;
     err << thing << " is not yet implemented.\n";
     report_error(err.str());
   }
-}
-#endif // BOOM_NYI_HPP
+}  // namespace BOOM
+#endif  // BOOM_NYI_HPP

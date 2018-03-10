@@ -20,8 +20,8 @@
 #ifndef BOOM_JACOBIAN_CHECKER_HPP_
 #define BOOM_JACOBIAN_CHECKER_HPP_
 
-#include <memory>
 #include <functional>
+#include <memory>
 #include "TargetFun/Transformation.hpp"
 #include "numopt/NumericalDerivatives.hpp"
 
@@ -45,8 +45,7 @@ namespace BOOM {
     //     analytic version match.
     JacobianChecker(
         const std::function<Vector(const Vector &)> &inverse_transformation,
-        const std::shared_ptr<Jacobian> &analytic_jacobian,
-        double epsilon);
+        const std::shared_ptr<Jacobian> &analytic_jacobian, double epsilon);
 
     // The following functions return 'true' if the analytic and
     // numeric Jacobians match, and 'false' if they don't.
@@ -84,13 +83,12 @@ namespace BOOM {
     bool check_logdet_Hessian(const Vector &new_parameterization);
 
    private:
-    std::function<Vector(const Vector &) > inverse_transformation_;
+    std::function<Vector(const Vector &)> inverse_transformation_;
     NumericJacobian numeric_jacobian_;
     std::shared_ptr<Jacobian> analytic_jacobian_;
     double epsilon_;
   };
 
-
 }  // namespace BOOM
 
-#endif //  BOOM_JACOBIAN_CHECKER_HPP_
+#endif  //  BOOM_JACOBIAN_CHECKER_HPP_

@@ -17,32 +17,29 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-
 #include "distributions/rng.hpp"
-#include "distributions.hpp"
-#include "cpputil/math_utils.hpp"
 #include <ctime>
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  unsigned long seed_rng(RNG &rng){
+  unsigned long seed_rng(RNG &rng) {
     long ans = 0;
-    while(ans<=2){
+    while (ans <= 2) {
       double u = runif_mt(rng) * std::numeric_limits<long>::max();
       ans = lround(u);
     }
     return ans;
   }
 
-  unsigned long seed_rng(){
-    return seed_rng(GlobalRng::rng);
-  }
+  unsigned long seed_rng() { return seed_rng(GlobalRng::rng); }
 
   RNG GlobalRng::rng(8675309);
 
-  void GlobalRng::seed_with_timestamp(){
+  void GlobalRng::seed_with_timestamp() {
     long seed = static_cast<long>(time(NULL));
     rng.seed(seed);
   }
 
-}
+}  // namespace BOOM

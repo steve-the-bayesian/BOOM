@@ -19,21 +19,22 @@
 #ifndef BOOM_PARSE_RANGE_HPP
 #define BOOM_PARSE_RANGE_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace BOOM{
+namespace BOOM {
 
   // returns a
 
   std::vector<unsigned int> parse_range(const std::string &s);
 
-  class RangeParser{
-  public:
+  class RangeParser {
+   public:
     typedef std::string::size_type sz;
     RangeParser();
     std::vector<unsigned int> operator()(const std::string &);
-  private:
+
+   private:
     void check_range();
     void find_block();
     void parse_block();
@@ -43,6 +44,5 @@ namespace BOOM{
     std::string block;
   };
 
-
-}
-#endif // BOOM_PARSE_RANGE_HPP
+}  // namespace BOOM
+#endif  // BOOM_PARSE_RANGE_HPP

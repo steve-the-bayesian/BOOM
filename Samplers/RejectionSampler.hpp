@@ -20,8 +20,8 @@
 #ifndef BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
 #define BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
 
-#include <functional>
 #include <cstdint>
+#include <functional>
 #include "Samplers/DirectProposal.hpp"
 
 namespace BOOM {
@@ -66,4 +66,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
+#endif  //  BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_

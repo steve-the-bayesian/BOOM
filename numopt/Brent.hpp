@@ -22,9 +22,9 @@
 
 #include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-// One dimensional function minimization using Brent's method.
+  // One dimensional function minimization using Brent's method.
   class BrentMinimizer {
    public:
     BrentMinimizer(const ScalarTarget &target);
@@ -32,10 +32,11 @@ namespace BOOM{
     void minimize(double starting_value, double second_candidate);
     void minimize(double starting_value);
 
-    double minimizing_x()const;
-    double minimum_value()const;
+    double minimizing_x() const;
+    double minimum_value() const;
 
     void set_tolerance(double tol);
+
    private:
     ScalarTarget target_;
     double minimizing_x_;
@@ -49,15 +50,16 @@ namespace BOOM{
     void maximize(double starting_value);
     void maximize(double starting_value, double second_candidate);
 
-    double maximizing_x()const;
-    double maximum_value()const;
+    double maximizing_x() const;
+    double maximum_value() const;
 
     void set_tolerance(double tol);
+
    private:
     ScalarNegation f_;
     BrentMinimizer minimizer_;
   };
 
-}
+}  // namespace BOOM
 
-#endif // BOOM_BRENT_MINIMIZER_HPP_
+#endif  // BOOM_BRENT_MINIMIZER_HPP_

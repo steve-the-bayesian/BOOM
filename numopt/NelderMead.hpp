@@ -20,10 +20,10 @@
 #ifndef BOOM_NELDER_MEAD_HPP_
 #define BOOM_NELDER_MEAD_HPP_
 
-#include "numopt.hpp"
 #include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class NelderMeadMinimizer {
    public:
     NelderMeadMinimizer(const Target &f);
@@ -48,23 +48,23 @@ namespace BOOM{
     void set_evaluation_limit(int number_of_evalutations);
 
     // The minimum value obtained by the Nelder Mead algorithm.
-    double minimum()const;
+    double minimum() const;
 
     // The value of x that achieves the minimum.
-    const Vector &minimizing_value()const;
+    const Vector &minimizing_value() const;
 
     // Returns true if the requested level of precision was obtained
     // in less than the maximum number of function evalutations.
-    bool success()const;
+    bool success() const;
 
     // The error message produced, if any.
-    std::string error_message()const;
+    std::string error_message() const;
 
     // The number of times the algorithm was restarted.
-    int number_of_restarts()const;
+    int number_of_restarts() const;
 
     // The number of times the function was evaluated.
-    int number_of_evaluations()const;
+    int number_of_evaluations() const;
 
    private:
     Target f_;
@@ -93,17 +93,18 @@ namespace BOOM{
     void set_precision(double precision);
     void set_evaluation_limit(int number_of_evalutations);
 
-    double minimum()const;
-    const Vector &minimizing_value()const;
-    bool success()const;
-    std::string error_message()const;
-    int number_of_restarts()const;
-    int number_of_evaluations()const;
+    double minimum() const;
+    const Vector &minimizing_value() const;
+    bool success() const;
+    std::string error_message() const;
+    int number_of_restarts() const;
+    int number_of_evaluations() const;
+
    private:
     Negate target_;
     NelderMeadMinimizer minimizer_;
   };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_NELDER_MEAD_HPP_

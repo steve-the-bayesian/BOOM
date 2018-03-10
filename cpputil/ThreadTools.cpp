@@ -30,9 +30,8 @@ namespace BOOM {
   bool ThreadSafeTaskQueue::wait_and_pop(MoveOnlyTaskWrapper &task,
                                          std::chrono::milliseconds timeout) {
     std::unique_lock<std::mutex> lock(task_queue_mutex_);
-    new_work_.wait_for(lock,
-                       timeout,
-                       [this](){return !task_queue_.empty();});
+    new_work_.wait_for(lock, timeout,
+                       [this]() { return !task_queue_.empty(); });
     if (!task_queue_.empty()) {
       task = std::move(task_queue_.front());
       task_queue_.pop();
@@ -47,17 +46,13 @@ namespace BOOM {
     return task_queue_.empty();
   }
 
-  ThreadWorkerPool::ThreadWorkerPool(int number_of_threads)
-      : done_(false)
-  {
+  ThreadWorkerPool::ThreadWorkerPool(int number_of_threads) : done_(false) {
     if (number_of_threads > 0) {
       add_threads(number_of_threads);
     }
   }
 
-  ThreadWorkerPool::~ThreadWorkerPool() {
-    done_ = true;
-  }
+  ThreadWorkerPool::~ThreadWorkerPool() { done_ = true; }
 
   void ThreadWorkerPool::add_threads(int number_of_threads) {
     try {

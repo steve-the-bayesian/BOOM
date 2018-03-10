@@ -19,13 +19,13 @@
 #include "cpputil/str2d.hpp"
 #include <sstream>
 
-namespace BOOM{
+namespace BOOM {
   using namespace std;
   using std::string;
-  double str2d(const string &s){
+  double str2d(const string &s) {
     istringstream str(s);
     double ans;
     str >> ans;
     return ans;
   }
-}
+}  // namespace BOOM

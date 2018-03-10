@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <vector>
 #include <cmath>
+#include <vector>
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // A regular sequence of data.
   // Args:
   //   from: The value of the first element in the sequence.
@@ -34,29 +34,27 @@ namespace BOOM{
   //
   // Returns:
   //   A vector of the requested type, containing the sequence values.
-  template<class NUMERIC>
-  std::vector<NUMERIC> seq(const NUMERIC &from,
-                           const NUMERIC &to,
+  template <class NUMERIC>
+  std::vector<NUMERIC> seq(const NUMERIC &from, const NUMERIC &to,
                            const NUMERIC &by = 1) {
     std::vector<NUMERIC> ans(1, from);
     if (from == to) {
       return ans;
     }
     int sign = to > from ? 1 : -1;
-    if ( (sign > 0 && by < 0) || (sign < 0 && by > 0) || by == 0) {
+    if ((sign > 0 && by < 0) || (sign < 0 && by > 0) || by == 0) {
       std::ostringstream err;
-      err << "Illegal combination of arguments.  You can't get from "
-          << from << " to " << to << " by adding increments of "
-          << by << "." << std::endl;
+      err << "Illegal combination of arguments.  You can't get from " << from
+          << " to " << to << " by adding increments of " << by << "."
+          << std::endl;
       report_error(err.str());
     }
-    size_t space_needed = static_cast<size_t>(1u + floor(
-        fabs(double(to - from) / by)));
+    size_t space_needed =
+        static_cast<size_t>(1u + floor(fabs(double(to - from) / by)));
     ans.reserve(space_needed);
     while (true) {
       NUMERIC tmp = ans.back() + by;
-      if ((sign == 1 && tmp > to)
-          || (sign == -1 && tmp < to)) {
+      if ((sign == 1 && tmp > to) || (sign == -1 && tmp < to)) {
         return ans;
       } else {
         ans.push_back(tmp);

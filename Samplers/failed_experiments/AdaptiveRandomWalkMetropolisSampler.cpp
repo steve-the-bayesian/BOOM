@@ -22,15 +22,12 @@
 namespace BOOM {
 
   AdaptiveRandomWalkMetropolisSampler::AdaptiveRandomWalkMetropolisSampler(
-      const LogDensity &log_density,
-      double smoothing_weight_on_past,
-      RNG *rng)
+      const LogDensity &log_density, double smoothing_weight_on_past, RNG *rng)
       : Sampler(rng),
         log_density_(log_density),
         smoothing_weight_(smoothing_weight_on_past),
         smoothed_sum_of_squares_(0),
-        smoothed_sample_size_(0)
-  {}
+        smoothed_sample_size_(0) {}
 
   Vector AdaptiveRandomWalkMetropolisSampler::draw(const Vector &old) {
     if (smoothed_sum_of_squares_.nrow() == 0) {
@@ -58,12 +55,11 @@ namespace BOOM {
       Vector delta = cand - old;
       smoothed_sum_of_squares_ *= smoothing_weight_;
       smoothed_sum_of_squares_.add_outer(delta, 1 - smoothing_weight_);
-      smoothed_sample_size_ *=  smoothing_weight_;
+      smoothed_sample_size_ *= smoothing_weight_;
       smoothing_weight_ += (1 - smoothing_weight_);
     } else {
       smoothed_sum_of_squares_ *= smoothing_weight_;
     }
   }
-  
-}  // namespace BOOM
 
+}  // namespace BOOM

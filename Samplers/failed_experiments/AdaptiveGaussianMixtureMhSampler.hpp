@@ -19,12 +19,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/SpdMatrix.hpp"
-#include "Models/MvnBase.hpp"
-#include "Samplers/Sampler.hpp"
 #include <functional>
 #include <vector>
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Models/MvnBase.hpp"
+#include "Samplers/Sampler.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
@@ -32,8 +32,7 @@ namespace BOOM {
   // An 'independence Metropolis-Hastings' sampler, where the proposal
   // distribution is a mixture of Gaussians selected to approximate the
   // target density.
-  class AdaptiveGaussianMixtureMhSampler
-      : public Sampler {
+  class AdaptiveGaussianMixtureMhSampler : public Sampler {
    public:
     typedef std::function<double(const Vector &)> LogDensity;
     AdaptiveGaussianMixtureMhSampler(const LogDensity &log_density,
@@ -43,24 +42,19 @@ namespace BOOM {
     double log_proposal_density(const Vector &x) const;
     Vector simulate_proposal();
 
-    // 
-    void set_initial_candidate_points(
-        const std::vector<Vector> &candidates);
+    //
+    void set_initial_candidate_points(const std::vector<Vector> &candidates);
 
-    int number_of_components() const {
-      return mixing_weights_.size();
-    }
+    int number_of_components() const { return mixing_weights_.size(); }
 
-    const Vector &mixing_weights() const {
-      return mixing_weights_;
-    }
+    const Vector &mixing_weights() const { return mixing_weights_; }
 
     void set_shared_variance(const SpdMatrix &variance) {
       shared_variance_ = variance;
       shared_precision_ = variance.inv();
       ldsi_ = shared_precision_.logdet();
     }
-    
+
    private:
     // Recompute the mixing weights for the proposal distribution, leaving the
     // variance and means unchanged.  This also recomputes the estimated log
@@ -80,15 +74,13 @@ namespace BOOM {
     //   "density_envelope_".
     bool candidate_poorly_supported(double log_density,
                                     double log_proposal_density) const;
-    
+
     // Start with a single candidate.  Assign a new cluster when logp(candidate)
     // - logp(mode) exceeds logq(candidate) - logq(mode) (to within a fudge
     // factor).
-    void update_proposal_distribution(
-        const Vector &x,
-        double log_density_value,
-        double log_proposal_density_value);
-                                      
+    void update_proposal_distribution(const Vector &x, double log_density_value,
+                                      double log_proposal_density_value);
+
     // Initialize an empty proposal distribution as a single component normal
     // mixture with mean set to the starting point, and variance proportional to
     // the identity.
@@ -113,11 +105,11 @@ namespace BOOM {
     // their associated log target densities.
     std::vector<Vector> candidates_;
     Vector log_density_values_;
-    
+
     // The amount by which the target density is allowed to exceed the proposal
     // density without requiring a new mixture to be added.
     double density_envelope_;
-    
+
     std::vector<MvnSuf> mixture_sufficient_statistics_;
     std::vector<Vector> mixture_means_;
     SpdMatrix shared_precision_;
@@ -126,7 +118,7 @@ namespace BOOM {
     Vector mixing_weights_;
     Vector log_mixing_weights_;
   };
-  
+
 }  // namespace BOOM
 
-#endif //  BOOM_ADAPTIVE_GAUSSIAN_MIXTURE_MH_SAMPLER_HPP_
+#endif  //  BOOM_ADAPTIVE_GAUSSIAN_MIXTURE_MH_SAMPLER_HPP_

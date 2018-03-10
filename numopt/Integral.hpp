@@ -21,19 +21,17 @@
 #define BOOM_NUMERICAL_INTEGRAL_HPP_
 
 #include <functional>
-#include "cpputil/math_utils.hpp"
 #include <vector>
+#include "cpputil/math_utils.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class Integral{
+  class Integral {
    public:
     typedef std::function<double(double)> Fun;
     Integral(const Fun &integrand,
              double lower_limit = BOOM::negative_infinity(),
-             double upper_limit = BOOM::infinity(),
-             int iwork_limit=100
-             );
+             double upper_limit = BOOM::infinity(), int iwork_limit = 100);
 
     void set_work_vector_size(int lenw);
     void set_absolute_epsilon(double eps);
@@ -43,16 +41,17 @@ namespace BOOM{
     double integrate();
 
     // the following are available after calling integrate:
-    double absolute_error()const;
-    int number_of_function_evaluations()const;
-    int number_of_partitions()const;
-    int error_code()const;
-    std::string error_message()const;
+    double absolute_error() const;
+    int number_of_function_evaluations() const;
+    int number_of_partitions() const;
+    int error_code() const;
+    std::string error_message() const;
 
     std::string debug_string() const;
+
    private:
-    Fun f_;               // integrand
-    double lo_, hi_;      // limits of integration
+    Fun f_;           // integrand
+    double lo_, hi_;  // limits of integration
 
     // everything below this point is a variable to be passed to the
     // fortran code
@@ -71,5 +70,5 @@ namespace BOOM{
     int error_code_;
   };
 
-}
-#endif // BOOM_NUMERICAL_INTEGRAL_HPP_
+}  // namespace BOOM
+#endif  // BOOM_NUMERICAL_INTEGRAL_HPP_

@@ -21,9 +21,9 @@
 #define BOOM_PARAM_FILE_IO_MANAGER_HPP_
 
 #include <deque>
+#include <memory>
 #include <string>
 #include "Models/ParamTypes.hpp"
-#include <memory>
 
 namespace BOOM {
 
@@ -136,11 +136,11 @@ namespace BOOM {
    private:
     // There is one element in io_ for each parameter added to the
     // IoManager.
-    std::vector<std::shared_ptr<
-                  ParameterFileIO::SingleParameterIoManager> > io_;
+    std::vector<std::shared_ptr<ParameterFileIO::SingleParameterIoManager> >
+        io_;
     int buffer_size_in_iterations_;
   };
 
 }  // namespace BOOM
 
-#endif // BOOM_PARAM_FILE_IO_MANAGER_HPP_
+#endif  // BOOM_PARAM_FILE_IO_MANAGER_HPP_

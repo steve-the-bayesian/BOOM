@@ -17,19 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Samplers/SliceSampler.hpp"
+#include <cassert>
+#include <cmath>
+#include <stdexcept>
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
-#include "stats/moments.hpp"  // for mean()
 #include "distributions.hpp"
-#include <cmath>
-#include <cassert>
-#include <stdexcept>
+#include "stats/moments.hpp"  // for mean()
 
 namespace BOOM {
   SliceSampler::SliceSampler(const Func &log_density, bool Unimodal)
-      : unimodal_(Unimodal),
-        logp_(log_density)
-  {
+      : unimodal_(Unimodal), logp_(log_density) {
     hi_ = lo_ = scale_ = 1.0;
   }
 
@@ -78,7 +76,7 @@ namespace BOOM {
 
   void SliceSampler::set_random_direction() {
     random_direction_.resize(last_position_.size());
-    for(uint i = 0; i < random_direction_.size(); ++i) {
+    for (uint i = 0; i < random_direction_.size(); ++i) {
       random_direction_[i] = scale_ * rnorm();
     }
   }
@@ -91,8 +89,9 @@ namespace BOOM {
     double old = value;
     double &p(upper ? logphi_ : logplo_);
     if (value <= 0.0) {
-      report_error("The slice sampler has collapsed.  Initial value "
-                   "may be on the boundary of the parameter space.");
+      report_error(
+          "The slice sampler has collapsed.  Initial value "
+          "may be on the boundary of the parameter space.");
     }
     // Double the value of the endpoint, unless doing so would produce
     // an infinity.
@@ -152,7 +151,7 @@ namespace BOOM {
     initialize();
     find_limits();
     Vector candidate;
-    double logp_candidate = log_p_slice_ -1;
+    double logp_candidate = log_p_slice_ - 1;
     do {
       double lambda = runif_mt(rng(), -lo_, hi_);
       candidate = last_position_ + lambda * random_direction_;

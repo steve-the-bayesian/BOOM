@@ -19,14 +19,14 @@
 #ifndef BOOM_DEFAULT_VNAMES_HPP
 #define BOOM_DEFAULT_VNAMES_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 #include "BOOM.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // produces default names for a set of variables of a given size
 
-  std::vector<string> default_vnames(uint sz, int indx_start=0);
-}
-#endif// BOOM_DEFAULT_VNAMES_HPP
+  std::vector<string> default_vnames(uint sz, int indx_start = 0);
+}  // namespace BOOM
+#endif  // BOOM_DEFAULT_VNAMES_HPP

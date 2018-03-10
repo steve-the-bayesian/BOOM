@@ -19,19 +19,14 @@
 #include "cpputil/Redirector.hpp"
 #include <iostream>
 
-namespace BOOM{
+namespace BOOM {
 
   using std::ostream;
   using std::streambuf;
-  Redirector::Redirector(ostream & from, ostream & to)
-    : from_buf_(from.rdbuf()),
-      to_buf_(to.rdbuf()),
-      from_(&from)
-    {
-      from_->rdbuf(to_buf_);
-    }
+  Redirector::Redirector(ostream& from, ostream& to)
+      : from_buf_(from.rdbuf()), to_buf_(to.rdbuf()), from_(&from) {
+    from_->rdbuf(to_buf_);
+  }
 
-  Redirector::~Redirector(){
-      from_->rdbuf(from_buf_);
-    }
-}
+  Redirector::~Redirector() { from_->rdbuf(from_buf_); }
+}  // namespace BOOM

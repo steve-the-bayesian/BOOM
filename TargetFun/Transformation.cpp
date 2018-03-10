@@ -23,9 +23,7 @@
 
 namespace BOOM {
 
-  Jacobian::Jacobian()
-      : original_parameterization_preferred_(true)
-  {}
+  Jacobian::Jacobian() : original_parameterization_preferred_(true) {}
 
   void Jacobian::prefer_new_parameterization() {
     original_parameterization_preferred_ = false;
@@ -65,8 +63,7 @@ namespace BOOM {
   }
 
   void Jacobian::transform_second_order_gradient(
-      SpdMatrix &working_hessian,
-      const Vector &original_gradient) {
+      SpdMatrix &working_hessian, const Vector &original_gradient) {
     int dim = original_gradient.size();
     for (int r = 0; r < dim; ++r) {
       for (int s = r; s < dim; ++s) {
@@ -79,18 +76,15 @@ namespace BOOM {
     working_hessian.reflect();
   }
 
-  Transformation::Transformation(
-      const Target &log_density_old_parameterization,
-      const Mapping &inverse_mapping,
-      Jacobian *jacobian)
+  Transformation::Transformation(const Target &log_density_old_parameterization,
+                                 const Mapping &inverse_mapping,
+                                 Jacobian *jacobian)
       : logp_original_scale_(log_density_old_parameterization),
         inverse_mapping_(inverse_mapping),
-        jacobian_(jacobian)
-  {}
+        jacobian_(jacobian) {}
 
   double Transformation::operator()(const Vector &new_parameterization,
-                                    Vector &gradient,
-                                    Matrix &Hessian,
+                                    Vector &gradient, Matrix &Hessian,
                                     uint nderiv) const {
     Vector original_parameterization = inverse_mapping_(new_parameterization);
     int dim = original_parameterization.size();
@@ -106,10 +100,7 @@ namespace BOOM {
     }
 
     double ans = logp_original_scale_(
-        original_parameterization,
-        original_gradient,
-        original_Hessian,
-        nderiv);
+        original_parameterization, original_gradient, original_Hessian, nderiv);
 
     if (nderiv > 0 && !original_gradient.all_finite()) {
       report_error("Illegal values in original gradient.");
@@ -119,8 +110,7 @@ namespace BOOM {
     }
 
     if (jacobian_->original_parameterization_preferred()) {
-      jacobian_->evaluate_original_parameterization(
-          original_parameterization);
+      jacobian_->evaluate_original_parameterization(original_parameterization);
     } else {
       jacobian_->evaluate_new_parameterization(new_parameterization);
     }
@@ -132,8 +122,8 @@ namespace BOOM {
         report_error("Illegal values in transformed gradient.");
       }
       if (nderiv > 1) {
-        Hessian = jacobian_->transform_Hessian(
-            original_gradient, original_Hessian, true);
+        Hessian = jacobian_->transform_Hessian(original_gradient,
+                                               original_Hessian, true);
         if (!Hessian.all_finite()) {
           report_error("Illegal values in transformed Hessian.");
         }
@@ -155,8 +145,7 @@ namespace BOOM {
   }
 
   double Transformation::operator()(const Vector &new_parameterization,
-                                    Vector &gradient,
-                                    Matrix &Hessian) const {
+                                    Vector &gradient, Matrix &Hessian) const {
     return (*this)(new_parameterization, gradient, Hessian, 2);
   }
 

@@ -20,10 +20,10 @@
 #ifndef BOOM_POLYNOMIAL_HPP_
 #define BOOM_POLYNOMIAL_HPP_
 
-#include "LinAlg/Vector.hpp"
 #include <complex>
+#include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class Polynomial {
    public:
@@ -35,17 +35,17 @@ namespace BOOM{
     // Otherwise it is
     //
     // coef[0]*x^n + coef[1]*x^{n-1} + ... + coef[n-1]*x + coef[n]
-    Polynomial(const Vector & coef, bool ascending = true);
+    Polynomial(const Vector &coef, bool ascending = true);
 
-    int degree()const;
-    double operator()(double x)const;
-    Complex operator()(Complex z)const;
+    int degree() const;
+    double operator()(double x) const;
+    Complex operator()(Complex z) const;
 
     std::vector<Complex> roots();
     std::vector<double> real_roots();
-    std::ostream & print(std::ostream &out)const;
+    std::ostream &print(std::ostream &out) const;
 
-    const Vector &coefficients() const {return coefficients_;}
+    const Vector &coefficients() const { return coefficients_; }
 
     bool operator==(const Polynomial &p2) const {
       return coefficients_ == p2.coefficients_;
@@ -53,7 +53,7 @@ namespace BOOM{
     bool operator!=(const Polynomial &p2) const {
       return coefficients_ != p2.coefficients_;
     }
-    
+
    private:
     void find_roots();
 
@@ -65,7 +65,7 @@ namespace BOOM{
     Vector roots_imag_;
   };
 
-  inline std::ostream & operator<<(std::ostream &out, const Polynomial &p){
+  inline std::ostream &operator<<(std::ostream &out, const Polynomial &p) {
     return p.print(out);
   }
 
@@ -73,8 +73,6 @@ namespace BOOM{
   Polynomial operator-(const Polynomial &p1, const Polynomial &p2);
   Polynomial operator*(const Polynomial &p1, const Polynomial &p2);
 
+}  // namespace BOOM
 
-  
-}
-
-#endif //  BOOM_POLYNOMIAL_HPP_
+#endif  //  BOOM_POLYNOMIAL_HPP_

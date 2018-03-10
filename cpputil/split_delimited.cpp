@@ -19,26 +19,26 @@
 #include <string>
 #include <vector>
 
-namespace BOOM{
+namespace BOOM {
   using namespace std;
   using std::string;
 
-  vector<string> split_delimited(const string &s, const string &delims){
+  vector<string> split_delimited(const string &s, const string &delims) {
     vector<string> ans;
     typedef std::string::size_type sz;
-    sz b=0;
-    bool done=false;
+    sz b = 0;
+    bool done = false;
 
-    while(!done){
+    while (!done) {
       sz e = s.find_first_of(delims, b);
-      if(e==std::string::npos){
-        done=true;
+      if (e == std::string::npos) {
+        done = true;
         ans.push_back(s.substr(b));
-      }else{
-        ans.push_back(s.substr(b,e-b));
+      } else {
+        ans.push_back(s.substr(b, e - b));
       }
-      b=e+1;
+      b = e + 1;
     }
     return ans;
   }
-}
+}  // namespace BOOM

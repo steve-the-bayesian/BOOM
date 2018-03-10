@@ -43,7 +43,7 @@ namespace BOOM {
     ans.reserve(input.size());
 
     for (int i = 0; i < input.size(); ++i) {
-      const T & element(input[i]);
+      const T &element(input[i]);
       if (already_seen.find(element) == already_seen.end()) {
         ans.push_back(element);
         already_seen.insert(element);
@@ -52,6 +52,6 @@ namespace BOOM {
     return ans;
   }
 
-}
+}  // namespace BOOM
 
-#endif //  BOOM_MAKE_UNIQUE_PRESERVE_ORDER_HPP_
+#endif  //  BOOM_MAKE_UNIQUE_PRESERVE_ORDER_HPP_

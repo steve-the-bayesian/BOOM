@@ -22,18 +22,13 @@
 namespace BOOM {
 
   UnivariateLangevinSampler::UnivariateLangevinSampler(
-      const Ptr<dScalarEnabledTargetFun> &f,
-      int xdim,
-      double step_size,
+      const Ptr<dScalarEnabledTargetFun> &f, int xdim, double step_size,
       RNG *rng)
-      : Sampler(rng),
-        f_(f),
-        x_(xdim)
-  {
+      : Sampler(rng), f_(f), x_(xdim) {
     for (int i = 0; i < xdim; ++i) {
       scalar_targets_.push_back(new dScalarTargetFunAdapter(f_, &x_, i));
-      scalar_samplers_.emplace_back(ScalarLangevinSampler(
-          scalar_targets_.back(), step_size, rng));
+      scalar_samplers_.emplace_back(
+          ScalarLangevinSampler(scalar_targets_.back(), step_size, rng));
     }
   }
 

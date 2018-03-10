@@ -23,30 +23,32 @@
 
 #include "cpputil/Ptr.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class Params;
-  class ParamHolder{
+  class ParamHolder {
    public:
     ParamHolder(const Ptr<Params> &held_prm, Vector &Wsp);
     ParamHolder(const Vector &x, const Ptr<Params> &held_prm, Vector &Wsp);
     ~ParamHolder();
 
    private:
-    Vector & v;
+    Vector &v;
     Ptr<Params> prm;
   };
 
-  class ParamVectorHolder{
-  public:
+  class ParamVectorHolder {
+   public:
     typedef std::vector<Ptr<Params> > ParamVector;
-  private:
-    Vector & v;
+
+   private:
+    Vector &v;
     ParamVector prm;
-  public:
+
+   public:
     ParamVectorHolder(const ParamVector &held, Vector &Wsp);
-    ParamVectorHolder(const Vector &x, const ParamVector & held, Vector &Wsp);
+    ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp);
     ~ParamVectorHolder();
   };
-}
-#endif// BOOM_PARAM_HOLDER_HPP
+}  // namespace BOOM
+#endif  // BOOM_PARAM_HOLDER_HPP

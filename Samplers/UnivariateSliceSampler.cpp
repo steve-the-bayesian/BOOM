@@ -18,29 +18,26 @@
 */
 
 #include "Samplers/UnivariateSliceSampler.hpp"
-#include <cmath>
 #include <cassert>
-#include "distributions.hpp"
+#include <cmath>
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   namespace {
     typedef UnivariateSliceSampler USS;
   }  // namespace
 
-  USS::UnivariateSliceSampler(const Target &logpost,
-                              double suggested_dx,
-                              bool unimodal,
-                              RNG *rng)
+  USS::UnivariateSliceSampler(const Target &logpost, double suggested_dx,
+                              bool unimodal, RNG *rng)
       : Sampler(rng),
         f_(logpost),
         suggested_dx_(suggested_dx),
-        unimodal_(unimodal)
-  {}
+        unimodal_(unimodal) {}
 
-  Vector USS::draw(const Vector &x){
+  Vector USS::draw(const Vector &x) {
     theta_ = x;
     if (scalar_samplers_.empty()) {
       initialize(x.size());
@@ -55,10 +52,7 @@ namespace BOOM{
     for (int i = 0; i < dim; ++i) {
       scalar_targets_.push_back(ScalarTargetFunAdapter(f_, &theta_, i));
       scalar_samplers_.push_back(ScalarSliceSampler(
-          scalar_targets_.back(),
-          unimodal_,
-          suggested_dx_,
-          &rng()));
+          scalar_targets_.back(), unimodal_, suggested_dx_, &rng()));
     }
   }
 
@@ -66,10 +60,11 @@ namespace BOOM{
     if (scalar_samplers_.empty()) {
       initialize(lower.size());
     }
-    if (lower.size() != scalar_samplers_.size()
-        || upper.size() != scalar_samplers_.size()) {
-      report_error("Limits are wrong dimension in "
-                   "UnivariateSliceSampler::set_limits.");
+    if (lower.size() != scalar_samplers_.size() ||
+        upper.size() != scalar_samplers_.size()) {
+      report_error(
+          "Limits are wrong dimension in "
+          "UnivariateSliceSampler::set_limits.");
     }
     for (size_t i = 0; i < lower.size(); ++i) {
       if (upper[i] <= lower[i]) {

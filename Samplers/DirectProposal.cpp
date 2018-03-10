@@ -21,7 +21,7 @@
 
 namespace BOOM {
 
-  void intrusive_ptr_add_ref(DirectProposal *d) {d->up_count();}
+  void intrusive_ptr_add_ref(DirectProposal *d) { d->up_count(); }
 
   void intrusive_ptr_release(DirectProposal *d) {
     d->down_count();
@@ -30,14 +30,10 @@ namespace BOOM {
     }
   }
 
-  MvnDirectProposal::MvnDirectProposal(const Vector &mu,
-                                       const SpdMatrix &Sigma)
-      : model_(mu, Sigma)
-  {}
+  MvnDirectProposal::MvnDirectProposal(const Vector &mu, const SpdMatrix &Sigma)
+      : model_(mu, Sigma) {}
 
-  Vector MvnDirectProposal::draw(RNG &rng) {
-    return model_.sim(rng);
-  }
+  Vector MvnDirectProposal::draw(RNG &rng) { return model_.sim(rng); }
 
   double MvnDirectProposal::logp(const Vector &x) const {
     return model_.logp(x);
@@ -45,15 +41,11 @@ namespace BOOM {
 
   //======================================================================
 
-  MvtDirectProposal::MvtDirectProposal(const Vector &mu,
-                                       const SpdMatrix &Sigma,
+  MvtDirectProposal::MvtDirectProposal(const Vector &mu, const SpdMatrix &Sigma,
                                        double nu)
-      : model_(mu, Sigma, nu)
-  {}
+      : model_(mu, Sigma, nu) {}
 
-  Vector MvtDirectProposal::draw(RNG &rng) {
-    return model_.sim(rng);
-  }
+  Vector MvtDirectProposal::draw(RNG &rng) { return model_.sim(rng); }
 
   double MvtDirectProposal::logp(const Vector &x) const {
     return model_.logp(x);

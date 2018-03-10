@@ -32,5 +32,5 @@ namespace BOOM {
   Vector apply_permutation(const std::vector<int> &permutation,
                            const ConstVectorView &data);
 
-}
-#endif //  BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_

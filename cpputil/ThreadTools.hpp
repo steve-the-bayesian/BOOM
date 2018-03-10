@@ -20,13 +20,13 @@
 #ifndef BOOM_CPPUTIL_THREAD_TOOLS_HPP_
 #define BOOM_CPPUTIL_THREAD_TOOLS_HPP_
 
-#include <condition_variable>
-#include <mutex>
-#include <future>
-#include <thread>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
+#include <future>
+#include <mutex>
 #include <queue>
+#include <thread>
 
 namespace BOOM {
 
@@ -34,11 +34,10 @@ namespace BOOM {
   // threads when it goes out of scope.
   class ThreadVector : public std::vector<std::thread> {
     typedef std::vector<std::thread> ParentType;
+
    public:
     ThreadVector() = default;
-    ~ThreadVector() {
-      join_threads();
-    }
+    ~ThreadVector() { join_threads(); }
 
     void clear() {
       join_threads();
@@ -64,16 +63,15 @@ namespace BOOM {
 
     // Construct a task from a function like object with a void(void)
     // signature.
-    template<typename F>
-    MoveOnlyTaskWrapper(F&& f)
-        : impl_(new ConcreteFunctor<F>(std::move(f))) {}
+    template <typename F>
+    MoveOnlyTaskWrapper(F &&f) : impl_(new ConcreteFunctor<F>(std::move(f))) {}
 
     // Move constructor
-    MoveOnlyTaskWrapper(MoveOnlyTaskWrapper&& other)
+    MoveOnlyTaskWrapper(MoveOnlyTaskWrapper &&other)
         : impl_(std::move(other.impl_)) {}
 
     // Move-only assignment operator.
-    MoveOnlyTaskWrapper & operator=(MoveOnlyTaskWrapper &&other) {
+    MoveOnlyTaskWrapper &operator=(MoveOnlyTaskWrapper &&other) {
       impl_ = std::move(other.impl_);
       return *this;
     }
@@ -82,7 +80,7 @@ namespace BOOM {
     // operator.
     MoveOnlyTaskWrapper(const MoveOnlyTaskWrapper &rhs) = delete;
     MoveOnlyTaskWrapper(MoveOnlyTaskWrapper &rhs) = delete;
-    MoveOnlyTaskWrapper & operator=(const MoveOnlyTaskWrapper &rhs) = delete;
+    MoveOnlyTaskWrapper &operator=(const MoveOnlyTaskWrapper &rhs) = delete;
 
     // Invoke the wrapped function.
     void operator()() { impl_->call(); }
@@ -97,10 +95,10 @@ namespace BOOM {
 
     // A concrete derived class that can hold functors of various
     // types.
-    template<typename F>
-    struct ConcreteFunctor: public FunctorInterface {
+    template <typename F>
+    struct ConcreteFunctor : public FunctorInterface {
       F f;
-      ConcreteFunctor(F&& f_): f(std::move(f_)) {}
+      ConcreteFunctor(F &&f_) : f(std::move(f_)) {}
       void call() override { f(); }
     };
 
@@ -192,7 +190,7 @@ namespace BOOM {
     //   remote thread completes, or an exception is thrown.  If an
     //   exception is thrown by the remote thread then wait() passes
     //   it to the current thread.
-    template<typename FunctionType>
+    template <typename FunctionType>
     std::future<void> submit(FunctionType work) {
       std::packaged_task<void()> task(std::move(work));
       std::future<void> res(task.get_future());
@@ -202,13 +200,9 @@ namespace BOOM {
 
     // Returns true() if there are currently no threads available to
     // do work.  Worker threads can be added by calling add_threads().
-    bool no_threads() const {
-      return threads_.empty();
-    }
+    bool no_threads() const { return threads_.empty(); }
 
-    int number_of_threads() const {
-      return threads_.size();
-    }
+    int number_of_threads() const { return threads_.size(); }
 
     int number_of_joinable_threads() const {
       int ans = 0;
@@ -236,4 +230,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_CPPUTIL_THREAD_TOOLS_HPP_
+#endif  //  BOOM_CPPUTIL_THREAD_TOOLS_HPP_

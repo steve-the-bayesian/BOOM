@@ -18,8 +18,8 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
   // Either resize and initialize derivatives to zero, or else check
@@ -34,10 +34,7 @@ namespace BOOM {
   //     (using report_error, which throws an exception by default) if
   //     their dimension fails to match 'dimension'.  In either case,
   //     Hessian is only examined if gradient is non-NULL.
-  void initialize_derivatives(
-      Vector *gradient,
-      Matrix *Hessian,
-      int dimension,
-      bool reset);
-}
-#endif //  BOOM_MODELS_INITIALIZE_DERIVATIVES_HPP_
+  void initialize_derivatives(Vector *gradient, Matrix *Hessian, int dimension,
+                              bool reset);
+}  // namespace BOOM
+#endif  //  BOOM_MODELS_INITIALIZE_DERIVATIVES_HPP_

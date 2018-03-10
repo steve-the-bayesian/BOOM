@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cmath>
 #include "cpputil/AsciiGraph.hpp"
+#include <cmath>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -30,20 +30,17 @@ namespace BOOM {
         yhi_(0),
         xbuckets_(-1),
         ybuckets_(-1),
-        throw_on_error_(true)
-  {}
+        throw_on_error_(true) {}
 
-  AsciiGraph::AsciiGraph(
-      double xlo, double xhi, double ylo, double yhi,
-      int xbuckets, int ybuckets, bool throw_on_error)
+  AsciiGraph::AsciiGraph(double xlo, double xhi, double ylo, double yhi,
+                         int xbuckets, int ybuckets, bool throw_on_error)
       : xlo_(xlo),
         xhi_(xhi),
         ylo_(ylo),
         yhi_(yhi),
         xbuckets_(xbuckets),
         ybuckets_(ybuckets),
-        throw_on_error_(throw_on_error)
-  {
+        throw_on_error_(throw_on_error) {
     if (xlo_ >= xhi_) {
       report_error("Illegal X limits.");
     }
@@ -96,16 +93,17 @@ namespace BOOM {
   int AsciiGraph::which_bucket(double value, double lo, double hi,
                                int buckets) const {
     if (buckets <= 0) {
-      report_error("Can't plot to a zero-sized graph.  "
-                   "Try increasing the number of pixels.");
+      report_error(
+          "Can't plot to a zero-sized graph.  "
+          "Try increasing the number of pixels.");
     }
-    int ans = std::lround(std::floor(buckets * ((value - lo) /
-                                                (1.00001 * (hi - lo)))));
+    int ans = std::lround(
+        std::floor(buckets * ((value - lo) / (1.00001 * (hi - lo)))));
     if (ans < 0 || ans >= buckets) {
       if (throw_on_error_) {
         std::ostringstream err;
-        err << "Illegal value " << value << " outside the legal range: ["
-            << lo << ", " << hi << "].";
+        err << "Illegal value " << value << " outside the legal range: [" << lo
+            << ", " << hi << "].";
         report_error(err.str());
       }
       return -1;

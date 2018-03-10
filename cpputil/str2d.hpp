@@ -20,8 +20,8 @@
 #define BOOM_STR2D_HPP
 
 #include <string>
-namespace BOOM{
+namespace BOOM {
   double str2d(const std::string &s);
 }
 
-#endif // BOOM_STR2D_HPP
+#endif  // BOOM_STR2D_HPP

@@ -17,21 +17,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-
-#include "LinAlg/Matrix.hpp" // includes Vector.hpp as well
-#include "LinAlg/Vector.hpp"
-#include "numopt.hpp"
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include "LinAlg/Matrix.hpp"  // includes Vector.hpp as well
+#include "LinAlg/Vector.hpp"
 #include "cpputil/math_utils.hpp"
+#include "numopt.hpp"
 
 namespace BOOM {
   using std::endl;
 
   namespace {
     inline bool BAD(double lcrit, double epsilon) {
-      return (lcrit != lcrit)            // nan
-          || ( (fabs(lcrit) > epsilon) && (lcrit < 0 ) )  //
+      return (lcrit != lcrit)                             // nan
+             || ((fabs(lcrit) > epsilon) && (lcrit < 0))  //
           ;
     }
 
@@ -87,8 +86,9 @@ namespace BOOM {
   // Return:
   //   The value of target at the minimum.
   double newton_raphson_min(Vector &theta, Vector &gradient, Matrix &hessian,
-                            const d2Target &target, int &function_count, double leps,
-                            bool &happy_ending, string &error_message) {
+                            const d2Target &target, int &function_count,
+                            double leps, bool &happy_ending,
+                            string &error_message) {
     double loglike = 0, oldloglike, lcrit = 1 + leps;
     int iteration = 0, max_iterations = 30;
     int step_halving = 0, total_step_halving = 0;
@@ -100,7 +100,7 @@ namespace BOOM {
     try {
       oldloglike = target(theta, gradient, hessian);
       ++function_count;
-      while(keep_going(lcrit, leps, iteration, max_iterations, step_halving)) {
+      while (keep_going(lcrit, leps, iteration, max_iterations, step_halving)) {
         if (!gradient.all_finite() || !hessian.all_finite()) {
           std::ostringstream err;
           err << "The Newton-Raphson algorithm encountered values that "
@@ -119,7 +119,7 @@ namespace BOOM {
         lcrit = oldloglike - loglike;
         // Likelihood criterion should be positive if all is well.
         step_halving = 0;
-        if (BAD(lcrit, leps / 2.0) ) { /* step halving */
+        if (BAD(lcrit, leps / 2.0)) { /* step halving */
           if (std::isfinite(loglike)) {
             // Only check the directional derivative if the outcome of the
             // function evaluation was finite.  Otherwise it is likely to be the
@@ -141,7 +141,7 @@ namespace BOOM {
           while (BAD(lcrit, leps / 2.0) &&
                  (step_halving++ <= max_step_halving)) {
             step_scale_factor /= 2.0;
-            step *= step_scale_factor;         // halve step size
+            step *= step_scale_factor;  // halve step size
             theta = oldtheta - step;
             loglike = target(theta, gradient, hessian);
             ++function_count;
@@ -151,22 +151,24 @@ namespace BOOM {
             happy_ending = false;
             ostringstream err;
             err << "The Hessian matrix is not positive definite in "
-                << "newton_raphson_min." << endl << hessian << endl;
+                << "newton_raphson_min." << endl
+                << hessian << endl;
             error_message = err.str();
             return loglike;
           }
         }
 
         oldloglike = loglike;
-        if ((step_halving > max_step_halving)
-            || (total_step_halving > max_total_step_halving)) {
+        if ((step_halving > max_step_halving) ||
+            (total_step_halving > max_total_step_halving)) {
           happy_ending = false;
           return loglike;
         }
       }
       return loglike;
     } catch (std::exception &e) {
-      error_message = "Exception caught in newton_raphson_min.  "
+      error_message =
+          "Exception caught in newton_raphson_min.  "
           "Error message:\n";
       error_message += e.what();
     } catch (...) {

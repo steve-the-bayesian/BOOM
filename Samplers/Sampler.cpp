@@ -18,41 +18,37 @@
 */
 #include "Samplers/Sampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  SamplerBase::SamplerBase()
-      : rng_(0),
-        owns_rng_(false)
-  {}
+  SamplerBase::SamplerBase() : rng_(0), owns_rng_(false) {}
 
-  SamplerBase::SamplerBase(RNG *rng)
-      : rng_(rng),
-        owns_rng_(false)
-  {}
+  SamplerBase::SamplerBase(RNG *rng) : rng_(rng), owns_rng_(false) {}
 
-  SamplerBase::~SamplerBase(){
-    if(owns_rng_) delete rng_;
+  SamplerBase::~SamplerBase() {
+    if (owns_rng_) delete rng_;
   }
 
-  RNG & SamplerBase::rng()const{
-    if(rng_) return *rng_;
+  RNG &SamplerBase::rng() const {
+    if (rng_) return *rng_;
     return GlobalRng::rng;
   }
 
-  void SamplerBase::set_rng(RNG *r, bool owner){
+  void SamplerBase::set_rng(RNG *r, bool owner) {
     rng_ = r;
     owns_rng_ = owner;
   }
 
-  SamplerBase::SamplerBase(const SamplerBase & rhs)
-      : RefCounted(rhs),
-        owns_rng_(false)
-  { if (!rhs.owns_rng_) { rng_ = rhs.rng_; } }
+  SamplerBase::SamplerBase(const SamplerBase &rhs)
+      : RefCounted(rhs), owns_rng_(false) {
+    if (!rhs.owns_rng_) {
+      rng_ = rhs.rng_;
+    }
+  }
 
-  void SamplerBase::set_seed(unsigned long s){
-    if(rng_) {
+  void SamplerBase::set_seed(unsigned long s) {
+    if (rng_) {
       rng_->seed(s);
     }  // do nothing if no rng is set.
   }
 
-}
+}  // namespace BOOM

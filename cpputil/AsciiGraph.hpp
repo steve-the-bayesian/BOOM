@@ -20,8 +20,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace BOOM {
 
@@ -53,8 +53,7 @@ namespace BOOM {
     //   throw_on_error: If true then the device will report an error when asked
     //     to plot a point at an (X,Y) value outside the range of the plot area.
     //     If false then points outside the plot area are ignored.
-    AsciiGraph(double xlo, double xhi,
-               double ylo, double yhi,
+    AsciiGraph(double xlo, double xhi, double ylo, double yhi,
                int xbuckets = 80, int ybuckets = 30,
                bool throw_on_error = false);
 
@@ -106,4 +105,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_ASCII_GRAPH_HPP_
+#endif  // BOOM_ASCII_GRAPH_HPP_

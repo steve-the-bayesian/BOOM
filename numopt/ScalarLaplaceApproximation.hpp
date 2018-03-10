@@ -20,35 +20,34 @@
 #define BOOM_SCALAR_LAPLACE_APPROXIMATION_
 #include "TargetFun/TargetFun.hpp"
 
-namespace BOOM{
-  class ScalarLaplaceApproximation{
+namespace BOOM {
+  class ScalarLaplaceApproximation {
    public:
     // logf is the (potentially un-normalized) log density whose
     // normalizing constant and/or mean and variance are desired
     // logf must exist for the life of the ScalarLaplaceApproximation
     ScalarLaplaceApproximation(const d2ScalarTargetFun &logf,
                                double starting_value);
-    double integral()const;      // integral of exp(logf) over real line
-    double log_integral()const;  // stable version of log(integral())
+    double integral() const;      // integral of exp(logf) over real line
+    double log_integral() const;  // stable version of log(integral())
 
     // the mean and variance can be computed based on numerical
     // derivatives of the cumulant_generating function at zero.  The
     // 'eps' argument is the step size used in the numerical
     // derivative.
-    double mean(double eps = 1e-5)const;
-    double variance(double eps=1e-5)const;
-    double cumulant_generating_function(double s)const;
-    double dCGF(double s, double eps)const; // derivative of cum_gen_fun
+    double mean(double eps = 1e-5) const;
+    double variance(double eps = 1e-5) const;
+    double cumulant_generating_function(double s) const;
+    double dCGF(double s, double eps) const;  // derivative of cum_gen_fun
    private:
     void find_mode(double starting_value);
 
-    double x_; // location of the mode
-    double h_; // hessian evaluated at mode
-    double y_; // value at mode
+    double x_;  // location of the mode
+    double h_;  // hessian evaluated at mode
+    double y_;  // value at mode
 
     const d2ScalarTargetFun &logf_;
   };
 
-
-}
-#endif // BOOM_SCALAR_LAPLACE_APPROXIMATION_
+}  // namespace BOOM
+#endif  // BOOM_SCALAR_LAPLACE_APPROXIMATION_

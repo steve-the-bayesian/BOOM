@@ -21,22 +21,23 @@
 #include "cpputil/string_utils.hpp"
 #include "uint.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class OutputTable {
    public:
-    OutputTable(uint pad=2);
-    std::vector<std::string> & column(uint i);
-    OutputTable & add_row(const std::vector<std::string> &);
-    OutputTable & add_column(const std::vector<std::string> &);
-    OutputTable & add_to_column(const string &, uint i);
+    OutputTable(uint pad = 2);
+    std::vector<std::string> &column(uint i);
+    OutputTable &add_row(const std::vector<std::string> &);
+    OutputTable &add_column(const std::vector<std::string> &);
+    OutputTable &add_to_column(const string &, uint i);
 
-    ostream & print(ostream &)const;
+    ostream &print(ostream &) const;
     void equalize_rows();
+
    private:
     uint pad_;
     std::vector<std::vector<std::string>> cols_;
   };
 
 }  // namespace BOOM
-#endif// BOOM_OUTPUT_TABLE_HPP
+#endif  // BOOM_OUTPUT_TABLE_HPP

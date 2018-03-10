@@ -34,6 +34,6 @@ namespace BOOM {
     out << object;
     return out.str();
   }
-}
+}  // namespace BOOM
 
-#endif //  BOOM_TO_STRING_HPP_
+#endif  //  BOOM_TO_STRING_HPP_

@@ -20,12 +20,13 @@
 #define BOOM_SCALAR_NEWTON_MAX_HPP_
 #include "TargetFun/TargetFun.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // newton-raphson routine to maximize the given target.  the value
   // of the function at the max is returned, x is set to the
   // maximizing value.  g and h are the first and second derivatives
   // at the max (g should be close to zero, and h should be negative).
-  double scalar_newton_max(const d2ScalarTargetFun &f, double &x, double &g, double &h);
-}
-#endif// BOOM_SCALAR_NEWTON_MAX_HPP_
+  double scalar_newton_max(const d2ScalarTargetFun &f, double &x, double &g,
+                           double &h);
+}  // namespace BOOM
+#endif  // BOOM_SCALAR_NEWTON_MAX_HPP_

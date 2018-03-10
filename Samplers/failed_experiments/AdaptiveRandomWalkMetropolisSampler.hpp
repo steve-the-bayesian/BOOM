@@ -27,8 +27,7 @@
 
 namespace BOOM {
 
-  class AdaptiveRandomWalkMetropolisSampler
-      : public Sampler {
+  class AdaptiveRandomWalkMetropolisSampler : public Sampler {
    public:
     typedef std::function<double(const Vector &)> LogDensity;
     AdaptiveRandomWalkMetropolisSampler(const LogDensity &log_density,
@@ -37,18 +36,15 @@ namespace BOOM {
     Vector draw(const Vector &old) override;
 
    private:
-    void update_proposal_distribution(
-        const Vector &cand, const Vector &old, bool accepted);
-    
+    void update_proposal_distribution(const Vector &cand, const Vector &old,
+                                      bool accepted);
+
     LogDensity log_density_;
     double smoothing_weight_;
     SpdMatrix smoothed_sum_of_squares_;
     double smoothed_sample_size_;
-
   };
 
-  
-} // namespace BOOM
+}  // namespace BOOM
 
 #endif  //  BOOM_ADAPTIVE_RANDOM_WALK_METROPOLIS_SAMPLER_HPP_
-
