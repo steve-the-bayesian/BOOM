@@ -48,12 +48,12 @@ namespace BOOM {
     virtual int time_dimension() const = 0;
 
     // Number of elements in the state vector at a single time point.
-    virtual int state_dimension() const {return state_dimension_;}
+    virtual int state_dimension() const { return state_dimension_; }
 
     // The number of state models.  Presently, a fixed regression
     // model does not count as a state model, nor does a Harvey
     // Cumulator.  This may change in the future.
-    int nstate() const {return state_models_.size();}
+    int nstate() const { return state_models_.size(); }
 
     // Returns true if observation t is missing, and false otherwise.  If the
     // observation at time t is multivariate, then is_missing_observation(t) ==
@@ -71,15 +71,15 @@ namespace BOOM {
 
     // Returns a draw of the state vector (produced by impute_state()) for the
     // last time point in the training data.
-    ConstVectorView final_state() const {return state_.last_col();}
+    ConstVectorView final_state() const { return state_.last_col(); }
 
     // Returns the draw of the state vector (produced by impute_state()) at time
     // t.
-    ConstVectorView state(int t) const {return state_.col(t);}
+    ConstVectorView state(int t) const { return state_.col(t); }
 
     // Returns the draw of the full state vector.  Each row is a state element.
     // Each column corresponds to a time point in the training data.
-    const Matrix &state() const {return state_;}
+    const Matrix &state() const { return state_; }
 
     // Takes the full state vector as input, and returns the component
     // of the state vector belonging to state model s.
@@ -104,8 +104,8 @@ namespace BOOM {
     //
     // Returns:
     //   The error vector for just the specified state model.
-    ConstVectorView state_error_component(
-        const Vector &full_state_error, int state_model_number) const;
+    ConstVectorView state_error_component(const Vector &full_state_error,
+                                          int state_model_number) const;
 
     // Returns the subcomponent of the (block diagonal) error variance matrix
     // corresponding to a specific state model.
@@ -138,8 +138,8 @@ namespace BOOM {
 
     // Returns a pointer to the model responsible for the observation
     // variance.
-    virtual PosteriorModeModel * observation_model() = 0;
-    virtual const PosteriorModeModel * observation_model() const = 0;
+    virtual PosteriorModeModel *observation_model() = 0;
+    virtual const PosteriorModeModel *observation_model() const = 0;
 
     // Returns a pointer to the specified state model.
     Ptr<StateModel> state_model(int s, bool supplemental = false) {
@@ -193,10 +193,7 @@ namespace BOOM {
     //     are not available.
     //   CURRENT: Neither parameters nor data have changed since
     //     full_kalman_filter() was last called.
-    enum KalmanFilterStatus {
-      NOT_CURRENT,
-      MCMC_CURRENT,
-      CURRENT};
+    enum KalmanFilterStatus { NOT_CURRENT, MCMC_CURRENT, CURRENT };
     KalmanFilterStatus kalman_filter_status() const {
       return kalman_filter_status_;
     }
@@ -207,12 +204,12 @@ namespace BOOM {
 
     //------------- Parameters for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
-    virtual const SparseKalmanMatrix * state_transition_matrix(
+    virtual const SparseKalmanMatrix *state_transition_matrix(
         int t, bool supplemental = false) const;
 
     // Durbin and Koopman's RQR^T.  Built from state models, often
     // less than full rank.
-    virtual const SparseKalmanMatrix * state_variance_matrix(
+    virtual const SparseKalmanMatrix *state_variance_matrix(
         int t, bool supplemental = false) const;
 
     // Durbin and Koopman's R matrix from the transition equation:
@@ -220,14 +217,14 @@ namespace BOOM {
     //
     // This is the matrix that takes the low dimensional state_errors
     // and turns them into error terms for states.
-    virtual const SparseKalmanMatrix * state_error_expander(
+    virtual const SparseKalmanMatrix *state_error_expander(
         int t, bool supplemental = false) const;
 
     // The full rank variance matrix for the errors in the transition
     // equation.  This is Durbin and Koopman's Q[t].  The errors with
     // this variance are multiplied by state_error_expander(t) to
     // produce the errors described by state_variance_matrix(t).
-    virtual const SparseKalmanMatrix * state_error_variance(
+    virtual const SparseKalmanMatrix *state_error_variance(
         int t, bool supplemental = false) const;
 
     //----------------- Access to data -----------------
@@ -290,22 +287,18 @@ namespace BOOM {
     // Run the full Kalman filter over the observed data, saving the
     // information produced in the process in full_kalman_storage_.
     // The log likelihood is computed as a by-product.
-    virtual void full_kalman_filter() {
-      kalman_filter(true);
-    }
+    virtual void full_kalman_filter() { kalman_filter(true); }
 
     // Run the kalman filter over the observed data, without storing the state
     // conditional means or variances.  The log likelihood is computed and
     // stored as a by-product.
-    virtual void light_kalman_filter() {
-      kalman_filter(false);
-    }
+    virtual void light_kalman_filter() { kalman_filter(false); }
 
     // Returns the final element of the Kalman filter previously computed by a
     // call to either light_kalman_filter or full_kalman_filter().  The filter
     // values a, and P contain the predictive mean and variance for the state at
     // time T+1 given data to time T.
-    virtual const KalmanStateStorage & final_kalman_storage() const = 0;
+    virtual const KalmanStateStorage &final_kalman_storage() const = 0;
 
     //------------- Parameter estimation by MLE and MAP --------------------
     // Set model parameters to their maximum-likelihood estimates, and
@@ -427,8 +420,7 @@ namespace BOOM {
     // The simulated value is returned in the vector view function argument.
     // The initial state refers to the state at time 0 (other implementations
     // sometimes assume the initial state is at time -1).
-    virtual void simulate_initial_state(RNG &rng,
-                                        VectorView state0,
+    virtual void simulate_initial_state(RNG &rng, VectorView state0,
                                         bool supplemental = false) const;
 
     // Simulates the value of the state vector for the current time
@@ -438,14 +430,10 @@ namespace BOOM {
     //   last:  Value of state at time t-1.
     //   next:  VectorView to be filled with state at time t.
     //   t:  The time index of 'next'.
-    void simulate_next_state(RNG &rng,
-                             const ConstVectorView &last,
-                             VectorView next,
-                             int t,
+    void simulate_next_state(RNG &rng, const ConstVectorView &last,
+                             VectorView next, int t,
                              bool supplemental = false) const;
-    Vector simulate_next_state(RNG &rng,
-                               const Vector &current_state,
-                               int t,
+    Vector simulate_next_state(RNG &rng, const Vector &current_state, int t,
                                bool supplemental = false) const;
 
     // Advance the state vector to a future time stamp.  This method is used to
@@ -464,8 +452,8 @@ namespace BOOM {
     // Side effects:
     //   On exit, 'time' is advanced to 'timestamp', and 'state' is a draw from
     //   the state vector at time time_dimension() + timestamp.
-    void advance_to_timestamp(RNG &rng, int &time, Vector &state,
-                              int timestamp, int observation_index) const;
+    void advance_to_timestamp(RNG &rng, int &time, Vector &state, int timestamp,
+                              int observation_index) const;
 
     // Returns a draw of the predictive distribution of 'state' over the next
     // 'horizon' time periods.  If any state models depend on external data,
@@ -504,8 +492,7 @@ namespace BOOM {
     //   state_error_variance: The variance of the state error at time
     //     t given observed data and model parameters.
     void update_state_level_complete_data_sufficient_statistics(
-        int t,
-        const Vector &state_error_mean,
+        int t, const Vector &state_error_mean,
         const SpdMatrix &state_error_variance);
 
     // Poke all the model matrices.  If any matrices have placed observers on
@@ -522,7 +509,7 @@ namespace BOOM {
       kalman_filter_status_ = status;
     }
 
-    Matrix &mutable_state() {return state_;}
+    Matrix &mutable_state() { return state_; }
 
     // Return the kalman filter results pertaining to the mean and variance of
     // the state at time t.  This is normally computed using the full kalman
@@ -568,9 +555,7 @@ namespace BOOM {
     // Side effects:
     //   r and N are "downdated" to time t-1 throug a call to the disturbance
     //   smoother.  The Kalman filter is updated by the smoothing recursions.
-    virtual void update_observation_model(Vector &r,
-                                          SpdMatrix &N,
-                                          int t,
+    virtual void update_observation_model(Vector &r, SpdMatrix &N, int t,
                                           bool save_state_distributions,
                                           bool update_sufficient_statistics,
                                           Vector *gradient) = 0;
@@ -588,11 +573,9 @@ namespace BOOM {
     //     time t (for the transition to time t+1).
     //   state_error_mean: The posterior variance of the state errors
     //     at time t (for the transition to time t+1).
-    void update_state_model_gradient(
-        Vector *gradient,
-        int t,
-        const Vector &state_error_mean,
-        const SpdMatrix &state_error_variance);
+    void update_state_model_gradient(Vector *gradient, int t,
+                                     const Vector &state_error_mean,
+                                     const SpdMatrix &state_error_variance);
 
     // Utility function used to implement E-step and log_likelihood_derivatives.
     //
@@ -613,10 +596,9 @@ namespace BOOM {
     //
     // Returns:
     //   The log likeilhood value computed by the Kalman filter.
-    double average_over_latent_data(
-        bool update_sufficient_statistics,
-        bool save_state_distributions,
-        Vector *gradient);
+    double average_over_latent_data(bool update_sufficient_statistics,
+                                    bool save_state_distributions,
+                                    Vector *gradient);
 
     //=-=-=-=-=-=-=-=-=-=-=-= DEPRECATED =-=-=-=-=-=-=-=-=-=-=-=
     // TODO(user): This is the old simulation step used to implement
@@ -731,24 +713,21 @@ namespace BOOM {
     // Each of the model matrices has a main entry and a supplemental copy for
     // use in bi-threaded work.
     mutable std::unique_ptr<BlockDiagonalMatrix>
-    default_state_transition_matrix_;
+        default_state_transition_matrix_;
     mutable std::unique_ptr<BlockDiagonalMatrix>
-    supplemental_state_transition_matrix_;
+        supplemental_state_transition_matrix_;
 
+    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_variance_matrix_;
     mutable std::unique_ptr<BlockDiagonalMatrix>
-    default_state_variance_matrix_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-    supplemental_state_variance_matrix_;
+        supplemental_state_variance_matrix_;
 
+    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_error_expander_;
     mutable std::unique_ptr<BlockDiagonalMatrix>
-    default_state_error_expander_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-    supplemental_state_error_expander_;
+        supplemental_state_error_expander_;
 
+    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_error_variance_;
     mutable std::unique_ptr<BlockDiagonalMatrix>
-    default_state_error_variance_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-    supplemental_state_error_variance_;
+        supplemental_state_error_variance_;
 
     // The log likelihood value produced by a call to filter(),
     // full_kalman_filter(), or impute_state().
@@ -760,7 +739,7 @@ namespace BOOM {
   // period.
   class ScalarStateSpaceModelBase : public StateSpaceModelBase {
    public:
-    ScalarStateSpaceModelBase * clone() const override = 0;
+    ScalarStateSpaceModelBase *clone() const override = 0;
 
     //------------- Parameters for structural equations. --------------
     // Variance of observed data y[t], given state alpha[t].  Durbin
@@ -768,8 +747,8 @@ namespace BOOM {
     virtual double observation_variance(int t) const = 0;
 
     // Durbin and Koopman's Z[t].transpose() built from state models.
-    virtual SparseVector observation_matrix(
-        int t, bool supplemental = false) const;
+    virtual SparseVector observation_matrix(int t,
+                                            bool supplemental = false) const;
 
     //----------------- Access to data -----------------
     // Returns y[t], after adjusting for regression effects that are
@@ -787,7 +766,8 @@ namespace BOOM {
     // The log likelihood is computed as a by-product.
     //
     // Args:
-    //   save_state_moments: Whether the conditional means and variances should be
+    //   save_state_moments: Whether the conditional means and variances should
+    //   be
     //     stored in full_kalman_storage_.  The moments of the final state are
     //     always saved.
     void kalman_filter(bool save_state_moments) override;
@@ -796,7 +776,7 @@ namespace BOOM {
     // call to either light_kalman_filter or full_kalman_filter().  The filter
     // values a, and P contain the predictive mean and variance for the state at
     // time T+1 given data to time T.
-    const ScalarKalmanStorage& final_kalman_storage() const override {
+    const ScalarKalmanStorage &final_kalman_storage() const override {
       return kalman_storage_.back();
     }
 
@@ -815,7 +795,7 @@ namespace BOOM {
     Vector state_contribution(int which_model) const;
 
     // Return true iff the model contains a regression component.
-    virtual bool has_regression() const {return false;}
+    virtual bool has_regression() const { return false; }
 
     // If the model contains a regression component, then return the
     // contribution of the regression model to the overall mean of y
@@ -839,8 +819,8 @@ namespace BOOM {
     void simulate_forward_and_filter(RNG &rng, bool supplemental) override;
 
     void smooth_simulated_disturbances(bool supplemental) override {
-      r0_sim_ = smooth_disturbances_fast(supplemental_kalman_storage_,
-                                         supplemental);
+      r0_sim_ =
+          smooth_disturbances_fast(supplemental_kalman_storage_, supplemental);
     }
     void smooth_observed_disturbances() override {
       r0_obs_ = smooth_disturbances_fast(kalman_storage_, false);
@@ -860,9 +840,7 @@ namespace BOOM {
     //     of the EM algorithm.
     //   gradient: If non-NULL then the observation model portion of the
     //     gradient will be incremented to reflect information at time t.
-    void update_observation_model(Vector &r,
-                                  SpdMatrix &N,
-                                  int t,
+    void update_observation_model(Vector &r, SpdMatrix &N, int t,
                                   bool save_state_distributions,
                                   bool update_sufficient_statistics,
                                   Vector *gradient) override;
@@ -878,8 +856,7 @@ namespace BOOM {
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
     virtual void update_observation_model_complete_data_sufficient_statistics(
-        int t,
-        double observation_error_mean,
+        int t, double observation_error_mean,
         double observation_error_variance);
 
     // Increment the portion of the log-likelihood gradient pertaining
@@ -896,9 +873,7 @@ namespace BOOM {
     //   observation_error_variance: The posterior variance of the
     //     observation error at time t.
     virtual void update_observation_model_gradient(
-        VectorView gradient,
-        int t,
-        double observation_error_mean,
+        VectorView gradient, int t, double observation_error_mean,
         double observation_error_variance);
 
     const ScalarKalmanStorage &kalman_state_storage(int t) const override {
@@ -922,9 +897,8 @@ namespace BOOM {
     //
     // Returns:
     //   Durbin and Koopman's r0.
-    Vector smooth_disturbances_fast(
-        std::vector<ScalarKalmanStorage> &filter,
-        bool supplemental);
+    Vector smooth_disturbances_fast(std::vector<ScalarKalmanStorage> &filter,
+                                    bool supplemental);
 
     void propagate_disturbances() override;
 
@@ -944,10 +918,9 @@ namespace BOOM {
   //===========================================================================
   // Base class that assumes y[t] is a vector.  It may be the case that y[t] has
   // different dimension than y[t'].
-  class MultivariateStateSpaceModelBase
-      : public StateSpaceModelBase {
+  class MultivariateStateSpaceModelBase : public StateSpaceModelBase {
    public:
-    MultivariateStateSpaceModelBase * clone() const override = 0;
+    MultivariateStateSpaceModelBase *clone() const override = 0;
 
     //------------- Parameters for structural equations. --------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
@@ -968,14 +941,15 @@ namespace BOOM {
     // The log likelihood is computed as a by-product.
     //
     // Args:
-    //   save_state_moments: Whether the conditional means and variances should be
+    //   save_state_moments: Whether the conditional means and variances should
+    //   be
     //     stored in full_kalman_storage_.  The moments of the final state are
     //     always saved.
     void kalman_filter(bool save_state_moments) override;
 
     // Returns the final element of the Kalman filter computed by a call to
     // either light_kalman_filter() or full_kalman_filter().
-    const MultivariateKalmanStorage& final_kalman_storage() const override {
+    const MultivariateKalmanStorage &final_kalman_storage() const override {
       return kalman_storage_.back();
     }
 
@@ -987,16 +961,15 @@ namespace BOOM {
     void simulate_forward_and_filter(RNG &rng, bool supplemental) override;
 
     void smooth_simulated_disturbances(bool supplemental) override {
-      r0_sim_ = smooth_disturbances_fast(supplemental_kalman_storage_,
-                                         supplemental);
+      r0_sim_ =
+          smooth_disturbances_fast(supplemental_kalman_storage_, supplemental);
     }
     void smooth_observed_disturbances() override {
       r0_obs_ = smooth_disturbances_fast(kalman_storage_, false);
     }
 
     Vector smooth_disturbances_fast(
-        std::vector<MultivariateKalmanStorage> &filter,
-        bool supplemental);
+        std::vector<MultivariateKalmanStorage> &filter, bool supplemental);
 
     // Implements part of a single step of the E-step in the EM algorithm or
     // gradient computation for the gradient of the observed data log
@@ -1020,9 +993,7 @@ namespace BOOM {
     // Side effects:
     //   r and N are "downdated" to time t-1 throug a call to the disturbance
     //   smoother.  The Kalman filter is updated by the smoothing recursions.
-    void update_observation_model(Vector &r,
-                                  SpdMatrix &N,
-                                  int t,
+    void update_observation_model(Vector &r, SpdMatrix &N, int t,
                                   bool save_state_distributions,
                                   bool update_sufficient_statistics,
                                   Vector *gradient) override;
@@ -1038,8 +1009,7 @@ namespace BOOM {
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
     virtual void update_observation_model_complete_data_sufficient_statistics(
-        int t,
-        const Vector &observation_error_mean,
+        int t, const Vector &observation_error_mean,
         const SpdMatrix &observation_error_variance) = 0;
 
     // Increment the portion of the log-likelihood gradient pertaining
@@ -1056,9 +1026,7 @@ namespace BOOM {
     //   observation_error_variance: The posterior variance of the
     //     observation error at time t.
     virtual void update_observation_model_gradient(
-        VectorView gradient,
-        int t,
-        const Vector &observation_error_mean,
+        VectorView gradient, int t, const Vector &observation_error_mean,
         const SpdMatrix &observation_error_variance) = 0;
 
     const MultivariateKalmanStorage &kalman_state_storage(
@@ -1109,16 +1077,12 @@ namespace BOOM {
     // performance hit in some situations.
     class ParameterHolder {
      public:
-      ParameterHolder(StateSpaceModelBase *model,
-                      const Vector &parameters)
-          : original_parameters_(model->vectorize_params()),
-            model_(model) {
+      ParameterHolder(StateSpaceModelBase *model, const Vector &parameters)
+          : original_parameters_(model->vectorize_params()), model_(model) {
         model_->unvectorize_params(parameters);
       }
 
-      ~ParameterHolder() {
-        model_->unvectorize_params(original_parameters_);
-      }
+      ~ParameterHolder() { model_->unvectorize_params(original_parameters_); }
 
      private:
       Vector original_parameters_;
@@ -1131,8 +1095,7 @@ namespace BOOM {
     class LogLikelihoodEvaluator {
      public:
       LogLikelihoodEvaluator(const StateSpaceModelBase *model)
-          : model_(const_cast<StateSpaceModelBase *>(model))
-      {}
+          : model_(const_cast<StateSpaceModelBase *>(model)) {}
 
       double evaluate_log_likelihood(const Vector &parameters) {
         ParameterHolder storage(model_, parameters);
@@ -1142,18 +1105,21 @@ namespace BOOM {
       double evaluate_log_posterior(const Vector &parameters) {
         ParameterHolder storage(model_, parameters);
         double ans = model_->observation_model()->logpri();
-        if (ans <= negative_infinity()) { return ans; }
+        if (ans <= negative_infinity()) {
+          return ans;
+        }
         for (int s = 0; s < model_->nstate(); ++s) {
           ans += model_->state_model(s)->logpri();
-          if (ans <= negative_infinity()) { return ans; }
+          if (ans <= negative_infinity()) {
+            return ans;
+          }
         }
         ans += model_->log_likelihood();
         return ans;
       }
 
       double evaluate_log_likelihood_derivatives(
-          const ConstVectorView &parameters,
-          VectorView gradient) {
+          const ConstVectorView &parameters, VectorView gradient) {
         ParameterHolder storage(model_, parameters);
         return model_->log_likelihood_derivatives(gradient);
       }
@@ -1165,4 +1131,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_STATE_SPACE_MODEL_BASE_HPP_
+#endif  // BOOM_STATE_SPACE_MODEL_BASE_HPP_

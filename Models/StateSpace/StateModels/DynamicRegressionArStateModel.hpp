@@ -45,12 +45,10 @@ namespace BOOM {
   //
   // The observation matrix is x(t, 0), 0, 0, 0, ..., x(t, 1), 0, 0, 0, ...,
   // x(t, 2), ...
-  class DynamicRegressionArStateModel
-      : public StateModel,
-        public CompositeParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy
-  {
+  class DynamicRegressionArStateModel : public StateModel,
+                                        public CompositeParamPolicy,
+                                        public NullDataPolicy,
+                                        public PriorPolicy {
    public:
     // A convenience constructor to use for the typical case of one observation
     // per time point.
@@ -71,18 +69,16 @@ namespace BOOM {
 
     DynamicRegressionArStateModel(const DynamicRegressionArStateModel &rhs);
     DynamicRegressionArStateModel(DynamicRegressionArStateModel &&) = default;
-    DynamicRegressionArStateModel * clone() const override {
+    DynamicRegressionArStateModel *clone() const override {
       return new DynamicRegressionArStateModel(*this);
     }
     DynamicRegressionArStateModel &operator=(
         const DynamicRegressionArStateModel &rhs);
-    DynamicRegressionArStateModel &operator=(
-        DynamicRegressionArStateModel &&) = default;
+    DynamicRegressionArStateModel &operator=(DynamicRegressionArStateModel &&) =
+        default;
 
     // The number of coefficients.
-    int xdim() const {
-      return coefficient_transition_model_.size();
-    }
+    int xdim() const { return coefficient_transition_model_.size(); }
 
     // The number of lags.
     int number_of_lags() const {
@@ -93,35 +89,26 @@ namespace BOOM {
       return coefficient_transition_model_[i];
     }
 
-    ArModel const * coefficient_model(int i) const {
+    ArModel const *coefficient_model(int i) const {
       return coefficient_transition_model_[i].get();
     }
 
     void clear_data() override;
 
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
-    
+
     void observe_initial_state(const ConstVectorView &state) override;
 
-    uint state_dimension() const override {
-      return transition_matrix_->nrow();
-    }
+    uint state_dimension() const override { return transition_matrix_->nrow(); }
 
-    uint state_error_dimension() const override {
-      return xdim();
-    }
+    uint state_error_dimension() const override { return xdim(); }
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
@@ -144,8 +131,9 @@ namespace BOOM {
     // The observation matrix is row t of the design matrix.
     SparseVector observation_matrix(int t) const override {
       if (t >= expanded_predictors_.size()) {
-        report_error("A DynamicRegressionArStateModel cannot be used outside "
-                     "the range of its predictor data.");
+        report_error(
+            "A DynamicRegressionArStateModel cannot be used outside "
+            "the range of its predictor data.");
       }
       return expanded_predictors_[t]->row(0);
     }
@@ -168,18 +156,14 @@ namespace BOOM {
     void add_multiplexed_forecast_data(const std::vector<Matrix> &predictors);
 
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     // The matrix of predictors used to initialize the model.
     Matrix predictors() const;
 
     void set_xnames(const std::vector<std::string> &names);
-    const std::vector<std::string> &xnames() const {
-      return xnames_;
-    }
+    const std::vector<std::string> &xnames() const { return xnames_; }
 
    private:
     // Compute the state dimension from arguments passed to the constructor.
@@ -284,4 +268,4 @@ namespace BOOM {
   };
 }  // namespace BOOM
 
-#endif //  BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_
+#endif  //  BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_

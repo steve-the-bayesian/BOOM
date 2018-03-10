@@ -20,8 +20,8 @@
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
-  namespace{
+namespace BOOM {
+  namespace {
     typedef LocalLinearTrendStateModel LLTSM;
   }
 
@@ -32,8 +32,7 @@ namespace BOOM{
         state_variance_matrix_(new DenseSpdParamView(Sigma_prm())),
         state_error_expander_(new IdentityMatrix(2)),
         initial_state_mean_(2, 0.0),
-        initial_state_variance_(2)
-  {
+        initial_state_variance_(2) {
     observation_matrix_[0] = 1;
   }
 
@@ -45,14 +44,12 @@ namespace BOOM{
         state_variance_matrix_(rhs.state_variance_matrix_->clone()),
         state_error_expander_(rhs.state_error_expander_->clone()),
         initial_state_mean_(rhs.initial_state_mean_),
-        initial_state_variance_(rhs.initial_state_variance_)
-  {}
+        initial_state_variance_(rhs.initial_state_variance_) {}
 
-  LLTSM * LLTSM::clone() const {return new LLTSM(*this);}
+  LLTSM *LLTSM::clone() const { return new LLTSM(*this); }
 
   void LLTSM::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now,
-                            int time_now,
+                            const ConstVectorView &now, int time_now,
                             ScalarStateSpaceModelBase *model) {
     check_dim(then);
     check_dim(now);
@@ -67,10 +64,8 @@ namespace BOOM{
   void LLTSM::check_dim(const ConstVectorView &v) const {
     if (v.size() != 2) {
       ostringstream err;
-      err << "improper dimesion of ConstVectorView v = :"
-          << v << endl
-          << "in LocalLinearTrendStateModel.  Should be of dimension 2"
-          << endl;
+      err << "improper dimesion of ConstVectorView v = :" << v << endl
+          << "in LocalLinearTrendStateModel.  Should be of dimension 2" << endl;
       report_error(err.str());
     }
   }
@@ -80,53 +75,55 @@ namespace BOOM{
   }
 
   Ptr<SparseMatrixBlock> LLTSM::state_transition_matrix(int t) const {
-    return state_transition_matrix_;}
+    return state_transition_matrix_;
+  }
 
   Ptr<SparseMatrixBlock> LLTSM::state_variance_matrix(int t) const {
-    return state_variance_matrix_;}
+    return state_variance_matrix_;
+  }
 
   Ptr<SparseMatrixBlock> LLTSM::state_error_expander(int t) const {
-    return state_error_expander_;}
+    return state_error_expander_;
+  }
 
   Ptr<SparseMatrixBlock> LLTSM::state_error_variance(int t) const {
-    return state_variance_matrix(t);}
+    return state_variance_matrix(t);
+  }
 
   SparseVector LLTSM::observation_matrix(int) const {
-    return observation_matrix_; }
+    return observation_matrix_;
+  }
 
-  Vector LLTSM::initial_state_mean() const {return initial_state_mean_;}
+  Vector LLTSM::initial_state_mean() const { return initial_state_mean_; }
   SpdMatrix LLTSM::initial_state_variance() const {
-    return initial_state_variance_;}
+    return initial_state_variance_;
+  }
   void LLTSM::set_initial_state_mean(const Vector &v) {
-    initial_state_mean_ = v; }
+    initial_state_mean_ = v;
+  }
   void LLTSM::set_initial_state_variance(const SpdMatrix &Sigma) {
-    initial_state_variance_ = Sigma; }
+    initial_state_variance_ = Sigma;
+  }
 
   void LLTSM::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    if (state_error_mean.size() != 2
-        || state_error_variance.nrow() != 2
-        || state_error_variance.ncol() != 2) {
+    if (state_error_mean.size() != 2 || state_error_variance.nrow() != 2 ||
+        state_error_variance.ncol() != 2) {
       suf()->update_expected_value(
-          1.0,
-          state_error_mean,
+          1.0, state_error_mean,
           state_error_variance + outer(state_error_mean));
     }
   }
 
   void LLTSM::increment_expected_gradient(
-      VectorView gradient,
-      int t,
-      const ConstVectorView &state_error_mean,
+      VectorView gradient, int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    if (gradient.size() != 2
-        || state_error_mean.size() != 2
-        || state_error_variance.nrow() != 2
-        || state_error_variance.ncol() != 2) {
-      report_error("Wrong size arguments to LocalLinearTrendStateModel::"
-                   "increment_expected_gradient.");
+    if (gradient.size() != 2 || state_error_mean.size() != 2 ||
+        state_error_variance.nrow() != 2 || state_error_variance.ncol() != 2) {
+      report_error(
+          "Wrong size arguments to LocalLinearTrendStateModel::"
+          "increment_expected_gradient.");
     }
 
     // The derivatives of log likelihood are:

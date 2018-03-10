@@ -20,11 +20,11 @@
 #define BOOM_MVN_GIVEN_X_HPP
 
 #include "Models/MvnBase.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class GlmModel;
   class GlmCoefs;
@@ -62,49 +62,45 @@ namespace BOOM{
   // per row of X shortly after initialization.  For problems where X
   // or w change frequently then clear_xtwx() and add_x() should be
   // called as needed to manage the changes.
-  class MvnGivenX
-    : public MvnBase,
-      public ParamPolicy_2<VectorParams, UnivParams>,
-      public IID_DataPolicy<GlmCoefs>,
-      public PriorPolicy
-  {
-  public:
-    MvnGivenX(const Vector &Mu, double kappa, double diag_wgt=0);
+  class MvnGivenX : public MvnBase,
+                    public ParamPolicy_2<VectorParams, UnivParams>,
+                    public IID_DataPolicy<GlmCoefs>,
+                    public PriorPolicy {
+   public:
+    MvnGivenX(const Vector &Mu, double kappa, double diag_wgt = 0);
 
-    MvnGivenX(const Ptr<VectorParams> & Mu,
-              const Ptr<UnivParams> &kappa,
-              double diag_wgt=0);
-    MvnGivenX(const Ptr<VectorParams> & Mu,
-              const Ptr<UnivParams> &kappa,
-              const Vector & Lambda,
-              double diag_wgt=0);
+    MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &kappa,
+              double diag_wgt = 0);
+    MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &kappa,
+              const Vector &Lambda, double diag_wgt = 0);
     MvnGivenX(const MvnGivenX &rhs);
 
-    MvnGivenX * clone() const override;
+    MvnGivenX *clone() const override;
     virtual void initialize_params();
-    virtual void add_x(const Vector &x, double w=1.0);
+    virtual void add_x(const Vector &x, double w = 1.0);
     virtual void clear_xtwx();
-    virtual const SpdMatrix & xtwx()const;
+    virtual const SpdMatrix &xtwx() const;
 
-    uint dim()const override;
-    const Vector & mu()const override;
-    double kappa()const;
-    const SpdMatrix & Sigma()const override;
-    const SpdMatrix & siginv()const override;
-    double ldsi()const override;
+    uint dim() const override;
+    const Vector &mu() const override;
+    double kappa() const;
+    const SpdMatrix &Sigma() const override;
+    const SpdMatrix &siginv() const override;
+    double ldsi() const override;
 
-    const Ptr<VectorParams> Mu_prm()const;
-    const Ptr<UnivParams> Kappa_prm()const;
+    const Ptr<VectorParams> Mu_prm() const;
+    const Ptr<UnivParams> Kappa_prm() const;
     Ptr<VectorParams> Mu_prm();
     Ptr<UnivParams> Kappa_prm();
 
-    double diagonal_weight()const;
-    Vector sim(RNG &rng = GlobalRng::rng)const override;
-  private:
-    virtual void set_ivar()const;  // logical constness
+    double diagonal_weight() const;
+    Vector sim(RNG &rng = GlobalRng::rng) const override;
+
+   private:
+    virtual void set_ivar() const;  // logical constness
 
     double diagonal_weight_;
-    Vector Lambda_;                // prior if no X's.  may be unallocated
+    Vector Lambda_;  // prior if no X's.  may be unallocated
 
     mutable Ptr<SpdParams> ivar_;
     SpdMatrix xtwx_;
@@ -141,17 +137,16 @@ namespace BOOM{
       : public MvnBase,
         public ParamPolicy_2<VectorParams, UnivParams>,
         public IID_DataPolicy<GlmCoefs>,
-        public PriorPolicy
-  {
-  public:
-    MvnGivenXMultinomialLogit(const Vector & beta_prior_mean,
+        public PriorPolicy {
+   public:
+    MvnGivenXMultinomialLogit(const Vector &beta_prior_mean,
                               double prior_sample_size,
-                              double diagonal_weight=0);
-    MvnGivenXMultinomialLogit(const Ptr<VectorParams> & beta_prior_mean,
+                              double diagonal_weight = 0);
+    MvnGivenXMultinomialLogit(const Ptr<VectorParams> &beta_prior_mean,
                               const Ptr<UnivParams> &prior_sample_size,
-                              double diagonal_weight=0);
+                              double diagonal_weight = 0);
     MvnGivenXMultinomialLogit(const MvnGivenXMultinomialLogit &rhs);
-    MvnGivenXMultinomialLogit * clone() const override;
+    MvnGivenXMultinomialLogit *clone() const override;
 
     // Args:
     //   subject_characeristics: An n x p array with rows
@@ -162,25 +157,25 @@ namespace BOOM{
     //   number_of_choices: The number of choices available for the
     //     response.  If choice_characteristics is provided, this
     //     argument must match.
-    void set_x(const Matrix & subject_characeristics,
-               const std::vector<Mat> & choice_characteristics,
+    void set_x(const Matrix &subject_characeristics,
+               const std::vector<Mat> &choice_characteristics,
                int number_of_choices);
 
     Ptr<VectorParams> Mu_prm();
-    const Ptr<VectorParams> Mu_prm()const;
+    const Ptr<VectorParams> Mu_prm() const;
     void set_mu(const Vector &mu);
 
     Ptr<UnivParams> Kappa_prm();
-    const Ptr<UnivParams> Kappa_prm()const;
-    double kappa()const;
+    const Ptr<UnivParams> Kappa_prm() const;
+    double kappa() const;
     void set_kappa(double kappa);
 
-    const Vector & mu()const override;
-    const SpdMatrix & Sigma()const override;
-    const SpdMatrix & siginv()const override;
-    double ldsi()const override;
+    const Vector &mu() const override;
+    const SpdMatrix &Sigma() const override;
+    const SpdMatrix &siginv() const override;
+    double ldsi() const override;
 
-  private:
+   private:
     double diagonal_weight_;
 
     SpdMatrix scaled_subject_xtx_;
@@ -190,9 +185,9 @@ namespace BOOM{
     mutable bool current_;
     mutable Ptr<SpdData> Sigma_storage_;
 
-    void make_current()const;
+    void make_current() const;
   };
 
 }  // namespace BOOM
 
-#endif// BOOM_MVN_GIVEN_X_HPP
+#endif  // BOOM_MVN_GIVEN_X_HPP

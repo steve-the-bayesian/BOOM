@@ -19,8 +19,8 @@
 #ifndef BOOM_SPD_STORAGE_HPP
 #define BOOM_SPD_STORAGE_HPP
 
-#include "Models/DataTypes.hpp"
 #include <functional>
+#include "Models/DataTypes.hpp"
 
 namespace BOOM {
   namespace SPD {
@@ -39,7 +39,7 @@ namespace BOOM {
       Storage(bool current = false);
       Storage(const Storage &rhs);
       virtual ~Storage();
-      virtual Storage * clone() const = 0;
+      virtual Storage *clone() const = 0;
 
       // Returns the length of one side of the stored matrix.
       virtual uint dim() const = 0;
@@ -68,38 +68,40 @@ namespace BOOM {
       bool current_;
       void observe_changes();
 
-      std::vector<std::function<void(void)> >signals_;
+      std::vector<std::function<void(void)> > signals_;
     };
 
     //------------------------------------------------------------
     class SpdStorage;
-    class CholStorage : public Storage{
-    public:
+    class CholStorage : public Storage {
+     public:
       CholStorage();
       CholStorage(const SpdMatrix &S);
       CholStorage(const CholStorage &rhs);
-      CholStorage * clone() const override;
+      CholStorage *clone() const override;
       uint dim() const override;
       void set(const Matrix &L, bool sig = true);
       void refresh(const SpdStorage &);
-      const Matrix & value() const;
-    private:
+      const Matrix &value() const;
+
+     private:
       Matrix L;
     };
 
     //------------------------------------------------------------
-    class SpdStorage : public Storage{
-    public:
+    class SpdStorage : public Storage {
+     public:
       SpdStorage();
       SpdStorage(const SpdMatrix &S);
       SpdStorage(const SpdStorage &S);
-      SpdStorage * clone() const override;
+      SpdStorage *clone() const override;
       uint dim() const override;
-      const SpdMatrix & value() const;
+      const SpdMatrix &value() const;
       void set(const SpdMatrix &, bool sig = true);
-      void refresh_from_chol(const CholStorage&, bool inv = false);
+      void refresh_from_chol(const CholStorage &, bool inv = false);
       void refresh_from_inv(const SpdStorage &, CholStorage &);
-    private:
+
+     private:
       SpdMatrix sig_;
     };
   }  // namespace SPD
@@ -110,26 +112,24 @@ namespace BOOM {
   // its inverse (ivar), as well as the cholesky triangles for these
   // two matrices.  This is extravagant, but it prevents excessive
   // computation.
-  class SpdData
-    : public DataTraits<Spd>
-  {
-  public:
-    SpdData(uint n, double diag=1.0, bool ivar = false);
+  class SpdData : public DataTraits<Spd> {
+   public:
+    SpdData(uint n, double diag = 1.0, bool ivar = false);
     SpdData(const SpdMatrix &S, bool ivar = false);
     SpdData(const SpdData &rhs);
-    SpdData * clone() const override;
+    SpdData *clone() const override;
 
     virtual uint size(bool minimal = true) const;
     virtual uint dim() const;
-    ostream & display(ostream &out) const override;
+    ostream &display(ostream &out) const override;
 
-    const SpdMatrix & value() const override;
+    const SpdMatrix &value() const override;
     void set(const SpdMatrix &v, bool sig = true) override;
 
-    const SpdMatrix & var() const;
-    const SpdMatrix & ivar() const;
-    const Matrix & var_chol() const;
-    const Matrix & ivar_chol() const;
+    const SpdMatrix &var() const;
+    const SpdMatrix &ivar() const;
+    const Matrix &var_chol() const;
+    const Matrix &ivar_chol() const;
     double ldsi() const;
 
     void set_var(const SpdMatrix &, bool signal = true);
@@ -150,7 +150,7 @@ namespace BOOM {
     void ensure_var_chol_current() const;
     void ensure_ivar_chol_current() const;
 
-  private:
+   private:
     mutable std::shared_ptr<SPD::SpdStorage> var_;
     mutable std::shared_ptr<SPD::SpdStorage> ivar_;
     mutable std::shared_ptr<SPD::CholStorage> var_chol_;
@@ -164,4 +164,4 @@ namespace BOOM {
     void setup_storage();
   };
 }  // namespace BOOM
-#endif// BOOM_SPD_STORAGE_HPP
+#endif  // BOOM_SPD_STORAGE_HPP

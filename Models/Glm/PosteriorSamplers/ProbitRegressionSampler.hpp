@@ -20,29 +20,27 @@
 #ifndef BOOM_PROBIT_REGRESSION_SAMPLER_HPP_
 #define BOOM_PROBIT_REGRESSION_SAMPLER_HPP_
 
-#include "Models/Glm/ProbitRegression.hpp"
 #include "Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp"
+#include "Models/Glm/ProbitRegression.hpp"
 #include "Models/MvnBase.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
-  class ProbitRegressionSampler
-      : public PosteriorSampler
-  {
+namespace BOOM {
+  class ProbitRegressionSampler : public PosteriorSampler {
    public:
     ProbitRegressionSampler(ProbitRegressionModel *model,
                             const Ptr<MvnBase> &prior,
                             RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri()const override;
+    double logpri() const override;
 
     // Call refresh_xtx when the model has gained or lost data.
     // Otherwise, it is assumed that xtx_ is fixed between iterations
     void refresh_xtx();
 
     void impute_latent_data();
-    const Vector & xtz()const;
-    const SpdMatrix & xtx()const;
+    const Vector &xtz() const;
+    const SpdMatrix &xtx() const;
 
    protected:
     virtual void draw_beta();
@@ -57,6 +55,6 @@ namespace BOOM{
     SpdMatrix xtx_;
     Vector xtz_;
   };
-}
+}  // namespace BOOM
 
 #endif  // BOOM_PROBIT_REGRESSION_SAMPLER_HPP_

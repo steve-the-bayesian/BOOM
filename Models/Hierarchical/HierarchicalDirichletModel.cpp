@@ -22,27 +22,20 @@
 
 namespace BOOM {
 
- namespace {
-   typedef HierarchicalDirichletModel HDM;
-   typedef HierarchicalDirichletData HDD;
- }
+  namespace {
+    typedef HierarchicalDirichletModel HDM;
+    typedef HierarchicalDirichletData HDD;
+  }  // namespace
 
-  HDD::HierarchicalDirichletData(uint p)
-      : counts_(p)
-  {}
+  HDD::HierarchicalDirichletData(uint p) : counts_(p) {}
 
-  HDD::HierarchicalDirichletData(const MultinomialSuf &suf)
-      : counts_(suf)
-  {}
+  HDD::HierarchicalDirichletData(const MultinomialSuf &suf) : counts_(suf) {}
 
-  HDD * HDD::clone() const {return new HDD(*this);}
+  HDD *HDD::clone() const { return new HDD(*this); }
 
-  ostream & HDD::display(ostream &out) const {
-    return out << counts_;
-  }
+  ostream &HDD::display(ostream &out) const { return out << counts_; }
 
-  HDM::HierarchicalDirichletModel(double sample_size,
-                                  const Vector &mean)
+  HDM::HierarchicalDirichletModel(double sample_size, const Vector &mean)
       : HierarchicalBase(new DirichletModel(sample_size * mean)) {
     double mean_sum = sum(mean);
     double mean_min = min(mean);
@@ -58,10 +51,9 @@ namespace BOOM {
   }
 
   HDM::HierarchicalDirichletModel(const Ptr<DirichletModel> &prior)
-      : HierarchicalBase(prior)
-  {}
+      : HierarchicalBase(prior) {}
 
-  HDM * HDM::clone() const {return new HDM(*this);}
+  HDM *HDM::clone() const { return new HDM(*this); }
 
   void HDM::add_data(const Ptr<Data> &dp) {
     Ptr<HierarchicalDirichletData> data_point =
@@ -70,4 +62,4 @@ namespace BOOM {
     add_data_level_model(data_model);
   }
 
-}
+}  // namespace BOOM

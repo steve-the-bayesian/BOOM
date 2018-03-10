@@ -19,10 +19,10 @@
 #ifndef BOOM_MVN_GIVEN_X_AND_SIGMA_HPP
 #define BOOM_MVN_GIVEN_X_AND_SIGMA_HPP
 
-#include "Models/ParamTypes.hpp"
 #include "Models/MvnBase.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/ParamTypes.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
 #include "Models/Glm/Glm.hpp"
@@ -30,7 +30,7 @@
 
 #include <functional>
 
-namespace BOOM{
+namespace BOOM {
 
   // A conjugate prior distribution for the coefficients of a linear
   // regression model.  The conditional distribution of the regression
@@ -55,13 +55,11 @@ namespace BOOM{
   // where X is less than full rank.  Likewise, adding a positive digonal
   // element Lambda keeps the prior propoer in case some columns of X have zero
   // variance, or in the case where X contains no data.
-  class MvnGivenXandSigma
-    : public MvnBase,
-      public ParamPolicy_2<VectorParams, UnivParams>,
-      public IID_DataPolicy<GlmCoefs>,
-      public PriorPolicy
-  {
-  public:
+  class MvnGivenXandSigma : public MvnBase,
+                            public ParamPolicy_2<VectorParams, UnivParams>,
+                            public IID_DataPolicy<GlmCoefs>,
+                            public PriorPolicy {
+   public:
     // In this constructor, Lambda is taken to be zero.
     // Args:
     //   model: The regression model whose coefficients are to be modeled.  The
@@ -92,20 +90,18 @@ namespace BOOM{
     //   additional_prior_precision: The constant to add to the diagonal of the
     //     prior precision matrix.  Denoted 'Lambda' above.
     //   diagonal_weight: The weight to use on the diagonal of XTX
-    MvnGivenXandSigma(const Ptr<VectorParams> & prior_mean,
+    MvnGivenXandSigma(const Ptr<VectorParams> &prior_mean,
                       const Ptr<UnivParams> &prior_sample_size,
-                      const Ptr<UnivParams> &sigsq,
-                      const SpdMatrix &XTX,
-                      double sample_size,
-                      const Vector &Lambda = Vector(0),
+                      const Ptr<UnivParams> &sigsq, const SpdMatrix &XTX,
+                      double sample_size, const Vector &Lambda = Vector(0),
                       double diagonal_weight = 0);
 
     MvnGivenXandSigma(const MvnGivenXandSigma &rhs);
-    MvnGivenXandSigma * clone() const override;
+    MvnGivenXandSigma *clone() const override;
 
-    const Vector & mu() const override;
-    const SpdMatrix & Sigma() const override;
-    const SpdMatrix & siginv() const override;
+    const Vector &mu() const override;
+    const SpdMatrix &Sigma() const override;
+    const SpdMatrix &siginv() const override;
     double ldsi() const override;
 
     // The value of the prior sample size parameter (denoted kappa
@@ -125,20 +121,18 @@ namespace BOOM{
 
     // An observer to be called whenever the underlying regression
     // model changes its residual variance parameter, or its data.
-    void observe_changes() {
-      current_ = false;
-    }
+    void observe_changes() { current_ = false; }
 
-  private:
+   private:
     Ptr<UnivParams> sigsq_;
-    std::function<const SpdMatrix (void)> compute_xtx_;
+    std::function<const SpdMatrix(void)> compute_xtx_;
     std::function<double(void)> data_sample_size_;
     Vector additional_prior_precision_;
     double diagonal_weight_;
 
     mutable Ptr<SpdParams> ivar_;
     mutable bool current_;
-    void set_ivar() const; // logical constness
+    void set_ivar() const;  // logical constness
   };
 }  // namespace BOOM
-#endif// BOOM_MVN_GIVEN_X_AND_SIGMA_HPP
+#endif  // BOOM_MVN_GIVEN_X_AND_SIGMA_HPP

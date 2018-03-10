@@ -23,15 +23,15 @@
 #include "Models/Bart/Bart.hpp"
 #include "Models/GaussianModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "cpputil/math_utils.hpp"
 #include "Samplers/MoveAccounting.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
   //======================================================================
   // Contains the parameters common to all Bart priors.
   struct BartPriorParameters {
-    BartPriorParameters(){}
+    BartPriorParameters() {}
     BartPriorParameters(double total_prediction_sd,
                         double prior_tree_depth_alpha,
                         double prior_tree_depth_beta)
@@ -56,6 +56,7 @@ namespace BOOM {
         return negative_infinity();
       }
     }
+
    private:
     int number_of_trees_;
   };
@@ -107,10 +108,8 @@ namespace BOOM {
     //     value with positive probability (finite log probability)
     //     under this distribution.
     BartPosteriorSamplerBase(
-        BartModelBase *model,
-        double total_prediction_sd,
-        double prior_tree_depth_alpha,
-        double prior_tree_depth_beta,
+        BartModelBase *model, double total_prediction_sd,
+        double prior_tree_depth_alpha, double prior_tree_depth_beta,
         const std::function<double(int)> &log_prior_on_number_of_trees,
         RNG &seeding_rng = GlobalRng::rng);
 
@@ -154,12 +153,12 @@ namespace BOOM {
     // in MH acceptance ratios, such as factors of 2*pi or constant
     // variance terms.
     virtual double log_integrated_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const = 0;
+        const Bart::SufficientStatisticsBase &suf) const = 0;
 
     // Returns the log integrated likelihood for the subtree
     // consisting of *node and its descendants.  This is the sum of
     // the log integrated likelihoods for all the leaves under *node.
-    double subtree_log_integrated_likelihood(Bart::TreeNode *node)const;
+    double subtree_log_integrated_likelihood(Bart::TreeNode *node) const;
 
     // Returns the log likelihood associated with the given set of
     // complete data sufficient statistics.  ***NOTE*** the outupt of
@@ -169,26 +168,26 @@ namespace BOOM {
     // constant that canel in MH ratios, those same constants must be
     // omitted here.
     virtual double complete_data_log_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const = 0;
+        const Bart::SufficientStatisticsBase &suf) const = 0;
 
     // Clear the vector of residuals (make it empty).
     virtual void clear_residuals() = 0;
 
     // Returns the number of observations stored in the residual vector.
-    virtual int residual_size()const = 0;
+    virtual int residual_size() const = 0;
 
     // Creates and stores the residual observation corresponding to
     // observation i in the model.  The model needs to have data
     // assigned before this function can be called.
-    virtual Bart::ResidualRegressionData * create_and_store_residual(int i) = 0;
+    virtual Bart::ResidualRegressionData *create_and_store_residual(int i) = 0;
 
     // Returns a pointer to the concrete instance of
     // ResidualRegressionData associated with data point i.
-    virtual Bart::ResidualRegressionData * residual(int i) = 0;
+    virtual Bart::ResidualRegressionData *residual(int i) = 0;
 
     // Create the type of sufficient statistics that go along with the
     // type of your data.
-    virtual Bart::SufficientStatisticsBase * create_suf() const = 0;
+    virtual Bart::SufficientStatisticsBase *create_suf() const = 0;
 
     //----------------------------------------------------------------------
     // Verify that the vector of residuals has been allocated and
@@ -235,7 +234,6 @@ namespace BOOM {
     void slice_sample_continuous_cutpoint(Bart::TreeNode *node);
     void slice_sample_discrete_cutpoint(Bart::TreeNode *node);
 
-
     // Conditional on the tree structure and sigma, sample the mean
     // parameters at the leaves.
     void draw_terminal_means_and_adjust_residuals(Bart::Tree *tree);
@@ -263,11 +261,9 @@ namespace BOOM {
     // The mean prior variance is the variance of the prior
     // distribution for the mean parameter at an individual leaf.  Its
     // value is is total_prediction_variance / number_of_trees.
-    double mean_prior_variance()const;
+    double mean_prior_variance() const;
 
-    const MoveAccounting & move_accounting() const {
-      return MH_accounting_;
-    }
+    const MoveAccounting &move_accounting() const { return MH_accounting_; }
 
     // Grow a new branch on tree, starting from 'leaf', which must be
     // a leaf node owned by 'tree'.  An exception will be thrown if
@@ -284,8 +280,8 @@ namespace BOOM {
     bool grow_branch_from_prior(Bart::Tree *tree, Bart::TreeNode *leaf);
 
     bool assign_random_split_rule(Bart::TreeNode *leaf);
-    bool assign_random_split_rule_from_subset(
-        Bart::TreeNode *leaf, Selector &included_variables);
+    bool assign_random_split_rule_from_subset(Bart::TreeNode *leaf,
+                                              Selector &included_variables);
 
    protected:
     // Removes all pointers to residuals_ from the trees owned by
@@ -296,15 +292,15 @@ namespace BOOM {
     // Compute the log of the Metropolis-Hastings ratio for the split
     // move.  The log ratio for the prune_split move is -1 times this
     // number.
-    double split_move_log_metropolis_ratio(
-        Bart::Tree *tree, Bart::TreeNode *leaf);
+    double split_move_log_metropolis_ratio(Bart::Tree *tree,
+                                           Bart::TreeNode *leaf);
 
     // Computes the log of the Metropolis-Hastings ratio for the
     // grow_branch move.  The log ratio for the prune_branch_move is
     // -1 times this number.  If the tree branch is a single split
     // then this function forwards to split_move_log_metropolis_ratio.
-    double grow_branch_log_metropolis_ratio(
-        Bart::Tree *tree, Bart::TreeNode *branch_root);
+    double grow_branch_log_metropolis_ratio(Bart::Tree *tree,
+                                            Bart::TreeNode *branch_root);
 
    private:
     BartModelBase *model_;
@@ -338,8 +334,7 @@ namespace BOOM {
     // The vector of move_probabilities_ must be the same length as
     // the number of elements in the MoveType enum.
     Vector move_probabilities_;
-
   };
 
-}
-#endif // BART_POSTERIOR_SAMPLER_BASE_HPP_
+}  // namespace BOOM
+#endif  // BART_POSTERIOR_SAMPLER_BASE_HPP_

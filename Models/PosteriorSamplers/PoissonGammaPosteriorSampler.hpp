@@ -38,10 +38,10 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
-    double logp(double prior_mean, double prior_sample_size)const;
+    double logp(double prior_mean, double prior_sample_size) const;
 
     // Exposed for testing.
-    const PoissonGammaModel *model() const { return model_;}
+    const PoissonGammaModel *model() const { return model_; }
 
    private:
     PoissonGammaModel *model_;

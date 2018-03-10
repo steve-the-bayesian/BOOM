@@ -20,13 +20,13 @@
 #ifndef BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_ASIS_SAMPLER_HPP_
 #define BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_ASIS_SAMPLER_HPP_
 
-#include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 #include "Models/GammaModel.hpp"
+#include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
 #include "Models/MvnModel.hpp"
-#include "Models/WishartModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 #include "Models/PosteriorSamplers/MvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/WishartModel.hpp"
 
 namespace BOOM {
 
@@ -35,8 +35,7 @@ namespace BOOM {
   // http://www.stat.harvard.edu/Faculty_Content/meng/jcgs.2011-article.pdf).
   // The ASIS sampler has better theoretical convergence properties than the
   // classic sampler used by HierarchicalGaussianRegressionSampler.
-  class HierarchicalGaussianRegressionAsisSampler
-      : public PosteriorSampler {
+  class HierarchicalGaussianRegressionAsisSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be posterior-sampled.
@@ -65,9 +64,10 @@ namespace BOOM {
     // meaning as in the constructor.  The residual_precision_prior can be
     // nullptr if the residual variance is to be either held fixed or managed by
     // another class.
-    void set_hyperprior(const Ptr<MvnModel> &coefficient_mean_hyperprior,
-                        const Ptr<WishartModel> &coefficient_precision_hyperprior,
-                        const Ptr<GammaModelBase> &residual_precision_prior);
+    void set_hyperprior(
+        const Ptr<MvnModel> &coefficient_mean_hyperprior,
+        const Ptr<WishartModel> &coefficient_precision_hyperprior,
+        const Ptr<GammaModelBase> &residual_precision_prior);
 
    private:
     HierarchicalGaussianRegressionModel *model_;

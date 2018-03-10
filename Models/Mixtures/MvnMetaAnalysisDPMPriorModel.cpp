@@ -18,8 +18,8 @@
 */
 
 #include "Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp"
-#include "Models/MvnBase.hpp"
 #include <utility>
+#include "Models/MvnBase.hpp"
 
 namespace BOOM {
 
@@ -28,8 +28,8 @@ namespace BOOM {
     typedef MvnMetaAnalysisDPMPriorModel mDPMPrior;
   }  // namespace
 
-  mDPMData::MvnMetaAnalysisDPMPriorData(const Vector &observation,
-                                        const SpdMatrix &observation_variance)
+  mDPMData::MvnMetaAnalysisDPMPriorData(const Vector& observation,
+                                        const SpdMatrix& observation_variance)
       : observation_(new VectorData(observation)),
         observation_variance_(observation_variance) {}
 
@@ -43,12 +43,13 @@ namespace BOOM {
   mDPMPrior::MvnMetaAnalysisDPMPriorModel(int dim, double alpha)
       : HierarchicalBase(new DirichletProcessMvnModel(dim, alpha)) {}
 
-  mDPMPrior::MvnMetaAnalysisDPMPriorModel(const Ptr<DirichletProcessMvnModel> & prior)
+  mDPMPrior::MvnMetaAnalysisDPMPriorModel(
+      const Ptr<DirichletProcessMvnModel>& prior)
       : HierarchicalBase(prior) {}
 
   mDPMPrior* mDPMPrior::clone() const { return new mDPMPrior(*this); }
 
-  void mDPMPrior::add_data(const Ptr<Data> & dp) {
+  void mDPMPrior::add_data(const Ptr<Data>& dp) {
     Ptr<mDPMData> data_point = dp.dcast<mDPMData>();
     const Vector& value(data_point->observation());
     NEW(MvnModel, model)(value, data_point->observation_variance());

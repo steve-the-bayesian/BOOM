@@ -20,20 +20,21 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_MODEL_HPP_
 #define BOOM_HIERARCHICAL_POISSON_MODEL_HPP_
 
-#include "Models/PoissonModel.hpp"
 #include "Models/GammaModel.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Hierarchical/HierarchicalModel.hpp"
+#include "Models/PoissonModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
 
 namespace BOOM {
 
   class HierarchicalPoissonData : public Data {
    public:
     HierarchicalPoissonData(double event_count, double exposure);
-    HierarchicalPoissonData * clone()const override;
-    ostream & display(ostream &out)const override;
-    double event_count() const {return event_count_;}
-    double exposure() const {return exposure_;}
+    HierarchicalPoissonData *clone() const override;
+    ostream &display(ostream &out) const override;
+    double event_count() const { return event_count_; }
+    double exposure() const { return exposure_; }
+
    private:
     double event_count_;
     double exposure_;
@@ -48,15 +49,15 @@ namespace BOOM {
    public:
     HierarchicalPoissonModel(double lambda_prior_guess,
                              double lambda_prior_sample_size);
-    HierarchicalPoissonModel(const Ptr<GammaModel> & prior_model);
-    HierarchicalPoissonModel * clone() const override;
+    HierarchicalPoissonModel(const Ptr<GammaModel> &prior_model);
+    HierarchicalPoissonModel *clone() const override;
 
     // Creates a new data_level_model with data assigned.
     void add_data(const Ptr<Data> &) override;
 
-    double prior_mean()const;
-    double prior_sample_size()const;
+    double prior_mean() const;
+    double prior_sample_size() const;
   };
 }  // namespace BOOM
 
-#endif //  BOOM_HIERARCHICAL_POISSON_MODEL_HPP_
+#endif  //  BOOM_HIERARCHICAL_POISSON_MODEL_HPP_

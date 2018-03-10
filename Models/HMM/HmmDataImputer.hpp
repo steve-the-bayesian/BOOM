@@ -30,15 +30,17 @@ namespace BOOM {
     HmmDataImputer(HiddenMarkovModel *hmm, uint id, uint nworkers);
     Ptr<MarkovModel> mark();
     Ptr<MixtureComponent> models(uint s);
-    double loglike()const;
+    double loglike() const;
 
     void setup(HiddenMarkovModel *);
     void clear_client_data();
     void impute_data();
 
-    friend void intrusive_ptr_add_ref(HmmDataImputer *d){d->up_count();}
-    friend void intrusive_ptr_release(HmmDataImputer *d){
-      d->down_count(); if(d->ref_count()==0) delete d;}
+    friend void intrusive_ptr_add_ref(HmmDataImputer *d) { d->up_count(); }
+    friend void intrusive_ptr_release(HmmDataImputer *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
 
    private:
     uint id_;
@@ -47,11 +49,11 @@ namespace BOOM {
     std::vector<Ptr<MixtureComponent>> mix_;
     Ptr<HmmFilter> filter_;
     double loglike_;
-    std::vector<TimeSeries<Data> * > dat_;
+    std::vector<TimeSeries<Data> *> dat_;
 
     RNG eng;
   };
 
-}
+}  // namespace BOOM
 
-#endif// BOOM_HMM_DATA_IMPUTER_HPP
+#endif  // BOOM_HMM_DATA_IMPUTER_HPP

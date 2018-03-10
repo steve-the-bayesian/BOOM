@@ -20,32 +20,37 @@
 #define BOOM_DATA_PAIR_HPP
 
 #include "Models/DataTypes.hpp"
-namespace BOOM{
+namespace BOOM {
 
   template <class D1, class D2>
-  class DataPair : public Data{
-  public:
-    DataPair(const Ptr<D1> & d1, const Ptr<D2> &d2) : d1_(d1), d2_(d2) {}
+  class DataPair : public Data {
+   public:
+    DataPair(const Ptr<D1> &d1, const Ptr<D2> &d2) : d1_(d1), d2_(d2) {}
     DataPair(const DataPair &rhs)
-      : Data(rhs), d1_(rhs.d1_->clone()), d2_(rhs.d2_->clone()) {}
-    DataPair * clone()const override{return new DataPair(*this);}
+        : Data(rhs), d1_(rhs.d1_->clone()), d2_(rhs.d2_->clone()) {}
+    DataPair *clone() const override { return new DataPair(*this); }
 
-    ostream & display(ostream &out)const override{
-      return d1_->display(out) << " " << d2_->display(out);}
-    virtual istream & read(istream &in){
-      d1_->read(in); d2_->read(in); return(in); }
-    virtual uint size(bool minimal=true)const{
-      return d1_->size(minimal) + d2_->size(minimal); }
+    ostream &display(ostream &out) const override {
+      return d1_->display(out) << " " << d2_->display(out);
+    }
+    virtual istream &read(istream &in) {
+      d1_->read(in);
+      d2_->read(in);
+      return (in);
+    }
+    virtual uint size(bool minimal = true) const {
+      return d1_->size(minimal) + d2_->size(minimal);
+    }
 
-    Ptr<D1> first(){return d1_;}
-    Ptr<D2> second(){return d2_;}
-    const Ptr<D1> first()const{return d1_;}
-    const Ptr<D2> second()const{return d2_;}
+    Ptr<D1> first() { return d1_; }
+    Ptr<D2> second() { return d2_; }
+    const Ptr<D1> first() const { return d1_; }
+    const Ptr<D2> second() const { return d2_; }
 
-  private:
+   private:
     Ptr<D1> d1_;
     Ptr<D2> d2_;
   };
 
-}
-#endif // BOOM_DATA_PAIR_HPP
+}  // namespace BOOM
+#endif  // BOOM_DATA_PAIR_HPP

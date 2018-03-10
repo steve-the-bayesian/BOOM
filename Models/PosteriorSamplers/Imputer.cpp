@@ -34,8 +34,8 @@ namespace BOOM {
       std::vector<std::future<void>> jobs;
       jobs.reserve(workers_.size());
       for (int i = 0; i < workers_.size(); ++i) {
-        jobs.emplace_back(pool_.submit(
-            workers_[i]->data_imputation_callback()));
+        jobs.emplace_back(
+            pool_.submit(workers_[i]->data_imputation_callback()));
       }
       std::vector<std::string> error_messages;
       for (int i = 0; i < jobs.size(); ++i) {
@@ -53,12 +53,10 @@ namespace BOOM {
           report_error(error_messages[0]);
         } else {
           std::ostringstream err;
-          err << "There were " << error_messages.size()
-              << " exceptions thrown." << std::endl;
+          err << "There were " << error_messages.size() << " exceptions thrown."
+              << std::endl;
           for (int i = 0; i < error_messages.size(); ++i) {
-            err << "Error message from exception "
-                << i + 1
-                << "." << std::endl
+            err << "Error message from exception " << i + 1 << "." << std::endl
                 << error_messages[i] << std::endl;
           }
           report_error(err.str());

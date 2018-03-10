@@ -24,13 +24,11 @@
 #include "Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
 
-
 namespace BOOM {
 
   // A spike-and-slab sampler for Poisson regression models.
   class PoissonRegressionSpikeSlabSampler
-      : public PoissonRegressionAuxMixSampler
-  {
+      : public PoissonRegressionAuxMixSampler {
    public:
     // Args:
     //   model:  The model to be posterior sampled.
@@ -41,11 +39,9 @@ namespace BOOM {
     //   number_of_threads: The number of threads to use for data
     //     augmentation.
     PoissonRegressionSpikeSlabSampler(
-        PoissonRegressionModel *model,
-        const Ptr<MvnBase> &slab_prior,
+        PoissonRegressionModel *model, const Ptr<MvnBase> &slab_prior,
         const Ptr<VariableSelectionPrior> &spike_prior,
-        int number_of_threads = 1,
-        RNG &seeding_rng = GlobalRng::rng);
+        int number_of_threads = 1, RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
@@ -66,13 +62,9 @@ namespace BOOM {
     // are "in" the model.  Dropped coefficients will remain zero.
     void find_posterior_mode(double epsilon = 1e-5) override;
 
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
+    bool can_find_posterior_mode() const override { return true; }
 
-    double log_posterior_at_mode() const {
-      return log_posterior_at_mode_;
-    }
+    double log_posterior_at_mode() const { return log_posterior_at_mode_; }
 
    private:
     PoissonRegressionModel *model_;
@@ -84,4 +76,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_GLM_POISSON_REGRESSION_SPIKE_SLAB_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_GLM_POISSON_REGRESSION_SPIKE_SLAB_POSTERIOR_SAMPLER_HPP_

@@ -28,8 +28,7 @@
 namespace BOOM {
   // This class implements the slice sampling algorithm from Kalli, Griffin, and
   // Walker, Statistics and Computing (2011), pp 93 -- 105.
-  class DirichletProcessSliceSampler
-      : public PosteriorSampler {
+  class DirichletProcessSliceSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be managed.
@@ -39,7 +38,7 @@ namespace BOOM {
     //     sampler.
     DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
                                  int initial_clusters = 1,
-                                 RNG & seeding_rng = GlobalRng::rng);
+                                 RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
 

@@ -19,10 +19,10 @@
 
 #ifndef BOOM_SEASONALSTATE_MODEL_HPP
 #define BOOM_SEASONALSTATE_MODEL_HPP
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "cpputil/Date.hpp"
 
 namespace BOOM {
@@ -30,32 +30,27 @@ namespace BOOM {
   //======================================================================
   // Shared based class for different concrete realizations of seasonal state
   // models.
-  class SeasonalStateModelBase
-      : public ZeroMeanGaussianModel,
-        public StateModel {
+  class SeasonalStateModelBase : public ZeroMeanGaussianModel,
+                                 public StateModel {
    public:
     explicit SeasonalStateModelBase(int nseasons);
     SeasonalStateModelBase(const SeasonalStateModelBase &rhs);
-    SeasonalStateModelBase * clone() const override = 0;
+    SeasonalStateModelBase *clone() const override = 0;
     // returns true if t is the start of a new season.
     virtual bool new_season(int t) const = 0;
 
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int t,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int t, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override {return 1;}
-    void simulate_state_error(
-        RNG &rng, VectorView state_error, int t) const override;
+    uint state_error_dimension() const override { return 1; }
+    void simulate_state_error(RNG &rng, VectorView state_error,
+                              int t) const override;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override;
@@ -80,14 +75,11 @@ namespace BOOM {
     void set_initial_state_variance(double sigsq);
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
    private:
@@ -102,8 +94,8 @@ namespace BOOM {
     Ptr<UpperLeftCornerMatrixParamView> state_error_variance_at_new_season_;
 
     // Model matrices in the interior of a season, when nothing changes
-    Ptr<IdentityMatrix> T1_;    //
-    Ptr<ZeroMatrix> RQR1_;      // dimension = state dimension
+    Ptr<IdentityMatrix> T1_;  //
+    Ptr<ZeroMatrix> RQR1_;    // dimension = state dimension
     Ptr<ZeroMatrix> state_error_variance_in_season_interior_;
 
     Ptr<FirstElementSingleColumnMatrix> state_error_expander_;
@@ -128,9 +120,8 @@ namespace BOOM {
     //     season_duration = 7.  A different class will be needed to
     //     have a month-effect because months have different
     //     durations.
-    explicit SeasonalStateModel(int nseasons,
-                                int season_duration = 1);
-    SeasonalStateModel * clone() const override;
+    explicit SeasonalStateModel(int nseasons, int season_duration = 1);
+    SeasonalStateModel *clone() const override;
 
     // If the time series does not start at t0 then you establish the
     // time of the first observation with this function.
@@ -149,11 +140,9 @@ namespace BOOM {
   class MonthlyAnnualCycle : public SeasonalStateModelBase {
    public:
     explicit MonthlyAnnualCycle(const Date &date_of_first_observation)
-        : SeasonalStateModelBase(12),
-          t0_(date_of_first_observation)
-    {}
+        : SeasonalStateModelBase(12), t0_(date_of_first_observation) {}
 
-    MonthlyAnnualCycle * clone() const override {
+    MonthlyAnnualCycle *clone() const override {
       return new MonthlyAnnualCycle(*this);
     }
 
@@ -168,4 +157,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_SEASONALSTATE_MODEL_HPP
+#endif  // BOOM_SEASONALSTATE_MODEL_HPP

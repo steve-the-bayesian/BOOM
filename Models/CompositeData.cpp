@@ -19,34 +19,27 @@
 
 #include "Models/CompositeData.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   CompositeData::CompositeData() {}
 
-  CompositeData::CompositeData(const std::vector<Ptr<Data> > &d)
-    : dat_(d)
-  {}
+  CompositeData::CompositeData(const std::vector<Ptr<Data> > &d) : dat_(d) {}
 
-  CompositeData * CompositeData::clone()const{
-    return new CompositeData(*this);}
+  CompositeData *CompositeData::clone() const {
+    return new CompositeData(*this);
+  }
 
-  ostream & CompositeData::display(ostream &out)const{
+  ostream &CompositeData::display(ostream &out) const {
     uint n = dat_.size();
-    for(uint i=0; i<n; ++i) dat_[i]->display(out) << " ";
+    for (uint i = 0; i < n; ++i) dat_[i]->display(out) << " ";
     return out;
   }
 
-  void CompositeData::add(const Ptr<Data> & dp){
-    dat_.push_back(dp);
-  }
+  void CompositeData::add(const Ptr<Data> &dp) { dat_.push_back(dp); }
 
-  uint CompositeData::dim()const{ return dat_.size();}
+  uint CompositeData::dim() const { return dat_.size(); }
 
-  Ptr<Data> CompositeData::get_ptr(uint i){
-    return dat_[i];
-  }
+  Ptr<Data> CompositeData::get_ptr(uint i) { return dat_[i]; }
 
-  const Data * CompositeData::get(uint i)const{
-    return dat_[i].get();
-  }
-}
+  const Data *CompositeData::get(uint i) const { return dat_[i].get(); }
+}  // namespace BOOM

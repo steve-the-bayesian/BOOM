@@ -27,19 +27,15 @@ namespace BOOM {
 
   DRARPS::DynamicRegressionArPosteriorSampler(
       DynamicRegressionArStateModel *model,
-      const std::vector<Ptr<GammaModelBase>> &siginv_priors,
-      RNG &seeding_rng)
-  : PosteriorSampler(seeding_rng),
-    model_(model)
-  {
+      const std::vector<Ptr<GammaModelBase>> &siginv_priors, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), model_(model) {
     if (siginv_priors.size() != model_->xdim()) {
       report_error("Wrong number of variance priors supplied.");
     }
     samplers_.reserve(model_->xdim());
     for (int i = 0; i < model_->xdim(); ++i) {
-      NEW(ArPosteriorSampler, sampler)(model_->coefficient_model(i).get(),
-                                       siginv_priors[i],
-                                       seeding_rng);
+      NEW(ArPosteriorSampler, sampler)
+      (model_->coefficient_model(i).get(), siginv_priors[i], seeding_rng);
       model_->coefficient_model(i)->set_method(sampler);
       samplers_.push_back(sampler);
     }

@@ -22,13 +22,12 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
-
-namespace BOOM{
+namespace BOOM {
 
   // Returns the first difference of the given vector.
   Vector diff(const Vector &v, bool leading_zero = false);
   Vector diff(const VectorView &v, bool leading_zero = false);
   Vector diff(const ConstVectorView &v, bool leading_zero = false);
 
-#endif // BOOM_DIFF_HPP_
+#endif  // BOOM_DIFF_HPP_
 }

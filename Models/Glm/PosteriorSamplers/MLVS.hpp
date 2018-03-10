@@ -20,11 +20,10 @@
 #ifndef BOOM_MULTINOMIAL_LOGIT_VARIABLE_SELECTION_HPP
 #define BOOM_MULTINOMIAL_LOGIT_VARIABLE_SELECTION_HPP
 
-
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/Glm/VariableSelectionPrior.hpp"
 #include "Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
 #include "Models/PosteriorSamplers/Imputer.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
@@ -34,8 +33,7 @@ namespace BOOM {
 
   //------------------------------------------------------------
   class MLVS : public PosteriorSampler,
-               public LatentDataSampler<MlvsDataImputer>
-  {
+               public LatentDataSampler<MlvsDataImputer> {
     // Draws the parameters of a multinomial logit model using the
     // approximate method from Fruewirth-Schnatter and Fruewirth,
     // Computational Statistics and Data Analysis 2007, 3508-3528.
@@ -43,8 +41,7 @@ namespace BOOM {
     // This implementation only stores the complete data sufficient
     // statistics and some workspace.  It does not store the imputed
     // latent data.
-  public:
-
+   public:
     // Args:
     //   Mod:  The multinomial logit model to be sampled.
     //   Pri: The conditional prior distribution for the coefficients
@@ -64,10 +61,8 @@ namespace BOOM {
     //     coefficient, but the coefficient is excluded by Mod.  If
     //     false then no error checking will take place on the initial
     //     condition.
-    MLVS(MultinomialLogitModel *Mod,
-         const Ptr<MvnBase> &Pri,
-         const Ptr<VariableSelectionPrior> &vPri,
-         uint nthreads=1,
+    MLVS(MultinomialLogitModel *Mod, const Ptr<MvnBase> &Pri,
+         const Ptr<VariableSelectionPrior> &vPri, uint nthreads = 1,
          bool check_initial_condition = true,
          RNG &seeding_rng = GlobalRng::rng);
 
@@ -99,9 +94,9 @@ namespace BOOM {
 
     // Returns the number of variables that the model selection
     // algorithm will attempt to modify at each iteration.
-    uint max_nflips()const;
+    uint max_nflips() const;
 
-  private:
+   private:
     MultinomialLogitModel *mod_;
     Ptr<MvnBase> pri;
     Ptr<VariableSelectionPrior> vpri;
@@ -109,7 +104,7 @@ namespace BOOM {
     typedef MultinomialLogit::CompleteDataSufficientStatistics LocalSuf;
     LocalSuf suf_;
 
-    const Vector & log_sampling_probs_;
+    const Vector &log_sampling_probs_;
     const bool downsampling_;
     bool select_;
     uint max_nflips_;

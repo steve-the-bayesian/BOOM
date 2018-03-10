@@ -30,7 +30,7 @@ namespace BOOM {
 
       // The observed sample size is the number of fully observed data points at
       // the time period described by this object.
-      int observed_sample_size() const {return observed_sample_size_;}
+      int observed_sample_size() const { return observed_sample_size_; }
 
       // The total_sample_size is the number of observed and missing data points
       // at the time period described by this object.

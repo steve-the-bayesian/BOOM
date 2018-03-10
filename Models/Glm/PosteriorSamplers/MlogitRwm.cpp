@@ -21,28 +21,21 @@
 #include "Models/MvnModel.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef MultinomialLogitModel MLM;
   typedef MlogitRwm MLR;
 
   MLR::MlogitRwm(MLM *mlm, const Ptr<MvnBase> &pri, RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      mlm_(mlm),
-      pri_(pri)
-  {}
+      : PosteriorSampler(seeding_rng), mlm_(mlm), pri_(pri) {}
 
+  MLR::MlogitRwm(MLM *mlm, const Vector &mu, const SpdMatrix &Ominv,
+                 RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        mlm_(mlm),
+        pri_(new MvnModel(mu, Ominv, true)) {}
 
-  MLR::MlogitRwm(MLM *mlm,
-         const Vector &mu,
-         const SpdMatrix & Ominv,
-     RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      mlm_(mlm),
-      pri_(new MvnModel(mu, Ominv, true))
-  {}
-
-  void MLR::draw(){
+  void MLR::draw() {
     // random walk metropolis centered on current beta, with inverse
     // variance matrix given by current hessian of log posterior
 
@@ -54,33 +47,28 @@ namespace BOOM{
     mu = inc.select(pri_->mu());
     ivar = inc.select(pri_->siginv());
 
-    double logp_old = mlm_->Loglike(nonzero_beta, g, H, 2)
-        + dmvn(nonzero_beta, mu, ivar, 0, true);
+    double logp_old = mlm_->Loglike(nonzero_beta, g, H, 2) +
+                      dmvn(nonzero_beta, mu, ivar, 0, true);
 
-    H*= -1;
+    H *= -1;
     H += ivar;  // now H is inverse posterior variance
     bstar = rmvt_ivar(nonzero_beta, H, 3);
     SpdMatrix Sigma = H.inv();
 
-    double logp_new = mlm_->loglike(bstar)
-        + dmvn(bstar, mu, ivar, 0, true);
+    double logp_new = mlm_->loglike(bstar) + dmvn(bstar, mu, ivar, 0, true);
     double log_alpha = logp_new - logp_old;
     double logu = log(runif_mt(rng(), 0, 1));
-    while(!std::isfinite(logu)) logu = log(runif_mt(rng(), 0, 1));
-    if(logu > log_alpha){
+    while (!std::isfinite(logu)) logu = log(runif_mt(rng(), 0, 1));
+    if (logu > log_alpha) {
       // Reject the draw.  Do nothing here.
-    }else{  // Accept the draw
+    } else {  // Accept the draw
       mlm_->coef().set_included_coefficients(bstar);
     }
   }
 
-
-  double MLR::logpri()const{
+  double MLR::logpri() const {
     const Selector &inc(mlm_->coef().inc());
     Vector b = mlm_->coef().included_coefficients();
-    return dmvn(b,
-                inc.select(pri_->mu()),
-                inc.select(pri_->siginv()),
-                true);
+    return dmvn(b, inc.select(pri_->mu()), inc.select(pri_->siginv()), true);
   }
-}
+}  // namespace BOOM

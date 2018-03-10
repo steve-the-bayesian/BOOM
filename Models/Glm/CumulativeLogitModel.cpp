@@ -21,34 +21,25 @@
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef CumulativeLogitModel CLM;
   typedef OrdinalCutpointModel OCM;
 
-  CLM::CumulativeLogitModel(const Vector &beta, const Vector & delta)
-      : OCM(beta, delta)
-  {}
+  CLM::CumulativeLogitModel(const Vector &beta, const Vector &delta)
+      : OCM(beta, delta) {}
 
-  CLM::CumulativeLogitModel(const Matrix &X, const Vector &y)
-      : OCM(X,y)
-  {}
+  CLM::CumulativeLogitModel(const Matrix &X, const Vector &y) : OCM(X, y) {}
 
-  CLM::CumulativeLogitModel(const CLM &rhs)
-    : Model(rhs),
-      OCM(rhs)
-  {}
+  CLM::CumulativeLogitModel(const CLM &rhs) : Model(rhs), OCM(rhs) {}
 
-  CLM * CLM::clone()const{ return new CLM(*this);}
+  CLM *CLM::clone() const { return new CLM(*this); }
 
-  double CLM::link_inv(double eta)const{
-    return plogis(eta);
+  double CLM::link_inv(double eta) const { return plogis(eta); }
+
+  double CLM::dlink_inv(double eta) const { return dlogis(eta); }
+
+  double CLM::simulate_latent_variable(RNG &rng) const {
+    return rlogis_mt(rng);
   }
 
-  double CLM::dlink_inv(double eta)const{
-    return dlogis(eta);
-  }
-
-  double CLM::simulate_latent_variable(RNG &rng)const{
-    return rlogis_mt(rng);}
-
-}
+}  // namespace BOOM

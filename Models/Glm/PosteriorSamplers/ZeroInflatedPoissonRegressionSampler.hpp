@@ -19,24 +19,22 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_REGRESSION_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_REGRESSION_SAMPLER_HPP_
 
-#include "Models/Glm/PoissonRegressionModel.hpp"
-#include "Models/Glm/ZeroInflatedPoissonRegression.hpp"
 #include "Models/Glm/BinomialLogitModel.hpp"
-#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
 #include "Models/Glm/PosteriorSamplers/BinomialLogitCompositeSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/ZeroInflatedPoissonRegression.hpp"
 
 namespace BOOM {
 
-  class ZeroInflatedPoissonRegressionSampler
-      : public PosteriorSampler {
+  class ZeroInflatedPoissonRegressionSampler : public PosteriorSampler {
    public:
     ZeroInflatedPoissonRegressionSampler(
         ZeroInflatedPoissonRegressionModel *model,
         const Ptr<VariableSelectionPrior> &poisson_spike,
         const Ptr<MvnBase> &poisson_slab,
         const Ptr<VariableSelectionPrior> &logit_spike,
-        const Ptr<MvnBase> &logit_slab,
-        RNG &seeding_rng = GlobalRng::rng);
+        const Ptr<MvnBase> &logit_slab, RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
@@ -61,9 +59,7 @@ namespace BOOM {
     // converged.  If not, then it did not converge within a specified
     // number of iterations.
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool posterior_mode_found() const {
-      return posterior_mode_found_;
-    }
+    bool posterior_mode_found() const { return posterior_mode_found_; }
 
    private:
     // Check that the latent models have latent data assigned to them,
@@ -89,7 +85,6 @@ namespace BOOM {
     Ptr<BinomialLogitModel> logit_;
     Ptr<PoissonRegressionSpikeSlabSampler> poisson_sampler_;
     Ptr<BinomialLogitCompositeSpikeSlabSampler> logit_sampler_;
-
 
     bool posterior_mode_found_;
   };

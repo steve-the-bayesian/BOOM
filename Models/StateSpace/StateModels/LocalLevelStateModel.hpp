@@ -22,39 +22,32 @@
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class LocalLevelStateModel
-      : public StateModel,
-        public ZeroMeanGaussianModel
-  {
+  class LocalLevelStateModel : public StateModel, public ZeroMeanGaussianModel {
    public:
-    LocalLevelStateModel(double sigma=1);
+    LocalLevelStateModel(double sigma = 1);
     LocalLevelStateModel(const LocalLevelStateModel &rhs);
-    LocalLevelStateModel * clone() const override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    LocalLevelStateModel *clone() const override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override {return 1;}
-    void simulate_state_error(RNG &rng, VectorView eta, int t)const override;
-    void simulate_initial_state(RNG &rng, VectorView eta)const override;
+    uint state_error_dimension() const override { return 1; }
+    void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
+    void simulate_initial_state(RNG &rng, VectorView eta) const override;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override;
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
-    SparseVector observation_matrix(int t)const override;
+    SparseVector observation_matrix(int t) const override;
 
     Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
@@ -63,23 +56,20 @@ namespace BOOM{
                                      data_point.total_sample_size());
     }
 
-    Vector initial_state_mean()const override;
-    SpdMatrix initial_state_variance()const override;
+    Vector initial_state_mean() const override;
+    SpdMatrix initial_state_variance() const override;
 
     void set_initial_state_mean(double m);
-    void set_initial_state_mean(const Vector & m);
+    void set_initial_state_mean(const Vector &m);
     void set_initial_state_variance(const SpdMatrix &v);
     void set_initial_state_variance(double v);
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
    private:
@@ -89,6 +79,6 @@ namespace BOOM{
     SpdMatrix initial_state_variance_;
   };
 
-}
+}  // namespace BOOM
 
-#endif// BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
+#endif  // BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP

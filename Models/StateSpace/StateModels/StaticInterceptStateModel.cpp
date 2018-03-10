@@ -27,13 +27,12 @@ namespace BOOM {
         state_variance_matrix_(new ZeroMatrix(1)),
         observation_matrix_(1),
         initial_state_mean_(1, 0.0),
-        initial_state_variance_(1, 1.0)
-  {
+        initial_state_variance_(1, 1.0) {
     observation_matrix_[0] = 1.0;
   }
 
-  void StaticInterceptStateModel::simulate_initial_state(
-      RNG &rng, VectorView eta) const {
+  void StaticInterceptStateModel::simulate_initial_state(RNG &rng,
+                                                         VectorView eta) const {
     eta[0] = rnorm_mt(rng, initial_state_mean_[0],
                       sqrt(initial_state_variance_(0, 0)));
   }

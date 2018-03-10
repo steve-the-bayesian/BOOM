@@ -25,11 +25,8 @@ namespace BOOM {
   }
 
   ASSPS::AggregatedStateSpacePosteriorSampler(
-      AggregatedStateSpaceRegression *model,
-      RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        m_(model)
-  {}
+      AggregatedStateSpaceRegression *model, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), m_(model) {}
 
   void ASSPS::draw() {
     m_->impute_state(rng(), nullptr);
@@ -41,7 +38,7 @@ namespace BOOM {
     }
   }
 
-  double ASSPS::logpri()const{
+  double ASSPS::logpri() const {
     double ans = m_->regression_model()->logpri();
     for (int s = 1; s < m_->nstate(); ++s) {
       ans += m_->state_model(s)->logpri();

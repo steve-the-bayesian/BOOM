@@ -48,8 +48,7 @@ namespace BOOM {
     //   data: The data set from which to build an empirical density function.
     //   num_knots: The number of equally spaced knots to use in the spline
     //     model of the CDF.
-    explicit EmpiricalDensity(const ConstVectorView &data,
-                              int num_knots = 10);
+    explicit EmpiricalDensity(const ConstVectorView &data, int num_knots = 10);
 
     // The value of the estimated density function at x.
     double operator()(double x) const;

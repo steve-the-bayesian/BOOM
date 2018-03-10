@@ -51,8 +51,8 @@ namespace BOOM {
       return ans;
     }
 
-  } // 
-  
+  }  // namespace
+
   Vector multinomial_logit(const Vector &distribution) {
     return multinomial_logit_impl(distribution);
   }
@@ -72,5 +72,5 @@ namespace BOOM {
   Vector multinomial_logit_inverse(const ConstVectorView &logits) {
     return multinomial_logit_inverse_impl(logits);
   }
-  
+
 }  // namespace BOOM

@@ -14,17 +14,18 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #ifndef BOOM_MOMENTS_HPP
 #define BOOM_MOMENTS_HPP
 
 #include <vector>
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   Vector mean(const Matrix &m);
   SpdMatrix var(const Matrix &m);
@@ -54,5 +55,5 @@ namespace BOOM{
   double mean(const std::vector<double> &x, const std::vector<bool> &observed);
   double var(const std::vector<double> &x, const std::vector<bool> &observed);
   double sd(const std::vector<double> &x, const std::vector<bool> &observed);
-}
-#endif // BOOM_MOMENTS_HPP
+}  // namespace BOOM
+#endif  // BOOM_MOMENTS_HPP

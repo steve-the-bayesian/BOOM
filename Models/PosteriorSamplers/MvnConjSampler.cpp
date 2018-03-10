@@ -19,23 +19,21 @@
 
 #include "Models/PosteriorSamplers/MvnConjSampler.hpp"
 #include "Models/MvnModel.hpp"
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 #include "math/special_functions.hpp"
 
 namespace BOOM {
 
   namespace NormalInverseWishart {
     NormalInverseWishartParameters::NormalInverseWishartParameters(
-        const MvnGivenSigma *mean_prior,
-        const WishartModel *precision_prior)
-      : mean_model_(mean_prior),
-        precision_model_(precision_prior),
-        sum_of_squares_(mean_prior->dim()),
-        variance_sample_size_(0),
-        mean_sample_size_(0),
-        mean_(mean_model_->dim())
-    {
+        const MvnGivenSigma *mean_prior, const WishartModel *precision_prior)
+        : mean_model_(mean_prior),
+          precision_model_(precision_prior),
+          sum_of_squares_(mean_prior->dim()),
+          variance_sample_size_(0),
+          mean_sample_size_(0),
+          mean_(mean_model_->dim()) {
       reset_to_prior();
     }
 
@@ -52,8 +50,8 @@ namespace BOOM {
       if (suf.n() > 0) {
         variance_sample_size_ += suf.n();
         mean_sample_size_ += suf.n();
-        double shrinkage =  mean_model_->kappa() /
-            (mean_model_->kappa() + suf.n());
+        double shrinkage =
+            mean_model_->kappa() / (mean_model_->kappa() + suf.n());
         mean_ *= shrinkage;
         mean_.axpy(suf.ybar(), 1 - shrinkage);
 
@@ -75,31 +73,24 @@ namespace BOOM {
     typedef MvnConjSampler MCS;
   }  // namespace
 
-  MCS::MvnConjSampler(MvnModel *mod,
-                      const Vector &mu0,
-                      double kappa,
-                      const SpdMatrix & SigmaHat,
-                      double prior_df,
+  MCS::MvnConjSampler(MvnModel *mod, const Vector &mu0, double kappa,
+                      const SpdMatrix &SigmaHat, double prior_df,
                       RNG &seeding_rng)
-    : ConjugateHierarchicalPosteriorSampler(seeding_rng),
-      mod_(mod),
-      mu_(new MvnGivenSigma(mu0, kappa, mod_->Sigma_prm() )),
-      siginv_(new WishartModel(prior_df, SigmaHat)),
-      prior_(mu_.get(), siginv_.get()),
-      posterior_(mu_.get(), siginv_.get())
-  {}
+      : ConjugateHierarchicalPosteriorSampler(seeding_rng),
+        mod_(mod),
+        mu_(new MvnGivenSigma(mu0, kappa, mod_->Sigma_prm())),
+        siginv_(new WishartModel(prior_df, SigmaHat)),
+        prior_(mu_.get(), siginv_.get()),
+        posterior_(mu_.get(), siginv_.get()) {}
 
-  MCS::MvnConjSampler(MvnModel *mod,
-              const Ptr<MvnGivenSigma> &mu,
-              const Ptr<WishartModel> &Siginv,
-          RNG &seeding_rng)
-    : ConjugateHierarchicalPosteriorSampler(seeding_rng),
-      mod_(mod),
-      mu_(mu),
-      siginv_(Siginv),
-      prior_(mu_.get(), siginv_.get()),
-      posterior_(mu_.get(), siginv_.get())
-  {
+  MCS::MvnConjSampler(MvnModel *mod, const Ptr<MvnGivenSigma> &mu,
+                      const Ptr<WishartModel> &Siginv, RNG &seeding_rng)
+      : ConjugateHierarchicalPosteriorSampler(seeding_rng),
+        mod_(mod),
+        mu_(mu),
+        siginv_(Siginv),
+        prior_(mu_.get(), siginv_.get()),
+        posterior_(mu_.get(), siginv_.get()) {
     if (mod_) {
       mu_->set_Sigma(mod_->Sigma_prm());
     }
@@ -109,24 +100,21 @@ namespace BOOM {
     return mod_ ? log_prior_density(*mod_) : negative_infinity();
   }
 
-  const Vector & MCS::mu0()const{ return mu_->mu();}
-  double MCS::kappa()const{ return mu_-> kappa();}
-  double MCS::prior_df()const{ return siginv_->nu();}
-  const SpdMatrix & MCS::prior_SS()const{ return siginv_->sumsq();}
+  const Vector &MCS::mu0() const { return mu_->mu(); }
+  double MCS::kappa() const { return mu_->kappa(); }
+  double MCS::prior_df() const { return siginv_->nu(); }
+  const SpdMatrix &MCS::prior_SS() const { return siginv_->sumsq(); }
 
   void MCS::draw_model_parameters(Model &model) {
     draw_model_parameters(dynamic_cast<MvnModel &>(model));
   }
 
   void MCS::draw_model_parameters(MvnModel &model) {
-
     posterior_.compute_mvn_posterior(*(model.suf()));
 
-    SpdMatrix Siginv = rWish_mt(rng(),
-                                posterior_.variance_sample_size(),
+    SpdMatrix Siginv = rWish_mt(rng(), posterior_.variance_sample_size(),
                                 posterior_.sum_of_squares().inv());
-    Vector mu = rmvn_ivar_mt(rng(),
-                             posterior_.mean(),
+    Vector mu = rmvn_ivar_mt(rng(), posterior_.mean(),
                              posterior_.mean_sample_size() * Siginv);
     model.set_siginv(Siginv);
     model.set_mu(mu);
@@ -149,7 +137,7 @@ namespace BOOM {
     return siginv_->logp(model.siginv()) + mu_->logp(model.mu());
   }
 
-  void MCS::draw(){
+  void MCS::draw() {
     if (mod_) {
       draw_model_parameters(*mod_);
     }
@@ -170,8 +158,9 @@ namespace BOOM {
                                    const ConjugateModel *abstract_model) const {
     const MvnModel *model(dynamic_cast<const MvnModel *>(abstract_model));
     if (!model) {
-      report_error("The MvnConjSampler is only conjugate with "
-                   "MvnModel objects.");
+      report_error(
+          "The MvnConjSampler is only conjugate with "
+          "MvnModel objects.");
     }
     return log_marginal_density(*model->DAT(dp), model);
   }
@@ -185,13 +174,12 @@ namespace BOOM {
     posterior_.compute_mvn_posterior(posterior_suf);
     int dim = prior_.mean().size();
     double ans =
-        0.5 * dim * log(prior_.mean_sample_size()
-                        / posterior_.mean_sample_size())
-        + 0.5 * prior_.variance_sample_size()
-        * prior_.sum_of_squares().logdet()
-        - 0.5 * posterior_.variance_sample_size()
-        * posterior_.sum_of_squares().logdet()
-        + lmultigamma_ratio(prior_.variance_sample_size() / 2.0, 1, dim);
+        0.5 * dim *
+            log(prior_.mean_sample_size() / posterior_.mean_sample_size()) +
+        0.5 * prior_.variance_sample_size() * prior_.sum_of_squares().logdet() -
+        0.5 * posterior_.variance_sample_size() *
+            posterior_.sum_of_squares().logdet() +
+        lmultigamma_ratio(prior_.variance_sample_size() / 2.0, 1, dim);
     return ans;
   }
 

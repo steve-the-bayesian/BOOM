@@ -18,8 +18,8 @@
 */
 
 #include "Models/HMM/PosteriorSamplers/HmmPosteriorSampler.hpp"
-#include "Models/HMM/HmmFilter.hpp"
 #include <future>
+#include "Models/HMM/HmmFilter.hpp"
 
 namespace BOOM {
 
@@ -28,8 +28,7 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         hmm_(hmm),
         use_threads_(true),
-        thread_pool_(0)
-  {}
+        thread_pool_(0) {}
 
   void HmmPosteriorSampler::draw() {
     hmm_->mark()->sample_posterior();
@@ -39,16 +38,16 @@ namespace BOOM {
     hmm_->impute_latent_data();
   }
 
-  double HmmPosteriorSampler::logpri()const{
+  double HmmPosteriorSampler::logpri() const {
     double ans = hmm_->mark()->logpri();
-    std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
+    std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
     uint S = mix.size();
-    for(uint s=0; s<S; ++s) ans += mix[s]->logpri();
+    for (uint s = 0; s < S; ++s) ans += mix[s]->logpri();
     return ans;
   }
 
-  void HmmPosteriorSampler::draw_mixture_components(){
-    std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
+  void HmmPosteriorSampler::draw_mixture_components() {
+    std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
     uint S = mix.size();
 
     if (use_threads_) {
@@ -63,7 +62,7 @@ namespace BOOM {
         futures[s].get();
       }
     } else {
-      for(uint s = 0; s < S; ++s) {
+      for (uint s = 0; s < S; ++s) {
         mix[s]->sample_posterior();
       }
     }
@@ -75,7 +74,7 @@ namespace BOOM {
       thread_pool_.set_number_of_threads(0);
       workers_.clear();
     } else {
-      std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
+      std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
       uint S = mix.size();
       workers_.clear();
       for (uint s = 0; s < S; ++s) {

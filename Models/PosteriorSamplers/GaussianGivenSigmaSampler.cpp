@@ -23,15 +23,12 @@
 namespace BOOM {
 
   GaussianGivenSigmaSampler::GaussianGivenSigmaSampler(
-      GaussianModelGivenSigma *model,
-      const Ptr<GaussianModelBase> &mean_prior,
-      const Ptr<GammaModelBase> &sample_size_prior,
-      RNG &seeding_rng)
-  : PosteriorSampler(seeding_rng),
-    model_(model),
-    mean_prior_(mean_prior),
-    sample_size_prior_(sample_size_prior)
-  {}
+      GaussianModelGivenSigma *model, const Ptr<GaussianModelBase> &mean_prior,
+      const Ptr<GammaModelBase> &sample_size_prior, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        mean_prior_(mean_prior),
+        sample_size_prior_(sample_size_prior) {}
 
   void GaussianGivenSigmaSampler::draw() {
     draw_mean();
@@ -40,16 +37,15 @@ namespace BOOM {
 
   double GaussianGivenSigmaSampler::logpri() const {
     return mean_prior_->logp(model_->mu()) +
-        sample_size_prior_->logp(model_->kappa());
+           sample_size_prior_->logp(model_->kappa());
   }
 
   void GaussianGivenSigmaSampler::draw_mean() {
     Ptr<GaussianSuf> suf = model_->suf();
     double posterior_precision =
         (1.0 / mean_prior_->sigsq()) + (suf->n() / model_->sigsq());
-    double scaled_posterior_mean =
-        (suf->sum() / model_->sigsq()) +
-        (mean_prior_->mu() / mean_prior_->sigsq());
+    double scaled_posterior_mean = (suf->sum() / model_->sigsq()) +
+                                   (mean_prior_->mu() / mean_prior_->sigsq());
     double posterior_mean = scaled_posterior_mean / posterior_precision;
     double posterior_sd = 1.0 / sqrt(posterior_precision);
     model_->set_mu(rnorm_mt(rng(), posterior_mean, posterior_sd));
@@ -58,7 +54,8 @@ namespace BOOM {
   void GaussianGivenSigmaSampler::draw_sample_size() {
     Ptr<GaussianSuf> suf = model_->suf();
     double a = sample_size_prior_->alpha() + .5 * suf->n();
-    double b = sample_size_prior_->beta() +
+    double b =
+        sample_size_prior_->beta() +
         .5 * suf->centered_sumsq(model_->mu()) / model_->scaling_variance();
     model_->set_kappa(rgamma_mt(rng(), a, b));
   }

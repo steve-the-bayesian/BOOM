@@ -21,11 +21,11 @@
 #define BOOM_SPIKE_SLAB_DA_REGRESSION_SAMPLER_HPP_
 
 #include "Models/GammaModel.hpp"
-#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
-#include "Models/MvnGivenSigma.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
-#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
+#include "Models/MvnGivenSigma.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
@@ -85,8 +85,7 @@ namespace BOOM {
   //     given (only) observed data.
   // (3) Draw beta given sigma and (observed) Y.
   // (4) Draw sigma given beta and (observed) Y.
-  class SpikeSlabDaRegressionSampler
-      : public BregVsSampler {
+  class SpikeSlabDaRegressionSampler : public BregVsSampler {
    public:
     // Args:
     //   model: The model for which posterior draws are desired.  The
@@ -119,22 +118,21 @@ namespace BOOM {
         RegressionModel *model,
         const Ptr<IndependentMvnModelGivenScalarSigma> &beta_prior,
         const Ptr<GammaModelBase> &siginv_prior,
-        const Vector & prior_inclusion_probabilities,
+        const Vector &prior_inclusion_probabilities,
         double complete_data_information_matrix_fudge_factor = .01,
-        double fallback_probability = 0.0,
-        RNG &seeding_rng = GlobalRng::rng);
+        double fallback_probability = 0.0, RNG &seeding_rng = GlobalRng::rng);
 
     double logpri() const override;
     void draw() override;
 
     // Compute the inclusion probability of coefficient i given complete
     // data.  The complete data makes all the coefficients independent.
-    double compute_inclusion_probability(int i)const;
+    double compute_inclusion_probability(int i) const;
 
     void impute_latent_data();
 
     // The prior information for variable j.
-    double unscaled_prior_information(int j)const;
+    double unscaled_prior_information(int j) const;
 
     // Returns the leverage of the data point 'x' with respect to the
     // centered complete data design matrix.  This really only a
@@ -145,15 +143,20 @@ namespace BOOM {
     //----------------------------------------------------------------------
     // Accessors for private objects, exposed for testing.
     const Vector &log_prior_inclusion_probabilities() const {
-      return log_prior_inclusion_probabilities_; }
+      return log_prior_inclusion_probabilities_;
+    }
     const Vector &log_prior_exclusion_probabilities() const {
-      return log_prior_exclusion_probabilities_; }
-    const Matrix &missing_design_matrix()const{return missing_design_matrix_;}
-    const Vector &missing_leverage() const {return missing_leverage_;}
+      return log_prior_exclusion_probabilities_;
+    }
+    const Matrix &missing_design_matrix() const {
+      return missing_design_matrix_;
+    }
+    const Vector &missing_leverage() const { return missing_leverage_; }
     const Vector &complete_data_xtx_diagonal() const {
-      return complete_data_xtx_diagonal_;}
-    const Vector &missing_y() const {return missing_y_;}
-    const Vector &complete_data_xty()const{return complete_data_xty_;}
+      return complete_data_xtx_diagonal_;
+    }
+    const Vector &missing_y() const { return missing_y_; }
+    const Vector &complete_data_xty() const { return complete_data_xty_; }
 
    private:
     // NOTE: This function assumes that the first column of the
@@ -191,15 +194,15 @@ namespace BOOM {
     // This is an 'observer' to be attached to the parameters of the
     // prior distribution, so we can be notified when they change.  It
     // sets prior_is_current_ to false.
-    void observe_changes_in_prior()const;
+    void observe_changes_in_prior() const;
 
     // If the prior is not current, then reset the
     // unscaled_prior_precision_ and information_weighted_prior_mean_,
     // and then mark the prior as current.
-    void check_prior()const;
+    void check_prior() const;
 
-    double information_weighted_prior_mean(int j)const;
-    double posterior_mean_beta_given_complete_data(int j)const;
+    double information_weighted_prior_mean(int j) const;
+    double posterior_mean_beta_given_complete_data(int j) const;
 
     RegressionModel *model_;
     Ptr<IndependentMvnModelGivenScalarSigma> beta_prior_;
@@ -257,6 +260,6 @@ namespace BOOM {
     // implement draw() using the more robust SSVS method instead.
     double fallback_probability_;
   };
-}
+}  // namespace BOOM
 
-#endif //  BOOM_SPIKE_SLAB_DA_REGRESSION_SAMPLER_HPP_
+#endif  //  BOOM_SPIKE_SLAB_DA_REGRESSION_SAMPLER_HPP_

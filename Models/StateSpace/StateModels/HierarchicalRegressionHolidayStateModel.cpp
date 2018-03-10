@@ -17,9 +17,9 @@
 */
 
 #include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
-#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -31,11 +31,8 @@ namespace BOOM {
   HRHSM::HierarchicalRegressionHolidayStateModel(
       const Date &time_of_first_observation,
       const Ptr<UnivParams> &residual_variance)
-      : impl_(time_of_first_observation,
-              residual_variance),
-        model_(nullptr)
-  {}
-  
+      : impl_(time_of_first_observation, residual_variance), model_(nullptr) {}
+
   void HRHSM::add_holiday(const Ptr<Holiday> &holiday) {
     const Holiday *first_holiday = impl_.holiday(0);
     if (first_holiday) {
@@ -67,10 +64,9 @@ namespace BOOM {
   void HRHSM::observe_time_dimension(int max_time) {
     impl_.observe_time_dimension(max_time);
   }
-  
+
   void HRHSM::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now,
-                            int time_now,
+                            const ConstVectorView &now, int time_now,
                             ScalarStateSpaceModelBase *model) {
     int which_model = impl_.which_holiday(time_now);
     if (which_model < 0) {
@@ -79,17 +75,17 @@ namespace BOOM {
     int day = impl_.which_day(time_now);
     // The residual contains the observed data minus the contributions from all
     // state models but this one.
-    double residual = model->adjusted_observation(time_now) - 
-        model->observation_matrix(time_now).dot(model->state(time_now))
-        + this->observation_matrix(time_now).dot(now);
-    model_->data_model(which_model)->suf()->add_mixture_data(
-        residual, daily_dummies(day), 1.0);
+    double residual =
+        model->adjusted_observation(time_now) -
+        model->observation_matrix(time_now).dot(model->state(time_now)) +
+        this->observation_matrix(time_now).dot(now);
+    model_->data_model(which_model)
+        ->suf()
+        ->add_mixture_data(residual, daily_dummies(day), 1.0);
   }
 
   void HRHSM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then,
-      const ConstVectorView &now,
-      int time_now,
+      const ConstVectorView &then, const ConstVectorView &now, int time_now,
       DynamicInterceptRegressionModel *model) {
     int which_model = impl_.which_holiday(time_now);
     if (which_model < 0) {
@@ -98,8 +94,8 @@ namespace BOOM {
     int day = impl_.which_day(time_now);
     // The residual contains the observed data minus the contributions from all
     // state models but this one.
-    Ptr<StateSpace::MultiplexedRegressionData>
-        full_data = model->dat()[time_now];
+    Ptr<StateSpace::MultiplexedRegressionData> full_data =
+        model->dat()[time_now];
     if (full_data->missing() == Data::missing_status::completely_missing) {
       return;
     }
@@ -107,11 +103,12 @@ namespace BOOM {
     for (int i = 0; i < nobs; ++i) {
       if (full_data->regression_data(i).missing() ==
           Data::missing_status::observed) {
-        double residual = full_data->regression_data(i).y()
-            - model->conditional_mean(time_now, i)
-            + this->observation_matrix(time_now).dot(now);
-        model_->data_model(which_model)->suf()->add_mixture_data(
-            residual, daily_dummies(day), 1.0);
+        double residual = full_data->regression_data(i).y() -
+                          model->conditional_mean(time_now, i) +
+                          this->observation_matrix(time_now).dot(now);
+        model_->data_model(which_model)
+            ->suf()
+            ->add_mixture_data(residual, daily_dummies(day), 1.0);
       }
     }
   }
@@ -121,13 +118,13 @@ namespace BOOM {
     if (impl_.which_holiday(t) < 0) {
       return ans;
     }
-    ans[0] = model_->data_model(impl_.which_holiday(t))->Beta()[
-        impl_.which_day(t)];
+    ans[0] =
+        model_->data_model(impl_.which_holiday(t))->Beta()[impl_.which_day(t)];
     return ans;
   }
 
   void HRHSM::clear_data() {
     if (!!model_) model_->clear_data_keep_models();
   }
-  
+
 }  // namespace BOOM

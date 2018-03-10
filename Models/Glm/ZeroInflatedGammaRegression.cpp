@@ -28,8 +28,7 @@ namespace BOOM {
   ZIGRM::ZeroInflatedGammaRegressionModel(int xdim, double zero_threshold)
       : gamma_model_(new GammaRegressionModelConditionalSuf(xdim)),
         logit_model_(new BinomialLogitModel(xdim)),
-        zero_threshold_(zero_threshold)
-  {
+        zero_threshold_(zero_threshold) {
     ParamPolicy::add_model(gamma_model_);
     ParamPolicy::add_model(logit_model_);
   }
@@ -40,13 +39,12 @@ namespace BOOM {
         PriorPolicy(rhs),
         gamma_model_(rhs.gamma_model_->clone()),
         logit_model_(rhs.logit_model_->clone()),
-        zero_threshold_(rhs.zero_threshold_)
-  {
+        zero_threshold_(rhs.zero_threshold_) {
     ParamPolicy::add_model(gamma_model_);
     ParamPolicy::add_model(logit_model_);
   }
 
-  ZIGRM * ZIGRM::clone() const {return new ZIGRM(*this);}
+  ZIGRM *ZIGRM::clone() const { return new ZIGRM(*this); }
 
   double ZIGRM::expected_value(const Vector &x) const {
     double prob_positive = logit_model_->success_probability(x);
@@ -68,7 +66,7 @@ namespace BOOM {
     double alpha = gamma_model_->shape_parameter();
     double p = logit_model_->success_probability(x);
     double mu2 = mu * mu;
-    return (p * mu2 / alpha) + p * mu2 * (1-p);
+    return (p * mu2 / alpha) + p * mu2 * (1 - p);
   }
 
   double ZIGRM::standard_deviation(const Vector &x) const {
@@ -86,8 +84,7 @@ namespace BOOM {
   void ZIGRM::add_data(const Ptr<RegressionData> &dp) {
     double y = dp->y();
     Ptr<VectorData> xptr = dp->Xptr();
-    NEW(BinomialRegressionData, logit_data)(
-        y > zero_threshold_, 1, xptr);
+    NEW(BinomialRegressionData, logit_data)(y > zero_threshold_, 1, xptr);
     logit_model_->add_data(logit_data);
     if (y > zero_threshold_) {
       gamma_model_->add_data(dp);
@@ -99,13 +96,10 @@ namespace BOOM {
   }
 
   void ZIGRM::increment_sufficient_statistics(
-      int number_zeros,
-      int number_nonzero,
-      double sum_of_nonzero,
-      double sum_of_logs_of_nonzero,
-      const Ptr<VectorData> &predictors) {
-    NEW(BinomialRegressionData, logit_data)(
-        number_nonzero, number_nonzero + number_zeros, predictors);
+      int number_zeros, int number_nonzero, double sum_of_nonzero,
+      double sum_of_logs_of_nonzero, const Ptr<VectorData> &predictors) {
+    NEW(BinomialRegressionData, logit_data)
+    (number_nonzero, number_nonzero + number_zeros, predictors);
     logit_model_->add_data(logit_data);
     gamma_model_->increment_sufficient_statistics(
         number_nonzero, sum_of_nonzero, sum_of_logs_of_nonzero, predictors);

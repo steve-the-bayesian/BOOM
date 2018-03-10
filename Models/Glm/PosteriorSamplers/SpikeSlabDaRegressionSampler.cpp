@@ -18,10 +18,10 @@
 */
 #include "Models/Glm/PosteriorSamplers/SpikeSlabDaRegressionSampler.hpp"
 #include <functional>
+#include "LinAlg/SWEEP.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
-#include "LinAlg/SWEEP.hpp"
 
 namespace BOOM {
 
@@ -35,13 +35,9 @@ namespace BOOM {
       const Ptr<GammaModelBase> &siginv_prior,
       const Vector &prior_inclusion_probabilities,
       double complete_data_information_matrix_fudge_factor,
-      double fallback_probability,
-      RNG &seeding_rng)
-      : BregVsSampler(model,
-                      beta_prior,
-                      siginv_prior,
-                      new VariableSelectionPrior(
-                          prior_inclusion_probabilities),
+      double fallback_probability, RNG &seeding_rng)
+      : BregVsSampler(model, beta_prior, siginv_prior,
+                      new VariableSelectionPrior(prior_inclusion_probabilities),
                       seeding_rng),
         model_(model),
         beta_prior_(beta_prior),
@@ -55,12 +51,11 @@ namespace BOOM {
         complete_data_xtx_diagonal_(model_->xdim()),
         complete_data_xty_(model_->xdim()),
         prior_is_current_(false),
-        fallback_probability_(fallback_probability)
-  {
+        fallback_probability_(fallback_probability) {
     for (int i = 0; i < log_prior_inclusion_probabilities_.size(); ++i) {
       double p = prior_inclusion_probabilities[i];
       log_prior_inclusion_probabilities_[i] =
-          p > 0 ? log(p): negative_infinity();
+          p > 0 ? log(p) : negative_infinity();
       p = 1.0 - p;
       log_prior_exclusion_probabilities_[i] =
           p > 0 ? log(p) : negative_infinity();
@@ -69,9 +64,9 @@ namespace BOOM {
         complete_data_information_matrix_fudge_factor);
     compute_leverage_of_missing_design_points();
     beta_prior_->prm1()->add_observer(
-        [this](){this->observe_changes_in_prior();});
+        [this]() { this->observe_changes_in_prior(); });
     beta_prior_->prm2()->add_observer(
-        [this](){this->observe_changes_in_prior();});
+        [this]() { this->observe_changes_in_prior(); });
     check_prior();
   }
 
@@ -81,17 +76,15 @@ namespace BOOM {
     // Prior is evaluated on the scale of the variance, not the
     // precision, so we must include the jacobian of the reciprocal
     // transformation.
-    double ans = siginv_prior_->logp(1.0 / model_->sigsq())
-        - 2 * log(model_->sigsq());
+    double ans =
+        siginv_prior_->logp(1.0 / model_->sigsq()) - 2 * log(model_->sigsq());
     const Vector &beta(model_->Beta());
     const Selector &inclusion_indicators(model_->coef().inc());
     for (int i = 0; i < log_prior_inclusion_probabilities_.size(); ++i) {
       if (inclusion_indicators[i]) {
-        ans += log_prior_inclusion_probabilities_[i]
-            + dnorm(beta[i],
-                    beta_prior_->mu()[i],
-                    beta_prior_->sd_for_element(i),
-                    true);
+        ans += log_prior_inclusion_probabilities_[i] +
+               dnorm(beta[i], beta_prior_->mu()[i],
+                     beta_prior_->sd_for_element(i), true);
       } else {
         ans += log_prior_exclusion_probabilities_[i];
       }
@@ -102,8 +95,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void SSDRS::draw() {
-    if (fallback_probability_ > 0 &&
-        runif_mt(rng()) < fallback_probability_) {
+    if (fallback_probability_ > 0 && runif_mt(rng()) < fallback_probability_) {
       BregVsSampler::draw();
     } else {
       impute_latent_data();
@@ -215,15 +207,15 @@ namespace BOOM {
         complete_data_xtx_diagonal_[j] + unscaled_prior_information(j);
     double posterior_mean = posterior_mean_beta_given_complete_data(j);
 
-    double SSE = square(posterior_mean) * complete_data_xtx_diagonal_[j]
-        -2 * posterior_mean * complete_data_xty_[j];
-    double SSB = square(posterior_mean - prior_mean) *
-        unscaled_prior_information(j);
+    double SSE = square(posterior_mean) * complete_data_xtx_diagonal_[j] -
+                 2 * posterior_mean * complete_data_xty_[j];
+    double SSB =
+        square(posterior_mean - prior_mean) * unscaled_prior_information(j);
 
-    double logp_in = log_prior_inclusion_probabilities_[j]
-        + .5 * (log(unscaled_prior_information(j))
-                - log(unscaled_posterior_information)
-                - (SSE + SSB) / model_->sigsq());
+    double logp_in = log_prior_inclusion_probabilities_[j] +
+                     .5 * (log(unscaled_prior_information(j)) -
+                           log(unscaled_posterior_information) -
+                           (SSE + SSB) / model_->sigsq());
 
     double logp_out = log_prior_exclusion_probabilities_[j];
 
@@ -235,7 +227,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double SSDRS::unscaled_prior_information(int j)const{
+  double SSDRS::unscaled_prior_information(int j) const {
     check_prior();
     return unscaled_prior_precision_[j];
   }
@@ -244,8 +236,7 @@ namespace BOOM {
   void SSDRS::draw_sigma_given_observed_data() {
     const RegSuf &suf(*(model_->suf()));
     double sigsq = draw_sigsq_given_sufficient_statistics(
-        suf.n(),
-        suf.relative_sse(model_->coef()));
+        suf.n(), suf.relative_sse(model_->coef()));
     model_->set_sigsq(sigsq);
   }
 
@@ -259,32 +250,31 @@ namespace BOOM {
     const RegSuf &suf(*(model_->suf()));
 
     SpdMatrix posterior_information = suf.xtx(inclusion_indicators);
-    Vector unscaled_prior_information = 1.0 / inclusion_indicators.select(
-        beta_prior_->unscaled_variance_diagonal());
+    Vector unscaled_prior_information =
+        1.0 /
+        inclusion_indicators.select(beta_prior_->unscaled_variance_diagonal());
     posterior_information.diag() += unscaled_prior_information;
 
     Vector prior_mean = inclusion_indicators.select(beta_prior_->mu());
-    Vector posterior_mean = suf.xty(inclusion_indicators) +
-        unscaled_prior_information * prior_mean;
+    Vector posterior_mean =
+        suf.xty(inclusion_indicators) + unscaled_prior_information * prior_mean;
     posterior_mean = posterior_information.solve(posterior_mean);
 
     posterior_information /= model_->sigsq();
-    Vector included_coefficients = rmvn_ivar_mt(
-        rng(), posterior_mean, posterior_information);
+    Vector included_coefficients =
+        rmvn_ivar_mt(rng(), posterior_mean, posterior_information);
     model_->set_included_coefficients(included_coefficients);
   }
 
   //----------------------------------------------------------------------
-  void SSDRS::observe_changes_in_prior()const {
-    prior_is_current_ = false;
-  }
+  void SSDRS::observe_changes_in_prior() const { prior_is_current_ = false; }
 
   //----------------------------------------------------------------------
   double SSDRS::posterior_mean_beta_given_complete_data(int j) const {
-    double posterior_information = complete_data_xtx_diagonal_[j] +
-        unscaled_prior_precision_[j];
-    return (complete_data_xty_[j] + information_weighted_prior_mean(j))
-        / posterior_information;
+    double posterior_information =
+        complete_data_xtx_diagonal_[j] + unscaled_prior_precision_[j];
+    return (complete_data_xty_[j] + information_weighted_prior_mean(j)) /
+           posterior_information;
   }
 
   //----------------------------------------------------------------------
@@ -310,8 +300,7 @@ namespace BOOM {
     // zeros, but which are nonzero because of numerical error.
     // Replace them with actual zeros.
     void detect_numerical_zeros(Matrix &m) {
-      const double root_epsilon =
-          sqrt(std::numeric_limits<double>::epsilon());
+      const double root_epsilon = sqrt(std::numeric_limits<double>::epsilon());
       for (int i = 0; i < m.nrow(); ++i) {
         for (int j = 0; j < m.ncol(); ++j) {
           if (fabs(m(i, j)) < root_epsilon) {
@@ -320,7 +309,7 @@ namespace BOOM {
         }
       }
     }
-  }
+  }  // namespace
   //----------------------------------------------------------------------
   void SSDRS::determine_missing_design_matrix(
       double complete_data_information_matrix_fudge_factor) {
@@ -335,10 +324,9 @@ namespace BOOM {
     // of xtx is the sample size, but after centering (which makes xtx
     // proportional to the variance) the element is zero.
     double root_machine_epsilon = sqrt(std::numeric_limits<double>::epsilon());
-    bool has_intercept =
-        fabs(model_->suf()->n() - model_->suf()->xtx()(0, 0)) <
-          root_machine_epsilon &&
-          fabs(centered_xtx(0, 0)) < root_machine_epsilon;
+    bool has_intercept = fabs(model_->suf()->n() - model_->suf()->xtx()(0, 0)) <
+                             root_machine_epsilon &&
+                         fabs(centered_xtx(0, 0)) < root_machine_epsilon;
 
     for (int i = has_intercept; i < number_of_variables; ++i) {
       for (int j = has_intercept; j < number_of_variables; ++j) {
@@ -378,16 +366,16 @@ namespace BOOM {
   void SSDRS::compute_leverage_of_missing_design_points() {
     missing_leverage_.resize(nrow(missing_design_matrix_));
     for (int i = 0; i < missing_leverage_.size(); ++i) {
-      missing_leverage_[i] = complete_data_leverage(
-          missing_design_matrix_.row(i));
+      missing_leverage_[i] =
+          complete_data_leverage(missing_design_matrix_.row(i));
     }
   }
 
   //----------------------------------------------------------------------
   double SSDRS::complete_data_leverage(const ConstVectorView &x) const {
     return (ConstVectorView(x, 1) /
-            ConstVectorView(complete_data_xtx_diagonal_, 1)).dot(
-                ConstVectorView(x, 1));
+            ConstVectorView(complete_data_xtx_diagonal_, 1))
+        .dot(ConstVectorView(x, 1));
   }
 
 }  // namespace BOOM
@@ -421,8 +409,8 @@ Begin with the model
 where $D$ is a diagonal matrix.  We can factor the joint distribution
 of all knowns and unknowns in two ways
 \begin{equation*}
-  p(\by|\beta, \gamma, \sigma) p(\beta | \gamma, \sigma)p(\gamma) p(1/\sigma^2) =
-  p(\beta|\gamma, \sigma, \by) p(\gamma | \sigma, \by) p(\sigma|\by) p(\by).
+  p(\by|\beta, \gamma, \sigma) p(\beta | \gamma, \sigma)p(\gamma) p(1/\sigma^2)
+= p(\beta|\gamma, \sigma, \by) p(\gamma | \sigma, \by) p(\sigma|\by) p(\by).
 \end{equation*}
 
 Subsuming distributions which do not depend on $\gamma$ into the
@@ -461,17 +449,15 @@ p(\gamma)
 
 Write
 \begin{equation*}
- SSE_\gamma(\tilde \beta) = \by^T\by - 2 \tilde\beta^T_\gamma(\xty)_\gamma + \tilde\beta^T\xtx\tilde\beta.
-\end{equation*}
-Discard the $\by^T\by$ term, which contains no $\gamma$'s, and write
-the other terms as
-\begin{equation*}
+ SSE_\gamma(\tilde \beta) = \by^T\by - 2 \tilde\beta^T_\gamma(\xty)_\gamma +
+\tilde\beta^T\xtx\tilde\beta. \end{equation*} Discard the $\by^T\by$ term, which
+contains no $\gamma$'s, and write the other terms as \begin{equation*}
   \tilde\beta_\gamma^T (\xty)_\gamma = \sum_j [\tilde\beta_j(\xty)_j]^{\gamma_j}
   \qquad
   \text{and}
   \qquad
-  \tilde\beta_\gamma^T\xtx_\gamma\tilde\beta\gamma = \sum_j (\tilde\beta_j^2 \xtx_{jj})^{\gamma_j}.
-\end{equation*}
+  \tilde\beta_\gamma^T\xtx_\gamma\tilde\beta\gamma = \sum_j (\tilde\beta_j^2
+\xtx_{jj})^{\gamma_j}. \end{equation*}
 
 Then we may write
 \begin{equation*}
@@ -484,7 +470,8 @@ Then we may write
 \end{equation*}
 where
 $$
-Q_j = \tilde\beta_j^2 \xtx_{jj} - 2 \tilde\beta_j\xty_j + D_j(\tilde\beta_j - b_j)^2.
+Q_j = \tilde\beta_j^2 \xtx_{jj} - 2 \tilde\beta_j\xty_j + D_j(\tilde\beta_j -
+b_j)^2.
 $$
 \end{document}
  */

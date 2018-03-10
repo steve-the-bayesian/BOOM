@@ -19,24 +19,21 @@
 #ifndef BOOM_TREGRESSION_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_TREGRESSION_SPIKE_SLAB_SAMPLER_HPP_
 
-#include "Models/Glm/PosteriorSamplers/TRegressionSampler.hpp"
+#include "Models/GammaModel.hpp"
 #include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/TRegressionSampler.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 #include "Models/MvnBase.hpp"
-#include "Models/GammaModel.hpp"
 
 namespace BOOM {
 
-  class TRegressionSpikeSlabSampler
-      : public TRegressionSampler {
+  class TRegressionSpikeSlabSampler : public TRegressionSampler {
    public:
     TRegressionSpikeSlabSampler(
-        TRegressionModel *model,
-        const Ptr<MvnBase> &coefficient_slab_prior,
+        TRegressionModel *model, const Ptr<MvnBase> &coefficient_slab_prior,
         const Ptr<VariableSelectionPrior> &coefficient_spike_prior,
         const Ptr<GammaModelBase> &siginv_prior,
-        const Ptr<DoubleModel> &nu_prior,
-        RNG &seeding_rng = GlobalRng::rng);
+        const Ptr<DoubleModel> &nu_prior, RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;

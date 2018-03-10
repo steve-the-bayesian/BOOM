@@ -18,10 +18,10 @@
 */
 
 #include "Models/Mixtures/DirichletProcessMvnModel.hpp"
-#include "distributions.hpp"
-#include "cpputil/report_error.hpp"
-#include "cpputil/math_utils.hpp"
 #include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -30,12 +30,11 @@ namespace BOOM {
   }  // namespace
 
   DPMM::DirichletProcessMvnModel(int dim, double alpha)
-      : alpha_(new UnivParams(alpha)),
-        dim_(dim)
-  {
+      : alpha_(new UnivParams(alpha)), dim_(dim) {
     if (dim <= 0) {
-      report_error("Dimension must be at least one for "
-                   "DirichletProcessMvnModel.");
+      report_error(
+          "Dimension must be at least one for "
+          "DirichletProcessMvnModel.");
     }
     register_models();
   }
@@ -43,31 +42,22 @@ namespace BOOM {
   DPMM::DirichletProcessMvnModel(const DPMM &rhs)
       : alpha_(rhs.alpha_->clone()),
         mixture_components_(rhs.mixture_components_),
-        dim_(rhs.dim_)
-  {
+        dim_(rhs.dim_) {
     for (int i = 0; i < mixture_components_.size(); ++i) {
       mixture_components_[i] = rhs.mixture_components_[i]->clone();
     }
     register_models();
   }
 
-  DPMM * DPMM::clone() const {return new DPMM(*this);}
+  DPMM *DPMM::clone() const { return new DPMM(*this); }
 
-  int DPMM::dim() const {
-    return dim_;
-  }
+  int DPMM::dim() const { return dim_; }
 
-  int DPMM::number_of_clusters() const {
-    return mixture_components_.size();
-  }
+  int DPMM::number_of_clusters() const { return mixture_components_.size(); }
 
-  double DPMM::alpha() const {
-    return alpha_->value();
-  }
+  double DPMM::alpha() const { return alpha_->value(); }
 
-  void DPMM::set_alpha(double alpha) {
-    alpha_->set(alpha);
-  }
+  void DPMM::set_alpha(double alpha) { alpha_->set(alpha); }
 
   void DPMM::assign_data_to_cluster(const Vector &y, int cluster) {
     if (cluster < mixture_components_.size()) {
@@ -78,8 +68,9 @@ namespace BOOM {
       mixture_components_.push_back(new_cluster);
       ParamPolicy::add_model(new_cluster);
     } else {
-      report_error("Cluster indicator out of range in "
-                   "assign_data_to_cluster.");
+      report_error(
+          "Cluster indicator out of range in "
+          "assign_data_to_cluster.");
     }
   }
 
@@ -92,8 +83,9 @@ namespace BOOM {
         mixture_components_.erase(mixture_components_.begin() + cluster);
       }
     } else {
-      report_error("Cluster indicator out of range in "
-                   "remove_data_from_cluster.");
+      report_error(
+          "Cluster indicator out of range in "
+          "remove_data_from_cluster.");
     }
   }
 
@@ -108,15 +100,14 @@ namespace BOOM {
     }
   }
 
-  const MvnModel & DPMM::cluster(int i) const {
+  const MvnModel &DPMM::cluster(int i) const {
     if (i >= mixture_components_.size()) {
       report_error("Cluster indicator out of range in cluster().");
     }
     return *mixture_components_[i];
   }
 
-  void DPMM::set_component_params(int cluster,
-                                  const Vector &mu,
+  void DPMM::set_component_params(int cluster, const Vector &mu,
                                   const SpdMatrix &Siginv) {
     Ptr<MvnModel> mvn = mixture_components_[cluster];
     mvn->set_mu(mu);
@@ -134,8 +125,7 @@ namespace BOOM {
     // The Dirichlet process is the limit of finite mixture models
     // with symmetric Dirichlet priors (with total mass alpha) on the
     // mixing weights.
-    Vector probs(number_of_components,
-                 alpha() / number_of_components);
+    Vector probs(number_of_components, alpha() / number_of_components);
     probs += counts;
     probs /= sum(probs);  // Posterior mode of mixing weights.
 

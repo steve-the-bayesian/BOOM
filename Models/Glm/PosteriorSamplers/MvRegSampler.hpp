@@ -20,23 +20,23 @@
 #define BOOM_MVREG_SAMPLER_HPP
 #include "Models/Glm/MvReg2.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class MvRegSampler
-    : public PosteriorSampler{
-  public:
+  class MvRegSampler : public PosteriorSampler {
+   public:
     // assumes Beta|Sigma ~ N(B, Sigma \otimes I/kappa)
     // and Sigma^{-1} ~ Wishart(prior_df/2, SS/2);
 
     MvRegSampler(MvReg *m, const Matrix &B, double kappa, double prior_df,
-                 const SpdMatrix & Sigma_guess, RNG &seeding_rng = GlobalRng::rng);
+                 const SpdMatrix &Sigma_guess,
+                 RNG &seeding_rng = GlobalRng::rng);
 
-    double logpri()const override;
+    double logpri() const override;
     void draw() override;
     void draw_Beta();
     void draw_Sigma();
 
-  private:
+   private:
     MvReg *mod;
     SpdMatrix SS;
     double prior_df;
@@ -45,5 +45,5 @@ namespace BOOM{
     Matrix B;
   };
 
-}
-#endif// BOOM_MVREG_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_MVREG_SAMPLER_HPP

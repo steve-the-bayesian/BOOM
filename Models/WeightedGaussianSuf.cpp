@@ -26,55 +26,47 @@ namespace BOOM {
     typedef WeightedGaussianSuf WGS;
   }
 
-  WGS::WeightedGaussianSuf(
-      double sum, double sumsq, double n, double sumw)
-      : sum_(sum),
-        sumsq_(sumsq),
-        n_(n),
-        sumw_(sumw)
-  {}
+  WGS::WeightedGaussianSuf(double sum, double sumsq, double n, double sumw)
+      : sum_(sum), sumsq_(sumsq), n_(n), sumw_(sumw) {}
 
-  WeightedGaussianSuf * WGS::clone()const{
-    return new WeightedGaussianSuf(*this);}
-
-  void WGS::clear() {
-    sum_ = sumsq_ = n_ = sumw_ = 0;
+  WeightedGaussianSuf *WGS::clone() const {
+    return new WeightedGaussianSuf(*this);
   }
 
-  void WGS::Update(const WeightedDoubleData &data){
+  void WGS::clear() { sum_ = sumsq_ = n_ = sumw_ = 0; }
+
+  void WGS::Update(const WeightedDoubleData &data) {
     update_raw(data.value(), data.weight());
   }
 
-  void WGS::add_mixture_data(double y, double w, double prob){
+  void WGS::add_mixture_data(double y, double w, double prob) {
     sumw_ += w * prob;
     sum_ += y * w * prob;
     sumsq_ += y * y * w * prob;
     n_ += prob;
   }
 
-  void WGS::update_raw(double y, double w){
+  void WGS::update_raw(double y, double w) {
     sumw_ += w;
     sum_ += y * w;
     sumsq_ += y * y * w;
     n_ += 1.0;
   }
 
-  void WGS::combine(const Ptr<WeightedGaussianSuf> & suf){
-    combine(*suf);
-  }
+  void WGS::combine(const Ptr<WeightedGaussianSuf> &suf) { combine(*suf); }
 
-  void WGS::combine(const WeightedGaussianSuf &rhs){
+  void WGS::combine(const WeightedGaussianSuf &rhs) {
     sum_ += rhs.sum();
     sumsq_ += rhs.sumsq();
     n_ += rhs.n();
     sumw_ += rhs.sumw();
   }
 
-  WeightedGaussianSuf * WGS::abstract_combine(Sufstat *s){
+  WeightedGaussianSuf *WGS::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
   }
 
-  Vector WGS::vectorize(bool)const{
+  Vector WGS::vectorize(bool) const {
     Vector ans(4);
     ans[0] = n_;
     ans[1] = sum_;
@@ -83,22 +75,24 @@ namespace BOOM {
     return ans;
   }
 
-  Vector::const_iterator WGS::unvectorize(
-      Vector::const_iterator &v, bool){
-    n_ = *v; ++v;
-    sum_ = *v; ++v;
-    sumsq_ = *v; ++v;
-    sumw_ = *v; ++v;
+  Vector::const_iterator WGS::unvectorize(Vector::const_iterator &v, bool) {
+    n_ = *v;
+    ++v;
+    sum_ = *v;
+    ++v;
+    sumsq_ = *v;
+    ++v;
+    sumw_ = *v;
+    ++v;
     return v;
   }
 
-  Vector::const_iterator WGS::unvectorize(
-      const Vector &v, bool minimal){
+  Vector::const_iterator WGS::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator b = v.begin();
     return unvectorize(b, minimal);
   }
 
-  ostream & WGS::print(ostream &out)const{
+  ostream &WGS::print(ostream &out) const {
     out << "n      = " << n_ << endl
         << "sum_   = " << sum_ << endl
         << "sumsq_ = " << sumsq_ << endl

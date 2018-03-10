@@ -20,9 +20,9 @@
 #ifndef BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 #define BOOM_STATE_SPACE_TRIG_MODEL_HPP_
 
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/IndependentMvnModel.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 
 namespace BOOM {
 
@@ -38,9 +38,7 @@ namespace BOOM {
   //   T[t]     = Identity matrix.
   //   Q[t]     = diagonal variance matrix for the changes in the
   //              coefficients.
-  class TrigStateModel
-      : public StateModel,
-        public IndependentMvnModel {
+  class TrigStateModel : public StateModel, public IndependentMvnModel {
    public:
     // Args:
     //   period: The number of time steps (need not be an integer)
@@ -51,28 +49,22 @@ namespace BOOM {
     TrigStateModel(double period, const Vector &frequencies);
     TrigStateModel(const TrigStateModel &rhs);
     TrigStateModel(TrigStateModel &&rhs) = default;
-    TrigStateModel * clone() const override;
+    TrigStateModel *clone() const override;
 
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
-    
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
+
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
 
-
-    uint state_dimension() const override {return 2 * frequencies_.size();}
-    uint state_error_dimension() const override {return state_dimension();}
+    uint state_dimension() const override { return 2 * frequencies_.size(); }
+    uint state_error_dimension() const override { return state_dimension(); }
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;

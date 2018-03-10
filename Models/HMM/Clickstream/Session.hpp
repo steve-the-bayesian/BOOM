@@ -24,8 +24,8 @@
 #include "Models/TimeSeries/TimeSeries.hpp"
 
 namespace BOOM {
-  namespace Clickstream{
-    class Session : public TimeSeries<Event>{
+  namespace Clickstream {
+    class Session : public TimeSeries<Event> {
      public:
       // Args:
       //   events:  A sequence of events comprising the session.
@@ -34,11 +34,11 @@ namespace BOOM {
       //     level), then an EOS event will be added to events.
       Session(const std::vector<Ptr<Event> > &events, bool add_eos_if_missing);
 
-      Session(const Session & rhs);
-      Session * clone() const override;
-      int number_of_events_including_eos()const;
+      Session(const Session &rhs);
+      Session *clone() const override;
+      int number_of_events_including_eos() const;
       Ptr<Event> event(int i);
-      const Ptr<Event> event(int i)const;
+      const Ptr<Event> event(int i) const;
 
      private:
       // Checks for two things:
@@ -51,4 +51,4 @@ namespace BOOM {
   }  // namespace Clickstream
 }  // namespace BOOM
 
-#endif// CLICKSTREAM_SESSION_HPP
+#endif  // CLICKSTREAM_SESSION_HPP

@@ -20,24 +20,20 @@
 #include "Models/ZeroInflatedPoissonModel.hpp"
 #include <functional>
 #include "Models/SufstatAbstractCombineImpl.hpp"
-#include "distributions.hpp"
 #include "cpputil/lse.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   ZeroInflatedPoissonSuf::ZeroInflatedPoissonSuf()
-      : number_of_zeros_(0),
-        number_of_positives_(0),
-        sum_of_positives_(0)
-      {}
+      : number_of_zeros_(0), number_of_positives_(0), sum_of_positives_(0) {}
 
   ZeroInflatedPoissonSuf::ZeroInflatedPoissonSuf(double nzero, double npos,
                                                  double sum_of_positives)
       : number_of_zeros_(nzero),
-      number_of_positives_(npos),
-      sum_of_positives_(sum_of_positives)
-      {}
+        number_of_positives_(npos),
+        sum_of_positives_(sum_of_positives) {}
 
-  ZeroInflatedPoissonSuf * ZeroInflatedPoissonSuf::clone() const {
+  ZeroInflatedPoissonSuf *ZeroInflatedPoissonSuf::clone() const {
     return new ZeroInflatedPoissonSuf(*this);
   }
 
@@ -49,16 +45,16 @@ namespace BOOM {
 
   void ZeroInflatedPoissonSuf::Update(const IntData &data) {
     int y = data.value();
-    if(y == 0) {
+    if (y == 0) {
       ++number_of_zeros_;
-    }else{
+    } else {
       ++number_of_positives_;
       sum_of_positives_ += y;
     }
   }
 
   void ZeroInflatedPoissonSuf::add_mixture_data(double y, double prob) {
-    if(lround(y) == 0) {
+    if (lround(y) == 0) {
       number_of_zeros_ += prob;
     } else {
       number_of_positives_ += prob;
@@ -66,8 +62,7 @@ namespace BOOM {
     }
   }
 
-  ZeroInflatedPoissonSuf *
-  ZeroInflatedPoissonSuf::abstract_combine(Sufstat *s) {
+  ZeroInflatedPoissonSuf *ZeroInflatedPoissonSuf::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
   }
 
@@ -77,8 +72,7 @@ namespace BOOM {
     sum_of_positives_ += rhs.sum_of_positives_;
   }
 
-  void ZeroInflatedPoissonSuf::combine(
-      const Ptr<ZeroInflatedPoissonSuf> & rhs) {
+  void ZeroInflatedPoissonSuf::combine(const Ptr<ZeroInflatedPoissonSuf> &rhs) {
     combine(*rhs);
   }
 
@@ -92,9 +86,12 @@ namespace BOOM {
 
   Vector::const_iterator ZeroInflatedPoissonSuf::unvectorize(
       Vector::const_iterator &v, bool) {
-    number_of_zeros_ = *v;     ++v;
-    number_of_positives_ = *v; ++v;
-    sum_of_positives_ = *v;    ++v;
+    number_of_zeros_ = *v;
+    ++v;
+    number_of_positives_ = *v;
+    ++v;
+    sum_of_positives_ = *v;
+    ++v;
     return v;
   }
 
@@ -104,7 +101,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream & ZeroInflatedPoissonSuf::print(ostream &out) const {
+  ostream &ZeroInflatedPoissonSuf::print(ostream &out) const {
     out << "number of zeros:     " << number_of_zeros_ << endl
         << "number of positives: " << number_of_positives_ << endl
         << "sum of positives:    " << sum_of_positives_ << endl;
@@ -112,25 +109,28 @@ namespace BOOM {
   }
 
   double ZeroInflatedPoissonSuf::number_of_zeros() const {
-    return number_of_zeros_;}
+    return number_of_zeros_;
+  }
   double ZeroInflatedPoissonSuf::number_of_positives() const {
-    return number_of_positives_;}
+    return number_of_positives_;
+  }
   double ZeroInflatedPoissonSuf::sum_of_positives() const {
-    return sum_of_positives_;}
+    return sum_of_positives_;
+  }
   double ZeroInflatedPoissonSuf::mean_of_positives() const {
-    if(number_of_positives_ == 0) return 0.0;
+    if (number_of_positives_ == 0) return 0.0;
     return sum_of_positives_ * 1.0 / number_of_positives_;
   }
 
-  void ZeroInflatedPoissonSuf::set_values(
-      double nzero, double npos, double sum) {
+  void ZeroInflatedPoissonSuf::set_values(double nzero, double npos,
+                                          double sum) {
     number_of_zeros_ = nzero;
     number_of_positives_ = npos;
     sum_of_positives_ = sum;
   }
 
-  void ZeroInflatedPoissonSuf::add_values(
-      double nzero, double npos, double sum) {
+  void ZeroInflatedPoissonSuf::add_values(double nzero, double npos,
+                                          double sum) {
     number_of_zeros_ += nzero;
     number_of_positives_ += npos;
     sum_of_positives_ += sum;
@@ -138,20 +138,21 @@ namespace BOOM {
 
   //======================================================================
 
-  ZeroInflatedPoissonModel::ZeroInflatedPoissonModel(
-      double lambda, double zero_prob)
+  ZeroInflatedPoissonModel::ZeroInflatedPoissonModel(double lambda,
+                                                     double zero_prob)
       : ParamPolicy(new UnivParams(lambda), new UnivParams(zero_prob)),
         DataPolicy(new ZeroInflatedPoissonSuf),
-        log_zero_prob_current_(false)
-  {
-    if(lambda <= 0) {
-      report_error("lambda must be positive in constructor for "
-                   "ZeroInflatedPoissonModel.");
+        log_zero_prob_current_(false) {
+    if (lambda <= 0) {
+      report_error(
+          "lambda must be positive in constructor for "
+          "ZeroInflatedPoissonModel.");
     }
 
-    if(zero_prob < 0 || zero_prob > 1) {
-      report_error("zero_prob must be between 0 and 1 in constructor for "
-                   "ZeroInflatedPoissonModel.");
+    if (zero_prob < 0 || zero_prob > 1) {
+      report_error(
+          "zero_prob must be between 0 and 1 in constructor for "
+          "ZeroInflatedPoissonModel.");
     }
   }
 
@@ -162,17 +163,15 @@ namespace BOOM {
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        log_zero_prob_current_(false)
-      {}
+        log_zero_prob_current_(false) {}
 
-  ZeroInflatedPoissonModel * ZeroInflatedPoissonModel::clone() const {
-    return new ZeroInflatedPoissonModel(*this);}
-
-  Ptr<UnivParams> ZeroInflatedPoissonModel::Lambda_prm() {
-    return prm1();
+  ZeroInflatedPoissonModel *ZeroInflatedPoissonModel::clone() const {
+    return new ZeroInflatedPoissonModel(*this);
   }
 
-  const UnivParams * ZeroInflatedPoissonModel::Lambda_prm() const {
+  Ptr<UnivParams> ZeroInflatedPoissonModel::Lambda_prm() { return prm1(); }
+
+  const UnivParams *ZeroInflatedPoissonModel::Lambda_prm() const {
     return prm1().get();
   }
 
@@ -184,12 +183,11 @@ namespace BOOM {
     Lambda_prm()->set(lambda);
   }
 
-
   Ptr<UnivParams> ZeroInflatedPoissonModel::ZeroProbability_prm() {
     return prm2();
   }
 
-  const UnivParams * ZeroInflatedPoissonModel::ZeroProbability_prm() const {
+  const UnivParams *ZeroInflatedPoissonModel::ZeroProbability_prm() const {
     return prm2().get();
   }
 
@@ -207,13 +205,13 @@ namespace BOOM {
     suf()->combine(s);
   }
 
-  double ZeroInflatedPoissonModel::pdf(
-      const Ptr<Data> &dp, bool logscale) const {
+  double ZeroInflatedPoissonModel::pdf(const Ptr<Data> &dp,
+                                       bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  double ZeroInflatedPoissonModel::pdf(const Data * dp, bool logscale) const {
+  double ZeroInflatedPoissonModel::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
@@ -235,15 +233,15 @@ namespace BOOM {
     double number_of_zeros = rbinom(n, zero_probability());
     double number_of_positives = n - number_of_zeros;
     double sum_of_positives = rpois(number_of_positives * lambda());
-    return ZeroInflatedPoissonSuf(
-        number_of_zeros, number_of_positives, sum_of_positives);
+    return ZeroInflatedPoissonSuf(number_of_zeros, number_of_positives,
+                                  sum_of_positives);
   }
 
   void ZeroInflatedPoissonModel::check_log_probabilities() const {
-    if(log_zero_prob_current_) return;
+    if (log_zero_prob_current_) return;
     double p = zero_probability();
     log_zero_prob_ = log(p);
-    log_poisson_prob_ = log(1-p);
+    log_poisson_prob_ = log(1 - p);
     log_zero_prob_current_ = true;
   }
 
@@ -253,7 +251,7 @@ namespace BOOM {
 
   std::function<void(void)>
   ZeroInflatedPoissonModel::create_zero_probability_observer() {
-    return [this](){this->observe_zero_probability();};
+    return [this]() { this->observe_zero_probability(); };
   }
 
 }  // namespace BOOM

@@ -18,9 +18,9 @@
 */
 
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 #include "stats/moments.hpp"
-#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
   namespace {
@@ -31,14 +31,13 @@ namespace BOOM {
       : xdim_(ncol(X)),
         initial_state_mean_(xdim_, 0.0),
         initial_state_variance_(xdim_, 1.0),
-        transition_matrix_(new IdentityMatrix(xdim_))
-  {
+        transition_matrix_(new IdentityMatrix(xdim_)) {
     setup_models_and_transition_variance_matrix();
     sparse_predictor_vectors_.reserve(nrow(X));
     for (int i = 0; i < nrow(X); ++i) {
       sparse_predictor_vectors_.push_back(SparseVector(X.row(i)));
-      sparse_predictor_matrices_.push_back(new DenseMatrix(
-          Matrix(1, xdim_, X.row(i))));
+      sparse_predictor_matrices_.push_back(
+          new DenseMatrix(Matrix(1, xdim_, X.row(i))));
     }
     compute_predictor_variance();
   }
@@ -48,8 +47,7 @@ namespace BOOM {
       : xdim_(check_columns(predictors)),
         initial_state_mean_(xdim_, 0.0),
         initial_state_variance_(xdim_, 1.0),
-        transition_matrix_(new IdentityMatrix(xdim_))
-  {
+        transition_matrix_(new IdentityMatrix(xdim_)) {
     setup_models_and_transition_variance_matrix();
     for (int i = 0; i < predictors.size(); ++i) {
       const Matrix &X(predictors[i]);
@@ -101,8 +99,8 @@ namespace BOOM {
             std::ostringstream err;
             err << "Matrices must all have the same number of columns.  "
                 << "Element " << i << " had " << predictors[i].ncol()
-                << " columns, but a previous entry had " << xdim
-                << "." << std::endl;
+                << " columns, but a previous entry had " << xdim << "."
+                << std::endl;
             report_error(err.str());
           }
         }
@@ -114,8 +112,7 @@ namespace BOOM {
     return xdim;
   }
 
-  DRSM::DynamicRegressionStateModel(
-      const DynamicRegressionStateModel &rhs)
+  DRSM::DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs)
       : StateModel(rhs),
         CompositeParamPolicy(rhs),
         NullDataPolicy(rhs),
@@ -127,8 +124,7 @@ namespace BOOM {
         sparse_predictor_vectors_(rhs.sparse_predictor_vectors_),
         sparse_predictor_matrices_(rhs.sparse_predictor_matrices_),
         predictor_variance_(rhs.predictor_variance_),
-        transition_matrix_(rhs.transition_matrix_->clone())
-  {
+        transition_matrix_(rhs.transition_matrix_->clone()) {
     coefficient_transition_model_.reserve(xdim_);
     std::vector<Ptr<UnivParams> > diagonal_variances;
     diagonal_variances.reserve(xdim_);
@@ -143,11 +139,11 @@ namespace BOOM {
         diagonal_variances, diagonal_variances.size()));
   }
 
-  DynamicRegressionStateModel * DRSM::clone() const {
-    return new DynamicRegressionStateModel(*this);}
+  DynamicRegressionStateModel *DRSM::clone() const {
+    return new DynamicRegressionStateModel(*this);
+  }
 
-  void DRSM::set_xnames(
-      const std::vector<string> &xnames) {
+  void DRSM::set_xnames(const std::vector<string> &xnames) {
     if (xnames.size() != state_dimension()) {
       std::ostringstream err;
       err << "Error in DRSM::set_xnames." << endl
@@ -158,9 +154,7 @@ namespace BOOM {
     xnames_ = xnames;
   }
 
-  const std::vector<string> & DRSM::xnames() const {
-    return xnames_;
-  }
+  const std::vector<string> &DRSM::xnames() const { return xnames_; }
 
   void DRSM::clear_data() {
     for (int i = 0; i < coefficient_transition_model_.size(); ++i) {
@@ -169,8 +163,7 @@ namespace BOOM {
   }
 
   void DRSM::observe_state(const ConstVectorView &then,
-                           const ConstVectorView &now,
-                           int time_now,
+                           const ConstVectorView &now, int time_now,
                            ScalarStateSpaceModelBase *) {
     check_size(then.size());
     check_size(now.size());
@@ -181,26 +174,21 @@ namespace BOOM {
   }
 
   void DRSM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then,
-      const ConstVectorView &now,
-      int time_now,
+      const ConstVectorView &then, const ConstVectorView &now, int time_now,
       DynamicInterceptRegressionModel *) {
     observe_state(then, now, time_now, nullptr);
   }
-  
-  void DRSM::observe_initial_state(
-      const ConstVectorView &state) {}
 
-  uint DRSM::state_dimension() const {return xdim_;}
+  void DRSM::observe_initial_state(const ConstVectorView &state) {}
+
+  uint DRSM::state_dimension() const { return xdim_; }
 
   void DRSM::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
     for (int s = 0; s < coefficient_transition_model_.size(); ++s) {
       coefficient_transition_model_[s]->suf()->update_expected_value(
-          1.0,
-          state_error_mean[s],
+          1.0, state_error_mean[s],
           state_error_variance(s, s) + square(state_error_mean[s]));
     }
   }
@@ -212,23 +200,19 @@ namespace BOOM {
     }
   }
 
-  Ptr<SparseMatrixBlock>
-      DRSM::state_transition_matrix(int t) const {
+  Ptr<SparseMatrixBlock> DRSM::state_transition_matrix(int t) const {
     return transition_matrix_;
   }
 
-  Ptr<SparseMatrixBlock>
-      DRSM::state_variance_matrix(int t) const {
+  Ptr<SparseMatrixBlock> DRSM::state_variance_matrix(int t) const {
     return transition_variance_matrix_;
   }
 
-  Ptr<SparseMatrixBlock>
-      DRSM::state_error_expander(int t) const {
+  Ptr<SparseMatrixBlock> DRSM::state_error_expander(int t) const {
     return state_transition_matrix(t);
   }
 
-  Ptr<SparseMatrixBlock>
-      DRSM::state_error_variance(int t) const {
+  Ptr<SparseMatrixBlock> DRSM::state_error_variance(int t) const {
     return state_variance_matrix(t);
   }
 
@@ -241,15 +225,14 @@ namespace BOOM {
       int t, const StateSpace::MultiplexedData &data_point) const {
     Ptr<DenseMatrix> ans = sparse_predictor_matrices_[t];
     if (data_point.total_sample_size() != ans->nrow()) {
-      report_error("Mismatch between model data and "
-                   "DynamicRegressionStateModel data.");
+      report_error(
+          "Mismatch between model data and "
+          "DynamicRegressionStateModel data.");
     }
     return ans;
   }
 
-  Vector DRSM::initial_state_mean() const {
-    return initial_state_mean_;
-  }
+  Vector DRSM::initial_state_mean() const { return initial_state_mean_; }
 
   void DRSM::set_initial_state_mean(const Vector &mu) {
     check_size(mu.size());
@@ -265,7 +248,7 @@ namespace BOOM {
     initial_state_variance_ = V;
   }
 
-  const GaussianSuf * DRSM::suf(int i) const {
+  const GaussianSuf *DRSM::suf(int i) const {
     return coefficient_transition_model_[i]->suf().get();
   }
 
@@ -277,9 +260,7 @@ namespace BOOM {
     coefficient_transition_model_[i]->set_sigsq(sigsq);
   }
 
-  const Vector & DRSM::predictor_variance() const {
-    return predictor_variance_;
-  }
+  const Vector &DRSM::predictor_variance() const { return predictor_variance_; }
 
   Ptr<UnivParams> DRSM::Sigsq_prm(int i) {
     return coefficient_transition_model_[i]->Sigsq_prm();
@@ -295,8 +276,8 @@ namespace BOOM {
     }
     for (int i = 0; i < nrow(predictors); ++i) {
       sparse_predictor_vectors_.push_back(SparseVector(predictors.row(i)));
-      sparse_predictor_matrices_.push_back(new DenseMatrix(Matrix(
-          1, xdim_, predictors.row(i))));
+      sparse_predictor_matrices_.push_back(
+          new DenseMatrix(Matrix(1, xdim_, predictors.row(i))));
     }
   }
 
@@ -309,8 +290,9 @@ namespace BOOM {
       NEW(DenseMatrix, predictor_matrix)(predictors[t]);
       if (!sparse_predictor_matrices_.empty() &&
           predictor_matrix->ncol() != sparse_predictor_matrices_[0]->ncol()) {
-        report_error("Multiplexed forecast data has the wrong "
-                     "number of columns.");
+        report_error(
+            "Multiplexed forecast data has the wrong "
+            "number of columns.");
       }
       sparse_predictor_matrices_.push_back(predictor_matrix);
       sparse_predictor_vectors_.push_back(SparseVector(predictors[t].row(0)));
@@ -318,14 +300,11 @@ namespace BOOM {
   }
 
   void DRSM::increment_expected_gradient(
-      VectorView gradient,
-      int t,
-      const ConstVectorView &state_error_mean,
+      VectorView gradient, int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    if (gradient.size() != xdim_
-        || state_error_mean.size() != xdim_
-        || state_error_variance.nrow() != xdim_
-        || state_error_variance.ncol() != xdim_) {
+    if (gradient.size() != xdim_ || state_error_mean.size() != xdim_ ||
+        state_error_variance.nrow() != xdim_ ||
+        state_error_variance.ncol() != xdim_) {
       report_error(
           "Wrong size arguments passed to "
           "DynamicRegressionStateModel::increment_expected_gradient.");
@@ -333,7 +312,8 @@ namespace BOOM {
     for (int i = 0; i < xdim_; ++i) {
       double mean = state_error_mean[i];
       double var = state_error_variance(i, i);
-      double sigsq = DynamicRegressionStateModel::sigsq(i);;
+      double sigsq = DynamicRegressionStateModel::sigsq(i);
+      ;
       double tmp = (var + mean * mean) / (sigsq * sigsq) - 1.0 / sigsq;
       gradient[i] += .5 * tmp;
     }
@@ -341,8 +321,9 @@ namespace BOOM {
 
   void DRSM::check_size(int n) const {
     if (n != xdim_) {
-      report_error("Wrong sized vector or matrix argument in"
-                   " DynamicRegressionStateModel");
+      report_error(
+          "Wrong sized vector or matrix argument in"
+          " DynamicRegressionStateModel");
     }
   }
 

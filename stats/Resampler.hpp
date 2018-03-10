@@ -20,12 +20,12 @@
 #include "BOOM.hpp"
 #include "LinAlg/Vector.hpp"
 
-#include <vector>
-#include <map>
 #include <algorithm>
+#include <map>
+#include <vector>
 #include "distributions/rng.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // Efficiently sample with replacement from a discrete distribution.
   //
@@ -36,12 +36,12 @@ namespace BOOM{
   // (Then use index to subsample things)
   //
   // std::vector<Things> ressampled = resample(unique_things, number_of_draws);
-  class Resampler{
-  public:
+  class Resampler {
+   public:
     // Resamples according to an equally weighted distribution of
     // dimension nvals.
     // Equivalent to Resampler(Vector(nvals, 1.0 / nvals), false);
-    Resampler(int nvals = 1); // equally weighted [0..nvals-1]
+    Resampler(int nvals = 1);  // equally weighted [0..nvals-1]
 
     // Args:
     //   probs:  A discrete distribution (all non-negative elements).
@@ -49,7 +49,7 @@ namespace BOOM{
     //     to ensure proper normalization before being used.  If false
     //     then it is assumed that the normalization has already
     //     occurred prior to construction, so sum(probs) == 1 already.
-    Resampler(const Vector &probs, bool normalize=true);
+    Resampler(const Vector &probs, bool normalize = true);
 
     // Resample from a vector of objects.
     // Args:
@@ -69,16 +69,16 @@ namespace BOOM{
 
     // Returns a sample, with replacement from [0, ... probs.size() - 1].
     std::vector<int> operator()(int number_of_draws,
-                                RNG &rng = GlobalRng::rng)const;
+                                RNG &rng = GlobalRng::rng) const;
 
     // Returns the number of categories in the discrete distribution.
-    int dimension()const;
+    int dimension() const;
 
     // Reset the Resampler with a new set of probabilities.
     // Equivalent to Resampler that(probs, normalize); swap(*this, that);
-    void set_probs(const Vector &probs, bool normalize=true);
+    void set_probs(const Vector &probs, bool normalize = true);
 
-  private:
+   private:
     typedef std::map<double, int> CDF;
     CDF cdf;
     void setup_cdf(const Vector &probs, bool normalize);
@@ -87,14 +87,12 @@ namespace BOOM{
   //------------------------------------------------------------
 
   template <class T>
-  std::vector<T> Resampler::operator()(
-      const std::vector<T> &things,
-      int number_of_draws,
-      RNG &rng) const {
+  std::vector<T> Resampler::operator()(const std::vector<T> &things,
+                                       int number_of_draws, RNG &rng) const {
     std::vector<int> index = (*this)(number_of_draws);
     std::vector<T> ans;
     ans.reserve(number_of_draws);
-    for(int i = 0; i < number_of_draws; ++i) {
+    for (int i = 0; i < number_of_draws; ++i) {
       ans[i] = things[index[i]];
     }
     return ans;
@@ -102,15 +100,14 @@ namespace BOOM{
 
   //______________________________________________________________________
 
-  template<class T>
-  std::vector<T> resample(const std::vector<T> & things,
-                          int number_of_draws,
-                          const Vector & probs){
+  template <class T>
+  std::vector<T> resample(const std::vector<T> &things, int number_of_draws,
+                          const Vector &probs) {
     Vector cdf = cumsum(probs);
     double total = cdf.back();
-    if(total<1.0 || total > 1.0) {
-      cdf/=total;
-      total=1.0;
+    if (total < 1.0 || total > 1.0) {
+      cdf /= total;
+      total = 1.0;
     }
 
     Vector u(number_of_draws);
@@ -119,12 +116,12 @@ namespace BOOM{
 
     std::vector<T> ans;
     ans.reserve(number_of_draws);
-    int cursor=0;
-    for(int i=0; i<number_of_draws; ++i){
-      while(u[i]>cdf[cursor]) ++cursor;
+    int cursor = 0;
+    for (int i = 0; i < number_of_draws; ++i) {
+      while (u[i] > cdf[cursor]) ++cursor;
       ans.push_back(things[cursor]);
     }
-    return(ans);
+    return (ans);
   }
-}
-#endif// BOOM_RESAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_RESAMPLER_HPP

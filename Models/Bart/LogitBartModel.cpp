@@ -22,28 +22,25 @@
 
 namespace BOOM {
   LogitBartModel::LogitBartModel(int number_of_trees, double mean)
-      : BartModelBase(number_of_trees, mean)
-  {}
+      : BartModelBase(number_of_trees, mean) {}
 
   LogitBartModel::LogitBartModel(int number_of_trees,
                                  const std::vector<int> &responses,
                                  const std::vector<int> &trials,
-                                 const Matrix & predictors)
-      : BartModelBase(number_of_trees, 0.0)
-  {
+                                 const Matrix &predictors)
+      : BartModelBase(number_of_trees, 0.0) {
     int n = responses.size();
     if (n != trials.size()) {
       std::ostringstream err;
       err << "There were " << n << " elements in the responses vector, but "
           << trials.size() << " in the trials vector.  "
-          << "The two sizes must match."
-          << endl;
+          << "The two sizes must match." << endl;
       report_error(err.str());
     }
     check_predictor_dimension(n, predictors);
     for (int i = 0; i < n; ++i) {
-      NEW(BinomialRegressionData, dp)(
-          responses[i], trials[i], predictors.row(i));
+      NEW(BinomialRegressionData, dp)
+      (responses[i], trials[i], predictors.row(i));
       add_data(dp);
     }
   }
@@ -51,8 +48,7 @@ namespace BOOM {
   LogitBartModel::LogitBartModel(int number_of_trees,
                                  const std::vector<bool> &responses,
                                  const Matrix &predictors)
-      : BartModelBase(number_of_trees, 0.0)
-  {
+      : BartModelBase(number_of_trees, 0.0) {
     int n = responses.size();
     check_predictor_dimension(n, predictors);
     for (int i = 0; i < n; ++i) {
@@ -66,22 +62,17 @@ namespace BOOM {
         BartModelBase(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
-        PriorPolicy(rhs)
-  {}
+        PriorPolicy(rhs) {}
 
-  LogitBartModel * LogitBartModel::clone() const {
+  LogitBartModel *LogitBartModel::clone() const {
     return new LogitBartModel(*this);
   }
 
-  int LogitBartModel::sample_size() const {
-    return dat().size();
-  }
+  int LogitBartModel::sample_size() const { return dat().size(); }
 
-  void LogitBartModel::add_data(const Ptr<Data> &dp) {
-    add_data(DAT(dp));
-  }
+  void LogitBartModel::add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
 
-  void LogitBartModel::add_data(const Ptr<BinomialRegressionData> & dp) {
+  void LogitBartModel::add_data(const Ptr<BinomialRegressionData> &dp) {
     DataPolicy::add_data(dp);
     BartModelBase::observe_data(dp->x());
   }

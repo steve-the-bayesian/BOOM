@@ -20,20 +20,19 @@
 #ifndef BOOM_ARP_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ARP_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/TimeSeries/ArModel.hpp"
 #include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A sampler for an AR(p) process, assuming a uniform prior over the
   // AR coefficients with support over the stationary region, and an
   // inverse Gamma prior on innovation variance.
-  class ArPosteriorSampler : public HierarchicalPosteriorSampler{
+  class ArPosteriorSampler : public HierarchicalPosteriorSampler {
    public:
-    ArPosteriorSampler(ArModel *model,
-                       const Ptr<GammaModelBase> &siginv_prior,
+    ArPosteriorSampler(ArModel *model, const Ptr<GammaModelBase> &siginv_prior,
                        RNG &seeding_rng = GlobalRng::rng);
 
     // The 'draw' method will make several attempts to simulate AR
@@ -66,10 +65,10 @@ namespace BOOM{
     double log_prior_density(const Model &model) const override;
     double log_prior_density(const ArModel &model) const;
 
-
     void set_max_number_of_regression_proposals(int number_of_proposals);
 
     void set_sigma_upper_limit(double max_sigma);
+
    private:
     ArModel *model_;
     Ptr<GammaModelBase> siginv_prior_;
@@ -79,4 +78,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif //  BOOM_ARP_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_ARP_POSTERIOR_SAMPLER_HPP_

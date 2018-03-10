@@ -41,10 +41,10 @@ namespace BOOM {
     //     a number of trials.
     PoissonRegressionData(int64_t y, const Ptr<VectorData> &x, double exposure);
 
-    PoissonRegressionData * clone() const override;
-    ostream & display(ostream &out)const override;
-    double exposure()const;
-    double log_exposure()const;
+    PoissonRegressionData *clone() const override;
+    ostream &display(ostream &out) const override;
+    double exposure() const;
+    double log_exposure() const;
 
     // Sets the value of this observation's exposure.
     // Args:
@@ -53,6 +53,7 @@ namespace BOOM {
     //     data object will be notified of the change.  If false then
     //     observers will not be notified.
     void set_exposure(double exposure, bool signal = true);
+
    private:
     double exposure_;
     double log_exposure_;

@@ -18,20 +18,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 #include "Models/GaussianModel.hpp"
 #include "Models/Glm/RegressionModel.hpp"
+#include "Models/Policies/ManyParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/NullPriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/Policies/ManyParamPolicy.hpp"
-#include "Models/Policies/NullDataPolicy.hpp"
-#include "Models/Policies/NullPriorPolicy.hpp"
-#include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/VectorView.hpp"
-#include "cpputil/report_error.hpp"
 #include "cpputil/Date.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -51,7 +51,8 @@ namespace BOOM {
     //     equation.  This parameter is shared by the regression model or models
     //     in the state transition equation.  This abstraction can only be used
     //     with Gaussian observation models.  If we were to allow a bit of state
-    //     error then we could introduce a free residual_variance parameter here.
+    //     error then we could introduce a free residual_variance parameter
+    //     here.
     RegressionHolidayBaseImpl(const Date &time_of_first_observation,
                               const Ptr<UnivParams> &residual_variance);
 
@@ -68,17 +69,15 @@ namespace BOOM {
     // The state of a regression model is just the number 1.  This state gets
     // multiplied by Z_t (observation_matrix) containing the results of the
     // linear predictor at time t.
-    int state_dimension() const {return 1;}
-    int state_error_dimension() const {return 0;}
+    int state_dimension() const { return 1; }
+    int state_error_dimension() const { return 0; }
 
     // There is no state error, so there is nothing to simulate.
     void simulate_state_error(VectorView eta) const {}
 
     // The state value is always 1, so simulating the initial state just fills
     // eta with 1.
-    void simulate_initial_state(VectorView eta) const {
-      eta[0] = 1.0;
-    }
+    void simulate_initial_state(VectorView eta) const { eta[0] = 1.0; }
 
     // The state transition matrix is the identity.
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const {
@@ -116,9 +115,7 @@ namespace BOOM {
       return (t >= 0 && t < which_day_.size()) ? which_day_[t] : -1;
     }
 
-    const Vector &initial_state_mean() const {
-      return initial_state_mean_;
-    }
+    const Vector &initial_state_mean() const { return initial_state_mean_; }
     const SpdMatrix &initial_state_variance() const {
       return initial_state_variance_;
     }
@@ -127,18 +124,20 @@ namespace BOOM {
     Ptr<UnivParams> residual_variance() { return residual_variance_; }
 
     // The numerical value held by the residual variance parameter.
-    double residual_variance_value() const {return residual_variance_->value();}
-    
+    double residual_variance_value() const {
+      return residual_variance_->value();
+    }
+
    private:
     Date time_of_first_observation_;
     Ptr<UnivParams> residual_variance_;
     std::vector<Ptr<Holiday>> holidays_;
 
     // State space model matrices.  These are trivial.
-    Ptr<IdentityMatrix> state_transition_matrix_;   // The 1x1 identity.
-    Ptr<ZeroMatrix> state_variance_matrix_;         // The 1x1 zero matrix.
-    Ptr<EmptyMatrix> state_error_expander_;         // Zero dimensional 
-    Ptr<EmptyMatrix> state_error_variance_;         //    error matrices.
+    Ptr<IdentityMatrix> state_transition_matrix_;  // The 1x1 identity.
+    Ptr<ZeroMatrix> state_variance_matrix_;        // The 1x1 zero matrix.
+    Ptr<EmptyMatrix> state_error_expander_;        // Zero dimensional
+    Ptr<EmptyMatrix> state_error_variance_;        //    error matrices.
 
     // A mapping from integer time t to which holiday is active at time t, and
     // which day in the holiday is active at time t.  These are filled when
@@ -150,7 +149,7 @@ namespace BOOM {
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
   };
-  
+
   //===========================================================================
   // A RegressionHolidayStateModel describes a set of holidays using a
   // regression on dummy variables.  Each holiday is described by an influence
@@ -158,11 +157,10 @@ namespace BOOM {
   // day in the window.  These dummy variables never co-occur, so X'X is a
   // diagonal matrix with diagonal elements containing occurrance counts for
   // each day.
-  class RegressionHolidayStateModel
-      : public StateModel,
-        public ManyParamPolicy,
-        public NullDataPolicy,
-        public NullPriorPolicy {
+  class RegressionHolidayStateModel : public StateModel,
+                                      public ManyParamPolicy,
+                                      public NullDataPolicy,
+                                      public NullPriorPolicy {
    public:
     // Args:
     //   time_of_first_observation: The date of the observation associated with
@@ -173,26 +171,25 @@ namespace BOOM {
     //     is used for all effects.
     //   rng: A random number generator used to seed the random number generator
     //     used for posterior sampling.
-    RegressionHolidayStateModel(
-        const Date &time_of_first_observation,
-        const Ptr<UnivParams> &residual_variance,
-        const Ptr<GaussianModel> &prior,
-        RNG &seeding_rng = GlobalRng::rng);
+    RegressionHolidayStateModel(const Date &time_of_first_observation,
+                                const Ptr<UnivParams> &residual_variance,
+                                const Ptr<GaussianModel> &prior,
+                                RNG &seeding_rng = GlobalRng::rng);
     RegressionHolidayStateModel(const RegressionHolidayStateModel &rhs);
     RegressionHolidayStateModel &operator=(
         const RegressionHolidayStateModel &rhs);
     RegressionHolidayStateModel(RegressionHolidayStateModel &&rhs) = default;
-    RegressionHolidayStateModel & operator=(
-        RegressionHolidayStateModel &&rhs) = default;
+    RegressionHolidayStateModel &operator=(RegressionHolidayStateModel &&rhs) =
+        default;
 
-    RegressionHolidayStateModel * clone() const override;
+    RegressionHolidayStateModel *clone() const override;
 
     // Add a holiday to the set of holidays modeled by this object.
     void add_holiday(const Ptr<Holiday> &holiday);
 
     // Clear all sufficient statistics for the managed holidays.
     void clear_data() override {
-      int number_of_holidays =  daily_totals_.size();
+      int number_of_holidays = daily_totals_.size();
       for (int i = 0; i < number_of_holidays; ++i) {
         daily_totals_[i] = 0;
         daily_counts_[i] = 0;
@@ -217,43 +214,34 @@ namespace BOOM {
     void set_holiday_pattern(int holiday, const Vector &pattern) {
       holiday_mean_contributions_[holiday]->set(pattern);
     }
-    
+
     void sample_posterior() override;
 
     // The numerical value of the residual variance parameter from the
     // observation equation.
-    double residual_variance() const {
-      return impl_.residual_variance_value();
-    }
+    double residual_variance() const { return impl_.residual_variance_value(); }
 
     void observe_time_dimension(int max_time) override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
 
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
-    
-    uint state_dimension() const override {return 1;}
-    uint state_error_dimension() const override {return 0;}
+
+    uint state_dimension() const override { return 1; }
+    uint state_error_dimension() const override { return 0; }
 
     // Calling this throws an exception.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {
       report_error("Not implemented.");
     }
 
     // Calling this throws an exception.
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {
       report_error("Not implemented.");
     }
@@ -288,7 +276,7 @@ namespace BOOM {
       return new IdenticalRowsMatrix(observation_matrix(t),
                                      data_point.total_sample_size());
     }
-    
+
     Vector initial_state_mean() const override {
       return impl_.initial_state_mean();
     }
@@ -308,7 +296,7 @@ namespace BOOM {
     Ptr<VectorParams> holiday_pattern_parameter(int i) {
       return holiday_mean_contributions_[i];
     }
-    
+
    private:
     RegressionHolidayBaseImpl impl_;
     std::vector<Ptr<VectorParams>> holiday_mean_contributions_;
@@ -318,7 +306,7 @@ namespace BOOM {
     Ptr<GaussianModel> prior_;
     RNG rng_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_REGRESSION_HOLIDAY_STATE_MODEL_HPP_

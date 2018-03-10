@@ -20,12 +20,12 @@
 #ifndef BOOM_DRAW_LOGIT_LAMBDA_HPP_
 #define BOOM_DRAW_LOGIT_LAMBDA_HPP_
 #include "distributions.hpp"
-namespace BOOM{
+namespace BOOM {
 
-  namespace Logit{
-    double draw_lambda_mt(RNG & rng, double r);
+  namespace Logit {
+    double draw_lambda_mt(RNG& rng, double r);
     bool check_right(double u, double lam);
     bool check_left(double u, double lam);
-  }
-}
-#endif // BOOM_DRAW_LOGIT_LAMBDA_HPP_
+  }  // namespace Logit
+}  // namespace BOOM
+#endif  // BOOM_DRAW_LOGIT_LAMBDA_HPP_

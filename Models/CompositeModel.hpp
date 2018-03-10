@@ -19,13 +19,13 @@
 
 #ifndef BOOM_COMPOSITE_MODEL_HPP
 #define BOOM_COMPOSITE_MODEL_HPP
-#include "Models/ModelTypes.hpp"
 #include "Models/CompositeData.hpp"
+#include "Models/ModelTypes.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A composite model assumes that y1, y2, ... are independent with
   // y1 ~ m1, y2 ~ m2, etc.  y1,y2... are stored in CompositeData,
@@ -33,13 +33,11 @@ namespace BOOM{
   //
   // The learning method should be set (using set_method) for the
   // component models before they are loaded in to the CompositeModel.
-  class CompositeModel
-    : virtual public MixtureComponent,
-      public CompositeParamPolicy,
-      public IID_DataPolicy<CompositeData>,
-      public PriorPolicy
-  {
-  public:
+  class CompositeModel : virtual public MixtureComponent,
+                         public CompositeParamPolicy,
+                         public IID_DataPolicy<CompositeData>,
+                         public PriorPolicy {
+   public:
     // The default constructor can be used in conjuction with
     // add_model if you want to build the mode up incrementally.
     CompositeModel();
@@ -49,13 +47,12 @@ namespace BOOM{
     // it can be any type that inherits from MixtureComponent.
     template <class MOD>
     CompositeModel(const std::vector<Ptr<MOD> > &models)
-        : m_(models.begin(), models.end())
-    {
+        : m_(models.begin(), models.end()) {
       setup();
     }
 
     CompositeModel(const CompositeModel &rhs);
-    CompositeModel * clone()const override;
+    CompositeModel *clone() const override;
 
     virtual void add_model(const Ptr<MixtureComponent> &component);
 
@@ -63,24 +60,26 @@ namespace BOOM{
     void add_data(const Ptr<Data> &) override;
     void clear_data() override;
 
-    double pdf(const CompositeData &, bool logscale)const;
-    double pdf(const Ptr<Data> &dp, bool logscale)const;
-    double pdf(const Data *, bool logscale)const override;
-    int number_of_observations() const override {return dat().size();}
+    double pdf(const CompositeData &, bool logscale) const;
+    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *, bool logscale) const override;
+    int number_of_observations() const override { return dat().size(); }
 
     std::vector<Ptr<MixtureComponent> > &components();
-    const std::vector<Ptr<MixtureComponent> > &components()const;
+    const std::vector<Ptr<MixtureComponent> > &components() const;
 
-  protected:
+   protected:
     template <class Fwd>
-    void set_models(Fwd b, Fwd e){   // to be called by constructors of
-      m_.assign(b,e);                // derived classes
-      setup(); }
-  private:
+    void set_models(Fwd b, Fwd e) {  // to be called by constructors of
+      m_.assign(b, e);               // derived classes
+      setup();
+    }
+
+   private:
     std::vector<Ptr<MixtureComponent> > m_;
     void setup();
   };
 
-}
+}  // namespace BOOM
 
-#endif // BOOM_COMPOSITE_MODEL_HPP
+#endif  // BOOM_COMPOSITE_MODEL_HPP

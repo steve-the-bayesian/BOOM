@@ -22,10 +22,10 @@
 
 #include "LinAlg/SpdMatrix.hpp"
 
-#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // Returns the likelihood contribution of y given previous y's.
   // Uses notation from Durbin and Koopman (2001):
   //
@@ -79,17 +79,16 @@ namespace BOOM{
   // Returns:
   //   This observation's contribution to log likelihood.
   double sparse_scalar_kalman_update(
-      double y,                      // y[t]
-      Vector &a,                     // a[t] -> a[t+1]
-      SpdMatrix &P,                  // P[t] -> P[t+1]
-      Vector &kalman_gain,           // output as K[t]
-      double &forecast_error_variance, // output as F[t]
-      double &forecast_error,          // output as v[t]
-      bool missing,                   // was y observed?
-      const SparseVector &Z,  // input
-      double observation_variance,
-      const SparseKalmanMatrix &T,
-      const SparseKalmanMatrix &RQR);   // state transition error variance
+      double y,                         // y[t]
+      Vector &a,                        // a[t] -> a[t+1]
+      SpdMatrix &P,                     // P[t] -> P[t+1]
+      Vector &kalman_gain,              // output as K[t]
+      double &forecast_error_variance,  // output as F[t]
+      double &forecast_error,           // output as v[t]
+      bool missing,                     // was y observed?
+      const SparseVector &Z,            // input
+      double observation_variance, const SparseKalmanMatrix &T,
+      const SparseKalmanMatrix &RQR);  // state transition error variance
 
   // A multivariate analog of 'sparse_scalar_kalman_update', except for this
   // function the response y[t] is a vector.
@@ -126,15 +125,11 @@ namespace BOOM{
   // Returns:
   //   This observation's contribution to log likelihood.
   double sparse_multivariate_kalman_update(
-      const ConstVectorView &observation,
-      Vector &state_conditional_mean,
-      SpdMatrix &state_conditional_variance,
-      Matrix &kalman_gain,
+      const ConstVectorView &observation, Vector &state_conditional_mean,
+      SpdMatrix &state_conditional_variance, Matrix &kalman_gain,
       SpdMatrix &forecast_error_precision,
-      double &forecast_precision_log_determinant,
-      Vector &forecast_error,
-      bool missing,
-      const SparseKalmanMatrix &observation_coefficients,
+      double &forecast_precision_log_determinant, Vector &forecast_error,
+      bool missing, const SparseKalmanMatrix &observation_coefficients,
       const SpdMatrix &observation_variance,
       const SparseKalmanMatrix &transition_matrix,
       const SparseKalmanMatrix &RQR);
@@ -142,16 +137,15 @@ namespace BOOM{
   // Updates a[t] and P[t] to condition on all Y, and sets up r and N
   // for use in the next recursion.
   void sparse_scalar_kalman_smoother_update(
-      Vector &a,                   // a[t] -> E(alpha[t] | Y)
-      SpdMatrix &P,                // P[t] -> V(alpha[t] | Y)
-      const Vector &K,             // K[t] As produced by Kalman filter
-      double forecast_variance,    // F[t] "
-      double forecast_error,       // v[t] "
-      const SparseVector &Z,       // Z[t] "
-      const SparseKalmanMatrix &T, // T[t] "
-      Vector &r,                   // backward Kalman variable, local
-      Matrix &N);                  // backward Kalman variance, local
-
+      Vector &a,                    // a[t] -> E(alpha[t] | Y)
+      SpdMatrix &P,                 // P[t] -> V(alpha[t] | Y)
+      const Vector &K,              // K[t] As produced by Kalman filter
+      double forecast_variance,     // F[t] "
+      double forecast_error,        // v[t] "
+      const SparseVector &Z,        // Z[t] "
+      const SparseKalmanMatrix &T,  // T[t] "
+      Vector &r,                    // backward Kalman variable, local
+      Matrix &N);                   // backward Kalman variance, local
 
   struct DisturbanceSmoothingStorage {
     // Scaled, potentially rank-deficient version of the state
@@ -192,25 +186,18 @@ namespace BOOM{
   // Initial values.  The backward smoothing recursions are started
   // with r[T+1] = 0 and N[T+1] = 0.
   void sparse_scalar_kalman_disturbance_smoother_update(
-      Vector &scaled_residual_r,
-      SpdMatrix &scaled_residual_variance_N,
+      Vector &scaled_residual_r, SpdMatrix &scaled_residual_variance_N,
       const SparseKalmanMatrix &transition_matrix_T,
-      const Vector &kalman_gain_K,
-      const SparseVector &observation_matrix_Z,
-      double forecast_variance,
-      double forecast_error);
+      const Vector &kalman_gain_K, const SparseVector &observation_matrix_Z,
+      double forecast_variance, double forecast_error);
 
   void sparse_multivariate_kalman_disturbance_smoother_update(
-      Vector &scaled_residual_r,
-      SpdMatrix &scaled_residual_variance_N,
+      Vector &scaled_residual_r, SpdMatrix &scaled_residual_variance_N,
       const SparseKalmanMatrix &transition_matrix_T,
       const Matrix &kalman_gain_K,
       const SparseKalmanMatrix &observation_matrix_Z,
-      const SpdMatrix &forecast_precision,
-      const Vector &forecast_error);
-
-
+      const SpdMatrix &forecast_precision, const Vector &forecast_error);
 
 }  // namespace BOOM
 
-#endif// BOOM_SPARSE_KALMAN_TOOLS_HPP
+#endif  // BOOM_SPARSE_KALMAN_TOOLS_HPP

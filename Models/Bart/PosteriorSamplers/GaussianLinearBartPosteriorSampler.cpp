@@ -25,25 +25,19 @@ namespace BOOM {
   GaussianLinearBartPosteriorSampler::GaussianLinearBartPosteriorSampler(
       GaussianLinearBartModel *model,
       const ZellnerPriorParameters &regression_prior,
-      const BartPriorParameters &bart_prior,
-      RNG &seeding_rng)
+      const BartPriorParameters &bart_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         first_time_for_regression_(true),
         bart_sampler_(new GaussianBartPosteriorSampler(
-            model->bart(),
-            regression_prior.prior_sigma_guess,
+            model->bart(), regression_prior.prior_sigma_guess,
             regression_prior.prior_sigma_guess_weight,
-            bart_prior.total_prediction_sd,
-            bart_prior.prior_tree_depth_alpha,
+            bart_prior.total_prediction_sd, bart_prior.prior_tree_depth_alpha,
             bart_prior.prior_tree_depth_beta,
-            PointMassPrior(model->bart()->number_of_trees()),
-            seeding_rng)),
-        first_time_for_bart_(true)
-  {
+            PointMassPrior(model->bart()->number_of_trees()), seeding_rng)),
+        first_time_for_bart_(true) {
     RegressionModel *regression = model_->regression();
-    NEW(BregVsSampler, regression_sampler)(
-        regression, regression_prior);
+    NEW(BregVsSampler, regression_sampler)(regression, regression_prior);
     regression->set_method(regression_sampler);
 
     model_->bart()->set_method(bart_sampler_);
@@ -107,9 +101,7 @@ namespace BOOM {
     for (int i = 0; i < data.size(); ++i) {
       const RegressionData *dp(data[i].get());
       double residual =
-          dp->y()
-          - regression->predict(dp->x())
-          - bart->predict(dp->x());
+          dp->y() - regression->predict(dp->x()) - bart->predict(dp->x());
       bart_sampler_->set_residual(i, residual);
     }
   }

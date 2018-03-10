@@ -24,26 +24,23 @@
 namespace BOOM {
 
   HierarchicalPoissonSampler::HierarchicalPoissonSampler(
-      HierarchicalPoissonModel *model,
-      const Ptr<DoubleModel> &gamma_mean_prior,
-      const Ptr<DoubleModel> &gamma_sample_size_prior,
-      RNG &seeding_rng)
+      HierarchicalPoissonModel *model, const Ptr<DoubleModel> &gamma_mean_prior,
+      const Ptr<DoubleModel> &gamma_sample_size_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         gamma_mean_prior_(gamma_mean_prior),
         gamma_sample_size_prior_(gamma_sample_size_prior) {
-
     GammaModel *prior = model_->prior_model();
     prior->clear_methods();
-    NEW(GammaPosteriorSampler, prior_sampler)(
-        prior, gamma_mean_prior_, gamma_sample_size_prior_, rng());
+    NEW(GammaPosteriorSampler, prior_sampler)
+    (prior, gamma_mean_prior_, gamma_sample_size_prior_, rng());
     prior->set_method(prior_sampler);
   }
 
   double HierarchicalPoissonSampler::logpri() const {
     const GammaModel *prior = model_->prior_model();
-    return gamma_mean_prior_->logp(prior->mean())
-        + gamma_sample_size_prior_->logp(prior->alpha());
+    return gamma_mean_prior_->logp(prior->mean()) +
+           gamma_sample_size_prior_->logp(prior->alpha());
   }
 
   void HierarchicalPoissonSampler::draw() {
@@ -53,16 +50,17 @@ namespace BOOM {
       PoissonModel *data_model = model_->data_model(i);
       if (data_model->number_of_sampling_methods() != 1) {
         data_model->clear_methods();
-        NEW(PoissonGammaSampler, data_model_sampler)(
-            data_model, Ptr<GammaModel>(prior), rng());
+        NEW(PoissonGammaSampler, data_model_sampler)
+        (data_model, Ptr<GammaModel>(prior), rng());
         data_model->set_method(data_model_sampler);
       }
       int number_attempts = 0;
       do {
         data_model->sample_posterior();
         if (++number_attempts > 1000) {
-          report_error("Too many attempts to draw a positive mean in "
-                       "HierarchicalPoissonSampler::draw");
+          report_error(
+              "Too many attempts to draw a positive mean in "
+              "HierarchicalPoissonSampler::draw");
         }
       } while (data_model->lam() == 0);
       prior->suf()->update_raw(data_model->lam());

@@ -19,17 +19,14 @@
 #ifndef BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP
 #define BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-namespace BOOM{
+namespace BOOM {
 
   class MultinomialModel;
   class DirichletModel;
 
-  class MultinomialDirichletSampler
-    : public PosteriorSampler
-  {
-  public:
-    MultinomialDirichletSampler(MultinomialModel *mod,
-                                const Vector & nu,
+  class MultinomialDirichletSampler : public PosteriorSampler {
+   public:
+    MultinomialDirichletSampler(MultinomialModel *mod, const Vector &nu,
                                 RNG &seeding_rng = GlobalRng::rng);
 
     MultinomialDirichletSampler(MultinomialModel *mod,
@@ -37,18 +34,17 @@ namespace BOOM{
                                 RNG &seeding_rng = GlobalRng::rng);
 
     MultinomialDirichletSampler(const MultinomialDirichletSampler &rhs);
-    MultinomialDirichletSampler * clone()const;
+    MultinomialDirichletSampler *clone() const;
 
     void draw() override;
     double logpri() const override;
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
-  private:
+    bool can_find_posterior_mode() const override { return true; }
+
+   private:
     MultinomialModel *mod_;
     Ptr<DirichletModel> pri_;
   };
 
-} // namespace BOOM
-#endif// BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP

@@ -20,12 +20,12 @@
 #ifndef BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_MODEL_HPP_
 #define BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_MODEL_HPP_
 
-#include "Models/ZeroInflatedGammaModel.hpp"
-#include "Models/GammaModel.hpp"
 #include "Models/BetaModel.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/GammaModel.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroInflatedGammaModel.hpp"
 
 namespace BOOM {
 
@@ -33,13 +33,15 @@ namespace BOOM {
   // data point contains the sufficient statistics for a group.
   class HierarchicalZeroInflatedGammaData : public Data {
    public:
-    HierarchicalZeroInflatedGammaData(int n0, int n1, double sum, double sumlog);
-    HierarchicalZeroInflatedGammaData * clone() const override;
-    ostream & display(ostream &out)const override;
-    int number_of_zeros()const;
-    int number_of_positives()const;
-    double sum()const;
-    double sumlog()const;
+    HierarchicalZeroInflatedGammaData(int n0, int n1, double sum,
+                                      double sumlog);
+    HierarchicalZeroInflatedGammaData *clone() const override;
+    ostream &display(ostream &out) const override;
+    int number_of_zeros() const;
+    int number_of_positives() const;
+    double sum() const;
+    double sumlog() const;
+
    private:
     int number_of_zeros_;
     int number_of_positives_;
@@ -99,9 +101,8 @@ namespace BOOM {
   // *) combine_data: Will add the data_level_models (including
   //                  parameters and data) from the rhs argument to
   //                  the current model.
-  class HierarchicalZeroInflatedGammaModel
-      : public CompositeParamPolicy,
-        public PriorPolicy {
+  class HierarchicalZeroInflatedGammaModel : public CompositeParamPolicy,
+                                             public PriorPolicy {
    public:
     // This is the constructor to be used when modeling data.
     // Args:
@@ -129,7 +130,7 @@ namespace BOOM {
     HierarchicalZeroInflatedGammaModel(
         const HierarchicalZeroInflatedGammaModel &rhs);
 
-    HierarchicalZeroInflatedGammaModel * clone() const override;
+    HierarchicalZeroInflatedGammaModel *clone() const override;
 
     // TODO: Should have a HierarchicalPriorPolicy that
     // implements clear_methods() by calling it on the data-level
@@ -147,31 +148,32 @@ namespace BOOM {
     void add_data(const Ptr<Data> &) override;
 
     // Returns the number of data_level_models managed by this model.
-    int number_of_groups()const;
+    int number_of_groups() const;
 
-    BetaModel * prior_for_positive_probability();
-    GammaModel * prior_for_mean_parameters();
-    GammaModel * prior_for_shape_parameters();
-    ZeroInflatedGammaModel * data_model(int i);
+    BetaModel *prior_for_positive_probability();
+    GammaModel *prior_for_mean_parameters();
+    GammaModel *prior_for_shape_parameters();
+    ZeroInflatedGammaModel *data_model(int i);
 
-    double positive_probability_prior_mean()const;
-    double positive_probability_prior_sample_size()const;
-    double mean_parameter_prior_mean()const;
-    double mean_parameter_prior_shape()const;
-    double shape_parameter_prior_mean()const;
-    double shape_parameter_prior_shape()const;
+    double positive_probability_prior_mean() const;
+    double positive_probability_prior_sample_size() const;
+    double mean_parameter_prior_mean() const;
+    double mean_parameter_prior_shape() const;
+    double shape_parameter_prior_mean() const;
+    double shape_parameter_prior_shape() const;
 
     // From the law of iterated expectation, the prior mean is the
     // positive_probability_prior_mean() times the
     // mean_parameter_prior_mean().
-    double prior_mean()const;
+    double prior_mean() const;
 
     // Args:
     //   n:  The number of trials for a particular observation.  All trials will
     //     use the same positive probability and reward value distribution.
     // Returns:
     //   Aggregated data for the all the requested observations.
-    HierarchicalZeroInflatedGammaData sim(int64_t n)const;
+    HierarchicalZeroInflatedGammaData sim(int64_t n) const;
+
    private:
     void setup();
     Ptr<GammaModel> prior_for_mean_parameters_;
@@ -182,4 +184,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_MODEL_HPP_
+#endif  //  BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_MODEL_HPP_

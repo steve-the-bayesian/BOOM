@@ -14,24 +14,25 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #ifndef STATS_LOGIT_HPP
 #define STATS_LOGIT_HPP
 
-#include "distributions/Rmath_dist.hpp"
 #include <cmath>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
+#include "distributions/Rmath_dist.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // Convert from the probabliity scale to the logit (log odds) scale.
-  inline double logit(double prob){ return qlogis(prob);}
+  inline double logit(double prob) { return qlogis(prob); }
 
   // Convert from the logit (log odds) scale to the probabliity scale.
-  inline double logit_inv(double logit){ return plogis(logit);}
+  inline double logit_inv(double logit) { return plogis(logit); }
 
   // Apply the logit transformation to a vector of probabilities.
   // Args:
@@ -40,9 +41,9 @@ namespace BOOM{
   // Returns:
   //   A vector of the same length as 'probs', giving event chances on the logit
   //   scale.
-  inline Vector logit(const Vector &probs){
+  inline Vector logit(const Vector &probs) {
     Vector ans(probs);
-    for(int i = 0; i < ans.size(); ++i) ans[i] = logit(ans[i]);
+    for (int i = 0; i < ans.size(); ++i) ans[i] = logit(ans[i]);
     return ans;
   }
 
@@ -53,20 +54,22 @@ namespace BOOM{
   // Returns:
   //   The probability associated with each element of the argument, computed
   //   using the inverse logit transformation.
-  inline Vector logit_inv(const Vector &logits){
+  inline Vector logit_inv(const Vector &logits) {
     Vector ans(logits);
-    for(int i = 0; i < ans.size(); ++i) ans[i] = logit_inv(ans[i]);
+    for (int i = 0; i < ans.size(); ++i) ans[i] = logit_inv(ans[i]);
     return ans;
   }
-  
+
   // "Log one plus exp" of x.
   // Args:
   //   x:  A real number.
   // Returns:
   //   log(1 + exp(x)), with care to avoid overflow or underflow.
-  inline double lope(double x){
-    if(x>0) return x + ::log1p(exp(-x));
-    else return ::log1p(exp(x));
+  inline double lope(double x) {
+    if (x > 0)
+      return x + ::log1p(exp(-x));
+    else
+      return ::log1p(exp(x));
   }
 
   // Args:
@@ -78,7 +81,7 @@ namespace BOOM{
   Vector multinomial_logit(const Vector &distribution);
   Vector multinomial_logit(const VectorView &distribution);
   Vector multinomial_logit(const ConstVectorView &distribution);
-  
+
   // The inverse of the multinomial_logit transformation.
   // Args:
   //   logits: A vector of real numbers.
@@ -90,7 +93,7 @@ namespace BOOM{
   Vector multinomial_logit_inverse(const Vector &logits);
   Vector multinomial_logit_inverse(const VectorView &logits);
   Vector multinomial_logit_inverse(const ConstVectorView &logits);
-  
+
 }  // namespace BOOM
 
-#endif // STATS_LOGIT_HPP
+#endif  // STATS_LOGIT_HPP

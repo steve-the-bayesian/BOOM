@@ -33,8 +33,7 @@ namespace BOOM {
   // NOTE: This algorithm is fast in terms of mixing time, but computationally
   // slow because individual data points are constantly being added and removed
   // from the component models.
-  class DirichletProcessCollapsedGibbsSampler:
-      public PosteriorSampler {
+  class DirichletProcessCollapsedGibbsSampler : public PosteriorSampler {
    public:
     DirichletProcessCollapsedGibbsSampler(
         ConjugateDirichletProcessMixtureModel *model,
@@ -67,7 +66,7 @@ namespace BOOM {
     //   The probability is 'marginal' because both parameters of the mixture
     //   components and the mixing weights in the Dirichlet process are
     //   integrated out.
-    const Vector & marginal_cluster_membership_probabilities(
+    const Vector &marginal_cluster_membership_probabilities(
         const Ptr<Data> &dp);
 
    private:

@@ -18,9 +18,9 @@
 */
 
 #include <algorithm>
-#include <iterator>
 #include <cmath>
 #include <cstdlib>
+#include <iterator>
 
 #include "Models/Bart/Bart.hpp"
 #include "Models/Bart/ResidualRegressionData.hpp"
@@ -33,52 +33,47 @@ namespace BOOM {
   namespace Bart {
     namespace {
       inline void remove_node_and_descendants_from_set(
-          TreeNode *node,
-          std::set<TreeNode *> &set_of_nodes) {
+          TreeNode *node, std::set<TreeNode *> &set_of_nodes) {
         if (!node) {
           return;
         }
         set_of_nodes.erase(node);
         if (!node->is_leaf()) {
-          remove_node_and_descendants_from_set(
-              node->left_child(),
-              set_of_nodes);
-          remove_node_and_descendants_from_set(
-              node->right_child(),
-              set_of_nodes);
+          remove_node_and_descendants_from_set(node->left_child(),
+                                               set_of_nodes);
+          remove_node_and_descendants_from_set(node->right_child(),
+                                               set_of_nodes);
         }
       }
 
-    // Args:
-    //   rng: The random number generator used to generate the U[0, 1)
-    //     randomness.
-    //   set_of_nodes:  The set to be sampled.
-    //
-    // Returns:
-    //   If the set is non-empty a random element is returned.  If the
-    //   set is empty then NULL is returned.
-    TreeNode * random_set_element(RNG &rng,
-                                  std::set<TreeNode *> &set_of_nodes) {
-      int n = set_of_nodes.size();
-      if (n == 0) {
-        return NULL;
+      // Args:
+      //   rng: The random number generator used to generate the U[0, 1)
+      //     randomness.
+      //   set_of_nodes:  The set to be sampled.
+      //
+      // Returns:
+      //   If the set is non-empty a random element is returned.  If the
+      //   set is empty then NULL is returned.
+      TreeNode *random_set_element(RNG &rng,
+                                   std::set<TreeNode *> &set_of_nodes) {
+        int n = set_of_nodes.size();
+        if (n == 0) {
+          return NULL;
+        }
+        Tree::NodeSetIterator it = set_of_nodes.begin();
+        std::advance(it, random_int_mt(rng, 0, n - 1));
+        return *it;
       }
-      Tree::NodeSetIterator it = set_of_nodes.begin();
-      std::advance(it, random_int_mt(rng, 0, n - 1));
-      return *it;
-    }
 
     }  // namespace
 
     //----------------------------------------------------------------------
     VariableSummary::VariableSummary(int variable_number)
-        : variable_number_(variable_number)
-    {}
+        : variable_number_(variable_number) {}
 
     //----------------------------------------------------------------------
     VariableSummary::VariableSummary(
-        const SerializedVariableSummary &serialized)
-    {
+        const SerializedVariableSummary &serialized) {
       deserialize(serialized);
     }
 
@@ -94,9 +89,8 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    void VariableSummary::finalize(
-        int discrete_distribution_cutoff,
-        ContinuousCutpointStrategy strategy) {
+    void VariableSummary::finalize(int discrete_distribution_cutoff,
+                                   ContinuousCutpointStrategy strategy) {
       observed_values_.sort();
       Vector::iterator end =
           std::unique(observed_values_.begin(), observed_values_.end());
@@ -122,16 +116,17 @@ namespace BOOM {
                                                     observed_values_));
             break;
           default:
-            report_error("Unknown enum value passed to "
-                         "VariableSummary::finalize");
+            report_error(
+                "Unknown enum value passed to "
+                "VariableSummary::finalize");
         }
       } else {
         // Assume the variable being summarized is discrete.
         if (number_of_unique_values < observed_values_.size()) {
           observed_values_.erase(end, observed_values_.end());
         }
-        impl_.reset(new DiscreteVariableSummary(variable_number_,
-                                                observed_values_));
+        impl_.reset(
+            new DiscreteVariableSummary(variable_number_, observed_values_));
       }
       observed_values_.clear();
     }
@@ -200,23 +195,20 @@ namespace BOOM {
     void VariableSummary::check_finalized(const char *msg) const {
       if (!impl_) {
         ostringstream err;
-        err << "A VariableSummary must be finalized before calling "
-            << msg << endl;
+        err << "A VariableSummary must be finalized before calling " << msg
+            << endl;
         report_error(err.str());
       }
     }
 
     //======================================================================
     VariableSummaryImpl::VariableSummaryImpl(int variable_index)
-        : variable_index_(variable_index)
-    {}
+        : variable_index_(variable_index) {}
 
     //======================================================================
     DiscreteVariableSummary::DiscreteVariableSummary(int variable_index,
                                                      const Vector &values)
-        : VariableSummaryImpl(variable_index),
-          cutpoint_values_(values)
-    {
+        : VariableSummaryImpl(variable_index), cutpoint_values_(values) {
       if (!cutpoint_values_.empty()) {
         cutpoint_values_.sort();
         Vector::iterator garbage_begin =
@@ -233,18 +225,17 @@ namespace BOOM {
     //----------------------------------------------------------------------
     DiscreteVariableSummary::DiscreteVariableSummary(
         const SerializedVariableSummary &vs)
-        : VariableSummaryImpl(vs.variable_number),
-          cutpoint_values_(vs.data)
-    {
+        : VariableSummaryImpl(vs.variable_number), cutpoint_values_(vs.data) {
       if (!vs.finalized) {
-        report_error("DiscreteVariableSummary initialized by a non-finalized "
-                     "SerializedVariableSummary.");
+        report_error(
+            "DiscreteVariableSummary initialized by a non-finalized "
+            "SerializedVariableSummary.");
       }
     }
 
     //----------------------------------------------------------------------
-    bool DiscreteVariableSummary::random_cutpoint(
-        RNG &rng, TreeNode *node) const {
+    bool DiscreteVariableSummary::random_cutpoint(RNG &rng,
+                                                  TreeNode *node) const {
       if (cutpoint_values_.empty()) {
         return false;
       }
@@ -285,9 +276,7 @@ namespace BOOM {
       while (parent) {
         if (parent->variable_index() == variable_index()) {
           Vector::iterator it = std::lower_bound(
-              cutpoints.begin(),
-              cutpoints.end(),
-              parent->cutpoint());
+              cutpoints.begin(), cutpoints.end(), parent->cutpoint());
           if (current_node->is_left_child()) {
             // If we're coming to parent from the left side of the
             // tree, we want to remove the parent's cutpoint, and any
@@ -322,10 +311,8 @@ namespace BOOM {
             node->left_child()->largest_cutpoint_among_descendants(
                 variable_index(), cutpoints[0] - 1);
         if (lower_bound >= cutpoints[0]) {
-          Vector::iterator it = std::lower_bound(
-              cutpoints.begin(),
-              cutpoints.end(),
-              lower_bound);
+          Vector::iterator it =
+              std::lower_bound(cutpoints.begin(), cutpoints.end(), lower_bound);
           if (it != cutpoints.end()) {
             ++it;
           }
@@ -339,10 +326,8 @@ namespace BOOM {
             node->right_child()->smallest_cutpoint_among_descendants(
                 variable_index(), cutpoints.back() + 1);
         if (upper_bound <= cutpoints.back()) {
-          Vector::iterator it = std::lower_bound(
-              cutpoints.begin(),
-              cutpoints.end(),
-              upper_bound);
+          Vector::iterator it =
+              std::lower_bound(cutpoints.begin(), cutpoints.end(), upper_bound);
           cutpoints.erase(it, cutpoints.end());
           if (cutpoints.empty()) {
             return cutpoints;
@@ -356,20 +341,15 @@ namespace BOOM {
     bool DiscreteVariableSummary::is_legal_configuration(
         const TreeNode *node) const {
       Vector cutpoints = get_cutpoint_range(node);
-      Vector::iterator it = std::lower_bound(
-          cutpoints.begin(),
-          cutpoints.end(),
-          node->cutpoint());
+      Vector::iterator it = std::lower_bound(cutpoints.begin(), cutpoints.end(),
+                                             node->cutpoint());
       return (it != cutpoints.end());
     }
 
     //======================================================================
-    ContinuousVariableSummary::ContinuousVariableSummary(
-        int variable_index,
-        const Vector &values)
-        : VariableSummaryImpl(variable_index),
-          range_(2)
-    {
+    ContinuousVariableSummary::ContinuousVariableSummary(int variable_index,
+                                                         const Vector &values)
+        : VariableSummaryImpl(variable_index), range_(2) {
       range_[0] = values[0];
       range_[1] = values.back();
     }
@@ -377,18 +357,17 @@ namespace BOOM {
     //----------------------------------------------------------------------
     ContinuousVariableSummary::ContinuousVariableSummary(
         const SerializedVariableSummary &vs)
-        : VariableSummaryImpl(vs.variable_number),
-          range_(vs.data)
-    {
+        : VariableSummaryImpl(vs.variable_number), range_(vs.data) {
       if (!vs.finalized) {
-        report_error("ContinuousVariableSummary initialized by a non-finalized "
-                     "SerializedVariableSummary.");
+        report_error(
+            "ContinuousVariableSummary initialized by a non-finalized "
+            "SerializedVariableSummary.");
       }
     }
 
     //----------------------------------------------------------------------
-    bool ContinuousVariableSummary::random_cutpoint(
-        RNG &rng, TreeNode *node) const {
+    bool ContinuousVariableSummary::random_cutpoint(RNG &rng,
+                                                    TreeNode *node) const {
       Vector range = get_cutpoint_range(node);
       if (range[1] <= range[0]) {
         // This should not happen.  If the program gets here it
@@ -429,15 +408,12 @@ namespace BOOM {
 
       if (!node->is_leaf()) {
         lower_bound = std::max<double>(
-            lower_bound,
-            node->left_child()->largest_cutpoint_among_descendants(
-                variable_index(),
-                lower_bound));
+            lower_bound, node->left_child()->largest_cutpoint_among_descendants(
+                             variable_index(), lower_bound));
         upper_bound = std::min<double>(
             upper_bound,
             node->right_child()->smallest_cutpoint_among_descendants(
-                variable_index(),
-                upper_bound));
+                variable_index(), upper_bound));
       }
 
       Vector ans(2);
@@ -471,17 +447,15 @@ namespace BOOM {
           right_child_(NULL),
           depth_(parent_ ? 1 + parent_->depth() : 0),
           mean_(mean_value),
-          which_variable_(-1),             // needs to be set
-          cutpoint_(BOOM::infinity())      // needs to be set
+          which_variable_(-1),         // needs to be set
+          cutpoint_(BOOM::infinity())  // needs to be set
     {}
 
     //----------------------------------------------------------------------
-    TreeNode::~TreeNode() {
-      prune_descendants();
-    }
+    TreeNode::~TreeNode() { prune_descendants(); }
 
     //----------------------------------------------------------------------
-    TreeNode * TreeNode::recursive_clone(TreeNode *parent) {
+    TreeNode *TreeNode::recursive_clone(TreeNode *parent) {
       TreeNode *copy = new TreeNode(mean_, parent);
       if (left_child_) {
         copy->left_child_ = left_child_->recursive_clone(this);
@@ -499,10 +473,9 @@ namespace BOOM {
       if (is_leaf()) {
         return rhs.is_leaf() && mean() == rhs.mean();
       } else {
-        return which_variable_ == rhs.which_variable_
-            && !rhs.is_leaf()
-            && *left_child_ == *(rhs.left_child_)
-            && *right_child_ == *(rhs.right_child_);
+        return which_variable_ == rhs.which_variable_ && !rhs.is_leaf() &&
+               *left_child_ == *(rhs.left_child_) &&
+               *right_child_ == *(rhs.right_child_);
       }
     }
 
@@ -579,23 +552,19 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     bool TreeNode::has_no_grandchildren() const {
-      return is_leaf() ||
-          (left_child_->is_leaf()
-           && right_child_->is_leaf());
+      return is_leaf() || (left_child_->is_leaf() && right_child_->is_leaf());
     }
 
     //----------------------------------------------------------------------
-    int TreeNode::depth() const {
-      return depth_;
-    }
+    int TreeNode::depth() const { return depth_; }
 
     //----------------------------------------------------------------------
     int TreeNode::number_of_leaves() const {
       if (is_leaf()) {
         return 1;
       } else {
-        return left_child_->number_of_leaves()
-            + right_child_->number_of_leaves();
+        return left_child_->number_of_leaves() +
+               right_child_->number_of_leaves();
       }
     }
 
@@ -612,32 +581,20 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    TreeNode * TreeNode::parent() {
-      return parent_;
-    }
+    TreeNode *TreeNode::parent() { return parent_; }
 
     //----------------------------------------------------------------------
-    const TreeNode * TreeNode::parent() const {
-      return parent_;
-    }
+    const TreeNode *TreeNode::parent() const { return parent_; }
 
     //----------------------------------------------------------------------
-    TreeNode * TreeNode::left_child() {
-      return left_child_;
-    }
+    TreeNode *TreeNode::left_child() { return left_child_; }
     //----------------------------------------------------------------------
-    const TreeNode * TreeNode::left_child() const {
-      return left_child_;
-    }
+    const TreeNode *TreeNode::left_child() const { return left_child_; }
 
     //----------------------------------------------------------------------
-    TreeNode * TreeNode::right_child() {
-      return right_child_;
-    }
+    TreeNode *TreeNode::right_child() { return right_child_; }
     //----------------------------------------------------------------------
-    const TreeNode * TreeNode::right_child() const {
-      return right_child_;
-    }
+    const TreeNode *TreeNode::right_child() const { return right_child_; }
 
     double TreeNode::largest_cutpoint_among_descendants(
         int variable_index, double current_bound) const {
@@ -649,11 +606,10 @@ namespace BOOM {
         return right_child_->largest_cutpoint_among_descendants(
             variable_index, std::max(current_bound, cutpoint_));
       } else {
-        return std::max(
-            left_child_->largest_cutpoint_among_descendants(
-                variable_index, current_bound),
-            right_child_->largest_cutpoint_among_descendants(
-                variable_index, current_bound));
+        return std::max(left_child_->largest_cutpoint_among_descendants(
+                            variable_index, current_bound),
+                        right_child_->largest_cutpoint_among_descendants(
+                            variable_index, current_bound));
       }
     }
 
@@ -667,11 +623,10 @@ namespace BOOM {
         return left_child_->smallest_cutpoint_among_descendants(
             variable_index, std::min(cutpoint_, current_bound));
       } else {
-        return std::min(
-            left_child_->smallest_cutpoint_among_descendants(
-                variable_index, current_bound),
-            right_child_->smallest_cutpoint_among_descendants(
-                variable_index, current_bound));
+        return std::min(left_child_->smallest_cutpoint_among_descendants(
+                            variable_index, current_bound),
+                        right_child_->smallest_cutpoint_among_descendants(
+                            variable_index, current_bound));
       }
     }
 
@@ -680,9 +635,7 @@ namespace BOOM {
       which_variable_ = variable_index;
     }
 
-    void TreeNode::set_cutpoint(double cutpoint) {
-      cutpoint_ = cutpoint;
-    }
+    void TreeNode::set_cutpoint(double cutpoint) { cutpoint_ = cutpoint; }
 
     //----------------------------------------------------------------------
     void TreeNode::set_variable_and_cutpoint(int variable_index,
@@ -692,24 +645,16 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    void TreeNode::set_mean(double value) {
-      mean_ = value;
-    }
+    void TreeNode::set_mean(double value) { mean_ = value; }
 
     //----------------------------------------------------------------------
-    double TreeNode::mean() const {
-      return mean_;
-    }
+    double TreeNode::mean() const { return mean_; }
 
     //----------------------------------------------------------------------
-    int TreeNode::variable_index() const {
-      return which_variable_;
-    }
+    int TreeNode::variable_index() const { return which_variable_; }
 
     //----------------------------------------------------------------------
-    double TreeNode::cutpoint() const {
-      return cutpoint_;
-    }
+    double TreeNode::cutpoint() const { return cutpoint_; }
 
     //----------------------------------------------------------------------
     void TreeNode::clear_data_and_delete_suf(bool recursive) {
@@ -744,9 +689,8 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    void TreeNode::populate_sufficient_statistics(
-        SufficientStatisticsBase *suf,
-        bool recursive) {
+    void TreeNode::populate_sufficient_statistics(SufficientStatisticsBase *suf,
+                                                  bool recursive) {
       suf_.reset(suf);
       if (recursive && !is_leaf()) {
         left_child_->populate_sufficient_statistics(suf->clone(), recursive);
@@ -791,7 +735,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    const SufficientStatisticsBase & TreeNode::compute_suf() {
+    const SufficientStatisticsBase &TreeNode::compute_suf() {
       if (!!suf_) {
         suf_->clear();
       } else {
@@ -804,7 +748,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    const std::vector<ResidualRegressionData *> & TreeNode::data() const {
+    const std::vector<ResidualRegressionData *> &TreeNode::data() const {
       return data_;
     }
 
@@ -823,15 +767,14 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    ostream & TreeNode::print(ostream &out) const {
+    ostream &TreeNode::print(ostream &out) const {
       for (int i = 0; i < depth_; ++i) {
         out << ".";
       }
       if (this->is_leaf()) {
         out << " " << mean_ << endl;
       } else {
-        out << "v" << which_variable_
-            << "(" << cutpoint_ << ")" << endl;
+        out << "v" << which_variable_ << "(" << cutpoint_ << ")" << endl;
         left_child_->print(out);
         right_child_->print(out);
       }
@@ -839,8 +782,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    int TreeNode::fill_tree_matrix_row(int parent_id,
-                                       int my_id,
+    int TreeNode::fill_tree_matrix_row(int parent_id, int my_id,
                                        Matrix *tree_matrix) const {
       VectorView row(tree_matrix->row(my_id));
       bool leaf = this->is_leaf();
@@ -849,10 +791,10 @@ namespace BOOM {
       row[2] = leaf ? mean_ : cutpoint_;
       int next_id = my_id + 1;
       if (!leaf) {
-        next_id = left_child_->fill_tree_matrix_row(
-            my_id, next_id, tree_matrix);
-        next_id = right_child_->fill_tree_matrix_row(
-            my_id, next_id, tree_matrix);
+        next_id =
+            left_child_->fill_tree_matrix_row(my_id, next_id, tree_matrix);
+        next_id =
+            right_child_->fill_tree_matrix_row(my_id, next_id, tree_matrix);
       }
       return next_id;
     }
@@ -860,16 +802,13 @@ namespace BOOM {
     //======================================================================
 
     Tree::Tree(double mean_value)
-        : root_(new TreeNode(mean_value)),
-          number_of_nodes_(1)
-    {
+        : root_(new TreeNode(mean_value)), number_of_nodes_(1) {
       leaves_.insert(root_.get());
     }
 
     //----------------------------------------------------------------------
     Tree::Tree(const Matrix &tree_matrix)
-        : number_of_nodes_(nrow(tree_matrix))
-    {
+        : number_of_nodes_(nrow(tree_matrix)) {
       std::vector<TreeNode *> nodes(number_of_nodes_);
       for (int id = 0; id < number_of_nodes_; ++id) {
         const ConstVectorView node_info(tree_matrix.row(id));
@@ -898,13 +837,12 @@ namespace BOOM {
     //----------------------------------------------------------------------
     Tree::Tree(const Tree &rhs)
         : root_(rhs.root_->recursive_clone(NULL)),
-          number_of_nodes_(rhs.number_of_nodes_)
-    {
+          number_of_nodes_(rhs.number_of_nodes_) {
       register_special_nodes(root_.get());
     }
 
     //----------------------------------------------------------------------
-    Tree & Tree::operator=(const Tree &rhs) {
+    Tree &Tree::operator=(const Tree &rhs) {
       if (&rhs != this) {
         root_.reset(rhs.root_->recursive_clone(NULL));
         number_of_nodes_ = rhs.number_of_nodes_;
@@ -923,9 +861,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    Tree::~Tree() {
-      root_.reset();
-    }
+    Tree::~Tree() { root_.reset(); }
 
     //----------------------------------------------------------------------
     bool Tree::operator==(const Tree &rhs) const {
@@ -933,14 +869,10 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    bool Tree::operator!=(const Tree &rhs) const {
-      return !(*this == rhs);
-    }
+    bool Tree::operator!=(const Tree &rhs) const { return !(*this == rhs); }
 
     //----------------------------------------------------------------------
-    double Tree::predict(const Vector &x) const {
-      return root_->predict(x);
-    }
+    double Tree::predict(const Vector &x) const { return root_->predict(x); }
 
     //----------------------------------------------------------------------
     double Tree::predict(const VectorView &x) const {
@@ -953,14 +885,10 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    int Tree::number_of_nodes() const {
-      return number_of_nodes_;
-    }
+    int Tree::number_of_nodes() const { return number_of_nodes_; }
 
     //----------------------------------------------------------------------
-    int Tree::number_of_leaves() const {
-      return leaves_.size();
-    }
+    int Tree::number_of_leaves() const { return leaves_.size(); }
 
     //----------------------------------------------------------------------
     int Tree::number_of_leaves_after_pruning(const TreeNode *node) const {
@@ -970,30 +898,24 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    Tree::NodeSetIterator Tree::leaf_begin() {
-      return leaves_.begin();
-    }
+    Tree::NodeSetIterator Tree::leaf_begin() { return leaves_.begin(); }
 
     Tree::ConstNodeSetIterator Tree::leaf_begin() const {
       return leaves_.begin();
     }
 
     //----------------------------------------------------------------------
-    Tree::NodeSetIterator Tree::leaf_end() {
-      return leaves_.end();
-    }
+    Tree::NodeSetIterator Tree::leaf_end() { return leaves_.end(); }
 
-    Tree::ConstNodeSetIterator Tree::leaf_end() const {
-      return leaves_.end();
-    }
+    Tree::ConstNodeSetIterator Tree::leaf_end() const { return leaves_.end(); }
 
     //----------------------------------------------------------------------
-    TreeNode * Tree::random_leaf(RNG &rng) {
-      TreeNode * leaf = random_set_element(rng, leaves_);
+    TreeNode *Tree::random_leaf(RNG &rng) {
+      TreeNode *leaf = random_set_element(rng, leaves_);
       if (!leaf || !leaf->is_leaf()) {
         ostringstream err;
         err << "Tree::random_leaf() found an answer that is not a leaf:" << endl
-            << "The returned value is: "<< endl
+            << "The returned value is: " << endl
             << *leaf << endl
             << "The tree is " << endl
             << *this;
@@ -1003,7 +925,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    TreeNode * Tree::random_interior_node(RNG &rng) {
+    TreeNode *Tree::random_interior_node(RNG &rng) {
       if (root_->is_leaf()) {
         return NULL;
       } else {
@@ -1035,7 +957,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    TreeNode * Tree::random_parent_of_leaves(RNG &rng) {
+    TreeNode *Tree::random_parent_of_leaves(RNG &rng) {
       if (root_->is_leaf()) {
         return NULL;
       }
@@ -1048,8 +970,8 @@ namespace BOOM {
     void Tree::grow(TreeNode *leaf, double left_mean, double right_mean) {
       if (!leaf->is_leaf()) {
         ostringstream err;
-        err << "The node " << endl << *leaf << " is not a leaf in this tree: "
-            << endl
+        err << "The node " << endl
+            << *leaf << " is not a leaf in this tree: " << endl
             << *this;
         report_error(err.str());
       }
@@ -1058,8 +980,9 @@ namespace BOOM {
       if (!found) {
         ostringstream err;
         err << "Tree::grow called on a leaf that was not "
-            "managed by the tree."
-            << endl << *this;
+               "managed by the tree."
+            << endl
+            << *this;
         report_error(err.str());
       }
 
@@ -1128,9 +1051,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    ostream & Tree::print(ostream &out) const {
-      return root_->print(out);
-    }
+    ostream &Tree::print(ostream &out) const { return root_->print(out); }
 
     //----------------------------------------------------------------------
     Matrix Tree::to_matrix() const {
@@ -1184,11 +1105,10 @@ namespace BOOM {
       }
     }
 
-  } // namespace Bart
+  }  // namespace Bart
 
   //======================================================================
-  BartModelBase::BartModelBase(int number_of_trees, double mean)
-  {
+  BartModelBase::BartModelBase(int number_of_trees, double mean) {
     create_trees(number_of_trees, mean);
   }
 
@@ -1196,8 +1116,7 @@ namespace BOOM {
   BartModelBase::BartModelBase(const BartModelBase &rhs)
       : Model(rhs),
         variable_summaries_(rhs.variable_summaries_),
-        trees_(rhs.trees_)
-  {
+        trees_(rhs.trees_) {
     for (int i = 0; i < trees_.size(); ++i) {
       trees_[i].reset(new Bart::Tree(*(rhs.trees_[i])));
     }
@@ -1228,9 +1147,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  int BartModelBase::number_of_trees() const {
-    return trees_.size();
-  }
+  int BartModelBase::number_of_trees() const { return trees_.size(); }
 
   //----------------------------------------------------------------------
   int BartModelBase::number_of_stumps() const {
@@ -1246,7 +1163,8 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void BartModelBase::set_number_of_trees(int new_number_of_trees) {
     int trees_needed = new_number_of_trees - number_of_trees();
-    if (trees_needed == 0) return;
+    if (trees_needed == 0)
+      return;
     else if (trees_needed > 0) {
       add_trees(trees_needed, 0.0);
     } else if (trees_needed < 0) {
@@ -1262,18 +1180,16 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void BartModelBase::finalize_data(
-        int discrete_distribution_cutoff,
-        Bart::ContinuousCutpointStrategy strategy) {
+  void BartModelBase::finalize_data(int discrete_distribution_cutoff,
+                                    Bart::ContinuousCutpointStrategy strategy) {
     for (int i = 0; i < number_of_variables(); ++i) {
-      variable_summaries_[i].finalize(discrete_distribution_cutoff,
-                                      strategy);
+      variable_summaries_[i].finalize(discrete_distribution_cutoff, strategy);
     }
   }
 
   //----------------------------------------------------------------------
-  const Bart::VariableSummary &
-  BartModelBase::variable_summary(int which_variable) const {
+  const Bart::VariableSummary &BartModelBase::variable_summary(
+      int which_variable) const {
     return variable_summaries_[which_variable];
   }
 
@@ -1288,12 +1204,12 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  Bart::Tree * BartModelBase::tree(int which_tree) {
+  Bart::Tree *BartModelBase::tree(int which_tree) {
     return trees_[which_tree].get();
   }
 
   //----------------------------------------------------------------------
-  const Bart::Tree * BartModelBase::tree(int which_tree) const {
+  const Bart::Tree *BartModelBase::tree(int which_tree) const {
     return trees_[which_tree].get();
   }
 
@@ -1311,13 +1227,12 @@ namespace BOOM {
       }
     }
     ostringstream err;
-    err << "Tree was not found in BartModelBase::remove_tree" << endl
-        << *tree;
+    err << "Tree was not found in BartModelBase::remove_tree" << endl << *tree;
     report_error(err.str());
   }
 
   //----------------------------------------------------------------------
-  Bart::Tree * BartModelBase::random_stump(RNG &rng) {
+  Bart::Tree *BartModelBase::random_stump(RNG &rng) {
     std::vector<Bart::Tree *> stumps;
     for (int i = 0; i < trees_.size(); ++i) {
       if (trees_[i]->number_of_leaves() <= 2) {
@@ -1336,8 +1251,8 @@ namespace BOOM {
     GaussianSuf suf;
     for (int i = 0; i < number_of_trees(); ++i) {
       const Bart::Tree *this_tree = tree(i);
-      for(Bart::Tree::ConstNodeSetIterator it = this_tree->leaf_begin();
-          it != this_tree->leaf_end(); ++it) {
+      for (Bart::Tree::ConstNodeSetIterator it = this_tree->leaf_begin();
+           it != this_tree->leaf_end(); ++it) {
         suf.update_raw((*it)->mean());
       }
     }
@@ -1380,8 +1295,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void BartModelBase::add_trees(int number_of_additional_trees,
-                                    double mean) {
+  void BartModelBase::add_trees(int number_of_additional_trees, double mean) {
     trees_.reserve(trees_.size() + number_of_additional_trees);
     for (int i = 0; i < number_of_additional_trees; ++i) {
       std::shared_ptr<Bart::Tree> tree(new Bart::Tree(mean));

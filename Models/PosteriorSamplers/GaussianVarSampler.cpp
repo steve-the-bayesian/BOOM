@@ -17,37 +17,33 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/PosteriorSamplers/GaussianVarSampler.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/GaussianModel.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
-#include "Models/GaussianModel.hpp"
-#include "Models/GammaModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef GaussianVarSampler GVS;
   GVS::GaussianVarSampler(GaussianModel *model,
                           const Ptr<GammaModelBase> &precision_prior,
                           RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      prior_(precision_prior),
-      model_(model),
-      sampler_(prior_)
-  {}
+      : PosteriorSampler(seeding_rng),
+        prior_(precision_prior),
+        model_(model),
+        sampler_(prior_) {}
 
-  inline double sumsq(double nu, double sig) {return nu*sig*sig;}
+  inline double sumsq(double nu, double sig) { return nu * sig * sig; }
 
-  GVS::GaussianVarSampler(GaussianModel *model,
-                          double prior_df,
-                          double prior_sigma_guess,
-                          RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      prior_(new GammaModel(prior_df / 2.0,
-                            sumsq(prior_df, prior_sigma_guess) / 2.0)),
-      model_(model),
-      sampler_(prior_)
-  {}
+  GVS::GaussianVarSampler(GaussianModel *model, double prior_df,
+                          double prior_sigma_guess, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        prior_(new GammaModel(prior_df / 2.0,
+                              sumsq(prior_df, prior_sigma_guess) / 2.0)),
+        model_(model),
+        sampler_(prior_) {}
 
   void GVS::draw() {
     double n = model_->suf()->n();
@@ -56,15 +52,13 @@ namespace BOOM{
     model_->set_sigsq(sigsq);
   }
 
-  double GVS::logpri() const {
-    return sampler_.log_prior(model_->sigsq());
-  }
+  double GVS::logpri() const { return sampler_.log_prior(model_->sigsq()); }
 
   void GVS::set_sigma_upper_limit(double max_sigma) {
     sampler_.set_sigma_max(max_sigma);
   }
 
-  const Ptr<GammaModelBase> GVS::ivar() const { return prior_;}
+  const Ptr<GammaModelBase> GVS::ivar() const { return prior_; }
 
   void GVS::find_posterior_mode(double) {
     double n = model_->suf()->n();

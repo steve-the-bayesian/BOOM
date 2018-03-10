@@ -35,9 +35,9 @@ namespace BOOM {
 
   class LocationScaleVectorModel : virtual public VectorModel {
    public:
-    virtual const Vector & mu() const = 0;
-    virtual const SpdMatrix & Sigma() const = 0;
-    virtual const SpdMatrix & siginv() const = 0;
+    virtual const Vector &mu() const = 0;
+    virtual const SpdMatrix &Sigma() const = 0;
+    virtual const SpdMatrix &siginv() const = 0;
     virtual double ldsi() const = 0;
   };
 
@@ -72,7 +72,6 @@ namespace BOOM {
     //  threshold.
     virtual double Logp(const Vector &x, Vector &g, Matrix &h,
                         uint nd) const = 0;
-
   };
 
 }  // namespace BOOM

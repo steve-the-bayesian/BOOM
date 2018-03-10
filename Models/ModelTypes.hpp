@@ -295,8 +295,7 @@ namespace BOOM {
   //
   // TODO: Remove this class once enough MixtureComponent child classes have had
   // this ability added,
-  class DirichletProcessMixtureComponent
-      : virtual public MixtureComponent {
+  class DirichletProcessMixtureComponent : virtual public MixtureComponent {
    public:
     DirichletProcessMixtureComponent *clone() const override = 0;
 

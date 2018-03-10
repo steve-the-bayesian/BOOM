@@ -20,11 +20,11 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 
-#include "Models/ZeroInflatedPoissonModel.hpp"
-#include "Models/GammaModel.hpp"
 #include "Models/BetaModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/ZeroInflatedPoissonModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class ZeroInflatedPoissonSampler : public PosteriorSampler {
    public:
     ZeroInflatedPoissonSampler(ZeroInflatedPoissonModel *model,
@@ -33,10 +33,11 @@ namespace BOOM{
                                RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
     ZeroInflatedPoissonModel *model_;
     Ptr<GammaModel> lambda_prior_;
     Ptr<BetaModel> zero_probability_prior_;
   };
-}
-#endif// BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_

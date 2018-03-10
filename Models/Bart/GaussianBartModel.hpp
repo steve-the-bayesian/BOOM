@@ -27,11 +27,10 @@ namespace BOOM {
   //======================================================================
   // The BART model is that a response variable y is the sum of the
   // contributions from many trees, plus a
-  class GaussianBartModel
-      : public ParamPolicy_1<UnivParams>,
-        public IID_DataPolicy<RegressionData>,
-        public PriorPolicy,
-        public BartModelBase {
+  class GaussianBartModel : public ParamPolicy_1<UnivParams>,
+                            public IID_DataPolicy<RegressionData>,
+                            public PriorPolicy,
+                            public BartModelBase {
    public:
     // An empty model with no data assigned.
     // Args:
@@ -52,17 +51,17 @@ namespace BOOM {
     GaussianBartModel(int number_of_trees, const Vector &y, const Matrix &x);
 
     GaussianBartModel(const GaussianBartModel &rhs);
-    GaussianBartModel * clone() const override;
+    GaussianBartModel *clone() const override;
 
     // The number of observations in the training data.
-    int sample_size()const override;
+    int sample_size() const override;
 
     // An override for add_data is needed so that variable_summaries_
     // can be adjusted when new data is observed.
     void add_data(const Ptr<Data> &) override;
     void add_data(const Ptr<RegressionData> &) override;
 
-    virtual double sigsq()const;
+    virtual double sigsq() const;
     void set_sigsq(double sigsq);
     Ptr<UnivParams> Sigsq_prm();
   };

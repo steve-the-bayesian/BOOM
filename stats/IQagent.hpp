@@ -27,24 +27,26 @@
 #include "stats/ECDF.hpp"
 #include "uint.hpp"
 
-namespace BOOM{
-  class IQagent{
+namespace BOOM {
+  class IQagent {
     typedef std::vector<double> VEC;
-  public:
-    IQagent(uint BufSize=20);
-    IQagent(const VEC & probs, uint BufSize=20);
+
+   public:
+    IQagent(uint BufSize = 20);
+    IQagent(const VEC& probs, uint BufSize = 20);
     void add(double x);
-    double quantile(double prob)const;
-    double cdf(double x)const;
+    double quantile(double prob) const;
+    double cdf(double x) const;
     void update_cdf();
-  private:
+
+   private:
     void flush();
     void set_default_probs();
 
-    double Fq(double x)const;
-    double F(double x, bool plus)const;
-    double find_xplus(double p)const;
-    double find_xminus(double p)const;
+    double Fq(double x) const;
+    double F(double x, bool plus) const;
+    double find_xplus(double p) const;
+    double find_xminus(double p) const;
 
     uint max_buffer_size_, nobs_;
     VEC data_buffer_;
@@ -54,8 +56,7 @@ namespace BOOM{
     ECDF ecdf_;
     VEC Fplus_;
     VEC Fminus_;
-
   };
 
-}
-#endif// BOOM_IQ_AGENT_HPP
+}  // namespace BOOM
+#endif  // BOOM_IQ_AGENT_HPP

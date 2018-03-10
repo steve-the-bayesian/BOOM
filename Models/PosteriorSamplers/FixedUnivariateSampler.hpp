@@ -23,24 +23,20 @@
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
-  class FixedUnivariateSampler : public PosteriorSampler{
+namespace BOOM {
+  class FixedUnivariateSampler : public PosteriorSampler {
    public:
-    FixedUnivariateSampler(const Ptr<UnivParams> & prm,
-                    double value,
-                    RNG &seeding_rng = GlobalRng::rng)
-        : PosteriorSampler(seeding_rng),
-          prm_(prm),
-          value_(value)
-    {}
+    FixedUnivariateSampler(const Ptr<UnivParams> &prm, double value,
+                           RNG &seeding_rng = GlobalRng::rng)
+        : PosteriorSampler(seeding_rng), prm_(prm), value_(value) {}
 
     void draw() override {
-      if(prm_->value() == value_) return;
+      if (prm_->value() == value_) return;
       prm_->set(value_);
     }
 
-    double logpri()const override{
-      if(prm_->value() == value_) return 0;
+    double logpri() const override {
+      if (prm_->value() == value_) return 0;
       return BOOM::negative_infinity();
     }
 
@@ -49,7 +45,6 @@ namespace BOOM{
     double value_;
   };
 
-}
+}  // namespace BOOM
 
-
-#endif //BOOM_FIXED_UNIVARIATE_SAMPLER_HPP_
+#endif  // BOOM_FIXED_UNIVARIATE_SAMPLER_HPP_

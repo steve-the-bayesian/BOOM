@@ -18,23 +18,19 @@
 */
 
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 #include "distributions/trun_gamma.hpp"
-#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
   GenericGaussianVarianceSampler::GenericGaussianVarianceSampler(
       const Ptr<GammaModelBase> &prior)
-      : prior_(prior),
-        sigma_max_(infinity())
-  {}
+      : prior_(prior), sigma_max_(infinity()) {}
 
   GenericGaussianVarianceSampler::GenericGaussianVarianceSampler(
-      const Ptr<GammaModelBase> &prior,
-      double sigma_max)
-      : prior_(prior)
-  {
+      const Ptr<GammaModelBase> &prior, double sigma_max)
+      : prior_(prior) {
     set_sigma_max(sigma_max);
   }
 
@@ -46,31 +42,32 @@ namespace BOOM {
   }
 
   double GenericGaussianVarianceSampler::draw(
-      RNG &rng,
-      double data_df,
-      double data_ss,
+      RNG &rng, double data_df, double data_ss,
       double prior_sigma_guess_scale_factor) const {
     if (!prior_) {
-      report_error("GenericGaussianVarianceSampler is disabled because it was "
-                   "built with a null prior.");
+      report_error(
+          "GenericGaussianVarianceSampler is disabled because it was "
+          "built with a null prior.");
     }
     double DF = data_df + 2 * prior_->alpha();
-    double SS = data_ss +
-        2 * prior_->beta() * square(prior_sigma_guess_scale_factor);
+    double SS =
+        data_ss + 2 * prior_->beta() * square(prior_sigma_guess_scale_factor);
     if (sigma_max_ == 0.0) {
       return 0.0;
-    } else if(sigma_max_ == infinity()){
-      return 1.0 / rgamma_mt(rng, DF/2, SS/2);
+    } else if (sigma_max_ == infinity()) {
+      return 1.0 / rgamma_mt(rng, DF / 2, SS / 2);
     } else {
-      return 1.0 / rtrun_gamma_mt(rng, DF/2, SS/2, 1.0/square(sigma_max_));
+      return 1.0 /
+             rtrun_gamma_mt(rng, DF / 2, SS / 2, 1.0 / square(sigma_max_));
     }
   }
 
-  double GenericGaussianVarianceSampler::posterior_mode(
-      double data_df, double data_ss) const {
+  double GenericGaussianVarianceSampler::posterior_mode(double data_df,
+                                                        double data_ss) const {
     if (!prior_) {
-      report_error("GenericGaussianVarianceSampler is disabled because it was "
-                   "built with a null prior.");
+      report_error(
+          "GenericGaussianVarianceSampler is disabled because it was "
+          "built with a null prior.");
     }
     double DF = data_df + 2 * prior_->alpha();
     double SS = data_ss + 2 * prior_->beta();
@@ -86,8 +83,9 @@ namespace BOOM {
     // add in the log of the Jacobian of the reciprocal
     // transformation.
     if (!prior_) {
-      report_error("GenericGaussianVarianceSampler is disabled because it was "
-                   "built with a null prior.");
+      report_error(
+          "GenericGaussianVarianceSampler is disabled because it was "
+          "built with a null prior.");
     }
     return prior_->logp(1.0 / sigsq) - 2 * log(sigsq);
   }

@@ -17,9 +17,9 @@
 */
 
 #include "Models/IRT/DafePcrRwm.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
 #include "Models/MvnModel.hpp"
 #include "Models/MvtModel.hpp"
-#include "Models/IRT/PartialCreditModel.hpp"
 
 #include "Samplers/MetropolisHastings.hpp"
 
@@ -28,17 +28,18 @@
 #include "cpputil/ParamHolder.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
     typedef DafePcrRwmItemSampler ISAM;
     typedef PartialCreditModel PCR;
 
-    class ItemLoglikeTF{
-    public:
+    class ItemLoglikeTF {
+     public:
       ItemLoglikeTF(const Ptr<PCR> &);
-      ItemLoglikeTF * clone()const;
-      double operator()(const Vector &beta)const;
-    private:
+      ItemLoglikeTF *clone() const;
+      double operator()(const Vector &beta) const;
+
+     private:
       Ptr<PCR> pcr;
       Ptr<VectorParams> v;
       mutable Vector wsp;
@@ -46,72 +47,65 @@ namespace BOOM{
 
     typedef ItemLoglikeTF TF;
     //------------------------------------------------------------
-    TF * TF::clone()const{return new TF(*this);}
+    TF *TF::clone() const { return new TF(*this); }
 
-    TF::ItemLoglikeTF(const Ptr<PCR> & item)
-      : pcr(item),
-    v(item->Beta_prm()),
-    wsp(item->beta())
-    {}
+    TF::ItemLoglikeTF(const Ptr<PCR> &item)
+        : pcr(item), v(item->Beta_prm()), wsp(item->beta()) {}
 
-    double TF::operator()(const Vector &b)const{
+    double TF::operator()(const Vector &b) const {
       ParamHolder ph(b, v, wsp);
-      if(pcr->a()<= 0.0) return BOOM::negative_infinity();
+      if (pcr->a() <= 0.0) return BOOM::negative_infinity();
       double ans = pcr->loglike();
       return ans;
     }
 
-
     //======================================================================
 
-    struct Logp{
-      Logp(const TF &F, const Ptr<MvnModel> &P) : f(F), pri(P){}
-      double operator()(const Vector &x)const{ return f(x) + pri->logp(x);}
-      const TF & f;
+    struct Logp {
+      Logp(const TF &F, const Ptr<MvnModel> &P) : f(F), pri(P) {}
+      double operator()(const Vector &x) const { return f(x) + pri->logp(x); }
+      const TF &f;
       Ptr<MvnModel> pri;
     };
 
-    ISAM::DafePcrRwmItemSampler(const Ptr<PCR> & item,
-                                const Ptr<MvnModel> &Prior,
-                                double Tdf,
+    ISAM::DafePcrRwmItemSampler(const Ptr<PCR> &item,
+                                const Ptr<MvnModel> &Prior, double Tdf,
                                 RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-  mod(item),
-    prior(Prior),
-    sigsq(1.644934066848226), // pi^2/6
-    xtx(mod->nlevels()),
-    ivar(mod->nlevels())
-    {
+        : PosteriorSampler(seeding_rng),
+          mod(item),
+          prior(Prior),
+          sigsq(1.644934066848226),  // pi^2/6
+          xtx(mod->nlevels()),
+          ivar(mod->nlevels()) {
       TF loglike(mod);
       Logp target(loglike, prior);
       uint dim = mod->beta().size();
 
       prop = new MvtRwmProposal(SpdMatrix(dim).Id(), Tdf);
-      sampler = new MetropolisHastings(target,prop);
+      sampler = new MetropolisHastings(target, prop);
     }
 
-    void ISAM::draw(){
+    void ISAM::draw() {
       get_moments();
       prop->set_ivar(ivar);
       b = sampler->draw(mod->beta());
       mod->set_beta(b);
     }
 
-    double ISAM::logpri()const{
-      return prior->pdf(mod->beta(), true);}
+    double ISAM::logpri() const { return prior->pdf(mod->beta(), true); }
 
-    void ISAM::get_moments(){
-      xtx=0.0;
+    void ISAM::get_moments() {
+      xtx = 0.0;
       for (auto &subject : mod->subjects()) {
         accumulate_moments(subject);
       }
-      ivar = prior->siginv() + xtx/sigsq;
+      ivar = prior->siginv() + xtx / sigsq;
     }
 
-    void ISAM::accumulate_moments(const Ptr<Subject> & s){
+    void ISAM::accumulate_moments(const Ptr<Subject> &s) {
       const Matrix &X(mod->X(s->Theta()));
       xtx.add_inner(X);
     }
 
-  }
-}
+  }  // namespace IRT
+}  // namespace BOOM

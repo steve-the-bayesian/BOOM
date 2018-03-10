@@ -45,5 +45,5 @@ namespace BOOM {
     }
     return sqrt(-.5 * log(alpha / 2) / n);
   }
-}  // namespace BOOM;
+}  // namespace BOOM
 #endif  //  BOOM_KS_CRITICAL_VALUES_HPP_

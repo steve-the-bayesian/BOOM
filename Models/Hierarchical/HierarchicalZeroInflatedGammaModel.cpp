@@ -19,9 +19,9 @@
 
 #include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
 #include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -33,17 +33,16 @@ namespace BOOM {
       : number_of_zeros_(n0),
         number_of_positives_(n1),
         sum_(sum),
-        sum_of_logs_of_positives_(sumlog)
-  {}
+        sum_of_logs_of_positives_(sumlog) {}
 
-  HierarchicalZeroInflatedGammaData *
-  HierarchicalZeroInflatedGammaData::clone() const {
+  HierarchicalZeroInflatedGammaData *HierarchicalZeroInflatedGammaData::clone()
+      const {
     return new HierarchicalZeroInflatedGammaData(*this);
   }
 
-  ostream & HierarchicalZeroInflatedGammaData::display(ostream &out) const {
-    out << number_of_zeros_ << " " << number_of_positives_ << " "
-        << sum_ << " " << sum_of_logs_of_positives_;
+  ostream &HierarchicalZeroInflatedGammaData::display(ostream &out) const {
+    out << number_of_zeros_ << " " << number_of_positives_ << " " << sum_ << " "
+        << sum_of_logs_of_positives_;
     return out;
   }
 
@@ -55,9 +54,7 @@ namespace BOOM {
     return number_of_positives_;
   }
 
-  double HierarchicalZeroInflatedGammaData::sum() const {
-    return sum_;
-  }
+  double HierarchicalZeroInflatedGammaData::sum() const { return sum_; }
 
   double HierarchicalZeroInflatedGammaData::sumlog() const {
     return sum_of_logs_of_positives_;
@@ -71,8 +68,7 @@ namespace BOOM {
       BOOM::RNG &seeding_rng)
       : prior_for_mean_parameters_(new GammaModel),
         prior_for_shape_parameters_(new GammaModel),
-        prior_for_positive_probability_(new BetaModel)
-  {
+        prior_for_positive_probability_(new BetaModel) {
     int number_of_groups = number_of_zeros_per_group.size();
     if (number_of_positives_per_group.size() != number_of_groups ||
         sum_of_positive_observations_per_group.size() != number_of_groups ||
@@ -84,17 +80,13 @@ namespace BOOM {
 
     data_models_.reserve(number_of_groups);
     for (int i = 0; i < number_of_groups; ++i) {
-      NEW(ZeroInflatedGammaModel, data_model)(
-          number_of_zeros_per_group[i],
-          number_of_positives_per_group[i],
-          sum_of_positive_observations_per_group[i],
-          sum_of_logs_of_positive_observations[i]);
-      NEW(ZeroInflatedGammaPosteriorSampler, sampler)(
-          data_model.get(),
-          prior_for_positive_probability_,
-          prior_for_mean_parameters_,
-          prior_for_shape_parameters_,
-          seeding_rng);
+      NEW(ZeroInflatedGammaModel, data_model)
+      (number_of_zeros_per_group[i], number_of_positives_per_group[i],
+       sum_of_positive_observations_per_group[i],
+       sum_of_logs_of_positive_observations[i]);
+      NEW(ZeroInflatedGammaPosteriorSampler, sampler)
+      (data_model.get(), prior_for_positive_probability_,
+       prior_for_mean_parameters_, prior_for_shape_parameters_, seeding_rng);
       data_model->set_method(sampler);
       data_models_.push_back(data_model);
     }
@@ -108,8 +100,7 @@ namespace BOOM {
         prior_for_mean_parameters_(rhs.prior_for_mean_parameters_->clone()),
         prior_for_shape_parameters_(rhs.prior_for_shape_parameters_->clone()),
         prior_for_positive_probability_(
-            rhs.prior_for_positive_probability_->clone())
-  {
+            rhs.prior_for_positive_probability_->clone()) {
     data_models_.reserve(rhs.data_models_.size());
     for (int i = 0; i < rhs.data_models_.size(); ++i) {
       data_models_.push_back(rhs.data_models_[i]->clone());
@@ -117,7 +108,7 @@ namespace BOOM {
     setup();
   }
 
-  HZIGM * HZIGM::clone() const { return new HZIGM(*this); }
+  HZIGM *HZIGM::clone() const { return new HZIGM(*this); }
 
   void HZIGM::clear_methods() {
     prior_for_mean_parameters_->clear_methods();
@@ -154,46 +145,41 @@ namespace BOOM {
           << "in combine_data()." << endl
           << e.what();
       report_error(err.str());
-    } catch(...) {
+    } catch (...) {
       report_error(
           "Unknown exception generated in HierarchicalZeroInflatedGammaModel::"
           "::combine_data.");
     }
   }
 
-  void HZIGM::add_data(const Ptr<Data> & dp) {
+  void HZIGM::add_data(const Ptr<Data> &dp) {
     Ptr<HierarchicalZeroInflatedGammaData> d(
         dp.dcast<HierarchicalZeroInflatedGammaData>());
     NEW(BinomialModel, binomial)(.5);
-    binomial->suf()->set(
-        d->number_of_positives(),
-        d->number_of_positives() + d->number_of_zeros());
+    binomial->suf()->set(d->number_of_positives(),
+                         d->number_of_positives() + d->number_of_zeros());
     NEW(GammaModel, gamma)(1, 1);
-    gamma->suf()->set(d->sum(),
-                      d->sumlog(),
-                      d->number_of_positives());
+    gamma->suf()->set(d->sum(), d->sumlog(), d->number_of_positives());
     NEW(ZeroInflatedGammaModel, data_model)(binomial, gamma);
     data_models_.push_back(data_model);
     ParamPolicy::add_model(data_model);
   }
 
-  int HZIGM::number_of_groups() const {
-    return data_models_.size();
-  }
+  int HZIGM::number_of_groups() const { return data_models_.size(); }
 
-  BetaModel * HZIGM::prior_for_positive_probability() {
+  BetaModel *HZIGM::prior_for_positive_probability() {
     return prior_for_positive_probability_.get();
   }
 
-  GammaModel * HZIGM::prior_for_mean_parameters() {
+  GammaModel *HZIGM::prior_for_mean_parameters() {
     return prior_for_mean_parameters_.get();
   }
 
-  GammaModel * HZIGM::prior_for_shape_parameters() {
+  GammaModel *HZIGM::prior_for_shape_parameters() {
     return prior_for_shape_parameters_.get();
   }
 
-  ZeroInflatedGammaModel * HZIGM::data_model(int i) {
+  ZeroInflatedGammaModel *HZIGM::data_model(int i) {
     return data_models_[i].get();
   }
 

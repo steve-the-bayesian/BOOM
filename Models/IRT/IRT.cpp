@@ -16,32 +16,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/IRT/IRT.hpp"
-#include "Models/IRT/Subject.hpp"
 #include "Models/IRT/Item.hpp"
+#include "Models/IRT/Subject.hpp"
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
     bool SubjectLess::operator()(const Ptr<Subject> &s1,
                                  const Ptr<Subject> &s2) const {
       return s1->id() < s2->id();
     }
 
-    bool ItemLess::operator()(const Ptr<Item> &i1,
-                              const Ptr<Item> &i2)const{
-      return i1->id() < i2->id(); }
+    bool ItemLess::operator()(const Ptr<Item> &i1, const Ptr<Item> &i2) const {
+      return i1->id() < i2->id();
+    }
 
-
-    void add_subject(SubjectSet &Sub,
-                     const Ptr<Subject> &s){
+    void add_subject(SubjectSet &Sub, const Ptr<Subject> &s) {
       SubjectLess sl;
-      SubjectSet::iterator it =
-        std::lower_bound(Sub.begin(), Sub.end(), s, sl);
-      if(it==Sub.end()) Sub.push_back(s);
-      else{
+      SubjectSet::iterator it = std::lower_bound(Sub.begin(), Sub.end(), s, sl);
+      if (it == Sub.end())
+        Sub.push_back(s);
+      else {
         Ptr<Subject> s2(*it);
-        if(s2 != s) Sub.insert(it,s);
+        if (s2 != s) Sub.insert(it, s);
       }
     }
 
-  }
-}
+  }  // namespace IRT
+}  // namespace BOOM

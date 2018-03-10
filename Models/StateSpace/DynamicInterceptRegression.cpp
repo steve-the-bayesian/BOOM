@@ -32,12 +32,9 @@ namespace BOOM {
   }
 
   DIRM::DynamicInterceptRegressionModel(const DIRM &rhs)
-      : MultivariateStateSpaceModelBase(rhs),
-        observations_(rhs.observations_)
-  {
+      : MultivariateStateSpaceModelBase(rhs), observations_(rhs.observations_) {
     initialize_regression_component(rhs.xdim());
-    regression_->regression()->set_Beta(
-        rhs.regression_->regression()->Beta());
+    regression_->regression()->set_Beta(rhs.regression_->regression()->Beta());
     regression_->regression()->set_sigsq(
         rhs.regression_->regression()->sigsq());
   }
@@ -56,17 +53,16 @@ namespace BOOM {
       return;
     }
     const ConstVectorView now(state().col(t));
-    const ConstVectorView then(state().col(t-1));
+    const ConstVectorView then(state().col(t - 1));
     for (int s = 0; s < nstate(); ++s) {
-      report_error("Need to implement observe_dynamic_regression_state in all StateModels.");
+      report_error(
+          "Need to implement observe_dynamic_regression_state in all "
+          "StateModels.");
       state_model(s)->observe_dynamic_intercept_regression_state(
-          state_component(then, s),
-          state_component(now, s),
-          t,
-          this);
+          state_component(then, s), state_component(now, s), t, this);
     }
   }
-  
+
   void DIRM::observe_data_given_state(int t) {
     if (!is_missing_observation(t)) {
       // Unless the data point is completely missing, add the regression
@@ -87,9 +83,7 @@ namespace BOOM {
     }
   }
 
-  void DIRM::add_data(const Ptr<Data> &dp) {
-    add_multiplexed_data(DAT(dp));
-  }
+  void DIRM::add_data(const Ptr<Data> &dp) { add_multiplexed_data(DAT(dp)); }
 
   void DIRM::add_multiplexed_data(const Ptr<MultiplexedRegressionData> &dp) {
     Vector observation_vector(dp->total_sample_size());
@@ -111,14 +105,15 @@ namespace BOOM {
 
   const SparseKalmanMatrix *DIRM::observation_coefficients(
       int t, bool supplemental) const {
-    SparseVerticalStripMatrix *coefficients = supplemental ?
-        &supplemental_observation_coefficients_ : &observation_coefficients_;
+    SparseVerticalStripMatrix *coefficients =
+        supplemental ? &supplemental_observation_coefficients_
+                     : &observation_coefficients_;
     coefficients->clear();
     for (int s = 0; s < nstate(); ++s) {
       coefficients->add_block(
-          state_model(s, supplemental)->
-          dynamic_intercept_regression_observation_coefficients(
-              t, *dat()[t]));
+          state_model(s, supplemental)
+              ->dynamic_intercept_regression_observation_coefficients(
+                  t, *dat()[t]));
     }
     return coefficients;
   }
@@ -128,10 +123,9 @@ namespace BOOM {
                      regression_->regression()->sigsq());
   }
 
-  double DIRM::conditional_mean(int time,
-                                int observation) const {
-
-    report_error("Need to implement DynamicInterceptRegressionModel::conditional_mean.");
+  double DIRM::conditional_mean(int time, int observation) const {
+    report_error(
+        "Need to implement DynamicInterceptRegressionModel::conditional_mean.");
     return negative_infinity();
 
     //////////////////////////////
@@ -145,7 +139,7 @@ namespace BOOM {
     //////////////////////////////
     //////////////////////////////
   }
-  
+
   //===========================================================================
   // private:
   Vector DIRM::simulate_observation(RNG &rng, int t, bool supplemental) {

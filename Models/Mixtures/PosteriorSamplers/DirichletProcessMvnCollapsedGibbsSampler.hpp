@@ -22,9 +22,9 @@
 
 #include "Models/Mixtures/DirichletProcessMvnModel.hpp"
 
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
 #include "Models/MvnGivenSigma.hpp"
+#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/WishartModel.hpp"
 
 namespace BOOM {
@@ -32,10 +32,8 @@ namespace BOOM {
   // A Posterior sampler for a Dirichlet process model that describes
   // observation vector y[i] as a mixture of normals, with a
   // normal-inverse-Wishart prior distribution.
-  class DirichletProcessMvnCollapsedGibbsSampler
-      : public PosteriorSampler {
+  class DirichletProcessMvnCollapsedGibbsSampler : public PosteriorSampler {
    public:
-
     // Args:
     //   model: The model for which posterior samples are desired.
     //   mean_base_measure: A conditional MVN model describing the

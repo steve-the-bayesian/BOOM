@@ -19,22 +19,17 @@
 #include "Models/PosteriorSamplers/FixedProbBinomialSampler.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef FixedProbBinomialSampler FBS;
   FBS::FixedProbBinomialSampler(BinomialModel *mod, double prob,
                                 RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      m_(mod),
-      p_(prob)
-  {}
+      : PosteriorSampler(seeding_rng), m_(mod), p_(prob) {}
 
-  void FBS::draw(){
-    m_->set_prob(p_);
-  }
+  void FBS::draw() { m_->set_prob(p_); }
 
-  double FBS::logpri()const{
+  double FBS::logpri() const {
     double p = m_->prob();
     return p_ == p ? 0 : BOOM::negative_infinity();
   }
-}
+}  // namespace BOOM

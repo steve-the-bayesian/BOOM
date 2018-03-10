@@ -20,21 +20,21 @@
 
 namespace BOOM {
 
-  ArmaSliceSampler::ArmaSliceSampler(
-      ArmaModel *model,
-      const Ptr<VectorModel> &ar_prior,
-      const Ptr<VectorModel> &ma_prior,
-      const Ptr<DoubleModel> &precision_prior,
-      RNG &seeding_rng)
+  ArmaSliceSampler::ArmaSliceSampler(ArmaModel *model,
+                                     const Ptr<VectorModel> &ar_prior,
+                                     const Ptr<VectorModel> &ma_prior,
+                                     const Ptr<DoubleModel> &precision_prior,
+                                     RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         ar_prior_(ar_prior),
         ma_prior_(ma_prior),
         precision_prior_(precision_prior),
-        sampler_([this](const Vector &parameters) {
-            return vectorized_log_posterior(parameters);},
-          1.0, false, &rng())
-  {}
+        sampler_(
+            [this](const Vector &parameters) {
+              return vectorized_log_posterior(parameters);
+            },
+            1.0, false, &rng()) {}
 
   void ArmaSliceSampler::draw() {
     Vector parameters = model_->vectorize_params();
@@ -47,20 +47,19 @@ namespace BOOM {
   }
 
   double ArmaSliceSampler::logpri() const {
-    return ar_prior_->logp(model_->ar_coefficients())
-        + ma_prior_->logp(model_->ma_coefficients())
-        + precision_prior_->logp(1.0 / model_->sigsq());
+    return ar_prior_->logp(model_->ar_coefficients()) +
+           ma_prior_->logp(model_->ma_coefficients()) +
+           precision_prior_->logp(1.0 / model_->sigsq());
   }
-  
+
   double ArmaSliceSampler::log_posterior(const Vector &ar_coefficients,
                                          const Vector &ma_coefficients,
                                          double precision) const {
-    double ans = ar_prior_->logp(ar_coefficients)
-        + ma_prior_->logp(ma_coefficients)
-        + precision_prior_->logp(precision);
+    double ans = ar_prior_->logp(ar_coefficients) +
+                 ma_prior_->logp(ma_coefficients) +
+                 precision_prior_->logp(precision);
     if (std::isfinite(ans)) {
-      ans += model_->log_likelihood(ar_coefficients,
-                                    ma_coefficients,
+      ans += model_->log_likelihood(ar_coefficients, ma_coefficients,
                                     1.0 / precision);
     }
     return ans;
@@ -72,15 +71,11 @@ namespace BOOM {
         model_->ar_dimension() + model_->ma_dimension() + 1) {
       report_error("Wrong size parameter vector.");
     }
-    ConstVectorView ar(parameters,
-                       0,
-                       model_->ar_dimension());
-    ConstVectorView ma(parameters,
-                       model_->ar_dimension(),
+    ConstVectorView ar(parameters, 0, model_->ar_dimension());
+    ConstVectorView ma(parameters, model_->ar_dimension(),
                        model_->ma_dimension());
     double siginv = parameters.back();
     return log_posterior(ar, ma, siginv);
   }
 
-  
-} // namespace BOOM
+}  // namespace BOOM

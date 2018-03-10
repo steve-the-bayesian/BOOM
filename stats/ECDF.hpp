@@ -22,7 +22,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // The empirical cumulative distribution function of a real valued data set.
   class ECDF {
@@ -46,7 +46,7 @@ namespace BOOM{
       return equality ? fplus(x) : fminus(x);
     }
 
-    const Vector sorted_data() const {return sorted_data_;}
+    const Vector sorted_data() const { return sorted_data_; }
 
    private:
     Vector sorted_data_;

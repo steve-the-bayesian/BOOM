@@ -18,14 +18,12 @@
 */
 
 #include "stats/Mspline.hpp"
-#include "cpputil/report_error.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   Mspline::Mspline(const Vector &knots, int order)
-      : SplineBase(knots),
-        order_(order)
-  {
+      : SplineBase(knots), order_(order) {
     if (knots.size() < 2) {
       basis_dimension_ = 0;
     } else {
@@ -34,7 +32,7 @@ namespace BOOM {
         if (sorted_knots[i] <= sorted_knots[i - 1]) {
           std::ostringstream err;
           err << "This Mspline implementation does not allow "
-              "duplicate knots.  Knot vector: "
+                 "duplicate knots.  Knot vector: "
               << sorted_knots;
           report_error(err.str());
         }
@@ -51,8 +49,8 @@ namespace BOOM {
     return ans;
   }
 
-  double Mspline::mspline_basis_function(
-      double x, int order, int which_basis) const {
+  double Mspline::mspline_basis_function(double x, int order,
+                                         int which_basis) const {
     if (order < 1) {
       return negative_infinity();
     }
@@ -66,26 +64,20 @@ namespace BOOM {
         return 0;
       }
     } else {
-      return order * (
-          (x - left_knot) * mspline_basis_function(
-              x, order - 1, which_basis)
-          + (right_knot - x) * mspline_basis_function(
-              x, order - 1, which_basis + 1))
-          / ((order - 1) * (right_knot - left_knot));
+      return order *
+             ((x - left_knot) *
+                  mspline_basis_function(x, order - 1, which_basis) +
+              (right_knot - x) *
+                  mspline_basis_function(x, order - 1, which_basis + 1)) /
+             ((order - 1) * (right_knot - left_knot));
     }
   }
 
-  void Mspline::increment_basis_dimension() {
-    ++basis_dimension_;
-  }
+  void Mspline::increment_basis_dimension() { ++basis_dimension_; }
 
-  void Mspline::decrement_basis_dimension() {
-    --basis_dimension_;
-  }
+  void Mspline::decrement_basis_dimension() { --basis_dimension_; }
 
-  Ispline::Ispline(const Vector &knots, int order)
-      : Mspline(knots, order)
-  {}
+  Ispline::Ispline(const Vector &knots, int order) : Mspline(knots, order) {}
 
   double Ispline::ispline_basis_function(double x, int order,
                                          int which_basis_element) const {
@@ -101,7 +93,7 @@ namespace BOOM {
       double ans = 0;
       for (int m = which_basis_element; m <= knot_span_index; ++m) {
         ans += (knot(m + order + 1) - knot(m)) *
-            mspline_basis_function(x, order + 1, m) / (order + 1);
+               mspline_basis_function(x, order + 1, m) / (order + 1);
       }
       return ans;
     }

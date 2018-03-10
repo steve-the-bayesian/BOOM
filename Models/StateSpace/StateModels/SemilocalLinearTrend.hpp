@@ -22,31 +22,28 @@
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
-#include "Models/ZeroMeanGaussianModel.hpp"
-#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
-namespace BOOM{
+#include "Models/ZeroMeanGaussianModel.hpp"
+namespace BOOM {
 
   // The state transition matrix for the
   // SemilocalLinearTrendMatrix is
   //  1   1   0
   //  0  phi (1-phi)
   //  0   0   1
-  class SemilocalLinearTrendMatrix
-      : public SparseMatrixBlock {
+  class SemilocalLinearTrendMatrix : public SparseMatrixBlock {
    public:
     SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi);
 
     // Can safely copy with pointer semantics, becasue nothing in this
     // class can change the value of the pointer.
-    SemilocalLinearTrendMatrix(
-        const SemilocalLinearTrendMatrix &rhs);
-    SemilocalLinearTrendMatrix * clone() const override;
-    int nrow() const override {return 3;}
-    int ncol() const override {return 3;}
+    SemilocalLinearTrendMatrix(const SemilocalLinearTrendMatrix &rhs);
+    SemilocalLinearTrendMatrix *clone() const override;
+    int nrow() const override { return 3; }
+    int ncol() const override { return 3; }
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_and_add(VectorView lhs,
                           const ConstVectorView &rhs) const override;
@@ -71,43 +68,34 @@ namespace BOOM{
   //   | 1 0 |
   //   | 0 1 |
   //   | 0 0 |
-  class SemilocalLinearTrendStateModel
-      : public StateModel,
-        public CompositeParamPolicy,
-        public IID_DataPolicy<VectorData>,
-        public PriorPolicy
-  {
+  class SemilocalLinearTrendStateModel : public StateModel,
+                                         public CompositeParamPolicy,
+                                         public IID_DataPolicy<VectorData>,
+                                         public PriorPolicy {
    public:
-    SemilocalLinearTrendStateModel(
-        const Ptr<ZeroMeanGaussianModel> &level,
-        const Ptr<NonzeroMeanAr1Model> &slope);
-    SemilocalLinearTrendStateModel(
-        const SemilocalLinearTrendStateModel &rhs);
-    SemilocalLinearTrendStateModel * clone() const override;
+    SemilocalLinearTrendStateModel(const Ptr<ZeroMeanGaussianModel> &level,
+                                   const Ptr<NonzeroMeanAr1Model> &slope);
+    SemilocalLinearTrendStateModel(const SemilocalLinearTrendStateModel &rhs);
+    SemilocalLinearTrendStateModel *clone() const override;
 
     void clear_data() override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
 
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
 
     void observe_initial_state(const ConstVectorView &state) override;
-    uint state_dimension() const override {return 3;}
-    uint state_error_dimension() const override {return 2;}
+    uint state_dimension() const override { return 3; }
+    uint state_error_dimension() const override { return 2; }
 
     // This model throws, because the AR1 state model for the slope
     // cannot be part of an EM algorithm.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
@@ -133,7 +121,7 @@ namespace BOOM{
     void set_initial_slope_mean(double slope_mean);
     void set_initial_slope_sd(double slope_sd);
 
-    void simulate_initial_state(RNG &rng, VectorView state)const override;
+    void simulate_initial_state(RNG &rng, VectorView state) const override;
 
    private:
     void check_dim(const ConstVectorView &) const;

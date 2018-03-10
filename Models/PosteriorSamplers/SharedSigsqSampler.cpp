@@ -20,29 +20,27 @@
 #include "Models/PosteriorSamplers/SharedSigsqSampler.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef SharedSigsqSampler SSS;
 
-  SSS::SharedSigsqSampler(const std::vector<GaussianModelBase*> &models,
+  SSS::SharedSigsqSampler(const std::vector<GaussianModelBase *> &models,
                           const Ptr<UnivParams> &sigsq,
-                          const Ptr<GammaModelBase> &pri,
-                          RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      models_(models),
-      sigsq_(sigsq),
-      pri_(pri),
-      sigsq_sampler_(pri_)
-  {}
+                          const Ptr<GammaModelBase> &pri, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        models_(models),
+        sigsq_(sigsq),
+        pri_(pri),
+        sigsq_sampler_(pri_) {}
 
-  void SSS::draw(){
+  void SSS::draw() {
     double df = 0;
     double ss = 0;
 
-    for(uint i=0; i<models_.size(); ++i){
+    for (uint i = 0; i < models_.size(); ++i) {
       Ptr<GaussianSuf> suf = models_[i]->suf();
       double n = suf->n();
-      df+= n;
+      df += n;
       double mu = models_[i]->mu();
       ss += suf->sumsq() + mu * suf->sum() + n * mu * mu;
     }
@@ -51,8 +49,8 @@ namespace BOOM{
     sigsq_->set(sigsq);
   }
 
-  double SSS::logpri()const{
+  double SSS::logpri() const {
     return sigsq_sampler_.log_prior(sigsq_->value());
   }
 
-}
+}  // namespace BOOM

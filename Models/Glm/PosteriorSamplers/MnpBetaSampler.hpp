@@ -17,25 +17,25 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-namespace BOOM{
+namespace BOOM {
 
   class MultinomialProbitModel;
   class MvnModel;
 
-  class MnpBetaSampler : public PosteriorSampler{
+  class MnpBetaSampler : public PosteriorSampler {
     // draws beta given Sigma for the multinomial probit model
     // assuming the prior beta|Sigma ~ N(b, Ominv)
-  public:
+   public:
     MnpBetaSampler(MultinomialProbitModel *Mod, const Ptr<MvnModel> &Pri,
                    RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-    void fix_beta0(bool=true);
-  private:
+    void fix_beta0(bool = true);
+
+   private:
     MultinomialProbitModel *mnp;
     Ptr<MvnModel> pri;
     bool b0_fixed;
   };
 
-
-}
+}  // namespace BOOM

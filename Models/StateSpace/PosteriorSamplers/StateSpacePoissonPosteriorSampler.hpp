@@ -20,16 +20,14 @@
 #ifndef BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/StateSpace/StateSpacePoissonModel.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
-#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/StateSpacePoissonModel.hpp"
 
 namespace BOOM {
-  class StateSpacePoissonPosteriorSampler
-      : public StateSpacePosteriorSampler {
+  class StateSpacePoissonPosteriorSampler : public StateSpacePosteriorSampler {
    public:
-
     // Args:
     //   model: The model for which posterior samples are desired.
     //     All state components should have posterior samplers
@@ -66,6 +64,6 @@ namespace BOOM {
     Ptr<PoissonRegressionSpikeSlabSampler> observation_model_sampler_;
     PoissonDataImputer data_imputer_;
   };
-}
+}  // namespace BOOM
 
-#endif // BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_
+#endif  // BOOM_STATE_SPACE_POISSON_POSTERIOR_SAMPLER_HPP_

@@ -19,17 +19,16 @@
 #ifndef BOOM_EM_MIXTURE_COMPONENT_HPP
 #define BOOM_EM_MIXTURE_COMPONENT_HPP
 
-#include "Models/ModelTypes.hpp"
 #include "Models/DataTypes.hpp"
+#include "Models/ModelTypes.hpp"
 
-namespace BOOM{
-  class EmMixtureComponent:
-      virtual public MixtureComponent,
-      virtual public MLE_Model,
-      virtual public PosteriorModeModel {
-  public:
-    EmMixtureComponent * clone()const override = 0;
+namespace BOOM {
+  class EmMixtureComponent : virtual public MixtureComponent,
+                             virtual public MLE_Model,
+                             virtual public PosteriorModeModel {
+   public:
+    EmMixtureComponent *clone() const override = 0;
     virtual void add_mixture_data(const Ptr<Data> &, double weight) = 0;
-   };
+  };
 }  // namespace BOOM
-#endif// BOOM_EM_MIXTURE_COMPONENT_HPP
+#endif  // BOOM_EM_MIXTURE_COMPONENT_HPP

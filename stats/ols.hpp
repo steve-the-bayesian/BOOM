@@ -22,9 +22,8 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   std::pair<Vector, double> ols(const Matrix &X, const Vector &y);
-
 }
-#endif// BOOM_STATS_OLS_HPP
+#endif  // BOOM_STATS_OLS_HPP

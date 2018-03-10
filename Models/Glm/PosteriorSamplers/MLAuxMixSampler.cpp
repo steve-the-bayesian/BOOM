@@ -17,25 +17,22 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/Glm/PosteriorSamplers/MLAuxMixSampler.hpp"
-#include "distributions.hpp"       // for rlexp,dnorm,rmvn
+#include "Models/Glm/ChoiceData.hpp"
 #include "Models/Glm/MultinomialLogitModel.hpp"
 #include "Models/MvnBase.hpp"
-#include "Models/Glm/ChoiceData.hpp"
+#include "distributions.hpp"  // for rlexp,dnorm,rmvn
 
-namespace BOOM{
+namespace BOOM {
   typedef MLAuxMixSampler AUX;
   typedef MultinomialLogitModel MLM;
 
   AUX::MLAuxMixSampler(MLM *Mod, const Ptr<MvnBase> &Pri, uint nthreads,
                        RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      mod_(Mod),
-      pri(Pri)
-  {
+      : PosteriorSampler(seeding_rng), mod_(Mod), pri(Pri) {
     Ptr<VariableSelectionPrior> vp(0);
     sam = new MLVS(mod_, pri, vp, nthreads, false);
     sam->suppress_model_selection();
   }
-  void AUX::draw(){ sam->draw();}
-  double AUX::logpri()const{ return pri->logp(mod_->beta());}
-}
+  void AUX::draw() { sam->draw(); }
+  double AUX::logpri() const { return pri->logp(mod_->beta()); }
+}  // namespace BOOM

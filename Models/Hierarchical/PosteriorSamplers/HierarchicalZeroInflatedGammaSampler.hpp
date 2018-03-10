@@ -73,6 +73,7 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
+
    private:
     // Check that a posterior sampler has been assigned to
     // *data_model.  If not, assign one.
@@ -99,4 +100,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_
+#endif  // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_

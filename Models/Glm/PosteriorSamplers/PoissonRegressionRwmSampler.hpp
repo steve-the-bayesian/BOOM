@@ -21,27 +21,26 @@
 #define BOOM_POISSON_REGRESSION_RWM_SAMPLER_HPP_
 
 #include "Models/Glm/PoissonRegressionModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A small class for doing random walk Metropolis for Poisson
   // regression models.
-  class PoissonRegressionRwmSampler
-      : public PosteriorSampler {
+  class PoissonRegressionRwmSampler : public PosteriorSampler {
    public:
     PoissonRegressionRwmSampler(PoissonRegressionModel *model,
                                 const Ptr<MvnBase> &prior,
                                 RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
     PoissonRegressionModel *model_;
     Ptr<MvnBase> prior_;
   };
 
-} // namespace BOOM
+}  // namespace BOOM
 
-
-#endif // BOOM_POISSON_REGRESSION_RWM_SAMPLER_HPP_
+#endif  // BOOM_POISSON_REGRESSION_RWM_SAMPLER_HPP_

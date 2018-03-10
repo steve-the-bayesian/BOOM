@@ -22,8 +22,7 @@
 namespace BOOM {
 
   StateSpaceNormalMixture::StateSpaceNormalMixture(bool has_regression)
-      : has_regression_(has_regression)
-  {}
+      : has_regression_(has_regression) {}
 
   Vector StateSpaceNormalMixture::regression_contribution() const {
     if (!has_regression_) {

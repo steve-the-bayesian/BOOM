@@ -24,14 +24,12 @@ namespace BOOM {
   namespace {
     typedef HierarchicalPosteriorSampler HPS;
     typedef ConjugateHierarchicalPosteriorSampler CHPS;
-  }
+  }  // namespace
 
   HPS::HierarchicalPosteriorSampler(RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng)
-  {}
+      : PosteriorSampler(seeding_rng) {}
 
   CHPS::ConjugateHierarchicalPosteriorSampler(RNG &seeding_rng)
-      : HPS(seeding_rng)
-  {}
+      : HPS(seeding_rng) {}
 
 }  // namespace BOOM

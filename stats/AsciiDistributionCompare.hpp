@@ -36,16 +36,15 @@ namespace BOOM {
     //     bars.  Generally xbuckets should be larger than ybuckets because
     //     screens have more horizontal than vertical space.
     AsciiDistributionCompare(const Vector &x, const Vector &y,
-                             int xbuckets = 80,
-                             int ybuckets = 30);
-    std::string print() const {return graph_.print();}
+                             int xbuckets = 80, int ybuckets = 30);
+    std::string print() const { return graph_.print(); }
 
    private:
     AsciiGraph graph_;
   };
 
-  inline std::ostream & operator<<(std::ostream &out,
-                                   const AsciiDistributionCompare &cmp) {
+  inline std::ostream &operator<<(std::ostream &out,
+                                  const AsciiDistributionCompare &cmp) {
     return out << cmp.print();
   }
 

@@ -20,20 +20,18 @@
 #ifndef BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
 #define BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
 
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/MvnGivenXandSigma.hpp"
 #include "Models/GammaModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/MvnGivenXandSigma.hpp"
+#include "Models/Glm/RegressionModel.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
-  class RegressionConjSampler
-    : public PosteriorSampler
-  {
+namespace BOOM {
+  class RegressionConjSampler : public PosteriorSampler {
     // for drawing p(beta, sigma^2 | y)
     // prior is p(beta | sigma^2, X) = N(b0, sigsq * XTX/kappa)
     //          p(sigsq | X) = Gamma(prior_df/2, prior_ss/2)
-  public:
+   public:
     RegressionConjSampler(RegressionModel *model,
                           const Ptr<MvnGivenXandSigma> &coefficient_prior,
                           const Ptr<GammaModelBase> &residual_precision_prior,
@@ -42,15 +40,14 @@ namespace BOOM{
     double logpri() const override;
 
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
+    bool can_find_posterior_mode() const override { return true; }
 
-    const Vector & b0()const;
-    double kappa()const;
-    double prior_df()const;
-    double prior_ss()const;
-  private:
+    const Vector &b0() const;
+    double kappa() const;
+    double prior_df() const;
+    double prior_ss() const;
+
+   private:
     RegressionModel *m_;
     Ptr<MvnGivenXandSigma> mu_;
     Ptr<GammaModelBase> siginv_;
@@ -61,4 +58,4 @@ namespace BOOM{
     void set_posterior_suf();
   };
 }  // namespace BOOM
-#endif// BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
+#endif  // BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP

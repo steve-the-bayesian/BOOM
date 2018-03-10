@@ -18,20 +18,19 @@
 */
 
 #include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 #include "distributions/trun_gamma.hpp"
-#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
   ArPosteriorSampler::ArPosteriorSampler(
       ArModel *model, const Ptr<GammaModelBase> &siginv_prior, RNG &seeding_rng)
-        : HierarchicalPosteriorSampler(seeding_rng),
-          model_(model),
-          siginv_prior_(siginv_prior),
-          max_number_of_regression_proposals_(3),
-          sigsq_sampler_(siginv_prior)
-  {}
+      : HierarchicalPosteriorSampler(seeding_rng),
+        model_(model),
+        siginv_prior_(siginv_prior),
+        max_number_of_regression_proposals_(3),
+        sigsq_sampler_(siginv_prior) {}
 
   void ArPosteriorSampler::draw() {
     if (model_) {
@@ -42,8 +41,9 @@ namespace BOOM {
   void ArPosteriorSampler::draw_model_parameters(Model &model) {
     ArModel *ar_model = dynamic_cast<ArModel *>(&model);
     if (!ar_model) {
-      report_error("ArPosteriorSampler can only draw_model_parameters for "
-                   "objects of type ArModel.");
+      report_error(
+          "ArPosteriorSampler can only draw_model_parameters for "
+          "objects of type ArModel.");
     }
     draw_model_parameters(*ar_model);
   }
@@ -56,8 +56,9 @@ namespace BOOM {
   double ArPosteriorSampler::log_prior_density(const Model &model) const {
     const ArModel *ar_model = dynamic_cast<const ArModel *>(&model);
     if (!ar_model) {
-      report_error("ArPosteriorSampler can only evaluate log_prior_density "
-                   "for ArModel objects.");
+      report_error(
+          "ArPosteriorSampler can only evaluate log_prior_density "
+          "for ArModel objects.");
     }
     return log_prior_density(*ar_model);
   }
@@ -106,8 +107,9 @@ namespace BOOM {
     int dim = model.phi().size();
     Vector phi = model.phi();
     if (!model.check_stationary(phi)) {
-      report_error("ArPosteriorSampler::draw_phi_univariate was called with an "
-                   "illegal initial value of phi.  That should never happen.");
+      report_error(
+          "ArPosteriorSampler::draw_phi_univariate was called with an "
+          "illegal initial value of phi.  That should never happen.");
     }
     const SpdMatrix &xtx(model.suf()->xtx());
     const Vector &xty(model.suf()->xty());
@@ -130,13 +132,15 @@ namespace BOOM {
       double mu = (xty[i] - (phi.dot(xtx.col(i)) - phi[i] * xtx(i, i))) / ivar;
       bool ok = false;
       while (!ok) {
-        double candidate = rtrun_norm_2_mt(rng(), mu, sqrt(1.0/ivar), lo, hi);
+        double candidate = rtrun_norm_2_mt(rng(), mu, sqrt(1.0 / ivar), lo, hi);
         phi[i] = candidate;
         if (ArModel::check_stationary(phi)) {
           ok = true;
         } else {
-          if (candidate > initial_phi) hi = candidate;
-          else lo = candidate;
+          if (candidate > initial_phi)
+            hi = candidate;
+          else
+            lo = candidate;
         }
       }
     }

@@ -20,11 +20,11 @@
 #ifndef BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 #define BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 
-#include "cpputil/Date.hpp"
-#include "cpputil/Ptr.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
-#include "Models/StateSpace/StateModels/Holiday.hpp"
+#include "cpputil/Date.hpp"
+#include "cpputil/Ptr.hpp"
 
 namespace BOOM {
 
@@ -48,9 +48,8 @@ namespace BOOM {
   // the holiday influences).  The transition matrix is always the
   // identity.  The error variance matrix is sigma^2 * outer(e[t]),
   // where e[t] is column t of the identity matrix.
-  class RandomWalkHolidayStateModel :
-      public StateModel,
-      public ZeroMeanGaussianModel{
+  class RandomWalkHolidayStateModel : public StateModel,
+                                      public ZeroMeanGaussianModel {
    public:
     // Args:
     //   holiday: A heap allocated pointer to a holiday that this
@@ -59,23 +58,17 @@ namespace BOOM {
     //   time_zero: The date at t = 0, where t is an integer number of
     //     days.
     RandomWalkHolidayStateModel(Holiday *holiday, const Date &time_zero);
-    RandomWalkHolidayStateModel * clone() const override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    RandomWalkHolidayStateModel *clone() const override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
-    
+
     uint state_dimension() const override;
-    uint state_error_dimension() const override {
-      return 1;
-    }
+    uint state_error_dimension() const override { return 1; }
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
@@ -95,8 +88,7 @@ namespace BOOM {
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void set_initial_state_mean(const Vector &v);
@@ -112,9 +104,9 @@ namespace BOOM {
     Ptr<ZeroMatrix> zero_state_variance_matrix_;
 
     std::vector<Ptr<SingleSparseDiagonalElementMatrixParamView> >
-    active_state_variance_matrix_;
+        active_state_variance_matrix_;
   };
 
 }  // namespace BOOM
 
-#endif //  BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
+#endif  //  BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_

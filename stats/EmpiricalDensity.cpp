@@ -18,9 +18,9 @@
 */
 
 #include "stats/EmpiricalDensity.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "stats/ECDF.hpp"
-#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
 
@@ -34,9 +34,7 @@ namespace BOOM {
 
   EmpiricalDensity::EmpiricalDensity(const ConstVectorView &data,
                                      const Vector &knots)
-      : spline_(knots),
-        coefficients_(spline_.basis_dimension())
-  {
+      : spline_(knots), coefficients_(spline_.basis_dimension()) {
     ECDF cdf(data);
     double min_value = cdf.sorted_data()[0];
     double max_value = cdf.sorted_data().back();
@@ -58,7 +56,6 @@ namespace BOOM {
 
   EmpiricalDensity::EmpiricalDensity(const ConstVectorView &data, int num_knots)
       : EmpiricalDensity(data, create_knots(data, num_knots)) {}
-
 
   double EmpiricalDensity::operator()(double x) const {
     double ans = coefficients_.dot(spline_.Mspline::basis(x));

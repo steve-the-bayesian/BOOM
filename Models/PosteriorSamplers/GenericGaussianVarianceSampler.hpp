@@ -32,13 +32,13 @@ namespace BOOM {
    public:
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.
-    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> & prior);
+    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior);
 
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.
     //   sigma_max: The largest acceptable value for the standard
     //     deviation sigma.
-    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> & prior,
+    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior,
                                    double sigma_max);
 
     // Sets the largest acceptable value for sigma (the standard
@@ -79,9 +79,7 @@ namespace BOOM {
     // Returns the log of the prior on the scale of sigma^2.
     double log_prior(double sigsq) const;
 
-    void set_prior(const Ptr<GammaModelBase> &new_prior) {
-      prior_ = new_prior;
-    }
+    void set_prior(const Ptr<GammaModelBase> &new_prior) { prior_ = new_prior; }
 
    private:
     Ptr<GammaModelBase> prior_;

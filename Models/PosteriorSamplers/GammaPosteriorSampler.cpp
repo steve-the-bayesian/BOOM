@@ -20,7 +20,7 @@
 #include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A private namespace for defining functors used just for implementation.
   namespace {
@@ -28,19 +28,16 @@ namespace BOOM{
     // parameter in the mean/alpha parameterization.
     class GammaMeanAlphaLogPosterior {
      public:
-      GammaMeanAlphaLogPosterior(
-          const GammaModel *model,
-          const DoubleModel *mean_prior)
-          : model_(model),
-            mean_prior_(mean_prior)
-      {}
+      GammaMeanAlphaLogPosterior(const GammaModel *model,
+                                 const DoubleModel *mean_prior)
+          : model_(model), mean_prior_(mean_prior) {}
 
       double operator()(double mean) const {
         if (mean <= 0) {
           return negative_infinity();
         }
         double a = model_->alpha();
-        double b = a/mean;
+        double b = a / mean;
         double ans = mean_prior_->logp(mean);
         ans += model_->loglikelihood(a, b);
         return ans;
@@ -55,13 +52,11 @@ namespace BOOM{
     // parameter in the mean/beta parameterization.
     class GammaMeanBetaLogPosterior {
      public:
-      GammaMeanBetaLogPosterior(
-          const GammaModel *model,
-          const DoubleModel *mean_prior)
-          : model_(model),
-            mean_prior_(mean_prior) {}
+      GammaMeanBetaLogPosterior(const GammaModel *model,
+                                const DoubleModel *mean_prior)
+          : model_(model), mean_prior_(mean_prior) {}
 
-      double operator()(double mean)const {
+      double operator()(double mean) const {
         if (mean <= 0.0) {
           return negative_infinity();
         }
@@ -83,9 +78,7 @@ namespace BOOM{
      public:
       GammaAlphaLogPosterior(const GammaModel *model,
                              const DoubleModel *alpha_prior)
-          : model_(model),
-            alpha_prior_(alpha_prior)
-      {}
+          : model_(model), alpha_prior_(alpha_prior) {}
 
       double operator()(double alpha) const {
         if (alpha <= 0) {
@@ -107,12 +100,11 @@ namespace BOOM{
     // parameter in the mean/beta parameterization.
     class GammaBetaLogPosterior {
      public:
-      GammaBetaLogPosterior(
-          const GammaModel *model,
-          const DoubleModel *beta_prior)
+      GammaBetaLogPosterior(const GammaModel *model,
+                            const DoubleModel *beta_prior)
           : model_(model), beta_prior_(beta_prior) {}
 
-      double operator()(double beta)const {
+      double operator()(double beta) const {
         if (beta <= 0.0) {
           return negative_infinity();
         }
@@ -132,24 +124,21 @@ namespace BOOM{
 
   //======================================================================
   GammaPosteriorSampler::GammaPosteriorSampler(
-      GammaModel *model,
-      const Ptr<DoubleModel> &mean_prior,
-      const Ptr<DoubleModel> &alpha_prior,
-      RNG &seeding_rng)
+      GammaModel *model, const Ptr<DoubleModel> &mean_prior,
+      const Ptr<DoubleModel> &alpha_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         mean_prior_(mean_prior),
         alpha_prior_(alpha_prior),
-        mean_sampler_(GammaMeanAlphaLogPosterior(
-            model_, mean_prior_.get()), true, 1.0, &seeding_rng),
-        alpha_sampler_(GammaAlphaLogPosterior(
-            model_, alpha_prior_.get()), true, 1.0, &seeding_rng)
-  {
+        mean_sampler_(GammaMeanAlphaLogPosterior(model_, mean_prior_.get()),
+                      true, 1.0, &seeding_rng),
+        alpha_sampler_(GammaAlphaLogPosterior(model_, alpha_prior_.get()), true,
+                       1.0, &seeding_rng) {
     mean_sampler_.set_lower_limit(0);
     alpha_sampler_.set_lower_limit(0);
   }
 
-  void GammaPosteriorSampler::draw(){
+  void GammaPosteriorSampler::draw() {
     // Draw alpha with the mean fixed.
     double mean = model_->mean();
     double alpha = alpha_sampler_.draw(model_->alpha());
@@ -160,7 +149,7 @@ namespace BOOM{
     model_->set_shape_and_mean(alpha, mean);
   }
 
-  double GammaPosteriorSampler::logpri()const{
+  double GammaPosteriorSampler::logpri() const {
     double a = model_->alpha();
     double mean = a / model_->beta();
     return mean_prior_->logp(mean) + alpha_prior_->logp(a);
@@ -169,21 +158,18 @@ namespace BOOM{
   //======================================================================
 
   GammaPosteriorSamplerBeta::GammaPosteriorSamplerBeta(
-      GammaModel *model,
-      const Ptr<DoubleModel> &mean_prior,
-      const Ptr<DoubleModel> &beta_prior,
-      RNG &seeding_rng)
+      GammaModel *model, const Ptr<DoubleModel> &mean_prior,
+      const Ptr<DoubleModel> &beta_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         mean_prior_(mean_prior),
         beta_prior_(beta_prior),
-        mean_sampler_(GammaMeanBetaLogPosterior(
-            model, mean_prior.get()), false, 1.0, &rng()),
-        beta_sampler_(GammaBetaLogPosterior(
-            model, beta_prior.get()), false, 1.0, &rng())
-  {}
+        mean_sampler_(GammaMeanBetaLogPosterior(model, mean_prior.get()), false,
+                      1.0, &rng()),
+        beta_sampler_(GammaBetaLogPosterior(model, beta_prior.get()), false,
+                      1.0, &rng()) {}
 
-  void GammaPosteriorSamplerBeta::draw(){
+  void GammaPosteriorSamplerBeta::draw() {
     // Draw beta given mean.
     double mean = model_->mean();
     double beta = beta_sampler_.draw(model_->beta());
@@ -194,7 +180,7 @@ namespace BOOM{
     model_->set_mean_and_scale(mean, beta);
   }
 
-  double GammaPosteriorSamplerBeta::logpri()const{
+  double GammaPosteriorSamplerBeta::logpri() const {
     double beta = model_->beta();
     double mean = model_->alpha() / beta;
     if (mean <= 0 || beta <= 0) {

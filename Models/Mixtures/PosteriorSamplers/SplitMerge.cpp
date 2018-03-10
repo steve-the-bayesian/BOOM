@@ -39,12 +39,10 @@ namespace BOOM {
           data_index_1_(data_index_1),
           data_index_2_(data_index_2),
           log_split_to_merge_probability_ratio_(
-              std::numeric_limits<double>::quiet_NaN())
-    {}
+              std::numeric_limits<double>::quiet_NaN()) {}
 
     void Proposal::check() {
-      if (split_mixing_weights_.empty() ||
-          merged_mixing_weights_.empty()) {
+      if (split_mixing_weights_.empty() || merged_mixing_weights_.empty()) {
         report_error("Mixing weights were not set.");
       }
       if (split_mixing_weights_.size() != merged_mixing_weights_.size()) {
@@ -57,47 +55,50 @@ namespace BOOM {
         report_error("Mixture components were not set.");
       }
       const double numerical_fudge_factor = 1e-10;
-      if (fabs(merged_mixing_weight() + empty_mixing_weight()
-               - split1_mixing_weight() - split2_mixing_weight())
-          > numerical_fudge_factor) {
+      if (fabs(merged_mixing_weight() + empty_mixing_weight() -
+               split1_mixing_weight() - split2_mixing_weight()) >
+          numerical_fudge_factor) {
         report_error("Mixing weights must sum to the same number.");
       }
-      if (fabs(merged_mixing_weights_.sum() - split_mixing_weights_.sum())
-          > numerical_fudge_factor) {
-        report_error("Mixing weight vectors differ in positions other "
-                     "than split and merge.  Have they gotten misaligned?");
+      if (fabs(merged_mixing_weights_.sum() - split_mixing_weights_.sum()) >
+          numerical_fudge_factor) {
+        report_error(
+            "Mixing weight vectors differ in positions other "
+            "than split and merge.  Have they gotten misaligned?");
       }
     }
 
-    void Proposal::set_components(
-        const Ptr<DpMixtureComponent> &merged,
-        const Ptr<DpMixtureComponent> &empty,
-        const Ptr<DpMixtureComponent> &split1,
-        const Ptr<DpMixtureComponent> &split2) {
+    void Proposal::set_components(const Ptr<DpMixtureComponent> &merged,
+                                  const Ptr<DpMixtureComponent> &empty,
+                                  const Ptr<DpMixtureComponent> &split1,
+                                  const Ptr<DpMixtureComponent> &split2) {
       if (merged->number_of_observations() !=
           split1->number_of_observations() + split2->number_of_observations()) {
-        report_error("All data must be allocated before setting the "
-                     "proposed mixture components.");
+        report_error(
+            "All data must be allocated before setting the "
+            "proposed mixture components.");
       }
       if (empty->number_of_observations() != 0) {
         report_error("The empty component was not empty.");
       }
-      if (merged->mixture_component_index() < 0
-          || empty->mixture_component_index() < 0
-          || split1->mixture_component_index() < 0
-          || split2->mixture_component_index() < 0) {
-        report_error("Mixture component index was not set for one of the "
-                     "components in a SplitMerge::Proposal.");
+      if (merged->mixture_component_index() < 0 ||
+          empty->mixture_component_index() < 0 ||
+          split1->mixture_component_index() < 0 ||
+          split2->mixture_component_index() < 0) {
+        report_error(
+            "Mixture component index was not set for one of the "
+            "components in a SplitMerge::Proposal.");
       }
       if (split2->mixture_component_index() ==
           split1->mixture_component_index()) {
         report_error("split1 and split2 must have distinct positions.");
       } else if (split2->mixture_component_index() >
                  split1->mixture_component_index()) {
-        if (split1->mixture_component_index()
-            != merged->mixture_component_index()) {
-          report_error("If split2 comes after split1 then the indices for "
-                       "split1 and merged should be the same.");
+        if (split1->mixture_component_index() !=
+            merged->mixture_component_index()) {
+          report_error(
+              "If split2 comes after split1 then the indices for "
+              "split1 and merged should be the same.");
         }
       } else {
         // In this branch split2 comes before split1.  When merged becomes
@@ -137,14 +138,16 @@ namespace BOOM {
     void Proposal::set_mixing_weights(const Vector &merged_mixing_weights,
                                       const Vector &split_mixing_weights) {
       if (split_mixing_weights.size() != merged_mixing_weights.size()) {
-        report_error("The split mixing weight vector should be the same size "
-                     "as the merged mixing weight vector.");
+        report_error(
+            "The split mixing weight vector should be the same size "
+            "as the merged mixing weight vector.");
       }
       const double numerical_fudge_factor = 1e-10;
-      if (fabs(merged_mixing_weights.sum() - split_mixing_weights.sum())
-          > numerical_fudge_factor) {
-        report_error("merged_mixing_weights and split_mixing_weights should "
-                     "sum to the same number.");
+      if (fabs(merged_mixing_weights.sum() - split_mixing_weights.sum()) >
+          numerical_fudge_factor) {
+        report_error(
+            "merged_mixing_weights and split_mixing_weights should "
+            "sum to the same number.");
       }
       merged_mixing_weights_ = check_mixing_weights(merged_mixing_weights);
       split_mixing_weights_ = check_mixing_weights(split_mixing_weights);
@@ -166,16 +169,15 @@ namespace BOOM {
     //======================================================================
     SOSS::SingleObservationSplitStrategy(DirichletProcessMixtureModel *model,
                                          double annealing_factor)
-        : model_(model),
-          annealing_factor_(annealing_factor)
-    {}
+        : model_(model), annealing_factor_(annealing_factor) {}
 
     //--------------------------------------------------------------------------
     Proposal SOSS::propose_split(int data_index_1, int data_index_2, RNG &rng) {
       int component_index = model_->cluster_indicator(data_index_1);
       if (component_index != model_->cluster_indicator(data_index_2)) {
-        report_error("Both data points must belong to the same cluster "
-                     "in order to attempt a split move.");
+        report_error(
+            "Both data points must belong to the same cluster "
+            "in order to attempt a split move.");
       }
 
       Proposal proposal(Proposal::Split, data_index_1, data_index_2);
@@ -187,7 +189,7 @@ namespace BOOM {
       // observation assigned.  The initialize function removes observations 1
       // and 2 from the data set.
       Ptr<DpMixtureComponent> original_component =
-                          model_->component(component_index);
+          model_->component(component_index);
       std::set<Ptr<Data>> data_set(original_component->abstract_data_set());
       Ptr<DpMixtureComponent> split1 = initialize_split_proposal(
           original_component, data_set, data_index_1, false, rng);
@@ -227,15 +229,12 @@ namespace BOOM {
       // The mixing weights for split1 and split2 are determined by a beta
       // random variable (epsilon) times the total mixing weight from the
       // original and empty components.
-      double total_mixing_weight = original_mixing_weights[component_index]
-          + original_mixing_weights.back();
-      double epsilon = rbeta_mt(
-          rng,
-          split1->number_of_observations(),
-          alpha + split2->number_of_observations() - 1);
+      double total_mixing_weight = original_mixing_weights[component_index] +
+                                   original_mixing_weights.back();
+      double epsilon = rbeta_mt(rng, split1->number_of_observations(),
+                                alpha + split2->number_of_observations() - 1);
       double split1_mixing_weight = total_mixing_weight * epsilon;
-      double split2_mixing_weight =
-          total_mixing_weight - split1_mixing_weight;
+      double split2_mixing_weight = total_mixing_weight - split1_mixing_weight;
 
       // The split_mixing_weights are the same size as the
       // original_mixing_weights, but the final component is non-empty.
@@ -258,10 +257,8 @@ namespace BOOM {
     //----------------------------------------------------------------------
     Ptr<DpMixtureComponent> SOSS::initialize_split_proposal(
         const Ptr<DpMixtureComponent> &original_component,
-        std::set<Ptr<Data>> &original_component_data_set,
-        int data_index,
-        bool initialize_parameters,
-        RNG &rng) {
+        std::set<Ptr<Data>> &original_component_data_set, int data_index,
+        bool initialize_parameters, RNG &rng) {
       // TODO: Consider getting the component from the buffer of
       // components held by the model if profiling shows the clone operation to
       // be a significant expense.
@@ -271,8 +268,9 @@ namespace BOOM {
       component->add_data(data_point);
       bool found = original_component_data_set.erase(data_point);
       if (!found) {
-        report_error("Data element was not part of its "
-                     "assigned mixture component.");
+        report_error(
+            "Data element was not part of its "
+            "assigned mixture component.");
       }
       if (initialize_parameters) {
         sample_parameters(*component);
@@ -302,10 +300,8 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     double SOSS::allocate_data_between_split_components(
-        DpMixtureComponent *split1,
-        DpMixtureComponent *split2,
-        const std::set<Ptr<Data>> &data_set,
-        RNG &rng) const {
+        DpMixtureComponent *split1, DpMixtureComponent *split2,
+        const std::set<Ptr<Data>> &data_set, RNG &rng) const {
       double log_partition_probability = 0;
       // If the annealing_factor is set to zero (which we check for with <= 0)
       // then the user intent is to ignore likelhood and just do uniformly
@@ -350,8 +346,9 @@ namespace BOOM {
       int component_index_1 = model_->cluster_indicator(data_index_1);
       int component_index_2 = model_->cluster_indicator(data_index_2);
       if (component_index_1 == component_index_2) {
-        report_error("Merge move cannot be attempted with data points "
-                     "in the same cluster");
+        report_error(
+            "Merge move cannot be attempted with data points "
+            "in the same cluster");
       }
       Proposal proposal(Proposal::Merge, data_index_1, data_index_2);
 
@@ -420,8 +417,7 @@ namespace BOOM {
     // Because this fraction appears in the denominator of the MH probability,
     // negative numbers favor a split.
     double SOSS::split_log_proposal_density_ratio(
-        const Proposal &proposal,
-        double log_allocation_probability,
+        const Proposal &proposal, double log_allocation_probability,
         int data_index_2) const {
       // The split proposal has the following steps:
       // 1) randomly choose 2 observations.  This step is identical in both the
@@ -430,9 +426,9 @@ namespace BOOM {
       // 2) Set the parameters of split1 equal to the parameters of the cluster
       //    containing observation 1.
       // 3) Choose a new location for the split2 mixture comopnent.
-      double split2_location_log_density =
-          log(proposal.merged_mixing_weights()[
-              proposal.split2()->mixture_component_index()]);
+      double split2_location_log_density = log(
+          proposal.merged_mixing_weights()[proposal.split2()
+                                               ->mixture_component_index()]);
 
       // 4) Simulate the parameters of split2 ~ p(theta | observation 2): a
       //    single element model with the base distribution as the prior.
@@ -447,33 +443,28 @@ namespace BOOM {
       // 6) Combine the mixing weight for 'merged' with the mixing weight for
       //    the first unpopulated component.  Split this weight among split1
       //    and split2 in proportion to the number allocated to each component.
-      double total_weight = proposal.split1_mixing_weight() +
-          proposal.split2_mixing_weight();
+      double total_weight =
+          proposal.split1_mixing_weight() + proposal.split2_mixing_weight();
       double split1_mixing_weight_fraction =
           proposal.split1_mixing_weight() / total_weight;
       double alpha = model_->concentration_parameter();
       double split1_mixing_weight_fraction_density =
           dbeta(split1_mixing_weight_fraction,
                 proposal.split1()->number_of_observations(),
-                  alpha + proposal.split2()->number_of_observations() - 1,
-                  true);
+                alpha + proposal.split2()->number_of_observations() - 1, true);
 
       double log_proposal_density_split =
-          split_log_prior
-          + split_log_likelihood
-          + log_allocation_probability
-          + split1_mixing_weight_fraction_density
-          + split2_location_log_density;
+          split_log_prior + split_log_likelihood + log_allocation_probability +
+          split1_mixing_weight_fraction_density + split2_location_log_density;
       if (print_mcmc_details) {
         std::cout << "   log split proposal density:  "
                   << log_proposal_density_split << endl
                   << "          prior:           " << split_log_prior << endl
                   << "          likelihood:      " << split_log_likelihood
                   << endl
-                  << "          allocation       "
-                  << log_allocation_probability << endl
-                  << "          mixing fraction: "
-                  << split_log_prior << endl
+                  << "          allocation       " << log_allocation_probability
+                  << endl
+                  << "          mixing fraction: " << split_log_prior << endl
                   << "          split2 location: "
                   << split2_location_log_density << endl;
       }
@@ -500,10 +491,9 @@ namespace BOOM {
       double empty_mixing_weight_fraction_density =
           dbeta(empty_mixing_weight_proportion, 1, alpha + n0, true);
 
-      double log_proposal_density_merged =
-          merged_log_prior
-          + merged_log_likelihood
-          + empty_mixing_weight_fraction_density;
+      double log_proposal_density_merged = merged_log_prior +
+                                           merged_log_likelihood +
+                                           empty_mixing_weight_fraction_density;
       if (print_mcmc_details) {
         std::cout << "   log merged proposal density: "
                   << log_proposal_density_merged << endl
@@ -511,8 +501,7 @@ namespace BOOM {
                   << "          likelihood:       " << merged_log_likelihood
                   << endl
                   << "          mixing fraction:  "
-                  << empty_mixing_weight_fraction_density
-                  << endl;
+                  << empty_mixing_weight_fraction_density << endl;
       }
       return log_proposal_density_split - log_proposal_density_merged;
     }
@@ -520,26 +509,23 @@ namespace BOOM {
     //----------------------------------------------------------------------
     double SOSS::compute_log_partition_probability(
         const Ptr<DpMixtureComponent> &split1,
-        const Ptr<DpMixtureComponent> &split2,
-        int data_index_1,
+        const Ptr<DpMixtureComponent> &split2, int data_index_1,
         int data_index_2) const {
-        return log_allocation_probability(split1, split2, data_index_1)
-            + log_allocation_probability(split2, split1, data_index_2);
+      return log_allocation_probability(split1, split2, data_index_1) +
+             log_allocation_probability(split2, split1, data_index_2);
     }
 
     //----------------------------------------------------------------------
     double SOSS::log_allocation_probability(
         const Ptr<DpMixtureComponent> &component,
-        const Ptr<DpMixtureComponent> &other_component,
-        int data_index) const {
+        const Ptr<DpMixtureComponent> &other_component, int data_index) const {
       if (annealing_factor_ > 0) {
         double ans = 0;
         Ptr<Data> seed_data_point = model_->dat()[data_index];
         std::set<Ptr<Data>> data_set = component->abstract_data_set();
         for (const auto &el : data_set) {
           if (el != seed_data_point) {
-            double logp1 =
-                annealing_factor_ * component->pdf(el.get(), true);
+            double logp1 = annealing_factor_ * component->pdf(el.get(), true);
             double logp2 =
                 annealing_factor_ * other_component->pdf(el.get(), true);
             double increment = logp1 - lse2(logp1, logp2);

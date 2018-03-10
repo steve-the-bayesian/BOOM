@@ -18,30 +18,29 @@
 */
 
 #include "Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp"
+#include <cstdint>
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
-#include <cstdint>
 
 namespace BOOM {
 
   BinomialProbitDataImputer::BinomialProbitDataImputer(int clt_threshold)
-      : clt_threshold_(clt_threshold)
-  {}
+      : clt_threshold_(clt_threshold) {}
 
-
-  double BinomialProbitDataImputer::impute(RNG &rng,
-                                           double number_of_trials,
+  double BinomialProbitDataImputer::impute(RNG &rng, double number_of_trials,
                                            double number_of_successes,
                                            double eta) const {
     int64_t n = lround(number_of_trials);
     int64_t y = lround(number_of_successes);
     if (y < 0 || n < 0) {
-      report_error("Negative values not allowed in "
-                   "BinomialProbitDataImputer::impute().");
+      report_error(
+          "Negative values not allowed in "
+          "BinomialProbitDataImputer::impute().");
     }
     if (y > n) {
-      report_error("Success count exceeds trial count in "
-                   "BinomialProbitDataImputer::impute.");
+      report_error(
+          "Success count exceeds trial count in "
+          "BinomialProbitDataImputer::impute.");
     }
     double mean, variance;
 

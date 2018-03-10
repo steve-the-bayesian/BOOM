@@ -25,11 +25,8 @@ namespace BOOM {
     using ADC = AsciiDistributionCompare;
   }
 
-  ADC::AsciiDistributionCompare(const Vector &x,
-                                const Vector &y,
-                                int xbuckets,
-                                int ybuckets)
-  {
+  ADC::AsciiDistributionCompare(const Vector &x, const Vector &y, int xbuckets,
+                                int ybuckets) {
     double xmin = std::min(min(x), min(y));
     double xmax = std::max(max(x), max(y));
     Vector x_density_values(xbuckets);
@@ -42,8 +39,8 @@ namespace BOOM {
     for (int i = 0; i < xbuckets; ++i) {
       x_density_values[i] = xdensity(xx);
       y_density_values[i] = ydensity(xx);
-      max_density = std::max(max_density, std::max(x_density_values[i],
-                                                   y_density_values[i]));
+      max_density = std::max(
+          max_density, std::max(x_density_values[i], y_density_values[i]));
       xx += dx;
     }
     graph_ = AsciiGraph(xmin, xmax, 0, max_density, xbuckets, ybuckets);

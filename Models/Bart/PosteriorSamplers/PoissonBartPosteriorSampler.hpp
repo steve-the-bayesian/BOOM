@@ -20,8 +20,8 @@
 #ifndef BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
 #include "Models/Bart/PoissonBartModel.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
 #include "Models/Bart/ResidualRegressionData.hpp"
 #include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
 
@@ -91,14 +91,14 @@ namespace BOOM {
     // y == 0.
     class PoissonResidualRegressionData : public ResidualRegressionData {
      public:
-      PoissonResidualRegressionData(const Ptr<PoissonRegressionData> & dp,
+      PoissonResidualRegressionData(const Ptr<PoissonRegressionData> &dp,
                                     double initial_predicted_log_lambda);
 
-      int y()const;            // observed_response
-      double exposure()const;  // observed exposure
+      int y() const;            // observed_response
+      double exposure() const;  // observed exposure
 
       void add_to_residual(double value) override;
-      void add_to_poisson_suf(PoissonSufficientStatistics &suf)const override;
+      void add_to_poisson_suf(PoissonSufficientStatistics &suf) const override;
 
       // The term 'internal' refers to the largest observation inside
       // the interval [0, exposure).
@@ -112,11 +112,10 @@ namespace BOOM {
       // where mu[i] and sigsq[i] are the mean and variance of the
       // mixture component associated with observation i (0 for
       // internal and 1 for external).
-      void set_latent_data(
-          double neglog_final_event_time_minus_mu,
-          double internal_weight,
-          double neglog_final_interarrival_time_minus_mu,
-          double external_weight);
+      void set_latent_data(double neglog_final_event_time_minus_mu,
+                           double internal_weight,
+                           double neglog_final_interarrival_time_minus_mu,
+                           double external_weight);
 
       // neglog_final_event_time_minus_mu - log(lambda)
       double internal_residual() const;
@@ -126,10 +125,8 @@ namespace BOOM {
       double external_residual() const;
       double external_weight() const;
 
-      void set_predicted_log_lambda(double eta) {
-        log_lambda_ = eta;
-      }
-      double predicted_log_lambda() const {return log_lambda_;}
+      void set_predicted_log_lambda(double eta) { log_lambda_ = eta; }
+      double predicted_log_lambda() const { return log_lambda_; }
 
      private:
       // Storing observed_data_ as a const raw pointer allows us to
@@ -160,15 +157,14 @@ namespace BOOM {
       double log_lambda_;
     };
 
-  //======================================================================
+    //======================================================================
     // The sufficient statistics are the stats needed to compute log
     // integrated likelihood, and to draw the mean parameters at each
     // node.  A derivation of log integrated likelihood is given
     // immediately after the class definition.
-    class PoissonSufficientStatistics
-        : public SufficientStatisticsBase {
+    class PoissonSufficientStatistics : public SufficientStatisticsBase {
      public:
-      PoissonSufficientStatistics * clone() const override;
+      PoissonSufficientStatistics *clone() const override;
 
       // Sets all data elements to 0.
       void clear() override;
@@ -178,13 +174,14 @@ namespace BOOM {
       void update(const ResidualRegressionData &data) override;
       virtual void update(const PoissonResidualRegressionData &data);
 
-      double sum_of_weights() const {return sum_of_weights_;}
+      double sum_of_weights() const { return sum_of_weights_; }
       double weighted_sum_of_residuals() const {
         return weighted_sum_of_residuals_;
       }
       double weighted_sum_of_squared_residuals() const {
         return weighted_sum_of_squared_residuals_;
       }
+
      private:
       // The sum (over all data) of internal_weight()*internal_residual()
       // + external_weight()*external_residual();
@@ -197,55 +194,55 @@ namespace BOOM {
       double weighted_sum_of_squared_residuals_;
     };
 
-  /* Begin LaTeX documentation for the calculation of integrated log
-   * likelihood, which reveals the structure of the complete data
-   * sufficient statistics.
-\documentclass{article}
-\usepackage{amsmath}
-\newcommand{\by}{{\bf y}}
-\begin{document}
-Suppose $y_i \sim N(\mu_i + \eta, \sigma^2_i)$, where $\mu_i$ and
-$\sigma_i$ are known.  The prior is $\eta \sim N(\mu_0, \tau^2)$.  Let
-$\by = (y_1, \dots, y_n)$, and $w_i = \sigma_i^{-2}$.  Let $v^{-1} =
-\sum_i w_i + 1/\tau^2$ be the posterior precision of $\eta$, and let
-$\tilde \mu = v(\sum_iw_i(y_i - \mu_i) + \mu_0/\tau^2)$ be the
-posterior mean.  Then the integrated likelihood is
-\begin{equation*}
-  \begin{split}
-    p(\by) & = \int p(\by | \eta) p(\eta) \ d \eta \\
-    &= \int (2\pi)^{-n/2} \prod_i (w_i)^{1/2}
-    \exp\left(-\frac{1}{2} \sum_i w_i [y_i - \mu_i - \eta]^2\right)\\
-    & \qquad (2\pi)^{-1/2} (\tau^2)^{-1/2}
-    \exp\left( -\frac{1}{2} [\eta - \mu_0]^2/\tau^2\right) \ d \eta \\
-    & = \int (2\pi)^{-n+1/2} \prod_i w_i^{1/2} \tau^{-1}
-    \exp \left(-\frac{1}{2} \left[
-        \eta^2 \left(\sum_iw_i + \frac{1}{\tau^2}\right)
-        -2 \eta \left(
-          \sum_i w_i[y_i - \mu_i]
-          + \frac{\mu_0}{\tau^2}\right)
-      \right.
-    \right. \\
-    & \left. \left. \qquad + \sum_i w_i(y_i - \mu_i)^2 +
-        \frac{\mu_0^2}{\tau^2} + \frac{\tilde \mu^2}{v} -
-        \frac{\tilde\mu^2}{v} \right]
-    \right) \ d \eta\\
-    &= (2\pi)^{-n/2} \left(\prod_i w_i^{1/2}\right) \frac{v}{\tau}
-    \exp\left(-\frac{1}{2}\left[
-      \sum_i w_i(y_i - \mu_i)^2 +
-        \frac{\mu_0^2}{\tau^2} - \frac{\tilde \mu^2}{v}\right]\right)
-    \\
-    & \qquad
-    \int (2\pi)^{-1/2}\frac{1}{v}
-    \exp\left( -\frac{1}{2v}(\eta - \tilde\mu)^2\right) \ d \eta \\
-    &=(2\pi)^{-n/2} \left(\prod_i w_i^{1/2}\right) \frac{v}{\tau}
-    \exp\left(-\frac{1}{2}\left[
-      \sum_i w_i(y_i - \mu_i)^2 +
-        \frac{\mu_0^2}{\tau^2} - \frac{\tilde \mu^2}{v}\right]\right).
-  \end{split}
-\end{equation*}
-\end{document}
-  ------ End LaTeX documentation ------------------------------------------*/
-  } // namespace Bart
+    /* Begin LaTeX documentation for the calculation of integrated log
+     * likelihood, which reveals the structure of the complete data
+     * sufficient statistics.
+  \documentclass{article}
+  \usepackage{amsmath}
+  \newcommand{\by}{{\bf y}}
+  \begin{document}
+  Suppose $y_i \sim N(\mu_i + \eta, \sigma^2_i)$, where $\mu_i$ and
+  $\sigma_i$ are known.  The prior is $\eta \sim N(\mu_0, \tau^2)$.  Let
+  $\by = (y_1, \dots, y_n)$, and $w_i = \sigma_i^{-2}$.  Let $v^{-1} =
+  \sum_i w_i + 1/\tau^2$ be the posterior precision of $\eta$, and let
+  $\tilde \mu = v(\sum_iw_i(y_i - \mu_i) + \mu_0/\tau^2)$ be the
+  posterior mean.  Then the integrated likelihood is
+  \begin{equation*}
+    \begin{split}
+      p(\by) & = \int p(\by | \eta) p(\eta) \ d \eta \\
+      &= \int (2\pi)^{-n/2} \prod_i (w_i)^{1/2}
+      \exp\left(-\frac{1}{2} \sum_i w_i [y_i - \mu_i - \eta]^2\right)\\
+      & \qquad (2\pi)^{-1/2} (\tau^2)^{-1/2}
+      \exp\left( -\frac{1}{2} [\eta - \mu_0]^2/\tau^2\right) \ d \eta \\
+      & = \int (2\pi)^{-n+1/2} \prod_i w_i^{1/2} \tau^{-1}
+      \exp \left(-\frac{1}{2} \left[
+          \eta^2 \left(\sum_iw_i + \frac{1}{\tau^2}\right)
+          -2 \eta \left(
+            \sum_i w_i[y_i - \mu_i]
+            + \frac{\mu_0}{\tau^2}\right)
+        \right.
+      \right. \\
+      & \left. \left. \qquad + \sum_i w_i(y_i - \mu_i)^2 +
+          \frac{\mu_0^2}{\tau^2} + \frac{\tilde \mu^2}{v} -
+          \frac{\tilde\mu^2}{v} \right]
+      \right) \ d \eta\\
+      &= (2\pi)^{-n/2} \left(\prod_i w_i^{1/2}\right) \frac{v}{\tau}
+      \exp\left(-\frac{1}{2}\left[
+        \sum_i w_i(y_i - \mu_i)^2 +
+          \frac{\mu_0^2}{\tau^2} - \frac{\tilde \mu^2}{v}\right]\right)
+      \\
+      & \qquad
+      \int (2\pi)^{-1/2}\frac{1}{v}
+      \exp\left( -\frac{1}{2v}(\eta - \tilde\mu)^2\right) \ d \eta \\
+      &=(2\pi)^{-n/2} \left(\prod_i w_i^{1/2}\right) \frac{v}{\tau}
+      \exp\left(-\frac{1}{2}\left[
+        \sum_i w_i(y_i - \mu_i)^2 +
+          \frac{\mu_0^2}{\tau^2} - \frac{\tilde \mu^2}{v}\right]\right).
+    \end{split}
+  \end{equation*}
+  \end{document}
+    ------ End LaTeX documentation ------------------------------------------*/
+  }  // namespace Bart
 
   class PoissonBartPosteriorSampler : public BartPosteriorSamplerBase {
    public:
@@ -253,29 +250,27 @@ posterior mean.  Then the integrated likelihood is
     typedef Bart::PoissonSufficientStatistics SufType;
 
     PoissonBartPosteriorSampler(
-        PoissonBartModel *model,
-        double total_prediction_sd,
-        double prior_tree_depth_alpha,
-        double prior_tree_depth_beta,
+        PoissonBartModel *model, double total_prediction_sd,
+        double prior_tree_depth_alpha, double prior_tree_depth_beta,
         const std::function<double(int)> &log_prior_on_number_of_trees,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double draw_mean(Bart::TreeNode *leaf) override;
     double log_integrated_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const override;
+        const Bart::SufficientStatisticsBase &suf) const override;
     double complete_data_log_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const override;
+        const Bart::SufficientStatisticsBase &suf) const override;
     virtual double complete_data_poisson_log_likelihood(
-        const Bart::PoissonSufficientStatistics &suf)const;
+        const Bart::PoissonSufficientStatistics &suf) const;
 
     void clear_residuals() override;
 
     // The number of "residual data points" managed by the sampler.
-    int residual_size()const override;
-    DataType * create_and_store_residual(int i) override;
-    DataType * residual(int i) override;
-    SufType * create_suf() const override;
+    int residual_size() const override;
+    DataType *create_and_store_residual(int i) override;
+    DataType *residual(int i) override;
+    SufType *create_suf() const override;
 
     void impute_latent_data();
     void impute_latent_data_point(DataType *data);
@@ -288,4 +283,4 @@ posterior mean.  Then the integrated likelihood is
 
 }  // namespace BOOM
 
-#endif //  BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_POISSON_BART_POSTERIOR_SAMPLER_HPP_

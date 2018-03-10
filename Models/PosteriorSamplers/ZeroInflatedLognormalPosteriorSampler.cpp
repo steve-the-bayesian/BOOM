@@ -16,18 +16,18 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/ZeroInflatedLognormalModel.hpp"
 #include "Models/PosteriorSamplers/ZeroInflatedLognormalPosteriorSampler.hpp"
+#include "Models/ZeroInflatedLognormalModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  double ZeroInflatedLognormalPosteriorSampler::logpri()const{
+  double ZeroInflatedLognormalPosteriorSampler::logpri() const {
     return model_->Gaussian_model()->logpri() +
-        model_->Binomial_model()->logpri();
+           model_->Binomial_model()->logpri();
   }
 
-  void ZeroInflatedLognormalPosteriorSampler::draw(){
+  void ZeroInflatedLognormalPosteriorSampler::draw() {
     model_->Gaussian_model()->sample_posterior();
     model_->Binomial_model()->sample_posterior();
   }
-}
+}  // namespace BOOM

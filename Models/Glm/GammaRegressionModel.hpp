@@ -19,12 +19,12 @@
 #ifndef BOOM_GAMMA_REGRESSION_MODEL_HPP_
 #define BOOM_GAMMA_REGRESSION_MODEL_HPP_
 
+#include "Models/GammaModel.hpp"
 #include "Models/Glm/Glm.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Sufstat.hpp"
-#include "Models/GammaModel.hpp"
 
 namespace BOOM {
 
@@ -42,27 +42,28 @@ namespace BOOM {
   //
   // In the code below, alpha is the "shape parameter" and beta are
   // the "coefficients".
-  class GammaRegressionModelBase
-      : public GlmModel,
-        public ParamPolicy_2<UnivParams, GlmCoefs>,
-        public PriorPolicy,
-        public NumOptModel,
-        virtual public MixtureComponent
-  {
+  class GammaRegressionModelBase : public GlmModel,
+                                   public ParamPolicy_2<UnivParams, GlmCoefs>,
+                                   public PriorPolicy,
+                                   public NumOptModel,
+                                   virtual public MixtureComponent {
    public:
     GammaRegressionModelBase(int xdim);
-    GammaRegressionModelBase(double shape_parameter, const Vector &coefficients);
-    GammaRegressionModelBase(const Ptr<UnivParams> & alpha,
+    GammaRegressionModelBase(double shape_parameter,
+                             const Vector &coefficients);
+    GammaRegressionModelBase(const Ptr<UnivParams> &alpha,
                              const Ptr<GlmCoefs> &coefficients);
-    GammaRegressionModelBase * clone() const override = 0;
+    GammaRegressionModelBase *clone() const override = 0;
 
-    GlmCoefs &coef() override {return ParamPolicy::prm2_ref();}
-    const GlmCoefs &coef() const override {return ParamPolicy::prm2_ref();}
-    Ptr<GlmCoefs> coef_prm() override {return ParamPolicy::prm2();}
-    const Ptr<GlmCoefs> coef_prm() const override {return ParamPolicy::prm2();}
+    GlmCoefs &coef() override { return ParamPolicy::prm2_ref(); }
+    const GlmCoefs &coef() const override { return ParamPolicy::prm2_ref(); }
+    Ptr<GlmCoefs> coef_prm() override { return ParamPolicy::prm2(); }
+    const Ptr<GlmCoefs> coef_prm() const override {
+      return ParamPolicy::prm2();
+    }
 
-    Ptr<UnivParams> shape_prm() {return prm1();}
-    double shape_parameter() const {return prm1_ref().value();}
+    Ptr<UnivParams> shape_prm() { return prm1(); }
+    double shape_parameter() const { return prm1_ref().value(); }
     void set_shape_parameter(double alpha);
 
     double expected_value(const Vector &x) const;
@@ -74,24 +75,20 @@ namespace BOOM {
     double sim(const Vector &x, RNG &rng = GlobalRng::rng) const;
   };
   //======================================================================
-  class GammaRegressionModel
-      : public GammaRegressionModelBase,
-        public IID_DataPolicy<RegressionData>
-  {
+  class GammaRegressionModel : public GammaRegressionModelBase,
+                               public IID_DataPolicy<RegressionData> {
    public:
     GammaRegressionModel(int xdim);
     GammaRegressionModel(double shape_parameter, const Vector &coefficients);
     GammaRegressionModel(const Ptr<UnivParams> &alpha,
                          const Ptr<GlmCoefs> &coefficients);
-    GammaRegressionModel * clone() const override;
+    GammaRegressionModel *clone() const override;
 
     // Returns log likelihood and its derivatives as a function of the
     // concatenated vector [shape_parameter(), coef()].
-    double Loglike(const Vector &alpha_beta,
-                   Vector &gradient,
-                   Matrix &Hessian,
+    double Loglike(const Vector &alpha_beta, Vector &gradient, Matrix &Hessian,
                    uint nderiv) const override;
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
   };
 
   //======================================================================
@@ -110,22 +107,19 @@ namespace BOOM {
   // model.  The data are organized using a map, so that unique
   // covariate patterns accumulate sufficient statistics for that
   // pattern.
-  class GammaRegressionConditionalSuf
-      : public SufstatDetails<RegressionData> {
+  class GammaRegressionConditionalSuf : public SufstatDetails<RegressionData> {
    public:
-    typedef std::map<Ptr<VectorData>,
-                     Ptr<GammaSuf>,
-                     VectorPtrLess> MapType;
+    typedef std::map<Ptr<VectorData>, Ptr<GammaSuf>, VectorPtrLess> MapType;
     GammaRegressionConditionalSuf();
-    GammaRegressionConditionalSuf * clone() const override;
+    GammaRegressionConditionalSuf *clone() const override;
     void Update(const RegressionData &data) override;
     void clear() override;
     void increment(double n, double sum, double sumlog,
                    const Ptr<VectorData> &predictors);
 
-    GammaRegressionConditionalSuf * abstract_combine(Sufstat *rhs) override;
+    GammaRegressionConditionalSuf *abstract_combine(Sufstat *rhs) override;
 
-    void combine(const Ptr<GammaRegressionConditionalSuf> & rhs);
+    void combine(const Ptr<GammaRegressionConditionalSuf> &rhs);
     void combine(const GammaRegressionConditionalSuf &rhs);
 
     Vector vectorize(bool minimal = true) const override;
@@ -133,12 +127,10 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    std::ostream & print(std::ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
     // This is the primay accessor for the sufficient statistics.
-    const MapType &map() const {
-      return suf_;
-    }
+    const MapType &map() const { return suf_; }
 
     // Set the dimensions of the sufficient statistics.  If the
     // sufstat object has been built natively using update() or
@@ -152,7 +144,7 @@ namespace BOOM {
     // return the GammaSuf that it is associated with.  Otherwise,
     // allocate a new, empty GammaSuf, associate it with predictors,
     // and return it.
-    Ptr<GammaSuf> get(const Ptr<VectorData> & predictors);
+    Ptr<GammaSuf> get(const Ptr<VectorData> &predictors);
 
     // This is the main object holding the conditional sufficient
     // statistics and the vectors of predictors associated with them.
@@ -173,32 +165,27 @@ namespace BOOM {
   // GammaRegressionModel.
   class GammaRegressionModelConditionalSuf
       : public GammaRegressionModelBase,
-        public SufstatDataPolicy<RegressionData, GammaRegressionConditionalSuf>
-  {
+        public SufstatDataPolicy<RegressionData,
+                                 GammaRegressionConditionalSuf> {
    public:
     GammaRegressionModelConditionalSuf(int xdim);
     GammaRegressionModelConditionalSuf(double shape_parameter,
                                        const Vector &coefficients);
     GammaRegressionModelConditionalSuf(const Ptr<UnivParams> &alpha,
                                        const Ptr<GlmCoefs> &coefficients);
-    GammaRegressionModelConditionalSuf * clone() const override;
+    GammaRegressionModelConditionalSuf *clone() const override;
 
     // Returns log likelihood and its derivatives as a function of the
     // concatenated vector [shape_parameter(), coef()].
-    double Loglike(const Vector &alpha_beta,
-                   Vector &gradient,
-                   Matrix &Hessian,
+    double Loglike(const Vector &alpha_beta, Vector &gradient, Matrix &Hessian,
                    uint nderiv) const override;
 
-    void increment_sufficient_statistics(
-        double n,
-        double sum,
-        double sumlog,
-        const Ptr<VectorData> &predictors);
+    void increment_sufficient_statistics(double n, double sum, double sumlog,
+                                         const Ptr<VectorData> &predictors);
 
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
   };
 
 }  // namespace BOOM
 
-#endif //  BOOM_GAMMA_REGRESSION_MODEL_HPP_
+#endif  //  BOOM_GAMMA_REGRESSION_MODEL_HPP_

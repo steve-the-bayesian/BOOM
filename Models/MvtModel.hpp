@@ -21,29 +21,27 @@
 #define MVT_MODEL_H
 
 #include "Models/ModelTypes.hpp"
-#include "Models/VectorModel.hpp"
-#include "Models/SpdParams.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/ScaledChisqModel.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/VectorModel.hpp"
 #include "Models/WeightedMvnModel.hpp"
 #include "distributions/rng.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class ScaledChisqModel;
   class WeightedMvnModel;
 
-  class MvtModel
-    : public CompositeParamPolicy,
-      public IID_DataPolicy<VectorData>,
-      public PriorPolicy,
-      public LatentVariableModel,
-      public LoglikeModel,
-      public LocationScaleVectorModel,
-      public MixtureComponent
-  {
-  public:
+  class MvtModel : public CompositeParamPolicy,
+                   public IID_DataPolicy<VectorData>,
+                   public PriorPolicy,
+                   public LatentVariableModel,
+                   public LoglikeModel,
+                   public LocationScaleVectorModel,
+                   public MixtureComponent {
+   public:
     MvtModel(uint p, double mu = 0.0, double sig = 1.0, double nu = 30.0);
     MvtModel(const Vector &mean, const SpdMatrix &Var, double Nu);
     MvtModel(const MvtModel &m);
@@ -78,7 +76,7 @@ namespace BOOM{
     double pdf(const Data *dp, bool logscale) const override;
     double pdf(const VectorData *dp, bool logscale) const;
     double pdf(const Vector &x, bool logscale) const;
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
 
     void add_data(const Ptr<Data> &) override;
     void add_data(const Ptr<VectorData> &) override;
@@ -91,7 +89,7 @@ namespace BOOM{
     virtual double complete_data_loglike() const;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
-  private:
+   private:
     void Impute(bool sample, RNG &rng = GlobalRng::rng);
     Ptr<WeightedMvnModel> mvn;
     Ptr<ScaledChisqModel> wgt;
@@ -99,4 +97,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif // MVT_MODEL_H
+#endif  // MVT_MODEL_H

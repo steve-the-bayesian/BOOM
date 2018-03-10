@@ -18,14 +18,14 @@
 */
 
 #include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
-  double  TDataImputer::impute(
-      RNG &rng, double residual, double sd, double nu) const {
-    double delta = residual/sd;
+  double TDataImputer::impute(RNG &rng, double residual, double sd,
+                              double nu) const {
+    double delta = residual / sd;
     return rgamma_mt(rng, 0.5 * (nu + 1), 0.5 * (nu + square(delta)));
   }
 

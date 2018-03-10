@@ -23,11 +23,10 @@
 #include "Models/DirichletModel.hpp"
 #include "Models/PosteriorSamplers/DirichletPosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-
+#include "Models/Hierarchical/HierarchicalDirichletModel.hpp"
 namespace BOOM {
 
-  class HierarchicalDirichletPosteriorSampler
-      : public PosteriorSampler {
+  class HierarchicalDirichletPosteriorSampler : public PosteriorSampler {
    public:
     HierarchicalDirichletPosteriorSampler(
         HierarchicalDirichletModel *model,
@@ -47,4 +46,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_HIERARCHICAL_DIRICHLET_SAMPLER_HPP_
+#endif  // BOOM_HIERARCHICAL_DIRICHLET_SAMPLER_HPP_

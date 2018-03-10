@@ -31,14 +31,12 @@
 
 namespace BOOM {
 
-  class BinomialProbitSpikeSlabSampler
-      : public PosteriorSampler {
+  class BinomialProbitSpikeSlabSampler : public PosteriorSampler {
    public:
-    BinomialProbitSpikeSlabSampler(BinomialProbitModel *model,
-                                   const Ptr<MvnBase> &slab_prior,
-                                   const Ptr<VariableSelectionPrior> &spike_prior,
-                                   int clt_threshold = 10,
-                                   RNG &seeding_rng = GlobalRng::rng);
+    BinomialProbitSpikeSlabSampler(
+        BinomialProbitModel *model, const Ptr<MvnBase> &slab_prior,
+        const Ptr<VariableSelectionPrior> &spike_prior, int clt_threshold = 10,
+        RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
@@ -69,6 +67,6 @@ namespace BOOM {
     Vector xtz_;
   };
 
-}   // namespace BOOM
+}  // namespace BOOM
 
 #endif  //  BOOM_BINOMIAL_PROBIT_SPIKE_SLAB_SAMPLER_HPP_

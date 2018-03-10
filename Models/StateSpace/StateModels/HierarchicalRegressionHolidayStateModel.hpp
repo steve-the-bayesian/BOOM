@@ -18,20 +18,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 #include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
 #include "Models/StateSpace/StateModels/RegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/NullDataPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/VectorView.hpp"
-#include "cpputil/report_error.hpp"
 #include "cpputil/Date.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -71,12 +71,10 @@ namespace BOOM {
   //   model.model()->set_method(sampler);
   //   // Observe the time dimension, to build initial data structures.
   //   model.observe_time_dimension(83);
-  class HierarchicalRegressionHolidayStateModel
-      : public StateModel,
-        public CompositeParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy
-  {
+  class HierarchicalRegressionHolidayStateModel : public StateModel,
+                                                  public CompositeParamPolicy,
+                                                  public NullDataPolicy,
+                                                  public PriorPolicy {
    public:
     // Args:
     //   time_of_first_observation: The date on which the first observed data
@@ -87,9 +85,10 @@ namespace BOOM {
     //     time-dependent variance, including GLM's.
     // TODO: Lift the residual variance restriction.  It might be easier to
     //    allow a bit of error back into the state equation
-    HierarchicalRegressionHolidayStateModel(const Date &time_of_first_observation,
-                                            const Ptr<UnivParams> &residual_variance);
-    HierarchicalRegressionHolidayStateModel * clone() const override {
+    HierarchicalRegressionHolidayStateModel(
+        const Date &time_of_first_observation,
+        const Ptr<UnivParams> &residual_variance);
+    HierarchicalRegressionHolidayStateModel *clone() const override {
       return new HierarchicalRegressionHolidayStateModel(*this);
     }
 
@@ -98,20 +97,16 @@ namespace BOOM {
     // opportunities to borrow strength.  Each holiday must have the same sized
     // influence window.
     void add_holiday(const Ptr<Holiday> &holiday);
-    
+
     void observe_time_dimension(int max_time) override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
 
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
 
-    uint state_dimension() const override {return impl_.state_dimension();}
+    uint state_dimension() const override { return impl_.state_dimension(); }
     uint state_error_dimension() const override {
       return impl_.state_error_dimension();
     }
@@ -119,8 +114,7 @@ namespace BOOM {
     // This is a required virtual function needed for MLE/MAP estimation, which
     // is not supported for this state model.  Calling this throws an exception.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {
       report_error("Not implemented.");
     }
@@ -128,9 +122,7 @@ namespace BOOM {
     // This is a required virtual function needed for MLE/MAP estimation, which
     // is not supported for this state model.  Calling this throws an exception.
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {
       report_error("Not implemented.");
     }
@@ -166,7 +158,7 @@ namespace BOOM {
       return new IdenticalRowsMatrix(observation_matrix(t),
                                      data_point.total_sample_size());
     }
-    
+
     Vector initial_state_mean() const override {
       return impl_.initial_state_mean();
     }
@@ -179,7 +171,7 @@ namespace BOOM {
     void clear_data() override;
 
     // The hierarchical model describing the state effects.
-    HierarchicalGaussianRegressionModel *model() {return model_.get();}
+    HierarchicalGaussianRegressionModel *model() { return model_.get(); }
     const HierarchicalGaussianRegressionModel *model() const {
       return model_.get();
     }
@@ -191,10 +183,8 @@ namespace BOOM {
     //
     // Returns the set of 'predictor variables' indicating the active day of the
     // influence window.  Element 'day' is 1, all other elements are 0.
-    const Vector &daily_dummies(int day) const {
-      return daily_dummies_[day];
-    }
-    
+    const Vector &daily_dummies(int day) const { return daily_dummies_[day]; }
+
    private:
     RegressionHolidayBaseImpl impl_;
 
@@ -205,7 +195,7 @@ namespace BOOM {
     // Element d is a dummy variable with a 1 in position d and 0's elsewhere.
     std::vector<Vector> daily_dummies_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_HIERARCHICAL_REGRESSION_HOLIDAY_STATE_MODEL_HPP_

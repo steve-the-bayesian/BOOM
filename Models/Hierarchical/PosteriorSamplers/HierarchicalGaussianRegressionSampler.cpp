@@ -24,17 +24,15 @@ namespace BOOM {
   namespace {
     typedef HierarchicalGaussianRegressionSampler HGRS;
     typedef HierarchicalGaussianRegressionModel HGRM;
-  }
+  }  // namespace
 
   HGRS::HierarchicalGaussianRegressionSampler(
-      HGRM *model,
-      const Ptr<GammaModelBase> &residual_precision_prior,
+      HGRM *model, const Ptr<GammaModelBase> &residual_precision_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         residual_variance_prior_(residual_precision_prior),
-        residual_variance_sampler_(residual_variance_prior_)
-  {}
+        residual_variance_sampler_(residual_variance_prior_) {}
 
   // TODO:  Consider threads here.
   void HGRS::draw() {
@@ -44,8 +42,8 @@ namespace BOOM {
     prior->clear_data();
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       RegressionModel *reg = model_->data_model(i);
-      RegressionCoefficientSampler::sample_regression_coefficients(
-          rng(), reg, *prior);
+      RegressionCoefficientSampler::sample_regression_coefficients(rng(), reg,
+                                                                   *prior);
       prior->suf()->update_raw(reg->Beta());
       sample_size += reg->suf()->n();
       residual_sum_of_squares += reg->suf()->relative_sse(reg->coef());
@@ -57,8 +55,8 @@ namespace BOOM {
 
   double HGRS::logpri() const {
     const MvnModel *prior = model_->prior();
-    double ans = residual_variance_sampler_.log_prior(
-        model_->residual_variance());
+    double ans =
+        residual_variance_sampler_.log_prior(model_->residual_variance());
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       ans += prior->logp(model_->data_model(i)->Beta());
     }

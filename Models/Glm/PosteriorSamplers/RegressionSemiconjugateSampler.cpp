@@ -27,17 +27,14 @@ namespace BOOM {
   }
 
   RSS::RegressionSemiconjugateSampler(
-      RegressionModel *model,
-      const Ptr<MvnBase> &coefficient_prior,
-      const Ptr<GammaModelBase> &residual_precision_prior,
-      RNG &seeding_rng)
+      RegressionModel *model, const Ptr<MvnBase> &coefficient_prior,
+      const Ptr<GammaModelBase> &residual_precision_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         beta_prior_(coefficient_prior),
         siginv_prior_(residual_precision_prior),
         beta_sampler_(model_, beta_prior_, seeding_rng),
-        sigsq_sampler_(siginv_prior_)
-  {}
+        sigsq_sampler_(siginv_prior_) {}
 
   void RSS::draw() {
     draw_beta_given_sigma();
@@ -54,58 +51,53 @@ namespace BOOM {
 
   void RSS::draw_sigma_given_beta() {
     const RegSuf &suf(*model_->suf());
-    double sigsq = sigsq_sampler_.draw(
-        rng(), suf.n(), suf.relative_sse(model_->coef()));
+    double sigsq =
+        sigsq_sampler_.draw(rng(), suf.n(), suf.relative_sse(model_->coef()));
     model_->set_sigsq(sigsq);
   }
 
   void RSS::find_posterior_mode(double epsilon) {
-    SpdMatrix precision = beta_prior_->siginv()
-        + model_->suf()->xtx() / model_->sigsq();
-    Vector unscaled_mean = beta_prior_->siginv() * beta_prior_->mu()
-        + model_->suf()->xty() / model_->sigsq();
+    SpdMatrix precision =
+        beta_prior_->siginv() + model_->suf()->xtx() / model_->sigsq();
+    Vector unscaled_mean = beta_prior_->siginv() * beta_prior_->mu() +
+                           model_->suf()->xty() / model_->sigsq();
     Vector beta = precision.solve(unscaled_mean);
-    double sigsq = model_->suf()->relative_sse(GlmCoefs(beta))
-        / model_->suf()->n();
+    double sigsq =
+        model_->suf()->relative_sse(GlmCoefs(beta)) / model_->suf()->n();
     model_->set_Beta(beta);
     model_->set_sigsq(sigsq);
 
     Vector parameters = model_->vectorize_params();
-    auto target_fun = [this](const Vector &parameters,
-                                           Vector &gradient,
-                                           Matrix &Hessian,
-                                           uint nd) {
-      return this->model_->Loglike(parameters, gradient, Hessian, nd)
-      + this->log_prior(parameters, gradient, Hessian, nd);
+    auto target_fun = [this](const Vector &parameters, Vector &gradient,
+                             Matrix &Hessian, uint nd) {
+      return this->model_->Loglike(parameters, gradient, Hessian, nd) +
+             this->log_prior(parameters, gradient, Hessian, nd);
     };
     auto fun = [target_fun](const Vector &x) {
       Vector g;
       Matrix h;
-      return target_fun(x, g, h, 0);};
+      return target_fun(x, g, h, 0);
+    };
     auto dfun = [target_fun](const Vector &x, Vector &g) {
       Matrix h;
-      return target_fun(x, g, h, 1);};
+      return target_fun(x, g, h, 1);
+    };
     auto d2fun = [target_fun](const Vector &x, Vector &g, Matrix &H) {
-      return target_fun(x, g, H, 2);};
+      return target_fun(x, g, H, 2);
+    };
     Vector gradient(parameters.size());
     Matrix Hessian(parameters.size(), parameters.size());
     double max_function_value = 0;
     std::string error_message;
-    bool ok = max_nd2_careful(parameters,
-                              gradient,
-                              Hessian,
-                              max_function_value,
-                              fun,
-                              dfun,
-                              d2fun,
-                              1e-5,
-                              error_message);
+    bool ok = max_nd2_careful(parameters, gradient, Hessian, max_function_value,
+                              fun, dfun, d2fun, 1e-5, error_message);
     if (ok) {
       model_->unvectorize_params(parameters);
     } else {
       ostringstream err;
       err << "An exception was thrown while locating the posterior mode in "
-          "RegressionSemiconjugateSampler." << std::endl
+             "RegressionSemiconjugateSampler."
+          << std::endl
           << "The error message was: " << std::endl
           << error_message;
       report_error(err.str());
@@ -127,16 +119,14 @@ namespace BOOM {
     beta.pop_back();
     Vector beta_gradient(beta.size());
     double sigsq_deriv;
-    double ans = beta_prior_->dlogp(beta, beta_gradient)
-        + siginv_prior_->logp_reciprocal(sigsq, &sigsq_deriv);
+    double ans = beta_prior_->dlogp(beta, beta_gradient) +
+                 siginv_prior_->logp_reciprocal(sigsq, &sigsq_deriv);
     gradient = concat(beta_gradient, sigsq_deriv);
     return ans;
   }
 
-  double RSS::log_prior(const Vector &parameters,
-                        Vector &gradient,
-                        Matrix &Hessian,
-                        uint nd) const {
+  double RSS::log_prior(const Vector &parameters, Vector &gradient,
+                        Matrix &Hessian, uint nd) const {
     Vector beta(parameters);
     double sigsq = beta.back();
     beta.pop_back();
@@ -145,12 +135,10 @@ namespace BOOM {
 
     double sigsq_derivative;
     double sigsq_second_derivative;
-    double ans = beta_prior_->Logp(
-        beta, beta_gradient, beta_hessian, nd)
-        + siginv_prior_->logp_reciprocal(
-            sigsq,
-            nd > 0 ? &sigsq_derivative : nullptr,
-            nd > 1 ? &sigsq_second_derivative : nullptr);
+    double ans = beta_prior_->Logp(beta, beta_gradient, beta_hessian, nd) +
+                 siginv_prior_->logp_reciprocal(
+                     sigsq, nd > 0 ? &sigsq_derivative : nullptr,
+                     nd > 1 ? &sigsq_second_derivative : nullptr);
 
     if (nd > 0) {
       gradient = concat(beta_gradient, sigsq_derivative);
@@ -158,8 +146,8 @@ namespace BOOM {
         // NOTE: There is a pretty strong assumption here that the prior models
         // do not share parameters.  If beta_prior_ is of class MvnGivenSigma,
         // for example, then some cross-Hessian terms will be nonzero.
-        Hessian = unpartition(
-            beta_hessian, Vector(beta.size(), 0.0), sigsq_second_derivative);
+        Hessian = unpartition(beta_hessian, Vector(beta.size(), 0.0),
+                              sigsq_second_derivative);
       }
     }
     return ans;

@@ -23,27 +23,19 @@
 #include <sstream>
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  GlmBaseData::GlmBaseData(const Vector &x)
-      : x_(new VectorData(x))
-  {}
+  GlmBaseData::GlmBaseData(const Vector &x) : x_(new VectorData(x)) {}
 
-  GlmBaseData::GlmBaseData(const Ptr<VectorData> & x)
-      : x_(x)
-  {}
+  GlmBaseData::GlmBaseData(const Ptr<VectorData> &x) : x_(x) {}
 
-  GlmBaseData::GlmBaseData(const GlmBaseData &rhs)
-      : x_(rhs.x_->clone())
-  {}
+  GlmBaseData::GlmBaseData(const GlmBaseData &rhs) : x_(rhs.x_->clone()) {}
 
-  uint GlmBaseData::xdim() const {
-    return x_->dim();
-  }
+  uint GlmBaseData::xdim() const { return x_->dim(); }
 
-  const Vector &GlmBaseData::x()const{ return x_->value();}
+  const Vector &GlmBaseData::x() const { return x_->value(); }
 
-  void GlmBaseData::set_x(const Vector &X, bool allow_any){
+  void GlmBaseData::set_x(const Vector &X, bool allow_any) {
     if (allow_any || x_->dim() == X.size()) {
       x_->set(X);
     } else {
@@ -57,28 +49,36 @@ namespace BOOM{
   }
 
   GlmModel::GlmModel() {}
-  GlmModel::GlmModel(const GlmModel & rhs) : Model(rhs) {}
-  uint GlmModel::xdim()const{ return coef().nvars_possible();}
-  void GlmModel::add(uint p){ coef().add(p);}
-  void GlmModel::add_all(){ for(int i = 0; i < xdim(); ++i) add(i);}
-  void GlmModel::drop(uint p){ coef().drop(p);}
-  void GlmModel::drop_all(){for(int i = 0; i < xdim(); ++i) drop(i);}
-  void GlmModel::drop_all_but_intercept(){drop_all();  add(0);}
-  void GlmModel::flip(uint p){coef().flip(p);}
-  const Selector & GlmModel::inc()const{return coef().inc();}
-  bool GlmModel::inc(uint p)const{return coef().inc(p);}
+  GlmModel::GlmModel(const GlmModel &rhs) : Model(rhs) {}
+  uint GlmModel::xdim() const { return coef().nvars_possible(); }
+  void GlmModel::add(uint p) { coef().add(p); }
+  void GlmModel::add_all() {
+    for (int i = 0; i < xdim(); ++i) add(i);
+  }
+  void GlmModel::drop(uint p) { coef().drop(p); }
+  void GlmModel::drop_all() {
+    for (int i = 0; i < xdim(); ++i) drop(i);
+  }
+  void GlmModel::drop_all_but_intercept() {
+    drop_all();
+    add(0);
+  }
+  void GlmModel::flip(uint p) { coef().flip(p); }
+  const Selector &GlmModel::inc() const { return coef().inc(); }
+  bool GlmModel::inc(uint p) const { return coef().inc(p); }
 
-  double GlmModel::predict(const Vector &x)const{
-    return coef().predict(x);}
-  double GlmModel::predict(const VectorView &x)const{
-    return coef().predict(x);}
-  double GlmModel::predict(const ConstVectorView &x)const{
-    return coef().predict(x);}
+  double GlmModel::predict(const Vector &x) const { return coef().predict(x); }
+  double GlmModel::predict(const VectorView &x) const {
+    return coef().predict(x);
+  }
+  double GlmModel::predict(const ConstVectorView &x) const {
+    return coef().predict(x);
+  }
 
-  Vector GlmModel::included_coefficients()const{
+  Vector GlmModel::included_coefficients() const {
     return coef().included_coefficients();
   }
-  void GlmModel::set_included_coefficients(const Vector &b){
+  void GlmModel::set_included_coefficients(const Vector &b) {
     coef().set_included_coefficients(b);
   }
   void GlmModel::set_included_coefficients(const Vector &beta,
@@ -87,8 +87,8 @@ namespace BOOM{
   }
 
   // reports 0 for excluded positions
-  const Vector & GlmModel::Beta()const{return coef().Beta();}
-  void GlmModel::set_Beta(const Vector &B){coef().set_Beta(B);}
-  double GlmModel::Beta(uint I)const{return coef().Beta(I);}
+  const Vector &GlmModel::Beta() const { return coef().Beta(); }
+  void GlmModel::set_Beta(const Vector &B) { coef().set_Beta(B); }
+  double GlmModel::Beta(uint I) const { return coef().Beta(I); }
 
-}  // namespace BOOM;
+}  // namespace BOOM

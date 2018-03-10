@@ -23,22 +23,21 @@
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/OrdinalCutpointModel.hpp"
 
-namespace BOOM{
-  class CumulativeLogitModel
-      : public OrdinalCutpointModel
-  {
+namespace BOOM {
+  class CumulativeLogitModel : public OrdinalCutpointModel {
    public:
-    CumulativeLogitModel(const Vector &beta, const Vector & delta);
+    CumulativeLogitModel(const Vector &beta, const Vector &delta);
     CumulativeLogitModel(const Matrix &X, const Vector &y);
     CumulativeLogitModel(const CumulativeLogitModel &rhs);
-    CumulativeLogitModel * clone() const override;
+    CumulativeLogitModel *clone() const override;
 
-    double link_inv(double)const override;
-    double dlink_inv(double)const override;
+    double link_inv(double) const override;
+    double dlink_inv(double) const override;
+
    private:
-    double simulate_latent_variable(RNG &rng)const override;
+    double simulate_latent_variable(RNG &rng) const override;
   };
 
-} // ends namespace BOOM
+}  // namespace BOOM
 
-#endif // CUMULATIVE_LOGIT_MODEL_HPP
+#endif  // CUMULATIVE_LOGIT_MODEL_HPP

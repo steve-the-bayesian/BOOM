@@ -19,48 +19,43 @@
 #include "Models/Glm/BinomialLogitModel.hpp"
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef BinomialRegressionData BRD;
   BRD::BinomialRegressionData(double y, double n, const Vector &x)
-      : GlmData<DoubleData>(y, x),
-        n_(n)
-  {
+      : GlmData<DoubleData>(y, x), n_(n) {
     check();
   }
 
   BRD::BinomialRegressionData(double y, double n, const Ptr<VectorData> &x)
-      : GlmData<DoubleData>(Ptr<DoubleData>(new DoubleData(y)), x),
-        n_(n)
-  {
+      : GlmData<DoubleData>(Ptr<DoubleData>(new DoubleData(y)), x), n_(n) {
     check();
   }
 
-  BRD * BRD::clone()const{ return new BRD(*this);}
+  BRD *BRD::clone() const { return new BRD(*this); }
 
-  void BRD::set_n(double n, bool check_n){
+  void BRD::set_n(double n, bool check_n) {
     n_ = n;
-    if(check_n) check();
+    if (check_n) check();
   }
 
-  void BRD::set_y(double y, bool check_n){
+  void BRD::set_y(double y, bool check_n) {
     GlmData<DoubleData>::set_y(y);
-    if(check_n) check();
+    if (check_n) check();
   }
 
-  double BRD::n()const{return n_;}
+  double BRD::n() const { return n_; }
 
-  void BRD::check()const{
-    if( n_ < y() || n_ < 0 || y() < 0){
+  void BRD::check() const {
+    if (n_ < y() || n_ < 0 || y() < 0) {
       ostringstream err;
       err << "error in BinomialRegressionData:  n < y" << endl
           << "  n = " << n_ << endl
-          << "  y = " << y() << endl
-          ;
+          << "  y = " << y() << endl;
       report_error(err.str());
     }
   }
 
-  ostream & BRD::display(ostream &out)const{
+  ostream &BRD::display(ostream &out) const {
     out << n_ << " ";
     return GlmData<DoubleData>::display(out);
   }

@@ -21,14 +21,13 @@
 #define BOOM_MULTINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
 
 #include "Models/Glm/MultinomialLogitModel.hpp"
-#include "Models/MvnBase.hpp"
 #include "Models/Glm/PosteriorSamplers/MLVS.hpp"
+#include "Models/MvnBase.hpp"
 #include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM {
 
-  class MultinomialLogitCompositeSpikeSlabSampler
-      : public MLVS {
+  class MultinomialLogitCompositeSpikeSlabSampler : public MLVS {
    public:
     // Args:
     //   model:  The model to be posterior sampled.
@@ -59,15 +58,11 @@ namespace BOOM {
     //     variables are initially excluded (or included) by the
     //     model.
     MultinomialLogitCompositeSpikeSlabSampler(
-        MultinomialLogitModel *model,
-        const Ptr<MvnBase> &coefficient_prior,
+        MultinomialLogitModel *model, const Ptr<MvnBase> &coefficient_prior,
         const Ptr<VariableSelectionPrior> &inclusion_prior,
-        double t_degrees_of_freedom = -1,
-        double rwm_variance_scale_factor = 1,
-        uint nthreads = 1,
-        int max_chunk_size = 10,
-        bool check_initial_condition = true,
-        RNG &seeding_rng = GlobalRng::rng);
+        double t_degrees_of_freedom = -1, double rwm_variance_scale_factor = 1,
+        uint nthreads = 1, int max_chunk_size = 10,
+        bool check_initial_condition = true, RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     void rwm_draw();
@@ -76,19 +71,13 @@ namespace BOOM {
 
     LabeledMatrix timing_report() const;
 
-    enum MoveType {
-      DATA_AUGMENTATION_MOVE = 0,
-      RWM_MOVE = 1,
-      TIM_MOVE = 2
-    };
+    enum MoveType { DATA_AUGMENTATION_MOVE = 0, RWM_MOVE = 1, TIM_MOVE = 2 };
 
     // Set the probabilities of selecting each of the three move
     // types.  The three arguments must be non-negative numbers
     // summing to 1.
-    void set_move_probabilities(
-        double data_augmentation,
-        double rwm,
-        double tim);
+    void set_move_probabilities(double data_augmentation, double rwm,
+                                double tim);
 
     int compute_chunk_size() const;
     int compute_number_of_chunks() const;
@@ -106,4 +95,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_MULTINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
+#endif  // BOOM_MULTINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_

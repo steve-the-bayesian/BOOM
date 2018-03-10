@@ -31,22 +31,19 @@ namespace BOOM {
 
   class HierarchicalGammaData : public Data {
    public:
-    HierarchicalGammaData(const GammaSuf &suf) : suf_(suf){}
-    HierarchicalGammaData * clone() const override {
+    HierarchicalGammaData(const GammaSuf &suf) : suf_(suf) {}
+    HierarchicalGammaData *clone() const override {
       return new HierarchicalGammaData(*this);
     }
-    ostream &display(ostream &out) const override {
-      return out << suf_;
-    }
-    const GammaSuf &suf()const {return suf_;}
+    ostream &display(ostream &out) const override { return out << suf_; }
+    const GammaSuf &suf() const { return suf_; }
 
    private:
     GammaSuf suf_;
   };
 
-  class HierarchicalGammaModel
-      : public CompositeParamPolicy,
-        public PriorPolicy {
+  class HierarchicalGammaModel : public CompositeParamPolicy,
+                                 public PriorPolicy {
    public:
     HierarchicalGammaModel(
         const std::vector<int> &number_of_observations_per_group,
@@ -54,7 +51,7 @@ namespace BOOM {
         const std::vector<double> &sum_of_logs_of_positives_per_group);
 
     HierarchicalGammaModel(const HierarchicalGammaModel &rhs);
-    HierarchicalGammaModel * clone() const override;
+    HierarchicalGammaModel *clone() const override;
 
     void clear_methods();
 
@@ -69,22 +66,22 @@ namespace BOOM {
     void add_data(const Ptr<Data> &) override;
 
     // Returns the number of data_level_models managed by this model.
-    int number_of_groups()const;
+    int number_of_groups() const;
 
-    GammaModel * prior_for_mean_parameters();
-    GammaModel * prior_for_shape_parameters();
-    GammaModel * data_model(int i);
+    GammaModel *prior_for_mean_parameters();
+    GammaModel *prior_for_shape_parameters();
+    GammaModel *data_model(int i);
 
-    double mean_parameter_prior_mean()const;
-    double mean_parameter_prior_shape()const;
-    double shape_parameter_prior_mean()const;
-    double shape_parameter_prior_shape()const;
+    double mean_parameter_prior_mean() const;
+    double mean_parameter_prior_shape() const;
+    double shape_parameter_prior_mean() const;
+    double shape_parameter_prior_shape() const;
 
    private:
     // Adds the prior models to ParamPolicy
     void initialize();
-    void get_initial_parameter_estimates(const Ptr<GammaModel> &)const;
-    void add_data_level_model(const Ptr<GammaModel> & data_model);
+    void get_initial_parameter_estimates(const Ptr<GammaModel> &) const;
+    void add_data_level_model(const Ptr<GammaModel> &data_model);
 
     Ptr<GammaModel> prior_for_mean_parameters_;
     Ptr<GammaModel> prior_for_shape_parameters_;

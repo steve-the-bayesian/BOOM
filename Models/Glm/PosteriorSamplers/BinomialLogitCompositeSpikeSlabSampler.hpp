@@ -23,29 +23,27 @@
 #include "Models/MvnBase.hpp"
 #include "Samplers/MoveAccounting.hpp"
 
-namespace BOOM{
+namespace BOOM {
   //======================================================================
   // A functor that returns the log posterior and first two
   // derivatives for the specified chunk.
   class BinomialLogitLogPostChunk {
    public:
     BinomialLogitLogPostChunk(const BinomialLogitModel *model,
-                              const MvnBase *prior,
-                              int chunk_size,
+                              const MvnBase *prior, int chunk_size,
                               int chunk_number)
-        : m_(model),
-          pri_(prior),
-          start_(chunk_size * chunk_number)
-    {
+        : m_(model), pri_(prior), start_(chunk_size * chunk_number) {
       int nvars = m_->coef().nvars();
       int elements_remaining = nvars - start_;
       chunk_size_ = std::min(chunk_size, elements_remaining);
     }
-    double operator()(const Vector &beta_chunk)const;
-    double operator()(const Vector &beta_chunk, Vector &grad, Matrix &hess, int nd)const;
+    double operator()(const Vector &beta_chunk) const;
+    double operator()(const Vector &beta_chunk, Vector &grad, Matrix &hess,
+                      int nd) const;
+
    private:
     const BinomialLogitModel *m_;
-    const MvnBase * pri_;
+    const MvnBase *pri_;
     int start_;
     int chunk_size_;
   };
@@ -63,13 +61,9 @@ namespace BOOM{
       : public BinomialLogitSpikeSlabSampler {
    public:
     BinomialLogitCompositeSpikeSlabSampler(
-        BinomialLogitModel *model,
-        const Ptr<MvnBase> &prior,
-        const Ptr<VariableSelectionPrior> &vpri,
-        int clt_threshold,
-        double tdf,
-        int max_tim_chunk_size,
-        int max_rwm_chunk_size = 1,
+        BinomialLogitModel *model, const Ptr<MvnBase> &prior,
+        const Ptr<VariableSelectionPrior> &vpri, int clt_threshold, double tdf,
+        int max_tim_chunk_size, int max_rwm_chunk_size = 1,
         double rwm_variance_scale_factor = 1.0,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
@@ -79,19 +73,16 @@ namespace BOOM{
     // Draw the specified chunk using a random walk proposal.
     void rwm_draw_chunk(int chunk);
 
-    BinomialLogitLogPostChunk log_posterior(
-        int chunk_number,
-        int max_chunk_size)const;
+    BinomialLogitLogPostChunk log_posterior(int chunk_number,
+                                            int max_chunk_size) const;
 
     // The three samplers will be used in proportion to the weights
     // supplied here.  Weights must be non-negative, and at least one
     // must be positive.
-    void set_sampler_weights(
-        double da_weight,
-        double rwm_weight,
-        double tim_weight);
+    void set_sampler_weights(double da_weight, double rwm_weight,
+                             double tim_weight);
 
-    ostream & time_report(ostream &out)const;
+    ostream &time_report(ostream &out) const;
 
    private:
     BinomialLogitModel *m_;
@@ -105,8 +96,8 @@ namespace BOOM{
     Vector sampler_weights_;
 
     // Compute the size of the largest chunk
-    int compute_chunk_size(int max_chunk_size)const;
-    int compute_number_of_chunks(int max_chunk_size)const;
+    int compute_chunk_size(int max_chunk_size) const;
+    int compute_number_of_chunks(int max_chunk_size) const;
   };
-}
-#endif //  BOOM_BINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_BINOMIAL_LOGIT_COMPOSITE_SPIKE_SLAB_SAMPLER_HPP_

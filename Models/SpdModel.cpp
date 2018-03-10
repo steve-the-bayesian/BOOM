@@ -23,7 +23,7 @@
 
 namespace BOOM {
 
-  double SpdModel::pdf(const Data *dp, bool logscale)const{
+  double SpdModel::pdf(const Data *dp, bool logscale) const {
     if (!dp) {
       report_error("NULL data pointer passed to SpdModel::pdf");
     }
@@ -35,8 +35,8 @@ namespace BOOM {
           << *dp << endl;
       report_error(err.str());
     }
-   double ans = logp(d->value());
-   return logscale ? ans : exp(ans);
+    double ans = logp(d->value());
+    return logscale ? ans : exp(ans);
   }
 
 }  // namespace BOOM

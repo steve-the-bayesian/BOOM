@@ -21,37 +21,34 @@
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef UniformCorrelationModel UCM;
 
-  UCM::UniformCorrelationModel(uint dim)
-    : dim_(dim)
-  {}
+  UCM::UniformCorrelationModel(uint dim) : dim_(dim) {}
 
   UCM::UniformCorrelationModel(const UCM &rhs)
-    : Model(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      CorrelationModel(rhs),
-      dim_(rhs.dim_)
-  {}
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        CorrelationModel(rhs),
+        dim_(rhs.dim_) {}
 
-  UCM * UCM::clone()const{return new UCM(*this);}
-  void UCM::initialize_params(){}
+  UCM *UCM::clone() const { return new UCM(*this); }
+  void UCM::initialize_params() {}
 
-  double UCM::logp(const CorrelationMatrix &m)const{
+  double UCM::logp(const CorrelationMatrix &m) const {
     return m.is_pos_def() ? 0.0 : BOOM::negative_infinity();
   }
 
-  double UCM::pdf(const Ptr<Data> &dp, bool logscale)const{
+  double UCM::pdf(const Ptr<Data> &dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  uint UCM::dim()const{return dim_;}
+  uint UCM::dim() const { return dim_; }
 
-  CorrelationMatrix UCM::sim(RNG &rng)const{
+  CorrelationMatrix UCM::sim(RNG &rng) const {
     return random_cor_mt(rng, dim());
   }
-}
+}  // namespace BOOM

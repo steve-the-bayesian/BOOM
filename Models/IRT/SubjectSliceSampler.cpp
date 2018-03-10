@@ -24,47 +24,41 @@
 #include "cpputil/ParamHolder.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
 
     typedef SubjectTF TF;
-    SubjectTF::SubjectTF(const Ptr<Subject> & subject,
+    SubjectTF::SubjectTF(const Ptr<Subject> &subject,
                          const Ptr<SubjectPrior> &prior)
-        : sub(subject),
-          pri(prior),
-          prms(sub->Theta_prm()),
-          wsp(sub->Theta())
-    {}
+        : sub(subject), pri(prior), prms(sub->Theta_prm()), wsp(sub->Theta()) {}
 
     double SubjectTF::operator()(const Vector &v) const {
       ParamHolder ph(v, prms, wsp);
       double ans = pri->pdf(sub, true);
-      if(ans==BOOM::negative_infinity()) return ans;
-      ans+= sub->loglike();
+      if (ans == BOOM::negative_infinity()) return ans;
+      ans += sub->loglike();
       return ans;
     }
 
     //======================================================================
 
     typedef SubjectSliceSampler SSS;
-  SSS::SubjectSliceSampler(const Ptr<Subject> & s,
-                           const Ptr<SubjectPrior> &p,
-                           RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-  sub(s),
-    pri(p),
-    target(sub, pri),
-    sam(new SliceSampler(target))
-    { }
+    SSS::SubjectSliceSampler(const Ptr<Subject> &s, const Ptr<SubjectPrior> &p,
+                             RNG &seeding_rng)
+        : PosteriorSampler(seeding_rng),
+          sub(s),
+          pri(p),
+          target(sub, pri),
+          sam(new SliceSampler(target)) {}
 
-    SSS * SSS::clone()const{return new SSS(*this);}
+    SSS *SSS::clone() const { return new SSS(*this); }
 
-    void SSS::draw(){
+    void SSS::draw() {
       Theta = sam->draw(sub->Theta());
       sub->set_Theta(Theta);
     }
 
-    double SSS::logpri()const{ return pri->pdf(sub, true);}
+    double SSS::logpri() const { return pri->pdf(sub, true); }
 
-  }
-}
+  }  // namespace IRT
+}  // namespace BOOM

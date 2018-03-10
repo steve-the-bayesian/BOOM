@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
 #include "Models/DataTypes.hpp"
-#include "distributions.hpp"
+#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "cpputil/seq.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -29,33 +29,29 @@ namespace BOOM {
     typedef StateSpace::MultiplexedRegressionData MRD;
   }  // namespace
 
-  MRD::MultiplexedRegressionData()
-      : state_model_offset_(0)
-  {}
+  MRD::MultiplexedRegressionData() : state_model_offset_(0) {}
   MRD::MultiplexedRegressionData(double y, const Vector &x)
-      : state_model_offset_(0)
-  {
+      : state_model_offset_(0) {
     NEW(RegressionData, data_point)(y, x);
     add_data(data_point);
   }
 
   MRD::MultiplexedRegressionData(const std::vector<Ptr<RegressionData>> &data)
-      : state_model_offset_(0)
-  {
+      : state_model_offset_(0) {
     for (const auto &d : data) {
       add_data(d);
     }
   }
 
-  MRD * MRD::clone() const { return new MRD(*this); }
+  MRD *MRD::clone() const { return new MRD(*this); }
 
-  std::ostream & MRD::display(std::ostream &out) const {
+  std::ostream &MRD::display(std::ostream &out) const {
     out << "state model offset: " << state_model_offset_ << std::endl
         << std::setw(10) << " response "
         << " predictors " << std::endl;
     for (int i = 0; i < regression_data_.size(); ++i) {
-      out << std::setw(10) << regression_data_[i]->y()
-          << " " << regression_data_[i]->x() << std::endl;
+      out << std::setw(10) << regression_data_[i]->y() << " "
+          << regression_data_[i]->x() << std::endl;
     }
     return out;
   }
@@ -96,8 +92,7 @@ namespace BOOM {
   }
 
   SSRM::StateSpaceRegressionModel(int xdim)
-      : regression_(new RegressionModel(xdim))
-  {
+      : regression_(new RegressionModel(xdim)) {
     setup();
     // Note that in this constructor the regression model will still
     // need to have data added, so we can't call fix_xtx().  This
@@ -107,8 +102,7 @@ namespace BOOM {
 
   SSRM::StateSpaceRegressionModel(const Vector &y, const Matrix &X,
                                   const std::vector<bool> &observed)
-      : regression_(new RegressionModel(ncol(X)))
-  {
+      : regression_(new RegressionModel(ncol(X))) {
     setup();
     int n = y.size();
     if (nrow(X) != n) {
@@ -138,14 +132,13 @@ namespace BOOM {
         ScalarStateSpaceModelBase(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        regression_(rhs.regression_->clone())
-  {
+        regression_(rhs.regression_->clone()) {
     setup();
   }
 
-  SSRM * SSRM::clone() const {return new SSRM(*this);}
+  SSRM *SSRM::clone() const { return new SSRM(*this); }
 
-  void SSRM::add_data(const Ptr<Data> & dp) {
+  void SSRM::add_data(const Ptr<Data> &dp) {
     Ptr<RegressionData> regression_data = dp.dcast<RegressionData>();
     if (!!regression_data) {
       add_regression_data(regression_data);
@@ -191,8 +184,8 @@ namespace BOOM {
   }
 
   bool SSRM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing
-        || dat()[t]->observed_sample_size() == 0;
+    return dat()[t]->missing() == Data::completely_missing ||
+           dat()[t]->observed_sample_size() == 0;
   }
 
   void SSRM::observe_data_given_state(int t) {
@@ -202,8 +195,8 @@ namespace BOOM {
       for (int i = 0; i < dp->total_sample_size(); ++i) {
         const RegressionData &observation(dp->regression_data(i));
         if (observation.missing() == Data::observed) {
-          regression_->suf()->add_mixture_data(
-              observation.y() - state_mean, observation.x(), 1.0);
+          regression_->suf()->add_mixture_data(observation.y() - state_mean,
+                                               observation.x(), 1.0);
         }
       }
     }
@@ -215,27 +208,21 @@ namespace BOOM {
     Matrix ans(nrow(newX), 2);
     int t0 = time_dimension();
     for (int t = 0; t < nrow(ans); ++t) {
-      ans(t,0) = regression_->predict(newX.row(t))
-          + observation_matrix(t + t0).dot(ks.a);
-      sparse_scalar_kalman_update(0,  // y is missing, so fill in a dummy value
-                                  ks.a,
-                                  ks.P,
-                                  ks.K,
-                                  ks.F,
-                                  ks.v,
-                                  true,  // forecasts are missing data
-                                  observation_matrix(t + t0),
-                                  observation_variance(t + t0),
-                                  *state_transition_matrix(t + t0),
-                                  *state_variance_matrix(t + t0));
-      ans(t,1) = sqrt(ks.F);
+      ans(t, 0) = regression_->predict(newX.row(t)) +
+                  observation_matrix(t + t0).dot(ks.a);
+      sparse_scalar_kalman_update(
+          0,  // y is missing, so fill in a dummy value
+          ks.a, ks.P, ks.K, ks.F, ks.v,
+          true,  // forecasts are missing data
+          observation_matrix(t + t0), observation_variance(t + t0),
+          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
+      ans(t, 1) = sqrt(ks.F);
     }
     return ans;
   }
 
   // TODO(user):  test simulate_forecast
-  Vector SSRM::simulate_forecast(RNG &rng,
-                                 const Matrix &newX,
+  Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX,
                                  const Vector &final_state) {
     return simulate_multiplex_forecast(rng, newX, final_state,
                                        seq<int>(1, nrow(newX)));
@@ -252,8 +239,7 @@ namespace BOOM {
     return simulate_forecast(rng, newX, final_state);
   }
 
-  Vector SSRM::simulate_multiplex_forecast(RNG &rng,
-                                           const Matrix &newX,
+  Vector SSRM::simulate_multiplex_forecast(RNG &rng, const Matrix &newX,
                                            const Vector &final_state,
                                            const std::vector<int> &timestamps) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
@@ -267,8 +253,7 @@ namespace BOOM {
     int time = 0;
     for (int i = 0; i < forecast_dimension; ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
-      ans[i] = rnorm_mt(rng,
-                        observation_matrix(t0 + time).dot(state),
+      ans[i] = rnorm_mt(rng, observation_matrix(t0 + time).dot(state),
                         sqrt(observation_variance(t0 + time)));
       ans[i] += regression_->predict(newX.row(i));
     }
@@ -276,33 +261,25 @@ namespace BOOM {
   }
 
   Vector SSRM::one_step_holdout_prediction_errors(
-      const Matrix &newX,
-      const Vector &newY,
-      const Vector &final_state) const {
+      const Matrix &newX, const Vector &newY, const Vector &final_state) const {
     if (nrow(newX) != length(newY)) {
-      report_error("X and Y do not match in StateSpaceRegressionModel::"
-                   "one_step_holdout_prediction_errors");
+      report_error(
+          "X and Y do not match in StateSpaceRegressionModel::"
+          "one_step_holdout_prediction_errors");
     }
 
     Vector ans(nrow(newX));
     int t0 = time_dimension();
     ScalarKalmanStorage ks(state_dimension());
-    ks.a = *state_transition_matrix(t0-1) * final_state;
-    ks.P = SpdMatrix(state_variance_matrix(t0-1)->dense());
+    ks.a = *state_transition_matrix(t0 - 1) * final_state;
+    ks.P = SpdMatrix(state_variance_matrix(t0 - 1)->dense());
 
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
       sparse_scalar_kalman_update(
-          newY[t] - regression_model()->predict(newX.row(t)),
-          ks.a,
-          ks.P,
-          ks.K,
-          ks.F,
-          ks.v,
-          missing,
-          observation_matrix(t + t0),
-          observation_variance(t + t0),
-          *state_transition_matrix(t + t0),
+          newY[t] - regression_model()->predict(newX.row(t)), ks.a, ks.P, ks.K,
+          ks.F, ks.v, missing, observation_matrix(t + t0),
+          observation_variance(t + t0), *state_transition_matrix(t + t0),
           *state_variance_matrix(t + t0));
       ans[t] = ks.v;
     }
@@ -319,9 +296,9 @@ namespace BOOM {
         average_contribution +=
             regression_model()->predict(dp->regression_data(j).x());
       }
-      ans[time] = dp->total_sample_size() > 0 ?
-          average_contribution /= dp->total_sample_size()
-          : 0;
+      ans[time] = dp->total_sample_size() > 0
+                      ? average_contribution /= dp->total_sample_size()
+                      : 0;
     }
     return ans;
   }

@@ -19,32 +19,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "Models/DoubleModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/TimeSeries/ArmaModel.hpp"
 #include "Models/VectorModel.hpp"
-#include "Models/DoubleModel.hpp"
 #include "Samplers/UnivariateSliceSampler.hpp"
 
 namespace BOOM {
 
   // A posterior sampler for ARMA models based on the slice sampler.  This is
   // computationally slow, but other approaches seem to be even slower.
-  class ArmaSliceSampler:  public PosteriorSampler {
+  class ArmaSliceSampler : public PosteriorSampler {
    public:
-    ArmaSliceSampler(ArmaModel *model,
-                     const Ptr<VectorModel> &ar_prior,
+    ArmaSliceSampler(ArmaModel *model, const Ptr<VectorModel> &ar_prior,
                      const Ptr<VectorModel> &ma_prior,
                      const Ptr<DoubleModel> &precision_prior,
                      RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
-    
+
     double log_posterior(const Vector &ar_coefficients,
-                         const Vector &ma_coefficients,
-                         double precision) const;
+                         const Vector &ma_coefficients, double precision) const;
     double vectorized_log_posterior(const Vector &parameters) const;
-    
+
    private:
     ArmaModel *model_;
     Ptr<VectorModel> ar_prior_;
@@ -53,8 +51,7 @@ namespace BOOM {
 
     UnivariateSliceSampler sampler_;
   };
-  
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_ARMA_SLICE_SAMPLER_HPP_

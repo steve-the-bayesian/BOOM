@@ -21,36 +21,33 @@
 
 namespace BOOM {
 
-  HierarchicalPoissonData::HierarchicalPoissonData(
-      double event_count, double exposure)
-      : event_count_(event_count),
-        exposure_(exposure)
-  {}
+  HierarchicalPoissonData::HierarchicalPoissonData(double event_count,
+                                                   double exposure)
+      : event_count_(event_count), exposure_(exposure) {}
 
-  HierarchicalPoissonData * HierarchicalPoissonData::clone() const {
+  HierarchicalPoissonData *HierarchicalPoissonData::clone() const {
     return new HierarchicalPoissonData(*this);
   }
 
-  ostream & HierarchicalPoissonData::display(ostream &out) const {
+  ostream &HierarchicalPoissonData::display(ostream &out) const {
     out << event_count_ << " " << exposure_;
     return out;
   }
 
   HierarchicalPoissonModel::HierarchicalPoissonModel(
-      double lambda_prior_guess,
-      double lambda_prior_sample_size)
-      : HierarchicalBase(new GammaModel(lambda_prior_sample_size,
-                                        lambda_prior_guess,
-                                        0)) {}
+      double lambda_prior_guess, double lambda_prior_sample_size)
+      : HierarchicalBase(
+            new GammaModel(lambda_prior_sample_size, lambda_prior_guess, 0)) {}
 
-  HierarchicalPoissonModel::HierarchicalPoissonModel(const Ptr<GammaModel> & prior)
+  HierarchicalPoissonModel::HierarchicalPoissonModel(
+      const Ptr<GammaModel> &prior)
       : HierarchicalBase(prior) {}
 
-  HierarchicalPoissonModel * HierarchicalPoissonModel::clone() const {
+  HierarchicalPoissonModel *HierarchicalPoissonModel::clone() const {
     return new HierarchicalPoissonModel(*this);
   }
 
-  void HierarchicalPoissonModel::add_data(const Ptr<Data> & dp) {
+  void HierarchicalPoissonModel::add_data(const Ptr<Data> &dp) {
     Ptr<HierarchicalPoissonData> data_point =
         dp.dcast<HierarchicalPoissonData>();
     double events = data_point->event_count();

@@ -42,6 +42,7 @@ namespace BOOM {
 
     void draw() override;
     double logpri() const override;
+
    private:
     HierarchicalZeroInflatedPoissonModel *model_;
     Ptr<DoubleModel> lambda_mean_prior_;
@@ -55,4 +56,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_
+#endif  // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_

@@ -1,5 +1,5 @@
-#include "Models/TimeSeries/ArmaModel.hpp"
 #include "Models/TimeSeries/ArmaPriors.hpp"
+#include "Models/TimeSeries/ArmaModel.hpp"
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 
@@ -23,11 +23,11 @@ namespace BOOM {
         return ans;
       }
     }
-    report_error("Could not simulate from UniformMaPrior.  "
-                 "Maybe dimension is too high?");
+    report_error(
+        "Could not simulate from UniformMaPrior.  "
+        "Maybe dimension is too high?");
     return Vector(0);
   }
-  
 
   double UniformArPrior::logp(const Vector &x) const {
     if (ArmaModel::is_invertible(x)) {
@@ -50,5 +50,5 @@ namespace BOOM {
     report_error("Simulation failed.  Maybe dimension is too high?");
     return Vector(0);
   }
-  
-} // namespace BOOM
+
+}  // namespace BOOM

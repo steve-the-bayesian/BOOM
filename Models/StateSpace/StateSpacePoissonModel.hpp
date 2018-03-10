@@ -20,11 +20,11 @@
 #ifndef BOOM_STATE_SPACE_POISSON_MODEL_HPP_
 #define BOOM_STATE_SPACE_POISSON_MODEL_HPP_
 
-#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Glm/PoissonRegressionModel.hpp"
-#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
 
 namespace BOOM {
 
@@ -84,8 +84,7 @@ namespace BOOM {
     //
     //  \sum_i ((u_{1i} - m_{1i1}) / v_{1i}) + ((u_{2i} - m_{2i}) / v_{2i}) /
     //         (sum_j (1/v_{1j}) + (1/v_{2j}))
-    class AugmentedPoissonRegressionData
-        : public MultiplexedData {
+    class AugmentedPoissonRegressionData : public MultiplexedData {
      public:
       // Starts with an empty data point, with observations to be added later
       // using add_data.
@@ -93,8 +92,7 @@ namespace BOOM {
 
       // A constructor for the typical case, where there is a single observation
       // at each time point.
-      AugmentedPoissonRegressionData(double count,
-                                     double exposure,
+      AugmentedPoissonRegressionData(double count, double exposure,
                                      const Vector &predictors);
 
       // A constructor for the multiplexed case, where there are multiple
@@ -102,8 +100,8 @@ namespace BOOM {
       AugmentedPoissonRegressionData(
           const std::vector<Ptr<PoissonRegressionData>> &data);
 
-      AugmentedPoissonRegressionData * clone() const override;
-      std::ostream & display(std::ostream &out) const override;
+      AugmentedPoissonRegressionData *clone() const override;
+      std::ostream &display(std::ostream &out) const override;
 
       void add_data(const Ptr<PoissonRegressionData> &observation);
 
@@ -113,9 +111,7 @@ namespace BOOM {
       // Args:
       //   value: The latent data value.  If y > 0 then this is the precision
       //     weighted average
-      void set_latent_data(double value,
-                           double precision,
-                           int observation);
+      void set_latent_data(double value, double precision, int observation);
 
       double latent_data_variance(int observation) const;
       double latent_data_value(int observation) const;
@@ -124,7 +120,7 @@ namespace BOOM {
       double latent_data_overall_variance() const;
 
       void set_state_model_offset(double offset);
-      double state_model_offset() const {return state_model_offset_;}
+      double state_model_offset() const { return state_model_offset_; }
 
       const PoissonRegressionData &poisson_data(int i) const {
         return *(poisson_data_[i]);
@@ -133,7 +129,7 @@ namespace BOOM {
         return poisson_data_[i];
       }
 
-      int total_sample_size() const override {return poisson_data_.size();}
+      int total_sample_size() const override { return poisson_data_.size(); }
 
      private:
       // If y() > 0 for observation j then latent_continuous_values_[j] is
@@ -158,24 +154,22 @@ namespace BOOM {
   class StateSpacePoissonModel
       : public StateSpaceNormalMixture,
         public IID_DataPolicy<StateSpace::AugmentedPoissonRegressionData>,
-        public PriorPolicy
-  {
+        public PriorPolicy {
    public:
     StateSpacePoissonModel(int xdim);
-    StateSpacePoissonModel(const Vector &counts,
-                           const Vector &exposure,
-                           const Matrix &design_matrix,
-                           const std::vector<bool> &observed =
-                           std::vector<bool>());
+    StateSpacePoissonModel(
+        const Vector &counts, const Vector &exposure,
+        const Matrix &design_matrix,
+        const std::vector<bool> &observed = std::vector<bool>());
 
     StateSpacePoissonModel(const StateSpacePoissonModel &rhs);
-    StateSpacePoissonModel * clone() const override;
+    StateSpacePoissonModel *clone() const override;
 
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();
     }
-    const PoissonRegressionData & data(int time,
-                                       int observation) const override {
+    const PoissonRegressionData &data(int time,
+                                      int observation) const override {
       return dat()[time]->poisson_data(observation);
     }
     int time_dimension() const override;
@@ -193,17 +187,17 @@ namespace BOOM {
     bool is_missing_observation(int t) const override;
 
     PoissonRegressionModel *observation_model() override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
     const PoissonRegressionModel *observation_model() const override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
 
     // Set the state model offset in the data to the state contribution.
     void observe_data_given_state(int t) override;
 
-    Vector simulate_forecast(RNG &rng,
-                             const Matrix &forecast_predictors,
-                             const Vector &exposure,
-                             const Vector &final_state);
+    Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
+                             const Vector &exposure, const Vector &final_state);
 
     Vector simulate_multiplex_forecast(RNG &rng,
                                        const Matrix &forecast_predictors,
@@ -211,13 +205,12 @@ namespace BOOM {
                                        const Vector &final_state,
                                        const std::vector<int> &timestamps);
 
-    Vector one_step_holdout_prediction_errors(
-        RNG &rng,
-        PoissonDataImputer &data_imputer,
-        const Vector &counts,
-        const Vector &exposure,
-        const Matrix &predictors,
-        const Vector &final_state);
+    Vector one_step_holdout_prediction_errors(RNG &rng,
+                                              PoissonDataImputer &data_imputer,
+                                              const Vector &counts,
+                                              const Vector &exposure,
+                                              const Matrix &predictors,
+                                              const Vector &final_state);
 
    private:
     Ptr<PoissonRegressionModel> observation_model_;
@@ -225,4 +218,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_STATE_SPACE_POISSON_MODEL_HPP_
+#endif  // BOOM_STATE_SPACE_POISSON_MODEL_HPP_

@@ -39,8 +39,9 @@ namespace BOOM {
       }
     }
     if (priors_.size() != model_->xdim()) {
-      report_error("The number of prior distributions must be the same "
-                   "as the number of coefficients in the dynamic regression.");
+      report_error(
+          "The number of prior distributions must be the same "
+          "as the number of coefficients in the dynamic regression.");
     }
     for (int i = 0; i < priors_.size(); ++i) {
       samplers_.push_back(GenericGaussianVarianceSampler(priors_[i]));
@@ -49,8 +50,8 @@ namespace BOOM {
 
   void DRIPS::draw() {
     for (int i = 0; i < samplers_.size(); ++i) {
-      double sigsq = samplers_[i].draw(
-          rng(), model_->suf(i)->n(), model_->suf(i)->sumsq());
+      double sigsq = samplers_[i].draw(rng(), model_->suf(i)->n(),
+                                       model_->suf(i)->sumsq());
       model_->set_sigsq(sigsq, i);
     }
   }
@@ -68,21 +69,19 @@ namespace BOOM {
   }
 
   DynamicRegressionPosteriorSampler::DynamicRegressionPosteriorSampler(
-      DynamicRegressionStateModel *model,
-      const Ptr<GammaModel> &siginv_prior,
+      DynamicRegressionStateModel *model, const Ptr<GammaModel> &siginv_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         siginv_prior_(siginv_prior),
         sigsq_sampler_(siginv_prior_),
-        handle_siginv_prior_separately_(false)
-  {}
+        handle_siginv_prior_separately_(false) {}
 
-  void DynamicRegressionPosteriorSampler::handle_siginv_prior_separately(){
+  void DynamicRegressionPosteriorSampler::handle_siginv_prior_separately() {
     handle_siginv_prior_separately_ = true;
   }
 
-  void DynamicRegressionPosteriorSampler::draw(){
+  void DynamicRegressionPosteriorSampler::draw() {
     siginv_prior_->clear_data();
     for (int i = 0; i < model_->state_dimension(); ++i) {
       const GaussianSuf *suf = model_->suf(i);
@@ -96,7 +95,7 @@ namespace BOOM {
     }
   }
 
-  double DynamicRegressionPosteriorSampler::logpri()const{
+  double DynamicRegressionPosteriorSampler::logpri() const {
     double ans = 0;
     for (int i = 0; i < model_->state_dimension(); ++i) {
       sigsq_sampler_.log_prior(model_->sigsq(i));
@@ -106,6 +105,5 @@ namespace BOOM {
     }
     return ans;
   }
-
 
 }  // namespace BOOM

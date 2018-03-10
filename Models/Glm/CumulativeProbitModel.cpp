@@ -14,39 +14,30 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #include "Models/Glm/CumulativeProbitModel.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef CumulativeProbitModel CPM;
 
-  CPM::CumulativeProbitModel(const Vector &beta, const Vector & delta) :
-      OrdinalCutpointModel(beta, delta)
-  {}
+  CPM::CumulativeProbitModel(const Vector &beta, const Vector &delta)
+      : OrdinalCutpointModel(beta, delta) {}
 
-  CPM::CumulativeProbitModel(const Matrix &X, const Vector &y) :
-      OrdinalCutpointModel(X,y)
-  {}
+  CPM::CumulativeProbitModel(const Matrix &X, const Vector &y)
+      : OrdinalCutpointModel(X, y) {}
 
   CPM::CumulativeProbitModel(const CPM &rhs)
-      : Model(rhs),
-        OrdinalCutpointModel(rhs)
-  {}
+      : Model(rhs), OrdinalCutpointModel(rhs) {}
 
-  CPM * CPM::clone()const{return new  CPM(*this);}
+  CPM *CPM::clone() const { return new CPM(*this); }
 
-  double CPM::link_inv(double eta)const{
-    return pnorm(eta);
-  }
+  double CPM::link_inv(double eta) const { return pnorm(eta); }
 
-  double CPM::dlink_inv(double eta)const{
-    return dnorm(eta);
-  }
+  double CPM::dlink_inv(double eta) const { return dnorm(eta); }
 
-  double CPM::simulate_latent_variable(RNG &rng)const{
-    return rnorm_mt(rng);
-  }
-}
+  double CPM::simulate_latent_variable(RNG &rng) const { return rnorm_mt(rng); }
+}  // namespace BOOM

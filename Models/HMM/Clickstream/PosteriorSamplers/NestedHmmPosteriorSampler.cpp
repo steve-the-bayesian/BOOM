@@ -23,10 +23,7 @@ namespace BOOM {
 
   NestedHmmPosteriorSampler::NestedHmmPosteriorSampler(NestedHmm *model,
                                                        RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        first_time_(true)
-  {}
+      : PosteriorSampler(seeding_rng), model_(model), first_time_(true) {}
 
   double NestedHmmPosteriorSampler::logpri() const {
     double ans = model_->session_model()->logpri();

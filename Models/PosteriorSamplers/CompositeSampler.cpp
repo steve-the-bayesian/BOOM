@@ -21,53 +21,43 @@
 #include <cmath>
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef CompositeSampler CS;
   typedef CompositeSamplerAdder CSA;
   typedef PosteriorSampler PS;
 
-  CS::CompositeSampler(RNG &seeding_rng) : PosteriorSampler(seeding_rng)
-  { }
+  CS::CompositeSampler(RNG &seeding_rng) : PosteriorSampler(seeding_rng) {}
 
-  CS::CompositeSampler(const Ptr<PS> & p, double pr, RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      samplers_(1,p),
-      probs_(1,pr)
-  {}
+  CS::CompositeSampler(const Ptr<PS> &p, double pr, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), samplers_(1, p), probs_(1, pr) {}
 
   CS::CompositeSampler(const std::vector<Ptr<PS> > &pv, RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      samplers_(pv),
-      probs_(pv.size(), 1.0)
-  {}
+      : PosteriorSampler(seeding_rng), samplers_(pv), probs_(pv.size(), 1.0) {}
 
-  CS::CompositeSampler(const std::vector<Ptr<PS> > &pv, const Vector & pr,
+  CS::CompositeSampler(const std::vector<Ptr<PS> > &pv, const Vector &pr,
                        RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      samplers_(pv),
-      probs_(pr)
-  {}
+      : PosteriorSampler(seeding_rng), samplers_(pv), probs_(pr) {}
 
-  CSA CS::add_sampler(const Ptr<PosteriorSampler> & s, double weight){
+  CSA CS::add_sampler(const Ptr<PosteriorSampler> &s, double weight) {
     samplers_.push_back(s);
     probs_.push_back(weight);
     return CSA(this);
   }
 
-  void CS::draw(){ choose_sampler()->draw(); }
+  void CS::draw() { choose_sampler()->draw(); }
 
-  double CS::logpri()const{ return choose_sampler()->logpri(); }
+  double CS::logpri() const { return choose_sampler()->logpri(); }
 
-  Ptr<PosteriorSampler> CS::choose_sampler()const{
+  Ptr<PosteriorSampler> CS::choose_sampler() const {
     uint k = rmulti_mt(rng(), probs_);
     return samplers_[k];
   }
   //----------------------------------------------------------------------
-  CSA::CompositeSamplerAdder(CS *cs_) : cs(cs_){}
+  CSA::CompositeSamplerAdder(CS *cs_) : cs(cs_) {}
 
-  CSA CSA::operator()(const Ptr<PosteriorSampler> & ps, double wgt){
+  CSA CSA::operator()(const Ptr<PosteriorSampler> &ps, double wgt) {
     cs->add_sampler(ps, wgt);
     return CSA(cs);
   }
-}
+}  // namespace BOOM

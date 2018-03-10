@@ -19,39 +19,37 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/ModelTypes.hpp"
 #include "LinAlg/VectorView.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/ModelTypes.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/MultiplexedData.hpp"
 #include "uint.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class ScalarStateSpaceModelBase;
   class DynamicInterceptRegressionModel;
-  
+
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
   // time dependent, an error variance Q, which may be of smaller dimension than
   // T, and a matrix R that can multiply draws from N(0, Q) so that the
   // dimension of RQR^T matches the state dimension.
-  class StateModel
-      : virtual public PosteriorModeModel
-  {
+  class StateModel : virtual public PosteriorModeModel {
    public:
     // Traditional state models are Gaussian, but Bayesian modeling lets you
     // work with conditionally Gaussian models just as easily.  For
     // conditionally Gaussian state models this enum can be used as an argument
     // to determine whether they should be viewed as normal mixtures, or as
     // plain old non-normal marginal models.
-    enum Behavior{
-      MARGINAL, // e.g. treat the t-distribution like the t-distribution.
-      MIXTURE   // e.g. treat the t-distribution like a normal mixture.
+    enum Behavior {
+      MARGINAL,  // e.g. treat the t-distribution like the t-distribution.
+      MIXTURE    // e.g. treat the t-distribution like a normal mixture.
     };
 
-    ~StateModel() override{}
-    StateModel * clone()const override = 0;
+    ~StateModel() override {}
+    StateModel *clone() const override = 0;
 
     // Some state models need to know the maximum value of t so they can set up
     // space for latent variables, etc.  Many state models do not need this
@@ -62,8 +60,7 @@ namespace BOOM{
     // sufficient statistics for this model.  This is often a difference between
     // the current and next state vectors.
     virtual void observe_state(const ConstVectorView &then,
-                               const ConstVectorView &now,
-                               int time_now,
+                               const ConstVectorView &now, int time_now,
                                ScalarStateSpaceModelBase *model) = 0;
 
     // Add the relevant information from the state vector to the complete data
@@ -73,11 +70,9 @@ namespace BOOM{
     // Concrete classes that can observe the state without reference to the
     // observation model can implement this method in terms of observe_state.
     virtual void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) = 0;
-    
+
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.
     virtual void observe_initial_state(const ConstVectorView &state);
@@ -96,8 +91,7 @@ namespace BOOM{
     // sufficient statistics.  Child classes can choose to implement
     // this method by throwing an exception.
     virtual void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) = 0;
 
     // Add the expected value of the derivative of log likelihood to
@@ -114,13 +108,12 @@ namespace BOOM{
     //   state_error_variance: Subset of the state error variance for
     //     time t corresponding to this state model.
     virtual void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance);
 
     // Simulates the state eror at time t, for moving to time t+1.
-    virtual void simulate_state_error(RNG &rng, VectorView eta, int t) const = 0;
+    virtual void simulate_state_error(RNG &rng, VectorView eta,
+                                      int t) const = 0;
     virtual void simulate_initial_state(RNG &rng, VectorView eta) const;
 
     virtual Ptr<SparseMatrixBlock> state_transition_matrix(int t) const = 0;
@@ -158,8 +151,8 @@ namespace BOOM{
     dynamic_intercept_regression_observation_coefficients(
         int t, const StateSpace::MultiplexedData &data_point) const = 0;
 
-    virtual Vector initial_state_mean()const = 0;
-    virtual SpdMatrix initial_state_variance()const = 0;
+    virtual Vector initial_state_mean() const = 0;
+    virtual SpdMatrix initial_state_variance() const = 0;
 
     // Some state models can behave differently in different contexts.
     // E.g. they can be viewed as conditionally normal when fitting,
@@ -177,4 +170,4 @@ namespace BOOM{
   };
 }  // namespace BOOM
 
-#endif// BOOM_STATE_SPACE_STATE_MODEL_HPP
+#endif  // BOOM_STATE_SPACE_STATE_MODEL_HPP

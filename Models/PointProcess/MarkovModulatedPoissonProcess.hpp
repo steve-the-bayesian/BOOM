@@ -21,8 +21,8 @@
 
 #include <vector>
 
-#include <memory>
 #include <boost/unordered_map.hpp>
+#include <memory>
 
 #include "Models/PointProcess/PointProcess.hpp"
 #include "Models/PointProcess/PoissonProcess.hpp"
@@ -31,15 +31,15 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "cpputil/RefCounted.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  namespace MmppHelper{
-    typedef std::vector<std::vector<PoissonProcess *> > SourceVector;
+  namespace MmppHelper {
+    typedef std::vector<std::vector<PoissonProcess *>> SourceVector;
 
     // A class to describe which processes are active in an HMM state,
     // and keep track of information needed during the forward-backward
     // algorithm, such as which other states it communicates with.
-    class HmmState : private RefCounted{
+    class HmmState : private RefCounted {
      public:
       // The HmmState does not own the PoissonProcess * pointers that
       // it is passed.  Each should be owned by a Ptr external to this
@@ -63,7 +63,7 @@ namespace BOOM{
       // constructor sorts them, so the order here may be different
       // than the order the processes were in when they were passed to
       // the constructor.
-      const std::vector<PoissonProcess *> & active_processes() const;
+      const std::vector<PoissonProcess *> &active_processes() const;
 
       // Add or remove processes to the set of active processes
       // defining the state.  Adding processes that are already part
@@ -73,14 +73,14 @@ namespace BOOM{
       void add_processes(std::vector<PoissonProcess *> additional_processes);
       void remove_processes(std::vector<PoissonProcess *> processes_to_remove);
 
-      const std::vector<HmmState *> & potential_outgoing_transitions() const;
-      const std::vector<HmmState *> & potential_incoming_transitions() const;
+      const std::vector<HmmState *> &potential_outgoing_transitions() const;
+      const std::vector<HmmState *> &potential_incoming_transitions() const;
 
       // The set of processes that could be responsible for a transition
       // from *this to *destination.  The result could be a singleton,
       // or it could be empty.
-      const std::vector<PoissonProcess *> &
-      processes_transitioning_to(const HmmState *destination) const;
+      const std::vector<PoissonProcess *> &processes_transitioning_to(
+          const HmmState *destination) const;
 
       // Inform the object that it is possible to transition to *this
       // from *previous_state.
@@ -105,14 +105,16 @@ namespace BOOM{
 
       // Keep track of which processes are responsible for a transition
       // from this state to each state in can_transition_to_.
-      typedef std::map<const HmmState *, std::vector<PoissonProcess *> >
-      TransitionResponsibilityMap;
+      typedef std::map<const HmmState *, std::vector<PoissonProcess *>>
+          TransitionResponsibilityMap;
       TransitionResponsibilityMap responsible_for_transition_to_;
 
      public:
-      friend void intrusive_ptr_add_ref(HmmState *s){s->up_count();}
-      friend void intrusive_ptr_release(HmmState *s){
-        s->down_count(); if(s->ref_count()==0) delete s;}
+      friend void intrusive_ptr_add_ref(HmmState *s) { s->up_count(); }
+      friend void intrusive_ptr_release(HmmState *s) {
+        s->down_count();
+        if (s->ref_count() == 0) delete s;
+      }
     };
 
     //----------------------------------------------------------------------
@@ -136,8 +138,8 @@ namespace BOOM{
       //     the processes argument.  Some elements of the vector can be
       //     repeated if the same mixture component is shared by
       //     multiple processes.
-      ProcessInfo(const std::vector<PoissonProcess *> & processes,
-                  const std::vector<MixtureComponent *> & mixture_components);
+      ProcessInfo(const std::vector<PoissonProcess *> &processes,
+                  const std::vector<MixtureComponent *> &mixture_components);
 
       // Evaluate the cumulative_hazard for the interval [t-1, t], the
       // instantaneous event rate at time t, and mixture component log
@@ -169,6 +171,7 @@ namespace BOOM{
       // by the presence or absence of the 'source' argument to
       // 'evaluate'.
       double conditional_cumulative_hazard(const HmmState *state, int t) const;
+
      private:
       // Returns the position of 'process' in processes_;
       int process_id(const PoissonProcess *process) const;
@@ -207,7 +210,7 @@ namespace BOOM{
       Matrix logp_;
     };
 
-  } // namespace MmppHelper
+  }  // namespace MmppHelper
 
   //======================================================================
   // The Markov modulated Poisson Process, as defined in Scott and
@@ -237,11 +240,9 @@ namespace BOOM{
   // should be capable of calling sample_posterior().
   //
   // Calling sample_posterior
-  class MarkovModulatedPoissonProcess
-      : public CompositeParamPolicy,
-        public IID_DataPolicy<PointProcess>,
-        public PriorPolicy
-  {
+  class MarkovModulatedPoissonProcess : public CompositeParamPolicy,
+                                        public IID_DataPolicy<PointProcess>,
+                                        public PriorPolicy {
    public:
     typedef MmppHelper::HmmState HmmState;
     typedef MmppHelper::ProcessInfo ProcessInfo;
@@ -249,7 +250,7 @@ namespace BOOM{
 
     MarkovModulatedPoissonProcess();
     MarkovModulatedPoissonProcess(const MarkovModulatedPoissonProcess &rhs);
-    MarkovModulatedPoissonProcess * clone() const override;
+    MarkovModulatedPoissonProcess *clone() const override;
 
     // Adds 'process' as a component process to the MMPP.  Every
     // component process must be registered with the MMPP using this
@@ -270,9 +271,9 @@ namespace BOOM{
     //     deactivated when 'process' generates an event.  For birth or
     //     death processes, 'processes' can be included in this vector.
     //   emits: A model describing the marks that 'process' emits.
-    void add_component_process(const Ptr<PoissonProcess> & process,
-                               std::vector<Ptr<PoissonProcess> > spawns,
-                               std::vector<Ptr<PoissonProcess> > kills,
+    void add_component_process(const Ptr<PoissonProcess> &process,
+                               std::vector<Ptr<PoissonProcess>> spawns,
+                               std::vector<Ptr<PoissonProcess>> kills,
                                const Ptr<MixtureComponent> &emits);
 
     // After all component processes have been added using
@@ -291,7 +292,7 @@ namespace BOOM{
     // matrices that keep track of the probability of activity and the
     // probability of responsibility get modified when a new process
     // is added.
-    void add_data(const Ptr<Data> & dp) override;
+    void add_data(const Ptr<Data> &dp) override;
     void add_data(const Ptr<PointProcess> &dp) override;
 
     // If a subset (possibly all) of the data are from a training set
@@ -303,7 +304,7 @@ namespace BOOM{
     // then you can use an empty vector to signal "don't know" for
     // that event.  The size of 'source' must match the number of
     // events in 'process'.  It cannot be empty.
-    void add_supervised_data(const Ptr<PointProcess> & dp,
+    void add_supervised_data(const Ptr<PointProcess> &dp,
                              const SourceVector &source);
 
     // Clears the data managed by this model.  The over-ride is
@@ -322,9 +323,7 @@ namespace BOOM{
 
     // Returns the log likelihood value that was computed during the
     // most recent data imputation.
-    double last_loglike() const{
-      return last_loglike_;
-    }
+    double last_loglike() const { return last_loglike_; }
 
     // As the MCMC progresses, the model accumulates information about
     // which processes were active at various points in time and which
@@ -400,11 +399,9 @@ namespace BOOM{
     //   MCMC.  Thus they are maintained as integers counting the
     //   number of events seen thus far.  They are turned into
     //   probabilities by dividing by the number of MCMC iterations.
-    void backward_sampling(RNG &rng,
-                           const PointProcess &process,
+    void backward_sampling(RNG &rng, const PointProcess &process,
                            Matrix &probability_of_activity,
                            Matrix &probability_of_responsibility);
-
 
     // In some MMPP's the hmm state space size grows exponentially
     // with the number of latent processes.
@@ -445,16 +442,13 @@ namespace BOOM{
     //    responsible for the transition from first_state to
     //    second_state.
     double conditional_event_loglikelihood(
-        int t,
-        const HmmState *first_state,
-        const HmmState *second_state,
+        int t, const HmmState *first_state, const HmmState *second_state,
         const ProcessInfo &process_info) const;
 
     // Add the exposure time between events t-1 and t from 'process'
     // to the active processes from the hmm_state indexed by
     // 'previous_state'.
-    void update_exposure_time(const PointProcess &process,
-                              int t,
+    void update_exposure_time(const PointProcess &process, int t,
                               int previous_state);
 
     // Draw the previous HMM state given the index of the current
@@ -479,12 +473,10 @@ namespace BOOM{
     //   The component process responsible for the transition from
     //   previous_state to current_state, as sampled from its full
     //   conditional distribution.
-    PoissonProcess * sample_responsible_process(
-        RNG &rng,
-        int previous_state,
-        int current_state,
-        const ProcessInfo &process_info,
-        int t);
+    PoissonProcess *sample_responsible_process(RNG &rng, int previous_state,
+                                               int current_state,
+                                               const ProcessInfo &process_info,
+                                               int t);
 
     // Records the current probability that each process is active.
     // Args:
@@ -498,21 +490,18 @@ namespace BOOM{
     //   can divide probability_of_activity by the number of MCMC
     //   iterations to get the marginal probability that each state is
     //   active at each time point, averaging over the parameters.
-    void record_activity(VectorView probability_of_activity,
-                         int hmm_state_id);
+    void record_activity(VectorView probability_of_activity, int hmm_state_id);
 
     // The set of hmm states created by make_hmm_states().  Exposed
     // mainly for testing.
-    const std::vector<Ptr<HmmState> > & hmm_states() const {
-      return hmm_states_;
-    }
+    const std::vector<Ptr<HmmState>> &hmm_states() const { return hmm_states_; }
 
    private:
-    std::vector<Ptr<PoissonProcess> > component_processes_;
+    std::vector<Ptr<PoissonProcess>> component_processes_;
 
     // The minimal list of mixture components, with each element being
     // unique.
-    std::vector<Ptr<MixtureComponent> > mixture_components_;
+    std::vector<Ptr<MixtureComponent>> mixture_components_;
 
     // A flag for whether mixture components are present, which is
     // determined by the first call to add_component_process().
@@ -530,25 +519,24 @@ namespace BOOM{
 
     // spawns_[process] is the vector of processes that an event from
     // 'process' turns on.
-    std::map<const PoissonProcess *, std::vector<PoissonProcess *> > spawns_;
+    std::map<const PoissonProcess *, std::vector<PoissonProcess *>> spawns_;
 
     // The processes that an event from 'process' turns off.
-    std::map<const PoissonProcess *, std::vector<PoissonProcess *> > kills_;
+    std::map<const PoissonProcess *, std::vector<PoissonProcess *>> kills_;
     std::map<const PoissonProcess *, MixtureComponent *> emits_;
     //------------------------------------------------------------
 
     // The set of HMM states used to define the forward-backward
     // algorithm.
-    std::vector<Ptr<HmmState> > hmm_states_;
+    std::vector<Ptr<HmmState>> hmm_states_;
 
     void check_that_all_processes_have_been_registered();
-    void check_first_entry(const Ptr<PoissonProcess> & process);
-    void check_for_new_process(const Ptr<PoissonProcess> & process);
+    void check_first_entry(const Ptr<PoissonProcess> &process);
+    void check_for_new_process(const Ptr<PoissonProcess> &process);
     void check_for_new_mixture_component(
-        const Ptr<MixtureComponent> & component);
-    Ptr<HmmState> check_for_new_hmm_state(
-        const Ptr<HmmState> & potential_state);
-    void generate_new_states(const Ptr<HmmState> & state);
+        const Ptr<MixtureComponent> &component);
+    Ptr<HmmState> check_for_new_hmm_state(const Ptr<HmmState> &potential_state);
+    void generate_new_states(const Ptr<HmmState> &state);
 
     // Return the position of 'process' in the data member
     // component_processes_.
@@ -586,5 +574,5 @@ namespace BOOM{
     SourceMap known_source_store_;
   };
 
-}
-#endif // BOOM_MARKOV_MODULATED_POISSON_PROCESS_HPP_
+}  // namespace BOOM
+#endif  // BOOM_MARKOV_MODULATED_POISSON_PROCESS_HPP_

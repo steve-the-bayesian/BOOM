@@ -19,46 +19,40 @@
 
 #ifndef BOOM_FIXED_SPD_SAMPLER_HPP_
 #define BOOM_FIXED_SPD_SAMPLER_HPP_
-#include "Models/SpdParams.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SpdParams.hpp"
 #include "cpputil/math_utils.hpp"
 
-namespace BOOM{
-  class FixedSpdSampler : public PosteriorSampler{
+namespace BOOM {
+  class FixedSpdSampler : public PosteriorSampler {
    public:
-    FixedSpdSampler(const Ptr<SpdParams> & spd,
-                    double value,
+    FixedSpdSampler(const Ptr<SpdParams> &spd, double value,
                     int which_diagonal_element,
                     RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
           spd_(spd),
           value_(value),
           i_(which_diagonal_element),
-          j_(which_diagonal_element)
-    {}
+          j_(which_diagonal_element) {}
 
-    FixedSpdSampler(const Ptr<SpdParams> & spd,
-                    double value,
-                    int which_i,
-                    int which_j,
-                    RNG &seeding_rng = GlobalRng::rng)
+    FixedSpdSampler(const Ptr<SpdParams> &spd, double value, int which_i,
+                    int which_j, RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
           spd_(spd),
           value_(value),
           i_(which_i),
-          j_(which_j)
-    {}
+          j_(which_j) {}
 
     void draw() override {
       if (spd_->var()(i_, j_) == value_) return;
       SpdMatrix Sigma = spd_->var();
       Sigma(i_, j_) = value_;
-      if(i_ != j_) Sigma(j_, i_) = value_;
+      if (i_ != j_) Sigma(j_, i_) = value_;
       spd_->set_var(Sigma);
     }
 
-    double logpri()const override{
-      if(spd_->var()(i_, j_) == value_) return 0;
+    double logpri() const override {
+      if (spd_->var()(i_, j_) == value_) return 0;
       return BOOM::negative_infinity();
     }
 
@@ -69,7 +63,6 @@ namespace BOOM{
     int j_;
   };
 
-}
+}  // namespace BOOM
 
-
-#endif //BOOM_FIXED_SPD_SAMPLER_HPP_
+#endif  // BOOM_FIXED_SPD_SAMPLER_HPP_

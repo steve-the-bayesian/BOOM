@@ -25,52 +25,50 @@
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class PosteriorSampler;
   class MvnModel;
   class MvRegModel;
-  namespace IRT{
+  namespace IRT {
 
-    class IrtModel
-      : public CompositeParamPolicy,
-        public IID_DataPolicy<Subject>,
-        public PriorPolicy
-    {
-    public:
+    class IrtModel : public CompositeParamPolicy,
+                     public IID_DataPolicy<Subject>,
+                     public PriorPolicy {
+     public:
       typedef std::vector<string> StringVector;
       typedef Ptr<SubjectPrior> PriPtr;
-      enum ModelTypeName{MultiSubscaleLogitCut};
+      enum ModelTypeName { MultiSubscaleLogitCut };
 
       IrtModel();
       IrtModel(uint Nsub);
       IrtModel(const StringVector &Subscale_Names);
       IrtModel(const IrtModel &rhs);
-      IrtModel * clone()const override;
+      IrtModel *clone() const override;
 
-      virtual double pdf(const Ptr<Data> & dp, bool logsc)const;
-      virtual double pdf(const Ptr<Subject> & dp, bool logsc)const;
+      virtual double pdf(const Ptr<Data> &dp, bool logsc) const;
+      virtual double pdf(const Ptr<Subject> &dp, bool logsc) const;
 
       void set_subscale_names(const StringVector &);
-      const StringVector & subscale_names();
-      ostream & print_subscales(ostream &, bool nl=true, bool decorate=true);
+      const StringVector &subscale_names();
+      ostream &print_subscales(ostream &, bool nl = true, bool decorate = true);
 
-      uint nscales()const; // number of subscales
-      uint nsubjects()const;
-      uint nitems()const;
+      uint nscales() const;  // number of subscales
+      uint nsubjects() const;
+      uint nitems() const;
 
       void add_item(const Ptr<Item> &);
-      Ptr<Item> find_item(const string &id, bool nag=true)const;
+      Ptr<Item> find_item(const string &id, bool nag = true) const;
       ItemIt item_begin();
       ItemIt item_end();
-      ItemItC item_begin()const;
-      ItemItC item_end()const;
+      ItemItC item_begin() const;
+      ItemItC item_end() const;
 
       void add_subject(const Ptr<Subject> &);
       SI subject_begin();
       SI subject_end();
-      CSI subject_begin()const;
-      CSI subject_end()const;
-      Ptr<Subject> find_subject(const string &id, bool nag=true)const;
+      CSI subject_begin() const;
+      CSI subject_end() const;
+      Ptr<Subject> find_subject(const string &id, bool nag = true) const;
 
       void set_subject_prior(const Ptr<MvnModel> &);
       void set_subject_prior(const Ptr<MvRegModel> &);
@@ -78,9 +76,10 @@ namespace BOOM{
       PriPtr subject_prior();
 
       //----------- io functions -------
-      void item_report(ostream &, uint max_name_width=40)const;
-      void item_report(const string &fname)const;
-    private:
+      void item_report(ostream &, uint max_name_width = 40) const;
+      void item_report(const string &fname) const;
+
+     private:
       // see IRT.hpp for types
       StringVector subscale_names_;
       SubjectSet subjects_;
@@ -104,13 +103,12 @@ namespace BOOM{
     // ID [delim]
     // -or-
     // ID [delim] bg1 [delim] bg2 [delim] ...
-    void read_subject_info_file(const string &fname,
-                                const Ptr<IrtModel> &m,
-                                const char delim=' ');
+    void read_subject_info_file(const string &fname, const Ptr<IrtModel> &m,
+                                const char delim = ' ');
 
     void read_item_response_file(const string &fname, const Ptr<IrtModel> &m);
 
-  } // ends namespace IRT
-} // ends namespace BOOM
+  }  // namespace IRT
+}  // namespace BOOM
 
-#endif // IRT_MODEL_HPP
+#endif  // IRT_MODEL_HPP

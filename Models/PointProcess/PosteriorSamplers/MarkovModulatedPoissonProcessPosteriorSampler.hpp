@@ -28,16 +28,16 @@ namespace BOOM {
       : public PosteriorSampler {
    public:
     MarkovModulatedPoissonProcessPosteriorSampler(
-        MarkovModulatedPoissonProcess *mmpp,
-        bool initialize_latent_data = true,
+        MarkovModulatedPoissonProcess *mmpp, bool initialize_latent_data = true,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
     MarkovModulatedPoissonProcess *model_;
     bool first_time_;
   };
 
-}
+}  // namespace BOOM
 
-#endif //  BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_

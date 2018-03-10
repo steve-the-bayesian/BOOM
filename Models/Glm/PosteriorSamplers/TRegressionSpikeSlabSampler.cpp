@@ -18,18 +18,16 @@
 */
 
 #include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   TRegressionSpikeSlabSampler::TRegressionSpikeSlabSampler(
-      TRegressionModel *model,
-      const Ptr<MvnBase> &coefficient_slab_prior,
+      TRegressionModel *model, const Ptr<MvnBase> &coefficient_slab_prior,
       const Ptr<VariableSelectionPrior> &coefficient_spike_prior,
-      const Ptr<GammaModelBase> &siginv_prior,
-      const Ptr<DoubleModel> &nu_prior,
+      const Ptr<GammaModelBase> &siginv_prior, const Ptr<DoubleModel> &nu_prior,
       RNG &seeding_rng)
       : TRegressionSampler(model, coefficient_slab_prior, siginv_prior,
                            nu_prior, seeding_rng),
@@ -38,8 +36,7 @@ namespace BOOM {
         coefficient_slab_prior_(coefficient_slab_prior),
         coefficient_spike_prior_(coefficient_spike_prior),
         siginv_prior_(siginv_prior),
-        nu_prior_(nu_prior)
-  {}
+        nu_prior_(nu_prior) {}
 
   void TRegressionSpikeSlabSampler::draw() {
     impute_latent_data();
@@ -50,19 +47,17 @@ namespace BOOM {
   }
 
   double TRegressionSpikeSlabSampler::logpri() const {
-    return sam_.logpri() + nu_prior_->logp(model_->nu())
-        + siginv_prior_->logp(1.0 / model_->sigsq());
+    return sam_.logpri() + nu_prior_->logp(model_->nu()) +
+           siginv_prior_->logp(1.0 / model_->sigsq());
   }
 
   void TRegressionSpikeSlabSampler::draw_model_indicators() {
-    sam_.draw_model_indicators(rng(),
-                               complete_data_sufficient_statistics(),
+    sam_.draw_model_indicators(rng(), complete_data_sufficient_statistics(),
                                model_->sigsq());
   }
 
   void TRegressionSpikeSlabSampler::draw_included_coefficients() {
-    sam_.draw_beta(rng(),
-                   complete_data_sufficient_statistics(),
+    sam_.draw_beta(rng(), complete_data_sufficient_statistics(),
                    model_->sigsq());
   }
 

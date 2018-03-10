@@ -30,18 +30,21 @@ namespace BOOM {
       StudentSufstatManager(StateSpaceStudentPosteriorSampler *sampler)
           : sampler_(sampler) {}
       void clear_complete_data_sufficient_statistics() override {
-        sampler_->clear_complete_data_sufficient_statistics(); }
+        sampler_->clear_complete_data_sufficient_statistics();
+      }
       void update_complete_data_sufficient_statistics(int t) override {
-        sampler_->update_complete_data_sufficient_statistics(t); }
+        sampler_->update_complete_data_sufficient_statistics(t);
+      }
+
      private:
-      StateSpaceStudentPosteriorSampler * sampler_;
+      StateSpaceStudentPosteriorSampler *sampler_;
     };
   }  // namespace StateSpace
 
   namespace {
     typedef StateSpaceStudentPosteriorSampler SSSPS;
     typedef StateSpace::AugmentedStudentRegressionData AugmentedData;
-  }
+  }  // namespace
 
   SSSPS::StateSpaceStudentPosteriorSampler(
       StateSpaceStudentRegressionModel *model,
@@ -49,19 +52,17 @@ namespace BOOM {
       RNG &seeding_rng)
       : StateSpacePosteriorSampler(model, seeding_rng),
         model_(model),
-        observation_model_sampler_(observation_model_sampler)
-  {
-    model_->register_data_observer(
-        new StateSpace::StudentSufstatManager(this));
+        observation_model_sampler_(observation_model_sampler) {
+    model_->register_data_observer(new StateSpace::StudentSufstatManager(this));
     observation_model_sampler_->fix_latent_data(true);
   }
 
   void SSSPS::impute_nonstate_latent_data() {
-    const std::vector<Ptr<AugmentedData> > &data(model_->dat());
+    const std::vector<Ptr<AugmentedData>> &data(model_->dat());
     for (int t = 0; t < data.size(); ++t) {
       Ptr<AugmentedData> dp = data[t];
-      double state_contribution = model_->observation_matrix(t).dot(
-          model_->state(t));
+      double state_contribution =
+          model_->observation_matrix(t).dot(model_->state(t));
       for (int j = 0; j < dp->total_sample_size(); ++j) {
         const RegressionData &observation(dp->regression_data(j));
         if (observation.missing() == Data::observed) {
@@ -97,9 +98,8 @@ namespace BOOM {
         for (int j = 0; j < local_sample_size; ++j) {
           const RegressionData &real_observation(
               real_data_point->regression_data(j));
-          NEW(RegressionData, subordinate_data)(
-              new DoubleData(real_observation.y()),
-              real_observation.Xptr());
+          NEW(RegressionData, subordinate_data)
+          (new DoubleData(real_observation.y()), real_observation.Xptr());
           local_subordinate_data.push_back(subordinate_data);
           if (real_observation.missing() == Data::observed) {
             model_->observation_model()->add_data(subordinate_data);
@@ -118,9 +118,7 @@ namespace BOOM {
         double time_series_residual =
             observation.y() - dp->state_model_offset();
         observation_model_sampler_->update_complete_data_sufficient_statistics(
-            time_series_residual,
-            observation.x(),
-            dp->weight(i));
+            time_series_residual, observation.x(), dp->weight(i));
         subordinate_data_[t][i]->set_y(time_series_residual);
       }
     }

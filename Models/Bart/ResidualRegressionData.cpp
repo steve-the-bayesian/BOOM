@@ -24,11 +24,10 @@ namespace BOOM {
   namespace Bart {
 
     ResidualRegressionData::ResidualRegressionData(const VectorData *x)
-        : predictor_(x)
-    {}
+        : predictor_(x) {}
 
     //----------------------------------------------------------------------
-    const Vector & ResidualRegressionData::x() const {
+    const Vector &ResidualRegressionData::x() const {
       return predictor_->value();
     }
 
@@ -40,31 +39,34 @@ namespace BOOM {
     //----------------------------------------------------------------------
     void ResidualRegressionData::add_to_gaussian_suf(
         GaussianBartSufficientStatistics &) const {
-      report_error("Illegal combination of ResidualRegressionData with "
-                   "GaussianBartSufficientStatistics.");
+      report_error(
+          "Illegal combination of ResidualRegressionData with "
+          "GaussianBartSufficientStatistics.");
     }
 
     //----------------------------------------------------------------------
     void ResidualRegressionData::add_to_poisson_suf(
         PoissonSufficientStatistics &) const {
-      report_error("Illegal combination of ResidualRegressionData with "
-                   "PoissonSufficientStatistics.");
+      report_error(
+          "Illegal combination of ResidualRegressionData with "
+          "PoissonSufficientStatistics.");
     }
 
     //----------------------------------------------------------------------
     void ResidualRegressionData::add_to_probit_suf(
         ProbitSufficientStatistics &) const {
-      report_error("Illegal combination of ResidualRegressionData with "
-                   "ProbitSufficientStatistics.");
+      report_error(
+          "Illegal combination of ResidualRegressionData with "
+          "ProbitSufficientStatistics.");
     }
 
     //----------------------------------------------------------------------
     void ResidualRegressionData::add_to_logit_suf(
         LogitSufficientStatistics &) const {
-      report_error("Illegal combination of ResidualRegressionData with "
-                   "LogitSufficientStatistics.");
+      report_error(
+          "Illegal combination of ResidualRegressionData with "
+          "LogitSufficientStatistics.");
     }
-
 
   }  // namespace Bart
 }  // namespace BOOM

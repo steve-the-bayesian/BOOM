@@ -25,107 +25,93 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace BOOM{
+namespace BOOM {
   typedef MultinomialSuf MS;
   typedef CategoricalData CD;
-  MS::MultinomialSuf(const uint p)
-    : counts_(p, 0.0)
-  {}
+  MS::MultinomialSuf(const uint p) : counts_(p, 0.0) {}
 
-  MS::MultinomialSuf(const Vector &counts)
-      : counts_(counts)
-  {
+  MS::MultinomialSuf(const Vector &counts) : counts_(counts) {
     if (counts.min() < 0.0) {
       report_error("All elements of counts must be non-negative.");
     }
   }
 
   MS::MultinomialSuf(const MultinomialSuf &rhs)
-    : Sufstat(rhs),
-      SufstatDetails<CD>(rhs),
-      counts_(rhs.counts_)
-  {}
+      : Sufstat(rhs), SufstatDetails<CD>(rhs), counts_(rhs.counts_) {}
 
-  MS * MS::clone()const{return new MS(*this);}
+  MS *MS::clone() const { return new MS(*this); }
 
-  void MS::Update(const CD &d){
+  void MS::Update(const CD &d) {
     uint i = d.value();
-    while(i>=counts_.size()) {
+    while (i >= counts_.size()) {
       counts_.push_back(0);  // counts_ grows when needed
     }
     ++counts_[i];
   }
 
-  void MS::add_mixture_data(uint y, double prob){ counts_[y]+=prob; }
+  void MS::add_mixture_data(uint y, double prob) { counts_[y] += prob; }
   void MS::add_mixture_data(const Vector &weights) { counts_ += weights; }
-  void MS::update_raw(uint k){ ++counts_[k]; }
-  void MS::clear(){ counts_ = 0.0; }
-  const Vector &MS::n()const{ return counts_; }
+  void MS::update_raw(uint k) { ++counts_[k]; }
+  void MS::clear() { counts_ = 0.0; }
+  const Vector &MS::n() const { return counts_; }
   uint MS::dim() const { return counts_.size(); }
-  void MS::combine(const Ptr<MS> &s){ counts_ += s->counts_; }
-  void MS::combine(const MS & s){ counts_ += s.counts_; }
+  void MS::combine(const Ptr<MS> &s) { counts_ += s->counts_; }
+  void MS::combine(const MS &s) { counts_ += s.counts_; }
 
-  MultinomialSuf * MS::abstract_combine(Sufstat *s){
-    return abstract_combine_impl(this,s);
+  MultinomialSuf *MS::abstract_combine(Sufstat *s) {
+    return abstract_combine_impl(this, s);
   }
-  Vector MS::vectorize(bool)const{return counts_; }
+  Vector MS::vectorize(bool) const { return counts_; }
 
-  Vector::const_iterator MS::unvectorize(Vector::const_iterator &v,
-                                      bool){
+  Vector::const_iterator MS::unvectorize(Vector::const_iterator &v, bool) {
     uint dim = counts_.size();
-    counts_.assign(v, v+dim);
-    v+=dim;
+    counts_.assign(v, v + dim);
+    v += dim;
     return v;
   }
 
-  Vector::const_iterator MS::unvectorize(const Vector &v, bool minimal){
+  Vector::const_iterator MS::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator it = v.begin();
-    return unvectorize(it,minimal);
+    return unvectorize(it, minimal);
   }
 
-  ostream & MS::print(ostream &out)const{
-    return out << counts_;
-  }
+  ostream &MS::print(ostream &out) const { return out << counts_; }
   //======================================================================
 
   typedef MultinomialModel MM;
   typedef std::vector<string> StringVector;
 
   MM::MultinomialModel(uint p)
-    : ParamPolicy(new VectorParams(p, 1.0/p)),
-      DataPolicy(new MS(p)),
-      PriorPolicy(),
-      logp_current_(false)
-  {
+      : ParamPolicy(new VectorParams(p, 1.0 / p)),
+        DataPolicy(new MS(p)),
+        PriorPolicy(),
+        logp_current_(false) {
     set_observer();
   }
 
-  uint  count_levels(const StringVector &sv){
+  uint count_levels(const StringVector &sv) {
     std::set<string> s;
-    for(uint i=0; i<sv.size(); ++i) s.insert(sv[i]);
+    for (uint i = 0; i < sv.size(); ++i) s.insert(sv[i]);
     return s.size();
   }
 
   MM::MultinomialModel(const Vector &probs)
-    : ParamPolicy(new VectorParams(probs)),
-      DataPolicy(new MS(probs.size())),
-      PriorPolicy(),
-      logp_current_(false)
-  {
+      : ParamPolicy(new VectorParams(probs)),
+        DataPolicy(new MS(probs.size())),
+        PriorPolicy(),
+        logp_current_(false) {
     set_observer();
   }
 
   MM::MultinomialModel(const StringVector &names)
-    : ParamPolicy(new VectorParams(1)),
-      DataPolicy(new MS(1)),
-      PriorPolicy(),
-      logp_current_(false)
-  {
-    std::vector<Ptr<CD> >
-      dvec(make_catdat_ptrs(names));
+      : ParamPolicy(new VectorParams(1)),
+        DataPolicy(new MS(1)),
+        PriorPolicy(),
+        logp_current_(false) {
+    std::vector<Ptr<CD> > dvec(make_catdat_ptrs(names));
 
-    uint nlev= dvec[0]->nlevels();
-    Vector probs(nlev, 1.0/nlev);
+    uint nlev = dvec[0]->nlevels();
+    Vector probs(nlev, 1.0 / nlev);
     set_pi(probs);
 
     set_data(dvec);
@@ -137,97 +123,91 @@ namespace BOOM{
       : ParamPolicy(new VectorParams(suf.dim())),
         DataPolicy(new MS(suf)),
         PriorPolicy(),
-        logp_current_(false)
-  {
+        logp_current_(false) {
     set_observer();
     mle();
   }
 
   MM::MultinomialModel(const MM &rhs)
-    : Model(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      LoglikeModel(rhs),
-      MixtureComponent(rhs),
-      logp_current_(false)
-  {
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        LoglikeModel(rhs),
+        MixtureComponent(rhs),
+        logp_current_(false) {
     set_observer();
   }
 
-  MM * MM::clone()const{return new MM(*this);}
+  MM *MM::clone() const { return new MM(*this); }
 
-  Ptr<VectorParams> MM::Pi_prm(){
-    return ParamPolicy::prm();}
-  const Ptr<VectorParams> MM::Pi_prm()const{
-    return ParamPolicy::prm();}
+  Ptr<VectorParams> MM::Pi_prm() { return ParamPolicy::prm(); }
+  const Ptr<VectorParams> MM::Pi_prm() const { return ParamPolicy::prm(); }
 
-  void MM::set_observer(){
-    Pi_prm()->add_observer([this](){this->observe_logp();});
+  void MM::set_observer() {
+    Pi_prm()->add_observer([this]() { this->observe_logp(); });
   }
 
-  uint MM::nlevels()const{return pi().size();}
-  const double & MM::pi(int s) const{ return pi()[s];}
-  const Vector & MM::pi()const{return Pi_prm()->value();}
-  void MM::set_pi(const Vector &probs){
+  uint MM::nlevels() const { return pi().size(); }
+  const double &MM::pi(int s) const { return pi()[s]; }
+  const Vector &MM::pi() const { return Pi_prm()->value(); }
+  void MM::set_pi(const Vector &probs) {
     Pi_prm()->set(probs);
     check_logp();
   }
 
-  uint MM::dim()const{return pi().size();}
+  uint MM::dim() const { return pi().size(); }
 
-  double MM::loglike(const Vector &probs)const{
+  double MM::loglike(const Vector &probs) const {
     double ans(0.0);
     const Vector &n(suf()->n());
-    for(uint i=0; i<dim(); ++i)ans+= n[i]*log(probs[i]);
+    for (uint i = 0; i < dim(); ++i) ans += n[i] * log(probs[i]);
     return ans;
   }
 
-  void MM::mle(){
+  void MM::mle() {
     const Vector &n(suf()->n());
     double tot = sum(n);
-    if(tot==0){
-      Vector probs(dim(), 1.0/dim());
+    if (tot == 0) {
+      Vector probs(dim(), 1.0 / dim());
       set_pi(probs);
       return;
     }
-    set_pi(n/tot);
+    set_pi(n / tot);
   }
 
-  double MM::pdf(const Data * dp, bool logscale)const{
+  double MM::pdf(const Data *dp, bool logscale) const {
     check_logp();
     uint i = DAT(dp)->value();
-    if(i >= dim()){
+    if (i >= dim()) {
       string msg = "too large a value passed to MultinomialModel::pdf";
       report_error(msg);
     }
     return logscale ? logp_[i] : pi(i);
   }
 
-  double MM::pdf(const Ptr<Data> &dp, bool logscale)const{
+  double MM::pdf(const Ptr<Data> &dp, bool logscale) const {
     check_logp();
     uint i = DAT(dp)->value();
-    if(i >= dim()){
+    if (i >= dim()) {
       string msg = "too large a value passed to MultinomialModel::pdf";
       report_error(msg);
     }
     return logscale ? logp_[i] : pi(i);
   }
 
-  uint MM::simdat(RNG &rng)const{ return rmulti_mt(rng, pi()); }
+  uint MM::simdat(RNG &rng) const { return rmulti_mt(rng, pi()); }
 
   void MM::add_mixture_data(const Ptr<Data> &dp, double prob) {
     uint i = DAT(dp)->value();
-    suf()->add_mixture_data(i,prob);
+    suf()->add_mixture_data(i, prob);
   }
 
-  void MM::observe_logp(){
-    logp_current_ = false;
-  }
+  void MM::observe_logp() { logp_current_ = false; }
 
-  void MM::check_logp()const{
-    if(logp_current_) return;
+  void MM::check_logp() const {
+    if (logp_current_) return;
     logp_ = log(pi());
     logp_current_ = true;
   }
-}
+}  // namespace BOOM

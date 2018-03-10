@@ -19,13 +19,13 @@
 #ifndef BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_
 #define BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_
 
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/Glm/BinomialLogitModel.hpp"
 #include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 #include "Samplers/TIM.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A posterior sampler for the BinomialLogitModel based on tailored
   // independence Metropolis (TIM).  The sampler approximates the
@@ -34,7 +34,7 @@ namespace BOOM{
   // and with pre-specified degrees of freedom.  The approximation is
   // used as a proposal distribution for a independence
   // Metropolis-Hastings sampler.
-  class BinomialLogitSamplerTim : public PosteriorSampler{
+  class BinomialLogitSamplerTim : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model for which posterior samples are desired.
@@ -58,17 +58,17 @@ namespace BOOM{
     //     for this sampler's RNG.
     BinomialLogitSamplerTim(BinomialLogitModel *model,
                             const Ptr<MvnBase> &prior,
-                            bool mode_is_stable = true,
-                            double nu = 3,
+                            bool mode_is_stable = true, double nu = 3,
                             RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
 
-    double logp(const Vector &beta)const;
-    double dlogp(const Vector &beta, Vector &g)const;
-    double d2logp(const Vector &beta, Vector &g, Matrix &H)const;
-    double Logp(const Vector &beta, Vector &g, Matrix &h, int nd)const;
+    double logp(const Vector &beta) const;
+    double dlogp(const Vector &beta, Vector &g) const;
+    double d2logp(const Vector &beta, Vector &g, Matrix &H) const;
+    double Logp(const Vector &beta, Vector &g, Matrix &h, int nd) const;
+
    private:
     BinomialLogitModel *m_;
     Ptr<MvnBase> pri_;
@@ -82,9 +82,9 @@ namespace BOOM{
     };
     std::map<Selector, Mode> modes_;
 
-    const Mode & locate_mode(const Selector &included_coefficients);
+    const Mode &locate_mode(const Selector &included_coefficients);
   };
 
-}
+}  // namespace BOOM
 
-#endif //  BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_
+#endif  //  BOOM_BINOMIAL_MIXTURE_SAMPLER_TIM_HPP_

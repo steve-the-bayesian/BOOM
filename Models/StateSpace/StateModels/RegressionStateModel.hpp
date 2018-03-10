@@ -20,11 +20,11 @@
 #ifndef BOOM_REGRESSION_STATE_MODEL_HPP_
 #define BOOM_REGRESSION_STATE_MODEL_HPP_
 
-#include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 
 namespace BOOM {
 
@@ -32,17 +32,15 @@ namespace BOOM {
   // 'state' is a constant '1' with zero error, and a [1x1] identity matrix for
   // the state transition matrix.
 
-  class RegressionStateModel
-      : public StateModel,
-        public CompositeParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy
-  {
+  class RegressionStateModel : public StateModel,
+                               public CompositeParamPolicy,
+                               public NullDataPolicy,
+                               public PriorPolicy {
    public:
     RegressionStateModel(const Ptr<RegressionModel> &rm);
     RegressionStateModel(const RegressionStateModel &rhs);
     RegressionStateModel(RegressionStateModel &&rhs) = default;
-    RegressionStateModel * clone() const override;
+    RegressionStateModel *clone() const override;
 
     // clears sufficient statistics, but does not erase pointers to data.
     void clear_data() override;
@@ -52,26 +50,19 @@ namespace BOOM {
     // observations.  A class that contains a RegressionStateModel
     // should update an externally held pointer to regression_ each time a
     // state vector is observed.
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override {
-      return 0;
-    }
+    uint state_error_dimension() const override { return 0; }
 
     // Implementation throws, because this model cannot be part of an
     // EM algorithm.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
@@ -97,8 +88,8 @@ namespace BOOM {
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
 
-    RegressionModel * regression() {return regression_.get();}
-    const RegressionModel * regression()const{return regression_.get();}
+    RegressionModel *regression() { return regression_.get(); }
+    const RegressionModel *regression() const { return regression_.get(); }
 
     void add_predictor_data(const std::vector<Matrix> &predictors);
 
@@ -113,4 +104,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif // BOOM_REGRESSION_STATE_MODEL_HPP_
+#endif  // BOOM_REGRESSION_STATE_MODEL_HPP_

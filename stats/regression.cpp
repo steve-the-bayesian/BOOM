@@ -18,15 +18,15 @@
 */
 #include "stats/regression.hpp"
 #include "LinAlg/QR.hpp"
-namespace BOOM{
+namespace BOOM {
 
-  std::pair<Vector, double> ols(const Matrix &X, const Vector &y){
+  std::pair<Vector, double> ols(const Matrix &X, const Vector &y) {
     uint n = y.size();
     uint p = X.ncol();
     QR qr(X);
     Vector b = qr.solve(y);
-    Vector e = y-X*b;
+    Vector e = y - X * b;
     double SSE = e.normsq();
-    return std::make_pair(b, SSE/(n-p));
+    return std::make_pair(b, SSE / (n - p));
   }
-}
+}  // namespace BOOM

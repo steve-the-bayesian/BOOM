@@ -18,29 +18,28 @@
 */
 
 #include "stats/ECDF.hpp"
-#include "cpputil/report_error.hpp"
 #include <algorithm>
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   ECDF::ECDF(const ConstVectorView &unsorted_data)
-      : sorted_data_(unsorted_data)
-  {
+      : sorted_data_(unsorted_data) {
     if (sorted_data_.empty()) {
       report_error("ECDF cannot be built from empty vector.");
     }
     std::sort(sorted_data_.begin(), sorted_data_.end());
   }
 
-  double ECDF::fplus(double x)const{
-    double ans = std::upper_bound(sorted_data_.begin(), sorted_data_.end(), x)
-        - sorted_data_.begin();
+  double ECDF::fplus(double x) const {
+    double ans = std::upper_bound(sorted_data_.begin(), sorted_data_.end(), x) -
+                 sorted_data_.begin();
     return ans / sorted_data_.size();
   }
 
-  double ECDF::fminus(double x)const{
-    double ans = std::lower_bound(sorted_data_.begin(), sorted_data_.end(), x)
-        - sorted_data_.begin();
+  double ECDF::fminus(double x) const {
+    double ans = std::lower_bound(sorted_data_.begin(), sorted_data_.end(), x) -
+                 sorted_data_.begin();
     return ans / sorted_data_.size();
   }
 

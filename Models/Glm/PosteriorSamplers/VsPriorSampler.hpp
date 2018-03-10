@@ -19,53 +19,45 @@
 
 #ifndef BOOM_VS_PRIOR_SAMPLER_HPP
 #define BOOM_VS_PRIOR_SAMPLER_HPP
-#include "Models/Glm/VariableSelectionPrior.hpp"
-#include "Models/BetaModel.hpp"
 #include <vector>
 #include "LinAlg/Selector.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class VsPriorSampler
-    : public PosteriorSampler
-  {
+  class VsPriorSampler : public PosteriorSampler {
     // This sampler is for the parameters of a VariableSelectionPrior,
     // which are a bunch of independent binomial probabilities 'pi'.
     // This sampler updates 'pi'.
 
     typedef VariableSelectionPrior VSP;
-  public:
-    VsPriorSampler(VSP *Vsp,
-                   const Ptr<BetaModel> &Beta,
+
+   public:
+    VsPriorSampler(VSP *Vsp, const Ptr<BetaModel> &Beta,
                    RNG &seeding_rng = GlobalRng::rng);
-    VsPriorSampler(VSP *Vsp,
-                   const std::vector<Ptr<BetaModel>> &Beta,
+    VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
                    RNG &seeding_rng = GlobalRng::rng);
-    VsPriorSampler(VSP *Vsp,
-                   const Vector & pi_guess,
-                   const Vector & wgt,
+    VsPriorSampler(VSP *Vsp, const Vector &pi_guess, const Vector &wgt,
                    RNG &seeding_rng = GlobalRng::rng);
 
-    VsPriorSampler(VSP *Vsp,
-                   const std::vector<Ptr<BetaModel>> &Beta,
-                   const Selector &forced_in,
-                   const Selector &forced_out,
+    VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
+                   const Selector &forced_in, const Selector &forced_out,
                    RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
-    double logpri()const override;
-    uint potential_nvars()const;
-  private:
+    double logpri() const override;
+    uint potential_nvars() const;
 
+   private:
     VSP *vsp;
     Selector forced_in_;
     Selector forced_out_;
-    std::vector<Ptr<PosteriorSampler> > sam_;
+    std::vector<Ptr<PosteriorSampler>> sam_;
 
-    bool is_fixed(uint i, double &p)const;
-    double logpri(uint i)const;
-
+    bool is_fixed(uint i, double &p) const;
+    double logpri(uint i) const;
   };
 
-}
-#endif// BOOM_VS_PRIOR_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_VS_PRIOR_SAMPLER_HPP

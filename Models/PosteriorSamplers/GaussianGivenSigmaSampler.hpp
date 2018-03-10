@@ -20,15 +20,14 @@
 #ifndef BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_
 #define BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_
 
-#include "Models/GaussianModelGivenSigma.hpp"
-#include "Models/GaussianModelBase.hpp"
 #include "Models/GammaModel.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/GaussianModelGivenSigma.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
-  class GaussianGivenSigmaSampler
-      : public PosteriorSampler {
+  class GaussianGivenSigmaSampler : public PosteriorSampler {
    public:
     GaussianGivenSigmaSampler(GaussianModelGivenSigma *model,
                               const Ptr<GaussianModelBase> &mean_prior,
@@ -49,4 +48,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_
+#endif  //  BOOM_GAUSSIAN_GIVEN_SIGMA_SAMPLER_HPP_

@@ -20,58 +20,59 @@
 #define BOOM_CHI_SQUARE_TEST_HPP_
 
 #include <iostream>
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
+namespace BOOM {
+  class OneWayChiSquareTest {
+   public:
+    // for testing counts vs. a known distribution
+    OneWayChiSquareTest(const Vector &observed, const Vector &distribution);
+    double p_value() const;
+    double degrees_of_freedom() const;
+    double chi_square() const;
 
-namespace BOOM{
-class OneWayChiSquareTest{
- public:
-  // for testing counts vs. a known distribution
-  OneWayChiSquareTest(const Vector & observed, const Vector & distribution);
-  double p_value()const;
-  double degrees_of_freedom()const;
-  double chi_square()const;
+    // Returns true if all the assumptions of the test have been met.
+    // Returns false if any expected cell counts are less than 5.0.
+    bool is_valid() const;
+    std::ostream &print(std::ostream &out) const;
 
-  // Returns true if all the assumptions of the test have been met.
-  // Returns false if any expected cell counts are less than 5.0.
-  bool is_valid()const;
-  std::ostream & print(std::ostream & out)const;
- private:
-  Vector observed_;
-  Vector expected_;
-  double chi_square_;
-  double df_;
-  double p_value_;
-};
+   private:
+    Vector observed_;
+    Vector expected_;
+    double chi_square_;
+    double df_;
+    double p_value_;
+  };
 
-inline std::ostream & operator<<(std::ostream &out,
-                                 const OneWayChiSquareTest &test){
-  return test.print(out);
-}
+  inline std::ostream &operator<<(std::ostream &out,
+                                  const OneWayChiSquareTest &test) {
+    return test.print(out);
+  }
 
-class TwoWayChiSquareTest{
- public:
-  TwoWayChiSquareTest(const Matrix & observed_cell_counts);
-  double p_value()const;
-  double degrees_of_freedom()const;
-  double chi_square()const;
+  class TwoWayChiSquareTest {
+   public:
+    TwoWayChiSquareTest(const Matrix &observed_cell_counts);
+    double p_value() const;
+    double degrees_of_freedom() const;
+    double chi_square() const;
 
-  // Returns true if all the assumptions of the test have been met.
-  // Returns false if any expected cell counts are less than 5.0.
-  bool is_valid()const;
-  std::ostream & print(std::ostream & out)const;
- private:
-  double chi_square_;
-  double df_;
-  double p_value_;
-  bool assumptions_are_met_;
-};
+    // Returns true if all the assumptions of the test have been met.
+    // Returns false if any expected cell counts are less than 5.0.
+    bool is_valid() const;
+    std::ostream &print(std::ostream &out) const;
 
-inline std::ostream & operator<<(std::ostream &out,
-                                 const TwoWayChiSquareTest &test){
-  return test.print(out);
-}
+   private:
+    double chi_square_;
+    double df_;
+    double p_value_;
+    bool assumptions_are_met_;
+  };
 
-}
-#endif // BOOM_CHI_SQUARE_TEST_HPP_
+  inline std::ostream &operator<<(std::ostream &out,
+                                  const TwoWayChiSquareTest &test) {
+    return test.print(out);
+  }
+
+}  // namespace BOOM
+#endif  // BOOM_CHI_SQUARE_TEST_HPP_

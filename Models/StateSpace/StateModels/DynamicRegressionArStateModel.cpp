@@ -26,8 +26,7 @@ namespace BOOM {
   }  // namespace
 
   DRASM::DynamicRegressionArStateModel(const Matrix &predictors, int lags)
-      : DynamicRegressionArStateModel(split_predictors(predictors), lags)
-  {}
+      : DynamicRegressionArStateModel(split_predictors(predictors), lags) {}
 
   DRASM::DynamicRegressionArStateModel(const std::vector<Matrix> &predictors,
                                        int lags)
@@ -37,8 +36,8 @@ namespace BOOM {
         state_variance_matrix_(new SparseDiagonalMatrixBlockParamView(
             compute_state_dimension(predictors, lags))),
         initial_state_mean_(compute_state_dimension(predictors, lags), 0.0),
-        initial_state_variance_(compute_state_dimension(predictors, lags), 1.0)
-  {
+        initial_state_variance_(compute_state_dimension(predictors, lags),
+                                1.0) {
     if (lags < 1) {
       report_error("An AR model must have a lag of at least 1.");
     }
@@ -64,11 +63,9 @@ namespace BOOM {
     }
   }
 
-  DRASM::DynamicRegressionArStateModel(const DRASM &rhs) {
-    operator=(rhs);
-  }
+  DRASM::DynamicRegressionArStateModel(const DRASM &rhs) { operator=(rhs); }
 
-  DRASM & DRASM::operator=(const DRASM &rhs) {
+  DRASM &DRASM::operator=(const DRASM &rhs) {
     if (&rhs != this) {
       coefficient_transition_model_.clear();
       transition_components_.clear();
@@ -98,8 +95,7 @@ namespace BOOM {
   }
 
   void DRASM::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now,
-                            int time_now,
+                            const ConstVectorView &now, int time_now,
                             ScalarStateSpaceModelBase *) {
     int pos = 0;
     for (int i = 0; i < xdim(); ++i) {
@@ -114,23 +110,21 @@ namespace BOOM {
   }
 
   void DRASM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then,
-      const ConstVectorView &now,
-      int time_now,
+      const ConstVectorView &then, const ConstVectorView &now, int time_now,
       DynamicInterceptRegressionModel *) {
     return observe_state(then, now, time_now, nullptr);
   }
-  
+
   void DRASM::observe_initial_state(const ConstVectorView &state) {
     // Nothing to do here.
   }
 
   void DRASM::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    report_error("MAP estimation is not supported for DynamicRegressionAr"
-                 "state models.");
+    report_error(
+        "MAP estimation is not supported for DynamicRegressionAr"
+        "state models.");
   }
 
   void DRASM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
@@ -144,9 +138,7 @@ namespace BOOM {
     }
   }
 
-  Vector DRASM::initial_state_mean() const {
-    return initial_state_mean_;
-  }
+  Vector DRASM::initial_state_mean() const { return initial_state_mean_; }
 
   void DRASM::set_initial_state_mean(const Vector &mu) {
     check_state_dimension_size(mu.size());
@@ -171,13 +163,13 @@ namespace BOOM {
     add_to_predictors(predictors);
   }
 
-  void DRASM::increment_expected_gradient(VectorView gradient,
-                                   int t,
-                                   const ConstVectorView &state_error_mean,
-                                   const ConstSubMatrix &state_error_variance) {
+  void DRASM::increment_expected_gradient(
+      VectorView gradient, int t, const ConstVectorView &state_error_mean,
+      const ConstSubMatrix &state_error_variance) {
     // TODO:  implement this one day.
-    report_error("MAP estimation is not supported for dynamic regression "
-                 "AR(p) state models.");
+    report_error(
+        "MAP estimation is not supported for dynamic regression "
+        "AR(p) state models.");
   }
 
   void DRASM::set_xnames(const std::vector<std::string> &names) {
@@ -201,9 +193,8 @@ namespace BOOM {
     int row = 0;
     for (int t = 0; t < number_of_time_points; ++t) {
       for (int r = 0; r < expanded_predictors_[t]->nrow(); ++r) {
-        state_error_expander_->Tmult(
-            ans.row(row++),
-            expanded_predictors_[t]->row(r).dense());
+        state_error_expander_->Tmult(ans.row(row++),
+                                     expanded_predictors_[t]->row(r).dense());
       }
     }
     return ans;
@@ -218,20 +209,18 @@ namespace BOOM {
     }
     int xdim = predictors[0].ncol();
     for (int t = 0; t < predictors.size(); ++t) {
-      NEW(GenericSparseMatrixBlock, predictor_matrix)(
-          predictors[t].nrow(), xdim * number_of_lags());
+      NEW(GenericSparseMatrixBlock, predictor_matrix)
+      (predictors[t].nrow(), xdim * number_of_lags());
       for (int i = 0; i < predictors[t].nrow(); ++i) {
-        predictor_matrix->set_row(expand_predictor(predictors[t].row(i)),
-                                  i);
+        predictor_matrix->set_row(expand_predictor(predictors[t].row(i)), i);
       }
-      if (!expanded_predictors_.empty()
-          && (expanded_predictors_[0]->ncol() != predictor_matrix->ncol())) {
-          report_error("All predictors must be the same dimension.");
+      if (!expanded_predictors_.empty() &&
+          (expanded_predictors_[0]->ncol() != predictor_matrix->ncol())) {
+        report_error("All predictors must be the same dimension.");
       }
       expanded_predictors_.push_back(predictor_matrix);
     }
   }
-
 
   std::vector<Matrix> DRASM::split_predictors(const Matrix &predictors) const {
     std::vector<Matrix> ans;

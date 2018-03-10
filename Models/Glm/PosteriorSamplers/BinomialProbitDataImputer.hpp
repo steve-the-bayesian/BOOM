@@ -20,8 +20,8 @@
 #ifndef BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 #define BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 
-#include "distributions/rng.hpp"
 #include <ostream>
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
@@ -52,14 +52,12 @@ namespace BOOM {
     //   observation.  y[i] will be from the distribution truncated to
     //   the upper tail, and n[i] - y[i] will be from the distribution
     //   truncated to the lower tail.
-    double impute(RNG &rng,
-                  double number_of_trials,
-                  double number_of_successes,
+    double impute(RNG &rng, double number_of_trials, double number_of_successes,
                   double eta) const;
 
     // The smallest number_of_trials for which approximate
     // augmentation takes place.
-    int clt_threshold() const {return clt_threshold_;}
+    int clt_threshold() const { return clt_threshold_; }
 
    private:
     int clt_threshold_;

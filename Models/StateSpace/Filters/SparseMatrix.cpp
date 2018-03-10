@@ -17,38 +17,33 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include "cpputil/report_error.hpp"
-#include "LinAlg/SpdMatrix.hpp"
 #include <iostream>
 #include <utility>
-
+#include "LinAlg/SpdMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
   void SparseMatrixBlock::conforms_to_rows(int i) const {
     if (i == nrow()) return;
     std::ostringstream err;
-    err << "object of length "
-        << i
-        << " does not conform with the number of rows ("
-        << nrow() << ")";
+    err << "object of length " << i
+        << " does not conform with the number of rows (" << nrow() << ")";
     report_error(err.str());
   }
 
   void SparseMatrixBlock::conforms_to_cols(int i) const {
     if (i == ncol()) return;
     std::ostringstream err;
-    err << "object of length "
-        << i
-        << " does not conform with the number of columns ("
-        << ncol() << ")";
+    err << "object of length " << i
+        << " does not conform with the number of columns (" << ncol() << ")";
     report_error(err.str());
   }
 
   void SparseMatrixBlock::check_can_add(const SubMatrix &block) const {
-    if (block.nrow() != nrow() || block.ncol()!=ncol()) {
+    if (block.nrow() != nrow() || block.ncol() != ncol()) {
       std::ostringstream err;
       err << "cant add SparseMatrix to SubMatrix: rows and columnns "
           << "are incompatible" << endl
@@ -100,11 +95,11 @@ namespace BOOM {
     }
   }
 
-  BlockDiagonalMatrixBlock * BlockDiagonalMatrixBlock::clone() const {
+  BlockDiagonalMatrixBlock *BlockDiagonalMatrixBlock::clone() const {
     return new BlockDiagonalMatrixBlock(*this);
   }
 
-  BlockDiagonalMatrixBlock & BlockDiagonalMatrixBlock::operator=(
+  BlockDiagonalMatrixBlock &BlockDiagonalMatrixBlock::operator=(
       const BlockDiagonalMatrixBlock &rhs) {
     if (this != &rhs) {
       blocks_.clear();
@@ -133,7 +128,6 @@ namespace BOOM {
       report_error("Right hand side is the wrong dimension.");
     }
   }
-
 
   void BlockDiagonalMatrixBlock::multiply(VectorView lhs,
                                           const ConstVectorView &rhs) const {
@@ -190,8 +184,8 @@ namespace BOOM {
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
       int local_dim = blocks_[b]->nrow();
-      SubMatrix rows_of_m(m, position, position + local_dim - 1,
-                          0, m.ncol() - 1);
+      SubMatrix rows_of_m(m, position, position + local_dim - 1, 0,
+                          m.ncol() - 1);
       blocks_[b]->matrix_multiply_inplace(rows_of_m);
       position += local_dim;
     }
@@ -220,8 +214,8 @@ namespace BOOM {
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
       int local_dim = blocks_[b]->nrow();
-      SubMatrix local(block, position, position + local_dim - 1,
-                      position, position + local_dim - 1);
+      SubMatrix local(block, position, position + local_dim - 1, position,
+                      position + local_dim - 1);
       blocks_[b]->add_to(local);
       position += local_dim;
     }
@@ -229,8 +223,7 @@ namespace BOOM {
 
   //======================================================================
   StackedMatrixBlock::StackedMatrixBlock(const StackedMatrixBlock &rhs)
-      : nrow_(0), ncol_(0)
-  {
+      : nrow_(0), ncol_(0) {
     for (int b = 0; b < rhs.blocks_.size(); ++b) {
       add_block(rhs.blocks_[b]->clone());
     }
@@ -255,8 +248,9 @@ namespace BOOM {
       ncol_ = block->ncol();
     } else {
       if (block->ncol() != ncol_) {
-        report_error("Blocks in a stacked matrix must have the same "
-                     "number of columns.");
+        report_error(
+            "Blocks in a stacked matrix must have the same "
+            "number of columns.");
       }
       nrow_ += block->nrow();
     }
@@ -276,8 +270,8 @@ namespace BOOM {
     }
   }
 
-  void StackedMatrixBlock::multiply_and_add(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void StackedMatrixBlock::multiply_and_add(VectorView lhs,
+                                            const ConstVectorView &rhs) const {
     conforms_to_rows(lhs.size());
     conforms_to_cols(rhs.size());
     int position = 0;
@@ -314,15 +308,14 @@ namespace BOOM {
     conforms_to_cols(block.ncol());
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
-      SubMatrix lhs_block(block, position, position + ncol_ - 1,
-                          0, ncol_ - 1);
+      SubMatrix lhs_block(block, position, position + ncol_ - 1, 0, ncol_ - 1);
       blocks_[b]->add_to(lhs_block);
       position += ncol_;
     }
   }
 
   //======================================================================
-  LocalLinearTrendMatrix * LocalLinearTrendMatrix::clone() const {
+  LocalLinearTrendMatrix *LocalLinearTrendMatrix::clone() const {
     return new LocalLinearTrendMatrix(*this);
   }
 
@@ -343,7 +336,7 @@ namespace BOOM {
   }
 
   void LocalLinearTrendMatrix::Tmult(VectorView lhs,
-                                        const ConstVectorView &rhs) const {
+                                     const ConstVectorView &rhs) const {
     conforms_to_cols(lhs.size());
     conforms_to_rows(rhs.size());
     lhs[0] = rhs[0];
@@ -358,12 +351,12 @@ namespace BOOM {
   void LocalLinearTrendMatrix::add_to(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += 1;
-    block(1,1) += 1;
+    block(1, 1) += 1;
   }
 
   Matrix LocalLinearTrendMatrix::dense() const {
-    Matrix ans(2,2, 1.0);
-    ans(1,0) = 0.0;
+    Matrix ans(2, 2, 1.0);
+    ans(1, 0) = 0.0;
     return ans;
   }
 
@@ -388,7 +381,7 @@ namespace BOOM {
   }
 
   void DMPV::set_observer(const Ptr<UnivParams> &variance) {
-    variance->add_observer( [this](){current_ = false;});
+    variance->add_observer([this]() { current_ = false; });
   }
 
   //======================================================================
@@ -396,7 +389,7 @@ namespace BOOM {
     typedef SparseDiagonalMatrixBlockParamView SDMB;
   }  // namespace
 
-  SDMB * SDMB::clone() const {return new SDMB(*this);}
+  SDMB *SDMB::clone() const { return new SDMB(*this); }
 
   void SDMB::add_element(const Ptr<UnivParams> &element, int position) {
     if (position < 0) {
@@ -422,8 +415,8 @@ namespace BOOM {
     }
   }
 
-  void SDMB::multiply_and_add(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void SDMB::multiply_and_add(VectorView lhs,
+                              const ConstVectorView &rhs) const {
     conforms_to_rows(lhs.size());
     conforms_to_cols(rhs.size());
     for (int i = 0; i < positions_.size(); ++i) {
@@ -466,20 +459,15 @@ namespace BOOM {
   }  // namespace
 
   SSSM::SeasonalStateSpaceMatrix(int number_of_seasons)
-      : number_of_seasons_(number_of_seasons)
-  {}
+      : number_of_seasons_(number_of_seasons) {}
 
-  SeasonalStateSpaceMatrix * SSSM::clone() const {
+  SeasonalStateSpaceMatrix *SSSM::clone() const {
     return new SeasonalStateSpaceMatrix(*this);
   }
 
-  int SSSM::nrow() const {
-    return number_of_seasons_ - 1;
-  }
+  int SSSM::nrow() const { return number_of_seasons_ - 1; }
 
-  int SSSM::ncol() const {
-    return number_of_seasons_ - 1;
-  }
+  int SSSM::ncol() const { return number_of_seasons_ - 1; }
 
   void SSSM::multiply(VectorView lhs, const ConstVectorView &rhs) const {
     conforms_to_rows(lhs.size());
@@ -487,17 +475,17 @@ namespace BOOM {
     lhs[0] = 0;
     for (int i = 0; i < ncol(); ++i) {
       lhs[0] -= rhs[i];
-      if (i > 0) lhs[i] = rhs[i-1];
+      if (i > 0) lhs[i] = rhs[i - 1];
     }
   }
 
-  void SSSM::multiply_and_add(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void SSSM::multiply_and_add(VectorView lhs,
+                              const ConstVectorView &rhs) const {
     conforms_to_rows(lhs.size());
     conforms_to_cols(rhs.size());
     for (int i = 0; i < ncol(); ++i) {
       lhs[0] -= rhs[i];
-      if (i > 0) lhs[i] += rhs[i-1];
+      if (i > 0) lhs[i] += rhs[i - 1];
     }
   }
 
@@ -506,7 +494,7 @@ namespace BOOM {
     conforms_to_cols(lhs.size());
     double first = rhs[0];
     for (int i = 0; i < rhs.size() - 1; ++i) {
-      lhs[i] = rhs[i+1] - first;
+      lhs[i] = rhs[i + 1] - first;
     }
     lhs[rhs.size() - 1] = -first;
   }
@@ -515,9 +503,9 @@ namespace BOOM {
     conforms_to_rows(x.size());
     int stride = x.stride();
     int n = x.size();
-    double *now = &x[n-1];
+    double *now = &x[n - 1];
     double total = -*now;
-    for (int i = 0; i < n-1; ++i) {
+    for (int i = 0; i < n - 1; ++i) {
       double *prev = now - stride;
       total -= *prev;
       *now = *prev;
@@ -541,17 +529,16 @@ namespace BOOM {
   }
   //======================================================================
   AutoRegressionTransitionMatrix::AutoRegressionTransitionMatrix(
-      const Ptr<GlmCoefs> &rho) : autoregression_params_(rho)
-  {}
+      const Ptr<GlmCoefs> &rho)
+      : autoregression_params_(rho) {}
 
   AutoRegressionTransitionMatrix::AutoRegressionTransitionMatrix(
       const AutoRegressionTransitionMatrix &rhs)
       : SparseMatrixBlock(rhs),
-        autoregression_params_(rhs.autoregression_params_->clone())
-  {}
+        autoregression_params_(rhs.autoregression_params_->clone()) {}
 
-  AutoRegressionTransitionMatrix *
-  AutoRegressionTransitionMatrix::clone() const {
+  AutoRegressionTransitionMatrix *AutoRegressionTransitionMatrix::clone()
+      const {
     return new AutoRegressionTransitionMatrix(*this);
   }
 
@@ -572,7 +559,7 @@ namespace BOOM {
     const Vector &rho(autoregression_params_->value());
     for (int i = 0; i < p; ++i) {
       lhs[0] += rho[i] * rhs[i];
-      if (i > 0) lhs[i] = rhs[i-1];
+      if (i > 0) lhs[i] = rhs[i - 1];
     }
   }
 
@@ -584,18 +571,18 @@ namespace BOOM {
     const Vector &rho(autoregression_params_->value());
     for (int i = 0; i < p; ++i) {
       lhs[0] += rho[i] * rhs[i];
-      if (i > 0) lhs[i] += rhs[i-1];
+      if (i > 0) lhs[i] += rhs[i - 1];
     }
   }
 
-  void AutoRegressionTransitionMatrix::Tmult(
-    VectorView lhs, const ConstVectorView &rhs) const {
+  void AutoRegressionTransitionMatrix::Tmult(VectorView lhs,
+                                             const ConstVectorView &rhs) const {
     conforms_to_rows(rhs.size());
     conforms_to_cols(lhs.size());
     int p = ncol();
     const Vector &rho(autoregression_params_->value());
     for (int i = 0; i < p; ++i) {
-      lhs[i] = rho[i]*rhs[0] + (i+1 < p ? rhs[i+1] : 0);
+      lhs[i] = rho[i] * rhs[0] + (i + 1 < p ? rhs[i + 1] : 0);
     }
   }
 
@@ -604,10 +591,10 @@ namespace BOOM {
     int p = x.size();
     double first_entry = 0;
     const Vector &rho(autoregression_params_->value());
-    for (int i = p-1; i >= 0; --i) {
+    for (int i = p - 1; i >= 0; --i) {
       first_entry += rho[i] * x[i];
       if (i > 0) {
-        x[i] = x[i-1];
+        x[i] = x[i - 1];
       } else {
         x[i] = first_entry;
       }
@@ -640,8 +627,8 @@ namespace BOOM {
     lhs[0] = rhs[position_] * value_;
   }
 
-  void SEIFR::multiply_and_add(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void SEIFR::multiply_and_add(VectorView lhs,
+                               const ConstVectorView &rhs) const {
     conforms_to_rows(lhs.size());
     conforms_to_cols(rhs.size());
     lhs[0] += rhs[position_] * value_;
@@ -674,13 +661,11 @@ namespace BOOM {
     m.row(position_) = value_ * m.row(0);
     // Set the rows before position_ to zero.
     if (position_ > 0) {
-      SubMatrix(m, 0, position_ - 1,
-                0, m.ncol() - 1) = 0;
+      SubMatrix(m, 0, position_ - 1, 0, m.ncol() - 1) = 0;
     }
     // Set the rows after position_ to zero.
     if (position_ < m.nrow() - 1) {
-      SubMatrix(m, position_ + 1, m.nrow() - 1,
-                0, m.ncol()) = 0;
+      SubMatrix(m, position_ + 1, m.nrow() - 1, 0, m.ncol()) = 0;
     }
   }
 
@@ -691,8 +676,8 @@ namespace BOOM {
   }
 
   //======================================================================
-  GenericSparseMatrixBlockElementProxy &
-  GenericSparseMatrixBlockElementProxy::operator=(double new_value) {
+  GenericSparseMatrixBlockElementProxy &GenericSparseMatrixBlockElementProxy::
+  operator=(double new_value) {
     matrix_->insert_element(row_, col_, new_value);
     value_ = new_value;
     return *this;
@@ -703,31 +688,31 @@ namespace BOOM {
         ncol_(ncol),
         nrow_compressed_(0),
         empty_row_(ncol_),
-        empty_column_(nrow_)
-  {
+        empty_column_(nrow_) {
     if (nrow < 0 || ncol < 0) {
       report_error("Negative matrix dimension.");
     }
   }
 
- GenericSparseMatrixBlockElementProxy GenericSparseMatrixBlock::operator()(
-     int row, int col) {
-   auto it = rows_.find(row);
-   if (it == rows_.end()) {
-     return GenericSparseMatrixBlockElementProxy(row, col, 0, this);
-   } else {
-     return GenericSparseMatrixBlockElementProxy(row, col, it->second[col], this);
-   }
- }
-
-double GenericSparseMatrixBlock::operator()(int row, int col) const {
-  auto it = rows_.find(row);
-  if (it == rows_.end()) {
-    return 0;
-  } else {
-    return it->second[col];
+  GenericSparseMatrixBlockElementProxy GenericSparseMatrixBlock::operator()(
+      int row, int col) {
+    auto it = rows_.find(row);
+    if (it == rows_.end()) {
+      return GenericSparseMatrixBlockElementProxy(row, col, 0, this);
+    } else {
+      return GenericSparseMatrixBlockElementProxy(row, col, it->second[col],
+                                                  this);
+    }
   }
-}
+
+  double GenericSparseMatrixBlock::operator()(int row, int col) const {
+    auto it = rows_.find(row);
+    if (it == rows_.end()) {
+      return 0;
+    } else {
+      return it->second[col];
+    }
+  }
 
   void GenericSparseMatrixBlock::set_row(const SparseVector &row,
                                          int row_number) {
@@ -745,7 +730,7 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   }
 
   void GenericSparseMatrixBlock::set_column(const SparseVector &column,
-                                         int col_number) {
+                                            int col_number) {
     if (column.size() != nrow()) {
       report_error("Size of inserted column must match the number of rows.");
     }
@@ -755,8 +740,8 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     }
   }
 
-  void GenericSparseMatrixBlock::insert_element_in_columns(
-      uint row, uint col, double value) {
+  void GenericSparseMatrixBlock::insert_element_in_columns(uint row, uint col,
+                                                           double value) {
     auto it = columns_.find(col);
     if (it == columns_.end()) {
       SparseVector column_vector(nrow_);
@@ -767,8 +752,8 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     }
   }
 
-  void GenericSparseMatrixBlock::insert_element_in_rows(
-      uint row, uint col, double value) {
+  void GenericSparseMatrixBlock::insert_element_in_rows(uint row, uint col,
+                                                        double value) {
     auto it = rows_.find(row);
     if (it == rows_.end()) {
       SparseVector row_vector(ncol_);
@@ -780,8 +765,8 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     }
   }
 
-  void GenericSparseMatrixBlock::multiply(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void GenericSparseMatrixBlock::multiply(VectorView lhs,
+                                          const ConstVectorView &rhs) const {
     lhs = 0.0;
     multiply_and_add(lhs, rhs);
   }
@@ -795,8 +780,8 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     }
   }
 
-  void GenericSparseMatrixBlock::Tmult(
-      VectorView lhs, const ConstVectorView &rhs) const {
+  void GenericSparseMatrixBlock::Tmult(VectorView lhs,
+                                       const ConstVectorView &rhs) const {
     conforms_to_rows(rhs.size());
     conforms_to_cols(lhs.size());
     lhs = 0;
@@ -871,7 +856,7 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     // First replace P with *this * P, which corresponds to *this
     // multiplying each column of P.
     for (int i = 0; i < P.ncol(); ++i) {
-      P.col(i) = (*this)*P.col(i);
+      P.col(i) = (*this) * P.col(i);
     }
     // Next, post-multiply P by this->transpose.  A * B is the same
     // thing as taking each row of A and transpose-multiplying it by
@@ -953,8 +938,9 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   // Returns this * rhs.transpose().
   Matrix SparseKalmanMatrix::multT(const Matrix &rhs) const {
     if (ncol() != rhs.ncol()) {
-      report_error("SparseKalmanMatrix::multT called with "
-                   "incompatible matrices.");
+      report_error(
+          "SparseKalmanMatrix::multT called with "
+          "incompatible matrices.");
     }
     Matrix ans(nrow(), rhs.nrow());
     for (int i = 0; i < rhs.nrow(); ++i) {
@@ -986,10 +972,7 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   }
 
   //======================================================================
-  BlockDiagonalMatrix::BlockDiagonalMatrix()
-      : nrow_(0),
-        ncol_(0)
-  {}
+  BlockDiagonalMatrix::BlockDiagonalMatrix() : nrow_(0), ncol_(0) {}
 
   void BlockDiagonalMatrix::add_block(const Ptr<SparseMatrixBlock> &m) {
     blocks_.push_back(m);
@@ -1001,8 +984,8 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
 
   void BlockDiagonalMatrix::replace_block(int which_block,
                                           const Ptr<SparseMatrixBlock> &b) {
-    if (b->nrow() != blocks_[which_block]->nrow()
-       || b->ncol() != blocks_[which_block]->ncol()) {
+    if (b->nrow() != blocks_[which_block]->nrow() ||
+        b->ncol() != blocks_[which_block]->ncol()) {
       report_error("");
     }
     blocks_[which_block] = b;
@@ -1015,13 +998,13 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     col_boundaries_.clear();
   }
 
-  int BlockDiagonalMatrix::nrow() const {return nrow_;}
-  int BlockDiagonalMatrix::ncol() const {return ncol_;}
+  int BlockDiagonalMatrix::nrow() const { return nrow_; }
+  int BlockDiagonalMatrix::ncol() const { return ncol_; }
 
   // TODO(user): add a unit test for the case where diagonal
   // blocks are not square.
   Vector block_multiply(const ConstVectorView &v, int nrow, int ncol,
-                     const std::vector<Ptr<SparseMatrixBlock> > &blocks_) {
+                        const std::vector<Ptr<SparseMatrixBlock>> &blocks_) {
     if (v.size() != ncol) {
       report_error(
           "incompatible vector in "
@@ -1136,16 +1119,14 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   void BlockDiagonalMatrix::sandwich_inplace_submatrix(SubMatrix P) const {
     for (int i = 0; i < blocks_.size(); ++i) {
       for (int j = 0; j < blocks_.size(); ++j) {
-        sandwich_inplace_block((*blocks_[i]),
-                               (*blocks_[j]),
+        sandwich_inplace_block((*blocks_[i]), (*blocks_[j]),
                                get_submatrix_block(P, i, j));
       }
     }
   }
 
   void BlockDiagonalMatrix::sandwich_inplace_block(
-      const SparseMatrixBlock &left,
-      const SparseMatrixBlock &right,
+      const SparseMatrixBlock &left, const SparseMatrixBlock &right,
       SubMatrix middle) const {
     for (int i = 0; i < middle.ncol(); ++i) {
       left.multiply_inplace(middle.col(i));
@@ -1157,12 +1138,11 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   }
 
   // Fills dest with left * source * right.transpose.
-  void BlockDiagonalMatrix::sandwich_block(
-      const SparseMatrixBlock &left,
-      const SparseMatrixBlock &right,
-      const ConstSubMatrix &source,
-      SubMatrix &dest,
-      Matrix &workspace) const {
+  void BlockDiagonalMatrix::sandwich_block(const SparseMatrixBlock &left,
+                                           const SparseMatrixBlock &right,
+                                           const ConstSubMatrix &source,
+                                           SubMatrix &dest,
+                                           Matrix &workspace) const {
     // Workspace will hold the reult of left * source.
     workspace.resize(left.nrow(), source.ncol());
     for (int i = 0; i < source.ncol(); ++i) {
@@ -1179,25 +1159,25 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   }
 
   SubMatrix BlockDiagonalMatrix::get_block(Matrix &m, int i, int j) const {
-    int rlo = (i == 0 ? 0 : row_boundaries_[i-1]);
+    int rlo = (i == 0 ? 0 : row_boundaries_[i - 1]);
     int rhi = row_boundaries_[i] - 1;
 
-    int clo = (j == 0 ? 0 : col_boundaries_[j-1]);
+    int clo = (j == 0 ? 0 : col_boundaries_[j - 1]);
     int chi = col_boundaries_[j] - 1;
     return SubMatrix(m, rlo, rhi, clo, chi);
   }
 
-  SubMatrix BlockDiagonalMatrix::get_submatrix_block(
-      SubMatrix m, int i, int j) const {
-    int rlo = (i == 0 ? 0 : row_boundaries_[i-1]);
+  SubMatrix BlockDiagonalMatrix::get_submatrix_block(SubMatrix m, int i,
+                                                     int j) const {
+    int rlo = (i == 0 ? 0 : row_boundaries_[i - 1]);
     int rhi = row_boundaries_[i] - 1;
 
-    int clo = (j == 0 ? 0 : col_boundaries_[j-1]);
+    int clo = (j == 0 ? 0 : col_boundaries_[j - 1]);
     int chi = col_boundaries_[j] - 1;
     return SubMatrix(m, rlo, rhi, clo, chi);
   }
 
-  Matrix & BlockDiagonalMatrix::add_to(Matrix &P) const {
+  Matrix &BlockDiagonalMatrix::add_to(Matrix &P) const {
     for (int b = 0; b < blocks_.size(); ++b) {
       SubMatrix block = get_block(P, b, b);
       blocks_[b]->add_to(block);
@@ -1217,15 +1197,13 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   namespace {
     template <class VECTOR>
     Vector block_multiply_impl(
-        const std::vector<Ptr<SparseMatrixBlock>> &blocks,
-        const VECTOR &rhs) {
+        const std::vector<Ptr<SparseMatrixBlock>> &blocks, const VECTOR &rhs) {
       Vector ans(blocks.back()->nrow(), 0.0);
       int start = 0;
       for (int i = 0; i < blocks.size(); ++i) {
         int ncol = blocks[i]->ncol();
-        blocks[i]->multiply_and_add(
-            VectorView(ans),
-            ConstVectorView(rhs, start, ncol));
+        blocks[i]->multiply_and_add(VectorView(ans),
+                                    ConstVectorView(rhs, start, ncol));
         start += ncol;
       }
       return ans;
@@ -1233,7 +1211,7 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   }  // namespace
 
   void SparseVerticalStripMatrix::add_block(
-     const Ptr<SparseMatrixBlock> &block) {
+      const Ptr<SparseMatrixBlock> &block) {
     if (!blocks_.empty() && block->nrow() != blocks_.back()->nrow()) {
       report_error("All blocks must have the same number of rows");
     }
@@ -1266,13 +1244,13 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
     return ans;
   }
 
-  Matrix & SparseVerticalStripMatrix::add_to(Matrix &P) const {
+  Matrix &SparseVerticalStripMatrix::add_to(Matrix &P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;
-    for (int i = 0; i  < blocks_.size(); ++i) {
+    for (int i = 0; i < blocks_.size(); ++i) {
       int ncol = blocks_[i]->ncol();
-      blocks_[i]->add_to(SubMatrix(
-          P, 0, nrow() - 1, start_column, start_column + ncol - 1));
+      blocks_[i]->add_to(
+          SubMatrix(P, 0, nrow() - 1, start_column, start_column + ncol - 1));
       start_column += ncol;
     }
     return P;
@@ -1281,10 +1259,10 @@ double GenericSparseMatrixBlock::operator()(int row, int col) const {
   SubMatrix SparseVerticalStripMatrix::add_to_submatrix(SubMatrix P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;
-    for (int i = 0; i  < blocks_.size(); ++i) {
+    for (int i = 0; i < blocks_.size(); ++i) {
       int ncol = blocks_[i]->ncol();
-      blocks_[i]->add_to(SubMatrix(
-          P, 0, nrow() - 1, start_column, start_column + ncol - 1));
+      blocks_[i]->add_to(
+          SubMatrix(P, 0, nrow() - 1, start_column, start_column + ncol - 1));
       start_column += ncol;
     }
     return P;

@@ -30,20 +30,18 @@ namespace BOOM {
       HierarchicalGaussianRegressionModel *model,
       const Ptr<MvnModel> &coefficient_mean_hyperprior,
       const Ptr<WishartModel> &coefficient_precision_hyperprior,
-      const Ptr<GammaModelBase> &residual_precision_prior,
-      RNG &seeding_rng)
+      const Ptr<GammaModelBase> &residual_precision_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         coefficient_mean_hyperprior_(coefficient_mean_hyperprior),
         coefficient_precision_hyperprior_(coefficient_precision_hyperprior),
         residual_variance_prior_(residual_precision_prior),
-        residual_variance_sampler_(residual_variance_prior_)
-  {
-    NEW(MvnMeanSampler, mean_sampler)(model_->prior(),
-                                      coefficient_mean_hyperprior);
+        residual_variance_sampler_(residual_variance_prior_) {
+    NEW(MvnMeanSampler, mean_sampler)
+    (model_->prior(), coefficient_mean_hyperprior);
     model_->prior()->set_method(mean_sampler);
-    NEW(MvnVarSampler, var_sampler)(model_->prior(),
-                                    coefficient_precision_hyperprior);
+    NEW(MvnVarSampler, var_sampler)
+    (model_->prior(), coefficient_precision_hyperprior);
     model_->prior()->set_method(var_sampler);
   }
 
@@ -53,8 +51,8 @@ namespace BOOM {
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       RegressionModel *reg = model_->data_model(i);
       // Sample coefficients for model i.
-      RegressionCoefficientSampler::sample_regression_coefficients(
-          rng(), reg, *prior);
+      RegressionCoefficientSampler::sample_regression_coefficients(rng(), reg,
+                                                                   *prior);
       prior->suf()->update_raw(reg->Beta());
     }
     prior->sample_posterior();
@@ -71,29 +69,24 @@ namespace BOOM {
 
       // Accumulate sufficient statistics to be used in the draw of the prior
       // mean.
-      xty_ += reg->suf()->xty()
-          - reg->suf()->xtx() * centered_regression_effects.col(i);
+      xty_ += reg->suf()->xty() -
+              reg->suf()->xtx() * centered_regression_effects.col(i);
     }
 
     // With the regression effects centered, the prior mean is no longer viewed
     // as the mean of a bunch of MVN data, but as the set of regression
     // coefficients on a bunch of ajusted observations.
     prior->set_mu(RegressionCoefficientSampler::sample_regression_coefficients(
-        rng(),
-        xtx_,
-        xty_,
-        model_->residual_variance(),
+        rng(), xtx_, xty_, model_->residual_variance(),
         *coefficient_mean_hyperprior_));
     prior->set_siginv(MvnVarSampler::draw_precision(
-        rng(),
-        model_->number_of_groups(),
-        centered_regression_effects.outer(),
+        rng(), model_->number_of_groups(), centered_regression_effects.outer(),
         *coefficient_precision_hyperprior_));
 
     if (!!residual_variance_prior_) {
-      // Convert centered_regression_effects betas back to betas, using the newly
-      // drawn prior mean.  Accumulate the sufficient statistics needed to draw
-      // the residual_variance.
+      // Convert centered_regression_effects betas back to betas, using the
+      // newly drawn prior mean.  Accumulate the sufficient statistics needed to
+      // draw the residual_variance.
       double sample_size = 0;
       double residual_sum_of_squares = 0;
       const Vector &prior_mean(model_->prior()->mu());
@@ -135,7 +128,6 @@ namespace BOOM {
     residual_variance_sampler_.set_prior(residual_variance_prior_);
   }
 
-  
   void HGRAS::refresh_working_suf() {
     int xdim = model_->xdim();
     xtx_.resize(xdim);

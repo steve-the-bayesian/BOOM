@@ -19,13 +19,13 @@
 #ifndef BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
 #define BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
 
+#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
+#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
-#include "Models/StateSpace/Filters/ScalarKalmanStorage.hpp"
-#include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 
 #include "Models/GaussianModel.hpp"
 #include "Models/Glm/RegressionModel.hpp"
@@ -103,13 +103,11 @@ namespace BOOM {
     // be false when a new month begins if the release of the most
     // recent monthly totals is delayed (e.g. if the coarse data is
     // not as up-to-date as the fine data).
-    FineNowcastingData(const Vector &x,
-                       double coarse_observation,
-                       bool coarse_observation_observed,
-                       bool contains_end,
+    FineNowcastingData(const Vector &x, double coarse_observation,
+                       bool coarse_observation_observed, bool contains_end,
                        double fraction_of_value_in_initial_period);
     FineNowcastingData(const FineNowcastingData &rhs);
-    FineNowcastingData * clone() const override;
+    FineNowcastingData *clone() const override;
     ostream &display(ostream &out) const override;
 
     Ptr<RegressionData> regression_data() const;
@@ -127,7 +125,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class AccumulatorTransitionMatrix : public SparseKalmanMatrix{
+  class AccumulatorTransitionMatrix : public SparseKalmanMatrix {
    public:
     // If this matrix is for the transition from time t to time t+1 then
     // Args:
@@ -140,21 +138,17 @@ namespace BOOM {
     //     a month.
     //   owns_matrix: If true then this class will take ownership of
     //     T, which will be deleted by the destructor.
-    AccumulatorTransitionMatrix(
-        const SparseKalmanMatrix *T_t,
-        const SparseVector &Z_t_plus_1,
-        double fraction_in_initial_period,
-        bool contains_end,
-        bool owns_matrix = false);
+    AccumulatorTransitionMatrix(const SparseKalmanMatrix *T_t,
+                                const SparseVector &Z_t_plus_1,
+                                double fraction_in_initial_period,
+                                bool contains_end, bool owns_matrix = false);
 
     ~AccumulatorTransitionMatrix() override;
 
     // Resets the class as if the constructor had been called with
     // these arguments.
-    void reset(const SparseKalmanMatrix *T,
-               const SparseVector &Z,
-               double fraction_in_initial_period,
-               bool contains_end);
+    void reset(const SparseKalmanMatrix *T, const SparseVector &Z,
+               double fraction_in_initial_period, bool contains_end);
 
     // Number of rows and columns in the augmented matrix (i.e. after
     // adding w and W to the state).
@@ -167,9 +161,10 @@ namespace BOOM {
 
     Vector Tmult(const ConstVectorView &v) const override;
     void sandwich_inplace(SpdMatrix &P) const override;
-    Matrix & add_to(Matrix &P) const override;
+    Matrix &add_to(Matrix &P) const override;
+
    private:
-    const SparseKalmanMatrix * transition_matrix_;
+    const SparseKalmanMatrix *transition_matrix_;
     SparseVector observation_vector_;
     double fraction_in_initial_period_;
     bool contains_end_;
@@ -195,15 +190,13 @@ namespace BOOM {
     // When calling the constructor, the observation matrix and
     // observation variance should be with respect to time t+1, while
     // RQR is with respect to time t.
-    AccumulatorStateVarianceMatrix(
-        const SparseKalmanMatrix *RQR,
-        const SparseVector &Z,
-        double observation_variance,
-        bool owns_matrix = false);
+    AccumulatorStateVarianceMatrix(const SparseKalmanMatrix *RQR,
+                                   const SparseVector &Z,
+                                   double observation_variance,
+                                   bool owns_matrix = false);
     ~AccumulatorStateVarianceMatrix() override;
 
-    void reset(const SparseKalmanMatrix *RQR,
-               const SparseVector &Z,
+    void reset(const SparseKalmanMatrix *RQR, const SparseVector &Z,
                double observation_variance);
 
     int nrow() const override;
@@ -214,7 +207,7 @@ namespace BOOM {
     Vector operator*(const ConstVectorView &v) const override;
 
     Vector Tmult(const ConstVectorView &v) const override;
-    Matrix & add_to(Matrix &m) const override;
+    Matrix &add_to(Matrix &m) const override;
 
    private:
     // See the fragility comments in AccumulatorTransitionMatrix.
@@ -234,12 +227,12 @@ namespace BOOM {
   // is a problem for the last time point, for which no predictor has
   // been observed.  The final time point makes no difference to the
   // Kalman simulation smoother, but it does forecast alpha[t+1].
-  class AggregatedRegressionStateModel
-      : public RegressionStateModel {
+  class AggregatedRegressionStateModel : public RegressionStateModel {
    public:
-    AggregatedRegressionStateModel(const Ptr<RegressionModel> & m);
+    AggregatedRegressionStateModel(const Ptr<RegressionModel> &m);
     void set_final_x(const Vector &x);
     SparseVector observation_matrix(int t) const override;
+
    private:
     Vector final_x_;
   };
@@ -250,12 +243,11 @@ namespace BOOM {
   class AggregatedStateSpaceRegression
       : public ScalarStateSpaceModelBase,
         public IID_DataPolicy<FineNowcastingData>,
-        public PriorPolicy
-  {
+        public PriorPolicy {
    public:
     AggregatedStateSpaceRegression(int number_of_predictors);
     AggregatedStateSpaceRegression(const AggregatedStateSpaceRegression &rhs);
-    AggregatedStateSpaceRegression * clone() const override;
+    AggregatedStateSpaceRegression *clone() const override;
 
     // Need to override add_data so that x's can be shared with the
     // regression model.
@@ -293,32 +285,32 @@ namespace BOOM {
     // The regression model is the observation model for the
     // non-cumulated client data.  The observation model for the
     // cumulated data is a Gaussian model with zero variance.
-    GaussianModel * observation_model() override {
-      return observation_model_.get();}
-    const GaussianModel * observation_model() const override {
-      return observation_model_.get(); }
+    GaussianModel *observation_model() override {
+      return observation_model_.get();
+    }
+    const GaussianModel *observation_model() const override {
+      return observation_model_.get();
+    }
 
     // Returns a pointer to the RegressionModel that manages the
     // linear prediction based on contemporaneous covariates.
-    RegressionModel * regression_model() {return regression_.get();}
+    RegressionModel *regression_model() { return regression_.get(); }
 
     // This function updates the regression portion of the model.
     void observe_data_given_state(int t) override;
 
-    const AccumulatorTransitionMatrix *
-    state_transition_matrix(int t, bool supplemental = false) const override;
-
-    SparseVector observation_matrix(
+    const AccumulatorTransitionMatrix *state_transition_matrix(
         int t, bool supplemental = false) const override;
 
-    const AccumulatorStateVarianceMatrix *
-    state_variance_matrix(int t, bool supplemental = false) const override;
+    SparseVector observation_matrix(int t,
+                                    bool supplemental = false) const override;
 
-    void simulate_initial_state(RNG &rng,
-                                VectorView state0,
+    const AccumulatorStateVarianceMatrix *state_variance_matrix(
+        int t, bool supplemental = false) const override;
+
+    void simulate_initial_state(RNG &rng, VectorView state0,
                                 bool supplemental = false) const override;
-    Vector simulate_state_error(RNG &rng,
-                                int t,
+    Vector simulate_state_error(RNG &rng, int t,
                                 bool supplemental = false) const override;
 
     Vector initial_state_mean(bool supplemental) const override;
@@ -330,20 +322,19 @@ namespace BOOM {
 
     mutable std::unique_ptr<AccumulatorStateVarianceMatrix> variance_matrix_;
     mutable std::unique_ptr<AccumulatorStateVarianceMatrix>
-    supplemental_variance_matrix_;
+        supplemental_variance_matrix_;
 
     mutable std::unique_ptr<AccumulatorTransitionMatrix> transition_matrix_;
     mutable std::unique_ptr<AccumulatorTransitionMatrix>
-    supplemental_transition_matrix_;
+        supplemental_transition_matrix_;
 
     const AccumulatorStateVarianceMatrix *fill_state_variance_matrix(
         int t,
         std::unique_ptr<AccumulatorStateVarianceMatrix> &variance_matrix) const;
     const AccumulatorTransitionMatrix *fill_state_transition_matrix(
-        int t,
-        const FineNowcastingData &fine_data,
+        int t, const FineNowcastingData &fine_data,
         std::unique_ptr<AccumulatorTransitionMatrix> &transition_matrix) const;
   };
 
-}  // namespace
-#endif // BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_
+}  // namespace BOOM
+#endif  // BOOM_AGGREGATED_STATE_SPACE_REGRESSION_HPP_

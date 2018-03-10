@@ -26,8 +26,7 @@ namespace BOOM {
   // Nonparametric models don't have parameters, so parameter_vector() and
   // vectorize_params() return empty objects, and their inverse operations are
   // no-ops.
-  class NonparametricParamPolicy
-      : virtual public Model {
+  class NonparametricParamPolicy : virtual public Model {
    public:
     typedef NonparametricParamPolicy ParamPolicy;
     std::vector<Ptr<Params>> parameter_vector() override {
@@ -42,7 +41,7 @@ namespace BOOM {
     }
     void unvectorize_params(const Vector &v, bool minimal = true) override {}
   };
-  
+
 }  // namespace BOOM
 
-#endif //  BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_
+#endif  //  BOOM_NONPARAMETRIC_PARAM_POLICY_HPP_

@@ -18,15 +18,13 @@
 */
 #ifndef BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP
 #define BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP
-namespace BOOM{
+namespace BOOM {
 
-  template<class D, class SUF>
-      class SufstatOnlyDataPolicy
-          : public DefaultDataInfoPolicy<D>{
+  template <class D, class SUF>
+  class SufstatOnlyDataPolicy : public DefaultDataInfoPolicy<D> {
    public:
-
    private:
   }
 
-};
-#endif// BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP
+};      // namespace BOOM
+#endif  // BOOM_SUFSTAT_ONLY_DATA_POLICY_HPP

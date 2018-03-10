@@ -31,11 +31,10 @@ namespace BOOM {
     class DafePcrRwmItemSampler : public PosteriorSampler {
      public:
       DafePcrRwmItemSampler(const Ptr<PartialCreditModel> &,
-                            const Ptr<MvnModel> &Prior,
-                            double Tdf,
+                            const Ptr<MvnModel> &Prior, double Tdf,
                             RNG &seeding_rng = GlobalRng::rng);
       void draw() override;
-      double logpri()const override;
+      double logpri() const override;
 
      private:
       Ptr<PartialCreditModel> mod;
@@ -51,15 +50,15 @@ namespace BOOM {
     };
 
     //======================================================================
-    class DafePcrRwmSubjectSampler : public PosteriorSampler{
-    public:
+    class DafePcrRwmSubjectSampler : public PosteriorSampler {
+     public:
       DafePcrRwmSubjectSampler(const Ptr<Subject> &,
-                               const Ptr<SubjectPrior> &Prior,
-                               double Tdf,
+                               const Ptr<SubjectPrior> &Prior, double Tdf,
                                RNG &seeding_rng = GlobalRng::rng);
       void draw() override;
-      double logpri()const override;
-    private:
+      double logpri() const override;
+
+     private:
       Ptr<Subject> sub;
       Ptr<SubjectPrior> prior;
       Ptr<MetropolisHastings> sampler;

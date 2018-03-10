@@ -24,46 +24,37 @@
 namespace BOOM {
 
   RegressionCoefficientSampler::RegressionCoefficientSampler(
-      RegressionModel *model,
-      const Ptr<MvnBase> &prior,
-      RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        prior_(prior)
-  {}
+      RegressionModel *model, const Ptr<MvnBase> &prior, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), model_(model), prior_(prior) {}
 
   void RegressionCoefficientSampler::draw() {
     sample_regression_coefficients(rng(), model_, *prior_);
   }
 
   void RegressionCoefficientSampler::sample_regression_coefficients(
-      RNG &rng,
-      RegressionModel *model,
-      const MvnBase &prior) {
+      RNG &rng, RegressionModel *model, const MvnBase &prior) {
     SpdMatrix prior_precision = prior.siginv();
-    SpdMatrix posterior_precision = model->suf()->xtx() / model->sigsq()
-        + prior_precision;
+    SpdMatrix posterior_precision =
+        model->suf()->xtx() / model->sigsq() + prior_precision;
     Vector scaled_posterior_mean = model->suf()->xty() / model->sigsq();
     scaled_posterior_mean += prior_precision * prior.mu();
 
     Chol cholesky(posterior_precision);
     Vector posterior_mean = cholesky.solve(scaled_posterior_mean);
-    model->set_Beta(rmvn_precision_upper_cholesky_mt(
-        rng,
-        posterior_mean,
-        cholesky.getLT()));
+    model->set_Beta(rmvn_precision_upper_cholesky_mt(rng, posterior_mean,
+                                                     cholesky.getLT()));
   }
 
   Vector RegressionCoefficientSampler::sample_regression_coefficients(
-      RNG &rng, const SpdMatrix &xtx, const Vector &xty,
-      double sigsq, const MvnBase &prior) {
+      RNG &rng, const SpdMatrix &xtx, const Vector &xty, double sigsq,
+      const MvnBase &prior) {
     SpdMatrix prior_precision = prior.siginv();
     SpdMatrix posterior_precision = (xtx / sigsq) + prior_precision;
     Vector scaled_posterior_mean = xty / sigsq + prior_precision * prior.mu();
     Chol cholesky(posterior_precision);
     Vector posterior_mean = cholesky.solve(scaled_posterior_mean);
-    return rmvn_precision_upper_cholesky_mt(
-      rng, posterior_mean, cholesky.getLT());
+    return rmvn_precision_upper_cholesky_mt(rng, posterior_mean,
+                                            cholesky.getLT());
   }
 
   double RegressionCoefficientSampler::logpri() const {

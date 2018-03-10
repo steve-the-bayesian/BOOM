@@ -32,31 +32,27 @@ namespace BOOM {
   // The state of this model is entirely determined by its initial distribution.
   // The transition matrix T is the number 1, and the residual variance matrix
   // is the number 0.
-  class StaticInterceptStateModel : public StateModel
-  {
+  class StaticInterceptStateModel : public StateModel {
    public:
     StaticInterceptStateModel();
     StaticInterceptStateModel(const StaticInterceptStateModel &rhs) = default;
-    StaticInterceptStateModel * clone() const override {
+    StaticInterceptStateModel *clone() const override {
       return new StaticInterceptStateModel(*this);
     }
 
     // There is nothing to do here.
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now,
                        ScalarStateSpaceModelBase *model) override {}
 
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override {}
 
-    uint state_dimension() const override {return 1;}
+    uint state_dimension() const override { return 1; }
 
     // The model is deterministic, so there is no state error.
-    uint state_error_dimension() const override {return 1;}
+    uint state_error_dimension() const override { return 1; }
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override {
       eta[0] = 0.0;
@@ -91,9 +87,7 @@ namespace BOOM {
                                      data_point.total_sample_size());
     }
 
-    Vector initial_state_mean() const override {
-      return initial_state_mean_;
-    }
+    Vector initial_state_mean() const override { return initial_state_mean_; }
 
     SpdMatrix initial_state_variance() const override {
       return initial_state_variance_;
@@ -106,14 +100,11 @@ namespace BOOM {
     void set_initial_state_variance(double variance);
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {}
 
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override {}
 
     // There are no parameters to learn for this model, it holds no data, and as
@@ -121,16 +112,18 @@ namespace BOOM {
     // following pure virtual functions declared in ModelTypes.hpp need to be
     // overridden with no-ops.
 
-    ParamVector parameter_vector() override {return ParamVector();}
-    const ParamVector parameter_vector() const override {return ParamVector();}
+    ParamVector parameter_vector() override { return ParamVector(); }
+    const ParamVector parameter_vector() const override {
+      return ParamVector();
+    }
     void add_data(const Ptr<Data> &) override {}
     void clear_data() override {}
     void combine_data(const Model &other, bool just_suf = true) override {}
     void sample_posterior() override {}
-    double logpri() const override {return 0;}
+    double logpri() const override { return 0; }
     void set_method(const Ptr<PosteriorSampler> &) override {}
-    int number_of_sampling_methods() const override {return 0;}
-    PosteriorSampler * sampler(int i) override {return nullptr;}
+    int number_of_sampling_methods() const override { return 0; }
+    PosteriorSampler *sampler(int i) override { return nullptr; }
     PosteriorSampler const *const sampler(int i) const override {
       return nullptr;
     }
@@ -146,4 +139,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //BOOM_STATE_SPACE_STATIC_INTERCEPT_STATE_MODEL_HPP
+#endif  // BOOM_STATE_SPACE_STATIC_INTERCEPT_STATE_MODEL_HPP

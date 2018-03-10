@@ -23,14 +23,14 @@
 #include "Models/MarkovModel.hpp"
 
 namespace BOOM {
-  namespace Clickstream{
+  namespace Clickstream {
 
     // Having a dedicated "event" class is kind of overkill at the
     // mooment.  In the future I may add support for modeling
     // inter-event times, which would distinguish an Event from a
     // MarkovData.  Presently, however, an Event is a glorified
     // typedef.
-    class Event : public MarkovData{
+    class Event : public MarkovData {
      public:
       // Constructor for first event in a session.
       // Args:
@@ -44,10 +44,9 @@ namespace BOOM {
       //   prev:  The previous event in the session.
       Event(int event_type, const Ptr<Event> &prev);
 
-      Event * clone()const;
-
+      Event *clone() const;
     };
 
   }  // namespace Clickstream
 }  // namespace BOOM
-#endif// BOOM_CLICKSTREAM_EVENT_HPP
+#endif  // BOOM_CLICKSTREAM_EVENT_HPP

@@ -20,14 +20,13 @@
 #ifndef BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
 
 namespace BOOM {
 
-  class StudentLocalLinearTrendPosteriorSampler
-      : public PosteriorSampler {
+  class StudentLocalLinearTrendPosteriorSampler : public PosteriorSampler {
    public:
     StudentLocalLinearTrendPosteriorSampler(
         StudentLocalLinearTrendStateModel *model,
@@ -47,6 +46,7 @@ namespace BOOM {
     void draw_nu_level();
     void draw_sigsq_slope();
     void draw_nu_slope();
+
    private:
     StudentLocalLinearTrendStateModel *model_;
 
@@ -59,6 +59,6 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_slope_sampler_;
   };
 
-} // namespace BOOM
+}  // namespace BOOM
 
-#endif //  BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_STUDENT_LOCAL_LINEAR_TREND_POSTERIOR_SAMPLER_HPP_

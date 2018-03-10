@@ -18,9 +18,9 @@
 */
 
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
 #include "cpputil/math_utils.hpp"
 #include "numopt.hpp"
-#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM {
 
@@ -28,15 +28,13 @@ namespace BOOM {
     using SSPS = StateSpacePosteriorSampler;
   }
 
-  SSPS::StateSpacePosteriorSampler(StateSpaceModelBase *model,
-                                   RNG &seeding_rng)
+  SSPS::StateSpacePosteriorSampler(StateSpaceModelBase *model, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         latent_data_initialized_(false),
-        pool_(2)
-  {}
+        pool_(2) {}
 
-  void SSPS::draw(){
+  void SSPS::draw() {
     if (!latent_data_initialized_) {
       model_->impute_state(rng(), &pool_);
       latent_data_initialized_ = true;
@@ -56,9 +54,9 @@ namespace BOOM {
     // the Kalman filter matches up with the parameter draws.
   }
 
-  double SSPS::logpri()const{
+  double SSPS::logpri() const {
     double ans = model_->observation_model()->logpri();
-    for (int s = 0; s < model_->nstate(); ++s){
+    for (int s = 0; s < model_->nstate(); ++s) {
       ans += model_->state_model(s)->logpri();
     }
     return ans;
@@ -83,8 +81,7 @@ namespace BOOM {
     double old_logp = model_->Estep(false) + logpri();
     double crit = 1 + epsilon;
     int em_steps = 0;
-    while ((crit > std::min(1.0, epsilon)) &&
-          (em_steps++ < max_steps)) {
+    while ((crit > std::min(1.0, epsilon)) && (em_steps++ < max_steps)) {
       Mstep();
       model_->clear_client_data();
       double logp = model_->Estep(false) + logpri();
@@ -100,15 +97,11 @@ namespace BOOM {
   }
 
   namespace {
-    class StateSpaceLogPosterior
-        : public dTargetFun {
+    class StateSpaceLogPosterior : public dTargetFun {
      public:
-      StateSpaceLogPosterior(
-          StateSpaceModelBase *model,
-          const StateSpacePosteriorSampler *prior)
-          : model_(model),
-            prior_(prior)
-      {}
+      StateSpaceLogPosterior(StateSpaceModelBase *model,
+                             const StateSpacePosteriorSampler *prior)
+          : model_(model), prior_(prior) {}
 
       double operator()(const Vector &parameters) const override {
         StateSpaceUtils::LogLikelihoodEvaluator evaluator(model_);
@@ -134,19 +127,14 @@ namespace BOOM {
     Vector parameters = model_->vectorize_params(true);
     double log_posterior_value = log_posterior(parameters);
     std::string error_message;
-    bool ok = max_nd1_careful(
-        parameters,
-        log_posterior_value,
-        log_posterior,
-        log_posterior,
-        error_message,
-        epsilon,
-        500,
-        ConjugateGradient);
+    bool ok = max_nd1_careful(parameters, log_posterior_value, log_posterior,
+                              log_posterior, error_message, epsilon, 500,
+                              ConjugateGradient);
     if (!ok) {
       ostringstream err;
       err << "Numerical search for posterior mode failed with error message: "
-          << endl << error_message;
+          << endl
+          << error_message;
       report_error(err.str());
     } else {
       model_->unvectorize_params(parameters);

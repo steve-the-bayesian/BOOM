@@ -30,8 +30,7 @@ namespace BOOM {
   // a.
   class GammaPosteriorSampler : public PosteriorSampler {
    public:
-    GammaPosteriorSampler(GammaModel *model,
-                          const Ptr<DoubleModel> &mean_prior,
+    GammaPosteriorSampler(GammaModel *model, const Ptr<DoubleModel> &mean_prior,
                           const Ptr<DoubleModel> &alpha_prior,
                           RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
@@ -66,4 +65,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_MODELS_POSTERIOR_SAMPLERS_GAMMA_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_MODELS_POSTERIOR_SAMPLERS_GAMMA_POSTERIOR_SAMPLER_HPP_

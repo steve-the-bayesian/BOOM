@@ -31,7 +31,7 @@
 #include "Samplers/UnivariateSliceSampler.hpp"
 #include "TargetFun/TargetFun.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   namespace DirichletSampler {
     // The DirichletPosteriorSampler defers its draws to one or more
@@ -48,8 +48,7 @@ namespace BOOM{
       //     Dirichlet distribution.
       DirichletSamplerImpl(DirichletModel *model,
                            const Ptr<VectorModel> &phi_prior,
-                           const Ptr<DoubleModel> &alpha_prior,
-                           RNG *rng);
+                           const Ptr<DoubleModel> &alpha_prior, RNG *rng);
       virtual ~DirichletSamplerImpl() {}
 
       virtual void draw() = 0;
@@ -57,7 +56,7 @@ namespace BOOM{
       const DirichletModel *model() const { return model_; }
       const VectorModel *phi_prior() const { return phi_prior_.get(); }
       const DoubleModel *alpha_prior() const { return alpha_prior_.get(); }
-      RNG *rng() {return rng_;}
+      RNG *rng() { return rng_; }
 
      protected:
       DirichletModel *model() { return model_; }
@@ -68,7 +67,7 @@ namespace BOOM{
       Ptr<DoubleModel> alpha_prior_;
       RNG *rng_;
     };
-  } // namespace DirichletSampler.
+  }  // namespace DirichletSampler.
 
   //======================================================================
   // A posterior sampler for the Dirichlet distribution.  For the
@@ -91,7 +90,7 @@ namespace BOOM{
                               RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-    uint dim()const;      // Dimension of model_->nu().
+    uint dim() const;  // Dimension of model_->nu().
 
     // Replaces the existing set of methods with this method.
     void set_method(
@@ -114,13 +113,14 @@ namespace BOOM{
 
     // The draw method will pick an implementation at random, in
     // proportion to weights.
-    std::vector<std::shared_ptr<
-      DirichletSampler::DirichletSamplerImpl>> sampler_implementations_;
+    std::vector<std::shared_ptr<DirichletSampler::DirichletSamplerImpl>>
+        sampler_implementations_;
     Vector weights_;
 
-    void draw_impl(const std::vector<std::shared_ptr<
-                   DirichletSampler::DirichletSamplerImpl>> &impl,
-                   const Vector &weights);
+    void draw_impl(
+        const std::vector<
+            std::shared_ptr<DirichletSampler::DirichletSamplerImpl>> &impl,
+        const Vector &weights);
   };
 
   // Now for some concrete instances of sampling methods that the
@@ -132,21 +132,16 @@ namespace BOOM{
     //----------------------------------------------------------------------
     // A functor representing the log posterior of a single element of
     // the 'nu' vector, conditional on the other elements.
-    class DirichletLogp
-        : public ScalarTargetFun {
+    class DirichletLogp : public ScalarTargetFun {
      public:
-      DirichletLogp(uint pos,
-                    const Vector & nu,
-                    const Vector & sumlogpi,
-                    double nobs,
-                    const VectorModel *phi_prior,
-                    const DoubleModel *alpha_prior,
-                    double min_nu = 0);
-      double operator()(double nu)const override;
+      DirichletLogp(uint pos, const Vector &nu, const Vector &sumlogpi,
+                    double nobs, const VectorModel *phi_prior,
+                    const DoubleModel *alpha_prior, double min_nu = 0);
+      double operator()(double nu) const override;
 
      private:
-      double logp()const;
-      const Vector & sumlogpi_;
+      double logp() const;
+      const Vector &sumlogpi_;
       const double nobs_;
       const uint pos_;
       mutable Vector nu_;
@@ -174,8 +169,7 @@ namespace BOOM{
       // Returns:
       //   The log density with respect to phi, along with derivatives
       //   in the output arguments, if desired.
-      double operator()(const Vector &truncated_phi,
-                        Vector &gradient,
+      double operator()(const Vector &truncated_phi, Vector &gradient,
                         Matrix &Hessian,
                         uint number_of_desired_derivatives) const override;
       using d2TargetFun::operator();
@@ -189,9 +183,8 @@ namespace BOOM{
     // Computes the log posterior of eta (multinomial logit transform
     // of phi) given alpha.  A Jacobian term is needed, which gets
     // kind of complicated.
-    class MultinomialLogitLogPosterior
-        : public d2TargetFun,
-          public dScalarEnabledTargetFun {
+    class MultinomialLogitLogPosterior : public d2TargetFun,
+                                         public dScalarEnabledTargetFun {
      public:
       // A class for handling the Jacobian of the multinomial logit
       // transformation.
@@ -245,8 +238,8 @@ namespace BOOM{
         //          - (J(r,s) * phi[t] + J(r,t) * phi[s])
         double second_order_element(int r, int s, int t) const {
           double ans = (s == t) ? element(r, s) : 0;
-          ans -= (element(r, s) * truncated_phi_[t]
-                  + truncated_phi_[s] * element(r, t));
+          ans -= (element(r, s) * truncated_phi_[t] +
+                  truncated_phi_[s] * element(r, t));
           return ans;
         }
 
@@ -264,9 +257,8 @@ namespace BOOM{
         const Vector truncated_phi_;
       };  // class Jacobian
 
-      MultinomialLogitLogPosterior(
-          DirichletModel *model,
-          const Ptr<DiffVectorModel> &phi_prior);
+      MultinomialLogitLogPosterior(DirichletModel *model,
+                                   const Ptr<DiffVectorModel> &phi_prior);
 
       // Transformations between the S-vector phi, which is a discrete
       // probability distribution, and its S-1 dimensional multinomial
@@ -279,19 +271,19 @@ namespace BOOM{
 
       // This returns log p(eta|.) and associated derivatives.
       // p(eta|dot) is p(to_phi(eta)|.)|Jacobian(phi)|
-      double operator()(const Vector &eta,
-                        Vector &gradient,
-                        Matrix &Hessian,
+      double operator()(const Vector &eta, Vector &gradient, Matrix &Hessian,
                         uint number_of_desired_derivatives) const override;
       double operator()(const Vector &x) const override {
-        return d2TargetFun::operator()(x); }
-      double operator()(const Vector &x, Vector &g) const override{
-        return d2TargetFun::operator()(x, g);}
-      double operator()(const Vector &x, Vector &g, Matrix &h) const override{
-        return d2TargetFun::operator()(x, g, h);}
+        return d2TargetFun::operator()(x);
+      }
+      double operator()(const Vector &x, Vector &g) const override {
+        return d2TargetFun::operator()(x, g);
+      }
+      double operator()(const Vector &x, Vector &g, Matrix &h) const override {
+        return d2TargetFun::operator()(x, g, h);
+      }
 
-      double scalar_derivative(const Vector &eta,
-                               double &derivative,
+      double scalar_derivative(const Vector &eta, double &derivative,
                                int position) const override;
 
      private:
@@ -306,9 +298,7 @@ namespace BOOM{
      public:
       LogAlphaLogPosterior(DirichletModel *model,
                            const Ptr<DiffDoubleModel> &alpha_prior);
-      double operator()(double log_alpha,
-                        double &d1,
-                        double &d2,
+      double operator()(double log_alpha, double &d1, double &d2,
                         uint nderiv) const override;
       using d2ScalarTargetFun::operator();
 
@@ -322,13 +312,10 @@ namespace BOOM{
     //----------------------------------------------------------------------
     // Draws model parameters using one-variable at a time slice
     // sampling on the untransformed 'nu' scale.
-    class NuSliceImpl
-        : public DirichletSamplerImpl {
+    class NuSliceImpl : public DirichletSamplerImpl {
      public:
-      NuSliceImpl(DirichletModel *model,
-                  const Ptr<VectorModel> &phi_prior,
-                  const Ptr<DoubleModel> &alpha_prior,
-                  RNG *rng);
+      NuSliceImpl(DirichletModel *model, const Ptr<VectorModel> &phi_prior,
+                  const Ptr<DoubleModel> &alpha_prior, RNG *rng);
       void draw() override;
     };
 
@@ -336,14 +323,13 @@ namespace BOOM{
     // A sampler for drawing eta = MultinomialLogit(phi) and
     // log(alpha) from their scalar full conditional distributions
     // using slice sampling.
-    class MlogitSliceImpl
-        : public DirichletSamplerImpl {
+    class MlogitSliceImpl : public DirichletSamplerImpl {
      public:
       MlogitSliceImpl(DirichletModel *model,
                       const Ptr<DiffVectorModel> &phi_prior,
-                      const Ptr<DiffDoubleModel> &alpha_prior,
-                      RNG *rng);
+                      const Ptr<DiffDoubleModel> &alpha_prior, RNG *rng);
       void draw() override;
+
      private:
       MultinomialLogitLogPosterior phi_logpost_;
       UnivariateSliceSampler phi_sampler_;
@@ -355,16 +341,14 @@ namespace BOOM{
     // A sampler that draws eta = MultinomialLogit(phi) using a
     // tailored independence Metropolis algorithm, and log(alpha)
     // using slice sampling.
-    class TimImpl
-        : public DirichletSamplerImpl {
+    class TimImpl : public DirichletSamplerImpl {
      public:
-      TimImpl(DirichletModel *model,
-              const Ptr<DiffVectorModel> &phi_prior,
-              const Ptr<DiffDoubleModel> &alpha_prior,
-              RNG *rng);
+      TimImpl(DirichletModel *model, const Ptr<DiffVectorModel> &phi_prior,
+              const Ptr<DiffDoubleModel> &alpha_prior, RNG *rng);
       void draw() override;
       void draw_alpha_given_phi();
       void draw_phi_given_alpha();
+
      private:
       MultinomialLogitLogPosterior phi_logpost_;
       TIM phi_sampler_;
@@ -375,16 +359,14 @@ namespace BOOM{
     //----------------------------------------------------------------------
     // A Langevin sampler for drawing eta = MultinomialLogit(phi) and
     // log(alpha) from their scalar full conditional distributions.
-    class LangevinImpl
-        : public DirichletSamplerImpl {
+    class LangevinImpl : public DirichletSamplerImpl {
      public:
-      LangevinImpl(DirichletModel *model,
-                   const Ptr<DiffVectorModel> &phi_prior,
-                   const Ptr<DiffDoubleModel> &alpha_prior,
-                   RNG *rng);
+      LangevinImpl(DirichletModel *model, const Ptr<DiffVectorModel> &phi_prior,
+                   const Ptr<DiffDoubleModel> &alpha_prior, RNG *rng);
       void draw() override;
       void draw_alpha_given_phi();
       void draw_phi_given_alpha();
+
      private:
       Ptr<MultinomialLogitLogPosterior> phi_logpost_;
       UnivariateLangevinSampler phi_sampler_;
@@ -394,4 +376,4 @@ namespace BOOM{
   }  // namespace DirichletSampler
 }  // namespace BOOM
 
-#endif// BOOM_DIRICHLET_POSTERIOR_SAMPLER_HPP
+#endif  // BOOM_DIRICHLET_POSTERIOR_SAMPLER_HPP

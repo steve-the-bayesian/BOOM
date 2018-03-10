@@ -70,15 +70,13 @@ namespace BOOM {
       return SplineBase::knot_span(x) + order() - 1;
     }
 
-    int order() const {return order_;}
+    int order() const { return order_; }
 
     // Return an Mspline basis function expansion at the value x.
     Vector basis(double x) const override;
 
     // The dimension of the vector returned by basis(x).
-    int basis_dimension() const override {
-      return basis_dimension_;
-    }
+    int basis_dimension() const override { return basis_dimension_; }
 
     // Evaluates M_k(x), where k can be 0, 1, ... number_of_knots + order - 1.
     // Args:

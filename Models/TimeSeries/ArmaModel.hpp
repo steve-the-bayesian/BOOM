@@ -19,12 +19,12 @@
 #ifndef BOOM_ARMA_MODEL_HPP_
 #define BOOM_ARMA_MODEL_HPP_
 
-#include "Models/Policies/ParamPolicy_3.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/TimeSeries/TimeSeries.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
 
 namespace BOOM {
 
@@ -39,15 +39,16 @@ namespace BOOM {
   class ArmaStateSpaceTransitionMatrix : public SparseMatrixBlock {
    public:
     ArmaStateSpaceTransitionMatrix(const Vector &expanded_phi);
-    ArmaStateSpaceTransitionMatrix * clone() const override {
-      return new ArmaStateSpaceTransitionMatrix(*this);}
-    
-    int nrow() const override {return expanded_phi_.size();}
-    int ncol() const override {return expanded_phi_.size();}
+    ArmaStateSpaceTransitionMatrix *clone() const override {
+      return new ArmaStateSpaceTransitionMatrix(*this);
+    }
+
+    int nrow() const override { return expanded_phi_.size(); }
+    int ncol() const override { return expanded_phi_.size(); }
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_and_add(VectorView lhs,
                           const ConstVectorView &rhs) const override;
-    
+
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     void add_to(SubMatrix block) const override;
@@ -65,25 +66,28 @@ namespace BOOM {
   class ArmaStateSpaceVarianceMatrix : public SparseMatrixBlock {
    public:
     ArmaStateSpaceVarianceMatrix(const Vector &expanded_theta, double sigsq);
-    ArmaStateSpaceVarianceMatrix * clone() const override {
-      return new ArmaStateSpaceVarianceMatrix(*this);}
-    
-    int nrow() const override {return theta_.size();}
-    int ncol() const override {return theta_.size();}
+    ArmaStateSpaceVarianceMatrix *clone() const override {
+      return new ArmaStateSpaceVarianceMatrix(*this);
+    }
+
+    int nrow() const override { return theta_.size(); }
+    int ncol() const override { return theta_.size(); }
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     // Because RQR is a symmetric matrix.
-    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       multiply(lhs, rhs);
     }
     void multiply_inplace(VectorView x) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
+
    private:
     Vector theta_;
     double sigsq_;
   };
-  
+
   // An ARMA(p, q) model describes a time series
   //   y[t+1] = phi[0] * y[t] + phi[1] * y[t-1] + ... + phi[p-1] * y[t - p +1]
   //            + theta[0] * epsilon[t] + ... + theta[q-1] * epsilon[t - q + 1]
@@ -94,11 +98,9 @@ namespace BOOM {
   //
   // If p == 0 then the model is said to be MA(q).  If q == 0 then the model is
   // AR(p) (but in that case consider an ArModel instead).
-  class ArmaModel
-      : public ParamPolicy_3<GlmCoefs, VectorParams, UnivParams>,
-        public IID_DataPolicy<DoubleData>,
-        public PriorPolicy
-  {
+  class ArmaModel : public ParamPolicy_3<GlmCoefs, VectorParams, UnivParams>,
+                    public IID_DataPolicy<DoubleData>,
+                    public PriorPolicy {
    public:
     // Args:
     //   p:  The number of AR lags.  p >= 0.
@@ -114,36 +116,36 @@ namespace BOOM {
     ArmaModel(const Ptr<GlmCoefs> &ar_params,
               const Ptr<VectorParams> &ma_params,
               const Ptr<UnivParams> &residual_variance);
-    
-    ArmaModel * clone() const override {return new ArmaModel(*this);}
+
+    ArmaModel *clone() const override { return new ArmaModel(*this); }
 
     // phi[0], phi[1], ... phi[p-1].  Might be empty.
     const Vector &ar_coefficients() const;
     void set_ar_coefficients(const Vector &ar_coefficients);
-    
+
     // theta[0], theta[1], ... theta[q-1].  Might be empty.
     const Vector &ma_coefficients() const;
     void set_ma_coefficients(const Vector &ma_coefficients);
 
     // Variance and SD of the white noise process.
     double sigsq() const;
-    double sigma() const {return sqrt(sigsq());}
+    double sigma() const { return sqrt(sigsq()); }
     void set_sigsq(double sigsq);
     void set_sigma(double sigma) { set_sigsq(sigma * sigma); }
-    
+
     // The number of AR coefficients.
-    int ar_dimension() const {return ar_coefficients().size();}
+    int ar_dimension() const { return ar_coefficients().size(); }
 
     // The number of MA coefficients.  This does not include the leading '1'
     // associated with the current error term.
-    int ma_dimension() const {return ma_coefficients().size();}
-    
+    int ma_dimension() const { return ma_coefficients().size(); }
+
     // An ARMA model is 'invertible' (i.e. it can be written as a weighted sum
     // of white noise: MA(infinity)), if all the roots of the AR polynomial
     // phi(z) = 1 - phi[0] * z - phi[1] * z^2 - ... - phi[p-1] * z^p lie outside
     // the unit circle.
     static bool is_invertible(const Vector &ar_coefficients);
-    bool is_invertible() const {return is_invertible(ar_coefficients());}
+    bool is_invertible() const { return is_invertible(ar_coefficients()); }
 
     // An ARMA model is 'causal' if it can be written as an infinite AR process.
     // This can be done iff all the roots of the MA polynomial
@@ -156,9 +158,7 @@ namespace BOOM {
     static bool is_causal(const Vector &ma_coefficients);
     bool is_causal() const { return is_causal(ma_coefficients()); }
 
-    bool is_stationary() const {
-      return is_causal() && is_invertible();
-    }
+    bool is_stationary() const { return is_causal() && is_invertible(); }
 
     // The first nlags of the autocovariance function.
     // Args:
@@ -175,7 +175,7 @@ namespace BOOM {
       Vector acvf = autocovariance(nlags);
       return acvf / acvf[0];
     }
-    
+
     // Args:
     //   ar_coefficients: The vector of autoregression coefficients.  The
     //     dimension must match the corresponding parameter in the model.
@@ -187,8 +187,7 @@ namespace BOOM {
     // Returns:
     //   The log likelihood of the data.
     double log_likelihood(const Vector &ar_coefficients,
-                          const Vector &ma_coefficients,
-                          double sigsq) const;
+                          const Vector &ma_coefficients, double sigsq) const;
 
     // Simulate an ARMA process of the specified length.
     // Args:
@@ -206,7 +205,7 @@ namespace BOOM {
     Vector expanded_ar_coefficients(int dimension) const {
       return expand_ar_coefficients(ar_coefficients(), dimension);
     }
-    
+
     // The expanded MA coefficients are [theta[0], theta[1], ...,
     // theta[dimension-1]], where element 0 is 1.0, and elements theta[q, ...]
     // are zero.
@@ -243,7 +242,8 @@ namespace BOOM {
     //   psi[0] = 1
     //  -phi[1] z + psi[1] z = theta[1] z
     //  -phi[2] z^2 -phi[1]*psi[1] z^2 + psi[2] = theta[2] z^2
-    //  -phi[3] z^3 - phi[2]*psi[1] z^3 - phi[1]*psi[2] z^3 + psi[3] z^3 = theta[3] z^3
+    //  -phi[3] z^3 - phi[2]*psi[1] z^3 - phi[1]*psi[2] z^3 + psi[3] z^3 =
+    //  theta[3] z^3
     // ...
     //
     // This is a triangular system, with each line having only a single unknown.
@@ -264,7 +264,7 @@ namespace BOOM {
     // phi(n) is the n'th AR coefficient.
     double phi(int n) const;
   };
-  
+
 }  // namespace BOOM
 
-#endif //  BOOM_ARMA_MODEL_HPP_
+#endif  //  BOOM_ARMA_MODEL_HPP_

@@ -9,8 +9,7 @@ namespace BOOM {
   // conditional on the AR coefficients using an adaptive Metropolis-Hastings
   // scheme.
 
-  class ArmaGibbsMhSampler
-      : public PosteriorSampler {
+  class ArmaGibbsMhSampler : public PosteriorSampler {
    public:
     void draw() override;
     double logpri() const override;
@@ -18,8 +17,8 @@ namespace BOOM {
     void draw_ar_given_ma();
     void draw_ma_given_ar();
     double log_posterior(const Vector &ar_coefficients,
-                         const Vector &ma_coefficients,
-                         double precision) const;
+                         const Vector &ma_coefficients, double precision) const;
+
    private:
     ArmaModel *model_;
 
@@ -27,7 +26,7 @@ namespace BOOM {
     Ptr<VectorModel> ma_prior_;
     Ptr<DoubleModel> precision_prior_;
   };
-  
-} // namespace BOOM
 
-#endif //  BOOM_ARMA_GIBBS_MH_SAMPLER_
+}  // namespace BOOM
+
+#endif  //  BOOM_ARMA_GIBBS_MH_SAMPLER_

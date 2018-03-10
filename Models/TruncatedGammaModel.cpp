@@ -17,20 +17,19 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/TruncatedGammaModel.hpp"
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
-  TruncatedGammaModel::TruncatedGammaModel(double a, double b,
-                                           double lower, double upper)
+  TruncatedGammaModel::TruncatedGammaModel(double a, double b, double lower,
+                                           double upper)
       : GammaModel(a, b),
         lower_truncation_point_(lower),
         upper_truncation_point_(upper),
         plo_(pgamma(lower_truncation_point_, a, b, false, false)),
         phi_(pgamma(upper_truncation_point_, a, b, false, false)),
-        lognc_(log(phi_ - plo_))
-  {}
+        lognc_(log(phi_ - plo_)) {}
 
   double TruncatedGammaModel::logp(double x) const {
     if (x < lower_truncation_point_ || x > upper_truncation_point_) {

@@ -17,22 +17,20 @@
 */
 
 #include "Models/TimeSeries/ArmaModel.hpp"
-#include "Models/TimeSeries/ArModel.hpp"
 #include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
-#include "distributions.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 #include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   namespace {
     using ASSTM = ArmaStateSpaceTransitionMatrix;
     using ASSVM = ArmaStateSpaceVarianceMatrix;
-  }
-  
-  ASSTM::ArmaStateSpaceTransitionMatrix(
-      const Vector &expanded_ar_coefficients)
-      : expanded_phi_(expanded_ar_coefficients)
-  {}
+  }  // namespace
+
+  ASSTM::ArmaStateSpaceTransitionMatrix(const Vector &expanded_ar_coefficients)
+      : expanded_phi_(expanded_ar_coefficients) {}
 
   void ASSTM::multiply(VectorView lhs, const ConstVectorView &rhs) const {
     if (lhs.size() != ncol()) {
@@ -50,7 +48,6 @@ namespace BOOM {
   // lhs += this * rhs
   void ASSTM::multiply_and_add(VectorView lhs,
                                const ConstVectorView &rhs) const {
-    
     if (lhs.size() != ncol()) {
       report_error("Wrong sized 'lhs' argument.");
     }
@@ -62,7 +59,7 @@ namespace BOOM {
       lhs[i] += expanded_phi_[i] * rhs[0] + (i + 1 < dim ? rhs[i + 1] : 0);
     }
   }
-  
+
   void ASSTM::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
     if (lhs.size() != ncol()) {
       report_error("Wrong sized 'lhs' argument.");
@@ -71,7 +68,7 @@ namespace BOOM {
       report_error("Wrong sized 'rhs' argument.");
     }
     lhs[0] = expanded_phi_.dot(rhs);
-    VectorView(lhs, 1, ncol() - 1) = ConstVectorView(rhs, 0 , ncol() - 1);
+    VectorView(lhs, 1, ncol() - 1) = ConstVectorView(rhs, 0, ncol() - 1);
   }
 
   void ASSTM::multiply_inplace(VectorView x) const {
@@ -86,8 +83,7 @@ namespace BOOM {
   }
 
   void ASSTM::add_to(SubMatrix block) const {
-    if (block.nrow() != nrow()
-        || block.ncol() != ncol()) {
+    if (block.nrow() != nrow() || block.ncol() != ncol()) {
       report_error("Wrong sized argument.");
     }
     block.col(0) += expanded_phi_;
@@ -102,11 +98,9 @@ namespace BOOM {
   }
   //======================================================================
 
-  ASSVM::ArmaStateSpaceVarianceMatrix(
-      const Vector &expanded_ma_coefficients, double sigsq)
-      : theta_(expanded_ma_coefficients),
-        sigsq_(sigsq)
-  {}
+  ASSVM::ArmaStateSpaceVarianceMatrix(const Vector &expanded_ma_coefficients,
+                                      double sigsq)
+      : theta_(expanded_ma_coefficients), sigsq_(sigsq) {}
 
   void ASSVM::multiply(VectorView lhs, const ConstVectorView &rhs) const {
     double scale_factor = sigsq_ * theta_.dot(rhs);
@@ -119,21 +113,19 @@ namespace BOOM {
     double scale_factor = sigsq_ * theta_.dot(rhs);
     lhs += theta_ * scale_factor;
   }
-  
+
   void ASSVM::multiply_inplace(VectorView x) const {
     x = theta_ * (theta_.dot(x) * sigsq_);
   }
 
-  void ASSVM::add_to(SubMatrix block) const {
-    block += dense();
-  }
+  void ASSVM::add_to(SubMatrix block) const { block += dense(); }
 
   Matrix ASSVM::dense() const {
     SpdMatrix ans(nrow(), 0.0);
     ans.add_outer(theta_, sigsq_);
     return ans;
   }
-  
+
   //======================================================================
   ArmaModel::ArmaModel(int p, int q) {
     if (p < 0 || q < 0) {
@@ -151,19 +143,15 @@ namespace BOOM {
   ArmaModel::ArmaModel(const Ptr<GlmCoefs> &ar_coefficients,
                        const Ptr<VectorParams> &ma_coefficients,
                        const Ptr<UnivParams> &residual_variance)
-      : ParamPolicy(ar_coefficients, ma_coefficients, residual_variance)
-  {}
+      : ParamPolicy(ar_coefficients, ma_coefficients, residual_variance) {}
 
-
-  const Vector & ArmaModel::ar_coefficients() const {
+  const Vector &ArmaModel::ar_coefficients() const {
     return prm1_ref().value();
   }
-  const Vector & ArmaModel::ma_coefficients() const {
+  const Vector &ArmaModel::ma_coefficients() const {
     return prm2_ref().value();
   }
-  double ArmaModel::sigsq() const {
-    return prm3_ref().value();
-  }
+  double ArmaModel::sigsq() const { return prm3_ref().value(); }
 
   bool ArmaModel::is_invertible(const Vector &ar_coefficients) {
     return ArModel::check_stationary(ar_coefficients);
@@ -181,7 +169,7 @@ namespace BOOM {
   Vector ArmaModel::autocovariance(int number_of_lags) const {
     Vector filter_coefficients = this->filter_coefficients();
     Vector ans(number_of_lags + 1);
-    for(int lag = 0; lag <= number_of_lags; ++lag){
+    for (int lag = 0; lag <= number_of_lags; ++lag) {
       int n = filter_coefficients.size() - lag;
       if (n < 0) {
         VectorView(ans, lag) = 0.0;
@@ -194,7 +182,7 @@ namespace BOOM {
     }
     return ans * sigsq();
   }
-  
+
   double ArmaModel::log_likelihood(const Vector &ar_coefficients,
                                    const Vector &ma_coefficients,
                                    double sigsq) const {
@@ -217,11 +205,11 @@ namespace BOOM {
     BlockDiagonalMatrix transition_matrix;
     transition_matrix.add_block(new ArmaStateSpaceTransitionMatrix(
         expand_ar_coefficients(ar_coefficients, state_dimension)));
-    
+
     BlockDiagonalMatrix state_variance_matrix;
     state_variance_matrix.add_block(new ArmaStateSpaceVarianceMatrix(
         expand_ma_coefficients(ma_coefficients, state_dimension), sigsq));
-    
+
     // Initial distribution of the state at time 0.  It might be better to use
     // the stationary or prior distribution here.
     Vector a(state_dimension, 0.0);
@@ -238,16 +226,8 @@ namespace BOOM {
     int time_dimension = data.size();
     for (int t = 1; t < time_dimension; ++t) {
       ans += sparse_scalar_kalman_update(
-          data[t]->value(),
-          a,
-          P,
-          kalman_gain,
-          forecast_error_variance,
-          forecast_error,
-          missing,
-          Z,
-          0,
-          transition_matrix,
+          data[t]->value(), a, P, kalman_gain, forecast_error_variance,
+          forecast_error, missing, Z, 0, transition_matrix,
           state_variance_matrix);
     }
     return ans;
@@ -266,8 +246,9 @@ namespace BOOM {
   Vector ArmaModel::expand_ma_coefficients(const Vector &ma_coefficients,
                                            int dimension) const {
     if (dimension < ma_coefficients.size() + 1) {
-      report_error("Dimension must be at least one more than the size of the "
-                   "MA coefficients");
+      report_error(
+          "Dimension must be at least one more than the size of the "
+          "MA coefficients");
     }
     Vector ans(dimension, 0.0);
     ans[0] = 1.0;
@@ -303,8 +284,7 @@ namespace BOOM {
 
     Vector R = expanded_ma_coefficients(state_dimension);
     for (int i = 0; i < ans.size(); ++i) {
-      state = transition_matrix * state
-          + rnorm_mt(rng, 0, white_noise_sd) * R;
+      state = transition_matrix * state + rnorm_mt(rng, 0, white_noise_sd) * R;
       ans[i] = state[0];
     }
     return Vector(VectorView(ans, burn, length));
@@ -312,9 +292,10 @@ namespace BOOM {
 
   Vector ArmaModel::filter_coefficients() const {
     if (!is_invertible()) {
-      report_error("Filter coefficients are not meaningful because the model is "
-                   "not invertible.  A root of the AR polynomial lies inside the "
-                   "unit circle.");
+      report_error(
+          "Filter coefficients are not meaningful because the model is "
+          "not invertible.  A root of the AR polynomial lies inside the "
+          "unit circle.");
     }
     Vector filter_coefficients(2);
     filter_coefficients[0] = 1.0;
@@ -322,10 +303,10 @@ namespace BOOM {
     bool done = false;
     while (!done) {
       double coefficient = theta(filter_coefficients.size()) +
-          filter_ar_dot_product(filter_coefficients);
+                           filter_ar_dot_product(filter_coefficients);
       filter_coefficients.push_back(coefficient);
       done = filter_coefficients.size() > ar_dimension() &&
-          const_tail(filter_coefficients, ar_dimension()).abs_norm() < 1e-6;
+             const_tail(filter_coefficients, ar_dimension()).abs_norm() < 1e-6;
     }
     return filter_coefficients;
   }
@@ -349,8 +330,8 @@ namespace BOOM {
       ConstVectorView phi(ar_coefficients(), 0, filter_coefficients.size() - 1);
       return filter_coefficients.dot(rev(phi));
     } else {
-      return const_tail(filter_coefficients, ar_dimension()).dot(
-          rev(ar_coefficients()));
+      return const_tail(filter_coefficients, ar_dimension())
+          .dot(rev(ar_coefficients()));
     }
   }
 
@@ -361,7 +342,7 @@ namespace BOOM {
     } else if (n == 0) {
       ans = 1;
     } else if (n > ma_dimension()) {
-      ans= 0;
+      ans = 0;
     } else {
       ans = ma_coefficients()[n - 1];
     }
@@ -379,5 +360,5 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
 }  // namespace BOOM

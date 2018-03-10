@@ -25,17 +25,13 @@ namespace BOOM {
   }
 
   QRM::QuantileRegressionModel(uint beta_dim, double quantile, bool include_all)
-      : ParamPolicy(new GlmCoefs(beta_dim, include_all)),
-        quantile_(quantile)
-  {}
+      : ParamPolicy(new GlmCoefs(beta_dim, include_all)), quantile_(quantile) {}
 
   QRM::QuantileRegressionModel(const Vector &beta, double quantile)
-      : ParamPolicy(new GlmCoefs(beta)),
-        quantile_(quantile)
-  {}
+      : ParamPolicy(new GlmCoefs(beta)), quantile_(quantile) {}
 
   QuantileRegressionModel *QRM::clone() const {
     return new QuantileRegressionModel(*this);
   }
 
-}
+}  // namespace BOOM

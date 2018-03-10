@@ -22,14 +22,12 @@
 
 #include "Models/Glm/CumulativeProbitModel.hpp"
 #include "Models/Glm/RegressionModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class CumulativeProbitSampler
-      : public PosteriorSampler
-  {
+  class CumulativeProbitSampler : public PosteriorSampler {
    public:
     CumulativeProbitSampler(CumulativeProbitModel *m,
                             const Ptr<MvnBase> &beta_prior,
@@ -40,6 +38,7 @@ namespace BOOM{
     void draw_delta();
     void draw() override;
     double logpri() const override;
+
    private:
     CumulativeProbitModel *m_;
     Ptr<MvnBase> beta_prior_;
@@ -50,5 +49,5 @@ namespace BOOM{
     Vector delta_;
     // assume a flat prior on delta
   };
-}
-#endif// BOOM_CUMULATIVE_PROBIT_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_CUMULATIVE_PROBIT_SAMPLER_HPP_

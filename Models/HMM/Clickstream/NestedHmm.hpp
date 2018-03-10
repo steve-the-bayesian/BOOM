@@ -17,7 +17,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-
 #ifndef CLICKSTREAM_MODEL_HPP
 #define CLICKSTREAM_MODEL_HPP
 
@@ -35,84 +34,80 @@
 
 namespace BOOM {
 
-  class NestedHmm
-      : public CompositeParamPolicy,
-        public IID_DataPolicy<Clickstream::Stream>,
-        public PriorPolicy
-  {
+  class NestedHmm : public CompositeParamPolicy,
+                    public IID_DataPolicy<Clickstream::Stream>,
+                    public PriorPolicy {
    public:
     typedef Clickstream::Event Event;
     typedef Clickstream::Session Session;
     typedef Clickstream::Stream Stream;
 
-    NestedHmm(const std::vector<Ptr<Stream> > & streams, int S2, int S1);
+    NestedHmm(const std::vector<Ptr<Stream> > &streams, int S2, int S1);
     NestedHmm(int S2, int S1, int S0);
-    NestedHmm * clone() const override;
+    NestedHmm *clone() const override;
 
     // The mixture component for state H, h.
     const Ptr<MarkovModel> &mix(int H, int h);
-    const Ptr<MarkovModel> &mix(int H, int h)const;
+    const Ptr<MarkovModel> &mix(int H, int h) const;
 
     // The model for latent state transitions between events.
     Ptr<MarkovModel> event_model(int H);
-    const Ptr<MarkovModel> event_model(int H)const;
+    const Ptr<MarkovModel> event_model(int H) const;
 
     // The model for latent state transitions between sessions.
     Ptr<MarkovModel> session_model();
-    const Ptr<MarkovModel> session_model()const;
+    const Ptr<MarkovModel> session_model() const;
 
     // Session level latent state dimension.
-    int S2()const;
+    int S2() const;
 
     // Event level latent state dimension.
-    int S1()const;
+    int S1() const;
 
     // Number of levels in the observed sequence of events, inluding
     // the end of session indicator
-    int S0()const;
+    int S0() const;
 
-    int Nstreams()const;
+    int Nstreams() const;
     Ptr<Stream> stream(int i);
 
     // Encode_state and decode state map between the state spaces H* =
     // (H,h) and S* = (0, ... , S1xS2-1).  encode_state moves from H* to
     // S*, and decode_state moves back.
-    int encode_state(int H, int h)const;
+    int encode_state(int H, int h) const;
     void decode_state(int state, int &H, int &h) const;
 
     double pdf(const Ptr<Data> &dp, bool logscale) const;
 
     double loglike();
-    double last_loglike()const;
-    double last_logpost()const;
-    double logpri()const override;
+    double last_loglike() const;
+    double last_logpost() const;
+    double logpri() const override;
 
     void set_loglike(double);
     void set_logpost(double);
 
     // Fit the model (find the MLE) using an EM algorithm.
-    double EM(double epsilon, bool bayes=true);
+    double EM(double epsilon, bool bayes = true);
 
-    ostream & write_suf(ostream &)const;
+    ostream &write_suf(ostream &) const;
 
     // Sets the number of threads to use for data imputation.
     void set_threads(int n);
 
     double impute_latent_data();
 
-    virtual std::vector<Ptr<Sufstat> > suf_vec()const;
+    virtual std::vector<Ptr<Sufstat> > suf_vec() const;
 
-    double fwd_bkwd(bool bayes=false, bool find_mode=true);
-    double fwd(const Ptr<Stream> &u)const;
+    double fwd_bkwd(bool bayes = false, bool find_mode = true);
+    double fwd(const Ptr<Stream> &u) const;
     void bkwd_sampling(const Ptr<Stream> &u);
     void bkwd_smoothing(const Ptr<Stream> &u);
 
     virtual void complete_data_mode(bool bayes);
-    virtual double logp(const Ptr<Event> &event, int H, int h)const;
+    virtual double logp(const Ptr<Event> &event, int H, int h) const;
     virtual void update(int H, int h, const Ptr<Event> &event);
-    virtual void update_mixture(int H,
-                                int h,
-                                const Ptr<Event> &event,
+    virtual void update_mixture(int H, int h, const Ptr<Event> &event,
                                 double prob);
     virtual void randomize_starting_values();
 
@@ -126,17 +121,14 @@ namespace BOOM {
     //      const BOOM::include &abs)const;
 
     // initial distribution and transition matrix in (h,y) space
-    Matrix augmented_Q(int H)const;
-    Vector augmented_pi0(int H)const;
+    Matrix augmented_Q(int H) const;
+    Vector augmented_pi0(int H) const;
 
-    void print_params(ostream &out)const; // for debugging
-    void print_event(ostream &out,
-                     const char *msg,
-                     const Ptr<Stream> &u,
-                     const Ptr<Session> &session,
-                     const Ptr<Event> &event,
+    void print_params(ostream &out) const;  // for debugging
+    void print_event(ostream &out, const char *msg, const Ptr<Stream> &u,
+                     const Ptr<Session> &session, const Ptr<Event> &event,
                      int event_number) const;
-    void print_filter(ostream &out, int j)const;
+    void print_filter(ostream &out, int j) const;
     //------------------------------------------------------------
 
     // Returns a Matrix, with rows corresponding to sessions, and
@@ -182,30 +174,30 @@ namespace BOOM {
 
     // stuff for the filter
     mutable std::vector<Mat> P;
-    mutable  Vector pi_;
-    mutable  Vector logpi0_;
-    mutable  Vector logd_;
-    const Vector one_;       // A vector of 1's
-    mutable  Matrix logQ1_;  // for the first obs in a session
-    mutable  Matrix logQ2_;  // for the subsequent observations
+    mutable Vector pi_;
+    mutable Vector logpi0_;
+    mutable Vector logd_;
+    const Vector one_;      // A vector of 1's
+    mutable Matrix logQ1_;  // for the first obs in a session
+    mutable Matrix logQ2_;  // for the subsequent observations
 
     RNG rng_;
 
     std::vector<Ptr<NestedHmm> > workers_;
     void setup();
     void pass_params_to_workers();
-    void fill_logd(const Ptr<Event> &event)const;
-    void fill_big_Q()const;
+    void fill_logd(const Ptr<Event> &event) const;
+    void fill_big_Q() const;
     void start_thread_imputation();
     void start_thread_em();
-    double initialize(const Ptr<Event> &event)const;
-    void check_filter_size(int n)const;
-    ConstVectorView get_hinit(const Vector &pi, int H)const;
-    Vector get_Hinit(const Vector &pi)const;
-    ConstSubMatrix get_htrans(const Matrix &P, int H)const;
-    ConstSubMatrix get_block(const Matrix &P, int H1, int H2)const;
-    Matrix get_Htrans(const Matrix &P)const;
-    double fwd_bkwd_with_threads(bool bayes=false, bool find_mode=true);
+    double initialize(const Ptr<Event> &event) const;
+    void check_filter_size(int n) const;
+    ConstVectorView get_hinit(const Vector &pi, int H) const;
+    Vector get_Hinit(const Vector &pi) const;
+    ConstSubMatrix get_htrans(const Matrix &P, int H) const;
+    ConstSubMatrix get_block(const Matrix &P, int H1, int H2) const;
+    Matrix get_Htrans(const Matrix &P) const;
+    double fwd_bkwd_with_threads(bool bayes = false, bool find_mode = true);
     double impute_latent_data_with_threads();
 
     double collect_threads();
@@ -213,22 +205,20 @@ namespace BOOM {
     void allocate_data_to_workers();
     void add_worker(const Ptr<NestedHmm> &w);
     void clear_workers();
-    RNG & rng(){return rng_;}
-
+    RNG &rng() { return rng_; }
   };
 
-  class NestedHmmDataImputer
-      : public BOOM::PosteriorSampler{
+  class NestedHmmDataImputer : public BOOM::PosteriorSampler {
    public:
     NestedHmmDataImputer(NestedHmm *mod, RNG &seeding_rng = GlobalRng::rng)
-      : PosteriorSampler(seeding_rng),
-        m(mod) {}
-    void draw() override{m->impute_latent_data();}
-    double logpri()const override{return 0;}
+        : PosteriorSampler(seeding_rng), m(mod) {}
+    void draw() override { m->impute_latent_data(); }
+    double logpri() const override { return 0; }
+
    private:
     NestedHmm *m;
   };
 
 }  // namespace BOOM
 
-#endif// CLICKSTREAM_MODEL_HPP
+#endif  // CLICKSTREAM_MODEL_HPP

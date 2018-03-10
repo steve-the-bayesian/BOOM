@@ -18,27 +18,24 @@
 */
 
 #include "Models/StateSpace/StateModels/ArStateModel.hpp"
-#include "distributions.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   ArStateModel::ArStateModel(int number_of_lags)
       : ArModel(number_of_lags),
-        state_transition_matrix_(
-            new AutoRegressionTransitionMatrix(Phi_prm())),
+        state_transition_matrix_(new AutoRegressionTransitionMatrix(Phi_prm())),
         state_variance_matrix_(
             new UpperLeftCornerMatrixParamView(number_of_lags, Sigsq_prm())),
         state_error_expander_(
             new FirstElementSingleColumnMatrix(number_of_lags)),
         state_error_variance_matrix_(
-            new SingleSparseDiagonalElementMatrixParamView(
-                1, Sigsq_prm(), 0)),
+            new SingleSparseDiagonalElementMatrixParamView(1, Sigsq_prm(), 0)),
         observation_matrix_(number_of_lags),
         initial_state_mean_(number_of_lags, 0.0),
         initial_state_variance_(number_of_lags, 1.0),
-        stationary_initial_distribution_(false)
-  {
+        stationary_initial_distribution_(false) {
     observation_matrix_[0] = 1.0;
     DataPolicy::only_keep_sufstats();
   }
@@ -54,24 +51,20 @@ namespace BOOM {
         state_error_expander_(
             new FirstElementSingleColumnMatrix(rhs.number_of_lags())),
         state_error_variance_matrix_(
-            new SingleSparseDiagonalElementMatrixParamView(
-                1, Sigsq_prm(), 0)),
+            new SingleSparseDiagonalElementMatrixParamView(1, Sigsq_prm(), 0)),
         observation_matrix_(rhs.observation_matrix_),
         initial_state_mean_(rhs.initial_state_mean_),
         initial_state_variance_(rhs.initial_state_variance_),
-        stationary_initial_distribution_(rhs.stationary_initial_distribution_)
-  {
+        stationary_initial_distribution_(rhs.stationary_initial_distribution_) {
     DataPolicy::only_keep_sufstats();
   }
 
   //======================================================================
-  ArStateModel * ArStateModel::clone()const{
-    return new ArStateModel(*this);}
+  ArStateModel *ArStateModel::clone() const { return new ArStateModel(*this); }
 
   //======================================================================
   void ArStateModel::observe_state(const ConstVectorView &then,
-                                   const ConstVectorView &now,
-                                   int t,
+                                   const ConstVectorView &now, int t,
                                    ScalarStateSpaceModelBase *) {
     double y = now[0];
     const ConstVectorView &x(then);
@@ -79,27 +72,27 @@ namespace BOOM {
   }
 
   //======================================================================
-  uint ArStateModel::state_dimension()const{
+  uint ArStateModel::state_dimension() const {
     return Phi_prm()->nvars_possible();
   }
 
   //======================================================================
   void ArStateModel::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &,
-      const ConstSubMatrix &) {
-    report_error("The ArStateModel cannot be part "
-                 "of the EM algorithm.");
+      int t, const ConstVectorView &, const ConstSubMatrix &) {
+    report_error(
+        "The ArStateModel cannot be part "
+        "of the EM algorithm.");
   }
 
   //======================================================================
-  void ArStateModel::simulate_state_error(RNG &rng, VectorView eta, int t)const{
+  void ArStateModel::simulate_state_error(RNG &rng, VectorView eta,
+                                          int t) const {
     eta = 0;
     eta[0] = rnorm_mt(rng) * sigma();
   }
 
   //======================================================================
-  Ptr<SparseMatrixBlock> ArStateModel::state_transition_matrix(int t)const{
+  Ptr<SparseMatrixBlock> ArStateModel::state_transition_matrix(int t) const {
     return state_transition_matrix_;
   }
 
@@ -117,30 +110,32 @@ namespace BOOM {
   }
 
   //======================================================================
-  SparseVector ArStateModel::observation_matrix(int t)const{
+  SparseVector ArStateModel::observation_matrix(int t) const {
     return observation_matrix_;
   }
 
   //======================================================================
-  Vector ArStateModel::initial_state_mean()const{
+  Vector ArStateModel::initial_state_mean() const {
     if (initial_state_mean_.size() != state_dimension()) {
-      report_error("mu_.size() != state_dimension() in "
-                   "ArStateModel::initial_state_mean()");
+      report_error(
+          "mu_.size() != state_dimension() in "
+          "ArStateModel::initial_state_mean()");
     }
     return initial_state_mean_;
   }
   //======================================================================
-  SpdMatrix ArStateModel::initial_state_variance()const{
+  SpdMatrix ArStateModel::initial_state_variance() const {
     if (initial_state_variance_.nrow() != state_dimension()) {
-      report_error("Sigma_.nrow() != state_dimension() in "
-                   "ArStateModel::initial_state_mean()");
+      report_error(
+          "Sigma_.nrow() != state_dimension() in "
+          "ArStateModel::initial_state_mean()");
     }
-    SpdMatrix & Sigma(const_cast<SpdMatrix &>(initial_state_variance_));
+    SpdMatrix &Sigma(const_cast<SpdMatrix &>(initial_state_variance_));
 
     if (stationary_initial_distribution_) {
       Vector gamma = autocovariance(state_dimension());
       Sigma.diag() = gamma[0];
-      for(int i = 1; i < state_dimension(); ++i){
+      for (int i = 1; i < state_dimension(); ++i) {
         Sigma.superdiag(i) = gamma[i];
       }
       Sigma.reflect();
@@ -149,19 +144,21 @@ namespace BOOM {
   }
 
   //======================================================================
-  void ArStateModel::set_initial_state_mean(const Vector &mu){
-    if(mu.size() != state_dimension()){
-      report_error("attempt to set mu to the wrong size in "
-                   "ArStateModel::set_initial_state_mean");
+  void ArStateModel::set_initial_state_mean(const Vector &mu) {
+    if (mu.size() != state_dimension()) {
+      report_error(
+          "attempt to set mu to the wrong size in "
+          "ArStateModel::set_initial_state_mean");
     }
     initial_state_mean_ = mu;
   }
 
   //======================================================================
-  void ArStateModel::set_initial_state_variance(const SpdMatrix &Sigma){
-    if(Sigma.nrow() != state_dimension()){
-      report_error("attempt to set Sigma to the wrong size in "
-                   "ArStateModel::set_initial_state_mean");
+  void ArStateModel::set_initial_state_variance(const SpdMatrix &Sigma) {
+    if (Sigma.nrow() != state_dimension()) {
+      report_error(
+          "attempt to set Sigma to the wrong size in "
+          "ArStateModel::set_initial_state_mean");
     }
     initial_state_variance_ = Sigma;
   }

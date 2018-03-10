@@ -23,43 +23,38 @@
 #include "Models/GammaModel.hpp"
 #include "Models/Policies/ParamPolicy_1.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   //======================================================================
-  class ScaledChisqModel
-    : public GammaModelBase,
-      public ParamPolicy_1<UnivParams>,
-      public PriorPolicy
-  {
+  class ScaledChisqModel : public GammaModelBase,
+                           public ParamPolicy_1<UnivParams>,
+                           public PriorPolicy {
     // w ~ Gamma(nu/2, nu/2) the factor of 2 needs to be accounted for
     // in log likelihood derivatives
 
-  public:
-    ScaledChisqModel(double nu=30.0);
+   public:
+    ScaledChisqModel(double nu = 30.0);
     ScaledChisqModel(const ScaledChisqModel &rhs);
-    ScaledChisqModel * clone()const override;
+    ScaledChisqModel *clone() const override;
 
     Ptr<UnivParams> Nu_prm();
-    const Ptr<UnivParams> Nu_prm()const;
+    const Ptr<UnivParams> Nu_prm() const;
 
-    const double & nu() const;
+    const double &nu() const;
     void set_nu(double);
 
-    double alpha()const override{return nu()/2;}
-    double beta()const override{return nu()/2;}
+    double alpha() const override { return nu() / 2; }
+    double beta() const override { return nu() / 2; }
 
     // probability calculations
     double Loglike(const Vector &nu, Vector &g, Matrix &h,
                    uint nd) const override;
     double log_likelihood(double nu) const;
-    double log_likelihood() const override {
-      return log_likelihood(nu());
-    }
-    void mle() override {d2LoglikeModel::mle();}
+    double log_likelihood() const override { return log_likelihood(nu()); }
+    void mle() override { d2LoglikeModel::mle(); }
 
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
   };
 
-
-};
-#endif // BOOM_SCALED_CHISQ_MODEL_HPP
+};      // namespace BOOM
+#endif  // BOOM_SCALED_CHISQ_MODEL_HPP

@@ -19,17 +19,17 @@
 
 #ifndef BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
 #define BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/Filters/SparseVector.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
 
+#include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
-#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
   // A dynamic regression state is an element of state parameterized
@@ -56,12 +56,10 @@ namespace BOOM {
   // small and the series will be forecastable.  We also hope that 'a'
   // is large because it means that the sigma[i]'s will be similar to
   // one another.
-  class DynamicRegressionStateModel
-      : public StateModel,
-        public CompositeParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy
-  {
+  class DynamicRegressionStateModel : public StateModel,
+                                      public CompositeParamPolicy,
+                                      public NullDataPolicy,
+                                      public PriorPolicy {
    public:
     // Each row of X is a predictor vector for an observation.  This constructor
     // assumes a single observation for each time point.
@@ -72,31 +70,24 @@ namespace BOOM {
     DynamicRegressionStateModel(const std::vector<Matrix> &predictors);
 
     DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs);
-    DynamicRegressionStateModel * clone()const override;
+    DynamicRegressionStateModel *clone() const override;
 
     void set_xnames(const std::vector<string> &xnames);
-    const std::vector<string> & xnames() const;
+    const std::vector<string> &xnames() const;
 
     void clear_data() override;
-    void observe_state(const ConstVectorView &then,
-                       const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override;
-    uint state_error_dimension() const override {
-      return state_dimension();
-    }
-    uint xdim() const {return state_dimension();}
+    uint state_error_dimension() const override { return state_dimension(); }
+    uint xdim() const { return state_dimension(); }
 
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
@@ -121,7 +112,7 @@ namespace BOOM {
     SpdMatrix initial_state_variance() const override;
     void set_initial_state_variance(const SpdMatrix &sigma);
 
-    const GaussianSuf * suf(int i) const;
+    const GaussianSuf *suf(int i) const;
     double sigsq(int i) const;
     void set_sigsq(double sigsq, int i);
     const Vector &predictor_variance() const;
@@ -133,9 +124,7 @@ namespace BOOM {
     void add_multiplexed_forecast_data(const std::vector<Matrix> &predictors);
 
     void increment_expected_gradient(
-        VectorView gradient,
-        int t,
-        const ConstVectorView &state_error_mean,
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
    private:
@@ -183,4 +172,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_
+#endif  //  BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_

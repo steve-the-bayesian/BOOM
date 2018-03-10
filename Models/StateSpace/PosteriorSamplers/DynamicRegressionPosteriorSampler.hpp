@@ -19,10 +19,10 @@
 #ifndef BOOM_DYNAMIC_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_DYNAMIC_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 #include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 
 namespace BOOM {
 
@@ -30,8 +30,7 @@ namespace BOOM {
   // each coefficient moves according to an independent random walk with
   // Gaussian noise.  This class models the variance for each coefficient using
   // an independent conjugate prior.
-  class DynamicRegressionIndependentPosteriorSampler
-    : public PosteriorSampler {
+  class DynamicRegressionIndependentPosteriorSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be managed by this sampler.
@@ -114,4 +113,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_DYNAMIC_REGRESSION_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_DYNAMIC_REGRESSION_POSTERIOR_SAMPLER_HPP_

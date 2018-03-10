@@ -18,13 +18,13 @@
 */
 
 #include "stats/compare_predictions.hpp"
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/PosteriorSamplers/RegressionConjSampler.hpp"
-#include "distributions.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionConjSampler.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
-  ostream & operator<<(ostream &out, const ComparePredictionsOutput &cmp) {
+  ostream &operator<<(ostream &out, const ComparePredictionsOutput &cmp) {
     out << " intercept:  " << cmp.intercept << endl
         << " (SE)     :  " << cmp.intercept_se << endl
         << " slope    :  " << cmp.slope << endl
@@ -53,7 +53,7 @@ namespace BOOM {
     double SSE = alternative_residual.normsq();
     double SST = null_residual.normsq();
     double SSR = SST - SSE;
-    double Fstat = (SSE/(n-2)) / (SSR / 2.0);
+    double Fstat = (SSE / (n - 2)) / (SSR / 2.0);
     double p_value = pf(Fstat, n - 2, 2, false);
     ComparePredictionsOutput result;
 

@@ -24,9 +24,7 @@ namespace BOOM {
 
   ConditionalFiniteMixtureSampler::ConditionalFiniteMixtureSampler(
       ConditionalFiniteMixtureModel *model, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model)
-  {}
+      : PosteriorSampler(seeding_rng), model_(model) {}
 
   void ConditionalFiniteMixtureSampler::draw() {
     model_->impute_latent_data(rng());

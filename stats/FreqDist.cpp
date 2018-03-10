@@ -17,20 +17,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "stats/FreqDist.hpp"
-#include "Models/CategoricalData.hpp"
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+#include "Models/CategoricalData.hpp"
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   namespace {
 
-    template <class INT> std::vector<int>
-    count_values(const std::vector<INT> &y,
-                 std::vector<std::string> &labels,
-                 bool contiguous) {
+    template <class INT>
+    std::vector<int> count_values(const std::vector<INT> &y,
+                                  std::vector<std::string> &labels,
+                                  bool contiguous) {
       std::vector<int> counts;
       labels.clear();
       if (y.empty()) {
@@ -61,38 +61,37 @@ namespace BOOM{
   }  // namespace
 
   FrequencyDistribution::FrequencyDistribution(const std::vector<uint> &y,
-                                               bool contiguous){
+                                               bool contiguous) {
     counts_ = count_values(y, labs_, contiguous);
   }
 
   FrequencyDistribution::FrequencyDistribution(const std::vector<int> &y,
-                                               bool contiguous){
+                                               bool contiguous) {
     counts_ = count_values(y, labs_, contiguous);
   }
 
   FrequencyDistribution::FrequencyDistribution(
-      const std::vector<unsigned long> &y, bool contiguous){
+      const std::vector<unsigned long> &y, bool contiguous) {
     counts_ = count_values(y, labs_, contiguous);
   }
 
-  std::ostream & FrequencyDistribution::print(std::ostream &out)const{
+  std::ostream &FrequencyDistribution::print(std::ostream &out) const {
     uint N = labs_.size();
-    uint labfw=0;
-    uint countfw=0;
-    for(uint i = 0; i<N; ++i){
+    uint labfw = 0;
+    uint countfw = 0;
+    for (uint i = 0; i < N; ++i) {
       uint len = labs_[i].size();
-      if(len > labfw) labfw = len;
+      if (len > labfw) labfw = len;
 
       string s = std::to_string(counts_[i]);
       len = s.size();
-      if(len > countfw) countfw = len;
+      if (len > countfw) countfw = len;
     }
     labfw += 2;
-    countfw +=2;
+    countfw += 2;
 
-    for(uint i=0; i<N; ++i){
-      out << std::setw(labfw) << labs_[i]
-          << std::setw(countfw) << counts_[i]
+    for (uint i = 0; i < N; ++i) {
+      out << std::setw(labfw) << labs_[i] << std::setw(countfw) << counts_[i]
           << std::endl;
     }
     return out;
@@ -120,20 +119,19 @@ namespace BOOM{
   }
 
   void FrequencyDistribution::reset(const std::vector<int> &counts,
-                                    const std::vector<std::string> &labels){
-    if(counts.size() != labels.size()){
-      report_error("counts and labels must be the same size in "
-                   "FrequencyDistribution::reset");
+                                    const std::vector<std::string> &labels) {
+    if (counts.size() != labels.size()) {
+      report_error(
+          "counts and labels must be the same size in "
+          "FrequencyDistribution::reset");
     }
     counts_ = counts;
     labs_ = labels;
   }
 
   BucketedFrequencyDistribution::BucketedFrequencyDistribution(
-      const Vector &x,
-      const Vector &cutpoints)
-      : cutpoints_(sort(cutpoints))
-  {
+      const Vector &x, const Vector &cutpoints)
+      : cutpoints_(sort(cutpoints)) {
     std::vector<int> counts(cutpoints.size() + 1, 0);
     Vector sorted_x = sort(x);
     int i = 0;
@@ -149,15 +147,15 @@ namespace BOOM{
     FrequencyDistribution::reset(counts, create_labels());
   }
 
-  std::vector<std::string>
-  BucketedFrequencyDistribution::create_labels() const {
+  std::vector<std::string> BucketedFrequencyDistribution::create_labels()
+      const {
     std::vector<std::string> ans;
-    for (int i = 0; i < cutpoints_.size(); ++i ){
+    for (int i = 0; i < cutpoints_.size(); ++i) {
       std::ostringstream label_stream;
       if (i == 0) {
         label_stream << "(-inf";
       } else {
-        label_stream << "(" << std::setprecision(3) << cutpoints_[i-1];
+        label_stream << "(" << std::setprecision(3) << cutpoints_[i - 1];
       }
       label_stream << ", " << std::setprecision(3) << cutpoints_[i] << "]";
       ans.push_back(label_stream.str());

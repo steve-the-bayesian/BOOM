@@ -38,14 +38,13 @@ namespace BOOM {
     double p_value;
   };
 
-  std::ostream & operator<<(std::ostream &out,
-                            const ComparePredictionsOutput &output);
+  std::ostream &operator<<(std::ostream &out,
+                           const ComparePredictionsOutput &output);
 
-  ComparePredictionsOutput compare_predictions(
-      const Vector &truth, const Vector &predictions);
+  ComparePredictionsOutput compare_predictions(const Vector &truth,
+                                               const Vector &predictions);
   ComparePredictionsOutput compare_predictions(
       const ConstVectorView &truth, const ConstVectorView &predictions);
 
-
-}
+}  // namespace BOOM
 #endif  // BOOM_COMPARE_PREDICTIONS_TEST_HPP_

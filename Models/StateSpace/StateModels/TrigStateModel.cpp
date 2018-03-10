@@ -17,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/StateSpace/StateModels/TrigStateModel.hpp"
-#include "distributions.hpp"
 #include <cmath>
 #include "cpputil/Constants.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -29,12 +29,11 @@ namespace BOOM {
         frequencies_(frequencies),
         state_transition_matrix_(new IdentityMatrix(state_dimension())),
         state_variance_matrix_(
-            new DiagonalMatrixBlockVectorParamView(
-                Sigsq_prm()))
-  {
+            new DiagonalMatrixBlockVectorParamView(Sigsq_prm())) {
     if (frequencies_.empty()) {
-      report_error("At least one frequency needed to "
-                   "initialize TrigStateModel.");
+      report_error(
+          "At least one frequency needed to "
+          "initialize TrigStateModel.");
     }
     for (int i = 0; i < frequencies_.size(); ++i) {
       frequencies_[i] = 2 * Constants::pi * frequencies_[i] / period_;
@@ -50,34 +49,30 @@ namespace BOOM {
         frequencies_(rhs.frequencies_),
         state_transition_matrix_(new IdentityMatrix(state_dimension())),
         state_variance_matrix_(
-            new DiagonalMatrixBlockVectorParamView(
-                Sigsq_prm())),
+            new DiagonalMatrixBlockVectorParamView(Sigsq_prm())),
         initial_state_mean_(rhs.initial_state_mean_),
-        initial_state_variance_(rhs.initial_state_variance_)
-  {}
+        initial_state_variance_(rhs.initial_state_variance_) {}
 
-  TrigStateModel * TrigStateModel::clone() const {
+  TrigStateModel *TrigStateModel::clone() const {
     return new TrigStateModel(*this);
   }
 
   void TrigStateModel::observe_state(const ConstVectorView &then,
-                                     const ConstVectorView &now,
-                                     int time_now,
+                                     const ConstVectorView &now, int time_now,
                                      ScalarStateSpaceModelBase *) {
     suf()->update_raw(now - then);
   }
 
   void TrigStateModel::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
     suf()->update_expected_value(
-        1.0,
-        state_error_mean,
+        1.0, state_error_mean,
         state_error_variance.diag() + pow(state_error_mean, 2));
   }
 
-  void TrigStateModel::simulate_state_error(RNG &rng, VectorView eta, int t) const {
+  void TrigStateModel::simulate_state_error(RNG &rng, VectorView eta,
+                                            int t) const {
     eta = sim(rng);
   }
 
@@ -105,13 +100,13 @@ namespace BOOM {
     return initial_state_variance_;
   }
 
-  void TrigStateModel::set_initial_state_variance(
-      const SpdMatrix &variance) {
+  void TrigStateModel::set_initial_state_variance(const SpdMatrix &variance) {
     if (nrow(variance) != state_dimension()) {
-      report_error("initial_state_variance is the wrong size "
-                   "in TrigStateModel.");
+      report_error(
+          "initial_state_variance is the wrong size "
+          "in TrigStateModel.");
     }
     initial_state_variance_ = variance;
   }
 
-}
+}  // namespace BOOM

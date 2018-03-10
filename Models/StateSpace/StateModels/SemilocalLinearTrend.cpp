@@ -21,31 +21,27 @@
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef SemilocalLinearTrendMatrix LMAT;
   typedef SemilocalLinearTrendStateModel SLLT;
 
-  LMAT::SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi)
-      : phi_(phi)
-  {}
+  LMAT::SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi) : phi_(phi) {}
 
   LMAT::SemilocalLinearTrendMatrix(const LMAT &rhs)
-      : SparseMatrixBlock(rhs),
-        phi_(rhs.phi_)
-  {}
+      : SparseMatrixBlock(rhs), phi_(rhs.phi_) {}
 
-  LMAT * LMAT::clone() const {return new LMAT(*this);}
+  LMAT *LMAT::clone() const { return new LMAT(*this); }
 
   void LMAT::multiply(VectorView lhs, const ConstVectorView &rhs) const {
-    if(lhs.size()!=3){
+    if (lhs.size() != 3) {
       report_error("lhs is the wrong size in LMAT::multiply");
     }
-    if(rhs.size()!=3){
+    if (rhs.size() != 3) {
       report_error("rhs is the wrong size in LMAT::multiply");
     }
     double phi = phi_->value();
     lhs[0] = rhs[0] + rhs[1];
-    lhs[1] = phi * rhs[1] + (1-phi) * rhs[2];
+    lhs[1] = phi * rhs[1] + (1 - phi) * rhs[2];
     lhs[2] = rhs[2];
   }
 
@@ -59,75 +55,70 @@ namespace BOOM{
     }
     double phi = phi_->value();
     lhs[0] += rhs[0] + rhs[1];
-    lhs[1] += phi * rhs[1] + (1-phi) * rhs[2];
+    lhs[1] += phi * rhs[1] + (1 - phi) * rhs[2];
     lhs[2] += rhs[2];
   }
 
   void LMAT::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
-    if(lhs.size()!=3){
+    if (lhs.size() != 3) {
       report_error("lhs is the wrong size in LMAT::Tmult");
     }
-    if(rhs.size()!=3){
+    if (rhs.size() != 3) {
       report_error("rhs is the wrong size in LMAT::Tmult");
     }
     lhs[0] = rhs[0];
     double phi = phi_->value();
     lhs[1] = rhs[0] + phi * rhs[1];
-    lhs[2] = (1-phi) * rhs[1] + rhs[2];
+    lhs[2] = (1 - phi) * rhs[1] + rhs[2];
   }
 
   void LMAT::multiply_inplace(VectorView x) const {
     x[0] += x[1];
     double phi = phi_->value();
-    x[1] = phi*x[1] + (1-phi)*x[2];
+    x[1] = phi * x[1] + (1 - phi) * x[2];
   }
 
   void LMAT::add_to(SubMatrix block) const {
-    if(block.nrow() != 3 || block.ncol() !=3){
+    if (block.nrow() != 3 || block.ncol() != 3) {
       report_error("block is the wrong size in LMAT::add_to");
     }
     double phi = phi_->value();
-    block(0,0) += 1;
-    block(0,1) += 1;
-    block(1,1) += phi;
-    block(1,2) += 1-phi;
-    block(2,2) += 1;
+    block(0, 0) += 1;
+    block(0, 1) += 1;
+    block(1, 1) += phi;
+    block(1, 2) += 1 - phi;
+    block(2, 2) += 1;
   }
 
-  Matrix LMAT::dense()const{
-    Matrix ans(3,3, 0.0);
+  Matrix LMAT::dense() const {
+    Matrix ans(3, 3, 0.0);
     ans(0, 0) = 1.0;
     ans(0, 1) = 1.0;
     double phi = phi_->value();
-    ans(1,1) = phi;
-    ans(1,2) = 1-phi;
-    ans(2,2) = 1.0;
+    ans(1, 1) = phi;
+    ans(1, 2) = 1 - phi;
+    ans(2, 2) = 1.0;
     return ans;
   }
 
-  SLLT::SemilocalLinearTrendStateModel(
-      const Ptr<ZeroMeanGaussianModel> &level,
-      const Ptr<NonzeroMeanAr1Model> &slope)
+  SLLT::SemilocalLinearTrendStateModel(const Ptr<ZeroMeanGaussianModel> &level,
+                                       const Ptr<NonzeroMeanAr1Model> &slope)
       : level_(level),
         slope_(slope),
         observation_matrix_(3),
         state_transition_matrix_(new LMAT(slope_->Phi_prm())),
-        state_variance_matrix_(new UpperLeftDiagonalMatrix(
-            get_variances(), 3)),
-        state_error_expander_(new ZeroPaddedIdentityMatrix(
-            3, 2)),
-        state_error_variance_(new UpperLeftDiagonalMatrix(
-            get_variances(), 2)),
+        state_variance_matrix_(new UpperLeftDiagonalMatrix(get_variances(), 3)),
+        state_error_expander_(new ZeroPaddedIdentityMatrix(3, 2)),
+        state_error_variance_(new UpperLeftDiagonalMatrix(get_variances(), 2)),
         initial_level_mean_(0.0),
         initial_slope_mean_(0.0),
-        initial_state_variance_(3, 1.0)
-  {
+        initial_state_variance_(3, 1.0) {
     observation_matrix_[0] = 1;
     ParamPolicy::add_model(level_);
     ParamPolicy::add_model(slope_);
 
     // The mean of the slope is a known model parameter.
-    initial_state_variance_(2,2) = 0;
+    initial_state_variance_(2, 2) = 0;
   }
 
   SLLT::SemilocalLinearTrendStateModel(const SLLT &rhs)
@@ -140,34 +131,28 @@ namespace BOOM{
         slope_(rhs.slope_->clone()),
         observation_matrix_(rhs.observation_matrix_),
         state_transition_matrix_(new LMAT(slope_->Phi_prm())),
-        state_variance_matrix_(new UpperLeftDiagonalMatrix(
-            get_variances(), 3)),
-        state_error_expander_(new ZeroPaddedIdentityMatrix(
-            3, 2)),
-        state_error_variance_(new UpperLeftDiagonalMatrix(
-            get_variances(), 2)),
+        state_variance_matrix_(new UpperLeftDiagonalMatrix(get_variances(), 3)),
+        state_error_expander_(new ZeroPaddedIdentityMatrix(3, 2)),
+        state_error_variance_(new UpperLeftDiagonalMatrix(get_variances(), 2)),
         initial_level_mean_(rhs.initial_level_mean_),
         initial_slope_mean_(rhs.initial_slope_mean_),
-        initial_state_variance_(rhs.initial_state_variance_)
-  {
+        initial_state_variance_(rhs.initial_state_variance_) {
     ParamPolicy::add_model(level_);
     ParamPolicy::add_model(slope_);
   }
 
-  SLLT * SLLT::clone() const {return new SLLT(*this);}
+  SLLT *SLLT::clone() const { return new SLLT(*this); }
 
-  void SLLT::clear_data(){
+  void SLLT::clear_data() {
     level_->clear_data();
     slope_->clear_data();
   }
-
 
   // State is (level, slope, slope_mean) The level model expects the
   // error term in level.  The slope model expects the current value
   // of the slope.
   void SLLT::observe_state(const ConstVectorView &then,
-                           const ConstVectorView &now,
-                           int time_now,
+                           const ConstVectorView &now, int time_now,
                            ScalarStateSpaceModelBase *model) {
     double change_in_level = now[0] - then[0] - then[1];
     level_->suf()->update_raw(change_in_level);
@@ -176,16 +161,15 @@ namespace BOOM{
     slope_->suf()->update_raw(current_slope);
   }
 
-  void SLLT::observe_initial_state(const ConstVectorView &state){
+  void SLLT::observe_initial_state(const ConstVectorView &state) {
     slope_->suf()->update_raw(state[1]);
   }
 
   void SLLT::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &,
-      const ConstSubMatrix &) {
-    report_error("SemilocalLinearTrendStateModel cannot "
-                 "be part of an EM algorithm.");
+      int t, const ConstVectorView &, const ConstSubMatrix &) {
+    report_error(
+        "SemilocalLinearTrendStateModel cannot "
+        "be part of an EM algorithm.");
   }
 
   void SLLT::simulate_state_error(RNG &rng, VectorView eta, int t) const {
@@ -211,9 +195,10 @@ namespace BOOM{
   }
 
   SparseVector SLLT::observation_matrix(int) const {
-    return observation_matrix_;}
+    return observation_matrix_;
+  }
 
-  Vector SLLT::initial_state_mean()const{
+  Vector SLLT::initial_state_mean() const {
     Vector ans(3);
     ans[0] = initial_level_mean_;
     ans[1] = initial_slope_mean_;
@@ -221,26 +206,28 @@ namespace BOOM{
     return ans;
   }
 
-  SpdMatrix SLLT::initial_state_variance()const{
+  SpdMatrix SLLT::initial_state_variance() const {
     return initial_state_variance_;
   }
-  void SLLT::set_initial_level_mean(double level_mean){
-    initial_level_mean_ = level_mean;}
-  void SLLT::set_initial_level_sd(double level_sd){
-    initial_state_variance_(0,0) = pow(level_sd, 2);}
-  void SLLT::set_initial_slope_mean(double slope_mean){
-    initial_slope_mean_ = slope_mean;}
-  void SLLT::set_initial_slope_sd(double sd){
-    initial_state_variance_(1,1) = pow(sd, 2); }
+  void SLLT::set_initial_level_mean(double level_mean) {
+    initial_level_mean_ = level_mean;
+  }
+  void SLLT::set_initial_level_sd(double level_sd) {
+    initial_state_variance_(0, 0) = pow(level_sd, 2);
+  }
+  void SLLT::set_initial_slope_mean(double slope_mean) {
+    initial_slope_mean_ = slope_mean;
+  }
+  void SLLT::set_initial_slope_sd(double sd) {
+    initial_state_variance_(1, 1) = pow(sd, 2);
+  }
 
   void SLLT::check_dim(const ConstVectorView &v) const {
-    if(v.size() != 3){
+    if (v.size() != 3) {
       ostringstream err;
-      err << "improper dimesion of ConstVectorView v = :"
-          << v << endl
+      err << "improper dimesion of ConstVectorView v = :" << v << endl
           << "in SemilocalLinearTrendStateModel.  "
-          << "Should be of dimension 3"
-          << endl;
+          << "Should be of dimension 3" << endl;
       report_error(err.str());
     }
   }
@@ -254,9 +241,11 @@ namespace BOOM{
 
   void SLLT::simulate_initial_state(RNG &rng, VectorView state) const {
     check_dim(state);
-    state[0] = rnorm_mt(rng, initial_level_mean_, sqrt(initial_state_variance_(0,0)));
-    state[1] = rnorm_mt(rng, initial_slope_mean_, sqrt(initial_state_variance_(1,1)));
+    state[0] =
+        rnorm_mt(rng, initial_level_mean_, sqrt(initial_state_variance_(0, 0)));
+    state[1] =
+        rnorm_mt(rng, initial_slope_mean_, sqrt(initial_state_variance_(1, 1)));
     state[2] = slope_->mu();
   }
 
-}
+}  // namespace BOOM

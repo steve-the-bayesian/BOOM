@@ -25,7 +25,7 @@
 #include "cpputil/Date.hpp"
 #include "cpputil/RefCounted.hpp"
 
-namespace BOOM{
+namespace BOOM {
   //===========================================================================
   // A Holiday is a recurring Date.  It differs from a standard "season" in that
   // holidays can sometimes move, either because of complicated religious logic
@@ -37,15 +37,16 @@ namespace BOOM{
   // be of different width each year, as holidays sometimes interact with
   // weekends and other holidays in strange ways.
   class Holiday : private RefCounted {
-    friend void intrusive_ptr_add_ref(Holiday *h) {h->up_count();}
+    friend void intrusive_ptr_add_ref(Holiday *h) { h->up_count(); }
     friend void intrusive_ptr_release(Holiday *h) {
       h->down_count();
       if (h->ref_count() == 0) {
         delete h;
       }
     }
+
    public:
-    virtual ~Holiday(){}
+    virtual ~Holiday() {}
 
     // Holidays can sometimes (or will usually) exert an influence before or
     // after the date of the actual holiday.  The number of days from the
@@ -107,9 +108,8 @@ namespace BOOM{
   // Returns:
   //   A heap-allocated pointer to the requested holiday.  The caller
   //   is responsible for deleting the returned object.
-  Holiday * CreateNamedHoliday(const string &holiday_name,
-                               int days_before,
-                               int days_after);
+  Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
+                              int days_after);
 
   //======================================================================
   // An OrdinaryAnnualHoliday is a Holiday that occurs once per year,
@@ -150,7 +150,7 @@ namespace BOOM{
   //======================================================================
   // A FixedDateHoliday is a Holiday that occurs on the same date each
   // year.
-  class FixedDateHoliday : public OrdinaryAnnualHoliday{
+  class FixedDateHoliday : public OrdinaryAnnualHoliday {
    public:
     // month is an integer between 1 and 12.
     FixedDateHoliday(int month, int day_of_month, int days_before = 1,
@@ -167,11 +167,12 @@ namespace BOOM{
   // An NthWeekdayInMonthHoliday is an OrdinaryAnnualHoliday defined
   // as the n'th weekday in a month.  For example, Thanksgiving is the
   // 4th Thursday in November.
-  class NthWeekdayInMonthHoliday : public OrdinaryAnnualHoliday{
+  class NthWeekdayInMonthHoliday : public OrdinaryAnnualHoliday {
    public:
     NthWeekdayInMonthHoliday(int which_week, DayNames day, MonthNames month,
                              int days_before, int days_after);
     Date compute_date(int year) const override;
+
    private:
     int which_week_;
     DayNames day_name_;
@@ -182,11 +183,12 @@ namespace BOOM{
   // An LastWeekdayInMonthHoliday is an OrdinaryAnnualHoliday defined
   // as the last weekday in a month.  For example, Memorial Day is the
   // last Monday in May.
-  class LastWeekdayInMonthHoliday : public OrdinaryAnnualHoliday{
+  class LastWeekdayInMonthHoliday : public OrdinaryAnnualHoliday {
    public:
-    LastWeekdayInMonthHoliday(DayNames day, MonthNames month,
-                              int days_before, int days_after);
+    LastWeekdayInMonthHoliday(DayNames day, MonthNames month, int days_before,
+                              int days_after);
     Date compute_date(int year) const override;
+
    private:
     DayNames day_name_;
     MonthNames month_name_;
@@ -196,11 +198,10 @@ namespace BOOM{
   // A floating holiday is a holiday that does not occur on the same
   // date each year.  Children of this class must define their own
   // compute_date function.
-  class FloatingHoliday : public OrdinaryAnnualHoliday{
+  class FloatingHoliday : public OrdinaryAnnualHoliday {
    public:
     FloatingHoliday(int days_before, int days_after);
   };
-
 
   //===========================================================================
   // A holiday defined by arbitrary date ranges.
@@ -230,142 +231,129 @@ namespace BOOM{
     //   order.
     void add_dates(const Date &begin, const Date &end);
 
-    int maximum_window_width() const override {return maximum_window_width_;}
+    int maximum_window_width() const override { return maximum_window_width_; }
     bool active(const Date &arbitrary_date) const override;
 
    protected:
     Date earliest_influence(const Date &holiday_date) const override;
     Date latest_influence(const Date &holiday_date) const override;
-    
+
    private:
     std::vector<Date> begin_;
     std::vector<Date> end_;
     int maximum_window_width_;
   };
-  
+
   //----------------------------------------------------------------------
   // Specific holidays observed in the US
-  class NewYearsDay : public FixedDateHoliday{
+  class NewYearsDay : public FixedDateHoliday {
    public:
     NewYearsDay(int days_before, int days_after)
-        : FixedDateHoliday(Jan, 1, days_before, days_after)
-    {}
+        : FixedDateHoliday(Jan, 1, days_before, days_after) {}
   };
 
-  class MartinLutherKingDay : public NthWeekdayInMonthHoliday{
+  class MartinLutherKingDay : public NthWeekdayInMonthHoliday {
    public:
     MartinLutherKingDay(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(3, Mon, Jan, days_before, days_after)
-    {}
+        : NthWeekdayInMonthHoliday(3, Mon, Jan, days_before, days_after) {}
   };
 
-  class SuperBowlSunday : public FloatingHoliday{
+  class SuperBowlSunday : public FloatingHoliday {
    public:
     SuperBowlSunday(int days_before, int days_after);
     Date compute_date(int year) const override;
   };
 
-  class PresidentsDay : public NthWeekdayInMonthHoliday{
+  class PresidentsDay : public NthWeekdayInMonthHoliday {
    public:
     PresidentsDay(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(3, Mon, Feb, days_before, days_after)
-    {}
+        : NthWeekdayInMonthHoliday(3, Mon, Feb, days_before, days_after) {}
   };
 
-  class ValentinesDay : public FixedDateHoliday{
+  class ValentinesDay : public FixedDateHoliday {
    public:
     ValentinesDay(int days_before, int days_after)
-        : FixedDateHoliday(Feb, 14, days_before, days_after)
-    {}
+        : FixedDateHoliday(Feb, 14, days_before, days_after) {}
   };
 
-  class SaintPatricksDay : public FixedDateHoliday{
+  class SaintPatricksDay : public FixedDateHoliday {
    public:
     SaintPatricksDay(int days_before, int days_after)
-        : FixedDateHoliday(Mar, 17, days_before, days_after)
-    {}
+        : FixedDateHoliday(Mar, 17, days_before, days_after) {}
   };
 
-  class USDaylightSavingsTimeBegins : public FloatingHoliday{
+  class USDaylightSavingsTimeBegins : public FloatingHoliday {
    public:
     USDaylightSavingsTimeBegins(int days_before, int days_after);
     Date compute_date(int year) const override;
   };
 
-  class USDaylightSavingsTimeEnds : public FloatingHoliday{
+  class USDaylightSavingsTimeEnds : public FloatingHoliday {
    public:
     USDaylightSavingsTimeEnds(int days_before, int days_after);
     Date compute_date(int year) const override;
   };
 
-  class EasterSunday : public FloatingHoliday{
+  class EasterSunday : public FloatingHoliday {
    public:
     EasterSunday(int days_before, int days_after);
     Date compute_date(int year) const override;
   };
 
   // The US definition of Mother's day: second Sunday in May.
-  class USMothersDay : public NthWeekdayInMonthHoliday{
+  class USMothersDay : public NthWeekdayInMonthHoliday {
    public:
     USMothersDay(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(2, Sun, May, days_before, days_after)
-    {}
+        : NthWeekdayInMonthHoliday(2, Sun, May, days_before, days_after) {}
   };
 
-  class MemorialDay : public LastWeekdayInMonthHoliday{
+  class MemorialDay : public LastWeekdayInMonthHoliday {
    public:
     MemorialDay(int days_before, int days_after);
-   };
+  };
 
-  class IndependenceDay : public FixedDateHoliday{
+  class IndependenceDay : public FixedDateHoliday {
    public:
     IndependenceDay(int days_before, int days_after)
-        : FixedDateHoliday(Jul, 4, days_before, days_after)
-    {}
+        : FixedDateHoliday(Jul, 4, days_before, days_after) {}
   };
 
-  class LaborDay : public NthWeekdayInMonthHoliday{
+  class LaborDay : public NthWeekdayInMonthHoliday {
    public:
     LaborDay(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(1, Mon, Sep, days_before, days_after)
-    {}
+        : NthWeekdayInMonthHoliday(1, Mon, Sep, days_before, days_after) {}
   };
 
-  class ColumbusDay : public NthWeekdayInMonthHoliday{
+  class ColumbusDay : public NthWeekdayInMonthHoliday {
    public:
     ColumbusDay(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(2, Mon, Oct, days_before, days_after)
-    {}
+        : NthWeekdayInMonthHoliday(2, Mon, Oct, days_before, days_after) {}
   };
 
-  class Halloween : public FixedDateHoliday{
+  class Halloween : public FixedDateHoliday {
    public:
     Halloween(int days_before, int days_after)
-        : FixedDateHoliday(Oct, 31, days_before, days_after)
-    {}
+        : FixedDateHoliday(Oct, 31, days_before, days_after) {}
   };
 
-  class VeteransDay : public FixedDateHoliday{
+  class VeteransDay : public FixedDateHoliday {
    public:
     VeteransDay(int days_before, int days_after)
-        : FixedDateHoliday(Nov, 11, days_before, days_after)
-    {}
-   };
+        : FixedDateHoliday(Nov, 11, days_before, days_after) {}
+  };
 
-  class Thanksgiving : public NthWeekdayInMonthHoliday{
+  class Thanksgiving : public NthWeekdayInMonthHoliday {
    public:
     Thanksgiving(int days_before, int days_after)
-        : NthWeekdayInMonthHoliday(4, Thu, Nov, days_before, days_after)
-    {}
-   };
+        : NthWeekdayInMonthHoliday(4, Thu, Nov, days_before, days_after) {}
+  };
 
   // Note that there can be very different numbers of shopping days
   // between Thanksgiving and Christmas in different years.
-  class Christmas : public FixedDateHoliday{
+  class Christmas : public FixedDateHoliday {
    public:
     Christmas(int days_before, int days_after)
-        : FixedDateHoliday(Dec, 25, days_before, days_after)
-    {}
+        : FixedDateHoliday(Dec, 25, days_before, days_after) {}
   };
 
 }  // namespace BOOM

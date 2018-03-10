@@ -64,4 +64,4 @@ namespace BOOM {
   }  // namespace StateSpace
 }  // namespace BOOM
 
-#endif //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_
+#endif  //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_

@@ -20,23 +20,21 @@
 #ifndef BOOM_REGRESSION_SEMICONJUGATE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_REGRESSION_SEMICONJUGATE_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp"
-#include "Models/MvnBase.hpp"
 #include "Models/GammaModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnBase.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
   // A regression sampler with a semi-conjugate prior p(beta, sigsq) = p(beta) *
   // p(sigsq)
-  class RegressionSemiconjugateSampler
-      : public PosteriorSampler {
+  class RegressionSemiconjugateSampler : public PosteriorSampler {
    public:
     RegressionSemiconjugateSampler(
-        RegressionModel *model,
-        const Ptr<MvnBase> &coefficient_prior,
+        RegressionModel *model, const Ptr<MvnBase> &coefficient_prior,
         const Ptr<GammaModelBase> &residual_precision_prior,
         RNG &seeding_rng = GlobalRng::rng);
 
@@ -46,9 +44,9 @@ namespace BOOM {
     void draw_beta_given_sigma();
     void draw_sigma_given_beta();
 
-    bool can_find_posterior_mode() const override {return true;}
-    bool can_evaluate_log_prior_density() const override {return true;}
-    bool can_increment_log_prior_gradient() const override {return true;}
+    bool can_find_posterior_mode() const override { return true; }
+    bool can_evaluate_log_prior_density() const override { return true; }
+    bool can_increment_log_prior_gradient() const override { return true; }
 
     void find_posterior_mode(double epsilon = 1e-5) override;
     double log_prior_density(const ConstVectorView &parameters) const override;
@@ -56,6 +54,7 @@ namespace BOOM {
                                         VectorView gradient) const override;
     double log_prior(const Vector &parameters, Vector &gradient,
                      Matrix &hessian, uint nd) const;
+
    private:
     RegressionModel *model_;
     Ptr<MvnBase> beta_prior_;

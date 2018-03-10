@@ -20,46 +20,39 @@
 #define BOOM_LOGIT_HOLMES_HELD_SAMPLER_HPP
 
 #include "Models/Glm/LogisticRegressionModel.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 #include "Models/MvnBase.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/Glm/WeightedRegressionModel.hpp"
-namespace BOOM{
+namespace BOOM {
 
   class WeightedRegSuf;
 
-
-// posterior sampler to draw from the posterior distribution of a
-// multinomical logit model using Holmes and Held's data augmentation
-// strategy
-  class LogitSampler
-    : public PosteriorSampler
-  {
-  public:
-    LogitSampler(LogisticRegressionModel *mod,
-         const Ptr<MvnBase> &pri, RNG &seeding_rng = GlobalRng::rng);
+  // posterior sampler to draw from the posterior distribution of a
+  // multinomical logit model using Holmes and Held's data augmentation
+  // strategy
+  class LogitSampler : public PosteriorSampler {
+   public:
+    LogitSampler(LogisticRegressionModel *mod, const Ptr<MvnBase> &pri,
+                 RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
     void impute_latent_data();
-    const Ptr<WeightedRegSuf> suf()const{return suf_;}
+    const Ptr<WeightedRegSuf> suf() const { return suf_; }
 
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
-    double log_posterior_at_mode() const {
-      return logpost_at_mode_;
-    }
+    bool can_find_posterior_mode() const override { return true; }
+    double log_posterior_at_mode() const { return logpost_at_mode_; }
 
-  private:
-    double draw_z(bool y, double eta)const;
-    double draw_lambda(double r)const;
+   private:
+    double draw_z(bool y, double eta) const;
+    double draw_lambda(double r) const;
     void draw_beta();
 
     LogisticRegressionModel *mod_;
     Ptr<MvnBase> pri_;
     Ptr<WeightedRegSuf> suf_;
 
-    SpdMatrix ivar;     // workspace:  stores inverse variance
+    SpdMatrix ivar;  // workspace:  stores inverse variance
     Vector ivar_mu;  // workspace:  stores un-normalized mean
 
     double logpost_at_mode_;
@@ -67,4 +60,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif // BOOM_LOGIT_HOLMES_HELD_SAMPLER_HPP
+#endif  // BOOM_LOGIT_HOLMES_HELD_SAMPLER_HPP

@@ -25,8 +25,7 @@
 
 namespace BOOM {
 
-  class DynamicRegressionArPosteriorSampler :
-      public PosteriorSampler {
+  class DynamicRegressionArPosteriorSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be posterior sampled.

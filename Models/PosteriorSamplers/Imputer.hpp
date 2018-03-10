@@ -20,9 +20,9 @@
 #ifndef BOOM_LATENT_DATA_IMPUTER_HPP
 #define BOOM_LATENT_DATA_IMPUTER_HPP
 
-#include <memory>
 #include <cstddef>
 #include <future>
+#include <memory>
 
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/report_error.hpp"
@@ -85,11 +85,11 @@ namespace BOOM {
     // it in a local repository.  The local repository is then combined with the
     // global repository in a thread-safe way.
     std::function<void(void)> data_imputation_callback() {
-      return [this](){
-               this->impute_latent_data();
-               std::unique_lock<std::mutex> lock(shared_resource_mutex_);
-               this->combine_complete_data();
-             };
+      return [this]() {
+        this->impute_latent_data();
+        std::unique_lock<std::mutex> lock(shared_resource_mutex_);
+        this->combine_complete_data();
+      };
     }
 
    private:
@@ -115,8 +115,7 @@ namespace BOOM {
   //   SUFFICIENT_STATISTICS: The type of the object used to hold the
   //     complete data sufficient statistics.
   template <class OBSERVED_DATA, class SUFFICIENT_STATISTICS>
-  class SufstatImputeWorker
-      : public LatentDataImputerWorker {
+  class SufstatImputeWorker : public LatentDataImputerWorker {
    public:
     typedef typename std::vector<Ptr<OBSERVED_DATA>>::const_iterator Iterator;
 
@@ -133,13 +132,11 @@ namespace BOOM {
     //   seeding_rng: If a new random number generator must be created, then
     //     this RNG will be used to seed it with an initial value.
     SufstatImputeWorker(SUFFICIENT_STATISTICS &global_suf,
-                        std::mutex &global_suf_mutex,
-                        RNG *rng = nullptr,
+                        std::mutex &global_suf_mutex, RNG *rng = nullptr,
                         RNG &seeding_rng = GlobalRng::rng)
         : LatentDataImputerWorker(global_suf_mutex),
           suf_(global_suf.clone()),
-          global_suf_(global_suf)
-    {
+          global_suf_(global_suf) {
       if (!rng) {
         rng_storage_.reset(new RNG(seed_rng(seeding_rng)));
         rng_ = rng_storage_.get();
@@ -182,13 +179,11 @@ namespace BOOM {
       }
     };
 
-    void combine_complete_data() override {
-      global_suf_.combine(*suf_);
-    }
+    void combine_complete_data() override { global_suf_.combine(*suf_); }
 
    private:
     Ptr<SUFFICIENT_STATISTICS> suf_;
-    SUFFICIENT_STATISTICS  &global_suf_;
+    SUFFICIENT_STATISTICS &global_suf_;
     Iterator observed_data_begin_;
     Iterator observed_data_end_;
     RNG *rng_;
@@ -206,20 +201,16 @@ namespace BOOM {
 
     // Set the number of background threads to use for data augmentation.  If n
     // <= 0 then no background threads are created.
-    void set_number_of_threads(int n) {
-      pool_.set_number_of_threads(n);
-    }
+    void set_number_of_threads(int n) { pool_.set_number_of_threads(n); }
 
     // Add a worker.  The number of workers need not be the same as the number
     // of threads.
-    void add_worker(const Ptr<LatentDataImputerWorker> & worker) {
+    void add_worker(const Ptr<LatentDataImputerWorker> &worker) {
       workers_.push_back(worker);
     }
 
     // Removes all elements from the collection of workers.
-    void clear_workers() {
-      workers_.clear();
-    }
+    void clear_workers() { workers_.clear(); }
 
     // The total number of data points seen by all the workers.
     int number_of_observations_managed() const {
@@ -251,9 +242,7 @@ namespace BOOM {
   class LatentDataSampler {
    public:
     LatentDataSampler()
-        : latent_data_fixed_(false),
-          reassign_data_each_time_(false)
-    {}
+        : latent_data_fixed_(false), reassign_data_each_time_(false) {}
 
     // Create a new worker, which has access to the global repository of
     // complete data, protected by mutex.
@@ -290,9 +279,7 @@ namespace BOOM {
     // clear_sufficient_statistics() and update_sufficient_statistics(), but
     // implicit data augmentation is turned off.  Calling this function with a
     // 'false' argument turns data augmentation back on.
-    void fix_latent_data(bool fixed = true) {
-      latent_data_fixed_ = fixed;
-    }
+    void fix_latent_data(bool fixed = true) { latent_data_fixed_ = fixed; }
 
     // In the typical use case, a model has a set of data that does not change.
     // When set_number_of_workers() is called, subsets of that data are assigned
@@ -327,7 +314,7 @@ namespace BOOM {
     }
 
    protected:
-    std::vector<Ptr<WORKER>> &workers() {return workers_;}
+    std::vector<Ptr<WORKER>> &workers() { return workers_; }
 
    private:
     // If this flag is set then latent data will not be changed from its current
@@ -389,4 +376,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_LATENT_DATA_IMPUTER_HPP
+#endif  // BOOM_LATENT_DATA_IMPUTER_HPP

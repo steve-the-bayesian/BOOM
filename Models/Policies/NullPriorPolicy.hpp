@@ -29,24 +29,24 @@ namespace BOOM {
   // PosteriorSampler.
   class NullPriorPolicy : virtual public Model {
    public:
-    NullPriorPolicy * clone() const override = 0;
+    NullPriorPolicy *clone() const override = 0;
 
     // Invoke each of the sampling methods that have been set, in the
     // order they were set.
     void sample_posterior() override {}
-    double logpri() const override {return 0;}
+    double logpri() const override { return 0; }
     void set_method(const Ptr<PosteriorSampler> &) override {}
 
     // Returns the number of sampling methods that have been set.
-    int number_of_sampling_methods() const override {return 0;}
+    int number_of_sampling_methods() const override { return 0; }
 
    protected:
-    PosteriorSampler * sampler(int i) override { return nullptr; }
-    PosteriorSampler const * const sampler(int i) const override {
+    PosteriorSampler *sampler(int i) override { return nullptr; }
+    PosteriorSampler const *const sampler(int i) const override {
       return nullptr;
     }
   };
 
 }  // namespace BOOM
 
-#endif // BOOM_NULL_PRIOR_POLICY_HPP
+#endif  // BOOM_NULL_PRIOR_POLICY_HPP
