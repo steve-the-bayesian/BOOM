@@ -908,18 +908,14 @@ namespace BOOM {
 
       SEXP r_holidays = getListElement(r_state_specification, "holidays");
       int number_of_holidays = Rf_length(r_holidays);
-      std::vector<std::string> holiday_names;
       for (int i = 0; i < number_of_holidays; ++i) {
         SEXP r_holiday = VECTOR_ELT(r_holidays, i);
         Ptr<Holiday> holiday = CreateHoliday(r_holiday);
-        holiday_names.push_back(ToString(getListElement(
-            r_state_specification, "name")));
+        std::string holiday_name = ToString(getListElement(r_holiday, "name"));
         holiday_model->add_holiday(holiday);
-      }
-      for (int i = 0; i < number_of_holidays; ++i) {
         io_manager_->add_list_element(new VectorListElement(
             holiday_model->holiday_pattern_parameter(i),
-            holiday_names[i]));
+            holiday_name));
       }
       return holiday_model;
     }
@@ -930,8 +926,8 @@ namespace BOOM {
       // errors.
       Ptr<UnivParams> residual_variance;
       PosteriorModeModel *observation_model = model_->observation_model();
-      if (GaussianModel *gaussian =
-          dynamic_cast<GaussianModel *>(observation_model)) {
+      if (ZeroMeanGaussianModel *gaussian =
+          dynamic_cast<ZeroMeanGaussianModel *>(observation_model)) {
         residual_variance = gaussian->Sigsq_prm();
       } else if (RegressionModel *regression =
                  dynamic_cast<RegressionModel *>(observation_model)) {
@@ -985,7 +981,10 @@ namespace BOOM {
           coefficient_mean_prior,
           coefficient_variance_prior,
           nullptr);
-      holiday_model->model()->set_method(sampler);
+      // This is one of the rare situations where the model holding the sampler
+      // is not the model being updated.  holiday_model owns the model being
+      // updated.
+      holiday_model->set_method(sampler);
 
       // Set up the io_manager
       std::vector<Ptr<VectorParams>> holiday_coefficients;
