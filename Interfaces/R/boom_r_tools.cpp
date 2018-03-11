@@ -25,19 +25,32 @@
 #include <R.h>
 #include <Rinternals.h>
 
-namespace BOOM{
-  SEXP getListElement(SEXP list, const std::string &name){
+namespace BOOM {
+
+  namespace {
+    using std::endl;
+  }  // namespace 
+  
+  SEXP getListElement(SEXP list, const std::string &name, bool expect_answer) {
     SEXP elmt = R_NilValue;
     SEXP names = Rf_getAttrib(list, R_NamesSymbol);
     if(Rf_isNull(names)){
-      report_error("attempt to use getListElement in a list with"
-                   " no 'names' attribute.");
+      std::ostringstream err;
+      err << "Attempt to use getListElement in a list with"
+          << " no 'names' attribute." << endl
+          << "You were searching for the name: " << name << endl;
+      report_error(err.str());
     }
     for(int i = 0; i < Rf_length(list); i++)
       if(name == CHAR(STRING_ELT(names, i))){
         elmt = VECTOR_ELT(list, i);
         break;
       }
+    if (expect_answer && elmt == R_NilValue) {
+      std::ostringstream warning;
+      warning << "Could not find list element named: " << name << endl;
+      report_warning(warning.str());
+    }
     return elmt;
   }
 

@@ -57,7 +57,18 @@
 namespace BOOM{
   // Returns list[[name]] if a list element with that name exists.
   // Returns R_NilValue otherwise.
-  SEXP getListElement(SEXP list, const std::string &name);
+  // Args:
+  //   list: The list to search.
+  //   name: The name of the list element to search for.
+  //   expect_answer: If true, then print a warning message if the named element
+  //     cannot be found.  This is useful in "printf debugging."
+  //
+  // Returns:
+  //   If the requested element is found then it is returned.  If not then
+  //   R_NilValue is returned.  If the first argument does not have a 'names'
+  //   attribute then an error is reported.
+  SEXP getListElement(SEXP list, const std::string &name,
+                      bool expect_answer = false);
 
   // Extract the names from a list.  If the list has no names
   // attribute a vector of empty strings is returned.
