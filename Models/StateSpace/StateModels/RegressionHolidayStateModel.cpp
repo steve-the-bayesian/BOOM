@@ -40,6 +40,7 @@ namespace BOOM {
         initial_state_variance_(1, 0.0) {}
 
   void RHBI::observe_time_dimension(int max_time) {
+    if (which_holiday_.size() == max_time) return;
     Date date = time_of_first_observation_;
     which_holiday_.resize(max_time);
     which_day_.resize(max_time);

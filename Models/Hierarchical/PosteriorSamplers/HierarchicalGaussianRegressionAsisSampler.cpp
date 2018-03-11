@@ -51,8 +51,8 @@ namespace BOOM {
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       RegressionModel *reg = model_->data_model(i);
       // Sample coefficients for model i.
-      RegressionCoefficientSampler::sample_regression_coefficients(rng(), reg,
-                                                                   *prior);
+      RegressionCoefficientSampler::sample_regression_coefficients(
+          rng(), reg, *prior);
       prior->suf()->update_raw(reg->Beta());
     }
     prior->sample_posterior();
