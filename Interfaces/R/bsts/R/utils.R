@@ -129,11 +129,18 @@ Shorten <- function(words) {
       ## Note:  an xts object inherits from zoo.
       stop("You must supply 'time0' if y is not a zoo or xts object.")
     }
-    times <- index(as.xts(y))
-    tryCatch(time0 <- as.POSIXct(times)[1],
-             error = simpleError(
-               "The index of y could not be converted to POSIXt."))
+    time0 <- index(as.xts(y))[1]
   }
+
+  if (inherits(time0, "Date")) {
+      ## Converting dates to characters keeps as.POSIXct from changing the date
+      ## in time zones with negative offsets.
+    time0 <- as.character(time0)
+  }
+
+  tryCatch(time0 <- as.POSIXct(time0),
+    error = simpleError(
+      "The supplied or inferred time0 could not be converted to POSIXct."))
   stopifnot(inherits(time0, "POSIXt"))
-  return(as.POSIXlt(time0))
+  return(time0)
 }

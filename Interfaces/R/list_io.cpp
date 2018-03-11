@@ -513,6 +513,7 @@ namespace BOOM {
     RMemoryProtector protector;
     SEXP buffer = protector.protect(Rf_alloc3DArray(
         REALSXP, niter, number_of_groups, dim));
+    set_buffer_group_names(buffer);
     StoreBuffer(buffer);
     array_view_.reset(data(), Array::index3(niter, number_of_groups, dim));
     return buffer;

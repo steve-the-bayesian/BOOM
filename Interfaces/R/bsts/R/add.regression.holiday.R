@@ -21,7 +21,7 @@ AddRegressionHoliday <- function(state.specification = NULL,
                                  y,
                                  holiday.list,
                                  time0 = NULL,
-                                 coefficient.prior = NULL,
+                                 prior = NULL,
                                  sdy = sd(as.numeric(y), na.rm = TRUE)) {
   ## Add a regression-based state model describing the effects of one or more
   ## holidays.  Each day of each holiday exerts a constant effect, specific to
@@ -37,10 +37,10 @@ AddRegressionHoliday <- function(state.specification = NULL,
   ##   time0: Either NULL, or an object convertible to class Date giving the
   ##     date of the first day in the training data y.  If NULL and y is of type
   ##     'zoo' then an attempt will be made to infer time0 from the index of y.
-  ##   coefficient.prior: An object of type NormalPrior describing the a priori
+  ##   prior: An object of type NormalPrior describing the a priori
   ##     expected variation among holiday effects.
   ##   sdy: The standard deviation of the 'y' argument, used to speicfy default
-  ##     priors in case coefficient.prior is missing.
+  ##     priors in case prior is missing.
   ##
   ## Returns:
   ##   A list containing the information needed to specify this state model to
@@ -50,16 +50,16 @@ AddRegressionHoliday <- function(state.specification = NULL,
     state.specification <- list()
   }
 
-  if (is.null(coefficient.prior)) {
-    coefficient.prior <- .DefaultRegressionHolidayModelCoefficientPrior(sdy)
+  if (is.null(prior)) {
+    prior <- .DefaultRegressionHolidayModelCoefficientPrior(sdy)
   }
-  stopifnot(inherits(coefficient.prior, "NormalPrior"))
+  stopifnot(inherits(prior, "NormalPrior"))
   
   spec <- list(name = "RegressionHolidays",
                holidays = holiday.list,
                time0 = as.Date(.SetTimeZero(time0, y)),
-               coefficient.prior = coefficient.prior)
-  class(spec) <- c("RegressionHolidayStateModel.", "StateModel")
+               prior = prior)
+  class(spec) <- c("RegressionHolidayStateModel", "StateModel")
   state.specification[[length(state.specification) + 1]] <- spec
   return(state.specification)
 }
@@ -142,7 +142,7 @@ AddHierarchicalRegressionHoliday <- function(
                time0 = as.Date(.SetTimeZero(time0, y)),
                coefficient.mean.prior = coefficient.mean.prior,
                coefficient.variance.prior = coefficient.variance.prior)
-  class(spec) <- c("HierarchicalRegressionHolidayStateModel.", "StateModel")
+  class(spec) <- c("HierarchicalRegressionHolidayStateModel", "StateModel")
   state.specification[[length(state.specification) + 1]] <- spec
   return(state.specification)
 }

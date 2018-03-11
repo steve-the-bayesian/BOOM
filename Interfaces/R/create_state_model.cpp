@@ -960,7 +960,7 @@ namespace BOOM {
         SEXP r_holiday = VECTOR_ELT(r_holidays, i);
         Ptr<Holiday> holiday = CreateHoliday(r_holiday);
         holiday_names.push_back(ToString(getListElement(
-            r_state_specification, "name")));
+            r_holiday, "name")));
         holiday_model->add_holiday(holiday);
       }
 
