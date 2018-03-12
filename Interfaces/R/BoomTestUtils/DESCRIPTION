@@ -1,0 +1,10 @@
+Package: BoomTestUtils
+Date: 2018-03-11
+Title: Boom Teest Utilities
+Author: Steven L. Scott <steve.the.bayesian@gmail.com>
+Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
+Description: Utilities for testing code based on the Boom package.
+Depends:
+Version: 0.0.1
+License: LGPL-2.1 | file LICENSE
+Encoding: UTF-8
