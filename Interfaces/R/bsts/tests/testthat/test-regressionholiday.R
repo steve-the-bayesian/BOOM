@@ -1,8 +1,13 @@
+context("test-regressionholiday.R")
+
 library(bsts)
+library(testthat)
+library(BoomTestUtils)
 
 trend <- cumsum(rnorm(730, 0, .1))
-  dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend), by = "day")
-  y <- zoo(trend + rnorm(length(trend), 0, .2), dates)
+dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend),
+  by = "day")
+y <- zoo(trend + rnorm(length(trend), 0, .2), dates)
 
 AddHolidayEffect <- function(y, dates, effect) {
   ## Adds a holiday effect to simulated data.
@@ -39,17 +44,34 @@ y <- AddHolidayEffect(y, labor.day.dates, labor.day.effect)
 
 ## The holidays can be in any order.
 holiday.list <- list(memorial.day, labor.day, presidents.day)
+number.of.holidays <- length(holiday.list)
 
 ## In a real example you'd want more than 100 MCMC iterations.
 niter <- 100
 
-## Fit the model
-ss <- AddLocalLevel(list(), y)
-ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
-model <- bsts(y, state.specification = ss, niter = niter)
+test_that("regression holiday model works", {
+  ss <- AddLocalLevel(list(), y)
+  ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
+  model <- bsts(y, state.specification = ss, niter = niter)
+  expect_that(model, is_a("bsts"))
+  expect_that(model$MemorialDay, is_a("matrix"))
+  expect_that(nrow(model$MemorialDay), equals(niter))
+  expect_that(ncol(model$MemorialDay), equals(length(memorial.day.effect)))
+  expect_true(CheckMcmcMatrix(
+    cbind(model$MemorialDay, model$LaborDay, model$PresidentsDay),
+    c(memorial.day.effect, labor.day.effect, presidents.day.effect)))
+})
 
-## Try again with some shrinkage.  With only 3 holidays there won't be much
-## shrinkage.  
-ss2 <- AddLocalLevel(list(), y)
-ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
-model2 <- bsts(y, state.specification = ss2, niter = niter)
+test_that("hierarchical model runs", {
+  ## Try again with some shrinkage.  With only 3 holidays there won't be much
+  ## shrinkage.  
+  ss2 <- AddLocalLevel(list(), y)
+  ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
+  model2 <- bsts(y, state.specification = ss2, niter = niter)
+  expect_that(model, is_a("bsts"))
+  expect_that(model$holiday.effects, is_a("array"))
+  expect_that(dim(model$holiday.effects),
+    equals(c(niter, number.of.holidays, 3)))
+  }
+)
+
