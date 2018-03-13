@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -20,11 +19,11 @@
 #ifndef BOOM_UNIFORM_SHRINKAGE_PRIOR_MODEL_HPP_
 #define BOOM_UNIFORM_SHRINKAGE_PRIOR_MODEL_HPP_
 
-#include "Models/DoubleModel.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/ModelTypes.hpp>
+#include <Models/DoubleModel.hpp>
+#include <Models/Policies/ParamPolicy_1.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
 namespace BOOM {
 
@@ -33,24 +32,28 @@ namespace BOOM {
   // with support on alpha > 0.
   // See Christiansen and Morris (1997, JASA, Hierarchical Poisson
   // Regression Modeling).
-  class UniformShrinkagePriorModel : public ParamPolicy_1<UnivParams>,
-                                     public IID_DataPolicy<DoubleData>,
-                                     public PriorPolicy,
-                                     public DiffDoubleModel,
-                                     public NumOptModel {
+  class UniformShrinkagePriorModel
+      : public ParamPolicy_1<UnivParams>,
+        public IID_DataPolicy<DoubleData>,
+        public PriorPolicy,
+        public DiffDoubleModel,
+        public NumOptModel
+  {
    public:
     explicit UniformShrinkagePriorModel(double median = 1.0);
-    UniformShrinkagePriorModel *clone() const override;
+    UniformShrinkagePriorModel * clone() const override;
 
     void set_median(double z0);
-    double median() const { return prm_ref().value(); }
+    double median() const {return prm_ref().value();}
 
     double Logp(double x, double &g, double &h, uint nd) const override;
-    double Loglike(const Vector &z0, Vector &gradient, Matrix &Hessian,
+    double Loglike(const Vector &z0,
+                   Vector &gradient,
+                   Matrix &Hessian,
                    uint nd) const override;
 
     double sim(RNG &rng = GlobalRng::rng) const override;
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override {return dat().size();}
   };
 
 }  // namespace BOOM

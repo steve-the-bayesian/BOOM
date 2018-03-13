@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -27,10 +26,9 @@
 #include <vector>
 #include <functional>
 
-#include "uint.hpp"
-#include "boost/operators.hpp"
-#include "distributions/rng.hpp"
-#include "cpputil/math_utils.hpp"
+#include <uint.hpp>
+#include <boost/operators.hpp>
+#include <distributions/rng.hpp>
 
 namespace BOOM{
   class SpdMatrix;
@@ -102,10 +100,6 @@ namespace BOOM{
     // Returns true if empty, or if std::isfinite returns true on all
     // elements.  Returns false otherwise.
     bool all_finite() const;
-
-    // Set all elements to zero.  This is slightly faster than using operator=
-    // 0.0;
-    void set_to_zero();
 
     Vector zero()const;  // returns a same sized Vector filled with 0's.
     Vector one()const;   // returns a same sized Vector filled with 1's.
@@ -379,20 +373,6 @@ namespace BOOM{
     ans *= a;
     ans.axpy(y, b);
     return ans;
-  }
-
-  // Returns the min (first) and max (second) elements in the vector-like object
-  // v.  As implemented, v can be a Vector, VectorView, ConstVectorView, or any
-  // STL container holding double's.
-  template <class VECTOR>
-  std::pair<double, double> min_max(const VECTOR &v) {
-    double min_value = infinity();
-    double max_value = negative_infinity();
-    for (auto value : v) {
-      if (value < min_value) min_value = value;
-      if (value > max_value) max_value = value;
-    }
-    return std::pair<double, double>(min_value, max_value);
   }
 }  // namespace BOOM
 

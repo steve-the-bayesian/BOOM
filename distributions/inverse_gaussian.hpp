@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -18,9 +17,9 @@
 */
 #ifndef BOOM_INVERSE_GAUSSIAN_HPP_
 #define BOOM_INVERSE_GAUSSIAN_HPP_
-#include "distributions.hpp"
+#include <distributions.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   // Functions to evaluate the density and the CDF of the inverse
   // Gaussian distribution, and to take random draws from the
@@ -40,10 +39,10 @@ namespace BOOM {
 
   double dig(double x, double mu, double lambda, bool logscale);
   double pig(double x, double mu, double lambda, bool logscale);
-  double rig_mt(RNG& rng, double mu, double lambda);
-  inline double rig(double mu, double lambda) {
+  double rig_mt(RNG & rng, double mu, double lambda);
+  inline double rig(double mu, double lambda){
     return rig_mt(GlobalRng::rng, mu, lambda);
   }
 
-}  // namespace BOOM
-#endif  // BOOM_INVERSE_GAUSSIAN_HPP_
+}
+#endif // BOOM_INVERSE_GAUSSIAN_HPP_

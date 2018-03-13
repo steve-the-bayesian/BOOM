@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,28 +19,29 @@
 // code obtained from
 // http://people.sc.fsu.edu/~jburkardt/cpp_src/asa047/asa047.html
 
-#include "numopt/NelderMead.hpp"
+#include <numopt/NelderMead.hpp>
 
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
+# include <cstdlib>
+# include <iostream>
+# include <iomanip>
+# include <ctime>
+# include <cmath>
 
-#include "LinAlg/Vector.hpp"
-#include "cpputil/report_error.hpp"
-#include "numopt.hpp"
+#include <LinAlg/Vector.hpp>
+#include <numopt.hpp>
+#include <cpputil/report_error.hpp>
 
-namespace NelderMeadStatlib {
+namespace NelderMeadStatlib{
   using namespace BOOM;
   void nelmin(const Target &fn, int n, Vector &start, Vector &xmin,
               double *ynewlo, double reqmin, const Vector &step,
               int konvge,  // frequency of convergence checks
               int kcount,  // max function evaluations
               int *icount, int *numres, int *ifault);
-}  // namespace NelderMeadStatlib
+}
 
-namespace BOOM {
+
+namespace BOOM{
   NelderMeadMinimizer::NelderMeadMinimizer(const Target &f)
       : f_(f),
         precision_(1e-6),
@@ -50,80 +50,91 @@ namespace BOOM {
         max_number_of_evaluations_(10000),
         number_of_evaluations_(0),
         number_of_restarts_(0),
-        error_code_(0) {}
+        error_code_(0)
+  {}
 
-  void NelderMeadMinimizer::minimize(const Vector &starting_value) {
+  void NelderMeadMinimizer::minimize(const Vector &starting_value){
     starting_value_ = starting_value;
     minimizing_value_ = starting_value;
-    if (stepsize_.size() != starting_value.size()) {
+    if(stepsize_.size() != starting_value.size()){
       stepsize_.resize(starting_value.size());
       stepsize_ = default_step_size_;
     }
     n_ = starting_value_.size();
 
-    NelderMeadStatlib::nelmin(
-        f_, n_, starting_value_, minimizing_value_, &minimum_, precision_,
-        stepsize_, frequency_of_convergence_checks_, max_number_of_evaluations_,
-        &number_of_evaluations_, &number_of_restarts_, &error_code_);
+    NelderMeadStatlib::nelmin(f_,
+                              n_,
+                              starting_value_,
+                              minimizing_value_,
+                              &minimum_,
+                              precision_,
+                              stepsize_,
+                              frequency_of_convergence_checks_,
+                              max_number_of_evaluations_,
+                              &number_of_evaluations_,
+                              &number_of_restarts_,
+                              &error_code_);
   }
 
-  void NelderMeadMinimizer::set_stepsize(const Vector &stepsize) {
+  void NelderMeadMinimizer::set_stepsize(const Vector &stepsize){
     stepsize_ = stepsize;
   }
 
   void NelderMeadMinimizer::set_convergence_check_frequency(int frequency) {
-    if (frequency <= 0) {
+    if(frequency <= 0){
       report_error("convergence_frequency must be positive.");
     }
     frequency_of_convergence_checks_ = frequency;
   }
 
-  void NelderMeadMinimizer::set_precision(double precision) {
-    if (precision <= 0) {
+  void NelderMeadMinimizer::set_precision(double precision){
+    if(precision <= 0){
       report_error("precision must be positive");
     }
     precision_ = precision;
   }
 
-  void NelderMeadMinimizer::set_evaluation_limit(int number_of_evalutations) {
+  void NelderMeadMinimizer::set_evaluation_limit(int number_of_evalutations){
     if (number_of_evalutations <= 0) {
       report_error("number_of_evalutations must be positive");
     }
     max_number_of_evaluations_ = number_of_evalutations;
   }
 
-  double NelderMeadMinimizer::minimum() const { return minimum_; }
+  double NelderMeadMinimizer::minimum()const{
+    return minimum_;
+  }
 
-  const Vector &NelderMeadMinimizer::minimizing_value() const {
+  const Vector & NelderMeadMinimizer::minimizing_value()const{
     return minimizing_value_;
   }
 
-  bool NelderMeadMinimizer::success() const { return error_code_ == 0; }
+  bool NelderMeadMinimizer::success()const{
+    return error_code_ == 0;
+  }
 
-  std::string NelderMeadMinimizer::error_message() const {
-    if (error_code_ == 0) {
+  std::string NelderMeadMinimizer::error_message()const{
+    if(error_code_ == 0){
       return "success";
-    } else if (error_code_ == 1) {
+    }else if(error_code_ == 1){
       return "precision_, n_, or frequency_of_convergence_checks_ "
-             "has an illegal value.";
-    } else if (error_code_ == 2) {
+          "has an illegal value.";
+    }else if(error_code_ == 2){
       return "max_number_of_evaluations_ exceeded.";
-    } else {
+    }else{
       return "Unknown error code.";
     }
   }
 
-  int NelderMeadMinimizer::number_of_restarts() const {
-    return number_of_restarts_;
-  }
+  int NelderMeadMinimizer::number_of_restarts()const{
+    return number_of_restarts_;}
 
-  int NelderMeadMinimizer::number_of_evaluations() const {
-    return number_of_evaluations_;
-  }
+  int NelderMeadMinimizer::number_of_evaluations()const{
+    return number_of_evaluations_;}
 
 }  // namespace BOOM
 
-namespace NelderMeadStatlib {
+namespace NelderMeadStatlib{
 
   using namespace std;
   using namespace BOOM;
@@ -249,53 +260,60 @@ namespace NelderMeadStatlib {
     //
     //  Check the input parameters.
     //
-    if (reqmin <= 0.0) {
+    if ( reqmin <= 0.0 )
+    {
       *ifault = 1;
       return;
     }
 
-    if (n < 1) {
+    if ( n < 1 )
+    {
       *ifault = 1;
       return;
     }
 
-    if (konvge < 1) {
+    if ( konvge < 1 )
+    {
       *ifault = 1;
       return;
     }
 
-    Vector p(n * (n + 1));
+    Vector p(n*(n+1));
     Vector pstar(n);
     Vector p2star(n);
     Vector pbar(n);
-    Vector y(n + 1);
+    Vector y(n+1);
 
     *icount = 0;
     *numres = 0;
 
     jcount = konvge;
-    dn = (double)(n);
+    dn = ( double ) ( n );
     nn = n + 1;
-    dnn = (double)(nn);
+    dnn = ( double ) ( nn );
     del = 1.0;
     rq = reqmin * dn;
     //
     //  Initial or restarted loop.
     //
-    for (;;) {
-      for (i = 0; i < n; i++) {
-        p[i + n * n] = start[i];
+    for ( ; ; )
+    {
+      for ( i = 0; i < n; i++ )
+      {
+        p[i+n*n] = start[i];
       }
-      y[n] = fn(start);
+      y[n] = fn ( start );
       *icount = *icount + 1;
 
-      for (j = 0; j < n; j++) {
+      for ( j = 0; j < n; j++ )
+      {
         x = start[j];
         start[j] = start[j] + step[j] * del;
-        for (i = 0; i < n; i++) {
-          p[i + j * n] = start[i];
+        for ( i = 0; i < n; i++ )
+        {
+          p[i+j*n] = start[i];
         }
-        y[j] = fn(start);
+        y[j] = fn ( start );
         *icount = *icount + 1;
         start[j] = x;
       }
@@ -308,8 +326,10 @@ namespace NelderMeadStatlib {
       ylo = y[0];
       ilo = 0;
 
-      for (i = 1; i < nn; i++) {
-        if (y[i] < ylo) {
+      for ( i = 1; i < nn; i++ )
+      {
+        if ( y[i] < ylo )
+        {
           ylo = y[i];
           ilo = i;
         }
@@ -317,15 +337,19 @@ namespace NelderMeadStatlib {
       //
       //  Inner loop.
       //
-      for (;;) {
-        if (kcount <= *icount) {
+      for ( ; ; )
+      {
+        if ( kcount <= *icount )
+        {
           break;
         }
         *ynewlo = y[0];
         ihi = 0;
 
-        for (i = 1; i < nn; i++) {
-          if (*ynewlo < y[i]) {
+        for ( i = 1; i < nn; i++ )
+        {
+          if ( *ynewlo < y[i] )
+          {
             *ynewlo = y[i];
             ihi = i;
           }
@@ -334,46 +358,55 @@ namespace NelderMeadStatlib {
         //  Calculate PBAR, the centroid of the simplex vertices
         //  excepting the vertex with Y value YNEWLO.
         //
-        for (i = 0; i < n; i++) {
+        for ( i = 0; i < n; i++ )
+        {
           z = 0.0;
-          for (j = 0; j < nn; j++) {
-            z = z + p[i + j * n];
+          for ( j = 0; j < nn; j++ )
+          {
+            z = z + p[i+j*n];
           }
-          z = z - p[i + ihi * n];
+          z = z - p[i+ihi*n];
           pbar[i] = z / dn;
         }
         //
         //  Reflection through the centroid.
         //
-        for (i = 0; i < n; i++) {
-          pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i + ihi * n]);
+        for ( i = 0; i < n; i++ )
+        {
+          pstar[i] = pbar[i] + rcoeff * ( pbar[i] - p[i+ihi*n] );
         }
-        ystar = fn(pstar);
+        ystar = fn ( pstar );
         *icount = *icount + 1;
         //
         //  Successful reflection, so extension.
         //
-        if (ystar < ylo) {
-          for (i = 0; i < n; i++) {
-            p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
+        if ( ystar < ylo )
+        {
+          for ( i = 0; i < n; i++ )
+          {
+            p2star[i] = pbar[i] + ecoeff * ( pstar[i] - pbar[i] );
           }
-          y2star = fn(p2star);
+          y2star = fn ( p2star );
           *icount = *icount + 1;
           //
           //  Check extension.
           //
-          if (ystar < y2star) {
-            for (i = 0; i < n; i++) {
-              p[i + ihi * n] = pstar[i];
+          if ( ystar < y2star )
+          {
+            for ( i = 0; i < n; i++ )
+            {
+              p[i+ihi*n] = pstar[i];
             }
             y[ihi] = ystar;
           }
           //
           //  Retain extension or contraction.
           //
-          else {
-            for (i = 0; i < n; i++) {
-              p[i + ihi * n] = p2star[i];
+          else
+          {
+            for ( i = 0; i < n; i++ )
+            {
+              p[i+ihi*n] = p2star[i];
             }
             y[ihi] = y2star;
           }
@@ -381,46 +414,58 @@ namespace NelderMeadStatlib {
         //
         //  No extension.
         //
-        else {
+        else
+        {
           l = 0;
-          for (i = 0; i < nn; i++) {
-            if (ystar < y[i]) {
+          for ( i = 0; i < nn; i++ )
+          {
+            if ( ystar < y[i] )
+            {
               l = l + 1;
             }
           }
 
-          if (1 < l) {
-            for (i = 0; i < n; i++) {
-              p[i + ihi * n] = pstar[i];
+          if ( 1 < l )
+          {
+            for ( i = 0; i < n; i++ )
+            {
+              p[i+ihi*n] = pstar[i];
             }
             y[ihi] = ystar;
           }
           //
           //  Contraction on the Y(IHI) side of the centroid.
           //
-          else if (l == 0) {
-            for (i = 0; i < n; i++) {
-              p2star[i] = pbar[i] + ccoeff * (p[i + ihi * n] - pbar[i]);
+          else if ( l == 0 )
+          {
+            for ( i = 0; i < n; i++ )
+            {
+              p2star[i] = pbar[i] + ccoeff * ( p[i+ihi*n] - pbar[i] );
             }
-            y2star = fn(p2star);
+            y2star = fn ( p2star );
             *icount = *icount + 1;
             //
             //  Contract the whole simplex.
             //
-            if (y[ihi] < y2star) {
-              for (j = 0; j < nn; j++) {
-                for (i = 0; i < n; i++) {
-                  p[i + j * n] = (p[i + j * n] + p[i + ilo * n]) * 0.5;
-                  xmin[i] = p[i + j * n];
+            if ( y[ihi] < y2star )
+            {
+              for ( j = 0; j < nn; j++ )
+              {
+                for ( i = 0; i < n; i++ )
+                {
+                  p[i+j*n] = ( p[i+j*n] + p[i+ilo*n] ) * 0.5;
+                  xmin[i] = p[i+j*n];
                 }
-                y[j] = fn(xmin);
+                y[j] = fn ( xmin );
                 *icount = *icount + 1;
               }
               ylo = y[0];
               ilo = 0;
 
-              for (i = 1; i < nn; i++) {
-                if (y[i] < ylo) {
+              for ( i = 1; i < nn; i++ )
+              {
+                if ( y[i] < ylo )
+                {
                   ylo = y[i];
                   ilo = i;
                 }
@@ -430,9 +475,11 @@ namespace NelderMeadStatlib {
             //
             //  Retain contraction.
             //
-            else {
-              for (i = 0; i < n; i++) {
-                p[i + ihi * n] = p2star[i];
+            else
+            {
+              for ( i = 0; i < n; i++ )
+              {
+                p[i+ihi*n] = p2star[i];
               }
               y[ihi] = y2star;
             }
@@ -440,23 +487,30 @@ namespace NelderMeadStatlib {
           //
           //  Contraction on the reflection side of the centroid.
           //
-          else if (l == 1) {
-            for (i = 0; i < n; i++) {
-              p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
+          else if ( l == 1 )
+          {
+            for ( i = 0; i < n; i++ )
+            {
+              p2star[i] = pbar[i] + ccoeff * ( pstar[i] - pbar[i] );
             }
-            y2star = fn(p2star);
+            y2star = fn ( p2star );
             *icount = *icount + 1;
             //
             //  Retain reflection?
             //
-            if (y2star <= ystar) {
-              for (i = 0; i < n; i++) {
-                p[i + ihi * n] = p2star[i];
+            if ( y2star <= ystar )
+            {
+              for ( i = 0; i < n; i++ )
+              {
+                p[i+ihi*n] = p2star[i];
               }
               y[ihi] = y2star;
-            } else {
-              for (i = 0; i < n; i++) {
-                p[i + ihi * n] = pstar[i];
+            }
+            else
+            {
+              for ( i = 0; i < n; i++ )
+              {
+                p[i+ihi*n] = pstar[i];
               }
               y[ihi] = ystar;
             }
@@ -465,33 +519,39 @@ namespace NelderMeadStatlib {
         //
         //  Check if YLO improved.
         //
-        if (y[ihi] < ylo) {
+        if ( y[ihi] < ylo )
+        {
           ylo = y[ihi];
           ilo = ihi;
         }
         jcount = jcount - 1;
 
-        if (0 < jcount) {
+        if ( 0 < jcount )
+        {
           continue;
         }
         //
         //  Check to see if minimum reached.
         //
-        if (*icount <= kcount) {
+        if ( *icount <= kcount )
+        {
           jcount = konvge;
 
           z = 0.0;
-          for (i = 0; i < nn; i++) {
+          for ( i = 0; i < nn; i++ )
+          {
             z = z + y[i];
           }
           x = z / dnn;
 
           z = 0.0;
-          for (i = 0; i < nn; i++) {
-            z = z + pow(y[i] - x, 2);
+          for ( i = 0; i < nn; i++ )
+          {
+            z = z + pow ( y[i] - x, 2 );
           }
 
-          if (z <= rq) {
+          if ( z <= rq )
+          {
             break;
           }
         }
@@ -499,48 +559,55 @@ namespace NelderMeadStatlib {
       //
       //  Factorial tests to check that YNEWLO is a local minimum.
       //
-      for (i = 0; i < n; i++) {
-        xmin[i] = p[i + ilo * n];
+      for ( i = 0; i < n; i++ )
+      {
+        xmin[i] = p[i+ilo*n];
       }
       *ynewlo = y[ilo];
 
-      if (kcount < *icount) {
+      if ( kcount < *icount )
+      {
         *ifault = 2;
         break;
       }
 
       *ifault = 0;
 
-      for (i = 0; i < n; i++) {
+      for ( i = 0; i < n; i++ )
+      {
         del = step[i] * eps;
         xmin[i] = xmin[i] + del;
-        z = fn(xmin);
+        z = fn ( xmin );
         *icount = *icount + 1;
-        if (z < *ynewlo) {
+        if ( z < *ynewlo )
+        {
           *ifault = 2;
           break;
         }
         xmin[i] = xmin[i] - del - del;
-        z = fn(xmin);
+        z = fn ( xmin );
         *icount = *icount + 1;
-        if (z < *ynewlo) {
+        if ( z < *ynewlo )
+        {
           *ifault = 2;
           break;
         }
         xmin[i] = xmin[i] + del;
       }
 
-      if (*ifault == 0) {
+      if ( *ifault == 0 )
+      {
         break;
       }
       //
       //  Restart the procedure.
       //
-      for (i = 0; i < n; i++) {
+      for ( i = 0; i < n; i++ )
+      {
         start[i] = xmin[i];
       }
       del = eps;
       *numres = *numres + 1;
     }
   }
-}  // namespace NelderMeadStatlib
+} // namespace NelderMeadStatlib

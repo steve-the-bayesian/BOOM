@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -16,23 +15,30 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Samplers/MetropolisHastings.hpp"
+#include <Samplers/MetropolisHastings.hpp>
+#include <cpputil/report_error.hpp>
+#include <distributions.hpp>
 #include <utility>
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
 
-namespace BOOM {
+namespace BOOM{
   typedef MetropolisHastings MH;
 
-  MH::MetropolisHastings(const Target &target, const Ptr<MH_Proposal> &prop,
+  MH::MetropolisHastings(const Target & target,
+                         const Ptr<MH_Proposal> &prop,
                          RNG *rng)
-      : Sampler(rng), f_(target), prop_(prop), accepted_(false) {}
+      : Sampler(rng),
+        f_(target),
+        prop_(prop),
+        accepted_(false)
+  {}
 
-  void MH::set_proposal(const Ptr<MH_Proposal> &p) { prop_ = p; }
+  void MH::set_proposal(const Ptr<MH_Proposal> &p){
+    prop_ = p;
+  }
 
   void MH::set_target(const Target &f) { f_ = f; }
 
-  Vector MH::draw(const Vector &old) {
+  Vector MH::draw(const Vector & old){
     cand_ = prop_->draw(old, &rng());
     double logp_cand = logp(cand_);
     double logp_old = logp(old);
@@ -69,16 +75,25 @@ namespace BOOM {
     return accepted_ ? cand_ : old;
   }
 
-  bool MH::last_draw_was_accepted() const { return accepted_; }
+  bool MH::last_draw_was_accepted()const{
+    return accepted_;
+  }
 
-  double MH::logp(const Vector &x) const { return f_(x); }
+  double MH::logp(const Vector &x)const{
+    return f_(x);
+  }
 
   typedef ScalarMetropolisHastings SMH;
   SMH::ScalarMetropolisHastings(const ScalarTarget &f,
-                                const Ptr<MH_ScalarProposal> &prop, RNG *rng)
-      : ScalarSampler(rng), f_(f), prop_(prop), accepted_(false) {}
+                                const Ptr<MH_ScalarProposal> &prop,
+                                RNG *rng)
+      : ScalarSampler(rng),
+        f_(f),
+        prop_(prop),
+        accepted_(false)
+  {}
 
-  double SMH::draw(double old) {
+  double SMH::draw(double old){
     double cand = prop_->draw(old, &rng());
     double logp_cand = f_(cand);
     double logp_old = f_(old);
@@ -104,9 +119,9 @@ namespace BOOM {
 
     double denom, d1, d2;
     denom = d1 = d2 = 0;
-    if (!prop_->sym()) {
-      d1 = prop_->logf(cand, old);
-      d2 = prop_->logf(old, cand);
+    if(!prop_->sym()){
+      d1 = prop_->logf(cand,old);
+      d2 = prop_->logf(old,cand);
       denom = d1 - d2;
     }
     double u = log(runif_mt(rng()));
@@ -114,7 +129,9 @@ namespace BOOM {
     return accepted_ ? cand : old;
   }
 
-  bool SMH::last_draw_was_accepted() const { return accepted_; }
+  bool SMH::last_draw_was_accepted()const{
+    return accepted_;
+  }
 
-  double SMH::logp(double x) const { return f_(x); }
-}  // namespace BOOM
+  double SMH::logp(double x)const{ return f_(x);}
+}

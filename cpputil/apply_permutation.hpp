@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,8 +19,8 @@
 #ifndef BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
 #define BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
 #include <vector>
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/VectorView.hpp"
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/VectorView.hpp>
 
 namespace BOOM {
 
@@ -32,5 +31,5 @@ namespace BOOM {
   Vector apply_permutation(const std::vector<int> &permutation,
                            const ConstVectorView &data);
 
-}  // namespace BOOM
-#endif  //  BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_
+}
+#endif //  BOOM_CPPUTIL_APPLY_PERMUTATION_HPP_

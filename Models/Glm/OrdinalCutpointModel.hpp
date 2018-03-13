@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,13 +19,13 @@
 #ifndef ORDINAL_CUTPOINT_MODEL_HPP
 #define ORDINAL_CUTPOINT_MODEL_HPP
 
-#include "Models/CategoricalData.hpp"
-#include "Models/Glm/Glm.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "TargetFun/TargetFun.hpp"
+#include <Models/Glm/Glm.hpp>
+#include <Models/CategoricalData.hpp>
+#include <Models/ModelTypes.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <TargetFun/TargetFun.hpp>
 
 // Model:  Y can be 0... M-1
 // Pr(Y-m) = F(d[m]-btx) - F(d[m-1] - btx)
@@ -34,37 +33,43 @@
 // d[] is the set of cutpoints with identifiability constraints:
 // d[-1] = -infinity, d[0] = 0, d[M-1]=infinity
 
-namespace BOOM {
+namespace BOOM{
 
   class OrdinalCutpointModel;
 
-  class OrdinalCutpointBetaLogLikelihood : public TargetFun {
+  class OrdinalCutpointBetaLogLikelihood
+      : public TargetFun
+  {
    public:
     OrdinalCutpointBetaLogLikelihood(const OrdinalCutpointModel *m_);
-    double operator()(const Vector &beta) const override;
-
+    double operator()(const Vector & beta) const override;
    private:
     const OrdinalCutpointModel *m_;
   };
 
-  class OrdinalCutpointDeltaLogLikelihood : public TargetFun {
+  class OrdinalCutpointDeltaLogLikelihood
+      : public TargetFun
+  {
    public:
     OrdinalCutpointDeltaLogLikelihood(const OrdinalCutpointModel *m_);
-    double operator()(const Vector &delta) const override;
-
+    double operator()(const Vector & delta) const override;
    private:
     const OrdinalCutpointModel *m_;
   };
 
-  class OrdinalCutpointModel : public ParamPolicy_2<GlmCoefs, VectorParams>,
-                               public IID_DataPolicy<OrdinalRegressionData>,
-                               public PriorPolicy,
-                               public GlmModel,
-                               public NumOptModel {
-   public:
-    OrdinalCutpointModel(const Vector &beta, const Vector &delta);
-    OrdinalCutpointModel(const Vector &beta, const Selector &Inc,
-                         const Vector &delta);
+  class OrdinalCutpointModel:
+    public ParamPolicy_2<GlmCoefs, VectorParams>,
+    public IID_DataPolicy<OrdinalRegressionData>,
+    public PriorPolicy,
+    public GlmModel,
+    public NumOptModel
+  {
+
+  public:
+    OrdinalCutpointModel(const Vector &beta, const Vector & delta);
+    OrdinalCutpointModel(const Vector &beta,
+                         const Selector &Inc,
+                         const Vector & delta);
     OrdinalCutpointModel(const Selector &Inc, uint Maxscore);
     OrdinalCutpointModel(const Matrix &X, const Vector &y);
     OrdinalCutpointModel(const OrdinalCutpointModel &rhs);
@@ -73,11 +78,11 @@ namespace BOOM {
 
     // link_inv(eta) = probability
     // link(prob) = eta
-    virtual double link_inv(double) const = 0;   // logit or probit
-    virtual double dlink_inv(double) const = 0;  // derivative of link_inv
+    virtual double link_inv(double) const = 0;  // logit or probit
+    virtual double dlink_inv(double) const = 0; // derivative of link_inv
 
-    GlmCoefs &coef() override;
-    const GlmCoefs &coef() const override;
+    GlmCoefs & coef() override;
+    const GlmCoefs & coef() const override;
     Ptr<GlmCoefs> coef_prm() override;
     const Ptr<GlmCoefs> coef_prm() const override;
 
@@ -85,12 +90,12 @@ namespace BOOM {
     const Ptr<VectorParams> Delta_prm() const;
 
     // inherits [Bb]eta()/set_[Bb]eta() from GlmModel
-    double delta(uint) const;  // delta[0] = - infinity, delta[1] = 0
-    const Vector &delta() const;
+    double delta(uint) const; // delta[0] = - infinity, delta[1] = 0
+    const Vector & delta() const;
     void set_delta(const Vector &d);
 
     // Check to see if Delta satisfies constraint.
-    bool check_delta(const Vector &Delta) const;
+    bool check_delta(const Vector & Delta) const;
 
     // Args:
     //   beta_delta: A vector with leading elements corresponding to
@@ -102,9 +107,9 @@ namespace BOOM {
     //   h: Hessian matrix (unused if nd < 2).  Dimension must match
     //     beta_delta.
     //   nd:  The number of derivatives desired.
-    double Loglike(const Vector &beta_delta, Vector &g, Matrix &h,
-                   uint nd) const override;
-    double log_likelihood(const Vector &beta, const Vector &delta) const;
+    double Loglike(const Vector &beta_delta,
+                           Vector &g, Matrix &h, uint nd) const override;
+    double log_likelihood(const Vector & beta, const Vector & delta) const;
     using LoglikeModel::log_likelihood;
     OrdinalCutpointBetaLogLikelihood beta_log_likelihood() const;
     OrdinalCutpointDeltaLogLikelihood delta_log_likelihood() const;
@@ -112,29 +117,28 @@ namespace BOOM {
     void initialize_params() override;
     void initialize_params(const Vector &counts);
 
-    Vector CDF(const Vector &x) const;  // Pr(Y<y)
+    Vector CDF(const Vector &x) const; // Pr(Y<y)
 
     virtual double pdf(const Ptr<Data> &, bool) const;
     double pdf(const Ptr<OrdinalRegressionData> &, bool) const;
     double pdf(const OrdinalData &y, const Vector &x, bool logscale) const;
     double pdf(uint y, const Vector &x, bool logscale) const;
 
-    uint maxscore() const;  // maximum possible score allowed
+    uint maxscore() const; // maximum possible score allowed
 
     Ptr<OrdinalRegressionData> sim(RNG &rng = GlobalRng::rng);
 
-   private:
+  private:
     // interface is complicated
-    double bd_loglike(Vector &gbeta, Vector &gdelta, Matrix &Hbeta,
-                      Matrix &Hdelta, Matrix &Hbd, uint nd, bool b_derivs,
-                      bool d_derivs) const;
+    double bd_loglike(Vector & gbeta, Vector &gdelta, Matrix & Hbeta,
+                      Matrix &Hdelta, Matrix & Hbd,
+                      uint nd, bool b_derivs, bool d_derivs) const;
     Ptr<CatKeyBase> simulation_key_;
 
     // Simulate latent variable from the link distribution.
-    virtual double simulate_latent_variable(
-        RNG &rng = GlobalRng::rng) const = 0;
+    virtual double simulate_latent_variable(RNG &rng = GlobalRng::rng) const = 0;
   };
 
-}  // namespace BOOM
+  } // closes namespace BOOM
 
-#endif  // ORDINAL_CUTPOINT_MODEL_HPP
+#endif// ORDINAL_CUTPOINT_MODEL_HPP

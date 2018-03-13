@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,11 +19,11 @@
 #ifndef BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/DoubleModel.hpp"
-#include "Models/Glm/GammaRegressionModel.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Samplers/MetropolisHastings.hpp"
+#include <Models/Glm/GammaRegressionModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/MvnBase.hpp>
+#include <Models/DoubleModel.hpp>
+#include <Samplers/MetropolisHastings.hpp>
 
 namespace BOOM {
 
@@ -32,10 +31,12 @@ namespace BOOM {
   // distribution of the regression coefficients and the log of the
   // shape parameter as a normal.  It locates the mode of the
   // posterior and stores the mode so that it can make TIM proposals.
-  class GammaRegressionPosteriorSampler : public PosteriorSampler {
+  class GammaRegressionPosteriorSampler
+      : public PosteriorSampler {
    public:
     GammaRegressionPosteriorSampler(
-        GammaRegressionModelBase *model, const Ptr<MvnBase> &coefficient_prior,
+        GammaRegressionModelBase *model,
+        const Ptr<MvnBase> &coefficient_prior,
         const Ptr<DiffDoubleModel> &shape_parameter_prior,
         RNG &seeding_rng = GlobalRng::rng);
 
@@ -59,12 +60,14 @@ namespace BOOM {
 
     // If find_posterior_mode was called successfully, then
     // mh_sampler_ will be defined. Otherwise it will be nullptr.
-    bool posterior_mode_found() const { return !!mh_sampler_; }
+    bool posterior_mode_found() const {return !!mh_sampler_;}
 
     // Returns the log posterior and its derivatives with respect to
     // (log alpha, beta).
-    double log_posterior(const Vector &log_alpha_beta, Vector &gradient,
-                         Matrix &Hessian, uint nderiv) const;
+    double log_posterior(const Vector &log_alpha_beta,
+                         Vector &gradient,
+                         Matrix &Hessian,
+                         uint nderiv) const;
 
    private:
     GammaRegressionModelBase *model_;
@@ -80,4 +83,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_
+#endif //  BOOM_GLM_GAMMA_REGRESSION_POSTERIOR_SAMPLER_HPP_

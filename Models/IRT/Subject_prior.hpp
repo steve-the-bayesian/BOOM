@@ -19,83 +19,89 @@
 #ifndef BOOM_SUBJECT_PRIOR_HPP
 #define BOOM_SUBJECT_PRIOR_HPP
 
-#include <models/mvn_model.hpp>
-#include <models/param_policies.hpp>
-#include <models/param_types.hpp>
-#include <models/prior_policies.hpp>
-#include <models/sufstat_policies.hpp>
 #include "IRT.hpp"
 #include "Subject.hpp"
-#include "cpputil/math_utils.hpp"
-namespace BOOM {
+#include <cpputil/math_utils.hpp>
+#include <models/param_types.hpp>
+#include <models/param_policies.hpp>
+#include <models/sufstat_policies.hpp>
+#include <models/prior_policies.hpp>
+#include <models/mvn_model.hpp>
+namespace BOOM{
   class mvn_suf;
-  namespace IRT {
+  namespace IRT{
 
-    class constrained_mvn_params : public corr_params {
+    class constrained_mvn_params : public corr_params{
       Corr Rinv_;
       double logdet_rinv;
       bool out_of_sync;
-      Corr &value() { return corr_params::value(); }
+      Corr & value(){return corr_params::value();}
       bool sync();
-
-     public:
+    public:
       constrained_mvn_params(uint ThetaDim);
       constrained_mvn_params(const SpdMatrix &R);
       constrained_mvn_params(const constrained_mvn_params &rhs);
-      constrained_mvn_params *clone() const;
+      constrained_mvn_params * clone()const;
 
-      constrained_mvn_params &operator=(const Corr &);
-      constrained_mvn_params &set_Rinv(const SpdMatrix &rinv);
+      constrained_mvn_params& operator=(const Corr &);
+      constrained_mvn_params & set_Rinv(const SpdMatrix & rinv);
 
-      const Corr &R() const;
-      const Corr &Rinv() const;
-      const double &ldri() const;
+      const Corr & R()const;
+      const Corr & Rinv()const;
+      const double & ldri()const;
 
-      const double *unvectorize(const double *dp);            //
-      const double *unvectorize(const double *dp, bool &ok);  //
-      bool problem() const { return out_of_sync; }
+      const double * unvectorize(const double *dp); //
+      const double * unvectorize(const double *dp, bool &ok); //
+      bool problem()const{return out_of_sync;}
       int io(const string &dname, const string &fname, IO io_prm,
-             const string &sfx);
+              const string &sfx);
+
     };
 
-    class SubjectPrior : public default_param_policy<constrained_mvn_params>,
-                         public default_sufstat_policy<mvn_suf>,
-                         public default_prior_policy,
-                         public basic_prior_details<Subject> {
+
+    class SubjectPrior
+      : public default_param_policy<constrained_mvn_params>,
+        public default_sufstat_policy<mvn_suf>,
+        public default_prior_policy,
+        public basic_prior_details<Subject>
+    {
       //  theta[i] ~ N(0, R)
-     public:
+    public:
       SubjectPrior(uint ThetaDim);
       SubjectPrior(const SpdMatrix &R);
       SubjectPrior(const SubjectPrior &rhs);
-      SubjectPrior *clone() const;
+      SubjectPrior * clone()const;
 
-      double pdf(const Ptr<data> &, bool logscale) const;
-      const SpdMatrix &Rinv() const;
-      const SpdMatrix &R() const;
-      const double &ldri() const;
-      double loglike(const Vector &x) const;
+      double pdf(const Ptr<data> &, bool logscale)const;
+      const SpdMatrix & Rinv()const;
+      const SpdMatrix & R()const;
+      const double & ldri()const;
+      double loglike(const Vector &x)const;
       void draw_children_params();
       void draw_theta_slice();
       void draw_theta_MH();
+
     };
 
-    class Subject_Regression_Prior {
+    class Subject_Regression_Prior{
       // each subject with covariates X has theta\sim N(X*Beta, R);
       // part of beta must be constrained to ensure identifiability
-     public:
+    public:
     };
     //======================================================================
-    class UniformCorrelationPrior : public default_param_policy<null_params>,
-                                    public default_sufstat_policy<null_suf>,
-                                    public default_prior_policy,
-                                    public slice_sampling_prior<SubjectPrior> {
+    class UniformCorrelationPrior
+      : public default_param_policy<null_params>,
+        public default_sufstat_policy<null_suf>,
+        public default_prior_policy,
+        public slice_sampling_prior<SubjectPrior>
+    {
       // p(R) \propto 1
-     public:
+    public:
       typedef UniformCorrelationPrior UCP;
-      UCP *clone() const;
-      double pdf(const Ptr<data> &, bool logscale) const;
+      UCP * clone()const;
+      double pdf(const Ptr<data> &, bool logscale)const;
     };
-  }  // namespace IRT
-}  // namespace BOOM
-#endif  // BOOM_SUBJECT_PRIOR_HPP
+  }
+}
+#endif // BOOM_SUBJECT_PRIOR_HPP
 g

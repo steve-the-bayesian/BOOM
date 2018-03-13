@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,27 +15,31 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/PosteriorSamplers/GaussianMeanSampler.hpp"
+#include <Models/PosteriorSamplers/GaussianMeanSampler.hpp>
+#include <Models/GaussianModel.hpp>
 #include <cmath>
-#include "Models/GaussianModel.hpp"
-#include "distributions.hpp"
+#include <distributions.hpp>
 
-namespace BOOM {
+namespace BOOM{
   typedef GaussianMeanSampler GMS;
 
   GMS::GaussianMeanSampler(GaussianModel *Mod, double mu, double tau,
                            RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        mod_(Mod),
-        pri(new GaussianModel(mu, tau)) {}
+    : PosteriorSampler(seeding_rng),
+      mod_(Mod),
+      pri(new GaussianModel(mu, tau))
+  {}
 
   GMS::GaussianMeanSampler(GaussianModel *Mod, const Ptr<GaussianModel> &Pri,
                            RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), mod_(Mod), pri(Pri) {}
+    : PosteriorSampler(seeding_rng),
+      mod_(Mod),
+      pri(Pri)
+  {}
 
-  double GMS::logpri() const { return pri->logp(mod_->mu()); }
+  double GMS::logpri()const{ return pri->logp(mod_->mu()); }
 
-  void GMS::draw() {
+  void GMS::draw(){
     Ptr<GaussianSuf> s = mod_->suf();
 
     double ybar = s->ybar();
@@ -47,11 +50,11 @@ namespace BOOM {
     double mu0 = pri->mu();
     double tausq = pri->sigsq();
 
-    double ivar = (n / sigsq) + (1.0 / tausq);
-    double mean = (n * ybar / sigsq + mu0 / tausq) / ivar;
-    double sd = sqrt(1.0 / ivar);
+    double ivar= (n/sigsq) + (1.0/tausq);
+    double mean = (n*ybar/sigsq + mu0/tausq)/ivar;
+    double sd = sqrt(1.0/ivar);
 
     double ans = rnorm_mt(rng(), mean, sd);
     mod_->set_mu(ans);
   }
-}  // namespace BOOM
+}

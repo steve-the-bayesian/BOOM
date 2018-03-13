@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,11 +19,11 @@
 #ifndef BOOM_BETA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_BETA_POSTERIOR_SAMPLER_HPP_
 
+#include <Models/DoubleModel.hpp>
+#include <Models/BetaModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Samplers/ScalarSliceSampler.hpp>
 #include <stdexcept>
-#include "Models/BetaModel.hpp"
-#include "Models/DoubleModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
 
@@ -33,7 +32,8 @@ namespace BOOM {
   // given, then support is truncated to those intervals.
   class BetaPosteriorSampler : public PosteriorSampler {
    public:
-    BetaPosteriorSampler(BetaModel *model, const Ptr<DoubleModel> &mean_prior,
+    BetaPosteriorSampler(BetaModel *model,
+                         const Ptr<DoubleModel> &mean_prior,
                          const Ptr<DoubleModel> &sample_size_prior,
                          RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
@@ -50,10 +50,10 @@ namespace BOOM {
     // generate a message containing the state of the sampler.  If *e
     // is non-NULL then print the exception message as part of the
     // error message.
-    std::string error_message(const char *thing_being_drawn,
-                              const std::exception *e) const;
+    std::string error_message(
+        const char *thing_being_drawn, const std::exception *e)const;
   };
 
-}  // namespace BOOM
+} // namespace BOOM
 
-#endif  // BOOM_BETA_POSTERIOR_SAMPLER_HPP_
+#endif // BOOM_BETA_POSTERIOR_SAMPLER_HPP_

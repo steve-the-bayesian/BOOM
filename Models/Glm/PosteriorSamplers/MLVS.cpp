@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -16,34 +15,34 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/Glm/PosteriorSamplers/MLVS.hpp"
+#include <Models/Glm/PosteriorSamplers/MLVS.hpp>
 
-#include <algorithm>
-#include <cmath>
 #include <sstream>
+#include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
-#include <random>
-#include "LinAlg/Selector.hpp"
-#include "Models/Glm/ChoiceData.hpp"
-#include "Models/Glm/MultinomialLogitModel.hpp"
-#include "Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp"
-#include "Models/MvnBase.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/seq.hpp"
-#include "distributions.hpp"  // for rlexp,dnorm,rmvn
-#include "stats/logit.hpp"
+#include <LinAlg/Selector.hpp>
+#include <Models/Glm/ChoiceData.hpp>
+#include <Models/Glm/MultinomialLogitModel.hpp>
+#include <Models/Glm/PosteriorSamplers/MLVS_data_imputer.hpp>
+#include <Models/MvnBase.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/seq.hpp>
+#include <distributions.hpp>       // for rlexp,dnorm,rmvn
+#include <stats/logit.hpp>
 
 namespace BOOM {
   namespace {
     typedef MultinomialLogitModel MLM;
     typedef MultinomialLogit::CompleteDataSufficientStatistics MLVSS;
-  }  // namespace
+  }
   using std::ostringstream;
 
   MLVS::MLVS(MLM *Mod, const Ptr<MvnBase> &Pri,
-             const Ptr<VariableSelectionPrior> &Vpri, uint nthreads,
-             bool check_initial_condition, RNG &seeding_rng)
+             const Ptr<VariableSelectionPrior> &Vpri,
+             uint nthreads, bool check_initial_condition,
+             RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         mod_(Mod),
         pri(Pri),
@@ -52,7 +51,8 @@ namespace BOOM {
         log_sampling_probs_(mod_->log_sampling_probs()),
         downsampling_(log_sampling_probs_.size() == mod_->Nchoices()),
         select_(true),
-        max_nflips_(mod_->beta_size(false)) {
+        max_nflips_(mod_->beta_size(false))
+  {
     if (check_initial_condition) {
       if (!std::isfinite(this->logpri())) {
         ostringstream err;
@@ -74,7 +74,9 @@ namespace BOOM {
     draw_beta();
   }
 
-  void MLVS::clear_latent_data() { suf_.clear(); }
+  void MLVS::clear_latent_data() {
+    suf_.clear();
+  }
 
   Ptr<MlvsDataImputer> MLVS::create_worker(std::mutex &m) {
     return new MlvsDataImputer(suf_, m, mod_, nullptr, rng());
@@ -84,13 +86,15 @@ namespace BOOM {
     BOOM::assign_data_to_workers(mod_->dat(), workers());
   }
 
-  double MLVS::logpri() const {
+  double MLVS::logpri()const{
     const Selector &g = mod_->coef().inc();
     double ans = vpri->logp(g);
     if (ans == BOOM::negative_infinity()) return ans;
     if (g.nvars() > 0) {
-      ans += dmvn(g.select(mod_->beta()), g.select(pri->mu()),
-                  g.select(pri->siginv()), true);
+      ans += dmvn(g.select(mod_->beta()),
+                  g.select(pri->mu()),
+                  g.select(pri->siginv()),
+                  true);
     }
     return ans;
   }
@@ -99,17 +103,17 @@ namespace BOOM {
   // Drawing parameters
 
   void MLVS::draw_beta() {
-    const Selector &inc(mod_->coef().inc());
+    const Selector  &inc(mod_->coef().inc());
     uint N = inc.nvars_possible();
     Vector Beta(N, 0.);
     if (inc.nvars() > 0) {
       SpdMatrix Ominv = inc.select(pri->siginv());
       SpdMatrix ivar = Ominv + inc.select(suf_.xtwx());
-      Vector b = inc.select(suf_.xtwu()) + Ominv * inc.select(pri->mu());
+      Vector b = inc.select(suf_.xtwu()) + Ominv *inc.select(pri->mu());
       b = ivar.solve(b);
-      Vector beta = rmvn_ivar(b, ivar);
+      Vector beta = rmvn_ivar(b,ivar);
       uint n = b.size();
-      for (uint i = 0; i < n; ++i) {
+      for (uint i=0; i<n; ++i) {
         uint I = inc.indx(i);
         Beta[I] = beta[i];
       }
@@ -137,30 +141,28 @@ namespace BOOM {
       report_error(err.str());
     }
 
-    std::vector<uint> flips = seq<uint>(0, nv - 1);
-    std::shuffle(flips.begin(), flips.end(), std::default_random_engine());
+    std::vector<uint> flips = seq<uint>(0, nv-1);
+    std::random_shuffle(flips.begin(), flips.end());
     uint hi = std::min<uint>(nv, max_nflips());
-    for (uint i = 0; i < hi; ++i) {
+    for (uint i=0; i<hi; ++i) {
       uint I = flips[i];
       inc.flip(I);
       double logp_new = log_model_prob(inc);
-      if (keep_flip(rng(), logp, logp_new))
-        logp = logp_new;
-      else
-        inc.flip(I);  // reject the flip, so flip back
+      if ( keep_flip(rng(), logp, logp_new)) logp = logp_new;
+      else inc.flip(I);  // reject the flip, so flip back
     }
     mod_->coef().set_inc(inc);
   }
 
-  void MLVS::suppress_model_selection() { select_ = false; }
-  void MLVS::allow_model_selection() { select_ = true; }
-  void MLVS::limit_model_selection(uint n) { max_nflips_ = n; }
-  uint MLVS::max_nflips() const { return max_nflips_; }
+  void MLVS::suppress_model_selection() { select_ = false;}
+  void MLVS::allow_model_selection() { select_ = true;}
+  void MLVS::limit_model_selection(uint n) {max_nflips_ = n;}
+  uint MLVS::max_nflips()const{return max_nflips_;}
 
   //______________________________________________________________________
   // computing probabilities
 
-  double MLVS::log_model_prob(const Selector &g) {
+  double MLVS::log_model_prob(const Selector & g) {
     double num = vpri->logp(g);
     if (num == BOOM::negative_infinity()) return num;
     if (g.nvars() == 0) {
@@ -169,24 +171,24 @@ namespace BOOM {
     }
 
     Ominv = g.select(pri->siginv());
-    num += .5 * Ominv.logdet();
+    num += .5*Ominv.logdet();
     if (num == BOOM::negative_infinity()) return num;
 
     Vector mu = g.select(pri->mu());
     Vector Ominv_mu = Ominv * mu;
-    num -= .5 * mu.dot(Ominv_mu);
+    num -= .5*mu.dot(Ominv_mu);
 
-    bool ok = true;
+    bool ok=true;
     iV_tilde_ = Ominv + g.select(suf_.xtwx());
     Matrix L = iV_tilde_.chol(ok);
-    if (!ok) return BOOM::negative_infinity();
+    if (!ok)  return BOOM::negative_infinity();
     double denom = sum(log(L.diag()));  // = .5 log |Ominv|
 
     Vector S = g.select(suf_.xtwu()) + Ominv_mu;
-    Lsolve_inplace(L, S);
-    denom -= .5 * S.normsq();  // S.normsq =  beta_tilde ^T V_tilde beta_tilde
+    Lsolve_inplace(L,S);
+    denom-= .5*S.normsq();  // S.normsq =  beta_tilde ^T V_tilde beta_tilde
 
-    return num - denom;
+    return num-denom;
   }
 
 }  // namespace BOOM

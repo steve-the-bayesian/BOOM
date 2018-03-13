@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -16,28 +15,30 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/PosteriorSamplers/CompositeModelSampler.hpp"
+#include <Models/PosteriorSamplers/CompositeModelSampler.hpp>
 
-namespace BOOM {
+namespace BOOM{
   typedef CompositeModel CM;
   typedef CompositeModelSampler CMS;
 
   CMS::CompositeModelSampler(CM *model, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), m_(model) {}
+      : PosteriorSampler(seeding_rng),
+        m_(model)
+  {}
 
-  double CMS::logpri() const {
+  double CMS::logpri()const{
     const std::vector<Ptr<MixtureComponent> > &components(m_->components());
     double ans = 0;
-    for (int i = 0; i < components.size(); ++i) {
+    for(int i = 0; i < components.size(); ++i){
       ans += components[i]->logpri();
     }
     return ans;
   }
 
-  void CMS::draw() {
+  void CMS::draw(){
     std::vector<Ptr<MixtureComponent> > &components(m_->components());
-    for (int i = 0; i < components.size(); ++i) {
+    for(int i = 0; i < components.size(); ++i){
       components[i]->sample_posterior();
     }
   }
-}  // namespace BOOM
+}

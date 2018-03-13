@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,16 +19,16 @@
 #ifndef BOOM_SPD_MODEL_HPP
 #define BOOM_SPD_MODEL_HPP
 
-#include "Models/ModelTypes.hpp"
+#include <Models/ModelTypes.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   // A mix-in class indicating that the model is capable of
-  class SpdModel : virtual public MixtureComponent {
-   public:
-    virtual double logp(const SpdMatrix &) const = 0;
-    SpdModel *clone() const override = 0;
-    double pdf(const Data *dp, bool logscale) const override;
+  class SpdModel : virtual public MixtureComponent{
+  public:
+    virtual double logp(const SpdMatrix &)const=0;
+    SpdModel *clone()const override =0;
+    double pdf(const Data *dp, bool logscale)const override;
   };
 
 }  // namespace BOOM

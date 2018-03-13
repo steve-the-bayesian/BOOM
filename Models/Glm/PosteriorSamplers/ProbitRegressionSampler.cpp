@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -16,63 +15,71 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/Glm/PosteriorSamplers/ProbitRegressionSampler.hpp"
-#include "distributions.hpp"
+#include <Models/Glm/PosteriorSamplers/ProbitRegressionSampler.hpp>
+#include <distributions.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  namespace {
-    typedef ProbitRegressionSampler PRS;
-  }
+  typedef ProbitRegressionSampler PRS;
 
   PRS::ProbitRegressionSampler(ProbitRegressionModel *model,
-                               const Ptr<MvnBase> &prior, RNG &seeding_rng)
+                               const Ptr<MvnBase> &prior,
+                               RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        model_(model),
-        prior_(prior),
-        xtx_(model_->xdim()),
-        xtz_(model_->xdim()) {
+        mod_(model),
+        pri_(prior),
+        xtx_(mod_->xdim()),
+        xtz_(mod_->xdim()),
+        beta_(mod_->xdim())
+  {
     refresh_xtx();
   }
 
-  double PRS::logpri() const { return prior_->logp(model_->Beta()); }
+  double PRS::logpri()const{
+    return pri_->logp(mod_->Beta());
+  }
 
-  void PRS::draw() {
+  void PRS::draw(){
     impute_latent_data();
     draw_beta();
   }
 
-  void PRS::draw_beta() {
-    model_->set_Beta(rmvn_suf_mt(rng(), xtx_ + prior_->siginv(),
-                                 xtz_ + prior_->siginv() * prior_->mu()));
+  void PRS::draw_beta(){
+    const SpdMatrix & siginv(pri_->siginv());
+    beta_ = rmvn_suf_mt(rng(),
+                        xtx_ + siginv,
+                        xtz_ + siginv * pri_->mu());
+    mod_->set_Beta(beta_);
   }
 
-  void PRS::impute_latent_data() {
-    const ProbitRegressionModel::DatasetType &data(model_->dat());
+  void PRS::impute_latent_data(){
+    const ProbitRegressionModel::DatasetType & data(mod_->dat());
     int n = data.size();
-    const Vector &beta(model_->Beta());
+    const Vector & beta(mod_->Beta());
     xtz_ = 0;
-    for (int i = 0; i < n; ++i) {
-      const Vector &x(data[i]->x());
-      double z = imputer_.impute(rng(), 1, data[i]->y(), x.dot(beta));
-      xtz_.axpy(x, z);
+    for(int i = 0; i < n; ++i){
+      const Vector & x(data[i]->x());
+      double eta = x.dot(beta);
+      bool y = data[i]->y();
+      double z = rtrun_norm_mt(rng(), eta, 1, 0, y);
+      xtz_.axpy(x,z);
     }
   }
 
-  const Vector &PRS::xtz() const { return xtz_; }
-  const SpdMatrix &PRS::xtx() const { return xtx_; }
+  const Vector & PRS::xtz()const{ return xtz_; }
+  const SpdMatrix & PRS::xtx()const{ return xtx_; }
 
-  void PRS::refresh_xtx() {
-    int p = model_->xdim();
+  void PRS::refresh_xtx(){
+    int p = mod_->xdim();
     xtx_.resize(p);
     xtx_ = 0;
-    const ProbitRegressionModel::DatasetType &data(model_->dat());
+    const ProbitRegressionModel::DatasetType & data(mod_->dat());
     int n = data.size();
-    for (int i = 0; i < n; ++i) {
-      const Vector &x(data[i]->x());
+    for(int i = 0; i < n; ++i){
+      const Vector & x(data[i]->x());
       xtx_.add_outer(x, 1, false);
     }
     xtx_.reflect();
   }
 
-}  // namespace BOOM
+}

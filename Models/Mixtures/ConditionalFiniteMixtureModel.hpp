@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,11 +19,11 @@
 #ifndef BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_MODEL_HPP_
 #define BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_MODEL_HPP_
 
-#include "Models/DataTypes.hpp"
-#include "Models/Glm/MultinomialLogitModel.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/Glm/MultinomialLogitModel.hpp>
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/ModelTypes.hpp>
+#include <Models/DataTypes.hpp>
 
 namespace BOOM {
 
@@ -43,17 +42,18 @@ namespace BOOM {
     //     component number here.  In most cases this will not be
     //     known, in which case any negative number can be supplied
     //     (thus the default of -1).
-    ConditionalMixtureData(const Ptr<Data> &data,
-                           const Ptr<VectorData> &mixture_category_predictors,
-                           int number_of_mixture_components,
-                           int known_mixture_component = -1);
+    ConditionalMixtureData(
+        const Ptr<Data> &data,
+        const Ptr<VectorData> &mixture_category_predictors,
+        int number_of_mixture_components,
+        int known_mixture_component = -1);
 
     ConditionalMixtureData(const ConditionalMixtureData &rhs);
-    ConditionalMixtureData *clone() const override;
-    ostream &display(ostream &out) const override;
+    ConditionalMixtureData * clone() const override;
+    ostream & display(ostream &out) const override;
 
     // The individual data point being modeled by the mixture.
-    const Data *data() const;
+    const Data * data() const;
     Ptr<Data> shared_data();
 
     // The predictor data for determining the mixture category, along
@@ -89,11 +89,14 @@ namespace BOOM {
   // Note that by having this class inherit from MixtureComponent we
   // can nest several layers of ConditionalFiniteMixtureModels
   // together to get a hierarchical mixture of experts.
-  class ConditionalFiniteMixtureModel : virtual public MixtureComponent,
-                                        public LatentVariableModel,
-                                        public CompositeParamPolicy,
-                                        public PriorPolicy {
+  class ConditionalFiniteMixtureModel
+      : virtual public MixtureComponent,
+        public LatentVariableModel,
+        public CompositeParamPolicy,
+        public PriorPolicy
+  {
    public:
+
     // Args:
     //   mixture_components: The vector of mixture components used in
     //     the model.
@@ -109,10 +112,10 @@ namespace BOOM {
     // sample_posterior() is called.  None of the models should have
     // data assigned to them.
     ConditionalFiniteMixtureModel(
-        const std::vector<Ptr<MixtureComponent> > &mixture_components,
+        const std::vector<Ptr<MixtureComponent> > & mixture_components,
         const Ptr<MultinomialLogitModel> &mixing_distribution);
 
-    ConditionalFiniteMixtureModel *clone() const override;
+    ConditionalFiniteMixtureModel * clone()const override;
 
     // Clears data from the mixture components.  No data is cleared
     // from the mixing distribution or the vector of data for this
@@ -122,10 +125,10 @@ namespace BOOM {
     // Clear the data from the model and all its components.
     void clear_data() override;
 
-    void add_data(const Ptr<Data> &dp) override;
-    void add_conditional_mixture_data(const Ptr<ConditionalMixtureData> &dp);
-    virtual std::vector<Ptr<ConditionalMixtureData> > &dat();
-    virtual const std::vector<Ptr<ConditionalMixtureData> > &dat() const;
+    void add_data(const Ptr<Data> & dp) override;
+    void add_conditional_mixture_data(const Ptr<ConditionalMixtureData> & dp);
+    virtual std::vector<Ptr<ConditionalMixtureData> > & dat();
+    virtual const std::vector<Ptr<ConditionalMixtureData> > & dat()const;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
     // Assigns each (non-missing) observation to a mixture component.
@@ -135,19 +138,19 @@ namespace BOOM {
     void impute_latent_data(RNG &rng) override;
 
     // The number of mixture components in the model.
-    int number_of_mixture_components() const;
+    int number_of_mixture_components()const;
 
     MultinomialLogitModel *mixing_distribution();
-    const MultinomialLogitModel *mixing_distribution() const;
+    const MultinomialLogitModel *mixing_distribution()const;
 
     MixtureComponent *mixture_component(int s);
-    const MixtureComponent *mixture_component(int s) const;
+    const MixtureComponent *mixture_component(int s)const;
 
     double last_loglike() const;
 
     double pdf(const Data *dp, bool logscale) const override;
     double logp(const ConditionalMixtureData &data) const;
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override {return dat().size();}
 
     // Sets the mixture component for a specific observation number.
     // Args:
@@ -155,10 +158,10 @@ namespace BOOM {
     //     component is to be assigned.
     //   which_component: The number of the mixture component for that
     //     observation.
-    void set_mixture_component_for_observation(int observation_number,
-                                               int which_component);
+    void set_mixture_component_for_observation(
+        int observation_number, int which_component);
 
-    const Matrix &class_membership_probabilities() const {
+    const Matrix & class_membership_probabilities() const {
       return class_membership_probabilities_;
     }
 
@@ -182,4 +185,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_MODEL_HPP_
+#endif // BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_MODEL_HPP_

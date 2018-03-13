@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -20,9 +19,9 @@
 #ifndef BOOM_PROBIT_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_PROBIT_BART_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
-#include "Models/Bart/ProbitBartModel.hpp"
-#include "Models/Bart/ResidualRegressionData.hpp"
+#include <Models/Bart/ProbitBartModel.hpp>
+#include <Models/Bart/ResidualRegressionData.hpp>
+#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
 
 namespace BOOM {
   namespace Bart {
@@ -39,12 +38,12 @@ namespace BOOM {
     // sum_i z[i].
     class ProbitResidualData : public ResidualRegressionData {
      public:
-      ProbitResidualData(const Ptr<BinomialRegressionData> &data_point,
+      ProbitResidualData(const Ptr<BinomialRegressionData> & data_point,
                          double original_prediction);
-      double y() const { return original_data_->y(); }
-      double n() const { return original_data_->n(); }
+      double y() const {return original_data_->y();}
+      double n() const {return original_data_->n();}
       void add_to_residual(double value) override;
-      void add_to_probit_suf(ProbitSufficientStatistics &suf) const override;
+      void add_to_probit_suf(ProbitSufficientStatistics &suf)const override;
       double sum_of_residuals() const;
       void set_sum_of_residuals(double sum_of_residuals);
 
@@ -53,7 +52,7 @@ namespace BOOM {
       // than to recompute it each time it is needed.  The value of
       // the prediction is adjusted each time add_to_residual or
       // subtract_from_residual is called.
-      double prediction() const { return prediction_; }
+      double prediction() const {return prediction_;}
       void set_prediction(double value) { prediction_ = value; }
 
      private:
@@ -68,28 +67,29 @@ namespace BOOM {
     //======================================================================
     class ProbitSufficientStatistics : public SufficientStatisticsBase {
      public:
-      ProbitSufficientStatistics *clone() const override;
+      ProbitSufficientStatistics * clone() const override;
       void clear() override;
       void update(const ResidualRegressionData &abstract_data) override;
       virtual void update(const ProbitResidualData &data);
-      int sample_size() const;
-      double sum() const;
-
+      int sample_size()const;
+      double sum()const;
      private:
       // n_ is the number of Bernoulli observations.
       double n_;
       // sum_ is the sum of residuals of latent probits.
       double sum_;
     };
-  }  // namespace Bart
+  } // namespace Bart
 
   class ProbitBartPosteriorSampler : public BartPosteriorSamplerBase {
    public:
     typedef Bart::ProbitResidualData DataType;
 
     ProbitBartPosteriorSampler(
-        ProbitBartModel *model, double total_prediction_sd,
-        double prior_tree_depth_alpha, double prior_tree_depth_beta,
+        ProbitBartModel *model,
+        double total_prediction_sd,
+        double prior_tree_depth_alpha,
+        double prior_tree_depth_beta,
         const std::function<double(int)> &log_prior_on_number_of_trees,
         RNG &seeding_rng = GlobalRng::rng);
 
@@ -99,24 +99,23 @@ namespace BOOM {
     // Omits a factor of (2*pi)^{N/2} \exp{-.5 * (N - 1) * s^2 } from
     // the integrated likelihood.
     double log_integrated_likelihood(
-        const Bart::SufficientStatisticsBase &suf) const override;
+        const Bart::SufficientStatisticsBase &suf)const override;
     double log_integrated_probit_likelihood(
-        const Bart::ProbitSufficientStatistics &suf) const;
+        const Bart::ProbitSufficientStatistics &suf)const;
 
     double complete_data_log_likelihood(
-        const Bart::SufficientStatisticsBase &suf) const override;
+        const Bart::SufficientStatisticsBase &suf)const override;
     double complete_data_probit_log_likelihood(
-        const Bart::ProbitSufficientStatistics &suf) const;
+        const Bart::ProbitSufficientStatistics &suf)const;
 
     void clear_residuals() override;
-    int residual_size() const override;
-    Bart::ProbitResidualData *create_and_store_residual(int i) override;
-    Bart::ProbitResidualData *residual(int i) override;
-    Bart::ProbitSufficientStatistics *create_suf() const override;
+    int residual_size()const override;
+    Bart::ProbitResidualData * create_and_store_residual(int i) override;
+    Bart::ProbitResidualData * residual(int i) override;
+    Bart::ProbitSufficientStatistics * create_suf()const override;
 
     void impute_latent_data();
     void impute_latent_data_point(DataType *data);
-
    private:
     ProbitBartModel *model_;
     std::vector<std::shared_ptr<DataType> > residuals_;

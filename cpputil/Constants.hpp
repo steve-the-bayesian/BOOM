@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -19,16 +18,17 @@
 
 #ifndef BOOM_MATH_CONSTANTS_HPP_
 #define BOOM_MATH_CONSTANTS_HPP_
-namespace BOOM {
+namespace BOOM{
 
-  struct Constants {
-    static double pi;
-    static double pi_squared;
-    static double half_pi_squared;
-    static double root_2pi;
-    static double log_root_2pi;
-    static double log_pi;
-  };
+struct Constants{
+  static double pi;
+  static double pi_squared;
+  static double half_pi_squared;
+  static double root_2pi;
+  static double log_root_2pi;
+  static double log_pi;
+};
 
-}  // namespace BOOM
-#endif  // BOOM_MATH_CONSTANTS_HPP_
+
+}
+#endif // BOOM_MATH_CONSTANTS_HPP_

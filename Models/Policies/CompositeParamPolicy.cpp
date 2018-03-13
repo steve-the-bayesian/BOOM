@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,45 +15,50 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/Policies/CompositeParamPolicy.hpp"
+#include <Models/Policies/CompositeParamPolicy.hpp>
 #include <algorithm>
 
-namespace BOOM {
+namespace BOOM{
   typedef CompositeParamPolicy CPP;
 
-  CPP::CompositeParamPolicy() {}
+  CPP::CompositeParamPolicy()
+  {}
 
-  CPP::CompositeParamPolicy(const CPP &rhs) : Model(rhs) {}
+  CPP::CompositeParamPolicy(const CPP &rhs)
+    : Model(rhs)
+  {}
 
-  CPP &CPP::operator=(const CompositeParamPolicy &) { return *this; }
+  CPP & CPP::operator=(const CompositeParamPolicy &)
+  {return *this;}
 
-  void CPP::add_params(const Ptr<Params> &p) { t_.push_back(p); }
+  void CPP::add_params(const Ptr<Params> & p){ t_.push_back(p); }
 
-  void CPP::add_model(const Ptr<Model> &m) {
-    if (have_model(m)) return;
+  void CPP::add_model(const Ptr<Model> & m){
+    if(have_model(m)) return;
     models_.push_back(m);
     ParamVector tmp(m->parameter_vector());
     std::copy(tmp.begin(), tmp.end(), back_inserter(t_));
   }
-  void CPP::drop_model(const Ptr<Model> &m) {
-    if (!have_model(m)) return;
+  void CPP::drop_model(const Ptr<Model> & m){
+    if(!have_model(m)) return;
     models_.erase(std::remove(models_.begin(), models_.end(), m),
                   models_.end());
     ParamVector tmp(m->parameter_vector());
-    for (uint i = 0; i < tmp.size(); ++i) {
+    for(uint i = 0; i<tmp.size(); ++i){
       t_.erase(std::remove(t_.begin(), t_.end(), tmp[i]), t_.end());
     }
   }
-  void CPP::clear() {
+  void CPP::clear(){
     models_.clear();
     t_.clear();
   }
 
-  ParamVector CPP::parameter_vector() { return t_; }
-  const ParamVector CPP::parameter_vector() const { return t_; }
+  ParamVector CPP::parameter_vector(){return t_;}
+  const ParamVector CPP::parameter_vector()const{return t_;}
 
-  bool CPP::have_model(const Ptr<Model> &m) const {
-    return std::find(models_.begin(), models_.end(), m) != models_.end();
-  }
+  bool CPP::have_model(const Ptr<Model> & m)const{
+    return std::find(models_.begin(),models_.end(), m)
+      != models_.end();}
 
-}  // namespace BOOM
+
+}

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -19,21 +18,20 @@
 #ifndef BOOM_COMPOSITE_MODEL_SAMPLER_HPP_
 #define BOOM_COMPOSITE_MODEL_SAMPLER_HPP_
 
-#include "Models/CompositeModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-namespace BOOM {
+#include <Models/CompositeModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+namespace BOOM{
   // A CompositeModelSampler is the default sampling method for a
   // CompositeModel.  It implements logpri() and draw() by passing calls
   // down to the individual components of the composite model.
-  class CompositeModelSampler : public PosteriorSampler {
+  class CompositeModelSampler : public PosteriorSampler{
    public:
     CompositeModelSampler(CompositeModel *model,
                           RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
-
    private:
     CompositeModel *m_;
   };
-}  // namespace BOOM
-#endif  //  BOOM_COMPOSITE_MODEL_SAMPLER_HPP_
+}
+#endif //  BOOM_COMPOSITE_MODEL_SAMPLER_HPP_

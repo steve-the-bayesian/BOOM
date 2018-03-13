@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,12 +16,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/CategoricalData.hpp"
+#include <Models/CategoricalData.hpp>
 #include <algorithm>
 #include <fstream>
 #include <set>
 #include <sstream>
-#include "cpputil/report_error.hpp"
+#include <cpputil/report_error.hpp>
 
 namespace BOOM {
 
@@ -31,38 +30,39 @@ namespace BOOM {
     dp->set_key(this);
   }
 
-  void CatKeyBase::Remove(CategoricalData *dat) {
+  void CatKeyBase::Remove(CategoricalData * dat) {
     observers_.erase(dat);
     if (dat->key().get() == this) {
       dat->set_key(nullptr);
     }
   }
 
-  ostream &CatKeyBase::print(uint value, ostream &out) const {
+  ostream & CatKeyBase::print(uint value, ostream &out) const {
     out << value;
     return out;
   }
 
   uint CatKeyBase::findstr(const std::string &s) const {
-    report_error(
-        "A string value was used with a categorical variable that "
-        "does not support string operations.");
+    report_error("A string value was used with a categorical variable that "
+                 "does not support string operations.");
     return 0;
   }
   //======================================================================
-  ostream &UnboundedIntCatKey::print(ostream &out) const {
+  ostream & UnboundedIntCatKey::print(ostream &out) const {
     out << "Numeric data with no upper bound.";
     return out;
   }
   //======================================================================
-  ostream &FixedSizeIntCatKey::print(ostream &out) const {
+  ostream & FixedSizeIntCatKey::print(ostream &out) const {
     out << "Numeric data with upper bound " << max_levels();
     return out;
   }
   //======================================================================
   CatKey::CatKey() : labs_(), grow_(true) {}
 
-  CatKey::CatKey(int number_of_levels) : labs_(number_of_levels), grow_(false) {
+  CatKey::CatKey(int number_of_levels)
+      : labs_(number_of_levels),
+        grow_(false) {
     for (int i = 0; i < number_of_levels; ++i) {
       std::ostringstream label;
       label << "level_" << i;
@@ -71,9 +71,13 @@ namespace BOOM {
   }
 
   CatKey::CatKey(const std::vector<std::string> &labels)
-      : labs_(labels), grow_(false) {}
+    : labs_(labels),
+      grow_(false)
+  {}
 
-  void CatKey::allow_growth(bool allow) { grow_ = allow; }
+  void CatKey::allow_growth(bool allow) {
+    grow_ = allow;
+  }
 
   void CatKey::Register(CategoricalData *dp) {
     CatKeyBase::Register(dp);
@@ -82,8 +86,7 @@ namespace BOOM {
     }
   }
 
-  void CatKey::RegisterWithLabel(CategoricalData *dp,
-                                 const std::string &label) {
+  void CatKey::RegisterWithLabel(CategoricalData *dp, const std::string &label) {
     CatKeyBase::Register(dp);
     bool found = true;
     uint numeric_value_for_label = findstr_safe(label, found);
@@ -93,25 +96,25 @@ namespace BOOM {
       if (grow_) {
         add_label(label);
         dp->set(findstr_safe(label, found));
-      } else
-        report_error("illegal label passed to CatKey::Register");
+      }
+      else report_error("illegal label passed to CatKey::Register");
     }
   }
 
-  const std::vector<std::string> &CatKey::labels() const { return labs_; }
+  const std::vector<std::string> & CatKey::labels() const {return labs_;}
 
-  uint CatKey::findstr_safe(const std::string &label, bool &found) const {
-    std::vector<std::string>::const_iterator it =
-        std::find(labs_.begin(), labs_.end(), label);
+  uint CatKey::findstr_safe(const std::string & label, bool & found) const {
+    std::vector<std::string>::const_iterator it = std::find(
+        labs_.begin(), labs_.end(), label);
     if (it == labs_.end()) {
-      found = false;
+      found=false;
       return labs_.size();
     }
-    found = true;
+    found=true;
     return distance(labs_.begin(), it);
   }
 
-  uint CatKey::findstr(const std::string &lab) const {
+  uint CatKey::findstr(const std::string & lab) const {
     bool found(true);
     uint ans = findstr_safe(lab, found);
     if (!found) {
@@ -133,11 +136,10 @@ namespace BOOM {
       for (uint j = 0; j < new_ordering.size(); ++j) {
         if (lab == new_ordering[j]) {
           new_vals[i] = j;
-          break;
-        }
+          break;}
       }
     }
-    for (auto &el : observers()) {
+    for (auto  &el : observers()) {
       el->set(new_vals[el->value()]);
     }
     labs_ = new_ordering;
@@ -149,7 +151,7 @@ namespace BOOM {
     labs_ = new_labels;
   }
 
-  ostream &CatKey::print(ostream &out) const {
+  ostream & CatKey::print(ostream & out) const {
     uint nlab = labs_.size();
     for (uint i = 0; i < nlab; ++i) {
       out << "level " << i << " = " << labs_[i] << std::endl;
@@ -157,7 +159,7 @@ namespace BOOM {
     return out;
   }
 
-  ostream &CatKey::print(uint value, ostream &out) const {
+  ostream & CatKey::print(uint value, ostream &out) const {
     if (value >= labs_.size()) {
       out << "NA";
     } else {
@@ -184,7 +186,7 @@ namespace BOOM {
     std::vector<uint> new_pos(labs_.size());
     for (uint i = 0; i < labs_.size(); ++i) {
       std::string s = labs_[i];
-      bool found_pos = false;
+      bool found_pos=false;
       for (uint j = 0; j < sv.size(); ++j) {
         found_pos = false;
         if (sv[j] == s) {
@@ -195,7 +197,8 @@ namespace BOOM {
         if (!found_pos) {
           ostringstream err;
           err << "CatKey::map_levels:  the replacement set of category "
-              << "labels is not a superset of the original labels." << endl
+              << "labels is not a superset of the original labels."
+              << endl
               << "Could not find level: " << labs_[i]
               << " in replacement labels." << endl;
           report_error(err.str());
@@ -206,30 +209,39 @@ namespace BOOM {
   }
 
   //======================================================================
-  CategoricalData::~CategoricalData() { key_->Remove(this); }
+  CategoricalData::~CategoricalData() {
+    key_->Remove(this);
+  }
 
   CategoricalData::CategoricalData(uint val, uint Nlevels)
-      : val_(val), key_(new FixedSizeIntCatKey(Nlevels)) {
+      : val_(val),
+        key_(new FixedSizeIntCatKey(Nlevels))
+  {
     key_->Register(this);
   }
 
   CategoricalData::CategoricalData(uint val, const Ptr<CatKeyBase> &key)
-      : val_(val), key_(key) {
+      : val_(val),
+        key_(key)
+  {
     key_->Register(this);
   }
 
   CategoricalData::CategoricalData(uint val, CategoricalData &other)
-      : val_(val), key_(other.key_) {
+      : val_(val),
+        key_(other.key_)
+  {
     key_->Register(this);
   }
 
   CategoricalData::CategoricalData(const std::string &label,
                                    const Ptr<CatKey> &key)
-      : key_(key) {
+      : key_(key)
+  {
     key->RegisterWithLabel(this, label);
   }
 
-  CategoricalData *CategoricalData::clone() const {
+  CategoricalData * CategoricalData::clone() const {
     return new CategoricalData(*this);
   }
 
@@ -237,9 +249,8 @@ namespace BOOM {
   void CategoricalData::set(const uint &value, bool signal_observers) {
     if (key_->max_levels() > 0 && value >= key_->max_levels()) {
       ostringstream msg;
-      msg << "CategoricalData::set() argument " << value
-          << " exceeds "
-             "maximum number of levels.";
+      msg << "CategoricalData::set() argument " << value << " exceeds "
+          "maximum number of levels.";
       report_error(msg.str());
     }
     val_ = value;
@@ -249,18 +260,17 @@ namespace BOOM {
   }
 
   //------------------------------------------------------------
-  bool CategoricalData::operator==(uint rhs) const { return val_ == rhs; }
+  bool CategoricalData::operator==(uint rhs) const { return val_ == rhs;}
 
-  bool CategoricalData::operator==(const CategoricalData &rhs) const {
-    return val_ == rhs.val_;
-  }
+  bool CategoricalData::operator==(const CategoricalData & rhs) const {
+    return val_ == rhs.val_; }
 
   //------------------------------------------------------------
 
-  uint CategoricalData::nlevels() const { return key_->max_levels(); }
+  uint CategoricalData::nlevels() const { return key_->max_levels();}
   // note:  key_ must be set in order for this to work
 
-  const uint &CategoricalData::value() const { return val_; }
+  const uint & CategoricalData::value() const {return val_;}
 
   bool CategoricalData::comparable(const CategoricalData &rhs) const {
     return key_ == rhs.key_;
@@ -270,32 +280,40 @@ namespace BOOM {
     report_error("comparison between incompatible categorical variables");
   }
   //------------------------------------------------------------
-  ostream &CategoricalData::display(ostream &out) const {
+  ostream & CategoricalData::display(ostream &out) const {
     return key_->print(value(), out);
   }
 
-  void CategoricalData::print_key(ostream &out) const { out << *key_ << endl; }
+  void CategoricalData::print_key(ostream &out) const {
+    out << *key_ << endl;
+  }
 
   //======================================================================
 
+
   OrdinalData::OrdinalData(uint value, uint Nlevels)
-      : CategoricalData(value, Nlevels) {}
+    : CategoricalData(value, Nlevels)
+  {}
 
   OrdinalData::OrdinalData(uint value, const Ptr<CatKeyBase> &key)
-      : CategoricalData(value, key) {}
+    : CategoricalData(value, key)
+  {}
 
   OrdinalData::OrdinalData(const std::string &label, const Ptr<CatKey> &key)
-      : CategoricalData(label, key) {}
+    : CategoricalData(label, key)
+  {}
 
   OrdinalData::OrdinalData(const OrdinalData &rhs)
-      : Data(rhs), CategoricalData(rhs) {}
+    : Data(rhs),
+      CategoricalData(rhs)
+  {}
 
-  OrdinalData *OrdinalData::clone() const { return new OrdinalData(*this); }
+  OrdinalData * OrdinalData::clone() const { return new OrdinalData(*this);}
 
-  bool OrdinalData::operator<(uint rhs) const { return value() < rhs; }
-  bool OrdinalData::operator<=(uint rhs) const { return value() <= rhs; }
-  bool OrdinalData::operator>(uint rhs) const { return value() > rhs; }
-  bool OrdinalData::operator>=(uint rhs) const { return value() >= rhs; }
+  bool OrdinalData::operator<(uint rhs) const { return value() < rhs;}
+  bool OrdinalData::operator<=(uint rhs) const { return value() <= rhs;}
+  bool OrdinalData::operator>(uint rhs) const { return value() > rhs;}
+  bool OrdinalData::operator>=(uint rhs) const { return value() >= rhs;}
 
   bool OrdinalData::operator<(const std::string &rhs) const {
     uint v = key()->findstr(rhs);
@@ -336,12 +354,12 @@ namespace BOOM {
     std::sort(tmp.begin(), tmp.end());
     std::vector<std::string> labs;
     std::unique_copy(tmp.begin(), tmp.end(), back_inserter(labs));
-    return new CatKey(labs);
-  }
+    return new CatKey(labs);}
+
 
   std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
       const std::vector<std::string> &sv) {
-    uint n = sv.size();
+    uint n =sv.size();
     Ptr<CatKey> labs = make_catkey(sv);
     std::vector<Ptr<CategoricalData> > ans(n);
     for (uint i = 0; i < n; ++i) ans[i] = new CategoricalData(sv[i], labs);
@@ -359,7 +377,7 @@ namespace BOOM {
   }
 
   std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &iv) {
-    uint n = iv.size();
+    uint n =iv.size();
     uint Max = 0;
     for (uint i = 0; i < n; ++i) Max = std::max(iv[i], Max);
     Ptr<CatKeyBase> key(new FixedSizeIntCatKey(Max + 1));
@@ -371,4 +389,4 @@ namespace BOOM {
     return ans;
   }
 
-}  // namespace BOOM
+} // namespace BOOM

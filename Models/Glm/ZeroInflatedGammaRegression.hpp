@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_
 #define BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_
 
-#include "Models/Glm/BinomialLogitModel.hpp"
-#include "Models/Glm/GammaRegressionModel.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/Glm/BinomialLogitModel.hpp>
+#include <Models/Glm/GammaRegressionModel.hpp>
 
 namespace BOOM {
 
@@ -40,14 +39,16 @@ namespace BOOM {
   //   f(y) = (1 - p(x)) * I(0) + p(x) * Gamma(alpha, alpha / mu(x))
   //
   // The mean of this distribution is p(x) * mu(x).
-  class ZeroInflatedGammaRegressionModel : public CompositeParamPolicy,
-                                           public PriorPolicy,
-                                           public MLE_Model {
+  class ZeroInflatedGammaRegressionModel
+      : public CompositeParamPolicy,
+        public PriorPolicy,
+        public MLE_Model
+  {
    public:
     ZeroInflatedGammaRegressionModel(int xdim, double zero_threshold = 1e-5);
     ZeroInflatedGammaRegressionModel(
         const ZeroInflatedGammaRegressionModel &rhs);
-    ZeroInflatedGammaRegressionModel *clone() const override;
+    ZeroInflatedGammaRegressionModel * clone() const override;
 
     double expected_value(const Vector &x) const;
     double variance(const Vector &x) const;
@@ -56,43 +57,42 @@ namespace BOOM {
     double probability_zero(const Vector &x) const;
 
     Ptr<GlmCoefs> regression_coefficient_ptr() {
-      return gamma_model_->coef_prm();
-    }
-    const GlmCoefs &regression_coefficients() const {
-      return gamma_model_->coef();
-    }
+      return gamma_model_->coef_prm();}
+    const GlmCoefs & regression_coefficients() const {
+      return gamma_model_->coef();}
 
-    Ptr<UnivParams> shape_prm() { return gamma_model_->shape_prm(); }
-    double shape_parameter() const { return gamma_model_->shape_parameter(); }
+    Ptr<UnivParams> shape_prm() {return gamma_model_->shape_prm();}
+    double shape_parameter() const {return gamma_model_->shape_parameter();}
     void set_shape_parameter(double alpha) {
-      gamma_model_->set_shape_parameter(alpha);
-    }
+      gamma_model_->set_shape_parameter(alpha);}
 
-    Ptr<GlmCoefs> logit_coefficient_ptr() { return logit_model_->coef_prm(); }
-    const GlmCoefs &logit_coefficients() const { return logit_model_->coef(); }
+    Ptr<GlmCoefs> logit_coefficient_ptr() {return logit_model_->coef_prm();}
+    const GlmCoefs & logit_coefficients() const {return logit_model_->coef();}
 
-    double zero_threshold() const { return zero_threshold_; }
+    double zero_threshold() const {return zero_threshold_;}
     double sim(const Vector &x, RNG &rng = BOOM::GlobalRng::rng) const;
 
     void add_data(const Ptr<RegressionData> &dp);
     void add_data(const Ptr<Data> &dp) override;
 
-    void increment_sufficient_statistics(int number_zeros, int number_nonzero,
-                                         double sum_of_nonzero,
-                                         double sum_of_logs_of_nonzero,
-                                         const Ptr<VectorData> &predictors);
+    void increment_sufficient_statistics(
+        int number_zeros,
+        int number_nonzero,
+        double sum_of_nonzero,
+        double sum_of_logs_of_nonzero,
+        const Ptr<VectorData> &predictors);
 
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
     GammaRegressionModelConditionalSuf *gamma_regression() {
-      return gamma_model_.get();
-    }
+      return gamma_model_.get();}
     const GammaRegressionModelConditionalSuf *gamma_regression() const {
-      return gamma_model_.get();
-    }
-    BinomialLogitModel *logit_model() { return logit_model_.get(); }
-    const BinomialLogitModel *logit_model() const { return logit_model_.get(); }
+      return gamma_model_.get();}
+    BinomialLogitModel *logit_model() {
+      return logit_model_.get(); }
+    const BinomialLogitModel *logit_model() const {
+      return logit_model_.get(); }
 
     void mle() override;
 
@@ -104,4 +104,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_
+#endif //  BOOM_ZERO_INFLATED_GAMMA_REGRESSION_HPP_

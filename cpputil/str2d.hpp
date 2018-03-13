@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,8 +19,8 @@
 #define BOOM_STR2D_HPP
 
 #include <string>
-namespace BOOM {
+namespace BOOM{
   double str2d(const std::string &s);
 }
 
-#endif  // BOOM_STR2D_HPP
+#endif // BOOM_STR2D_HPP

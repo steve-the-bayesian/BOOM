@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MIXTURE_HPP_
 #define BOOM_DIRICHLET_PROCESS_MIXTURE_HPP_
 
-#include "Models/CategoricalData.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
+#include <Models/CategoricalData.hpp>
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
 
 namespace BOOM {
 
@@ -76,8 +75,10 @@ namespace BOOM {
   //
   // This class represents the DPMM using a set of mixture components and stick
   // fractions.  Some posterior samplers don't need the stick fractions.
-  class DirichletProcessMixtureModel : public CompositeParamPolicy,
-                                       public PriorPolicy {
+  class DirichletProcessMixtureModel
+      : public CompositeParamPolicy,
+        public PriorPolicy
+  {
    public:
     typedef DirichletProcessMixtureComponent DpMixtureComponent;
 
@@ -99,11 +100,11 @@ namespace BOOM {
         const Ptr<HierarchicalPosteriorSampler> &base_distribution,
         const Ptr<UnivParams> &concentration_parameter);
 
-    DirichletProcessMixtureModel *clone() const override {
+    DirichletProcessMixtureModel * clone() const override {
       return new DirichletProcessMixtureModel(*this);
     }
 
-    virtual bool conjugate() const { return false; }
+    virtual bool conjugate() const {return false;}
     int number_of_components() const { return mixture_components_.size(); }
     int number_of_observations() const { return dat().size(); }
 
@@ -155,7 +156,7 @@ namespace BOOM {
     void add_data(const Ptr<Data> &dp) override;
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
-    const std::vector<Ptr<Data>> &dat() const { return data_; }
+    const std::vector<Ptr<Data>> &dat() const {return data_;}
 
     // Args:
     //   proposal:  The proposed split or merge.
@@ -251,8 +252,9 @@ namespace BOOM {
 
     // Insert a new mixture component at the given position.  Indices for all
     // mixture components to the right of position are set appropriately.
-    virtual void insert_cluster(const Ptr<DpMixtureComponent> &component,
-                                int index);
+    virtual void insert_cluster(
+        const Ptr<DpMixtureComponent> &component,
+        int index);
 
    private:
     std::vector<Ptr<DpMixtureComponent>> mixture_components_;
@@ -313,7 +315,7 @@ namespace BOOM {
       : public DirichletProcessMixtureModel {
    public:
     typedef ConjugateDirichletProcessMixtureComponent
-        ConjugateDpMixtureComponent;
+    ConjugateDpMixtureComponent;
     typedef DirichletProcessMixtureComponent DpMixtureComponent;
 
     ConjugateDirichletProcessMixtureModel(
@@ -321,11 +323,11 @@ namespace BOOM {
         const Ptr<ConjugateHierarchicalPosteriorSampler> &base_distribution,
         const Ptr<UnivParams> &concentration_parameter);
 
-    ConjugateDirichletProcessMixtureModel *clone() const override {
+    ConjugateDirichletProcessMixtureModel * clone() const override {
       return new ConjugateDirichletProcessMixtureModel(*this);
     }
 
-    bool conjugate() const override { return true; }
+    bool conjugate() const override {return true;}
     ConjugateDpMixtureComponent *component(int i) override {
       return conjugate_mixture_components_[i].get();
     }
@@ -346,8 +348,9 @@ namespace BOOM {
     void remove_empty_cluster(const Ptr<DpMixtureComponent> &component,
                               bool adjust_mixing_weights) override;
 
-    void replace_cluster(const Ptr<DpMixtureComponent> &component_to_replace,
-                         const Ptr<DpMixtureComponent> &new_component) override;
+    void replace_cluster(
+        const Ptr<DpMixtureComponent> &component_to_replace,
+        const Ptr<DpMixtureComponent> &new_component) override;
 
     void insert_cluster(const Ptr<DpMixtureComponent> &component,
                         int index) override;

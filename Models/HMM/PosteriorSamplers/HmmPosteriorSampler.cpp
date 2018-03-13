@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -17,20 +16,29 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/HMM/PosteriorSamplers/HmmPosteriorSampler.hpp"
-#include <future>
-#include "Models/HMM/HmmFilter.hpp"
+#include <Models/HMM/PosteriorSamplers/HmmPosteriorSampler.hpp>
+#include <Models/HMM/HmmFilter.hpp>
 
-namespace BOOM {
+#ifndef NO_BOOST_THREADS
+#include <boost/thread.hpp>
+#include <boost/ref.hpp>
+#endif
 
-  HmmPosteriorSampler::HmmPosteriorSampler(HiddenMarkovModel *hmm,
-                                           RNG &seeding_rng)
+namespace BOOM{
+
+typedef HmmPosteriorSampler HS;
+
+  HS::HmmPosteriorSampler(HiddenMarkovModel *hmm, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
+#ifndef NO_BOOST_THREADS
         hmm_(hmm),
-        use_threads_(true),
-        thread_pool_(0) {}
+        use_threads_(false)
+#else
+        hmm_(hmm)
+#endif
+  {}
 
-  void HmmPosteriorSampler::draw() {
+  void HS::draw(){
     hmm_->mark()->sample_posterior();
     draw_mixture_components();
     // by drawing latent data at the end, the log likelihood stored
@@ -38,49 +46,44 @@ namespace BOOM {
     hmm_->impute_latent_data();
   }
 
-  double HmmPosteriorSampler::logpri() const {
+  double HS::logpri()const{
     double ans = hmm_->mark()->logpri();
-    std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
+    std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
     uint S = mix.size();
-    for (uint s = 0; s < S; ++s) ans += mix[s]->logpri();
+    for(uint s=0; s<S; ++s) ans += mix[s]->logpri();
     return ans;
   }
 
-  void HmmPosteriorSampler::draw_mixture_components() {
-    std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
+  void HS::draw_mixture_components(){
+    std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
     uint S = mix.size();
 
-    if (use_threads_) {
-      if (workers_.size() != S) {
-        use_threads(true);
-      }
-      std::vector<std::future<void>> futures;
-      for (uint s = 0; s < S; ++s) {
-        futures.emplace_back(thread_pool_.submit(workers_[s]));
-      }
-      for (uint s = 0; s < S; ++s) {
-        futures[s].get();
-      }
-    } else {
-      for (uint s = 0; s < S; ++s) {
-        mix[s]->sample_posterior();
-      }
+#ifndef NO_BOOST_THREADS
+    if(use_threads_){
+      if(workers_.size()!=S) use_threads(true);
+      boost::thread_group tg;
+      for(uint s=0; s<S; ++s)
+        tg.add_thread(new boost::thread(boost::ref(*workers_[s])));
+      tg.join_all();
+    }else
+#endif
+    {
+      for(uint s=0; s<S; ++s) mix[s]->sample_posterior();
     }
   }
 
-  void HmmPosteriorSampler::use_threads(bool yn) {
+  void HS::use_threads(bool yn){
+#ifndef NO_BOOST_THREADS
     use_threads_ = yn;
-    if (!use_threads_) {
-      thread_pool_.set_number_of_threads(0);
-      workers_.clear();
-    } else {
-      std::vector<Ptr<MixtureComponent>> mix = hmm_->mixture_components();
-      uint S = mix.size();
-      workers_.clear();
-      for (uint s = 0; s < S; ++s) {
-        workers_.emplace_back(mix[s].get());
-      }
+    if(!use_threads_) return;
+    std::vector<Ptr<MixtureComponent> > mix = hmm_->mixture_components();
+    uint S = mix.size();
+    workers_.clear();
+    for(uint s=0; s<S; ++s){
+      std::shared_ptr<MixtureComponentSampler>
+          worker(new MixtureComponentSampler(mix[s].get()));
+      workers_.push_back(worker);
     }
+#endif
   }
-
-}  // namespace BOOM
+}

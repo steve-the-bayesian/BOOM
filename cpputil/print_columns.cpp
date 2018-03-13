@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -16,15 +15,16 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <iomanip>
 #include <iostream>
-#include "cpputil/string_utils.hpp"
-#include "uint.hpp"
+#include <iomanip>
+#include <cpputil/string_utils.hpp>
+#include <uint.hpp>
 
 namespace BOOM {
-  std::ostream &print_columns(
-      std::ostream &out, const std::vector<std::vector<std::string>> &columns,
-      uint pad) {
+  std::ostream & print_columns(
+    std::ostream &out,
+    const std::vector<std::vector<std::string> >  &columns,
+    uint pad) {
     unsigned nc = columns.size();
     std::vector<unsigned> widths;
     unsigned nr = 0;
@@ -42,18 +42,19 @@ namespace BOOM {
     for (unsigned i = 0; i < nr; ++i) {
       for (unsigned j = 0; j < nc; ++j) {
         out << std::setw(widths[j]);
-        if (i < columns[j].size())
-          out << columns[j][i];
-        else
-          out << string(widths[j], ' ');
+        if (i < columns[j].size()) out << columns[j][i];
+        else out << string(widths[j], ' ');
       }
       out << endl;
     }
     return out;
   }
 
-  ostream &print_two_columns(ostream &out, const std::vector<std::string> &left,
-                             const std::vector<std::string> &right, uint pad) {
+  ostream & print_two_columns(
+      ostream & out,
+      const std::vector<std::string> & left,
+      const std::vector<std::string> &right,
+      uint pad) {
     std::vector<std::vector<std::string>> cols;
     cols.push_back(left);
     cols.push_back(right);

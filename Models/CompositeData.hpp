@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -19,14 +18,16 @@
 #ifndef BOOM_COMPOSITE_DATA_HPP
 #define BOOM_COMPOSITE_DATA_HPP
 
-#include "Models/DataTypes.hpp"
-namespace BOOM {
 
-  // CompositeData is a multivariate observation (on a single subject)
-  // of potentially disparate data types.  This is the data type for a
-  // CompositeModel.
-  class CompositeData : virtual public Data {
-   public:
+#include <Models/DataTypes.hpp>
+namespace BOOM{
+
+// CompositeData is a multivariate observation (on a single subject)
+// of potentially disparate data types.  This is the data type for a
+// CompositeModel.
+  class CompositeData : virtual public Data{
+  public:
+
     // Use this constructor to create a new CompositeData and add() in
     // elements one at a time.  This approach is more flexible than
     // the vector constructor because add() can take advantage of
@@ -37,22 +38,22 @@ namespace BOOM {
     // already got the component data stored away in a vector.
     CompositeData(const std::vector<Ptr<Data> > &d);
 
-    CompositeData *clone() const override;
-    ostream &display(ostream &) const override;
+    CompositeData * clone() const override;
+    ostream & display(ostream &)const override;
 
     // Number of composite data elements.  This can be smaller than
     // size() when some elements are vectors, matrices, regression
     // data, etc.
-    uint dim() const;
+    uint dim()const;
 
     Ptr<Data> get_ptr(uint n);
-    const Data *get(uint n) const;
-    void add(const Ptr<Data> &dp);
+    const Data * get(uint n)const;
+    void add(const Ptr<Data> & dp);
 
-   private:
+  private:
     std::vector<Ptr<Data> > dat_;
   };
 
-}  // namespace BOOM
+}
 
-#endif  // BOOM_COMPOSITE_DATA_HPP
+#endif // BOOM_COMPOSITE_DATA_HPP

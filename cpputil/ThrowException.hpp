@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -19,16 +18,16 @@
 #ifndef BOOM_THROW_EXCEPTION_HPP_
 #define BOOM_THROW_EXCEPTION_HPP_
 
-#include <stdexcept>
 #include <string>
+#include <stdexcept>
 
-namespace BOOM {
+namespace BOOM{
 #ifdef NO_BOOM_EXCEPTIONS
-  // exception handling function in namespace boom supplied by the user
+// exception handling function in namespace boom supplied by the user
   void nothrow_exception(const std::string &s);
 #endif
 
-  template <class EXCEPTION>
+template <class EXCEPTION>
   void throw_exception(const std::string &s) {
 #ifndef NO_BOOM_EXCEPTIONS
     throw EXCEPTION(s);
@@ -37,5 +36,5 @@ namespace BOOM {
 #endif
   }
 
-}  // namespace BOOM
-#endif  // BOOM_THROW_EXCEPTION_HPP_
+}
+#endif // BOOM_THROW_EXCEPTION_HPP_

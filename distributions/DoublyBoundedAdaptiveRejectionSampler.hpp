@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,21 +19,21 @@
 #define BOOM_DOUBLY_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP
 
 #include <functional>
+#include <distributions.hpp>
 #include <vector>
-#include "distributions.hpp"
 
-namespace BOOM {
+namespace BOOM{
 
-  class DoublyBoundedAdaptiveRejectionSampler {
+  class DoublyBoundedAdaptiveRejectionSampler{
    public:
     typedef std::function<double(double)> Fun;
-    DoublyBoundedAdaptiveRejectionSampler(double lo, double hi, const Fun &Logf,
-                                          const Fun &Dlogf);
-    double draw(RNG &);                // simluate a value
-    void add_point(double x);          // adds the point to the hull
-    double f(double x) const;          // log of the target distribution
-    double df(double x) const;         // derivative of logf at x
-    double h(double x, uint k) const;  // evaluates the outer hull at x
+    DoublyBoundedAdaptiveRejectionSampler(
+        double lo, double hi, const Fun &Logf, const Fun &Dlogf);
+    double draw(RNG & );              // simluate a value
+    void add_point(double x);         // adds the point to the hull
+    double f(double x)const;          // log of the target distribution
+    double df(double x)const;         // derivative of logf at x
+    double h(double x, uint k)const;  // evaluates the outer hull at x
    private:
     Fun logf_;
     Fun dlogf_;
@@ -61,9 +60,9 @@ namespace BOOM {
 
     void update_cdf();
     void refresh_knots();
-    double compute_knot(uint k) const;
+    double compute_knot(uint k)const;
     typedef std::vector<double>::iterator IT;
   };
 
-}  // namespace BOOM
-#endif  // BOOM_DOUBLY_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP
+}
+#endif// BOOM_DOUBLY_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP

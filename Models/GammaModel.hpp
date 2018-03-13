@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -21,19 +20,19 @@
 #define BOOM_GAMMA_MODEL_HPP
 
 #include <iosfwd>
-#include "Models/DoubleModel.hpp"
-#include "Models/EmMixtureComponent.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
-#include "cpputil/Ptr.hpp"
+#include <cpputil/Ptr.hpp>
+#include <Models/ModelTypes.hpp>
+#include <Models/DoubleModel.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/EmMixtureComponent.hpp>
 
 //======================================================================
 namespace BOOM {
-  class GammaSuf : public SufstatDetails<DoubleData> {
-   public:
+  class GammaSuf: public SufstatDetails<DoubleData> {
+  public:
     GammaSuf();
     GammaSuf *clone() const override;
 
@@ -49,19 +48,19 @@ namespace BOOM {
     double sum() const;
     double sumlog() const;
     double n() const;
-    ostream &display(ostream &out) const override;
+    ostream & display(ostream &out) const override;
 
-    virtual void combine(const Ptr<GammaSuf> &s);
-    virtual void combine(const GammaSuf &s);
-    GammaSuf *abstract_combine(Sufstat *s) override;
-    Vector vectorize(bool minimal = true) const override;
+    virtual void combine(const Ptr<GammaSuf> & s);
+    virtual void combine(const GammaSuf & s);
+    GammaSuf * abstract_combine(Sufstat *s) override;
+    Vector vectorize(bool minimal=true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
+                                       bool minimal=true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
+                                       bool minimal=true) override;
     ostream &print(ostream &out) const override;
 
-   private:
+  private:
     // Sum of the observations.
     double sum_;
 
@@ -73,15 +72,16 @@ namespace BOOM {
   };
 
   //======================================================================
-  class GammaModelBase  // Gamma Model, Chi-Square Model, Scaled Chi-Square
-      : public SufstatDataPolicy<DoubleData, GammaSuf>,
-        public DiffDoubleModel,
-        public LocationScaleDoubleModel,
-        public NumOptModel,
-        public EmMixtureComponent {
-   public:
+  class GammaModelBase // Gamma Model, Chi-Square Model, Scaled Chi-Square
+    : public SufstatDataPolicy<DoubleData, GammaSuf>,
+      public DiffDoubleModel,
+      public LocationScaleDoubleModel,
+      public NumOptModel,
+      public EmMixtureComponent
+  {
+  public:
     GammaModelBase();
-    GammaModelBase *clone() const override = 0;
+    GammaModelBase * clone() const override = 0;
 
     virtual double alpha() const = 0;
     virtual double beta() const = 0;
@@ -90,36 +90,23 @@ namespace BOOM {
 
     void add_mixture_data(const Ptr<Data> &, double prob) override;
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
-    double pdf(const Data *dp, bool logscale) const override;
-    int number_of_observations() const override { return dat().size(); }
+    double pdf(const Data * dp, bool logscale) const override;
+    int number_of_observations() const override {return dat().size();}
 
-    double Logp(double x, double &g, double &h, uint nd) const override;
+    double Logp(double x, double &g, double &h, uint nd) const override ;
     double sim(RNG &rng = GlobalRng::rng) const override;
-
-    //  p(1/sigsq) = beta^alpha * (1/sigsq)^(alpha - 1) * exp(-beta/sigsq)
-    //               -----------------------------------------------------
-    //                                    Gamma(alpha)
-    //
-    // p(sigsq) = beta^alpha * (1/sigsq)^(alpha + 1) * exp(-beta / sigsq)
-    //               -----------------------------------------------------
-    //                                    Gamma(alpha)
-    //
-    // This function returns log(p(sigsq)).  If gradient is non-NULL then it is
-    // filled with the derivative with respect to sigsq.  If the gradient _and_
-    // hessian are both non-NULL then hessian is filled with the second
-    // derivative with respect to sigsq.
-    double logp_reciprocal(double sigsq, double *gradient = nullptr,
-                           double *hessian = nullptr) const;
   };
   //======================================================================
 
-  class GammaModel : public GammaModelBase,
-                     public ParamPolicy_2<UnivParams, UnivParams>,
-                     public PriorPolicy {
-   public:
+  class GammaModel
+    : public GammaModelBase,
+      public ParamPolicy_2<UnivParams, UnivParams>,
+      public PriorPolicy
+  {
+  public:
     // The usual parameterization of the Gamma distribution a =
     // shape, b = scale, mean = a/b.
-    GammaModel(double a = 1.0, double b = 1.0);
+    GammaModel(double a=1.0, double b=1.0);
 
     // To initialize a GammaModel with shape (a) and mean parameters,
     // simply include a third argument that is an int.
@@ -146,10 +133,13 @@ namespace BOOM {
     double mean() const override;
 
     // probability calculations
-    double Loglike(const Vector &shape_scale, Vector &gradient, Matrix &hessian,
+    double Loglike(const Vector &shape_scale,
+                   Vector &gradient,
+                   Matrix &hessian,
                    uint number_of_derivatives) const override;
     double loglikelihood(double a, double b) const;
-    double loglikelihood(const Vector &shape_scale, Vector *gradient,
+    double loglikelihood(const Vector &shape_scale,
+                         Vector *gradient,
                          Matrix *hessian) const;
     void mle() override;
   };

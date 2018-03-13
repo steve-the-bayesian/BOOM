@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,18 +16,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Samplers/RejectionSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
+#include <Samplers/RejectionSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
-  RejectionSampler::RejectionSampler(const Target &log_target_density,
-                                     const Ptr<DirectProposal> &proposal)
+  RejectionSampler::RejectionSampler(
+      const Target &log_target_density,
+      const Ptr<DirectProposal> &proposal)
       : log_target_density_(log_target_density),
         proposal_(proposal),
         log_proposal_density_offset_(0.0),
-        rejection_limit_(-1) {}
+        rejection_limit_(-1)
+  {}
 
   Vector RejectionSampler::draw(RNG &rng) {
     std::int64_t rejection_count = 0;
@@ -42,8 +43,9 @@ namespace BOOM {
         // Avoid the fact that the RNG is on U[0, 1).
         u = runif_mt(rng, 0, 1);
       }
-      if (log(u) < log_target_density_(candidate) - proposal_->logp(candidate) -
-                       log_proposal_density_offset_) {
+      if (log(u) < log_target_density_(candidate)
+          - proposal_->logp(candidate)
+          - log_proposal_density_offset_) {
         return candidate;
       }
     }
@@ -56,5 +58,6 @@ namespace BOOM {
   void RejectionSampler::set_log_proposal_density_offset(double offset) {
     log_proposal_density_offset_ = offset;
   }
+
 
 }  // namespace BOOM

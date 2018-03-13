@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,41 +16,55 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/LognormalModel.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
+#include <Models/LognormalModel.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
   LognormalModel::LognormalModel(double mu, double sigma)
-      : ParamPolicy(new UnivParams(mu), new UnivParams(sigma * sigma)),
-        DataPolicy(new GaussianSuf) {
+      : ParamPolicy(new UnivParams(mu),
+                    new UnivParams(sigma * sigma)),
+        DataPolicy(new GaussianSuf)
+  {
     if (sigma <= 0) {
       report_error("Standard deviation must be positive.");
     }
   }
 
-  LognormalModel::LognormalModel(const Ptr<UnivParams> &mu,
+  LognormalModel::LognormalModel(const Ptr<UnivParams> & mu,
                                  const Ptr<UnivParams> &sigsq)
-      : ParamPolicy(mu, sigsq), DataPolicy(new GaussianSuf) {
+      : ParamPolicy(mu, sigsq),
+        DataPolicy(new GaussianSuf)
+  {
     if (sigsq->value() <= 0) {
       report_error("Variance must be positive.");
     }
   }
 
-  LognormalModel *LognormalModel::clone() const {
+  LognormalModel * LognormalModel::clone() const {
     return new LognormalModel(*this);
   }
 
-  Ptr<UnivParams> LognormalModel::Mu_prm() { return prm1(); }
+  Ptr<UnivParams> LognormalModel::Mu_prm() {
+    return prm1();
+  }
 
-  Ptr<UnivParams> LognormalModel::Sigsq_prm() { return prm2(); }
+  Ptr<UnivParams> LognormalModel::Sigsq_prm() {
+    return prm2();
+  }
 
-  double LognormalModel::mu() const { return prm1_ref().value(); }
+  double LognormalModel::mu() const {
+    return prm1_ref().value();
+  }
 
-  double LognormalModel::sigsq() const { return prm2_ref().value(); }
+  double LognormalModel::sigsq() const {
+    return prm2_ref().value();
+  }
 
-  void LognormalModel::set_mu(double mu) { prm1_ref().set(mu); }
+  void LognormalModel::set_mu(double mu) {
+    prm1_ref().set(mu);
+  }
 
   void LognormalModel::set_sigsq(double sigsq) {
     if (sigsq <= 0) {
@@ -60,7 +73,9 @@ namespace BOOM {
     prm2_ref().set(sigsq);
   }
 
-  double LognormalModel::mean() const { return exp(mu() + 0.5 * sigsq()); }
+  double LognormalModel::mean() const {
+    return exp(mu() + 0.5 * sigsq());
+  }
 
   double LognormalModel::variance() const {
     return (exp(sigsq()) - 1) * square(mean());

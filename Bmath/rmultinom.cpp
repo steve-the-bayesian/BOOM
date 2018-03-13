@@ -38,7 +38,7 @@
  *
  *  SYNOPSIS
  *
- *      #include "Bmath.hpp"
+ *      #include <Bmath.hpp>
  *      void rmultinom(int n, double* prob, int K, int* rN);
  *
  *  DESCRIPTION
@@ -54,8 +54,8 @@
  *      => Hence also can have  int arguments.
  */
 
-#include "Bmath/Bmath.hpp"
-#include "cpputil/report_error.hpp"
+#include <Bmath/Bmath.hpp>
+#include <cpputil/report_error.hpp>
 
 #include <vector>
 #include <stdexcept>

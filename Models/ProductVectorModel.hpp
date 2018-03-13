@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,11 +18,11 @@
 #ifndef BOOM_PRODUCT_VECTOR_MODEL_HPP_
 #define BOOM_PRODUCT_VECTOR_MODEL_HPP_
 
-#include "Models/DoubleModel.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/NullDataPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/VectorModel.hpp"
+#include <Models/VectorModel.hpp>
+#include <Models/DoubleModel.hpp>
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/NullDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
 namespace BOOM {
 
@@ -33,10 +32,12 @@ namespace BOOM {
   // This is not a model for learning about parameters.  If parameter
   // learning is needed then separate pointers to the component models
   // should be held and used to add data and posterior samplers.
-  class ProductVectorModel : virtual public VectorModel,
-                             public CompositeParamPolicy,
-                             public NullDataPolicy,
-                             public PriorPolicy {
+  class ProductVectorModel
+      : virtual public VectorModel,
+        public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy
+  {
    public:
     // To build the model incrementally, use the default constructor
     // and add models with add_model().
@@ -47,12 +48,14 @@ namespace BOOM {
     ProductVectorModel(const std::vector<Ptr<DoubleModel>> &marginals);
     ProductVectorModel(const ProductVectorModel &rhs);
     ProductVectorModel(ProductVectorModel &&rhs) = default;
-    ProductVectorModel &operator=(const ProductVectorModel &rhs);
-    ProductVectorModel &operator=(ProductVectorModel &&rhs) = default;
-    ProductVectorModel *clone() const override;
+    ProductVectorModel & operator=(const ProductVectorModel &rhs);
+    ProductVectorModel & operator=(ProductVectorModel &&rhs) = default;
+    ProductVectorModel * clone() const override;
 
     // The dimension of the Vector being modeled.
-    int dimension() const { return marginal_distributions_.size(); }
+    int dimension() const {
+      return marginal_distributions_.size();
+    }
 
     double logp(const Vector &y) const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
@@ -70,37 +73,28 @@ namespace BOOM {
 
   //======================================================================
   // A ProductVectorModel that knows about its mean and variance.
-  class ProductLocationScaleVectorModel : public ProductVectorModel,
-                                          public LocationScaleVectorModel {
+  class ProductLocationScaleVectorModel
+      : public ProductVectorModel,
+        public LocationScaleVectorModel
+  {
    public:
     ProductLocationScaleVectorModel();
     ProductLocationScaleVectorModel(
         const std::vector<Ptr<LocationScaleDoubleModel>> &marginals);
     ProductLocationScaleVectorModel(const ProductLocationScaleVectorModel &rhs);
-    ProductLocationScaleVectorModel(ProductLocationScaleVectorModel &&rhs) =
-        default;
-    ProductLocationScaleVectorModel &operator=(
-        const ProductLocationScaleVectorModel &rhs);
-    ProductLocationScaleVectorModel &operator=(
+    ProductLocationScaleVectorModel(
         ProductLocationScaleVectorModel &&rhs) = default;
-    ProductLocationScaleVectorModel *clone() const override;
+    ProductLocationScaleVectorModel & operator=(
+        const ProductLocationScaleVectorModel &rhs);
+    ProductLocationScaleVectorModel & operator=(
+        ProductLocationScaleVectorModel &&rhs) = default;
+    ProductLocationScaleVectorModel * clone() const override;
 
-    const Vector &mu() const override {
-      refresh_moments();
-      return mu_;
-    }
-    const SpdMatrix &Sigma() const override {
-      refresh_moments();
-      return Sigma_;
-    }
-    const SpdMatrix &siginv() const override {
-      refresh_moments();
-      return siginv_;
-    }
-    double ldsi() const override {
-      refresh_moments();
-      return ldsi_;
-    }
+    const Vector &mu() const override { refresh_moments(); return mu_; }
+    const SpdMatrix &Sigma() const override {refresh_moments(); return Sigma_;}
+    const SpdMatrix &siginv() const override { refresh_moments();
+      return siginv_;}
+    double ldsi() const override {refresh_moments(); return ldsi_;}
 
     void add_model(const Ptr<DoubleModel> &model) override;
     void add_location_scale_model(const Ptr<LocationScaleDoubleModel> &model);
@@ -110,7 +104,9 @@ namespace BOOM {
     // An observer that should be passed to the parameters of the
     // marginal distributions.  When they change the
     // moments_are_current_ flag gets flipped to false.
-    void observe_parameter_changes() { moments_are_current_ = false; }
+    void observe_parameter_changes() {
+      moments_are_current_ = false;
+    }
 
     // Moments are logically const.  refresh_moments has to be marked
     // const so it can be called from the moment accessor functions
@@ -127,4 +123,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_PRODUCT_VECTOR_MODEL_HPP_
+#endif //  BOOM_PRODUCT_VECTOR_MODEL_HPP_

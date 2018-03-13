@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "stats/simple_random_sample.hpp"
-#include <random>
+#include <stats/simple_random_sample.hpp>
 
-namespace BOOM {
-  std::vector<bool> SRS_indx(uint N, uint n) {
+namespace BOOM{
+  std::vector<bool> SRS_indx(uint N, uint n){
     // generate a vector<bool> of length N such that n elements are true
     std::vector<bool> in(N, false);
     std::fill_n(in.begin(), n, true);
-    std::shuffle(in.begin(), in.end(), std::default_random_engine());
+    std::random_shuffle(in.begin(), in.end());
     return in;
   }
-}  // namespace BOOM
+
+}

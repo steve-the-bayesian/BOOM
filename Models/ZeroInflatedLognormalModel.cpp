@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -17,13 +16,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/ZeroInflatedLognormalModel.hpp"
+#include <Models/ZeroInflatedLognormalModel.hpp>
 #include <functional>
 #include <sstream>
-#include "Models/PosteriorSamplers/ZeroInflatedLognormalPosteriorSampler.hpp"
-#include "Models/SufstatAbstractCombineImpl.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/PosteriorSamplers/ZeroInflatedLognormalPosteriorSampler.hpp>
+#include <Models/SufstatAbstractCombineImpl.hpp>
+#include <cpputil/report_error.hpp>
+#include <distributions.hpp>
 
 namespace BOOM {
   namespace {
@@ -34,35 +33,37 @@ namespace BOOM {
       : gaussian_(new GaussianModel),
         binomial_(new BinomialModel),
         precision_(1e-8),
-        log_probabilities_are_current_(false) {
+        log_probabilities_are_current_(false)
+  {
     ParamPolicy::add_model(gaussian_);
     ParamPolicy::add_model(binomial_);
     binomial_->Prob_prm()->add_observer(create_binomial_observer());
   }
 
-  ZILM::ZeroInflatedLognormalModel(const ZeroInflatedLognormalModel &rhs)
+  ZILM::ZeroInflatedLognormalModel(
+      const ZeroInflatedLognormalModel &rhs)
       : DoubleModel(rhs),
         ParamPolicy(rhs),
         PriorPolicy(rhs),
         EmMixtureComponent(rhs),
         gaussian_(rhs.gaussian_->clone()),
         binomial_(rhs.binomial_->clone()),
-        precision_(rhs.precision_) {
+        precision_(rhs.precision_)
+  {
     ParamPolicy::add_model(gaussian_);
     ParamPolicy::add_model(binomial_);
     binomial_->Prob_prm()->add_observer(create_binomial_observer());
   }
 
-  ZeroInflatedLognormalModel *ZILM::clone() const {
-    return new ZeroInflatedLognormalModel(*this);
-  }
+  ZeroInflatedLognormalModel * ZILM::clone() const {
+    return new ZeroInflatedLognormalModel(*this);}
 
   double ZILM::pdf(const Ptr<Data> &dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  double ZILM::pdf(const Data *dp, bool logscale) const {
+  double ZILM::pdf(const Data * dp, bool logscale) const {
     double ans = logp(dynamic_cast<const DoubleData *>(dp)->value());
     return logscale ? ans : exp(ans);
   }
@@ -80,7 +81,7 @@ namespace BOOM {
     return 0;
   }
 
-  void ZILM::add_data(const Ptr<Data> &dp) {
+  void ZILM::add_data(const Ptr<Data> & dp) {
     if (dp->missing()) return;
     Ptr<DoubleData> d = DAT(dp);
     double y = d->value();
@@ -116,18 +117,20 @@ namespace BOOM {
     binomial_->clear_data();
   }
 
-  void ZILM::combine_data(const Model &rhs, bool just_suf) {
-    const ZeroInflatedLognormalModel *rhsp =
+  void ZILM::combine_data(
+      const Model &rhs, bool just_suf) {
+    const ZeroInflatedLognormalModel * rhsp =
         dynamic_cast<const ZeroInflatedLognormalModel *>(&rhs);
     if (!rhsp) {
       ostringstream err;
       err << "ZILM::combine_data was called "
           << "with an argument "
-          << "that was not coercible to ZeroInflatedLognormalModel." << endl;
+          << "that was not coercible to ZeroInflatedLognormalModel."
+          << endl;
       report_error(err.str());
     }
-    gaussian_->combine_data(*(rhsp->gaussian_), true);
-    binomial_->combine_data(*(rhsp->binomial_), true);
+    gaussian_->combine_data( *(rhsp->gaussian_), true);
+    binomial_->combine_data( *(rhsp->binomial_), true);
   }
 
   void ZILM::mle() {
@@ -135,17 +138,22 @@ namespace BOOM {
     binomial_->mle();
   }
 
-  double ZILM::mu() const { return gaussian_->mu(); }
-  void ZILM::set_mu(double mu) { gaussian_->set_mu(mu); }
+  double ZILM::mu() const {
+    return gaussian_->mu();}
+  void ZILM::set_mu(double mu) {
+    gaussian_->set_mu(mu);}
 
-  double ZILM::sigma() const { return gaussian_->sigma(); }
-  void ZILM::set_sigma(double sigma) { gaussian_->set_sigsq(sigma * sigma); }
-  void ZILM::set_sigsq(double sigsq) { gaussian_->set_sigsq(sigsq); }
+  double ZILM::sigma() const {
+    return gaussian_->sigma();}
+  void ZILM::set_sigma(double sigma) {
+    gaussian_->set_sigsq(sigma * sigma);}
+  void ZILM::set_sigsq(double sigsq) {
+    gaussian_->set_sigsq(sigsq);}
 
-  double ZILM::positive_probability() const { return binomial_->prob(); }
+  double ZILM::positive_probability() const {
+    return binomial_->prob();}
   void ZILM::set_positive_probability(double prob) {
-    return binomial_->set_prob(prob);
-  }
+    return binomial_->set_prob(prob);}
 
   double ZILM::mean() const {
     return positive_probability() * exp(mu() + .5 * gaussian_->sigsq());
@@ -156,11 +164,16 @@ namespace BOOM {
     return (exp(sigsq) - 1) * exp(2 * mu() + sigsq);
   }
 
-  double ZILM::sd() const { return sqrt(variance()); }
+  double ZILM::sd() const {
+    return sqrt(variance());
+  }
 
-  Ptr<GaussianModel> ZILM::Gaussian_model() { return gaussian_; }
+  Ptr<GaussianModel> ZILM::Gaussian_model() {
+    return gaussian_;}
 
-  Ptr<BinomialModel> ZILM::Binomial_model() { return binomial_; }
+  Ptr<BinomialModel> ZILM::Binomial_model() {
+    return binomial_;}
+
 
   Ptr<DoubleData> ZILM::DAT(const Ptr<Data> &dp) const {
     if (!!dp) return dp.dcast<DoubleData>();
@@ -168,7 +181,7 @@ namespace BOOM {
   }
 
   std::function<void(void)> ZILM::create_binomial_observer() {
-    return [this]() { this->observe_binomial_probability(); };
+    return [this]() {this->observe_binomial_probability();};
   }
 
   void ZILM::observe_binomial_probability() {

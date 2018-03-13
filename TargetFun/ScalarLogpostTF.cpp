@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,15 +16,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "TargetFun/ScalarLogpostTF.hpp"
-#include "Models/DoubleModel.hpp"
-#include "TargetFun/Loglike.hpp"
+#include <TargetFun/ScalarLogpostTF.hpp>
+#include <TargetFun/Loglike.hpp>
+#include <Models/DoubleModel.hpp>
 
-namespace BOOM {
+namespace BOOM{
   typedef ScalarLogpostTF SLT;
 
-  SLT::ScalarLogpostTF(LoglikeModel *loglike, const Ptr<DoubleModel> &prior)
-      : loglike_(LoglikeTF(loglike)), prior_(prior) {}
+  SLT::ScalarLogpostTF(LoglikeModel *loglike,
+                       const Ptr<DoubleModel> &prior)
+    : loglike_(LoglikeTF(loglike)),
+      prior_(prior)
+  { }
 
   double SLT::operator()(const Vector &x) const {
     double ans = loglike_(x);

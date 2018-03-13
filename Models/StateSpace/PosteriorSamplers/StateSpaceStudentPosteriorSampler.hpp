@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,19 +19,20 @@
 #ifndef BOOM_SRC_MODELS_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 #define BOOM_SRC_MODELS_STATE_SPACE_STUDENT_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
-#include "Models/Glm/WeightedRegressionModel.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
-#include "Models/StateSpace/StateSpaceStudentRegressionModel.hpp"
+#include <Models/Glm/WeightedRegressionModel.hpp>
+#include <Models/StateSpace/StateSpaceStudentRegressionModel.hpp>
+#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp>
 
 namespace BOOM {
 
-  class StateSpaceStudentPosteriorSampler : public StateSpacePosteriorSampler {
+  class StateSpaceStudentPosteriorSampler
+      : public StateSpacePosteriorSampler {
    public:
     StateSpaceStudentPosteriorSampler(
         StateSpaceStudentRegressionModel *model,
         const Ptr<TRegressionSpikeSlabSampler> &observation_model_sampler,
-        RNG &seeding_rng = GlobalRng::rng);
+        RNG & seeding_rng = GlobalRng::rng);
 
     // Impute the latent variances at each data point.
     void impute_nonstate_latent_data() override;

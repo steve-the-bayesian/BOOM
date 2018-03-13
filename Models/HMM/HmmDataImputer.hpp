@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -20,40 +19,41 @@
 #ifndef BOOM_HMM_DATA_IMPUTER_HPP
 #define BOOM_HMM_DATA_IMPUTER_HPP
 
-#include "Models/HMM/HMM2.hpp"
-#include "distributions/rng.hpp"
+#include <Models/HMM/HMM2.hpp>
+#include <distributions/rng.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class HmmDataImputer : private RefCounted {
-   public:
-    HmmDataImputer(HiddenMarkovModel *hmm, uint id, uint nworkers);
-    Ptr<MarkovModel> mark();
-    Ptr<MixtureComponent> models(uint s);
-    double loglike() const;
+class HmmDataImputer
+    : private RefCounted
+{
+  // HmmDataImputer
+ public:
+  HmmDataImputer(HiddenMarkovModel *hmm, uint id, uint nworkers);
+  void operator()();
 
-    void setup(HiddenMarkovModel *);
-    void clear_client_data();
-    void impute_data();
+  Ptr<MarkovModel> mark();
+  Ptr<MixtureComponent> models(uint s);
+  double loglike()const;
 
-    friend void intrusive_ptr_add_ref(HmmDataImputer *d) { d->up_count(); }
-    friend void intrusive_ptr_release(HmmDataImputer *d) {
-      d->down_count();
-      if (d->ref_count() == 0) delete d;
-    }
+  void setup(HiddenMarkovModel *);
+  void clear_client_data();
 
-   private:
-    uint id_;
-    uint nworkers_;
-    Ptr<MarkovModel> mark_;
-    std::vector<Ptr<MixtureComponent>> mix_;
-    Ptr<HmmFilter> filter_;
-    double loglike_;
-    std::vector<TimeSeries<Data> *> dat_;
+  friend void intrusive_ptr_add_ref(HmmDataImputer *d){d->up_count();}
+  friend void intrusive_ptr_release(HmmDataImputer *d){
+    d->down_count(); if(d->ref_count()==0) delete d;}
+ private:
+  uint id_;
+  uint nworkers_;
+  Ptr<MarkovModel> mark_;
+  std::vector<Ptr<MixtureComponent>> mix_;
+  Ptr<HmmFilter> filter_;
+  double loglike_;
+  std::vector<TimeSeries<Data> * > dat_;
 
-    RNG eng;
-  };
+  RNG eng;
+};
 
-}  // namespace BOOM
+}
 
-#endif  // BOOM_HMM_DATA_IMPUTER_HPP
+#endif// BOOM_HMM_DATA_IMPUTER_HPP

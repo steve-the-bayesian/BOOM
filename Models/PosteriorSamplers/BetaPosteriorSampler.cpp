@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -17,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PosteriorSamplers/BetaPosteriorSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
+#include <Models/PosteriorSamplers/BetaPosteriorSampler.hpp>
+#include <cpputil/math_utils.hpp>
+#include <distributions.hpp>
 
 namespace BOOM {
 
@@ -31,16 +30,18 @@ namespace BOOM {
      public:
       BetaMeanLogPosterior(const BetaModel *model,
                            const DoubleModel *mean_prior)
-          : model_(model), mean_prior_(mean_prior) {}
+          : model_(model),
+            mean_prior_(mean_prior)
+      {}
 
-      double operator()(double mean) const {
-        if (mean <= 0 || mean >= 1.0) {
+      double operator()(double mean)const{
+        if (mean <= 0  || mean >= 1.0) {
           return negative_infinity();
         }
         double ans = mean_prior_->logp(mean);
         double sample_size = model_->sample_size();
         double a = sample_size * mean;
-        double b = sample_size * (1 - mean);
+        double b = sample_size * (1-mean);
         ans += model_->log_likelihood(a, b);
         return ans;
       }
@@ -57,16 +58,18 @@ namespace BOOM {
      public:
       BetaSampleSizeLogPosterior(const BetaModel *model,
                                  const DoubleModel *sample_size_prior)
-          : model_(model), sample_size_prior_(sample_size_prior) {}
+          : model_(model),
+            sample_size_prior_(sample_size_prior)
+      {}
 
-      double operator()(double sample_size) const {
+      double operator()(double sample_size)const{
         if (sample_size <= 0) {
           return negative_infinity();
         }
         double ans = sample_size_prior_->logp(sample_size);
         double mean = model_->mean();
         double a = sample_size * mean;
-        double b = sample_size * (1 - mean);
+        double b = sample_size * (1-mean);
         ans += model_->log_likelihood(a, b);
         return ans;
       }
@@ -79,22 +82,24 @@ namespace BOOM {
 
   //======================================================================
   BetaPosteriorSampler::BetaPosteriorSampler(
-      BetaModel *model, const Ptr<DoubleModel> &mean_prior,
-      const Ptr<DoubleModel> &sample_size_prior, RNG &seeding_rng)
+      BetaModel *model,
+      const Ptr<DoubleModel> &mean_prior,
+      const Ptr<DoubleModel> &sample_size_prior,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         mean_prior_(mean_prior),
         sample_size_prior_(sample_size_prior),
-        mean_sampler_(BetaMeanLogPosterior(model_, mean_prior_.get()), false,
-                      1.0, &rng()),
-        sample_size_sampler_(
-            BetaSampleSizeLogPosterior(model_, sample_size_prior_.get()), false,
-            1.0, &rng()) {
+        mean_sampler_(BetaMeanLogPosterior(
+            model_, mean_prior_.get()), false, 1.0, &rng()),
+        sample_size_sampler_(BetaSampleSizeLogPosterior(
+            model_, sample_size_prior_.get()), false, 1.0, &rng())
+  {
     mean_sampler_.set_limits(0.0, 1.0);
     sample_size_sampler_.set_lower_limit(0.0);
   }
 
-  void BetaPosteriorSampler::draw() {
+  void BetaPosteriorSampler::draw(){
     try {
       double sample_size = sample_size_sampler_.draw(model_->sample_size());
       model_->set_sample_size(sample_size);
@@ -114,7 +119,7 @@ namespace BOOM {
     }
   }
 
-  double BetaPosteriorSampler::logpri() const {
+  double BetaPosteriorSampler::logpri()const{
     double mean = model_->mean();
     double sample_size = model_->sample_size();
     if (mean <= 0 || sample_size <= 0) {
@@ -123,8 +128,8 @@ namespace BOOM {
     return mean_prior_->logp(mean) + sample_size_prior_->logp(sample_size);
   }
 
-  string BetaPosteriorSampler::error_message(const char *thing_being_drawn,
-                                             const std::exception *e) const {
+  string BetaPosteriorSampler::error_message(
+      const char *thing_being_drawn, const std::exception *e) const {
     ostringstream err;
     err << "The slice sampler generated an exception when drawing "
         << thing_being_drawn << " for the beta distribution.  " << endl
@@ -138,7 +143,8 @@ namespace BOOM {
         << "     sum(log(p)) = " << model_->suf()->sumlog() << endl
         << " sum(log(1 - p)) = " << model_->suf()->sumlogc() << endl;
     if (e) {
-      err << "The exception message was: " << endl << e->what() << endl;
+      err << "The exception message was: " << endl
+          << e->what() << endl;
     }
     return err.str();
   }

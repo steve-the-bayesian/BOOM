@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,14 +18,14 @@
 #ifndef BOOM_HMM_TOOLS_HPP
 #define BOOM_HMM_TOOLS_HPP
 
-#include "LinAlg/Matrix.hpp"
-#include "LinAlg/Vector.hpp"
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/Matrix.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  double fwd_1(Vector &pi, Matrix &P, const Matrix &logQ, const Vector &logd,
-               const Vector &one);
-  void bkwd_1(Vector &pi, Matrix &P, Vector &wsp, const Vector &one);
+    double fwd_1(Vector &pi, Matrix &P, const Matrix &logQ, const Vector &logd,
+                 const Vector &one);
+    void bkwd_1(Vector &pi, Matrix &P, Vector & wsp, const Vector &one);
 
-}  // namespace BOOM
-#endif  // BOOM_HMM_TOOLS_HPP
+}  // namespace
+#endif// BOOM_HMM_TOOLS_HPP

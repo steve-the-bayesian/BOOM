@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -18,33 +17,34 @@
 */
 #ifndef BOOM_UNIFORM_CORRELATION_MODEL_HPP
 #define BOOM_UNIFORM_CORRELATION_MODEL_HPP
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/NullParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/SpdParams.hpp"
+#include <Models/Policies/NullParamPolicy.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/SpdParams.hpp>
 
-#include "LinAlg/CorrelationMatrix.hpp"
+#include <LinAlg/CorrelationMatrix.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class UniformCorrelationModel : public NullParamPolicy,
-                                  public IID_DataPolicy<SpdParams>,
-                                  public PriorPolicy,
-                                  public CorrelationModel {
-   public:
+  class UniformCorrelationModel
+    : public NullParamPolicy,
+      public IID_DataPolicy<SpdParams>,
+      public PriorPolicy,
+      public CorrelationModel
+  {
+  public:
     UniformCorrelationModel(uint dim);
     UniformCorrelationModel(const UniformCorrelationModel &);
-    UniformCorrelationModel *clone() const override;
+    UniformCorrelationModel * clone()const override;
 
     void initialize_params();
-    double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double logp(const CorrelationMatrix &) const override;
+    double pdf(const Ptr<Data> &dp, bool logscale)const;
+    double logp(const CorrelationMatrix &)const override;
 
-    uint dim() const;
-    CorrelationMatrix sim(RNG &rng = GlobalRng::rng) const;
-
-   private:
+    uint dim()const;
+    CorrelationMatrix sim(RNG &rng = GlobalRng::rng)const;
+  private:
     uint dim_;
   };
-}  // namespace BOOM
-#endif  // BOOM_UNIFORM_CORRELATION_MODEL_HPP
+}
+#endif// BOOM_UNIFORM_CORRELATION_MODEL_HPP

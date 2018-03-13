@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -21,8 +20,8 @@
 #define BOOM_HIERARCHICAL_MODEL_HPP_
 
 #include <vector>
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
 namespace BOOM {
 
@@ -34,12 +33,16 @@ namespace BOOM {
   //     PRIOR_TYPE: The model responsible for describing the
   //       parameters of the data_models across groups.
   template <class DATA_MODEL_TYPE, class PRIOR_TYPE>
-  class HierarchicalModelBase : public CompositeParamPolicy,
-                                public PriorPolicy {
+  class HierarchicalModelBase
+      : public CompositeParamPolicy,
+        public PriorPolicy {
    public:
-    typedef HierarchicalModelBase<DATA_MODEL_TYPE, PRIOR_TYPE> HierarchicalBase;
 
-    HierarchicalModelBase(const Ptr<PRIOR_TYPE> &prior) : prior_(prior) {
+    typedef HierarchicalModelBase<DATA_MODEL_TYPE, PRIOR_TYPE>
+    HierarchicalBase;
+
+    HierarchicalModelBase(const Ptr<PRIOR_TYPE> & prior)
+        : prior_(prior) {
       initialize_model_structure();
     }
 
@@ -47,7 +50,8 @@ namespace BOOM {
         : Model(rhs),
           ParamPolicy(rhs),
           PriorPolicy(rhs),
-          prior_(rhs.prior_->clone()) {
+          prior_(rhs.prior_->clone())
+    {
       initialize_model_structure();
       for (int i = 0; i < rhs.data_level_models_.size(); ++i) {
         add_data_level_model(rhs.data_level_models_[i]->clone());
@@ -56,9 +60,9 @@ namespace BOOM {
 
     HierarchicalModelBase(HierarchicalModelBase &&rhs) = default;
 
-    HierarchicalModelBase *clone() const override = 0;
+    HierarchicalModelBase * clone() const override = 0;
 
-    void add_data_level_model(const Ptr<DATA_MODEL_TYPE> &data_model) {
+    void add_data_level_model(const Ptr<DATA_MODEL_TYPE> & data_model) {
       data_level_models_.push_back(data_model);
       ParamPolicy::add_model(data_model);
     }
@@ -92,18 +96,24 @@ namespace BOOM {
       }
     }
 
-    int number_of_groups() const { return data_level_models_.size(); }
-
-    DATA_MODEL_TYPE *data_model(int which_group) {
-      return data_level_models_[which_group].get();
-    }
-    const DATA_MODEL_TYPE *data_model(int which_group) const {
-      return data_level_models_[which_group].get();
+    int number_of_groups() const {
+      return data_level_models_.size();
     }
 
-    PRIOR_TYPE *prior_model() { return prior_.get(); }
+    DATA_MODEL_TYPE * data_model(int which_group) {
+      return data_level_models_[which_group].get();
+    }
+    const DATA_MODEL_TYPE * data_model(int which_group) const {
+      return data_level_models_[which_group].get();
+    }
 
-    const PRIOR_TYPE *prior_model() const { return prior_.get(); }
+    PRIOR_TYPE * prior_model() {
+      return prior_.get();
+    }
+
+    const PRIOR_TYPE * prior_model() const {
+      return prior_.get();
+    }
 
    private:
     void initialize_model_structure() {

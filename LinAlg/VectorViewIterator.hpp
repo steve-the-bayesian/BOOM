@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -21,7 +20,7 @@
 #define BOOM_VECTOR_VIEW_ITERATOR_HPP
 
 #include <iterator>
-#include "uint.hpp"
+#include <uint.hpp>
 
 namespace BOOM{
   class VectorViewIterator

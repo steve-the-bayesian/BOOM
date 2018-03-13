@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -20,8 +19,8 @@
 #ifndef BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_
 #define BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_
 
-#include "Models/Mixtures/DirichletProcessMixture.hpp"
-#include "distributions/rng.hpp"
+#include <Models/Mixtures/DirichletProcessMixture.hpp>
+#include <distributions/rng.hpp>
 
 namespace BOOM {
   namespace SplitMerge {
@@ -54,7 +53,7 @@ namespace BOOM {
     // reapportioned.
     class Proposal {
      public:
-      enum ProposalType { Split, Merge };
+      enum ProposalType {Split, Merge};
 
       // A Proposal has several sub-components.  Rather than have a giant
       // constructor with a dozen arguments, the constructor is kept small.
@@ -103,10 +102,11 @@ namespace BOOM {
       // could be the same (if split2 comes after split1) or off by 1 (if split2
       // comes before split1, so that moving it to the empty position shifts
       // split1 by one spot).
-      void set_components(const Ptr<DirichletProcessMixtureComponent> &merged,
-                          const Ptr<DirichletProcessMixtureComponent> &empty,
-                          const Ptr<DirichletProcessMixtureComponent> &split1,
-                          const Ptr<DirichletProcessMixtureComponent> &split2);
+      void set_components(
+          const Ptr<DirichletProcessMixtureComponent> &merged,
+          const Ptr<DirichletProcessMixtureComponent> &empty,
+          const Ptr<DirichletProcessMixtureComponent> &split1,
+          const Ptr<DirichletProcessMixtureComponent> &split2);
 
       // Set the mixing weights for the proposal.  See 'set_components' for the
       // meanings of 'split' and 'merged'.
@@ -123,15 +123,16 @@ namespace BOOM {
       //     be no terminal element giving weights for empty mixture components,
       //     so the sum of split_mixing_weights will typically be less than 1.
       //     Its size and its sum must match merged_mixing_weights.
-      void set_mixing_weights(const Vector &merged_mixing_weights,
-                              const Vector &split_mixing_weights);
+      void set_mixing_weights(
+          const Vector &merged_mixing_weights,
+          const Vector &split_mixing_weights);
 
       void set_log_proposal_density_ratio(double log_ratio) {
         log_split_to_merge_probability_ratio_ = log_ratio;
       }
 
-      int data_index_1() const { return data_index_1_; }
-      int data_index_2() const { return data_index_2_; }
+      int data_index_1() const {return data_index_1_;}
+      int data_index_2() const {return data_index_2_;}
 
       const Ptr<DirichletProcessMixtureComponent> &merged() const {
         return merged_;
@@ -220,7 +221,8 @@ namespace BOOM {
     //
     // Proposes to merge components by combining data from two components into
     // whichever was arbitrarily labeled "component 1".
-    class SingleObservationSplitStrategy : public ProposalStrategy {
+    class SingleObservationSplitStrategy
+        : public ProposalStrategy {
      public:
       // Args:
       //   model: The model to be posterior sampled.
@@ -261,15 +263,16 @@ namespace BOOM {
       //     seed observations do not contribute to this probability.
       //   data_index_2: The index (in the global DP model) of the data point
       //     serving as the second seed observation.
-      double split_log_proposal_density_ratio(const Proposal &proposal,
-                                              double log_allocation_probability,
-                                              int data_index_2) const;
+      double split_log_proposal_density_ratio(
+          const Proposal &proposal,
+          double log_allocation_probability,
+          int data_index_2) const;
 
       // Return a split proposal, initialized from an original merged component.
       // The returned proposal has its seeding data point assigned.  The seeding
       // data point is removed from the data set of elements owned by the
-      // original_component.  (The data set is a copy.  The actual vector of
-      // data in original_component is not modified here.)
+      // original_component.  (The data set is a copy.  The actual vector of data
+      // in original_component is not modified here.)
       //
       // If the proposal is from "component 1" then its parameters are set to
       // the parameters of the original component.  If it is from "component 2"
@@ -294,8 +297,10 @@ namespace BOOM {
       //     of the split cluster.
       Ptr<DirichletProcessMixtureComponent> initialize_split_proposal(
           const Ptr<DirichletProcessMixtureComponent> &original_component,
-          std::set<Ptr<Data>> &original_component_data_set, int data_index,
-          bool initialize_parameters, RNG &rng);
+          std::set<Ptr<Data>> &original_component_data_set,
+          int data_index,
+          bool initialize_parameters,
+          RNG &rng);
 
       // Simulates parameters from their posterior distribution.
       void sample_parameters(DirichletProcessMixtureComponent &component);
@@ -307,7 +312,8 @@ namespace BOOM {
       double allocate_data_between_split_components(
           DirichletProcessMixtureComponent *split1,
           DirichletProcessMixtureComponent *split2,
-          const std::set<Ptr<Data>> &data_set, RNG &rng) const;
+          const std::set<Ptr<Data>> &data_set,
+          RNG &rng) const;
 
       // The log probability that the data in the union of the data sets for two
       // mixture components would be allocated as observed.
@@ -322,7 +328,8 @@ namespace BOOM {
       //     must be left out of the probability calculation.
       double compute_log_partition_probability(
           const Ptr<DirichletProcessMixtureComponent> &split1,
-          const Ptr<DirichletProcessMixtureComponent> &split2, int data_index_1,
+          const Ptr<DirichletProcessMixtureComponent> &split2,
+          int data_index_1,
           int data_index_2) const;
 
       // Computes the log of the probability that the data in 'component' would
@@ -350,4 +357,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_
+#endif //  BOOM_DIRICHLET_PROCESS_SPLIT_MERGE_PROPOSALS_HPP_

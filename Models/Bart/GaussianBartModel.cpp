@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,18 +16,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Bart/GaussianBartModel.hpp"
-#include "stats/moments.hpp"
+#include <Models/Bart/GaussianBartModel.hpp>
+#include <stats/moments.hpp>
 
 namespace BOOM {
   GaussianBartModel::GaussianBartModel(int number_of_trees, double mean)
       : ParamPolicy(new UnivParams(1.0)),
-        BartModelBase(number_of_trees, mean) {}
+        BartModelBase(number_of_trees, mean)
+  {}
 
-  GaussianBartModel::GaussianBartModel(int number_of_trees, const Vector &y,
+  GaussianBartModel::GaussianBartModel(int number_of_trees,
+                                       const Vector &y,
                                        const Matrix &x)
       : ParamPolicy(new UnivParams(sd(y))),
-        BartModelBase(number_of_trees, mean(y)) {
+        BartModelBase(number_of_trees, mean(y))
+  {
     for (int i = 0; i < y.size(); ++i) {
       NEW(RegressionData, dp)(y[i], x.row(i));
       add_data(dp);
@@ -40,25 +42,36 @@ namespace BOOM {
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        BartModelBase(rhs) {}
+        BartModelBase(rhs)
+  {}
 
-  GaussianBartModel *GaussianBartModel::clone() const {
+  GaussianBartModel * GaussianBartModel::clone() const {
     return new GaussianBartModel(*this);
   }
 
-  int GaussianBartModel::sample_size() const { return dat().size(); }
+  int GaussianBartModel::sample_size() const {
+    return dat().size();
+  }
 
-  void GaussianBartModel::add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
+  void GaussianBartModel::add_data(const Ptr<Data> &dp) {
+    add_data(DAT(dp));
+  }
 
   void GaussianBartModel::add_data(const Ptr<RegressionData> &data) {
     DataPolicy::add_data(data);
     BartModelBase::observe_data(data->x());
   }
 
-  double GaussianBartModel::sigsq() const { return prm_ref().value(); }
+  double GaussianBartModel::sigsq() const {
+    return prm_ref().value();
+  }
 
-  void GaussianBartModel::set_sigsq(double sigsq) { prm_ref().set(sigsq); }
+  void GaussianBartModel::set_sigsq(double sigsq) {
+    prm_ref().set(sigsq);
+  }
 
-  Ptr<UnivParams> GaussianBartModel::Sigsq_prm() { return ParamPolicy::prm(); }
+  Ptr<UnivParams> GaussianBartModel::Sigsq_prm() {
+    return ParamPolicy::prm();
+  }
 
 }  // namespace BOOM

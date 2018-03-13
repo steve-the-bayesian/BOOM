@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,36 +19,38 @@
 #ifndef BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP
 #define BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP
 
-#include "Models/GammaModel.hpp"
-#include "Models/GaussianModelGivenSigma.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/GaussianModelGivenSigma.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
 
-namespace BOOM {
+namespace BOOM{
   class GaussianModel;
 
-  class GaussianConjSampler : public PosteriorSampler {
+  class GaussianConjSampler : public PosteriorSampler
+  {
    public:
     GaussianConjSampler(GaussianModel *m,
-                        const Ptr<GaussianModelGivenSigma> &mu,
-                        const Ptr<GammaModelBase> &sig,
-                        RNG &seeding_rng = GlobalRng::rng);
+            const Ptr<GaussianModelGivenSigma> &mu,
+            const Ptr<GammaModelBase> &sig,
+      RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
 
-    double mu() const;
-    double kappa() const;
-    double df() const;
-    double ss() const;
+    double mu()const;
+    double kappa()const;
+    double df()const;
+    double ss()const;
 
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override { return true; }
-
-   private:
+    bool can_find_posterior_mode() const override {
+      return true;
+    }
+  private:
     GaussianModel *mod_;
     Ptr<GaussianModelGivenSigma> mu_;
     Ptr<GammaModelBase> siginv_;
     GenericGaussianVarianceSampler sigsq_sampler_;
   };
 }  // namespace BOOM
-#endif  // BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP
+#endif// BOOM_GAUSSIAN_MODEL_CONJUGATE_SAMPLER_HPP

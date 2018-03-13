@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Bart/PosteriorSamplers/PoissonBartPosteriorSampler.hpp"
-#include "Models/Glm/PosteriorSamplers/poisson_mixture_approximation_table.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
+#include <Models/Bart/PosteriorSamplers/PoissonBartPosteriorSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/poisson_mixture_approximation_table.hpp>
+#include <cpputil/math_utils.hpp>
+#include <distributions.hpp>
 
 namespace BOOM {
   namespace Bart {
@@ -33,10 +32,13 @@ namespace BOOM {
           internal_weight_(0),
           neglog_final_interarrival_time_minus_mu_(0),
           external_weight_(0),
-          log_lambda_(initial_predicted_log_lambda) {}
+          log_lambda_(initial_predicted_log_lambda)
+    {}
 
     //----------------------------------------------------------------------
-    int PoissonResidualRegressionData::y() const { return observed_data_->y(); }
+    int PoissonResidualRegressionData::y() const {
+      return observed_data_->y();
+    }
 
     //----------------------------------------------------------------------
     double PoissonResidualRegressionData::exposure() const {
@@ -56,15 +58,16 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     void PoissonResidualRegressionData::set_latent_data(
-        double neglog_final_event_time_minus_mu, double internal_weight,
+        double neglog_final_event_time_minus_mu,
+        double internal_weight,
         double neglog_final_interarrival_time_minus_mu,
         double external_weight) {
       if (internal_weight < 0 || external_weight < 0) {
-        report_error(
-            "Negative weights in PoissonResidualRegressionData::"
-            "set_residuals");
+        report_error("Negative weights in PoissonResidualRegressionData::"
+                     "set_residuals");
       }
-      neglog_final_event_time_minus_mu_ = neglog_final_event_time_minus_mu;
+      neglog_final_event_time_minus_mu_ =
+          neglog_final_event_time_minus_mu;
       internal_weight_ = internal_weight;
       neglog_final_interarrival_time_minus_mu_ =
           neglog_final_interarrival_time_minus_mu;
@@ -88,7 +91,8 @@ namespace BOOM {
     }
 
     //======================================================================
-    PoissonSufficientStatistics *PoissonSufficientStatistics::clone() const {
+    PoissonSufficientStatistics *
+    PoissonSufficientStatistics::clone() const {
       return new PoissonSufficientStatistics(*this);
     }
 
@@ -126,15 +130,21 @@ namespace BOOM {
   //======================================================================
 
   PoissonBartPosteriorSampler::PoissonBartPosteriorSampler(
-      PoissonBartModel *model, double total_prediction_sd,
-      double prior_tree_depth_alpha, double prior_tree_depth_beta,
+      PoissonBartModel *model,
+      double total_prediction_sd,
+      double prior_tree_depth_alpha,
+      double prior_tree_depth_beta,
       const std::function<double(int)> &log_prior_on_number_of_trees,
       RNG &seeding_rng)
-      : BartPosteriorSamplerBase(model, total_prediction_sd,
-                                 prior_tree_depth_alpha, prior_tree_depth_beta,
-                                 log_prior_on_number_of_trees, seeding_rng),
+      : BartPosteriorSamplerBase(model,
+                                 total_prediction_sd,
+                                 prior_tree_depth_alpha,
+                                 prior_tree_depth_beta,
+                                 log_prior_on_number_of_trees,
+                                 seeding_rng),
         model_(model),
-        data_imputer_(new PoissonDataImputer) {}
+        data_imputer_(new PoissonDataImputer)
+  {}
 
   //----------------------------------------------------------------------
   void PoissonBartPosteriorSampler::draw() {
@@ -157,7 +167,8 @@ namespace BOOM {
   double PoissonBartPosteriorSampler::log_integrated_likelihood(
       const Bart::SufficientStatisticsBase &abstract_suf) const {
     const Bart::PoissonSufficientStatistics &suf(
-        dynamic_cast<const Bart::PoissonSufficientStatistics &>(abstract_suf));
+        dynamic_cast<const Bart::PoissonSufficientStatistics &>(
+            abstract_suf));
     double prior_variance = mean_prior_variance();
     double ivar = suf.sum_of_weights() + (1.0 / prior_variance);
     double posterior_mean = suf.weighted_sum_of_residuals() / ivar;
@@ -166,8 +177,9 @@ namespace BOOM {
     // We omit facors in the integrated likelihood that will cancel in
     // the MH ratio for splitting nodes in the same tree.  The omitted
     // is the log of (2 * pi)^(-n/2) * \prod(w[i] ^.5)
-    double ans = .5 * (log(posterior_variance / prior_variance) +
-                       (square(posterior_mean) / posterior_variance));
+    double ans =
+        .5 * (log(posterior_variance / prior_variance)
+              +(square(posterior_mean) / posterior_variance));
     return ans;
   }
 
@@ -195,12 +207,14 @@ namespace BOOM {
   // because they are omitted by log_integrated_likelihood.
   double PoissonBartPosteriorSampler::complete_data_poisson_log_likelihood(
       const Bart::PoissonSufficientStatistics &suf) const {
-    double ans = -.5 * suf.weighted_sum_of_squared_residuals();
+    double ans = - .5 * suf.weighted_sum_of_squared_residuals();
     return ans;
   }
 
   //----------------------------------------------------------------------
-  void PoissonBartPosteriorSampler::clear_residuals() { residuals_.clear(); }
+  void PoissonBartPosteriorSampler::clear_residuals() {
+    residuals_.clear();
+  }
 
   //----------------------------------------------------------------------
   int PoissonBartPosteriorSampler::residual_size() const {
@@ -219,14 +233,14 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  Bart::PoissonResidualRegressionData *PoissonBartPosteriorSampler::residual(
-      int i) {
+  Bart::PoissonResidualRegressionData *
+  PoissonBartPosteriorSampler::residual(int i) {
     return residuals_[i].get();
   }
 
   //----------------------------------------------------------------------
-  Bart::PoissonSufficientStatistics *PoissonBartPosteriorSampler::create_suf()
-      const {
+  Bart::PoissonSufficientStatistics *
+  PoissonBartPosteriorSampler::create_suf() const {
     return new SufType;
   }
 
@@ -247,13 +261,14 @@ namespace BOOM {
     double neglog_final_interarrival_time;
     double external_mu;
     double external_weight;
-    data_imputer_->impute(rng(), data->y(), data->exposure(), eta,
-                          &neglog_final_event_time, &internal_mu,
-                          &internal_weight, &neglog_final_interarrival_time,
-                          &external_mu, &external_weight);
-    data->set_latent_data(
-        neglog_final_event_time - internal_mu, internal_weight,
-        neglog_final_interarrival_time - external_mu, external_weight);
+    data_imputer_->impute(
+        rng(), data->y(), data->exposure(), eta,
+        &neglog_final_event_time, &internal_mu, &internal_weight,
+        &neglog_final_interarrival_time, &external_mu, &external_weight);
+    data->set_latent_data(neglog_final_event_time - internal_mu,
+                          internal_weight,
+                          neglog_final_interarrival_time - external_mu,
+                          external_weight);
   }
 
 }  // namespace BOOM

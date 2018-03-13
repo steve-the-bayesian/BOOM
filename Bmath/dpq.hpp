@@ -21,7 +21,7 @@
 #ifndef BOOM_RMATH_DPQ_HPP_
 #define BOOM_RMATH_DPQ_HPP_
 
-#include "cpputil/report_error.hpp"
+#include <cpputil/report_error.hpp>
 
 /* give_log in "d";  log_p in "p" & "q" : */
 #define give_log log_p

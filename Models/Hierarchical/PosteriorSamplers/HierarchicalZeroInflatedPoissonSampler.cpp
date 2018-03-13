@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -17,12 +16,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Hierarchical/PosteriorSamplers/HierarchicalZeroInflatedPoissonSampler.hpp"
-#include "cpputil/math_utils.hpp"
+#include <Models/Hierarchical/PosteriorSamplers/HierarchicalZeroInflatedPoissonSampler.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
-  typedef HierarchicalZeroInflatedPoissonSampler HZIPS;
+typedef HierarchicalZeroInflatedPoissonSampler HZIPS;
 
   HZIPS::HierarchicalZeroInflatedPoissonSampler(
       HierarchicalZeroInflatedPoissonModel *model,
@@ -37,12 +36,17 @@ namespace BOOM {
         lambda_sample_size_prior_(lambda_sample_size_prior),
         zero_probability_mean_prior_(zero_probability_mean_prior),
         zero_probability_sample_size_prior_(zero_probability_sample_size_prior),
-        lambda_prior_sampler_(model_->prior_for_poisson_mean(),
-                              lambda_mean_prior_, lambda_sample_size_prior_,
-                              seeding_rng),
+        lambda_prior_sampler_(
+            model_->prior_for_poisson_mean(),
+            lambda_mean_prior_,
+            lambda_sample_size_prior_,
+            seeding_rng),
         zero_probability_prior_sampler_(
-            model_->prior_for_zero_probability(), zero_probability_mean_prior_,
-            zero_probability_sample_size_prior_, seeding_rng) {
+            model_->prior_for_zero_probability(),
+            zero_probability_mean_prior_,
+            zero_probability_sample_size_prior_,
+            seeding_rng)
+  {
     Ptr<GammaModel> lambda_prior = model_->prior_for_poisson_mean();
     Ptr<BetaModel> beta_prior = model_->prior_for_zero_probability();
   }
@@ -58,8 +62,11 @@ namespace BOOM {
     for (int i = 0; i < model_->number_of_groups(); ++i) {
       ZeroInflatedPoissonModel *data_level_model = model_->data_model(i);
       if (data_level_model->number_of_sampling_methods() == 0) {
-        NEW(ZeroInflatedPoissonSampler, sampler)
-        (data_level_model, lambda_prior, zero_probability_prior, rng());
+        NEW(ZeroInflatedPoissonSampler, sampler)(
+            data_level_model,
+            lambda_prior,
+            zero_probability_prior,
+            rng());
         data_level_model->set_method(sampler);
       }
       data_level_model->sample_posterior();
@@ -84,22 +91,24 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double HierarchicalZeroInflatedPoissonSampler::logpri() const {
+  double HierarchicalZeroInflatedPoissonSampler::logpri()const{
     double lambda_mean = model_->poisson_prior_mean();
     double lambda_sample_size = model_->poisson_prior_sample_size();
     double zero_probability_prior_mean = model_->zero_probability_prior_mean();
     double zero_probability_prior_sample_size =
         model_->zero_probability_prior_sample_size();
-    if (lambda_mean <= 0 || lambda_sample_size <= 0 ||
-        zero_probability_prior_mean <= 0 || zero_probability_prior_mean >= 1 ||
-        zero_probability_prior_sample_size <= 0) {
+    if (lambda_mean <= 0
+        || lambda_sample_size <= 0
+        || zero_probability_prior_mean <= 0
+        || zero_probability_prior_mean >= 1
+        || zero_probability_prior_sample_size <= 0) {
       return negative_infinity();
     }
-    return lambda_mean_prior_->logp(lambda_mean) +
-           lambda_sample_size_prior_->logp(lambda_sample_size) +
-           zero_probability_mean_prior_->logp(zero_probability_prior_mean) +
-           zero_probability_sample_size_prior_->logp(
-               zero_probability_prior_sample_size);
+    return lambda_mean_prior_->logp(lambda_mean)
+        + lambda_sample_size_prior_->logp(lambda_sample_size)
+        + zero_probability_mean_prior_->logp(zero_probability_prior_mean)
+        + zero_probability_sample_size_prior_->logp(
+            zero_probability_prior_sample_size);
   }
 
-}  // namespace BOOM
+} // namespace BOOM

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -17,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "LinAlg/MatrixPartition.hpp"
+#include <LinAlg/MatrixPartition.hpp>
 
 namespace BOOM{
   MatrixPartition::MatrixPartition(Matrix *m,

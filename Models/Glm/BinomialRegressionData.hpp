@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -19,10 +18,11 @@
 #ifndef BOOM_BINOMIAL_REGRESSION_DATA_HPP_
 #define BOOM_BINOMIAL_REGRESSION_DATA_HPP_
 
-#include "Models/Glm/Glm.hpp"
+#include <Models/Glm/Glm.hpp>
 
-namespace BOOM {
-  class BinomialRegressionData : public GlmData<DoubleData> {
+namespace BOOM{
+  class BinomialRegressionData
+      : public GlmData<DoubleData>{
    public:
     typedef GlmData<DoubleData> Base;
 
@@ -39,12 +39,12 @@ namespace BOOM {
     //     allows the x's to be shared with other objects.
     BinomialRegressionData(double y, double n, const Ptr<VectorData> &x);
 
-    BinomialRegressionData *clone() const override;
+    BinomialRegressionData * clone() const override;
     void set_n(double n, bool check = true);
     void set_y(double y, bool check = true);
-    double n() const;
-    void check() const;  // throws if n < y
-    ostream &display(ostream &out) const override;
+    double n()const;
+    void check()const;  // throws if n < y
+    ostream & display(ostream &out)const override;
 
    private:
     // Number of binomial trials.
@@ -53,4 +53,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif  // BOOM_BINOMIAL_REGRESSION_DATA_HPP_
+#endif // BOOM_BINOMIAL_REGRESSION_DATA_HPP_

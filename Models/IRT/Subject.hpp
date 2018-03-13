@@ -19,13 +19,13 @@
 #ifndef IRT_SUBJECT_HPP
 #define IRT_SUBJECT_HPP
 
-#include "Models/IRT/IRT.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/IRT/IRT.hpp>
+#include <Models/Policies/ParamPolicy_1.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
-namespace BOOM {
-  namespace IRT {
+namespace BOOM{
+  namespace IRT{
     class Item;
 
     // 'Subject' means 'observational unit' (e.g. student) not
@@ -33,14 +33,14 @@ namespace BOOM {
 
     class Subject : virtual public Data  // data is the sequence of responses
     {
-     public:
+    public:
       friend class IrtModel;
 
       Subject(const string &Id, uint nscal);
-      Subject(const string &Id, const Vector &theta);
-      Subject(const string &Id, uint nscal, const Vector &background_vars);
+      Subject(const string &Id, const Vector & theta);
+      Subject(const string &Id, uint nscal, const Vector & background_vars);
       Subject(const Subject &rhs);
-      Subject *clone() const override;
+      Subject * clone()const override;
 
       Response add_item(const Ptr<Item> &item, uint response);
       Response add_item(const Ptr<Item> &item, const string &response);
@@ -48,38 +48,38 @@ namespace BOOM {
 
       // find this subject's response to an item
 
-      const ItemResponseMap &item_responses() const;
-      Response response(const Ptr<Item> &) const;
-      Ptr<Item> find_item(const string &item_id, bool nag = false) const;
+      const ItemResponseMap & item_responses()const;
+      Response response(const Ptr<Item> &)const;
+      Ptr<Item> find_item(const string &item_id, bool nag=false)const;
 
       Ptr<VectorParams> Theta_prm();
-      const Ptr<VectorParams> Theta_prm() const;
-      const Vector &Theta() const;
+      const Ptr<VectorParams> Theta_prm()const;
+      const Vector & Theta()const;
       void set_Theta(const Vector &v);
 
-      ostream &display(ostream &) const override;
-      ostream &display_responses(ostream &) const;
+      ostream & display(ostream &)const override;
+      ostream & display_responses(ostream &)const;
 
-      uint Nitems() const;
-      uint Nscales() const;
+      uint Nitems()const;
+      uint Nscales()const;
 
-      virtual double loglike() const;
-      const string &id() const;
-      SpdMatrix xtx() const;
+      virtual double loglike()const;
+      const string & id()const;
+      SpdMatrix xtx()const;
       // returns \sum_i \Beta_i \Beta_i^T for betas
 
       Response simulate_response(const Ptr<Item> &item);
-
-     private:
-      string id_;  // subject identifier
+    private:
+      string id_;                        // subject identifier
       ItemResponseMap responses_;
       Ptr<Item> search_helper;
       Ptr<VectorParams> Theta_;
-      Vector x_;  // covariates
+      Vector x_;                            // covariates
       Response prototype;
     };
     //----------------------------------------------------------------------
 
-  }  // namespace IRT
-}  // namespace BOOM
-#endif  // IRT_SUBJECT_HPP
+
+  }
+}
+#endif // IRT_SUBJECT_HPP

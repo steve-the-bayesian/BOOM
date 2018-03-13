@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -21,24 +20,21 @@
 #define BOOM_CPP_MATH_UTILS_H
 
 #include <cmath>
-#include "cpputil/portable_math.hpp"
+#include <cpputil/portable_math.hpp>
 
-namespace BOOM {
-  inline int I(int r, int s) { return r == s ? 1 : 0; }
+namespace BOOM{
+  inline int I(int r, int s){ return r==s ? 1:0;}
   double safelog(double x);
   double infinity();
   double negative_infinity();
-  template <class T>
-  inline T square(T x) {
-    return x * x;
-  }
+  template <class T> inline T square(T x) { return x * x; }
   inline bool finite(double x) { return std::isfinite(x); }
 
-  inline int divide_rounding_up(int a, int b) {
-    int ans = a / b;
-    return ans * b < a ? ans + 1 : ans;
+  inline int divide_rounding_up(int a, int b){
+    int ans = a/b;
+    return ans * b < a ? ans+1 : ans;
   }
 
   using std::isnan;
-}  // namespace BOOM
-#endif  // BOOM_CPP_MATH_UTILS_H
+}
+#endif // BOOM_CPP_MATH_UTILS_H

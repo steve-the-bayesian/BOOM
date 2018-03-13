@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,25 +18,26 @@
 #ifndef BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP
 #define BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP
 
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
 
-namespace BOOM {
+namespace BOOM{
   class ExponentialModel;
   class GammaModel;
 
-  class ExponentialGammaSampler : public PosteriorSampler {
-   public:
-    ExponentialGammaSampler(ExponentialModel *Mod, const Ptr<GammaModel> &Pri,
-                            RNG &seeding_rng = GlobalRng::rng);
+  class ExponentialGammaSampler
+    : public PosteriorSampler{
+  public:
+    ExponentialGammaSampler(ExponentialModel *Mod,
+                const Ptr<GammaModel> &Pri,
+          RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-    double a() const;
-    double b() const;
+    double a()const;
+    double b()const;
     void find_posterior_mode(double epsilon = 1e-5) override;
-
-   private:
-    ExponentialModel *mod;
+  private:
+    ExponentialModel* mod;
     Ptr<GammaModel> pri;
   };
-}  // namespace BOOM
-#endif  // BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP
+}
+#endif// BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP

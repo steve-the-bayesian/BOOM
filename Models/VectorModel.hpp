@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -19,8 +18,8 @@
 
 #ifndef BOOM_VECTOR_MODEL_HPP
 #define BOOM_VECTOR_MODEL_HPP
-#include "Models/ModelTypes.hpp"
-#include "distributions/rng.hpp"
+#include <Models/ModelTypes.hpp>
+#include <distributions/rng.hpp>
 
 namespace BOOM {
 
@@ -35,9 +34,9 @@ namespace BOOM {
 
   class LocationScaleVectorModel : virtual public VectorModel {
    public:
-    virtual const Vector &mu() const = 0;
-    virtual const SpdMatrix &Sigma() const = 0;
-    virtual const SpdMatrix &siginv() const = 0;
+    virtual const Vector & mu() const = 0;
+    virtual const SpdMatrix & Sigma() const = 0;
+    virtual const SpdMatrix & siginv() const = 0;
     virtual double ldsi() const = 0;
   };
 
@@ -72,6 +71,7 @@ namespace BOOM {
     //  threshold.
     virtual double Logp(const Vector &x, Vector &g, Matrix &h,
                         uint nd) const = 0;
+
   };
 
 }  // namespace BOOM

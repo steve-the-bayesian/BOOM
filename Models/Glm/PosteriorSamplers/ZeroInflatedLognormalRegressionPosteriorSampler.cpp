@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/ZeroInflatedLognormalRegressionPosteriorSampler.hpp"
+#include <Models/Glm/PosteriorSamplers/ZeroInflatedLognormalRegressionPosteriorSampler.hpp>
+#include <distributions.hpp>
 #include <functional>
-#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -33,22 +32,30 @@ namespace BOOM {
       const Ptr<MvnGivenScalarSigmaBase> &regression_slab,
       const Ptr<GammaModelBase> &siginv_prior,
       const Ptr<VariableSelectionPrior> &logit_spike,
-      const Ptr<MvnBase> &logit_slab, RNG &seeding_rng)
+      const Ptr<MvnBase> &logit_slab,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         regression_model_(new RegressionModel(
-            model->regression_coefficient_ptr(), model->sigsq_prm())),
-        nonzero_(new BinomialLogitModel(model->logit_coefficient_ptr())),
+            model->regression_coefficient_ptr(),
+            model->sigsq_prm())),
+        nonzero_(new BinomialLogitModel(
+            model->logit_coefficient_ptr())),
         regression_spike_(regression_spike),
         regression_slab_(regression_slab),
         siginv_prior_(siginv_prior),
         logit_spike_(logit_spike),
         logit_slab_(logit_slab),
-        regression_sampler_(new BregVsSampler(regression_model_.get(),
-                                              regression_slab_, siginv_prior_,
-                                              regression_spike_, seeding_rng)),
+        regression_sampler_(new BregVsSampler(
+            regression_model_.get(),
+            regression_slab_,
+            siginv_prior_,
+            regression_spike_,
+            seeding_rng)),
         logit_sampler_(new BinomialLogitCompositeSpikeSlabSampler(
-            nonzero_.get(), logit_slab_, logit_spike_,
+            nonzero_.get(),
+            logit_slab_,
+            logit_spike_,
             3,    // clt_threshold
             3.0,  // t degrees of freedom
             10,   // max_tim_chunk_size
@@ -57,7 +64,8 @@ namespace BOOM {
             seeding_rng)),
         data_is_current_(false),
         check_data_(true),
-        posterior_mode_found_(false) {
+        posterior_mode_found_(false)
+  {
     regression_model_->set_method(regression_sampler_);
     nonzero_->set_method(logit_sampler_);
   }
@@ -85,9 +93,8 @@ namespace BOOM {
     if (!check_data_) {
       return;
     }
-    std::function<void(void)> observer = [this]() {
-      this->invalidate_latent_data();
-    };
+    std::function<void(void)> observer = [this](){
+      this->invalidate_latent_data();};
 
     if (!data_is_current_) {
       regression_model_->clear_data();
@@ -101,8 +108,10 @@ namespace BOOM {
           data_point->add_observer(observer);
           observed_data_.insert(data_point);
         }
-        NEW(BinomialRegressionData, nonzero_data)
-        (data_point->y() > model_->zero_threshold(), 1, data_point->Xptr());
+        NEW(BinomialRegressionData, nonzero_data)(
+            data_point->y() > model_->zero_threshold(),
+            1,
+            data_point->Xptr());
         nonzero_->add_data(nonzero_data);
       }
     }

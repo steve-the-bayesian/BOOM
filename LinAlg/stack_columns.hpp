@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -18,7 +17,7 @@
 */
 #ifndef BOOM_STACK_COLUMNS_HPP
 #define BOOM_STACK_COLUMNS_HPP
-#include "LinAlg/Vector.hpp"
+#include <LinAlg/Vector.hpp>
 namespace BOOM{
   class Matrix;
   Vector stack_columns(const Matrix &m);

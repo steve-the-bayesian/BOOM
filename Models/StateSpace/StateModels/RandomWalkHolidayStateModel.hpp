@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -20,27 +19,28 @@
 #ifndef BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 #define BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
 
-#include "Models/StateSpace/StateModels/Holiday.hpp"
-#include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "Models/ZeroMeanGaussianModel.hpp"
-#include "cpputil/Date.hpp"
-#include "cpputil/Ptr.hpp"
+#include <memory>
+#include <cpputil/Date.hpp>
+#include <Models/StateSpace/StateModels/StateModel.hpp>
+#include <Models/ZeroMeanGaussianModel.hpp>
+#include <Models/StateSpace/StateModels/Holiday.hpp>
 
 namespace BOOM {
 
-  // TODO: Need a new class of HolidayStateModel that
+  // TODO(stevescott): Need a new class of HolidayStateModel that
   // adjusts when floating holidays occur on weekends.
 
   // A RandomWalkHolidayStateModel assumes the holiday will produce an
   // effect of size delta[t], where the state model is
   //
-  //    delta[t] = delta[t-1] + error,
+  //    delta[t] = delta[t-1time_unit] + error,
   //
-  // if t is in the holiday window, and delta[t] = 0 otherwise.  The notation
-  // t-1 indicates the same position in the time window the last time the
-  // holiday occurred.  In other words, holiday effects are modeled as a random
-  // walk (relative to the last incidence of the holiday) inside the holiday
-  // influence window.
+  // if t is in the holiday window, and delta[t] = 0 otherwise.  The
+  // notation t-1time_unit indicates the same position in the time
+  // window the last time the holiday occurred.  In other words,
+  // holiday effects are modeled as a random walk (relative to the
+  // last incidence of the holiday) inside the holiday influence
+  // window.
   //
   // This model allows for arbitrarily shaped 'bumps' in both positive
   // and negative directions.  The state dimension is the holiday
@@ -48,8 +48,9 @@ namespace BOOM {
   // the holiday influences).  The transition matrix is always the
   // identity.  The error variance matrix is sigma^2 * outer(e[t]),
   // where e[t] is column t of the identity matrix.
-  class RandomWalkHolidayStateModel : public StateModel,
-                                      public ZeroMeanGaussianModel {
+  class RandomWalkHolidayStateModel :
+      public StateModel,
+      public ZeroMeanGaussianModel{
    public:
     // Args:
     //   holiday: A heap allocated pointer to a holiday that this
@@ -58,17 +59,15 @@ namespace BOOM {
     //   time_zero: The date at t = 0, where t is an integer number of
     //     days.
     RandomWalkHolidayStateModel(Holiday *holiday, const Date &time_zero);
-    RandomWalkHolidayStateModel *clone() const override;
-    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override {
-      observe_state(then, now, time_now, nullptr);
-    }
+    RandomWalkHolidayStateModel * clone() const override;
+    void observe_state(const ConstVectorView then,
+                       const ConstVectorView now,
+                       int time_now) override;
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override { return 1; }
+    uint state_error_dimension() const override {
+      return 1;
+    }
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
@@ -77,18 +76,11 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
     SparseVector observation_matrix(int t) const override;
-
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override {
-      return new IdenticalRowsMatrix(observation_matrix(t),
-                                     data_point.total_sample_size());
-    }
-
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
     void update_complete_data_sufficient_statistics(
-        int t, const ConstVectorView &state_error_mean,
+        int t,
+        const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     void set_initial_state_mean(const Vector &v);
@@ -96,7 +88,8 @@ namespace BOOM {
     void set_time_zero(const Date &time_zero);
 
    private:
-    Ptr<Holiday> holiday_;
+    // TODO(stevescott): Make this a unique_ptr once available.
+    std::shared_ptr<Holiday> holiday_;
     Date time_zero_;
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
@@ -104,9 +97,9 @@ namespace BOOM {
     Ptr<ZeroMatrix> zero_state_variance_matrix_;
 
     std::vector<Ptr<SingleSparseDiagonalElementMatrixParamView> >
-        active_state_variance_matrix_;
+    active_state_variance_matrix_;
   };
 
 }  // namespace BOOM
 
-#endif  //  BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_
+#endif //  BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_

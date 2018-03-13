@@ -18,47 +18,46 @@
 #ifndef BOOM_WEEKLY_CYCLE_POISSON_PROCESS_HPP_
 #define BOOM_WEEKLY_CYCLE_POISSON_PROCESS_HPP_
 
+#include <Models/PointProcess/PoissonProcess.hpp>
+#include <Models/PointProcess/PointProcess.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/Policies/ParamPolicy_4.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 #include <functional>
-#include "Models/PointProcess/PointProcess.hpp"
-#include "Models/PointProcess/PoissonProcess.hpp"
-#include "Models/Policies/ParamPolicy_4.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
 
-namespace BOOM {
+namespace BOOM{
 
   class WeeklyCyclePoissonSuf : public SufstatDetails<PointProcess> {
    public:
     WeeklyCyclePoissonSuf();
-    WeeklyCyclePoissonSuf *clone() const override;
+    WeeklyCyclePoissonSuf * clone() const override;
     void clear() override;
 
     void Update(const PointProcess &data) override;
     void add_exposure_window(const DateTime &t0, const DateTime &t1);
     void add_event(const DateTime &t);
 
-    WeeklyCyclePoissonSuf *combine(const Ptr<WeeklyCyclePoissonSuf> &);
-    WeeklyCyclePoissonSuf *combine(const WeeklyCyclePoissonSuf &);
-    WeeklyCyclePoissonSuf *abstract_combine(Sufstat *s) override;
+    WeeklyCyclePoissonSuf * combine(const Ptr<WeeklyCyclePoissonSuf> &);
+    WeeklyCyclePoissonSuf * combine(const WeeklyCyclePoissonSuf &);
+    WeeklyCyclePoissonSuf * abstract_combine(Sufstat *s) override;
 
-    Vector vectorize(bool minimal = true) const override;
+    Vector vectorize(bool minimal = true)const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    ostream & print(ostream &out)const override;
 
-    Vector daily_event_count() const;
-    Vector weekday_hourly_event_count() const;
-    Vector weekend_hourly_event_count() const;
+    Vector daily_event_count()const;
+    Vector weekday_hourly_event_count()const;
+    Vector weekend_hourly_event_count()const;
 
     // Returns a matrix where the (day, hour) element gives the total
     // exposure time (measured in fractoins of a day) for that hour in
     // that day of the week.
-    const Matrix &exposure() const;
-    const Matrix &count() const;
-
+    const Matrix &exposure()const;
+    const Matrix &count()const;
    private:
     // Keeps track of the number of events that take place during each
     // hour of the week.  Indexed by (day, hour).
@@ -82,10 +81,11 @@ namespace BOOM {
                              VectorParams>,  // Weekend hourly factor
         public SufstatDataPolicy<PointProcess, WeeklyCyclePoissonSuf>,
         public PriorPolicy,
-        public LoglikeModel {
+        public LoglikeModel
+  {
    public:
     WeeklyCyclePoissonProcess();
-    WeeklyCyclePoissonProcess *clone() const override;
+    WeeklyCyclePoissonProcess * clone()const override;
 
     // Concatenate a collection of 4 parameters into a single vector
     // that can be passed to loglike().
@@ -99,48 +99,52 @@ namespace BOOM {
     //   A vector containing lambda, the first 6 elements of daily,
     //   the first 23 elements of weekday_hourly, and the first 23
     //   elements of weekend_hourly.
-    static Vector concatenate_params(double lambda, const Vector &daily,
-                                     const Vector &weekday_hourly,
-                                     const Vector &weekend_hourly);
-    double loglike(const Vector &lam0_delta_weekday_weekend) const override;
+    static Vector concatenate_params(
+        double lambda,
+        const Vector &daily,
+        const Vector &weekday_hourly,
+        const Vector &weekend_hourly);
+    double loglike(const Vector &lam0_delta_weekday_weekend)const override;
     void mle() override;
 
-    double event_rate(const DateTime &t) const override;
-    double event_rate(DayNames day, int hour) const;
+    double event_rate(const DateTime &t)const override;
+    double event_rate(DayNames day, int hour)const;
 
     double expected_number_of_events(const DateTime &t0,
-                                     const DateTime &t1) const override;
-    double average_daily_rate() const;
+                                             const DateTime &t1)const override;
+    double average_daily_rate()const;
     void set_average_daily_rate(double lambda);
 
-    const Vector &day_of_week_pattern() const;  // sums to 7
+    const Vector &day_of_week_pattern()const;        // sums to 7
     void set_day_of_week_pattern(const Vector &pattern);
 
-    const Vector &weekday_hourly_pattern() const;  // sums to 24
+    const Vector &weekday_hourly_pattern()const;     // sums to 24
     void set_weekday_hourly_pattern(const Vector &pattern);
 
-    const Vector &weekend_hourly_pattern() const;  // sums to 24
+    const Vector &weekend_hourly_pattern()const;     // sums to 24
     void set_weekend_hourly_pattern(const Vector &pattern);
 
-    PointProcess simulate(RNG &rng, const DateTime &t0, const DateTime &t1,
-                          std::function<Data *()> mark_generator =
-                              NullDataGenerator()) const override;
+    PointProcess simulate(
+        RNG &rng,
+        const DateTime &t0,
+        const DateTime &t1,
+        std::function<Data*()> mark_generator
+           = NullDataGenerator())const override;
 
     Ptr<UnivParams> average_daily_event_rate_prm();
-    const Ptr<UnivParams> average_daily_event_rate_prm() const;
+    const Ptr<UnivParams> average_daily_event_rate_prm()const;
     Ptr<VectorParams> day_of_week_cycle_prm();
-    const Ptr<VectorParams> day_of_week_cycle_prm() const;
+    const Ptr<VectorParams> day_of_week_cycle_prm()const;
     Ptr<VectorParams> weekday_hour_of_day_cycle_prm();
-    const Ptr<VectorParams> weekday_hour_of_day_cycle_prm() const;
+    const Ptr<VectorParams> weekday_hour_of_day_cycle_prm()const;
     Ptr<VectorParams> weekend_hour_of_day_cycle_prm();
-    const Ptr<VectorParams> weekend_hour_of_day_cycle_prm() const;
+    const Ptr<VectorParams> weekend_hour_of_day_cycle_prm()const;
 
     void add_data_raw(const PointProcess &);
     void add_exposure_window(const DateTime &t0, const DateTime &t1) override;
     void add_event(const DateTime &t) override;
-
    private:
-    const Vector &hourly_pattern(int day) const;
+    const Vector &hourly_pattern(int day)const;
     void maximize_average_daily_rate();
     void maximize_daily_pattern();
     void maximize_hourly_pattern();

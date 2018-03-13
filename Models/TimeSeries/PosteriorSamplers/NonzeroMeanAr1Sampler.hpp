@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,13 +18,13 @@
 #ifndef BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_
 #define BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_
 
-#include "Models/GammaModel.hpp"
-#include "Models/GaussianModelBase.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/GaussianModelBase.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   class NonzeroMeanAr1Sampler : public PosteriorSampler {
    public:
@@ -55,12 +54,12 @@ namespace BOOM {
     NonzeroMeanAr1Model *m_;
     Ptr<GaussianModelBase> mean_prior_;
     Ptr<GaussianModelBase> phi_prior_;
-    Ptr<GammaModelBase> siginv_prior_;
+    Ptr<GammaModelBase>  siginv_prior_;
     bool truncate_phi_;  // truncate the support of phi to (-1, 1) to
                          // ensure stationarity.
     bool force_ar1_positive_;
     GenericGaussianVarianceSampler sigsq_sampler_;
   };
 
-}  // namespace BOOM
-#endif  // BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_
+}
+#endif // BOOM_NONZERO_MEAN_AR1_SAMPLER_HPP_

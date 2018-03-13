@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,62 +19,62 @@
 #ifndef BOOM_REGRESSION_MODEL_H
 #define BOOM_REGRESSION_MODEL_H
 
-#include "BOOM.hpp"
-#include "LinAlg/QR.hpp"
-#include "Models/EmMixtureComponent.hpp"
-#include "Models/Glm/Glm.hpp"
-#include "Models/ParamTypes.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
-#include "uint.hpp"
+#include <BOOM.hpp>
+#include <uint.hpp>
+#include <Models/Glm/Glm.hpp>
+#include <LinAlg/QR.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/ParamTypes.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/EmMixtureComponent.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class AnovaTable {
+  class AnovaTable{
    public:
     double SSE, SSM, SST;
     double MSM, MSE;
     double df_error, df_model, df_total;
     double F, p_value;
-    ostream &display(ostream &out) const;
+    ostream & display(ostream &out) const;
   };
 
-  ostream &operator<<(ostream &out, const AnovaTable &tab);
+  ostream & operator<<(ostream &out, const AnovaTable &tab);
 
   Matrix add_intercept(const Matrix &X);
   Vector add_intercept(const Vector &X);
 
   //------- virtual base for regression sufficient statistics ----
-  class RegSuf : virtual public Sufstat {
-   public:
+  class RegSuf: virtual public Sufstat{
+  public:
     typedef std::vector<Ptr<RegressionData> > dataset_type;
     typedef Ptr<dataset_type, false> dsetPtr;
 
-    RegSuf *clone() const override = 0;
+    RegSuf * clone()const override = 0;
 
-    virtual uint size() const = 0;  // dimension of beta
-    virtual double yty() const = 0;
-    virtual Vector xty() const = 0;
-    virtual SpdMatrix xtx() const = 0;
+    virtual uint size()const = 0;  // dimension of beta
+    virtual double yty()const = 0;
+    virtual Vector xty()const = 0;
+    virtual SpdMatrix xtx()const = 0;
 
-    virtual Vector xty(const Selector &) const = 0;
-    virtual SpdMatrix xtx(const Selector &) const = 0;
+    virtual Vector xty(const Selector &)const = 0;
+    virtual SpdMatrix xtx(const Selector &)const = 0;
 
     // (X - Xbar)^T * (X - Xbar)
     //  = xtx - n * xbar xbar^T
     SpdMatrix centered_xtx() const;
 
     // return least squares estimates of regression params
-    virtual Vector beta_hat() const = 0;
-    virtual double SSE() const = 0;  // SSE measured from ols beta
-    virtual double SST() const = 0;
-    virtual double ybar() const = 0;
+    virtual Vector beta_hat()const = 0;
+    virtual double SSE()const = 0;  // SSE measured from ols beta
+    virtual double SST()const = 0;
+    virtual double ybar()const = 0;
     // Column means of the design matrix.
-    virtual Vector xbar() const = 0;
-    virtual double n() const = 0;
+    virtual Vector xbar()const = 0;
+    virtual double n()const = 0;
 
     // Compute the sum of square errors using the given set of
     // coefficients, taking advantage of sparsity.
@@ -90,20 +89,24 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
   };
-  inline ostream &operator<<(ostream &out, const RegSuf &suf) {
+  inline ostream & operator<<(ostream &out, const RegSuf &suf){
     return suf.print(out);
   }
   //------------------------------------------------------------------
-  class QrRegSuf : public RegSuf, public SufstatDetails<RegressionData> {
-   public:
+  class QrRegSuf :
+    public RegSuf,
+    public SufstatDetails<RegressionData>
+  {
+  public:
     QrRegSuf(const Matrix &X, const Vector &y);
 
     QrRegSuf *clone() const override;
     void clear() override;
     void Update(const DataType &) override;
-    void add_mixture_data(double y, const Vector &x, double prob) override;
-    void add_mixture_data(double y, const ConstVectorView &x,
-                          double prob) override;
+    void add_mixture_data(
+        double y, const Vector &x, double prob) override;
+    void add_mixture_data(
+        double y, const ConstVectorView &x, double prob) override;
     uint size() const override;  // dimension of beta
     double yty() const override;
     Vector xty() const override;
@@ -119,19 +122,18 @@ namespace BOOM {
     double ybar() const override;
     Vector xbar() const override;
     double n() const override;
-    void refresh_qr(const std::vector<Ptr<DataType> > &) const;
+    void refresh_qr(const std::vector<Ptr<DataType> > &) const ;
     //    void check_raw_data(const Matrix &X, const Vector &y);
     void combine(const Ptr<RegSuf> &) override;
     virtual void combine(const RegSuf &);
-    QrRegSuf *abstract_combine(Sufstat *s) override;
+    QrRegSuf * abstract_combine(Sufstat *s) override;
 
-    Vector vectorize(bool minimal = true) const override;
+    Vector vectorize(bool minimal=true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
+                                            bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
+                                            bool minimal = true) override;
     ostream &print(ostream &out) const override;
-
    private:
     mutable QR qr;
     mutable Vector Qty;
@@ -141,10 +143,10 @@ namespace BOOM {
   };
   //------------------------------------------------------------------
   class NeRegSuf
-      : public RegSuf,
-        public SufstatDetails<RegressionData> {  // directly solves 'normal
-                                                 // equations'
-   public:
+    : public RegSuf,
+      public SufstatDetails<RegressionData>
+  {   // directly solves 'normal equations'
+  public:
     // An empty, but right-sized set of sufficient statistics.
     NeRegSuf(uint p);
 
@@ -153,12 +155,14 @@ namespace BOOM {
 
     // Build from the indiviudal sufficient statistic components.  The
     // 'n' is needed because X might not have an intercept term.
-    NeRegSuf(const SpdMatrix &xtx, const Vector &xty, double yty, double n,
+    NeRegSuf(const SpdMatrix &xtx,
+             const Vector &xty,
+             double yty,
+             double n,
              const Vector &xbar);
 
     // Build from a sequence of Ptr<RegressionData>
-    template <class Fwd>
-    NeRegSuf(Fwd b, Fwd e);
+    template <class Fwd> NeRegSuf(Fwd b, Fwd e);
     NeRegSuf *clone() const override;
 
     // If fixed, then xtx will not be changed by a call to clear(),
@@ -166,10 +170,11 @@ namespace BOOM {
     void fix_xtx(bool tf = true);
 
     void clear() override;
-    void add_mixture_data(double y, const Vector &x, double prob) override;
-    void add_mixture_data(double y, const ConstVectorView &x,
-                          double prob) override;
-    void Update(const RegressionData &rdp) override;
+    void add_mixture_data(
+        double y, const Vector &x, double prob) override;
+    void add_mixture_data(
+        double y, const ConstVectorView &x, double prob) override;
+    void Update(const RegressionData & rdp) override;
     uint size() const override;  // dimension of beta
     double yty() const override;
     Vector xty() const override;
@@ -183,21 +188,20 @@ namespace BOOM {
     Vector xbar() const override;
     double n() const override;
     void combine(const Ptr<RegSuf> &) override;
-    void combine(const RegSuf &);
-    NeRegSuf *abstract_combine(Sufstat *s) override;
+    void combine(const RegSuf &) ;
+    NeRegSuf * abstract_combine(Sufstat *s) override;
 
-    Vector vectorize(bool minimal = true) const override;
-    Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
+    Vector vectorize(bool minimal=true) const override;
+    Vector::const_iterator unvectorize(
+        Vector::const_iterator &v, bool minimal=true) override;
+    Vector::const_iterator unvectorize(
+        const Vector &v, bool minimal=true) override;
     ostream &print(ostream &out) const override;
 
     // Adding data only updates the upper triangle of xtx_.  Calling
     // reflect() fills the lower triangle as well, if needed.
     void reflect() const;
-
-   private:
+  private:
     mutable SpdMatrix xtx_;
     mutable bool needs_to_reflect_;
     Vector xty_;
@@ -209,22 +213,24 @@ namespace BOOM {
   };
 
   template <class Fwd>
-  NeRegSuf::NeRegSuf(Fwd b, Fwd e) {
+  NeRegSuf::NeRegSuf(Fwd b, Fwd e){
     Ptr<RegressionData> dp = *b;
     uint p = dp->xdim();
     xtx_ = SpdMatrix(p, 0.0);
     xty_ = Vector(p, 0.0);
     sumsqy = 0.0;
-    while (b != e) {
+    while(b!=e){
       update(*b);
       ++b;
     }
   }
 
+
   //------------------------------------------------------------------
   class RegressionDataPolicy
-      : public SufstatDataPolicy<RegressionData, RegSuf> {
-   public:
+    : public SufstatDataPolicy<RegressionData, RegSuf>
+  {
+  public:
     typedef RegressionDataPolicy DataPolicy;
     typedef SufstatDataPolicy<RegressionData, RegSuf> DPBase;
 
@@ -234,20 +240,24 @@ namespace BOOM {
     RegressionDataPolicy(const Ptr<RegSuf> &, FwdIt Begin, FwdIt End);
 
     RegressionDataPolicy(const RegressionDataPolicy &);
-    RegressionDataPolicy *clone() const override = 0;
-    RegressionDataPolicy &operator=(const RegressionDataPolicy &);
+    RegressionDataPolicy * clone()const override = 0;
+    RegressionDataPolicy & operator=(const RegressionDataPolicy &);
+
   };
   template <class Fwd>
-  RegressionDataPolicy::RegressionDataPolicy(const Ptr<RegSuf> &s, Fwd b, Fwd e)
-      : DPBase(s, b, e) {}
+  RegressionDataPolicy::RegressionDataPolicy(const Ptr<RegSuf> & s, Fwd b, Fwd e)
+    : DPBase(s,b,e)
+  {}
 
   //------------------------------------------------------------------
-  class RegressionModel : public GlmModel,
-                          public ParamPolicy_2<GlmCoefs, UnivParams>,
-                          public RegressionDataPolicy,
-                          public PriorPolicy,
-                          public NumOptModel,
-                          public EmMixtureComponent {
+  class RegressionModel
+    : public GlmModel,
+      public ParamPolicy_2<GlmCoefs, UnivParams>,
+      public RegressionDataPolicy,
+      public PriorPolicy,
+      public NumOptModel,
+      public EmMixtureComponent
+  {
    public:
     RegressionModel(uint p);
     RegressionModel(const Vector &b, double Sigma);
@@ -255,7 +265,8 @@ namespace BOOM {
     // Use this constructor if the model needs to share parameters
     // with another model.  E.g. a mixture model with shared variance
     // parameter.
-    RegressionModel(const Ptr<GlmCoefs> &beta, const Ptr<UnivParams> &sigsq);
+    RegressionModel(const Ptr<GlmCoefs> &beta,
+                    const Ptr<UnivParams> &sigsq);
 
     // Args:
     //   X: The design matrix of predictor variables.  Must contain an
@@ -267,7 +278,7 @@ namespace BOOM {
 
     RegressionModel(const DatasetType &d, bool include_all_variables = true);
     RegressionModel(const RegressionModel &rhs);
-    RegressionModel *clone() const override;
+    RegressionModel * clone() const override;
 
     // The number of variables currently included in the model,
     // including the intercept, if present.
@@ -277,8 +288,8 @@ namespace BOOM {
     uint nvars_possible() const;
 
     //---- parameters ----
-    GlmCoefs &coef() override;
-    const GlmCoefs &coef() const override;
+    GlmCoefs & coef() override;
+    const GlmCoefs & coef() const override;
     Ptr<GlmCoefs> coef_prm() override;
     const Ptr<GlmCoefs> coef_prm() const override;
     Ptr<UnivParams> Sigsq_prm();
@@ -290,17 +301,17 @@ namespace BOOM {
     double sigma() const;
 
     //---- simulate regression data  ---
-    virtual RegressionData *simdat(RNG &rng = GlobalRng::rng) const;
-    virtual RegressionData *simdat(const Vector &X,
-                                   RNG &rng = GlobalRng::rng) const;
+    virtual RegressionData * simdat(RNG &rng = GlobalRng::rng) const;
+    virtual RegressionData * simdat(const Vector &X,
+                                    RNG &rng = GlobalRng::rng) const;
     Vector simulate_fake_x(RNG &rng = GlobalRng::rng) const;  // no intercept
 
     //---- estimation ---
     SpdMatrix xtx(const Selector &inc) const;
     Vector xty(const Selector &inc) const;
-    SpdMatrix xtx() const;  // adjusts for covariate inclusion-
-    Vector xty() const;     // exclusion, and includes weights,
-    double yty() const;     // if used
+    SpdMatrix xtx() const;      // adjusts for covariate inclusion-
+    Vector xty() const;      // exclusion, and includes weights,
+    double yty() const;   // if used
 
     void make_X_y(Matrix &X, Vector &y) const;
 
@@ -310,8 +321,8 @@ namespace BOOM {
     // corresponding to the residual variance parameter, and the
     // remaining elements corresponding to the set of included
     // coefficients.
-    double Loglike(const Vector &sigsq_beta, Vector &g, Matrix &h,
-                   uint nd) const override;
+    double Loglike(const Vector &sigsq_beta,
+                   Vector &g, Matrix &h, uint nd) const override;
 
     // This implementation of log_likelihood allows for a vector beta that might
     // be of smaller dimension than the predictors, so long as those predictors
@@ -331,7 +342,7 @@ namespace BOOM {
     virtual double pdf(const Ptr<Data> &, bool) const;
     double pdf(const Data *, bool) const override;
 
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override {return dat().size();}
 
     // The log likelihood when beta is empty (i.e. all coefficients,
     // including the intercept, are zero).
@@ -347,7 +358,7 @@ namespace BOOM {
     void add_mixture_data(const Ptr<Data> &, double prob) override;
 
     //--- diagnostics ---
-    AnovaTable anova() const { return suf()->anova(); }
+    AnovaTable anova()const{return suf()->anova();}
   };
 
 }  // namespace BOOM

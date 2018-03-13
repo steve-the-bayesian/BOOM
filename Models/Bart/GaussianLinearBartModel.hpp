@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -20,9 +19,9 @@
 #ifndef BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP
 #define BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP
 
-#include "Models/Bart/GaussianBartModel.hpp"
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
+#include <Models/Glm/RegressionModel.hpp>
+#include <Models/Bart/GaussianBartModel.hpp>
+#include <Models/Policies/CompositeParamPolicy.hpp>
 
 namespace BOOM {
   // A GaussianLinearBartModel is a model relating y to x, where y is a
@@ -34,28 +33,30 @@ namespace BOOM {
   // The usual prior on this model combines a spike and slab prior on
   // beta with a prior penalizing the number and complexity of trees
   // in f(x).
-  class GaussianLinearBartModel : public CompositeParamPolicy,
-                                  public IID_DataPolicy<RegressionData>,
-                                  public PriorPolicy {
+  class GaussianLinearBartModel
+      : public CompositeParamPolicy,
+        public IID_DataPolicy<RegressionData>,
+        public PriorPolicy {
    public:
     GaussianLinearBartModel(int number_of_trees, int xdim);
-    GaussianLinearBartModel(int number_of_trees, const Vector &y,
+    GaussianLinearBartModel(int number_of_trees,
+                            const Vector &y,
                             const Matrix &x);
     GaussianLinearBartModel(const GaussianLinearBartModel &rhs);
-    GaussianLinearBartModel *clone() const override;
+    GaussianLinearBartModel * clone() const override;
 
     void add_data(const Ptr<Data> &) override;
     void add_data(const Ptr<RegressionData> &) override;
 
-    double predict(const Vector &x) const;
-    double predict(const VectorView &x) const;
-    double predict(const ConstVectorView &x) const;
+    double predict(const Vector &x)const;
+    double predict(const VectorView &x)const;
+    double predict(const ConstVectorView &x)const;
 
     RegressionModel *regression();
-    const RegressionModel *regression() const;
+    const RegressionModel *regression()const;
 
     GaussianBartModel *bart();
-    const GaussianBartModel *bart() const;
+    const GaussianBartModel *bart()const;
 
    private:
     void Init();
@@ -66,4 +67,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP
+#endif //  BOOM_GAUSSIAN_LINEAR_BART_MODEL_HPP

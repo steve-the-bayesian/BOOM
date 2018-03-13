@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,44 +17,46 @@
 */
 #ifndef BOOM_MVT_REG_HPP
 #define BOOM_MVT_REG_HPP
-#include "Models/Glm/Glm.hpp"  // for MvRegData
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_3.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/SpdParams.hpp"
-#include "cpputil/Ptr.hpp"
+#include <Models/Policies/ParamPolicy_3.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/SpdParams.hpp>
+#include <cpputil/Ptr.hpp>
+#include <Models/Glm/Glm.hpp>  // for MvRegData
 
-namespace BOOM {
-  class MvtRegModel : public ParamPolicy_3<MatrixParams, SpdParams, UnivParams>,
-                      public IID_DataPolicy<MvRegData>,
-                      public PriorPolicy,
-                      public LoglikeModel {
-   public:
+namespace BOOM{
+  class MvtRegModel
+    : public ParamPolicy_3<MatrixParams,SpdParams,UnivParams>,
+      public IID_DataPolicy<MvRegData>,
+      public PriorPolicy,
+      public LoglikeModel
+  {
+  public:
     MvtRegModel(uint xdim, uint ydim);
-    MvtRegModel(const Matrix &X, const Matrix &Y, bool add_intercept = false);
+    MvtRegModel(const Matrix &X,const Matrix &Y, bool add_intercept=false);
     MvtRegModel(const Matrix &B, const SpdMatrix &Sigma, double nu);
 
     MvtRegModel(const MvtRegModel &rhs);
-    MvtRegModel *clone() const override;
+    MvtRegModel * clone()const override;
 
-    uint xdim() const;  // x includes intercept
-    uint ydim() const;
+    uint xdim()const;  // x includes intercept
+    uint ydim()const;
 
-    const Matrix &Beta() const;  // [xdim rows, ydim columns]
-    const SpdMatrix &Sigma() const;
-    const SpdMatrix &Siginv() const;
-    double ldsi() const;
-    double nu() const;
+    const Matrix & Beta()const;     // [xdim rows, ydim columns]
+    const SpdMatrix & Sigma()const;
+    const SpdMatrix & Siginv()const;
+    double ldsi()const;
+    double nu()const;
 
     Ptr<MatrixParams> Beta_prm();
     Ptr<SpdParams> Sigma_prm();
     Ptr<UnivParams> Nu_prm();
-    const Ptr<MatrixParams> Beta_prm() const;
-    const Ptr<SpdParams> Sigma_prm() const;
-    const Ptr<UnivParams> Nu_prm() const;
+    const Ptr<MatrixParams> Beta_prm()const;
+    const Ptr<SpdParams> Sigma_prm()const;
+    const Ptr<UnivParams> Nu_prm()const;
 
     void set_Beta(const Matrix &B);
-    void set_beta(const Vector &b, uint m);
+    void set_beta(const Vector & b, uint m);
     void set_Sigma(const SpdMatrix &V);
     void set_Siginv(const SpdMatrix &iV);
 
@@ -64,15 +65,16 @@ namespace BOOM {
     //--- estimation and probability calculations
     void mle() override;
     double loglike(
-        const Vector &beta_columns_siginv_triangle_nu) const override;
-    virtual double pdf(const Ptr<Data> &, bool) const;
-    virtual Vector predict(const Vector &x) const;
+        const Vector &beta_columns_siginv_triangle_nu)const override;
+    virtual double pdf(const Ptr<Data> &,bool)const;
+    virtual Vector predict(const Vector &x)const;
 
     //---- simulate MV regression data ---
-    virtual MvRegData *simdat(RNG &rng = GlobalRng::rng) const;
-    virtual MvRegData *simdat(const Vector &X, RNG &rng = GlobalRng::rng) const;
-    Vector simulate_fake_x(RNG &rng = GlobalRng::rng) const;  // no intercept
-  };
-}  // namespace BOOM
+    virtual MvRegData * simdat(RNG &rng = GlobalRng::rng)const;
+    virtual MvRegData * simdat(const Vector &X, RNG &rng = GlobalRng::rng)const;
+    Vector simulate_fake_x(RNG &rng = GlobalRng::rng)const;  // no intercept
 
-#endif  // BOOM_MVT_REG_HPP
+  };
+}
+
+#endif //BOOM_MVT_REG_HPP

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,25 +19,25 @@
 #define BOOM_BINOMIAL_MODEL_HPP
 
 #include <cstdint>
-#include "Models/EmMixtureComponent.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
+#include <Models/ModelTypes.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/EmMixtureComponent.hpp>
+#include <Models/Policies/ParamPolicy_1.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
 namespace BOOM {
 
   // Forward declaration of the conjugate sampler for this model.
   class BetaBinomialSampler;
 
-  class BinomialData : public Data {
+  class BinomialData : public Data{
    public:
     BinomialData() : trials_(0), successes_(0) {}
     BinomialData(int64_t n, int64_t y);
     BinomialData(const BinomialData &rhs);
-    BinomialData *clone() const override;
-    BinomialData &operator=(const BinomialData &rhs);
+    BinomialData * clone() const override;
+    BinomialData & operator=(const BinomialData &rhs);
 
     virtual uint size(bool minimal = true) const;
     ostream &display(ostream &) const override;
@@ -61,18 +60,18 @@ namespace BOOM {
     int64_t trials_;
     int64_t successes_;
 
-    void check_size(int64_t n, int64_t y) const;
+    void check_size(int64_t n, int64_t y)const;
   };
 
   class BinomialSuf : public SufstatDetails<BinomialData> {
    public:
     BinomialSuf();
     BinomialSuf(const BinomialSuf &rhs);
-    BinomialSuf *clone() const override;
+    BinomialSuf * clone()const override;
     void set(double sum, double observation_count);
 
-    double sum() const;
-    double nobs() const;
+    double sum()const;
+    double nobs()const;
     void clear() override;
     void Update(const BinomialData &) override;
     void update_raw(double y);
@@ -82,39 +81,40 @@ namespace BOOM {
 
     void add_mixture_data(double y, double n, double prob);
 
-    BinomialSuf *abstract_combine(Sufstat *s) override;
+    BinomialSuf * abstract_combine(Sufstat *s) override;
     void combine(const Ptr<BinomialSuf> &);
     void combine(const BinomialSuf &);
 
-    Vector vectorize(bool minimal = true) const override;
+    Vector vectorize(bool minimal=true)const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
+                                       bool minimal=true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
-    ostream &print(ostream &out) const override;
-
+                                       bool minimal=true) override;
+    ostream &print(ostream &out)const override;
    private:
     double sum_, nobs_;
   };
 
-  class BinomialModel : public ParamPolicy_1<UnivParams>,
-                        public SufstatDataPolicy<BinomialData, BinomialSuf>,
-                        public PriorPolicy,
-                        public NumOptModel,
-                        public EmMixtureComponent,
-                        public ConjugateDirichletProcessMixtureComponent {
+  class BinomialModel
+    : public ParamPolicy_1<UnivParams>,
+      public SufstatDataPolicy<BinomialData, BinomialSuf>,
+      public PriorPolicy,
+      public NumOptModel,
+      public EmMixtureComponent,
+      public ConjugateDirichletProcessMixtureComponent
+  {
    public:
-    BinomialModel(double p = .5);
+    BinomialModel(double p=.5);
     BinomialModel(const BinomialModel &rhs);
-    BinomialModel *clone() const override;
+    BinomialModel * clone()const override;
 
     void mle() override;
-    double Loglike(const Vector &probvec, Vector &g, Matrix &h,
-                   uint nd) const override;
+    double Loglike(
+        const Vector &probvec, Vector &g, Matrix &h, uint nd)const override;
 
-    double log_prob() const { return log_prob_; }
-    double log_failure_prob() const { return log_failure_prob_; }
-    double prob() const;
+    double log_prob() const {return log_prob_;}
+    double log_failure_prob() const {return log_failure_prob_;}
+    double prob()const;
     void set_prob(double p);
 
     double pdf(const Data *dp, bool logscale) const override;
@@ -129,7 +129,7 @@ namespace BOOM {
     void remove_data(const Ptr<Data> &dp) override;
     std::set<Ptr<Data>> abstract_data_set() const override;
 
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override {return dat().size();}
 
     double log_likelihood() const override {
       return LoglikeModel::log_likelihood();
@@ -146,4 +146,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_BINOMIAL_MODEL_HPP
+#endif // BOOM_BINOMIAL_MODEL_HPP

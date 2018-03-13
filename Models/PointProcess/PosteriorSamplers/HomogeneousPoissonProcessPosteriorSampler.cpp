@@ -16,25 +16,31 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PointProcess/PosteriorSamplers/HomogeneousPoissonProcessPosteriorSampler.hpp"
-#include "distributions.hpp"
+#include <Models/PointProcess/PosteriorSamplers/HomogeneousPoissonProcessPosteriorSampler.hpp>
+#include <distributions.hpp>
 
-namespace BOOM {
+namespace BOOM{
   namespace {
     typedef HomogeneousPoissonProcessPosteriorSampler HPS;
   }
 
   HPS::HomogeneousPoissonProcessPosteriorSampler(
-      HomogeneousPoissonProcess *model, const Ptr<GammaModelBase> &prior,
+      HomogeneousPoissonProcess *model,
+      const Ptr<GammaModelBase> &prior,
       RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), model_(model), prior_(prior) {}
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        prior_(prior)
+  {}
 
-  double HPS::logpri() const { return prior_->logp(model_->lambda()); }
+  double HPS::logpri()const{
+    return prior_->logp(model_->lambda());
+  }
 
-  void HPS::draw() {
+  void HPS::draw(){
     double a = prior_->alpha() + model_->suf()->count();
     double b = prior_->beta() + model_->suf()->exposure();
     double lambda = rgamma_mt(rng(), a, b);
     model_->set_lambda(lambda);
   }
-}  // namespace BOOM
+}

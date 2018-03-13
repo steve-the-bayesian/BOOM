@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,51 +16,53 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PoissonRegressionData.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
+#include <Models/Glm/PoissonRegressionData.hpp>
+#include <cpputil/report_error.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
-  PoissonRegressionData::PoissonRegressionData(int64_t y, const Vector &x,
-                                               double exposure)
-      : PoissonRegressionData(y, new VectorData(x), exposure) {}
+  PoissonRegressionData::PoissonRegressionData(
+      int64_t y,
+      const Vector &x,
+      double exposure)
+      : PoissonRegressionData(y, new VectorData(x), exposure)
+  {}
 
-  PoissonRegressionData::PoissonRegressionData(int64_t y,
-                                               const Ptr<VectorData> &x,
-                                               double exposure)
-      : GlmData<IntData>(Ptr<IntData>(new IntData(y)), x),
+  PoissonRegressionData::PoissonRegressionData(
+      int64_t y,
+      const Ptr<VectorData> &x,
+      double exposure)
+      : GlmData<IntData>(Ptr<IntData>(new IntData(y)),
+                         x),
         exposure_(exposure),
-        log_exposure_(log(exposure)) {
+        log_exposure_(log(exposure))
+  {
     if (y < 0) {
-      report_error(
-          "Negative value of 'y' passed to "
-          "PoissonRegressionData constructor.");
+      report_error("Negative value of 'y' passed to "
+                   "PoissonRegressionData constructor.");
     }
     if (exposure < 0) {
-      report_error(
-          "You can't pass a negative exposure to the "
-          "PoissonRegressionData constructor.");
+      report_error("You can't pass a negative exposure to the "
+                   "PoissonRegressionData constructor.");
     }
     if (exposure == 0 && y > 0) {
-      report_error(
-          "If exposure is 0 then y must also be 0 in "
-          "PoissonRegressionData constructor.");
+      report_error("If exposure is 0 then y must also be 0 in "
+                   "PoissonRegressionData constructor.");
     }
   }
 
-  PoissonRegressionData *PoissonRegressionData::clone() const {
-    return new PoissonRegressionData(*this);
-  }
+  PoissonRegressionData * PoissonRegressionData::clone()const{
+    return new PoissonRegressionData(*this);}
 
-  ostream &PoissonRegressionData::display(ostream &out) const {
+  ostream & PoissonRegressionData::display(ostream &out)const{
     out << "[" << exposure_ << "]  ";
     return GlmData<IntData>::display(out);
   }
 
-  double PoissonRegressionData::exposure() const { return exposure_; }
+  double PoissonRegressionData::exposure()const{return exposure_;}
 
-  double PoissonRegressionData::log_exposure() const { return log_exposure_; }
+  double PoissonRegressionData::log_exposure()const{return log_exposure_;}
 
   void PoissonRegressionData::set_exposure(double exposure, bool signal) {
     if (exposure < 0) {
@@ -78,4 +79,4 @@ namespace BOOM {
     }
   }
 
-}  // namespace BOOM
+}

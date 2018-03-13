@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,27 +19,28 @@
 #ifndef BOOM_MLOGIT_RWM_SAMPLER_HPP
 #define BOOM_MLOGIT_RWM_SAMPLER_HPP
 
-#include "Models/Glm/MultinomialLogitModel.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/Glm/MultinomialLogitModel.hpp>
+#include <Models/MvnBase.hpp>
 
-namespace BOOM {
-  class MlogitRwm : public PosteriorSampler {
-   public:
+namespace BOOM{
+  class MlogitRwm : public PosteriorSampler{
+  public:
     MlogitRwm(MultinomialLogitModel *mlm, const Ptr<MvnBase> &pri,
-              RNG &seeding_rng = GlobalRng::rng);
-    MlogitRwm(MultinomialLogitModel *mlm, const Vector &mu,
-              const SpdMatrix &Ominv, RNG &seeding_rng = GlobalRng::rng);
+        RNG &seeding_rng = GlobalRng::rng);
+    MlogitRwm(MultinomialLogitModel *mlm,
+          const Vector &mu,
+          const SpdMatrix & Ominv,
+        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-
-   private:
+  private:
     MultinomialLogitModel *mlm_;
     Ptr<MvnBase> pri_;
-    Vector mu, g, b, bstar;
+    Vector mu,g, b, bstar;
     SpdMatrix H, ivar;
   };
 
-}  // namespace BOOM
+}
 
-#endif  // BOOM_MLOGIT_RWM_SAMPLER_HPP
+#endif// BOOM_MLOGIT_RWM_SAMPLER_HPP

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -17,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/NonconjugateRegressionSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/Glm/PosteriorSamplers/NonconjugateRegressionSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/report_error.hpp>
 
 namespace BOOM {
 
@@ -29,17 +28,26 @@ namespace BOOM {
   }
 
   NRS::NonconjugateRegressionSampler(
-      RegressionModel *model, const Ptr<LocationScaleVectorModel> &beta_prior,
-      const Ptr<GammaModelBase> &residual_precision_prior, RNG &seeding_rng)
+      RegressionModel *model,
+      const Ptr<LocationScaleVectorModel> &beta_prior,
+      const Ptr<GammaModelBase> &residual_precision_prior,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         beta_prior_(beta_prior),
         residual_precision_prior_(residual_precision_prior),
         residual_variance_sampler_(residual_precision_prior_),
         mh_proposal_(new MvtIndepProposal(Vector(model->xdim()),
-                                          SpdMatrix(model->xdim(), 1.0), 3.0)),
-        mh_sampler_(beta_log_posterior_callback(), mh_proposal_, &rng()),
-        slice_sampler_(beta_log_posterior_callback(), 1.0, false, &rng()) {}
+                                          SpdMatrix(model->xdim(), 1.0),
+                                          3.0)),
+        mh_sampler_(beta_log_posterior_callback(),
+                    mh_proposal_,
+                    &rng()),
+        slice_sampler_(beta_log_posterior_callback(),
+                       1.0,
+                       false,
+                       &rng())
+  {}
 
   void NRS::set_slice_sampler_limits(const Vector &lower, const Vector &upper) {
     slice_sampler_.set_limits(lower, upper);
@@ -53,10 +61,10 @@ namespace BOOM {
   void NRS::draw_coefficients() {
     SamplingMethod method = select_sampling_method();
     switch (method) {
-      case (METROPOLIS):
+      case (METROPOLIS) :
         draw_using_mh();
         break;
-      case (SLICE):
+      case (SLICE) :
         draw_using_slice();
         break;
       default:
@@ -76,13 +84,15 @@ namespace BOOM {
   }
 
   double NRS::logpri() const {
-    return beta_prior_->logp(model_->Beta()) +
-           residual_precision_prior_->logp(1.0 / model_->sigsq());
+    return beta_prior_->logp(model_->Beta())
+        + residual_precision_prior_->logp(1.0 / model_->sigsq());
   }
 
   void NRS::draw_sigsq() {
     double sigsq = residual_variance_sampler_.draw(
-        rng(), model_->suf()->n(), model_->suf()->relative_sse(model_->coef()));
+        rng(),
+        model_->suf()->n(),
+        model_->suf()->relative_sse(model_->coef()));
     model_->set_sigsq(sigsq);
   }
 
@@ -102,8 +112,8 @@ namespace BOOM {
     double sigsq = model_->sigsq();
     SpdMatrix posterior_precision =
         beta_prior_->siginv() + model_->suf()->xtx() / sigsq;
-    Vector posterior_mean = beta_prior_->siginv() * beta_prior_->mu() +
-                            model_->suf()->xty() / sigsq;
+    Vector posterior_mean = beta_prior_->siginv() * beta_prior_->mu()
+        + model_->suf()->xty() / sigsq;
     posterior_mean = posterior_precision.solve(posterior_mean);
     mh_proposal_->set_mu(posterior_mean);
     mh_proposal_->set_ivar(posterior_precision);
@@ -118,9 +128,9 @@ namespace BOOM {
 
   std::function<double(const Vector &)> NRS::beta_log_posterior_callback() {
     return [this](const Vector &beta) {
-      return this->model_->log_likelihood(beta, model_->sigsq()) +
-             this->beta_prior_->logp(beta);
-    };
+             return this->model_->log_likelihood(beta, model_->sigsq())
+                 + this->beta_prior_->logp(beta);
+           };
   }
 
 }  // namespace BOOM

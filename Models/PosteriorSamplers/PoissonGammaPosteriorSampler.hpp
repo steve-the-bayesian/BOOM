@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_POISSON_GAMMA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POISSON_GAMMA_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/DoubleModel.hpp"
-#include "Models/PoissonGammaModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Samplers/ScalarSliceSampler.hpp"
+#include <Models/DoubleModel.hpp>
+#include <Models/PoissonGammaModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Samplers/ScalarSliceSampler.hpp>
 
 namespace BOOM {
 
@@ -38,10 +37,10 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
-    double logp(double prior_mean, double prior_sample_size) const;
+    double logp(double prior_mean, double prior_sample_size)const;
 
     // Exposed for testing.
-    const PoissonGammaModel *model() const { return model_; }
+    const PoissonGammaModel *model() const { return model_;}
 
    private:
     PoissonGammaModel *model_;

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
 #define BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
 
-#include "LinAlg/Vector.hpp"
-#include "distributions/Rmath_dist.hpp"
-#include "distributions/rng.hpp"
-#include "numopt.hpp"
+#include <numopt.hpp>
+#include <LinAlg/Vector.hpp>
+#include <distributions/rng.hpp>
+#include <distributions/Rmath_dist.hpp>
 
 namespace BOOM {
 
@@ -42,7 +41,8 @@ namespace BOOM {
 
     // Use this constructor for a NormalMixtureApproximation with a
     // specified set of mixture components and mixing weights.
-    NormalMixtureApproximation(const Vector &mu, const Vector &sigma,
+    NormalMixtureApproximation(const Vector &mu,
+                               const Vector &sigma,
                                const Vector &weights);
 
     // Use this constructor to find the approximation that best fits a
@@ -66,11 +66,14 @@ namespace BOOM {
     //   force_zero_mu: If true then then all mixture components will
     //     be forced to have zero mean.
     NormalMixtureApproximation(
-        const ScalarTarget &log_target_density, const Vector &initial_mu,
-        const Vector &initial_sigma, const Vector &initial_weights,
-        double precision = 1e-6,  // the precision of the final KL divergence
-        int max_evals = 20000,    // max number of times to evaluate logf
-        double initial_stepsize = 10.0, bool force_zero_mu = false);
+        const ScalarTarget &log_target_density,
+        const Vector &initial_mu,
+        const Vector &initial_sigma,
+        const Vector &initial_weights,
+        double precision = 1e-6,   // the precision of the final KL divergence
+        int max_evals = 20000,     // max number of times to evaluate logf
+        double initial_stepsize = 10.0,
+        bool force_zero_mu = false);
 
     // Set the mixing weights, means, and standard deviations to the
     // specified values.
@@ -82,29 +85,29 @@ namespace BOOM {
     void set(const Vector &theta);
 
     // The number of mixture components used in the approximation.
-    int dim() const { return mu_.size(); }
+    int dim()const{return mu_.size();}
 
-    const Vector &mu() const { return mu_; }
-    const Vector &sigma() const { return sigma_; }
-    const Vector &weights() const { return weights_; }
-    const Vector &log_weights() const { return log_weights_; }
+    const Vector &mu()const{return mu_;}
+    const Vector &sigma()const{return sigma_;}
+    const Vector &weights()const{return weights_;}
+    const Vector &log_weights()const{return log_weights_;}
 
     // Return the log of the approximating normal mixture density at
     // x.
-    double logp(double x) const;
+    double logp(double x)const;
 
     // For a particular observation u drawn from the distribution
     // being approximated, take a random draw of the mixture component
     // that generated it.
-    void unmix(RNG &rng, double u, double *mu, double *sigsq) const;
+    void unmix(RNG &rng, double u, double *mu, double *sigsq)const;
 
-    double kullback_leibler() const;
+    double kullback_leibler()const;
     // Records the answer in state.
     double kullback_leibler(const ScalarTarget &target);
 
-    int number_of_function_evaluations() const;
+    int number_of_function_evaluations()const;
 
-    ostream &print(ostream &out) const;
+    ostream & print(ostream &out)const;
 
     Vector serialize() const;
     Vector::const_iterator deserialize(Vector::const_iterator begin);
@@ -145,10 +148,9 @@ namespace BOOM {
     int number_of_function_evaluations_;
   };
 
-  inline ostream &operator<<(ostream &out,
-                             const NormalMixtureApproximation &approximation) {
-    return approximation.print(out);
-  }
+  inline ostream & operator<<(ostream &out,
+                              const NormalMixtureApproximation &approximation){
+    return approximation.print(out);}
 
   //======================================================================
 
@@ -156,22 +158,22 @@ namespace BOOM {
   class NormalMixtureApproximationTable {
    public:
     NormalMixtureApproximationTable();
-    ~NormalMixtureApproximationTable() {}
+    ~NormalMixtureApproximationTable(){}
     NormalMixtureApproximationTable(const NormalMixtureApproximationTable &rhs);
-    NormalMixtureApproximationTable &operator=(
+    NormalMixtureApproximationTable & operator=(
         const NormalMixtureApproximationTable &rhs);
 
     // Add an entry into the table.
     void add(int index, const NormalMixtureApproximation &spec);
 
     // Return the smallest and lagest indices contained in the table.
-    int smallest_index() const;
-    int largest_index() const;
+    int smallest_index()const;
+    int largest_index()const;
 
     // If a numerical approximation exists at index_value, then return
     // it.  Otherwise return an interpolation between the two nearest
     // indices.
-    NormalMixtureApproximation &approximate(int index_value);
+    NormalMixtureApproximation & approximate(int index_value);
 
     // Save the current state of the table to a numeric vector that
     // can be stored somewhere.
@@ -193,10 +195,8 @@ namespace BOOM {
   class NegLogGamma {
    public:
     NegLogGamma(double nu) : nu_(nu) {}
-    double operator()(double y) const {
-      return -nu_ * y - exp(-y) - lgamma(nu_);
-    }
-
+    double operator()(double y)const {
+      return -nu_*y - exp(-y) - lgamma(nu_); }
    private:
     double nu_;
   };
@@ -208,7 +208,8 @@ namespace BOOM {
    public:
     ApproximationDistance(const ScalarTarget &logf,
                           const NormalMixtureApproximation &approximation,
-                          double lower_limit, double upper_limit,
+                          double lower_limit,
+                          double upper_limit,
                           double guess_at_mode);
 
     virtual ~ApproximationDistance() {}
@@ -216,15 +217,15 @@ namespace BOOM {
     // The distance metric is a function of a set of parameters
     // contained in the vector theta.  A default method is provided,
     // but it can be over-ridden.
-    virtual double operator()(const Vector &theta) const;
+    virtual double operator()(const Vector &theta)const;
 
-    double current_distance() const;
+    double current_distance()const;
 
     // The integrand
     virtual double integrand(double x) const = 0;
 
     double logf(double x) const;
-    double approximation(double x) const;
+    double approximation(double x)const;
     double lower_limit() const;
     double upper_limit() const;
 
@@ -238,20 +239,23 @@ namespace BOOM {
 
   class KullbackLeiblerDivergence : public ApproximationDistance {
    public:
-    KullbackLeiblerDivergence(const ScalarTarget &logf,
-                              const NormalMixtureApproximation &approx,
-                              double lower_limit, double upper_limit,
-                              double guess_at_mode);
-    double integrand(double x) const override;
+    KullbackLeiblerDivergence(
+        const ScalarTarget &logf,
+        const NormalMixtureApproximation &approx,
+        double lower_limit,
+        double upper_limit,
+        double guess_at_mode);
+    double integrand(double x)const override;
   };
 
   class AbsNormDistance : public ApproximationDistance {
    public:
     AbsNormDistance(const ScalarTarget &logf,
                     const NormalMixtureApproximation &approx,
-                    double lower_limit, double upper_limit,
+                    double lower_limit,
+                    double upper_limit,
                     double guess_at_mode);
-    double integrand(double x) const override;
+    double integrand(double x)const override;
   };
 }  // namespace BOOM
-#endif  //  BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
+#endif //  BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_

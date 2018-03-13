@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
    Copyright (C) 2005 Steven L. Scott
 
@@ -14,12 +13,11 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-   USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
+#include <cpputil/math_utils.hpp>
 #include <cmath>
-#include "cpputil/math_utils.hpp"
-namespace BOOM {
-  double safelog(double x) { return x == 0.0 ? negative_infinity() : log(x); }
-}  // namespace BOOM
+namespace BOOM{
+  double safelog(double x){ return x==0.0? negative_infinity() : log(x);}
+}

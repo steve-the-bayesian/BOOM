@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,21 +19,22 @@
 #ifndef BOOM_DOUBLE_MODEL_HPP
 #define BOOM_DOUBLE_MODEL_HPP
 
-#include "Models/ModelTypes.hpp"
-namespace BOOM {
+#include <Models/ModelTypes.hpp>
+namespace BOOM{
 
-  class DoubleModel : virtual public MixtureComponent {
+  class DoubleModel : virtual public MixtureComponent{
    public:
     virtual double logp(double x) const = 0;
     virtual double sim(RNG &rng = GlobalRng::rng) const = 0;
     DoubleModel *clone() const override = 0;
     virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double pdf(const Data *dp, bool logscale) const override;
+    double pdf(const Data * dp, bool logscale) const override;
   };
 
-  class LocationScaleDoubleModel : virtual public DoubleModel {
+  class LocationScaleDoubleModel
+      : virtual public DoubleModel {
    public:
-    LocationScaleDoubleModel *clone() const override = 0;
+    LocationScaleDoubleModel * clone() const override = 0;
     virtual double mean() const = 0;
     virtual double variance() const = 0;
   };
@@ -64,4 +64,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_DOUBLE_MODEL_HPP
+#endif// BOOM_DOUBLE_MODEL_HPP

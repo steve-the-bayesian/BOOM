@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#include "LinAlg/SWEEP.hpp"
-#include "cpputil/report_error.hpp"
+#include <LinAlg/SWEEP.hpp>
+#include <cpputil/report_error.hpp>
 
 namespace BOOM{
   typedef SweptVarianceMatrix SVM;

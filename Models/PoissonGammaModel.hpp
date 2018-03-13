@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_POISSON_GAMMA_MODEL_HPP_
 #define BOOM_POISSON_GAMMA_MODEL_HPP_
 
-#include "Models/DataTypes.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/DataTypes.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
 
 namespace BOOM {
 
@@ -31,16 +30,16 @@ namespace BOOM {
    public:
     explicit PoissonData(int trials = 0, int events = 0);
     PoissonData(const PoissonData &rhs);
-    PoissonData *clone() const override;
-    PoissonData &operator=(const PoissonData &rhs);
-    bool operator==(const PoissonData &rhs) const;
-    bool operator!=(const PoissonData &rhs) const;
+    PoissonData * clone() const override;
+    PoissonData & operator=(const PoissonData &rhs);
+    bool operator==(const PoissonData &rhs)const;
+    bool operator!=(const PoissonData &rhs)const;
 
-    virtual uint size(bool minimal = true) const;
-    ostream &display(ostream &out) const override;
+    virtual uint size(bool minimal = true)const;
+    ostream &display(ostream &out)const override;
 
-    int number_of_trials() const;
-    int number_of_events() const;
+    int number_of_trials()const;
+    int number_of_events()const;
 
     void set_number_of_trials(int n);
     void set_number_of_events(int n);
@@ -59,10 +58,12 @@ namespace BOOM {
   // sequence of lambda[i]'s is IID from a Gamma(a, b) distribution
   // (with mean a/b and variance a/b^2).  The parameters can be
   // interpreted as 'prior_mean = a/b' and a 'prior_sample_size = b'.
-  class PoissonGammaModel : public ParamPolicy_2<UnivParams, UnivParams>,
-                            public IID_DataPolicy<PoissonData>,
-                            public PriorPolicy,
-                            public NumOptModel {
+  class PoissonGammaModel
+      : public ParamPolicy_2<UnivParams, UnivParams>,
+        public IID_DataPolicy<PoissonData>,
+        public PriorPolicy,
+        public NumOptModel
+  {
    public:
     explicit PoissonGammaModel(double a = 1.0, double b = 1.0);
 
@@ -73,23 +74,23 @@ namespace BOOM {
     PoissonGammaModel(const std::vector<int> &number_of_trials,
                       const std::vector<int> &number_of_events);
     PoissonGammaModel(const PoissonGammaModel &rhs);
-    PoissonGammaModel *clone() const override;
+    PoissonGammaModel * clone() const override;
 
-    virtual double loglike() const;
-    double loglike(const Vector &ab) const override;
-    double loglike(double a, double b) const;
+    virtual double loglike()const;
+    double loglike(const Vector &ab)const override;
+    double loglike(double a, double b)const;
     double Loglike(const Vector &ab, Vector &g, Matrix &H,
                    uint nd) const override;
 
     Ptr<UnivParams> Alpha_prm();
     Ptr<UnivParams> Beta_prm();
-    double a() const;
-    double b() const;
+    double a()const;
+    double b()const;
     void set_a(double a);
     void set_b(double b);
 
-    double prior_mean() const;         //    a/b
-    double prior_sample_size() const;  //    b
+    double prior_mean()const;           //    a/b
+    double prior_sample_size()const;    //    b
 
     void set_prior_mean_and_sample_size(double prior_mean,
                                         double prior_sample_size);
@@ -101,6 +102,7 @@ namespace BOOM {
     void method_of_moments();
   };
 
-}  // namespace BOOM
+} // namespace BOOM
 
-#endif  //  BOOM_POISSON_GAMMA_MODEL_HPP_
+
+#endif //  BOOM_POISSON_GAMMA_MODEL_HPP_

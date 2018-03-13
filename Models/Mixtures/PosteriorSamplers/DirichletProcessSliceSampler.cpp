@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -17,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Mixtures/PosteriorSamplers/DirichletProcessSliceSampler.hpp"
-#include "cpputil/lse.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/Mixtures/PosteriorSamplers/DirichletProcessSliceSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/report_error.hpp>
+#include <cpputil/lse.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
@@ -32,17 +31,19 @@ namespace BOOM {
     const bool print_mcmc_details = false;
   }  // namespace
 
-  DPSS::DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
-                                     int initial_clusters, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        mixing_weight_importance_ratio_(.2),
-        log_mixing_weight_importance_ratio_(
-            log(mixing_weight_importance_ratio_)),
-        max_clusters_(model_->number_of_observations(), initial_clusters),
-        global_max_clusters_(initial_clusters),
-        first_time_(true),
-        split_merge_strategy_(nullptr) {}
+  DPSS::DirichletProcessSliceSampler(
+      DirichletProcessMixtureModel *model,
+      int initial_clusters,
+      RNG &seeding_rng)
+  : PosteriorSampler(seeding_rng),
+    model_(model),
+    mixing_weight_importance_ratio_(.2),
+    log_mixing_weight_importance_ratio_(log(mixing_weight_importance_ratio_)),
+    max_clusters_(model_->number_of_observations(), initial_clusters),
+    global_max_clusters_(initial_clusters),
+    first_time_(true),
+    split_merge_strategy_(nullptr)
+  {}
 
   //----------------------------------------------------------------------
   void DPSS::draw() {
@@ -59,14 +60,16 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double DPSS::logpri() const { return model_->base_distribution()->logpri(); }
+  double DPSS::logpri() const {
+    return model_->base_distribution()->logpri();
+  }
   //----------------------------------------------------------------------
   double DPSS::mixing_weight_importance(int cluster) const {
     return exp(log_mixing_weight_importance(cluster));
   }
   //----------------------------------------------------------------------
   double DPSS::log_mixing_weight_importance(int cluster) const {
-    return (cluster)*log_mixing_weight_importance_ratio_;
+    return (cluster) * log_mixing_weight_importance_ratio_;
   }
   //----------------------------------------------------------------------
   void DPSS::set_mixing_weight_importance_ratio(double value) {
@@ -76,7 +79,8 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void DPSS::draw_parameters_given_mixture_indicators() {
     for (int i = 0; i < model_->number_of_components(); ++i) {
-      model_->base_distribution()->draw_model_parameters(*model_->component(i));
+      model_->base_distribution()->draw_model_parameters(
+          *model_->component(i));
     }
   }
   //----------------------------------------------------------------------
@@ -88,7 +92,8 @@ namespace BOOM {
     }
     Vector cluster_counts(nc);
     Vector cumulative_cluster_counts(nc);
-    cluster_counts[0] = cumulative_cluster_counts[0] = model_->cluster_count(0);
+    cluster_counts[0] = cumulative_cluster_counts[0] =
+        model_->cluster_count(0);
     for (int i = 1; i < nc; ++i) {
       cluster_counts[i] = model_->cluster_count(i);
       cumulative_cluster_counts[i] =
@@ -98,8 +103,8 @@ namespace BOOM {
     double sample_size = cumulative_cluster_counts.back();
     for (int i = 0; i < nc; ++i) {
       double a = 1 + cluster_counts[i];
-      double b = model_->concentration_parameter() + sample_size -
-                 cumulative_cluster_counts[i];
+      double b = model_->concentration_parameter() + sample_size
+          - cumulative_cluster_counts[i];
       stick_fractions[i] = rbeta_mt(rng(), a, b);
     }
     model_->set_stick_fractions(stick_fractions);
@@ -144,9 +149,9 @@ namespace BOOM {
       Ptr<Data> data_point = data[i];
       workspace.resize(max_clusters_[i]);
       for (int c = 0; c < max_clusters_[i]; ++c) {
-        workspace[c] = log_mixing_weights[c] +
-                       model_->component(c)->pdf(data_point.get(), true) -
-                       log_mixing_weight_importance(c);
+        workspace[c] = log_mixing_weights[c]
+            + model_->component(c)->pdf(data_point.get(), true)
+            - log_mixing_weight_importance(c);
       }
       workspace.normalize_logprob();
       int new_mixture_indicator = rmulti_mt(rng(), workspace);
@@ -156,8 +161,8 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   int DPSS::find_max_number_of_clusters(double slice_variable) const {
-    int ans =
-        lround(ceil(log(slice_variable) / log_mixing_weight_importance_ratio_));
+    int ans =  lround(ceil(
+        log(slice_variable) / log_mixing_weight_importance_ratio_));
     if (ans <= 0) {
       report_error("Found an impossible value for max_number_of_clusters.");
     }
@@ -185,8 +190,8 @@ namespace BOOM {
 
     double concentration = model_->concentration_parameter();
     double log_MH_alpha =
-        DPMM::dstick(shuffled_mixing_weights, concentration, true) -
-        DPMM::dstick(original_mixing_weights, concentration, true);
+        DPMM::dstick(shuffled_mixing_weights, concentration, true)
+        - DPMM::dstick(original_mixing_weights, concentration, true);
 
     // Make the MH decision.
     double logu = log(runif_mt(rng()));
@@ -203,7 +208,7 @@ namespace BOOM {
     split_merge_strategy_.reset(strategy);
   }
 
-  // TODO: only do split_merge with some probability, because it is
+  // TODO(stevescott): only do split_merge with some probability, because it is
   // expensive.
   void DPSS::split_merge_move() {
     if (!split_merge_strategy_) return;
@@ -234,27 +239,29 @@ namespace BOOM {
   void DPSS::attempt_merge_move(int data_index_1, int data_index_2) {
     if (print_mcmc_details) {
       std::cout << "Attempting to merge clusters "
-                << model_->cluster_indicator(data_index_1) << " and "
-                << model_->cluster_indicator(data_index_2) << "." << std::endl;
+                << model_->cluster_indicator(data_index_1)
+                << " and "
+                << model_->cluster_indicator(data_index_2)
+                << "." << std::endl;
     }
     MoveTimer timer = move_accounting_.start_time("Merge");
-    SplitMerge::Proposal proposal =
-        split_merge_strategy_->propose_merge(data_index_1, data_index_2, rng());
+    SplitMerge::Proposal proposal = split_merge_strategy_->propose_merge(
+        data_index_1, data_index_2, rng());
     double log_MH_alpha = log_MH_probability(proposal);
     double logu = log(runif_mt(rng(), 0, 1));
     if (logu < log_MH_alpha) {
       model_->accept_split_merge_proposal(proposal);
       move_accounting_.record_acceptance("Merge");
       if (print_mcmc_details) {
-        std::cout << "Merge successful with log alpha = " << log_MH_alpha << "."
-                  << std::endl;
+        std::cout << "Merge successful with log alpha = "
+                  << log_MH_alpha << "." << std::endl;
       }
     } else {
       // Proposal failed, leave things as they are.
       move_accounting_.record_rejection("Merge");
       if (print_mcmc_details) {
-        std::cout << "Merge failed with log alpha = " << log_MH_alpha << "."
-                  << std::endl;
+        std::cout << "Merge failed with log alpha = "
+                  << log_MH_alpha << "." << std::endl;
       }
     }
   }
@@ -265,67 +272,70 @@ namespace BOOM {
                 << model_->cluster_indicator(data_index_1) << std::endl;
     }
     MoveTimer time = move_accounting_.start_time("Split");
-    SplitMerge::Proposal proposal =
-        split_merge_strategy_->propose_split(data_index_1, data_index_2, rng());
+    SplitMerge::Proposal proposal = split_merge_strategy_->propose_split(
+        data_index_1, data_index_2, rng());
     double log_MH_alpha = log_MH_probability(proposal);
     double logu = log(runif_mt(rng(), 0, 1));
     if (logu < log_MH_alpha) {
       model_->accept_split_merge_proposal(proposal);
       move_accounting_.record_acceptance("Split");
       if (print_mcmc_details) {
-        std::cout << "Split was successful with log_alpha = " << log_MH_alpha
-                  << "." << std::endl;
+        std::cout << "Split was successful with log_alpha = "
+                  << log_MH_alpha << "." << std::endl;
       }
     } else {
       move_accounting_.record_rejection("Split");
       if (print_mcmc_details) {
-        std::cout << "Split failed with log_alpha = " << log_MH_alpha << "."
-                  << std::endl;
+        std::cout << "Split failed with log_alpha = "
+                  << log_MH_alpha << "." << std::endl;
       }
     }
   }
   //----------------------------------------------------------------------
   // Compute the MH acceptance probability for the proposal.
   double DPSS::log_MH_probability(const SplitMerge::Proposal &proposal) const {
-    double log_likelihood_ratio = proposal.split1()->log_likelihood() +
-                                  proposal.split2()->log_likelihood() -
-                                  proposal.merged()->log_likelihood();
+    double log_likelihood_ratio = proposal.split1()->log_likelihood()
+        + proposal.split2()->log_likelihood()
+        - proposal.merged()->log_likelihood();
 
     double log_prior_ratio =
-        model_->base_distribution()->log_prior_density(*proposal.split1()) +
-        model_->base_distribution()->log_prior_density(*proposal.split2()) -
-        model_->base_distribution()->log_prior_density(*proposal.merged()) -
-        model_->base_distribution()->log_prior_density(*proposal.empty());
+        model_->base_distribution()->log_prior_density(*proposal.split1())
+        + model_->base_distribution()->log_prior_density(*proposal.split2())
+        - model_->base_distribution()->log_prior_density(*proposal.merged())
+        - model_->base_distribution()->log_prior_density(*proposal.empty());
 
     double log_allocation_probability_ratio =
-        proposal.split1()->number_of_observations() *
-            log(proposal.split1_mixing_weight()) +
-        proposal.split2()->number_of_observations() *
-            log(proposal.split2_mixing_weight()) -
-        proposal.merged()->number_of_observations() *
-            log(proposal.merged_mixing_weight());
+        proposal.split1()->number_of_observations()
+          * log(proposal.split1_mixing_weight())
+        + proposal.split2()->number_of_observations()
+          * log(proposal.split2_mixing_weight())
+        - proposal.merged()->number_of_observations()
+          * log(proposal.merged_mixing_weight());
 
     double alpha = model_->concentration_parameter();
     double log_mixing_weight_prior_ratio =
-        DPMM::dstick(proposal.split_mixing_weights(), alpha, true) -
-        DPMM::dstick(proposal.merged_mixing_weights(), alpha, true);
+        DPMM::dstick(proposal.split_mixing_weights(), alpha, true)
+        - DPMM::dstick(proposal.merged_mixing_weights(), alpha, true);
 
-    double log_target_density_ratio = log_likelihood_ratio + log_prior_ratio +
-                                      log_allocation_probability_ratio +
-                                      log_mixing_weight_prior_ratio;
+    double log_target_density_ratio =
+        log_likelihood_ratio
+        + log_prior_ratio
+        + log_allocation_probability_ratio
+        + log_mixing_weight_prior_ratio;
     if (print_mcmc_details) {
-      std::cout << "positive numbers favor splits" << endl
-                << "   log likelihood ratio:       " << log_likelihood_ratio
-                << std::endl
-                << "   log_prior_ratio:            " << log_prior_ratio
-                << std::endl
-                << "   log_prior_allocation_ratio: "
-                << log_allocation_probability_ratio << std::endl
-                << "   log stick ratio:            "
-                << log_mixing_weight_prior_ratio << std::endl;
+      std::cout
+          << "positive numbers favor splits" << endl
+          << "   log likelihood ratio:       "
+          << log_likelihood_ratio << std::endl
+          << "   log_prior_ratio:            "
+          << log_prior_ratio << std::endl
+          << "   log_prior_allocation_ratio: "
+          << log_allocation_probability_ratio << std::endl
+          << "   log stick ratio:            "
+          << log_mixing_weight_prior_ratio << std::endl;
     }
-    double log_MH_ratio = log_target_density_ratio -
-                          proposal.log_split_to_merge_probability_ratio();
+    double log_MH_ratio = log_target_density_ratio
+        - proposal.log_split_to_merge_probability_ratio();
 
     return log_MH_ratio * (proposal.is_merge() ? -1.0 : 1.0);
   }
@@ -339,7 +349,8 @@ namespace BOOM {
     }
     const std::vector<Ptr<Data>> &data(model_->dat());
     for (int i = 0; i < data.size(); ++i) {
-      int cluster = random_int_mt(rng(), 0, global_max_clusters_ - 1);
+      int cluster = random_int_mt(rng(), 0,
+                                  global_max_clusters_ - 1);
       model_->assign_data_to_cluster(data[i], cluster, rng());
     }
   }

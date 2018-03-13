@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,7 +18,7 @@
 #ifndef BOOM_LIN_ALG_KRONECKER_HPP
 #define BOOM_LIN_ALG_KRONECKER_HPP
 
-#include "LinAlg/Matrix.hpp"
+#include <LinAlg/Matrix.hpp>
 
 namespace BOOM{
   Matrix Kronecker(const Matrix &A, const Matrix &B);

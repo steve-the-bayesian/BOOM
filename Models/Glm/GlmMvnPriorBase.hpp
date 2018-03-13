@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,13 +16,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/GlmCoefs.hpp"
-#include "Models/ModelTypes.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
+
+#include <Models/ModelTypes.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/Glm/GlmCoefs.hpp>
+#include <Models/MvnBase.hpp>
 
 /*
   Base class that can serve as a prior model for GlmCoefs.  Might
@@ -32,52 +32,59 @@
   depends on a scalar 'prior sample size' kappa as well.
  */
 
-namespace BOOM {
+namespace BOOM{
 
   class GlmMvnSuf;
 
-  class GlmMvnPriorBase : public SufstatDataPolicy<GlmCoefs, GlmMvnSuf> {
+  class GlmMvnPriorBase
+    : public SufstatDataPolicy<GlmCoefs,GlmMvnSuf>
+  {
+
     // model:  beta | b, V, sigsq, gamma ~ N(b_g, sigsq * V_g/kappa)
 
-   public:
+
+  public:
     GlmMvnPriorBase(uint dim);
-    virtual double pdf(const Ptr<Data> &, bool logscale) const = 0;
-    virtual double pdf(const const Ptr<GlmCoefs> &beta,
-                       bool logscale) const = 0;
+    virtual double pdf(const Ptr<Data> &, bool logscale)const=0;
+    virtual double pdf(const const Ptr<GlmCoefs> &beta, bool logscale)const=0;
 
-    virtual double sigsq() const;  // default return is 1.0;
-    virtual double kappa() const;  // default return is 1.0;
+    virtual double sigsq()const;       // default return is 1.0;
+    virtual double kappa()const;       // default return is 1.0;
 
-    virtual Vector mu() const = 0;         // not conditional on gamma
-    virtual SpdMatrix siginv() const = 0;  // not conditional on gamma
+    virtual Vector mu()const=0;      // not conditional on gamma
+    virtual SpdMatrix siginv()const=0;  // not conditional on gamma
     // conceptually, siginv is the inverse of sigsq * XTX / kappa
+
   };
 
-  class GlmMvnSuf : public SufstatDetails<GlmCoefs> {
-   public:
-    GlmMvnSuf(uint p = 0);
-    GlmMvnSuf(const std::vector<Ptr<GlmCoefs> > &d);
-    GlmMvnSuf *clone() const override;
+
+  class GlmMvnSuf
+    : public SufstatDetails<GlmCoefs>
+  {
+  public:
+    GlmMvnSuf(uint p=0);
+    GlmMvnSuf(const std::vector<Ptr<GlmCoefs> > & d);
+    GlmMvnSuf * clone()const override;
 
     void clear() override;
     void Update(const GlmCoefs &beta) override;
 
-    SpdMatrix center_sumsq(const Vector &b) const;
-    const Vector &vnobs() const;   // sum of gamma
-    const SpdMatrix &GTG() const;  // sum of gamma gamma^T
-    const Matrix &BTG() const;     // sum of beta gamma^T
-    uint nobs() const;
-
-   private:
-    mutable SpdMatrix bbt_;  // sum of beta beta.transpose()
-    mutable SpdMatrix ggt_;  // sum of gamma * gamma^T
-    Matrix bgt_;             // sum of beta gamma.transpose()
-    Vector vnobs_;           // sum of gamma
-    uint nobs_;              // number of observations
+    SpdMatrix center_sumsq(const Vector &b)const;
+    const Vector & vnobs()const;  // sum of gamma
+    const SpdMatrix & GTG()const;    // sum of gamma gamma^T
+    const Matrix & BTG()const;    // sum of beta gamma^T
+    uint nobs()const;
+  private:
+    mutable SpdMatrix bbt_;    // sum of beta beta.transpose()
+    mutable SpdMatrix ggt_;    // sum of gamma * gamma^T
+    Matrix bgt_;    // sum of beta gamma.transpose()
+    Vector vnobs_;  // sum of gamma
+    uint nobs_;  // number of observations
 
     Vector b, gam;
     mutable bool sym_;
-    void make_symmetric() const;
+    void make_symmetric()const;
   };
 
-}  // namespace BOOM
+
+}

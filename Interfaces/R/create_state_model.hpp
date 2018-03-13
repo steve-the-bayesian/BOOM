@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -35,47 +34,36 @@
 // directly from R by .Call.
 //======================================================================
 
-namespace BOOM {
+namespace BOOM{
 
-  // Trend models
   class LocalLevelStateModel;
   class LocalLinearTrendStateModel;
-  class SemilocalLinearTrendStateModel;
-  class StudentLocalLinearTrendStateModel;
-  class StaticInterceptStateModel;
-  class ArStateModel;
-
-  // Regression models
-  class DynamicRegressionStateModel;
-  class DynamicRegressionArStateModel;
-
-  // Seasonal Models
-  class MonthlyAnnualCycle;
   class SeasonalStateModel;
+  class SemilocalLinearTrendStateModel;
+  class RandomWalkHolidayStateModel;
+  class DynamicRegressionStateModel;
+  class ArStateModel;
+  class StudentLocalLinearTrendStateModel;
   class TrigStateModel;
 
-  // Holiday models
-  class Holiday;
-  class RandomWalkHolidayStateModel;
-  class RegressionHolidayStateModel;
-  class HierarchicalRegressionHolidayStateModel;
+  namespace RInterface{
 
-
-  namespace RInterface {
     // A factory for creating state components for use with state
     // space models.
     class StateModelFactory {
      public:
       // Args:
+
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
+
       //   model: The model that will receive the state to be added.  If a
       //     nullptr is passed then this factory can still call
       //     CreateStateModel(), but AddState and SaveFinalState() will do
       //     nothing.
       StateModelFactory(RListIoManager *io_manager,
-                        ScalarStateSpaceModelBase *model);
+                        StateSpaceModelBase *model);
 
       // Adds all the state components listed in
       // r_state_specification_list to the model.
@@ -99,96 +87,66 @@ namespace BOOM {
       //     the wrong size.
       //   list_element_name: The name of the final state vector in
       //     the R list holding the MCMC output.
-      void SaveFinalState(
-          BOOM::Vector *final_state = NULL,
-          const std::string & list_element_name = "final.state");
+      void SaveFinalState(BOOM::Vector *final_state = NULL,
+                          const std::string & list_element_name = "final.state");
+
+      typedef std::function<void(StateSpaceModelBase *)> ConstructionCallback;
+      typedef std::vector<ConstructionCallback> CallbackVector;
 
       // Factory method for creating a StateModel based on inputs
       // supplied to R.  Returns a smart pointer to the StateModel that
       // gets created.
       // Args:
-      //   r_state_component: The portion of the state.specification list (that
-      //     was supplied to R by the user), corresponding to the state model
+      //   list_arg: The portion of the state.specification list (that was
+      //     supplied to R by the user), corresponding to the state model
       //     that needs to be created.
       //   prefix: A prefix to be added to the name field of the
-      //     r_state_component in the io_manager.
+      //     list_arg in the io_manager.
+      //   callbacks: A pointer to a vector of ConstructionCallbacks that are to
+      //     be called once all state has been added.  This can be nullptr if
+      //     io_manager is also nullptr.
       // Returns:
       //   A Ptr to a StateModel that can be added as a component of
       //   state to a state space model.
-      Ptr<StateModel> CreateStateModel(SEXP r_state_component,
-                                       const std::string &prefix);
+      Ptr<StateModel> CreateStateModel(
+          SEXP list_arg,
+          const std::string &prefix,
+          CallbackVector * callbacks);
 
      private:
       // Concrete implementations of CreateStateModel.
-
       LocalLevelStateModel *CreateLocalLevel(
           SEXP r_state_component, const std::string &prefix);
       LocalLinearTrendStateModel *CreateLocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
+      SeasonalStateModel *CreateSeasonal(
+          SEXP r_state_component, const std::string &prefix);
       SemilocalLinearTrendStateModel *CreateSemilocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
-      StudentLocalLinearTrendStateModel *CreateStudentLocalLinearTrend(
+      RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
-      StaticInterceptStateModel *CreateStaticIntercept(
-          SEXP r_state_component, const std::string &prefix);
+      DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
+          SEXP r_state_component, const std::string &prefix,
+          CallbackVector * callbacks);
       ArStateModel *CreateArStateModel(
           SEXP r_state_component, const std::string &prefix);
       ArStateModel *CreateAutoArStateModel(
           SEXP r_state_component, const std::string &prefix);
-
-      DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
-          SEXP r_state_component, const std::string &prefix);
-      DynamicRegressionArStateModel *CreateDynamicRegressionArStateModel(
-          SEXP r_state_component, const std::string &prefix);
-
-      RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
-          SEXP r_state_component, const std::string &prefix);
-      RegressionHolidayStateModel *CreateRegressionHolidayStateModel(
-          SEXP r_state_component, const std::string &prefix);
-      HierarchicalRegressionHolidayStateModel *
-      CreateHierarchicalRegressionHolidayStateModel(
-          SEXP r_state_component, const std::string &prefix);
-      
-      SeasonalStateModel *CreateSeasonal(
+      StudentLocalLinearTrendStateModel *CreateStudentLocalLinearTrend(
           SEXP r_state_component, const std::string &prefix);
       TrigStateModel *CreateTrigStateModel(
           SEXP r_state_component, const std::string &prefix);
-      MonthlyAnnualCycle *CreateMonthlyAnnualCycle(
-          SEXP r_state_component, const std::string &prefix);
-
-      Holiday *CreateHoliday(SEXP holiday_spec);
-
-      Ptr<UnivParams> GetResidualVarianceParameter();
 
       // A pointer to the object manaaging the R list that will record (or has
       // already recorded) the MCMC output.  This can be a nullptr if IoManager
       // support is not desired.
-      RListIoManager *io_manager_;
+      RListIoManager * io_manager_;
 
       // The model that needs state added.  This can be a nullptr if the state
       // space model is managed externally.
-      ScalarStateSpaceModelBase *model_;
-
-      // Some state models (notably dynamic regression) introduce special
-      // elements of state (like the paths of regression coefficients) that
-      // should be placed in the io_manager after the state model parameters.
-      // If any such state elements exist, they will be placed in storage by
-      // CreateStateModel.  This function should be called after the last call
-      // to CreateStateModel.
-      void InstallPostStateListElements() {
-        if (io_manager_) {
-          for (int i = 0; i < post_state_list_elements_.size(); ++i) {
-            io_manager_->add_list_element(post_state_list_elements_[i]);
-          }
-        }
-        // The post state list elements will be empty after a call to this
-        // function, whether or not io_manager_ is defined.
-        post_state_list_elements_.clear();
-      }
-
-      std::vector<RListIoElement *> post_state_list_elements_;
+      StateSpaceModelBase * model_;
     };
 
-  }  // namespace RInterface
+    }  // namespace RInterface
 }  // namespace BOOM
 #endif  // BOOM_R_INTERFACE_CREATE_STATE_MODEL_HPP_

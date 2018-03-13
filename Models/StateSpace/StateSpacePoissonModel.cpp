@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,41 +16,44 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/StateSpace/StateSpacePoissonModel.hpp"
-#include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
-#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
-#include "cpputil/Constants.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/seq.hpp"
-#include "distributions.hpp"
-#include "stats/moments.hpp"
+#include <Models/StateSpace/StateSpacePoissonModel.hpp>
+#include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
+#include <Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp>
+#include <stats/moments.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/Constants.hpp>
 
 namespace BOOM {
   namespace {
     typedef StateSpacePoissonModel SSPM;
     typedef StateSpace::AugmentedPoissonRegressionData APRD;
-  }  // namespace
+  }
 
-  APRD::AugmentedPoissonRegressionData() : state_model_offset_(0.0) {}
+  APRD::AugmentedPoissonRegressionData()
+      : state_model_offset_(0.0)
+  {}
 
-  APRD::AugmentedPoissonRegressionData(double count, double exposure,
-                                       const Vector &predictors)
-      : AugmentedPoissonRegressionData() {
-    NEW(PoissonRegressionData, observation)(count, predictors, exposure);
+  APRD::AugmentedPoissonRegressionData(
+      double counts, double exposure, const Vector &predictors)
+      : AugmentedPoissonRegressionData()
+  {
+    NEW(PoissonRegressionData, observation)(counts, predictors, exposure);
     add_data(observation);
   }
 
   APRD::AugmentedPoissonRegressionData(
       const std::vector<Ptr<PoissonRegressionData>> &data)
-      : AugmentedPoissonRegressionData() {
+      : AugmentedPoissonRegressionData()
+  {
     for (int i = 0; i < data.size(); ++i) {
       add_data(data[i]);
     }
   }
 
-  APRD *APRD::clone() const { return new APRD(*this); }
+  APRD * APRD::clone() const {return new APRD(*this);}
 
-  std::ostream &APRD::display(std::ostream &out) const {
+  std::ostream & APRD::display(std::ostream &out) const {
     for (int i = 0; i < poisson_data_.size(); ++i) {
       out << poisson_data(i) << std::endl;
     }
@@ -85,16 +87,16 @@ namespace BOOM {
   }
 
   double APRD::adjusted_observation(const GlmCoefs &coefficients) const {
-    if (missing() == Data::completely_missing ||
-        latent_continuous_values_.empty()) {
+    if (missing() == Data::completely_missing
+        || latent_continuous_values_.empty()) {
       return negative_infinity();
     }
     double ans = 0;
     double total_precision = 0;
-    for (int i = 0; i < latent_continuous_values_.size(); ++i) {
+    for (int i = 0; i < latent_continuous_values_.size(); ++i ) {
       if (poisson_data_[i]->missing() == Data::observed) {
-        ans += precisions_[i] * (latent_continuous_values_[i] -
-                                 coefficients.predict(poisson_data_[i]->x()));
+        ans += precisions_[i] * (latent_continuous_values_[i]
+                                 - coefficients.predict(poisson_data_[i]->x()));
         total_precision += precisions_[i];
       }
     }
@@ -129,7 +131,7 @@ namespace BOOM {
       // This will likely lead to an exception later in the program when the
       // variance is square-rooted into a standard deviation.
       //
-      // TODO(user): Should an exception be thrown here?
+      // TODO(stevescott): Should an exception be thrown here?
       return negative_infinity();
     }
     return 1.0 / total_precision;
@@ -142,30 +144,32 @@ namespace BOOM {
   //======================================================================
   SSPM::StateSpacePoissonModel(int xdim)
       : StateSpaceNormalMixture(xdim > 1),
-        observation_model_(new PoissonRegressionModel(xdim)) {}
+        observation_model_(new PoissonRegressionModel(xdim))
+  {}
 
-  SSPM::StateSpacePoissonModel(const Vector &counts, const Vector &exposure,
-                               const Matrix &design_matrix,
+  SSPM::StateSpacePoissonModel(const Vector &counts,
+                               const Vector &exposure,
+                               const Matrix &design,
                                const std::vector<bool> &observed)
-      : StateSpaceNormalMixture(ncol(design_matrix) > 0),
-        observation_model_(new PoissonRegressionModel(ncol(design_matrix))) {
-    if ((ncol(design_matrix) == 1) &&
-        (var(design_matrix.col(0)) < std::numeric_limits<double>::epsilon())) {
+      : StateSpaceNormalMixture(ncol(design) > 0),
+        observation_model_(new PoissonRegressionModel(ncol(design)))
+  {
+    if ((ncol(design) == 1) &&
+        (var(design.col(0)) < std::numeric_limits<double>::epsilon())) {
       set_regression_flag(false);
     }
     bool all_observed = observed.empty();
-    if (counts.size() != exposure.size() ||
-        counts.size() != nrow(design_matrix) ||
-        (!all_observed && counts.size() != observed.size())) {
-      report_error(
-          "Data sizes do not match in StateSpacePoissonModel "
-          "constructor");
+    if (counts.size() != exposure.size()
+        || counts.size() != nrow(design)
+        || (!all_observed && counts.size() != observed.size())) {
+      report_error("Data sizes do not match in StateSpacePoissonModel "
+                   "constructor");
     }
     for (int i = 0; i < counts.size(); ++i) {
       bool missing = !(all_observed || observed[i]);
-      NEW(APRD, dp)
-      (missing ? 0 : counts[i], missing ? 0 : exposure[i],
-       design_matrix.row(i));
+      NEW(APRD, dp)(missing ? 0 : counts[i],
+                    missing ? 0 : exposure[i],
+                    design.row(i));
       if (missing) {
         dp->set_missing_status(Data::missing_status::completely_missing);
         dp->poisson_data_ptr(0)->set_missing_status(
@@ -177,11 +181,16 @@ namespace BOOM {
 
   SSPM::StateSpacePoissonModel(const SSPM &rhs)
       : StateSpaceNormalMixture(rhs),
-        observation_model_(rhs.observation_model_->clone()) {}
+        observation_model_(rhs.observation_model_->clone())
+  {}
 
-  SSPM *SSPM::clone() const { return new SSPM(*this); }
+  SSPM * SSPM::clone() const {
+    return new SSPM(*this);
+  }
 
-  int SSPM::time_dimension() const { return dat().size(); }
+  int SSPM::time_dimension() const {
+    return dat().size();
+  }
 
   double SSPM::observation_variance(int t) const {
     if (t >= time_dimension()) {
@@ -199,9 +208,9 @@ namespace BOOM {
   }
 
   bool SSPM::is_missing_observation(int t) const {
-    return t > time_dimension() ||
-           dat()[t]->missing() == Data::completely_missing ||
-           dat()[t]->observed_sample_size() == 0;
+    return t > time_dimension()
+        || dat()[t]->missing() == Data::completely_missing
+        || dat()[t]->observed_sample_size() == 0;
   }
 
   void SSPM::observe_data_given_state(int t) {
@@ -211,42 +220,35 @@ namespace BOOM {
     }
   }
 
-  Vector SSPM::simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
+  Vector SSPM::simulate_forecast(RNG &rng,
+                                 const Matrix &forecast_predictors,
                                  const Vector &exposure,
                                  const Vector &final_state) {
-    return simulate_multiplex_forecast(rng, forecast_predictors, exposure,
-                                       final_state,
-                                       seq<int>(1, nrow(forecast_predictors)));
-  }
-
-  Vector SSPM::simulate_multiplex_forecast(RNG &rng,
-                                           const Matrix &forecast_predictors,
-                                           const Vector &exposure,
-                                           const Vector &final_state,
-                                           const std::vector<int> &timestamps) {
-    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    StateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
-    int t0 = time_dimension();
-    int time = 0;
-    for (int i = 0; i < ans.size(); ++i) {
-      advance_to_timestamp(rng, time, state, timestamps[i], i);
-      double eta = observation_matrix(time + t0).dot(state) +
-                   observation_model_->predict(forecast_predictors.row(i));
+    int t0 = dat().size();
+    for (int t = 0; t < ans.size(); ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      double eta = observation_matrix(t + t0).dot(state)
+          + observation_model_->predict(forecast_predictors.row(t));
       double mu = exp(eta);
-      ans[i] = rpois_mt(rng, exposure[i] * mu);
+      ans[t] = rpois_mt(rng, exposure[t] * mu);
     }
     return ans;
   }
 
   Vector SSPM::one_step_holdout_prediction_errors(
-      RNG &rng, PoissonDataImputer &data_imputer, const Vector &counts,
-      const Vector &exposure, const Matrix &predictors,
+      RNG &rng,
+      PoissonDataImputer &data_imputer,
+      const Vector &counts,
+      const Vector &exposure,
+      const Matrix &predictors,
       const Vector &final_state) {
-    if (nrow(predictors) != counts.size() || exposure.size() != counts.size()) {
-      report_error(
-          "Size mismatch in arguments provided to "
-          "one_step_holdout_prediction_errors.");
+    if (nrow(predictors) != counts.size()
+        || exposure.size() != counts.size()) {
+      report_error("Size mismatch in arguments provided to "
+                   "one_step_holdout_prediction_errors.");
     }
     Vector ans(counts.size());
     int t0 = dat().size();
@@ -269,7 +271,7 @@ namespace BOOM {
       // 3) kalman update state given w_t.
       Vector state = rmvn(ks.a, ks.P);
 
-      double state_contribution = observation_matrix(t + t0).dot(state);
+      double state_contribution = observation_matrix(t+t0).dot(state);
       double regression_contribution =
           observation_model_->predict(predictors.row(t));
       double mu = state_contribution + regression_contribution;
@@ -288,11 +290,17 @@ namespace BOOM {
       double external_mixture_mean = 0;
       double external_mixture_precision = 0;
 
-      data_imputer.impute(rng, counts[t], exposure[t], mu,
-                          &internal_neglog_final_event_time,
-                          &internal_mixture_mean, &internal_mixture_precision,
-                          &neglog_final_interarrival_time,
-                          &external_mixture_mean, &external_mixture_precision);
+      data_imputer.impute(
+          rng,
+          counts[t],
+          exposure[t],
+          mu,
+          &internal_neglog_final_event_time,
+          &internal_mixture_mean,
+          &internal_mixture_precision,
+          &neglog_final_interarrival_time,
+          &external_mixture_mean,
+          &external_mixture_precision);
 
       double total_precision = external_mixture_precision;
       double precision_weighted_sum =
@@ -300,8 +308,8 @@ namespace BOOM {
       precision_weighted_sum *= external_mixture_precision;
       if (counts[t] > 0) {
         precision_weighted_sum +=
-            (internal_neglog_final_event_time - internal_mixture_mean) *
-            internal_mixture_precision;
+            (internal_neglog_final_event_time - internal_mixture_mean)
+            * internal_mixture_precision;
         total_precision += internal_mixture_precision;
       }
       double latent_observation = precision_weighted_sum / total_precision;
@@ -312,10 +320,17 @@ namespace BOOM {
       // y[t0+t].  That latent data is now used to update the Kalman
       // filter for the next time period.  It is important that we
       // discard the imputed state at this point.
-      sparse_scalar_kalman_update(
-          latent_observation - regression_contribution, ks.a, ks.P, ks.K, ks.F,
-          ks.v, missing, observation_matrix(t + t0), latent_variance,
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
+      sparse_scalar_kalman_update(latent_observation - regression_contribution,
+                                  ks.a,
+                                  ks.P,
+                                  ks.K,
+                                  ks.F,
+                                  ks.v,
+                                  missing,
+                                  observation_matrix(t + t0),
+                                  latent_variance,
+                                  *state_transition_matrix(t + t0),
+                                  *state_variance_matrix(t + t0));
     }
     return ans;
   }

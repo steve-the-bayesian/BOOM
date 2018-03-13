@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,8 +19,8 @@
 #ifndef BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_
 #define BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_
 
-#include "Models/Mixtures/ConditionalFiniteMixtureModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/Mixtures/ConditionalFiniteMixtureModel.hpp>
 
 namespace BOOM {
 
@@ -31,11 +30,10 @@ namespace BOOM {
                                     RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
-
    private:
     ConditionalFiniteMixtureModel *model_;
   };
 
 }  // namespace BOOM
 
-#endif  // BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_
+#endif // BOOM_MIXTURES_CONDITIONAL_FINITE_MIXTURE_SAMPLER_HPP_

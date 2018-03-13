@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,7 +17,7 @@
 */
 #ifndef BOOM_SUBMATRIX_HPP
 #define BOOM_SUBMATRIX_HPP
-#include "LinAlg/Matrix.hpp"
+#include <LinAlg/Matrix.hpp>
 namespace BOOM{
   // A Rectangular view into a matrix specified by lower
   // and upper coordinates (inclusive)
@@ -135,7 +134,7 @@ namespace BOOM{
     const_col_iterator col_begin(uint j)const;
     const_col_iterator col_end(uint j)const;
 
-    // TODO:  range checking
+    // TODO(stevescott):  range checking
     ConstVectorView col(uint j)const;
     ConstVectorView last_col()const;
     ConstVectorView row(uint j)const;

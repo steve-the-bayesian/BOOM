@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,21 +19,21 @@
 #ifndef BOOM_TIME_SERIES_BASE_CLASS_HPP
 #define BOOM_TIME_SERIES_BASE_CLASS_HPP
 
-#include <boost/type_traits/is_base_of.hpp>
 #include <sstream>
 #include <vector>
-#include "Models/DataTypes.hpp"
-#include "Models/TimeSeries/MarkovLink.hpp"
+#include <Models/DataTypes.hpp>
+#include <Models/TimeSeries/MarkovLink.hpp>
+#include  <boost/type_traits/is_base_of.hpp>
 
-namespace BOOM {
+namespace BOOM{
   //======================================================================
   // Return true if d inherits from MarkovLink and its links are set.
   // Otherwise return false.
-  template <class D>
-  bool linked(const Ptr<D> &d) {
+  template<class D>
+  bool linked(const Ptr<D> & d){
     // true if either prev or next is set
     bool linkable = boost::is_base_of<MarkovLink<D>, D>::value;
-    if (!linkable) return false;
+    if(!linkable) return false;
     return (!!d->next() || !!d->prev());
   }
 
@@ -43,33 +42,36 @@ namespace BOOM {
   // A TimeSeries is a type of Data that holds vector of pointers to
   // a specific Data type.
   template <class D>
-  class TimeSeries : virtual public Data, public std::vector<Ptr<D> > {
-   public:
+  class TimeSeries :
+      virtual public Data,
+      public std::vector<Ptr<D> >
+  {
+  public:
     typedef D data_point_type;
     typedef TimeSeries<D> ts_type;
 
     TimeSeries();
-    TimeSeries(const D &);
-    TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links = true);
+    TimeSeries(const D&);
+    TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links=true);
 
-    TimeSeries(const TimeSeries &);                   // value semantics
-    TimeSeries<D> *clone() const override;            // value semantics
-    TimeSeries<D> &operator=(const TimeSeries &rhs);  // copies pointers
+    TimeSeries(const TimeSeries &);   // value semantics
+    TimeSeries<D> * clone()const override;      // value semantics
+    TimeSeries<D> & operator=(const TimeSeries &rhs);    // copies pointers
 
-    TimeSeries<D> &unique_copy(const TimeSeries &rhs);  // clones pointers
+    TimeSeries<D> & unique_copy(const TimeSeries & rhs); // clones pointers
 
     // Copy the pointers in the given sequence without setting links
-    template <class FwdIt>
-    TimeSeries<D> &ref(FwdIt Beg, FwdIt End);
+    template<class FwdIt>
+    TimeSeries<D> & ref(FwdIt Beg, FwdIt End);
 
     // If the data held in the TimeSeries inherit from MarkovLink then
     // reset their links so they point in sequence.
     void set_links();
 
-    ostream &display(ostream &) const override;
-    uint element_size(bool minimal = true) const;  // size of one data point
-    uint length() const;                           // length of the series
-    virtual uint size(bool minimal = true) const;
+    ostream & display(ostream &)const override;
+    uint element_size(bool minimal=true)const;   // size of one data point
+    uint length()const;                          // length of the series
+    virtual uint size(bool minimal=true)const;
 
     // Adding data to the time series... add_1 and add_series
     // assimilate their entries so that the time series is remains
@@ -85,17 +87,17 @@ namespace BOOM {
 
     void clear();
 
-   private:
+    private:
     // Makes *this a copy of rhs.  Copies underlying data and sets links
     void clone_series(const TimeSeries &rhs);
   };
 
   typedef TimeSeries<DoubleData> ScalarTimeSeries;
-  inline Ptr<ScalarTimeSeries> make_ts(const Vector &y) {
+  inline Ptr<ScalarTimeSeries> make_ts(const Vector &y){
     uint n = y.size();
     std::vector<Ptr<DoubleData> > ts;
     ts.reserve(n);
-    for (uint i = 0; i < n; ++i) {
+    for(uint i=0; i<n; ++i){
       NEW(DoubleData, yi)(y[i]);
       ts.push_back(yi);
     }
@@ -111,48 +113,45 @@ namespace BOOM {
   // will set those links as data elements are added.
 
   template <class D, class T>
-  struct time_series_data_adder {
-    void operator()(const Ptr<D> &, Ptr<D>) {}
+  struct time_series_data_adder{
+    void operator()(const Ptr<D> &, Ptr<D>){}
   };
 
   template <class D>
-  struct time_series_data_adder<D, boost::true_type> {
-    void operator()(const Ptr<D> &last, Ptr<D> d) {
-      if (linked(d)) {
+  struct time_series_data_adder<D, boost::true_type>{
+    void operator()(const Ptr<D> & last, Ptr<D> d){
+      if(linked(d)) {
         // If the links for d are already set, then do nothing.
         return;
       }
-      if (!last->next()) last->set_next(d);
-      if (!d->prev()) d->set_prev(last);
+      if(!last->next()) last->set_next(d);
+      if(!d->prev()) d->set_prev(last);
     }
   };
 
   template <class D>
-  struct is_linkable : public boost::is_base_of<MarkovLink<D>, D> {};
+  struct is_linkable : public boost::is_base_of<MarkovLink<D>, D>{};
 
   template <class D, class T = is_linkable<D> >
-  struct time_series_link_clearer {
-    void operator()(const Ptr<D> &) {}
-  };
+  struct time_series_link_clearer{ void operator()(const Ptr<D> &){} };
 
   template <class D>
-  struct time_series_link_clearer<D, boost::true_type> {
-    void operator()(const Ptr<D> &d) { d->clear_links(); }
-  };
+  struct time_series_link_clearer<D, boost::true_type>{
+    void operator()(const Ptr<D> & d){ d->clear_links(); }  };
 
   template <class D, class T>
-  struct set_links_impl {
-    void operator()(std::vector<Ptr<D> > &) {}
+  struct set_links_impl{
+    void operator()(std::vector<Ptr<D> > &){}
   };
 
-  template <class D>
-  struct set_links_impl<D, boost::true_type> {
-    void operator()(std::vector<Ptr<D> > &v) {
+  template<class D>
+  struct set_links_impl<D, boost::true_type>{
+    void operator()(std::vector<Ptr<D> > & v){
       uint n = v.size();
-      if (n == 0) return;
-      for (uint i = 0; i < n; ++i) {
-        if (i > 0) v[i]->set_prev(v[i - 1]);
-        if (i < n - 1) v[i]->set_next(v[i + 1]);
+      if(n==0) return;
+      for(uint i=0; i<n; ++i){
+        if(i>0) v[i]->set_prev(v[i-1]);
+        if(i<n-1) v[i]->set_next(v[i+1]);
       }
       v.front()->unset_prev();
       v.back()->unset_next();
@@ -161,96 +160,100 @@ namespace BOOM {
 
   //======================================================================
 
-  template <class D>
-  TimeSeries<D>::TimeSeries() : Data(), std::vector<Ptr<D> >() {}
+  template<class D>
+  TimeSeries<D>::TimeSeries()
+    : Data(),
+      std::vector<Ptr<D> >()
+  {}
 
-  template <class D>
+  template<class D>
   TimeSeries<D>::TimeSeries(const D &d) {}
 
-  template <class D>
-  void TimeSeries<D>::clone_series(const TimeSeries<D> &rhs) {
+  template<class D>
+  void TimeSeries<D>::clone_series(const TimeSeries<D> &rhs)
+  {
     uint n = rhs.length();
     std::vector<Ptr<D> >::resize(n);
-    for (uint i = 0; i < n; ++i) (*this)[i] = rhs[i]->clone();
+    for(uint i=0; i<n; ++i) (*this)[i] = rhs[i]->clone();
     set_links();
   }
 
   template <class D>
-  void TimeSeries<D>::set_links() {
+  void TimeSeries<D>::set_links(){
     typedef typename is_linkable<D>::type isLinked;
     set_links_impl<D, isLinked> impl;
     impl(*this);
   }
 
-  template <class D>
+  template<class D>
   TimeSeries<D>::TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links)
-      : std::vector<Ptr<D> >(v)  // copies pointers
+    : std::vector<Ptr<D> >(v)     // copies pointers
   {
-    if (reset_links) set_links();
+    if(reset_links) set_links();
   }
 
-  template <class D>
+  template<class D>
   TimeSeries<D>::TimeSeries(const TimeSeries &rhs)
-      : Data(), std::vector<Ptr<D> >() {
+    : Data(),
+      std::vector<Ptr<D> >()
+  {
     clone_series(rhs);
   }
 
-  template <class D>
-  TimeSeries<D> &TimeSeries<D>::operator=(const TimeSeries<D> &rhs) {
-    if (&rhs == this) return *this;
-    // changed 10/21/2005.  No longer clones underlying data
+  template<class D>
+  TimeSeries<D> & TimeSeries<D>::operator=(const TimeSeries<D> &rhs){
+    if(&rhs==this) return *this;
+    //changed 10/21/2005.  No longer clones underlying data
     //    clone_series(rhs);
-    std::vector<Ptr<D> >::operator=(rhs);  // now just the pointers are copied
+    std::vector<Ptr<D> >::operator=(rhs);     // now just the pointers are copied
     return *this;
   }
 
-  template <class D>
-  TimeSeries<D> &TimeSeries<D>::unique_copy(const TimeSeries<D> &rhs) {
-    if (&rhs == this) return *this;
+  template<class D>
+  TimeSeries<D> & TimeSeries<D>::unique_copy(const TimeSeries<D> &rhs){
+    if(&rhs==this) return *this;
     clone_series(rhs);
     return *this;
   }
 
-  template <class D>
-  template <class FwdIt>
-  TimeSeries<D> &TimeSeries<D>::ref(FwdIt Beg, FwdIt End) {
-    std::vector<Ptr<D> >::assign(Beg, End);
+  template<class D>
+  template<class FwdIt>
+  TimeSeries<D> & TimeSeries<D>::ref(FwdIt Beg, FwdIt End){
+    std::vector<Ptr<D> >::assign(Beg,End);
     return *this;
   }
 
-  template <class D>
-  TimeSeries<D> *TimeSeries<D>::clone() const {
-    return new TimeSeries<D>(*this);
-  }
+  template<class D>
+  TimeSeries<D> * TimeSeries<D>::clone()const{
+    return new TimeSeries<D>(*this);}
 
-  template <class D>
-  ostream &TimeSeries<D>::display(ostream &out) const {
-    for (uint i = 0; i < length(); ++i) {
+  template<class D>
+  ostream & TimeSeries<D>::display(ostream &out)const{
+    for(uint i = 0; i<length(); ++i){
       (*this)[i]->display(out);
       out << endl;
     }
     return out;
   }
 
-  template <class D>
-  uint TimeSeries<D>::element_size(bool minimal) const {
-    if (this->empty()) return 0;
-    return std::vector<Ptr<D> >::back()->size(minimal);
-  }
+  template<class D>
+  uint TimeSeries<D>::element_size(bool minimal)const{
+    if(this->empty()) return 0;
+    return std::vector<Ptr<D> >::back()->size(minimal); }
 
-  template <class D>
-  uint TimeSeries<D>::size(bool) const {
+  template<class D>
+  uint TimeSeries<D>::size(bool)const{
     return std::vector<Ptr<D> >::size();
   }
 
-  template <class D>
-  uint TimeSeries<D>::length() const {
+  template<class D>
+  uint TimeSeries<D>::length()const{
     return std::vector<Ptr<D> >::size();
   }
 
-  template <class D>
-  void TimeSeries<D>::add_1(const Ptr<D> &d) {
-    if (length() > 0) {
+  template<class D>
+  void TimeSeries<D>::add_1(const Ptr<D> &d){
+    if(length()>0){
       Ptr<D> last = std::vector<Ptr<D> >::back();
       time_series_data_adder<D, is_linkable<D> > adder;
       adder(last, d);
@@ -258,20 +261,19 @@ namespace BOOM {
     just_add(d);
   }
 
-  template <class D>
-  void TimeSeries<D>::add_series(const Ptr<TimeSeries<D> > &d) {
-    for (uint i = 0; i < d->length(); ++i) add_1((*d)[i]);
-  }
+  template<class D>
+  void TimeSeries<D>::add_series(const Ptr<TimeSeries<D> > &d){
+    for(uint i = 0; i<d->length(); ++i) add_1((*d)[i]);  }
 
-  template <class D>
-  void TimeSeries<D>::just_add(const Ptr<D> &d) {
+  template<class D>
+  void TimeSeries<D>::just_add(const Ptr<D> &d){
     std::vector<Ptr<D> >::push_back(d);
   }
 
-  template <class D>
-  void TimeSeries<D>::clear() {
+  template<class D>
+  void TimeSeries<D>::clear(){
     std::vector<Ptr<D> >::clear();
   }
-}  // namespace BOOM
+}
 
-#endif  // BOOM_TIME_SERIES_BASE_CLASS_HPP
+#endif // BOOM_TIME_SERIES_BASE_CLASS_HPP

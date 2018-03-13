@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
-#include "distributions.hpp"
+#include <Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp>
+#include <distributions.hpp>
 
 namespace BOOM {
 
@@ -26,14 +25,19 @@ namespace BOOM {
       ZeroInflatedGammaModel *model,
       const Ptr<BetaModel> &prior_for_nonzero_probability,
       const Ptr<DoubleModel> &prior_for_gamma_mean,
-      const Ptr<DoubleModel> &prior_for_gamma_shape, RNG &seeding_rng)
+      const Ptr<DoubleModel> &prior_for_gamma_shape,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        binomial_sampler_(new BetaBinomialSampler(model->Binomial_model().get(),
-                                                  prior_for_nonzero_probability,
-                                                  seeding_rng)),
+        binomial_sampler_(new BetaBinomialSampler(
+            model->Binomial_model().get(),
+            prior_for_nonzero_probability,
+            seeding_rng)),
         gamma_sampler_(new GammaPosteriorSampler(
-            model->Gamma_model().get(), prior_for_gamma_mean,
-            prior_for_gamma_shape, seeding_rng)) {}
+            model->Gamma_model().get(),
+            prior_for_gamma_mean,
+            prior_for_gamma_shape,
+            seeding_rng))
+  {}
 
   double ZeroInflatedGammaPosteriorSampler::logpri() const {
     return binomial_sampler_->logpri() + gamma_sampler_->logpri();
@@ -44,4 +48,4 @@ namespace BOOM {
     gamma_sampler_->draw();
   }
 
-}  // namespace BOOM
+}

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -17,15 +16,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/ProductVectorModel.hpp"
-#include "cpputil/report_error.hpp"
+#include <Models/ProductVectorModel.hpp>
+#include <cpputil/report_error.hpp>
 
 namespace BOOM {
 
   namespace {
     typedef ProductVectorModel PVM;
     typedef ProductLocationScaleVectorModel PLSVM;
-  }  // namespace
+  }
 
   PVM::ProductVectorModel(const std::vector<Ptr<DoubleModel>> &marginals) {
     for (int i = 0; i < marginals.size(); ++i) {
@@ -34,13 +33,15 @@ namespace BOOM {
   }
 
   PVM::ProductVectorModel(const ProductVectorModel &rhs)
-      : VectorModel(rhs), CompositeParamPolicy(rhs) {
+      : VectorModel(rhs),
+        CompositeParamPolicy(rhs)
+  {
     for (int i = 0; i < rhs.marginal_distributions_.size(); ++i) {
       non_virtual_add_model(rhs.marginal_distributions_[i]->clone());
     }
   }
 
-  ProductVectorModel &PVM::operator=(const ProductVectorModel &rhs) {
+  ProductVectorModel & PVM::operator=(const ProductVectorModel &rhs) {
     if (&rhs == this) {
       return *this;
     }
@@ -51,11 +52,13 @@ namespace BOOM {
     return *this;
   }
 
-  ProductVectorModel *PVM::clone() const {
+  ProductVectorModel * PVM::clone() const {
     return new ProductVectorModel(*this);
   }
 
-  void PVM::add_model(const Ptr<DoubleModel> &m) { non_virtual_add_model(m); }
+  void PVM::add_model(const Ptr<DoubleModel> &m) {
+    non_virtual_add_model(m);
+  }
 
   void PVM::non_virtual_add_model(const Ptr<DoubleModel> &m) {
     marginal_distributions_.push_back(m);
@@ -87,11 +90,15 @@ namespace BOOM {
   }
 
   //======================================================================
-  PLSVM::ProductLocationScaleVectorModel() : moments_are_current_(false) {}
+  PLSVM::ProductLocationScaleVectorModel()
+      : moments_are_current_(false)
+  {}
 
   PLSVM::ProductLocationScaleVectorModel(
       const std::vector<Ptr<LocationScaleDoubleModel>> &marginals)
-      : ProductVectorModel(), moments_are_current_(false) {
+      : ProductVectorModel(),
+        moments_are_current_(false)
+  {
     for (int i = 0; i < marginals.size(); ++i) {
       add_location_scale_model(marginals[i]);
     }
@@ -99,7 +106,9 @@ namespace BOOM {
   }
 
   PLSVM::ProductLocationScaleVectorModel(const PLSVM &rhs)
-      : ProductVectorModel(), moments_are_current_(false) {
+      : ProductVectorModel(),
+        moments_are_current_(false)
+  {
     for (int i = 0; i < rhs.ls_marginal_distributions_.size(); ++i) {
       Ptr<LocationScaleDoubleModel> model =
           rhs.ls_marginal_distributions_[i]->clone();
@@ -108,9 +117,9 @@ namespace BOOM {
     refresh_moments();
   }
 
-  PLSVM *PLSVM::clone() const { return new PLSVM(*this); }
+  PLSVM * PLSVM::clone() const {return new PLSVM(*this);}
 
-  PLSVM &PLSVM::operator=(const PLSVM &rhs) {
+  PLSVM & PLSVM::operator=(const PLSVM &rhs) {
     if (&rhs == this) {
       return *this;
     }
@@ -125,9 +134,8 @@ namespace BOOM {
     Ptr<LocationScaleDoubleModel> model_with_correct_type(
         model.dcast<LocationScaleDoubleModel>());
     if (!model_with_correct_type) {
-      report_error(
-          "Argument to ProductLocationScaleVectorModel::add_model "
-          "must inherit from LocationScaleDoubleModel.");
+      report_error("Argument to ProductLocationScaleVectorModel::add_model "
+                   "must inherit from LocationScaleDoubleModel.");
     }
     add_location_scale_model(model_with_correct_type);
   }
@@ -136,10 +144,10 @@ namespace BOOM {
       const Ptr<LocationScaleDoubleModel> &model) {
     ls_marginal_distributions_.push_back(model);
     moments_are_current_ = false;
-    std::vector<Ptr<Params>> parameter_vector = model->parameter_vector();
-    std::function<void(void)> observer = [this]() {
-      this->observe_parameter_changes();
-    };
+    std::vector<Ptr<Params>> parameter_vector =
+        model->parameter_vector();
+    std::function<void(void)> observer =
+        [this](){this->observe_parameter_changes();};
     for (int i = 0; i < parameter_vector.size(); ++i) {
       parameter_vector[i]->add_observer(observer);
     }

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,13 +19,13 @@
 #ifndef BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_
 #define BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_
 
-#include "Models/Glm/Glm.hpp"
-#include "Models/Glm/GlmCoefs.hpp"
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_3.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
+#include <Models/Policies/ParamPolicy_3.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/Glm/GlmCoefs.hpp>
+#include <Models/Glm/Glm.hpp>
+#include <Models/Glm/RegressionModel.hpp>
+#include <Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp>
 
 namespace BOOM {
 
@@ -47,7 +46,8 @@ namespace BOOM {
   class ZeroInflatedLognormalRegressionModel
       : public ParamPolicy_3<GlmCoefs, UnivParams, GlmCoefs>,
         public SufstatDataPolicy<RegressionData, RegSuf>,
-        public PriorPolicy {
+        public PriorPolicy
+  {
    public:
     // Args:
     //   dimension:  The number of predictor variables.
@@ -55,7 +55,7 @@ namespace BOOM {
     //     counted as zero.
     ZeroInflatedLognormalRegressionModel(int dimension,
                                          double zero_threshold = 1e-5);
-    ZeroInflatedLognormalRegressionModel *clone() const override;
+    ZeroInflatedLognormalRegressionModel * clone() const override;
 
     double expected_value(const Vector &x) const;
     double variance(const Vector &x) const;
@@ -77,7 +77,7 @@ namespace BOOM {
     double sigma() const;
     void set_sigsq(double sigsq);
     Ptr<GlmCoefs> logit_coefficient_ptr();
-    const GlmCoefs &logit_coefficients() const;
+    const GlmCoefs & logit_coefficients() const;
 
     // Observations smaller than this number will be treated as zero.
     double zero_threshold() const { return zero_threshold_; }
@@ -94,6 +94,6 @@ namespace BOOM {
     double zero_threshold_;
   };
 
-}  // namespace BOOM
+}
 
-#endif  //  BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_
+#endif //  BOOM_ZERO_INFLATED_LOGNORMAL_REGRESSION_MODEL_HPP_

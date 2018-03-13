@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,19 +19,22 @@
 #ifndef BOOM_SCALAR_LANGEVIN_SAMPLER_HPP_
 #define BOOM_SCALAR_LANGEVIN_SAMPLER_HPP_
 
+#include <cpputil/Ptr.hpp>
+#include <Samplers/Sampler.hpp>
+#include <TargetFun/TargetFun.hpp>
 #include <functional>
-#include "Samplers/Sampler.hpp"
-#include "TargetFun/TargetFun.hpp"
-#include "cpputil/Ptr.hpp"
 
 namespace BOOM {
 
-  class ScalarLangevinSampler : public ScalarSampler {
+  class ScalarLangevinSampler
+      : public ScalarSampler {
    public:
+
     // The initial innovation sd is set to the square root of the step
     // size.
     ScalarLangevinSampler(const Ptr<dScalarTargetFun> &logf,
-                          double initial_step_size, RNG *rng = nullptr);
+                          double initial_step_size,
+                          RNG *rng = nullptr);
     double draw(double x) override;
 
     // The Metropolis proposal is centered on 0.5 * step_size() *
@@ -64,4 +66,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_SCALAR_LANGEVIN_SAMPLER_HPP_
+#endif // BOOM_SCALAR_LANGEVIN_SAMPLER_HPP_

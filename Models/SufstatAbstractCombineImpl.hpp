@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -19,21 +18,21 @@
 #ifndef BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_
 #define BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_
 
-#include "Models/Sufstat.hpp"
-#include "cpputil/report_error.hpp"
+#include <Models/Sufstat.hpp>
+#include <cpputil/report_error.hpp>
 
 // NOTE:  this file must not be included in another header file.
-namespace BOOM {
+namespace BOOM{
 
   template <class ConcreteSuf>
-  ConcreteSuf *abstract_combine_impl(ConcreteSuf *me, Sufstat *s) {
-    ConcreteSuf *cs = dynamic_cast<ConcreteSuf *>(s);
-    if (!cs) {
+  ConcreteSuf * abstract_combine_impl(ConcreteSuf *me, Sufstat *s){
+    ConcreteSuf * cs = dynamic_cast<ConcreteSuf *>(s);
+    if(!cs){
       report_error("Cannot cast Sufstat to concrete type");
     }
     me->combine(*cs);
     return me;
   }
 
-}  // namespace BOOM
-#endif  // BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_
+}
+#endif// BOOM_SUFSTAT_ABSTRACT_COMBINE_IMPL_HPP_

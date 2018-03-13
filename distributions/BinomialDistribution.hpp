@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,32 +19,31 @@
 #ifndef BOOM_BINOMIAL_DISTRIBUTION_HPP
 #define BOOM_BINOMIAL_DISTRIBUTION_HPP
 
-#include "distributions/rng.hpp"
-#include "uint.hpp"
+#include <distributions/rng.hpp>
+#include <uint.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class binomial_distribution {
-    // different case models tr1::binomial_distribution
-   public:
-    binomial_distribution(uint n = 1, double p = 0.5);
-    uint operator()(RNG &);
+class binomial_distribution{
+  // different case models tr1::binomial_distribution
+ public:
+  binomial_distribution(uint n=1, double p = 0.5);
+  uint operator()(RNG &);
+ private:
+  void setup(double pp);
+  uint finis();
+  uint draw_np_small(RNG &);
 
-   private:
-    void setup(double pp);
-    uint finis();
-    uint draw_np_small(RNG &);
+  double c, fm, npq, p1, p2, p3, p4, qn;
+  double xl, xll, xlr, xm, xr;
+  double psave;
+  int m;
 
-    double c, fm, npq, p1, p2, p3, p4, qn;
-    double xl, xll, xlr, xm, xr;
-    double psave;
-    int m;
+  double f, f1, f2, u, v, w, w2, x, x1, x2, z, z2;
+  double p, q, np, g, r, al, alv, amaxp, ffm, ynorm;
+  int i,k, ix;
+  unsigned  n;
+};
 
-    double f, f1, f2, u, v, w, w2, x, x1, x2, z, z2;
-    double p, q, np, g, r, al, alv, amaxp, ffm, ynorm;
-    int i, k, ix;
-    unsigned n;
-  };
-
-}  // namespace BOOM
-#endif  // BOOM_BINOMIAL_DISTRIBUTION_HPP
+}
+#endif// BOOM_BINOMIAL_DISTRIBUTION_HPP

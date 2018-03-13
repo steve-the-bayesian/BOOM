@@ -1,8 +1,8 @@
 #include <r_interface/prior_specification.hpp>
-#include "Models/Glm/VariableSelectionPrior.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/MvnModel.hpp"
-#include "cpputil/math_utils.hpp"
+#include <Models/Glm/VariableSelectionPrior.hpp>
+#include <Models/MvnBase.hpp>
+#include <Models/MvnModel.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
   namespace RInterface {

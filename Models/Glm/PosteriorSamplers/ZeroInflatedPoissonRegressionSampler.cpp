@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/ZeroInflatedPoissonRegressionSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/Glm/PosteriorSamplers/ZeroInflatedPoissonRegressionSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/report_error.hpp>
 
 namespace BOOM {
 
@@ -31,11 +30,14 @@ namespace BOOM {
       const Ptr<VariableSelectionPrior> &poisson_spike,
       const Ptr<MvnBase> &poisson_slab,
       const Ptr<VariableSelectionPrior> &logit_spike,
-      const Ptr<MvnBase> &logit_slab, RNG &seeding_rng)
+      const Ptr<MvnBase> &logit_slab,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        poisson_(new PoissonRegressionModel(model_->poisson_coefficient_ptr())),
-        logit_(new BinomialLogitModel(model_->logit_coefficient_ptr())),
+        poisson_(new PoissonRegressionModel(
+            model_->poisson_coefficient_ptr())),
+        logit_(new BinomialLogitModel(
+            model_->logit_coefficient_ptr())),
         poisson_sampler_(new PoissonRegressionSpikeSlabSampler(
             poisson_.get(), poisson_slab, poisson_spike,
             1,  // number of threads
@@ -48,7 +50,7 @@ namespace BOOM {
             1,    // rwm chunk size
             1.0,  // rwm scale factor
             seeding_rng)),
-        posterior_mode_found_(false) {}
+    posterior_mode_found_(false) {}
 
   double ZIPRS::logpri() const {
     double ans = poisson_sampler_->logpri();
@@ -77,15 +79,17 @@ namespace BOOM {
           model_->logit_coefficients().included_coefficients();
       Vector poisson_coefficients =
           model_->poisson_coefficients().included_coefficients();
-      while (criterion > epsilon && function_count++ < function_count_limit) {
+      while (criterion > epsilon &&
+             function_count++ < function_count_limit) {
         // E-step of EM
         impute_forced_zeros(false);
         // M-step of EM
         poisson_sampler_->find_posterior_mode();
         logit_sampler_->find_posterior_mode();
 
-        criterion = compute_convergence_criterion(logit_coefficients,
-                                                  poisson_coefficients);
+        criterion = compute_convergence_criterion(
+            logit_coefficients,
+            poisson_coefficients);
         logit_coefficients =
             model_->logit_coefficients().included_coefficients();
         poisson_coefficients =
@@ -102,12 +106,8 @@ namespace BOOM {
       const Vector &poisson_coefficients) const {
     Vector new_logit_coefficients =
         model_->logit_coefficients().included_coefficients();
-    Vector percent_change = abs((new_logit_coefficients - logit_coefficients));
-    for (int i = 0; i < new_logit_coefficients.size(); ++i) {
-      percent_change[i] = logit_coefficients[i] != 0
-                              ? percent_change[i] / logit_coefficients[i]
-                              : infinity();
-    }
+    Vector percent_change =
+        abs((new_logit_coefficients - logit_coefficients)/logit_coefficients);
     double max_percent_change = max(percent_change);
     if (!std::isfinite(max_percent_change)) {
       return infinity();
@@ -115,10 +115,10 @@ namespace BOOM {
 
     Vector new_poisson_coefficients =
         model_->poisson_coefficients().included_coefficients();
-    percent_change = abs((new_poisson_coefficients - poisson_coefficients) /
-                         poisson_coefficients);
-    max_percent_change =
-        std::max(max_percent_change, BOOM::max(percent_change));
+    percent_change = abs((new_poisson_coefficients
+                          - poisson_coefficients) / poisson_coefficients);
+    max_percent_change = std::max(max_percent_change,
+                                  BOOM::max(percent_change));
     if (!std::isfinite(max_percent_change)) {
       return infinity();
     }
@@ -126,12 +126,13 @@ namespace BOOM {
   }
 
   void ZIPRS::impute_forced_zeros(bool stochastic) {
-    const std::vector<Ptr<ZeroInflatedPoissonRegressionData>> &data(
+    const std::vector<Ptr<ZeroInflatedPoissonRegressionData> > &data(
         model_->dat());
     ensure_latent_data();
-    const std::vector<Ptr<PoissonRegressionData>> &poisson_data(
+    const std::vector<Ptr<PoissonRegressionData> > & poisson_data(
         poisson_->dat());
-    const std::vector<Ptr<BinomialRegressionData>> &logit_data(logit_->dat());
+    const std::vector<Ptr<BinomialRegressionData> > & logit_data(
+        logit_->dat());
     for (int i = 0; i < data.size(); ++i) {
       int64_t total_number_of_zeros = lround(data[i]->number_of_zero_trials());
       if (total_number_of_zeros > 0) {
@@ -145,10 +146,11 @@ namespace BOOM {
         double pforced = model_->probability_forced_to_zero(data[i]->x());
         double pfree = 1.0 - pforced;
         double lambda = model_->poisson_mean(data[i]->x());
-        double pforced_given_0 = pforced / (pforced + pfree * dpois(0, lambda));
+        double pforced_given_0 =
+            pforced / (pforced + pfree * dpois(0, lambda));
         if (stochastic) {
-          int64_t number_of_binomial_zeros =
-              rbinom_mt(rng(), total_number_of_zeros, pforced_given_0);
+          int64_t number_of_binomial_zeros = rbinom_mt(
+              rng(), total_number_of_zeros, pforced_given_0);
 
           // The number of trials for the logit data is the total number
           // of zeros.  This should be set in ensure_latent_data, as it
@@ -176,8 +178,8 @@ namespace BOOM {
           double expected_number_of_binomial_zeros =
               total_number_of_zeros * pforced_given_0;
           double expected_number_of_poisson_observations =
-              data[i]->total_number_of_trials() -
-              expected_number_of_binomial_zeros;
+              data[i]->total_number_of_trials()
+              - expected_number_of_binomial_zeros;
           logit_data[i]->set_y(expected_number_of_poisson_observations);
           poisson_data[i]->set_exposure(
               expected_number_of_poisson_observations);
@@ -194,8 +196,8 @@ namespace BOOM {
   void ZIPRS::ensure_latent_data() {
     int64_t number_of_observations = model_->dat().size();
     bool okay = true;
-    if (number_of_observations != poisson_->dat().size() ||
-        number_of_observations != logit_->dat().size()) {
+    if (number_of_observations != poisson_->dat().size()
+        || number_of_observations != logit_->dat().size()) {
       okay = false;
     }
     if (okay) {
@@ -203,8 +205,8 @@ namespace BOOM {
       // observations to see if the X's match.
       for (int j = 0; j < std::min<int>(number_of_observations, 5); ++j) {
         int pos = random_int_mt(rng(), 0, number_of_observations - 1);
-        if (model_->dat()[pos]->Xptr() != poisson_->dat()[pos]->Xptr() ||
-            model_->dat()[pos]->Xptr() != logit_->dat()[pos]->Xptr()) {
+        if (model_->dat()[pos]->Xptr() != poisson_->dat()[pos]->Xptr()
+            || model_->dat()[pos]->Xptr() != logit_->dat()[pos]->Xptr()) {
           okay = false;
           break;
         }
@@ -221,7 +223,7 @@ namespace BOOM {
   void ZIPRS::refresh_latent_data() {
     poisson_->clear_data();
     logit_->clear_data();
-    const std::vector<Ptr<ZeroInflatedPoissonRegressionData>> &data(
+    const std::vector<Ptr<ZeroInflatedPoissonRegressionData> > &data(
         model_->dat());
     for (int i = 0; i < data.size(); ++i) {
       Ptr<ZeroInflatedPoissonRegressionData> data_point = data[i];
@@ -229,9 +231,10 @@ namespace BOOM {
       // sampler, unless there are zero trials with zero observations.
       // In that case it is important to set the poisson exposure
       // parameter correctly here as the total number of trials.
-      NEW(PoissonRegressionData, poisson_data)
-      (data_point->y(), data_point->Xptr(),
-       data_point->total_number_of_trials());
+      NEW(PoissonRegressionData, poisson_data)(
+          data_point->y(),
+          data_point->Xptr(),
+          data_point->total_number_of_trials());
       poisson_->add_data(poisson_data);
 
       // The number of unconstrained trials will be set by the
@@ -241,9 +244,10 @@ namespace BOOM {
       // of trials.
       int64_t number_of_unconstrained_trials =
           data_point->total_number_of_trials();
-      NEW(BinomialRegressionData, logit_data)
-      (number_of_unconstrained_trials, data_point->total_number_of_trials(),
-       data_point->Xptr());
+      NEW(BinomialRegressionData, logit_data)(
+          number_of_unconstrained_trials,
+          data_point->total_number_of_trials(),
+          data_point->Xptr());
       logit_->add_data(logit_data);
     }
     poisson_sampler_->assign_data_to_workers();

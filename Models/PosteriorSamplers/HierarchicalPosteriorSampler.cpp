@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -17,19 +16,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
 
 namespace BOOM {
 
   namespace {
     typedef HierarchicalPosteriorSampler HPS;
     typedef ConjugateHierarchicalPosteriorSampler CHPS;
-  }  // namespace
+  }
 
   HPS::HierarchicalPosteriorSampler(RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng) {}
+      : PosteriorSampler(seeding_rng)
+  {}
 
   CHPS::ConjugateHierarchicalPosteriorSampler(RNG &seeding_rng)
-      : HPS(seeding_rng) {}
+      : HPS(seeding_rng)
+  {}
 
 }  // namespace BOOM

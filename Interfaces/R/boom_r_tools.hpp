@@ -21,15 +21,16 @@
 
 #include <string>
 
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/Matrix.hpp"
-#include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/SubMatrix.hpp"
-#include "LinAlg/Array.hpp"
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/Matrix.hpp>
+#include <LinAlg/SpdMatrix.hpp>
+#include <LinAlg/SubMatrix.hpp>
+#include <LinAlg/Array.hpp>
 
-#include "Models/CategoricalData.hpp"
-#include "stats/DataTable.hpp"
-#include "cpputil/Date.hpp"
+#include <Models/CategoricalData.hpp>
+
+#include <stats/DataTable.hpp>
+
 //======================================================================
 // Note that the functions listed here throw exceptions.  Code that
 // uses them should be wrapped in a try-block where the catch
@@ -57,18 +58,7 @@
 namespace BOOM{
   // Returns list[[name]] if a list element with that name exists.
   // Returns R_NilValue otherwise.
-  // Args:
-  //   list: The list to search.
-  //   name: The name of the list element to search for.
-  //   expect_answer: If true, then print a warning message if the named element
-  //     cannot be found.  This is useful in "printf debugging."
-  //
-  // Returns:
-  //   If the requested element is found then it is returned.  If not then
-  //   R_NilValue is returned.  If the first argument does not have a 'names'
-  //   attribute then an error is reported.
-  SEXP getListElement(SEXP list, const std::string &name,
-                      bool expect_answer = false);
+  SEXP getListElement(SEXP list, const std::string &name);
 
   // Extract the names from a list.  If the list has no names
   // attribute a vector of empty strings is returned.
@@ -225,10 +215,6 @@ namespace BOOM{
       SEXP r_int_matrix,
       bool convert_to_zero_offset = false);
 
-  // Convert an R Date object (singleton or vector) to a BOOM Date.
-  Date ToBoomDate(SEXP r_Date);
-  std::vector<Date> ToBoomDateVector(SEXP r_Dates);
-  
   // Convert a BOOM vector, matrix, or array to its R equivalent.
   // Less type checking is needed for these functions than in the
   // other direction because we know the type of the input.

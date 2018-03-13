@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007-2014 Steven L. Scott
 
@@ -25,7 +24,7 @@
 
 #ifdef _MSC_VER
 #include <boost/math/special_functions/fpclassify.hpp>
-namespace std {
+namespace std{
   using boost::math::isnan;
 }
 #endif  // _MSC_VER
@@ -35,14 +34,14 @@ namespace std {
 // provide.
 #include <boost/math/special_functions/fpclassify.hpp>
 namespace std {
-  using boost::math::isfinite;
   using boost::math::isnan;
-}  // namespace std
+  using boost::math::isfinite;
+}
 #endif  // __sun
 
 #include <boost/math/special_functions/round.hpp>
 namespace BOOM {
-  using boost::math::lround;
+using boost::math::lround;
 }
 
 #endif  // BOOM_PORTABLE_MATH_HPP_

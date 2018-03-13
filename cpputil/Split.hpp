@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -22,12 +21,11 @@
 #include <string>
 #include <vector>
 
-namespace BOOM {
+namespace BOOM{
   class StringSplitter {
    public:
-    StringSplitter(const std::string &sep = " \t", bool allow_quotes = true);
+    StringSplitter(const std::string &sep=" \t", bool allow_quotes=true);
     std::vector<std::string> operator()(const std::string &s) const;
-
    private:
     std::string delim;
     std::string quotes;
@@ -36,4 +34,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_STRING_SPLIT_HPP
+#endif // BOOM_STRING_SPLIT_HPP

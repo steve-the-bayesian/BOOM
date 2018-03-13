@@ -16,25 +16,25 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/IRT/IrtModel.hpp"
+#include <Models/IRT/IrtModel.hpp>
 
 #include <algorithm>
 #include <cstring>
 #include <functional>
 #include <iomanip>
 
-#include "LinAlg/CorrelationMatrix.hpp"
-#include "Models/IRT/Item.hpp"
-#include "Models/IRT/Subject.hpp"
-#include "Models/IRT/SubjectPrior.hpp"
-#include "Models/MvnModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/random_element.hpp"
-#include "cpputil/string_utils.hpp"
+#include <LinAlg/CorrelationMatrix.hpp>
+#include <Models/IRT/Item.hpp>
+#include <Models/IRT/Subject.hpp>
+#include <Models/IRT/SubjectPrior.hpp>
+#include <Models/MvnModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/random_element.hpp>
+#include <cpputil/string_utils.hpp>
 
-namespace BOOM {
-  namespace IRT {
+namespace BOOM{
+  namespace IRT{
 
     typedef std::vector<IrtModel::ModelTypeName> ModelVec;
 
@@ -51,54 +51,61 @@ namespace BOOM {
     }
     //------------------------------------------------------------
     IrtModel::IrtModel()
-        : subscale_names_(1),
-          theta_freq(1),
-          item_freq(1),
-          R_freq(1),
-          niter(0),
-          theta_suppressed(false),
-          subject_subset(0),
-          subject_search_helper(new Subject("", 1)),
-          item_search_helper(new NullItem) {
+      : subscale_names_(1),
+        theta_freq(1),
+        item_freq(1),
+        R_freq(1),
+        niter(0),
+        theta_suppressed(false),
+        subject_subset(0),
+        subject_search_helper(new Subject("", 1)),
+        item_search_helper(new NullItem)
+    {
       set_default_names(subscale_names_);
     }
 
     //------------------------------------------------------------
     IrtModel::IrtModel(uint nsub)
-        : subscale_names_(nsub),
-          //      response_prototype(new ordinal_data<uint>),
-          theta_freq(1),
-          item_freq(1),
-          R_freq(1),
-          niter(0),
-          theta_suppressed(false),
-          subject_subset(0),
-          subject_search_helper(new Subject("", 1)),
-          item_search_helper(new NullItem) {
+      : subscale_names_(nsub),
+        //      response_prototype(new ordinal_data<uint>),
+        theta_freq(1),
+        item_freq(1),
+        R_freq(1),
+        niter(0),
+        theta_suppressed(false),
+        subject_subset(0),
+        subject_search_helper(new Subject("", 1)),
+        item_search_helper(new NullItem)
+    {
       set_default_names(subscale_names_);
     }
 
     //------------------------------------------------------------
     IrtModel::IrtModel(const StringVector &SubscaleNames)
-        : subscale_names_(SubscaleNames),
-          theta_freq(1),
-          item_freq(1),
-          R_freq(1),
-          niter(0),
-          theta_suppressed(false),
-          subject_subset(0),
-          subject_search_helper(new Subject("", 1)),
-          item_search_helper(new NullItem) {}
+      : subscale_names_(SubscaleNames),
+        theta_freq(1),
+        item_freq(1),
+        R_freq(1),
+        niter(0),
+        theta_suppressed(false),
+        subject_subset(0),
+        subject_search_helper(new Subject("", 1)),
+        item_search_helper(new NullItem)
+    { }
 
     IrtModel::IrtModel(const IrtModel &rhs)
-        : Model(rhs), ParamPolicy(rhs), DataPolicy(rhs), PriorPolicy(rhs) {
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs)
+    {
       report_error("need to implement copy constructor for IrtModel");
     }
 
     //------------------------------------------------------------
-    IrtModel *IrtModel::clone() const { return new IrtModel(*this); }
+    IrtModel * IrtModel::clone()const{ return new IrtModel(*this);}
     //------------------------------------------------------------
-    double IrtModel::pdf(const Ptr<Subject> &s, bool logscale) const {
+    double IrtModel::pdf(const Ptr<Subject> & s, bool logscale)const{
       const ItemResponseMap &resp(s->item_responses());
       double ans = 0;
       for (IrIterC it = resp.begin(); it != resp.end(); ++it) {
@@ -110,16 +117,15 @@ namespace BOOM {
     }
     //------------------------------------------------------------
 
-    double IrtModel::pdf(const Ptr<Data> &dp, bool logscale) const {
-      return pdf(DAT(dp), logscale);
-    }
+    double IrtModel::pdf(const Ptr<Data> & dp, bool logscale)const{
+      return pdf(DAT(dp), logscale); }
     //------------------------------------------------------------
     void IrtModel::set_subscale_names(const StringVector &names) {
-      subscale_names_ = names;
-    }
+      subscale_names_ = names;}
 
     //------------------------------------------------------------
-    const StringVector &IrtModel::subscale_names() { return subscale_names_; }
+    const StringVector & IrtModel::subscale_names() {
+      return subscale_names_;}
 
     //------------------------------------------------------------
     inline uint find_max_length(const StringVector &v) {
@@ -132,7 +138,7 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    ostream &IrtModel::print_subscales(ostream &out, bool nl, bool decorate) {
+    ostream & IrtModel::print_subscales(ostream &out , bool nl, bool decorate) {
       uint sz = 0;
       string sep = "   ";
       if (decorate) {
@@ -153,58 +159,60 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    uint IrtModel::nscales() const { return subscale_names_.size(); }
-    uint IrtModel::nsubjects() const { return subjects_.size(); }
-    uint IrtModel::nitems() const { return items.size(); }
+    uint IrtModel::nscales()const{return subscale_names_.size();}
+    uint IrtModel::nsubjects()const{return subjects_.size(); }
+    uint IrtModel::nitems()const{return items.size();}
 
     //------------------------------------------------------------
-    void IrtModel::add_item(const Ptr<Item> &item) {
+    void IrtModel::add_item(const Ptr<Item> & item) {
       items.insert(item);
       ParamPolicy::add_model(item);
     }
 
     //------------------------------------------------------------
-    ItemIt IrtModel::item_begin() { return items.begin(); }
-    ItemIt IrtModel::item_end() { return items.end(); }
-    ItemItC IrtModel::item_begin() const { return items.begin(); }
-    ItemItC IrtModel::item_end() const { return items.end(); }
+    ItemIt IrtModel::item_begin() { return items.begin();}
+    ItemIt IrtModel::item_end() { return items.end();}
+    ItemItC IrtModel::item_begin()const{ return items.begin();}
+    ItemItC IrtModel::item_end()const{ return items.end();}
+
 
     //------------------------------------------------------------
-    Ptr<Item> IrtModel::find_item(const string &id, bool nag) const {
+    Ptr<Item> IrtModel::find_item(const string &id, bool nag)const{
       item_search_helper->id_ = id;
       ItemItC it = items.lower_bound(item_search_helper);
       if (it == items.end() || (*it)->id() != id) {
         if (nag) {
           ostringstream msg;
-          msg << "item with id " << id << " not found in IrtModel::find_item";
+          msg << "item with id "<< id
+              << " not found in IrtModel::find_item";
           report_error(msg.str());
         }
-        return Ptr<Item>();
+        return Ptr<Item> ();
       }
       return *it;
     }
 
     //------------------------------------------------------------
-    void IrtModel::add_subject(const Ptr<Subject> &s) {
+    void IrtModel::add_subject(const Ptr<Subject> & s) {
       BOOM::IRT::add_subject(subjects_, s);
       DataPolicy::add_data(s);
       if (!!subject_prior_) subject_prior_->add_data(s);
     }
     //------------------------------------------------------------
-    SI IrtModel::subject_begin() { return subjects_.begin(); }
-    SI IrtModel::subject_end() { return subjects_.end(); }
-    CSI IrtModel::subject_begin() const { return subjects_.begin(); }
-    CSI IrtModel::subject_end() const { return subjects_.end(); }
+    SI IrtModel::subject_begin() {return subjects_.begin();}
+    SI IrtModel::subject_end() {return subjects_.end();}
+    CSI IrtModel::subject_begin()const{return subjects_.begin();}
+    CSI IrtModel::subject_end()const{return subjects_.end();}
 
     //------------------------------------------------------------
-    Ptr<Subject> IrtModel::find_subject(const string &id, bool nag) const {
+    Ptr<Subject> IrtModel::find_subject(const string &id, bool nag)const{
       subject_search_helper->id_ = id;
       CSI it = std::lower_bound(subject_begin(), subject_end(),
                                 subject_search_helper, SubjectLess());
       if (it == subject_end() || (*it)->id() != id) {
         if (nag) {
           ostringstream msg;
-          msg << "subject with id " << id
+          msg << "subject with id "<< id
               << " not found in IrtModel::find_subject";
           report_error(msg.str());
         }
@@ -214,17 +222,18 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    void IrtModel::set_subject_prior(const Ptr<MvnModel> &p) {
+    void IrtModel::set_subject_prior(const Ptr<MvnModel> & p) {
       subject_prior_ = new MvnSubjectPrior(p);
       allocate_subjects();
     }
 
-    void IrtModel::set_subject_prior(const Ptr<SubjectPrior> &sp) {
+    void IrtModel::set_subject_prior(const Ptr<SubjectPrior> & sp) {
       subject_prior_ = sp;
       allocate_subjects();
     }
 
-    IrtModel::PriPtr IrtModel::subject_prior() { return subject_prior_; }
+    IrtModel::PriPtr IrtModel::subject_prior() {
+      return subject_prior_;}
 
     void IrtModel::allocate_subjects() {
       if (!subject_prior_) return;
@@ -234,7 +243,8 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    void read_subject_info_file(const string &fname, const Ptr<IrtModel> &m,
+    void read_subject_info_file(const string &fname,
+                                const Ptr<IrtModel> &m,
                                 const char delim) {
       ifstream in(fname.c_str());
       while (in) {
@@ -242,7 +252,7 @@ namespace BOOM {
         getline(in, line);
         if (!in || is_all_white(line)) break;
         StringVector fields =
-            (delim == ' ') ? split_string(line) : split_delimited(line, delim);
+          (delim == ' ') ? split_string(line): split_delimited(line, delim);
 
         uint nf = fields.size();
         string id = fields[0];
@@ -251,16 +261,15 @@ namespace BOOM {
           msg << "IrtModel::read_subject_info_file..." << endl
               << "subject identifiers must be unique" << endl
               << "offending id: " << id;
-          report_error(msg.str().c_str());
-        }
+          report_error(msg.str().c_str());}
 
         if (nf == 1) {
           NEW(Subject, s)(id, m->nscales());
           m->add_subject(s);
         } else if (nf > 1) {
-          Vector x(nf - 1);
+          Vector x(nf-1);
           for (uint i = 1; i < nf; ++i) {
-            INS(fields[i]) >> x[i - 1];
+            INS(fields[i]) >> x[i-1];
           }
           NEW(Subject, s)(id, m->nscales(), x);
           m->add_subject(s);
@@ -294,8 +303,8 @@ namespace BOOM {
         if (!item) {
           OUTS msg;
           msg << "item " << item_id
-              << " present in IrtModel::read_item_response_file," << endl
-              << "but not in IrtModel::read_item_info_file." << endl;
+              << " present in IrtModel::read_item_response_file,"<< endl
+              << "but not in IrtModel::read_item_info_file."<< endl;
           report_error(msg.str().c_str());
         }
 
@@ -305,13 +314,15 @@ namespace BOOM {
       }
     }
 
-    void IrtModel::item_report(ostream &out, uint max_name_width) const {
+    void IrtModel::item_report(ostream &out, uint max_name_width)const{
       uint maxw = 0;
-      for (ItemItC it = items.begin(); it != items.end(); ++it) {
+      for (ItemItC it = items.begin();
+          it != items.end(); ++it) {
         maxw = std::max<uint>(maxw, (*it)->name().size());
       }
       maxw = std::min(maxw, max_name_width);
-      for (ItemItC it = items.begin(); it != items.end(); ++it) {
+      for (ItemItC it = items.begin();
+          it != items.end(); ++it) {
         (*it)->report(out, maxw);
       }
     }

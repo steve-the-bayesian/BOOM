@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,7 +18,7 @@
 #ifndef BOOM_POISSON_REGRESSION_DATA_HPP_
 #define BOOM_POISSON_REGRESSION_DATA_HPP_
 
-#include "Models/Glm/Glm.hpp"
+#include <Models/Glm/Glm.hpp>
 
 namespace BOOM {
   class PoissonRegressionData : public GlmData<IntData> {
@@ -41,10 +40,10 @@ namespace BOOM {
     //     a number of trials.
     PoissonRegressionData(int64_t y, const Ptr<VectorData> &x, double exposure);
 
-    PoissonRegressionData *clone() const override;
-    ostream &display(ostream &out) const override;
-    double exposure() const;
-    double log_exposure() const;
+    PoissonRegressionData * clone() const override;
+    ostream & display(ostream &out)const override;
+    double exposure()const;
+    double log_exposure()const;
 
     // Sets the value of this observation's exposure.
     // Args:
@@ -53,7 +52,6 @@ namespace BOOM {
     //     data object will be notified of the change.  If false then
     //     observers will not be notified.
     void set_exposure(double exposure, bool signal = true);
-
    private:
     double exposure_;
     double log_exposure_;

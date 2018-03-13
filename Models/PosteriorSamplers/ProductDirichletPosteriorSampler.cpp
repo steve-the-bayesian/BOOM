@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -16,57 +15,63 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/PosteriorSamplers/ProductDirichletPosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/DirichletPosteriorSampler.hpp"
-#include "Samplers/ScalarSliceSampler.hpp"
-#include "cpputil/math_utils.hpp"
+#include <Models/PosteriorSamplers/DirichletPosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/ProductDirichletPosteriorSampler.hpp>
+#include <Samplers/ScalarSliceSampler.hpp>
+#include <cpputil/math_utils.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  typedef ProductDirichletPosteriorSampler PDPS;
+typedef ProductDirichletPosteriorSampler PDPS;
 
-  void PDPS::draw() {
-    const Matrix& sumlog(m_->suf()->sumlog());
-    double nobs(m_->suf()->n());
-    Matrix Nu(m_->Nu());
-    uint d = nrow(Nu);
-    for (uint i = 0; i < d; ++i) {
-      Vector sumlog_i(sumlog.row(i));
-      Vector nu(Nu.row(i));
-      for (uint j = 0; j < d; ++j) {
-        DirichletSampler::DirichletLogp logp(
-            j, nu, sumlog_i, nobs, phi_row_prior_[i].get(),
-            alpha_row_prior_[i].get(), min_nu_);
-        ScalarSliceSampler sam(logp, true);
-        sam.set_lower_limit(min_nu_);
-        nu[j] = sam.draw(nu[j]);
-      }
-      Nu.row(i) = nu;
+void PDPS::draw(){
+
+  const Matrix & sumlog(m_->suf()->sumlog());
+  double nobs(m_->suf()->n());
+  Matrix Nu(m_->Nu());
+  uint d= nrow(Nu);
+  for(uint i=0; i<d; ++i){
+    Vector sumlog_i(sumlog.row(i));
+    Vector nu(Nu.row(i));
+    for(uint j=0; j<d; ++j){
+      DirichletSampler::DirichletLogp logp(
+          j,
+          nu,
+          sumlog_i,
+          nobs,
+          phi_row_prior_[i].get(),
+          alpha_row_prior_[i].get(),
+          min_nu_);
+      ScalarSliceSampler sam(logp, true);
+      sam.set_lower_limit(min_nu_);
+      nu[j]= sam.draw(nu[j]);
     }
-
-    m_->set_Nu(Nu);
+    Nu.row(i) = nu;
   }
 
-  double PDPS::logpri() const {
-    const Matrix& Nu(m_->Nu());
-    uint d = nrow(Nu);
-    Vector phi(d);
-    double ans = 0;
-    for (uint i = 0; i < d; ++i) {
-      double a = sum(Nu.row(i));
-      if (a <= 0) return BOOM::negative_infinity();
-      phi = Nu.row(i);
-      for (uint j = 0; j < d; ++j) {
-        if (phi[j] < min_nu_) {
-          return BOOM::negative_infinity();
-        }
-      }
-      phi /= a;
-      ans += alpha_row_prior_[i]->logp(a);
-      ans += phi_row_prior_[i]->logp(phi);
-      ans -= (d - 1) * log(a);
-    }
-    return ans;
-  }
+  m_->set_Nu(Nu);
+}
 
-}  // namespace BOOM
+double PDPS::logpri()const{
+  const Matrix & Nu(m_->Nu());
+  uint d = nrow(Nu);
+  Vector phi(d);
+  double ans=0;
+  for(uint i=0; i<d; ++i){
+    double a = sum(Nu.row(i));
+    if(a <=0) return BOOM::negative_infinity();
+    phi = Nu.row(i);
+    for(uint j=0; j<d; ++j) {
+      if(phi[j] < min_nu_) {
+        return BOOM::negative_infinity();
+      }
+    }
+    phi/=a;
+    ans += alpha_row_prior_[i]->logp(a);
+    ans += phi_row_prior_[i]->logp(phi);
+    ans -= (d-1) * log(a);
+  }
+  return ans;
+}
+
+}

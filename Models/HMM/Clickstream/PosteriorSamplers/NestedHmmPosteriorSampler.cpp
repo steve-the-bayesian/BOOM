@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,13 +16,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/HMM/Clickstream/PosteriorSamplers/NestedHmmPosteriorSampler.hpp"
+#include <Models/HMM/Clickstream/PosteriorSamplers/NestedHmmPosteriorSampler.hpp>
 
 namespace BOOM {
 
   NestedHmmPosteriorSampler::NestedHmmPosteriorSampler(NestedHmm *model,
                                                        RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), model_(model), first_time_(true) {}
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        first_time_(true)
+  {}
 
   double NestedHmmPosteriorSampler::logpri() const {
     double ans = model_->session_model()->logpri();

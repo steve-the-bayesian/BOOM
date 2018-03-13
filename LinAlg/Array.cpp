@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2011 Steven L. Scott
 
@@ -17,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "LinAlg/Array.hpp"
+#include <LinAlg/Array.hpp>
 #include <cstdarg>
 #include <sstream>
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <cpputil/report_error.hpp>
+#include <distributions.hpp>
 #include <algorithm>
 
 namespace BOOM{

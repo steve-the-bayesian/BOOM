@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -20,13 +19,13 @@
 #ifndef BOOM_QUANTILE_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_QUANTILE_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp"
-#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
-#include "Models/Glm/QuantileRegressionModel.hpp"
-#include "Models/Glm/WeightedRegressionModel.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/PosteriorSamplers/Imputer.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/Glm/QuantileRegressionModel.hpp>
+#include <Models/Glm/PosteriorSamplers/QuantileRegressionPosteriorSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
+#include <Models/Glm/WeightedRegressionModel.hpp>
+#include <Models/MvnBase.hpp>
+#include <Models/PosteriorSamplers/Imputer.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
 
 namespace BOOM {
   // The data augmentation scheme for quantile regression goes
@@ -63,22 +62,24 @@ namespace BOOM {
       : public SufstatImputeWorker<RegressionData, WeightedRegSuf> {
    public:
     QuantileRegressionImputeWorker(const GlmCoefs *coefficients,
-                                   double quantile, WeightedRegSuf &global_suf,
+                                   double quantile,
+                                   WeightedRegSuf &global_suf,
                                    std::mutex &global_suf_mutex,
                                    RNG *rng = nullptr,
                                    RNG &seeding_rng = GlobalRng::rng)
         : SufstatImputeWorker<RegressionData, WeightedRegSuf>(
               global_suf, global_suf_mutex, rng, seeding_rng),
           coefficients_(coefficients),
-          quantile_complement_(1 - quantile) {}
+          quantile_complement_(1 - quantile)
+    {}
 
     double adjusted_observation(double y, double lambda) const {
-      return y - (2 * quantile_complement_ - 1) * lambda;
+      return y -  (2 * quantile_complement_ - 1) * lambda;
     }
 
     void impute_latent_data_point(const RegressionData &data_point,
-                                  WeightedRegSuf *suf, RNG &rng) override;
-
+                                  WeightedRegSuf *suf,
+                                  RNG &rng) override;
    private:
     const GlmCoefs *coefficients_;
     double quantile_complement_;
@@ -91,16 +92,17 @@ namespace BOOM {
       : public PosteriorSampler,
         public LatentDataSampler<QuantileRegressionImputeWorker> {
    public:
-    QuantileRegressionPosteriorSampler(QuantileRegressionModel *model,
-                                       const Ptr<MvnBase> &prior,
-                                       RNG &seeding_rng = GlobalRng::rng);
+    QuantileRegressionPosteriorSampler(
+        QuantileRegressionModel *model,
+        const Ptr<MvnBase> &prior,
+        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
     void draw_params();
     Ptr<QuantileRegressionImputeWorker> create_worker(std::mutex &m) override;
     void clear_latent_data() override;
     void assign_data_to_workers() override;
-    const WeightedRegSuf &suf() const { return suf_; }
+    const WeightedRegSuf &suf() const {return suf_;}
 
    private:
     QuantileRegressionModel *model_;
@@ -114,10 +116,11 @@ namespace BOOM {
   class QuantileRegressionSpikeSlabSampler
       : public QuantileRegressionPosteriorSampler {
    public:
-    QuantileRegressionSpikeSlabSampler(QuantileRegressionModel *model,
-                                       const Ptr<MvnBase> &slab,
-                                       const Ptr<VariableSelectionPrior> &spike,
-                                       RNG &seeding_rng = GlobalRng::rng);
+    QuantileRegressionSpikeSlabSampler(
+        QuantileRegressionModel *model,
+        const Ptr<MvnBase> &slab,
+        const Ptr<VariableSelectionPrior> &spike,
+        RNG & seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;

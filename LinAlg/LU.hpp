@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -22,7 +21,7 @@
 #ifndef BOOM_LU_HPP
 #define BOOM_LU_HPP
 
-#include "LinAlg/Matrix.hpp"
+#include <LinAlg/Matrix.hpp>
 #include <vector>
 
 namespace BOOM{

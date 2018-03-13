@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -17,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/BinomialLogitModel.hpp"
-#include "Models/Glm/GammaRegressionModel.hpp"
-#include "Models/Glm/ZeroInflatedGammaRegression.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/Glm/BinomialLogitModel.hpp>
+#include <Models/Glm/GammaRegressionModel.hpp>
+#include <Models/Glm/ZeroInflatedGammaRegression.hpp>
 
 namespace BOOM {
 
@@ -28,12 +27,15 @@ namespace BOOM {
   // ZeroInflatedGammaRegressionModel.  It assumes that posterior
   // samplers have been set for the logit_model and gamma_regression
   // components of the ZeroInflatedGammaRegressionModel.
-  class ZeroInflatedGammaRegressionPosteriorSampler : public PosteriorSampler {
+  class ZeroInflatedGammaRegressionPosteriorSampler
+      : public PosteriorSampler {
    public:
     ZeroInflatedGammaRegressionPosteriorSampler(
         ZeroInflatedGammaRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng)
-        : PosteriorSampler(seeding_rng), model_(model) {}
+        : PosteriorSampler(seeding_rng),
+          model_(model)
+    {}
 
     void draw() override {
       model_->logit_model()->sample_posterior();
@@ -41,12 +43,12 @@ namespace BOOM {
     }
 
     double logpri() const override {
-      return model_->logit_model()->logpri() +
-             model_->gamma_regression()->logpri();
+      return model_->logit_model()->logpri()
+          + model_->gamma_regression()->logpri();
     }
 
    private:
     ZeroInflatedGammaRegressionModel *model_;
   };
 
-}  // namespace BOOM
+} // namespace BOOM

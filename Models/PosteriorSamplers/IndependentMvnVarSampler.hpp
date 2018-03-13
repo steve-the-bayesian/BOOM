@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -21,16 +20,17 @@
 #define BOOM_INDEPENDENT_MVN_VAR_SAMPLER_HPP_
 
 #include <vector>
-#include "Models/GammaModel.hpp"
-#include "Models/IndependentMvnModel.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/IndependentMvnModel.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
 
 namespace BOOM {
 
   // A posterior sampler for IndependentMvnModel objects where the
   // 'mean' parameter is assumed known.
-  class IndependentMvnVarSampler : public PosteriorSampler {
+  class IndependentMvnVarSampler
+      : public PosteriorSampler {
    public:
     // Args:
     //   model: The model whose diagonal variance parameters are to be
@@ -60,4 +60,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif  // BOOM_INDEPENDENT_MVN_VAR_SAMPLER_HPP_
+#endif   // BOOM_INDEPENDENT_MVN_VAR_SAMPLER_HPP_

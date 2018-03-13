@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2009 Steven L. Scott
 
@@ -22,18 +21,18 @@
 
 #include <boost/random/ranlux.hpp>
 
-namespace BOOM {
-  typedef boost::random::ranlux64_base_01 RNG;
+namespace BOOM{
+typedef boost::random::ranlux64_base_01 RNG;
 
-  struct GlobalRng {
-   public:
-    static RNG rng;
-    static void seed_with_timestamp();
-  };
+struct GlobalRng{
+ public:
+  static RNG rng;
+  static void seed_with_timestamp();
+};
 
-  unsigned long seed_rng();  // generates a random seed from the global RNG
-                             // used to seed other RNG's
-  unsigned long seed_rng(RNG &);
-}  // namespace BOOM
+unsigned long seed_rng();  // generates a random seed from the global RNG
+                           // used to seed other RNG's
+unsigned long seed_rng(RNG &);
+}
 
-#endif  // BOOM_DISTRIBUTIONS_RNG_HPP
+#endif// BOOM_DISTRIBUTIONS_RNG_HPP

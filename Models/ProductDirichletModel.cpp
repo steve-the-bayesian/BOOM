@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,71 +15,74 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/ProductDirichletModel.hpp"
+#include <Models/ProductDirichletModel.hpp>
 #include <cmath>
-#include "LinAlg/Matrix.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/SufstatAbstractCombineImpl.hpp"
-#include "distributions.hpp"
+#include <distributions.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/SufstatAbstractCombineImpl.hpp>
+#include <LinAlg/Matrix.hpp>
 
-namespace BOOM {
+namespace BOOM{
   typedef ProductDirichletSuf PDS;
-  PDS::ProductDirichletSuf(uint p) : sumlog_(p, p, 0.0) {}
+  PDS::ProductDirichletSuf(uint p)
+    : sumlog_(p,p,0.0)
+  {}
 
   PDS::ProductDirichletSuf(const PDS &rhs)
-      : Sufstat(rhs), SufstatDetails<MatrixData>(rhs), sumlog_(rhs.sumlog_) {}
+    : Sufstat(rhs),
+      SufstatDetails<MatrixData>(rhs),
+      sumlog_(rhs.sumlog_)
+  {}
 
-  PDS *PDS::clone() const { return new PDS(*this); }
+  PDS * PDS::clone()const{return new PDS(*this);}
 
-  const Matrix &PDS::sumlog() const { return sumlog_; }
-  double PDS::n() const { return n_; }
+  const Matrix & PDS::sumlog()const{return sumlog_;}
+  double PDS::n()const{return n_;}
 
-  void PDS::Update(const MatrixData &d) {
+  void PDS::Update(const MatrixData &d){
     sumlog_ += log(d.value());
     ++n_;
   }
 
-  void PDS::clear() {
-    sumlog_ = 0;
-    n_ = 0;
+  void PDS::clear(){
+    sumlog_=0;
+    n_=0;
   }
 
-  void PDS::combine(const Ptr<PDS> &s) {
+  void PDS::combine(const Ptr<PDS> & s){
     sumlog_ += s->sumlog_;
     n_ += s->n_;
   }
 
-  void PDS::combine(const PDS &s) {
+  void PDS::combine(const PDS & s){
     sumlog_ += s.sumlog_;
     n_ += s.n_;
   }
 
-  ProductDirichletSuf *PDS::abstract_combine(Sufstat *s) {
-    return abstract_combine_impl(this, s);
-  }
+  ProductDirichletSuf * PDS::abstract_combine(Sufstat *s){
+    return abstract_combine_impl(this,s); }
 
-  Vector PDS::vectorize(bool) const {
+  Vector PDS::vectorize(bool)const{
     Vector ans(sumlog_.begin(), sumlog_.end());
     ans.push_back(n_);
     return ans;
   }
 
-  Vector::const_iterator PDS::unvectorize(Vector::const_iterator &v, bool) {
+  Vector::const_iterator PDS::unvectorize(Vector::const_iterator &v, bool){
     uint dim = sumlog_.nrow();
-    Matrix tmp(v, v + dim * dim, dim, dim);
-    v += dim * dim;
+    Matrix tmp(v, v + dim*dim, dim, dim);
+    v+= dim*dim;
     sumlog_ = tmp;
-    n_ = *v;
-    ++v;
+    n_ = *v; ++v;
     return v;
   }
 
-  Vector::const_iterator PDS::unvectorize(const Vector &v, bool minimal) {
+  Vector::const_iterator PDS::unvectorize(const Vector &v, bool minimal){
     Vector::const_iterator it = v.begin();
     return unvectorize(it, minimal);
   }
 
-  ostream &PDS::print(ostream &out) const {
+  ostream &PDS::print(ostream &out)const{
     return out << n_ << endl << sumlog_;
   }
   //============================================================
@@ -88,75 +90,81 @@ namespace BOOM {
   typedef ProductDirichletModel PDM;
 
   PDM::ProductDirichletModel(uint p)
-      : ParamPolicy(new MatrixParams(p, p, 1.0)),
-        DataPolicy(new PDS(p)),
-        PriorPolicy() {}
+    : ParamPolicy(new MatrixParams(p,p, 1.0)),
+      DataPolicy(new PDS(p)),
+      PriorPolicy()
+  {}
 
   PDM::ProductDirichletModel(const Matrix &N)
-      : ParamPolicy(new MatrixParams(N)),
-        DataPolicy(new PDS(N.nrow())),
-        PriorPolicy() {}
+    : ParamPolicy(new MatrixParams(N)),
+      DataPolicy(new PDS(N.nrow())),
+      PriorPolicy()
+  {}
 
   PDM::ProductDirichletModel(const Vector &wgt, const Matrix &Pi)
-      : ParamPolicy(new MatrixParams(Pi)),
-        DataPolicy(new PDS(wgt.size())),
-        PriorPolicy() {
+    : ParamPolicy(new MatrixParams(Pi)),
+      DataPolicy(new PDS(wgt.size())),
+      PriorPolicy()
+  {
     SpdMatrix W(wgt.size());
     W.set_diag(wgt);
-    set_Nu(W * Nu());
+    set_Nu(W*Nu());
   }
 
   PDM::ProductDirichletModel(const PDM &rhs)
-      : Model(rhs),
-        ParamPolicy(rhs),
-        DataPolicy(rhs),
-        PriorPolicy(rhs),
-        dLoglikeModel(rhs) {}
+    : Model(rhs),
+      ParamPolicy(rhs),
+      DataPolicy(rhs),
+      PriorPolicy(rhs),
+      dLoglikeModel(rhs)
+  {}
 
-  PDM *PDM::clone() const { return new PDM(*this); }
+  PDM * PDM::clone()const{return new PDM(*this);}
 
-  uint PDM::dim() const { return Nu().nrow(); }
+  uint PDM::dim()const{ return Nu().nrow();  }
 
-  Ptr<MatrixParams> PDM::Nu_prm() { return ParamPolicy::prm(); }
-  const Ptr<MatrixParams> PDM::Nu_prm() const { return ParamPolicy::prm(); }
-  const Matrix &PDM::Nu() const { return Nu_prm()->value(); }
+  Ptr<MatrixParams> PDM::Nu_prm(){
+    return ParamPolicy::prm();}
+  const Ptr<MatrixParams> PDM::Nu_prm()const{
+    return ParamPolicy::prm();}
+  const Matrix & PDM::Nu()const{return Nu_prm()->value();}
 
-  void PDM::set_Nu(const Matrix &Nu) { Nu_prm()->set(Nu); }
+  void PDM::set_Nu(const Matrix &Nu){
+    Nu_prm()->set(Nu);}
 
-  double PDM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    return pdf(DAT(dp)->value(), logscale);
-  }
+  double PDM::pdf(const Ptr<Data> &dp, bool logscale)const{
+    return pdf(DAT(dp)->value(), logscale); }
 
-  double PDM::pdf(const Matrix &Pi, bool logscale) const {
+  double PDM::pdf(const Matrix &Pi, bool logscale)const{
     double ans(0);
-    for (uint i = 0; i < Pi.nrow(); ++i) {
+    for(uint i=0; i<Pi.nrow(); ++i){
       ans += ddirichlet(Pi.row(i), Nu().row(1), true);
     }
     return logscale ? ans : exp(ans);
   }
 
-  double PDM::loglike(const Vector &Nu_columns) const {
+  double PDM::loglike(const Vector &Nu_columns)const{
     Matrix Nu(dim(), dim(), Nu_columns.data());
-    const Matrix &sumlog(suf()->sumlog());
-    double n = suf()->n();
+    const Matrix & sumlog(suf()->sumlog());
+    double n=  suf()->n();
 
-    double ans = 0;
-    for (uint i = 0; i < nrow(Nu); ++i)
+    double ans=0;
+    for(uint i=0; i<nrow(Nu); ++i)
       ans += dirichlet_loglike(Nu.row(i), 0, 0, sumlog.row(i), n);
     return ans;
   }
 
-  double PDM::dloglike(const Vector &Nu_columns, Vector &g) const {
+  double PDM::dloglike(const Vector &Nu_columns, Vector &g)const{
     Matrix Nu(dim(), dim(), Nu_columns.data());
-    const Matrix &sumlog(suf()->sumlog());
-    double n = suf()->n();
+    const Matrix & sumlog(suf()->sumlog());
+    double n=  suf()->n();
 
     uint nr = nrow(Nu);
-    Matrix G(nr, nr);
+    Matrix G(nr,nr);
     Vector g_row(nr);
 
-    double ans = 0;
-    for (uint i = 0; i < nrow(Nu); ++i) {
+    double ans=0;
+    for(uint i=0; i<nrow(Nu); ++i){
       ans += dirichlet_loglike(Nu.row(i), &g_row, 0, sumlog.row(i), n);
       G.row(i) = g_row;
     }
@@ -168,11 +176,11 @@ namespace BOOM {
     return ans;
   }
 
-  Matrix PDM::sim(RNG &rng) const {
+  Matrix PDM::sim(RNG &rng)const{
     uint d = dim();
-    Matrix ans(d, d);
-    for (uint i = 0; i < d; ++i) ans.row(i) = rdirichlet_mt(rng, Nu().row(i));
+    Matrix ans(d,d);
+    for(uint i=0; i<d; ++i) ans.row(i) = rdirichlet_mt(rng, Nu().row(i));
     return ans;
   }
 
-}  // namespace BOOM
+}

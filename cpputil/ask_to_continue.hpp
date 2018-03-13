@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,27 +19,28 @@
 #ifndef BOOM_ASK_TO_CONTINUE_HPP
 #define BOOM_ASK_TO_CONTINUE_HPP
 
-#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
 #include <string>
 
-namespace BOOM {
-  inline bool ask_to_continue(const std::string &msg = "",
+namespace BOOM{
+  inline bool ask_to_continue(const std::string & msg="",
                               std::ostream &out = std::cerr,
-                              std::istream &in = std::cin) {
+                              std::istream &in = std::cin){
+
     out << msg << " Continue? [y/n] ";
-    char c = 'a';
+    char c='a';
     in >> c;
-    if (c == 'n' || c == 'N') {
+    if(c=='n' || c=='N'){
       out << std::endl;
       return false;
     }
-    if (c == 'y' || c == 'Y') {
+    if(c=='y' || c=='Y'){
       out << std::endl;
       return true;
-    } else
-      out << "Please answer y or n." << std::endl;
+    }
+    else out << "Please answer y or n." << std::endl;
     return ask_to_continue(msg, out, in);
   }
-}  // namespace BOOM
-#endif  // BOOM_ASK_TO_CONTINUE_HPP
+}
+#endif // BOOM_ASK_TO_CONTINUE_HPP

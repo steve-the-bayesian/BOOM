@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,18 +19,18 @@
 #ifndef BOOM_ML_AUX_MIX_SAMPLER_HPP
 #define BOOM_ML_AUX_MIX_SAMPLER_HPP
 
-#include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/Vector.hpp"
-#include "Models/Glm/PosteriorSamplers/MLVS.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/MLVS.hpp>
+#include <LinAlg/SpdMatrix.hpp>
+#include <LinAlg/Vector.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   class MultinomialLogitModel;
   class MvnBase;
   class ChoiceData;
 
-  class MLAuxMixSampler : public PosteriorSampler {
+  class MLAuxMixSampler : public PosteriorSampler{
     // draws the parameters of a multinomial logit model using the
     // approximate method from Fruhwirth-Schnatter and Fruhwirth, CSDA
     // 2007, 3508-3528.
@@ -39,17 +38,17 @@ namespace BOOM {
     // this implementation only stores the complete data sufficient
     // statistics and some workspace.  It does not store the imputed
     // latent data.
-   public:
-    MLAuxMixSampler(MultinomialLogitModel *Mod, const Ptr<MvnBase> &Pri,
-                    uint nthreads = 1, RNG &seeding_rng = GlobalRng::rng);
+  public:
+    MLAuxMixSampler(MultinomialLogitModel *Mod,
+            const Ptr<MvnBase> &Pri, uint nthreads=1,
+            RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-
-   private:
+  private:
     MultinomialLogitModel *mod_;
     Ptr<MvnBase> pri;
     Ptr<MLVS> sam;
   };
 
-}  // namespace BOOM
-#endif  // BOOM_ML_AUX_MIX_SAMPLER_HPP
+}
+#endif// BOOM_ML_AUX_MIX_SAMPLER_HPP

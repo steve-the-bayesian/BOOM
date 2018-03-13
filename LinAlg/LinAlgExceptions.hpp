@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,7 +18,7 @@
 
 
 #include <string>
-#include "LinAlg/Matrix.hpp"
+#include <LinAlg/Matrix.hpp>
 
 namespace BOOM{
   struct matrix_not_positive_definite

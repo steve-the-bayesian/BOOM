@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/LU.hpp"
-#include "cpputil/report_error.hpp"
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/LU.hpp>
+#include <cpputil/report_error.hpp>
 
 extern "C"{
   void dgetrf_(int *, int *, double *, int *, int *, int *);

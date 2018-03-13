@@ -63,7 +63,7 @@ MODELS_HDRS := $(wildcard Models/*.hpp Models/Policies/*.hpp) \
 	$(wildcard Models/PosteriorSamplers/*.hpp)
 
 NUMOPT_SRCS := $(wildcard numopt/*.cpp)
-NUMOPT_HDRS := $(wildcard numopt/*.hpp)
+NUMOPT_SRCS := $(wildcard numopt/*.hpp)
 
 POINTPROCESS_SRCS := $(wildcard Models/PointProcess/*.cpp) \
 		  $(wildcard Models/PointProcess/PosteriorSamplers/*.cpp)
@@ -160,7 +160,7 @@ install: libboom.a
 	install libboom.a /usr/local/lib
 	rm -rf /usr/local/include/BOOM
 	mkdir -p /usr/local/include/BOOM
-	./install/install_headers.py $(HDRS) /usr/local/include/BOOM
+	./install_headers.py $(HDRS) /usr/local/include/BOOM
 
 .PHONY: clean
 clean:

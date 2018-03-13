@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -22,14 +21,14 @@
 
 #include <set>
 
-#include "LinAlg/SubMatrix.hpp"
-#include "Models/GaussianModelBase.hpp"
-#include "Models/Glm/Glm.hpp"  // for RegressionData
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions/rng.hpp"
+#include <LinAlg/SubMatrix.hpp>
+#include <Models/GaussianModelBase.hpp>
+#include <Models/Glm/Glm.hpp>            // for RegressionData
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/ParamPolicy_1.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <distributions/rng.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
@@ -61,14 +60,14 @@ namespace BOOM {
      public:
       virtual ~SufficientStatisticsBase() {}
       // Create a copy of *this, with the same data.
-      virtual SufficientStatisticsBase *clone() const = 0;
+      virtual SufficientStatisticsBase * clone() const = 0;
       virtual void clear() = 0;
 
       // Add relevant functions of data to the sufficient statistics
       // being modeled.
       virtual void update(const ResidualRegressionData &data) = 0;
-      virtual SufficientStatisticsBase *create() const {
-        SufficientStatisticsBase *ans = clone();
+      virtual SufficientStatisticsBase * create() const {
+        SufficientStatisticsBase * ans = clone();
         ans->clear();
         return ans;
       }
@@ -204,12 +203,11 @@ namespace BOOM {
       explicit VariableSummaryImpl(int variable_number);
       virtual ~VariableSummaryImpl() {}
       virtual bool random_cutpoint(RNG &rng, TreeNode *node) const = 0;
-      int variable_index() const { return variable_index_; }
+      int variable_index() const {return variable_index_;}
       virtual bool is_continuous() const = 0;
       virtual Vector get_cutpoint_range(const TreeNode *node) const = 0;
       virtual bool is_legal_configuration(const TreeNode *node) const = 0;
       virtual SerializedVariableSummary serialize() const = 0;
-
      private:
       int variable_index_;
     };
@@ -222,10 +220,9 @@ namespace BOOM {
       explicit DiscreteVariableSummary(const SerializedVariableSummary &vs);
       bool random_cutpoint(RNG &rng, TreeNode *node) const override;
       SerializedVariableSummary serialize() const override;
-      bool is_continuous() const override { return false; }
+      bool is_continuous() const override {return false;}
       Vector get_cutpoint_range(const TreeNode *node) const override;
       bool is_legal_configuration(const TreeNode *node) const override;
-
      private:
       Vector cutpoint_values_;
     };
@@ -238,10 +235,9 @@ namespace BOOM {
       explicit ContinuousVariableSummary(const SerializedVariableSummary &vs);
       bool random_cutpoint(RNG &rng, TreeNode *node) const override;
       SerializedVariableSummary serialize() const override;
-      bool is_continuous() const override { return true; }
+      bool is_continuous() const override {return true;}
       Vector get_cutpoint_range(const TreeNode *node) const override;
       bool is_legal_configuration(const TreeNode *node) const override;
-
      private:
       Vector range_;  // lower and upper limits for cutpoints
     };
@@ -265,7 +261,7 @@ namespace BOOM {
       // Returns a pointer to a new TreeNode equal to *this, with the
       // specified TreeNode as its parent.  All descendants of *this
       // are also cloned.
-      TreeNode *recursive_clone(TreeNode *parent);
+      TreeNode * recursive_clone(TreeNode *parent);
 
       // If the node is a leaf then the equality operator compares the
       // mean parameters.  If it is an interior node, it returns true
@@ -309,12 +305,12 @@ namespace BOOM {
       bool is_left_child() const;
       bool is_right_child() const;
 
-      TreeNode *parent();
-      const TreeNode *parent() const;
-      TreeNode *left_child();
-      const TreeNode *left_child() const;
-      TreeNode *right_child();
-      const TreeNode *right_child() const;
+      TreeNode * parent();
+      const TreeNode * parent() const;
+      TreeNode * left_child();
+      const TreeNode * left_child() const;
+      TreeNode * right_child();
+      const TreeNode * right_child() const;
 
       void set_mean(double mean_value);
       double mean() const;
@@ -324,13 +320,15 @@ namespace BOOM {
       // have the same variable_index then 'current_bound' is
       // returned.
       double largest_cutpoint_among_descendants(
-          int variable_index, double current_bound = negative_infinity()) const;
+          int variable_index,
+          double current_bound = negative_infinity()) const;
 
       // Returns the smallest cutpoint among the descendants of this
       // node with the same variable_index.  If no descendants have
       // the same variable_index then current_bound is returned.
       double smallest_cutpoint_among_descendants(
-          int variable_index, double current_bound = infinity()) const;
+          int variable_index,
+          double current_bound = infinity()) const;
 
       // Set the index of the variable for which this node represents
       // a split, and the value of the cutpoint to use for that
@@ -340,9 +338,12 @@ namespace BOOM {
       // (e.g. in an MCMC step where a split on this node is being
       // considered), but the values will only be used for prediction
       // if *this is a leaf.
-      void set_variable_and_cutpoint(int variable_index, double cutpoint);
+      void set_variable_and_cutpoint(
+          int variable_index,
+          double cutpoint);
       void set_variable(int variable_index);
       void set_cutpoint(double cutpoint);
+
 
       // The index of the variable on which this node splits, and the
       // value of the cutpoint where the split occurs.
@@ -379,7 +380,8 @@ namespace BOOM {
       //     the left or right child of *this, depending on whether
       //     dp->x() indicates that the observation should fall to the
       //     left or the right.
-      void populate_data(ResidualRegressionData *dp, bool recursive = true);
+      void populate_data(ResidualRegressionData *dp,
+                         bool recursive = true);
 
       // Clear the data below this node, and drop this node's data
       // down through the subtree formed by this node's descendants.
@@ -402,13 +404,13 @@ namespace BOOM {
       // Re-compute sufficient statistics based on the current values
       // of the residuals assigned to this node.
       //
-      // TODO: Check whether this is a bottleneck, and if
+      // TODO(stevescott): Check whether this is a bottleneck, and if
       // so whether it can be made more efficient using an
       // "is_current" observer.
-      const SufficientStatisticsBase &compute_suf();
+      const SufficientStatisticsBase & compute_suf();
 
       // The vector of data associated with this node.
-      const std::vector<ResidualRegressionData *> &data() const;
+      const std::vector<ResidualRegressionData *> & data() const;
 
       // Remove the effect of this node on the predicted values of the
       // data associated with it.  (I.e. adjust the predictions as if
@@ -420,7 +422,7 @@ namespace BOOM {
       // remove_mean_effect().
       void replace_mean_effect();
 
-      ostream &print(ostream &out) const;
+      ostream & print(ostream &out) const;
 
       // Args:
       //   parent_id:  The id of the parent of this node.
@@ -430,10 +432,13 @@ namespace BOOM {
       //     tree.  It must have three columns and enough rows.
       // Returns:
       //   The next available id.
-      int fill_tree_matrix_row(int parent_id, int my_id,
+      int fill_tree_matrix_row(int parent_id,
+                               int my_id,
                                Matrix *tree_matrix) const;
 
-      int sample_size() const { return data_.size(); }
+      int sample_size() const {
+        return data_.size();
+      }
 
      private:
       // For singleton trees, it is possible for a node to be a root and
@@ -454,11 +459,11 @@ namespace BOOM {
 
       // For interior nodes predictions are made by going left if x <=
       // cutpoint_, and right if x > cutpoint_.
-      int which_variable_;  // Used iff this is not a leaf.
-      double cutpoint_;     // Used iff this is not a leaf.
+      int which_variable_;         // Used iff this is not a leaf.
+      double cutpoint_;            // Used iff this is not a leaf.
     };
 
-    inline ostream &operator<<(ostream &out, const TreeNode &node) {
+    inline ostream & operator<<(ostream &out, const TreeNode &node) {
       return node.print(out);
     }
 
@@ -499,7 +504,7 @@ namespace BOOM {
       // nodes, cutpoints, etc.  No data or sufficient statistics are
       // associated with the new tree.
       Tree(const Tree &rhs);
-      Tree &operator=(const Tree &rhs);
+      Tree & operator=(const Tree &rhs);
       void swap(Tree &rhs);
       ~Tree();
 
@@ -513,8 +518,8 @@ namespace BOOM {
       double predict(const VectorView &x) const;
       double predict(const ConstVectorView &x) const;
 
-      TreeNode *root() { return root_.get(); }
-      const TreeNode *root() const { return root_.get(); }
+      TreeNode * root() {return root_.get();}
+      const TreeNode * root() const {return root_.get();}
 
       // How many nodes are in this tree overall?
       int number_of_nodes() const;
@@ -562,7 +567,8 @@ namespace BOOM {
       // have no grandchildren, it will be removed from the set of
       // leaves, and its parent (if it has one) will be removed from
       // the set of nodes with no grandchildren.
-      void grow(TreeNode *leaf, double left_mean = 0.0,
+      void grow(TreeNode *leaf,
+                double left_mean = 0.0,
                 double right_mean = 0.0);
 
       // Removes all descendants from node.  The node is kept (and
@@ -592,7 +598,7 @@ namespace BOOM {
       // each leaf's mean effect from the residuals for that leaf.
       void replace_mean_effect();
 
-      ostream &print(ostream &out) const;
+      ostream & print(ostream &out) const;
 
       // For serialization purposes, the tree can be stored as a
       // 3-column matrix.  The columns are:
@@ -623,7 +629,7 @@ namespace BOOM {
       void register_special_nodes(TreeNode *node);
     };
 
-    inline ostream &operator<<(ostream &out, const Tree &tree) {
+    inline ostream & operator<<(ostream &out, const Tree &tree) {
       return tree.print(out);
     }
 
@@ -684,11 +690,12 @@ namespace BOOM {
     // data has been observed.
     void finalize_data(
         int discrete_distribution_cutoff = 20,
-        Bart::ContinuousCutpointStrategy strategy = Bart::UNIFORM_CONTINUOUS);
+        Bart::ContinuousCutpointStrategy strategy =
+        Bart::UNIFORM_CONTINUOUS);
 
     // Returns the VariableSummary associated with the variable at the
     // given index.
-    const Bart::VariableSummary &variable_summary(int which_variable) const;
+    const Bart::VariableSummary & variable_summary(int which_variable) const;
 
     // Return a pointer to a specific tree.
     Bart::Tree *tree(int which_tree);
@@ -706,13 +713,13 @@ namespace BOOM {
     // split).  If no such tree exists, then NULL is returned.
     Bart::Tree *random_stump(RNG &rng);
 
-    // TODO: Consider maintaining this in the class
+    // TODO(stevescott): Consider maintaining this in the class
     // instead of recomputing it.
     GaussianSuf mean_effect_sufstats() const;
 
    protected:
-    void observe_data(const ConstVectorView &predictor);
-    void observe_data(const Vector &predictor);
+    void observe_data(const ConstVectorView & predictor);
+    void observe_data(const Vector & predictor);
 
    private:
     // If variable_summaries_ is empty, then populate it with 'dim'
@@ -738,4 +745,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_BART_HPP_
+#endif // BOOM_BART_HPP_

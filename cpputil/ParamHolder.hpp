@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,36 +18,34 @@
 #ifndef BOOM_PARAM_HOLDER_HPP
 #define BOOM_PARAM_HOLDER_HPP
 
-#include "LinAlg/Vector.hpp"
+#include <LinAlg/Vector.hpp>
 
-#include "cpputil/Ptr.hpp"
+#include <cpputil/Ptr.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   class Params;
-  class ParamHolder {
+  class ParamHolder{
    public:
     ParamHolder(const Ptr<Params> &held_prm, Vector &Wsp);
     ParamHolder(const Vector &x, const Ptr<Params> &held_prm, Vector &Wsp);
     ~ParamHolder();
 
    private:
-    Vector &v;
+    Vector & v;
     Ptr<Params> prm;
   };
 
-  class ParamVectorHolder {
-   public:
+  class ParamVectorHolder{
+  public:
     typedef std::vector<Ptr<Params> > ParamVector;
-
-   private:
-    Vector &v;
+  private:
+    Vector & v;
     ParamVector prm;
-
-   public:
+  public:
     ParamVectorHolder(const ParamVector &held, Vector &Wsp);
-    ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp);
+    ParamVectorHolder(const Vector &x, const ParamVector & held, Vector &Wsp);
     ~ParamVectorHolder();
   };
-}  // namespace BOOM
-#endif  // BOOM_PARAM_HOLDER_HPP
+}
+#endif// BOOM_PARAM_HOLDER_HPP

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,14 +19,16 @@
 #ifndef BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
-#include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
-#include "Models/StateSpace/StateSpaceLogitModel.hpp"
+#include <Models/StateSpace/StateSpaceLogitModel.hpp>
+#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp>
+#include <Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp>
 
 namespace BOOM {
-  class StateSpaceLogitPosteriorSampler : public StateSpacePosteriorSampler {
+  class StateSpaceLogitPosteriorSampler
+      : public StateSpacePosteriorSampler {
    public:
+
     // Args:
     //   model: The model for which posterior samples are desired.
     //     All state components should have posterior samplers
@@ -66,6 +67,6 @@ namespace BOOM {
     Ptr<BinomialLogitSpikeSlabSampler> observation_model_sampler_;
     BinomialLogitCltDataImputer data_imputer_;
   };
-}  // namespace BOOM
+}
 
-#endif  // BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_
+#endif // BOOM_STATE_SPACE_LOGIT_POSTERIOR_SAMPLER_HPP_

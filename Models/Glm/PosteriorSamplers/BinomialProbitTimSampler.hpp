@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -20,20 +19,22 @@
 #ifndef BOOM_BINOMIAL_PROBIT_TIM_SAMPLER_HPP_
 #define BOOM_BINOMIAL_PROBIT_TIM_SAMPLER_HPP_
 
-#include "LinAlg/Selector.hpp"
-#include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/Vector.hpp"
-#include "Models/Glm/BinomialProbitModel.hpp"
-#include "Models/MvnBase.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Samplers/TIM.hpp"
+#include <Models/Glm/BinomialProbitModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <LinAlg/Selector.hpp>
+#include <LinAlg/Vector.hpp>
+#include <LinAlg/SpdMatrix.hpp>
+#include <Samplers/TIM.hpp>
+#include <Models/MvnBase.hpp>
 
 namespace BOOM {
 
-  class BinomialProbitTimSampler : public PosteriorSampler {
+  class BinomialProbitTimSampler
+      : public PosteriorSampler {
    public:
     BinomialProbitTimSampler(BinomialProbitModel *model,
-                             const Ptr<MvnBase> &prior, double proposal_df = 3,
+                             const Ptr<MvnBase> &prior,
+                             double proposal_df = 3,
                              RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;

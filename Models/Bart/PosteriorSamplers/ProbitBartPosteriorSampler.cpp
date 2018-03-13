@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -17,19 +16,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Bart/PosteriorSamplers/ProbitBartPosteriorSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/Bart/PosteriorSamplers/ProbitBartPosteriorSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/report_error.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
   namespace Bart {
 
-    ProbitResidualData::ProbitResidualData(
-        const Ptr<BinomialRegressionData> &dp, double original_prediction)
+    ProbitResidualData::ProbitResidualData(const Ptr<BinomialRegressionData> & dp,
+                                           double original_prediction)
         : ResidualRegressionData(dp->Xptr().get()),
           original_data_(dp.get()),
-          prediction_(original_prediction) {}
+          prediction_(original_prediction)
+    {}
 
     void ProbitResidualData::add_to_probit_suf(
         ProbitSufficientStatistics &suf) const {
@@ -53,7 +53,7 @@ namespace BOOM {
     }
 
     //======================================================================
-    ProbitSufficientStatistics *ProbitSufficientStatistics::clone() const {
+    ProbitSufficientStatistics * ProbitSufficientStatistics::clone() const {
       return new ProbitSufficientStatistics(*this);
     }
 
@@ -80,14 +80,21 @@ namespace BOOM {
 
   //======================================================================
   ProbitBartPosteriorSampler::ProbitBartPosteriorSampler(
-      ProbitBartModel *model, double total_prediction_sd,
-      double prior_tree_depth_alpha, double prior_tree_depth_beta,
+      ProbitBartModel *model,
+      double total_prediction_sd,
+      double prior_tree_depth_alpha,
+      double prior_tree_depth_beta,
       const std::function<double(int)> &log_prior_on_number_of_trees,
       RNG &seeding_rng)
-      : BartPosteriorSamplerBase(model, total_prediction_sd,
-                                 prior_tree_depth_alpha, prior_tree_depth_beta,
-                                 log_prior_on_number_of_trees, seeding_rng),
-        model_(model) {}
+      : BartPosteriorSamplerBase(
+            model,
+            total_prediction_sd,
+            prior_tree_depth_alpha,
+            prior_tree_depth_beta,
+            log_prior_on_number_of_trees,
+            seeding_rng),
+        model_(model)
+  {}
 
   //----------------------------------------------------------------------
   void ProbitBartPosteriorSampler::draw() {
@@ -112,7 +119,8 @@ namespace BOOM {
   double ProbitBartPosteriorSampler::log_integrated_likelihood(
       const Bart::SufficientStatisticsBase &suf) const {
     return log_integrated_probit_likelihood(
-        dynamic_cast<const Bart::ProbitSufficientStatistics &>(suf));
+        dynamic_cast<const Bart::ProbitSufficientStatistics &>(
+            suf));
   }
 
   //----------------------------------------------------------------------
@@ -130,8 +138,9 @@ namespace BOOM {
     double ivar = n + (1.0 / prior_variance);
     double posterior_variance = 1.0 / ivar;
     double posterior_mean = suf.sum() / ivar;
-    double ans = log(posterior_variance / prior_variance) - n * square(ybar) +
-                 square(posterior_mean) / posterior_variance;
+    double ans =  log(posterior_variance / prior_variance)
+        - n * square(ybar)
+        + square(posterior_mean) / posterior_variance;
     return .5 * ans;
   }
 
@@ -151,7 +160,9 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void ProbitBartPosteriorSampler::clear_residuals() { residuals_.clear(); }
+  void ProbitBartPosteriorSampler::clear_residuals() {
+    residuals_.clear();
+  }
 
   //----------------------------------------------------------------------
   int ProbitBartPosteriorSampler::residual_size() const {
@@ -170,13 +181,14 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  Bart::ProbitResidualData *ProbitBartPosteriorSampler::residual(int i) {
+  Bart::ProbitResidualData *
+  ProbitBartPosteriorSampler::residual(int i) {
     return residuals_[i].get();
   }
 
   //----------------------------------------------------------------------
-  Bart::ProbitSufficientStatistics *ProbitBartPosteriorSampler::create_suf()
-      const {
+  Bart::ProbitSufficientStatistics *
+  ProbitBartPosteriorSampler::create_suf() const {
     return new Bart::ProbitSufficientStatistics;
   }
 
@@ -199,7 +211,8 @@ namespace BOOM {
       double mean = 0;
       double variance = 1;
       trun_norm_moments(eta, 1, 0, true, &mean, &variance);
-      sum_of_probits += rnorm_mt(rng(), number_positive * mean,
+      sum_of_probits += rnorm_mt(rng(),
+                                 number_positive * mean,
                                  sqrt(number_positive * variance));
     } else {
       for (int i = 0; i < number_positive; ++i) {
@@ -211,7 +224,8 @@ namespace BOOM {
       double mean = 0;
       double variance = 1;
       trun_norm_moments(eta, 1, 0, false, &mean, &variance);
-      sum_of_probits += rnorm_mt(rng(), number_negative * mean,
+      sum_of_probits += rnorm_mt(rng(),
+                                 number_negative * mean,
                                  sqrt(number_negative * variance));
     } else {
       for (int i = 0; i < number_negative; ++i) {

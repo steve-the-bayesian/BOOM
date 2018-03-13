@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,22 +19,25 @@
 #ifndef BOOM_STATE_SPACE_NORMAL_MIXTURE_HPP_
 #define BOOM_STATE_SPACE_NORMAL_MIXTURE_HPP_
 
-#include "Models/Glm/Glm.hpp"
-#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include <Models/StateSpace/StateSpaceModelBase.hpp>
+#include <Models/Glm/Glm.hpp>
 
 namespace BOOM {
 
   // A base class for code common to all normal mixture state space
   // models.
 
-  class StateSpaceNormalMixture : public ScalarStateSpaceModelBase {
+  class StateSpaceNormalMixture
+      : public StateSpaceModelBase {
    public:
     // Args:
     //   has_regression: derived classes should set to 'true' of the
     //     model has a regression component.
     StateSpaceNormalMixture(bool has_regression);
 
-    bool has_regression() const override { return has_regression_; }
+    bool has_regression() const override {
+      return has_regression_;
+    }
 
     void set_regression_flag(bool has_regression) {
       has_regression_ = has_regression;
@@ -64,6 +66,7 @@ namespace BOOM {
     bool has_regression_;
   };
 
-}  // namespace BOOM
+
+} // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_NORMAL_MIXTURE_HPP_

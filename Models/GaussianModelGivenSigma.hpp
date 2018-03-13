@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -19,24 +18,25 @@
 #ifndef BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP
 #define BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP
 
-#include "Models/ModelTypes.hpp"
-#include "Models/ParamTypes.hpp"
-#include "Models/Policies/ParamPolicy_2.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "Models/Policies/SufstatDataPolicy.hpp"
-#include "Models/Sufstat.hpp"
+#include <Models/ModelTypes.hpp>
+#include <Models/ParamTypes.hpp>
+#include <Models/Sufstat.hpp>
+#include <Models/Policies/SufstatDataPolicy.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <Models/Policies/ParamPolicy_2.hpp>
 
-#include "Models/GaussianModelBase.hpp"
+#include <Models/GaussianModelBase.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   // A Gaussian model parameterized as N(mu0, sigma^2/kappa), where sigma^2 is
   // owned by another model.  This model is the conjugate prior for the mean of
   // a normal distribution, conditional on its variance (sigma^2).
-  class GaussianModelGivenSigma : public GaussianModelBase,
-                                  public ParamPolicy_2<UnivParams, UnivParams>,
-                                  public PriorPolicy {
-   public:
+  class GaussianModelGivenSigma
+    : public GaussianModelBase,
+      public ParamPolicy_2<UnivParams, UnivParams>,
+      public PriorPolicy {
+  public:
     // Args:
     //   scaling_variance: The 'sigma^2' parameter that scales the variance of
     //     this distribution.  If left as nullptr then 'set_scaling_variance'
@@ -46,8 +46,9 @@ namespace BOOM {
     //   sample_size: The denominator of the variance of this distribution.
     //     This is 'kappa' in the class comment.
     GaussianModelGivenSigma(const Ptr<UnivParams> &scaling_variance = nullptr,
-                            double mean = 0, double sample_size = 1);
-    GaussianModelGivenSigma *clone() const override;
+                            double mean = 0,
+                            double sample_size = 1);
+    GaussianModelGivenSigma * clone()const override;
 
     // Sets the parameter in the numerator of the variance of the normal
     // distribution.
@@ -70,19 +71,19 @@ namespace BOOM {
 
     Ptr<UnivParams> Mu_prm();
     Ptr<UnivParams> Kappa_prm();
-    const Ptr<UnivParams> Mu_prm() const;
-    const Ptr<UnivParams> Kappa_prm() const;
+    const Ptr<UnivParams> Mu_prm()const;
+    const Ptr<UnivParams> Kappa_prm()const;
 
     void mle() override;
     double Loglike(const Vector &mu_kappa, Vector &g, Matrix &h,
                    uint nderiv) const override;
     double log_likelihood() const override {
-      return LoglikeModel::log_likelihood();
+       return LoglikeModel::log_likelihood();
     }
 
-   private:
+  private:
     Ptr<UnivParams> scaling_variance_;
   };
 
-}  // namespace BOOM
-#endif  // BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP
+}
+#endif// BOOM_GAUSSIAN_MODEL_GIVEN_SIGMA_HPP

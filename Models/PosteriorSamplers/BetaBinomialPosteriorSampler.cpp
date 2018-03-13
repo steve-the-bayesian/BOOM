@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -17,17 +16,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PosteriorSamplers/BetaBinomialPosteriorSampler.hpp"
+#include <Models/PosteriorSamplers/BetaBinomialPosteriorSampler.hpp>
 #include <functional>
 
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
-#include "numopt.hpp"
-#include "numopt/NumericalDerivatives.hpp"
-#include "stats/logit.hpp"
+#include <distributions.hpp>
+#include <stats/logit.hpp>
+#include <cpputil/report_error.hpp>
+#include <cpputil/math_utils.hpp>
+#include <numopt.hpp>
+#include <numopt/NumericalDerivatives.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   typedef BetaBinomialPosteriorSampler BBPS;
 
@@ -35,20 +34,24 @@ namespace BOOM {
   // The log posterior of the beta binomial model on the (prob,
   // sample_size) scale.
   BetaBinomialLogPosterior::BetaBinomialLogPosterior(
-      const BetaBinomialModel *model, const Ptr<BetaModel> &probability_prior,
+      const BetaBinomialModel *model,
+      const Ptr<BetaModel> &probability_prior,
       const Ptr<DiffDoubleModel> &sample_size_prior)
       : model_(model),
         probability_prior_(probability_prior),
-        sample_size_prior_(sample_size_prior) {}
+        sample_size_prior_(sample_size_prior)
+  {}
 
-  double BetaBinomialLogPosterior::operator()(const Vector &prob_samplesize,
-                                              Vector &gradient, Matrix &Hessian,
-                                              uint nderiv) const {
+  double BetaBinomialLogPosterior::operator()(
+      const Vector &prob_samplesize,
+      Vector &gradient,
+      Matrix &Hessian,
+      uint nderiv) const {
     double prob = prob_samplesize[0];
     double sample_size = prob_samplesize[1];
     double a = prob * sample_size;
     double b = sample_size - a;
-    Vector ab{a, b};
+    Vector ab{a,b};
     double ans = model_->Loglike(ab, gradient, Hessian, nderiv);
 
     ProbSamplesizeJacobian jacobian;
@@ -59,16 +62,21 @@ namespace BOOM {
       // (prob,size) scale.
       gradient = jacobian.transform_gradient(original_gradient, false);
       if (nderiv > 1) {
-        Hessian = jacobian.transform_Hessian(original_gradient, Hessian, false);
+        Hessian = jacobian.transform_Hessian(
+            original_gradient, Hessian, false);
       }
     }
 
     double prob_first_derivative, prob_second_derivative;
-    ans += probability_prior_->Logp(prob, prob_first_derivative,
-                                    prob_second_derivative, nderiv);
+    ans += probability_prior_->Logp(prob,
+                                    prob_first_derivative,
+                                    prob_second_derivative,
+                                    nderiv);
     double size_first_derivative, size_second_derivative;
-    ans += sample_size_prior_->Logp(sample_size, size_first_derivative,
-                                    size_second_derivative, nderiv);
+    ans += sample_size_prior_->Logp(sample_size,
+                                    size_first_derivative,
+                                    size_second_derivative,
+                                    nderiv);
     if (nderiv > 0) {
       gradient[0] += prob_first_derivative;
       gradient[1] += size_first_derivative;
@@ -97,35 +105,37 @@ namespace BOOM {
   }  // namespace
 
   BBPS::BetaBinomialPosteriorSampler(
-      BetaBinomialModel *model, const Ptr<BetaModel> &probability_prior,
-      const Ptr<DiffDoubleModel> &sample_size_prior, RNG &seeding_rng)
+      BetaBinomialModel *model,
+      const Ptr<BetaModel> &probability_prior,
+      const Ptr<DiffDoubleModel> &sample_size_prior,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         probability_prior_(probability_prior),
         sample_size_prior_(sample_size_prior),
-        probability_sampler_(
-            [this](double prob) { return this->logp_prob(prob); }),
+        probability_sampler_([this](double prob) {
+            return this->logp_prob(prob);}),
         sample_size_sampler_([this](double sample_size) {
-          return this->logp_sample_size(sample_size);
-        }),
+            return this->logp_sample_size(sample_size);}),
         sampling_method_(DATA_AUGMENTATION),
-        trouble_locating_mode_(false) {
-    probability_sampler_.set_limits(0, 1);
+        trouble_locating_mode_(false)
+  {
+    probability_sampler_.set_limits(0,1);
     probability_sampler_.set_rng(&rng(), false);
     sample_size_sampler_.set_lower_limit(0);
     sample_size_sampler_.set_rng(&rng(), false);
-    model_->add_observer([this] { this->observe_new_data(); });
+    model_->add_observer( [this]{this->observe_new_data();} );
   }
 
-  double BBPS::logpri() const {
+  double BBPS::logpri()const{
     double prob = model_->prior_mean();
     double sample_size = model_->prior_sample_size();
     return probability_prior_->logp(prob) +
-           sample_size_prior_->logp(sample_size);
+        sample_size_prior_->logp(sample_size);
   }
 
-  void BBPS::draw() {
-    switch (sampling_method_) {
+  void BBPS::draw(){
+    switch (sampling_method_){
       case SLICE:
         draw_slice();
         return;
@@ -144,12 +154,12 @@ namespace BOOM {
     }
   }
 
-  void BBPS::draw_data_augmentation() {
+  void BBPS::draw_data_augmentation(){
     double a = model_->a();
     double b = model_->b();
     complete_data_suf_.clear();
 
-    const std::vector<Ptr<BinomialData> > &data(model_->dat());
+    const std::vector<Ptr<BinomialData> > & data(model_->dat());
     int nobs = data.size();
     for (int i = 0; i < nobs; ++i) {
       int y = data[i]->y();
@@ -173,21 +183,21 @@ namespace BOOM {
     draw_slice();
   }
 
-  void BBPS::draw_slice() {
+  void BBPS::draw_slice(){
     double prob = model_->prior_mean();
     prob = probability_sampler_.draw(prob);
     model_->set_prior_mean(prob);
 
     double sample_size = model_->prior_sample_size();
-    sample_size = sample_size_sampler_.draw(sample_size);
+    sample_size  = sample_size_sampler_.draw(sample_size);
     model_->set_prior_sample_size(sample_size);
   }
 
-  double BBPS::logp(double prob, double sample_size) const {
+  double BBPS::logp(double prob, double sample_size)const{
     double a = prob * sample_size;
     double b = sample_size - a;
-    double ans =
-        probability_prior_->logp(prob) + sample_size_prior_->logp(sample_size);
+    double ans = probability_prior_->logp(prob)
+        + sample_size_prior_->logp(sample_size);
     if (sampling_method_ == DATA_AUGMENTATION) {
       ans += beta_log_likelihood(a, b, complete_data_suf_);
     } else {
@@ -196,19 +206,18 @@ namespace BOOM {
     return ans;
   }
 
-  double BBPS::logp_sample_size(double sample_size) const {
+  double BBPS::logp_sample_size(double sample_size)const{
     double prob = model_->prior_mean();
     return logp(prob, sample_size);
   }
 
-  double BBPS::logp_prob(double prob) const {
+  double BBPS::logp_prob(double prob)const{
     double sample_size = model_->prior_sample_size();
     return logp(prob, sample_size);
   }
 
-  void BBPS::set_prior_on_sample_size(
-      const Ptr<DiffDoubleModel> &sample_size_prior) {
-    sample_size_prior_ = sample_size_prior;
+  void BBPS::set_prior_on_sample_size(const Ptr<DiffDoubleModel> & sample_size_prior) {
+    sample_size_prior_ =  sample_size_prior;
     if (!!tim_sampler_) {
       // Setting a new prior distribution invalidates the proxy object
       // in the MH sampler, so it needs to be re-initialized.  The
@@ -218,15 +227,19 @@ namespace BOOM {
     }
   }
 
+
   BetaBinomialLogPosterior BBPS::prob_sample_size_log_posterior() {
-    return BetaBinomialLogPosterior(model_, probability_prior_,
+    return BetaBinomialLogPosterior(model_,
+                                    probability_prior_,
                                     sample_size_prior_);
   }
 
   Transformation BBPS::approximately_gaussian_log_posterior() {
     LogitLogToProbSampleSize inverse_transformation;
-    return Transformation(prob_sample_size_log_posterior(),
-                          inverse_transformation, new LogitLogJacobian);
+    return Transformation(
+        prob_sample_size_log_posterior(),
+        inverse_transformation,
+        new LogitLogJacobian);
   }
 
   void BBPS::find_posterior_mode(double epsilon) {
@@ -238,15 +251,24 @@ namespace BOOM {
     Matrix hessian(2, 2);
     double max_value = negative_infinity();
     std::string error_message;
-    bool ok = max_nd2_careful(gaussian_approx_parameters, gradient, hessian,
-                              max_value, log_posterior, log_posterior,
-                              log_posterior, epsilon, error_message);
+    bool ok = max_nd2_careful(
+        gaussian_approx_parameters,
+        gradient,
+        hessian,
+        max_value,
+        log_posterior,
+        log_posterior,
+        log_posterior,
+        epsilon,
+        error_message);
     if (!ok) {
       report_error("Trouble finding posterior mode:\n" + error_message);
     }
     if (!tim_proposal_distribution_) {
-      tim_proposal_distribution_.reset(
-          new MvtIndepProposal(gaussian_approx_parameters, -hessian, 1.0));
+      tim_proposal_distribution_.reset(new MvtIndepProposal(
+          gaussian_approx_parameters,
+          -hessian,
+          1.0));
     } else {
       tim_proposal_distribution_->set_mu(gaussian_approx_parameters);
       tim_proposal_distribution_->set_ivar(-hessian);
@@ -270,8 +292,8 @@ namespace BOOM {
         Vector gaussian_approx_parameters(2);
         gaussian_approx_parameters[0] = qlogis(model_->prior_mean());
         gaussian_approx_parameters[1] = log(model_->prior_sample_size());
-        gaussian_approx_parameters =
-            tim_sampler_->draw(gaussian_approx_parameters);
+        gaussian_approx_parameters = tim_sampler_->draw(
+            gaussian_approx_parameters);
         if (tim_sampler_->last_draw_was_accepted()) {
           model_->set_prior_mean(plogis(gaussian_approx_parameters[0]));
           model_->set_prior_sample_size(exp(gaussian_approx_parameters[1]));
@@ -289,16 +311,19 @@ namespace BOOM {
       // tim_proposal_distribution_.
       find_posterior_mode();
     }
-    tim_sampler_.reset(
-        new MetropolisHastings(approximately_gaussian_log_posterior(),
-                               tim_proposal_distribution_, &rng()));
+    tim_sampler_.reset(new MetropolisHastings(
+        approximately_gaussian_log_posterior(),
+        tim_proposal_distribution_,
+        &rng()));
   }
 
   namespace {
     typedef ProbSamplesizeJacobian PSJ;
   }
 
-  PSJ::ProbSamplesizeJacobian() { prefer_new_parameterization(); }
+  PSJ::ProbSamplesizeJacobian() {
+    prefer_new_parameterization();
+  }
 
   void PSJ::evaluate_original_parameterization(const Vector &ab) {
     sample_size_ = ab[0] + ab[1];
@@ -312,7 +337,7 @@ namespace BOOM {
     matrix_is_current_ = false;
   }
 
-  Matrix &PSJ::matrix() {
+  Matrix & PSJ::matrix() {
     if (matrix_is_current_) {
       return matrix_;
     }
@@ -328,11 +353,11 @@ namespace BOOM {
   void PSJ::transform_second_order_gradient(SpdMatrix &working_hessian,
                                             const Vector &original_gradient) {
     working_hessian(0, 1) +=
-        second_order_element(0, 1, 0) * original_gradient[0] +
-        second_order_element(0, 1, 1) * original_gradient[1];
+        second_order_element(0, 1, 0) * original_gradient[0]
+        + second_order_element(0, 1, 1) * original_gradient[1];
     working_hessian(1, 0) +=
-        second_order_element(1, 0, 0) * original_gradient[0] +
-        second_order_element(1, 0, 1) * original_gradient[1];
+        second_order_element(1, 0, 0) * original_gradient[0]
+        + second_order_element(1, 0, 1) * original_gradient[1];
   }
 
   void PSJ::add_logdet_gradient(Vector &gradient) {
@@ -347,7 +372,9 @@ namespace BOOM {
     typedef LogitLogJacobian LLJ;
   }
 
-  LLJ::LogitLogJacobian() { prefer_original_parameterization(); }
+  LLJ::LogitLogJacobian() {
+    prefer_original_parameterization();
+  }
 
   void LLJ::evaluate_original_parameterization(const Vector &prob_size) {
     prob_ = prob_size[0];
@@ -361,9 +388,11 @@ namespace BOOM {
     matrix_is_current_ = false;
   }
 
-  double LLJ::logdet() { return log(prob_ * (1 - prob_) * sample_size_); }
+  double LLJ::logdet() {
+    return log(prob_ * (1 - prob_) * sample_size_);
+  }
 
-  Matrix &LLJ::matrix() {
+  Matrix & LLJ::matrix() {
     matrix_.resize(2, 2);
     matrix_(0, 0) = prob_ * (1 - prob_);
     matrix_(1, 1) = sample_size_;

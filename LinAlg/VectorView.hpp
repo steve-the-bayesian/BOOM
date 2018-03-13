@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -24,8 +23,8 @@
 #include <string>
 #include <iterator>
 #include <cassert>
-#include "LinAlg/VectorViewIterator.hpp"
-#include "LinAlg/Vector.hpp"
+#include <LinAlg/VectorViewIterator.hpp>
+#include <LinAlg/Vector.hpp>
 
 namespace BOOM{
   class Vector;
@@ -210,9 +209,7 @@ namespace BOOM{
           nelem_(rhs.size()),
           stride_(rhs.stride())
     {}
-
-    //    ConstVectorView(const ConstVectorView &rhs) = default;
-    ConstVectorView(ConstVectorView &&rhs) = default;
+    // default copy constructor
 
     //-------------- STL Vector stuff ---------------------
     const_iterator begin()const;
@@ -329,14 +326,5 @@ namespace BOOM{
   inline Vector operator/(const ConstVectorView &x, const ConstVectorView &y){
     Vector ans(x); ans/=y; return ans; }
 
-  // Return a view giving the last 'size' elements of the vector or view.  If
-  // the size of the vector or view is less than 'size' then return a view to
-  // the first argument.
-  VectorView tail(Vector &v, int size);
-  VectorView tail(VectorView &v, int size);
-  ConstVectorView const_tail(const Vector &v, int size);
-  ConstVectorView const_tail(const VectorView &v, int size);
-  ConstVectorView const_tail(const ConstVectorView &v, int size);
-  
 }  // namespace BOOM;
 #endif //BOOM_NEWLA_VECTOR_HPP

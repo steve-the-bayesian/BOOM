@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -17,223 +16,122 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
-#include "LinAlg/Selector.hpp"
-#include "Models/Bart/ResidualRegressionData.hpp"
-#include "Samplers/ScalarSliceSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
+#include <Models/Bart/ResidualRegressionData.hpp>
+#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
+#include <distributions.hpp>
+#include <cpputil/math_utils.hpp>
+#include <Samplers/ScalarSliceSampler.hpp>
+#include <LinAlg/Selector.hpp>
 
 namespace {
   // Returns the log of the integer d.  This is a compiler
   // optimization to pre-compute the logs of the first 100 integers.
   inline double log_integer(const int d) {
     switch (d) {
-      case 1:
-        return log(1.0);
-      case 2:
-        return log(2.0);
-      case 3:
-        return log(3.0);
-      case 4:
-        return log(4.0);
-      case 5:
-        return log(5.0);
-      case 6:
-        return log(6.0);
-      case 7:
-        return log(7.0);
-      case 8:
-        return log(8.0);
-      case 9:
-        return log(9.0);
-      case 10:
-        return log(10.0);
-      case 11:
-        return log(11.0);
-      case 12:
-        return log(12.0);
-      case 13:
-        return log(13.0);
-      case 14:
-        return log(14.0);
-      case 15:
-        return log(15.0);
-      case 16:
-        return log(16.0);
-      case 17:
-        return log(17.0);
-      case 18:
-        return log(18.0);
-      case 19:
-        return log(19.0);
-      case 20:
-        return log(20.0);
-      case 21:
-        return log(21.0);
-      case 22:
-        return log(22.0);
-      case 23:
-        return log(23.0);
-      case 24:
-        return log(24.0);
-      case 25:
-        return log(25.0);
-      case 26:
-        return log(26.0);
-      case 27:
-        return log(27.0);
-      case 28:
-        return log(28.0);
-      case 29:
-        return log(29.0);
-      case 30:
-        return log(30.0);
-      case 31:
-        return log(31.0);
-      case 32:
-        return log(32.0);
-      case 33:
-        return log(33.0);
-      case 34:
-        return log(34.0);
-      case 35:
-        return log(35.0);
-      case 36:
-        return log(36.0);
-      case 37:
-        return log(37.0);
-      case 38:
-        return log(38.0);
-      case 39:
-        return log(39.0);
-      case 40:
-        return log(40.0);
-      case 41:
-        return log(41.0);
-      case 42:
-        return log(42.0);
-      case 43:
-        return log(43.0);
-      case 44:
-        return log(44.0);
-      case 45:
-        return log(45.0);
-      case 46:
-        return log(46.0);
-      case 47:
-        return log(47.0);
-      case 48:
-        return log(48.0);
-      case 49:
-        return log(49.0);
-      case 50:
-        return log(50.0);
-      case 51:
-        return log(51.0);
-      case 52:
-        return log(52.0);
-      case 53:
-        return log(53.0);
-      case 54:
-        return log(54.0);
-      case 55:
-        return log(55.0);
-      case 56:
-        return log(56.0);
-      case 57:
-        return log(57.0);
-      case 58:
-        return log(58.0);
-      case 59:
-        return log(59.0);
-      case 60:
-        return log(60.0);
-      case 61:
-        return log(61.0);
-      case 62:
-        return log(62.0);
-      case 63:
-        return log(63.0);
-      case 64:
-        return log(64.0);
-      case 65:
-        return log(65.0);
-      case 66:
-        return log(66.0);
-      case 67:
-        return log(67.0);
-      case 68:
-        return log(68.0);
-      case 69:
-        return log(69.0);
-      case 70:
-        return log(70.0);
-      case 71:
-        return log(71.0);
-      case 72:
-        return log(72.0);
-      case 73:
-        return log(73.0);
-      case 74:
-        return log(74.0);
-      case 75:
-        return log(75.0);
-      case 76:
-        return log(76.0);
-      case 77:
-        return log(77.0);
-      case 78:
-        return log(78.0);
-      case 79:
-        return log(79.0);
-      case 80:
-        return log(80.0);
-      case 81:
-        return log(81.0);
-      case 82:
-        return log(82.0);
-      case 83:
-        return log(83.0);
-      case 84:
-        return log(84.0);
-      case 85:
-        return log(85.0);
-      case 86:
-        return log(86.0);
-      case 87:
-        return log(87.0);
-      case 88:
-        return log(88.0);
-      case 89:
-        return log(89.0);
-      case 90:
-        return log(90.0);
-      case 91:
-        return log(91.0);
-      case 92:
-        return log(92.0);
-      case 93:
-        return log(93.0);
-      case 94:
-        return log(94.0);
-      case 95:
-        return log(95.0);
-      case 96:
-        return log(96.0);
-      case 97:
-        return log(97.0);
-      case 98:
-        return log(98.0);
-      case 99:
-        return log(99.0);
-      case 100:
-        return log(100.0);
-      default:
-        return log(static_cast<double>(d));
+      case 1: return log(1.0);
+      case 2: return log(2.0);
+      case 3: return log(3.0);
+      case 4: return log(4.0);
+      case 5: return log(5.0);
+      case 6: return log(6.0);
+      case 7: return log(7.0);
+      case 8: return log(8.0);
+      case 9: return log(9.0);
+      case 10: return log(10.0);
+      case 11: return log(11.0);
+      case 12: return log(12.0);
+      case 13: return log(13.0);
+      case 14: return log(14.0);
+      case 15: return log(15.0);
+      case 16: return log(16.0);
+      case 17: return log(17.0);
+      case 18: return log(18.0);
+      case 19: return log(19.0);
+      case 20: return log(20.0);
+      case 21: return log(21.0);
+      case 22: return log(22.0);
+      case 23: return log(23.0);
+      case 24: return log(24.0);
+      case 25: return log(25.0);
+      case 26: return log(26.0);
+      case 27: return log(27.0);
+      case 28: return log(28.0);
+      case 29: return log(29.0);
+      case 30: return log(30.0);
+      case 31: return log(31.0);
+      case 32: return log(32.0);
+      case 33: return log(33.0);
+      case 34: return log(34.0);
+      case 35: return log(35.0);
+      case 36: return log(36.0);
+      case 37: return log(37.0);
+      case 38: return log(38.0);
+      case 39: return log(39.0);
+      case 40: return log(40.0);
+      case 41: return log(41.0);
+      case 42: return log(42.0);
+      case 43: return log(43.0);
+      case 44: return log(44.0);
+      case 45: return log(45.0);
+      case 46: return log(46.0);
+      case 47: return log(47.0);
+      case 48: return log(48.0);
+      case 49: return log(49.0);
+      case 50: return log(50.0);
+      case 51: return log(51.0);
+      case 52: return log(52.0);
+      case 53: return log(53.0);
+      case 54: return log(54.0);
+      case 55: return log(55.0);
+      case 56: return log(56.0);
+      case 57: return log(57.0);
+      case 58: return log(58.0);
+      case 59: return log(59.0);
+      case 60: return log(60.0);
+      case 61: return log(61.0);
+      case 62: return log(62.0);
+      case 63: return log(63.0);
+      case 64: return log(64.0);
+      case 65: return log(65.0);
+      case 66: return log(66.0);
+      case 67: return log(67.0);
+      case 68: return log(68.0);
+      case 69: return log(69.0);
+      case 70: return log(70.0);
+      case 71: return log(71.0);
+      case 72: return log(72.0);
+      case 73: return log(73.0);
+      case 74: return log(74.0);
+      case 75: return log(75.0);
+      case 76: return log(76.0);
+      case 77: return log(77.0);
+      case 78: return log(78.0);
+      case 79: return log(79.0);
+      case 80: return log(80.0);
+      case 81: return log(81.0);
+      case 82: return log(82.0);
+      case 83: return log(83.0);
+      case 84: return log(84.0);
+      case 85: return log(85.0);
+      case 86: return log(86.0);
+      case 87: return log(87.0);
+      case 88: return log(88.0);
+      case 89: return log(89.0);
+      case 90: return log(90.0);
+      case 91: return log(91.0);
+      case 92: return log(92.0);
+      case 93: return log(93.0);
+      case 94: return log(94.0);
+      case 95: return log(95.0);
+      case 96: return log(96.0);
+      case 97: return log(97.0);
+      case 98: return log(98.0);
+      case 99: return log(99.0);
+      case 100: return log(100.0);
+      default: return log(static_cast<double>(d));
     }
   }
-}  // namespace
+} // namespace
 
 namespace BOOM {
   using Bart::ResidualRegressionData;
@@ -243,8 +141,10 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   BartPosteriorSamplerBase::BartPosteriorSamplerBase(
-      BartModelBase *model, double total_prediction_sd,
-      double prior_tree_depth_alpha, double prior_tree_depth_beta,
+      BartModelBase *model,
+      double total_prediction_sd,
+      double prior_tree_depth_alpha,
+      double prior_tree_depth_beta,
       const std::function<double(int)> &log_prior_number_of_trees,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
@@ -253,22 +153,22 @@ namespace BOOM {
         prior_tree_depth_alpha_(prior_tree_depth_alpha),
         prior_tree_depth_beta_(prior_tree_depth_beta),
         total_prediction_variance_(square(total_prediction_sd)),
-        log_prior_number_of_trees_(log_prior_number_of_trees) {
-    if (prior_tree_depth_alpha <= 0 || prior_tree_depth_alpha >= 1) {
-      report_error(
-          "The prior_tree_depth_alpha parameter "
-          "must be strictly between 0 and 1.");
-    }
-    if (prior_tree_depth_beta < 0) {
-      report_error(
-          "The prior_tree_depth_beta parameter "
-          " must be non-negative");
-    }
-    if (total_prediction_sd <= 0) {
-      report_error("total_prediction_sd must be positive");
-    }
-    set_default_move_probabilities();
-  }
+        log_prior_number_of_trees_(log_prior_number_of_trees)
+      {
+        if (prior_tree_depth_alpha <= 0
+            || prior_tree_depth_alpha >= 1) {
+          report_error("The prior_tree_depth_alpha parameter "
+                       "must be strictly between 0 and 1.");
+        }
+        if (prior_tree_depth_beta < 0) {
+          report_error("The prior_tree_depth_beta parameter "
+                       " must be non-negative");
+        }
+        if (total_prediction_sd <= 0) {
+          report_error("total_prediction_sd must be positive");
+        }
+        set_default_move_probabilities();
+      }
 
   //----------------------------------------------------------------------
   BartPosteriorSamplerBase::~BartPosteriorSamplerBase() {
@@ -303,10 +203,9 @@ namespace BOOM {
   double BartPosteriorSamplerBase::logpri() const {
     // Implementing logpri would involve a sum over trees of
     // P(split | parents) * p(mean).  Not hard, really?????
-    report_error(
-        "logpri() is not yet implemented for "
-        "BartPosteriorSamplerBase, and it probably won't "
-        "be any time soon.");
+    report_error("logpri() is not yet implemented for "
+                 "BartPosteriorSamplerBase, and it probably won't "
+                 "be any time soon.");
     return -1;
   }
 
@@ -326,8 +225,8 @@ namespace BOOM {
     if (node->is_leaf()) {
       return log_integrated_likelihood(node->compute_suf());
     } else {
-      return subtree_log_integrated_likelihood(node->left_child()) +
-             subtree_log_integrated_likelihood(node->right_child());
+      return subtree_log_integrated_likelihood(node->left_child())
+          + subtree_log_integrated_likelihood(node->right_child());
     }
   }
 
@@ -387,16 +286,15 @@ namespace BOOM {
         slice_sample_cutpoint(tree);
         break;
       default:
-        report_error(
-            "An impossible move type was attempted in "
-            "BartPosteriorSamplerBase::modify_tree_structure");
+        report_error("An impossible move type was attempted in "
+                     "BartPosteriorSamplerBase::modify_tree_structure");
     }
   }
 
   //----------------------------------------------------------------------
   // Returns false if no split is possible.  Returns true otherwise.
-  bool BartPosteriorSamplerBase::grow_branch_from_prior(Tree *tree,
-                                                        TreeNode *leaf) {
+  bool BartPosteriorSamplerBase::grow_branch_from_prior(
+      Tree *tree, TreeNode *leaf) {
     if (runif_mt(rng()) < probability_of_no_split(leaf->depth())) {
       // Bail if the leaf does not want to split.
       return true;
@@ -412,8 +310,8 @@ namespace BOOM {
       return false;
     }
     tree->grow(leaf);
-    return grow_branch_from_prior(tree, leaf->left_child()) &&
-           grow_branch_from_prior(tree, leaf->right_child());
+    return grow_branch_from_prior(tree, leaf->left_child())
+        && grow_branch_from_prior(tree, leaf->right_child());
   }
 
   //----------------------------------------------------------------------
@@ -463,8 +361,8 @@ namespace BOOM {
       // If the branch root is a leaf then the proposal distribution
       // didn't generate any splits, so we reject the proposal.
       return negative_infinity();
-    } else if (branch_root->left_child()->is_leaf() &&
-               branch_root->right_child()->is_leaf()) {
+    } else if (branch_root->left_child()->is_leaf()
+               && branch_root->right_child()->is_leaf()) {
       // If the branch contains a single split, then we need to handle
       // the possibility that the same tree could have been generated
       // by the split move.
@@ -472,8 +370,8 @@ namespace BOOM {
     }
 
     double log_likelihood_ratio =
-        subtree_log_integrated_likelihood(branch_root) -
-        log_integrated_likelihood(branch_root->compute_suf());
+        subtree_log_integrated_likelihood(branch_root)
+        - log_integrated_likelihood(branch_root->compute_suf());
 
     int depth = branch_root->depth();
     double log_prior_ratio = -log_probability_of_no_split(depth);
@@ -481,15 +379,17 @@ namespace BOOM {
     double log_transition_density_numerator = log(
         move_probabilities_[PRUNE_BRANCH] / tree->number_of_interior_nodes());
 
-    double log_transition_density_denominator =
-        log(move_probabilities_[GROW_BRANCH] /
-            tree->number_of_leaves_after_pruning(branch_root));
+    double log_transition_density_denominator = log(
+        move_probabilities_[GROW_BRANCH]
+        / tree->number_of_leaves_after_pruning(branch_root));
 
     double log_transition_density_ratio =
-        log_transition_density_numerator - log_transition_density_denominator;
+        log_transition_density_numerator
+        - log_transition_density_denominator;
 
-    return log_likelihood_ratio + log_prior_ratio +
-           log_transition_density_ratio;
+    return log_likelihood_ratio
+        + log_prior_ratio
+        + log_transition_density_ratio;
   }
 
   //----------------------------------------------------------------------
@@ -531,15 +431,14 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   bool BartPosteriorSamplerBase::assign_random_split_rule_from_subset(
-      TreeNode *leaf, Selector &potential_variables) {
+      TreeNode *leaf, Selector & potential_variables) {
     if (potential_variables.nvars() == 0) {
       return false;
     }
     int variable_index = potential_variables.random_included_position(rng());
     if (variable_index < 0) {
-      report_error(
-          "Something went wrong in "
-          "'assign_random_split_rule_from_subset'");
+      report_error("Something went wrong in "
+                   "'assign_random_split_rule_from_subset'");
     }
     leaf->set_variable(variable_index);
     bool success =
@@ -613,8 +512,8 @@ namespace BOOM {
       MH_accounting_.record_rejection("prune_split");
       return;
     }
-    double log_alpha =
-        -1 * split_move_log_metropolis_ratio(tree, candidate_leaf);
+    double log_alpha = -1 * split_move_log_metropolis_ratio(
+        tree, candidate_leaf);
     if (log(runif_mt(rng())) < log_alpha) {
       tree->prune_descendants(candidate_leaf);
       MH_accounting_.record_acceptance("prune_split");
@@ -639,29 +538,32 @@ namespace BOOM {
     int depth = leaf->depth();
 
     double log_likelihood_ratio =
-        log_integrated_likelihood(leaf->left_child()->compute_suf()) +
-        log_integrated_likelihood(leaf->right_child()->compute_suf()) -
-        log_integrated_likelihood(leaf->compute_suf());
+        log_integrated_likelihood(leaf->left_child()->compute_suf())
+        + log_integrated_likelihood(leaf->right_child()->compute_suf())
+        - log_integrated_likelihood(leaf->compute_suf());
 
     // The prior_ratio omits a factor of p(variable, cutpoint) that
     // cancels with the transition distribution.
-    double log_prior_ratio = log_probability_of_split(depth) +
-                             2 * log_probability_of_no_split(depth + 1) -
-                             log_probability_of_no_split(depth);
+    double log_prior_ratio =
+        log_probability_of_split(depth)
+        + 2 * log_probability_of_no_split(depth + 1)
+        - log_probability_of_no_split(depth);
 
     double log_transition_density_numerator = log(
-        move_probabilities_[PRUNE_SPLIT] / tree->number_of_parents_of_leaves() +
-        move_probabilities_[PRUNE_BRANCH] / tree->number_of_interior_nodes());
-    double log_transition_density_denominator =
-        log(move_probabilities_[SPLIT] / original_number_of_leaves +
-            (move_probabilities_[GROW_BRANCH] / original_number_of_leaves *
-             probability_of_split(depth) *
-             square(probability_of_no_split(depth + 1))));
+        move_probabilities_[PRUNE_SPLIT] / tree->number_of_parents_of_leaves()
+        + move_probabilities_[PRUNE_BRANCH] / tree->number_of_interior_nodes());
+    double log_transition_density_denominator = log(
+        move_probabilities_[SPLIT] / original_number_of_leaves
+        + (move_probabilities_[GROW_BRANCH] / original_number_of_leaves
+           * probability_of_split(depth)
+           * square(probability_of_no_split(depth + 1))));
     double log_transition_density_ratio =
         log_transition_density_numerator - log_transition_density_denominator;
 
     double log_alpha =
-        log_likelihood_ratio + log_prior_ratio + log_transition_density_ratio;
+        log_likelihood_ratio
+        + log_prior_ratio
+        + log_transition_density_ratio;
     return log_alpha;
   }
 
@@ -689,8 +591,8 @@ namespace BOOM {
         model_->variable_summary(node->parent()->variable_index()));
     const VariableSummary &child_variable_summary(
         model_->variable_summary(node->variable_index()));
-    if (!parent_variable_summary.is_legal_configuration(node->parent()) ||
-        !child_variable_summary.is_legal_configuration(node)) {
+    if (!parent_variable_summary.is_legal_configuration(node->parent())
+        || !child_variable_summary.is_legal_configuration(node)) {
       node->swap_splitting_rule(node->parent());
       node->parent()->refresh_subtree_data();
       MH_accounting_.record_special("swap", "cant_split");
@@ -699,8 +601,8 @@ namespace BOOM {
 
     double proposal_log_integrated_likelihood =
         subtree_log_integrated_likelihood(node->parent());
-    double log_alpha =
-        proposal_log_integrated_likelihood - original_log_integrated_likelihood;
+    double log_alpha = proposal_log_integrated_likelihood
+        - original_log_integrated_likelihood;
     if (log(runif_mt(rng())) < log_alpha) {
       // Do nothing.  Accept the tree.
       MH_accounting_.record_acceptance("swap");
@@ -761,13 +663,16 @@ namespace BOOM {
   //----------------------------------------------------------------------
   class ContinuousCutpointLogLikelihood {
    public:
-    ContinuousCutpointLogLikelihood(BartPosteriorSamplerBase *sampler,
-                                    TreeNode *node, double lower_cutpoint_bound,
-                                    double upper_cutpoint_bound)
+    ContinuousCutpointLogLikelihood(
+        BartPosteriorSamplerBase *sampler,
+        TreeNode *node,
+        double lower_cutpoint_bound,
+        double upper_cutpoint_bound)
         : sampler_(sampler),
           node_(node),
           lower_cutpoint_bound_(lower_cutpoint_bound),
-          upper_cutpoint_bound_(upper_cutpoint_bound) {}
+          upper_cutpoint_bound_(upper_cutpoint_bound)
+    {}
 
     double operator()(double cutpoint) {
       if (cutpoint < lower_cutpoint_bound_) {
@@ -804,28 +709,24 @@ namespace BOOM {
       TreeNode *node) {
     int variable = node->variable_index();
     const VariableSummary &variable_summary(model_->variable_summary(variable));
-    Vector potential_cutpoint_values =
-        variable_summary.get_cutpoint_range(node);
+    Vector potential_cutpoint_values = variable_summary.get_cutpoint_range(node);
     if (potential_cutpoint_values.empty()) {
-      report_error(
-          "Started with an illegal configuration in "
-          "slice_sample_discrete_cutpoint");
+      report_error("Started with an illegal configuration in "
+                   "slice_sample_discrete_cutpoint");
     } else if (potential_cutpoint_values.size() == 1) {
       // There is only one choice.  We need to stay where we are.
       return;
     }
 
-    double logf_slice =
-        subtree_log_integrated_likelihood(node) - rexp_mt(rng(), 1.0);
-    Selector possible_cutpoint_positions(potential_cutpoint_values.size(),
-                                         true);
+    double logf_slice = subtree_log_integrated_likelihood(node)
+        - rexp_mt(rng(), 1.0);
+    Selector possible_cutpoint_positions(potential_cutpoint_values.size(), true);
     double logp = logf_slice - 1;
     while (logp < logf_slice && possible_cutpoint_positions.nvars() > 0) {
       int pos = possible_cutpoint_positions.random_included_position(rng());
       if (pos < 0) {
-        report_error(
-            "Something went wrong when sampling cutpoints in "
-            "'slice_sample_discrete_cutpoint'");
+        report_error("Something went wrong when sampling cutpoints in "
+                     "'slice_sample_discrete_cutpoint'");
       }
       double cutpoint = potential_cutpoint_values[pos];
       node->set_variable_and_cutpoint(variable, cutpoint);
@@ -834,17 +735,16 @@ namespace BOOM {
       possible_cutpoint_positions.drop(pos);
     }
     if (logp < logf_slice && possible_cutpoint_positions.nvars() == 0) {
-      report_error(
-          "Ran out of choices for cutpoints when slice sampling "
-          "a discrete variable.");
+      report_error("Ran out of choices for cutpoints when slice sampling "
+                   "a discrete variable.");
     }
   }
 
   //----------------------------------------------------------------------
   void BartPosteriorSamplerBase::draw_terminal_means_and_adjust_residuals(
       Bart::Tree *tree) {
-    for (Tree::NodeSetIterator it = tree->leaf_begin(); it != tree->leaf_end();
-         ++it) {
+    for(Tree::NodeSetIterator it = tree->leaf_begin();
+        it != tree->leaf_end(); ++it) {
       Bart::TreeNode *leaf = *it;
       double mean = draw_mean(leaf);
       leaf->set_mean(mean);
@@ -859,8 +759,8 @@ namespace BOOM {
     // avoid the extra evaluation of log_prior_number_of_trees(), but
     // this is probably cheaper than the work leading up to the MH
     // accept probability calculation.
-    if (log_prior_number_of_trees_(model_->number_of_trees() + 1) ==
-        negative_infinity()) {
+    if (log_prior_number_of_trees_(model_->number_of_trees() + 1)
+        == negative_infinity()) {
       return;
     }
 
@@ -874,11 +774,12 @@ namespace BOOM {
     // For example, if was the constant term in a design matrix then
     // it would not be splittable.
     while (!node_can_split) {
-      int variable_index =
-          random_int_mt(rng(), 0, model_->number_of_variables() - 1);
+      int variable_index = random_int_mt(
+          rng(), 0, model_->number_of_variables() - 1);
       const VariableSummary &variable_summary(
           model_->variable_summary(variable_index));
-      node_can_split = variable_summary.random_cutpoint(rng(), root);
+      node_can_split = variable_summary.random_cutpoint(
+          rng(), root);
     }
 
     // Split the root with probability determined by the prior, but
@@ -940,24 +841,23 @@ namespace BOOM {
     // samples variables and cutpoints from the prior.  The prior on
     // tree topology does not cancel, because the proposal is limited
     // to at most one split.
-    double proposal_log_prior =
-        log_prior_number_of_trees_(model_->number_of_trees() + 1);
+    double proposal_log_prior = log_prior_number_of_trees_(
+        model_->number_of_trees() + 1);
     switch (proposal->number_of_leaves()) {
       case 1:
         proposal_log_prior += log_probability_of_no_split(0);
         break;
       case 2:
-        proposal_log_prior +=
-            log_probability_of_split(0) + 2 * log_probability_of_no_split(1);
+        proposal_log_prior += log_probability_of_split(0)
+            + 2 * log_probability_of_no_split(1);
         break;
       default:
-        report_error(
-            "tree_birth_log_acceptance_probability called with a "
-            "proposal containing more than one split.");
+        report_error("tree_birth_log_acceptance_probability called with a "
+                     "proposal containing more than one split.");
     }
 
-    double current_log_prior =
-        log_prior_number_of_trees_(model_->number_of_trees());
+    double current_log_prior = log_prior_number_of_trees_(
+        model_->number_of_trees());
 
     // This part computes the ratio
     //                      p(M[j] | F + 1)
@@ -977,17 +877,18 @@ namespace BOOM {
     GaussianSuf suf = model_->mean_effect_sufstats();
     int number_of_leaves = suf.n();
     double log_prior_mean_ratio =
-        .5 * number_of_leaves *
-            log(proposed_number_of_trees / current_number_of_trees) -
-        .5 * suf.sumsq() / total_prediction_variance_;
+        .5 * number_of_leaves * log(
+            proposed_number_of_trees / current_number_of_trees)
+        - .5 * suf.sumsq() / total_prediction_variance_;
 
     // As mentioned above, the only component of the prior we consider
     // here is tree topology, because the other elements of the
     // proposal probability (variable and cutpoint) cancel with the
     // prior.
     double log_proposal_transition_probability =
-        proposal->number_of_leaves() == 1 ? log_probability_of_no_split(0)
-                                          : log_probability_of_split(0);
+        proposal->number_of_leaves() == 1 ?
+        log_probability_of_no_split(0) :
+        log_probability_of_split(0);
 
     // The reverse transition probability is the probability of
     // proposing the current configuration given current + proposal.
@@ -1006,13 +907,15 @@ namespace BOOM {
 
     // Any root will do here, since they all start with the same set
     // of data.
-    double current_loglike =
-        complete_data_log_likelihood(proposal->root()->compute_suf());
+    double current_loglike = complete_data_log_likelihood(
+        proposal->root()->compute_suf());
 
-    double log_numerator = proposal_loglike + proposal_log_prior -
-                           log_proposal_transition_probability;
-    double log_denominator = current_loglike + current_log_prior -
-                             log_reverse_transition_probability;
+    double log_numerator = proposal_loglike
+        + proposal_log_prior -
+        log_proposal_transition_probability;
+    double log_denominator = current_loglike
+        + current_log_prior
+        - log_reverse_transition_probability;
 
     return log_numerator + log_prior_mean_ratio - log_denominator;
   }
@@ -1092,9 +995,9 @@ namespace BOOM {
     }
 
     double log_prior_mean_ratio =
-        -0.5 * proposal_mean_suf.n() *
-            log(current_number_of_trees / proposed_number_of_trees) +
-        0.5 * proposal_mean_suf.sumsq() / total_prediction_variance_;
+        -0.5 * proposal_mean_suf.n()
+        * log(current_number_of_trees / proposed_number_of_trees)
+        + 0.5 * proposal_mean_suf.sumsq() / total_prediction_variance_;
 
     // Now compute the current prior and reverse transition
     // probability.
@@ -1118,32 +1021,31 @@ namespace BOOM {
         double logp_nosplit1 = log_probability_of_no_split(1);
         log_reverse_transition_probability += logp_split0;
         current_log_prior += logp_split0 + 2 * logp_nosplit1;
-        current_log_prior += dnorm(stump->root()->left_child()->mean(), 0,
-                                   current_mean_sd, true);
-        current_log_prior += dnorm(stump->root()->right_child()->mean(), 0,
-                                   current_mean_sd, true);
+        current_log_prior += dnorm(stump->root()->left_child()->mean(),
+                                   0, current_mean_sd, true);
+        current_log_prior += dnorm(stump->root()->right_child()->mean(),
+                                   0, current_mean_sd, true);
         break;
       }
       default:
-        report_error(
-            "The 'stump' proposed in the tree_death move isn't "
-            "really a stump");
+        report_error("The 'stump' proposed in the tree_death move isn't "
+                     "really a stump");
     }
 
     // Compute the likelihood contributions for the proposal and the
     // current model.
 
-    double current_loglike =
-        complete_data_log_likelihood(stump->root()->compute_suf());
+    double current_loglike = complete_data_log_likelihood(
+        stump->root()->compute_suf());
 
     stump->remove_mean_effect();
-    double proposal_loglike =
-        complete_data_log_likelihood(stump->root()->compute_suf());
+    double proposal_loglike = complete_data_log_likelihood(
+        stump->root()->compute_suf());
 
-    double log_numerator = proposal_loglike + proposal_log_prior -
-                           log_proposal_transition_probability;
-    double log_denominator = current_loglike + current_log_prior -
-                             log_reverse_transition_probability;
+    double log_numerator = proposal_loglike + proposal_log_prior
+        - log_proposal_transition_probability;
+    double log_denominator = current_loglike + current_log_prior
+        - log_reverse_transition_probability;
 
     double log_acceptance_probability =
         log_numerator + log_prior_mean_ratio - log_denominator;
@@ -1156,13 +1058,15 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   // p(split) = alpha / (1 + d)^beta
-  double BartPosteriorSamplerBase::log_probability_of_split(int depth) const {
-    return log_prior_tree_depth_alpha_ -
-           prior_tree_depth_beta_ * log_integer(1 + depth);
+  double BartPosteriorSamplerBase::log_probability_of_split(
+      int depth) const {
+    return log_prior_tree_depth_alpha_
+        - prior_tree_depth_beta_
+        * log_integer(1 + depth);
   }
 
   double BartPosteriorSamplerBase::probability_of_split(int depth) const {
-    return prior_tree_depth_alpha_ / pow(1 + depth, prior_tree_depth_beta_);
+    return prior_tree_depth_alpha_ / pow(1 +  depth, prior_tree_depth_beta_);
   }
 
   //----------------------------------------------------------------------

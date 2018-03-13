@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,14 +19,16 @@
 #ifndef BOOM_LOGIT_SAMPLER_BMA_HPP
 #define BOOM_LOGIT_SAMPLER_BMA_HPP
 
-#include "Models/Glm/PosteriorSamplers/LogitSampler.hpp"
-#include "Models/Glm/VariableSelectionPrior.hpp"
+#include <Models/Glm/PosteriorSamplers/LogitSampler.hpp>
+#include <Models/Glm/VariableSelectionPrior.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class LogitSamplerBma : public LogitSampler {
-   public:
-    LogitSamplerBma(LogisticRegressionModel *mod, const Ptr<MvnBase> &slab,
+  class LogitSamplerBma
+    : public LogitSampler{
+  public:
+    LogitSamplerBma(LogisticRegressionModel *mod,
+                    const Ptr<MvnBase> &slab,
                     const Ptr<VariableSelectionPrior> &spike,
                     RNG &seeding_rng = GlobalRng::rng);
 
@@ -35,9 +36,8 @@ namespace BOOM {
     double logpri() const override;
 
     void limit_model_selection(uint n);
-    double log_model_prob(const Selector &inc) const;
-
-   private:
+    double log_model_prob(const Selector &inc)const;
+  private:
     void draw_beta_given_gamma();
     void draw_gamma();
 
@@ -47,7 +47,8 @@ namespace BOOM {
     uint max_nflips_;
 
     mutable SpdMatrix Ominv, iV_tilde_;
+
   };
 
-}  // namespace BOOM
-#endif  // BOOM_LOGIT_SAMPLER_BMA_HPP
+}
+#endif // BOOM_LOGIT_SAMPLER_BMA_HPP

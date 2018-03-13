@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -17,17 +16,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/UniformShrinkagePriorModel.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/UniformShrinkagePriorModel.hpp>
+#include <distributions.hpp>
+#include <cpputil/report_error.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
 
   UniformShrinkagePriorModel::UniformShrinkagePriorModel(double median)
-      : ParamPolicy(new UnivParams(median)) {}
+      : ParamPolicy(new UnivParams(median))
+  {}
 
-  UniformShrinkagePriorModel *UniformShrinkagePriorModel::clone() const {
+  UniformShrinkagePriorModel * UniformShrinkagePriorModel::clone() const {
     return new UniformShrinkagePriorModel(*this);
   }
 
@@ -38,8 +38,8 @@ namespace BOOM {
     prm()->set(z);
   }
 
-  double UniformShrinkagePriorModel::Logp(double x, double &g, double &h,
-                                          uint nd) const {
+  double UniformShrinkagePriorModel::Logp(
+      double x, double &g, double &h, uint nd) const {
     double z0 = median();
     double x_plus_z = x + z0;
     double ans = log(z0) - 2 * log(x_plus_z);
@@ -52,8 +52,8 @@ namespace BOOM {
     return ans;
   }
 
-  double UniformShrinkagePriorModel::Loglike(const Vector &z, Vector &gradient,
-                                             Matrix &Hessian, uint nd) const {
+  double UniformShrinkagePriorModel::Loglike(
+      const Vector &z, Vector &gradient, Matrix &Hessian, uint nd) const {
     double z0 = z[0];
     const std::vector<Ptr<DoubleData> > &data(dat());
     int n = data.size();

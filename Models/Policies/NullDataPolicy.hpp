@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -18,24 +17,22 @@
 */
 #ifndef BOOM_NULL_DATA_POLICY_HPP
 #define BOOM_NULL_DATA_POLICY_HPP
+#include <Models/ModelTypes.hpp>
+#include <Models/Policies/DataInfoPolicy.hpp>
 #include <fstream>
 #include <list>
-#include "Models/ModelTypes.hpp"
-#include "Models/Policies/DataInfoPolicy.hpp"
 
-namespace BOOM {
+namespace BOOM{
   // A class for models that don't have data (for whatever reason)
-  class NullDataPolicy : virtual public Model {
+  class NullDataPolicy : virtual public Model{
    public:
     typedef NullDataPolicy DataPolicy;
-
    public:
-    NullDataPolicy() {}
-    void add_data(const Ptr<Data> &) override {}
-    void clear_data() override {}
-    void combine_data(const Model &, bool = true) override {}
-
+    NullDataPolicy(){}
+    void add_data(const Ptr<Data> &) override{}
+    void clear_data() override{}
+    void combine_data(const Model &, bool=true) override{}
    private:
   };
-}  // namespace BOOM
-#endif  // BOOM_NULL_DATA_POLICY_HPP
+}
+#endif //BOOM_NULL_DATA_POLICY_HPP

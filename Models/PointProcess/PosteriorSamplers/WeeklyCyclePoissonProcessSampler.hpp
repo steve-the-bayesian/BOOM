@@ -19,14 +19,14 @@
 #ifndef BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/DirichletModel.hpp"
-#include "Models/GammaModel.hpp"
-#include "Models/PointProcess/WeeklyCyclePoissonProcess.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/PointProcess/WeeklyCyclePoissonProcess.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/DirichletModel.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class WeeklyCyclePoissonProcessSampler : public PosteriorSampler {
+  class WeeklyCyclePoissonProcessSampler : public PosteriorSampler{
    public:
     WeeklyCyclePoissonProcessSampler(
         WeeklyCyclePoissonProcess *model,
@@ -48,7 +48,6 @@ namespace BOOM {
     double daily_pattern_accept_rate();
     double weekday_hourly_accept_rate();
     double weekend_hourly_accept_rate();
-
    private:
     WeeklyCyclePoissonProcess *model_;
     Ptr<GammaModelBase> average_daily_rate_prior_;
@@ -66,6 +65,7 @@ namespace BOOM {
     int weekend_hourly_successes_;
   };
 
-}  // namespace BOOM
 
-#endif  // BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
+}
+
+#endif // BOOM_WEEKLY_CYCLE_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_

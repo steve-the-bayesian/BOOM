@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -17,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-namespace BOOM {
+namespace BOOM{
 
   // Compute the probability that binomial proportion 1, which has
   // produced successes1 successes out of trials1 trials is less than
@@ -29,4 +28,5 @@ namespace BOOM {
                                       double prior_successes = 1.0,
                                       double prior_failures = 1.0);
 
-}  // namespace BOOM
+
+}

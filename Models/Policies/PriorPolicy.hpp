@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,17 +19,17 @@
 #ifndef BOOM_PRIOR_POLICY_HPP
 #define BOOM_PRIOR_POLICY_HPP
 
+#include <Models/ModelTypes.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
 #include <map>
-#include "Models/ModelTypes.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM {
+namespace BOOM{
 
   // A policy class implementing the relationship between a Model and
   // its PosteriorSampler.
   class PriorPolicy : virtual public Model {
    public:
-    PriorPolicy *clone() const override = 0;
+    PriorPolicy * clone()const override =0;
 
     // Invoke each of the sampling methods that have been set, in the
     // order they were set.
@@ -43,8 +42,10 @@ namespace BOOM {
     int number_of_sampling_methods() const override;
 
    protected:
-    PosteriorSampler *sampler(int i) override { return samplers_[i].get(); }
-    PosteriorSampler const *const sampler(int i) const override {
+    PosteriorSampler * sampler(int i) override {
+      return samplers_[i].get();
+    }
+    PosteriorSampler const * const sampler(int i) const override {
       return samplers_[i].get();
     }
 
@@ -54,4 +55,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_PRIOR_POLICY_HPP
+#endif // BOOM_PRIOR_POLICY_HPP

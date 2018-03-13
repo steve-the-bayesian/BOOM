@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -20,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_
 
-#include "Models/DoubleModel.hpp"
-#include "Models/Hierarchical/HierarchicalGammaModel.hpp"
-#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/DoubleModel.hpp>
+#include <Models/Hierarchical/HierarchicalGammaModel.hpp>
+#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
 
 namespace BOOM {
 
@@ -53,12 +52,13 @@ namespace BOOM {
     //     variation in the shape parameters.  If this parameter is
     //     large then group-level shape parameters (a[i]) will tend to
     //     be homogeneous across groups.
-    HierarchicalGammaSampler(HierarchicalGammaModel *model,
-                             const Ptr<DoubleModel> &gamma_mean_mean_prior,
-                             const Ptr<DoubleModel> &gamma_mean_shape_prior,
-                             const Ptr<DoubleModel> &gamma_shape_mean_prior,
-                             const Ptr<DoubleModel> &gamma_shape_shape_prior,
-                             RNG &seeding_rng = GlobalRng::rng);
+    HierarchicalGammaSampler(
+        HierarchicalGammaModel *model,
+        const Ptr<DoubleModel> &gamma_mean_mean_prior,
+        const Ptr<DoubleModel> &gamma_mean_shape_prior,
+        const Ptr<DoubleModel> &gamma_shape_mean_prior,
+        const Ptr<DoubleModel> &gamma_shape_shape_prior,
+        RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
 
@@ -82,4 +82,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_
+#endif // BOOM_HIERARCHICAL_GAMMA_SAMPLER_HPP_

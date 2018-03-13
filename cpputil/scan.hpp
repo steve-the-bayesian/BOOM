@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,26 +19,26 @@
 #ifndef BOOM_SCAN_HPP
 #define BOOM_SCAN_HPP
 
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <vector>
+#include <string>
+#include <iostream>
+#include <fstream>
 
-namespace BOOM {
+namespace BOOM{
 
   template <class T>
-  std::vector<T> scan(std::istream &in) {
+  std::vector<T> scan(std::istream &in){
     std::vector<T> ans;
     T tmp;
-    while (in >> tmp) ans.push_back(tmp);
+    while(in >> tmp) ans.push_back(tmp);
     return ans;
   }
 
   template <class T>
-  std::vector<T> scan(const std::string &fname) {
+  std::vector<T> scan(const std::string  &fname){
     std::ifstream in(fname.c_str());
     return scan<T>(in);
   }
 
-}  // namespace BOOM
-#endif  // BOOM_SCAN_HPP
+}
+#endif// BOOM_SCAN_HPP

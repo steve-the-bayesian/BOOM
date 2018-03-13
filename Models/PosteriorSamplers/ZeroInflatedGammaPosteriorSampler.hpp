@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -20,14 +19,15 @@
 #ifndef BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
-#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/ZeroInflatedGammaModel.hpp"
+#include <Models/ZeroInflatedGammaModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/BetaBinomialSampler.hpp>
+#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
 
 namespace BOOM {
 
-  class ZeroInflatedGammaPosteriorSampler : public PosteriorSampler {
+  class ZeroInflatedGammaPosteriorSampler
+      : public PosteriorSampler {
    public:
     ZeroInflatedGammaPosteriorSampler(
         ZeroInflatedGammaModel *model,
@@ -37,7 +37,6 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
-
    private:
     Ptr<BetaBinomialSampler> binomial_sampler_;
     Ptr<GammaPosteriorSampler> gamma_sampler_;
@@ -45,4 +44,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  //  BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_
+#endif //  BOOM_ZERO_INFLATED_GAMMA_POSTERIOR_SAMPLER_HPP_

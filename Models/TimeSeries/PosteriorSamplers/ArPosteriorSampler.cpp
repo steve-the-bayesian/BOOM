@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -17,134 +16,101 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "distributions.hpp"
-#include "distributions/trun_gamma.hpp"
+#include <Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp>
+#include <distributions.hpp>
+#include <distributions/trun_gamma.hpp>
+#include <cpputil/math_utils.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
   ArPosteriorSampler::ArPosteriorSampler(
       ArModel *model, const Ptr<GammaModelBase> &siginv_prior, RNG &seeding_rng)
-      : HierarchicalPosteriorSampler(seeding_rng),
-        model_(model),
-        siginv_prior_(siginv_prior),
-        max_number_of_regression_proposals_(3),
-        sigsq_sampler_(siginv_prior) {}
+        : PosteriorSampler(seeding_rng),
+          model_(model),
+          siginv_prior_(siginv_prior),
+          max_number_of_regression_proposals_(3),
+          sigsq_sampler_(siginv_prior)
+  {}
 
-  void ArPosteriorSampler::draw() {
-    if (model_) {
-      draw_model_parameters(*model_);
-    }
+  void ArPosteriorSampler::draw(){
+    draw_phi();
+    draw_sigma();
   }
 
-  void ArPosteriorSampler::draw_model_parameters(Model &model) {
-    ArModel *ar_model = dynamic_cast<ArModel *>(&model);
-    if (!ar_model) {
-      report_error(
-          "ArPosteriorSampler can only draw_model_parameters for "
-          "objects of type ArModel.");
-    }
-    draw_model_parameters(*ar_model);
-  }
-
-  void ArPosteriorSampler::draw_model_parameters(ArModel &model) {
-    draw_phi(model);
-    draw_sigma(model);
-  }
-
-  double ArPosteriorSampler::log_prior_density(const Model &model) const {
-    const ArModel *ar_model = dynamic_cast<const ArModel *>(&model);
-    if (!ar_model) {
-      report_error(
-          "ArPosteriorSampler can only evaluate log_prior_density "
-          "for ArModel objects.");
-    }
-    return log_prior_density(*ar_model);
-  }
-
-  double ArPosteriorSampler::log_prior_density(const ArModel &model) const {
-    bool ok = model.check_stationary(model.phi());
-    if (!ok) return negative_infinity();
-    return sigsq_sampler_.log_prior(model.sigsq());
-  }
-
-  double ArPosteriorSampler::logpri() const {
-    return model_ ? log_prior_density(*model_) : negative_infinity();
+  double ArPosteriorSampler::logpri()const{
+    bool ok = model_->check_stationary(model_->phi());
+    if(!ok) return negative_infinity();
+    return sigsq_sampler_.log_prior(model_->sigsq());
   }
 
   // Draws sigma given phi and observed data.
-  void ArPosteriorSampler::draw_sigma(ArModel &model,
-                                      double sigma_guess_scale_factor) {
+  void ArPosteriorSampler::draw_sigma(){
     // ss = y - xb  y - xb
     //     = yty - 2 bt xty + bt xtx b
-    const Vector &phi(model.phi());
-    const Vector &xty(model.suf()->xty());
-    const SpdMatrix &xtx(model.suf()->xtx());
-    double ss = xtx.Mdist(phi) - 2 * phi.dot(xty) + model.suf()->yty();
-    double df = model.suf()->n();
-    double sigsq = sigsq_sampler_.draw(rng(), df, ss, sigma_guess_scale_factor);
-    model.set_sigsq(sigsq);
+    const Vector &phi(model_->phi());
+    const Vector &xty(model_->suf()->xty());
+    const SpdMatrix &xtx(model_->suf()->xtx());
+    double ss = xtx.Mdist(phi) - 2 * phi.dot(xty) + model_->suf()->yty();
+    double df = model_->suf()->n();
+    double sigsq = sigsq_sampler_.draw(rng(), df, ss);
+    model_->set_sigsq(sigsq);
   }
 
-  void ArPosteriorSampler::draw_phi(ArModel &model) {
-    const SpdMatrix &xtx(model.suf()->xtx());
-    const Vector &xty(model.suf()->xty());
+  void ArPosteriorSampler::draw_phi(){
+    const SpdMatrix &xtx(model_->suf()->xtx());
+    const Vector &xty(model_->suf()->xty());
     Vector phi_hat = xtx.solve(xty);
     bool ok = false;
     int attempts = 0;
     while (!ok && ++attempts <= max_number_of_regression_proposals_) {
-      Vector phi = rmvn_ivar(phi_hat, xtx / model.sigsq());
+      Vector phi = rmvn_ivar(phi_hat, xtx / model_->sigsq());
       ok = ArModel::check_stationary(phi);
-      if (ok) model.set_phi(phi);
+      if(ok) model_->set_phi(phi);
     }
-    if (!ok) {
-      draw_phi_univariate(model);
+    if(!ok){
+      draw_phi_univariate();
     }
   }
 
-  void ArPosteriorSampler::draw_phi_univariate(ArModel &model) {
-    int dim = model.phi().size();
-    Vector phi = model.phi();
-    if (!model.check_stationary(phi)) {
-      report_error(
-          "ArPosteriorSampler::draw_phi_univariate was called with an "
-          "illegal initial value of phi.  That should never happen.");
+  void ArPosteriorSampler::draw_phi_univariate() {
+    int p = model_->phi().size();
+    Vector phi = model_->phi();
+    if (!model_->check_stationary(phi)) {
+      report_error("ArPosteriorSampler::draw_phi_univariate was called with an "
+                   "illegal initial value of phi.  That should never happen.");
     }
-    const SpdMatrix &xtx(model.suf()->xtx());
-    const Vector &xty(model.suf()->xty());
+    const SpdMatrix &xtx(model_->suf()->xtx());
+    const Vector &xty(model_->suf()->xty());
 
-    for (int i = 0; i < dim; ++i) {
+    for (int i = 0; i < p; ++i) {
       double initial_phi = phi[i];
+
       double lo = -1;
       double hi = 1;
 
       // y - xb  y - xb
       //   bt xtx b  - 2 bt xty + yty
-      //
-      //  bt xtx b
-      //   = sum_i sum_j beta[i] beta[j] xtx[i, j]
-      //   = beta [i]^2 xtx[i,i] + 2 * sum_{j != i} beta[i] xtx[i, j] * beta[j]
-      //                         - 2 * beta[i] * xty[i];
+
+      //  bt xtx b = sum_i sum_j beta[i] beta[j] xtx[i, j]
+      //           = beta [i]^2 xtx[i,i] + 2 * sum_{j != i} beta[i] xtx[i, j] * beta[j]
+      //             - 2 * beta[i] * xty[i];
 
       // mean is (xty[i] - sum_{j != i}  )
       double ivar = xtx(i, i);
       double mu = (xty[i] - (phi.dot(xtx.col(i)) - phi[i] * xtx(i, i))) / ivar;
       bool ok = false;
       while (!ok) {
-        double candidate = rtrun_norm_2_mt(rng(), mu, sqrt(1.0 / ivar), lo, hi);
+        double candidate = rtrun_norm_2_mt(rng(), mu, sqrt(1.0/ivar), lo, hi);
         phi[i] = candidate;
         if (ArModel::check_stationary(phi)) {
           ok = true;
         } else {
-          if (candidate > initial_phi)
-            hi = candidate;
-          else
-            lo = candidate;
+          if (candidate > initial_phi) hi = candidate;
+          else lo = candidate;
         }
       }
     }
-    model.set_phi(phi);
+    model_->set_phi(phi);
   }
 
   void ArPosteriorSampler::set_max_number_of_regression_proposals(
@@ -155,8 +121,8 @@ namespace BOOM {
     max_number_of_regression_proposals_ = number_of_proposals;
   }
 
-  void ArPosteriorSampler::set_sigma_upper_limit(double max_sigma) {
+  void ArPosteriorSampler::set_sigma_upper_limit(double max_sigma){
     sigsq_sampler_.set_sigma_max(max_sigma);
   }
 
-}  // namespace BOOM
+}

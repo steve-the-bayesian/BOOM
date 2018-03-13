@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,20 +18,20 @@
 
 #ifndef BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP
 #define BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP
-#include "Models/BinomialModel.hpp"
+#include <Models/BinomialModel.hpp>
 
-namespace BOOM {
-  class FixedProbBinomialSampler : public PosteriorSampler {
-   public:
+namespace BOOM{
+  class FixedProbBinomialSampler
+    : public PosteriorSampler{
+  public:
     FixedProbBinomialSampler(BinomialModel *mod, double p = 1.0,
                              RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-
-   private:
+  private:
     BinomialModel *m_;
     double p_;
   };
-}  // namespace BOOM
+}
 
-#endif  // BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP
+#endif// BOOM_FIXED_PROB_BINOMIAL_SAMPLER_HPP

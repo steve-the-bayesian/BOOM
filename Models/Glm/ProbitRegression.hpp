@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -20,55 +19,58 @@
 #ifndef PROBIT_REGRESSION_HPP
 #define PROBIT_REGRESSION_HPP
 
-#include "BOOM.hpp"
-#include "Models/Glm/Glm.hpp"
-#include "Models/Policies/CompositeParamPolicy.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
-#include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/PriorPolicy.hpp"
-#include "TargetFun/TargetFun.hpp"
-#include "numopt.hpp"
+#include <BOOM.hpp>
+#include <Models/Glm/Glm.hpp>
+#include <Models/Policies/IID_DataPolicy.hpp>
+#include <Models/Policies/CompositeParamPolicy.hpp>
+#include <Models/Policies/ParamPolicy_1.hpp>
+#include <Models/Policies/PriorPolicy.hpp>
+#include <numopt.hpp>
+#include <TargetFun/TargetFun.hpp>
 
-namespace BOOM {
+namespace BOOM{
 
-  class ProbitRegressionModel : public GlmModel,
-                                public NumOptModel,
-                                public ParamPolicy_1<GlmCoefs>,
-                                public IID_DataPolicy<BinaryRegressionData>,
-                                public PriorPolicy {
-   public:
+  class ProbitRegressionModel
+      : public GlmModel,
+        public NumOptModel,
+        public ParamPolicy_1<GlmCoefs>,
+        public IID_DataPolicy<BinaryRegressionData>,
+        public PriorPolicy
+  {
+  public:
     ProbitRegressionModel(const Vector &beta);
     ProbitRegressionModel(const Matrix &X, const Vector &y);
     ProbitRegressionModel(const ProbitRegressionModel &);
-    ProbitRegressionModel *clone() const override;
+    ProbitRegressionModel *clone()const override;
 
-    GlmCoefs &coef() override;
-    const GlmCoefs &coef() const override;
+    GlmCoefs & coef() override;
+    const GlmCoefs & coef()const override;
     Ptr<GlmCoefs> coef_prm() override;
-    const Ptr<GlmCoefs> coef_prm() const override;
+    const Ptr<GlmCoefs> coef_prm()const override;
 
-    virtual double pdf(const Ptr<Data> &, bool) const;
-    virtual double pdf(const Ptr<BinaryRegressionData> &, bool) const;
-    virtual double pdf(bool y, const Vector &x, bool logscale) const;
+    virtual double pdf(const Ptr<Data> &, bool)const;
+    virtual double pdf(const Ptr<BinaryRegressionData> &, bool)const;
+    virtual double pdf(bool y, const Vector &x, bool logscale)const;
 
     // The dimension here and in log_likelihood is the number of
     // included variables.
-    double Loglike(const Vector &beta, Vector &g, Matrix &h,
-                   uint nd) const override;
+    double Loglike(
+        const Vector &beta, Vector &g, Matrix &h, uint nd)const override;
 
     // call with *g=0 if you don't want any derivatives.  Call with
     // *g!=0 and *h=0 if you only want first derivatives.
     // if(initialize_derivs) then *g and *h will be set to zero.
     // Otherwise they will be incremented.
-    double log_likelihood(const Vector &beta, Vector *g, Matrix *h,
-                          bool initialize_derivs = true) const;
+    double log_likelihood(const Vector & beta, Vector *g, Matrix *h,
+                          bool initialize_derivs = true)const;
     using LoglikeModel::log_likelihood;
-    d2TargetFunPointerAdapter log_likelihood_tf() const;
+    d2TargetFunPointerAdapter log_likelihood_tf()const;
 
-    bool sim(const Vector &x, RNG &rng = GlobalRng::rng) const;
-    Ptr<BinaryRegressionData> sim(RNG &rng = GlobalRng::rng) const;
+    bool sim(const Vector &x, RNG &rng = GlobalRng::rng)const;
+    Ptr<BinaryRegressionData> sim(RNG &rng = GlobalRng::rng)const;
+
   };
 
-}  // namespace BOOM
+}// ends namespace BOOM
 
-#endif  // PROBIT_REGRESSION_HPP
+#endif //PROBIT_REGRESSION_HPP

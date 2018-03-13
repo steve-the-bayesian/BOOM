@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -17,10 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/TRegressionSampler.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "distributions.hpp"
+#include <Models/Glm/PosteriorSamplers/TRegressionSampler.hpp>
+#include <cpputil/math_utils.hpp>
+#include <cpputil/report_error.hpp>
+#include <distributions.hpp>
 
 namespace BOOM {
 
@@ -29,17 +28,19 @@ namespace BOOM {
      public:
       TRegressionLogPosterior(TRegressionModel *model,
                               const Ptr<DoubleModel> &nu_prior)
-          : model_(model), nu_prior_(nu_prior) {}
+          : model_(model),
+            nu_prior_(nu_prior)
+      {}
 
       double operator()(double nu) const {
         double ans = nu_prior_->logp(nu);
         if (ans <= negative_infinity()) {
           return ans;
         }
-        return ans +
-               model_->log_likelihood(model_->Beta(), model_->sigsq(), nu);
+        return ans + model_->log_likelihood(model_->Beta(),
+                                            model_->sigsq(),
+                                            nu);
       }
-
      private:
       TRegressionModel *model_;
       Ptr<DoubleModel> nu_prior_;
@@ -50,7 +51,9 @@ namespace BOOM {
       TRegressionCompleteDataLogPosterior(
           const Ptr<ScaledChisqModel> &complete_data_model,
           const Ptr<DoubleModel> &prior)
-          : complete_data_model_(complete_data_model), prior_(prior) {}
+          : complete_data_model_(complete_data_model),
+            prior_(prior)
+      {}
 
       double operator()(double nu) const {
         if (nu <= 0.0) {
@@ -71,8 +74,10 @@ namespace BOOM {
   }  // namespace
 
   TRegressionSampler::TRegressionSampler(
-      TRegressionModel *model, const Ptr<MvnBase> &coefficient_prior,
-      const Ptr<GammaModelBase> &siginv_prior, const Ptr<DoubleModel> &nu_prior,
+      TRegressionModel *model,
+      const Ptr<MvnBase> &coefficient_prior,
+      const Ptr<GammaModelBase> &siginv_prior,
+      const Ptr<DoubleModel> &nu_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
@@ -82,12 +87,18 @@ namespace BOOM {
         weight_model_(new ScaledChisqModel(model_->nu())),
         complete_data_sufficient_statistics_(model_->xdim()),
         sigsq_sampler_(siginv_prior_),
-        nu_observed_data_sampler_(TRegressionLogPosterior(model_, nu_prior_),
-                                  false, 1.0, &rng()),
+        nu_observed_data_sampler_(
+            TRegressionLogPosterior(model_, nu_prior_),
+            false,
+            1.0,
+            &rng()),
         nu_complete_data_sampler_(
             TRegressionCompleteDataLogPosterior(weight_model_, nu_prior_),
-            false, 1.0, &rng()),
-        latent_data_is_fixed_(false) {
+            false,
+            1.0,
+            &rng()),
+        latent_data_is_fixed_(false)
+  {
     nu_observed_data_sampler_.set_lower_limit(0.0);
     nu_complete_data_sampler_.set_lower_limit(0.0);
   }
@@ -114,11 +125,13 @@ namespace BOOM {
       for (int i = 0; i < data.size(); ++i) {
         double mu = model_->predict(data[i]->x());
         double residual = data[i]->y() - mu;
-        double weight = data_imputer_.impute(rng(), residual, model_->sigma(),
-                                             model_->nu());
+        double weight = data_imputer_.impute(
+            rng(), residual, model_->sigma(), model_->nu());
         weight_model_->suf()->update_raw(weight);
-        complete_data_sufficient_statistics_.add_data(data[i]->x(),
-                                                      data[i]->y(), weight);
+        complete_data_sufficient_statistics_.add_data(
+            data[i]->x(),
+            data[i]->y(),
+            weight);
       }
     }
   }
@@ -131,12 +144,11 @@ namespace BOOM {
   //    where V^{-1} = Ominv + X'WX/sigsq
   //    beta_tilde = V * (Ominv * b + X'Wy/sigsq)
   void TRegressionSampler::draw_beta_full_conditional() {
-    SpdMatrix Vinv =
-        coefficient_prior_->siginv() +
-        complete_data_sufficient_statistics_.xtx() / model_->sigsq();
+    SpdMatrix Vinv = coefficient_prior_->siginv()
+        + complete_data_sufficient_statistics_.xtx() / model_->sigsq();
     Vector Vinv_beta_tilde =
-        coefficient_prior_->siginv() * coefficient_prior_->mu() +
-        complete_data_sufficient_statistics_.xty() / model_->sigsq();
+        coefficient_prior_->siginv() * coefficient_prior_->mu()
+        + complete_data_sufficient_statistics_.xty() / model_->sigsq();
     Vector beta = rmvn_suf_mt(rng(), Vinv, Vinv_beta_tilde);
     model_->set_Beta(beta);
   }
@@ -146,7 +158,8 @@ namespace BOOM {
   //      \prod_i (w[i]/sigsq)^1/2 exp( -0.5 (y[i] - mu[i])^2 * w[i] / sigsq)
   void TRegressionSampler::draw_sigsq_full_conditional() {
     double sigsq = sigsq_sampler_.draw(
-        rng(), complete_data_sufficient_statistics_.n(),
+        rng(),
+        complete_data_sufficient_statistics_.n(),
         complete_data_sufficient_statistics_.weighted_sum_of_squared_errors(
             model_->Beta()));
     model_->set_sigsq(sigsq);

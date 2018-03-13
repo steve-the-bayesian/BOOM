@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -17,55 +16,58 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/MultinomialLogitCompleteDataSuf.hpp"
-#include "cpputil/math_utils.hpp"
+#include <Models/Glm/PosteriorSamplers/MultinomialLogitCompleteDataSuf.hpp>
+#include <cpputil/math_utils.hpp>
 
 namespace BOOM {
-  namespace MultinomialLogit {
-    namespace {
-      typedef CompleteDataSufficientStatistics MLVSS;
+ namespace MultinomialLogit {
+  namespace {
+    typedef CompleteDataSufficientStatistics MLVSS;
+  }
+
+  MLVSS::CompleteDataSufficientStatistics(uint dim)
+    : xtwx_(dim),
+      xtwu_(dim),
+      sym_(false),
+      weighted_sum_of_squares_(0.0)
+  {}
+
+  MLVSS * MLVSS::clone() const {return new MLVSS(*this);}
+
+  void MLVSS::clear(){
+    xtwx_ = 0;
+    xtwu_ = 0;
+    weighted_sum_of_squares_ = 0.0;
+    sym_ = false;
+  }
+
+  void MLVSS::update(const ChoiceData &dp, const Vector & wgts, const Vector &u){
+    const Matrix & X(dp.X(false));      // 'false' means omit columns
+    xtwx_.add_inner(X, wgts, false);   // corresponding to subject X's at
+    xtwu_ += X.Tmult(wgts*u);         // choice level 0.
+    sym_ = false;
+    for (int i = 0; i < wgts.size(); ++i) {
+      weighted_sum_of_squares_ += wgts[i] * square(u[i]);
     }
+  }
 
-    MLVSS::CompleteDataSufficientStatistics(uint dim)
-        : xtwx_(dim), xtwu_(dim), sym_(false), weighted_sum_of_squares_(0.0) {}
+  void MLVSS::combine(const MLVSS &rhs){
+    xtwx_ += rhs.xtwx();
+    xtwu_ += rhs.xtwu();
+    sym_ = false;
+    weighted_sum_of_squares_ += rhs.weighted_sum_of_squares();
+  }
 
-    MLVSS *MLVSS::clone() const { return new MLVSS(*this); }
+  const SpdMatrix & MLVSS::xtwx()const{
+    if(!sym_) xtwx_.reflect();
+    sym_ = true;
+    return xtwx_;
+  }
 
-    void MLVSS::clear() {
-      xtwx_ = 0;
-      xtwu_ = 0;
-      weighted_sum_of_squares_ = 0.0;
-      sym_ = false;
-    }
+  const Vector & MLVSS::xtwu()const{return xtwu_;}
 
-    void MLVSS::update(const ChoiceData &dp, const Vector &wgts,
-                       const Vector &u) {
-      const Matrix &X(dp.X(false));     // 'false' means omit columns
-      xtwx_.add_inner(X, wgts, false);  // corresponding to subject X's at
-      xtwu_ += X.Tmult(wgts * u);       // choice level 0.
-      sym_ = false;
-      for (int i = 0; i < wgts.size(); ++i) {
-        weighted_sum_of_squares_ += wgts[i] * square(u[i]);
-      }
-    }
-
-    void MLVSS::combine(const MLVSS &rhs) {
-      xtwx_ += rhs.xtwx();
-      xtwu_ += rhs.xtwu();
-      sym_ = false;
-      weighted_sum_of_squares_ += rhs.weighted_sum_of_squares();
-    }
-
-    const SpdMatrix &MLVSS::xtwx() const {
-      if (!sym_) xtwx_.reflect();
-      sym_ = true;
-      return xtwx_;
-    }
-
-    const Vector &MLVSS::xtwu() const { return xtwu_; }
-
-    double MLVSS::weighted_sum_of_squares() const {
-      return weighted_sum_of_squares_;
-    }
-  }  // namespace MultinomialLogit
+  double MLVSS::weighted_sum_of_squares() const {
+    return weighted_sum_of_squares_;
+  }
+ }  // namespace MultinomialLogit
 }  // namespace BOOM

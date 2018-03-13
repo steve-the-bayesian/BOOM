@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,16 +18,16 @@
 
 #ifndef BOOM_BREG_VS_SAMPLER_HPP
 #define BOOM_BREG_VS_SAMPLER_HPP
-#include "Models/ChisqModel.hpp"
-#include "Models/GammaModel.hpp"
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/VariableSelectionPrior.hpp"
-#include "Models/MvnGivenScalarSigma.hpp"
-#include "Models/MvnGivenSigma.hpp"
-#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include <Models/Glm/RegressionModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include <Models/MvnGivenScalarSigma.hpp>
+#include <Models/Glm/VariableSelectionPrior.hpp>
+#include <Models/MvnGivenSigma.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/ChisqModel.hpp>
 
-namespace BOOM {
+namespace BOOM{
   struct ZellnerPriorParameters {
     Vector prior_inclusion_probabilities;
     Vector prior_beta_guess;
@@ -53,8 +52,9 @@ namespace BOOM {
   // used to draw the variance.  A reasonable value for b is to set
   // the intercept to the sample mean of the responses, and set the
   // slopes to zero.
-  class BregVsSampler : public PosteriorSampler {
+  class BregVsSampler : public PosteriorSampler{
    public:
+
     // Omega inverse is 'prior_nobs' * XTX/n. The intercept term in
     // 'b' is ybar (sample mean of the responses).  The slope terms in
     // b are all zero.  The prior for 1/sigsq is
@@ -62,9 +62,9 @@ namespace BOOM {
     // prior_ss = prior_nobs*sigma_guess^2, and
     // sigma_guess = sample_variance*(1-expected_rsq)
     BregVsSampler(RegressionModel *model,
-                  double prior_nobs,           // Omega is prior_nobs * XTX/n
-                  double expected_rsq,         // sigsq_guess = sample var*this
-                  double expected_model_size,  // prior inc probs = this/dim
+                  double prior_nobs,          // Omega is prior_nobs * XTX/n
+                  double expected_rsq,        // sigsq_guess = sample var*this
+                  double expected_model_size, // prior inc probs = this/dim
                   bool first_term_is_intercept = true,
                   RNG &seeding_rng = GlobalRng::rng);
 
@@ -73,9 +73,12 @@ namespace BOOM {
     // The prior on 1/sigsq is Gamma(prior_sigma_nobs/2, priors_ss/2)
     // with prior_ss = prior_sigma_guess^2 * prior_sigma_nobs.
     // b = [ybar, 0, 0, ...]
-    BregVsSampler(RegressionModel *model, double prior_sigma_nobs,
-                  double prior_sigma_guess, double prior_beta_nobs,
-                  double diagonal_shrinkage, double prior_inclusion_probability,
+    BregVsSampler(RegressionModel *model,
+                  double prior_sigma_nobs,
+                  double prior_sigma_guess,
+                  double prior_beta_nobs,
+                  double diagonal_shrinkage,
+                  double prior_inclusion_probability,
                   bool force_intercept = true,
                   RNG &seeding_rng = GlobalRng::rng);
 
@@ -83,14 +86,18 @@ namespace BOOM {
     // parameters of the prior distribution, but you don't want to
     // supply actual model objects.  You won't be able to modify the
     // values of the prior parameters afterwards.
-    BregVsSampler(RegressionModel *model, const Vector &prior_mean,
-                  const SpdMatrix &unscaled_prior_precision, double sigma_guess,
-                  double df, const Vector &prior_inclusion_probs,
+    BregVsSampler(RegressionModel *model,
+                  const Vector &prior_mean,
+                  const SpdMatrix &unscaled_prior_precision,
+                  double sigma_guess,
+                  double df,
+                  const Vector &prior_inclusion_probs,
                   RNG &seeding_rng = GlobalRng::rng);
 
     // Equivalent to the preceding constructor, but the prior
     // parameters are specified in a struct.
-    BregVsSampler(RegressionModel *model, const ZellnerPriorParameters &prior,
+    BregVsSampler(RegressionModel *model,
+                  const ZellnerPriorParameters &prior,
                   RNG &seeding_rng = GlobalRng::rng);
 
     // This constructor offers full control.  If external copies of
@@ -146,10 +153,10 @@ namespace BOOM {
     void allow_sigma_draw();
     void allow_beta_draw();
 
-    double prior_df() const;
-    double prior_ss() const;
+    double prior_df()const;
+    double prior_ss()const;
 
-    bool model_is_empty() const;
+    bool model_is_empty()const;
 
     void set_sigma_upper_limit(double sigma_upper_limit);
 
@@ -160,9 +167,13 @@ namespace BOOM {
     // be set to zero.
     void find_posterior_mode(double epsilon = 1e-5) override;
 
-    bool can_find_posterior_mode() const override { return true; }
+    bool can_find_posterior_mode() const override {
+      return true;
+    }
 
-    bool posterior_mode_found() const { return true; }
+    bool posterior_mode_found() const {
+      return true;
+    }
 
    protected:
     double draw_sigsq_given_sufficient_statistics(double df, double ss) {
@@ -184,7 +195,8 @@ namespace BOOM {
     //   conditional distribution.  The return value is the
     //   (unnormalized) log posterior of the current
     //   inclusion_indicators at function exit.
-    double mcmc_one_flip(Selector &inclusion_indicators, uint which_var,
+    double mcmc_one_flip(Selector &inclusion_indicators,
+                         uint which_var,
                          double current_logp);
 
    private:
@@ -235,9 +247,9 @@ namespace BOOM {
     void draw_sigma();
 
     const Ptr<MvnGivenScalarSigmaBase> &check_slab_dimension(
-        const Ptr<MvnGivenScalarSigmaBase> &slab);
+      const Ptr<MvnGivenScalarSigmaBase> &slab);
     const Ptr<VariableSelectionPrior> &check_spike_dimension(
-        const Ptr<VariableSelectionPrior> &spike);
+      const Ptr<VariableSelectionPrior> &spike);
   };
 }  // namespace BOOM
 #endif  // BOOM_BREG_VS_SAMPLER_HPP

@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -20,11 +19,11 @@
 #ifndef BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
 
-#include "Models/BetaModel.hpp"
-#include "Models/GammaModel.hpp"
-#include "Models/ZeroInflatedPoissonModel.hpp"
+#include <Models/ZeroInflatedPoissonModel.hpp>
+#include <Models/GammaModel.hpp>
+#include <Models/BetaModel.hpp>
 
-namespace BOOM {
+namespace BOOM{
   class ZeroInflatedPoissonSampler : public PosteriorSampler {
    public:
     ZeroInflatedPoissonSampler(ZeroInflatedPoissonModel *model,
@@ -33,11 +32,10 @@ namespace BOOM {
                                RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
-
    private:
     ZeroInflatedPoissonModel *model_;
     Ptr<GammaModel> lambda_prior_;
     Ptr<BetaModel> zero_probability_prior_;
   };
-}  // namespace BOOM
-#endif  // BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_
+}
+#endif// BOOM_ZERO_INFLATED_POISSON_SAMPLER_HPP_

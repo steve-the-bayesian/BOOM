@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,15 +16,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
-#include <random>
-#include "Models/ChisqModel.hpp"
-#include "Models/MvnGivenScalarSigma.hpp"
-#include "cpputil/math_utils.hpp"
-#include "cpputil/report_error.hpp"
-#include "cpputil/seq.hpp"
-#include "distributions.hpp"
-#include "distributions/trun_gamma.hpp"
+#include <cpputil/math_utils.hpp>
+#include <cpputil/seq.hpp>
+#include <cpputil/report_error.hpp>
+#include <distributions.hpp>
+#include <distributions/trun_gamma.hpp>
+#include <Models/ChisqModel.hpp>
+#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
+#include <Models/MvnGivenScalarSigma.hpp>
 
 namespace BOOM {
 
@@ -37,29 +35,33 @@ namespace BOOM {
                                             double expected_rsq) {
       double sample_variance = model->suf()->SST() / (model->suf()->n() - 1);
       assert(expected_rsq > 0 && expected_rsq < 1);
-      double sigma_guess = sqrt(sample_variance * (1 - expected_rsq));
+      double sigma_guess = sqrt(sample_variance * (1-expected_rsq));
       return new ChisqModel(prior_nobs, sigma_guess);
     }
   }  // namespace
 
   //----------------------------------------------------------------------
-  BVS::BregVsSampler(RegressionModel *model, double prior_nobs,
-                     double expected_rsq, double expected_model_size,
-                     bool first_term_is_intercept, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        residual_precision_prior_(
-            create_siginv_prior(model, prior_nobs, expected_rsq)),
-        indx(seq<uint>(0, model_->nvars_possible() - 1)),
-        max_nflips_(indx.size()),
-        draw_beta_(true),
-        draw_sigma_(true),
-        // Initialize mutable workspace variables to illegal values.
-        posterior_mean_(1, negative_infinity()),
-        unscaled_posterior_precision_(1, negative_infinity()),
-        DF_(negative_infinity()),
-        SS_(negative_infinity()),
-        sigsq_sampler_(residual_precision_prior_) {
+  BVS::BregVsSampler(RegressionModel *model,
+                     double prior_nobs,
+                     double expected_rsq,
+                     double expected_model_size,
+                     bool first_term_is_intercept,
+                     RNG &seeding_rng)
+    : PosteriorSampler(seeding_rng),
+      model_(model),
+      residual_precision_prior_(create_siginv_prior(
+          model, prior_nobs, expected_rsq)),
+      indx(seq<uint>(0, model_->nvars_possible()-1)),
+      max_nflips_(indx.size()),
+      draw_beta_(true),
+      draw_sigma_(true),
+      // Initialize mutable workspace variables to illegal values.
+      posterior_mean_(1, negative_infinity()),
+      unscaled_posterior_precision_(1, negative_infinity()),
+      DF_(negative_infinity()),
+      SS_(negative_infinity()),
+      sigsq_sampler_(residual_precision_prior_)
+  {
     uint p = model_->nvars_possible();
     Vector b = Vector(p, 0.0);
     if (first_term_is_intercept) {
@@ -71,7 +73,7 @@ namespace BOOM {
     slab_ = check_slab_dimension(
         new MvnGivenScalarSigma(ominv, model_->Sigsq_prm()));
 
-    double prob = expected_model_size / p;
+    double prob = expected_model_size/p;
     if (prob > 1) prob = 1.0;
     Vector pi(p, prob);
     if (first_term_is_intercept) {
@@ -81,20 +83,24 @@ namespace BOOM {
     spike_ = check_spike_dimension(new VariableSelectionPrior(pi));
   }
   //----------------------------------------------------------------------
-  BVS::BregVsSampler(RegressionModel *model, double prior_sigma_nobs,
-                     double prior_sigma_guess, double prior_beta_nobs,
+  BVS::BregVsSampler(RegressionModel *model,
+                     double prior_sigma_nobs,
+                     double prior_sigma_guess,
+                     double prior_beta_nobs,
                      double diagonal_shrinkage,
-                     double prior_inclusion_probability, bool force_intercept,
+                     double prior_inclusion_probability,
+                     bool force_intercept,
                      RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        residual_precision_prior_(
-            new ChisqModel(prior_sigma_nobs, prior_sigma_guess)),
-        indx(seq<uint>(0, model_->nvars_possible() - 1)),
-        max_nflips_(indx.size()),
-        draw_beta_(true),
-        draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {
+    : PosteriorSampler(seeding_rng),
+      model_(model),
+      residual_precision_prior_(
+          new ChisqModel(prior_sigma_nobs, prior_sigma_guess)),
+      indx(seq<uint>(0, model_->nvars_possible()-1)),
+      max_nflips_(indx.size()),
+      draw_beta_(true),
+      draw_sigma_(true),
+      sigsq_sampler_(residual_precision_prior_)
+  {
     uint p = model_->nvars_possible();
     Vector b = Vector(p, 0.0);
     double ybar = model_->suf()->ybar();
@@ -110,7 +116,7 @@ namespace BOOM {
           << "legal values are strictly > 0";
       report_error(msg.str());
     }
-    ominv *= prior_beta_nobs / n;
+    ominv *= prior_beta_nobs/n;
 
     // handle diagonal shrinkage:  ominv =alpha*diag(ominv) + (1-alpha)*ominv
     // This prevents a perfectly singular ominv.
@@ -118,14 +124,14 @@ namespace BOOM {
     if (alpha > 1.0 || alpha < 0.0) {
       ostringstream msg;
       msg << "illegal value of 'diagonal_shrinkage' in "
-          << "BregVsSampler constructor.  Supplied value = " << alpha
-          << ".  Legal values are [0, 1].";
+          << "BregVsSampler constructor.  Supplied value = "
+          << alpha << ".  Legal values are [0, 1].";
       report_error(msg.str());
     }
 
     if (alpha < 1.0) {
-      diag(ominv).axpy(diag(ominv), alpha / (1 - alpha));
-      ominv *= (1 - alpha);
+      diag(ominv).axpy(diag(ominv), alpha/(1-alpha));
+      ominv *= (1-alpha);
     } else {
       ominv.set_diag(diag(ominv));
     }
@@ -137,56 +143,66 @@ namespace BOOM {
     spike_ = check_spike_dimension(new VariableSelectionPrior(pi));
   }
   //----------------------------------------------------------------------
-  BVS::BregVsSampler(RegressionModel *model, const Vector &prior_mean,
+  BVS::BregVsSampler(RegressionModel *model,
+                     const Vector &prior_mean,
                      const SpdMatrix &unscaled_prior_precision,
-                     double sigma_guess, double df,
-                     const Vector &prior_inclusion_probs, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        slab_(check_slab_dimension(new MvnGivenScalarSigma(
-            prior_mean, unscaled_prior_precision, model_->Sigsq_prm()))),
-        residual_precision_prior_(new ChisqModel(df, sigma_guess)),
-        spike_(check_spike_dimension(
-            new VariableSelectionPrior(prior_inclusion_probs))),
-        indx(seq<uint>(0, model_->nvars_possible() - 1)),
-        max_nflips_(indx.size()),
-        draw_beta_(true),
-        draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+                     double sigma_guess,
+                     double df,
+                     const Vector &prior_inclusion_probs,
+                     RNG &seeding_rng)
+    : PosteriorSampler(seeding_rng),
+      model_(model),
+      slab_(check_slab_dimension(new MvnGivenScalarSigma(
+          prior_mean, unscaled_prior_precision, model_->Sigsq_prm()))),
+      residual_precision_prior_(new ChisqModel(df, sigma_guess)),
+      spike_(check_spike_dimension(
+          new VariableSelectionPrior(prior_inclusion_probs))),
+      indx(seq<uint>(0, model_->nvars_possible()-1)),
+      max_nflips_(indx.size()),
+      draw_beta_(true),
+      draw_sigma_(true),
+      sigsq_sampler_(residual_precision_prior_)
+  {}
   //----------------------------------------------------------------------
   BVS::BregVsSampler(RegressionModel *model,
-                     const ZellnerPriorParameters &prior, RNG &seeding_rng)
+                     const ZellnerPriorParameters &prior,
+                     RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         slab_(check_slab_dimension(new MvnGivenScalarSigma(
-            prior.prior_beta_guess, prior.prior_beta_information,
+            prior.prior_beta_guess,
+            prior.prior_beta_information,
             model_->Sigsq_prm()))),
-        residual_precision_prior_(new ChisqModel(prior.prior_sigma_guess_weight,
-                                                 prior.prior_sigma_guess)),
+        residual_precision_prior_(
+            new ChisqModel(prior.prior_sigma_guess_weight,
+                           prior.prior_sigma_guess)),
         spike_(check_spike_dimension(
             new VariableSelectionPrior(prior.prior_inclusion_probabilities))),
-        indx(seq<uint>(0, model_->nvars_possible() - 1)),
+        indx(seq<uint>(0, model_->nvars_possible()-1)),
         max_nflips_(indx.size()),
         draw_beta_(true),
         draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+        sigsq_sampler_(residual_precision_prior_)
+  {}
   //----------------------------------------------------------------------
   BVS::BregVsSampler(RegressionModel *model,
                      const Ptr<MvnGivenScalarSigmaBase> &slab,
                      const Ptr<GammaModelBase> &residual_precision_prior,
-                     const Ptr<VariableSelectionPrior> &spike, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        slab_(check_slab_dimension(slab)),
-        residual_precision_prior_(residual_precision_prior),
-        spike_(check_spike_dimension(spike)),
-        indx(seq<uint>(0, model_->nvars_possible() - 1)),
-        max_nflips_(indx.size()),
-        draw_beta_(true),
-        draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+                     const Ptr<VariableSelectionPrior> &spike,
+                     RNG &seeding_rng)
+    : PosteriorSampler(seeding_rng),
+      model_(model),
+      slab_(check_slab_dimension(slab)),
+      residual_precision_prior_(residual_precision_prior),
+      spike_(check_spike_dimension(spike)),
+      indx(seq<uint>(0, model_->nvars_possible()-1)),
+      max_nflips_(indx.size()),
+      draw_beta_(true),
+      draw_sigma_(true),
+      sigsq_sampler_(residual_precision_prior_)
+  {}
   //----------------------------------------------------------------------
-  void BVS::limit_model_selection(uint n) { max_nflips_ = n; }
+  void BVS::limit_model_selection(uint n) { max_nflips_ = n;}
   void BVS::allow_model_selection(bool allow) {
     if (allow) {
       max_nflips_ = indx.size();
@@ -194,17 +210,19 @@ namespace BOOM {
       suppress_model_selection();
     }
   }
-  void BVS::suppress_model_selection() { max_nflips_ = 0; }
-  void BVS::suppress_beta_draw() { draw_beta_ = false; }
-  void BVS::allow_beta_draw() { draw_beta_ = false; }
-  void BVS::suppress_sigma_draw() { draw_sigma_ = false; }
-  void BVS::allow_sigma_draw() { draw_sigma_ = false; }
+  void BVS::suppress_model_selection() {max_nflips_ = 0;}
+  void BVS::suppress_beta_draw() {draw_beta_ = false;}
+  void BVS::allow_beta_draw() {draw_beta_ = false;}
+  void BVS::suppress_sigma_draw() {draw_sigma_ = false;}
+  void BVS::allow_sigma_draw() {draw_sigma_ = false;}
 
   //  since alpha = df/2 df is 2 * alpha, likewise for beta
   double BVS::prior_df() const {
     return 2 * residual_precision_prior_->alpha();
   }
-  double BVS::prior_ss() const { return 2 * residual_precision_prior_->beta(); }
+  double BVS::prior_ss() const {
+    return 2 * residual_precision_prior_->beta();
+  }
 
   double BVS::log_model_prob(const Selector &g) const {
     if (g.nvars() == 0) {
@@ -215,7 +233,7 @@ namespace BOOM {
       // mean for an empty matrix.
       double ss = model_->suf()->yty() + prior_ss();
       double df = model_->suf()->n() + prior_df();
-      double ans = spike_->logp(g) - (.5 * df - 1) * log(ss);
+      double ans = spike_->logp(g) - (.5*df-1)*log(ss);
       return ans;
     }
     double ans = spike_->logp(g);
@@ -226,8 +244,8 @@ namespace BOOM {
     if (ldoi <= negative_infinity()) {
       return negative_infinity();
     }
-    ans += .5 * (ldoi - unscaled_posterior_precision_.logdet());
-    ans -= (.5 * DF_ - 1) * log(SS_);
+    ans += .5*(ldoi - unscaled_posterior_precision_.logdet());
+    ans -= (.5*DF_-1)*log(SS_);
     return ans;
   }
   //----------------------------------------------------------------------
@@ -251,7 +269,9 @@ namespace BOOM {
     if (draw_beta_) draw_beta();
   }
   //----------------------------------------------------------------------
-  bool BVS::model_is_empty() const { return model_->coef().inc().nvars() == 0; }
+  bool BVS::model_is_empty() const {
+    return model_->coef().inc().nvars() == 0;
+  }
   //----------------------------------------------------------------------
   void BVS::set_sigma_upper_limit(double sigma_upper_limit) {
     sigsq_sampler_.set_sigma_max(sigma_upper_limit);
@@ -279,15 +299,14 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void BVS::draw_beta() {
     if (model_is_empty()) return;
-    posterior_mean_ =
-        rmvn_ivar_mt(rng(), posterior_mean_,
-                     unscaled_posterior_precision_ / model_->sigsq());
+    posterior_mean_ = rmvn_ivar_mt(
+        rng(), posterior_mean_, unscaled_posterior_precision_ / model_->sigsq());
     model_->set_included_coefficients(posterior_mean_);
   }
   //----------------------------------------------------------------------
   void BVS::draw_model_indicators() {
     Selector g = model_->coef().inc();
-    std::shuffle(indx.begin(), indx.end(), std::default_random_engine());
+    std::random_shuffle(indx.begin(), indx.end());
     double logp = log_model_prob(g);
 
     if (!std::isfinite(logp)) {
@@ -318,7 +337,8 @@ namespace BOOM {
     ans += sigsq_sampler_.log_prior(sigsq);
 
     if (g.nvars() > 0) {
-      ans += dmvn(g.select(model_->Beta()), g.select(slab_->mu()),
+      ans += dmvn(g.select(model_->Beta()),
+                  g.select(slab_->mu()),
                   g.select(slab_->siginv()), true);
     }
     return ans;
@@ -348,8 +368,8 @@ namespace BOOM {
     // posterior_mean_ is the posterior mean, given inclusion_indicators.
     posterior_mean_ = unscaled_prior_precision * prior_mean + xty;
     bool positive_definite = true;
-    posterior_mean_ =
-        unscaled_posterior_precision_.solve(posterior_mean_, positive_definite);
+    posterior_mean_ = unscaled_posterior_precision_.solve(
+        posterior_mean_, positive_definite);
     if (!positive_definite) {
       posterior_mean_ = Vector(unscaled_posterior_precision_.nrow());
       return negative_infinity();
@@ -359,17 +379,16 @@ namespace BOOM {
     SS_ = prior_ss();
 
     // Add in the sum of squared errors around posterior_mean_
-    double likelihood_ss =
-        s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
-    SS_ += likelihood_ss;
+    double likelihood_ss = s->yty() - 2 * posterior_mean_.dot(xty)
+        + xtx.Mdist(posterior_mean_);
+    SS_ +=likelihood_ss;
 
     // Add in the sum of squares component arising from the discrepancy between
     // the prior and posterior means.
     SS_ += unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
     if (SS_ < 0) {
-      report_error(
-          "Illegal data caused negative sum of squares "
-          "in Breg::set_reg_post_params.");
+      report_error("Illegal data caused negative sum of squares "
+                   "in Breg::set_reg_post_params.");
     }
     return ldoi;
   }

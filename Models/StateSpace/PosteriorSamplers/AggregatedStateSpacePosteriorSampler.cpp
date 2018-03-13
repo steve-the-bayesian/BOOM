@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -17,33 +16,34 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/AggregatedStateSpacePosteriorSampler.hpp"
+#include <Models/StateSpace/PosteriorSamplers/AggregatedStateSpacePosteriorSampler.hpp>
+namespace BOOM{
 
-namespace BOOM {
-  namespace {
-    using ASSPS = AggregatedStateSpacePosteriorSampler;
-  }
+  typedef AggregatedStateSpacePosteriorSampler ASSPS;
 
   ASSPS::AggregatedStateSpacePosteriorSampler(
-      AggregatedStateSpaceRegression *model, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), m_(model) {}
+      AggregatedStateSpaceRegression *model,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        m_(model)
+  {}
 
-  void ASSPS::draw() {
-    m_->impute_state(rng(), nullptr);
+  void ASSPS::draw(){
+    m_->impute_state(rng());
     m_->regression_model()->sample_posterior();
 
     // Don't re-sample the regression model (in position 0).
-    for (int s = 1; s < m_->nstate(); ++s) {
+    for(int s = 1; s < m_->nstate(); ++s) {
       m_->state_model(s)->sample_posterior();
     }
   }
 
-  double ASSPS::logpri() const {
+  double ASSPS::logpri()const{
     double ans = m_->regression_model()->logpri();
-    for (int s = 1; s < m_->nstate(); ++s) {
+    for(int s = 0; s < m_->nstate(); ++s){
       ans += m_->state_model(s)->logpri();
     }
     return ans;
   }
 
-}  // namespace BOOM
+}

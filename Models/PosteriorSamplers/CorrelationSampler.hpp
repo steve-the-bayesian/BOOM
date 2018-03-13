@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -18,26 +17,28 @@
 */
 #ifndef BOOM_CORRELATION_SAMPLER_HPP
 #define BOOM_CORRELATION_SAMPLER_HPP
-#include "Models/ModelTypes.hpp"
-#include "Models/MvnModel.hpp"
-#include "Models/ParamTypes.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Samplers/Sampler.hpp"
-#include "TargetFun/TargetFun.hpp"
-namespace BOOM {
+#include <Samplers/Sampler.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <TargetFun/TargetFun.hpp>
+#include <Models/ParamTypes.hpp>
+#include <Models/ModelTypes.hpp>
+#include <Models/MvnModel.hpp>
+namespace BOOM{
 
   // Draws from the posterior distribution of the correlation matrix
   // in a Gaussian model with known means and variances given a
   // CorrelationModel prior distribution on the correlation matrix
-  class MvnCorrelationSampler : public PosteriorSampler {
-   public:
-    MvnCorrelationSampler(MvnModel *model, const Ptr<CorrelationModel> &prior,
+  class MvnCorrelationSampler
+    : public PosteriorSampler
+  {
+  public:
+    MvnCorrelationSampler(MvnModel *model,
+                          const Ptr<CorrelationModel> &prior,
                           bool refresh_suf = false,
                           RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri() const override;
-
-   private:
+    double logpri()const override;
+  private:
     double logp(double r);
     void find_limits();
     void draw_one();
@@ -54,5 +55,5 @@ namespace BOOM {
     double lo_, hi_;
   };
 
-}  // namespace BOOM
-#endif  // BOOM_CORRELATION_SAMPLER_HPP
+}
+#endif// BOOM_CORRELATION_SAMPLER_HPP

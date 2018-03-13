@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -17,29 +16,38 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/CumulativeLogitModel.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "distributions.hpp"
+#include <Models/Glm/CumulativeLogitModel.hpp>
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <distributions.hpp>
 
-namespace BOOM {
+namespace BOOM{
   typedef CumulativeLogitModel CLM;
   typedef OrdinalCutpointModel OCM;
 
-  CLM::CumulativeLogitModel(const Vector &beta, const Vector &delta)
-      : OCM(beta, delta) {}
+  CLM::CumulativeLogitModel(const Vector &beta, const Vector & delta)
+      : OCM(beta, delta)
+  {}
 
-  CLM::CumulativeLogitModel(const Matrix &X, const Vector &y) : OCM(X, y) {}
+  CLM::CumulativeLogitModel(const Matrix &X, const Vector &y)
+      : OCM(X,y)
+  {}
 
-  CLM::CumulativeLogitModel(const CLM &rhs) : Model(rhs), OCM(rhs) {}
+  CLM::CumulativeLogitModel(const CLM &rhs)
+    : Model(rhs),
+      OCM(rhs)
+  {}
 
-  CLM *CLM::clone() const { return new CLM(*this); }
+  CLM * CLM::clone()const{ return new CLM(*this);}
 
-  double CLM::link_inv(double eta) const { return plogis(eta); }
-
-  double CLM::dlink_inv(double eta) const { return dlogis(eta); }
-
-  double CLM::simulate_latent_variable(RNG &rng) const {
-    return rlogis_mt(rng);
+  double CLM::link_inv(double eta)const{
+    return plogis(eta);
   }
 
-}  // namespace BOOM
+  double CLM::dlink_inv(double eta)const{
+    return dlogis(eta);
+  }
+
+  double CLM::simulate_latent_variable(RNG &rng)const{
+    return rlogis_mt(rng);}
+
+}

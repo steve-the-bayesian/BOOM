@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,20 +19,22 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MVN_COLLAPSED_GIBBS_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_MVN_COLLAPSED_GIBBS_SAMPLER_HPP_
 
-#include "Models/Mixtures/DirichletProcessMvnModel.hpp"
+#include <Models/Mixtures/DirichletProcessMvnModel.hpp>
 
-#include "Models/MvnGivenSigma.hpp"
-#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
-#include "Models/WishartModel.hpp"
+#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include <Models/PosteriorSamplers/MvnConjSampler.hpp>
+#include <Models/MvnGivenSigma.hpp>
+#include <Models/WishartModel.hpp>
 
 namespace BOOM {
 
   // A Posterior sampler for a Dirichlet process model that describes
   // observation vector y[i] as a mixture of normals, with a
   // normal-inverse-Wishart prior distribution.
-  class DirichletProcessMvnCollapsedGibbsSampler : public PosteriorSampler {
+  class DirichletProcessMvnCollapsedGibbsSampler
+      : public PosteriorSampler {
    public:
+
     // Args:
     //   model: The model for which posterior samples are desired.
     //   mean_base_measure: A conditional MVN model describing the

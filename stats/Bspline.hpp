@@ -1,4 +1,3 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2015 Steven L. Scott
 
@@ -20,8 +19,8 @@
 #ifndef BOOM_STATS_BSPLINE_HPP_
 #define BOOM_STATS_BSPLINE_HPP_
 
-#include "LinAlg/Vector.hpp"
-#include "stats/Spline.hpp"
+#include <LinAlg/Vector.hpp>
+#include <stats/Spline.hpp>
 
 namespace BOOM {
 
@@ -66,13 +65,13 @@ namespace BOOM {
     // - 1 + degree, though it can be less if knots() contains
     // duplicate elements.  If knots().size <= 1 then the
     // basis_dimension is 0.
-    int basis_dimension() const override { return basis_dimension_; }
+    int basis_dimension() const override {return basis_dimension_;}
 
     // The order of the piecewise polynomial connecting the knots.
-    int order() const { return order_; }
+    int order() const {return order_;}
 
     // The degree of the piecewise polynomial connecting the knots.
-    int degree() const { return order_ - 1; }
+    int degree() const {return order_ - 1;}
 
     // Compute the coefficient C for combining two splines of order degree-1
     // into a spline of order degree.  The recursion is
@@ -90,10 +89,10 @@ namespace BOOM {
     // The dimension of the spline basis expansion.
     int basis_dimension_;
 
-    void increment_basis_dimension() override { ++basis_dimension_; }
-    void decrement_basis_dimension() override { --basis_dimension_; }
+    void increment_basis_dimension() override {++basis_dimension_;}
+    void decrement_basis_dimension() override {--basis_dimension_;}
   };
 
-}  // namespace BOOM
+} // namespace BOOM
 
 #endif  //  BOOM_STATS_BSPLINE_HPP_
