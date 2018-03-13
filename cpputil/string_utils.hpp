@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,41 +19,39 @@
 
 #ifndef CPP_STRING_UTILS_H
 #define CPP_STRING_UTILS_H
-#include <vector>
 #include <string>
-#include <BOOM.hpp>
-#include <uint.hpp>
-#include <cpputil/Split.hpp>
+#include <vector>
+#include "BOOM.hpp"
+#include "cpputil/Split.hpp"
+#include "uint.hpp"
 
-namespace BOOM{
+namespace BOOM {
   std::vector<string> split_delimited(const string &s, const string &delim);
-  std::vector<string> split_string(const string&);
+  std::vector<string> split_string(const string &);
 
-  inline std::vector<string> split_delimited(const string &s, char delim){
-    return split_delimited(s, string(1,delim));}
-  inline std::vector<string> split(const string &s){
-    return split_string(s);}
-  inline std::vector<string> split(const string &s, const string &d){
-    return split_delimited(s,d);}
-  inline std::vector<string> split(const string &s, char dlm){
-    return split_delimited(s,dlm);  }
+  inline std::vector<string> split_delimited(const string &s, char delim) {
+    return split_delimited(s, string(1, delim));
+  }
+  inline std::vector<string> split(const string &s) { return split_string(s); }
+  inline std::vector<string> split(const string &s, const string &d) {
+    return split_delimited(s, d);
+  }
+  inline std::vector<string> split(const string &s, char dlm) {
+    return split_delimited(s, dlm);
+  }
 
-
-  inline ostream & operator << (ostream &out,
-                                const std::vector<std::string> &sv){
-    for(uint i=0; i<sv.size(); ++i) out << sv[i] << " ";
+  inline ostream &operator<<(ostream &out, const std::vector<std::string> &sv) {
+    for (uint i = 0; i < sv.size(); ++i) out << sv[i] << " ";
     return out;
   }
 
-  ostream & print_columns(
-      ostream & out,
-      const std::vector<std::vector<std::string>> & columns,
-      uint pad = 2);
+  ostream &print_columns(ostream &out,
+                         const std::vector<std::vector<std::string>> &columns,
+                         uint pad = 2);
 
-  ostream & print_two_columns(ostream & out,
-                              const std::vector<std::string> & left,
-                              const std::vector<std::string> &right,
-                              uint pad = 2);
+  ostream &print_two_columns(ostream &out, const std::vector<std::string> &left,
+                             const std::vector<std::string> &right,
+                             uint pad = 2);
 
   string operator+(const std::string &, int);
   string operator+(const std::string &, double);
@@ -65,19 +64,19 @@ namespace BOOM{
   string operator>>(const std::string &, double &);
 
   bool is_all_white(const string &s);
-  string strip_white_space(const string &s); // removes all white space
-  string trim_white_space(const string &s);  // removes from the ends
+  string strip_white_space(const string &s);  // removes all white space
+  string trim_white_space(const string &s);   // removes from the ends
   void trim_white_space(std::vector<std::string> &v);
 
-  string strip(const string &s, const string &bad="\r\n\t");
+  string strip(const string &s, const string &bad = "\r\n\t");
   // removes \r's, \n's etc from end
 
   string replace_all(const string &s, const char *, const char *);
-  string & replace_all(string &s, const char *, const char *);
+  string &replace_all(string &s, const char *, const char *);
 
-  inline char last(const string &s) { return s[s.length()-1]; }
-  inline char & last(string &s) { return s[s.length()-1]; }
+  inline char last(const string &s) { return s[s.length() - 1]; }
+  inline char &last(string &s) { return s[s.length() - 1]; }
 
   bool is_numeric(const string &s);
 }  // namespace BOOM
-#endif //CPP_STRING_UTILS_H
+#endif  // CPP_STRING_UTILS_H

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,35 +17,36 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp> // rnorm, etc
 #include <cmath>
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"  // rnorm, etc
 
-namespace BOOM{
+namespace BOOM {
 
-  double dstudent(double x, double mu, double sigma, double df,
-                  bool logscale){
-
+  double dstudent(double x, double mu, double sigma, double df, bool logscale) {
     /* univariate student density where x = z/w + mu, where z~N(0,
        sigsq) and w^2~Gamma(df/2, df/2) (i.e. w^2 has been divided by
        its degrees of freedom) */
 
     double ans;
-    if(sigma==0) return (x==mu ? infinity() : 0.0);
+    if (sigma == 0) return (x == mu ? infinity() : 0.0);
 
-    ans = (x-mu)/sigma;
-    ans = dt(ans, df, 1) - log(sigma);  /* log sigma from the jacobian */
-    if(logscale) return ans;
-    else return exp(ans);
+    ans = (x - mu) / sigma;
+    ans = dt(ans, df, 1) - log(sigma); /* log sigma from the jacobian */
+    if (logscale)
+      return ans;
+    else
+      return exp(ans);
   }
 
   /*======================================================================*/
 
-  double rstudent(double mu, double sigma, double df){
-    return rstudent_mt(GlobalRng::rng, mu, sigma, df);  }
-
-  double rstudent_mt(RNG & rng, double mu, double sigma, double df){
-    double w=rgamma_mt(rng, df/2.0, df/2.0);
-    return rnorm_mt(rng, mu, sigma/sqrt(w));
+  double rstudent(double mu, double sigma, double df) {
+    return rstudent_mt(GlobalRng::rng, mu, sigma, df);
   }
-}
+
+  double rstudent_mt(RNG& rng, double mu, double sigma, double df) {
+    double w = rgamma_mt(rng, df / 2.0, df / 2.0);
+    return rnorm_mt(rng, mu, sigma / sqrt(w));
+  }
+}  // namespace BOOM

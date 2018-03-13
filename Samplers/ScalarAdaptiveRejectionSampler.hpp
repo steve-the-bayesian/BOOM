@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,9 +21,9 @@
 #define BOOM_SAMPLERS_SCALAR_ADAPTIVE_REJECTION_SAMPLER_HPP_
 
 #include <functional>
-#include <LinAlg/Vector.hpp>
-#include <Samplers/Sampler.hpp>
-#include <distributions/rng.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Samplers/Sampler.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
@@ -36,7 +37,7 @@ namespace BOOM {
      public:
       PiecewiseExponentialApproximation();
 
-      //Set lower and upper limits on the support of the approximation.
+      // Set lower and upper limits on the support of the approximation.
       // lower_limit must be less than the current upper_limit.
       void set_lower_limit(double lower_support_limit);
 
@@ -44,11 +45,10 @@ namespace BOOM {
       void set_upper_limit(double upper_support_limit);
 
       // Must have upper_limit > lower_limit.
-      void set_limits(double lower_support_limit,
-                      double upper_support_limit);
+      void set_limits(double lower_support_limit, double upper_support_limit);
 
-      double lower_limit() const {return lower_limit_;}
-      double upper_limit() const {return upper_limit_;}
+      double lower_limit() const { return lower_limit_; }
+      double upper_limit() const { return upper_limit_; }
 
       // Add the point (x, logf(x)) to the approximation.  It is an
       // error to call this function with x outside the range
@@ -91,17 +91,11 @@ namespace BOOM {
 
       double sample(RNG &rng) const;
 
-      int number_of_knots() const {
-        return knots_.size();
-      }
+      int number_of_knots() const { return knots_.size(); }
 
-      const Vector & knots() const {
-        return knots_;
-      }
+      const Vector &knots() const { return knots_; }
 
-      const Vector & log_density_values_at_knots() const {
-        return logf_;
-      }
+      const Vector &log_density_values_at_knots() const { return logf_; }
 
      private:
       // The domain of the approximation consists of 5 kinds of
@@ -140,11 +134,10 @@ namespace BOOM {
       //          to = upper_limit,
       //          fun = exp(intercept + slope * x),
       //          integration_variable = x)
-      double cumulative_exponential_log_probability(
-          double intercept,
-          double slope,
-          double lower_limit,
-          double upper_limit) const;
+      double cumulative_exponential_log_probability(double intercept,
+                                                    double slope,
+                                                    double lower_limit,
+                                                    double upper_limit) const;
 
       // Returns the value of the linear function defined by the two
       // specified knots.  In most cases knot2 = knot1 + 1.  Note that
@@ -161,9 +154,7 @@ namespace BOOM {
       //     knot0 < knot1 < number_of_knots()
       //   intercept:  On output, the intercept of the interpolating line.
       //   slope:  On output, the slope of the interpolating line.
-      void interpolating_equation(int knot0,
-                                  int knot1,
-                                  double *intercept,
+      void interpolating_equation(int knot0, int knot1, double *intercept,
                                   double *slope) const;
 
       // Returns the value of x where the interpolating lines between
@@ -232,7 +223,7 @@ namespace BOOM {
     double draw();
     double draw(double) override { return draw(); }  // ignore argument
 
-    virtual double logp(double x)const;
+    virtual double logp(double x) const;
 
    private:
     // If the approximation has fewer than 3 knots, add knots.
@@ -253,4 +244,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_SAMPLERS_SCALAR_ADAPTIVE_REJECTION_SAMPLER_HPP_
+#endif  // BOOM_SAMPLERS_SCALAR_ADAPTIVE_REJECTION_SAMPLER_HPP_

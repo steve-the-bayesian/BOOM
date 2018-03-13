@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,23 +17,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Bart/PoissonBartModel.hpp>
-#include <stats/moments.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/Bart/PoissonBartModel.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
 
   PoissonBartModel::PoissonBartModel(int number_of_trees, double mean)
-      : BartModelBase(number_of_trees, mean)
-  {}
+      : BartModelBase(number_of_trees, mean) {}
 
   //----------------------------------------------------------------------
   PoissonBartModel::PoissonBartModel(int number_of_trees,
                                      const std::vector<int> &responses,
                                      const Matrix &predictors)
-      : BartModelBase(number_of_trees, 0.0)
-  {
+      : BartModelBase(number_of_trees, 0.0) {
     double ybar = mean(Vector(responses.begin(), responses.end()));
     if (ybar > 0) {
       set_constant_prediction(log(ybar));
@@ -46,8 +45,8 @@ namespace BOOM {
       report_error(err.str());
     }
     for (int i = 0; i < responses.size(); ++i) {
-      Ptr<PoissonRegressionData> dp(new PoissonRegressionData(
-          responses[i], predictors.row(i)));
+      Ptr<PoissonRegressionData> dp(
+          new PoissonRegressionData(responses[i], predictors.row(i)));
       add_data(dp);
     }
   }
@@ -57,8 +56,7 @@ namespace BOOM {
                                      const std::vector<int> &responses,
                                      const std::vector<double> &exposures,
                                      const Matrix &predictors)
-      : BartModelBase(number_of_trees, 0.0)
-  {
+      : BartModelBase(number_of_trees, 0.0) {
     if (responses.size() != nrow(predictors)) {
       ostringstream err;
       err << "Error in PoissonBartModel constructor.  The response vector had "
@@ -100,26 +98,21 @@ namespace BOOM {
         BartModelBase(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
-        PriorPolicy(rhs)
-  {}
+        PriorPolicy(rhs) {}
 
   //----------------------------------------------------------------------
-  PoissonBartModel * PoissonBartModel::clone() const {
+  PoissonBartModel *PoissonBartModel::clone() const {
     return new PoissonBartModel(*this);
   }
 
   //----------------------------------------------------------------------
-  int PoissonBartModel::sample_size() const {
-    return dat().size();
-  }
+  int PoissonBartModel::sample_size() const { return dat().size(); }
 
   //----------------------------------------------------------------------
-  void PoissonBartModel::add_data(const Ptr<Data> &dp) {
-    add_data(DAT(dp));
-  }
+  void PoissonBartModel::add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
 
   //----------------------------------------------------------------------
-  void PoissonBartModel::add_data(const Ptr<PoissonRegressionData> & dp) {
+  void PoissonBartModel::add_data(const Ptr<PoissonRegressionData> &dp) {
     DataPolicy::add_data(dp);
     BartModelBase::observe_data(dp->x());
   }

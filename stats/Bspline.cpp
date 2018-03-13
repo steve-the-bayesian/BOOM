@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2015 Steven L. Scott
 
@@ -15,18 +16,16 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/Bspline.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "stats/Bspline.hpp"
 #include <sstream>
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   Bspline::Bspline(const Vector &knots, int degree)
-      : SplineBase(knots),
-        order_(degree + 1)
-  {
+      : SplineBase(knots), order_(degree + 1) {
     const Vector &sorted_knots(SplineBase::knots());
     if (degree < 0) {
       report_error("Spline degree must be non-negative.");
@@ -44,7 +43,7 @@ namespace BOOM{
     }
     for (int i = 1; i < sorted_knots.size(); ++i) {
       // Any duplicate knots reduce the number of distinct knot spans.
-      if (sorted_knots[i] == sorted_knots[i-1]) {
+      if (sorted_knots[i] == sorted_knots[i - 1]) {
         --basis_dimension_;
       }
     }
@@ -67,8 +66,8 @@ namespace BOOM{
     const Vector &sorted_knots(SplineBase::knots());
     // To find the knot in the left endpoint of the knot span, we
     // first find the first knot larger than x, then back up one spot.
-    Vector::const_iterator terminal_knot_position = std::upper_bound(
-        sorted_knots.begin(), sorted_knots.end(), x);
+    Vector::const_iterator terminal_knot_position =
+        std::upper_bound(sorted_knots.begin(), sorted_knots.end(), x);
     int terminal_knot = terminal_knot_position - sorted_knots.begin();
     int knot_span_for_x = terminal_knot - 1;
 
@@ -111,9 +110,7 @@ namespace BOOM{
     // The entries of basis_function_table, column d, are the spline
     // basis functions of degree d.
     ArbitraryOffsetMatrix basis_function_table(
-        -degree(), number_of_knot_spans + order_,
-        0, order_,
-        0.0);
+        -degree(), number_of_knot_spans + order_, 0, order_, 0.0);
 
     basis_function_table(knot_span_for_x, 0) = 1.0;
     for (int d = 1; d <= degree(); ++d) {
@@ -124,14 +121,13 @@ namespace BOOM{
       for (int lag = 0; lag <= d; ++lag) {
         int span = knot_span_for_x - lag;
         double left_coefficient = compute_coefficient(x, span, d);
-        double right_coefficient =
-            1 - compute_coefficient(x, span + 1, d);
+        double right_coefficient = 1 - compute_coefficient(x, span + 1, d);
         double left_basis = basis_function_table(span, d - 1);
-        double right_basis =
-            span < number_of_knot_spans ?
-                   basis_function_table(span + 1, d - 1) : 0.0;
-        basis_function_table(span, d) = left_coefficient * left_basis
-            + right_coefficient * right_basis;
+        double right_basis = span < number_of_knot_spans
+                                 ? basis_function_table(span + 1, d - 1)
+                                 : 0.0;
+        basis_function_table(span, d) =
+            left_coefficient * left_basis + right_coefficient * right_basis;
       }
     }
     if (number_of_knots() > 1) {
@@ -139,12 +135,11 @@ namespace BOOM{
         ans[i + degree()] = basis_function_table(i, degree());
       }
     }
-    return(ans);
+    return (ans);
   }
 
-
-  double Bspline::compute_coefficient(
-      double x, int knot_span, int degree) const {
+  double Bspline::compute_coefficient(double x, int knot_span,
+                                      int degree) const {
     if (knot(knot_span) < knot(knot_span + degree)) {
       double dknot = knot(knot_span + degree) - knot(knot_span);
       return (x - knot(knot_span)) / dknot;
@@ -156,5 +151,4 @@ namespace BOOM{
     }
   }
 
-
-}
+}  // namespace BOOM

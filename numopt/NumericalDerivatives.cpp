@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -15,18 +16,16 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <limits>
+#include "numopt/NumericalDerivatives.hpp"
 #include <cmath>
-#include <numopt/NumericalDerivatives.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include <limits>
+#include "LinAlg/SpdMatrix.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-  NumericalDerivatives::NumericalDerivatives(const Target &f)
-      : f_(f)
-  {}
+  NumericalDerivatives::NumericalDerivatives(const Target &f) : f_(f) {}
 
   // The value for h was taken from:
   // http://journal.info.unlp.edu.ar/journal/journal6/papers/ipaper.pdf
@@ -44,10 +43,8 @@ namespace BOOM {
   // A Richardson approximation to the first derivative.  For
   // derivation, see
   // http://www2.math.umd.edu/~dlevy/classes/amsc466/lecture-notes/differentiation-chap.pdf
-  double NumericalDerivatives::scalar_first_derivative(
-      const Vector &x,
-      int pos,
-      double h) const {
+  double NumericalDerivatives::scalar_first_derivative(const Vector &x, int pos,
+                                                       double h) const {
     Vector dx(x);
     dx[pos] = x[pos] + h;
     double fp1 = f_(dx);
@@ -71,7 +68,7 @@ namespace BOOM {
       double hi = tol * std::max<double>(0.1, fabs(x[i]));
       int lo = quick_and_dirty ? i : 0;
       for (int j = lo; j < dim; ++j) {
-        double hj =tol * std::max<double>(0.1, fabs(x[j]));
+        double hj = tol * std::max<double>(0.1, fabs(x[j]));
         if (i == j) {
           ans(i, j) = homogeneous_scalar_second_derivative(x, i, hi);
         } else {
@@ -100,12 +97,9 @@ namespace BOOM {
 
   // Using the central second derivative found here:
   // http://terminus.sdsu.edu/SDSU/Math693a_f2005/Lectures/16/lecture-static-04.pdf
-  double NumericalDerivatives::scalar_second_derivative(
-      const Vector &x,
-      int i,
-      double hi,
-      int j,
-      double hj) const {
+  double NumericalDerivatives::scalar_second_derivative(const Vector &x, int i,
+                                                        double hi, int j,
+                                                        double hj) const {
     if (i == j) {
       report_error("Call homogeneous_scalar_second_derivative instead.");
     }
@@ -120,15 +114,12 @@ namespace BOOM {
     double f_minus_minus = f_(dx);
     dx[j] = x[j] + hj;
     double f_minus_plus = f_(dx);
-    return (+ f_plus_plus
-            - f_plus_minus
-            - f_minus_plus
-            + f_minus_minus) / (4 * hi * hj);
+    return (+f_plus_plus - f_plus_minus - f_minus_plus + f_minus_minus) /
+           (4 * hi * hj);
   }
 
   ScalarNumericalDerivatives::ScalarNumericalDerivatives(const ScalarTarget &f)
-      : f_(f)
-  {}
+      : f_(f) {}
 
   double ScalarNumericalDerivatives::first_derivative(double x) const {
     const double tol = cbrt(std::numeric_limits<double>::epsilon());
@@ -150,23 +141,17 @@ namespace BOOM {
     return (fp + fm - 2 * f0) / square(h);
   }
 
-
   NumericJacobian::NumericJacobian(const Mapping &inverse_transformation)
-      : inverse_transformation_(inverse_transformation)
-  {}
+      : inverse_transformation_(inverse_transformation) {}
 
   namespace {
     class SubFunction {
      public:
       typedef NumericJacobian::Mapping Mapping;
       SubFunction(const Mapping &mapping, int position)
-          : mapping_(mapping),
-            position_(position)
-      {}
+          : mapping_(mapping), position_(position) {}
 
-      double operator()(const Vector &x) {
-        return mapping_(x)[position_];
-      }
+      double operator()(const Vector &x) { return mapping_(x)[position_]; }
 
      private:
       Mapping mapping_;

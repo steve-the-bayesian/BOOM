@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -19,26 +20,25 @@
 #ifndef BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_
 #define BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_
 
-#include <Models/Glm/CumulativeLogitModel.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/Glm/CumulativeLogitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/draw_logit_lambda.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class CumulativeLogitSampler
-      : public PosteriorSampler
-  {
+  class CumulativeLogitSampler : public PosteriorSampler {
    public:
     CumulativeLogitSampler(CumulativeLogitModel *m,
-                            const Ptr<MvnBase> &beta_prior,
-                            RNG &seeding_rng = GlobalRng::rng);
+                           const Ptr<MvnBase> &beta_prior,
+                           RNG &seeding_rng = GlobalRng::rng);
     void impute_latent_data();
     void draw_beta();
     void draw_delta();
     void draw() override;
     double logpri() const override;
+
    private:
     CumulativeLogitModel *m_;
     Ptr<MvnBase> beta_prior_;
@@ -50,6 +50,5 @@ namespace BOOM{
     // assume a flat prior on delta
   };
 
-
-}
-#endif// BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_CUMULATIVE_LOGIT_SAMPLER_HPP_

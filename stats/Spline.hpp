@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2016 Steven L. Scott
 
@@ -17,7 +18,7 @@
 */
 #ifndef BOOM_SPLINE_HPP
 #define BOOM_SPLINE_HPP
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
   // A base class providing features shared by different spline bases.
@@ -53,8 +54,8 @@ namespace BOOM {
     void remove_knot(int which_knot);
 
     // The vector of knots.  Implicit boundary knots are not included.
-    virtual const Vector &knots() const {return knots_;}
-    virtual int number_of_knots() const {return knots_.size();}
+    virtual const Vector &knots() const { return knots_; }
+    virtual int number_of_knots() const { return knots_.size(); }
 
     // If the argument is in the interior of the knots vector, return
     // knots_[i].  If it is off the end to the left return knots_[0].
@@ -83,5 +84,5 @@ namespace BOOM {
     Vector knots_;
   };
 
-}
-#endif// BOOM_SPLINE_HPP
+}  // namespace BOOM
+#endif  // BOOM_SPLINE_HPP

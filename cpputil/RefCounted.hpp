@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -26,21 +27,21 @@ namespace BOOM {
 
   class RefCounted {
    public:
-    RefCounted(): reference_count_(0) {}
+    RefCounted() : reference_count_(0) {}
     RefCounted(const RefCounted &) : reference_count_(0) {}
     virtual ~RefCounted() {}
 
     // If this object is assigned a new value, nothing is done to the
     // reference count, so assignment is a no-op.
-    RefCounted & operator=(const RefCounted &rhs) { return *this; }
+    RefCounted &operator=(const RefCounted &rhs) { return *this; }
 
     void up_count() { ++reference_count_; }
     void down_count() { --reference_count_; }
-    unsigned int ref_count() const {return reference_count_;}
+    unsigned int ref_count() const { return reference_count_; }
 
    private:
     std::atomic<unsigned int> reference_count_;
   };
 
 }  // namespace BOOM
-#endif // BOOM_REF_COUNTED_HPP
+#endif  // BOOM_REF_COUNTED_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -15,46 +16,44 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Samplers/ARMS.hpp>
-#include <Samplers/Gilks/arms.hpp>
-#include <sstream>
-#include <stdexcept>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Samplers/ARMS.hpp"
 #include <cstdlib>
 #include <limits>
-#include <numopt.hpp>
+#include <sstream>
+#include <stdexcept>
+#include "Samplers/Gilks/arms.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef ArmsSampler ARMS;
 
-  double localfun(double x, void *Obj){
-    ARMS * obj = static_cast<ARMS *>(Obj) ;
+  double localfun(double x, void *Obj) {
+    ARMS *obj = static_cast<ARMS *>(Obj);
     obj->set(x);
     return obj->eval();
   }
 
-  ARMS::ArmsSampler(const Target &target,
-                    const Vector & initial_value,
+  ARMS::ArmsSampler(const Target &target, const Vector &initial_value,
                     bool log_convex)
-    : target_(target),
-      x_(initial_value),
-      lower_limits_(initial_value),
-      upper_limits_(initial_value),
-      ninit_(4),
-      log_convex_(log_convex)
-  {
+      : target_(target),
+        x_(initial_value),
+        lower_limits_(initial_value),
+        upper_limits_(initial_value),
+        ninit_(4),
+        log_convex_(log_convex) {
     find_limits();
   }
 
-  void ARMS::find_limits(){
+  void ARMS::find_limits() {
     max_nd0(x_, target_);
     lower_limits_ = x_ - 1.0;
     upper_limits_ = x_ + 1.0;  // these get adjusted later
   }
 
-  Vector ARMS::draw(const Vector &old){
+  Vector ARMS::draw(const Vector &old) {
     using std::endl;
     x_ = old;
     for (uint i = 0; i < x_.size(); ++i) {
@@ -63,7 +62,7 @@ namespace BOOM{
       double hi = upper_limits_[i];
       double now = x_[i];
       double ans = now;
-      void * this_ptr(this);
+      void *this_ptr(this);
       int err =
           GilksArms::arms_simple(rng(), ninit_, &lo, &hi, localfun, this_ptr,
                                  static_cast<int>(!log_convex_), &now, &ans);
@@ -75,10 +74,10 @@ namespace BOOM{
             << "hi    = " << hi << endl
             << "log_convex_ = " << log_convex_ << endl
             << "now   = " << now << endl
-            << "ans   = " << ans <<endl;
+            << "ans   = " << ans << endl;
         report_error(msg.str());
       }
-      double width = hi-lo;
+      double width = hi - lo;
       if (fabs(hi - ans) < 1.0) upper_limits_[i] += .5 * width;
       if (fabs(ans - lo) < 1.0) lower_limits_[i] -= .5 * width;
       x_[which_] = ans;
@@ -86,18 +85,14 @@ namespace BOOM{
     return x_;
   }
 
-  double ARMS::logp(const Vector &v) const { return target_(v);}
-  double ARMS::eval() const {return logp(x_);}
-  void ARMS::set(double y) {x_[which_] = y;}
+  double ARMS::logp(const Vector &v) const { return target_(v); }
+  double ARMS::eval() const { return logp(x_); }
+  void ARMS::set(double y) { x_[which_] = y; }
   void ARMS::set_limits(const Vector &lo, const Vector &hi) {
     lower_limits_ = lo;
     upper_limits_ = hi;
   }
-  void ARMS::set_lower_limits(const Vector &lo) {
-    lower_limits_ = lo;
-  }
-  void ARMS::set_upper_limits(const Vector &hi) {
-    upper_limits_ = hi;
-  }
+  void ARMS::set_lower_limits(const Vector &lo) { lower_limits_ = lo; }
+  void ARMS::set_upper_limits(const Vector &hi) { upper_limits_ = hi; }
 
-}
+}  // namespace BOOM

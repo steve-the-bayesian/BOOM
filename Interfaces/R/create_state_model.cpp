@@ -1,49 +1,68 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-#include <r_interface/create_state_model.hpp>
+#include "r_interface/create_state_model.hpp"
 #include <string>
-#include <cpputil/report_error.hpp>
-#include <cpputil/Date.hpp>
+#include "cpputil/report_error.hpp"
+#include "cpputil/Date.hpp"
 
-#include <r_interface/boom_r_tools.hpp>
-#include <r_interface/list_io.hpp>
-#include <r_interface/prior_specification.hpp>
+#include "r_interface/boom_r_tools.hpp"
+#include "r_interface/list_io.hpp"
+#include "r_interface/prior_specification.hpp"
 
-#include <Models/ChisqModel.hpp>
-#include <Models/GaussianModel.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
-#include <Models/PosteriorSamplers/FixedSpdSampler.hpp>
-#include <Models/PosteriorSamplers/FixedUnivariateSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/IndependentMvnVarSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp>
+#include "Models/ChisqModel.hpp"
+#include "Models/GaussianModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/PosteriorSamplers/FixedSpdSampler.hpp"
+#include "Models/PosteriorSamplers/FixedUnivariateSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
-#include <Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp>
-#include <Models/StateSpace/StateModels/ArStateModel.hpp>
-#include <Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp>
-#include <Models/StateSpace/StateModels/Holiday.hpp>
-#include <Models/StateSpace/StateModels/LocalLevelStateModel.hpp>
-#include <Models/StateSpace/StateModels/LocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/SemilocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp>
-#include <Models/StateSpace/StateModels/SeasonalStateModel.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp>
-#include <Models/StateSpace/StateModels/TrigStateModel.hpp>
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
 
-#include <Models/TimeSeries/NonzeroMeanAr1Model.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/NonzeroMeanAr1Sampler.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp>
-#include <Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp>
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionArPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
+#include "Models/StateSpace/StateModels/ArStateModel.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
+#include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp"
+#include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
+#include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateModels/StaticInterceptStateModel.hpp"
+#include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 
-namespace BOOM{
-  namespace RInterface{
+#include "Models/TimeSeries/NonzeroMeanAr1Model.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/NonzeroMeanAr1Sampler.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
+#include "Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp"
+
+namespace BOOM {
+  namespace RInterface {
 
     StateModelFactory::StateModelFactory(RListIoManager * io_manager,
-                                         StateSpaceModelBase * model)
+                                         ScalarStateSpaceModelBase * model)
         : io_manager_(io_manager),
           model_(model)
     {}
@@ -51,17 +70,13 @@ namespace BOOM{
     void StateModelFactory::AddState(SEXP r_state_specification_list,
                                      const std::string &prefix) {
       if (!model_) return;
-      CallbackVector callbacks;
       int number_of_state_models = Rf_length(r_state_specification_list);
       for (int i = 0; i < number_of_state_models; ++i) {
         model_->add_state(
             CreateStateModel(VECTOR_ELT(r_state_specification_list, i),
-                             prefix,
-                             &callbacks));
+                             prefix));
       }
-      for (int i = 0; i < callbacks.size(); ++i) {
-        callbacks[i](model_);
-      }
+      InstallPostStateListElements();
     }
 
     // A factory function that unpacks information from an R object
@@ -71,60 +86,87 @@ namespace BOOM{
     // comments to the worker functions that implement each specific
     // type.
     // Args:
-    //   list_arg:  The R object created by AddXXX
+    //   r_state_component:  The R object created by AddXXX.
     //   prefix: An optional prefix to be prepended to the name of the
     //     state component in the io_manager.
-    //   callbacks: A vector of callbacks to be executed once all
-    //     state has been added.  Each callback will be passed a
-    //     pointer to the StateSpaceModelBase that is receiving the
-    //     state models being created here.  This is useful for
-    //     storing elements of state that won't be computable until
-    //     after all state models have been added.
     // Returns:
     //   A BOOM smart pointer to the appropriately typed StateModel.
     Ptr<StateModel> StateModelFactory::CreateStateModel(
-        SEXP list_arg, const std::string &prefix, CallbackVector * callbacks) {
-      if (Rf_inherits(list_arg, "LocalLinearTrend")) {
-        return CreateLocalLinearTrend(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "Seasonal")) {
-        return CreateSeasonal(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "SemilocalLinearTrend")) {
-        return CreateSemilocalLinearTrend(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "LocalLevel")) {
-        return CreateLocalLevel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "Holiday")) {
-        return CreateRandomWalkHolidayStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "DynamicRegression")) {
-        return CreateDynamicRegressionStateModel(list_arg, prefix, callbacks);
-      } else if (Rf_inherits(list_arg, "AutoAr")) {
+        SEXP r_state_component,
+        const std::string &prefix) {
+      if (Rf_inherits(r_state_component, "AutoAr")) {
         // AutoAr also inherits from ArProcess, so this case must be
         // handled before ArProcess.
-        return CreateAutoArStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "ArProcess")) {
-        return CreateArStateModel(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "StudentLocalLinearTrend")) {
-        return CreateStudentLocalLinearTrend(list_arg, prefix);
-      } else if (Rf_inherits(list_arg, "Trig")) {
-        return CreateTrigStateModel(list_arg, prefix);
+        return CreateAutoArStateModel(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "ArProcess")) {
+        return CreateArStateModel(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "DynamicRegression")) {
+        SEXP r_model_options = getListElement(
+            r_state_component, "model.options");
+        if (Rf_inherits(
+                r_model_options, "DynamicRegressionRandomWalkOptions")) {
+          return CreateDynamicRegressionStateModel(r_state_component, prefix);
+        } else if (Rf_inherits(
+            r_model_options, "DynamicRegressionArOptions")) {
+          return CreateDynamicRegressionArStateModel(r_state_component, prefix);
+        } else {
+          report_error("Unrecognized 'model.options' object in dynamic "
+                       "regression state component.");
+          return Ptr<StateModel>(nullptr);
+        }
+      } else if (Rf_inherits(r_state_component, "LocalLevel")) {
+        return CreateLocalLevel(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "LocalLinearTrend")) {
+        return CreateLocalLinearTrend(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "Monthly")) {
+        return CreateMonthlyAnnualCycle(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "Seasonal")) {
+        return CreateSeasonal(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "SemilocalLinearTrend")) {
+        return CreateSemilocalLinearTrend(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "StaticIntercept")) {
+        return CreateStaticIntercept(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "StudentLocalLinearTrend")) {
+        return CreateStudentLocalLinearTrend(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "Trig")) {
+        return CreateTrigStateModel(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "RandomWalkHolidayStateModel")) {
+        return CreateRandomWalkHolidayStateModel(r_state_component, prefix);
+      } else if (Rf_inherits(
+          r_state_component, "HierarchicalRegressionHolidayStateModel")) {
+        return CreateHierarchicalRegressionHolidayStateModel(r_state_component, prefix);
+      } else if (Rf_inherits(r_state_component, "RegressionHolidayStateModel")) {
+        return CreateRegressionHolidayStateModel(r_state_component, prefix);
+      } else {
+        std::ostringstream err;
+        err << "Unknown object passed where state model expected." << endl;
+        std::vector<std::string> class_info = StringVector(
+            Rf_getAttrib(r_state_component, R_ClassSymbol));
+        if (class_info.empty()) {
+          err << "Object has no class attribute." << endl;
+        } else if (class_info.size() == 1) {
+          err << "Object is of class " << class_info[0] << "." << endl;
+        } else {
+          err << "Object has class:" << endl;
+          for (int i = 0; i < class_info.size(); ++i) {
+            err << "     " << class_info[i] << endl;
+          }
+          report_error(err.str());
+        }
+        return nullptr;
       }
-
-      // Should never get here
-      report_error("Unknown state model type.");
-
-      Ptr<StateModel> keep_compiler_quiet;
-      return keep_compiler_quiet;
     }
 
     // A callback class for recording the final state that the
-    // StateSpaceModelBase sampled in an MCMC iteration.
+    // ScalarStateSpaceModelBase sampled in an MCMC iteration.
     class FinalStateCallback : public VectorIoCallback {
      public:
-      explicit FinalStateCallback(StateSpaceModelBase *model)
+      explicit FinalStateCallback(ScalarStateSpaceModelBase *model)
           : model_(model) {}
       virtual int dim() const {return model_->state_dimension();}
       virtual Vector get_vector() const { return model_->final_state();}
      private:
-      StateSpaceModelBase * model_;
+      ScalarStateSpaceModelBase * model_;
     };
 
     void StateModelFactory::SaveFinalState(
@@ -145,12 +187,11 @@ namespace BOOM{
 
     //======================================================================
     LocalLevelStateModel * StateModelFactory::CreateLocalLevel(
-        SEXP list_arg, const std::string &prefix) {
-
-      SdPrior sigma_prior_spec(getListElement(list_arg, "sigma.prior"));
+        SEXP r_state_component, const std::string &prefix) {
+      SdPrior sigma_prior_spec(getListElement(
+          r_state_component, "sigma.prior"));
       NormalPrior initial_state_prior(getListElement(
-          list_arg, "initial.state.prior"));
-
+          r_state_component, "initial.state.prior"));
       LocalLevelStateModel * level(
           new LocalLevelStateModel(sigma_prior_spec.initial_value()));
 
@@ -191,24 +232,24 @@ namespace BOOM{
 
     //======================================================================
     // See comments to CreateStateModel.  This function expects a
-    // list_arg created by R's AddLocalLinearTrend.
+    // r_state_component created by R's AddLocalLinearTrend.
     LocalLinearTrendStateModel * StateModelFactory::CreateLocalLinearTrend(
-        SEXP list_arg, const std::string &prefix) {
+        SEXP r_state_component, const std::string &prefix) {
 
       LocalLinearTrendStateModel * local_linear_trend(
           new LocalLinearTrendStateModel);
 
       SdPrior level_sigma_prior_spec(
-          getListElement(list_arg, "level.sigma.prior"));
+          getListElement(r_state_component, "level.sigma.prior"));
       SdPrior slope_sigma_prior_spec(
-          getListElement(list_arg, "slope.sigma.prior"));
+          getListElement(r_state_component, "slope.sigma.prior"));
 
       //----------------------------------------------------------------------
       // Set the prior for the initial state.
       NormalPrior level_initial_value_prior_spec(
-          getListElement(list_arg, "initial.level.prior"));
+          getListElement(r_state_component, "initial.level.prior"));
       NormalPrior slope_initial_value_prior_spec(
-          getListElement(list_arg, "initial.slope.prior"));
+          getListElement(r_state_component, "initial.slope.prior"));
 
       Vector initial_state_mean(2);
       initial_state_mean[0] = level_initial_value_prior_spec.mu();
@@ -328,7 +369,7 @@ namespace BOOM{
 
     StudentLocalLinearTrendStateModel *
     StateModelFactory::CreateStudentLocalLinearTrend(
-        SEXP list_arg, const std::string &prefix) {
+        SEXP r_state_component, const std::string &prefix) {
 
       StudentLocalLinearTrendStateModel * robust_local_linear_trend(
           new StudentLocalLinearTrendStateModel(1, 10, 1, 10));
@@ -336,19 +377,19 @@ namespace BOOM{
       //----------------------------------------------------------------------
       // Unpack the prior and create the posterior sampler.
       SdPrior level_sigma_prior_spec(
-          getListElement(list_arg, "level.sigma.prior"));
+          getListElement(r_state_component, "level.sigma.prior"));
       NEW(ChisqModel, level_sigma_prior)(
           level_sigma_prior_spec.prior_df(),
           level_sigma_prior_spec.prior_guess());
       SdPrior slope_sigma_prior_spec(
-          getListElement(list_arg, "slope.sigma.prior"));
+          getListElement(r_state_component, "slope.sigma.prior"));
       NEW(ChisqModel, slope_sigma_prior)(
           slope_sigma_prior_spec.prior_df(),
           slope_sigma_prior_spec.prior_guess());
       Ptr<DoubleModel> level_nu_prior(create_double_model(
-          getListElement(list_arg, "level.nu.prior")));
+          getListElement(r_state_component, "level.nu.prior")));
       Ptr<DoubleModel> slope_nu_prior(create_double_model(
-          getListElement(list_arg, "slope.nu.prior")));
+          getListElement(r_state_component, "slope.nu.prior")));
 
       NEW(StudentLocalLinearTrendPosteriorSampler, sampler)(
           robust_local_linear_trend,
@@ -365,9 +406,9 @@ namespace BOOM{
       //----------------------------------------------------------------------
       // Set the prior for the initial state.
       NormalPrior level_initial_value_prior_spec(
-          getListElement(list_arg, "initial.level.prior"));
+          getListElement(r_state_component, "initial.level.prior"));
       NormalPrior slope_initial_value_prior_spec(
-          getListElement(list_arg, "initial.slope.prior"));
+          getListElement(r_state_component, "initial.slope.prior"));
 
       Vector initial_state_mean(2);
       initial_state_mean[0] = level_initial_value_prior_spec.mu();
@@ -403,7 +444,7 @@ namespace BOOM{
                 prefix + "nu.trend.slope"));
 
         bool save_weights = Rf_asInteger(getListElement(
-            list_arg, "save.weights"));
+            r_state_component, "save.weights"));
         if (save_weights) {
           io_manager_->add_list_element(
               new NativeVectorListElement(
@@ -424,16 +465,26 @@ namespace BOOM{
       return robust_local_linear_trend;
     }
     //======================================================================
+    StaticInterceptStateModel *StateModelFactory::CreateStaticIntercept(
+        SEXP r_state_component, const std::string &prefix) {
+      StaticInterceptStateModel *intercept = new StaticInterceptStateModel;
+      RInterface::NormalPrior initial_state_prior(getListElement(
+          r_state_component, "initial.state.prior"));
+      intercept->set_initial_state_mean(initial_state_prior.mu());
+      intercept->set_initial_state_variance(initial_state_prior.sigsq());
+      return intercept;
+    }
+    //======================================================================
     TrigStateModel *StateModelFactory::CreateTrigStateModel(
-        SEXP list_arg, const std::string &prefix) {
-      double period = Rf_asReal(getListElement(list_arg, "period"));
+        SEXP r_state_component, const std::string &prefix) {
+      double period = Rf_asReal(getListElement(r_state_component, "period"));
       Vector frequencies = ToBoomVector(getListElement(
-          list_arg, "frequencies"));
+          r_state_component, "frequencies"));
       TrigStateModel * trig_state_model(
           new TrigStateModel(period, frequencies));
 
       //-------------- set the prior and the posterior sampler.
-      SdPrior sigma_prior(getListElement(list_arg, "sigma.prior"));
+      SdPrior sigma_prior(getListElement(r_state_component, "sigma.prior"));
       int dimension = trig_state_model->dim();
       NEW(ChisqModel, single_siginv_prior)(
           sigma_prior.prior_df(),
@@ -451,7 +502,8 @@ namespace BOOM{
       trig_state_model->set_method(sampler);
 
       //-------------- set the prior for the initial state
-      MvnPrior initial_prior(getListElement(list_arg, "initial.state.prior"));
+      MvnPrior initial_prior(getListElement(
+          r_state_component, "initial.state.prior"));
       trig_state_model->set_initial_state_mean(initial_prior.mu());
       trig_state_model->set_initial_state_variance(initial_prior.Sigma());
 
@@ -466,18 +518,18 @@ namespace BOOM{
     //======================================================================
     SemilocalLinearTrendStateModel *
     StateModelFactory::CreateSemilocalLinearTrend(
-        SEXP list_arg, const std::string &prefix) {
+        SEXP r_state_component, const std::string &prefix) {
 
       SdPrior level_sigma_prior_spec(getListElement(
-          list_arg, "level.sigma.prior"));
+          r_state_component, "level.sigma.prior"));
       NEW(ZeroMeanGaussianModel, level)(level_sigma_prior_spec.initial_value());
 
       NormalPrior slope_mean_prior_spec(getListElement(
-          list_arg, "slope.mean.prior"));
+          r_state_component, "slope.mean.prior"));
       Ar1CoefficientPrior slope_ar1_prior_spec(getListElement(
-          list_arg, "slope.ar1.prior"));
+          r_state_component, "slope.ar1.prior"));
       SdPrior slope_sd_prior_spec(getListElement(
-          list_arg, "slope.sigma.prior"));
+          r_state_component, "slope.sigma.prior"));
 
       NEW(NonzeroMeanAr1Model, slope)(slope_mean_prior_spec.initial_value(),
                                       slope_ar1_prior_spec.initial_value(),
@@ -541,9 +593,9 @@ namespace BOOM{
       trend->set_method(slope_sampler);
 
       NormalPrior level_initial_value_prior(getListElement(
-          list_arg, "initial.level.prior"));
+          r_state_component, "initial.level.prior"));
       NormalPrior slope_initial_value_prior(getListElement(
-          list_arg, "initial.slope.prior"));
+          r_state_component, "initial.slope.prior"));
 
       // Finally, the last task is to set the prior for the initial
       // value of the state
@@ -576,55 +628,148 @@ namespace BOOM{
 
     //======================================================================
     // See comments to CreateStateModel.  This function expects a
-    // list_arg created by R's AddSeasonal.
+    // r_state_component created by R's AddSeasonal.
+
+    namespace {
+
+      //  This code is shared between the SeasonalStateModel and the
+      //  MonthlyAnnualCycle.
+      template <class SEASONAL>
+      void set_initial_state_prior(SEASONAL *component,
+                                   SEXP r_state_component) {
+        // Set prior distribution for initial state.
+        SEXP r_initial_state_prior(getListElement(
+            r_state_component, "initial.state.prior"));
+        if (Rf_inherits(r_initial_state_prior, "NormalPrior")) {
+          NormalPrior initial_value_prior_spec(r_initial_state_prior);
+          component->set_initial_state_variance(
+              square(initial_value_prior_spec.sigma()));
+        } else if (Rf_inherits(r_initial_state_prior, "MvnDiagonalPrior")) {
+          MvnDiagonalPrior initial_value_prior_spec(r_initial_state_prior);
+          component->set_initial_state_mean(
+              initial_value_prior_spec.mean());
+          SpdMatrix variance(initial_value_prior_spec.sd().size());
+          variance.set_diag(pow(initial_value_prior_spec.sd(), 2));
+          component->set_initial_state_variance(variance);
+        } else if (Rf_inherits(r_initial_state_prior, "MvnPrior")) {
+          MvnPrior spec(r_initial_state_prior);
+          component->set_initial_state_mean(spec.mu());
+          component->set_initial_state_variance(spec.Sigma());
+        }
+      }
+
+      template <class SEASONAL>
+      void set_posterior_sampler(SEASONAL *component,
+                                 const SdPrior &sigma_prior_spec) {
+        // Set prior distribution for variance parameter
+        if (sigma_prior_spec.fixed()) {
+          Ptr<FixedUnivariateSampler> sampler(
+              new FixedUnivariateSampler(
+                  component->Sigsq_prm(),
+                  component->sigsq()));
+          component->set_method(sampler);
+        } else {
+          Ptr<ZeroMeanGaussianConjSampler> sampler(
+              new ZeroMeanGaussianConjSampler(component,
+                                              sigma_prior_spec.prior_df(),
+                                              sigma_prior_spec.prior_guess()));
+
+          if (sigma_prior_spec.upper_limit() > 0) {
+            sampler->set_sigma_upper_limit(sigma_prior_spec.upper_limit());
+          }
+          component->set_method(sampler);
+        }
+      }
+
+
+      // Returns the position of the specified state model in the state space
+      // model.  If the state space model is nullptr or the state model is not
+      // found, then -1 is returned.
+      int state_model_position(ScalarStateSpaceModelBase *model,
+                               StateModel *state_model) {
+        if (!model) {
+          return -1;
+        } else {
+          for (int i = 0; i < model->nstate(); ++i) {
+            if (model->state_model(i).get() == state_model) {
+              return i;
+            }
+          }
+        }
+        return -1;
+      }
+
+    }  // namespace
+
+    // Args:
+    //   holiday_spec: An R list describing a single holiday.  Must inherit from
+    //     class 'Holiday' and from a specific holiday class.  Class membership
+    //     is used to dispatch the right method of object creation.
+    // Returns:
+    //   A raw pointer to a Holiday object of the type specified by the R-class
+    //   attribute of holiday_spec.  The pointer should be immediately caught by
+    //   a Ptr.
+    Holiday * StateModelFactory::CreateHoliday(SEXP holiday_spec) {
+      if (Rf_inherits(holiday_spec, "NthWeekdayInMonthHoliday")) {
+        int week = Rf_asInteger(getListElement(holiday_spec, "week.number"));
+        std::string day = ToString(getListElement(holiday_spec, "day.of.week"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new NthWeekdayInMonthHoliday(
+            week, str2day(day), str2month(month),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "LastWeekdayInMonthHoliday")) {
+        std::string day = ToString(getListElement(holiday_spec, "day.of.week"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new LastWeekdayInMonthHoliday(
+            str2day(day),
+            str2month(month),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "FixedDateHoliday")) {
+        int day = Rf_asInteger(getListElement(holiday_spec, "day"));
+        std::string month = ToString(getListElement(holiday_spec, "month"));
+        return new FixedDateHoliday(
+            str2month(month),
+            day,
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else if (Rf_inherits(holiday_spec, "DateRangeHoliday")) {
+        std::vector<Date> start_date = ToBoomDateVector(getListElement(
+            holiday_spec, "start.date", true));
+        std::vector<Date> end_date = ToBoomDateVector(getListElement(
+            holiday_spec, "end.date", true));
+        return new DateRangeHoliday(start_date, end_date);
+      } else if (Rf_inherits(holiday_spec, "NamedHoliday")) {
+        return BOOM::CreateNamedHoliday(
+            ToString(getListElement(holiday_spec, "name")),
+            Rf_asInteger(getListElement(holiday_spec, "days.before")),
+            Rf_asInteger(getListElement(holiday_spec, "days.after")));
+      } else {
+        report_error("Unknown holiday type passed to CreateHoliday.");
+        return nullptr;
+      }
+    }
+
     SeasonalStateModel * StateModelFactory::CreateSeasonal(
-        SEXP list_arg, const std::string &prefix) {
+        SEXP r_state_component, const std::string &prefix) {
 
       int nseasons = Rf_asInteger(getListElement(
-          list_arg, "nseasons"));
+          r_state_component, "nseasons"));
       int season_duration = Rf_asInteger(getListElement(
-          list_arg, "season.duration"));
+          r_state_component, "season.duration"));
       SdPrior sigma_prior_spec(getListElement(
-          list_arg, "sigma.prior"));
+          r_state_component, "sigma.prior"));
 
       SeasonalStateModel * seasonal(
           new SeasonalStateModel(nseasons, season_duration));
       seasonal->set_sigsq(square(sigma_prior_spec.initial_value()));
 
       // Set prior distribution for initial state.
-      SEXP r_initial_state_prior(getListElement(
-          list_arg, "initial.state.prior"));
-      if (Rf_inherits(r_initial_state_prior, "NormalPrior")) {
-        NormalPrior initial_value_prior_spec(r_initial_state_prior);
-        seasonal->set_initial_state_variance(
-            square(initial_value_prior_spec.sigma()));
-      } else if (Rf_inherits(r_initial_state_prior, "MvnDiagonalPrior")) {
-        MvnDiagonalPrior initial_value_prior_spec(r_initial_state_prior);
-        seasonal->set_initial_state_mean(
-            initial_value_prior_spec.mean());
-        SpdMatrix variance(initial_value_prior_spec.sd().size());
-        variance.set_diag(pow(initial_value_prior_spec.sd(), 2));
-        seasonal->set_initial_state_variance(variance);
-      }
+      set_initial_state_prior(seasonal, r_state_component);
 
       // Set prior distribution for variance parameter
-      if (sigma_prior_spec.fixed()) {
-        Ptr<FixedUnivariateSampler> sampler(
-            new FixedUnivariateSampler(
-                seasonal->Sigsq_prm(),
-                seasonal->sigsq()));
-        seasonal->set_method(sampler);
-      } else {
-        Ptr<ZeroMeanGaussianConjSampler> sampler(
-            new ZeroMeanGaussianConjSampler(seasonal,
-                                            sigma_prior_spec.prior_df(),
-                                            sigma_prior_spec.prior_guess()));
-
-        if (sigma_prior_spec.upper_limit() > 0) {
-          sampler->set_sigma_upper_limit(sigma_prior_spec.upper_limit());
-        }
-        seasonal->set_method(sampler);
-      }
+      set_posterior_sampler(seasonal, sigma_prior_spec);
 
       std::ostringstream parameter_name;
       parameter_name  <<  "sigma.seasonal" << "." << nseasons;
@@ -638,18 +783,40 @@ namespace BOOM{
       }
       return seasonal;
     }
+    //======================================================================
+    MonthlyAnnualCycle *StateModelFactory::CreateMonthlyAnnualCycle(
+        SEXP r_state_component, const std::string &prefix) {
+      Date date_of_first_observation(
+          Rf_asInteger(getListElement(
+              r_state_component, "first.observation.month")),
+          Rf_asInteger(getListElement(
+              r_state_component, "first.observation.day")),
+          Rf_asInteger(getListElement(
+              r_state_component, "first.observation.year")));
+      MonthlyAnnualCycle *monthly =
+          new MonthlyAnnualCycle(date_of_first_observation);
+      SdPrior sigma_prior_spec(getListElement(
+          r_state_component, "sigma.prior"));
+      monthly->set_sigsq(square(sigma_prior_spec.initial_value()));
+      set_initial_state_prior(monthly, r_state_component);
+      set_posterior_sampler(monthly, sigma_prior_spec);
+      if (io_manager_) {
+        io_manager_->add_list_element(new StandardDeviationListElement(
+            monthly->Sigsq_prm(),
+            prefix + "Monthly"));
+      }
+      return monthly;
+    }
 
     //======================================================================
-    // Creates a holiday state model.
-    // Args:
-    //   list_arg: An R object inheriting from class "Holiday".  This
+    // Creates a random walk holiday state model.
+    //   r_state_component: An R object inheriting from class "Holiday".  This
     //     is a list with a named element "holidays".
     //   prefix: An optional prefix to be prepended to the name of the
     //     state component in the io_manager.
     RandomWalkHolidayStateModel *
     StateModelFactory::CreateRandomWalkHolidayStateModel(
         SEXP list_arg, const std::string &prefix) {
-
       std::string holiday_name = GetStringFromList(list_arg, "name");
       int days_before = Rf_asInteger(getListElement(list_arg, "days.before"));
       int days_after = Rf_asInteger(getListElement(list_arg, "days.after"));
@@ -726,12 +893,131 @@ namespace BOOM{
       return holiday_model;
     }
 
+    //=========================================================================
+    RegressionHolidayStateModel *
+    StateModelFactory::CreateRegressionHolidayStateModel(
+        SEXP r_state_specification, const std::string &prefix) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      Ptr<UnivParams> residual_variance = GetResidualVarianceParameter();
+      NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
+      NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
+
+      RegressionHolidayStateModel *holiday_model =
+          new RegressionHolidayStateModel(
+              time_zero, residual_variance, prior);
+
+      RMemoryProtector holiday_list_protector;
+      SEXP r_holidays = holiday_list_protector.protect(
+          getListElement(r_state_specification, "holidays"));
+
+      int number_of_holidays = Rf_length(r_holidays);
+      for (int i = 0; i < number_of_holidays; ++i) {
+        RMemoryProtector holiday_protector;
+        SEXP r_holiday = holiday_protector.protect(VECTOR_ELT(r_holidays, i));
+        Ptr<Holiday> holiday = CreateHoliday(r_holiday);
+        std::string holiday_name = ToString(getListElement(r_holiday, "name"));
+        holiday_model->add_holiday(holiday);
+        io_manager_->add_list_element(new VectorListElement(
+            holiday_model->holiday_pattern_parameter(i),
+            holiday_name));
+      }
+      return holiday_model;
+    }
+
+    Ptr<UnivParams> StateModelFactory::GetResidualVarianceParameter() {
+      // Get the residual variance from the observation model.  This requires a
+      // cast, and can only be done with observation models that use Gaussian
+      // errors.
+      Ptr<UnivParams> residual_variance;
+      PosteriorModeModel *observation_model = model_->observation_model();
+      if (ZeroMeanGaussianModel *gaussian =
+          dynamic_cast<ZeroMeanGaussianModel *>(observation_model)) {
+        residual_variance = gaussian->Sigsq_prm();
+      } else if (RegressionModel *regression =
+                 dynamic_cast<RegressionModel *>(observation_model)) {
+        residual_variance = regression->Sigsq_prm();
+      } else {
+        report_error("You have specified a state model that can only be "
+                     "used with Gaussian observation errors.  Maybe that will "
+                     "change one day (but what do we say to Death, Arya?).");
+        residual_variance = nullptr;
+      }
+      return residual_variance;
+    }
+          
+    //=========================================================================
+    // Args:
+    //   r_state_specification: An R object of class
+    //     ShrinkageRegressionHolidayModel detailing the model to be built.
+    HierarchicalRegressionHolidayStateModel *
+    StateModelFactory::CreateHierarchicalRegressionHolidayStateModel(
+        SEXP r_state_specification, const std::string &prefix) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      HierarchicalRegressionHolidayStateModel *holiday_model =
+          new HierarchicalRegressionHolidayStateModel(
+              time_zero, GetResidualVarianceParameter());
+      SEXP r_holidays = getListElement(r_state_specification, "holidays");
+      int number_of_holidays = Rf_length(r_holidays);
+      std::vector<std::string> holiday_names;
+      for (int i = 0; i < number_of_holidays; ++i) {
+        SEXP r_holiday = VECTOR_ELT(r_holidays, i);
+        Ptr<Holiday> holiday = CreateHoliday(r_holiday);
+        holiday_names.push_back(ToString(getListElement(
+            r_holiday, "name")));
+        holiday_model->add_holiday(holiday);
+      }
+
+      // Unpack the priors and set the posterior sampler.
+      MvnPrior coefficient_mean_prior_spec(
+          getListElement(r_state_specification, "coefficient.mean.prior"));
+      NEW(MvnModel, coefficient_mean_prior)(
+          coefficient_mean_prior_spec.mu(),
+          coefficient_mean_prior_spec.Sigma());
+      InverseWishartPrior coefficient_variance_prior_spec(
+          getListElement(r_state_specification, "coefficient.variance.prior"));
+      NEW(WishartModel, coefficient_variance_prior)(
+          coefficient_variance_prior_spec.variance_guess_weight(),
+          coefficient_variance_prior_spec.variance_guess());
+
+      NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
+          holiday_model->model(),
+          coefficient_mean_prior,
+          coefficient_variance_prior,
+          nullptr);
+      // This is one of the rare situations where the model holding the sampler
+      // is not the model being updated.  holiday_model owns the model being
+      // updated.
+      holiday_model->set_method(sampler);
+
+      // Set up the io_manager
+      std::vector<Ptr<VectorParams>> holiday_coefficients;
+      for (int i = 0; i < number_of_holidays; ++i) {
+        holiday_coefficients.push_back(
+            holiday_model->model()->data_model(i)->coef_prm());
+      }
+      HierarchicalVectorListElement *coefficient_io =  
+          new HierarchicalVectorListElement(
+              holiday_coefficients,
+              prefix + "holiday.coefficients");
+      coefficient_io->set_group_names(holiday_names);
+      io_manager_->add_list_element(coefficient_io);
+
+      io_manager_->add_list_element(
+          new VectorListElement(holiday_model->model()->prior()->Mu_prm(),
+                                prefix + "holiday.coefficient.mean"));
+      io_manager_->add_list_element(
+          new SpdListElement(holiday_model->model()->prior()->Sigma_prm(),
+                             prefix + "holiday.coefficient.variance"));
+      return holiday_model;
+    }
+    
     //======================================================================
     ArStateModel * StateModelFactory::CreateArStateModel(
-        SEXP list_arg, const std::string & prefix) {
-
-      SdPrior sigma_prior_spec(getListElement(list_arg, "sigma.prior"));
-      int number_of_lags = Rf_asInteger(getListElement(list_arg, "lags"));
+        SEXP r_state_component, const std::string & prefix) {
+      SdPrior sigma_prior_spec(getListElement(r_state_component, "sigma.prior"));
+      int number_of_lags = Rf_asInteger(getListElement(r_state_component, "lags"));
       ArStateModel *state_model(new ArStateModel(number_of_lags));
 
       NEW(ChisqModel, siginv_prior)(sigma_prior_spec.prior_df(),
@@ -762,12 +1048,12 @@ namespace BOOM{
     }
     //======================================================================
     ArStateModel * StateModelFactory::CreateAutoArStateModel(
-        SEXP list_arg, const std::string & prefix) {
-      int number_of_lags = Rf_asInteger(getListElement(list_arg, "lags"));
+        SEXP r_state_component, const std::string & prefix) {
+      int number_of_lags = Rf_asInteger(getListElement(
+          r_state_component, "lags"));
       ArStateModel *state_model(new ArStateModel(number_of_lags));
-
-      ArSpikeSlabPrior prior_spec(getListElement(list_arg, "prior"));
-
+      ArSpikeSlabPrior prior_spec(getListElement(
+          r_state_component, "prior"));
       NEW(ArSpikeSlabSampler, sampler)(state_model,
                                        prior_spec.slab(),
                                        prior_spec.spike(),
@@ -808,102 +1094,87 @@ namespace BOOM{
     }
 
     //======================================================================
-    // This is a callback designed to be used with a
-    // NativeMatrixListElement in an R io_manager.  When this callback
-    // is invoked it grabs the dynamic regression component of the
-    // model's current state.  It is needed so that the dynamic
-    // regression can store the dynamic regression coefficients at
-    // each iteration.
-    class DynamicRegressionStateCallback : public BOOM::MatrixIoCallback {
+    // This is a callback designed to be used with a NativeMatrixListElement in
+    // an R io_manager.  Invoking this callback grabs the dynamic regression
+    // component of the model's current state, allowing the model to store the
+    // dynamic regression coefficients at each iteration.
+    class DynamicRegressionRandomWalkStateCallback : public BOOM::MatrixIoCallback {
      public:
-      DynamicRegressionStateCallback(BOOM::StateSpaceModelBase *model,
-                                     BOOM::DynamicRegressionStateModel
-                                         *state_model,
-                                     int model_position)
+      DynamicRegressionRandomWalkStateCallback(
+          BOOM::ScalarStateSpaceModelBase *model,
+          DynamicRegressionStateModel *state_model)
           : model_(model),
             state_model_(state_model),
-            model_position_(model_position) {}
+            model_position_(-1) {}
 
       // There is one row for each dynamic regression coefficient.
-      virtual int nrow() const {return state_model_->state_dimension(); }
-      virtual int ncol() const {return model_->time_dimension();}
-      virtual BOOM::Matrix get_matrix() const {
-        return model_->full_state_subcomponent(model_position_);
+      int nrow() const override {return state_model_->state_dimension(); }
+      int ncol() const override {return model_->time_dimension();}
+      BOOM::Matrix get_matrix() const override {
+        if (model_position_ < 0) determine_model_position();
+        return model_->full_state_subcomponent(model_position_).to_matrix();
+      }
+
+      void determine_model_position() const {
+        model_position_ = state_model_position(model_, state_model_);
       }
 
      private:
-      BOOM::StateSpaceModelBase * model_;
-      BOOM::DynamicRegressionStateModel * state_model_;
-      int model_position_;
+      BOOM::ScalarStateSpaceModelBase *model_;
+      DynamicRegressionStateModel *state_model_;
+      mutable int model_position_;
     };
 
-    //======================================================================
-    // A callback for adding dynamic regression coefficients to the
-    // io_manager for a StateSpaceModel.
-    class RecordDynamicRegressionCallback {
+    // When called, this callback will record the current values of the
+    // coefficients in a DynamicRegressionArStateModel.
+    class DynamicRegressionArStateCallback : public BOOM::MatrixIoCallback {
      public:
-      // Args:
-      //   model: The state space model that may or may not have a dynamic
-      //     regression state component to be recorded.
-      //   io_manager: The io_manager in charge of building the list
-      //     containing the dynamic regression coefficients.
-      RecordDynamicRegressionCallback(
-          DynamicRegressionStateModel *dynamic_regression,
-          RListIoManager* io_manager)
-          : dynamic_regression_(dynamic_regression),
-            io_manager_(io_manager) {}
-
-      // Adds an element to the io_manager that records the
-      // coefficients of the dynamic regression model.
-      void operator()(StateSpaceModelBase* model) {
-        if (io_manager_) {
-          std::string list_element_name = "dynamic.regression.coefficients";
-          int model_position = compute_model_position(model);
-          BOOM::NativeMatrixListElement * state_recorder(
-              new NativeMatrixListElement(
-                  new DynamicRegressionStateCallback(
-                      model,
-                      dynamic_regression_,
-                      model_position),
-                  list_element_name.c_str(),
-                  NULL));
-          state_recorder->set_row_names(dynamic_regression_->xnames());
-          io_manager_->add_list_element(state_recorder);
+      DynamicRegressionArStateCallback(BOOM::ScalarStateSpaceModelBase *model,
+                                       DynamicRegressionArStateModel *state_model)
+          : model_(model),
+            state_model_(state_model),
+            model_position_(-1) {}
+      int nrow() const override {return state_model_->xdim();}
+      int ncol() const override {return model_->time_dimension();}
+      BOOM::Matrix get_matrix() const override {
+        if (model_position_ < 0) determine_model_position();
+        int lags = state_model_->number_of_lags();
+        Matrix ans(nrow(), ncol());
+        int row_index = 0;
+        const ConstSubMatrix
+            state(model_->full_state_subcomponent(model_position_));
+        for (int i = 0; i < nrow(); ++i) {
+          ans.row(i) = state.row(row_index);
+          row_index += lags;
         }
+        return ans;
       }
 
-      // Compute the position of the dynamic regression state model in
-      // the list of state components.
-      int compute_model_position(StateSpaceModelBase *model) const {
-        for (int i = 0; i < model->nstate(); ++i) {
-          if(model->state_model(i).get() == dynamic_regression_) {
-            return i;
-          }
-        }
-        report_error("Could not determine the position of "
-                     "DynamicRegressionStateModel.");
-        return -1;
+      void determine_model_position() const {
+        model_position_ = state_model_position(model_, state_model_);
       }
 
      private:
-      DynamicRegressionStateModel *dynamic_regression_;
-      RListIoManager * io_manager_;
+      BOOM::ScalarStateSpaceModelBase *model_;
+      DynamicRegressionArStateModel *state_model_;
+      mutable int model_position_;
     };
 
     //======================================================================
-    //
     DynamicRegressionStateModel *
     StateModelFactory::CreateDynamicRegressionStateModel(
-        SEXP list_arg, const std::string &prefix, CallbackVector *callbacks) {
-
-      SEXP r_design_matrix(getListElement(list_arg, "predictors"));
-      Matrix X = ToBoomMatrix(r_design_matrix);
-      // Get colnames for X.  The R code should ensure that X has them.
+        SEXP r_state_component,
+        const std::string &prefix) {
+      SEXP r_model_options = getListElement(r_state_component, "model.options");
+      SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
+      Matrix predictors = ToBoomMatrix(r_design_matrix);
+      // Get colnames for predictors.  The R code should ensure that
+      // 'predictors' has them.
       std::vector<std::string> xnames =
           StringVector(Rf_GetColNames(r_design_matrix));
       if (xnames.empty()) {
-        xnames.reserve(ncol(X));
-        for (int i = 0; i < ncol(X); ++i) {
+        xnames.reserve(ncol(predictors));
+        for (int i = 0; i < ncol(predictors); ++i) {
           std::ostringstream name_maker;
           name_maker << "V" << i+1;
           xnames.push_back(name_maker.str());
@@ -911,15 +1182,15 @@ namespace BOOM{
       }
 
       DynamicRegressionStateModel * dynamic_regression(
-          new DynamicRegressionStateModel(X));
+          new DynamicRegressionStateModel(predictors));
       dynamic_regression->set_xnames(xnames);
 
       Ptr<DoubleModel> sigma_mean_prior =
           create_double_model(getListElement(
-              list_arg, "sigma.mean.prior"));
+              r_model_options, "sigma.mean.prior"));
       Ptr<DoubleModel> shrinkage_parameter_prior =
           create_double_model(getListElement(
-              list_arg, "shrinkage.parameter.prior"));
+              r_model_options, "shrinkage.parameter.prior"));
 
       NEW(GammaModel, siginv_prior)(1, 1);
       NEW(GammaPosteriorSampler, hyperparameter_sampler)(
@@ -930,11 +1201,16 @@ namespace BOOM{
 
       NEW(DynamicRegressionPosteriorSampler, sampler)(
           dynamic_regression, siginv_prior);
+      double sigma_max = Rf_asReal(getListElement(
+          r_model_options, "sigma.max"));
+      if (std::isfinite(sigma_max)) {
+        sampler->set_sigma_max(sigma_max);
+      }
       dynamic_regression->set_method(sampler);
 
       if (io_manager_) {
         // Store the standard deviations for each variable.
-        for (int i = 0; i < ncol(X); ++i) {
+        for (int i = 0; i < ncol(predictors); ++i) {
           std::ostringstream vname;
           vname << prefix << xnames[i] << ".sigma";
           io_manager_->add_list_element(new StandardDeviationListElement(
@@ -952,17 +1228,98 @@ namespace BOOM{
             siginv_prior->Beta_prm(),
             prefix + "siginv_scale_hyperparameter"));
 
-        if (callbacks) {
-          // We need to add a component to the io_manager so that it will
-          // record the state of the dynamic regression coefficients.
-          // This should be done in a callback so that the returned object
-          // has all the model parameters grouped together.  The
-          // RecordDynamicRegressionCallback will be invoked after all the
-          // components of state have been created.
-          RecordDynamicRegressionCallback callback(
-              dynamic_regression, io_manager_);
-          callbacks->push_back(callback);
+        NativeMatrixListElement *dynamic_regression_coefficients(
+            new NativeMatrixListElement(
+                new DynamicRegressionRandomWalkStateCallback(
+                    model_,
+                    dynamic_regression),
+                "dynamic.regression.coefficients",
+                nullptr));
+        dynamic_regression_coefficients->set_row_names(xnames);
+        post_state_list_elements_.push_back(dynamic_regression_coefficients);
+      }
+      return dynamic_regression;
+    }
+
+    //======================================================================
+    DynamicRegressionArStateModel *
+    StateModelFactory::CreateDynamicRegressionArStateModel(
+        SEXP r_state_component,
+        const std::string &prefix) {
+      SEXP r_model_options = getListElement(r_state_component, "model.options");
+      SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
+
+      // Upack the predictors
+      Matrix predictors = ToBoomMatrix(r_design_matrix);
+      // Get colnames for predictors.  The R code should ensure that
+      // 'predictors' has them.
+      std::vector<std::string> xnames =
+          StringVector(Rf_GetColNames(r_design_matrix));
+      if (xnames.empty()) {
+        xnames.reserve(ncol(predictors));
+        for (int i = 0; i < ncol(predictors); ++i) {
+          std::ostringstream name_maker;
+          name_maker << "V" << i+1;
+          xnames.push_back(name_maker.str());
         }
+      }
+
+      // Build the model.
+      int lags = Rf_asInteger(getListElement(r_model_options, "lags"));
+      DynamicRegressionArStateModel * dynamic_regression(
+          new DynamicRegressionArStateModel(predictors, lags));
+      dynamic_regression->set_xnames(xnames);
+
+      // Set the prior and the posterior sampler.
+      SEXP r_siginv_prior_vector = getListElement(
+          r_model_options, "sigma.prior");
+      std::vector<Ptr<GammaModelBase>> siginv_priors;
+      siginv_priors.reserve(ncol(predictors));
+      for (int i = 0; i < ncol(predictors); ++i) {
+        SdPrior siginv_prior_spec(VECTOR_ELT(r_siginv_prior_vector, i));
+        NEW(ChisqModel, siginv_prior)(siginv_prior_spec.prior_df(),
+                                      siginv_prior_spec.prior_guess());
+        siginv_priors.push_back(siginv_prior);
+      }
+
+      NEW(DynamicRegressionArPosteriorSampler, sampler)(
+          dynamic_regression, siginv_priors);
+      dynamic_regression->set_method(sampler);
+
+      if (io_manager_) {
+        std::vector<std::string> lag_names;
+        lag_names.reserve(lags);
+        for (int i = 0; i < lags; ++i) {
+          std::ostringstream lag_name;
+          lag_name << "lag." << i+1;
+          lag_names.push_back(lag_name.str());
+        }
+
+        for (int i = 0; i < ncol(predictors); ++i) {
+          std::ostringstream sigsq_param_name;
+          sigsq_param_name << prefix << xnames[i] << ".sigma";
+          io_manager_->add_list_element(new StandardDeviationListElement(
+              dynamic_regression->coefficient_model(i)->Sigsq_prm(),
+              sigsq_param_name.str()));
+
+          std::ostringstream coefficient_param_name;
+          coefficient_param_name << prefix << xnames[i] << ".ar.coefficients";
+          io_manager_->add_list_element(new GlmCoefsListElement(
+              dynamic_regression->coefficient_model(i)->coef_prm(),
+              coefficient_param_name.str(),
+              lag_names));
+        }
+
+        // Create a state component for recording the individual dynamic
+        // regression coefficients, but install it after all the components that
+        // track the parameters of the state models.
+        NativeMatrixListElement *dynamic_regression_coefficients(
+            new NativeMatrixListElement(
+                new DynamicRegressionArStateCallback(model_, dynamic_regression),
+                "dynamic.regression.coefficients",
+                nullptr));
+        dynamic_regression_coefficients->set_row_names(xnames);
+        post_state_list_elements_.push_back(dynamic_regression_coefficients);
       }
       return dynamic_regression;
     }

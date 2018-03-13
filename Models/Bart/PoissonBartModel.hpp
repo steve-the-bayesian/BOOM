@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -19,21 +20,20 @@
 #ifndef BOOM_POISSON_BART_HPP_
 #define BOOM_POISSON_BART_HPP_
 
-// This code is untested.  TODO(stevescott):  test it.
+// This code is untested.  TODO:  test it.
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Glm/PoissonRegressionData.hpp>
-#include <Models/Policies/NonparametricParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/NonparametricParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
-  class PoissonBartModel
-      : public BartModelBase,
-        public NonparametricParamPolicy,
-        public IID_DataPolicy<PoissonRegressionData>,
-        public PriorPolicy {
+  class PoissonBartModel : public BartModelBase,
+                           public NonparametricParamPolicy,
+                           public IID_DataPolicy<PoissonRegressionData>,
+                           public PriorPolicy {
    public:
     // Args:
     //   number_of_trees:  The number of trees to use in the model.
@@ -50,8 +50,7 @@ namespace BOOM {
     //   predictors: A matrix of predictors used to predict
     //     'responses'.  The number of rows in 'predictors' must match
     //     the length of 'responses'.
-    PoissonBartModel(int number_of_trees,
-                     const std::vector<int>  &responses,
+    PoissonBartModel(int number_of_trees, const std::vector<int> &responses,
                      const Matrix &predictors);
 
     // Args:
@@ -65,13 +64,12 @@ namespace BOOM {
     //   predictors: A matrix of predictors used to predict
     //     'responses'.  The number of rows in 'predictors' must match
     //     the length of 'responses'.
-    PoissonBartModel(int number_of_trees,
-                     const std::vector<int>  &responses,
+    PoissonBartModel(int number_of_trees, const std::vector<int> &responses,
                      const std::vector<double> &exposures,
                      const Matrix &predictors);
     PoissonBartModel(const PoissonBartModel &rhs);
-    PoissonBartModel * clone() const override;
-    int sample_size()const override;
+    PoissonBartModel *clone() const override;
+    int sample_size() const override;
     void add_data(const Ptr<Data> &) override;
     void add_data(const Ptr<PoissonRegressionData> &) override;
 
@@ -80,5 +78,5 @@ namespace BOOM {
     void set_constant_prediction(double log_lambda);
   };
 
-}
-#endif //  BOOM_POISSON_BART_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_POISSON_BART_HPP_

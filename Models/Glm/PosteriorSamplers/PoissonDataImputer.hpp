@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #ifndef BOOM_POISSON_DATA_IMPUTER_HPP_
 #define BOOM_POISSON_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
@@ -65,16 +66,10 @@ namespace BOOM {
     //     the final interarrival time.
     //   external_weight: The reciprocal variance (information) for
     //     the mixture component imputed for the final interarrival time.
-    void impute(RNG &rng,
-                int response,
-                double exposure,
-                double log_lambda,
-                double *internal_neglog_final_event_time,
-                double *internal_mu,
-                double *internal_weight,
-                double *neglog_final_interarrival_time,
-                double *external_mu,
-                double *external_weight);
+    void impute(RNG &rng, int response, double exposure, double log_lambda,
+                double *internal_neglog_final_event_time, double *internal_mu,
+                double *internal_weight, double *neglog_final_interarrival_time,
+                double *external_mu, double *external_weight);
 
     // Fills the mixture_table_ with all values that could possibly be
     // required by unmix_poisson_augmented_data, so that usage of this
@@ -105,4 +100,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif // BOOM_POISSON_DATA_IMPUTER_HPP_
+#endif  // BOOM_POISSON_DATA_IMPUTER_HPP_

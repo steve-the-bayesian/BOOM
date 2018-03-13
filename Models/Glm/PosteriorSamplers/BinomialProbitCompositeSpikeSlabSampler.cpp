@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -16,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/BinomialProbitCompositeSpikeSlabSampler.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialProbitCompositeSpikeSlabSampler.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -26,12 +27,9 @@ namespace BOOM {
   }  // namespace
 
   BPCSSS::BinomialProbitCompositeSpikeSlabSampler(
-      BinomialProbitModel *model,
-      const Ptr<MvnBase> &slab,
-      const Ptr<VariableSelectionPrior> &spike,
-      int clt_threshold,
-      double proposal_df,
-      RNG &seeding_rng)
+      BinomialProbitModel *model, const Ptr<MvnBase> &slab,
+      const Ptr<VariableSelectionPrior> &spike, int clt_threshold,
+      double proposal_df, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         slab_(slab),
@@ -40,9 +38,7 @@ namespace BOOM {
         tim_(model_, slab_, proposal_df, seeding_rng),
         sampling_weights_{.5, .5} {}
 
-  double BPCSSS::logpri() const {
-    return spike_slab_sampler_.logpri();
-  }
+  double BPCSSS::logpri() const { return spike_slab_sampler_.logpri(); }
 
   void BPCSSS::draw() {
     try {
@@ -60,7 +56,8 @@ namespace BOOM {
           spike_slab_sampler_.draw();
         }
       }
-    } catch (...) {}
+    } catch (...) {
+    }
   }
 
   void BPCSSS::set_sampling_weights(const Vector &weights) {
@@ -70,12 +67,11 @@ namespace BOOM {
     if (weights.min() < 0) {
       report_error("Negative weights not allowed.");
     }
-    double total =  sum(weights);
+    double total = sum(weights);
     if (!std::isfinite(total)) {
       report_error("Infinite or NaN values in weights.");
     }
     sampling_weights_ = weights / total;
   }
-
 
 }  // namespace BOOM

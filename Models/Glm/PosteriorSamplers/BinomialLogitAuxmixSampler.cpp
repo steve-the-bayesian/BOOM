@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialLogitAuxmixSampler.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -27,13 +28,9 @@ namespace BOOM {
 
   namespace BinomialLogit {
     SufficientStatistics::SufficientStatistics(int dim)
-        : xtx_(dim),
-          xty_(dim),
-          sym_(false),
-          sample_size_(0)
-    {}
+        : xtx_(dim), xty_(dim), sym_(false), sample_size_(0) {}
 
-    SufficientStatistics * SufficientStatistics::clone() const {
+    SufficientStatistics *SufficientStatistics::clone() const {
       return new SufficientStatistics(*this);
     }
 
@@ -51,7 +48,7 @@ namespace BOOM {
       sample_size_ += rhs.sample_size_;
     }
 
-    const SpdMatrix & SufficientStatistics::xtx() const {
+    const SpdMatrix &SufficientStatistics::xtx() const {
       if (!sym_) {
         xtx_.reflect();
         sym_ = true;
@@ -59,12 +56,10 @@ namespace BOOM {
       return xtx_;
     }
 
-    const Vector & SufficientStatistics::xty() const {
-      return xty_;
-    }
+    const Vector &SufficientStatistics::xty() const { return xty_; }
 
-    void SufficientStatistics::update(
-        const Vector &x, double weighted_value, double weight) {
+    void SufficientStatistics::update(const Vector &x, double weighted_value,
+                                      double weight) {
       sym_ = false;
       xtx_.add_outer(x, weight, false);
       xty_.axpy(x, weighted_value);
@@ -72,38 +67,29 @@ namespace BOOM {
     }
 
     ImputeWorker::ImputeWorker(SufficientStatistics &global_suf,
-                               std::mutex &global_suf_mutex,
-                               int clt_threshold,
-                               const GlmCoefs *coef,
-                               RNG *rng,
-                               RNG &seeding_rng)
+                               std::mutex &global_suf_mutex, int clt_threshold,
+                               const GlmCoefs *coef, RNG *rng, RNG &seeding_rng)
         : SufstatImputeWorker<BinomialRegressionData, SufficientStatistics>(
               global_suf, global_suf_mutex, rng, seeding_rng),
           binomial_data_imputer_(clt_threshold),
-          coefficients_(coef)
-    {}
+          coefficients_(coef) {}
 
     void ImputeWorker::impute_latent_data_point(
-        const BinomialRegressionData &observation,
-        SufficientStatistics *suf,
+        const BinomialRegressionData &observation, SufficientStatistics *suf,
         RNG &rng) {
       const Vector &x(observation.x());
       double eta = coefficients_->predict(x);
       double sum, weight;
       try {
         std::pair<double, double> imputed = binomial_data_imputer_.impute(
-            rng,
-            observation.n(),
-            observation.y(),
-            eta);
+            rng, observation.n(), observation.y(), eta);
         sum = imputed.first;
         weight = imputed.second;
         suf->update(x, sum, weight);
-      } catch(std::exception &e) {
+      } catch (std::exception &e) {
         ostringstream err;
         err << "caught an exception "
-            << "with the following message:"
-            << e.what() << endl
+            << "with the following message:" << e.what() << endl
             << "n   = " << observation.n() << endl
             << "y   = " << observation.y() << endl
             << "eta = " << eta << endl;
@@ -116,20 +102,16 @@ namespace BOOM {
 
   BLAMS::BinomialLogitAuxmixSampler(BinomialLogitModel *model,
                                     const Ptr<MvnBase> &prior,
-                                    int clt_threshold,
-                                    RNG &seeding_rng)
+                                    int clt_threshold, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         prior_(prior),
         suf_(model->xdim()),
-        clt_threshold_(clt_threshold)
-  {
+        clt_threshold_(clt_threshold) {
     set_number_of_workers(1);
   }
 
-  double BLAMS::logpri() const {
-    return prior_->logp(model_->Beta());
-  }
+  double BLAMS::logpri() const { return prior_->logp(model_->Beta()); }
 
   void BLAMS::draw() {
     impute_latent_data();
@@ -137,14 +119,9 @@ namespace BOOM {
   }
 
   Ptr<ImputeWorker> BLAMS::create_worker(std::mutex &suf_mutex) {
-    return new ImputeWorker(suf_,
-                            suf_mutex,
-                            clt_threshold_,
-                            model_->coef_prm().get(),
-                            nullptr,
-                            rng());
+    return new ImputeWorker(suf_, suf_mutex, clt_threshold_,
+                            model_->coef_prm().get(), nullptr, rng());
   }
-
 
   void BLAMS::draw_params() {
     SpdMatrix ivar = prior_->siginv() + suf_.xtx();
@@ -153,17 +130,11 @@ namespace BOOM {
     model_->set_Beta(draw);
   }
 
-  void BLAMS::clear_latent_data() {
-    suf_.clear();
-  }
-  void BLAMS::clear_complete_data_sufficient_statistics() {
-    suf_.clear();
-  }
+  void BLAMS::clear_latent_data() { suf_.clear(); }
+  void BLAMS::clear_complete_data_sufficient_statistics() { suf_.clear(); }
 
   void BLAMS::update_complete_data_sufficient_statistics(
-      double precision_weighted_sum,
-      double total_precision,
-      const Vector &x) {
+      double precision_weighted_sum, double total_precision, const Vector &x) {
     suf_.update(x, precision_weighted_sum, total_precision);
   }
 

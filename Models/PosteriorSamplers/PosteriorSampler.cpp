@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,30 +17,28 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   void intrusive_ptr_add_ref(PosteriorSampler *m) { m->up_count(); }
 
   void intrusive_ptr_release(PosteriorSampler *m) {
-    m->down_count(); if(m->ref_count()==0) delete m; }
+    m->down_count();
+    if (m->ref_count() == 0) delete m;
+  }
 
   PosteriorSampler::PosteriorSampler(RNG &seeding_rng)
-      : rng_(seed_rng(seeding_rng))
-  {}
+      : rng_(seed_rng(seeding_rng)) {}
 
   PosteriorSampler::PosteriorSampler(const PosteriorSampler &rhs)
-      : RefCounted(rhs)
-  {
+      : RefCounted(rhs) {
     rng_.seed(seed_rng(rhs.rng()));
   }
 
-  void PosteriorSampler::set_seed(unsigned long s) {
-    rng_.seed(s);
-  }
+  void PosteriorSampler::set_seed(unsigned long s) { rng_.seed(s); }
 
   void PosteriorSampler::find_posterior_mode(double epsilon) {
     report_error("Sampler class does not implement find_posterior_mode.");
@@ -52,10 +51,10 @@ namespace BOOM{
   }
 
   double PosteriorSampler::increment_log_prior_gradient(
-      const ConstVectorView &parameters,
-      VectorView gradient) const {
-    report_error("Sampler class does not implement "
-                 "increment_log_prior_gradient.");
+      const ConstVectorView &parameters, VectorView gradient) const {
+    report_error(
+        "Sampler class does not implement "
+        "increment_log_prior_gradient.");
     return negative_infinity();
   }
 

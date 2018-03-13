@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #ifndef BOOM_DIRICHLET_PROCESS_COLLAPSED_GIBBS_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_COLLAPSED_GIBBS_SAMPLER_HPP_
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
@@ -32,8 +33,7 @@ namespace BOOM {
   // NOTE: This algorithm is fast in terms of mixing time, but computationally
   // slow because individual data points are constantly being added and removed
   // from the component models.
-  class DirichletProcessCollapsedGibbsSampler:
-      public PosteriorSampler {
+  class DirichletProcessCollapsedGibbsSampler : public PosteriorSampler {
    public:
     DirichletProcessCollapsedGibbsSampler(
         ConjugateDirichletProcessMixtureModel *model,
@@ -66,7 +66,7 @@ namespace BOOM {
     //   The probability is 'marginal' because both parameters of the mixture
     //   components and the mixing weights in the Dirichlet process are
     //   integrated out.
-    const Vector & marginal_cluster_membership_probabilities(
+    const Vector &marginal_cluster_membership_probabilities(
         const Ptr<Data> &dp);
 
    private:

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -17,42 +18,40 @@
 */
 #ifndef BOOM_BINOMIAL_LOGIT_MODEL_HPP_
 #define BOOM_BINOMIAL_LOGIT_MODEL_HPP_
-#include <Models/Glm/BinomialRegressionData.hpp>
-#include <BOOM.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <numopt.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "BOOM.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Glm/BinomialRegressionData.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // Logistic regression model with binomial (binned) training data.
-  class BinomialLogitModel
-      : public GlmModel,
-        public NumOptModel,
-        public ParamPolicy_1<GlmCoefs>,
-        public IID_DataPolicy<BinomialRegressionData>,
-        public PriorPolicy,
-        virtual public MixtureComponent
-  {
+  class BinomialLogitModel : public GlmModel,
+                             public NumOptModel,
+                             public ParamPolicy_1<GlmCoefs>,
+                             public IID_DataPolicy<BinomialRegressionData>,
+                             public PriorPolicy,
+                             virtual public MixtureComponent {
    public:
-    BinomialLogitModel(uint beta_dim, bool include_all=true);
+    BinomialLogitModel(uint beta_dim, bool include_all = true);
     BinomialLogitModel(const Vector &beta);
 
     // Use this constructor if the model needs to share its
     // coefficient vector with another model.
-    BinomialLogitModel(const Ptr<GlmCoefs> & beta);
+    BinomialLogitModel(const Ptr<GlmCoefs> &beta);
 
     BinomialLogitModel(const Matrix &X, const Vector &y, const Vector &n);
     BinomialLogitModel(const BinomialLogitModel &);
     BinomialLogitModel *clone() const override;
 
-    GlmCoefs & coef() override{return ParamPolicy::prm_ref();}
-    const GlmCoefs & coef() const override{return ParamPolicy::prm_ref();}
-    Ptr<GlmCoefs> coef_prm() override{return ParamPolicy::prm();}
-    const Ptr<GlmCoefs> coef_prm() const override{return ParamPolicy::prm();}
+    GlmCoefs &coef() override { return ParamPolicy::prm_ref(); }
+    const GlmCoefs &coef() const override { return ParamPolicy::prm_ref(); }
+    Ptr<GlmCoefs> coef_prm() override { return ParamPolicy::prm(); }
+    const Ptr<GlmCoefs> coef_prm() const override { return ParamPolicy::prm(); }
 
     double success_probability(const Vector &x) const;
     double success_probability(const VectorView &x) const;
@@ -61,18 +60,18 @@ namespace BOOM{
     double failure_probability(const VectorView &x) const;
     double failure_probability(const ConstVectorView &x) const;
 
-    double pdf(const Data * dp, bool logscale) const override;
-    virtual double pdf(const Ptr<Data> & dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const override;
+    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
     virtual double pdf(const Ptr<BinomialRegressionData> &, bool) const;
     virtual double logp(double y, double n, const Vector &x,
                         bool logscale) const;
     virtual double logp_1(bool y, const Vector &x, bool logscale) const;
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
 
     // In the following, beta refers to the set of nonzero "included"
     // coefficients.
-    double Loglike(const Vector &beta,
-                   Vector &g, Matrix &h, uint nd) const override;
+    double Loglike(const Vector &beta, Vector &g, Matrix &h,
+                   uint nd) const override;
     virtual double log_likelihood(const Vector &beta, Vector *g, Matrix *h,
                                   bool initialize_derivs = true) const;
     using LoglikeModel::log_likelihood;
@@ -90,4 +89,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif// BOOM_BINOMIAL_LOGIT_MODEL_HPP_
+#endif  // BOOM_BINOMIAL_LOGIT_MODEL_HPP_

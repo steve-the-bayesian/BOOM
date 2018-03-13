@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,56 +16,56 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/MvRegSampler.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/PosteriorSamplers/MvRegSampler.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef MvRegSampler MRS;
 
   MRS::MvRegSampler(MvReg *m, const Matrix &Beta_guess, double prior_beta_nobs,
-            double Prior_df, const SpdMatrix & Sigma_guess, RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      mod(m),
-      SS(Sigma_guess * Prior_df),
-      prior_df(Prior_df),
-      Ominv(m->xdim()),
-      B(Beta_guess)
-  {
+                    double Prior_df, const SpdMatrix &Sigma_guess,
+                    RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        mod(m),
+        SS(Sigma_guess * Prior_df),
+        prior_df(Prior_df),
+        Ominv(m->xdim()),
+        B(Beta_guess) {
     double kappa = prior_beta_nobs;
     Ominv.set_diag(kappa);
     ldoi = m->ydim() * log(kappa);
   }
 
-  double MRS::logpri()const{
-    const SpdMatrix & Siginv(mod->Siginv());
-    double ldsi  = mod->ldsi();
-    const Matrix & Beta(mod->Beta());
+  double MRS::logpri() const {
+    const SpdMatrix &Siginv(mod->Siginv());
+    double ldsi = mod->ldsi();
+    const Matrix &Beta(mod->Beta());
     double ans = dWish(Siginv, SS, prior_df, true);
-    ans += dmatrix_normal_ivar(Beta, B, Siginv, ldsi, Ominv, ldoi,true);
+    ans += dmatrix_normal_ivar(Beta, B, Siginv, ldsi, Ominv, ldoi, true);
     return ans;
   }
 
-  void MRS::draw(){
+  void MRS::draw() {
     draw_Sigma();
     draw_Beta();
   }
 
-  void MRS::draw_Beta(){
+  void MRS::draw_Beta() {
     Ptr<NeMvRegSuf> s(mod->suf().dcast<NeMvRegSuf>());
 
     SpdMatrix ivar = Ominv + s->xtx();
-    Matrix Mu = s->xty() + Ominv*B;
+    Matrix Mu = s->xty() + Ominv * B;
     Mu = ivar.solve(Mu);
     Matrix ans = rmatrix_normal_ivar(Mu, mod->Siginv(), ivar);
     mod->set_Beta(ans);
   }
 
-  void MRS::draw_Sigma(){
+  void MRS::draw_Sigma() {
     Ptr<MvRegSuf> s(mod->suf());
     SpdMatrix sumsq = SS + s->SSE(mod->Beta());
     double df = prior_df + s->n();
     SpdMatrix ans = rWish(df, sumsq.inv());
     mod->set_Siginv(ans);
   }
-}
+}  // namespace BOOM

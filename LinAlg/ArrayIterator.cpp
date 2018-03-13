@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -16,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Array.hpp>
-#include <LinAlg/ArrayIterator.hpp>
-#include <cpputil/report_error.hpp>
+#include "LinAlg/Array.hpp"
+#include "LinAlg/ArrayIterator.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

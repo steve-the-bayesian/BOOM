@@ -18,12 +18,12 @@
 #ifndef BOOM_DAFE_PCR_HPP
 #define BOOM_DAFE_PCR_HPP
 
-#include <Models/VectorModel.hpp>
-#include <Models/IRT/IRT.hpp>
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
 #include <map>
+#include "Models/IRT/IRT.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/VectorModel.hpp"
+#include "Samplers/MetropolisHastings.hpp"
 
 namespace BOOM {
   class MvnModel;
@@ -33,45 +33,44 @@ namespace BOOM {
   namespace IRT {
     class PartialCreditModel;
 
-    class DafePcrDataImputer : public PosteriorSampler{
-    public:
+    class DafePcrDataImputer : public PosteriorSampler {
+     public:
       typedef PartialCreditModel PCR;
       DafePcrDataImputer(RNG &seeding_rng = GlobalRng::rng);
       void add_item(const Ptr<PCR> &item);
       void draw() override;
-      double logpri()const override;
-      Vector get_u(const Response &r, bool nag=true)const;
+      double logpri() const override;
+      Vector get_u(const Response &r, bool nag = true) const;
 
       // ---- for debugging purposes only -----
       void set_u(const Response &r, const Vector &u);
       //---------------------------------------
-    private:
+     private:
       // this object stores internal data from partial credit models
       std::set<Ptr<PCR> > items;
       std::map<Response, Vector> latent_data;  // "u" from scott 2006
-      Vector Eta;                    // workspace
-      const double mu;            // -1* Euler's constant
+      Vector Eta;                              // workspace
+      const double mu;                         // -1* Euler's constant
 
       //--- internal helper functions--
       void setup_latent_data(const Ptr<PCR> &);
-      void setup_data_1(const Ptr<PCR> &model,
-                        const Ptr<Subject> &subject);
-      void impute_u(Vector &u, const Vector & Eta, uint y);
+      void setup_data_1(const Ptr<PCR> &model, const Ptr<Subject> &subject);
+      void impute_u(Vector &u, const Vector &Eta, uint y);
       void draw_item_u(const Ptr<PCR> &);
       void draw_one(const Ptr<PCR> &, const Ptr<Subject> &subject);
     };
 
     //============================================================
-    class DafePcrItemSampler : public PosteriorSampler{
-    public:
+    class DafePcrItemSampler : public PosteriorSampler {
+     public:
       DafePcrItemSampler(const Ptr<PartialCreditModel> &model,
                          const Ptr<DafePcrDataImputer> &imputer,
-                         const Ptr<MvnModel> &prior,
-                         double Tdf,
+                         const Ptr<MvnModel> &prior, double Tdf,
                          RNG &seeding_rng = GlobalRng::rng);
       void draw() override;
-      double logpri()const override;
-    private:
+      double logpri() const override;
+
+     private:
       Ptr<PartialCreditModel> mod;
       Ptr<MvnModel> prior;
       Ptr<DafePcrDataImputer> imp;
@@ -86,15 +85,16 @@ namespace BOOM {
       void accumulate_moments(const Ptr<Subject> &);
     };
     //============================================================
-    class DafePcrSubject : public PosteriorSampler{
-    public:
-      DafePcrSubject(const Ptr<Subject> & sub, const Ptr<SubjectPrior> &prior,
-             const Ptr<DafePcrDataImputer> &imp, double Tdf= -1.0,
-         RNG &seeding_rng = GlobalRng::rng);
+    class DafePcrSubject : public PosteriorSampler {
+     public:
+      DafePcrSubject(const Ptr<Subject> &sub, const Ptr<SubjectPrior> &prior,
+                     const Ptr<DafePcrDataImputer> &imp, double Tdf = -1.0,
+                     RNG &seeding_rng = GlobalRng::rng);
 
-      double logpri()const override;
+      double logpri() const override;
       void draw() override;
-    private:
+
+     private:
       Ptr<Subject> subject;
       Ptr<SubjectPrior> pri;
       Ptr<DafePcrDataImputer> imp;
@@ -109,4 +109,4 @@ namespace BOOM {
   }  // namespace IRT
 }  // namespace BOOM
 
-#endif// BOOM_DAFE_PCR_HPP
+#endif  // BOOM_DAFE_PCR_HPP

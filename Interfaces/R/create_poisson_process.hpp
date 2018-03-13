@@ -20,7 +20,7 @@
 #define BOOM_RINTERFACE_CREATE_POISSON_PROCESS_HPP_
 
 #include <r_interface/list_io.hpp>
-#include <Models/PointProcess/PoissonProcess.hpp>
+#include "Models/PointProcess/PoissonProcess.hpp"
 
 namespace BOOM{
   namespace RInterface{

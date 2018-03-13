@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -15,7 +16,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <LinAlg/SubMatrix.hpp>
+#include "LinAlg/SubMatrix.hpp"
 #include <iomanip>
 
 namespace BOOM{

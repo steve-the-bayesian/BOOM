@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rhyper(double NR, double NB, double n);
  *
  *  DESCRIPTION

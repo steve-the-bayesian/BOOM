@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -18,36 +19,36 @@
 #ifndef BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP
 #define BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ProductDirichletModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ProductDirichletModel.hpp"
+#include "Models/VectorModel.hpp"
+#include "Models/DoubleModel.hpp"
 
-namespace BOOM{
-class ProductDirichletPosteriorSampler
-    : public PosteriorSampler{
- public:
+namespace BOOM {
+  class ProductDirichletPosteriorSampler : public PosteriorSampler {
+   public:
+    // template constructor is needed for polymorphic vectors of models
+    template <class VECmodel, class SCALmodel>
+    ProductDirichletPosteriorSampler(ProductDirichletModel *m,
+                                     std::vector<const Ptr<VECmodel> &> phi,
+                                     std::vector<const Ptr<SCALmodel> &> alpha,
+                                     double min_nu = 0,
+                                     RNG &seeding_rng = GlobalRng::rng)
+        : PosteriorSampler(seeding_rng),
+          m_(m),
+          phi_row_prior_(phi.begin(), phi.end()),
+          alpha_row_prior_(alpha.begin(), alpha.end()),
+          min_nu_(min_nu) {}
 
-  // template constructor is needed for polymorphic vectors of models
-  template <class VECmodel, class SCALmodel>
-  ProductDirichletPosteriorSampler(ProductDirichletModel *m,
-                                   std::vector<const Ptr<VECmodel> &> phi,
-                                   std::vector<const Ptr<SCALmodel> &> alpha,
-                                   double min_nu=0,
-                                   RNG &seeding_rng = GlobalRng::rng)
-      : PosteriorSampler(seeding_rng),
-        m_(m),
-        phi_row_prior_(phi.begin(), phi.end()),
-        alpha_row_prior_(alpha.begin(), alpha.end()),
-        min_nu_(min_nu)
-  {}
+    void draw() override;
+    double logpri() const override;
 
-  void draw() override;
-  double logpri() const override;
- private:
-  ProductDirichletModel *m_;
-  // phi_row_prior_ pretty much has to be Dirichlet
-  std::vector<Ptr<VectorModel> > phi_row_prior_;
-  std::vector<Ptr<DoubleModel> > alpha_row_prior_;
-  double min_nu_;
-};
-}
-#endif// BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP
+   private:
+    ProductDirichletModel *m_;
+    // phi_row_prior_ pretty much has to be Dirichlet
+    std::vector<Ptr<VectorModel> > phi_row_prior_;
+    std::vector<Ptr<DoubleModel> > alpha_row_prior_;
+    double min_nu_;
+  };
+}  // namespace BOOM
+#endif  // BOOM_PRODUCT_DIRICHLET_POSTERIOR_SAMPLER_HPP

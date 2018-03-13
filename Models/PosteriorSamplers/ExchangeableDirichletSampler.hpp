@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -19,26 +20,23 @@
 #ifndef BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP
 #define BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/DoubleModel.hpp>
+#include "Models/DirichletModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class ExchangeableDirichletSampler
-      : public PosteriorSampler{
+  class ExchangeableDirichletSampler : public PosteriorSampler {
    public:
     ExchangeableDirichletSampler(DirichletModel *m, const Ptr<DoubleModel> &pri,
                                  RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri()const override;
+    double logpri() const override;
+
    private:
     DirichletModel *mod_;
     Ptr<DoubleModel> pri_;
   };
 
-
-
-
-}
-#endif// BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_EXCHANGEABLE_DIRICHLET_SAMPLER_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,57 +20,60 @@
 #ifndef BOOM_LOG_POST_H
 #define BOOM_LOG_POST_H
 
-#include <cpputil/Ptr.hpp>
-#include <TargetFun/Loglike.hpp>
-#include <numopt.hpp>
 #include <functional>
+#include "TargetFun/Loglike.hpp"
+#include "cpputil/Ptr.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class VectorModel;
   class dVectorModel;
   class d2VectorModel;
 
-  class LogPostTF{
-  public:
+  class LogPostTF {
+   public:
     LogPostTF(const Target &loglike, const Ptr<VectorModel> &prior);
-    double operator()(const Vector &z)const;
-  private:
+    double operator()(const Vector &z) const;
+
+   private:
     Target loglike_;
     Ptr<VectorModel> prior_;
   };
   /*----------------------------------------------------------------------*/
-  class dLogPostTF : public LogPostTF{
-  public:
+  class dLogPostTF : public LogPostTF {
+   public:
     dLogPostTF(const dLoglikeTF &loglike, const Ptr<dVectorModel> &prior);
     dLogPostTF(const Target &loglike, const dTarget &dloglike,
                const Ptr<dVectorModel> &prior);
-    double operator()(const Vector &z)const{
-      return LogPostTF::operator()(z);}
-    double operator()(const Vector &z, Vector &g)const;
-  private:
+    double operator()(const Vector &z) const {
+      return LogPostTF::operator()(z);
+    }
+    double operator()(const Vector &z, Vector &g) const;
+
+   private:
     dTarget dloglike_;
     Ptr<dVectorModel> dprior_;
   };
 
   //----------------------------------------------------------------------
-  class d2LogPostTF : public dLogPostTF{
-  public:
-    d2LogPostTF(const d2LoglikeTF &loglike,
-                const Ptr<d2VectorModel> &prior);
-    d2LogPostTF(const Target &loglike,
-                const dTarget &dloglike,
-                const d2Target &d2loglike,
-                const Ptr<d2VectorModel> &prior);
+  class d2LogPostTF : public dLogPostTF {
+   public:
+    d2LogPostTF(const d2LoglikeTF &loglike, const Ptr<d2VectorModel> &prior);
+    d2LogPostTF(const Target &loglike, const dTarget &dloglike,
+                const d2Target &d2loglike, const Ptr<d2VectorModel> &prior);
 
-    double operator()(const Vector &z)const{
-      return LogPostTF::operator()(z);}
-    double operator()(const Vector &z, Vector &g){
-      return dLogPostTF::operator()(z,g);}
-    double operator()(const Vector &z, Vector &g, Matrix &h)const;
-  private:
-    std::function<double(const Vector &x, Vector &g, Mat&h)> d2loglike_;
+    double operator()(const Vector &z) const {
+      return LogPostTF::operator()(z);
+    }
+    double operator()(const Vector &z, Vector &g) {
+      return dLogPostTF::operator()(z, g);
+    }
+    double operator()(const Vector &z, Vector &g, Matrix &h) const;
+
+   private:
+    std::function<double(const Vector &x, Vector &g, Mat &h)> d2loglike_;
     Ptr<d2VectorModel> d2prior_;
   };
 
-}
+}  // namespace BOOM
 #endif  // BOOM_LOG_POST_HPP

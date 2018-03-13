@@ -17,24 +17,24 @@
 */
 #ifndef BOOM_IRT_ITEM_SLICE_SAMPLER_HPP
 #define BOOM_IRT_ITEM_SLICE_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/IRT/Item.hpp>
+#include "Models/IRT/Item.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class SliceSampler;
-  namespace IRT{
+  namespace IRT {
 
-    class ItemSliceSampler
-      : public PosteriorSampler{
-    public:
+    class ItemSliceSampler : public PosteriorSampler {
+     public:
       ItemSliceSampler(const Ptr<Item> &, RNG &seeding_rng = GlobalRng::rng);
-      ItemSliceSampler * clone()const;
+      ItemSliceSampler *clone() const;
       void draw() override;
       double logpri() const override;
-    private:
+
+     private:
       Ptr<Item> it;
       Ptr<SliceSampler> sam;
     };
-  }
-}
+  }  // namespace IRT
+}  // namespace BOOM
 #endif  // BOOM_IRT_ITEM_SLICE_SAMPLER_HPP

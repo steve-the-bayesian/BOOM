@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,18 +20,22 @@
 #define BOOM_LSE_HPP
 
 #include <cmath>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
   double lse(const Vector &v);
   double lse_safe(const Vector &v);
   double lse_fast(const Vector &v);
 
   // The log of the sum of 2 exponentials.  log(exp(x) + exp(y))
-  inline double lse2(double x, double y){
+  inline double lse2(double x, double y) {
     // returns log( exp(x) + exp(y));
-    if(x<y){ double tmp(x); x=y; y=tmp; }
-    return x + ::log1p(::exp(y-x));
+    if (x < y) {
+      double tmp(x);
+      x = y;
+      y = tmp;
+    }
+    return x + ::log1p(::exp(y - x));
   }
 
   // The log of the difference of 2 exponentials.  log(exp(x) -
@@ -39,5 +44,5 @@ namespace BOOM{
   // thrown.
   double lde2(double x, double y);
 
-}
-#endif // BOOM_LSE_HPP
+}  // namespace BOOM
+#endif  // BOOM_LSE_HPP

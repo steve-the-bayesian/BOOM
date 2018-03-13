@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,21 +19,21 @@
 #ifndef BOOM_NULL_PARAM_POLICY_HPP
 #define BOOM_NULL_PARAM_POLICY_HPP
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
+#include "cpputil/Ptr.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class NullParamPolicy : virtual public Model{
+  class NullParamPolicy : virtual public Model {
     // for use with models that have no parameters: e.g. uniform
     // distributions.
-  public:
+   public:
     typedef NullParamPolicy ParamPolicy;
 
     NullParamPolicy();
     NullParamPolicy(const NullParamPolicy &rhs);
-    NullParamPolicy * clone()const override = 0;
-    NullParamPolicy & operator=(const NullParamPolicy &);
+    NullParamPolicy *clone() const override = 0;
+    NullParamPolicy &operator=(const NullParamPolicy &);
 
     // over-rides for abstract base Model
     ParamVector parameter_vector() override;
@@ -40,4 +41,4 @@ namespace BOOM{
   };
 
 }  // namespace BOOM
-#endif // BOOM_NULL_PARAM_POLICY_HPP
+#endif  // BOOM_NULL_PARAM_POLICY_HPP

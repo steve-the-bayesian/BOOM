@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,24 +18,20 @@
 */
 #include <string>
 #include <vector>
-namespace BOOM{
+namespace BOOM {
 
-  std::string trim_white_space(const std::string &s){
+  std::string trim_white_space(const std::string &s) {
     typedef std::string::size_type sz;
     sz b = s.find_first_not_of(" \n\t\f\r\v");
-    if(b==std::string::npos) return std::string("");
+    if (b == std::string::npos) return std::string("");
     sz e = s.find_last_not_of(" \n\t\f\r\v");
     //    if(b==e) return std::string("");
-    return s.substr(b,1 + (e-b));
+    return s.substr(b, 1 + (e - b));
   }
 
-  void trim_white_space(std::vector<std::string> &v){
+  void trim_white_space(std::vector<std::string> &v) {
     unsigned int n = v.size();
-    for(unsigned int i = 0; i<n; ++i)
-      v[i] = trim_white_space(v[i]);
+    for (unsigned int i = 0; i < n; ++i) v[i] = trim_white_space(v[i]);
   }
 
-
-
-
-}
+}  // namespace BOOM

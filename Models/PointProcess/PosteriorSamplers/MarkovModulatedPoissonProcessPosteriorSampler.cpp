@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PointProcess/PosteriorSamplers/MarkovModulatedPoissonProcessPosteriorSampler.hpp>
+#include "Models/PointProcess/PosteriorSamplers/MarkovModulatedPoissonProcessPosteriorSampler.hpp"
 
 namespace BOOM {
   typedef MarkovModulatedPoissonProcessPosteriorSampler MMPPPS;
@@ -25,8 +25,7 @@ namespace BOOM {
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(mmpp),
-        first_time_(initialize_latent_data)
-  {}
+        first_time_(initialize_latent_data) {}
 
   // The model should call impute_latent_data one time before this
   // method is run.
@@ -39,8 +38,6 @@ namespace BOOM {
     model_->impute_latent_data(rng());
   }
 
-  double MMPPPS::logpri() const {
-    return model_->logpri();
-  }
+  double MMPPPS::logpri() const { return model_->logpri(); }
 
-}
+}  // namespace BOOM

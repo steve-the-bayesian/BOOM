@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -15,20 +16,20 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <cpputil/report_error.hpp>
-#include <cpputil/ThrowException.hpp>
+#include "cpputil/report_error.hpp"
 #include <iostream>
+#include "cpputil/ThrowException.hpp"
 
 #ifdef RLANGUAGE
 #include <Rinternals.h>
 #endif
 
-namespace BOOM{
-  void report_error(const std::string &msg){
+namespace BOOM {
+  void report_error(const std::string &msg) {
     throw_exception<std::runtime_error>(msg);
   }
 
-  void report_warning(const std::string &msg){
+  void report_warning(const std::string &msg) {
 #ifdef RLANGUAGE
     Rf_warning("%s\n", msg.c_str());
 #else
@@ -36,7 +37,7 @@ namespace BOOM{
 #endif
   }
 
-  void report_message(const std::string &msg){
+  void report_message(const std::string &msg) {
 #ifdef RLANGUAGE
     REprintf("%s\n", msg.c_str());
 #else
@@ -44,4 +45,4 @@ namespace BOOM{
 #endif
   }
 
-}
+}  // namespace BOOM

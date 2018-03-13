@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,15 +20,14 @@
 #ifndef BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_SAMPLER_HPP_
 #define BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_GAUSSIAN_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
-  class HierarchicalGaussianRegressionSampler
-      : public PosteriorSampler {
+  class HierarchicalGaussianRegressionSampler : public PosteriorSampler {
    public:
     HierarchicalGaussianRegressionSampler(
         HierarchicalGaussianRegressionModel *model,

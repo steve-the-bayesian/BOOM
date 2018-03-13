@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,6 +21,6 @@ namespace BOOM {
 
   // Moves input so that it points to the next to last end of line
   // character.  gll stands for get last line.
-  ifstream & gll(std::ifstream &input);
+  ifstream &gll(std::ifstream &input);
 
 }  // namespace BOOM

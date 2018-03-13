@@ -18,15 +18,12 @@
 #ifndef BOOM_PCR_NID_HPP
 #define BOOM_PCR_NID_HPP
 
-#include <Models/IRT/PartialCreditModel.hpp>
+#include "Models/IRT/PartialCreditModel.hpp"
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
 
-    class PcrNid
-      : public PartialCreditModel
-    {
-
+    class PcrNid : public PartialCreditModel {
       /*------------------------------------------------------------
         An item with maxscore()==M yields log score probabilities = C
         + X*beta where C is a normalizing constant X[0..M, 0..M] is an
@@ -43,30 +40,29 @@ namespace BOOM{
 
         ------------------------------------------------------------*/
 
-    public:
-      PcrNid(const string & Id, uint Mscore, uint which_sub,
-                         uint Nscales, const string &Name="");
-      PcrNid(const string & Id, uint Mscore, uint which_sub,
-                         uint Nscales, double a, double b, const Vector &d,
-                         const string &Name="");
+     public:
+      PcrNid(const string &Id, uint Mscore, uint which_sub, uint Nscales,
+             const string &Name = "");
+      PcrNid(const string &Id, uint Mscore, uint which_sub, uint Nscales,
+             double a, double b, const Vector &d, const string &Name = "");
       PcrNid(const PcrNid &rhs);
-      PcrNid * clone()const override;
+      PcrNid *clone() const override;
 
-      virtual const Vector & d()const;
-      virtual double d(uint m)const;
+      virtual const Vector &d() const;
+      virtual double d(uint m) const;
       virtual void set_d(const Vector &D);
-      virtual bool is_d0_fixed()const{return false;}
+      virtual bool is_d0_fixed() const { return false; }
 
-      virtual const Matrix & X(const Vector &Theta)const;
-      virtual const Matrix & X(double theta)const;
+      virtual const Matrix &X(const Vector &Theta) const;
+      virtual const Matrix &X(double theta) const;
 
-    private:
-      virtual void fill_beta(bool first_time=false)const;
-      virtual void fill_abd()const;
+     private:
+      virtual void fill_beta(bool first_time = false) const;
+      virtual void fill_abd() const;
       // to be called during construction:
       void setup_X();
       void setup_beta();
     };
-  }
-}
-#endif// BOOM_PCR_NID_HPP
+  }  // namespace IRT
+}  // namespace BOOM
+#endif  // BOOM_PCR_NID_HPP

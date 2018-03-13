@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,40 +20,36 @@
 #ifndef MVN_MODEL_H
 #define MVN_MODEL_H
 
-
-#include <Models/ModelTypes.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Sufstat.hpp"
 
 namespace BOOM {
   class MvnConjSampler;
 
-  class MvnModel:
-    public MvnBaseWithParams,
-    public LoglikeModel,
-    public SufstatDataPolicy<VectorData, MvnSuf>,
-    public PriorPolicy,
-    public EmMixtureComponent,
-    public ConjugateDirichletProcessMixtureComponent
-  {
-  public:
+  class MvnModel : public MvnBaseWithParams,
+                   public LoglikeModel,
+                   public SufstatDataPolicy<VectorData, MvnSuf>,
+                   public PriorPolicy,
+                   public EmMixtureComponent,
+                   public ConjugateDirichletProcessMixtureComponent {
+   public:
     typedef MvnBaseWithParams Base;
     // A p-dimensional MvnModel, with a constant value mu for a mean,
     // and a diagonal variance matrix sigma^2.  Note that the
     // constructor expects the standard deviation instead of a
     // variance.
-    MvnModel(uint p, double mu=0.0, double sigma = 1.0);
+    MvnModel(uint p, double mu = 0.0, double sigma = 1.0);
 
     // Use this constructor if you want to directly specify the mean
     // and variance.  If the third argument 'ivar' is 'true' then you
     // specify the mean and the precision ('ivar' is inverse
     // variance).
-    MvnModel(const Vector &mean, const SpdMatrix &V,
-             bool ivar = false);
+    MvnModel(const Vector &mean, const SpdMatrix &V, bool ivar = false);
 
     // Use this constructor if you already have pointers to model
     // parameters.  This is useful if the model is supposed to share
@@ -77,10 +74,10 @@ namespace BOOM {
 
     void add_raw_data(const Vector &y);
 
-    double pdf(const Ptr<Data> &dp, bool logscale)const;
-    double pdf(const Data *, bool logscale)const override;
-    double pdf(const Vector &x, bool logscale)const;
-    int number_of_observations() const override {return dat().size();}
+    double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *, bool logscale) const override;
+    double pdf(const Vector &x, bool logscale) const;
+    int number_of_observations() const override { return dat().size(); }
 
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,12 +19,12 @@
 
 #include <string>
 
-namespace BOOM{
+namespace BOOM {
   using std::string;
-  string strip_path(const string &fname){
+  string strip_path(const string &fname) {
     string::size_type n = fname.find_last_of("/");
-    if(n==string::npos) return fname;
-    string ans = fname.substr(n+1, fname.size());
+    if (n == string::npos) return fname;
+    string ans = fname.substr(n + 1, fname.size());
     return ans;
   }
-}
+}  // namespace BOOM

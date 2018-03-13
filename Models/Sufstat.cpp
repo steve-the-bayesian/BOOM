@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,24 +16,23 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Sufstat.hpp>
+#include "Models/Sufstat.hpp"
 #include <sstream>
 
-namespace BOOM{
-  Vector vectorize(const std::vector<Ptr<Sufstat> > &v, bool minimal){
+namespace BOOM {
+  Vector vectorize(const std::vector<Ptr<Sufstat> > &v, bool minimal) {
     Vector ans;
-    for(uint i = 0; i < v.size(); ++i){
+    for (uint i = 0; i < v.size(); ++i) {
       Vector tmp = v[i]->vectorize(minimal);
       ans.concat(tmp);
     }
     return ans;
   }
 
-  void unvectorize(std::vector<Ptr<Sufstat> >  &svec,
-                   const Vector &v,
-                   bool minimal){
+  void unvectorize(std::vector<Ptr<Sufstat> > &svec, const Vector &v,
+                   bool minimal) {
     Vector::const_iterator it = v.begin();
-    for(uint i = 0; i < svec.size(); ++i){
+    for (uint i = 0; i < svec.size(); ++i) {
       it = svec[i]->unvectorize(it, minimal);
     }
   }
@@ -42,4 +42,4 @@ namespace BOOM{
     out << *this;
     return out.str();
   }
-}
+}  // namespace BOOM

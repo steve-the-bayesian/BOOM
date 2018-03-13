@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -15,20 +16,16 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Policies/NullParamPolicy.hpp>
-namespace BOOM{
+#include "Models/Policies/NullParamPolicy.hpp"
+namespace BOOM {
   typedef NullParamPolicy NPP;
 
-  NPP::NullParamPolicy(){}
+  NPP::NullParamPolicy() {}
 
-  NPP::NullParamPolicy(const NPP &rhs )
-    : Model(rhs)
-  {}
+  NPP::NullParamPolicy(const NPP &rhs) : Model(rhs) {}
 
-  NPP & NPP::operator=(const NPP &){
-    return *this;
-  }
+  NPP &NPP::operator=(const NPP &) { return *this; }
 
-  ParamVector NPP::parameter_vector(){return ParamVector();}
-  const ParamVector NPP::parameter_vector()const{return ParamVector();}
-}
+  ParamVector NPP::parameter_vector() { return ParamVector(); }
+  const ParamVector NPP::parameter_vector() const { return ParamVector(); }
+}  // namespace BOOM

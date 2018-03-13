@@ -15,21 +15,9 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
+#include <thread>
 #include <r_interface/determine_nthreads.hpp>
-#include <cpputil/report_error.hpp>
-
-#ifdef NO_BOOST_THREADS
-namespace BOOM {
-  namespace RInterface{
-    int determine_nthreads(SEXP r_nthreads) {
-      return 1;
-    }
-  }
-}
-
-#else
-
-#include <boost/thread/thread.hpp>  // TODO(stevescott) use std library equivalent when possible
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace RInterface{
@@ -37,7 +25,7 @@ namespace BOOM {
       if (Rf_isInteger(r_nthreads)) {
         return Rf_asInteger(r_nthreads);
       } else if (Rf_isNull(r_nthreads)) {
-        return boost::thread::hardware_concurrency();
+        return std::thread::hardware_concurrency();
       } else {
         report_error("r_nthreads must be an integer or NULL.");
       }
@@ -46,4 +34,3 @@ namespace BOOM {
   }  // namespace RInterface
 }  // namespace BOOM
 
-#endif  // NO_BOOST_THREADS

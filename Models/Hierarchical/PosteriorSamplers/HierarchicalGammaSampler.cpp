@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/PosteriorSamplers/HierarchicalGammaSampler.hpp>
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGammaSampler.hpp"
 
 namespace BOOM {
 
@@ -25,8 +26,7 @@ namespace BOOM {
       const Ptr<DoubleModel> &gamma_mean_mean_prior,
       const Ptr<DoubleModel> &gamma_mean_shape_prior,
       const Ptr<DoubleModel> &gamma_shape_mean_prior,
-      const Ptr<DoubleModel> &gamma_shape_shape_prior,
-      RNG &seeding_rng)
+      const Ptr<DoubleModel> &gamma_shape_shape_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         gamma_mean_mean_prior_(gamma_mean_mean_prior),
@@ -34,14 +34,11 @@ namespace BOOM {
         gamma_shape_mean_prior_(gamma_shape_mean_prior),
         gamma_shape_shape_prior_(gamma_shape_shape_prior),
         gamma_mean_sampler_(new GammaPosteriorSampler(
-                model_->prior_for_mean_parameters(),
-                gamma_mean_mean_prior,
-                gamma_mean_shape_prior)),
+            model_->prior_for_mean_parameters(), gamma_mean_mean_prior,
+            gamma_mean_shape_prior)),
         gamma_shape_sampler_(new GammaPosteriorSampler(
-            model_->prior_for_shape_parameters(),
-            gamma_shape_mean_prior,
-            gamma_shape_shape_prior))
-  {
+            model_->prior_for_shape_parameters(), gamma_shape_mean_prior,
+            gamma_shape_shape_prior)) {
     model_->prior_for_mean_parameters()->set_method(gamma_mean_sampler_);
     model_->prior_for_shape_parameters()->set_method(gamma_shape_sampler_);
   }
@@ -72,10 +69,9 @@ namespace BOOM {
   void HierarchicalGammaSampler::ensure_posterior_sampling_method(
       GammaModel *data_model) {
     if (data_model->number_of_sampling_methods() == 0) {
-      NEW(GammaPosteriorSampler, sampler)(
-          data_model,
-          model_->prior_for_mean_parameters(),
-          model_->prior_for_shape_parameters());
+      NEW(GammaPosteriorSampler, sampler)
+      (data_model, model_->prior_for_mean_parameters(),
+       model_->prior_for_shape_parameters());
       data_model->set_method(sampler);
     }
   }

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -15,13 +16,13 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/GaussianModelGivenSigma.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/GaussianModelGivenSigma.hpp"
 #include <cmath>
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -30,13 +31,11 @@ namespace BOOM {
   }  // namespace
 
   GMGS::GaussianModelGivenSigma(const Ptr<UnivParams> &scaling_variance,
-                                double mean,
-                                double sample_size)
+                                double mean, double sample_size)
       : ParamPolicy(new UnivParams(mean), new UnivParams(sample_size)),
-        scaling_variance_(scaling_variance)
-  {}
+        scaling_variance_(scaling_variance) {}
 
-  GMGS * GMGS::clone() const {return new GMGS(*this);}
+  GMGS *GMGS::clone() const { return new GMGS(*this); }
 
   Ptr<UnivParams> GMGS::Mu_prm() { return prm1(); }
   Ptr<UnivParams> GMGS::Kappa_prm() { return prm2(); }
@@ -52,30 +51,27 @@ namespace BOOM {
     scaling_variance_ = scaling_variance;
   }
 
-  double GMGS::mu() const {return prm1_ref().value();}
+  double GMGS::mu() const { return prm1_ref().value(); }
   void GMGS::set_mu(double m) { Mu_prm()->set(m); }
 
-  double GMGS::kappa() const {return prm2_ref().value();}
+  double GMGS::kappa() const { return prm2_ref().value(); }
   void GMGS::set_kappa(double s) { Kappa_prm()->set(s); }
 
   double GMGS::scaling_variance() const {
     if (!scaling_variance_) {
       report_error("Scaling variance is not set.");
     }
-    return scaling_variance_-> value();
+    return scaling_variance_->value();
   }
 
-  double GMGS::sigsq() const {
-    return scaling_variance() / kappa();
-  }
+  double GMGS::sigsq() const { return scaling_variance() / kappa(); }
 
-  double GMGS::Loglike(const Vector &mu_kappa,
-                       Vector &g,
-                       Matrix &h,
+  double GMGS::Loglike(const Vector &mu_kappa, Vector &g, Matrix &h,
                        uint nd) const {
     if (mu_kappa.size() != 2) {
-      report_error("Wrong size argument passed to GaussianModelGivenSigma"
-                   "::Loglike.");
+      report_error(
+          "Wrong size argument passed to GaussianModelGivenSigma"
+          "::Loglike.");
     }
     double sigsq = this->scaling_variance();
     if (sigsq < 0) {

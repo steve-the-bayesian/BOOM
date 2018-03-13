@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -15,19 +16,15 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <distributions.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
+#include "Models/MvnGivenScalarSigma.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  MvnGivenScalarSigmaBase::MvnGivenScalarSigmaBase(
-      const Ptr<UnivParams> & sigsq)
-      : sigsq_(sigsq)
-  {}
+  MvnGivenScalarSigmaBase::MvnGivenScalarSigmaBase(const Ptr<UnivParams> &sigsq)
+      : sigsq_(sigsq) {}
 
-  double MvnGivenScalarSigmaBase::sigsq() const {
-    return sigsq_->value();
-  }
+  double MvnGivenScalarSigmaBase::sigsq() const { return sigsq_->value(); }
 
   typedef MvnGivenScalarSigma MGSS;
 
@@ -38,8 +35,7 @@ namespace BOOM{
         DataPolicy(new MvnSuf(nrow(ominv))),
         PriorPolicy(),
         omega_(ominv, true),
-        wsp_(ominv)
-  {}
+        wsp_(ominv) {}
 
   MvnGivenScalarSigma::MvnGivenScalarSigma(const Vector &mean,
                                            const SpdMatrix &ominv,
@@ -49,8 +45,7 @@ namespace BOOM{
         DataPolicy(new MvnSuf(mean.size())),
         PriorPolicy(),
         omega_(ominv, true),
-        wsp_(mean.size())
-  {}
+        wsp_(mean.size()) {}
 
   MvnGivenScalarSigma::MvnGivenScalarSigma(const MGSS &rhs)
       : Model(rhs),
@@ -61,43 +56,40 @@ namespace BOOM{
         DataPolicy(rhs),
         PriorPolicy(rhs),
         omega_(rhs.omega_),
-        wsp_(rhs.wsp_)
-      {}
+        wsp_(rhs.wsp_) {}
 
-  MGSS * MGSS::clone()const{return new MGSS(*this);}
+  MGSS *MGSS::clone() const { return new MGSS(*this); }
 
-  Ptr<VectorParams> MGSS::Mu_prm(){return ParamPolicy::prm();}
-  const Ptr<VectorParams> MGSS::Mu_prm()const{return ParamPolicy::prm();}
+  Ptr<VectorParams> MGSS::Mu_prm() { return ParamPolicy::prm(); }
+  const Ptr<VectorParams> MGSS::Mu_prm() const { return ParamPolicy::prm(); }
 
-  uint MGSS::dim()const{ return nrow(wsp_); }
-  const Vector & MGSS::mu()const{ return Mu_prm()->value(); }
+  uint MGSS::dim() const { return nrow(wsp_); }
+  const Vector &MGSS::mu() const { return Mu_prm()->value(); }
 
-  const SpdMatrix & MGSS::Sigma()const{
+  const SpdMatrix &MGSS::Sigma() const {
     wsp_ = omega_.var() * sigsq();
     return wsp_;
   }
 
-  const SpdMatrix & MGSS::siginv()const{
+  const SpdMatrix &MGSS::siginv() const {
     wsp_ = omega_.ivar() / sigsq();
     return wsp_;
   }
 
-  double MGSS::ldsi()const{
-    return omega_.ldsi() - dim() * log(sigsq());
-  }
+  double MGSS::ldsi() const { return omega_.ldsi() - dim() * log(sigsq()); }
 
-  const SpdMatrix & MGSS::Omega()const{ return omega_.var();}
-  const SpdMatrix & MGSS::ominv()const{ return omega_.ivar();}
-  double MGSS::ldoi()const{ return omega_.ldsi();}
+  const SpdMatrix &MGSS::Omega() const { return omega_.var(); }
+  const SpdMatrix &MGSS::ominv() const { return omega_.ivar(); }
+  double MGSS::ldoi() const { return omega_.ldsi(); }
 
-  void MGSS::set_mu(const Vector &mu){Mu_prm()->set(mu);}
+  void MGSS::set_mu(const Vector &mu) { Mu_prm()->set(mu); }
   void MGSS::set_unscaled_precision(const SpdMatrix &omega_inverse) {
     omega_.set_ivar(omega_inverse);
   }
 
-  void MGSS::mle(){ set_mu(suf()->ybar()); }
+  void MGSS::mle() { set_mu(suf()->ybar()); }
 
-  double MGSS::loglike(const Vector &mu_ominv)const{
+  double MGSS::loglike(const Vector &mu_ominv) const {
     const ConstVectorView mu(mu_ominv, 0, dim());
     SpdMatrix siginv(dim());
     Vector::const_iterator b(mu_ominv.cbegin() + dim());
@@ -106,9 +98,9 @@ namespace BOOM{
     return MvnBase::log_likelihood(Vector(mu), siginv, *suf());
   }
 
-  double MGSS::pdf(const Ptr<Data> &dp, bool logscale)const{
+  double MGSS::pdf(const Ptr<Data> &dp, bool logscale) const {
     const Vector &y(DAT(dp)->value());
     return dmvn(y, mu(), siginv(), ldsi(), logscale);
   }
 
-}// namespace BOOM
+}  // namespace BOOM

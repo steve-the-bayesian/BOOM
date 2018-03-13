@@ -47,7 +47,7 @@
  */
 
 #include "nmath.hpp"
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 #include <sstream>
 
 namespace Rmath{

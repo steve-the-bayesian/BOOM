@@ -20,7 +20,7 @@
 #define BOOM_PARSE_MODEL_FORMULA_HPP_
 
 #include <string>
-#include <stats/Design.hpp>
+#include "stats/Design.hpp"
 #include <r_interface/boom_r_tools.hpp>
 
 namespace BOOM {

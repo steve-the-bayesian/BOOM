@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -17,11 +18,11 @@
 */
 #ifndef BOOM_REPORT_ERROR_HPP_
 #define BOOM_REPORT_ERROR_HPP_
-#include <string>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 
-namespace BOOM{
+namespace BOOM {
 
   // Code that calls report_error typically also includes
   // ostringstream to build the error message and uses iomanipulators
@@ -42,23 +43,23 @@ namespace BOOM{
   // The usual method of reporting an error is to throw a
   // std::runtime_error with the given msg as its payload.
   void report_error(const std::string &msg);
-  inline void report_error(const std::ostringstream &message_buffer){
+  inline void report_error(const std::ostringstream &message_buffer) {
     report_error(message_buffer.str());
   }
 
   // The usual method of reporting a warning is to write to stderr.
   void report_warning(const std::string &msg);
-  inline void report_warning(const std::ostringstream &message_buffer){
+  inline void report_warning(const std::ostringstream &message_buffer) {
     report_warning(message_buffer.str());
   }
 
   // The usual method of reporting a message is to write to stdout.
   void report_message(const std::string &msg);
 
-  inline void report_message(const std::ostringstream &message_buffer){
+  inline void report_message(const std::ostringstream &message_buffer) {
     report_message(message_buffer.str());
   }
 
 }  // namespace BOOM
 
-#endif// BOOM_REPORT_ERROR_HPP_
+#endif  // BOOM_REPORT_ERROR_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,20 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Samplers/ScalarLangevinSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
+#include "Samplers/ScalarLangevinSampler.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   ScalarLangevinSampler::ScalarLangevinSampler(
-      const Ptr<dScalarTargetFun> &logf,
-      double initial_step_size,
-      RNG *rng)
-      : ScalarSampler(rng),
-        logf_(logf),
-        adapt_(false)
-  {
+      const Ptr<dScalarTargetFun> &logf, double initial_step_size, RNG *rng)
+      : ScalarSampler(rng), logf_(logf), adapt_(false) {
     set_step_size(initial_step_size);
   }
 
@@ -53,8 +49,8 @@ namespace BOOM {
     double reverse_mean = proposal + 0.5 * proposal_gradient * step_size_;
 
     double log_acceptance_ratio =
-        logp_proposal - dnorm(proposal, proposal_mean, sd_, true)
-        - logp_current + dnorm(current_x, reverse_mean, sd_, true);
+        logp_proposal - dnorm(proposal, proposal_mean, sd_, true) -
+        logp_current + dnorm(current_x, reverse_mean, sd_, true);
     if (log(runif_mt(rng())) < log_acceptance_ratio) {
       consecutive_rejects_ = 0;
       ++consecutive_accepts_;

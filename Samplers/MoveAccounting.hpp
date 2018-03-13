@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -24,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
 
@@ -39,6 +40,7 @@ namespace BOOM {
     MoveTimer(const std::string &move_type, MoveAccounting *accounting);
     ~MoveTimer();
     void stop();
+
    private:
     const std::string move_type_;
     MoveAccounting *accounting_;
@@ -59,12 +61,12 @@ namespace BOOM {
     // correspond to acceptances, failures, and special cases.  The
     // number of special cases must be computed.  If timings have been
     // kept, they will be stored in the first column.
-    LabeledMatrix to_matrix()const;
+    LabeledMatrix to_matrix() const;
 
     // Returns a vector of move type names corresponding to the row
     // names of to_matrix().
-    std::vector<std::string> compute_move_types()const;
-    std::vector<std::string> compute_outcome_type_names()const;
+    std::vector<std::string> compute_move_types() const;
+    std::vector<std::string> compute_outcome_type_names() const;
 
     // Returns the ratio of "accept" counts to "accept" + "reject"
     // counts for the specified move type.  If the total number of
@@ -107,4 +109,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif //  BOOM_MOVE_ACCOUNTING_HPP_
+#endif  //  BOOM_MOVE_ACCOUNTING_HPP_

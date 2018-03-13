@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,11 +20,11 @@
 #ifndef BOOM_QUANTILE_REGRESSION_MODEL_HPP_
 #define BOOM_QUANTILE_REGRESSION_MODEL_HPP_
 
-#include <LinAlg/Vector.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
@@ -41,25 +42,22 @@ namespace BOOM {
   //
   // The pseudo-likelihood for this function exponentiates the
   // negative of the loss function sum_i -rho_p(y_i - beta.dot(x_i)).
-  class QuantileRegressionModel
-      : public GlmModel,
-        public ParamPolicy_1<GlmCoefs>,
-        public IID_DataPolicy<RegressionData>,
-        public PriorPolicy
-  {
+  class QuantileRegressionModel : public GlmModel,
+                                  public ParamPolicy_1<GlmCoefs>,
+                                  public IID_DataPolicy<RegressionData>,
+                                  public PriorPolicy {
    public:
-    explicit QuantileRegressionModel(uint beta_dim,
-                                     double quantile = .5,
+    explicit QuantileRegressionModel(uint beta_dim, double quantile = .5,
                                      bool include_all = true);
     explicit QuantileRegressionModel(const Vector &beta, double quantile = .5);
-    QuantileRegressionModel * clone() const override;
+    QuantileRegressionModel *clone() const override;
 
-    GlmCoefs & coef() override {return ParamPolicy::prm_ref();}
-    const GlmCoefs & coef() const override {return ParamPolicy::prm_ref();}
-    Ptr<GlmCoefs> coef_prm() override {return ParamPolicy::prm();}
-    const Ptr<GlmCoefs> coef_prm() const override {return ParamPolicy::prm();}
+    GlmCoefs &coef() override { return ParamPolicy::prm_ref(); }
+    const GlmCoefs &coef() const override { return ParamPolicy::prm_ref(); }
+    Ptr<GlmCoefs> coef_prm() override { return ParamPolicy::prm(); }
+    const Ptr<GlmCoefs> coef_prm() const override { return ParamPolicy::prm(); }
 
-    double quantile() const {return quantile_;}
+    double quantile() const { return quantile_; }
 
    private:
     double quantile_;
@@ -67,4 +65,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_QUANTILE_REGRESSION_MODEL_HPP_
+#endif  //  BOOM_QUANTILE_REGRESSION_MODEL_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_MATRIX_PARTITION_HPP_
 #define BOOM_MATRIX_PARTITION_HPP_
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/SubMatrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
 namespace BOOM{
   class MatrixPartition{

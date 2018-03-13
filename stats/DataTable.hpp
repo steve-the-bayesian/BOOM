@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,17 +20,17 @@
 #ifndef BOOM_DATA_TABLE_HPP
 #define BOOM_DATA_TABLE_HPP
 
-#include <BOOM.hpp>
+#include "BOOM.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/Vector.hpp"
 
-#include <Models/DataTypes.hpp>
-#include <Models/CategoricalData.hpp>
 #include <limits>
+#include "Models/CategoricalData.hpp"
+#include "Models/DataTypes.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A CategoricalVariable is a column of CategoricalData.  The data are
   // assumed to come in string format, so a CatKey is used to handle the
@@ -41,20 +42,19 @@ namespace BOOM{
     CategoricalVariable(const std::vector<std::string> &raw_data);
     CategoricalVariable(const std::vector<Ptr<CategoricalData>> &data,
                         const Ptr<CatKey> &key)
-        : key_(key),
-          data_(data) {}
+        : key_(key), data_(data) {}
 
-    Ptr<CategoricalData> operator[](uint i) {return data_[i];}
-    const Ptr<CategoricalData> operator[](uint i) const {return data_[i];}
-    const std::vector<std::string> & labels() const {return key_->labels();}
+    Ptr<CategoricalData> operator[](uint i) { return data_[i]; }
+    const Ptr<CategoricalData> operator[](uint i) const { return data_[i]; }
+    const std::vector<std::string> &labels() const { return key_->labels(); }
 
     // Return the label of the ith data point.
     const std::string &label(int observation_number) const {
       return key_->label(data_[observation_number]->value());
     }
 
-    int size() const {return data_.size();}
-    bool empty() const {return data_.empty();}
+    int size() const { return data_.size(); }
+    bool empty() const { return data_.empty(); }
     void push_back(const Ptr<CategoricalData> &element) {
       data_.push_back(element);
       key_->Register(element.get());
@@ -63,8 +63,8 @@ namespace BOOM{
       key_->reorder(level_names);
     }
 
-    Ptr<CatKey> key() {return key_;}
-    const std::vector<Ptr<CategoricalData>> &data() const {return data_;}
+    Ptr<CatKey> key() { return key_; }
+    const std::vector<Ptr<CategoricalData>> &data() const { return data_; }
 
    private:
     Ptr<CatKey> key_;
@@ -90,9 +90,8 @@ namespace BOOM{
   // variables.
   class DataTable : public Data {
    public:
-
     typedef std::vector<double> dvector;
-    enum VariableType {unknown = -1, continuous, categorical};
+    enum VariableType { unknown = -1, continuous, categorical };
     typedef std::vector<string> StringVector;
 
     //--- constructors ---
@@ -107,50 +106,47 @@ namespace BOOM{
     //     is the first observation, and variable names will be
     //     automatically generated.
     //   sep: The separator between fields in the data file.
-    DataTable(const string &fname,
-              bool header = false,
-              const string &sep = "");
+    DataTable(const string &fname, bool header = false, const string &sep = "");
 
-    DataTable * clone() const override;
-    ostream & display(ostream &out) const override;
+    DataTable *clone() const override;
+    ostream &display(ostream &out) const override;
 
     //--- build a DataTable by appending variables ---
     void append_variable(const Vector &v, const string &name);
     void append_variable(const CategoricalVariable &cv, const string &name);
 
     //--- size  ---
-    uint nvars() const; // number of variables stored in the table
-    uint nobs() const;  // number of observations
+    uint nvars() const;          // number of variables stored in the table
+    uint nobs() const;           // number of observations
     uint nlevels(uint i) const;  // 1 for continuous, nlevels for categorical
 
     //--- look inside ---
-    ostream & print(ostream &out,
-                    uint from = 0,
-                    uint to = std::numeric_limits<uint>::max()) const;
+    ostream &print(ostream &out, uint from = 0,
+                   uint to = std::numeric_limits<uint>::max()) const;
 
-    const std::vector<VariableType> & display_variable_types() const;
+    const std::vector<VariableType> &display_variable_types() const;
 
-    StringVector & vnames();
-    const StringVector & vnames() const;
+    StringVector &vnames();
+    const StringVector &vnames() const;
 
     //--- extract variables ---
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const;
     Vector getvar(uint which_column) const;
     CategoricalVariable get_nominal(uint which_column) const;
-//    OrdinalVariable get_ordinal(uint which_column) const;
-//    OrdinalVariable get_ordinal(uint which_column, const StringVector &ord) const;
+    //    OrdinalVariable get_ordinal(uint which_column) const;
+    //    OrdinalVariable get_ordinal(uint which_column, const StringVector
+    //    &ord) const;
 
     //--- Compute a design matrix ---
     LabeledMatrix design(bool add_icpt = false) const;
-    LabeledMatrix design(const Selector &include,
-                         bool add_icpt = false) const;
+    LabeledMatrix design(const Selector &include, bool add_icpt = false) const;
 
     // Bind the rows of rhs below the rows of *this.  The variable
     // types of *this and rhs must match, and all categorical
     // variables must have the same levels.  A reference to *this is
     // returned.
-    DataTable & rbind(const DataTable &rhs);
+    DataTable &rbind(const DataTable &rhs);
 
    private:
     std::vector<Vector> continuous_variables_;
@@ -162,7 +158,7 @@ namespace BOOM{
     bool check_type(VariableType type, const string &s) const;
   };
 
-  ostream & operator<<(ostream &out, const DataTable &dt);
+  ostream &operator<<(ostream &out, const DataTable &dt);
 
   struct VariableSummary {
     DataTable::VariableType type;
@@ -176,5 +172,5 @@ namespace BOOM{
 
   std::vector<VariableSummary> summarize(const DataTable &table);
 
-}
-#endif // BOOM_DATA_TABLE_HPP
+}  // namespace BOOM
+#endif  // BOOM_DATA_TABLE_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -16,16 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/PosteriorSamplers/ConditionalFiniteMixtureSampler.hpp>
-#include <distributions.hpp>
+#include "Models/Mixtures/PosteriorSamplers/ConditionalFiniteMixtureSampler.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   ConditionalFiniteMixtureSampler::ConditionalFiniteMixtureSampler(
       ConditionalFiniteMixtureModel *model, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model)
-  {}
+      : PosteriorSampler(seeding_rng), model_(model) {}
 
   void ConditionalFiniteMixtureSampler::draw() {
     model_->impute_latent_data(rng());

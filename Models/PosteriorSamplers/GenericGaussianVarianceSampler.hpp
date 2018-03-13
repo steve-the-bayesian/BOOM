@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #ifndef BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_
 #define BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <distributions/rng.hpp>
+#include "Models/GammaModel.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
@@ -31,13 +32,13 @@ namespace BOOM {
    public:
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.
-    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> & prior);
+    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior);
 
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.
     //   sigma_max: The largest acceptable value for the standard
     //     deviation sigma.
-    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> & prior,
+    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior,
                                    double sigma_max);
 
     // Sets the largest acceptable value for sigma (the standard
@@ -60,9 +61,15 @@ namespace BOOM {
     //   data_ss: The sum of squares supplied by the data.  Do not
     //     include the prior sum of squares, as this will be supplied
     //     by this function.
+    //   prior_sigma_guess_scale_factor: A number by which to scale the prior
+    //     guess at the standard deviation.  This will usually be 1.0.  However,
+    //     this argument allows the sampler to be applied to multiple models
+    //     that differ only by a scale factor.  Some hierarchical models and
+    //     regression models can take advantage of this argument.
     // Returns:
     //   A draw of the residual variance, which will be <= sigma_max_^2.
-    double draw(RNG &rng, double data_df, double data_ss) const;
+    double draw(RNG &rng, double data_df, double data_ss,
+                double prior_sigma_guess_scale_factor = 1.0) const;
 
     // Returns the posterior mode of the residual variance based on
     // the inverse Gamma distribution.  If theta ~ Gamma(a, b), then
@@ -72,15 +79,13 @@ namespace BOOM {
     // Returns the log of the prior on the scale of sigma^2.
     double log_prior(double sigsq) const;
 
-    void set_prior(const Ptr<GammaModelBase> &new_prior) {
-      prior_ = new_prior;
-    }
+    void set_prior(const Ptr<GammaModelBase> &new_prior) { prior_ = new_prior; }
 
    private:
     Ptr<GammaModelBase> prior_;
     double sigma_max_;
   };
 
-}
+}  // namespace BOOM
 
 #endif  //  BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_

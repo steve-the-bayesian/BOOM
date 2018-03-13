@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -16,39 +17,34 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/BinomialProbitModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/Glm/BinomialProbitModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   namespace {
     typedef BinomialProbitModel BPM;
     typedef BinomialRegressionData BRD;
   }  // namespace
   BPM::BinomialProbitModel(uint beta_dim, bool all)
-      : ParamPolicy(new GlmCoefs(beta_dim, all))
-  {}
+      : ParamPolicy(new GlmCoefs(beta_dim, all)) {}
 
   BPM::BinomialProbitModel(const Vector &beta)
-      : ParamPolicy(new GlmCoefs(beta))
-  {}
+      : ParamPolicy(new GlmCoefs(beta)) {}
 
-  BPM::BinomialProbitModel(const Ptr<GlmCoefs> & beta)
-      : ParamPolicy(beta)
-  {}
+  BPM::BinomialProbitModel(const Ptr<GlmCoefs> &beta) : ParamPolicy(beta) {}
 
   BPM::BinomialProbitModel(const Matrix &X, const Vector &y, const Vector &n)
-      : ParamPolicy(new GlmCoefs(X.ncol()))
-      {
-        int nr = nrow(X);
-        for(int i = 0; i < nr; ++i){
-          uint yi = lround(y[i]);
-          uint ni = lround(n[i]);
-          NEW(BinomialRegressionData, dp)(yi, ni, X.row(i));
-          add_data(dp);
-        }
-      }
+      : ParamPolicy(new GlmCoefs(X.ncol())) {
+    int nr = nrow(X);
+    for (int i = 0; i < nr; ++i) {
+      uint yi = lround(y[i]);
+      uint ni = lround(n[i]);
+      NEW(BinomialRegressionData, dp)(yi, ni, X.row(i));
+      add_data(dp);
+    }
+  }
 
   BPM::BinomialProbitModel(const BPM &rhs)
       : Model(rhs),
@@ -57,11 +53,11 @@ namespace BOOM{
         NumOptModel(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
-        PriorPolicy(rhs)
-  {}
+        PriorPolicy(rhs) {}
 
-  BPM* BinomialProbitModel::clone() const {
-    return new BinomialProbitModel(*this);}
+  BPM *BinomialProbitModel::clone() const {
+    return new BinomialProbitModel(*this);
+  }
 
   namespace {
     // Compute the probability of success (or failure) at a value of x.
@@ -71,13 +67,13 @@ namespace BOOM{
     //   success: If true, then the probability of success is
     //     returned.  Otherwise the probability of failure is returned.
     template <class VECTOR>
-    double probit_success_probability(
-        const VECTOR &x, const GlmCoefs &beta, bool success) {
+    double probit_success_probability(const VECTOR &x, const GlmCoefs &beta,
+                                      bool success) {
       double eta = beta.predict(x);
       bool log_p = false;
       return pnorm(eta, 0, 1, success, log_p);
     }
-  }
+  }  // namespace
 
   double BPM::success_probability(const Vector &x) const {
     return probit_success_probability(x, coef(), true);
@@ -98,16 +94,17 @@ namespace BOOM{
     return probit_success_probability(x, coef(), false);
   }
 
-  double BPM::pdf(const Ptr<Data> & dp, bool logscale) const {
-    return pdf(DAT(dp), logscale);}
+  double BPM::pdf(const Ptr<Data> &dp, bool logscale) const {
+    return pdf(DAT(dp), logscale);
+  }
 
-  double BPM::pdf(const Data * dp, bool logscale) const {
+  double BPM::pdf(const Data *dp, bool logscale) const {
     const BinomialRegressionData *rd =
         dynamic_cast<const BinomialRegressionData *>(dp);
     return logp(rd->y(), rd->n(), rd->x(), logscale);
   }
 
-  double BPM::pdf(const Ptr<BRD> & dp, bool logscale) const {
+  double BPM::pdf(const Ptr<BRD> &dp, bool logscale) const {
     return logp(dp->y(), dp->n(), dp->x(), logscale);
   }
 
@@ -133,33 +130,33 @@ namespace BOOM{
   }
 
   double BPM::Loglike(const Vector &beta, Vector &g, Matrix &h, uint nd) const {
-    if(nd>=2) return log_likelihood(beta, &g, &h);
-    if(nd==1) return log_likelihood(beta, &g, 0);
+    if (nd >= 2) return log_likelihood(beta, &g, &h);
+    if (nd == 1) return log_likelihood(beta, &g, 0);
     return log_likelihood(beta, 0, 0);
   }
 
-  double BPM::log_likelihood(const Vector & beta, Vector *g, Matrix *h,
+  double BPM::log_likelihood(const Vector &beta, Vector *g, Matrix *h,
                              bool initialize_derivs) const {
     const BPM::DatasetType &data(dat());
     if (initialize_derivs) {
-      if (g){
+      if (g) {
         g->resize(beta.size());
-        *g=0;
+        *g = 0;
         if (h) {
           h->resize(beta.size(), beta.size());
-          *h=0;
+          *h = 0;
         }
       }
     }
     double ans = 0;
     bool all_coefficients_included = (xdim() == beta.size());
     const Selector &inc(coef().inc());
-    for(int i = 0; i < data.size(); ++i){
+    for (int i = 0; i < data.size(); ++i) {
       // y and n had been defined as uint's but y-n*p was computing
       // -n, which overflowed
       const double y = data[i]->y();
       const double n = data[i]->n();
-      const Vector & x(data[i]->x());
+      const Vector &x(data[i]->x());
       Vector reduced_x;
       if (!all_coefficients_included) {
         reduced_x = inc.select(x);
@@ -257,19 +254,17 @@ namespace BOOM{
 
   d2TargetFunPointerAdapter BPM::log_likelihood_tf() const {
     return d2TargetFunPointerAdapter(
-        [this](const Vector &beta,
-               Vector *g,
-               Matrix *h,
-               bool reset_derivs) {
-          return this->log_likelihood(beta, g, h, reset_derivs);});
+        [this](const Vector &beta, Vector *g, Matrix *h, bool reset_derivs) {
+          return this->log_likelihood(beta, g, h, reset_derivs);
+        });
   }
 
   SpdMatrix BPM::xtx() const {
-    const std::vector<Ptr<BinomialRegressionData> > & d(dat());
+    const std::vector<Ptr<BinomialRegressionData> > &d(dat());
     uint n = d.size();
     uint p = d[0]->xdim();
     SpdMatrix ans(p);
-    for(uint i=0; i<n; ++i){
+    for (uint i = 0; i < n; ++i) {
       double n = d[i]->n();
       ans.add_outer(d[i]->x(), n, false);
     }

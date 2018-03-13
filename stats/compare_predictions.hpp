@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -18,7 +19,7 @@
 
 #ifndef BOOM_COMPARE_PREDICTIONS_TEST_HPP_
 #define BOOM_COMPARE_PREDICTIONS_TEST_HPP_
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/VectorView.hpp"
 
 namespace BOOM {
 
@@ -37,14 +38,13 @@ namespace BOOM {
     double p_value;
   };
 
-  std::ostream & operator<<(std::ostream &out,
-                            const ComparePredictionsOutput &output);
+  std::ostream &operator<<(std::ostream &out,
+                           const ComparePredictionsOutput &output);
 
-  ComparePredictionsOutput compare_predictions(
-      const Vector &truth, const Vector &predictions);
+  ComparePredictionsOutput compare_predictions(const Vector &truth,
+                                               const Vector &predictions);
   ComparePredictionsOutput compare_predictions(
       const ConstVectorView &truth, const ConstVectorView &predictions);
 
-
-}
+}  // namespace BOOM
 #endif  // BOOM_COMPARE_PREDICTIONS_TEST_HPP_

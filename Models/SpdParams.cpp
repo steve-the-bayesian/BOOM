@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,45 +16,34 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/SpdParams.hpp>
-namespace BOOM{
+#include "Models/SpdParams.hpp"
+namespace BOOM {
 
   typedef SpdParams SP;
   typedef SpdData SD;
 
-  SP::SpdParams(uint p, double diag, bool ivar)
-    : SD(p,diag,ivar)
-  {}
+  SP::SpdParams(uint p, double diag, bool ivar) : SD(p, diag, ivar) {}
 
-  SP::SpdParams(const SpdMatrix &V, bool ivar)
-    : SD(V,ivar)
-  {}
+  SP::SpdParams(const SpdMatrix &V, bool ivar) : SD(V, ivar) {}
 
-  SP::SpdParams(const SpdParams &rhs)
-    : Data(rhs),
-      Params(rhs),
-      SD(rhs)
-  {}
+  SP::SpdParams(const SpdParams &rhs) : Data(rhs), Params(rhs), SD(rhs) {}
 
-  SP::SpdParams(const SpdData &rhs)
-    : Data(rhs),
-      SD(rhs)
-  {}
+  SP::SpdParams(const SpdData &rhs) : Data(rhs), SD(rhs) {}
 
-  SP * SP::clone()const{return new SP(*this);}
+  SP *SP::clone() const { return new SP(*this); }
 
-  Vector SP::vectorize(bool min)const{
-    return var().vectorize(min); }
+  Vector SP::vectorize(bool min) const { return var().vectorize(min); }
 
-  Vector::const_iterator SP::unvectorize
-  (Vector::const_iterator &v, bool minimal){
+  Vector::const_iterator SP::unvectorize(Vector::const_iterator &v,
+                                         bool minimal) {
     SpdMatrix tmp(var());
     Vector::const_iterator ans = tmp.unvectorize(v, minimal);
     set_var(tmp);
     return ans;
   }
 
-  Vector::const_iterator SP::unvectorize(const Vector &v, bool minimal){
+  Vector::const_iterator SP::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator b(v.begin());
-    return this->unvectorize(b, minimal); }
-}
+    return this->unvectorize(b, minimal);
+  }
+}  // namespace BOOM

@@ -44,7 +44,7 @@
  */
 
 #include "nmath.hpp"
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 namespace Rmath{
 
 constexpr double expmax = (std::numeric_limits<double>::max_exponent * M_LN2);

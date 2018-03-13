@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,18 +20,15 @@
 #ifndef BOOM_BETA_BINOMIAL_SAMPLER_HPP
 #define BOOM_BETA_BINOMIAL_SAMPLER_HPP
 
-#include <Models/BetaModel.hpp>
-#include <Models/BinomialModel.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
+#include "Models/BetaModel.hpp"
+#include "Models/BinomialModel.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class BetaBinomialSampler
-    : public ConjugateHierarchicalPosteriorSampler
-  {
-  public:
-    BetaBinomialSampler(BinomialModel *model,
-                        const Ptr<BetaModel> &prior,
+  class BetaBinomialSampler : public ConjugateHierarchicalPosteriorSampler {
+   public:
+    BetaBinomialSampler(BinomialModel *model, const Ptr<BetaModel> &prior,
                         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
@@ -49,11 +47,12 @@ namespace BOOM{
                                 const ConjugateModel *model) const override;
     double log_marginal_density(const BinomialData &data,
                                 const BinomialModel *model) const;
-  private:
+
+   private:
     BinomialModel *model_;
     Ptr<BetaModel> prior_;
   };
 
-} // namespace BOOM
+}  // namespace BOOM
 
-#endif// BOOM_BETA_BINOMIAL_SAMPLER_HPP
+#endif  // BOOM_BETA_BINOMIAL_SAMPLER_HPP

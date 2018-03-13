@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -15,34 +16,34 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/diff.hpp>
+#include "stats/diff.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-template <class V>
-Vector diff_impl(const V& v, bool leading_zero){
-  int n = v.size();
-  if(n==0) return v;
-  Vector ans(leading_zero ? n : n-1);
-  int pos = 0;
-  if(leading_zero) {
-    ans[0] = 0;
-    ++pos;
+  template <class V>
+  Vector diff_impl(const V &v, bool leading_zero) {
+    int n = v.size();
+    if (n == 0) return v;
+    Vector ans(leading_zero ? n : n - 1);
+    int pos = 0;
+    if (leading_zero) {
+      ans[0] = 0;
+      ++pos;
+    }
+    for (int i = 1; i < n; ++i) {
+      ans[pos++] = v[i] - v[i - 1];
+    }
+    return ans;
   }
-  for(int i = 1; i < n; ++i) {
-    ans[pos++] = v[i] - v[i-1];
+
+  Vector diff(const Vector &v, bool leading_zero) {
+    return diff_impl(v, leading_zero);
   }
-  return ans;
-}
+  Vector diff(const VectorView &v, bool leading_zero) {
+    return diff_impl(v, leading_zero);
+  }
+  Vector diff(const ConstVectorView &v, bool leading_zero) {
+    return diff_impl(v, leading_zero);
+  }
 
-Vector diff(const Vector &v, bool leading_zero) {
-  return diff_impl(v, leading_zero);
-}
-Vector diff(const VectorView &v, bool leading_zero) {
-  return diff_impl(v, leading_zero);
-}
-Vector diff(const ConstVectorView &v, bool leading_zero) {
-  return diff_impl(v, leading_zero);
-}
-
-}
+}  // namespace BOOM

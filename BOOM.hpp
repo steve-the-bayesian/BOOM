@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -23,7 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <uint.hpp>
+#include "uint.hpp"
 
 namespace BOOM{
   using std::string;

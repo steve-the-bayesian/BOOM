@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,19 +16,18 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <distributions.hpp>
 #include <cmath>
-namespace BOOM{
+#include "distributions.hpp"
+namespace BOOM {
 
-  double rlexp(double loglam){
-    return rlexp_mt(GlobalRng::rng, loglam); }
+  double rlexp(double loglam) { return rlexp_mt(GlobalRng::rng, loglam); }
 
-  double rlexp_mt(RNG & rng, double loglam){
+  double rlexp_mt(RNG& rng, double loglam) {
     double ans;
-    do{
+    do {
       ans = log(-log(runif_mt(rng)));
-    }while(!std::isfinite(ans));
+    } while (!std::isfinite(ans));
     return ans - loglam;
   }
 
-}
+}  // namespace BOOM

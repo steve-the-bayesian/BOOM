@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007-2011 Steven L. Scott
 
@@ -19,14 +20,14 @@
 #ifndef BOOM_ARRAY_HPP
 #define BOOM_ARRAY_HPP
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/ArrayIterator.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/ArrayIterator.hpp"
 
 #include <vector>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM{
   // ConstArrayBase implements the const methods common to the Array

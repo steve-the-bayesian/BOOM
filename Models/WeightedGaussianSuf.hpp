@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,22 +20,19 @@
 #ifndef BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_
 #define BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_
 
-#include <Models/Sufstat.hpp>
-#include <Models/DataTypes.hpp>
-#include <Models/WeightedData.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Sufstat.hpp"
+#include "Models/WeightedData.hpp"
 
 namespace BOOM {
 
   // WeightedGaussianSuf are the sufficient statistics for a Gaussian
   // model where y[i] ~ N(mu, sigsq / w[i]).
-  class WeightedGaussianSuf
-      : public SufstatDetails<WeightedDoubleData>{
+  class WeightedGaussianSuf : public SufstatDetails<WeightedDoubleData> {
    public:
-    explicit WeightedGaussianSuf(double sum = 0,
-                                 double sumsq = 0,
-                                 double n = 0,
+    explicit WeightedGaussianSuf(double sum = 0, double sumsq = 0, double n = 0,
                                  double sumw = 0);
-    WeightedGaussianSuf * clone() const override;
+    WeightedGaussianSuf *clone() const override;
 
     void clear() override;
     void Update(const WeightedDoubleData &data) override;
@@ -42,22 +40,22 @@ namespace BOOM {
     void update_raw(double data, double weight);
     void add_mixture_data(double y, double weight, double prob);
 
-    WeightedGaussianSuf * abstract_combine(Sufstat *s) override;
+    WeightedGaussianSuf *abstract_combine(Sufstat *s) override;
     void combine(const Ptr<WeightedGaussianSuf> &);
     void combine(const WeightedGaussianSuf &);
 
-    double ybar()const{return sum_ / sumw_;}
-    double sum()const{return sum_;}
-    double n()const{return n_;}
-    double sumsq()const{return sumsq_;}
-    double sumw()const{return sumw_;}
+    double ybar() const { return sum_ / sumw_; }
+    double sum() const { return sum_; }
+    double n() const { return n_; }
+    double sumsq() const { return sumsq_; }
+    double sumw() const { return sumw_; }
 
-    Vector vectorize(bool minimal=true)const override;
+    Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                            bool minimal=true) override;
+                                       bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                            bool minimal=true) override;
-    ostream & print(ostream &)const override;
+                                       bool minimal = true) override;
+    ostream &print(ostream &) const override;
 
    private:
     double sum_;    // sum y[i] * w[i]
@@ -68,4 +66,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_
+#endif  //  BOOM_WEIGHTED_GAUSSIAN_SUF_HPP_

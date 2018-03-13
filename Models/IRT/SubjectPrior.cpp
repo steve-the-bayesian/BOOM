@@ -15,64 +15,62 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/IRT/SubjectPrior.hpp>
-#include <Models/MvnModel.hpp>
+#include "Models/IRT/SubjectPrior.hpp"
+#include "Models/MvnModel.hpp"
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
 
     typedef MvnSubjectPrior MSP;
     typedef SubjectPrior SP;
 
     //------------------------------------------------------------
 
-    MSP::MvnSubjectPrior(const Ptr<MvnModel> &Mvn)
-      : mvn(Mvn)
-    {
+    MSP::MvnSubjectPrior(const Ptr<MvnModel> &Mvn) : mvn(Mvn) {
       ParamPolicy::add_model(mvn);
     }
 
     MSP::MvnSubjectPrior(const MSP &rhs)
-      : Model(rhs),
-        SubjectPrior(rhs),
-        ParamPolicy(rhs),
-        DataPolicy(rhs),
-        PriorPolicy(rhs),
-        mvn(rhs.mvn->clone())
-    {
+        : Model(rhs),
+          SubjectPrior(rhs),
+          ParamPolicy(rhs),
+          DataPolicy(rhs),
+          PriorPolicy(rhs),
+          mvn(rhs.mvn->clone()) {
       ParamPolicy::add_model(mvn);
     }
 
-    MSP * MSP::clone()const{return new MSP(*this);}
+    MSP *MSP::clone() const { return new MSP(*this); }
 
-    double MSP::pdf(const Ptr<Data> &dp, bool logsc)const{
-      return pdf(DAT(dp), logsc);}
+    double MSP::pdf(const Ptr<Data> &dp, bool logsc) const {
+      return pdf(DAT(dp), logsc);
+    }
 
-    double MSP::pdf(const Ptr<Subject> & s, bool logsc)const{
-      return mvn->pdf(s->Theta(), logsc); }
+    double MSP::pdf(const Ptr<Subject> &s, bool logsc) const {
+      return mvn->pdf(s->Theta(), logsc);
+    }
 
-    void MSP::initialize_params(){mvn->initialize_params();}
+    void MSP::initialize_params() { mvn->initialize_params(); }
 
-    void MSP::clear_data(){
+    void MSP::clear_data() {
       mvn->clear_data();
       DataPolicy::clear_data();
     }
 
-    void MSP::add_data(const Ptr<Subject> & s){
+    void MSP::add_data(const Ptr<Subject> &s) {
       Ptr<VectorData> dp = s->Theta_prm();
       mvn->add_data(dp);
-      DataPolicy::add_data(s); }
+      DataPolicy::add_data(s);
+    }
 
-    void MSP::add_data(const Ptr<Data> & d){
+    void MSP::add_data(const Ptr<Data> &d) {
       Ptr<Subject> s = DAT(d);
       add_data(s);
     }
 
-    Vector MSP::mean(const Ptr<Subject> &)const{
-      return mvn->mu();}
+    Vector MSP::mean(const Ptr<Subject> &) const { return mvn->mu(); }
 
-    SpdMatrix MSP::siginv()const{
-      return mvn->siginv();}
+    SpdMatrix MSP::siginv() const { return mvn->siginv(); }
 
   }  // namespace IRT
-} // namespace BOOM
+}  // namespace BOOM

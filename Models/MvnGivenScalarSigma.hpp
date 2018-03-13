@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2010 Steven L. Scott
 
@@ -19,13 +20,13 @@
 #ifndef BOOM_MVN_GIVEN_SCALAR_SIGMA_HPP_
 #define BOOM_MVN_GIVEN_SCALAR_SIGMA_HPP_
 
-#include <Models/MvnBase.hpp>
-#include <Models/SpdData.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/SpdData.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // This model is intended for use as a conditional prior
   // distribution for regression coefficients in "least squares"
@@ -38,11 +39,11 @@ namespace BOOM{
   // the inverse of Omega as an argument.  Omega is a fixed constant in
   // this model, which might make it a poor fit for hierarchical models
   // where the degree of shrinkage is to be learned across groups.
-  class MvnGivenScalarSigmaBase
-      : public MvnBase {
+  class MvnGivenScalarSigmaBase : public MvnBase {
    public:
     MvnGivenScalarSigmaBase(const Ptr<UnivParams> &sigsq);
     double sigsq() const;
+
    private:
     // sigsq_ is a pointer to the residual variance parameter, e.g. in
     // a regression model.
@@ -51,51 +52,48 @@ namespace BOOM{
 
   //======================================================================
   // The concrete class to use with arbitrary "Omega" values.
-  class MvnGivenScalarSigma
-      : public MvnGivenScalarSigmaBase,
-        public LoglikeModel,
-        public ParamPolicy_1<VectorParams>,
-        public SufstatDataPolicy<VectorData, MvnSuf>,
-        public PriorPolicy
-  {
+  class MvnGivenScalarSigma : public MvnGivenScalarSigmaBase,
+                              public LoglikeModel,
+                              public ParamPolicy_1<VectorParams>,
+                              public SufstatDataPolicy<VectorData, MvnSuf>,
+                              public PriorPolicy {
    public:
-    MvnGivenScalarSigma(const SpdMatrix &ominv,
-                        const Ptr<UnivParams> &sigsq);
-    MvnGivenScalarSigma(const Vector &mean,
-                        const SpdMatrix &ominv,
+    MvnGivenScalarSigma(const SpdMatrix &ominv, const Ptr<UnivParams> &sigsq);
+    MvnGivenScalarSigma(const Vector &mean, const SpdMatrix &ominv,
                         const Ptr<UnivParams> &sigsq);
 
-    MvnGivenScalarSigma(const MvnGivenScalarSigma & rhs);
-    MvnGivenScalarSigma * clone() const override;
+    MvnGivenScalarSigma(const MvnGivenScalarSigma &rhs);
+    MvnGivenScalarSigma *clone() const override;
 
     Ptr<VectorParams> Mu_prm();
-    const Ptr<VectorParams> Mu_prm()const;
+    const Ptr<VectorParams> Mu_prm() const;
 
-    uint dim()const override;
-    const Vector & mu() const override;
+    uint dim() const override;
+    const Vector &mu() const override;
 
     // Sigma refers to the actual variance matrix of beta given sigma
     // and Omega, i.e. Omega * sigsq.  siginv and ldsi refer to its
     // inverse and the log of the determinant of its inverse.
-    const SpdMatrix & Sigma()const override;
-    const SpdMatrix & siginv()const override;
-    double ldsi()const override;
+    const SpdMatrix &Sigma() const override;
+    const SpdMatrix &siginv() const override;
+    double ldsi() const override;
 
     // Omega refers to the proportional variance matrix of beta
     // (i.e. not multiplied by sigsq).  ominv and ldoi refer to the
     // inverse of this matrix and the log of the determinant of the
     // inverse.
-    const SpdMatrix & Omega()const;
-    const SpdMatrix & ominv()const;
-    double ldoi()const;
+    const SpdMatrix &Omega() const;
+    const SpdMatrix &ominv() const;
+    double ldoi() const;
 
     void set_mu(const Vector &);
 
     void set_unscaled_precision(const SpdMatrix &omega_inverse);
 
     void mle() override;
-    double loglike(const Vector &mu_ominv)const override;
-    double pdf(const Ptr<Data> &dp, bool)const;
+    double loglike(const Vector &mu_ominv) const override;
+    double pdf(const Ptr<Data> &dp, bool) const;
+
    private:
     // ominv_ is stored as SpdParams instead of as a raw SpdMatrix because
     // SpdParams keeps track of the matrix, its inverse, and its log
@@ -108,5 +106,5 @@ namespace BOOM{
     mutable SpdMatrix wsp_;
   };
 
-}
+}  // namespace BOOM
 #endif  // BOOM_MVN_GIVEN_SCALAR_SIGMA_HPP_

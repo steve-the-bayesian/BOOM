@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,16 +20,16 @@
 #ifndef BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/BetaBinomialModel.hpp>
-#include <Models/BetaModel.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <Samplers/MH_Proposals.hpp>
-#include <TargetFun/Transformation.hpp>
+#include "Models/BetaBinomialModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/MH_Proposals.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "TargetFun/Transformation.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   //======================================================================
   // The log posterior of the beta binomial model on the (prob,
@@ -40,6 +41,7 @@ namespace BOOM{
                              const Ptr<DiffDoubleModel> &sample_size_prior);
     double operator()(const Vector &prob_samplesize, Vector &gradient,
                       Matrix &Hessian, uint nderiv) const;
+
    private:
     const BetaBinomialModel *model_;
     const Ptr<BetaModel> probability_prior_;
@@ -58,8 +60,7 @@ namespace BOOM{
   //
   //  |J| = sample_size * (1 - prob) + sample_size * prob
   //      = sample_size
-  class ProbSamplesizeJacobian
-      : public Jacobian {
+  class ProbSamplesizeJacobian : public Jacobian {
    public:
     // Default constructor says to prefer the new (prob, sample_size)
     // parameterization.
@@ -77,7 +78,7 @@ namespace BOOM{
     //     position and sample_size in the second.
     void evaluate_new_parameterization(const Vector &prob_size) override;
 
-    double logdet() override {return log(sample_size_);}
+    double logdet() override { return log(sample_size_); }
 
     Matrix &matrix() override;
 
@@ -92,15 +93,14 @@ namespace BOOM{
     // of b, and thus -1.
     double second_order_element(int r, int s, int t) override {
       if (r == s) return 0;
-      return t==0 ? 1 : -1;
+      return t == 0 ? 1 : -1;
     }
 
     // This override takes advantage of the sparsity in
     // second_order_element.  It omits calls where the elements are
     // known to be zero.
     void transform_second_order_gradient(
-        SpdMatrix &working_hessian,
-        const Vector &original_gradient) override;
+        SpdMatrix &working_hessian, const Vector &original_gradient) override;
 
     // Derivatives of logdet() with respect to prob are all zero, so
     // the gradient and Hessian are easy.
@@ -133,15 +133,14 @@ namespace BOOM{
   //        |   0              size |
   //
   //
-  class LogitLogJacobian
-      : public Jacobian {
+  class LogitLogJacobian : public Jacobian {
    public:
     LogitLogJacobian();
     void evaluate_original_parameterization(const Vector &prob_size) override;
     void evaluate_new_parameterization(const Vector &eta_nu) override;
     double logdet() override;
 
-    Matrix & matrix() override;
+    Matrix &matrix() override;
 
     double second_order_element(int r, int s, int t) override {
       // Becaue the Jacobian matrix is diagonal, if s !=t the Jacobian
@@ -153,17 +152,17 @@ namespace BOOM{
         // the chain rule to get the derivative, where d_prob / d_eta
         // is the 0,0 element of the Jacobian matrix.
         return (1 - 2 * prob_) * prob_ * (1 - prob_);
-      } else if (r == 1 && s == 1 && t== 1) {
+      } else if (r == 1 && s == 1 && t == 1) {
         // Derivative of size = exp(nu) with respect to nu.
         return sample_size_;
-      } else return 0;
+      } else
+        return 0;
     }
 
     // Overrides the default implementation because only two calls to
     // second_order_element are needed.
     void transform_second_order_gradient(
-        SpdMatrix &working_hessian,
-        const Vector &original_gradient) override;
+        SpdMatrix &working_hessian, const Vector &original_gradient) override;
 
     void add_logdet_gradient(Vector &gradient) override;
     void add_logdet_Hessian(Matrix &hessian) override;
@@ -179,15 +178,13 @@ namespace BOOM{
   // This is a posterior sampler for the BetaBinomialModel.  It
   // differs from the BetaBinomialSampler, which is a sampler for the
   // binomial model based on a beta prior.
-  class BetaBinomialPosteriorSampler
-      : public PosteriorSampler {
+  class BetaBinomialPosteriorSampler : public PosteriorSampler {
    public:
-    enum SamplingMethod { SLICE, DATA_AUGMENTATION, TIM};
-    BetaBinomialPosteriorSampler(
-        BetaBinomialModel *model,
-        const Ptr<BetaModel> &probability_prior,
-        const Ptr<DiffDoubleModel> &sample_size_prior,
-        RNG &seeding_rng = GlobalRng::rng);
+    enum SamplingMethod { SLICE, DATA_AUGMENTATION, TIM };
+    BetaBinomialPosteriorSampler(BetaBinomialModel *model,
+                                 const Ptr<BetaModel> &probability_prior,
+                                 const Ptr<DiffDoubleModel> &sample_size_prior,
+                                 RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
@@ -197,9 +194,7 @@ namespace BOOM{
     // will be stored in the MetropolisHastings proposal distribution.
     void find_posterior_mode(double epsilon = 1e-5) override;
 
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
+    bool can_find_posterior_mode() const override { return true; }
 
     void draw_slice();
     void draw_data_augmentation();
@@ -207,19 +202,20 @@ namespace BOOM{
 
     // Full conditional distributions of the probability and sample
     // size parameters.
-    double logp(double prob, double sample_size)const;
-    double logp_prob(double prob)const;
-    double logp_sample_size(double sample_size)const;
+    double logp(double prob, double sample_size) const;
+    double logp_prob(double prob) const;
+    double logp_sample_size(double sample_size) const;
 
     // Determines which sampling method will be used when draw() is
     // called.
-    void set_sampling_method(SamplingMethod method){
+    void set_sampling_method(SamplingMethod method) {
       sampling_method_ = method;
     }
 
     // Set the prior distribution on the "sample_size" model parameter
     // (a + b).
-    void set_prior_on_sample_size(const Ptr<DiffDoubleModel> & sample_size_prior);
+    void set_prior_on_sample_size(
+        const Ptr<DiffDoubleModel> &sample_size_prior);
 
     // Returns a functor for evaluating logp and derivatives on
     // the probability/sample_size scale.
@@ -229,9 +225,7 @@ namespace BOOM{
     // scale of logit(prob) and log(sample_size).
     Transformation approximately_gaussian_log_posterior();
 
-    void observe_new_data() {
-      trouble_locating_mode_ = false;
-    }
+    void observe_new_data() { trouble_locating_mode_ = false; }
 
    private:
     BetaBinomialModel *model_;
@@ -257,4 +251,4 @@ namespace BOOM{
   };
 
 }  // namespace BOOM
-#endif //  BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_BETA_BINOMIAL_POSTERIOR_SAMPLER_HPP_

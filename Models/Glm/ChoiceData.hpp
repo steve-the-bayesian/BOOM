@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,16 +20,14 @@
 #ifndef BOOM_CHOICE_DATA_HPP
 #define BOOM_CHOICE_DATA_HPP
 
-#include <Models/CategoricalData.hpp>
-#include <Models/DataTypes.hpp>
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Selector.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/DataTypes.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class ChoiceData : public CategoricalData
-  {
-  public:
-
+  class ChoiceData : public CategoricalData {
+   public:
     // Args:
     //   y:  The response
     //   subject_x: A vector of predictors describing subject level
@@ -39,33 +38,32 @@ namespace BOOM{
     //   choice_x: A vector of vectors describing characteristics of
     //     the object being chosen.  May be empty if all data is
     //     subject-level data.
-    ChoiceData(const CategoricalData &y,
-               const Ptr<VectorData> &subject_x,
-               const std::vector<Ptr<VectorData> > & choice_x);
+    ChoiceData(const CategoricalData &y, const Ptr<VectorData> &subject_x,
+               const std::vector<Ptr<VectorData> > &choice_x);
 
     ChoiceData(const ChoiceData &rhs);
 
-    ChoiceData * clone() const override;
+    ChoiceData *clone() const override;
 
     //--------- virtual function over-rides ----
-    ostream & display(ostream &)const override;
+    ostream &display(ostream &) const override;
 
     //--------- choice information ----
-    uint nchoices()const;     // number of possible choices
-    uint n_avail()const;      // number of choices actually available
-    bool avail(uint i)const;  // is choice i available to the subject?
+    uint nchoices() const;     // number of possible choices
+    uint n_avail() const;      // number of choices actually available
+    bool avail(uint i) const;  // is choice i available to the subject?
 
-    uint subject_nvars()const;
-    uint choice_nvars()const;
+    uint subject_nvars() const;
+    uint choice_nvars() const;
 
-    const uint & value()const override;
+    const uint &value() const override;
     void set_y(uint y);
 
     // The Vector of subject-level predictor variables.
-    const Vector & Xsubject()const;
+    const Vector &Xsubject() const;
 
     // The Vector of choice-level predictor variables for choice i.
-    const Vector & Xchoice(uint i)const;
+    const Vector &Xchoice(uint i) const;
 
     // Fills the matrix given in the first argument with the "design
     // matrix" corresponding to this observation.  Let Sx denote the
@@ -84,7 +82,7 @@ namespace BOOM{
     //
     // The return value is the final value of the first argument,
     // after it is modified.
-    const Matrix & write_x(Matrix &X, bool include_zero)const;
+    const Matrix &write_x(Matrix &X, bool include_zero) const;
 
     // Returns the matrix written by write_x().  If this function is
     // never called then the space for X is never allocated.  The
@@ -93,25 +91,25 @@ namespace BOOM{
     // function many times than to call write_x many times.  If memory
     // becomes an issue, then it may be prefereable to call write_x
     // instead.
-    const Matrix & X(bool include_zero = true)const;
+    const Matrix &X(bool include_zero = true) const;
 
     void set_Xsubject(const Vector &x);
     void set_Xchoice(const Vector &x, uint i);
 
-  private:
-    Ptr<VectorData> xsubject_;                // age of car buyer
-    std::vector<Ptr<VectorData> > xchoice_;   // price of car
+   private:
+    Ptr<VectorData> xsubject_;               // age of car buyer
+    std::vector<Ptr<VectorData> > xchoice_;  // price of car
 
-    Selector avail_;                          // which choices are available
-    Vector null_;           // zero length.  return for null reference.
+    Selector avail_;  // which choices are available
+    Vector null_;     // zero length.  return for null reference.
 
     // All subject and choice predictors stretched out into a single
     // predictor vector
     mutable Matrix bigX_;
     mutable bool big_x_current_;
 
-    bool check_big_x(bool include_zeros)const;
+    bool check_big_x(bool include_zeros) const;
   };
 
-}
-#endif// BOOM_CHOICE_DATA_HPP
+}  // namespace BOOM
+#endif  // BOOM_CHOICE_DATA_HPP

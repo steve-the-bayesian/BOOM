@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_INDEPENDENT_MVN_CONJ_SAMPLER_HPP_
 #define BOOM_INDEPENDENT_MVN_CONJ_SAMPLER_HPP_
 
-#include <Models/IndependentMvnModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
@@ -33,22 +34,21 @@ namespace BOOM {
    public:
     IndependentMvnConjSampler(IndependentMvnModel *model,
                               const Vector &mean_guess,
-                              const Vector & mean_sample_size,
+                              const Vector &mean_sample_size,
                               const Vector &sd_guess,
                               const Vector &sd_sample_size,
                               const Vector &sigma_upper_limit,
                               RNG &seeding_rng = GlobalRng::rng);
 
-    IndependentMvnConjSampler(IndependentMvnModel *model,
-                              double mean_guess,
-                              double mean_sample_size,
-                              double sd_guess,
+    IndependentMvnConjSampler(IndependentMvnModel *model, double mean_guess,
+                              double mean_sample_size, double sd_guess,
                               double sd_sample_size,
                               double sigma_upper_limit = infinity(),
                               RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
+
    private:
     void check_sizes(const Vector &sigma_upper_limit);
     void check_vector_size(const Vector &v, const char *vector_name);
@@ -61,5 +61,5 @@ namespace BOOM {
     std::vector<GenericGaussianVarianceSampler> sigsq_samplers_;
   };
 
-}
-#endif// BOOM_INDEPENDENT_MVN_CONJ_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_INDEPENDENT_MVN_CONJ_SAMPLER_HPP_

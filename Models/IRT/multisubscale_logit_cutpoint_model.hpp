@@ -17,42 +17,43 @@
 */
 #ifndef BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP
 #define BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP
-#include <Models/Glm/OrdinalCutpointModel.hpp>
+#include "Models/Glm/OrdinalCutpointModel.hpp"
 
-#include <Models/IRT/IRT.hpp>
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/ItemDataPolicy.hpp>
+#include "Models/IRT/IRT.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/ItemDataPolicy.hpp"
 
-namespace BOOM{
-  namespace IRT{
-        class MultisubscaleLogitCutpointModel
-          : public OrdinalCutpointModel,
-            public ItemDataPolicy<OrdinalRegressionData>
-    {
-    public:
+namespace BOOM {
+  namespace IRT {
+    class MultisubscaleLogitCutpointModel
+        : public OrdinalCutpointModel,
+          public ItemDataPolicy<OrdinalRegressionData> {
+     public:
       // don't forget to call model_selection(false)
       typedef MultisubscaleLogitCutpointModel MLCM;
       typedef OrdinalCutpointModel base;
 
       MultisubscaleLogitCutpointModel(const Selector &subs, uint Maxscore);
       MultisubscaleLogitCutpointModel(const MLCM &rhs);
-      MLCM * clone()const override;
+      MLCM *clone() const override;
 
-      ostream & display_item_params(ostream &, bool decorate=true)const;
+      ostream &display_item_params(ostream &, bool decorate = true) const;
 
       // set to observed proportions assuming theta=0
       void initialize_params() override;
 
-      double response_prob(Response r, const Vector &Theta, bool logscale)const;
-      double response_prob(uint r, const Vector &Theta, bool logscale)const;
+      double response_prob(Response r, const Vector &Theta,
+                           bool logscale) const;
+      double response_prob(uint r, const Vector &Theta, bool logscale) const;
 
-      DataPolicy::DatasetType & dat(){return DataPolicy::dat();}
-      const DataPolicy::DatasetType & dat()const{return DataPolicy::dat();}
+      DataPolicy::DatasetType &dat() { return DataPolicy::dat(); }
+      const DataPolicy::DatasetType &dat() const { return DataPolicy::dat(); }
     };
 
-    Ptr<MultisubscaleLogitCutpointModel> random_mlcm(
-        RNG &rng, const Selector &subs, uint Maxscore);
+    Ptr<MultisubscaleLogitCutpointModel> random_mlcm(RNG &rng,
+                                                     const Selector &subs,
+                                                     uint Maxscore);
 
-  }
-}
-#endif // BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP
+  }  // namespace IRT
+}  // namespace BOOM
+#endif  // BOOM_IRT_MULTISUBSCALE_LOGIT_CUTPOINT_MODEL_HPP

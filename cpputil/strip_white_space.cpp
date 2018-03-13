@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,15 +18,15 @@
 */
 #include <cctype>
 #include <string>
-namespace BOOM{
+namespace BOOM {
 
-  std::string strip_white_space(const std::string &s){
+  std::string strip_white_space(const std::string &s) {
     unsigned n = s.size();
     std::string ans;
-    for(unsigned i=0; i<n; ++i){
+    for (unsigned i = 0; i < n; ++i) {
       char c = s[i];
-      if(!isspace(c)) ans+= c;
+      if (!isspace(c)) ans += c;
     }
     return ans;
   }
-}
+}  // namespace BOOM

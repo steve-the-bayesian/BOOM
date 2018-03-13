@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,15 +20,15 @@
 #ifndef BOOM_TRUN_GAMMA_HPP
 #define BOOM_TRUN_GAMMA_HPP
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // Density of the truncated Gamma(a,b) distribution with support >= cut.
   double dtrun_gamma(double x, double a, double b, double cut, bool logscale);
 
   // Returns a draw from the truncated Gamma(a,b) distribution with
   // support >= cut.
-  double rtrun_gamma(double a, double b, double cut, unsigned n=5);
-  double rtrun_gamma_mt(RNG &, double a, double b, double cut, unsigned n=5);
-}
-#endif// BOOM_TRUN_GAMMA_HPP
+  double rtrun_gamma(double a, double b, double cut, unsigned n = 5);
+  double rtrun_gamma_mt(RNG &, double a, double b, double cut, unsigned n = 5);
+}  // namespace BOOM
+#endif  // BOOM_TRUN_GAMMA_HPP

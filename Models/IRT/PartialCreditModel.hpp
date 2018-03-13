@@ -18,41 +18,38 @@
 #ifndef BOOM_PARTIAL_CREDIT_MODEL_HPP
 #define BOOM_PARTIAL_CREDIT_MODEL_HPP
 
-#include <Models/IRT/Item.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Models/Glm/MultinomialLogitModel.hpp>
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ConstrainedVectorParams.hpp>
-namespace BOOM{
-  namespace IRT{
+#include "Models/ConstrainedVectorParams.hpp"
+#include "Models/Glm/MultinomialLogitModel.hpp"
+#include "Models/IRT/Item.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+namespace BOOM {
+  namespace IRT {
 
-    class PcrBetaConstraint : public VectorConstraint{
-    public:
+    class PcrBetaConstraint : public VectorConstraint {
+     public:
       // Constrains the first and next_to_last elements of b so that (M+1)*b[0]
       // = b[M]. This class is used when PartialCreditModel is kept identified.
-      bool check(const Vector &b)const override;
-      void impose(Vector &b)const override;
-      Vector expand(const Vector &b_min)const override;   // adds in b0
-      Vector reduce(const Vector &b_full)const override;  // omits b0
+      bool check(const Vector &b) const override;
+      void impose(Vector &b) const override;
+      Vector expand(const Vector &b_min) const override;   // adds in b0
+      Vector reduce(const Vector &b_full) const override;  // omits b0
     };
 
-    class PcrDConstraint : public VectorConstraint{
-    public:
-      bool check(const Vector &d)const override;
-      void impose(Vector &d)const override;
-      Vector expand(const Vector &d_min)const override;
-      Vector reduce(const Vector &d_full)const override;
+    class PcrDConstraint : public VectorConstraint {
+     public:
+      bool check(const Vector &d) const override;
+      void impose(Vector &d) const override;
+      Vector expand(const Vector &d_min) const override;
+      Vector reduce(const Vector &d_full) const override;
     };
 
     class PartialCreditModel
-      : public Item,  // knows all subjects assigned to this item
-        public ParamPolicy_3<UnivParams,
-                             UnivParams,
-                             ConstrainedVectorParams>, // a,b,d
-        public PriorPolicy
-    {
-
+        : public Item,  // knows all subjects assigned to this item
+          public ParamPolicy_3<UnivParams, UnivParams,
+                               ConstrainedVectorParams>,  // a,b,d
+          public PriorPolicy {
       /*------------------------------------------------------------
         An item with maxscore()==M yields log score probabilities = C
         + X*beta where C is a normalizing constant X[0..M, 0..M] is an
@@ -73,63 +70,64 @@ namespace BOOM{
 
         ------------------------------------------------------------*/
 
-    public:
-      PartialCreditModel(const string & Id, uint Mscore, uint which_sub,
-                         uint Nscales, const string &Name="", bool id_d0=true);
-      PartialCreditModel(const string & Id, uint Mscore, uint which_sub,
+     public:
+      PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
+                         uint Nscales, const string &Name = "",
+                         bool id_d0 = true);
+      PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
                          uint Nscales, double a, double b, const Vector &d,
-                         const string &Name="", bool id_d0=true);
+                         const string &Name = "", bool id_d0 = true);
       PartialCreditModel(const PartialCreditModel &rhs);
-      PartialCreditModel * clone()const override;
+      PartialCreditModel *clone() const override;
 
-      uint which_subscale()const;
+      uint which_subscale() const;
 
-      Ptr<UnivParams> A_prm(bool check=true);
-      Ptr<UnivParams> B_prm(bool check=true);
-      Ptr<ConstrainedVectorParams> D_prm(bool check=true);
-      Ptr<ConstrainedVectorParams> Beta_prm(bool check=true);
-      const Ptr<UnivParams> A_prm(bool check=true)const;
-      const Ptr<UnivParams> B_prm(bool check=true)const;
-      const Ptr<ConstrainedVectorParams> D_prm(bool check=true)const;
-      const Ptr<ConstrainedVectorParams> Beta_prm(bool check=true)const;
+      Ptr<UnivParams> A_prm(bool check = true);
+      Ptr<UnivParams> B_prm(bool check = true);
+      Ptr<ConstrainedVectorParams> D_prm(bool check = true);
+      Ptr<ConstrainedVectorParams> Beta_prm(bool check = true);
+      const Ptr<UnivParams> A_prm(bool check = true) const;
+      const Ptr<UnivParams> B_prm(bool check = true) const;
+      const Ptr<ConstrainedVectorParams> D_prm(bool check = true) const;
+      const Ptr<ConstrainedVectorParams> Beta_prm(bool check = true) const;
       ParamVector parameter_vector() override;
       const ParamVector parameter_vector() const override;
 
-      double a()const;
-      double b()const;
-      double d(uint m)const;
-      const Vector & d()const;
+      double a() const;
+      double b() const;
+      double d(uint m) const;
+      const Vector &d() const;
       void set_a(double a);
       void set_b(double b);
       void set_d(const Vector &d);
 
       void fix_d0();
       void free_d0();
-      bool is_d0_fixed()const;
+      bool is_d0_fixed() const;
 
       void initialize_params();
-      void sync_params()const;
+      void sync_params() const;
 
-      const Vector & beta()const override;  // see note above for dimension
+      const Vector &beta() const override;  // see note above for dimension
       void set_beta(const Vector &b);
 
-      const Vector & fill_eta(const Vector &Theta)const;  // 0.. maxscore()
-      const Matrix & X(const Vector &Theta)const;
-      const Matrix & X(double theta)const;
+      const Vector &fill_eta(const Vector &Theta) const;  // 0.. maxscore()
+      const Matrix &X(const Vector &Theta) const;
+      const Matrix &X(double theta) const;
 
-      double
-      response_prob(Response r, const Vector &Theta, bool logsc)const override;
-      double
-      response_prob(uint r, const Vector &Theta, bool logsc)const override;
+      double response_prob(Response r, const Vector &Theta,
+                           bool logsc) const override;
+      double response_prob(uint r, const Vector &Theta,
+                           bool logsc) const override;
 
-      std::pair<double,double> theta_moments()const;
+      std::pair<double, double> theta_moments() const;
       // mean and variance of theta's for subjects that were assigned
       // this item
 
-      ostream &
-      display_item_params(ostream &, bool decorate=true)const override;
+      ostream &display_item_params(ostream &,
+                                   bool decorate = true) const override;
 
-    private:
+     private:
       // workspace for probability calculations
       mutable Vector b_, eta_;
       mutable Matrix X_;
@@ -141,8 +139,8 @@ namespace BOOM{
       mutable bool beta_current, a_current, b_current, d_current;
 
       void impose_beta_constraint();
-      void fill_beta(bool first_time=false)const;
-      void fill_abd()const;
+      void fill_beta(bool first_time = false) const;
+      void fill_abd() const;
       void setup_X();
       void setup_beta();
 
@@ -150,12 +148,12 @@ namespace BOOM{
 
       // the observers watch a, b, and d for changes
 
-      void observe_a()const{beta_current=false;}
-      void observe_b()const{beta_current=false;}
-      void observe_d()const{beta_current=false;}
-      void observe_beta()const{a_current=b_current=d_current=false;}
+      void observe_a() const { beta_current = false; }
+      void observe_b() const { beta_current = false; }
+      void observe_d() const { beta_current = false; }
+      void observe_beta() const { a_current = b_current = d_current = false; }
 
-      void set_abd_current()const;
+      void set_abd_current() const;
 
       // to be called during construction:
       void setup();
@@ -163,11 +161,9 @@ namespace BOOM{
       void set_observers();
 
       // helper for theta_moments
-      void increment_theta_moments(const Ptr<Subject> &,
-                                   double &m,
-                                   double &v,
-                                   double &n)const;
+      void increment_theta_moments(const Ptr<Subject> &, double &m, double &v,
+                                   double &n) const;
     };
-  }
-}
-#endif// BOOM_PARTIAL_CREDIT_MODEL_HPP
+  }  // namespace IRT
+}  // namespace BOOM
+#endif  // BOOM_PARTIAL_CREDIT_MODEL_HPP

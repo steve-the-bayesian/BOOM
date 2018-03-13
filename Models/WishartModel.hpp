@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,36 +20,37 @@
 #ifndef WISHART_MODEL_H
 #define WISHART_MODEL_H
 
-#include <Models/ModelTypes.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/SpdModel.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/SpdModel.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/Sufstat.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class WishartSuf : public SufstatDetails<SpdData> {
-  public:
+   public:
     WishartSuf(uint dim);
     WishartSuf(const WishartSuf &sf);
     WishartSuf *clone() const override;
 
     void clear() override;
     void Update(const SpdData &d) override;
-    double n()const{return n_;}
-    double sumldw()const{return sumldw_;}
-    const SpdMatrix & sumW()const{return sumW_;}
+    double n() const { return n_; }
+    double sumldw() const { return sumldw_; }
+    const SpdMatrix &sumW() const { return sumW_; }
     void combine(const Ptr<WishartSuf> &);
     void combine(const WishartSuf &);
-    WishartSuf * abstract_combine(Sufstat *s) override;
-    Vector vectorize(bool minimal=true)const override;
+    WishartSuf *abstract_combine(Sufstat *s) override;
+    Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                            bool minimal=true) override;
+                                       bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                            bool minimal=true) override;
-    ostream &print(ostream &out)const override;
-  private:
+                                       bool minimal = true) override;
+    ostream &print(ostream &out) const override;
+
+   private:
     double n_;
     double sumldw_;
     SpdMatrix sumW_;
@@ -72,14 +74,12 @@ namespace BOOM{
   // prior for the precision matrix of a multivariate normal
   // distribution.  A 'precision' (aka 'information') matrix is the
   // matrix inverse of a variance matrix.
-  class WishartModel :
-    public ParamPolicy_2<UnivParams, SpdParams>,
-    public SufstatDataPolicy<SpdData, WishartSuf>,
-    public PriorPolicy,
-    public dLoglikeModel,
-    public SpdModel
-  {
-  public:
+  class WishartModel : public ParamPolicy_2<UnivParams, SpdParams>,
+                       public SufstatDataPolicy<SpdData, WishartSuf>,
+                       public PriorPolicy,
+                       public dLoglikeModel,
+                       public SpdModel {
+   public:
     // A Wishart model with a constant diagonal sum of squares parameter.
     //
     // Args:
@@ -90,8 +90,7 @@ namespace BOOM{
     //   diagonal_variance: An estimate of the variance to use for
     //     each parameter.  This will be converted to a sum of squares
     //     by multiplying it by prior_df.
-    explicit WishartModel(uint dim,
-                          double prior_df = -1.0,
+    explicit WishartModel(uint dim, double prior_df = -1.0,
                           double diagonal_variance = 1.0);
 
     // Args:
@@ -111,16 +110,16 @@ namespace BOOM{
 
     Ptr<UnivParams> Nu_prm();
     Ptr<SpdParams> Sumsq_prm();
-    const Ptr<UnivParams> Nu_prm()const;
-    const Ptr<SpdParams> Sumsq_prm()const;
+    const Ptr<UnivParams> Nu_prm() const;
+    const Ptr<SpdParams> Sumsq_prm() const;
 
-    const double & nu() const;
+    const double &nu() const;
     const SpdMatrix &sumsq() const;
     void set_nu(double);
     void set_sumsq(const SpdMatrix &);
 
     SpdMatrix simdat(RNG &rng = GlobalRng::rng);
-    int dim()const {return sumsq().nrow();}
+    int dim() const { return sumsq().nrow(); }
 
     // Experimental code for finding the MLE of the Wishart density.
     // mle0 finds the mode using no derivatives via the Nelder Mead
@@ -130,7 +129,7 @@ namespace BOOM{
 
     double logp(const SpdMatrix &W) const override;
 
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
 
     // Evaluate the log likelihood of Wishart data.  The model
     // parameters are Sumsq and nu, passed as a vector with the upper
@@ -138,9 +137,9 @@ namespace BOOM{
     // would be produced by Sumsq.vectorize()), and then nu at the
     // end.
     double loglike(const Vector &sumsq_triangle_nu) const override;
-    double dloglike(const Vector &sumsq_triangle_nu, Vector &g)const override;
-    double Loglike(const Vector &sumsq_triangle_nu, Vector &g, uint nd)const;
+    double dloglike(const Vector &sumsq_triangle_nu, Vector &g) const override;
+    double Loglike(const Vector &sumsq_triangle_nu, Vector &g, uint nd) const;
   };
 
-} // namespace BOOM
-#endif // WISHART_MODEL_H
+}  // namespace BOOM
+#endif  // WISHART_MODEL_H

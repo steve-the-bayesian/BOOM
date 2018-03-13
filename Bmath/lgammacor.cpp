@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double lgammacor(double x);
  *
  *  DESCRIPTION

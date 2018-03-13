@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -18,12 +19,12 @@
 #ifndef BOOM_GAUSSIAN_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_GAUSSIAN_BART_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Bart/GaussianBartModel.hpp>
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/ChisqModel.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Bart/GaussianBartModel.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/ChisqModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
   namespace Bart {
@@ -32,8 +33,7 @@ namespace BOOM {
     // This is the internal data type managed by the
     // GaussianBartPosteriorSampler, and fed to the nodes of the
     // GaussianBartModel model being managed.
-    class GaussianResidualRegressionData
-        : public ResidualRegressionData {
+    class GaussianResidualRegressionData : public ResidualRegressionData {
      public:
       // The data_point argument retains ownership of the data it
       // manages.  It must remain in scope while the
@@ -43,13 +43,12 @@ namespace BOOM {
       //
       // At construction time, the residual is the same as the
       // original observed response.
-      GaussianResidualRegressionData(
-          const Ptr<RegressionData> &data_point,
-          double original_prediction);
-      double y() const {return observed_response_->y();}
-      double residual() const {return residual_;}
-      void set_residual(double r) {residual_ = r;}
-      void add_to_residual(double value) override {residual_ += value;}
+      GaussianResidualRegressionData(const Ptr<RegressionData> &data_point,
+                                     double original_prediction);
+      double y() const { return observed_response_->y(); }
+      double residual() const { return residual_; }
+      void set_residual(double r) { residual_ = r; }
+      void add_to_residual(double value) override { residual_ += value; }
       void add_to_gaussian_suf(
           GaussianBartSufficientStatistics &suf) const override;
 
@@ -58,32 +57,31 @@ namespace BOOM {
       double residual_;
     };
 
-    class GaussianBartSufficientStatistics
-        : public SufficientStatisticsBase {
+    class GaussianBartSufficientStatistics : public SufficientStatisticsBase {
      public:
-      GaussianBartSufficientStatistics * clone() const override {
+      GaussianBartSufficientStatistics *clone() const override {
         return new GaussianBartSufficientStatistics(*this);
       }
-      void clear() override {suf_.clear();}
+      void clear() override { suf_.clear(); }
       void update(const ResidualRegressionData &abstract_data) override {
         abstract_data.add_to_gaussian_suf(*this);
       }
       virtual void update(const GaussianResidualRegressionData &data) {
         suf_.update_raw(data.residual());
       }
-      double n() const {return suf_.n();}
-      double ybar() const {return suf_.ybar();}
-      double sum() const {return suf_.sum();}
-      double sumsq() const {return suf_.sumsq();}
-      double sample_var() const {return suf_.sample_var();}
+      double n() const { return suf_.n(); }
+      double ybar() const { return suf_.ybar(); }
+      double sum() const { return suf_.sum(); }
+      double sumsq() const { return suf_.sumsq(); }
+      double sample_var() const { return suf_.sample_var(); }
+
      private:
       GaussianSuf suf_;
     };
 
   }  // namespace Bart
 
-  class GaussianBartPosteriorSampler
-      : public BartPosteriorSamplerBase {
+  class GaussianBartPosteriorSampler : public BartPosteriorSamplerBase {
     // The prior is that the probability of a node at depth 'd'
     // splitting is a / (1 + d)^b.  Given a split, a variable is
     // chosen uniformly from the set of available variables, and a
@@ -99,12 +97,9 @@ namespace BOOM {
     // * prior_residual_sd_guess^2 / 2).
    public:
     GaussianBartPosteriorSampler(
-        GaussianBartModel *model,
-        double prior_residual_sd_guess,
-        double prior_residual_sd_weight,
-        double prediction_sd,
-        double prior_tree_depth_alpha,
-        double prior_tree_depth_beta,
+        GaussianBartModel *model, double prior_residual_sd_guess,
+        double prior_residual_sd_weight, double prediction_sd,
+        double prior_tree_depth_alpha, double prior_tree_depth_beta,
         const std::function<double(int)> &log_prior_on_number_of_trees,
         RNG &seeding_rng = GlobalRng::rng);
     //----------------------------------------------------------------------
@@ -126,10 +121,11 @@ namespace BOOM {
     void clear_residuals() override;
     int residual_size() const override;
 
-    Bart::GaussianResidualRegressionData * create_and_store_residual(int i) override;
-    Bart::GaussianResidualRegressionData * residual(int i) override;
+    Bart::GaussianResidualRegressionData *create_and_store_residual(
+        int i) override;
+    Bart::GaussianResidualRegressionData *residual(int i) override;
 
-    Bart::GaussianBartSufficientStatistics * create_suf() const override {
+    Bart::GaussianBartSufficientStatistics *create_suf() const override {
       return new Bart::GaussianBartSufficientStatistics;
     }
 
@@ -139,8 +135,8 @@ namespace BOOM {
     // Draw the residual variance given structure and mean parameters.
     void draw_residual_variance();
 
-    const std::vector<const Bart::GaussianResidualRegressionData *>
-    residuals() const;
+    const std::vector<const Bart::GaussianResidualRegressionData *> residuals()
+        const;
 
     void set_residual(int i, double residual);
 
@@ -153,9 +149,8 @@ namespace BOOM {
     // Local changes will be reflected in other trees, so they need to
     // be locally adjusted before they are used.  This makes the
     // algorithm thread-unsafe.
-    std::vector<
-      std::shared_ptr<
-        Bart::GaussianResidualRegressionData> > residuals_;
+    std::vector<std::shared_ptr<Bart::GaussianResidualRegressionData> >
+        residuals_;
   };
 
 }  // namespace BOOM

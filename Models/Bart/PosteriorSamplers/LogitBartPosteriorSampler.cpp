@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,22 +17,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Bart/PosteriorSamplers/LogitBartPosteriorSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Bart/PosteriorSamplers/LogitBartPosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace Bart {
 
-    LogitResidualData::LogitResidualData(const Ptr<BinomialRegressionData> & dp,
+    LogitResidualData::LogitResidualData(const Ptr<BinomialRegressionData> &dp,
                                          double original_prediction)
         : ResidualRegressionData(dp->Xptr().get()),
           original_data_(dp.get()),
           sum_of_information_(0.0),
           information_weighted_sum_(0.0),
-          prediction_(original_prediction)
-    {}
+          prediction_(original_prediction) {}
 
     void LogitResidualData::add_to_residual(double value) {
       prediction_ -= value;
@@ -50,7 +50,7 @@ namespace BOOM {
     }
 
     //======================================================================
-    LogitSufficientStatistics * LogitSufficientStatistics::clone() const {
+    LogitSufficientStatistics *LogitSufficientStatistics::clone() const {
       return new LogitSufficientStatistics(*this);
     }
 
@@ -60,7 +60,7 @@ namespace BOOM {
       information_weighted_prediction_ = 0;
       information_weighted_sum_of_observation_times_prediction_ = 0;
       information_weighted_sum_of_squared_predictions_ = 0;
-     }
+    }
 
     void LogitSufficientStatistics::update(const ResidualRegressionData &data) {
       data.add_to_logit_suf(*this);
@@ -85,17 +85,19 @@ namespace BOOM {
       return information_weighted_sum_;
     }
 
-    double LogitSufficientStatistics::information_weighted_residual_sum()const {
+    double LogitSufficientStatistics::information_weighted_residual_sum()
+        const {
       return information_weighted_sum_ - information_weighted_prediction_;
     }
 
-    double LogitSufficientStatistics::
-    information_weighted_cross_product() const {
+    double LogitSufficientStatistics::information_weighted_cross_product()
+        const {
       return information_weighted_sum_of_observation_times_prediction_;
     }
 
-    double LogitSufficientStatistics::
-    information_weighted_sum_of_squared_predictions() const {
+    double
+    LogitSufficientStatistics::information_weighted_sum_of_squared_predictions()
+        const {
       return information_weighted_sum_of_squared_predictions_;
     }
 
@@ -103,22 +105,15 @@ namespace BOOM {
 
   //======================================================================
   LogitBartPosteriorSampler::LogitBartPosteriorSampler(
-      LogitBartModel *model,
-      double total_prediction_sd,
-      double prior_tree_depth_alpha,
-      double prior_tree_depth_beta,
+      LogitBartModel *model, double total_prediction_sd,
+      double prior_tree_depth_alpha, double prior_tree_depth_beta,
       const std::function<double(int)> &log_prior_on_number_of_trees,
       RNG &seeding_rng)
-      : BartPosteriorSamplerBase(
-            model,
-            total_prediction_sd,
-            prior_tree_depth_alpha,
-            prior_tree_depth_beta,
-            log_prior_on_number_of_trees,
-            seeding_rng),
+      : BartPosteriorSamplerBase(model, total_prediction_sd,
+                                 prior_tree_depth_alpha, prior_tree_depth_beta,
+                                 log_prior_on_number_of_trees, seeding_rng),
         model_(model),
-        data_imputer_(new BinomialLogitCltDataImputer(10))
-  {}
+        data_imputer_(new BinomialLogitCltDataImputer(10)) {}
 
   //----------------------------------------------------------------------
   void LogitBartPosteriorSampler::draw() {
@@ -156,101 +151,97 @@ namespace BOOM {
   double LogitBartPosteriorSampler::log_integrated_likelihood(
       const Bart::SufficientStatisticsBase &suf) const {
     return log_integrated_logit_likelihood(
-        dynamic_cast<const Bart::LogitSufficientStatistics &>(
-            suf));
+        dynamic_cast<const Bart::LogitSufficientStatistics &>(suf));
   }
 
   //----------------------------------------------------------------------
   // The following is a derivation of the integrated complete data
   // logit likelihood.
-/*
-\documentclass{article}
-\usepackage{amsmath}
-\begin{document}
+  /*
+  \documentclass{article}
+  \usepackage{amsmath}
+  \begin{document}
 
-The logit integrated likelihood assumes $y_i \sim N(\theta,
-\sigma^2_{z_i})$, where $z_i$ is the mixture indicator from the
-discrete normal approximation to the logit.  If there are $K$
-components in the normal mixture approximation, then let $n_k$ denote
-the number from mixture component $k$.  Let $w_i = 1 /
-\sigma^2_{z_i}$, $w_+ = \sum_i w_i$, $\bar y_w = \sum_i w_i y_i /
-w_+$, and $S_w = \sum_i w_i (y_i - \bar y_w)^2$.  Let $v^{-1} =
-\frac{1}{\tau^2} + w_+$ denote the posterior variance and $\tilde \mu
-= v(w_+\bar y_w + \mu_0/\tau^2)$ the posterior mean.
+  The logit integrated likelihood assumes $y_i \sim N(\theta,
+  \sigma^2_{z_i})$, where $z_i$ is the mixture indicator from the
+  discrete normal approximation to the logit.  If there are $K$
+  components in the normal mixture approximation, then let $n_k$ denote
+  the number from mixture component $k$.  Let $w_i = 1 /
+  \sigma^2_{z_i}$, $w_+ = \sum_i w_i$, $\bar y_w = \sum_i w_i y_i /
+  w_+$, and $S_w = \sum_i w_i (y_i - \bar y_w)^2$.  Let $v^{-1} =
+  \frac{1}{\tau^2} + w_+$ denote the posterior variance and $\tilde \mu
+  = v(w_+\bar y_w + \mu_0/\tau^2)$ the posterior mean.
 
-\begin{equation*}
-  \begin{split}
-    p(y) & =
-    (2\pi)^{-\frac{n+1}{2}}
-    \frac{1}{\tau}
-    \prod_i w_i^{\frac{1}{2}}
-    \int
-    \exp \left(
-      -\frac{1}{2} \left[
-        \frac{(\theta - \mu_0)^2}{\tau^2}
-         + \sum_i w_i(y_i - \theta)^2
-       \right]
-    \right)
-    \ d \theta
-    \\
-    &=    (2\pi)^{-\frac{n+1}{2}}
-    \left(\frac{1}{\tau^2}\right)^{\frac{1}{2}}
-    \prod_i w_i^{\frac{1}{2}}
-    \left(\frac{v}{v}\right)^{\frac{1}{2}}
-    \\
-    & \qquad
-    \times
-    \int
-    \exp \left(
-      -\frac{1}{2}
-      \left[
-        \theta^2\left(\frac{1}{\tau^2} + \sum_i w_i\right)
-        -2\theta\left( \frac{\mu_0}{\tau^2} + \sum_i w_iy_i\right)
-        + \frac{\tilde\mu^2}{v}
-        \right.
-        \right. \\
-        & \qquad \qquad \qquad \qquad
-        \left.
+  \begin{equation*}
+    \begin{split}
+      p(y) & =
+      (2\pi)^{-\frac{n+1}{2}}
+      \frac{1}{\tau}
+      \prod_i w_i^{\frac{1}{2}}
+      \int
+      \exp \left(
+        -\frac{1}{2} \left[
+          \frac{(\theta - \mu_0)^2}{\tau^2}
+           + \sum_i w_i(y_i - \theta)^2
+         \right]
+      \right)
+      \ d \theta
+      \\
+      &=    (2\pi)^{-\frac{n+1}{2}}
+      \left(\frac{1}{\tau^2}\right)^{\frac{1}{2}}
+      \prod_i w_i^{\frac{1}{2}}
+      \left(\frac{v}{v}\right)^{\frac{1}{2}}
+      \\
+      & \qquad
+      \times
+      \int
+      \exp \left(
+        -\frac{1}{2}
+        \left[
+          \theta^2\left(\frac{1}{\tau^2} + \sum_i w_i\right)
+          -2\theta\left( \frac{\mu_0}{\tau^2} + \sum_i w_iy_i\right)
+          + \frac{\tilde\mu^2}{v}
+          \right.
+          \right. \\
+          & \qquad \qquad \qquad \qquad
           \left.
-        - \frac{\tilde\mu^2}{v}
-         + \sum_i w_iy_i^2
-         + \frac{\mu_0^2}{\tau^2}
-      \right]
-    \right)
-    \ d \theta \\
-    &=
-    (2\pi)^{-\frac{n}{2}}
-    \left(\frac{v}{\tau^2}\right)^{\frac{1}{2}}
-    \prod_i w_i^{\frac{1}{2}}
-    \exp\left(
-      -\frac{1}{2}\left[
-        \sum_i w_i y_i^2 + \frac{\mu_0^2}{\tau^2} - \frac{\tilde\mu^2}{\tau^2}a
+            \left.
+          - \frac{\tilde\mu^2}{v}
+           + \sum_i w_iy_i^2
+           + \frac{\mu_0^2}{\tau^2}
         \right]
       \right)
-  \end{split}
-\end{equation*}
+      \ d \theta \\
+      &=
+      (2\pi)^{-\frac{n}{2}}
+      \left(\frac{v}{\tau^2}\right)^{\frac{1}{2}}
+      \prod_i w_i^{\frac{1}{2}}
+      \exp\left(
+        -\frac{1}{2}\left[
+          \sum_i w_i y_i^2 + \frac{\mu_0^2}{\tau^2} -
+  \frac{\tilde\mu^2}{\tau^2}a \right] \right) \end{split} \end{equation*}
 
-Thus the log integrated likelihood is
+  Thus the log integrated likelihood is
 
-\begin{equation*}
-\log p(y) = \frac{1}{2}\left(
-  n \log 2\pi + \log v - \log \tau^2 + \sum_i \log w_i
-  - \sum_iw_iy_i^2 - \frac{\mu_0^2}{\tau^2} + \frac{\tilde\mu^2}{v}
-\right).
-\end{equation*}
+  \begin{equation*}
+  \log p(y) = \frac{1}{2}\left(
+    n \log 2\pi + \log v - \log \tau^2 + \sum_i \log w_i
+    - \sum_iw_iy_i^2 - \frac{\mu_0^2}{\tau^2} + \frac{\tilde\mu^2}{v}
+  \right).
+  \end{equation*}
 
-For the purposes of BART portions that only depend on the data $w_i$
-and $y_i$ can be ignored because they cancel out in the split/combine
-moves, and thus a minimal log integrated likelihood is
+  For the purposes of BART portions that only depend on the data $w_i$
+  and $y_i$ can be ignored because they cancel out in the split/combine
+  moves, and thus a minimal log integrated likelihood is
 
-\begin{equation*}
-\ell = \frac{1}{2}\left(
-  \log v - \log \tau^2 - \frac{\mu_0^2}{\tau^2} + \frac{\tilde\mu^2}{v}
-\right).
-\end{equation*}
+  \begin{equation*}
+  \ell = \frac{1}{2}\left(
+    \log v - \log \tau^2 - \frac{\mu_0^2}{\tau^2} + \frac{\tilde\mu^2}{v}
+  \right).
+  \end{equation*}
 
-\end{document}
-*/
+  \end{document}
+  */
 
   // As documented above, this function returns the log integrated
   // likelihood, with the following factor omitted from the
@@ -274,9 +265,8 @@ moves, and thus a minimal log integrated likelihood is
     // This function omits a factor of (2 * pi)^(-n/2) * \prod_i
     // w[i]^{-.5} from the integrated likelihood, because it will
     // cancel in the relevant MH acceptance ratios.
-    double ans =  .5 * (
-        log(posterior_variance / prior_variance)
-        + (square(posterior_mean) / posterior_variance));
+    double ans = .5 * (log(posterior_variance / prior_variance) +
+                       (square(posterior_mean) / posterior_variance));
     return ans;
   }
 
@@ -295,14 +285,12 @@ moves, and thus a minimal log integrated likelihood is
   // (2 * pi)^{-n/2} \prod_i w[i]^{1/2} exp(-.5 \sum_i w[i]y[i]^2)
   double LogitBartPosteriorSampler::complete_data_logit_log_likelihood(
       const Bart::LogitSufficientStatistics &suf) const {
-    return -.5 * (suf.information_weighted_sum_of_squared_predictions()
-                  - 2 * suf.information_weighted_cross_product());
+    return -.5 * (suf.information_weighted_sum_of_squared_predictions() -
+                  2 * suf.information_weighted_cross_product());
   }
 
   //----------------------------------------------------------------------
-  void LogitBartPosteriorSampler::clear_residuals() {
-    residuals_.clear();
-  }
+  void LogitBartPosteriorSampler::clear_residuals() { residuals_.clear(); }
 
   //----------------------------------------------------------------------
   int LogitBartPosteriorSampler::residual_size() const {
@@ -310,8 +298,8 @@ moves, and thus a minimal log integrated likelihood is
   }
 
   //----------------------------------------------------------------------
-  Bart::LogitResidualData *
-  LogitBartPosteriorSampler::create_and_store_residual(int i) {
+  Bart::LogitResidualData *LogitBartPosteriorSampler::create_and_store_residual(
+      int i) {
     Ptr<BinomialRegressionData> data_point(model_->dat()[i]);
     double original_prediction = model_->predict(data_point->x());
     std::shared_ptr<Bart::LogitResidualData> residual(
@@ -321,14 +309,13 @@ moves, and thus a minimal log integrated likelihood is
   }
 
   //----------------------------------------------------------------------
-  Bart::LogitResidualData *
-  LogitBartPosteriorSampler::residual(int i) {
+  Bart::LogitResidualData *LogitBartPosteriorSampler::residual(int i) {
     return residuals_[i].get();
   }
 
   //----------------------------------------------------------------------
-  Bart::LogitSufficientStatistics *
-  LogitBartPosteriorSampler::create_suf() const {
+  Bart::LogitSufficientStatistics *LogitBartPosteriorSampler::create_suf()
+      const {
     return new Bart::LogitSufficientStatistics;
   }
 

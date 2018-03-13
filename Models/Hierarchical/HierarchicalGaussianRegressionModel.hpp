@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 #define BOOM_HIERARCHICAL_GAUSSIAN_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
@@ -33,10 +34,8 @@ namespace BOOM {
   //
   //    y[i, g] ~ N(beta[g] * (x[i, g]), sigma^2)
   //    beta[g] ~ Mvn(mu, V)
-  class HierarchicalGaussianRegressionModel
-      : public CompositeParamPolicy,
-        public PriorPolicy
-  {
+  class HierarchicalGaussianRegressionModel : public CompositeParamPolicy,
+                                              public PriorPolicy {
    public:
     // Args:
     //   prior: The distribution describing how regression coefficients differ
@@ -51,13 +50,13 @@ namespace BOOM {
 
     HierarchicalGaussianRegressionModel(
         const HierarchicalGaussianRegressionModel &rhs);
-    HierarchicalGaussianRegressionModel * clone() const override;
+    HierarchicalGaussianRegressionModel *clone() const override;
 
     // Data policy functions.  Data is stored by models.  In this setup,
     // add_model and add_data are pretty similar.  Calling add_data causes a new
     // regression model to be created to store the data.
     void add_model(const Ptr<RegressionModel> &model);
-    void add_data(const Ptr<Data> & dp) override;
+    void add_data(const Ptr<Data> &dp) override;
     void add_data(const Ptr<RegSuf> &suf);
 
     // Add new regression data to a particular model.
@@ -67,27 +66,29 @@ namespace BOOM {
     // their parameters from the global list of model parameters.
     void clear_data() override;
 
+    // Clears the data from the prior and the group level models.  Does not
+    // delete the group level models themselves.
+    void clear_data_keep_models();
+
     // Copies the sufficient statistics from other_model into this model.
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
-    int number_of_groups() const {return groups_.size();}
-    int xdim() const {return prior_->dim();}
+    int number_of_groups() const { return groups_.size(); }
+    int xdim() const { return prior_->dim(); }
 
-    RegressionModel * data_model(int which_group) {
+    RegressionModel *data_model(int which_group) {
       return groups_[which_group].get();
     }
-    const RegressionModel * data_model(int which_group) const {
+    const RegressionModel *data_model(int which_group) const {
       return groups_[which_group].get();
     }
 
-    MvnModel * prior() {return prior_.get();}
-    const MvnModel * prior() const {return prior_.get();}
+    MvnModel *prior() { return prior_.get(); }
+    const MvnModel *prior() const { return prior_.get(); }
 
-    double residual_variance() const {return residual_variance_->value();}
-    double residual_sd() const {return sqrt(residual_variance());}
-    void set_residual_variance(double sigsq) {
-      residual_variance_->set(sigsq);
-    }
+    double residual_variance() const { return residual_variance_->value(); }
+    double residual_sd() const { return sqrt(residual_variance()); }
+    void set_residual_variance(double sigsq) { residual_variance_->set(sigsq); }
 
    private:
     // Reset the list of model parameters managed by the ParamPolicy to those

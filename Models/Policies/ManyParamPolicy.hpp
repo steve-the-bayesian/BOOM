@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -24,44 +25,36 @@
   CompositeParamPolicy, where the parameters are owned by sub-models.
   ======================================================================*/
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
+#include "cpputil/Ptr.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class ManyParamPolicy : virtual public Model{
-  public:
+  class ManyParamPolicy : virtual public Model {
+   public:
     typedef ManyParamPolicy ParamPolicy;
     ManyParamPolicy();
-    ManyParamPolicy(const ManyParamPolicy &rhs);  // components not copied
-    ManyParamPolicy & operator=(const ManyParamPolicy &);
 
+    // Copy and assignment are hard, because we don't know how the parameters
+    // are organized in the concrete class.  Child classes will to call
+    // ParamPolicy::add_params on each of their parameters after assignment.
+    ManyParamPolicy(const ManyParamPolicy &rhs);
+    ManyParamPolicy &operator=(const ManyParamPolicy &);
 
-    // the following functions will need to be called during
-    // construction of the inheriting Model object
+    // Moving works by default.
+    ManyParamPolicy(ManyParamPolicy &&rhs) = default;
+    ManyParamPolicy &operator=(ManyParamPolicy &&rhs) = default;
 
-    template<class Fwd>
-    void set_params(Fwd b, Fwd e){t_.assign(b,e);}
+    void add_params(const Ptr<Params> &p) {t_.push_back(p);}
+    void clear() {t_.clear();}
 
-    template<class Fwd>
-    void add_params(Fwd b, Fwd e){std::copy(b,e,back_inserter(t_));}
+    ParamVector parameter_vector() override {return t_;}
+    const ParamVector parameter_vector() const override {return t_;}
 
-    void add_params(const Ptr<Params> & p);
-    void clear();
-
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector()const override;
-
-  protected:
-    virtual void setup_params()=0;  // to be called during construction
-  private:
+   private:
     ParamVector t_;
   };
+}  // namespace BOOM
 
-
-
-
-}
-
-#endif// BOOM_MANY_PARAM_POLICY_HPP
+#endif  // BOOM_MANY_PARAM_POLICY_HPP

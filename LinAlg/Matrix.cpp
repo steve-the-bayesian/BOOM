@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -29,38 +30,25 @@
 #include <string>
 
 // other linear algebra
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/DiagonalMatrix.hpp>
-#include <LinAlg/LU.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <LinAlg/QR.hpp>
-#include <LinAlg/blas.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
+#include "LinAlg/LU.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "LinAlg/QR.hpp"
+
+#include "LinAlg/EigenMap.hpp"
+#include "Eigen/LU"
+#include "Eigen/SVD"
 
 // other BOOM
-#include <distributions.hpp>
-#include <cpputil/string_utils.hpp>
-#include <cpputil/Split.hpp>
-#include <cpputil/report_error.hpp>
-
-// lapack and blas
-
-extern "C"{
-  void dgesv_(const int *n, const int *nrhs, double *A, const int *lda,
-              int *ipiv, double *ans, const int *ldb, int *info);
-  int ilaenv_( const int *, const char *, const char *, const int *,
-               const int *, const int *, const int *);
-  void dgesdd_(const char *, const int *m, const int *n, double *A,
-               const int *lda, double *values,
-               double *u, const int *ldu, double *vt, const int *ldvt,
-               double *wsp, const int *lwork, int *iwork, int *info);
-  void dgeev_(const char *, const char *, const int *, double *,
-              const int *, double *, double *, double *, const int *,
-              double *, const int *, double *, const int *, int *);
-}
+#include "distributions.hpp"
+#include "cpputil/string_utils.hpp"
+#include "cpputil/Split.hpp"
+#include "cpputil/report_error.hpp"
 
 typedef std::vector<double> dVector;
 
@@ -71,7 +59,6 @@ namespace BOOM{
   }
 
   using namespace std;
-  using namespace blas;
   Matrix::Matrix()
     : V(),
       nr_(0),
@@ -84,8 +71,7 @@ namespace BOOM{
       nc_(nc)
   {}
 
-  Matrix::Matrix(uint nr, uint nc, const double *m,
-           bool byrow)
+  Matrix::Matrix(uint nr, uint nc, const double *m, bool byrow)
     : V(&m[0], &m[nr*nc]),
       nr_(nr),
       nc_(nc)
@@ -96,7 +82,7 @@ namespace BOOM{
           V[INDX(i,j)]= *m++;}}}
   }
 
-  Matrix::Matrix(uint nr, uint nc, const std::vector<double> &v, bool byrow)
+  Matrix::Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow)
       : V(v),
         nr_(nr),
         nc_(nc)
@@ -207,14 +193,32 @@ namespace BOOM{
   uint Matrix::nrow() const { return nr_;}
   uint Matrix::ncol() const { return nc_;}
 
+  double Matrix::distance_from_symmetry() const {
+    if (nr_ != nc_) return infinity();
+    double num = 0, denom = 0;
+    for (uint i = 0; i < nr_; ++i) {
+      for (uint j = 0; j < i; ++j) {
+        num = std::max<double>(
+            num, fabs(unchecked(i, j) - unchecked(j, i)));
+        denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
+      }
+      // Include the diagonal when figuring the average size of the matrix
+      // elements.
+      denom += fabs(unchecked(i, i));
+    }
+    denom /= (nr_ * nc_);
+
+    // The denominator can't be less than zero, but I don't want actual equality
+    // here.
+    if (denom <= 0.0) {
+      return 0;
+    }
+    return num / denom;
+  }
+
   bool Matrix::is_sym(double tol) const {
-    if (nr_ != nc_) return false;
-    double num=0, denom=0;
-    for (uint i=0; i<nr_; ++i) {
-      for (uint j=0; j<i; ++j) {
-        num+= fabs(unchecked(i,j) - unchecked(j,i));
-        denom+= fabs(unchecked(i,j)) + fabs(unchecked(j,i));}}
-    return (denom < tol || num/denom<=tol) ; }
+    return distance_from_symmetry() < tol;
+  }
 
   bool Matrix::same_dim(const Matrix &A) const {
     return nr_ == A.nr_ && nc_ == A.nc_;
@@ -235,40 +239,39 @@ namespace BOOM{
   }
 
   Matrix & Matrix::rbind(const Matrix &A) {
-    if (nrow()==0) {
+    if (nrow() == 0) {
       *this = A;
       return *this;
+    } else if (A.ncol() != nc_) {
+      report_error("Matrix::rbind called with an incompatible matrix.");
+    } else if (&A == this) {
+      Matrix B(A);
+      return rbind(B);
     }
-    assert(A.ncol()==ncol());
-    uint m = nrow() + A.nrow();
-    uint n = ncol();
-    Matrix tmp(m,n);
-    for (uint i=0; i<n; ++i) {
-      dVector::iterator it =
-        std::copy(col_begin(i), col_end(i), tmp.col_begin(i));
-      std::copy(A.col_begin(i), A.col_end(i), it);
+    V.reserve(nc_* (nr_ + A.nrow()));
+    for (int i = 0; i < nc_; ++i) {
+      // The call to insert dynamically manages V's size.  It also invalidates
+      // iterators, so 'insertion_point' needs to be recomputed each time.
+      auto insertion_point = V.begin() + i * A.nrow() + (i + 1) * nr_;
+      V.insert(insertion_point, A.col_begin(i), A.col_end(i));
     }
-    swap(tmp);
-    //      swap(*this, tmp);
+    nr_ += A.nrow();
     return *this;
   }
 
   Matrix & Matrix::rbind(const Vector &A) {
-    if (nrow()==0) {
+    if (nrow() == 0) {
       resize(1, A.size());
       row(0) = A;
       return *this;
+    } else if (A.size() != ncol()) {
+      report_error("Matrix::rbind called with incompatible vector.");
     }
-    assert(A.size()==ncol());
-    uint m = nrow() + 1;
-    uint n = ncol();
-    Matrix tmp(m,n);
-    for (uint i=0; i<n; ++i) {
-      std::copy(col_begin(i), col_end(i), tmp.col_begin(i));
-      tmp(m-1,i) = A[i];
+    V.reserve((nr_ + 1) * nc_);
+    for (int i = 0; i < A.size(); ++i) {
+      V.insert(V.begin() + i + (i+1) * nr_, A[i]);
     }
-    //      swap(*this, tmp);
-    swap(tmp);
+    ++nr_;
     return *this;
   }
 
@@ -520,49 +523,38 @@ namespace BOOM{
 
   Matrix & Matrix::mult(const Matrix &B, Matrix &ans, double scal) const {
     assert(can_mult(B,ans));
-    uint m =ans.nrow();
-    uint n=ans.ncol();
-    uint k = ncol();
-    dgemm(NoTrans, NoTrans, m, n, k, scal, data(),
-          nrow(), B.data(), B.nrow(), 0.0, ans.data(), ans.nrow());
-    return ans; }
+    EigenMap(ans) = EigenMap(*this) * EigenMap(B) * scal;
+    return ans;
+  }
 
   Matrix & Matrix::Tmult(const Matrix &B, Matrix &ans, double scal) const {
-    assert(can_Tmult(B,ans));
-    uint m =ans.nrow();
-    uint n=ans.ncol();
-    uint k =nrow();
-    dgemm(Trans, NoTrans, m, n, k, scal, data(),
-          nrow(), B.data(), B.nrow(), 0.0, ans.data(), ans.nrow());
-    return ans; }
+    assert(can_Tmult(B, ans));
+    EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(B) * scal;
+    return ans;
+  }
 
   Matrix & Matrix::multT(const Matrix &B, Matrix &ans, double scal) const {
     assert(can_multT(B,ans));
-    uint m =ans.nrow();
-    uint n=ans.ncol();
-    uint k =ncol();
-    dgemm(NoTrans, Trans, m, n, k, scal, data(),
-          nrow(), B.data(), B.nrow(), 0.0, ans.data(), ans.nrow());
-    return ans; }
-
+    EigenMap(ans) = EigenMap(*this) * EigenMap(B).transpose() * scal;
+    return ans;
+  }
 
   //------- support for spd matrices --------
 
   Matrix & Matrix::mult(const SpdMatrix &S, Matrix & ans, double scal) const {
     assert(can_mult(S,ans));
-    uint m = nrow();
-    uint n = S.ncol();
-    dsymm(Right, Upper, m, n, scal,
-          S.data(), S.nrow(), data(), nrow(),
-          0.0, ans.data(), ans.nrow());
-    return ans; }
-
+    EigenMap(ans) = EigenMap(*this)
+        * scal * EigenMap(S).selfadjointView<Eigen::Upper>();
+    return ans;
+  }
 
   Matrix & Matrix::Tmult(const SpdMatrix &S, Matrix & ans, double scal) const {
-    return Tmult( static_cast<const Matrix &>(S), ans, scal);}
+    return Tmult(static_cast<const Matrix &>(S), ans, scal);
+  }
 
   Matrix & Matrix::multT(const SpdMatrix &S, Matrix & ans, double scal) const {
-    return mult(S,ans, scal);}
+    return mult(S, ans, scal);
+  }
 
   //----------- diagonal matrices ----------
 
@@ -598,39 +590,18 @@ namespace BOOM{
     return mult(d, ans, scal);
   }
 
-  template<class MATRIX, class VECTOR_IN, class VECTOR_OUT>
-  VECTOR_OUT & matrix_multiply_impl(const MATRIX &m, const VECTOR_IN &v,
-                                    VECTOR_OUT &ans, bool transpose) {
-    dgemv(transpose ? Trans : NoTrans,
-          m.nrow(),
-          m.ncol(),
-          1.0,
-          m.data(),
-          m.nrow(),
-          v.data(),
-          v.stride(),
-          0.0,
-          ans.data(),
-          ans.stride());
-    return ans;
-  }
-
   //--------- Vector support
   Vector & Matrix::mult(const Vector &v, Vector &ans, double scal) const {
     assert(ncol()==v.size() && nrow()==ans.size());
-    dgemv(NoTrans,nrow(),ncol(), scal, data(), nrow(),
-          v.data(), v.stride(), 0.0, ans.data(), ans.stride());
+    EigenMap(ans) = EigenMap(*this) * EigenMap(v) * scal;
     return ans;
   }
 
   Vector & Matrix::Tmult(const Vector &v, Vector &ans, double scal) const {
-    assert(nrow() == v.size()
-           && ncol() == ans.size());
-    dgemv(Trans,nrow(),ncol(), scal, data(), nrow(),
-          v.data(), v.stride(), 0.0, ans.data(), ans.stride());
+    assert(nrow() == v.size() && ncol() == ans.size());
+    EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(v) * scal;
     return ans;
   }
-
 
   //---------- non-virtual multiplication funcitons -----------
 
@@ -680,26 +651,12 @@ namespace BOOM{
 
   SpdMatrix Matrix::inner() const {  // eventually return type will be SpdMatrix
     SpdMatrix ans(nc_, 0.0);
-    dsyrk(Upper, Trans, nc_, nr_, 1.0, data(),
-          nr_, 0.0, ans.data(), nc_);
-    ans.reflect();
+    EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(*this);
     return ans; }
 
   SpdMatrix Matrix::outer() const {
     SpdMatrix ans(nr_);
-    //
-    // C <- alpha * A A^T + beta * C
-    // where C is NxN and A is NxK.
-    dsyrk(Upper,
-          NoTrans,
-          nr_,            // N
-          nc_,            // K
-          1.0,            // alpha
-          data(),         // *A
-          nr_,            // LDA
-          0.0,            // beta
-          ans.data(),     // *C
-          nr_);           // LDC
+    EigenMap(ans).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(*this), 1.0);
     ans.reflect();
     return ans;
   }
@@ -713,30 +670,14 @@ namespace BOOM{
     assert(this->is_square());
     assert(m.nrow()==ncol());
     Matrix ans(m);
-    Matrix A(*this);
-    int n = nrow();
-    int nrhs  = ans.ncol();
-    int lda = nrow();
-    std::vector<int> ipiv(n);
-    int ldb = ans.nrow();
-    int info=0;
-    dgesv_(&n, &nrhs, A.data(), &lda, &(ipiv[0]),
-           ans.data(), &ldb, &info);
+    EigenMap(ans) = EigenMap(*this).partialPivLu().solve(EigenMap(m));
     return ans;
   }
 
   Vector Matrix::solve(const Vector &v) const {
     assert(this->is_square());
     Vector ans(v);
-    int n = nrow();
-    int nrhs = 1;
-    int lda= nrow();
-    std::vector<int> ipiv(n);
-    int ldb  = v.size();
-    int info;
-    Matrix A(*this);
-    dgesv_(&n, &nrhs, A.data(), &lda, &(ipiv[0]),
-           ans.data(), &ldb, &info);
+    EigenMap(ans) = EigenMap(*this).partialPivLu().solve(EigenMap(v));
     return ans;
   }
 
@@ -750,28 +691,10 @@ namespace BOOM{
   }
 
   Vector Matrix::singular_values() const {
-    int m =nr_;
-    int n =nc_;
-    int one=1;
-    int info=0;
-    int lwork(-1);
-    Vector work(1);
-    std::vector<int> iwork(8*std::min(m,n));
-    Vector values(std::min(m,n));
-    double *u=0;
-    double *vt=0;
-
-    Matrix tmp(*this);
-    dgesdd_("N", &m, &n, tmp.data(), &m, values.data(),
-            u, &one, vt, &one, work.data(), &lwork, &(iwork[0]), &info);
-    if (info!=0) report_error(
-           "error computing optimal work size  with dgesdd_");
-    lwork = static_cast<int>(work[0]);
-    work.resize(lwork);
-    dgesdd_("N", &m, &n, tmp.data(), &m, values.data(),
-            u, &one, vt, &one, work.data(), &lwork, &(iwork[0]), &info);
-    if (info!=0) report_error(
-           "error computing singular values with dgesdd_");
+    Vector values(std::min(nr_, nc_));
+    ::Eigen::JacobiSVD<Eigen::MatrixXd> svd(
+         EigenMap(*this), Eigen::ComputeThinU | Eigen::ComputeThinV);
+    EigenMap(values) = svd.singularValues();
     return values;
   }
 
@@ -788,103 +711,67 @@ namespace BOOM{
     return s.size()-k;
   }
 
-  Vector Matrix::real_evals() const {
-    assert(this->is_square());
-    int n = nrow();
-    int one = 1;
-    Matrix A(*this);
-    Vector real_ev(n);
-    Vector imag_ev(n);
-    Vector work(1);
-    int lwork(-1);
-    int info=0;
-    dgeev_("N", "N", &n, A.data(), &n, real_ev.data(), imag_ev.data(),
-           0, &one, 0, &one, work.data(), &lwork, &info);
-    lwork = static_cast<uint>(work[0]);
-    work.resize(lwork);
-    dgeev_("N", "N", &n, A.data(), &n, real_ev.data(), imag_ev.data(),
-           0, &one, 0, &one, work.data(), &lwork, &info);
-    dVector tmp;
-    tmp.reserve(n);
-    for (int i=0; i<n; ++i) {
-      if (i==n-1) {
-        tmp.push_back(real_ev[i]);
-      } else if (real_ev[i] == real_ev[i+1] && imag_ev[i] == -imag_ev[i+1]) {
-        ++i;
-      } else {
-        tmp.push_back(real_ev[i]);
-      }
-    }
-    Vector ans(tmp.begin(), tmp.end());
-    return ans;
-  }
-
   Matrix & Matrix::add_outer(const Vector &x, const Vector &y, double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
 
   Matrix & Matrix::add_outer(const Vector &x, const VectorView &y, double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
 
   Matrix & Matrix::add_outer(const VectorView &x, const Vector &y, double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
-  Matrix & Matrix::add_outer(const VectorView &x,
-                             const VectorView &y,
-                             double w) {
+  Matrix & Matrix::add_outer(
+      const VectorView &x, const VectorView &y, double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
-  Matrix & Matrix::add_outer(const ConstVectorView &x,
-                             const Vector &y,
-                             double w) {
+  Matrix & Matrix::add_outer(
+      const ConstVectorView &x, const Vector &y, double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
   Matrix & Matrix::add_outer(const Vector &x,
                              const ConstVectorView &y,
                              double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
   Matrix & Matrix::add_outer(const ConstVectorView &x,
                              const VectorView &y,
                              double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
   Matrix & Matrix::add_outer(const VectorView &x,
                              const ConstVectorView &y,
                              double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
   Matrix & Matrix::add_outer(const ConstVectorView &x,
                              const ConstVectorView &y,
                              double w) {
     assert(nrow()==x.size() && ncol() == y.size());
-    dger(nrow(), ncol(), w, x.data(), x.stride(),
-         y.data(), y.stride(), data(), nrow());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+
+  Matrix & Matrix::add_outer(const Matrix &left, const Matrix &right,
+                             double coefficient) {
+    EigenMap(*this) += coefficient * EigenMap(left) * EigenMap(right).transpose();
     return *this;
   }
 
@@ -914,8 +801,11 @@ namespace BOOM{
   Matrix & Matrix::operator*=(double x) {
     int n = size();
     double *d(data());
-    dscal(n,x,d,1);
-    return *this; }
+    for (int i = 0; i < n; ++i) {
+      d[i] *= x;
+    }
+    return *this;
+  }
 
   Matrix & Matrix::operator/=(double x) {
     return this->operator*=(1.0/x);}
@@ -1071,19 +961,20 @@ namespace BOOM{
   }
 
   double el_mult_sum(const Matrix &A, const Matrix &B) {
-    assert(can_add(A,B));
-    uint n = A.size();
-    return ddot(n, A.data(), 1, B.data(), 1);
+    return traceAtB(A, B);
   }
 
   double Matrix::sum() const {
-    return accumulate(V.begin(), V.end(), 0.0);}
+    return accumulate(V.begin(), V.end(), 0.0);
+  }
 
   double Matrix::abs_norm() const {
-    return dasum(size(), data(), 1);}
+    return EigenMap(*this).lpNorm<1>();
+  }
 
   double Matrix::sumsq() const {
-    return ddot(size(), data(), 1, data(), 1); }
+    return EigenMap(*this).squaredNorm();
+  }
 
   double Matrix::prod() const {
     return accumulate(V.begin(), V.end(), 1.0, mul);}
@@ -1211,34 +1102,35 @@ namespace BOOM{
   Vector operator*(const VectorView &v, const Matrix &m) {
     Vector ans(m.ncol());
     assert(v.size() == m.nrow());
-    matrix_multiply_impl(m,v,ans, true);
+    EigenMap(ans) = EigenMap(m).transpose() * EigenMap(v);
     return ans;
   }
 
   Vector operator*(const Matrix &m, const VectorView &v) {
     Vector ans(m.nrow());
     assert(v.size() ==  m.ncol());
-    matrix_multiply_impl(m,v,ans, false);
+    EigenMap(ans) = EigenMap(m) * EigenMap(v);
     return ans;
   }
 
   // t(v) %*% m   =   t(m) %*% v
   Vector operator*(const ConstVectorView &v, const Matrix &m) {
-    Vector ans(m.ncol());
     assert(v.size() == m.nrow());
-    matrix_multiply_impl(m,v,ans, true);
+    Vector ans(m.ncol());
+    EigenMap(ans) = EigenMap(m).transpose() * EigenMap(v);
     return ans;
   }
 
   Vector operator*(const Matrix &m, const ConstVectorView &v) {
-    Vector ans(m.nrow());
     assert(v.size() ==  m.ncol());
-    matrix_multiply_impl(m,v,ans, false);
+    Vector ans(m.nrow());
+    EigenMap(ans) = EigenMap(m) * EigenMap(v);
     return ans;
   }
 
   Matrix operator*(const Matrix &A, const Matrix &B) {
-    return A.mult(B);}
+    return A.mult(B);
+  }
 
 
   //----------- changing Matrix size and layout -------------
@@ -1338,9 +1230,15 @@ namespace BOOM{
   }
 
   double traceAtB(const Matrix &A, const Matrix &B) {
-    uint n = A.size();
-    assert(n==B.size());
-    return ddot(n,A.data(),1,B.data(),1);
+    assert(can_add(A, B));
+    const double *d1 = A.data();
+    const double *d2 = B.data();
+    int n = A.size();
+    double ans = 0;
+    for (int i = 0; i < n; ++i) {
+      ans += d1[i] * d2[i];
+    }
+    return ans;
   }
 
 
@@ -1395,94 +1293,87 @@ namespace BOOM{
 
   // ------------- lower triangular functions --------------
 
-  Matrix LTmult(const Matrix &L, const Matrix &B) {
-    assert(L.is_square() && (L.nrow() == B.nrow()));
-    Matrix ans(B);
-
-    dtrmm(Left,
-          Lower,
-          Trans,
-          NonUnit,
-          L.nrow(),
-          L.ncol(),
-          1.0,
-          L.data(),
-          L.nrow(),
-          ans.data(),
-          ans.nrow());
-    return ans;
-  }
-
   Vector Lmult(const Matrix &L, const Vector &y) {
     assert(L.is_square() && L.nrow()==y.size());
     Vector ans(y);
-    dtrmv(Lower, NoTrans, NonUnit, L.nrow(), L.data(), L.nrow(),
-          ans.data(), 1);
-    return ans; }
+    EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>() * EigenMap(y);
+    return ans;
+  }
 
   Vector& Lsolve_inplace(const Matrix &L, Vector &b) {
     assert(L.is_square() && L.nrow()==b.size());
-    dtrsv(Lower, NoTrans, NonUnit, L.nrow(), L.data(), L.nrow(),
-          b.data(), 1);
-    return b; }
+    EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(
+        EigenMap(b));
+    return b;
+  }
 
   Vector & LTsolve_inplace(const Matrix &L, Vector &b) {
     assert(L.is_square() && L.nrow()==b.size());
-    dtrsv(Lower, Trans, NonUnit, L.nrow(), L.data(), L.nrow(),
-          b.data(), 1);
-    return b; }
-
+    EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(
+        EigenMap(b));
+    return b;
+  }
 
   Vector Lsolve(const Matrix &L, const Vector &b) {
     Vector ans(b);
-    return Lsolve_inplace(L,ans);}
+    return Lsolve_inplace(L,ans);
+  }
 
   Matrix &Lsolve_inplace(const Matrix &L, Matrix &B) {
     assert(L.is_square() && L.ncol()==B.nrow());
-    dtrsm(Left, Lower, NoTrans, NonUnit, B.nrow(), B.ncol(), 1.0,
-          L.data(), L.nrow(), B.data(), B.nrow());
-    return B; }
+    EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(B));
+    return B;
+  }
 
+  Matrix &LTsolve_inplace(const Matrix &L, Matrix &B) {
+    assert(L.is_square() && L.ncol()==B.nrow());
+    EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(
+        EigenMap(B));
+    return B;
+  }
+  
   Matrix Lsolve(const Matrix &L, const Matrix &B) {
     Matrix ans = B;
-    return Lsolve_inplace(L,ans);}
+    return Lsolve_inplace(L,ans);
+  }
 
   Matrix Linv(const Matrix &L) {
     Matrix ans(L.Id());
-    return Lsolve_inplace(L, ans); }
+    return Lsolve_inplace(L, ans);
+  }
 
   // ------------- upper triangular functions --------------
 
   Vector Umult(const Matrix &U, const Vector &y) {
     assert(U.is_square() && U.nrow()==y.size());
     Vector ans(y);
-    dtrmv(Upper, NoTrans, NonUnit, U.nrow(), U.data(), U.nrow(),
-          ans.data(), 1);
-    return ans; }
+    EigenMap(ans) = EigenMap(U).triangularView<Eigen::Upper>() * EigenMap(y);
+    return ans;
+  }
 
   Matrix Umult(const Matrix &U, const Matrix &B) {
     assert(U.is_square() && U.ncol()==B.nrow());
     Matrix ans(B);
-    dtrmm(Left, Upper, NoTrans, NonUnit, B.nrow(), B.ncol(), 1.0, U.data(),
-          U.nrow(), ans.data(), ans.nrow());
+    EigenMap(ans) = EigenMap(U).triangularView<Eigen::Upper>() * EigenMap(B);
     return ans;
   }
 
   Vector& Usolve_inplace(const Matrix &U, Vector &b) {
     assert(U.is_square() && U.nrow()==b.size());
-    dtrsv(Upper, NoTrans, NonUnit,
-          U.nrow(), U.data(), U.nrow(), b.data(), 1);
-    return b; }
+    EigenMap(U).triangularView<Eigen::Upper>().solveInPlace(EigenMap(b));
+    return b;
+  }
 
   Vector Usolve(const Matrix &U, const Vector &b) {
     Vector ans(b);
-    return Usolve_inplace(U,ans);}
+    return Usolve_inplace(U,ans);
+  }
 
   Matrix &Usolve_inplace(const Matrix &U, Matrix &B) {
     assert(U.is_square() && U.ncol()==B.nrow());
-    dtrsm(Left, Upper, NoTrans, NonUnit, B.nrow(), B.ncol(), 1.0,
-          U.data(), U.nrow(), B.data(), B.nrow());
-    return B; }
+    EigenMap(U).triangularView<Eigen::Upper>().solveInPlace(EigenMap(B));    
+    return B;
+  }
 
   Matrix Usolve(const Matrix &U, const Matrix &B) {
     Matrix ans = B;

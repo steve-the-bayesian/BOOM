@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -21,13 +22,13 @@
 
 #include <functional>
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/BinomialModel.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/BinomialModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // The ZeroInflatedGammaModel describes non-negative data that can
   // be exactly zero, but are positive otherwise.  The model is
@@ -40,21 +41,18 @@ namespace BOOM{
   // The Gamma distribution used here is parameterized as Ga(mu, a),
   // instead of the arguably more conventional Ga(a, b).  The mapping
   // between the two parameterizations is mu = a/b and a = a.
-  class ZeroInflatedGammaModel
-      : public CompositeParamPolicy,
-        public PriorPolicy,
-        public LocationScaleDoubleModel
-  {
+  class ZeroInflatedGammaModel : public CompositeParamPolicy,
+                                 public PriorPolicy,
+                                 public LocationScaleDoubleModel {
    public:
     ZeroInflatedGammaModel();
     ZeroInflatedGammaModel(const Ptr<BinomialModel> &positive_probability,
                            const Ptr<GammaModel> &positive_density);
-    ZeroInflatedGammaModel(int number_of_zeros,
-                           int number_of_positives,
+    ZeroInflatedGammaModel(int number_of_zeros, int number_of_positives,
                            double sum_of_positives,
                            double sum_of_logs_of_positives);
     ZeroInflatedGammaModel(const ZeroInflatedGammaModel &rhs);
-    ZeroInflatedGammaModel * clone() const override;
+    ZeroInflatedGammaModel *clone() const override;
 
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *, bool logscale) const override;
@@ -143,4 +141,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif // BOOM_ZERO_INFLATED_GAMMA_MODEL_HPP_
+#endif  // BOOM_ZERO_INFLATED_GAMMA_MODEL_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,42 +19,40 @@
 #ifndef BOOM_GAUSSIAN_VARIANCE_METHOD_HPP
 #define BOOM_GAUSSIAN_VARIANCE_METHOD_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class GaussianModel;
   class GammaModelBase;
 
   // draws sigma given mu
-  class GaussianVarSampler : public PosteriorSampler{
+  class GaussianVarSampler : public PosteriorSampler {
    public:
-    GaussianVarSampler(GaussianModel *model,
-                       double prior_df,
+    GaussianVarSampler(GaussianModel *model, double prior_df,
                        double prior_sigma_guess,
                        RNG &seeding_rng = GlobalRng::rng);
     GaussianVarSampler(GaussianModel *model,
                        const Ptr<GammaModelBase> &precision_prior,
                        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri()const override;
+    double logpri() const override;
     // Call to ensure that sigma (standard deviation) remains below
     // the specified upper_truncation_point
     void set_sigma_upper_limit(double max_sigma);
 
     // Sets mod->sigsq() to the posterior mode given the prior and mod->suf();
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
+    bool can_find_posterior_mode() const override { return true; }
 
    protected:
-    const Ptr<GammaModelBase> ivar()const;
+    const Ptr<GammaModelBase> ivar() const;
+
    private:
     Ptr<GammaModelBase> prior_;
-    GaussianModel * model_;
+    GaussianModel *model_;
     GenericGaussianVarianceSampler sampler_;
   };
 
 }  // namespace BOOM
-#endif // BOOM_GAUSSIAN_VARIANCE_METHOD_HPP
+#endif  // BOOM_GAUSSIAN_VARIANCE_METHOD_HPP

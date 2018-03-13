@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -16,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/RegressionShrinkageSampler.hpp>
-#include <LinAlg/Cholesky.hpp>
-#include <distributions.hpp>
+#include "Models/Glm/PosteriorSamplers/RegressionShrinkageSampler.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -26,12 +27,9 @@ namespace BOOM {
     typedef RegressionShrinkageSampler::CoefficientGroup CG;
   }
 
-  CG::CoefficientGroup(
-      const Ptr<GaussianModelBase> &prior,
-      const std::vector<int> &indices)
-  : prior_(prior),
-    indices_(indices)
-  {}
+  CG::CoefficientGroup(const Ptr<GaussianModelBase> &prior,
+                       const std::vector<int> &indices)
+      : prior_(prior), indices_(indices) {}
 
   void CG::refresh_sufficient_statistics(const Vector &beta) {
     prior_->suf()->clear();
@@ -44,13 +42,11 @@ namespace BOOM {
   RegressionShrinkageSampler::RegressionShrinkageSampler(
       RegressionModel *model,
       const Ptr<GammaModelBase> &residual_precision_prior,
-      const std::vector<CoefficientGroup> &groups,
-      RNG &seeding_rng)
+      const std::vector<CoefficientGroup> &groups, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         variance_sampler_(residual_precision_prior),
-        groups_(groups)
-  {}
+        groups_(groups) {}
 
   void RegressionShrinkageSampler::draw() {
     draw_coefficients();
@@ -69,10 +65,8 @@ namespace BOOM {
     Chol cholesky(posterior_precision);
     Vector posterior_mean = cholesky.solve(scaled_posterior_mean);
 
-    model_->set_Beta(rmvn_precision_upper_cholesky_mt(
-        rng(),
-        posterior_mean,
-        cholesky.getLT()));
+    model_->set_Beta(rmvn_precision_upper_cholesky_mt(rng(), posterior_mean,
+                                                      cholesky.getLT()));
   }
 
   void RegressionShrinkageSampler::draw_hyperparameters() {

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,47 +19,47 @@
 #ifndef BOOM_COMPOSITE_SAMPLER_HPP
 #define BOOM_COMPOSITE_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class CompositeSampler;
-  class CompositeSamplerAdder{
-  public:
+  class CompositeSamplerAdder {
+   public:
     CompositeSamplerAdder(CompositeSampler *pcs);
     CompositeSamplerAdder operator()(const Ptr<PosteriorSampler> &,
-                     double wgt=1.0);
-  private:
-    CompositeSampler * cs;
+                                     double wgt = 1.0);
+
+   private:
+    CompositeSampler *cs;
   };
   //----------------------------------------------------------------------
   // A posterior sampler that is made of one or more other posterior
   // samplers.  Each iteration one of the component samplers will be
   // selected at random and run.
-  class CompositeSampler: public PosteriorSampler{
-  public:
+  class CompositeSampler : public PosteriorSampler {
+   public:
     CompositeSampler(RNG &seeding_rng = GlobalRng::rng);
-    CompositeSampler(const Ptr<PosteriorSampler> & s, double prob=1.0,
+    CompositeSampler(const Ptr<PosteriorSampler> &s, double prob = 1.0,
                      RNG &seeding_rng = GlobalRng::rng);
-    CompositeSampler(const std::vector<Ptr<PosteriorSampler> > & s,
+    CompositeSampler(const std::vector<Ptr<PosteriorSampler> > &s,
                      RNG &seeding_rng = GlobalRng::rng);
-    CompositeSampler(const std::vector<Ptr<PosteriorSampler> > & s,
-                     const Vector & Probs,
-                     RNG &seeding_rng = GlobalRng::rng);
+    CompositeSampler(const std::vector<Ptr<PosteriorSampler> > &s,
+                     const Vector &Probs, RNG &seeding_rng = GlobalRng::rng);
     template <class It>
     CompositeSampler(It b, It e)
-      : samplers_(b,e),
-    probs_(samplers_.size(), 1.0/samplers_.size())
-    {}
+        : samplers_(b, e), probs_(samplers_.size(), 1.0 / samplers_.size()) {}
 
     void draw() override;
     double logpri() const override;
-    CompositeSamplerAdder add_sampler(const Ptr<PosteriorSampler> &, double w=1.0);
-  private:
+    CompositeSamplerAdder add_sampler(const Ptr<PosteriorSampler> &,
+                                      double w = 1.0);
+
+   private:
     std::vector<Ptr<PosteriorSampler> > samplers_;
     Vector probs_;
-    Ptr<PosteriorSampler> choose_sampler()const;
+    Ptr<PosteriorSampler> choose_sampler() const;
   };
-}
+}  // namespace BOOM
 
-#endif //BOOM_COMPOSITE_SAMPLER_HPP
+#endif  // BOOM_COMPOSITE_SAMPLER_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -18,30 +19,29 @@
 #ifndef BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_
 #define BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_
 
-#include <Models/Policies/NullParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/NullParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/SpdParams.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class MarginallyUniformCorrelationModel
-      : public NullParamPolicy,
-        public IID_DataPolicy<SpdParams>,
-        public PriorPolicy,
-        public CorrelationModel
-  {
+  class MarginallyUniformCorrelationModel : public NullParamPolicy,
+                                            public IID_DataPolicy<SpdParams>,
+                                            public PriorPolicy,
+                                            public CorrelationModel {
    public:
     MarginallyUniformCorrelationModel(uint dim);
-    MarginallyUniformCorrelationModel * clone() const override;
+    MarginallyUniformCorrelationModel *clone() const override;
 
-    virtual double pdf(const Ptr<Data> &dp, bool logscale)const;
-    double logp(const CorrelationMatrix &)const override;
-    uint dim()const;
-    CorrelationMatrix sim(RNG &rng = GlobalRng::rng)const;
+    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double logp(const CorrelationMatrix &) const override;
+    uint dim() const;
+    CorrelationMatrix sim(RNG &rng = GlobalRng::rng) const;
+
    private:
     uint dim_;
   };
-}
-#endif // BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_
+}  // namespace BOOM
+#endif  // BOOM_MARGINALLY_UNIFORM_CORRELATION_MODEL_HPP_

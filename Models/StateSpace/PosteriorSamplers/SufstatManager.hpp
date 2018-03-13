@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -63,4 +64,4 @@ namespace BOOM {
   }  // namespace StateSpace
 }  // namespace BOOM
 
-#endif //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_
+#endif  //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_

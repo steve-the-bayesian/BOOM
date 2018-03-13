@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -16,19 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialProbitSpikeSlabSampler.hpp"
 
 namespace BOOM {
 
-namespace {
-  typedef BinomialProbitSpikeSlabSampler BPSSS;
-}  // namespace
+  namespace {
+    typedef BinomialProbitSpikeSlabSampler BPSSS;
+  }  // namespace
 
   BPSSS::BinomialProbitSpikeSlabSampler(
-      BinomialProbitModel *model,
-      const Ptr<MvnBase> &slab_prior,
-      const Ptr<VariableSelectionPrior> &spike_prior,
-      int clt_threshold,
+      BinomialProbitModel *model, const Ptr<MvnBase> &slab_prior,
+      const Ptr<VariableSelectionPrior> &spike_prior, int clt_threshold,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
@@ -39,15 +38,12 @@ namespace {
 
   void BPSSS::draw() {
     impute_latent_data();
-    spike_slab_.draw_model_indicators(
-        rng(),
-        complete_data_sufficient_statistics());
+    spike_slab_.draw_model_indicators(rng(),
+                                      complete_data_sufficient_statistics());
     spike_slab_.draw_beta(rng(), complete_data_sufficient_statistics());
   }
 
-  double BPSSS::logpri() const {
-    return spike_slab_.logpri();
-  }
+  double BPSSS::logpri() const { return spike_slab_.logpri(); }
 
   void BPSSS::allow_model_selection(bool tf) {
     spike_slab_.allow_model_selection(tf);
@@ -67,9 +63,7 @@ namespace {
     const std::vector<Ptr<BinomialRegressionData>> &data(model_->dat());
     for (int i = 0; i < data.size(); ++i) {
       const Vector &x(data[i]->x());
-      double sum_of_z = imputer_.impute(rng(),
-                                        data[i]->n(),
-                                        data[i]->y(),
+      double sum_of_z = imputer_.impute(rng(), data[i]->n(), data[i]->y(),
                                         model_->predict(x));
       xtz_.axpy(x, sum_of_z);
     }

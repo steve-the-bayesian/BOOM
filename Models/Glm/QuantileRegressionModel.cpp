@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -16,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/QuantileRegressionModel.hpp>
+#include "Models/Glm/QuantileRegressionModel.hpp"
 
 namespace BOOM {
   namespace {
@@ -24,17 +25,13 @@ namespace BOOM {
   }
 
   QRM::QuantileRegressionModel(uint beta_dim, double quantile, bool include_all)
-      : ParamPolicy(new GlmCoefs(beta_dim, include_all)),
-        quantile_(quantile)
-  {}
+      : ParamPolicy(new GlmCoefs(beta_dim, include_all)), quantile_(quantile) {}
 
   QRM::QuantileRegressionModel(const Vector &beta, double quantile)
-      : ParamPolicy(new GlmCoefs(beta)),
-        quantile_(quantile)
-  {}
+      : ParamPolicy(new GlmCoefs(beta)), quantile_(quantile) {}
 
   QuantileRegressionModel *QRM::clone() const {
     return new QuantileRegressionModel(*this);
   }
 
-}
+}  // namespace BOOM

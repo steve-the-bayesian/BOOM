@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,68 +17,64 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/Holiday.hpp>
-#include <Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp"
+#include "Models/StateSpace/StateModels/Holiday.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   typedef RandomWalkHolidayStateModel RWHSM;
   RWHSM::RandomWalkHolidayStateModel(Holiday *holiday, const Date &time_zero)
-      : holiday_(holiday),
-        time_zero_(time_zero)
-  {
+      : holiday_(holiday), time_zero_(time_zero) {
     int dim = holiday->maximum_window_width();
     initial_state_mean_.resize(dim);
     initial_state_variance_.resize(dim);
     identity_transition_matrix_ = new IdentityMatrix(dim);
     zero_state_variance_matrix_ = new ZeroMatrix(dim);
-    for(int i = 0; i < dim; ++i){
-      NEW(SingleSparseDiagonalElementMatrixParamView, variance_matrix)(
-          dim, Sigsq_prm(), i);
+    for (int i = 0; i < dim; ++i) {
+      NEW(SingleSparseDiagonalElementMatrixParamView, variance_matrix)
+      (dim, Sigsq_prm(), i);
       active_state_variance_matrix_.push_back(variance_matrix);
     }
   }
 
-  RandomWalkHolidayStateModel * RWHSM::clone()const{
-    return new RandomWalkHolidayStateModel(*this);}
+  RandomWalkHolidayStateModel *RWHSM::clone() const {
+    return new RandomWalkHolidayStateModel(*this);
+  }
 
-  void RWHSM::observe_state(const ConstVectorView then,
-                            const ConstVectorView now,
-                            int time_now){
+  void RWHSM::observe_state(const ConstVectorView &then,
+                            const ConstVectorView &now, int time_now,
+                            ScalarStateSpaceModelBase *) {
     Date today = time_zero_ + time_now;
-    if(holiday_->active(today)){
-      Date holiday_date = holiday_->nearest(today);
-      int position = today - holiday_->earliest_influence(holiday_date);
+    if (holiday_->active(today)) {
+      int position = holiday_->days_into_influence_window(today);
       double delta = now[position] - then[position];
       suf()->update_raw(delta);
     }
   }
 
-  uint RWHSM::state_dimension()const{
+  uint RWHSM::state_dimension() const {
     return holiday_->maximum_window_width();
   }
 
-  void RWHSM::simulate_state_error(RNG &rng, VectorView eta, int t)const{
+  void RWHSM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
     Date now = time_zero_ + t;
     eta = 0;
-    if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+    if (holiday_->active(now)) {
+      int position = holiday_->days_into_influence_window(now);
       eta[position] = rnorm_mt(rng, 0, sigma());
     }
   }
 
-  Ptr<SparseMatrixBlock>  RWHSM::state_transition_matrix(int t)const{
+  Ptr<SparseMatrixBlock> RWHSM::state_transition_matrix(int t) const {
     return identity_transition_matrix_;
   }
 
-  Ptr<SparseMatrixBlock> RWHSM::state_variance_matrix(int t)const{
+  Ptr<SparseMatrixBlock> RWHSM::state_variance_matrix(int t) const {
     Date now = time_zero_ + t;
-    if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+    if (holiday_->active(now)) {
+      int position = holiday_->days_into_influence_window(now);
       return active_state_variance_matrix_[position];
     }
     return zero_state_variance_matrix_;
@@ -91,51 +88,44 @@ namespace BOOM {
     return state_variance_matrix(t);
   }
 
-  SparseVector RWHSM::observation_matrix(int t)const{
+  SparseVector RWHSM::observation_matrix(int t) const {
     Date now = time_zero_ + t;
     SparseVector ans(state_dimension());
-    if(holiday_->active(now)){
-      Date holiday_date(holiday_->nearest(now));
-      int position = now - holiday_->earliest_influence(holiday_date);
+    if (holiday_->active(now)) {
+      int position = holiday_->days_into_influence_window(now);
       ans[position] = 1.0;
     }
     return ans;
   }
 
-  Vector RWHSM::initial_state_mean()const{
-    return initial_state_mean_;
-  }
+  Vector RWHSM::initial_state_mean() const { return initial_state_mean_; }
 
-  SpdMatrix RWHSM::initial_state_variance()const{
+  SpdMatrix RWHSM::initial_state_variance() const {
     return initial_state_variance_;
   }
 
   void RWHSM::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    if (state_error_mean.size() != 1
-        || state_error_variance.nrow() != 1
-        || state_error_variance.ncol() != 1) {
-      report_error("Wrong size argument to RandomWalkHolidayStateModel::"
-                   "update_complete_data_sufficient_statistics");
+    if (state_error_mean.size() != 1 || state_error_variance.nrow() != 1 ||
+        state_error_variance.ncol() != 1) {
+      report_error(
+          "Wrong size argument to RandomWalkHolidayStateModel::"
+          "update_complete_data_sufficient_statistics");
     }
     double mean = state_error_mean[0];
     double var = state_error_variance(0, 0);
     suf()->update_expected_value(1.0, mean, var + square(mean));
   }
 
-
-  void RWHSM::set_initial_state_mean(const Vector &v){
+  void RWHSM::set_initial_state_mean(const Vector &v) {
     initial_state_mean_ = v;
   }
 
-  void RWHSM::set_initial_state_variance(const SpdMatrix &Sigma){
+  void RWHSM::set_initial_state_variance(const SpdMatrix &Sigma) {
     initial_state_variance_ = Sigma;
   }
 
-  void RWHSM::set_time_zero(const Date &time_zero){
-    time_zero_ = time_zero;
-  }
+  void RWHSM::set_time_zero(const Date &time_zero) { time_zero_ = time_zero; }
 
 }  // namespace BOOM

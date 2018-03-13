@@ -18,14 +18,12 @@
 #ifndef BOOM_STATE_SPACE_REGRESSION_MODEL_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_REGRESSION_MODEL_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateSpaceRegressionModel.hpp>
-#include <Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp>
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef StateSpacePosteriorSampler StateSpaceRegressionSampler;
-
 }
 
-
-#endif // BOOM_STATE_SPACE_REGRESSION_MODEL_SAMPLER_HPP_
+#endif  // BOOM_STATE_SPACE_REGRESSION_MODEL_SAMPLER_HPP_

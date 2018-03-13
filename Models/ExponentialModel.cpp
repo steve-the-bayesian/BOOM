@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,146 +17,147 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/ExponentialModel.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/ExponentialModel.hpp"
 #include <cmath>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/ExponentialGammaSampler.hpp>
-#include <distributions.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/ExponentialGammaSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  ExpSuf::ExpSuf(){}
+  ExpSuf::ExpSuf() {}
 
   ExpSuf::ExpSuf(const ExpSuf &rhs)
-    : Sufstat(rhs),
-      SufstatDetails<DoubleData>(rhs),
-      sum_(rhs.sum_),
-      n_(rhs.n_)
-  {}
+      : Sufstat(rhs),
+        SufstatDetails<DoubleData>(rhs),
+        sum_(rhs.sum_),
+        n_(rhs.n_) {}
 
-  ExpSuf * ExpSuf::clone()const{return new ExpSuf(*this);}
+  ExpSuf *ExpSuf::clone() const { return new ExpSuf(*this); }
 
-  double ExpSuf::sum()const{return sum_;}
-  double ExpSuf::n()const{return n_;}
+  double ExpSuf::sum() const { return sum_; }
+  double ExpSuf::n() const { return n_; }
 
-  void ExpSuf::Update(const DoubleData &x){
-    n_+=1.0;
-    sum_+=x.value();}
+  void ExpSuf::Update(const DoubleData &x) {
+    n_ += 1.0;
+    sum_ += x.value();
+  }
 
-  void ExpSuf::add_mixture_data(double y, double prob){
+  void ExpSuf::add_mixture_data(double y, double prob) {
     n_ += prob;
     sum_ += y * prob;
   }
 
-  void ExpSuf::clear(){ n_ = sum_ = 0; }
+  void ExpSuf::clear() { n_ = sum_ = 0; }
 
-  void ExpSuf::combine(const Ptr<ExpSuf> & s){
+  void ExpSuf::combine(const Ptr<ExpSuf> &s) {
     n_ += s->n_;
     sum_ += s->sum_;
   }
 
-  void ExpSuf::combine(const ExpSuf & s){
+  void ExpSuf::combine(const ExpSuf &s) {
     n_ += s.n_;
     sum_ += s.sum_;
   }
 
-  ExpSuf * ExpSuf::abstract_combine(Sufstat *s){
-    return abstract_combine_impl(this, s);}
+  ExpSuf *ExpSuf::abstract_combine(Sufstat *s) {
+    return abstract_combine_impl(this, s);
+  }
 
-  Vector ExpSuf::vectorize(bool)const{
+  Vector ExpSuf::vectorize(bool) const {
     Vector ans(2);
     ans[0] = sum_;
     ans[1] = n_;
     return ans;
   }
 
-  Vector::const_iterator ExpSuf::unvectorize(Vector::const_iterator &v, bool){
-    sum_ = *v; ++v;
-    n_ = *v;   ++v;
+  Vector::const_iterator ExpSuf::unvectorize(Vector::const_iterator &v, bool) {
+    sum_ = *v;
+    ++v;
+    n_ = *v;
+    ++v;
     return v;
   }
 
-  Vector::const_iterator ExpSuf::unvectorize(const Vector &v, bool minimal){
+  Vector::const_iterator ExpSuf::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator it = v.begin();
     return unvectorize(it, minimal);
   }
 
-  ostream & ExpSuf::print(ostream &out)const{
+  ostream &ExpSuf::print(ostream &out) const {
     return out << n_ << " " << sum_;
   }
   //======================================================================
   typedef ExponentialModel EM;
 
   EM::ExponentialModel()
-    : ParamPolicy(new UnivParams(1.0)),
-      DataPolicy(new ExpSuf()),
-      PriorPolicy()
-  {}
+      : ParamPolicy(new UnivParams(1.0)),
+        DataPolicy(new ExpSuf()),
+        PriorPolicy() {}
 
   EM::ExponentialModel(double lam)
-    : ParamPolicy(new UnivParams(lam)),
-      DataPolicy(new ExpSuf()),
-      PriorPolicy()
-  {}
+      : ParamPolicy(new UnivParams(lam)),
+        DataPolicy(new ExpSuf()),
+        PriorPolicy() {}
 
   EM::ExponentialModel(const EM &rhs)
-    : Model(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      DiffDoubleModel(rhs),
-      NumOptModel(rhs),
-      EmMixtureComponent(rhs)
-  {}
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        DiffDoubleModel(rhs),
+        NumOptModel(rhs),
+        EmMixtureComponent(rhs) {}
 
+  ExponentialModel *ExponentialModel::clone() const {
+    return new ExponentialModel(*this);
+  }
 
-  ExponentialModel *ExponentialModel::clone() const{
-    return new ExponentialModel(*this);}
+  Ptr<UnivParams> EM::Lam_prm() { return ParamPolicy::prm(); }
+  const Ptr<UnivParams> EM::Lam_prm() const { return ParamPolicy::prm(); }
 
-  Ptr<UnivParams> EM::Lam_prm(){return ParamPolicy::prm();}
-  const Ptr<UnivParams> EM::Lam_prm()const{return ParamPolicy::prm();}
+  const double &EM::lam() const { return Lam_prm()->value(); }
+  void EM::set_lam(double x) { return Lam_prm()->set(x); }
 
-  const double & EM::lam()const{return Lam_prm()->value();}
-  void  EM::set_lam(double x){return Lam_prm()->set(x);}
-
-  void EM::set_conjugate_prior(double a, double b){
-    NEW(GammaModel, pri)(a,b);
+  void EM::set_conjugate_prior(double a, double b) {
+    NEW(GammaModel, pri)(a, b);
     set_conjugate_prior(pri);
   }
 
-  void EM::set_conjugate_prior(const Ptr<GammaModel> & g){
+  void EM::set_conjugate_prior(const Ptr<GammaModel> &g) {
     NEW(ExponentialGammaSampler, pri)(this, g);
     set_conjugate_prior(pri);
   }
 
-  void EM::set_conjugate_prior(const Ptr<ExponentialGammaSampler> & pri){
+  void EM::set_conjugate_prior(const Ptr<ExponentialGammaSampler> &pri) {
     set_method(pri);
   }
 
-  double ExponentialModel::Loglike(const Vector &lambda_vector,
-                                   Vector &g, Matrix &h, uint nd) const{
+  double ExponentialModel::Loglike(const Vector &lambda_vector, Vector &g,
+                                   Matrix &h, uint nd) const {
     if (lambda_vector.size() != 1) {
       report_error("Wrong size argument.");
     }
     double lam = lambda_vector[0];
-    double ans=0;
-    if(lam<=0){
+    double ans = 0;
+    if (lam <= 0) {
       ans = negative_infinity();
-      if(nd>0){
-        g[0]= std::max(fabs(lam), .10);
-        if(nd>1) h(0,0) = -1;
+      if (nd > 0) {
+        g[0] = std::max(fabs(lam), .10);
+        if (nd > 1) h(0, 0) = -1;
       }
-      return ans;}
+      return ans;
+    }
 
     double n = suf()->n();
     double sum = suf()->sum();
-    ans = n *log(lam) - lam*sum;
-    if(nd>0){
-      g[0] = n/lam - sum;
-      if(nd>1) h(0,0) = -n/(lam*lam);
+    ans = n * log(lam) - lam * sum;
+    if (nd > 0) {
+      g[0] = n / lam - sum;
+      if (nd > 1) h(0, 0) = -n / (lam * lam);
     }
     return ans;
   }
@@ -166,28 +168,36 @@ namespace BOOM{
     set_lam(number_of_observations / sum_of_durations);
   }
 
-  double ExponentialModel::pdf(const Ptr<Data> &dp, bool logscale)const{
+  double ExponentialModel::pdf(const Ptr<Data> &dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);}
+    return logscale ? ans : exp(ans);
+  }
 
-  double ExponentialModel::pdf(const Data * dp, bool logscale)const{
+  double ExponentialModel::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
-    return logscale ? ans : exp(ans);}
+    return logscale ? ans : exp(ans);
+  }
 
-  double ExponentialModel::Logp(double x, double &g, double &h, uint nd)const{
+  double ExponentialModel::Logp(double x, double &g, double &h, uint nd) const {
     double lam = this->lam();
-     if(lam<=0) return negative_infinity();
-     double ans = x <0 ? negative_infinity() : log(lam) - lam*x;
-    if(nd>0){
-      if(lam>0) g = 1.0/lam - x;
-      else g = 1.0;
-      if(nd>1){
-        if(lam>0) h = -1.0/(lam*lam);
-        else h = -1.0;}}
+    if (lam <= 0) return negative_infinity();
+    double ans = x < 0 ? negative_infinity() : log(lam) - lam * x;
+    if (nd > 0) {
+      if (lam > 0)
+        g = 1.0 / lam - x;
+      else
+        g = 1.0;
+      if (nd > 1) {
+        if (lam > 0)
+          h = -1.0 / (lam * lam);
+        else
+          h = -1.0;
+      }
+    }
     return ans;
   }
 
-  double ExponentialModel::sim(RNG &rng)const{ return rexp_mt(rng, lam());}
+  double ExponentialModel::sim(RNG &rng) const { return rexp_mt(rng, lam()); }
 
   void ExponentialModel::add_mixture_data(const Ptr<Data> &dp, double prob) {
     double y = DAT(dp)->value();
