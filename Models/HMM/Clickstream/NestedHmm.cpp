@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "Models/HMM/Clickstream/NestedHmm.hpp"
+#include <thread>
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
@@ -25,10 +26,6 @@
 #include "Models/HMM/hmm_tools.hpp"
 #include "distributions.hpp"
 #include "distributions/Markov.hpp"
-
-#ifndef NO_BOOST_THREADS
-#include <boost/thread.hpp>
-#endif
 
 namespace BOOM {
 

@@ -155,34 +155,34 @@ namespace BOOM {
   //======================================================================
   DateRangeHoliday::DateRangeHoliday() : maximum_window_width_(-1) {}
 
-  DateRangeHoliday::DateRangeHoliday(const std::vector<Date> &begin,
-                                     const std::vector<Date> &end)
+  DateRangeHoliday::DateRangeHoliday(const std::vector<Date> &from,
+                                     const std::vector<Date> &to)
       : maximum_window_width_(-1) {
-    if (begin.size() != end.size()) {
+    if (from.size() != to.size()) {
       report_error(
-          "'begin' and 'end' must contain the same number "
+          "'from' and 'to' must contain the same number "
           "of elements.");
     }
-    for (int i = 0; i < begin.size(); ++i) {
-      add_dates(begin_[i], end_[i]);
+    for (int i = 0; i < from.size(); ++i) {
+      add_dates(from[i], to[i]);
     }
   }
 
-  void DateRangeHoliday::add_dates(const Date &begin, const Date &end) {
-    if (end < begin) {
-      report_error("'begin' must come before 'end'.");
+  void DateRangeHoliday::add_dates(const Date &from, const Date &to) {
+    if (to < from) {
+      report_error("'from' must come before 'to'.");
     }
-    if (!begin_.empty() && begin <= begin_.back()) {
+    if (!begin_.empty() && from <= begin_.back()) {
       report_error(
           "Dates must be added in sequential order.  "
           "Please sort by start date before calling add_dates.");
     }
-    int width = end - begin + 1;
+    int width = to - from + 1;
     if (width > maximum_window_width_) {
       maximum_window_width_ = width;
     }
-    begin_.push_back(begin);
-    end_.push_back(end);
+    begin_.push_back(from);
+    end_.push_back(to);
   }
 
   bool DateRangeHoliday::active(const Date &arbitrary_date) const {
@@ -359,6 +359,7 @@ namespace BOOM {
   // the holiday name.
   Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
                               int days_after) {
+    cout << "Creating named holiday: " << holiday_name << endl;
     if (holiday_name == "NewYearsDay") {
       return new NewYearsDay(days_before, days_after);
     } else if (holiday_name == "MartinLutherKingDay") {

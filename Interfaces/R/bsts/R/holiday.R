@@ -64,6 +64,8 @@ FixedDateHoliday <- function(holiday.name,
   } else if (month == "February") {
     stopifnot(day <= 28)
   }
+  
+  
   stopifnot(is.numeric(days.before), length(days.before) == 1, days.before >= 0)
   stopifnot(is.numeric(days.after), length(days.after) == 1, days.after >= 0)
 
@@ -205,7 +207,7 @@ DateRangeHoliday <- function(holiday.name,
   ##   for passing to C++ code.
   stopifnot(is.character(holiday.name), length(holiday.name) == 1)
   start.date <- as.Date(start.date)
-  end.date <- as.Date(start.date)
+  end.date <- as.Date(end.date)
   stopifnot(length(start.date) == length(end.date),
             all(start.date <= end.date),
             all(tail(start.date, -1) > head(end.date, -1)))

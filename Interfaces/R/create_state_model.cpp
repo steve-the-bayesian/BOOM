@@ -631,6 +631,7 @@ namespace BOOM {
     // r_state_component created by R's AddSeasonal.
 
     namespace {
+
       //  This code is shared between the SeasonalStateModel and the
       //  MonthlyAnnualCycle.
       template <class SEASONAL>
@@ -735,9 +736,9 @@ namespace BOOM {
             Rf_asInteger(getListElement(holiday_spec, "days.after")));
       } else if (Rf_inherits(holiday_spec, "DateRangeHoliday")) {
         std::vector<Date> start_date = ToBoomDateVector(getListElement(
-            holiday_spec, "start.date"));
+            holiday_spec, "start.date", true));
         std::vector<Date> end_date = ToBoomDateVector(getListElement(
-            holiday_spec, "end.date"));
+            holiday_spec, "end.date", true));
         return new DateRangeHoliday(start_date, end_date);
       } else if (Rf_inherits(holiday_spec, "NamedHoliday")) {
         return BOOM::CreateNamedHoliday(
@@ -906,10 +907,14 @@ namespace BOOM {
           new RegressionHolidayStateModel(
               time_zero, residual_variance, prior);
 
-      SEXP r_holidays = getListElement(r_state_specification, "holidays");
+      RMemoryProtector holiday_list_protector;
+      SEXP r_holidays = holiday_list_protector.protect(
+          getListElement(r_state_specification, "holidays"));
+
       int number_of_holidays = Rf_length(r_holidays);
       for (int i = 0; i < number_of_holidays; ++i) {
-        SEXP r_holiday = VECTOR_ELT(r_holidays, i);
+        RMemoryProtector holiday_protector;
+        SEXP r_holiday = holiday_protector.protect(VECTOR_ELT(r_holidays, i));
         Ptr<Holiday> holiday = CreateHoliday(r_holiday);
         std::string holiday_name = ToString(getListElement(r_holiday, "name"));
         holiday_model->add_holiday(holiday);

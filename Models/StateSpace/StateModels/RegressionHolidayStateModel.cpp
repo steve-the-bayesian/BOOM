@@ -37,7 +37,11 @@ namespace BOOM {
         state_error_expander_(new EmptyMatrix),
         state_error_variance_(new EmptyMatrix),
         initial_state_mean_(1, 1.0),
-        initial_state_variance_(1, 0.0) {}
+        initial_state_variance_(1, 0.0) {
+    if (!residual_variance) {
+      report_error("residual_variance must be non-NULL");
+    }
+  }
 
   void RHBI::observe_time_dimension(int max_time) {
     if (which_holiday_.size() == max_time) return;
@@ -49,11 +53,15 @@ namespace BOOM {
       which_day_[t] = -1;
       for (int h = 0; h < holidays_.size(); ++h) {
         if (holidays_[h]->active(date)) {
+          // It is possible (but rare) for multiple holidays to be active on the
+          // same date.
           if (which_holiday_[t] >= 0) {
             std::ostringstream err;
             err << "More than one holiday is active on " << date
                 << ".  This violates a model assumption that only one"
-                << " holiday is active at a time.";
+                << " holiday is active at a time.  If you really want to allow"
+                << " this behavior, please place the co-occurring holidays in "
+                << "different holiday state models.";
             report_error(err.str());
           }
           which_holiday_[t] = h;
@@ -78,7 +86,11 @@ namespace BOOM {
                                     RNG &seeding_rng)
       : impl_(time_of_first_observation, residual_variance),
         prior_(prior),
-        rng_(seed_rng(seeding_rng)) {}
+        rng_(seed_rng(seeding_rng)) {
+    if (!prior_) {
+      report_error("Prior must not be NULL.");
+    }
+  }
 
   RHSM *RHSM::clone() const { return new RHSM(*this); }
 
@@ -132,6 +144,18 @@ namespace BOOM {
 
   void RHSM::sample_posterior() {
     int number_of_holidays = holiday_mean_contributions_.size();
+    ////////// Remove after debugging
+    if (holiday_mean_contributions_.size() != number_of_holidays) {
+      report_error("holiday_mean_contributions_ is the wrong size");
+    }
+    if (daily_totals_.size() != number_of_holidays) {
+      report_error("daily_totals_ is the wrong size");
+    }
+    if (daily_counts_.size() != number_of_holidays) {
+      report_error("daily_counts_ is the wrong size");
+    }
+    ////////// Remove after debugging
+    
     for (int holiday = 0; holiday < number_of_holidays; ++holiday) {
       Vector holiday_pattern = holiday_mean_contributions_[holiday]->value();
       for (int day = 0; day < holiday_pattern.size(); ++day) {

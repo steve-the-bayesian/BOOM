@@ -34,9 +34,4 @@ namespace BOOM {
     return *this;
   }
 
-  void MPP::add_params(const Ptr<Params> &p) { t_.push_back(p); }
-  void MPP::clear() { t_.clear(); }
-
-  ParamVector MPP::parameter_vector() { return t_; }
-  const ParamVector MPP::parameter_vector() const { return t_; }
 }  // namespace BOOM

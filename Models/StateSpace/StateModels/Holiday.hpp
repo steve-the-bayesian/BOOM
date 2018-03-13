@@ -37,25 +37,9 @@ namespace BOOM {
   // be of different width each year, as holidays sometimes interact with
   // weekends and other holidays in strange ways.
   class Holiday : private RefCounted {
-    friend void intrusive_ptr_add_ref(Holiday *h) { h->up_count(); }
-    friend void intrusive_ptr_release(Holiday *h) {
-      h->down_count();
-      if (h->ref_count() == 0) {
-        delete h;
-      }
-    }
-
    public:
+
     virtual ~Holiday() {}
-
-    // Holidays can sometimes (or will usually) exert an influence before or
-    // after the date of the actual holiday.  The number of days from the
-    // earliest influenced day to the last influenced day (including the end
-    // points) is the maximum_window_width.
-    virtual int maximum_window_width() const = 0;
-
-    // Indicates whether this holiday is active on the given date.
-    virtual bool active(const Date &arbitrary_date) const = 0;
 
     // Returns the number of days that 'arbitrary_date' is into the holiday's
     // influence window.  If arbitrary_date is not in the influence window then
@@ -68,6 +52,16 @@ namespace BOOM {
       }
     }
 
+    // Holidays can sometimes (or will usually) exert an influence before or
+    // after the date of the actual holiday.  The number of days from the
+    // earliest influenced day to the last influenced day (including the end
+    // points) is the maximum_window_width.
+    virtual int maximum_window_width() const = 0;
+
+    // Indicates whether this holiday is active on the given date.
+    virtual bool active(const Date &arbitrary_date) const = 0;
+
+
    protected:
     // The dates of earliest and latest influence for a holiday occurring on
     // 'holiday_date'.  These functions are protected because it is an error to
@@ -75,6 +69,15 @@ namespace BOOM {
     // error to make.
     virtual Date earliest_influence(const Date &holiday_date) const = 0;
     virtual Date latest_influence(const Date &holiday_date) const = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(Holiday *h) { h->up_count(); }
+    friend void intrusive_ptr_release(Holiday *h) {
+      h->down_count();
+      if (h->ref_count() == 0) {
+        delete h;
+      }
+    }
   };
 
   // A SingleDayHoliday is a holiday associated with a specific date.  Its

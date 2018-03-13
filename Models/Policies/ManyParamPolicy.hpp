@@ -46,11 +46,11 @@ namespace BOOM {
     ManyParamPolicy(ManyParamPolicy &&rhs) = default;
     ManyParamPolicy &operator=(ManyParamPolicy &&rhs) = default;
 
-    void add_params(const Ptr<Params> &p);
-    void clear();
+    void add_params(const Ptr<Params> &p) {t_.push_back(p);}
+    void clear() {t_.clear();}
 
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector() const override;
+    ParamVector parameter_vector() override {return t_;}
+    const ParamVector parameter_vector() const override {return t_;}
 
    private:
     ParamVector t_;

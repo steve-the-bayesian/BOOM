@@ -31,3 +31,22 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "HolidayMcmc_test",
+    srcs = ["HolidayMcmc_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
+    name = "HolidayMcmcExample",
+    srcs = ["HolidayMcmcExample.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+    ],
+)
