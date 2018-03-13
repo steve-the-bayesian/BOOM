@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,11 +19,10 @@
 
 #ifndef BOOM_REP_HPP
 #define BOOM_REP_HPP
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
-
-namespace BOOM{
-  Vector rep(const Vector & x, uint n);
-  inline Vector rep(double x, uint n){ return Vector(n,x);}
-}
-#endif// BOOM_REP_HPP
+namespace BOOM {
+  Vector rep(const Vector& x, uint n);
+  inline Vector rep(double x, uint n) { return Vector(n, x); }
+}  // namespace BOOM
+#endif  // BOOM_REP_HPP

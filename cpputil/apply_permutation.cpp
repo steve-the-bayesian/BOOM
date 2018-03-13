@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -15,13 +16,12 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <cpputil/apply_permutation.hpp>
+#include "cpputil/apply_permutation.hpp"
 
 namespace BOOM {
 
   template <class VEC>
-  void apply_permutation_impl(const std::vector<int> &permutation,
-                              VEC &data) {
+  void apply_permutation_impl(const std::vector<int> &permutation, VEC &data) {
     int stride = data.stride();
     int n = data.size();
     int pk;
@@ -35,39 +35,39 @@ namespace BOOM {
       if (pk == i) continue;
       // shuffle the elements of the cycle
       {
-        double tmp_data = data[i*stride];
+        double tmp_data = data[i * stride];
 
         while (pk != i) {
           {
-            double r1 = data[pk*stride];
-            data[k*stride] = r1;
+            double r1 = data[pk * stride];
+            data[k * stride] = r1;
           }
           k = pk;
           pk = permutation[k];
         };
 
-        data[k*stride] = tmp_data;
+        data[k * stride] = tmp_data;
       }
     }
   }
 
-  void permute_inplace(const std::vector<int> &permutation, Vector &data){
+  void permute_inplace(const std::vector<int> &permutation, Vector &data) {
     apply_permutation_impl(permutation, data);
   }
 
-  void permute_inplace(const std::vector<int> &permutation, VectorView &data){
+  void permute_inplace(const std::vector<int> &permutation, VectorView &data) {
     apply_permutation_impl(permutation, data);
   }
 
   Vector apply_permutation(const std::vector<int> &permutation,
-                           const Vector &data){
+                           const Vector &data) {
     Vector ans(data);
     permute_inplace(permutation, ans);
     return ans;
   }
 
   Vector apply_permutation(const std::vector<int> &permutation,
-                           const ConstVectorView &data){
+                           const ConstVectorView &data) {
     Vector ans(data);
     permute_inplace(permutation, ans);
     return ans;

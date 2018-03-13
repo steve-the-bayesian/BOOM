@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -20,15 +21,16 @@
 
 #include <iosfwd>
 
-namespace BOOM{
-  class Redirector{
-  public:
-    Redirector(std::ostream & from, std::ostream & to);
+namespace BOOM {
+  class Redirector {
+   public:
+    Redirector(std::ostream &from, std::ostream &to);
     ~Redirector();
-  private:
-    std::streambuf *from_buf_,  * to_buf_ ;
-    std::ostream * from_;
+
+   private:
+    std::streambuf *from_buf_, *to_buf_;
+    std::ostream *from_;
   };
 
-}
-#endif// BOOM_STREAM_REDIRECTOR
+}  // namespace BOOM
+#endif  // BOOM_STREAM_REDIRECTOR

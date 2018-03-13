@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_
 #define BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/WishartModel.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Mixtures/MvnMetaAnalysisDPMPriorModel.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/WishartModel.hpp"
 
 namespace BOOM {
 
@@ -64,4 +65,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_MVN_META_ANALYSIS_MVN_POSTERIOR_SAMPLER_HPP_

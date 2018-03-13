@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -18,10 +19,10 @@
 
 #ifndef BOOM_LOGIT_BART_POSTERIOR_SAMPLER_HPP_
 #define BOOM_LOGIT_BART_POSTERIOR_SAMPLER_HPP_
-#include <Models/Bart/LogitBartModel.hpp>
-#include <Models/Bart/ResidualRegressionData.hpp>
-#include <Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp>
+#include "Models/Bart/LogitBartModel.hpp"
+#include "Models/Bart/PosteriorSamplers/BartPosteriorSampler.hpp"
+#include "Models/Bart/ResidualRegressionData.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
 
 namespace BOOM {
   namespace Bart {
@@ -41,23 +42,18 @@ namespace BOOM {
     // information: sum_i 1/sigsq[i].
     class LogitResidualData : public ResidualRegressionData {
      public:
-      LogitResidualData(const Ptr<BinomialRegressionData> & data_point,
+      LogitResidualData(const Ptr<BinomialRegressionData> &data_point,
                         double original_prediction);
-      double y() const {return original_data_->y();}
-      double n() const {return original_data_->n();}
+      double y() const { return original_data_->y(); }
+      double n() const { return original_data_->n(); }
 
       void add_to_residual(double value) override;
       void add_to_logit_suf(LogitSufficientStatistics &suf) const override;
 
       double information_weighted_sum() const {
-        return information_weighted_sum_; }
-      double information_weighted_residual_sum() const {
-        return information_weighted_sum_
-            - prediction_ * sum_of_information_;
+        return information_weighted_sum_;
       }
-      double sum_of_information() const {
-        return sum_of_information_;
-      }
+      double sum_of_information() const { return sum_of_information_; }
 
       // The predicted value is subtracted from the latent logit in
       // each Bernoulli trial in the
@@ -75,7 +71,7 @@ namespace BOOM {
       //
       // The return value is the log odds of success for a single
       // Bernoulli trial.
-      double prediction() const {return prediction_;}
+      double prediction() const { return prediction_; }
       void set_prediction(double value) { prediction_ = value; }
 
      private:
@@ -98,7 +94,7 @@ namespace BOOM {
     //======================================================================
     class LogitSufficientStatistics : public SufficientStatisticsBase {
      public:
-      LogitSufficientStatistics * clone() const override;
+      LogitSufficientStatistics *clone() const override;
       void clear() override;
       void update(const ResidualRegressionData &abstract_data) override;
       virtual void update(const LogitResidualData &data);
@@ -109,6 +105,7 @@ namespace BOOM {
 
       double information_weighted_cross_product() const;
       double information_weighted_sum_of_squared_predictions() const;
+
      private:
       // \sum_i \sum_j information_{ij} * latent_observation_{ij}
       double information_weighted_sum_;
@@ -125,7 +122,7 @@ namespace BOOM {
       // \sum_i prediction{i}^2 * \sum_j \information_{ij}
       double information_weighted_sum_of_squared_predictions_;
     };
-  } // namespace Bart
+  }  // namespace Bart
 
   //======================================================================
   // Posterior sampler for the LogitBartModel.
@@ -133,32 +130,31 @@ namespace BOOM {
    public:
     typedef Bart::LogitResidualData DataType;
     LogitBartPosteriorSampler(
-        LogitBartModel *model,
-        double total_prediction_sd,
-        double prior_tree_depth_alpha,
-        double prior_tree_depth_beta,
+        LogitBartModel *model, double total_prediction_sd,
+        double prior_tree_depth_alpha, double prior_tree_depth_beta,
         const std::function<double(int)> &log_prior_on_number_of_trees,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double draw_mean(Bart::TreeNode *leaf) override;
     double log_integrated_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const override;
+        const Bart::SufficientStatisticsBase &suf) const override;
     double log_integrated_logit_likelihood(
-        const Bart::LogitSufficientStatistics &suf)const;
+        const Bart::LogitSufficientStatistics &suf) const;
 
     double complete_data_log_likelihood(
-        const Bart::SufficientStatisticsBase &suf)const override;
+        const Bart::SufficientStatisticsBase &suf) const override;
     double complete_data_logit_log_likelihood(
-        const Bart::LogitSufficientStatistics &suf)const;
+        const Bart::LogitSufficientStatistics &suf) const;
 
     void clear_residuals() override;
-    int residual_size()const override;
-    Bart::LogitResidualData * create_and_store_residual(int i) override;
-    Bart::LogitResidualData * residual(int i) override;
-    Bart::LogitSufficientStatistics * create_suf()const override;
+    int residual_size() const override;
+    Bart::LogitResidualData *create_and_store_residual(int i) override;
+    Bart::LogitResidualData *residual(int i) override;
+    Bart::LogitSufficientStatistics *create_suf() const override;
 
     void impute_latent_data();
     void impute_latent_data_point(DataType *data);
+
    private:
     LogitBartModel *model_;
     std::vector<std::shared_ptr<DataType> > residuals_;

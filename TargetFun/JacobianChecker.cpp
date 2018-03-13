@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,20 +17,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <TargetFun/JacobianChecker.hpp>
+#include "TargetFun/JacobianChecker.hpp"
 #include <sstream>
 #include <string>
 
 namespace BOOM {
   JacobianChecker::JacobianChecker(
       const std::function<Vector(const Vector &)> &inverse_transformation,
-      const std::shared_ptr<Jacobian> &analytic_jacobian,
-      double epsilon)
+      const std::shared_ptr<Jacobian> &analytic_jacobian, double epsilon)
       : inverse_transformation_(inverse_transformation),
         numeric_jacobian_(inverse_transformation_),
         analytic_jacobian_(analytic_jacobian),
-        epsilon_(epsilon)
-  {}
+        epsilon_(epsilon) {}
 
   bool JacobianChecker::check_matrix(const Vector &new_parameterization) {
     Matrix numeric_matrix = numeric_jacobian_.matrix(new_parameterization);
@@ -42,22 +41,21 @@ namespace BOOM {
   bool JacobianChecker::check_logdet(const Vector &new_parameterization) {
     Matrix numeric_matrix = numeric_jacobian_.matrix(new_parameterization);
     analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
-    return fabs(log(fabs(det(numeric_matrix)))
-                - analytic_jacobian_->logdet()) < epsilon_;
+    return fabs(log(fabs(det(numeric_matrix))) - analytic_jacobian_->logdet()) <
+           epsilon_;
   }
 
   namespace {
     class SubFunction {
      public:
-      typedef std::function<Vector(const Vector &) > Mapping;
+      typedef std::function<Vector(const Vector &)> Mapping;
       SubFunction(const Mapping &inverse_mapping, int position)
-          : inverse_mapping_(inverse_mapping),
-            position_(position)
-      {}
+          : inverse_mapping_(inverse_mapping), position_(position) {}
 
       double operator()(const Vector &new_parameterization) {
         return inverse_mapping_(new_parameterization)[position_];
       }
+
      private:
       Mapping inverse_mapping_;
       int position_;
@@ -72,8 +70,7 @@ namespace BOOM {
     for (int t = 0; t < dim; ++t) {
       SubFunction ft(inverse_transformation_, t);
       NumericalDerivatives derivatives(ft);
-      numeric_hessians.push_back(
-          derivatives.Hessian(new_parameterization));
+      numeric_hessians.push_back(derivatives.Hessian(new_parameterization));
     }
 
     for (int r = 0; r < dim; ++r) {
@@ -81,11 +78,11 @@ namespace BOOM {
         for (int t = 0; t < dim; ++t) {
           double analytic_second_derivative =
               analytic_jacobian_->second_order_element(r, s, t);
-          if (fabs(analytic_second_derivative
-                   - numeric_hessians[t](r, s)) > epsilon_) {
+          if (fabs(analytic_second_derivative - numeric_hessians[t](r, s)) >
+              epsilon_) {
             if (error_messages) {
               std::ostringstream err;
-              err << "Element (" << r << "," << s << "," << t <<")"
+              err << "Element (" << r << "," << s << "," << t << ")"
                   << " had a numeric second derivative of "
                   << numeric_hessians[t](r, s)
                   << " but an analytic second derivative of "
@@ -106,8 +103,7 @@ namespace BOOM {
   // from the base class.  Note, the reliable, slow method depends on
   // the correctness of analytic_jacobian_->second_order_element().
   bool JacobianChecker::check_transform_second_order_gradient(
-      const Vector &new_parameterization,
-      std::string *error_message) {
+      const Vector &new_parameterization, std::string *error_message) {
     int dim = new_parameterization.size();
     analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
     Vector original_gradient(dim);
@@ -118,8 +114,8 @@ namespace BOOM {
     Vector original_gradient_copy(original_gradient);
     SpdMatrix working_hessian_copy(working_hessian);
 
-    analytic_jacobian_->transform_second_order_gradient(
-        working_hessian, original_gradient);
+    analytic_jacobian_->transform_second_order_gradient(working_hessian,
+                                                        original_gradient);
     analytic_jacobian_->Jacobian::transform_second_order_gradient(
         working_hessian_copy, original_gradient_copy);
 
@@ -144,10 +140,10 @@ namespace BOOM {
           : analytic_jacobian_(analytic_jacobian) {}
 
       double operator()(const Vector &new_parameterization) {
-        analytic_jacobian_->evaluate_new_parameterization(
-            new_parameterization);
+        analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
         return analytic_jacobian_->logdet();
       }
+
      private:
       std::shared_ptr<Jacobian> analytic_jacobian_;
     };

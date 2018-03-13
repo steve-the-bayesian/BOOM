@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,25 +20,22 @@
 #ifndef BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_
 #define BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/MvnModel.hpp>
 #include <vector>
-#include <cpputil/math_utils.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
-  class MvnIndependentVarianceSampler
-      : public PosteriorSampler {
+  class MvnIndependentVarianceSampler : public PosteriorSampler {
    public:
     MvnIndependentVarianceSampler(
-        MvnModel *model,
-        const std::vector<Ptr<GammaModelBase> > &siginv_priors,
-        const Vector & sigma_max_values,
-        RNG &seeding_rng = GlobalRng::rng);
+        MvnModel *model, const std::vector<Ptr<GammaModelBase> > &siginv_priors,
+        const Vector &sigma_max_values, RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri()const override;
+    double logpri() const override;
 
    private:
     MvnModel *model_;
@@ -47,4 +45,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_
+#endif  //  BOOM_MVN_INDEPENDENT_VARIANCE_SAMPLER_HPP_

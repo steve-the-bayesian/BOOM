@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -17,24 +18,23 @@
 */
 #ifndef BOOM_SCALAR_LOGPOST_TF_HPP
 #define BOOM_SCALAR_LOGPOST_TF_HPP
-#include <cpputil/Ptr.hpp>
-#include <numopt.hpp>
+#include "cpputil/Ptr.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class LoglikeModel;
   class DoubleModel;
 
-  class ScalarLogpostTF{
-  public:
-    ScalarLogpostTF(LoglikeModel *loglike,
-                    const Ptr<DoubleModel> &prior);
+  class ScalarLogpostTF {
+   public:
+    ScalarLogpostTF(LoglikeModel *loglike, const Ptr<DoubleModel> &prior);
     double operator()(const Vector &z) const;  // z is really a scalar
     double operator()(double z) const;
 
-  private:
+   private:
     Target loglike_;
     Ptr<DoubleModel> prior_;
   };
 }  // namespace BOOM
 
-#endif// BOOM_SCALAR_LOGPOST_TF_HPP
+#endif  // BOOM_SCALAR_LOGPOST_TF_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -19,50 +20,49 @@
 #ifndef BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP
 #define BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP
 
-#include <Models/TimeSeries/TimeSeriesDataPolicy.hpp>
-#include <Models/TimeSeries/AugmentedTimeSeries.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/TimeSeries/AugmentedTimeSeries.hpp"
+#include "Models/TimeSeries/TimeSeriesDataPolicy.hpp"
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  template<class D, class F>
+  template <class D, class F>
   class AugmentedTimeSeriesDataPolicy
-    : public TimeSeriesDataInfoPolicy<D,AugmentedTimeSeries<D,F> >
-  {
-  public:
+      : public TimeSeriesDataInfoPolicy<D, AugmentedTimeSeries<D, F> > {
+   public:
     typedef D DataPointType;
     typedef F InitialDataType;
-    typedef AugmentedTimeSeries<D,F> DataSeriesType; // should inherit from TimeSeries<D>
-    typedef TimeSeriesDataInfoPolicy<D,DataSeriesType> DataInfo;
-    typedef AugmentedTimeSeriesDataPolicy<D,F> DataPolicy;
+    typedef AugmentedTimeSeries<D, F>
+        DataSeriesType;  // should inherit from TimeSeries<D>
+    typedef TimeSeriesDataInfoPolicy<D, DataSeriesType> DataInfo;
+    typedef AugmentedTimeSeriesDataPolicy<D, F> DataPolicy;
 
     AugmentedTimeSeriesDataPolicy();
-    AugmentedTimeSeriesDataPolicy(const Ptr<DataSeriesType> & ds);
-    AugmentedTimeSeriesDataPolicy * clone()const=0;
+    AugmentedTimeSeriesDataPolicy(const Ptr<DataSeriesType> &ds);
+    AugmentedTimeSeriesDataPolicy *clone() const = 0;
 
     // extended conversion function
     using DataInfo::DAT;
     using DataInfo::DAT_1;
-    Ptr<F> DAT_0(const Ptr<Data> & dp)const;
+    Ptr<F> DAT_0(const Ptr<Data> &dp) const;
 
-    virtual void set_data(const Ptr<DataSeriesType> & d);
-    virtual void add_data_series(const Ptr<DataSeriesType> & d);
+    virtual void set_data(const Ptr<DataSeriesType> &d);
+    virtual void add_data_series(const Ptr<DataSeriesType> &d);
     virtual void start_new_series(const Ptr<F> &);
-    virtual void add_data_point(const Ptr<D> & d);
-    virtual void add_data(const Ptr<Data> & d);
+    virtual void add_data_point(const Ptr<D> &d);
+    virtual void add_data(const Ptr<Data> &d);
     // add_data will check whether data is initial data point, regular
     // data point, or new series
 
     virtual void clear_data();
 
-    virtual DataSeriesType & dat(uint i=0){return *(ts_[i]);}
-    virtual const DataSeriesType & dat(uint i=0)const{return *(ts_[i]);}
+    virtual DataSeriesType &dat(uint i = 0) { return *(ts_[i]); }
+    virtual const DataSeriesType &dat(uint i = 0) const { return *(ts_[i]); }
 
-    uint nseries()const{return ts_.size();}
+    uint nseries() const { return ts_.size(); }
 
-  private:
-    std::vector<Ptr<AugmentedTimeSeries<D,F> > > ts_;
-
+   private:
+    std::vector<Ptr<AugmentedTimeSeries<D, F> > > ts_;
   };
 
   //______________________________________________________________________
@@ -76,75 +76,75 @@ namespace BOOM{
   // type
 
   //   template <class D, class F>
-  //   void TimeSeriesDataPolicy<D, AugmentedTimeSeries<D,F> >::add_data_point(const Ptr<D> &)
-  //   //void TimeSeriesDataPolicy<D, TimeSeries<D> >::add_data_point(const Ptr<D> &)
+  //   void TimeSeriesDataPolicy<D, AugmentedTimeSeries<D,F>
+  //   >::add_data_point(const Ptr<D> &)
+  //   //void TimeSeriesDataPolicy<D, TimeSeries<D> >::add_data_point(const
+  //   Ptr<D> &)
   //   {}
 
   //______________________________________________________________________
 
+  template <class D, class F>
+  AugmentedTimeSeriesDataPolicy<D, F>::AugmentedTimeSeriesDataPolicy() {}
 
   template <class D, class F>
-  AugmentedTimeSeriesDataPolicy<D,F>::AugmentedTimeSeriesDataPolicy()
-  {}
+  AugmentedTimeSeriesDataPolicy<D, F>::AugmentedTimeSeriesDataPolicy(
+      const Ptr<DataSeriesType> &ds)
+      : ts_(1, ds) {}
 
   template <class D, class F>
-  AugmentedTimeSeriesDataPolicy<D,F>::AugmentedTimeSeriesDataPolicy
-  (const Ptr<DataSeriesType> & ds)
-    : ts_(1,ds)
-  {}
-
-  template<class D, class F>
-  Ptr<F> AugmentedTimeSeriesDataPolicy<D,F>::DAT_0(Ptr<Data> dp)const{
-    if(!dp) return Ptr<F>();
+  Ptr<F> AugmentedTimeSeriesDataPolicy<D, F>::DAT_0(Ptr<Data> dp) const {
+    if (!dp) return Ptr<F>();
     return dp.dcast<F>();
   }
 
-
-  template<class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::set_data(const Ptr<DataSeriesType> & ts){
+  template <class D, class F>
+  void AugmentedTimeSeriesDataPolicy<D, F>::set_data(
+      const Ptr<DataSeriesType> &ts) {
     ts_.clear();
     add_data_series(ts);
   }
 
-  template<class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::add_data_series(const Ptr<DataSeriesType> & ts){
+  template <class D, class F>
+  void AugmentedTimeSeriesDataPolicy<D, F>::add_data_series(
+      const Ptr<DataSeriesType> &ts) {
     ts_.push_back(ts);
   }
 
   template <class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::start_new_series(const Ptr<F> & dp){
+  void AugmentedTimeSeriesDataPolicy<D, F>::start_new_series(const Ptr<F> &dp) {
     NEW(DataSeriesType, ts)(dp);
     add_data_series(ts);
   }
 
   template <class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::add_data_point(const Ptr<D> & dp){
+  void AugmentedTimeSeriesDataPolicy<D, F>::add_data_point(const Ptr<D> &dp) {
     uint n = this->nseries();
-    if(n==0){
+    if (n == 0) {
       ostringstream err;
       err << "You need at least one data series before you add a data point."
           << endl;
       report_error(err.str());
     }
-    this->dat(n-1).add_1(dp);
+    this->dat(n - 1).add_1(dp);
   }
 
   template <class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::add_data(const Ptr<Data> & dp){
+  void AugmentedTimeSeriesDataPolicy<D, F>::add_data(const Ptr<Data> &dp) {
     Ptr<DataSeriesType> ts(DAT(dp));
-    if(!!ts){
+    if (!!ts) {
       add_data_series(ts);
       return;
     }
 
     Ptr<D> obs(DAT_1(dp));
-    if(!!obs){
+    if (!!obs) {
       add_data_point(obs);
       return;
     }
 
     Ptr<F> init(DAT_0(dp));
-    if(!!init){
+    if (!!init) {
       start_new_series(init);
       return;
     }
@@ -152,16 +152,15 @@ namespace BOOM{
     ostringstream err;
     err << "data value: " << *dp << " could not be cast to an augmented "
         << "time series, an element of the augmented time series, or "
-        << "the initial data for an augmented time series."
-        << endl;
+        << "the initial data for an augmented time series." << endl;
     report_error(err.str());
   }
 
   template <class D, class F>
-  void AugmentedTimeSeriesDataPolicy<D,F>::clear_data(){
+  void AugmentedTimeSeriesDataPolicy<D, F>::clear_data() {
     ts_.clear();
   }
 
-}
+}  // namespace BOOM
 
-#endif  //BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP
+#endif  // BOOM_AUGMENTED_TIME_SERIES_DATA_POLICY_HPP

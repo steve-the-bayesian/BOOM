@@ -20,13 +20,13 @@
 #define BOOM_R_PRIOR_SPECIFICATION_HPP_
 
 #include <r_interface/boom_r_tools.hpp>
-#include <Models/ChisqModel.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/IndependentMvnModel.hpp>
-#include <Models/IndependentMvnModelGivenScalarSigma.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
+#include "Models/ChisqModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/MvnGivenScalarSigma.hpp"
 
 namespace BOOM{
 

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,25 +20,23 @@
 #ifndef BOOM_BINOMIAL_PROBIT_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_BINOMIAL_PROBIT_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/BinomialProbitModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <distributions/rng.hpp>
+#include "Models/Glm/BinomialProbitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialProbitDataImputer.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
-  class BinomialProbitSpikeSlabSampler
-      : public PosteriorSampler {
+  class BinomialProbitSpikeSlabSampler : public PosteriorSampler {
    public:
-    BinomialProbitSpikeSlabSampler(BinomialProbitModel *model,
-                                   const Ptr<MvnBase> &slab_prior,
-                                   const Ptr<VariableSelectionPrior> &spike_prior,
-                                   int clt_threshold = 10,
-                                   RNG &seeding_rng = GlobalRng::rng);
+    BinomialProbitSpikeSlabSampler(
+        BinomialProbitModel *model, const Ptr<MvnBase> &slab_prior,
+        const Ptr<VariableSelectionPrior> &spike_prior, int clt_threshold = 10,
+        RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
@@ -68,6 +67,6 @@ namespace BOOM {
     Vector xtz_;
   };
 
-}   // namespace BOOM
+}  // namespace BOOM
 
 #endif  //  BOOM_BINOMIAL_PROBIT_SPIKE_SLAB_SAMPLER_HPP_

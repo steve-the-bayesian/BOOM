@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,50 +16,34 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <cpputil/ParamHolder.hpp>
-#include <Models/ParamTypes.hpp>
+#include "cpputil/ParamHolder.hpp"
+#include "Models/ParamTypes.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef ParamHolder PH;
 
-  PH::ParamHolder(const Ptr<Params> &held, Vector &Wsp)
-    : v(Wsp),
-      prm(held)
-  {}
+  PH::ParamHolder(const Ptr<Params> &held, Vector &Wsp) : v(Wsp), prm(held) {}
 
-  PH::ParamHolder(const Vector & x, const Ptr<Params> &held, Vector &Wsp)
-    : v(Wsp),
-      prm(held)
-    {
-      v = prm->vectorize(true);
-      prm->unvectorize(x, true);
-    }
-
-  PH::~ParamHolder(){
-    prm->unvectorize(v, true);
+  PH::ParamHolder(const Vector &x, const Ptr<Params> &held, Vector &Wsp)
+      : v(Wsp), prm(held) {
+    v = prm->vectorize(true);
+    prm->unvectorize(x, true);
   }
+
+  PH::~ParamHolder() { prm->unvectorize(v, true); }
 
   //------------------------------------------------------------
 
   typedef ParamVectorHolder PVH;
   PVH::ParamVectorHolder(const ParamVector &held, Vector &Wsp)
-    : v(Wsp),
-      prm(held)
-  {}
+      : v(Wsp), prm(held) {}
 
-  PVH::ParamVectorHolder(const Vector & x, const ParamVector & held, Vector &Wsp)
-    : v(Wsp),
-      prm(held)
-    {
-      v = vectorize(prm, true);
-      unvectorize(prm, x, true);
-    }
-
-
-  PVH::~ParamVectorHolder(){
-    unvectorize(prm, v, true);
+  PVH::ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp)
+      : v(Wsp), prm(held) {
+    v = vectorize(prm, true);
+    unvectorize(prm, x, true);
   }
 
+  PVH::~ParamVectorHolder() { unvectorize(prm, v, true); }
 
-
-}
+}  // namespace BOOM

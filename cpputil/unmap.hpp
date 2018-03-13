@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -18,30 +19,32 @@
 
 #ifndef BOOM_UNMAP_HPP
 #define BOOM_UNMAP_HPP
-#include <vector>
 #include <map>
+#include <vector>
 
-namespace BOOM{
+namespace BOOM {
 
-template <class K, class V>
-std::vector<V> unmap_values(const std::map<K,V> &m){
-  std::vector<V> ans;
-  unsigned int n = m.size();
-  ans.reserve(n);
-  for(typename std::map<K,V>::const_iterator it = m.begin(); it!=m.end(); ++it)
-    ans.push_back(it->second);
-  return ans;
-}
+  template <class K, class V>
+  std::vector<V> unmap_values(const std::map<K, V> &m) {
+    std::vector<V> ans;
+    unsigned int n = m.size();
+    ans.reserve(n);
+    for (typename std::map<K, V>::const_iterator it = m.begin(); it != m.end();
+         ++it)
+      ans.push_back(it->second);
+    return ans;
+  }
 
-template <class K, class V>
-std::vector<K> unmap_keys(const std::map<K,V> &m){
-  std::vector<K> ans;
-  unsigned int n = m.size();
-  ans.reserve(n);
-  for(typename std::map<K,V>::const_iterator it = m.begin(); it!=m.end(); ++it)
-    ans.push_back(it->first);
-  return ans;
-}
+  template <class K, class V>
+  std::vector<K> unmap_keys(const std::map<K, V> &m) {
+    std::vector<K> ans;
+    unsigned int n = m.size();
+    ans.reserve(n);
+    for (typename std::map<K, V>::const_iterator it = m.begin(); it != m.end();
+         ++it)
+      ans.push_back(it->first);
+    return ans;
+  }
 
-}
-#endif //BOOM_UNMAP_HPP
+}  // namespace BOOM
+#endif  // BOOM_UNMAP_HPP

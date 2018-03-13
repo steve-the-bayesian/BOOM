@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,9 +20,9 @@
 #ifndef BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_
 #define BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_
 
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
 
-namespace BOOM{
+namespace BOOM {
   namespace Bart {
     class SufficientStatisticsBase;
     class GaussianBartSufficientStatistics;
@@ -45,7 +46,7 @@ namespace BOOM{
     class ResidualRegressionData {
      public:
       ResidualRegressionData(const VectorData *x);
-      virtual ~ResidualRegressionData(){}
+      virtual ~ResidualRegressionData() {}
       // The vector of predictors associated with this observation.
       const Vector &x() const;
 
@@ -79,4 +80,4 @@ namespace BOOM{
 
   }  // namespace Bart
 }  // namespace BOOM
-#endif //  BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_
+#endif  //  BOOM_BART_RESIDUAL_REGRESSION_DATA_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,13 +17,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/GammaRegressionPosteriorSampler.hpp>
-#include <distributions.hpp>
-#include <numopt.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <cpputil/report_error.hpp>
-#include <Samplers/MH_Proposals.hpp>
+#include "Models/Glm/PosteriorSamplers/GammaRegressionPosteriorSampler.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "Samplers/MH_Proposals.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 namespace BOOM {
   namespace {
@@ -42,8 +43,7 @@ namespace BOOM {
         return sampler_->log_posterior(theta, gradient, Hessian_, 1);
       }
 
-      double operator()(const Vector &theta,
-                        Vector &gradient,
+      double operator()(const Vector &theta, Vector &gradient,
                         Matrix &Hessian) const {
         return sampler_->log_posterior(theta, gradient, Hessian, 2);
       }
@@ -57,16 +57,13 @@ namespace BOOM {
   }  // namespace
 
   GRPS::GammaRegressionPosteriorSampler(
-      GammaRegressionModelBase *model,
-      const Ptr<MvnBase> &coefficient_prior,
-      const Ptr<DiffDoubleModel> &shape_parameter_prior,
-      RNG &seeding_rng)
+      GammaRegressionModelBase *model, const Ptr<MvnBase> &coefficient_prior,
+      const Ptr<DiffDoubleModel> &shape_parameter_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         coefficient_prior_(coefficient_prior),
         shape_parameter_prior_(shape_parameter_prior),
-        epsilon_(1e-5)
-  {}
+        epsilon_(1e-5) {}
 
   void GRPS::reset_shape_parameter_prior(
       const Ptr<DiffDoubleModel> &shape_parameter_prior) {
@@ -102,27 +99,23 @@ namespace BOOM {
     Matrix Hessian(dim, dim);
     double log_posterior = 0;
     std::string error_message = "";
-    bool ok = max_nd2_careful(
-        log_alpha_beta, gradient, Hessian, log_posterior,
-        Target(target), dTarget(target), d2Target(target),
-        epsilon, error_message);
+    bool ok = max_nd2_careful(log_alpha_beta, gradient, Hessian, log_posterior,
+                              Target(target), dTarget(target), d2Target(target),
+                              epsilon, error_message);
     if (!ok) {
       std::ostringstream err;
-      err << "Trouble finding posterior mode.  Error message:"
-          << std::endl << error_message;
+      err << "Trouble finding posterior mode.  Error message:" << std::endl
+          << error_message;
       report_error(err.str());
     }
     mh_sampler_.reset(new MetropolisHastings(
-        target,
-        new MvtIndepProposal(log_alpha_beta, -Hessian, 3)));
+        target, new MvtIndepProposal(log_alpha_beta, -Hessian, 3)));
     log_alpha_beta[0] = exp(log_alpha_beta[0]);
     model_->unvectorize_params(log_alpha_beta);
   }
 
-  double GRPS::log_posterior(const Vector &log_alpha_beta,
-                             Vector &gradient,
-                             Matrix &Hessian,
-                             uint nd) const {
+  double GRPS::log_posterior(const Vector &log_alpha_beta, Vector &gradient,
+                             Matrix &Hessian, uint nd) const {
     int dim = log_alpha_beta.size();
     Vector alpha_beta = log_alpha_beta;
     double log_alpha = log_alpha_beta[0];
@@ -131,18 +124,16 @@ namespace BOOM {
     double ans = model_->Loglike(alpha_beta, gradient, Hessian, nd);
     // gradient is d loglike / dalpha_beta
 
-
     // Derivatives of the prior on beta, with respect to beta.
     Vector beta_prior_gradient;
     Matrix beta_prior_hessian;
-    ans += coefficient_prior_->Logp(ConstVectorView(log_alpha_beta, 1),
-                                    beta_prior_gradient,
-                                    beta_prior_hessian,
-                                    nd);
+    ans +=
+        coefficient_prior_->Logp(ConstVectorView(log_alpha_beta, 1),
+                                 beta_prior_gradient, beta_prior_hessian, nd);
     if (nd > 0) {
       VectorView(gradient, 1) += beta_prior_gradient;
       if (nd > 1) {
-        SubMatrix(Hessian, 1, dim-1, 1, dim-1) += beta_prior_hessian;
+        SubMatrix(Hessian, 1, dim - 1, 1, dim - 1) += beta_prior_hessian;
       }
     }
 

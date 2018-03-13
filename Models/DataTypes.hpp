@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,64 +20,57 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
-#include <BOOM.hpp>
-#include <map>     // for STL's map container
-#include <vector>
-#include <string>
 #include <cmath>
+#include <map>  // for STL's map container
+#include <string>
+#include <vector>
+#include "BOOM.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/CorrelationMatrix.hpp>  // for VectorData
+#include "LinAlg/CorrelationMatrix.hpp"  // for VectorData
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
-#include <cpputil/Ptr.hpp>
-#include <cpputil/RefCounted.hpp>
 #include <functional>
+#include "cpputil/Ptr.hpp"
+#include "cpputil/RefCounted.hpp"
 
+namespace BOOM {
 
-namespace BOOM{
-
-  class Data{  // abstract base class
-  public:
+  class Data {  // abstract base class
+   public:
     RefCounted rc_;
-    void up_count(){rc_.up_count();}
-    void down_count(){rc_.down_count();}
-    unsigned int ref_count(){return rc_.ref_count();}
+    void up_count() { rc_.up_count(); }
+    void down_count() { rc_.down_count(); }
+    unsigned int ref_count() { return rc_.ref_count(); }
 
-    enum missing_status{
-      observed=0,
-      completely_missing,
-      partly_missing};
-  private:
+    enum missing_status { observed = 0, completely_missing, partly_missing };
+
+   private:
     missing_status missing_flag;
     mutable std::vector<std::function<void(void)> > signals_;
-  public:
-    Data() : missing_flag(observed){}
-    Data(const Data &rhs)
-      : missing_flag(rhs.missing_flag)
-    {}
-    virtual Data * clone()const=0;
-    virtual ~Data(){}
-    virtual ostream & display(ostream &)const =0;
-    missing_status missing()const;
+
+   public:
+    Data() : missing_flag(observed) {}
+    Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
+    virtual Data *clone() const = 0;
+    virtual ~Data() {}
+    virtual ostream &display(ostream &) const = 0;
+    missing_status missing() const;
     void set_missing_status(missing_status m);
-    void signal()const{
+    void signal() const {
       uint n = signals_.size();
-      for(uint i=0; i<n; ++i) signals_[i]();
+      for (uint i = 0; i < n; ++i) signals_[i]();
     }
-    // TODO(stevescott): This implementation of the observer pattern
-    // is broken by assignment.  When an object is created from an old
-    // object by assignment, it should eliminate any observers it has
-    // placed on other objects.  This will require the observing
-    // object to keep a collection of handles to the observers and
-    // mark them as inactive.  The observed objects should check that
-    // the observer is active when calling, and remove inactive
-    // observers from the set of signals.  This fix will require
-    // making changes to all the classes that use the current observer
-    // scheme.
-    void add_observer(std::function<void(void)> f){
-      signals_.push_back(f); }
+    // TODO: This implementation of the observer pattern is broken by
+    // assignment.  When an object is created from an old object by assignment,
+    // it should eliminate any observers it has placed on other objects.  This
+    // will require the observing object to keep a collection of handles to the
+    // observers and mark them as inactive.  The observed objects should check
+    // that the observer is active when calling, and remove inactive observers
+    // from the set of signals.  This fix will require making changes to all the
+    // classes that use the current observer scheme.
+    void add_observer(std::function<void(void)> f) { signals_.push_back(f); }
     friend void intrusive_ptr_add_ref(Data *d);
     friend void intrusive_ptr_release(Data *d);
   };
@@ -84,40 +78,45 @@ namespace BOOM{
   void intrusive_ptr_add_ref(Data *d);
   void intrusive_ptr_release(Data *d);
   //----------------------------------------------------------------------
-  ostream & operator<<(ostream & out, const Data &d);
-  ostream & operator<<(ostream &out , const Ptr<Data> &dp);
+  ostream &operator<<(ostream &out, const Data &d);
+  ostream &operator<<(ostream &out, const Ptr<Data> &dp);
   void print_data(const Data &d);
 
   //----------------------------------------------------------------------
 
   template <class DAT>
-  class DataTraits : virtual public Data{
-  public:
-    DataTraits(){}
+  class DataTraits : virtual public Data {
+   public:
+    DataTraits() {}
     DataTraits(const DataTraits &rhs) : Data(rhs) {}
     typedef DAT value_type;
     typedef DataTraits<DAT> Traits;
-    virtual void set(const value_type &, bool)=0;
-    virtual const value_type &value()const=0;
+    virtual void set(const value_type &, bool) = 0;
+    virtual const value_type &value() const = 0;
   };
   //----------------------------------------------------------------------
   template <class T>
-  class UnivData : public DataTraits<T>{  // univariate data
-  public:
+  class UnivData : public DataTraits<T> {  // univariate data
+   public:
     typedef typename DataTraits<T>::Traits Traits;
     // constructors
     UnivData() : value_() {}
-    UnivData(T y) : value_(y){}
-    UnivData(const UnivData &rhs): Data(rhs), Traits(rhs), value_(rhs.value_) {}
-    UnivData<T> * clone()const{return new UnivData<T>(*this);}
+    UnivData(T y) : value_(y) {}
+    UnivData(const UnivData &rhs)
+        : Data(rhs), Traits(rhs), value_(rhs.value_) {}
+    UnivData<T> *clone() const { return new UnivData<T>(*this); }
 
-    const T& value()const{return value_;}
-    virtual void set(const T &rhs, bool Signal=true){
+    const T &value() const { return value_; }
+    virtual void set(const T &rhs, bool Signal = true) {
       value_ = rhs;
-      if(Signal) this->signal();
+      if (Signal) this->signal();
     }
-    ostream & display(ostream &out) const{out << value_ ; return out;}
-  private:
+    ostream &display(ostream &out) const {
+      out << value_;
+      return out;
+    }
+
+   private:
     T value_;
   };
 
@@ -127,44 +126,47 @@ namespace BOOM{
   typedef UnivData<bool> BinaryData;
   //----------------------------------------------------------------------//
 
-  class VectorData : public DataTraits<Vector>{
-  public:
-    explicit VectorData(uint n, double x=0);
+  class VectorData : public DataTraits<Vector> {
+   public:
+    explicit VectorData(uint n, double x = 0);
     VectorData(const Vector &y);
     VectorData(const VectorData &d);
-    VectorData * clone()const override;
+    VectorData *clone() const override;
 
-    uint dim()const {return x.size();}
-    ostream & display(ostream &out) const override;
+    uint dim() const { return x.size(); }
+    ostream &display(ostream &out) const override;
 
-    const Vector & value()const override{return x;}
-    void set(const Vector &rhs, bool signal=true) override;
+    const Vector &value() const override { return x; }
+    void set(const Vector &rhs, bool signal = true) override;
     virtual void set_element(double value, int position, bool signal = true);
 
-    double operator[](uint)const;
-    double & operator[](uint);
-  private:
+    double operator[](uint) const;
+    double &operator[](uint);
+
+   private:
     Vector x;
   };
   //----------------------------------------------------------------------//
-  class MatrixData : public DataTraits<Mat>{
-  public:
-    MatrixData(int r, int c, double x=0.0);
+  class MatrixData : public DataTraits<Mat> {
+   public:
+    MatrixData(int r, int c, double x = 0.0);
     MatrixData(const Matrix &y);
     MatrixData(const MatrixData &rhs);
-    MatrixData * clone()const override;
+    MatrixData *clone() const override;
 
-    uint nrow()const{return x.nrow();}
-    uint ncol()const{return x.ncol();}
+    uint nrow() const { return x.nrow(); }
+    uint ncol() const { return x.ncol(); }
 
-    ostream & display(ostream &out) const override;
+    ostream &display(ostream &out) const override;
 
-    const Matrix & value()const override{return x;}
-    void set(const Matrix &rhs, bool signal=true) override;
-    virtual void set_element(double value, int row, int col, bool signal=true);
-  private:
+    const Matrix &value() const override { return x; }
+    void set(const Matrix &rhs, bool signal = true) override;
+    virtual void set_element(double value, int row, int col,
+                             bool signal = true);
+
+   private:
     Matrix x;
   };
 }  // namespace BOOM
 
-#endif // DATA_TYPES_H
+#endif  // DATA_TYPES_H

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -15,31 +16,28 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/Glm/PosteriorSamplers/BinomialLogitSamplerTim.hpp>
+#include "Models/Glm/PosteriorSamplers/BinomialLogitSamplerTim.hpp"
 #include <functional>
 
 namespace BOOM {
 
   typedef BinomialLogitSamplerTim BLST;
-  BLST::BinomialLogitSamplerTim(BinomialLogitModel *m,
-                                const Ptr<MvnBase> &pri,
-                                bool mode_is_stable,
-                                double nu,
+  BLST::BinomialLogitSamplerTim(BinomialLogitModel *m, const Ptr<MvnBase> &pri,
+                                bool mode_is_stable, double nu,
                                 RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         m_(m),
         pri_(pri),
-        sam_([this](const Vector &beta) {return this->logp(beta);},
-               [this](const Vector &beta,
-                        Vector &gradient) {return this->dlogp(beta, gradient);},
-               [this](const Vector &beta,
-                        Vector &gradient,
-                        Matrix &hessian) {return this->d2logp(
-                            beta, gradient, hessian);},
-               nu),
-        save_modes_(mode_is_stable)
-  {
-    if(mode_is_stable) sam_.fix_mode();
+        sam_([this](const Vector &beta) { return this->logp(beta); },
+             [this](const Vector &beta, Vector &gradient) {
+               return this->dlogp(beta, gradient);
+             },
+             [this](const Vector &beta, Vector &gradient, Matrix &hessian) {
+               return this->d2logp(beta, gradient, hessian);
+             },
+             nu),
+        save_modes_(mode_is_stable) {
+    if (mode_is_stable) sam_.fix_mode();
   }
 
   void BLST::draw() {
@@ -58,8 +56,8 @@ namespace BOOM {
 
   double BLST::Logp(const Vector &beta, Vector &g, Matrix &h, int nd) const {
     double ans = pri_->Logp(beta, g, h, nd);
-    Vector *gp = nd >0 ? &g : 0;
-    Matrix *hp = nd >1 ? &h : 0;
+    Vector *gp = nd > 0 ? &g : 0;
+    Matrix *hp = nd > 1 ? &h : 0;
     ans += m_->log_likelihood(beta, gp, hp, false);
     return ans;
   }
@@ -67,7 +65,7 @@ namespace BOOM {
   double BLST::logp(const Vector &beta) const {
     Vector g;
     Matrix h;
-    return Logp(beta,g,h,0);
+    return Logp(beta, g, h, 0);
   }
 
   double BLST::dlogp(const Vector &beta, Vector &g) const {
@@ -79,7 +77,7 @@ namespace BOOM {
     return Logp(beta, g, h, 2);
   }
 
-  const BLST::Mode & BLST::locate_mode(const Selector &inc) {
+  const BLST::Mode &BLST::locate_mode(const Selector &inc) {
     Mode &mode(modes_[inc]);
     if (mode.empty()) {
       bool ok = sam_.locate_mode(m_->included_coefficients());

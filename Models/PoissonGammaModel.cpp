@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -16,31 +17,28 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PoissonGammaModel.hpp>
-#include <cpputil/report_error.hpp>
-#include <Bmath/Bmath.hpp>
-#include <stats/moments.hpp>
+#include "Models/PoissonGammaModel.hpp"
+#include "Bmath/Bmath.hpp"
+#include "cpputil/report_error.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
-  using Rmath::trigamma;
   using Rmath::digamma;
+  using Rmath::trigamma;
 
   PoissonData::PoissonData(int trials, int events)
-      : trials_(trials), events_(events)
-  {
+      : trials_(trials), events_(events) {
     check_legal_values();
   }
 
-  PoissonData::PoissonData(const PoissonData &rhs)
-      : Data(rhs)
-  {
+  PoissonData::PoissonData(const PoissonData &rhs) : Data(rhs) {
     trials_ = rhs.trials_;
     events_ = rhs.events_;
   }
 
-  PoissonData * PoissonData::clone()const {return new PoissonData(*this);}
+  PoissonData *PoissonData::clone() const { return new PoissonData(*this); }
 
-  PoissonData & PoissonData::operator=(const PoissonData &rhs){
+  PoissonData &PoissonData::operator=(const PoissonData &rhs) {
     if (&rhs != this) {
       Data::operator=(rhs);
       trials_ = rhs.trials_;
@@ -49,39 +47,40 @@ namespace BOOM {
     return *this;
   }
 
-  bool PoissonData::operator==(const PoissonData &rhs)const{
+  bool PoissonData::operator==(const PoissonData &rhs) const {
     return (trials_ == rhs.trials_) && (events_ == rhs.events_);
   }
 
-  bool PoissonData::operator!=(const PoissonData &rhs)const{
+  bool PoissonData::operator!=(const PoissonData &rhs) const {
     return !((*this) == rhs);
   }
 
-  uint PoissonData::size(bool)const{return 2;}
+  uint PoissonData::size(bool) const { return 2; }
 
-  ostream & PoissonData::display(ostream &out)const{
+  ostream &PoissonData::display(ostream &out) const {
     out << "[" << trials_ << ", " << events_ << "]";
     return out;
   }
 
-  int PoissonData::number_of_trials()const{return trials_;}
+  int PoissonData::number_of_trials() const { return trials_; }
 
-  int PoissonData::number_of_events()const{return events_;}
+  int PoissonData::number_of_events() const { return events_; }
 
-  void PoissonData::set_number_of_trials(int n){
+  void PoissonData::set_number_of_trials(int n) {
     trials_ = n;
     check_legal_values();
   }
 
-  void PoissonData::set_number_of_events(int n){
+  void PoissonData::set_number_of_events(int n) {
     events_ = n;
     check_legal_values();
   }
 
   void PoissonData::check_legal_values() {
     if (trials_ < 0 || events_ < 0) {
-      report_error("Both 'trials' and 'events' must be non-negative in "
-                   "the PoissonData constructor.");
+      report_error(
+          "Both 'trials' and 'events' must be non-negative in "
+          "the PoissonData constructor.");
     }
     if (trials_ == 0 && events_ != 0) {
       report_error("If you have zero trials, you must also have zero events.");
@@ -91,16 +90,15 @@ namespace BOOM {
   //======================================================================
 
   PoissonGammaModel::PoissonGammaModel(double a, double b)
-      : ParamPolicy(new UnivParams(a), new UnivParams(b))
-  {}
+      : ParamPolicy(new UnivParams(a), new UnivParams(b)) {}
 
   PoissonGammaModel::PoissonGammaModel(const std::vector<int> &number_of_trials,
                                        const std::vector<int> &number_of_events)
-      : ParamPolicy(new UnivParams(1.0), new UnivParams(1.0))
-  {
+      : ParamPolicy(new UnivParams(1.0), new UnivParams(1.0)) {
     if (number_of_events.size() != number_of_trials.size()) {
-      report_error("The number_of_trials and number_of_events arguments must "
-                   "have the same size.");
+      report_error(
+          "The number_of_trials and number_of_events arguments must "
+          "have the same size.");
     }
     int n = number_of_events.size();
     for (int i = 0; i < n; ++i) {
@@ -109,7 +107,7 @@ namespace BOOM {
     }
     try {
       mle();
-    } catch(...) {
+    } catch (...) {
       method_of_moments();
     }
     if (a() < .1) {
@@ -125,22 +123,19 @@ namespace BOOM {
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        NumOptModel(rhs)
-  {}
+        NumOptModel(rhs) {}
 
-  PoissonGammaModel * PoissonGammaModel::clone()const{
+  PoissonGammaModel *PoissonGammaModel::clone() const {
     return new PoissonGammaModel(*this);
   }
 
-  double PoissonGammaModel::loglike()const{
-    return this->loglike(a(), b());
-  }
+  double PoissonGammaModel::loglike() const { return this->loglike(a(), b()); }
 
-  double PoissonGammaModel::loglike(const Vector &ab)const{
+  double PoissonGammaModel::loglike(const Vector &ab) const {
     return loglike(ab[0], ab[1]);
   }
 
-  double PoissonGammaModel::loglike(double a, double b)const{
+  double PoissonGammaModel::loglike(double a, double b) const {
     const std::vector<Ptr<PoissonData> > &data(dat());
     int nobs = data.size();
     double ans = nobs * (a * log(b) - lgamma(a));
@@ -152,8 +147,8 @@ namespace BOOM {
     return ans;
   }
 
-  double PoissonGammaModel::Loglike(
-      const Vector &ab, Vector &g, Matrix &H, uint nd)const{
+  double PoissonGammaModel::Loglike(const Vector &ab, Vector &g, Matrix &H,
+                                    uint nd) const {
     if (ab.size() != 2) {
       report_error("Wrong size argument.");
     }
@@ -174,7 +169,7 @@ namespace BOOM {
         H(0, 0) = -nobs * trigamma(a);
         H(1, 0) = nobs / b;
         H(0, 1) = nobs / b;
-        H(1, 1) = -nobs * a/(b*b);
+        H(1, 1) = -nobs * a / (b * b);
       }
     }
 
@@ -184,59 +179,50 @@ namespace BOOM {
       ans += lgamma(apy) - apy * log(npb);
       if (nd > 0) {
         g[0] += digamma(apy) - log(npb);
-        g[1] -= apy/(npb);
+        g[1] -= apy / (npb);
         if (nd > 1) {
           H(0, 0) += trigamma(apy);
-          H(1, 0) -= 1.0/npb;
-          H(0, 1) -= 1.0/npb;
-          H(1, 1) += apy/(npb * npb);
+          H(1, 0) -= 1.0 / npb;
+          H(0, 1) -= 1.0 / npb;
+          H(1, 1) += apy / (npb * npb);
         }
       }
-
     }
     return ans;
   }
 
-  Ptr<UnivParams> PoissonGammaModel::Alpha_prm(){
-    return ParamPolicy::prm1();
-  }
+  Ptr<UnivParams> PoissonGammaModel::Alpha_prm() { return ParamPolicy::prm1(); }
 
-  Ptr<UnivParams> PoissonGammaModel::Beta_prm(){
-    return ParamPolicy::prm2();
-  }
+  Ptr<UnivParams> PoissonGammaModel::Beta_prm() { return ParamPolicy::prm2(); }
 
-  double PoissonGammaModel::a()const{
+  double PoissonGammaModel::a() const {
     return ParamPolicy::prm1_ref().value();
   }
 
-  double PoissonGammaModel::b()const{
+  double PoissonGammaModel::b() const {
     return ParamPolicy::prm2_ref().value();
   }
 
-  void PoissonGammaModel::set_a(double a){
+  void PoissonGammaModel::set_a(double a) {
     if (a <= 0) {
       report_error("Argument must be positive in PoissonGammaModel::set_a.");
     }
     Alpha_prm()->set(a);
   }
 
-  void PoissonGammaModel::set_b(double b){
+  void PoissonGammaModel::set_b(double b) {
     if (b <= 0) {
       report_error("Argument must be positive in PoissonGammaModel::set_b.");
     }
     Beta_prm()->set(b);
   }
 
-  double PoissonGammaModel::prior_mean()const{
-    return a() / b();
-  }
+  double PoissonGammaModel::prior_mean() const { return a() / b(); }
 
-  double PoissonGammaModel::prior_sample_size()const{
-    return b();
-  }
+  double PoissonGammaModel::prior_sample_size() const { return b(); }
 
-  void PoissonGammaModel::set_prior_mean_and_sample_size(
-      double prior_mean, double sample_size){
+  void PoissonGammaModel::set_prior_mean_and_sample_size(double prior_mean,
+                                                         double sample_size) {
     double b = sample_size;
     double a = sample_size * prior_mean;
     set_a(a);
@@ -246,7 +232,7 @@ namespace BOOM {
   // An estimate of the prior mean is the grand mean ybar.  An
   // estimate of the sample size is the variance of empirical means
   // around ybar.
-  void PoissonGammaModel::method_of_moments(){
+  void PoissonGammaModel::method_of_moments() {
     Vector lambda;
     const std::vector<Ptr<PoissonData> > &data(dat());
     int nobs = data.size();

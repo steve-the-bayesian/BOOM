@@ -36,7 +36,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double choose(double n, double k);
  *    double lchoose(double n, double k);
  *    (and private)

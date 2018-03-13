@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -21,9 +22,9 @@
 #include <functional>
 #include <memory>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
 
@@ -118,7 +119,7 @@ namespace BOOM {
     // way matrix() * gradient transforms the gradient with respect to
     // the old parameterization into the gradient with respect to the
     // new one.
-    virtual Matrix & matrix() = 0;
+    virtual Matrix &matrix() = 0;
 
     // Returns the second derivative of original_parameterization[t] with
     // respect to new_parameterization[r] and new_parameterization[s].
@@ -144,8 +145,7 @@ namespace BOOM {
     // of sparsity.  It is cubic in the dimension of the
     // transformation, and very expensive.
     virtual void transform_second_order_gradient(
-        SpdMatrix &working_hessian,
-        const Vector &original_gradient);
+        SpdMatrix &working_hessian, const Vector &original_gradient);
 
     // Sets gradient += the gradient of |log(J)| with respect to
     // new_parameterization.
@@ -165,22 +165,18 @@ namespace BOOM {
   // the equivalent log density in z.
   class Transformation {
    public:
-    typedef std::function<double(
-        const Vector &, Vector &, Matrix &, uint)> Target;
+    typedef std::function<double(const Vector &, Vector &, Matrix &, uint)>
+        Target;
     typedef std::function<Vector(const Vector &)> Mapping;
 
     Transformation(const Target &log_density_old_parameterization,
-                   const Mapping &inverse_mapping,
-                   Jacobian *jacobian);
-    double operator()(const Vector &new_parameterization,
-                      Vector &gradient,
-                      Matrix &hessian,
-                      uint nderiv) const;
+                   const Mapping &inverse_mapping, Jacobian *jacobian);
+    double operator()(const Vector &new_parameterization, Vector &gradient,
+                      Matrix &hessian, uint nderiv) const;
     double operator()(const Vector &new_parameterization) const;
     double operator()(const Vector &new_parameterization,
                       Vector &gradient) const;
-    double operator()(const Vector &new_parameterization,
-                      Vector &gradient,
+    double operator()(const Vector &new_parameterization, Vector &gradient,
                       Matrix &hessian) const;
 
    private:

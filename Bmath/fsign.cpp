@@ -36,7 +36,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double fsign(double x, double y);
  *
  *  DESCRIPTION

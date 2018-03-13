@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -20,16 +21,15 @@
 #define BOOM_SAMPLERS_IMPORTANCE_RESAMPLER_HPP_
 
 #include <functional>
-#include <Samplers/DirectProposal.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Samplers/DirectProposal.hpp"
 
 namespace BOOM {
 
   // An implementation of sampling with importance resampling.
   class ImportanceResampler {
    public:
-
     // Create an importance resampler that generates draws a target
     // distribution by first generating draws from a proposal
     // distribution, and then resampling with weight proportional to
@@ -50,15 +50,12 @@ namespace BOOM {
     //   equal to the number of rows in the Matrix.  The Vector's
     //   entries are the number of times the corresponding row of
     //   the Matrix occurred in the resample.
-    std::pair<Matrix, Vector> draw(
-        int number_of_draws,
-        RNG &rng = GlobalRng::rng);
+    std::pair<Matrix, Vector> draw(int number_of_draws,
+                                   RNG &rng = GlobalRng::rng);
 
     // Returns a matrix with number_of_draws rows, each of which is a
     // draw from the target distribution.  The number of draws
-    Matrix draw_and_resample(
-        int number_of_draws,
-        RNG &rng = GlobalRng::rng);
+    Matrix draw_and_resample(int number_of_draws, RNG &rng = GlobalRng::rng);
 
    private:
     std::function<double(const Vector &)> log_target_density_;

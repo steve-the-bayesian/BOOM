@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,12 +20,12 @@
 #ifndef BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/GammaModel.hpp>
-#include <Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
 // A posterior sampler for ArModel's where the prior distribution for
 // the AR coefficients is a spike and slab.
@@ -39,15 +40,12 @@
 // truncation is ignored by the portion of the spike and slab
 // algorithm that draws inclusion indicators.
 //
-// TODO(stevescott): Consider extending this to use the prior by
-// Huerta and West (1999), who put spike and slab priors on roots of
-// the AR polynomial.
+// TODO: Consider extending this to use the prior by Huerta and West (1999), who
+// put spike and slab priors on roots of the AR polynomial.
 namespace BOOM {
-  class ArSpikeSlabSampler
-      : public PosteriorSampler {
+  class ArSpikeSlabSampler : public PosteriorSampler {
    public:
-    ArSpikeSlabSampler(ArModel *model,
-                       const Ptr<MvnBase> &slab,
+    ArSpikeSlabSampler(ArModel *model, const Ptr<MvnBase> &slab,
                        const Ptr<VariableSelectionPrior> &spike,
                        const Ptr<GammaModelBase> &residual_precision_prior,
                        bool truncate_support_to_stationary_region = true,
@@ -93,4 +91,4 @@ namespace BOOM {
   };
 }  // namespace BOOM
 
-#endif //  BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_
+#endif  //  BOOM_AR_SPIKE_SLAB_SAMPLER_HPP_

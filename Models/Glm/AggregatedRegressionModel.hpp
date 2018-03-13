@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,11 +20,11 @@
 #ifndef BOOM_AGGREGATED_REGRESSION_MODEL_HPP_
 #define BOOM_AGGREGATED_REGRESSION_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 #include <memory>
 
@@ -57,11 +58,11 @@ namespace BOOM {
 
     class LogTransformation : public Transformation {
      public:
-      double operator()(double y)const override { return log(y); }
-      double inverse(double z)const override { return exp(z); }
+      double operator()(double y) const override { return log(y); }
+      double inverse(double z) const override { return exp(z); }
       // Jacobian is 1/y, so log is -log(y)
-      double log_jacobian(double y)const override { return -log(y); }
-      string name()const override{return "log";}
+      double log_jacobian(double y) const override { return -log(y); }
+      string name() const override { return "log"; }
     };
 
     class SquareRootTransformation : public Transformation {
@@ -70,9 +71,9 @@ namespace BOOM {
       double inverse(double z) const override { return z * z; }
       // Jacobian is .5/sqrt(y), so log is log(.5) - .5*log(y)
       double log_jacobian(double y) const override {
-        return -0.693147180559945 - .5*log(y);
+        return -0.693147180559945 - .5 * log(y);
       }
-      string name()const override{return "sqrt";}
+      string name() const override { return "sqrt"; }
     };
 
     class IdentityTransformation : public Transformation {
@@ -80,7 +81,7 @@ namespace BOOM {
       double operator()(double x) const override { return x; }
       double inverse(double y) const override { return y; }
       double log_jacobian(double y) const override { return 0; }
-      string name()const override{return "";}
+      string name() const override { return ""; }
     };
 
     //======================================================================
@@ -95,15 +96,15 @@ namespace BOOM {
       Group(const Group &rhs);
 
       // Virtual functions required by Data
-      Group * clone() const override;
-      ostream & display(ostream &out)const override;
-      virtual uint size(bool minimal = true)const;
+      Group *clone() const override;
+      ostream &display(ostream &out) const override;
+      virtual uint size(bool minimal = true) const;
 
       // Add a new unit to an existing Group.  The RegressionData has two
       // data elements: x() and y().  The vector of predictors in x() is
       // immutable.  The scalar response variable y() will change with
       // each MCMC iteration.  The initial value of y is not relevant.
-      void add_unit(const Ptr<RegressionData> & dp);
+      void add_unit(const Ptr<RegressionData> &dp);
 
       // Distribute total value among units given current unit valuations,
       // as well as the transformed-regression model:
@@ -146,35 +147,33 @@ namespace BOOM {
       Vector unit_values_;
 
       // local storage simplifies the interface to ModifyUnitValue
-      const Vector * beta_;
+      const Vector *beta_;
       double sigma_;
 
       // Transformation to normality.
       const Transformation &f;
     };
-  } // namespace Agreg
+  }  // namespace Agreg
 
   //======================================================================
   // The model is that individual units are indpendently transformed
   // normal with f(y[i])~ N(beta^Tx_i, sigma).
-  class AggregatedRegressionModel
-      : public CompositeParamPolicy,
-        public IID_DataPolicy<Agreg::Group>,
-        public PriorPolicy
-  {
+  class AggregatedRegressionModel : public CompositeParamPolicy,
+                                    public IID_DataPolicy<Agreg::Group>,
+                                    public PriorPolicy {
    public:
     typedef Agreg::Group Group;
 
-    AggregatedRegressionModel(const Matrix & design_matrix_,
-                              const std::vector<string> & group_names,
-                              const Vector & group_values,
+    AggregatedRegressionModel(const Matrix &design_matrix_,
+                              const std::vector<string> &group_names,
+                              const Vector &group_values,
                               const string &transformation);
 
     AggregatedRegressionModel(const AggregatedRegressionModel &rhs);
-    AggregatedRegressionModel * clone() const override;
+    AggregatedRegressionModel *clone() const override;
 
-    const Vector &beta()const{return model_->Beta();}
-    double sigma()const{return model_->sigma();}
+    const Vector &beta() const { return model_->Beta(); }
+    double sigma() const { return model_->sigma(); }
     void set_beta(const Vector &beta);
     void set_sigma(double sigma);
 
@@ -183,7 +182,8 @@ namespace BOOM {
     // the model parameters.
     void distribute_group_totals();
 
-    RegressionModel *regression_model()const{return model_.get();}
+    RegressionModel *regression_model() const { return model_.get(); }
+
    private:
     // Method used to implement the constructor.
     // Args:
@@ -201,16 +201,16 @@ namespace BOOM {
                            const Vector &group_values);
 
     // Create an appropriate transformation for use in the constructor.
-    static Agreg::Transformation *create_transformation(const string &transformation);
+    static Agreg::Transformation *create_transformation(
+        const string &transformation);
 
     // Returns the index (in groups_) of the group with the given name and
     // value.  If not present, a new group with these values is added.
-    int find_group(const string & group_name, double group_value);
+    int find_group(const string &group_name, double group_value);
 
     // Let the model's sufficient statistics know about changes that
     // have been made to individual unit responses.
     void refresh_suf();
-
 
     // The model assumes that f(y) ~ Normal(X * beta, sigma^2)
     std::unique_ptr<Agreg::Transformation> f_;
@@ -223,5 +223,5 @@ namespace BOOM {
     std::map<string, int> group_positions_;
   };
 
-}
-#endif //  BOOM_AGGREGATED_REGRESSION_MODEL_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_AGGREGATED_REGRESSION_MODEL_HPP_

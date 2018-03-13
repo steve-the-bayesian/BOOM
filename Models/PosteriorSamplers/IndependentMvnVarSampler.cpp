@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,36 +17,34 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/IndependentMvnVarSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   IndependentMvnVarSampler::IndependentMvnVarSampler(
       IndependentMvnModel *model,
-      const std::vector<Ptr<GammaModelBase>> &priors,
-      Vector sd_max_values,
+      const std::vector<Ptr<GammaModelBase>> &priors, Vector sd_max_values,
       RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        priors_(priors)
-  {
+      : PosteriorSampler(seeding_rng), model_(model), priors_(priors) {
     if (priors.size() != model->dim()) {
-      report_error("Prior dimension does not match model in "
-                   "IndependentMvnVarSampler");
+      report_error(
+          "Prior dimension does not match model in "
+          "IndependentMvnVarSampler");
     }
     if (sd_max_values.empty()) {
       sd_max_values.resize(model->dim(), infinity());
     }
     if (sd_max_values.size() != model->dim()) {
-      report_error("sd_max_values.size() != model->dim() in "
-                   "IndependentMvnVarSampler");
+      report_error(
+          "sd_max_values.size() != model->dim() in "
+          "IndependentMvnVarSampler");
     }
     for (int i = 0; i < model->dim(); ++i) {
-      samplers_.push_back(GenericGaussianVarianceSampler(
-          priors_[i], sd_max_values[i]));
+      samplers_.push_back(
+          GenericGaussianVarianceSampler(priors_[i], sd_max_values[i]));
     }
   }
 
@@ -61,8 +60,8 @@ namespace BOOM {
   void IndependentMvnVarSampler::draw() {
     Ptr<IndependentMvnSuf> suf = model_->suf();
     for (int i = 0; i < model_->dim(); ++i) {
-      double sigsq = samplers_[i].draw(
-          rng(), suf->n(), suf->centered_sumsq(i, model_->mu()[i]));
+      double sigsq = samplers_[i].draw(rng(), suf->n(),
+                                       suf->centered_sumsq(i, model_->mu()[i]));
       model_->set_sigsq_element(sigsq, i);
     }
   }

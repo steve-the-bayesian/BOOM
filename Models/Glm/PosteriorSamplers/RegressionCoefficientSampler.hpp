@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,19 +20,18 @@
 #ifndef BOOM_REGRESSION_COEFFICIENT_SAMPLER_HPP_
 #define BOOM_REGRESSION_COEFFICIENT_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <distributions/rng.hpp>
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
   // Simulate regression coefficients from their full conditional distribution
   // given the data and the residual variance parameter.  For a sampler that
   // simulates both parameters, see RegressionConjSampler.
-  class RegressionCoefficientSampler
-      : public PosteriorSampler {
-    public:
+  class RegressionCoefficientSampler : public PosteriorSampler {
+   public:
     RegressionCoefficientSampler(RegressionModel *model,
                                  const Ptr<MvnBase> &prior,
                                  RNG &seeding_rng = GlobalRng::rng);
@@ -42,11 +42,8 @@ namespace BOOM {
     // distribution given the sufficient statistics in 'model,' the residual
     // variance parameter in 'model', and the specified prior distribution.
     // Store the simulated value in 'model'.
-    static void sample_regression_coefficients(
-        RNG &rng,
-        RegressionModel *model,
-        const MvnBase &prior);
-
+    static void sample_regression_coefficients(RNG &rng, RegressionModel *model,
+                                               const MvnBase &prior);
 
     // Simulate the vector of regression coefficients from their posterior
     // distribution given the directly supplied sufficient statistics, the
@@ -55,19 +52,17 @@ namespace BOOM {
     // Args:
     //   rng:  A U[0, 1) random number generator.
     //   xtx:  The cross product matrix from the regression.
-    //   xty:  The cross product of the predictor matrix with the response vector.
-    //   sigsq:  The residual variance from the regression model.
-    //   prior:  The prior distribution for the regression coefficients.
+    //   xty:  The cross product of the predictor matrix with the response
+    //   vector. sigsq:  The residual variance from the regression model. prior:
+    //   The prior distribution for the regression coefficients.
     //
     // Returns:
     //   A draw of the regression coefficients from their posterior
     //   distribution.
-    static Vector sample_regression_coefficients(
-        RNG &rng,
-        const SpdMatrix &xtx,
-        const Vector &xty,
-        double sigsq,
-        const MvnBase &prior);
+    static Vector sample_regression_coefficients(RNG &rng, const SpdMatrix &xtx,
+                                                 const Vector &xty,
+                                                 double sigsq,
+                                                 const MvnBase &prior);
 
    private:
     RegressionModel *model_;

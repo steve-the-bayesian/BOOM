@@ -1,10 +1,29 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
+/*
+  Copyright (C) 2005-2018 Steven L. Scott
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+*/
+
 #ifndef BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_
 #define BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
 
 namespace BOOM {
 
@@ -20,8 +39,7 @@ namespace BOOM {
   // a normal to something that looks like a T.
   class SpikeSlabSampler {
    public:
-    SpikeSlabSampler(GlmModel *model,
-                     const Ptr<MvnBase> &slab_prior,
+    SpikeSlabSampler(GlmModel *model, const Ptr<MvnBase> &slab_prior,
                      const Ptr<VariableSelectionPrior> &spike_prior);
     double logpri() const;
 
@@ -35,8 +53,8 @@ namespace BOOM {
     //     variance of each normal deviate is w[i] * sigsq) can
     //     provide it here.  Models that do not have a sigsq parameter
     //     should pass sigsq = 1.0.
-    void draw_model_indicators(
-        RNG &rng, const WeightedRegSuf &suf, double sigsq = 1.0);
+    void draw_model_indicators(RNG &rng, const WeightedRegSuf &suf,
+                               double sigsq = 1.0);
 
     // Draws the set of included Glm coefficients given complete data
     // sufficient statistics.
@@ -61,8 +79,7 @@ namespace BOOM {
     //     not reflected in 'suf' provide it here.  Models that do not
     //     have a separate residual variance parameter should use
     //     sigsq = 1.0.
-    double log_model_prob(const Selector &g,
-                          const WeightedRegSuf &suf,
+    double log_model_prob(const Selector &g, const WeightedRegSuf &suf,
                           double sigsq) const;
 
     // A single MCMC step for a single position in the set of
@@ -79,13 +96,9 @@ namespace BOOM {
     //     not reflected in 'suf' provide it here.  Models that do not
     //     have a separate residual variance parameter should use
     //     sigsq = 1.0.
-    double mcmc_one_flip(
-        RNG &rng,
-        Selector &g,
-        int which_variable,
-        double logp_old,
-        const WeightedRegSuf &suf,
-        double sigsq);
+    double mcmc_one_flip(RNG &rng, Selector &g, int which_variable,
+                         double logp_old, const WeightedRegSuf &suf,
+                         double sigsq);
 
     GlmModel *model_;
     Ptr<MvnBase> slab_prior_;
@@ -96,5 +109,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-
-#endif // BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_
+#endif  // BOOM_GLM_SPIKE_SLAB_SAMPLER_HPP_

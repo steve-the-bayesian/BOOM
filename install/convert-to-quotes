@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Convert BOOM source code from using <angle bracket> includes to "quotation includes".
+
+all_files=`find . -name "*.?pp" | grep -v cephes | sed 's/^\.\///' `
+echo $all_files
+
+sed -i '' 's/include \<Bmath\(.*hpp\)\>/include \"Bmath\1\"/' $all_files
+sed -i '' 's/include \<LinAlg\(.*hpp\)\>/include \"LinAlg\1\"/' $all_files
+sed -i '' 's/include \<Models\(.*hpp\)\>/include \"Models\1\"/' $all_files
+sed -i '' 's/include \<Samplers\(.*hpp\)\>/include \"Samplers\1\"/' $all_files
+sed -i '' 's/include \<TargetFun\(.*hpp\)\>/include \"TargetFun\1\"/' $all_files
+sed -i '' 's/include \<cpputil\(.*hpp\)\>/include \"cpputil\1\"/' $all_files
+sed -i '' 's/include\<cpputil\(.*hpp\)\>/include \"cpputil\1\"/' $all_files
+sed -i '' 's/include \<distributions\(.*hpp\)\>/include \"distributions\1\"/' $all_files
+sed -i '' 's/include \<math\(.*hpp\)\>/include \"math\1\"/' $all_files
+sed -i '' 's/include \<numopt\(.*hpp\)\>/include \"numopt\1\"/' $all_files
+sed -i '' 's/include \<stats\(.*hpp\)\>/include \"stats\1\"/' $all_files
+sed -i '' 's/include \<BOOM.hpp\>/include \"BOOM.hpp"/' $all_files
+sed -i '' 's/include\<BOOM.hpp\>/include \"BOOM.hpp"/' $all_files
+sed -i '' 's/include \<uint.hpp\>/include \"uint.hpp"/' $all_files
+

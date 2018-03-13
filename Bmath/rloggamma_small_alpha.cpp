@@ -1,7 +1,7 @@
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions/rng.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions/rng.hpp"
 
 // An algorithm for drawing gamma random variables with small alpha
 // parameters.  This code implements the algorithm described by Liu,

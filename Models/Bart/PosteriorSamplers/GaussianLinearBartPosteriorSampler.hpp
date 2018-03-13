@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,42 +20,42 @@
 #ifndef BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP
 #define BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Bart/GaussianLinearBartModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
-#include <Models/Bart/PosteriorSamplers/GaussianBartPosteriorSampler.hpp>
+#include "Models/Bart/GaussianLinearBartModel.hpp"
+#include "Models/Bart/PosteriorSamplers/GaussianBartPosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
-// Combines the regression component of the GaussianLinearBartModel
-// with a spike and slab prior, and the Bart part of the model with a
-// traditional Bart prior.
-//
-// At each stage of the MCMC, the Bart predictions are subtracted from
-// the data for the regression model, and vice versa.
-class GaussianLinearBartPosteriorSampler : public PosteriorSampler {
- public:
-  GaussianLinearBartPosteriorSampler(
-      GaussianLinearBartModel *model,
-      const ZellnerPriorParameters &regression_prior,
-      const BartPriorParameters &bart_prior,
-      RNG &seeding_rng = GlobalRng::rng);
+  // Combines the regression component of the GaussianLinearBartModel
+  // with a spike and slab prior, and the Bart part of the model with a
+  // traditional Bart prior.
+  //
+  // At each stage of the MCMC, the Bart predictions are subtracted from
+  // the data for the regression model, and vice versa.
+  class GaussianLinearBartPosteriorSampler : public PosteriorSampler {
+   public:
+    GaussianLinearBartPosteriorSampler(
+        GaussianLinearBartModel *model,
+        const ZellnerPriorParameters &regression_prior,
+        const BartPriorParameters &bart_prior,
+        RNG &seeding_rng = GlobalRng::rng);
 
-  void draw() override;
-  double logpri() const override;
+    void draw() override;
+    double logpri() const override;
 
-  void sample_regression_posterior();
-  void sample_bart_posterior();
-  void adjust_regression_residuals();
-  void adjust_bart_residuals();
+    void sample_regression_posterior();
+    void sample_bart_posterior();
+    void adjust_regression_residuals();
+    void adjust_bart_residuals();
 
- private:
-  GaussianLinearBartModel *model_;
-  bool first_time_for_regression_;
-  Ptr<GaussianBartPosteriorSampler> bart_sampler_;
-  bool first_time_for_bart_;
-};
+   private:
+    GaussianLinearBartModel *model_;
+    bool first_time_for_regression_;
+    Ptr<GaussianBartPosteriorSampler> bart_sampler_;
+    bool first_time_for_bart_;
+  };
 
 }  // namespace BOOM
 
-#endif //  BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP
+#endif  //  BOOM_GAUSSIAN_LINEAR_BART_POSTERIOR_SAMPLER_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -18,10 +19,10 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_
 #define BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_
 
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/Glm/PoissonRegressionModel.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   // A HierarchicalPoissonRegressionModel is a single level hierarchy
@@ -34,17 +35,16 @@ namespace BOOM {
   // The model is y[i, j] ~ Poisson(exp(beta[i] * x[i, j])) with
   // beta[i] ~ Normal(mu, Sigma)
   //
-  // TODO(stevescott): Consider a parallel class with an
+  // TODO: Consider a parallel class with an
   // IndependentMvnModel instead of an MvnModel for the
   // data_parent_model.
-  class HierarchicalPoissonRegressionModel
-      : public CompositeParamPolicy,
-        public PriorPolicy {
+  class HierarchicalPoissonRegressionModel : public CompositeParamPolicy,
+                                             public PriorPolicy {
    public:
-    HierarchicalPoissonRegressionModel(const Ptr<MvnModel> & data_parent_model);
+    HierarchicalPoissonRegressionModel(const Ptr<MvnModel> &data_parent_model);
     HierarchicalPoissonRegressionModel(
         const HierarchicalPoissonRegressionModel &rhs);
-    HierarchicalPoissonRegressionModel * clone() const override;
+    HierarchicalPoissonRegressionModel *clone() const override;
 
     void add_data_level_model(const Ptr<PoissonRegressionModel> &);
 
@@ -53,10 +53,10 @@ namespace BOOM {
     void combine_data(const Model &rhs, bool just_suf = true) override;
     void add_data(const Ptr<Data> &dp) override;
 
-    int xdim()const;
-    int number_of_groups()const;
-    PoissonRegressionModel * data_model(int which_group);
-    MvnModel * data_parent_model();
+    int xdim() const;
+    int number_of_groups() const;
+    PoissonRegressionModel *data_model(int which_group);
+    MvnModel *data_parent_model();
 
    private:
     // The group_model_ describes the variation in
@@ -64,5 +64,5 @@ namespace BOOM {
     std::vector<Ptr<PoissonRegressionModel> > data_level_models_;
   };
 
-}
-#endif //  BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_HIERARCHICAL_POISSON_REGRESSION_HPP_

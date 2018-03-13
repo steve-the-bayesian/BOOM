@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #define BOOM_NEWLA_MATRIX_HPP
 #include <vector>
 #include <iosfwd>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM{
   using std::ostream;
@@ -50,7 +51,7 @@ namespace BOOM{
 
     Matrix(uint nr, uint nc, double x=0.0);
     Matrix(uint nr, uint nc, const double *m, bool byrow=false);
-    Matrix(uint nr, uint nc, const std::vector<double> &v, bool byrow=false);
+    Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow = false);
     Matrix(const std::string &s, const std::string &row_delim = "|");
 
     template <class FwdIt>
@@ -86,7 +87,13 @@ namespace BOOM{
     uint size() const;  // number of elements in the Matrix
     uint nrow() const ;
     uint ncol() const ;
-    bool is_sym(double tol= 1.0e-9) const;
+
+    // The largest absolute discrepancy between elements (i, j) and (j, i),
+    // relative to the average absolute magnitude of the elements in the matrix.
+    // The distance is taken to be zero if all elements are zero, and infinity
+    // if the matrix is not square.
+    double distance_from_symmetry() const;
+    bool is_sym(double tol= 1.0e-4) const;
     bool same_dim(const Matrix &A) const;
     bool is_square() const;
     bool is_pos_def() const;
@@ -227,7 +234,6 @@ namespace BOOM{
     uint rank(double prop=1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
     // the largest
-    virtual Vector real_evals() const;
 
     Matrix & add_outer(const Vector &x, const Vector &y,
                        double w = 1.0);
@@ -248,6 +254,11 @@ namespace BOOM{
     Matrix & add_outer(const ConstVectorView &x, const ConstVectorView &y,
                        double w = 1.0);
     // *this += w*x*y^T
+
+    // Add the result of coefficient * left * right.transpose() to *this, and
+    // return the result.
+    Matrix &add_outer(const Matrix &left, const Matrix &right,
+                      double coefficient);
 
     //--------  Math
     virtual Matrix & operator+=(double x);
@@ -451,13 +462,13 @@ namespace BOOM{
     // A and B both square
 
     // routines for lower triangluar matrices
-    Matrix LTmult(const Matrix &L, const Matrix &B);
     Vector Lmult(const Matrix &L, const Vector &y);
     Vector Lsolve(const Matrix &L, const Vector &b); // ans = L^{-1}b
     Vector & LTsolve_inplace(const Matrix &L, Vector &b);
     Vector & Lsolve_inplace(const Matrix &L, Vector &b); // b = L^{-1}b
     Matrix Lsolve(const Matrix &L, const Matrix &B); // ans = L^{-1}B
     Matrix & Lsolve_inplace(const Matrix &L, Matrix &B); // B = L^{-1}B
+    Matrix & LTsolve_inplace(const Matrix &L, Matrix &B); // B = L^{-1}B
     Matrix Linv(const Matrix &L);
 
     Vector Umult(const Matrix &U, const Vector &y);
@@ -468,6 +479,6 @@ namespace BOOM{
     Matrix & Usolve_inplace(const Matrix &U, Matrix &B); // B = U^{-1}B
     Matrix Uinv(const Matrix &U);
 
+}  // namespace BOOOM
 
-}
 #endif // BOOM_NEWLA_MATRIX_HPP

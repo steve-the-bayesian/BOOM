@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_
 #define BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM {
   void fill_poisson_mixture_approximation_table(
@@ -27,13 +28,11 @@ namespace BOOM {
 
   NormalMixtureApproximationTable create_poisson_mixture_approximation_table();
 
-  void unmix_poisson_augmented_data(
-      RNG &rng,
-      double negative_log_interevent_time,
-      int number_of_events,
-      double *mu,
-      double *sigsq,
-      NormalMixtureApproximationTable *table);
+  void unmix_poisson_augmented_data(RNG &rng,
+                                    double negative_log_interevent_time,
+                                    int number_of_events, double *mu,
+                                    double *sigsq,
+                                    NormalMixtureApproximationTable *table);
 
-}
-#endif //  BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_FILL_POISSON_MIXTURE_APPROXIMATION_TABLE_HPP_

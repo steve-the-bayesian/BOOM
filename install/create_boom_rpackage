@@ -1,0 +1,120 @@
+#!/bin/bash
+
+usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+
+DO_INSTALL=0
+DO_CHECK=0
+
+while getopts :ci option; do
+    case "${option}" in
+        i)
+            DO_INSTALL=1
+            ;;
+        c)
+            DO_CHECK=1
+            ;;
+        \?)
+	    echo "Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+BOOM_DIR='rpackage/Boom'
+
+## If there is already a Boom directory then delete it.
+if [ -d "$BOOM_DIR" ]; then
+   rm -rf $BOOM_DIR
+fi
+
+## create a Boom subdirectory and copy the relevant files into it.
+mkdir -p $BOOM_DIR
+echo "Copying top level files"
+cp Interfaces/R/Boom/DESCRIPTION $BOOM_DIR
+cp Interfaces/R/Boom/LICENSE $BOOM_DIR
+cp Interfaces/R/Boom/NAMESPACE $BOOM_DIR
+
+##----------------------------------------------------------------------
+## Source:
+## Create the source directory and copy top-level files.
+echo "Copying source files"
+mkdir $BOOM_DIR/src
+cp Interfaces/R/*.cpp $BOOM_DIR/src
+# cp Interfaces/R/Boom/src/*.cpp $BOOM_DIR/src
+cp Interfaces/R/Boom/src/*.R $BOOM_DIR/src
+cp Interfaces/R/Boom/src/Makevars $BOOM_DIR/src
+
+## Populate the various source directories.
+SRCS=`find Bmath -name "*.cpp"`
+SRCS="$SRCS `find cpputil -name "*.cpp"`"
+SRCS="$SRCS `find distributions -name "*.cpp"`"
+SRCS="$SRCS `find LinAlg -name "*.cpp"`"
+SRCS="$SRCS `find math -name "*.cpp"`"
+SRCS="$SRCS `find Models -name "*.cpp"`"
+SRCS="$SRCS `find numopt -name "*.cpp"`"
+SRCS="$SRCS `find Samplers -name "*.cpp"`"
+SRCS="$SRCS `find stats -name "*.cpp"`"
+SRCS="$SRCS `find TargetFun -name "*.cpp"`"
+./install/install_headers.py $SRCS $BOOM_DIR/src
+
+##----------------------------------------------------------------------
+## Copy the R source files
+echo "Copying R source files"
+mkdir $BOOM_DIR/R
+cp Interfaces/R/Boom/R/*.R $BOOM_DIR/R
+
+##----------------------------------------------------------------------
+## Copy the documentation
+mkdir $BOOM_DIR/man
+echo "copying documentation"
+cp Interfaces/R/Boom/man/*.Rd $BOOM_DIR/man
+
+##----------------------------------------------------------------------
+## Headers:
+## Create the include directory, and add in the top level header files.
+echo "copying headers"
+mkdir -p $BOOM_DIR/inst/include
+cp *.hpp $BOOM_DIR/inst/include
+
+## Put a couple of local implementation files in the source directories that
+## expect them.
+cp math/cephes/cephes_impl.hpp $BOOM_DIR/src/math/cephes
+cp Bmath/*.hpp $BOOM_DIR/src/Bmath
+
+## Copy the bulk of the header files to the relevant sub directories.
+HDRS=`find Bmath -name "*.hpp"`
+HDRS="$HDRS `find cpputil -name "*.hpp"`"
+HDRS="$HDRS `find distributions -name "*.hpp"`"
+HDRS="$HDRS `find LinAlg -name "*.hpp"`"
+HDRS="$HDRS `find math -name "*.hpp"`"
+HDRS="$HDRS `find Models -name "*.hpp"`"
+HDRS="$HDRS `find numopt -name "*.hpp"`"
+HDRS="$HDRS `find Samplers -name "*.hpp"`"
+HDRS="$HDRS `find stats -name "*.hpp"`"
+HDRS="$HDRS `find TargetFun -name "*.hpp"`"
+HDRS="$HDRS `find Eigen -name "*.h"`"
+./install/install_headers.py $HDRS $BOOM_DIR/inst/include
+
+## Put the headers from Interfaces/R in the r_interface directory.
+mkdir $BOOM_DIR/inst/include/r_interface
+cp Interfaces/R/*.hpp $BOOM_DIR/inst/include/r_interface
+cp Eigen/* $BOOM_DIR/inst/include/Eigen/
+echo "Ignore the message about not being able to copy Eigen/src."
+
+##----------------------------------------------------------------------
+## Build the package:
+
+cd rpackage
+
+R CMD build Boom
+
+if [[ $DO_CHECK = 1 ]]; then
+    MAKEFLAGS=" j 8 " R CMD CHECK Boom_*.tar.gz
+fi
+
+if [[ $DO_INSTALL = 1 ]]; then
+    MAKEFLAGS=" j 8 " R CMD INSTALL Boom_*.tar.gz
+fi
+
+

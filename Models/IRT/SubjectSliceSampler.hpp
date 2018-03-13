@@ -18,40 +18,39 @@
 #ifndef BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP
 #define BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP
 
-#include <TargetFun/TargetFun.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ParamTypes.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class SliceSampler;
   class TargetFun;
-  namespace IRT{
+  namespace IRT {
     class SubjectPrior;
     class Subject;
 
-    class SubjectTF
-      : public BOOM::TargetFun{
-    public:
-      SubjectTF(const Ptr<Subject> &subject,
-                const Ptr<SubjectPrior> &prior);
-      double operator()(const Vector &v)const override;
-    private:
+    class SubjectTF : public BOOM::TargetFun {
+     public:
+      SubjectTF(const Ptr<Subject> &subject, const Ptr<SubjectPrior> &prior);
+      double operator()(const Vector &v) const override;
+
+     private:
       Ptr<Subject> sub;
       Ptr<SubjectPrior> pri;
       mutable Ptr<VectorParams> prms;
       mutable Vector wsp;
     };
 
-    class SubjectSliceSampler
-      : public PosteriorSampler{
-    public:
+    class SubjectSliceSampler : public PosteriorSampler {
+     public:
       SubjectSliceSampler(const Ptr<Subject> &subject,
                           const Ptr<SubjectPrior> &prior,
                           RNG &seeding_rng = GlobalRng::rng);
-      SubjectSliceSampler * clone()const;
+      SubjectSliceSampler *clone() const;
       void draw() override;
       double logpri() const override;
-    private:
+
+     private:
       Ptr<Subject> sub;
       Ptr<SubjectPrior> pri;
       SubjectTF target;
@@ -60,4 +59,4 @@ namespace BOOM{
     };
   }  // namespace IRT
 }  // namespace BOOM
-#endif // BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP
+#endif  // BOOM_IRT_SUBJECT_SLICE_SAMPLER_HPP

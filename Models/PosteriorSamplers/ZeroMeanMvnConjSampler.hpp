@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -18,28 +19,28 @@
 
 #ifndef BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_
 #define BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/WishartModel.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/WishartModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class ZeroMeanMvnModel;
-  class ZeroMeanMvnConjSampler : public PosteriorSampler{
+  class ZeroMeanMvnConjSampler : public PosteriorSampler {
    public:
     ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m, const Ptr<WishartModel> &prior,
                            RNG &seeding_rng = GlobalRng::rng);
     // creates a WishartModel with nu = prior_df and a diagonal scale
     // matrix with prior_df * sigma_guess^2
-    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m,
-                           double prior_df,
+    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m, double prior_df,
                            double sigma_guess,
                            RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
     void find_posterior_mode(double epsilon = 1e-5) override;
+
    private:
     ZeroMeanMvnModel *m_;
     Ptr<WishartModel> siginv_prior_;
-};
-}
+  };
+}  // namespace BOOM
 
-#endif// BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_
+#endif  // BOOM_ZERO_MEAN_MVN_CONJ_SAMPLER_HPP_

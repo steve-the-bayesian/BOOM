@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -16,21 +17,22 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <numopt.hpp>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  double Negate::operator()(const Vector & x)const{ return -1*f(x);}
-  double dNegate::operator()(const Vector &x, Vector &g)const{
-      double ans = df(x,g);
-      g*= -1;
-      return -1*ans;}
-  double d2Negate::operator()(const Vector &x, Vector &g, Matrix &h)const{
-    double ans = d2f(x,g,h);
-    g*= -1;
-    h*= -1.0;
-    return -1*ans; }
+  double Negate::operator()(const Vector &x) const { return -1 * f(x); }
+  double dNegate::operator()(const Vector &x, Vector &g) const {
+    double ans = df(x, g);
+    g *= -1;
+    return -1 * ans;
+  }
+  double d2Negate::operator()(const Vector &x, Vector &g, Matrix &h) const {
+    double ans = d2f(x, g, h);
+    g *= -1;
+    h *= -1.0;
+    return -1 * ans;
+  }
 
-
-}
+}  // namespace BOOM

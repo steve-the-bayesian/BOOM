@@ -20,24 +20,37 @@
 #include <sstream>
 
 #include <r_interface/boom_r_tools.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 #include <R.h>
 #include <Rinternals.h>
 
-namespace BOOM{
-  SEXP getListElement(SEXP list, const std::string &name){
+namespace BOOM {
+
+  namespace {
+    using std::endl;
+  }  // namespace 
+  
+  SEXP getListElement(SEXP list, const std::string &name, bool expect_answer) {
     SEXP elmt = R_NilValue;
     SEXP names = Rf_getAttrib(list, R_NamesSymbol);
     if(Rf_isNull(names)){
-      report_error("attempt to use getListElement in a list with"
-                   " no 'names' attribute.");
+      std::ostringstream err;
+      err << "Attempt to use getListElement in a list with"
+          << " no 'names' attribute." << endl
+          << "You were searching for the name: " << name << endl;
+      report_error(err.str());
     }
     for(int i = 0; i < Rf_length(list); i++)
       if(name == CHAR(STRING_ELT(names, i))){
         elmt = VECTOR_ELT(list, i);
         break;
       }
+    if (expect_answer && elmt == R_NilValue) {
+      std::ostringstream warning;
+      warning << "Could not find list element named: " << name << endl;
+      report_warning(warning.str());
+    }
     return elmt;
   }
 
@@ -389,6 +402,22 @@ namespace BOOM{
     return ans;
   }
 
+  // R's date object is the number of days since Jan 1 1970.
+  Date ToBoomDate(SEXP r_Date) {
+    Date ans;
+    ans.set(lround(Rf_asReal(r_Date)));
+    return ans;
+  }
+
+  std::vector<BOOM::Date> ToBoomDateVector(SEXP r_dates) {
+    Vector date_numbers = ToBoomVector(r_dates);
+    std::vector<BOOM::Date> ans(date_numbers.size());
+    for (int i = 0; i < ans.size(); ++i) {
+      ans[i].set(lround(date_numbers[i]));
+    }
+    return ans;
+  }
+  
   SEXP ToRVector(const Vector &v){
     int n = v.size();
     RMemoryProtector protector;

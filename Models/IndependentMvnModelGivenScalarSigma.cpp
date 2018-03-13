@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/IndependentMvnModelGivenScalarSigma.hpp>
-#include <distributions.hpp>
+#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -26,32 +27,24 @@ namespace BOOM {
   }
 
   IMMGS::IndependentMvnModelGivenScalarSigma(
-      const Vector &prior_mean,
-      const Vector &unscaled_prior_variance,
+      const Vector &prior_mean, const Vector &unscaled_prior_variance,
       const Ptr<UnivParams> &sigsq)
       : MvnGivenScalarSigmaBase(sigsq),
         ParamPolicy(new VectorParams(prior_mean),
-                    new VectorParams(unscaled_prior_variance))
-  {}
+                    new VectorParams(unscaled_prior_variance)) {}
 
   IMMGS::IndependentMvnModelGivenScalarSigma(
       const Ptr<VectorParams> &prior_mean,
       const Ptr<VectorParams> &unscaled_prior_variance,
       const Ptr<UnivParams> &sigsq)
       : MvnGivenScalarSigmaBase(sigsq),
-        ParamPolicy(prior_mean, unscaled_prior_variance)
-  {}
+        ParamPolicy(prior_mean, unscaled_prior_variance) {}
 
-  IndependentMvnModelGivenScalarSigma *
-  IMMGS::clone() const {
+  IndependentMvnModelGivenScalarSigma *IMMGS::clone() const {
     return new IndependentMvnModelGivenScalarSigma(*this);
   }
 
-  double IMMGS::Logp(
-      const Vector &x,
-      Vector &g,
-      Matrix &h,
-      uint nderiv) const {
+  double IMMGS::Logp(const Vector &x, Vector &g, Matrix &h, uint nderiv) const {
     double ans = 0;
     if (nderiv > 0) {
       g = 0;
@@ -63,7 +56,7 @@ namespace BOOM {
     Vector v = unscaled_variance_diagonal() * sigsq();
     for (int i = 0; i < x.size(); ++i) {
       ans += dnorm(x[i], mu[i], sqrt(v[i]), true);
-      if (nderiv > 0)  {
+      if (nderiv > 0) {
         g[i] -= -(x[i] - mu[i]) / v[i];
         if (nderiv > 1) {
           h(i, i) -= 1.0 / v[i];
@@ -73,18 +66,16 @@ namespace BOOM {
     return ans;
   }
 
-  const Vector & IMMGS::mu() const {
-    return prm1_ref().value();
-  }
+  const Vector &IMMGS::mu() const { return prm1_ref().value(); }
 
-  const SpdMatrix & IMMGS::Sigma() const {
+  const SpdMatrix &IMMGS::Sigma() const {
     sigma_scratch_.resize(dim());
     sigma_scratch_.diag() = unscaled_variance_diagonal();
     sigma_scratch_.diag() *= sigsq();
     return sigma_scratch_;
   }
 
-  const SpdMatrix & IMMGS::siginv() const {
+  const SpdMatrix &IMMGS::siginv() const {
     sigma_scratch_.resize(dim());
     sigma_scratch_.diag() = 1.0 / unscaled_variance_diagonal();
     sigma_scratch_.diag() /= sigsq();
@@ -111,7 +102,7 @@ namespace BOOM {
     return ans;
   }
 
-  const Vector & IMMGS::unscaled_variance_diagonal() const {
+  const Vector &IMMGS::unscaled_variance_diagonal() const {
     return prm2_ref().value();
   }
 

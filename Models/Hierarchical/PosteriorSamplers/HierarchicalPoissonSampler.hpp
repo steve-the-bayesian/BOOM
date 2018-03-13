@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalPoissonModel.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalPoissonModel.hpp"
 
 namespace BOOM {
 
@@ -60,4 +61,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_HIERARCHICAL_POISSON_POSTERIOR_SAMPLER_HPP_

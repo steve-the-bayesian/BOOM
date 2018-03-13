@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,13 +17,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateSpaceNormalMixture.hpp>
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
 
 namespace BOOM {
 
   StateSpaceNormalMixture::StateSpaceNormalMixture(bool has_regression)
-      : has_regression_(has_regression)
-  {}
+      : has_regression_(has_regression) {}
 
   Vector StateSpaceNormalMixture::regression_contribution() const {
     if (!has_regression_) {

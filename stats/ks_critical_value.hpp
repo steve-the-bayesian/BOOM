@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_KS_CRITICAL_VALUES_HPP_
 #define BOOM_KS_CRITICAL_VALUES_HPP_
 #include <cmath>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   // Critical value for the Kolmogorov Smirnoff test statistic
@@ -44,5 +45,5 @@ namespace BOOM {
     }
     return sqrt(-.5 * log(alpha / 2) / n);
   }
-}  // namespace BOOM;
+}  // namespace BOOM
 #endif  //  BOOM_KS_CRITICAL_VALUES_HPP_

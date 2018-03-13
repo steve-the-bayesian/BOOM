@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,18 +20,18 @@
 #ifndef BOOM_HIERARCHICAL_POISSON_REGRESSION_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_POISSON_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/HierarchicalPoissonRegression.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/ZeroMeanMvnModel.hpp>
-#include <Models/PosteriorSamplers/MvnVarSampler.hpp>
-#include <Models/PosteriorSamplers/MvnMeanSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnConjSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp>
+#include "Models/Glm/HierarchicalPoissonRegression.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionAuxMixSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/PosteriorSamplers/MvnMeanSampler.hpp"
+#include "Models/PosteriorSamplers/MvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
+#include "Models/ZeroMeanMvnModel.hpp"
 
-#include <Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp>
-#include <Models/SpdModel.hpp>
+#include "Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp"
+#include "Models/SpdModel.hpp"
 
 namespace BOOM {
 
@@ -70,10 +71,8 @@ namespace BOOM {
       : public PosteriorSampler {
    public:
     HierarchicalPoissonRegressionPosteriorSampler(
-        HierarchicalPoissonRegressionModel *model,
-        const Ptr<MvnBase> &mu_prior,
-        int nthreads = 1,
-        RNG &seeding_rng = GlobalRng::rng);
+        HierarchicalPoissonRegressionModel *model, const Ptr<MvnBase> &mu_prior,
+        int nthreads = 1, RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
 
@@ -88,18 +87,18 @@ namespace BOOM {
     // Ensures that each data model in model_ is paired with a sampler
     // in data_model_samplers_.
     void check_data_model_samplers();
+
    protected:
-    ZeroMeanMvnModel * zero_mean_random_effect_model();
-    const ZeroMeanMvnModel * zero_mean_random_effect_model()const;
-    MvnModel * data_parent_model() {
+    ZeroMeanMvnModel *zero_mean_random_effect_model();
+    const ZeroMeanMvnModel *zero_mean_random_effect_model() const;
+    MvnModel *data_parent_model() { return model_->data_parent_model(); }
+    const MvnModel *data_parent_model() const {
       return model_->data_parent_model();
     }
-    const MvnModel * data_parent_model() const {
-      return model_->data_parent_model();
-    }
-    const MvnBase * mu_prior()const{return mu_prior_.get();}
+    const MvnBase *mu_prior() const { return mu_prior_.get(); }
+
    private:
-    HierarchicalPoissonRegressionModel * model_;
+    HierarchicalPoissonRegressionModel *model_;
     std::vector<Ptr<PoissonRegressionAuxMixSampler> > data_model_samplers_;
 
     Ptr<MvnBase> mu_prior_;
@@ -108,8 +107,9 @@ namespace BOOM {
     int nthreads_;
 
     // Sufficient statistics for mu given alpha
-    SpdMatrix xtx_;  // sum of the xtx sufficient statistics for each data model.
-    Vector xtu_;     // sum of xtu() for each data model - xtx[i]*alpha[i]
+    SpdMatrix
+        xtx_;     // sum of the xtx sufficient statistics for each data model.
+    Vector xtu_;  // sum of xtu() for each data model - xtx[i]*alpha[i]
   };
 
   //----------------------------------------------------------------------
@@ -119,13 +119,12 @@ namespace BOOM {
       : public HierarchicalPoissonRegressionPosteriorSampler {
    public:
     HierarchicalPoissonRegressionConjugatePosteriorSampler(
-        HierarchicalPoissonRegressionModel *model,
-        const Ptr<MvnBase> &mu_prior,
-        const Ptr<WishartModel> &siginv_prior,
-        int nthreads = 1);
+        HierarchicalPoissonRegressionModel *model, const Ptr<MvnBase> &mu_prior,
+        const Ptr<WishartModel> &siginv_prior, int nthreads = 1);
     double logpri() const override;
     void draw_mu_and_sigma_given_beta() override;
     void draw_sigma_given_zero_mean_sufficient_statistics() override;
+
    private:
     Ptr<WishartModel> siginv_prior_;
 
@@ -141,7 +140,7 @@ namespace BOOM {
   // to be modeled independently by a set of truncated gamma
   // distributions.
   //
-  // TODO(stevescott): For wide hierarchies, it might not be prudent
+  // TODO: For wide hierarchies, it might not be prudent
   // to use a full variance matrix for the prior or "data_parent"
   // model.  It may be better to replace the MvnModel in the
   // HierarchicalPoissonRegressionModel with an IndependentMvnModel.
@@ -151,11 +150,9 @@ namespace BOOM {
       : public HierarchicalPoissonRegressionPosteriorSampler {
    public:
     HierarchicalPoissonRegressionIndependencePosteriorSampler(
-        HierarchicalPoissonRegressionModel *model,
-        const Ptr<MvnBase> &mu_prior,
-        const std::vector<Ptr<GammaModelBase> > & siginv_priors,
-        const Vector & upper_sigma_truncation_point,
-        int nthreads = 1);
+        HierarchicalPoissonRegressionModel *model, const Ptr<MvnBase> &mu_prior,
+        const std::vector<Ptr<GammaModelBase> > &siginv_priors,
+        const Vector &upper_sigma_truncation_point, int nthreads = 1);
 
     double logpri() const override;
 
@@ -163,6 +160,7 @@ namespace BOOM {
     void draw_sigma_given_zero_mean_sufficient_statistics() override;
 
     void set_sigma_upper_limits(const Vector &sigma_upper_limits);
+
    private:
     std::vector<Ptr<GammaModelBase> > siginv_priors_;
 
@@ -172,6 +170,6 @@ namespace BOOM {
     Ptr<ZeroMeanMvnCompositeIndependenceSampler> zero_mean_sigma_sampler_;
   };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_HIERARCHICAL_POISSON_REGRESSION_POSTERIOR_SAMPLER_HPP_

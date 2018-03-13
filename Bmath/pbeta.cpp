@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- * #include <Bmath.hpp>
+ * #include "Bmath.hpp"
  *
  * double pbeta_raw(double x, double pin, double qin, int lower_tail)
  * double pbeta    (double x, double pin, double qin, int lower_tail, int log_p)

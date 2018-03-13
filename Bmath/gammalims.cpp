@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    void gammalims(double *xmin, double *xmax);
  *
  *  DESCRIPTION

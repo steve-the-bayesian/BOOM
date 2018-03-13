@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
    Copyright (C) 2005 Steven L. Scott
 
@@ -13,46 +14,48 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #ifndef ORDERING_HPP
 #define ORDERING_HPP
 
-#include <BOOM.hpp>
-#include <vector>
 #include <map>
+#include <vector>
+#include "BOOM.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-   template <class T=string>
-   class ordering{
-     std::map<T,uint> ord;
+  template <class T = string>
+  class ordering {
+    std::map<T, uint> ord;
+
    public:
-     ordering(T[] arr);
-     ordering(const std::vector<T> &);
+    ordering(T[] arr);
+    ordering(const std::vector<T> &);
 
-     bool operator()(const T &arg1, const T &arg2)const;
-     // return true if arg1 "<" arg2
-   };
+    bool operator()(const T &arg1, const T &arg2) const;
+    // return true if arg1 "<" arg2
+  };
 
+  //-----------------------------
+  template <class T>
+  ordering<T>::ordering(T[] arr) {
+    std::vector<T> v(arr, arr + sizeof(arr) / sizeof(arr[0]));
+    for (uint i = 0; i < v.size(); ++i) ord[v[i]] = i;
+  }
 
-   //-----------------------------
-   template<class T>
-   ordering<T>::ordering(T[] arr){
-     std::vector<T> v(arr, arr+sizeof(arr)/sizeof(arr[0]));
-     for(uint i=0; i<v.size(); ++i) ord[v[i]] = i; }
+  template <class T>
+  ordering<T>::ordering(const std::vector<T> &v) {
+    for (uint i = 0; i < v.size(); ++i) ord[v[i]] = i;
+  }
 
-   template<class T>
-   ordering<T>::ordering(const std::vector<T>&v){
-     for(uint i=0; i<v.size(); ++i) ord[v[i]] = i; }
+  template <class T>
+  bool ordering<T>::ordering(const T &arg1, const T &arg2) const {
+    return ord[arg1] < ord[arg2];
+  }
 
-   template <class T>
-   bool ordering<T>::ordering
-   (const T &arg1, const T & arg2)const{
-     return ord[arg1] < ord[arg2]; }
+}  // namespace BOOM
 
-}
-
-
-#endif //ORDERING_HPP
+#endif  // ORDERING_HPP

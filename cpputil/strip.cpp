@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
    Copyright (C) 2005 Steven L. Scott
 
@@ -13,18 +14,19 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #include <string>
- namespace BOOM{
-   using std::string;
+namespace BOOM {
+  using std::string;
 
-   string strip(const string& s, const string& bad) {
-     //     string bad_stuff="\r\n\t";
-     string ans(s);
-     string::size_type n = ans.find_first_of(bad);
-     if(n!=string::npos) ans.erase(n);
-     return ans;
-   }
- }
+  string strip(const string& s, const string& bad) {
+    //     string bad_stuff="\r\n\t";
+    string ans(s);
+    string::size_type n = ans.find_first_of(bad);
+    if (n != string::npos) ans.erase(n);
+    return ans;
+  }
+}  // namespace BOOM

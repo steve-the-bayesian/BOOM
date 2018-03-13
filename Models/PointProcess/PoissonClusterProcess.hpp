@@ -19,18 +19,18 @@
 #ifndef BOOM_POISSON_CLUSTER_PROCESS_HPP_
 #define BOOM_POISSON_CLUSTER_PROCESS_HPP_
 
-#include <Models/PointProcess/PointProcess.hpp>
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/PointProcess/PointProcess.hpp"
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-#include <LinAlg/Selector.hpp>
-#include <vector>
-#include <map>
 #include <functional>
+#include <map>
+#include <vector>
+#include "LinAlg/Selector.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A struct containing the component processes in a Poisson cluster
   // process.
@@ -48,25 +48,23 @@ namespace BOOM{
   // events.  When the primary Poisson process generates a top-level
   // event, it also activates a secondary process that generates
   // events subsequent events until it dies.
-  class PoissonClusterProcess
-      : public CompositeParamPolicy,
-        public IID_DataPolicy<PointProcess>,
-        public PriorPolicy
-  {
+  class PoissonClusterProcess : public CompositeParamPolicy,
+                                public IID_DataPolicy<PointProcess>,
+                                public PriorPolicy {
    public:
     // Use this constructor if there are no marks in the process, or
     // if you don't want to model the marks.
     PoissonClusterProcess(const PoissonClusterComponentProcesses &components);
 
     // Use this constructor if there are marks to be modeled.
-    PoissonClusterProcess(const PoissonClusterComponentProcesses & components,
+    PoissonClusterProcess(const PoissonClusterComponentProcesses &components,
                           const Ptr<MixtureComponent> &primary_mark_model,
                           const Ptr<MixtureComponent> &secondary_mark_model);
 
     PoissonClusterProcess(const PoissonClusterProcess &rhs);
-    PoissonClusterProcess * clone()const override;
+    PoissonClusterProcess *clone() const override;
 
-    ~PoissonClusterProcess() override{}
+    ~PoissonClusterProcess() override {}
 
     void set_mark_models(const Ptr<MixtureComponent> &primary,
                          const Ptr<MixtureComponent> &secondary);
@@ -99,17 +97,17 @@ namespace BOOM{
     //   The conditional log likelihood of the event given the r->s
     //   transition.
     virtual double conditional_event_loglikelihood(
-        int r, int s, const PointProcessEvent &event,
-        double logp_primary, double logp_secondary, int source)const;
+        int r, int s, const PointProcessEvent &event, double logp_primary,
+        double logp_secondary, int source) const;
 
     // The sum of cumulative hazard functions between times t0 and t1
     // for processes active at time t0.  The set of active processes
     // is determined by hmm state 'r', using the function
     // active_processes(r).
-    double conditional_cumulative_hazard(
-        const DateTime &t0, const DateTime &t1, int r)const;
+    double conditional_cumulative_hazard(const DateTime &t0, const DateTime &t1,
+                                         int r) const;
 
-    int number_of_hmm_states()const;
+    int number_of_hmm_states() const;
 
     // Filter the data using the forward filtering algorithm.  Fills
     // filter_[t] data structure with the conditional distribution of
@@ -165,8 +163,7 @@ namespace BOOM{
     //   probability_of_responsibility: A matrix with dimensions
     //     matching probability_of_activity, but giving the probablity
     //     that each process was responsible at time t.
-    void backward_sampling(RNG &rng,
-                           const PointProcess &data,
+    void backward_sampling(RNG &rng, const PointProcess &data,
                            const std::vector<int> &source,
                            Matrix &probability_of_activity,
                            Matrix &probability_of_responsibility);
@@ -198,8 +195,7 @@ namespace BOOM{
     // marginal density of h[t] given complete data.  On output,
     // transition_density is updated to condition on all data, and
     // 'marginal' is the marginal of h[t-1] given complete data.
-    void backward_smoothing_step(Matrix &transition_density,
-                                 Vector &marginal);
+    void backward_smoothing_step(Matrix &transition_density, Vector &marginal);
 
     // Determine the specific process responsible for the event at
     // time t, given that the state at time t-1 is prev_state and the
@@ -223,9 +219,11 @@ namespace BOOM{
     //   the value of the transition.  If source < 0 (the expected
     //   state in many cases, the source for this observation is
     //   missing.
-    virtual PoissonProcess * assign_responsibility(
-        RNG &rng, const PointProcess &data, int t,
-        int previous_state, int current_state, int source);
+    virtual PoissonProcess *assign_responsibility(RNG &rng,
+                                                  const PointProcess &data,
+                                                  int t, int previous_state,
+                                                  int current_state,
+                                                  int source);
 
     // Attribute the event at time 'current_time' to the responsible
     // process and update its sufficient statistics accordingly,
@@ -233,7 +231,7 @@ namespace BOOM{
     // models.  Exposure time is not updated, because it has already
     // been updated with update_exposure_time.
     virtual void attribute_event(const PointProcessEvent &data,
-                                 PoissonProcess* responsible_process);
+                                 PoissonProcess *responsible_process);
 
     // Update the statistics for all the processes determined to be
     // running between current_time and current_time + 1, conditional
@@ -241,10 +239,10 @@ namespace BOOM{
     void update_exposure_time(const PointProcess &data, int current_time,
                               int previous_state, int current_state);
 
-    double loglike()const{return last_loglike_;}
+    double loglike() const { return last_loglike_; }
 
     void clear_data() override;
-    void add_data(const Ptr<Data> & dp) override;  // *dp is a PointProcess
+    void add_data(const Ptr<Data> &dp) override;  // *dp is a PointProcess
     void add_data(const Ptr<PointProcess> &dp) override;
 
     // Adds a point process to the model, along with "ground truth"
@@ -257,41 +255,33 @@ namespace BOOM{
 
     // Simulate a PoissonClusterProcess observed from t0 to t1.
     virtual PointProcess simulate(
-        RNG &rng,
-        const DateTime &t0,
-        const DateTime &t1,
-        std::function<Data*()> primary_mark_simulator = NullDataGenerator(),
-        std::function<Data*()> secondary_mark_simulator
-           = NullDataGenerator()) const;
+        RNG &rng, const DateTime &t0, const DateTime &t1,
+        std::function<Data *()> primary_mark_simulator = NullDataGenerator(),
+        std::function<Data *()> secondary_mark_simulator =
+            NullDataGenerator()) const;
 
-    const std::vector<Mat> & probability_of_activity()const;
-    const std::vector<Mat> & probability_of_responsibility()const;
+    const std::vector<Mat> &probability_of_activity() const;
+    const std::vector<Mat> &probability_of_responsibility() const;
 
     void record_activity(VectorView activity_probs, int state);
     void record_responsibility(VectorView activity_probs,
-                               PoissonProcess* responsible_process);
+                               PoissonProcess *responsible_process);
 
-    void record_activity_distribution(
-        VectorView probs,
-        const Matrix & transition_distribution);
+    void record_activity_distribution(VectorView probs,
+                                      const Matrix &transition_distribution);
     void record_responsibility_distribution(
-        VectorView probs,
-        const Matrix & transition_distribution,
-        const PointProcessEvent &event,
-        int source);
-    void allocate_probability(int previous_state,
-                              int current_state,
+        VectorView probs, const Matrix &transition_distribution,
+        const PointProcessEvent &event, int source);
+    void allocate_probability(int previous_state, int current_state,
                               VectorView process_probs,
                               double transition_probability,
-                              double logp_primary,
-                              double logp_secondary,
-                              const DateTime &timestamp,
-                              int source);
+                              double logp_primary, double logp_secondary,
+                              const DateTime &timestamp, int source);
 
     // These functions can return 0/NULL if no mark_models have been
     // assigned.
-    MixtureComponent * mark_model(const PoissonProcess * process);
-    const MixtureComponent * mark_model(const PoissonProcess * process)const;
+    MixtureComponent *mark_model(const PoissonProcess *process);
+    const MixtureComponent *mark_model(const PoissonProcess *process) const;
 
    private:
     void initialize();
@@ -301,11 +291,11 @@ namespace BOOM{
 
     // Returns true iff process is associated with a primary event.
     // I.e. primary_traffic, primary_birth, or primary_death.
-    bool primary(const PoissonProcess *process)const;
+    bool primary(const PoissonProcess *process) const;
 
     // Returns true iff process is background, secondary_traffic, or
     // secondary_death.
-    bool secondary(const PoissonProcess *process)const;
+    bool secondary(const PoissonProcess *process) const;
 
     // Returns the set of component processes that might have produced
     // an r->s transition.
@@ -314,10 +304,10 @@ namespace BOOM{
     //   source: Indicator of the mark model that the event associated
     //     with the transition to 's'. Primary (1), secondary or
     //     background (0), or unknown source ( < 0 ).
-    std::vector<PoissonProcess *> get_responsible_processes(
-        int r, int s, int source);
+    std::vector<PoissonProcess *> get_responsible_processes(int r, int s,
+                                                            int source);
     std::vector<const PoissonProcess *> get_responsible_processes(
-        int r, int s, int source)const;
+        int r, int s, int source) const;
 
     // Given a vector of Poisson processes, return the subset
     // associated with the mark model specified in 'source'.
@@ -332,16 +322,16 @@ namespace BOOM{
     std::vector<PoissonProcess *> subset_matching_source(
         std::vector<PoissonProcess *> &candidates, int source);
     std::vector<const PoissonProcess *> subset_matching_source(
-        const std::vector<PoissonProcess *> &candidates, int source)const;
+        const std::vector<PoissonProcess *> &candidates, int source) const;
 
     // Returns true if process is associated with latent process
     // 'source', where source is 0 (secondary or background), 1
     // (primary), or negative (unknown).
-    bool matches_source(const PoissonProcess *process, int source)const;
+    bool matches_source(const PoissonProcess *process, int source) const;
 
     // Returns true if the transition from state r to state s is
     // possible.
-    bool legal_transition(int r, int s)const;
+    bool legal_transition(int r, int s) const;
 
     // Throws an exception if positive probability was assigned to an
     // impossible state based on known information about an
@@ -384,9 +374,8 @@ namespace BOOM{
     // Keeps track of which processes are potentially responsible for
     // an (r->s) transition.  If a transition is impossible then no
     // map entry will be present.
-    typedef
-    std::map<std::pair<int, int>, std::vector<PoissonProcess *> >
-    ResponsibleProcessMap;
+    typedef std::map<std::pair<int, int>, std::vector<PoissonProcess *> >
+        ResponsibleProcessMap;
     ResponsibleProcessMap responsible_process_map_;
 
     std::vector<Mat> filter_;
@@ -403,8 +392,10 @@ namespace BOOM{
     std::vector<Mat> probability_of_activity_;
     std::vector<Mat> probability_of_responsibility_;
 
-    enum InitializationStrategy{
-      UniformInitialState = 0, StationaryDistribution};
+    enum InitializationStrategy {
+      UniformInitialState = 0,
+      StationaryDistribution
+    };
     InitializationStrategy initialization_strategy_;
 
     // The known_source_store_ keeps track of source information for
@@ -414,4 +405,4 @@ namespace BOOM{
   };
 
 }  // namespace BOOM
-#endif// BOOM_POISSON_CLUSTER_PROCESS_HPP_
+#endif  // BOOM_POISSON_CLUSTER_PROCESS_HPP_

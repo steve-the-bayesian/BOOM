@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,16 +20,15 @@
 #ifndef BOOM_DIRICHLET_PROCESS_SLICE_SAMPLER_HPP_
 #define BOOM_DIRICHLET_PROCESS_SLICE_SAMPLER_HPP_
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/Mixtures/PosteriorSamplers/SplitMerge.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Samplers/MoveAccounting.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/Mixtures/PosteriorSamplers/SplitMerge.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Samplers/MoveAccounting.hpp"
 
 namespace BOOM {
   // This class implements the slice sampling algorithm from Kalli, Griffin, and
   // Walker, Statistics and Computing (2011), pp 93 -- 105.
-  class DirichletProcessSliceSampler
-      : public PosteriorSampler {
+  class DirichletProcessSliceSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be managed.
@@ -38,7 +38,7 @@ namespace BOOM {
     //     sampler.
     DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
                                  int initial_clusters = 1,
-                                 RNG & seeding_rng = GlobalRng::rng);
+                                 RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
 
@@ -54,7 +54,7 @@ namespace BOOM {
     // The KGW paper claims xi[i] can be "any positive sequence", but xi values
     // should be < 1, and decreasing with i.
     //
-    // TODO(stevescott): Investigate sequences other than geometric,
+    // TODO: Investigate sequences other than geometric,
     // e.g. Poisson or NB distributions.
     double mixing_weight_importance(int cluster) const;
     double log_mixing_weight_importance(int cluster) const;

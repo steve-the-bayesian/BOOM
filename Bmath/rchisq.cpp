@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rchisq(double df);
  *
  *  DESCRIPTION
@@ -50,7 +50,7 @@
  */
 
 #include "nmath.hpp"
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace Rmath{
 

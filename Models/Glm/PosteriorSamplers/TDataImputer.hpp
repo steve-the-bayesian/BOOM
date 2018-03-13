@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_T_DATA_IMPUTER_HPP_
 #define BOOM_T_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -16,31 +17,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   void StateModel::update_complete_data_sufficient_statistics(
-      int t,
-      const ConstVectorView &state_error_mean,
+      int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    report_error("update_complete_data_sufficient_statistics does not work "
-                 "for this StateModel subclass.");
+    report_error(
+        "update_complete_data_sufficient_statistics does not work "
+        "for this StateModel subclass.");
   }
 
   void StateModel::increment_expected_gradient(
-      VectorView gradient,
-      int t,
-      const ConstVectorView &state_error_mean,
+      VectorView gradient, int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
-    report_error("increment_expected_gradient does not work for "
-                 "this StateModel subclass.");
+    report_error(
+        "increment_expected_gradient does not work for "
+        "this StateModel subclass.");
   }
 
-  void StateModel::simulate_initial_state(RNG &rng, VectorView eta)const{
-    if(eta.size() != state_dimension()){
+  void StateModel::simulate_initial_state(RNG &rng, VectorView eta) const {
+    if (eta.size() != state_dimension()) {
       std::ostringstream err;
       err << "output vector 'eta' has length " << eta.size()
           << " in StateModel::simulate_initial_state.  Expected length "
@@ -50,5 +50,5 @@ namespace BOOM{
     eta = rmvn_mt(rng, initial_state_mean(), initial_state_variance());
   }
 
-  void StateModel::observe_initial_state(const ConstVectorView &state){}
-}
+  void StateModel::observe_initial_state(const ConstVectorView &state) {}
+}  // namespace BOOM

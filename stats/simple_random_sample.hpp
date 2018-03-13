@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,42 +21,41 @@
 #define BOOM_SIMPLE_RANDOM_SAMPLE_HPP
 
 #include <algorithm>
-#include <vector>
 #include <map>
-#include <BOOM.hpp>
-namespace BOOM{
+#include <vector>
+#include "BOOM.hpp"
+namespace BOOM {
 
   std::vector<bool> SRS_indx(unsigned int N, unsigned int n);
 
-  template<class T, template<class> class Cont>
-  std::vector<T> simple_random_sample(const Cont<T> &c, unsigned int n){
+  template <class T, template <class> class Cont>
+  std::vector<T> simple_random_sample(const Cont<T> &c, unsigned int n) {
     unsigned int N = c.size();
     std::vector<bool> in = SRS_indx(N, n);
     std::vector<T> ans(n);
     unsigned int i(0), I(0);
     typedef typename Cont<T>::const_iterator It;
-    for(It it = c.begin(); it!=c.end(); ++it){
-      if(in[i++]) ans[I++] = *it;
-      if(I==n) break;
+    for (It it = c.begin(); it != c.end(); ++it) {
+      if (in[i++]) ans[I++] = *it;
+      if (I == n) break;
     }
     return ans;
   }
 
-
-  template<class T, class Indx>
-  std::vector<T> simple_random_sample(const std::map<Indx,T> &c,
-                                      unsigned int n){
+  template <class T, class Indx>
+  std::vector<T> simple_random_sample(const std::map<Indx, T> &c,
+                                      unsigned int n) {
     unsigned int N = c.size();
-    std::vector<bool> in = SRS_indx(N,n);
+    std::vector<bool> in = SRS_indx(N, n);
     std::vector<T> ans(n);
-    typedef typename std::map<Indx,T>::const_iterator mapit;
+    typedef typename std::map<Indx, T>::const_iterator mapit;
     unsigned int i(0), I(0);
-    for(mapit it = c.begin(); it!=c.end(); ++it){
-      if(in[i++]) ans[I++] = it->second;
-      if(I==n) break;
+    for (mapit it = c.begin(); it != c.end(); ++it) {
+      if (in[i++]) ans[I++] = it->second;
+      if (I == n) break;
     }
     return ans;
   }
 
-}
-#endif // BOOM_SIMPLE_RANDOM_SAMPLE_HPP
+}  // namespace BOOM
+#endif  // BOOM_SIMPLE_RANDOM_SAMPLE_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -16,18 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-
-#include <cpputil/DefaultVnames.hpp>
+#include "cpputil/DefaultVnames.hpp"
 #include <sstream>
 
-namespace BOOM{
-  std::vector<string> default_vnames(uint sz, int indx_start){
+namespace BOOM {
+  std::vector<string> default_vnames(uint sz, int indx_start) {
     std::vector<string> ans;
-    for(uint i = 0; i<sz; ++i){
+    for (uint i = 0; i < sz; ++i) {
       ostringstream msg;
-      msg << "V." << static_cast<int>(i)+indx_start;
+      msg << "V." << static_cast<int>(i) + indx_start;
       ans.push_back(msg.str());
     }
     return ans;
   }
-}
+}  // namespace BOOM

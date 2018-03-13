@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -18,14 +19,14 @@
 #ifndef BOOM_TREGRESSION_SAMPLER_HPP_
 #define BOOM_TREGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/TRegression.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/Glm/PosteriorSamplers/TDataImputer.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
+#include "Models/Glm/TRegression.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
 
 namespace BOOM {
   // A posterior sampler for T regression models.  Uses data
@@ -33,8 +34,7 @@ namespace BOOM {
   // The DF parameters can be sampled either conditional on the latent
   // data (computationally fast, but slow mixing) or after
   // marginalizing out the latent data.
-  class TRegressionSampler
-      : public PosteriorSampler {
+  class TRegressionSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model whose parameters are to be sampled.
@@ -62,8 +62,9 @@ namespace BOOM {
 
     void set_sigma_upper_limit(double max_sigma);
 
-    const WeightedRegSuf & complete_data_sufficient_statistics() const {
-      return complete_data_sufficient_statistics_;}
+    const WeightedRegSuf &complete_data_sufficient_statistics() const {
+      return complete_data_sufficient_statistics_;
+    }
 
     // Normally the sampler manages the draw of the complete data
     // sufficient statistics in the draw() method by a call to
@@ -85,8 +86,8 @@ namespace BOOM {
     // normally necessary to call this function unless an outside
     // object wants to assume control of the
     // complete_data_sufficient_statistics_.
-    void update_complete_data_sufficient_statistics(
-        double y, const Vector &x, double weight);
+    void update_complete_data_sufficient_statistics(double y, const Vector &x,
+                                                    double weight);
 
    private:
     TRegressionModel *model_;
@@ -115,4 +116,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_TREGRESSION_SAMPLER_HPP_
+#endif  //  BOOM_TREGRESSION_SAMPLER_HPP_

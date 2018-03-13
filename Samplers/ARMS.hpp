@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -15,35 +16,35 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Samplers/Sampler.hpp>
-#include <cpputil/Ptr.hpp>
+#include "Samplers/Sampler.hpp"
+#include "cpputil/Ptr.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <numopt.hpp>
+#include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class ArmsSampler : virtual public Sampler{
+  class ArmsSampler : virtual public Sampler {
     /*======================================================================
 
       Adaptive rejection sampling from Gilks, Best, and Tan 1995,
       applied statistics.  Calls code from Wally Gilks' web site.
 
       ======================================================================*/
-  public:
-    ArmsSampler(const Target &target,
-                const Vector &initial_value,
-                bool log_convex=false);
+   public:
+    ArmsSampler(const Target &target, const Vector &initial_value,
+                bool log_convex = false);
 
     void find_limits();
     Vector draw(const Vector &old) override;
-    virtual double logp(const Vector &x)const;
-    void  set(double);
-    double eval()const;
+    virtual double logp(const Vector &x) const;
+    void set(double);
+    double eval() const;
     void set_limits(const Vector &lo, const Vector &hi);
     void set_lower_limits(const Vector &lo);
     void set_upper_limits(const Vector &hi);
-  private:
+
+   private:
     Target target_;
     Vector x_;
     Vector lower_limits_;
@@ -52,4 +53,4 @@ namespace BOOM{
     uint ninit_;
     bool log_convex_;  // set false if not sure;
   };
-}
+}  // namespace BOOM

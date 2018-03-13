@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -16,27 +17,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/UniformModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
+#include "Models/UniformModel.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   namespace {
     typedef UniformSuf US;
     typedef UniformModel UM;
-  }
+  }  // namespace
 
-  US::UniformSuf()
-    : lo_(BOOM::infinity()),
-      hi_(BOOM::negative_infinity())
-  {}
+  US::UniformSuf() : lo_(BOOM::infinity()), hi_(BOOM::negative_infinity()) {}
 
-  US::UniformSuf(double a, double b)
-    : lo_(a),
-      hi_(b)
-  {
+  US::UniformSuf(double a, double b) : lo_(a), hi_(b) {
     assert(a <= b && "Arguments out of order in UniformSuf constructor");
   }
 
@@ -52,13 +47,9 @@ namespace BOOM {
   }
 
   US::UniformSuf(const US &rhs)
-    : Sufstat(rhs),
-      SufTraits(rhs),
-      lo_(rhs.lo_),
-      hi_(rhs.hi_)
-  {}
+      : Sufstat(rhs), SufTraits(rhs), lo_(rhs.lo_), hi_(rhs.hi_) {}
 
-  US * US::clone() const {return new US(*this);}
+  US *US::clone() const { return new US(*this); }
 
   void US::clear() {
     lo_ = BOOM::infinity();
@@ -66,14 +57,14 @@ namespace BOOM {
   }
 
   void US::update_raw(double x) {
-    lo_ = x < lo_? x:lo_;
-    hi_ = x > hi_? x:hi_;
+    lo_ = x < lo_ ? x : lo_;
+    hi_ = x > hi_ ? x : hi_;
   }
 
   void US::Update(const DoubleData &d) { update_raw(d.value()); }
 
-  double US::lo() const {return lo_;}
-  double US::hi() const {return hi_;}
+  double US::lo() const { return lo_; }
+  double US::hi() const { return hi_; }
   void US::set_lo(double a) {
     lo_ = a;
     assert(hi_ >= lo_);
@@ -88,12 +79,12 @@ namespace BOOM {
     hi_ = std::max<double>(hi_, s->hi_);
   }
 
-  void US::combine(const US & s) {
+  void US::combine(const US &s) {
     lo_ = std::min<double>(lo_, s.lo_);
     hi_ = std::max<double>(hi_, s.hi_);
   }
 
-  UniformSuf * US::abstract_combine(Sufstat *s) {
+  UniformSuf *US::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
   }
 
@@ -105,8 +96,10 @@ namespace BOOM {
   }
 
   Vector::const_iterator US::unvectorize(Vector::const_iterator &v, bool) {
-    lo_ = *v; ++v;
-    hi_ = *v; ++v;
+    lo_ = *v;
+    ++v;
+    hi_ = *v;
+    ++v;
     return v;
   }
 
@@ -115,37 +108,31 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &US::print(ostream &out) const {
-    return out << lo_ << " " << hi_;
-  }
+  ostream &US::print(ostream &out) const { return out << lo_ << " " << hi_; }
 
   //======================================================================
   UM::UniformModel(double a, double b)
-    : ParamPolicy(new UnivParams(a), new UnivParams(b)),
-      DataPolicy(new US)
-  {}
+      : ParamPolicy(new UnivParams(a), new UnivParams(b)), DataPolicy(new US) {}
 
   UM::UniformModel(const std::vector<double> &data)
-    : ParamPolicy(new UnivParams(0), new UnivParams(1)),
-      DataPolicy(new US(data))
-  {
+      : ParamPolicy(new UnivParams(0), new UnivParams(1)),
+        DataPolicy(new US(data)) {
     mle();
   }
 
   UM::UniformModel(const UM &rhs)
-    : Model(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      DiffDoubleModel(rhs),
-      LoglikeModel(rhs)
-  {}
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        DiffDoubleModel(rhs),
+        LoglikeModel(rhs) {}
 
-  UM * UM::clone() const {return new UM(*this);}
+  UM *UM::clone() const { return new UM(*this); }
 
-  double UM::lo() const { return LoParam()->value();}
-  double UM::hi() const { return HiParam()->value();}
-  double UM::nc() const { return 1.0/(hi()-lo());}
+  double UM::lo() const { return LoParam()->value(); }
+  double UM::hi() const { return HiParam()->value(); }
+  double UM::nc() const { return 1.0 / (hi() - lo()); }
 
   void UM::set_lo(double a) {
     LoParam()->set(a);
@@ -162,20 +149,14 @@ namespace BOOM {
     HiParam()->set(b);
   }
 
-  double UM::mean() const {
-    return .5 * (lo() + hi());
-  }
+  double UM::mean() const { return .5 * (lo() + hi()); }
 
-  double UM::variance() const {
-    return square(hi() - lo()) / 12.0;
-  }
+  double UM::variance() const { return square(hi() - lo()) / 12.0; }
 
-  Ptr<UnivParams> UM::LoParam() {return ParamPolicy::prm1();}
-  Ptr<UnivParams> UM::HiParam() {return ParamPolicy::prm2();}
-  const Ptr<UnivParams> UM::LoParam() const {
-    return ParamPolicy::prm1();}
-  const Ptr<UnivParams> UM::HiParam() const {
-    return ParamPolicy::prm2();}
+  Ptr<UnivParams> UM::LoParam() { return ParamPolicy::prm1(); }
+  Ptr<UnivParams> UM::HiParam() { return ParamPolicy::prm2(); }
+  const Ptr<UnivParams> UM::LoParam() const { return ParamPolicy::prm1(); }
+  const Ptr<UnivParams> UM::HiParam() const { return ParamPolicy::prm2(); }
 
   double UM::Logp(double x, double &g, double &h, uint nd) const {
     bool outside = x > hi() || x < lo();
@@ -195,9 +176,7 @@ namespace BOOM {
     return BOOM::negative_infinity();
   }
 
-  void UM::mle() {
-    set_ab(suf()->lo(), suf()->hi());
-  }
+  void UM::mle() { set_ab(suf()->lo(), suf()->hi()); }
 
   double UM::sim(RNG &rng) const { return runif_mt(rng, lo(), hi()); }
 

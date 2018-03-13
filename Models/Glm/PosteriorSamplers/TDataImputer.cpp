@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,15 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/TDataImputer.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
-  double  TDataImputer::impute(
-      RNG &rng, double residual, double sd, double nu) const {
-    double delta = residual/sd;
+  double TDataImputer::impute(RNG &rng, double residual, double sd,
+                              double nu) const {
+    double delta = residual / sd;
     return rgamma_mt(rng, 0.5 * (nu + 1), 0.5 * (nu + square(delta)));
   }
 

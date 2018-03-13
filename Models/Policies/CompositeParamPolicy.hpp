@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -24,62 +25,59 @@
   to have many paramters use ManyParamPolicy instead.
   ======================================================================*/
 
-#include<cpputil/Ptr.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
-namespace BOOM{
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
+#include "cpputil/Ptr.hpp"
+namespace BOOM {
 
-  class CompositeParamPolicy
-    : virtual public Model
-  {
-  public:
+  class CompositeParamPolicy : virtual public Model {
+   public:
     typedef CompositeParamPolicy ParamPolicy;
     CompositeParamPolicy();
 
-    template <class FwdIt>                // *FwdIt is a Ptr<Model>
+    template <class FwdIt>  // *FwdIt is a Ptr<Model>
     CompositeParamPolicy(FwdIt b, FwdIt e);
 
-    CompositeParamPolicy(const CompositeParamPolicy &rhs);  // components not copied
+    CompositeParamPolicy(
+        const CompositeParamPolicy &rhs);  // components not copied
     CompositeParamPolicy(CompositeParamPolicy &&rhs) = default;
 
-    CompositeParamPolicy & operator=(const CompositeParamPolicy &);
-    CompositeParamPolicy & operator=(CompositeParamPolicy &&) = default;
+    CompositeParamPolicy &operator=(const CompositeParamPolicy &);
+    CompositeParamPolicy &operator=(CompositeParamPolicy &&) = default;
 
     void add_model(const Ptr<Model> &);
     void drop_model(const Ptr<Model> &);
     void clear();
 
-    template<class Fwd>
+    template <class Fwd>
     void set_models(Fwd b, Fwd e);
 
     ParamVector parameter_vector() override;
-    const ParamVector parameter_vector()const override;
+    const ParamVector parameter_vector() const override;
 
     void add_params(const Ptr<Params> &);
 
-  private:
-    bool have_model(const Ptr<Model> &)const;
+   private:
+    bool have_model(const Ptr<Model> &) const;
     std::vector<Ptr<Model> > models_;
     ParamVector t_;
   };
 
   template <class Fwd>
-  void CompositeParamPolicy::set_models(Fwd b, Fwd e){
+  void CompositeParamPolicy::set_models(Fwd b, Fwd e) {
     models_.clear();
-    std::copy(b,e, back_inserter(models_));
+    std::copy(b, e, back_inserter(models_));
     t_.clear();
-    for(uint i = 0; i < models_.size(); ++i) {
+    for (uint i = 0; i < models_.size(); ++i) {
       ParamVector tmp(models_[i]->parameter_vector());
-      std::copy(tmp.begin(), tmp.end(), back_inserter(t_));}}
-
-
-  template <class Fwd>
-  CompositeParamPolicy::CompositeParamPolicy(Fwd b, Fwd e)
-    : models_(),
-      t_()
-  {
-    set_models(b,e);
+      std::copy(tmp.begin(), tmp.end(), back_inserter(t_));
+    }
   }
 
-}
-#endif// BOOM_COMPOSITE_MODEL_PARAM_POLICY
+  template <class Fwd>
+  CompositeParamPolicy::CompositeParamPolicy(Fwd b, Fwd e) : models_(), t_() {
+    set_models(b, e);
+  }
+
+}  // namespace BOOM
+#endif  // BOOM_COMPOSITE_MODEL_PARAM_POLICY
