@@ -117,8 +117,8 @@ namespace {
 
     NEW(LocalLevelStateModel, trend_model);
     NEW(ChisqModel, trend_precision_prior)(1, 1);
-    NEW(ZeroMeanGaussianConjSampler, trend_sampler)(trend_model.get(),
-                                                    trend_precision_prior);
+    NEW(ZeroMeanGaussianConjSampler, trend_sampler)(
+      trend_model.get(), trend_precision_prior);
     trend_model->set_method(trend_sampler);
     model->add_state(trend_model);
 
@@ -131,6 +131,10 @@ namespace {
       holiday_model->add_holiday(holidays[i]);
     }
     model->add_state(holiday_model);
+
+    NEW(ChisqModel, observation_precision_prior)(1, 1);
+    NEW(ZeroMeanGaussianConjSampler, observation_sampler)(
+      model->observation_model(), observation_precision_prior);
     
     NEW(StateSpacePosteriorSampler, sampler)(model.get());
     model->set_method(sampler);
