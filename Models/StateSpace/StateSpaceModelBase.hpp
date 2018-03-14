@@ -500,7 +500,7 @@ namespace BOOM {
     // single-threaded program this is not necessary.  In a multi-threaded
     // program it can help avoid race conditions.
     //
-    // TODO(user): mutex protection would be better.  Once C++17 becomes
+    // TODO: mutex protection would be better.  Once C++17 becomes
     // established explore using shared_mutex in places like SpdData and
     // removing this function.
     virtual void update_model_matrices();
@@ -601,7 +601,7 @@ namespace BOOM {
                                     Vector *gradient);
 
     //=-=-=-=-=-=-=-=-=-=-=-= DEPRECATED =-=-=-=-=-=-=-=-=-=-=-=
-    // TODO(user): This is the old simulation step used to implement
+    // TODO: This is the old simulation step used to implement
     // impute_state.  Take this out once you've had a chance to gain confidence
     // with the thread-friendly code that replaced it.
     //

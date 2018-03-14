@@ -473,7 +473,7 @@ namespace BOOM {
     regression_->suf()->add_mixture_data(residual + predicted, dp->x(), 1.0);
   }
 
-  // TODO(user): This and other code involving model matrices is
+  // TODO: This and other code involving model matrices is
   // an optimization opportunity.  Test it out to see if
   // precomputation makes sense.
   const AccumulatorTransitionMatrix *ASSR::state_transition_matrix(

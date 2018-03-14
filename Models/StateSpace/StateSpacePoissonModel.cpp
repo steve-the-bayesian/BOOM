@@ -129,7 +129,7 @@ namespace BOOM {
       // This will likely lead to an exception later in the program when the
       // variance is square-rooted into a standard deviation.
       //
-      // TODO(user): Should an exception be thrown here?
+      // TODO: Should an exception be thrown here?
       return negative_infinity();
     }
     return 1.0 / total_precision;
