@@ -1,5 +1,5 @@
 COPTS = [
-    "-I/usr/local/include",
+    #     "-I/usr/local/include",
 ]
 
 cc_test(

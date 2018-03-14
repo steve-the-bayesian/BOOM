@@ -33,7 +33,11 @@ DISTRIBUTIONS_SRCS = glob(["distributions/*.cpp"])
 
 DISTRIBUTIONS_HDRS = glob(["distributions/*.hpp"])
 
-MATH_SRCS = glob(["math/*.cpp"])
+MATH_SRCS = glob([
+    "math/*.cpp",
+    "math/cephes/*.cpp",
+    "math/cephes/*.hpp",
+])
 
 MATH_HDRS = glob(["math/*.hpp"])
 
