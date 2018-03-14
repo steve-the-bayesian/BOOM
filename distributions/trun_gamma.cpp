@@ -56,12 +56,11 @@ namespace BOOM {
 
   class DLogGammaDensity {
    public:
-    DLogGammaDensity(double a, double b, double cut)
-        : a_(a), b_(b), cut_(cut) {}
+    DLogGammaDensity(double a, double b) : a_(a), b_(b) {}
     double operator()(double x) const { return (a_ - 1) / x - b_; }
 
    private:
-    double a_, b_, cut_;
+    double a_, b_;
   };
 
   double rtrun_gamma(double a, double b, double cut, unsigned n) {
@@ -80,7 +79,7 @@ namespace BOOM {
     if (a > 1) {
       try {
         BoundedAdaptiveRejectionSampler sam(cut, LogGammaDensity(a, b, cut),
-                                            DLogGammaDensity(a, b, cut));
+                                            DLogGammaDensity(a, b));
         return sam.draw(rng);
       } catch (std::exception &e) {
         std::ostringstream err;

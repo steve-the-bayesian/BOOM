@@ -24,6 +24,7 @@
 #include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "Models/HMM/hmm_tools.hpp"
+#include "cpputil/ThreadTools.hpp"
 #include "distributions.hpp"
 #include "distributions/Markov.hpp"
 
@@ -591,7 +592,7 @@ namespace BOOM {
   void NestedHmm::start_thread_imputation() {
     ThreadWorkerPool pool;
     pool.add_threads(workers_.size());
-    std::vector<future<void>> futures;
+    std::vector<std::future<void>> futures;
     for (int i = 0; i < workers_.size(); ++i){
       ClickstreamSamplingImputer imputer(workers_[i]);
       futures.emplace_back(pool.submit(imputer));
@@ -616,8 +617,8 @@ namespace BOOM {
   void NestedHmm::start_thread_em() {
     ThreadWorkerPool pool;
     pool.add_threads(workers_.size());
-    std::vector<future<void>> futures;
-    for (inti i = 0; i < workers_.size(); ++i) {
+    std::vector<std::future<void>> futures;
+    for (int i = 0; i < workers_.size(); ++i) {
       ClickstreamEmImputer imputer(workers_[i]);
       futures.emplace_back(pool.submit(imputer));
     }
