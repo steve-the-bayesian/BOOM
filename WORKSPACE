@@ -1,10 +1,11 @@
 
-## Use the github archive for googletest / gtest, version 1.8
+# Use the github archive for googletest / gtest, version 1.8
 new_http_archive(
     name = "gtest",
     url = "https://github.com/google/googletest/archive/release-1.8.0.zip",
     build_file = "gtest.BUILD",
 )
+
 
 ## Grab bazel rules for R
 ## See https://github.com/grailbio/rules_r
