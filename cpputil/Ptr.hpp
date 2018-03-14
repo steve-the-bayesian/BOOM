@@ -153,7 +153,6 @@ namespace BOOM {
     template <class Y>
     Ptr(const Ptr<Y> &rhs) : managed_pointer_(rhs.get_boost()) {}
     template <class Y>
-    Ptr(std::auto_ptr<Y> &rhs) : managed_pointer_(rhs) {}
     explicit Ptr(const std::shared_ptr<T> &rhs) : managed_pointer_(rhs) {}
 
     Ptr &operator=(const Ptr &rhs) {
@@ -165,12 +164,6 @@ namespace BOOM {
     template <class Y>
     Ptr &operator=(const Ptr<Y> &rhs) {
       managed_pointer_ = rhs.get_boost();
-      return *this;
-    }
-
-    template <class Y>
-    Ptr &operator=(const std::auto_ptr<Y> &rhs) {
-      managed_pointer_ = rhs;
       return *this;
     }
 

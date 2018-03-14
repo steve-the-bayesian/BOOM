@@ -188,6 +188,7 @@ cc_library(
     copts = [
         "-I/usr/local/include",
         "-std=c++11",
+        "-Wnosign-compare",
         "-isystem $(GENDIR)",
     ],
     #    includes = ["."],
