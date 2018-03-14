@@ -94,6 +94,12 @@ namespace {
       const Date &date(dates[i]);
       if (new_years_day->active(date)) {
         int d = new_years_day->days_into_influence_window(date);
+        ASSERT_GE(d, 0)
+            << "d = " << d << endl
+            << "new_years_effect = " << new_years_effect;
+        ASSERT_LT(d, new_years_effect.size())
+            << "d = " << d << endl
+            << "new_years_effect = " << new_years_effect;
         y[i] += new_years_effect[d];
       }
 
