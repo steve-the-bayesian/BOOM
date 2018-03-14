@@ -36,7 +36,6 @@
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
-#include "LinAlg/LU.hpp"
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/QR.hpp"
 

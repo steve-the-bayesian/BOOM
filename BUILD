@@ -33,7 +33,11 @@ DISTRIBUTIONS_SRCS = glob(["distributions/*.cpp"])
 
 DISTRIBUTIONS_HDRS = glob(["distributions/*.hpp"])
 
-MATH_SRCS = glob(["math/*.cpp"])
+MATH_SRCS = glob([
+    "math/*.cpp",
+    "math/cephes/*.cpp",
+    "math/cephes/*.hpp",
+])	
 
 MATH_HDRS = glob(["math/*.hpp"])
 
@@ -189,15 +193,13 @@ cc_library(
         "-I/usr/local/include",
         "-std=c++11",
         "-isystem $(GENDIR)",
+        "-Wno-sign-compare",
     ],
     #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
-        "-llapack",
-        "-lblas",
         "-lm",
-        "-lboost_thread-mt",
     ],
     visibility = ["//visibility:public"],
 )
