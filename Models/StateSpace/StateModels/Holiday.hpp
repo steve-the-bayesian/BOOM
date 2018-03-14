@@ -117,11 +117,10 @@ namespace BOOM {
   Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
                               int days_after);
 
-  //======================================================================
-  // An OrdinaryAnnualHoliday is a Holiday that occurs once per year,
-  // with a fixed-sized window of influence.  An OrdinaryAnnualHoliday
-  // keeps track of two integers: days_before and days_after, that
-  // define its influence window.
+  //==========================================================================
+  // An OrdinaryAnnualHoliday is a Holiday that occurs once per year, with a
+  // fixed-sized window of influence.  An OrdinaryAnnualHoliday keeps track of
+  // two integers: days_before and days_after, that define its influence window.
   class OrdinaryAnnualHoliday : public SingleDayHoliday {
    public:
     OrdinaryAnnualHoliday(int days_before, int days_after);
@@ -129,12 +128,11 @@ namespace BOOM {
     Date date_on_or_after(const Date &d) const override;
     Date date_on_or_before(const Date &d) const override;
 
-    // The date the holiday occurs on a given year.  For floating
-    // holidays, the date() function might be expensive to compute
-    // over and over again, so we defer computation to a rarely called
-    // function compute_date(), and store the results in a table.
-    // This class implements the table logic, and requires its
-    // children to implement compute_date().
+    // The date the holiday occurs on a given year.  For floating holidays, the
+    // date() function might be expensive to compute over and over again, so we
+    // defer computation to a rarely called function compute_date(), and store
+    // the results in a table.  This class implements the table logic, and
+    // requires its children to implement compute_date().
     virtual Date date(int year) const;
 
     // Compute the date of this holiday in the given year.

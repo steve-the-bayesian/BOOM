@@ -14,6 +14,15 @@ namespace {
     }
   };
 
+  // days_into_influence_window
+  // maximum_window_width
+  // active
+  // date_on_or_after
+  // date_on_or_before
+  // nearest
+  // date(year)
+  
+
   TEST_F(HolidayTest, NewYears) {
     NewYearsDay nyd(2, 1);
 
@@ -34,7 +43,6 @@ namespace {
     EXPECT_TRUE(nyd.active(Date(Jan, 2, 2012)));
     EXPECT_FALSE(nyd.active(Date(Jan, 3, 2012)));
 
-
     EXPECT_EQ(nyd.date_on_or_after(Date(Sep, 3, 2004)),
               Date(Jan, 1, 2005));
     EXPECT_EQ(nyd.date_on_or_after(Date(Jan, 1, 2005)),
@@ -49,6 +57,122 @@ namespace {
     EXPECT_EQ(1,
               nyd.days_into_influence_window(Date(Dec, 31, 2011)));
     
+    EXPECT_EQ(nyd.date(2004), Date(Jan, 1, 2004));
+    EXPECT_EQ(nyd.date(2007), Date(Jan, 1, 2007));
+  }
+
+  TEST_F(HolidayTest, Easter) {
+    EasterSunday easter(3, 1);
+
+    // In 2014 easter was April 20.
+    Date easter_2014(Apr, 20, 2014);
+    Date before_easter = easter_2014 - 1;
+    EXPECT_EQ(easter.nearest(before_easter),
+              easter_2014);
+    EXPECT_EQ(easter.nearest(easter_2014 + 1),
+              easter_2014);
+    EXPECT_EQ(easter.date_on_or_after(easter_2014),
+              easter_2014);
+    EXPECT_EQ(easter.date_on_or_after(easter_2014 - 1),
+              easter_2014);
+    EXPECT_EQ(easter.date_on_or_after(easter_2014 - 100),
+              easter_2014);
+
+    Date easter_2015(Apr, 5, 2015);
+    EXPECT_EQ(easter.date_on_or_after(easter_2014 + 1),
+              easter_2015);
+    EXPECT_EQ(easter.date_on_or_before(easter_2015 - 1),
+              easter_2014);
+
+    EXPECT_EQ(5, easter.maximum_window_width());
+
+    EXPECT_FALSE(easter.active(easter_2014 - 4));
+    EXPECT_TRUE(easter.active(easter_2014 - 3));
+    EXPECT_TRUE(easter.active(easter_2014 - 2));
+    EXPECT_TRUE(easter.active(easter_2014 - 1));
+    EXPECT_TRUE(easter.active(easter_2014));
+    EXPECT_TRUE(easter.active(easter_2014 + 1));
+    EXPECT_FALSE(easter.active(easter_2014 + 2));
+    EXPECT_FALSE(easter.active(easter_2014 + 230));
+
+    EXPECT_EQ(-1,
+              easter.days_into_influence_window(easter_2014 - 4));
+    EXPECT_EQ(0,
+              easter.days_into_influence_window(easter_2014 - 3));
+    EXPECT_EQ(1,
+              easter.days_into_influence_window(easter_2014 - 2));
+    EXPECT_EQ(2,
+              easter.days_into_influence_window(easter_2014 - 1));
+    EXPECT_EQ(3,
+              easter.days_into_influence_window(easter_2014));
+    EXPECT_EQ(4,
+              easter.days_into_influence_window(easter_2014 + 1));
+    EXPECT_EQ(-1,
+              easter.days_into_influence_window(easter_2014 + 2));
+    
+    EXPECT_EQ(easter.date(2014), easter_2014);
+    EXPECT_EQ(easter.date(2015), easter_2015);
+  }
+
+  // MartinLutherKingDay is an NthWeekdayInMonth holiday.
+  TEST_F(HolidayTest, MlkTest) {
+    MartinLutherKingDay mlk(1, 1);
+    Date mlk_2004(Jan, 19, 2004);
+    Date mlk_2005(Jan, 17, 2005);
+    EXPECT_EQ(mlk_2004.day_of_week(), Mon);
+    EXPECT_EQ(mlk_2005.day_of_week(), Mon);
+    EXPECT_EQ(mlk.nearest(Date(Mar, 10, 2004)), mlk_2004);
+    EXPECT_EQ(mlk.nearest(mlk_2004), mlk_2004);
+    EXPECT_EQ(mlk.nearest(Date(Sep, 10, 2004)), mlk_2005);
+    EXPECT_EQ(mlk.nearest(mlk_2005), mlk_2005);
+
+    EXPECT_FALSE(mlk.active(mlk_2004 - 2));
+    EXPECT_TRUE(mlk.active(mlk_2004 - 1));
+    EXPECT_TRUE(mlk.active(mlk_2004));
+    EXPECT_TRUE(mlk.active(mlk_2004 + 1));
+    EXPECT_FALSE(mlk.active(mlk_2004 + 2));
+
+    EXPECT_EQ(mlk.date_on_or_after(mlk_2004 - 9), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_after(mlk_2004 - 1), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_after(mlk_2004), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_after(mlk_2004 + 1), mlk_2005);
+
+    EXPECT_EQ(mlk.date_on_or_before(mlk_2004), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_before(mlk_2004 + 1), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_before(mlk_2004 + 300), mlk_2004);
+    EXPECT_EQ(mlk.date_on_or_before(mlk_2005 - 1), mlk_2004);
+
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004 - 2), -1);
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004 - 1), 0);
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004), 1);
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004 + 1), 2);
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004 + 2), -1);
+    EXPECT_EQ(mlk.days_into_influence_window(mlk_2004 + 200), -1);
+
+    EXPECT_EQ(mlk.date(2004), mlk_2004);
+    EXPECT_EQ(mlk.date(2005), mlk_2005);
+  }
+
+  // MemorialDay is a LastWeekdayInMonthHoliday
+  TEST_F(HolidayTest, MemorialDayTest) {
+    MemorialDay md(1, 2);
+    Date md_2010(May, 31, 2010);
+    Date md_2011(May, 30, 2011);
+    EXPECT_EQ(md_2010.day_of_week(), Mon);
+    EXPECT_EQ(md_2011.day_of_week(), Mon);
+    EXPECT_EQ(md.nearest(md_2010 - 1), md_2010);
+    EXPECT_EQ(md.nearest(md_2010), md_2010);
+    EXPECT_EQ(md.nearest(md_2010 + 1), md_2010);
+    EXPECT_EQ(md.nearest(md_2010 + 120), md_2010);
+    EXPECT_EQ(md.nearest(md_2010 + 300), md_2011);
+
+    EXPECT_FALSE(md.active(md_2010 - 2));
+    EXPECT_TRUE(md.active(md_2010 - 1));
+    EXPECT_TRUE(md.active(md_2010));
+    EXPECT_TRUE(md.active(md_2010 + 1));
+    EXPECT_TRUE(md.active(md_2010 + 2));
+    EXPECT_FALSE(md.active(md_2010 + 3));
+    EXPECT_FALSE(md.active(md_2010 + 37));
   }
   
   TEST_F(HolidayTest, DateRangeHoliday) {

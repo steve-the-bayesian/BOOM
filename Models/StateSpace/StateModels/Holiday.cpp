@@ -39,8 +39,8 @@ namespace BOOM {
 
   bool SingleDayHoliday::active(const Date &date) const {
     Date holiday_date(nearest(date));
-    return date >= earliest_influence(holiday_date) &&
-           date <= latest_influence(holiday_date);
+    return (date <= holiday_date && date >= earliest_influence(holiday_date))
+        || (date >= holiday_date && date <= latest_influence(holiday_date));
   }
 
   //======================================================================
