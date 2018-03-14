@@ -7,7 +7,7 @@ all:	libboom.a
 # MAKEFLAGS=" -k -j 8 "
 
 PKG_CFLAGS = -DADD_ -DR_NO_REMAP
-PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DNO_BOOST_THREADS 
+PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes 
 
 ############################################################################
 # Begin the list of all the BOOM source files.

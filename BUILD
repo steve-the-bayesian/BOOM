@@ -37,7 +37,7 @@ MATH_SRCS = glob([
     "math/*.cpp",
     "math/cephes/*.cpp",
     "math/cephes/*.hpp",
-])	
+])
 
 MATH_HDRS = glob(["math/*.hpp"])
 
