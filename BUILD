@@ -194,15 +194,13 @@ cc_library(
         "-std=c++11",
         "-Wnosign-compare",
         "-isystem $(GENDIR)",
+        "-Wno-sign-compare",
     ],
     #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
-        "-llapack",
-        "-lblas",
         "-lm",
-        "-lboost_thread-mt",
     ],
     visibility = ["//visibility:public"],
 )
