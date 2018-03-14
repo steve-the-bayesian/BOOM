@@ -64,9 +64,11 @@ namespace BOOM {
 
    protected:
     // The dates of earliest and latest influence for a holiday occurring on
-    // 'holiday_date'.  These functions are protected because it is an error to
-    // call this function when active(holiday_date) is false, which is an easy
-    // error to make.
+    // 'holiday_date' meaning that holiday_date is a date in the influence
+    // interval for the holiday.  If holiday_date is not in the influence
+    // interval for a holiday then Jan 1, -1000000 is returned.  That's 1
+    // million years BC for Raquel Welch fans!!
+
     virtual Date earliest_influence(const Date &holiday_date) const = 0;
     virtual Date latest_influence(const Date &holiday_date) const = 0;
 
@@ -82,8 +84,9 @@ namespace BOOM {
 
   // A SingleDayHoliday is a holiday associated with a specific date.  Its
   // influence can extend beyond that date, but (e.g.) February 14 is
-  // Valentine's day.  Most Holidays are SingleDayHolidays, but the Olympics, or
-  // the World Cup are not.
+  // Valentine's day.  Most Holidays are SingleDayHolidays, some religious
+  // holidays (e.g. Passover) and some sporting events (e.g. the Olympics or the
+  // World Cup) are not.
   class SingleDayHoliday : public Holiday {
    public:
     // The first incidence of the holiday ON or AFTER the given date.  Returns a

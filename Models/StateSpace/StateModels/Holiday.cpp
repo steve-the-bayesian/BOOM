@@ -46,35 +46,19 @@ namespace BOOM {
   //======================================================================
   OrdinaryAnnualHoliday::OrdinaryAnnualHoliday(int days_before, int days_after)
       : days_before_(days_before), days_after_(days_after) {
-    assert(days_before >= 0);
-    assert(days_after >= 0);
+    if (days_before < 0 || days_after < 0) {
+      report_error("Influence window must have non-negative size.");
+    }
   }
 
   Date OrdinaryAnnualHoliday::earliest_influence(
-      const Date &holiday_date) const {
-    int year = holiday_date.year();
-    std::map<Year, Date>::iterator it = earliest_influence_by_year_.find(year);
-    if (it != earliest_influence_by_year_.end()) {
-      return it->second;
-    }
-    Date ans = date(year) - days_before_;
-    earliest_influence_by_year_[year] = ans;
-    // Note that year refers to the year of the holiday, and
-    // earliest_influence_by_year_[year] contains a Date whose year()
-    // might not be in the same year as the holiday (if the holiday is
-    // close to a year boundary).
-    return ans;
+      const Date &date_in_window) const {
+    return nearest(date_in_window) - days_before_;
   }
 
-  Date OrdinaryAnnualHoliday::latest_influence(const Date &holiday_date) const {
-    int year = holiday_date.year();
-    std::map<Year, Date>::iterator it = latest_influence_by_year_.find(year);
-    if (it != latest_influence_by_year_.end()) {
-      return it->second;
-    }
-    Date ans = date(year) + days_after_;
-    latest_influence_by_year_[year] = ans;
-    return ans;
+  Date OrdinaryAnnualHoliday::latest_influence(
+      const Date &date_in_window) const {
+    return nearest(date_in_window) + days_after_;
   }
 
   int OrdinaryAnnualHoliday::maximum_window_width() const {

@@ -14,6 +14,43 @@ namespace {
     }
   };
 
+  TEST_F(HolidayTest, NewYears) {
+    NewYearsDay nyd(2, 1);
+
+    Date before_nyd(Dec, 31, 2014);
+    EXPECT_EQ(nyd.nearest(before_nyd),
+              Date(Jan, 1, 2015));
+    EXPECT_EQ(nyd.date_on_or_after(before_nyd),
+              Date(Jan, 1, 2015));
+    EXPECT_EQ(nyd.date_on_or_before(before_nyd),
+              Date(Jan, 1, 2014));
+
+    EXPECT_EQ(4, nyd.maximum_window_width());
+
+    EXPECT_FALSE(nyd.active(Date(Dec, 29, 2011)));
+    EXPECT_TRUE(nyd.active(Date(Dec, 30, 2011)));
+    EXPECT_TRUE(nyd.active(Date(Dec, 31, 2011)));
+    EXPECT_TRUE(nyd.active(Date(Jan, 1, 2012)));
+    EXPECT_TRUE(nyd.active(Date(Jan, 2, 2012)));
+    EXPECT_FALSE(nyd.active(Date(Jan, 3, 2012)));
+
+
+    EXPECT_EQ(nyd.date_on_or_after(Date(Sep, 3, 2004)),
+              Date(Jan, 1, 2005));
+    EXPECT_EQ(nyd.date_on_or_after(Date(Jan, 1, 2005)),
+              Date(Jan, 1, 2005));
+    EXPECT_EQ(nyd.date_on_or_after(Date(Jan, 2, 2005)),
+              Date(Jan, 1, 2006));
+
+    EXPECT_EQ(-1,
+              nyd.days_into_influence_window(Date(Dec, 29, 2011)));
+    EXPECT_EQ(0,
+              nyd.days_into_influence_window(Date(Dec, 30, 2011)));
+    EXPECT_EQ(1,
+              nyd.days_into_influence_window(Date(Dec, 31, 2011)));
+    
+  }
+  
   TEST_F(HolidayTest, DateRangeHoliday) {
     DateRangeHoliday holiday;
     EXPECT_EQ(-1, holiday.maximum_window_width());
