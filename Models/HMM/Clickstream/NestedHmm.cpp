@@ -314,7 +314,6 @@ namespace BOOM {
     return ans;
   }
   //----------------------------------------------------------------------
-#ifndef NO_BOOST_THREADS
   double NestedHmm::fwd_bkwd_with_threads(bool bayes, bool find_mode) {
     clear_client_data();
     pass_params_to_workers();
@@ -328,33 +327,33 @@ namespace BOOM {
     if (find_mode) complete_data_mode(bayes);
     return loglike;
   }
-#endif
 
   //----------------------------------------------------------------------
   // One step of an EM algorithm for finding point estimates of model
   // parameters
   double NestedHmm::fwd_bkwd(bool bayes, bool find_mode) {
-#ifndef NO_BOOST_THREADS
-    if (!workers_.empty()) return fwd_bkwd_with_threads(bayes, find_mode);
-#endif
-    clear_client_data();
-    int N = Nstreams();
-    fill_big_Q();
-    double loglike = 0;
+    if (!workers_.empty()) {
+      return fwd_bkwd_with_threads(bayes, find_mode);
+    } else {
+      clear_client_data();
+      int N = Nstreams();
+      fill_big_Q();
+      double loglike = 0;
 
-    for (int i = 0; i < N; ++i) {
-      loglike += fwd(stream(i));
-      bkwd_smoothing(stream(i));
+      for (int i = 0; i < N; ++i) {
+        loglike += fwd(stream(i));
+        bkwd_smoothing(stream(i));
+      }
+      if (find_mode) complete_data_mode(bayes);
+
+      loglike_->set(loglike);
+
+      if (bayes) {
+        loglike += logpri();
+        logpost_->set(loglike);
+      }
+      return loglike;
     }
-    if (find_mode) complete_data_mode(bayes);
-
-    loglike_->set(loglike);
-
-    if (bayes) {
-      loglike += logpri();
-      logpost_->set(loglike);
-    }
-    return loglike;
   }
 
   //----------------------------------------------------------------------
@@ -536,9 +535,9 @@ namespace BOOM {
   Ptr<Clickstream::Stream> NestedHmm::stream(int i) { return this->dat()[i]; }
   //----------------------------------------------------------------------
   double NestedHmm::impute_latent_data() {
-#ifndef NO_BOOST_THREADS
-    if (!workers_.empty()) return impute_latent_data_with_threads();
-#endif
+    if (!workers_.empty()) {
+      return impute_latent_data_with_threads();
+    }
     clear_client_data();
     double ans = 0;
     fill_big_Q();
@@ -552,7 +551,6 @@ namespace BOOM {
     return ans;
   }
   //----------------------------------------------------------------------
-#ifndef NO_BOOST_THREADS
   double NestedHmm::impute_latent_data_with_threads() {
     clear_client_data();
     pass_params_to_workers();
@@ -562,7 +560,6 @@ namespace BOOM {
     logpost_->set(loglike + logpri());
     return loglike;
   }
-#endif
   //----------------------------------------------------------------------
   struct ClickstreamSamplingImputer {
     Ptr<NestedHmm> mod;
@@ -576,11 +573,6 @@ namespace BOOM {
     void operator()() { mod->fwd_bkwd(false, false); }
   };
   //----------------------------------------------------------------------
-#ifdef NO_BOOST_THREADS
-  void NestedHmm::set_threads(int n) {
-    // nothing needed.
-  }
-#else
   void NestedHmm::set_threads(int n) {
     clear_workers();
     for (int i = 0; i < n; ++i) {
@@ -597,12 +589,16 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void NestedHmm::start_thread_imputation() {
-    boost::thread_group tg;
-    for (int i = 0; i < workers_.size(); ++i) {
-      ClickstreamSamplingImputer imp(workers_[i]);
-      tg.add_thread(new boost::thread(imp));
+    ThreadWorkerPool pool;
+    pool.add_threads(workers_.size());
+    std::vector<future<void>> futures;
+    for (int i = 0; i < workers_.size(); ++i){
+      ClickstreamSamplingImputer imputer(workers_[i]);
+      futures.emplace_back(pool.submit(imputer));
     }
-    tg.join_all();
+    for (int i = 0; i < workers_.size(); ++i) {
+      futures[i].get();
+    }
   }
   //----------------------------------------------------------------------
   void NestedHmm::add_worker(const Ptr<NestedHmm> &w) { workers_.push_back(w); }
@@ -618,12 +614,16 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void NestedHmm::start_thread_em() {
-    boost::thread_group tg;
-    for (int i = 0; i < workers_.size(); ++i) {
-      ClickstreamEmImputer imp(workers_[i]);
-      tg.add_thread(new boost::thread(imp));
+    ThreadWorkerPool pool;
+    pool.add_threads(workers_.size());
+    std::vector<future<void>> futures;
+    for (inti i = 0; i < workers_.size(); ++i) {
+      ClickstreamEmImputer imputer(workers_[i]);
+      futures.emplace_back(pool.submit(imputer));
     }
-    tg.join_all();
+    for (int i = 0; i < workers_.size(); ++i) {
+      futures[i].get();
+    }
   }
   //----------------------------------------------------------------------
   double NestedHmm::collect_threads() {
@@ -640,7 +640,6 @@ namespace BOOM {
     }
     return loglike;
   }
-#endif
   //----------------------------------------------------------------------
   void NestedHmm::clear_client_data() {
     session_model()->clear_data();
