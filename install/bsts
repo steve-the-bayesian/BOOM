@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PACKAGE=bsts
+
 usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
 
 DO_INSTALL=0
@@ -26,33 +28,33 @@ if [ ! -d rpackage ]; then
     mkdir rpackage
 fi
 
-BSTSDIR='rpackage/bsts'
-## If there is already an rpackage/bsts directory then delete it.
-if [ -d "$BSTSDIR" ]; then
-   rm -rf $BSTSDIR
+PACKAGEDIR='rpackage/$PACKAGE'
+## If there is already an rpackage/$PACKAGE directory then delete it.
+if [ -d "$PACKAGEDIR" ]; then
+   rm -rf $PACKAGEDIR
 fi
 
-cp -r ./Interfaces/R/bsts rpackage
+cp -r ./Interfaces/R/$PACKAGE rpackage
 cd rpackage
-if [ -d bsts/tests ]; then
-    if [ ! -d bsts/inst ]; then
-	mkdir bsts/inst
+if [ -d $PACKAGE/tests ]; then
+    if [ ! -d $PACKAGE/inst ]; then
+	mkdir $PACKAGE/inst
     fi
-    mv bsts/tests bsts/inst/tests
+    mv $PACKAGE/tests $PACKAGE/inst/tests
 fi
 
-if [ -f bsts_*.tar.gz ]; then
-    rm bsts_*.tar.gz
+if [ -f $PACKAGE_*.tar.gz ]; then
+    rm $PACKAGE_*.tar.gz
 fi
 
-R CMD BUILD bsts
+R CMD BUILD $PACKAGE
 
 if [[ $DO_CHECK = 1 ]]; then
     echo "Checking package"
-    MAKEFLAGS=" -j 8 " R CMD CHECK bsts_*.tar.gz
+    MAKEFLAGS=" -j 8 " R CMD CHECK $PACKAGE_*.tar.gz
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
     echo "Installing package"
-    MAKEFLAGS=" -j 8 " R CMD INSTALL bsts_*.tar.gz
+    MAKEFLAGS=" -j 8 " R CMD INSTALL $PACKAGE_*.tar.gz
 fi

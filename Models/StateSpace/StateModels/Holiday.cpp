@@ -343,7 +343,6 @@ namespace BOOM {
   // the holiday name.
   Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
                               int days_after) {
-    cout << "Creating named holiday: " << holiday_name << endl;
     if (holiday_name == "NewYearsDay") {
       return new NewYearsDay(days_before, days_after);
     } else if (holiday_name == "MartinLutherKingDay") {

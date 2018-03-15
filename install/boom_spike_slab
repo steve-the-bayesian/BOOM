@@ -1,15 +1,61 @@
 #!/bin/bash
 
-BSS='rpackage/BoomSpikeSlab'
-## If there is already a Boom directory then delete it.
-if [ -d "$BSS" ]; then
-   rm -rf $BSS
-fi
+PACKAGE=BoomSpikeSlab
 
-if [ -d rpackage ]; then
+usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+
+DO_INSTALL=0
+DO_CHECK=0
+
+while getopts :ci option; do
+    case "${option}" in
+        i)
+            DO_INSTALL=1
+            ;;
+        c)
+            DO_CHECK=1
+            ;;
+        \?)
+	    echo "Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+## If the rpackage directory does not exist then create it.
+if [ ! -d rpackage ]; then
     mkdir rpackage
 fi
 
-cp -r ./Interfaces/R/BoomSpikeSlab rpackage
+PACKAGEDIR='rpackage/$PACKAGE'
+## If there is already an rpackage/$PACKAGE directory then delete it.
+if [ -d "$PACKAGEDIR" ]; then
+   rm -rf $PACKAGEDIR
+fi
+
+cp -r ./Interfaces/R/$PACKAGE rpackage
 cd rpackage
-R CMD BUILD BoomSpikeSlab
+if [ -d $PACKAGE/tests ]; then
+    if [ ! -d $PACKAGE/inst ]; then
+	mkdir $PACKAGE/inst
+    fi
+    mv $PACKAGE/tests $PACKAGE/inst/tests
+fi
+
+if [ -f $PACKAGE_*.tar.gz ]; then
+    rm $PACKAGE_*.tar.gz
+fi
+
+echo "Building $PACKAGE"
+R CMD BUILD $PACKAGE
+
+if [[ $DO_CHECK = 1 ]]; then
+    echo "Checking $PACKAGE"
+    MAKEFLAGS=" -j 8 " R CMD CHECK $PACKAGE_*.tar.gz
+fi
+
+if [[ $DO_INSTALL = 1 ]]; then
+    echo "Installing $PACKAGE"
+    MAKEFLAGS=" -j 8 " R CMD INSTALL $PACKAGE_*.tar.gz
+fi
