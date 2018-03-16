@@ -7,8 +7,6 @@
 #include "r_interface/prior_specification.hpp"
 #include "r_interface/seed_rng_from_R.hpp"
 
-#include <R_ext/Parse.h>  // Needed for RVectorFunction.  
-
 namespace {
   using namespace BOOM;
   using namespace BOOM::RInterface;
