@@ -8,3 +8,5 @@ package_name [-c] [-i]
 -c : run the package through R CMD CHECK
 
 -i : run the package through R CMD INSTALL
+
+
