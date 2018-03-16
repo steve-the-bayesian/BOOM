@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2011 Steven L. Scott
+  Copyright (C) 2005-2018 Steven L. Scott
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -508,6 +508,24 @@ namespace BOOM {
     return "";
   }
 
+  SEXP ToRString(const std::string &s) {
+    SEXP ans;
+    RMemoryProtector protector;
+    protector.protect(ans = Rf_allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, Rf_mkChar(s.c_str()));
+    return ans;
+  }
+
+  SEXP ToRStringVector(const std::vector<std::string> &string_vector) {
+    SEXP ans;
+    RMemoryProtector protector;
+    protector.protect(ans = Rf_allocVector(STRSXP, string_vector.size()));
+    for (int i = 0; i < string_vector.size(); ++i) {
+      SET_STRING_ELT(ans, i, Rf_mkChar(string_vector[i].c_str()));
+    }
+    return ans;
+  }
+  
   Factor::Factor(SEXP r_factor)
       : values_(Rf_length(r_factor)),
         levels_(new CatKey(GetFactorLevels(r_factor)))
@@ -578,5 +596,5 @@ namespace BOOM {
     // longjmp out of the current context, so C++ can clean up correctly.
     return (!R_ToplevelExec(check_interrupt_func, NULL));
   }
-
+  
 }  // namespace BOOM;

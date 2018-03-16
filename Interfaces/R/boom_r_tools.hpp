@@ -259,6 +259,10 @@ namespace BOOM{
   //     STRINGSXP then the first element is returned.
   std::string ToString(SEXP r_string);
 
+  // Convert a C++ string (or vector of strings) to an R character vector.
+  SEXP ToRString(const std::string &s);
+  SEXP ToRStringVector(const std::vector<std::string> &string_vector);
+
   // A Factor object is intended to be initialized with an R factor.
   class Factor {
    public:
@@ -330,18 +334,16 @@ namespace BOOM{
     int protection_count_;
   };
 
-  // The job of an RErrorReporter is to reconcile the error handling
-  // mechanisms of C++ (exceptions) and R (Rf_error).  When C++
-  // exceptions are thrown, stack unwinding frees memory in objects
-  // held by smart pointers that go out of scope.  When Rf_error is
-  // called, the destructors that C++ relies on to do the right thing
-  // are never called, and so memory leaks.  The solution is to define
-  // an RErrorReporter on the first line of a function entered by
-  // .Call().  If an error is encountered that should be communicated
-  // back to R then write it using SetError, and then exit the
-  // function.  The RErrorReporter will be the last thing destroyed on
-  // function exit, and its destructor will call Rf_error with the
-  // specified error message.
+  // The job of an RErrorReporter is to reconcile the error handling mechanisms
+  // of C++ (exceptions) and R (Rf_error).  When C++ exceptions are thrown,
+  // stack unwinding frees memory in objects held by smart pointers that go out
+  // of scope.  When Rf_error is called, the destructors that C++ relies on to
+  // do the right thing are never called, and so memory leaks.  The solution is
+  // to define an RErrorReporter on the first line of a function entered by
+  // .Call().  If an error is encountered that should be communicated back to R
+  // then write it using SetError, and then exit the function.  The
+  // RErrorReporter will be the last thing destroyed on function exit, and its
+  // destructor will call Rf_error with the specified error message.
   class RErrorReporter {
    public:
     RErrorReporter() : error_message_(nullptr) {}
