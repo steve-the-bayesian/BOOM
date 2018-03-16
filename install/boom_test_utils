@@ -1,15 +1,3 @@
 #!/bin/bash
 
-BSTSDIR='rpackage/BoomTestUtils'
-## If there is already a Boom directory then delete it.
-if [ -d "$BTUDIR" ]; then
-   rm -rf $BTUDIR
-fi
-
-if [ -d rpackage ]; then
-    mkdir rpackage
-fi
-
-cp -r ./Interfaces/R/BoomTestUtils rpackage
-cd rpackage
-R CMD BUILD BoomTestUtils
+PACKAGE=BoomTestUtils ./install/install.package $@
