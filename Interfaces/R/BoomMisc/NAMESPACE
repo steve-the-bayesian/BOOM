@@ -1,0 +1,5 @@
+export("slice.sampler")
+
+useDynLib(BoomMisc, .registration = TRUE)
+
+importFrom("Boom", "check.scalar.integer")
