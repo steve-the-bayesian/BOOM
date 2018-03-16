@@ -362,6 +362,48 @@ namespace BOOM{
     std::string *error_message_;
   };
 
+  // A functor representing a scalar-valued function of a single Vector valued
+  // argument.  The canonical use case for this class is for users to be able to
+  // define a log density in R and pass it to a PosteriorSampler in BOOM.  This
+  // approach will be much slower than defining everything in C++, but it can be
+  // quite convenient.
+  class RVectorFunction {
+   public:
+    // Args:
+    //   r_vector_function: An R list containing three elements, in the
+    //     following order.
+    //   - r_fun: The function (closure) passed in from R.  The function should
+    //       take a single argument (a real-valued vector), and return a scalar.
+    //   - r_env: The environment in which to evaluate r_fun.
+    //   - argument_name: The name of the argument to r_fun as it appears in the
+    //       function signature.
+    RVectorFunction(SEXP r_vector_function);
+
+    // The process of evaluatingt the function creates an object in the
+    // function's environment with an ugly name.  The destructor should remove
+    // this object.
+    ~RVectorFunction();
+    
+    // Evaluate the function at x.
+    double evaluate(const Vector &x);
+    double operator()(const Vector &x) { return evaluate(x); }
+    
+   private:
+    // The name of the function as it exists in R.
+    std::string function_name_;
+
+    // The name of the object to which we will be assigning numerical values.
+    // Should be ugly so we don't accidentally overwrite anytihng.
+    std::string argument_name_;
+
+    // The environment in which to find the R function.
+    SEXP r_env_;
+
+    // The call we will use to get the output, something like "f(argument_name_)"
+    std::string call_string_;
+  };
+
+  
   // Returns true if the user has requested an interrupt.
   bool RCheckInterrupt();
 

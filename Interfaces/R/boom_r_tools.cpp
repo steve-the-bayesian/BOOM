@@ -584,6 +584,51 @@ namespace BOOM {
     }
   }
 
+
+  RVectorFunction::RVectorFunction(SEXP r_vector_function)
+      : function_name_(ToString(getListElement(
+            r_vector_function, "function.name"))),
+        argument_name_("RVectorFunction_arg_"),
+        r_env_(getListElement(r_vector_function, "env"))
+  {
+    if (!Rf_isEnvironment(r_env_)) {
+      Rf_PrintValue(r_env_);
+      report_error("The second argument to RVectorFunction must be an "
+                   "environment.");
+    }
+    call_string_ = function_name_ + "(" + argument_name_ + ")";
+
+  }
+
+  // If RVectorFunction_arg_ exists in r_env_ then delete it
+  RVectorFunction::~RVectorFunction() {
+    // ParseStatus parse_status;
+    // std::string rm_string = "if (exists(" + argument_name_ + ") rm(" + argument_name_ + ")";
+    // RMemoryProtector protector;
+    // SEXP r_call = protector.protect(R_ParseVector(
+    //     ToRString(rm_string), 1, &parse_status, R_NilValue));
+    // Rf_eval(VECTOR_ELT(r_call, 0), r_env_);
+  }
+  
+  // Creates an object named argument_name_ in the function's environment, then
+  // calls f(argument_name_) on the function.
+  double RVectorFunction::evaluate(const Vector &x) {
+    // First, write x as an R object with the right name.
+    SEXP symbol, value;
+    RMemoryProtector protector;
+    protector.protect(symbol = Rf_install(argument_name_.c_str()));
+    protector.protect(value = ToRVector(x));
+    Rf_defineVar(symbol, value, r_env_);
+
+    // Next, create a call that we can pass to Rf_eval.
+    // ParseStatus is an enum defined in .../include/R_ext/Parse.h
+    ParseStatus parse_status;
+    SEXP r_call = protector.protect(R_ParseVector(
+        ToRString(call_string_), 1, &parse_status, R_NilValue));
+    return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
+  }
+
+  
   namespace {
     // Wrapper for R_CheckUserInterrupt.
     static void check_interrupt_func(void *dummy) {
