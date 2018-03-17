@@ -27,7 +27,7 @@ namespace BOOM {
   // One dimensional function minimization using Brent's method.
   class BrentMinimizer {
    public:
-    BrentMinimizer(const ScalarTarget &target);
+    explicit BrentMinimizer(const ScalarTarget &target);
 
     void minimize(double starting_value, double second_candidate);
     void minimize(double starting_value);
@@ -46,7 +46,7 @@ namespace BOOM {
 
   class BrentMaximizer {
    public:
-    BrentMaximizer(const ScalarTarget &f);
+    explicit BrentMaximizer(const ScalarTarget &f);
     void maximize(double starting_value);
     void maximize(double starting_value, double second_candidate);
 

@@ -29,7 +29,7 @@ namespace BOOM {
   class Integral {
    public:
     typedef std::function<double(double)> Fun;
-    Integral(const Fun &integrand,
+    explicit Integral(const Fun &integrand,
              double lower_limit = BOOM::negative_infinity(),
              double upper_limit = BOOM::infinity(), int iwork_limit = 100);
 

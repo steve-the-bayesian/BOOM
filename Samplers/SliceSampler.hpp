@@ -29,7 +29,7 @@ namespace BOOM {
 
   class SliceSampler : public Sampler {
    public:
-    SliceSampler(const Func &log_density, bool unimodal = false);
+    explicit SliceSampler(const Func &log_density, bool unimodal = false);
     Vector draw(const Vector &x) override;
 
    private:

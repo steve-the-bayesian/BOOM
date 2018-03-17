@@ -37,7 +37,7 @@ namespace BOOM {
   class SamplerBase : private RefCounted {
    public:
     SamplerBase();
-    SamplerBase(RNG *rng);
+    explicit SamplerBase(RNG *rng);
     SamplerBase(const SamplerBase &rhs);
     ~SamplerBase() override;
     void set_seed(unsigned long s);
@@ -57,7 +57,7 @@ namespace BOOM {
   class Sampler : public SamplerBase {
    public:
     Sampler() {}
-    Sampler(RNG *rng) : SamplerBase(rng) {}
+    explicit Sampler(RNG *rng) : SamplerBase(rng) {}
     virtual Vector draw(const Vector &old) = 0;
   };
   //======================================================================
@@ -65,7 +65,7 @@ namespace BOOM {
   class ScalarSampler : public SamplerBase {
    public:
     ScalarSampler() {}
-    ScalarSampler(RNG *rng) : SamplerBase(rng) {}
+    explicit ScalarSampler(RNG *rng) : SamplerBase(rng) {}
     virtual double draw(double) = 0;
   };
 

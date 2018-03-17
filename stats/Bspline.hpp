@@ -51,7 +51,7 @@ namespace BOOM {
     //     times.
     //   degree: The degree of the piecewise polynomial in between
     //     pairs of interior knots.
-    Bspline(const Vector &knots, int degree = 3);
+    explicit Bspline(const Vector &knots, int degree = 3);
 
     // The Bspline basis expansion at the value x.  If x lies outside
     // the range [knots.begin(), knots.end()] then all basis elements

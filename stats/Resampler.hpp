@@ -41,7 +41,7 @@ namespace BOOM {
     // Resamples according to an equally weighted distribution of
     // dimension nvals.
     // Equivalent to Resampler(Vector(nvals, 1.0 / nvals), false);
-    Resampler(int nvals = 1);  // equally weighted [0..nvals-1]
+    explicit Resampler(int nvals = 1);  // equally weighted [0..nvals-1]
 
     // Args:
     //   probs:  A discrete distribution (all non-negative elements).
@@ -49,7 +49,7 @@ namespace BOOM {
     //     to ensure proper normalization before being used.  If false
     //     then it is assumed that the normalization has already
     //     occurred prior to construction, so sum(probs) == 1 already.
-    Resampler(const Vector &probs, bool normalize = true);
+    explicit Resampler(const Vector &probs, bool normalize = true);
 
     // Resample from a vector of objects.
     // Args:

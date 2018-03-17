@@ -49,12 +49,15 @@ namespace BOOM {
     boost::intrusive_ptr<T> &get_boost() { return managed_pointer_; }
 
     Ptr() = default;
+
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
     Ptr(T *p, bool add_ref = true) : managed_pointer_(p, add_ref) {}
     Ptr(const Ptr &rhs) = default;
     Ptr(Ptr &&rhs) = default;
 
-    template <class Y>
-    Ptr(const Ptr<Y, true> &rhs) : managed_pointer_(rhs.get_boost()) {}
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <class Y> Ptr(const Ptr<Y, true> &rhs)
+        : managed_pointer_(rhs.get_boost()) {}
 
     ~Ptr() {}  // deletes pt
 
@@ -139,21 +142,29 @@ namespace BOOM {
 
     typedef T element_type;
     typedef Ptr<T, false> this_type;
-
     typedef T *this_type::*unspecified_bool_type;
 
     Ptr() : managed_pointer_() {}
-    template <class Y>
-    Ptr(Y *p) : managed_pointer_(p) {}
-    template <class Y, class D>
-    Ptr(Y *p, D d) : managed_pointer_(p, d) {}
+
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <class Y> Ptr(Y *p)
+        : managed_pointer_(p) {}
+
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <class Y, class D> Ptr(Y *p, D d)
+        : managed_pointer_(p, d) {}
+    
     ~Ptr() {}
 
     Ptr(const Ptr &rhs) : managed_pointer_(rhs.managed_pointer_) {}
-    template <class Y>
-    Ptr(const Ptr<Y> &rhs) : managed_pointer_(rhs.get_boost()) {}
-    template <class Y>
-    explicit Ptr(const std::shared_ptr<T> &rhs) : managed_pointer_(rhs) {}
+
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <class Y> Ptr(const Ptr<Y> &rhs)
+        : managed_pointer_(rhs.get_boost()) {}
+
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <class Y> Ptr(const std::shared_ptr<T> &rhs)
+        : managed_pointer_(rhs) {}
 
     Ptr &operator=(const Ptr &rhs) {
       if (&rhs == this) return *this;

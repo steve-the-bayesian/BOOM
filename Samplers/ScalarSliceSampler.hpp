@@ -29,7 +29,7 @@ namespace BOOM {
    public:
     typedef std::function<double(double)> Fun;
 
-    ScalarSliceSampler(const Fun &F, bool Unimodal = false,
+    explicit ScalarSliceSampler(const Fun &F, bool Unimodal = false,
                        double suggested_dx = 1.0, RNG *rng = 0);
     void set_limits(double lo, double hi);
     void set_lower_limit(double lo);

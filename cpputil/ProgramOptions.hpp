@@ -32,7 +32,7 @@ namespace BOOM {
 
   class ProgramOptions {
    public:
-    ProgramOptions(const string &desc = "program options")
+    explicit ProgramOptions(const string &desc = "program options")
         : od_(desc.c_str()) {}
 
     void add_option(const string &option_name, const string &description);

@@ -98,7 +98,7 @@ namespace BOOM {
 
   class MvnRwmProposal : public MvtRwmProposal {
    public:
-    MvnRwmProposal(const SpdMatrix &Ivar) : MvtRwmProposal(Ivar, -1) {}
+    explicit MvnRwmProposal(const SpdMatrix &Ivar) : MvtRwmProposal(Ivar, -1) {}
   };
 
   // ======================================================================
@@ -153,7 +153,7 @@ namespace BOOM {
   // ----------------------------------------------------------------------
   class GaussianScalarRwmProposal : public TScalarRwmProposal {
    public:
-    GaussianScalarRwmProposal(double sigma) : TScalarRwmProposal(sigma, -1) {}
+    explicit GaussianScalarRwmProposal(double sigma) : TScalarRwmProposal(sigma, -1) {}
   };
   // ----------------------------------------------------------------------
   class GaussianScalarIndepProposal : public TScalarIndepProposal {

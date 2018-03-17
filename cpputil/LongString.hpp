@@ -28,7 +28,7 @@ namespace BOOM {
      *  Class to control the printing of very long strings.
      */
    public:
-    LongString(const std::string &str, unsigned Width = 80, unsigned Pad = 0,
+    explicit LongString(const std::string &str, unsigned Width = 80, unsigned Pad = 0,
                bool pad_first_line = true);
     std::ostream &print(std::ostream &out) const;
 

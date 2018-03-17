@@ -25,7 +25,7 @@
 namespace BOOM {
   class StringSplitter {
    public:
-    StringSplitter(const std::string &sep = " \t", bool allow_quotes = true);
+    explicit StringSplitter(const std::string &sep = " \t", bool allow_quotes = true);
     std::vector<std::string> operator()(const std::string &s) const;
 
    private:

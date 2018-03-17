@@ -79,12 +79,11 @@ namespace BOOM {
         RNG &rng) {
       const Vector &x(observation.x());
       double eta = coefficients_->predict(x);
-      double sum, weight;
       try {
         std::pair<double, double> imputed = binomial_data_imputer_.impute(
             rng, observation.n(), observation.y(), eta);
-        sum = imputed.first;
-        weight = imputed.second;
+        double sum = imputed.first;
+        double weight = imputed.second;
         suf->update(x, sum, weight);
       } catch (std::exception &e) {
         ostringstream err;

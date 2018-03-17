@@ -81,13 +81,13 @@ namespace BOOM {
     enum date_format { slashes, dashes, script };
 
     Date();                           // 'today'
-    Date(int days_after_jan_1_1970);  // Unix time, but in days
+    explicit Date(int days_after_jan_1_1970);  // Unix time, but in days
     Date(int m, int dd, int yyyy);    // January 3, 2007 is Date(1, 3, 2007);
     Date(MonthNames m, int dd, int yyyy);       // Date(Jan, 3, 2007)
-    Date(const string &mdy, char delim = '/');  // Date("Jan/3/2007")
+    explicit Date(const string &mdy, char delim = '/');  // Date("Jan/3/2007")
     Date(const string &m, int d, int yyyy);     // Date("January", 3, 2007);
     Date(const Date &rhs);
-    Date(const struct tm &time_info);
+    explicit Date(const struct tm &time_info);
 
     Date &operator=(const Date &rhs);
     Date &operator=(const struct tm &rhs);

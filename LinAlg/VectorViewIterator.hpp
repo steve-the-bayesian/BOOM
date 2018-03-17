@@ -21,6 +21,7 @@
 #define BOOM_VECTOR_VIEW_ITERATOR_HPP
 
 #include <iterator>
+#include <cassert>
 #include "uint.hpp"
 
 namespace BOOM{
