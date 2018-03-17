@@ -58,6 +58,7 @@ AddRegressionHoliday <- function(state.specification = NULL,
   spec <- list(name = "RegressionHolidays",
                holidays = holiday.list,
                time0 = as.Date(.SetTimeZero(time0, y)),
+               size = 1,
                prior = prior)
   class(spec) <- c("RegressionHolidayStateModel", "StateModel")
   state.specification[[length(state.specification) + 1]] <- spec
@@ -140,6 +141,7 @@ AddHierarchicalRegressionHoliday <- function(
   spec <- list(name = "HierarchicalRegressionHolidays",
                holidays = holiday.list,
                time0 = as.Date(.SetTimeZero(time0, y)),
+               size = 1,
                coefficient.mean.prior = coefficient.mean.prior,
                coefficient.variance.prior = coefficient.variance.prior)
   class(spec) <- c("HierarchicalRegressionHolidayStateModel", "StateModel")
