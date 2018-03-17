@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,-modernize-loop-convert,-readability-named-parameter,-modernize-use-default-member-init,-cppcoreguidelines-special-member-functions,-modernize-use-auto,-clang-analyzer-core.NonNullParamChecker,-modernize-pass-by-value,-cppcoreguidelines-pro-type-member-init'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
