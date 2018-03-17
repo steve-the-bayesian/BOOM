@@ -29,7 +29,7 @@ namespace BOOM {
 
   class ProductDirichletSuf : public SufstatDetails<MatrixData> {
    public:
-    ProductDirichletSuf(uint p);
+    explicit ProductDirichletSuf(uint p);
     ProductDirichletSuf(const ProductDirichletSuf &rhs);
     ProductDirichletSuf *clone() const override;
     const Matrix &sumlog() const;
@@ -61,8 +61,8 @@ namespace BOOM {
         public PriorPolicy,
         public dLoglikeModel {
    public:
-    ProductDirichletModel(uint p);  // default is uniform:  Nu = 1
-    ProductDirichletModel(const Matrix &NU);
+    explicit ProductDirichletModel(uint p);  // default is uniform:  Nu = 1
+    explicit ProductDirichletModel(const Matrix &NU);
     ProductDirichletModel(const Vector &wgt, const Matrix &Pi);
     ProductDirichletModel(const ProductDirichletModel &);
 

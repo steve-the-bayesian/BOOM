@@ -37,7 +37,7 @@ namespace BOOM {
                                public NullDataPolicy,
                                public PriorPolicy {
    public:
-    RegressionStateModel(const Ptr<RegressionModel> &rm);
+    explicit RegressionStateModel(const Ptr<RegressionModel> &rm);
     RegressionStateModel(const RegressionStateModel &rhs);
     RegressionStateModel(RegressionStateModel &&rhs) = default;
     RegressionStateModel *clone() const override;

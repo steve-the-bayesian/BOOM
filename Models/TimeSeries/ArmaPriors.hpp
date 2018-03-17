@@ -31,7 +31,7 @@ namespace BOOM {
                          public NullDataPolicy,
                          public PriorPolicy {
    public:
-    UniformMaPrior(int dim) : dim_(dim) {}
+    explicit UniformMaPrior(int dim) : dim_(dim) {}
     UniformMaPrior *clone() const override { return new UniformMaPrior(*this); }
     double logp(const Vector &x) const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
@@ -45,7 +45,7 @@ namespace BOOM {
                          public NullDataPolicy,
                          public PriorPolicy {
    public:
-    UniformArPrior(int dim) : dim_(dim) {}
+    explicit UniformArPrior(int dim) : dim_(dim) {}
     UniformArPrior *clone() const override { return new UniformArPrior(*this); }
     double logp(const Vector &x) const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;

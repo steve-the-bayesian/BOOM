@@ -35,7 +35,7 @@ namespace BOOM {
                                public IID_DataPolicy<PointProcess>,
                                public PriorPolicy {
    public:
-    CosinePoissonProcess(double lambda = 1.0, double frequency = 1.0);
+    explicit CosinePoissonProcess(double lambda = 1.0, double frequency = 1.0);
     CosinePoissonProcess *clone() const override;
 
     double event_rate(const DateTime &t) const override;

@@ -25,8 +25,9 @@
 namespace BOOM {
   class AggregatedStateSpacePosteriorSampler : public PosteriorSampler {
    public:
-    AggregatedStateSpacePosteriorSampler(AggregatedStateSpaceRegression *model,
-                                         RNG &seeding_rng = GlobalRng::rng);
+    explicit AggregatedStateSpacePosteriorSampler(
+        AggregatedStateSpaceRegression *model,
+        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
 

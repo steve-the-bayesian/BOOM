@@ -104,7 +104,7 @@ namespace BOOM {
     using Traits = typename DataTraits<T>::Traits;
     // constructors
     UnivData() : value_() {}
-    UnivData(T y) : value_(y) {}
+    explicit UnivData(T y) : value_(y) {}
     UnivData(const UnivData &rhs)
         : Data(rhs), Traits(rhs), value_(rhs.value_) {}
     UnivData<T> *clone() const { return new UnivData<T>(*this); }

@@ -74,7 +74,8 @@ namespace BOOM {
         public SufstatDataPolicy<IntData, ZeroInflatedPoissonSuf>,
         public PriorPolicy {
    public:
-    ZeroInflatedPoissonModel(double lambda = 1.0, double zero_prob = 0.5);
+    explicit ZeroInflatedPoissonModel(double lambda = 1.0,
+                                      double zero_prob = 0.5);
     ZeroInflatedPoissonModel(const ZeroInflatedPoissonModel &rhs);
     ZeroInflatedPoissonModel *clone() const override;
 

@@ -1094,7 +1094,7 @@ namespace BOOM {
     // state space model's log likelihood function.
     class LogLikelihoodEvaluator {
      public:
-      LogLikelihoodEvaluator(const StateSpaceModelBase *model)
+      explicit LogLikelihoodEvaluator(const StateSpaceModelBase *model)
           : model_(const_cast<StateSpaceModelBase *>(model)) {}
 
       double evaluate_log_likelihood(const Vector &parameters) {

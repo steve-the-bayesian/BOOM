@@ -36,7 +36,7 @@ namespace BOOM {
     typedef D data_point_type;
     typedef TimeSeries<D> ts_type;
 
-    AugmentedTimeSeries(const Ptr<FIRST> &x0, const string &ID = "");
+    explicit AugmentedTimeSeries(const Ptr<FIRST> &x0, const string &ID = "");
     AugmentedTimeSeries(const Ptr<FIRST> &x0, Ptr<D> proto,
                         const string &ID = "");
     AugmentedTimeSeries(const Ptr<FIRST> &x0, const std::vector<Ptr<D> > &v,

@@ -37,7 +37,7 @@ namespace BOOM {
     // Args:
     //   mu:  Mean of the log of the data begin modeled.
     //   sigma:  Standard deviation of the log of the data being modeled.
-    LognormalModel(double mu = 0.0, double sigma = 1.0);
+    explicit LognormalModel(double mu = 0.0, double sigma = 1.0);
 
     // Args:
     //   mu:  Mean of the log of the data begin modeled.

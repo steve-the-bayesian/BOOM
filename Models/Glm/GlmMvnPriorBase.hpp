@@ -40,7 +40,7 @@ namespace BOOM {
     // model:  beta | b, V, sigsq, gamma ~ N(b_g, sigsq * V_g/kappa)
 
    public:
-    GlmMvnPriorBase(uint dim);
+    explicit GlmMvnPriorBase(uint dim);
     virtual double pdf(const Ptr<Data> &, bool logscale) const = 0;
     virtual double pdf(const const Ptr<GlmCoefs> &beta,
                        bool logscale) const = 0;
@@ -55,8 +55,8 @@ namespace BOOM {
 
   class GlmMvnSuf : public SufstatDetails<GlmCoefs> {
    public:
-    GlmMvnSuf(uint p = 0);
-    GlmMvnSuf(const std::vector<Ptr<GlmCoefs> > &d);
+    explicit GlmMvnSuf(uint p = 0);
+    explicit GlmMvnSuf(const std::vector<Ptr<GlmCoefs> > &d);
     GlmMvnSuf *clone() const override;
 
     void clear() override;

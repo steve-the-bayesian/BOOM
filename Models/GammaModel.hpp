@@ -119,7 +119,7 @@ namespace BOOM {
    public:
     // The usual parameterization of the Gamma distribution a =
     // shape, b = scale, mean = a/b.
-    GammaModel(double a = 1.0, double b = 1.0);
+    explicit GammaModel(double a = 1.0, double b = 1.0);
 
     // To initialize a GammaModel with shape (a) and mean parameters,
     // simply include a third argument that is an int.

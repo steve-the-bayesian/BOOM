@@ -60,7 +60,7 @@ namespace BOOM {
     //   shared_resource_mutex: The mutex guarding the shared data repository.
     //     To avoid race conditions, this class should be the only one capable
     //     of locking the mutex.  Child classes should not lock this mutex.
-    LatentDataImputerWorker(std::mutex &shared_resource_mutex)
+    explicit LatentDataImputerWorker(std::mutex &shared_resource_mutex)
         : shared_resource_mutex_(shared_resource_mutex) {}
 
     // Clear the local repository holding the complete data, and refill it with

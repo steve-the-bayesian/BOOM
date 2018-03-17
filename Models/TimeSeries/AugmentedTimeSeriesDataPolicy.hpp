@@ -38,13 +38,16 @@ namespace BOOM {
     typedef AugmentedTimeSeriesDataPolicy<D, F> DataPolicy;
 
     AugmentedTimeSeriesDataPolicy();
-    AugmentedTimeSeriesDataPolicy(const Ptr<DataSeriesType> &ds);
+    explicit AugmentedTimeSeriesDataPolicy(const Ptr<DataSeriesType> &ds);
     AugmentedTimeSeriesDataPolicy *clone() const = 0;
 
     // extended conversion function
     using DataInfo::DAT;
     using DataInfo::DAT_1;
-    Ptr<F> DAT_0(const Ptr<Data> &dp) const;
+    Ptr<F> DAT_0(const Ptr<Data> &dp) const {
+      if (!dp) return nullptr;
+      return dp.dcast<F>();
+    }
 
     virtual void set_data(const Ptr<DataSeriesType> &d);
     virtual void add_data_series(const Ptr<DataSeriesType> &d);
@@ -91,12 +94,6 @@ namespace BOOM {
   AugmentedTimeSeriesDataPolicy<D, F>::AugmentedTimeSeriesDataPolicy(
       const Ptr<DataSeriesType> &ds)
       : ts_(1, ds) {}
-
-  template <class D, class F>
-  Ptr<F> AugmentedTimeSeriesDataPolicy<D, F>::DAT_0(Ptr<Data> dp) const {
-    if (!dp) return Ptr<F>();
-    return dp.dcast<F>();
-  }
 
   template <class D, class F>
   void AugmentedTimeSeriesDataPolicy<D, F>::set_data(

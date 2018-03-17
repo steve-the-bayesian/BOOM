@@ -32,7 +32,7 @@ namespace BOOM {
   class UniformSuf : public SufstatDetails<DoubleData> {
    public:
     UniformSuf();
-    UniformSuf(const std::vector<double> &d);
+    explicit UniformSuf(const std::vector<double> &d);
     UniformSuf(double low, double high);
     UniformSuf(const UniformSuf &rhs);
     UniformSuf *clone() const override;
@@ -68,8 +68,8 @@ namespace BOOM {
                        public LocationScaleDoubleModel,
                        public LoglikeModel {
    public:
-    UniformModel(double a = 0, double b = 1);
-    UniformModel(const std::vector<double> &data);
+    explicit UniformModel(double a = 0, double b = 1);
+    explicit UniformModel(const std::vector<double> &data);
     UniformModel(const UniformModel &rhs);
     UniformModel *clone() const override;
 

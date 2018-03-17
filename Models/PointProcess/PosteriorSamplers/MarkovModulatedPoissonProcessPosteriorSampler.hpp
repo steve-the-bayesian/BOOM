@@ -27,7 +27,7 @@ namespace BOOM {
   class MarkovModulatedPoissonProcessPosteriorSampler
       : public PosteriorSampler {
    public:
-    MarkovModulatedPoissonProcessPosteriorSampler(
+    explicit MarkovModulatedPoissonProcessPosteriorSampler(
         MarkovModulatedPoissonProcess *mmpp, bool initialize_latent_data = true,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;

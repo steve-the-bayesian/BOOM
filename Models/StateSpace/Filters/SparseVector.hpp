@@ -38,7 +38,9 @@ namespace BOOM {
    public:
     SparseVectorReturnProxy(int position, double value, SparseVector *v);
     SparseVectorReturnProxy &operator=(double new_value);
-    operator double() const;
+
+    // Implicit conversion to double is desired.
+    operator double() const;  // NOLINT
 
    private:
     int position_;

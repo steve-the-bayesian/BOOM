@@ -30,7 +30,7 @@ namespace BOOM {
   // components of the ZeroInflatedGammaRegressionModel.
   class ZeroInflatedGammaRegressionPosteriorSampler : public PosteriorSampler {
    public:
-    ZeroInflatedGammaRegressionPosteriorSampler(
+    explicit ZeroInflatedGammaRegressionPosteriorSampler(
         ZeroInflatedGammaRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), model_(model) {}

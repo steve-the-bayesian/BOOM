@@ -67,7 +67,7 @@ namespace BOOM {
                            public EmMixtureComponent {
    public:
     ExponentialModel();
-    ExponentialModel(double lam);
+    explicit ExponentialModel(double lam);
     ExponentialModel(const ExponentialModel &rhs);
     ExponentialModel *clone() const override;
 

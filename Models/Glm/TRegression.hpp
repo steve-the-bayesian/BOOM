@@ -37,7 +37,7 @@ namespace BOOM {
         public PriorPolicy,
         public NumOptModel {
    public:
-    TRegressionModel(uint p);  // dimension of beta
+    explicit TRegressionModel(uint p);  // dimension of beta
     TRegressionModel(const Vector &b, double Sigma, double nu = 30);
     TRegressionModel(const Matrix &X, const Vector &y);
     TRegressionModel *clone() const override;

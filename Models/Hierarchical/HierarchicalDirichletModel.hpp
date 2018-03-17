@@ -36,8 +36,8 @@ namespace BOOM {
 
   class HierarchicalDirichletData : public Data {
    public:
-    HierarchicalDirichletData(uint dimension);
-    HierarchicalDirichletData(const MultinomialSuf &suf);
+    explicit HierarchicalDirichletData(uint dimension);
+    explicit HierarchicalDirichletData(const MultinomialSuf &suf);
     HierarchicalDirichletData *clone() const override;
     ostream &display(ostream &out) const override;
     const MultinomialSuf &suf() { return counts_; }
@@ -62,7 +62,7 @@ namespace BOOM {
     //     determine the acceptable dimension of
     //     HierarchicalDirichletData.
     HierarchicalDirichletModel(double prior_sample_size, const Vector &mean);
-    HierarchicalDirichletModel(const Ptr<DirichletModel> &prior);
+    explicit HierarchicalDirichletModel(const Ptr<DirichletModel> &prior);
     HierarchicalDirichletModel *clone() const override;
     void add_data(const Ptr<Data> &) override;
 

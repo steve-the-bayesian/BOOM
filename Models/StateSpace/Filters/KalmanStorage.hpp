@@ -28,7 +28,7 @@ namespace BOOM {
   // Store the conditional state mean and conditional state variance.
   struct KalmanStateStorage {
     KalmanStateStorage() {}
-    KalmanStateStorage(int dim) : a(dim), P(dim) {}
+    explicit KalmanStateStorage(int dim) : a(dim), P(dim) {}
     Vector a;
     SpdMatrix P;
   };
@@ -37,7 +37,7 @@ namespace BOOM {
   // series.
   struct ScalarKalmanStorage : public KalmanStateStorage {
     ScalarKalmanStorage() : KalmanStateStorage() {}
-    ScalarKalmanStorage(int dim, bool store_state_moments = true)
+    explicit ScalarKalmanStorage(int dim, bool store_state_moments = true)
         : KalmanStateStorage(store_state_moments ? 0 : dim), K(dim) {}
 
     // Kalman gain

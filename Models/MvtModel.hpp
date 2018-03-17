@@ -42,7 +42,8 @@ namespace BOOM {
                    public LocationScaleVectorModel,
                    public MixtureComponent {
    public:
-    MvtModel(uint p, double mu = 0.0, double sig = 1.0, double nu = 30.0);
+    explicit MvtModel(uint p, double mu = 0.0, double sig = 1.0,
+                      double nu = 30.0);
     MvtModel(const Vector &mean, const SpdMatrix &Var, double Nu);
     MvtModel(const MvtModel &m);
 

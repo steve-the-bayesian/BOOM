@@ -38,7 +38,7 @@ namespace BOOM {
   // phi_p   0 0 0 ... 0
   class ArmaStateSpaceTransitionMatrix : public SparseMatrixBlock {
    public:
-    ArmaStateSpaceTransitionMatrix(const Vector &expanded_phi);
+    explicit ArmaStateSpaceTransitionMatrix(const Vector &expanded_phi);
     ArmaStateSpaceTransitionMatrix *clone() const override {
       return new ArmaStateSpaceTransitionMatrix(*this);
     }

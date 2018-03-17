@@ -44,7 +44,7 @@ namespace BOOM {
       // The HmmState does not own the PoissonProcess * pointers that
       // it is passed.  Each should be owned by a Ptr external to this
       // class.
-      HmmState(const std::vector<PoissonProcess *> &processes);
+      explicit HmmState(const std::vector<PoissonProcess *> &processes);
 
       // The id_number is this state's position in the vector of
       // hmm_states_ in the managing MMPP.

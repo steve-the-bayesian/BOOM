@@ -41,7 +41,7 @@ namespace BOOM {
       // Args:
       //   dim: The dimension of the coefficient vector in the model
       //     being sampled.
-      SufficientStatistics(int dim);
+      explicit SufficientStatistics(int dim);
 
       SufficientStatistics *clone() const;
       void clear();

@@ -33,7 +33,7 @@ namespace BOOM {
     // in log likelihood derivatives
 
    public:
-    ScaledChisqModel(double nu = 30.0);
+    explicit ScaledChisqModel(double nu = 30.0);
     ScaledChisqModel(const ScaledChisqModel &rhs);
     ScaledChisqModel *clone() const override;
 

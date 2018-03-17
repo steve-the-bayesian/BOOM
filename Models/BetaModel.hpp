@@ -64,7 +64,7 @@ namespace BOOM {
     // Initialize with the prior number of "successes" (a) and
     // "failures" (b).  This is the usual parameterization of the Beta
     // model.
-    BetaModel(double a = 1.0, double b = 1.0);
+    explicit BetaModel(double a = 1.0, double b = 1.0);
 
     // Initialize the Beta model with a mean and a sample size.  In
     // the standard parameterization, the mean maps to a/(a+b) and the

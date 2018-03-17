@@ -36,7 +36,7 @@ namespace BOOM {
     //     distribution.
     //   sigma_est: An estimate of the standard deviation being
     //     modeled.  Note that the argument is sigma, not sigma^2.
-    ChisqModel(double df = 1.0, double sigma_estimate = 1.0);
+    explicit ChisqModel(double df = 1.0, double sigma_estimate = 1.0);
     ChisqModel *clone() const override;
 
     // Df_prm holds "sample size".

@@ -31,7 +31,7 @@ namespace BOOM {
 
   class GaussianSuf : public SufstatDetails<DoubleData> {
    public:
-    GaussianSuf(double Sum = 0, double Sumsq = 0, double N = 0);
+    explicit GaussianSuf(double Sum = 0, double Sumsq = 0, double N = 0);
     GaussianSuf(const GaussianSuf &);
     GaussianSuf *clone() const override;
 
@@ -80,7 +80,7 @@ namespace BOOM {
   {
    public:
     GaussianModelBase();
-    GaussianModelBase(const std::vector<double> &y);
+    explicit GaussianModelBase(const std::vector<double> &y);
     GaussianModelBase *clone() const override = 0;
 
     // Returns the mean of the distribution.

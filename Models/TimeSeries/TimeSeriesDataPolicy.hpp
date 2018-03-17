@@ -52,7 +52,7 @@ namespace BOOM {
     typedef TimeSeriesDataPolicy<D, SER> DataPolicy;
 
     TimeSeriesDataPolicy();
-    TimeSeriesDataPolicy(const Ptr<DataSeriesType> &ds);
+    explicit TimeSeriesDataPolicy(const Ptr<DataSeriesType> &ds);
     TimeSeriesDataPolicy *clone() const = 0;
 
     template <class FwdIt>

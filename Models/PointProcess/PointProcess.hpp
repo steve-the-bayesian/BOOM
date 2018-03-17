@@ -30,7 +30,7 @@ namespace BOOM {
         public boost::less_than_comparable<PointProcessEvent>,
         public boost::less_than_comparable<PointProcessEvent, DateTime> {
    public:
-    PointProcessEvent(const DateTime &time);
+    explicit PointProcessEvent(const DateTime &time);
     PointProcessEvent(const DateTime &time, const Ptr<Data> &mark);
     PointProcessEvent *clone() const override;
     ostream &display(ostream &) const override;
@@ -68,7 +68,7 @@ namespace BOOM {
     // all you have is the vector of event times.  It will set the
     // observation window to coincide with the first and last event
     // time.
-    PointProcess(const std::vector<DateTime> &events);
+    explicit PointProcess(const std::vector<DateTime> &events);
     PointProcess(const std::vector<DateTime> &events,
                  const std::vector<Ptr<Data> > &marks);
 

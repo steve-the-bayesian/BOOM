@@ -39,7 +39,8 @@ namespace BOOM {
     //   number_of_trees:  The number of trees to use in the model.
     //   initial_prediction: The model is initialized to predict this
     //     constant (as the log of the mean) for all x.
-    PoissonBartModel(int number_of_trees, double initial_prediction = 0.0);
+    explicit PoissonBartModel(int number_of_trees,
+                              double initial_prediction = 0.0);
 
     // Args:
     //   number_of_trees:  The number of trees to use in the model.

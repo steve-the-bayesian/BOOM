@@ -30,7 +30,7 @@ namespace BOOM {
 
    public:
     MarkovLink();
-    MarkovLink(const Ptr<D> &Prev);
+    explicit MarkovLink(const Ptr<D> &Prev);
     MarkovLink(const MarkovLink &rhs);
     virtual ~MarkovLink() { clear_links(); }  // problems?????
     D *prev() const { return prev_.get(); }

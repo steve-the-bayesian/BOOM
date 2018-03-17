@@ -30,13 +30,14 @@ namespace BOOM {
 
   class MarkovConjShrinkageSampler : public PosteriorSampler {
    public:
-    MarkovConjShrinkageSampler(uint dim, RNG &seeding_rng = GlobalRng::rng);
-    MarkovConjShrinkageSampler(const Matrix &Nu,
-                               RNG &seeding_rng = GlobalRng::rng);
+    explicit MarkovConjShrinkageSampler(uint dim,
+                                        RNG &seeding_rng = GlobalRng::rng);
+    explicit MarkovConjShrinkageSampler(const Matrix &Nu,
+                                        RNG &seeding_rng = GlobalRng::rng);
     MarkovConjShrinkageSampler(const Matrix &Nu, const Vector &nu,
                                RNG &seeding_rng = GlobalRng::rng);
-    MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> &Nu,
-                               RNG &seeding_rng = GlobalRng::rng);
+    explicit MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> &Nu,
+                                        RNG &seeding_rng = GlobalRng::rng);
     MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> &Nu,
                                const Ptr<DirichletModel> &nu,
                                RNG &seeding_rng = GlobalRng::rng);

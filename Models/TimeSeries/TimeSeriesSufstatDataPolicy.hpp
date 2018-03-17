@@ -33,7 +33,7 @@ namespace BOOM {
     typedef TS DataSeriesType;  // should inherit from TimeSeries<D>
     typedef TimeSeriesSufstatDataPolicy<D, TS, SUF> DataPolicy;
 
-    TimeSeriesSufstatDataPolicy(const Ptr<SUF> &s);
+    explicit TimeSeriesSufstatDataPolicy(const Ptr<SUF> &s);
     TimeSeriesSufstatDataPolicy(const Ptr<SUF> &s, const DataSeriesType &ds);
     TimeSeriesSufstatDataPolicy(const TimeSeriesSufstatDataPolicy &rhs);
     TimeSeriesSufstatDataPolicy *clone() const = 0;

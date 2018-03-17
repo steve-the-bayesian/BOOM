@@ -81,7 +81,7 @@ namespace BOOM {
   class MarkovSuf
       : public TimeSeriesSufstatDetails<MarkovData, MarkovDataSeries> {
    public:
-    MarkovSuf(uint S);
+    explicit MarkovSuf(uint S);
     MarkovSuf(const MarkovSuf &sf);
     MarkovSuf *clone() const override;
 
@@ -122,7 +122,7 @@ namespace BOOM {
   class MatrixRowsObserver {
    public:
     typedef std::vector<Ptr<VectorParams> > Rows;
-    MatrixRowsObserver(Rows &);
+    explicit MatrixRowsObserver(Rows &);
     void operator()(const Matrix &);
 
    private:
@@ -131,7 +131,7 @@ namespace BOOM {
 
   class StationaryDistObserver {
    public:
-    StationaryDistObserver(const Ptr<VectorParams> &);
+    explicit StationaryDistObserver(const Ptr<VectorParams> &);
     void operator()(const Matrix &);
 
    private:
@@ -153,8 +153,8 @@ namespace BOOM {
 
   class TransitionProbabilityMatrix : public MatrixParams {
    public:
-    TransitionProbabilityMatrix(uint S);
-    TransitionProbabilityMatrix(const Matrix &);
+    explicit TransitionProbabilityMatrix(uint S);
+    explicit TransitionProbabilityMatrix(const Matrix &);
     TransitionProbabilityMatrix(const TransitionProbabilityMatrix &);
     TransitionProbabilityMatrix *clone() const override;
 
@@ -190,11 +190,11 @@ namespace BOOM {
     typedef MarkovDataSeries DataSeriesType;
     typedef TransitionProbabilityMatrix TPM;
 
-    MarkovModel(uint S);
-    MarkovModel(const Matrix &Q);
+    explicit MarkovModel(uint S);
+    explicit MarkovModel(const Matrix &Q);
     MarkovModel(const Matrix &Q, const Vector &pi0);
-    MarkovModel(const std::vector<uint> &);
-    MarkovModel(const std::vector<string> &);
+    explicit MarkovModel(const std::vector<uint> &);
+    explicit MarkovModel(const std::vector<string> &);
 
     MarkovModel(const MarkovModel &rhs);
     MarkovModel *clone() const override;

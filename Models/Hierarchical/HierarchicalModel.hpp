@@ -39,7 +39,8 @@ namespace BOOM {
    public:
     typedef HierarchicalModelBase<DATA_MODEL_TYPE, PRIOR_TYPE> HierarchicalBase;
 
-    HierarchicalModelBase(const Ptr<PRIOR_TYPE> &prior) : prior_(prior) {
+    explicit HierarchicalModelBase(const Ptr<PRIOR_TYPE> &prior)
+        : prior_(prior) {
       initialize_model_structure();
     }
 

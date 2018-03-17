@@ -101,7 +101,7 @@ namespace BOOM {
                         public EmMixtureComponent,
                         public ConjugateDirichletProcessMixtureComponent {
    public:
-    BinomialModel(double p = .5);
+    explicit BinomialModel(double p = .5);
     BinomialModel(const BinomialModel &rhs);
     BinomialModel(BinomialModel &&rhs) = default;
     BinomialModel &operator=(const BinomialModel &rhs);

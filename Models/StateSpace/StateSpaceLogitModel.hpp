@@ -71,7 +71,7 @@ namespace BOOM {
 
       // A constructor for the multiplexed case, where there are multiple
       // observations at each time point.
-      AugmentedBinomialRegressionData(
+      explicit AugmentedBinomialRegressionData(
           const std::vector<Ptr<BinomialRegressionData>> &binomial_data);
 
       AugmentedBinomialRegressionData *clone() const override;
@@ -133,7 +133,7 @@ namespace BOOM {
         public IID_DataPolicy<StateSpace::AugmentedBinomialRegressionData>,
         public PriorPolicy {
    public:
-    StateSpaceLogitModel(int xdim);
+    explicit StateSpaceLogitModel(int xdim);
     StateSpaceLogitModel(
         const Vector &successes, const Vector &trials,
         const Matrix &design_matrix,

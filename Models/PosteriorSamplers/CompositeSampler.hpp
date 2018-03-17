@@ -26,7 +26,7 @@ namespace BOOM {
   class CompositeSampler;
   class CompositeSamplerAdder {
    public:
-    CompositeSamplerAdder(CompositeSampler *pcs);
+    explicit CompositeSamplerAdder(CompositeSampler *pcs);
     CompositeSamplerAdder operator()(const Ptr<PosteriorSampler> &,
                                      double wgt = 1.0);
 
@@ -39,11 +39,11 @@ namespace BOOM {
   // selected at random and run.
   class CompositeSampler : public PosteriorSampler {
    public:
-    CompositeSampler(RNG &seeding_rng = GlobalRng::rng);
-    CompositeSampler(const Ptr<PosteriorSampler> &s, double prob = 1.0,
-                     RNG &seeding_rng = GlobalRng::rng);
-    CompositeSampler(const std::vector<Ptr<PosteriorSampler> > &s,
-                     RNG &seeding_rng = GlobalRng::rng);
+    explicit CompositeSampler(RNG &seeding_rng = GlobalRng::rng);
+    explicit CompositeSampler(const Ptr<PosteriorSampler> &s, double prob = 1.0,
+                              RNG &seeding_rng = GlobalRng::rng);
+    explicit CompositeSampler(const std::vector<Ptr<PosteriorSampler> > &s,
+                              RNG &seeding_rng = GlobalRng::rng);
     CompositeSampler(const std::vector<Ptr<PosteriorSampler> > &s,
                      const Vector &Probs, RNG &seeding_rng = GlobalRng::rng);
     template <class It>

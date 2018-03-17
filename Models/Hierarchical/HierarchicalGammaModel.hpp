@@ -31,7 +31,7 @@ namespace BOOM {
 
   class HierarchicalGammaData : public Data {
    public:
-    HierarchicalGammaData(const GammaSuf &suf) : suf_(suf) {}
+    explicit HierarchicalGammaData(const GammaSuf &suf) : suf_(suf) {}
     HierarchicalGammaData *clone() const override {
       return new HierarchicalGammaData(*this);
     }

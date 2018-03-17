@@ -32,7 +32,7 @@ namespace BOOM {
                                   public PriorPolicy,
                                   public CorrelationModel {
    public:
-    UniformCorrelationModel(uint dim);
+    explicit UniformCorrelationModel(uint dim);
     UniformCorrelationModel(const UniformCorrelationModel &);
     UniformCorrelationModel *clone() const override;
 

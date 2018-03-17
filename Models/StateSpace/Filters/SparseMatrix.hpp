@@ -183,7 +183,7 @@ namespace BOOM {
   // sub-block of a sparse matrix.
   class DenseMatrix : public SparseMatrixBlock {
    public:
-    DenseMatrix(const Matrix &m) : m_(m) {}
+    explicit DenseMatrix(const Matrix &m) : m_(m) {}
     DenseMatrix(const DenseMatrix &rhs) : SparseMatrixBlock(rhs), m_(rhs.m_) {}
     DenseMatrix *clone() const override { return new DenseMatrix(*this); }
     void resize(int rows, int cols) { m_.resize(rows, cols); }
@@ -231,7 +231,7 @@ namespace BOOM {
   // A SparseMatrixBlock filled with a dense SpdMatrix.
   class DenseSpd : public DenseSpdBase {
    public:
-    DenseSpd(const SpdMatrix &m) : m_(m) {}
+    explicit DenseSpd(const SpdMatrix &m) : m_(m) {}
     DenseSpd(const DenseSpd &rhs) : DenseSpdBase(rhs), m_(rhs.m_) {}
     DenseSpd *clone() const override { return new DenseSpd(*this); }
     const SpdMatrix &value() const override { return m_; }
@@ -243,7 +243,8 @@ namespace BOOM {
 
   class DenseSpdParamView : public DenseSpdBase {
    public:
-    DenseSpdParamView(const Ptr<SpdParams> &matrix) : matrix_(matrix) {}
+    explicit DenseSpdParamView(const Ptr<SpdParams> &matrix)
+        : matrix_(matrix) {}
     DenseSpdParamView *clone() const override {
       return new DenseSpdParamView(*this);
     }
@@ -301,8 +302,8 @@ namespace BOOM {
   // A diagonal matrix with elements to be set manually.
   class DiagonalMatrixBlock : public DiagonalMatrixBlockBase {
    public:
-    DiagonalMatrixBlock(int size) : diagonal_elements_(size) {}
-    DiagonalMatrixBlock(const Vector &diagonal_elements)
+    explicit DiagonalMatrixBlock(int size) : diagonal_elements_(size) {}
+    explicit DiagonalMatrixBlock(const Vector &diagonal_elements)
         : diagonal_elements_(diagonal_elements) {}
     DiagonalMatrixBlock *clone() const override {
       return new DiagonalMatrixBlock(*this);
@@ -325,7 +326,7 @@ namespace BOOM {
   // VectorParams.
   class DiagonalMatrixBlockVectorParamView : public DiagonalMatrixBlockBase {
    public:
-    DiagonalMatrixBlockVectorParamView(
+    explicit DiagonalMatrixBlockVectorParamView(
         const Ptr<VectorParams> &diagonal_elements)
         : diagonal_elements_(diagonal_elements) {}
     DiagonalMatrixBlockVectorParamView *clone() const override {
@@ -380,7 +381,7 @@ namespace BOOM {
   // diagonal_elements() member returning a dense vector.
   class SparseDiagonalMatrixBlockParamView : public SparseMatrixBlock {
    public:
-    SparseDiagonalMatrixBlockParamView(int dim) : dim_(dim) {}
+    explicit SparseDiagonalMatrixBlockParamView(int dim) : dim_(dim) {}
     SparseDiagonalMatrixBlockParamView *clone() const override;
     void add_element(const Ptr<UnivParams> &element, int position);
 
@@ -411,7 +412,7 @@ namespace BOOM {
   // of 0's appended on the right hand side.
   class SeasonalStateSpaceMatrix : public SparseMatrixBlock {
    public:
-    SeasonalStateSpaceMatrix(int number_of_seasons);
+    explicit SeasonalStateSpaceMatrix(int number_of_seasons);
     SeasonalStateSpaceMatrix *clone() const override;
     int nrow() const override;
     int ncol() const override;
@@ -439,7 +440,7 @@ namespace BOOM {
   // 0's.
   class AutoRegressionTransitionMatrix : public SparseMatrixBlock {
    public:
-    AutoRegressionTransitionMatrix(const Ptr<GlmCoefs> &rho);
+    explicit AutoRegressionTransitionMatrix(const Ptr<GlmCoefs> &rho);
     AutoRegressionTransitionMatrix(const AutoRegressionTransitionMatrix &rhs);
     AutoRegressionTransitionMatrix *clone() const override;
 
@@ -464,7 +465,7 @@ namespace BOOM {
   // The [dim x dim] identity matrix
   class IdentityMatrix : public SparseMatrixBlock {
    public:
-    IdentityMatrix(int dim) : dim_(dim) {}
+    explicit IdentityMatrix(int dim) : dim_(dim) {}
     IdentityMatrix *clone() const override { return new IdentityMatrix(*this); }
     int nrow() const override { return dim_; }
     int ncol() const override { return dim_; }
@@ -513,7 +514,7 @@ namespace BOOM {
   // A scalar constant times the identity matrix
   class ConstantMatrixBase : public SparseMatrixBlock {
    public:
-    ConstantMatrixBase(int dim) : dim_(dim) {}
+    explicit ConstantMatrixBase(int dim) : dim_(dim) {}
     virtual double value() const = 0;
 
     // In most cases the dimension of the matrix will be set in the constructor.
@@ -581,7 +582,7 @@ namespace BOOM {
   // A square matrix of all zeros.
   class ZeroMatrix : public ConstantMatrix {
    public:
-    ZeroMatrix(int dim) : ConstantMatrix(dim, 0.0) {}
+    explicit ZeroMatrix(int dim) : ConstantMatrix(dim, 0.0) {}
     ZeroMatrix *clone() const override { return new ZeroMatrix(*this); }
     void add_to(SubMatrix block) const override {}
   };
@@ -591,7 +592,7 @@ namespace BOOM {
   //  the (0,0) corner.
   class UpperLeftCornerMatrixBase : public SparseMatrixBlock {
    public:
-    UpperLeftCornerMatrixBase(int dim) : dim_(dim) {}
+    explicit UpperLeftCornerMatrixBase(int dim) : dim_(dim) {}
     virtual double value() const = 0;
     int nrow() const override { return dim_; }
     int ncol() const override { return dim_; }
@@ -658,7 +659,7 @@ namespace BOOM {
   // (*this) = [1, 0, 0, ..., 0]^T
   class FirstElementSingleColumnMatrix : public SparseMatrixBlock {
    public:
-    FirstElementSingleColumnMatrix(int nrow) : nrow_(nrow) {}
+    explicit FirstElementSingleColumnMatrix(int nrow) : nrow_(nrow) {}
     FirstElementSingleColumnMatrix *clone() const override {
       return new FirstElementSingleColumnMatrix(*this);
     }
@@ -1034,7 +1035,7 @@ namespace BOOM {
     GenericSparseMatrixBlockElementProxy(int row, int col, double value,
                                          GenericSparseMatrixBlock *matrix)
         : row_(row), col_(col), value_(value), matrix_(matrix) {}
-    operator double() const { return value_; }
+    explicit operator double() const { return value_; }
     GenericSparseMatrixBlockElementProxy &operator=(double new_value);
 
    private:
@@ -1046,7 +1047,7 @@ namespace BOOM {
 
   class GenericSparseMatrixBlock : public SparseMatrixBlock {
    public:
-    GenericSparseMatrixBlock(int nrow = 0, int ncol = 0);
+    explicit GenericSparseMatrixBlock(int nrow = 0, int ncol = 0);
     GenericSparseMatrixBlock *clone() const override {
       return new GenericSparseMatrixBlock(*this);
     }

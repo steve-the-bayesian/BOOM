@@ -146,7 +146,7 @@ namespace BOOM {
                                                  // equations'
    public:
     // An empty, but right-sized set of sufficient statistics.
-    NeRegSuf(uint p);
+    explicit NeRegSuf(uint p);
 
     // Build from the design matrix X and response vector y.
     NeRegSuf(const Matrix &X, const Vector &y);
@@ -228,7 +228,7 @@ namespace BOOM {
     typedef RegressionDataPolicy DataPolicy;
     typedef SufstatDataPolicy<RegressionData, RegSuf> DPBase;
 
-    RegressionDataPolicy(const Ptr<RegSuf> &);
+    explicit RegressionDataPolicy(const Ptr<RegSuf> &);
     RegressionDataPolicy(const Ptr<RegSuf> &, const DatasetType &d);
     template <class FwdIt>
     RegressionDataPolicy(const Ptr<RegSuf> &, FwdIt Begin, FwdIt End);
@@ -249,7 +249,7 @@ namespace BOOM {
                           public NumOptModel,
                           public EmMixtureComponent {
    public:
-    RegressionModel(uint p);
+    explicit RegressionModel(uint p);
     RegressionModel(const Vector &b, double Sigma);
 
     // Use this constructor if the model needs to share parameters
@@ -265,7 +265,8 @@ namespace BOOM {
     // Iniitializes the model with the least squares fit.
     RegressionModel(const Matrix &X, const Vector &y);
 
-    RegressionModel(const DatasetType &d, bool include_all_variables = true);
+    explicit RegressionModel(const DatasetType &d,
+                             bool include_all_variables = true);
     RegressionModel(const RegressionModel &rhs);
     RegressionModel *clone() const override;
 

@@ -34,7 +34,7 @@ namespace BOOM {
                            public SufstatDataPolicy<VectorData, MvnSuf>,
                            public PriorPolicy {
    public:
-    ZeroMeanMvnModel(int dim);
+    explicit ZeroMeanMvnModel(int dim);
     ZeroMeanMvnModel *clone() const override;
     const Vector &mu() const override;
     const SpdMatrix &Sigma() const override;

@@ -37,7 +37,7 @@ namespace BOOM {
 
    public:
     // constructor
-    DirichletSuf(uint S);
+    explicit DirichletSuf(uint S);
     DirichletSuf(const DirichletSuf &rhs);
     DirichletSuf *clone() const override;
 

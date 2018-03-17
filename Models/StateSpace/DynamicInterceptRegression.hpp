@@ -52,7 +52,7 @@ namespace BOOM {
         public IID_DataPolicy<StateSpace::MultiplexedRegressionData>,
         public PriorPolicy {
    public:
-    DynamicInterceptRegressionModel(int xdim);
+    explicit DynamicInterceptRegressionModel(int xdim);
     DynamicInterceptRegressionModel(const DynamicInterceptRegressionModel &rhs);
     DynamicInterceptRegressionModel *clone() const override {
       return new DynamicInterceptRegressionModel(*this);

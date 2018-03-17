@@ -52,7 +52,7 @@ namespace BOOM {
   // R_t = [1 0 0 0 0]^T
   class ArStateModel : public StateModel, public ArModel {
    public:
-    ArStateModel(int number_of_lags = 1);
+    explicit ArStateModel(int number_of_lags = 1);
     ArStateModel(const ArStateModel &rhs);
     ArStateModel *clone() const override;
 

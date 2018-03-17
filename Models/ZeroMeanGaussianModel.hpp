@@ -30,8 +30,8 @@ namespace BOOM {
                                 public ParamPolicy_1<UnivParams>,
                                 public PriorPolicy {
    public:
-    ZeroMeanGaussianModel(double sigma = 1.0);
-    ZeroMeanGaussianModel(const std::vector<double> &);
+    explicit ZeroMeanGaussianModel(double sigma = 1.0);
+    explicit ZeroMeanGaussianModel(const std::vector<double> &);
     ZeroMeanGaussianModel *clone() const override;
 
     void set_sigsq(double sigsq);

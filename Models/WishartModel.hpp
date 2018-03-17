@@ -31,7 +31,7 @@
 namespace BOOM {
   class WishartSuf : public SufstatDetails<SpdData> {
    public:
-    WishartSuf(uint dim);
+    explicit WishartSuf(uint dim);
     WishartSuf(const WishartSuf &sf);
     WishartSuf *clone() const override;
 

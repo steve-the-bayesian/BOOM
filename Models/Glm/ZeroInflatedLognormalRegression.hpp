@@ -53,8 +53,8 @@ namespace BOOM {
     //   dimension:  The number of predictor variables.
     //   zero_threshold: A positive number below which observations will be
     //     counted as zero.
-    ZeroInflatedLognormalRegressionModel(int dimension,
-                                         double zero_threshold = 1e-5);
+    explicit ZeroInflatedLognormalRegressionModel(int dimension,
+                                                  double zero_threshold = 1e-5);
     ZeroInflatedLognormalRegressionModel *clone() const override;
 
     double expected_value(const Vector &x) const;

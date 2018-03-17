@@ -33,7 +33,7 @@ namespace BOOM {
                          public IID_DataPolicy<BinomialRegressionData>,
                          public PriorPolicy {
    public:
-    LogitBartModel(int number_of_trees, double mean = 0.0);
+    explicit LogitBartModel(int number_of_trees, double mean = 0.0);
     LogitBartModel(int number_of_trees, const std::vector<int> &responses,
                    const std::vector<int> &trials, const Matrix &predictors);
     LogitBartModel(int number_of_trees, const std::vector<bool> &responses,

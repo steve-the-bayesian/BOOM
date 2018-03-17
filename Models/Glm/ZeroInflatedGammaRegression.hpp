@@ -44,7 +44,8 @@ namespace BOOM {
                                            public PriorPolicy,
                                            public MLE_Model {
    public:
-    ZeroInflatedGammaRegressionModel(int xdim, double zero_threshold = 1e-5);
+    explicit ZeroInflatedGammaRegressionModel(int xdim,
+                                              double zero_threshold = 1e-5);
     ZeroInflatedGammaRegressionModel(
         const ZeroInflatedGammaRegressionModel &rhs);
     ZeroInflatedGammaRegressionModel *clone() const override;

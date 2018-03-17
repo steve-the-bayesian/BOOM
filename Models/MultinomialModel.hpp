@@ -30,8 +30,8 @@ namespace BOOM {
 
   class MultinomialSuf : public SufstatDetails<CategoricalData> {
    public:
-    MultinomialSuf(uint p);
-    MultinomialSuf(const Vector &counts);
+    explicit MultinomialSuf(uint p);
+    explicit MultinomialSuf(const Vector &counts);
     MultinomialSuf(const MultinomialSuf &rhs);
     MultinomialSuf *clone() const override;
 
@@ -66,14 +66,14 @@ namespace BOOM {
         public LoglikeModel,
         public MixtureComponent {
    public:
-    MultinomialModel(uint Nlevels);
-    MultinomialModel(const Vector &probs);
+    explicit MultinomialModel(uint Nlevels);
+    explicit MultinomialModel(const Vector &probs);
 
     // The argument is a vector of names to use for factor levels to
     // be modeled.
-    MultinomialModel(const std::vector<string> &);
+    explicit MultinomialModel(const std::vector<string> &);
 
-    MultinomialModel(const MultinomialSuf &suf);
+    explicit MultinomialModel(const MultinomialSuf &suf);
 
     template <class Fwd>  // iterator promotable to uint
     MultinomialModel(Fwd b, Fwd e);

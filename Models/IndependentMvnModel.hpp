@@ -28,7 +28,7 @@
 namespace BOOM {
   class IndependentMvnSuf : public SufstatDetails<VectorData> {
    public:
-    IndependentMvnSuf(int dim);
+    explicit IndependentMvnSuf(int dim);
     IndependentMvnSuf *clone() const override;
 
     void clear() override;
@@ -70,7 +70,7 @@ namespace BOOM {
         public PriorPolicy,
         virtual public MixtureComponent {
    public:
-    IndependentMvnModel(int dim);
+    explicit IndependentMvnModel(int dim);
     IndependentMvnModel(const Vector &mean, const Vector &variance);
     IndependentMvnModel(const IndependentMvnModel &rhs);
     IndependentMvnModel *clone() const override;
