@@ -35,7 +35,7 @@ namespace BOOM {
 
     class ItemLoglikeTF {
      public:
-      ItemLoglikeTF(const Ptr<PCR> &);
+      explicit ItemLoglikeTF(const Ptr<PCR> &);
       ItemLoglikeTF *clone() const;
       double operator()(const Vector &beta) const;
 

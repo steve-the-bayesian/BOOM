@@ -92,7 +92,7 @@ namespace BOOM {
   // Numerical categorical data with a fixed number of levels.
   class FixedSizeIntCatKey : public CatKeyBase {
    public:
-    FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
+    explicit FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
     int max_levels() const override { return max_levels_; }
     ostream &print(ostream &out) const override;
 
@@ -105,8 +105,8 @@ namespace BOOM {
   class CatKey : public CatKeyBase {
    public:
     CatKey();
-    CatKey(int number_of_levels);
-    CatKey(const std::vector<std::string> &labels);
+    explicit CatKey(int number_of_levels);
+    explicit CatKey(const std::vector<std::string> &labels);
     CatKey(const CatKey &rhs) = default;
 
     // Sets the 'grow_' flag.  If true then the max number of levels increases

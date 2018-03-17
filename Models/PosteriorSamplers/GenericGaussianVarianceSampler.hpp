@@ -32,7 +32,7 @@ namespace BOOM {
    public:
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.
-    GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior);
+    explicit GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior);
 
     // Args:
     //   prior:  A prior distribution for 1 / sigsq.

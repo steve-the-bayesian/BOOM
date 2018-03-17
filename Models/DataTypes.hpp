@@ -129,7 +129,7 @@ namespace BOOM {
   class VectorData : public DataTraits<Vector> {
    public:
     explicit VectorData(uint n, double x = 0);
-    VectorData(const Vector &y);
+    explicit VectorData(const Vector &y);
     VectorData(const VectorData &d);
     VectorData *clone() const override;
 
@@ -150,7 +150,7 @@ namespace BOOM {
   class MatrixData : public DataTraits<Mat> {
    public:
     MatrixData(int r, int c, double x = 0.0);
-    MatrixData(const Matrix &y);
+    explicit MatrixData(const Matrix &y);
     MatrixData(const MatrixData &rhs);
     MatrixData *clone() const override;
 

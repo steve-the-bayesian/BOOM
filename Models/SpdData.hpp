@@ -114,8 +114,8 @@ namespace BOOM {
   // computation.
   class SpdData : public DataTraits<Spd> {
    public:
-    SpdData(uint n, double diag = 1.0, bool ivar = false);
-    SpdData(const SpdMatrix &S, bool ivar = false);
+    explicit SpdData(uint n, double diag = 1.0, bool ivar = false);
+    explicit SpdData(const SpdMatrix &S, bool ivar = false);
     SpdData(const SpdData &rhs);
     SpdData *clone() const override;
 
