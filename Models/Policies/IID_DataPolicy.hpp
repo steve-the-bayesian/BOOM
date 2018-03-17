@@ -33,7 +33,7 @@ namespace BOOM {
     typedef DefaultDataInfoPolicy<D> Info;
 
     IID_DataPolicy();
-    IID_DataPolicy(const DatasetType &d);
+    explicit IID_DataPolicy(const DatasetType &d);
     template <class FwdIt>
     IID_DataPolicy(FwdIt Begin, FwdIt End);
 

@@ -25,7 +25,7 @@ namespace BOOM {
 
     class PoissonSufstatManager : public SufstatManagerBase {
      public:
-      PoissonSufstatManager(StateSpacePoissonPosteriorSampler *sampler)
+      explicit PoissonSufstatManager(StateSpacePoissonPosteriorSampler *sampler)
           : sampler_(sampler) {}
 
       void clear_complete_data_sufficient_statistics() override {

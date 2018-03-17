@@ -266,7 +266,7 @@ namespace BOOM{
   // A Factor object is intended to be initialized with an R factor.
   class Factor {
    public:
-    Factor(SEXP r_factor);
+    explicit Factor(SEXP r_factor);
 
     // Corresponds to R's length(r_factor).
     int length() const;

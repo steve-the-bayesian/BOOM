@@ -182,7 +182,7 @@ namespace BOOM{
   //----------------------------------------------------------------------
   class ListValuedRListIoElement : public RListIoElement {
    public:
-    ListValuedRListIoElement(const std::string &name);
+    explicit ListValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
   };
 
@@ -393,7 +393,7 @@ namespace BOOM{
     // Use this constructor if you plan to add parameter vectors one
     // at a time.  This use case obviously requires holding onto the
     // list element pointer outside of an RListIoManager.
-    HierarchicalVectorListElement(const std::string &param_name);
+    explicit HierarchicalVectorListElement(const std::string &param_name);
 
     void add_vector(const Ptr<VectorParams> &vector);
     SEXP prepare_to_write(int niter) override;

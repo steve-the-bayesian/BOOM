@@ -116,7 +116,7 @@ namespace BOOM {
         gsignu[0] *= (1 - (nu + 1) * frac);
 
         gsignu[1] = .5 * (digamma((nu + 1) / 2) - digamma(nu / 2) - 1.0 / nu -
-                          log(1 + esq_ns) + frac * (nu + 1) / nu);
+                          log1p(esq_ns) + frac * (nu + 1) / nu);
         g += concat(gbeta, gsignu);
         if (nd > 1) {
           report_error(
@@ -136,7 +136,7 @@ namespace BOOM {
 
   class TrmNuTF {
    public:
-    TrmNuTF(TRegressionModel *Mod) : mod(Mod) {}
+    explicit TrmNuTF(TRegressionModel *Mod) : mod(Mod) {}
     TrmNuTF *clone() const { return new TrmNuTF(*this); }
     double operator()(const Vector &Nu) const;
     double operator()(const Vector &Nu, Vector &g) const;

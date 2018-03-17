@@ -35,7 +35,7 @@ namespace BOOM {
     typedef Ptr<DatasetType, false> dsetPtr;
 
    public:
-    MixtureDataPolicy(int number_of_latent_levels);
+    explicit MixtureDataPolicy(int number_of_latent_levels);
     MixtureDataPolicy(const MixtureDataPolicy &);
     MixtureDataPolicy *clone() const override = 0;
     MixtureDataPolicy &operator=(const MixtureDataPolicy &);

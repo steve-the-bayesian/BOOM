@@ -215,6 +215,7 @@ namespace BOOM {
     xtx_ = SpdMatrix(p, 0.0);
     xty_ = Vector(p, 0.0);
     sumsqy = 0.0;
+    needs_to_reflect_ = true;
     while (b != e) {
       update(*b);
       ++b;

@@ -31,7 +31,7 @@ namespace BOOM {
     typedef ParamPolicy_1<P> ParamPolicy;
 
     ParamPolicy_1();
-    ParamPolicy_1(const Ptr<P> &pPrm);
+    explicit ParamPolicy_1(const Ptr<P> &pPrm);
     ParamPolicy_1(const ParamPolicy_1 &rhs);
     ParamPolicy_1<P> &operator=(const ParamPolicy_1 &rhs);
 

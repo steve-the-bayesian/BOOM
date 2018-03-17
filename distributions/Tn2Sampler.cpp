@@ -98,7 +98,7 @@ namespace BOOM {
       if (fabs(d) < .00000000001) {
         increment = exp(y - y0) * (knots[k + 1] - knots[k]);
       } else {
-        increment = (exp(y - y0) / d) * (exp(d * knots[k + 1] - knots[k]) - 1);
+        increment = (exp(y - y0) / d) * expm1(d * knots[k + 1] - knots[k]);
       }
       cdf[k] = (k == 0 ? increment : cdf[k - 1] + increment);
     }

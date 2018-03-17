@@ -29,7 +29,7 @@ namespace BOOM{
 
       // need all the constructors from TNT
       CorrelationMatrix();
-      CorrelationMatrix(int dim);
+      explicit CorrelationMatrix(int dim);
       CorrelationMatrix(int dim, double *m, bool ColMajor=true);
       template <class FwdIt>
       CorrelationMatrix(FwdIt Beg, FwdIt End);

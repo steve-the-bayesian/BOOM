@@ -26,7 +26,7 @@ namespace BOOM {
 
     class LogitSufstatManager : public SufstatManagerBase {
      public:
-      LogitSufstatManager(StateSpaceLogitPosteriorSampler *sampler)
+      explicit LogitSufstatManager(StateSpaceLogitPosteriorSampler *sampler)
           : sampler_(sampler) {}
       void clear_complete_data_sufficient_statistics() override {
         sampler_->clear_complete_data_sufficient_statistics();

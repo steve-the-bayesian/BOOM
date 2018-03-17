@@ -27,7 +27,7 @@ namespace BOOM {
   namespace StateSpace {
     class StudentSufstatManager : public SufstatManagerBase {
      public:
-      StudentSufstatManager(StateSpaceStudentPosteriorSampler *sampler)
+      explicit StudentSufstatManager(StateSpaceStudentPosteriorSampler *sampler)
           : sampler_(sampler) {}
       void clear_complete_data_sufficient_statistics() override {
         sampler_->clear_complete_data_sufficient_statistics();
