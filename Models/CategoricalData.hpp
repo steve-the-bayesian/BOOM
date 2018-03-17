@@ -71,7 +71,9 @@ namespace BOOM {
     friend void intrusive_ptr_add_ref(CatKeyBase *k) { k->up_count(); }
     friend void intrusive_ptr_release(CatKeyBase *k) {
       k->down_count();
-      if (k->ref_count() == 0) delete k;
+      if (k->ref_count() == 0) {
+        delete k;
+      }
     }
 
     // The observers are the categorical data objects using *this as a key.
@@ -224,7 +226,7 @@ namespace BOOM {
     void print_key(std::ostream &out) const;
 
    private:
-    uint val_;
+    uint val_{};
     Ptr<CatKeyBase> key_;
   };
   //------------------------------------------------------------

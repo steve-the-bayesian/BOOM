@@ -21,8 +21,8 @@
 
 namespace BOOM {
 
-  typedef VectorConstraint VC;
-  typedef ElementConstraint EC;
+  using VC = BOOM::VectorConstraint;
+  using EC = BOOM::ElementConstraint;
   EC::ElementConstraint(uint el, double val) : element_(el), value_(val) {}
 
   bool EC::check(const Vector &v) const { return v[element_] == value_; }
@@ -38,7 +38,9 @@ namespace BOOM {
   }
 
   Vector EC::reduce(const Vector &v) const {
-    if (v.empty()) return Vector(0);
+    if (v.empty()) {
+      return Vector(0);
+    }
     Vector ans(v.size() - 1);
     Vector::const_iterator b(v.begin()), e(v.end());
     std::copy(b, b + element_, ans.begin());
@@ -46,7 +48,7 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
-  typedef SumConstraint SC;
+  using SC = BOOM::SumConstraint;
   SC::SumConstraint(double x) : sum_(x) {}
 
   bool SC::check(const Vector &v) const { return v.sum() == sum_; }
@@ -70,16 +72,20 @@ namespace BOOM {
 
   //============================================================
 
-  typedef ConstrainedVectorParams CVP;
+  using CVP = BOOM::ConstrainedVectorParams;
 
   CVP::ConstrainedVectorParams(uint p, double x, const Ptr<VC> &vc)
       : VectorParams(p, x), c_(vc) {
-    if (!vc) c_ = new NoConstraint;
+    if (!vc) {
+      c_ = new NoConstraint;
+    }
   }
 
   CVP::ConstrainedVectorParams(const Vector &v, const Ptr<VC> &vc)
       : VectorParams(v), c_(vc) {
-    if (!vc) c_ = new NoConstraint;
+    if (!vc) {
+      c_ = new NoConstraint;
+    }
   }
 
   CVP::ConstrainedVectorParams(const CVP &rhs)
@@ -88,7 +94,9 @@ namespace BOOM {
   CVP *CVP::clone() const { return new CVP(*this); }
 
   Vector CVP::vectorize(bool minimal) const {
-    if (minimal) return c_->reduce(value());
+    if (minimal) {
+      return c_->reduce(value());
+    }
     return value();
   }
 
@@ -97,10 +105,11 @@ namespace BOOM {
     Vector tmp(vectorize(minimal));
     Vector::const_iterator e = v + tmp.size();
     tmp.assign(v, e);
-    if (minimal)
+    if (minimal) {
       set(c_->expand(tmp));
-    else
+    } else {
       set(tmp);
+    }
     return e;
   }
 

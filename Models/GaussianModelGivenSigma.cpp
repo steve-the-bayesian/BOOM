@@ -27,7 +27,7 @@
 namespace BOOM {
 
   namespace {
-    typedef GaussianModelGivenSigma GMGS;
+    using GMGS = BOOM::GaussianModelGivenSigma;
   }  // namespace
 
   GMGS::GaussianModelGivenSigma(const Ptr<UnivParams> &scaling_variance,
@@ -42,8 +42,8 @@ namespace BOOM {
   const Ptr<UnivParams> GMGS::Mu_prm() const { return prm1(); }
   const Ptr<UnivParams> GMGS::Kappa_prm() const { return prm2(); }
 
-  void GMGS::set_params(double mu, double kappa) {
-    set_mu(mu);
+  void GMGS::set_params(double mu0, double kappa) {
+    set_mu(mu0);
     set_kappa(kappa);
   }
 
@@ -52,10 +52,10 @@ namespace BOOM {
   }
 
   double GMGS::mu() const { return prm1_ref().value(); }
-  void GMGS::set_mu(double m) { Mu_prm()->set(m); }
+  void GMGS::set_mu(double mu0) { Mu_prm()->set(mu0); }
 
   double GMGS::kappa() const { return prm2_ref().value(); }
-  void GMGS::set_kappa(double s) { Kappa_prm()->set(s); }
+  void GMGS::set_kappa(double kappa) { Kappa_prm()->set(kappa); }
 
   double GMGS::scaling_variance() const {
     if (!scaling_variance_) {
@@ -67,7 +67,7 @@ namespace BOOM {
   double GMGS::sigsq() const { return scaling_variance() / kappa(); }
 
   double GMGS::Loglike(const Vector &mu_kappa, Vector &g, Matrix &h,
-                       uint nd) const {
+                       uint nderiv) const {
     if (mu_kappa.size() != 2) {
       report_error(
           "Wrong size argument passed to GaussianModelGivenSigma"
@@ -90,11 +90,11 @@ namespace BOOM {
     double ans = .5 * n * (-log2pi + log(kappa) - log(sigsq));
     ans -= .5 * kappa * centered_sumsq / sigsq;
 
-    if (nd > 0) {
+    if (nderiv > 0) {
       double residual_sum = suf()->sum() - n * mu;
       g[0] = kappa * residual_sum / sigsq;
       g[1] = .5 * ((n / kappa) - (centered_sumsq / sigsq));
-      if (nd > 1) {
+      if (nderiv > 1) {
         h(0, 0) = -n * kappa / sigsq;
         h(1, 0) = h(0, 1) = residual_sum / sigsq;
         h(1, 1) = -0.5 * n / square(kappa);

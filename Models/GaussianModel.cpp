@@ -28,11 +28,11 @@
 #include "distributions.hpp"
 
 namespace BOOM {
-  typedef GaussianConjSampler GCS;
-  typedef GaussianModel GM;
+  using GCS = BOOM::GaussianConjSampler;
+  using GM = BOOM::GaussianModel;
 
   GaussianModel::GaussianModel(double mean, double sd)
-      : Model(), ParamPolicy(new UnivParams(mean), new UnivParams(sd * sd)) {}
+      : ParamPolicy(new UnivParams(mean), new UnivParams(sd * sd)) {}
 
   GaussianModel::GaussianModel(const std::vector<double> &v)
       : GaussianModelBase(v),
@@ -83,7 +83,9 @@ namespace BOOM {
   double GaussianModel::Loglike(const Vector &mu_sigsq, Vector &g, Matrix &h,
                                 uint nd) const {
     double sigsq = mu_sigsq[1];
-    if (sigsq < 0) return BOOM::negative_infinity();
+    if (sigsq < 0) {
+      return BOOM::negative_infinity();
+    }
 
     double mu = mu_sigsq[0];
     const double log2pi = 1.8378770664093453;

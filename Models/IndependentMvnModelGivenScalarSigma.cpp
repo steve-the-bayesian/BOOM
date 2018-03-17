@@ -23,33 +23,35 @@
 namespace BOOM {
 
   namespace {
-    typedef IndependentMvnModelGivenScalarSigma IMMGS;
+    using IMMGS = BOOM::IndependentMvnModelGivenScalarSigma;
   }
 
   IMMGS::IndependentMvnModelGivenScalarSigma(
-      const Vector &prior_mean, const Vector &unscaled_prior_variance,
+      const Vector &prior_mean,
+      const Vector &unscaled_variance_diagonal,
       const Ptr<UnivParams> &sigsq)
       : MvnGivenScalarSigmaBase(sigsq),
         ParamPolicy(new VectorParams(prior_mean),
-                    new VectorParams(unscaled_prior_variance)) {}
+                    new VectorParams(unscaled_variance_diagonal)) {}
 
   IMMGS::IndependentMvnModelGivenScalarSigma(
       const Ptr<VectorParams> &prior_mean,
-      const Ptr<VectorParams> &unscaled_prior_variance,
+      const Ptr<VectorParams> &unscaled_variance_diagonal,
       const Ptr<UnivParams> &sigsq)
       : MvnGivenScalarSigmaBase(sigsq),
-        ParamPolicy(prior_mean, unscaled_prior_variance) {}
+        ParamPolicy(prior_mean, unscaled_variance_diagonal) {}
 
   IndependentMvnModelGivenScalarSigma *IMMGS::clone() const {
     return new IndependentMvnModelGivenScalarSigma(*this);
   }
 
-  double IMMGS::Logp(const Vector &x, Vector &g, Matrix &h, uint nderiv) const {
+  double IMMGS::Logp(const Vector &x, Vector &gradient, Matrix &hessian,
+                     uint nderiv) const {
     double ans = 0;
     if (nderiv > 0) {
-      g = 0;
+      gradient = 0;
       if (nderiv > 1) {
-        h = 0;
+        hessian = 0;
       }
     }
     const Vector &mu(this->mu());
@@ -57,9 +59,9 @@ namespace BOOM {
     for (int i = 0; i < x.size(); ++i) {
       ans += dnorm(x[i], mu[i], sqrt(v[i]), true);
       if (nderiv > 0) {
-        g[i] -= -(x[i] - mu[i]) / v[i];
+        gradient[i] -= -(x[i] - mu[i]) / v[i];
         if (nderiv > 1) {
-          h(i, i) -= 1.0 / v[i];
+          hessian(i, i) -= 1.0 / v[i];
         }
       }
     }

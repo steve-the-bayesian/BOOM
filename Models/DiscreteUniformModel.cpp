@@ -39,9 +39,8 @@ namespace BOOM {
   double DiscreteUniformModel::logp(int x) const {
     if (x >= lo_ && x <= hi_) {
       return -log_normalizing_constant_;
-    } else {
-      return negative_infinity();
     }
+    return negative_infinity();
   }
 
   int DiscreteUniformModel::sim(RNG &rng) const {

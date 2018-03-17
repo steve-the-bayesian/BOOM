@@ -162,8 +162,12 @@ namespace BOOM {
     double a = alpha();
     double b = beta();
     double ans = dgamma(x, a, b, true);
-    if (nd > 0) g = (a - 1) / x - b;
-    if (nd > 1) h = -(a - 1) / square(x);
+    if (nd > 0) {
+      g = (a - 1) / x - b;
+    }
+    if (nd > 1) {
+      h = -(a - 1) / square(x);
+    }
     return ans;
   }
 
@@ -185,10 +189,10 @@ namespace BOOM {
     }
     double log_sigsq = log(sigsq);
     double ans = dgamma(1.0 / sigsq, a, b, true) - 2 * log_sigsq;
-    if (gradient) {
+    if (gradient != nullptr) {
       double sig4 = sigsq * sigsq;
       *gradient = -(a + 1) / sigsq + (b / sig4);
-      if (hessian) {
+      if (hessian != nullptr) {
         *hessian = ((a + 1) / sig4) - 2 * b / (sig4 * sigsq);
       }
     }
@@ -198,9 +202,7 @@ namespace BOOM {
   //======================================================================
 
   GammaModel::GammaModel(double a, double b)
-      : GammaModelBase(),
-        ParamPolicy(new UnivParams(a), new UnivParams(b)),
-        PriorPolicy() {
+      : GammaModelBase(), ParamPolicy(new UnivParams(a), new UnivParams(b)) {
     if (a <= 0 || b <= 0) {
       report_error(
           "Both parameters must be positive in the "
@@ -210,8 +212,7 @@ namespace BOOM {
 
   GammaModel::GammaModel(double shape, double mean, int)
       : GammaModelBase(),
-        ParamPolicy(new UnivParams(shape), new UnivParams(shape / mean)),
-        PriorPolicy() {
+        ParamPolicy(new UnivParams(shape), new UnivParams(shape / mean)) {
     if (shape <= 0 || mean <= 0) {
       report_error(
           "Both parameters must be positive in the "
@@ -275,11 +276,11 @@ namespace BOOM {
   double GammaModel::mean() const { return alpha() / beta(); }
 
   inline double bad_gamma_loglike(double a, double b, Vector *g, Matrix *h) {
-    if (g) {
+    if (g != nullptr) {
       (*g)[0] = (a <= 0) ? -(a + 1) : 0;
       (*g)[1] = (b <= 0) ? -(b + 1) : 0;
     }
-    if (h) {
+    if (h != nullptr) {
       h->set_diag(-1);
     }
     return negative_infinity();
@@ -314,7 +315,7 @@ namespace BOOM {
     double logb = log(b);
     double ans = n * (a * logb - lgamma(a)) + (a - 1) * sumlog - b * sum;
 
-    if (gradient) {
+    if (gradient != nullptr) {
       if (gradient->size() != 2) {
         report_error(
             "GammaModel::loglikelihood expects a gradient vector "
@@ -323,7 +324,7 @@ namespace BOOM {
       (*gradient)[0] = n * (logb - digamma(a)) + sumlog;
       (*gradient)[1] = n * a / b - sum;
 
-      if (hessian) {
+      if (hessian != nullptr) {
         if (hessian->nrow() != 2 || hessian->ncol() != 2) {
           report_error(
               "GammaModel::loglikelihood expects a 2 x 2 "

@@ -84,7 +84,9 @@ namespace BOOM {
 
   double IndependentMvnSuf::ybar(int i) const {
     double ni = n_;
-    if (ni < 1e-7) return 0;
+    if (ni < 1e-7) {
+      return 0;
+    }
     return sum_[i] / ni;
   }
 

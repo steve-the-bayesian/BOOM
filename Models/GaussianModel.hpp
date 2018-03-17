@@ -39,7 +39,7 @@ namespace BOOM {
     GaussianModel(const GaussianModel &rhs);
     GaussianModel *clone() const override;
 
-    void set_params(double Mean, double Var);
+    void set_params(double mu, double sigsq);
     void set_mu(double m);
     void set_sigsq(double s);
 

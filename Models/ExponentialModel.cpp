@@ -28,7 +28,7 @@
 
 namespace BOOM {
 
-  ExpSuf::ExpSuf() {}
+  ExpSuf::ExpSuf() = default;
 
   ExpSuf::ExpSuf(const ExpSuf &rhs)
       : Sufstat(rhs),
@@ -91,17 +91,13 @@ namespace BOOM {
     return out << n_ << " " << sum_;
   }
   //======================================================================
-  typedef ExponentialModel EM;
+  using EM = BOOM::ExponentialModel;
 
   EM::ExponentialModel()
-      : ParamPolicy(new UnivParams(1.0)),
-        DataPolicy(new ExpSuf()),
-        PriorPolicy() {}
+      : ParamPolicy(new UnivParams(1.0)), DataPolicy(new ExpSuf()) {}
 
   EM::ExponentialModel(double lam)
-      : ParamPolicy(new UnivParams(lam)),
-        DataPolicy(new ExpSuf()),
-        PriorPolicy() {}
+      : ParamPolicy(new UnivParams(lam)), DataPolicy(new ExpSuf()) {}
 
   EM::ExponentialModel(const EM &rhs)
       : Model(rhs),
@@ -147,7 +143,9 @@ namespace BOOM {
       ans = negative_infinity();
       if (nd > 0) {
         g[0] = std::max(fabs(lam), .10);
-        if (nd > 1) h(0, 0) = -1;
+        if (nd > 1) {
+          h(0, 0) = -1;
+        }
       }
       return ans;
     }
@@ -157,7 +155,9 @@ namespace BOOM {
     ans = n * log(lam) - lam * sum;
     if (nd > 0) {
       g[0] = n / lam - sum;
-      if (nd > 1) h(0, 0) = -n / (lam * lam);
+      if (nd > 1) {
+        h(0, 0) = -n / (lam * lam);
+      }
     }
     return ans;
   }
@@ -180,18 +180,22 @@ namespace BOOM {
 
   double ExponentialModel::Logp(double x, double &g, double &h, uint nd) const {
     double lam = this->lam();
-    if (lam <= 0) return negative_infinity();
+    if (lam <= 0) {
+      return negative_infinity();
+    }
     double ans = x < 0 ? negative_infinity() : log(lam) - lam * x;
     if (nd > 0) {
-      if (lam > 0)
+      if (lam > 0) {
         g = 1.0 / lam - x;
-      else
+      } else {
         g = 1.0;
+      }
       if (nd > 1) {
-        if (lam > 0)
+        if (lam > 0) {
           h = -1.0 / (lam * lam);
-        else
+        } else {
           h = -1.0;
+        }
       }
     }
     return ans;

@@ -54,7 +54,7 @@ namespace BOOM {
     CompositeModel(const CompositeModel &rhs);
     CompositeModel *clone() const override;
 
-    virtual void add_model(const Ptr<MixtureComponent> &component);
+    virtual void add_model(const Ptr<MixtureComponent> &new_model);
 
     void add_data(const Ptr<CompositeData> &) override;
     void add_data(const Ptr<Data> &) override;

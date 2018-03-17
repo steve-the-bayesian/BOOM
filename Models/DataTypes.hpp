@@ -54,13 +54,15 @@ namespace BOOM {
     Data() : missing_flag(observed) {}
     Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
     virtual Data *clone() const = 0;
-    virtual ~Data() {}
+    virtual ~Data() = default;
     virtual ostream &display(ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
     void signal() const {
       uint n = signals_.size();
-      for (uint i = 0; i < n; ++i) signals_[i]();
+      for (uint i = 0; i < n; ++i) {
+        signals_[i]();
+      }
     }
     // TODO: This implementation of the observer pattern is broken by
     // assignment.  When an object is created from an old object by assignment,
@@ -70,13 +72,14 @@ namespace BOOM {
     // that the observer is active when calling, and remove inactive observers
     // from the set of signals.  This fix will require making changes to all the
     // classes that use the current observer scheme.
-    void add_observer(std::function<void(void)> f) { signals_.push_back(f); }
+    void add_observer(const std::function<void(void)> &f) {
+      signals_.push_back(f);
+    }
     friend void intrusive_ptr_add_ref(Data *d);
     friend void intrusive_ptr_release(Data *d);
   };
   //----------------------------------------------------------------------
-  void intrusive_ptr_add_ref(Data *d);
-  void intrusive_ptr_release(Data *d);
+
   //----------------------------------------------------------------------
   ostream &operator<<(ostream &out, const Data &d);
   ostream &operator<<(ostream &out, const Ptr<Data> &dp);
@@ -87,10 +90,10 @@ namespace BOOM {
   template <class DAT>
   class DataTraits : virtual public Data {
    public:
-    DataTraits() {}
+    DataTraits() = default;
     DataTraits(const DataTraits &rhs) : Data(rhs) {}
-    typedef DAT value_type;
-    typedef DataTraits<DAT> Traits;
+    using value_type = DAT;
+    using Traits = DataTraits<DAT>;
     virtual void set(const value_type &, bool) = 0;
     virtual const value_type &value() const = 0;
   };
@@ -98,7 +101,7 @@ namespace BOOM {
   template <class T>
   class UnivData : public DataTraits<T> {  // univariate data
    public:
-    typedef typename DataTraits<T>::Traits Traits;
+    using Traits = typename DataTraits<T>::Traits;
     // constructors
     UnivData() : value_() {}
     UnivData(T y) : value_(y) {}
@@ -109,7 +112,9 @@ namespace BOOM {
     const T &value() const { return value_; }
     virtual void set(const T &rhs, bool Signal = true) {
       value_ = rhs;
-      if (Signal) this->signal();
+      if (Signal) {
+        this->signal();
+      }
     }
     ostream &display(ostream &out) const {
       out << value_;
@@ -121,24 +126,24 @@ namespace BOOM {
   };
 
   //----------------------------------------------------------------------//
-  typedef UnivData<unsigned int> IntData;
-  typedef UnivData<double> DoubleData;
-  typedef UnivData<bool> BinaryData;
+  using IntData = UnivData<unsigned int>;
+  using DoubleData = UnivData<double>;
+  using BinaryData = UnivData<bool>;
   //----------------------------------------------------------------------//
 
   class VectorData : public DataTraits<Vector> {
    public:
-    explicit VectorData(uint n, double x = 0);
+    explicit VectorData(uint n, double X = 0);
     explicit VectorData(const Vector &y);
-    VectorData(const VectorData &d);
+    VectorData(const VectorData &rhs);
     VectorData *clone() const override;
 
     uint dim() const { return x.size(); }
     ostream &display(ostream &out) const override;
 
     const Vector &value() const override { return x; }
-    void set(const Vector &rhs, bool signal = true) override;
-    virtual void set_element(double value, int position, bool signal = true);
+    void set(const Vector &rhs, bool sig = true) override;
+    virtual void set_element(double value, int position, bool sig = true);
 
     double operator[](uint) const;
     double &operator[](uint);
@@ -149,7 +154,7 @@ namespace BOOM {
   //----------------------------------------------------------------------//
   class MatrixData : public DataTraits<Mat> {
    public:
-    MatrixData(int r, int c, double x = 0.0);
+    MatrixData(int r, int c, double val = 0.0);
     explicit MatrixData(const Matrix &y);
     MatrixData(const MatrixData &rhs);
     MatrixData *clone() const override;
@@ -160,9 +165,8 @@ namespace BOOM {
     ostream &display(ostream &out) const override;
 
     const Matrix &value() const override { return x; }
-    void set(const Matrix &rhs, bool signal = true) override;
-    virtual void set_element(double value, int row, int col,
-                             bool signal = true);
+    void set(const Matrix &rhs, bool sig = true) override;
+    virtual void set_element(double value, int row, int col, bool sig = true);
 
    private:
     Matrix x;

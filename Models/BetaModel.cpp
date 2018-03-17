@@ -29,8 +29,8 @@
 namespace BOOM {
 
   namespace {
-    typedef BetaSuf BS;
-    typedef BetaModel BM;
+    using BS = BOOM::BetaSuf;
+    using BM = BOOM::BetaModel;
   }  // namespace
 
   BS::BetaSuf() : n_(0), sumlog_(0), sumlogc_(0) {}
@@ -99,17 +99,14 @@ namespace BOOM {
   }
 
   BM::BetaModel(double a, double b)
-      : ParamPolicy(new UnivParams(a), new UnivParams(b)),
-        DataPolicy(new BS),
-        PriorPolicy() {
+      : ParamPolicy(new UnivParams(a), new UnivParams(b)), DataPolicy(new BS) {
     set_params(a, b);
   }
 
   BM::BetaModel(double mean, double sample_size, int)
       : ParamPolicy(new UnivParams(mean * sample_size),
                     new UnivParams((1 - mean) * sample_size)),
-        DataPolicy(new BS),
-        PriorPolicy() {
+        DataPolicy(new BS) {
     if (mean <= 0 || mean >= 1.0 || sample_size <= 0) {
       report_error(
           "mean must be in (0, 1), and sample_size must "
@@ -229,11 +226,15 @@ namespace BOOM {
   }
 
   double BM::Logp(double x, double &d1, double &d2, uint nd) const {
-    if (x < 0 || x > 1) return BOOM::negative_infinity();
+    if (x < 0 || x > 1) {
+      return BOOM::negative_infinity();
+    }
     double inf = BOOM::infinity();
     double a = this->a();
     double b = this->b();
-    if (a == inf || b == inf) return Logp_degenerate(x, d1, d2, nd);
+    if (a == inf || b == inf) {
+      return Logp_degenerate(x, d1, d2, nd);
+    }
 
     double ans = dbeta(x, a, b, true);
 
@@ -243,23 +244,29 @@ namespace BOOM {
 
     if (nd > 0) {
       d1 = A / x - B / y;
-      if (nd > 1) d2 = -A / square(x) - B / square(y);
+      if (nd > 1) {
+        d2 = -A / square(x) - B / square(y);
+      }
     }
     return ans;
   }
 
   double BM::Logp_degenerate(double x, double &d1, double &d2, uint nd) const {
     double inf = BOOM::infinity();
-    double a_inf = a() == inf;
-    double b_inf = b() == inf;
-    if (a_inf && b_inf) {
+    double a_inf = static_cast<double>(a() == inf);
+    double b_inf = static_cast<double>(b() == inf);
+    if ((a_inf != 0.0) && (b_inf != 0.0)) {
       report_error("both a and b are finite in BetaModel::Logp");
     }
     if (nd > 0) {
       d1 = 0;
-      if (nd > 1) d2 = 0;
+      if (nd > 1) {
+        d2 = 0;
+      }
     }
-    if (b_inf) x = 1 - x;
+    if (b_inf != 0.0) {
+      x = 1 - x;
+    }
     return x == 1.0 ? 0.0 : BOOM::negative_infinity();
   }
 

@@ -29,8 +29,7 @@ namespace BOOM {
 
   BetaBinomialModel::BetaBinomialModel(double a, double b)
       : ParamPolicy(new UnivParams(a), new UnivParams(b)),
-        DataPolicy(),
-        PriorPolicy(),
+
         lgamma_n_y_(0.0) {
     check_positive(a, "BetaBinomialModel");
     check_positive(b, "BetaBinomialModel");
@@ -39,8 +38,7 @@ namespace BOOM {
   BetaBinomialModel::BetaBinomialModel(const BOOM::Vector &trials,
                                        const BOOM::Vector &successes)
       : ParamPolicy(new UnivParams(1.0), new UnivParams(1.0)),
-        DataPolicy(),
-        PriorPolicy(),
+
         lgamma_n_y_(0.0) {
     if (trials.size() != successes.size()) {
       ostringstream err;
@@ -110,7 +108,9 @@ namespace BOOM {
     }
     double a = ab[0];
     double b = ab[1];
-    if (a <= 0 || b <= 0) return BOOM::negative_infinity();
+    if (a <= 0 || b <= 0) {
+      return BOOM::negative_infinity();
+    }
     const std::vector<Ptr<BinomialData> > &data(dat());
     int nobs = data.size();
     double ans =
@@ -147,7 +147,9 @@ namespace BOOM {
 
   double BetaBinomialModel::logp(int64_t n, int64_t y, double a,
                                  double b) const {
-    if (a <= 0 || b <= 0) return BOOM::negative_infinity();
+    if (a <= 0 || b <= 0) {
+      return BOOM::negative_infinity();
+    }
     double ans = lgammafn(n + 1) - lgammafn(y + 1) - lgammafn(n - y + 1);
     ans += lgammafn(a + b) - lgammafn(a) - lgammafn(b);
     ans -= lgammafn(n + a + b) - lgammafn(a + y) - lgammafn(b + n - y);
@@ -155,7 +157,9 @@ namespace BOOM {
   }
 
   double BetaBinomialModel::loglike(double a, double b) const {
-    if (a <= 0 || b <= 0) return BOOM::negative_infinity();
+    if (a <= 0 || b <= 0) {
+      return BOOM::negative_infinity();
+    }
     const std::vector<Ptr<BinomialData> > &data(dat());
     int nobs = data.size();
     double ans =
@@ -191,8 +195,9 @@ namespace BOOM {
 
     double sample_mean = mean(p_hat);
     double sample_variance = var(p_hat);
-    if (sample_variance == 0.0 || sample_mean == 0.0 || sample_mean == 1.0)
+    if (sample_variance == 0.0 || sample_mean == 0.0 || sample_mean == 1.0) {
       return;
+    }
     set_prior_mean(sample_mean);
     // v = (mean) * (1-mean) / (a+b+1)
     // =>
@@ -250,7 +255,9 @@ namespace BOOM {
 
   void BetaBinomialModel::check_positive(double arg,
                                          const char *function_name) const {
-    if (arg > 0) return;
+    if (arg > 0) {
+      return;
+    }
     ostringstream err;
     err << "Illegal argument (" << arg << ") passed to "
         << "BetaBinomialModel::" << function_name
@@ -260,7 +267,9 @@ namespace BOOM {
 
   void BetaBinomialModel::check_probability(double arg,
                                             const char *function_name) const {
-    if (arg > 0 && arg < 1) return;
+    if (arg > 0 && arg < 1) {
+      return;
+    }
     ostringstream err;
     err << "Illegal argument (" << arg << ") passed to "
         << "BetaBinomialModel::" << function_name

@@ -40,11 +40,11 @@ namespace BOOM {
     void set(double sum, double sumlog, double n);
     void clear() override;
     void Update(const DoubleData &dat) override;
-    void update_raw(double y);
+    void update_raw(double x);
     void add_mixture_data(double y, double prob);
 
     // Add the given sufficient components to the sufficient statistics.
-    void increment(double n, double sumy, double sumlog);
+    void increment(double n, double sum, double sumlog);
 
     double sum() const;
     double sumlog() const;
@@ -139,17 +139,17 @@ namespace BOOM {
 
     // Three different ways to set parameters, depending on the
     // parameterization.
-    void set_shape_and_scale(double alpha, double beta);
-    void set_shape_and_mean(double alpha, double mean);
-    void set_mean_and_scale(double mean, double beta);
+    void set_shape_and_scale(double a, double b);
+    void set_shape_and_mean(double a, double mean);
+    void set_mean_and_scale(double mean, double b);
 
     double mean() const override;
 
     // probability calculations
     double Loglike(const Vector &shape_scale, Vector &gradient, Matrix &hessian,
                    uint number_of_derivatives) const override;
-    double loglikelihood(double a, double b) const;
-    double loglikelihood(const Vector &shape_scale, Vector *gradient,
+    double loglikelihood(double shape, double scale) const;
+    double loglikelihood(const Vector &ab, Vector *gradient,
                          Matrix *hessian) const;
     void mle() override;
   };

@@ -22,6 +22,7 @@
 #include <fstream>
 #include <set>
 #include <sstream>
+#include <utility>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -60,7 +61,7 @@ namespace BOOM {
     return out;
   }
   //======================================================================
-  CatKey::CatKey() : labs_(), grow_(true) {}
+  CatKey::CatKey() : grow_(true) {}
 
   CatKey::CatKey(int number_of_levels) : labs_(number_of_levels), grow_(false) {
     for (int i = 0; i < number_of_levels; ++i) {
@@ -93,8 +94,9 @@ namespace BOOM {
       if (grow_) {
         add_label(label);
         dp->set(findstr_safe(label, found));
-      } else
+      } else {
         report_error("illegal label passed to CatKey::Register");
+      }
     }
   }
 
@@ -125,7 +127,9 @@ namespace BOOM {
   void CatKey::add_label(const std::string &lab) { labs_.push_back(lab); }
 
   void CatKey::reorder(const std::vector<std::string> &new_ordering) {
-    if (labs_ == new_ordering) return;
+    if (labs_ == new_ordering) {
+      return;
+    }
     assert(new_ordering.size() == labs_.size());
     std::vector<uint> new_vals(labs_.size());
     for (uint i = 0; i < labs_.size(); ++i) {
@@ -144,7 +148,9 @@ namespace BOOM {
   }
 
   void CatKey::relabel(const std::vector<std::string> &new_labels) {
-    if (labs_ == new_labels) return;
+    if (labs_ == new_labels) {
+      return;
+    }
     assert(new_labels.size() == labs_.size());
     labs_ = new_labels;
   }
@@ -315,19 +321,27 @@ namespace BOOM {
   }
 
   bool OrdinalData::operator<(const OrdinalData &rhs) const {
-    if (!comparable(rhs)) incompat();
+    if (!comparable(rhs)) {
+      incompat();
+    }
     return value() < rhs.value();
   }
   bool OrdinalData::operator<=(const OrdinalData &rhs) const {
-    if (!comparable(rhs)) incompat();
+    if (!comparable(rhs)) {
+      incompat();
+    }
     return value() <= rhs.value();
   }
   bool OrdinalData::operator>(const OrdinalData &rhs) const {
-    if (!comparable(rhs)) incompat();
+    if (!comparable(rhs)) {
+      incompat();
+    }
     return value() > rhs.value();
   }
   bool OrdinalData::operator>=(const OrdinalData &rhs) const {
-    if (!comparable(rhs)) incompat();
+    if (!comparable(rhs)) {
+      incompat();
+    }
     return value() >= rhs.value();
   }
   //======================================================================
@@ -344,7 +358,9 @@ namespace BOOM {
     uint n = sv.size();
     Ptr<CatKey> labs = make_catkey(sv);
     std::vector<Ptr<CategoricalData> > ans(n);
-    for (uint i = 0; i < n; ++i) ans[i] = new CategoricalData(sv[i], labs);
+    for (uint i = 0; i < n; ++i) {
+      ans[i] = new CategoricalData(sv[i], labs);
+    }
     return ans;
   }
 
@@ -354,14 +370,18 @@ namespace BOOM {
     int max = *std::max_element(iv.begin(), iv.end());
     Ptr<CatKeyBase> labs = new FixedSizeIntCatKey(max + 1);
     std::vector<Ptr<CategoricalData> > ans(iv.size());
-    for (uint i = 0; i < n; ++i) ans[i] = new CategoricalData(iv[i], labs);
+    for (uint i = 0; i < n; ++i) {
+      ans[i] = new CategoricalData(iv[i], labs);
+    }
     return ans;
   }
 
   std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &iv) {
     uint n = iv.size();
     uint Max = 0;
-    for (uint i = 0; i < n; ++i) Max = std::max(iv[i], Max);
+    for (uint i = 0; i < n; ++i) {
+      Max = std::max(iv[i], Max);
+    }
     Ptr<CatKeyBase> key(new FixedSizeIntCatKey(Max + 1));
     std::vector<Ptr<OrdinalData> > ans;
     ans.reserve(n);

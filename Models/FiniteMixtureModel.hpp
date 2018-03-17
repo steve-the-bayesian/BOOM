@@ -108,10 +108,11 @@ namespace BOOM {
 
   template <class M>
   FiniteMixtureModel::FiniteMixtureModel(
-      const std::vector<Ptr<M>> &Models,
+      const std::vector<Ptr<M>> &mixture_components,
       const Ptr<MultinomialModel> &mixing_weights)
       : DataPolicy(mixing_weights->dim()),
-        mixture_components_(Models.begin(), Models.end()),
+        mixture_components_(mixture_components.begin(),
+                            mixture_components.end()),
         mixing_dist_(mixing_weights) {
     set_observers();
   }

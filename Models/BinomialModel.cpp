@@ -32,27 +32,15 @@
 namespace BOOM {
 
   namespace {
-    typedef BinomialSuf BS;
-    typedef BinomialModel BM;
+    using BS = BOOM::BinomialSuf;
+    using BM = BOOM::BinomialModel;
   }  // namespace
 
   BinomialData::BinomialData(int64_t n, int64_t y) : trials_(n), successes_(y) {
     check_size(n, y);
   }
 
-  BinomialData::BinomialData(const BinomialData &rhs)
-      : Data(rhs), trials_(rhs.trials_), successes_(rhs.successes_) {}
-
   BinomialData *BinomialData::clone() const { return new BinomialData(*this); }
-
-  BinomialData &BinomialData::operator=(const BinomialData &rhs) {
-    if (&rhs != this) {
-      Data::operator=(rhs);
-      trials_ = rhs.trials_;
-      successes_ = rhs.successes_;
-    }
-    return *this;
-  }
 
   uint BinomialData::size(bool) const { return 2; }
 
@@ -104,10 +92,7 @@ namespace BOOM {
 
   //======================================================================
 
-  BS::BinomialSuf() : SufTraits(), sum_(0), nobs_(0) {}
-
-  BS::BinomialSuf(const BS &rhs)
-      : Sufstat(rhs), SufTraits(rhs), sum_(rhs.sum_), nobs_(rhs.nobs_) {}
+  BS::BinomialSuf() : sum_(0), nobs_(0) {}
 
   BS *BS::clone() const { return new BS(*this); }
 
@@ -178,14 +163,15 @@ namespace BOOM {
   }
 
   Vector::const_iterator BS::unvectorize(const Vector &v, bool minimal) {
-    Vector::const_iterator it = v.begin();
-    return unvectorize(it, minimal);
+    Vector::const_iterator begin = v.begin();
+    auto ans = unvectorize(begin, minimal);
+    return ans;
   }
 
   ostream &BS::print(ostream &out) const { return out << sum_ << " " << nobs_; }
 
   BM::BinomialModel(double p)
-      : ParamPolicy(new UnivParams(p)), DataPolicy(new BS), NumOptModel() {
+      : ParamPolicy(new UnivParams(p)), DataPolicy(new BS) {
     observe_prob();
   }
 
@@ -196,6 +182,18 @@ namespace BOOM {
         PriorPolicy(rhs),
         NumOptModel(rhs) {
     observe_prob();
+  }
+
+  BM &BinomialModel::operator=(const BinomialModel &rhs) {
+    if (&rhs != this) {
+      Model::operator=(rhs);
+      ParamPolicy::operator=(rhs);
+      DataPolicy::operator=(rhs);
+      PriorPolicy::operator=(rhs);
+      NumOptModel::operator=(rhs);
+      observe_prob();
+    }
+    return *this;
   }
 
   void BM::observe_prob() {

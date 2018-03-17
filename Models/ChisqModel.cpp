@@ -24,13 +24,12 @@
 
 namespace BOOM {
 
-  typedef ChisqModel CSM;
-  typedef GammaModelBase GMB;
+  using CSM = BOOM::ChisqModel;
+  using GMB = BOOM::GammaModelBase;
 
   CSM::ChisqModel(double df, double sigma_estimate)
-      : GMB(),
-        ParamPolicy(new UnivParams(df), new UnivParams(square(sigma_estimate))),
-        PriorPolicy() {}
+      : ParamPolicy(new UnivParams(df),
+                    new UnivParams(square(sigma_estimate))) {}
 
   CSM *CSM::clone() const { return new CSM(*this); }
 
@@ -69,7 +68,9 @@ namespace BOOM {
       if (nd > 0) {
         g[0] = (d <= 0) ? d : 0;
         g[1] = (s <= 0) ? s : 0;
-        if (nd > 1) h.set_diag(-1);
+        if (nd > 1) {
+          h.set_diag(-1);
+        }
       }
       return BOOM::negative_infinity();
     }

@@ -23,7 +23,7 @@
 namespace BOOM {
 
   namespace {
-    typedef GaussianSuf GS;
+    using GS = BOOM::GaussianSuf;
   }
 
   GS::GaussianSuf(double Sum, double Sumsq, double N)
@@ -78,12 +78,16 @@ namespace BOOM {
   }
   double GS::n() const { return n_; }
   double GS::ybar() const {
-    if (n_ > 0) return sum() / n();
+    if (n_ > 0) {
+      return sum() / n();
+    }
     return 0.0;
   }
 
   double GS::sample_var() const {
-    if (n_ <= 1) return 0;
+    if (n_ <= 1) {
+      return 0;
+    }
     double ss = sumsq() - n() * pow(ybar(), 2);
     return ss / (n_ - 1);
   }
@@ -157,8 +161,12 @@ namespace BOOM {
                                  uint nd) const {
     double m = mu();
     double ans = dnorm(x, m, sigma(), 1);
-    if (nd > 0) g = -(x - m) / sigsq();
-    if (nd > 1) h = -1.0 / sigsq();
+    if (nd > 0) {
+      g = -(x - m) / sigsq();
+    }
+    if (nd > 1) {
+      h = -1.0 / sigsq();
+    }
     return ans;
   }
 
@@ -167,8 +175,12 @@ namespace BOOM {
     double X = x[0];
     double G(0), H(0);
     double ans = Logp(X, G, H, nd);
-    if (nd > 0) g[0] = G;
-    if (nd > 1) h(0, 0) = H;
+    if (nd > 0) {
+      g[0] = G;
+    }
+    if (nd > 1) {
+      h(0, 0) = H;
+    }
     return ans;
   }
 
