@@ -199,6 +199,7 @@ namespace GilksArms {
     metrop = (METROPOLIS *)malloc(sizeof(METROPOLIS));
     if (metrop == NULL) {
       /* insufficient space */
+      free (env);
       return InsufficientSpace;
     }
     metrop->on = dometrop;

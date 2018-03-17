@@ -94,6 +94,7 @@ namespace BOOM {
     //======================================================================
     class LogitSufficientStatistics : public SufficientStatisticsBase {
      public:
+      LogitSufficientStatistics();
       LogitSufficientStatistics *clone() const override;
       void clear() override;
       void update(const ResidualRegressionData &abstract_data) override;

@@ -38,7 +38,11 @@ namespace BOOM {
   struct ScalarKalmanStorage : public KalmanStateStorage {
     ScalarKalmanStorage() : KalmanStateStorage() {}
     explicit ScalarKalmanStorage(int dim, bool store_state_moments = true)
-        : KalmanStateStorage(store_state_moments ? 0 : dim), K(dim) {}
+        : KalmanStateStorage(store_state_moments ? 0 : dim),
+          K(dim),
+          F(0),
+          v(0)
+    {}
 
     // Kalman gain
     Vector K;

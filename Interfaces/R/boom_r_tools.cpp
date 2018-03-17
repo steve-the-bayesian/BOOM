@@ -291,7 +291,6 @@ namespace BOOM {
     } else {
       // If r_array is actually a matrix that's okay, because to R a
       // matrix is a 2-d array.
-      std::vector<int> dims = GetArrayDimensions(r_array);
       return Array(GetArrayDimensions(r_array), REAL(r_array));
     }
   }

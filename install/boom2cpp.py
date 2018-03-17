@@ -1,8 +1,11 @@
+#!/usr/local/bin/python3
+
 import glob
-import string
 import shutil
 
-'''Convert the files in the Boom R package back to a functioning C++ library, by moving the headers in with the source files, and movinng the Interface files to their own directory.'''
+# Convert the files in the Boom R package back to a functioning C++ library, by
+# moving the headers in with the source files, and movinng the Interface files
+# to their own directory.
 
 header_files = glob.iglob('Boom/inst/include/**/*.hpp', recursive = True)
 for fname in header_files:
