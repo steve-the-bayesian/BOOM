@@ -33,7 +33,7 @@ namespace BOOM{
       CorrelationMatrix(int dim, double *m, bool ColMajor=true);
       template <class FwdIt>
       CorrelationMatrix(FwdIt Beg, FwdIt End);
-      CorrelationMatrix(const Matrix &m);
+      explicit CorrelationMatrix(const Matrix &m);
       CorrelationMatrix(const CorrelationMatrix &sm);
 
       CorrelationMatrix & operator=(const CorrelationMatrix &x);

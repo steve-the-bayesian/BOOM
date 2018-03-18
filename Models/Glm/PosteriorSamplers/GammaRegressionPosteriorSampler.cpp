@@ -31,7 +31,7 @@ namespace BOOM {
 
     class GammaRegressionLogPosterior {
      public:
-      GammaRegressionLogPosterior(
+      explicit GammaRegressionLogPosterior(
           const GammaRegressionPosteriorSampler *sampler)
           : sampler_(sampler) {}
 

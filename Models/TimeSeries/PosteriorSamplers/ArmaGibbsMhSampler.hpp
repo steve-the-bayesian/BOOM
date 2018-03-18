@@ -17,6 +17,11 @@ namespace BOOM {
 
   class ArmaGibbsMhSampler : public PosteriorSampler {
    public:
+    ArmaGibbsMhSampler(ArmaModel *model,
+                       const Ptr<MvnBase> &ar_prior,
+                       const Ptr<VectorModel> &ma_prior,
+                       const Ptr<DoubleModel> &precision_prior);
+
     void draw() override;
     double logpri() const override;
 

@@ -42,7 +42,7 @@ namespace BOOM {
         // Args:
         //   r_frame: An R data frame containing the variables to be
         //     used as part of a model formula.
-        ExpressionFactory(SEXP r_frame);
+        explicit ExpressionFactory(SEXP r_frame);
 
         // Constructor for ExpressionFactory<BOOM::ContextualEffectGroup>
         ExpressionFactory(SEXP r_experiment_data,

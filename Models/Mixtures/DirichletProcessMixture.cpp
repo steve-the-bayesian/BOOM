@@ -253,9 +253,8 @@ namespace BOOM {
     double ans = dim * log_alpha;
     double previous_probability = 1.0;
     for (int i = 0; i < dim; ++i) {
-      double stick_fraction;
       if (previous_probability > 0) {
-        stick_fraction = weights[i] / previous_probability;
+        double stick_fraction = weights[i] / previous_probability;
         previous_probability -= weights[i];
         ans += (alpha + i - dim) * log(1 - stick_fraction);
       } else {

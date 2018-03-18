@@ -356,7 +356,6 @@ namespace BOOM {
 
       // method of moments estimates
       double b = ybar / sample_variance;
-      double a = ybar * b;
 
       // one step newton refinement:
       // a = ybar * b;
@@ -366,8 +365,7 @@ namespace BOOM {
       double g = 1 - tmp * trigamma(ybar * b) * ybar;
 
       b -= f / g;
-      a = b * ybar;
-      set_shape_and_scale(a, b);
+      set_shape_and_scale(ybar * b, b);
     }
     NumOptModel::mle();
   }

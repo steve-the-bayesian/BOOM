@@ -42,7 +42,7 @@ namespace BOOM {
   }
 
   double UCM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    double ans = logp(DAT(dp)->value());
+    double ans = logp(CorrelationMatrix(DAT(dp)->value()));
     return logscale ? ans : exp(ans);
   }
 

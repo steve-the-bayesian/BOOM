@@ -344,7 +344,7 @@ namespace BOOM {
     class StudentLocalLinearTrendLevelWeightCallback
         : public VectorIoCallback {
      public:
-      StudentLocalLinearTrendLevelWeightCallback(
+      explicit StudentLocalLinearTrendLevelWeightCallback(
           StudentLocalLinearTrendStateModel *model) : model_(model) {}
       virtual int dim() const { return model_->latent_level_weights().size(); }
       virtual Vector get_vector() const {
@@ -357,7 +357,7 @@ namespace BOOM {
     class StudentLocalLinearTrendSlopeWeightCallback
         : public VectorIoCallback {
      public:
-      StudentLocalLinearTrendSlopeWeightCallback(
+      explicit StudentLocalLinearTrendSlopeWeightCallback(
           StudentLocalLinearTrendStateModel *model) : model_(model) {}
       virtual int dim() const { return model_->latent_level_weights().size(); }
       virtual Vector get_vector() const {
