@@ -107,7 +107,6 @@ namespace BOOM {
     double total = cdf.back();
     if (total < 1.0 || total > 1.0) {
       cdf /= total;
-      total = 1.0;
     }
 
     Vector u(number_of_draws);

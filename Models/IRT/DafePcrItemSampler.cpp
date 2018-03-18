@@ -55,7 +55,7 @@ namespace BOOM {
      public:
       ItemDafeTF(const Ptr<PCR> &it, const Ptr<MvnModel> &pri,
                  const Ptr<IMP> &Imp)
-          : mod(it), prior(pri), imp(Imp), t(it->parameter_vector()) {}
+          : mod(it), prior(pri), imp(Imp), ans(0), t(it->parameter_vector()) {}
       double operator()(const Vector &b) const;
       ItemDafeTF *clone() const { return new ItemDafeTF(*this); }
 

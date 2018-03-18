@@ -63,7 +63,7 @@ namespace BOOM {
   double LognormalModel::mean() const { return exp(mu() + 0.5 * sigsq()); }
 
   double LognormalModel::variance() const {
-    return (exp(sigsq()) - 1) * square(mean());
+    return expm1(sigsq()) * square(mean());
   }
 
   double LognormalModel::Logp(double x, double &d1, double &d2,

@@ -52,8 +52,8 @@ namespace BOOM {
   class MvnMetaAnalysisDPMPriorModel
       : public HierarchicalModelBase<MvnModel, DirichletProcessMvnModel> {
    public:
-    MvnMetaAnalysisDPMPriorModel(int dim, double alpha = 1.0);
-    MvnMetaAnalysisDPMPriorModel(
+    explicit MvnMetaAnalysisDPMPriorModel(int dim, double alpha = 1.0);
+    explicit MvnMetaAnalysisDPMPriorModel(
         const Ptr<DirichletProcessMvnModel> &prior_model);
     MvnMetaAnalysisDPMPriorModel *clone() const override;
 

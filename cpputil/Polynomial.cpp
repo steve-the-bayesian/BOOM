@@ -205,20 +205,16 @@ double pow_di(double *ap, int *ip);
 
 // pow_di algorithm from netlib.org
 double pow_di(double *ap, int *bp) {
-  double pow, x;
-  int n;
-  unsigned long u;
-
-  pow = 1;
-  x = *ap;
-  n = *bp;
+  double pow = 1;
+  double x = *ap;
+  int n = *bp;
 
   if (n != 0) {
     if (n < 0) {
       n = -n;
       x = 1 / x;
     }
-    for (u = n;;) {
+    for (unsigned long u = n;;) {
       if (u & 01) pow *= x;
       if (u >>= 1)
         x *= x;
