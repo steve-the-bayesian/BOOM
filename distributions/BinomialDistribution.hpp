@@ -28,7 +28,7 @@ namespace BOOM {
   class binomial_distribution {
     // different case models tr1::binomial_distribution
    public:
-    binomial_distribution(uint n = 1, double p = 0.5);
+    explicit binomial_distribution(uint n = 1, double p = 0.5);
     uint operator()(RNG &);
 
    private:

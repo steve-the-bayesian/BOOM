@@ -144,7 +144,9 @@ namespace BOOM {
       err << "The initial state variance has the wrong size in "
           << "SeasonalStateModel.  " << endl
           << "It must be set manually, and it must be of dimension "
-          << "number_of_seasons - 1.";
+          << "number_of_seasons - 1.  " << std::endl
+          << "The curent dimension is " << initial_state_variance_.nrow()
+          << " and it should be " << state_dimension() << "." << std::endl;
       report_error(err.str());
     }
     return initial_state_variance_;
