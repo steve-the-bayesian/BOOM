@@ -172,7 +172,7 @@ namespace {
 
     model->sample_posterior();
     
-    int niter = 1000;
+    int niter = 500;
     Matrix day_of_week_draws(niter, series_.size());
     Matrix weekly_draws(niter, series_.size());
     for (int i = 0; i < niter; ++i) {

@@ -104,8 +104,10 @@ namespace BOOM {
     //
     // Returns:
     //   The error vector for just the specified state model.
-    ConstVectorView state_error_component(const Vector &full_state_error,
-                                          int state_model_number) const;
+    ConstVectorView const_state_error_component(const Vector &full_state_error,
+                                                int state_model_number) const;
+    VectorView state_error_component(Vector &full_state_error,
+                                     int state_model_number) const;
 
     // Returns the subcomponent of the (block diagonal) error variance matrix
     // corresponding to a specific state model.

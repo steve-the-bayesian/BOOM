@@ -138,11 +138,18 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  ConstVectorView Base::state_error_component(const Vector &full_state_error,
-                                              int state_model_number) const {
+  ConstVectorView Base::const_state_error_component(const Vector &full_state_error,
+                                                    int state_model_number) const {
     int start = state_error_positions_[state_model_number];
     int size = state_model(state_model_number)->state_error_dimension();
     return ConstVectorView(full_state_error, start, size);
+  }
+
+  VectorView Base::state_error_component(Vector &full_state_error,
+                                         int state_model_number) const {
+    int start = state_error_positions_[state_model_number];
+    int size = state_model(state_model_number)->state_error_dimension();
+    return VectorView(full_state_error, start, size);
   }
 
   //----------------------------------------------------------------------
@@ -552,7 +559,8 @@ namespace BOOM {
                                  VectorView next, int t,
                                  bool supplemental) const {
     next = (*state_transition_matrix(t - 1, supplemental)) * last;
-    next += simulate_state_error(rng, t - 1, supplemental);
+    next += (*state_error_expander(t - 1, supplemental)) *
+             simulate_state_error(rng, t - 1, supplemental);
   }
 
   //----------------------------------------------------------------------
@@ -601,9 +609,9 @@ namespace BOOM {
   Vector Base::simulate_state_error(RNG &rng, int t, bool supplemental) const {
     // simulate N(0, RQR) for the state at time t+1, using the
     // variance matrix at time t.
-    Vector ans(state_dimension_, 0);
+    Vector ans(state_error_dimension_, 0);
     for (int s = 0; s < state_models_.size(); ++s) {
-      VectorView eta(state_component(ans, s));
+      VectorView eta(state_error_component(ans, s));
       state_model(s, supplemental)->simulate_state_error(rng, eta, t);
     }
     return ans;
@@ -618,7 +626,7 @@ namespace BOOM {
     if (t >= 0) {
       for (int s = 0; s < nstate(); ++s) {
         state_model(s)->update_complete_data_sufficient_statistics(
-            t, state_error_component(state_error_mean, s),
+            t, const_state_error_component(state_error_mean, s),
             state_error_variance_component(state_error_variance, s));
       }
     }
@@ -654,7 +662,7 @@ namespace BOOM {
       for (int s = 0; s < nstate(); ++s) {
         state_model(s)->increment_expected_gradient(
             state_parameter_component(*gradient, s), t,
-            state_error_component(state_error_mean, s),
+            const_state_error_component(state_error_mean, s),
             state_error_variance_component(state_error_variance, s));
       }
     }
