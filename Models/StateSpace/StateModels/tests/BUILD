@@ -53,6 +53,16 @@ cc_test(
 )
 
 cc_test(
+    name = "SeasonalStateModel_test",
+    srcs = ["SeasonalStateModel_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "Trig_test",
     srcs = ["Trig_test.cc"],
     copts = COPTS,
