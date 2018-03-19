@@ -45,7 +45,7 @@ namespace BOOM {
      public:
       AugmentedStudentRegressionData();
       AugmentedStudentRegressionData(double y, const Vector &x);
-      AugmentedStudentRegressionData(
+      explicit AugmentedStudentRegressionData(
           const std::vector<Ptr<RegressionData>> &data);
 
       AugmentedStudentRegressionData *clone() const override;
@@ -82,7 +82,7 @@ namespace BOOM {
         public IID_DataPolicy<StateSpace::AugmentedStudentRegressionData>,
         public PriorPolicy {
    public:
-    StateSpaceStudentRegressionModel(int xdim);
+    explicit StateSpaceStudentRegressionModel(int xdim);
     StateSpaceStudentRegressionModel(
         const Vector &response, const Matrix &predictors,
         const std::vector<bool> &observed = std::vector<bool>());

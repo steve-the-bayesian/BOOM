@@ -117,7 +117,7 @@ namespace BOOM {
     //     unique (that is a requirement of this implementation, not a
     //     mathematical requirement).
     //   order:  The order of the underlying Mspline.
-    Ispline(const Vector &knots, int order = 4);
+    explicit Ispline(const Vector &knots, int order = 4);
 
     // Returns the Ispline basis expansion of the value x.
     Vector basis(double x) const override;

@@ -41,7 +41,7 @@ namespace BOOM {
   // where the degree of shrinkage is to be learned across groups.
   class MvnGivenScalarSigmaBase : public MvnBase {
    public:
-    MvnGivenScalarSigmaBase(const Ptr<UnivParams> &sigsq);
+    explicit MvnGivenScalarSigmaBase(const Ptr<UnivParams> &sigsq);
     double sigsq() const;
 
    private:

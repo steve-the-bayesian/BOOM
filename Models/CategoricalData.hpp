@@ -71,7 +71,9 @@ namespace BOOM {
     friend void intrusive_ptr_add_ref(CatKeyBase *k) { k->up_count(); }
     friend void intrusive_ptr_release(CatKeyBase *k) {
       k->down_count();
-      if (k->ref_count() == 0) delete k;
+      if (k->ref_count() == 0) {
+        delete k;
+      }
     }
 
     // The observers are the categorical data objects using *this as a key.
@@ -92,7 +94,7 @@ namespace BOOM {
   // Numerical categorical data with a fixed number of levels.
   class FixedSizeIntCatKey : public CatKeyBase {
    public:
-    FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
+    explicit FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
     int max_levels() const override { return max_levels_; }
     ostream &print(ostream &out) const override;
 
@@ -105,8 +107,8 @@ namespace BOOM {
   class CatKey : public CatKeyBase {
    public:
     CatKey();
-    CatKey(int number_of_levels);
-    CatKey(const std::vector<std::string> &labels);
+    explicit CatKey(int number_of_levels);
+    explicit CatKey(const std::vector<std::string> &labels);
     CatKey(const CatKey &rhs) = default;
 
     // Sets the 'grow_' flag.  If true then the max number of levels increases
@@ -224,7 +226,7 @@ namespace BOOM {
     void print_key(std::ostream &out) const;
 
    private:
-    uint val_;
+    uint val_{};
     Ptr<CatKeyBase> key_;
   };
   //------------------------------------------------------------

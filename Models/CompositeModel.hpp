@@ -46,7 +46,7 @@ namespace BOOM {
     // model pointers.  Note that they have to be of the same type but
     // it can be any type that inherits from MixtureComponent.
     template <class MOD>
-    CompositeModel(const std::vector<Ptr<MOD> > &models)
+    explicit CompositeModel(const std::vector<Ptr<MOD> > &models)
         : m_(models.begin(), models.end()) {
       setup();
     }
@@ -54,7 +54,7 @@ namespace BOOM {
     CompositeModel(const CompositeModel &rhs);
     CompositeModel *clone() const override;
 
-    virtual void add_model(const Ptr<MixtureComponent> &component);
+    virtual void add_model(const Ptr<MixtureComponent> &new_model);
 
     void add_data(const Ptr<CompositeData> &) override;
     void add_data(const Ptr<Data> &) override;

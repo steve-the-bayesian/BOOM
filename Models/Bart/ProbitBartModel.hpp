@@ -35,7 +35,7 @@ namespace BOOM {
                           public IID_DataPolicy<BinomialRegressionData>,
                           public PriorPolicy {
    public:
-    ProbitBartModel(int number_of_trees, double mean = 0.0);
+    explicit ProbitBartModel(int number_of_trees, double mean = 0.0);
     ProbitBartModel(int number_of_trees, const std::vector<int> &responses,
                     const std::vector<int> &trials, const Matrix &predictors);
     ProbitBartModel(int number_of_trees, const std::vector<bool> &responses,

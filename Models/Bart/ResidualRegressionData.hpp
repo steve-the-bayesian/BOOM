@@ -45,7 +45,7 @@ namespace BOOM {
     // leave specifics to concrete classes.
     class ResidualRegressionData {
      public:
-      ResidualRegressionData(const VectorData *x);
+      explicit ResidualRegressionData(const VectorData *x);
       virtual ~ResidualRegressionData() {}
       // The vector of predictors associated with this observation.
       const Vector &x() const;

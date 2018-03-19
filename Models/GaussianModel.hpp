@@ -34,12 +34,12 @@ namespace BOOM {
                         public ParamPolicy_2<UnivParams, UnivParams>,
                         public PriorPolicy {
    public:
-    GaussianModel(double mean = 0.0, double sd = 1.0);
-    GaussianModel(const std::vector<double> &v);
+    explicit GaussianModel(double mean = 0.0, double sd = 1.0);
+    explicit GaussianModel(const std::vector<double> &v);
     GaussianModel(const GaussianModel &rhs);
     GaussianModel *clone() const override;
 
-    void set_params(double Mean, double Var);
+    void set_params(double mu, double sigsq);
     void set_mu(double m);
     void set_sigsq(double s);
 

@@ -54,7 +54,8 @@ namespace BOOM {
   }
 
   MVTR::MvtRegModel(const Matrix &B, const SpdMatrix &Sigma, double nu)
-      : ParamPolicy(new MatrixParams(B), new SpdParams(Sigma),
+      : ParamPolicy(new MatrixParams(B),
+                    new SpdParams(Sigma),
                     new UnivParams(nu)) {}
 
   MVTR::MvtRegModel(const MvtRegModel &rhs)

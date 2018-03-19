@@ -37,7 +37,7 @@ namespace BOOM {
   // and the current value as 'y'.
   class ArSuf : public SufstatDetails<DoubleData> {
    public:
-    ArSuf(int number_of_lags);
+    explicit ArSuf(int number_of_lags);
     ArSuf *clone() const override;
     void clear() override;
 
@@ -89,7 +89,7 @@ namespace BOOM {
                   public SufstatDataPolicy<DoubleData, ArSuf>,
                   public PriorPolicy {
    public:
-    ArModel(int number_of_lags = 1);
+    explicit ArModel(int number_of_lags = 1);
     ArModel(const Ptr<GlmCoefs> &autoregression_coefficients,
             const Ptr<UnivParams> &innovation_variance);
     ArModel *clone() const override;

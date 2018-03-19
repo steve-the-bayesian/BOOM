@@ -38,8 +38,8 @@ namespace BOOM {
                                   public IID_DataPolicy<BinaryRegressionData>,
                                   public PriorPolicy {
    public:
-    LogisticRegressionModel(uint beta_dim, bool include_all = true);
-    LogisticRegressionModel(const Vector &beta);
+    explicit LogisticRegressionModel(uint beta_dim, bool include_all = true);
+    explicit LogisticRegressionModel(const Vector &beta);
     LogisticRegressionModel(const Matrix &X, const Vector &y, bool add_int);
     LogisticRegressionModel(const LogisticRegressionModel &);
     LogisticRegressionModel *clone() const override;

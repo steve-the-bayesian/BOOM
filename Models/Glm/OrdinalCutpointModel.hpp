@@ -40,7 +40,7 @@ namespace BOOM {
 
   class OrdinalCutpointBetaLogLikelihood : public TargetFun {
    public:
-    OrdinalCutpointBetaLogLikelihood(const OrdinalCutpointModel *m_);
+    explicit OrdinalCutpointBetaLogLikelihood(const OrdinalCutpointModel *m_);
     double operator()(const Vector &beta) const override;
 
    private:
@@ -49,7 +49,7 @@ namespace BOOM {
 
   class OrdinalCutpointDeltaLogLikelihood : public TargetFun {
    public:
-    OrdinalCutpointDeltaLogLikelihood(const OrdinalCutpointModel *m_);
+    explicit OrdinalCutpointDeltaLogLikelihood(const OrdinalCutpointModel *m_);
     double operator()(const Vector &delta) const override;
 
    private:

@@ -97,7 +97,7 @@ namespace BOOM {
 
       // A constructor for the multiplexed case, where there are multiple
       // observations at each time point.
-      AugmentedPoissonRegressionData(
+      explicit AugmentedPoissonRegressionData(
           const std::vector<Ptr<PoissonRegressionData>> &data);
 
       AugmentedPoissonRegressionData *clone() const override;
@@ -156,7 +156,7 @@ namespace BOOM {
         public IID_DataPolicy<StateSpace::AugmentedPoissonRegressionData>,
         public PriorPolicy {
    public:
-    StateSpacePoissonModel(int xdim);
+    explicit StateSpacePoissonModel(int xdim);
     StateSpacePoissonModel(
         const Vector &counts, const Vector &exposure,
         const Matrix &design_matrix,

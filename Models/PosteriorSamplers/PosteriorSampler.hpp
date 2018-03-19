@@ -40,7 +40,7 @@ namespace BOOM {
   // can_find_posterior_mode method to return true.
   class PosteriorSampler : private RefCounted {
    public:
-    PosteriorSampler(RNG &seeding_rng);
+    explicit PosteriorSampler(RNG &seeding_rng);
     PosteriorSampler(const PosteriorSampler &);
     virtual void draw() = 0;
     virtual double logpri() const = 0;

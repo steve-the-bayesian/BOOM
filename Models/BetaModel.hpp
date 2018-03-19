@@ -35,7 +35,7 @@ namespace BOOM {
     BetaSuf *clone() const override;
     void clear() override { n_ = sumlog_ = sumlogc_ = 0.0; }
     void Update(const DoubleData &) override;
-    void update_raw(double theta);
+    void update_raw(double p);
     double n() const { return n_; }
     double sumlog() const { return sumlog_; }
     double sumlogc() const { return sumlogc_; }
@@ -64,14 +64,14 @@ namespace BOOM {
     // Initialize with the prior number of "successes" (a) and
     // "failures" (b).  This is the usual parameterization of the Beta
     // model.
-    BetaModel(double a = 1.0, double b = 1.0);
+    explicit BetaModel(double a = 1.0, double b = 1.0);
 
     // Initialize the Beta model with a mean and a sample size.  In
     // the standard parameterization, the mean maps to a/(a+b) and the
     // sample size is (a+b).
     BetaModel(double mean, double sample_size, int);
 
-    BetaModel(const BetaModel &m);
+    BetaModel(const BetaModel &rhs);
 
     BetaModel *clone() const override;
 
@@ -107,7 +107,7 @@ namespace BOOM {
     int number_of_observations() const override { return dat().size(); }
 
    private:
-    double Logp_degenerate(double x, double &g, double &h, uint nd) const;
+    double Logp_degenerate(double x, double &d1, double &d2, uint nd) const;
   };
 
   double beta_log_likelihood(double a, double b, const BetaSuf &);

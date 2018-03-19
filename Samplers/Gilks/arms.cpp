@@ -15,9 +15,17 @@
 #include <vector>
 #include "cpputil/report_error.hpp"
 #include "distributions/rng.hpp"
-
+#include "Samplers/Gilks/arms.hpp"
 /* *********************************************************************** */
 namespace GilksArms {
+
+  namespace {
+    // Global constants used in this file.
+    const double YCEIL = 50.0; /* maximum y avoiding overflow in exp(y) */
+    const double XEPS(0.00001);
+    const double YEPS(0.1);
+    const double EYEPS(0.001);
+  }  // namespace 
 
   using BOOM::report_error;
 
@@ -71,28 +79,13 @@ namespace GilksArms {
   // #define YCEIL 50.                /* maximum y avoiding overflow in exp(y)
   // */
 
-  const double XEPS(0.00001);
-  const double YEPS(0.1);
-  const double EYEPS(0.001);
-  const double YCEIL(50);
-
   /* *********************************************************************** */
 
   /* declarations for functions defined in this file */
 
-  int arms_simple(BOOM::RNG &, int ninit, double *xl, double *xr,
-                  double (*myfunc)(double x, void *mydata), void *mydata,
-                  int dometrop, double *xprev, double *xsamp);
-
-  int arms(BOOM::RNG &, double *xinit, int ninit, double *xl, double *xr,
-           double (*myfunc)(double x, void *mydata), void *mydata,
-           double *convex, int npoint, int dometrop, double *xprev,
-           double *xsamp, int nsamp, double *qcent, double *xcent, int ncent,
-           int *neval);
-
-  int initial(double *xinit, int ninit, double xl, double xr, int npoint,
-              FUNBAG *lpdf, ENVELOPE *env, double *convex, int *neval,
-              METROPOLIS *metrop);
+  GilksErrorCode initial(double *xinit, int ninit, double xl, double xr,
+                         int npoint, FUNBAG *lpdf, ENVELOPE *env,
+                         double *convex, int *neval, METROPOLIS *metrop);
 
   void sample(BOOM::RNG &, ENVELOPE *env, POINT *p);
 
@@ -122,9 +115,9 @@ namespace GilksArms {
 
   /* *********************************************************************** */
 
-  int arms_simple(BOOM::RNG &rng, int ninit, double *xl, double *xr,
-                  double (*myfunc)(double x, void *mydata), void *mydata,
-                  int dometrop, double *xprev, double *xsamp)
+  GilksErrorCode arms_simple(BOOM::RNG &rng, int ninit, double *xl, double *xr,
+                             double (*myfunc)(double x, void *mydata), void *mydata,
+                             int dometrop, double *xprev, double *xsamp)
 
   /* adaptive rejection metropolis sampling - simplified argument list */
   /* ninit        : number of starting values to be used */
@@ -138,7 +131,7 @@ namespace GilksArms {
 
   {
     double convex = 1.0, qcent, xcent;
-    int err, i, npoint = 100, nsamp = 1, ncent = 0, neval;
+    int i, npoint = 100, nsamp = 1, ncent = 0, neval;
 
     std::vector<double> xinit(ninit);
     /* set up starting values */
@@ -146,53 +139,48 @@ namespace GilksArms {
       xinit[i] = *xl + (i + 1.0) * (*xr - *xl) / (ninit + 1.0);
     }
 
-    err =
-        arms(rng, xinit.data(), ninit, xl, xr, myfunc, mydata, &convex, npoint,
-             dometrop, xprev, xsamp, nsamp, &qcent, &xcent, ncent, &neval);
-
-    return err;
+    return arms(rng, xinit.data(), ninit, xl, xr, myfunc, mydata, &convex,
+                npoint, dometrop, xprev, xsamp, nsamp, &qcent, &xcent, ncent,
+                &neval);
   }
 
   /* *********************************************************************** */
 
-  int arms(BOOM::RNG &rng, double *xinit, int ninit, double *xl, double *xr,
-           double (*myfunc)(double x, void *mydata), void *mydata,
-           double *convex, int npoint, int dometrop, double *xprev,
-           double *xsamp, int nsamp, double *qcent, double *xcent, int ncent,
-           int *neval)
-
-  /* to perform derivative-free adaptive rejection sampling with metropolis step
-   */
-  /* *xinit       : starting values for x in ascending order */
-  /* ninit        : number of starting values supplied */
-  /* *xl          : left bound */
-  /* *xr          : right bound */
-  /* *myfunc      : function to evaluate log-density */
-  /* *mydata      : data required by *myfunc */
-  /* *convex      : adjustment for convexity */
-  /* npoint       : maximum number of envelope points */
-  /* dometrop     : whether metropolis step is required */
-  /* *xprev       : previous value from markov chain */
-  /* *xsamp       : to store sampled values */
-  /* nsamp        : number of sampled values to be obtained */
-  /* *qcent       : percentages for envelope centiles */
-  /* *xcent       : to store requested centiles */
-  /* ncent        : number of centiles requested */
-  /* *neval       : on exit, the number of function evaluations performed */
-
-  {
+  GilksErrorCode arms(BOOM::RNG &rng, double *xinit, int ninit, double *xl,
+                      double *xr, double (*myfunc)(double x, void *mydata),
+                      void *mydata, double *convex, int npoint, int dometrop,
+                      double *xprev, double *xsamp, int nsamp, double *qcent,
+                      double *xcent, int ncent, int *neval) {
+    /* to perform derivative-free adaptive rejection sampling with metropolis step
+     */
+    /* *xinit       : starting values for x in ascending order */
+    /* ninit        : number of starting values supplied */
+    /* *xl          : left bound */
+    /* *xr          : right bound */
+    /* *myfunc      : function to evaluate log-density */
+    /* *mydata      : data required by *myfunc */
+    /* *convex      : adjustment for convexity */
+    /* npoint       : maximum number of envelope points */
+    /* dometrop     : whether metropolis step is required */
+    /* *xprev       : previous value from markov chain */
+    /* *xsamp       : to store sampled values */
+    /* nsamp        : number of sampled values to be obtained */
+    /* *qcent       : percentages for envelope centiles */
+    /* *xcent       : to store requested centiles */
+    /* ncent        : number of centiles requested */
+    /* *neval       : on exit, the number of function evaluations performed */
     ENVELOPE *env;      /* rejection envelope */
     POINT pwork;        /* a working point, not yet incorporated in envelope */
     int msamp = 0;      /* the number of x-values currently sampled */
     FUNBAG lpdf;        /* to hold density function and its data */
     METROPOLIS *metrop; /* to hold bits for metropolis step */
-    int i, err;
+    int i;
 
     /* check requested envelope centiles */
     for (i = 0; i < ncent; i++) {
       if ((qcent[i] < 0.0) || (qcent[i] > 100.0)) {
         /* percentage requesting centile is out of range */
-        return 1005;
+        return CentileOutOfRange;
       }
     }
 
@@ -204,28 +192,29 @@ namespace GilksArms {
     env = (ENVELOPE *)malloc(sizeof(ENVELOPE));
     if (env == NULL) {
       /* insufficient space */
-      return 1006;
+      return InsufficientSpace;
     }
 
     /* start setting up metropolis struct */
     metrop = (METROPOLIS *)malloc(sizeof(METROPOLIS));
     if (metrop == NULL) {
       /* insufficient space */
-      return 1006;
+      free (env);
+      return InsufficientSpace;
     }
     metrop->on = dometrop;
 
     /* set up initial envelope */
-    err = initial(xinit, ninit, *xl, *xr, npoint, &lpdf, env, convex, neval,
-                  metrop);
-    if (err) return err;
+    GilksErrorCode err = initial(xinit, ninit, *xl, *xr, npoint, &lpdf,
+                                 env, convex, neval, metrop);
+    if (err != Success) return err;
 
     /* finish setting up metropolis struct (can only do this after */
     /* setting up env) */
     if (metrop->on) {
       if ((*xprev < *xl) || (*xprev > *xr)) {
         /* previous markov chain iterate out of range */
-        return 1007;
+        return PreviousIterateOutOfRange;
       }
       metrop->xprev = *xprev;
       metrop->yprev = perfunc(&lpdf, env, *xprev);
@@ -243,7 +232,7 @@ namespace GilksArms {
         xsamp[msamp++] = pwork.x;
       } else if (i != 0) {
         /* envelope error - violation without metropolis */
-        return 2000;
+        return EnvelopeViolation;
       }
     } while (msamp < nsamp);
 
@@ -259,14 +248,15 @@ namespace GilksArms {
     free(env);
     free(metrop);
 
-    return 0;
+    return Success;
   }
 
   /* *********************************************************************** */
 
-  int initial(double *xinit, int ninit, double xl, double xr, int npoint,
-              FUNBAG *lpdf, ENVELOPE *env, double *convex, int *neval,
-              METROPOLIS *metrop)
+  
+  GilksErrorCode initial(double *xinit, int ninit, double xl, double xr, int npoint,
+                         FUNBAG *lpdf, ENVELOPE *env, double *convex, int *neval,
+                         METROPOLIS *metrop)
 
   /* to set up initial envelope */
   /* xinit        : initial x-values */
@@ -285,30 +275,30 @@ namespace GilksArms {
 
     if (ninit < 3) {
       /* too few initial points */
-      return 1001;
+      return TooFewInitialPoints;
     }
 
     mpoint = 2 * ninit + 1;
     if (npoint < mpoint) {
       /* too many initial points */
-      return 1002;
+      return TooManyInitialPoints;
     }
 
     if ((xinit[0] <= xl) || (xinit[ninit - 1] >= xr)) {
       /* initial points do not satisfy bounds */
-      return 1003;
+      return InitialPointsDoNotSatisfyBounds;
     }
 
     for (i = 1; i < ninit; i++) {
       if (xinit[i] <= xinit[i - 1]) {
         /* data not ordered */
-        return 1004;
+        return DataNotOrdered;
       }
     }
 
     if (*convex < 0.0) {
       /* negative convexity parameter */
-      return 1008;
+      return NegativeConvexityParameter;
     }
 
     /* copy convexity address to env */
@@ -324,7 +314,7 @@ namespace GilksArms {
     env->p = (POINT *)malloc(npoint * sizeof(POINT));
     if (env->p == NULL) {
       /* insufficient space */
-      return 1006;
+      return InsufficientSpace;
     }
 
     /* set up envelope POINTs */
@@ -360,7 +350,7 @@ namespace GilksArms {
     for (j = 0; j < mpoint; j = j + 2, q = q + 2) {
       if (meet(q, env, metrop)) {
         /* envelope violation without metropolis */
-        return 2000;
+        return EnvelopeViolation;
       }
     }
 
@@ -370,7 +360,7 @@ namespace GilksArms {
     /* note number of POINTs currently in envelope */
     env->cpoint = mpoint;
 
-    return 0;
+    return Success;
   }
 
   /* *********************************************************************** */

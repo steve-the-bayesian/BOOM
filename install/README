@@ -1,0 +1,12 @@
+This directory contains utilities and installation scripts for BOOM (when
+building with Make) and for the Boom-related R packages.
+
+The usage for the R package installation scripts is
+
+package_name [-c] [-i]
+
+-c : run the package through R CMD CHECK
+
+-i : run the package through R CMD INSTALL
+
+

@@ -37,7 +37,7 @@ namespace BOOM {
                                 public IID_DataPolicy<BinaryRegressionData>,
                                 public PriorPolicy {
    public:
-    ProbitRegressionModel(const Vector &beta);
+    explicit ProbitRegressionModel(const Vector &beta);
     ProbitRegressionModel(const Matrix &X, const Vector &y);
     ProbitRegressionModel(const ProbitRegressionModel &);
     ProbitRegressionModel *clone() const override;

@@ -43,7 +43,7 @@ namespace BOOM {
     // and a diagonal variance matrix sigma^2.  Note that the
     // constructor expects the standard deviation instead of a
     // variance.
-    MvnModel(uint p, double mu = 0.0, double sigma = 1.0);
+    explicit MvnModel(uint p, double mu = 0.0, double sigma = 1.0);
 
     // Use this constructor if you want to directly specify the mean
     // and variance.  If the third argument 'ivar' is 'true' then you
@@ -59,7 +59,7 @@ namespace BOOM {
 
     // Use this constructor if you have a set of multivariate normal
     // observations.  It sets the initial parameter values to the MLE.
-    MvnModel(const std::vector<Vector> &data);
+    explicit MvnModel(const std::vector<Vector> &data);
 
     MvnModel(const MvnModel &rhs);
     MvnModel *clone() const override;

@@ -26,7 +26,7 @@
 namespace BOOM {
   class NelderMeadMinimizer {
    public:
-    NelderMeadMinimizer(const Target &f);
+    explicit NelderMeadMinimizer(const Target &f);
 
     // Find the minimum from the specified starting value.
     void minimize(const Vector &starting_value);
@@ -85,7 +85,7 @@ namespace BOOM {
 
   class NelderMeadMaximizer {
    public:
-    NelderMeadMaximizer(Target f);
+    explicit NelderMeadMaximizer(Target f);
     void maximize(const Vector &starting_value);
 
     void set_stepsize(const Vector &stepsize);

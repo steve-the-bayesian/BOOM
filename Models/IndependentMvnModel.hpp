@@ -28,14 +28,14 @@
 namespace BOOM {
   class IndependentMvnSuf : public SufstatDetails<VectorData> {
    public:
-    IndependentMvnSuf(int dim);
+    explicit IndependentMvnSuf(int dim);
     IndependentMvnSuf *clone() const override;
 
     void clear() override;
     void resize(int dim);
     void Update(const VectorData &) override;
-    void update_raw(const Vector &x);
-    void add_mixture_data(const Vector &x, double prob);
+    void update_raw(const Vector &y);
+    void add_mixture_data(const Vector &v, double prob);
     void update_expected_value(double sample_size, const Vector &expected_sum,
                                const Vector &expected_sum_of_squares);
 
@@ -70,14 +70,14 @@ namespace BOOM {
         public PriorPolicy,
         virtual public MixtureComponent {
    public:
-    IndependentMvnModel(int dim);
+    explicit IndependentMvnModel(int dim);
     IndependentMvnModel(const Vector &mean, const Vector &variance);
     IndependentMvnModel(const IndependentMvnModel &rhs);
     IndependentMvnModel *clone() const override;
     // Several virtual functions from MvnBase are re-implemented here
     // for efficiency.
     double Logp(const Vector &x, Vector &g, Matrix &h,
-                uint nderiv) const override;
+                uint nderivs) const override;
     const Vector &mu() const override;
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
@@ -98,7 +98,7 @@ namespace BOOM {
     double sigma(int i) const;
 
     void set_mu(const Vector &mu);
-    void set_mu_element(double mu, int position);
+    void set_mu_element(double value, int position);
     void set_sigsq(const Vector &sigsq);
     void set_sigsq_element(double sigsq, int position);
 

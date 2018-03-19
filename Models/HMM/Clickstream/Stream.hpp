@@ -27,7 +27,7 @@ namespace BOOM {
     // sequence of Sessions.
     class Stream : public BOOM::Data {
      public:
-      Stream(const std::vector<Ptr<Session> > &sessions);
+      explicit Stream(const std::vector<Ptr<Session> > &sessions);
       Stream *clone() const override;
 
       int nsessions() const;

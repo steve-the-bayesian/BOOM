@@ -49,9 +49,8 @@ namespace BOOM {
     pri_->clear_data();
     if (!!ipri_) ipri_->clear_data();
 
-    MarkovModel *m;
     for (uint i = 0; i < Nmodels(); ++i) {
-      m = models_[i];
+      MarkovModel *m = models_[i];
       Matrix N = pri_->Nu() + m->suf()->trans();
       Matrix Q(N);
       for (uint s = 0; s < dim(); ++s)

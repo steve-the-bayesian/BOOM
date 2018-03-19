@@ -260,7 +260,7 @@ namespace BOOM {
       if (hi_ < lo_) {
         report_error("hi < lo in DiscreteUniformPrior.");
       }
-      log_normalizing_constant_ = -log(hi_ - lo_ + 1);
+      log_normalizing_constant_ = -log1p(hi_ - lo_);
     }
 
     double DiscreteUniformPrior::logp(int value) const {

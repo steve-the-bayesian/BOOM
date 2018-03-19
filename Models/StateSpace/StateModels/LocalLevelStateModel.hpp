@@ -26,7 +26,7 @@ namespace BOOM {
 
   class LocalLevelStateModel : public StateModel, public ZeroMeanGaussianModel {
    public:
-    LocalLevelStateModel(double sigma = 1);
+    explicit LocalLevelStateModel(double sigma = 1);
     LocalLevelStateModel(const LocalLevelStateModel &rhs);
     LocalLevelStateModel *clone() const override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,

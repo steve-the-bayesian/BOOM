@@ -82,7 +82,7 @@ namespace BOOM {
   class UnivParams : virtual public Params, public DoubleData {
    public:
     UnivParams();
-    UnivParams(double x);
+    explicit UnivParams(double x);
     UnivParams(const UnivParams &rhs);
     UnivParams *clone() const override;
 
@@ -98,8 +98,8 @@ namespace BOOM {
   class VectorParams : public VectorData, virtual public Params {
    public:
     explicit VectorParams(uint p, double x = 0.0);
-    VectorParams(const Vector &v);          // copies v's data
-    VectorParams(const VectorParams &rhs);  // copies data
+    explicit VectorParams(const Vector &v);  // copies v's data
+    VectorParams(const VectorParams &rhs);   // copies data
     VectorParams *clone() const override;
 
     uint size(bool minimal = true) const override;
@@ -113,7 +113,7 @@ namespace BOOM {
   class MatrixParams : public MatrixData, virtual public Params {
    public:
     MatrixParams(uint r, uint c, double x = 0.0);  // zero matrix
-    MatrixParams(const Matrix &m);                 // copies m's data
+    explicit MatrixParams(const Matrix &m);        // copies m's data
     MatrixParams(const MatrixParams &rhs);         // copies data
     MatrixParams *clone() const override;
 

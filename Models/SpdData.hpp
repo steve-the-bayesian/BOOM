@@ -36,7 +36,7 @@ namespace BOOM {
       // Args:
       //   current: A flag indicating whether the data held by storage
       //     is current
-      Storage(bool current = false);
+      explicit Storage(bool current = false);
       Storage(const Storage &rhs);
       virtual ~Storage();
       virtual Storage *clone() const = 0;
@@ -76,7 +76,7 @@ namespace BOOM {
     class CholStorage : public Storage {
      public:
       CholStorage();
-      CholStorage(const SpdMatrix &S);
+      explicit CholStorage(const SpdMatrix &S);
       CholStorage(const CholStorage &rhs);
       CholStorage *clone() const override;
       uint dim() const override;
@@ -92,7 +92,7 @@ namespace BOOM {
     class SpdStorage : public Storage {
      public:
       SpdStorage();
-      SpdStorage(const SpdMatrix &S);
+      explicit SpdStorage(const SpdMatrix &S);
       SpdStorage(const SpdStorage &S);
       SpdStorage *clone() const override;
       uint dim() const override;
@@ -114,8 +114,8 @@ namespace BOOM {
   // computation.
   class SpdData : public DataTraits<Spd> {
    public:
-    SpdData(uint n, double diag = 1.0, bool ivar = false);
-    SpdData(const SpdMatrix &S, bool ivar = false);
+    explicit SpdData(uint n, double diag = 1.0, bool ivar = false);
+    explicit SpdData(const SpdMatrix &S, bool ivar = false);
     SpdData(const SpdData &rhs);
     SpdData *clone() const override;
 

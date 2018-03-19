@@ -80,7 +80,7 @@ namespace BOOM {
     // variables are included, but with zero coefficients.
     // Args:
     //   dimension:  The dimension of the predictor variables.
-    ZeroInflatedPoissonRegressionModel(int dimension);
+    explicit ZeroInflatedPoissonRegressionModel(int dimension);
     ZeroInflatedPoissonRegressionModel *clone() const override;
 
     // Returns the conditional expected value per trial, given the

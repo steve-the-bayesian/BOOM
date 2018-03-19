@@ -179,6 +179,7 @@ namespace BOOM {
     yty_ = SpdMatrix(ydim, 0.0);
     xty_ = Matrix(xdim, ydim, 0.0);
     n_ = 0;
+    sumw_ = 0;
 
     while (b != e) {
       this->update(*b);

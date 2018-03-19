@@ -80,8 +80,9 @@ namespace BOOM {
         public SufstatDataPolicy<DoubleData, Ar1Suf>,
         public PriorPolicy {
    public:
-    NonzeroMeanAr1Model(double mu = 0, double phi = 0, double sigma = 1);
-    NonzeroMeanAr1Model(const Vector &y);
+    explicit NonzeroMeanAr1Model(double mu = 0, double phi = 0,
+                                 double sigma = 1);
+    explicit NonzeroMeanAr1Model(const Vector &y);
     NonzeroMeanAr1Model(const NonzeroMeanAr1Model &rhs);
     NonzeroMeanAr1Model *clone() const override;
 

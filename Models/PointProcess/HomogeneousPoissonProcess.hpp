@@ -33,7 +33,7 @@ namespace BOOM {
   // Models/PoissonModel.hpp) because
   class PoissonProcessSuf : public SufstatDetails<PointProcess> {
    public:
-    PoissonProcessSuf(int count = 0, double exposure = 0);
+    explicit PoissonProcessSuf(int count = 0, double exposure = 0);
     PoissonProcessSuf *clone() const override;
 
     int count() const;
@@ -70,8 +70,8 @@ namespace BOOM {
         public PriorPolicy,
         public LoglikeModel {
    public:
-    HomogeneousPoissonProcess(double lambda = 1.0);
-    HomogeneousPoissonProcess(const std::vector<DateTime> &timestamps);
+    explicit HomogeneousPoissonProcess(double lambda = 1.0);
+    explicit HomogeneousPoissonProcess(const std::vector<DateTime> &timestamps);
 
     HomogeneousPoissonProcess *clone() const override;
     double lambda() const;

@@ -48,7 +48,7 @@ namespace BOOM {
   // the ensemble.
   class PointMassPrior {
    public:
-    PointMassPrior(int n) : number_of_trees_(n) {}
+    explicit PointMassPrior(int n) : number_of_trees_(n) {}
     double operator()(int n) const {
       if (n == number_of_trees_) {
         return 0;

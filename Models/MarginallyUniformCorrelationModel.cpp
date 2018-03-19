@@ -31,7 +31,7 @@ namespace BOOM {
   double MUCM::pdf(const Ptr<Data> &dp, bool logscale) const {
     // un-normalized!!!
     Ptr<SpdParams> d = DAT(dp);
-    double ans = logp(d->value());
+    double ans = logp(CorrelationMatrix(d->value()));
     return logscale ? ans : exp(ans);
   }
 

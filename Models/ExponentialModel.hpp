@@ -31,15 +31,13 @@
 
 namespace BOOM {
   class ExpSuf : public SufstatDetails<DoubleData> {
-    double sum_, n_;
-
    public:
     ExpSuf();
     ExpSuf(const ExpSuf &);
     ExpSuf *clone() const override;
 
     void clear() override;
-    void Update(const DoubleData &dat) override;
+    void Update(const DoubleData &x) override;
     void add_mixture_data(double y, double prob);
     double sum() const;
     double n() const;
@@ -52,6 +50,9 @@ namespace BOOM {
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
     ostream &print(ostream &out) const override;
+
+   private:
+    double sum_, n_;
   };
   //======================================================================
   class GammaModel;
@@ -66,8 +67,8 @@ namespace BOOM {
                            public EmMixtureComponent {
    public:
     ExponentialModel();
-    ExponentialModel(double lam);
-    ExponentialModel(const ExponentialModel &m);
+    explicit ExponentialModel(double lam);
+    ExponentialModel(const ExponentialModel &rhs);
     ExponentialModel *clone() const override;
 
     Ptr<UnivParams> Lam_prm();
@@ -89,9 +90,9 @@ namespace BOOM {
     // probability calculations
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;
-    double Loglike(const Vector &lambda_as_vector, Vector &g, Matrix &h,
+    double Loglike(const Vector &lambda_vector, Vector &g, Matrix &h,
                    uint nd) const override;
-    double Logp(double x, double &g, double &h, const uint lev) const override;
+    double Logp(double x, double &g, double &h, uint nd) const override;
     void mle() override;
 
     double sim(RNG &rng = GlobalRng::rng) const override;

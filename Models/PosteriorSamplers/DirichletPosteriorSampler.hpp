@@ -193,7 +193,7 @@ namespace BOOM {
         // This is a lightweight helper class.  It stores truncated_phi by
         // reference.  The caller must ensure that truncated_phi
         // exists throughout the lifetime of this object.
-        Jacobian(const Vector &truncated_phi);
+        explicit Jacobian(const Vector &truncated_phi);
 
         // Returns element (r,s) of the Jacobian matrix, which is the
         // derivative of phi[s] with respect to eta[r].

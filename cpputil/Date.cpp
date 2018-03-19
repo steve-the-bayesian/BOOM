@@ -562,54 +562,56 @@ namespace BOOM {
   void Date::set_print_order(Date::print_order f) { po = f; }
 
   std::ostream &display(std::ostream &out, DayNames d, calendar_format f) {
-    static const char *Days[] = {"Sunday",   "Monday", "Tuesday", "Wednesday",
-                                 "Thursday", "Friday", "Saturday"};
-    static const char *days[] = {"sunday",   "monday", "tuesday", "wednesday",
-                                 "thursday", "friday", "saturday"};
-    static const char *ds[] = {"sun", "mon", "tue", "wed", "thu", "fri", "sat"};
-    static const char *Ds[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    if (f == Full)
+    if (f == Full) {
+      static const char *Days[] = {"Sunday",   "Monday", "Tuesday", "Wednesday",
+                                   "Thursday", "Friday", "Saturday"};
       out << Days[d];
-    else if (f == full)
+    } else if (f == full) {
+      static const char *days[] = {"sunday",   "monday", "tuesday", "wednesday",
+                                   "thursday", "friday", "saturday"};
       out << days[d];
-    else if (f == Abbreviations)
+    } else if (f == Abbreviations) {
+      static const char *Ds[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
       out << Ds[d];
-    else if (f == abbreviations)
+    } else if (f == abbreviations) {
+      static const char *ds[] = {"sun", "mon", "tue", "wed", "thu", "fri", "sat"};
       out << ds[d];
-    else if (f == numeric) {
+    } else if (f == numeric) {
       uint tmp(d);
       out << tmp;
-    }
+    } 
     return out;
   }
 
   std::ostream &Date::display_month(std::ostream &out) const {
-    static const char *Month_names[] = {
+    if (month_format == Full) {
+      static const char *Month_names[] = {
         "",        "January",  "February", "March",  "April",
         "May",     "June",     "July",     "August", "September",
         "October", "November", "December"};
-    static const char *month_names[] = {
+      out << Month_names[month()];
+    } else if (month_format == full) {
+      static const char *month_names[] = {
         "",        "january",  "february", "march",  "april",
         "may",     "june",     "july",     "august", "september",
         "october", "november", "december"};
-    static const char *Month_abbrevs[] = {"",    "Jan", "Feb", "Mar", "Apr",
-                                          "May", "Jun", "Jul", "Aug", "Sep",
-                                          "Oct", "Nov", "Dec"};
-    static const char *month_abbrevs[] = {"",    "jan", "feb", "mar", "apr",
-                                          "may", "jun", "jul", "aug", "sep",
-                                          "oct", "nov", "dec"};
-    if (month_format == Full)
-      out << Month_names[month()];
-    else if (month_format == full)
       out << month_names[month()];
-    else if (month_format == Abbreviations)
+    } else if (month_format == Abbreviations) {
+      static const char *Month_abbrevs[] = {
+        "",    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+        "Oct", "Nov", "Dec"};
       out << Month_abbrevs[month()];
-    else if (month_format == abbreviations)
+    } else if (month_format == abbreviations) {
+      static const char *month_abbrevs[] = {
+        "",    "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep",
+        "oct", "nov", "dec"};
       out << month_abbrevs[month()];
-    else
+    } else {
       out << int(month());
+    }
     return out;
   }
+
   using std::swap;
   Date guess_date_format(const string &s, char delim) {
     std::vector<string> fields = split_delimited(s, delim);

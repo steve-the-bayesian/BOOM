@@ -39,12 +39,12 @@ namespace BOOM {
                                  public IID_DataPolicy<PoissonRegressionData>,
                                  public PriorPolicy {
    public:
-    PoissonRegressionModel(int xdim);
-    PoissonRegressionModel(const Vector &beta);
+    explicit PoissonRegressionModel(int xdim);
+    explicit PoissonRegressionModel(const Vector &beta);
 
     // Use this constructor if the model is supposed to share its
     // coefficient parameter with another model.
-    PoissonRegressionModel(const Ptr<GlmCoefs> &beta);
+    explicit PoissonRegressionModel(const Ptr<GlmCoefs> &beta);
 
     PoissonRegressionModel *clone() const override;
 

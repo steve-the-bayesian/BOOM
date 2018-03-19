@@ -54,10 +54,10 @@ namespace BOOM {
         public PriorPolicy,
         public StateModel {
    public:
-    StudentLocalLinearTrendStateModel(double sigma_level = 1.0,
-                                      double nu_level = 1000,
-                                      double sigma_slope = 1.0,
-                                      double nu_slope = 1000);
+    explicit StudentLocalLinearTrendStateModel(double sigma_level = 1.0,
+                                               double nu_level = 1000,
+                                               double sigma_slope = 1.0,
+                                               double nu_slope = 1000);
     StudentLocalLinearTrendStateModel(
         const StudentLocalLinearTrendStateModel &rhs);
     StudentLocalLinearTrendStateModel *clone() const override;

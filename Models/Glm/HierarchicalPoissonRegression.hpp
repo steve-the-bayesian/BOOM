@@ -41,7 +41,8 @@ namespace BOOM {
   class HierarchicalPoissonRegressionModel : public CompositeParamPolicy,
                                              public PriorPolicy {
    public:
-    HierarchicalPoissonRegressionModel(const Ptr<MvnModel> &data_parent_model);
+    explicit HierarchicalPoissonRegressionModel(
+        const Ptr<MvnModel> &data_parent_model);
     HierarchicalPoissonRegressionModel(
         const HierarchicalPoissonRegressionModel &rhs);
     HierarchicalPoissonRegressionModel *clone() const override;

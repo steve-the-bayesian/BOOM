@@ -39,12 +39,12 @@ namespace BOOM {
                               public PriorPolicy,
                               virtual public MixtureComponent {
    public:
-    BinomialProbitModel(uint beta_dim, bool include_all = true);
-    BinomialProbitModel(const Vector &beta);
+    explicit BinomialProbitModel(uint beta_dim, bool include_all = true);
+    explicit BinomialProbitModel(const Vector &beta);
 
     // Use this constructor if the model needs to share its
     // coefficient vector with another model.
-    BinomialProbitModel(const Ptr<GlmCoefs> &beta);
+    explicit BinomialProbitModel(const Ptr<GlmCoefs> &beta);
 
     BinomialProbitModel(const Matrix &X, const Vector &y, const Vector &n);
     BinomialProbitModel(const BinomialProbitModel &);

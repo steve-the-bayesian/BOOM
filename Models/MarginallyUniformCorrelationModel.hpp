@@ -32,7 +32,7 @@ namespace BOOM {
                                             public PriorPolicy,
                                             public CorrelationModel {
    public:
-    MarginallyUniformCorrelationModel(uint dim);
+    explicit MarginallyUniformCorrelationModel(uint dim);
     MarginallyUniformCorrelationModel *clone() const override;
 
     virtual double pdf(const Ptr<Data> &dp, bool logscale) const;

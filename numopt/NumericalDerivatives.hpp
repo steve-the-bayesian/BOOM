@@ -29,7 +29,7 @@ namespace BOOM {
   class NumericalDerivatives {
    public:
     typedef std::function<double(const Vector &)> Target;
-    NumericalDerivatives(const Target &f);
+    explicit NumericalDerivatives(const Target &f);
 
     // Returns the gradient of f at the point x.
     Vector gradient(const Vector &x) const;
@@ -67,7 +67,7 @@ namespace BOOM {
   class ScalarNumericalDerivatives {
    public:
     typedef std::function<double(double)> ScalarTarget;
-    ScalarNumericalDerivatives(const ScalarTarget &f);
+    explicit ScalarNumericalDerivatives(const ScalarTarget &f);
     double first_derivative(double x) const;
     double second_derivative(double x) const;
 
@@ -81,7 +81,7 @@ namespace BOOM {
   class NumericJacobian {
    public:
     typedef std::function<Vector(const Vector &)> Mapping;
-    NumericJacobian(const Mapping &inverse_transformation);
+    explicit NumericJacobian(const Mapping &inverse_transformation);
 
     // Returns the derivative of each element of
     // inverse_transformation(new_parameterization) with respect to

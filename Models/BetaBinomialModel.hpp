@@ -55,8 +55,11 @@ namespace BOOM {
     BetaBinomialModel *clone() const override;
 
     void clear_data() override;
-    void add_data(const Ptr<Data> &data) override;
-    void add_data(const Ptr<BinomialData> &data) override;
+    // Marking virtual functions as final so they can be called in the
+    // constructor.
+    void add_data(const Ptr<Data> &dp) final;
+    void add_data(const Ptr<BinomialData> &data) final;
+    void mle() final { NumOptModel::mle(); }
 
     // The likelihood contribution for observation i is
     // int Pr(y_i | theta_i, n_i) p(theta_i) dtheta_i

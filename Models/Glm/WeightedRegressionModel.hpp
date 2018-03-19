@@ -33,10 +33,10 @@ namespace BOOM {
     typedef std::vector<Ptr<WeightedRegressionData> > dataset_type;
     typedef Ptr<dataset_type, false> dsetPtr;
 
-    WeightedRegSuf(int p);                             // dimension of beta
+    explicit WeightedRegSuf(int p);                    // dimension of beta
     WeightedRegSuf(const Matrix &X, const Vector &y);  // w implicitly 1.0
     WeightedRegSuf(const Matrix &X, const Vector &y, const Vector &w);
-    WeightedRegSuf(const dsetPtr &dat);
+    explicit WeightedRegSuf(const dsetPtr &dat);
     WeightedRegSuf(const WeightedRegSuf &rhs);  // value semantics
 
     WeightedRegSuf *clone() const override;
@@ -105,12 +105,12 @@ namespace BOOM {
     typedef WeightedRegressionData data_type;
     typedef WeightedRegSuf suf_type;
 
-    WeightedRegressionModel(uint p);
+    explicit WeightedRegressionModel(uint p);
     WeightedRegressionModel(const Vector &b, double Sigma);
     WeightedRegressionModel(const WeightedRegressionModel &rhs);
     WeightedRegressionModel(const Matrix &X, const Vector &y);
     WeightedRegressionModel(const Matrix &X, const Vector &y, const Vector &w);
-    WeightedRegressionModel(const DatasetType &d, bool all = true);
+    explicit WeightedRegressionModel(const DatasetType &d, bool all = true);
     WeightedRegressionModel *clone() const override;
 
     GlmCoefs &coef() override;

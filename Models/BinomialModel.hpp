@@ -36,9 +36,7 @@ namespace BOOM {
    public:
     BinomialData() : trials_(0), successes_(0) {}
     BinomialData(int64_t n, int64_t y);
-    BinomialData(const BinomialData &rhs);
     BinomialData *clone() const override;
-    BinomialData &operator=(const BinomialData &rhs);
 
     virtual uint size(bool minimal = true) const;
     ostream &display(ostream &) const override;
@@ -67,7 +65,6 @@ namespace BOOM {
   class BinomialSuf : public SufstatDetails<BinomialData> {
    public:
     BinomialSuf();
-    BinomialSuf(const BinomialSuf &rhs);
     BinomialSuf *clone() const override;
     void set(double sum, double observation_count);
 
@@ -104,8 +101,11 @@ namespace BOOM {
                         public EmMixtureComponent,
                         public ConjugateDirichletProcessMixtureComponent {
    public:
-    BinomialModel(double p = .5);
+    explicit BinomialModel(double p = .5);
     BinomialModel(const BinomialModel &rhs);
+    BinomialModel(BinomialModel &&rhs) = default;
+    BinomialModel &operator=(const BinomialModel &rhs);
+    BinomialModel &operator=(BinomialModel &&rhs) = default;
     BinomialModel *clone() const override;
 
     void mle() override;

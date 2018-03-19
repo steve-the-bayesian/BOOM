@@ -1,6 +1,12 @@
 #ifndef BOOM_ARMA_GIBBS_MH_SAMPLER_
 #define BOOM_ARMA_GIBBS_MH_SAMPLER_
 
+#include "Models/DoubleModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/TimeSeries/ArmaModel.hpp"
+#include "Models/VectorModel.hpp"
+
 namespace BOOM {
 
   // A PosteriorSampler for ARMA models based on a separation between the AR and
@@ -11,6 +17,11 @@ namespace BOOM {
 
   class ArmaGibbsMhSampler : public PosteriorSampler {
    public:
+    ArmaGibbsMhSampler(ArmaModel *model,
+                       const Ptr<MvnBase> &ar_prior,
+                       const Ptr<VectorModel> &ma_prior,
+                       const Ptr<DoubleModel> &precision_prior);
+
     void draw() override;
     double logpri() const override;
 

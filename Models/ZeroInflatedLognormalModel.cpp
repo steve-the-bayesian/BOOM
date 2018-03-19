@@ -153,7 +153,7 @@ namespace BOOM {
 
   double ZILM::variance() const {
     double sigsq = gaussian_->sigsq();
-    return (exp(sigsq) - 1) * exp(2 * mu() + sigsq);
+    return expm1(sigsq) * exp(2 * mu() + sigsq);
   }
 
   double ZILM::sd() const { return sqrt(variance()); }

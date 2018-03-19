@@ -29,7 +29,7 @@ namespace BOOM {
 
     class CompleteDataSufficientStatistics : private RefCounted {
      public:
-      CompleteDataSufficientStatistics(uint dim);
+      explicit CompleteDataSufficientStatistics(uint dim);
       CompleteDataSufficientStatistics *clone() const;
 
       void clear();

@@ -32,8 +32,8 @@ namespace BOOM {
     // assumes y~N(mu, Sig) with mu~N(mu0, Sig/kappa)
     // draws mu given y, Sigma, mu0, kappa
    public:
-    MvnConjMeanSampler(MvnModel *Mod,  // improper: mu0 = 0 kappa = 0;
-                       RNG &seeding_rng = GlobalRng::rng);
+    explicit MvnConjMeanSampler(MvnModel *Mod,  // improper: mu0 = 0 kappa = 0;
+                                RNG &seeding_rng = GlobalRng::rng);
     MvnConjMeanSampler(MvnModel *Mod, const Ptr<VectorParams> &Mu0,
                        const Ptr<UnivParams> &Kappa,
                        RNG &seeding_rng = GlobalRng::rng);

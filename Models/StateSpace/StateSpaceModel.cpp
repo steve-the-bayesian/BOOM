@@ -158,10 +158,10 @@ namespace BOOM {
     }
   }
 
-  // TODO(user): should observation_matrix and
+  // TODO: should observation_matrix and
   // observation_variance be called with t + t0 + 1?
   Matrix SSM::forecast(int n) {
-    // TODO(user): This method only works with truly Gaussian
+    // TODO: This method only works with truly Gaussian
     // state models.  We should put in a check to make sure that none
     // of the state models are T, normal mixture, etc.
     full_kalman_filter();

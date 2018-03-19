@@ -36,7 +36,7 @@ namespace BOOM {
   //  0   0   1
   class SemilocalLinearTrendMatrix : public SparseMatrixBlock {
    public:
-    SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi);
+    explicit SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi);
 
     // Can safely copy with pointer semantics, becasue nothing in this
     // class can change the value of the pointer.

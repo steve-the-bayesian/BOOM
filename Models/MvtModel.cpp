@@ -173,7 +173,7 @@ namespace BOOM {
 
   class MvtNuTF {
    public:
-    MvtNuTF(MvtModel *Mod) : mod(Mod) {}
+    explicit MvtNuTF(MvtModel *Mod) : mod(Mod) {}
     MvtNuTF *clone() const { return new MvtNuTF(*this); }
     double operator()(const Vector &Nu) const;
     double operator()(const Vector &Nu, Vector &g) const;

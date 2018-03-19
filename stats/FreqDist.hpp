@@ -36,9 +36,9 @@ namespace BOOM {
     //     and largest values in y will be included (with zero counts
     //     if they did not appear in y).  If false, then values that
     //     did not appear in y will be skipped.
-    FrequencyDistribution(const std::vector<uint> &y, bool contiguous = false);
-    FrequencyDistribution(const std::vector<int> &y, bool contiguous = false);
-    FrequencyDistribution(const std::vector<unsigned long> &y,
+    explicit FrequencyDistribution(const std::vector<uint> &y, bool contiguous = false);
+    explicit FrequencyDistribution(const std::vector<int> &y, bool contiguous = false);
+    explicit FrequencyDistribution(const std::vector<unsigned long> &y,
                           bool contiguous = false);
 
     // Set the category labels for the unique values in y.

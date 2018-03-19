@@ -53,7 +53,7 @@ namespace BOOM {
     //     information
     //                        const Matrix &Xsubject_info);
 
-    MultinomialProbitModel(const std::vector<Ptr<ChoiceData> > &);
+    explicit MultinomialProbitModel(const std::vector<Ptr<ChoiceData> > &);
     MultinomialProbitModel(const MultinomialProbitModel &rhs);
     MultinomialProbitModel *clone() const override;
 

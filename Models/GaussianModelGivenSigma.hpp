@@ -45,13 +45,14 @@ namespace BOOM {
     //     comment.
     //   sample_size: The denominator of the variance of this distribution.
     //     This is 'kappa' in the class comment.
-    GaussianModelGivenSigma(const Ptr<UnivParams> &scaling_variance = nullptr,
-                            double mean = 0, double sample_size = 1);
+    explicit GaussianModelGivenSigma(
+        const Ptr<UnivParams> &scaling_variance = nullptr, double mean = 0,
+        double sample_size = 1);
     GaussianModelGivenSigma *clone() const override;
 
     // Sets the parameter in the numerator of the variance of the normal
     // distribution.
-    void set_scaling_variance(const Ptr<UnivParams> &sigsq);
+    void set_scaling_variance(const Ptr<UnivParams> &scaling_variance);
 
     void set_params(double mu0, double kappa);
     void set_mu(double mu0);

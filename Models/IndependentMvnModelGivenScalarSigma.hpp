@@ -40,7 +40,7 @@ namespace BOOM {
         public PriorPolicy {
    public:
     // Args:
-    //   mean:  The mean of the distribution.
+    //   prior_mean:  The mean of the distribution.
     //   unscaled_variance_diagonal: A vector positive numbers
     //     representing the diagonal of the unscaled variance matrix.
     //     Multiplying each element by sigsq gives the element-wise
@@ -48,12 +48,12 @@ namespace BOOM {
     //   sigsq: The residual variance parameter.  This is not
     //     considered to be a "parameter" of this model, in the sense
     //     that it is not managed by a ParamPolicy.
-    IndependentMvnModelGivenScalarSigma(
-        const Vector &mean, const Vector &unscaled_variance_diagonal,
-        const Ptr<UnivParams> &sigsq);
+    IndependentMvnModelGivenScalarSigma(const Vector &prior_mean,
+                                        const Vector &unscaled_variance_diagonal,
+                                        const Ptr<UnivParams> &sigsq);
 
     // Args:
-    //   mean:  The mean of the distribution.
+    //   prior_mean:  The mean of the distribution.
     //   unscaled_variance_diagonal: A vector positive numbers
     //     representing the diagonal of the unscaled variance matrix.
     //     Multiplying each element by sigsq gives the element-wise
@@ -62,7 +62,7 @@ namespace BOOM {
     //     considered to be a "parameter" of this model, in the sense
     //     that it is not managed by a ParamPolicy.
     IndependentMvnModelGivenScalarSigma(
-        const Ptr<VectorParams> &mean,
+        const Ptr<VectorParams> &prior_mean,
         const Ptr<VectorParams> &unscaled_variance_diagonal,
         const Ptr<UnivParams> &sigsq);
 

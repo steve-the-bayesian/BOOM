@@ -27,7 +27,7 @@ namespace BOOM {
 
   class LoglikeTF {
    public:
-    LoglikeTF(LoglikeModel *model) : mod(model) {}
+    explicit LoglikeTF(LoglikeModel *model) : mod(model) {}
     double operator()(const Vector &x) const { return mod->loglike(x); }
 
    private:
@@ -37,7 +37,7 @@ namespace BOOM {
 
   class dLoglikeTF : public LoglikeTF {
    public:
-    dLoglikeTF(dLoglikeModel *d) : LoglikeTF(d), dmod(d) {}
+    explicit dLoglikeTF(dLoglikeModel *d) : LoglikeTF(d), dmod(d) {}
     double operator()(const Vector &x) const {
       return LoglikeTF::operator()(x);
     }
@@ -52,7 +52,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   class d2LoglikeTF : public dLoglikeTF {
    public:
-    d2LoglikeTF(d2LoglikeModel *d2) : dLoglikeTF(d2), d2mod(d2) {}
+    explicit d2LoglikeTF(d2LoglikeModel *d2) : dLoglikeTF(d2), d2mod(d2) {}
     double operator()(const Vector &x) const {
       return LoglikeTF::operator()(x);
     }

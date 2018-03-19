@@ -21,6 +21,10 @@
 #define BOOM_HMM_DATA_IMPUTER_HPP
 
 #include "Models/HMM/HMM2.hpp"
+#include "Models/HMM/HmmFilter.hpp"
+#include "Models/MarkovModel.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {

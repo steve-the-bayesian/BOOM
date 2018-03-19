@@ -33,7 +33,7 @@ namespace BOOM {
     // Args:
     //   has_regression: derived classes should set to 'true' of the
     //     model has a regression component.
-    StateSpaceNormalMixture(bool has_regression);
+    explicit StateSpaceNormalMixture(bool has_regression);
 
     bool has_regression() const override { return has_regression_; }
 

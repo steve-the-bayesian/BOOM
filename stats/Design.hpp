@@ -635,7 +635,7 @@ namespace BOOM {
 
     // This constructor provides low-level control over the structure
     // of the experiment.
-    RowBuilder(const std::vector<EffectGroup> &effects,
+    explicit RowBuilder(const std::vector<EffectGroup> &effects,
                bool add_intercept = true);
 
     // Take all the factors in an experiment and combine them up to

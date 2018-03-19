@@ -31,7 +31,7 @@ namespace BOOM {
   // in the corresponding cpp file.
   class PowellMinimizer {
    public:
-    PowellMinimizer(const Target &f);
+    explicit PowellMinimizer(const Target &f);
     void minimize(const Vector &initial_value);
 
     void set_evaluation_limit(long number_of_evaluations);

@@ -115,11 +115,11 @@ namespace BOOM {
       // An empty VariableSummary.
       // Args:
       //   variable_number:  The index of the variable being summarized.
-      VariableSummary(int variable_number);
+      explicit VariableSummary(int variable_number);
 
       // Constructing from a SerializedVariableSummary produces an
       // already finalized VariableSummary.
-      VariableSummary(const SerializedVariableSummary &);
+      explicit VariableSummary(const SerializedVariableSummary &);
 
       // When an observation is added to a Bart model, each
       // VariableSummary should get to observe the value of the
@@ -259,7 +259,7 @@ namespace BOOM {
       //     nodes have mean parameters, but only leaves use them.
       //   parent: A pointer to the parent of *this.  If *this is a
       //     root then parent should point to NULL.
-      TreeNode(double mean_value = 0.0, TreeNode *parent = NULL);
+      explicit TreeNode(double mean_value = 0.0, TreeNode *parent = NULL);
       ~TreeNode();
 
       // Returns a pointer to a new TreeNode equal to *this, with the
@@ -474,7 +474,7 @@ namespace BOOM {
       typedef std::set<TreeNode *>::const_iterator ConstNodeSetIterator;
 
       // Build an empty tree consisting of a single node with mean zero.
-      Tree(double mean_value = 0);
+      explicit Tree(double mean_value = 0);
 
       // Build a tree from a set of serialized tree nodes.  The format
       // described below is what is output by the to_matrix() member
@@ -493,7 +493,7 @@ namespace BOOM {
       //     2) Either the value of the node's mean parameter (if a
       //        leaf), or the value of the cutpoint that the node
       //        splits on (if not a leaf).
-      Tree(const Matrix &tree_as_matrix);
+      explicit Tree(const Matrix &tree_as_matrix);
 
       // Copying or assigning a tree will copy or assign all its
       // nodes, cutpoints, etc.  No data or sufficient statistics are
@@ -641,7 +641,7 @@ namespace BOOM {
     //   mean: The model begins as a constant mean.  Each tree
     //     contributes an equal fraction to this mean, so each tree's
     //     contribution is 'mean' / 'number_of_trees'.
-    BartModelBase(int number_of_trees, double mean = 0.0);
+    explicit BartModelBase(int number_of_trees, double mean = 0.0);
     BartModelBase(const BartModelBase &rhs);
     ~BartModelBase() override {}
 

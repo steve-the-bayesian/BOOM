@@ -63,8 +63,10 @@ namespace BOOM {
 
     // Construct a task from a function like object with a void(void)
     // signature.
-    template <typename F>
-    MoveOnlyTaskWrapper(F &&f) : impl_(new ConcreteFunctor<F>(std::move(f))) {}
+    //
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    template <typename F> MoveOnlyTaskWrapper(F &&f)
+        : impl_(new ConcreteFunctor<F>(std::move(f))) {}
 
     // Move constructor
     MoveOnlyTaskWrapper(MoveOnlyTaskWrapper &&other)
@@ -98,6 +100,7 @@ namespace BOOM {
     template <typename F>
     struct ConcreteFunctor : public FunctorInterface {
       F f;
+      // NOLINTNEXTLINE  Implicit conversions are intentional.
       ConcreteFunctor(F &&f_) : f(std::move(f_)) {}
       void call() override { f(); }
     };
@@ -163,7 +166,7 @@ namespace BOOM {
   class ThreadWorkerPool {
    public:
     // Start a worker pool with the given number of threads.
-    ThreadWorkerPool(int number_of_threads = 0);
+    explicit ThreadWorkerPool(int number_of_threads = 0);
 
     // Shuts down waiting threads.
     ~ThreadWorkerPool();

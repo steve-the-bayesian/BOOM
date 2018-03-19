@@ -210,7 +210,7 @@ namespace BOOM {
 
   class NestedHmmDataImputer : public BOOM::PosteriorSampler {
    public:
-    NestedHmmDataImputer(NestedHmm *mod, RNG &seeding_rng = GlobalRng::rng)
+    explicit NestedHmmDataImputer(NestedHmm *mod, RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), m(mod) {}
     void draw() override { m->impute_latent_data(); }
     double logpri() const override { return 0; }

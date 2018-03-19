@@ -50,6 +50,14 @@ namespace BOOM {
     }
 
     //======================================================================
+    LogitSufficientStatistics::LogitSufficientStatistics()
+        : information_weighted_sum_(0.0),
+          sum_of_information_(0.0),
+          information_weighted_prediction_(0.0),
+          information_weighted_sum_of_observation_times_prediction_(0.0),
+          information_weighted_sum_of_squared_predictions_(0.0)
+    {}
+
     LogitSufficientStatistics *LogitSufficientStatistics::clone() const {
       return new LogitSufficientStatistics(*this);
     }

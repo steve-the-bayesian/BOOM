@@ -196,19 +196,23 @@ namespace BOOM {
                            const Ptr<MarkovModel> &mark)
       : HmmFilter(std::vector<Ptr<MixtureComponent>>(mix.begin(), mix.end()),
                   mark),
-        models_(mix) {}
+        em_models_(mix) {}
   //------------------------------------------------------------
   void HmmEmFilter::bkwd_smoothing(const std::vector<Ptr<Data>> &dv) {
     // pi was set by fwd;
     uint n = dv.size();
     uint S = state_space_size();
     for (uint i = n - 1; i != 0; --i) {
-      for (uint s = 0; s < S; ++s) models_[s]->add_mixture_data(dv[i], pi[s]);
+      for (uint s = 0; s < S; ++s) {
+        em_models_[s]->add_mixture_data(dv[i], pi[s]);
+      }
       markov_->suf()->add_transition_distribution(P[i]);
       bkwd_1(pi, P[i], logp, one);
     }
     pi = P[1] * one;
-    for (uint s = 0; s < S; ++s) models_[s]->add_mixture_data(dv[0], pi[s]);
+    for (uint s = 0; s < S; ++s) {
+      em_models_[s]->add_mixture_data(dv[0], pi[s]);
+    }
     markov_->suf()->add_initial_distribution(pi);
   }
 

@@ -71,7 +71,7 @@ namespace BOOM {
 
       // A constructor for the multiplexed case, where there are multiple
       // observations at each time point.
-      AugmentedBinomialRegressionData(
+      explicit AugmentedBinomialRegressionData(
           const std::vector<Ptr<BinomialRegressionData>> &binomial_data);
 
       AugmentedBinomialRegressionData *clone() const override;
@@ -133,7 +133,7 @@ namespace BOOM {
         public IID_DataPolicy<StateSpace::AugmentedBinomialRegressionData>,
         public PriorPolicy {
    public:
-    StateSpaceLogitModel(int xdim);
+    explicit StateSpaceLogitModel(int xdim);
     StateSpaceLogitModel(
         const Vector &successes, const Vector &trials,
         const Matrix &design_matrix,
@@ -243,7 +243,7 @@ namespace BOOM {
     //   data, so it will consist of integers, but it is an error, so
     //   it may be positive or negative.
     //
-    //  TODO(user): consider whether this would make more sense
+    //  TODO: consider whether this would make more sense
     //  on the logit scale.
     Vector one_step_holdout_prediction_errors(
         RNG &rng, BinomialLogitDataImputer &data_imputer,

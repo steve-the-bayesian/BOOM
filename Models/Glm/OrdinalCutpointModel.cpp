@@ -238,7 +238,9 @@ namespace BOOM {
       uint mscr;
 
      public:
-      vdelta(const Vector &Delta) : d(Delta), mscr(d.size() + 1) {}
+      explicit vdelta(const Vector &Delta)
+          : d(Delta), mscr(d.size() + 1) {}
+
       double operator()(uint i) {
         if (i <= 0)
           return BOOM::negative_infinity();

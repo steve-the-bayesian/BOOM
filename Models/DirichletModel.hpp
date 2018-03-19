@@ -37,8 +37,8 @@ namespace BOOM {
 
    public:
     // constructor
-    DirichletSuf(uint S);
-    DirichletSuf(const DirichletSuf &sf);
+    explicit DirichletSuf(uint S);
+    DirichletSuf(const DirichletSuf &rhs);
     DirichletSuf *clone() const override;
 
     void clear() override;
@@ -69,7 +69,7 @@ namespace BOOM {
    public:
     explicit DirichletModel(uint S, double Nu = 1.0);
     explicit DirichletModel(const Vector &Nu);
-    DirichletModel(const DirichletModel &m);
+    DirichletModel(const DirichletModel &rhs);
     DirichletModel *clone() const override;
 
     Ptr<VectorParams> Nu();
@@ -96,7 +96,7 @@ namespace BOOM {
     double Logp(const Vector &probs, Vector &gradient, Matrix &Hessian,
                 uint nderiv) const override;
     double Loglike(const Vector &nu, Vector &g, Matrix &h,
-                   uint nderiv) const override;
+                   uint nd) const override;
     double log_likelihood() const override { return loglike(nu()); }
     void mle() override { return d2LoglikeModel::mle(); }
 

@@ -78,7 +78,7 @@ namespace BOOM {
     double n_;
     SpdMatrix sumsq_;
     Matrix sumsq_upper_chol_;
-    mutable SpdMatrix R_;  // workspace for fast_draw.  state for stable_draw
+    mutable CorrelationMatrix R_;  // workspace for fast_draw.  state for stable_draw
     mutable Vector sd_;    // workspace for fast_draw.  state for stable_draw
 
     int fast_count_;

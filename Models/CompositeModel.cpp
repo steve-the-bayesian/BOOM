@@ -21,16 +21,18 @@
 
 namespace BOOM {
 
-  typedef CompositeModel CM;
+  using CM = BOOM::CompositeModel;
 
-  CM::CompositeModel() {}
+  CM::CompositeModel() = default;
 
   void CM::setup() { ParamPolicy::set_models(m_.begin(), m_.end()); }
 
   CM::CompositeModel(const CM &rhs)
       : Model(rhs), ParamPolicy(rhs), DataPolicy(rhs), PriorPolicy(rhs) {
     uint S = rhs.m_.size();
-    for (uint s = 0; s < S; ++s) m_.push_back(rhs.m_[s]->clone());
+    for (uint s = 0; s < S; ++s) {
+      m_.emplace_back(rhs.m_[s]->clone());
+    }
     setup();
   }
 
@@ -45,7 +47,9 @@ namespace BOOM {
     DataPolicy::add_data(dp);
     uint n = dp->dim();
     assert(n == m_.size());
-    for (uint i = 0; i < n; ++i) m_[i]->add_data(dp->get_ptr(i));
+    for (uint i = 0; i < n; ++i) {
+      m_[i]->add_data(dp->get_ptr(i));
+    }
   }
 
   void CM::add_data(const Ptr<Data> &dp) {
@@ -74,7 +78,9 @@ namespace BOOM {
     assert(n == m_.size());
     double ans = 0;
     for (uint i = 0; i < n; ++i) {
-      if (!dp.get(i)->missing()) ans += m_[i]->pdf(dp.get(i), true);
+      if (dp.get(i)->missing() == 0u) {
+        ans += m_[i]->pdf(dp.get(i), true);
+      }
     }
     return logscale ? ans : exp(ans);
   }

@@ -257,7 +257,7 @@ namespace BOOM {
 
   LabeledMatrix DataTable::design(bool add_int) const {
     std::vector<bool> include(nvars(), true);
-    return design(include, add_int);
+    return design(Selector(include), add_int);
   }
 
   //------------------------------------------------------------

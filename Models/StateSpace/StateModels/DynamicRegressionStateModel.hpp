@@ -63,11 +63,11 @@ namespace BOOM {
    public:
     // Each row of X is a predictor vector for an observation.  This constructor
     // assumes a single observation for each time point.
-    DynamicRegressionStateModel(const Matrix &X);
+    explicit DynamicRegressionStateModel(const Matrix &X);
 
     // Each element of 'predictors' is the set of time points for that time
     // period.
-    DynamicRegressionStateModel(const std::vector<Matrix> &predictors);
+    explicit DynamicRegressionStateModel(const std::vector<Matrix> &predictors);
 
     DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs);
     DynamicRegressionStateModel *clone() const override;

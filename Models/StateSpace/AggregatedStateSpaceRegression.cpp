@@ -154,8 +154,7 @@ namespace BOOM {
                                     fraction_in_initial_period, v);
       }
       ConstVectorView old_state(v.data(), state_dim, v.stride());
-      double old_weekly_observation(v[state_dim]);
-      double old_cumulator(v[state_dim + 1]);
+      double old_weekly_observation = v[state_dim];
 
       Vector ans(v.size());
       VectorView new_state(ans, 0, state_dim);
@@ -168,6 +167,7 @@ namespace BOOM {
         new_cumulator =
             (1 - fraction_in_initial_period) * old_weekly_observation;
       } else {
+        double old_cumulator = v[state_dim + 1];
         new_cumulator = old_cumulator + old_weekly_observation;
       }
       return ans;
@@ -473,7 +473,7 @@ namespace BOOM {
     regression_->suf()->add_mixture_data(residual + predicted, dp->x(), 1.0);
   }
 
-  // TODO(user): This and other code involving model matrices is
+  // TODO: This and other code involving model matrices is
   // an optimization opportunity.  Test it out to see if
   // precomputation makes sense.
   const AccumulatorTransitionMatrix *ASSR::state_transition_matrix(

@@ -22,13 +22,14 @@
 
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
   // Store the conditional state mean and conditional state variance.
   struct KalmanStateStorage {
     KalmanStateStorage() {}
-    KalmanStateStorage(int dim) : a(dim), P(dim) {}
+    explicit KalmanStateStorage(int dim) : a(dim), P(dim) {}
     Vector a;
     SpdMatrix P;
   };
@@ -37,8 +38,12 @@ namespace BOOM {
   // series.
   struct ScalarKalmanStorage : public KalmanStateStorage {
     ScalarKalmanStorage() : KalmanStateStorage() {}
-    ScalarKalmanStorage(int dim, bool store_state_moments = true)
-        : KalmanStateStorage(store_state_moments ? 0 : dim), K(dim) {}
+    explicit ScalarKalmanStorage(int dim, bool store_state_moments = true)
+        : KalmanStateStorage(store_state_moments ? 0 : dim),
+          K(dim),
+          F(0),
+          v(0)
+    {}
 
     // Kalman gain
     Vector K;
@@ -61,6 +66,7 @@ namespace BOOM {
         : KalmanStateStorage(store_state_moments ? state_dim : 0),
           kalman_gain_(state_dim, observation_dim),
           forecast_precision_(observation_dim),
+          forecast_precision_log_determinant_(negative_infinity()),
           forecast_error_(observation_dim) {}
 
     // The Kalman gain K[t] shows up in the updating equation:

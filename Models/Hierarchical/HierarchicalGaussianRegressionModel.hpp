@@ -44,7 +44,7 @@ namespace BOOM {
     //     externally held pointer).
     //   residual_variance: The common residual variance parameter for the
     //     group-level regression models.
-    HierarchicalGaussianRegressionModel(
+    explicit HierarchicalGaussianRegressionModel(
         const Ptr<MvnModel> &prior,
         const Ptr<UnivParams> &residual_variance = new UnivParams(1.0));
 

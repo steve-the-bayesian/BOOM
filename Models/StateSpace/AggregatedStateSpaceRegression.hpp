@@ -229,7 +229,7 @@ namespace BOOM {
   // Kalman simulation smoother, but it does forecast alpha[t+1].
   class AggregatedRegressionStateModel : public RegressionStateModel {
    public:
-    AggregatedRegressionStateModel(const Ptr<RegressionModel> &m);
+    explicit AggregatedRegressionStateModel(const Ptr<RegressionModel> &m);
     void set_final_x(const Vector &x);
     SparseVector observation_matrix(int t) const override;
 
@@ -245,7 +245,7 @@ namespace BOOM {
         public IID_DataPolicy<FineNowcastingData>,
         public PriorPolicy {
    public:
-    AggregatedStateSpaceRegression(int number_of_predictors);
+    explicit AggregatedStateSpaceRegression(int number_of_predictors);
     AggregatedStateSpaceRegression(const AggregatedStateSpaceRegression &rhs);
     AggregatedStateSpaceRegression *clone() const override;
 

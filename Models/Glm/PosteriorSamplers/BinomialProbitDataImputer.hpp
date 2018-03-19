@@ -35,7 +35,7 @@ namespace BOOM {
     // Args:
     //   clt_threshold: The smallest number_of_trials where
     //   approximate augmentation takes place.
-    BinomialProbitDataImputer(int clt_threshold = 10);
+    explicit BinomialProbitDataImputer(int clt_threshold = 10);
 
     // Args:
     //   rng:  The random number generator.

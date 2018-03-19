@@ -1,7 +1,5 @@
 #!/usr/local/bin/python3
 
-import sys
-import string
 import shutil
 import os.path
 

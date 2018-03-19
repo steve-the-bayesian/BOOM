@@ -84,8 +84,8 @@ namespace BOOM {
                        public IntModel,
                        virtual public MixtureComponent {
    public:
-    PoissonModel(double lam = 1.0);
-    PoissonModel(const std::vector<uint> &);
+    explicit PoissonModel(double lam = 1.0);
+    explicit PoissonModel(const std::vector<uint> &);
     PoissonModel(const PoissonModel &m);
     PoissonModel *clone() const override;
 

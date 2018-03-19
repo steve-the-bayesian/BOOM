@@ -221,7 +221,7 @@ namespace BOOM {
     return ans;
   }
 
-  // TODO(user):  test simulate_forecast
+  // TODO:  test simulate_forecast
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX,
                                  const Vector &final_state) {
     return simulate_multiplex_forecast(rng, newX, final_state,

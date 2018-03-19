@@ -42,7 +42,8 @@ namespace BOOM {
      public:
       MultiplexedRegressionData();
       MultiplexedRegressionData(double y, const Vector &x);
-      MultiplexedRegressionData(const std::vector<Ptr<RegressionData>> &data);
+      explicit MultiplexedRegressionData(
+          const std::vector<Ptr<RegressionData>> &data);
       MultiplexedRegressionData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
 
@@ -79,7 +80,7 @@ namespace BOOM {
    public:
     // xdim is the dimension of the x's in the regression part of the
     // model.
-    StateSpaceRegressionModel(int xdim);
+    explicit StateSpaceRegressionModel(int xdim);
 
     // y is the time series of observations.  X is the design matrix,
     // with rows contemporaneous to y.  If some of the y's are

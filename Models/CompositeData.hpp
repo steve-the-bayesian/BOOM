@@ -35,7 +35,7 @@ namespace BOOM {
 
     // Use this constructor to create a new Composite Data when you've
     // already got the component data stored away in a vector.
-    CompositeData(const std::vector<Ptr<Data> > &d);
+    explicit CompositeData(const std::vector<Ptr<Data>> &d);
 
     CompositeData *clone() const override;
     ostream &display(ostream &) const override;
@@ -45,12 +45,12 @@ namespace BOOM {
     // data, etc.
     uint dim() const;
 
-    Ptr<Data> get_ptr(uint n);
-    const Data *get(uint n) const;
+    Ptr<Data> get_ptr(uint i);
+    const Data *get(uint i) const;
     void add(const Ptr<Data> &dp);
 
    private:
-    std::vector<Ptr<Data> > dat_;
+    std::vector<Ptr<Data>> dat_;
   };
 
 }  // namespace BOOM

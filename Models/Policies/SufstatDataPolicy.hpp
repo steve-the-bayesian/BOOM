@@ -34,7 +34,7 @@ namespace BOOM {
     typedef std::vector<Ptr<DataType> > DatasetType;
     typedef Ptr<DatasetType, false> dsetPtr;
 
-    SufstatDataPolicy(const Ptr<S> &);
+    explicit SufstatDataPolicy(const Ptr<S> &);
     SufstatDataPolicy(const Ptr<S> &, const DatasetType &d);
     template <class FwdIt>
     SufstatDataPolicy(const Ptr<S> &, FwdIt Begin, FwdIt End);

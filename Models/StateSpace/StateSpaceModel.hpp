@@ -33,7 +33,7 @@ namespace BOOM {
     class MultiplexedDoubleData : public MultiplexedData {
      public:
       MultiplexedDoubleData();
-      MultiplexedDoubleData(double y);
+      explicit MultiplexedDoubleData(double y);
       MultiplexedDoubleData *clone() const override;
       std::ostream &display(std::ostream &out) const override;
       void add_data(const Ptr<DoubleData> &data_point);
@@ -60,8 +60,9 @@ namespace BOOM {
         public PriorPolicy {
    public:
     StateSpaceModel();
-    StateSpaceModel(const Vector &y, const std::vector<bool> &y_is_observed =
-                                         std::vector<bool>());
+    explicit StateSpaceModel(
+        const Vector &y,
+        const std::vector<bool> &y_is_observed = std::vector<bool>());
     StateSpaceModel(const StateSpaceModel &rhs);
     StateSpaceModel *clone() const override;
 

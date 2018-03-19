@@ -44,7 +44,7 @@ namespace BOOM {
 
     // To build the model all at once pass in a vector of pointers to
     // DoubleModel.
-    ProductVectorModel(const std::vector<Ptr<DoubleModel>> &marginals);
+    explicit ProductVectorModel(const std::vector<Ptr<DoubleModel>> &marginals);
     ProductVectorModel(const ProductVectorModel &rhs);
     ProductVectorModel(ProductVectorModel &&rhs) = default;
     ProductVectorModel &operator=(const ProductVectorModel &rhs);
@@ -74,7 +74,7 @@ namespace BOOM {
                                           public LocationScaleVectorModel {
    public:
     ProductLocationScaleVectorModel();
-    ProductLocationScaleVectorModel(
+    explicit ProductLocationScaleVectorModel(
         const std::vector<Ptr<LocationScaleDoubleModel>> &marginals);
     ProductLocationScaleVectorModel(const ProductLocationScaleVectorModel &rhs);
     ProductLocationScaleVectorModel(ProductLocationScaleVectorModel &&rhs) =

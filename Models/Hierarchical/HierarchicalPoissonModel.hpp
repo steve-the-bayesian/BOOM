@@ -49,7 +49,7 @@ namespace BOOM {
    public:
     HierarchicalPoissonModel(double lambda_prior_guess,
                              double lambda_prior_sample_size);
-    HierarchicalPoissonModel(const Ptr<GammaModel> &prior_model);
+    explicit HierarchicalPoissonModel(const Ptr<GammaModel> &prior_model);
     HierarchicalPoissonModel *clone() const override;
 
     // Creates a new data_level_model with data assigned.

@@ -32,8 +32,8 @@ namespace BOOM {
     typedef std::vector<double> VEC;
 
    public:
-    IQagent(uint BufSize = 20);
-    IQagent(const VEC& probs, uint BufSize = 20);
+    explicit IQagent(uint BufSize = 20);
+    explicit IQagent(const VEC& probs, uint BufSize = 20);
     void add(double x);
     double quantile(double prob) const;
     double cdf(double x) const;

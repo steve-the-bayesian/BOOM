@@ -26,8 +26,8 @@
 namespace BOOM {
   class FiniteMixturePosteriorSampler : public PosteriorSampler {
    public:
-    FiniteMixturePosteriorSampler(FiniteMixtureModel *model,
-                                  RNG &seeding_rng = GlobalRng::rng)
+    explicit FiniteMixturePosteriorSampler(FiniteMixtureModel *model,
+                                           RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), model_(model) {}
 
     double logpri() const override {

@@ -32,8 +32,8 @@ namespace BOOM {
   // A base class for GlmData,
   class GlmBaseData : virtual public Data {
    public:
-    GlmBaseData(const Vector &x);
-    GlmBaseData(const Ptr<VectorData> &xp);
+    explicit GlmBaseData(const Vector &x);
+    explicit GlmBaseData(const Ptr<VectorData> &xp);
     GlmBaseData(const GlmBaseData &rhs);
     GlmBaseData *clone() const override = 0;
 

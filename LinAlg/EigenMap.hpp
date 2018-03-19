@@ -20,6 +20,8 @@
 */
 
 #include "Eigen/Core"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace BOOM {
   // EigenMap(foo) takes a BOOM linear algebra object foo and maps it into an Eigen object.

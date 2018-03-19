@@ -32,9 +32,9 @@ namespace BOOM {
   class SpdParams : public SpdData, virtual public Params {
    public:
     explicit SpdParams(uint p, double diag = 1.0, bool ivar = false);
-    SpdParams(const SpdMatrix &V, bool ivar);
+    explicit SpdParams(const SpdMatrix &V, bool ivar = false);
     SpdParams(const SpdParams &rhs);
-    SpdParams(const SpdData &rhs);
+    explicit SpdParams(const SpdData &rhs);
     SpdParams *clone() const override;
 
     uint size(bool minimal = true) const override {

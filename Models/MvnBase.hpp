@@ -34,7 +34,7 @@ namespace BOOM {
     // If created using the default constructor, the MvnSuf will be
     // resized to the dimension of the first data point passed to it
     // in update().
-    MvnSuf(uint p = 0);
+    explicit MvnSuf(uint p = 0);
     MvnSuf(double n, const Vector &ybar, const SpdMatrix &sumsq);
     MvnSuf(const MvnSuf &sf);
     MvnSuf *clone() const override;
@@ -143,7 +143,7 @@ namespace BOOM {
                             public ParamPolicy_2<VectorParams, SpdParams>,
                             public LocationScaleVectorModel {
    public:
-    MvnBaseWithParams(uint p, double mu = 0.0, double sig = 1.0);
+    explicit MvnBaseWithParams(uint p, double mu = 0.0, double sig = 1.0);
     // N(mu,V)... if(ivar) then V is the inverse variance.
     MvnBaseWithParams(const Vector &mean, const SpdMatrix &V,
                       bool ivar = false);

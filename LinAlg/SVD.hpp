@@ -25,7 +25,7 @@ namespace BOOM {
 
   class SingularValueDecomposition {
    public:
-    SingularValueDecomposition(const Matrix &m);
+    explicit SingularValueDecomposition(const Matrix &m);
     const Vector & values()const;
     const Matrix & left()const;
     const Matrix & right()const;

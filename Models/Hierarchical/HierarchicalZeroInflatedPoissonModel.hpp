@@ -37,7 +37,7 @@ namespace BOOM {
                             double number_of_positive_trials,
                             double total_number_of_events);
     // Automatic conversions from ZeroInflatedPoissonSuf are allowed.
-    ZeroInflatedPoissonData(const ZeroInflatedPoissonSuf &suf);
+    explicit ZeroInflatedPoissonData(const ZeroInflatedPoissonSuf &suf);
     ZeroInflatedPoissonData(const ZeroInflatedPoissonData &rhs);
     ZeroInflatedPoissonData *clone() const override;
     ostream &display(ostream &out) const override;

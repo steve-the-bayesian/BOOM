@@ -54,7 +54,8 @@ namespace BOOM {
    public:
     // Use this constructor if there are no marks in the process, or
     // if you don't want to model the marks.
-    PoissonClusterProcess(const PoissonClusterComponentProcesses &components);
+    explicit PoissonClusterProcess(
+        const PoissonClusterComponentProcesses &components);
 
     // Use this constructor if there are marks to be modeled.
     PoissonClusterProcess(const PoissonClusterComponentProcesses &components,

@@ -48,7 +48,7 @@ namespace BOOM {
                                    public NumOptModel,
                                    virtual public MixtureComponent {
    public:
-    GammaRegressionModelBase(int xdim);
+    explicit GammaRegressionModelBase(int xdim);
     GammaRegressionModelBase(double shape_parameter,
                              const Vector &coefficients);
     GammaRegressionModelBase(const Ptr<UnivParams> &alpha,
@@ -78,7 +78,7 @@ namespace BOOM {
   class GammaRegressionModel : public GammaRegressionModelBase,
                                public IID_DataPolicy<RegressionData> {
    public:
-    GammaRegressionModel(int xdim);
+    explicit GammaRegressionModel(int xdim);
     GammaRegressionModel(double shape_parameter, const Vector &coefficients);
     GammaRegressionModel(const Ptr<UnivParams> &alpha,
                          const Ptr<GlmCoefs> &coefficients);
@@ -168,7 +168,7 @@ namespace BOOM {
         public SufstatDataPolicy<RegressionData,
                                  GammaRegressionConditionalSuf> {
    public:
-    GammaRegressionModelConditionalSuf(int xdim);
+    explicit GammaRegressionModelConditionalSuf(int xdim);
     GammaRegressionModelConditionalSuf(double shape_parameter,
                                        const Vector &coefficients);
     GammaRegressionModelConditionalSuf(const Ptr<UnivParams> &alpha,

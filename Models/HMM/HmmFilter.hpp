@@ -81,7 +81,7 @@ namespace BOOM {
     virtual void bkwd_smoothing(const std::vector<Ptr<Data>> &);
 
    private:
-    std::vector<Ptr<EmMixtureComponent>> models_;
+    std::vector<Ptr<EmMixtureComponent>> em_models_;
   };
 
 }  // namespace BOOM

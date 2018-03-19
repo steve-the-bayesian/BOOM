@@ -144,18 +144,6 @@ namespace BOOM {
 
   void RHSM::sample_posterior() {
     int number_of_holidays = holiday_mean_contributions_.size();
-    ////////// Remove after debugging
-    if (holiday_mean_contributions_.size() != number_of_holidays) {
-      report_error("holiday_mean_contributions_ is the wrong size");
-    }
-    if (daily_totals_.size() != number_of_holidays) {
-      report_error("daily_totals_ is the wrong size");
-    }
-    if (daily_counts_.size() != number_of_holidays) {
-      report_error("daily_counts_ is the wrong size");
-    }
-    ////////// Remove after debugging
-    
     for (int holiday = 0; holiday < number_of_holidays; ++holiday) {
       Vector holiday_pattern = holiday_mean_contributions_[holiday]->value();
       for (int day = 0; day < holiday_pattern.size(); ++day) {

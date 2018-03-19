@@ -38,7 +38,7 @@ namespace BOOM {
    public:
     // Use this constructor for an empty NormalMixtureApproximation
     // with n mixture components.
-    NormalMixtureApproximation(int n);
+    explicit NormalMixtureApproximation(int n);
 
     // Use this constructor for a NormalMixtureApproximation with a
     // specified set of mixture components and mixing weights.
@@ -192,7 +192,7 @@ namespace BOOM {
   // variable.
   class NegLogGamma {
    public:
-    NegLogGamma(double nu) : nu_(nu) {}
+    explicit NegLogGamma(double nu) : nu_(nu) {}
     double operator()(double y) const {
       return -nu_ * y - exp(-y) - lgamma(nu_);
     }

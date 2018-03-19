@@ -38,7 +38,9 @@ namespace BOOM {
   void intrusive_ptr_add_ref(Data *d) { d->up_count(); }
   void intrusive_ptr_release(Data *d) {
     d->down_count();
-    if (d->ref_count() == 0) delete d;
+    if (d->ref_count() == 0) {
+      delete d;
+    }
   }
 
   Data::missing_status Data::missing() const { return missing_flag; }
@@ -58,12 +60,16 @@ namespace BOOM {
 
   void VectorData::set(const Vector &rhs, bool sig) {
     x = rhs;
-    if (sig) signal();
+    if (sig) {
+      signal();
+    }
   }
 
   void VectorData::set_element(double value, int position, bool sig) {
     x[position] = value;
-    if (sig) signal();
+    if (sig) {
+      signal();
+    }
   }
 
   double VectorData::operator[](uint i) const { return x[i]; }
@@ -76,7 +82,7 @@ namespace BOOM {
   //------------------------------------------------------------
   MatrixData::MatrixData(int r, int c, double val) : x(r, c, val) {}
 
-  MatrixData::MatrixData(const Matrix &y) : Data(), x(y) {}
+  MatrixData::MatrixData(const Matrix &y) : x(y) {}
 
   MatrixData::MatrixData(const MatrixData &rhs)
       : Data(rhs), Traits(rhs), x(rhs.x) {}
@@ -89,12 +95,16 @@ namespace BOOM {
 
   void MatrixData::set(const Matrix &rhs, bool sig) {
     x = rhs;
-    if (sig) signal();
+    if (sig) {
+      signal();
+    }
   }
 
   void MatrixData::set_element(double value, int row, int col, bool sig) {
     x(row, col) = value;
-    if (sig) signal();
+    if (sig) {
+      signal();
+    }
   }
 
 }  // namespace BOOM

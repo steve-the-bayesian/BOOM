@@ -18,11 +18,14 @@
 #ifndef BOOM_POISSON_CLUSTER_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POISSON_CLUSTER_POSTERIOR_SAMPLER_HPP_
 
+#include "Models/PointProcess/PoissonClusterProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+
 namespace BOOM {
   class PoissonClusterPosteriorSampler : public PosteriorSampler {
    public:
-    PoissonClusterPosteriorSampler(PoissonClusterProcess *model,
-                                   RNG &seeding_rng = GlobalRng::rng)
+    explicit PoissonClusterPosteriorSampler(PoissonClusterProcess *model,
+                                            RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), model_(model) {}
     virtual void draw() {
       model_->impute_latent_data(rng());

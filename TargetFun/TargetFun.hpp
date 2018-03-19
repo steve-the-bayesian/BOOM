@@ -95,7 +95,7 @@ namespace BOOM {
                                  Matrix *Hessian, bool reset_derivatives)>
         TargetType;
     d2TargetFunPointerAdapter() {}
-    d2TargetFunPointerAdapter(const TargetType &target);
+    explicit d2TargetFunPointerAdapter(const TargetType &target);
     d2TargetFunPointerAdapter(const TargetType &prior,
                               const TargetType &likelihood);
     void add_function(const TargetType &target);

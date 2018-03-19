@@ -80,12 +80,13 @@ namespace BOOM {
 
     // A prior for coefficients of dimension n, with marginal inclusion
     // probability.
-    VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
+    explicit VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
 
     // Args:
     //   marginal_inclusion_probabilities: Each entry gives the marginal
     //     inclusion probability for the corresponding regression coefficient.
-    VariableSelectionPrior(const Vector &marginal_inclusion_probabilities);
+    explicit VariableSelectionPrior(
+        const Vector &marginal_inclusion_probabilities);
 
     VariableSelectionPrior(const VariableSelectionPrior &rhs);
     VariableSelectionPrior *clone() const override;

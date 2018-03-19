@@ -36,7 +36,7 @@ namespace BOOM {
     // Args:
     //   number_of_trees:  The number of trees to use.
     //   mean:  The model is initialized to predict this constant.
-    GaussianBartModel(int number_of_trees, double mean = 0.0);
+    explicit GaussianBartModel(int number_of_trees, double mean = 0.0);
 
     // A model with the specifed data assigned.
     // Args:

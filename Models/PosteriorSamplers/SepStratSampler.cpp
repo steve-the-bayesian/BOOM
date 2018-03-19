@@ -138,7 +138,7 @@ namespace BOOM {
     // Prior is with respect to Sigma
 
     int d = Sigma.nrow();
-    R_ = var2cor(Sigma);
+    R_ = CorrelationMatrix(var2cor(Sigma));
     sd_ = sqrt(diag(Sigma));
 
     double ans = Rpri_->logp(R_);
@@ -250,7 +250,7 @@ namespace BOOM {
   // class to be passed to the slice sampler in draw_sigsq
   class SigmaTarget : public ScalarTargetFun {
    public:
-    SigmaTarget(SepStratSampler *s) : s_(s) {}
+    explicit SigmaTarget(SepStratSampler *s) : s_(s) {}
     double operator()(double ivar) const { return s_->logp_slice_ivar(ivar); }
 
    private:
@@ -264,7 +264,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   class SigmaPolarTarget : public TargetFun {
    public:
-    SigmaPolarTarget(SepStratSampler *s) : sam(s), Sigma_(s->Sigma()) {}
+    explicit SigmaPolarTarget(SepStratSampler *s) : sam(s), Sigma_(s->Sigma()) {}
     double operator()(const Vector &x) const {
       Sigma_.unvectorize(x, true);
       return sam->logp0(Sigma_, 1.0);

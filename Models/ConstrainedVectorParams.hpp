@@ -26,10 +26,12 @@ namespace BOOM {
     friend void intrusive_ptr_add_ref(VectorConstraint *d) { d->up_count(); }
     friend void intrusive_ptr_release(VectorConstraint *d) {
       d->down_count();
-      if (d->ref_count() == 0) delete d;
+      if (d->ref_count() == 0) {
+        delete d;
+      }
     }
 
-    ~VectorConstraint() override {}
+    ~VectorConstraint() override = default;
 
     virtual bool check(const Vector &v) const = 0;
     // returns true if constraint satisfied
@@ -54,7 +56,7 @@ namespace BOOM {
   //------------------------------------------------------------
   class ElementConstraint : public VectorConstraint {
    public:
-    ElementConstraint(uint element = 0, double x = 0.0);
+    explicit ElementConstraint(uint el = 0, double val = 0.0);
     bool check(const Vector &v) const override;
     void impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;
@@ -67,7 +69,7 @@ namespace BOOM {
   //------------------------------------------------------------
   class SumConstraint : public VectorConstraint {
    public:
-    SumConstraint(double sum);
+    explicit SumConstraint(double x);
     bool check(const Vector &v) const override;
     void impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;  // adds final element to
@@ -81,10 +83,10 @@ namespace BOOM {
   class ConstrainedVectorParams : public VectorParams {
    public:
     explicit ConstrainedVectorParams(uint p, double x = 0.0,
-                                     const Ptr<VectorConstraint> &vc = 0);
+                                     const Ptr<VectorConstraint> &vc = nullptr);
     // copies v's data
-    ConstrainedVectorParams(const Vector &v,
-                            const Ptr<VectorConstraint> &vc = 0);
+    explicit ConstrainedVectorParams(const Vector &v,
+                                     const Ptr<VectorConstraint> &vc = nullptr);
     // copies data
     ConstrainedVectorParams(const ConstrainedVectorParams &rhs);
     ConstrainedVectorParams *clone() const override;

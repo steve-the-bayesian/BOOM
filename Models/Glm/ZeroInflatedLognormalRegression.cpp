@@ -55,7 +55,7 @@ namespace BOOM {
   //           + p(x)*(1-p(x))*lognormal_mean^2
   double ZILRM::variance(const Vector &x) const {
     double mu = regression_coefficients().predict(x);
-    double lognormal_variance = (exp(sigsq()) - 1) * exp(2 * mu + sigsq());
+    double lognormal_variance = expm1(sigsq()) * exp(2 * mu + sigsq());
     double lognormal_mean = exp(mu + 0.5 * sigsq());
     double p = probability_zero(x);
     return (1 - p) * lognormal_variance + p * (1 - p) * square(lognormal_mean);

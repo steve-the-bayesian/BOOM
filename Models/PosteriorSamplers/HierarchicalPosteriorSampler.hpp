@@ -27,7 +27,7 @@ namespace BOOM {
 
   class HierarchicalPosteriorSampler : public PosteriorSampler {
    public:
-    HierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
+    explicit HierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
 
     // Child classes should be capable of drawing model parameters in models
     // with no data.
@@ -40,7 +40,8 @@ namespace BOOM {
   class ConjugateHierarchicalPosteriorSampler
       : public HierarchicalPosteriorSampler {
    public:
-    ConjugateHierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
+    explicit ConjugateHierarchicalPosteriorSampler(
+        RNG &seeding_rng = GlobalRng::rng);
 
     // Evaluates the log of the marginal density function
     //   p(y) = \int p(y | theta) p(theta).

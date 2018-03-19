@@ -112,7 +112,7 @@ namespace BOOM{
   // required for each distinct parameter in the model output list.
   class RListIoElement {
    public:
-    RListIoElement(const std::string &name);
+    explicit RListIoElement(const std::string &name);
     virtual ~RListIoElement();
 
     // Allocates and returns the R object (usually a vector, matrix,
@@ -169,7 +169,7 @@ namespace BOOM{
   // valued data.
   class RealValuedRListIoElement : public RListIoElement {
    public:
-    RealValuedRListIoElement(const std::string &name);
+    explicit RealValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
    protected:
@@ -182,7 +182,7 @@ namespace BOOM{
   //----------------------------------------------------------------------
   class ListValuedRListIoElement : public RListIoElement {
    public:
-    ListValuedRListIoElement(const std::string &name);
+    explicit ListValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
   };
 
@@ -342,7 +342,7 @@ namespace BOOM{
   // elements that store MCMC draws of matrices.
   class MatrixListElementBase : public RealValuedRListIoElement {
    public:
-    MatrixListElementBase(const std::string &param_name)
+    explicit MatrixListElementBase(const std::string &param_name)
         : RealValuedRListIoElement(param_name) {}
     virtual int nrow() const = 0;
     virtual int ncol() const = 0;
@@ -393,7 +393,7 @@ namespace BOOM{
     // Use this constructor if you plan to add parameter vectors one
     // at a time.  This use case obviously requires holding onto the
     // list element pointer outside of an RListIoManager.
-    HierarchicalVectorListElement(const std::string &param_name);
+    explicit HierarchicalVectorListElement(const std::string &param_name);
 
     void add_vector(const Ptr<VectorParams> &vector);
     SEXP prepare_to_write(int niter) override;

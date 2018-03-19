@@ -30,7 +30,7 @@ namespace {
   class SseCallback
       : public BOOM::ScalarIoCallback {
    public:
-    SseCallback(RegressionModel *model)
+    explicit SseCallback(RegressionModel *model)
         : model_(model) {}
     double get_value() const override {
       return model_->suf()->relative_sse(model_->coef());

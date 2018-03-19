@@ -47,7 +47,7 @@ namespace BOOM {
     class SufstatManager {
      public:
       // Assumes ownership of the passed pointer.
-      SufstatManager(SufstatManagerBase *impl) : impl_(impl) {}
+      explicit SufstatManager(SufstatManagerBase *impl) : impl_(impl) {}
 
       void clear_complete_data_sufficient_statistics() {
         impl_->clear_complete_data_sufficient_statistics();

@@ -30,7 +30,7 @@
 namespace BOOM {
 
   //======================================================================
-  typedef DirichletSuf DS;
+  using DS = BOOM::DirichletSuf;
 
   DS::DirichletSuf(uint S) : sumlog_(S, 0.0), n_(0){};
 
@@ -97,17 +97,13 @@ namespace BOOM {
 
   ostream &DS::print(ostream &out) const { return out << n_ << " " << sumlog_; }
   //======================================================================
-  typedef DirichletModel DM;
+  using DM = BOOM::DirichletModel;
 
   DM::DirichletModel(uint S, double Nu)
-      : ParamPolicy(new VectorParams(S, Nu)),
-        DataPolicy(new DS(S)),
-        PriorPolicy() {}
+      : ParamPolicy(new VectorParams(S, Nu)), DataPolicy(new DS(S)) {}
 
   DM::DirichletModel(const Vector &Nu)
-      : ParamPolicy(new VectorParams(Nu)),
-        DataPolicy(new DS(Nu.size())),
-        PriorPolicy() {}
+      : ParamPolicy(new VectorParams(Nu)), DataPolicy(new DS(Nu.size())) {}
 
   DM::DirichletModel(const DirichletModel &rhs)
       : Model(rhs),
@@ -218,8 +214,8 @@ namespace BOOM {
 
     const Vector &sumlogpi(suf()->sumlog());
     double nobs = suf()->n();
-    Vector *G(nd > 0 ? &g : 0);
-    Matrix *H(nd > 1 ? &h : 0);
+    Vector *G(nd > 0 ? &g : nullptr);
+    Matrix *H(nd > 1 ? &h : nullptr);
     return dirichlet_loglike(nu, G, H, sumlogpi, nobs);
   }
 

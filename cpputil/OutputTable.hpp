@@ -25,7 +25,7 @@ namespace BOOM {
 
   class OutputTable {
    public:
-    OutputTable(uint pad = 2);
+    explicit OutputTable(uint pad = 2);
     std::vector<std::string> &column(uint i);
     OutputTable &add_row(const std::vector<std::string> &);
     OutputTable &add_column(const std::vector<std::string> &);

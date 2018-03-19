@@ -29,7 +29,7 @@ namespace BOOM {
 
   class MixtureComponentSampler {
    public:
-    MixtureComponentSampler(Model *m) : m_(m) {}
+    explicit MixtureComponentSampler(Model *m) : m_(m) {}
     void operator()() { m_->sample_posterior(); }
     // m_ must have been assigned a thread safe PosteriorSampler, or this
     // will result in a race condition on the random seed of the RNG
@@ -39,7 +39,7 @@ namespace BOOM {
 
   class HmmPosteriorSampler : public PosteriorSampler {
    public:
-    HmmPosteriorSampler(HiddenMarkovModel *hmm,
+    explicit HmmPosteriorSampler(HiddenMarkovModel *hmm,
                         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;

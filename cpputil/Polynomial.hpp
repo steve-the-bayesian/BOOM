@@ -35,7 +35,7 @@ namespace BOOM {
     // Otherwise it is
     //
     // coef[0]*x^n + coef[1]*x^{n-1} + ... + coef[n-1]*x + coef[n]
-    Polynomial(const Vector &coef, bool ascending = true);
+    explicit Polynomial(const Vector &coef, bool ascending = true);
 
     int degree() const;
     double operator()(double x) const;

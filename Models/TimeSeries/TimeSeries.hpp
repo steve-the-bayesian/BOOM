@@ -49,8 +49,8 @@ namespace BOOM {
     typedef TimeSeries<D> ts_type;
 
     TimeSeries();
-    TimeSeries(const D &);
-    TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links = true);
+    explicit TimeSeries(const D &);
+    explicit TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links = true);
 
     TimeSeries(const TimeSeries &);                   // value semantics
     TimeSeries<D> *clone() const override;            // value semantics

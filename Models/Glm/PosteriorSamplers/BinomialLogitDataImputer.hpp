@@ -73,7 +73,8 @@ namespace BOOM {
     // Args:
     //   clt_threshold: The minimal sample size where approximate
     //     augmentation begins to take place.
-    BinomialLogitPartialAugmentationDataImputer(int clt_threshold = 10);
+    explicit BinomialLogitPartialAugmentationDataImputer(
+        int clt_threshold = 10);
 
     // Impute the latent quasi-sufficient statistics for a single
     // observation.
@@ -141,7 +142,7 @@ namespace BOOM {
     // Args:
     //   clt_threshold: The smallest number_of_trials where
     //   approximate augmentation takes place.
-    BinomialLogitCltDataImputer(int clt_threshold = 10);
+    explicit BinomialLogitCltDataImputer(int clt_threshold = 10);
 
     // Args:
     //   rng:  The random number generator.

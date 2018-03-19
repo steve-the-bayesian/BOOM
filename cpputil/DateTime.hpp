@@ -47,7 +47,7 @@ namespace BOOM {
       day_scale,
       week_scale
     };
-    DateTime(double time_since_midnight_starting_jan_1_1970,
+    explicit DateTime(double time_since_midnight_starting_jan_1_1970,
              TimeScale timescale = day_scale);
 
     bool operator<(const DateTime &rhs) const;

@@ -288,7 +288,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  // TODO(user): This and other code involving model matrices is
+  // TODO: This and other code involving model matrices is
   // an optimization opportunity.  Test it out to see if
   // precomputation makes sense.
   const SparseKalmanMatrix *Base::state_transition_matrix(

@@ -97,7 +97,7 @@ namespace BOOM {
     double logp(const Vector &x) const override;
 
     // Simulates data from model.
-    // TODO(user): add ownership of mean and precision base measures to model
+    // TODO: add ownership of mean and precision base measures to model
     //                so that simulation possible.
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 

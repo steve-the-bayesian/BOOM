@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2011 Steven L. Scott
+  Copyright (C) 2005-2018 Steven L. Scott
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/Parse.h>
 
 namespace BOOM {
 
@@ -290,7 +291,6 @@ namespace BOOM {
     } else {
       // If r_array is actually a matrix that's okay, because to R a
       // matrix is a 2-d array.
-      std::vector<int> dims = GetArrayDimensions(r_array);
       return Array(GetArrayDimensions(r_array), REAL(r_array));
     }
   }
@@ -308,7 +308,6 @@ namespace BOOM {
     } else {
       // If r_array is actually a matrix that's okay, because to R a
       // matrix is a 2-d array.
-      std::vector<int> dims = GetArrayDimensions(r_array);
       return ConstArrayView(REAL(r_array), GetArrayDimensions(r_array));
     }
   }
@@ -508,6 +507,24 @@ namespace BOOM {
     return "";
   }
 
+  SEXP ToRString(const std::string &s) {
+    SEXP ans;
+    RMemoryProtector protector;
+    protector.protect(ans = Rf_allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, Rf_mkChar(s.c_str()));
+    return ans;
+  }
+
+  SEXP ToRStringVector(const std::vector<std::string> &string_vector) {
+    SEXP ans;
+    RMemoryProtector protector;
+    protector.protect(ans = Rf_allocVector(STRSXP, string_vector.size()));
+    for (int i = 0; i < string_vector.size(); ++i) {
+      SET_STRING_ELT(ans, i, Rf_mkChar(string_vector[i].c_str()));
+    }
+    return ans;
+  }
+  
   Factor::Factor(SEXP r_factor)
       : values_(Rf_length(r_factor)),
         levels_(new CatKey(GetFactorLevels(r_factor)))
@@ -566,6 +583,51 @@ namespace BOOM {
     }
   }
 
+
+  RVectorFunction::RVectorFunction(SEXP r_vector_function)
+      : function_name_(ToString(getListElement(
+            r_vector_function, "function.name"))),
+        argument_name_("RVectorFunction_arg_"),
+        r_env_(getListElement(r_vector_function, "env"))
+  {
+    if (!Rf_isEnvironment(r_env_)) {
+      Rf_PrintValue(r_env_);
+      report_error("The second argument to RVectorFunction must be an "
+                   "environment.");
+    }
+    call_string_ = function_name_ + "(" + argument_name_ + ")";
+
+  }
+
+  // If RVectorFunction_arg_ exists in r_env_ then delete it
+  RVectorFunction::~RVectorFunction() {
+    // ParseStatus parse_status;
+    // std::string rm_string = "if (exists(" + argument_name_ + ") rm(" + argument_name_ + ")";
+    // RMemoryProtector protector;
+    // SEXP r_call = protector.protect(R_ParseVector(
+    //     ToRString(rm_string), 1, &parse_status, R_NilValue));
+    // Rf_eval(VECTOR_ELT(r_call, 0), r_env_);
+  }
+  
+  // Creates an object named argument_name_ in the function's environment, then
+  // calls f(argument_name_) on the function.
+  double RVectorFunction::evaluate(const Vector &x) {
+    // First, write x as an R object with the right name.
+    SEXP symbol, value;
+    RMemoryProtector protector;
+    protector.protect(symbol = Rf_install(argument_name_.c_str()));
+    protector.protect(value = ToRVector(x));
+    Rf_defineVar(symbol, value, r_env_);
+
+    // Next, create a call that we can pass to Rf_eval.
+    // ParseStatus is an enum defined in .../include/R_ext/Parse.h
+    ParseStatus parse_status;
+    SEXP r_call = protector.protect(R_ParseVector(
+        ToRString(call_string_), 1, &parse_status, R_NilValue));
+    return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
+  }
+
+  
   namespace {
     // Wrapper for R_CheckUserInterrupt.
     static void check_interrupt_func(void *dummy) {
@@ -578,5 +640,5 @@ namespace BOOM {
     // longjmp out of the current context, so C++ can clean up correctly.
     return (!R_ToplevelExec(check_interrupt_func, NULL));
   }
-
+  
 }  // namespace BOOM;

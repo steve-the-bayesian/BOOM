@@ -52,7 +52,7 @@ namespace BOOM {
 
   class TwoWayChiSquareTest {
    public:
-    TwoWayChiSquareTest(const Matrix &observed_cell_counts);
+    explicit TwoWayChiSquareTest(const Matrix &observed_cell_counts);
     double p_value() const;
     double degrees_of_freedom() const;
     double chi_square() const;

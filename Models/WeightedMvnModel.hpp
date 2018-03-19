@@ -31,7 +31,7 @@ namespace BOOM {
 
   class WeightedMvnSuf : public SufstatDetails<WeightedVectorData> {
    public:
-    WeightedMvnSuf(uint p);
+    explicit WeightedMvnSuf(uint p);
     WeightedMvnSuf(const WeightedMvnSuf &rhs);
     WeightedMvnSuf *clone() const override;
 
@@ -73,7 +73,7 @@ namespace BOOM {
         public PriorPolicy,
         public LoglikeModel {
    public:
-    WeightedMvnModel(uint p, double mu = 0.0, double sig = 1.0);
+    explicit WeightedMvnModel(uint p, double mu = 0.0, double sig = 1.0);
     WeightedMvnModel(const Vector &mean, const SpdMatrix &Var);  // N(mu, Var)
     WeightedMvnModel(const WeightedMvnModel &m);
     WeightedMvnModel *clone() const override;

@@ -39,7 +39,7 @@ namespace BOOM {
   class CategoricalVariable {
    public:
     CategoricalVariable() = default;
-    CategoricalVariable(const std::vector<std::string> &raw_data);
+    explicit CategoricalVariable(const std::vector<std::string> &raw_data);
     CategoricalVariable(const std::vector<Ptr<CategoricalData>> &data,
                         const Ptr<CatKey> &key)
         : key_(key), data_(data) {}
@@ -106,7 +106,7 @@ namespace BOOM {
     //     is the first observation, and variable names will be
     //     automatically generated.
     //   sep: The separator between fields in the data file.
-    DataTable(const string &fname, bool header = false, const string &sep = "");
+    explicit DataTable(const string &fname, bool header = false, const string &sep = "");
 
     DataTable *clone() const override;
     ostream &display(ostream &out) const override;

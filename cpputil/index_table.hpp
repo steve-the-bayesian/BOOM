@@ -36,7 +36,7 @@ namespace BOOM {
     const std::vector<OBJ> &V;
 
    public:
-    index_table_less(const std::vector<OBJ> &v) : V(v) {}
+    explicit index_table_less(const std::vector<OBJ> &v) : V(v) {}
     bool operator()(const int &i, const int &j) const { return V[i] < V[j]; }
   };
 

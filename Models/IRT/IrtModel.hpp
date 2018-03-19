@@ -40,8 +40,8 @@ namespace BOOM {
       enum ModelTypeName { MultiSubscaleLogitCut };
 
       IrtModel();
-      IrtModel(uint Nsub);
-      IrtModel(const StringVector &Subscale_Names);
+      explicit IrtModel(uint Nsub);
+      explicit IrtModel(const StringVector &Subscale_Names);
       IrtModel(const IrtModel &rhs);
       IrtModel *clone() const override;
 

@@ -27,7 +27,7 @@
 namespace BOOM {
 
   namespace {
-    typedef FiniteMixtureModel FMM;
+    using FMM = BOOM::FiniteMixtureModel;
   }
 
   FMM::FiniteMixtureModel(const Ptr<MixtureComponent> &mixture_component,
@@ -60,8 +60,9 @@ namespace BOOM {
         mixture_components_(rhs.mixture_components_),
         mixing_dist_(rhs.mixing_dist_->clone()) {
     uint S = number_of_mixture_components();
-    for (uint s = 0; s < S; ++s)
+    for (uint s = 0; s < S; ++s) {
       mixture_components_[s] = rhs.mixture_components_[s]->clone();
+    }
     set_observers();
   }
 
@@ -70,7 +71,9 @@ namespace BOOM {
   void FMM::clear_component_data() {
     mixing_dist_->clear_data();
     uint S = number_of_mixture_components();
-    for (uint s = 0; s < S; ++s) mixture_components_[s]->clear_data();
+    for (uint s = 0; s < S; ++s) {
+      mixture_components_[s]->clear_data();
+    }
   }
 
   void FMM::impute_latent_data(RNG &rng) {
@@ -90,7 +93,7 @@ namespace BOOM {
     for (uint i = 0; i < n; ++i) {
       Ptr<Data> dp = d[i];
       Ptr<CategoricalData> cd = hvec[i];
-      if (dp->missing()) {
+      if (dp->missing() != 0u) {
         wsp_ = logpi_;
       } else if (which_mixture_component(i) > 0) {
         int source = which_mixture_component(i);
@@ -145,13 +148,17 @@ namespace BOOM {
   }
 
   double FMM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    if (!logpi_current_) logpi_ = log(pi());
+    if (!logpi_current_) {
+      logpi_ = log(pi());
+    }
     uint S = number_of_mixture_components();
     wsp_.resize(S);
     for (uint s = 0; s < S; ++s) {
       wsp_[s] = logpi_[s] + mixture_components_[s]->pdf(dp.get(), true);
     }
-    if (logscale) return lse(wsp_);
+    if (logscale) {
+      return lse(wsp_);
+    }
     return sum(exp(wsp_));
   }
 
@@ -187,7 +194,9 @@ namespace BOOM {
     std::vector<Ptr<CategoricalData> > hvec(latent_data());
     int n = hvec.size();
     Vector ans(n);
-    for (int i = 0; i < n; ++i) ans[i] = hvec[i]->value();
+    for (int i = 0; i < n; ++i) {
+      ans[i] = hvec[i]->value();
+    }
     return ans;
   }
 
@@ -292,10 +301,11 @@ namespace BOOM {
 
   void EmFiniteMixtureModel::MStep(bool posterior_mode) {
     for (int s = 0; s < number_of_mixture_components(); ++s) {
-      if (posterior_mode)
+      if (posterior_mode) {
         em_mixture_component(s)->find_posterior_mode();
-      else
+      } else {
         em_mixture_component(s)->mle();
+      }
     }
     mixing_distribution()->mle();
   }
