@@ -40,5 +40,9 @@ namespace BOOM {
   }
 
   using std::isnan;
+  using std::log1p;
+  using std::expm1;
+  
 }  // namespace BOOM
+
 #endif  // BOOM_CPP_MATH_UTILS_H

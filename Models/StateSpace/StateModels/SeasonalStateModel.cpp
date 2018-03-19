@@ -122,7 +122,7 @@ namespace BOOM {
       report_error(err.str());
     }
     state_error = 0;
-    assert(state_error.size() == state_dimension());
+    assert(state_error.size() == state_error_dimension());
     if (new_season(t + 1)) {
       // If next time period is the start of a new season, then an
       // update is needed.  Otherwise, the state error is zero.

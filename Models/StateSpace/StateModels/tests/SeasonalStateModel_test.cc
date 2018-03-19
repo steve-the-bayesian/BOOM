@@ -16,7 +16,6 @@ namespace {
           sigma_obs_(.5)
     {
       GlobalRng::rng.seed(8675309);
-      SimulateData();
       day_of_week_cycle_->set_sigsq(square(.1));
       EXPECT_EQ(6, day_of_week_cycle_->state_dimension());
       day_of_week_cycle_->set_initial_state_mean(
@@ -29,6 +28,8 @@ namespace {
           Vector(weekly_annual_cycle_->state_dimension(), 0.0));
       weekly_annual_cycle_->set_initial_state_variance(
           SpdMatrix(weekly_annual_cycle_->state_dimension(), square(2.0)));
+
+      SimulateData();
     }
 
     void SimulateData() {
