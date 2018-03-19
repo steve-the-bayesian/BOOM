@@ -121,8 +121,15 @@ namespace BOOM {
           << "nrow(variance)    : " << nrow(initial_state_variance_) << endl;
       report_error(err.str());
     }
-    state_error = 0;
+    if (state_error.size() != state_error_dimension()) {
+      std::ostringstream err;
+      err << "State error size is " << state_error.size()
+          << " but state_error_dimension() == " << state_error_dimension()
+          << "." << endl;
+      report_error(err.str());
+    }
     assert(state_error.size() == state_error_dimension());
+    state_error = 0;
     if (new_season(t + 1)) {
       // If next time period is the start of a new season, then an
       // update is needed.  Otherwise, the state error is zero.

@@ -36,7 +36,9 @@ namespace BOOM {
     explicit SeasonalStateModelBase(int nseasons);
     SeasonalStateModelBase(const SeasonalStateModelBase &rhs);
     SeasonalStateModelBase *clone() const override = 0;
-    // returns true if t is the start of a new season.
+
+    // Return 'true' if time period t is in a different season than time period
+    // t-1.
     virtual bool new_season(int t) const = 0;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
