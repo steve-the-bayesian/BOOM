@@ -3,14 +3,16 @@
 \alias{boxplot.true}
 \alias{BoxplotTrue}
 \title{
-  side-by-side boxplots from a matrix, with optional reference values
+  Compare Boxplots to True Values
 }
 \description{
+
   Plots side-by-side boxplots of the columns of the matrix \code{x}.
   Each boxplot can have its own reference line (\code{truth}) and
   standard error lines \code{se.truth}, if desired.  This function was
   originally written to display MCMC output, where the reference lines
   were true values used to test an MCMC simulation.
+
 }
 \usage{
 BoxplotTrue(x, truth = NULL, vnames = NULL, center = FALSE,
