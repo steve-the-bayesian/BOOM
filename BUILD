@@ -203,3 +203,15 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "boom_test_utils",
+    srcs = glob(["test_utils/*.cpp"]),
+    hdrs = ["test_utils/test_utils.hpp"],
+    copts = [
+        "-I/usr/local/include",
+        "-std=c++11",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":boom"],
+)

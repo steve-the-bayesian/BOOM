@@ -3,21 +3,12 @@
 #include "Models/TimeSeries/ArmaPriors.hpp"
 #include "Models/TimeSeries/PosteriorSamplers/ArmaSliceSampler.hpp"
 #include "Models/ChisqModel.hpp"
+#include "test_utils/test_utils.hpp"
 
 namespace {
   using namespace BOOM;
   using std::endl;
   
-  bool VectorEquals(const Vector &lhs, const Vector &rhs, double tol = 1e-7) {
-    Vector diff = lhs - rhs;
-    return diff.max_abs() < tol;
-  }
-
-  bool MatrixEquals(const Matrix &lhs, const Matrix &rhs, double tol = 1e-7) {
-    Matrix diff = lhs - rhs;
-    return diff.max_abs() < tol;
-  }
-
   class ArmaModelTest : public ::testing::Test {
    protected:
     ArmaModelTest() : phi_({.80, .067}), theta_({.53, .09}) {

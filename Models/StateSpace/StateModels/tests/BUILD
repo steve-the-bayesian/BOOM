@@ -1,6 +1,6 @@
 COPTS = [
     "-I/usr/local/include",
-    "-Wno-sign-compare"
+    "-Wno-sign-compare",
 ]
 
 cc_test(
@@ -9,6 +9,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -48,6 +49,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -58,6 +60,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -68,6 +71,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )

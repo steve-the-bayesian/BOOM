@@ -7,6 +7,8 @@
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 
+#include "test_utils/test_utils.hpp"
+
 namespace {
   using namespace BOOM;
   using std::endl;
@@ -57,7 +59,7 @@ namespace {
       
       for (int i = 0; i < nobs_; ++i) {
         true_state_.col(i) = state;
-        series_[i] = state[0] + state[7] + rnorm(0, sigma_obs_);
+        series_[i] = state[0] + state[6] + rnorm(0, sigma_obs_);
 
         if (i < nobs_ - 1) {
           BlockDiagonalMatrix transition;
@@ -89,8 +91,6 @@ namespace {
     double sigma_obs_;
 
     int nobs_;
-    Vector daily_pattern_;  // Length 7
-    Vector lunar_pattern_;  // length 12, season_duration = 7
     Matrix true_state_;
     Vector series_;
   };
@@ -178,13 +178,31 @@ namespace {
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
       day_of_week_draws.row(i) = model->state().row(0);
-      weekly_draws.row(i) = model->state().row(7);
+      weekly_draws.row(i) = model->state().row(6);
     }
 
-    std::ofstream day_file("day.draws");
-    day_file << day_of_week_draws;
-    std::ofstream week_file("week.draws");
-    week_file << weekly_draws;
+    bool both_ok = true;
+    CheckMatrixStatus status = check_mcmc_matrix(day_of_week_draws,
+                                                 true_state_.row(0));
+    EXPECT_TRUE(status.ok)
+        << "Day of week pattern failed to cover." << endl
+        << status.error_message();
+    both_ok &= status.ok;
+    
+    status = check_mcmc_matrix(weekly_draws, true_state_.row(6));
+    EXPECT_TRUE(status.ok)
+        << "Weekly annual cycle failed to cover." << endl
+        << status.error_message();
+    both_ok &= status.ok;
+
+    if (!both_ok) {
+      std::ofstream series_file("raw.data");
+      series_file << series_;
+      std::ofstream day_file("day.draws");
+      day_file << true_state_.row(0) << endl << day_of_week_draws;
+      std::ofstream week_file("week.draws");
+      week_file << true_state_.row(6) << endl << weekly_draws;
+    }
   }
   
 }  // namespace

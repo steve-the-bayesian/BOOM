@@ -37,14 +37,18 @@ namespace BOOM {
     SeasonalStateModelBase(const SeasonalStateModelBase &rhs);
     SeasonalStateModelBase *clone() const override = 0;
 
-    // Return 'true' if time period t is in a different season than time period
-    // t-1.
+    // Return 'true' if period t is in a different season than period t-1.
     virtual bool new_season(int t) const = 0;
 
-    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int t, ScalarStateSpaceModelBase *model) override;
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
+                       int time_now,
+                       ScalarStateSpaceModelBase *model) override;
+
     void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
         DynamicInterceptRegressionModel *model) override {
       observe_state(then, now, time_now, nullptr);
     }
@@ -129,7 +133,7 @@ namespace BOOM {
     // time of the first observation with this function.
     void set_time_of_first_observation(int t0);
 
-    // returns true if t is the start of a new season.
+    // Returns true if period t is in a different season than period t-1.
     bool new_season(int t) const override;
 
    private:
@@ -148,6 +152,7 @@ namespace BOOM {
       return new MonthlyAnnualCycle(*this);
     }
 
+    // Returns true if period t is in a different season than period t-1.
     bool new_season(int t) const override {
       Date timestamp = t0_ + t;
       return timestamp.day() == 1;

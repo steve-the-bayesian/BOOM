@@ -58,9 +58,16 @@ namespace BOOM {
 
     // Add the relevant information from the state vector to the complete data
     // sufficient statistics for this model.  This is often a difference between
-    // the current and next state vectors.
+    // the current and previous state vectors.
+    //
+    // Args:
+    //   then:  The state for this component at time_now - 1.
+    //   now: The state for this component at time time_now.
+    //   time_now:  The current time index.
+    //   model:  The model that owns this state component.
     virtual void observe_state(const ConstVectorView &then,
-                               const ConstVectorView &now, int time_now,
+                               const ConstVectorView &now,
+                               int time_now,
                                ScalarStateSpaceModelBase *model) = 0;
 
     // Add the relevant information from the state vector to the complete data
