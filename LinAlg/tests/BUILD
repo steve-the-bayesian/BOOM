@@ -8,6 +8,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -18,6 +19,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -28,6 +30,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -38,6 +41,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -48,6 +52,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -58,6 +63,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -68,6 +74,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -78,6 +85,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )
@@ -88,6 +96,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
+        "//:boom_test_utils",
         "@gtest//:main",
     ],
 )

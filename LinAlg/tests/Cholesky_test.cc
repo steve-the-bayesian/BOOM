@@ -2,24 +2,13 @@
 #include "distributions.hpp"
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "test_utils/test_utils.hpp"
 #include <fstream>
 
 namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
-  template <class V1, class V2>
-  bool VectorEquals(const V1 &v1, const V2 &v2) {
-    Vector v = v1 - v2;
-    return v.max_abs() < 1e-8;
-  }
-
-  template <class M1, class M2>
-  bool MatrixEquals(const M1 &m1, const M2 &m2) {
-    Matrix m = m1 - m2;
-    return m.max_abs() < 1e-8;
-  }
   
   class CholeskyTest : public ::testing::Test {
    protected:
