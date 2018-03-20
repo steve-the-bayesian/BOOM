@@ -25,8 +25,8 @@ namespace BOOM {
       : regression_(rm),
         transition_matrix_(new IdentityMatrix(1)),
         error_variance_(new ZeroMatrix(1)),
-        state_error_expander_(new EmptyMatrix),
-        state_error_variance_(new EmptyMatrix) {}
+        state_error_expander_(new IdentityMatrix(1)),
+        state_error_variance_(new ZeroMatrix(1)) {}
 
   // The copy constructor copies pointers to private data.  Only regression_
   // is controversial, as all the others are the same across all

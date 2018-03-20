@@ -70,10 +70,13 @@ namespace BOOM {
     // multiplied by Z_t (observation_matrix) containing the results of the
     // linear predictor at time t.
     int state_dimension() const { return 1; }
-    int state_error_dimension() const { return 0; }
+    int state_error_dimension() const { return 1; }
 
-    // There is no state error, so there is nothing to simulate.
-    void simulate_state_error(VectorView eta) const {}
+    // The state is deterministic, so simulating state error means filling in a
+    // zero for the first element.
+    void simulate_state_error(VectorView eta) const {
+      eta[0] = 0.0;
+    }
 
     // The state value is always 1, so simulating the initial state just fills
     // eta with 1.
@@ -136,8 +139,8 @@ namespace BOOM {
     // State space model matrices.  These are trivial.
     Ptr<IdentityMatrix> state_transition_matrix_;  // The 1x1 identity.
     Ptr<ZeroMatrix> state_variance_matrix_;        // The 1x1 zero matrix.
-    Ptr<EmptyMatrix> state_error_expander_;        // Zero dimensional
-    Ptr<EmptyMatrix> state_error_variance_;        //    error matrices.
+    Ptr<IdentityMatrix> state_error_expander_;     // The 1x1 identity.
+    Ptr<ZeroMatrix> state_error_variance_;         // 1x1
 
     // A mapping from integer time t to which holiday is active at time t, and
     // which day in the holiday is active at time t.  These are filled when
@@ -229,8 +232,13 @@ namespace BOOM {
         const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) override;
 
-    uint state_dimension() const override { return 1; }
-    uint state_error_dimension() const override { return 0; }
+    uint state_dimension() const override {
+      return impl_.state_dimension();
+    }
+
+    uint state_error_dimension() const override {
+      return impl_.state_error_dimension();
+    }
 
     // Calling this throws an exception.
     void update_complete_data_sufficient_statistics(
@@ -246,7 +254,8 @@ namespace BOOM {
       report_error("Not implemented.");
     }
 
-    // The state error is zero-dimensional, so simulation is a no-op.
+    // The state is fully deterministic, so simulating state error means filling
+    // a 1-dimensional zero.
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override {
       impl_.simulate_state_error(eta);
     }

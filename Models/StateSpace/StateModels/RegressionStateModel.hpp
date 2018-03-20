@@ -57,7 +57,7 @@ namespace BOOM {
         DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override { return 0; }
+    uint state_error_dimension() const override { return 1; }
 
     // Implementation throws, because this model cannot be part of an
     // EM algorithm.
@@ -97,8 +97,8 @@ namespace BOOM {
     Ptr<RegressionModel> regression_;
     Ptr<IdentityMatrix> transition_matrix_;
     Ptr<ZeroMatrix> error_variance_;
-    Ptr<EmptyMatrix> state_error_expander_;
-    Ptr<EmptyMatrix> state_error_variance_;
+    Ptr<IdentityMatrix> state_error_expander_;
+    Ptr<ZeroMatrix> state_error_variance_;
 
     std::vector<Matrix> predictors_;
   };

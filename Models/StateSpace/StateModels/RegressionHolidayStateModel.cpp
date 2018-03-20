@@ -34,8 +34,8 @@ namespace BOOM {
         residual_variance_(residual_variance),
         state_transition_matrix_(new IdentityMatrix(1)),
         state_variance_matrix_(new ZeroMatrix(1)),
-        state_error_expander_(new EmptyMatrix),
-        state_error_variance_(new EmptyMatrix),
+        state_error_expander_(new IdentityMatrix(1)),
+        state_error_variance_(new ZeroMatrix(1)),
         initial_state_mean_(1, 1.0),
         initial_state_variance_(1, 0.0) {
     if (!residual_variance) {
