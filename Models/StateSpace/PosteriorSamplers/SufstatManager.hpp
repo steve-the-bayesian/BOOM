@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -46,7 +47,7 @@ namespace BOOM {
     class SufstatManager {
      public:
       // Assumes ownership of the passed pointer.
-      SufstatManager(SufstatManagerBase *impl) : impl_(impl) {}
+      explicit SufstatManager(SufstatManagerBase *impl) : impl_(impl) {}
 
       void clear_complete_data_sufficient_statistics() {
         impl_->clear_complete_data_sufficient_statistics();
@@ -63,4 +64,4 @@ namespace BOOM {
   }  // namespace StateSpace
 }  // namespace BOOM
 
-#endif //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_
+#endif  //  BOOM_STATE_SPACE_SUFSTAT_MANAGER_HPP_

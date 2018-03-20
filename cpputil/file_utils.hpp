@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,12 +20,12 @@
 #ifndef BOOM_CPP_FILE_UTILS_H
 #define BOOM_CPP_FILE_UTILS_H
 
-#include <BOOM.hpp>
 #include <vector>
-#include <cpputil/gll.hpp>
-#include <uint.hpp>
+#include "BOOM.hpp"
+#include "cpputil/gll.hpp"
+#include "uint.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   uint count_lines(const std::string &fname);
   std::string add_to_path(const std::string &path, const std::string &s);
@@ -39,5 +40,5 @@ namespace BOOM{
   std::vector<string> read_file(const string &fname);
   std::vector<string> read_file(istream &);
 
-}
-#endif //BOOM_CPP_FILE_UTILS_H
+}  // namespace BOOM
+#endif  // BOOM_CPP_FILE_UTILS_H

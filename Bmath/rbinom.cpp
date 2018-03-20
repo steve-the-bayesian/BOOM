@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *      #include <Bmath.hpp>
+ *      #include "Bmath.hpp"
  *      double rbinom(int nin, double pp)
  *
  *  DESCRIPTION
@@ -56,8 +56,8 @@
 #include <stdlib.h>
 #include <stdexcept>
 #include <sstream>
-#include <distributions/BinomialDistribution.hpp>
-#include <distributions/rng.hpp>
+#include "distributions/BinomialDistribution.hpp"
+#include "distributions/rng.hpp"
 
 namespace Rmath{
 

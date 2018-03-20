@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -19,47 +20,46 @@
 #ifndef BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP
 #define BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP
 
-#include <Models/ProductDirichletModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/DirichletModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ProductDirichletModel.hpp"
 
-namespace BOOM{
-class MarkovConjShrinkageSampler;
-class MarkovModel;
+namespace BOOM {
+  class MarkovConjShrinkageSampler;
+  class MarkovModel;
 
-class MarkovConjShrinkageSampler :
-      public PosteriorSampler
-{
- public:
-  MarkovConjShrinkageSampler(uint dim, RNG &seeding_rng = GlobalRng::rng);
-  MarkovConjShrinkageSampler(const Matrix & Nu, RNG &seeding_rng = GlobalRng::rng);
-  MarkovConjShrinkageSampler(const Matrix & Nu, const Vector & nu,
-                             RNG &seeding_rng = GlobalRng::rng);
-  MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> & Nu,
-                             RNG &seeding_rng = GlobalRng::rng);
-  MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> & Nu,
-                             const Ptr<DirichletModel> &nu,
-                             RNG &seeding_rng = GlobalRng::rng);
+  class MarkovConjShrinkageSampler : public PosteriorSampler {
+   public:
+    explicit MarkovConjShrinkageSampler(uint dim,
+                                        RNG &seeding_rng = GlobalRng::rng);
+    explicit MarkovConjShrinkageSampler(const Matrix &Nu,
+                                        RNG &seeding_rng = GlobalRng::rng);
+    MarkovConjShrinkageSampler(const Matrix &Nu, const Vector &nu,
+                               RNG &seeding_rng = GlobalRng::rng);
+    explicit MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> &Nu,
+                                        RNG &seeding_rng = GlobalRng::rng);
+    MarkovConjShrinkageSampler(const Ptr<ProductDirichletModel> &Nu,
+                               const Ptr<DirichletModel> &nu,
+                               RNG &seeding_rng = GlobalRng::rng);
 
-  void draw() override;
-  double logpri() const override;
+    void draw() override;
+    double logpri() const override;
 
-  uint Nmodels()const;
-  uint dim()const;
-  MarkovConjShrinkageSampler * add_model(MarkovModel *);
-  // the sampler manages a collection of MarkovModels.  Its 'draw'
-  // method will sample all their initial distributions and transition
-  // matrices, and update the sufficient statistics for pri_.  It does
-  // not draw the parameters of pri_.
+    uint Nmodels() const;
+    uint dim() const;
+    MarkovConjShrinkageSampler *add_model(MarkovModel *);
+    // the sampler manages a collection of MarkovModels.  Its 'draw'
+    // method will sample all their initial distributions and transition
+    // matrices, and update the sufficient statistics for pri_.  It does
+    // not draw the parameters of pri_.
 
- private:
-  std::vector<MarkovModel *> models_;
-  Ptr<ProductDirichletModel> pri_;
-  Ptr<DirichletModel> ipri_;
-  void check_dim(uint d);
-};
+   private:
+    std::vector<MarkovModel *> models_;
+    Ptr<ProductDirichletModel> pri_;
+    Ptr<DirichletModel> ipri_;
+    void check_dim(uint d);
+  };
 
+}  // namespace BOOM
 
-}
-
-#endif // BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP
+#endif  // BOOM_MARKOV_CONJ_SHRINKAGE_SAMPLER_HPP

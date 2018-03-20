@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -21,15 +22,15 @@
 
 #include <memory>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/Imputer.hpp>
-#include <Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp>
-#include <Models/Glm/PoissonRegressionModel.hpp>
-#include <Models/Glm/WeightedRegressionModel.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonDataImputer.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/PosteriorSamplers/Imputer.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class PoissonDataImputer;
 
@@ -41,17 +42,15 @@ namespace BOOM{
     //     sampler.  These are constant for the duration of the data
     //     augmentation step, and then change (for all workers) after
     //     the parameter sampling step.
-    PoissonRegressionDataImputer(
-        WeightedRegSuf &global_suf,
-        std::mutex &global_suf_mutex,
-        const GlmCoefs *coefficients,
-        RNG *rng = nullptr,
-        RNG &seeding_rng = GlobalRng::rng);
+    PoissonRegressionDataImputer(WeightedRegSuf &global_suf,
+                                 std::mutex &global_suf_mutex,
+                                 const GlmCoefs *coefficients,
+                                 RNG *rng = nullptr,
+                                 RNG &seeding_rng = GlobalRng::rng);
 
-    void impute_latent_data_point(
-        const PoissonRegressionData &data_point,
-        WeightedRegSuf *complete_data_suf,
-        RNG &rng) override;
+    void impute_latent_data_point(const PoissonRegressionData &data_point,
+                                  WeightedRegSuf *complete_data_suf,
+                                  RNG &rng) override;
 
    private:
     const GlmCoefs *coefficients_;
@@ -91,7 +90,7 @@ namespace BOOM{
     double draw_censored_event_time_zero_case(double rate);
 
     void draw_beta_given_complete_data();
-    const WeightedRegSuf &complete_data_sufficient_statistics()const;
+    const WeightedRegSuf &complete_data_sufficient_statistics() const;
 
     // Clear the complete data sufficient statistics.  This is
     // normally unnecessary.  This function is primarily intended for
@@ -105,10 +104,7 @@ namespace BOOM{
     // complete data sufficient statistics need to be manipulated by
     // an outside actor.
     void update_complete_data_sufficient_statistics(
-        double precision_weighted_sum,
-        double total_precision,
-        const Vector &x);
-
+        double precision_weighted_sum, double total_precision, const Vector &x);
 
    private:
     PoissonRegressionModel *model_;
@@ -125,9 +121,8 @@ namespace BOOM{
     // multi-threaded environment can be set up.  This field keeps
     // track of the desired number of workers.
     int desired_number_of_workers_;
-
   };
 
 }  // namespace BOOM
 
-#endif // BOOM_POISSON_REGRESSION_AUXILIARY_MIXTURE_SAMPLER_HPP_
+#endif  // BOOM_POISSON_REGRESSION_AUXILIARY_MIXTURE_SAMPLER_HPP_

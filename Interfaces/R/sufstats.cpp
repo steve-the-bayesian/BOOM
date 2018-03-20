@@ -18,7 +18,7 @@
 
 #include <r_interface/sufstats.hpp>
 #include <r_interface/boom_r_tools.hpp>
-#include <Models/Glm/RegressionModel.hpp>
+#include "Models/Glm/RegressionModel.hpp"
 
 namespace BOOM {
   namespace RInterface {

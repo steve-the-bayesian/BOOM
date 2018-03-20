@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,22 +20,22 @@
 #ifndef BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class ZeroInflatedLognormalModel;
   class ZeroInflatedLognormalPosteriorSampler : public PosteriorSampler {
    public:
-    ZeroInflatedLognormalPosteriorSampler(ZeroInflatedLognormalModel *model,
-                                          RNG &seeding_rng = GlobalRng::rng)
+    explicit ZeroInflatedLognormalPosteriorSampler(
+        ZeroInflatedLognormalModel *model, RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), model_(model) {}
     double logpri() const override;
     void draw() override;
+
    private:
     ZeroInflatedLognormalModel *model_;
   };
 
-}
+}  // namespace BOOM
 
-
-#endif// BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_
+#endif  // BOOM_ZERO_INFLATED_LOGNORMAL_POSTERIOR_SAMPLER_HPP_

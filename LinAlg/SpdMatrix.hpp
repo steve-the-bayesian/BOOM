@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,7 +19,8 @@
 
 #ifndef NEW_LA_SPD_MATRIX_H
 #define NEW_LA_SPD_MATRIX_H
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include <algorithm>
 
 namespace BOOM{
 
@@ -85,6 +87,12 @@ namespace BOOM{
     Matrix chol(bool & ok) const;
     SpdMatrix inv() const;
     SpdMatrix inv(bool &ok) const;
+
+    // Invert the matrix without allocating extra storage.  Returns the log
+    // determinant of the inverted matrix.
+    double invert_inplace();
+
+    // Determinant of the matrix.
     double det() const override;
     double logdet() const;
     double logdet(bool &ok) const;
@@ -102,7 +110,12 @@ namespace BOOM{
     // inverted.
     Vector solve(const Vector &v) const override;
 
-    void reflect();   // copies upper triangle into lower triangle
+    // Copy the entries in the upper triangle to the lower triangle.
+    void reflect();
+
+    // Average corresponding elements above and below the diagonal to enforce
+    // symmetry.
+    void fix_near_symmetry();
 
     // Returns the Mahalinobis distance:  (x - y)^T (*this) (x - y).
     double Mdist(const Vector &x, const Vector &y) const ;
@@ -118,9 +131,6 @@ namespace BOOM{
                     bool force_sym=true);     // *this+= w*x*x^T
     SpdMatrix & add_outer(const Matrix &X, double w=1.0,
                           bool force_sym = true);   // *this+= w*X*X^T
-
-    SpdMatrix & add_outer_w(const Vector &x, double w = 1.0){
-      return add_outer(x,w); }
 
     SpdMatrix & add_inner(const Matrix &x, double w=1.0);
     SpdMatrix & add_inner(const Matrix &X, const Vector & w,
@@ -165,6 +175,9 @@ namespace BOOM{
     virtual void unvectorize(const Vector &v, bool minimal=true);
     Vector::const_iterator unvectorize(Vector::const_iterator &b,
                                  bool minimal=true);
+    ConstVectorView::const_iterator unvectorize(
+        ConstVectorView::const_iterator b,
+        bool minimal = true);
     void make_symmetric(bool have_upper_triangle=true);
   };
 
@@ -201,8 +214,21 @@ namespace BOOM{
   SpdMatrix chol2inv(const Matrix &L);
   // Returns A^{-1}, where L is the cholesky factor of A.
 
-  SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V); // AVA^t
-  SpdMatrix sandwich_old(const Matrix &A, const SpdMatrix &V); // AVA^t
+  // Args:
+  //   A: the outer matrix doing the sandwiching.
+  //   V: the inner matrix being sandwiched.
+  // Returns:
+  //   A * V * A^T
+  SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V);
+
+  // Args:
+  //   A: the outer matrix doing the sandwiching.
+  //   V: the inner matrix being sandwiched.
+  // Returns:
+  //   A^T * V * A
+  inline SpdMatrix sandwich_transpose(const Matrix &A, const SpdMatrix &V) {
+    return A.Tmult(V * A);
+  }
 
   SpdMatrix as_symmetric(const Matrix &A);
 
@@ -248,4 +274,5 @@ namespace BOOM{
   // relationship W^T * W = X.
   Matrix eigen_root(const SpdMatrix &X);
 }
+
 #endif // NEW_LA_SPD_MATRIX_H

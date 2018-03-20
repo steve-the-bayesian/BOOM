@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,17 +16,17 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/regression.hpp>
-#include <LinAlg/QR.hpp>
-namespace BOOM{
+#include "stats/regression.hpp"
+#include "LinAlg/QR.hpp"
+namespace BOOM {
 
-  std::pair<Vector, double> ols(const Matrix &X, const Vector &y){
+  std::pair<Vector, double> ols(const Matrix &X, const Vector &y) {
     uint n = y.size();
     uint p = X.ncol();
     QR qr(X);
     Vector b = qr.solve(y);
-    Vector e = y-X*b;
+    Vector e = y - X * b;
     double SSE = e.normsq();
-    return std::make_pair(b, SSE/(n-p));
+    return std::make_pair(b, SSE / (n - p));
   }
-}
+}  // namespace BOOM

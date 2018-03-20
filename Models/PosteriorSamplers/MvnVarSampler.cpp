@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -15,28 +16,23 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/MvnVarSampler.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/WishartModel.hpp>
-#include <distributions.hpp>
-namespace BOOM{
+#include "Models/PosteriorSamplers/MvnVarSampler.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/WishartModel.hpp"
+#include "distributions.hpp"
+namespace BOOM {
 
-  MvnVarSampler::MvnVarSampler(MvnModel *m,
-                               double df,
+  MvnVarSampler::MvnVarSampler(MvnModel *m, double df,
                                const SpdMatrix &variance_estimate,
                                RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(m),
-        prior_(new WishartModel(df, variance_estimate))
-  {}
+        prior_(new WishartModel(df, variance_estimate)) {}
 
   MvnVarSampler::MvnVarSampler(MvnModel *m,
                                const Ptr<WishartModel> &siginv_prior,
                                RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      model_(m),
-      prior_(siginv_prior)
-  {}
+      : PosteriorSampler(seeding_rng), model_(m), prior_(siginv_prior) {}
 
   double MvnVarSampler::logpri() const {
     return prior_->logp(model_->siginv());
@@ -49,35 +45,27 @@ namespace BOOM{
   }
 
   SpdMatrix MvnVarSampler::draw_precision(
-      RNG &rng,
-      double data_sample_size,
+      RNG &rng, double data_sample_size,
       const SpdMatrix &data_centered_sum_of_squares,
       const WishartModel &precision_prior) {
     return rWish_mt(
-        rng,
-        precision_prior.nu() + data_sample_size,
-        (data_centered_sum_of_squares + precision_prior.sumsq()).inv(),
-        false);
+        rng, precision_prior.nu() + data_sample_size,
+        (data_centered_sum_of_squares + precision_prior.sumsq()).inv(), false);
   }
 
   SpdMatrix MvnVarSampler::draw_variance(
-      RNG &rng,
-      double data_sample_size,
+      RNG &rng, double data_sample_size,
       const SpdMatrix &data_centered_sum_of_squares,
       const WishartModel &precision_prior) {
     return rWish_mt(
-        rng,
-        precision_prior.nu() + data_sample_size,
-        (data_centered_sum_of_squares + precision_prior.sumsq()).inv(),
-        true);
+        rng, precision_prior.nu() + data_sample_size,
+        (data_centered_sum_of_squares + precision_prior.sumsq()).inv(), true);
   }
 
   //======================================================================
 
-  MvnConjVarSampler::MvnConjVarSampler(MvnModel *m,
-                                       double df,
-                                       const SpdMatrix &sumsq,
-                                       RNG &seeding_rng)
+  MvnConjVarSampler::MvnConjVarSampler(MvnModel *m, double df,
+                                       const SpdMatrix &sumsq, RNG &seeding_rng)
       : MvnVarSampler(m, df, sumsq, seeding_rng) {}
 
   MvnConjVarSampler::MvnConjVarSampler(MvnModel *m,
@@ -85,13 +73,10 @@ namespace BOOM{
                                        RNG &seeding_rng)
       : MvnVarSampler(m, prior, seeding_rng) {}
 
-  void MvnConjVarSampler::draw(){
+  void MvnConjVarSampler::draw() {
     Ptr<MvnSuf> suf = model()->suf();
     model()->set_siginv(MvnVarSampler::draw_precision(
-        rng(),
-        suf->n() - 1,
-        suf->center_sumsq(suf->ybar()),
-        *prior()));
+        rng(), suf->n() - 1, suf->center_sumsq(suf->ybar()), *prior()));
   }
 
-} // namespace BOOM
+}  // namespace BOOM

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,27 +19,28 @@
 #ifndef BOOM_LONGSTRING_PRINTER_HPP
 #define BOOM_LONGSTRING_PRINTER_HPP
 
-#include <string>
 #include <iosfwd>
-namespace BOOM{
+#include <string>
+namespace BOOM {
 
-  class LongString{
+  class LongString {
     /*
      *  Class to control the printing of very long strings.
      */
-  public:
-    LongString(const std::string &str, unsigned Width=80, unsigned Pad=0,
-               bool pad_first_line=true);
-    std::ostream & print(std::ostream &out)const;
+   public:
+    explicit LongString(const std::string &str, unsigned Width = 80, unsigned Pad = 0,
+               bool pad_first_line = true);
+    std::ostream &print(std::ostream &out) const;
 
-  private:
+   private:
     std::string s;
     unsigned width, pad;
     bool pad_first;
   };
 
-  inline std::ostream & operator<<(std::ostream &out, const LongString &s){
-    return s.print(out);}
+  inline std::ostream &operator<<(std::ostream &out, const LongString &s) {
+    return s.print(out);
+  }
 
-}
-#endif// BOOM_LONGSTRING_PRINTER_HPP
+}  // namespace BOOM
+#endif  // BOOM_LONGSTRING_PRINTER_HPP

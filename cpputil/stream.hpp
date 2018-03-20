@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -18,16 +19,16 @@
 #ifndef BOOM_STREAM_HPP_
 #define BOOM_STREAM_HPP_
 
-#include <ostream>
 #include <iomanip>
+#include <ostream>
 
 namespace BOOM {
 
-// Sets out to be appropriate for numeric formatting.
-inline std::ostream & numeric(std::ostream &out) {
-  return out << std::dec << std::setfill(' ');
-}
+  // Sets out to be appropriate for numeric formatting.
+  inline std::ostream &numeric(std::ostream &out) {
+    return out << std::dec << std::setfill(' ');
+  }
 
-} // namespace BOOM
+}  // namespace BOOM
 
-#endif // BOOM_STREAM_HPP_
+#endif  // BOOM_STREAM_HPP_

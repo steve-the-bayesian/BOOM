@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,11 +20,11 @@
 #ifndef BOOM_STATE_SPACE_LOGIT_MODEL_HPP_
 #define BOOM_STATE_SPACE_LOGIT_MODEL_HPP_
 
-#include <Models/StateSpace/StateSpaceNormalMixture.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/BinomialRegressionData.hpp>
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/BinomialRegressionData.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
 
 namespace BOOM {
 
@@ -58,8 +59,7 @@ namespace BOOM {
     //
     // In the case of multiplexed data each binomial observation y_jt gets
     // imputed as above, with a corresponding zbar_jt and V_jt.
-    class AugmentedBinomialRegressionData
-        : public MultiplexedData {
+    class AugmentedBinomialRegressionData : public MultiplexedData {
      public:
       // Constructs an empty data point.  Observations can be added later using
       // add_data().
@@ -71,11 +71,11 @@ namespace BOOM {
 
       // A constructor for the multiplexed case, where there are multiple
       // observations at each time point.
-      AugmentedBinomialRegressionData(
+      explicit AugmentedBinomialRegressionData(
           const std::vector<Ptr<BinomialRegressionData>> &binomial_data);
 
-      AugmentedBinomialRegressionData * clone() const override;
-      std::ostream & display(std::ostream &out) const override;
+      AugmentedBinomialRegressionData *clone() const override;
+      std::ostream &display(std::ostream &out) const override;
 
       void add_data(const Ptr<BinomialRegressionData> &binomial_data);
 
@@ -96,7 +96,7 @@ namespace BOOM {
       double latent_data_overall_variance() const;
 
       void set_state_model_offset(double offset);
-      double state_model_offset() const {return state_model_offset_;}
+      double state_model_offset() const { return state_model_offset_; }
 
       const BinomialRegressionData &binomial_data(int observation) const {
         return *(binomial_data_[observation]);
@@ -108,7 +108,7 @@ namespace BOOM {
 
       double total_trials() const;
       double total_successes() const;
-      int total_sample_size() const override {return binomial_data_.size();}
+      int total_sample_size() const override { return binomial_data_.size(); }
 
      private:
       std::vector<Ptr<BinomialRegressionData>> binomial_data_;
@@ -131,24 +131,22 @@ namespace BOOM {
   class StateSpaceLogitModel
       : public StateSpaceNormalMixture,
         public IID_DataPolicy<StateSpace::AugmentedBinomialRegressionData>,
-        public PriorPolicy
-  {
+        public PriorPolicy {
    public:
-    StateSpaceLogitModel(int xdim);
-    StateSpaceLogitModel(const Vector &successes,
-                         const Vector &trials,
-                         const Matrix &design_matrix,
-                         const std::vector<bool> &observed =
-                         std::vector<bool>());
+    explicit StateSpaceLogitModel(int xdim);
+    StateSpaceLogitModel(
+        const Vector &successes, const Vector &trials,
+        const Matrix &design_matrix,
+        const std::vector<bool> &observed = std::vector<bool>());
 
     StateSpaceLogitModel(const StateSpaceLogitModel &rhs);
-    StateSpaceLogitModel * clone() const override;
+    StateSpaceLogitModel *clone() const override;
 
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();
     }
 
-    const BinomialRegressionData & data(int t, int observation) const override {
+    const BinomialRegressionData &data(int t, int observation) const override {
       return dat()[t]->binomial_data(observation);
     }
 
@@ -168,9 +166,11 @@ namespace BOOM {
     bool is_missing_observation(int t) const override;
 
     BinomialLogitModel *observation_model() override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
     const BinomialLogitModel *observation_model() const override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
 
     // Set the offset in the data to the state contribution.
     void observe_data_given_state(int t) override;
@@ -191,10 +191,37 @@ namespace BOOM {
     //     forecast period.
     //   final_state: A draw of the value of the state vector at the
     //     final time period in the training data.
-    Vector simulate_forecast(RNG &rng,
-                             const Matrix &forecast_predictors,
-                             const Vector &trials,
-                             const Vector &final_state);
+    Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
+                             const Vector &trials, const Vector &final_state);
+
+    // Returns a vector of draws from the posterior predictive distribution for
+    // a multiplexed prediction problem.  That is, a prediction problem where
+    // some time periods to be predicted have more than one observation with
+    // different covariates.
+    //
+    // Args:
+    //   forecast_predictors: A matrix of predictors to use for the
+    //     forecast period.  If no regression component is desired,
+    //     then a single column matrix of 1's (an intercept) should be
+    //     supplied so that the length of the forecast period can be
+    //     determined.
+    //   trials: A vector of non-negative integers giving the number
+    //     of trials that will take place at each point in the
+    //     forecast period.
+    //   final_state: A draw of the value of the state vector at the
+    //     final time period in the training data.
+    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
+    //     gives the number of time periods after the end of the training data
+    //     at which to make the prediction.
+    //
+    // Returns:
+    //   A vector of draws with length equal to nrow(forecast_predictors), from
+    //   the posterior distribution of the conditional state at time t.
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &forecast_predictors,
+                                       const Vector &trials,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
 
     // Args:
     //   rng:  A U(0,1) random number generator.
@@ -216,14 +243,11 @@ namespace BOOM {
     //   data, so it will consist of integers, but it is an error, so
     //   it may be positive or negative.
     //
-    //  TODO(stevescott): consider whether this would make more sense
+    //  TODO: consider whether this would make more sense
     //  on the logit scale.
     Vector one_step_holdout_prediction_errors(
-        RNG &rng,
-        BinomialLogitDataImputer &data_imputer,
-        const Vector &successes,
-        const Vector &trials,
-        const Matrix &predictors,
+        RNG &rng, BinomialLogitDataImputer &data_imputer,
+        const Vector &successes, const Vector &trials, const Matrix &predictors,
         const Vector &final_state);
 
    private:
@@ -237,4 +261,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_STATE_SPACE_LOGIT_MODEL_HPP_
+#endif  // BOOM_STATE_SPACE_LOGIT_MODEL_HPP_

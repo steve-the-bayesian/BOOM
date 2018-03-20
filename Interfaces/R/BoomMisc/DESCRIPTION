@@ -1,0 +1,13 @@
+Package: BoomMisc
+Version: 0.0.1
+Date: 2018-03-15
+Title: Miscellaneous tools calling the Boom library that don't fit anywhere else.  Maybe they should just be part of Boom?
+Author: Steven L. Scott 
+Maintainer: Steve Scott <steve.the.bayesian@gmail.com>
+Description: A collection of tools using the Boom library.
+License: LGPL-2.1 | file LICENSE
+Depends: R(>= 3.1.0), Boom(>= 0.8)
+LinkingTo: BH (>= 1.15.0-2)
+Encoding: UTF-8
+SystemRequirements: GNU Make, C++11
+Suggests: testthat, BoomTestUtils

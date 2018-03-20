@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,22 +19,18 @@
 
 #ifndef BOOM_SCALAR_SLICE_SAMPLER_HPP
 #define BOOM_SCALAR_SLICE_SAMPLER_HPP
-#include <Samplers/Sampler.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <iosfwd>
 #include <functional>
-namespace BOOM{
+#include <iosfwd>
+#include "Samplers/Sampler.hpp"
+#include "TargetFun/TargetFun.hpp"
+namespace BOOM {
 
-  class ScalarSliceSampler
-    : public ScalarSampler
-  {
-  public:
+  class ScalarSliceSampler : public ScalarSampler {
+   public:
     typedef std::function<double(double)> Fun;
 
-    ScalarSliceSampler(const Fun &F,
-                       bool Unimodal=false,
-                       double suggested_dx = 1.0,
-                       RNG *rng = 0);
+    explicit ScalarSliceSampler(const Fun &F, bool Unimodal = false,
+                       double suggested_dx = 1.0, RNG *rng = 0);
     void set_limits(double lo, double hi);
     void set_lower_limit(double lo);
     void set_upper_limit(double hi);
@@ -42,8 +39,9 @@ namespace BOOM{
     void estimate_dx(bool should_dx_be_estimated);
     void set_min_dx(double dx);
     double draw(double x) override;
-    virtual double logp(double x)const;
-  private:
+    virtual double logp(double x) const;
+
+   private:
     //    const ScalarTargetFun &logf_;
     Fun logf_;
     double lo_;
@@ -69,12 +67,12 @@ namespace BOOM{
     void find_limits_unbounded_unimodal(double x);
 
     void contract(double x, double xstar, double logp);
-    bool done_doubling()const;
+    bool done_doubling() const;
     void double_lo(double x);
     void double_hi(double x);
 
     // quality assurance and error handling
-    std::ostream & print_state(std::ostream &)const;
+    std::ostream &print_state(std::ostream &) const;
     //    void ensure_slice(double x);
     void check_probs(double x);  // ensure probabilities are legal
     void check_slice(double x);  // ensure lo <= x <= hi
@@ -82,15 +80,13 @@ namespace BOOM{
     void check_upper_limit(double x);
     void check_finite(double x, double logpstar);
 
-    bool doubly_bounded()const;  // bounded on both sides
-    bool lower_bounded()const;
-    bool upper_bounded()const;
-    bool unbounded()const;  // on either side
-    void handle_error(const std::string & msg, double x)const;
-    std::string error_message(double lo, double hi, double x,
-                              double logplo, double logphi,
-                              double logp_slice)const;
-
+    bool doubly_bounded() const;  // bounded on both sides
+    bool lower_bounded() const;
+    bool upper_bounded() const;
+    bool unbounded() const;  // on either side
+    void handle_error(const std::string &msg, double x) const;
+    std::string error_message(double lo, double hi, double x, double logplo,
+                              double logphi, double logp_slice) const;
   };
-}
-#endif// BOOM_SCALAR_SLICE_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_SCALAR_SLICE_SAMPLER_HPP

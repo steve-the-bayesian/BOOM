@@ -15,35 +15,31 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PointProcess/BoundedPoissonProcessSimulator.hpp>
-#include <distributions.hpp>
+#include "Models/PointProcess/BoundedPoissonProcessSimulator.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   BoundedPoissonProcessSimulator::BoundedPoissonProcessSimulator(
-      const PoissonProcess *process,
-      double max_event_rate)
-      : process_(process),
-        max_event_rate_(max_event_rate) {}
+      const PoissonProcess *process, double max_event_rate)
+      : process_(process), max_event_rate_(max_event_rate) {}
 
   PointProcess BoundedPoissonProcessSimulator::simulate(
-      RNG &rng,
-      const DateTime &t0,
-      const DateTime &t1,
-      const std::function<Data*()> &mark_generator) const{
+      RNG &rng, const DateTime &t0, const DateTime &t1,
+      const std::function<Data *()> &mark_generator) const {
     PointProcess ans(t0, t1);
     double duration = t1 - t0;
     int number_of_candidate_events = rpois(max_event_rate_ * duration);
     Vector times(number_of_candidate_events);
-    for(int i = 0; i < number_of_candidate_events; ++i){
+    for (int i = 0; i < number_of_candidate_events; ++i) {
       times[i] = runif_mt(rng, 0, duration);
     }
     times.sort();
 
-    for(int i = 0; i < times.size(); ++i){
+    for (int i = 0; i < times.size(); ++i) {
       DateTime cand = t0 + times[i];
       double prob = process_->event_rate(cand) / max_event_rate_;
-      if(runif_mt(rng, 0, 1) < prob){
+      if (runif_mt(rng, 0, 1) < prob) {
         Data *mark = mark_generator();
         if (mark) {
           ans.add_event(cand, Ptr<Data>(mark));
@@ -55,4 +51,4 @@ namespace BOOM{
     return ans;
   }
 
-}  // namepsace BOOM
+}  // namespace BOOM

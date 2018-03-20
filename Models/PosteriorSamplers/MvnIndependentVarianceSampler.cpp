@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -16,65 +17,59 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp>
+#include "Models/PosteriorSamplers/MvnIndependentVarianceSampler.hpp"
 
-#include <distributions.hpp>
-#include <distributions/trun_gamma.hpp>
+#include "distributions.hpp"
+#include "distributions/trun_gamma.hpp"
 
 namespace BOOM {
 
   MvnIndependentVarianceSampler::MvnIndependentVarianceSampler(
-      MvnModel * model,
-      const std::vector<Ptr<GammaModelBase> > & siginv_priors,
-      const Vector & sigma_max_values,
-      RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        priors_(siginv_priors)
-  {
+      MvnModel *model, const std::vector<Ptr<GammaModelBase> > &siginv_priors,
+      const Vector &sigma_max_values, RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), model_(model), priors_(siginv_priors) {
     if (model->dim() != siginv_priors.size()) {
-      report_error("The model and siginv_priors arguments do not conform in "
-                   "the MvnIndependentVarianceSampler constructor.");
+      report_error(
+          "The model and siginv_priors arguments do not conform in "
+          "the MvnIndependentVarianceSampler constructor.");
     }
 
     if (model->dim() != sigma_max_values.size()) {
-      report_error("The model and sigma_max_values arguments do "
-                   "not conform in the MvnIndependentVarianceSampler "
-                   "constructor.");
+      report_error(
+          "The model and sigma_max_values arguments do "
+          "not conform in the MvnIndependentVarianceSampler "
+          "constructor.");
     }
 
-    for (int i  = 0; i < model->dim(); ++i) {
+    for (int i = 0; i < model->dim(); ++i) {
       if (sigma_max_values[i] < 0) {
-        report_error("All elements of sigma_max_values must be "
-                     "non-negative in "
-                     "MvnIndependentVarianceSampler constructor.");
+        report_error(
+            "All elements of sigma_max_values must be "
+            "non-negative in "
+            "MvnIndependentVarianceSampler constructor.");
       }
     }
 
     for (int i = 0; i < model->dim(); ++i) {
-      GenericGaussianVarianceSampler sampler(
-          priors_[i],
-          sigma_max_values[i]);
+      GenericGaussianVarianceSampler sampler(priors_[i], sigma_max_values[i]);
       sigsq_samplers_.push_back(sampler);
     }
   }
 
-  void MvnIndependentVarianceSampler::draw(){
+  void MvnIndependentVarianceSampler::draw() {
     SpdMatrix diagonal_inverse_variance = model_->siginv();
     SpdMatrix sumsq = model_->suf()->center_sumsq(model_->mu());
     // Because the variance matrix is diagonal, we can simply draw its
     // diagonal elements one at a time.
     for (int i = 0; i < model_->dim(); ++i) {
-      double sigsq = sigsq_samplers_[i].draw(
-          rng(),
-          model_->suf()->n(),
-          sumsq(i, i));
+      double sigsq =
+          sigsq_samplers_[i].draw(rng(), model_->suf()->n(), sumsq(i, i));
       diagonal_inverse_variance(i, i) = 1.0 / sigsq;
     }
     model_->set_siginv(diagonal_inverse_variance);
   }
 
-  double MvnIndependentVarianceSampler::logpri()const{
+  double MvnIndependentVarianceSampler::logpri() const {
     double ans = 0;
     for (int i = 0; i < priors_.size(); ++i) {
       double siginv = model_->siginv()(i, i);
@@ -83,4 +78,4 @@ namespace BOOM {
     return ans;
   }
 
-} // namespace BOOM
+}  // namespace BOOM

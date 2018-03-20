@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,17 +19,55 @@
 #ifndef BOOM_EM_MIXTURE_COMPONENT_HPP
 #define BOOM_EM_MIXTURE_COMPONENT_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/ModelTypes.hpp"
 
-namespace BOOM{
-  class EmMixtureComponent:
-      virtual public MixtureComponent,
-      virtual public MLE_Model,
-      virtual public PosteriorModeModel {
-  public:
-    EmMixtureComponent * clone()const override = 0;
+namespace BOOM {
+  class EmMixtureComponent : virtual public MixtureComponent,
+                             virtual public MLE_Model,
+                             virtual public PosteriorModeModel {
+   public:
+    // The rule-of-five members are explicitly defined below because the
+    // implicit virtual assignment move operator has trouble with virtual base
+    // classes and had to be defined explicitly.  Defining one means you need to
+    // define all, or you get stupid compiler warnings.
+    EmMixtureComponent() = default;
+    ~EmMixtureComponent() = default;
+    
+    EmMixtureComponent(const EmMixtureComponent &rhs)
+        : Model(rhs),
+          MixtureComponent(rhs),
+          MLE_Model(rhs),
+          PosteriorModeModel(rhs)
+    {}
+
+    EmMixtureComponent(EmMixtureComponent &&rhs)
+        : Model(rhs),
+          MixtureComponent(rhs),
+          MLE_Model(rhs),
+          PosteriorModeModel(rhs)
+    {}
+
+    EmMixtureComponent *clone() const override = 0;
     virtual void add_mixture_data(const Ptr<Data> &, double weight) = 0;
-   };
+
+    EmMixtureComponent &operator=(const EmMixtureComponent &rhs) {
+      if (&rhs != this) {
+        MixtureComponent::operator=(rhs);
+        MLE_Model::operator=(rhs);
+        PosteriorModeModel::operator=(rhs);
+      }
+      return *this;
+    }
+
+    EmMixtureComponent &operator=(EmMixtureComponent &&rhs) {
+      if (&rhs != this) {
+        MixtureComponent::operator=(rhs);
+        MLE_Model::operator=(rhs);
+        PosteriorModeModel::operator=(rhs);
+      }
+      return *this;
+    }
+  };
 }  // namespace BOOM
-#endif// BOOM_EM_MIXTURE_COMPONENT_HPP
+#endif  // BOOM_EM_MIXTURE_COMPONENT_HPP

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,18 +20,16 @@
 #ifndef BOOM_UNIVARIATE_LANGEVIN_SAMPLER_HPP_
 #define BOOM_UNIVARIATE_LANGEVIN_SAMPLER_HPP_
 
-#include <Samplers/Sampler.hpp>
-#include <Samplers/ScalarLangevinSampler.hpp>
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Samplers/Sampler.hpp"
+#include "Samplers/ScalarLangevinSampler.hpp"
 
 namespace BOOM {
 
   class UnivariateLangevinSampler : public Sampler {
    public:
-    UnivariateLangevinSampler(const Ptr<dScalarEnabledTargetFun> &f,
-                              int xdim,
-                              double step_size,
-                              RNG *rng);
+    UnivariateLangevinSampler(const Ptr<dScalarEnabledTargetFun> &f, int xdim,
+                              double step_size, RNG *rng);
     Vector draw(const Vector &x) override;
 
     // If 'okay_to_adapt' is true then the sampler will attempt to

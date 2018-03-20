@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,7 +19,7 @@
 
 #ifndef NEW_LA_CORRELATION_MATRIX_H
 #define NEW_LA_CORRELATION_MATRIX_H
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM{
 
@@ -28,11 +29,11 @@ namespace BOOM{
 
       // need all the constructors from TNT
       CorrelationMatrix();
-      CorrelationMatrix(int dim);
+      explicit CorrelationMatrix(int dim);
       CorrelationMatrix(int dim, double *m, bool ColMajor=true);
       template <class FwdIt>
       CorrelationMatrix(FwdIt Beg, FwdIt End);
-      CorrelationMatrix(const Matrix &m);
+      explicit CorrelationMatrix(const Matrix &m);
       CorrelationMatrix(const CorrelationMatrix &sm);
 
       CorrelationMatrix & operator=(const CorrelationMatrix &x);

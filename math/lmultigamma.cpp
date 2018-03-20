@@ -17,8 +17,8 @@
 */
 
 #include <cmath>
-#include <cpputil/Constants.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/Constants.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

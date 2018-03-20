@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rhyper(double NR, double NB, double n);
  *
  *  DESCRIPTION
@@ -116,8 +116,6 @@ double rhyper_mt(BOOM::RNG & rng, double nn1in, double nn2in, double kkin)
     double xk, xm, xn, y1, ym, yn, yk, alv;
 
     /* These should become `thread_local globals' : */
-    int ks = -1;
-    int n1s = -1, n2s = -1;
 
     int k, m;
     int minjx, maxjx, n1, n2;
@@ -141,8 +139,6 @@ double rhyper_mt(BOOM::RNG & rng, double nn1in, double nn2in, double kkin)
     /* if new parameter values, initialize */
     reject = true;
     if (setup1) {
-        n1s = nn1;
-        n2s = nn2;
         tn = nn1 + nn2;
         if (nn1 <= nn2) {
             n1 = nn1;
@@ -153,7 +149,6 @@ double rhyper_mt(BOOM::RNG & rng, double nn1in, double nn2in, double kkin)
         }
     }
     if (setup2) {
-        ks = kk;
         if (kk + kk >= tn) {
           k = static_cast<int>(tn - kk);
         } else {

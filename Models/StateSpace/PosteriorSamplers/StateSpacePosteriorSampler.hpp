@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -18,14 +19,14 @@
 #ifndef BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class StateSpacePosteriorSampler : public PosteriorSampler {
    public:
-    StateSpacePosteriorSampler(StateSpaceModelBase *model,
-                               RNG &seeding_rng = GlobalRng::rng);
+    explicit StateSpacePosteriorSampler(StateSpaceModelBase *model,
+                                        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
 
@@ -61,6 +62,8 @@ namespace BOOM{
     double increment_log_prior_gradient(const ConstVectorView &parameters,
                                         VectorView gradient) const override;
 
+    void disable_threads() { pool_.set_number_of_threads(-1); }
+
    protected:
     // Samplers for models with observation equations that are
     // conditionally normal can override this function to impute the
@@ -81,6 +84,8 @@ namespace BOOM{
 
     StateSpaceModelBase *model_;
     bool latent_data_initialized_;
+
+    ThreadWorkerPool pool_;
   };
-}
-#endif //BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_STATE_SPACE_POSTERIOR_SAMPLER_HPP_

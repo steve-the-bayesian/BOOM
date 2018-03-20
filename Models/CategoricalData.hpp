@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,13 +20,13 @@
 #ifndef BOOM_CATEGORICAL_DATA_HPP
 #define BOOM_CATEGORICAL_DATA_HPP
 
-#include <Models/DataTypes.hpp>
-#include <cpputil/RefCounted.hpp>
-#include <stats/FreqDist.hpp>
-#include <vector>
 #include <set>
+#include <vector>
+#include "Models/DataTypes.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "stats/FreqDist.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class CategoricalData;
   //======================================================================
@@ -36,7 +37,6 @@ namespace BOOM{
   // observers, which must be dumb pointers.
   class CatKeyBase : private RefCounted {
    public:
-
     // Establish a parent child relationship between the key and the
     // CategoricalData.  The argument adopts *this as its key, and the argument
     // is added to the set of observers.
@@ -48,16 +48,16 @@ namespace BOOM{
     // If positive then the integer values that the CategoricalData can assume
     // have a fixed upper limit of max_levels() - 1.  If non-positive then there
     // is no upper limit on the value of each CategoricalData object.
-    virtual int max_levels() const {return -1;}
+    virtual int max_levels() const { return -1; }
 
     // Print the value of this key to the stream 'out'.
-    virtual ostream & print(ostream &out) const = 0;
+    virtual ostream &print(ostream &out) const = 0;
 
     // Print the label corresponding to 'value' on the stream 'out'.
-    virtual ostream & print(uint value, ostream &out) const;
+    virtual ostream &print(uint value, ostream &out) const;
 
     // If true then the CategoricalData can be worked with as strings.
-    virtual bool allows_strings() const {return false;}
+    virtual bool allows_strings() const { return false; }
 
     // Returns the numeric value associated with the string 's'.  The default
     // implementation of findstr throws an error.  It should be overwritten for
@@ -65,12 +65,16 @@ namespace BOOM{
     virtual uint findstr(const std::string &s) const;
 
    protected:
-    std::set<CategoricalData *> &observers() {return observers_;}
+    std::set<CategoricalData *> &observers() { return observers_; }
 
    private:
-    friend void intrusive_ptr_add_ref(CatKeyBase *k){ k->up_count();}
-    friend void intrusive_ptr_release(CatKeyBase *k){
-      k->down_count(); if(k->ref_count()==0) delete k;}
+    friend void intrusive_ptr_add_ref(CatKeyBase *k) { k->up_count(); }
+    friend void intrusive_ptr_release(CatKeyBase *k) {
+      k->down_count();
+      if (k->ref_count() == 0) {
+        delete k;
+      }
+    }
 
     // The observers are the categorical data objects using *this as a key.
     // They are stored as ordinary pointers, not smart pointers, to avoid an
@@ -83,16 +87,16 @@ namespace BOOM{
   class UnboundedIntCatKey : public CatKeyBase {
    public:
     UnboundedIntCatKey() = default;
-    ostream & print(ostream &out) const override;
+    ostream &print(ostream &out) const override;
   };
 
   //======================================================================
   // Numerical categorical data with a fixed number of levels.
   class FixedSizeIntCatKey : public CatKeyBase {
    public:
-    FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
-    int max_levels() const override {return max_levels_;}
-    ostream & print(ostream &out) const override;
+    explicit FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
+    int max_levels() const override { return max_levels_; }
+    ostream &print(ostream &out) const override;
 
    private:
     int max_levels_;
@@ -103,8 +107,8 @@ namespace BOOM{
   class CatKey : public CatKeyBase {
    public:
     CatKey();
-    CatKey(int number_of_levels);
-    CatKey(const std::vector<std::string> &labels);
+    explicit CatKey(int number_of_levels);
+    explicit CatKey(const std::vector<std::string> &labels);
     CatKey(const CatKey &rhs) = default;
 
     // Sets the 'grow_' flag.  If true then the max number of levels increases
@@ -120,11 +124,11 @@ namespace BOOM{
     //   label:  The label associated with dp.
     void RegisterWithLabel(CategoricalData *dp, const std::string &label);
 
-    bool allows_strings() const override {return true;}
-    int max_levels() const override{return labs_.size();}
+    bool allows_strings() const override { return true; }
+    int max_levels() const override { return labs_.size(); }
 
-    const std::vector<std::string> & labels()const;
-    const std::string &label(int value) const {return labs_[value];}
+    const std::vector<std::string> &labels() const;
+    const std::string &label(int value) const { return labs_[value]; }
 
     // Returns the position in labs_ containing the string 's'.  If the string
     // is found then 'found' is set to true, otherwise it is set to false.
@@ -151,18 +155,18 @@ namespace BOOM{
     void relabel(const std::vector<std::string> &new_labels);
 
     // Print the value of this key to the stream 'out'.
-    ostream & print(ostream &out) const override;
+    ostream &print(ostream &out) const override;
 
     // Print the level that corresponds to a particular value.
-    ostream & print(uint value, ostream &out) const override;
+    ostream &print(uint value, ostream &out) const override;
 
-  private:
+   private:
     std::vector<std::string> labs_;
     bool grow_;
-    std::vector<uint> map_levels(const std::vector<std::string> &sv)const;
+    std::vector<uint> map_levels(const std::vector<std::string> &sv) const;
   };
 
-  inline ostream & operator<<(ostream &out, const CatKeyBase &k){
+  inline ostream &operator<<(ostream &out, const CatKeyBase &k) {
     return k.print(out);
   }
 
@@ -192,71 +196,73 @@ namespace BOOM{
     CategoricalData(const CategoricalData &rhs) = default;
     CategoricalData(CategoricalData &&rhs) = default;
 
-    CategoricalData * clone()const override;
+    CategoricalData *clone() const override;
 
     // The const-ref in the signature is needed to match the signature of the
     // DataTraits parent class.
     void set(const uint &value, bool signal_observers = true) override;
 
-    bool operator==(uint rhs)const;
-    bool operator==(const CategoricalData & rhs)const;
+    bool operator==(uint rhs) const;
+    bool operator==(const CategoricalData &rhs) const;
 
-    bool operator!=(uint rhs)const{return ! (*this == rhs);}
-    bool operator!=(const CategoricalData & rhs)const{return ! (*this == rhs);}
+    bool operator!=(uint rhs) const { return !(*this == rhs); }
+    bool operator!=(const CategoricalData &rhs) const {
+      return !(*this == rhs);
+    }
 
     //  size querries...........
-    uint nlevels()const;  //  'value()' can be 0..nelvels()-1
+    uint nlevels() const;  //  'value()' can be 0..nelvels()-1
 
     // value querries.............
-    const uint & value()const override;
-    const Ptr<CatKeyBase> & key() const {return key_;}
-    bool comparable(const CategoricalData &rhs)const;
+    const uint &value() const override;
+    const Ptr<CatKeyBase> &key() const { return key_; }
+    bool comparable(const CategoricalData &rhs) const;
 
     // input-output
-    ostream & display(ostream &out)const override;
+    ostream &display(ostream &out) const override;
 
-    void set_key(const Ptr<CatKeyBase> &key) {key_ = key;}
+    void set_key(const Ptr<CatKeyBase> &key) { key_ = key; }
 
-    void print_key(std::ostream & out)const;
+    void print_key(std::ostream &out) const;
 
    private:
-    uint val_;
+    uint val_{};
     Ptr<CatKeyBase> key_;
   };
   //------------------------------------------------------------
-  class OrdinalData : public CategoricalData{
-  public:
+  class OrdinalData : public CategoricalData {
+   public:
     OrdinalData(uint value, uint Nlevels);
     OrdinalData(uint value, const Ptr<CatKeyBase> &key);
     OrdinalData(const std::string &label, const Ptr<CatKey> &key);
 
     OrdinalData(const OrdinalData &rhs);
-    OrdinalData * clone()const override;
+    OrdinalData *clone() const override;
 
-    bool operator<(const OrdinalData &rhs)const;
-    bool operator<=(const OrdinalData &rhs)const;
-    bool operator>(const OrdinalData &rhs)const;
-    bool operator>=(const OrdinalData &rhs)const;
+    bool operator<(const OrdinalData &rhs) const;
+    bool operator<=(const OrdinalData &rhs) const;
+    bool operator>(const OrdinalData &rhs) const;
+    bool operator>=(const OrdinalData &rhs) const;
 
-    bool operator<(uint rhs)const;
-    bool operator<=(uint rhs)const;
-    bool operator>(uint rhs)const;
-    bool operator>=(uint rhs)const;
+    bool operator<(uint rhs) const;
+    bool operator<=(uint rhs) const;
+    bool operator>(uint rhs) const;
+    bool operator>=(uint rhs) const;
 
-    bool operator<(const std::string &rhs)const;
-    bool operator<=(const std::string &rhs)const;
-    bool operator>(const std::string &rhs)const;
-    bool operator>=(const std::string &rhs)const;
+    bool operator<(const std::string &rhs) const;
+    bool operator<=(const std::string &rhs) const;
+    bool operator>(const std::string &rhs) const;
+    bool operator>=(const std::string &rhs) const;
   };
   //======================================================================
 
-  std::vector<Ptr<CategoricalData> >
-  make_catdat_ptrs(const std::vector<std::string> &);
-  std::vector<Ptr<CategoricalData> >
-  make_catdat_ptrs(const std::vector<uint> &);
+  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
+      const std::vector<std::string> &);
+  std::vector<Ptr<CategoricalData> > make_catdat_ptrs(
+      const std::vector<uint> &);
 
   std::vector<Ptr<OrdinalData> > make_ord_ptrs(const std::vector<uint> &);
 
 }  // namespace BOOM
 
-#endif //BOOM_CATEGORICAL_DATA_HPP
+#endif  // BOOM_CATEGORICAL_DATA_HPP

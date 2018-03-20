@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,28 +16,28 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <LinAlg/Vector.hpp>
+#include "LinAlg/Vector.hpp"
 
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  double lse_safe(const Vector &eta){
+  double lse_safe(const Vector &eta) {
     double m = eta.max();
     if (m == negative_infinity()) return m;
-    double tmp=0;
+    double tmp = 0;
     uint n = eta.size();
-    for (uint i=0; i<n; ++i) tmp+= exp(eta[i]-m);
+    for (uint i = 0; i < n; ++i) tmp += exp(eta[i] - m);
     return m + log(tmp);
   }
 
-  double lse_fast(const Vector & eta){
+  double lse_fast(const Vector &eta) {
     double ans = 0;
     uint n = eta.size();
     const double *d(eta.data());
-    for (uint i=0; i<n; ++i) {
+    for (uint i = 0; i < n; ++i) {
       ans += exp(d[i]);
     }
     if (ans <= 0) {
@@ -45,9 +46,7 @@ namespace BOOM{
     return log(ans);
   }
 
-  double lse(const Vector &eta){
-    return lse_safe(eta);
-  }
+  double lse(const Vector &eta) { return lse_safe(eta); }
 
   double lde2(double x, double y) {
     if (x <= y) {
@@ -56,6 +55,6 @@ namespace BOOM{
       }
       return negative_infinity();
     }
-    return x + log1p(- exp(y - x));
+    return x + log1p(-exp(y - x));
   }
-}
+}  // namespace BOOM

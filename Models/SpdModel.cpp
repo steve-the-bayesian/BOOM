@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -16,13 +17,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/SpdModel.hpp>
-#include <Models/SpdData.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/SpdModel.hpp"
+#include "Models/SpdData.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-  double SpdModel::pdf(const Data *dp, bool logscale)const{
+  double SpdModel::pdf(const Data *dp, bool logscale) const {
     if (!dp) {
       report_error("NULL data pointer passed to SpdModel::pdf");
     }
@@ -34,8 +35,8 @@ namespace BOOM {
           << *dp << endl;
       report_error(err.str());
     }
-   double ans = logp(d->value());
-   return logscale ? ans : exp(ans);
+    double ans = logp(d->value());
+    return logscale ? ans : exp(ans);
   }
 
 }  // namespace BOOM

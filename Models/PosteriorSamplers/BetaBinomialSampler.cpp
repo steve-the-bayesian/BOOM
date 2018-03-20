@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,27 +16,23 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/BetaBinomialSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/BetaBinomialSampler.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef BetaBinomialSampler BBS;
 
-  BBS::BetaBinomialSampler(BinomialModel *model,
-                           const Ptr<BetaModel> &prior,
+  BBS::BetaBinomialSampler(BinomialModel *model, const Ptr<BetaModel> &prior,
                            RNG &seeding_rng)
-    : ConjugateHierarchicalPosteriorSampler(seeding_rng),
-      model_(model),
-      prior_(prior)
-  {}
+      : ConjugateHierarchicalPosteriorSampler(seeding_rng),
+        model_(model),
+        prior_(prior) {}
 
-  void BBS::draw() {
-    draw_model_parameters(*model_);
-  }
+  void BBS::draw() { draw_model_parameters(*model_); }
 
-  double BBS::logpri()const{
+  double BBS::logpri() const {
     double p = model_->prob();
     return prior_->logp(p);
   }
@@ -56,7 +53,7 @@ namespace BOOM{
       // In most cases this do loop will finish without repeating.  It
       // exists to guard against cases where rbeta returns values of p
       // on the boundary, or nan.
-      p = rbeta_mt(rng(), a + nyes, b+nno);
+      p = rbeta_mt(rng(), a + nyes, b + nno);
       if (++ntries > 500) {
         const double epsilon = std::numeric_limits<double>::epsilon();
         if (p >= 1.0 || ((nyes > nno) && (b + nno < 1))) {
@@ -78,12 +75,12 @@ namespace BOOM{
           report_error(err.str());
         }
       }
-    } while(p <= 0 || p >= 1 || !std::isfinite(p));
+    } while (p <= 0 || p >= 1 || !std::isfinite(p));
     model.set_prob(p);
   }
 
   double BBS::log_prior_density(const ConstVectorView &parameters) const {
-    if (parameters.size() != 0) {
+    if (!parameters.empty()) {
       report_error("Wrong size parameters in log_prior_density.");
     }
     return prior_->logp(parameters[0]);
@@ -97,12 +94,12 @@ namespace BOOM{
     return prior_->logp(model.prob());
   }
 
-  void BBS::find_posterior_mode(double){
+  void BBS::find_posterior_mode(double) {
     double a = prior_->a();
     double b = prior_->b();
     double y = model_->suf()->sum() + a;
     double n = model_->suf()->nobs() + a + b;
-    model_->set_prob( (y - 1) / (n - 2) );
+    model_->set_prob((y - 1) / (n - 2));
   }
 
   double BBS::log_marginal_density(const Ptr<Data> &dp,
@@ -110,15 +107,15 @@ namespace BOOM{
     const BinomialModel *model(
         dynamic_cast<const BinomialModel *>(abstract_model));
     if (!model) {
-      report_error("The BetaBinomialSampler is only conjugate with "
-                   "BinomialModel objects.");
+      report_error(
+          "The BetaBinomialSampler is only conjugate with "
+          "BinomialModel objects.");
     }
     return log_marginal_density(*model->DAT(dp), model);
   }
 
-  double BBS::log_marginal_density(
-      const BinomialData &data,
-      const BinomialModel *model) const {
+  double BBS::log_marginal_density(const BinomialData &data,
+                                   const BinomialModel *model) const {
     double n = data.n() + model->suf()->nobs();
     double y = data.y() + model->suf()->sum();
     double a = prior_->a();
@@ -126,9 +123,9 @@ namespace BOOM{
     if (n <= 0 || y < 0 || n - y < 0 || a <= 0 || b <= 0) {
       return negative_infinity();
     }
-    return lgamma(a + b) + lgamma(n + 1) + lgamma(a + y) + lgamma(b + n - y)
-        - lgamma(a) - lgamma(b) - lgamma(y + 1) - lgamma(n - y + 1)
-        - lgamma(a + b + n);
+    return lgamma(a + b) + lgamma(n + 1) + lgamma(a + y) + lgamma(b + n - y) -
+           lgamma(a) - lgamma(b) - lgamma(y + 1) - lgamma(n - y + 1) -
+           lgamma(a + b + n);
   }
 
-}
+}  // namespace BOOM

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -18,17 +19,17 @@
 #ifndef BOOM_TRUNCATED_GAMMA_MODEL_HPP
 #define BOOM_TRUNCATED_GAMMA_MODEL_HPP
 
-#include <Models/GammaModel.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/GammaModel.hpp"
+#include "cpputil/math_utils.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // This is not a fully fledged model, because there is no mechanism
   // for inference.
   class TruncatedGammaModel : public GammaModel {
    public:
-    TruncatedGammaModel(double a, double b,
-                        double lower = 0, double upper = infinity());
+    TruncatedGammaModel(double a, double b, double lower = 0,
+                        double upper = infinity());
     double logp(double x) const override;
     double dlogp(double x, double &derivative) const override;
     double sim(RNG &rng = GlobalRng::rng) const override;
@@ -41,5 +42,5 @@ namespace BOOM{
     double lognc_;
   };
 
-}
-#endif// BOOM_TRUNCATED_GAMMA_MODEL_HPP
+}  // namespace BOOM
+#endif  // BOOM_TRUNCATED_GAMMA_MODEL_HPP

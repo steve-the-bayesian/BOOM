@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -18,40 +19,38 @@
 
 #ifndef BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP
 #define BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
-  class ZeroMeanGaussianModel
-      : public GaussianModelBase,
-        public ParamPolicy_1<UnivParams>,
-        public PriorPolicy
-  {
+  class ZeroMeanGaussianModel : public GaussianModelBase,
+                                public ParamPolicy_1<UnivParams>,
+                                public PriorPolicy {
    public:
-    ZeroMeanGaussianModel(double sigma=1.0);
-    ZeroMeanGaussianModel(const std::vector<double> &);
-    ZeroMeanGaussianModel * clone() const override;
+    explicit ZeroMeanGaussianModel(double sigma = 1.0);
+    explicit ZeroMeanGaussianModel(const std::vector<double> &);
+    ZeroMeanGaussianModel *clone() const override;
 
     void set_sigsq(double sigsq);
 
     Ptr<UnivParams> Sigsq_prm();
-    const Ptr<UnivParams> Sigsq_prm()const;
+    const Ptr<UnivParams> Sigsq_prm() const;
 
-    double mu()const override{return 0;}
-    double sigsq()const override;
-    double sigma()const override;
+    double mu() const override { return 0; }
+    double sigsq() const override;
+    double sigma() const override;
 
     void mle() override;
 
-    double Loglike(const Vector &sigsq_vec,
-                   Vector &g, Matrix &h, uint nd)const override;
+    double Loglike(const Vector &sigsq_vec, Vector &g, Matrix &h,
+                   uint nd) const override;
     double log_likelihood(double sigsq, double *g, double *h) const;
     double log_likelihood() const override {
       return log_likelihood(sigsq(), nullptr, nullptr);
     }
   };
 }  // namespace BOOM
-#endif // BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP
+#endif  // BOOM_ZERO_MEAN_GAUSSIAN_MODEL_HPP

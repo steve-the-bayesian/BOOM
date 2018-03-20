@@ -18,18 +18,18 @@
 
 #include <r_interface/boom_r_tools.hpp>
 #include <r_interface/prior_specification.hpp>
-#include <Models/BetaModel.hpp>
-#include <Models/DiscreteUniformModel.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/TruncatedGammaModel.hpp>
-#include <Models/GaussianModel.hpp>
-#include <Models/LognormalModel.hpp>
-#include <Models/MarkovModel.hpp>
-#include <Models/PoissonModel.hpp>
-#include <Models/PosteriorSamplers/MarkovConjSampler.hpp>
-#include <Models/UniformModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
+#include "Models/BetaModel.hpp"
+#include "Models/DiscreteUniformModel.hpp"
+#include "Models/GammaModel.hpp"
+#include "Models/TruncatedGammaModel.hpp"
+#include "Models/GaussianModel.hpp"
+#include "Models/LognormalModel.hpp"
+#include "Models/MarkovModel.hpp"
+#include "Models/PoissonModel.hpp"
+#include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
+#include "Models/UniformModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace RInterface {
@@ -260,7 +260,7 @@ namespace BOOM {
       if (hi_ < lo_) {
         report_error("hi < lo in DiscreteUniformPrior.");
       }
-      log_normalizing_constant_ = -log(hi_ - lo_ + 1);
+      log_normalizing_constant_ = -log1p(hi_ - lo_);
     }
 
     double DiscreteUniformPrior::logp(int value) const {

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,41 +20,39 @@
 #ifndef LOGISTIC_REGRESSION_HPP
 #define LOGISTIC_REGRESSION_HPP
 
-#include <BOOM.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <numopt.hpp>
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/ParamPolicy_1.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/EmMixtureComponent.hpp>
+#include "BOOM.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class LogisticRegressionModel
-      : public GlmModel,
-        public NumOptModel,
-        virtual public MixtureComponent,
-        public ParamPolicy_1<GlmCoefs>,
-        public IID_DataPolicy<BinaryRegressionData>,
-        public PriorPolicy
-  {
-  public:
-    LogisticRegressionModel(uint beta_dim, bool include_all=true);
-    LogisticRegressionModel(const Vector &beta);
+  class LogisticRegressionModel : public GlmModel,
+                                  public NumOptModel,
+                                  virtual public MixtureComponent,
+                                  public ParamPolicy_1<GlmCoefs>,
+                                  public IID_DataPolicy<BinaryRegressionData>,
+                                  public PriorPolicy {
+   public:
+    explicit LogisticRegressionModel(uint beta_dim, bool include_all = true);
+    explicit LogisticRegressionModel(const Vector &beta);
     LogisticRegressionModel(const Matrix &X, const Vector &y, bool add_int);
     LogisticRegressionModel(const LogisticRegressionModel &);
     LogisticRegressionModel *clone() const override;
 
-    GlmCoefs &coef() override {return ParamPolicy::prm_ref();}
-    const GlmCoefs &coef() const override {return ParamPolicy::prm_ref();}
-    Ptr<GlmCoefs> coef_prm() override {return ParamPolicy::prm();}
-    const Ptr<GlmCoefs> coef_prm() const override {return ParamPolicy::prm();}
+    GlmCoefs &coef() override { return ParamPolicy::prm_ref(); }
+    const GlmCoefs &coef() const override { return ParamPolicy::prm_ref(); }
+    Ptr<GlmCoefs> coef_prm() override { return ParamPolicy::prm(); }
+    const Ptr<GlmCoefs> coef_prm() const override { return ParamPolicy::prm(); }
 
-    virtual double pdf(const Ptr<Data> & dp, bool logscale) const;
-    double pdf(const Data * dp, bool logscale) const override;
+    virtual double pdf(const Ptr<Data> &dp, bool logscale) const;
+    double pdf(const Data *dp, bool logscale) const override;
     double logp(bool y, const Vector &x) const;
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
 
     // In the following, 'beta' refers to the set of nonzero
     // "included" coefficients, so its dimension might be less than
@@ -79,6 +78,6 @@ namespace BOOM{
                         // events and 100 alpha% of the non-events
   };
 
-}  // ends namespace BOOM
+}  // namespace BOOM
 
-#endif //LOGISTIC_REGRESSION_HPP
+#endif  // LOGISTIC_REGRESSION_HPP

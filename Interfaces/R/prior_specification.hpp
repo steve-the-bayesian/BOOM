@@ -20,13 +20,13 @@
 #define BOOM_R_PRIOR_SPECIFICATION_HPP_
 
 #include <r_interface/boom_r_tools.hpp>
-#include <Models/ChisqModel.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Glm/VariableSelectionPrior.hpp>
-#include <Models/IndependentMvnModel.hpp>
-#include <Models/IndependentMvnModelGivenScalarSigma.hpp>
-#include <Models/MvnBase.hpp>
-#include <Models/MvnGivenScalarSigma.hpp>
+#include "Models/ChisqModel.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/IndependentMvnModelGivenScalarSigma.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/MvnGivenScalarSigma.hpp"
 
 namespace BOOM{
 
@@ -219,7 +219,7 @@ namespace BOOM{
     //----------------------------------------------------------------------
     class InverseWishartPrior {
      public:
-      InverseWishartPrior(SEXP r_prior);
+      explicit InverseWishartPrior(SEXP r_prior);
       double variance_guess_weight() const {return variance_guess_weight_;}
       const SpdMatrix & variance_guess() const {return variance_guess_;}
      private:
@@ -229,7 +229,7 @@ namespace BOOM{
     //----------------------------------------------------------------------
     class NormalInverseWishartPrior {
      public:
-      NormalInverseWishartPrior(SEXP prior);
+      explicit NormalInverseWishartPrior(SEXP prior);
       const Vector & mu_guess()const{return mu_guess_;}
       double mu_guess_weight()const{return mu_guess_weight_;}
       const SpdMatrix & Sigma_guess()const{return sigma_guess_;}
@@ -246,7 +246,7 @@ namespace BOOM{
     //----------------------------------------------------------------------
     class MvnIndependentSigmaPrior {
      public:
-      MvnIndependentSigmaPrior(SEXP prior);
+      explicit MvnIndependentSigmaPrior(SEXP prior);
       const MvnPrior & mu_prior()const{return mu_prior_;}
       const SdPrior & sigma_prior(int i)const{return sigma_priors_[i];}
 
@@ -258,7 +258,7 @@ namespace BOOM{
     //----------------------------------------------------------------------
     class MvnDiagonalPrior {
      public:
-      MvnDiagonalPrior(SEXP prior);
+      explicit MvnDiagonalPrior(SEXP prior);
       const Vector & mean()const{return mean_;}
       const Vector & sd()const{return sd_;}
 
@@ -271,7 +271,7 @@ namespace BOOM{
     // A discrete prior over the integers {lo, ..., hi}.
     class DiscreteUniformPrior {
      public:
-      DiscreteUniformPrior(SEXP prior);
+      explicit DiscreteUniformPrior(SEXP prior);
       double logp(int value) const;
       int lo() const {return lo_;}
       int hi() const {return hi_;}
@@ -285,7 +285,7 @@ namespace BOOM{
     // A poisson prior, potentially truncated to the set {lo, ..., hi}.
     class PoissonPrior {
      public:
-      PoissonPrior(SEXP prior);
+      explicit PoissonPrior(SEXP prior);
       double logp(int value) const;
       double lambda() const {return lambda_;}
 
@@ -297,7 +297,7 @@ namespace BOOM{
 
     class PointMassPrior {
      public:
-      PointMassPrior(SEXP prior);
+      explicit PointMassPrior(SEXP prior);
       double logp(int value) const;
       int location() const {return location_;}
 
@@ -317,7 +317,7 @@ namespace BOOM{
       //     ignored.  If 'prior' inherits from
       //     IndependentSpikeSlabPrior then the slab will be an
       //     IndependentMvnModel.  Otherwise it will be an MvnModel.
-      SpikeSlabGlmPrior(SEXP r_prior);
+      explicit SpikeSlabGlmPrior(SEXP r_prior);
       virtual ~SpikeSlabGlmPrior() {}
       const Vector &prior_inclusion_probabilities() {
         return prior_inclusion_probabilities_;
@@ -399,7 +399,7 @@ namespace BOOM{
       //   - prior.df: The number of observations worth of weight to
       //       be given to sigma.guess.
       //   - sigma.guess:  A guess at the residual variance
-      RegressionNonconjugateSpikeSlabPrior(SEXP prior);
+      explicit RegressionNonconjugateSpikeSlabPrior(SEXP prior);
 
       Ptr<ChisqModel> siginv_prior() {return siginv_prior_;}
       double sigma_upper_limit() const {return sigma_upper_limit_;}
@@ -412,7 +412,7 @@ namespace BOOM{
     class ArSpikeSlabPrior
         : public RegressionNonconjugateSpikeSlabPrior {
      public:
-      ArSpikeSlabPrior(SEXP r_prior);
+      explicit ArSpikeSlabPrior(SEXP r_prior);
       bool truncate() const {return truncate_;}
 
      private:
@@ -425,8 +425,8 @@ namespace BOOM{
     class StudentRegressionNonconjugateSpikeSlabPrior
         : public RegressionNonconjugateSpikeSlabPrior {
      public:
-      StudentRegressionNonconjugateSpikeSlabPrior(SEXP r_prior);
-       Ptr<DoubleModel> degrees_of_freedom_prior() {return df_prior_;}
+      explicit StudentRegressionNonconjugateSpikeSlabPrior(SEXP r_prior);
+      Ptr<DoubleModel> degrees_of_freedom_prior() {return df_prior_;}
 
      private:
       Ptr<DoubleModel> df_prior_;
@@ -476,7 +476,7 @@ namespace BOOM{
     // normal given sigma^2 and X.
     class RegressionCoefficientConjugatePrior {
      public:
-      RegressionCoefficientConjugatePrior(SEXP prior);
+      explicit RegressionCoefficientConjugatePrior(SEXP prior);
       const Vector &mean() const {return mean_;}
       double sample_size() const {return sample_size_;}
       const Vector &additional_prior_precision() const {
@@ -493,7 +493,7 @@ namespace BOOM{
 
     class UniformPrior {
      public:
-      UniformPrior(SEXP prior);
+      explicit UniformPrior(SEXP prior);
       double lo() const {return lo_;}
       double hi() const {return hi_;}
       double initial_value() const {return initial_value_;}

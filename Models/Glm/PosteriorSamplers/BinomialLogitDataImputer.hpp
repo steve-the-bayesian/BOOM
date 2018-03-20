@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_BINOMIAL_LOGIT_DATA_IMPUTER_HPP_
 #define BOOM_BINOMIAL_LOGIT_DATA_IMPUTER_HPP_
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 namespace BOOM {
 
@@ -42,11 +43,9 @@ namespace BOOM {
     //   The first element in the returned pair is the information
     //   weighted sum of the latent logits.  The second element is the
     //   sum of the information weights.
-    virtual std::pair<double, double> impute(
-        RNG &rng,
-        double number_of_trials,
-        double number_of_successes,
-        double log_odds) const = 0;
+    virtual std::pair<double, double> impute(RNG &rng, double number_of_trials,
+                                             double number_of_successes,
+                                             double log_odds) const = 0;
 
     // A finite mixture approximation to the logistic distribution.
     static const NormalMixtureApproximation mixture_approximation;
@@ -60,10 +59,8 @@ namespace BOOM {
 
    protected:
     // Adds a human readable message to 'err'.
-    void debug_status_message(ostream &err,
-                              double number_of_trials,
-                              double number_of_successes,
-                              double eta) const;
+    void debug_status_message(ostream &err, double number_of_trials,
+                              double number_of_successes, double eta) const;
   };
 
   //=======================================================================
@@ -76,7 +73,8 @@ namespace BOOM {
     // Args:
     //   clt_threshold: The minimal sample size where approximate
     //     augmentation begins to take place.
-    BinomialLogitPartialAugmentationDataImputer(int clt_threshold = 10);
+    explicit BinomialLogitPartialAugmentationDataImputer(
+        int clt_threshold = 10);
 
     // Impute the latent quasi-sufficient statistics for a single
     // observation.
@@ -121,10 +119,9 @@ namespace BOOM {
     //     i.e.
     //
     //               sum_j (1.0 / v[i, j]).
-    std::pair<double, double> impute(RNG &rng,
-                                     double number_of_trials,
+    std::pair<double, double> impute(RNG &rng, double number_of_trials,
                                      double number_of_successes,
-                                     double log_odds)const override;
+                                     double log_odds) const override;
 
     // The smallest number_of_trials where approximate augmentation
     // takes place.
@@ -140,13 +137,12 @@ namespace BOOM {
   // directly from the multinomial distribution.  Then the information
   // weighted sum is sampled conditionally from the large sample
   // approximation given by the central limit theorem.
-  class BinomialLogitCltDataImputer
-      : public BinomialLogitDataImputer {
+  class BinomialLogitCltDataImputer : public BinomialLogitDataImputer {
    public:
     // Args:
     //   clt_threshold: The smallest number_of_trials where
     //   approximate augmentation takes place.
-    BinomialLogitCltDataImputer(int clt_threshold = 10);
+    explicit BinomialLogitCltDataImputer(int clt_threshold = 10);
 
     // Args:
     //   rng:  The random number generator.
@@ -177,31 +173,29 @@ namespace BOOM {
     //   clt_threshold then the sum is obtained by a single random
     //   draw from the normal distribution with the appropriate
     //   moments.
-    std::pair<double, double> impute(RNG &rng,
-                                     double number_of_trials,
+    std::pair<double, double> impute(RNG &rng, double number_of_trials,
                                      double number_of_successes,
                                      double log_odds) const override;
 
     // The smallest number_of_trials for which approximate
     // augmentation takes place.
-    int clt_threshold()const override;
+    int clt_threshold() const override;
+
    private:
     int clt_threshold_;
 
     // Specific cases used to implement the public impute() method.
-    std::pair<double, double> impute_small_sample(
-        RNG &rng,
-        double number_of_trials,
-        double number_of_successes,
-        double eta) const;
+    std::pair<double, double> impute_small_sample(RNG &rng,
+                                                  double number_of_trials,
+                                                  double number_of_successes,
+                                                  double eta) const;
 
-    std::pair<double, double> impute_large_sample(
-        RNG &rng,
-        double number_of_trials,
-        double number_of_successes,
-        double eta) const;
+    std::pair<double, double> impute_large_sample(RNG &rng,
+                                                  double number_of_trials,
+                                                  double number_of_successes,
+                                                  double eta) const;
   };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_BINOMIAL_LOGIT_DATA_IMPUTER_HPP_

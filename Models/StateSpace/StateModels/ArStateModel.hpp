@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_AR_STATE_MODEL_HPP_
 #define BOOM_AR_STATE_MODEL_HPP_
 
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/TimeSeries/ArModel.hpp>
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/TimeSeries/ArModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // A state space model based on a stationary AR(p) process.  The
   // initial state is populated with a set of IID data with variance
   // equal to the stationary variance of the AR(p) process.  The model
@@ -49,26 +50,27 @@ namespace BOOM{
   // The shift portion of the stat transition is deterministic, so the
   // one-dimensional error is multiplied by
   // R_t = [1 0 0 0 0]^T
-  class ArStateModel
-      : public StateModel,
-        public ArModel
-  {
+  class ArStateModel : public StateModel, public ArModel {
    public:
-    ArStateModel(int number_of_lags = 1);
+    explicit ArStateModel(int number_of_lags = 1);
     ArStateModel(const ArStateModel &rhs);
-    ArStateModel * clone() const override;
+    ArStateModel *clone() const override;
 
-    void observe_state(const ConstVectorView previous_state,
-                       const ConstVectorView current_state,
-                       int t) override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int t, ScalarStateSpaceModelBase *model) override;
+
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then, const ConstVectorView &now, int t,
+        DynamicInterceptRegressionModel *model) override {
+      observe_state(then, now, t, nullptr);
+    }
 
     uint state_dimension() const override;
-    uint state_error_dimension() const override {return 1;}
+    uint state_error_dimension() const override { return 1; }
 
     // This throws, because an ArStateModel cannot be part of an EM algorithm.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &error_mean,
+        int t, const ConstVectorView &error_mean,
         const ConstSubMatrix &error_variance) override;
 
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
@@ -79,6 +81,13 @@ namespace BOOM{
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
     SparseVector observation_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
@@ -98,9 +107,7 @@ namespace BOOM{
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
     bool stationary_initial_distribution_;
-
   };
 
-
-}
-#endif //  BOOM_AR_STATE_MODEL_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_AR_STATE_MODEL_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,59 +20,57 @@
 #ifndef BOOM_T_REGRESSION_HPP
 #define BOOM_T_REGRESSION_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Policies/ParamPolicy_3.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_3.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class WeightedRegSuf;
 
   class TRegressionModel
-    : public GlmModel,
-      public ParamPolicy_3<GlmCoefs, UnivParams, UnivParams>,
-      public IID_DataPolicy<RegressionData>,
-      public PriorPolicy,
-      public NumOptModel
-  {
-  public:
-    TRegressionModel(uint p);   // dimension of beta
-    TRegressionModel(const Vector &b, double Sigma, double nu=30);
+      : public GlmModel,
+        public ParamPolicy_3<GlmCoefs, UnivParams, UnivParams>,
+        public IID_DataPolicy<RegressionData>,
+        public PriorPolicy,
+        public NumOptModel {
+   public:
+    explicit TRegressionModel(uint p);  // dimension of beta
+    TRegressionModel(const Vector &b, double Sigma, double nu = 30);
     TRegressionModel(const Matrix &X, const Vector &y);
-    TRegressionModel * clone()const override;
+    TRegressionModel *clone() const override;
 
-    GlmCoefs & coef() override;
-    const GlmCoefs & coef()const override;
+    GlmCoefs &coef() override;
+    const GlmCoefs &coef() const override;
     Ptr<GlmCoefs> coef_prm() override;
-    const Ptr<GlmCoefs> coef_prm()const override;
+    const Ptr<GlmCoefs> coef_prm() const override;
     Ptr<UnivParams> Sigsq_prm();
-    const Ptr<UnivParams> Sigsq_prm()const;
+    const Ptr<UnivParams> Sigsq_prm() const;
     Ptr<UnivParams> Nu_prm();
-    const Ptr<UnivParams> Nu_prm()const;
+    const Ptr<UnivParams> Nu_prm() const;
 
     // beta() and Beta() inherited from GlmModel;
-    const double & sigsq()const;
-    double sigma()const;
+    const double &sigsq() const;
+    double sigma() const;
     void set_sigsq(double s2);
 
-    const double & nu()const;
+    const double &nu() const;
     void set_nu(double Nu);
 
     // The argument to Loglike is a vector containing the included
     // regression coefficients, followed by the residual 'dispersion'
     // parameter sigsq, followed by the tail thickness parameter nu.
-    double Loglike(const Vector &beta_sigsq_nu,
-                   Vector &g, Matrix &h, uint nd)const override;
+    double Loglike(const Vector &beta_sigsq_nu, Vector &g, Matrix &h,
+                   uint nd) const override;
 
     // Args:
     //   full_beta: The full set of regression coefficients, including
     //     any that are set to zero.
     //   sigma:  The "residual standard deviation" parameter.
     //   nu:  The tail thickness parameter.
-    double log_likelihood(const Vector &full_beta,
-                          double sigma,
+    double log_likelihood(const Vector &full_beta, double sigma,
                           double nu) const;
 
     double log_likelihood() const override {
@@ -81,13 +80,14 @@ namespace BOOM{
     // The MLE is computed using an EM algorithm.
     void mle() override;
 
-    double pdf(const Ptr<Data> &dp, bool)const;
-    double pdf(const Ptr<DataType> &dp, bool)const;
+    double pdf(const Ptr<Data> &dp, bool) const;
+    double pdf(const Ptr<DataType> &dp, bool) const;
 
-    Ptr<RegressionData> simdat(RNG &rng = GlobalRng::rng)const;
-    Ptr<RegressionData> simdat(const Vector &X, RNG &rng = GlobalRng::rng)const;
+    Ptr<RegressionData> simdat(RNG &rng = GlobalRng::rng) const;
+    Ptr<RegressionData> simdat(const Vector &X,
+                               RNG &rng = GlobalRng::rng) const;
 
-  private:
+   private:
     // Clear 'suf' and fill it with the expected complete data
     // sufficient statistics.
     void EStep(WeightedRegSuf &suf) const;
@@ -101,4 +101,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif// BOOM_T_REGRESSION_HPP
+#endif  // BOOM_T_REGRESSION_HPP

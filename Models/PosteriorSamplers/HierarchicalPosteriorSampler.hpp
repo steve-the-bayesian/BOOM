@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,15 +20,14 @@
 #ifndef BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_POSTERIOR_SAMPLER_HPP_
 #define BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/ModelTypes.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
-  class HierarchicalPosteriorSampler
-      : public PosteriorSampler {
+  class HierarchicalPosteriorSampler : public PosteriorSampler {
    public:
-    HierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
+    explicit HierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
 
     // Child classes should be capable of drawing model parameters in models
     // with no data.
@@ -40,7 +40,8 @@ namespace BOOM {
   class ConjugateHierarchicalPosteriorSampler
       : public HierarchicalPosteriorSampler {
    public:
-    ConjugateHierarchicalPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
+    explicit ConjugateHierarchicalPosteriorSampler(
+        RNG &seeding_rng = GlobalRng::rng);
 
     // Evaluates the log of the marginal density function
     //   p(y) = \int p(y | theta) p(theta).
@@ -54,11 +55,10 @@ namespace BOOM {
     //     sampler.
     //
     // Returns: the log marginal density at y.
-    virtual double log_marginal_density(
-        const Ptr<Data> &dp,
-        const ConjugateModel *model) const = 0;
+    virtual double log_marginal_density(const Ptr<Data> &dp,
+                                        const ConjugateModel *model) const = 0;
   };
 
-}
+}  // namespace BOOM
 
 #endif  // BOOM_POSTERIOR_SAMPLERS_HIERARCHICAL_POSTERIOR_SAMPLER_HPP_

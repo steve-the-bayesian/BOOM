@@ -38,7 +38,7 @@
  *
  *  SYNOPSIS
  *
- *      #include <Bmath.hpp>
+ *      #include "Bmath.hpp"
  *      double qtukey(p, rr, cc, df, lower_tail, log_p);
  *
  *  DESCRIPTION

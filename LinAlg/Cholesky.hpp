@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,14 +19,14 @@
 #ifndef BOOM_CHOL_HPP
 #define BOOM_CHOL_HPP
 
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
   class Chol {
    public:
     // Compute and store the Cholesky factor of the matrix 'A'.
-    Chol(const Matrix &A);
+    explicit Chol(const Matrix &A);
 
     // All three of these return the number of rows in the represented matrix
     // (which is the same as the number of columns).
@@ -64,7 +65,7 @@ namespace BOOM {
     bool is_pos_def() const {return pos_def_;}
 
    private:
-    Matrix dcmp_;
+    Matrix lower_cholesky_triangle_;
     bool pos_def_;
     void check()const;
   };

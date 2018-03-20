@@ -18,7 +18,7 @@
 
 #include <r_interface/create_point_process.hpp>
 
-#include <cpputil/DateTime.hpp>
+#include "cpputil/DateTime.hpp"
 #include <vector>
 
 namespace BOOM {

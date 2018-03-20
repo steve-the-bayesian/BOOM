@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,9 +20,9 @@
 #ifndef BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
 #define BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
 
-#include <functional>
 #include <cstdint>
-#include <Samplers/DirectProposal.hpp>
+#include <functional>
+#include "Samplers/DirectProposal.hpp"
 
 namespace BOOM {
 
@@ -65,4 +66,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif //  BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_
+#endif  //  BOOM_SAMPLERS_REJECTION_SAMPLER_HPP_

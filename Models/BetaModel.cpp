@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,37 +16,32 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/BetaModel.hpp>
+#include "Models/BetaModel.hpp"
 #include <cmath>
 #include <sstream>
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   namespace {
-    typedef BetaSuf BS;
-    typedef BetaModel BM;
-  }
+    using BS = BOOM::BetaSuf;
+    using BM = BOOM::BetaModel;
+  }  // namespace
 
-  BS::BetaSuf()
-      : n_(0),
-        sumlog_(0),
-        sumlogc_(0)
-  {}
+  BS::BetaSuf() : n_(0), sumlog_(0), sumlogc_(0) {}
 
   BS::BetaSuf(const BetaSuf &rhs)
       : SufstatDetails<DoubleData>(rhs),
         n_(rhs.n_),
         sumlog_(rhs.sumlog_),
-        sumlogc_(rhs.sumlogc_)
-  {}
+        sumlogc_(rhs.sumlogc_) {}
 
-  BS * BS::clone() const {return new BS(*this);}
+  BS *BS::clone() const { return new BS(*this); }
 
   void BS::Update(const DoubleData &d) {
     double p = d.value();
@@ -58,8 +54,9 @@ namespace BOOM {
     sumlogc_ += log(1 - p);
   }
 
-  BetaSuf * BS::abstract_combine(Sufstat *s) {
-      return abstract_combine_impl(this, s);}
+  BetaSuf *BS::abstract_combine(Sufstat *s) {
+    return abstract_combine_impl(this, s);
+  }
 
   void BS::combine(const Ptr<BS> &s) {
     n_ += s->n_;
@@ -67,7 +64,7 @@ namespace BOOM {
     sumlogc_ += s->sumlogc_;
   }
 
-  void BS::combine(const BS & s) {
+  void BS::combine(const BS &s) {
     n_ += s.n_;
     sumlog_ += s.sumlog_;
     sumlogc_ += s.sumlogc_;
@@ -82,9 +79,12 @@ namespace BOOM {
   }
 
   Vector::const_iterator BS::unvectorize(Vector::const_iterator &v, bool) {
-    n_ = *v; ++v;
-    sumlog_ = *v; ++v;
-    sumlogc_ = *v; ++v;
+    n_ = *v;
+    ++v;
+    sumlog_ = *v;
+    ++v;
+    sumlogc_ = *v;
+    ++v;
     return v;
   }
 
@@ -93,50 +93,45 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream & BS::print(ostream &out) const {
+  ostream &BS::print(ostream &out) const {
     out << n_ << " " << sumlog_ << " " << sumlogc_;
     return out;
   }
 
   BM::BetaModel(double a, double b)
-    : ParamPolicy(new UnivParams(a), new UnivParams(b)),
-      DataPolicy(new BS),
-      PriorPolicy()
-  {
+      : ParamPolicy(new UnivParams(a), new UnivParams(b)), DataPolicy(new BS) {
     set_params(a, b);
   }
 
   BM::BetaModel(double mean, double sample_size, int)
       : ParamPolicy(new UnivParams(mean * sample_size),
-                    new UnivParams( (1 - mean) * sample_size)),
-        DataPolicy(new BS),
-        PriorPolicy()
-  {
+                    new UnivParams((1 - mean) * sample_size)),
+        DataPolicy(new BS) {
     if (mean <= 0 || mean >= 1.0 || sample_size <= 0) {
-      report_error("mean must be in (0, 1), and sample_size must "
-                   "be positive in BetaModel(mean, sample_size, int) "
-                   "constructor");
+      report_error(
+          "mean must be in (0, 1), and sample_size must "
+          "be positive in BetaModel(mean, sample_size, int) "
+          "constructor");
     }
   }
 
   BM::BetaModel(const BM &rhs)
-    : Model(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      NumOptModel(rhs),
-      DiffDoubleModel(rhs)
-  {}
+      : Model(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        NumOptModel(rhs),
+        DiffDoubleModel(rhs) {}
 
-  BM * BM::clone() const {return new BM(*this);}
+  BM *BM::clone() const { return new BM(*this); }
 
-  Ptr<UnivParams> BM::Alpha() {return ParamPolicy::prm1();}
-  Ptr<UnivParams> BM::Beta() {return ParamPolicy::prm2();}
-  const Ptr<UnivParams> BM::Alpha() const {return ParamPolicy::prm1();}
-  const Ptr<UnivParams> BM::Beta() const {return ParamPolicy::prm2();}
+  Ptr<UnivParams> BM::Alpha() { return ParamPolicy::prm1(); }
+  Ptr<UnivParams> BM::Beta() { return ParamPolicy::prm2(); }
+  const Ptr<UnivParams> BM::Alpha() const { return ParamPolicy::prm1(); }
+  const Ptr<UnivParams> BM::Beta() const { return ParamPolicy::prm2(); }
 
-  const double &BM::a() const {return ParamPolicy::prm1_ref().value();}
-  const double &BM::b() const {return ParamPolicy::prm2_ref().value();}
+  const double &BM::a() const { return ParamPolicy::prm1_ref().value(); }
+  const double &BM::b() const { return ParamPolicy::prm2_ref().value(); }
 
   void BM::set_a(double alpha) {
     if (alpha <= 0) {
@@ -160,10 +155,13 @@ namespace BOOM {
     ParamPolicy::prm2_ref().set(beta);
   }
 
-  void BM::set_params(double a, double b) {set_a(a); set_b(b);}
+  void BM::set_params(double a, double b) {
+    set_a(a);
+    set_b(b);
+  }
 
-  double BM::mean() const {return a()/sample_size();}
-  double BM::sample_size() const {return a() + b();}
+  double BM::mean() const { return a() / sample_size(); }
+  double BM::sample_size() const { return a() + b(); }
   double BM::variance() const {
     double p = mean();
     return p * (1 - p) / (1 + sample_size());
@@ -205,7 +203,7 @@ namespace BOOM {
     double sumlog = suf()->sumlog();
     double sumlogc = suf()->sumlogc();
 
-    double ans = n * (lgamma(alpha + beta) - lgamma(alpha)-lgamma(beta));
+    double ans = n * (lgamma(alpha + beta) - lgamma(alpha) - lgamma(beta));
     ans += (alpha - 1) * sumlog + (beta - 1) * sumlogc;
 
     if (nd > 0) {
@@ -214,7 +212,7 @@ namespace BOOM {
       g[1] = n * (psisum - digamma(beta)) + sumlogc;
 
       if (nd > 1) {
-        double trisum = trigamma(alpha+beta);
+        double trisum = trigamma(alpha + beta);
         h(0, 0) = n * (trisum - trigamma(alpha));
         h(0, 1) = h(1, 0) = n * trisum;
         h(1, 1) = n * (trisum - trigamma(beta));
@@ -228,11 +226,15 @@ namespace BOOM {
   }
 
   double BM::Logp(double x, double &d1, double &d2, uint nd) const {
-    if (x < 0 || x > 1) return BOOM::negative_infinity();
+    if (x < 0 || x > 1) {
+      return BOOM::negative_infinity();
+    }
     double inf = BOOM::infinity();
     double a = this->a();
     double b = this->b();
-    if (a == inf || b == inf) return Logp_degenerate(x, d1, d2, nd);
+    if (a == inf || b == inf) {
+      return Logp_degenerate(x, d1, d2, nd);
+    }
 
     double ans = dbeta(x, a, b, true);
 
@@ -242,24 +244,30 @@ namespace BOOM {
 
     if (nd > 0) {
       d1 = A / x - B / y;
-      if (nd > 1) d2 = -A / square(x) - B / square(y);
+      if (nd > 1) {
+        d2 = -A / square(x) - B / square(y);
+      }
     }
     return ans;
   }
 
   double BM::Logp_degenerate(double x, double &d1, double &d2, uint nd) const {
     double inf = BOOM::infinity();
-    double a_inf = a() == inf;
-    double b_inf = b() == inf;
-    if (a_inf && b_inf) {
+    double a_inf = static_cast<double>(a() == inf);
+    double b_inf = static_cast<double>(b() == inf);
+    if ((a_inf != 0.0) && (b_inf != 0.0)) {
       report_error("both a and b are finite in BetaModel::Logp");
     }
     if (nd > 0) {
       d1 = 0;
-      if (nd > 1) d2 = 0;
+      if (nd > 1) {
+        d2 = 0;
+      }
     }
-    if (b_inf) x = 1 - x;
-    return x == 1.0 ?  0.0 : BOOM::negative_infinity();
+    if (b_inf != 0.0) {
+      x = 1 - x;
+    }
+    return x == 1.0 ? 0.0 : BOOM::negative_infinity();
   }
 
   double BM::sim(RNG &rng) const { return rbeta_mt(rng, a(), b()); }

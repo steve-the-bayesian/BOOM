@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,23 +20,21 @@
 #ifndef BOOM_DISCRETE_UNIFORM_MODEL_HPP_
 #define BOOM_DISCRETE_UNIFORM_MODEL_HPP_
 
-#include <Models/Policies/NullParamPolicy.hpp>
-#include <Models/Policies/NullDataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <distributions/rng.hpp>
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/NullParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
   // A uniform distribution on the integers {lo, ..., hi}.
-  class DiscreteUniformModel
-      : public NullParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy,
-        public IntModel
-  {
+  class DiscreteUniformModel : public NullParamPolicy,
+                               public NullDataPolicy,
+                               public PriorPolicy,
+                               public IntModel {
    public:
     DiscreteUniformModel(int lo, int hi);
-    DiscreteUniformModel * clone() const override;
+    DiscreteUniformModel *clone() const override;
     double logp(int x) const override;
 
     // Smallest number in support.
@@ -53,4 +52,4 @@ namespace BOOM {
   };
 }  // namespace BOOM
 
-#endif //  BOOM_DISCRETE_UNIFORM_MODEL_HPP_
+#endif  //  BOOM_DISCRETE_UNIFORM_MODEL_HPP_

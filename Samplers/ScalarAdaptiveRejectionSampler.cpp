@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,18 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Samplers/ScalarAdaptiveRejectionSampler.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/lse.hpp>
-#include <cpputil/report_error.hpp>
-#include <distributions.hpp>
+#include "Samplers/ScalarAdaptiveRejectionSampler.hpp"
+#include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   ScalarAdaptiveRejectionSampler::ScalarAdaptiveRejectionSampler(
       const std::function<double(double)> &logf)
-      : log_density_(logf)
-  {}
+      : log_density_(logf) {}
 
   void ScalarAdaptiveRejectionSampler::add_point(double x) {
     if (x < log_density_approximation_.lower_limit() ||
@@ -44,8 +44,7 @@ namespace BOOM {
     // Sample a uniform random number between 0 and the height of the
     // envelope, on the log scale.
     double log_u =
-        log_density_approximation_.envelope(candidate)
-        + log(runif_mt(rng()));
+        log_density_approximation_.envelope(candidate) + log(runif_mt(rng()));
 
     // If the uniform number is less than the lower bound then accept.
     // Otherwise, accept if it is less than the density function.
@@ -121,10 +120,10 @@ namespace BOOM {
       // so we can ensure a negative slope and thus a finite right
       // tail probability.
       int counter = 0;
-      while (log_density_approximation_.log_density_values_at_knots()[
-                 log_density_approximation_.number_of_knots() - 2] <
-             log_density_approximation_.log_density_values_at_knots()[
-                 log_density_approximation_.number_of_knots() - 1]) {
+      while (log_density_approximation_.log_density_values_at_knots()
+                 [log_density_approximation_.number_of_knots() - 2] <
+             log_density_approximation_.log_density_values_at_knots()
+                 [log_density_approximation_.number_of_knots() - 1]) {
         const Vector &knots(log_density_approximation_.knots());
         int nk = log_density_approximation_.number_of_knots();
         double dx = std::max<double>(1.0, knots.back() - knots[nk - 2]);
@@ -140,9 +139,7 @@ namespace BOOM {
     typedef PiecewiseExponentialApproximation PEA;
 
     PEA::PiecewiseExponentialApproximation()
-        : lower_limit_(negative_infinity()),
-          upper_limit_(infinity())
-    {}
+        : lower_limit_(negative_infinity()), upper_limit_(infinity()) {}
 
     void PEA::set_lower_limit(double lo) {
       if (lo > upper_limit_) {
@@ -171,8 +168,8 @@ namespace BOOM {
         report_error("Adding an illegal point.");
       }
       std::vector<double>::iterator b = knots_.begin();
-      std::vector<double>::iterator knots_iterator = std::lower_bound(
-          b, knots_.end(), x);
+      std::vector<double>::iterator knots_iterator =
+          std::lower_bound(b, knots_.end(), x);
       int position_of_new_knot = 0;
       if (knots_iterator == knots_.end()) {
         position_of_new_knot = knots_.empty() ? 0 : knots_.size() - 1;
@@ -185,8 +182,8 @@ namespace BOOM {
           return;
         }
         position_of_new_knot = knots_iterator - b;
-        std::vector<double>::iterator logf_iterator
-            = logf_.begin() + position_of_new_knot;
+        std::vector<double>::iterator logf_iterator =
+            logf_.begin() + position_of_new_knot;
         knots_.insert(knots_iterator, x);
         logf_.insert(logf_iterator, logf);
       }
@@ -206,8 +203,7 @@ namespace BOOM {
         recompute_region_probabilities();
       } else {
         log_region_probability_.insert(
-            log_region_probability_.begin() + position_of_new_knot,
-            0);
+            log_region_probability_.begin() + position_of_new_knot, 0);
         recompute_region_probabilities();
       }
     }
@@ -252,8 +248,9 @@ namespace BOOM {
         int left_knot = right_knot - 1;
         double left_line =
             (left_knot >= 1) ? interpolate(x, left_knot - 1, left_knot) : inf;
-        double right_line = (right_knot + 1 < nk) ?
-            interpolate(x, right_knot, right_knot + 1) : inf;
+        double right_line = (right_knot + 1 < nk)
+                                ? interpolate(x, right_knot, right_knot + 1)
+                                : inf;
         return std::min(left_line, right_line);
       }
     }
@@ -271,11 +268,8 @@ namespace BOOM {
       return y0 + slope * (x - x0);
     }
 
-    void PEA::interpolating_equation(
-        int knot0,
-        int knot1,
-        double *intercept,
-        double *slope) const {
+    void PEA::interpolating_equation(int knot0, int knot1, double *intercept,
+                                     double *slope) const {
       double x0 = knots_[knot0];
       double y0 = logf_[knot0];
       double x1 = knots_[knot1];
@@ -291,9 +285,7 @@ namespace BOOM {
     // Return the log probability between lower_limit and upper_limit of
     // the un-normalized distribuiton exp(intercept + slope * x).
     double PEA::cumulative_exponential_log_probability(
-        double intercept,
-        double slope,
-        double lower_limit,
+        double intercept, double slope, double lower_limit,
         double upper_limit) const {
       if (lower_limit > upper_limit) {
         std::swap(lower_limit, upper_limit);
@@ -313,10 +305,9 @@ namespace BOOM {
     // left_knot and right_knot intersect, where right_knot is
     // left_knot + 1.
     double PEA::point_of_intersection(int left_knot) const {
-      if (left_knot >= number_of_knots() - 1 ) {
+      if (left_knot >= number_of_knots() - 1) {
         std::ostringstream err;
-        err << "There is no knot after " << left_knot
-            << "." << std::endl;
+        err << "There is no knot after " << left_knot << "." << std::endl;
         report_error(err.str());
         return 0;
       } else if (left_knot < 0) {
@@ -336,8 +327,8 @@ namespace BOOM {
       } else {
         double intercept0, slope0, intercept1, slope1;
         interpolating_equation(left_knot - 1, left_knot, &intercept0, &slope0);
-        interpolating_equation(
-            left_knot + 1, left_knot + 2, &intercept1, &slope1);
+        interpolating_equation(left_knot + 1, left_knot + 2, &intercept1,
+                               &slope1);
         return (intercept1 - intercept0) / (slope0 - slope1);
       }
     }
@@ -351,38 +342,26 @@ namespace BOOM {
         // Initial, potentially unbounded region on left side.  The
         // interpolant is determined by knots 0 and 1.
         interpolating_equation(0, 1, &intercept, &slope);
-        return cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            lower_limit_,
-            knots_[0]);
+        return cumulative_exponential_log_probability(intercept, slope,
+                                                      lower_limit_, knots_[0]);
       } else if (left_knot == 0) {
         // First interior region on left side.  The interpolant is
         // determined by knots 1 and 2.
         interpolating_equation(1, 2, &intercept, &slope);
-        return cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            knots_[0],
-            knots_[1]);
+        return cumulative_exponential_log_probability(intercept, slope,
+                                                      knots_[0], knots_[1]);
       } else if (left_knot == number_of_knots() - 2) {
         // Final interior region, on right side.  Interpolant is
         // determined by knots nk-3 and nk-2.
         interpolating_equation(left_knot - 1, left_knot, &intercept, &slope);
         return cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            knots_[left_knot],
-            knots_[left_knot + 1]);
+            intercept, slope, knots_[left_knot], knots_[left_knot + 1]);
       } else if (left_knot == number_of_knots() - 1) {
         // Final, poentially unbounded region on right hand side.
         // Interpolant determined by nk-2 and nk-1.
         interpolating_equation(left_knot - 1, left_knot, &intercept, &slope);
         return cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            knots_[left_knot],
-            upper_limit_);
+            intercept, slope, knots_[left_knot], upper_limit_);
       } else {
         // Buffered interior region.  The interpolant has two parts.
         // The first is determined by the left knot, and the knot to
@@ -391,18 +370,12 @@ namespace BOOM {
         double xstar = point_of_intersection(left_knot);
         interpolating_equation(left_knot - 1, left_knot, &intercept, &slope);
         double logp0 = cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            knots_[left_knot],
-            xstar);
+            intercept, slope, knots_[left_knot], xstar);
 
         int right_knot = left_knot + 1;
         interpolating_equation(right_knot, right_knot + 1, &intercept, &slope);
         double logp1 = cumulative_exponential_log_probability(
-            intercept,
-            slope,
-            xstar,
-            knots_[right_knot]);
+            intercept, slope, xstar, knots_[right_knot]);
         return lse2(logp0, logp1);
       }
     }
@@ -441,21 +414,15 @@ namespace BOOM {
       } else if (which_region == number_of_knots() - 1) {
         // Draw from the truncated exponential between
         // number_of_knots() - 2 and number_of_knots() - 1.
-        interpolating_equation(
-            number_of_knots() - 3,
-            number_of_knots() - 2,
-            &intercept,
-            &slope);
+        interpolating_equation(number_of_knots() - 3, number_of_knots() - 2,
+                               &intercept, &slope);
         lo = knots_[number_of_knots() - 2];
-        hi = knots_[number_of_knots() -1];
+        hi = knots_[number_of_knots() - 1];
       } else if (which_region == number_of_knots()) {
         // Draw from the truncated exponential between knots_.back()
         // and upper_limit_.
-        interpolating_equation(
-            number_of_knots() - 2,
-            number_of_knots() - 1,
-            &intercept,
-            &slope);
+        interpolating_equation(number_of_knots() - 2, number_of_knots() - 1,
+                               &intercept, &slope);
         lo = knots_.back();
         hi = upper_limit_;
       } else {
@@ -464,16 +431,14 @@ namespace BOOM {
         int right_knot = which_region;
         double xstar = point_of_intersection(left_knot);
         double left_intercept, left_slope;
-        interpolating_equation(left_knot - 1,
-                               left_knot,
-                               &left_intercept,
+        interpolating_equation(left_knot - 1, left_knot, &left_intercept,
                                &left_slope);
         double logp_left = cumulative_exponential_log_probability(
             left_intercept, left_slope, knots_[left_knot], xstar);
 
         double right_intercept, right_slope;
-        interpolating_equation(right_knot, right_knot + 1,
-                               &right_intercept, &right_slope);
+        interpolating_equation(right_knot, right_knot + 1, &right_intercept,
+                               &right_slope);
         double logp_right = cumulative_exponential_log_probability(
             right_intercept, right_slope, xstar, knots_[right_knot]);
 
@@ -493,17 +458,18 @@ namespace BOOM {
         }
       }
       if (lo == BOOM::negative_infinity() && slope <= 0) {
-          report_error("Density is increasing unboundedly to the left.");
-      } else if (hi == BOOM::infinity()  && slope >= 0) {
-          report_error("Density is increasing unboundedly to the right.");
+        report_error("Density is increasing unboundedly to the left.");
+      } else if (hi == BOOM::infinity() && slope >= 0) {
+        report_error("Density is increasing unboundedly to the right.");
       }
       double ans = rpiecewise_log_linear_mt(rng, slope, lo, hi);
       if (std::isnan(ans)) {
-        report_error("Adaptive rejection sampler approximation "
-                     "simulated a NaN.");
+        report_error(
+            "Adaptive rejection sampler approximation "
+            "simulated a NaN.");
       }
       return ans;
     }
 
   }  // namespace ARS
-}
+}  // namespace BOOM

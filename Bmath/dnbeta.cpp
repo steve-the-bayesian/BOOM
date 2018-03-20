@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double dnbeta(double x, double a, double b, double lambda, int give_log);
  *
  *  DESCRIPTION

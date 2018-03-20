@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,23 +20,22 @@
 #ifndef BOOM_STATE_SPACE_MODEL_HPP_
 #define BOOM_STATE_SPACE_MODEL_HPP_
 
-#include <Models/DataTypes.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroMeanGaussianModel.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
-#include <Models/StateSpace/StateSpaceModelBase.hpp>
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   namespace StateSpace {
-    class MultiplexedDoubleData
-        : public MultiplexedData {
+    class MultiplexedDoubleData : public MultiplexedData {
      public:
       MultiplexedDoubleData();
-      MultiplexedDoubleData(double y);
-      MultiplexedDoubleData * clone() const override;
-      std::ostream & display(std::ostream &out) const override;
+      explicit MultiplexedDoubleData(double y);
+      MultiplexedDoubleData *clone() const override;
+      std::ostream &display(std::ostream &out) const override;
       void add_data(const Ptr<DoubleData> &data_point);
 
       double adjusted_observation() const;
@@ -47,7 +47,7 @@ namespace BOOM{
       // missing.
       bool all_missing() const;
 
-      int total_sample_size() const override {return data_.size();}
+      int total_sample_size() const override { return data_.size(); }
 
      private:
       std::vector<Ptr<DoubleData>> data_;
@@ -55,23 +55,23 @@ namespace BOOM{
   }  // namespace StateSpace
 
   class StateSpaceModel
-      : public StateSpaceModelBase,
+      : public ScalarStateSpaceModelBase,
         public IID_DataPolicy<StateSpace::MultiplexedDoubleData>,
         public PriorPolicy {
    public:
     StateSpaceModel();
-    StateSpaceModel(const Vector &y,
-                    const std::vector<bool> &y_is_observed =
-                       std::vector<bool>());
+    explicit StateSpaceModel(
+        const Vector &y,
+        const std::vector<bool> &y_is_observed = std::vector<bool>());
     StateSpaceModel(const StateSpaceModel &rhs);
-    StateSpaceModel* clone()const override;
+    StateSpaceModel *clone() const override;
 
     int time_dimension() const override;
     double observation_variance(int t) const override;
     double adjusted_observation(int t) const override;
     bool is_missing_observation(int t) const override;
-    ZeroMeanGaussianModel* observation_model() override;
-    const ZeroMeanGaussianModel* observation_model() const override;
+    ZeroMeanGaussianModel *observation_model() override;
+    const ZeroMeanGaussianModel *observation_model() const override;
     void observe_data_given_state(int t) override;
 
     // Forecast the next nrow(newX) time steps given the current data,
@@ -92,8 +92,8 @@ namespace BOOM{
     //   observed_data: A vector of observed data on which to base the
     //     forecast.  This might be different than the data used to
     //     fit the model.
-    Vector simulate_forecast_given_observed_data(
-        RNG &rng, int n, const Vector &observed_data);
+    Vector simulate_forecast_given_observed_data(RNG &rng, int n,
+                                                 const Vector &observed_data);
 
     // Run the Kalman filter over the set of observed data, using
     // negative_infinity() as a signal for missing data.  The .a and .P
@@ -120,8 +120,7 @@ namespace BOOM{
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
     void update_observation_model_complete_data_sufficient_statistics(
-        int t,
-        double observation_error_mean,
+        int t, double observation_error_mean,
         double observation_error_variance) override;
 
     // Increment the portion of the log-likelihood gradient
@@ -138,9 +137,7 @@ namespace BOOM{
     //   observation_error_variance: The posterior variance of the
     //     observation error at time t.
     void update_observation_model_gradient(
-        VectorView gradient,
-        int t,
-        double observation_error_mean,
+        VectorView gradient, int t, double observation_error_mean,
         double observation_error_variance) override;
 
    private:
@@ -149,4 +146,4 @@ namespace BOOM{
   };
 }  // namespace BOOM
 
-#endif //BOOM_STATE_SPACE_MODEL_HPP_
+#endif  // BOOM_STATE_SPACE_MODEL_HPP_

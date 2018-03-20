@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -16,19 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp>
-#include <LinAlg/SWEEP.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
+#include "Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp"
+#include "LinAlg/SWEEP.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   ArSpikeSlabSampler::ArSpikeSlabSampler(
-      ArModel *model,
-      const Ptr<MvnBase> &slab,
+      ArModel *model, const Ptr<MvnBase> &slab,
       const Ptr<VariableSelectionPrior> &spike,
-      const Ptr<GammaModelBase> &residual_precision_prior,
-      bool truncate,
+      const Ptr<GammaModelBase> &residual_precision_prior, bool truncate,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
@@ -39,8 +38,7 @@ namespace BOOM {
         max_number_of_regression_proposals_(100),
         spike_slab_sampler_(model_, slab_, spike_),
         sigsq_sampler_(residual_precision_prior_),
-        suf_(model_->xdim())
-  {}
+        suf_(model_->xdim()) {}
 
   void ArSpikeSlabSampler::draw() {
     set_sufficient_statistics();
@@ -54,7 +52,7 @@ namespace BOOM {
       return negative_infinity();
     }
     return spike_slab_sampler_.logpri() +
-        sigsq_sampler_.log_prior(model_->sigsq());
+           sigsq_sampler_.log_prior(model_->sigsq());
   }
 
   void ArSpikeSlabSampler::truncate_support(bool truncate) {
@@ -64,8 +62,9 @@ namespace BOOM {
       int max_shrinkage = 100;
       while (!model_->check_stationary(phi)) {
         if (attempts++ > max_shrinkage) {
-          report_error("Could not shrink AR coefficient vector to "
-                       "stationary region.");
+          report_error(
+              "Could not shrink AR coefficient vector to "
+              "stationary region.");
         }
         phi *= .9;
       }
@@ -97,17 +96,18 @@ namespace BOOM {
     int p = inc.nvars();
     Vector phi = model_->included_coefficients();
     if (!model_->check_stationary(model_->phi())) {
-      report_error("ArSpikeSlabSampler::draw_phi_univariate was called with an "
-                   "illegal initial value of phi.  That should never happen.");
+      report_error(
+          "ArSpikeSlabSampler::draw_phi_univariate was called with an "
+          "illegal initial value of phi.  That should never happen.");
     }
     double sigsq = model_->sigsq();
 
     const SpdMatrix prior_precision = inc.select(slab_->siginv());
-    const SpdMatrix precision = inc.select(model_->suf()->xtx()) / sigsq
-        + prior_precision;
-    const Vector posterior_mean = precision.solve(
-        inc.select(model_->suf()->xty()) / sigsq
-        + prior_precision * inc.select(slab_->mu()));
+    const SpdMatrix precision =
+        inc.select(model_->suf()->xtx()) / sigsq + prior_precision;
+    const Vector posterior_mean =
+        precision.solve(inc.select(model_->suf()->xty()) / sigsq +
+                        prior_precision * inc.select(slab_->mu()));
 
     for (int i = 0; i < p; ++i) {
       SweptVarianceMatrix swept_precision(precision, true);
@@ -116,8 +116,7 @@ namespace BOOM {
       conditional.drop(i);
 
       double conditional_mean = swept_precision.conditional_mean(
-          conditional.select(phi),
-          posterior_mean)[0];
+          conditional.select(phi), posterior_mean)[0];
       double conditional_sd = sqrt(swept_precision.residual_variance()(0, 0));
 
       double initial_phi = phi[i];
@@ -133,18 +132,16 @@ namespace BOOM {
         if (attempts++ > max_attempts) {
           report_error("Too many attempts in draw_phi_univariate.");
         }
-        double candidate = rtrun_norm_2_mt(
-            rng(),
-            conditional_mean,
-            conditional_sd,
-            lo,
-            hi);
+        double candidate =
+            rtrun_norm_2_mt(rng(), conditional_mean, conditional_sd, lo, hi);
         phi[i] = candidate;
         if (ArModel::check_stationary(inc.expand(phi))) {
           ok = true;
         } else {
-          if (candidate > initial_phi) hi = candidate;
-          else lo = candidate;
+          if (candidate > initial_phi)
+            hi = candidate;
+          else
+            lo = candidate;
         }
       }
     }

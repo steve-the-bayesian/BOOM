@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -33,6 +34,6 @@ namespace BOOM {
     out << object;
     return out.str();
   }
-}
+}  // namespace BOOM
 
-#endif //  BOOM_TO_STRING_HPP_
+#endif  //  BOOM_TO_STRING_HPP_

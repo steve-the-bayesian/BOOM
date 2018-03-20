@@ -19,8 +19,8 @@
 #ifndef BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_
 #define BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_
 
-#include <Models/PointProcess/PoissonProcess.hpp>
 #include <functional>
+#include "Models/PointProcess/PoissonProcess.hpp"
 
 namespace BOOM {
   // A class to help concrete PoissonProcess models implement the
@@ -29,20 +29,17 @@ namespace BOOM {
   // observation window.
   class BoundedPoissonProcessSimulator {
    public:
-    BoundedPoissonProcessSimulator(
-        const PoissonProcess *process_to_simulate,
-        double max_event_rate);
-    PointProcess simulate(
-        RNG &rng,
-        const DateTime &t0,
-        const DateTime &t1,
-        const std::function<Data*()> &mark_generator
-        = NullDataGenerator()) const;
+    BoundedPoissonProcessSimulator(const PoissonProcess *process_to_simulate,
+                                   double max_event_rate);
+    PointProcess simulate(RNG &rng, const DateTime &t0, const DateTime &t1,
+                          const std::function<Data *()> &mark_generator =
+                              NullDataGenerator()) const;
+
    private:
     const PoissonProcess *process_;
     double max_event_rate_;
     mutable RNG rng_;
   };
-}
+}  // namespace BOOM
 
-#endif //  BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_
+#endif  //  BOOM_BOUNDED_POISSON_PROCESS_SIMULATOR_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -20,7 +21,7 @@
 #define BOOM_CPPUTIL_SHIFT_ELEMENT_HPP_
 
 #include <vector>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 

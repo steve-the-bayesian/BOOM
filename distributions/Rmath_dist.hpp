@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -23,10 +24,10 @@
 // bunch of dangerous #define's (e.g. trunc, which is used by C++ as a
 // file input mode.)
 
-#include <distributions/rng.hpp>
 #include <vector>
+#include "distributions/rng.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // This file brings Rmath functions into BOOM scope and adjusts some
   // default arguments
 
@@ -36,126 +37,147 @@ namespace BOOM{
   double rtrap_mt(RNG &, double, double, double, double);
   double rtriangle_mt(RNG &, double, double, double);
 
-  double dtriangle(double, double, double, double, bool log=false);
+  double dtriangle(double, double, double, double, bool log = false);
   double ptriangle(double, double, double, double, bool);
   double qtriangle(double, double, double, double);
 
   //============ stuff below wraps Rmath  functions =======
 
-  double dnorm(double x, double mu=0, double sig=1, bool log=false);
-  double pnorm(double x, double mu=0, double sig=1, bool low=true, bool log=false);
-  double qnorm(double p, double mu=0, double sig=1, bool low=true, bool log=false);
-  double rnorm(double mu=0, double sig=1);
-  double rnorm_mt(RNG &, double mu=0, double sig=1);
+  double dnorm(double x, double mu = 0, double sig = 1, bool log = false);
+  double pnorm(double x, double mu = 0, double sig = 1, bool low = true,
+               bool log = false);
+  double qnorm(double p, double mu = 0, double sig = 1, bool low = true,
+               bool log = false);
+  double rnorm(double mu = 0, double sig = 1);
+  double rnorm_mt(RNG &, double mu = 0, double sig = 1);
 
   /* Uniform Distribution */
-  double dunif(double x, double lo=0, double hi=1, bool log=false);
-  double punif(double x, double lo=0, double hi=1, bool low=true, bool log=false);
-  double qunif(double p, double lo=0, double hi=1, bool low=true, bool log=false);
-  double runif(double lo=0, double hi=1);
-  double runif_mt(RNG &, double lo=0, double hi=1);
+  double dunif(double x, double lo = 0, double hi = 1, bool log = false);
+  double punif(double x, double lo = 0, double hi = 1, bool low = true,
+               bool log = false);
+  double qunif(double p, double lo = 0, double hi = 1, bool low = true,
+               bool log = false);
+  double runif(double lo = 0, double hi = 1);
+  double runif_mt(RNG &, double lo = 0, double hi = 1);
 
   /* Gamma Distribution */
 
-  double dgamma(double x, double a=1, double b=1, bool log=false);
-  double pgamma(double x, double a=1, double b=1, bool low=true, bool log=false);
-  double qgamma(double p, double a=1, double b=1, bool low=true, bool log=false);
-  double rgamma(double a=1, double b=1);
-  double rgamma_mt(RNG &, double a=1, double b=1);
+  double dgamma(double x, double a = 1, double b = 1, bool log = false);
+  double pgamma(double x, double a = 1, double b = 1, bool low = true,
+                bool log = false);
+  double qgamma(double p, double a = 1, double b = 1, bool low = true,
+                bool log = false);
+  double rgamma(double a = 1, double b = 1);
+  double rgamma_mt(RNG &, double a = 1, double b = 1);
 
   /* Beta Distribution */
 
-  double dbeta(double x, double a=1, double b=1, bool log=false);
-  double pbeta(double x, double a=1, double b=1, bool low=true, bool log=false);
-  double qbeta(double p, double a=1, double b=1, bool low=true, bool log=false);
-  double rbeta(double a=1, double b=1);
-  double rbeta_mt(RNG &, double a=1, double b=1);
+  double dbeta(double x, double a = 1, double b = 1, bool log = false);
+  double pbeta(double x, double a = 1, double b = 1, bool low = true,
+               bool log = false);
+  double qbeta(double p, double a = 1, double b = 1, bool low = true,
+               bool log = false);
+  double rbeta(double a = 1, double b = 1);
+  double rbeta_mt(RNG &, double a = 1, double b = 1);
 
   /* Lognormal Distribution */
 
-  double dlnorm(double x, double mu=0, double sig=1, bool log=false);
-  double plnorm(double x, double mu=0, double sig=1, bool low=true, bool log=false);
-  double qlnorm(double p, double mu=0, double sig=1, bool low=true, bool log=false);
-  double rlnorm(double mu=0, double sig=1);
-  double rlnorm_mt(RNG &, double mu=0, double sig=1);
+  double dlnorm(double x, double mu = 0, double sig = 1, bool log = false);
+  double plnorm(double x, double mu = 0, double sig = 1, bool low = true,
+                bool log = false);
+  double qlnorm(double p, double mu = 0, double sig = 1, bool low = true,
+                bool log = false);
+  double rlnorm(double mu = 0, double sig = 1);
+  double rlnorm_mt(RNG &, double mu = 0, double sig = 1);
 
   /* Chi-squared Distribution */
 
-  double dchisq(double x, double df, bool log=false);
-  double pchisq(double x, double df, bool low=true, bool log=false);
-  double qchisq(double q, double df, bool low=true, bool log=false);
+  double dchisq(double x, double df, bool log = false);
+  double pchisq(double x, double df, bool low = true, bool log = false);
+  double qchisq(double q, double df, bool low = true, bool log = false);
   double rchisq(double df);
   double rchisq_mt(RNG &, double df);
 
   /* Non-central Chi-squared Distribution */
 
-  double dnchisq(double x, double df, double ncp, bool log=false);
-  double pnchisq(double x, double df, double ncp, bool low=true, bool log=false);
-  double qnchisq(double p, double df, double ncp, bool low=true, bool log=false);
+  double dnchisq(double x, double df, double ncp, bool log = false);
+  double pnchisq(double x, double df, double ncp, bool low = true,
+                 bool log = false);
+  double qnchisq(double p, double df, double ncp, bool low = true,
+                 bool log = false);
   //  double rnchisq(double df, double ncp);
 
   /* F Distibution */
 
-  double df(double x, double dfn , double dfd, bool log=false);
-  double pf(double x, double dfn , double dfd, bool low=true, bool log=false);
-  double qf(double p, double dfn , double dfd, bool low=true, bool log=false);
+  double df(double x, double dfn, double dfd, bool log = false);
+  double pf(double x, double dfn, double dfd, bool low = true,
+            bool log = false);
+  double qf(double p, double dfn, double dfd, bool low = true,
+            bool log = false);
   double rf(double dfn, double dfd);
   double rf_mt(RNG &, double dfn, double dfd);
 
   /* Student t Distibution */
 
-  double dt(double x, double df, bool log=false);
-  double pt(double x, double df, bool low=true, bool log=false);
-  double qt(double p, double df, bool low=true, bool log=false);
+  double dt(double x, double df, bool log = false);
+  double pt(double x, double df, bool low = true, bool log = false);
+  double qt(double p, double df, bool low = true, bool log = false);
   double rt(double df);
   double rt_mt(RNG &, double df);
 
   /* Binomial Distribution */
 
-  double dbinom(double x, double n, double p, bool log=false);
-  double pbinom(double x, double n, double p, bool low=true, bool log=false);
-  double qbinom(double p, double n, double prob, bool low=true, bool log=false);
+  double dbinom(double x, double n, double p, bool log = false);
+  double pbinom(double x, double n, double p, bool low = true,
+                bool log = false);
+  double qbinom(double p, double n, double prob, bool low = true,
+                bool log = false);
   unsigned rbinom(int n, double prob);
   unsigned rbinom_mt(RNG &, int n, double prob);
 
   /* Multinomial distribution */
-  void rmultinom_mt(RNG &, int, const std::vector<double> &prob,
+  void rmultinom_mt(RNG &rng, int64_t n, const std::vector<double> &prob,
                     std::vector<int> &result);
-  std::vector<int> rmultinom_mt(RNG &rng, int n,
+  std::vector<int> rmultinom_mt(RNG &rng, int64_t n,
                                 const std::vector<double> &prob);
-  void rmultinom(int n, const std::vector<double> &prob,
+  void rmultinom(int64_t n, const std::vector<double> &prob,
                  std::vector<int> &result);
-  std::vector<int> rmultinom(int n, const std::vector<double> &prob);
+  std::vector<int> rmultinom(int64_t n, const std::vector<double> &prob);
 
   /* Cauchy Distribution */
 
-  double dcauchy(double x, double mu=0, double sig=1, bool log=false);
-  double pcauchy(double x, double mu=0, double sig=1, bool low=true, bool log=false);
-  double qcauchy(double p, double mu=0, double sig=1, bool low=true, bool log=false);
+  double dcauchy(double x, double mu = 0, double sig = 1, bool log = false);
+  double pcauchy(double x, double mu = 0, double sig = 1, bool low = true,
+                 bool log = false);
+  double qcauchy(double p, double mu = 0, double sig = 1, bool low = true,
+                 bool log = false);
   double rcauchy(double mu, double sig);
   double rcauchy_mt(RNG &, double mu, double sig);
 
   /* Exponential Distribution */
 
-  double dexp(double x, double lam=1, bool log=false);
-  double pexp(double x, double lam=1, bool low=true, bool log=false);
-  double qexp(double p, double lam=1, bool low=true, bool log=false);
-  double rexp(double lam=1);
-  double rexp_mt(RNG &, double lam=1);
+  double dexp(double x, double lam = 1, bool log = false);
+  double pexp(double x, double lam = 1, bool low = true, bool log = false);
+  double qexp(double p, double lam = 1, bool low = true, bool log = false);
+  double rexp(double lam = 1);
+  double rexp_mt(RNG &, double lam = 1);
 
   /* Geometric Distribution */
 
-  double dgeom(double x, double p, bool log=false);
-  double pgeom(double x, double p, bool low=true, bool log=false);
-  double qgeom(double p, double prob, bool low=true, bool log=false);
+  double dgeom(double x, double p, bool log = false);
+  double pgeom(double x, double p, bool low = true, bool log = false);
+  double qgeom(double p, double prob, bool low = true, bool log = false);
   double rgeom(double p);
   double rgeom_mt(RNG &, double p);
 
   /* Hypergeometric Distibution */
 
-  double dhyper(double x, double Ntrue, double Nfalse, double n, bool log=false);
-  double phyper(double x, double Ntrue, double Nfalse, double n, bool low=true, bool log=false);
-  double qhyper(double p, double Ntrue, double Nfalse, double n, bool low=true, bool log=false);
+  double dhyper(double x, double Ntrue, double Nfalse, double n,
+                bool log = false);
+  double phyper(double x, double Ntrue, double Nfalse, double n,
+                bool low = true, bool log = false);
+  double qhyper(double p, double Ntrue, double Nfalse, double n,
+                bool low = true, bool log = false);
   double rhyper(double Ntrue, double Nfalse, double n);
   double rhyper_mt(RNG &, double Ntrue, double Nfalse, double n);
 
@@ -167,49 +189,59 @@ namespace BOOM{
    *   alpha, p = beta/(1+beta))
    */
 
-  double dnbinom(double x, double n=1, double p=.5, bool log=false);
-  double pnbinom(double x, double n=1, double p=.5, bool low=true, bool log=false);
-  double qnbinom(double p, double n=1, double prob=.5, bool low=true, bool log=false);
-  double rnbinom(double n=1, double p=.5);
-  double rnbinom_mt(RNG &, double n=1, double p=.5);
+  double dnbinom(double x, double n = 1, double p = .5, bool log = false);
+  double pnbinom(double x, double n = 1, double p = .5, bool low = true,
+                 bool log = false);
+  double qnbinom(double p, double n = 1, double prob = .5, bool low = true,
+                 bool log = false);
+  double rnbinom(double n = 1, double p = .5);
+  double rnbinom_mt(RNG &, double n = 1, double p = .5);
 
   /* Poisson Distribution */
 
-  double dpois(double x, double lam=1, bool log=false);
-  double ppois(double x, double lam=1, bool low=true, bool log=false);
-  double qpois(double p, double lam=1, bool low=true, bool log=false);
-  double rpois(double lam=1);
-  double rpois_mt(RNG &, double lam=1);
+  double dpois(double x, double lam = 1, bool log = false);
+  double ppois(double x, double lam = 1, bool low = true, bool log = false);
+  double qpois(double p, double lam = 1, bool low = true, bool log = false);
+  double rpois(double lam = 1);
+  double rpois_mt(RNG &, double lam = 1);
 
   /* Weibull Distribution */
 
-  double dweibull(double x, double shape=1, double scale=1, bool log=false);
-  double pweibull(double x, double shape=1, double scale=1, bool low=true, bool log=false);
-  double qweibull(double p, double shape=1, double scale=1, bool low=true, bool log=false);
-  double rweibull(double shape=1, double scale=1);
-  double rweibull_mt(RNG &, double shape=1, double scale=1);
+  double dweibull(double x, double shape = 1, double scale = 1,
+                  bool log = false);
+  double pweibull(double x, double shape = 1, double scale = 1, bool low = true,
+                  bool log = false);
+  double qweibull(double p, double shape = 1, double scale = 1, bool low = true,
+                  bool log = false);
+  double rweibull(double shape = 1, double scale = 1);
+  double rweibull_mt(RNG &, double shape = 1, double scale = 1);
 
   /* Logistic Distribution */
 
-  double dlogis(double x, double mu=0, double sig=1, bool log=false);
-  double plogis(double x, double mu=0, double sig=1, bool low=true, bool log=false);
-  double qlogis(double p, double mu=0, double sig=1, bool low=true, bool log=false);
-  double rlogis(double mu=0, double sig=1);
-  double rlogis_mt(RNG &, double mu=0, double sig=1);
+  double dlogis(double x, double mu = 0, double sig = 1, bool log = false);
+  double plogis(double x, double mu = 0, double sig = 1, bool low = true,
+                bool log = false);
+  double qlogis(double p, double mu = 0, double sig = 1, bool low = true,
+                bool log = false);
+  double rlogis(double mu = 0, double sig = 1);
+  double rlogis_mt(RNG &, double mu = 0, double sig = 1);
 
   /* Non-central Beta Distribution */
 
-  double dnbeta(double x, double a=1, double b=1, double lam=0, bool log=false);
-  double pnbeta(double x, double a=1, double b=1, double lam=0, bool low=true, bool log=false);
+  double dnbeta(double x, double a = 1, double b = 1, double lam = 0,
+                bool log = false);
+  double pnbeta(double x, double a = 1, double b = 1, double lam = 0,
+                bool low = true, bool log = false);
 
   /* Non-central F Distribution */
 
-  double pnf(double x, double dfn, double dfd, double lam,
-             bool low=true, bool log=false);
+  double pnf(double x, double dfn, double dfd, double lam, bool low = true,
+             bool log = false);
 
   /* Non-central Student t Distribution */
 
-  double pnt(double x, double df, double mu=0, bool low=true, bool log=false);
+  double pnt(double x, double df, double mu = 0, bool low = true,
+             bool log = false);
 
   /* Gamma and Related Functions */
   double gamma(double);
@@ -226,30 +258,24 @@ namespace BOOM{
   double lchoose(double n, double p);
 
   /* Bessel Functions */
-// Bessesl functions have been removed because they are included in
-// the new C++ standard
+  // Bessesl functions have been removed because they are included in
+  // the new C++ standard
 
-//   double bessel_i(double x, double a, double expo);
-//   double bessel_j(double x, double a);
-//   double bessel_k(double x, double a, double expo);
-//   double bessel_y(double x, double a);
+  //   double bessel_i(double x, double a, double expo);
+  //   double bessel_j(double x, double a);
+  //   double bessel_k(double x, double a, double expo);
+  //   double bessel_y(double x, double a);
 
   /* General Support Functions */
 
-  double  pythag(double, double);
-#ifndef HAVE_EXPM1
-  double  expm1(double); /* = exp(x)-1 {care for small x} */
-#endif
-#ifndef HAVE_LOG1P
-  double  log1p(double); /* = log(1+x) {care for small x} */
-#endif
+  double pythag(double, double);
   double sign(double);
   double fprec(double, double);
   double fround(double, double);
   double fsign(double, double);
   double ftrunc(double);
 
-  struct unknown_error{};
-} // ends namespace BOOM
+  struct unknown_error {};
+}  // namespace BOOM
 
 #endif  // BOOM_RMATH_DISTRIBUTIONS_HPP

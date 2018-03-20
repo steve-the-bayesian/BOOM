@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,16 +18,16 @@
 */
 
 #include <cmath>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <vector>
-#include <numopt.hpp>
 #include <stdexcept>
+#include <vector>
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // Args:
   //   X: On input X contains the starting value for the algorithm.
@@ -47,20 +48,13 @@ namespace BOOM{
   //
   // Returns:
   //   The value of target at the minimum.
-  bool conj_grad(Vector &X,
-                 double &Fmin,
-                 const Target &target,
-                 const dTarget &dtarget,
-                 double abstol,
-                 double intol,
-                 ConjugateGradientMethod method,
-                 int &fncount,
-                 int &grcount,
-                 int maxit,
-                 std::string &error_message) {
-    const double reltest= 10.0;
-    const double acctol=  0.0001;
-    const double stepredn= 0.2;
+  bool conj_grad(Vector &X, double &Fmin, const Target &target,
+                 const dTarget &dtarget, double abstol, double intol,
+                 ConjugateGradientMethod method, int &fncount, int &grcount,
+                 int maxit, std::string &error_message) {
+    const double reltest = 10.0;
+    const double acctol = 0.0001;
+    const double stepredn = 0.2;
     Vector Bvec = X;
     int n = Bvec.size();
     error_message = "";
@@ -68,12 +62,12 @@ namespace BOOM{
     int count, cycle, cyclimit;
     double f;
     double G1, G2, G3, gradproj;
-    int funcount=0, gradcount=0, i;
-    double newstep, oldstep, setstep, steplength=1.0;
+    int funcount = 0, gradcount = 0, i;
+    double newstep, oldstep, setstep, steplength = 1.0;
     double tol;
 
     if (maxit <= 0) {
-      Fmin = target(Bvec); //fminfn(n, Bvec, ex);
+      Fmin = target(Bvec);  // fminfn(n, Bvec, ex);
       fncount = grcount = 0;
       error_message = "The maximum number of iterations was negative.";
       return false;
@@ -88,7 +82,7 @@ namespace BOOM{
     tol = intol * n * sqrt(intol);
 
     f = target(Bvec);
-    if(!std::isfinite(f)) {
+    if (!std::isfinite(f)) {
       ostringstream err;
       err << "bad initial value: " << Bvec << " in conj_grad";
       error_message = err.str();
@@ -99,8 +93,8 @@ namespace BOOM{
     funcount = 1;
     gradcount = 0;
     do {
-      t=0.0;
-      c=0.0;
+      t = 0.0;
+      c = 0.0;
 
       cycle = 0;
       oldstep = 1.0;
@@ -120,34 +114,34 @@ namespace BOOM{
         G1 = 0;
         G2 = 0;
         switch (method) {
-          case FletcherReeves : {
+          case FletcherReeves: {
             G1 = g.normsq();
             G2 = c.normsq();
             break;
           }
-          case PolakRibiere : {
+          case PolakRibiere: {
             G1 = g.normsq() - g.dot(c);
             G2 = c.normsq();
             break;
           }
-          case BealeSorenson : {
+          case BealeSorenson: {
             G1 = g.normsq() - g.dot(c);
             G2 = t.dot(g) - t.dot(c);
             break;
           }
           default: {
-            error_message = "Unknown ConjugateGradientMethod passed to "
+            error_message =
+                "Unknown ConjugateGradientMethod passed to "
                 "conj_grad.";
             return false;
           }
         }
-        c=g;
+        c = g;
 
         if (G1 > tol) {
-
-          G3 = G2>0.0? G1/G2 : 1.0;
-          t*=G3;
-          t-= g;
+          G3 = G2 > 0.0 ? G1 / G2 : 1.0;
+          t *= G3;
+          t -= g;
 
           gradproj = t.dot(g);
           steplength = oldstep;
@@ -178,7 +172,8 @@ namespace BOOM{
               Fmin = f;
               f = target(Bvec);
               funcount++;
-              if (f < Fmin) Fmin = f;
+              if (f < Fmin)
+                Fmin = f;
               else {
                 Bvec = X;
                 Bvec.axpy(t, steplength);
@@ -190,8 +185,7 @@ namespace BOOM{
         if (oldstep > 1.0) oldstep = 1.0;
       } while ((count != n) && (G1 > tol) && (cycle != cyclimit));
 
-    } while ((cycle != 1) ||
-             ((count != n) && (G1 > tol) && Fmin > abstol));
+    } while ((cycle != 1) || ((count != n) && (G1 > tol) && Fmin > abstol));
 
     fncount = funcount;
     grcount = gradcount;

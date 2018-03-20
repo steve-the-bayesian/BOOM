@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -18,18 +19,20 @@
 #ifndef BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/StateSpace/AggregatedStateSpaceRegression.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/StateSpace/AggregatedStateSpaceRegression.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class AggregatedStateSpacePosteriorSampler : public PosteriorSampler {
    public:
-    AggregatedStateSpacePosteriorSampler(AggregatedStateSpaceRegression *model,
-                                         RNG &seeding_rng = GlobalRng::rng);
+    explicit AggregatedStateSpacePosteriorSampler(
+        AggregatedStateSpaceRegression *model,
+        RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
     AggregatedStateSpaceRegression *m_;
   };
-}
-#endif // BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_AGGREGATED_STATE_SPACE_POSTERIOR_SAMPLER_HPP_

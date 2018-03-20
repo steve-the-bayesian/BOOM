@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,33 +17,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/DiscreteUniformModel.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "Models/DiscreteUniformModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   DiscreteUniformModel::DiscreteUniformModel(int lo, int hi)
-      : lo_(lo),
-        hi_(hi)
-  {
+      : lo_(lo), hi_(hi) {
     if (hi < lo) {
       report_error("hi must be >= lo in DiscreteUniformModel.");
     }
     log_normalizing_constant_ = log(1 + hi_ - lo_);
   }
 
-  DiscreteUniformModel * DiscreteUniformModel::clone() const {
+  DiscreteUniformModel *DiscreteUniformModel::clone() const {
     return new DiscreteUniformModel(*this);
   }
 
   double DiscreteUniformModel::logp(int x) const {
     if (x >= lo_ && x <= hi_) {
       return -log_normalizing_constant_;
-    } else {
-      return negative_infinity();
     }
+    return negative_infinity();
   }
 
   int DiscreteUniformModel::sim(RNG &rng) const {

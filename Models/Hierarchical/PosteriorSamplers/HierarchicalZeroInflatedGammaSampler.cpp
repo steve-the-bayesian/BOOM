@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/PosteriorSamplers/HierarchicalZeroInflatedGammaSampler.hpp>
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalZeroInflatedGammaSampler.hpp"
 
 namespace BOOM {
 
@@ -29,31 +30,25 @@ namespace BOOM {
       const Ptr<DoubleModel> &positive_probability_mean_prior,
       const Ptr<DoubleModel> &positive_probability_sample_size_prior,
       RNG &seeding_rng)
-      :     PosteriorSampler(seeding_rng),
-            model_(model),
-            gamma_mean_mean_prior_(gamma_mean_mean_prior),
-            gamma_mean_shape_prior_(gamma_mean_shape_prior),
-            gamma_shape_mean_prior_(gamma_shape_mean_prior),
-            gamma_shape_shape_prior_(gamma_shape_shape_prior),
-            positive_probability_mean_prior_(positive_probability_mean_prior),
-            positive_probability_sample_size_prior_(
-                positive_probability_sample_size_prior),
-            gamma_mean_sampler_(new GammaPosteriorSampler(
-                model_->prior_for_mean_parameters(),
-                gamma_mean_mean_prior,
-                gamma_mean_shape_prior,
-                seeding_rng)),
-            gamma_shape_sampler_(new GammaPosteriorSampler(
-                model_->prior_for_shape_parameters(),
-                gamma_shape_mean_prior,
-                gamma_shape_shape_prior,
-                seeding_rng)),
-            positive_probability_prior_sampler_(new BetaPosteriorSampler(
-                model_->prior_for_positive_probability(),
-                positive_probability_mean_prior,
-                positive_probability_sample_size_prior,
-                seeding_rng))
-  {
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        gamma_mean_mean_prior_(gamma_mean_mean_prior),
+        gamma_mean_shape_prior_(gamma_mean_shape_prior),
+        gamma_shape_mean_prior_(gamma_shape_mean_prior),
+        gamma_shape_shape_prior_(gamma_shape_shape_prior),
+        positive_probability_mean_prior_(positive_probability_mean_prior),
+        positive_probability_sample_size_prior_(
+            positive_probability_sample_size_prior),
+        gamma_mean_sampler_(new GammaPosteriorSampler(
+            model_->prior_for_mean_parameters(), gamma_mean_mean_prior,
+            gamma_mean_shape_prior, seeding_rng)),
+        gamma_shape_sampler_(new GammaPosteriorSampler(
+            model_->prior_for_shape_parameters(), gamma_shape_mean_prior,
+            gamma_shape_shape_prior, seeding_rng)),
+        positive_probability_prior_sampler_(new BetaPosteriorSampler(
+            model_->prior_for_positive_probability(),
+            positive_probability_mean_prior,
+            positive_probability_sample_size_prior, seeding_rng)) {
     model_->prior_for_positive_probability()->set_method(
         positive_probability_prior_sampler_);
     model_->prior_for_mean_parameters()->set_method(gamma_mean_sampler_);
@@ -61,9 +56,8 @@ namespace BOOM {
   }
 
   double HierarchicalZeroInflatedGammaSampler::logpri() const {
-    return gamma_mean_sampler_->logpri() +
-        gamma_shape_sampler_->logpri() +
-        positive_probability_prior_sampler_->logpri();
+    return gamma_mean_sampler_->logpri() + gamma_shape_sampler_->logpri() +
+           positive_probability_prior_sampler_->logpri();
   }
 
   // The draw() method will draw values of the gamma_mean and gamma_shape
@@ -92,12 +86,10 @@ namespace BOOM {
   void HierarchicalZeroInflatedGammaSampler::ensure_posterior_sampling_method(
       ZeroInflatedGammaModel *data_model) {
     if (data_model->number_of_sampling_methods() == 0) {
-      NEW(ZeroInflatedGammaPosteriorSampler, sampler)(
-          data_model,
-          model_->prior_for_positive_probability(),
-          model_->prior_for_mean_parameters(),
-          model_->prior_for_shape_parameters(),
-          rng());
+      NEW(ZeroInflatedGammaPosteriorSampler, sampler)
+      (data_model, model_->prior_for_positive_probability(),
+       model_->prior_for_mean_parameters(),
+       model_->prior_for_shape_parameters(), rng());
       data_model->set_method(sampler);
     }
   }

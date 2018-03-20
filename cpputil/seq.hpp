@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,51 +17,50 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include<vector>
-#include<cmath>
+#include <cmath>
+#include <vector>
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
-
-  namespace SeqTmp{
-    template<class T>
-    bool inrange(const T & tmp, const T& from, const T& to){
-      if(from < to) return (tmp <= to && tmp >=from);
-      else if(from > to) return (tmp >=to && tmp <=from);
-      return tmp==from && tmp==to;
+namespace BOOM {
+  // A regular sequence of data.
+  // Args:
+  //   from: The value of the first element in the sequence.
+  //   to: The targeted value of the final element in the sequence.  If 'to' is
+  //     not an integral number of steps from 'from' then the sequence stops
+  //     with the final element before 'to' is reached.
+  //   by: The increment between consecutinv sequence elements.  If 'to' is than
+  //     'from' then 'by' should be negative.  It is an error to call this
+  //     function with 'by' == 0 unless 'to' == 'from'.
+  //
+  // Returns:
+  //   A vector of the requested type, containing the sequence values.
+  template <class NUMERIC>
+  std::vector<NUMERIC> seq(const NUMERIC &from, const NUMERIC &to,
+                           const NUMERIC &by = 1) {
+    std::vector<NUMERIC> ans(1, from);
+    if (from == to) {
+      return ans;
     }
-
-    template <class T>
-    unsigned int dist(const T &from, const T &to, const T &by){
-      bool inc(from < to);
-      T tmp = inc ? (to-from)/by : (from-to)/by;
-      return static_cast<unsigned int>(1u+ floor(tmp));
+    int sign = to > from ? 1 : -1;
+    if ((sign > 0 && by < 0) || (sign < 0 && by > 0) || by == 0) {
+      std::ostringstream err;
+      err << "Illegal combination of arguments.  You can't get from " << from
+          << " to " << to << " by adding increments of " << by << "."
+          << std::endl;
+      report_error(err.str());
     }
-
-  }
-  template<class T>
-  std::vector<T> seq(const T &from, const T& to, const T & by){
-    using namespace SeqTmp;
-    if(from==to) return std::vector<T>(1, from);
-    bool incr(from < to);
-    unsigned int len = dist(from, to, by);
-    std::vector<T> ans;
-    ans.reserve(len);
-    T tmp= from;
-    ans.push_back(tmp);
-    bool ok=true;
-    while(ok){
-      if(incr) tmp+=by;
-      else tmp-= by;
-      ok = inrange(tmp, from, to);
-      if(ok) ans.push_back(tmp);
+    size_t space_needed =
+        static_cast<size_t>(1u + floor(fabs(double(to - from) / by)));
+    ans.reserve(space_needed);
+    while (true) {
+      NUMERIC tmp = ans.back() + by;
+      if ((sign == 1 && tmp > to) || (sign == -1 && tmp < to)) {
+        return ans;
+      } else {
+        ans.push_back(tmp);
+      }
     }
     return ans;
   }
 
-  template<class T>
-  std::vector<T> seq(const T &from, const T & to){
-    T one(1);
-    return seq(from, to, one);
-  }
-
-}
+}  // namespace BOOM

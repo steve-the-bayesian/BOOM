@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,24 +20,25 @@
 #ifndef CUMULATIVE_PROBIT_MODEL_HPP
 #define CUMULATIVE_PROBIT_MODEL_HPP
 
-#include <Models/Glm/Glm.hpp>
-#include <Models/Glm/OrdinalCutpointModel.hpp>
+#include "Models/Glm/Glm.hpp"
+#include "Models/Glm/OrdinalCutpointModel.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class CumulativeProbitModel : public OrdinalCutpointModel{
-  public:
-    CumulativeProbitModel(const Vector &beta, const Vector & delta);
+  class CumulativeProbitModel : public OrdinalCutpointModel {
+   public:
+    CumulativeProbitModel(const Vector &beta, const Vector &delta);
     CumulativeProbitModel(const Matrix &X, const Vector &y);
     CumulativeProbitModel(const CumulativeProbitModel &rhs);
-    CumulativeProbitModel * clone()const override;
+    CumulativeProbitModel *clone() const override;
 
-    double link_inv(double)const override;
-    double dlink_inv(double)const override;
+    double link_inv(double) const override;
+    double dlink_inv(double) const override;
+
    private:
-    double simulate_latent_variable(RNG &rng)const override;
+    double simulate_latent_variable(RNG &rng) const override;
   };
 
-} // ends namespace BOOM
+}  // namespace BOOM
 
-#endif // CUMULATIVE_PROBIT_MODEL_HPP
+#endif  // CUMULATIVE_PROBIT_MODEL_HPP

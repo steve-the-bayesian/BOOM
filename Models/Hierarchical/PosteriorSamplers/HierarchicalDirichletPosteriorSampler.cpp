@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,9 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/HierarchicalDirichletModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Hierarchical/PosteriorSamplers/HierarchicalDirichletPosteriorSampler.hpp>
+#include "Models/Hierarchical/PosteriorSamplers/HierarchicalDirichletPosteriorSampler.hpp"
+#include "Models/Hierarchical/HierarchicalDirichletModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
@@ -29,27 +30,21 @@ namespace BOOM {
   HDPS::HierarchicalDirichletPosteriorSampler(
       HierarchicalDirichletModel *model,
       const Ptr<DiffVectorModel> &dirichlet_mean_prior,
-      const Ptr<DiffDoubleModel> &dirichlet_sample_size_prior,
-      RNG &seeding_rng)
+      const Ptr<DiffDoubleModel> &dirichlet_sample_size_prior, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         dirichlet_mean_prior_(dirichlet_mean_prior),
         dirichlet_sample_size_prior_(dirichlet_sample_size_prior),
         sampler_(new DirichletPosteriorSampler(
-            model_->prior_model(),
-            dirichlet_mean_prior_,
-            dirichlet_sample_size_prior_,
-            rng()))
-  {
+            model_->prior_model(), dirichlet_mean_prior_,
+            dirichlet_sample_size_prior_, rng())) {
     model_->prior_model()->set_method(sampler_);
   }
 
   double HDPS::logpri() const {
     const DirichletModel *prior = model_->prior_model();
-    double ans = dirichlet_mean_prior_->logp(
-        prior->pi());
-    ans += dirichlet_sample_size_prior_->logp(
-        sum(prior->nu()));
+    double ans = dirichlet_mean_prior_->logp(prior->pi());
+    ans += dirichlet_sample_size_prior_->logp(sum(prior->nu()));
     return ans;
   }
 
@@ -60,10 +55,8 @@ namespace BOOM {
       MultinomialModel *data_model = model_->data_model(i);
       if (data_model->number_of_sampling_methods() != 1) {
         data_model->clear_methods();
-        NEW(MultinomialDirichletSampler, data_model_sampler)(
-            data_model,
-            Ptr<DirichletModel>(prior),
-            rng());
+        NEW(MultinomialDirichletSampler, data_model_sampler)
+        (data_model, Ptr<DirichletModel>(prior), rng());
         data_model->set_method(data_model_sampler);
       }
       data_model->sample_posterior();

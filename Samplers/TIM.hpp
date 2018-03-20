@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2010 Steven L. Scott
 
@@ -18,12 +19,12 @@
 
 #ifndef BOOM_TIM_HPP
 #define BOOM_TIM_HPP
-#include <Samplers/Sampler.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <numopt.hpp>
 #include <functional>
+#include "Samplers/MetropolisHastings.hpp"
+#include "Samplers/Sampler.hpp"
+#include "numopt.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // TIM stands for Tailored Independence Metropolis.  Use it when the
   // target function is approximately the log of a multivariate normal
@@ -38,8 +39,8 @@ namespace BOOM{
   //
   // TIM is also powerful, like Tim the enchanter
   // http://www.youtube.com/watch?v=JTbrIo1p-So
-  class TIM : public MetropolisHastings{
-  public:
+  class TIM : public MetropolisHastings {
+   public:
     // Args:
     //   logf: A function or functor taking arguments
     //     theta:  A vector at which to evaluate logf
@@ -51,17 +52,12 @@ namespace BOOM{
     //     logf returns the log of the un-normalized target distribution
     //     at theta.
     //   nu:  The degrees of freedom parameter to use for the
-    TIM(const std::function<double(const Vector &,
-                                   Vector &,
-                                   Matrix &,
-                                   int)> &logf,
+    explicit TIM(const std::function<double(const Vector &, Vector &, Matrix &, int)>
+            &logf,
         double nu = 3, RNG *rng = 0);
 
-    TIM(const BOOM::Target & logf,
-        const BOOM::dTarget & dlogf,
-        const BOOM::d2Target & d2logf,
-        double nu = 3,
-        RNG *rng = 0);
+    TIM(const BOOM::Target &logf, const BOOM::dTarget &dlogf,
+        const BOOM::d2Target &d2logf, double nu = 3, RNG *rng = 0);
 
     Vector draw(const Vector &old) override;
 
@@ -76,7 +72,7 @@ namespace BOOM{
     //
     // Users will normally not have to call locate_mode directly, but
     // you can if you want.
-    bool locate_mode(const Vector & old);
+    bool locate_mode(const Vector &old);
 
     // In some rare cases (e.g. spike and slab models with varying
     // dimensions) you may want to store the mode in some other
@@ -90,9 +86,10 @@ namespace BOOM{
     // to get the location of the mode and the inverse of the variance
     // of the approximating normal at the mode (i.e. the negative
     // Hessian).
-    const Vector & mode()const;
-    const SpdMatrix & ivar()const;
-  private:
+    const Vector &mode() const;
+    const SpdMatrix &ivar() const;
+
+   private:
     void report_failure(const Vector &old);
     Ptr<MvtIndepProposal> create_proposal(int dim, double nu);
     void check_proposal(int dim);
@@ -108,5 +105,5 @@ namespace BOOM{
     bool mode_is_fixed_;
     bool mode_has_been_found_;
   };
-}
+}  // namespace BOOM
 #endif

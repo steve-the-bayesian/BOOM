@@ -50,8 +50,8 @@
 #include <limits>
 #include <climits>
 #include <stdexcept>
-#include <Bmath/Bmath.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Bmath/Bmath.hpp"
+#include "cpputil/math_utils.hpp"
 
 // TODO(stevescott): Once all CRAN platforms support the thread_local
 // keyword remove this macro.

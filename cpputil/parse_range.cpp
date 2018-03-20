@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -16,28 +17,28 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/parse_range.hpp>
-#include <sstream>
+#include "cpputil/parse_range.hpp"
 #include <algorithm>
-#include <cpputil/seq.hpp>
-#include <cpputil/report_error.hpp>
-#include <uint.hpp>
 #include <cstdlib>
+#include <sstream>
+#include "cpputil/report_error.hpp"
+#include "cpputil/seq.hpp"
+#include "uint.hpp"
 
-namespace BOOM{
+namespace BOOM {
   using namespace std;
   using std::string;
   typedef RangeParser RP;
 
-  vector<unsigned> parse_range(const string &s){
+  vector<unsigned> parse_range(const string &s) {
     RP rp;
     return rp(s);
   }
 
   RP::RangeParser() : not_found(string::npos) {}
 
-  vector<unsigned int> RP::operator()(const string &s){
-    range=s;
+  vector<unsigned int> RP::operator()(const string &s) {
+    range = s;
     check_range();
     ans.clear();
     while (!range.empty()) {
@@ -47,36 +48,36 @@ namespace BOOM{
     return ans;
   }
 
-  void RP::find_block(){
+  void RP::find_block() {
     sz comma_pos = range.find(',');
-    if(comma_pos == not_found){
+    if (comma_pos == not_found) {
       block = range;
       range.clear();
-    }else{
+    } else {
       // separate parts and throw away comma
       block = range.substr(0, comma_pos);
-      range = range.substr(comma_pos+1);
+      range = range.substr(comma_pos + 1);
     }
   }
 
-  void RP::parse_block(){
+  void RP::parse_block() {
     sz dash_pos = block.find('-');
-    if(dash_pos == not_found){
+    if (dash_pos == not_found) {
       uint number = atoi(block.c_str());
       ans.push_back(number);
-    }else{
+    } else {
       istringstream in(block);
       char dash;
       uint from, to;
       in >> from >> dash >> to;
       vector<uint> irng = seq(from, to);
       std::copy(irng.begin(), irng.end(), back_inserter(ans));
-     }
+    }
   }
 
-  void RP::check_range(){
+  void RP::check_range() {
     sz bad = range.find_first_not_of("0123456789,-");
-    if(bad == not_found) return;
+    if (bad == not_found) return;
     ostringstream msg;
     msg << "Illegal characters passed to RangeParser(string) : " << range
         << std::endl
@@ -84,4 +85,4 @@ namespace BOOM{
     report_error(msg.str());
   }
 
-}
+}  // namespace BOOM

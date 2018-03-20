@@ -19,48 +19,43 @@
 #ifndef BOOM_COSINE_POISSON_PROCESS_HPP_
 #define BOOM_COSINE_POISSON_PROCESS_HPP_
 
-#include <Models/PointProcess/PoissonProcess.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
 #include <functional>
+#include "Models/PointProcess/PoissonProcess.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
   // The CosinePoissonProcess is an inhomogeneous Poisson process with
   // rate function lambda * (1 + cos(frequency * t)), where t is the
   // time in days since Jan 1 1970..  It is mainly useful for testing
   // code involving inhomogeneous processes.
-  class CosinePoissonProcess
-      : public PoissonProcess,
-        public ParamPolicy_2<UnivParams, UnivParams>,
-        public IID_DataPolicy<PointProcess>,
-        public PriorPolicy
-  {
+  class CosinePoissonProcess : public PoissonProcess,
+                               public ParamPolicy_2<UnivParams, UnivParams>,
+                               public IID_DataPolicy<PointProcess>,
+                               public PriorPolicy {
    public:
-    CosinePoissonProcess(double lambda = 1.0, double frequency = 1.0);
-    CosinePoissonProcess * clone() const override;
+    explicit CosinePoissonProcess(double lambda = 1.0, double frequency = 1.0);
+    CosinePoissonProcess *clone() const override;
 
-    double event_rate(const DateTime &t)const override;
-    double expected_number_of_events(
-        const DateTime &t0, const DateTime &t1)const override;
+    double event_rate(const DateTime &t) const override;
+    double expected_number_of_events(const DateTime &t0,
+                                     const DateTime &t1) const override;
 
     // Adding data is a no-op since this
-    void add_exposure_window(const DateTime &t0, const DateTime &t1) override{}
-    void add_event(const DateTime &t) override{}
+    void add_exposure_window(const DateTime &t0, const DateTime &t1) override {}
+    void add_event(const DateTime &t) override {}
 
     double lambda() const;
     double frequency() const;
 
-    PointProcess simulate(
-        RNG &rng,
-        const DateTime &t0,
-        const DateTime &t1,
-        std::function<Data*()> mark_generator
-           = NullDataGenerator()) const override;
+    PointProcess simulate(RNG &rng, const DateTime &t0, const DateTime &t1,
+                          std::function<Data *()> mark_generator =
+                              NullDataGenerator()) const override;
 
    private:
     DateTime origin_;
   };
 
 }  // namespace BOOM
-#endif// BOOM_COSINE_POISSON_PROCESS_HPP_
+#endif  // BOOM_COSINE_POISSON_PROCESS_HPP_

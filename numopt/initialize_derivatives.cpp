@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -16,45 +17,39 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cpputil/report_error.hpp>
-#include <numopt/initialize_derivatives.hpp>
+#include "numopt/initialize_derivatives.hpp"
 #include <sstream>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-void initialize_derivatives(Vector *gradient,
-                            Matrix *Hessian,
-                            int dimension,
-                            bool reset) {
-  if (reset) {
-    if (gradient) {
-      gradient->resize(dimension);
-      *gradient = 0;
-      if (Hessian) {
-        Hessian->resize(dimension, dimension);
-        *Hessian = 0;
+  void initialize_derivatives(Vector *gradient, Matrix *Hessian, int dimension,
+                              bool reset) {
+    if (reset) {
+      if (gradient) {
+        gradient->resize(dimension);
+        *gradient = 0;
+        if (Hessian) {
+          Hessian->resize(dimension, dimension);
+          *Hessian = 0;
+        }
+      }
+    } else {
+      if (gradient && gradient->size() != dimension) {
+        std::ostringstream err;
+        err << "Error:  gradient->size() == " << gradient->size()
+            << " but there are " << dimension << " variables." << std::endl;
+        report_error(err.str());
+      }
+      if (gradient && Hessian &&
+          (Hessian->nrow() != dimension || Hessian->ncol() != dimension)) {
+        std::ostringstream err;
+        err << "Hessian dimensions are [" << Hessian->nrow() << " x "
+            << Hessian->ncol() << "] but there are " << dimension
+            << " variables." << std::endl;
+        report_error(err.str());
       }
     }
-  } else {
-    if (gradient && gradient->size() != dimension) {
-      std::ostringstream err;
-      err << "Error:  gradient->size() == " << gradient->size()
-          << " but there are " << dimension << " variables."
-          << std::endl;
-      report_error(err.str());
-    }
-    if (gradient &&
-        Hessian &&
-        (Hessian->nrow() != dimension || Hessian->ncol() != dimension)) {
-      std::ostringstream err;
-      err << "Error in PoissonRegressionModel::log_likelihood.  "
-          << "Hessian dimensions are ["
-          << Hessian->nrow() << " x " << Hessian->ncol()
-          << "] but there are " << dimension << " variables."
-          << std::endl;
-      report_error(err.str());
-    }
   }
-}
 
 }  // namespace BOOM

@@ -1,3 +1,7 @@
+#ifndef BOOM_GLL_HPP_
+#define BOOM_GLL_HPP_
+
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -16,10 +20,12 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-namespace BOOM {
+#include <fstream>
 
+namespace BOOM {
   // Moves input so that it points to the next to last end of line
   // character.  gll stands for get last line.
-  ifstream & gll(std::ifstream &input);
+  std::ifstream &gll(std::ifstream &input);
 
 }  // namespace BOOM
+#endif //  BOOM_GLL_HPP_

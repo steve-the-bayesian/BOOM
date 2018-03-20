@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,11 +20,11 @@
 #ifndef BOOM_REGRESSION_SHRINKAGE_SAMPLER_HPP_
 #define BOOM_REGRESSION_SHRINKAGE_SAMPLER_HPP_
 
-#include <Models/Glm/RegressionModel.hpp>
-#include <Models/GaussianModelBase.hpp>
-#include <Models/GammaModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/GaussianModelBase.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
@@ -40,8 +41,7 @@ namespace BOOM {
   // belonging to group k is IID according to the specified normal distribution.
   // Further priors may be placed on the parameters of the normal distributions
   // governing shrinkage within a group.
-  class RegressionShrinkageSampler
-      : public PosteriorSampler {
+  class RegressionShrinkageSampler : public PosteriorSampler {
    public:
     // A class describing the set of regression coefficients that are
     // exchangeable.
@@ -57,11 +57,11 @@ namespace BOOM {
       CoefficientGroup(const Ptr<GaussianModelBase> &prior,
                        const std::vector<int> &indices);
 
-      double prior_mean() const {return prior_->mu();}
-      double prior_variance() const {return prior_->sigsq();}
-      double prior_sd() const {return prior_->sigma();}
+      double prior_mean() const { return prior_->mu(); }
+      double prior_variance() const { return prior_->sigsq(); }
+      double prior_sd() const { return prior_->sigma(); }
 
-      const std::vector<int> &indices() const {return indices_;}
+      const std::vector<int> &indices() const { return indices_; }
 
       // Clear the sufficient statistics from the prior model, and leave the
       // prior model with a set of sufficient statistics computed from the
@@ -69,15 +69,13 @@ namespace BOOM {
       //
       // Args:
       //   coefficients: The full vector of coefficients.
-      void refresh_sufficient_statistics (const Vector &coefficients);
+      void refresh_sufficient_statistics(const Vector &coefficients);
 
-      void sample_posterior() {prior_->sample_posterior();}
+      void sample_posterior() { prior_->sample_posterior(); }
 
-      double log_prior(double b) const {
-        return prior_->logp(b);
-      }
+      double log_prior(double b) const { return prior_->logp(b); }
 
-      double log_hyperprior() const {return prior_->logpri();}
+      double log_hyperprior() const { return prior_->logpri(); }
 
      private:
       Ptr<GaussianModelBase> prior_;

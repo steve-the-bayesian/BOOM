@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2013 Steven L. Scott
 
@@ -19,39 +20,36 @@
 #ifndef BOOM_PROBIT_BART_HPP_
 #define BOOM_PROBIT_BART_HPP_
 
-// This code is untested.  TODO(stevescott):  test it.
+// This code is untested.  TODO:  test it.
 
-#include <Models/Bart/Bart.hpp>
-#include <Models/Glm/BinomialRegressionData.hpp>
-#include <Models/Policies/NonparametricParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Bart/Bart.hpp"
+#include "Models/Glm/BinomialRegressionData.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/NonparametricParamPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
-  class ProbitBartModel
-      : public BartModelBase,
-        public NonparametricParamPolicy,
-        public IID_DataPolicy<BinomialRegressionData>,
-        public PriorPolicy {
+  class ProbitBartModel : public BartModelBase,
+                          public NonparametricParamPolicy,
+                          public IID_DataPolicy<BinomialRegressionData>,
+                          public PriorPolicy {
    public:
-    ProbitBartModel(int number_of_trees, double mean = 0.0);
-    ProbitBartModel(int number_of_trees,
-                    const std::vector<int>  &responses,
-                    const std::vector<int> &trials,
-                    const Matrix &predictors);
-    ProbitBartModel(int number_of_trees,
-                    const std::vector<bool> &responses,
+    explicit ProbitBartModel(int number_of_trees, double mean = 0.0);
+    ProbitBartModel(int number_of_trees, const std::vector<int> &responses,
+                    const std::vector<int> &trials, const Matrix &predictors);
+    ProbitBartModel(int number_of_trees, const std::vector<bool> &responses,
                     const Matrix &predictors);
     ProbitBartModel(const ProbitBartModel &rhs);
-    ProbitBartModel * clone() const override;
-    int sample_size()const override;
+    ProbitBartModel *clone() const override;
+    int sample_size() const override;
     void add_data(const Ptr<Data> &) override;
     void add_data(const Ptr<BinomialRegressionData> &) override;
+
    private:
     void check_predictor_dimension(int number_of_observations,
-                                   const Matrix &predictors)const ;
+                                   const Matrix &predictors) const;
   };
 
-}
-#endif //  BOOM_PROBIT_BART_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_PROBIT_BART_HPP_

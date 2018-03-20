@@ -22,13 +22,13 @@
 #include <set>
 #include <vector>
 
-#include <BOOM.hpp>
-#include <Models/ModelTypes.hpp>
-#include <Models/CategoricalData.hpp>
+#include "BOOM.hpp"
+#include "Models/CategoricalData.hpp"
+#include "Models/ModelTypes.hpp"
 
-#include <LinAlg/Selector.hpp>
+#include "LinAlg/Selector.hpp"
 
-namespace BOOM{
+namespace BOOM {
   namespace IRT {
     typedef Selector Indicators;
 
@@ -38,17 +38,16 @@ namespace BOOM{
     class Item;
 
     struct SubjectLess
-      : public std::binary_function<bool, Ptr<Subject>, Ptr<Subject> >
-    {
-      bool operator()(const Ptr<Subject> &s1, const Ptr<Subject> &s2)const;
+        : public std::binary_function<bool, Ptr<Subject>, Ptr<Subject> > {
+      bool operator()(const Ptr<Subject> &s1, const Ptr<Subject> &s2) const;
     };
 
-    struct ItemLess{
-      bool operator()(const Ptr<Item> &i1, const Ptr<Item> &i2)const;
+    struct ItemLess {
+      bool operator()(const Ptr<Item> &i1, const Ptr<Item> &i2) const;
     };
 
     typedef Ptr<OrdinalData> Response;
-    typedef std::vector<Ptr<Subject> >  SubjectSet;
+    typedef std::vector<Ptr<Subject> > SubjectSet;
     typedef SubjectSet::iterator SI;
     typedef SubjectSet::const_iterator CSI;  // Miami :)
 
@@ -63,4 +62,4 @@ namespace BOOM{
 
   }  // namespace IRT
 }  // namespace BOOM
-#endif // BOOM_IRT_HDR_HPP
+#endif  // BOOM_IRT_HDR_HPP

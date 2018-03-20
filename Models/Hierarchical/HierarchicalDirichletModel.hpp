@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_HIERARCHICAL_DIRICHLET_MODEL_HPP_
 #define BOOM_HIERARCHICAL_DIRICHLET_MODEL_HPP_
 
-#include <Models/MultinomialModel.hpp>
-#include <Models/DirichletModel.hpp>
-#include <Models/Hierarchical/HierarchicalModel.hpp>
-#include <Models/PosteriorSamplers/MultinomialDirichletSampler.hpp>
+#include "Models/DirichletModel.hpp"
+#include "Models/Hierarchical/HierarchicalModel.hpp"
+#include "Models/MultinomialModel.hpp"
+#include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
 
 namespace BOOM {
 
@@ -33,14 +34,14 @@ namespace BOOM {
   // alpha is a positive real, and pi is a discrete probability
   // distribution).
 
-  class HierarchicalDirichletData
-      : public Data {
+  class HierarchicalDirichletData : public Data {
    public:
-    HierarchicalDirichletData(uint dimension);
-    HierarchicalDirichletData(const MultinomialSuf &suf);
-    HierarchicalDirichletData * clone() const override;
+    explicit HierarchicalDirichletData(uint dimension);
+    explicit HierarchicalDirichletData(const MultinomialSuf &suf);
+    HierarchicalDirichletData *clone() const override;
     ostream &display(ostream &out) const override;
-    const MultinomialSuf &suf() {return counts_;}
+    const MultinomialSuf &suf() { return counts_; }
+
    private:
     MultinomialSuf counts_;
   };
@@ -48,7 +49,6 @@ namespace BOOM {
   class HierarchicalDirichletModel
       : public HierarchicalModelBase<MultinomialModel, DirichletModel> {
    public:
-
     // The Dirichlet parameters are alpha * pi, where alpha is a
     // postive scalar and pi is a discrete probability distribution.
     // The larger alpha, the closer the draws from the prior are to
@@ -61,10 +61,9 @@ namespace BOOM {
     //     and elements must sum to 1.  The dimension of pi will
     //     determine the acceptable dimension of
     //     HierarchicalDirichletData.
-    HierarchicalDirichletModel(double prior_sample_size,
-                               const Vector &mean);
-    HierarchicalDirichletModel(const Ptr<DirichletModel> &prior);
-    HierarchicalDirichletModel * clone() const override;
+    HierarchicalDirichletModel(double prior_sample_size, const Vector &mean);
+    explicit HierarchicalDirichletModel(const Ptr<DirichletModel> &prior);
+    HierarchicalDirichletModel *clone() const override;
     void add_data(const Ptr<Data> &) override;
 
     // Mean of the Dirichlet distribution in the prior.  This is the

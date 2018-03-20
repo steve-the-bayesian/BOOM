@@ -1,19 +1,35 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
 #ifndef BOOM_R_LIST_IO_HPP_
 #define BOOM_R_LIST_IO_HPP_
 
 #include <string>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/Array.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/Array.hpp"
 
-#include <Models/ModelTypes.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/SpdParams.hpp>
-#include <Models/Glm/GlmCoefs.hpp>
+#include "Models/ModelTypes.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/SpdParams.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 
 //======================================================================
 // Note that the functions listed here throw exceptions.  Code that
@@ -96,7 +112,7 @@ namespace BOOM{
   // required for each distinct parameter in the model output list.
   class RListIoElement {
    public:
-    RListIoElement(const std::string &name);
+    explicit RListIoElement(const std::string &name);
     virtual ~RListIoElement();
 
     // Allocates and returns the R object (usually a vector, matrix,
@@ -153,7 +169,7 @@ namespace BOOM{
   // valued data.
   class RealValuedRListIoElement : public RListIoElement {
    public:
-    RealValuedRListIoElement(const std::string &name);
+    explicit RealValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
    protected:
@@ -166,7 +182,7 @@ namespace BOOM{
   //----------------------------------------------------------------------
   class ListValuedRListIoElement : public RListIoElement {
    public:
-    ListValuedRListIoElement(const std::string &name);
+    explicit ListValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
   };
 
@@ -326,7 +342,7 @@ namespace BOOM{
   // elements that store MCMC draws of matrices.
   class MatrixListElementBase : public RealValuedRListIoElement {
    public:
-    MatrixListElementBase(const std::string &param_name)
+    explicit MatrixListElementBase(const std::string &param_name)
         : RealValuedRListIoElement(param_name) {}
     virtual int nrow() const = 0;
     virtual int ncol() const = 0;
@@ -377,17 +393,21 @@ namespace BOOM{
     // Use this constructor if you plan to add parameter vectors one
     // at a time.  This use case obviously requires holding onto the
     // list element pointer outside of an RListIoManager.
-    HierarchicalVectorListElement(const std::string &param_name);
+    explicit HierarchicalVectorListElement(const std::string &param_name);
 
     void add_vector(const Ptr<VectorParams> &vector);
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
     void write() override;
     void stream() override;
+    void set_group_names(const std::vector<std::string> &group_names);
+
    private:
+    void set_buffer_group_names(SEXP buffer);
     void CheckSize();
     std::vector<Ptr<VectorData>> parameters_;
     ArrayView array_view_;
+    std::vector<std::string> group_names_;
   };
 
   //----------------------------------------------------------------------

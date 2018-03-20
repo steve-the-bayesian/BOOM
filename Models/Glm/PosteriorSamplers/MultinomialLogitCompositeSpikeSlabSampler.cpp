@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -16,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/MultinomialLogitCompositeSpikeSlabSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Samplers/TIM.hpp>
+#include "Models/Glm/PosteriorSamplers/MultinomialLogitCompositeSpikeSlabSampler.hpp"
+#include "Samplers/TIM.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -40,17 +41,16 @@ namespace BOOM {
       //   chunk_number:  The number of this chunk, counting from 0.
       MultinomialLogitLogPosteriorChunk(const MultinomialLogitModel *model,
                                         const MvnBase *prior,
-                                        int max_chunk_size,
-                                        int chunk_number)
+                                        int max_chunk_size, int chunk_number)
           : model_(model),
             prior_(prior),
             chunk_size_(max_chunk_size),
-            start_(max_chunk_size * chunk_number)
-      {
+            start_(max_chunk_size * chunk_number) {
         int beta_dim = model_->coef().inc().nvars();
         if (start_ >= beta_dim) {
-          report_error("Too large a chunk_number passed to "
-                       "MultinomialLogitLogPosteriorChunk constructor.");
+          report_error(
+              "Too large a chunk_number passed to "
+              "MultinomialLogitLogPosteriorChunk constructor.");
         }
         if (beta_dim - start_ < chunk_size_) {
           chunk_size_ = beta_dim - start_;
@@ -80,10 +80,8 @@ namespace BOOM {
       //     it is left unused.
       // Returns:
       //   Log posterior evaluated at beta_chunk.
-      double operator()(const Vector &beta_chunk,
-                        Vector &gradient,
-                        Matrix &Hessian,
-                        int nd) const {
+      double operator()(const Vector &beta_chunk, Vector &gradient,
+                        Matrix &Hessian, int nd) const {
         Vector beta = model_->coef().included_coefficients();
         VectorView beta_chunk_view(beta, start_, chunk_size_);
         beta_chunk_view = beta_chunk;
@@ -105,8 +103,8 @@ namespace BOOM {
         Vector *gradient_pointer = nd > 0 ? &g : nullptr;
         Matrix *Hessian_pointer = nd > 1 ? &h : nullptr;
         const Selector &inclusion(model_->coef().inc());
-        ans += prior_->logp_given_inclusion(
-            beta, gradient_pointer, Hessian_pointer, inclusion, false);
+        ans += prior_->logp_given_inclusion(beta, gradient_pointer,
+                                            Hessian_pointer, inclusion, false);
         if (nd > 0) {
           gradient = chunk_mask.select(g);
           if (nd > 1) {
@@ -127,15 +125,10 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   MLCS3::MultinomialLogitCompositeSpikeSlabSampler(
-      MultinomialLogitModel *model,
-      const Ptr<MvnBase> &prior,
-      const Ptr<VariableSelectionPrior> &inclusion_prior,
-      double tdf,
-      double rwm_variance_scale_factor,
-      uint nthreads,
-      int max_chunk_size,
-      bool check_initial_condition,
-      RNG &seeding_rng)
+      MultinomialLogitModel *model, const Ptr<MvnBase> &prior,
+      const Ptr<VariableSelectionPrior> &inclusion_prior, double tdf,
+      double rwm_variance_scale_factor, uint nthreads, int max_chunk_size,
+      bool check_initial_condition, RNG &seeding_rng)
       : MLVS(model, prior, inclusion_prior, nthreads, check_initial_condition,
              seeding_rng),
         model_(model),
@@ -144,8 +137,7 @@ namespace BOOM {
         max_chunk_size_(max_chunk_size),
         tdf_(tdf),
         rwm_variance_scale_factor_(rwm_variance_scale_factor),
-        move_probs_(".45 .45 .10")
-  {
+        move_probs_(".45 .45 .10") {
     if (max_chunk_size_ <= 0) {
       max_chunk_size_ = model_->beta().size();
     }
@@ -159,8 +151,7 @@ namespace BOOM {
         MoveTimer timer = accounting_.start_time("DA");
         MLVS::draw();
         accounting_.record_acceptance("DA");
-      }
-        break;
+      } break;
 
       case RWM_MOVE:
         rwm_draw();
@@ -171,8 +162,9 @@ namespace BOOM {
         break;
 
       default:
-        report_error("Unknown move type sampled in "
-                     "MultinomialLogitCompositeSpikeSlabSampler::draw().");
+        report_error(
+            "Unknown move type sampled in "
+            "MultinomialLogitCompositeSpikeSlabSampler::draw().");
     }
   }
 
@@ -186,11 +178,8 @@ namespace BOOM {
     int full_chunk_size = compute_chunk_size();
     for (int chunk = 0; chunk < number_of_chunks; ++chunk) {
       MoveTimer move_timer = accounting_.start_time("TIMchunk");
-      MultinomialLogitLogPosteriorChunk logpost(
-          model_,
-          prior_.get(),
-          full_chunk_size,
-          chunk);
+      MultinomialLogitLogPosteriorChunk logpost(model_, prior_.get(),
+                                                full_chunk_size, chunk);
       TIM tim_sampler(logpost, tdf_);
       int start = full_chunk_size * chunk;
       int beta_dim = beta.size();  // type coercsion uint -> int
@@ -226,8 +215,8 @@ namespace BOOM {
   void MLCS3::rwm_draw_chunk(int chunk) {
     MoveTimer move_timer = accounting_.start_time("RWMchunk");
     int chunk_size = compute_chunk_size();
-    MultinomialLogitLogPosteriorChunk logpost(
-        model_, prior_.get(), chunk_size, chunk);
+    MultinomialLogitLogPosteriorChunk logpost(model_, prior_.get(), chunk_size,
+                                              chunk);
     int chunk_begin = chunk_size * chunk;
     Vector beta = model_->coef().included_coefficients();
     int beta_dim = beta.size();  // type coercion
@@ -239,16 +228,11 @@ namespace BOOM {
     double original_logpost = logpost(beta_chunk, gradient, Hessian, 2);
     Vector candidate;
     if (tdf_ > 0) {
-      candidate = rmvt_ivar_mt(
-          rng(),
-          beta_chunk,
-          -Hessian / rwm_variance_scale_factor_,
-          tdf_);
+      candidate = rmvt_ivar_mt(rng(), beta_chunk,
+                               -Hessian / rwm_variance_scale_factor_, tdf_);
     } else {
-      candidate = rmvn_ivar_mt(
-          rng(),
-          beta_chunk,
-          -Hessian / rwm_variance_scale_factor_);
+      candidate = rmvn_ivar_mt(rng(), beta_chunk,
+                               -Hessian / rwm_variance_scale_factor_);
     }
     double candidate_logpost = logpost(candidate);
     double log_alpha = candidate_logpost - original_logpost;
@@ -263,17 +247,11 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  LabeledMatrix MLCS3::timing_report() const {
-    return accounting_.to_matrix();
-  }
+  LabeledMatrix MLCS3::timing_report() const { return accounting_.to_matrix(); }
 
-  void MLCS3::set_move_probabilities(
-      double data_augmentation,
-      double rwm,
-      double tim) {
-    if (data_augmentation < 0 ||
-        rwm < 0 ||
-        tim < 0) {
+  void MLCS3::set_move_probabilities(double data_augmentation, double rwm,
+                                     double tim) {
+    if (data_augmentation < 0 || rwm < 0 || tim < 0) {
       report_error(
           "All probabilities must be non-negative in "
           "MultinomialLogitCompositeSpikeSlabSampler::"
@@ -292,7 +270,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   int MLCS3::compute_chunk_size() const {
     int nvars = model_->coef().nvars();
-    if(max_chunk_size_ <= 0 || nvars == 0) return nvars;
+    if (max_chunk_size_ <= 0 || nvars == 0) return nvars;
     int number_of_full_chunks = nvars / max_chunk_size_;
     bool has_partial_chunk = number_of_full_chunks * max_chunk_size_ < nvars;
     int total_chunks = number_of_full_chunks + has_partial_chunk;
@@ -314,4 +292,4 @@ namespace BOOM {
     return number_of_chunks;
   }
 
-}
+}  // namespace BOOM

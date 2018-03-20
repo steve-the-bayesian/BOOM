@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -16,11 +17,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Mixtures/DirichletProcessMixture.hpp>
-#include <Models/Mixtures/PosteriorSamplers/SplitMerge.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/shift_element.hpp>
-#include <distributions.hpp>
+#include "Models/Mixtures/DirichletProcessMixture.hpp"
+#include "Models/Mixtures/PosteriorSamplers/SplitMerge.hpp"
+#include "cpputil/report_error.hpp"
+#include "cpputil/shift_element.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -29,7 +30,7 @@ namespace BOOM {
     typedef ConjugateDirichletProcessMixtureModel CDPMM;
     typedef DirichletProcessMixtureComponent DpMixtureComponent;
     typedef ConjugateDirichletProcessMixtureComponent
-      ConjugateDpMixtureComponent;
+        ConjugateDpMixtureComponent;
   }  // namespace
 
   DPMM::DirichletProcessMixtureModel(
@@ -40,8 +41,7 @@ namespace BOOM {
         base_distribution_(base_distribution),
         concentration_parameter_(concentration_parameter),
         mixing_weights_(1, 1.0),
-        spare_mixture_component_target_buffer_size_(10)
-  {
+        spare_mixture_component_target_buffer_size_(10) {
     observe_concentration_parameter();
   }
 
@@ -102,8 +102,7 @@ namespace BOOM {
           proposal.merged());
       int component_index_2 = proposal.split2()->mixture_component_index();
       mixture_components_[component_index_2]->clear_data();
-      remove_empty_cluster(mixture_components_[component_index_2],
-                           false);
+      remove_empty_cluster(mixture_components_[component_index_2], false);
       // The last element of proposal.merged_mixing_weights() is the mixing
       // weight for an empty cluster.  Get rid of that and put in the collective
       // weight for all unpopulated components.
@@ -254,11 +253,10 @@ namespace BOOM {
     double ans = dim * log_alpha;
     double previous_probability = 1.0;
     for (int i = 0; i < dim; ++i) {
-      double stick_fraction;
       if (previous_probability > 0) {
-        stick_fraction = weights[i] / previous_probability;
+        double stick_fraction = weights[i] / previous_probability;
         previous_probability -= weights[i];
-        ans += (alpha + i - dim) *  log(1 - stick_fraction);
+        ans += (alpha + i - dim) * log(1 - stick_fraction);
       } else {
         // Do some error checking to make sure previous_probability isn't so
         // more negative than can plausibly be attributed to numerical issues.
@@ -297,14 +295,12 @@ namespace BOOM {
   }
 
   void DPMM::assign_and_add_mixture_component(
-      const Ptr<DpMixtureComponent> &component,
-      RNG &rng) {
+      const Ptr<DpMixtureComponent> &component, RNG &rng) {
     mixture_components_.push_back(component);
     base_distribution_->draw_model_parameters(*mixture_components_.back());
     mixture_components_.back()->set_mixture_component_index(
         mixture_components_.size() - 1);
-    stick_fractions_.push_back(
-        rbeta_mt(rng, 1, concentration_parameter()));
+    stick_fractions_.push_back(rbeta_mt(rng, 1, concentration_parameter()));
     double remainder = mixing_weights_.back();
     mixing_weights_.back() = remainder * stick_fractions_.back();
     mixing_weights_.push_back(remainder * (1 - stick_fractions_.back()));
@@ -347,11 +343,9 @@ namespace BOOM {
   }
 
   void DPMM::observe_concentration_parameter() {
-    concentration_parameter_->add_observer(
-        [this]() {
-          this->log_concentration_parameter_ =
-              log(this->concentration_parameter());
-        });
+    concentration_parameter_->add_observer([this]() {
+      this->log_concentration_parameter_ = log(this->concentration_parameter());
+    });
     concentration_parameter_->set(concentration_parameter());
   }
 
@@ -360,18 +354,16 @@ namespace BOOM {
       const Ptr<ConjugateDpMixtureComponent> &mixture_component_prototype,
       const Ptr<ConjugateHierarchicalPosteriorSampler> &base_distribution,
       const Ptr<UnivParams> &concentration_parameter)
-  : DPMM(mixture_component_prototype,
-         base_distribution,
-         concentration_parameter),
-    conjugate_mixture_component_prototype_(mixture_component_prototype),
-    conjugate_base_distribution_(base_distribution)
-  {}
+      : DPMM(mixture_component_prototype, base_distribution,
+             concentration_parameter),
+        conjugate_mixture_component_prototype_(mixture_component_prototype),
+        conjugate_base_distribution_(base_distribution) {}
 
   double ConjugateDirichletProcessMixtureModel::log_marginal_density(
       const Ptr<Data> &data_point, int which_component) const {
     if (which_component > 0) {
-          return conjugate_base_distribution_->log_marginal_density(
-              data_point, component(which_component));
+      return conjugate_base_distribution_->log_marginal_density(
+          data_point, component(which_component));
     } else {
       return conjugate_base_distribution_->log_marginal_density(
           data_point, conjugate_mixture_component_prototype_.get());
@@ -395,8 +387,8 @@ namespace BOOM {
     }
     spare_conjugate_components_.push_back(
         conjugate_mixture_components_[which_cluster]);
-    conjugate_mixture_components_.erase(
-        conjugate_mixture_components_.begin() + which_cluster);
+    conjugate_mixture_components_.erase(conjugate_mixture_components_.begin() +
+                                        which_cluster);
     DPMM::remove_empty_cluster(component, adjust_mixing_weights);
   }
 

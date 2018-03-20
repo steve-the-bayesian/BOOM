@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
    Copyright (C) 2005 Steven L. Scott
 
@@ -13,7 +14,8 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #include <cstdio>
@@ -21,25 +23,26 @@
 #include <ctime>
 #include <string>
 
- namespace BOOM{
-   char * get_date(char *s){
-     char *sp;
-     time_t tm;
-     tm = time(&tm);
+namespace BOOM {
+  char *get_date(char *s) {
+    char *sp;
+    time_t tm;
+    tm = time(&tm);
 
-     sprintf(s, "%s", ctime(&tm));
-     sp =strstr(s, "\n");
-     sp[0]='\0';
-     return s; }
+    sprintf(s, "%s", ctime(&tm));
+    sp = strstr(s, "\n");
+    sp[0] = '\0';
+    return s;
+  }
 
-   using std::string;
+  using std::string;
 
-   string get_date(){
-     time_t tm;
-     tm = time(&tm);
-     string s(ctime(&tm));
-     string::size_type n = s.find_last_of("\n");
-     if(n!= string::npos) s.erase(n);
-     return s; }
- }
-
+  string get_date() {
+    time_t tm;
+    tm = time(&tm);
+    string s(ctime(&tm));
+    string::size_type n = s.find_last_of("\n");
+    if (n != string::npos) s.erase(n);
+    return s;
+  }
+}  // namespace BOOM

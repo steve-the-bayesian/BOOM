@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,7 +20,7 @@
 #ifndef BOOM_MSPLINE_HPP_
 #define BOOM_MSPLINE_HPP_
 
-#include <stats/Spline.hpp>
+#include "stats/Spline.hpp"
 
 namespace BOOM {
 
@@ -69,15 +70,13 @@ namespace BOOM {
       return SplineBase::knot_span(x) + order() - 1;
     }
 
-    int order() const {return order_;}
+    int order() const { return order_; }
 
     // Return an Mspline basis function expansion at the value x.
     Vector basis(double x) const override;
 
     // The dimension of the vector returned by basis(x).
-    int basis_dimension() const override {
-      return basis_dimension_;
-    }
+    int basis_dimension() const override { return basis_dimension_; }
 
     // Evaluates M_k(x), where k can be 0, 1, ... number_of_knots + order - 1.
     // Args:
@@ -118,7 +117,7 @@ namespace BOOM {
     //     unique (that is a requirement of this implementation, not a
     //     mathematical requirement).
     //   order:  The order of the underlying Mspline.
-    Ispline(const Vector &knots, int order = 4);
+    explicit Ispline(const Vector &knots, int order = 4);
 
     // Returns the Ispline basis expansion of the value x.
     Vector basis(double x) const override;

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,17 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include <numopt.hpp>
+#include "numopt.hpp"
 
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/report_error.hpp>
-#include <numopt/Powell.hpp>
 #include <utility>
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/report_error.hpp"
+#include "numopt/Powell.hpp"
 
-namespace BOOM{
+namespace BOOM {
   /*----------------------------------------------------------------------
     Maximizing functions of several variables.
     ----------------------------------------------------------------------*/
@@ -34,19 +35,14 @@ namespace BOOM{
     Negate f(std::move(tf));
     Vector wsp(x);
     int fc = 0;
-    double ans = nelder_mead_driver(x, wsp, f, 1e-8, 1e-8, 1.0, .5, 2.0,
-                                    fc, 1000);
+    double ans =
+        nelder_mead_driver(x, wsp, f, 1e-8, 1e-8, 1.0, .5, 2.0, fc, 1000);
     return ans * -1;
   }
   //======================================================================
-  bool max_nd1_careful(Vector &x,
-                       double &function_value,
-                       Target f,
-                       dTarget dtf,
-                       std::string &error_message,
-                       double epsilon,
-                       int max_iterations,
-                       OptimizationMethod method) {
+  bool max_nd1_careful(Vector &x, double &function_value, Target f, dTarget dtf,
+                       std::string &error_message, double epsilon,
+                       int max_iterations, OptimizationMethod method) {
     dNegate negative_f(std::move(f), std::move(dtf));
     bool fail = false;
     int fcount = 0;
@@ -55,7 +51,7 @@ namespace BOOM{
     int maxntries = 5;
     Vector original_x = x;
     switch (method) {
-      case BFGS : {
+      case BFGS: {
         // Try to minimize negative_f
         function_value = bfgs(x, negative_f, negative_f, 200, epsilon, epsilon,
                               fcount, gcount, fail);
@@ -65,22 +61,22 @@ namespace BOOM{
         break;
       }
 
-      case ConjugateGradient : {
-        fail = !conj_grad(x, function_value, negative_f, negative_f,
-                          epsilon, epsilon, PolakRibiere, fcount, gcount,
-                          max_iterations, error_message);
+      case ConjugateGradient: {
+        fail = !conj_grad(x, function_value, negative_f, negative_f, epsilon,
+                          epsilon, PolakRibiere, fcount, gcount, max_iterations,
+                          error_message);
         if (!std::isfinite(function_value) || !x.all_finite()) {
           x = original_x;
         }
         break;
       }
 
-      case Both : {
+      case Both: {
         // Start with conjugate gradient, but set convergence epsilon
         // larger than desired.
         fail = !conj_grad(x, function_value, negative_f, negative_f,
-                          epsilon * 10, epsilon * 10, PolakRibiere,
-                          fcount, gcount, max_iterations, error_message);
+                          epsilon * 10, epsilon * 10, PolakRibiere, fcount,
+                          gcount, max_iterations, error_message);
         if (!std::isfinite(function_value) || !x.all_finite()) {
           x = original_x;
         }
@@ -110,9 +106,9 @@ namespace BOOM{
           x = original_x;
         }
       } else if (method == ConjugateGradient || method == Both) {
-        fail = !conj_grad(x, function_value, negative_f, negative_f,
-            epsilon, epsilon, PolakRibiere, fcount, gcount, max_iterations,
-            error_message);
+        fail = !conj_grad(x, function_value, negative_f, negative_f, epsilon,
+                          epsilon, PolakRibiere, fcount, gcount, max_iterations,
+                          error_message);
         if (!std::isfinite(function_value) || !x.all_finite()) {
           x = original_x;
         }
@@ -124,11 +120,8 @@ namespace BOOM{
   }
 
   //======================================================================
-  double max_nd1(Vector &x,
-                 Target target,
-                 dTarget differentiable_target,
-                 double epsilon,
-                 int max_iterations,
+  double max_nd1(Vector &x, Target target, dTarget differentiable_target,
+                 double epsilon, int max_iterations,
                  OptimizationMethod method) {
     double ans;
     std::string error_message;
@@ -138,9 +131,8 @@ namespace BOOM{
   }
 
   //======================================================================
-  double max_nd2(Vector &x, Vector &g, Matrix &h,
-                 Target f, dTarget df, d2Target d2f,
-                 double leps) {
+  double max_nd2(Vector &x, Vector &g, Matrix &h, Target f, dTarget df,
+                 d2Target d2f, double leps) {
     double ans;
     string error_message;
     bool ok = max_nd2_careful(x, g, h, ans, std::move(f), std::move(df),
@@ -152,10 +144,9 @@ namespace BOOM{
   }
 
   //======================================================================
-  bool max_nd2_careful(Vector &x, Vector &g, Matrix &h, double &ans,
-                       Target f, dTarget df, d2Target d2f,
-                       double leps, string &error_message) {
-
+  bool max_nd2_careful(Vector &x, Vector &g, Matrix &h, double &ans, Target f,
+                       dTarget df, d2Target d2f, double leps,
+                       string &error_message) {
     unsigned int ntries = 0, maxtries = 5;
     Vector original_x = x;
     d2Negate nd2f(std::move(f), std::move(df), std::move(d2f));
@@ -165,8 +156,8 @@ namespace BOOM{
     int gradient_count = 0;
     error_message = "";
     do {
-      ans = newton_raphson_min(x, g, h, nd2f, function_count, leps,
-                               happy, error_message);
+      ans = newton_raphson_min(x, g, h, nd2f, function_count, leps, happy,
+                               error_message);
       ++ntries;
       if (!happy) {
         // If the Newton-Raphson algorithm did not succeed, then
@@ -179,16 +170,15 @@ namespace BOOM{
                                   function_count, gradient_count, fail);
         // If bfgs succeeded and got the same answer as Newton Raphson
         // (and that answer was finite), then accept that answer.
-        happy = (!fail)
-            && std::isfinite(ans)
-            && (fabs(bfgs_answer - ans) < leps);
+        happy =
+            (!fail) && std::isfinite(ans) && (fabs(bfgs_answer - ans) < leps);
       }
     } while (!happy && ntries < maxtries);
 
     if (ntries >= maxtries) {
       ostringstream err;
       err << "max_nd2 failed.   too many newton_raphson failures " << endl
-          << "last error message was: " <<  endl
+          << "last error message was: " << endl
           << error_message;
       error_message = err.str();
       return false;

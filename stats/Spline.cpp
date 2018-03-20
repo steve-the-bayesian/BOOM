@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,30 +16,24 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <stats/Spline.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "stats/Spline.hpp"
+#include <algorithm>
 #include <cstring>
 #include <sstream>
-#include <algorithm>
-#include <BOOM.hpp>
+#include "BOOM.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  SplineBase::SplineBase(const Vector &knots)
-      : knots_(knots)
-  {
-    knots_.sort();
-  }
+  SplineBase::SplineBase(const Vector &knots) : knots_(knots) { knots_.sort(); }
 
   double SplineBase::final_knot() const {
     return knots_.empty() ? negative_infinity() : knots_.back();
   }
 
   void SplineBase::add_knot(double knot_location) {
-    knots_.insert(std::lower_bound(knots_.begin(),
-                                   knots_.end(),
-                                   knot_location),
+    knots_.insert(std::lower_bound(knots_.begin(), knots_.end(), knot_location),
                   knot_location);
     increment_basis_dimension();
   }
@@ -66,10 +61,10 @@ namespace BOOM{
   }
 
   int SplineBase::knot_span(double x) const {
-    Vector::const_iterator terminal_knot_position = std::upper_bound(
-        knots_.begin(), knots_.end(), x);
+    Vector::const_iterator terminal_knot_position =
+        std::upper_bound(knots_.begin(), knots_.end(), x);
     int terminal_knot = terminal_knot_position - knots_.begin();
     return terminal_knot - 1;
   }
 
-}
+}  // namespace BOOM

@@ -38,7 +38,7 @@
 
 /* A version of Marsaglia-MultiCarry */
 
-#include <distributions/rng.hpp>
+#include "distributions/rng.hpp"
 
 namespace Rmath{
 

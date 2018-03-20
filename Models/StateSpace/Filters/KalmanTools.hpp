@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008-2011 Steven L. Scott
 
@@ -19,10 +20,9 @@
 #ifndef BOOM_KALMAN_TOOLS_HPP
 #define BOOM_KALMAN_TOOLS_HPP
 
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/SpdMatrix.hpp"
 
-
-namespace BOOM{
+namespace BOOM {
   // Returns the likelihood contribution of y given previous y's.
   // Uses notation from Durbin and Koopman (2001).
   // y is y[t]
@@ -31,18 +31,14 @@ namespace BOOM{
   // K is output as K[t]
   // Finv is output as Finv[t]
   // v is output as v[t]
-  double scalar_kalman_update(double y,       // y[t]
-                              Vector &a,      // a[t] -> a[t+1]
-                              SpdMatrix &P,   // P[t] -> P[t+1]
-                              Vector &K,      // output as K[t]
-                              double &F,      // output as F[t]
-                              double &v,      // output as v[t]
-                              bool missing,
-                              const Vector &Z,
-                              double H,
-                              const Matrix &T,
-                              Matrix &L,
-                              const SpdMatrix &RQR);
+  double scalar_kalman_update(double y,      // y[t]
+                              Vector &a,     // a[t] -> a[t+1]
+                              SpdMatrix &P,  // P[t] -> P[t+1]
+                              Vector &K,     // output as K[t]
+                              double &F,     // output as F[t]
+                              double &v,     // output as v[t]
+                              bool missing, const Vector &Z, double H,
+                              const Matrix &T, Matrix &L, const SpdMatrix &RQR);
 
   // The Kalman filter as implemented above computes the predictive
   // distribution of the state at time t+1 given data up to time t.
@@ -64,24 +60,16 @@ namespace BOOM{
   //     time t (the output 'v' of scalar_kalman_update upon observing
   //     y[t]).
   //   Z_state_reducer:  The value of Z passed to scalar_kalman_update.
-  void make_contemporaneous(Vector &a,
-                            SpdMatrix &P,
-                            double F_forecast_variance,
+  void make_contemporaneous(Vector &a, SpdMatrix &P, double F_forecast_variance,
                             double v_one_step_prediction_error,
                             const Vector &Z_state_reducer);
 
   // Updates a[t] and P[t] to condition on all Y, and sets up r and N
   // for use in the next recursion.
-  void scalar_kalman_smoother_update(Vector &a,
-                                     SpdMatrix &P,
-                                     const Vector & K,
-                                     double F,
-                                     double v,
-                                     const Vector &Z,
-                                     const Matrix &T,
-                                     Vector & r,
-                                     Matrix & N,
-                                     Matrix & L);
+  void scalar_kalman_smoother_update(Vector &a, SpdMatrix &P, const Vector &K,
+                                     double F, double v, const Vector &Z,
+                                     const Matrix &T, Vector &r, Matrix &N,
+                                     Matrix &L);
 
-}
-#endif// BOOM_KALMAN_TOOLS_HPP
+}  // namespace BOOM
+#endif  // BOOM_KALMAN_TOOLS_HPP

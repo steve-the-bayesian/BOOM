@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,24 +20,22 @@
 #ifndef BOOM_DIRICHLET_PROCESS_MVN_MODEL_HPP_
 #define BOOM_DIRICHLET_PROCESS_MVN_MODEL_HPP_
 
-#include <Models/MvnModel.hpp>
-#include <Models/VectorModel.hpp>
-#include <Models/Policies/CompositeParamPolicy.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/MvnModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/VectorModel.hpp"
 
 namespace BOOM {
 
   // A nonparametric model for multivariate continuous data.  The data
   // are described by a Dirichlet process mixture of normals.  The
   // prior (base measure) is a normal inverse Wishart model.
-  class DirichletProcessMvnModel
-      : public VectorModel,
-        public CompositeParamPolicy,
-        public IID_DataPolicy<VectorData>,
-        public PriorPolicy {
+  class DirichletProcessMvnModel : public VectorModel,
+                                   public CompositeParamPolicy,
+                                   public IID_DataPolicy<VectorData>,
+                                   public PriorPolicy {
    public:
-
     // Creates a DirichletProcessMvnModel with a single mixture
     // component of dimension dim.
     // Args:
@@ -47,7 +46,7 @@ namespace BOOM {
     DirichletProcessMvnModel(int dim, double alpha = 1.0);
 
     DirichletProcessMvnModel(const DirichletProcessMvnModel &rhs);
-    DirichletProcessMvnModel * clone() const override;
+    DirichletProcessMvnModel *clone() const override;
 
     // Dimension of the data being modeled.
     int dim() const;
@@ -75,7 +74,7 @@ namespace BOOM {
     void update_cluster(const Vector &old_y, const Vector &new_y, int cluster);
 
     // It is an error to try to obtain a cluster >= number_of_clusters().
-    const MvnModel & cluster(int i) const;
+    const MvnModel &cluster(int i) const;
 
     // Sets the parameters of the specified mixture component to the
     // given values.
@@ -87,8 +86,7 @@ namespace BOOM {
     //   mu: A vector of size dim() for the cluster mean.
     //   Siginv: A matrix of dimension dim() x dim() for the cluster
     //     precision (inverse variance).
-    void set_component_params(int cluster,
-                              const Vector &mu,
+    void set_component_params(int cluster, const Vector &mu,
                               const SpdMatrix &Siginv);
 
     // Returns the log likelihood of the data under the current set of
@@ -99,7 +97,7 @@ namespace BOOM {
     double logp(const Vector &x) const override;
 
     // Simulates data from model.
-    // TODO(user): add ownership of mean and precision base measures to model
+    // TODO: add ownership of mean and precision base measures to model
     //                so that simulation possible.
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
@@ -119,14 +117,12 @@ namespace BOOM {
     }
 
     // Set cluster indicator for i-th observation.
-    void set_cluster_indicator(int i, int k) {
-      cluster_indicators_[i] = k;
-    }
+    void set_cluster_indicator(int i, int k) { cluster_indicators_[i] = k; }
 
     // Initialize vector of cluster indicators.
     void initialize_cluster_indicators(int s) {
-       cluster_indicators_.clear();
-       cluster_indicators_.resize(s, -1);
+      cluster_indicators_.clear();
+      cluster_indicators_.resize(s, -1);
     }
 
    private:

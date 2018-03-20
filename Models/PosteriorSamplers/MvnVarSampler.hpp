@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -17,20 +18,20 @@
 */
 #ifndef BOOM_MVN_VAR_SAMPLER_HPP
 #define BOOM_MVN_VAR_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/SpdParams.hpp>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/SpdParams.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class MvnModel;
   class WishartModel;
 
-  class MvnVarSampler : public PosteriorSampler{
+  class MvnVarSampler : public PosteriorSampler {
     // assumes y~N(mu, Sigma), with Sigma^-1~W(df, SS).  The prior on
     // mu may or may not be conjugate.  The sampling step will
     // condition on mu.  Use MvnConjVarSampler if you want to
     // integrate out mu.
-  public:
-    MvnVarSampler(MvnModel *, double df, const SpdMatrix & SS,
+   public:
+    MvnVarSampler(MvnModel *, double df, const SpdMatrix &SS,
                   RNG &seeding_rng = GlobalRng::rng);
     MvnVarSampler(MvnModel *, const Ptr<WishartModel> &siginv_prior,
                   RNG &seeding_rng = GlobalRng::rng);
@@ -39,39 +40,35 @@ namespace BOOM{
 
     // Returns a draw of the precision matrix for an MvnModel.
     static SpdMatrix draw_precision(
-        RNG &rng,
-        double data_sample_size,
+        RNG &rng, double data_sample_size,
         const SpdMatrix &data_centered_sum_of_squares,
         const WishartModel &precision_prior);
 
     // Returns a draw of the variance matrix for an MvnModel.
     static SpdMatrix draw_variance(
-        RNG &rng,
-        double data_sample_size,
+        RNG &rng, double data_sample_size,
         const SpdMatrix &data_centered_sum_of_squares,
         const WishartModel &precision_prior);
 
-  private:
+   private:
     MvnModel *model_;
     Ptr<WishartModel> prior_;
+
    protected:
-    MvnModel *model() {return model_;}
-    const WishartModel *prior() const {return prior_.get();}
+    MvnModel *model() { return model_; }
+    const WishartModel *prior() const { return prior_.get(); }
   };
 
-  class MvnConjVarSampler : public MvnVarSampler{
+  class MvnConjVarSampler : public MvnVarSampler {
     // assumes y~N(mu, Sigma), with mu|Sigma \norm(mu0, Sigma/kappa)
     // and Sigma^-1~W(df, SS)
-  public:
-    MvnConjVarSampler(MvnModel *,
-                      double df,
-                      const SpdMatrix & SS,
+   public:
+    MvnConjVarSampler(MvnModel *, double df, const SpdMatrix &SS,
                       RNG &seeding_rng = GlobalRng::rng);
-    MvnConjVarSampler(MvnModel *,
-                      const Ptr<WishartModel> &siginv_prior,
+    MvnConjVarSampler(MvnModel *, const Ptr<WishartModel> &siginv_prior,
                       RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
   };
 
-}
-#endif// BOOM_MVN_VAR_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_MVN_VAR_SAMPLER_HPP

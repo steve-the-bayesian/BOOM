@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,27 +20,26 @@
 #ifndef BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_
 #define BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/HMM/Clickstream/NestedHmm.hpp>
+#include "Models/HMM/Clickstream/NestedHmm.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
   // To use this sampler, make sure all the mixture components and
   // latent Markov models have been assigned posterior samplers.  This
   // class will simply call them all.
-  class NestedHmmPosteriorSampler
-      : public PosteriorSampler {
+  class NestedHmmPosteriorSampler : public PosteriorSampler {
    public:
     NestedHmmPosteriorSampler(NestedHmm *model,
                               RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
+
    private:
     NestedHmm *model_;
     bool first_time_;
   };
 
-}
+}  // namespace BOOM
 
-
-#endif //  BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_NESTED_HMM_POSTERIOR_SAMPLER_HPP_

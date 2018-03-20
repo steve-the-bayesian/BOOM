@@ -1,11 +1,24 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include <string>
-#include <r_interface/list_io.hpp>
-#include <r_interface/boom_r_tools.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
+#include "r_interface/list_io.hpp"
+#include "r_interface/boom_r_tools.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -500,9 +513,22 @@ namespace BOOM {
     RMemoryProtector protector;
     SEXP buffer = protector.protect(Rf_alloc3DArray(
         REALSXP, niter, number_of_groups, dim));
+    set_buffer_group_names(buffer);
     StoreBuffer(buffer);
     array_view_.reset(data(), Array::index3(niter, number_of_groups, dim));
     return buffer;
+  }
+
+  void HierarchicalVectorListElement::set_buffer_group_names(SEXP buffer) {
+    if (group_names_.empty()) return;
+    RMemoryProtector protector;
+    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, 3));
+    // The leading dimension (MCMC iteration number) does not get
+    // names.
+    SET_VECTOR_ELT(r_dimnames, 0, R_NilValue);
+    SET_VECTOR_ELT(r_dimnames, 1, CharacterVector(group_names_));
+    SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
+    Rf_dimnamesgets(buffer, r_dimnames);
   }
 
   void HierarchicalVectorListElement::prepare_to_stream(SEXP object) {
@@ -537,6 +563,16 @@ namespace BOOM {
       parameters_[i]->set(values);
     }
   }
+
+  void HierarchicalVectorListElement::set_group_names(
+      const std::vector<std::string> &group_names) {
+    if (group_names.size() != parameters_.size()) {
+      report_error("Vector of group names must be the same size as the "
+                   "number of groups.");
+    }
+    group_names_ = group_names;
+  }
+  
 
   void HierarchicalVectorListElement::CheckSize() {
     const std::vector<int> &dims(array_view_.dim());

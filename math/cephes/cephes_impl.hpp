@@ -20,7 +20,7 @@
 #define BOOM_MATH_CEPHES_HPP_
 
 #include <limits>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 #include <cmath>
 
 namespace BOOM {

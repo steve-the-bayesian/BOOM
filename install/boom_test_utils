@@ -1,0 +1,3 @@
+#!/bin/bash
+
+PACKAGE=BoomTestUtils ./install/install.package $@

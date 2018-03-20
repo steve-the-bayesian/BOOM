@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -17,63 +18,57 @@
 */
 #ifndef BOOM_MVN_MEAN_SAMPLER_HPP
 #define BOOM_MVN_MEAN_SAMPLER_HPP
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/MvnBase.hpp>
+#include "Models/MvnBase.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class MvnModel;
   class VectorParams;
   class SpdParams;
 
   //____________________________________________________________
-  class MvnConjMeanSampler : public PosteriorSampler{
+  class MvnConjMeanSampler : public PosteriorSampler {
     // assumes y~N(mu, Sig) with mu~N(mu0, Sig/kappa)
     // draws mu given y, Sigma, mu0, kappa
-  public:
-    MvnConjMeanSampler(MvnModel *Mod,   // improper: mu0 = 0 kappa = 0;
-                       RNG &seeding_rng = GlobalRng::rng);
-    MvnConjMeanSampler(MvnModel *Mod,
-                       const Ptr<VectorParams> &Mu0,
+   public:
+    explicit MvnConjMeanSampler(MvnModel *Mod,  // improper: mu0 = 0 kappa = 0;
+                                RNG &seeding_rng = GlobalRng::rng);
+    MvnConjMeanSampler(MvnModel *Mod, const Ptr<VectorParams> &Mu0,
                        const Ptr<UnivParams> &Kappa,
                        RNG &seeding_rng = GlobalRng::rng);
-    MvnConjMeanSampler(MvnModel *Mod,
-                       const Vector &Mu0,
-                       double Kappa,
+    MvnConjMeanSampler(MvnModel *Mod, const Vector &Mu0, double Kappa,
                        RNG &seeding_rng = GlobalRng::rng);
 
     double logpri() const override;  // p(mu|Sig)
     void draw() override;
-  private:
+
+   private:
     MvnModel *mvn;
     Ptr<VectorParams> mu0;
     Ptr<UnivParams> kappa;
   };
   //____________________________________________________________
 
-  class MvnMeanSampler : public PosteriorSampler{
+  class MvnMeanSampler : public PosteriorSampler {
     // assumes y~N(mu, Sigma) with mu~N(mu0, Omega)
-  public:
+   public:
+    MvnMeanSampler(MvnModel *Mod, const Ptr<VectorParams> &Mu0,
+                   const Ptr<SpdParams> &Omega,
+                   RNG &seeding_rng = GlobalRng::rng);
 
-    MvnMeanSampler(MvnModel *Mod,
-           const Ptr<VectorParams> &Mu0,
-           const Ptr<SpdParams> &Omega,
-       RNG &seeding_rng = GlobalRng::rng);
+    MvnMeanSampler(MvnModel *Mod, const Ptr<MvnBase> &Pri,
+                   RNG &seeding_rng = GlobalRng::rng);
 
-    MvnMeanSampler(MvnModel *Mod,
-           const Ptr<MvnBase> &Pri,
-       RNG &seeding_rng = GlobalRng::rng);
-
-    MvnMeanSampler(MvnModel *Mod,
-           const Vector & Mu0,
-           const SpdMatrix & Omega,
-       RNG &seeding_rng = GlobalRng::rng);
-    double logpri()const override;
+    MvnMeanSampler(MvnModel *Mod, const Vector &Mu0, const SpdMatrix &Omega,
+                   RNG &seeding_rng = GlobalRng::rng);
+    double logpri() const override;
     void draw() override;
-  private:
+
+   private:
     MvnModel *mvn;
     Ptr<MvnBase> mu_prior_;
   };
   //____________________________________________________________
-}
-#endif// BOOM_MVN_MEAN_SAMPLER_HPP
+}  // namespace BOOM
+#endif  // BOOM_MVN_MEAN_SAMPLER_HPP

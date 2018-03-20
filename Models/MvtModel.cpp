@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,15 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/MvtModel.hpp>
-#include <Models/WeightedData.hpp>
-#include <Models/WeightedMvnModel.hpp>
-#include <Models/ScaledChisqModel.hpp>
-#include <distributions.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <TargetFun/TargetFun.hpp>
-#include <numopt.hpp>
+#include "Models/MvtModel.hpp"
 #include <cmath>
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/ScaledChisqModel.hpp"
+#include "Models/WeightedData.hpp"
+#include "Models/WeightedMvnModel.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "distributions.hpp"
+#include "numopt.hpp"
 
 namespace BOOM {
 
@@ -33,82 +34,77 @@ namespace BOOM {
   }
 
   MVT::MvtModel(uint p, double mu, double sig, double nu)
-    : ParamPolicy(),
-      DataPolicy(),
-      PriorPolicy(),
-      mvn(new WeightedMvnModel(p,mu,sig)),
-      wgt(new ScaledChisqModel(nu))
-  {
+      : ParamPolicy(),
+        DataPolicy(),
+        PriorPolicy(),
+        mvn(new WeightedMvnModel(p, mu, sig)),
+        wgt(new ScaledChisqModel(nu)) {
     ParamPolicy::add_model(mvn);
     ParamPolicy::add_model(wgt);
   }
 
   MVT::MvtModel(const Vector &mean, const SpdMatrix &Var, double Nu)
-    : ParamPolicy(),
-      DataPolicy(),
-      PriorPolicy(),
-      mvn(new WeightedMvnModel(mean, Var)),
-      wgt(new ScaledChisqModel(Nu))
-  {
+      : ParamPolicy(),
+        DataPolicy(),
+        PriorPolicy(),
+        mvn(new WeightedMvnModel(mean, Var)),
+        wgt(new ScaledChisqModel(Nu)) {
     ParamPolicy::add_model(mvn);
     ParamPolicy::add_model(wgt);
   }
 
   MVT::MvtModel(const MvtModel &rhs)
-    : Model(rhs),
-      VectorModel(rhs),
-      ParamPolicy(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      LatentVariableModel(rhs),
-      LoglikeModel(rhs),
-      LocationScaleVectorModel(rhs),
-      mvn(rhs.mvn->clone()),
-      wgt(rhs.wgt->clone())
-  {
+      : Model(rhs),
+        VectorModel(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        LatentVariableModel(rhs),
+        LoglikeModel(rhs),
+        LocationScaleVectorModel(rhs),
+        mvn(rhs.mvn->clone()),
+        wgt(rhs.wgt->clone()) {
     ParamPolicy::add_model(mvn);
     ParamPolicy::add_model(wgt);
   }
 
-  MvtModel *MVT::clone() const { return new MvtModel(*this);}
+  MvtModel *MVT::clone() const { return new MvtModel(*this); }
 
-  void MVT::initialize_params() {
-    mle();
-  }
+  void MVT::initialize_params() { mle(); }
 
-  Ptr<VectorParams> MVT::Mu_prm() {return mvn->Mu_prm();}
-  Ptr<SpdParams> MVT::Sigma_prm() {return mvn->Sigma_prm();}
-  Ptr<UnivParams> MVT::Nu_prm() {return wgt->Nu_prm();}
+  Ptr<VectorParams> MVT::Mu_prm() { return mvn->Mu_prm(); }
+  Ptr<SpdParams> MVT::Sigma_prm() { return mvn->Sigma_prm(); }
+  Ptr<UnivParams> MVT::Nu_prm() { return wgt->Nu_prm(); }
 
-  const Ptr<VectorParams> MVT::Mu_prm() const {
-    return mvn->Mu_prm();}
-  const Ptr<SpdParams> MVT::Sigma_prm() const {
-    return mvn->Sigma_prm();}
-  const Ptr<UnivParams> MVT::Nu_prm() const {
-    return wgt->Nu_prm();}
+  const Ptr<VectorParams> MVT::Mu_prm() const { return mvn->Mu_prm(); }
+  const Ptr<SpdParams> MVT::Sigma_prm() const { return mvn->Sigma_prm(); }
+  const Ptr<UnivParams> MVT::Nu_prm() const { return wgt->Nu_prm(); }
 
-  int MVT::dim() const {return mu().size();}
-  const Vector & MVT::mu() const { return Mu_prm()->value();}
-  const SpdMatrix & MVT::Sigma() const {return Sigma_prm()->var();}
-  const Matrix & MVT::Sigma_chol() const {return Sigma_prm()->var_chol();}
-  const SpdMatrix & MVT::siginv() const {return Sigma_prm()->ivar();}
-  double MVT::ldsi() const { return Sigma_prm()->ldsi();}
-  double MVT::nu() const {return Nu_prm()->value();}
+  int MVT::dim() const { return mu().size(); }
+  const Vector &MVT::mu() const { return Mu_prm()->value(); }
+  const SpdMatrix &MVT::Sigma() const { return Sigma_prm()->var(); }
+  const Matrix &MVT::Sigma_chol() const { return Sigma_prm()->var_chol(); }
+  const SpdMatrix &MVT::siginv() const { return Sigma_prm()->ivar(); }
+  double MVT::ldsi() const { return Sigma_prm()->ldsi(); }
+  double MVT::nu() const { return Nu_prm()->value(); }
 
-  void MVT::set_mu(const Vector &mu) {Mu_prm()->set(mu);}
-  void MVT::set_Sigma(const SpdMatrix &Sig) {Sigma_prm()->set_var(Sig);}
-  void MVT::set_siginv(const SpdMatrix &ivar) {Sigma_prm()->set_ivar(ivar);}
-  void MVT::set_nu(double nu) {Nu_prm()->set(nu);}
+  void MVT::set_mu(const Vector &mu) { Mu_prm()->set(mu); }
+  void MVT::set_Sigma(const SpdMatrix &Sig) { Sigma_prm()->set_var(Sig); }
+  void MVT::set_siginv(const SpdMatrix &ivar) { Sigma_prm()->set_ivar(ivar); }
+  void MVT::set_nu(double nu) { Nu_prm()->set(nu); }
 
   double MVT::pdf(const VectorData *dp, bool logscale) const {
-    return pdf(dp->value(),logscale);}
+    return pdf(dp->value(), logscale);
+  }
   double MVT::pdf(const Data *dp, bool logscale) const {
     const Vector &v(dynamic_cast<const VectorData *>(dp)->value());
-    return pdf(v, logscale);}
+    return pdf(v, logscale);
+  }
   double MVT::pdf(const Vector &x, bool logscale) const {
-    return dmvt(x, mu(), siginv(), nu(), ldsi(), logscale); }
+    return dmvt(x, mu(), siginv(), nu(), ldsi(), logscale);
+  }
 
-  double MVT::logp(const Vector &x) const {return pdf(x, true);}
+  double MVT::logp(const Vector &x) const { return pdf(x, true); }
 
   void MVT::add_data(const Ptr<VectorData> &dp) {
     DataPolicy::add_data(dp);
@@ -118,7 +114,7 @@ namespace BOOM {
     mvn->add_data(v);
   }
 
-  void MVT::add_data(const Ptr<Data> & dp) {
+  void MVT::add_data(const Ptr<Data> &dp) {
     Ptr<VectorData> d = DAT(dp);
     add_data(d);
   }
@@ -126,7 +122,7 @@ namespace BOOM {
   //======================================================================
 
   double MVT::loglike(const Vector &mu_siginv_triangle_nu) const {
-    const DatasetType & dat(this->dat());
+    const DatasetType &dat(this->dat());
     const ConstVectorView mu(mu_siginv_triangle_nu, 0, dim());
     SpdMatrix siginv(dim());
     Vector::const_iterator it = mu_siginv_triangle_nu.cbegin() + dim();
@@ -135,7 +131,7 @@ namespace BOOM {
     double nu = mu_siginv_triangle_nu.back();
     double lognu = log(nu);
 
-    const double logpi= 1.1447298858494;
+    const double logpi = 1.1447298858494;
     uint n = dat.size();
     uint d = mu.size();
     double half_npd = .5 * (nu + d);
@@ -144,7 +140,7 @@ namespace BOOM {
     ans += .5 * ldsi + half_npd * lognu;
     ans *= n;
 
-    for (uint i=0; i<n; ++i) {
+    for (uint i = 0; i < n; ++i) {
       double delta = siginv.Mdist(mu, dat[i]->value());
       ans -= half_npd * log(nu + delta / nu);
     }
@@ -158,7 +154,7 @@ namespace BOOM {
   void MVT::Impute(bool sample, RNG &rng) {
     std::vector<Ptr<WVD> > &V(mvn->dat());
 
-    for (uint i=0; i<V.size(); ++i) {
+    for (uint i = 0; i < V.size(); ++i) {
       Ptr<WVD> d = V[i];
       const Vector &y(d->value());
       double delta = siginv().Mdist(y, mu());
@@ -171,34 +167,37 @@ namespace BOOM {
     wgt->refresh_suf();
   }
   void MVT::impute_latent_data(RNG &rng) { Impute(true, rng); }
-  void MVT::Estep() {Impute(false, GlobalRng::rng);}
+  void MVT::Estep() { Impute(false, GlobalRng::rng); }
 
   //------------------------------------------------------------
 
-  class MvtNuTF{
-  public:
-    MvtNuTF(MvtModel *Mod) : mod(Mod) {}
-    MvtNuTF * clone() const {return new MvtNuTF(*this);}
+  class MvtNuTF {
+   public:
+    explicit MvtNuTF(MvtModel *Mod) : mod(Mod) {}
+    MvtNuTF *clone() const { return new MvtNuTF(*this); }
     double operator()(const Vector &Nu) const;
     double operator()(const Vector &Nu, Vector &g) const;
-  private:
+
+   private:
     double Loglike(const Vector &Nu, Vector &g, uint nd) const;
     MvtModel *mod;
   };
 
   double MvtNuTF::operator()(const Vector &Nu) const {
     Vector g;
-    return Loglike(Nu, g, 0);}
+    return Loglike(Nu, g, 0);
+  }
 
   double MvtNuTF::operator()(const Vector &Nu, Vector &g) const {
-    return Loglike(Nu,g,1);}
+    return Loglike(Nu, g, 1);
+  }
 
   double MvtNuTF::Loglike(const Vector &Nu, Vector &g, uint nd) const {
-    const std::vector<Ptr<VectorData> > & dat(mod->dat());
+    const std::vector<Ptr<VectorData> > &dat(mod->dat());
     double ldsi = mod->ldsi();
-    const SpdMatrix & Siginv(mod->siginv());
+    const SpdMatrix &Siginv(mod->siginv());
     const Vector &mu(mod->mu());
-    const double logpi= 1.1447298858494;
+    const double logpi = 1.1447298858494;
     double nu = Nu[0];
     double lognu = log(nu);
     uint n = dat.size();
@@ -211,16 +210,16 @@ namespace BOOM {
 
     if (nd > 0) {
       g[0] = .5 * (digamma(half_npd) - digamma(nu / 2.0) - d / nu);
-      g[0] +=  half_npd / nu + .5 * lognu;
+      g[0] += half_npd / nu + .5 * lognu;
       g[0] *= n;
     }
 
-    for (uint i=0; i<n; ++i) {
+    for (uint i = 0; i < n; ++i) {
       double delta = Siginv.Mdist(mu, dat[i]->value());
       double npd = nu + delta;
       ans -= half_npd * log(npd);
       if (nd > 0) {
-        g[0] -=  half_npd / npd + .5 * log(npd);
+        g[0] -= half_npd / npd + .5 * log(npd);
       }
     }
     return ans;
@@ -249,7 +248,7 @@ namespace BOOM {
     params.pop_back();
     double ans = mvn->loglike(params);
     Vector nu_vector(1, nu());
-    ans+= wgt->loglike(nu_vector);
+    ans += wgt->loglike(nu_vector);
     return ans;
   }
 

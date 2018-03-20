@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -16,10 +17,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions/BoundedAdaptiveRejectionSampler.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
+#include "distributions/BoundedAdaptiveRejectionSampler.hpp"
 #include <sstream>
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace {
@@ -27,7 +28,7 @@ namespace BOOM {
 
     // A streaming operator for vector<double>, mainly used for recording the
     // state of the BARS object in the event an exception is thrown.
-    ostream & operator <<(ostream &out, const std::vector<double> &v) {
+    ostream &operator<<(ostream &out, const std::vector<double> &v) {
       for (int i = 0; i < v.size(); ++i) {
         out << v[i] << " ";
       }
@@ -35,7 +36,7 @@ namespace BOOM {
     }
   }  // namespace
 
-  BARS:: BoundedAdaptiveRejectionSampler(
+  BARS::BoundedAdaptiveRejectionSampler(
       double support_lower_bound,
       const std::function<double(double)> &log_target_density,
       const std::function<double(double)> &log_target_density_derivative)
@@ -45,9 +46,8 @@ namespace BOOM {
         log_density_values_(1, log_target_density_(support_lower_bound)),
         log_density_derivative_values_(
             1, log_target_density_derivative_(support_lower_bound)),
-        knots_(1, support_lower_bound)
-  {
-    if (log_density_derivative_values_[0] >=0) {
+        knots_(1, support_lower_bound) {
+    if (log_density_derivative_values_[0] >= 0) {
       std::ostringstream err;
       err << "lower bound of " << support_lower_bound
           << " must be to the right of the mode of "
@@ -120,6 +120,9 @@ namespace BOOM {
     uint n = knots_.size();
     cdf_.resize(n);
     double y0 = log_density_values_[0];
+    if (!std::isfinite(y0)) {
+      report_error("log density value 0 is not finite.");
+    }
     double last = 0;
     for (uint k = 0; k < knots_.size(); ++k) {
       double d = log_density_derivative_values_[k];
@@ -130,6 +133,11 @@ namespace BOOM {
       double inc2 = dinv * exp(y - d * z + d * knots_[k]);
       cdf_[k] = last + inc1 - inc2;
       last = cdf_[k];
+      if (!std::isfinite(last)) {
+        report_error(
+            "BoundedAdaptiveRejectionSampler found an illegal value "
+            "when updating the cdf.");
+      }
     }
   }
   //----------------------------------------------------------------------
@@ -140,7 +148,7 @@ namespace BOOM {
     return yk + dk * (z - xk);
   }
   //----------------------------------------------------------------------
-  double BARS::draw_safely(RNG & rng, int available_recursion_levels) {
+  double BARS::draw_safely(RNG &rng, int available_recursion_levels) {
     if (available_recursion_levels-- < 0) {
       ostringstream err;
       err << "Too many recursion layers in "
@@ -156,7 +164,7 @@ namespace BOOM {
     if (k + 1 == cdf_.size()) {
       // one sided draw..................
       cand = knots_.back() +
-          rexp_mt(rng, -1 * log_density_derivative_values_.back());
+             rexp_mt(rng, -1 * log_density_derivative_values_.back());
     } else {
       // draw from the doubly truncated exponential distribution
       double lo = knots_[k];
@@ -174,19 +182,17 @@ namespace BOOM {
     return draw_safely(rng, available_recursion_levels);
   }
 
-  double BARS::draw(RNG &rng) {
-    return draw_safely(rng, 1000);
-  }
+  double BARS::draw(RNG &rng) { return draw_safely(rng, 1000); }
 
-  std::ostream & BARS::print(std::ostream &out) const {
+  std::ostream &BARS::print(std::ostream &out) const {
     out << "proposed points: " << endl
         << x_ << endl
         << "log density " << endl
         << log_density_values_ << endl
         << "knots = " << endl
         << knots_ << endl
-        <<  "cdf = " << endl
+        << "cdf = " << endl
         << cdf_ << endl;
-    return(out);
+    return (out);
   }
 }  // namespace BOOM

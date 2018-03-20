@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -16,15 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <LinAlg/Selector.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 
-#include <cpputil/seq.hpp>
-#include <cpputil/report_error.hpp>
+#include "cpputil/seq.hpp"
+#include "cpputil/report_error.hpp"
 
-#include <distributions.hpp>
+#include "distributions.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -565,6 +566,31 @@ namespace BOOM {
       // then we might need to flip the include_all_ bit.
       if (nvars() == nvars_possible()) {
         include_all_ = true;
+      }
+    }
+  }
+
+  int Selector::first_included_at_or_before(uint position) const {
+    // If position is included then life is easy.
+    if (include_all_ || (*this)[position]) {
+      return position;
+    } else if (nvars() == 0) {
+      // Handle the nothing-included case, when included_positions_ might be
+      // empty.
+      return -1;
+    } else {
+      // The vector of included positions is non-empty, but position is not
+      // included.  The call to lower bound returns the first element with value
+      // >= position.
+      auto it = std::lower_bound(included_positions_.begin(),
+                                 included_positions_.end(),
+                                 position);
+      if (it == included_positions_.begin()) {
+        // Element 0 is >= position;
+        return -1;
+      } else {
+        --it;
+        return *it;
       }
     }
   }

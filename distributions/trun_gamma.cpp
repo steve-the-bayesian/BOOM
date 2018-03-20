@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -16,68 +17,69 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <cmath>                          // log
+#include "distributions/trun_gamma.hpp"
+#include <cmath>  // log
 #include <sstream>
-#include <distributions.hpp>              // rgamma, runif
-#include <cpputil/math_utils.hpp>         // infinity
-#include <cpputil/report_error.hpp>
-#include <distributions/trun_gamma.hpp>
-#include <distributions/BoundedAdaptiveRejectionSampler.hpp>
+#include "cpputil/math_utils.hpp"  // infinity
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"  // rgamma, runif
+#include "distributions/BoundedAdaptiveRejectionSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   double rtg_init(double x, double a, double b, double cut, double logpstar);
-  double rtg_slice(RNG & , double x,double a,double b,double cut);
+  double rtg_slice(RNG &, double x, double a, double b, double cut);
 
-  double dtrun_gamma(double x, double a, double b, double cut, bool logscale){
+  double dtrun_gamma(double x, double a, double b, double cut, bool logscale) {
     /*
      * return the un-normalized density of a gamma(a,b) random
      * variable x, given x > cut
      */
 
-    if(a < 0 || b< 0 || cut < 0 || x < cut) return BOOM::negative_infinity();
+    if (a < 0 || b < 0 || cut < 0 || x < cut) return BOOM::negative_infinity();
 
-    double ans = (a-1)*log(x) - b * x;
+    double ans = (a - 1) * log(x) - b * x;
     return logscale ? ans : exp(ans);
   }
 
   //----------------------------------------------------------------------
-  class LogGammaDensity{
+  class LogGammaDensity {
    public:
-    LogGammaDensity(double a, double b, double cut)
-        : a_(a), b_(b), cut_(cut) {}
-    double operator()(double x)const{
-      return dtrun_gamma(x, a_, b_, cut_, true); }
+    LogGammaDensity(double a, double b, double cut) : a_(a), b_(b), cut_(cut) {}
+    double operator()(double x) const {
+      return dtrun_gamma(x, a_, b_, cut_, true);
+    }
+
    private:
     double a_, b_, cut_;
   };
 
-  class DLogGammaDensity{
+  class DLogGammaDensity {
    public:
-    DLogGammaDensity(double a, double b, double cut)
-        : a_(a), b_(b), cut_(cut) {}
-    double operator()(double x)const{ return (a_ - 1)/x - b_;}
+    DLogGammaDensity(double a, double b) : a_(a), b_(b) {}
+    double operator()(double x) const { return (a_ - 1) / x - b_; }
+
    private:
-    double a_, b_, cut_;
+    double a_, b_;
   };
 
+  double rtrun_gamma(double a, double b, double cut, unsigned n) {
+    return rtrun_gamma_mt(GlobalRng::rng, a, b, cut, n);
+  }
 
-  double rtrun_gamma(double a,double b,double cut, unsigned n){
-    return rtrun_gamma_mt(GlobalRng::rng, a, b, cut, n);}
-
-  double rtrun_gamma_mt(RNG & rng, double a,double b,double cut, unsigned n){
-    double mode = (a-1)/b;
+  double rtrun_gamma_mt(RNG &rng, double a, double b, double cut, unsigned n) {
+    double mode = (a - 1) / b;
     double x = cut;
-    if(cut < mode){    // rejection sampling
+    if (cut < mode) {  // rejection sampling
       do {
-        x = rgamma_mt(rng, a,b);
-      } while(x<cut);
+        x = rgamma_mt(rng, a, b);
+      } while (x < cut);
       return x;
     }
-    if(a > 1){
-      try{
-        BoundedAdaptiveRejectionSampler sam(
-            cut, LogGammaDensity(a, b, cut), DLogGammaDensity(a, b, cut));
+    if (a > 1) {
+      try {
+        BoundedAdaptiveRejectionSampler sam(cut, LogGammaDensity(a, b, cut),
+                                            DLogGammaDensity(a, b));
         return sam.draw(rng);
       } catch (std::exception &e) {
         std::ostringstream err;
@@ -93,41 +95,40 @@ namespace BOOM{
         report_error("caught unknown exception in rtrun_gamma_mt");
       }
     } else {
-      for(unsigned i=0; i<n; ++i) x = rtg_slice(rng, x,a,b,cut);
+      for (unsigned i = 0; i < n; ++i) x = rtg_slice(rng, x, a, b, cut);
     }
     return x;
   }
 
   //----------------------------------------------------------------------
 
-  double rtg_init(double x, double a, double b, double cut, double logpstar){
+  double rtg_init(double x, double a, double b, double cut, double logpstar) {
     /*
      * finds a value of x such that dtrun_gamma(x,a,b,cut,true) <
      * logpstar.  This function will only be called if cut > mode, in
      * which case dtrun_gamma is a decreasing function.
      */
 
-    double f = dtrun_gamma(x,a,b,cut,true) - logpstar;
-    double fprime = ((a-1)/x)  - b;
-    while(f>0){
-      x -= f/fprime;
-      f = dtrun_gamma(x,a,b,cut,true) - logpstar;
-      fprime = ((a-1)/cut)  - b;
+    double f = dtrun_gamma(x, a, b, cut, true) - logpstar;
+    double fprime = ((a - 1) / x) - b;
+    while (f > 0) {
+      x -= f / fprime;
+      f = dtrun_gamma(x, a, b, cut, true) - logpstar;
+      fprime = ((a - 1) / cut) - b;
     }
     return x;
   }
   //----------------------------------------------------------------------
-  double rtg_slice(RNG &rng, double x,double a,double b,double cut){
-    double logpstar = dtrun_gamma(x,a,b,cut,true) - rexp_mt(rng, 1.0);
+  double rtg_slice(RNG &rng, double x, double a, double b, double cut) {
+    double logpstar = dtrun_gamma(x, a, b, cut, true) - rexp_mt(rng, 1.0);
     double lo = cut;
-    double hi = rtg_init(x,a,b,cut, logpstar);
-    x = runif_mt(rng, lo,hi);
-    while(dtrun_gamma(x,a,b, cut, true) < logpstar){
+    double hi = rtg_init(x, a, b, cut, logpstar);
+    x = runif_mt(rng, lo, hi);
+    while (dtrun_gamma(x, a, b, cut, true) < logpstar) {
       hi = x;
-      x = runif_mt(rng, lo,hi);
+      x = runif_mt(rng, lo, hi);
     }
-    return(x);
+    return (x);
   }
 
-
-}
+}  // namespace BOOM

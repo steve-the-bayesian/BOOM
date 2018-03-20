@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -29,7 +30,7 @@ namespace BOOM{
 
   class ArrayPositionManager {
    public:
-    ArrayPositionManager(const std::vector<int> &dims);
+    explicit ArrayPositionManager(const std::vector<int> &dims);
     void operator++();
 
     // Move the position back to the beginning.

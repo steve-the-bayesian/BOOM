@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,20 +16,20 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <cpputil/rep.hpp>
+#include "cpputil/rep.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  Vector rep(const Vector &x, uint n){
+  Vector rep(const Vector &x, uint n) {
     uint m = x.size();
-    Vector ans(m*n);
+    Vector ans(m * n);
     Vector::const_iterator b = x.begin();
     Vector::const_iterator e = x.end();
     Vector::iterator out = ans.begin();
-    for(uint i=0; i<n; ++i){
-      std::copy(b,e,out);
-      out+=m;
+    for (uint i = 0; i < n; ++i) {
+      std::copy(b, e, out);
+      out += m;
     }
     return ans;
   }
-}
+}  // namespace BOOM

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -18,38 +19,33 @@
 
 #ifndef BOOM_SPD_PARAMS_HPP
 #define BOOM_SPD_PARAMS_HPP
-#include <Models/SpdData.hpp>
-#include <Models/ParamTypes.hpp>
+#include "Models/ParamTypes.hpp"
+#include "Models/SpdData.hpp"
 
-namespace BOOM{
+namespace BOOM {
   /*
    * There are several storage classes that one could use for Spd
    * params.  Store Sigma, Sigma_inverse, chol(Sigma), chol(Sigma_inv),
    * S and R, S and chol(R), S and chol(R_inv), etc.
    */
 
-  class SpdParams
-    : public SpdData,
-      virtual public Params
-  {
-  public:
-    explicit SpdParams(uint p, double diag = 1.0, bool ivar=false);
-    SpdParams(const SpdMatrix &V, bool ivar);
+  class SpdParams : public SpdData, virtual public Params {
+   public:
+    explicit SpdParams(uint p, double diag = 1.0, bool ivar = false);
+    explicit SpdParams(const SpdMatrix &V, bool ivar = false);
     SpdParams(const SpdParams &rhs);
-    SpdParams(const SpdData &rhs);
-    SpdParams * clone()const override;
+    explicit SpdParams(const SpdData &rhs);
+    SpdParams *clone() const override;
 
-    uint size(bool minimal = true)const override{
-      return SpdData::size(minimal);}
-    Vector vectorize(bool minimal=true)const override;
+    uint size(bool minimal = true) const override {
+      return SpdData::size(minimal);
+    }
+    Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                            bool minimal=true) override;
+                                       bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                            bool minimal=true) override;
-
+                                       bool minimal = true) override;
   };
 
-
-
-}
-#endif// BOOM_SPD_PARAMS_HPP
+}  // namespace BOOM
+#endif  // BOOM_SPD_PARAMS_HPP

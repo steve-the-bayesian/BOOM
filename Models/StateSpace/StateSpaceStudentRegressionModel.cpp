@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -16,13 +17,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/StateSpace/StateSpaceStudentRegressionModel.hpp>
-#include <Models/StateSpace/Filters/SparseKalmanTools.hpp>
-#include <Models/Glm/PosteriorSamplers/TDataImputer.hpp>
-#include <distributions.hpp>
-#include <cpputil/math_utils.hpp>
-#include <stats/moments.hpp>
-
+#include "Models/StateSpace/StateSpaceStudentRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
+#include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/seq.hpp"
+#include "distributions.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   namespace {
@@ -30,39 +31,32 @@ namespace BOOM {
     typedef StateSpace::AugmentedStudentRegressionData AugmentedData;
   }  // namespace
 
-  AugmentedData::AugmentedStudentRegressionData()
-      : state_model_offset_(0)
-  {}
+  AugmentedData::AugmentedStudentRegressionData() : state_model_offset_(0) {}
 
   AugmentedData::AugmentedStudentRegressionData(double y, const Vector &x)
-      : state_model_offset_(0.0)
-  {
+      : state_model_offset_(0.0) {
     add_data(new RegressionData(y, x));
   }
 
   AugmentedData::AugmentedStudentRegressionData(
-      const std::vector<Ptr<RegressionData>> & data)
-      : state_model_offset_(0.0)
-  {
+      const std::vector<Ptr<RegressionData>> &data)
+      : state_model_offset_(0.0) {
     for (int i = 0; i < data.size(); ++i) {
       add_data(data[i]);
     }
   }
 
-  AugmentedData * AugmentedData::clone() const {
+  AugmentedData *AugmentedData::clone() const {
     return new AugmentedData(*this);
   }
 
-  std::ostream & AugmentedData::display(std::ostream &out) const {
+  std::ostream &AugmentedData::display(std::ostream &out) const {
     out << "state model offset: " << state_model_offset_ << std::endl;
-    out << std::setw(10) << "response"
-        << std::setw(10) << " weight"
+    out << std::setw(10) << "response" << std::setw(10) << " weight"
         << " predictors" << std::endl;
     for (int i = 0; i < regression_data_.size(); ++i) {
-      out << std::setw(10) << regression_data_[i]->y()
-          << std::setw(10) << weights_[i]
-          << regression_data_[i]->x()
-          << std::endl;
+      out << std::setw(10) << regression_data_[i]->y() << std::setw(10)
+          << weights_[i] << regression_data_[i]->x() << std::endl;
     }
     return out;
   }
@@ -96,9 +90,11 @@ namespace BOOM {
 
   double AugmentedData::sum_of_weights() const {
     switch (missing()) {
-      case Data::observed : return sum(weights_);
-      case Data::completely_missing : return 0;
-      case Data::partly_missing : {
+      case Data::observed:
+        return sum(weights_);
+      case Data::completely_missing:
+        return 0;
+      case Data::partly_missing: {
         double ans = 0;
         for (int i = 0; i < regression_data_.size(); ++i) {
           if (regression_data(i).missing() == Data::observed) {
@@ -121,28 +117,26 @@ namespace BOOM {
   //======================================================================
   SSSRM::StateSpaceStudentRegressionModel(int xdim)
       : StateSpaceNormalMixture(xdim > 1),
-        observation_model_(new TRegressionModel(xdim))
-  {
+        observation_model_(new TRegressionModel(xdim)) {
     set_observers();
   }
 
-  SSSRM::StateSpaceStudentRegressionModel(
-      const Vector &response,
-      const Matrix &predictors,
-      const std::vector<bool> &observed)
+  SSSRM::StateSpaceStudentRegressionModel(const Vector &response,
+                                          const Matrix &predictors,
+                                          const std::vector<bool> &observed)
       : StateSpaceNormalMixture(ncol(predictors) > 0),
-        observation_model_(new TRegressionModel(ncol(predictors)))
-  {
+        observation_model_(new TRegressionModel(ncol(predictors))) {
     set_observers();
-    if ((ncol(predictors) == 1)
-        && (var(predictors.col(0)) < std::numeric_limits<double>::epsilon())) {
+    if ((ncol(predictors) == 1) &&
+        (var(predictors.col(0)) < std::numeric_limits<double>::epsilon())) {
       set_regression_flag(false);
     }
 
     if (!observed.empty()) {
       if (observed.size() != response.size()) {
-        report_error("Argument size mismatch between response and observed in "
-                     "StateSpaceStudentRegressionModel constructor.");
+        report_error(
+            "Argument size mismatch between response and observed in "
+            "StateSpaceStudentRegressionModel constructor.");
       }
     }
     for (int i = 0; i < response.size(); ++i) {
@@ -162,14 +156,11 @@ namespace BOOM {
         StateSpaceNormalMixture(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        observation_model_(rhs.observation_model_->clone())
-  {}
+        observation_model_(rhs.observation_model_->clone()) {}
 
-  SSSRM * SSSRM::clone() const {return new SSSRM(*this);}
+  SSSRM *SSSRM::clone() const { return new SSSRM(*this); }
 
-  int SSSRM::time_dimension() const {
-    return dat().size();
-  }
+  int SSSRM::time_dimension() const { return dat().size(); }
 
   int SSSRM::total_sample_size() const {
     int ans = 0;
@@ -202,46 +193,52 @@ namespace BOOM {
   }
 
   bool SSSRM::is_missing_observation(int t) const {
-    return dat()[t]->missing() == Data::completely_missing
-        || dat()[t]->observed_sample_size() == 0;
+    return dat()[t]->missing() == Data::completely_missing ||
+           dat()[t]->observed_sample_size() == 0;
   }
 
-  void SSSRM::observe_data_given_state(int t)  {
+  void SSSRM::observe_data_given_state(int t) {
     if (!is_missing_observation(t)) {
       dat()[t]->set_state_model_offset(observation_matrix(t).dot(state(t)));
       signal_complete_data_change(t);
     }
   }
 
-  Vector SSSRM::simulate_forecast(
-      RNG &rng,
-      const Matrix &predictors,
-      const Vector &final_state) {
+  Vector SSSRM::simulate_forecast(RNG &rng, const Matrix &predictors,
+                                  const Vector &final_state) {
+    return simulate_multiplex_forecast(rng, predictors, final_state,
+                                       seq<int>(1, nrow(predictors)));
+  }
+
+  Vector SSSRM::simulate_multiplex_forecast(
+      RNG &rng, const Matrix &predictors, const Vector &final_state,
+      const std::vector<int> &timestamps) {
     set_state_model_behavior(StateModel::MARGINAL);
     Vector state = final_state;
     Vector ans(nrow(predictors));
     int t0 = dat().size();
     double sigma = observation_model_->sigma();
     double nu = observation_model_->nu();
-    for (int t = 0; t < nrow(predictors); ++t) {
-      state = simulate_next_state(rng, state, t + t0);
-      double mu = observation_model_->predict(predictors.row(t))
-          + observation_matrix(t+t0).dot(state);
-      ans[t] = rstudent_mt(rng, mu, sigma, nu);
+    int time = 0;
+    for (int i = 0; i < nrow(predictors); ++i) {
+      advance_to_timestamp(rng, time, state, timestamps[i], i);
+      double mu = observation_model_->predict(predictors.row(i)) +
+                  observation_matrix(time + t0).dot(state);
+      ans[i] = rstudent_mt(rng, mu, sigma, nu);
     }
     return ans;
   }
 
-  Vector SSSRM::one_step_holdout_prediction_errors(
-      RNG &rng,
-      const Vector &response,
-      const Matrix &predictors,
-      const Vector &final_state) {
+  Vector SSSRM::one_step_holdout_prediction_errors(RNG &rng,
+                                                   const Vector &response,
+                                                   const Matrix &predictors,
+                                                   const Vector &final_state) {
     TDataImputer data_imputer;
 
     if (nrow(predictors) != response.size()) {
-      report_error("Size mismatch in arguments provided to "
-                   "one_step_holdout_prediction_errors.");
+      report_error(
+          "Size mismatch in arguments provided to "
+          "one_step_holdout_prediction_errors.");
     }
     Vector ans(response.size());
     int t0 = dat().size();
@@ -256,7 +253,7 @@ namespace BOOM {
       // 1) simulate next state.
       // 2) simulate w_t given state
       // 3) kalman update state given w_t.
-      double state_contribution = observation_matrix(t+t0).dot(ks.a);
+      double state_contribution = observation_matrix(t + t0).dot(ks.a);
       double regression_contribution =
           observation_model_->predict(predictors.row(t));
       double mu = state_contribution + regression_contribution;
@@ -275,17 +272,10 @@ namespace BOOM {
       // y[t0+t].  That latent data is now used to update the Kalman
       // filter for the next time period.  It is important that we
       // discard the imputed state at this point.
-      sparse_scalar_kalman_update(response[t] - regression_contribution,
-                                  ks.a,
-                                  ks.P,
-                                  ks.K,
-                                  ks.F,
-                                  ks.v,
-                                  missing,
-                                  observation_matrix(t + t0),
-                                  latent_variance,
-                                  *state_transition_matrix(t + t0),
-                                  *state_variance_matrix(t + t0));
+      sparse_scalar_kalman_update(
+          response[t] - regression_contribution, ks.a, ks.P, ks.K, ks.F, ks.v,
+          missing, observation_matrix(t + t0), latent_variance,
+          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
     }
     return ans;
   }

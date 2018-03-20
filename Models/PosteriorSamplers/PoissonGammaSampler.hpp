@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,27 +19,26 @@
 #ifndef BOOM_POISSON_GAMMA_METHOD_HPP
 #define BOOM_POISSON_GAMMA_METHOD_HPP
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class PoissonModel;
 
-  class PoissonGammaSampler : public PosteriorSampler{
-  public:
+  class PoissonGammaSampler : public PosteriorSampler {
+   public:
     PoissonGammaSampler(PoissonModel *p, const Ptr<GammaModel> &g,
                         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
-    double logpri()const override;
-    double alpha()const;
-    double beta()const;
+    double logpri() const override;
+    double alpha() const;
+    double beta() const;
     void find_posterior_mode(double epsilon = 1e-5) override;
-    bool can_find_posterior_mode() const override {
-      return true;
-    }
-  private:
+    bool can_find_posterior_mode() const override { return true; }
+
+   private:
     PoissonModel *pois;
     Ptr<GammaModel> gam;
   };
 }  // namespace BOOM
-#endif // BOOM_POISSON_GAMMA_METHOD_HPP
+#endif  // BOOM_POISSON_GAMMA_METHOD_HPP

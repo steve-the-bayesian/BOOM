@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -16,22 +17,22 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp>
+#include "Models/Glm/PosteriorSamplers/NormalMixtureApproximation.hpp"
 
 #include <sstream>
 
-#include <functional>
-#include <cpputil/lse.hpp>
-#include <cpputil/math_utils.hpp>
-#include <cpputil/report_error.hpp>
-#include <cpputil/index_table.hpp>
-#include <cpputil/apply_permutation.hpp>
-#include <distributions.hpp>
-#include <numopt/Brent.hpp>
-#include <numopt/Integral.hpp>
-#include <numopt/Powell.hpp>
-#include <iomanip>
 #include <ctime>
+#include <functional>
+#include <iomanip>
+#include "cpputil/apply_permutation.hpp"
+#include "cpputil/index_table.hpp"
+#include "cpputil/lse.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
+#include "numopt/Brent.hpp"
+#include "numopt/Integral.hpp"
+#include "numopt/Powell.hpp"
 
 namespace {
   using namespace BOOM;
@@ -48,30 +49,26 @@ namespace {
     return log(tail / w[0]);
   }
 
-} // namespace
+}  // namespace
 
 namespace BOOM {
 
   ApproximationDistance::ApproximationDistance(
-      const ScalarTarget &logf,
-      const NormalMixtureApproximation & approximation,
-      double lower_limit,
-      double upper_limit,
-      double guess_at_mode)
+      const ScalarTarget &logf, const NormalMixtureApproximation &approximation,
+      double lower_limit, double upper_limit, double guess_at_mode)
       : logf_(logf),
         approx_(approximation),
         lower_limit_(lower_limit),
         upper_limit_(upper_limit),
-        guess_at_mode_(guess_at_mode)
-  {}
+        guess_at_mode_(guess_at_mode) {}
 
-  double ApproximationDistance::operator()(const Vector &theta)const{
+  double ApproximationDistance::operator()(const Vector &theta) const {
     approx_.set(theta);
     return current_distance();
   }
 
-  double ApproximationDistance::current_distance()const{
-    ScalarTarget ig = [this](double x){return this->integrand(x);};
+  double ApproximationDistance::current_distance() const {
+    ScalarTarget ig = [this](double x) { return this->integrand(x); };
     Integral integral1(ig, lower_limit_, guess_at_mode_, 1000);
     integral1.throw_on_error(false);
     Integral integral2(ig, guess_at_mode_, upper_limit_, 1000);
@@ -79,39 +76,34 @@ namespace BOOM {
     return integral1.integrate() + integral2.integrate();
   }
 
-  double ApproximationDistance::logf(double x)const{return logf_(x);}
+  double ApproximationDistance::logf(double x) const { return logf_(x); }
   double ApproximationDistance::approximation(double x) const {
     return approx_.logp(x);
   }
-  double ApproximationDistance::lower_limit()const{return lower_limit_;}
-  double ApproximationDistance::upper_limit()const{return upper_limit_;}
+  double ApproximationDistance::lower_limit() const { return lower_limit_; }
+  double ApproximationDistance::upper_limit() const { return upper_limit_; }
 
   KullbackLeiblerDivergence::KullbackLeiblerDivergence(
-      const ScalarTarget &logf,
-      const NormalMixtureApproximation &approx,
-      double lower_limit,
-      double upper_limit,
-      double guess_at_mode)
-      : ApproximationDistance(logf, approx, lower_limit,
-                              upper_limit, guess_at_mode) {}
+      const ScalarTarget &logf, const NormalMixtureApproximation &approx,
+      double lower_limit, double upper_limit, double guess_at_mode)
+      : ApproximationDistance(logf, approx, lower_limit, upper_limit,
+                              guess_at_mode) {}
 
-  double KullbackLeiblerDivergence::integrand(double x)const{
+  double KullbackLeiblerDivergence::integrand(double x) const {
     double logfx = logf(x);
     double fx = exp(logfx);
     double ans = fx * (logfx - approximation(x));
     return ans;
   }
 
-  AbsNormDistance::AbsNormDistance(
-      const ScalarTarget &logf,
-      const NormalMixtureApproximation &approx,
-      double lower_limit,
-      double upper_limit,
-      double guess_at_mode)
+  AbsNormDistance::AbsNormDistance(const ScalarTarget &logf,
+                                   const NormalMixtureApproximation &approx,
+                                   double lower_limit, double upper_limit,
+                                   double guess_at_mode)
       : ApproximationDistance(logf, approx, lower_limit, upper_limit,
                               guess_at_mode) {}
 
-  double AbsNormDistance::integrand(double x)const{
+  double AbsNormDistance::integrand(double x) const {
     return fabs(exp(logf(x)) - exp(approximation(x)));
   }
   //======================================================================
@@ -123,22 +115,19 @@ namespace BOOM {
         log_weights_(n),
         force_zero_mu_(false),
         kullback_leibler_(negative_infinity()),
-        number_of_function_evaluations_(-1)
-  {
+        number_of_function_evaluations_(-1) {
     check_sizes();
   }
 
-  NormalMixtureApproximation::NormalMixtureApproximation(
-      const Vector &mu,
-      const Vector &sigma,
-      const Vector &weights)
+  NormalMixtureApproximation::NormalMixtureApproximation(const Vector &mu,
+                                                         const Vector &sigma,
+                                                         const Vector &weights)
       : mu_(mu),
         sigma_(sigma),
         weights_(weights),
         force_zero_mu_(false),
         kullback_leibler_(negative_infinity()),
-        number_of_function_evaluations_(-1)
-  {
+        number_of_function_evaluations_(-1) {
     order_by_mu();
     log_weights_ = log(weights_);
     check_sizes();
@@ -146,20 +135,15 @@ namespace BOOM {
   }
 
   NormalMixtureApproximation::NormalMixtureApproximation(
-      const ScalarTarget &logf,
-      const Vector &initial_mu,
-      const Vector &initial_sigma,
-      const Vector &initial_weights,
-      double precision,
-      int max_evals,
-      double initial_stepsize,
+      const ScalarTarget &logf, const Vector &initial_mu,
+      const Vector &initial_sigma, const Vector &initial_weights,
+      double precision, int max_evals, double initial_stepsize,
       bool force_zero_mu)
       : mu_(initial_mu),
         sigma_(initial_sigma),
         weights_(initial_weights),
         log_weights_(weights_),
-        force_zero_mu_(force_zero_mu)
-  {
+        force_zero_mu_(force_zero_mu) {
     check_sizes();
     check_values();
     BrentMaximizer brent(logf);
@@ -168,13 +152,13 @@ namespace BOOM {
     double mode_value = brent.maximum_value();
     double lower_limit = guess_at_mode - 1;
     double flo = logf(lower_limit);
-    while(mode_value - flo < 30) {
+    while (mode_value - flo < 30) {
       flo = logf(--lower_limit);
     }
 
     double upper_limit = guess_at_mode + 1;
     double fhi = logf(upper_limit);
-    while(mode_value - fhi < 30) {
+    while (mode_value - fhi < 30) {
       fhi = logf(++upper_limit);
     }
 
@@ -207,16 +191,16 @@ namespace BOOM {
     int number_of_components = initial_mu.size();
     if (force_zero_mu_) {
       ConstVectorView final_log_sigma(theta, 0, number_of_components);
-      ConstVectorView final_logit_w(
-          theta, number_of_components, number_of_components - 1);
+      ConstVectorView final_logit_w(theta, number_of_components,
+                                    number_of_components - 1);
       mu_ = 0;
       set(mu_, exp(final_log_sigma), inverse_logit(final_logit_w));
     } else {
       ConstVectorView final_mu(theta, 0, number_of_components);
-      ConstVectorView final_log_sigma(
-          theta, number_of_components, number_of_components);
-      ConstVectorView final_logit_w(
-          theta, 2*number_of_components, number_of_components - 1);
+      ConstVectorView final_log_sigma(theta, number_of_components,
+                                      number_of_components);
+      ConstVectorView final_logit_w(theta, 2 * number_of_components,
+                                    number_of_components - 1);
       set(final_mu, exp(final_log_sigma), inverse_logit(final_logit_w));
     }
   }
@@ -225,8 +209,8 @@ namespace BOOM {
     if (force_zero_mu_) {
       int dimension = (theta.size() + 1) / 2;
       sigma_ = exp(ConstVectorView(theta, 0, dimension));
-      weights_ = inverse_logit(
-          ConstVectorView(theta, dimension, dimension - 1));
+      weights_ =
+          inverse_logit(ConstVectorView(theta, dimension, dimension - 1));
       mu_.resize(dimension);
       mu_ = 0;
       order_by_sigma();
@@ -234,8 +218,8 @@ namespace BOOM {
       int dimension = (theta.size() + 1) / 3;
       mu_ = ConstVectorView(theta, 0, dimension);
       sigma_ = exp(ConstVectorView(theta, dimension, dimension));
-      weights_ = inverse_logit(ConstVectorView(
-          theta, 2*dimension, dimension - 1));
+      weights_ =
+          inverse_logit(ConstVectorView(theta, 2 * dimension, dimension - 1));
       order_by_mu();
     }
     log_weights_ = log(weights_);
@@ -243,13 +227,12 @@ namespace BOOM {
     check_values();
   }
 
-  void NormalMixtureApproximation::set(const Vector &mu,
-                                       const Vector &sigma,
+  void NormalMixtureApproximation::set(const Vector &mu, const Vector &sigma,
                                        const Vector &weights) {
-    if ((mu.size() != sigma.size()) ||
-        (mu.size() != weights.size())) {
-      report_error("mu, sigma, and weights must all be the same size in "
-                   "NormalMixtureApproximation::set().");
+    if ((mu.size() != sigma.size()) || (mu.size() != weights.size())) {
+      report_error(
+          "mu, sigma, and weights must all be the same size in "
+          "NormalMixtureApproximation::set().");
     }
     mu_ = mu;
     sigma_ = sigma;
@@ -278,7 +261,7 @@ namespace BOOM {
     permute_inplace(permutation, log_weights_);
   }
 
-  void NormalMixtureApproximation::order_by_mu(){
+  void NormalMixtureApproximation::order_by_mu() {
     set_order(index_table(mu_));
   }
 
@@ -286,7 +269,7 @@ namespace BOOM {
     set_order(index_table(sigma_));
   }
 
-  double NormalMixtureApproximation::logp(double y)const{
+  double NormalMixtureApproximation::logp(double y) const {
     Vector wsp = log_weights_;
     for (int s = 0; s < mu_.size(); ++s) {
       wsp[s] += dnorm(y, mu_[s], sigma_[s], true);
@@ -294,8 +277,8 @@ namespace BOOM {
     return lse(wsp);
   }
 
-  void NormalMixtureApproximation::unmix(
-      RNG &rng, double u, double *mu, double *sigsq) const {
+  void NormalMixtureApproximation::unmix(RNG &rng, double u, double *mu,
+                                         double *sigsq) const {
     Vector wsp = log_weights_;
     for (int s = 0; s < dim(); ++s) {
       wsp[s] += dnorm(u, mu_[s], sigma_[s], true);
@@ -306,11 +289,12 @@ namespace BOOM {
     *sigsq = square(sigma_[mixture_indicator]);
   }
 
-  double NormalMixtureApproximation::kullback_leibler()const{
-    return kullback_leibler_;}
+  double NormalMixtureApproximation::kullback_leibler() const {
+    return kullback_leibler_;
+  }
 
   double NormalMixtureApproximation::kullback_leibler(
-      const ScalarTarget &target){
+      const ScalarTarget &target) {
     check_sizes();
     BrentMaximizer brent(target);
     brent.maximize(0.0);
@@ -318,33 +302,30 @@ namespace BOOM {
     double mode_value = brent.maximum_value();
     double lower_limit = guess_at_mode - 1;
     double flo = logf(lower_limit);
-    while(mode_value - flo < 30) {
+    while (mode_value - flo < 30) {
       flo = target(--lower_limit);
     }
 
     double upper_limit = guess_at_mode + 1;
     double fhi = logf(upper_limit);
-    while(mode_value - fhi < 30) {
+    while (mode_value - fhi < 30) {
       fhi = target(++upper_limit);
     }
 
-    KullbackLeiblerDivergence kl(target,
-                                 *this,
-                                 lower_limit,
-                                 upper_limit,
+    KullbackLeiblerDivergence kl(target, *this, lower_limit, upper_limit,
                                  guess_at_mode);
     kullback_leibler_ = kl.current_distance();
     return kullback_leibler_;
   }
 
-  int NormalMixtureApproximation::number_of_function_evaluations()const{
-    return number_of_function_evaluations_;}
+  int NormalMixtureApproximation::number_of_function_evaluations() const {
+    return number_of_function_evaluations_;
+  }
 
-  void NormalMixtureApproximation::check_sizes(){
+  void NormalMixtureApproximation::check_sizes() {
     int n = mu_.size();
-    if(sigma_.size() != n ||
-       weights_.size() != n ||
-       log_weights_.size() != n) {
+    if (sigma_.size() != n || weights_.size() != n ||
+        log_weights_.size() != n) {
       ostringstream err;
       err << "Error in NormalMixtureApproximation:  "
           << "vectors have different sizes." << endl
@@ -359,9 +340,8 @@ namespace BOOM {
   void NormalMixtureApproximation::check_values() {
     int n = mu_.size();
     for (int i = 0; i < n; ++i) {
-      if (!std::isfinite(mu_[i])
-          || !std::isfinite(sigma_[i])
-          || !std::isfinite(weights_[i])) {
+      if (!std::isfinite(mu_[i]) || !std::isfinite(sigma_[i]) ||
+          !std::isfinite(weights_[i])) {
         ostringstream err;
         err << "Error in NormalMixtureApproximation:  " << endl
             << "Infinite or non-numeric values." << endl;
@@ -392,8 +372,8 @@ namespace BOOM {
       } else {
         ostringstream err;
         err << "Error in NormalMixtureApproximation: " << endl
-            << "Weights must sum to 1.  They sum to " << sum(weights_)
-            << "." << endl
+            << "Weights must sum to 1.  They sum to " << sum(weights_) << "."
+            << endl
             << "sum(weights_) - 1.0 = " << sum(weights_) - 1.0 << endl;
         print(err);
         report_error(err.str());
@@ -401,7 +381,7 @@ namespace BOOM {
     }
   }
 
-  ostream & NormalMixtureApproximation::print(ostream &out) const {
+  ostream &NormalMixtureApproximation::print(ostream &out) const {
     out << "mu:      " << std::setprecision(15) << mu_ << endl
         << "sigma:   " << sigma_ << endl
         << "weights: " << weights_ << endl
@@ -437,11 +417,9 @@ namespace BOOM {
 
   NormalMixtureApproximationTable::NormalMixtureApproximationTable(
       const NormalMixtureApproximationTable &rhs)
-      : index_(rhs.index_),
-        approximations_(rhs.approximations_)
-  {}
+      : index_(rhs.index_), approximations_(rhs.approximations_) {}
 
-  NormalMixtureApproximationTable & NormalMixtureApproximationTable::operator=(
+  NormalMixtureApproximationTable &NormalMixtureApproximationTable::operator=(
       const NormalMixtureApproximationTable &rhs) {
     if (&rhs == this) {
       return *this;
@@ -452,26 +430,25 @@ namespace BOOM {
   }
 
   void NormalMixtureApproximationTable::add(
-      int index, const NormalMixtureApproximation &approximation){
+      int index, const NormalMixtureApproximation &approximation) {
     if (index_.empty() || index > index_.back()) {
       index_.push_back(index);
       approximations_.push_back(approximation);
     } else {
-      std::vector<int>::iterator lower_bound = std::lower_bound(
-          index_.begin(), index_.end(), index);
+      std::vector<int>::iterator lower_bound =
+          std::lower_bound(index_.begin(), index_.end(), index);
       int position = lower_bound - index_.begin();
       index_.insert(lower_bound, index);
 
-      approximations_.insert(approximations_.begin() + position,
-                             approximation);
+      approximations_.insert(approximations_.begin() + position, approximation);
     }
   }
 
-  int NormalMixtureApproximationTable::smallest_index()const{
+  int NormalMixtureApproximationTable::smallest_index() const {
     return index_[0];
   }
 
-  int NormalMixtureApproximationTable::largest_index()const{
+  int NormalMixtureApproximationTable::largest_index() const {
     return index_.back();
   }
 
@@ -481,10 +458,10 @@ namespace BOOM {
     return dt / CLOCKS_PER_SEC;
   }
 
-  NormalMixtureApproximation &
-  NormalMixtureApproximationTable::approximate(int nu){
-    std::vector<int>::const_iterator lower_bound = std::lower_bound(
-        index_.begin(), index_.end(), nu);
+  NormalMixtureApproximation &NormalMixtureApproximationTable::approximate(
+      int nu) {
+    std::vector<int>::const_iterator lower_bound =
+        std::lower_bound(index_.begin(), index_.end(), nu);
     // *lower_bound is the first index element greater than or equal
     // *to nu.
     int position = lower_bound - index_.begin();
@@ -493,8 +470,8 @@ namespace BOOM {
     NegLogGamma target(nu);
 
     int nu0 = index_[position - 1];
-    const NormalMixtureApproximation & approximation_0(
-        approximations_[position-1]);
+    const NormalMixtureApproximation &approximation_0(
+        approximations_[position - 1]);
     int nu1 = index_[position];
     const NormalMixtureApproximation &approximation_1(
         approximations_[position]);
@@ -504,19 +481,16 @@ namespace BOOM {
     int max_evals = 20000;
     double stepsize = .5 / sqrt(nu);
 
-    if(approximation_0.dim() == approximation_1.dim()) {
-      Vector mu = linear_combination(
-          1-weight, approximation_0.mu(),
-          weight, approximation_1.mu());
-      Vector sigma = linear_combination(
-          1-weight, approximation_0.sigma(),
-          weight, approximation_1.sigma());
-      Vector weights = linear_combination(
-          1-weight, approximation_0.weights(),
-          weight, approximation_1.weights());
+    if (approximation_0.dim() == approximation_1.dim()) {
+      Vector mu = linear_combination(1 - weight, approximation_0.mu(), weight,
+                                     approximation_1.mu());
+      Vector sigma = linear_combination(1 - weight, approximation_0.sigma(),
+                                        weight, approximation_1.sigma());
+      Vector weights = linear_combination(1 - weight, approximation_0.weights(),
+                                          weight, approximation_1.weights());
       NormalMixtureApproximation approximation(mu, sigma, weights);
       double kl = approximation.kullback_leibler(target);
-      if(kl < 1e-5) {
+      if (kl < 1e-5) {
         add(nu, approximation);
         return this->approximate(nu);
       } else {
@@ -524,11 +498,10 @@ namespace BOOM {
         // too imprecise.
         int number_of_components = approximation_0.dim();
         mu = -log(nu);
-        sigma = sqrt(1.0/nu);
-        weights = 1.0/number_of_components;
+        sigma = sqrt(1.0 / nu);
+        weights = 1.0 / number_of_components;
         NormalMixtureApproximation better_approximation(
-            target, mu, sigma, weights,
-            precision, max_evals, stepsize);
+            target, mu, sigma, weights, precision, max_evals, stepsize);
         add(nu, better_approximation);
         return this->approximate(nu);
       }
@@ -538,10 +511,10 @@ namespace BOOM {
 
       int number_of_components = approximation_0.dim();
       Vector mu(number_of_components, -log(nu));
-      Vector sigma(number_of_components, 1.0/sqrt(nu));
-      Vector weights(number_of_components, 1.0/number_of_components);
-      NormalMixtureApproximation approximation(
-          target, mu, sigma, weights, precision, max_evals, stepsize);
+      Vector sigma(number_of_components, 1.0 / sqrt(nu));
+      Vector weights(number_of_components, 1.0 / number_of_components);
+      NormalMixtureApproximation approximation(target, mu, sigma, weights,
+                                               precision, max_evals, stepsize);
       add(nu, approximation);
       return this->approximate(nu);
     }
@@ -564,7 +537,8 @@ namespace BOOM {
     Vector::const_iterator b = serialized_state.begin();
     Vector::const_iterator e = serialized_state.end();
     while (b != e) {
-      int index = lround(*b); ++b;
+      int index = lround(*b);
+      ++b;
       NormalMixtureApproximation approximation(0);
       b = approximation.deserialize(b);
       index_.push_back(index);

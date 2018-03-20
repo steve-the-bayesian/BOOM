@@ -16,53 +16,47 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "Models/PointProcess/CosinePoissonProcess.hpp"
 #include <cmath>
-#include <cpputil/report_error.hpp>
-#include <Models/PointProcess/CosinePoissonProcess.hpp>
-#include <Models/PointProcess/BoundedPoissonProcessSimulator.hpp>
+#include "Models/PointProcess/BoundedPoissonProcessSimulator.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
   CosinePoissonProcess::CosinePoissonProcess(double lambda, double frequency)
       : ParamPolicy(new UnivParams(lambda), new UnivParams(frequency)),
-        origin_(Date(Jan, 1, 1970), 0.0)
-  {
-    if ( (lambda < 0) || (frequency <= 0)) {
+        origin_(Date(Jan, 1, 1970), 0.0) {
+    if ((lambda < 0) || (frequency <= 0)) {
       report_error("Invalid arguments to CosinePoissonProcess.");
     }
   }
 
-  CosinePoissonProcess * CosinePoissonProcess::clone()const{
-    return new CosinePoissonProcess(*this);}
+  CosinePoissonProcess *CosinePoissonProcess::clone() const {
+    return new CosinePoissonProcess(*this);
+  }
 
-  double CosinePoissonProcess::event_rate(const DateTime &t)const{
+  double CosinePoissonProcess::event_rate(const DateTime &t) const {
     double dt = t - origin_;
     return lambda() * (1 + std::cos(frequency() * dt));
   }
 
   double CosinePoissonProcess::expected_number_of_events(
-      const DateTime &t0, const DateTime &t1)const{
+      const DateTime &t0, const DateTime &t1) const {
     double real_t0 = t0 - origin_;
     double real_t1 = t1 - origin_;
     double ans = lambda() * (real_t1 - real_t0);
-    ans += (lambda()/frequency()) *
-        (sin(frequency() * real_t1) - sin(frequency() * real_t0));
+    ans += (lambda() / frequency()) *
+           (sin(frequency() * real_t1) - sin(frequency() * real_t0));
     return ans;
   }
 
-  double CosinePoissonProcess::lambda()const{
-    return prm1_ref().value();
-  }
+  double CosinePoissonProcess::lambda() const { return prm1_ref().value(); }
 
-  double CosinePoissonProcess::frequency()const{
-    return prm2_ref().value();
-  }
+  double CosinePoissonProcess::frequency() const { return prm2_ref().value(); }
 
   PointProcess CosinePoissonProcess::simulate(
-      RNG &rng,
-      const DateTime &t0,
-      const DateTime &t1,
-      std::function<Data*()> mark_generator) const {
+      RNG &rng, const DateTime &t0, const DateTime &t1,
+      std::function<Data *()> mark_generator) const {
     BoundedPoissonProcessSimulator simulator(this, 2 * lambda());
     return simulator.simulate(rng, t0, t1, mark_generator);
   }

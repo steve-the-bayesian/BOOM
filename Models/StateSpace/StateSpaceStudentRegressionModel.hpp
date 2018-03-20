@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -19,10 +20,10 @@
 #ifndef BOOM_STATE_SPACE_STUDENT_REGRESSION_MODEL_HPP_
 #define BOOM_STATE_SPACE_STUDENT_REGRESSION_MODEL_HPP_
 
-#include <Models/StateSpace/StateSpaceNormalMixture.hpp>
-#include <Models/Glm/TRegression.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
+#include "Models/Glm/TRegression.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/StateSpaceNormalMixture.hpp"
 
 namespace BOOM {
   namespace StateSpace {
@@ -40,26 +41,25 @@ namespace BOOM {
     // In the case of multiplexed data, the "value" of this data point is the
     // precision weighted average of (y - x * beta) across observations.  The
     // precision weighted average has precision = (sum of weights) / sigma^2.
-    class AugmentedStudentRegressionData
-        : public MultiplexedData {
+    class AugmentedStudentRegressionData : public MultiplexedData {
      public:
       AugmentedStudentRegressionData();
       AugmentedStudentRegressionData(double y, const Vector &x);
-      AugmentedStudentRegressionData(
+      explicit AugmentedStudentRegressionData(
           const std::vector<Ptr<RegressionData>> &data);
 
-      AugmentedStudentRegressionData * clone() const override;
-      std::ostream & display(std::ostream &out) const override;
+      AugmentedStudentRegressionData *clone() const override;
+      std::ostream &display(std::ostream &out) const override;
 
       void add_data(const Ptr<RegressionData> &observation);
 
-      double weight(int observation) const {return weights_[observation];}
+      double weight(int observation) const { return weights_[observation]; }
       void set_weight(double weight, int observation);
 
       double adjusted_observation(const GlmCoefs &coefficients) const;
       double sum_of_weights() const;
 
-      double state_model_offset() const {return state_model_offset_;}
+      double state_model_offset() const { return state_model_offset_; }
       void set_state_model_offset(double offset);
 
       const RegressionData &regression_data(int observation) const {
@@ -68,7 +68,7 @@ namespace BOOM {
       Ptr<RegressionData> regression_data_ptr(int observation) {
         return regression_data_[observation];
       }
-      int total_sample_size() const override {return regression_data_.size();}
+      int total_sample_size() const override { return regression_data_.size(); }
 
      private:
       std::vector<Ptr<RegressionData>> regression_data_;
@@ -80,17 +80,15 @@ namespace BOOM {
   class StateSpaceStudentRegressionModel
       : public StateSpaceNormalMixture,
         public IID_DataPolicy<StateSpace::AugmentedStudentRegressionData>,
-        public PriorPolicy
-  {
+        public PriorPolicy {
    public:
-    StateSpaceStudentRegressionModel(int xdim);
+    explicit StateSpaceStudentRegressionModel(int xdim);
     StateSpaceStudentRegressionModel(
-        const Vector &y,
-        const Matrix &X,
+        const Vector &response, const Matrix &predictors,
         const std::vector<bool> &observed = std::vector<bool>());
     StateSpaceStudentRegressionModel(
         const StateSpaceStudentRegressionModel &rhs);
-    StateSpaceStudentRegressionModel * clone() const override;
+    StateSpaceStudentRegressionModel *clone() const override;
 
     int time_dimension() const override;
 
@@ -101,7 +99,7 @@ namespace BOOM {
       return dat()[time]->total_sample_size();
     }
 
-    const RegressionData & data(int t, int observation) const override {
+    const RegressionData &data(int t, int observation) const override {
       return dat()[t]->regression_data(observation);
     }
 
@@ -118,28 +116,31 @@ namespace BOOM {
     bool is_missing_observation(int t) const override;
 
     TRegressionModel *observation_model() override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
     const TRegressionModel *observation_model() const override {
-      return observation_model_.get(); }
+      return observation_model_.get();
+    }
 
     // Set the offset in the data to the state contribution.
     void observe_data_given_state(int t) override;
 
-    Vector simulate_forecast(RNG &rng,
-                             const Matrix &predictors,
+    Vector simulate_forecast(RNG &rng, const Matrix &predictors,
                              const Vector &final_state);
-    Vector one_step_holdout_prediction_errors(
-        RNG &rng,
-        const Vector &response,
-        const Matrix &predictors,
-        const Vector &final_state);
+
+    Vector simulate_multiplex_forecast(RNG &rng, const Matrix &predictors,
+                                       const Vector &final_state,
+                                       const std::vector<int> &timestamps);
+
+    Vector one_step_holdout_prediction_errors(RNG &rng, const Vector &response,
+                                              const Matrix &predictors,
+                                              const Vector &final_state);
 
    private:
     // Returns the marginal variance of the student error distribution.  If the
     // 'nu' degrees of freedom parameter <= 2 this is technically infinity, but
     // a "large value" will be returned instead.
     double student_marginal_variance() const;
-
 
     // Sets up observers on model parameters, so that the Kalman
     // filter knows when it needs to be recomputed.

@@ -19,25 +19,25 @@
 #ifndef BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PointProcess/MarkovModulatedPoissonProcess.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/PointProcess/MarkovModulatedPoissonProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
 
   class MarkovModulatedPoissonProcessPosteriorSampler
       : public PosteriorSampler {
    public:
-    MarkovModulatedPoissonProcessPosteriorSampler(
-        MarkovModulatedPoissonProcess *mmpp,
-        bool initialize_latent_data = true,
+    explicit MarkovModulatedPoissonProcessPosteriorSampler(
+        MarkovModulatedPoissonProcess *mmpp, bool initialize_latent_data = true,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
     MarkovModulatedPoissonProcess *model_;
     bool first_time_;
   };
 
-}
+}  // namespace BOOM
 
-#endif //  BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
+#endif  //  BOOM_MARKOV_MODULATED_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_

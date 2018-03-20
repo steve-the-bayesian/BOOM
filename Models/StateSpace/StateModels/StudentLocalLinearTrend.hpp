@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,14 +20,14 @@
 #ifndef BOOM_STUDENT_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 #define BOOM_STUDENT_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
 
-#include <Models/Policies/ParamPolicy_4.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/StateSpace/StateModels/StateModel.hpp>
-#include <Models/WeightedGaussianSuf.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_4.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/WeightedGaussianSuf.hpp"
 
-namespace BOOM{
+namespace BOOM {
   // This is a 'robust' version of the local linear trend model with T
   // errors in place of the usual Gaussian errors.
   //
@@ -51,30 +52,33 @@ namespace BOOM{
                              UnivParams>,  // slope tail thickness
         public IID_DataPolicy<DoubleData>,
         public PriorPolicy,
-        public StateModel
-  {
+        public StateModel {
    public:
-    StudentLocalLinearTrendStateModel(double sigma_level = 1.0,
-                                     double nu_level = 1000,
-                                     double sigma_slope = 1.0,
-                                     double nu_slope = 1000);
+    explicit StudentLocalLinearTrendStateModel(double sigma_level = 1.0,
+                                               double nu_level = 1000,
+                                               double sigma_slope = 1.0,
+                                               double nu_slope = 1000);
     StudentLocalLinearTrendStateModel(
         const StudentLocalLinearTrendStateModel &rhs);
-    StudentLocalLinearTrendStateModel * clone() const override;
+    StudentLocalLinearTrendStateModel *clone() const override;
 
     void observe_time_dimension(int max_time) override;
 
-    void observe_state(const ConstVectorView then,
-                       const ConstVectorView now,
-                       int time_now) override;
-    uint state_dimension() const override{return 2;}
-    uint state_error_dimension() const override {return state_dimension();}
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now, ScalarStateSpaceModelBase *model) override;
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then, const ConstVectorView &now, int time_now,
+        DynamicInterceptRegressionModel *model) override {
+      observe_state(then, now, time_now, nullptr);
+    }
+
+    uint state_dimension() const override { return 2; }
+    uint state_error_dimension() const override { return state_dimension(); }
 
     // This implementation throws, because this model cannot be part
     // of an EM algorithm.
     void update_complete_data_sufficient_statistics(
-        int t,
-        const ConstVectorView &state_error_mean,
+        int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
     // The state error simulation is conditional on the value of the
@@ -82,7 +86,8 @@ namespace BOOM{
     // latent data imputation can work properly.
     void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
     void simulate_marginal_state_error(RNG &rng, VectorView eta, int t) const;
-    void simulate_conditional_state_error(RNG &rng, VectorView eta, int t) const;
+    void simulate_conditional_state_error(RNG &rng, VectorView eta,
+                                          int t) const;
 
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override;
@@ -93,6 +98,13 @@ namespace BOOM{
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
     SparseVector observation_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock>
+    dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &v);
@@ -130,16 +142,16 @@ namespace BOOM{
     void set_nu_slope(double nu);
 
     void clear_data() override;
-    const WeightedGaussianSuf & sigma_level_complete_data_suf() const;
-    const WeightedGaussianSuf & sigma_slope_complete_data_suf() const;
-    const GammaSuf & nu_level_complete_data_suf() const;
-    const GammaSuf & nu_slope_complete_data_suf() const;
+    const WeightedGaussianSuf &sigma_level_complete_data_suf() const;
+    const WeightedGaussianSuf &sigma_slope_complete_data_suf() const;
+    const GammaSuf &nu_level_complete_data_suf() const;
+    const GammaSuf &nu_slope_complete_data_suf() const;
 
     // Posterior draws for the weights in the normal mixture
     // representation of the T distribution.  For Gaussian models the
     // weights will be around 1.  A large outlier has a small weight.
-    const Vector & latent_level_weights() const;
-    const Vector & latent_slope_weights() const;
+    const Vector &latent_level_weights() const;
+    const Vector &latent_slope_weights() const;
 
    private:
     void check_dim(const ConstVectorView &) const;
@@ -165,4 +177,4 @@ namespace BOOM{
   };
 
 }  // namespace BOOM
-#endif // BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
+#endif  // BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_

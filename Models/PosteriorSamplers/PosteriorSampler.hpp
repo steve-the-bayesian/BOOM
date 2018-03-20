@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,14 +20,13 @@
 #ifndef BOOM_SAMPLING_METHOD_HPP
 #define BOOM_SAMPLING_METHOD_HPP
 
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
+#include "cpputil/Ptr.hpp"
+#include "cpputil/RefCounted.hpp"
+#include "distributions/rng.hpp"
 
-#include <cpputil/RefCounted.hpp>
-#include <cpputil/Ptr.hpp>
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
-#include <distributions/rng.hpp>
-
-namespace BOOM{
+namespace BOOM {
 
   // The job of a PosteriorSampler is primarily to simulate a set of
   // model parameters from their posterior distribution.  Concrete
@@ -38,28 +38,21 @@ namespace BOOM{
   // Some PosteriorSamplers also allow you to find the posterior mode
   // of the model that they manage.  If so, they should override the
   // can_find_posterior_mode method to return true.
-  class PosteriorSampler
-    : private RefCounted {
-  public:
-    PosteriorSampler(RNG &seeding_rng);
+  class PosteriorSampler : private RefCounted {
+   public:
+    explicit PosteriorSampler(RNG &seeding_rng);
     PosteriorSampler(const PosteriorSampler &);
     virtual void draw() = 0;
     virtual double logpri() const = 0;
-    ~PosteriorSampler() override{}
-    RNG & rng()const{return rng_;}
+    ~PosteriorSampler() override {}
+    RNG &rng() const { return rng_; }
     void set_seed(unsigned long);
 
     // Returns true if the child class implements
     // find_posterior_mode().  Returns false otherwise.
-    virtual bool can_find_posterior_mode() const {
-      return false;
-    }
-    virtual bool can_evaluate_log_prior_density() const {
-      return false;
-    }
-    virtual bool can_increment_log_prior_gradient() const {
-      return false;
-    }
+    virtual bool can_find_posterior_mode() const { return false; }
+    virtual bool can_evaluate_log_prior_density() const { return false; }
+    virtual bool can_increment_log_prior_gradient() const { return false; }
 
     // The default implementations of the following three functions
     // throw an exception through report_error().
@@ -92,14 +85,14 @@ namespace BOOM{
     //   override this function and
     //   can_increment_log_prior_gradient().
     virtual double increment_log_prior_gradient(
-        const ConstVectorView &parameters,
-        VectorView gradient) const;
+        const ConstVectorView &parameters, VectorView gradient) const;
 
     friend void intrusive_ptr_add_ref(PosteriorSampler *m);
     friend void intrusive_ptr_release(PosteriorSampler *m);
+
    private:
     mutable RNG rng_;
   };
 
 }  // namespace BOOM
-#endif// BOOM_SAMPLING_METHOD_HPP
+#endif  // BOOM_SAMPLING_METHOD_HPP

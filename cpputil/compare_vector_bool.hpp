@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
    Copyright (C) 2005 Steven L. Scott
 
@@ -13,39 +14,47 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA
  */
 
 #ifndef BOOM_COMPARE_VECTOR_BOOL_HPP
 #define BOOM_COMPARE_VECTOR_BOOL_HPP
 #include <vector>
-namespace BOOM{
-   /*------------------------------------------------------------
-      compare vector<bool>'s as binary representations of decimal
-      integers.  x[n] is the 2^n place (i.e. x[0] is the unit's place)
-      ------------------------------------------------------------*/
+namespace BOOM {
+  /*------------------------------------------------------------
+     compare vector<bool>'s as binary representations of decimal
+     integers.  x[n] is the 2^n place (i.e. x[0] is the unit's place)
+     ------------------------------------------------------------*/
 
-   bool less(const std::vector<bool> & x,
-            const std::vector<bool> &y,
+  bool less(const std::vector<bool> &x, const std::vector<bool> &y,
             bool or_equal);
 
-   bool less(const std::vector<bool> & x,
-            const std::vector<bool> &y);
+  bool less(const std::vector<bool> &x, const std::vector<bool> &y);
 
-   inline bool operator<(const std::vector<bool> & x,
-                        const std::vector<bool> &y){return less(x,y);}
-   bool operator==(const std::vector<bool> & x, const std::vector<bool> &y);
-   inline bool operator<=(const std::vector<bool> & x,
-                         const std::vector<bool> &y){return less(x,y,false);}
+  inline bool operator<(const std::vector<bool> &x,
+                        const std::vector<bool> &y) {
+    return less(x, y);
+  }
+  bool operator==(const std::vector<bool> &x, const std::vector<bool> &y);
+  inline bool operator<=(const std::vector<bool> &x,
+                         const std::vector<bool> &y) {
+    return less(x, y, false);
+  }
 
-   inline bool operator>(const std::vector<bool> & x,
-                        const std::vector<bool> &y){return !(x<=y); }
-   inline bool operator>=(const std::vector<bool> & x,
-                         const std::vector<bool> &y){return !(x<y);}
+  inline bool operator>(const std::vector<bool> &x,
+                        const std::vector<bool> &y) {
+    return !(x <= y);
+  }
+  inline bool operator>=(const std::vector<bool> &x,
+                         const std::vector<bool> &y) {
+    return !(x < y);
+  }
 
-   inline bool operator!=(const std::vector<bool> & x,
-                         const std::vector<bool> &y){return !(x==y);}
+  inline bool operator!=(const std::vector<bool> &x,
+                         const std::vector<bool> &y) {
+    return !(x == y);
+  }
 
-
- }
-#endif // BOOM_COMPARE_VECTOR_BOOL_HPP
+}  // namespace BOOM
+#endif  // BOOM_COMPARE_VECTOR_BOOL_HPP

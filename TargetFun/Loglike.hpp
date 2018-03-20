@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -19,52 +20,52 @@
 #ifndef MODEL_TF_H
 #define MODEL_TF_H
 
-#include <Models/ModelTypes.hpp>
+#include "Models/ModelTypes.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class ParamVectorHolder;
 
-  class LoglikeTF{
-  public:
-    LoglikeTF(LoglikeModel *model) : mod(model) {}
-    double operator()(const Vector &x)const {
-      return mod->loglike(x);
-    }
-  private:
-    LoglikeModel * mod;   // provides loglike(x);
+  class LoglikeTF {
+   public:
+    explicit LoglikeTF(LoglikeModel *model) : mod(model) {}
+    double operator()(const Vector &x) const { return mod->loglike(x); }
+
+   private:
+    LoglikeModel *mod;  // provides loglike(x);
   };
   //----------------------------------------------------------------------
 
-  class dLoglikeTF : public LoglikeTF{
-  public:
-    dLoglikeTF(dLoglikeModel * d)
-        : LoglikeTF(d),
-          dmod(d)
-    {}
-    double operator()(const Vector &x)const{return LoglikeTF::operator()(x);}
-    double operator()(const Vector &x, Vector &g)const {
+  class dLoglikeTF : public LoglikeTF {
+   public:
+    explicit dLoglikeTF(dLoglikeModel *d) : LoglikeTF(d), dmod(d) {}
+    double operator()(const Vector &x) const {
+      return LoglikeTF::operator()(x);
+    }
+    double operator()(const Vector &x, Vector &g) const {
       return dmod->dloglike(x, g);
     }
-  private:
-    dLoglikeModel * dmod;
+
+   private:
+    dLoglikeModel *dmod;
   };
 
   //----------------------------------------------------------------------
-  class d2LoglikeTF : public dLoglikeTF{
-  public:
-    d2LoglikeTF(d2LoglikeModel * d2)
-        : dLoglikeTF(d2),
-          d2mod(d2)
-    {}
-    double operator()(const Vector &x)const{ return LoglikeTF::operator()(x);}
-    double operator()(const Vector &x, Vector &g)const{
-      return dLoglikeTF::operator()(x,g);}
-    double operator()(const Vector &x, Vector &g, Matrix &h)const {
+  class d2LoglikeTF : public dLoglikeTF {
+   public:
+    explicit d2LoglikeTF(d2LoglikeModel *d2) : dLoglikeTF(d2), d2mod(d2) {}
+    double operator()(const Vector &x) const {
+      return LoglikeTF::operator()(x);
+    }
+    double operator()(const Vector &x, Vector &g) const {
+      return dLoglikeTF::operator()(x, g);
+    }
+    double operator()(const Vector &x, Vector &g, Matrix &h) const {
       return d2mod->d2loglike(x, g, h);
     }
-  private:
-    d2LoglikeModel * d2mod;
+
+   private:
+    d2LoglikeModel *d2mod;
   };
   //------------------------------------------------------------
-}
-#endif // MODEL_TF_H
+}  // namespace BOOM
+#endif  // MODEL_TF_H

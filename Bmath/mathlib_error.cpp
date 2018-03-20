@@ -1,7 +1,7 @@
 #include "nmath.hpp"
 #include <stdexcept>
 #include <sstream>
-#include <cpputil/report_error.hpp>
+#include "cpputil/report_error.hpp"
 using namespace std;
 
 namespace Rmath{

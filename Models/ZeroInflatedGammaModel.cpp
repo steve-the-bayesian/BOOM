@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,14 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <distributions.hpp>
-#include <Models/ZeroInflatedGammaModel.hpp>
-#include <Models/SufstatAbstractCombineImpl.hpp>
-#include <sstream>
-#include <cpputil/report_error.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp>
+#include "Models/ZeroInflatedGammaModel.hpp"
 #include <functional>
+#include <sstream>
+#include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
+#include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
   namespace {
@@ -34,39 +35,33 @@ namespace BOOM {
       : gamma_(new GammaModel),
         binomial_(new BinomialModel),
         zero_threshold_(1e-8),
-        log_probabilities_are_current_(false)
-  {
+        log_probabilities_are_current_(false) {
     setup();
   }
 
-  ZIGM::ZeroInflatedGammaModel(
-      const Ptr<BinomialModel> &positive_probability,
-      const Ptr<GammaModel> &positive_density)
+  ZIGM::ZeroInflatedGammaModel(const Ptr<BinomialModel> &positive_probability,
+                               const Ptr<GammaModel> &positive_density)
       : gamma_(positive_density),
         binomial_(positive_probability),
         zero_threshold_(1e-8),
-        log_probabilities_are_current_(false)
-  {
+        log_probabilities_are_current_(false) {
     setup();
   }
 
-  ZIGM::ZeroInflatedGammaModel(
-      int number_of_zeros,
-      int number_of_positives,
-      double sum_of_positives,
-      double sum_of_logs_of_positives)
+  ZIGM::ZeroInflatedGammaModel(int number_of_zeros, int number_of_positives,
+                               double sum_of_positives,
+                               double sum_of_logs_of_positives)
       : gamma_(new GammaModel),
         binomial_(new BinomialModel),
         zero_threshold_(1e-8),
-        log_probabilities_are_current_(false)
-  {
+        log_probabilities_are_current_(false) {
     if (sum_of_positives == 0 &&
         (sum_of_logs_of_positives != 0 || number_of_positives != 0)) {
-      report_error("If sum_of_positives is zero, then sum_of_log_positives and "
-                   "number_of_positives must also be zero.");
+      report_error(
+          "If sum_of_positives is zero, then sum_of_log_positives and "
+          "number_of_positives must also be zero.");
     }
-    gamma_->suf()->set(sum_of_positives,
-                       sum_of_logs_of_positives,
+    gamma_->suf()->set(sum_of_positives, sum_of_logs_of_positives,
                        number_of_positives);
     binomial_->suf()->set(number_of_positives,
                           number_of_positives + number_of_zeros);
@@ -78,7 +73,7 @@ namespace BOOM {
     if (number_of_positives > 1) {
       try {
         gamma_->mle();
-      } catch(...) {
+      } catch (...) {
         report_warning("Warning:  failed to set gamma model to its MLE.");
       }
     }
@@ -91,20 +86,20 @@ namespace BOOM {
         gamma_(rhs.gamma_->clone()),
         binomial_(rhs.binomial_->clone()),
         zero_threshold_(rhs.zero_threshold_),
-        log_probabilities_are_current_(false)
-  {
+        log_probabilities_are_current_(false) {
     setup();
   }
 
-  ZeroInflatedGammaModel * ZIGM::clone() const {
-    return new ZeroInflatedGammaModel(*this);}
+  ZeroInflatedGammaModel *ZIGM::clone() const {
+    return new ZeroInflatedGammaModel(*this);
+  }
 
   double ZIGM::pdf(const Ptr<Data> &dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  double ZIGM::pdf(const Data * dp, bool logscale) const {
+  double ZIGM::pdf(const Data *dp, bool logscale) const {
     double ans = logp(dynamic_cast<const DoubleData *>(dp)->value());
     return logscale ? ans : exp(ans);
   }
@@ -157,18 +152,17 @@ namespace BOOM {
   }
 
   void ZIGM::combine_data(const Model &rhs, bool just_suf) {
-    const ZeroInflatedGammaModel * rhsp =
+    const ZeroInflatedGammaModel *rhsp =
         dynamic_cast<const ZeroInflatedGammaModel *>(&rhs);
     if (!rhsp) {
       ostringstream err;
       err << "ZIGM::combine_data was called "
           << "with an argument "
-          << "that was not coercible to ZeroInflatedGammaModel."
-          << endl;
+          << "that was not coercible to ZeroInflatedGammaModel." << endl;
       report_error(err.str());
     }
-    gamma_->combine_data( *(rhsp->gamma_), true);
-    binomial_->combine_data( *(rhsp->binomial_), true);
+    gamma_->combine_data(*(rhsp->gamma_), true);
+    binomial_->combine_data(*(rhsp->binomial_), true);
   }
 
   void ZIGM::mle() {
@@ -176,8 +170,7 @@ namespace BOOM {
     binomial_->mle();
   }
 
-  double ZIGM::positive_probability() const {
-    return binomial_->prob();}
+  double ZIGM::positive_probability() const { return binomial_->prob(); }
 
   void ZIGM::set_positive_probability(double prob) {
     binomial_->set_prob(prob);
@@ -186,25 +179,17 @@ namespace BOOM {
     log_probabilities_are_current_ = true;
   }
 
-  double ZIGM::mean_parameter() const {
-    return gamma_->mean();
-  }
+  double ZIGM::mean_parameter() const { return gamma_->mean(); }
 
   void ZIGM::set_mean_parameter(double mu) {
-    gamma_-> set_shape_and_mean(gamma_->alpha(), mu);
+    gamma_->set_shape_and_mean(gamma_->alpha(), mu);
   }
 
-  double ZIGM::shape_parameter() const {
-    return gamma_->alpha();
-  }
+  double ZIGM::shape_parameter() const { return gamma_->alpha(); }
 
-  void ZIGM::set_shape_parameter(double a) {
-    gamma_->set_alpha(a);
-  }
+  void ZIGM::set_shape_parameter(double a) { gamma_->set_alpha(a); }
 
-  double ZIGM::scale_parameter() const {
-    return gamma_->beta();
-  }
+  double ZIGM::scale_parameter() const { return gamma_->beta(); }
 
   double ZIGM::mean() const {
     return positive_probability() * mean_parameter();
@@ -215,15 +200,11 @@ namespace BOOM {
     return p * square(mean_parameter()) * (1 - p + (1 / shape_parameter()));
   }
 
-  double ZIGM::sd() const {
-    return sqrt(variance());
-  }
+  double ZIGM::sd() const { return sqrt(variance()); }
 
-  Ptr<GammaModel> ZIGM::Gamma_model() {
-    return gamma_;}
+  Ptr<GammaModel> ZIGM::Gamma_model() { return gamma_; }
 
-  Ptr<BinomialModel> ZIGM::Binomial_model() {
-    return binomial_;}
+  Ptr<BinomialModel> ZIGM::Binomial_model() { return binomial_; }
 
   Ptr<DoubleData> ZIGM::DAT(const Ptr<Data> &dp) const {
     if (!dp) return Ptr<DoubleData>();
@@ -231,7 +212,7 @@ namespace BOOM {
   }
 
   std::function<void(void)> ZIGM::create_binomial_observer() {
-    return [this]() {this->observe_binomial_probability();};
+    return [this]() { this->observe_binomial_probability(); };
   }
 
   void ZIGM::observe_binomial_probability() {

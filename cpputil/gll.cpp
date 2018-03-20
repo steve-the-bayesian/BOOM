@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,15 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <iostream>
 #include <fstream>
 #include <ios>
-namespace BOOM{
+#include <iostream>
+namespace BOOM {
 
   using namespace std;
   typedef basic_ios<char>::pos_type pos_type;
 
-  std::ifstream & gll(std::ifstream &in){
+  std::ifstream &gll(std::ifstream &in) {
     // sets in so that it points to the last line of a data file
 
     in.seekg(0, ios_base::beg);
@@ -33,21 +34,20 @@ namespace BOOM{
     in.seekg(-1, ios_base::end);
     pos_type end = in.tellg();
 
-    if(begin==end) return in;
+    if (begin == end) return in;
 
     char c = in.peek();
-    while( (c=='\n' || c=='\r') && in.tellg()>0){
-      in.seekg(-1,ios_base::cur);
-      c= in.peek();}
-    do{
+    while ((c == '\n' || c == '\r') && in.tellg() > 0) {
       in.seekg(-1, ios_base::cur);
-      c=in.peek();
-    } while (c!= '\n' && c!='\r' && in.tellg()>0 );
+      c = in.peek();
+    }
+    do {
+      in.seekg(-1, ios_base::cur);
+      c = in.peek();
+    } while (c != '\n' && c != '\r' && in.tellg() > 0);
     pos_type now = in.tellg();
-    if(now!=end && now!=begin) in.get(c);  // read in last newline
+    if (now != end && now != begin) in.get(c);  // read in last newline
     return in;
   }
 
-
-}
-
+}  // namespace BOOM

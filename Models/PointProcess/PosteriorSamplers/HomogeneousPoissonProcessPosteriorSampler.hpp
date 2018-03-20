@@ -18,24 +18,24 @@
 #ifndef BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 #define BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/GammaModel.hpp>
+#include "Models/GammaModel.hpp"
+#include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   class HomogeneousPoissonProcessPosteriorSampler : public PosteriorSampler {
    public:
     HomogeneousPoissonProcessPosteriorSampler(
-        HomogeneousPoissonProcess *model,
-        const Ptr<GammaModelBase> &prior,
+        HomogeneousPoissonProcess *model, const Ptr<GammaModelBase> &prior,
         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
+
    private:
-    HomogeneousPoissonProcess * model_;
+    HomogeneousPoissonProcess *model_;
     Ptr<GammaModelBase> prior_;
   };
 
-}
-#endif // BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  // BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,9 +20,9 @@
 #ifndef BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_
 #define BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_
 
-#include <Models/Hierarchical/HierarchicalModel.hpp>
-#include <Models/Mixtures/DirichletProcessMvnModel.hpp>
-#include <Models/MvnModel.hpp>
+#include "Models/Hierarchical/HierarchicalModel.hpp"
+#include "Models/Mixtures/DirichletProcessMvnModel.hpp"
+#include "Models/MvnModel.hpp"
 
 namespace BOOM {
 
@@ -31,10 +32,11 @@ namespace BOOM {
    public:
     MvnMetaAnalysisDPMPriorData(const Vector &y,
                                 const SpdMatrix &observation_variance);
-    MvnMetaAnalysisDPMPriorData * clone()const override;
-    ostream & display(ostream &out)const override;
-    Vector observation() const {return observation_->value();}
-    SpdMatrix observation_variance() const {return observation_variance_;}
+    MvnMetaAnalysisDPMPriorData *clone() const override;
+    ostream &display(ostream &out) const override;
+    Vector observation() const { return observation_->value(); }
+    SpdMatrix observation_variance() const { return observation_variance_; }
+
    private:
     Ptr<VectorData> observation_;
     SpdMatrix observation_variance_;
@@ -50,17 +52,18 @@ namespace BOOM {
   class MvnMetaAnalysisDPMPriorModel
       : public HierarchicalModelBase<MvnModel, DirichletProcessMvnModel> {
    public:
-    MvnMetaAnalysisDPMPriorModel(int dim, double alpha = 1.0);
-    MvnMetaAnalysisDPMPriorModel(const Ptr<DirichletProcessMvnModel> & prior_model);
-    MvnMetaAnalysisDPMPriorModel * clone() const override;
+    explicit MvnMetaAnalysisDPMPriorModel(int dim, double alpha = 1.0);
+    explicit MvnMetaAnalysisDPMPriorModel(
+        const Ptr<DirichletProcessMvnModel> &prior_model);
+    MvnMetaAnalysisDPMPriorModel *clone() const override;
 
     // Creates a new data_level_model with data assigned.
     void add_data(const Ptr<Data> &) override;
 
-    std::vector<Vector> group_means()const;
-    int number_of_clusters()const;
-    int dim()const;
+    std::vector<Vector> group_means() const;
+    int number_of_clusters() const;
+    int dim() const;
   };
 }  // namespace BOOM
 
-#endif //  BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_
+#endif  //  BOOM_MVN_METAANALYSIS_MVN_DPM_HPP_

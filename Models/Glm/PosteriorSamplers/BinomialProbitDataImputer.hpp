@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #ifndef BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 #define BOOM_BINOMIAL_PROBIT_DATA_IMPUTER_HPP_
 
-#include <distributions/rng.hpp>
 #include <ostream>
+#include "distributions/rng.hpp"
 
 namespace BOOM {
 
@@ -34,7 +35,7 @@ namespace BOOM {
     // Args:
     //   clt_threshold: The smallest number_of_trials where
     //   approximate augmentation takes place.
-    BinomialProbitDataImputer(int clt_threshold = 10);
+    explicit BinomialProbitDataImputer(int clt_threshold = 10);
 
     // Args:
     //   rng:  The random number generator.
@@ -51,14 +52,12 @@ namespace BOOM {
     //   observation.  y[i] will be from the distribution truncated to
     //   the upper tail, and n[i] - y[i] will be from the distribution
     //   truncated to the lower tail.
-    double impute(RNG &rng,
-                  double number_of_trials,
-                  double number_of_successes,
-                  double log_odds) const;
+    double impute(RNG &rng, double number_of_trials, double number_of_successes,
+                  double eta) const;
 
     // The smallest number_of_trials for which approximate
     // augmentation takes place.
-    int clt_threshold() const {return clt_threshold_;}
+    int clt_threshold() const { return clt_threshold_; }
 
    private:
     int clt_threshold_;

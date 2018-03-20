@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2011 Steven L. Scott
 
@@ -19,30 +20,30 @@
 #ifndef BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_
 #define BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_
 
-#include <Models/Glm/AggregatedRegressionModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/Glm/PosteriorSamplers/BregVsSampler.hpp>
+#include "Models/Glm/AggregatedRegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-class AggregatedRegressionSampler : public PosteriorSampler {
- public:
-  AggregatedRegressionSampler(AggregatedRegressionModel *model,
-                              double prior_sigma_nobs,
-                              double prior_sigma_guess,
-                              double prior_beta_nobs,
-                              double prior_diagonal_shrinkage,
-                              double prior_variable_inclusion_probability,
-                              RNG &seeding_rng = GlobalRng::rng);
+  class AggregatedRegressionSampler : public PosteriorSampler {
+   public:
+    AggregatedRegressionSampler(AggregatedRegressionModel *model,
+                                double prior_sigma_nobs,
+                                double prior_sigma_guess,
+                                double prior_beta_nobs,
+                                double prior_diagonal_shrinkage,
+                                double prior_variable_inclusion_probability,
+                                RNG &seeding_rng = GlobalRng::rng);
 
-  void draw() override;
-  double logpri() const override;
+    void draw() override;
+    double logpri() const override;
 
- private:
-  AggregatedRegressionModel *model_;
-  Ptr<BregVsSampler> sam_;
-};
+   private:
+    AggregatedRegressionModel *model_;
+    Ptr<BregVsSampler> sam_;
+  };
 
-}
+}  // namespace BOOM
 
-#endif // BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_
+#endif  // BOOM_AGGREGATED_REGRESSION_SAMPLER_HPP_

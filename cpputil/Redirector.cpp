@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,22 +16,17 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <cpputil/Redirector.hpp>
+#include "cpputil/Redirector.hpp"
 #include <iostream>
 
-namespace BOOM{
+namespace BOOM {
 
   using std::ostream;
   using std::streambuf;
-  Redirector::Redirector(ostream & from, ostream & to)
-    : from_buf_(from.rdbuf()),
-      to_buf_(to.rdbuf()),
-      from_(&from)
-    {
-      from_->rdbuf(to_buf_);
-    }
+  Redirector::Redirector(ostream& from, ostream& to)
+      : from_buf_(from.rdbuf()), to_buf_(to.rdbuf()), from_(&from) {
+    from_->rdbuf(to_buf_);
+  }
 
-  Redirector::~Redirector(){
-      from_->rdbuf(from_buf_);
-    }
-}
+  Redirector::~Redirector() { from_->rdbuf(from_buf_); }
+}  // namespace BOOM

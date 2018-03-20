@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_DESIGN_HPP
 #define BOOM_DESIGN_HPP
 /*
@@ -23,11 +24,11 @@
 #include <string>
 #include <vector>
 
-#include <BOOM.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/Selector.hpp>
+#include "BOOM.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Selector.hpp"
 
-namespace BOOM{
+namespace BOOM {
   //======================================================================
   // A Configuration is a sequence of factor levels, represented by a
   // vector of integers, indicating the value of each experimental
@@ -71,13 +72,13 @@ namespace BOOM{
     int level(int factor) const;
 
     // Returns the values of all factors.
-    const std::vector<int> & levels() const;
+    const std::vector<int> &levels() const;
 
     // Two Configurations are equal if all their component data
     // (factors_ and levels_) are equal.
     bool operator==(const Configuration &rhs) const;
     bool operator!=(const Configuration &rhs) const;
-    ostream & print(ostream &out) const;
+    ostream &print(ostream &out) const;
 
    private:
     // The number of potential values available to each factor.
@@ -87,8 +88,9 @@ namespace BOOM{
     std::vector<int> levels_;
   };
 
-  inline ostream & operator<<(ostream &out, const Configuration &config){
-    return config.print(out);}
+  inline ostream &operator<<(ostream &out, const Configuration &config) {
+    return config.print(out);
+  }
 
   //======================================================================
   // An ExperimentStructure records the names of the factors in an
@@ -96,7 +98,7 @@ namespace BOOM{
   // factor.  It is the meta-data for the 'raw data' in a data frame
   // that is to be turned into a design matrix by a RowBuilder.
   class ExperimentStructure {
-  public:
+   public:
     // Use this constructor if you know the number of levels for each
     // factor and don't care about names.  (The names will be
     // automatically generated).
@@ -105,7 +107,7 @@ namespace BOOM{
     //     possible for each experimental factor.
     //   context: Indicates whether this structure describes the contextual part
     //     of an experiment.  This only affects the variable names.
-    explicit ExperimentStructure(const std::vector<int> & nlevels,
+    explicit ExperimentStructure(const std::vector<int> &nlevels,
                                  bool context = false);
 
     // Use this constructor if you want to specify the experiment
@@ -117,8 +119,8 @@ namespace BOOM{
     //     factor.  Must satisfy level_names.size() ==
     //     factor_names.size().
     ExperimentStructure(
-        const std::vector<std::string> & factor_names,
-        const std::vector<std::vector<std::string> > & level_names);
+        const std::vector<std::string> &factor_names,
+        const std::vector<std::vector<std::string> > &level_names);
 
     // The number of factors in the experiment.
     int nfactors() const;
@@ -127,7 +129,7 @@ namespace BOOM{
     int nlevels(int factor) const;
 
     // The number of levels available to all factors.
-    const std::vector<int> & nlevels() const;
+    const std::vector<int> &nlevels() const;
 
     // Returns the number of possible configurations in the
     // experiment, given by the product of the number of levels for
@@ -135,21 +137,20 @@ namespace BOOM{
     int nconfigurations() const;
 
     // The name of the specified level for the specified factor.
-    const std::string & level_name(int factor, int level) const;
+    const std::string &level_name(int factor, int level) const;
 
     // The name of the specified level for the specified factor.  The
     // factor name is prepended to the level name, separated by
     // 'separator'.
-    std::string full_level_name(int factor,
-                                int level,
+    std::string full_level_name(int factor, int level,
                                 const std::string &separator = ".") const;
 
     const std::vector<std::string> &factor_names() const {
       return factor_names_;
     }
 
-  private:
-    std::vector<std::string>  factor_names_;
+   private:
+    std::vector<std::string> factor_names_;
     std::vector<std::vector<std::string> > level_names_;
     std::vector<int> nlevels_;
   };
@@ -163,7 +164,7 @@ namespace BOOM{
   // An example of a FactorDummy is X(red), where X is a multi-level
   // factor and 'red' is one of its potential levels.
   class FactorDummy {
-  public:
+   public:
     // Args:
     //   factor_position_in_input_data: The position in the input data
     //     (a sequence of integers) representing the experimental
@@ -176,9 +177,8 @@ namespace BOOM{
     //
     // If factor or level is negative then this FactorDummy will
     // always evaluate to 0.
-    FactorDummy(int factor_position_in_input_data,
-                int level,
-                const std::string & name);
+    FactorDummy(int factor_position_in_input_data, int level,
+                const std::string &name);
 
     // Evaluate the dummy variable for a specific configuration of levels.
     // Args:
@@ -197,7 +197,7 @@ namespace BOOM{
     // Two FactorDummy objects are equal if factor_ and level_ are the
     // same.  The name is not checked.
     bool operator==(const FactorDummy &rhs) const;
-    bool operator!=(const FactorDummy &rhs) const {return !(*this == rhs);}
+    bool operator!=(const FactorDummy &rhs) const { return !(*this == rhs); }
 
     // Objects are sorted first by factor, then by level.
     bool operator<(const FactorDummy &rhs) const;
@@ -218,7 +218,7 @@ namespace BOOM{
     // long enough, it is resized.
     void set_level(std::vector<int> &configuration) const;
 
-  private:
+   private:
     int factor_;
     int level_;
     std::string name_;
@@ -234,7 +234,7 @@ namespace BOOM{
   // specific term in the interaction between X and Y), where X and Y
   // are multi-level factors.
   class Effect {
-  public:
+   public:
     // The empty Effect is the intercept.
     Effect();
 
@@ -266,7 +266,7 @@ namespace BOOM{
     // Two effects are equal if they contain the same factors.  Order
     // is not relevant.
     bool operator==(const Effect &rhs) const;
-    bool operator!=(const Effect &rhs) const {return !(*this == rhs);}
+    bool operator!=(const Effect &rhs) const { return !(*this == rhs); }
 
     // Effects are sorted lexicographically, first by lowest factor,
     // then by level of lowest factor.  If both tie then move to the
@@ -288,23 +288,23 @@ namespace BOOM{
     //     This is the internal storage position 0, 1, 2, ... order()
     //     - 1.  It is NOT the position of the factor in the input
     //     data.  It is an error if internal_factor_number >= order().
-    const FactorDummy & factor(int internal_factor_number) const;
+    const FactorDummy &factor(int internal_factor_number) const;
 
     // Returns the factor dummy associated with the given factor
     // position.  It is an error to request a factor position not
     // managed by this object.
-    const FactorDummy & factor_dummy_for_factor(
+    const FactorDummy &factor_dummy_for_factor(
         int factor_position_in_input_data) const;
 
     // Set the appropriate entries in levels to the necessary values
     // to make this->eval(levels) == true.
     void set_levels(std::vector<int> &levels) const;
 
-  private:
+   private:
     std::vector<FactorDummy> factors_;
   };
 
-  inline ostream & operator<<(ostream &out, const Effect &effect){
+  inline ostream &operator<<(ostream &out, const Effect &effect) {
     out << effect.name();
     return out;
   }
@@ -324,12 +324,10 @@ namespace BOOM{
     //   factor: A FactorDummy describing a factor to be modeled.
     //   is_context: If 'true' then 'factor' refers to contextual
     //     data.  Otherwise it refers to experimental data.
-    ContextualEffect(const FactorDummy &factor,
-                     bool is_context);
+    ContextualEffect(const FactorDummy &factor, bool is_context);
 
     // Create a ContextualEffect from a standard Effect.
-    ContextualEffect(const Effect &effect,
-                     bool is_context);
+    ContextualEffect(const Effect &effect, bool is_context);
 
     // Create an interaction between two contextual effects.
     ContextualEffect(const ContextualEffect &first,
@@ -364,7 +362,9 @@ namespace BOOM{
     // (i.e. if they match the same set of factors and levels).  Order
     // is not relevant.
     bool operator==(const ContextualEffect &rhs) const;
-    bool operator!=(const ContextualEffect &rhs) const {return !(*this == rhs);}
+    bool operator!=(const ContextualEffect &rhs) const {
+      return !(*this == rhs);
+    }
 
     // Effects are sorted lexicographically, first by lowest factor,
     // then by level of lowest factor.  If both tie then move to the
@@ -386,15 +386,15 @@ namespace BOOM{
     //     This is the internal storage position 0, 1, 2, ... order()
     //     - 1.  It is NOT the position of the factor in the input
     //     data.  It is an error if internal_factor_number >= order().
-    const FactorDummy & experiment_factor(int internal_factor_number) const;
-    const FactorDummy & context_factor(int internal_factor_number) const;
+    const FactorDummy &experiment_factor(int internal_factor_number) const;
+    const FactorDummy &context_factor(int internal_factor_number) const;
 
     // Returns the factor dummy associated with the given factor
     // position.  It is an error to request a factor position not
     // managed by this object.
-    const FactorDummy & factor_dummy_for_experiment_factor(
+    const FactorDummy &factor_dummy_for_experiment_factor(
         int factor_position_in_input_data) const;
-    const FactorDummy & factor_dummy_for_context_factor(
+    const FactorDummy &factor_dummy_for_context_factor(
         int factor_position_in_input_data) const;
 
     // Set the appropriate entries in levels to the necessary values
@@ -407,7 +407,7 @@ namespace BOOM{
     Effect context_effect_;
   };
 
-  inline ostream & operator<<(ostream &out, const ContextualEffect &e) {
+  inline ostream &operator<<(ostream &out, const ContextualEffect &e) {
     return out << e.name();
   }
 
@@ -431,8 +431,7 @@ namespace BOOM{
     //     - 1.
     //   factor_name: The name of the variable that the factor is
     //     modeling.  Used to label output.
-    EffectGroup(int factor_position_in_input_data,
-                int number_of_levels,
+    EffectGroup(int factor_position_in_input_data, int number_of_levels,
                 const std::string &factor_name);
 
     // Build a set of dummy variables for a multi-level factor by
@@ -446,13 +445,13 @@ namespace BOOM{
     //   factor_name: The name of the variable that the factor is
     //     modeling.  Used to label output.
     EffectGroup(int factor_position_in_input_data,
-                const std::vector<std::string> & level_names,
+                const std::vector<std::string> &level_names,
                 const std::string &factor_name);
 
-    // TODO(kmillar|stevescott): EffectGroup may one day be changed to
-    // model an additive collection of effects.  When that happens the
-    // following constructor could be changed and renamed:
-    // static EffectGroup Interaction(EffectGroup &first, EffectGroup &second);
+    // TODO: EffectGroup may one day be changed to model an additive collection
+    // of effects.  When that happens the following constructor could be changed
+    // and renamed: static EffectGroup Interaction(EffectGroup &first,
+    // EffectGroup &second);
     //
     // Create an interaction between two effect groups.  Every term in
     // first is multiplied by every term in second.
@@ -480,7 +479,7 @@ namespace BOOM{
     bool operator==(const EffectGroup &rhs) const {
       return effects_ == rhs.effects_;
     }
-    bool operator!=(const EffectGroup &rhs) const {return !(*this == rhs);}
+    bool operator!=(const EffectGroup &rhs) const { return !(*this == rhs); }
 
     // Sort first by size, then lexicographically within groups of the
     // same size.
@@ -489,7 +488,8 @@ namespace BOOM{
         // Main effects and low order interaactions come before higher
         // order interaction.
         return true;
-      } if (effects_.size() > rhs.effects_.size()) {
+      }
+      if (effects_.size() > rhs.effects_.size()) {
         return false;
       } else {
         return effects_ < rhs.effects_;
@@ -518,8 +518,7 @@ namespace BOOM{
     //   is_context: If true then treat the factor as contextual.  If
     //     false, treat it as experimental.
     ContextualEffectGroup(int factor_position_in_input_data,
-                          int number_of_levels,
-                          const std::string &factor_name,
+                          int number_of_levels, const std::string &factor_name,
                           bool is_context);
 
     // A set of dummies for a single factor.
@@ -532,8 +531,7 @@ namespace BOOM{
     //     false, treat it as experimental.
     ContextualEffectGroup(int factor_position_in_input_data,
                           const std::vector<std::string> &level_names,
-                          const std::string &factor_name,
-                          bool is_context);
+                          const std::string &factor_name, bool is_context);
 
     // An interaction between two existing ContextualEffectGroups.
     // The first might represent (X+Y).  The second might be (Z + W).
@@ -590,43 +588,40 @@ namespace BOOM{
   //   The vector of EffectGroups corresponding to
   //   first_set_of_effects * second_set_of_effects.
   std::vector<EffectGroup> ExpandInteraction(
-      const std::vector<EffectGroup> & first_set_of_effects,
-      const std::vector<EffectGroup> & second_set_of_effects);
+      const std::vector<EffectGroup> &first_set_of_effects,
+      const std::vector<EffectGroup> &second_set_of_effects);
 
   // As above, but with with contextual effects.
   std::vector<ContextualEffectGroup> ExpandInteraction(
-      const std::vector<ContextualEffectGroup> & first_set_of_effects,
-      const std::vector<ContextualEffectGroup> & second_set_of_effects);
+      const std::vector<ContextualEffectGroup> &first_set_of_effects,
+      const std::vector<ContextualEffectGroup> &second_set_of_effects);
 
-// TODO(kmillar): The notion of an EffectGroup should probably be
-// expanded to mean what is currently std::vector<EffectGroup>, in
-// which case ExpandInteraction should be made part of the EffectGroup
-// class.
+  // TODO: The notion of an EffectGroup should probably be expanded to mean what
+  // is currently std::vector<EffectGroup>, in which case ExpandInteraction
+  // should be made part of the EffectGroup class.
 
   // Produce an interaction of the form (x + y) * z, where x, y, and z
   // are potentially multi-level factors.  The set of effects produced
   // in this example is
   // x, y, z, x*z, y*z
   std::vector<EffectGroup> ExpandInteraction(
-      const std::vector<EffectGroup> & group,
-      const EffectGroup &single_factor);
+      const std::vector<EffectGroup> &group, const EffectGroup &single_factor);
 
   // As above, but with contextual effects.
   std::vector<ContextualEffectGroup> ExpandInteraction(
-      const std::vector<ContextualEffectGroup> & group,
+      const std::vector<ContextualEffectGroup> &group,
       const ContextualEffectGroup &single_factor);
 
   // Produce an interaction of the form x * (y + z), where x, y, and z
   // are potentially multi-level factors.  The set of effects produced
   // in this example is x, y, z, x*y, x*z.
   std::vector<EffectGroup> ExpandInteraction(
-      const EffectGroup &single_factor,
-      const std::vector<EffectGroup> & group);
+      const EffectGroup &single_factor, const std::vector<EffectGroup> &group);
 
   // As above, but with contextual effects.
   std::vector<ContextualEffectGroup> ExpandInteraction(
       const ContextualEffectGroup &single_factor,
-      const std::vector<ContextualEffectGroup> & group);
+      const std::vector<ContextualEffectGroup> &group);
 
   //======================================================================
   // A RowBuilder converts a vector of integers, representing levels
@@ -640,7 +635,7 @@ namespace BOOM{
 
     // This constructor provides low-level control over the structure
     // of the experiment.
-    RowBuilder(const std::vector<EffectGroup> &effects,
+    explicit RowBuilder(const std::vector<EffectGroup> &effects,
                bool add_intercept = true);
 
     // Take all the factors in an experiment and combine them up to
@@ -672,7 +667,7 @@ namespace BOOM{
     // If the given effect is present then remove it.  If it is not
     // present do nothing.
     void remove_effect(const Effect &e);
-    void remove_intercept() {remove_effect(Effect());}
+    void remove_intercept() { remove_effect(Effect()); }
 
     // The number of columns in the design matrix corresponding to
     // main effects.  The intercept is not a main effect.
@@ -712,7 +707,7 @@ namespace BOOM{
         int first_factor, int second_factor) const;
 
     // An accessor returning the i'th effect.
-    const Effect & effect(int i) const;
+    const Effect &effect(int i) const;
 
     // Produce a row of a design matrix (or "model matrix")
     // corresponding to a given configuration of input data.
@@ -774,9 +769,7 @@ namespace BOOM{
     // If the given effect is present then remove it.  If it is not
     // present do nothing.
     void remove_effect(const ContextualEffect &effect);
-    void remove_intercept() {
-      remove_effect(ContextualEffect());
-    }
+    void remove_intercept() { remove_effect(ContextualEffect()); }
 
     // Adds the effects in 'group' to the set of effects defining the
     // design matrix.  This adds one or more columns corresponding to
@@ -828,11 +821,11 @@ namespace BOOM{
     //   empty vector is returned.  If two levels do not interact then
     //   that position in the matrix is recorded as -1.
     std::vector<std::vector<int> > second_order_interaction_positions(
-        int first_factor, bool first_factor_is_contextual,
-        int second_factor, bool second_factor_is_contextual) const;
+        int first_factor, bool first_factor_is_contextual, int second_factor,
+        bool second_factor_is_contextual) const;
 
     // Returns i'th effect managed by this object.
-    const ContextualEffect & effect(int i) const;
+    const ContextualEffect &effect(int i) const;
 
     // Checks whether this object manages the specified effect.
     bool has_effect(const ContextualEffect &effect) const;
@@ -888,7 +881,7 @@ namespace BOOM{
   // added.  If order = 2 then second order interactions are added.
   // Etc.
   LabeledMatrix generate_design_matrix(
-      const std::map<std::string, std::vector<std::string> > & level_names,
+      const std::map<std::string, std::vector<std::string> > &level_names,
       int interaction_order);
 
   LabeledMatrix generate_design_matrix(const ExperimentStructure &xp,
@@ -901,9 +894,8 @@ namespace BOOM{
       const ContextualRowBuilder &row_builder);
 
   LabeledMatrix generate_experimental_design_matrix(
-      const ExperimentStructure &xp,
-      const ContextualRowBuilder &row_builder);
+      const ExperimentStructure &xp, const ContextualRowBuilder &row_builder);
 
 }  // namespace BOOM
 
-#endif //BOOM_DESIGN_HPP
+#endif  // BOOM_DESIGN_HPP

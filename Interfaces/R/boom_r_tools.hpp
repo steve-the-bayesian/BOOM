@@ -21,16 +21,15 @@
 
 #include <string>
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/Matrix.hpp>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/SubMatrix.hpp>
-#include <LinAlg/Array.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/Array.hpp"
 
-#include <Models/CategoricalData.hpp>
-
-#include <stats/DataTable.hpp>
-
+#include "Models/CategoricalData.hpp"
+#include "stats/DataTable.hpp"
+#include "cpputil/Date.hpp"
 //======================================================================
 // Note that the functions listed here throw exceptions.  Code that
 // uses them should be wrapped in a try-block where the catch
@@ -58,7 +57,18 @@
 namespace BOOM{
   // Returns list[[name]] if a list element with that name exists.
   // Returns R_NilValue otherwise.
-  SEXP getListElement(SEXP list, const std::string &name);
+  // Args:
+  //   list: The list to search.
+  //   name: The name of the list element to search for.
+  //   expect_answer: If true, then print a warning message if the named element
+  //     cannot be found.  This is useful in "printf debugging."
+  //
+  // Returns:
+  //   If the requested element is found then it is returned.  If not then
+  //   R_NilValue is returned.  If the first argument does not have a 'names'
+  //   attribute then an error is reported.
+  SEXP getListElement(SEXP list, const std::string &name,
+                      bool expect_answer = false);
 
   // Extract the names from a list.  If the list has no names
   // attribute a vector of empty strings is returned.
@@ -215,6 +225,10 @@ namespace BOOM{
       SEXP r_int_matrix,
       bool convert_to_zero_offset = false);
 
+  // Convert an R Date object (singleton or vector) to a BOOM Date.
+  Date ToBoomDate(SEXP r_Date);
+  std::vector<Date> ToBoomDateVector(SEXP r_Dates);
+  
   // Convert a BOOM vector, matrix, or array to its R equivalent.
   // Less type checking is needed for these functions than in the
   // other direction because we know the type of the input.
@@ -245,10 +259,14 @@ namespace BOOM{
   //     STRINGSXP then the first element is returned.
   std::string ToString(SEXP r_string);
 
+  // Convert a C++ string (or vector of strings) to an R character vector.
+  SEXP ToRString(const std::string &s);
+  SEXP ToRStringVector(const std::vector<std::string> &string_vector);
+
   // A Factor object is intended to be initialized with an R factor.
   class Factor {
    public:
-    Factor(SEXP r_factor);
+    explicit Factor(SEXP r_factor);
 
     // Corresponds to R's length(r_factor).
     int length() const;
@@ -316,18 +334,16 @@ namespace BOOM{
     int protection_count_;
   };
 
-  // The job of an RErrorReporter is to reconcile the error handling
-  // mechanisms of C++ (exceptions) and R (Rf_error).  When C++
-  // exceptions are thrown, stack unwinding frees memory in objects
-  // held by smart pointers that go out of scope.  When Rf_error is
-  // called, the destructors that C++ relies on to do the right thing
-  // are never called, and so memory leaks.  The solution is to define
-  // an RErrorReporter on the first line of a function entered by
-  // .Call().  If an error is encountered that should be communicated
-  // back to R then write it using SetError, and then exit the
-  // function.  The RErrorReporter will be the last thing destroyed on
-  // function exit, and its destructor will call Rf_error with the
-  // specified error message.
+  // The job of an RErrorReporter is to reconcile the error handling mechanisms
+  // of C++ (exceptions) and R (Rf_error).  When C++ exceptions are thrown,
+  // stack unwinding frees memory in objects held by smart pointers that go out
+  // of scope.  When Rf_error is called, the destructors that C++ relies on to
+  // do the right thing are never called, and so memory leaks.  The solution is
+  // to define an RErrorReporter on the first line of a function entered by
+  // .Call().  If an error is encountered that should be communicated back to R
+  // then write it using SetError, and then exit the function.  The
+  // RErrorReporter will be the last thing destroyed on function exit, and its
+  // destructor will call Rf_error with the specified error message.
   class RErrorReporter {
    public:
     RErrorReporter() : error_message_(nullptr) {}
@@ -346,6 +362,48 @@ namespace BOOM{
     std::string *error_message_;
   };
 
+  // A functor representing a scalar-valued function of a single Vector valued
+  // argument.  The canonical use case for this class is for users to be able to
+  // define a log density in R and pass it to a PosteriorSampler in BOOM.  This
+  // approach will be much slower than defining everything in C++, but it can be
+  // quite convenient.
+  class RVectorFunction {
+   public:
+    // Args:
+    //   r_vector_function: An R list containing three elements, in the
+    //     following order.
+    //   - r_fun: The function (closure) passed in from R.  The function should
+    //       take a single argument (a real-valued vector), and return a scalar.
+    //   - r_env: The environment in which to evaluate r_fun.
+    //   - argument_name: The name of the argument to r_fun as it appears in the
+    //       function signature.
+    RVectorFunction(SEXP r_vector_function);
+
+    // The process of evaluatingt the function creates an object in the
+    // function's environment with an ugly name.  The destructor should remove
+    // this object.
+    ~RVectorFunction();
+    
+    // Evaluate the function at x.
+    double evaluate(const Vector &x);
+    double operator()(const Vector &x) { return evaluate(x); }
+    
+   private:
+    // The name of the function as it exists in R.
+    std::string function_name_;
+
+    // The name of the object to which we will be assigning numerical values.
+    // Should be ugly so we don't accidentally overwrite anytihng.
+    std::string argument_name_;
+
+    // The environment in which to find the R function.
+    SEXP r_env_;
+
+    // The call we will use to get the output, something like "f(argument_name_)"
+    std::string call_string_;
+  };
+
+  
   // Returns true if the user has requested an interrupt.
   bool RCheckInterrupt();
 

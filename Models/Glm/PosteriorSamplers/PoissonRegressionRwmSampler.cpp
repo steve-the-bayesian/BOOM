@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -16,29 +17,26 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Glm/PosteriorSamplers/PoissonRegressionRwmSampler.hpp>
-#include <distributions.hpp>
-#include <cpputil/report_error.hpp>
-#include <LinAlg/SpdMatrix.hpp>
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionRwmSampler.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
   PoissonRegressionRwmSampler::PoissonRegressionRwmSampler(
-      PoissonRegressionModel *model,
-      const Ptr<MvnBase> &prior,
+      PoissonRegressionModel *model, const Ptr<MvnBase> &prior,
       RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        model_(model),
-        prior_(prior)
-  {
+      : PosteriorSampler(seeding_rng), model_(model), prior_(prior) {
     if (model_->xdim() != prior_->dim()) {
-      report_error("Prior and model are incompatible in "
-                   "PoissonRegressionRwmSampler constructor.");
+      report_error(
+          "Prior and model are incompatible in "
+          "PoissonRegressionRwmSampler constructor.");
     }
   }
 
   void PoissonRegressionRwmSampler::draw() {
-    const std::vector<Ptr<PoissonRegressionData> > & data(model_->dat());
+    const std::vector<Ptr<PoissonRegressionData> > &data(model_->dat());
     int nobs = data.size();
     SpdMatrix proposal_information = prior_->siginv();
 
@@ -49,11 +47,11 @@ namespace BOOM {
     }
 
     proposal_information.reflect();
-    const Vector & beta = model_->Beta();
+    const Vector &beta = model_->Beta();
 
     Vector candidate = rmvt_ivar_mt(rng(), beta, proposal_information, 2);
-    double logp_cand = prior_->logp(candidate) +
-        model_->log_likelihood(candidate);
+    double logp_cand =
+        prior_->logp(candidate) + model_->log_likelihood(candidate);
     double logp_original = prior_->logp(beta) + model_->log_likelihood(beta);
 
     if (log(runif_mt(rng())) < logp_cand - logp_original) {
@@ -61,7 +59,7 @@ namespace BOOM {
     }
   }
 
-  double PoissonRegressionRwmSampler::logpri()const {
+  double PoissonRegressionRwmSampler::logpri() const {
     return prior_->logp(model_->Beta());
   }
 

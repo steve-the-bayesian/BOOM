@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,53 +19,51 @@
 #ifndef BOOM_GAUSSIAN_MODEL_H
 #define BOOM_GAUSSIAN_MODEL_H
 
-#include <Models/GaussianModelBase.hpp>
-#include <Models/ParamTypes.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
+#include "Models/GaussianModelBase.hpp"
+#include "Models/ParamTypes.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
 
-namespace BOOM{
+namespace BOOM {
   class GaussianModelGivenSigma;
   class GammaModel;
   class GaussianConjSampler;
 
   //------------------------------------------------------------
-  class GaussianModel
-      : public GaussianModelBase,
-        public ParamPolicy_2<UnivParams, UnivParams>,
-        public PriorPolicy
-  {
-  public:
-    GaussianModel(double mean = 0.0, double sd = 1.0);
-    GaussianModel(const std::vector<double> &v);
+  class GaussianModel : public GaussianModelBase,
+                        public ParamPolicy_2<UnivParams, UnivParams>,
+                        public PriorPolicy {
+   public:
+    explicit GaussianModel(double mean = 0.0, double sd = 1.0);
+    explicit GaussianModel(const std::vector<double> &v);
     GaussianModel(const GaussianModel &rhs);
-    GaussianModel * clone()const override;
+    GaussianModel *clone() const override;
 
-    void set_params(double Mean, double Var);
+    void set_params(double mu, double sigsq);
     void set_mu(double m);
     void set_sigsq(double s);
 
-    double mu()const override;
-    double sigsq()const override;
-    double sigma()const override;
+    double mu() const override;
+    double sigsq() const override;
+    double sigma() const override;
 
     Ptr<UnivParams> Mu_prm();
     Ptr<UnivParams> Sigsq_prm();
-    const Ptr<UnivParams> Mu_prm()const;
-    const Ptr<UnivParams> Sigsq_prm()const;
+    const Ptr<UnivParams> Mu_prm() const;
+    const Ptr<UnivParams> Sigsq_prm() const;
 
     void mle() override;
 
-    void set_conjugate_prior(double mu0, double kappa,
-                             double df, double sigma_guess);
+    void set_conjugate_prior(double mu0, double kappa, double df,
+                             double sigma_guess);
 
-    double Loglike(const Vector &mu_sigsq,
-                           Vector &g, Matrix &h, uint nd)const override;
-     double log_likelihood() const override {
-       return LoglikeModel::log_likelihood();
-     }
+    double Loglike(const Vector &mu_sigsq, Vector &g, Matrix &h,
+                   uint nd) const override;
+    double log_likelihood() const override {
+      return LoglikeModel::log_likelihood();
+    }
   };
 
 }  // namespace BOOM
 
-#endif// BOOM_GAUSSIAN_MODEL_H
+#endif  // BOOM_GAUSSIAN_MODEL_H

@@ -1,7 +1,5 @@
 #!/usr/local/bin/python3
 
-import sys
-import string
 import shutil
 import os.path
 
@@ -16,7 +14,7 @@ def getopts(argv):
 def copy_many_files(filename_list, dest_dir):
     for fname in filename_list:
         dest = os.path.normpath(os.path.join(dest_dir, fname))
-        print('copying ', fname, ' to ', dest)
+#        print('copying ', fname, ' to ', dest)
         target_directory = os.path.dirname(dest)
         if not os.path.exists(target_directory):
             os.makedirs(target_directory)

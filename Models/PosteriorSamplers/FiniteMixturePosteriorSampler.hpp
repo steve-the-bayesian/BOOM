@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2012 Steven L. Scott
 
@@ -19,36 +20,35 @@
 #ifndef BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_
 #define BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_
 
-#include <Models/FiniteMixtureModel.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
+#include "Models/FiniteMixtureModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM{
-  class FiniteMixturePosteriorSampler : public PosteriorSampler{
+namespace BOOM {
+  class FiniteMixturePosteriorSampler : public PosteriorSampler {
    public:
-    FiniteMixturePosteriorSampler(FiniteMixtureModel *model,
-                                  RNG &seeding_rng = GlobalRng::rng)
-        : PosteriorSampler(seeding_rng), model_(model)
-    {}
+    explicit FiniteMixturePosteriorSampler(FiniteMixtureModel *model,
+                                           RNG &seeding_rng = GlobalRng::rng)
+        : PosteriorSampler(seeding_rng), model_(model) {}
 
-    double logpri()const override{
+    double logpri() const override {
       double ans = model_->mixing_distribution()->logpri();
       int S = model_->number_of_mixture_components();
-      for(int s = 0; s < S; ++s){
+      for (int s = 0; s < S; ++s) {
         ans += model_->mixture_component(s)->logpri();
       }
       return ans;
     }
 
-    void draw() override{
+    void draw() override {
       model_->impute_latent_data(rng());
       model_->mixing_distribution()->sample_posterior();
-      for(int s = 0; s < model_->number_of_mixture_components(); ++s){
+      for (int s = 0; s < model_->number_of_mixture_components(); ++s) {
         model_->mixture_component(s)->sample_posterior();
       }
     }
 
    private:
-    FiniteMixtureModel * model_;
+    FiniteMixtureModel *model_;
   };
-}
-#endif //  BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_
+}  // namespace BOOM
+#endif  //  BOOM_FINITE_MIXTURE_POSTERIOR_SAMPLER_HPP_

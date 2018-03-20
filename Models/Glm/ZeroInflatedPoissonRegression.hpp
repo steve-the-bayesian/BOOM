@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2015 Steven L. Scott
 
@@ -19,17 +20,15 @@
 #ifndef BOOM_GLM_ZERO_INFLATED_POISSON_REGRESSION_MODEL_HPP_
 #define BOOM_GLM_ZERO_INFLATED_POISSON_REGRESSION_MODEL_HPP_
 
-#include <Models/Glm/PoissonRegressionData.hpp>
-#include <Models/Policies/ParamPolicy_2.hpp>
-#include <Models/Policies/IID_DataPolicy.hpp>
-#include <Models/Policies/PriorPolicy.hpp>
-#include <Models/ZeroInflatedPoissonModel.hpp>
+#include "Models/Glm/PoissonRegressionData.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/ParamPolicy_2.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroInflatedPoissonModel.hpp"
 
 namespace BOOM {
 
-  class ZeroInflatedPoissonRegressionData
-      : public PoissonRegressionData
-  {
+  class ZeroInflatedPoissonRegressionData : public PoissonRegressionData {
    public:
     // Args:
     //   event_count: Total number of events represented by this
@@ -40,11 +39,9 @@ namespace BOOM {
     //   number_of_zeros: The number of trials that produced zero
     //     events.  Must be non-negative, and cannot exceed
     //     number_of_trials.
-    ZeroInflatedPoissonRegressionData(
-        int64_t event_count,
-        const Vector &x,
-        int64_t number_of_trials,
-        int64_t number_of_zeros);
+    ZeroInflatedPoissonRegressionData(int64_t event_count, const Vector &x,
+                                      int64_t number_of_trials,
+                                      int64_t number_of_zeros);
 
     // Number of trials that each produced zero events.
     int64_t number_of_zero_trials() const;
@@ -77,16 +74,14 @@ namespace BOOM {
   class ZeroInflatedPoissonRegressionModel
       : public ParamPolicy_2<GlmCoefs, GlmCoefs>,
         public IID_DataPolicy<ZeroInflatedPoissonRegressionData>,
-        public PriorPolicy
-  {
+        public PriorPolicy {
    public:
-
     // Create a new model with the specified dimension.  All predictor
     // variables are included, but with zero coefficients.
     // Args:
     //   dimension:  The dimension of the predictor variables.
-    ZeroInflatedPoissonRegressionModel(int dimension);
-    ZeroInflatedPoissonRegressionModel * clone() const override;
+    explicit ZeroInflatedPoissonRegressionModel(int dimension);
+    ZeroInflatedPoissonRegressionModel *clone() const override;
 
     // Returns the conditional expected value per trial, given the
     // specified vector of predictor variables x.  The conditional
@@ -125,10 +120,8 @@ namespace BOOM {
     // Returns:
     //   Aggregated data for the all the requested observations.
     ZeroInflatedPoissonSuf simulate_sufficient_statistics(
-        const Vector &x,
-        int64_t n,
-        RNG &rng = GlobalRng::rng) const;
+        const Vector &x, int64_t n, RNG &rng = GlobalRng::rng) const;
   };
 
-} // namespace BOOM
+}  // namespace BOOM
 #endif  //  BOOM_GLM_ZERO_INFLATED_POISSON_REGRESSION_MODEL_HPP_

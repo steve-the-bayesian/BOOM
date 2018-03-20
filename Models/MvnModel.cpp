@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,20 +17,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "Models/MvnModel.hpp"
 #include <cmath>
-#include <LinAlg/SpdMatrix.hpp>
-#include <LinAlg/Vector.hpp>
-#include <Models/MvnGivenSigma.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/MvnConjSampler.hpp>
-#include <Models/WishartModel.hpp>
-#include <cpputil/math_utils.hpp>
-#include <distributions.hpp>
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "Models/MvnGivenSigma.hpp"
+#include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/MvnConjSampler.hpp"
+#include "Models/WishartModel.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  double MvnModel::loglike(const Vector &mu_siginv)const{
+  double MvnModel::loglike(const Vector &mu_siginv) const {
     const ConstVectorView mu(mu_siginv, 0, dim());
     SpdMatrix siginv(dim());
     Vector::const_iterator b = mu_siginv.cbegin() + dim();
@@ -37,80 +38,69 @@ namespace BOOM{
     return MvnBase::log_likelihood(mu, siginv, *suf());
   }
 
-  void MvnModel::add_raw_data(const Vector &y){
+  void MvnModel::add_raw_data(const Vector &y) {
     NEW(VectorData, dp)(y);
     this->add_data(dp);
   }
 
-  double MvnModel::pdf(const Ptr<Data> &dp, bool logscale)const{
+  double MvnModel::pdf(const Ptr<Data> &dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  double MvnModel::pdf(const Data * dp, bool logscale)const{
+  double MvnModel::pdf(const Data *dp, bool logscale) const {
     double ans = logp(DAT(dp)->value());
     return logscale ? ans : exp(ans);
   }
 
-  double MvnModel::pdf(const Vector &x, bool logscale)const{
+  double MvnModel::pdf(const Vector &x, bool logscale) const {
     double ans = logp(x);
     return logscale ? ans : exp(ans);
   }
 
-  Vector MvnModel::sim(RNG &rng)const{
+  Vector MvnModel::sim(RNG &rng) const {
     return rmvn_L_mt(rng, mu(), Sigma_chol());
   }
 
   //======================================================================
 
   MvnModel::MvnModel(uint p, double mu, double sigma)
-    : Base(p,mu,sigma),
-      DataPolicy(new MvnSuf(p))
-  {}
+      : Base(p, mu, sigma), DataPolicy(new MvnSuf(p)) {}
 
   MvnModel::MvnModel(const Vector &mean, const SpdMatrix &V, bool ivar)
-    : Base(mean, V, ivar),
-      DataPolicy(new MvnSuf(mean.size()))
-  {}
+      : Base(mean, V, ivar), DataPolicy(new MvnSuf(mean.size())) {}
 
-  MvnModel::MvnModel(const Ptr<VectorParams> &mu,
-                     const Ptr<SpdParams> &Sigma)
-    : Base(mu, Sigma),
-      DataPolicy(new MvnSuf(mu->dim()))
-  {}
+  MvnModel::MvnModel(const Ptr<VectorParams> &mu, const Ptr<SpdParams> &Sigma)
+      : Base(mu, Sigma), DataPolicy(new MvnSuf(mu->dim())) {}
 
   MvnModel::MvnModel(const std::vector<Vector> &data)
-    : Base(data[0].size()),
-      DataPolicy(new MvnSuf(data[0].size())),
-      PriorPolicy()
-  {
+      : Base(data[0].size()),
+        DataPolicy(new MvnSuf(data[0].size())),
+        PriorPolicy() {
     set_data_raw(data.begin(), data.end());
     mle();
   }
 
   MvnModel::MvnModel(const MvnModel &rhs)
-    : Model(rhs),
-      VectorModel(rhs),
-      Base(rhs),
-      LoglikeModel(rhs),
-      DataPolicy(rhs),
-      PriorPolicy(rhs),
-      EmMixtureComponent(rhs)
-  {}
+      : Model(rhs),
+        VectorModel(rhs),
+        Base(rhs),
+        LoglikeModel(rhs),
+        DataPolicy(rhs),
+        PriorPolicy(rhs),
+        EmMixtureComponent(rhs) {}
 
-  MvnModel * MvnModel::clone() const{return new MvnModel(*this);}
+  MvnModel *MvnModel::clone() const { return new MvnModel(*this); }
 
-  void MvnModel::mle(){
+  void MvnModel::mle() {
     set_mu(suf()->ybar());
     set_Sigma(suf()->var_hat());
   }
 
-  void MvnModel::initialize_params() {
-    mle();
-  }
+  void MvnModel::initialize_params() { mle(); }
 
-  void MvnModel::add_mixture_data(const Ptr<Data> &dp, double prob){
-    suf()->add_mixture_data( DAT(dp)->value(), prob);
+  void MvnModel::add_mixture_data(const Ptr<Data> &dp, double prob) {
+    suf()->add_mixture_data(DAT(dp)->value(), prob);
   }
 
   void MvnModel::remove_data(const Ptr<Data> &dp) {

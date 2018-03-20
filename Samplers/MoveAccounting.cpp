@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -16,18 +17,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Samplers/MoveAccounting.hpp>
+#include "Samplers/MoveAccounting.hpp"
 #include <set>
 
 namespace BOOM {
 
   namespace {
-    typedef std::map<std::string,
-                     std::map<std::string,
-                              int> >::const_iterator CountsIterator;
+    typedef std::map<std::string, std::map<std::string, int> >::const_iterator
+        CountsIterator;
     typedef std::map<std::string, int>::const_iterator IntMapIterator;
     typedef std::map<std::string, double>::const_iterator TimeIterator;
-  }
+  }  // namespace
 
   void MoveAccounting::record_acceptance(const std::string &move_type) {
     ++counts_[move_type]["accept"];
@@ -41,17 +41,17 @@ namespace BOOM {
   }
 
   namespace {
-    std::map<std::string, int>
-    reverse_lookup(const std::vector<std::string> &names) {
+    std::map<std::string, int> reverse_lookup(
+        const std::vector<std::string> &names) {
       std::map<std::string, int> ans;
       for (int i = 0; i < names.size(); ++i) {
         ans[names[i]] = i;
       }
       return ans;
     }
-  }
+  }  // namespace
 
-  LabeledMatrix MoveAccounting::to_matrix()const{
+  LabeledMatrix MoveAccounting::to_matrix() const {
     std::vector<std::string> move_types = compute_move_types();
     std::vector<std::string> outcome_types = compute_outcome_type_names();
     Matrix counts(move_types.size(), outcome_types.size());
@@ -65,8 +65,8 @@ namespace BOOM {
       counts(row_name_map[move_type], col_name_map["seconds"]) = seconds;
     }
 
-    for (CountsIterator move_type = counts_.begin();
-         move_type != counts_.end(); ++move_type) {
+    for (CountsIterator move_type = counts_.begin(); move_type != counts_.end();
+         ++move_type) {
       int row = row_name_map[move_type->first];
       for (IntMapIterator case_type = move_type->second.begin();
            case_type != move_type->second.end(); ++case_type) {
@@ -111,9 +111,7 @@ namespace BOOM {
     for (std::set<std::string>::const_iterator it = names.begin();
          it != names.end(); ++it) {
       const std::string &el(*it);
-      if (el != "accept"
-          && el != "reject"
-          && el != "seconds") {
+      if (el != "accept" && el != "reject" && el != "seconds") {
         ans.push_back(el);
       }
     }
@@ -144,17 +142,13 @@ namespace BOOM {
     return seconds;
   }
 
-  MoveTimer::MoveTimer(const std::string &move_type,
-                       MoveAccounting *accounting)
+  MoveTimer::MoveTimer(const std::string &move_type, MoveAccounting *accounting)
       : move_type_(move_type),
         accounting_(accounting),
         time_(clock()),
-        stopped_(false)
-  {}
+        stopped_(false) {}
 
-  MoveTimer::~MoveTimer() {
-    stop();
-  }
+  MoveTimer::~MoveTimer() { stop(); }
 
   void MoveTimer::stop() {
     if (!stopped_) {

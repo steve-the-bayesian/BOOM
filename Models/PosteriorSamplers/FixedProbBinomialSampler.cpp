@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2007 Steven L. Scott
 
@@ -15,25 +16,20 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/PosteriorSamplers/FixedProbBinomialSampler.hpp>
-#include <cpputil/math_utils.hpp>
+#include "Models/PosteriorSamplers/FixedProbBinomialSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef FixedProbBinomialSampler FBS;
   FBS::FixedProbBinomialSampler(BinomialModel *mod, double prob,
                                 RNG &seeding_rng)
-    : PosteriorSampler(seeding_rng),
-      m_(mod),
-      p_(prob)
-  {}
+      : PosteriorSampler(seeding_rng), m_(mod), p_(prob) {}
 
-  void FBS::draw(){
-    m_->set_prob(p_);
-  }
+  void FBS::draw() { m_->set_prob(p_); }
 
-  double FBS::logpri()const{
+  double FBS::logpri() const {
     double p = m_->prob();
     return p_ == p ? 0 : BOOM::negative_infinity();
   }
-}
+}  // namespace BOOM

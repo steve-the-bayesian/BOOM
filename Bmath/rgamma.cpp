@@ -37,7 +37,7 @@
  *
  *  SYNOPSIS
  *
- *    #include <Bmath.hpp>
+ *    #include "Bmath.hpp"
  *    double rgamma(double a, double scale);
  *
  *  DESCRIPTION
@@ -201,7 +201,7 @@ double rgamma_mt(BOOM::RNG & rng, double a, double scale) {
       q = q0 + 0.5 * t * t * ((((((a7 * v + a6) * v + a5) * v + a4) * v
                                 + a3) * v + a2) * v + a1) * v;
     else
-      q = q0 - s * t + 0.25 * t * t + (s2 + s2) * log(1.0 + v);
+      q = q0 - s * t + 0.25 * t * t + (s2 + s2) * log1p(v);
 
 
     /* Step 7: quotient acceptance (q) */

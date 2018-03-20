@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -17,30 +18,28 @@
 */
 
 #include <cmath>
-#include <distributions.hpp>
+#include "distributions.hpp"
 
-#include <LinAlg/Vector.hpp>
-#include <LinAlg/VectorView.hpp>
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
-#include <cpputil/report_error.hpp>
 #include <sstream>
+#include "cpputil/report_error.hpp"
 
 using namespace std;
-namespace BOOM{
+namespace BOOM {
 
-  int rmulti(int lo, int hi){
-    return rmulti_mt(GlobalRng::rng, lo, hi);}
+  int rmulti(int lo, int hi) { return rmulti_mt(GlobalRng::rng, lo, hi); }
 
-  int rmulti_mt(RNG & rng, int lo, int hi){
+  int rmulti_mt(RNG &rng, int lo, int hi) {
     // draw a random integer between lo and hi with equal probability
-    double tmp = runif_mt(rng, lo+0.0,hi+1.0);
+    double tmp = runif_mt(rng, lo + 0.0, hi + 1.0);
     return (int)floor(tmp);
   }
 
   namespace {
     template <class VEC>
-    uint rmulti_mt_impl(RNG & rng, const VEC &prob){
-
+    uint rmulti_mt_impl(RNG &rng, const VEC &prob) {
       /* This function draws a deviate from the multiBernoulli
          distribution with states from lo to hi.  The probability
          vector need not sum to 1, it only needs to be specified up to a
@@ -51,49 +50,50 @@ namespace BOOM{
       // point at which the BLAS routine starts to outperform the
       // STL accumulate algorithm.
       double probsum = n > 35 ? prob.abs_norm() : prob.sum();
-      if(!std::isfinite(probsum)){
+      if (!std::isfinite(probsum)) {
         std::ostringstream err;
         err << "infinite or NA probabilities supplied to rmulti:  prob = "
             << prob << std::endl;
         report_error(err.str());
       }
-      if(probsum <= 0){
+      if (probsum <= 0) {
         std::ostringstream err;
         err << "zero or negative normalizing constant in rmulti:  prob = "
             << prob << std::endl;
         report_error(err.str());
       }
-      double tmp=runif_mt(rng, 0,probsum);
+      double tmp = runif_mt(rng, 0, probsum);
 
-      double psum=0;
-      for(uint i = 0; i<n; ++i){
-        psum+=prob(i);
-        if(tmp<=psum) return i;}
+      double psum = 0;
+      for (uint i = 0; i < n; ++i) {
+        psum += prob(i);
+        if (tmp <= psum) return i;
+      }
       ostringstream msg;
       msg << "rmulti failed:  prob = " << prob << std::endl
           << "psum = " << psum << std::endl;
       report_error(msg.str());
       return 0;
     }
+  }  // namespace
+
+  uint rmulti_mt(RNG &rng, const Vector &prob) {
+    return rmulti_mt_impl(rng, prob);
+  }
+  uint rmulti_mt(RNG &rng, const VectorView &prob) {
+    return rmulti_mt_impl(rng, prob);
+  }
+  uint rmulti_mt(RNG &rng, const ConstVectorView &prob) {
+    return rmulti_mt_impl(rng, prob);
   }
 
-  uint rmulti_mt(RNG &rng, const Vector &prob){
-    return rmulti_mt_impl(rng, prob);
-  }
-  uint rmulti_mt(RNG &rng, const VectorView &prob){
-    return rmulti_mt_impl(rng, prob);
-  }
-  uint rmulti_mt(RNG &rng, const ConstVectorView &prob){
-    return rmulti_mt_impl(rng, prob);
-  }
-
-  uint rmulti(const Vector &prob){
+  uint rmulti(const Vector &prob) {
     return rmulti_mt_impl(GlobalRng::rng, prob);
   }
-  uint rmulti(const VectorView &prob){
+  uint rmulti(const VectorView &prob) {
     return rmulti_mt_impl(GlobalRng::rng, prob);
   }
-  uint rmulti(const ConstVectorView &prob){
+  uint rmulti(const ConstVectorView &prob) {
     return rmulti_mt_impl(GlobalRng::rng, prob);
   }
 

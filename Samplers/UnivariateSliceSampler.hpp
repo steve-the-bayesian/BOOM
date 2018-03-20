@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2006 Steven L. Scott
 
@@ -19,17 +20,17 @@
 #ifndef BOOM_SAMPLERS_UNIVARIATE_SLICE_SAMPLER_HPP_
 #define BOOM_SAMPLERS_UNIVARIATE_SLICE_SAMPLER_HPP_
 
-#include <Samplers/Sampler.hpp>
-#include <Samplers/ScalarSliceSampler.hpp>
-#include <LinAlg/Vector.hpp>
 #include <functional>
-#include <TargetFun/TargetFun.hpp>
+#include "LinAlg/Vector.hpp"
+#include "Samplers/Sampler.hpp"
+#include "Samplers/ScalarSliceSampler.hpp"
+#include "TargetFun/TargetFun.hpp"
 
 namespace BOOM {
 
-   // A "Univariate" slice sampler draws a vector one component at a
-   // time.  If you just want to draw a scalar quantity then you want
-   // a ScalarSliceSampler instead.
+  // A "Univariate" slice sampler draws a vector one component at a
+  // time.  If you just want to draw a scalar quantity then you want
+  // a ScalarSliceSampler instead.
   class UnivariateSliceSampler : public Sampler {
    public:
     typedef std::function<double(const Vector &x)> Target;
@@ -43,10 +44,8 @@ namespace BOOM {
     //     'false' then the density is potentially multi-modal.
     //   rng: A pointer to the random number generator that supplies
     //     randomness to this sampler.
-    UnivariateSliceSampler(const Target &logdensity,
-                           double suggested_dx = 1.0,
-                           bool unimodal = false,
-                           RNG *rng = nullptr);
+    explicit UnivariateSliceSampler(const Target &logdensity, double suggested_dx = 1.0,
+                           bool unimodal = false, RNG *rng = nullptr);
     Vector draw(const Vector &x) override;
 
     // Set lower and upper limits for the domain of each variable.

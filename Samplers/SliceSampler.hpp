@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -18,20 +19,20 @@
 #ifndef BOOM_SLICE_SAMPLER_HPP
 #define BOOM_SLICE_SAMPLER_HPP
 
-#include <Samplers/Sampler.hpp>
-#include <LinAlg/Vector.hpp>
 #include <functional>
+#include "LinAlg/Vector.hpp"
+#include "Samplers/Sampler.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   typedef std::function<double(const Vector &)> Func;
 
-  class SliceSampler : public Sampler{
-  public:
-    SliceSampler(const Func &log_density, bool unimodal = false);
+  class SliceSampler : public Sampler {
+   public:
+    explicit SliceSampler(const Func &log_density, bool unimodal = false);
     Vector draw(const Vector &x) override;
 
-  private:
+   private:
     // lo and hi, last_position_, and random_direction_ define slice boundaries.
     // The "left" edge of the slice is last_position_ - lo_ * random_direction_.
     // The "right " edge is last_position_ + hi * random_direction_;
@@ -72,4 +73,4 @@ namespace BOOM{
 
 }  // namespace BOOM
 
-#endif// BOOM_SLICE_SAMPLER_HPP
+#endif  // BOOM_SLICE_SAMPLER_HPP

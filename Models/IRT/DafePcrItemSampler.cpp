@@ -15,33 +15,36 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <Models/IRT/DafePcr.hpp>
-#include <distributions.hpp>
-#include <cpputil/ParamHolder.hpp>
-#include <cpputil/math_utils.hpp>
-#include <Models/MvnModel.hpp>
-#include <Models/MvtModel.hpp>
-#include <Models/IRT/PartialCreditModel.hpp>
-#include <Models/IRT/Subject.hpp>
-#include <Samplers/MetropolisHastings.hpp>
-#include <TargetFun/TargetFun.hpp>
+#include "Models/IRT/DafePcr.hpp"
+#include "Models/IRT/PartialCreditModel.hpp"
+#include "Models/IRT/Subject.hpp"
+#include "Models/MvnModel.hpp"
+#include "Models/MvtModel.hpp"
+#include "Samplers/MetropolisHastings.hpp"
+#include "TargetFun/TargetFun.hpp"
+#include "cpputil/ParamHolder.hpp"
+#include "cpputil/math_utils.hpp"
+#include "distributions.hpp"
 
 #include <functional>
 #include <iomanip>
 
-namespace BOOM{
-  namespace IRT{
+namespace BOOM {
+  namespace IRT {
     typedef DafePcrItemSampler ISAM;
     typedef PartialCreditModel PCR;
     typedef DafePcrDataImputer IMP;
     //======================================================================
     class PcrBetaHolder {
      public:
-      PcrBetaHolder(const Vector &newb,
-                    const Ptr<PartialCreditModel> &pcr,
+      PcrBetaHolder(const Vector &newb, const Ptr<PartialCreditModel> &pcr,
                     Vector &V)
-          : v(V), mod(pcr){ v = mod->beta(); mod->set_beta(newb); }
-      ~PcrBetaHolder(){ mod->set_beta(v); }
+          : v(V), mod(pcr) {
+        v = mod->beta();
+        mod->set_beta(newb);
+      }
+      ~PcrBetaHolder() { mod->set_beta(v); }
+
      private:
       Vector &v;
       Ptr<PartialCreditModel> mod;
@@ -50,15 +53,12 @@ namespace BOOM{
     class ItemDafeTF : public TargetFun {
       // evaluates posterior probability of a vector b
      public:
-      ItemDafeTF(const Ptr<PCR> & it,
-                 const Ptr<MvnModel> &pri,
+      ItemDafeTF(const Ptr<PCR> &it, const Ptr<MvnModel> &pri,
                  const Ptr<IMP> &Imp)
-          : mod(it),
-            prior(pri),
-            imp(Imp),
-            t(it->parameter_vector()) {}
+          : mod(it), prior(pri), imp(Imp), ans(0), t(it->parameter_vector()) {}
       double operator()(const Vector &b) const;
-      ItemDafeTF * clone()const{return new ItemDafeTF(*this);}
+      ItemDafeTF *clone() const { return new ItemDafeTF(*this); }
+
      private:
       Ptr<PCR> mod;
       Ptr<MvnModel> prior;
@@ -71,32 +71,31 @@ namespace BOOM{
     };
     void ItemDafeTF::logp_sub(const Ptr<Subject> &s) const {
       Response r = s->response(mod);
-      const Vector & u(imp->get_u(r, true));
-      const Vector & Theta(s->Theta());
+      const Vector &u(imp->get_u(r, true));
+      const Vector &Theta(s->Theta());
       const Vector &eta(mod->fill_eta(Theta));
-      assert(u.size()==eta.size());
-      for(uint i=0; i<u.size(); ++i) ans+= dexv(u[i], eta[i], 1.0, true);
+      assert(u.size() == eta.size());
+      for (uint i = 0; i < u.size(); ++i) ans += dexv(u[i], eta[i], 1.0, true);
     }
-    double ItemDafeTF::operator()(const Vector &b)const{
+    double ItemDafeTF::operator()(const Vector &b) const {
       PcrBetaHolder ph(b, mod, tmpbeta);
-      if( mod->a() <=0) return BOOM::negative_infinity();
-      ans=0.0;
+      if (mod->a() <= 0) return BOOM::negative_infinity();
+      ans = 0.0;
       for (auto &subject : mod->subjects()) {
         logp_sub(subject);
       }
       return ans;
     }
     //======================================================================
-    ISAM::DafePcrItemSampler(const Ptr<PCR> & Mod,
+    ISAM::DafePcrItemSampler(const Ptr<PCR> &Mod,
                              const Ptr<DafePcrDataImputer> &Imp,
-                             const Ptr<MvnModel> &Prior,
-                             double Tdf,
+                             const Ptr<MvnModel> &Prior, double Tdf,
                              RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng),
-        mod(Mod),
-        prior(Prior),
-        imp(Imp),
-        sigsq(1.644934066848226) // pi^2/6
+        : PosteriorSampler(seeding_rng),
+          mod(Mod),
+          prior(Prior),
+          imp(Imp),
+          sigsq(1.644934066848226)  // pi^2/6
     {
       Matrix X(Mod->X(1.0));
       xtx = SpdMatrix(X.ncol());
@@ -110,10 +109,10 @@ namespace BOOM{
       sampler = new MetropolisHastings(target, prop);
     }
     //------------------------------------------------------------
-    double ISAM::logpri()const{ return prior->logp(mod->beta()); }
+    double ISAM::logpri() const { return prior->logp(mod->beta()); }
     //------------------------------------------------------------
-    void ISAM::draw(){
-      get_moments();    // fills xtx and xtu
+    void ISAM::draw() {
+      get_moments();  // fills xtx and xtu
       prop->set_mu(mean);
       prop->set_ivar(ivar);
       Vector b = mod->beta();
@@ -122,22 +121,22 @@ namespace BOOM{
       mod->sync_params();
     }
     //----------------------------------------------------------------------
-    void ISAM::get_moments(){
-      xtx=0.0;
+    void ISAM::get_moments() {
+      xtx = 0.0;
       xtu = 0.0;
       for (auto &subject : mod->subjects()) {
         accumulate_moments(subject);
       }
-      ivar= as_symmetric(xtx)/sigsq+ prior->siginv();
-      mean = ivar.solve(prior->siginv()*prior->mu() + xtu/sigsq);
+      ivar = as_symmetric(xtx) / sigsq + prior->siginv();
+      mean = ivar.solve(prior->siginv() * prior->mu() + xtu / sigsq);
     }
     //----------------------------------------------------------------------
-    void ISAM::accumulate_moments(const Ptr<Subject> & s){
+    void ISAM::accumulate_moments(const Ptr<Subject> &s) {
       const Matrix &X(mod->X(s->Theta()));
       xtx.add_inner(X);
       Response r = s->response(mod);
       const Vector &u(imp->get_u(r, true));
       xtu.add_Xty(X, u);
     }
-  }// namespace IRT
-} // namespace BOOM
+  }  // namespace IRT
+}  // namespace BOOM

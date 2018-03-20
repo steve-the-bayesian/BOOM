@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,13 +20,13 @@
 #ifndef BOOM_BINOMIAL_LOGIT_AUXMIX_SAMPLER_HPP_
 #define BOOM_BINOMIAL_LOGIT_AUXMIX_SAMPLER_HPP_
 
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/Imputer.hpp>
+#include "Models/PosteriorSamplers/Imputer.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-#include <Models/Glm/BinomialLogitModel.hpp>
-#include <Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp>
-#include <Models/MvnBase.hpp>
-#include <cpputil/RefCounted.hpp>
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
+#include "Models/MvnBase.hpp"
+#include "cpputil/RefCounted.hpp"
 
 namespace BOOM {
   namespace BinomialLogit {
@@ -40,16 +41,16 @@ namespace BOOM {
       // Args:
       //   dim: The dimension of the coefficient vector in the model
       //     being sampled.
-      SufficientStatistics(int dim);
+      explicit SufficientStatistics(int dim);
 
-      SufficientStatistics * clone() const;
+      SufficientStatistics *clone() const;
       void clear();
       void combine(const SufficientStatistics &rhs);
 
       void update(const Vector &x, double weighted_value, double weight);
       const SpdMatrix &xtx() const;
       const Vector &xty() const;
-      int sample_size() const {return sample_size_;}
+      int sample_size() const { return sample_size_; }
 
      private:
       mutable SpdMatrix xtx_;
@@ -57,16 +58,18 @@ namespace BOOM {
       mutable bool sym_;
       int sample_size_;
       friend void intrusive_ptr_add_ref(SufficientStatistics *w) {
-        w->up_count(); }
+        w->up_count();
+      }
       friend void intrusive_ptr_release(SufficientStatistics *w) {
-        w->down_count(); if (w->ref_count() == 0) delete w; }
+        w->down_count();
+        if (w->ref_count() == 0) delete w;
+      }
     };
 
     // An worker class for drawing latent data in the auxiliary
     // mixture sampling algorithm for binomial logit models.
-    class ImputeWorker
-      : public SufstatImputeWorker<BinomialRegressionData,
-                                   SufficientStatistics> {
+    class ImputeWorker : public SufstatImputeWorker<BinomialRegressionData,
+                                                    SufficientStatistics> {
      public:
       // Args:
       //   global_suf: A reference to the global sufficient statistics
@@ -88,10 +91,8 @@ namespace BOOM {
       //   seeding_rng: A RNG used to initialize a new RNG in the case
       //     that rng==nullptr.
       ImputeWorker(SufficientStatistics &global_suf,
-                   std::mutex &global_suf_mutex,
-                   int clt_threshold,
-                   const GlmCoefs* coef,
-                   RNG *rng = nullptr,
+                   std::mutex &global_suf_mutex, int clt_threshold,
+                   const GlmCoefs *coef, RNG *rng = nullptr,
                    RNG &seeding_rng = GlobalRng::rng);
 
       void impute_latent_data_point(const BinomialRegressionData &data,
@@ -107,8 +108,7 @@ namespace BOOM {
   //======================================================================
   class BinomialLogitAuxmixSampler
       : public PosteriorSampler,
-        public LatentDataSampler<BinomialLogit::ImputeWorker>
-  {
+        public LatentDataSampler<BinomialLogit::ImputeWorker> {
    public:
     BinomialLogitAuxmixSampler(BinomialLogitModel *model,
                                const Ptr<MvnBase> &prior,
@@ -123,7 +123,7 @@ namespace BOOM {
 
     void assign_data_to_workers() override;
 
-    // TODO(stevescott): remove calls to this function and replace
+    // TODO: remove calls to this function and replace
     // them with calls to clear_latent_data().
     //
     // Clear the complete data sufficient statistics.  This is
@@ -138,16 +138,11 @@ namespace BOOM {
     // complete data sufficient statistics need to be manipulated by
     // an outside actor.
     void update_complete_data_sufficient_statistics(
-        double precision_weighted_sum,
-        double total_precision,
-        const Vector &x);
+        double precision_weighted_sum, double total_precision, const Vector &x);
 
-    const BinomialLogit::SufficientStatistics &suf() const {
-      return suf_;
-    }
+    const BinomialLogit::SufficientStatistics &suf() const { return suf_; }
 
-    int clt_threshold() const {return clt_threshold_;}
-
+    int clt_threshold() const { return clt_threshold_; }
 
    private:
     BinomialLogitModel *model_;

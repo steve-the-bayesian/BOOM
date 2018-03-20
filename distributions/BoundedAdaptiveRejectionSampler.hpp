@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2009 Steven L. Scott
 
@@ -19,8 +20,8 @@
 #define BOOM_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP
 
 #include <functional>
-#include <distributions.hpp>
 #include <vector>
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -30,7 +31,7 @@ namespace BOOM {
   // limited to functions with (mathematical) support above a truncation point
   // on the real line.  For the implementation used here, the target function
   // must be strictly decreasing beyond the truncation point.
-  class BoundedAdaptiveRejectionSampler{
+  class BoundedAdaptiveRejectionSampler {
    public:
     // Args:
     //   support_lower_bound: The left endpoint of the support for the target
@@ -51,9 +52,9 @@ namespace BOOM {
     // function is modified by adding the proposal to the approximation set
     // (improving the approximation), and then another proposal is made.  The
     // process is repeated until a successful proposal is made.
-    double draw(RNG & );
+    double draw(RNG &);
 
-    std::ostream & print(std::ostream & out) const;
+    std::ostream &print(std::ostream &out) const;
 
    private:
     std::function<double(double)> log_target_density_;
@@ -99,8 +100,8 @@ namespace BOOM {
 
     // Returns the location (i.e. the x coordinate) of the intersection of the
     // lines tangent to the log target density at x_[k] and x_[k - 1].
-    double compute_knot(uint k)const;
+    double compute_knot(uint k) const;
   };
 
 }  // namespace BOOM
-#endif // BOOM_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP
+#endif  // BOOM_BOUNDED_ADAPTIVE_REJECTION_SAMPLER_HPP

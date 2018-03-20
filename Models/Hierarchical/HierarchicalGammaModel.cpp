@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -16,7 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <Models/Hierarchical/HierarchicalGammaModel.hpp>
+#include "Models/Hierarchical/HierarchicalGammaModel.hpp"
 #include <vector>
 
 namespace BOOM {
@@ -25,8 +26,7 @@ namespace BOOM {
       const std::vector<double> &sum_of_observations_per_group,
       const std::vector<double> &sum_of_log_observations_per_group)
       : prior_for_mean_parameters_(new GammaModel(1, 1)),
-        prior_for_shape_parameters_(new GammaModel(1, 1))
-  {
+        prior_for_shape_parameters_(new GammaModel(1, 1)) {
     int n = number_of_observations_per_group.size();
     initialize();
     if ((sum_of_observations_per_group.size() != n) ||
@@ -38,10 +38,9 @@ namespace BOOM {
     data_models_.reserve(n);
     for (int i = 0; i < n; ++i) {
       NEW(GammaModel, data_model)(1, 1);
-      data_model->suf()->set(
-          sum_of_observations_per_group[i],
-          sum_of_log_observations_per_group[i],
-          number_of_observations_per_group[i]);
+      data_model->suf()->set(sum_of_observations_per_group[i],
+                             sum_of_log_observations_per_group[i],
+                             number_of_observations_per_group[i]);
       get_initial_parameter_estimates(data_model);
       add_data_level_model(data_model);
     }
@@ -53,15 +52,14 @@ namespace BOOM {
         ParamPolicy(rhs),
         PriorPolicy(rhs),
         prior_for_mean_parameters_(rhs.prior_for_mean_parameters_->clone()),
-        prior_for_shape_parameters_(rhs.prior_for_shape_parameters_->clone())
-  {
+        prior_for_shape_parameters_(rhs.prior_for_shape_parameters_->clone()) {
     initialize();
     for (int i = 0; i < rhs.data_models_.size(); ++i) {
       add_data_level_model(rhs.data_models_[i]->clone());
     }
   }
 
-  HierarchicalGammaModel * HierarchicalGammaModel::clone() const {
+  HierarchicalGammaModel *HierarchicalGammaModel::clone() const {
     return new HierarchicalGammaModel(*this);
   }
 
@@ -88,7 +86,7 @@ namespace BOOM {
     }
   }
 
-  void HierarchicalGammaModel::add_data(const Ptr<Data> & dp) {
+  void HierarchicalGammaModel::add_data(const Ptr<Data> &dp) {
     NEW(GammaModel, data_model)(1, 1);
     Ptr<HierarchicalGammaData> d(dp.dcast<HierarchicalGammaData>());
     data_model->suf()->combine(d->suf());
@@ -96,7 +94,8 @@ namespace BOOM {
     add_data_level_model(data_model);
   }
 
-  void HierarchicalGammaModel::add_data_level_model(const Ptr<GammaModel> & model) {
+  void HierarchicalGammaModel::add_data_level_model(
+      const Ptr<GammaModel> &model) {
     data_models_.push_back(model);
     ParamPolicy::add_model(model);
   }
@@ -105,15 +104,15 @@ namespace BOOM {
     return data_models_.size();
   }
 
-  GammaModel * HierarchicalGammaModel::prior_for_mean_parameters() {
+  GammaModel *HierarchicalGammaModel::prior_for_mean_parameters() {
     return prior_for_mean_parameters_.get();
   }
 
-  GammaModel * HierarchicalGammaModel::prior_for_shape_parameters() {
+  GammaModel *HierarchicalGammaModel::prior_for_shape_parameters() {
     return prior_for_shape_parameters_.get();
   }
 
-  GammaModel * HierarchicalGammaModel::data_model(int group) {
+  GammaModel *HierarchicalGammaModel::data_model(int group) {
     return data_models_[group].get();
   }
 
@@ -142,7 +141,7 @@ namespace BOOM {
       const Ptr<GammaModel> &data_model) const {
     try {
       data_model->mle();
-    } catch(...) {
+    } catch (...) {
       double a = 1;
       double b = 1;
       Ptr<GammaSuf> suf(data_model->suf());

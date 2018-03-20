@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2014 Steven L. Scott
 
@@ -20,9 +21,9 @@
 #define BOOM_PARAM_FILE_IO_MANAGER_HPP_
 
 #include <deque>
-#include <string>
-#include <Models/ParamTypes.hpp>
 #include <memory>
+#include <string>
+#include "Models/ParamTypes.hpp"
 
 namespace BOOM {
 
@@ -84,7 +85,7 @@ namespace BOOM {
       // Its size must be buffer_size_in_iterations_ *
       // parameter_->size(false);
       //
-      // TODO(stevescott): Consider making this a deque<Vector>.
+      // TODO: Consider making this a deque<Vector>.
       std::deque<double> buffer_;
       int buffer_limit_;
 
@@ -135,11 +136,11 @@ namespace BOOM {
    private:
     // There is one element in io_ for each parameter added to the
     // IoManager.
-    std::vector<std::shared_ptr<
-                  ParameterFileIO::SingleParameterIoManager> > io_;
+    std::vector<std::shared_ptr<ParameterFileIO::SingleParameterIoManager> >
+        io_;
     int buffer_size_in_iterations_;
   };
 
 }  // namespace BOOM
 
-#endif // BOOM_PARAM_FILE_IO_MANAGER_HPP_
+#endif  // BOOM_PARAM_FILE_IO_MANAGER_HPP_

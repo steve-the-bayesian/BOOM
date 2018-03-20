@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -15,14 +16,15 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include <distributions.hpp>
 #include <cmath>
-namespace BOOM{
-  int random_int(int lo, int hi){
-    return random_int_mt(GlobalRng::rng, lo, hi);  }
+#include "distributions.hpp"
+namespace BOOM {
+  int random_int(int lo, int hi) {
+    return random_int_mt(GlobalRng::rng, lo, hi);
+  }
 
-  int random_int_mt(RNG & rng, int lo, int hi){
-    double tmp = runif_mt(rng, lo, hi+1);
+  int random_int_mt(RNG& rng, int lo, int hi) {
+    double tmp = runif_mt(rng, lo, hi + 1);
     return static_cast<int>(std::floor(tmp));
   }
-}
+}  // namespace BOOM

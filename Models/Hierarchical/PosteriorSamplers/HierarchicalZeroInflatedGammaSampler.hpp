@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2013 Steven L. Scott
 
@@ -19,12 +20,12 @@
 #ifndef BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_SAMPLER_HPP_
 #define BOOM_HIERARCHICAL_ZERO_INFLATED_GAMMA_SAMPLER_HPP_
 
-#include <Models/DoubleModel.hpp>
-#include <Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp>
-#include <Models/PosteriorSamplers/BetaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/GammaPosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/PosteriorSampler.hpp>
-#include <Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp>
+#include "Models/DoubleModel.hpp"
+#include "Models/Hierarchical/HierarchicalZeroInflatedGammaModel.hpp"
+#include "Models/PosteriorSamplers/BetaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/GammaPosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroInflatedGammaPosteriorSampler.hpp"
 
 namespace BOOM {
 
@@ -72,6 +73,7 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
+
    private:
     // Check that a posterior sampler has been assigned to
     // *data_model.  If not, assign one.
@@ -98,4 +100,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_
+#endif  // BOOM_HIERARCHICAL_ZERO_INFLATED_POISSON_SAMPLER_HPP_

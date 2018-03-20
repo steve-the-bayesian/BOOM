@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -20,7 +21,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <iosfwd>
-#include <LinAlg/Matrix.hpp>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM{
   using std::ostream;

@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -16,19 +17,19 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <TargetFun/TargetFun.hpp>
+#include "TargetFun/TargetFun.hpp"
 #include <cmath>
-#include <LinAlg/Matrix.hpp>
-#include <cpputil/report_error.hpp>
 #include <functional>
+#include "LinAlg/Matrix.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-  void intrusive_ptr_add_ref(TargetFun *s){
-    s->up_count();}
-  void intrusive_ptr_release(TargetFun *s){
+  void intrusive_ptr_add_ref(TargetFun *s) { s->up_count(); }
+  void intrusive_ptr_release(TargetFun *s) {
     s->down_count();
-    if(s->ref_count()==0) delete s; }
+    if (s->ref_count() == 0) delete s;
+  }
 
   double d2TargetFun::operator()(const Vector &x) const {
     Vector g;
@@ -44,22 +45,20 @@ namespace BOOM {
   }
 
   //======================================================================
-  void intrusive_ptr_add_ref(ScalarTargetFun *s){
-    s->up_count();}
-  void intrusive_ptr_release(ScalarTargetFun *s){
+  void intrusive_ptr_add_ref(ScalarTargetFun *s) { s->up_count(); }
+  void intrusive_ptr_release(ScalarTargetFun *s) {
     s->down_count();
-    if(s->ref_count()==0) delete s; }
+    if (s->ref_count() == 0) delete s;
+  }
   //----------------------------------------------------------------------
 
   d2TargetFunPointerAdapter::d2TargetFunPointerAdapter(
-      const TargetType &target)
-  {
+      const TargetType &target) {
     add_function(target);
   }
 
   d2TargetFunPointerAdapter::d2TargetFunPointerAdapter(
-      const TargetType &prior, const TargetType &likelihood)
-  {
+      const TargetType &prior, const TargetType &likelihood) {
     add_function(prior);
     add_function(likelihood);
   }
@@ -68,52 +67,41 @@ namespace BOOM {
     targets_.push_back(fun);
   }
 
-  double d2TargetFunPointerAdapter::operator()(
-      const Vector &x, Vector &g, Matrix &h, uint nderiv) const {
+  double d2TargetFunPointerAdapter::operator()(const Vector &x, Vector &g,
+                                               Matrix &h, uint nderiv) const {
     check_not_empty();
-    double ans = targets_[0](x,
-                             nderiv > 0 ? &g : nullptr,
-                             nderiv > 1 ? &h : nullptr,
-                             true);
+    double ans = targets_[0](x, nderiv > 0 ? &g : nullptr,
+                             nderiv > 1 ? &h : nullptr, true);
     for (int i = 1; i < targets_.size(); ++i) {
-      ans += targets_[i](x,
-                         nderiv > 0 ? &g : nullptr,
-                         nderiv > 1 ? &h : nullptr,
-                         false);
+      ans += targets_[i](x, nderiv > 0 ? &g : nullptr,
+                         nderiv > 1 ? &h : nullptr, false);
     }
     return ans;
   }
 
   void d2TargetFunPointerAdapter::check_not_empty() const {
     if (targets_.empty()) {
-      report_error("Error in d2TargetFunPointerAdapter.  "
-                   "No component functions specified.");
+      report_error(
+          "Error in d2TargetFunPointerAdapter.  "
+          "No component functions specified.");
     }
   }
 
   //======================================================================
 
   ScalarTargetFunAdapter::ScalarTargetFunAdapter(
-      const std::function<double(const Vector &)> &F,
-      Vector *X,
-      uint position)
-    : f_(F),
-      wsp_(X),
-      which_(position)
-  {}
+      const std::function<double(const Vector &)> &F, Vector *X, uint position)
+      : f_(F), wsp_(X), which_(position) {}
 
-  double ScalarTargetFunAdapter::operator()(double x)const{
+  double ScalarTargetFunAdapter::operator()(double x) const {
     (*wsp_)[which_] = x;
     return f_(*wsp_);
   }
 
   //======================================================================
   dScalarTargetFunAdapter::dScalarTargetFunAdapter(
-      const Ptr<dScalarEnabledTargetFun> &f,
-      Vector *x,
-      uint position)
-      : f_(f), x_(x), position_(position)
-  {}
+      const Ptr<dScalarEnabledTargetFun> &f, Vector *x, uint position)
+      : f_(f), x_(x), position_(position) {}
 
   double dScalarTargetFunAdapter::operator()(double x_arg) const {
     (*x_)[position_] = x_arg;

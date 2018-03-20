@@ -1,3 +1,4 @@
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -19,19 +20,18 @@
 #ifndef BOOM_GAUSSIAN_MODEL_BASE_HPP
 #define BOOM_GAUSSIAN_MODEL_BASE_HPP
 
-#include <Models/ModelTypes.hpp>
-#include <Models/DoubleModel.hpp>
-#include <Models/Sufstat.hpp>
-#include <Models/EmMixtureComponent.hpp>
-#include <Models/Policies/SufstatDataPolicy.hpp>
-#include <Models/DataTypes.hpp>
+#include "Models/DataTypes.hpp"
+#include "Models/DoubleModel.hpp"
+#include "Models/EmMixtureComponent.hpp"
+#include "Models/ModelTypes.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
+#include "Models/Sufstat.hpp"
 
 namespace BOOM {
 
-  class GaussianSuf
-    : public SufstatDetails<DoubleData> {
-  public:
-    GaussianSuf(double Sum = 0, double Sumsq = 0, double N = 0);
+  class GaussianSuf : public SufstatDetails<DoubleData> {
+   public:
+    explicit GaussianSuf(double Sum = 0, double Sumsq = 0, double N = 0);
     GaussianSuf(const GaussianSuf &);
     GaussianSuf *clone() const override;
 
@@ -39,10 +39,8 @@ namespace BOOM {
     void Update(const DoubleData &X) override;
     void update_raw(double y);
 
-    void update_expected_value(
-        double expected_sample_size,
-        double expected_sum,
-        double expected_sum_of_squares);
+    void update_expected_value(double expected_sample_size, double expected_sum,
+                               double expected_sum_of_squares);
 
     // Remove the effect of observation y from the sufficient
     // statistics, as if it were dropped from the data set.
@@ -58,14 +56,14 @@ namespace BOOM {
     double ybar() const;
     double sample_var() const;
 
-    GaussianSuf * abstract_combine(Sufstat *s) override;
+    GaussianSuf *abstract_combine(Sufstat *s) override;
     void combine(const Ptr<GaussianSuf> &);
     void combine(const GaussianSuf &);
-    Vector vectorize(bool minimal=true) const override;
+    Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal=true) override;
+                                       bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal=true) override;
+                                       bool minimal = true) override;
     ostream &print(ostream &out) const override;
 
    private:
@@ -74,16 +72,16 @@ namespace BOOM {
   //======================================================================
   class GaussianModelBase
       : public SufstatDataPolicy<DoubleData, GaussianSuf>,
-        public DiffDoubleModel,    // promises  Logp(x,g,h,nd);
+        public DiffDoubleModel,           // promises  Logp(x,g,h,nd);
         public LocationScaleDoubleModel,  // mean and variance.
-        public NumOptModel,        // promises Loglike(g,h,nd), and mle();
+        public NumOptModel,  // promises Loglike(g,h,nd), and mle();
         virtual public EmMixtureComponent,  // promises add_mixture_data
         virtual public DirichletProcessMixtureComponent  // remove_data
   {
    public:
     GaussianModelBase();
-    GaussianModelBase(const std::vector<double> &y);
-    GaussianModelBase * clone() const override = 0;
+    explicit GaussianModelBase(const std::vector<double> &y);
+    GaussianModelBase *clone() const override = 0;
 
     // Returns the mean of the distribution.
     virtual double mu() const = 0;
@@ -94,15 +92,15 @@ namespace BOOM {
     // Standard deviation of the distribution.
     virtual double sigma() const;
 
-    double mean() const override {return mu();}
-    double variance() const override {return sigsq();}
+    double mean() const override { return mu(); }
+    double variance() const override { return sigsq(); }
 
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
-    double pdf(const Data * dp, bool logscale) const override;
+    double pdf(const Data *dp, bool logscale) const override;
     double Logp(double x, double &g, double &h, uint nd) const override;
-    double Logp(const Vector & x, Vector &g, Matrix &h, uint nd) const;
+    double Logp(const Vector &x, Vector &g, Matrix &h, uint nd) const;
 
-    int number_of_observations() const override {return dat().size();}
+    int number_of_observations() const override { return dat().size(); }
 
     // Sample moments of data assigned to the model.
     double ybar() const;
@@ -117,4 +115,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
-#endif// BOOM_GAUSSIAN_MODEL_BASE_HPP
+#endif  // BOOM_GAUSSIAN_MODEL_BASE_HPP
