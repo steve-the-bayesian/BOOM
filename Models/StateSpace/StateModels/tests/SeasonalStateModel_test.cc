@@ -45,8 +45,6 @@ namespace {
       nobs_ = 500;
       int state_dimension = day_of_week_cycle_->state_dimension() +
           weekly_annual_cycle_->state_dimension();
-      int state_error_dimension = day_of_week_cycle_->state_error_dimension() +
-          weekly_annual_cycle_->state_error_dimension();
       true_state_ = Matrix(state_dimension, nobs_);
       series_ = Vector(nobs_);
       
@@ -68,21 +66,17 @@ namespace {
           transition.add_block(weekly_annual_cycle_->state_transition_matrix(i));
           state = transition * state;
           
-          Vector state_error(state_error_dimension);
+          Vector state_error(state_dimension);
           day_of_week_cycle_->simulate_state_error(
               GlobalRng::rng,
-              VectorView(state_error, 0, day_of_week_cycle_->state_error_dimension()),
+              VectorView(state_error, 0, day_of_week_cycle_->state_dimension()),
               i);
           weekly_annual_cycle_->simulate_state_error(
               GlobalRng::rng,
-              VectorView(state_error, day_of_week_cycle_->state_error_dimension(),
-                         weekly_annual_cycle_->state_error_dimension()),
+              VectorView(state_error, day_of_week_cycle_->state_dimension(),
+                         weekly_annual_cycle_->state_dimension()),
               i);
-
-          BlockDiagonalMatrix error_expander;
-          error_expander.add_block(day_of_week_cycle_->state_error_expander(i));
-          error_expander.add_block(weekly_annual_cycle_->state_error_expander(i));
-          state += error_expander * state_error;
+          state += state_error;
         }
       }
     }
@@ -120,7 +114,7 @@ namespace {
     EXPECT_FALSE(weekly_annual_cycle_->new_season(8));
     EXPECT_TRUE(weekly_annual_cycle_->new_season(14));
 
-    Vector state_error(1);
+    Vector state_error(weekly_annual_cycle_->state_dimension());
     weekly_annual_cycle_->simulate_state_error(
         GlobalRng::rng, VectorView(state_error), 0);
     EXPECT_DOUBLE_EQ(state_error[0], 0.0);

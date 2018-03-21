@@ -128,6 +128,7 @@ namespace BOOM {
   }
 
   void DRASM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
+    assert(eta.size() == state_dimension());
     int position = 0;
     for (int i = 0; i < coefficient_transition_model_.size(); ++i) {
       eta[position++] =

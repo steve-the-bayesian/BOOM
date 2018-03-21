@@ -59,6 +59,7 @@ namespace BOOM {
   }
 
   void RWHSM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
+    assert(eta.size() == state_dimension());
     Date now = time_zero_ + t;
     eta = 0;
     if (holiday_->active(now)) {

@@ -558,9 +558,8 @@ namespace BOOM {
   void Base::simulate_next_state(RNG &rng, const ConstVectorView &last,
                                  VectorView next, int t,
                                  bool supplemental) const {
-    next = (*state_transition_matrix(t - 1, supplemental)) * last;
-    next += (*state_error_expander(t - 1, supplemental)) *
-             simulate_state_error(rng, t - 1, supplemental);
+      next = (*state_transition_matrix(t - 1, supplemental)) * last
+          + simulate_state_error(rng, t - 1, supplemental);
   }
 
   //----------------------------------------------------------------------
@@ -609,9 +608,9 @@ namespace BOOM {
   Vector Base::simulate_state_error(RNG &rng, int t, bool supplemental) const {
     // simulate N(0, RQR) for the state at time t+1, using the
     // variance matrix at time t.
-    Vector ans(state_error_dimension_, 0);
+    Vector ans(state_dimension_, 0);
     for (int s = 0; s < state_models_.size(); ++s) {
-      VectorView eta(state_error_component(ans, s));
+      VectorView eta(state_component(ans, s));
       state_model(s, supplemental)->simulate_state_error(rng, eta, t);
     }
     return ans;
