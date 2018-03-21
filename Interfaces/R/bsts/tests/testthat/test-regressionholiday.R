@@ -67,10 +67,10 @@ test_that("hierarchical model runs", {
   ## shrinkage.  
   ss2 <- AddLocalLevel(list(), y)
   ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
-  model2 <- bsts(y, state.specification = ss2, niter = niter)
+  model <- bsts(y, state.specification = ss2, niter = niter)
   expect_that(model, is_a("bsts"))
-  expect_that(model$holiday.effects, is_a("array"))
-  expect_that(dim(model$holiday.effects),
+  expect_that(model$holiday.coefficients, is_a("array"))
+  expect_that(dim(model$holiday.coefficients),
     equals(c(niter, number.of.holidays, 3)))
   }
 )
