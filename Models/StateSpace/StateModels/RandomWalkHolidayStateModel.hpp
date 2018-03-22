@@ -57,7 +57,7 @@ namespace BOOM {
     //     pointer and deletes it upon destruction.
     //   time_zero: The date at t = 0, where t is an integer number of
     //     days.
-    RandomWalkHolidayStateModel(Holiday *holiday, const Date &time_zero);
+    RandomWalkHolidayStateModel(const Ptr<Holiday> &holiday, const Date &time_zero);
     RandomWalkHolidayStateModel *clone() const override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now, ScalarStateSpaceModelBase *model) override;

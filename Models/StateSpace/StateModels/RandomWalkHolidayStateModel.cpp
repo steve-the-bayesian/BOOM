@@ -25,7 +25,7 @@
 
 namespace BOOM {
   typedef RandomWalkHolidayStateModel RWHSM;
-  RWHSM::RandomWalkHolidayStateModel(Holiday *holiday, const Date &time_zero)
+  RWHSM::RandomWalkHolidayStateModel(const Ptr<Holiday> &holiday, const Date &time_zero)
       : holiday_(holiday), time_zero_(time_zero) {
     int dim = holiday->maximum_window_width();
     initial_state_mean_.resize(dim);
