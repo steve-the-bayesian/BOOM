@@ -27,5 +27,3 @@ if __name__ == '__main__':
     argv.remove(argv[0])
     dest_dir = argv.pop()
     copy_many_files(argv, dest_dir)
-
-    

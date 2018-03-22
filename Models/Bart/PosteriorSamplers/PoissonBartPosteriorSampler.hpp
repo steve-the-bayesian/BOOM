@@ -164,6 +164,11 @@ namespace BOOM {
     // immediately after the class definition.
     class PoissonSufficientStatistics : public SufficientStatisticsBase {
      public:
+      PoissonSufficientStatistics()
+          : weighted_sum_of_residuals_(0),
+            sum_of_weights_(0),
+            weighted_sum_of_squared_residuals_(0) {}
+      
       PoissonSufficientStatistics *clone() const override;
 
       // Sets all data elements to 0.
