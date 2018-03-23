@@ -61,12 +61,15 @@ namespace BOOM {
     u = runif_mt(rng, 0, 1);
 
     double ans = 0;
-    if (u < a0)
-      ans = x0 + sqrt(2 * u / m0); /* area of left right triangle */
-    else if (u >= a0)
-      ans = x1 - sqrt(-2.0 * (1 - u) / m1); /* area of right right triangle */
-    else
+    if (!std::isfinite(a0)) {
       report_error("an unknown error occurred in rtriangle_mt");
+    }
+    
+    if (u < a0) {
+      ans = x0 + sqrt(2 * u / m0); /* area of left right triangle */
+    } else {
+      ans = x1 - sqrt(-2.0 * (1 - u) / m1); /* area of right right triangle */
+    }
     return ans;
   }
   /*======================================================================*/

@@ -89,16 +89,16 @@ namespace BOOM {
                             const d2Target &target, int &function_count,
                             double leps, bool &happy_ending,
                             string &error_message) {
-    double loglike = 0, oldloglike, lcrit = 1 + leps;
-    int iteration = 0, max_iterations = 30;
-    int step_halving = 0, total_step_halving = 0;
-    const int max_step_halving = 10, max_total_step_halving = 50;
-
     function_count = 0;
     happy_ending = true;
     error_message = "";
     try {
-      oldloglike = target(theta, gradient, hessian);
+      double loglike = 0, lcrit = 1 + leps;
+      int iteration = 0, max_iterations = 30;
+      int step_halving = 0, total_step_halving = 0;
+      const int max_step_halving = 10, max_total_step_halving = 50;
+
+      double oldloglike = target(theta, gradient, hessian);
       ++function_count;
       while (keep_going(lcrit, leps, iteration, max_iterations, step_halving)) {
         if (!gradient.all_finite() || !hessian.all_finite()) {

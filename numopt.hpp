@@ -316,7 +316,7 @@ namespace BOOM{
   // maximizes f(x).
   class ScalarNegation {
    public:
-    ScalarNegation(ScalarTarget target)
+    ScalarNegation(const ScalarTarget &target)
         : original_function_(target) {}
     double operator()(double x)const{ return -1 * original_function_(x); }
    private:
@@ -327,16 +327,16 @@ namespace BOOM{
   // variables.
   class Negate{
   public:
-    Negate(Target F) : f(F){}
+    Negate(const Target &F) : f(F){}
     double operator()(const Vector &x)const;
-  private:
+   private:
     Target f;
   };
 
   // Use this negation when F has first derivatives.
   class dNegate : public Negate{
   public:
-    dNegate(Target F, dTarget dF)
+    dNegate(const Target &F, const dTarget &dF)
       : Negate(F), df(dF){}
     double operator()(const Vector &x)const{
       return Negate::operator()(x);}
@@ -348,7 +348,7 @@ namespace BOOM{
   // Use this Negation when F has first and second derivatives.
   class d2Negate : public dNegate{
   public:
-    d2Negate(Target target, dTarget df, d2Target  d2F)
+    d2Negate(const Target &target, const dTarget &df, const d2Target &d2F)
       : dNegate(target, df), d2f(d2F){}
     double operator()(const Vector &x)const{
       return Negate::operator()(x);}
