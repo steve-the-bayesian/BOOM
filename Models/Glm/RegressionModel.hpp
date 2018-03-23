@@ -210,10 +210,10 @@ namespace BOOM {
 
   template <class Fwd>
   NeRegSuf::NeRegSuf(Fwd b, Fwd e) {
+    needs_to_reflect_ = true;
     Ptr<RegressionData> dp = *b;
     uint p = dp->xdim();
     xtx_ = SpdMatrix(p, 0.0);
-    needs_to_reflect_ = false;
     xty_ = Vector(p, 0.0);
     sumsqy = 0.0;
     while (b != e) {

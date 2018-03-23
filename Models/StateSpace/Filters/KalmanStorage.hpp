@@ -37,7 +37,7 @@ namespace BOOM {
   // Storage for the full Kalman filter and smoother, for scalar-valued time
   // series.
   struct ScalarKalmanStorage : public KalmanStateStorage {
-    ScalarKalmanStorage() : KalmanStateStorage() {}
+    ScalarKalmanStorage() : ScalarKalmanStorage(0, true) {}
     explicit ScalarKalmanStorage(int dim, bool store_state_moments = true)
         : KalmanStateStorage(store_state_moments ? 0 : dim),
           K(dim),

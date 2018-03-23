@@ -916,7 +916,7 @@ namespace BOOM {
         ostringstream err;
         err << "Tree::random_leaf() found an answer that is not a leaf:" << endl
             << "The returned value is: " << endl
-            << *leaf << endl
+            << leaf ? *leaf : leaf << endl
             << "The tree is " << endl
             << *this;
         report_error(err.str());

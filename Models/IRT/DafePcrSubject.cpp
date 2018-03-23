@@ -54,7 +54,7 @@ namespace BOOM {
 
       SubjectTF::SubjectTF(const Ptr<Subject> &s, const Ptr<SubjectPrior> &pri,
                            const Ptr<IMP> &Imp)
-          : subject(s), prior(pri), imp(Imp) {
+          : subject(s), prior(pri), imp(Imp), wsp(0), ans(0) {
         //    pri->add_data(s);  // THIS LOOKS DANGEROUS
       }
 

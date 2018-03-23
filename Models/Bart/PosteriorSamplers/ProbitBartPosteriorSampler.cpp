@@ -53,6 +53,10 @@ namespace BOOM {
     }
 
     //======================================================================
+    ProbitSufficientStatistics::ProbitSufficientStatistics()
+        : n_(0), sum_(0)
+    {} 
+    
     ProbitSufficientStatistics *ProbitSufficientStatistics::clone() const {
       return new ProbitSufficientStatistics(*this);
     }

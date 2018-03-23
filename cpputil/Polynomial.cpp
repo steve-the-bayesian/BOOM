@@ -1154,7 +1154,6 @@ L30:
   int i__1;
 
   /* Local variables */
-  static double c__;
   static int i__;
 
   /* DIVIDES P BY THE QUADRATIC  1,U,V  PLACING THE */
@@ -1170,7 +1169,7 @@ L30:
   q[2] = *a;
   i__1 = *nn;
   for (i__ = 3; i__ <= i__1; ++i__) {
-    c__ = p[i__] - *u * *a - *v * *b;
+    double c__ = p[i__] - *u * *a - *v * *b;
     q[i__] = c__;
     *b = *a;
     *a = c__;

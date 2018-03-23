@@ -173,16 +173,6 @@ namespace BOOM{
                        double epsilon,
                        string &error_msg);
 
-  // Compute the numerical derivative of f at x.
-  double numeric_deriv(const ScalarTarget target, double x);
-  double numeric_deriv(const ScalarTarget target, double x,
-                       double &dx, double &abs_err);
-
-  // Compute the numerical gradient of f at x.
-  Vector numeric_gradient(const Vector &x, Target target, double dx);
-  Matrix numeric_hessian(const Vector &x, Target target, double dx);
-  Matrix numeric_hessian(const Vector &x, dTarget df, double dx);
-
   //--------- Methods: Each includes a full interface and an inline
   //--------- function providing a simpler interface
 
