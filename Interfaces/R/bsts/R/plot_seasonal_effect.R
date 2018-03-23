@@ -113,6 +113,134 @@ PlotSeasonalEffect <- function(bsts.object,
   return(invisible(NULL))
 }
 
+.FindDayOfWeekSpec <- function(bsts.object) {
+  ## Find and return the state specification object corresponding to the
+  ## day-of-week cycle.  If there are multiple cycles of size 7 the first one is
+  ## returned.  If no such state specification exists then NULL is returned.
+  ss <- bsts.object$state.specification
+  for (i in 1:length(ss)) {
+    if (inherits(ss[[i]], "Seasonal")
+      && ss[[i]]$nseasons == 7) {
+      return(ss[[i]])
+    }
+  }
+  return(NULL)
+}
+
+PlotDayOfWeekCycle <- function(bsts.object,
+                               burn = SuggestBurn(.1, bsts.object),
+                               time = NULL, 
+                               ylim = NULL,
+                               state.specification = NULL,
+                               ...) {
+  ## Plots the time series of Sunday, Monday, Tuesday, ... effects in a time
+  ## series model that was fit to daily data with a day-of-week seasonal
+  ## component.  
+  ##
+  ## Args:
+  ##   bsts.object: A bsts model that was fit using a Seasonal state component
+  ##     with a 7-season cycle.
+  ##   burn:  The number of MCMC iterations to discard.
+  ##   time:  An optional vector of times to plot on the horizontal axis.
+  ##   ylim:  Limits for the vertical axis.
+  ##   state.specification: A Seasonal state specification object.  If NULL then
+  ##     it will be taken from bsts.object$state.specification, and if no
+  ##     apprpriate object can befound an error will be raised.
+  ##   ...: Extra arguments passed to PlotDynamicDistribution.
+  ##
+  ## NOTE: split.screen is used to make this plot, so it is incompatible with
+  ## other plot multi-plot frameworks, but it can be used with other plots in a
+  ## split.screen environment.
+  ##
+  ## Returns:
+  ##   Invisible(NULL)
+  if (is.null(state.specification)) {
+    state.specification <- .FindDayOfWeekSpec(bsts.object)
+  }
+  stopifnot(inherits(state.specification, "Seasonal"),
+    state.specification$nseasons == 7)
+
+  position <- grep(state.specification$name,
+    dimnames(bsts.object$state.contributions)[[2]])
+  if (length(position) != 1) {
+    stop("The day of week cycle could not be located, or is not unique.")
+  }
+  effect <- bsts.object$state.contributions[, position, ]
+  if (burn > 0) {
+    effect <- effect[-(1:burn), , drop = FALSE]
+  }
+
+  nseasons <- 7
+  season.duration <- state.specification$season.duration
+  if (is.null(time)) {
+    time <- bsts.object$timestamp.info$regular.timestamps
+  }
+  
+  screen.matrix <- .ScreenMatrix(nrow = 3, ncol = 3, top.margin = .12)
+  ## Each row of screen.numbers corresponds to the coordinates given
+  ## screen.matrix.  However, if split.screen was called before this those
+  ## numbers might not be 1:9.
+  screen.numbers <- split.screen(screen.matrix)
+  on.exit(close.screen(screen.numbers))
+
+  ## Define the screens where the different days of the week should appear.
+  ## Skip screens 3 and 6.
+  season.screen.numbers <- c(
+    screen.numbers[1],
+    screen.numbers[2],
+    screen.numbers[4],
+    screen.numbers[5],
+    screen.numbers[7],
+    screen.numbers[8],
+    screen.numbers[9])
+
+  if (is.null(ylim)) {
+    ylim <- range(effect)
+  }
+
+  for (season in 1:nseasons) {
+    screen(season.screen.numbers[season])
+    par(mar = rep(0, 4))
+    time.index <- seq(from = 1 + (season - 1) * season.duration,
+                      to = length(time),
+                      by = nseasons * season.duration)
+
+    season.effect <- effect[, time.index]
+    dates <- time[time.index]
+    PlotDynamicDistribution(season.effect,
+                            dates,
+                            ylim = ylim,
+                            xlim = range(time),
+                            axes = FALSE,
+                            ylab = "",
+                            xlab = "",
+                            ...)
+    abline(h = 0, lty = 3)
+    lines(dates, apply(season.effect, 2, median), col = "green")
+    if (inherits(dates, c("Date", "POSIXt"))) {
+      title(main = weekdays(dates[1]), line = -2, cex.main = .6)
+    } else {
+      title(main = paste("Season", season), line = -2, cex.main = .6)
+    }
+    if (season %in% c(5, 7)) {
+      ## On the bottom row, so put in the time axis.
+      .AddDateAxis(time, 1)
+    }
+    if (season == 2) {
+      .AddDateAxis(time, 3)
+    }
+    if (season == 2 || season == 7) {
+      ## Put axis on the right.
+      axis(4)
+    }
+    if (season == 3) {
+      ## Put axis on the left.
+      axis(2)
+    }
+  }
+  return(invisible(NULL))
+}
+
 PlotMonthlyAnnualCycle <- function(bsts.object,
                                    ylim = NULL,
                                    same.scale = TRUE,

@@ -43,8 +43,10 @@ extern "C" {
   //   r_timestamps:  A vector containing an increasing sequence of Date objects.
   //
   // Returns:
-  //   A two column matrix of integers giving the first and last active
-  //   timepoints of each holiday period contained in timestamps.
+  //   A two column matrix of integers giving the indices of the first and last
+  //   active timepoints of each holiday period contained in timestamps.  The
+  //   indices are unit-offset, so they're ready for use by R without adding 1
+  //   to them.
   SEXP analysis_common_r_get_date_ranges_(
       SEXP r_holiday,
       SEXP r_timestamps) {

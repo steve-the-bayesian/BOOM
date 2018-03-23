@@ -45,7 +45,7 @@
 AddRandomWalkHoliday <- function(state.specification = NULL,
                                  y,
                                  holiday,
-                                 time0, 
+                                 time0 = NULL, 
                                  sigma.prior = NULL,
                                  initial.state.prior = NULL,
                                  sdy = sd(as.numeric(y), na.rm = TRUE)) {
@@ -87,13 +87,85 @@ AddRandomWalkHoliday <- function(state.specification = NULL,
   ## Returns:
   ##   A list containing the information in the arguments, formatted as expected
   ##   by the underlying C++ code.
-  stopifnot(inherits(holiday, "holiday"))
-  ans <- list(holiday = holiday,
-              time0 = .SetTimeZero(time0, y),
-              sigma.prior = .ValidateHolidaySigmaPrior(sigma.prior, sdy),
-              initial.state.prior = .ValidateHolidayInitialStatePrior(
-                initial.state.prior, sdy))
-  class(ans) <- c("RandomWalkHolidayStateModel", "StateModel")
-  return(ans)
+  if (is.null(state.specification)) state.specification <- list()
+  stopifnot(is.list(state.specification))
+  stopifnot(inherits(holiday, "Holiday"))
+  holiday.model <- list(
+    name = holiday$name,
+    holiday = holiday,
+    time0 = as.Date(.SetTimeZero(time0, y)),
+    sigma.prior = .ValidateHolidaySigmaPrior(sigma.prior, sdy),
+    initial.state.prior = .ValidateHolidayInitialStatePrior(
+      initial.state.prior, sdy))
+  class(holiday.model) <- c("RandomWalkHolidayStateModel", "HolidayStateModel",
+    "StateModel")
+  state.specification[[length(state.specification) + 1]] <- holiday.model
+  return(state.specification)
 }
-                                 
+
+plot.RandomWalkHolidayStateModel <- function(x,
+                                             bsts.object,
+                                             burn = NULL,
+                                             time = NULL,
+                                             style = NULL,
+                                             ylim = NULL,
+                                             ...) {
+  ## S3 plot method for RandomWalkHolidayStateModel
+  ## Args:
+  ##   x:  An object of type RandomWalkHolidayStateModel.
+  ##   bsts.object: A bsts model that includes a RandomWalkHolidayStateModel
+  ##     component.
+  ##   burn:  The number of MCMC iterations to discard.
+  ##   time:  Not used.  Here for compatibility with plot.StateModel.
+  ##   style:  Not used.  Here for compatibility with plot.StateModel.
+  ##   ylim:  Limits for the vertical axis of the plot.
+  ##   ...: Extra arguments passed to boxplot.
+  ##
+  ## Side Effects:
+  ##   A plot is added to the current graphics device.  Side-by-side boxplots
+  ##   show the evolution of the holiday effect across time for each instance of
+  ##   the holiday.  Each group of boxes shows the pattern for the holiday
+  ##   window.  The is one such grouping for each distinct holiday window in the
+  ##   training data for the bsts.object.
+  ##
+  ## Returns:
+  ##   invisible(NULL)
+  state.specification <- x
+  stopifnot(inherits(state.specification, "RandomWalkHolidayStateModel"))
+  stopifnot(inherits(bsts.object, "bsts"))
+
+  state <- bsts.object$state.contributions[, state.specification$name, ]
+  if (is.null(state)) {
+    stop("Could not find state contributions for ", state.specification$name)
+  }
+  if (!is.matrix(state)) {
+    state <- matrix(state, ncol = 1)
+  }
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  if (burn > 0) {
+    state <- state[-(1:burn), ]
+  }
+
+  if (is.null(ylim)) {
+    ylim <- range(state)
+  }
+  all.zero <- apply(state == 0, 2, all)
+
+  index <- seq_along(all.zero)
+  index <- index[!all.zero]
+  gaps <- 1 + which(diff(index) > 1)
+
+  old.par <- par(mar = c(2, 2, 4, 2))
+  on.exit(par(old.par))
+  
+  boxplot(.NonzeroCols(state), main = state.specification$name, pch = 20,
+    cex = .2, axes = FALSE, ylim = ylim, ...)
+  box()
+  axis(2)
+  abline(v = gaps - .5, lty = 3)
+  abline(h = 0, lty = 3)
+  return(invisible(NULL))
+}
+                                             

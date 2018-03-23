@@ -1,8 +1,11 @@
-context("test-regressionholiday.R")
 
 library(bsts)
 library(testthat)
 library(BoomTestUtils)
+
+context("test-regressionholiday.R")
+
+set.seed(8675309)
 
 trend <- cumsum(rnorm(730, 0, .1))
 dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend),
@@ -52,7 +55,7 @@ niter <- 100
 test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
   ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
-  model <- bsts(y, state.specification = ss, niter = niter)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309)
   expect_that(model, is_a("bsts"))
   expect_that(model$MemorialDay, is_a("matrix"))
   expect_that(nrow(model$MemorialDay), equals(niter))
@@ -67,7 +70,7 @@ test_that("hierarchical model runs", {
   ## shrinkage.  
   ss2 <- AddLocalLevel(list(), y)
   ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
-  model <- bsts(y, state.specification = ss2, niter = niter)
+  model <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309)
   expect_that(model, is_a("bsts"))
   expect_that(model$holiday.coefficients, is_a("array"))
   expect_that(dim(model$holiday.coefficients),
@@ -75,3 +78,15 @@ test_that("hierarchical model runs", {
   }
 )
 
+test_that("random walk holiday works", {
+  ss <- AddLocalLevel(list(), y)
+  ss <- AddRandomWalkHoliday(ss, y, memorial.day)
+  ss <- AddRandomWalkHoliday(ss, y, labor.day)
+  ss <- AddRandomWalkHoliday(ss, y, presidents.day)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309)
+  expect_that(model, is_a("bsts"))
+  expect_that(length(dim(model$state.contributions)), equals(3))
+  expect_true(memorial.day$name %in% dimnames(model$state.contributions)[[2]])
+  expect_true(labor.day$name %in% dimnames(model$state.contributions)[[2]])
+  expect_true(presidents.day$name %in% dimnames(model$state.contributions)[[2]])
+})

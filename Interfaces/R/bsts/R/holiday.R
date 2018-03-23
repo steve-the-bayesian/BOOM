@@ -235,3 +235,34 @@ MaxWindowWidth.DateRangeHoliday <- function(holiday, ...) {
   dt <- 1 + difftime(holiday$start, holiday$end, units = "days")
   return(as.numeric(max(dt)))
 }
+
+.GetDateRanges <- function(holiday, timestamps) {
+  ## Returns the first and last dates of the influence window for the given
+  ## holiday, among the given timestamps.
+  ##
+  ## Args:
+  ##   holiday:  An object inheriting from class "Holiday".
+  ##   timestamps:  A vector of class Date or POSIXt.
+  ##
+  ## NOTE: This function was written with the expectation that timestamps
+  ## contain daily data.  Use with caution otherwise.
+  ##
+  ## Returns:
+  ##   A two-column matrix giving the start and end times for each incidence of
+  ##   the holiday during the period spanned by timestamps.
+  if (!inherits(timestamps, "Date")
+    && !inherits(timestamps, "POSIXt")) {
+    stop("Model must have timestamps of class Date or POSIXt.")
+  }
+  if (inherits(timestamps, "POSIXt")) {
+    timestamps <- as.Date(timestamps)
+  }
+  date.ranges <- .Call("analysis_common_r_get_date_ranges_",
+    holiday,
+    timestamps,
+    PACKAGE = "bsts");
+  start <- timestamps[date.ranges[, 1]]
+  end <- timestamps[date.ranges[, 2]]
+  return(as.Date(cbind(start, end)))
+}
+
