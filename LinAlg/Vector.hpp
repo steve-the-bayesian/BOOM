@@ -58,12 +58,14 @@ namespace BOOM{
     explicit Vector(uint n, double x=0);
 
     // Create a vector from a string that is comma or white space separated
+    // cppcheck-suppress noExplicitConstructor
     explicit Vector(const std::string &s);
 
     // Create a vector from a string that is delimited with delimiter 'sep'
     Vector(const std::string &s, const std::string &sep);
 
-    Vector(const std::initializer_list<double> &init);
+    // cppcheck-suppress noExplicitConstructor
+    Vector(const std::initializer_list<double> &init);  // NOLINT
 
     // A vector can be build using a stream of numbers, e.g. from a file.
     explicit Vector(std::istream &in);
@@ -71,20 +73,26 @@ namespace BOOM{
     // Conversion from std::vector<double> is covered under the
     // template container structure, but the specialization for
     // dVector is likely to be faster.
-    Vector(const dVector &d);
+    //
+    // cppcheck-suppress noExplicitConstructor
+    Vector(const dVector &d);  // NOLINT
 
     template <class FwdIt> Vector(FwdIt begin, FwdIt end);
 
     Vector(const Vector &rhs) = default;
     Vector(Vector &&rhs) = default;
-    Vector(const VectorView &);
-    Vector(const ConstVectorView &);
+
+    // cppcheck-suppress noExplicitConstructor
+    Vector(const VectorView &);                 // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    Vector(const ConstVectorView &);            // NOLINT
 
     // This constructors works with arbitrary STL containers.
     template <typename NUMERIC, template <typename ELEM,
                                           typename ALLOC = std::allocator<ELEM>
                                           > class CONTAINER>
-    Vector(const CONTAINER<NUMERIC> &rhs)
+    // cppcheck-suppress noExplicitConstructor
+    Vector(const CONTAINER<NUMERIC> &rhs)       // NOLINT
          : dVector(rhs.begin(), rhs.end())
     {}
 

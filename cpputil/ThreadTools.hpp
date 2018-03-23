@@ -64,8 +64,8 @@ namespace BOOM {
     // Construct a task from a function like object with a void(void)
     // signature.
     //
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <typename F> MoveOnlyTaskWrapper(F &&f)
+    // cppcheck-suppress noExplicitConstructor
+    template <typename F> MoveOnlyTaskWrapper(F &&f)  // NOLINT
         : impl_(new ConcreteFunctor<F>(std::move(f))) {}
 
     // Move constructor
@@ -100,8 +100,8 @@ namespace BOOM {
     template <typename F>
     struct ConcreteFunctor : public FunctorInterface {
       F f;
-      // NOLINTNEXTLINE  Implicit conversions are intentional.
-      ConcreteFunctor(F &&f_) : f(std::move(f_)) {}
+      // cppcheck-suppress noExplicitConstructor
+      ConcreteFunctor(F &&f_) : f(std::move(f_)) {}  // NOLINT
       void call() override { f(); }
     };
 
