@@ -42,21 +42,27 @@
 
   PlotBstsCoefficients(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        inclusion.threshold = 0, number.of.variables = NULL, ...)
+
   PlotBstsComponents(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        time, same.scale = TRUE,
                        layout = c("square", "horizontal", "vertical"),
                        style = c("dynamic", "boxplot"),
-                       ylim = NULL, ...)
+                       ylim = NULL,
+                       components = 1:length(bsts.object$state.specification),
+                       ...)
+
   PlotDynamicRegression(bsts.object, burn = SuggestBurn(.1, bsts.object),
                         time = NULL, style = c("dynamic", "boxplot"),
                         layout = c("square", "horizontal", "vertical"),
                         ...)
+
   PlotBstsState(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        time, show.actuals = TRUE,
                        style = c("dynamic", "boxplot"),
                        scale = c("linear", "mean"),
                        ylim = NULL,
                        ...)
+
   PlotBstsResiduals(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        time, style = c("dynamic", "boxplot"), ...)
 
@@ -78,9 +84,11 @@
 
   PlotBstsSize(bsts.object, burn = SuggestBurn(.1, bsts.object), style =
                        c("histogram", "ts"), ...)
+
   PlotSeasonalEffect(bsts.object, nseasons = 7, season.duration = 1,
                      same.scale = TRUE, ylim = NULL, get.season.name = NULL,
                      burn = SuggestBurn(.1, bsts.object),  ...)
+
   PlotMonthlyAnnualCycle(bsts.object, ylim = NULL, same.scale = TRUE,
                      burn = SuggestBurn(.1, bsts.object),  ...)
 }
@@ -97,6 +105,10 @@
 
   \item{col.actuals}{The color to use for the actual data when comparing
     actuals vs forecasts.}
+
+  \item{components}{A numeric vector indicating which components to
+    plot. Component indices correspond to elements of the state
+    specification that was used to build the bsts model being plotted.}
 
   \item{cutpoints}{A numeric vector of integers, or \code{NULL}.  For
     diagnostic plots of prediction errors or forecast distributions, the

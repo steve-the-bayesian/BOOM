@@ -1,13 +1,17 @@
 import(Boom, BoomSpikeSlab, xts, zoo)
 
 importFrom("grDevices", "dev.off", "gray", "pdf", "rainbow")
-importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct",
-           "box", "boxplot", "hist", "legend", "lines", "par", "plot", "points",
-           "polygon", "title")
-importFrom("stats", ".checkMFClasses", ".getXlevels",
-           "delete.response", "median", "model.frame", "model.frame.default",
-           "model.matrix", "model.response", "na.exclude", "na.omit", "na.pass",
-           "plogis", "plot.ts", "quantile", "rnorm", "sd", "terms", "var")
+
+importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "box",
+           "boxplot", "hist", "legend", "lines", "par", "plot", "points",
+           "polygon", "title", "close.screen", "screen", "split.screen",
+           "strheight", "strwidth")
+
+importFrom("stats", ".checkMFClasses", ".getXlevels", "delete.response",
+           "median", "model.frame", "model.frame.default", "model.matrix",
+           "model.response", "na.exclude", "na.omit", "na.pass", "plogis",
+           "plot.ts", "quantile", "rnorm", "sd", "terms", "var", "window")
+
 importFrom("utils", "head", "help", "tail")
 
 export(AddAr,
@@ -69,7 +73,7 @@ export(AddAr,
        PlotBstsSize,
        PlotBstsState,
        PlotDynamicRegression,
-       PlotHolidays,
+       PlotHoliday,
        PlotSeasonalEffect,
        predict.bsts,
        Quarter,
@@ -96,6 +100,13 @@ S3method(residuals, bsts)
 
 S3method(plot, bsts.prediction)
 S3method(plot, bsts.mixed)
+
+# Plot methods for specific state components
+S3method(plot, StateModel)
+S3method(plot, HierarchicalRegressionHolidayStateModel)
+S3method(plot, RandomWalkHolidayStateModel)
+S3method(plot, RegressionHolidayStateModel)
+S3method(plot, Seasonal)
 
 S3method(RegularizeTimestamps, default)
 S3method(RegularizeTimestamps, numeric)

@@ -46,19 +46,23 @@ namespace BOOM {
 
     // Complex conjugate eigenvalues occur consecutively.  The entry
     // with the positive imaginary part comes first.
-    std::vector<std::complex<double>> eigenvalues() const { return eigenvalues_; }
+    std::vector<std::complex<double>> eigenvalues() const {
+      return eigenvalues_;
+    }
 
     // The real and imaginary parts of all the eigenvalues.  If all
     // eigenvalues are real then the imaginary_values() will be a
     // vector of zeros (up to numerical accuracy).
-    const Vector & real_eigenvalues() const {return real_eigenvalues_;}
-    const Vector & imaginary_eigenvalues() const {return imaginary_eigenvalues_;}
+    const Vector &real_eigenvalues() const { return real_eigenvalues_; }
+    const Vector &imaginary_eigenvalues() const {
+      return imaginary_eigenvalues_;
+    }
 
     // Requests for eigenvectors will throw exceptions if eigenvectors
     // were not requested by the constructor.
     ConstVectorView real_eigenvector(int i) const;
     ConstVectorView imaginary_eigenvector(int i) const;
-    std::vector<std::complex<double> > eigenvector(int i) const;
+    std::vector<std::complex<double>> eigenvector(int i) const;
 
    private:
     std::vector<std::complex<double>> eigenvalues_;

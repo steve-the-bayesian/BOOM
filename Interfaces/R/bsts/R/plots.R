@@ -227,44 +227,43 @@ PlotBstsSize <- function(bsts.object,
 ###----------------------------------------------------------------------
 PlotBstsComponents <- function(bsts.object,
                                burn = SuggestBurn(.1, bsts.object),
-                               time,
+                               time = NULL,
                                same.scale = TRUE,
                                layout = c("square", "horizontal", "vertical"),
                                style = c("dynamic", "boxplot"),
                                ylim = NULL,
+                               components = 1:length(bsts.object$state.specification),
                                ...) {
-  ## Plots the posterior distribution of each state model's
-  ## contributions to the mean of the time series.
+  ## Plots the posterior distribution of each state model's contributions to the
+  ## mean of the time series.
+  ##
   ## Args:
   ##   bsts.object: An object of class 'bsts'.
   ##   burn: The number of MCMC iterations to be discarded as burn-in.
   ##   time: An optional vector of values to plot on the time axis.
-  ##   same.scale: Logical.  If TRUE then all plots will share a
-  ##     common scale for the vertical axis.  Otherwise the veritcal
-  ##     scales for each plot will be determined independently.
-  ##   layout: A text string indicating whether the state components
-  ##     plots should be laid out in a square (maximizing plot area),
-  ##     vertically, or horizontally.
-  ##   style: Either "dynamic", for dynamic distribution plots, or
-  ##     "boxplot", for box plots.  Partial matching is allowed, so
-  ##     "dyn" or "box" would work, for example.
+  ##   same.scale: Logical.  If TRUE then all plots will share a common scale
+  ##     for the vertical axis.  Otherwise the veritcal scales for each plot
+  ##     will be determined independently.
+  ##   layout: A text string indicating whether the state components plots
+  ##     should be laid out in a square (maximizing plot area), vertically, or
+  ##     horizontally.
+  ##   style: Either "dynamic", for dynamic distribution plots, or "boxplot",
+  ##     for box plots.  Partial matching is allowed, so "dyn" or "box" would
+  ##     work, for example.
   ##   ylim:  Limits on the vertical axis.
+  ##   components: A numeric index vector indicating which state components to
+  ##     plot.
   ##   ...: Extra arguments passed to PlotDynamicDistribution.
+  ## 
   ## Returns:
-  ##   This function is called for its side effect, which is to
-  ##   produce a plot on the current graphics device.
-  stopifnot(inherits(bsts.object, "bsts"))
-  style <- match.arg(style)
+  ##   Produces a plot on the current graphics device.  Returns invisible NULL.
+  components <- unique(components)
+  state.specification <- bsts.object$state.specification[components]
+  number.of.components <- length(state.specification)
 
-  if (missing(time)) {
+  if (is.null(time)) {
     time <- bsts.object$timestamp.info$regular.timestamps
   }
-  state <- bsts.object$state.contributions
-  if (burn > 0) {
-    state <- state[-(1:burn), , , drop = FALSE]
-  }
-  dims <- dim(state)
-  number.of.components <- dims[2]
 
   layout <- match.arg(layout)
   if (layout == "square") {
@@ -277,34 +276,99 @@ PlotBstsComponents <- function(bsts.object,
     num.rows <- 1
     num.cols <- number.of.components
   }
-  original.par <- par(mfrow = c(num.rows, num.cols))
-  on.exit(par(original.par))
 
-  names <- dimnames(state)[[2]]
+  screen.matrix <- .ScreenMatrix(num.rows, num.cols, side.margin = 0)
+  close.screen(all.screens = TRUE)
+  original.par <- par(mfrow = c(1,1))
+  par(mfrow = c(num.rows, num.cols))
+  cex <- par("cex")
+  par(mfrow = c(1,1), cex= cex)
+  
+  screen.numbers <- split.screen(screen.matrix)
+  on.exit({close.screen(screen.numbers); par(original.par)})
 
-  have.ylim <- !is.null(ylim)
-  if (same.scale) {
-    scale <- range(state)
-  }
-  for (component in 1:number.of.components) {
-    if (!have.ylim) {
-      ylim <- if (same.scale) scale else range(state[, component, ])
-    }
-    if (style == "boxplot") {
-      TimeSeriesBoxplot(state[, component, ],
-                        time = time,
-                        ylim = ylim,
-                        ...)
+  if (is.null(ylim) && same.scale) {
+    if (burn > 0) {
+      ylim <- range(bsts.object$state.contributions[-(1:burn), , ])
     } else {
-      PlotDynamicDistribution(state[, component, ],
-                              timestamps = time,
-                              ylim = ylim,
-                              ...)
+      ylim <- range(bsts.object$state.contributions)
     }
-    title(main = names[component])
   }
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  for (i in 1:number.of.components) {
+    screen(screen.numbers[i])
+    ## Each state component has a generic plot function that knows how to make
+    ## the right plot.
+    plot(state.specification[[i]], bsts.object, burn = burn,
+      time = time, style = style, ylim = ylim, ...)
+  }
+  return(invisible(NULL))
 }
 
+plot.StateModel <- function(x,
+                            bsts.object,
+                            burn = NULL,
+                            time = NULL,
+                            style = c("dynamic", "boxplot"),
+                            ylim = NULL,
+                            ...) {
+  ## The default plotting method for a StateModel is to find the column of
+  ## bsts.object$state.contributions corresponding to state.specification$name
+  ## and plot it using either PlotDynamicRegression or TimeSeriesBoxplot.
+  ##
+  ## Args:
+  ##   x:  An object inheriting from StateModel.
+  ##   bsts.object: A bsts model that includes state.specification in its state
+  ##     specification.
+  ##   burn:  The number of MCMC iterations to burn.
+  ##   time: An optional vector of values to plot on the time axis.
+  ##   style: Either "dynamic", for dynamic distribution plots, or "boxplot",
+  ##     for box plots.  Partial matching is allowed, so "dyn" or "box" would
+  ##     work, for example.
+  ##   ylim:  Limits on the vertical axis.
+  ##   ...: Extra arguments passed to PlotDynamicDistribution or
+  ##     TimeSeriesBoxplot.
+  ##
+  ## Returns:
+  ##   Draws a plot on the current plotting device.
+  state.specification <- x
+  stopifnot(inherits(state.specification, "StateModel"))
+  stopifnot(inherits(bsts.object, "bsts"))
+  if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
+    stop("The state specification is not part of the bsts object.")
+  }
+  
+  state <- bsts.object$state.contributions[, state.specification$name, ]
+  if (is.null(state)) {
+    stop("Could not find state contributions for ", state.specification$name)
+  }
+  if (!is.matrix(state)) {
+    state <- matrix(state, ncol = 1)
+  }
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  if (burn > 0) {
+    state <- state[-(1:burn), ]
+  }
+  if (is.null(time)) {
+    time <- bsts.object$timestamp.info$regular.timestamps
+  }
+  if (is.null(ylim)) {
+    ylim <- range(state)
+  }
+  style <- match.arg(style)
+  if (style == "boxplot") {
+    TimeSeriesBoxplot(state, time = time, ylim = ylim, ...)
+  } else {
+    PlotDynamicDistribution(state, timestamps = time, ylim = ylim, ...)
+  }
+  title(main = state.specification$name)
+  return(invisible(NULL))
+}
+  
 ###----------------------------------------------------------------------
 PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
                           time, show.actuals = TRUE,
@@ -568,3 +632,87 @@ PlotDynamicRegression <- function(
     title(beta.names[variable])
   }
 }
+###----------------------------------------------------------------------
+PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
+                        ylim = NULL, ...) {
+  ## Plot the estimated holiday effect for the given holiday.
+  ##
+  ## Args:
+  ##   holiday:  An object of class Holiday.
+  ##   model: A bsts model object with a state specification that includes
+  ##     'holiday' in a RegressionHolidayStateModel or
+  ##     HierarchicalRegressionHolidayStateModel.
+  ##   show.raw.data: Logical indicating if the raw data corresponding to the
+  ##     holiday should be superimposed on the plot.  The 'raw data' are the
+  ##     actual values of the target series, minus the value of the target
+  ##     series the day before the holiday began, which is a (somewhat poor)
+  ##     proxy for remaining state elements.  The raw data can appear
+  ##     artificially noisy if there are other strong state effects such as a
+  ##     day-of-week effect for holidays that don't always occur on the same day
+  ##     of the week.
+  ##   ylim:  Limits for the vertical axis.
+  ##
+  ## Effects:
+  ##   A set of boxplots are drawn on the current graphics device showing the
+  ##   posterior distribution of the impact of the holiday during each day of
+  ##   its influence window.  
+  date.ranges <- .GetDateRanges(holiday, model$timestamp.info$timestamps)
+  raw.data<- list()
+  for (i in 1:nrow(date.ranges)) {
+    baseline <- as.numeric(model$original.series[date.ranges[i, 1] - 1])
+    actuals <- as.numeric(window(model$original.series,
+      start = date.ranges[i, 1],
+      end = date.ranges[i, 2]))
+    raw.data[[i]] <- actuals - baseline
+  }
+
+  holiday.effects <- .FindHolidayEffects(model, holiday$name)
+  if (is.null(ylim)) {
+    ylim <- range(holiday.effects)
+    if (show.raw.data) {
+      ylim <- range(ylim, raw.data)
+    } 
+  }
+
+  boxplot(holiday.effects, ylim = ylim, ...)
+  if (show.raw.data) {
+    for (i in 1:length(raw.data)) {
+      lines(raw.data[[i]], col = i, lty = i)
+    }
+  }
+  return(invisible(NULL))
+}
+
+.FindHolidayEffects <- function(model, holiday.name) {
+  ## Look through all the state specificiations and find all the ones that
+  ## inherit from HolidayModel.
+  ##
+  ## Args:
+  ##   model:  a bsts model to search.
+  ##   holiday.name:  The name of a holiday expected to be part of 'model'.
+  ##
+  ## Returns:
+  ##    If a holiday named 'holiday.name' was included in 'model' as part of a
+  ##    RegressionHolidayStateModel or HierarchicalRegressionHolidayStateModel
+  ##    then find the MCMC draws of its coefficients and return them as a
+  ##    matrix. Otherwise raise an error.
+  state.specification <- model$state.specification
+  for (i in 1:length(state.specification)) {
+    if (inherits(state.specification[[i]], "RegressionHolidayStateModel")) {
+      holiday.names <- sapply(state.specification[[i]]$holidays, function(x)
+        x$name)
+      if (holiday.name %in% holiday.names) {
+        return(model[[holiday.name]])
+      }
+    } else if (inherits(state.specification[[i]],
+      "HierarchicalRegressionHolidayStateModel")) {
+      return(model$holiday.coefficients[, holiday.name, ])
+    } else if (inherits(state.specification[[i]], "RandomWalkHolidayStateModel")) {
+      stop("A plot method for RandomWalkHolidayStateModel never got implemented.")
+    }
+  }
+  stop(paste0("Could not find a holiday named ", holiday.name, "."))
+  return(NULL)
+}
+
+      

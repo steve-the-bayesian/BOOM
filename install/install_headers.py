@@ -19,7 +19,7 @@ def copy_many_files(filename_list, dest_dir):
         if not os.path.exists(target_directory):
             os.makedirs(target_directory)
         shutil.copy(fname, dest)
-        
+
 if __name__ == '__main__':
     from sys import argv
     myargs = getopts(argv)
@@ -27,5 +27,3 @@ if __name__ == '__main__':
     argv.remove(argv[0])
     dest_dir = argv.pop()
     copy_many_files(argv, dest_dir)
-
-    

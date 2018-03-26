@@ -709,7 +709,7 @@ namespace BOOM {
     //   A raw pointer to a Holiday object of the type specified by the R-class
     //   attribute of holiday_spec.  The pointer should be immediately caught by
     //   a Ptr.
-    Holiday * StateModelFactory::CreateHoliday(SEXP holiday_spec) {
+    Ptr<Holiday> StateModelFactory::CreateHoliday(SEXP holiday_spec) {
       if (Rf_inherits(holiday_spec, "NthWeekdayInMonthHoliday")) {
         int week = Rf_asInteger(getListElement(holiday_spec, "week.number"));
         std::string day = ToString(getListElement(holiday_spec, "day.of.week"));
@@ -810,48 +810,24 @@ namespace BOOM {
 
     //======================================================================
     // Creates a random walk holiday state model.
-    //   r_state_component: An R object inheriting from class "Holiday".  This
-    //     is a list with a named element "holidays".
+
+    //   r_state_component: An R object inheriting from class
+    //     "RandomWalkHolidayStateModel".  
     //   prefix: An optional prefix to be prepended to the name of the
     //     state component in the io_manager.
     RandomWalkHolidayStateModel *
     StateModelFactory::CreateRandomWalkHolidayStateModel(
-        SEXP list_arg, const std::string &prefix) {
-      std::string holiday_name = GetStringFromList(list_arg, "name");
-      int days_before = Rf_asInteger(getListElement(list_arg, "days.before"));
-      int days_after = Rf_asInteger(getListElement(list_arg, "days.after"));
-      Holiday *holiday;
-      if (Rf_inherits(list_arg, "NamedHoliday")) {
-        holiday = CreateNamedHoliday(holiday_name, days_before, days_after);
-      } else if (Rf_inherits(list_arg, "FixedDateHoliday")) {
-        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
-        int holiday_day = Rf_asInteger(getListElement(list_arg, "day"));
-        holiday = new FixedDateHoliday(
-            month_name, holiday_day, days_before, days_after);
-      } else if (Rf_inherits(list_arg, "NthWeekdayInMonthHoliday")) {
-        MonthNames month_name = str2month(GetStringFromList(list_arg, "month"));
-        DayNames day_name = str2day(GetStringFromList(list_arg, "day.of.week"));
-        int which_week = Rf_asInteger(getListElement(list_arg, "which.week"));
-        if (which_week > 0) {
-          holiday = new NthWeekdayInMonthHoliday(
-              which_week, day_name, month_name, days_before, days_after);
-        } else {
-          holiday = new LastWeekdayInMonthHoliday(
-              day_name, month_name, days_before, days_after);
-        }
-      } else {
-        report_error("Unknown type of holiday state model");
-        return NULL;
-      }
-      int month_of_time0 =
-          Rf_asInteger(getListElement(list_arg, "time0.month"));
-      int day_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.day"));
-      int year_of_time0 = Rf_asInteger(getListElement(list_arg, "time0.year"));
-      Date time0(month_of_time0, day_of_time0, year_of_time0);
+        SEXP r_state_component, const std::string &prefix) {
+
+      SEXP r_holiday = getListElement(r_state_component, "holiday");
+      Ptr<Holiday> holiday = CreateHoliday(r_holiday);
+      std::string holiday_name = ToString(getListElement(r_holiday, "name"));
+          
+      Date time0 = ToBoomDate(getListElement(r_state_component, "time0"));
       SdPrior sigma_prior_spec(getListElement(
-          list_arg, "sigma.prior"));
+          r_state_component, "sigma.prior"));
       NormalPrior initial_value_prior_spec(getListElement(
-          list_arg, "initial.state.prior"));
+          r_state_component, "initial.state.prior"));
 
       RandomWalkHolidayStateModel * holiday_model
           = new RandomWalkHolidayStateModel(holiday, time0);

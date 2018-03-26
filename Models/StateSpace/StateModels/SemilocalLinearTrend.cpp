@@ -173,6 +173,7 @@ namespace BOOM {
   }
 
   void SLLT::simulate_state_error(RNG &rng, VectorView eta, int t) const {
+    assert(eta.size() == state_dimension());
     eta[0] = rnorm_mt(rng, 0, level_->sigma());
     eta[1] = rnorm_mt(rng, 0, slope_->sigma());
     eta[2] = 0;

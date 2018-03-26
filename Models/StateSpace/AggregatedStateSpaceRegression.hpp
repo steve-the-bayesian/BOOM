@@ -36,10 +36,9 @@
 
 #include <memory>
 
-// AggregatedStateSpaceRegression models a StateSpaceModel that
-// produces values on a fine time scale (e.g. weeks) but is only
-// observed on a coarse time scale (e.g. months).  The model can be
-// written down as
+// AggregatedStateSpaceRegression models a StateSpaceModel that produces values
+// on a fine time scale (e.g. weeks) but is only observed on a coarse time scale
+// (e.g. months).  The model can be written down as
 //
 //       w[t] ~ N(Z[t].dot(alpha[t]), client_observation_variance)
 // alpha[t+1] ~ N(T[t] * alpha[t], client_state_variance)
@@ -49,15 +48,14 @@
 //     w[t+1] =  Z[t+1]^T T[t+1] * alpha[t] + Z[t+1]^T R[t] * eta[t] + eps[t+1]
 //     W[t+1] = (1-delta[t]) * W[t] + (1-delta[t]*phi[t]) * w[t]
 
-// The state in this model is (a[t], w[t], W[t]), where a[t] is the
-// state from the underlying StateSpaceRegressionModel, w[t] is the
-// amount produced by the underlying model for period [t], and W[t] is
-// the cumulative amount produced in the current month, before period
-// [t].  Let phi[t] be the fraction of the current week's output
-// belonging to the month containing the first day in the week.  Then
-// Y[t] = W[t] + phi[t]*w[t] is the current total, for the month
-// containing the start of week t.  Let delta[t] denote the indicator
-// that a week contains the end of an existing month.
+// The state in this model is (a[t], w[t], W[t]), where a[t] is the state from
+// the underlying StateSpaceRegressionModel, w[t] is the amount produced by the
+// underlying model for period [t], and W[t] is the cumulative amount produced
+// in the current month, before period [t].  Let phi[t] be the fraction of the
+// current week's output belonging to the month containing the first day in the
+// week.  Then Y[t] = W[t] + phi[t]*w[t] is the current total, for the month
+// containing the start of week t.  Let delta[t] denote the indicator that a
+// week contains the end of an existing month.
 
 // The transition matrix is:
 // |T[t]            0                 0     |
@@ -66,24 +64,22 @@
 //
 // Note that Z is from time t+1, while the others are from time t.
 //
-// The observation matrix is (0 0 0 0 ... phi 1).  This is not the
-// same as 'Z', which is the observation matrix for the underlying
-// state space model.
+// The observation matrix is (0 0 0 0 ... phi 1).  This is not the same as 'Z',
+// which is the observation matrix for the underlying state space model.
 
 namespace BOOM {
   //======================================================================
-  // FineNowcastingData describes one 'week' in the life of a
-  // nowcasting model.  We observe the vector of signals for that week
-  // and if the week contains the start of a new month then we observe
-  // the monthly total for the month that just passed.  If a week
-  // straddles monthly boundaries, we need to know how much of that
-  // week's activity is attributable to the earlier of the two months
-  // that contains it.
+  // FineNowcastingData describes one 'week' in the life of a nowcasting model.
+  // We observe the vector of signals for that week and if the week contains the
+  // start of a new month then we observe the monthly total for the month that
+  // just passed.  If a week straddles monthly boundaries, we need to know how
+  // much of that week's activity is attributable to the earlier of the two
+  // months that contains it.
   //
-  // Note that 'months' and 'weeks' are conceptual placeholders for
-  // coarse- and fine-grained time intervals.  'months' might be weeks
-  // and 'weeks' might be days, for example, or 'months' might be
-  // quarters, and 'weeks' might be months.
+  // Note that 'months' and 'weeks' are conceptual placeholders for coarse- and
+  // fine-grained time intervals.  'months' might be weeks and 'weeks' might be
+  // days, for example, or 'months' might be quarters, and 'weeks' might be
+  // months.
   class FineNowcastingData : public Data {
    public:
     // Args:
@@ -98,11 +94,10 @@ namespace BOOM {
     //     belonging to the month containing the _start_ of the week.  This is
     //     always positive, and usually 1.
     //
-    // Note that 'contains_end' and 'coarse_observation_observed' are
-    // almost redundant.  However, 'coarse_observation_observed' can
-    // be false when a new month begins if the release of the most
-    // recent monthly totals is delayed (e.g. if the coarse data is
-    // not as up-to-date as the fine data).
+    // Note that 'contains_end' and 'coarse_observation_observed' are almost
+    // redundant.  However, 'coarse_observation_observed' can be false when a
+    // new month begins if the release of the most recent monthly totals is
+    // delayed (e.g. if the coarse data is not as up-to-date as the fine data).
     FineNowcastingData(const Vector &x, double coarse_observation,
                        bool coarse_observation_observed, bool contains_end,
                        double fraction_of_value_in_initial_period);

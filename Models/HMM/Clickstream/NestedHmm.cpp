@@ -564,12 +564,12 @@ namespace BOOM {
   //----------------------------------------------------------------------
   struct ClickstreamSamplingImputer {
     Ptr<NestedHmm> mod;
-    ClickstreamSamplingImputer(const Ptr<NestedHmm> &m) : mod(m) {}
+    explicit ClickstreamSamplingImputer(const Ptr<NestedHmm> &m) : mod(m) {}
     void operator()() { mod->impute_latent_data(); }
   };
   //----------------------------------------------------------------------
   struct ClickstreamEmImputer {
-    ClickstreamEmImputer(const Ptr<NestedHmm> &m) : mod(m) {}
+    explicit ClickstreamEmImputer(const Ptr<NestedHmm> &m) : mod(m) {}
     Ptr<NestedHmm> mod;
     void operator()() { mod->fwd_bkwd(false, false); }
   };

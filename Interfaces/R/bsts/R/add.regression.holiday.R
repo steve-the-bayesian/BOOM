@@ -60,9 +60,163 @@ AddRegressionHoliday <- function(state.specification = NULL,
                time0 = as.Date(.SetTimeZero(time0, y)),
                size = 1,
                prior = prior)
-  class(spec) <- c("RegressionHolidayStateModel", "StateModel")
+  class(spec) <- c("RegressionHolidayStateModel", "HolidayStateModel", "StateModel")
   state.specification[[length(state.specification) + 1]] <- spec
   return(state.specification)
+}
+
+.PlotHolidayRegressionCoefficients <- function(coefficients, ylim, ...) {
+  ## A driver function used to implement common plotting needs for
+  ## plot.RegressionHolidayStateModel and
+  ## plot.HierarchicalRegressionHolidayStateModel.
+  ##
+  ## Args:
+  ##   coefficients: A matrix of holiday coefficients. Each row is a Monte Carlo
+  ##     draw, and each column is a specific holiday coefficient.  The column
+  ##     names for the matrix are expected to give the name of the holiday
+  ##     corresponding to each coefficient.  All coefficients for a given
+  ##     holiday window are expected to be grouped together in ascending order.
+  ##   ylim:  Limits for the vertical axis.
+  ##   ...: Extra arguments passed to boxplot.
+  ##
+  ## Side Effects:
+  ##   A plot is added to the current graphics device.  Side-by-side boxplots
+  ##   show the posterior distribution of the effect of each holiday.
+  ##
+  ## Returns:
+  ##   invisible(NULL)
+  if(is.null(ylim)) {
+    ylim = range(coefficients)
+  }
+  variable.names <- colnames(coefficients)
+  old.mai <- par("mai")
+  old.mai[1] <- max(strheight(variable.names, units = "inches"))
+  old.mai[2] <- max(strwidth(variable.names, units = "inches")) + 
+    strwidth("        -- ", units = "inches")
+  oldpar <- par(mai = old.mai)
+  on.exit(par(oldpar))
+
+  ## Reversing the order of the coefficients means the plot can be read from top
+  ## to bottom, which is the natural order.
+  new.holiday.index <- (1:ncol(coefficients))[colnames(coefficients) != ""][-1]
+  coefficients <- coefficients[, ncol(coefficients):1]
+  new.holiday.index <- 1 + ncol(coefficients) - new.holiday.index
+  
+  boxplot(coefficients, horizontal = TRUE, ylim = ylim, las = 1, cex = .6, ...)
+  abline(v = 0, lty = 3)
+  abline(h = new.holiday.index + .5, lty = 3)
+  return(invisible(NULL))
+}
+
+plot.RegressionHolidayStateModel <- function(x,
+                                             bsts.object,
+                                             burn = NULL,
+                                             time = NULL,
+                                             style = NULL,
+                                             ylim = NULL,
+                                             ...) {
+  ## S3 method for plotting a RegressionHolidayStateModel
+  ##
+  ## Args:
+  ##   x: An object inheriting from RegressionHolidayStateModel.
+  ##   bsts.object: A bsts model that includes state.specification in its state
+  ##     specification.
+  ##   burn:  The number of MCMC iterations to discard as burn-in.
+  ##   time: Not used.  Here to match the signature of plot.StateModel.
+  ##   style: Not used.  Here to match the signature of plot.StateModel.
+  ##   ylim:  Limits on the vertical axis.
+  ##   ...: Extra arguments passed boxplot
+  ##
+  ## Side Effects:
+  ##   A plot is added to the current graphics device.  Side-by-side boxplots
+  ##   show the posterior distribution of the effect of each holiday.
+  ##
+  ## Returns:
+  ##   invisible(NULL)
+  state.specification <- x
+  stopifnot(inherits(state.specification, "RegressionHolidayStateModel"))
+  stopifnot(inherits(bsts.object, "bsts"))
+  if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
+    stop("The state specification is not part of the bsts object.")
+  }
+
+  holidays <- state.specification$holidays
+  coefficients <- NULL
+  for (i in 1:length(holidays)) {
+    new.coefficients <- bsts.object[[holidays[[i]]$name]]
+    colnames(new.coefficients) <-
+      c(holidays[[i]]$name, rep("", ncol(new.coefficients) - 1))
+    coefficients <- cbind(coefficients, new.coefficients)
+  }
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  stopifnot(is.numeric(burn))
+  if (burn > 0) {
+    coefficients <- coefficients[-(1:burn), , drop = FALSE]
+  }
+  .PlotHolidayRegressionCoefficients(coefficients, ylim, ...)
+  title("Regression Holiday Effects")
+  return(invisible(NULL))
+}
+
+plot.HierarchicalRegressionHolidayStateModel <- function(x,
+                                                         bsts.object,
+                                                         burn = NULL,
+                                                         time = NULL,
+                                                         style = NULL,
+                                                         ylim = NULL,
+                                                         ...) {
+  ## S3 method for plotting a HierarchicalRegressionHolidayStateModel.
+  ##
+  ## Args:
+  ##   x: An object inheriting from HierarchicalRegressionHolidayStateModel.
+  ##   bsts.object: A bsts model that includes state.specification in its state
+  ##     specification.
+  ##   burn:  The number of MCMC iterations to discard as burn-in.
+  ##   time: Not used.  Here to match the signature of plot.StateModel.
+  ##   style: Not used.  Here to match the signature of plot.StateModel.
+  ##   ylim:  Limits on the vertical axis.
+  ##   ...: Extra arguments passed boxplot
+  ##
+  ## Side Effects:
+  ##   A plot is added to the current graphics device.  Side-by-side boxplots
+  ##   show the posterior distribution of the effect of each holiday.
+  ##
+  ## Returns:
+  ##   invisible(NULL)
+  state.specification <- x
+  stopifnot(inherits(
+    state.specification, "HierarchicalRegressionHolidayStateModel"))
+  stopifnot(inherits(bsts.object, "bsts"))
+  if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
+    stop("The state specification is not part of the bsts object.")
+  }
+  
+  coefficient.array <- bsts.object$holiday.coefficients
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  if (burn > 0) {
+    coefficient.array <- coefficient.array[-(1:burn), , , drop = FALSE]
+  }
+  holiday.window.size <- dim(coefficient.array)[3]
+  number.of.holidays <- dim(coefficient.array)[2]
+  coefficients <- matrix(nrow = dim(coefficient.array)[1],
+    ncol = holiday.window.size * number.of.holidays)
+  colnames(coefficients) <- rep("", ncol(coefficients))
+  colnames(coefficients)[seq(from = 1, by = holiday.window.size,
+    len = number.of.holidays)] <- dimnames(coefficient.array)[[2]]
+  
+  start <- 0
+  for (i in 1:number.of.holidays) {
+    coefficients[, start + (1:holiday.window.size)] <- coefficient.array[, i, ]
+    start <- start + holiday.window.size
+  }
+  
+  .PlotHolidayRegressionCoefficients(coefficients, ylim, ...)
+  title("Hierarchical Regression\nHoliday Effects")
+  return(invisible(NULL))
 }
 
 AddHierarchicalRegressionHoliday <- function(
@@ -73,8 +227,6 @@ AddHierarchicalRegressionHoliday <- function(
     coefficient.variance.prior = NULL,
     time0 = NULL,
     sdy = sd(as.numeric(y), na.rm = TRUE)) {
-  ##
-  ##
   ## Args:
   ##   state.specification: A list of state components.  If omitted, an empty
   ##    list is assumed.
@@ -83,7 +235,8 @@ AddHierarchicalRegressionHoliday <- function(
   ##     width of the influence window should be the same number of days for all
   ##     the holidays in this list.  See below if this case does not apply.
   ##   coefficient.mean.prior: An object of type MvnPrior giving the hyperprior
-  ##     for the average effect of a holiday in each day of the influence window.
+  ##     for the average effect of a holiday in each day of the influence
+  ##     window.
   ##   coefficient.variance.prior: An object of type InverseWishartPrior
   ##     describing the prior belief about the variation in holiday effects from
   ##     one holiday to the next.
@@ -144,7 +297,8 @@ AddHierarchicalRegressionHoliday <- function(
                size = 1,
                coefficient.mean.prior = coefficient.mean.prior,
                coefficient.variance.prior = coefficient.variance.prior)
-  class(spec) <- c("HierarchicalRegressionHolidayStateModel", "StateModel")
+  class(spec) <- c("HierarchicalRegressionHolidayStateModel",
+    "HolidayStateModel", "StateModel")
   state.specification[[length(state.specification) + 1]] <- spec
   return(state.specification)
 }

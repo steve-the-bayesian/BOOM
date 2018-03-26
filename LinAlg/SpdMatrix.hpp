@@ -19,27 +19,25 @@
 
 #ifndef NEW_LA_SPD_MATRIX_H
 #define NEW_LA_SPD_MATRIX_H
-#include "LinAlg/Matrix.hpp"
 #include <algorithm>
+#include "LinAlg/Matrix.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  class SpdMatrix
-    : public Matrix
-  {
+  class SpdMatrix : public Matrix {
     // symmetric, positive definite matrix with 'square' storage
     // (i.e. 0's are stored)
-  public:
+   public:
     SpdMatrix();
-    SpdMatrix(uint dim, double diag=0.0);
-    SpdMatrix(uint dim, double *m, bool ColMajor=true);
+    SpdMatrix(uint dim, double diag = 0.0);
+    SpdMatrix(uint dim, double *m, bool ColMajor = true);
     template <class FwdIt>
     explicit SpdMatrix(FwdIt Beg, FwdIt End);
 
     SpdMatrix(const SpdMatrix &rhs) = default;
     SpdMatrix(SpdMatrix &&rhs) = default;
-    SpdMatrix & operator=(const SpdMatrix &rhs) = default;
-    SpdMatrix & operator=(SpdMatrix &&rhs) = default;
+    SpdMatrix &operator=(const SpdMatrix &rhs) = default;
+    SpdMatrix &operator=(SpdMatrix &&rhs) = default;
 
     // Args:
     //   v: The elements of the matrix.
@@ -58,33 +56,33 @@ namespace BOOM{
     SpdMatrix(const SubMatrix &m, bool check = true);
     SpdMatrix(const ConstSubMatrix &m, bool check = true);
 
-    SpdMatrix & operator=(const Matrix &);
-    SpdMatrix & operator=(const SubMatrix &);
-    SpdMatrix & operator=(const ConstSubMatrix &);
-    SpdMatrix & operator=(double x);
+    SpdMatrix &operator=(const Matrix &);
+    SpdMatrix &operator=(const SubMatrix &);
+    SpdMatrix &operator=(const ConstSubMatrix &);
+    SpdMatrix &operator=(double x);
     bool operator==(const SpdMatrix &) const;
 
-    void  swap(SpdMatrix &rhs);
+    void swap(SpdMatrix &rhs);
     // Fill entries with U(0,1) random variables, then multiply by
     // self-transpose.
     // Returns *this;
-    SpdMatrix & randomize() override;
+    SpdMatrix &randomize() override;
 
     //-------- size and shape info ----------
-    virtual uint nelem() const;         // number of distinct elements
-    uint dim() const {return nrow();}
+    virtual uint nelem() const;  // number of distinct elements
+    uint dim() const { return nrow(); }
 
     //--------- change size and shape ----------
-    SpdMatrix & resize(uint n);
+    SpdMatrix &resize(uint n);
 
     // -------- row and column operations ----------
-    SpdMatrix & set_diag(double x, bool zero_offdiag=true);
-    SpdMatrix & set_diag(const Vector &v, bool zero_offdiag=true);
+    SpdMatrix &set_diag(double x, bool zero_offdiag = true);
+    SpdMatrix &set_diag(const Vector &v, bool zero_offdiag = true);
 
     //------------- Linear Algebra -----------
     //      lower_triangular_Matrix chol() const;
     Matrix chol() const;
-    Matrix chol(bool & ok) const;
+    Matrix chol(bool &ok) const;
     SpdMatrix inv() const;
     SpdMatrix inv(bool &ok) const;
 
@@ -118,79 +116,78 @@ namespace BOOM{
     void fix_near_symmetry();
 
     // Returns the Mahalinobis distance:  (x - y)^T (*this) (x - y).
-    double Mdist(const Vector &x, const Vector &y) const ;
+    double Mdist(const Vector &x, const Vector &y) const;
 
     // Mahalinobis distance from 0:  x^T (*this) x
-    double Mdist(const Vector &x) const ;
+    double Mdist(const Vector &x) const;
 
-    SpdMatrix & add_outer(const Vector &x, double w = 1.0,
-                    bool force_sym=true);     // *this+= w*x*x^T
-    SpdMatrix & add_outer(const VectorView &x, double w = 1.0,
-                    bool force_sym=true);     // *this+= w*x*x^T
-    SpdMatrix & add_outer(const ConstVectorView &x, double w = 1.0,
-                    bool force_sym=true);     // *this+= w*x*x^T
-    SpdMatrix & add_outer(const Matrix &X, double w=1.0,
-                          bool force_sym = true);   // *this+= w*X*X^T
+    SpdMatrix &add_outer(const Vector &x, double w = 1.0,
+                         bool force_sym = true);  // *this+= w*x*x^T
+    SpdMatrix &add_outer(const VectorView &x, double w = 1.0,
+                         bool force_sym = true);  // *this+= w*x*x^T
+    SpdMatrix &add_outer(const ConstVectorView &x, double w = 1.0,
+                         bool force_sym = true);  // *this+= w*x*x^T
+    SpdMatrix &add_outer(const Matrix &X, double w = 1.0,
+                         bool force_sym = true);  // *this+= w*X*X^T
 
-    SpdMatrix & add_inner(const Matrix &x, double w=1.0);
-    SpdMatrix & add_inner(const Matrix &X, const Vector & w,
-                    bool force_sym=true);  // *this+= X^T w X
+    SpdMatrix &add_inner(const Matrix &x, double w = 1.0);
+    SpdMatrix &add_inner(const Matrix &X, const Vector &w,
+                         bool force_sym = true);  // *this+= X^T w X
 
     // *this  += w x.t()*y + y.t()*x;
-    SpdMatrix & add_inner2(const Matrix &x, const Matrix &y, double w=1.0);
+    SpdMatrix &add_inner2(const Matrix &x, const Matrix &y, double w = 1.0);
     // *this  += w x*y.t() + y*x.t();
-    SpdMatrix & add_outer2(const Matrix &x, const Matrix &y, double w=1.0);
+    SpdMatrix &add_outer2(const Matrix &x, const Matrix &y, double w = 1.0);
 
-    SpdMatrix & add_outer2(const Vector &x, const Vector &y, double w = 1.0);
+    SpdMatrix &add_outer2(const Vector &x, const Vector &y, double w = 1.0);
 
     //--------- Matrix multiplication ------------
-    Matrix & mult(const Matrix &B, Matrix &ans,
-                  double scal=1.0) const override;
-    Matrix & Tmult(const Matrix &B, Matrix &ans,
-                   double scal=1.0) const override;
-    Matrix & multT(const Matrix &B, Matrix &ans,
-                   double scal=1.0) const override;
+    Matrix &mult(const Matrix &B, Matrix &ans,
+                 double scal = 1.0) const override;
+    Matrix &Tmult(const Matrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
+    Matrix &multT(const Matrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
 
-    Matrix & mult(const SpdMatrix &B, Matrix &ans,
-                  double scal=1.0) const override;
-    Matrix & Tmult(const SpdMatrix &B, Matrix &ans,
-                   double scal=1.0) const override;
-    Matrix & multT(const SpdMatrix &B, Matrix &ans,
-                   double scal=1.0) const override;
+    Matrix &mult(const SpdMatrix &B, Matrix &ans,
+                 double scal = 1.0) const override;
+    Matrix &Tmult(const SpdMatrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
+    Matrix &multT(const SpdMatrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
 
-    Matrix & mult(const DiagonalMatrix &B, Matrix &ans,
-                  double scal=1.0) const override;
-    Matrix & Tmult(const DiagonalMatrix &B, Matrix &ans,
-                   double scal=1.0) const override;
-    Matrix & multT(const DiagonalMatrix &B, Matrix &ans,
-                   double scal=1.0) const override;
+    Matrix &mult(const DiagonalMatrix &B, Matrix &ans,
+                 double scal = 1.0) const override;
+    Matrix &Tmult(const DiagonalMatrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
+    Matrix &multT(const DiagonalMatrix &B, Matrix &ans,
+                  double scal = 1.0) const override;
 
-    Vector & mult(const Vector &v, Vector &ans,
-                  double scal=1.0) const override;
-    Vector & Tmult(const Vector &v, Vector &ans,
-                   double scal=1.0) const override;
+    Vector &mult(const Vector &v, Vector &ans,
+                 double scal = 1.0) const override;
+    Vector &Tmult(const Vector &v, Vector &ans,
+                  double scal = 1.0) const override;
 
     //------------- input/output ---------------
-    virtual Vector vectorize(bool minimal=true) const;
-    virtual void unvectorize(const Vector &v, bool minimal=true);
+    virtual Vector vectorize(bool minimal = true) const;
+    virtual void unvectorize(const Vector &v, bool minimal = true);
     Vector::const_iterator unvectorize(Vector::const_iterator &b,
-                                 bool minimal=true);
+                                       bool minimal = true);
     ConstVectorView::const_iterator unvectorize(
-        ConstVectorView::const_iterator b,
-        bool minimal = true);
-    void make_symmetric(bool have_upper_triangle=true);
+        ConstVectorView::const_iterator b, bool minimal = true);
+    void make_symmetric(bool have_upper_triangle = true);
   };
 
   typedef SpdMatrix Spd;
 
   //______________________________________________________________________
   template <class Fwd>
-  SpdMatrix::SpdMatrix(Fwd b, Fwd e){
-    uint n = std::distance(b,e);
-    uint m = lround( ::sqrt(static_cast<double>(n)));
-    assert(m*m == n);
+  SpdMatrix::SpdMatrix(Fwd b, Fwd e) {
+    uint n = std::distance(b, e);
+    uint m = lround(::sqrt(static_cast<double>(n)));
+    assert(m * m == n);
     resize(m);
-    std::copy(b,e,begin());
+    std::copy(b, e, begin());
   }
 
   SpdMatrix operator*(double x, const SpdMatrix &V);
@@ -199,8 +196,8 @@ namespace BOOM{
 
   SpdMatrix Id(uint p);
 
-  SpdMatrix RTR(const Matrix &R, double a = 1.0); // a * R^T%*%R
-  SpdMatrix LLT(const Matrix &L, double a = 1.0); // a * L%*%L^T
+  SpdMatrix RTR(const Matrix &R, double a = 1.0);  // a * R^T%*%R
+  SpdMatrix LLT(const Matrix &L, double a = 1.0);  // a * L%*%L^T
 
   SpdMatrix outer(const Vector &v);
   SpdMatrix outer(const VectorView &v);
@@ -209,7 +206,7 @@ namespace BOOM{
   Matrix chol(const SpdMatrix &Sigma);
   Matrix chol(const SpdMatrix &Sigma, bool &ok);
 
-  inline double logdet(const SpdMatrix & Sigma){ return Sigma.logdet();}
+  inline double logdet(const SpdMatrix &Sigma) { return Sigma.logdet(); }
 
   SpdMatrix chol2inv(const Matrix &L);
   // Returns A^{-1}, where L is the cholesky factor of A.
@@ -248,7 +245,7 @@ namespace BOOM{
   //
   // The relationship is V = Q^T Lambda Q, or Q * V = Lambda * Q,
   // where Q^T = eigenvectors.
-  Vector eigen(const SpdMatrix &V, Matrix & eigenvectors);
+  Vector eigen(const SpdMatrix &V, Matrix &eigenvectors);
 
   // Returns the largest eigenvalue of X.
   double largest_eigenvalue(const SpdMatrix &X);
@@ -273,6 +270,6 @@ namespace BOOM{
   // matrix A to produce W = A * Lambda^{1/2} * Q, which preserves the
   // relationship W^T * W = X.
   Matrix eigen_root(const SpdMatrix &X);
-}
+}  // namespace BOOM
 
-#endif // NEW_LA_SPD_MATRIX_H
+#endif  // NEW_LA_SPD_MATRIX_H

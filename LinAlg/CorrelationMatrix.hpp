@@ -21,41 +21,39 @@
 #define NEW_LA_CORRELATION_MATRIX_H
 #include "LinAlg/SpdMatrix.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-    class CorrelationMatrix : public SpdMatrix{
-      // symmetric, positive definite Matrix with unit diagonal
-    public:
-
-      // need all the constructors from TNT
-      CorrelationMatrix();
-      explicit CorrelationMatrix(int dim);
-      CorrelationMatrix(int dim, double *m, bool ColMajor=true);
-      template <class FwdIt>
-      CorrelationMatrix(FwdIt Beg, FwdIt End);
-      explicit CorrelationMatrix(const Matrix &m);
-      CorrelationMatrix(const CorrelationMatrix &sm);
-
-      CorrelationMatrix & operator=(const CorrelationMatrix &x);
-      CorrelationMatrix & operator=(const Matrix &x);
-
-      Vector vectorize(bool minimal=true)const override;
-      void unvectorize(const Vector &v, bool minimal=true) override;
-      virtual Vector::const_iterator unvectorize
-      (Vector::const_iterator &b, bool minimal=true);
-
-      uint nelem()const override;   // number of potentially distinct elements
-      bool operator==(const CorrelationMatrix &rhs)const;
-      bool operator!=(const CorrelationMatrix &rhs)const;
-    };
-
+  class CorrelationMatrix : public SpdMatrix {
+    // symmetric, positive definite Matrix with unit diagonal
+   public:
+    // need all the constructors from TNT
+    CorrelationMatrix();
+    explicit CorrelationMatrix(int dim);
+    CorrelationMatrix(int dim, double *m, bool ColMajor = true);
     template <class FwdIt>
-    CorrelationMatrix::CorrelationMatrix(FwdIt Beg, FwdIt End)
-      : SpdMatrix(Beg,End)
-    {}
+    CorrelationMatrix(FwdIt Beg, FwdIt End);
+    explicit CorrelationMatrix(const Matrix &m);
+    CorrelationMatrix(const CorrelationMatrix &sm);
 
-    CorrelationMatrix var2cor(const SpdMatrix &v);
-    SpdMatrix cor2var(const CorrelationMatrix &cor, const Vector &sd);
-    CorrelationMatrix random_cor_mt(RNG &rng, uint n);
-}
-#endif // NEW_LA_CORRELATION_MATRIX_H
+    CorrelationMatrix &operator=(const CorrelationMatrix &x);
+    CorrelationMatrix &operator=(const Matrix &x);
+
+    Vector vectorize(bool minimal = true) const override;
+    void unvectorize(const Vector &v, bool minimal = true) override;
+    virtual Vector::const_iterator unvectorize(Vector::const_iterator &b,
+                                               bool minimal = true);
+
+    uint nelem() const override;  // number of potentially distinct elements
+    bool operator==(const CorrelationMatrix &rhs) const;
+    bool operator!=(const CorrelationMatrix &rhs) const;
+  };
+
+  template <class FwdIt>
+  CorrelationMatrix::CorrelationMatrix(FwdIt Beg, FwdIt End)
+      : SpdMatrix(Beg, End) {}
+
+  CorrelationMatrix var2cor(const SpdMatrix &v);
+  SpdMatrix cor2var(const CorrelationMatrix &cor, const Vector &sd);
+  CorrelationMatrix random_cor_mt(RNG &rng, uint n);
+}  // namespace BOOM
+#endif  // NEW_LA_CORRELATION_MATRIX_H

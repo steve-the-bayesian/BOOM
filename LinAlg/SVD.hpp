@@ -18,43 +18,40 @@
 */
 #ifndef BOOM_SVD_HPP
 #define BOOM_SVD_HPP
-#include "LinAlg/Matrix.hpp"
 #include <limits>
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
 
   class SingularValueDecomposition {
    public:
     explicit SingularValueDecomposition(const Matrix &m);
-    const Vector & values()const;
-    const Matrix & left()const;
-    const Matrix & right()const;
+    const Vector &values() const;
+    const Matrix &left() const;
+    const Matrix &right() const;
 
-    Matrix original_matrix()const;
+    Matrix original_matrix() const;
     Matrix solve(const Matrix &RHS,
-                 double tol = std::numeric_limits<double>::epsilon())const;
+                 double tol = std::numeric_limits<double>::epsilon()) const;
 
     Vector solve(const Vector &RHS,
-                 double tol = std::numeric_limits<double>::epsilon())const;
+                 double tol = std::numeric_limits<double>::epsilon()) const;
 
-    Matrix inv()const;  // inverse of the original matrix, if square
+    Matrix inv() const;  // inverse of the original matrix, if square
 
    private:
     // Return the smaller of the the number of rows, or the number of columns,
     // in the Matrix m.
-    int min_dim(const Matrix &m) const {
-      return std::min(m.nrow(), m.ncol());
-    }
+    int min_dim(const Matrix &m) const { return std::min(m.nrow(), m.ncol()); }
 
     // the SVD is A = U S V.t()
-    Vector singular_values_; // diagonal of S
+    Vector singular_values_;  // diagonal of S
 
     // Left singular vectors are the columns of left_;
-    Matrix left_;   // U
+    Matrix left_;  // U
 
     // Right singular vectors are the columns of right_;
     Matrix right_;  // V.t()
-    
   };
-}
-#endif// BOOM_SVD_HPP
+}  // namespace BOOM
+#endif  // BOOM_SVD_HPP

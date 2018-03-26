@@ -39,7 +39,7 @@ namespace BOOM {
     QR() {}
 
     // The QR decomposition of the matrix X.
-    QR(const Matrix &m);
+    explicit QR(const Matrix &m);
 
     // Extract the Q and R matrices from the decomposition.
     Matrix getQ() const;

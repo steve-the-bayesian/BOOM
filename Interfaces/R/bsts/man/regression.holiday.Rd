@@ -1,6 +1,8 @@
 \name{regression.holiday}
 \alias{AddRegressionHoliday}
+\alias{RegressionHolidayStateModel}
 \alias{AddHierarchicalRegressionHoliday}
+\alias{HierarchicalRegressionHolidayStateModel}
 
 \Rdversion{1.1}
 \title{
@@ -111,8 +113,6 @@ AddHierarchicalRegressionHoliday(
 }
 
 \examples{
-
-
 trend <- cumsum(rnorm(730, 0, .1))
   dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend), by = "day")
   y <- zoo(trend + rnorm(length(trend), 0, .2), dates)
@@ -161,16 +161,27 @@ ss <- AddLocalLevel(list(), y)
 ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
 model <- bsts(y, state.specification = ss, niter = niter)
 
+## Plot all model state components.
+plot(model, "comp")
+
+## Plot the specific holiday state component.
+plot(ss[[2]], model)
+
 ## Try again with some shrinkage.  With only 3 holidays there won't be much
 ## shrinkage.  
 ss2 <- AddLocalLevel(list(), y)
+
+## Plot the specific holiday state component.
 ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
 model2 <- bsts(y, state.specification = ss2, niter = niter)
 
+plot(model2, "comp")
+plot(ss2[[2]], model2)
 }
 
 \seealso{
   \code{\link{bsts}}.
+  \code{\link{RandomWalkHolidayStateModel}}.
   \code{\link[Boom]{SdPrior}}
   \code{\link[Boom]{NormalPrior}}
 }

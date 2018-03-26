@@ -17,17 +17,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "LinAlg/Array.hpp"
 #include "LinAlg/ArrayIterator.hpp"
+#include "LinAlg/Array.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
   ArrayPositionManager::ArrayPositionManager(const std::vector<int> &dims)
-      : dims_(dims),
-        position_(dims.size(), 0),
-        at_end_(false)
-  {
+      : dims_(dims), position_(dims.size(), 0), at_end_(false) {
     if (dims_.empty()) {
       at_end_ = true;
     }
@@ -102,7 +99,8 @@ namespace BOOM {
       if (position[i] < 0 || position[i] >= dims_[i]) {
         std::ostringstream err;
         err << "Dimension " << i << " of 'position' argument is out of bounds."
-            << std::endl << "  Argument value: " << position[i] << std::endl
+            << std::endl
+            << "  Argument value: " << position[i] << std::endl
             << "  Legal value are between 0 and " << dims_[i] - 1 << ".";
         report_error(err.str());
       }
@@ -115,18 +113,14 @@ namespace BOOM {
 
   ArrayIterator::ArrayIterator(ArrayBase *host,
                                const std::vector<int> &starting_position)
-      : host_(host),
-        position_(host->dim())
-  {
+      : host_(host), position_(host->dim()) {
     position_.set_position(starting_position);
   }
 
   ArrayIterator::ArrayIterator(ArrayBase *host)
-      : host_(host),
-        position_(host->dim())
-  {}
+      : host_(host), position_(host->dim()) {}
 
-  double & ArrayIterator::operator*() {
+  double &ArrayIterator::operator*() {
     if (position_.at_end()) {
       report_error("ArrayIterator dereference past end of data.");
     }
@@ -136,18 +130,13 @@ namespace BOOM {
   //======================================================================
 
   ConstArrayIterator::ConstArrayIterator(
-      const ConstArrayBase *host,
-      const std::vector<int> &starting_position)
-      : host_(host),
-        position_(host->dim())
-  {
+      const ConstArrayBase *host, const std::vector<int> &starting_position)
+      : host_(host), position_(host->dim()) {
     position_.set_position(starting_position);
   }
 
   ConstArrayIterator::ConstArrayIterator(const ConstArrayBase *host)
-      : host_(host),
-        position_(host->dim())
-  {}
+      : host_(host), position_(host->dim()) {}
 
   double ConstArrayIterator::operator*() const {
     if (position_.at_end()) {

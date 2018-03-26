@@ -79,10 +79,9 @@ namespace BOOM {
 
     const std::vector<Ptr<MvRegData> > &dat(mod->dat());
     uint n = dat.size();
-    double w(0);
     for (uint i = 0; i < n; ++i) {
       Ptr<MvRegData> dp = dat[i];
-      w = impute_w(dp);
+      double w = impute_w(dp);
       rs->update_raw_data(dp->y(), dp->x(), w);
       gs->update_raw(w);
     }

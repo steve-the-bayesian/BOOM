@@ -29,17 +29,15 @@ namespace BOOM {
     using std::cout;
     using std::endl;
   }  // namespace
-  
-  EigenDecomposition::EigenDecomposition(const Matrix &mat,
-                                         bool vectors)
+
+  EigenDecomposition::EigenDecomposition(const Matrix &mat, bool vectors)
       : eigenvalues_(mat.nrow()),
         real_eigenvalues_(mat.nrow()),
         imaginary_eigenvalues_(mat.nrow()),
         real_eigenvectors_(0, 0),
-        imaginary_eigenvectors_(0, 0)
-  {
+        imaginary_eigenvectors_(0, 0) {
     Eigen::EigenSolver<MatrixXd> eigen(EigenMap(mat), vectors);
-    const auto & eigen_values = eigen.eigenvalues();
+    const auto &eigen_values = eigen.eigenvalues();
     int dim = mat.nrow();
     for (int i = 0; i < dim; ++i) {
       eigenvalues_[i] = eigen_values(i);
@@ -49,7 +47,7 @@ namespace BOOM {
     if (vectors) {
       real_eigenvectors_ = Matrix(dim, dim);
       imaginary_eigenvectors_ = Matrix(dim, dim);
-      const auto & eigen_vectors = eigen.eigenvectors();
+      const auto &eigen_vectors = eigen.eigenvectors();
       for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
           real_eigenvectors_(i, j) = eigen_vectors(i, j).real();
@@ -74,8 +72,8 @@ namespace BOOM {
   }
 
   namespace {
-    std::vector<std::complex<double>>
-    complex_vector(const ConstVectorView &real, const ConstVectorView &imag) {
+    std::vector<std::complex<double>> complex_vector(
+        const ConstVectorView &real, const ConstVectorView &imag) {
       std::vector<std::complex<double>> ans;
       if (real.size() != imag.size()) {
         report_error("Real and imaginary parts must be the same size.");
@@ -87,7 +85,7 @@ namespace BOOM {
       return ans;
     }
   }  // namespace
-  
+
   std::vector<std::complex<double>> EigenDecomposition::eigenvector(
       int i) const {
     if (real_eigenvectors_.size() == 0) {

@@ -30,7 +30,8 @@ namespace BOOM {
         public boost::less_than_comparable<PointProcessEvent>,
         public boost::less_than_comparable<PointProcessEvent, DateTime> {
    public:
-    explicit PointProcessEvent(const DateTime &time);
+    // Implicit conversion from DateTime is intentional.
+    PointProcessEvent(const DateTime &time);  // NOLINT
     PointProcessEvent(const DateTime &time, const Ptr<Data> &mark);
     PointProcessEvent *clone() const override;
     ostream &display(ostream &) const override;

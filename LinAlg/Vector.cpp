@@ -23,18 +23,18 @@
 #include "LinAlg/VectorView.hpp"
 
 #include <algorithm>
-#include <iostream>
-#include <stdexcept>
 #include <cmath>
-#include <numeric>
 #include <functional>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
 
+#include <sstream>
 #include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include "cpputil/shift_element.hpp"
 #include "cpputil/string_utils.hpp"
-#include "cpputil/report_error.hpp"
 #include "distributions.hpp"
-#include <sstream>
 
 #include <cstdlib>
 #include <utility>
@@ -43,85 +43,82 @@
 
 using namespace std;
 
-namespace BOOM{
+namespace BOOM {
   typedef std::vector<double> dVector;
 
 #ifndef NDEBUG
-    inline void check_range(uint n, uint size){
-      if(n >= size){
-        ostringstream out;
-        out << "Vector subscript " << n << " out of bounds in Vector of size "
-            << size << endl;
-        report_error(out.str());
-      }
+  inline void check_range(uint n, uint size) {
+    if (n >= size) {
+      ostringstream out;
+      out << "Vector subscript " << n << " out of bounds in Vector of size "
+          << size << endl;
+      report_error(out.str());
     }
+  }
 #else
-    inline void check_range(uint, uint){}
+  inline void check_range(uint, uint) {}
 #endif
-
-  Vector::Vector() : dVector() {}
 
   Vector::Vector(uint n, double x) : dVector(n, x) {}
 
-  Vector::Vector(const string &s)
-  {
+  Vector::Vector(const string &s) {
     bool have_comma = s.find(',') < std::string::npos;
     StringSplitter split;
-    if(have_comma) split = StringSplitter(",");
+    if (have_comma) split = StringSplitter(",");
     std::vector<string> fields = split(s);
     uint n = fields.size();
     reserve(n);
-    for(uint i=0; i<n; ++i){
+    for (uint i = 0; i < n; ++i) {
       double x = atof(fields[i].c_str());
       push_back(x);
     }
   }
 
-  Vector::Vector(const string &s, const string & delim) {
+  Vector::Vector(const string &s, const string &delim) {
     StringSplitter split(delim);
     std::vector<string> fields = split(s);
     uint n = fields.size();
     reserve(n);
-    for(uint i=0; i<n; ++i){
+    for (uint i = 0; i < n; ++i) {
       double x = atof(fields[i].c_str());
       push_back(x);
     }
   }
 
-  Vector::Vector(const std::initializer_list<double> &init)
-      : dVector(init)
-  {}
+  Vector::Vector(const std::initializer_list<double> &init) : dVector(init) {}
 
-  Vector::Vector(std::istream &in)
-  {
+  Vector::Vector(std::istream &in) {
     double x;
-    while(in && (in >> x)) {
+    while (in && (in >> x)) {
       push_back(x);
     }
   }
 
-  Vector::Vector(const dVector &rhs)
-      : dVector(rhs)
-  {}
+  Vector::Vector(const dVector &rhs) : dVector(rhs) {}
 
-  Vector::Vector(const VectorView &rhs)
-      : dVector(rhs.begin(), rhs.end())
-  {}
+  Vector::Vector(const VectorView &rhs) : dVector(rhs.begin(), rhs.end()) {}
 
   Vector::Vector(const ConstVectorView &rhs)
-      : dVector(rhs.begin(), rhs.end())
-  {}
+      : dVector(rhs.begin(), rhs.end()) {}
 
-  Vector & Vector::operator=(const VectorView &v){
-    assign(v.begin(), v.end()); return *this; }
-  Vector & Vector::operator=(const ConstVectorView &v){
-    assign(v.begin(), v.end()); return *this; }
-  Vector & Vector::operator=(const std::vector<double> &v){
-    assign(v.begin(), v.end()); return *this; }
-  Vector & Vector::operator=(const std::initializer_list<double> &v) {
-    assign(v.begin(), v.end()); return *this; }
+  Vector &Vector::operator=(const VectorView &v) {
+    assign(v.begin(), v.end());
+    return *this;
+  }
+  Vector &Vector::operator=(const ConstVectorView &v) {
+    assign(v.begin(), v.end());
+    return *this;
+  }
+  Vector &Vector::operator=(const std::vector<double> &v) {
+    assign(v.begin(), v.end());
+    return *this;
+  }
+  Vector &Vector::operator=(const std::initializer_list<double> &v) {
+    assign(v.begin(), v.end());
+    return *this;
+  }
 
-  Vector & Vector::operator=(double x) {
+  Vector &Vector::operator=(double x) {
     uint n = size();
     dVector::assign(n == 0 ? 1 : n, x);
     return *this;
@@ -130,9 +127,10 @@ namespace BOOM{
   bool Vector::operator==(const Vector &rhs) const {
     const dVector &tmp1(*this);
     const dVector &tmp2(rhs);
-    return tmp1==tmp2;}
+    return tmp1 == tmp2;
+  }
 
-  Vector & Vector::swap(Vector &rhs){
+  Vector &Vector::swap(Vector &rhs) {
     dVector::swap(rhs);
     return *this;
   }
@@ -148,191 +146,185 @@ namespace BOOM{
     return true;
   }
 
-  void Vector::set_to_zero() {
-    memset(data(), 0 ,size() * sizeof(double));
-  }
+  void Vector::set_to_zero() { memset(data(), 0, size() * sizeof(double)); }
 
-  Vector Vector::zero()const{ return Vector(size(), 0.0);}
+  Vector Vector::zero() const { return Vector(size(), 0.0); }
 
-  Vector Vector::one() const { return Vector(size(), 1.0);}
+  Vector Vector::one() const { return Vector(size(), 1.0); }
 
-  Vector & Vector::randomize(RNG &rng){
+  Vector &Vector::randomize(RNG &rng) {
     uint n = size();
     double *d(data());
-    for(uint i=0; i<n; ++i) d[i] = runif_mt(rng, 0, 1);
+    for (uint i = 0; i < n; ++i) d[i] = runif_mt(rng, 0, 1);
     return *this;
   }
 
-  Vector & Vector::randomize_with_intercept(RNG &rng){
-    uint n = size();
-    if (n > 0) {
-      double *d(data());
-      d[0] = 1.0;
-      for (uint i = 1; i < n; ++i) {
-        d[i] = runif_mt(rng, 0,1);
-      }
-    }
-    return *this;
+  double *Vector::data() {
+    if (empty()) return 0;
+    return &((*this)[0]);
   }
 
-  double * Vector::data(){
-    if(empty()) return 0;
-    return &((*this)[0]);}
+  const double *Vector::data() const {
+    if (empty()) return 0;
+    return &((*this)[0]);
+  }
 
-  const double * Vector::data() const {
-    if(empty()) return 0;
-    return &((*this)[0]);}
+  uint Vector::length() const { return size(); }
 
-  uint Vector::length() const {return size();}
-
-  Vector & Vector::push_back(double x){
+  Vector &Vector::push_back(double x) {
     dVector::push_back(x);
-    return *this; }
+    return *this;
+  }
 
   //------------------------------ deprecated functions ---------------
-  const double & Vector::operator()(uint n) const {
+  const double &Vector::operator()(uint n) const {
     check_range(n, size());
-    return (*this)[n];}
+    return (*this)[n];
+  }
 
-  double & Vector::operator()(uint n){
+  double &Vector::operator()(uint n) {
     check_range(n, size());
-    return (*this)[n];}
+    return (*this)[n];
+  }
 
   //------------- input/output -----------------------
-  ostream & Vector::write(ostream &out, bool nl) const {
-    if(!empty()){
+  ostream &Vector::write(ostream &out, bool nl) const {
+    if (!empty()) {
       out << operator[](0);
     }
-    for(uint i=1; i<size(); ++i) out<< " " << operator[](i);
-    if(nl) out << endl;
-    return out; }
+    for (uint i = 1; i < size(); ++i) out << " " << operator[](i);
+    if (nl) out << endl;
+    return out;
+  }
 
-  istream & Vector::read(istream &in){
-    for(uint i=0; i<size(); ++i) in >> operator[](i);
+  istream &Vector::read(istream &in) {
+    for (uint i = 0; i < size(); ++i) in >> operator[](i);
     return in;
   }
 
   //-------------------- math
-  Vector & Vector::operator+=(double x){
+  Vector &Vector::operator+=(double x) {
     double *d(data());
     uint n = size();
-    for(uint i=0; i<n; ++i) d[i]+=x;
-    return *this; }
+    for (uint i = 0; i < n; ++i) d[i] += x;
+    return *this;
+  }
 
-  Vector & Vector::operator-=(double x){
-    return *this += (-x);}
+  Vector &Vector::operator-=(double x) { return *this += (-x); }
 
-  Vector & Vector::operator*=(double x){
+  Vector &Vector::operator*=(double x) {
     EigenMap(*this) *= x;
     return *this;
   }
 
-  Vector & Vector::operator/=(double x){
-    assert(x!=0.0 && "divide by zero error in Vector::operator/=");
-    return operator*=(1.0/x);}
+  Vector &Vector::operator/=(double x) {
+    assert(x != 0.0 && "divide by zero error in Vector::operator/=");
+    return operator*=(1.0 / x);
+  }
 
-  Vector & Vector::operator+=(const ConstVectorView &y){
-    assert(y.size()==size());
+  Vector &Vector::operator+=(const ConstVectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) += EigenMap(y);
     return *this;
   }
 
-  Vector & Vector::operator+=(const VectorView &y){
+  Vector &Vector::operator+=(const VectorView &y) {
     return operator+=(ConstVectorView(y));
   }
 
-  Vector & Vector::operator+=(const Vector &y) {
+  Vector &Vector::operator+=(const Vector &y) {
     return operator+=(ConstVectorView(y));
   }
 
-  Vector & Vector::operator-=(const ConstVectorView &y){
-    assert(y.size()==size());
+  Vector &Vector::operator-=(const ConstVectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) -= EigenMap(y);
     return *this;
   }
 
-  Vector & Vector::operator-=(const VectorView &y){
+  Vector &Vector::operator-=(const VectorView &y) {
     return operator-=(ConstVectorView(y));
   }
 
-  Vector & Vector::operator-=(const Vector &y){
+  Vector &Vector::operator-=(const Vector &y) {
     return operator-=(ConstVectorView(y));
   }
 
-  Vector & Vector::operator*=(const ConstVectorView &y){
+  Vector &Vector::operator*=(const ConstVectorView &y) {
     assert(size() == y.size());
-    for(uint i=0; i<size(); ++i) (*this)[i] *= y[i];
+    for (uint i = 0; i < size(); ++i) (*this)[i] *= y[i];
     return *this;
   }
 
-  Vector & Vector::operator*=(const VectorView &v){
+  Vector &Vector::operator*=(const VectorView &v) {
     return operator*=(ConstVectorView(v));
   }
 
-  Vector & Vector::operator*=(const Vector &v){
+  Vector &Vector::operator*=(const Vector &v) {
     return operator*=(ConstVectorView(v));
   }
 
-  Vector & Vector::operator/=(const ConstVectorView &y){
-    for(uint i=0; i<size(); ++i) (*this)[i] /= y[i];
+  Vector &Vector::operator/=(const ConstVectorView &y) {
+    for (uint i = 0; i < size(); ++i) (*this)[i] /= y[i];
     return *this;
   }
 
-  Vector & Vector::operator/=(const VectorView &v) {
+  Vector &Vector::operator/=(const VectorView &v) {
     return operator/=(ConstVectorView(v));
   }
 
-  Vector & Vector::operator/=(const Vector &v) {
+  Vector &Vector::operator/=(const Vector &v) {
     return operator/=(ConstVectorView(v));
   }
 
-  Vector & Vector::axpy(const Vector &x, double w){
-    assert(x.size()==size());
+  Vector &Vector::axpy(const Vector &x, double w) {
+    assert(x.size() == size());
     EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
 
-  Vector & Vector::axpy(const VectorView &x, double w){
-    assert(x.size()==size());
+  Vector &Vector::axpy(const VectorView &x, double w) {
+    assert(x.size() == size());
     EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
-  Vector & Vector::axpy(const ConstVectorView &x, double w){
-    assert(x.size()==size());
+  Vector &Vector::axpy(const ConstVectorView &x, double w) {
+    assert(x.size() == size());
     EigenMap(*this) += EigenMap(x) * w;
     return *this;
   }
 
-  Vector & Vector::add_Xty(const Matrix &X, const Vector &y, double wgt) {
+  Vector &Vector::add_Xty(const Matrix &X, const Vector &y, double wgt) {
     EigenMap(*this) += EigenMap(X).transpose() * EigenMap(y) * wgt;
     return *this;
   }
 
   //------------- linear algebra ----------------
 
-  Vector & Vector::mult(const Matrix &A, Vector &ans) const {
+  Vector &Vector::mult(const Matrix &A, Vector &ans) const {
     // v^A == (A^Tv)^T
-    assert(ans.size()==A.ncol());
-    assert(size()==A.nrow());
+    assert(ans.size() == A.ncol());
+    assert(size() == A.nrow());
     EigenMap(ans) = EigenMap(A).transpose() * EigenMap(*this);
     return ans;
   }
   Vector Vector::mult(const Matrix &A) const {
     Vector ans(A.ncol());
-    return mult(A,ans);}
+    return mult(A, ans);
+  }
 
-  Vector & Vector::mult(const SpdMatrix &A, Vector &ans) const {
+  Vector &Vector::mult(const SpdMatrix &A, Vector &ans) const {
     // v^A == (A^Tv)^T
-    assert(ans.size()==A.ncol());
-    assert(size()==A.nrow());
-    EigenMap(ans) = EigenMap(A).selfadjointView<Eigen::Upper>()
-        * EigenMap(*this);
+    assert(ans.size() == A.ncol());
+    assert(size() == A.nrow());
+    EigenMap(ans) =
+        EigenMap(A).selfadjointView<Eigen::Upper>() * EigenMap(*this);
     return ans;
   }
   Vector Vector::mult(const SpdMatrix &S) const {
     Vector ans(S.ncol());
-    return mult(S,ans);}
-
+    return mult(S, ans);
+  }
 
   SpdMatrix Vector::outer() const {
     uint n = size();
@@ -346,17 +338,27 @@ namespace BOOM{
     outer(y, ans, a);
     return ans;
   }
-  
+
   void Vector::outer(const Vector &y, Matrix &ans, double a) const {
     EigenMap(ans) = a * EigenMap(*this) * EigenMap(y).transpose();
   }
-  
-  double Vector::normsq() const {
-    return EigenMap(*this).squaredNorm();
-  }
 
-  Vector & Vector::normalize_prob(){
-    double total = this->sum();
+  double Vector::normsq() const { return EigenMap(*this).squaredNorm(); }
+
+  Vector &Vector::normalize_prob() {
+    double total = 0;
+    double *d = data();
+    size_t n = size();
+    for (size_t i = 0; i < n; ++i) {
+      if (d[i] < 0) {
+        std::ostringstream err;
+        err << "Error during normalize_prob.  "
+            << "Vector had a negative element in position " << i << "."
+            << std::endl;
+        report_error(err.str());
+      }
+      total += d[i];
+    }
     if (total == 0) {
       report_error("normalizing constant is zero in Vector::normalize_prob");
     }
@@ -364,41 +366,41 @@ namespace BOOM{
     return *this;
   }
 
-  Vector & Vector::normalize_logprob(){
+  Vector &Vector::normalize_logprob() {
     double nc = 0;
-    Vector &x= *this;
+    Vector &x = *this;
     int n = size();
     if (n == 0) {
       report_error("Vector::normalize_logprob called for empty vector");
     }
     double m = max();
-    for(uint i = 0; i < n; ++i) {
+    for (uint i = 0; i < n; ++i) {
       x[i] = std::exp(x[i] - m);
       nc += x[i];
     }
     x /= nc;
-    return *this;   // might want to change this
+    return *this;  // might want to change this
   }
 
-  Vector & Vector::normalize_L2() {
+  Vector &Vector::normalize_L2() {
     *this /= EigenMap(*this).norm();
     return *this;
   }
 
-  double Vector::min() const { return *min_element(begin(), end());}
+  double Vector::min() const { return *min_element(begin(), end()); }
   double Vector::max() const { return *std::max_element(begin(), end()); }
 
   uint Vector::imax() const {
     const_iterator it = std::max_element(begin(), end());
-    return it-begin();}
+    return it - begin();
+  }
 
   uint Vector::imin() const {
     const_iterator it = min_element(begin(), end());
-    return it-begin();}
-
-  double Vector::abs_norm() const {
-    return EigenMap(*this).lpNorm<1>();
+    return it - begin();
   }
+
+  double Vector::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
   double Vector::max_abs() const {
     dVector::size_type n = size();
@@ -423,7 +425,7 @@ namespace BOOM{
     return ans;
   }
 
-  inline double mul(double x, double y){return x*y;}
+  inline double mul(double x, double y) { return x * y; }
   double Vector::prod() const {
     const auto n = this->size();
     double ans = 1.0;
@@ -434,12 +436,12 @@ namespace BOOM{
     return ans;
   }
 
-  Vector & Vector::sort(){
+  Vector &Vector::sort() {
     std::sort(begin(), end());
     return *this;
   }
 
-  Vector & Vector::transform(const std::function<double(double)> &f) {
+  Vector &Vector::transform(const std::function<double(double)> &f) {
     const auto n = this->size();
     double *d = data();
     for (auto i = n * 0; i < n; ++i) {
@@ -454,11 +456,10 @@ namespace BOOM{
 
   namespace {
     template <class V>
-    double dot_impl(const Vector &x, const V & y){
+    double dot_impl(const Vector &x, const V &y) {
       if (y.size() != x.size()) {
         ostringstream err;
-        err << "Dot product between two vectors of different sizes:"
-            << endl
+        err << "Dot product between two vectors of different sizes:" << endl
             << "x = " << x << endl
             << "y = " << y << endl;
         report_error(err.str());
@@ -466,8 +467,8 @@ namespace BOOM{
       return EigenMap(x).dot(EigenMap(y));
     }
 
-    template<class V>
-    double affdot_impl(const Vector &x, const V & y){
+    template <class V>
+    double affdot_impl(const Vector &x, const V &y) {
       uint n = x.size();
       uint m = y.size();
       if (m == n) {
@@ -482,85 +483,89 @@ namespace BOOM{
       }
     }
   }  // namespace
-  double Vector::dot(const Vector &y) const { return dot_impl(*this, y);}
-  double Vector::dot(const VectorView &y) const { return dot_impl(*this,y);}
+  double Vector::dot(const Vector &y) const { return dot_impl(*this, y); }
+  double Vector::dot(const VectorView &y) const { return dot_impl(*this, y); }
   double Vector::dot(const ConstVectorView &y) const {
-    return dot_impl(*this,y);
+    return dot_impl(*this, y);
   }
 
-  double Vector::affdot(const Vector &y) const {
-    return affdot_impl(*this, y);}
+  double Vector::affdot(const Vector &y) const { return affdot_impl(*this, y); }
   double Vector::affdot(const VectorView &y) const {
-    return affdot_impl(*this, y); }
+    return affdot_impl(*this, y);
+  }
   double Vector::affdot(const ConstVectorView &y) const {
-    return affdot_impl(*this, y); }
+    return affdot_impl(*this, y);
+  }
   //============== non member functions from Vector.hpp =============
 
-  Vector scan_vector(const string &fname){
+  Vector scan_vector(const string &fname) {
     ifstream in(fname.c_str());
     Vector ans;
     double x;
-    while(in>>x) ans.push_back(x);
+    while (in >> x) ans.push_back(x);
     return ans;
   }
 
-  void permute_Vector(Vector &v, const std::vector<uint> &perm){
+  void permute_Vector(Vector &v, const std::vector<uint> &perm) {
     uint n = v.size();
     Vector x(n);
-    for(uint i = 0; i<n; ++i) x[i] = v[perm[i]];
-    v=x;
+    for (uint i = 0; i < n; ++i) x[i] = v[perm[i]];
+    v = x;
   }
 
   typedef std::vector<string> svec;
-  Vector str2vec(const string &line){
+  Vector str2vec(const string &line) {
     StringSplitter split;
-    svec sv=split(line);
-    return str2vec(sv); }
+    svec sv = split(line);
+    return str2vec(sv);
+  }
 
-  Vector str2vec(const svec &sv){
-    uint n= sv.size();
+  Vector str2vec(const svec &sv) {
+    uint n = sv.size();
     Vector ans(n);
-    for(uint i = 0; i<n; ++i){
+    for (uint i = 0; i < n; ++i) {
       istringstream tmp(sv[i]);
-      tmp >> ans[i]; }
-    return ans; }
+      tmp >> ans[i];
+    }
+    return ans;
+  }
 
-   Vector operator/(double a, const ConstVectorView &x){
-     Vector ans(x.size(), a);
-     ans/=x;
-     return ans;
-   }
-   Vector operator/(double a, const Vector &x){
-     ConstVectorView xx(x);
-     return a / xx;
-   }
-   Vector operator/(double a, const VectorView &x){
-     ConstVectorView xx(x);
-     return a / xx;
-   }
-  Vector operator/(const ConstVectorView &x, double a){
+  Vector operator/(double a, const ConstVectorView &x) {
+    Vector ans(x.size(), a);
+    ans /= x;
+    return ans;
+  }
+  Vector operator/(double a, const Vector &x) {
+    ConstVectorView xx(x);
+    return a / xx;
+  }
+  Vector operator/(double a, const VectorView &x) {
+    ConstVectorView xx(x);
+    return a / xx;
+  }
+  Vector operator/(const ConstVectorView &x, double a) {
     Vector ans(x);
     ans /= a;
     return ans;
   }
-  Vector operator/(const VectorView &x, double a){
+  Vector operator/(const VectorView &x, double a) {
     return ConstVectorView(x) / a;
   }
 
-  Vector operator-(double a, const ConstVectorView &x){
+  Vector operator-(double a, const ConstVectorView &x) {
     Vector ans(-x);
-    ans+=a;
+    ans += a;
     return ans;
   }
-  Vector operator-(double a, const Vector &x){
+  Vector operator-(double a, const Vector &x) {
     ConstVectorView xx(x);
     return a - xx;
   }
-  Vector operator-(double a, const VectorView &x){
+  Vector operator-(double a, const VectorView &x) {
     ConstVectorView xx(x);
     return a - xx;
   }
-  Vector operator-(const ConstVectorView &x, double a){
+  Vector operator-(const ConstVectorView &x, double a) {
     Vector ans(x);
     ans -= a;
     return ans;
@@ -590,7 +595,7 @@ namespace BOOM{
       Vector v(v1);
       return v /= v2;
     }
-  }
+  }  // namespace
 
   Vector operator+(const ConstVectorView &x, const Vector &y) {
     return vector_add(y, x);
@@ -645,7 +650,7 @@ namespace BOOM{
   }
 
   // unary transformations
-  Vector operator-(const Vector &x){
+  Vector operator-(const Vector &x) {
     Vector ans = x;
     return ans.operator*=(-1);
   }
@@ -664,60 +669,60 @@ namespace BOOM{
   //======================================================================
   // The static_cast in the following transformation functions is
   // there to help with overload resolution.  See b/28857895.
-  Vector log(const Vector &x){
+  Vector log(const Vector &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::log));
   }
-  Vector log(const VectorView &x){
+  Vector log(const VectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::log));
   }
-  Vector log(const ConstVectorView &x){
+  Vector log(const ConstVectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::log));
   }
 
-  Vector exp(const Vector &x){
+  Vector exp(const Vector &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::exp));
   }
-  Vector exp(const VectorView &x){
+  Vector exp(const VectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::exp));
   }
-  Vector exp(const ConstVectorView &x){
+  Vector exp(const ConstVectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::exp));
   }
 
-  Vector sqrt(const Vector &x){
+  Vector sqrt(const Vector &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::sqrt));
   }
-  Vector sqrt(const VectorView &x){
+  Vector sqrt(const VectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::sqrt));
   }
-  Vector sqrt(const ConstVectorView &x){
+  Vector sqrt(const ConstVectorView &x) {
     return vector_transform(x, static_cast<DoubleFunction>(::sqrt));
   }
 
-  Vector pow(const Vector &x, double power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const Vector &x, double power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
-  Vector pow(const VectorView &x, double power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const VectorView &x, double power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
-  Vector pow(const ConstVectorView &x, double power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const ConstVectorView &x, double power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
 
-  Vector pow(const Vector &x, int power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const Vector &x, int power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
-  Vector pow(const VectorView &x, int power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const VectorView &x, int power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
-  Vector pow(const ConstVectorView &x, int power){
-    return vector_transform(x, [power](double x)->double{
-        return std::pow(x, power);});
+  Vector pow(const ConstVectorView &x, int power) {
+    return vector_transform(
+        x, [power](double x) -> double { return std::pow(x, power); });
   }
 
   Vector abs(const Vector &x) {
@@ -732,7 +737,7 @@ namespace BOOM{
 
   namespace {
     template <class VECTOR>
-    std::pair<double, double> range_impl(const VECTOR &v){
+    std::pair<double, double> range_impl(const VECTOR &v) {
       double lo = infinity();
       double hi = negative_infinity();
       for (int i = 0; i < v.size(); ++i) {
@@ -746,126 +751,136 @@ namespace BOOM{
       }
       return std::make_pair(lo, hi);
     }
-  }
+  }  // namespace
 
-  std::pair<double, double> range(const Vector &v) {
-    return range_impl(v);
-  }
+  std::pair<double, double> range(const Vector &v) { return range_impl(v); }
 
-  std::pair<double, double> range(const VectorView &v) {
-    return range_impl(v);
-  }
+  std::pair<double, double> range(const VectorView &v) { return range_impl(v); }
 
   std::pair<double, double> range(const ConstVectorView &v) {
     return range_impl(v);
   }
 
-  Vector cumsum(const Vector &x){
+  Vector cumsum(const Vector &x) {
     Vector ans(x);
     std::partial_sum(x.begin(), x.end(), ans.begin());
     return ans;
   }
 
-  ostream & operator<<(ostream & out, const Vector &v){
-    return v.write(out, false);}
-
-  void print(const Vector &v) {
-    std::cout << v << std::endl;
+  ostream &operator<<(ostream &out, const Vector &v) {
+    return v.write(out, false);
   }
 
-  void print_vector(const Vector &v) {
-    print(v);
-  }
+  void print(const Vector &v) { std::cout << v << std::endl; }
 
-  istream & operator>>(istream &in, Vector & v){
+  void print_vector(const Vector &v) { print(v); }
+
+  istream &operator>>(istream &in, Vector &v) {
     string s;
-    do{
-      getline(in,s);
-    }while(is_all_white(s));
+    do {
+      getline(in, s);
+    } while (is_all_white(s));
     v = str2vec(s);
-    return in; }
+    return in;
+  }
 
-  Vector read_Vector(istream &in){
+  Vector read_Vector(istream &in) {
     string line;
     getline(in, line);
-    return str2vec(line);}
+    return str2vec(line);
+  }
 
   namespace {
     template <class VEC1, class VEC2>
-    Vector concat_impl(const VEC1 &x, const VEC2 &y){
+    Vector concat_impl(const VEC1 &x, const VEC2 &y) {
       Vector ans(x);
       ans.concat(y);
       return ans;
     }
 
-    template<class VEC>
-    Vector scalar_concat_impl(double x, const VEC &v){
+    template <class VEC>
+    Vector scalar_concat_impl(double x, const VEC &v) {
       Vector ans(1, x);
       return ans.concat(v);
     }
+  }  // namespace
+
+  Vector concat(const Vector &x, const Vector &y) { return concat_impl(x, y); }
+  Vector concat(const Vector &x, const VectorView &y) {
+    return concat_impl(x, y);
   }
-
-  Vector concat(const Vector &x, const Vector &y){
-    return concat_impl(x, y);}
-  Vector concat(const Vector &x, const VectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const Vector &x, const ConstVectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const Vector &x, double y){
-    Vector ans(x); ans.push_back(y); return ans;}
-
-  Vector concat(const VectorView &x, const Vector &y){
-    return concat_impl(x, y);}
-  Vector concat(const VectorView &x, const VectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const VectorView &x, const ConstVectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const VectorView &x, double y){
-    Vector ans(x); ans.push_back(y); return ans;}
-
-  Vector concat(const ConstVectorView &x, const Vector &y){
-    return concat_impl(x, y);}
-  Vector concat(const ConstVectorView &x, const VectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const ConstVectorView &x, const ConstVectorView &y){
-    return concat_impl(x, y);}
-  Vector concat(const ConstVectorView &x, double y){
-    Vector ans(x); ans.push_back(y); return ans;}
-
-  Vector concat(double x, const Vector &y){
-    return scalar_concat_impl(x, y);}
-  Vector concat(double x, const VectorView &y){
-    return scalar_concat_impl(x, y);}
-  Vector concat(double x, const ConstVectorView &y){
-    return scalar_concat_impl(x, y);}
-
-  Vector select(const Vector &v, const std::vector<bool> & inc,
-                uint nvars){
-    Vector ans(nvars);
-    assert( (v.size()==inc.size()) && (inc.size()>=nvars) );
-    uint I=0;
-    for(uint i=0; i<nvars; ++i)
-      if(inc[i])
-        ans[I++] = v[i];
+  Vector concat(const Vector &x, const ConstVectorView &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const Vector &x, double y) {
+    Vector ans(x);
+    ans.push_back(y);
     return ans;
   }
 
-  Vector select(const Vector &v, const std::vector<bool> &inc){
+  Vector concat(const VectorView &x, const Vector &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const VectorView &x, const VectorView &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const VectorView &x, const ConstVectorView &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const VectorView &x, double y) {
+    Vector ans(x);
+    ans.push_back(y);
+    return ans;
+  }
+
+  Vector concat(const ConstVectorView &x, const Vector &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const ConstVectorView &x, const VectorView &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const ConstVectorView &x, const ConstVectorView &y) {
+    return concat_impl(x, y);
+  }
+  Vector concat(const ConstVectorView &x, double y) {
+    Vector ans(x);
+    ans.push_back(y);
+    return ans;
+  }
+
+  Vector concat(double x, const Vector &y) { return scalar_concat_impl(x, y); }
+  Vector concat(double x, const VectorView &y) {
+    return scalar_concat_impl(x, y);
+  }
+  Vector concat(double x, const ConstVectorView &y) {
+    return scalar_concat_impl(x, y);
+  }
+
+  Vector select(const Vector &v, const std::vector<bool> &inc, uint nvars) {
+    Vector ans(nvars);
+    assert((v.size() == inc.size()) && (inc.size() >= nvars));
+    uint I = 0;
+    for (uint i = 0; i < nvars; ++i)
+      if (inc[i]) ans[I++] = v[i];
+    return ans;
+  }
+
+  Vector select(const Vector &v, const std::vector<bool> &inc) {
     uint nvars(std::accumulate(inc.begin(), inc.end(), 0));
-    return select(v,inc,nvars);
+    return select(v, inc, nvars);
   }
 
-  Vector sort(const Vector &v){
+  Vector sort(const Vector &v) {
     Vector ans(v);
     return ans.sort();
   }
 
-  Vector sort(const VectorView &v){
+  Vector sort(const VectorView &v) {
     Vector ans(v);
     return ans.sort();
   }
 
-  Vector sort(const ConstVectorView &v){
+  Vector sort(const ConstVectorView &v) {
     Vector ans(v);
     return ans.sort();
   }
@@ -887,13 +902,9 @@ namespace BOOM{
     return ans;
   }
 
-  Vector rev(const VectorView &v) {
-    return rev(ConstVectorView(v));
-  }
+  Vector rev(const VectorView &v) { return rev(ConstVectorView(v)); }
 
-  Vector rev(const Vector &v) {
-    return rev(ConstVectorView(v));
-  }
+  Vector rev(const Vector &v) { return rev(ConstVectorView(v)); }
 
   double sorted_vector_quantile(const ConstVectorView &v, double quantile) {
     if (quantile < 0 || quantile > 1) {
@@ -936,4 +947,4 @@ namespace BOOM{
   std::vector<int> round(const VectorView &v) { return round_impl(v); }
   std::vector<int> round(const ConstVectorView &v) { return round_impl(v); }
 
-} // BOOM
+}  // namespace BOOM

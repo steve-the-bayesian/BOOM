@@ -68,6 +68,7 @@ namespace BOOM {
     //======================================================================
     class ProbitSufficientStatistics : public SufficientStatisticsBase {
      public:
+      ProbitSufficientStatistics();
       ProbitSufficientStatistics *clone() const override;
       void clear() override;
       void update(const ResidualRegressionData &abstract_data) override;

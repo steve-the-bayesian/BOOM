@@ -87,38 +87,47 @@ namespace BOOM {
     // The dimension of the state vector.
     virtual uint state_dimension() const = 0;
 
-    // The dimension of the full-rank state error term.  This might be
-    // smaller than state_dimension if the transition equation
-    // contains a determinisitc component.  For example, the seasonal
-    // model has state_dimension = number_of_seasons - 1, but
-    // state_error_dimension = 1.
+    // The dimension of the full-rank state error term.  This might be smaller
+    // than state_dimension if the transition equation contains a deterministic
+    // component.  For example, the seasonal model has state_dimension =
+    // number_of_seasons - 1, but state_error_dimension = 1.
     virtual uint state_error_dimension() const = 0;
 
-    // Add the observed error mean and variance to the complete data
-    // sufficient statistics.  Child classes can choose to implement
-    // this method by throwing an exception.
+    // Add the observed error mean and variance to the complete data sufficient
+    // statistics.  Child classes can choose to implement this method by
+    // throwing an exception.
     virtual void update_complete_data_sufficient_statistics(
         int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) = 0;
 
-    // Add the expected value of the derivative of log likelihood to
-    // the gradient.  Child classes can choose to implement this
-    // method by throwing an exception.
+    // Add the expected value of the derivative of log likelihood to the
+    // gradient.  Child classes can choose to implement this method by throwing
+    // an exception.
     //
     // Args:
-    //   gradient: Subset of the gradient vector corresponding to this
-    //     state model.
+    //   gradient: Subset of the gradient vector corresponding to this state
+    //     model.
     //   t: The time index of the state innovation, which is for the
     //     t -> t+1 transition.
     //   state_error_mean: Subset of the state error mean for time t
     //     corresponding to this state model.
-    //   state_error_variance: Subset of the state error variance for
-    //     time t corresponding to this state model.
+    //   state_error_variance: Subset of the state error variance for time t
+    //     corresponding to this state model.
     virtual void increment_expected_gradient(
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance);
 
     // Simulates the state eror at time t, for moving to time t+1.
+    // Args:
+    //   rng:  The random number generator to use for the simulation.
+    //   eta: A view into the error term to be simulated.  ***NOTE***: that
+    //     eta.size() should match state_dimension(), not
+    //     state_error_dimension().  If the error distribution is not full rank
+    //     then some components of eta will be deterministic functions of others
+    //     (most likely just zero).
+    //   t: The time index of the error.  The convention is that state[t+1] =
+    //     T[t] * state[t] + error[t], so errors at time t are part of the state
+    //     at time t+1.
     virtual void simulate_state_error(RNG &rng, VectorView eta,
                                       int t) const = 0;
     virtual void simulate_initial_state(RNG &rng, VectorView eta) const;

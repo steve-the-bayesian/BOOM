@@ -17,8 +17,9 @@ namespace {
   class SeasonalTest : public ::testing::Test {
    protected:
     SeasonalTest()
-        : day_of_week_cycle_(new SeasonalStateModel(7, 1)),
-          weekly_annual_cycle_(new SeasonalStateModel(52, 7)),
+        : weeks_per_year_(18),
+          day_of_week_cycle_(new SeasonalStateModel(7, 1)),
+          weekly_annual_cycle_(new SeasonalStateModel(weeks_per_year_, 7)),
           sigma_obs_(.5)
     {
       GlobalRng::rng.seed(8675309);
@@ -41,11 +42,9 @@ namespace {
     }
     
     void SimulateData() {
-      nobs_ = 1000;
+      nobs_ = 500;
       int state_dimension = day_of_week_cycle_->state_dimension() +
           weekly_annual_cycle_->state_dimension();
-      int state_error_dimension = day_of_week_cycle_->state_error_dimension() +
-          weekly_annual_cycle_->state_error_dimension();
       true_state_ = Matrix(state_dimension, nobs_);
       series_ = Vector(nobs_);
       
@@ -67,25 +66,23 @@ namespace {
           transition.add_block(weekly_annual_cycle_->state_transition_matrix(i));
           state = transition * state;
           
-          Vector state_error(state_error_dimension);
+          Vector state_error(state_dimension);
           day_of_week_cycle_->simulate_state_error(
               GlobalRng::rng,
-              VectorView(state_error, 0, day_of_week_cycle_->state_error_dimension()),
+              VectorView(state_error, 0, day_of_week_cycle_->state_dimension()),
               i);
           weekly_annual_cycle_->simulate_state_error(
               GlobalRng::rng,
-              VectorView(state_error, day_of_week_cycle_->state_error_dimension(),
-                         weekly_annual_cycle_->state_error_dimension()),
+              VectorView(state_error, day_of_week_cycle_->state_dimension(),
+                         weekly_annual_cycle_->state_dimension()),
               i);
-
-          BlockDiagonalMatrix error_expander;
-          error_expander.add_block(day_of_week_cycle_->state_error_expander(i));
-          error_expander.add_block(weekly_annual_cycle_->state_error_expander(i));
-          state += error_expander * state_error;
+          state += state_error;
         }
       }
     }
-    
+
+    // Make weeks_per_year_ smaller than 52 to keep the test running fast.
+    int weeks_per_year_;
     Ptr<SeasonalStateModel> day_of_week_cycle_;
     Ptr<SeasonalStateModel> weekly_annual_cycle_;
     double sigma_obs_;
@@ -98,7 +95,7 @@ namespace {
   TEST_F(SeasonalTest, Basics) {
     EXPECT_EQ(7 - 1, day_of_week_cycle_->state_dimension());
     EXPECT_EQ(1, day_of_week_cycle_->state_error_dimension());
-    EXPECT_EQ(52 - 1, weekly_annual_cycle_->state_dimension());
+    EXPECT_EQ(weeks_per_year_ - 1, weekly_annual_cycle_->state_dimension());
     EXPECT_EQ(1, weekly_annual_cycle_->state_error_dimension());
     
     EXPECT_TRUE(day_of_week_cycle_->new_season(0));
@@ -117,7 +114,7 @@ namespace {
     EXPECT_FALSE(weekly_annual_cycle_->new_season(8));
     EXPECT_TRUE(weekly_annual_cycle_->new_season(14));
 
-    Vector state_error(1);
+    Vector state_error(weekly_annual_cycle_->state_dimension());
     weekly_annual_cycle_->simulate_state_error(
         GlobalRng::rng, VectorView(state_error), 0);
     EXPECT_DOUBLE_EQ(state_error[0], 0.0);
@@ -149,7 +146,7 @@ namespace {
         day_of_week_cycle_->initial_state_variance());
     model->add_state(daily_model);
 
-    NEW(SeasonalStateModel, weekly_model)(52, 7);
+    NEW(SeasonalStateModel, weekly_model)(weeks_per_year_, 7);
     NEW(ChisqModel, weekly_precision_prior)(1, 1);
     NEW(ZeroMeanGaussianConjSampler, weekly_sampler)(
         weekly_model.get(), weekly_precision_prior);

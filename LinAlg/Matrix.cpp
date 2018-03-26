@@ -18,78 +18,67 @@
 */
 
 // std library includes
-#include <iostream>
-#include <iomanip>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <functional>
+#include <iomanip>
+#include <iostream>
 #include <numeric>
 #include <sstream>
-#include <algorithm>
-#include <functional>
-#include <vector>
 #include <string>
+#include <vector>
 
 // other linear algebra
+#include "LinAlg/Cholesky.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Matrix.hpp"
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/VectorView.hpp"
+#include "LinAlg/QR.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/SubMatrix.hpp"
-#include "LinAlg/DiagonalMatrix.hpp"
-#include "LinAlg/Cholesky.hpp"
-#include "LinAlg/QR.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
-#include "LinAlg/EigenMap.hpp"
 #include "Eigen/LU"
 #include "Eigen/SVD"
+#include "LinAlg/EigenMap.hpp"
 
 // other BOOM
-#include "distributions.hpp"
-#include "cpputil/string_utils.hpp"
 #include "cpputil/Split.hpp"
 #include "cpputil/report_error.hpp"
+#include "cpputil/string_utils.hpp"
+#include "distributions.hpp"
 
 typedef std::vector<double> dVector;
 
-namespace BOOM{
+namespace BOOM {
 
   inline bool can_add(const Matrix &A, const Matrix &B) {
-    return  (A.nrow() == B.nrow()) && (A.ncol() == B.ncol());
+    return (A.nrow() == B.nrow()) && (A.ncol() == B.ncol());
   }
 
   using namespace std;
-  Matrix::Matrix()
-    : V(),
-      nr_(0),
-      nc_(0)
-  {}
+  Matrix::Matrix() : V(), nr_(0), nc_(0) {}
 
   Matrix::Matrix(uint nr, uint nc, double x)
-    : V(nr*nc, x),
-      nr_(nr),
-      nc_(nc)
-  {}
+      : V(nr * nc, x), nr_(nr), nc_(nc) {}
 
   Matrix::Matrix(uint nr, uint nc, const double *m, bool byrow)
-    : V(&m[0], &m[nr*nc]),
-      nr_(nr),
-      nc_(nc)
-  {
+      : V(&m[0], &m[nr * nc]), nr_(nr), nc_(nc) {
     if (byrow) {
-      for (uint i=0; i<nr; ++i) {
-        for (uint j=0; j<nc; ++j) {
-          V[INDX(i,j)]= *m++;}}}
+      for (uint i = 0; i < nr; ++i) {
+        for (uint j = 0; j < nc; ++j) {
+          V[INDX(i, j)] = *m++;
+        }
+      }
+    }
   }
 
   Matrix::Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow)
-      : V(v),
-        nr_(nr),
-        nc_(nc)
-  {
+      : V(v), nr_(nr), nc_(nc) {
     if (v.size() != nr * nc) {
       ostringstream err;
-      err << "Size of vector (" << v.size()
-          << ") does not match dimensions ("
+      err << "Size of vector (" << v.size() << ") does not match dimensions ("
           << nr << ", " << nc << ") in Matrix constructor.";
       report_error(err.str());
     }
@@ -103,74 +92,75 @@ namespace BOOM{
     }
   }
 
-  Matrix::Matrix(const std::string & s, const std::string &row_delim) {
+  Matrix::Matrix(const std::string &s, const std::string &row_delim) {
     BOOM::StringSplitter rowsplit(row_delim);
     std::vector<string> row_strings = rowsplit(s);
 
     nr_ = row_strings.size();
     std::vector<Vector> v;
     v.reserve(nr_);
-    nc_ =0;
-    for (uint i=0; i<nr_; ++i) {
+    nc_ = 0;
+    for (uint i = 0; i < nr_; ++i) {
       Vector row(row_strings[i]);
       v.push_back(row);
-      if (i==0) {
+      if (i == 0) {
         nc_ = v[0].size();
-      } else if (v[i].size()!=nc_) {
+      } else if (v[i].size() != nc_) {
         string msg =
             "Attempt to initialize Matrix with rows of differing lengths";
         report_error(msg.c_str());
       }
     }
-    V.resize(nr_*nc_);
-    for (uint i=0; i<nr_; ++i) set_row(i,v[i]);
+    V.resize(nr_ * nc_);
+    for (uint i = 0; i < nr_; ++i) set_row(i, v[i]);
   }
 
-  Matrix::Matrix(const SubMatrix &rhs) {
-    operator=(rhs);
-  }
+  Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
 
-  Matrix::Matrix(const ConstSubMatrix &rhs) {
-    operator=(rhs);
-  }
+  Matrix::Matrix(const ConstSubMatrix &rhs) { operator=(rhs); }
 
-  Matrix & Matrix::operator=(const SubMatrix & rhs) {
+  Matrix &Matrix::operator=(const SubMatrix &rhs) {
     nr_ = rhs.nrow();
     nc_ = rhs.ncol();
-    V.resize(nr_*nc_);
-    for (uint j = 0; j<nc_; ++j) col(j) = rhs.col(j);
+    V.resize(nr_ * nc_);
+    for (uint j = 0; j < nc_; ++j) col(j) = rhs.col(j);
     return *this;
   }
 
-  Matrix & Matrix::operator=(const ConstSubMatrix & rhs) {
+  Matrix &Matrix::operator=(const ConstSubMatrix &rhs) {
     nr_ = rhs.nrow();
     nc_ = rhs.ncol();
-    V.resize(nr_*nc_);
-    for (uint j = 0; j<nc_; ++j) col(j) = rhs.col(j);
+    V.resize(nr_ * nc_);
+    for (uint j = 0; j < nc_; ++j) col(j) = rhs.col(j);
     return *this;
   }
 
-  Matrix & Matrix::operator=(const double &x) {
+  Matrix &Matrix::operator=(const double &x) {
     if (V.empty()) {
       V.resize(1);
       nr_ = nc_ = 1;
     }
-    V.assign(V.size(), x); //
-    return *this; }
+    V.assign(V.size(), x);  //
+    return *this;
+  }
 
   bool Matrix::operator==(const Matrix &rhs) const {
-    if (nr_ != rhs.nr_ || nc_!=rhs.nc_) return false;
-    else return (V== rhs.V); }
+    if (nr_ != rhs.nr_ || nc_ != rhs.nc_)
+      return false;
+    else
+      return (V == rhs.V);
+  }
 
   void Matrix::swap(Matrix &rhs) {
     std::swap(nr_, rhs.nr_);
     std::swap(nc_, rhs.nc_);
-    std::swap(V, rhs.V); }
+    std::swap(V, rhs.V);
+  }
 
-  Matrix & Matrix::randomize() {
+  Matrix &Matrix::randomize() {
     uint n = nr_ * nc_;
-    for (uint i=0; i<n; ++i) {
-      V[i] = runif (0,1);
+    for (uint i = 0; i < n; ++i) {
+      V[i] = runif(0, 1);
     }
     return *this;
   }
@@ -180,7 +170,7 @@ namespace BOOM{
   bool Matrix::all_finite() const {
     size_t n = V.size();
     const double *d(V.data());
-    for (size_t i = 0; i < n; ++i){
+    for (size_t i = 0; i < n; ++i) {
       if (!std::isfinite(d[i])) {
         return false;
       }
@@ -188,17 +178,16 @@ namespace BOOM{
     return true;
   }
 
-  uint Matrix::size() const { return V.size();}
-  uint Matrix::nrow() const { return nr_;}
-  uint Matrix::ncol() const { return nc_;}
+  uint Matrix::size() const { return V.size(); }
+  uint Matrix::nrow() const { return nr_; }
+  uint Matrix::ncol() const { return nc_; }
 
   double Matrix::distance_from_symmetry() const {
     if (nr_ != nc_) return infinity();
     double num = 0, denom = 0;
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < i; ++j) {
-        num = std::max<double>(
-            num, fabs(unchecked(i, j) - unchecked(j, i)));
+        num = std::max<double>(num, fabs(unchecked(i, j) - unchecked(j, i)));
         denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
       }
       // Include the diagonal when figuring the average size of the matrix
@@ -223,21 +212,22 @@ namespace BOOM{
     return nr_ == A.nr_ && nc_ == A.nc_;
   }
 
-  bool Matrix::is_square() const { return nr_==nc_;}
+  bool Matrix::is_square() const { return nr_ == nc_; }
 
   bool Matrix::is_pos_def() const {
-    if (!is_square())return false;
+    if (!is_square()) return false;
     Chol choldc(*this);
-    return choldc.is_pos_def(); }
+    return choldc.is_pos_def();
+  }
 
-  Matrix & Matrix::resize(uint nr, uint nc) {
-    V.resize(nr*nc);
+  Matrix &Matrix::resize(uint nr, uint nc) {
+    V.resize(nr * nc);
     nr_ = nr;
     nc_ = nc;
     return *this;
   }
 
-  Matrix & Matrix::rbind(const Matrix &A) {
+  Matrix &Matrix::rbind(const Matrix &A) {
     if (nrow() == 0) {
       *this = A;
       return *this;
@@ -247,7 +237,7 @@ namespace BOOM{
       Matrix B(A);
       return rbind(B);
     }
-    V.reserve(nc_* (nr_ + A.nrow()));
+    V.reserve(nc_ * (nr_ + A.nrow()));
     for (int i = 0; i < nc_; ++i) {
       // The call to insert dynamically manages V's size.  It also invalidates
       // iterators, so 'insertion_point' needs to be recomputed each time.
@@ -258,7 +248,7 @@ namespace BOOM{
     return *this;
   }
 
-  Matrix & Matrix::rbind(const Vector &A) {
+  Matrix &Matrix::rbind(const Vector &A) {
     if (nrow() == 0) {
       resize(1, A.size());
       row(0) = A;
@@ -268,27 +258,27 @@ namespace BOOM{
     }
     V.reserve((nr_ + 1) * nc_);
     for (int i = 0; i < A.size(); ++i) {
-      V.insert(V.begin() + i + (i+1) * nr_, A[i]);
+      V.insert(V.begin() + i + (i + 1) * nr_, A[i]);
     }
     ++nr_;
     return *this;
   }
 
-  Matrix & Matrix::cbind(const Matrix &A) {
-    if (nrow()==0) {
+  Matrix &Matrix::cbind(const Matrix &A) {
+    if (nrow() == 0) {
       *this = A;
       return *this;
     }
-    assert(A.nrow()==nrow());
+    assert(A.nrow() == nrow());
     uint nc = nc_;
-    nc_+= A.ncol();
-    resize(nr_,nc_);
+    nc_ += A.ncol();
+    resize(nr_, nc_);
     std::copy(A.begin(), A.end(), col_begin(nc));
     return *this;
   }
 
-  Matrix & Matrix::cbind(const Vector &A) {
-    if (nrow()==0) {
+  Matrix &Matrix::cbind(const Vector &A) {
+    if (nrow() == 0) {
       resize(A.size(), 1);
       col(0) = A;
       return *this;
@@ -296,124 +286,126 @@ namespace BOOM{
     if (A.size() != nrow()) {
       ostringstream err;
       err << "Improperly sized argument to cbind.  "
-          << "The LHS matrix has dimension "
-          << nrow() << " x " << ncol()
-          << ".  The RHS vector has length "
-          << A.size() << endl
-          << "LHS = " << *this
-          << "RHS = " << A << endl;
+          << "The LHS matrix has dimension " << nrow() << " x " << ncol()
+          << ".  The RHS vector has length " << A.size() << endl
+          << "LHS = " << *this << "RHS = " << A << endl;
       report_error(err.str());
     }
-    nc_+= 1;
-    resize(nr_,nc_);
-    std::copy(A.begin(), A.end(), col_begin(nc_-1));
+    nc_ += 1;
+    resize(nr_, nc_);
+    std::copy(A.begin(), A.end(), col_begin(nc_ - 1));
     return *this;
   }
 
-  double * Matrix::data() {
-    return V.data();
+  double *Matrix::data() { return V.data(); }
+
+  const double *Matrix::data() const { return V.data(); }
+
+  double &Matrix::operator()(uint i, uint j) {
+    assert(inrange(i, j));
+    return V[INDX(i, j)];
   }
 
-  const double * Matrix::data() const {
-    return V.data();
+  const double &Matrix::operator()(uint i, uint j) const {
+    assert(inrange(i, j));
+    return V[INDX(i, j)];
   }
 
-  double & Matrix::operator()(uint i, uint j) {
-    assert(inrange(i,j));
-    return V[INDX(i,j)];}
+  double &Matrix::unchecked(uint i, uint j) { return V[INDX(i, j)]; }
 
-  const double & Matrix::operator()(uint i, uint j) const {
-    assert(inrange(i,j));
-    return V[INDX(i,j)];}
-
-  double & Matrix::unchecked(uint i, uint j) {
-    return V[INDX(i,j)];}
-
-  const double & Matrix::unchecked(uint i, uint j) const {
-    return V[INDX(i,j)];}
-
+  const double &Matrix::unchecked(uint i, uint j) const {
+    return V[INDX(i, j)];
+  }
 
   ConstVectorView Matrix::row(uint i) const {
-    return ConstVectorView (data()+i, ncol(), nrow());}
+    return ConstVectorView(data() + i, ncol(), nrow());
+  }
 
   VectorView Matrix::row(uint i) {
-    return VectorView(data()+i, ncol(), nrow());}
+    return VectorView(data() + i, ncol(), nrow());
+  }
 
   void Matrix::set_row(uint i, const Vector &v) {
-    assert(v.size()==nc_);
-    for (uint j=0; j<nc_; ++j) unchecked(i,j) = v[j];}
+    assert(v.size() == nc_);
+    for (uint j = 0; j < nc_; ++j) unchecked(i, j) = v[j];
+  }
 
   void Matrix::set_row(uint i, const double *v) {
-    for (uint j=0; j<nc_; ++j) unchecked(i,j) = v[j];}
+    for (uint j = 0; j < nc_; ++j) unchecked(i, j) = v[j];
+  }
 
   void Matrix::set_row(uint i, const double x) {
-    for (uint j=0; j<nc_; ++j) unchecked(i,j) = x;}
-
+    for (uint j = 0; j < nc_; ++j) unchecked(i, j) = x;
+  }
 
   VectorView Matrix::col(uint j) {
     double *start = &(*col_begin(j));
-    return VectorView(start, nrow(), 1);}
+    return VectorView(start, nrow(), 1);
+  }
 
   const VectorView Matrix::col(uint j) const {
     double *start = const_cast<double *>(&(*col_begin(j)));
-    return VectorView(start, nrow(), 1);}
+    return VectorView(start, nrow(), 1);
+  }
 
   void Matrix::set_col(uint j, const Vector &v) {
-    std::copy(v.begin(), v.end(), col_begin(j)); }
+    std::copy(v.begin(), v.end(), col_begin(j));
+  }
 
   void Matrix::set_col(uint j, const double *v) {
-    std::copy(v, v+nr_, col_begin(j)); }
+    std::copy(v, v + nr_, col_begin(j));
+  }
 
   void Matrix::set_col(uint j, double x) {
-    std::fill(col_begin(j), col_end(j), x); }
+    std::fill(col_begin(j), col_end(j), x);
+  }
 
-  void Matrix::set_rc(uint i,  double x) {
+  void Matrix::set_rc(uint i, double x) {
     assert(is_square());
-    for (uint k=0; k<nr_; ++k) unchecked(i,k) = unchecked(k,i) = x;}
-
+    for (uint k = 0; k < nr_; ++k) unchecked(i, k) = unchecked(k, i) = x;
+  }
 
   ConstVectorView Matrix::diag() const {
-    uint m = std::min(nr_,nc_);
-    ConstVectorView ans(data(), m, nrow()+1);
+    uint m = std::min(nr_, nc_);
+    ConstVectorView ans(data(), m, nrow() + 1);
     return ans;
   }
 
   VectorView Matrix::diag() {
-    uint m = std::min(nr_,nc_);
-    return  VectorView(data(), m, nrow()+1);}
+    uint m = std::min(nr_, nc_);
+    return VectorView(data(), m, nrow() + 1);
+  }
 
   VectorView Matrix::subdiag(int i) {
     if (i < 0) return superdiag(-i);
-    int m = std::min(nr_,nc_);
-    return VectorView(data()+i, m - i, nrow() + 1);
+    int m = std::min(nr_, nc_);
+    return VectorView(data() + i, m - i, nrow() + 1);
   }
 
   ConstVectorView Matrix::subdiag(int i) const {
     if (i < 0) return superdiag(-i);
-    int m = std::min(nr_,nc_);
-    return ConstVectorView(data()+i, m - i, nrow() + 1);
+    int m = std::min(nr_, nc_);
+    return ConstVectorView(data() + i, m - i, nrow() + 1);
   }
 
   VectorView Matrix::superdiag(int i) {
     if (i < 0) return subdiag(-i);
     int m = std::min(nr_, nc_);
-    return VectorView(data() + i*nr_, m - i, nrow() + 1);
+    return VectorView(data() + i * nr_, m - i, nrow() + 1);
   }
 
   ConstVectorView Matrix::superdiag(int i) const {
     if (i < 0) return subdiag(-i);
     int m = std::min(nr_, nc_);
-    return ConstVectorView(data() + i*nr_, m - i, nrow() + 1);
+    return ConstVectorView(data() + i * nr_, m - i, nrow() + 1);
   }
 
-  VectorView Matrix::first_row() {
-    return VectorView(data(), ncol(), nrow()); }
+  VectorView Matrix::first_row() { return VectorView(data(), ncol(), nrow()); }
   ConstVectorView Matrix::first_row() const {
-    return ConstVectorView(data(), ncol(), nrow()); }
-
-  VectorView Matrix::first_col() {
-    return VectorView(data(), nrow(), 1);
+    return ConstVectorView(data(), ncol(), nrow());
   }
+
+  VectorView Matrix::first_col() { return VectorView(data(), nrow(), 1); }
 
   ConstVectorView Matrix::first_col() const {
     return ConstVectorView(data(), nrow(), 1);
@@ -421,145 +413,149 @@ namespace BOOM{
 
   VectorView Matrix::last_row() {
     uint nr = nrow();
-    return VectorView(data()+nr-1, ncol(), nr);
+    return VectorView(data() + nr - 1, ncol(), nr);
   }
   ConstVectorView Matrix::last_row() const {
     uint nr = nrow();
-    return ConstVectorView(data()+nr-1, ncol(), nr);
+    return ConstVectorView(data() + nr - 1, ncol(), nr);
   }
   VectorView Matrix::last_col() {
     uint nc = ncol();
     uint nr = nrow();
-    return VectorView(data()+(nc-1)*nr, nr, 1);
+    return VectorView(data() + (nc - 1) * nr, nr, 1);
   }
   ConstVectorView Matrix::last_col() const {
     uint nc = ncol();
     uint nr = nrow();
-    return ConstVectorView(data()+(nc-1)*nr, nr, 1);
+    return ConstVectorView(data() + (nc - 1) * nr, nr, 1);
   }
 
-
-  Matrix & Matrix::set_diag(double x, bool zero_off) {
+  Matrix &Matrix::set_diag(double x, bool zero_off) {
     if (zero_off) operator=(0.0);
-    diag()=x;
-    return *this; }
+    diag() = x;
+    return *this;
+  }
 
-  Matrix & Matrix::set_diag(const Vector &v, bool zero_off) {
+  Matrix &Matrix::set_diag(const Vector &v, bool zero_off) {
     if (zero_off) operator=(0.0);
-    assert(v.size()== std::min(nr_, nc_));
-    diag()=v;
-    return *this; }
+    assert(v.size() == std::min(nr_, nc_));
+    diag() = v;
+    return *this;
+  }
 
-  dVector::iterator Matrix::col_begin(uint j) {
-    return V.begin() + j*nr_; }
+  dVector::iterator Matrix::col_begin(uint j) { return V.begin() + j * nr_; }
   dVector::iterator Matrix::col_end(uint j) {
-    return V.begin() + (j+1)*nr_; }
+    return V.begin() + (j + 1) * nr_;
+  }
   dVector::const_iterator Matrix::col_begin(uint j) const {
-    return V.begin() + j*nr_; }
+    return V.begin() + j * nr_;
+  }
   dVector::const_iterator Matrix::col_end(uint j) const {
-    return V.begin() + (j+1)*nr_; }
+    return V.begin() + (j + 1) * nr_;
+  }
 
-  dVector::iterator Matrix::begin() {
-    return V.begin();}
-  dVector::const_iterator Matrix::begin() const {
-    return V.begin();}
-  dVector::iterator Matrix::end() {
-    return V.end();}
-  dVector::const_iterator Matrix::end() const {
-    return V.end();}
+  dVector::iterator Matrix::begin() { return V.begin(); }
+  dVector::const_iterator Matrix::begin() const { return V.begin(); }
+  dVector::iterator Matrix::end() { return V.end(); }
+  dVector::const_iterator Matrix::end() const { return V.end(); }
 
   VectorViewIterator Matrix::dbegin() {
-    return VectorViewIterator(&V.front(), &V.front(), ncol()+1); }
+    return VectorViewIterator(&V.front(), &V.front(), ncol() + 1);
+  }
   VectorViewIterator Matrix::dend() {  // make it right for rectangular matrices
     uint m = std::min(nr_, nc_);
-    uint stride = ncol()+1;
-    double * last_ = &(unchecked(m-1, m-1)) + stride;
-    return VectorViewIterator(last_, &unchecked(0,0), stride);
+    uint stride = ncol() + 1;
+    double *last_ = &(unchecked(m - 1, m - 1)) + stride;
+    return VectorViewIterator(last_, &unchecked(0, 0), stride);
   }
 
   VectorViewConstIterator Matrix::dbegin() const {
-    return VectorViewConstIterator(&(V.front()), &(V.back()), ncol()+1); }
+    return VectorViewConstIterator(&(V.front()), &(V.back()), ncol() + 1);
+  }
   VectorViewConstIterator Matrix::dend() const {
     return VectorViewConstIterator(
-        &V.front(),
-        &(V.back())+ ncol()+1,
-        ncol()+1);
+        &V.front(), &(V.back()) + ncol() + 1, ncol() + 1);
   }
 
   VectorViewIterator Matrix::row_begin(uint i) {
-    double *b = data()+i;
+    double *b = data() + i;
     uint stride = nrow();
-    return VectorViewIterator(b,b,stride);}
+    return VectorViewIterator(b, b, stride);
+  }
 
   VectorViewIterator Matrix::row_end(uint i) {
-    double *b = data()+i;
+    double *b = data() + i;
     uint stride = nrow();
-    double *e = b + ncol()*stride;
-    return VectorViewIterator(e,b,stride);}
+    double *e = b + ncol() * stride;
+    return VectorViewIterator(e, b, stride);
+  }
 
   VectorViewConstIterator Matrix::row_begin(uint i) const {
-    const double *b = data()+i;
+    const double *b = data() + i;
     uint stride = nrow();
-    return VectorViewConstIterator(b,b,stride);}
+    return VectorViewConstIterator(b, b, stride);
+  }
 
   VectorViewConstIterator Matrix::row_end(uint i) const {
-    const double *b = data()+i;
+    const double *b = data() + i;
     uint stride = nrow();
-    const double *e = b + ncol()*stride;
-    return VectorViewConstIterator(e,b,stride);}
-
+    const double *e = b + ncol() * stride;
+    return VectorViewConstIterator(e, b, stride);
+  }
 
   //------------ linear algebra ------------------------
 
   bool Matrix::can_mult(const Matrix &B, const Matrix &ans) const {
-    return nrow()==ans.nrow() && B.ncol()==ans.ncol() && ncol() == B.nrow();}
+    return nrow() == ans.nrow() && B.ncol() == ans.ncol() && ncol() == B.nrow();
+  }
 
   bool Matrix::can_Tmult(const Matrix &B, const Matrix &ans) const {
-    return ncol()==ans.nrow() && B.ncol()==ans.ncol() && nrow() == B.nrow();}
+    return ncol() == ans.nrow() && B.ncol() == ans.ncol() && nrow() == B.nrow();
+  }
 
   bool Matrix::can_multT(const Matrix &B, const Matrix &ans) const {
-    return nrow()==ans.nrow() && B.nrow()==ans.ncol() && ncol() == B.ncol();}
+    return nrow() == ans.nrow() && B.nrow() == ans.ncol() && ncol() == B.ncol();
+  }
 
-  Matrix & Matrix::mult(const Matrix &B, Matrix &ans, double scal) const {
-    assert(can_mult(B,ans));
+  Matrix &Matrix::mult(const Matrix &B, Matrix &ans, double scal) const {
+    assert(can_mult(B, ans));
     EigenMap(ans) = EigenMap(*this) * EigenMap(B) * scal;
     return ans;
   }
 
-  Matrix & Matrix::Tmult(const Matrix &B, Matrix &ans, double scal) const {
+  Matrix &Matrix::Tmult(const Matrix &B, Matrix &ans, double scal) const {
     assert(can_Tmult(B, ans));
     EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(B) * scal;
     return ans;
   }
 
-  Matrix & Matrix::multT(const Matrix &B, Matrix &ans, double scal) const {
-    assert(can_multT(B,ans));
+  Matrix &Matrix::multT(const Matrix &B, Matrix &ans, double scal) const {
+    assert(can_multT(B, ans));
     EigenMap(ans) = EigenMap(*this) * EigenMap(B).transpose() * scal;
     return ans;
   }
 
   //------- support for spd matrices --------
 
-  Matrix & Matrix::mult(const SpdMatrix &S, Matrix & ans, double scal) const {
-    assert(can_mult(S,ans));
-    EigenMap(ans) = EigenMap(*this)
-        * scal * EigenMap(S).selfadjointView<Eigen::Upper>();
+  Matrix &Matrix::mult(const SpdMatrix &S, Matrix &ans, double scal) const {
+    assert(can_mult(S, ans));
+    EigenMap(ans) =
+        EigenMap(*this) * scal * EigenMap(S).selfadjointView<Eigen::Upper>();
     return ans;
   }
 
-  Matrix & Matrix::Tmult(const SpdMatrix &S, Matrix & ans, double scal) const {
+  Matrix &Matrix::Tmult(const SpdMatrix &S, Matrix &ans, double scal) const {
     return Tmult(static_cast<const Matrix &>(S), ans, scal);
   }
 
-  Matrix & Matrix::multT(const SpdMatrix &S, Matrix & ans, double scal) const {
+  Matrix &Matrix::multT(const SpdMatrix &S, Matrix &ans, double scal) const {
     return mult(S, ans, scal);
   }
 
   //----------- diagonal matrices ----------
 
-  Matrix & Matrix::mult(const DiagonalMatrix &d,
-                        Matrix &ans,
-                        double scal) const {
+  Matrix &Matrix::mult(const DiagonalMatrix &d, Matrix &ans,
+                       double scal) const {
     assert(ncol() == d.nrow());
     ans = *this;
     const Vector &diagonal_values(d.diag());
@@ -571,9 +567,8 @@ namespace BOOM{
 
   // The diagonal matrix scales the columns of this->transpose(),
   // which is the same as scaling the rows of *this.
-  Matrix & Matrix::Tmult(const DiagonalMatrix &d,
-                         Matrix &ans,
-                         double scal) const {
+  Matrix &Matrix::Tmult(const DiagonalMatrix &d, Matrix &ans,
+                        double scal) const {
     assert(nrow() == d.ncol());
     ans.resize(ncol(), nrow());
     const Vector &diagonal_values(d.diag());
@@ -583,20 +578,19 @@ namespace BOOM{
     return ans;
   }
 
-  Matrix & Matrix::multT(const DiagonalMatrix &d,
-                         Matrix & ans,
-                         double scal) const {
+  Matrix &Matrix::multT(const DiagonalMatrix &d, Matrix &ans,
+                        double scal) const {
     return mult(d, ans, scal);
   }
 
   //--------- Vector support
-  Vector & Matrix::mult(const Vector &v, Vector &ans, double scal) const {
-    assert(ncol()==v.size() && nrow()==ans.size());
+  Vector &Matrix::mult(const Vector &v, Vector &ans, double scal) const {
+    assert(ncol() == v.size() && nrow() == ans.size());
     EigenMap(ans) = EigenMap(*this) * EigenMap(v) * scal;
     return ans;
   }
 
-  Vector & Matrix::Tmult(const Vector &v, Vector &ans, double scal) const {
+  Vector &Matrix::Tmult(const Vector &v, Vector &ans, double scal) const {
     assert(nrow() == v.size() && ncol() == ans.size());
     EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(v) * scal;
     return ans;
@@ -606,43 +600,51 @@ namespace BOOM{
 
   Matrix Matrix::mult(const Matrix &B) const {
     Matrix ans(nrow(), B.ncol());
-    return mult(B, ans);}
+    return mult(B, ans);
+  }
 
   Matrix Matrix::Tmult(const Matrix &B) const {
     Matrix ans(ncol(), B.ncol());
-    return Tmult(B, ans);}
+    return Tmult(B, ans);
+  }
 
   Matrix Matrix::multT(const Matrix &B) const {
     Matrix ans(nrow(), B.nrow());
-    return multT(B, ans);}
+    return multT(B, ans);
+  }
 
   Vector Matrix::mult(const Vector &v) const {
     Vector ans(nrow());
-    return mult(v,ans);}
+    return mult(v, ans);
+  }
 
   Vector Matrix::Tmult(const Vector &v) const {
     Vector ans(ncol());
-    return Tmult(v,ans);}
-
+    return Tmult(v, ans);
+  }
 
   Matrix Matrix::Id() const {
-    Matrix ans(nr_,nc_);
+    Matrix ans(nr_, nc_);
     ans.set_diag(1.0);
-    return ans;}
+    return ans;
+  }
 
   Matrix Matrix::t() const {
-    Matrix ans(nc_,nr_);
-    for (uint i=0; i<nr_; ++i) {
-      for (uint j=0; j<nc_; ++j) {
-        ans(j,i) = (*this)(i,j);}}
-    return ans; }
+    Matrix ans(nc_, nr_);
+    for (uint i = 0; i < nr_; ++i) {
+      for (uint j = 0; j < nc_; ++j) {
+        ans(j, i) = (*this)(i, j);
+      }
+    }
+    return ans;
+  }
 
-  Matrix & Matrix::transpose_inplace_square() {
+  Matrix &Matrix::transpose_inplace_square() {
     assert(is_square());
     double *d(data());
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < i; ++j) {
-        std::swap(d[INDX(i,j)], d[INDX(j,i)]);
+        std::swap(d[INDX(i, j)], d[INDX(j, i)]);
       }
     }
     return *this;
@@ -651,23 +653,26 @@ namespace BOOM{
   SpdMatrix Matrix::inner() const {  // eventually return type will be SpdMatrix
     SpdMatrix ans(nc_, 0.0);
     EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(*this);
-    return ans; }
+    return ans;
+  }
 
   SpdMatrix Matrix::outer() const {
     SpdMatrix ans(nr_);
-    EigenMap(ans).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(*this), 1.0);
+    EigenMap(ans).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(*this),
+                                                             1.0);
     ans.reflect();
     return ans;
   }
 
   Matrix Matrix::inv() const {
     assert(is_square());
-    return solve(Id()); }
+    return solve(Id());
+  }
 
   Matrix Matrix::solve(const Matrix &m) const {
-    //return this^{-1}*m
+    // return this^{-1}*m
     assert(this->is_square());
-    assert(m.nrow()==ncol());
+    assert(m.nrow() == ncol());
     Matrix ans(m);
     EigenMap(ans) = EigenMap(*this).partialPivLu().solve(EigenMap(m));
     return ans;
@@ -680,8 +685,7 @@ namespace BOOM{
     return ans;
   }
 
-  double Matrix::trace() const {
-    return accumulate(dbegin(), dend(), 0.0);}
+  double Matrix::trace() const { return accumulate(dbegin(), dend(), 0.0); }
 
   double Matrix::det() const {
     assert(is_square());
@@ -692,112 +696,109 @@ namespace BOOM{
   Vector Matrix::singular_values() const {
     Vector values(std::min(nr_, nc_));
     ::Eigen::JacobiSVD<Eigen::MatrixXd> svd(
-         EigenMap(*this), Eigen::ComputeThinU | Eigen::ComputeThinV);
+        EigenMap(*this), Eigen::ComputeThinU | Eigen::ComputeThinV);
     EigenMap(values) = svd.singularValues();
     return values;
   }
 
-  struct greater{
-    bool operator()(double a, double b) const { return a>b;}
+  struct greater {
+    bool operator()(double a, double b) const { return a > b; }
   };
 
   uint Matrix::rank(double prop) const {
     Vector s = singular_values();
-    double bound =s[0]*prop;
+    double bound = s[0] * prop;
     std::vector<double>::iterator pos =
-      lower_bound(s.begin(), s.end(), bound, greater());
+        lower_bound(s.begin(), s.end(), bound, greater());
     uint k = distance(pos, s.end());
-    return s.size()-k;
+    return s.size() - k;
   }
 
-  Matrix & Matrix::add_outer(const Vector &x, const Vector &y, double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-
-  Matrix & Matrix::add_outer(const Vector &x, const VectorView &y, double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
+  Matrix &Matrix::add_outer(const Vector &x, const Vector &y, double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
     EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
 
-  Matrix & Matrix::add_outer(const VectorView &x, const Vector &y, double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(
-      const VectorView &x, const VectorView &y, double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(
-      const ConstVectorView &x, const Vector &y, double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(const Vector &x,
-                             const ConstVectorView &y,
-                             double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(const ConstVectorView &x,
-                             const VectorView &y,
-                             double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(const VectorView &x,
-                             const ConstVectorView &y,
-                             double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
-    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
-    return *this;
-  }
-  Matrix & Matrix::add_outer(const ConstVectorView &x,
-                             const ConstVectorView &y,
-                             double w) {
-    assert(nrow()==x.size() && ncol() == y.size());
+  Matrix &Matrix::add_outer(const Vector &x, const VectorView &y, double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
     EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
 
-  Matrix & Matrix::add_outer(const Matrix &left, const Matrix &right,
-                             double coefficient) {
-    EigenMap(*this) += coefficient * EigenMap(left) * EigenMap(right).transpose();
+  Matrix &Matrix::add_outer(const VectorView &x, const Vector &y, double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const VectorView &x, const VectorView &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const ConstVectorView &x, const Vector &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const Vector &x, const ConstVectorView &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const ConstVectorView &x, const VectorView &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const VectorView &x, const ConstVectorView &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
+    return *this;
+  }
+  Matrix &Matrix::add_outer(const ConstVectorView &x, const ConstVectorView &y,
+                            double w) {
+    assert(nrow() == x.size() && ncol() == y.size());
+    EigenMap(*this) += w * EigenMap(x) * EigenMap(y).transpose();
     return *this;
   }
 
-  Matrix & Matrix::operator+=(double x) {
+  Matrix &Matrix::add_outer(const Matrix &left, const Matrix &right,
+                            double coefficient) {
+    EigenMap(*this) +=
+        coefficient * EigenMap(left) * EigenMap(right).transpose();
+    return *this;
+  }
+
+  Matrix &Matrix::operator+=(double x) {
     uint n = size();
     double *d(data());
-    for (uint i=0; i<n; ++i) d[i] += x;
-    return *this; }
-
-  Matrix & Matrix::operator-=(double x) {
-    return this->operator+=(-x);}
-
-  Matrix & Matrix::exp() {
-    uint n = size();
-    double *d(data());
-    for (uint i=0; i<n; ++i) d[i] = std::exp(d[i]);
+    for (uint i = 0; i < n; ++i) d[i] += x;
     return *this;
   }
 
-  Matrix & Matrix::log() {
+  Matrix &Matrix::operator-=(double x) { return this->operator+=(-x); }
+
+  Matrix &Matrix::exp() {
     uint n = size();
     double *d(data());
-    for (uint i=0; i<n; ++i) d[i] = std::log(d[i]);
+    for (uint i = 0; i < n; ++i) d[i] = std::exp(d[i]);
     return *this;
   }
 
-  Matrix & Matrix::operator*=(double x) {
+  Matrix &Matrix::log() {
+    uint n = size();
+    double *d(data());
+    for (uint i = 0; i < n; ++i) d[i] = std::log(d[i]);
+    return *this;
+  }
+
+  Matrix &Matrix::operator*=(double x) {
     int n = size();
     double *d(data());
     for (int i = 0; i < n; ++i) {
@@ -806,112 +807,117 @@ namespace BOOM{
     return *this;
   }
 
-  Matrix & Matrix::operator/=(double x) {
-    return this->operator*=(1.0/x);}
+  Matrix &Matrix::operator/=(double x) { return this->operator*=(1.0 / x); }
 
-  Matrix & Matrix::operator+= (const Matrix &m) {
+  Matrix &Matrix::operator+=(const Matrix &m) {
     if (!same_dim(m)) {
       ostringstream err;
       err << "Matrix::operator+= wrong dimension:  "
-          << "LHS[" <<nrow() << "," << ncol() << "]   RHS["
-          << m.nrow() << "," << m.ncol() << ")";
+          << "LHS[" << nrow() << "," << ncol() << "]   RHS[" << m.nrow() << ","
+          << m.ncol() << ")";
       report_error(err.str());
     }
-    V+= m.V;
+    V += m.V;
     return *this;
   }
 
-  Matrix & Matrix::operator+=(const SubMatrix &m) {
+  Matrix &Matrix::operator+=(const SubMatrix &m) {
     SubMatrix lhs(*this);
     lhs += m;
     return *this;
   }
 
-  Matrix & Matrix::operator+=(const ConstSubMatrix &m) {
+  Matrix &Matrix::operator+=(const ConstSubMatrix &m) {
     SubMatrix lhs(*this);
     lhs += m;
     return *this;
   }
 
-  Matrix & Matrix::operator-= (const Matrix &m) {
+  Matrix &Matrix::operator-=(const Matrix &m) {
     if (!same_dim(m)) {
       ostringstream err;
       err << "Matrix::operator-= wrong dimension:  "
-          << "LHS[" <<nrow() << "," << ncol() << "]   RHS["
-          << m.nrow() << "," << m.ncol() << ")";
+          << "LHS[" << nrow() << "," << ncol() << "]   RHS[" << m.nrow() << ","
+          << m.ncol() << ")";
       report_error(err.str());
     }
-    V-= m.V;
+    V -= m.V;
     return *this;
   }
 
-  Matrix & Matrix::operator-=(const SubMatrix &m) {
+  Matrix &Matrix::operator-=(const SubMatrix &m) {
     SubMatrix lhs(*this);
     lhs -= m;
     return *this;
   }
 
-  Matrix & Matrix::operator-=(const ConstSubMatrix &m) {
+  Matrix &Matrix::operator-=(const ConstSubMatrix &m) {
     SubMatrix lhs(*this);
     lhs -= m;
     return *this;
   }
 
-  ostream & Matrix::write(ostream &out, bool nl) const {
-    for (uint i=0; i<nr_; ++i) {
-      for (uint j=0; j<nc_; ++j) {
-        out << unchecked(i,j) << " ";}}
+  ostream &Matrix::write(ostream &out, bool nl) const {
+    for (uint i = 0; i < nr_; ++i) {
+      for (uint j = 0; j < nc_; ++j) {
+        out << unchecked(i, j) << " ";
+      }
+    }
     if (nl) out << std::endl;
-    return out; }
+    return out;
+  }
 
-  istream & Matrix::read(istream &in) {
-    for (uint i=0; i<nr_; ++i) {
-      for (uint j = 0; j<nc_; ++j) {
-        in >> unchecked(i,j); }}
-    return in; }
+  istream &Matrix::read(istream &in) {
+    for (uint i = 0; i < nr_; ++i) {
+      for (uint j = 0; j < nc_; ++j) {
+        in >> unchecked(i, j);
+      }
+    }
+    return in;
+  }
 
   //========== non-member functions =============
 
-  VectorView diag(Matrix &m) {return m.diag();}
-  ConstVectorView diag(const Matrix &m) {return m.diag();}
+  VectorView diag(Matrix &m) { return m.diag(); }
+  ConstVectorView diag(const Matrix &m) { return m.diag(); }
 
   Matrix diag(const Vector &v) {
     uint n = v.size();
-    Matrix ans(n,n,0.0);
+    Matrix ans(n, n, 0.0);
     ans.set_diag(v);
     return ans;
   }
 
   Matrix diag(const VectorView &v) {
     uint n = v.size();
-    Matrix ans(n,n,0.0);
+    Matrix ans(n, n, 0.0);
     ans.set_diag(v);
     return ans;
   }
 
-  ostream & Matrix::display(ostream & out, int precision) const {
+  ostream &Matrix::display(ostream &out, int precision) const {
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
       for (uint j = 0; j < ncol(); ++j)
-        out << std::setw(8) << unchecked(i,j) << " ";
-      out << endl;}
-    return out; }
+        out << std::setw(8) << unchecked(i, j) << " ";
+      out << endl;
+    }
+    return out;
+  }
 
-  ostream & operator<<(ostream & out, const Matrix &x) {
+  ostream &operator<<(ostream &out, const Matrix &x) {
     return x.display(out, 5);
   }
 
-  void print(const Matrix &m) {
-    cout << m << endl;
-  }
+  void print(const Matrix &m) { cout << m << endl; }
 
-  istream & operator>>(istream &in, Matrix &m) {
+  istream &operator>>(istream &in, Matrix &m) {
     // reads until a blank line is found or the end of a line
 
     typedef std::vector<string> svec;
 
     svec lines;
-    while(in) {
+    while (in) {
       string line;
       getline(in, line);
       if (is_all_white(line)) break;
@@ -922,35 +928,42 @@ namespace BOOM{
     svec splitline(split(lines[0]));
     uint ncols = splitline.size();
 
-    if (m.nrow()!=nrows || m.ncol()!=ncols) {
-      m = Matrix(nrows, ncols);}
+    if (m.nrow() != nrows || m.ncol() != ncols) {
+      m = Matrix(nrows, ncols);
+    }
 
-    for (uint j=0; j<ncols; ++j) {
+    for (uint j = 0; j < ncols; ++j) {
       istringstream sin(splitline[j]);
-      sin >> m(0,j);}
+      sin >> m(0, j);
+    }
 
-    for (uint i=1; i<nrows; ++i) {
+    for (uint i = 1; i < nrows; ++i) {
       splitline = split(lines[i]);
-      assert(splitline.size()==ncols);
-      for (uint j=0; j<ncols; ++j) {
+      assert(splitline.size() == ncols);
+      for (uint j = 0; j < ncols; ++j) {
         istringstream sin(splitline[j]);
-        sin >> m(i,j);}}
+        sin >> m(i, j);
+      }
+    }
     return in;
   }
 
   Matrix operator-(const double y, const Matrix &x) {
     Matrix ans = -x;
-    ans+=y;
-    return ans; }
-
-  Matrix operator/(const double y, const Matrix &x) {
-    Matrix ans = x;
-    transform(ans.begin(), ans.end(), ans.begin(),
-        bind1st(std::divides<double>(), y) );
+    ans += y;
     return ans;
   }
 
-  inline double mul(double x, double y) {return x*y;}
+  Matrix operator/(const double y, const Matrix &x) {
+    Matrix ans = x;
+    transform(ans.begin(),
+              ans.end(),
+              ans.begin(),
+              bind1st(std::divides<double>(), y));
+    return ans;
+  }
+
+  inline double mul(double x, double y) { return x * y; }
 
   Matrix el_mult(const Matrix &A, const Matrix &B) {
     assert(A.same_dim(B));
@@ -963,25 +976,19 @@ namespace BOOM{
     return traceAtB(A, B);
   }
 
-  double Matrix::sum() const {
-    return accumulate(V.begin(), V.end(), 0.0);
-  }
+  double Matrix::sum() const { return accumulate(V.begin(), V.end(), 0.0); }
 
-  double Matrix::abs_norm() const {
-    return EigenMap(*this).lpNorm<1>();
-  }
+  double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
-  double Matrix::sumsq() const {
-    return EigenMap(*this).squaredNorm();
-  }
+  double Matrix::sumsq() const { return EigenMap(*this).squaredNorm(); }
 
   double Matrix::prod() const {
-    return accumulate(V.begin(), V.end(), 1.0, mul);}
+    return accumulate(V.begin(), V.end(), 1.0, mul);
+  }
 
   double Matrix::max() const { return *std::max_element(begin(), end()); }
 
-  double Matrix::min() const {
-    return *min_element(begin(), end()); }
+  double Matrix::min() const { return *min_element(begin(), end()); }
 
   double Matrix::max_abs() const {
     int n = size();
@@ -996,27 +1003,23 @@ namespace BOOM{
     return max;
   }
 
-  LabeledMatrix::LabeledMatrix(
-      const Matrix &m,
-      const std::vector<std::string> &row_names,
-      const std::vector<std::string> &col_names)
-      : Matrix(m),
-        row_names_(row_names),
-        col_names_(col_names)
-      {
-        if (!row_names.empty() &&
-            row_names.size() != m.nrow()) {
-          report_error("row_names was the wrong size in "
-                       "LabeledMatrix constructor");
-        }
-        if (!col_names.empty() &&
-            col_names.size() != m.ncol()) {
-          report_error("col_names was the wrong size in "
-                       "LabeledMatrix constructor");
-        }
-      }
+  LabeledMatrix::LabeledMatrix(const Matrix &m,
+                               const std::vector<std::string> &row_names,
+                               const std::vector<std::string> &col_names)
+      : Matrix(m), row_names_(row_names), col_names_(col_names) {
+    if (!row_names.empty() && row_names.size() != m.nrow()) {
+      report_error(
+          "row_names was the wrong size in "
+          "LabeledMatrix constructor");
+    }
+    if (!col_names.empty() && col_names.size() != m.ncol()) {
+      report_error(
+          "col_names was the wrong size in "
+          "LabeledMatrix constructor");
+    }
+  }
 
-  ostream & LabeledMatrix::display(ostream &out, int precision) const {
+  ostream &LabeledMatrix::display(ostream &out, int precision) const {
     int max_row_label = 0;
     bool have_row_names = !row_names_.empty();
     if (have_row_names) {
@@ -1051,51 +1054,48 @@ namespace BOOM{
     return out;
   }
 
-  Matrix LabeledMatrix::drop_labels() const {
-    return Matrix(*this);
-  }
+  Matrix LabeledMatrix::drop_labels() const { return Matrix(*this); }
 
-  ArbitraryOffsetMatrix::ArbitraryOffsetMatrix(
-      int first_row, uint number_of_rows,
-      int first_column, uint number_of_columns,
-      double initial_value)
+  ArbitraryOffsetMatrix::ArbitraryOffsetMatrix(int first_row,
+                                               uint number_of_rows,
+                                               int first_column,
+                                               uint number_of_columns,
+                                               double initial_value)
       : data_(number_of_rows, number_of_columns, initial_value),
         row_offset_(first_row),
-        column_offset_(first_column)
-  {}
+        column_offset_(first_column) {}
 
   Matrix log(const Matrix &x) {
     Matrix ans(x);
-    std::transform(ans.begin(), ans.end(), ans.begin(),
-             pointer_to_unary_function<double,double>(std::log));
-    return ans; }
+    std::transform(ans.begin(),
+                   ans.end(),
+                   ans.begin(),
+                   pointer_to_unary_function<double, double>(std::log));
+    return ans;
+  }
 
   Matrix exp(const Matrix &x) {
     Matrix ans(x);
-    std::transform(ans.begin(), ans.end(), ans.begin(),
-             pointer_to_unary_function<double,double>(std::exp));
-    return ans; }
+    std::transform(ans.begin(),
+                   ans.end(),
+                   ans.begin(),
+                   pointer_to_unary_function<double, double>(std::exp));
+    return ans;
+  }
 
-  Matrix matmult(const Matrix &A, const Matrix &B) {
-    return A.mult(B);}
+  Matrix matmult(const Matrix &A, const Matrix &B) { return A.mult(B); }
 
-  Matrix matTmult(const Matrix &A, const Matrix &B) {
-    return A.Tmult(B);}
+  Matrix matTmult(const Matrix &A, const Matrix &B) { return A.Tmult(B); }
 
-  Matrix matmultT(const Matrix &A, const Matrix &B) {
-    return A.multT(B);}
+  Matrix matmultT(const Matrix &A, const Matrix &B) { return A.multT(B); }
 
-  Vector matmult(const Matrix &A, const Vector &v) {
-    return A.mult(v);}
+  Vector matmult(const Matrix &A, const Vector &v) { return A.mult(v); }
 
-  Vector matmult(const Vector &v, const Matrix &A) {
-    return v.mult(A);}
+  Vector matmult(const Vector &v, const Matrix &A) { return v.mult(A); }
 
-  Vector operator*(const Vector &v, const Matrix &m) {
-    return v.mult(m);}
+  Vector operator*(const Vector &v, const Matrix &m) { return v.mult(m); }
 
-  Vector operator*(const Matrix &m, const Vector &v) {
-    return m.mult(v);}
+  Vector operator*(const Matrix &m, const Vector &v) { return m.mult(v); }
 
   // t(v) %*% m   =   t(m) %*% v
   Vector operator*(const VectorView &v, const Matrix &m) {
@@ -1107,7 +1107,7 @@ namespace BOOM{
 
   Vector operator*(const Matrix &m, const VectorView &v) {
     Vector ans(m.nrow());
-    assert(v.size() ==  m.ncol());
+    assert(v.size() == m.ncol());
     EigenMap(ans) = EigenMap(m) * EigenMap(v);
     return ans;
   }
@@ -1121,87 +1121,95 @@ namespace BOOM{
   }
 
   Vector operator*(const Matrix &m, const ConstVectorView &v) {
-    assert(v.size() ==  m.ncol());
+    assert(v.size() == m.ncol());
     Vector ans(m.nrow());
     EigenMap(ans) = EigenMap(m) * EigenMap(v);
     return ans;
   }
 
-  Matrix operator*(const Matrix &A, const Matrix &B) {
-    return A.mult(B);
-  }
-
+  Matrix operator*(const Matrix &A, const Matrix &B) { return A.mult(B); }
 
   //----------- changing Matrix size and layout -------------
 
   Matrix rbind(const Matrix &m1, const Matrix &m2) {
     Matrix tmp(m1);
-    return tmp.rbind(m2); }
+    return tmp.rbind(m2);
+  }
 
   Matrix rbind(const Vector &v, const Matrix &m) {
     Matrix tmp(v.begin(), v.end(), 1u, v.size());
-    return tmp.rbind(m); }
+    return tmp.rbind(m);
+  }
 
   Matrix rbind(const Matrix &m, const Vector &v) {
     Matrix ans(m);
-    return ans.rbind(v);}
+    return ans.rbind(v);
+  }
 
   Matrix rbind(const Vector &v1, const Vector &v2) {
     Matrix tmp(v1.begin(), v1.end(), 1, v1.size());
-    return tmp.rbind(v2); }
+    return tmp.rbind(v2);
+  }
 
   Matrix rbind(double x, const Matrix &m) {
     Vector tmp(m.ncol(), x);
-    return rbind(tmp, m); }
+    return rbind(tmp, m);
+  }
 
   Matrix rbind(const Matrix &m, double x) {
     Vector tmp(m.ncol(), x);
-    return rbind(m,tmp);
+    return rbind(m, tmp);
   }
 
   Matrix cbind(const Matrix &m1, const Matrix &m2) {
     Matrix ans(m1);
-    return ans.cbind(m2); }
+    return ans.cbind(m2);
+  }
 
   Matrix cbind(const Matrix &m, const Vector &v) {
     Matrix ans(m);
-    return ans.cbind(v); }
+    return ans.cbind(v);
+  }
 
   Matrix cbind(const Vector &v, const Matrix &m) {
     Matrix ans(v.begin(), v.end(), v.size(), 1);
-    return ans.cbind(m);}
+    return ans.cbind(m);
+  }
 
   Matrix cbind(const Vector &v1, const Vector &v2) {
     Matrix ans(v1.begin(), v1.end(), v1.size(), 1);
-    return ans.cbind(v2); }
+    return ans.cbind(v2);
+  }
 
   Matrix cbind(const Matrix &m, double x) {
     Vector v(m.nrow(), x);
     Matrix ans(m);
-    return ans.cbind(v); }
+    return ans.cbind(v);
+  }
 
   Matrix cbind(double x, const Matrix &m) {
     Vector v(m.nrow(), x);
-    return cbind(v,m); }
+    return cbind(v, m);
+  }
 
   Matrix drop_col(const Matrix &m, uint j) {
     uint nr = m.nrow();
-    uint nc = m.ncol()-1;
-    Matrix ans(nr,nc);
-    for (uint i=0; i<j; ++i) ans.col(i) = m.col(i);
-    for (uint i=j+1; i<nc; ++i) ans.col(i-1) = m.col(i);
+    uint nc = m.ncol() - 1;
+    Matrix ans(nr, nc);
+    for (uint i = 0; i < j; ++i) ans.col(i) = m.col(i);
+    for (uint i = j + 1; i < nc; ++i) ans.col(i - 1) = m.col(i);
     return ans;
   }
 
   Matrix drop_cols(const Matrix &m, std::vector<uint> indx) {
-    std::sort(indx.begin(), indx.end(), std::greater<uint>() );
+    std::sort(indx.begin(), indx.end(), std::greater<uint>());
     uint nr = m.nrow();
-    uint nc = m.ncol()-indx.size();
+    uint nc = m.ncol() - indx.size();
     assert(m.ncol() > indx.size());
-    Matrix ans(nr,nc);
-    uint I=0;
-    for (uint i=0; i<m.ncol(); ++i) {
-      if (i== indx.back()) {
+    Matrix ans(nr, nc);
+    uint I = 0;
+    for (uint i = 0; i < m.ncol(); ++i) {
+      if (i == indx.back()) {
         indx.pop_back();
       } else {
         ans.col(I++) = m.col(i);
@@ -1210,21 +1218,23 @@ namespace BOOM{
     return ans;
   }
 
-
   Matrix permute_Matrix(const Matrix &Q, const std::vector<uint> &perm) {
     assert(Q.is_square());
     Matrix ans = Q;
     uint n = Q.nrow();
-    for (uint i = 0; i<n; ++i) {
-      for (uint j = 0; j<n; ++j) {
-        ans(i,j) = Q(perm[i], perm[j]);}}
-    return ans; }
+    for (uint i = 0; i < n; ++i) {
+      for (uint j = 0; j < n; ++j) {
+        ans(i, j) = Q(perm[i], perm[j]);
+      }
+    }
+    return ans;
+  }
 
   double traceAB(const Matrix &A, const Matrix &B) {
-  // tr(AB) = sum_i  A.row(i) .dot. B.col(i)
+    // tr(AB) = sum_i  A.row(i) .dot. B.col(i)
     uint n = A.nrow();
-    double ans=0;
-    for (uint i = 0; i<n; ++i) ans+= A.row(i).dot(B.col(i));
+    double ans = 0;
+    for (uint i = 0; i < n; ++i) ans += A.row(i).dot(B.col(i));
     return ans;
   }
 
@@ -1240,30 +1250,29 @@ namespace BOOM{
     return ans;
   }
 
-
   Matrix unpartition(double a, const Vector &v, const Matrix &B) {
     // a v
     // v B
-    assert(B.is_square() && B.nrow()==v.size());
-    Matrix ans = cbind(v,B);
-    Vector tmp = concat(a,v);
-    ans= rbind(tmp, ans);
+    assert(B.is_square() && B.nrow() == v.size());
+    Matrix ans = cbind(v, B);
+    Vector tmp = concat(a, v);
+    ans = rbind(tmp, ans);
     return ans;
   }
 
-   Matrix unpartition(const Matrix &B, const Vector &v, double a) {
-     // B v
-     // v a
-     assert(B.is_square() && B.nrow()==v.size());
-     Matrix ans(B);
-     ans.cbind(v);          // ans = B v
-     Vector tmp(v);
-     ans.rbind(tmp.push_back(a));
-     return ans;
-   }
+  Matrix unpartition(const Matrix &B, const Vector &v, double a) {
+    // B v
+    // v a
+    assert(B.is_square() && B.nrow() == v.size());
+    Matrix ans(B);
+    ans.cbind(v);  // ans = B v
+    Vector tmp(v);
+    ans.rbind(tmp.push_back(a));
+    return ans;
+  }
 
   Matrix unpartition(const Matrix &A, const Matrix &Rect, const Matrix &B) {
-    assert(A.is_square() && B.is_square() && (A.nrow()==Rect.nrow()));
+    assert(A.is_square() && B.is_square() && (A.nrow() == Rect.nrow()));
     Matrix ans = A;
     ans.cbind(Rect);
 
@@ -1278,14 +1287,12 @@ namespace BOOM{
     uint n2 = B.nrow();
 
     uint n = n1 + n2;
-    Matrix ans(n,n,0.0);
-    for (uint i=0; i<n1; ++i) {
-      std::copy(A.col_begin(i), A.col_end(i),
-          ans.col_begin(i));
+    Matrix ans(n, n, 0.0);
+    for (uint i = 0; i < n1; ++i) {
+      std::copy(A.col_begin(i), A.col_end(i), ans.col_begin(i));
     }
-    for (uint i=n1; i<n; ++i) {
-      std::copy(B.col_begin(i-n1), B.col_end(i-n1),
-          ans.col_begin(i)+n1);
+    for (uint i = n1; i < n; ++i) {
+      std::copy(B.col_begin(i - n1), B.col_end(i - n1), ans.col_begin(i) + n1);
     }
     return ans;
   }
@@ -1293,21 +1300,20 @@ namespace BOOM{
   // ------------- lower triangular functions --------------
 
   Vector Lmult(const Matrix &L, const Vector &y) {
-    assert(L.is_square() && L.nrow()==y.size());
+    assert(L.is_square() && L.nrow() == y.size());
     Vector ans(y);
     EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>() * EigenMap(y);
     return ans;
   }
 
-  Vector& Lsolve_inplace(const Matrix &L, Vector &b) {
-    assert(L.is_square() && L.nrow()==b.size());
-    EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(
-        EigenMap(b));
+  Vector &Lsolve_inplace(const Matrix &L, Vector &b) {
+    assert(L.is_square() && L.nrow() == b.size());
+    EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(b));
     return b;
   }
 
-  Vector & LTsolve_inplace(const Matrix &L, Vector &b) {
-    assert(L.is_square() && L.nrow()==b.size());
+  Vector &LTsolve_inplace(const Matrix &L, Vector &b) {
+    assert(L.is_square() && L.nrow() == b.size());
     EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(
         EigenMap(b));
     return b;
@@ -1315,25 +1321,25 @@ namespace BOOM{
 
   Vector Lsolve(const Matrix &L, const Vector &b) {
     Vector ans(b);
-    return Lsolve_inplace(L,ans);
+    return Lsolve_inplace(L, ans);
   }
 
   Matrix &Lsolve_inplace(const Matrix &L, Matrix &B) {
-    assert(L.is_square() && L.ncol()==B.nrow());
+    assert(L.is_square() && L.ncol() == B.nrow());
     EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(B));
     return B;
   }
 
   Matrix &LTsolve_inplace(const Matrix &L, Matrix &B) {
-    assert(L.is_square() && L.ncol()==B.nrow());
+    assert(L.is_square() && L.ncol() == B.nrow());
     EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(
         EigenMap(B));
     return B;
   }
-  
+
   Matrix Lsolve(const Matrix &L, const Matrix &B) {
     Matrix ans = B;
-    return Lsolve_inplace(L,ans);
+    return Lsolve_inplace(L, ans);
   }
 
   Matrix Linv(const Matrix &L) {
@@ -1344,43 +1350,44 @@ namespace BOOM{
   // ------------- upper triangular functions --------------
 
   Vector Umult(const Matrix &U, const Vector &y) {
-    assert(U.is_square() && U.nrow()==y.size());
+    assert(U.is_square() && U.nrow() == y.size());
     Vector ans(y);
     EigenMap(ans) = EigenMap(U).triangularView<Eigen::Upper>() * EigenMap(y);
     return ans;
   }
 
   Matrix Umult(const Matrix &U, const Matrix &B) {
-    assert(U.is_square() && U.ncol()==B.nrow());
+    assert(U.is_square() && U.ncol() == B.nrow());
     Matrix ans(B);
     EigenMap(ans) = EigenMap(U).triangularView<Eigen::Upper>() * EigenMap(B);
     return ans;
   }
 
-  Vector& Usolve_inplace(const Matrix &U, Vector &b) {
-    assert(U.is_square() && U.nrow()==b.size());
+  Vector &Usolve_inplace(const Matrix &U, Vector &b) {
+    assert(U.is_square() && U.nrow() == b.size());
     EigenMap(U).triangularView<Eigen::Upper>().solveInPlace(EigenMap(b));
     return b;
   }
 
   Vector Usolve(const Matrix &U, const Vector &b) {
     Vector ans(b);
-    return Usolve_inplace(U,ans);
+    return Usolve_inplace(U, ans);
   }
 
   Matrix &Usolve_inplace(const Matrix &U, Matrix &B) {
-    assert(U.is_square() && U.ncol()==B.nrow());
-    EigenMap(U).triangularView<Eigen::Upper>().solveInPlace(EigenMap(B));    
+    assert(U.is_square() && U.ncol() == B.nrow());
+    EigenMap(U).triangularView<Eigen::Upper>().solveInPlace(EigenMap(B));
     return B;
   }
 
   Matrix Usolve(const Matrix &U, const Matrix &B) {
     Matrix ans = B;
-    return Usolve_inplace(U,ans);}
+    return Usolve_inplace(U, ans);
+  }
 
   Matrix Uinv(const Matrix &U) {
     Matrix ans(U.Id());
-    return Usolve_inplace(U, ans); }
+    return Usolve_inplace(U, ans);
+  }
 
-
-}// namespace BOOM
+}  // namespace BOOM

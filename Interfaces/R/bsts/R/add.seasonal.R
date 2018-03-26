@@ -77,3 +77,53 @@ AddSeasonal <- function(state.specification,
   state.specification[[length(state.specification) + 1]] <- seas
   return(state.specification)
 }
+
+plot.Seasonal <- function(x,
+                          bsts.object,
+                          burn = NULL,
+                          time = NULL,
+                          style = c("dynamic", "boxplot"),
+                          ylim = NULL,
+                          ...) {
+  ## S3 method for plotting a RegressionHolidayStateModel
+  ##
+  ## Args:
+  ##   x: An object inheriting from RegressionHolidayStateModel.
+  ##   bsts.object: A bsts model that includes state.specification in its state
+  ##     specification.
+  ##   burn:  The number of MCMC iterations to discard as burn-in.
+  ##   time: An optional vector of Date or POSIXt timestamps to use for the
+  ##     horizontal axis.
+  ##   style: Either "dynamic", for dynamic distribution plots, or "boxplot",
+  ##     for box plots.  Partial matching is allowed, so "dyn" or "box" would
+  ##     work, for example.
+  ##   ylim:  Limits on the vertical axis.
+  ##   ...: Extra arguments passed TimeSeriesBoxplot, or
+  ##     PlotDynamicDistribution.
+  ##
+  ## Side Effects:
+  ##   A plot is added to the current graphics device.  If the seasonal pattern
+  ##   being plotted is a day-of-week pattern then a cluster of 7 small plots is
+  ##   added showing the evolution of the seasonal effect for each day of the
+  ##   week.  Otherwise a dynamic distribution plot is produced, showing the
+  ##   overall contribution of the effect over time.
+  ##
+  ## Returns:
+  ##   invisible(NULL)
+  state.specification <- x
+  stopifnot(inherits(state.specification, "Seasonal"))
+  stopifnot(inherits(bsts.object, "bsts"))
+  if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
+    stop("The state specification is not part of the bsts object.")
+  }
+  
+  if (state.specification$nseasons == 7 &&
+        state.specification$season.duration == 1) {
+    PlotDayOfWeekCycle(bsts.object, burn = burn, time = time, ylim = ylim,
+      state.specification = state.specification, ...)
+  } else {
+    plot.StateModel(state.specification, bsts.object, burn = burn, time = time,
+      style = style, ylim = ylim, ...)
+  }
+  return(invisible(NULL))
+}

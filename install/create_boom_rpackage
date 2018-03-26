@@ -110,11 +110,11 @@ cd rpackage
 R CMD build Boom
 
 if [[ $DO_CHECK = 1 ]]; then
-    MAKEFLAGS=" j 8 " R CMD CHECK Boom_*.tar.gz
+    MAKEFLAGS=" j 16 " R CMD CHECK Boom_*.tar.gz
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
-    MAKEFLAGS=" j 8 " R CMD INSTALL Boom_*.tar.gz
+    MAKEFLAGS=" j 16 " R CMD INSTALL Boom_*.tar.gz
 fi
 
 

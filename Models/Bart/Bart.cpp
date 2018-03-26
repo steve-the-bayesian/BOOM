@@ -912,11 +912,13 @@ namespace BOOM {
     //----------------------------------------------------------------------
     TreeNode *Tree::random_leaf(RNG &rng) {
       TreeNode *leaf = random_set_element(rng, leaves_);
-      if (!leaf || !leaf->is_leaf()) {
+      if (!leaf) {
+        report_error("Tree::random_leaf() returned nullptr.");
+      }
+      if (!leaf->is_leaf()) {
         ostringstream err;
         err << "Tree::random_leaf() found an answer that is not a leaf:" << endl
-            << "The returned value is: " << endl
-            << *leaf << endl
+            << "The returned value is: " << endl << *leaf << endl
             << "The tree is " << endl
             << *this;
         report_error(err.str());

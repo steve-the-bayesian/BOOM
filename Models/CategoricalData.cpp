@@ -190,15 +190,11 @@ namespace BOOM {
     std::vector<uint> new_pos(labs_.size());
     for (uint i = 0; i < labs_.size(); ++i) {
       std::string s = labs_[i];
-      bool found_pos = false;
       for (uint j = 0; j < sv.size(); ++j) {
-        found_pos = false;
         if (sv[j] == s) {
           new_pos[i] = j;
-          found_pos = true;
           break;
-        }
-        if (!found_pos) {
+        } else {
           ostringstream err;
           err << "CatKey::map_levels:  the replacement set of category "
               << "labels is not a superset of the original labels." << endl

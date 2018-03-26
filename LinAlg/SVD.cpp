@@ -27,41 +27,44 @@
 
 namespace BOOM {
   namespace {
-    using Eigen::MatrixXd;
     using Eigen::JacobiSVD;
+    using Eigen::MatrixXd;
   }  // namespace
 
   SingularValueDecomposition::SingularValueDecomposition(const Matrix &m)
       : singular_values_(min_dim(m)),
         left_(m.nrow(), min_dim(m)),
-        right_(m.ncol(), min_dim(m))
-  {
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(EigenMap(m),
-                                          Eigen::ComputeThinU | Eigen::ComputeThinV);
+        right_(m.ncol(), min_dim(m)) {
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(
+        EigenMap(m), Eigen::ComputeThinU | Eigen::ComputeThinV);
     EigenMap(singular_values_) = svd.singularValues();
     EigenMap(left_) = svd.matrixU();
     EigenMap(right_) = svd.matrixV();
   }
 
-  const Vector & SingularValueDecomposition::values()const{return singular_values_;}
-  const Matrix & SingularValueDecomposition::left()const{return left_;}
-  const Matrix & SingularValueDecomposition::right()const{return right_;}
-  Matrix SingularValueDecomposition::original_matrix()const{
+  const Vector &SingularValueDecomposition::values() const {
+    return singular_values_;
+  }
+  const Matrix &SingularValueDecomposition::left() const { return left_; }
+  const Matrix &SingularValueDecomposition::right() const { return right_; }
+  Matrix SingularValueDecomposition::original_matrix() const {
     DiagonalMatrix Sigma(singular_values_);
     Matrix ans = (left_ * Sigma) * right_.t();
     return ans;
   }
 
-  Matrix SingularValueDecomposition::solve(const Matrix &rhs, double tol) const {
+  Matrix SingularValueDecomposition::solve(const Matrix &rhs,
+                                           double tol) const {
     Matrix ans = left_.Tmult(rhs);
-    for(uint i = 0; i< ans.nrow(); ++i) {
+    for (uint i = 0; i < ans.nrow(); ++i) {
       double scale = singular_values_[i] / singular_values_[0];
       ans.row(i) *= fabs(scale) < tol ? 0 : 1.0 / singular_values_[i];
     }
     return right_ * ans;
   }
 
-  Vector SingularValueDecomposition::solve(const Vector &rhs, double tol)const{
+  Vector SingularValueDecomposition::solve(const Vector &rhs,
+                                           double tol) const {
     Vector ans = left_.Tmult(rhs);
     for (uint i = 0; i < ans.size(); ++i) {
       double scale = singular_values_[i] / singular_values_[0];
@@ -70,16 +73,16 @@ namespace BOOM {
     return right_ * ans;
   }
 
-  Matrix SingularValueDecomposition::inv()const{
-    bool invertible = left_.is_square()
-        && right_.is_square()
-        && left_.nrow() == right_.nrow();
-    if(!invertible){
+  Matrix SingularValueDecomposition::inv() const {
+    bool invertible = left_.is_square() && right_.is_square() &&
+                      left_.nrow() == right_.nrow();
+    if (!invertible) {
       std::ostringstream err;
-      err << "error in SingularValueDecomposition::inv(), only square matrices can be inverted"
+      err << "error in SingularValueDecomposition::inv(), only square matrices "
+             "can be inverted"
           << std::endl
-          << "original matrix = " << std::endl << original_matrix()
-          << std::endl;
+          << "original matrix = " << std::endl
+          << original_matrix() << std::endl;
       report_error(err.str());
     }
     return solve(left_.Id());

@@ -87,6 +87,7 @@ namespace BOOM {
   //======================================================================
   void ArStateModel::simulate_state_error(RNG &rng, VectorView eta,
                                           int t) const {
+    assert(eta.size() == state_dimension());
     eta = 0;
     eta[0] = rnorm_mt(rng) * sigma();
   }

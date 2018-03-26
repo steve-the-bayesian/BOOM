@@ -18,12 +18,12 @@
 */
 
 #include "LinAlg/Selector.hpp"
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
-#include "cpputil/seq.hpp"
 #include "cpputil/report_error.hpp"
+#include "cpputil/seq.hpp"
 
 #include "distributions.hpp"
 
@@ -33,19 +33,20 @@
 namespace BOOM {
 
   namespace {
-    std::vector<bool> to_vector_bool(const std::string & s) {
+    std::vector<bool> to_vector_bool(const std::string &s) {
       uint n = s.size();
-      std::vector<bool> ans(n,false);
+      std::vector<bool> ans(n, false);
       for (uint i = 0; i < n; ++i) {
         char c = s[i];
-        if (c == '1') ans[i] = true;
-        else if (c == '0') ans[i] = false;
-        else{
+        if (c == '1')
+          ans[i] = true;
+        else if (c == '0')
+          ans[i] = false;
+        else {
           ostringstream err;
           err << "only 0's and 1's are allowed in the 'Selector' "
-              << "string constructor "
-              << endl
-              << "you supplied:  "  << endl
+              << "string constructor " << endl
+              << "you supplied:  " << endl
               << s << endl
               << "first illegal value found at position " << i << "." << endl;
           report_error(err.str());
@@ -67,34 +68,27 @@ namespace BOOM {
   Selector::Selector() {}
 
   Selector::Selector(uint p, bool all)
-      : std::vector<bool>(p,all),
-        include_all_(all)
-  {
+      : std::vector<bool>(p, all), include_all_(all) {
     reset_included_positions();
   }
 
   Selector::Selector(const std::string &s)
-      : std::vector<bool>(to_vector_bool(s)),
-        include_all_(false)
-  {
+      : std::vector<bool>(to_vector_bool(s)), include_all_(false) {
     reset_included_positions();
     if (nvars() == nvars_possible()) {
       include_all_ = true;
     }
   }
 
-  Selector::Selector(const std::vector<bool>& in)
-      : std::vector<bool>(in),
-        include_all_(false)
-  {
+  Selector::Selector(const std::vector<bool> &in)
+      : std::vector<bool>(in), include_all_(false) {
     reset_included_positions();
   }
 
   Selector::Selector(const std::vector<uint> &pos, uint n)
       : std::vector<bool>(n, false),
         included_positions_(),
-        include_all_(false)
-  {
+        include_all_(false) {
     for (uint i = 0; i < pos.size(); ++i) add(pos[i]);
   }
 
@@ -109,7 +103,7 @@ namespace BOOM {
   }
 
   void Selector::check_size_gt(uint p, const string &fun) const {
-    if (p< nvars_possible()) return;
+    if (p < nvars_possible()) return;
     ostringstream err;
 
     err << "error in function Selector::" << fun << endl
@@ -118,8 +112,7 @@ namespace BOOM {
     report_error(err.str());
   }
 
-
-  Selector & Selector::append(const Selector &rhs) {
+  Selector &Selector::append(const Selector &rhs) {
     int n0 = nvars_possible();
     std::vector<bool>::resize(size() + rhs.size(), false);
     for (int i = 0; i < rhs.included_positions_.size(); ++i) {
@@ -129,7 +122,7 @@ namespace BOOM {
     return *this;
   }
 
-  Selector & Selector::append(bool new_last_element) {
+  Selector &Selector::append(bool new_last_element) {
     push_back(new_last_element);
     if (new_last_element) {
       included_positions_.push_back(size() - 1);
@@ -138,16 +131,15 @@ namespace BOOM {
     return *this;
   }
 
-  Selector & Selector::add(uint p) {
+  Selector &Selector::add(uint p) {
     check_size_gt(p, "add");
     if (include_all_) return *this;
     if (inc(p) == false) {
       (*this)[p] = true;
-      std::vector<uint>::iterator it =
-        std::lower_bound(included_positions_.begin(),
-                         included_positions_.end(),
-                         p);
-      included_positions_.insert(it, p);}
+      std::vector<uint>::iterator it = std::lower_bound(
+          included_positions_.begin(), included_positions_.end(), p);
+      included_positions_.insert(it, p);
+    }
     return *this;
   }
 
@@ -160,7 +152,7 @@ namespace BOOM {
   void Selector::add_all() {
     include_all_ = true;
     uint n = nvars_possible();
-    included_positions_ = seq<uint>(0, n-1);
+    included_positions_ = seq<uint>(0, n - 1);
     std::vector<bool>::assign(n, true);
   }
 
@@ -172,17 +164,18 @@ namespace BOOM {
     }
     if (inc(p)) {
       (*this)[p] = false;
-      std::vector<uint>::iterator it =
-          std::lower_bound(included_positions_.begin(),
-                           included_positions_.end(),
-                           p);
-      included_positions_.erase(it);}
+      std::vector<uint>::iterator it = std::lower_bound(
+          included_positions_.begin(), included_positions_.end(), p);
+      included_positions_.erase(it);
+    }
     return *this;
   }
 
-  Selector & Selector::flip(uint p) {
-    if (inc(p)) drop(p);
-    else add(p);
+  Selector &Selector::flip(uint p) {
+    if (inc(p))
+      drop(p);
+    else
+      add(p);
     return *this;
   }
 
@@ -200,24 +193,24 @@ namespace BOOM {
     std::swap(include_all_, rhs.include_all_);
   }
 
-  bool Selector::inc(uint i) const { return (*this)[i];}
+  bool Selector::inc(uint i) const { return (*this)[i]; }
 
   uint Selector::nvars() const {
-    return include_all_ ? nvars_possible() : included_positions_.size(); }
+    return include_all_ ? nvars_possible() : included_positions_.size();
+  }
 
-  uint Selector::nvars_possible() const {return size();}
+  uint Selector::nvars_possible() const { return size(); }
 
-  uint Selector::nvars_excluded() const {return nvars_possible() - nvars();}
+  uint Selector::nvars_excluded() const { return nvars_possible() - nvars(); }
 
   uint Selector::indx(uint i) const {
     if (include_all_) return i;
-    return included_positions_[i]; }
+    return included_positions_[i];
+  }
   uint Selector::INDX(uint i) const {
     if (include_all_) return i;
-    std::vector<uint>::const_iterator loc =
-      std::lower_bound(included_positions_.begin(),
-                       included_positions_.end(),
-                       i);
+    std::vector<uint>::const_iterator loc = std::lower_bound(
+        included_positions_.begin(), included_positions_.end(), i);
     return loc - included_positions_.begin();
   }
 
@@ -234,17 +227,19 @@ namespace BOOM {
   bool Selector::covers(const Selector &rhs) const {
     for (uint i = 0; i < rhs.nvars(); ++i) {
       uint I = rhs.indx(i);
-      if (!inc(I)) return false;}
-    return true;}
+      if (!inc(I)) return false;
+    }
+    return true;
+  }
 
   bool Selector::operator==(const Selector &rhs) const {
-    const std::vector<bool> & RHS(rhs);
-    const std::vector<bool> & LHS(*this);
+    const std::vector<bool> &RHS(rhs);
+    const std::vector<bool> &LHS(*this);
     return LHS == RHS;
   }
 
   bool Selector::operator!=(const Selector &rhs) const {
-    return ! operator==(rhs);
+    return !operator==(rhs);
   }
 
   Selector Selector::Union(const Selector &rhs) const {
@@ -272,7 +267,7 @@ namespace BOOM {
     return ans;
   }
 
-  Selector & Selector::cover(const Selector &rhs) {
+  Selector &Selector::cover(const Selector &rhs) {
     check_size_eq(rhs.nvars_possible(), "cover");
     for (uint i = 0; i < rhs.nvars(); ++i)
       add(rhs.indx(i));  // does nothing if already added
@@ -285,8 +280,8 @@ namespace BOOM {
     uint N = inc.nvars_possible();
     if (nx != N) {
       ostringstream msg;
-      msg << "Selector::select... x.size() = " << nx << " nvars_possible() = "
-          << N << endl;
+      msg << "Selector::select... x.size() = " << nx
+          << " nvars_possible() = " << N << endl;
       report_error(msg.str());
     }
     uint n = inc.nvars();
@@ -298,20 +293,23 @@ namespace BOOM {
   }
 
   Vector Selector::select(const Vector &x) const {
-    return inc_select<Vector>(x, *this); }
+    return inc_select<Vector>(x, *this);
+  }
   Vector Selector::select(const VectorView &x) const {
-    return inc_select<VectorView>(x, *this); }
+    return inc_select<VectorView>(x, *this);
+  }
   Vector Selector::select(const ConstVectorView &x) const {
-    return inc_select<ConstVectorView>(x, *this); }
+    return inc_select<ConstVectorView>(x, *this);
+  }
 
   template <class V>
   Vector inc_expand(const V &x, const Selector &inc) {
     uint n = inc.nvars();
     uint nx = x.size();
-    if (nx!=n) {
+    if (nx != n) {
       ostringstream msg;
-      msg << "Selector::expand... x.size() = " << nx << " nvars() = "
-          << n << endl;
+      msg << "Selector::expand... x.size() = " << nx << " nvars() = " << n
+          << endl;
       report_error(msg.str());
     }
     uint N = inc.nvars_possible();
@@ -324,12 +322,15 @@ namespace BOOM {
     return ans;
   }
 
-  Vector Selector::expand(const Vector & x) const {
-    return inc_expand(x,*this); }
-  Vector Selector::expand(const VectorView & x) const {
-    return inc_expand(x,*this); }
-  Vector Selector::expand(const ConstVectorView & x) const {
-    return inc_expand(x,*this); }
+  Vector Selector::expand(const Vector &x) const {
+    return inc_expand(x, *this);
+  }
+  Vector Selector::expand(const VectorView &x) const {
+    return inc_expand(x, *this);
+  }
+  Vector Selector::expand(const ConstVectorView &x) const {
+    return inc_expand(x, *this);
+  }
 
   SpdMatrix Selector::expand(const SpdMatrix &dense_matrix) {
     SpdMatrix sparse_matrix(nvars_possible());
@@ -343,11 +344,11 @@ namespace BOOM {
   }
 
   Vector Selector::select_add_int(const Vector &x) const {
-    assert(x.size()==nvars_possible() - 1);
-    if(include_all_) return concat(1.0, x);
+    assert(x.size() == nvars_possible() - 1);
+    if (include_all_) return concat(1.0, x);
     Vector ans(nvars());
-    ans[0]= inc(0) ? 1.0 : x[indx(0) - 1];
-    for (uint i = 1; i < nvars(); ++i) ans[i] = x[indx(i)-1];
+    ans[0] = inc(0) ? 1.0 : x[indx(0) - 1];
+    for (uint i = 1; i < nvars(); ++i) ans[i] = x[indx(i) - 1];
     return ans;
   }
   //----------------------------------------------------------------------
@@ -359,8 +360,8 @@ namespace BOOM {
     SpdMatrix ans(n);
     for (uint i = 0; i < n; ++i) {
       uint I = included_positions_[i];
-      const double * s(S.col(I).data());
-      double * a(ans.col(i).data());
+      const double *s(S.col(I).data());
+      double *a(ans.col(i).data());
       for (uint j = 0; j < n; ++j) {
         a[j] = s[included_positions_[j]];
       }
@@ -396,22 +397,24 @@ namespace BOOM {
       uint I = indx(i);
       for (uint j = 0; j < nvars(); ++j) {
         uint J = indx(j);
-        ans(i, j) = m(I, J); }}
+        ans(i, j) = m(I, J);
+      }
+    }
     return ans;
   }
 
-  Vector & Selector::zero_missing_elements(Vector &v) const {
+  Vector &Selector::zero_missing_elements(Vector &v) const {
     uint N = nvars_possible();
     check_size_eq(v.size(), "zero_missing_elements");
-    const Selector & inc(*this);
+    const Selector &inc(*this);
     for (uint i = 0; i < N; ++i) {
       if (!inc[i]) v[i] = 0;
     }
     return v;
   }
 
-  void Selector::sparse_multiply(
-      const Matrix &m, const Vector &v, VectorView ans) const {
+  void Selector::sparse_multiply(const Matrix &m, const Vector &v,
+                                 VectorView ans) const {
     bool m_already_sparse = ncol(m) == nvars();
     if (!m_already_sparse) {
       check_size_eq(m.ncol(), "sparse_multiply");
@@ -424,37 +427,32 @@ namespace BOOM {
 
     for (int i = 0; i < included_positions_.size(); ++i) {
       uint I = included_positions_[i];
-      ans.axpy(m.col(m_already_sparse ? i : I),
-               v[v_already_sparse ? i : I]);
+      ans.axpy(m.col(m_already_sparse ? i : I), v[v_already_sparse ? i : I]);
     }
   }
 
-  Vector Selector::sparse_multiply(
-      const Matrix &m, const Vector &v) const {
+  Vector Selector::sparse_multiply(const Matrix &m, const Vector &v) const {
     Vector ans(m.nrow(), 0.0);
     this->sparse_multiply(m, v, VectorView(ans));
     return ans;
   }
 
-  Vector Selector::sparse_multiply(
-      const Matrix &m, const VectorView &v) const {
+  Vector Selector::sparse_multiply(const Matrix &m, const VectorView &v) const {
     Vector ans(m.nrow(), 0.0);
     this->sparse_multiply(m, v, VectorView(ans));
     return ans;
   }
 
-  Vector Selector::sparse_multiply(
-      const Matrix &m, const ConstVectorView &v) const {
+  Vector Selector::sparse_multiply(const Matrix &m,
+                                   const ConstVectorView &v) const {
     Vector ans(m.nrow(), 0.0);
     this->sparse_multiply(m, v, VectorView(ans));
     return ans;
   }
-
 
   namespace {
     template <class VEC1, class VEC2>
-    double do_sparse_dot_product(const Selector &inc,
-                                 const VEC1 &full,
+    double do_sparse_dot_product(const Selector &inc, const VEC1 &full,
                                  const VEC2 &sparse) {
       int n = inc.nvars_possible();
       if (full.size() != n || sparse.size() > n) {
@@ -523,7 +521,7 @@ namespace BOOM {
       // If the number of excluded variables is a large fraction of
       // the total then perform the random selection by rejection sampling.
       while (true) {
-        int j = random_int_mt(rng, 1, N-1);
+        int j = random_int_mt(rng, 1, N - 1);
         if (!inc(j)) return j;
       }
     } else {
@@ -582,9 +580,8 @@ namespace BOOM {
       // The vector of included positions is non-empty, but position is not
       // included.  The call to lower bound returns the first element with value
       // >= position.
-      auto it = std::lower_bound(included_positions_.begin(),
-                                 included_positions_.end(),
-                                 position);
+      auto it = std::lower_bound(
+          included_positions_.begin(), included_positions_.end(), position);
       if (it == included_positions_.begin()) {
         // Element 0 is >= position;
         return -1;
@@ -595,29 +592,31 @@ namespace BOOM {
     }
   }
 
-  Selector &Selector::operator+=(const Selector &rhs) {
-    return cover(rhs);}
+  Selector &Selector::operator+=(const Selector &rhs) { return cover(rhs); }
 
-  Selector & Selector::operator*=(const Selector &rhs) {
+  Selector &Selector::operator*=(const Selector &rhs) {
     Selector tmp = intersection(rhs);
     this->swap(tmp);
     return *this;
   }
 
-  ostream & operator<<(ostream &out, const Selector &inc) {
+  ostream &operator<<(ostream &out, const Selector &inc) {
     for (uint i = 0; i < inc.nvars_possible(); ++i) out << inc.inc(i);
     return out;
   }
 
-  istream & operator>>(istream &in, Selector &inc) {
+  istream &operator>>(istream &in, Selector &inc) {
     string s;
     in >> s;
     uint n = s.size();
     std::vector<bool> tmp(n);
     for (uint i = 0; i < n; ++i) {
-      if (s[i] == '0') tmp[i] = false;
-      else if (s[i] == '1') tmp[i] = true;
-      else report_error(s + "is an illegal input value for 'Selector'");
+      if (s[i] == '0')
+        tmp[i] = false;
+      else if (s[i] == '1')
+        tmp[i] = true;
+      else
+        report_error(s + "is an illegal input value for 'Selector'");
     }
     Selector blah(tmp);
     inc.swap(blah);
@@ -643,7 +642,7 @@ namespace BOOM {
 
     for (uint i = 0; i < small.size(); ++i) {
       it = std::find(it, end, small[i]);
-      uint I = it-b;
+      uint I = it - b;
       vec[I] = true;
     }
     return Selector(vec);

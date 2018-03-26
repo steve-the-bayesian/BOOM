@@ -22,20 +22,20 @@
 
 #include "BOOM.hpp"
 
-#include <vector>
-#include <iostream>
 #include <cassert>
+#include <iostream>
 #include <string>
+#include <vector>
 
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 #include "distributions/rng.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
-  //TODO:  remove the inheritance from vector<bool>
+  // TODO:  remove the inheritance from vector<bool>
   //
   // A Selector models inclusion or exclusion from a set of positions.
   // The job of a Selector is often to extract a subset of elements
@@ -43,7 +43,7 @@ namespace BOOM{
   class Selector : public std::vector<bool> {
    public:
     Selector();
-    explicit Selector(uint p, bool all=true);  // all true or all false
+    explicit Selector(uint p, bool all = true);  // all true or all false
 
     // Using this constructor, Selector s("10") would have s[0] = true
     // and [1] = false;
@@ -56,28 +56,28 @@ namespace BOOM{
     void swap(Selector &rhs);
 
     // Append one or more elements elements to the end.  Return *this.
-    Selector & append(bool new_last_element);
-    Selector & append(const Selector &new_trailing_elements);
+    Selector &append(bool new_last_element);
+    Selector &append(const Selector &new_trailing_elements);
 
     // Add element i to the included set.  If it is already present,
     // then do nothing.
-    Selector & add(uint i);
-    Selector & operator+=(uint i) {return add(i);}
+    Selector &add(uint i);
+    Selector &operator+=(uint i) { return add(i); }
 
     // Remove element i from the included set.  If it is already
     // absent then do nothing.
-    Selector & drop(uint i);
-    Selector & operator-=(uint i) {return drop(i);}
+    Selector &drop(uint i);
+    Selector &operator-=(uint i) { return drop(i); }
 
     // Add element i if it is absent, otherwise drop it.
-    Selector & flip(uint i);
+    Selector &flip(uint i);
 
     // Set union.  Add any elements that are present in rhs, while
     // keeping any that are already present in *this.  Return *this.
-    Selector & operator+=(const Selector &rhs);
+    Selector &operator+=(const Selector &rhs);
 
     // Intersection.  Drop any elements that are absent in rhs.
-    Selector & operator*=(const Selector &rhs);
+    Selector &operator*=(const Selector &rhs);
 
     // Returns a selector of the same size as this, but with all
     // elements flipped.
@@ -87,9 +87,9 @@ namespace BOOM{
     void drop_all();
     void add_all();
 
-    uint nvars() const;          // =="n"
-    uint nvars_possible() const; // =="N"
-    uint nvars_excluded() const; // == N-n;
+    uint nvars() const;           // =="n"
+    uint nvars_possible() const;  // =="N"
+    uint nvars_excluded() const;  // == N-n;
 
     // Returns an indicator of whether element i is included.
     bool inc(uint i) const;
@@ -107,7 +107,7 @@ namespace BOOM{
 
     // Returns a Selector that is 1 in places where this disagrees with rhs.
     Selector exclusive_or(const Selector &rhs) const;
-    Selector & cover(const Selector &rhs);  // makes *this cover rhs
+    Selector &cover(const Selector &rhs);  // makes *this cover rhs
 
     // Returns the position of the ith nonzero element in the expanded
     // sparse vector.
@@ -128,19 +128,18 @@ namespace BOOM{
     Matrix select_square(const Matrix &M) const;  // selects rows and columns
     Matrix select_rows(const Matrix &M) const;
 
-    Vector select(const VectorView & x) const;
-    Vector select(const ConstVectorView & x) const;
+    Vector select(const VectorView &x) const;
+    Vector select(const ConstVectorView &x) const;
     SpdMatrix expand(const SpdMatrix &dense_part_of_sparse_matrix);
 
     Vector expand(const Vector &x) const;
     Vector expand(const VectorView &x) const;
     Vector expand(const ConstVectorView &x) const;
 
-    Vector & zero_missing_elements(Vector &v) const;
+    Vector &zero_missing_elements(Vector &v) const;
 
     // Fill ans with select_cols(M) * select(v).
-    void sparse_multiply(const Matrix &M,
-                         const Vector &v,
+    void sparse_multiply(const Matrix &M, const Vector &v,
                          VectorView ans) const;
     Vector sparse_multiply(const Matrix &M, const Vector &v) const;
     Vector sparse_multiply(const Matrix &M, const VectorView &v) const;
@@ -168,7 +167,7 @@ namespace BOOM{
     template <class T>
     std::vector<T> select(const std::vector<T> &v) const;
 
-    template<class T>
+    template <class T>
     T sub_select(const T &x, const Selector &rhs) const;
     // x is an object obtained by select(original_object).
     // this->covers(rhs).  sub_select(x,rhs) returns the object that
@@ -201,12 +200,11 @@ namespace BOOM{
     void check_size_eq(uint p, const string &fun_name) const;
     // Checks that the size of *this is greater than 'p'.
     void check_size_gt(uint p, const string &fun_name) const;
-
   };
   //______________________________________________________________________
 
-  ostream & operator<<(ostream &, const Selector &);
-  istream & operator>>(istream &, Selector &);
+  ostream &operator<<(ostream &, const Selector &);
+  istream &operator>>(istream &, Selector &);
 
   Selector find_contiguous_subset(const Vector &big, const Vector &small);
   // find_contiguous_subset returns the indices of 'big' that contain
@@ -216,33 +214,34 @@ namespace BOOM{
   template <class T>
   std::vector<T> select(const std::vector<T> &v, const std::vector<bool> &vb) {
     uint n = v.size();
-    assert(vb.size()==n);
+    assert(vb.size() == n);
     std::vector<T> ans;
-    for(uint i=0; i<n; ++i) if(vb[i]) ans.push_back(v[i]);
+    for (uint i = 0; i < n; ++i)
+      if (vb[i]) ans.push_back(v[i]);
     return ans;
   }
 
   template <class T>
-  std::vector<T> Selector::select(const std::vector<T> &v) const{
-    assert(v.size()==nvars_possible());
+  std::vector<T> Selector::select(const std::vector<T> &v) const {
+    assert(v.size() == nvars_possible());
     std::vector<T> ans;
     ans.reserve(nvars());
-    for(uint i=0; i<nvars_possible(); ++i)
-      if(inc(i))
-        ans.push_back(v[i]);
-    return ans;}
+    for (uint i = 0; i < nvars_possible(); ++i)
+      if (inc(i)) ans.push_back(v[i]);
+    return ans;
+  }
 
   template <class T>
-  T Selector::sub_select(const T &x, const Selector &rhs) const{
+  T Selector::sub_select(const T &x, const Selector &rhs) const {
     assert(rhs.nvars() <= this->nvars());
     assert(this->covers(rhs));
 
     Selector tmp(nvars(), false);
-    for(uint i=0; i<rhs.nvars(); ++i) {
+    for (uint i = 0; i < rhs.nvars(); ++i) {
       tmp.add(INDX(rhs.indx(i)));
     }
     return tmp.select(x);
   }
 
 }  // namespace BOOM
-#endif // BOOM_SELECTOR_HPP
+#endif  // BOOM_SELECTOR_HPP

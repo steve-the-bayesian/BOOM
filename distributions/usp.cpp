@@ -62,7 +62,7 @@ namespace BOOM {
       report_error(msg.str());
     }
 
-    if (p <= 0 && p >= 1) {
+    if (p <= 0 || p >= 1) {
       ostringstream msg;
       msg << "probability out of range in qusp: p = " << p;
       report_error(msg.str());

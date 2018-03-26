@@ -18,56 +18,60 @@
 */
 // std library includes
 #include <algorithm>
-#include <iostream>
-#include <stdexcept>
 #include <cmath>
+#include <iostream>
 #include <numeric>
+#include <stdexcept>
 
-#include "LinAlg/VectorView.hpp"
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/Matrix.hpp"
 #include "LinAlg/EigenMap.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
-#include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
+#include "distributions.hpp"
 
-namespace BOOM{
+namespace BOOM {
   using namespace std;
 
   namespace {
-    template <class V1, class V2> double dot_impl(const V1 &v1, const V2 &v2) {
+    template <class V1, class V2>
+    double dot_impl(const V1 &v1, const V2 &v2) {
       return EigenMap(v1).dot(EigenMap(v2));
     }
   }  // namespace
 
   typedef VectorView VV;
 
-  VV::iterator VV::begin() {return iterator(V, V, stride()); }
+  VV::iterator VV::begin() { return iterator(V, V, stride()); }
   VV::iterator VV::end() {
-    return iterator(V+size()*stride(), V, stride()); }
+    return iterator(V + size() * stride(), V, stride());
+  }
   VV::const_iterator VV::begin() const {
-    return const_iterator(V, V, stride()); }
+    return const_iterator(V, V, stride());
+  }
   VV::const_iterator VV::end() const {
-    return const_iterator(V+size()*stride(), V, stride()); }
+    return const_iterator(V + size() * stride(), V, stride());
+  }
 
   VV::reverse_iterator VV::rbegin() {
-    return std::reverse_iterator<iterator>(begin());}
+    return std::reverse_iterator<iterator>(begin());
+  }
   VV::reverse_iterator VV::rend() {
-    return std::reverse_iterator<iterator>(end());}
+    return std::reverse_iterator<iterator>(end());
+  }
   VV::const_reverse_iterator VV::rbegin() const {
-    return std::reverse_iterator<const_iterator>(begin());}
+    return std::reverse_iterator<const_iterator>(begin());
+  }
   VV::const_reverse_iterator VV::rend() const {
-    return std::reverse_iterator<const_iterator>(end());}
-
+    return std::reverse_iterator<const_iterator>(end());
+  }
 
   VV::VectorView(double *first, uint n, int s)
-      : V(first),
-      nelem_(n),
-      stride_(s)
-      {}
+      : V(first), nelem_(n), stride_(s) {}
 
-  VV & VV::reset(double *first, uint n, uint s) {
+  VV &VV::reset(double *first, uint n, uint s) {
     V = first;
     nelem_ = n;
     stride_ = s;
@@ -75,48 +79,38 @@ namespace BOOM{
   }
 
   VV::VectorView(Vector &v, uint first)
-      : V(v.data()+first),
-        nelem_(v.size()-first),
-        stride_(1)
-  {}
+      : V(v.data() + first), nelem_(v.size() - first), stride_(1) {}
 
   VV::VectorView(Vector &v, uint first, uint length)
-      : V(v.data()+first),
-        nelem_(length),
-        stride_(1)
-  {}
+      : V(v.data() + first), nelem_(length), stride_(1) {}
 
   VV::VectorView(VectorView v, uint first)
       : V(v.data() + first * v.stride()),
         nelem_(v.size() - first),
-        stride_(v.stride())
-  {}
+        stride_(v.stride()) {}
 
   VV::VectorView(VectorView v, uint first, uint length)
-      : V(v.data() + first * v.stride()),
-        nelem_(length),
-        stride_(v.stride())
-  {}
+      : V(v.data() + first * v.stride()), nelem_(length), stride_(v.stride()) {}
 
-  VV & VV::operator=(double x) {
+  VV &VV::operator=(double x) {
     std::fill(begin(), end(), x);
     return *this;
   }
 
-  VV & VV::operator=(const Vector &x) {
-    assert(x.size()==size());
+  VV &VV::operator=(const Vector &x) {
+    assert(x.size() == size());
     std::copy(x.begin(), x.end(), begin());
     return *this;
   }
 
-  VV & VV::operator=(const VectorView &x) {
-    assert(x.size()==size());
+  VV &VV::operator=(const VectorView &x) {
+    assert(x.size() == size());
     std::copy(x.begin(), x.end(), begin());
     return *this;
   }
 
-  VV & VV::operator=(const ConstVectorView &x) {
-    assert(x.size()==size());
+  VV &VV::operator=(const ConstVectorView &x) {
+    assert(x.size() == size());
     std::copy(x.begin(), x.end(), begin());
     return *this;
   }
@@ -124,156 +118,156 @@ namespace BOOM{
   void VV::randomize() {
     uint n = size();
     double *d = data();
-    for(uint i=0; i<n; ++i) d[i] = runif(0,1);
+    for (uint i = 0; i < n; ++i) d[i] = runif(0, 1);
   }
 
-  VV & VV::operator+=(const double & x) {
+  VV &VV::operator+=(const double &x) {
     VV &A(*this);
-    for(uint i=0; i<size(); ++i) A[i]+=x;
-    return *this; }
+    for (uint i = 0; i < size(); ++i) A[i] += x;
+    return *this;
+  }
 
-  VV & VV::operator-=(const double & x) {
+  VV &VV::operator-=(const double &x) {
     VV &A(*this);
-    for(uint i=0; i<size(); ++i) A[i]-=x;
-    return *this; }
+    for (uint i = 0; i < size(); ++i) A[i] -= x;
+    return *this;
+  }
 
-  VV & VV::operator*=(const double & x) {
+  VV &VV::operator*=(const double &x) {
     EigenMap(*this) *= x;
     //    dscal(size(), x, data(), stride());
     return *this;
   }
 
-  VV & VV::operator/=(const double & x) {
-    assert(x!=0.0);
+  VV &VV::operator/=(const double &x) {
+    assert(x != 0.0);
     EigenMap(*this) /= x;
     //    dscal(size(), 1.0/x, data(), stride());
     return *this;
   }
 
-  VV & VV::operator+=(const VectorView & y) {
-    assert(y.size()==size());
+  VV &VV::operator+=(const VectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) += EigenMap(y);
-    //daxpy(size(), 1.0, y.data(), y.stride(), data(), stride());
+    // daxpy(size(), 1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::operator+=(const ConstVectorView & y) {
-    assert(y.size()==size());
+  VV &VV::operator+=(const ConstVectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) += EigenMap(y);
-    //daxpy(size(), 1.0, y.data(), y.stride(), data(), stride());
+    // daxpy(size(), 1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::operator+=(const Vector &y) {
-    assert(y.size()==size());
+  VV &VV::operator+=(const Vector &y) {
+    assert(y.size() == size());
     EigenMap(*this) += EigenMap(y);
     //    daxpy(size(), 1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::operator-=(const Vector &y) {
-    assert(y.size()==size());
+  VV &VV::operator-=(const Vector &y) {
+    assert(y.size() == size());
     EigenMap(*this) -= EigenMap(y);
     //    daxpy(size(), -1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::operator-=(const VectorView &y) {
-    assert(y.size()==size());
+  VV &VV::operator-=(const VectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) -= EigenMap(y);
     //    daxpy(size(), -1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::operator-=(const ConstVectorView &y) {
-    assert(y.size()==size());
+  VV &VV::operator-=(const ConstVectorView &y) {
+    assert(y.size() == size());
     EigenMap(*this) -= EigenMap(y);
-    //daxpy(size(), -1.0, y.data(), y.stride(), data(), stride());
+    // daxpy(size(), -1.0, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::axpy(const Vector &y, double a) {
-    assert(y.size()==size());
+  VV &VV::axpy(const Vector &y, double a) {
+    assert(y.size() == size());
     EigenMap(*this) += a * EigenMap(y);
     //    daxpy(size(), a, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::axpy(const VectorView &y, double a) {
-    assert(y.size()==size());
+  VV &VV::axpy(const VectorView &y, double a) {
+    assert(y.size() == size());
     EigenMap(*this) += a * EigenMap(y);
     //    daxpy(size(), a, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
-  VV & VV::axpy(const ConstVectorView &y, double a) {
-    assert(y.size()==size());
+  VV &VV::axpy(const ConstVectorView &y, double a) {
+    assert(y.size() == size());
     EigenMap(*this).array() += a * EigenMap(y).array();
     //    daxpy(size(), a, y.data(), y.stride(), data(), stride());
     return *this;
   }
 
   namespace {
-    inline void dmul(uint n, double *x, uint xs, const double *y, uint ys ) {
-      for(uint i=0 ; i<n; ++i) {
+    inline void dmul(uint n, double *x, uint xs, const double *y, uint ys) {
+      for (uint i = 0; i < n; ++i) {
         *x *= *y;
-        x+= xs;
-        y+= ys;
+        x += xs;
+        y += ys;
       }
     }
-    inline void ddiv(uint n, double *x, uint xs, const double *y, uint ys ) {
-      for(uint i=0; i<n; ++i) {
+    inline void ddiv(uint n, double *x, uint xs, const double *y, uint ys) {
+      for (uint i = 0; i < n; ++i) {
         *x /= *y;
-        x+= xs;
-        y+= ys;
+        x += xs;
+        y += ys;
       }
     }
-    inline double mul(double x, double y) {return x*y;}
+    inline double mul(double x, double y) { return x * y; }
   }  // namespace
 
-  VV & VV::operator*=(const Vector &y) {
-    assert(size()==y.size());
+  VV &VV::operator*=(const Vector &y) {
+    assert(size() == y.size());
     dmul(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  VV & VV::operator*=(const VectorView &y) {
-    assert(size()==y.size());
+  VV &VV::operator*=(const VectorView &y) {
+    assert(size() == y.size());
     dmul(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  VV & VV::operator*=(const ConstVectorView &y) {
-    assert(size()==y.size());
+  VV &VV::operator*=(const ConstVectorView &y) {
+    assert(size() == y.size());
     dmul(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  VV & VV::operator/=(const Vector &y) {
-    assert(size()==y.size());
+  VV &VV::operator/=(const Vector &y) {
+    assert(size() == y.size());
     ddiv(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  VV & VV::operator/=(const VectorView &y) {
-    assert(size()==y.size());
+  VV &VV::operator/=(const VectorView &y) {
+    assert(size() == y.size());
     ddiv(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  VV & VV::operator/=(const ConstVectorView &y) {
-    assert(size()==y.size());
+  VV &VV::operator/=(const ConstVectorView &y) {
+    assert(size() == y.size());
     ddiv(size(), data(), stride(), y.data(), y.stride());
     return *this;
   }
 
-  double VV::normsq() const {
-    return EigenMap(*this).squaredNorm();
-  }
+  double VV::normsq() const { return EigenMap(*this).squaredNorm(); }
 
   double VV::normalize_prob() {
     double s = sum();
-    if (s==0) {
+    if (s == 0) {
       report_error("normalizing constant is zero in VV::normalize_logprob");
     }
     operator/=(s);
@@ -281,54 +275,54 @@ namespace BOOM{
   }
 
   double VV::normalize_logprob() {
-    double nc=0;
-    VectorView &x= *this;
+    double nc = 0;
+    VectorView &x = *this;
     double m = max();
     uint n = size();
-    for(uint i=0; i<n; ++i) {
-      x[i] = std::exp(x[i]-m);
-      nc+=x[i]; }
-    x/=nc;
-    return nc;   // might want to change this
+    for (uint i = 0; i < n; ++i) {
+      x[i] = std::exp(x[i] - m);
+      nc += x[i];
+    }
+    x /= nc;
+    return nc;  // might want to change this
   }
-
 
   double VV::min() const {
     const_iterator it = min_element(begin(), end());
-    return *it; }
+    return *it;
+  }
 
   double VV::max() const {
     const_iterator it = std::max_element(begin(), end());
-    return *it; }
+    return *it;
+  }
 
   uint VV::imax() const {
     const_iterator it = std::max_element(begin(), end());
-    return it-begin();}
+    return it - begin();
+  }
 
   uint VV::imin() const {
     const_iterator it = min_element(begin(), end());
-    return it-begin();}
-
-  double VV::sum() const {
-    return accumulate(begin(), end(), 0.0); }
-
-  double VV::abs_norm() const {
-    return EigenMap(*this).lpNorm<1>();
+    return it - begin();
   }
 
-  double VV::prod() const {
-    return accumulate(begin(), end(), 1.0, mul);}
+  double VV::sum() const { return accumulate(begin(), end(), 0.0); }
 
-  double VV::dot(const Vector &y) const {return dot_impl(*this, y); }
-  double VV::dot(const VectorView &y) const {return dot_impl(*this, y); }
-  double VV::dot(const ConstVectorView &y) const {return dot_impl(*this, y); }
+  double VV::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
+
+  double VV::prod() const { return accumulate(begin(), end(), 1.0, mul); }
+
+  double VV::dot(const Vector &y) const { return dot_impl(*this, y); }
+  double VV::dot(const VectorView &y) const { return dot_impl(*this, y); }
+  double VV::dot(const ConstVectorView &y) const { return dot_impl(*this, y); }
 
   namespace {
     template <class V1, class V2>
     double affdot_impl(const V1 &x, const V2 &y) {
       uint n = x.size();
       uint m = y.size();
-      if(m==n) {
+      if (m == n) {
         return x.dot(y);
       } else if (m == n + 1) {
         return y[0] + ConstVectorView(y, 1).dot(x);
@@ -339,17 +333,13 @@ namespace BOOM{
         return negative_infinity();
       }
     }
-  }
+  }  // namespace
 
-  double VV::affdot(const Vector &y) const {
-    return affdot_impl(*this, y);
-  }
+  double VV::affdot(const Vector &y) const { return affdot_impl(*this, y); }
 
-  double VV::affdot(const VectorView &y) const {
-    return affdot_impl(*this, y);
-  }
+  double VV::affdot(const VectorView &y) const { return affdot_impl(*this, y); }
 
-  VV & VV::transform(const std::function<double(double)> &f) {
+  VV &VV::transform(const std::function<double(double)> &f) {
     for (int i = 0; i < size(); ++i) {
       double *d = V + i * stride_;
       *d = f(*d);
@@ -357,20 +347,17 @@ namespace BOOM{
     return *this;
   }
 
-  std::ostream & operator<<(std::ostream & out, const VV & v) {
-    for(uint i = 0; i<v.size(); ++i) out << v[i] << " ";
-    return out; }
-
-  void print(const VectorView &v) {
-    std::cout << v << std::endl;
+  std::ostream &operator<<(std::ostream &out, const VV &v) {
+    for (uint i = 0; i < v.size(); ++i) out << v[i] << " ";
+    return out;
   }
 
-  void print(const ConstVectorView &v) {
-    std::cout << v << std::endl;
-  }
+  void print(const VectorView &v) { std::cout << v << std::endl; }
 
-  istream & operator<< (istream &in, VV &v) {
-    for(uint i=0; i<v.size(); ++i) in >> v[i];
+  void print(const ConstVectorView &v) { std::cout << v << std::endl; }
+
+  istream &operator<<(istream &in, VV &v) {
+    for (uint i = 0; i < v.size(); ++i) in >> v[i];
     return in;
   }
 
@@ -383,7 +370,7 @@ namespace BOOM{
   }
 
   CVV::const_iterator CVV::end() const {
-    return const_iterator(V+size()*stride(), V, stride());
+    return const_iterator(V + size() * stride(), V, stride());
   }
 
   CVV::const_reverse_iterator CVV::rbegin() const {
@@ -395,96 +382,80 @@ namespace BOOM{
   }
 
   CVV::ConstVectorView(const double *first_element, uint n, int s)
-      : V(first_element),
-        nelem_(n),
-        stride_(s)
-  {}
+      : V(first_element), nelem_(n), stride_(s) {}
 
   CVV::ConstVectorView(const Vector &v, uint first_element)
       : V(v.data() + first_element),
         nelem_(v.size() - first_element),
-        stride_(1)
-  {}
+        stride_(1) {}
 
   CVV::ConstVectorView(const Vector &v, uint first_element, uint length)
-      : V(v.data() + first_element),
-        nelem_(length),
-        stride_(1)
-  {}
+      : V(v.data() + first_element), nelem_(length), stride_(1) {}
 
   CVV::ConstVectorView(const CVV &v, uint first_element)
       : V(v.data() + first_element * v.stride()),
         nelem_(v.size() - first_element),
-        stride_(v.stride())
-  {}
+        stride_(v.stride()) {}
 
   CVV::ConstVectorView(const std::vector<double> &v, uint first_element)
       : V(v.data() + first_element),
         nelem_(v.size() - first_element),
-        stride_(1)
-  {}
+        stride_(1) {}
 
   CVV::ConstVectorView(const VectorView &v, uint first_element, uint length)
-      : V(v.data() + first_element*v.stride()),
+      : V(v.data() + first_element * v.stride()),
         nelem_(length),
-        stride_(v.stride())
-  {}
+        stride_(v.stride()) {}
 
   CVV::ConstVectorView(const CVV &v, uint first_element, uint length)
-      : V(v.data() + first_element*v.stride()),
+      : V(v.data() + first_element * v.stride()),
         nelem_(length),
-        stride_(v.stride())
-  {}
+        stride_(v.stride()) {}
 
   CVV::ConstVectorView(const VectorView &v, uint first_element)
       : V(v.data() + first_element * v.stride()),
         nelem_(v.size() - first_element),
-        stride_(v.stride())
-  {}
+        stride_(v.stride()) {}
 
   CVV::ConstVectorView(const std::vector<double> &v, uint first_element,
                        uint length)
-      : V(v.data() + first_element),
-        nelem_(length),
-        stride_(1)
-  {}
+      : V(v.data() + first_element), nelem_(length), stride_(1) {}
 
-  double CVV::normsq() const {
-    return EigenMap(*this).squaredNorm();
-  }
+  double CVV::normsq() const { return EigenMap(*this).squaredNorm(); }
 
   double CVV::min() const {
     const_iterator it = min_element(begin(), end());
-    return *it; }
+    return *it;
+  }
 
   double CVV::max() const {
     const_iterator it = std::max_element(begin(), end());
-    return *it; }
+    return *it;
+  }
 
   uint CVV::imax() const {
     const_iterator it = std::max_element(begin(), end());
-    return it-begin();}
+    return it - begin();
+  }
 
   uint CVV::imin() const {
     const_iterator it = min_element(begin(), end());
-    return it-begin();}
-
-  double CVV::sum() const {
-    return accumulate(begin(), end(), 0.0); }
-
-  double CVV::abs_norm() const {
-    return EigenMap(*this).lpNorm<1>();
+    return it - begin();
   }
 
-  double CVV::prod() const {
-    return accumulate(begin(), end(), 1.0, mul);
-  }
+  double CVV::sum() const { return accumulate(begin(), end(), 0.0); }
 
-  double CVV::dot(const Vector &y) const {return dot_impl(*this, y); }
-  double CVV::dot(const VectorView &y) const {return dot_impl(*this, y); }
-  double CVV::dot(const ConstVectorView &y) const {return dot_impl(*this, y); }
-  double CVV::affdot(const Vector &y) const {return affdot_impl(*this, y);}
-  double CVV::affdot(const VectorView &y) const {return affdot_impl(*this, y);}
+  double CVV::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
+
+  double CVV::prod() const { return accumulate(begin(), end(), 1.0, mul); }
+
+  double CVV::dot(const Vector &y) const { return dot_impl(*this, y); }
+  double CVV::dot(const VectorView &y) const { return dot_impl(*this, y); }
+  double CVV::dot(const ConstVectorView &y) const { return dot_impl(*this, y); }
+  double CVV::affdot(const Vector &y) const { return affdot_impl(*this, y); }
+  double CVV::affdot(const VectorView &y) const {
+    return affdot_impl(*this, y);
+  }
   double CVV::affdot(const ConstVectorView &y) const {
     return affdot_impl(*this, y);
   }
@@ -494,9 +465,10 @@ namespace BOOM{
     return CVV(start, nelem_, -stride_);
   }
 
-  std::ostream & operator<<(std::ostream & out, const CVV & v) {
-    for(uint i = 0; i<v.size(); ++i) out << v[i] << " ";
-    return out; }
+  std::ostream &operator<<(std::ostream &out, const CVV &v) {
+    for (uint i = 0; i < v.size(); ++i) out << v[i] << " ";
+    return out;
+  }
 
   namespace {
     template <class VECTOR>
@@ -518,9 +490,9 @@ namespace BOOM{
       return ConstVectorView(view, n - size);
     }
   }  // namespace
-  
+
   VectorView tail(Vector &v, int size) { return tail_impl(v, size); }
-  VectorView tail(VectorView &v, int size) {return tail_impl(v, size); }
+  VectorView tail(VectorView &v, int size) { return tail_impl(v, size); }
 
   ConstVectorView const_tail(const Vector &v, int size) {
     return const_tail_impl(v, size);

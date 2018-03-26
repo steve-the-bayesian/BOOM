@@ -136,7 +136,7 @@ namespace BOOM {
   namespace {
     class LogDet {
      public:
-      LogDet(const std::shared_ptr<Jacobian> &analytic_jacobian)
+      explicit LogDet(const std::shared_ptr<Jacobian> &analytic_jacobian)
           : analytic_jacobian_(analytic_jacobian) {}
 
       double operator()(const Vector &new_parameterization) {

@@ -118,6 +118,13 @@ namespace BOOM {
       Ptr<StateModel> CreateStateModel(SEXP r_state_component,
                                        const std::string &prefix);
 
+      // Create a BOOM::Holiday from the supplied R object.
+      // Args:
+      //   holiday_spec:  An R object inheriting from "Holiday".
+      // Returns:
+      //   A BOOM::Holiday corresponding to 'holiday_spec'.
+      static Ptr<Holiday> CreateHoliday(SEXP holiday_spec);
+
      private:
       // Concrete implementations of CreateStateModel.
 
@@ -155,8 +162,6 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
       MonthlyAnnualCycle *CreateMonthlyAnnualCycle(
           SEXP r_state_component, const std::string &prefix);
-
-      Holiday *CreateHoliday(SEXP holiday_spec);
 
       Ptr<UnivParams> GetResidualVarianceParameter();
 

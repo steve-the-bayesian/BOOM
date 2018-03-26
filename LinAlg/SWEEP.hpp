@@ -23,12 +23,12 @@
 #include <vector>
 #include "BOOM.hpp"
 
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
-#include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Selector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
-namespace BOOM{
+namespace BOOM {
 
   // A SweptVarianceMatrix is a matrix that has been operated on by
   // the SWEEP operator.  The SWEEP operator operates on multivariate
@@ -47,7 +47,7 @@ namespace BOOM{
   //                ( A_{21} * A_{11}^{-1}   A_22 - A_{21} A_{11}^{-1} A_{12})
   //
 
-  class SweptVarianceMatrix{
+  class SweptVarianceMatrix {
     // Sweeping a variable is equivalent to conditioning on it.
     // i.e. when a variable is swept it changes from 'y' to 'x'.
    public:
@@ -70,7 +70,7 @@ namespace BOOM{
 
     // The matrix of regression coefficients for E(unknown | known).
     // The dimension
-    Matrix Beta()const;  // to compute E(unswept | swept)
+    Matrix Beta() const;  // to compute E(unswept | swept)
 
     // Compute the conditional mean of the unknowns given the knowns.
     // Args:
@@ -95,7 +95,7 @@ namespace BOOM{
     // Dimension of the knowns x.  xdim() + ydim() = nrow(S_).
     uint xdim() const;
 
-    const SpdMatrix & swept_matrix() const {return S_;}
+    const SpdMatrix &swept_matrix() const { return S_; }
 
    private:
     SpdMatrix S_;
@@ -106,6 +106,6 @@ namespace BOOM{
     // Implementation of steps common to both SWP and RSW.
     void do_sweep(uint sweep_index);
   };
-}
+}  // namespace BOOM
 
-#endif // BOOM_SWEEP_HPP
+#endif  // BOOM_SWEEP_HPP

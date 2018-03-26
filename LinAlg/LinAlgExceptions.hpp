@@ -17,17 +17,15 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-
 #include <string>
 #include "LinAlg/Matrix.hpp"
 
-namespace BOOM{
-  struct matrix_not_positive_definite
-      : public std::exception{
+namespace BOOM {
+  struct matrix_not_positive_definite : public std::exception {
     Matrix m;
     std::string msg;
     matrix_not_positive_definite(const Matrix &M, const std::string &err_msg);
-    ~matrix_not_positive_definite()throw() override{}
-    const char * what()const throw() override;
+    ~matrix_not_positive_definite() throw() override {}
+    const char *what() const throw() override;
   };
-}
+}  // namespace BOOM
