@@ -75,7 +75,7 @@ namespace BOOM {
   //------------------------------------------------------------
   class TrunMvnTF : public TargetFun {
    public:
-    TrunMvnTF(const SpdMatrix &siginv)
+    explicit TrunMvnTF(const SpdMatrix &siginv)
         : mu(siginv.nrow()), Ivar(siginv), ldsi(siginv.logdet()), y(0) {}
 
     TrunMvnTF *clone() const { return new TrunMvnTF(*this); }

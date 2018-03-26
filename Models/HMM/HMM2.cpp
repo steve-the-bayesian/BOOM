@@ -295,7 +295,8 @@ namespace BOOM {
   namespace {
     class HmmWorkWrapper {
      public:
-      HmmWorkWrapper(const Ptr<HmmDataImputer> &worker) : worker_(worker) {}
+      explicit HmmWorkWrapper(const Ptr<HmmDataImputer> &worker)
+          : worker_(worker) {}
       void operator()() { worker_->impute_data(); }
 
      public:
