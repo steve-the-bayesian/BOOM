@@ -19,14 +19,14 @@
 #include "LinAlg/stack_columns.hpp"
 #include "LinAlg/Matrix.hpp"
 
-namespace BOOM{
-  Vector stack_columns(const Matrix &m){
+namespace BOOM {
+  Vector stack_columns(const Matrix &m) {
     uint n = m.size();
     Vector ans(n);
     Vector::iterator it = ans.begin();
     uint nc = m.ncol();
-    for(uint i=0; i<nc; ++i)
+    for (uint i = 0; i < nc; ++i)
       it = std::copy(m.col_begin(i), m.col_end(i), it);
     return ans;
   }
-}
+}  // namespace BOOM

@@ -20,13 +20,11 @@
 #include "LinAlg/SWEEP.hpp"
 #include "cpputil/report_error.hpp"
 
-namespace BOOM{
+namespace BOOM {
   typedef SweptVarianceMatrix SVM;
 
   SVM::SweptVarianceMatrix(const SpdMatrix &m, bool inverse)
-      : S_(m),
-        swept_(m.nrow(), inverse)
-  {
+      : S_(m), swept_(m.nrow(), inverse) {
     if (inverse) S_ *= -1;
   }
 
@@ -51,8 +49,9 @@ namespace BOOM{
   void SVM::do_sweep(uint sweep_index) {
     double x = S_(sweep_index, sweep_index);
     if (!std::isfinite(1.0 / x)) {
-      report_error("Zero variance implied by SWEEP operation.  "
-                   "Matrix might be less than full rank.");
+      report_error(
+          "Zero variance implied by SWEEP operation.  "
+          "Matrix might be less than full rank.");
     }
     S_(sweep_index, sweep_index) = -1.0 / x;
     uint dimension = S_.nrow();
@@ -81,17 +80,17 @@ namespace BOOM{
   }
 
   uint SVM::xdim() const { return swept_.nvars(); }
-  uint SVM::ydim() const { return swept_.nvars_excluded();}
+  uint SVM::ydim() const { return swept_.nvars_excluded(); }
 
   //------------------------------------------------------------
-  Matrix SVM::Beta() const {   // E(y|x) = Beta * x
+  Matrix SVM::Beta() const {  // E(y|x) = Beta * x
     return swept_.complement().select_rows(swept_.select_cols(S_));
   }
   //------------------------------------------------------------
   Vector SVM::conditional_mean(const Vector &known_subset,
                                const Vector &unconditional_mean) const {
-    return (known_subset - swept_.select(unconditional_mean)) * Beta()
-        + swept_.complement().select(unconditional_mean);
+    return (known_subset - swept_.select(unconditional_mean)) * Beta() +
+           swept_.complement().select(unconditional_mean);
   }
   //------------------------------------------------------------
   SpdMatrix SVM::residual_variance() const {
@@ -102,4 +101,4 @@ namespace BOOM{
     return -1 * swept_.select(S_);
   }
 
-} // ends namespace BOOM
+}  // namespace BOOM

@@ -19,22 +19,20 @@
 
 #include "LinAlg/Cholesky.hpp"
 #include <sstream>
-#include "cpputil/report_error.hpp"
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/EigenMap.hpp"
 #include "Eigen/Cholesky"
+#include "LinAlg/EigenMap.hpp"
+#include "LinAlg/Vector.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
   namespace {
+    using Eigen::MatrixXd;
     using std::cout;
     using std::endl;
-    using Eigen::MatrixXd;
-  }
-  
+  }  // namespace
+
   Chol::Chol(const Matrix &m)
-      : lower_cholesky_triangle_(m.nrow(), m.ncol(), 0.0),
-        pos_def_(true)
-  {
+      : lower_cholesky_triangle_(m.nrow(), m.ncol(), 0.0), pos_def_(true) {
     if (!m.is_square()) {
       pos_def_ = false;
       lower_cholesky_triangle_ = Matrix();
@@ -51,13 +49,11 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix Chol::inv() const {
-    return chol2inv(lower_cholesky_triangle_);
-  }
+  SpdMatrix Chol::inv() const { return chol2inv(lower_cholesky_triangle_); }
 
-  uint Chol::nrow() const { return lower_cholesky_triangle_.nrow();}
-  uint Chol::ncol() const { return lower_cholesky_triangle_.ncol();}
-  uint Chol::dim() const { return lower_cholesky_triangle_.nrow();}
+  uint Chol::nrow() const { return lower_cholesky_triangle_.nrow(); }
+  uint Chol::ncol() const { return lower_cholesky_triangle_.ncol(); }
+  uint Chol::dim() const { return lower_cholesky_triangle_.nrow(); }
 
   Matrix Chol::getL(bool perform_check) const {
     if (perform_check) {

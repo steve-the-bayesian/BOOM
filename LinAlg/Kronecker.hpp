@@ -21,7 +21,7 @@
 
 #include "LinAlg/Matrix.hpp"
 
-namespace BOOM{
+namespace BOOM {
   Matrix Kronecker(const Matrix &A, const Matrix &B);
 }
-#endif// BOOM_LIN_ALG_KRONECKER_HPP
+#endif  // BOOM_LIN_ALG_KRONECKER_HPP

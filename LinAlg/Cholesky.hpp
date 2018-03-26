@@ -30,44 +30,44 @@ namespace BOOM {
 
     // All three of these return the number of rows in the represented matrix
     // (which is the same as the number of columns).
-    uint nrow()const;
-    uint ncol()const;
-    uint dim()const;
+    uint nrow() const;
+    uint ncol() const;
+    uint dim() const;
 
     // The lower Cholesky triangle of A.
-    Matrix getL(bool perform_check=true)const;
+    Matrix getL(bool perform_check = true) const;
 
     // The upper Cholesky triangle of A.
-    Matrix getLT()const;
+    Matrix getLT() const;
 
     // The (inverse of A) times B.
-    Matrix solve(const Matrix &B)const;
+    Matrix solve(const Matrix &B) const;
 
     // The (inverse of A) times b.
-    Vector solve(const Vector &b)const;
+    Vector solve(const Vector &b) const;
 
     // The inverse of A.
-    SpdMatrix inv()const;  // inverse of A
+    SpdMatrix inv() const;  // inverse of A
 
     // The original (represented) matrix.
-    SpdMatrix original_matrix()const;
+    SpdMatrix original_matrix() const;
 
     // Determinant of A.
-    double det()const;
+    double det() const;
 
     // Natural log of the determinant of A.
-    double logdet()const;
+    double logdet() const;
 
     // Returns true if A is positive definite.  Computing a cholesky
     // decomposition is a fast way to determine if a matrix is positive
     // definite.  If the result is false, then other computations are not to be
     // trusted, and may result in errors or exceptions.
-    bool is_pos_def() const {return pos_def_;}
+    bool is_pos_def() const { return pos_def_; }
 
    private:
     Matrix lower_cholesky_triangle_;
     bool pos_def_;
-    void check()const;
+    void check() const;
   };
 
 }  // namespace BOOM

@@ -18,23 +18,21 @@
 */
 #include "LinAlg/QR.hpp"
 #include <cstring>
-#include "cpputil/report_error.hpp"
 #include "Eigen/QR"
-#include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/EigenMap.hpp"
+#include "LinAlg/SubMatrix.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-  using std::cout;
-  using std::endl;
+  using Eigen::HouseholderQR;
+  using Eigen::Lower;
   using Eigen::MatrixXd;
   using Eigen::Upper;
-  using Eigen::Lower;
-  using Eigen::HouseholderQR;
-  
-  QR::QR(const Matrix &mat) {
-    decompose(mat);
-  }
+  using std::cout;
+  using std::endl;
+
+  QR::QR(const Matrix &mat) { decompose(mat); }
 
   Matrix QR::getQ() const { return Q_; }
 
@@ -44,7 +42,7 @@ namespace BOOM {
     Matrix ans = Usolve(R_, B);
     EigenMap(ans) = EigenMap(Q_).transpose() * EigenMap(ans);
     return ans;
-  }        
+  }
 
   Vector QR::Qty(const Vector &y) const {
     if (length(y) != Q_.nrow()) {
@@ -73,7 +71,7 @@ namespace BOOM {
   void QR::decompose(const Matrix &mat) {
     Q_ = Matrix(mat.nrow(), mat.ncol());
     R_ = Matrix(mat.ncol(), mat.ncol(), 0.0);
-    
+
     Eigen::HouseholderQR<MatrixXd> eigen_qr(EigenMap(mat));
 
     // Temporary is needed because you can't take the block() of a view.
@@ -108,9 +106,7 @@ namespace BOOM {
     return ans;
   }
 
-  Matrix QR::Rsolve(const Matrix &QtY) const {
-    return Usolve(R_, QtY);
-  }
+  Matrix QR::Rsolve(const Matrix &QtY) const { return Usolve(R_, QtY); }
 
   Vector QR::vectorize() const {
     Vector ans(2);

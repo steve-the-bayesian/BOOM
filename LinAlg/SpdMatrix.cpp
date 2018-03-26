@@ -18,23 +18,23 @@
 */
 
 #include "LinAlg/SpdMatrix.hpp"
-#include "LinAlg/Matrix.hpp"
-#include "LinAlg/Vector.hpp"
 #include "LinAlg/Cholesky.hpp"
+#include "LinAlg/Matrix.hpp"
 #include "LinAlg/SubMatrix.hpp"
+#include "LinAlg/Vector.hpp"
 
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 
 #include <cmath>
 #include <numeric>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
-#include "LinAlg/EigenMap.hpp"
-#include "LinAlg/Eigen.hpp"
-#include "Eigen/Core"
 #include "Eigen/Cholesky"
+#include "Eigen/Core"
+#include "LinAlg/Eigen.hpp"
+#include "LinAlg/EigenMap.hpp"
 
 namespace BOOM {
   using Eigen::MatrixXd;
@@ -44,18 +44,14 @@ namespace BOOM {
 
   SpdMatrix::SpdMatrix() {}
 
-  SpdMatrix::SpdMatrix(uint dim, double x)
-      : Matrix(dim, dim)
-  {
+  SpdMatrix::SpdMatrix(uint dim, double x) : Matrix(dim, dim) {
     if (dim > 0) set_diag(x);
   }
 
   SpdMatrix::SpdMatrix(uint n, double *x, bool ColMajor)
-      : Matrix(n, n, x, ColMajor)
-  {}
+      : Matrix(n, n, x, ColMajor) {}
 
-  SpdMatrix::SpdMatrix(const Vector &v, bool minimal)
-  {
+  SpdMatrix::SpdMatrix(const Vector &v, bool minimal) {
     if (v.empty()) return;
     size_t dimension = 0;
     if (minimal) {
@@ -73,9 +69,7 @@ namespace BOOM {
     unvectorize(v, minimal);
   }
 
-  SpdMatrix::SpdMatrix(const Matrix &A, bool check)
-      : Matrix(A)
-  {
+  SpdMatrix::SpdMatrix(const Matrix &A, bool check) : Matrix(A) {
     if (check) {
       double d = A.distance_from_symmetry();
       if (d > .5) {
@@ -87,45 +81,47 @@ namespace BOOM {
     }
   }
 
-  SpdMatrix::SpdMatrix(const SubMatrix &rhs, bool check)
-  {
+  SpdMatrix::SpdMatrix(const SubMatrix &rhs, bool check) {
     if (check && (rhs.nrow() != rhs.ncol())) {
-      report_error("SpdMatrix constructor was supplied a non-square"
-                   "SubMatrix argument");
+      report_error(
+          "SpdMatrix constructor was supplied a non-square"
+          "SubMatrix argument");
     }
     operator=(rhs);
   }
 
-  SpdMatrix::SpdMatrix(const ConstSubMatrix &rhs, bool check)
-  {
+  SpdMatrix::SpdMatrix(const ConstSubMatrix &rhs, bool check) {
     if (check && rhs.nrow() != rhs.ncol()) {
-      report_error("SpdMatrix constructor was supplied a non-square"
-                   "SubMatrix argument");
+      report_error(
+          "SpdMatrix constructor was supplied a non-square"
+          "SubMatrix argument");
     }
     operator=(rhs);
   }
 
-  SpdMatrix & SpdMatrix::operator=(const SubMatrix &rhs) {
+  SpdMatrix &SpdMatrix::operator=(const SubMatrix &rhs) {
     if (rhs.nrow() != rhs.ncol()) {
-      report_error("SpdMatrix::operator= called with rectangular "
-                   "RHS argument");
+      report_error(
+          "SpdMatrix::operator= called with rectangular "
+          "RHS argument");
     }
     Matrix::operator=(rhs);
     fix_near_symmetry();
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::operator=(const ConstSubMatrix &rhs) {
+  SpdMatrix &SpdMatrix::operator=(const ConstSubMatrix &rhs) {
     if (rhs.nrow() != rhs.ncol()) {
-      report_error("SpdMatrix::operator= called with rectangular "
-                   "RHS argument");
+      report_error(
+          "SpdMatrix::operator= called with rectangular "
+          "RHS argument");
     }
     Matrix::operator=(rhs);
     fix_near_symmetry();
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::operator=(const Matrix &rhs) {
+  SpdMatrix &SpdMatrix::operator=(const Matrix &rhs) {
     double d = rhs.distance_from_symmetry();
     if (d > .5) {
       report_error("Argument to SpdMatrix is non-symmetric.");
@@ -135,17 +131,18 @@ namespace BOOM {
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::operator=(double x) {
+  SpdMatrix &SpdMatrix::operator=(double x) {
     Matrix::operator=(x);
     return *this;
   }
 
   bool SpdMatrix::operator==(const SpdMatrix &rhs) const {
-    return Matrix::operator == (rhs);}
+    return Matrix::operator==(rhs);
+  }
 
   void SpdMatrix::swap(SpdMatrix &rhs) { Matrix::swap(rhs); }
 
-  SpdMatrix & SpdMatrix::randomize() {
+  SpdMatrix &SpdMatrix::randomize() {
     *this = 0.0;
     SpdMatrix tmp(nrow());
     tmp.Matrix::randomize();
@@ -160,27 +157,34 @@ namespace BOOM {
     return n * (n + 1) / 2;
   }
 
-  SpdMatrix & SpdMatrix::resize(uint n) {
+  SpdMatrix &SpdMatrix::resize(uint n) {
     Matrix::resize(n, n);
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::set_diag(double x, bool zero) {
+  SpdMatrix &SpdMatrix::set_diag(double x, bool zero) {
     Matrix::set_diag(x, zero);
-    return *this; }
+    return *this;
+  }
 
-  SpdMatrix & SpdMatrix::set_diag(const Vector &v, bool zero) {
+  SpdMatrix &SpdMatrix::set_diag(const Vector &v, bool zero) {
     Matrix::set_diag(v, zero);
-    return *this; }
+    return *this;
+  }
 
   inline void zero_upper(SpdMatrix &V) {
     uint n = V.nrow();
     for (uint i = 0; i < n; ++i) {
       dVector::iterator b = V.col_begin(i);
-      dVector::iterator e = b+i;
-      std::fill(b, e, 0.0);}}
+      dVector::iterator e = b + i;
+      std::fill(b, e, 0.0);
+    }
+  }
 
-  Matrix SpdMatrix::chol() const { bool ok = true; return chol(ok);}
+  Matrix SpdMatrix::chol() const {
+    bool ok = true;
+    return chol(ok);
+  }
   Matrix SpdMatrix::chol(bool &ok) const {
     Chol cholesky(*this);
     if (!cholesky.is_pos_def()) {
@@ -201,7 +205,7 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix SpdMatrix::inv(bool & ok) const {
+  SpdMatrix SpdMatrix::inv(bool &ok) const {
     Chol cholesky(*this);
     if (!cholesky.is_pos_def()) {
       ok = false;
@@ -213,13 +217,15 @@ namespace BOOM {
   }
 
   double SpdMatrix::invert_inplace() {
-    Eigen::LLT<Eigen::MatrixXd> eigen_chol(Eigen::Ref<Eigen::MatrixXd>(EigenMap(*this)));
+    Eigen::LLT<Eigen::MatrixXd> eigen_chol(
+        Eigen::Ref<Eigen::MatrixXd>(EigenMap(*this)));
     Eigen::MatrixXd L = eigen_chol.matrixL();
     double ans = 0;
     for (int i = 0; i < nrow(); ++i) {
       ans -= 2 * std::log(fabs(L(i, i)));
     }
-    EigenMap(*this) = eigen_chol.solve(Eigen::MatrixXd::Identity(nrow(), nrow()));
+    EigenMap(*this) =
+        eigen_chol.solve(Eigen::MatrixXd::Identity(nrow(), nrow()));
     return ans;
   }
 
@@ -234,7 +240,8 @@ namespace BOOM {
 
   double SpdMatrix::logdet() const {
     bool ok(true);
-    return logdet(ok);}
+    return logdet(ok);
+  }
 
   double SpdMatrix::logdet(bool &ok) const {
     ok = true;
@@ -273,14 +280,16 @@ namespace BOOM {
 
   Matrix SpdMatrix::solve(const Matrix &rhs) const {
     if (rhs.nrow() != this->ncol()) {
-      report_error("Number of rows in rhs does not match the number of columns "
-                   "in the SpdMatrix.");
+      report_error(
+          "Number of rows in rhs does not match the number of columns "
+          "in the SpdMatrix.");
     }
     Chol cholesky(*this);
     if (!cholesky.is_pos_def()) {
       ostringstream msg;
       msg << "Matrix not positive definite in SpdMatrix::solve(Matrix)"
-          << std::endl << *this << std::endl;
+          << std::endl
+          << *this << std::endl;
       report_error(msg.str());
     }
     return cholesky.solve(rhs);
@@ -355,38 +364,40 @@ namespace BOOM {
       if (S.nrow() == 0) return;
       EigenMap(S).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(v), w);
     }
-  }  //namespace
+  }  // namespace
 
-  SpdMatrix & SpdMatrix::add_outer(const Vector &v, double w, bool force_sym) {
+  SpdMatrix &SpdMatrix::add_outer(const Vector &v, double w, bool force_sym) {
     add_outer_impl<Vector>(*this, v, w);
-    if (force_sym) reflect();
-    return *this; }
-
-  SpdMatrix & SpdMatrix::add_outer(const VectorView &v, double w,
-                                   bool force_sym) {
-    add_outer_impl<VectorView>(*this, v, w);
-    if (force_sym) reflect();
-    return *this; }
-
-  SpdMatrix & SpdMatrix::add_outer(const ConstVectorView &v, double w,
-                                   bool force_sym) {
-    add_outer_impl<ConstVectorView>(*this, v, w);
-    if (force_sym) reflect();
-    return *this; }
-
-  SpdMatrix & SpdMatrix::add_outer(const Matrix &X, double w, bool force_sym) {
-    if (X.nrow() == 0 || X.ncol() == 0) return *this;
-    if (X.nrow() != this->nrow()) {
-      report_error("Wrong number of rows in add_outer.");
-    }
-    EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(
-        EigenMap(X), w);
     if (force_sym) reflect();
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::add_inner(const Matrix &X, const Vector &w,
-                                   bool force_sym) {
+  SpdMatrix &SpdMatrix::add_outer(const VectorView &v, double w,
+                                  bool force_sym) {
+    add_outer_impl<VectorView>(*this, v, w);
+    if (force_sym) reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::add_outer(const ConstVectorView &v, double w,
+                                  bool force_sym) {
+    add_outer_impl<ConstVectorView>(*this, v, w);
+    if (force_sym) reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::add_outer(const Matrix &X, double w, bool force_sym) {
+    if (X.nrow() == 0 || X.ncol() == 0) return *this;
+    if (X.nrow() != this->nrow()) {
+      report_error("Wrong number of rows in add_outer.");
+    }
+    EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(X), w);
+    if (force_sym) reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::add_inner(const Matrix &X, const Vector &w,
+                                  bool force_sym) {
     assert(X.nrow() == w.size());
     assert(X.ncol() == this->ncol());
     uint n = w.size();
@@ -397,8 +408,7 @@ namespace BOOM {
     return *this;
   }
 
-
-  SpdMatrix & SpdMatrix::add_inner(const Matrix &x, double w) {
+  SpdMatrix &SpdMatrix::add_inner(const Matrix &x, double w) {
     int n = nrow();
     assert(x.ncol() == this->nrow());
     uint k = x.nrow();
@@ -409,8 +419,7 @@ namespace BOOM {
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::add_inner2(const Matrix &A, const Matrix &B,
-                                    double w) {
+  SpdMatrix &SpdMatrix::add_inner2(const Matrix &A, const Matrix &B, double w) {
     // adds w*(A^TB + B^TA)
     assert(A.ncol() == B.ncol() && A.ncol() == nrow());
     assert(A.nrow() == B.nrow());
@@ -420,20 +429,17 @@ namespace BOOM {
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::add_outer2(const Matrix &A, const Matrix &B,
-                                    double w) {
+  SpdMatrix &SpdMatrix::add_outer2(const Matrix &A, const Matrix &B, double w) {
     // adds w*(AB^T + BA^T)
-    assert(A.nrow() == B.nrow()  &&  B.nrow() == nrow());
+    assert(A.nrow() == B.nrow() && B.nrow() == nrow());
     assert(B.ncol() == A.ncol());
     if (nrow() == 0) return *this;
-    EigenMap(*this) += w * (EigenMap(A) * EigenMap(B).transpose()
-                            + EigenMap(B) * EigenMap(A).transpose());
+    EigenMap(*this) += w * (EigenMap(A) * EigenMap(B).transpose() +
+                            EigenMap(B) * EigenMap(A).transpose());
     return *this;
   }
 
-  SpdMatrix & SpdMatrix::add_outer2(const Vector &x,
-                                    const Vector &y,
-                                    double w) {
+  SpdMatrix &SpdMatrix::add_outer2(const Vector &x, const Vector &y, double w) {
     assert(x.size() == nrow() && y.size() == ncol());
     if (nrow() == 0) return *this;
     EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(
@@ -445,79 +451,85 @@ namespace BOOM {
   //-------------- multiplication --------------------
 
   //---------- general_Matrix ---------
-  Matrix & SpdMatrix::mult(const Matrix &B, Matrix &ans, double scal) const {
+  Matrix &SpdMatrix::mult(const Matrix &B, Matrix &ans, double scal) const {
     assert(can_mult(B, ans));
     uint m = nrow();
     uint n = B.ncol();
     if (n == 0 || m == 0) return ans;
     EigenMap(ans) =
-        EigenMap(*this).selfadjointView<Eigen::Upper>()
-        * EigenMap(B) * scal;
+        EigenMap(*this).selfadjointView<Eigen::Upper>() * EigenMap(B) * scal;
     return ans;
   }
 
-  Matrix & SpdMatrix::Tmult(const Matrix &B, Matrix &ans, double scal) const {
-    return mult(B, ans, scal);}
+  Matrix &SpdMatrix::Tmult(const Matrix &B, Matrix &ans, double scal) const {
+    return mult(B, ans, scal);
+  }
 
-  Matrix & SpdMatrix::multT(const Matrix &B, Matrix & ans, double scal) const {
-    return Matrix::multT(B, ans, scal);}
+  Matrix &SpdMatrix::multT(const Matrix &B, Matrix &ans, double scal) const {
+    return Matrix::multT(B, ans, scal);
+  }
 
   //---------- SpdMatrix ---------
-  Matrix & SpdMatrix::mult(const SpdMatrix &B, Matrix &ans,
-                           double scal) const {
+  Matrix &SpdMatrix::mult(const SpdMatrix &B, Matrix &ans, double scal) const {
     const Matrix &A(B);
-    return mult(A, ans, scal);}
+    return mult(A, ans, scal);
+  }
 
-  Matrix & SpdMatrix::Tmult(const SpdMatrix &B, Matrix &ans,
-                            double scal) const {
+  Matrix &SpdMatrix::Tmult(const SpdMatrix &B, Matrix &ans, double scal) const {
     const Matrix &A(B);
-    return Tmult(A, ans, scal);}
+    return Tmult(A, ans, scal);
+  }
 
-  Matrix & SpdMatrix::multT(const SpdMatrix &B, Matrix &ans,
-                            double scal) const {
+  Matrix &SpdMatrix::multT(const SpdMatrix &B, Matrix &ans, double scal) const {
     const Matrix &A(B);
-    return multT(A, ans, scal);}
+    return multT(A, ans, scal);
+  }
 
   //--------- DiagonalMatrix this and B are both symmetric ---------
-  Matrix & SpdMatrix::mult(
-      const DiagonalMatrix &B, Matrix &ans, double scal) const {
+  Matrix &SpdMatrix::mult(const DiagonalMatrix &B, Matrix &ans,
+                          double scal) const {
     return Matrix::mult(B, ans, scal);
   }
-  Matrix & SpdMatrix::Tmult(
-      const DiagonalMatrix &B, Matrix &ans, double scal) const {
+  Matrix &SpdMatrix::Tmult(const DiagonalMatrix &B, Matrix &ans,
+                           double scal) const {
     return Matrix::mult(B, ans, scal);
   }
-  Matrix & SpdMatrix::multT(
-      const DiagonalMatrix &B, Matrix &ans, double scal) const {
+  Matrix &SpdMatrix::multT(const DiagonalMatrix &B, Matrix &ans,
+                           double scal) const {
     return Matrix::mult(B, ans, scal);
   }
 
   //--------- Vector --------------
 
-  Vector & SpdMatrix::mult(const Vector &v, Vector & ans, double scal) const {
+  Vector &SpdMatrix::mult(const Vector &v, Vector &ans, double scal) const {
     assert(ans.size() == nrow());
     if (size() == 0) return ans;
-    EigenMap(ans) = EigenMap(*this).selfadjointView<Eigen::Upper>() * EigenMap(v);
-    return ans;}
+    EigenMap(ans) =
+        EigenMap(*this).selfadjointView<Eigen::Upper>() * EigenMap(v);
+    return ans;
+  }
 
-  Vector & SpdMatrix::Tmult(const Vector &v, Vector & ans, double scal) const {
-    return mult(v, ans, scal);}
+  Vector &SpdMatrix::Tmult(const Vector &v, Vector &ans, double scal) const {
+    return mult(v, ans, scal);
+  }
 
   Vector SpdMatrix::vectorize(bool minimal) const {  // copies upper triangle
     uint n = ncol();
-    uint ans_size = minimal ? nelem() : n*n;
+    uint ans_size = minimal ? nelem() : n * n;
     Vector ans(ans_size);
     Vector::iterator it = ans.begin();
     for (uint i = 0; i < n; ++i) {
       dVector::const_iterator b = col_begin(i);
-      dVector::const_iterator e = minimal ? b+i+1 : b+n;
-      it = std::copy(b, e, it);}
+      dVector::const_iterator e = minimal ? b + i + 1 : b + n;
+      it = std::copy(b, e, it);
+    }
     return ans;
   }
 
   void SpdMatrix::unvectorize(const Vector &x, bool minimal) {
     Vector::const_iterator b(x.begin());
-    unvectorize(b, minimal);}
+    unvectorize(b, minimal);
+  }
 
   namespace {
     template <class ITERATOR>
@@ -533,8 +545,8 @@ namespace BOOM {
     }
   }  // namespace
 
-  Vector::const_iterator SpdMatrix::unvectorize
-      (Vector::const_iterator &b, bool minimal) {
+  Vector::const_iterator SpdMatrix::unvectorize(Vector::const_iterator &b,
+                                                bool minimal) {
     return unvectorize_impl(this, b, minimal);
   }
 
@@ -546,9 +558,14 @@ namespace BOOM {
   void SpdMatrix::make_symmetric(bool have_upper) {
     uint n = ncol();
     for (uint i = 1; i < n; ++i) {
-      for (uint j = 0; j < i; ++j) { // (i, j) is in the lower triangle
-        if (have_upper) unchecked(i, j) = unchecked(j, i);
-        else  unchecked(j, i) = unchecked(i, j);}}}
+      for (uint j = 0; j < i; ++j) {  // (i, j) is in the lower triangle
+        if (have_upper)
+          unchecked(i, j) = unchecked(j, i);
+        else
+          unchecked(j, i) = unchecked(i, j);
+      }
+    }
+  }
 
   // ================== non member functions ===========================
   SpdMatrix Id(uint p) {
@@ -585,15 +602,16 @@ namespace BOOM {
     return ans;
   }
 
-  Matrix chol(const SpdMatrix &S) { return S.chol();}
-  Matrix chol(const SpdMatrix &S, bool & ok) {return S.chol(ok);}
+  Matrix chol(const SpdMatrix &S) { return S.chol(); }
+  Matrix chol(const SpdMatrix &S, bool &ok) { return S.chol(ok); }
 
   SpdMatrix chol2inv(const Matrix &L) {
     assert(L.is_square());
     int n = L.nrow();
     SpdMatrix ans(n, 1.0);
     EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(ans));
-    EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(EigenMap(ans));
+    EigenMap(L).triangularView<Eigen::Lower>().transpose().solveInPlace(
+        EigenMap(ans));
     return ans;
   }
 
@@ -602,9 +620,8 @@ namespace BOOM {
       return SpdMatrix(0);
     }
     SpdMatrix ans(A.nrow());
-    EigenMap(ans) = EigenMap(A) *
-        EigenMap(V).selfadjointView<Eigen::Upper>() *
-        EigenMap(A).transpose();
+    EigenMap(ans) = EigenMap(A) * EigenMap(V).selfadjointView<Eigen::Upper>() *
+                    EigenMap(A).transpose();
     return ans;
   }
 
@@ -612,8 +629,8 @@ namespace BOOM {
     assert(A.is_square());
     Matrix ans = A.t();
     ans += A;
-    ans/=2.0;
-    return SpdMatrix(ans, false); // no symmetry check needed
+    ans /= 2.0;
+    return SpdMatrix(ans, false);  // no symmetry check needed
   }
 
   SpdMatrix sum_self_transpose(const Matrix &A) {
@@ -622,7 +639,9 @@ namespace BOOM {
     SpdMatrix ans(n, 0.0);
     for (uint i = 0; i < n; ++i) {
       for (uint j = 0; j < i; ++j) {
-        ans(i, j) = ans(j, i) = A(i, j) + A(j, i);}}
+        ans(i, j) = ans(j, i) = A(i, j) + A(j, i);
+      }
+    }
     return ans;
   }
 
@@ -631,15 +650,13 @@ namespace BOOM {
     return eigen.eigenvalues();
   }
 
-  Vector eigen(const SpdMatrix &X, Matrix & Z) {
+  Vector eigen(const SpdMatrix &X, Matrix &Z) {
     SpdEigen eigen(X, true);
     Z = eigen.eigenvectors();
     return eigen.eigenvalues();
   }
 
-  double largest_eigenvalue(const SpdMatrix &X) {
-    return max(eigenvalues(X));
-  }
+  double largest_eigenvalue(const SpdMatrix &X) { return max(eigenvalues(X)); }
 
   SpdMatrix operator*(double x, const SpdMatrix &V) {
     SpdMatrix ans(V);
@@ -647,13 +664,9 @@ namespace BOOM {
     return ans;
   }
 
-  SpdMatrix operator*(const SpdMatrix &V, double x) {
-    return x*V;
-  }
+  SpdMatrix operator*(const SpdMatrix &V, double x) { return x * V; }
 
-  SpdMatrix operator/(const SpdMatrix &v, double x) {
-    return v*(1.0/x);
-  }
+  SpdMatrix operator/(const SpdMatrix &v, double x) { return v * (1.0 / x); }
 
   SpdMatrix symmetric_square_root(const SpdMatrix &V) {
     Matrix eigenvectors(V.nrow(), V.nrow());
@@ -675,4 +688,4 @@ namespace BOOM {
     return eigenvectors.t();
   }
 
-} // namespace BOOM
+}  // namespace BOOM

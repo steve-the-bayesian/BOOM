@@ -21,29 +21,30 @@
 #define BOOM_GIVENS_HPP
 #include <iosfwd>
 
-namespace BOOM{
+namespace BOOM {
   class Selector;
-    using std::ostream;
-    class Matrix;
+  using std::ostream;
+  class Matrix;
 
-    class GivensRotation{
-    public:
-      GivensRotation(const Matrix &A, int I, int J);
-      GivensRotation(int i, int j, double c, double s);
+  class GivensRotation {
+   public:
+    GivensRotation(const Matrix &A, int I, int J);
+    GivensRotation(int i, int j, double c, double s);
 
-      std::ostream & print(std::ostream & out)const ;
-      GivensRotation trans()const;
-    private:
-      friend Matrix & operator*(const GivensRotation &, Matrix &);
-      friend Matrix & operator*(Matrix &, const GivensRotation &);
-      int i,j;
-      double c,s;
-    };
+    std::ostream &print(std::ostream &out) const;
+    GivensRotation trans() const;
 
-    std::ostream & operator<< (std::ostream &out, const GivensRotation &G);
-    Matrix & operator*(const GivensRotation &G, Matrix &A);
-    Matrix & operator*(Matrix &A,const GivensRotation &G);
-    Matrix triangulate(const Matrix &U, const Selector &inc,
-                       bool chop_zero_rows=false);
-}
-#endif// BOOM_GIVENS_HPP
+   private:
+    friend Matrix &operator*(const GivensRotation &, Matrix &);
+    friend Matrix &operator*(Matrix &, const GivensRotation &);
+    int i, j;
+    double c, s;
+  };
+
+  std::ostream &operator<<(std::ostream &out, const GivensRotation &G);
+  Matrix &operator*(const GivensRotation &G, Matrix &A);
+  Matrix &operator*(Matrix &A, const GivensRotation &G);
+  Matrix triangulate(const Matrix &U, const Selector &inc,
+                     bool chop_zero_rows = false);
+}  // namespace BOOM
+#endif  // BOOM_GIVENS_HPP

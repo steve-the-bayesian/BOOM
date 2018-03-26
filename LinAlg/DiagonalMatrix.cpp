@@ -20,10 +20,10 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 
-#include "distributions.hpp"
 #include <algorithm>
-#include <numeric>
 #include <functional>
+#include <numeric>
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -31,27 +31,20 @@ namespace BOOM {
 
   DM::DiagonalMatrix() {}
 
-  DM::DiagonalMatrix(uint n, double x)
-      : diagonal_elements_(n, x)
-  {}
+  DM::DiagonalMatrix(uint n, double x) : diagonal_elements_(n, x) {}
 
-  DM::DiagonalMatrix(const Vector &v)
-      : diagonal_elements_(v)
-  {}
+  DM::DiagonalMatrix(const Vector &v) : diagonal_elements_(v) {}
 
   DM::DiagonalMatrix(const VectorView &diagonal_elements)
-      : diagonal_elements_(diagonal_elements)
-  {}
+      : diagonal_elements_(diagonal_elements) {}
 
   DM::DiagonalMatrix(const ConstVectorView &diagonal_elements)
-      : diagonal_elements_(diagonal_elements)
-  {}
+      : diagonal_elements_(diagonal_elements) {}
 
   DM::DiagonalMatrix(const std::vector<double> &diagonal_elements)
-      : diagonal_elements_(diagonal_elements)
-  {}
+      : diagonal_elements_(diagonal_elements) {}
 
-  DiagonalMatrix & DiagonalMatrix::operator=(double x) {
+  DiagonalMatrix &DiagonalMatrix::operator=(double x) {
     diagonal_elements_ = x;
     return *this;
   }
@@ -64,40 +57,34 @@ namespace BOOM {
     std::swap(diagonal_elements_, rhs.diagonal_elements_);
   }
 
-  void DM::randomize() {
-    diagonal_elements_.randomize();
-  }
+  void DM::randomize() { diagonal_elements_.randomize(); }
 
-  DM & DM::resize(uint n){
+  DM &DM::resize(uint n) {
     diagonal_elements_.resize(n);
     return *this;
   }
 
-  VectorView DM::diag() {
-    return VectorView(diagonal_elements_);
-  }
+  VectorView DM::diag() { return VectorView(diagonal_elements_); }
 
-  const Vector & DM::diag() const {
-    return diagonal_elements_;
-  }
+  const Vector &DM::diag() const { return diagonal_elements_; }
 
   //---------------  Matrix multiplication -----------
 
-  Matrix & DM::mult(const Matrix &B, Matrix &ans, double scalar) const {
+  Matrix &DM::mult(const Matrix &B, Matrix &ans, double scalar) const {
     assert(nrow() == B.nrow());
     ans = B;
-    for (uint i=0; i < ans.nrow(); ++i) {
+    for (uint i = 0; i < ans.nrow(); ++i) {
       ans.row(i) *= diagonal_elements_[i] * scalar;
     }
     return ans;
   }
 
-  Matrix & DM::Tmult(const Matrix &B, Matrix &ans, double scal) const {
+  Matrix &DM::Tmult(const Matrix &B, Matrix &ans, double scal) const {
     return this->mult(B, ans, scal);
   }
 
-  Matrix & DM::multT(const Matrix &B, Matrix &ans, double scal) const {
-    assert(ncol()==B.nrow());
+  Matrix &DM::multT(const Matrix &B, Matrix &ans, double scal) const {
+    assert(ncol() == B.nrow());
     ans.resize(B.ncol(), B.nrow());
     for (uint i = 0; i < nrow(); ++i) {
       ans.row(i) = B.col(i) * diagonal_elements_[i] * scal;
@@ -107,18 +94,20 @@ namespace BOOM {
 
   //------ SpdMatrix (this and spd both symmetric) ----------
 
-  Matrix & DM::mult(const SpdMatrix &S, Matrix &ans, double scal) const {
+  Matrix &DM::mult(const SpdMatrix &S, Matrix &ans, double scal) const {
     const Matrix &tmp(S);
     return this->mult(tmp, ans, scal);
-}
+  }
 
-  Matrix & DM::Tmult(const SpdMatrix &S, Matrix &ans, double scal) const {
+  Matrix &DM::Tmult(const SpdMatrix &S, Matrix &ans, double scal) const {
     const Matrix &tmp(S);
-    return this->mult(tmp, ans, scal);}
+    return this->mult(tmp, ans, scal);
+  }
 
-  Matrix & DM::multT(const SpdMatrix &S, Matrix &ans, double scal) const {
+  Matrix &DM::multT(const SpdMatrix &S, Matrix &ans, double scal) const {
     const Matrix &tmp(S);
-    return this->mult(tmp, ans, scal);}
+    return this->mult(tmp, ans, scal);
+  }
 
   void DM::sandwich_inplace(SpdMatrix &m) const {
     assert((nrow() == m.nrow()) && (m.ncol() == ncol()));
@@ -136,9 +125,8 @@ namespace BOOM {
 
   //------ DiagonalMatrix (this and spd both symmetric) ----------
 
-  DiagonalMatrix & DM::mult(const DiagonalMatrix &S,
-                            DiagonalMatrix &ans,
-                            double scal) const {
+  DiagonalMatrix &DM::mult(const DiagonalMatrix &S, DiagonalMatrix &ans,
+                           double scal) const {
     ans.resize(ncol());
     ans.diag() = diagonal_elements_ * S.diagonal_elements_;
     if (scal != 1.0) {
@@ -147,19 +135,18 @@ namespace BOOM {
     return ans;
   }
 
-  DiagonalMatrix & DM::Tmult(const DiagonalMatrix &S,
-                             DiagonalMatrix &ans,
-                             double scal) const {
-    return mult(S, ans, scal);}
+  DiagonalMatrix &DM::Tmult(const DiagonalMatrix &S, DiagonalMatrix &ans,
+                            double scal) const {
+    return mult(S, ans, scal);
+  }
 
-  DiagonalMatrix & DM::multT(const DiagonalMatrix &S,
-                             DiagonalMatrix &ans,
-                             double scal) const {
+  DiagonalMatrix &DM::multT(const DiagonalMatrix &S, DiagonalMatrix &ans,
+                            double scal) const {
     return mult(S, ans, scal);
   }
 
   //---------- Vector ------------
-  Vector & DM::mult(const Vector &v, Vector &ans, double scal) const {
+  Vector &DM::mult(const Vector &v, Vector &ans, double scal) const {
     ans = diagonal_elements_ * v;
     if (scal != 1.0) {
       ans *= scal;
@@ -167,11 +154,11 @@ namespace BOOM {
     return ans;
   }
 
-  Vector & DM::Tmult(const Vector &v, Vector &ans, double scal) const {
+  Vector &DM::Tmult(const Vector &v, Vector &ans, double scal) const {
     return this->mult(v, ans, scal);
   }
 
-  DiagonalMatrix DM::t() const { return *this;}
+  DiagonalMatrix DM::t() const { return *this; }
 
   DiagonalMatrix DM::inv() const {
     DiagonalMatrix ans(1.0 / diagonal_elements_);
@@ -182,17 +169,13 @@ namespace BOOM {
     return DiagonalMatrix(diagonal_elements_ * diagonal_elements_);
   }
 
-  Matrix DM::solve(const Matrix &mat) const {
-    return inv() * mat;
-  }
+  Matrix DM::solve(const Matrix &mat) const { return inv() * mat; }
 
-  Vector DM::solve(const Vector &v) const {
-    return v / diagonal_elements_;
-  }
+  Vector DM::solve(const Vector &v) const { return v / diagonal_elements_; }
 
-  double DM::det() const {return prod();}
+  double DM::det() const { return prod(); }
 
-  ostream & DM::print(ostream &out) const {
+  ostream &DM::print(ostream &out) const {
     Matrix tmp(nrow(), ncol(), 0.0);
     tmp.diag() = diagonal_elements_;
     return out << tmp;
@@ -210,53 +193,49 @@ namespace BOOM {
     return ans;
   }
 
-  DM & DM::operator+=(double x){
+  DM &DM::operator+=(double x) {
     diagonal_elements_ += x;
     return *this;
   }
 
-  DM & DM::operator+=(const DiagonalMatrix &rhs) {
+  DM &DM::operator+=(const DiagonalMatrix &rhs) {
     diagonal_elements_ += rhs.diagonal_elements_;
     return *this;
   }
 
-  DM & DM::operator-=(double x){
+  DM &DM::operator-=(double x) {
     diagonal_elements_ -= x;
     return *this;
   }
 
-  DM & DM::operator-=(const DiagonalMatrix &rhs) {
+  DM &DM::operator-=(const DiagonalMatrix &rhs) {
     diagonal_elements_ -= rhs.diagonal_elements_;
     return *this;
   }
 
-  DM & DM::operator*=(double x){
+  DM &DM::operator*=(double x) {
     diagonal_elements_ *= x;
     return *this;
   }
 
-  DM & DM::operator*=(const DiagonalMatrix &rhs) {
+  DM &DM::operator*=(const DiagonalMatrix &rhs) {
     diagonal_elements_ *= rhs.diagonal_elements_;
     return *this;
   }
 
-  DM & DM::operator/=(const DiagonalMatrix &rhs) {
+  DM &DM::operator/=(const DiagonalMatrix &rhs) {
     diagonal_elements_ /= rhs.diagonal_elements_;
     return *this;
   }
 
-  DM & DM::operator/=(double x){
+  DM &DM::operator/=(double x) {
     diagonal_elements_ /= x;
     return *this;
   }
 
-  double DM::sum() const {
-    return diagonal_elements_.sum();
-  }
+  double DM::sum() const { return diagonal_elements_.sum(); }
 
-  double DM::prod() const {
-    return diagonal_elements_.prod();
-  }
+  double DM::prod() const { return diagonal_elements_.prod(); }
 
   DiagonalMatrix operator-(const DiagonalMatrix &d) {
     return DiagonalMatrix(-1 * d.diag());
@@ -293,9 +272,7 @@ namespace BOOM {
     return ans;
   }
 
-  DiagonalMatrix operator+(double x, const DiagonalMatrix &d) {
-    return d+x;
-  }
+  DiagonalMatrix operator+(double x, const DiagonalMatrix &d) { return d + x; }
 
   DiagonalMatrix operator+(const DiagonalMatrix &m1, const DiagonalMatrix &m2) {
     DiagonalMatrix ans(m1);
@@ -355,9 +332,7 @@ namespace BOOM {
     return ans;
   }
 
-  DiagonalMatrix operator*(double x, const DiagonalMatrix &d) {
-    return d * x;
-   }
+  DiagonalMatrix operator*(double x, const DiagonalMatrix &d) { return d * x; }
 
   DiagonalMatrix operator/(const DiagonalMatrix &d, double x) {
     return d * (1.0 / x);
@@ -366,6 +341,5 @@ namespace BOOM {
   DiagonalMatrix operator/(double x, const DiagonalMatrix &d) {
     return d.inv() * x;
   }
-
 
 }  // namespace BOOM

@@ -24,73 +24,61 @@
 #include "LinAlg/Vector.hpp"
 
 namespace BOOM {
-  // EigenMap(foo) takes a BOOM linear algebra object foo and maps it into an Eigen object.
-  
+  // EigenMap(foo) takes a BOOM linear algebra object foo and maps it into an
+  // Eigen object.
 
   // Maps for Matrices.
-  inline ::Eigen::Map< ::Eigen::MatrixXd>
-  EigenMap(Matrix &m) {
-    return ::Eigen::Map< ::Eigen::MatrixXd>(m.data(), m.nrow(), m.ncol());
+  inline ::Eigen::Map<::Eigen::MatrixXd> EigenMap(Matrix &m) {
+    return ::Eigen::Map<::Eigen::MatrixXd>(m.data(), m.nrow(), m.ncol());
   }
 
-  inline const ::Eigen::Map<const ::Eigen::MatrixXd>
-  EigenMap(const Matrix &m) {
-    return ::Eigen::Map<const ::Eigen::MatrixXd> (m.data(), m.nrow(), m.ncol());
+  inline const ::Eigen::Map<const ::Eigen::MatrixXd> EigenMap(const Matrix &m) {
+    return ::Eigen::Map<const ::Eigen::MatrixXd>(m.data(), m.nrow(), m.ncol());
   }
 
   // Maps for Vectors
-  inline ::Eigen::Map< ::Eigen::VectorXd>
-  EigenMap(Vector &v) {
-    return ::Eigen::Map< ::Eigen::VectorXd>(v.data(), v.size());
+  inline ::Eigen::Map<::Eigen::VectorXd> EigenMap(Vector &v) {
+    return ::Eigen::Map<::Eigen::VectorXd>(v.data(), v.size());
   }
 
-  inline const ::Eigen::Map<const ::Eigen::VectorXd>
-  EigenMap(const Vector &v) {
-    return ::Eigen::Map< const ::Eigen::VectorXd>(v.data(), v.size());
+  inline const ::Eigen::Map<const ::Eigen::VectorXd> EigenMap(const Vector &v) {
+    return ::Eigen::Map<const ::Eigen::VectorXd>(v.data(), v.size());
   }
 
   // Maps for VectorViews and ConstVectorViews
-  inline ::Eigen::Map< ::Eigen::VectorXd,
-                       ::Eigen::Unaligned,
-                       ::Eigen::InnerStride< ::Eigen::Dynamic>>
+  inline ::Eigen::Map<::Eigen::VectorXd, ::Eigen::Unaligned,
+                      ::Eigen::InnerStride<::Eigen::Dynamic>>
   EigenMap(VectorView &view) {
-    return ::Eigen::Map<
-      ::Eigen::VectorXd,
-      ::Eigen::Unaligned,
-      ::Eigen::InnerStride< ::Eigen::Dynamic>>(
-           view.data(),
-           view.size(),
-           ::Eigen::InnerStride< ::Eigen::Dynamic>(view.stride()));
+    return ::Eigen::Map<::Eigen::VectorXd,
+                        ::Eigen::Unaligned,
+                        ::Eigen::InnerStride<::Eigen::Dynamic>>(
+        view.data(),
+        view.size(),
+        ::Eigen::InnerStride<::Eigen::Dynamic>(view.stride()));
   }
 
-  inline ::Eigen::Map<const ::Eigen::VectorXd,
-                      ::Eigen::Unaligned,
-                      ::Eigen::InnerStride< ::Eigen::Dynamic>>
+  inline ::Eigen::Map<const ::Eigen::VectorXd, ::Eigen::Unaligned,
+                      ::Eigen::InnerStride<::Eigen::Dynamic>>
   EigenMap(const VectorView &view) {
-    return ::Eigen::Map<
-      const ::Eigen::VectorXd,
-      ::Eigen::Unaligned,
-      ::Eigen::InnerStride< ::Eigen::Dynamic>>(
-           view.data(),
-           view.size(),
-           ::Eigen::InnerStride< ::Eigen::Dynamic>(view.stride()));
+    return ::Eigen::Map<const ::Eigen::VectorXd,
+                        ::Eigen::Unaligned,
+                        ::Eigen::InnerStride<::Eigen::Dynamic>>(
+        view.data(),
+        view.size(),
+        ::Eigen::InnerStride<::Eigen::Dynamic>(view.stride()));
   }
 
-  inline ::Eigen::Map<const ::Eigen::VectorXd,
-                      ::Eigen::Unaligned,
-                      ::Eigen::InnerStride< ::Eigen::Dynamic>>
+  inline ::Eigen::Map<const ::Eigen::VectorXd, ::Eigen::Unaligned,
+                      ::Eigen::InnerStride<::Eigen::Dynamic>>
   EigenMap(const ConstVectorView &view) {
-    return ::Eigen::Map<
-      const ::Eigen::VectorXd,
-      ::Eigen::Unaligned,
-      ::Eigen::InnerStride< ::Eigen::Dynamic>>(
-           view.data(),
-           view.size(),
-           ::Eigen::InnerStride< ::Eigen::Dynamic>(view.stride()));
+    return ::Eigen::Map<const ::Eigen::VectorXd,
+                        ::Eigen::Unaligned,
+                        ::Eigen::InnerStride<::Eigen::Dynamic>>(
+        view.data(),
+        view.size(),
+        ::Eigen::InnerStride<::Eigen::Dynamic>(view.stride()));
   }
 
-  
 }  // namespace BOOM
-
 
 #endif  // BOOM_EIGEN_MAP_WRAPPER_
