@@ -89,7 +89,13 @@ bsts.prediction.errors(bsts.object,
   y <- log(AirPassengers)
   ss <- AddLocalLinearTrend(list(), y)
   ss <- AddSeasonal(ss, y, nseasons = 12)
+
+\dontrun{
   model <- bsts(y, state.specification = ss, niter = 500)
+}
+\dontshow{
+  model <- bsts(y, state.specification = ss, niter = 200)
+}
   errors <- bsts.prediction.errors(model, burn = 100)
   PlotDynamicDistribution(errors$in.sample)
 

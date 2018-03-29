@@ -1,9 +1,16 @@
 #include "gtest/gtest.h"
+
 #include "Models/ChisqModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 #include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+
 #include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+
+#include "cpputil/Constants.hpp"
 #include "cpputil/Date.hpp"
 #include "cpputil/seq.hpp"
 #include "cpputil/math_utils.hpp"
@@ -77,8 +84,23 @@ namespace {
           + rnorm_mt(GlobalRng::rng, 0, 1.2);
     }
 
-    StateSpaceModel model;
-    
+    StateSpaceModel model(y);
+    NEW(QuasiTrigStateModel, trig_state)(time_dimension, {1.0, 2.0});
+    NEW(ChisqModel, innovation_precision_prior)(1, 1);
+    NEW(ZeroMeanGaussianConjSampler, state_variance_sampler)(
+        trig_state->error_distribution(),
+        innovation_precision_prior);
+    trig_state->set_method(state_variance_sampler);
+    trig_state->error_distribution()->set_method(state_variance_sampler);
+    model.add_state(trig_state);
+
+    NEW(StateSpacePosteriorSampler, sampler)(&model);
+    model.set_method(sampler);
+
+    int niter = 500;
+    for (int i = 0; i < niter; ++i) {
+      model.sample_posterior();
+    }
   }
 
   

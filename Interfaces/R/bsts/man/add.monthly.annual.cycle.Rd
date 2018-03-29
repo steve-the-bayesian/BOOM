@@ -86,7 +86,12 @@ AddMonthlyAnnualCycle(state.specification,
 \examples{
 
   ## Let's simulate some fake daily data with a monthly cycle.
+\dontrun{
   residuals <- rnorm(365 * 5)
+}
+\dontshow{
+  residuals <- rnorm(365 * 2)
+}
   n <- length(residuals)
   dates <- seq.Date(from = as.Date("2014-01-01"),
                     len = n,

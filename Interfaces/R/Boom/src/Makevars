@@ -6,8 +6,9 @@ all:	libboom.a
 # -j 8: use 8 threads
 # MAKEFLAGS=" -k -j 8 "
 
-PKG_CFLAGS = -DADD_ -DR_NO_REMAP
-PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -Wno-deprecated-declarations
+PKG_CFLAGS = -DADD_ -DR_NO_REMAP 
+PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes 
+#-Wno-deprecated-declarations
 
 ############################################################################
 # Begin the list of all the BOOM source files.

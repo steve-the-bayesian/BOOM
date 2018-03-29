@@ -1,5 +1,5 @@
 library(testthat)
 library(bsts)
-library(BoomTestUtils)
+library(Boom)
 
 test_check("bsts")

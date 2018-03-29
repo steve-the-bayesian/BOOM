@@ -230,8 +230,8 @@ namespace BOOM {
       return observation_matrix_;
     }
     
-    Ptr<SparseMatrixBlock> dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override;
+    // Ptr<SparseMatrixBlock> dynamic_intercept_regression_observation_coefficients(
+    //     int t, const StateSpace::MultiplexedData &data_point) const override;
 
     Vector initial_state_mean() const override {
       return initial_state_mean_;

@@ -1,7 +1,8 @@
 CheckMcmcMatrix <- function(draws, truth, confidence = .95,
                             control.multiple.comparisons = TRUE) {
-  ## Check that an MCMC ensemble contains the 'true' values used to simulate the
-  ## fake data driving the MCMC test.
+  ## A utility for unit testing an MCMC algorithm.  Check that an MCMC ensemble
+  ## contains the 'true' values used to simulate the fake data driving the MCMC
+  ## test.
   ##
   ## Args:
   ##   draws: A matrix of MCMC draws.  Each row is a draw.  Each column is a
@@ -36,6 +37,24 @@ CheckMcmcMatrix <- function(draws, truth, confidence = .95,
 }
 
 CheckMcmcVector <- function(draws, truth, confidence = .95) {
+  ## A utility for unit testing an MCMC algorithm.  Check that an MCMC ensemble
+  ## contains the 'true' value used to simulate the fake data driving the MCMC
+  ## test.
+  ##
+  ## Args:
+  ##   draws:  A numeric vector of Monte Carlo draws.
+  ##   truth:  A scalar value used to verify the draws.
+  ##   confidence: The probability content of the central interval formed from
+  ##     the distribution of 'draws'.
+  ##
+  ## Details:
+  ##   A central interval is formed by taking the middle (1 - confidence)
+  ##   proportion of the empirical distribution of 'draws'.  If 'truth' is
+  ##   contained in this interval the test is a success and TRUE is returned.
+  ##   Otherwise the test is a failure, and FALSE is returned.
+  ##
+  ## Returns:
+  ##    TRUE, if the interval described above covers 'truth', and FALSE otherwise.
   stopifnot(is.numeric(draws),
     is.numeric(truth),
     length(truth) == 1)

@@ -112,6 +112,10 @@ namespace BOOM {
 
   void BlockDiagonalMatrixBlock::add_block(
       const Ptr<SparseMatrixBlock> &block) {
+    if (!block) {
+      report_error("nullptr argument passed to BlockDiagonalMatrixBlock::"
+                   "add_block");
+    }
     if (block->nrow() != block->ncol()) {
       report_error("Sub-blocks of a BlockDiagonalMatrixBlock must be square.");
     }
