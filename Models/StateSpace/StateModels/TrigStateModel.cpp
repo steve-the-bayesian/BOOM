@@ -22,6 +22,8 @@
 #include "distributions.hpp"
 
 namespace BOOM {
+  using std::cout;
+  using std::endl;
 
   TrigStateModel::TrigStateModel(double period, const Vector &frequencies)
       : IndependentMvnModel(2 * frequencies.size()),
@@ -232,14 +234,14 @@ namespace BOOM {
 
   Ptr<SparseMatrixBlock>
   QuasiTrigStateModel::state_transition_matrix(int t) const {
-    Ptr<BlockDiagonalMatrixBlock> transition;
+    NEW(BlockDiagonalMatrixBlock, transition)();
     Matrix rotation(2, 2);
     for (int i = 0; i < frequencies_.size(); ++i) {
       rotation(0, 0) = cosines_[i];
       rotation(0, 1) = sines_[i];
       rotation(1, 0) = -sines_[i];
       rotation(1, 1) = cosines_[i];
-      transition->add_block(new DenseMatrix(rotation));
+      transition->add_block(new DenseMatrix(rotation))
     }
     return transition;
   }

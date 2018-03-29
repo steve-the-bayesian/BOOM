@@ -482,6 +482,7 @@ namespace BOOM {
       : RealValuedRListIoElement(param_name),
         array_view_(0, Array::index3(0, 0, 0))
   {
+    parameters_.reserve(parameters.size());
     for (int i = 0; i < parameters.size(); ++i) {
       add_vector(parameters[i]);
     }

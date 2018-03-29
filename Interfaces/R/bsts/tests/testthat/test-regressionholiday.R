@@ -1,7 +1,5 @@
-
 library(bsts)
 library(testthat)
-library(BoomTestUtils)
 
 context("test-regressionholiday.R")
 
