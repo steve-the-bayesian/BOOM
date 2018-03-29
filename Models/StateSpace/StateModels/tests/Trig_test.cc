@@ -4,6 +4,7 @@
 #include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
+#include "cpputil/Constants.hpp"
 #include "cpputil/Date.hpp"
 #include "cpputil/seq.hpp"
 #include "cpputil/math_utils.hpp"

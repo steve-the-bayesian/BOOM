@@ -91,13 +91,6 @@ namespace BOOM {
 
     SparseVector observation_matrix(int t) const override;
 
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override {
-      return new IdenticalRowsMatrix(observation_matrix(t),
-                                     data_point.total_sample_size());
-    }
-
     Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &v);
 
@@ -230,9 +223,6 @@ namespace BOOM {
       return observation_matrix_;
     }
     
-    Ptr<SparseMatrixBlock> dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override;
-
     Vector initial_state_mean() const override {
       return initial_state_mean_;
     }

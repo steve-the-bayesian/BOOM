@@ -165,7 +165,10 @@ namespace BOOM {
     //   each of the observations at time t.
     virtual Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const = 0;
+        int t, const StateSpace::MultiplexedData &data_point) const {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     virtual Vector initial_state_mean() const = 0;
     virtual SpdMatrix initial_state_variance() const = 0;
