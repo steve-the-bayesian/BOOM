@@ -23,6 +23,10 @@
 #include "Models/IndependentMvnModel.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
 namespace BOOM {
 
@@ -41,11 +45,11 @@ namespace BOOM {
   class TrigStateModel : public StateModel, public IndependentMvnModel {
    public:
     // Args:
-    //   period: The number of time steps (need not be an integer)
-    //     that it takes for the longest cycle to repeat.
-    //   frequencies: A vector giving the number of times each
-    //     sinusoid repeats in a period.  One sine and one cosine will
-    //     be added to the model for each entry in frequencies.
+    //   period: The number of time steps (need not be an integer) that it takes
+    //     for the longest cycle to repeat.
+    //   frequencies: A vector giving the number of times each sinusoid repeats
+    //     in a period.  One sine and one cosine will be added to the model for
+    //     each entry in frequencies.
     TrigStateModel(double period, const Vector &frequencies);
     TrigStateModel(const TrigStateModel &rhs);
     TrigStateModel(TrigStateModel &&rhs) = default;
@@ -110,6 +114,163 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+
+  // An alternative version of the trig state model that is supposed to be more
+  // stable.  Each frequency lambda_j = 2 * pi * j / S, where S is the period
+  // (number of time points in a full cycle) is associated with two time-varying
+  // random components: gamma[j, t], and gamma^*[j, t].  They evolve through
+  // time as
+  //
+  // gamma[j, t + 1] = \gamma[j, t] * cos(lambda_j * t)
+  //       + \gamma^*[j,t] * sin(\lambda_j * t) + error_0
+  // gamma^[j, t + 1] = \gamma^*[j, t] cos(\lambda_j * t)
+  //       - \gamma[j, t] * sin(lambda_j * t) + error_1
+  //
+  // where error_0 and error_1 are independent with the same variance.
+  //
+  // The state is (gamma_jt, gamma^*_jt)',
+  //
+  // The state transition matrix is
+  //
+  //    cos(lambda_j t)   sin(lambda_j t)
+  //   -sin(lambda_j t)   cos(lambda_j t)
+  //
+  // The error variance matrix is sigma^2 * I.
+  // The error expander is I.
+  // The observation_matrix is (1, 0)
+  //
+  // The name QuasiTrigStateModel comes from the fact that Durbin and Koopman
+  // refer to this as the "Quasi-random walk model".
+  class QuasiTrigStateModel
+      : public StateModel,
+        public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy 
+  {
+   public:
+    // Args:
+    //   period: The number of time steps (need not be an integer) that it takes
+    //     for the longest cycle to repeat.
+    //   frequencies: A vector giving the number of times each sinusoid repeats
+    //     in a period.  One sine and one cosine will be added to the model for
+    //     each entry in frequencies.
+    QuasiTrigStateModel(double period, const Vector &frequencies);
+
+    ~QuasiTrigStateModel() {}
+    QuasiTrigStateModel(const QuasiTrigStateModel &rhs);
+    QuasiTrigStateModel & operator=(const QuasiTrigStateModel &rhs);
+    QuasiTrigStateModel(QuasiTrigStateModel &&rhs) = default;
+    QuasiTrigStateModel & operator=(QuasiTrigStateModel &&rhs) = default;
+
+    QuasiTrigStateModel *clone() const override {
+      return new QuasiTrigStateModel(*this);
+    }
+
+    void clear_data() override {
+      error_distribution_->clear_data();
+    }
+    void add_data(const Ptr<Data> &dp) override {
+      error_distribution_->add_data(dp);
+    }
+    void combine_data(const Model &other_model, bool just_suf = true) override {
+      error_distribution_->combine_data(other_model, just_suf);
+    }
+    ZeroMeanGaussianModel *error_distribution() {
+      return error_distribution_.get();
+    }
+    
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
+                       int time_now,
+                       ScalarStateSpaceModelBase *model) override;
+
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) override {
+      return observe_state(then, now, time_now, nullptr);
+    }
+
+    uint state_dimension() const override {
+      return 2 * frequencies_.size();
+    }
+
+    uint state_error_dimension() const override {
+      return state_dimension();
+    }
+
+    void update_complete_data_sufficient_statistics(
+        int t, const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    void increment_expected_gradient(
+        VectorView gradient,
+        int t,
+        const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
+
+    Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override {
+      return state_error_variance_;
+    }
+
+    Ptr<SparseMatrixBlock> state_error_expander(int t) const override {
+      return state_error_expander_;
+    }
+    
+    Ptr<SparseMatrixBlock> state_error_variance(int t) const override {
+      return state_error_variance_;
+    }
+      
+    SparseVector observation_matrix(int t) const override {
+      return observation_matrix_;
+    }
+    
+    Ptr<SparseMatrixBlock> dynamic_intercept_regression_observation_coefficients(
+        int t, const StateSpace::MultiplexedData &data_point) const override;
+
+    Vector initial_state_mean() const override {
+      return initial_state_mean_;
+    }
+    void set_initial_state_mean(const ConstVectorView &mean);
+
+    SpdMatrix initial_state_variance() const override {
+      return initial_state_variance_;
+    }
+    void set_initial_state_variance(const SpdMatrix &variance);
+    
+   private:
+    // The number of time steps in the longest full cycle.
+    double period_;
+
+    // A vector of integers indicating how many complete cycles each sinusoid
+    // will go through in one period.  This need not be an integer.
+    Vector frequencies_;
+    
+    Ptr<ZeroMeanGaussianModel> error_distribution_;
+
+    // Let lambda_j = 2 * pi * frequencies_[j] / period_
+    // cosines_[j] = cos(lambda_j)
+    // sines_[j] = cos(lambda_j)
+    //
+    // These matrices are constructed when the user calls
+    // observe_time_dimension(n), to avoid computing the same quantities each
+    // MCMC iteration.
+    Vector cosines_;
+    Vector sines_;
+
+    Ptr<ConstantMatrixParamView> state_error_variance_;
+    Ptr<IdentityMatrix> state_error_expander_;
+    SparseVector observation_matrix_;
+
+    Vector initial_state_mean_;
+    SpdMatrix initial_state_variance_;
+  };
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_TRIG_MODEL_HPP_

@@ -60,5 +60,26 @@ namespace {
       EXPECT_DOUBLE_EQ(4, trig.suf()->sumsq(i));
     }
   }
+
+  TEST_F(TrigStateModelTest, QuasiTrigMCMC) {
+    int time_dimension = 100;
+
+    Vector first_harmonic(time_dimension);
+    Vector second_harmonic(time_dimension);
+    Vector y(time_dimension);
+    
+    for (int t = 0; t < time_dimension; ++t) {
+      double freq1 = 2.0 * Constants::pi * t / time_dimension;
+      double freq2 = 2 * freq1; 
+      first_harmonic[t] = 3.2 * cos(freq1) - 1.6 * sin(freq1);
+      second_harmonic[t] = -.8 * cos(freq2) + .25 * sin(freq2);
+      y[t] = first_harmonic[t] + second_harmonic[t]
+          + rnorm_mt(GlobalRng::rng, 0, 1.2);
+    }
+
+    StateSpaceModel model;
+    
+  }
+
   
 }  // namespace

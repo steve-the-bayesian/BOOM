@@ -109,4 +109,139 @@ namespace BOOM {
     initial_state_variance_ = variance;
   }
 
+  //===========================================================================
+  QuasiTrigStateModel::QuasiTrigStateModel(double period,
+                                           const Vector &frequencies)
+      : period_(period),
+        frequencies_(frequencies),
+        error_distribution_(new ZeroMeanGaussianModel),
+        cosines_(frequencies.size()),
+        sines_(frequencies.size()),
+        state_error_variance_(new ConstantMatrixParamView(
+            2 * frequencies_.size(),
+            error_distribution_->Sigsq_prm())),
+        state_error_expander_(new IdentityMatrix(2 * frequencies_.size())),
+        observation_matrix_(2 * frequencies_.size()),
+        initial_state_mean_(2 * frequencies_.size(), 0.0),
+        initial_state_variance_(2 * frequencies_.size(), 1.0)
+  {
+    ParamPolicy::add_model(error_distribution_);
+    for (int i = 0; i < 2 * frequencies_.size(); i += 2) {
+      observation_matrix_[i] = 1.0;
+    }
+    for (int i = 0; i < frequencies_.size(); ++i) {
+      double freq = 2 * Constants::pi * frequencies_[i] / period_;
+      cosines_[i] = cos(freq);
+      sines_[i] = sin(freq);
+    }
+  }
+
+  QuasiTrigStateModel::QuasiTrigStateModel(const QuasiTrigStateModel &rhs)
+      : StateModel(rhs),
+        period_(rhs.period_),
+        frequencies_(rhs.frequencies_),
+        error_distribution_(rhs.error_distribution_->clone()),
+        cosines_(rhs.cosines_),
+        sines_(rhs.sines_),
+        state_error_variance_(new ConstantMatrixParamView(
+            2 * frequencies_.size(),
+            error_distribution_->Sigsq_prm())),
+        state_error_expander_(rhs.state_error_expander_->clone()),
+        observation_matrix_(rhs.observation_matrix_),
+        initial_state_mean_(rhs.initial_state_mean_),
+        initial_state_variance_(rhs.initial_state_variance_) {
+    ParamPolicy::add_model(error_distribution_);
+  }
+
+  QuasiTrigStateModel & QuasiTrigStateModel::operator=(
+      const QuasiTrigStateModel &rhs) {
+    if (&rhs != this) {
+      StateModel::operator=(rhs);
+      period_ = rhs.period_;
+      frequencies_ = rhs.frequencies_;
+      error_distribution_ = rhs.error_distribution_->clone();
+      cosines_ = rhs.cosines_;
+      sines_ = rhs.sines_;
+      state_error_variance_.reset(new ConstantMatrixParamView(
+          2 * frequencies_.size(),
+          error_distribution_->Sigsq_prm()));
+      state_error_expander_ = rhs.state_error_expander_->clone();
+      observation_matrix_ = rhs.observation_matrix_;
+      initial_state_mean_ = rhs.initial_state_mean_;
+      initial_state_variance_ = rhs.initial_state_variance_;
+      ParamPolicy::clear();
+      ParamPolicy::add_model(error_distribution_);
+    }
+    return *this;
+  }
+
+  void QuasiTrigStateModel::observe_state(const ConstVectorView &then,
+                                          const ConstVectorView &now,
+                                          int time_now,
+                                          ScalarStateSpaceModelBase *model) {
+    Matrix rotation(2, 2);
+    Vector rotated(2);
+    if (time_now <= 0) {
+      report_error("observe_state called with time_now = 0.");
+    }
+    for (int i = 0; i < frequencies_.size(); ++i) {
+      rotation(0, 0) = cosines_[i];
+      rotation(0, 1) = sines_[i];
+      rotation(1, 0) = -sines_[i];
+      rotation(1, 1) = cosines_[i];
+      rotated = rotation * then;
+      error_distribution_->suf()->update_raw(now[0] - rotated[0]);
+      error_distribution_->suf()->update_raw(now[1] - rotated[1]);
+    }
+  }
+
+  void QuasiTrigStateModel::update_complete_data_sufficient_statistics(
+      int t,
+      const ConstVectorView &state_error_mean,
+      const ConstSubMatrix &state_error_variance)  {
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // TODO
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+  }
+
+  void QuasiTrigStateModel::increment_expected_gradient(
+      VectorView gradient,
+      int t,
+      const ConstVectorView &state_error_mean,
+      const ConstSubMatrix &state_error_variance) {
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // TODO
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+  }
+
+  void QuasiTrigStateModel::simulate_state_error(
+      RNG &rng, VectorView eta, int t) const {
+    double sigma = error_distribution_->sigma();
+    for (int i = 0; i < eta.size(); ++i) {
+      eta[i] = rnorm_mt(rng, 0, sigma);
+    }
+  }
+
+  Ptr<SparseMatrixBlock>
+  QuasiTrigStateModel::state_transition_matrix(int t) const {
+    Ptr<BlockDiagonalMatrixBlock> transition;
+    Matrix rotation(2, 2);
+    for (int i = 0; i < frequencies_.size(); ++i) {
+      rotation(0, 0) = cosines_[i];
+      rotation(0, 1) = sines_[i];
+      rotation(1, 0) = -sines_[i];
+      rotation(1, 1) = cosines_[i];
+      transition->add_block(new DenseMatrix(rotation));
+    }
+    return transition;
+  }
+
 }  // namespace BOOM
