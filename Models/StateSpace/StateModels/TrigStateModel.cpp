@@ -241,9 +241,33 @@ namespace BOOM {
       rotation(0, 1) = sines_[i];
       rotation(1, 0) = -sines_[i];
       rotation(1, 1) = cosines_[i];
-      transition->add_block(new DenseMatrix(rotation))
+      transition->add_block(new DenseMatrix(rotation));
     }
     return transition;
   }
 
+  void QuasiTrigStateModel::set_initial_state_mean(
+      const ConstVectorView &mean) {
+    if (mean.size() != state_dimension()) {
+      std::ostringstream err;
+      err << "Argument to QuasiTrigStateModel::set_initial_state_mean is of size "
+          << mean.size() << " but it should be of size "
+          << state_dimension() << ".";
+      report_error(err.str());
+    }
+    initial_state_mean_ = mean;
+  }
+
+  void QuasiTrigStateModel::set_initial_state_variance(
+      const SpdMatrix &variance) {
+    if (variance.nrow() != state_dimension()) {
+      std::ostringstream err;
+      err << "Argument to QuasiTrigStateModel::set_initial_state_variance has "
+          << variance.nrow() << " rows, but it should have "
+          << state_dimension() << ".";
+      report_error(err.str());
+    }
+    initial_state_variance_ = variance;
+  }
+  
 }  // namespace BOOM

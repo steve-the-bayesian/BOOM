@@ -108,29 +108,37 @@ namespace BOOM {
   };
 
 
-  // An alternative version of the trig state model that is supposed to be more
-  // stable.  Each frequency lambda_j = 2 * pi * j / S, where S is the period
-  // (number of time points in a full cycle) is associated with two time-varying
-  // random components: gamma[j, t], and gamma^*[j, t].  They evolve through
-  // time as
+  // A more stable version of the trig state model.  Each frequency lambda_j = 2
+  // * pi * j / S, where S is the period (number of time points in a full cycle)
+  // is associated with two time-varying random components: gamma[j, t], and
+  // gamma^*[j, t].  They evolve through time as
   //
-  // gamma[j, t + 1] = \gamma[j, t] * cos(lambda_j * t)
-  //       + \gamma^*[j,t] * sin(\lambda_j * t) + error_0
-  // gamma^[j, t + 1] = \gamma^*[j, t] cos(\lambda_j * t)
-  //       - \gamma[j, t] * sin(lambda_j * t) + error_1
+  // gamma[j, t + 1] = \gamma[j, t] * cos(lambda_j)
+  //                   + \gamma^*[j, t] * sin(\lambda_j) + error_0
+  // gamma^[j, t + 1] = \gamma^*[j, t] cos(\lambda_j)
+  //                   - \gamma[j, t] * sin(lambda_j) + error_1
   //
-  // where error_0 and error_1 are independent with the same variance.
+  // where error_0 and error_1 are independent with the same variance.  This is
+  // the real-valued version of a harmonic function: gamma * exp(i * theta).
+  // The transition matrix multiplies the function by exp(i * lambda), so that
+  // after 't' steps the harmonic's value is gamma * exp(i * lambda * t).  The
+  // state allows gamma to drift over time in a random walk.
   //
-  // The state is (gamma_jt, gamma^*_jt)',
+  // The state is (gamma_jt, gamma^*_jt)', for j = 1, ... number of frequencies.
   //
-  // The state transition matrix is
+  // The state transition matrix is a block diagonal matrix, where block 'j' is
   //
-  //    cos(lambda_j t)   sin(lambda_j t)
-  //   -sin(lambda_j t)   cos(lambda_j t)
+  //    cos(lambda_j)   sin(lambda_j)
+  //   -sin(lambda_j)   cos(lambda_j)
   //
-  // The error variance matrix is sigma^2 * I.
-  // The error expander is I.
-  // The observation_matrix is (1, 0)
+  // The error variance matrix is sigma^2 * I.  There is a common sigma^2
+  // parameter shared by all frequencies.
+  //
+  // The model is full rank, so the state error expander matrix R_t is the
+  // identity.
+  //
+  // The observation_matrix is (1, 0, 1, 0, ...), where the 1's pick out the
+  // 'real' part of the state contributions.
   //
   // The name QuasiTrigStateModel comes from the fact that Durbin and Koopman
   // refer to this as the "Quasi-random walk model".
@@ -146,7 +154,11 @@ namespace BOOM {
     //     for the longest cycle to repeat.
     //   frequencies: A vector giving the number of times each sinusoid repeats
     //     in a period.  One sine and one cosine will be added to the model for
-    //     each entry in frequencies.
+    //     each entry in frequencies.  
+    //
+    // A typical value of frequencies is {1, 2, 3, ...}.  The number of
+    // frequencies should not exceed half the period, and the largest entry in
+    // frequencies should not exceed half the period.
     QuasiTrigStateModel(double period, const Vector &frequencies);
 
     ~QuasiTrigStateModel() {}
@@ -159,6 +171,8 @@ namespace BOOM {
       return new QuasiTrigStateModel(*this);
     }
 
+    // Member functions inherited from Model that would normally be supplied by
+    // a data policy.  These are deferred to the error distribution.
     void clear_data() override {
       error_distribution_->clear_data();
     }
@@ -168,10 +182,12 @@ namespace BOOM {
     void combine_data(const Model &other_model, bool just_suf = true) override {
       error_distribution_->combine_data(other_model, just_suf);
     }
+    
     ZeroMeanGaussianModel *error_distribution() {
       return error_distribution_.get();
     }
-    
+
+    // Overrides from StateModel.  Please see documentation in the base class.
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
                        int time_now,
@@ -237,19 +253,18 @@ namespace BOOM {
     // The number of time steps in the longest full cycle.
     double period_;
 
-    // A vector of integers indicating how many complete cycles each sinusoid
-    // will go through in one period.  This need not be an integer.
+    // A vector of numbers (typically, but not necessarily, integers) indicating
+    // how many complete cycles each sinusoid will go through in one period.
     Vector frequencies_;
     
+    // The model describing innovations in the harmonic coefficients over time.
     Ptr<ZeroMeanGaussianModel> error_distribution_;
 
+    // Pre-computed trig quantities.
+    //
     // Let lambda_j = 2 * pi * frequencies_[j] / period_
     // cosines_[j] = cos(lambda_j)
     // sines_[j] = cos(lambda_j)
-    //
-    // These matrices are constructed when the user calls
-    // observe_time_dimension(n), to avoid computing the same quantities each
-    // MCMC iteration.
     Vector cosines_;
     Vector sines_;
 
