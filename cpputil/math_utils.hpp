@@ -21,13 +21,21 @@
 #define BOOM_CPP_MATH_UTILS_H
 
 #include <cmath>
+#include <limits>
 #include "cpputil/portable_math.hpp"
 
 namespace BOOM {
   inline int I(int r, int s) { return r == s ? 1 : 0; }
   double safelog(double x);
-  double infinity();
-  double negative_infinity();
+
+  constexpr double infinity() {
+        return std::numeric_limits<double>::infinity(); 
+  }
+
+  constexpr double negative_infinity() {
+    return -1 * std::numeric_limits<double>::infinity();
+  }
+
   template <class T>
   inline T square(T x) {
     return x * x;

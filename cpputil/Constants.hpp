@@ -22,12 +22,12 @@
 namespace BOOM {
 
   struct Constants {
-    static double pi;
-    static double pi_squared;
-    static double half_pi_squared;
-    static double root_2pi;
-    static double log_root_2pi;
-    static double log_pi;
+    static constexpr double pi = 3.141592653589793;
+    static constexpr double pi_squared = 9.86960440108936;
+    static constexpr double half_pi_squared = 4.93480220054468;
+    static constexpr double root_2pi = 0.918938533204673;
+    static constexpr double log_root_2pi = 2.506628274631;
+    static constexpr double log_pi = 1.1447298858494;
   };
 
 }  // namespace BOOM

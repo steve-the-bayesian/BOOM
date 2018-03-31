@@ -158,13 +158,15 @@ namespace BOOM {
     a0 = 0.5 * y * (xm - x0);
 
     double ans = 0;
-    if (p < a0)
+    if (!std::isfinite(p)) {
+      report_error("Non finite value for p in qtriangle.");
+    } else if (!std::isfinite(a0)) {
+      report_error("Nonfinite value for a0 in qtriangle.");
+    } else if (p < a0) {
       ans = x0 + sqrt(2 * p / m0); /* area of left right triangle */
-    else if (p >= a0)
+    } else {
       ans = x1 - sqrt(-2.0 * (1 - p) / m1); /* area of right right triangle */
-    else
-      report_error("an unknown error occurred in qtriangle");
-
+    }
     return ans;
   }
 
