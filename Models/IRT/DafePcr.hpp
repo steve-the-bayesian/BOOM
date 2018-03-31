@@ -36,7 +36,7 @@ namespace BOOM {
     class DafePcrDataImputer : public PosteriorSampler {
      public:
       typedef PartialCreditModel PCR;
-      DafePcrDataImputer(RNG &seeding_rng = GlobalRng::rng);
+      explicit DafePcrDataImputer(RNG &seeding_rng = GlobalRng::rng);
       void add_item(const Ptr<PCR> &item);
       void draw() override;
       double logpri() const override;

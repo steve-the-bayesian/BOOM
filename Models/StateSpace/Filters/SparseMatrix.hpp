@@ -1034,7 +1034,8 @@ namespace BOOM {
   class EffectConstrainedMatrixBlock
       : public SparseMatrixBlock {
    public:
-    EffectConstrainedMatrixBlock(const Ptr<SparseMatrixBlock> &unconstrained)
+    explicit EffectConstrainedMatrixBlock(
+        const Ptr<SparseMatrixBlock> &unconstrained)
         : unconstrained_(unconstrained) {}
 
     EffectConstrainedMatrixBlock(const EffectConstrainedMatrixBlock &rhs)
