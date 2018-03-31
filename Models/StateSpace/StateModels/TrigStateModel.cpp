@@ -117,8 +117,7 @@ namespace BOOM {
       : period_(period),
         frequencies_(frequencies),
         error_distribution_(new ZeroMeanGaussianModel),
-        cosines_(frequencies.size()),
-        sines_(frequencies.size()),
+        state_transition_matrix_(new BlockDiagonalMatrixBlock),
         state_error_variance_(new ConstantMatrixParamView(
             2 * frequencies_.size(),
             error_distribution_->Sigsq_prm())),
@@ -131,10 +130,17 @@ namespace BOOM {
     for (int i = 0; i < 2 * frequencies_.size(); i += 2) {
       observation_matrix_[i] = 1.0;
     }
+
     for (int i = 0; i < frequencies_.size(); ++i) {
       double freq = 2 * Constants::pi * frequencies_[i] / period_;
-      cosines_[i] = cos(freq);
-      sines_[i] = sin(freq);
+      double cosine = cos(freq);
+      double sine = sin(freq);
+      Matrix rotation(2, 2);
+      rotation(0, 0) = cosine;
+      rotation(0, 1) = sine;
+      rotation(1, 0) = -sine;
+      rotation(1, 1) = cosine;
+      state_transition_matrix_->add_block(new DenseMatrix(rotation));
     }
   }
 
@@ -144,8 +150,7 @@ namespace BOOM {
         period_(rhs.period_),
         frequencies_(rhs.frequencies_),
         error_distribution_(rhs.error_distribution_->clone()),
-        cosines_(rhs.cosines_),
-        sines_(rhs.sines_),
+        state_transition_matrix_(rhs.state_transition_matrix_->clone()),
         state_error_variance_(new ConstantMatrixParamView(
             2 * frequencies_.size(),
             error_distribution_->Sigsq_prm())),
@@ -163,8 +168,7 @@ namespace BOOM {
       period_ = rhs.period_;
       frequencies_ = rhs.frequencies_;
       error_distribution_ = rhs.error_distribution_->clone();
-      cosines_ = rhs.cosines_;
-      sines_ = rhs.sines_;
+      state_transition_matrix_ = rhs.state_transition_matrix_->clone();
       state_error_variance_.reset(new ConstantMatrixParamView(
           2 * frequencies_.size(),
           error_distribution_->Sigsq_prm()));
@@ -183,19 +187,13 @@ namespace BOOM {
       const ConstVectorView &now,
       int time_now,
       ScalarStateSpaceModelBase *model) {
-    Matrix rotation(2, 2);
-    Vector rotated(2);
     if (time_now <= 0) {
       report_error("observe_state called with time_now = 0.");
     }
-    for (int i = 0; i < frequencies_.size(); ++i) {
-      rotation(0, 0) = cosines_[i];
-      rotation(0, 1) = sines_[i];
-      rotation(1, 0) = -sines_[i];
-      rotation(1, 1) = cosines_[i];
-      rotated = rotation * then;
-      error_distribution_->suf()->update_raw(now[0] - rotated[0]);
-      error_distribution_->suf()->update_raw(now[1] - rotated[1]);
+    Vector rotated(now.size());
+    state_transition_matrix_->multiply(VectorView(rotated), then);
+    for (int i = 0; i < rotated.size(); ++i) { 
+      error_distribution_->suf()->update_raw(now[i] - rotated[i]);
     }
   }
 
@@ -236,16 +234,7 @@ namespace BOOM {
 
   Ptr<SparseMatrixBlock>
   HarmonicTrigStateModel::state_transition_matrix(int t) const {
-    NEW(BlockDiagonalMatrixBlock, transition)();
-    Matrix rotation(2, 2);
-    for (int i = 0; i < frequencies_.size(); ++i) {
-      rotation(0, 0) = cosines_[i];
-      rotation(0, 1) = sines_[i];
-      rotation(1, 0) = -sines_[i];
-      rotation(1, 1) = cosines_[i];
-      transition->add_block(new DenseMatrix(rotation));
-    }
-    return transition;
+    return state_transition_matrix_;
   }
 
   void HarmonicTrigStateModel::set_initial_state_mean(

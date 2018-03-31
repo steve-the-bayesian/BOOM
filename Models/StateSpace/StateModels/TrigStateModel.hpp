@@ -256,14 +256,7 @@ namespace BOOM {
     // The model describing innovations in the harmonic coefficients over time.
     Ptr<ZeroMeanGaussianModel> error_distribution_;
 
-    // Pre-computed trig quantities.
-    //
-    // Let lambda_j = 2 * pi * frequencies_[j] / period_
-    // cosines_[j] = cos(lambda_j)
-    // sines_[j] = cos(lambda_j)
-    Vector cosines_;
-    Vector sines_;
-
+    Ptr<BlockDiagonalMatrixBlock> state_transition_matrix_;
     Ptr<ConstantMatrixParamView> state_error_variance_;
     Ptr<IdentityMatrix> state_error_expander_;
     SparseVector observation_matrix_;
