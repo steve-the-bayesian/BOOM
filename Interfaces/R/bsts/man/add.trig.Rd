@@ -59,25 +59,23 @@
 
 \details{
 
-  \section{\strong{Harmonic Method}}
+  \subsection{Harmonic Method}{ 
+    Each frequency \eqn{lambda_j = 2\pi j / S}{2 * pi * j / S} where S
+    is the period (number of time points in a full cycle) is associated
+    with two time-varying random components: \eqn{\gamma_{jt}}{gamma[j,
+    t]}, and \eqn{gamma^*_{jt}}{gamma^*[j, t]}.  They evolve through
+    time as
 
-  The "harmonic" method is strongly preferred, and is described first.
-
-  Each frequency \eqn{lambda_j = 2\pi j / S}{2 * pi * j / S} where S is
-  the period (number of time points in a full cycle) is associated with
-  two time-varying random components: \eqn{\gamma_{jt}}{gamma[j, t]},
-  and \eqn{gamma^*_{jt}}{gamma^*[j, t]}.  They evolve through time as
-
-  \deqn{%
-    \gamma_{j, t + 1} = \gamma_{jt}  \cos(\lambda_j) + \gamma^*_{j, t}  %
-    \sin(\lambda_j) + \epsilon_{0t}}{%
-    gamma[j, t + 1] = \gamma[j, t] * cos(\lambda_j)%
-                      - \gamma^*[j, t] * sin(lambda_j) + error_0}
-  \deqn{%
-    \gamma^*_{j, t + 1} = \gamma^*[j, t] \cos(\lambda_j) - \gamma_{jt} *
-    \sin(\lambda_j) + \epsilon_1}{%
-     gamma^*[j, t + 1] = \gamma^*[j, t] * cos(\lambda_j)
-                     - \gamma[j, t] * sin(lambda_j) + error_1}
+   \deqn{%
+     \gamma_{j, t + 1} = \gamma_{jt}  \cos(\lambda_j) + \gamma^*_{j, t}  %
+     \sin(\lambda_j) + \epsilon_{0t}}{%
+     gamma[j, t + 1] = \gamma[j, t] * cos(\lambda_j)%
+                     - \gamma^*[j, t] * sin(lambda_j) + error_0}
+    \deqn{%
+      \gamma^*_{j, t + 1} = \gamma^*[j, t] \cos(\lambda_j) - \gamma_{jt} *
+      \sin(\lambda_j) + \epsilon_1}{%
+      gamma^*[j, t + 1] = \gamma^*[j, t] * cos(\lambda_j)
+                        - \gamma[j, t] * sin(lambda_j) + error_1}
 
 
   where \eqn{\epsilon_0}{error_0} and \eqn{\epsilon_1}{error_1} are
@@ -87,7 +85,7 @@
   The transition matrix multiplies the function by
   \eqn{\exp(i \lambda_j}{exp(i * lambda_j)}, so that
   after 't' steps the harmonic's value is
-  \eqn{\gamma \exp(i \lambda_j t}{gamma * exp(i * lambda * t)}.
+  \eqn{\gamma \exp(i \lambda_j t)}{gamma * exp(i * lambda * t)}.
 
   The model dynamics  allows gamma to drift over time in a random walk.
   
@@ -108,9 +106,9 @@
   
   The observation_matrix is (1, 0, 1, 0, ...), where the 1's pick out the
   'real' part of the state contributions.
+}
 
-  \section{\strong{Direct Method}}
-  
+\subsection{Direct Method}{
   Under the 'direct' method the trig component adds a collection of sine
   and cosine terms with randomly varying coefficients to the state
   model.  The coefficients are the states, while the sine and cosine
@@ -127,11 +125,15 @@
   The evolution equation is that each of the sinusoid coefficients
   follows a random walk with standard deviation sigma[j].
 
-  \deqn{\beta_{jt} = \beta_{jt-1} + N(0, sigma_{sj}^2))
+  \deqn{\beta_{jt} = \beta_{jt-1} + N(0, sigma_{sj}^2)
     \gamma_{jt} = \gamma_{j-1} + N(0, sigma_{cj}^2) }{%
     beta[j, t] = beta[j, t-1] + N(0, sigma[j, 1])^2
     gamma[j, t] = gamma[j, t-1] + N(0, sigma[j, 2])^2
   }
+
+  The direct method is generally inferior to the harmonic method.  It
+  may be removed in the future.
+}
 }
 
 \references{

@@ -133,7 +133,7 @@ namespace BOOM {
             r_state_component, "method", true));
         if (method == "direct") {
           return CreateTrigStateModel(r_state_component, prefix);
-        } else if (method == "fourier") {
+        } else if (method == "harmonic") {
           return CreateHarmonicTrigStateModel(r_state_component, prefix);
         } else {
           std::ostringstream err;
