@@ -69,7 +69,7 @@ namespace {
   }
 
   //======================================================================
-  TEST_F(TrigStateModelTest, QuasiTrigMCMC) {
+  TEST_F(TrigStateModelTest, HarmonicTrigMCMC) {
     int time_dimension = 200;
 
     Vector first_harmonic(time_dimension);
@@ -88,7 +88,7 @@ namespace {
     }
 
     StateSpaceModel model(y);
-    NEW(QuasiTrigStateModel, trig_state)(period, {1.0, 2.0});
+    NEW(HarmonicTrigStateModel, trig_state)(period, {1.0, 2.0});
     trig_state->set_initial_state_mean(
         Vector(trig_state->state_dimension(), 0.0));
     trig_state->set_initial_state_variance(

@@ -112,8 +112,8 @@ namespace BOOM {
   }
 
   //===========================================================================
-  QuasiTrigStateModel::QuasiTrigStateModel(double period,
-                                           const Vector &frequencies)
+  HarmonicTrigStateModel::HarmonicTrigStateModel(double period,
+                                                 const Vector &frequencies)
       : period_(period),
         frequencies_(frequencies),
         error_distribution_(new ZeroMeanGaussianModel),
@@ -138,7 +138,8 @@ namespace BOOM {
     }
   }
 
-  QuasiTrigStateModel::QuasiTrigStateModel(const QuasiTrigStateModel &rhs)
+  HarmonicTrigStateModel::HarmonicTrigStateModel(
+      const HarmonicTrigStateModel &rhs)
       : StateModel(rhs),
         period_(rhs.period_),
         frequencies_(rhs.frequencies_),
@@ -155,8 +156,8 @@ namespace BOOM {
     ParamPolicy::add_model(error_distribution_);
   }
 
-  QuasiTrigStateModel & QuasiTrigStateModel::operator=(
-      const QuasiTrigStateModel &rhs) {
+  HarmonicTrigStateModel & HarmonicTrigStateModel::operator=(
+      const HarmonicTrigStateModel &rhs) {
     if (&rhs != this) {
       StateModel::operator=(rhs);
       period_ = rhs.period_;
@@ -177,10 +178,11 @@ namespace BOOM {
     return *this;
   }
 
-  void QuasiTrigStateModel::observe_state(const ConstVectorView &then,
-                                          const ConstVectorView &now,
-                                          int time_now,
-                                          ScalarStateSpaceModelBase *model) {
+  void HarmonicTrigStateModel::observe_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      ScalarStateSpaceModelBase *model) {
     Matrix rotation(2, 2);
     Vector rotated(2);
     if (time_now <= 0) {
@@ -197,7 +199,7 @@ namespace BOOM {
     }
   }
 
-  void QuasiTrigStateModel::update_complete_data_sufficient_statistics(
+  void HarmonicTrigStateModel::update_complete_data_sufficient_statistics(
       int t,
       const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance)  {
@@ -210,7 +212,7 @@ namespace BOOM {
     ////////////////////////////////////////////////////////////////////////
   }
 
-  void QuasiTrigStateModel::increment_expected_gradient(
+  void HarmonicTrigStateModel::increment_expected_gradient(
       VectorView gradient,
       int t,
       const ConstVectorView &state_error_mean,
@@ -224,7 +226,7 @@ namespace BOOM {
     ////////////////////////////////////////////////////////////////////////
   }
 
-  void QuasiTrigStateModel::simulate_state_error(
+  void HarmonicTrigStateModel::simulate_state_error(
       RNG &rng, VectorView eta, int t) const {
     double sigma = error_distribution_->sigma();
     for (int i = 0; i < eta.size(); ++i) {
@@ -233,7 +235,7 @@ namespace BOOM {
   }
 
   Ptr<SparseMatrixBlock>
-  QuasiTrigStateModel::state_transition_matrix(int t) const {
+  HarmonicTrigStateModel::state_transition_matrix(int t) const {
     NEW(BlockDiagonalMatrixBlock, transition)();
     Matrix rotation(2, 2);
     for (int i = 0; i < frequencies_.size(); ++i) {
@@ -246,24 +248,24 @@ namespace BOOM {
     return transition;
   }
 
-  void QuasiTrigStateModel::set_initial_state_mean(
+  void HarmonicTrigStateModel::set_initial_state_mean(
       const ConstVectorView &mean) {
     if (mean.size() != state_dimension()) {
       std::ostringstream err;
-      err << "Argument to QuasiTrigStateModel::set_initial_state_mean is of size "
-          << mean.size() << " but it should be of size "
+      err << "Argument to HarmonicTrigStateModel::set_initial_state_mean is "
+          << "of size " << mean.size() << " but it should be of size "
           << state_dimension() << ".";
       report_error(err.str());
     }
     initial_state_mean_ = mean;
   }
 
-  void QuasiTrigStateModel::set_initial_state_variance(
+  void HarmonicTrigStateModel::set_initial_state_variance(
       const SpdMatrix &variance) {
     if (variance.nrow() != state_dimension()) {
       std::ostringstream err;
-      err << "Argument to QuasiTrigStateModel::set_initial_state_variance has "
-          << variance.nrow() << " rows, but it should have "
+      err << "Argument to HarmonicTrigStateModel::set_initial_state_variance "
+          << "has " << variance.nrow() << " rows, but it should have "
           << state_dimension() << ".";
       report_error(err.str());
     }

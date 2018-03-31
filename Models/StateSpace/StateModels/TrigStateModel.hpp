@@ -107,7 +107,6 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
-
   // A more stable version of the trig state model.  Each frequency lambda_j = 2
   // * pi * j / S, where S is the period (number of time points in a full cycle)
   // is associated with two time-varying random components: gamma[j, t], and
@@ -115,7 +114,7 @@ namespace BOOM {
   //
   // gamma[j, t + 1] = \gamma[j, t] * cos(lambda_j)
   //                   + \gamma^*[j, t] * sin(\lambda_j) + error_0
-  // gamma^[j, t + 1] = \gamma^*[j, t] cos(\lambda_j)
+  // gamma^[j, t + 1] = \gamma^*[j, t] * cos(\lambda_j)
   //                   - \gamma[j, t] * sin(lambda_j) + error_1
   //
   // where error_0 and error_1 are independent with the same variance.  This is
@@ -139,10 +138,7 @@ namespace BOOM {
   //
   // The observation_matrix is (1, 0, 1, 0, ...), where the 1's pick out the
   // 'real' part of the state contributions.
-  //
-  // The name QuasiTrigStateModel comes from the fact that Durbin and Koopman
-  // refer to this as the "Quasi-random walk model".
-  class QuasiTrigStateModel
+  class HarmonicTrigStateModel
       : public StateModel,
         public CompositeParamPolicy,
         public NullDataPolicy,
@@ -159,16 +155,16 @@ namespace BOOM {
     // A typical value of frequencies is {1, 2, 3, ...}.  The number of
     // frequencies should not exceed half the period, and the largest entry in
     // frequencies should not exceed half the period.
-    QuasiTrigStateModel(double period, const Vector &frequencies);
+    HarmonicTrigStateModel(double period, const Vector &frequencies);
 
-    ~QuasiTrigStateModel() {}
-    QuasiTrigStateModel(const QuasiTrigStateModel &rhs);
-    QuasiTrigStateModel & operator=(const QuasiTrigStateModel &rhs);
-    QuasiTrigStateModel(QuasiTrigStateModel &&rhs) = default;
-    QuasiTrigStateModel & operator=(QuasiTrigStateModel &&rhs) = default;
+    ~HarmonicTrigStateModel() {}
+    HarmonicTrigStateModel(const HarmonicTrigStateModel &rhs);
+    HarmonicTrigStateModel & operator=(const HarmonicTrigStateModel &rhs);
+    HarmonicTrigStateModel(HarmonicTrigStateModel &&rhs) = default;
+    HarmonicTrigStateModel & operator=(HarmonicTrigStateModel &&rhs) = default;
 
-    QuasiTrigStateModel *clone() const override {
-      return new QuasiTrigStateModel(*this);
+    HarmonicTrigStateModel *clone() const override {
+      return new HarmonicTrigStateModel(*this);
     }
 
     // Member functions inherited from Model that would normally be supplied by
