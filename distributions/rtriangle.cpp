@@ -120,18 +120,18 @@ namespace BOOM {
     y = 2.0 / (x1 - x0);
 
     double ans = 0;
-    if (x <= xm) {
+    if (!std::isfinite(x) || !std::isfinite(xm)) {
+      report_error("Non-finite inputs to ptriangle.");
+    } else if (x <= xm) {
       x -= x0;
       double m0 = y / (xm - x0);
       double a0 = 0.5 * m0 * x * x;
       ans = lower_tail ? a0 : 1 - a0;
-    } else if (x > xm) {
+    } else {
       double m1 = y / (xm - x1);
       double b = 0.5 * m1 * (x - x1) * (x1 - x);
       ans = lower_tail ? b : 1 - b;
-    } else
-      report_error("an unknown error occurred in ptrigangle");
-
+    }
     return ans;
   }
   /*======================================================================*/
