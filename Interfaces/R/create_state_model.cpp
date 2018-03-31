@@ -538,7 +538,6 @@ namespace BOOM {
 
       //-------------- set the prior and the posterior sampler.
       SdPrior sigma_prior(getListElement(r_state_component, "sigma.prior"));
-      int dimension = quasi_trig_state_model->state_dimension();
       NEW(ChisqModel, innovation_precision_prior)(
           sigma_prior.prior_df(),
           sigma_prior.prior_guess());
