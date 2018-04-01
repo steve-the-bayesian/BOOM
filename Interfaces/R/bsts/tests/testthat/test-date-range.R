@@ -9,5 +9,5 @@ test_that("DateRange returns a two-column data frame of dates", {
   expect_that(ncol(influence), equals(2))
   expect_that(influence[, 1], is_a("Date"))
   expect_that(influence[, 2], is_a("Date"))
-  expect_le(influence[, 1], influence[, 2])
+  expect_true(all(influence[, 1] <= influence[, 2]))
   })
