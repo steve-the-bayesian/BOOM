@@ -297,7 +297,7 @@ PlotBstsComponents <- function(bsts.object,
   if (is.null(burn)) {
     burn <- 0
   }
-  for (i in 1:number.of.components) {
+  for (i in components) {
     screen(screen.numbers[i])
     ## Each state component has a generic plot function that knows how to make
     ## the right plot.
@@ -656,7 +656,7 @@ PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
   ##   A set of boxplots are drawn on the current graphics device showing the
   ##   posterior distribution of the impact of the holiday during each day of
   ##   its influence window.  
-  date.ranges <- .GetDateRanges(holiday, model$timestamp.info$timestamps)
+  date.ranges <- DateRange(holiday, model$timestamp.info$timestamps)
   raw.data<- list()
   for (i in 1:nrow(date.ranges)) {
     baseline <- as.numeric(model$original.series[date.ranges[i, 1] - 1])

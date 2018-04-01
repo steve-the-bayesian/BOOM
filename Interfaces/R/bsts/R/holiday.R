@@ -236,7 +236,7 @@ MaxWindowWidth.DateRangeHoliday <- function(holiday, ...) {
   return(as.numeric(max(dt)))
 }
 
-.GetDateRanges <- function(holiday, timestamps) {
+DateRange <- function(holiday, timestamps) {
   ## Returns the first and last dates of the influence window for the given
   ## holiday, among the given timestamps.
   ##
@@ -248,8 +248,8 @@ MaxWindowWidth.DateRangeHoliday <- function(holiday, ...) {
   ## contain daily data.  Use with caution otherwise.
   ##
   ## Returns:
-  ##   A two-column matrix giving the start and end times for each incidence of
-  ##   the holiday during the period spanned by timestamps.
+  ##   A two-column data frame giving the start and end times for each incidence
+  ##   of the holiday during the period spanned by timestamps.
   if (!inherits(timestamps, "Date")
     && !inherits(timestamps, "POSIXt")) {
     stop("Model must have timestamps of class Date or POSIXt.")
@@ -261,8 +261,8 @@ MaxWindowWidth.DateRangeHoliday <- function(holiday, ...) {
     holiday,
     timestamps,
     PACKAGE = "bsts");
-  start <- timestamps[date.ranges[, 1]]
-  end <- timestamps[date.ranges[, 2]]
-  return(as.Date(cbind(start, end)))
+  start <- as.Date(timestamps[date.ranges[, 1]])
+  end <- as.Date(timestamps[date.ranges[, 2]])
+  return(data.frame(start = start, end = end))
 }
 
