@@ -120,11 +120,10 @@ namespace BOOM {
     // Simulates the state eror at time t, for moving to time t+1.
     // Args:
     //   rng:  The random number generator to use for the simulation.
-    //   eta: A view into the error term to be simulated.  ***NOTE***: that
-    //     eta.size() should match state_dimension(), not
-    //     state_error_dimension().  If the error distribution is not full rank
-    //     then some components of eta will be deterministic functions of others
-    //     (most likely just zero).
+    //   eta: A view into the error term to be simulated.  ***NOTE*** eta.size()
+    //     matches state_dimension(), not state_error_dimension().  If the error
+    //     distribution is not full rank then some components of eta will be
+    //     deterministic functions of others (most likely just zero).
     //   t: The time index of the error.  The convention is that state[t+1] =
     //     T[t] * state[t] + error[t], so errors at time t are part of the state
     //     at time t+1.
@@ -165,7 +164,10 @@ namespace BOOM {
     //   each of the observations at time t.
     virtual Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const = 0;
+        int t, const StateSpace::MultiplexedData &data_point) const {
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.total_sample_size());
+    }
 
     virtual Vector initial_state_mean() const = 0;
     virtual SpdMatrix initial_state_variance() const = 0;

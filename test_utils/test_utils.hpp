@@ -61,6 +61,8 @@ namespace BOOM {
           failure_rate_limit(0)
     {}
 
+    // A human readable error message that should be examined in case 'ok' is
+    // false.
     std::string error_message() const;
     
     // The primary return type.  True iff 'draws' cover 'truth' acceptably well.
@@ -74,7 +76,12 @@ namespace BOOM {
     double failure_rate_limit;
   };
 
-
+  // Printing a status object prints its error message.
+  ostream & operator<<(ostream &out, const CheckMatrixStatus &status) {
+    out << status.error_message();
+    return(out);
+  }
+  
   // Check to see if a matrix of Monte Carlo draws covers a known set of true
   // values acceptably well.
   //

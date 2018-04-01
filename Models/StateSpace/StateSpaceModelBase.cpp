@@ -419,7 +419,9 @@ namespace BOOM {
     // Suitable for passing to numerical optimizers.
     class StateSpaceTargetFun {
      public:
-      StateSpaceTargetFun(StateSpaceModelBase *model) : model_(model) {}
+      explicit StateSpaceTargetFun(StateSpaceModelBase *model)
+          : model_(model) {}
+
       double operator()(const Vector &parameters) {
         Vector old_parameters = model_->vectorize_params();
         model_->unvectorize_params(parameters);

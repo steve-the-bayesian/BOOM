@@ -23,6 +23,10 @@
 #include "Models/IndependentMvnModel.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
 namespace BOOM {
 
@@ -41,11 +45,11 @@ namespace BOOM {
   class TrigStateModel : public StateModel, public IndependentMvnModel {
    public:
     // Args:
-    //   period: The number of time steps (need not be an integer)
-    //     that it takes for the longest cycle to repeat.
-    //   frequencies: A vector giving the number of times each
-    //     sinusoid repeats in a period.  One sine and one cosine will
-    //     be added to the model for each entry in frequencies.
+    //   period: The number of time steps (need not be an integer) that it takes
+    //     for the longest cycle to repeat.
+    //   frequencies: A vector giving the number of times each sinusoid repeats
+    //     in a period.  One sine and one cosine will be added to the model for
+    //     each entry in frequencies.
     TrigStateModel(double period, const Vector &frequencies);
     TrigStateModel(const TrigStateModel &rhs);
     TrigStateModel(TrigStateModel &&rhs) = default;
@@ -87,13 +91,6 @@ namespace BOOM {
 
     SparseVector observation_matrix(int t) const override;
 
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override {
-      return new IdenticalRowsMatrix(observation_matrix(t),
-                                     data_point.total_sample_size());
-    }
-
     Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &v);
 
@@ -110,6 +107,164 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  // A more stable version of the trig state model.  Each frequency lambda_j = 2
+  // * pi * j / S, where S is the period (number of time points in a full cycle)
+  // is associated with two time-varying random components: gamma[j, t], and
+  // gamma^*[j, t].  They evolve through time as
+  //
+  // gamma[j, t + 1] = \gamma[j, t] * cos(lambda_j)
+  //                   + \gamma^*[j, t] * sin(\lambda_j) + error_0
+  // gamma^[j, t + 1] = \gamma^*[j, t] * cos(\lambda_j)
+  //                   - \gamma[j, t] * sin(lambda_j) + error_1
+  //
+  // where error_0 and error_1 are independent with the same variance.  This is
+  // the real-valued version of a harmonic function: gamma * exp(i * theta).
+  // The transition matrix multiplies the function by exp(i * lambda), so that
+  // after 't' steps the harmonic's value is gamma * exp(i * lambda * t).  The
+  // state allows gamma to drift over time in a random walk.
+  //
+  // The state is (gamma_jt, gamma^*_jt)', for j = 1, ... number of frequencies.
+  //
+  // The state transition matrix is a block diagonal matrix, where block 'j' is
+  //
+  //    cos(lambda_j)   sin(lambda_j)
+  //   -sin(lambda_j)   cos(lambda_j)
+  //
+  // The error variance matrix is sigma^2 * I.  There is a common sigma^2
+  // parameter shared by all frequencies.
+  //
+  // The model is full rank, so the state error expander matrix R_t is the
+  // identity.
+  //
+  // The observation_matrix is (1, 0, 1, 0, ...), where the 1's pick out the
+  // 'real' part of the state contributions.
+  class HarmonicTrigStateModel
+      : public StateModel,
+        public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy 
+  {
+   public:
+    // Args:
+    //   period: The number of time steps (need not be an integer) that it takes
+    //     for the longest cycle to repeat.
+    //   frequencies: A vector giving the number of times each sinusoid repeats
+    //     in a period.  One sine and one cosine will be added to the model for
+    //     each entry in frequencies.  
+    //
+    // A typical value of frequencies is {1, 2, 3, ...}.  The number of
+    // frequencies should not exceed half the period, and the largest entry in
+    // frequencies should not exceed half the period.
+    HarmonicTrigStateModel(double period, const Vector &frequencies);
+
+    ~HarmonicTrigStateModel() {}
+    HarmonicTrigStateModel(const HarmonicTrigStateModel &rhs);
+    HarmonicTrigStateModel & operator=(const HarmonicTrigStateModel &rhs);
+    HarmonicTrigStateModel(HarmonicTrigStateModel &&rhs) = default;
+    HarmonicTrigStateModel & operator=(HarmonicTrigStateModel &&rhs) = default;
+
+    HarmonicTrigStateModel *clone() const override {
+      return new HarmonicTrigStateModel(*this);
+    }
+
+    // Member functions inherited from Model that would normally be supplied by
+    // a data policy.  These are deferred to the error distribution.
+    void clear_data() override {
+      error_distribution_->clear_data();
+    }
+    void add_data(const Ptr<Data> &dp) override {
+      error_distribution_->add_data(dp);
+    }
+    void combine_data(const Model &other_model, bool just_suf = true) override {
+      error_distribution_->combine_data(other_model, just_suf);
+    }
+    
+    ZeroMeanGaussianModel *error_distribution() {
+      return error_distribution_.get();
+    }
+
+    // Overrides from StateModel.  Please see documentation in the base class.
+    void observe_state(const ConstVectorView &then,
+                       const ConstVectorView &now,
+                       int time_now,
+                       ScalarStateSpaceModelBase *model) override;
+
+    void observe_dynamic_intercept_regression_state(
+        const ConstVectorView &then,
+        const ConstVectorView &now,
+        int time_now,
+        DynamicInterceptRegressionModel *model) override {
+      return observe_state(then, now, time_now, nullptr);
+    }
+
+    uint state_dimension() const override {
+      return 2 * frequencies_.size();
+    }
+
+    uint state_error_dimension() const override {
+      return state_dimension();
+    }
+
+    void update_complete_data_sufficient_statistics(
+        int t, const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    void increment_expected_gradient(
+        VectorView gradient,
+        int t,
+        const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
+
+    Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override;
+
+    Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override {
+      return state_error_variance_;
+    }
+
+    Ptr<SparseMatrixBlock> state_error_expander(int t) const override {
+      return state_error_expander_;
+    }
+    
+    Ptr<SparseMatrixBlock> state_error_variance(int t) const override {
+      return state_error_variance_;
+    }
+      
+    SparseVector observation_matrix(int t) const override {
+      return observation_matrix_;
+    }
+    
+    Vector initial_state_mean() const override {
+      return initial_state_mean_;
+    }
+    void set_initial_state_mean(const ConstVectorView &mean);
+
+    SpdMatrix initial_state_variance() const override {
+      return initial_state_variance_;
+    }
+    void set_initial_state_variance(const SpdMatrix &variance);
+    
+   private:
+    // The number of time steps in the longest full cycle.
+    double period_;
+
+    // A vector of numbers (typically, but not necessarily, integers) indicating
+    // how many complete cycles each sinusoid will go through in one period.
+    Vector frequencies_;
+    
+    // The model describing innovations in the harmonic coefficients over time.
+    Ptr<ZeroMeanGaussianModel> error_distribution_;
+
+    Ptr<BlockDiagonalMatrixBlock> state_transition_matrix_;
+    Ptr<ConstantMatrixParamView> state_error_variance_;
+    Ptr<IdentityMatrix> state_error_expander_;
+    SparseVector observation_matrix_;
+
+    Vector initial_state_mean_;
+    SpdMatrix initial_state_variance_;
+  };
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_TRIG_MODEL_HPP_

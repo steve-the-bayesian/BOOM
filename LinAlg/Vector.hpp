@@ -216,7 +216,7 @@ namespace BOOM {
     void shift_element(int from, int to);
 
    private:
-    bool inrange(uint n) const { return n < size(); }
+    bool inrange(uint n) const { return n < static_cast<uint>(size()); }
   };
 
   //----------------------------------------------------------------------

@@ -38,6 +38,8 @@
 #include "Models/Glm/GlmCoefs.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 
+#include "stats/moments.hpp"
+
 namespace BOOM {
   //======================================================================
   // The SparseMatrixBlock classes are designed to be used as elements
@@ -1025,6 +1027,70 @@ namespace BOOM {
     int nrow_;
   };
 
+  //===========================================================================
+  // The product of a SparseMatrixBlock and the matrix I - 11'/S, where I is the
+  // identity matrix, 1 is a matrix of 1's, and everything is dimension S.  This
+  // matrix takes a vector and subtracts the mean from each element.
+  class EffectConstrainedMatrixBlock
+      : public SparseMatrixBlock {
+   public:
+    explicit EffectConstrainedMatrixBlock(
+        const Ptr<SparseMatrixBlock> &unconstrained)
+        : unconstrained_(unconstrained) {}
+
+    EffectConstrainedMatrixBlock(const EffectConstrainedMatrixBlock &rhs)
+        : SparseMatrixBlock(rhs),
+          unconstrained_(rhs.unconstrained_->clone()) {}
+    EffectConstrainedMatrixBlock & operator=(const EffectConstrainedMatrixBlock &rhs) {
+      if (&rhs != this) {
+        unconstrained_ = rhs.unconstrained_->clone();
+      }
+      return *this;
+    }
+
+    EffectConstrainedMatrixBlock & operator=(
+        EffectConstrainedMatrixBlock &&rhs) = default;
+
+    EffectConstrainedMatrixBlock(EffectConstrainedMatrixBlock &&rhs) = default;
+    
+    EffectConstrainedMatrixBlock *clone() const override {
+      return new EffectConstrainedMatrixBlock(*this);
+    }
+
+    int nrow() const override {return unconstrained_->nrow();}
+    int ncol() const override {return unconstrained_->ncol();}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      unconstrained_->multiply(lhs, rhs);
+      lhs -= mean(lhs);
+    }
+
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      // lhs += this * rhs
+      Vector tmp = lhs;
+      multiply(lhs, tmp);
+      lhs += tmp;
+    }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override{
+      Vector tmp = rhs;
+      tmp -= mean(rhs);
+      unconstrained_->Tmult(lhs, tmp);
+    }
+
+    void multiply_inplace(VectorView x) const override {
+      unconstrained_->multiply_inplace(x);
+      x -= mean(x);
+    }
+
+    void add_to(SubMatrix block) const override {
+      block += dense();
+    }
+    
+   private:
+    Ptr<SparseMatrixBlock> unconstrained_;
+  };
+  
   //===========================================================================
   // A sparse matrix whose rows and columns are sparse vectors.  This matrix is
   // somewhat expensive to construct, because a mapping must be constructed

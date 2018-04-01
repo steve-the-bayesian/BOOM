@@ -72,11 +72,21 @@ AddLocalLinearTrend <- function (state.specification = NULL,
   }
 
   if (is.null(initial.level.prior)) {
+    ## The mean of the initial level is the first observation.
     initial.level.prior <- NormalPrior(initial.y, sdy);
   }
 
   if (is.null(initial.slope.prior)) {
-    initial.slope.prior <- NormalPrior(0, sdy);
+    if (!missing(y)) {
+      ## If y is actually provided, then set the mean of the initial slope to
+      ## the slope of a line connecting the first and last points of y.
+      final.y <- tail(as.numeric(y), 1)
+      initial.slope.mean <- (final.y - initial.y) / length(y)
+    } else {
+      ## If y is missing set the mean of the initial slope to zero.
+      initial.slope.mean <- 0
+    }
+    initial.slope.prior <- NormalPrior(initial.slope.mean, sdy);
   }
 
   llt <- list(name = "trend",

@@ -129,7 +129,19 @@ namespace BOOM {
       } else if (Rf_inherits(r_state_component, "StudentLocalLinearTrend")) {
         return CreateStudentLocalLinearTrend(r_state_component, prefix);
       } else if (Rf_inherits(r_state_component, "Trig")) {
-        return CreateTrigStateModel(r_state_component, prefix);
+        std::string method = ToString(getListElement(
+            r_state_component, "method", true));
+        if (method == "direct") {
+          return CreateTrigStateModel(r_state_component, prefix);
+        } else if (method == "harmonic") {
+          return CreateHarmonicTrigStateModel(r_state_component, prefix);
+        } else {
+          std::ostringstream err;
+          err << "Unknown method: " << method
+              << " in state specification for trig state model.";
+          report_error(err.str());
+          return nullptr;
+        }
       } else if (Rf_inherits(r_state_component, "RandomWalkHolidayStateModel")) {
         return CreateRandomWalkHolidayStateModel(r_state_component, prefix);
       } else if (Rf_inherits(
@@ -514,6 +526,45 @@ namespace BOOM {
                                     prefix + "trig.coefficient.sd"));
       }
       return trig_state_model;
+    }
+    //======================================================================
+    HarmonicTrigStateModel * StateModelFactory::CreateHarmonicTrigStateModel(
+        SEXP r_state_component, const std::string &prefix) {
+      double period = Rf_asReal(getListElement(r_state_component, "period"));
+      Vector frequencies = ToBoomVector(getListElement(
+          r_state_component, "frequencies"));
+      HarmonicTrigStateModel * quasi_trig_state_model(
+          new HarmonicTrigStateModel(period, frequencies));
+
+      //-------------- set the prior and the posterior sampler.
+      SdPrior sigma_prior(getListElement(r_state_component, "sigma.prior"));
+      NEW(ChisqModel, innovation_precision_prior)(
+          sigma_prior.prior_df(),
+          sigma_prior.prior_guess());
+      double sigma_upper_limit = sigma_prior.upper_limit();
+      if (sigma_upper_limit < 0) {
+        sigma_upper_limit = infinity();
+      }
+      NEW(ZeroMeanGaussianConjSampler, error_distribution_sampler)(
+          quasi_trig_state_model->error_distribution(),
+          innovation_precision_prior);
+      error_distribution_sampler->set_sigma_upper_limit(sigma_upper_limit);
+      quasi_trig_state_model->set_method(error_distribution_sampler);
+
+      //--------------- Set prior for initial state
+      MvnPrior initial_prior(getListElement(
+          r_state_component, "initial.state.prior", true));
+      quasi_trig_state_model->set_initial_state_mean(initial_prior.mu());
+      quasi_trig_state_model->set_initial_state_variance(initial_prior.Sigma());
+
+      //--------------- Adjust the IO manager.
+      if (io_manager_) {
+        io_manager_->add_list_element(
+            new StandardDeviationListElement(
+                quasi_trig_state_model->error_distribution()->Sigsq_prm(),
+                prefix + "trig.coefficient.sd"));
+      }
+      return quasi_trig_state_model;
     }
     //======================================================================
     SemilocalLinearTrendStateModel *

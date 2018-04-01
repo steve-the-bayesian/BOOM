@@ -316,7 +316,7 @@ namespace BOOM{
   // maximizes f(x).
   class ScalarNegation {
    public:
-    ScalarNegation(const ScalarTarget &target)
+    explicit ScalarNegation(const ScalarTarget &target)
         : original_function_(target) {}
     double operator()(double x)const{ return -1 * original_function_(x); }
    private:
@@ -327,7 +327,7 @@ namespace BOOM{
   // variables.
   class Negate{
   public:
-    Negate(const Target &F) : f(F){}
+    explicit Negate(const Target &F) : f(F){}
     double operator()(const Vector &x)const;
    private:
     Target f;

@@ -59,7 +59,7 @@ namespace BOOM {
       : public std::iterator<std::forward_iterator_tag, double> {
    public:
     ArrayIterator(ArrayBase *host, const std::vector<int> &starting_position);
-    ArrayIterator(ArrayBase *host);
+    explicit ArrayIterator(ArrayBase *host);
 
     double &operator*();
 

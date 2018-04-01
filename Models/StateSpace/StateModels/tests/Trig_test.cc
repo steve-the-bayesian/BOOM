@@ -1,9 +1,16 @@
 #include "gtest/gtest.h"
+
 #include "Models/ChisqModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 #include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+
 #include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+
+#include "cpputil/Constants.hpp"
 #include "cpputil/Date.hpp"
 #include "cpputil/seq.hpp"
 #include "cpputil/math_utils.hpp"
@@ -34,7 +41,7 @@ namespace {
   };
 
   inline double dsquare(double x) {return x * x;}
-  
+  //======================================================================
   TEST_F(TrigStateModelTest, ModelMatrices) {
     TrigStateModel trig(period_, frequencies_);
     EXPECT_EQ(trig.state_dimension(), 2 * frequencies_.size());
@@ -60,5 +67,73 @@ namespace {
       EXPECT_DOUBLE_EQ(4, trig.suf()->sumsq(i));
     }
   }
+
+  //======================================================================
+  TEST_F(TrigStateModelTest, HarmonicTrigMCMC) {
+    int time_dimension = 200;
+
+    Vector first_harmonic(time_dimension);
+    Vector second_harmonic(time_dimension);
+    Vector y(time_dimension);
+    int period = time_dimension / 5;
+    double residual_sd = 1;
+    
+    for (int t = 0; t < time_dimension; ++t) {
+      double freq1 = 2.0 * Constants::pi * t / period;
+      double freq2 = 2 * freq1; 
+      first_harmonic[t] = 3.2 * cos(freq1) - 1.6 * sin(freq1);
+      second_harmonic[t] = -.8 * cos(freq2) + .25 * sin(freq2);
+      y[t] = first_harmonic[t] + second_harmonic[t]
+          + rnorm_mt(GlobalRng::rng, 0, residual_sd);
+    }
+
+    StateSpaceModel model(y);
+    NEW(HarmonicTrigStateModel, trig_state)(period, {1.0, 2.0});
+    trig_state->set_initial_state_mean(
+        Vector(trig_state->state_dimension(), 0.0));
+    trig_state->set_initial_state_variance(
+        SpdMatrix(trig_state->state_dimension(), 100.0));
+    
+    NEW(ChisqModel, innovation_precision_prior)(1, .1);
+    NEW(ZeroMeanGaussianConjSampler, state_variance_sampler)(
+        trig_state->error_distribution(),
+        innovation_precision_prior);
+    trig_state->set_method(state_variance_sampler);
+    trig_state->error_distribution()->set_method(state_variance_sampler);
+    model.add_state(trig_state);
+
+    NEW(ChisqModel, observation_precision_prior)(1, 0.2);
+    NEW(ZeroMeanGaussianConjSampler, sigma_obs_sampler)(
+        model.observation_model(),
+        observation_precision_prior);
+    model.observation_model()->set_method(sigma_obs_sampler);
+    
+    NEW(StateSpacePosteriorSampler, sampler)(&model);
+    model.set_method(sampler);
+
+    EXPECT_EQ(model.state_dimension(), 4);
+    
+    int niter = 500;
+    Matrix first_harmonic_state_draws(niter, time_dimension);
+    Matrix second_harmonic_state_draws(niter, time_dimension);
+    Vector sigma_trig_draws(niter);
+    Vector sigma_obs_draws(niter);
+    for (int i = 0; i < niter; ++i) {
+      model.sample_posterior();
+      const Matrix &state(model.state());
+      first_harmonic_state_draws.row(i) = state.row(0);
+      second_harmonic_state_draws.row(i) = state.row(2);
+      sigma_trig_draws[i] = trig_state->error_distribution()->sigma();
+      sigma_obs_draws[i] = model.observation_model()->sigma();
+    }
+    auto status = check_mcmc_matrix(first_harmonic_state_draws,
+                                    first_harmonic);
+    EXPECT_TRUE(status.ok) << status;
+
+    auto second_status = check_mcmc_matrix(second_harmonic_state_draws,
+                                           second_harmonic);
+    EXPECT_TRUE(second_status.ok) << second_status;
+  }
+
   
 }  // namespace

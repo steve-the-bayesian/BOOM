@@ -22,6 +22,8 @@
 #include "distributions.hpp"
 
 namespace BOOM {
+  using std::cout;
+  using std::endl;
 
   TrigStateModel::TrigStateModel(double period, const Vector &frequencies)
       : IndependentMvnModel(2 * frequencies.size()),
@@ -109,4 +111,154 @@ namespace BOOM {
     initial_state_variance_ = variance;
   }
 
+  //===========================================================================
+  HarmonicTrigStateModel::HarmonicTrigStateModel(double period,
+                                                 const Vector &frequencies)
+      : period_(period),
+        frequencies_(frequencies),
+        error_distribution_(new ZeroMeanGaussianModel),
+        state_transition_matrix_(new BlockDiagonalMatrixBlock),
+        state_error_variance_(new ConstantMatrixParamView(
+            2 * frequencies_.size(),
+            error_distribution_->Sigsq_prm())),
+        state_error_expander_(new IdentityMatrix(2 * frequencies_.size())),
+        observation_matrix_(2 * frequencies_.size()),
+        initial_state_mean_(2 * frequencies_.size(), 0.0),
+        initial_state_variance_(2 * frequencies_.size(), 1.0)
+  {
+    ParamPolicy::add_model(error_distribution_);
+    for (int i = 0; i < 2 * frequencies_.size(); i += 2) {
+      observation_matrix_[i] = 1.0;
+    }
+
+    for (int i = 0; i < frequencies_.size(); ++i) {
+      double freq = 2 * Constants::pi * frequencies_[i] / period_;
+      double cosine = cos(freq);
+      double sine = sin(freq);
+      Matrix rotation(2, 2);
+      rotation(0, 0) = cosine;
+      rotation(0, 1) = sine;
+      rotation(1, 0) = -sine;
+      rotation(1, 1) = cosine;
+      state_transition_matrix_->add_block(new DenseMatrix(rotation));
+    }
+  }
+
+  HarmonicTrigStateModel::HarmonicTrigStateModel(
+      const HarmonicTrigStateModel &rhs)
+      : StateModel(rhs),
+        period_(rhs.period_),
+        frequencies_(rhs.frequencies_),
+        error_distribution_(rhs.error_distribution_->clone()),
+        state_transition_matrix_(rhs.state_transition_matrix_->clone()),
+        state_error_variance_(new ConstantMatrixParamView(
+            2 * frequencies_.size(),
+            error_distribution_->Sigsq_prm())),
+        state_error_expander_(rhs.state_error_expander_->clone()),
+        observation_matrix_(rhs.observation_matrix_),
+        initial_state_mean_(rhs.initial_state_mean_),
+        initial_state_variance_(rhs.initial_state_variance_) {
+    ParamPolicy::add_model(error_distribution_);
+  }
+
+  HarmonicTrigStateModel & HarmonicTrigStateModel::operator=(
+      const HarmonicTrigStateModel &rhs) {
+    if (&rhs != this) {
+      StateModel::operator=(rhs);
+      period_ = rhs.period_;
+      frequencies_ = rhs.frequencies_;
+      error_distribution_ = rhs.error_distribution_->clone();
+      state_transition_matrix_ = rhs.state_transition_matrix_->clone();
+      state_error_variance_.reset(new ConstantMatrixParamView(
+          2 * frequencies_.size(),
+          error_distribution_->Sigsq_prm()));
+      state_error_expander_ = rhs.state_error_expander_->clone();
+      observation_matrix_ = rhs.observation_matrix_;
+      initial_state_mean_ = rhs.initial_state_mean_;
+      initial_state_variance_ = rhs.initial_state_variance_;
+      ParamPolicy::clear();
+      ParamPolicy::add_model(error_distribution_);
+    }
+    return *this;
+  }
+
+  void HarmonicTrigStateModel::observe_state(
+      const ConstVectorView &then,
+      const ConstVectorView &now,
+      int time_now,
+      ScalarStateSpaceModelBase *model) {
+    if (time_now <= 0) {
+      report_error("observe_state called with time_now = 0.");
+    }
+    Vector rotated(now.size());
+    state_transition_matrix_->multiply(VectorView(rotated), then);
+    for (int i = 0; i < rotated.size(); ++i) { 
+      error_distribution_->suf()->update_raw(now[i] - rotated[i]);
+    }
+  }
+
+  void HarmonicTrigStateModel::update_complete_data_sufficient_statistics(
+      int t,
+      const ConstVectorView &state_error_mean,
+      const ConstSubMatrix &state_error_variance)  {
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // TODO
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+  }
+
+  void HarmonicTrigStateModel::increment_expected_gradient(
+      VectorView gradient,
+      int t,
+      const ConstVectorView &state_error_mean,
+      const ConstSubMatrix &state_error_variance) {
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // TODO
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+  }
+
+  void HarmonicTrigStateModel::simulate_state_error(
+      RNG &rng, VectorView eta, int t) const {
+    double sigma = error_distribution_->sigma();
+    for (int i = 0; i < eta.size(); ++i) {
+      eta[i] = rnorm_mt(rng, 0, sigma);
+    }
+  }
+
+  Ptr<SparseMatrixBlock>
+  HarmonicTrigStateModel::state_transition_matrix(int t) const {
+    return state_transition_matrix_;
+  }
+
+  void HarmonicTrigStateModel::set_initial_state_mean(
+      const ConstVectorView &mean) {
+    if (mean.size() != state_dimension()) {
+      std::ostringstream err;
+      err << "Argument to HarmonicTrigStateModel::set_initial_state_mean is "
+          << "of size " << mean.size() << " but it should be of size "
+          << state_dimension() << ".";
+      report_error(err.str());
+    }
+    initial_state_mean_ = mean;
+  }
+
+  void HarmonicTrigStateModel::set_initial_state_variance(
+      const SpdMatrix &variance) {
+    if (variance.nrow() != state_dimension()) {
+      std::ostringstream err;
+      err << "Argument to HarmonicTrigStateModel::set_initial_state_variance "
+          << "has " << variance.nrow() << " rows, but it should have "
+          << state_dimension() << ".";
+      report_error(err.str());
+    }
+    initial_state_variance_ = variance;
+  }
+  
 }  // namespace BOOM
