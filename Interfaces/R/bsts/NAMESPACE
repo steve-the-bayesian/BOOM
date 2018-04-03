@@ -3,14 +3,14 @@ import(Boom, BoomSpikeSlab, xts, zoo)
 importFrom("grDevices", "dev.off", "gray", "pdf", "rainbow")
 
 importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "box",
-           "boxplot", "hist", "legend", "lines", "par", "plot", "points",
-           "polygon", "title", "close.screen", "screen", "split.screen",
-           "strheight", "strwidth")
+  "boxplot", "hist", "legend", "lines", "par", "plot", "points",
+  "polygon", "title", "close.screen", "screen", "split.screen",
+  "strheight", "strwidth")
 
-importFrom("stats", ".checkMFClasses", ".getXlevels", "delete.response",
-           "median", "model.frame", "model.frame.default", "model.matrix",
-           "model.response", "na.exclude", "na.omit", "na.pass", "plogis",
-           "plot.ts", "quantile", "rnorm", "sd", "terms", "var", "window")
+importFrom("stats", ".checkMFClasses", ".getXlevels", "delete.response", 
+  "is.ts", "median", "model.frame", "model.frame.default", "model.matrix",
+  "model.response", "na.exclude", "na.omit", "na.pass", "plogis",
+  "plot.ts", "quantile", "rnorm", "sd", "terms", "var", "window")
 
 importFrom("utils", "head", "help", "tail")
 
@@ -38,6 +38,7 @@ export(AddAr,
        CompareBstsModels,
        DateRange,
        DateRangeHoliday,
+       DayPlot,
        EstimateTimeScale,
        ExtendTime,
        FixedDateHoliday,
@@ -55,6 +56,7 @@ export(AddAr,
        MaxWindowWidth.default,
        MaxWindowWidth.DateRangeHoliday,
        MonthDistance,
+       MonthPlot,
        NamedHoliday,
        named.holidays,
        NoDuplicates,
@@ -92,7 +94,8 @@ export(AddAr,
        summary.bsts,
        weekday.names,
        WeekEndsMonth,
-       WeekEndsQuarter)
+       WeekEndsQuarter,
+       YearPlot)
 
 S3method(plot, bsts)
 S3method(summary, bsts)

@@ -14,6 +14,158 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+DayPlot <- function(y, colors = NULL, ylab = NULL, ...) {
+  ## Plot the time series of each day of the week, all on the same plot (so
+  ## seven lines on the same plot, for Sunday, Monday, ...)
+  ## Args:
+  ##   y: A zoo object containing daily data.  The index of y must be either
+  ##     Date or POSIXt.
+  ##   colors:  A vector of colors to use for the lines.
+  ##   ylab:  The label for the vertical axis.
+  ##
+  ## Effects:
+  ##   Plots seven time series on the same set of axes, showing the time series
+  ##   of Mondays, Tuesdays, etc.  This is obviously only useful for data
+  ##   observed at daily or finer time scales.
+  return(MonthPlot(y, seasonal.identifier = base::weekdays,
+    colors = colors, ylab = ylab, ...))
+}
+
+.YearMonToPOSIX <- function(yearmon.timestamps) {
+  ## Convert an object of class yearmon to class POSIXt, without getting bogged
+  ## down in timezone calculations.
+  ##
+  ## Calling as.POSIXct on another date/time object (e.g. Date) applies a
+  ## timezone correction to the object.  This can shift the time marker by a few
+  ## hours, which can have the effect of shifting the day by one unit.  If the
+  ## day was the first or last in a month or year, then the month or year will
+  ## be off by one as well.
+  ##
+  ## Coercing the object to the character representation of a Date prevents this
+  ## adjustment from being applied, and leaves the POSIXt return value with the
+  ## intended day, month, and year.
+  return(as.POSIXct(as.character(as.Date(yearmon.timestamps))))
+}
+
+.DateToPOSIX <- function(date) {
+  stopifnot(inherits(date, "Date"))
+  return(as.POSIXct(as.character(date)))
+}
+
+YearPlot <- function(y, colors = NULL, ylab = NULL, ...) {
+  ## Overlay the time plot for each year of the time series on the same axis.
+  ##
+  ## Args:
+  ##   y: A zoo object to be plotted.  The index of y must have class Date or
+  ##     POSIXt.
+  ##   colors:  A vector of colors to use for the lines.
+  ##   ylab:  The label for the vertical axis.
+  ##
+  ## Effects:
+  ##   A plot is added to the current graphics device.  Each year of y is shown
+  ##   as a separate line on the plot.  This plot is most effective when there
+  ##   are a modest number of years (say 20 or less) of time series data on the
+  ##   monthly, weekly, or daily scale.
+  if (is.null(ylab)) {
+    ylab <- deparse(substitute(y))
+  }
+  if (is.ts(y)) {
+    y <- as.zoo(y)
+  }
+  stopifnot(is.zoo(y))
+  if (inherits(index(y), "yearmon")) {
+    index(y) <- .YearMonToPOSIX(index(y))
+  }
+  stopifnot(inherits(index(y), c("Date", "POSIXt")))
+  if (inherits(index(y), "Date")) {
+    index(y) <- .DateToPOSIX(index(y))
+  }
+  
+  years <- sort(unique(sapply(strsplit(as.character(index(y)), "-"),
+    function(x) as.numeric(x[1]))))
+  
+  ts.list <- list()
+  for (i in 1:length(years)) {
+    year <- years[i]
+    begin <- as.POSIXct(paste0(year, "-01-01"))
+    end <- as.POSIXct(paste0(year, "-12-31"))
+    yearly.series <- window(y, start = begin, end = end)
+
+    ##### Daily data assumed here.
+    idx <- as.POSIXlt(as.character(index(yearly.series)))
+    ## POSIXlt stores the year relative to 1900.
+    idx$year <- years[1] - 1900
+    index(yearly.series) <- idx
+    ts.list[[i]] <- yearly.series
+  }
+  if (is.null(colors)) {
+    colors <- 1:length(ts.list)
+  }
+  stopifnot(length(colors) >= length(ts.list))
+  names(ts.list) <- as.character(years)
+  time.index <- seq(.DateToPOSIX(as.Date(paste0(years[1], "-01-01"))),
+    length = 365,
+    by = "day")
+    
+  plot(ts.list[[1]], ylim = range(y), xlim = range(time.index),
+    ylab = ylab, ...)
+  for (i in 2:length(years)) {
+    lines(ts.list[[i]], lty = i, col = colors[i], ...)
+  }
+  legend("topleft",
+    legend = as.character(years),
+    lty = 1:length(years),
+    col = colors[1:length(years)],
+    bg = "white")
+  return(invisible(NULL))
+}
+
+MonthPlot <- function(y, seasonal.identifier = months, colors = NULL, ylab = NULL, ...) {
+  ## Plot the time series of each day of the week, all on the same plot (so
+  ## seven lines on the same plot, for Sunday, Monday, ...)
+  ## Args:
+  ##   y:  A ts or zoo object containing seasonal data.
+  ##   seasonal.identifier: a function that takes a vector of timestamps as an
+  ##     argument, and returns the name of the season containing the timestamp.
+  ##     See ?weekdays for other options.
+  ##   colors:  A vector of colors to use for the lines.
+  ##   ylab:  Label for the vertical axis.
+  ##   ...: Other arguments passed to plot and lines.
+  if (is.null(ylab)) {
+    ylab <- deparse(substitute(y))
+  }
+  if (is.ts(y)) {
+    y <- as.zoo(y)
+  }
+  stopifnot(is.zoo(y))
+  stopifnot(inherits(index(y), c("Date", "POSIXt", "yearmon")))
+  if (inherits(index(y), "yearmon")) {
+    index(y) <- .YearMonToPOSIX(index(y))
+  } else if (inherits(index(y), "Date")) {
+    index(y) <- .DateToPOSIX(index(y))
+  }
+
+  season.names <- unique(seasonal.identifier(index(y)))
+  if (is.null(colors)) {
+    colors <- 1:length(season.names)
+  }
+  stopifnot(length(colors) >= length(season.names))
+  
+  for (i in 1:length(season.names)) {
+    season <- season.names[i]
+    index <- as.character(seasonal.identifier(index(y))) == season
+    if (i == 1) {
+      plot(y[index], ylim = range(y), col = colors[i], ylab = ylab, ...)
+    } else {
+      lines(y[index], col = i, ...)
+    }
+  }
+  abline(v = seq(from = min(index(y)), to = max(index(y)), by = "year"), lty = 3)
+  legend("topleft", col = colors[1:length(season.names)],
+    legend = season.names, bg = "white", lty = 1)
+  return(invisible(NULL))
+}
+
 plot.bsts <- function(x,
                       y = c("state", "components", "residuals", "coefficients",
                           "prediction.errors", "forecast.distribution",
