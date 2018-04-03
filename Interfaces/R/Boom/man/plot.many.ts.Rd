@@ -17,10 +17,9 @@ PlotManyTs(x, type = "l", gap = 0, boxes = TRUE, truth = NULL,
            refline = NULL, color = NULL, ...)
 }
 
-%- maybe also 'usage' for other objects documented here.
 \arguments{
 
-  \item{x}{Matrix, data frame, or 3-dimensional array to be plotted }
+  \item{x}{Matrix, data frame, list, or 3-dimensional array to be plotted. }
 
   \item{type}{ type of line plots to produce.  See
     \code{\link{plot.default}} for other options.  }
@@ -75,11 +74,11 @@ PlotManyTs(x, type = "l", gap = 0, boxes = TRUE, truth = NULL,
 }
 
 \examples{
-x <- matrix(rnorm(1000), ncol=10)
-PlotManyTs(x)
 
+x <- matrix(rnorm(1000), ncol = 10)
+PlotManyTs(x)
 PlotManyTs(x, same = FALSE)
+
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
+
 \keyword{ hplot }
