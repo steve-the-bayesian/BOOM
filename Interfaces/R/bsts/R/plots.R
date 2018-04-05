@@ -14,6 +14,70 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
+qqdist <- function(draws, ...) {
+  ## The distribution of a QQ plot for a set of noisy observations thought to be
+  ## normally distributed.
+  ##
+  ## Args:
+  ##   draws: A matrix of Monte Carlo draws.  Rows correspond to draws.  Columns
+  ##     to noisy observations.
+  ##   ...: Extra arguments passed to PlotDynamicDistribution.
+  ##
+  ## Effects:
+  ##   A dynamic distribution plot is added to the graphics device, showing the
+  ##   posterior distribution of the observations, sorted by their posterior
+  ##   mean.  The plot also contains a reference line showing the expected
+  ##   values of the points under perfect normality, and blue dots based on the
+  ##   posterior means of the noisy observations.
+
+  ## Step 1: draw the dynamic distribution plot.
+  post.mean <- colMeans(draws)
+  sample.size <- length(post.mean)
+  draws <- draws[, order(post.mean)]
+  expected <- qnorm(ppoints(sample.size))
+  PlotDynamicDistribution(draws, time = expected,
+    xlab = "Quantiles of Standard Normal", ylab = "Distribution",
+    ...)
+
+  ## Step 2: Add the reference line.
+  probs <- c(.25, .75)
+  x <- qnorm(probs)
+  y <- quantile(post.mean, probs)
+  abline(lsfit(x, y), col = "green")
+
+  ## Step3:  Add the points from the posterior means.
+  points(expected, sort(post.mean), pch = 20, col = "blue")
+
+  return(invisible(NULL))
+}
+
+AcfDist <- function(draws, lag.max = NULL,
+                    xlab = "Lag", ylab = "Autocorrelation", ...) {
+  ## Plot the posterior distribution of the autocorrelation function for 'draws'.
+  ##
+  ## Args:
+  ##   draws: A matrix representing the posterior distribution of a time series.
+  ##     Each row is a Monte Carlo draw, and each column is a time point.
+  ##   lag.max:  The number of lags in the ACF.  Passed directly to 'acf'.
+  ##   xlab:  Label for the horizontal axis.
+  ##   ylab:  Label for the vertical axis.
+  ##   ...:  Extra arguments passed to 'boxplot'.x
+  ##
+  ## Details:
+  ##   A sequence of boxplots is plotted, each giving the marginal posterior
+  ##   distribution of the ACF at a specific lag.
+  ##
+  ## Returns:
+  ##   invisible(NULL).
+  dist <- t(apply(draws, 1, function(x) {
+    return(acf(x, plot = FALSE, lag.max = lag.max)$acf)
+  }))
+  lag.names <- as.character(seq(from = 0, len = ncol(dist), by = 1))
+  boxplot(dist, xlab = xlab, ylab = ylab, names = lag.names, ...)
+  abline(h = 0)
+  return(invisible(NULL))
+}
+
 DayPlot <- function(y, colors = NULL, ylab = NULL, ...) {
   ## Plot the time series of each day of the week, all on the same plot (so
   ## seven lines on the same plot, for Sunday, Monday, ...)
@@ -685,7 +749,7 @@ PlotBstsForecastDistribution <- function(bsts.object,
 
 ###----------------------------------------------------------------------
 PlotBstsResiduals <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                              time, style = c("dynamic", "boxplot"),
+                              time, style = c("dynamic", "boxplot"), means = TRUE,
                               ...) {
   ## Plots the posterior distribution of the residuals from the bsts
   ## model, after subtracting off the state effects (including
@@ -694,6 +758,8 @@ PlotBstsResiduals <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
   ##   bsts.object:  An object of class 'bsts'.
   ##   burn: The number of MCMC iterations to be discarded as burn-in.
   ##   time: An optional vector of values to plot on the time axis.
+  ##   means: If TRUE then the posterior mean of each residual is plotted as a
+  ##     blue dot on top of the boxplot or the dynamic distribution plot.
   ##   style: Either "dynamic", for dynamic distribution plots, or
   ##     "boxplot", for box plots.  Partial matching is allowed, so
   ##     "dyn" or "box" would work, for example.
@@ -718,6 +784,10 @@ PlotBstsResiduals <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
     PlotDynamicDistribution(residuals, timestamps = time, ...)
   } else {
     TimeSeriesBoxplot(residuals, time = time, ...)
+  }
+
+  if (means) {
+    points(time, colMeans(residuals), pch = 20, col = "blue")
   }
   return(invisible(NULL))
 }

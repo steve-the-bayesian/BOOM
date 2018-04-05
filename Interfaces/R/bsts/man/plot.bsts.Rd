@@ -64,7 +64,8 @@
                        ...)
 
   PlotBstsResiduals(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                       time, style = c("dynamic", "boxplot"), ...)
+                       time, style = c("dynamic", "boxplot"), means =
+                       TRUE, ...)
 
   PlotBstsPredictionErrors(bsts.object, cutpoints = NULL,
                            burn = SuggestBurn(.1, bsts.object),
@@ -142,6 +143,10 @@
 
   \item{main}{Main title for the plot.}
 
+  \item{means}{Logical.  If TRUE then the mean of each residual is
+    plotted as a blue dot.  If false only the distribution of the
+    residuals is plotted.}
+  
   \item{nseasons}{If there is only one seasonal component in the model,
     this argument is ignored.  If there are multiple seasonal
     components then \code{nseasons} and \code{season.duration} are used

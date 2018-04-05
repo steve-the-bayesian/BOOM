@@ -38,12 +38,15 @@
        \eqn{n}{n} denote the length of the series, and \eqn{y}{y} denote
        the original series.  The goodness of fit statistic is \deqn{ 1 -
        \sum_{i = 1}^n \nu_i^2 / \sum_{i = 2}{n} (\Delta y_i- \Delta \bar
-       y)^2}{ 1 - sum(nu^2) / (n-2) * var(diff(y)) }.
+       y)^2.}{ 1 - sum(nu^2) / (n-2) * var(diff(y)).}
 
      This statistic is analogous to \eqn{R^2}{rsquare} in a regression
-     model, but the baseline model is a random walk with drift,
-     instead of the mean of the data.  Unlike a traditional R-square
-     statistic, this can be negative.}
+     model, but the reduction in sum of squared errors is relative to a
+     random walk with a constant drift, \deqn{y_{t+1} = y_t + \beta +
+     \epsilon_t,}{y[t+1] = y[t] + beta + epsilon[t],} which Harvey
+     (1989, equation 5.5.14) argues is a more relevant baseline than a
+     simple mean.  Unlike a traditional R-square statistic, this can be
+     negative.}
 
    \item{size}{Distribution of the number of nonzero coefficients
        appearing in the model}
