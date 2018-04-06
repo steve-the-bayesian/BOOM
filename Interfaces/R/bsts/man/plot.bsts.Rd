@@ -43,17 +43,23 @@
   PlotBstsCoefficients(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        inclusion.threshold = 0, number.of.variables = NULL, ...)
 
-  PlotBstsComponents(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                       time, same.scale = TRUE,
-                       layout = c("square", "horizontal", "vertical"),
-                       style = c("dynamic", "boxplot"),
-                       ylim = NULL,
-                       components = 1:length(bsts.object$state.specification),
-                       ...)
+  PlotBstsComponents(bsts.object,
+                     burn = SuggestBurn(.1, bsts.object),
+                     time,
+                     same.scale = TRUE,
+                     layout = c("square", "horizontal", "vertical"),
+                     style = c("dynamic", "boxplot"),
+                     ylim = NULL,
+                     components = 1:length(bsts.object$state.specification),
+                     ...)
 
-  PlotDynamicRegression(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                        time = NULL, style = c("dynamic", "boxplot"),
+  PlotDynamicRegression(bsts.object,
+                        burn = SuggestBurn(.1, bsts.object),
+                        time = NULL,
+                        same.scale = FALSE,
                         layout = c("square", "horizontal", "vertical"),
+                        style = c("dynamic", "boxplot"),
+                        ylim = NULL,
                         ...)
 
   PlotBstsState(bsts.object, burn = SuggestBurn(.1, bsts.object),

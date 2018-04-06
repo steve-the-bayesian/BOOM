@@ -855,8 +855,10 @@ PlotDynamicRegression <- function(
     bsts.object,
     burn = SuggestBurn(.1, bsts.object),
     time = NULL,
+    same.scale = FALSE,
     style = c("dynamic", "boxplot"),
     layout = c("square", "horizontal", "vertical"),
+    ylim = NULL,
     ...) {
   ## Plot the coefficients of a dynamic regression state component.
   ## Args:
@@ -889,7 +891,10 @@ PlotDynamicRegression <- function(
   if (burn > 0) {
     beta <- beta[-(1:burn), , , drop = FALSE]
   }
-
+  if (is.null(ylim) && same.scale == TRUE) {
+    ylim <- range(beta)
+  }
+  
   layout <- match.arg(layout)
   if (layout == "square") {
     num.rows <- floor(sqrt(number.of.variables))
@@ -904,19 +909,18 @@ PlotDynamicRegression <- function(
   original.par <- par(mfrow = c(num.rows, num.cols))
   on.exit(par(original.par))
   beta.names <- dimnames(beta)[[2]]
-
   for (variable in 1:number.of.variables) {
     if (style == "boxplot") {
       TimeSeriesBoxplot(beta[, variable, , ],
-                        time = time,
-                        ...)
+        time = time, ylim = ylim, ...)
     } else if (style == "dynamic") {
       PlotDynamicDistribution(beta[, variable, ],
-                              timestamps = time,
-                              ...)
+        timestamps = time, ylim = ylim, ...)
     }
+    abline(h = 0, lty = 3, col = "green")
     title(beta.names[variable])
   }
+  return(invisible(NULL))
 }
 ###----------------------------------------------------------------------
 PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
