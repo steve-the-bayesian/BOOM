@@ -53,8 +53,9 @@ AddLocalLinearTrend <- function (state.specification = NULL,
 
   if (!missing(y)) {
     stopifnot(is.numeric(y))
-    sdy <- sd(as.numeric(y), na.rm = TRUE)
-    initial.y <- y[1]
+    observed.y <- y[!is.na(y)]
+    sdy <- sd(as.numeric(observed.y), na.rm = TRUE)
+    initial.y <- observed.y[1]
   }
 
   if (is.null(level.sigma.prior)) {
@@ -80,7 +81,7 @@ AddLocalLinearTrend <- function (state.specification = NULL,
     if (!missing(y)) {
       ## If y is actually provided, then set the mean of the initial slope to
       ## the slope of a line connecting the first and last points of y.
-      final.y <- tail(as.numeric(y), 1)
+      final.y <- tail(as.numeric(observed.y), 1)
       initial.slope.mean <- (final.y - initial.y) / length(y)
     } else {
       ## If y is missing set the mean of the initial slope to zero.

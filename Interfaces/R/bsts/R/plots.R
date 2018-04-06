@@ -482,7 +482,10 @@ PlotBstsComponents <- function(bsts.object,
   
   state.specification <- bsts.object$state.specification[components]
   number.of.components <- length(state.specification)
-
+  if (model$has.regression) {
+    number.of.components <- number.of.components + 1
+  }
+  
   if (is.null(time)) {
     time <- bsts.object$timestamp.info$regular.timestamps
   }
@@ -526,7 +529,82 @@ PlotBstsComponents <- function(bsts.object,
     plot(state.specification[[i]], bsts.object, burn = burn,
       time = time, style = style, ylim = ylim, ...)
   }
+  if (bsts.object$has.regression) {
+    screen(screen.numbers[length(components) + 1])
+    .PlotRegressionComponent(bsts.object, burn = burn, time = time,
+      style = style, ylim = ylim, ...)
+  }
   return(invisible(NULL))
+}
+
+.PlotRegressionComponent <- function(bsts.object,
+                                     burn = NULL,
+                                     time = NULL,
+                                     style = c("dynamic", "boxplot"),
+                                     ylim = NULL,
+                                     ...) {
+  ## Plot the regression component of a state space model.
+  ##
+  ## Args:
+  ##   bsts.object:  The object from which state.contribution was extracted.
+  ##   burn:  The number of observations to discard as burn-in.
+  ##   time:  A vector of time stamps to plot against.
+  ##   style:  The style of plot desired.
+  ##   ylim:  Limits for the vertical axis.
+  ##   ...: Extra arguments passed to TimeSeriesBoxplot or
+  ##     PlotDynamicDistribution.
+  stopifnot(inherits(bsts.object, "bsts"), bsts.object$has.regression)
+  state.contribution <- bsts.object$state.contributions[, "regression", ]
+  style <- match.arg(style)
+  .PlotStateContribution(state.contribution, bsts.object, burn, time, style,
+    ylim, ...)
+  title(main = "Regression")
+  return(invisible(NULL))
+}
+
+.PlotStateContribution <- function(state.contribution,
+                                   bsts.object,
+                                   burn = NULL,
+                                   time = NULL,
+                                   style = c("dynamic", "boxplot"),
+                                   ylim = NULL,
+                                   ...) {
+  ## Create a dynamic distribution plot or time series boxplot showing the
+  ## contribution of a state component to the mean of the time series being
+  ## modeled.
+  ##
+  ## Args:
+  ##   state.contribution: A matrix of MCMC draws.  Each row is a draw.  Each
+  ##     column is a time point.
+  ##   bsts.object:  The object from which state.contribution was extracted.
+  ##   burn:  The number of observations to discard as burn-in.
+  ##   time:  A vector of time stamps to plot against.
+  ##   style:  The style of plot desired.
+  ##   ylim:  Limits for the vertical axis.
+  ##   ...: Extra arguments passed to TimeSeriesBoxplot or
+  ##     PlotDynamicDistribution.
+  if (!is.matrix(state.contribution)) {
+    state <- matrix(state.contribution, ncol = 1)
+  }
+  if (is.null(burn)) {
+    burn <- 0
+  }
+  if (burn > 0) {
+    state.contribution <- state.contribution[-(1:burn), ]
+  }
+  if (is.null(time)) {
+    time <- bsts.object$timestamp.info$regular.timestamps
+  }
+  if (is.null(ylim)) {
+    ylim <- range(state.contribution)
+  }
+  style <- match.arg(style)
+  if (style == "boxplot") {
+    TimeSeriesBoxplot(state.contribution, time = time, ylim = ylim, ...)
+  } else {
+    PlotDynamicDistribution(state.contribution, timestamps = time, ylim = ylim, ...)
+  }
+
 }
 
 plot.StateModel <- function(x,
@@ -561,32 +639,12 @@ plot.StateModel <- function(x,
   if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
     stop("The state specification is not part of the bsts object.")
   }
-  
+  style <- match.arg(style)
   state <- bsts.object$state.contributions[, state.specification$name, ]
   if (is.null(state)) {
     stop("Could not find state contributions for ", state.specification$name)
   }
-  if (!is.matrix(state)) {
-    state <- matrix(state, ncol = 1)
-  }
-  if (is.null(burn)) {
-    burn <- 0
-  }
-  if (burn > 0) {
-    state <- state[-(1:burn), ]
-  }
-  if (is.null(time)) {
-    time <- bsts.object$timestamp.info$regular.timestamps
-  }
-  if (is.null(ylim)) {
-    ylim <- range(state)
-  }
-  style <- match.arg(style)
-  if (style == "boxplot") {
-    TimeSeriesBoxplot(state, time = time, ylim = ylim, ...)
-  } else {
-    PlotDynamicDistribution(state, timestamps = time, ylim = ylim, ...)
-  }
+  .PlotStateContribution(state, bsts.object, burn, time, style, ylim, ...)
   title(main = state.specification$name)
   return(invisible(NULL))
 }
