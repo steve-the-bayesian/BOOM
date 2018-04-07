@@ -98,6 +98,42 @@
   return(invisible(NULL))
 }
 
+YearMonToPOSIX <- function(timestamps) {
+  ## Convert an object of class yearmon to class POSIXt, without getting bogged
+  ## down in timezone calculations.
+  ##
+  ## Calling as.POSIXct on another date/time object (e.g. Date) applies a
+  ## timezone correction to the object.  This can shift the time marker by a few
+  ## hours, which can have the effect of shifting the day by one unit.  If the
+  ## day was the first or last in a month or year, then the month or year will
+  ## be off by one as well.
+  ##
+  ## Coercing the object to the character representation of a Date prevents this
+  ## adjustment from being applied, and leaves the POSIXt return value with the
+  ## intended day, month, and year.
+  stopifnot(inherits(timestamps, "yearmon"))
+  return(as.POSIXct(as.character(as.Date(timestamps))))
+}
+
+DateToPOSIX <- function(timestamps) {
+  ## Convert an object of class Date to class POSIXct without getting bogged
+  ## down in timezone calculation.
+  ##
+  ## Calling as.POSIXct on another date/time object (e.g. Date) applies a
+  ## timezone correction to the object.  This can shift the time marker by a few
+  ## hours, which can have the effect of shifting the day by one unit.  If the
+  ## day was the first or last in a month or year, then the month or year will
+  ## be off by one as well.
+  ##
+  ## Coercing the object to the character representation of a Date prevents this
+  ## adjustment from being applied, and leaves the POSIXt return value with the
+  ## intended day, month, and year.
+  stopifnot(inherits(timestamps, "Date"))
+  return(as.POSIXct(as.character(timestamps)))
+}
+
+
+
 StateSizes <- function(state.specification) {
   ## Returns a vector giving the number of dimensions used by each state
   ## component in the state vector.

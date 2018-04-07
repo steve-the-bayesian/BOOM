@@ -39,6 +39,7 @@ export(AcfDist,
   CompareBstsModels,
   DateRange,
   DateRangeHoliday,
+  DateToPOSIX,
   DayPlot,
   EstimateTimeScale,
   ExtendTime,
@@ -97,6 +98,7 @@ export(AcfDist,
   weekday.names,
   WeekEndsMonth,
   WeekEndsQuarter,
+  YearMonToPOSIX,
   YearPlot)
 
 S3method(plot, bsts)

@@ -95,28 +95,7 @@ DayPlot <- function(y, colors = NULL, ylab = NULL, ...) {
     colors = colors, ylab = ylab, ...))
 }
 
-.YearMonToPOSIX <- function(yearmon.timestamps) {
-  ## Convert an object of class yearmon to class POSIXt, without getting bogged
-  ## down in timezone calculations.
-  ##
-  ## Calling as.POSIXct on another date/time object (e.g. Date) applies a
-  ## timezone correction to the object.  This can shift the time marker by a few
-  ## hours, which can have the effect of shifting the day by one unit.  If the
-  ## day was the first or last in a month or year, then the month or year will
-  ## be off by one as well.
-  ##
-  ## Coercing the object to the character representation of a Date prevents this
-  ## adjustment from being applied, and leaves the POSIXt return value with the
-  ## intended day, month, and year.
-  return(as.POSIXct(as.character(as.Date(yearmon.timestamps))))
-}
-
-.DateToPOSIX <- function(date) {
-  stopifnot(inherits(date, "Date"))
-  return(as.POSIXct(as.character(date)))
-}
-
-YearPlot <- function(y, colors = NULL, ylab = NULL, ...) {
+YearPlot <- function(y, colors = NULL, ylab = NULL, ylim = NULL, legend = TRUE, ...) {
   ## Overlay the time plot for each year of the time series on the same axis.
   ##
   ## Args:
@@ -138,11 +117,11 @@ YearPlot <- function(y, colors = NULL, ylab = NULL, ...) {
   }
   stopifnot(is.zoo(y))
   if (inherits(index(y), "yearmon")) {
-    index(y) <- .YearMonToPOSIX(index(y))
+    index(y) <- YearMonToPOSIX(index(y))
   }
   stopifnot(inherits(index(y), c("Date", "POSIXt")))
   if (inherits(index(y), "Date")) {
-    index(y) <- .DateToPOSIX(index(y))
+    index(y) <- DateToPOSIX(index(y))
   }
   
   years <- sort(unique(sapply(strsplit(as.character(index(y)), "-"),
@@ -167,20 +146,24 @@ YearPlot <- function(y, colors = NULL, ylab = NULL, ...) {
   }
   stopifnot(length(colors) >= length(ts.list))
   names(ts.list) <- as.character(years)
-  time.index <- seq(.DateToPOSIX(as.Date(paste0(years[1], "-01-01"))),
+  time.index <- seq(DateToPOSIX(as.Date(paste0(years[1], "-01-01"))),
     length = 365,
     by = "day")
-    
-  plot(ts.list[[1]], ylim = range(y), xlim = range(time.index),
+  if(is.null(ylim)) {
+    ylim <- range(y)
+  }
+  plot(ts.list[[1]], ylim = ylim, xlim = range(time.index),
     ylab = ylab, ...)
   for (i in 2:length(years)) {
     lines(ts.list[[i]], lty = i, col = colors[i], ...)
   }
-  legend("topleft",
-    legend = as.character(years),
-    lty = 1:length(years),
-    col = colors[1:length(years)],
-    bg = "white")
+  if (legend) {
+    legend("topleft",
+      legend = as.character(years),
+      lty = 1:length(years),
+      col = colors[1:length(years)],
+      bg = "white")
+  }
   return(invisible(NULL))
 }
 
@@ -204,9 +187,9 @@ MonthPlot <- function(y, seasonal.identifier = months, colors = NULL, ylab = NUL
   stopifnot(is.zoo(y))
   stopifnot(inherits(index(y), c("Date", "POSIXt", "yearmon")))
   if (inherits(index(y), "yearmon")) {
-    index(y) <- .YearMonToPOSIX(index(y))
+    index(y) <- YearMonToPOSIX(index(y))
   } else if (inherits(index(y), "Date")) {
-    index(y) <- .DateToPOSIX(index(y))
+    index(y) <- DateToPOSIX(index(y))
   }
 
   season.names <- unique(seasonal.identifier(index(y)))
@@ -859,6 +842,8 @@ PlotDynamicRegression <- function(
     style = c("dynamic", "boxplot"),
     layout = c("square", "horizontal", "vertical"),
     ylim = NULL,
+    zero.width = 2,
+    zero.color = "green",
     ...) {
   ## Plot the coefficients of a dynamic regression state component.
   ## Args:
@@ -909,15 +894,21 @@ PlotDynamicRegression <- function(
   original.par <- par(mfrow = c(num.rows, num.cols))
   on.exit(par(original.par))
   beta.names <- dimnames(beta)[[2]]
+  need.ylim <- is.null(ylim)
   for (variable in 1:number.of.variables) {
+    if (need.ylim) {
+      ylim <- range(beta[, variable, ])
+    }      
     if (style == "boxplot") {
-      TimeSeriesBoxplot(beta[, variable, , ],
+      TimeSeriesBoxplot(beta[, variable, ],
         time = time, ylim = ylim, ...)
     } else if (style == "dynamic") {
       PlotDynamicDistribution(beta[, variable, ],
         timestamps = time, ylim = ylim, ...)
     }
-    abline(h = 0, lty = 3, col = "green")
+    if (!is.null(zero.width) && !is.null(zero.color)) {
+      abline(h = 0, lty = 3, lwd = zero.width, col = zero.color)
+    }
     title(beta.names[variable])
   }
   return(invisible(NULL))

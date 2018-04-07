@@ -60,6 +60,8 @@
                         layout = c("square", "horizontal", "vertical"),
                         style = c("dynamic", "boxplot"),
                         ylim = NULL,
+                        zero.width = 2,
+                        zero.color = "green",
                         ...)
 
   PlotBstsState(bsts.object, burn = SuggestBurn(.1, bsts.object),
@@ -197,6 +199,12 @@
     argument.  Otherwise all plots will be created with the same
     \code{ylim} values.}
 
+  \item{zero.width}{A numerical value for the width of the reference
+    line at zero.  If \code{NULL} then the line will be omitted.}
+
+  \item{zero.color}{A color for the width of the reference line at zero.
+    If \code{NULL} then the line will be omitted.}
+  
   \item{...}{Additional arguments to be passed to
     \code{\link[Boom]{PlotDynamicDistribution}}, or
     \code{\link[Boom]{TimeSeriesBoxplot}}.}
