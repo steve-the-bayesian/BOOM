@@ -246,9 +246,8 @@ predict.poisson.spike <- function(object, newdata = NULL, exposure = NULL, burn 
                as.integer(nthreads),
                beta0,
                seed)
-  variable.names <- dimnames(x)[[2]]
-  if (!is.null(variable.names)) {
-    dimnames(ans$beta)[[2]] <- variable.names
+  if (!is.null(colnames(x))) {
+    colnames(ans$beta) <- colnames(x)
   }
   ans$prior <- prior
 

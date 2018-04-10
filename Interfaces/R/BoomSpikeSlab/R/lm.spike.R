@@ -142,9 +142,8 @@ lm.spike <- function(formula,
                bma.method,
                oda.options,
                seed)
-  variable.names <- dimnames(x)[[2]]
-  if (!is.null(variable.names)) {
-    colnames(ans$beta) <- variable.names
+  if (!is.null(colnames(x))) {
+    colnames(ans$beta) <- colnames(x)
   }
 
   ## Model diagnostics
@@ -309,7 +308,7 @@ PlotMarginalInclusionProbabilities <- function(
   bar.plot <- NULL
   if (sum(show) > 0) {
     omai <- par("mai")
-    variable.names <- dimnames(beta)[[2]]
+    variable.names <- colnames(beta)
     omai[2] <- max(strwidth(variable.names[show], units = "inches")) + .5
     oldpar <- par(mai = omai)
     on.exit(par(oldpar))
