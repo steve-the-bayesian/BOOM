@@ -80,11 +80,16 @@ namespace BOOM {
           double external_mixture_mean = 0;
           double external_mixture_precision = 0;
           data_imputer_.impute(
-              rng(), observation.y(), observation.exposure(),
+              rng(),
+              observation.y(),
+              observation.exposure(),
               state_contribution + regression_contribution,
-              &internal_neglog_final_event_time, &internal_mixture_mean,
-              &internal_mixture_precision, &neglog_final_interarrival_time,
-              &external_mixture_mean, &external_mixture_precision);
+              &internal_neglog_final_event_time,
+              &internal_mixture_mean,
+              &internal_mixture_precision,
+              &neglog_final_interarrival_time,
+              &external_mixture_mean,
+              &external_mixture_precision);
 
           double total_precision = external_mixture_precision;
           double precision_weighted_sum =

@@ -144,7 +144,8 @@ namespace BOOM {
       : StateSpaceNormalMixture(xdim > 1),
         observation_model_(new PoissonRegressionModel(xdim)) {}
 
-  SSPM::StateSpacePoissonModel(const Vector &counts, const Vector &exposure,
+  SSPM::StateSpacePoissonModel(const Vector &counts,
+                               const Vector &exposure,
                                const Matrix &design_matrix,
                                const std::vector<bool> &observed)
       : StateSpaceNormalMixture(ncol(design_matrix) > 0),
@@ -163,9 +164,9 @@ namespace BOOM {
     }
     for (int i = 0; i < counts.size(); ++i) {
       bool missing = !(all_observed || observed[i]);
-      NEW(APRD, dp)
-      (missing ? 0 : counts[i], missing ? 0 : exposure[i],
-       design_matrix.row(i));
+      NEW(APRD, dp)(missing ? 0 : counts[i],
+                    missing ? 0 : exposure[i],
+                    design_matrix.row(i));
       if (missing) {
         dp->set_missing_status(Data::missing_status::completely_missing);
         dp->poisson_data_ptr(0)->set_missing_status(

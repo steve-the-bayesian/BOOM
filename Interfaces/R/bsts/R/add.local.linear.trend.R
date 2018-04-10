@@ -53,8 +53,8 @@ AddLocalLinearTrend <- function (state.specification = NULL,
 
   if (!missing(y)) {
     stopifnot(is.numeric(y))
-    observed.y <- y[!is.na(y)]
-    sdy <- sd(as.numeric(observed.y), na.rm = TRUE)
+    observed.y <- as.numeric(y[!is.na(y)])
+    sdy <- sd(observed.y, na.rm = TRUE)
     initial.y <- observed.y[1]
   }
 

@@ -1,9 +1,38 @@
-
 library(bsts)
-data(shark)
+library(testthat)
 
-test_that("Poisson bsts runs without crashing", {
-ss <- AddLocalLevel(list(), y = log(1 + shark$Attacks))
-model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson")
-expect_that(model, is_a("bsts"))
+data(shark)
+test_that("Poisson bsts", {
+
+  logshark <- log1p(shark$Attacks)
+  
+  ss.level <- AddLocalLevel(list(), y = logshark)
+  model.level <- bsts(shark$Attacks, ss.level, niter = 1000, family = "poisson", seed = 8675309)
+  expect_that(model, is_a("bsts"))
+
+  ss.level <- AddLocalLevel(list(), y = logshark)
+  model.level <- bsts(cbind(shark$Attacks, shark$Population / 1000),
+    state.specification = ss.level, niter = 1000, family = "poisson", seed = 8675309)
+
+  ## This currently does not work, because one or more of the states moves into
+  ## very negative territory and can't recover.  Not sure why that is a problem
+  ## for LLT and not local level or semilocal.
+  ss <- AddLocalLinearTrend(list(), y = logshark)
+  model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson")
+  expect_that(model, is_a("bsts"))
+  expect_true(all(abs(model$state.contributions) < 1e+10))
+
+  ss <- AddLocalLinearTrend(list(), logshark,
+    level.sigma.prior = SdPrior(1, 1),
+    slope.sigma.prior = SdPrior(1, 1),
+    initial.level.prior = NormalPrior(as.numeric(logshark[1]), 1),
+    initial.slope.prior = NormalPrior(.16, 1))
+  model <- bsts(shark$Attacks, ss, niter = 1000, ping = 500, family = "poisson")
+  
+  ss <- AddSemilocalLinearTrend(list(), y = logshark)
+  model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson")
+
+
+  ss.student <- AddStudentLocalLinearTrend(list(), y = logshark)
+  model.student <- bsts(shark$Attacks, ss.student, niter = 1000, family = "poisson")
 })
