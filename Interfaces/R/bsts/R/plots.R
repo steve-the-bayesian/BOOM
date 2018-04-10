@@ -670,7 +670,7 @@ PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
   state <- rowSums(aperm(state, c(1, 3, 2)), dims = 2)
   if (scale == "mean") {
     if (bsts.object$family == "logit") {
-      state <- plogis(state)
+      state <- t(t(plogis(state)) * bsts.object$trials)
     } else if (bsts.object$family == "poisson") {
       state <- t(t(exp(state)) * bsts.object$exposure)
     }
