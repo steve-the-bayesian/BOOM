@@ -46,7 +46,7 @@ namespace BOOM {
       return equality ? fplus(x) : fminus(x);
     }
 
-    const Vector sorted_data() const { return sorted_data_; }
+    const Vector &sorted_data() const { return sorted_data_; }
 
    private:
     Vector sorted_data_;
