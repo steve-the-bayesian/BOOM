@@ -672,14 +672,24 @@ PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
     if (bsts.object$family == "logit") {
       state <- plogis(state)
     } else if (bsts.object$family == "poisson") {
-      state <- exp(state)
+      state <- t(t(exp(state)) * bsts.object$exposure)
+    }
+  } else {
+    ## If the plot is not on the scale of the data then don't show the actual
+    ## data values.
+    if (bsts.object$family %in% c("poisson", "logit")) {
+      show.actuals <- FALSE
     }
   }
 
   if (is.null(ylim)) {
-    ylim <- range(state, bsts.object$original.series)
+    if (show.actuals) {
+      ylim <- range(state, bsts.object$original.series)
+    } else {
+      ylim <- range(state)
+    }
   }
-
+  
   if (style == "boxplot") {
     TimeSeriesBoxplot(state, time = time, ylim = ylim, ...)
   } else {
