@@ -399,6 +399,21 @@ namespace BOOM {
     }
     return std::pair<double, double>(min_value, max_value);
   }
+
+  template <class VECTOR>
+  bool all_finite(const VECTOR &v) {
+    uint n = v.size();
+    const double *d = v.data();
+    uint stride = v.stride();
+    for (uint i = 0; i < n; ++i) {
+      if (!std::isfinite(*d)) {
+        return false;
+      }
+      d += stride;
+    }
+    return true;
+  }
+
 }  // namespace BOOM
 
 #endif  // BOOM_LINALG_VECTOR_HPP
