@@ -473,15 +473,12 @@ namespace BOOM {
     regression_->suf()->add_mixture_data(residual + predicted, dp->x(), 1.0);
   }
 
-  // TODO: This and other code involving model matrices is
-  // an optimization opportunity.  Test it out to see if
-  // precomputation makes sense.
+  // TODO: This and other code involving model matrices is an optimization
+  // opportunity.  Test it out to see if precomputation makes sense.
   const AccumulatorTransitionMatrix *ASSR::state_transition_matrix(
-      int t, bool supplemental) const {
+      int t) const {
     Ptr<FineNowcastingData> fine_data(this->fine_data(t));
-    return fill_state_transition_matrix(
-        t, *fine_data,
-        supplemental ? supplemental_transition_matrix_ : transition_matrix_);
+    return fill_state_transition_matrix(t, *fine_data, transition_matrix_);
   }
 
   const AccumulatorTransitionMatrix *ASSR::fill_state_transition_matrix(
@@ -500,7 +497,7 @@ namespace BOOM {
     return transition_matrix.get();
   }
 
-  SparseVector ASSR::observation_matrix(int t, bool) const {
+  SparseVector ASSR::observation_matrix(int t) const {
     Ptr<FineNowcastingData> fine_data(this->fine_data(t));
     int p = state_dimension();
     SparseVector ans(p);
@@ -510,9 +507,8 @@ namespace BOOM {
   }
 
   const AccumulatorStateVarianceMatrix *ASSR::state_variance_matrix(
-      int t, bool supplemental) const {
-    return fill_state_variance_matrix(
-        t, supplemental ? supplemental_variance_matrix_ : variance_matrix_);
+      int t) const {
+    return fill_state_variance_matrix(t, variance_matrix_);
   }
 
   const AccumulatorStateVarianceMatrix *ASSR::fill_state_variance_matrix(
@@ -530,37 +526,36 @@ namespace BOOM {
     return variance_matrix.get();
   }
 
-  void ASSR::simulate_initial_state(RNG &rng, VectorView state0,
-                                    bool supplemental) const {
+  void ASSR::simulate_initial_state(RNG &rng, VectorView state0) const {
     // First, simulate the initial state of the client state vector.
     VectorView client_state(state0, 0, state0.size() - 2);
-    SSSMB::simulate_initial_state(rng, client_state, supplemental);
+    SSSMB::simulate_initial_state(rng, client_state);
 
     // Next simulate the initial value of the first latent weekly
     // observation.
-    double mu = SSSMB::observation_matrix(0, supplemental).dot(client_state);
+    double mu = SSSMB::observation_matrix(0).dot(client_state);
     state0[state_dimension() - 2] = rnorm_mt(rng, mu, regression_->sigma());
 
     // Finally, the initial state of the cumulator variable is zero.
     state0[state_dimension() - 1] = 0;
   }
 
-  Vector ASSR::simulate_state_error(RNG &rng, int t, bool supplemental) const {
+  Vector ASSR::simulate_state_error(RNG &rng, int t) const {
     int state_dim = state_dimension();
     Vector ans(state_dim, 0);
     VectorView client_state_error(ans, 0, state_dim - 2);
     client_state_error =
-        ScalarStateSpaceModelBase::simulate_state_error(rng, t, supplemental);
+        ScalarStateSpaceModelBase::simulate_state_error(rng, t);
     ans[state_dim - 2] =
-        SSSMB::observation_matrix(t, supplemental).dot(client_state_error) +
+        SSSMB::observation_matrix(t).dot(client_state_error) +
         rnorm_mt(rng, 0, regression_->sigma());
     ans.back() = 0;
     return ans;
   }
 
-  Vector ASSR::initial_state_mean(bool supplemental) const {
-    Vector ans = SSSMB::initial_state_mean(supplemental);
-    double y0 = SSSMB::observation_matrix(0, supplemental).dot(ans);
+  Vector ASSR::initial_state_mean() const {
+    Vector ans = SSSMB::initial_state_mean();
+    double y0 = SSSMB::observation_matrix(0).dot(ans);
     ans.push_back(y0);
     ans.push_back(0.0);
     return ans;
@@ -569,9 +564,9 @@ namespace BOOM {
   // | V0   Z^T*V0   0 |
   // | V0*Z Z^T*V0*Z 0 |
   // | 0    0        0 |
-  SpdMatrix ASSR::initial_state_variance(bool supplemental) const {
-    SpdMatrix V0 = SSSMB::initial_state_variance(supplemental);
-    SparseVector Z0(SSSMB::observation_matrix(0, supplemental));
+  SpdMatrix ASSR::initial_state_variance() const {
+    SpdMatrix V0 = SSSMB::initial_state_variance();
+    SparseVector Z0(SSSMB::observation_matrix(0));
     Vector covariance = V0 * Z0;
     double y_variance = Z0.dot(covariance) + regression_->sigsq();
 

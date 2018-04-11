@@ -31,12 +31,12 @@ namespace BOOM {
   SSPS::StateSpacePosteriorSampler(StateSpaceModelBase *model, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        latent_data_initialized_(false),
-        pool_(2) {}
+        latent_data_initialized_(false)
+  {}
 
   void SSPS::draw() {
     if (!latent_data_initialized_) {
-      model_->impute_state(rng(), &pool_);
+      model_->impute_state(rng());
       latent_data_initialized_ = true;
       impute_nonstate_latent_data();
     }
@@ -49,7 +49,7 @@ namespace BOOM {
     // data should be imputed immediately before that, so the complete data
     // sufficient statistics reflect all the latent data correctly.
     impute_nonstate_latent_data();
-    model_->impute_state(rng(), &pool_);
+    model_->impute_state(rng());
     // End with a call to impute_state() so that the internal state of
     // the Kalman filter matches up with the parameter draws.
   }

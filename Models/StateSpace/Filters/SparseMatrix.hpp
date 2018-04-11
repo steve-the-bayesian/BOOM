@@ -1170,9 +1170,9 @@ namespace BOOM {
   };
 
   //======================================================================
-  // A SparseKalmanMatrix is a sparse matrix that can be used in the
-  // Kalman recursions.  This may get expanded to a more full fledged
-  // sparse matrix class later on, if need be.
+  // A SparseKalmanMatrix is a sparse matrix that can be used in the Kalman
+  // recursions.  This may get expanded to a more full fledged sparse matrix
+  // class later on, if need be.
   class SparseKalmanMatrix {
    public:
     virtual ~SparseKalmanMatrix() {}

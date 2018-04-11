@@ -29,7 +29,7 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng), m_(model) {}
 
   void ASSPS::draw() {
-    m_->impute_state(rng(), nullptr);
+    m_->impute_state(rng());
     m_->regression_model()->sample_posterior();
 
     // Don't re-sample the regression model (in position 0).
