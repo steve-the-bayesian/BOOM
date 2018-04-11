@@ -321,7 +321,6 @@ BstsOptions <- function(save.state.contributions = TRUE,
                             fallback.probability = 0.0,
                             eigenvalue.fudge.factor = 0.01),
                         timeout.seconds = Inf,
-                        enable.threads = TRUE,
                         save.full.state = FALSE) {
   ## A collection of somewhat more obscure options that can be used to control a
   ## bsts model.
@@ -367,11 +366,6 @@ BstsOptions <- function(save.state.contributions = TRUE,
   ##     before the timeout occurred, as if that had been the
   ##     requested value of 'niter'.  A timeout is reported through a
   ##     warning.
-  ##   enable.threads: Logical.  If TRUE then threads can be used as part of the
-  ##     data augmentation algorithm.  Threads are used to process part of the
-  ##     data augmentation algorithm in parallel, potentially making it faster.
-  ##     However, there is some overhead involved in using threads, so there is
-  ##     no guarantee.  If false then single-threaded code will be used.
   ##   save.full.state: Logical: If TRUE then the full distribution of state
   ##     will be saved.  This gets expensive if complex high-dimensional state
   ##     models are used, so the default is to not save the full state.  If
@@ -390,8 +384,6 @@ BstsOptions <- function(save.state.contributions = TRUE,
   stopifnot(is.numeric(timeout.seconds),
             length(timeout.seconds) == 1,
             timeout.seconds >= 0)
-  stopifnot(is.logical(enable.threads),
-            length(enable.threads) == 1)
   stopifnot(is.logical(save.full.state),
             length(save.full.state) == 1)
   ans <- list(save.state.contributions = save.state.contributions,
@@ -399,7 +391,6 @@ BstsOptions <- function(save.state.contributions = TRUE,
               bma.method = bma.method,
               oda.options = oda.options,
               timeout.seconds = timeout.seconds,
-              enable.threads = enable.threads,
               save.full.state = save.full.state)
   class(ans) <- "BstsOptions"
   return(ans)
