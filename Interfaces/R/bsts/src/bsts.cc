@@ -44,8 +44,6 @@ extern "C" {
       SEXP r_prior,
       SEXP r_options,
       SEXP r_family,
-      SEXP r_save_state_contribution_flag,
-      SEXP r_save_prediction_errors_flag,
       SEXP r_niter,
       SEXP r_ping,
       SEXP r_timeout_in_seconds,
@@ -55,10 +53,6 @@ extern "C" {
     try {
       BOOM::RInterface::seed_rng_from_R(r_seed);
       BOOM::RListIoManager io_manager;
-      bool save_state_contribution = Rf_asLogical(
-          r_save_state_contribution_flag);
-      bool save_prediction_errors = Rf_asLogical(
-          r_save_prediction_errors_flag);
       std::string family = BOOM::ToString(r_family);
       int xdim = 0;
       SEXP r_predictors = BOOM::getListElement(r_data_list, "predictors");
@@ -73,8 +67,6 @@ extern "C" {
           r_prior,
           r_options,
           nullptr,
-          save_state_contribution,
-          save_prediction_errors,
           &io_manager));
 
       // Do one posterior sampling step before getting ready to write.

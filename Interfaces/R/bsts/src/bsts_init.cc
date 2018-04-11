@@ -29,8 +29,6 @@ extern "C" {
       SEXP r_prior,
       SEXP r_options,
       SEXP r_family,
-      SEXP r_save_state_contribution_flag,
-      SEXP r_save_prediction_errors_flag,
       SEXP r_niter,
       SEXP r_ping,
       SEXP r_timeout_in_seconds,
@@ -70,7 +68,7 @@ extern "C" {
       SEXP r_timestamps);
   
   static R_CallMethodDef bsts_arg_description[] = {
-    CALLDEF(analysis_common_r_fit_bsts_model_, 11),
+    CALLDEF(analysis_common_r_fit_bsts_model_, 9),
     CALLDEF(analysis_common_r_predict_bsts_model_, 5),
     CALLDEF(analysis_common_r_bsts_one_step_prediction_errors_, 2),
     CALLDEF(analysis_common_r_bsts_aggregate_time_series_, 3),

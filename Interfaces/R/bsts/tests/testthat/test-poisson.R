@@ -18,20 +18,19 @@ test_that("Poisson bsts", {
   ## very negative territory and can't recover.  Not sure why that is a problem
   ## for LLT and not local level or semilocal.
   ss <- AddLocalLinearTrend(list(), y = logshark)
-  model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson")
+  model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson",
+    model.options = BstsOptions(save.full.state = TRUE))
   expect_that(model, is_a("bsts"))
   expect_true(all(abs(model$state.contributions) < 1e+10))
 
   ss <- AddLocalLinearTrend(list(), logshark,
-    level.sigma.prior = SdPrior(1, 1),
-    slope.sigma.prior = SdPrior(1, 1),
-    initial.level.prior = NormalPrior(as.numeric(logshark[1]), 1),
-    initial.slope.prior = NormalPrior(.16, 1))
-  model <- bsts(shark$Attacks, ss, niter = 1000, ping = 500, family = "poisson")
+    initial.level.prior = NormalPrior(0, .1),
+    initial.slope.prior = NormalPrior(.16, .1))
+  model <- bsts(shark$Attacks, ss, niter = 1000, ping = 500, family = "poisson",
+    model.options = BstsOptions(save.full.state = TRUE))
   
-  ss <- AddSemilocalLinearTrend(list(), y = logshark)
-  model <- bsts(shark$Attacks, ss, niter = 1000, family = "poisson")
-
+  ss.semi <- AddSemilocalLinearTrend(list(), y = logshark)
+  model.semi <- bsts(shark$Attacks, ss.semi, niter = 1000, family = "poisson")
 
   ss.student <- AddStudentLocalLinearTrend(list(), y = logshark)
   model.student <- bsts(shark$Attacks, ss.student, niter = 1000, family = "poisson")

@@ -17,7 +17,8 @@ BstsOptions(save.state.contributions = TRUE,
                 fallback.probability = 0.0,
                 eigenvalue.fudge.factor = 0.01),
             timeout.seconds = Inf,
-            enable.threads = TRUE)
+            enable.threads = TRUE,
+            save.full.state = FALSE)
 
 }
 
@@ -73,6 +74,12 @@ BstsOptions(save.state.contributions = TRUE,
     potentially making it faster.  However, there is some overhead
     involved in using threads, so there is no guarantee.  If
     \code{FALSE} then single-threaded code will be used.}
+
+  \item{save.full.state}{Logical.  If \code{TRUE} then the full
+    distribution of the state vector will be preserved.  It will be
+    stored in the model under the name \code{full.state}, which is a
+    3-way array with dimenions corresponding to MCMC iteration, state
+    dimension, and time.}
 
 }
 
