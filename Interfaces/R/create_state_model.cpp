@@ -58,6 +58,9 @@
 #include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
 #include "Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp"
 
+
+#include <R_ext/Print.h>
+
 namespace BOOM {
   namespace RInterface {
 
@@ -1197,8 +1200,10 @@ namespace BOOM {
       Matrix predictors = ToBoomMatrix(r_design_matrix);
       // Get colnames for predictors.  The R code should ensure that
       // 'predictors' has them.
-      std::vector<std::string> xnames =
-          StringVector(Rf_GetColNames(r_design_matrix));
+      RMemoryProtector protector;
+      SEXP r_dimnames = protector.protect(Rf_GetArrayDimnames(r_design_matrix));
+      SEXP r_colnames = VECTOR_ELT(r_dimnames, 1);
+      std::vector<std::string> xnames = StringVector(r_colnames);
       if (xnames.empty()) {
         xnames.reserve(ncol(predictors));
         for (int i = 0; i < ncol(predictors); ++i) {

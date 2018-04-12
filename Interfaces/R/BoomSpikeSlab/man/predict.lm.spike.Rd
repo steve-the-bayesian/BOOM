@@ -24,7 +24,8 @@
     type = c("prob", "logit", "link", "response"),
     na.action = na.pass, ...)
 
-\method{predict}{poisson.spike}(object, newdata, burn = 0,
+\method{predict}{poisson.spike}(object, newdata = NULL,
+    exposure = NULL, burn = 0,
     type = c("mean", "log", "link", "response"),
     na.action = na.pass, ...)
 
@@ -58,6 +59,13 @@
     the number of columns is too small by one.  If the dimension of
     \code{object$beta} is 1 or 2, then \code{newdata} can be a vector. }
 
+  \item{exposure}{ A vector of positive real numbers the same size as
+    newdata, or \code{NULL}.  If both \code{newdata} and \code{exposure}
+    are \code{NULL} then \code{exposure} is taken to be the exposure
+    from the training data.  If \code{newdata} is supplied and
+    \code{exposure} is \code{NULL} then \code{exposure} is taken to be 1
+    for all observations.  }
+  
   \item{burn}{
     The number of MCMC iterations in the object to be discarded as
     burn-in.

@@ -67,7 +67,7 @@ if [ ${#PACKAGE_LIST} > 0 ]; then
 fi
 
 echo "Building $PACKAGE"
-R CMD BUILD $PACKAGE
+R CMD build $PACKAGE
 
 PACKAGE_VERSION=`ls ${PACKAGE}_*.tar.gz`
 

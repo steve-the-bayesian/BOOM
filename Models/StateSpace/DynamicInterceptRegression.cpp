@@ -104,18 +104,14 @@ namespace BOOM {
   }
 
   const SparseKalmanMatrix *DIRM::observation_coefficients(
-      int t, bool supplemental) const {
-    SparseVerticalStripMatrix *coefficients =
-        supplemental ? &supplemental_observation_coefficients_
-                     : &observation_coefficients_;
-    coefficients->clear();
+      int t) const {
+    observation_coefficients_.clear();
     for (int s = 0; s < nstate(); ++s) {
-      coefficients->add_block(
-          state_model(s, supplemental)
-              ->dynamic_intercept_regression_observation_coefficients(
+      observation_coefficients_.add_block(
+          state_model(s)->dynamic_intercept_regression_observation_coefficients(
                   t, *dat()[t]));
     }
-    return coefficients;
+    return &observation_coefficients_;
   }
 
   SpdMatrix DIRM::observation_variance(int t) const {
@@ -142,8 +138,8 @@ namespace BOOM {
 
   //===========================================================================
   // private:
-  Vector DIRM::simulate_observation(RNG &rng, int t, bool supplemental) {
-    Vector ans = (*observation_coefficients(t, supplemental)) * state(t);
+  Vector DIRM::simulate_observation(RNG &rng, int t) {
+    Vector ans = (*observation_coefficients(t)) * state(t);
     double residual_sd = regression_->regression()->sigma();
     for (int i = 0; i < ans.size(); ++i) {
       ans[i] += rnorm_mt(rng, 0, residual_sd);

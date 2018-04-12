@@ -81,8 +81,7 @@ namespace BOOM {
     void add_multiplexed_data(
         const Ptr<StateSpace::MultiplexedRegressionData> &dp);
 
-    const SparseKalmanMatrix *observation_coefficients(
-        int t, bool supplemental = false) const override;
+    const SparseKalmanMatrix *observation_coefficients(int t) const override;
     SpdMatrix observation_variance(int t) const override;
     const Vector &observation(int t) const override { return observations_[t]; }
 
@@ -98,7 +97,7 @@ namespace BOOM {
 
    private:
     // Reimplements the logic in the base class, but ???.
-    Vector simulate_observation(RNG &rng, int t, bool supplemental) override;
+    Vector simulate_observation(RNG &rng, int t) override;
 
     void initialize_regression_component(int xdim);
     void update_observation_model_complete_data_sufficient_statistics(
@@ -127,7 +126,6 @@ namespace BOOM {
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].
     mutable SparseVerticalStripMatrix observation_coefficients_;
-    mutable SparseVerticalStripMatrix supplemental_observation_coefficients_;
 
     // Element t contains the response vector for time point t.  Elements can be
     // of different sizes.

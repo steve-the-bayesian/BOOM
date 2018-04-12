@@ -77,7 +77,7 @@ namespace BOOM {
   };
 
   // Printing a status object prints its error message.
-  ostream & operator<<(ostream &out, const CheckMatrixStatus &status) {
+  inline ostream & operator<<(ostream &out, const CheckMatrixStatus &status) {
     out << status.error_message();
     return(out);
   }
@@ -124,7 +124,23 @@ namespace BOOM {
   bool CheckMcmcVector(const Vector &draws,
                        double truth,
                        double confidence = .95);
-  
-}
+
+  // Returns true if the empirical CDF of the vector of data matches the
+  // theoretical CDF to with the tolerance of a Kolmogorov-Smirnoff test.
+  // Args:
+  //   data: A sample of data ostensibly from the cdf passed as the second
+  //     argument.
+  //   cdf:  The mathematical CDF ostensibly responsible for the data.
+  //   significance: The significance level of the KS test comparing 'data' to
+  //     'cdf'.
+  //
+  // Returns:
+  //   An empirical CDF of data is computed and used to implement a KS test.
+  //   The return value is true if the p-value of the text exceeds the given
+  //   significance level.
+  bool DistributionsMatch(const Vector &data,
+                          const std::function<double(double)> &cdf,
+                          double significance = .05);
+}  // namespace BOOM
 
 #endif //  BOOM_TEST_UTILS_HPP_

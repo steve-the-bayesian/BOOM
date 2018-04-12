@@ -35,8 +35,6 @@ class GaussianModelManagerBase : public ModelManager {
       SEXP r_prior,
       SEXP r_options,
       Vector *final_state,
-      bool save_state_contribution,
-      bool save_prediction_errors,
       RListIoManager *io_manager) override;
 };
 

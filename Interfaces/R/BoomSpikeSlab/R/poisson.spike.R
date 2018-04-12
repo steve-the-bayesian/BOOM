@@ -133,32 +133,36 @@ poisson.spike <- function(
   }
 
   if (has.data) {
-    ## Note, if a data.frame was passed as an argument to this function
-    ## then saving the data frame will be cheaper than saving the
-    ## model.frame.
+    ## Note, if a data frame was passed as an argument to this function then
+    ## saving the data frame will be cheaper than saving the model.frame.
     ans$training.data <- data
   } else {
-    ## If the model was called with a formula referring to objects in
-    ## another environment, then saving the model frame will capture
-    ## these variables so they can be used to recreate the design
-    ## matrix.
+    ## If the model was called with a formula referring to objects in another
+    ## environment, then saving the model frame will capture these variables so
+    ## they can be used to recreate the design matrix.
     ans$training.data <- mf
   }
+  ans$exposure <- exposure
 
   ## Make the answer a class, so that the right methods will be used.
   class(ans) <- c("poisson.spike", "glm.spike")
   return(ans)
 }
 
-predict.poisson.spike <- function(object, newdata, burn = 0,
+predict.poisson.spike <- function(object, newdata = NULL, exposure = NULL, burn = 0,
                                   type = c("mean", "log", "link", "response"),
                                   na.action = na.pass, ...) {
   ## Prediction method for logit.spike
   ## Args:
   ##   object: object of class "logit.spike" returned from the logit.spike
   ##     function
-  ##   newdata: A data frame including variables with the same names
-  ##     as the data frame used to fit 'object'.
+  ##   newdata: A data frame including variables with the same names as the data
+  ##     frame used to fit 'object'.  If NULL then the predictors are taken from
+  ##     the training data.
+  ##   exposure: A vector of positive real numbers the same size as newdata, or
+  ##     NULL.  If both newdata and exposure are NULL then exposure is taken to
+  ##     be the exposure from the training data.  If newdata is supplied and
+  ##     exposure is null then exposure is taken to be 1 for all observations.
   ##   burn: The number of MCMC iterations in 'object' that should be
   ##     discarded.  If burn < 0 then all iterations are kept.
   ##   type: The type of prediction desired.  If 'mean' then the
@@ -166,20 +170,34 @@ predict.poisson.spike <- function(object, newdata, burn = 0,
   ##     'log' then it is returned on the log scale (i.e. the scale of
   ##     the linear predictor).  Also accepts 'link' and 'response'
   ##     for compatibility with predict.glm.
+  ##   na.action: what to do about NA's.  See 'predict.lm'.
   ##   ...: unused, but present for compatibility with generic predict().
   ## Returns:
   ##   A matrix of predictions, with each row corresponding to a row
   ##   in newdata, and each column to an MCMC iteration.
-
   type <- match.arg(type)
-  predictors <- GetPredictorMatrix(object, newdata, na.action = na.action, ...)
+  if (is.null(newdata)) {
+    predictors <- model.matrix(object)
+    if (is.null(exposure)) {
+      exposure <- object$exposure
+    }
+  } else {
+    predictors <- GetPredictorMatrix(object, newdata,
+      na.action = na.action, ...)
+    if (is.null(exposure)) {
+      exposure <- rep(1, nrow(predictors))
+    }
+  }
   beta <- object$beta
   if (burn > 0) {
     beta <- beta[-(1:burn), , drop = FALSE]
   }
-  eta <- predictors %*% t(beta)
-  if (type == "log" || type == "link") return(eta)
-  if (type == "mean" || type == "response") return(exp(eta))
+  eta <- log(exposure) + predictors %*% t(beta)
+  if (type == "log" || type == "link") {
+    return(eta)
+  } else {
+    return(exp(eta))
+  }
 }
 
 .poisson.spike.fit <- function(
@@ -228,9 +246,8 @@ predict.poisson.spike <- function(object, newdata, burn = 0,
                as.integer(nthreads),
                beta0,
                seed)
-  variable.names <- dimnames(x)[[2]]
-  if (!is.null(variable.names)) {
-    dimnames(ans$beta)[[2]] <- variable.names
+  if (!is.null(colnames(x))) {
+    colnames(ans$beta) <- colnames(x)
   }
   ans$prior <- prior
 

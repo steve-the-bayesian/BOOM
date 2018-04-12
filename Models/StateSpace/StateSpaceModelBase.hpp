@@ -144,18 +144,18 @@ namespace BOOM {
     virtual const PosteriorModeModel *observation_model() const = 0;
 
     // Returns a pointer to the specified state model.
-    Ptr<StateModel> state_model(int s, bool supplemental = false) {
-      return supplemental ? supplemental_state_models_[s] : state_models_[s];
+    Ptr<StateModel> state_model(int s) {
+      return state_models_[s];
     }
-    const Ptr<StateModel> state_model(int s, bool supplemental = false) const {
-      return supplemental ? supplemental_state_models_[s] : state_models_[s];
+    const Ptr<StateModel> state_model(int s) const {
+      return state_models_[s];
     }
 
     // Parameters of initial state distribution, specified in the state models
     // given to add_state.  The initial state refers to the state at time 0
     // (other implementations sometimes assume the initial state is at time -1).
-    virtual Vector initial_state_mean(bool supplemental = false) const;
-    virtual SpdMatrix initial_state_variance(bool supplemental = false) const;
+    virtual Vector initial_state_mean() const;
+    virtual SpdMatrix initial_state_variance() const;
 
     // Overrides that would normally be handled by a parameter policy.
     // These are needed to ensure that parameters are vectorized in
@@ -206,28 +206,24 @@ namespace BOOM {
 
     //------------- Parameters for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
-    virtual const SparseKalmanMatrix *state_transition_matrix(
-        int t, bool supplemental = false) const;
+    virtual const SparseKalmanMatrix *state_transition_matrix(int t) const;
 
-    // Durbin and Koopman's RQR^T.  Built from state models, often
-    // less than full rank.
-    virtual const SparseKalmanMatrix *state_variance_matrix(
-        int t, bool supplemental = false) const;
+    // Durbin and Koopman's RQR^T.  Built from state models, often less than
+    // full rank.
+    virtual const SparseKalmanMatrix *state_variance_matrix(int t) const;
 
     // Durbin and Koopman's R matrix from the transition equation:
     //    state[t+1] = (T[t] * state[t]) + (R[t] * state_error[t]).
     //
     // This is the matrix that takes the low dimensional state_errors
     // and turns them into error terms for states.
-    virtual const SparseKalmanMatrix *state_error_expander(
-        int t, bool supplemental = false) const;
+    virtual const SparseKalmanMatrix *state_error_expander(int t) const;
 
     // The full rank variance matrix for the errors in the transition
     // equation.  This is Durbin and Koopman's Q[t].  The errors with
     // this variance are multiplied by state_error_expander(t) to
     // produce the errors described by state_variance_matrix(t).
-    virtual const SparseKalmanMatrix *state_error_variance(
-        int t, bool supplemental = false) const;
+    virtual const SparseKalmanMatrix *state_error_variance(int t) const;
 
     //----------------- Access to data -----------------
     // Clears sufficient statistics for state models and for
@@ -271,9 +267,7 @@ namespace BOOM {
     //
     // Args:
     //   rng:  The random number generator to use for simulation.
-    //   pool: The thread pool to use for filtering and smoothing the two
-    //     streams in the DK simulation method.
-    void impute_state(RNG &rng, ThreadWorkerPool *pool = nullptr);
+    void impute_state(RNG &rng);
 
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the
@@ -422,8 +416,7 @@ namespace BOOM {
     // The simulated value is returned in the vector view function argument.
     // The initial state refers to the state at time 0 (other implementations
     // sometimes assume the initial state is at time -1).
-    virtual void simulate_initial_state(RNG &rng, VectorView state0,
-                                        bool supplemental = false) const;
+    virtual void simulate_initial_state(RNG &rng, VectorView state0) const;
 
     // Simulates the value of the state vector for the current time
     // period, t, given the value of state at the previous time
@@ -433,10 +426,10 @@ namespace BOOM {
     //   next:  VectorView to be filled with state at time t.
     //   t:  The time index of 'next'.
     void simulate_next_state(RNG &rng, const ConstVectorView &last,
-                             VectorView next, int t,
-                             bool supplemental = false) const;
-    Vector simulate_next_state(RNG &rng, const Vector &current_state, int t,
-                               bool supplemental = false) const;
+                             VectorView next, int t) const;
+    Vector simulate_next_state(RNG &rng,
+                               const Vector &current_state,
+                               int t) const;
 
     // Advance the state vector to a future time stamp.  This method is used to
     // implement simulations from the posterior predictive distribution.
@@ -479,8 +472,7 @@ namespace BOOM {
     // Returns a vector of size state_dimension().  If the model
     // matrices are not full rank then some elements of this vector
     // will be deterministic functions of other elements.
-    virtual Vector simulate_state_error(RNG &rng, int t,
-                                        bool supplemental) const;
+    virtual Vector simulate_state_error(RNG &rng, int t) const;
 
    protected:
     // Update the complete data sufficient statistics for the state
@@ -613,15 +605,12 @@ namespace BOOM {
     //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     // Code used to implement impute_state().
-    void simulate_disturbances(RNG &rng, ThreadWorkerPool *pool);
-    virtual void simulate_forward_and_filter(RNG &rng, bool supplemental) = 0;
+    void simulate_disturbances(RNG &rng);
+    virtual void simulate_forward_and_filter(RNG &rng) = 0;
 
-    // Run the fast disturbance smoother over the data in supplemental kalman
-    // storage.
-    // Args:
-    //   supplemental: If true then use the supplemental state models to form
-    //     the model matrices.  Otherwise use the regular state models.
-    virtual void smooth_simulated_disturbances(bool supplemental) = 0;
+    // Run the fast disturbance smoother over the data in
+    // simulation_kalman_storage_.
+    virtual void smooth_simulated_disturbances() = 0;
 
     // Run the fast disturbance smoother over the data in the actual kalman
     // filter.
@@ -641,10 +630,6 @@ namespace BOOM {
       log_likelihood_is_current_ = true;
     }
 
-    // Copy the parameters of each state model over to the corresponding
-    // supplemental state model.
-    void copy_state_models();
-
    private:
     // Reset the size of the state_ matrix so that it has state_dimension() rows
     // and time_dimension() columns.
@@ -658,10 +643,6 @@ namespace BOOM {
     //----------------------------------------------------------------------
     // data starts here
     std::vector<Ptr<StateModel>> state_models_;
-
-    // supplemental_state_models_ are used when imputing state with multiple
-    // threads.
-    std::vector<Ptr<StateModel>> supplemental_state_models_;
 
     // Dimension of the latent state vector.  Constructors set state_dimension
     // to zero.  It is incremented during calls to add_state.
@@ -712,24 +693,11 @@ namespace BOOM {
     // typically do.
     std::vector<StateSpace::SufstatManager> data_observers_;
 
-    // Each of the model matrices has a main entry and a supplemental copy for
-    // use in bi-threaded work.
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-        default_state_transition_matrix_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-        supplemental_state_transition_matrix_;
-
-    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_variance_matrix_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-        supplemental_state_variance_matrix_;
-
-    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_error_expander_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-        supplemental_state_error_expander_;
-
-    mutable std::unique_ptr<BlockDiagonalMatrix> default_state_error_variance_;
-    mutable std::unique_ptr<BlockDiagonalMatrix>
-        supplemental_state_error_variance_;
+    // Model matrices for Kalman filtering.
+    mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
+    mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
+    mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
+    mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
 
     // The log likelihood value produced by a call to filter(),
     // full_kalman_filter(), or impute_state().
@@ -749,8 +717,7 @@ namespace BOOM {
     virtual double observation_variance(int t) const = 0;
 
     // Durbin and Koopman's Z[t].transpose() built from state models.
-    virtual SparseVector observation_matrix(int t,
-                                            bool supplemental = false) const;
+    virtual SparseVector observation_matrix(int t) const;
 
     //----------------- Access to data -----------------
     // Returns y[t], after adjusting for regression effects that are
@@ -818,14 +785,13 @@ namespace BOOM {
 
     void update_model_matrices() override;
     void simulate_forward(RNG &rng) override;
-    void simulate_forward_and_filter(RNG &rng, bool supplemental) override;
+    void simulate_forward_and_filter(RNG &rng) override;
 
-    void smooth_simulated_disturbances(bool supplemental) override {
-      r0_sim_ =
-          smooth_disturbances_fast(supplemental_kalman_storage_, supplemental);
+    void smooth_simulated_disturbances() override {
+      r0_sim_ = smooth_disturbances_fast(simulation_kalman_storage_);
     }
     void smooth_observed_disturbances() override {
-      r0_obs_ = smooth_disturbances_fast(kalman_storage_, false);
+      r0_obs_ = smooth_disturbances_fast(kalman_storage_);
     }
 
     // Args:
@@ -899,18 +865,17 @@ namespace BOOM {
     //
     // Returns:
     //   Durbin and Koopman's r0.
-    Vector smooth_disturbances_fast(std::vector<ScalarKalmanStorage> &filter,
-                                    bool supplemental);
+    Vector smooth_disturbances_fast(std::vector<ScalarKalmanStorage> &filter);
 
     void propagate_disturbances() override;
 
     //-----------------------------------------------------------------------
     // Data begins here.
 
-    // kalman_storage_ and supplemental_kalman_storage_ are used in the
-    // MCMC algorithm for imputing state.
+    // kalman_storage_ and simulation_kalman_storage_ are used in the MCMC
+    // algorithm for imputing state.
     std::vector<ScalarKalmanStorage> kalman_storage_;
-    std::vector<ScalarKalmanStorage> supplemental_kalman_storage_;
+    std::vector<ScalarKalmanStorage> simulation_kalman_storage_;
 
     // Workspace for disturbance smoothing.
     Vector r0_sim_;
@@ -926,8 +891,7 @@ namespace BOOM {
 
     //------------- Parameters for structural equations. --------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
-    virtual const SparseKalmanMatrix *observation_coefficients(
-        int t, bool supplemental = false) const = 0;
+    virtual const SparseKalmanMatrix *observation_coefficients(int t) const = 0;
 
     // Variance of the observation error at time t.  Durbin and Koopman's H[t].
     virtual SpdMatrix observation_variance(int t) const = 0;
@@ -960,18 +924,17 @@ namespace BOOM {
    protected:
     void update_model_matrices() override;
     void simulate_forward(RNG &rng) override;
-    void simulate_forward_and_filter(RNG &rng, bool supplemental) override;
+    void simulate_forward_and_filter(RNG &rng) override;
 
-    void smooth_simulated_disturbances(bool supplemental) override {
-      r0_sim_ =
-          smooth_disturbances_fast(supplemental_kalman_storage_, supplemental);
+    void smooth_simulated_disturbances() override {
+      r0_sim_ = smooth_disturbances_fast(simulation_kalman_storage_);
     }
     void smooth_observed_disturbances() override {
-      r0_obs_ = smooth_disturbances_fast(kalman_storage_, false);
+      r0_obs_ = smooth_disturbances_fast(kalman_storage_);
     }
 
     Vector smooth_disturbances_fast(
-        std::vector<MultivariateKalmanStorage> &filter, bool supplemental);
+        std::vector<MultivariateKalmanStorage> &filter);
 
     // Implements part of a single step of the E-step in the EM algorithm or
     // gradient computation for the gradient of the observed data log
@@ -1040,7 +1003,7 @@ namespace BOOM {
     }
 
    private:
-    virtual Vector simulate_observation(RNG &rng, int t, bool supplemental);
+    virtual Vector simulate_observation(RNG &rng, int t);
 
     void check_kalman_storage(std::vector<MultivariateKalmanStorage> &storage,
                               bool save_state_moments);
@@ -1053,7 +1016,7 @@ namespace BOOM {
 
     // For running the Kalman filter on simulated data as part of
     // impute_state().
-    std::vector<MultivariateKalmanStorage> supplemental_kalman_storage_;
+    std::vector<MultivariateKalmanStorage> simulation_kalman_storage_;
 
     // Workspace for disturbance smoothing.
     Vector r0_sim_;

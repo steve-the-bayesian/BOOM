@@ -68,7 +68,8 @@ cc_test(
 cc_test(
     name = "Trig_test",
     srcs = ["Trig_test.cc"],
-    copts = COPTS,
+    copts = COPTS + ["-g"],
+    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",

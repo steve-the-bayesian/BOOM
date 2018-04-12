@@ -274,8 +274,6 @@ HoldoutErrorSampler StateSpaceRegressionModelManager::CreateHoldoutSampler(
           getListElement(r_bsts_object, "prior"),
           getListElement(r_bsts_object, "model.options"),
           nullptr,
-          false,
-          true,
           &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 

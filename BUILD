@@ -185,6 +185,7 @@ BOOM_HDRS = TOP_HDRS + \
             STATE_SPACE_HDRS + \
             TIMESERIES_HDRS
 
+## To run the profiler on BOOM code compile with -g and -lprofiler
 cc_library(
     name = "boom",
     srcs = BOOM_SRCS,
@@ -194,11 +195,13 @@ cc_library(
         "-std=c++11",
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
+        #        "-g",
     ],
     #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
+        #        "-lprofiler",
         "-lm",
     ],
     visibility = ["//visibility:public"],

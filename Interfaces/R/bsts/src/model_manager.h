@@ -136,10 +136,7 @@ class ModelManager {
       SEXP r_prior,
       SEXP r_options,
       Vector *final_state,
-      bool save_state_contribution,
-      bool save_prediction_errors,
       RListIoManager *io_manager);
-
   // Returns a set of draws from the posterior predictive distribution.
   // Args:
   //   r_bsts_object:  The R object created from a previous call to bsts().

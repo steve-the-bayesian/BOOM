@@ -163,11 +163,13 @@ namespace BOOM {
   double rlexp(double loglam);               // log E(lam).  loglam = log(lam)
   double rlexp_mt(RNG &rng, double loglam);  // log E(lam).  loglam = log(lam)
 
-  // extreme value distribution with mean 'loc'
-  // and variance 'scale^2 * pi^2/6'
-  double dexv(double x, double loc = 0., double scale = 1., bool log = false);
-  double rexv_mt(RNG &rng, double loc = 0., double scale = 1.);
-  double rexv(double loc = 0., double scale = 1.);
+  // extreme value distribution with centrality parameter 'mu + gamma', where
+  // gamma is Euler's constant -0.5772157... and variance 'sigma^2 * pi^2/6'.  
+
+  double pexv(double x, double mu = 0, double sigma = 1, bool logscale = false);
+  double dexv(double x, double mu = 0., double sigma = 1., bool logscale = false);
+  double rexv_mt(RNG &rng, double mu = 0., double sigma = 1.);
+  double rexv(double mu = 0., double sigma = 1.);
 
   // random integer uniform on lo to hi, inclusive
   int random_int(int lo, int hi);

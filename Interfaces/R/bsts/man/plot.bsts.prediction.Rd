@@ -11,19 +11,19 @@
 
 \usage{
   \method{plot}{bsts.prediction}(x,
-                                 y = NULL,
-                                 burn = 0,
-                                 plot.original = TRUE,
-                                 median.color = "blue",
-                                 median.type = 1,
-                                 median.width = 3,
-                                 interval.quantiles = c(.025, .975),
-                                 interval.color = "green",
-                                 interval.type = 2,
-                                 interval.width = 2,
-                                 style = c("dynamic", "boxplot"),
-                                 ylim = NULL,
-                                 ...)
+     y = NULL,
+     burn = 0,
+     plot.original = TRUE,
+     median.color = "blue",
+     median.type = 1,
+     median.width = 3,
+     interval.quantiles = c(.025, .975),
+     interval.color = "green",
+     interval.type = 2,
+     interval.width = 2,
+     style = c("dynamic", "boxplot"),
+     ylim = NULL,
+     ...)
 }
 
 \arguments{

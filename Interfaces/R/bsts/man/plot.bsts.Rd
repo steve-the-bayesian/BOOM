@@ -43,17 +43,25 @@
   PlotBstsCoefficients(bsts.object, burn = SuggestBurn(.1, bsts.object),
                        inclusion.threshold = 0, number.of.variables = NULL, ...)
 
-  PlotBstsComponents(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                       time, same.scale = TRUE,
-                       layout = c("square", "horizontal", "vertical"),
-                       style = c("dynamic", "boxplot"),
-                       ylim = NULL,
-                       components = 1:length(bsts.object$state.specification),
-                       ...)
+  PlotBstsComponents(bsts.object,
+                     burn = SuggestBurn(.1, bsts.object),
+                     time,
+                     same.scale = TRUE,
+                     layout = c("square", "horizontal", "vertical"),
+                     style = c("dynamic", "boxplot"),
+                     ylim = NULL,
+                     components = 1:length(bsts.object$state.specification),
+                     ...)
 
-  PlotDynamicRegression(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                        time = NULL, style = c("dynamic", "boxplot"),
+  PlotDynamicRegression(bsts.object,
+                        burn = SuggestBurn(.1, bsts.object),
+                        time = NULL,
+                        same.scale = FALSE,
                         layout = c("square", "horizontal", "vertical"),
+                        style = c("dynamic", "boxplot"),
+                        ylim = NULL,
+                        zero.width = 2,
+                        zero.color = "green",
                         ...)
 
   PlotBstsState(bsts.object, burn = SuggestBurn(.1, bsts.object),
@@ -64,7 +72,8 @@
                        ...)
 
   PlotBstsResiduals(bsts.object, burn = SuggestBurn(.1, bsts.object),
-                       time, style = c("dynamic", "boxplot"), ...)
+                       time, style = c("dynamic", "boxplot"), means =
+                       TRUE, ...)
 
   PlotBstsPredictionErrors(bsts.object, cutpoints = NULL,
                            burn = SuggestBurn(.1, bsts.object),
@@ -142,6 +151,10 @@
 
   \item{main}{Main title for the plot.}
 
+  \item{means}{Logical.  If TRUE then the mean of each residual is
+    plotted as a blue dot.  If false only the distribution of the
+    residuals is plotted.}
+  
   \item{nseasons}{If there is only one seasonal component in the model,
     this argument is ignored.  If there are multiple seasonal
     components then \code{nseasons} and \code{season.duration} are used
@@ -186,6 +199,12 @@
     argument.  Otherwise all plots will be created with the same
     \code{ylim} values.}
 
+  \item{zero.width}{A numerical value for the width of the reference
+    line at zero.  If \code{NULL} then the line will be omitted.}
+
+  \item{zero.color}{A color for the width of the reference line at zero.
+    If \code{NULL} then the line will be omitted.}
+  
   \item{...}{Additional arguments to be passed to
     \code{\link[Boom]{PlotDynamicDistribution}}, or
     \code{\link[Boom]{TimeSeriesBoxplot}}.}

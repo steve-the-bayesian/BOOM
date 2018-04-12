@@ -295,33 +295,25 @@ namespace BOOM {
     void observe_data_given_state(int t) override;
 
     const AccumulatorTransitionMatrix *state_transition_matrix(
-        int t, bool supplemental = false) const override;
+        int t) const override;
 
-    SparseVector observation_matrix(int t,
-                                    bool supplemental = false) const override;
+    SparseVector observation_matrix(int t) const override;
 
     const AccumulatorStateVarianceMatrix *state_variance_matrix(
-        int t, bool supplemental = false) const override;
+        int t) const override;
 
-    void simulate_initial_state(RNG &rng, VectorView state0,
-                                bool supplemental = false) const override;
-    Vector simulate_state_error(RNG &rng, int t,
-                                bool supplemental = false) const override;
+    void simulate_initial_state(RNG &rng, VectorView state0) const override;
+    Vector simulate_state_error(RNG &rng, int t) const override;
 
-    Vector initial_state_mean(bool supplemental) const override;
-    SpdMatrix initial_state_variance(bool supplemental) const override;
+    Vector initial_state_mean() const override;
+    SpdMatrix initial_state_variance() const override;
 
    private:
     Ptr<RegressionModel> regression_;
     Ptr<GaussianModel> observation_model_;
 
     mutable std::unique_ptr<AccumulatorStateVarianceMatrix> variance_matrix_;
-    mutable std::unique_ptr<AccumulatorStateVarianceMatrix>
-        supplemental_variance_matrix_;
-
     mutable std::unique_ptr<AccumulatorTransitionMatrix> transition_matrix_;
-    mutable std::unique_ptr<AccumulatorTransitionMatrix>
-        supplemental_transition_matrix_;
 
     const AccumulatorStateVarianceMatrix *fill_state_variance_matrix(
         int t,
