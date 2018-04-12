@@ -95,7 +95,7 @@ namespace BOOM {
 
     class FullStateCallback : public MatrixIoCallback {
      public:
-      FullStateCallback(StateSpaceModelBase *model) : model_(model) {}
+      explicit FullStateCallback(StateSpaceModelBase *model) : model_(model) {}
       int nrow() const override {return model_->state_dimension();}
       int ncol() const override {return model_->time_dimension();}
       Matrix get_matrix() const override {return model_->state();}

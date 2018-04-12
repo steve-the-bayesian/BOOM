@@ -49,10 +49,9 @@ namespace BOOM {
     // Delta is the time between the final interior event time and the end of
     // the interval.
     double delta = exposure - time_of_final_internal_event;
-    double final_interarrival_time, z_external;
+    double z_external;
     if (safe_to_exp(log_lambda)) {
-      final_interarrival_time = delta + rexp_mt(rng, exp(log_lambda));
-      z_external = -log(final_interarrival_time);
+      z_external = -log(delta + rexp_mt(rng, exp(log_lambda)));
     } else {
       if (delta > 0) {
         // Handle cases where log lambda is really big or small.  Really big
