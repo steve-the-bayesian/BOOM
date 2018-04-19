@@ -1026,34 +1026,6 @@ namespace BOOM {
   //======================================================================
   namespace StateSpaceUtils {
 
-    // Some complex computations for state space models (e.g. log
-    // likelihood and derivatives) can really only be done using the
-    // current set of model parameters.  To enable likelihood
-    // evaluation at other parameters, the idiom is to replace the
-    // parameters, evalute the function, and restore the old set of
-    // parameters when the computation concludes.
-    //
-    // This class holds the "old" set of model parameters while a
-    // computation takes place, and restores them when it goes out of
-    // scope.  Mutable values held by the model (kalman filter, log
-    // likelihood) will no longer be current after the swap is undone.
-    // It is the model's responsibility to keep track of these
-    // quantities, but one could envision a user being affected by a
-    // performance hit in some situations.
-    class ParameterHolder {
-     public:
-      ParameterHolder(StateSpaceModelBase *model, const Vector &parameters)
-          : original_parameters_(model->vectorize_params()), model_(model) {
-        model_->unvectorize_params(parameters);
-      }
-
-      ~ParameterHolder() { model_->unvectorize_params(original_parameters_); }
-
-     private:
-      Vector original_parameters_;
-      StateSpaceModelBase *model_;
-    };
-
     //----------------------------------------------------------------------
     // A helper class to manage the logical const-ness of evaluating a
     // state space model's log likelihood function.

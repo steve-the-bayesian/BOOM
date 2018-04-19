@@ -68,6 +68,13 @@ namespace BOOM {
     }
   }
 
+  void SparseMatrixBlock::left_inverse(VectorView,
+                                       const ConstVectorView &) const {
+    report_error("left_inverse was called for a sparse matrix type that is "
+                 "either mathematically non-invertible, or the left_inverse "
+                 "function simply has not been implemented.");
+  }
+  
   Matrix SparseMatrixBlock::dense() const {
     Matrix ans(nrow(), ncol());
     if (nrow() == ncol()) {
@@ -1197,6 +1204,21 @@ namespace BOOM {
     return P;
   }
 
+  Vector BlockDiagonalMatrix::left_inverse(const ConstVectorView &rhs) const {
+    if (rhs.size() != nrow()) {
+      report_error("Wrong size argument passed to left_inverse().");
+    }
+    Vector ans(ncol());
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    for (int b = 0; b < blocks_.size(); ++b) {
+      ConstVectorView rhs_block(rhs, rhs_pos, blocks_[b]->nrow());
+      VectorView lhs(ans, lhs_pos, blocks_[b]->ncol());
+      blocks_[b]->left_inverse(lhs, rhs_block);
+    }
+    return ans;
+  }
+  
   //===========================================================================
   namespace {
     template <class VECTOR>
@@ -1288,5 +1310,4 @@ namespace BOOM {
       report_error("Incompatible matrix addition.");
     }
   }
-
 }  // namespace BOOM

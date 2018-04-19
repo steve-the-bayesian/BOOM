@@ -75,6 +75,11 @@ namespace BOOM {
     // Add *this to block
     virtual void add_to(SubMatrix block) const = 0;
 
+    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the dfault
+    // is to throw an error.
+    virtual void left_inverse(VectorView lhs,
+                              const ConstVectorView &rhs) const;
+    
     // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
 
@@ -489,7 +494,11 @@ namespace BOOM {
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
     void add_to(SubMatrix block) const override { block.diag() += 1.0; }
-
+    void left_inverse(VectorView lhs,
+                      const ConstVectorView &rhs) const override {
+      lhs = rhs;
+    }
+    
    private:
     int dim_;
   };
@@ -702,6 +711,11 @@ namespace BOOM {
       return ans;
     }
 
+    void left_inverse(VectorView lhs,
+                      const ConstVectorView &rhs) const override {
+      lhs[0] = rhs[0];
+    }
+    
    private:
     int nrow_;
   };
@@ -1223,6 +1237,22 @@ namespace BOOM {
 
     // Returns this * rhs.transpose().
     Matrix multT(const Matrix &rhs) const;
+
+    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
+    // blocks are non-invertible, in which case calling this function will
+    // report an error.
+    //
+    // The initial reason for this implementing this method is to evaluate the
+    // transition density for state space models when the error distribution is
+    // less than full rank.   In those settings we must be able to evaluate
+    // error_expander->left_inverse( new_state - T * old_state).
+    //
+    // Thus the only blocks that need to implement left_inverse are those used
+    // in an error expander somewhere.
+    virtual Vector left_inverse(const ConstVectorView &rhs) const {
+      report_error("left_inverse is not implemented for this SparseKalmanMatrix.");
+      return Vector(0);
+    }
   };
 
   Matrix operator*(const Matrix &lhs, const SparseKalmanMatrix &rhs);
@@ -1268,6 +1298,19 @@ namespace BOOM {
     Matrix &add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;
 
+    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
+    // blocks are non-invertible, in which case calling this function will
+    // report an error.
+    //
+    // The initial reason for this implementing this method is to evaluate the
+    // transition density for state space models when the error distribution is
+    // less than full rank.   In those settings we must be able to evaluate
+    // error_expander->left_inverse( new_state - T * old_state).
+    //
+    // Thus the only blocks that need to implement left_inverse are those used
+    // in an error expander somewhere.
+    Vector left_inverse(const ConstVectorView &rhs) const override;
+    
    private:
     // Replace middle with left * middle * right.transpose()
     void sandwich_inplace_block(const SparseMatrixBlock &left,

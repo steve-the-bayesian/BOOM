@@ -315,5 +315,37 @@ namespace BOOM {
     ConjugateDirichletProcessMixtureComponent *clone() const override = 0;
   };
 
+  //===========================================================================
+  // Some complex computations for certain models (e.g. log likelihood and
+  // derivatives) can really only be done using the current set of model
+  // parameters.  To enable likelihood evaluation at parameter other than their
+  // current values, one idiom is to replace the parameters, evalute the
+  // function, and restore the old set of parameters when the computation
+  // concludes.
+  //
+  // This class holds the "old" set of model parameters while a computation
+  // takes place, and restores them when it goes out of scope.
+  //
+  // Mutable values held by the model (e.g. the kalman filter for state space
+  // models, or the log likelihood for HMM's and mixture models) will no longer
+  // be current after the swap is undone.  It is the model's responsibility to
+  // keep track of these quantities.
+  class ParameterHolder {
+   public:
+    ParameterHolder(Model *model, const Vector &parameters)
+        : original_parameters_(model->vectorize_params()), model_(model) {
+      model_->unvectorize_params(parameters);
+    }
+    
+    ~ParameterHolder() { model_->unvectorize_params(original_parameters_); }
+    
+   private:
+    Vector original_parameters_;
+    Model *model_;
+  };
+
+
+
+  
 }  // namespace BOOM
 #endif  // BOOM_MODEL_TYPES_HPP
