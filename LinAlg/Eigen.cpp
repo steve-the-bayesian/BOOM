@@ -96,16 +96,17 @@ namespace BOOM {
   }
 
   //======================================================================
-  SpdEigen::SpdEigen(const SpdMatrix &matrix, bool values_only)
+  SpdEigen::SpdEigen(const SpdMatrix &matrix, bool compute_vectors)
       : eigenvalues_(matrix.nrow()),
-        right_vectors_(0)
-
+        right_vectors_(0, 0)
   {
     ::Eigen::SelfAdjointEigenSolver<::Eigen::MatrixXd> solver(
         EigenMap(matrix),
-        values_only ? ::Eigen::EigenvaluesOnly : ::Eigen::ComputeEigenvectors);
-    if (!values_only) {
-      EigenMap(right_vectors_) = solver.eigenvalues();
+        compute_vectors ? ::Eigen::ComputeEigenvectors : ::Eigen::EigenvaluesOnly);
+    EigenMap(eigenvalues_) = solver.eigenvalues();
+    if (compute_vectors) {
+      right_vectors_.resize(matrix.nrow(), matrix.ncol());
+      EigenMap(right_vectors_) = solver.eigenvectors();
     }
   }
 

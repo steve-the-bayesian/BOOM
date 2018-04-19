@@ -2,6 +2,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Eigen.hpp"
 #include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
@@ -47,6 +48,47 @@ namespace {
     EXPECT_EQ(dim, values_only.eigenvalues().size());
     EXPECT_EQ(dim, values_only.real_eigenvalues().size());
     EXPECT_EQ(dim, values_only.imaginary_eigenvalues().size());
+  }
+
+  TEST_F(EigenTest, SpdValuesOnly) {
+
+    SpdMatrix V0(2);
+    V0(0, 0) = 2;
+    V0(1, 1) = 2;
+    V0(0, 1) = 1;
+    V0(1, 0) = 1;
+    SpdEigen eigen0(V0, true);
+    EXPECT_EQ(2, eigen0.eigenvalues().size());
+    EXPECT_DOUBLE_EQ(1.0, eigen0.eigenvalues().min());
+    EXPECT_DOUBLE_EQ(3.0, eigen0.eigenvalues().max());
+
+    int dim = 4;
+    SpdMatrix V(dim);
+    V.randomize();
+
+    SpdEigen values_only(V, false);
+    EXPECT_EQ(0, values_only.eigenvectors().nrow());
+    EXPECT_EQ(0, values_only.eigenvectors().ncol());
+    
+    SpdEigen both(V, true);
+    EXPECT_TRUE(VectorEquals(values_only.eigenvalues(), both.eigenvalues()));
+
+    DiagonalMatrix D(both.eigenvalues());
+
+    EXPECT_TRUE(VectorEquals(V * both.eigenvectors().col(3),
+                             both.eigenvalues()[3] *
+                             both.eigenvectors().col(3)))
+        << "V * eigenvectors().col(3) = " << endl
+        << V * both.eigenvectors().col(3) << endl
+        << " lambda(3) * eigenvectors.col(3) = " << endl
+        << both.eigenvalues()[3] * both.eigenvectors().col(3);
+
+    EXPECT_TRUE(MatrixEquals(V * both.eigenvectors(),
+                             both.eigenvectors() * D))
+        << "V * eigenvectors: " << endl
+        << V * both.eigenvectors() << endl
+        << "eigenvectors * D: " << endl
+        << both.eigenvectors() * D;
   }
   
 }  // namespace

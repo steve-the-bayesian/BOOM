@@ -78,16 +78,22 @@ namespace BOOM {
   // Eigenvalues and vectors of an SpdMatrix.
   class SpdEigen {
    public:
-    SpdEigen(const SpdMatrix &matrix, bool eigenvalues_only);
+    // Args:
+    //   matrix:  The matrix whose eigendecomposition is desired.
+    //   compute_vectors: If true then eigenvalues and eigenvectors are both
+    //     computed.  If false only the eigenvalues are computed.
+    SpdEigen(const SpdMatrix &matrix, bool compute_vectors);
 
     const Vector &eigenvalues() const { return eigenvalues_; }
+
+    // This matrix is size zero if eigenvectors were not requested.
     const Matrix &eigenvectors() const { return right_vectors_; }
 
    private:
     Vector eigenvalues_;
 
     // The eigenvectors are the columns of right_vectors.  This matrix will be
-    // of size zero if eigenvalues_only was passed to the constructor.
+    // of size zero if compute_vectors==false in the constructor.
     Matrix right_vectors_;
   };
 }  // namespace BOOM
