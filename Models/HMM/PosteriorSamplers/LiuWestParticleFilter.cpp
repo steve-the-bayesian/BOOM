@@ -26,7 +26,8 @@ namespace BOOM {
       const Ptr<GeneralContinuousStateHmm> &hmm,
       int number_of_particles,
       double kernel_scale_factor)
-      : log_weights_(number_of_particles),
+      : hmm_(hmm),
+        log_weights_(number_of_particles),
         kernel_scale_factor_(kernel_scale_factor)
   {
     if (number_of_particles <= 0) {
@@ -38,15 +39,11 @@ namespace BOOM {
                    "0 and 1.");
     }
 
-    cout << "Made it past checks" << endl;
-    
     state_particles_.reserve(number_of_particles);
     parameter_particles_.reserve(number_of_particles);
 
-    cout << "Vectorizing params" << endl;
     Vector parameter_vector = hmm_->vectorize_params(true);
     for (int i = 0; i < number_of_particles; ++i) {
-      cout << "Populating particle " << i << endl;
       state_particles_.push_back(Vector(hmm_->state_dimension()));
       parameter_particles_.push_back(parameter_vector);
     }
@@ -67,7 +64,7 @@ namespace BOOM {
     std::vector<Vector> predicted_state_mean;
     predicted_state_mean.reserve(number_of_particles());
     MvnSuf suf(parameter_particles_[0].size());
-    for (int i = 1; i < number_of_particles(); ++i) {
+    for (int i = 0; i < number_of_particles(); ++i) {
       suf.update_raw(parameter_particles_[i]);
       predicted_state_mean.push_back(hmm_->predicted_state_mean(
           state_particles_[i], observation_time, parameter_particles_[i]));
@@ -101,7 +98,12 @@ namespace BOOM {
       ////////////////
       // Refresh the parameter distribution.
     }
-    Matrix variance_cholesky = kernel_scale_factor_ * sample_variance.chol();
+    Chol sample_variance_cholesky(sample_variance);
+    if (!sample_variance_cholesky.is_pos_def()) {
+      report_error("Sample variance is not positive definite.");
+    }
+    Matrix variance_cholesky =
+        kernel_scale_factor_ * sample_variance_cholesky.getL();
 
     //===== Step 2:
     // Propose new values of state and parameters, and update the weights.

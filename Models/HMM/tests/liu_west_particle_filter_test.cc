@@ -40,10 +40,8 @@ namespace {
     NEW(LocalLinearTrendStateModel, trend)();
     base_model->add_state(trend);
 
-    cout << "building wrapper"  << endl;
     NEW(GeneralHmmStateSpaceWrapper, model)(base_model);
     int number_of_particles = 1000;
-    cout << "building filter"  << endl;
     LiuWestParticleFilter filter(model, number_of_particles);
     for (int i = 0; i < data.size(); ++i) {
       cout << "about to update for data point " << i << endl;
