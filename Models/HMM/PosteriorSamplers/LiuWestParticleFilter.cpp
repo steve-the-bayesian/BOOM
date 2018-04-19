@@ -47,12 +47,34 @@ namespace BOOM {
       state_particles_.push_back(Vector(hmm_->state_dimension()));
       parameter_particles_.push_back(parameter_vector);
     }
-    /////////////////////////////////////////////////////////
-    // TODO:
-    //   1) Initialize particles.
-    /////////////////////////////////////////////////////////
   }
 
+  void LiuWestParticleFilter::set_particles(const Matrix &state,
+                                            const Matrix &parameters) {
+    if (state.nrow() != parameters.nrow()) {
+      report_error("state and parameters must have the same number of rows.");
+    }
+    if (state.ncol() != hmm_->state_dimension()) {
+      report_error("State matrix should have state_dimension() columns.");
+    }
+    if (parameters.ncol() != parameter_particles_[0].size()) {
+      std::ostringstream err;
+      err << "Parameter matrix had " << parameters.ncol()
+          << " columns, but " << parameter_particles_[0].size()
+          << " were expected.";
+      report_error(err.str());
+    }
+    int nparticles = state.nrow();
+    state_particles_.resize(nparticles);
+    parameter_particles_.resize(nparticles);
+    log_weights_.resize(nparticles);
+    for (int i = 0; i < nparticles; ++i) {
+      state_particles_[i] = state.row(i);
+      parameter_particles_[i] = parameters.row(i);
+      log_weights_[i] = 0;
+    }
+  }
+  
   void LiuWestParticleFilter::update(RNG &rng,
                                      const Data &observation,
                                      int observation_time) {

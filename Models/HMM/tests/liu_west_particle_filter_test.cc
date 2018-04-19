@@ -43,6 +43,19 @@ namespace {
     NEW(GeneralHmmStateSpaceWrapper, model)(base_model);
     int number_of_particles = 1000;
     LiuWestParticleFilter filter(model, number_of_particles);
+    Matrix initial_parameters(number_of_particles, 4);
+    Matrix initial_state(number_of_particles, 2);
+    for (int i = 0; i < number_of_particles; ++i) {
+      initial_parameters.row(i)[0] = 1.0 / rgamma(1, 1);
+      initial_parameters.row(i)[1] = 1.0 / rgamma(1, 1);
+      initial_parameters.row(i)[2] = rnorm(0, 3);
+      initial_parameters.row(i)[3] = 1.0 / rgamma(1, 1);
+
+      initial_state.row(i)[0] = rnorm(0, 10);
+      initial_state.row(i)[1] = rnorm(0, 10);
+    }
+    filter.set_particles(initial_state, initial_parameters);
+    
     for (int i = 0; i < data.size(); ++i) {
       cout << "about to update for data point " << i << endl;
       filter.update(GlobalRng::rng, *data[i], i);

@@ -53,7 +53,17 @@ namespace BOOM {
     void update(RNG &rng, const Data &observation, int observation_time);
 
     int64_t number_of_particles() const {return state_particles_.size();}
-        
+
+    // Set the particle ensemble.  This function should be called to initialize
+    // the filter prior to updating.
+    //
+    // Args:
+    //   state: An N x state_dimension matrix, where N is the number of
+    //     particles.
+    //   parameters: An N x parameter_dimension matrix, where N is the number of
+    //     particles.
+    void set_particles(const Matrix &state, const Matrix &parameters);
+    
    private:
     Ptr<GeneralContinuousStateHmm> hmm_;
     std::vector<Vector> state_particles_;
