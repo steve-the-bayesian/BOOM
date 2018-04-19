@@ -114,22 +114,28 @@ namespace BOOM {
   }
   //------------------------------------------------------------
 
-  void HmmFilter::bkwd_sampling_mt(const std::vector<Ptr<Data>> &dv, RNG &eng) {
-    uint n = dv.size();
+  void HmmFilter::bkwd_sampling_mt(const std::vector<Ptr<Data>> &data, RNG &rng) {
+    uint sample_size = data.size();
+    std::vector<int> imputed_state(sample_size);
     // pi was already set by fwd.
-    // So the following line would  break things when n=1.
+    // So the following line would  break things when sample_size=1.
     //      pi = one * P.back();
-    uint s = rmulti_mt(eng, pi);
-    models_[s]->add_data(dv.back());
-    for (uint i = n - 1; i != 0; --i) {
+    uint s = rmulti_mt(rng, pi);
+    models_[s]->add_data(data.back());
+    imputed_state.back() = s;
+    for (int64_t i = sample_size - 1; i >= 0; --i) {
       pi = P[i].col(s);
       pi.normalize_prob();
-      uint r = rmulti_mt(eng, pi);
-      models_[r]->add_data(dv[i - 1]);
+      uint r = rmulti_mt(rng, pi);
+      if (i > 0) {
+        imputed_state[i - 1] = r;
+      }
+      models_[r]->add_data(data[i - 1]);
       markov_->suf()->add_transition(r, s);
       s = r;
     }
     markov_->suf()->add_initial_value(s);
+    imputed_state_map_[data] = imputed_state;
   }
 
   //------------------------------------------------------------
@@ -162,7 +168,17 @@ namespace BOOM {
         "Use an HmmSavePiFilter instead.");
     return ans;
   }
-
+  //----------------------------------------------------------------------
+  std::vector<int> HmmFilter::imputed_state(
+      const std::vector<Ptr<Data>> &data) const {
+    const auto it = imputed_state_map_.find(data);
+    if (it == imputed_state_map_.end()) {
+      return std::vector<int>(0);
+    } else {
+      return it->second;
+    }
+  }
+  
   //======================================================================
   HmmSavePiFilter::HmmSavePiFilter(const std::vector<Ptr<MixtureComponent>> &mv,
                                    const Ptr<MarkovModel> &mark,

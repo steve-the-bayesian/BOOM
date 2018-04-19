@@ -40,7 +40,7 @@ namespace BOOM {
   class HmmPosteriorSampler : public PosteriorSampler {
    public:
     explicit HmmPosteriorSampler(HiddenMarkovModel *hmm,
-                        RNG &seeding_rng = GlobalRng::rng);
+                                 RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
     void use_threads(bool yn = true);
@@ -51,6 +51,8 @@ namespace BOOM {
     std::vector<MixtureComponentSampler> workers_;
     bool use_threads_;
     ThreadWorkerPool thread_pool_;
+    // 
+    bool first_time_;
   };
 
 }  // namespace BOOM

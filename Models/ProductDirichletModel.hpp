@@ -52,18 +52,32 @@ namespace BOOM {
     double n_;
   };
 
-  // class ProductDirichletModelBase
-  //     : public SufstatDataPolicy<MatrixData, ProductDirichletSuf>
-
+  // Models a pxp matrix, where each row is a discrete probability distribution.
+  // Rows are independent of one another, with row i modeled as a Dirichlet
+  // distribution with parameter Nu().row(i).
   class ProductDirichletModel
       : public ParamPolicy_1<MatrixParams>,
         public SufstatDataPolicy<MatrixData, ProductDirichletSuf>,
         public PriorPolicy,
         public dLoglikeModel {
    public:
-    explicit ProductDirichletModel(uint p);  // default is uniform:  Nu = 1
-    explicit ProductDirichletModel(const Matrix &NU);
+    // Set Nu to the pxp matrix of all 1's.
+    explicit ProductDirichletModel(uint p); 
+
+    // Set Nu explicitly.  It must be a square matrix of positive numbers.
+    explicit ProductDirichletModel(const Matrix &Nu);
+
+    // Parameterize each row of Nu as a weight (content) times a probabiltiy
+    // distribution.
+    //
+    // Args:
+    //   wgt: A vector of postive numbers giving the total "sample size"
+    //     associated with each row
+    //   Pi: A square matrix with dimension matching wgt.  Each row of Pi is a
+    //     discrete probability distribution.  Pi is the mean of the
+    //     distribution.
     ProductDirichletModel(const Vector &wgt, const Matrix &Pi);
+
     ProductDirichletModel(const ProductDirichletModel &);
 
     ProductDirichletModel *clone() const override;

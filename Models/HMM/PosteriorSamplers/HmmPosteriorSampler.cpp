@@ -27,10 +27,16 @@ namespace BOOM {
                                            RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         hmm_(hmm),
-        use_threads_(true),
-        thread_pool_(0) {}
+        use_threads_(false),
+        thread_pool_(0),
+        first_time_(true)
+  {}
 
   void HmmPosteriorSampler::draw() {
+    if (first_time_) {
+      hmm_->impute_latent_data();
+      first_time_ = false;
+    }
     hmm_->mark()->sample_posterior();
     draw_mixture_components();
     // by drawing latent data at the end, the log likelihood stored

@@ -49,16 +49,21 @@ namespace BOOM {
     double loglike(const std::vector<Ptr<Data>> &);
     double fwd(const std::vector<Ptr<Data>> &);
     void bkwd_sampling(const std::vector<Ptr<Data>> &);
-    void bkwd_sampling_mt(const std::vector<Ptr<Data>> &, RNG &eng);
+    void bkwd_sampling_mt(const std::vector<Ptr<Data>> &, RNG &rng);
     virtual void allocate(const Ptr<Data> &, uint);
     virtual Vector state_probs(const Ptr<Data> &) const;
 
+    // Return the state vector that was imputed for data during the call to
+    // bkwd_sampling or bkwd_sampling_mt.
+    std::vector<int> imputed_state(const std::vector<Ptr<Data>> &data) const;
+    
    protected:
     std::vector<Ptr<MixtureComponent>> models_;
     std::vector<Mat> P;
     Vector pi, logp, logpi, one;
     Matrix logQ;
     Ptr<MarkovModel> markov_;
+    std::map<std::vector<Ptr<Data>>, std::vector<int>> imputed_state_map_;
   };
   //----------------------------------------------------------------------
   class HmmSavePiFilter : public HmmFilter {

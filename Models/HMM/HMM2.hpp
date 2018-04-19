@@ -36,11 +36,24 @@ namespace BOOM {
   class HmmEmFilter;
   class HmmDataImputer;
 
+  // A HiddenMarkovModel models one or more time series using a hidden Markov
+  // mixture of an arbitrary set of mixture components.  If multiple time series
+  // are being modeled then the class is capable of imputing latent data for
+  // each series in a separate thread.
   class HiddenMarkovModel : public TimeSeriesDataPolicy<Data>,
                             public CompositeParamPolicy,
                             public PriorPolicy {
    public:
-    // constructors...
+    // Args:
+    //   Mix: The mixture components for the hidden Markov mixture.  These
+    //     define the "emission distribution" or the "observation equation" for
+    //     the HMM.  
+    //   Mark: The Markov chain describing the transition distribution for the
+    //     hidden states.  The dimension of this model must match the number of
+    //     mixture components passed in the first argument.
+    //
+    // A posterior sampling method, but no data, should be assigned to each
+    // argument prior to creating the HMM.
     HiddenMarkovModel(const std::vector<Ptr<MixtureComponent>> &Mix,
                       const Ptr<MarkovModel> &Mark);
     HiddenMarkovModel(const HiddenMarkovModel &rhs);
