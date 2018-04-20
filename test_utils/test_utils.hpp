@@ -104,10 +104,10 @@ namespace BOOM {
   //   A status message with the value 'ok' indicating whether the check passed
   //   (ok == true) or failed (ok == false).  The remainder of the status
   //   message is there to help with useful error messages.
-  CheckMatrixStatus check_mcmc_matrix(const Matrix &draws,
-                                      const Vector &truth,
-                                      double confidence = .95,
-                                      bool control_multiple_comparisons = true);
+  CheckMatrixStatus CheckMcmcMatrix(const Matrix &draws,
+                                    const Vector &truth,
+                                    double confidence = .95,
+                                    bool control_multiple_comparisons = true);
 
   // Check to see if a vector of Monte Carlo draws covers a known value.
   //

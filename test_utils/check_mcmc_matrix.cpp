@@ -29,7 +29,7 @@ namespace BOOM {
     return err.str();
   }
   
-  CheckMatrixStatus check_mcmc_matrix(
+  CheckMatrixStatus CheckMcmcMatrix(
       const Matrix &draws,
       const Vector &truth,
       double confidence,
