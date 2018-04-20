@@ -74,7 +74,7 @@ namespace BOOM {
     //     can be viewed as an unweeighted sample.  If null then the particles
     //     must be interpreted in the context of the weight assigned to each
     //     particle.
-    Matrix parameter_distribution(RNG *rng) const;
+    Matrix parameter_distribution(RNG *rng = &GlobalRng::rng) const;
 
     Vector particle_weights() const;
 
@@ -88,7 +88,7 @@ namespace BOOM {
     //     can be viewed as an unweeighted sample.  If null then the particles
     //     must be interpreted in the context of the weight assigned to each
     //     particle.
-    Matrix state_distribution(RNG *rng = nullptr) const;
+    Matrix state_distribution(RNG *rng = &GlobalRng::rng) const;
     
    private:
     Ptr<GeneralContinuousStateHmm> hmm_;
