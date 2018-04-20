@@ -33,7 +33,7 @@ namespace BOOM {
     typedef DeferredDataPolicy DataPolicy;
     
     DeferredDataPolicy() {}
-    DeferredDataPolicy(const Ptr<Model> &model) : model_(model) {}
+    explicit DeferredDataPolicy(const Ptr<Model> &model) : model_(model) {}
 
     // Copy and assignment reset the model pointer to nullptr, with the
     // expectation that it will be set in the downstream implementation using

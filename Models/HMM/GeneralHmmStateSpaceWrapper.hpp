@@ -32,12 +32,14 @@ namespace BOOM {
         public NullPriorPolicy
   {
    public:
-    GeneralHmmStateSpaceWrapper(const Ptr<ScalarStateSpaceModelBase> &model);
-
+    explicit GeneralHmmStateSpaceWrapper(
+        const Ptr<ScalarStateSpaceModelBase> &model);
+    
     GeneralHmmStateSpaceWrapper(const GeneralHmmStateSpaceWrapper &rhs);
     GeneralHmmStateSpaceWrapper * clone() const override;
     
-    GeneralHmmStateSpaceWrapper & operator=(const GeneralHmmStateSpaceWrapper &rhs);
+    GeneralHmmStateSpaceWrapper & operator=(
+        const GeneralHmmStateSpaceWrapper &rhs);
     
     GeneralHmmStateSpaceWrapper(GeneralHmmStateSpaceWrapper &&rhs) = default;
     GeneralHmmStateSpaceWrapper &
