@@ -126,12 +126,12 @@ namespace {
       sigma_trig_draws[i] = trig_state->error_distribution()->sigma();
       sigma_obs_draws[i] = model.observation_model()->sigma();
     }
-    auto status = check_mcmc_matrix(first_harmonic_state_draws,
-                                    first_harmonic);
+    auto status = CheckMcmcMatrix(first_harmonic_state_draws,
+                                  first_harmonic);
     EXPECT_TRUE(status.ok) << status;
 
-    auto second_status = check_mcmc_matrix(second_harmonic_state_draws,
-                                           second_harmonic);
+    auto second_status = CheckMcmcMatrix(second_harmonic_state_draws,
+                                         second_harmonic);
     EXPECT_TRUE(second_status.ok) << second_status;
   }
 

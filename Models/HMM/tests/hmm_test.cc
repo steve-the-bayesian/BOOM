@@ -101,13 +101,13 @@ namespace {
 
     // The prior distributions that we used identify the model so there is no
     // issue with label switching.  The values 
-    auto status = check_mcmc_matrix(lambda_draws, Vector{.02, .46, 3.13});
+    auto status = CheckMcmcMatrix(lambda_draws, Vector{.02, .46, 3.13});
     EXPECT_TRUE(status.ok) << "Lambda draws failed to cover" << status;
 
-    status = check_mcmc_matrix(transition_probablity_draws,
-                           Vector {0.881, 0.095, 0.024,
-                                 0.083, 0.898, 0.019,
-                                 0.221, 0.198, 0.580});
+    status = CheckMcmcMatrix(transition_probablity_draws,
+                             Vector {0.881, 0.095, 0.024,
+                                   0.083, 0.898, 0.019,
+                                   0.221, 0.198, 0.580});
     EXPECT_TRUE(status.ok) << "Transition_Probablity_Draws failed to cover"
                            << status;
   }

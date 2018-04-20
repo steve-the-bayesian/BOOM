@@ -179,14 +179,14 @@ namespace {
     }
 
     bool both_ok = true;
-    CheckMatrixStatus status = check_mcmc_matrix(day_of_week_draws,
-                                                 true_state_.row(0));
+    CheckMatrixStatus status = CheckMcmcMatrix(day_of_week_draws,
+                                               true_state_.row(0));
     EXPECT_TRUE(status.ok)
         << "Day of week pattern failed to cover." << endl
         << status.error_message();
     both_ok &= status.ok;
     
-    status = check_mcmc_matrix(weekly_draws, true_state_.row(6));
+    status = CheckMcmcMatrix(weekly_draws, true_state_.row(6));
     EXPECT_TRUE(status.ok)
         << "Weekly annual cycle failed to cover." << endl
         << status.error_message();
