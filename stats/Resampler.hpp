@@ -37,7 +37,7 @@ namespace BOOM {
   // std::vector<int> index = resample(number_of_draws, rng).
   // (Then use index to subsample things)
   //
-  // std::vector<Things> ressampled = resample(unique_things, number_of_draws);
+  // std::vector<Things> resampled = resample(unique_things, number_of_draws);
   class Resampler {
    public:
     // Args:
@@ -88,13 +88,14 @@ namespace BOOM {
   };
 
   //------------------------------------------------------------
+  // This is the primary method of the resampler object.
   template <class T>
   std::vector<T> Resampler::operator()(const std::vector<T> &things,
                                        int number_of_draws,
                                        RNG &rng) const {
-    if (things.size() != cdf.size()) {
-      report_error("Resampling weights don't match the vector of "
-                   "things to resample.");
+    if (cdf.crbegin()->second >= things.size()) {
+      report_error("The vector of things to sample is smaller than "
+                   "the vector of sampling weights.");
     }
     if (number_of_draws < 0) {
       number_of_draws = cdf.size();
@@ -108,29 +109,5 @@ namespace BOOM {
     return ans;
   }
 
-  // //______________________________________________________________________
-  // template <class T>
-  // std::vector<T> resample(const std::vector<T> &things,
-  //                         int number_of_draws,
-  //                         const Vector &probs) {
-  //   Vector cdf = cumsum(probs);
-  //   double total = cdf.back();
-  //   if (total < 1.0 || total > 1.0) {
-  //     cdf /= total;
-  //   }
-
-  //   Vector u(number_of_draws);
-  //   u.randomize();
-  //   std::sort(u.begin(), u.end());
-
-  //   std::vector<T> ans;
-  //   ans.reserve(number_of_draws);
-  //   int cursor = 0;
-  //   for (int i = 0; i < number_of_draws; ++i) {
-  //     while (u[i] > cdf[cursor]) ++cursor;
-  //     ans.push_back(things[cursor]);
-  //   }
-  //   return (ans);
-  // }
 }  // namespace BOOM
 #endif  // BOOM_RESAMPLER_HPP

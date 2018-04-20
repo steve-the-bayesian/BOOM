@@ -66,8 +66,10 @@ namespace BOOM {
       if (p0 < 0) {
         report_error("Negative resamplng weight found.");
       }
-      cumulative_probability += p0;
-      cdf[cumulative_probability] = i;
+      if (p0 > 0) {
+        cumulative_probability += p0;
+        cdf[cumulative_probability] = i;
+      }
     }
     if (cumulative_probability > 1 + 1e-8) {
       std::ostringstream err;

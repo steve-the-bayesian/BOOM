@@ -45,5 +45,20 @@ namespace {
         << "Chisq test results: " << chisq_uniform << endl
         << "Frequency distribution: " << FrequencyDistribution(samples, false);
   }
+
+  TEST_F(ResamplerTest, ZeroWeights) {
+    Vector weights = {.5, 0, 0, .5};
+    Resampler sam(weights);
+    int sample_size = 10000;
+    std::vector<int> values = seq<int>(0, 3);
+    std::vector<int> samples = sam(values, sample_size);
+
+    EXPECT_EQ(samples.size(), sample_size);
+    FrequencyDistribution freq(samples, true);
+    EXPECT_GT(freq.counts()[0], 4000);
+    EXPECT_EQ(freq.counts()[1], 0);
+    EXPECT_EQ(freq.counts()[2], 0);
+    EXPECT_GT(freq.counts()[3], 4000);
+  }
   
 }  // namespace
