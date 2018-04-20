@@ -18,18 +18,10 @@
 #include "stats/Resampler.hpp"
 #include "LinAlg/Vector.hpp"
 #include "distributions.hpp"
-
 #include "cpputil/report_error.hpp"
+#include <limits>
 
 namespace BOOM {
-
-  Resampler::Resampler(int N) {
-    for (int i = 0; i < N; ++i) {
-      double p = i + 1;
-      p /= N;
-      cdf[p] = i;
-    }
-  }
 
   Resampler::Resampler(const Vector &probs, bool normalize) {
     setup_cdf(probs, normalize);
@@ -41,28 +33,47 @@ namespace BOOM {
     }
     std::vector<int> ans(number_of_draws);
     for (int i = 0; i < number_of_draws; ++i) {
-      ans[i] = cdf.lower_bound(runif_mt(rng))->second;
+      ans[i] = sample_index(rng);
     }
     return ans;
   }
 
+  int64_t Resampler::sample_index(RNG &rng) const {
+    return cdf.lower_bound(runif_mt(rng))->second;
+  }
+  
   void Resampler::set_probs(const Vector &probs, bool normalize) {
     cdf.clear();
     setup_cdf(probs, normalize);
   }
 
   void Resampler::setup_cdf(const Vector &probs, bool normalize) {
-    int N = probs.size();
-    double nc = 1.0;
-    if (normalize) {
-      nc = sum(probs);
+    if (probs.empty()) {
+      report_error("Resampling weights cannot be empty.");
     }
-    double p(0);
+    int N = probs.size();
+    double normalizing_constant = 1.0;
+    if (normalize) {
+      normalizing_constant = sum(probs);
+      if (normalizing_constant <= 0) {
+        report_error("Negative or zero normalizing constant.");
+      }
+    }
+    double cumulative_probability = 0.0;
+    cdf.clear();
     for (int i = 0; i < N; ++i) {
-      double p0 = probs[i] / nc;
-      if (p0 < 0) report_error("negative prob");
-      p += p0;
-      cdf[p] = i;
+      double p0 = probs[i] / normalizing_constant;
+      if (p0 < 0) {
+        report_error("Negative resamplng weight found.");
+      }
+      cumulative_probability += p0;
+      if (cumulative_probability > 1 + std::numeric_limits<double>::epsilon()) {
+        std::ostringstream err;
+        err << "Weights were not properly normalized.  "
+            "Current cumulative probability: " << cumulative_probability;
+        report_error(err.str());
+      }
+      cdf[cumulative_probability] = i;
     }
   }
 
