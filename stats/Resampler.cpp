@@ -67,13 +67,13 @@ namespace BOOM {
         report_error("Negative resamplng weight found.");
       }
       cumulative_probability += p0;
-      if (cumulative_probability > 1 + std::numeric_limits<double>::epsilon()) {
-        std::ostringstream err;
-        err << "Weights were not properly normalized.  "
-            "Current cumulative probability: " << cumulative_probability;
-        report_error(err.str());
-      }
       cdf[cumulative_probability] = i;
+    }
+    if (cumulative_probability > 1 + 1e-8) {
+      std::ostringstream err;
+      err << "Weights were not properly normalized.  They sum to "
+          << cumulative_probability;
+      report_error(err.str());
     }
   }
 

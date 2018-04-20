@@ -1,6 +1,6 @@
 COPTS = [
     "-I/usr/local/include",
-    "-Wno-sign-compare"
+    "-Wno-sign-compare",
 ]
 
 cc_test(

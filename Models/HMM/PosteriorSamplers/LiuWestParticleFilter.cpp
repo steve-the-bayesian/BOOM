@@ -124,6 +124,7 @@ namespace BOOM {
     if (sample_variance.rank() < sample_variance.nrow()) {
       ////////////////
       // Refresh the parameter distribution.
+      ////////////////
     }
     Chol sample_variance_cholesky(sample_variance);
     if (!sample_variance_cholesky.is_pos_def()) {
@@ -143,20 +144,29 @@ namespace BOOM {
       int particle = rmulti_mt(rng, kernel_weights);
       Vector parameter_proposal =
           rmvn_L_mt(rng, predicted_parameter_mean[particle], variance_cholesky);
-      Vector state_proposal = hmm_->simulate_transition(
-          rng, state_particles_[particle], observation_time - 1, parameter_proposal);
-      parameter_particles_[i] = parameter_proposal;
-      new_state_particles[i] = state_proposal;
-      new_log_weights[i] =
-          hmm_->log_observation_density(observation,
-                                        state_proposal,
-                                        observation_time,
-                                        parameter_proposal)
-          - hmm_->log_observation_density(observation,
-                                          predicted_state_mean[particle],
+      try {
+        Vector state_proposal = hmm_->simulate_transition(
+            rng, state_particles_[particle], observation_time - 1, parameter_proposal);
+        parameter_particles_[i] = parameter_proposal;
+        new_state_particles[i] = state_proposal;
+        new_log_weights[i] =
+            hmm_->log_observation_density(observation,
+                                          state_proposal,
                                           observation_time,
-                                          predicted_parameter_mean[particle]);
-      if (!std::isfinite(new_log_weights[i])) {
+                                          parameter_proposal)
+            - hmm_->log_observation_density(observation,
+                                            predicted_state_mean[particle],
+                                            observation_time,
+                                            predicted_parameter_mean[particle]);
+        if (!std::isfinite(new_log_weights[i])) {
+          new_log_weights[i] = negative_infinity();
+        }
+      } catch (...) {
+        // If we're here it means the parameter proposal was an illegal value.
+        // Stuff the new_state_particles[i] entry with the right-sized garbage,
+        // and set the weight to zero (i.e. set the log weight to negative
+        // infinity).
+        new_state_particles[i] = state_particles_[i];
         new_log_weights[i] = negative_infinity();
       }
     }

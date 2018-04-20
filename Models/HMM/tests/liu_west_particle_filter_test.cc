@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/HMM/GeneralHmmStateSpaceWrapper.hpp"
 #include "Models/HMM/PosteriorSamplers/LiuWestParticleFilter.hpp"
 #include "distributions.hpp"
@@ -37,33 +38,29 @@ namespace {
     EXPECT_TRUE(base_model->observation_model() != nullptr);
     EXPECT_DOUBLE_EQ(base_model->observation_model()->sigsq(), 1.0);
     
-    NEW(LocalLinearTrendStateModel, trend)();
+    NEW(LocalLevelStateModel, trend)();
     base_model->add_state(trend);
     NEW(GeneralHmmStateSpaceWrapper, model)(base_model);
     int number_of_particles = 1000;
     LiuWestParticleFilter filter(model, number_of_particles);
-    Matrix initial_parameters(number_of_particles, 4);
-    Matrix initial_state(number_of_particles, 2);
+    Matrix initial_parameters(number_of_particles, 2);
+    Matrix initial_state(number_of_particles, 1);
 
     // The parameters of the model are
-    // 1) a scalar variance.
-    // 2) The lower triangle of a variance matrix.
-    
+    // 1) a scalar observation variance.
+    // 2) a scalar trend innovation variance.
     for (int i = 0; i < number_of_particles; ++i) {
       initial_parameters.row(i)[0] = 1.0 / rgamma(1, 1);
-      SpdMatrix Sigma(2);
-      Sigma.randomize();
-      initial_parameters.row(i)[1] = Sigma(0, 0);
-      initial_parameters.row(i)[2] = Sigma(0, 1);
-      initial_parameters.row(i)[3] = Sigma(1, 1);
-
+      initial_parameters.row(i)[1] = 1.0 / rgamma(1, 1);
       initial_state.row(i)[0] = rnorm(0, 10);
-      initial_state.row(i)[1] = rnorm(0, 10);
     }
     filter.set_particles(initial_state, initial_parameters);
     
+    std::ofstream state_file("final_state.out");
     for (int i = 0; i < data.size(); ++i) {
       filter.update(GlobalRng::rng, *data[i], i);
+      state_file << true_state[i] << " "
+                 << filter.state_distribution(&GlobalRng::rng).t();
     }
 
     std::ofstream param_file("params.out");
@@ -72,8 +69,6 @@ namespace {
     std::ofstream weight_file("weights.out");
     weight_file << filter.particle_weights();
 
-    std::ofstream state_file("final_state.out");
-    state_file << filter.state_distribution(&GlobalRng::rng);
   }
   
 }  // namespace
