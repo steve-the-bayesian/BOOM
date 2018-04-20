@@ -24,7 +24,7 @@
 
 namespace BOOM {
 
-  // The empirical cumulative distribution function of a real valued data set.
+  // The empirical cumulative distribution function of a real-valued data set.
   class ECDF {
    public:
     // Args:
@@ -46,6 +46,17 @@ namespace BOOM {
       return equality ? fplus(x) : fminus(x);
     }
 
+    // The quantile function, which is the inverse of the CDF.  Returns the
+    // number that corresponds to a given probability.
+    //
+    // Args:
+    //   probability:  The probabliity for which a quantile is desired.
+    //
+    // Returns:
+    //   The number appearing 'probability' percent of the way through the
+    //   distribution.
+    double quantile(double probability) const;
+    
     const Vector &sorted_data() const { return sorted_data_; }
 
    private:

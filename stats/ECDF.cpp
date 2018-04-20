@@ -43,4 +43,22 @@ namespace BOOM {
     return ans / sorted_data_.size();
   }
 
+  double ECDF::quantile(double probability) const {
+    double min_prob = 1.0 / sorted_data_.size();
+    
+    if (probability < min_prob) {
+      return sorted_data_[0];
+    } else if (probability >= 1.0) {
+      return sorted_data_.back();
+    } 
+    
+    int index = probability * sorted_data_.size();
+    if ((sorted_data_.size() - probability * index) < min_prob
+        || index + 1 == sorted_data_.size()) {
+      return sorted_data_[index];
+    } else {
+      return .5 * (sorted_data_[index] + sorted_data_[index + 1]);
+    }
+  }
+
 }  // namespace BOOM

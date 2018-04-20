@@ -16,6 +16,13 @@ cc_test(
 )
 
 cc_test(
+    name = "ecdf_test",
+    srcs = ["ecdf_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
     name = "resampler_test",
     srcs = ["resampler_test.cc"],
     copts = COPTS,
