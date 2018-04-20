@@ -23,13 +23,14 @@
 
 namespace BOOM {
 
-  Resampler::Resampler(const Vector &probs, bool normalize) {
+  Resampler::Resampler(const Vector &probs, bool normalize)
+  {
     setup_cdf(probs, normalize);
   }
 
   std::vector<int> Resampler::operator()(int number_of_draws, RNG &rng) const {
     if (number_of_draws < 0) {
-      number_of_draws = cdf.size();
+      number_of_draws = dimension();
     }
     std::vector<int> ans(number_of_draws);
     for (int i = 0; i < number_of_draws; ++i) {
@@ -48,6 +49,7 @@ namespace BOOM {
   }
 
   void Resampler::setup_cdf(const Vector &probs, bool normalize) {
+    weight_vector_size_ = probs.size();
     if (probs.empty()) {
       report_error("Resampling weights cannot be empty.");
     }
@@ -79,6 +81,6 @@ namespace BOOM {
     }
   }
 
-  int Resampler::dimension() const { return cdf.size(); }
+  int64_t Resampler::dimension() const { return weight_vector_size_; }
 
 }  // namespace BOOM

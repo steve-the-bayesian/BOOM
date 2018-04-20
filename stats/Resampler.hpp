@@ -74,7 +74,7 @@ namespace BOOM {
     int64_t sample_index(RNG &rng) const;
     
     // Returns the number of categories in the discrete distribution.
-    int dimension() const;
+    int64_t dimension() const;
 
     // Reset the Resampler with a new set of probabilities.
     // Equivalent to Resampler that(probs, normalize); swap(*this, that);
@@ -84,6 +84,10 @@ namespace BOOM {
 
    private:
     std::map<double, int64_t>  cdf;
+
+    // If some weights are zero, then the cdf won't include them, so we need to
+    // store the weight vector size separately.
+    int64_t weight_vector_size_;
     void setup_cdf(const Vector &probs, bool normalize);
   };
 
@@ -98,7 +102,7 @@ namespace BOOM {
                    "the vector of sampling weights.");
     }
     if (number_of_draws < 0) {
-      number_of_draws = cdf.size();
+      number_of_draws = dimension();
     }
     std::vector<T> ans;
     ans.reserve(number_of_draws);
