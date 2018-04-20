@@ -91,9 +91,12 @@ namespace BOOM {
                                        int number_of_draws, RNG &rng) const {
     std::vector<int> index = (*this)(number_of_draws);
     std::vector<T> ans;
+    if (number_of_draws < 0) {
+      number_of_draws = cdf.size();
+    }
     ans.reserve(number_of_draws);
     for (int i = 0; i < number_of_draws; ++i) {
-      ans[i] = things[index[i]];
+      ans.push_back(things[index[i]]);
     }
     return ans;
   }

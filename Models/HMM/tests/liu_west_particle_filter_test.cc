@@ -24,7 +24,7 @@ namespace {
   }
 
   TEST_F(LiuWestParticleFilterTest, Filtering) {
-    Vector true_state(1000);
+    Vector true_state(200);
     Vector observations(true_state.size());
     std::vector<Ptr<DoubleData>> data;
     for (int i = 0; i < true_state.size(); ++i) {
@@ -39,17 +39,23 @@ namespace {
     
     NEW(LocalLinearTrendStateModel, trend)();
     base_model->add_state(trend);
-
     NEW(GeneralHmmStateSpaceWrapper, model)(base_model);
     int number_of_particles = 1000;
     LiuWestParticleFilter filter(model, number_of_particles);
     Matrix initial_parameters(number_of_particles, 4);
     Matrix initial_state(number_of_particles, 2);
+
+    // The parameters of the model are
+    // 1) a scalar variance.
+    // 2) The lower triangle of a variance matrix.
+    
     for (int i = 0; i < number_of_particles; ++i) {
       initial_parameters.row(i)[0] = 1.0 / rgamma(1, 1);
-      initial_parameters.row(i)[1] = 1.0 / rgamma(1, 1);
-      initial_parameters.row(i)[2] = rnorm(0, 3);
-      initial_parameters.row(i)[3] = 1.0 / rgamma(1, 1);
+      SpdMatrix Sigma(2);
+      Sigma.randomize();
+      initial_parameters.row(i)[1] = Sigma(0, 0);
+      initial_parameters.row(i)[2] = Sigma(0, 1);
+      initial_parameters.row(i)[3] = Sigma(1, 1);
 
       initial_state.row(i)[0] = rnorm(0, 10);
       initial_state.row(i)[1] = rnorm(0, 10);
@@ -57,9 +63,17 @@ namespace {
     filter.set_particles(initial_state, initial_parameters);
     
     for (int i = 0; i < data.size(); ++i) {
-      cout << "about to update for data point " << i << endl;
       filter.update(GlobalRng::rng, *data[i], i);
     }
+
+    std::ofstream param_file("params.out");
+    param_file << filter.parameter_distribution(&GlobalRng::rng);
+
+    std::ofstream weight_file("weights.out");
+    weight_file << filter.particle_weights();
+
+    std::ofstream state_file("final_state.out");
+    state_file << filter.state_distribution(&GlobalRng::rng);
   }
   
 }  // namespace

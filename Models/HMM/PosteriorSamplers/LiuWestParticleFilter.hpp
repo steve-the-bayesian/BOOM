@@ -63,6 +63,32 @@ namespace BOOM {
     //   parameters: An N x parameter_dimension matrix, where N is the number of
     //     particles.
     void set_particles(const Matrix &state, const Matrix &parameters);
+
+    // Returns the current parameter distribution.  Combine this with particle
+    // weights to get the empirical distribution.
+    //
+    // Args:
+    //   rng: A random number generator to use for the resampling, if resampling
+    //     is desired.  If non-null then the particles will be resampled with
+    //     replacement from the weighted particle distribution, so the output
+    //     can be viewed as an unweeighted sample.  If null then the particles
+    //     must be interpreted in the context of the weight assigned to each
+    //     particle.
+    Matrix parameter_distribution(RNG *rng) const;
+
+    Vector particle_weights() const;
+
+    // Returns the current state distribution.  Combine this with particle
+    // weights to get the empirical distribution.
+    //
+    // Args:
+    //   rng: A random number generator to use for the resampling, if resampling
+    //     is desired.  If non-null then the particles will be resampled with
+    //     replacement from the weighted particle distribution, so the output
+    //     can be viewed as an unweeighted sample.  If null then the particles
+    //     must be interpreted in the context of the weight assigned to each
+    //     particle.
+    Matrix state_distribution(RNG *rng = nullptr) const;
     
    private:
     Ptr<GeneralContinuousStateHmm> hmm_;
@@ -70,6 +96,8 @@ namespace BOOM {
     std::vector<Vector> parameter_particles_;
     Vector log_weights_;
     double kernel_scale_factor_;
+
+    Matrix to_matrix(const std::vector<Vector> &vectors) const;
   };
   
 }

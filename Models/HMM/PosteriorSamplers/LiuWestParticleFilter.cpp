@@ -19,6 +19,7 @@
 #include "Models/HMM/PosteriorSamplers/LiuWestParticleFilter.hpp"
 #include "distributions.hpp"
 #include "Models/MvnBase.hpp"
+#include "stats/Resampler.hpp"
 
 namespace BOOM {
 
@@ -78,8 +79,6 @@ namespace BOOM {
   void LiuWestParticleFilter::update(RNG &rng,
                                      const Data &observation,
                                      int observation_time) {
-    cout << "Calling update at time " << observation_time << endl;
-
     //====== Step 1
     // Compute the means and variances to be used in the kernel density
     // estimate.
@@ -105,11 +104,17 @@ namespace BOOM {
           predicted_state_mean[i],
           observation_time,
           predicted_parameter_mean[i]);
+      if (!std::isfinite(kernel_weights[i])) {
+        kernel_weights[i] = negative_infinity();
+      }
       max_log_weight = std::max<double>(max_log_weight, kernel_weights[i]);
     }
     double total_weight = 0;
     for (int i = 0; i < number_of_particles(); ++i) {
       double weight = exp(kernel_weights[i] - max_log_weight);
+      if (!std::isfinite(weight)) {
+        weight = 0;
+      }
       total_weight += weight;
       kernel_weights[i] = weight;
     }
@@ -151,8 +156,48 @@ namespace BOOM {
                                           predicted_state_mean[particle],
                                           observation_time,
                                           predicted_parameter_mean[particle]);
+      if (!std::isfinite(new_log_weights[i])) {
+        new_log_weights[i] = negative_infinity();
+      }
     }
     std::swap(new_state_particles, state_particles_);
     std::swap(new_log_weights, log_weights_);
-  }  
+  }
+
+  Matrix LiuWestParticleFilter::parameter_distribution(RNG *rng) const {
+    if (rng) {
+      Resampler resampler(particle_weights(), false);
+      return to_matrix(resampler(parameter_particles_, -1, *rng));
+    } else {
+      return to_matrix(parameter_particles_);
+    }
+  }
+  
+  Vector LiuWestParticleFilter::particle_weights() const {
+    Vector ans = log_weights_;
+    ans.normalize_logprob();
+    return ans;
+  }
+
+  Matrix LiuWestParticleFilter::state_distribution(RNG *rng) const {
+    if (rng) {
+      Resampler resampler(particle_weights(), false);
+      return to_matrix(resampler(state_particles_, -1, *rng));
+    } else {
+      return to_matrix(state_particles_);
+    }
+  }
+
+  Matrix LiuWestParticleFilter::to_matrix(
+      const std::vector<Vector> &vectors) const {
+    if (vectors.empty()) {
+      return Matrix(0, 0);
+    }
+    Matrix ans(vectors.size(), vectors[0].size());
+    for (int i = 0; i < vectors.size(); ++i) {
+      ans.row(i) = vectors[i];
+    }
+    return ans;
+  }
+  
 }  // namespace BOOM

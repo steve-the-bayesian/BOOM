@@ -36,6 +36,9 @@ namespace BOOM {
   }
 
   std::vector<int> Resampler::operator()(int number_of_draws, RNG &rng) const {
+    if (number_of_draws < 0) {
+      number_of_draws = cdf.size();
+    }
     std::vector<int> ans(number_of_draws);
     for (int i = 0; i < number_of_draws; ++i) {
       ans[i] = cdf.lower_bound(runif_mt(rng))->second;
