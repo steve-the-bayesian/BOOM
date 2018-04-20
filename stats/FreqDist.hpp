@@ -32,14 +32,14 @@ namespace BOOM {
     // Overloaded constructors for various integral types.
     // Args:
     //   y:  A vector of categorical data to be tabulated.
-    //   contiguous: If true, then all the values between the smallest
-    //     and largest values in y will be included (with zero counts
-    //     if they did not appear in y).  If false, then values that
-    //     did not appear in y will be skipped.
+    //   contiguous: If true, then all the values between the smallest and
+    //     largest values in y will be included (with zero counts if they did
+    //     not appear in y).  If false, then values that did not appear in y
+    //     will be skipped.
     explicit FrequencyDistribution(const std::vector<uint> &y, bool contiguous = false);
     explicit FrequencyDistribution(const std::vector<int> &y, bool contiguous = false);
     explicit FrequencyDistribution(const std::vector<unsigned long> &y,
-                          bool contiguous = false);
+                                   bool contiguous = false);
 
     // Set the category labels for the unique values in y.
     void set_labels(const std::vector<std::string> &labels);
@@ -47,6 +47,7 @@ namespace BOOM {
 
     // Count the frequency of each value in y.
     const std::vector<int> &counts() const { return counts_; }
+
     Vector relative_frequencies() const {
       Vector ans(counts_);
       double normalizing_constant = sum(ans);

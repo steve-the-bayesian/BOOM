@@ -18,7 +18,9 @@
 */
 
 #include "stats/ChiSquareTest.hpp"
+#include "stats/FreqDist.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -28,6 +30,11 @@ namespace BOOM {
         expected_(distribution * sum(observed_)),
         chi_square_(0),
         df_(observed.size() - 1) {
+    if (observed.size() != distribution.size()) {
+      report_error("Vector of empirical counts has a different size than the "
+                   "true discrete distribution.  Maybe some zero-counts are "
+                   "missing?");
+    }
     for (int i = 0; i < observed_.size(); ++i) {
       double Oi = observed_[i];
       double Ei = expected_[i];
@@ -49,6 +56,11 @@ namespace BOOM {
       }
     }
   }
+
+  OneWayChiSquareTest::OneWayChiSquareTest(const FrequencyDistribution &freq,
+                                           const Vector &distribution)
+      : OneWayChiSquareTest(Vector(freq.counts()), distribution)
+  {}
 
   bool OneWayChiSquareTest::is_valid() const {
     for (int i = 0; i < expected_.size(); ++i) {

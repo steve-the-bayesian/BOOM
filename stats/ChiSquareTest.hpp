@@ -24,10 +24,22 @@
 #include "LinAlg/Vector.hpp"
 
 namespace BOOM {
+  class FrequencyDistribution;
+  
+  // For testing counts vs. a known distribution
   class OneWayChiSquareTest {
    public:
-    // for testing counts vs. a known distribution
+    // Args:
+    //   observed:  The observed cell counts in each cell of the frequency distribution.
+    //   distribution:  The discrete probability distribution being tested against.
     OneWayChiSquareTest(const Vector &observed, const Vector &distribution);
+
+    // Args:
+    //   freq:  The empirical frequency distribution of observed events.
+    //   distribution:  The discrete probability distribution being tested against.
+    OneWayChiSquareTest(const FrequencyDistribution &freq,
+                        const Vector &distribution);
+    
     double p_value() const;
     double degrees_of_freedom() const;
     double chi_square() const;
