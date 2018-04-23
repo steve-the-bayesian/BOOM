@@ -121,7 +121,7 @@ namespace {
       }
       truth <- prm[1, ]
       PlotDynamicDistribution(prm)
-      lines(truth, col = "green")
+      lines(truth, col = "green", lwd = 3)
     }
    */
 
