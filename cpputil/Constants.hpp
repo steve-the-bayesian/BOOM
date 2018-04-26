@@ -25,6 +25,8 @@ namespace BOOM {
   struct Constants {
     static constexpr double pi = 3.141592653589793;
     static constexpr double pi_squared = 9.86960440108936;
+    static constexpr double pi_squared_over_3 = 3.289868133696452872944830333292;
+    static constexpr double pi_squared_over_6 = 1.6449340668482264061;
     static constexpr double half_pi_squared = 4.93480220054468;
     static constexpr double root_2pi = 2.506628274631;
     static constexpr double log_root_2pi = 0.918938533204673;

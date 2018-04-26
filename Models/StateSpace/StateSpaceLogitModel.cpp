@@ -118,7 +118,7 @@ namespace BOOM {
       // In the case of NO information about a time point, the observation
       // variance is the variance of the standard logistic distribution, which
       // is pi^2 / 3.
-      return Constants::pi_squared / 3.0;
+      return Constants::pi_squared_over_3;
     } else {
       // If neither of the preceding cases holds, then there is partial
       // information, we just have to be careful to only include the observed
@@ -197,7 +197,7 @@ namespace BOOM {
 
   double SSLM::observation_variance(int t) const {
     if (t > time_dimension()) {
-      return Constants::pi_squared / 3.0;
+      return Constants::pi_squared_over_3;
     }
     return dat()[t]->latent_data_overall_variance();
   }

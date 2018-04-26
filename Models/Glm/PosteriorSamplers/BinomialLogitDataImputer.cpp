@@ -19,6 +19,7 @@
 
 #include "Models/Glm/PosteriorSamplers/BinomialLogitDataImputer.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/Constants.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 #include "distributions/trun_logit.hpp"
@@ -72,7 +73,6 @@ namespace BOOM {
                            linear_predictor);
       report_error(err.str());
     }
-    const double pi_squared_over_3 = 3.289868133696452872;
     double information_weighted_sum = 0;
     double information = 0;
     if (number_of_trials < clt_threshold_) {
@@ -114,11 +114,11 @@ namespace BOOM {
       // distribution, pi^2/3).
       information_weighted_sum =
           rnorm_mt(rng, mean_of_logit_sum, sqrt(variance_of_logit_sum));
-      information_weighted_sum /= pi_squared_over_3;
+      information_weighted_sum /= Constants::pi_squared_over_3;
 
       // Each latent logit carries the same amount of information:
       // 1/pi_squared_over_3.
-      information = number_of_trials / pi_squared_over_3;
+      information = number_of_trials / Constants::pi_squared_over_3;
     }
     return std::make_pair(information_weighted_sum, information);
   }

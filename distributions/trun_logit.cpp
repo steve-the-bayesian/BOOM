@@ -19,6 +19,7 @@
 
 #include "distributions/trun_logit.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/Constants.hpp"
 #include "distributions.hpp"           // for plogis
 #include "math/special_functions.hpp"  // for dilog
 #include "stats/logit.hpp"             // for lope
@@ -36,8 +37,7 @@ namespace BOOM {
         //  dilog(z) + dilog(1/z) = -pi^2/6 - .5 * (log(-z))^2
         //
         // If x > 10 then the approximation has absolute error less that 5e-5.
-        const double pi_squared_over_six = 1.6449340668482264061;
-        return -pi_squared_over_six - .5 * x * x;
+        return -Constants::pi_squared_over_6 - .5 * x * x;
       } else if (x > -10) {
         return dilog(-exp(x));
       } else {
@@ -54,8 +54,7 @@ namespace BOOM {
     inline double second_moment_antiderivative(double x) {
       if (x == infinity()) {
         // Values at infinity and negative_infinity courtesy of Wolfram.
-        const double pi_squared_over_three = 3.289868133696452872944830333292;
-        return pi_squared_over_three;
+        return Constants::pi_squared_over_3;
       } else if (x == negative_infinity()) {
         return 0;
       }

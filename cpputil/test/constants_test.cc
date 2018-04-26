@@ -18,6 +18,14 @@ namespace {
                 .5 * Constants::pi_squared,
                 epsilon);
 
+    EXPECT_NEAR(3.0 * Constants::pi_squared_over_3,
+                Constants::pi_squared,
+                epsilon);
+
+    EXPECT_NEAR(6.0 * Constants::pi_squared_over_6,
+                Constants::pi_squared,
+                epsilon);
+    
     EXPECT_NEAR(square(Constants::root_2pi),
                 2.0 * Constants::pi,
                 epsilon);

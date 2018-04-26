@@ -115,7 +115,7 @@ namespace BOOM {
       // single latent observation, which is the negative log of an exponential
       // random variable.  This is a standard type 1 extreme value distribution,
       // which has variance pi^2 / 6.
-      return Constants::pi_squared / 6.0;
+      return Constants::pi_squared_over_6;
     } else {
       // If neither case above holds, then we have partial information, with
       // some missing and some observed values.
@@ -187,7 +187,7 @@ namespace BOOM {
   double SSPM::observation_variance(int t) const {
     if (t >= time_dimension()) {
       // Variance of Poisson latent variable, on the log scale.
-      return Constants::pi_squared / 6;
+      return Constants::pi_squared_over_6;
     }
     return dat()[t]->latent_data_overall_variance();
   }
