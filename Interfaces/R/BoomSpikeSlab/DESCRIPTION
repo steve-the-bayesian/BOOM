@@ -6,7 +6,7 @@ Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
 Description: Spike and slab regression a la McCulloch and George (1997).
 Depends: Boom (>= 0.8) , R (>= 3.1.0)
 LinkingTo: BH (>= 1.65.0)
-Suggests: MASS
+Suggests: MASS, testthat
 Version: 1.0.0
 License: LGPL-2.1 | file LICENSE
 Encoding: UTF-8

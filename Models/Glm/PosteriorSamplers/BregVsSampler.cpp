@@ -17,21 +17,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
-#include <random>
 #include "Models/ChisqModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "Models/MvnGivenScalarSigma.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/seq.hpp"
+#include "cpputil/shuffle.hpp"
 #include "distributions.hpp"
 #include "distributions/trun_gamma.hpp"
 
 namespace BOOM {
 
-  typedef BregVsSampler BVS;
-
   namespace {
+    typedef BregVsSampler BVS;
+
     Ptr<GammaModelBase> create_siginv_prior(RegressionModel *model,
                                             double prior_nobs,
                                             double expected_rsq) {
@@ -287,7 +287,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void BVS::draw_model_indicators() {
     Selector g = model_->coef().inc();
-    std::shuffle(indx.begin(), indx.end(), std::default_random_engine());
+    shuffle(indx, rng());
     double logp = log_model_prob(g);
 
     if (!std::isfinite(logp)) {
