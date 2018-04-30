@@ -37,12 +37,23 @@ extern "C" {
                            SEXP r_threads,
                            SEXP r_seed,
                            SEXP r_print_suf_level);
-  
+
+  SEXP markov_modulated_poisson_process_wrapper_(
+      SEXP r_point_process_list,
+      SEXP r_process_specification,
+      SEXP r_initial_state,
+      SEXP r_mixture_components,
+      SEXP r_known_source,
+      SEXP r_niter,
+      SEXP r_ping,
+      SEXP r_seed);
+
   static R_CallMethodDef boom_mix_arg_description[] = {
     CALLDEF(boom_rinterface_fit_finite_mixture_, 6),
     CALLDEF(boom_rinterface_fit_conditional_mixture_, 7),
     CALLDEF(composite_hmm_wrapper_, 5),
     CALLDEF(nested_hmm_wrapper_, 9),
+    CALLDEF(markov_modulated_poisson_process_wrapper_, 8),
     {NULL, NULL, 0}
   };
 

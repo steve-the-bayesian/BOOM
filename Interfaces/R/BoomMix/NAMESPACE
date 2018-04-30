@@ -1,40 +1,79 @@
-useDynLib("BoomMix")
-
 export(
+  CheckMixtureComponent,
+  CheckProcessSpecification,
   ConditionalMixture,
   FiniteMixture,
-  InferMixtureComponentNames,
-  CheckMixtureComponent,
-  NormalMixtureComponent,
-  PoissonMixtureComponent,
-  ZeroInflatedPoissonMixtureComponent,
-  ZeroInflatedLognormalMixtureComponent,
-  RegressionMixtureComponent,
-  LogitMixtureComponent,
-  MultinomialMixtureComponent,
-  MarkovMixtureComponent,
-  MvnMixtureComponent,
-  IndependentMvnMixtureComponent,
-  PlotMixtureParams,
-  PlotMixingWeights,
-  PlotStateProbabilities,
-  plot.FiniteMixture,
   HiddenMarkovModel,
-  plot.HiddenMarkovModel,
+  IndependentMvnMixtureComponent,
+  InferMixtureComponentNames,
+  LogitMixtureComponent,
+  MarkovMixtureComponent,
+  MarkovModulatedPoissonProcess,
+  MultinomialMixtureComponent,
+  MvnMixtureComponent,
+  NormalMixtureComponent,
   PlotInitialStateDistribution,
+  PlotMixingWeights,
+  PlotMixtureParams,
+  PlotProbabilityOfActivity,
+  PlotStateProbabilities,
   PlotStateProbabilities,
   PlotTransitionProbabilities,
-  SimulateFakeClickstreamParams)
+  PointProcess,
+  PoissonMixtureComponent,
+  PoissonProcessComponent,
+  RegressionMixtureComponent,
+  SimulateFakeClickstreamParams,
+  WeeklyProfile,
+  ZeroInflatedLognormalMixtureComponent,
+  ZeroInflatedPoissonMixtureComponent,
+  plot.FiniteMixture,
+  plot.HiddenMarkovModel,
+  HomogeneousPoissonProcess,
+  WeeklyCyclePoissonProcess,
+  SimulateWeeklyCyclePoissonProcess,
+  AverageExposureTime,
+  AverageEventRate
+  )
 
 S3method(plot, FiniteMixture)
+S3method(plot, PointProcess)
+S3method(plot, PointProcessDensity)
 S3method(plot, HiddenMarkovModel)
+S3method(plot, WeeklyProfile)
+
+S3method(print, WeeklyProfile)
+
+S3method(density, PointProcess)
+S3method(length, PointProcess)
+
 
 import(Boom, BoomSpikeSlab)
 
-importFrom("graphics", "abline", "boxplot", "legend", "par", "plot")
+importFrom("graphics",
+  "abline",
+  "barplot",
+  "boxplot",
+  "layout",
+  "legend",
+  "par",
+  "plot",
+  "polygon",
+  "rug")
 
-importFrom("stats", ".getXlevels", "model.matrix", "model.response", "plot.ts",
-  "rgamma", "rpois", "sd", "var")
+
+importFrom("stats",
+  ".getXlevels",
+  "density",
+  "model.matrix",
+  "model.response",
+  "plot.ts",
+  "rgamma",
+  "rpois",
+  "runif",
+  "sd",
+  "var"
+)
 
 importFrom("utils", "head", "tail")
 

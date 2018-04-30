@@ -1,0 +1,24 @@
+import(Boom)
+
+export(
+  BoomBart,
+  BartTreePrior,
+  BartPartialDependencePlot,
+  GaussianBartTreePrior,
+  SuggestBartBurn,
+  NumberOfTrees,
+  PlotTreeSizeDistribution,
+  predict.BoomBart,
+  plot.BoomBart)
+
+S3method(plot, BoomBart)
+S3method(predict, BoomBart)
+
+importFrom("graphics", "legend", "par", "plot", "points")
+
+importFrom("stats", ".checkMFClasses", "contrasts", "delete.response",
+  "model.frame", "model.matrix", "model.response", "plogis",
+  "plot.ts", "pnorm", "rnorm", "terms", "var")
+
+
+useDynLib("BoomBart", .registration = TRUE)

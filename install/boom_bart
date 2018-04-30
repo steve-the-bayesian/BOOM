@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PACKAGE=BoomBart ./install/install.package $@
+
