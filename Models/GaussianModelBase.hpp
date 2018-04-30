@@ -126,7 +126,7 @@ namespace BOOM {
     //   sigsq:  The variance of the data.
     //
     // Returns:
-    //   The log of \int p(y | \mu, \sigma^2) p(\mu |\mu_0, \tausq) \ d \mu.
+    //   The log of \int p(y | \mu, \sigma^2) p(\mu |\mu_0, \tausq) d \mu.
     static double log_integrated_likelihood(const GaussianSuf &suf,
                                             double mu0,
                                             double tausq,
@@ -144,8 +144,8 @@ namespace BOOM {
     //   ss:  The prior sum of squares for sigsq.
     //
     // Returns:
-    //  The log of \int p(y | \mu, \sigma^2) p(\mu | \sigma^2) p(1/ \sigma^2) \
-    //    d\mu \ d 1/sigma^2
+    //  The log of \int p(y | \mu, \sigma^2) p(\mu | \sigma^2) p(1/ \sigma^2) 
+    //     d \mu  d 1/sigma^2
     static double log_integrated_likelihood(const GaussianSuf &suf,
                                             double mu0,
                                             double kappa,
