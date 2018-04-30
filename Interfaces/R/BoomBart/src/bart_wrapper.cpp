@@ -278,7 +278,7 @@ namespace {
         report_error("Illegal arguments to BartDiscreteUniformTreePrior "
                      "constructor.  'hi' must be >= 'lo'. ");
       }
-      log_density_value_ = -log(hi_ - lo_ + 1);
+      log_density_value_ = -log1p(hi_ - lo_);
     }
 
     virtual double evaluate_log_prior(int number_of_trees) const {
