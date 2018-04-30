@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \alias{AverageExposureTime}
 \name{average.exposure.time}
@@ -32,7 +32,7 @@ AverageExposureTime(point.process.list,
   exposure time of each element in \code{point.process.list} is returned.}
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \name{independent.mvn.mixture.component}
 
@@ -63,7 +63,7 @@ IndependentMvnMixtureComponent(data,
   distribution.  }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

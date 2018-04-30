@@ -116,7 +116,7 @@ trees.  Annals of Applied Statistics.  Volume 4, Number 1. 266 -- 298.
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

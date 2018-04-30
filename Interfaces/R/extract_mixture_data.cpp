@@ -1,5 +1,5 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
+// Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 #include "Models/DataTypes.hpp"
 #include "Models/Glm/Glm.hpp"

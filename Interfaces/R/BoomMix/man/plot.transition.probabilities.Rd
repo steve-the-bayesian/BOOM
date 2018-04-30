@@ -1,4 +1,4 @@
-% Author: stevescott@google.com (Steve Scott)
+
 
 \name{plot.transition.probabilities}
 \title{Plot HMM transition probabilities}

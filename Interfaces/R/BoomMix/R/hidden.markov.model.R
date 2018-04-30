@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 HiddenMarkovModel <- function(mixture.components,
                               state.space.size,

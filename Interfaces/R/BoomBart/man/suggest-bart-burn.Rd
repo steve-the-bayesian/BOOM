@@ -17,7 +17,7 @@ SuggestBartBurn(model, proportion = .1)
   \code{model}.  This function is mainly for readability.}
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

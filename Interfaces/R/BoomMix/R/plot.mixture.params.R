@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 PlotMixtureParams <- function(model, stem, style = c("density", "ts", "box"),
                               colors = NULL, burn = 0, ...) {

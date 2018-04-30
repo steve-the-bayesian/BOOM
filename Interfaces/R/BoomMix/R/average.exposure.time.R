@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 AverageExposureTime <- function(point.process.list,
                                 timescale = c("days", "secs", "mins", "hours",

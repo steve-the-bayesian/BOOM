@@ -25,5 +25,5 @@ check.scalar.integer(x)
   \code{\link{stop}} is called.  Otherwise \code{TRUE} is returned.  }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }

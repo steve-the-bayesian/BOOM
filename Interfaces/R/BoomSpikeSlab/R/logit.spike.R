@@ -1,5 +1,5 @@
 # Copyright 2010-2014 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+# Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 logit.spike <- function(formula,
                         niter,

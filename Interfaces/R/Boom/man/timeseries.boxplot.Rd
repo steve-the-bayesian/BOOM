@@ -31,7 +31,7 @@
   current graphics device.  }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 \examples{
   x <- t(matrix(rnorm(1000 * 100, 1:100, 1:100), nrow=100))

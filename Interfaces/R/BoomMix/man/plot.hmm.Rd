@@ -1,4 +1,4 @@
-% Author: stevescott@google.com (Steve Scott)
+
 
 \name{plot.hmm}
 \title{Plot a hidden Markov model}

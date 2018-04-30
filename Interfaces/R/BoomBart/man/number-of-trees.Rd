@@ -17,7 +17,7 @@ NumberOfTrees(model)
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

@@ -1,4 +1,4 @@
-% Author: stevescott@google.com (Steve Scott)
+
 
 \name{plot.initial.distribution}
 \title{Plot HMM initial state distribution}

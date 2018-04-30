@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 plot.FiniteMixture <- function(x,
                                y = c("state.probabilities",

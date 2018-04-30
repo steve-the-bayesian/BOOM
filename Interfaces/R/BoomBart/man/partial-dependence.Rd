@@ -97,7 +97,7 @@ machine.  Annals of Statistics.  Volume 29, Number 5.  1189 -- 1232.
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \examples{

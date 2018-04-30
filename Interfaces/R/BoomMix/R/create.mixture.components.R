@@ -1,5 +1,3 @@
-# Copyright 2011 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
 
 ## Objects defined here must have C++ analogs in
 ## <r_interface/create_mixture_components.?pp>

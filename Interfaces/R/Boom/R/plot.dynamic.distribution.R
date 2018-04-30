@@ -1,9 +1,3 @@
-# Copyright 2013 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
-
-# This function is a modified version of a function called
-# plot.dynamic.dist that stevescott wrote for his own use long ago.
-
 PlotDynamicDistribution <- function(curves,
                                     timestamps = NULL,
                                     quantile.step = .01,

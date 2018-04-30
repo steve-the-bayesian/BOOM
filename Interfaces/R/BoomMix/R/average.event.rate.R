@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 AverageEventRate <- function(point.process,
                              timescale = c("days", "secs", "mins", "hours",

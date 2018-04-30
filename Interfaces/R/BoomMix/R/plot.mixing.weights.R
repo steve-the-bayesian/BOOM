@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 PlotMixingWeights <- function(model, style = c("boxplot", "ts", "density"),
                               burn = 0, ylim = c(0, 1), color = NULL, ...) {

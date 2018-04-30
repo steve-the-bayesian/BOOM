@@ -1,4 +1,4 @@
-% Author: stevescott@google.com (Steve Scott)
+
 
 \name{markov.mixture.component}
 \alias{MarkovMixtureComponent}
@@ -38,7 +38,7 @@ MarkovMixtureComponent(data, prior = NULL, group.id = NULL, name = "",  ...)
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{ \code{\link{FiniteMixture}}, \code{\link{BoomMix-package}}.  }

@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \alias{plot.PointProcess}
 \name{plot.point.process}
@@ -47,7 +47,7 @@
 
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{

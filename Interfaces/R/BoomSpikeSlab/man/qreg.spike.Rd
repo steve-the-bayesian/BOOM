@@ -1,5 +1,5 @@
 % Copyright 2016 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{qreg.spike}
 \Rdversion{1.1}

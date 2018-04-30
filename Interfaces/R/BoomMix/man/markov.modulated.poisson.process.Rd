@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \name{markov.modulated.poisson.process}
 \alias{MarkovModulatedPoissonProcess}
@@ -105,7 +105,7 @@ MarkovModulatedPoissonProcess(point.process.list,
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{

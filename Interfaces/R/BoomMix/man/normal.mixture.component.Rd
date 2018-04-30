@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \name{normal.mixture.component}
 \alias{NormalMixtureComponent}
@@ -42,7 +42,7 @@ NormalMixtureComponent(data, prior = NULL, group.id = NULL,
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{ \code{\link{FiniteMixture}}, \code{\link{BoomMix-package}}.  }

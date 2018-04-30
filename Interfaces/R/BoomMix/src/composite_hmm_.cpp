@@ -1,6 +1,3 @@
-// Copyright 2011 Google Inc. All Rights Reserved.
-// Author: stevescott@google.com (Steve Scott)
-
 #include <vector>
 #include <r_interface/create_mixture_component.hpp>
 

@@ -1,5 +1,3 @@
-# Author: stevescott@google.com (Steve Scott)
-
 CompareDensities <- function (x,
                               legend.text = NULL,
                               legend.location = "topright",

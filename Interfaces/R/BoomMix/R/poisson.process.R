@@ -1,5 +1,5 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
+
+
 
 HomogeneousPoissonProcess <- function(lambda.prior) {
   ## Creates an object of class HomogeneousPoissonProcess, whch

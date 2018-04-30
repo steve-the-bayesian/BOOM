@@ -1,6 +1,3 @@
-# Copyright 2012 Google Inc. All Rights Reserved.
-# Author: stevescott@google.com (Steve Scott)
-
 CompareVectorBoxplots <- function(draws, main = NULL, colors = NULL,
                                   burn = 0, ...) {
   ## Creates a boxplot comparing the distributions of several vector

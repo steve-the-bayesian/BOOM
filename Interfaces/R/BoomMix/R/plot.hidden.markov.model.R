@@ -1,4 +1,4 @@
-# Author: stevescott@google.com (Steve Scott)
+
 
 plot.HiddenMarkovModel <- function(x,
                                    y = c("state.probabilities",

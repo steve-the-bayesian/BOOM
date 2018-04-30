@@ -1,5 +1,5 @@
 % Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+% Author: steve.the.bayesian@gmail.com (Steve Scott)
 
 \name{mvn.diagonal.prior}
 \title{diagonal MVN prior}
@@ -25,5 +25,5 @@ MvnDiagonalPrior(mean.vector, sd.vector)
 }
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }

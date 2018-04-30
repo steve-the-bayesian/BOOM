@@ -1,5 +1,3 @@
-# Author: stevescott@google.com
-
 CompareManyTs <- function (list.of.ts, burn = 0, type = "l", gap
                            = 0, boxes = TRUE, thin = 1, labels = NULL,
                            same.scale = TRUE, ylim = NULL, refline =

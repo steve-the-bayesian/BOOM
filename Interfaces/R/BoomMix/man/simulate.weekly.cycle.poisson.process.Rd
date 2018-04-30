@@ -1,5 +1,5 @@
-% Copyright 2012 Google Inc. All Rights Reserved.
-% Author: stevescott@google.com (Steve Scott)
+
+
 
 \alias{SimulateWeeklyCyclePoissonProcess}
 \name{simulate.weekly.cycle.poisson.process}
@@ -50,7 +50,7 @@
 
 
 \author{
-  Steven L. Scott \email{stevescott@google.com}
+  Steven L. Scott \email{steve.the.bayesian@gmail.com}
 }
 
 \seealso{
