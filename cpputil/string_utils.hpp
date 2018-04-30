@@ -26,12 +26,13 @@
 #include "uint.hpp"
 
 namespace BOOM {
-  std::vector<string> split_delimited(const string &s, const string &delim);
-  std::vector<string> split_string(const string &);
 
+  std::vector<string> split_string(const string &);
+  std::vector<string> split_delimited(const string &s, const string &delim);
   inline std::vector<string> split_delimited(const string &s, char delim) {
     return split_delimited(s, string(1, delim));
   }
+
   inline std::vector<string> split(const string &s) { return split_string(s); }
   inline std::vector<string> split(const string &s, const string &d) {
     return split_delimited(s, d);
@@ -41,7 +42,9 @@ namespace BOOM {
   }
 
   inline ostream &operator<<(ostream &out, const std::vector<std::string> &sv) {
-    for (uint i = 0; i < sv.size(); ++i) out << sv[i] << " ";
+    for (uint i = 0; i < sv.size(); ++i) {
+      out << sv[i] << " ";
+    }
     return out;
   }
 
@@ -53,16 +56,6 @@ namespace BOOM {
                              const std::vector<std::string> &right,
                              uint pad = 2);
 
-  string operator+(const std::string &, int);
-  string operator+(const std::string &, double);
-  string operator+=(string &, int);
-  string operator+=(string &, double);
-  string operator+(int, const std::string &);
-  string operator+(double, const std::string &);
-
-  string operator>>(const std::string &, int &);
-  string operator>>(const std::string &, double &);
-
   bool is_all_white(const string &s);
   string strip_white_space(const string &s);  // removes all white space
   string trim_white_space(const string &s);   // removes from the ends
@@ -73,9 +66,6 @@ namespace BOOM {
 
   string replace_all(const string &s, const char *, const char *);
   string &replace_all(string &s, const char *, const char *);
-
-  inline char last(const string &s) { return s[s.length() - 1]; }
-  inline char &last(string &s) { return s[s.length() - 1]; }
 
   bool is_numeric(const string &s);
 }  // namespace BOOM

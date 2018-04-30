@@ -227,11 +227,9 @@ namespace BOOM {
   Date::Date(const string &mdy, char delim) {
     std::vector<string> tmp = split_delimited(mdy, delim);
     MonthNames m = str2month(tmp[0]);
-    istringstream date_stream(tmp[1]);
     int d, y;
-    date_stream >> d;
-    istringstream year_stream(tmp[2]);
-    year_stream >> y;
+    std::istringstream(tmp[1]) >> d;
+    std::istringstream(tmp[2]) >> y;
     set(m, d, y);
   }
 
@@ -337,8 +335,8 @@ namespace BOOM {
   int Date::year() const { return year_; }
 
   DayNames Date::day_of_week() const {
-    /////////////////////////////////////////////////////////
-    // Jan 1 1970 was a Thursday.  Subtract 4
+    // Jan 1 1970 was a Thursday.  So computing the day of week means taking the
+    // julian date mod 7, then subtracting 4.
     int day = days_after_origin_ % 7;
     return DayNames((day + 4) % 7);
   }
@@ -612,19 +610,18 @@ namespace BOOM {
     return out;
   }
 
-  using std::swap;
   Date guess_date_format(const string &s, char delim) {
     std::vector<string> fields = split_delimited(s, delim);
     int m, d, y;
-    fields[0] >> m;
-    fields[1] >> d;
-    fields[2] >> y;
+    std::istringstream(fields[0]) >> m;
+    std::istringstream(fields[1]) >> d;
+    std::istringstream(fields[2]) >> y;
 
     if (y <= 31) {
       if (m > 12)
-        swap(y, m);
+        std::swap(y, m);
       else if (d > 31)
-        swap(y, d);
+        std::swap(y, d);
       else {
         ostringstream err;
         err << "Error in guess_date_format: " << endl
@@ -635,7 +632,7 @@ namespace BOOM {
       }
     }  // now year is okay;
     assert(y > 31);
-    if (m > 12) swap(d, m);
+    if (m > 12) std::swap(d, m);
 
     assert(m <= 12 && m >= 1 && d >= 1 &&
            d <= Date::days_in_month(MonthNames(m), Date::is_leap_year(y)));
