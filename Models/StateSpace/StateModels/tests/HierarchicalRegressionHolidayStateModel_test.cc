@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+#include "Models/Hierarchical/PosteriorSamplers/HierGaussianRegressionAsisSampler.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
 #include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
@@ -83,7 +83,7 @@ namespace {
       holiday_model->add_holiday(holidays[i]);
     }
     holiday_model->observe_time_dimension(y.size());
-    NEW(HierarchicalGaussianRegressionAsisSampler, holiday_sampler)(
+    NEW(HierGaussianRegressionAsisSampler, holiday_sampler)(
         holiday_model->model(),
         holiday_mean_prior,
         holiday_variance_prior,
