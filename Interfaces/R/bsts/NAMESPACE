@@ -7,10 +7,11 @@ importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "box",
   "polygon", "title", "close.screen", "screen", "split.screen",
   "strheight", "strwidth")
 
-importFrom("stats", ".checkMFClasses", ".getXlevels", "delete.response", 
-  "is.ts", "median", "model.frame", "model.frame.default", "model.matrix",
-  "model.response", "na.exclude", "na.omit", "na.pass", "plogis",
-  "plot.ts", "quantile", "rnorm", "sd", "terms", "var", "window")
+importFrom("stats", ".checkMFClasses", ".getXlevels", "acf", "delete.response",
+  "is.ts", "lsfit", "median", "model.frame", "model.frame.default",
+  "model.matrix", "model.response", "na.exclude", "na.omit", "na.pass",
+  "plogis", "plot.ts", "ppoints", "quantile", "qnorm", "rnorm", "sd", "terms",
+  "var", "window")
 
 importFrom("utils", "head", "help", "tail")
 

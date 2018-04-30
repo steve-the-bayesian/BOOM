@@ -37,7 +37,6 @@ bsts <- function(formula,
                  model.options = BstsOptions(),
                  timestamps = NULL,
                  seed = NULL,
-### End of deprecated arguments
                  ...) {
   ## Uses MCMC to sample from the posterior distribution of a Bayesian
   ## structural time series model.  This function can be used either

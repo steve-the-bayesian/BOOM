@@ -10,7 +10,7 @@
 \usage{
   DayPlot(y, colors = NULL, ylab = NULL, ...)
   MonthPlot(y, seasonal.identifier = months, colors = NULL, ylab = NULL, ...)
-  YearPlot(y, colors = NULL, ylab = NULL, ...)
+  YearPlot(y, colors = NULL, ylab = NULL, ylim = NULL, legend = TRUE, ...)
 }
 
 \arguments{
@@ -29,8 +29,12 @@
     and \code{\link{quarters}} for examples of how this should work.  }
 
   \item{colors}{A vector of colors to use for the lines.}
+
+  \item{legend}{Logical.  If \code{TRUE} then a legend is added to the plot.}
   
   \item{ylab}{Label for the vertical axis.}
+
+  \item{ylim}{Limits for the vertical axis. (a 2-vector)}
 
   \item{\dots}{Extra arguments passed to \code{\link{plot}} or \code{\link{lines}}.}
 

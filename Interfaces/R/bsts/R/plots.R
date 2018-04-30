@@ -35,7 +35,7 @@ qqdist <- function(draws, ...) {
   sample.size <- length(post.mean)
   draws <- draws[, order(post.mean)]
   expected <- qnorm(ppoints(sample.size))
-  PlotDynamicDistribution(draws, time = expected,
+  PlotDynamicDistribution(draws, timestamps = expected,
     xlab = "Quantiles of Standard Normal", ylab = "Distribution",
     ...)
 
@@ -103,6 +103,8 @@ YearPlot <- function(y, colors = NULL, ylab = NULL, ylim = NULL, legend = TRUE, 
   ##     POSIXt.
   ##   colors:  A vector of colors to use for the lines.
   ##   ylab:  The label for the vertical axis.
+  ##   ylim:  Limits for the vertical axis.
+  ##   legend:  Logical.  If TRUE then a legend is added to the plot.
   ##
   ## Effects:
   ##   A plot is added to the current graphics device.  Each year of y is shown
@@ -465,7 +467,7 @@ PlotBstsComponents <- function(bsts.object,
   
   state.specification <- bsts.object$state.specification[components]
   number.of.components <- length(state.specification)
-  if (model$has.regression) {
+  if (bsts.object$has.regression) {
     number.of.components <- number.of.components + 1
   }
   

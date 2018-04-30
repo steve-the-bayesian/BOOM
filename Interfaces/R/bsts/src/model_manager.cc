@@ -119,36 +119,40 @@ namespace BOOM {
       state_model_factory.AddState(r_state_specification);
       state_model_factory.SaveFinalState(final_state);
 
-      bool save_state_contribution = Rf_asLogical(getListElement(
-          r_options, "save.state.contributions"));
-      if (save_state_contribution) {
-        io_manager->add_list_element(
-            new NativeMatrixListElement(
-                new GeneralStateContributionCallback(model),
-                "state.contributions",
-                nullptr));
-      }
+      // The predict method does not set BstsOptions, so allow NULL here to
+      // signal that options have not been set.
+      if (!Rf_isNull(r_options)) {
+        bool save_state_contribution = Rf_asLogical(getListElement(
+            r_options, "save.state.contributions"));
+        if (save_state_contribution) {
+          io_manager->add_list_element(
+              new NativeMatrixListElement(
+                  new GeneralStateContributionCallback(model),
+                  "state.contributions",
+                  nullptr));
+        }
 
-      bool save_prediction_errors = Rf_asLogical(getListElement(
-          r_options, "save.prediction.errors"));
-      if (save_prediction_errors) {
-        // The final nullptr argument is because we will not be streaming
-        // prediction errors in future calculations.  They are for reporting
-        // only.  As usual, the rows of the matrix correspond to MCMC
-        // iterations, so the columns represent time.
-        io_manager->add_list_element(
-            new BOOM::NativeVectorListElement(
-                new PredictionErrorCallback(model),
-                "one.step.prediction.errors",
-                nullptr));
-      }
+        bool save_prediction_errors = Rf_asLogical(getListElement(
+            r_options, "save.prediction.errors"));
+        if (save_prediction_errors) {
+          // The final nullptr argument is because we will not be streaming
+          // prediction errors in future calculations.  They are for reporting
+          // only.  As usual, the rows of the matrix correspond to MCMC
+          // iterations, so the columns represent time.
+          io_manager->add_list_element(
+              new BOOM::NativeVectorListElement(
+                  new PredictionErrorCallback(model),
+                  "one.step.prediction.errors",
+                  nullptr));
+        }
 
-      bool save_full_state = Rf_asLogical(getListElement(
-          r_options, "save.full.state"));
-      if (save_full_state) {
-        io_manager->add_list_element(
-            new NativeMatrixListElement(
-                new FullStateCallback(model), "full.state", nullptr));
+        bool save_full_state = Rf_asLogical(getListElement(
+            r_options, "save.full.state"));
+        if (save_full_state) {
+          io_manager->add_list_element(
+              new NativeMatrixListElement(
+                  new FullStateCallback(model), "full.state", nullptr));
+        }
       }
       return model;
     }
