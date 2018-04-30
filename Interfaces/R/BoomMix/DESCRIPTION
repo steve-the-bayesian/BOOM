@@ -1,0 +1,11 @@
+Package: BoomMix
+Date: 2018-04-29
+Title: Bayesian analysis of finite mixtures
+Author: Steven L. Scott <steve.the.bayesian@gmail.com>
+Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
+Description: Markov chain Monte Carlo methods for finite mixture models.  Includes support for multiple mixture components used to model multivariate data.
+Depends: BoomSpikeSlab(>= 1.0.0), Boom(>= 0.8.0), R (>= 3.4.0)
+LinkingTo:  Boom(>= 0.8.0), BH (>= 1.15.0-2)
+Version: 0.1
+License: LGPL-2.1 | file LICENSE
+Encoding: UTF-8

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PACKAGE=BoomMix ./install/install.package $@
+

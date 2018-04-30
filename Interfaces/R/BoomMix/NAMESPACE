@@ -1,0 +1,41 @@
+useDynLib("BoomMix")
+
+export(
+  ConditionalMixture,
+  FiniteMixture,
+  InferMixtureComponentNames,
+  CheckMixtureComponent,
+  NormalMixtureComponent,
+  PoissonMixtureComponent,
+  ZeroInflatedPoissonMixtureComponent,
+  ZeroInflatedLognormalMixtureComponent,
+  RegressionMixtureComponent,
+  LogitMixtureComponent,
+  MultinomialMixtureComponent,
+  MarkovMixtureComponent,
+  MvnMixtureComponent,
+  IndependentMvnMixtureComponent,
+  PlotMixtureParams,
+  PlotMixingWeights,
+  PlotStateProbabilities,
+  plot.FiniteMixture,
+  HiddenMarkovModel,
+  plot.HiddenMarkovModel,
+  PlotInitialStateDistribution,
+  PlotStateProbabilities,
+  PlotTransitionProbabilities,
+  SimulateFakeClickstreamParams)
+
+S3method(plot, FiniteMixture)
+S3method(plot, HiddenMarkovModel)
+
+import(Boom, BoomSpikeSlab)
+
+importFrom("graphics", "abline", "boxplot", "legend", "par", "plot")
+
+importFrom("stats", ".getXlevels", "model.matrix", "model.response", "plot.ts",
+  "rgamma", "rpois", "sd", "var")
+
+importFrom("utils", "head", "tail")
+
+useDynLib(BoomMix, .registration = TRUE)
