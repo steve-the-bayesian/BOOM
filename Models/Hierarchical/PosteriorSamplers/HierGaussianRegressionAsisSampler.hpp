@@ -35,7 +35,7 @@ namespace BOOM {
   // http://www.stat.harvard.edu/Faculty_Content/meng/jcgs.2011-article.pdf).
   // The ASIS sampler has better theoretical convergence properties than the
   // classic sampler used by HierarchicalGaussianRegressionSampler.
-  class HierarchicalGaussianRegressionAsisSampler : public PosteriorSampler {
+  class HierGaussianRegressionAsisSampler : public PosteriorSampler {
    public:
     // Args:
     //   model:  The model to be posterior-sampled.
@@ -51,7 +51,7 @@ namespace BOOM {
     //     parameter will be managed elsewhere.
     //   seeding_rng: The random number generator used to set the seed in this
     //     sampler's RNG.
-    HierarchicalGaussianRegressionAsisSampler(
+    HierGaussianRegressionAsisSampler(
         HierarchicalGaussianRegressionModel *model,
         const Ptr<MvnModel> &coefficient_mean_hyperprior,
         const Ptr<WishartModel> &coefficient_precision_hyperprior,

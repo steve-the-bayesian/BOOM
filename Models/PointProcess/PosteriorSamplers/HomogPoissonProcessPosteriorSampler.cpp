@@ -15,27 +15,26 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#ifndef BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
-#define BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_
 
-#include "Models/GammaModel.hpp"
-#include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
-#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/PointProcess/PosteriorSamplers/HomogPoissonProcessPosteriorSampler.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
+  namespace {
+    typedef HomogPoissonProcessPosteriorSampler HPS;
+  }
 
-  class HomogeneousPoissonProcessPosteriorSampler : public PosteriorSampler {
-   public:
-    HomogeneousPoissonProcessPosteriorSampler(
-        HomogeneousPoissonProcess *model, const Ptr<GammaModelBase> &prior,
-        RNG &seeding_rng = GlobalRng::rng);
-    void draw() override;
-    double logpri() const override;
+  HPS::HomogPoissonProcessPosteriorSampler(
+      HomogeneousPoissonProcess *model, const Ptr<GammaModelBase> &prior,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng), model_(model), prior_(prior) {}
 
-   private:
-    HomogeneousPoissonProcess *model_;
-    Ptr<GammaModelBase> prior_;
-  };
+  double HPS::logpri() const { return prior_->logp(model_->lambda()); }
 
+  void HPS::draw() {
+    double a = prior_->alpha() + model_->suf()->count();
+    double b = prior_->beta() + model_->suf()->exposure();
+    double lambda = rgamma_mt(rng(), a, b);
+    model_->set_lambda(lambda);
+  }
 }  // namespace BOOM
-#endif  // BOOM_HOMOGENEOUS_POISSON_PROCESS_POSTERIOR_SAMPLER_HPP_

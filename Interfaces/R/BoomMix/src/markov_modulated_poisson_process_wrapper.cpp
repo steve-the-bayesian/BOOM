@@ -12,7 +12,7 @@
 #include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
 #include <Models/PointProcess/HomogeneousPoissonProcess.hpp>
 #include <Models/PointProcess/MarkovModulatedPoissonProcess.hpp>
-#include <Models/PointProcess/PosteriorSamplers/MarkovModulatedPoissonProcessPosteriorSampler.hpp>
+#include <Models/PointProcess/PosteriorSamplers/MmppPosteriorSampler.hpp>
 #include <cpputil/report_error.hpp>
 
 namespace BOOM {
@@ -75,7 +75,7 @@ namespace BOOM {
             new MarkovModulatedPoissonProcess;
         AssignComponentProcesses(mmpp);
         AssignData(mmpp);
-        NEW(MarkovModulatedPoissonProcessPosteriorSampler, sam)(mmpp);
+        NEW(MmppPosteriorSampler, sam)(mmpp);
         mmpp->set_method(sam);
 
         // Store the draws of log likelihood.

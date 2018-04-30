@@ -6,7 +6,7 @@
 #include "Models/Glm/PosteriorSamplers/RegressionShrinkageSampler.hpp"
 #include "Models/Hierarchical/HierarchicalGaussianRegressionModel.hpp"
 #include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionSampler.hpp"
-#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+#include "Models/Hierarchical/PosteriorSamplers/HierGaussianRegressionAsisSampler.hpp"
 
 #include "cpputil/math_utils.hpp"
 
@@ -165,7 +165,7 @@ namespace {
                                               sd_prior.prior_guess());
 
     if (prior_extractor.ASIS()) {
-      NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
+      NEW(HierGaussianRegressionAsisSampler, sampler)(
           model.get(),
           prior_extractor.mean_hyperprior(),
           prior_extractor.variance_hyperprior(),

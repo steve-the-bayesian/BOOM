@@ -22,7 +22,7 @@
 #include "Models/PointProcess/PoissonProcess.hpp"
 #include "Models/PointProcess/HomogeneousPoissonProcess.hpp"
 #include "Models/PointProcess/WeeklyCyclePoissonProcess.hpp"
-#include "Models/PointProcess/PosteriorSamplers/HomogeneousPoissonProcessPosteriorSampler.hpp"
+#include "Models/PointProcess/PosteriorSamplers/HomogPoissonProcessPosteriorSampler.hpp"
 #include "Models/PointProcess/PosteriorSamplers/WeeklyCyclePoissonProcessSampler.hpp"
 
 #include <r_interface/prior_specification.hpp>
@@ -86,7 +86,7 @@ namespace BOOM {
           NEW(BOOM::HomogeneousPoissonProcess, ans)(initial_lambda);
           NEW(BOOM::GammaModel, lambda_prior)(prior_specification.a(),
                                               prior_specification.b());
-          NEW(HomogeneousPoissonProcessPosteriorSampler, sampler)(
+          NEW(HomogPoissonProcessPosteriorSampler, sampler)(
               ans.get(),
               lambda_prior);
           ans->set_method(sampler);

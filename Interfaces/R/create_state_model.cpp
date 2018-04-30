@@ -33,7 +33,7 @@
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
-#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+#include "Models/Hierarchical/PosteriorSamplers/HierGaussianRegressionAsisSampler.hpp"
 
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionArPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
@@ -1011,7 +1011,7 @@ namespace BOOM {
           coefficient_variance_prior_spec.variance_guess_weight(),
           coefficient_variance_prior_spec.variance_guess());
 
-      NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
+      NEW(HierGaussianRegressionAsisSampler, sampler)(
           holiday_model->model(),
           coefficient_mean_prior,
           coefficient_variance_prior,

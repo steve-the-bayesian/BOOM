@@ -17,16 +17,16 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Hierarchical/PosteriorSamplers/HierarchicalGaussianRegressionAsisSampler.hpp"
+#include "Models/Hierarchical/PosteriorSamplers/HierGaussianRegressionAsisSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/RegressionCoefficientSampler.hpp"
 #include "Models/PosteriorSamplers/MvnMeanSampler.hpp"
 #include "Models/PosteriorSamplers/MvnVarSampler.hpp"
 
 namespace BOOM {
   namespace {
-    typedef HierarchicalGaussianRegressionAsisSampler HGRAS;
+    typedef HierGaussianRegressionAsisSampler HGRAS;
   }
-  HGRAS::HierarchicalGaussianRegressionAsisSampler(
+  HGRAS::HierGaussianRegressionAsisSampler(
       HierarchicalGaussianRegressionModel *model,
       const Ptr<MvnModel> &coefficient_mean_hyperprior,
       const Ptr<WishartModel> &coefficient_precision_hyperprior,
