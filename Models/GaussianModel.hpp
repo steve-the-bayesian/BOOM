@@ -54,9 +54,7 @@ namespace BOOM {
 
     void mle() override;
 
-    void set_conjugate_prior(double mu0, double kappa, double df,
-                             double sigma_guess);
-
+    // Derivatives of log likelihood are with respect to mu and sigma^2.
     double Loglike(const Vector &mu_sigsq, Vector &g, Matrix &h,
                    uint nd) const override;
     double log_likelihood() const override {

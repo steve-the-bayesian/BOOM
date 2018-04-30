@@ -83,10 +83,6 @@ namespace BOOM {
       return m * m;
     }
 
-    void set_conjugate_prior(double a, double b);
-    void set_conjugate_prior(const Ptr<GammaModel> &);
-    void set_conjugate_prior(const Ptr<ExponentialGammaSampler> &);
-
     // probability calculations
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;

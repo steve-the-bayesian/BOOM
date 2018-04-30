@@ -431,21 +431,6 @@ namespace BOOM {
     }
   }
 
-  void MarkovModel::set_conjugate_prior(const Ptr<ProductDirichletModel> &pri) {
-    NEW(MarkovConjSampler, sam)(this, pri);
-    set_conjugate_prior(sam);
-  }
-
-  void MarkovModel::set_conjugate_prior(const Ptr<ProductDirichletModel> &pri,
-                                        const Ptr<DirichletModel> &pi0pri) {
-    NEW(MarkovConjSampler, sam)(this, pri, pi0pri);
-    set_conjugate_prior(sam);
-  }
-
-  void MarkovModel::set_conjugate_prior(const Ptr<MarkovConjSampler> &p) {
-    set_method(p);
-  }
-
   double MarkovModel::loglike(const Vector &serialized_params) const {
     const Vector &icount(suf()->init());
     const Matrix &tcount(suf()->trans());

@@ -29,6 +29,7 @@ namespace BOOM {
     static constexpr double pi_squared_over_6 = 1.6449340668482264061;
     static constexpr double half_pi_squared = 4.93480220054468;
     static constexpr double root_2pi = 2.506628274631;
+    static constexpr double log_2pi = 1.83787706640935;
     static constexpr double log_root_2pi = 0.918938533204673;
     static constexpr double log_pi = 1.1447298858494;
     static constexpr double root2 = 1.4142135623730951455;

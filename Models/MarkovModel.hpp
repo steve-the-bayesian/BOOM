@@ -231,10 +231,6 @@ namespace BOOM {
     double pi0(int) const;
 
     void mle() override;
-    void set_conjugate_prior(const Ptr<ProductDirichletModel> &);
-    void set_conjugate_prior(const Ptr<ProductDirichletModel> &,
-                             const Ptr<DirichletModel> &);
-    void set_conjugate_prior(const Ptr<MarkovConjSampler> &);
 
     // The argument is a Vector with S^2 - 1 elements, where S is the
     // state space size.  The final S-1 are the initial distribution.

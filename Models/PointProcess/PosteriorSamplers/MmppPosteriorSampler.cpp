@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/PointProcess/PosteriorSamplers/MarkovModulatedPoissonProcessPosteriorSampler.hpp"
+#include "Models/PointProcess/PosteriorSamplers/MmppPosteriorSampler.hpp"
 
 namespace BOOM {
-  typedef MarkovModulatedPoissonProcessPosteriorSampler MMPPPS;
-  MMPPPS::MarkovModulatedPoissonProcessPosteriorSampler(
+  typedef MmppPosteriorSampler MMPPPS;
+  MMPPPS::MmppPosteriorSampler(
       MarkovModulatedPoissonProcess *mmpp, bool initialize_latent_data,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),

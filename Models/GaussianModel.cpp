@@ -19,7 +19,6 @@
 #include "Models/GaussianModel.hpp"
 #include "Models/GammaModel.hpp"
 #include "Models/GaussianModelGivenSigma.hpp"
-#include "Models/PosteriorSamplers/GaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 #include <cmath>
@@ -28,7 +27,6 @@
 #include "distributions.hpp"
 
 namespace BOOM {
-  using GCS = BOOM::GaussianConjSampler;
   using GM = BOOM::GaussianModel;
 
   GaussianModel::GaussianModel(double mean, double sd)
@@ -96,25 +94,16 @@ namespace BOOM {
     double ans = -0.5 * (n * (log2pi + log(sigsq)) + SS / sigsq);
 
     if (nd > 0) {
-      double sigsq_sq = sigsq * sigsq;
+      double sig4 = sigsq * sigsq;
       g[0] = (sum - n * mu) / sigsq;
-      g[1] = -0.5 * n / sigsq + 0.5 * SS / sigsq_sq;
+      g[1] = -0.5 * n / sigsq + 0.5 * SS / sig4;
       if (nd > 1) {
-        h(0, 0) = n / sigsq;
-        h(1, 0) = h(0, 1) = -(sum - n * mu) / sigsq_sq;
-        h(1, 1) = (n / 2 - SS / sigsq) / sigsq_sq;
+        h(0, 0) = -n / sigsq;
+        h(1, 0) = h(0, 1) = -(sum - n * mu) / sig4;
+        h(1, 1) = (n / 2 - SS / sigsq) / sig4;
       }
     }
     return ans;
-  }
-
-  void GM::set_conjugate_prior(double mu0, double kappa, double df,
-                               double sigma_guess) {
-    double sum_of_squares = pow(sigma_guess, 2) * df;
-    NEW(GammaModel, siginv_prior)(df / 2, sum_of_squares / 2);
-    NEW(GaussianModelGivenSigma, mu_prior)(Sigsq_prm(), mu0, kappa);
-    NEW(GaussianConjSampler, sampler)(this, mu_prior, siginv_prior);
-    set_method(sampler);
   }
 
 }  // namespace BOOM
