@@ -48,7 +48,7 @@ holiday.list <- list(memorial.day, labor.day, presidents.day)
 number.of.holidays <- length(holiday.list)
 
 ## In a real example you'd want more than 100 MCMC iterations.
-niter <- 100
+niter <- 200
 
 test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
