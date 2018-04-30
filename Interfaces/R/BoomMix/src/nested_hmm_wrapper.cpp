@@ -38,7 +38,7 @@ namespace {
   // need custom callbacks.
   class pi0Callback : public ArrayIoCallback {
    public:
-    pi0Callback(Ptr<NestedHmm> model)
+    explicit pi0Callback(Ptr<NestedHmm> model)
         : model_(model)
     {}
 
@@ -70,7 +70,7 @@ namespace {
   //----------------------------------------------------------------------
   class P0Callback : public ArrayIoCallback {
    public:
-    P0Callback(Ptr<NestedHmm> model) : model_(model) {}
+    explicit P0Callback(Ptr<NestedHmm> model) : model_(model) {}
 
     virtual std::vector<int> dim() const {
       std::vector<int> ans(4);
@@ -98,7 +98,7 @@ namespace {
   //----------------------------------------------------------------------
   class pi1Callback : public ArrayIoCallback {
    public:
-    pi1Callback(Ptr<NestedHmm> model) : model_(model) {}
+    explicit pi1Callback(Ptr<NestedHmm> model) : model_(model) {}
     virtual std::vector<int> dim() const {
       std::vector<int> ans(2);
       ans[0] = model_->S2();
@@ -122,7 +122,7 @@ namespace {
   //----------------------------------------------------------------------
   class P1Callback : public ArrayIoCallback {
    public:
-    P1Callback(Ptr<NestedHmm> model) : model_(model) {}
+    explicit P1Callback(Ptr<NestedHmm> model) : model_(model) {}
     virtual std::vector<int> dim() const {
       std::vector<int> ans(3);
       ans[0] = model_->S2();
@@ -148,7 +148,7 @@ namespace {
   //----------------------------------------------------------------------
   class LogLikelihoodCallback : public ScalarIoCallback {
    public:
-    LogLikelihoodCallback(Ptr<NestedHmm> model) : model_(model) {}
+    explicit LogLikelihoodCallback(Ptr<NestedHmm> model) : model_(model) {}
     virtual double get_value() const {
       return model_->last_loglike();
     }
@@ -159,7 +159,7 @@ namespace {
   //----------------------------------------------------------------------
   class LogPosteriorCallback : public ScalarIoCallback {
    public:
-    LogPosteriorCallback(Ptr<NestedHmm> model) : model_(model) {}
+    explicit LogPosteriorCallback(Ptr<NestedHmm> model) : model_(model) {}
     virtual double get_value() const {
       return model_->last_logpost();
     }
