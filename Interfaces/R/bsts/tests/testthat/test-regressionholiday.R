@@ -10,6 +10,13 @@ dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend),
   by = "day")
 y <- zoo(trend + rnorm(length(trend), 0, .2), dates)
 
+McmcMatrixReport <- function(draws, truth, confidence = .95) {
+  alpha <- 1 - confidence
+  intervals <- t(apply(draws, 2, quantile, c(alpha / 2, (1 - alpha / 2))))
+  ans <- cbind(intervals, truth)
+  return(paste(capture.output(print(ans)), collapse = "\n"))
+}
+
 AddHolidayEffect <- function(y, dates, effect) {
   ## Adds a holiday effect to simulated data.
   ## Args:
@@ -58,11 +65,12 @@ test_that("regression holiday model works", {
   expect_that(model$MemorialDay, is_a("matrix"))
   expect_that(nrow(model$MemorialDay), equals(niter))
   expect_that(ncol(model$MemorialDay), equals(length(memorial.day.effect)))
-  all.effects <- cbind(model$MemorialDay, model$LaborDay, model$PresidentsDay)
-  truth <- c(memorial.day.effect, labor.day.effect, presidents.day.effect)
-  ranges <- t(apply(all.effects, 2, range))
-  expect_true(CheckMcmcMatrix(all.effects, truth, confidence = .99),
-    info = list("ranges" = ranges, "truth" = truth))
+  expect_true(CheckMcmcMatrix(model$MemorialDay, memorial.day.effect),
+    info = McmcMatrixReport(model$MemorialDay, memorial.day.effect))
+  expect_true(CheckMcmcMatrix(model$LaborDay, labor.day.effect),
+    info = McmcMatrixReport(model$LaborDay, labor.day.effect))
+  expect_true(CheckMcmcMatrix(model$PresidentsDay, presidents.day.effect),
+    info = McmcMatrixReport(model$PresidentsDay, presidents.day.effect))
 })
 
 test_that("hierarchical model runs", {

@@ -36,6 +36,31 @@ CheckMcmcMatrix <- function(draws, truth, confidence = .95,
   }
 }
 
+McmcMatrixReport <- function(draws, truth, confidence = .95) {
+  ## A report that can be put in the 'info' field of an expect_that call when
+  ## the MCMC matrix checked by CheckMcmcMatrix fails to cover the true values.
+  ##
+  ## Args:
+  ##   draws: A matrix of MCMC draws.  Each row is a draw.  Each column is a
+  ##     variable in the distribution being sampled by the MCMC.
+  ##   truth: The true values used to verify the draws.  A vector of the same
+  ##     dimension as ncol(draws).
+  ##   confidence: The probability content of the central interval for each
+  ##     variable.
+  ##
+  ## Returns:
+  ##   A textual representation of a three column matrix.  Each row matches a
+  ##   variable in draws, and gives the lower and upper bounds for the credible
+  ##   interval used to check the values.  The final column lists the true
+  ##   values that are supposed to be inside the credible intervals.  The value
+  ##   is returned as a character string that is expected to be fed to cat() or
+  ##   print() so that it will render correctly in R CMD CHECK output.
+  alpha <- 1 - confidence
+  intervals <- t(apply(draws, 2, quantile, c(alpha / 2, (1 - alpha / 2))))
+  ans <- cbind(intervals, truth)
+  return(paste(capture.output(print(ans)), collapse = "\n"))
+}
+
 CheckMcmcVector <- function(draws, truth, confidence = .95) {
   ## A utility for unit testing an MCMC algorithm.  Check that an MCMC ensemble
   ## contains the 'true' value used to simulate the fake data driving the MCMC
