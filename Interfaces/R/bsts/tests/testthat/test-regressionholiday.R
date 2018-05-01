@@ -48,19 +48,21 @@ holiday.list <- list(memorial.day, labor.day, presidents.day)
 number.of.holidays <- length(holiday.list)
 
 ## In a real example you'd want more than 100 MCMC iterations.
-niter <- 200
+niter <- 500
 
 test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
   ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
-  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = niter)
   expect_that(model, is_a("bsts"))
   expect_that(model$MemorialDay, is_a("matrix"))
   expect_that(nrow(model$MemorialDay), equals(niter))
   expect_that(ncol(model$MemorialDay), equals(length(memorial.day.effect)))
-  expect_true(CheckMcmcMatrix(
-    cbind(model$MemorialDay, model$LaborDay, model$PresidentsDay),
-    c(memorial.day.effect, labor.day.effect, presidents.day.effect)))
+  all.effects <- cbind(model$MemorialDay, model$LaborDay, model$PresidentsDay)
+  truth <- c(memorial.day.effect, labor.day.effect, presidents.day.effect)
+  ranges <- t(apply(all.effects, 2, range))
+  expect_true(CheckMcmcMatrix(all.effects, truth, confidence = .99),
+    info = list("ranges" = ranges, "truth" = truth))
 })
 
 test_that("hierarchical model runs", {
@@ -68,10 +70,10 @@ test_that("hierarchical model runs", {
   ## shrinkage.  
   ss2 <- AddLocalLevel(list(), y)
   ss2 <- AddHierarchicalRegressionHoliday(ss2, y, holiday.list = holiday.list)
-  model <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309)
-  expect_that(model, is_a("bsts"))
-  expect_that(model$holiday.coefficients, is_a("array"))
-  expect_that(dim(model$holiday.coefficients),
+  model2 <- bsts(y, state.specification = ss2, niter = niter, seed = 8675309, ping = niter)
+  expect_that(model2, is_a("bsts"))
+  expect_that(model2$holiday.coefficients, is_a("array"))
+  expect_that(dim(model2$holiday.coefficients),
     equals(c(niter, number.of.holidays, 3)))
   }
 )
@@ -81,7 +83,7 @@ test_that("random walk holiday works", {
   ss <- AddRandomWalkHoliday(ss, y, memorial.day)
   ss <- AddRandomWalkHoliday(ss, y, labor.day)
   ss <- AddRandomWalkHoliday(ss, y, presidents.day)
-  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309)
+  model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = niter)
   expect_that(model, is_a("bsts"))
   expect_that(length(dim(model$state.contributions)), equals(3))
   expect_true(memorial.day$name %in% dimnames(model$state.contributions)[[2]])
