@@ -10,9 +10,10 @@
 }
 \usage{
 CheckMcmcMatrix(draws, truth, confidence = .95,
-                control.multiple.comparisons = TRUE)
+                control.multiple.comparisons = TRUE,
+                burn = 0)
 
-CheckMcmcVector(draws, truth, confidence = .95)
+CheckMcmcVector(draws, truth, confidence = .95, burn = 0)
 
 }
 
@@ -33,7 +34,7 @@ CheckMcmcVector(draws, truth, confidence = .95)
     cover its corresponding true value.  Otherwise a fraction of
     intervals (given by \code{confidence}) must cover.}
 
-
+  \item{burn}{The number of MCMC iterations to discard as burn-in.}
 }
 \value{
 

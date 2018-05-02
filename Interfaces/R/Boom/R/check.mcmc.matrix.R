@@ -1,5 +1,6 @@
 CheckMcmcMatrix <- function(draws, truth, confidence = .95,
-                            control.multiple.comparisons = TRUE) {
+                            control.multiple.comparisons = TRUE,
+                            burn = 0) {
   ## A utility for unit testing an MCMC algorithm.  Check that an MCMC ensemble
   ## contains the 'true' values used to simulate the fake data driving the MCMC
   ## test.
@@ -21,6 +22,10 @@ CheckMcmcMatrix <- function(draws, truth, confidence = .95,
   ## Returns:
   ##   TRUE if the check passes.  FALSE otherwise.
   stopifnot(is.matrix(draws), length(truth) == ncol(draws))
+  if (burn > 0) {
+    draws <- draws[-(1:burn), , drop = FALSE]
+  }
+  stopifnot(nrow(draws) > 0)
   alpha <- 1 - confidence
   intervals <- apply(draws, 2, quantile, c(alpha / 2, 1 - (alpha / 2)))
   ## intervals is a 2-row matrix.
@@ -36,7 +41,7 @@ CheckMcmcMatrix <- function(draws, truth, confidence = .95,
   }
 }
 
-McmcMatrixReport <- function(draws, truth, confidence = .95) {
+McmcMatrixReport <- function(draws, truth, confidence = .95, burn = 0) {
   ## A report that can be put in the 'info' field of an expect_that call when
   ## the MCMC matrix checked by CheckMcmcMatrix fails to cover the true values.
   ##
@@ -56,12 +61,16 @@ McmcMatrixReport <- function(draws, truth, confidence = .95) {
   ##   is returned as a character string that is expected to be fed to cat() or
   ##   print() so that it will render correctly in R CMD CHECK output.
   alpha <- 1 - confidence
+  if (burn > 0) {
+    draws <- draws[-(1:burn), , drop = FALSE]
+  }
+  stopifnot(nrow(draws) > 0)
   intervals <- t(apply(draws, 2, quantile, c(alpha / 2, (1 - alpha / 2))))
   ans <- cbind(intervals, truth)
   return(paste(capture.output(print(ans)), collapse = "\n"))
 }
 
-CheckMcmcVector <- function(draws, truth, confidence = .95) {
+CheckMcmcVector <- function(draws, truth, confidence = .95, burn = 0) {
   ## A utility for unit testing an MCMC algorithm.  Check that an MCMC ensemble
   ## contains the 'true' value used to simulate the fake data driving the MCMC
   ## test.
@@ -83,6 +92,11 @@ CheckMcmcVector <- function(draws, truth, confidence = .95) {
   stopifnot(is.numeric(draws),
     is.numeric(truth),
     length(truth) == 1)
+  if (burn > 0) {
+    draws <- draws[-(1:burn)]
+  }
+  stopifnot(length(draws) > 0)
+
   alpha <- 1 - confidence
   interval <- quantile(draws, c(alpha / 2, 1 - (alpha/2)))
   return(truth >= interval[1] && truth <= interval[2])
