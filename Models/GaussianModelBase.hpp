@@ -151,6 +151,9 @@ namespace BOOM {
                                             double kappa,
                                             double df,
                                             double ss);
+
+    static double log_likelihood(const GaussianSuf &suf, double mu,
+                                 double sigsq);
   };
 
 }  // namespace BOOM

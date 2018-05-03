@@ -252,5 +252,13 @@ namespace BOOM {
         + (.5 * df) * log(ss / 2)
         - (.5 * DF) * log(SS / 2);
   }
+
+  double GaussianModelBase::log_likelihood(const GaussianSuf &suf, double mu, double sigsq) {
+    double n = suf.n();
+    return -.5 * n * Constants::log_2pi
+        - .5 * n * log(sigsq)
+        - .5 * (n - 1) * suf.sample_var() / sigsq
+        - .5 * n * square(suf.ybar() - mu) / sigsq;
+  }
   
 }  // namespace BOOM

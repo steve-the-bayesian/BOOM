@@ -143,5 +143,37 @@ namespace {
         suf, mu0, kappa, df, ss);
     EXPECT_NEAR(quadrature_ans, ans, 1e-4);
   }  
+
+  TEST_F(GaussianTest, LogLikelihood_from_suf) {
+    int nobs = 4;
+    Vector y(nobs);
+    double mu_arg = 2;
+    double sigsq_arg = 12;
+    double manual_log_likelihood = 0;
+    GaussianSuf suf;
+    for (int i = 0; i < nobs; ++i) {
+      y[i] = rnorm(3, 7);
+      manual_log_likelihood += dnorm(y[i], mu_arg, sqrt(sigsq_arg), true);
+      suf.update_raw(y[i]);
+    }
+    EXPECT_NEAR(manual_log_likelihood,
+                GaussianModelBase::log_likelihood(suf, mu_arg, sigsq_arg),
+                1e-8);
+
+    // Log likelihood should also work when there is only a single observation.
+    y.clear();
+    suf.clear();
+    y.push_back(1.2);
+    suf.update_raw(y[0]);
+    EXPECT_NEAR(dnorm(y[0], mu_arg, sqrt(sigsq_arg), true),
+                GaussianModelBase::log_likelihood(suf, mu_arg, sigsq_arg),
+                1e-8);
+
+    // Log likelihood should return 0 if suf is empty.
+    suf.clear();
+    EXPECT_NEAR(0.0,
+                GaussianModelBase::log_likelihood(suf, mu_arg, sigsq_arg),
+                1-e8);
+  }
   
 }  // namespace
