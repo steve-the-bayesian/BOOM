@@ -68,6 +68,17 @@ namespace BOOM {
     return *this;
   }
 
+  SM & SubMatrix::reset(Matrix &rhs, int rlo, int rhi, int clo, int chi) {
+    start_ = rhs.data() + rlo + clo * rhs.nrow();
+    nr_ = (rhi - rlo + 1);
+    nc_ = (chi - clo + 1);
+    stride = (rhs.nrow());
+    assert(nr_ >= 0);
+    assert(nc_ >= 0);
+    assert(rhi < rhs.nrow() && chi < rhs.ncol());
+    return *this;
+  }
+  
   SM &SM::reset(double *data, int nrow, int ncol, int new_stride) {
     start_ = data;
     nr_ = nrow;
@@ -297,6 +308,19 @@ namespace BOOM {
     assert(stride >= 1);
   }
 
+  CSM & ConstSubMatrix::reset(const Matrix &rhs, int rlo, int rhi,
+                              int clo, int chi) {
+    start_ = rhs.data() + rlo + clo * rhs.nrow();
+    nr_ = (rhi - rlo + 1);
+    nc_ = (chi - clo + 1);
+    stride = (rhs.nrow());
+    assert(nr_ >= 0);
+    assert(nc_ >= 0);
+    assert(rhi < rhs.nrow() && chi < rhs.ncol());
+    return *this;
+  }
+
+  
   uint CSM::nrow() const { return nr_; }
   uint CSM::ncol() const { return nc_; }
   const double &CSM::operator()(uint i, uint j) const {

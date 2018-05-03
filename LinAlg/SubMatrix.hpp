@@ -41,9 +41,10 @@ namespace BOOM {
 
     // Pointer semantics: make the memory here point to the memory
     // there.
+    SubMatrix &reset(Matrix &rhs, int rlo, int rhi, int clo, int chi);
     SubMatrix &reset(const SubMatrix &rhs);
     SubMatrix &reset(double *v, int nrow, int ncol, int stride);
-
+    
     uint nrow() const;
     uint ncol() const;
 
@@ -128,6 +129,8 @@ namespace BOOM {
     //     cases the stride argument can be ignored.
     ConstSubMatrix(const double *data, int rows, int cols, int stride = -1);
 
+    ConstSubMatrix &reset(const Matrix &rhs, int rlo, int rhi, int clo, int chi);
+    
     uint nrow() const;
     uint ncol() const;
 
