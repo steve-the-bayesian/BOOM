@@ -151,10 +151,10 @@ bsts <- function(formula,
   has.regression <- !is.numeric(formula)
   if (has.regression) {
     ##----------------------------------------------------------------------
-    ## Here begins some black magic to extract the responses and the
-    ## matrix of predictors from the model formula and either the
-    ## 'data' argument or from objects present in the parent frame at
-    ## the time of calling.  Most of this was copied from 'lm'.
+    ## Here begins some black magic to extract the responses and the matrix of
+    ## predictors from the model formula and either the 'data' argument or from
+    ## objects present in the parent frame at the time of calling.  Most of this
+    ## was copied from 'lm'.
     function.call <- match.call()
     my.model.frame <- match.call(expand.dots = FALSE)
     frame.match <- match(c("formula", "data", "na.action"),
@@ -162,12 +162,11 @@ bsts <- function(formula,
     my.model.frame <- my.model.frame[c(1L, frame.match)]
     my.model.frame$drop.unused.levels <- TRUE
 
-    # In an ordinary regression model the default action for NA's is
-    # to delete them.  This makes sense in ordinary regression models,
-    # but is dangerous in time series, because it artificially
-    # shortens the time between two data points.  If the user has not
-    # specified an na.action function argument then we should use
-    # na.pass as a default, so that NA's are passed through to the
+    # In an ordinary regression model the default action for NA's is to delete
+    # them.  This makes sense in ordinary regression models, but is dangerous in
+    # time series, because it artificially shortens the time between two data
+    # points.  If the user has not specified an na.action function argument then
+    # we should use na.pass as a default, so that NA's are passed through to the
     # underlying C++ code.
     if (! "na.action" %in% names(my.model.frame)) {
       my.model.frame$na.action <- na.pass
@@ -181,9 +180,8 @@ bsts <- function(formula,
       stop("bsts does not allow NA's in the predictors, only the responses.")
     }
     response <- model.response(my.model.frame, "any")
-    ## Check that response and predictors are the right size.  The
-    ## response might be a matrix if the model family is logit or
-    ## Poisson.
+    ## Check that response and predictors are the right size.  The response
+    ## might be a matrix if the model family is logit or Poisson.
     sample.size <- if (is.matrix(response)) nrow(response) else length(response)
     stopifnot(nrow(predictors) == sample.size)
 

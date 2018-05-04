@@ -69,10 +69,10 @@ extern "C" {
           nullptr,
           &io_manager));
 
-      // Do one posterior sampling step before getting ready to write.
-      // This will ensure that any dynamically allocated objects have
-      // the correct size before any R memory gets allocated in the
-      // call to prepare_to_write().
+      // Do one posterior sampling step before getting ready to write.  This
+      // will ensure that any dynamically allocated objects have the correct
+      // size before any R memory gets allocated in the call to
+      // prepare_to_write().
       model->sample_posterior();
       int niter = lround(Rf_asReal(r_niter));
       int ping = lround(Rf_asReal(r_ping));
