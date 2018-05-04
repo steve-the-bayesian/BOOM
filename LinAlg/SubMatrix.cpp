@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "LinAlg/SubMatrix.hpp"
+#include "cpputil/report_error.hpp"
 #include <iomanip>
 
 namespace BOOM {
@@ -294,8 +295,21 @@ namespace BOOM {
         nr_(rhi - rlo + 1),
         nc_(chi - clo + 1),
         stride(m.nrow()) {
-    assert(rhi >= rlo && chi >= clo);
-    assert(rhi < m.nrow() && chi < m.ncol());
+    if (rlo < 0 || clo < 0) {
+      report_error("Row and column indices cannot be less than zero.");
+    }
+    if (rhi >= m.nrow()) {
+      report_error("Row index exceeds maximum number of rows.");
+    }
+    if (chi >= m.ncol()) {
+      report_error("Column index exceeds maximum number of rows.");
+    }
+    if (rhi < rlo) {
+      report_error("Upper row index is less than lower index.");
+    }
+    if (chi < clo) {
+      report_error("Upper column index is less than lower index.");
+    }
   }
 
   CSM::ConstSubMatrix(const double *data, int nrow, int ncol, int my_stride)

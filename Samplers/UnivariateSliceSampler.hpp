@@ -44,8 +44,10 @@ namespace BOOM {
     //     'false' then the density is potentially multi-modal.
     //   rng: A pointer to the random number generator that supplies
     //     randomness to this sampler.
-    explicit UnivariateSliceSampler(const Target &logdensity, double suggested_dx = 1.0,
-                           bool unimodal = false, RNG *rng = nullptr);
+    explicit UnivariateSliceSampler(const Target &logdensity,
+                                    double suggested_dx = 1.0,
+                                    bool unimodal = false,
+                                    RNG *rng = nullptr);
     Vector draw(const Vector &x) override;
 
     // Set lower and upper limits for the domain of each variable.

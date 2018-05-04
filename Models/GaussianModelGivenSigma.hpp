@@ -46,7 +46,8 @@ namespace BOOM {
     //   sample_size: The denominator of the variance of this distribution.
     //     This is 'kappa' in the class comment.
     explicit GaussianModelGivenSigma(
-        const Ptr<UnivParams> &scaling_variance = nullptr, double mean = 0,
+        const Ptr<UnivParams> &scaling_variance = nullptr,
+        double mean = 0,
         double sample_size = 1);
     GaussianModelGivenSigma *clone() const override;
 
