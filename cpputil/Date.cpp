@@ -450,6 +450,7 @@ namespace BOOM {
   }
 
   int Date::compute_local_time_zone() {
+    //    std::cout << "computing local time zone!!!" << std::endl;
     time_t now;
     time(&now);
     struct tm local_time = *localtime(&now);
