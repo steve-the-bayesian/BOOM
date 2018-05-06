@@ -49,12 +49,10 @@ AddRegressionHoliday <- function(state.specification = NULL,
   if (missing(state.specification)) {
     state.specification <- list()
   }
-
   if (is.null(prior)) {
     prior <- .DefaultRegressionHolidayModelCoefficientPrior(sdy)
   }
   stopifnot(inherits(prior, "NormalPrior"))
-  
   spec <- list(name = "RegressionHolidays",
                holidays = holiday.list,
                time0 = as.Date(.SetTimeZero(time0, y)),
@@ -290,7 +288,6 @@ AddHierarchicalRegressionHoliday <- function(
   }
   stopifnot(inherits(coefficient.variance.prior,
     "InverseWishartPrior"))
-  
   spec <- list(name = "HierarchicalRegressionHolidays",
                holidays = holiday.list,
                time0 = as.Date(.SetTimeZero(time0, y)),

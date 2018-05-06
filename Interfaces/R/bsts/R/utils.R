@@ -98,6 +98,15 @@
   return(invisible(NULL))
 }
 
+as.Date.POSIXct <- function(x, ...) {
+  ## Convert a POSIXct object to a Date, without shifting time zones.
+  return(base::as.Date.POSIXct(x, tz = Sys.timezone()))
+}
+as.Date.POSIXlt <- function(x, ...) {
+  ## Convert a POSIXlt object to a Date, without shifting time zones.
+  return(base::as.Date.POSIXlt(x, tz = Sys.timezone()))
+}
+
 YearMonToPOSIX <- function(timestamps) {
   ## Convert an object of class yearmon to class POSIXt, without getting bogged
   ## down in timezone calculations.

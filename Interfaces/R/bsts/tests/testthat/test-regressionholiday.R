@@ -55,8 +55,6 @@ labor.day.effect <- c(70, 80, 90)
 labor.day.dates <- as.Date(c("2014-09-01", "2015-09-07"))
 y <- AddHolidayEffect(y, labor.day.dates, labor.day.effect)
 
-print(y)
-
 ## The holidays can be in any order.
 holiday.list <- list(memorial.day, labor.day, presidents.day)
 number.of.holidays <- length(holiday.list)
@@ -68,11 +66,6 @@ test_that("regression holiday model works", {
   ss <- AddLocalLevel(list(), y)
   ss <- AddRegressionHoliday(ss, y, holiday.list = holiday.list)
   model <- bsts(y, state.specification = ss, niter = niter, seed = 8675309, ping = niter)
-
-  ## This might fail if something fishy happens with timestamps.
-  expect_equal(y, model$original.series)
-  print(cbind(y, model$original.series)
-
   expect_that(model, is_a("bsts"))
   expect_that(model$MemorialDay, is_a("matrix"))
   expect_that(nrow(model$MemorialDay), equals(niter))

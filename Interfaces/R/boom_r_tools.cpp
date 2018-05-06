@@ -591,7 +591,6 @@ namespace BOOM {
         r_env_(getListElement(r_vector_function, "env"))
   {
     if (!Rf_isEnvironment(r_env_)) {
-      Rf_PrintValue(r_env_);
       report_error("The second argument to RVectorFunction must be an "
                    "environment.");
     }
