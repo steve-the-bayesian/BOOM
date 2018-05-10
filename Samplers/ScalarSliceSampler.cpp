@@ -54,11 +54,9 @@ namespace BOOM {
   void SSS::set_lower_limit(double Lo) {
     lo_ = lower_bound_ = Lo;
     lo_set_manually_ = true;
-    hi_set_manually_ = false;
   }
   void SSS::set_upper_limit(double Hi) {
     hi_ = upper_bound_ = Hi;
-    lo_set_manually_ = false;
     hi_set_manually_ = true;
   }
 
