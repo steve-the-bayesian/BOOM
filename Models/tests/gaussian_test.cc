@@ -173,7 +173,7 @@ namespace {
     suf.clear();
     EXPECT_NEAR(0.0,
                 GaussianModelBase::log_likelihood(suf, mu_arg, sigsq_arg),
-                1-e8);
+                1e-8);
   }
   
 }  // namespace
