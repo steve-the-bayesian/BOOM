@@ -25,30 +25,51 @@
 
 namespace BOOM {
 
+  // An object that will remember a real value, and a memory location where it
+  // is stored.  When this object goes out of scope, its destructor resets the
+  // variable to the value it had when this object was created.
+  class RealValueHolder {
+   public:
+    RealValueHolder(double &value)
+        : value_(value), source_(&value)
+    {}
+    ~RealValueHolder() {*source_ = value_;}
+   private:
+    double value_;
+    double *source_;
+  };
+  
   class Params;
   class ParamHolder {
    public:
+    // Store the current value of held_prm in Wsp, to be restored when the
+    // ParamHolder goes out of scope.
     ParamHolder(const Ptr<Params> &held_prm, Vector &Wsp);
+
+    // Store teh value of held_prm in Wsp, and replace it with the values in
+    // 'x'.  The original value of held_prm will be restored when *this goes out
+    // of scope.
     ParamHolder(const Vector &x, const Ptr<Params> &held_prm, Vector &Wsp);
+
+    // Restore the parameter to its initial value.
     ~ParamHolder();
 
    private:
-    Vector &v;
-    Ptr<Params> prm;
+    Vector &storage_;
+    Ptr<Params> prm_;
   };
 
+  // For holding and restoring a vector of parameters.
   class ParamVectorHolder {
    public:
     typedef std::vector<Ptr<Params> > ParamVector;
+    ParamVectorHolder(const ParamVector &held, Vector &Wsp);
+    ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp);
+    ~ParamVectorHolder();
 
    private:
     Vector &v;
     ParamVector prm;
-
-   public:
-    ParamVectorHolder(const ParamVector &held, Vector &Wsp);
-    ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp);
-    ~ParamVectorHolder();
   };
 }  // namespace BOOM
 #endif  // BOOM_PARAM_HOLDER_HPP

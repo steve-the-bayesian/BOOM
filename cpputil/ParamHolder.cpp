@@ -22,15 +22,18 @@
 namespace BOOM {
   typedef ParamHolder PH;
 
-  PH::ParamHolder(const Ptr<Params> &held, Vector &Wsp) : v(Wsp), prm(held) {}
-
-  PH::ParamHolder(const Vector &x, const Ptr<Params> &held, Vector &Wsp)
-      : v(Wsp), prm(held) {
-    v = prm->vectorize(true);
-    prm->unvectorize(x, true);
+  PH::ParamHolder(const Ptr<Params> &held, Vector &Wsp)
+      : storage_(Wsp), prm_(held) {
+    storage_ = prm_->vectorize(true);
   }
 
-  PH::~ParamHolder() { prm->unvectorize(v, true); }
+  PH::ParamHolder(const Vector &x, const Ptr<Params> &held, Vector &Wsp)
+      : storage_(Wsp), prm_(held) {
+    storage_ = prm_->vectorize(true);
+    prm_->unvectorize(x, true);
+  }
+
+  PH::~ParamHolder() { prm_->unvectorize(storage_, true); }
 
   //------------------------------------------------------------
 
