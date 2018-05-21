@@ -15,6 +15,7 @@ CheckMcmcMatrix(draws, truth, confidence = .95,
 
 CheckMcmcVector(draws, truth, confidence = .95, burn = 0)
 
+McmcMatrixReport(draws, truth, confidence = .95, burn = 0)
 }
 
 \arguments{
@@ -37,9 +38,20 @@ CheckMcmcVector(draws, truth, confidence = .95, burn = 0)
   \item{burn}{The number of MCMC iterations to discard as burn-in.}
 }
 \value{
+  
+  \code{CheckMcmcVector} and \code{CheckMcmcMatrix} return \code{TRUE}
+  if the check passes, and \code{FALSE} if it does not.
 
-  Returns TRUE if the check passes, and FALSE if it does not.
-
+  \code{McmcMatrixReport} returns a string that can be put in the
+  \code{info} field of an \code{\link[testthat]{expect_true}}
+  expression, to give useful information about a failed test case.  The
+  return value is a textual representation of a three column matrix.
+  Each row matches a variable in \code{draws}, and gives the lower and
+  upper bounds for the credible interval used to check the values.  The
+  final column lists the true values that are supposed to be inside the
+  credible intervals.  The value is returned as a character string that
+  is expected to be fed to \code{cat()} or \code{print()} so that it
+  will render correctly in R CMD CHECK output.
 }
 
 \details{
@@ -61,7 +73,6 @@ CheckMcmcVector(draws, truth, confidence = .95, burn = 0)
   intervals must cover.  The fraction is the lower bound of the binomial
   confidence interval for the coverage rate under the hypothesis that
   the true coverage rate is \code{confidence}.
-  
 }
 
 

@@ -1,3 +1,14 @@
+GaussianSuf <- function(y) {
+  ## Sufficient statistics for a Gaussian distribution given data 'y'.
+  stopifnot(is.numeric(y))
+  ans <- list(
+    n = sum(!is.na(y)),
+    sum = sum(y, na.rm = TRUE),
+    sumsq = sum(y^2, na.rm = TRUE))
+  class(ans) <- c("GaussianSuf", "Suf")
+  return(ans)
+}
+
 RegressionSuf <- function(X = NULL,
                           y = NULL,
                           xtx = crossprod(X),
@@ -48,3 +59,4 @@ RegressionSuf <- function(X = NULL,
   class(ans) <- c("RegressionSuf", "Suf")
   return(ans)
 }
+

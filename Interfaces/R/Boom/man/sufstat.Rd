@@ -4,6 +4,7 @@
 \name{sufstat.Rd}
 \title{Sufficient Statistics}
 \alias{RegressionSuf}
+\alias{GaussianSuf}
 
 \description{Sufficient statistics for various models.}
 
@@ -15,12 +16,14 @@
                 yty = sum(y^2),
                 n = length(y),
                 xbar = colMeans(X))
+
+  GaussianSuf(y)
 }
 
 \arguments{
   \item{X}{The predictor matrix for a regression problem.}
 
-  \item{y}{The response vector for a regression problem.}
+  \item{y}{The data, or the regression response variable.}
 
   \item{xtx}{The cross product of the design matrix. "X transpose X."}
 

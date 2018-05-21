@@ -1,7 +1,11 @@
-set.seed(8675309)
-library(BoomTestUtils)
+library(Boom)
+library(testthat)
 
-TestWishartDraws <- function() {
+context("Wishart")
+
+set.seed(8675309)
+
+test_that("Wishart draws", {
   dimension <- 5
   nu <- 18
   niter <- 10000
@@ -18,7 +22,7 @@ TestWishartDraws <- function() {
   for (i in 1:5) {
     for (j in i:5) {
       test.result <- ks.test(draws[, i, j], direct.draws[, i, j])
-      checkTrue(test.result$p.value > .05 / 15)  ## Bonferroni correction
+      expect_true(test.result$p.value > .05 / 15)  ## Bonferroni correction
     }
   }
 
@@ -33,38 +37,38 @@ TestWishartDraws <- function() {
   for (i in 1:5) {
     for (j in i:5) {
       test.result <- ks.test(draws[, i, j], direct.draws[, i, j])
-      checkTrue(test.result$p.value > .05 / 15)  ## Bonferroni correction
+      expect_true(test.result$p.value > .05 / 15)  ## Bonferroni correction
     }
   }
-}
+})
 
-TestLmgamma <- function() {
+test_that("lmgamma", {
   ans <- lmgamma(6.2, 3)
   log.Mgamma <- log(pi^(3/2)) + lgamma(6.2) + lgamma(6.2 - .5) + lgamma(6.2 - 1)
-  checkEquals(ans, log.Mgamma)
-}
+  expect_equal(ans, log.Mgamma)
+})
 
-TestTraceProduct <- function() {
+test_that("traceproduct", {
   ## Check that the function returns the same thing as direct
   ## calculation.
   A <- matrix(rnorm(100), ncol = 10)
   B <- matrix(rnorm(100), ncol = 10)
 
   trAB <- TraceProduct(A, B, FALSE)
-  checkTrue(is.numeric(trAB))
-  checkTrue(length(trAB) == 1)
+  expect_true(is.numeric(trAB))
+  expect_true(length(trAB) == 1)
 
   trAB.direct <- sum(diag(A %*% B))
-  checkEquals(trAB, trAB.direct)
+  expect_equal(trAB, trAB.direct)
 
   ## Make B symmetic
   B <- B + t(B)
   trAB <- TraceProduct(A, B, TRUE)
   trAB.direct <- sum(diag(A %*% B))
-  checkEquals(trAB, trAB.direct)
-}
+  expect_equal(trAB, trAB.direct)
+})
 
-TestWishartMean <- function() {
+test_that("Wishart mean", {
   dimension <- 4
   nu <- 7
   niter <- 10000
@@ -82,7 +86,7 @@ TestWishartMean <- function() {
   threshold <- abs(qnorm(.05 / (4 * 5 / 2)))
   for (i in 1:dimension) {
     for (j in i:dimension) {
-      checkTrue(abs(tstats[i, j]) < threshold)
+      expect_true(abs(tstats[i, j]) < threshold)
     }
   }
 
@@ -96,15 +100,15 @@ TestWishartMean <- function() {
   threshold <- abs(qnorm(.05 / (4 * 5 / 2)))
   for (i in 1:dimension) {
     for (j in i:dimension) {
-      checkTrue(abs(tstats[i, j]) < threshold)
+      expect_true(abs(tstats[i, j]) < threshold)
     }
   }
-}
+})
 
-TestPosteriorDistribution <- function() {
+test_that("Posterior distribution", {
   ## This test checks the interpretation of the scale.matrix
   ## parameter as the inverse of the sum of squares.
-
+  set.seed(19710114)
   dimension <- 4
   prior.nu <- 16
   sample.size <- 1000
@@ -113,7 +117,7 @@ TestPosteriorDistribution <- function() {
   lower.Sigma <- t(chol(Sigma))
   z <- rmvn(sample.size, rep(0, dimension), Sigma)
   sum.of.squares <- crossprod(z)
-  niter <- 10000
+  niter <- 1000
   Sigma.draws <- array(dim = c(niter, dimension, dimension))
   inverted.ss <- solve(prior.ss + sum.of.squares)
   for (i in 1:niter) {
@@ -122,12 +126,12 @@ TestPosteriorDistribution <- function() {
                                  TRUE)
   }
   for (i in 1:dimension) {
-    CheckMcmcMatrix(Sigma.draws[,i,], Sigma[i, ],
-                    msg = paste("trouble in Sigma row", i))
+    expect_true(CheckMcmcMatrix(Sigma.draws[,i,], Sigma[i, ]),
+      info = paste("trouble in Sigma row", i))
   }
-}
+})
 
-TestdInverseWishart <- function() {
+test_that("dInverseWishart", {
   variance <- matrix(c(8, 6, 7, 5, 3, 01, 9, 8, 6), ncol = 3)
   variance <- crossprod(variance)
 
@@ -143,5 +147,5 @@ TestdInverseWishart <- function() {
       .5 * (nu + p + 1) * log(det(variance)) -
       .5 * sum(diag(sumsq %*% solve(variance)))
 
-  checkEquals(density.direct, density)
-}
+  expect_equal(density.direct, density)
+})
