@@ -261,7 +261,8 @@ namespace BOOM {
   }
 
   Vector SSRM::one_step_holdout_prediction_errors(
-      const Matrix &newX, const Vector &newY, const Vector &final_state) const {
+      const Matrix &newX, const Vector &newY, const Vector &final_state,
+      bool standardize) const {
     if (nrow(newX) != length(newY)) {
       report_error(
           "X and Y do not match in StateSpaceRegressionModel::"
@@ -282,6 +283,9 @@ namespace BOOM {
           observation_variance(t + t0), *state_transition_matrix(t + t0),
           *state_variance_matrix(t + t0));
       ans[t] = ks.v;
+      if (standardize) {
+        ans[t] /= sqrt(ks.F);
+      }
     }
     return ans;
   }

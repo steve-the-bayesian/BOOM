@@ -149,7 +149,8 @@ namespace BOOM {
     // holdout sample.
     Vector one_step_holdout_prediction_errors(const Matrix &newX,
                                               const Vector &newY,
-                                              const Vector &final_state) const;
+                                              const Vector &final_state,
+                                              bool standardize = false) const;
 
     Ptr<RegressionModel> regression_model() { return regression_; }
     const Ptr<RegressionModel> regression_model() const { return regression_; }

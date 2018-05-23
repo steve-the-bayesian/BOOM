@@ -134,7 +134,8 @@ namespace BOOM {
 
     Vector one_step_holdout_prediction_errors(RNG &rng, const Vector &response,
                                               const Matrix &predictors,
-                                              const Vector &final_state);
+                                              const Vector &final_state,
+                                              bool standardize = false);
 
    private:
     // Returns the marginal variance of the student error distribution.  If the

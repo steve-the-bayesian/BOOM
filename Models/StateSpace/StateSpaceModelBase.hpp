@@ -751,7 +751,7 @@ namespace BOOM {
 
     // Returns the vector of one step ahead prediction errors for the
     // training data.
-    Vector one_step_prediction_errors();
+    Vector one_step_prediction_errors(bool standardize = false);
 
     //------- Accessors for getting at state components -----------
     // Returns the contributions of each state model to the overall

@@ -795,7 +795,7 @@ namespace BOOM {
     set_log_likelihood(log_likelihood);
   }
   //----------------------------------------------------------------------
-  Vector SSSMB::one_step_prediction_errors() {
+  Vector SSSMB::one_step_prediction_errors(bool standardize) {
     int n = time_dimension();
     Vector errors(n);
     if (n == 0) return errors;
@@ -804,6 +804,9 @@ namespace BOOM {
     }
     for (int i = 0; i < n; ++i) {
       errors[i] = kalman_storage_[i].v;
+      if (standardize) {
+        errors[i] /= sqrt(kalman_storage_[i].F);
+      }
     }
     return errors;
   }

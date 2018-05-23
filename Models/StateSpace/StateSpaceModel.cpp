@@ -233,7 +233,7 @@ namespace BOOM {
   }
 
   Vector SSM::one_step_holdout_prediction_errors(
-      const Vector &newY, const Vector &final_state) const {
+      const Vector &newY, const Vector &final_state, bool standardize) const {
     Vector ans(length(newY));
     int t0 = time_dimension();
     ScalarKalmanStorage ks(state_dimension());
@@ -246,6 +246,9 @@ namespace BOOM {
           observation_matrix(t + t0), observation_variance(t + t0),
           *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
       ans[t] = ks.v;
+      if (standardize) {
+        ans[t] /= sqrt(ks.F);
+      }
     }
     return ans;
   }

@@ -232,7 +232,8 @@ namespace BOOM {
   Vector SSSRM::one_step_holdout_prediction_errors(RNG &rng,
                                                    const Vector &response,
                                                    const Matrix &predictors,
-                                                   const Vector &final_state) {
+                                                   const Vector &final_state,
+                                                   bool standardize) {
     TDataImputer data_imputer;
 
     if (nrow(predictors) != response.size()) {
@@ -258,7 +259,10 @@ namespace BOOM {
           observation_model_->predict(predictors.row(t));
       double mu = state_contribution + regression_contribution;
       ans[t] = response[t] - mu;
-
+      if (standardize) {
+        ans[t] /= sqrt(ks.F);
+      }
+      
       // ans[t] is a random draw of the one step ahead prediction
       // error at time t0+t given observed data to time t0+t-1.  We
       // now proceed with the steps needed to update the Kalman filter
