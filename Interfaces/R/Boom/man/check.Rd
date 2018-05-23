@@ -2,6 +2,7 @@
 \Rdversion{1.0}
 \alias{CheckMcmcMatrix}
 \alias{CheckMcmcVector}
+\alias{McmcMatrixReport}
 \title{
  Check MCMC Output
 }
