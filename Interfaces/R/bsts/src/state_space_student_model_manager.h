@@ -41,14 +41,17 @@ class StateSpaceStudentHoldoutErrorSampler
       const Vector &holdout_responses,
       const Matrix &holdout_predictors,
       int niter,
+      bool standardize,
       Matrix *errors)
       : model_(model),
         holdout_responses_(holdout_responses),
         holdout_predictors_(holdout_predictors),
         niter_(niter),
-        errors_(errors) {
-    rng_.seed(seed_rng());
-  }
+        standardize_(standardize),
+        errors_(errors)
+        {
+          rng_.seed(seed_rng());
+        }
 
   void sample_holdout_prediction_errors() override {
     model_->sample_posterior();
@@ -56,10 +59,11 @@ class StateSpaceStudentHoldoutErrorSampler
                     model_->time_dimension() + holdout_responses_.size());
     for (int i = 0; i < niter_; ++i) {
       model_->sample_posterior();
-      Vector all_errors = model_->one_step_prediction_errors();
+      Vector all_errors = model_->one_step_prediction_errors(standardize_);
       all_errors.concat(model_->one_step_holdout_prediction_errors(
           rng_, holdout_responses_, holdout_predictors_,
-          model_->final_state()));
+          model_->final_state(),
+          standardize_));
       errors_->row(i) = all_errors;
     }
   }
@@ -69,6 +73,7 @@ class StateSpaceStudentHoldoutErrorSampler
   Vector holdout_responses_;
   Matrix holdout_predictors_;
   int niter_;
+  bool standardize_;
   Matrix *errors_;
   RNG rng_;
 };
@@ -88,6 +93,7 @@ class StateSpaceStudentModelManager
   HoldoutErrorSampler CreateHoldoutSampler(
       SEXP r_bsts_object,
       int cutpoint,
+      bool standardize,
       Matrix *prediction_error_output) override;
 
   void AddDataFromBstsObject(SEXP r_bsts_object) override;

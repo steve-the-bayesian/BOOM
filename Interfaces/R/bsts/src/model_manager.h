@@ -175,6 +175,9 @@ class ModelManager {
   //   cutpoint: An integer giving the index of the last data point in
   //     r_bsts_object to be considered training data.  Observations after
   //     'cutpoint' are considered holdout data.
+  //   standardize: Logical indicating whether the prediction errors should be
+  //     standardized by dividing by the square root of the one step ahead
+  //     forecast variance.
   //   prediction_error_output: A reference to a Matrix, with rows corresponding
   //     to MCMC iterations, and columns to observations in the holdout data
   //     set.  The matrix will be resized to appropriate dimensions by this
@@ -185,6 +188,7 @@ class ModelManager {
   virtual HoldoutErrorSampler CreateHoldoutSampler(
       SEXP r_bsts_object,
       int cutpoint,
+      bool standardize,
       BOOM::Matrix *prediction_error_output) = 0;
 
   // Time stamps are considered trivial if either (a) no time stamp information

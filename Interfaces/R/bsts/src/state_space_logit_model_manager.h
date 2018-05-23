@@ -48,8 +48,7 @@ class StateSpaceLogitModelManager
       SEXP r_options,
       RListIoManager *io_manager) override;
 
-  HoldoutErrorSampler CreateHoldoutSampler(
-      SEXP r_bsts_object, int cutpoint, Matrix *err) override {
+  HoldoutErrorSampler CreateHoldoutSampler(SEXP, int, bool, Matrix *) override {
     return HoldoutErrorSampler(new NullErrorSampler);
   }
 

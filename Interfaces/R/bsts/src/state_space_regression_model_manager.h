@@ -39,12 +39,14 @@ class StateSpaceRegressionHoldoutErrorSampler
       const Vector &holdout_responses,
       const Matrix &holdout_predictors,
       int niter,
+      bool standardize,
       Matrix *errors)
       : model_(model),
-        holdout_responses_(holdout_responses),
-        holdout_predictors_(holdout_predictors),
-        niter_(niter),
-        errors_(errors) {}
+      holdout_responses_(holdout_responses),
+      holdout_predictors_(holdout_predictors),
+      niter_(niter),
+      standardize_(standardize),
+      errors_(errors) {}
 
   void sample_holdout_prediction_errors() override;
 
@@ -53,6 +55,7 @@ class StateSpaceRegressionHoldoutErrorSampler
   Vector holdout_responses_;
   Matrix holdout_predictors_;
   int niter_;
+  bool standardize_;
   Matrix *errors_;
 };
 
@@ -70,6 +73,7 @@ class StateSpaceRegressionModelManager
   HoldoutErrorSampler CreateHoldoutSampler(
       SEXP r_bsts_object,
       int cutpoint,
+      bool standardize,
       Matrix *prediction_error_output) override;
 
   void AddDataFromBstsObject(SEXP r_bsts_object) override;

@@ -156,6 +156,7 @@ StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
 HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
     SEXP r_bsts_object,
     int cutpoint,
+    bool standardize,
     Matrix *prediction_error_output) {
   RListIoManager io_manager;
   Ptr<StateSpaceStudentRegressionModel> model =
@@ -192,6 +193,7 @@ HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
   return HoldoutErrorSampler(new StateSpaceStudentHoldoutErrorSampler(
       model, holdout_response, holdout_predictors,
       Rf_asInteger(getListElement(r_bsts_object, "niter")),
+      standardize,
       prediction_error_output));
 }
 

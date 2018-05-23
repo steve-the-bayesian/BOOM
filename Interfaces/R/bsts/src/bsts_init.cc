@@ -43,7 +43,8 @@ extern "C" {
 
   SEXP analysis_common_r_bsts_one_step_prediction_errors_(
       SEXP r_bsts_object,
-      SEXP r_cutpoints);
+      SEXP r_cutpoints,
+      SEXP r_standardize);
 
   SEXP analysis_common_r_bsts_aggregate_time_series_(
       SEXP r_fine_series,
@@ -70,7 +71,7 @@ extern "C" {
   static R_CallMethodDef bsts_arg_description[] = {
     CALLDEF(analysis_common_r_fit_bsts_model_, 9),
     CALLDEF(analysis_common_r_predict_bsts_model_, 5),
-    CALLDEF(analysis_common_r_bsts_one_step_prediction_errors_, 2),
+    CALLDEF(analysis_common_r_bsts_one_step_prediction_errors_, 3),
     CALLDEF(analysis_common_r_bsts_aggregate_time_series_, 3),
     CALLDEF(analysis_common_r_bsts_fit_mixed_frequency_model_, 11),
     CALLDEF(analysis_common_r_get_date_ranges_, 2),

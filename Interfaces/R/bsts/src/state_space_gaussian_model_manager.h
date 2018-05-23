@@ -51,6 +51,7 @@ class StateSpaceModelPredictionErrorSampler
   StateSpaceModelPredictionErrorSampler(const Ptr<StateSpaceModel> &model,
                                         const Vector &holdout_data,
                                         int niter,
+                                        bool standardize,
                                         Matrix *errors);
   void sample_holdout_prediction_errors() override;
 
@@ -58,6 +59,7 @@ class StateSpaceModelPredictionErrorSampler
   Ptr<StateSpaceModel> model_;
   Vector holdout_data_;
   int niter_;
+  bool standardize_;
   Matrix *errors_;
 };
 
@@ -82,6 +84,7 @@ class StateSpaceModelManager
   HoldoutErrorSampler CreateHoldoutSampler(
       SEXP r_bsts_object,
       int cutpoint,
+      bool standardize,
       Matrix *prediction_error_output) override;
 
   void AddDataFromBstsObject(SEXP r_bsts_object) override;

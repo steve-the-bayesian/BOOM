@@ -13,7 +13,8 @@
 \usage{
 bsts.prediction.errors(bsts.object,
                        cutpoints = NULL,
-                       burn = SuggestBurn(.1, bsts.object))
+                       burn = SuggestBurn(.1, bsts.object),
+                       standardize = FALSE)
 }
 
 \arguments{
@@ -32,6 +33,11 @@ bsts.prediction.errors(bsts.object,
   \item{burn}{An integer giving the number of MCMC iterations to discard
     as burn-in.  If \code{burn <= 0} then no burn-in sample will be
     discarded.}
+
+  \item{standardize}{ Logical.  If \code{TRUE} then the prediction
+    errors are divided by the square root of the one-step-ahead forecast
+    variance.  If \code{FALSE} the raw errors are returned.  }
+
 }
 
 \value{

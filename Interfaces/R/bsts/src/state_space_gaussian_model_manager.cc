@@ -155,6 +155,7 @@ void StateSpaceModelManager::AddData(
 HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
     SEXP r_bsts_object,
     int cutpoint,
+    bool standardize,
     Matrix *prediction_error_output) {
   RListIoManager io_manager;
   Ptr<StateSpaceModel> model = static_cast<StateSpaceModel *>(CreateModel(
@@ -180,7 +181,7 @@ HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
   }
   int niter = Rf_asInteger(getListElement(r_bsts_object, "niter"));
   return HoldoutErrorSampler(new StateSpaceModelPredictionErrorSampler(
-      model, holdout_data, niter, prediction_error_output));
+      model, holdout_data, niter, standardize, prediction_error_output));
 }
 
 
@@ -188,10 +189,12 @@ StateSpaceModelPredictionErrorSampler::StateSpaceModelPredictionErrorSampler(
     const Ptr<StateSpaceModel> &model,
     const Vector &holdout_data,
     int niter,
+    bool standardize,
     Matrix *errors)
     : model_(model),
       holdout_data_(holdout_data),
       niter_(niter),
+      standardize_(standardize),
       errors_(errors)
 {}
 
@@ -202,7 +205,7 @@ void StateSpaceModelPredictionErrorSampler::sample_holdout_prediction_errors() {
     model_->sample_posterior();
     Vector error_sim = model_->one_step_prediction_errors();
     error_sim.concat(model_->one_step_holdout_prediction_errors(
-        holdout_data_, model_->final_state()));
+        holdout_data_, model_->final_state(), standardize_));
     errors_->row(i) = error_sim;
   }
 }

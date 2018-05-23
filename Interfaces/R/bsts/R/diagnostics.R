@@ -60,7 +60,8 @@ residuals.bsts <- function(object,
 ###----------------------------------------------------------------------
 bsts.prediction.errors <- function(bsts.object,
                                    cutpoints = NULL,
-                                   burn = SuggestBurn(.1, bsts.object)) {
+                                   burn = SuggestBurn(.1, bsts.object),
+                                   standardize = FALSE) {
   ## Returns the posterior distribution of the one-step-ahead prediction errors
   ## from the bsts.object.  The errors are computing using the Kalman filter,
   ## and are of two types.
@@ -91,6 +92,9 @@ bsts.prediction.errors <- function(bsts.object,
   ##     cutpoint will be included in the fit, and one-step prediction errors
   ##     for data after the cutpoint will be computed.
   ##   burn:  The number of MCMC iterations to discard as burn-in.
+  ##   standardize: Logical.  If TRUE then the prediction errors are divided by
+  ##     the square root of the one-step-ahead forecast variance.  If FALSE the
+  ##     raw errors are returned.
   ##
   ## Returns:
   ##   A list, with entries giving the distribution of one-step prediction
@@ -100,9 +104,8 @@ bsts.prediction.errors <- function(bsts.object,
   ##   errors were stored in the original model fit, they will be present in
   ##   list.
   stopifnot(inherits(bsts.object, "bsts"))
-  stopifnot(is.numeric(burn),
-            length(burn) == 1,
-            burn < bsts.object$niter)
+  stopifnot(is.numeric(burn), length(burn) == 1, burn < bsts.object$niter)
+  stopifnot(is.logical(standardize), length(standardize) == 1)
   if (bsts.object$family %in% c("logit", "poisson")) {
     stop("Prediction errors are not supported for Poisson or logit models.")
   }
@@ -117,6 +120,7 @@ bsts.prediction.errors <- function(bsts.object,
     errors <- .Call("analysis_common_r_bsts_one_step_prediction_errors_",
                     bsts.object,
                     as.integer(cutpoints),
+                    as.logical(standardize),
                     PACKAGE = "bsts")
   } else {
     errors <- NULL

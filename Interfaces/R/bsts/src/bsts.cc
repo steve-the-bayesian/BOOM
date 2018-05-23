@@ -201,11 +201,13 @@ extern "C" {
   //    corresponding to time.
   SEXP analysis_common_r_bsts_one_step_prediction_errors_(
       SEXP r_bsts_object,
-      SEXP r_cutpoints) {
+      SEXP r_cutpoints,
+      SEXP r_standardize) {
     try {
       std::vector<int> cutpoints = BOOM::ToIntVector(r_cutpoints, true);
       std::vector<BOOM::Matrix> prediction_errors(cutpoints.size());
-
+      bool standardize = Rf_asLogical(r_standardize);
+      
       std::vector<std::future<void>> futures;
       int desired_threads = std::min<int>(
           cutpoints.size(), std::thread::hardware_concurrency() - 1);
@@ -215,7 +217,7 @@ extern "C" {
         std::unique_ptr<ModelManager> model_manager(
             ModelManager::Create(r_bsts_object));
         futures.emplace_back(pool.submit(model_manager->CreateHoldoutSampler(
-            r_bsts_object, cutpoints[i], &prediction_errors[i])));
+            r_bsts_object, cutpoints[i], standardize, &prediction_errors[i])));
       }
       for (int i = 0; i < futures.size(); ++i) {
         futures[i].get();
