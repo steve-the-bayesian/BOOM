@@ -1,3 +1,7 @@
+### NOTE: BOOM is primarily built using 'bazel' instead of 'make'.  This
+### Makefile could build and install BOOM as of January 2018, but it may be out
+### of date.
+
 all:	libboom.a
 
 # When compiling remotely (e.g. on CRAN's winbuilder) flags to be
