@@ -236,7 +236,7 @@ bsts(formula,
   \code{\link{bsts}},
   \code{\link{AddLocalLevel}},
   \code{\link{AddLocalLinearTrend}},
-  \code{\link{AddGeneralizedLocalLinearTrend}},
+  \code{\link{AddSemilocalLinearTrend}},
   \code{\link{AddSeasonal}}
   \code{\link{AddDynamicRegression}}
   \code{\link[BoomSpikeSlab]{SpikeSlabPrior}},
@@ -277,13 +277,13 @@ bsts(formula,
   ## Example 2: GOOG is the Google stock price, an xts series of daily
   ##            data.
   data(goog)
-  ss <- AddGeneralizedLocalLinearTrend(list(), goog)
+  ss <- AddSemilocalLinearTrend(list(), goog)
   model <- bsts(goog, state.specification = ss, niter = 500)
   MakePlots(model)
 
   ## Example 3:  Change GOOG to be zoo, and not xts.
   goog <- zoo(goog, index(goog))
-  ss <- AddGeneralizedLocalLinearTrend(list(), goog)
+  ss <- AddSemilocalLinearTrend(list(), goog)
   model <- bsts(goog, state.specification = ss, niter = 500)
   MakePlots(model)
 

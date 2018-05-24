@@ -113,6 +113,19 @@ bsts.prediction.errors <- function(bsts.object,
     stop("Prediction errors are not supported for duplicate timestamps.")
   }
 
+  if (standardize && is.null(cutpoints)) {
+    ## If standardized errors are desired then the kalman filter will have to be
+    ## run, so we need to force the data through the C++ code path.  To do this
+    ## we add a cutpoint at the final observation.  If timestamps are trivial
+    ## then this is just the length of the original series.  Otherwise it comes
+    ## from the mapping in timestamp.info.
+    if (bsts.object$timestamp.info$timestamps.are.trivial) {
+      cutpoints <- length(bsts.object$original.series)
+    } else {
+      cutpoints <- max(bsts.object$timestamp.info$timestamp.mapping)
+    }
+  }
+  
   if (!is.null(cutpoints) && length(cutpoints) > 0) {
     stopifnot(length(cutpoints) <= bsts.object$number.of.time.points,
               all(cutpoints > 0),

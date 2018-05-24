@@ -140,7 +140,7 @@
   \code{\link{bsts}},
   \code{\link{AddLocalLevel}},
   \code{\link{AddLocalLinearTrend}},
-  \code{\link{AddGeneralizedLocalLinearTrend}},
+  \code{\link{AddSemilocalLinearTrend}},
   \code{\link[BoomSpikeSlab]{SpikeSlabPrior}},
   \code{\link[Boom]{SdPrior}}.
 }
