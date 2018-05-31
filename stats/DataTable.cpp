@@ -25,6 +25,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "Models/CategoricalData.hpp"
@@ -32,16 +33,12 @@
 #include "cpputil/Ptr.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
-#include "cpputil/str2d.hpp"
 #include "cpputil/string_utils.hpp"
 
 namespace BOOM {
-  using std::ostringstream;
 
-  namespace {
-    typedef CategoricalVariable CatVar;
-  }
-  CatVar::CategoricalVariable(const std::vector<std::string> &raw_data)
+  CategoricalVariable::CategoricalVariable(
+      const std::vector<std::string> &raw_data)
       : key_(make_catkey(raw_data)) {
     for (int i = 0; i < raw_data.size(); ++i) {
       Ptr<CategoricalData> dp = new CategoricalData(raw_data[i], key_);
@@ -58,9 +55,9 @@ namespace BOOM {
     return m.find(i)->second;
   }
 
-  inline void field_length_error(const string &fname, uint line, uint nfields,
+  inline void field_length_error(const std::string &fname, uint line, uint nfields,
                                  uint prev_nfields) {
-    ostringstream msg;
+    std::ostringstream msg;
     msg << "file: " << fname << endl
         << " line number " << line << " has " << nfields
         << " fields.  Previous lines had " << prev_nfields << "fields." << endl;
@@ -69,7 +66,7 @@ namespace BOOM {
 
   //-----------------------------------------------------------------
   inline void wrong_type_error(uint line_num, uint field_num) {
-    ostringstream msg;
+    std::ostringstream msg;
     msg << "line number " << line_num << " field number " << field_num << endl;
     report_error(msg.str());
   }
@@ -79,19 +76,21 @@ namespace BOOM {
 
   DataTable::DataTable() {}
 
-  DataTable::DataTable(const string &fname, bool header, const string &sep) {
+  DataTable::DataTable(const std::string &fname,
+                       bool header,
+                       const std::string &sep) {
     ifstream in(fname.c_str());
     if (!in) {
-      string msg = "bad file name ";
+      std::string msg = "bad file name ";
       report_error(msg + fname);
     }
 
     StringSplitter split(sep);
-    string line;
+    std::string line;
     uint nfields = 0;
     uint line_number = 0;
 
-    std::vector<std::vector<string>> categorical_data;
+    std::vector<std::vector<std::string>> categorical_data;
     std::vector<std::vector<double>> numeric_data;
 
     if (header) {
@@ -104,7 +103,7 @@ namespace BOOM {
       ++line_number;
       getline(in, line);
       if (is_all_white(line)) continue;
-      std::vector<string> fields = split(line);
+      std::vector<std::string> fields = split(line);
 
       if (nfields == 0) {  // getting started
         nfields = fields.size();
@@ -118,11 +117,12 @@ namespace BOOM {
       }
 
       for (uint i = 0; i < nfields; ++i) {
-        if (!check_type(variable_types_[i], fields[i]))
+        if (!check_type(variable_types_[i], fields[i])) {
           wrong_type_error(line_number, i + 1);
+        }
 
         if (variable_types_[i] == continuous) {
-          double tmp = str2d(fields[i]);
+          double tmp = std::stod(fields[i], nullptr);
           numeric_data[i].push_back(tmp);
         } else if (variable_types_[i] == categorical) {
           categorical_data[i].push_back(fields[i]);
@@ -158,7 +158,7 @@ namespace BOOM {
   ostream &DataTable::display(ostream &out) const { return print(out); }
 
   //--- build a DataTable by appending variables ---
-  void DataTable::append_variable(const Vector &v, const string &name) {
+  void DataTable::append_variable(const Vector &v, const std::string &name) {
     // If there are no variables, ie the table is empty, append to the
     // continuous variables.  IMPORTANT: The first set of observations
     // determines the size of the data columns from then on! (since nobs()
@@ -193,7 +193,7 @@ namespace BOOM {
   }
 
   void DataTable::append_variable(const CategoricalVariable &cv,
-                                  const string &name) {
+                                  const std::string &name) {
     // If there are no variables, ie the table is empty, append to the
     // continuous variables.  IMPORTANT: The first set of observations
     // determines the size of the data columns from then on! (since nobs()
@@ -227,7 +227,7 @@ namespace BOOM {
 
   //---------------------------------------------------------------------
   // Determine the type of variable stored in vs.
-  void DataTable::diagnose_types(const std::vector<string> &vs) {
+  void DataTable::diagnose_types(const std::vector<std::string> &vs) {
     uint nfields = vs.size();
     variable_types_ = std::vector<VariableType>(nfields, unknown);
     for (uint i = 0; i < vs.size(); ++i) {
@@ -235,7 +235,7 @@ namespace BOOM {
     }
   }
 
-  bool DataTable::check_type(VariableType type, const string &s) const {
+  bool DataTable::check_type(VariableType type, const std::string &s) const {
     if (is_numeric(s)) {
       if (type == continuous) return true;
     } else {  // s is not numeric
@@ -249,8 +249,8 @@ namespace BOOM {
     return variable_types_;
   }
 
-  std::vector<string> &DataTable::vnames() { return vnames_; }
-  const std::vector<string> &DataTable::vnames() const { return vnames_; }
+  std::vector<std::string> &DataTable::vnames() { return vnames_; }
+  const std::vector<std::string> &DataTable::vnames() const { return vnames_; }
 
   //------------------------------------------------------------
   uint DataTable::nvars() const { return variable_types_.size(); }
@@ -291,7 +291,7 @@ namespace BOOM {
       }
     }
 
-    std::vector<string> dimnames;
+    std::vector<std::string> dimnames;
     if (add_int) {
       dimnames.push_back("Intercept");
     }
@@ -301,8 +301,8 @@ namespace BOOM {
         dimnames.push_back(vnames_[J]);
       } else if (variable_types_[J] == categorical) {
         const Ptr<CategoricalData> x(categorical_variables_[J][0]);
-        string stub = vnames_[J];
-        std::vector<string> labs = categorical_variables_[J].labels();
+        std::string stub = vnames_[J];
+        std::vector<std::string> labs = categorical_variables_[J].labels();
         for (uint i = 1; i < labs.size(); ++i) {
           dimnames.push_back(stub + ":" + labs[i]);
         }
@@ -332,7 +332,7 @@ namespace BOOM {
       if (!categorical_variables_[i].empty()) {
         if (categorical_variables_[i].labels() !=
             rhs.categorical_variables_[i].labels()) {
-          ostringstream err;
+          std::ostringstream err;
           err << "Labels for categorical variable " << i
               << " do not match in DataTable::rbind." << endl
               << "Labels from left hand side: " << endl
@@ -403,7 +403,7 @@ namespace BOOM {
 
   // DataTable::OrdinalVariable DataTable::get_ordinal(
   //     uint n,
-  //     const std::vector<string> &ord)const{
+  //     const std::vector<std::string> &ord)const{
   //   std::vector<Ptr<OrdinalData> > ans(get_ordinal(n));
   //   set_order(ans, ord);
   //   return ans;
@@ -428,13 +428,13 @@ namespace BOOM {
       v.reserve(nobs());
       bool is_cont = variable_types_[j] == continuous;
       for (uint i = 0; i < nobs(); ++i) {
-        ostringstream sout;
+        std::ostringstream sout;
         if (is_cont) {
           sout << continuous_variables_[j][i];
         } else {
           sout << categorical_variables_[j].label(i);
         }
-        string lab = sout.str();
+        std::string lab = sout.str();
         fw[j] = std::max<uint>(fw[j], lab.size() + padding);
         v.push_back(lab);
       }

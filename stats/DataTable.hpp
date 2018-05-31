@@ -92,7 +92,7 @@ namespace BOOM {
    public:
     typedef std::vector<double> dvector;
     enum VariableType { unknown = -1, continuous, categorical };
-    typedef std::vector<string> StringVector;
+    typedef std::vector<std::string> StringVector;
 
     //--- constructors ---
     // Creates an empty data table.
@@ -106,14 +106,15 @@ namespace BOOM {
     //     is the first observation, and variable names will be
     //     automatically generated.
     //   sep: The separator between fields in the data file.
-    explicit DataTable(const string &fname, bool header = false, const string &sep = "");
+    explicit DataTable(const std::string &fname, bool header = false,
+                       const std::string &sep = "");
 
     DataTable *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     //--- build a DataTable by appending variables ---
-    void append_variable(const Vector &v, const string &name);
-    void append_variable(const CategoricalVariable &cv, const string &name);
+    void append_variable(const Vector &v, const std::string &name);
+    void append_variable(const CategoricalVariable &cv, const std::string &name);
 
     //--- size  ---
     uint nvars() const;          // number of variables stored in the table
@@ -121,8 +122,8 @@ namespace BOOM {
     uint nlevels(uint i) const;  // 1 for continuous, nlevels for categorical
 
     //--- look inside ---
-    ostream &print(ostream &out, uint from = 0,
-                   uint to = std::numeric_limits<uint>::max()) const;
+    std::ostream &print(ostream &out, uint from = 0,
+                        uint to = std::numeric_limits<uint>::max()) const;
 
     const std::vector<VariableType> &display_variable_types() const;
 
@@ -153,12 +154,12 @@ namespace BOOM {
     std::vector<CategoricalVariable> categorical_variables_;
 
     std::vector<VariableType> variable_types_;
-    std::vector<string> vnames_;
-    void diagnose_types(const std::vector<string> &);
-    bool check_type(VariableType type, const string &s) const;
+    std::vector<std::string> vnames_;
+    void diagnose_types(const std::vector<std::string> &);
+    bool check_type(VariableType type, const std::string &s) const;
   };
 
-  ostream &operator<<(ostream &out, const DataTable &dt);
+  std::ostream &operator<<(std::ostream &out, const DataTable &dt);
 
   struct VariableSummary {
     DataTable::VariableType type;
