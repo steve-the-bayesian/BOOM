@@ -38,5 +38,49 @@ namespace BOOM {
     return maxdiff <= ks_critical_value(sorted_data.size(), significance);
   }
 
+  bool TwoSampleKS(
+      const ConstVectorView &data1,
+      const ConstVectorView &data2,
+      double significance) {
+    ECDF ecdf1(data1);
+    ECDF ecdf2(data2);
+    double maxdiff = negative_infinity();
+    for (double x : ecdf1.sorted_data()) {
+      maxdiff = std::max<double>(maxdiff, fabs(ecdf1(x) - ecdf2(x)));
+    }
+    for (double x : ecdf2.sorted_data()) {
+      maxdiff = std::max<double>(maxdiff, fabs(ecdf1(x) - ecdf2(x)));
+    }
+    double n1 = data1.size();
+    double n2 = data2.size();
+    double constant = sqrt(-.5 * log(significance / 2));
+
+    double critical_value = constant * sqrt((n1 + n2) / (n1 * n2));
+    return maxdiff <= critical_value;
+  }
+
+  namespace {
+    bool CheckCoverage(const ECDF &ecdf1, const ECDF &ecdf2) {
+      // Compute the (.2, .8) central interval for ECDF1.
+      double lo1 = ecdf1.quantile(.2);
+      double hi1 = ecdf1.quantile(.8);
+
+      // Compute the (.3, .7) interval for ECDF2.
+      double lo2 = ecdf2.quantile(.3);
+      double hi2 = ecdf2.quantile(.7);
+
+      // If the distributions are nearly the same, interval1 should cover
+      // interval2.
+      return lo1 <= lo2 && hi1 >= hi2;
+    }
+  }  // namespace
+  
+  bool EquivalentSimulations(const ConstVectorView &draws1,
+                             const ConstVectorView &draws2) {
+    ECDF ecdf1(draws1);
+    ECDF ecdf2(draws2);
+    return CheckCoverage(ecdf1, ecdf2) && CheckCoverage(ecdf2, ecdf1);
+  }
+  
 }  // namespace BOOM
 

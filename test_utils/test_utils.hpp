@@ -141,6 +141,43 @@ namespace BOOM {
   bool DistributionsMatch(const Vector &data,
                           const std::function<double(double)> &cdf,
                           double significance = .05);
+
+  // Performs a 2-sample Kolmogorov Smirnoff test that the two sets of draws are
+  // from the same distribution.
+  //
+  // Args:
+  //   data1, data2: Sets of draws thought to be from the same distribution.
+  //   significance:  The significance level of the KS test.
+  //
+  // Returns:
+  //   If the null hypothesis cannot be rejected at the given significance level
+  //   then this function returns 'true'.  If the null is rejected then 'false'
+  //   is returned.  In other words, 'true' indicates that 'data1' and 'data2'
+  //   are a match.
+  bool TwoSampleKsMatch(const ConstVectorView &data1,
+                        const ConstVectorView &data2,
+                        double significance = .05);
+  
+  // Checks that two sets of Monte Carlo draws have roughly the same center and
+  // spread.  The check is done by computing the .2 - .8 credible interval from
+  // one set of draws, and checking that it covers the .3 - .7 interval for the
+  // second.  The check is then done in reverse.
+  //
+  // This check is useful if there is an old, slow, reliable way of sampling
+  // from a distribution, and you want to check that the new, fast way gets the
+  // same answer.
+  //
+  // This check is more lenient than the TwoSampleKsMatch check above, but it is
+  // also less sensitive to the assumption of independent draws.
+  //
+  // Args:
+  //   draws1, draws2:  Two sets of Monte Carlo draws
+  //
+  // Returns:
+  //   If the distributions are similar (in the sense defined above) then 'true'
+  //   is returned.  Otherwise 'false' is returned.
+  bool EquivalentSimulations(const ConstVectorView &draws1,
+                             const ConstVectorView &draws2);
 }  // namespace BOOM
 
 #endif //  BOOM_TEST_UTILS_HPP_

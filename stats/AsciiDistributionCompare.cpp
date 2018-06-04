@@ -44,9 +44,11 @@ namespace BOOM {
       xx += dx;
     }
     graph_ = AsciiGraph(xmin, xmax, 0, max_density, xbuckets, ybuckets);
-    for (int i = 0, xx = xmin; i < xbuckets; ++i, xx += dx) {
+    xx = xmin;
+    for (int i = 0; i < xbuckets; ++i) {
       graph_.plot(xx, x_density_values[i], 'X');
       graph_.plot(xx, y_density_values[i], '0');
+      xx += dx;
     }
   }
 
