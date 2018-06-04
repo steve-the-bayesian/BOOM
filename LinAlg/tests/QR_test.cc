@@ -49,7 +49,6 @@ namespace {
 
 
   TEST_F(QrTest, Regression) {
-
     Matrix predictors(100, 4);
     predictors.randomize();
     predictors.col(0) = 1.0;
@@ -69,10 +68,11 @@ namespace {
     Vector qty2 = Q.t() * response;
 
     Vector qr_coef = qr.Rsolve(qty);
+    EXPECT_TRUE(VectorEquals(qr_coef, qr.getR().inv() * qty, 1e-5));
+    
     SpdMatrix xtx = predictors.t() * predictors;
     Vector direct_coef = xtx.solve(predictors.t() * response);
-    
-    
+    EXPECT_TRUE(VectorEquals(qr_coef, direct_coef, 1e-5));
   }
   
 }  // namespace

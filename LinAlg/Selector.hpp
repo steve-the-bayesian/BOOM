@@ -164,6 +164,10 @@ namespace BOOM {
     double sparse_dot_product(const ConstVectorView &full_size_vector,
                               const ConstVectorView &sparse_vector) const;
 
+    double sparse_sum(const ConstVectorView &view) const;
+    double sparse_sum(const VectorView &view) const;
+    double sparse_sum(const Vector &vector) const;
+    
     template <class T>
     std::vector<T> select(const std::vector<T> &v) const;
 

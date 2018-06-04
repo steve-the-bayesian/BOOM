@@ -503,6 +503,31 @@ namespace BOOM {
     return do_sparse_dot_product(*this, full, sparse);
   }
 
+  namespace {
+    template <class VECTOR>
+    double sparse_sum_impl(const Selector &inc, const VECTOR &v) {
+      size_t n = inc.nvars_possible();
+      if (v.size() != n) {
+        report_error("Incompatible vector in 'sparse_sum'.");
+      }
+      double ans = 0;
+      for (int i = 0; i < inc.nvars(); ++i) {
+        ans += v[inc.indx(i)];
+      }
+      return ans;
+    }
+  }  // namespace 
+  
+  double Selector::sparse_sum(const Vector &v) const {
+    return sparse_sum_impl(*this, v);
+  }
+  double Selector::sparse_sum(const VectorView &v) const {
+    return sparse_sum_impl(*this, v);
+  }
+  double Selector::sparse_sum(const ConstVectorView &v) const {
+    return sparse_sum_impl(*this, v);
+  }
+  
   int Selector::random_included_position(RNG &rng) const {
     int number_included = nvars();
     if (number_included == 0) {
