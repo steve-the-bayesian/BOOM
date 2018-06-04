@@ -102,7 +102,7 @@ namespace BOOM {
   Vector QR::Rsolve(const Vector &Qty) const {
     assert(Qty.size() == R_.nrow());
     Vector ans = Usolve(R_, Qty);
-    EigenMap(ans) = EigenMap(Q_).transpose() * EigenMap(ans);
+    //    EigenMap(ans) = EigenMap(Q_).transpose() * EigenMap(ans);
     return ans;
   }
 

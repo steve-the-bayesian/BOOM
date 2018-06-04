@@ -46,5 +46,33 @@ namespace {
 
     EXPECT_TRUE(MatrixEquals(Q.Tmult(Q), SpdMatrix(3, 1.0)));
   }
+
+
+  TEST_F(QrTest, Regression) {
+
+    Matrix predictors(100, 4);
+    predictors.randomize();
+    predictors.col(0) = 1.0;
+
+    Vector response(100);
+    response.randomize();
+
+    QR qr(predictors);
+
+    // xtx.inv * xty
+    // (rtr).inv * rt qty
+    // r.inv rt.inv * rt * qty
+    // r.inv * qty
+
+    Matrix Q = qr.getQ();
+    Vector qty = qr.Qty(response);
+    Vector qty2 = Q.t() * response;
+
+    Vector qr_coef = qr.Rsolve(qty);
+    SpdMatrix xtx = predictors.t() * predictors;
+    Vector direct_coef = xtx.solve(predictors.t() * response);
+    
+    
+  }
   
 }  // namespace
