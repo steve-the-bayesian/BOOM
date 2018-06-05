@@ -33,14 +33,14 @@ namespace BOOM {
         << "Y = " << endl
         << y << endl;
     report_error(out.str());
-  };
+  }
 
   inline void index_out_of_bounds(uint i, uint bound) {
     ostringstream out;
     out << "requested index " << i << " out of bounds." << endl
         << "bound is " << bound << "." << endl;
     report_error(out.str());
-  };
+  }
 
   Matrix add_intercept(const Matrix &X) {
     Vector one(X.nrow(), 1.0);
@@ -501,11 +501,13 @@ namespace BOOM {
         ParamPolicy(beta, sigsq),
         DataPolicy(new NeRegSuf(beta->nvars_possible())) {}
 
-  RM::RegressionModel(const Matrix &X, const Vector &y)
+  RM::RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle)
       : GlmModel(),
         ParamPolicy(new GlmCoefs(X.ncol()), new UnivParams(1.0)),
         DataPolicy(new QrRegSuf(X, y)) {
-    mle();
+    if (start_at_mle) {
+      mle();
+    }
   }
 
   RM::RegressionModel(const DatasetType &d, bool include_all_variable)

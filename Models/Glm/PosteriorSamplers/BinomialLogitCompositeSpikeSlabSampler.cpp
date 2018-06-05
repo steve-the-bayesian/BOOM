@@ -259,4 +259,4 @@ namespace BOOM {
     out << move_accounting_.to_matrix();
     return out;
   }
-};  // namespace BOOM
+}  // namespace BOOM

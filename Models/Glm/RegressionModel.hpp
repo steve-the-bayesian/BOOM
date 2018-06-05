@@ -268,8 +268,10 @@ namespace BOOM {
     //     explicit column of 1's if an intercept term is desired.
     //   y: The vector of responses.  The length of y must match the
     //     number of rows in X.
-    // Iniitializes the model with the least squares fit.
-    RegressionModel(const Matrix &X, const Vector &y);
+    //   start_at_mle: If true then the regression coefficients will begin at
+    //     their maximum likelihood estimate.  Otherwise the coefficients begin
+    //     at zero.
+    RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle = true);
 
     explicit RegressionModel(const DatasetType &d,
                              bool include_all_variables = true);
