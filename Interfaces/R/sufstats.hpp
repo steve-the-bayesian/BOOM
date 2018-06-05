@@ -25,7 +25,7 @@ namespace BOOM {
   class RegSuf;
   namespace RInterface {
     RegSuf * CreateRegSuf(SEXP r_reg_suf);
-  };
+  }
 
 }  // namespace BOOM
 

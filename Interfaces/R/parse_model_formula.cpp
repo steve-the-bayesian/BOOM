@@ -212,7 +212,7 @@ namespace BOOM {
         names_.context_variable_names_ = getListNames(r_context_data);
         FillLevelNames(names_.experiment_level_names_, r_experiment_data);
         FillLevelNames(names_.context_level_names_, r_context_data);
-      };
+      }
 
       //----------------------------------------------------------------------
       // Args:

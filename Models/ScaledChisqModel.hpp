@@ -56,5 +56,5 @@ namespace BOOM {
     int number_of_observations() const override { return dat().size(); }
   };
 
-};      // namespace BOOM
+}  // namespace BOOM
 #endif  // BOOM_SCALED_CHISQ_MODEL_HPP

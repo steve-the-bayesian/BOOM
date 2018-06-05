@@ -92,8 +92,8 @@ namespace {
   }
 
   TEST_F(RegressionSpikeSlabTest, Large) {
-    int nobs = 10000;
-    int nvars = 1000;
+    int nobs = 1000;
+    int nvars = 100;
     int niter = 1000;
     double residual_sd = 0.3;
     Matrix predictors(nobs, nvars);
@@ -137,7 +137,9 @@ namespace {
     }
 
     ECDF size_distribution(size_draws);
-    EXPECT_LT(size_distribution(10), .05);
+    // The fraction of models with 8 or fewer included predictors should be
+    // high.
+    EXPECT_GE(size_distribution(8), .95);
   }
   
 }  // namespace
