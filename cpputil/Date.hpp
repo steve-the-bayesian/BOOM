@@ -73,7 +73,7 @@ namespace BOOM {
   //   The enum corresponding to the day of the week in the input string.
   DayNames str2day(const string &day_name);
 
-  ostream &operator<<(ostream &, const DayNames &);
+  std::ostream &operator<<(std::ostream &, const DayNames &);
 
   class Date {
    public:

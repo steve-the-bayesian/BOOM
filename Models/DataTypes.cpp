@@ -89,7 +89,7 @@ namespace BOOM {
 
   MatrixData *MatrixData::clone() const { return new MatrixData(*this); }
   ostream &MatrixData::display(ostream &out) const {
-    out << x << endl;
+    out << x << std::endl;
     return out;
   }
 

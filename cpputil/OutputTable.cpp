@@ -50,7 +50,7 @@ namespace BOOM {
       while (cols_[i].size() < nr) cols_[i].push_back("");
   }
 
-  ostream &OT::print(ostream &out) const {
+  std::ostream &OT::print(std::ostream &out) const {
     return print_columns(out, cols_, pad_);
   }
 

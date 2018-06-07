@@ -47,13 +47,16 @@ namespace BOOM {
         else
           out << string(widths[j], ' ');
       }
-      out << endl;
+      out << std::endl;
     }
     return out;
   }
 
-  ostream &print_two_columns(ostream &out, const std::vector<std::string> &left,
-                             const std::vector<std::string> &right, uint pad) {
+  std::ostream &print_two_columns(
+      std::ostream &out,
+      const std::vector<std::string> &left,
+      const std::vector<std::string> &right,
+      uint pad) {
     std::vector<std::vector<std::string>> cols;
     cols.push_back(left);
     cols.push_back(right);

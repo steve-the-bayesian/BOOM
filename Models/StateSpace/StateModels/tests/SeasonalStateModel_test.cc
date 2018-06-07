@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+
+#include <fstream>
+
 #include "Models/ChisqModel.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"

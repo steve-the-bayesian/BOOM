@@ -21,25 +21,10 @@
 #define BOOM_HPP
 
 #include <string>
-#include <iostream>
-#include <sstream>
-#include <fstream>
 #include "uint.hpp"
 
 namespace BOOM{
   using std::string;
-  using std::cout;
-  using std::cerr;
-  using std::cin;
-  using std::endl;
-  using std::iostream;
-  using std::istream;
-  using std::ostream;
-  using std::ifstream;
-  using std::ofstream;
-  using std::istringstream;
-  using std::ostringstream;
-  using std::ios;
 }
 
 #endif //BOOM_HPP

@@ -20,6 +20,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
+#include <fstream>
 #include <functional>
 #include <iomanip>
 
@@ -38,13 +40,11 @@ namespace BOOM {
 
     typedef std::vector<IrtModel::ModelTypeName> ModelVec;
 
-    typedef istringstream INS;
-    typedef ostringstream OUTS;
-    typedef std::vector<string> StringVector;
+    typedef std::vector<std::string> StringVector;
 
     inline void set_default_names(StringVector &s) {
       for (uint i = 0; i < s.size(); ++i) {
-        OUTS out;
+        std::ostringstream out;
         out << "subscale[" << i << "]";
         s[i] = out.str();
       }
@@ -134,10 +134,10 @@ namespace BOOM {
     //------------------------------------------------------------
     ostream &IrtModel::print_subscales(ostream &out, bool nl, bool decorate) {
       uint sz = 0;
-      string sep = "   ";
+      std::string sep = "   ";
       if (decorate) {
         sz = find_max_length(subscale_names());
-        out << string(2, '-') << sep << string(sz, '-') << endl;
+        out << std::string(2, '-') << sep << std::string(sz, '-') << endl;
       }
 
       for (uint i = 0; i < nscales(); ++i) {
@@ -170,12 +170,12 @@ namespace BOOM {
     ItemItC IrtModel::item_end() const { return items.end(); }
 
     //------------------------------------------------------------
-    Ptr<Item> IrtModel::find_item(const string &id, bool nag) const {
+    Ptr<Item> IrtModel::find_item(const std::string &id, bool nag) const {
       item_search_helper->id_ = id;
       ItemItC it = items.lower_bound(item_search_helper);
       if (it == items.end() || (*it)->id() != id) {
         if (nag) {
-          ostringstream msg;
+          std::ostringstream msg;
           msg << "item with id " << id << " not found in IrtModel::find_item";
           report_error(msg.str());
         }
@@ -197,13 +197,13 @@ namespace BOOM {
     CSI IrtModel::subject_end() const { return subjects_.end(); }
 
     //------------------------------------------------------------
-    Ptr<Subject> IrtModel::find_subject(const string &id, bool nag) const {
+    Ptr<Subject> IrtModel::find_subject(const std::string &id, bool nag) const {
       subject_search_helper->id_ = id;
       CSI it = std::lower_bound(subject_begin(), subject_end(),
                                 subject_search_helper, SubjectLess());
       if (it == subject_end() || (*it)->id() != id) {
         if (nag) {
-          ostringstream msg;
+          std::ostringstream msg;
           msg << "subject with id " << id
               << " not found in IrtModel::find_subject";
           report_error(msg.str());
@@ -234,20 +234,21 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    void read_subject_info_file(const string &fname, const Ptr<IrtModel> &m,
+    void read_subject_info_file(const std::string &fname,
+                                const Ptr<IrtModel> &m,
                                 const char delim) {
-      ifstream in(fname.c_str());
+      std::ifstream in(fname.c_str());
       while (in) {
-        string line;
+        std::string line;
         getline(in, line);
         if (!in || is_all_white(line)) break;
         StringVector fields =
             (delim == ' ') ? split_string(line) : split_delimited(line, delim);
 
         uint nf = fields.size();
-        string id = fields[0];
+        std::string id = fields[0];
         if (!!m->find_subject(id, false)) {
-          OUTS msg;
+          std::ostringstream msg;
           msg << "IrtModel::read_subject_info_file..." << endl
               << "subject identifiers must be unique" << endl
               << "offending id: " << id;
@@ -260,29 +261,30 @@ namespace BOOM {
         } else if (nf > 1) {
           Vector x(nf - 1);
           for (uint i = 1; i < nf; ++i) {
-            INS(fields[i]) >> x[i - 1];
+            std::istringstream(fields[i]) >> x[i - 1];
           }
           NEW(Subject, s)(id, m->nscales(), x);
           m->add_subject(s);
         } else {
-          OUTS out;
+          std::ostringstream out;
           out << "0 fields in IrtModel::read_subject_info_file";
           report_error(out.str().c_str());
         }
       }
     }
 
-    void read_item_response_file(const string &fname, const Ptr<IrtModel> &m) {
-      ifstream in(fname.c_str());
+    void read_item_response_file(const std::string &fname,
+                                 const Ptr<IrtModel> &m) {
+      std::ifstream in(fname.c_str());
       while (in) {
-        string line;
+        std::string line;
         getline(in, line);
         if (!in || is_all_white(line)) break;
 
-        string subject_id;
-        string item_id;
-        string response_str;
-        INS sin(line);
+        std::string subject_id;
+        std::string item_id;
+        std::string response_str;
+        std::istringstream sin(line);
         sin >> subject_id >> item_id >> response_str;
         Ptr<Subject> sub = m->find_subject(subject_id, false);
         if (!sub) {
@@ -292,7 +294,7 @@ namespace BOOM {
 
         const Ptr<Item> &item = m->find_item(item_id, false);
         if (!item) {
-          OUTS msg;
+          std::ostringstream msg;
           msg << "item " << item_id
               << " present in IrtModel::read_item_response_file," << endl
               << "but not in IrtModel::read_item_info_file." << endl;

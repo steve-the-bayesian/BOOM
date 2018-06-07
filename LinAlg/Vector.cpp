@@ -26,10 +26,10 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
-#include <numeric>
-#include <stdexcept>
-
+#include <fstream>
 #include <sstream>
+#include <numeric>
+
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/shift_element.hpp"
@@ -51,7 +51,7 @@ namespace BOOM {
     if (n >= size) {
       ostringstream out;
       out << "Vector subscript " << n << " out of bounds in Vector of size "
-          << size << endl;
+          << size << std::endl;
       report_error(out.str());
     }
   }
@@ -499,7 +499,7 @@ namespace BOOM {
   //============== non member functions from Vector.hpp =============
 
   Vector scan_vector(const string &fname) {
-    ifstream in(fname.c_str());
+    std::ifstream in(fname.c_str());
     Vector ans;
     double x;
     while (in >> x) ans.push_back(x);

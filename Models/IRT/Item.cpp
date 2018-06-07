@@ -25,20 +25,23 @@
 namespace BOOM {
   namespace IRT {
 
-    typedef std::vector<string> StringVector;
+    typedef std::vector<std::string> StringVector;
 
     inline Ptr<CatKey> make_resp(uint Mscore) {
       StringVector ans(Mscore + 1);
       for (uint i = 0; i <= Mscore; ++i) {
-        ostringstream s;
+        std::ostringstream s;
         s << i;
         (ans)[i] = s.str();
       }
       return new CatKey(ans);
     }
 
-    Item::Item(const string &Id, uint Mscore, uint one_subscale, uint nscales,
-               const string &Name)
+    Item::Item(const std::string &Id,
+               uint Mscore,
+               uint one_subscale,
+               uint nscales,
+               const std::string &Name)
         : subscales_(nscales, false),
           id_(Id),
           name_(Name),
@@ -47,8 +50,8 @@ namespace BOOM {
       if (Name.empty()) name_ = id_;
     }
 
-    Item::Item(const string &Id, uint Mscore,
-               const std::vector<bool> &subscales, const string &Name)
+    Item::Item(const std::string &Id, uint Mscore,
+               const std::vector<bool> &subscales, const std::string &Name)
         : subscales_(subscales),
           id_(Id),
           name_(Name),
@@ -63,16 +66,17 @@ namespace BOOM {
           id_(rhs.id_),
           possible_responses_(rhs.possible_responses_) {}
 
-    void Item::report(ostream &out, uint namewidth) const {
-      string plural = nscales_this() == 1 ? " subscale:  " : " subscales: ";
-      string name_paren = " (" + name().substr(0, namewidth) + ")";
+    void Item::report(std::ostream &out, uint namewidth) const {
+      std::string plural =
+          nscales_this() == 1 ? " subscale:  " : " subscales: ";
+      std::string name_paren = " (" + name().substr(0, namewidth) + ")";
       out << "Item " << std::setw(4) << id();
       if (namewidth > 0) out << std::setw(namewidth + 3);
       out << name_paren << "  assesses " << nscales_this() << plural;
       for (uint i = 0; i < nscales_this(); ++i) {
         out << subscales_.indx(i) << " ";
       }
-      out << endl;
+      out << std::endl;
     }
 
     void Item::increment_hist(const Ptr<Subject> &s, Vector &ans) const {
@@ -126,10 +130,10 @@ namespace BOOM {
 
     uint Item::Nsubjects() const { return dat().size(); }
 
-    const string &Item::id() const { return id_; }
-    const string &Item::name() const { return name_; }
+    const std::string &Item::id() const { return id_; }
+    const std::string &Item::name() const { return name_; }
 
-    Response Item::make_response(const string &s) const {
+    Response Item::make_response(const std::string &s) const {
       return new OrdinalData(s, possible_responses_);
     }
 
@@ -187,13 +191,13 @@ namespace BOOM {
       return loglike_ans;
     }
 
-    ostream &Item::display(ostream &out) const {
+    std::ostream &Item::display(std::ostream &out) const {
       out << id() << "\t" << name() << "\t";
       for (uint i = 0; i < subscales_.nvars_possible(); ++i) {
         out << subscales_[i] << "\t";
       }
       display_item_params(out);
-      out << endl;
+      out << std::endl;
       return out;
     }
 

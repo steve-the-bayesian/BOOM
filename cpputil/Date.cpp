@@ -28,7 +28,7 @@
 
 namespace BOOM {
 
-  ostream &operator<<(ostream &out, const DayNames &d) {
+  std::ostream &operator<<(std::ostream &out, const DayNames &d) {
     if (d == Sat)
       out << "Saturday";
     else if (d == Sun)
@@ -245,13 +245,13 @@ namespace BOOM {
 
   void Date::check(MonthNames month, int day, int year) const {
     if (month < 1 || month > 12) {
-      ostringstream err;
+     std::ostringstream err;
       err << "Bad month name: " << month << endl;
       report_error(err.str());
     }
 
     if (day < 1 || day > days_in_month(month, is_leap_year(year))) {
-      ostringstream err;
+     std::ostringstream err;
       err << "bad dateformat:  " << endl
           << "month = " << month << " day = " << day << " year = " << year;
       report_error(err.str());
@@ -624,7 +624,7 @@ namespace BOOM {
       else if (d > 31)
         std::swap(y, d);
       else {
-        ostringstream err;
+       std::ostringstream err;
         err << "Error in guess_date_format: " << endl
             << "called with argument: " << s << endl
             << "and delimiter = [" << delim << "]" << endl
@@ -641,7 +641,7 @@ namespace BOOM {
   }
 
   string Date::str() const {
-    ostringstream os;
+    std::ostringstream os;
     os << *this;
     return os.str();
   }
@@ -686,7 +686,7 @@ namespace BOOM {
     if (m == "December" || m == "december" || m == "Dec" || m == "dec" ||
         m == "12")
       return Dec;
-    ostringstream err;
+    std::ostringstream err;
     err << "unkown month name: " << m;
     report_error(err.str());
     return unknown_month;
@@ -710,7 +710,7 @@ namespace BOOM {
       if (s == "Friday" || s == "friday") return Fri;
       if (s == "Saturday" || s == "saturday") return Sat;
     }
-    ostringstream err;
+    std::ostringstream err;
     err << "Unrecognized day name: " << s;
     report_error(err.str());
     return Sun;  // to keep the compiler quiet.
@@ -728,7 +728,7 @@ namespace BOOM {
     int days_to = ans.days_until(weekday);
     ans += days_to + 7 * (n - 1);
     if (ans.month() != month) {
-      ostringstream err;
+      std::ostringstream err;
       err << "n is too large in nth_weekday_in_month.  There are not " << n
           << " " << weekday << "s in " << month << " in " << year << ".";
       report_error(err.str());

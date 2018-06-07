@@ -20,6 +20,8 @@
 #include <cassert>
 #include <cmath>
 #include <ctime>
+#include <ostream>
+#include <sstream>
 
 namespace BOOM {
 
@@ -170,7 +172,7 @@ namespace BOOM {
     return fraction_of_hour > 0 ? (1 - fraction_of_hour) / 24 : 1.0 / 24;
   }
 
-  ostream &DateTime::print(ostream &out) const {
+  std::ostream &DateTime::print(std::ostream &out) const {
     double hr = hour();
     double min = minute();
     double sec = second();
@@ -179,13 +181,13 @@ namespace BOOM {
     sec += frac;
     // Writing to a string before writing to 'out' is a quick hack to
     // make sure we respect the setw() manipulator.
-    ostringstream formatted_output;
+    std::ostringstream formatted_output;
     formatted_output << d_ << " " << hr << ":" << min << ":" << sec;
     out << formatted_output.str();
     return out;
   }
 
-  ostream &operator<<(ostream &out, const DateTime &dt) {
+  std::ostream &operator<<(std::ostream &out, const DateTime &dt) {
     return dt.print(out);
   }
 

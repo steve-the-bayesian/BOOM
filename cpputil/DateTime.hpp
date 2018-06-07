@@ -92,7 +92,7 @@ namespace BOOM {
     // Can return 0, but never 1.
     double fraction_of_day_remaining() const;
 
-    ostream &print(ostream &) const;
+    std::ostream &print(std::ostream &) const;
 
     // Convert the given amount of the given time unit to days
     // (including fractions of a day).
@@ -118,7 +118,7 @@ namespace BOOM {
     static const double microseconds_in_day_;
   };
 
-  ostream &operator<<(ostream &out, const DateTime &dt);
+  std::ostream &operator<<(std::ostream &out, const DateTime &dt);
 
 }  // namespace BOOM
 

@@ -227,7 +227,7 @@ namespace BOOM {
   ostream &TimeSeries<D>::display(ostream &out) const {
     for (uint i = 0; i < length(); ++i) {
       (*this)[i]->display(out);
-      out << endl;
+      out << std::endl;
     }
     return out;
   }

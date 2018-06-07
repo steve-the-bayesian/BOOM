@@ -36,6 +36,7 @@
 #include "cpputil/string_utils.hpp"
 
 namespace BOOM {
+  using std::endl;
 
   CategoricalVariable::CategoricalVariable(
       const std::vector<std::string> &raw_data)

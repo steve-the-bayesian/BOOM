@@ -31,7 +31,7 @@ namespace BOOM {
     OutputTable &add_column(const std::vector<std::string> &);
     OutputTable &add_to_column(const string &, uint i);
 
-    ostream &print(ostream &) const;
+    std::ostream &print(std::ostream &) const;
     void equalize_rows();
 
    private:
