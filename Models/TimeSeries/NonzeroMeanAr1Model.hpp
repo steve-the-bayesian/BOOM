@@ -75,7 +75,7 @@ namespace BOOM {
   //      y[t] ~ N( (1-phi)*mu + phi*y[t-1], sigsq)
   // where (1-phi)*mu is the intercept and phi is the slope.
   class NonzeroMeanAr1Model
-      : public MLE_Model,
+      : virtual public MLE_Model,
         public ParamPolicy_3<UnivParams, UnivParams, UnivParams>,
         public SufstatDataPolicy<DoubleData, Ar1Suf>,
         public PriorPolicy {

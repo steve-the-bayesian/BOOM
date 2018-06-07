@@ -42,7 +42,7 @@ namespace BOOM {
   // The mean of this distribution is p(x) * mu(x).
   class ZeroInflatedGammaRegressionModel : public CompositeParamPolicy,
                                            public PriorPolicy,
-                                           public MLE_Model {
+                                           virtual public MLE_Model {
    public:
     explicit ZeroInflatedGammaRegressionModel(int xdim,
                                               double zero_threshold = 1e-5);
