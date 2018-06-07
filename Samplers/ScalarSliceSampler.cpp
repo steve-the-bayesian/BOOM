@@ -23,7 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"

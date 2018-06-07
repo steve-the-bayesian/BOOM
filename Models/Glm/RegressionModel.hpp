@@ -20,7 +20,7 @@
 #ifndef BOOM_REGRESSION_MODEL_H
 #define BOOM_REGRESSION_MODEL_H
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/QR.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/Glm/Glm.hpp"

@@ -21,7 +21,7 @@
 #define BOOM_CPP_FILE_UTILS_H
 
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "cpputil/gll.hpp"
 #include "uint.hpp"
 

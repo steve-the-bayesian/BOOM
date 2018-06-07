@@ -21,7 +21,7 @@
 #define BOOM_MARKOV_MODEL_HPP
 
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 #include "Models/CategoricalData.hpp"
 #include "Models/EmMixtureComponent.hpp"

@@ -18,7 +18,7 @@
 */
 #ifndef BOOM_BINOMIAL_LOGIT_MODEL_HPP_
 #define BOOM_BINOMIAL_LOGIT_MODEL_HPP_
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/Glm/BinomialRegressionData.hpp"
 #include "Models/Glm/Glm.hpp"

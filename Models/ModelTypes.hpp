@@ -21,7 +21,7 @@
 
 #include <set>
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "Models/DataTypes.hpp"

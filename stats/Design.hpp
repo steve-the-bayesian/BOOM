@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
 

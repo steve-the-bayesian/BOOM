@@ -20,7 +20,7 @@
 #ifndef BOOM_SELECTOR_HPP
 #define BOOM_SELECTOR_HPP
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 #include <cassert>
 #include <iostream>

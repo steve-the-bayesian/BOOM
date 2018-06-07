@@ -21,7 +21,7 @@
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "cpputil/report_error.hpp"
 

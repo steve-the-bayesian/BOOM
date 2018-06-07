@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
 

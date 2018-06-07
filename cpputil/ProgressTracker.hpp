@@ -19,7 +19,7 @@
 #ifndef BOOM_PROGRESS_TRACKER_CLASS_HPP
 #define BOOM_PROGRESS_TRACKER_CLASS_HPP
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "cpputil/Ptr.hpp"
 #include "cpputil/RefCounted.hpp"
 

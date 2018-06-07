@@ -17,7 +17,7 @@
 */
 #ifndef BOOM_RESAMPLER_HPP
 #define BOOM_RESAMPLER_HPP
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/Vector.hpp"
 
 #include <algorithm>

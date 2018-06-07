@@ -20,7 +20,7 @@
 #ifndef LOGISTIC_REGRESSION_HPP
 #define LOGISTIC_REGRESSION_HPP
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"

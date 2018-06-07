@@ -20,7 +20,7 @@
 #ifndef BOOM_DATA_TABLE_HPP
 #define BOOM_DATA_TABLE_HPP
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"

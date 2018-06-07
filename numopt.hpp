@@ -23,7 +23,7 @@
 #include <string>
 #include "LinAlg/SpdMatrix.hpp"
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include <functional>
 #include "cpputil/report_error.hpp"
 

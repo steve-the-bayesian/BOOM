@@ -21,7 +21,7 @@
 #define BOOM_SWEEP_HPP
 
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"

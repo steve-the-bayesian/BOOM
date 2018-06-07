@@ -23,7 +23,7 @@
 #include <set>
 #include <tuple>
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "cpputil/make_unique_preserve_order.hpp"
 #include "cpputil/report_error.hpp"
 #include "stats/Design.hpp"

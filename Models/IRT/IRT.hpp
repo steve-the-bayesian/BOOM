@@ -22,7 +22,7 @@
 #include <set>
 #include <vector>
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "Models/CategoricalData.hpp"
 #include "Models/ModelTypes.hpp"
 

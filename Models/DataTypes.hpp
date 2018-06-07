@@ -24,7 +24,7 @@
 #include <map>  // for STL's map container
 #include <string>
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 #include "LinAlg/CorrelationMatrix.hpp"  // for VectorData
 #include "LinAlg/Matrix.hpp"

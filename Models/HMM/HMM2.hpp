@@ -21,7 +21,7 @@
 #define BOOM_HMM_HPP
 
 #include <vector>
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "Models/DataTypes.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/MarkovModel.hpp"

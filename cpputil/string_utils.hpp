@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "cpputil/Split.hpp"
 #include "uint.hpp"
 

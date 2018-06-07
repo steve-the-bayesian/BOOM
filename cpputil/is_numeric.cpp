@@ -20,7 +20,7 @@
 
 #include <cctype>
 #include <string>
-#include "BOOM.hpp"
+#include "uint.hpp"
 
 namespace BOOM {
 

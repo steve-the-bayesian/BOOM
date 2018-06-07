@@ -20,7 +20,7 @@
 #ifndef PROBIT_REGRESSION_HPP
 #define PROBIT_REGRESSION_HPP
 
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"

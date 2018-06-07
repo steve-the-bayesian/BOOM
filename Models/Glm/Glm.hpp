@@ -20,7 +20,7 @@
 
 #ifndef GLM_MODEL_H
 #define GLM_MODEL_H
-#include "BOOM.hpp"
+#include "uint.hpp"
 #include "LinAlg/Selector.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
