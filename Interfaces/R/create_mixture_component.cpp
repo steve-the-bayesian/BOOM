@@ -128,7 +128,7 @@ namespace BOOM {
       // Indicates that the MixtureComponentBuilder should use the text
       // naming strategy (see 'create_name' above), and specifies the
       // prefix of the next mixture component to be created.
-      void set_component_name_prefix(const string &prefix) {
+      void set_component_name_prefix(const std::string &prefix) {
         state_number_ = -1;
         component_name_prefix_ = prefix;
       }

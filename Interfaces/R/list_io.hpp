@@ -284,8 +284,8 @@ namespace BOOM{
    public:
     VectorListElement(const Ptr<VectorParams> &m,
                       const std::string &param_name,
-                      const std::vector<string> &element_names
-                      = std::vector<string>());
+                      const std::vector<std::string> &element_names
+                      = std::vector<std::string>());
     // Allocate a matrix
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
@@ -295,7 +295,7 @@ namespace BOOM{
     void CheckSize();
     Ptr<VectorParams> prm_;
     SubMatrix matrix_view_;
-    std::vector<string> element_names_;
+    std::vector<std::string> element_names_;
   };
 
   //----------------------------------------------------------------------
@@ -306,18 +306,19 @@ namespace BOOM{
    public:
     GlmCoefsListElement(const Ptr<GlmCoefs> &m,
                         const std::string &param_name,
-                        const std::vector<string> &element_names
-                        = std::vector<string>());
+                        const std::vector<std::string> &element_names
+                        = std::vector<std::string>());
     void stream() override;
-
+    
     // If coefficient names are set prior to calling prepare_to_write()
-    void set_coefficient_names(const std::vector<string> &names);
+    void set_coefficient_names(const std::vector<std::string> &names);
+
    private:
     Ptr<GlmCoefs> coefs_;
 
     // Workspace to use when streaming.
     Vector beta_;
-    const std::vector<string> coefficient_names_;
+    const std::vector<std::string> coefficient_names_;
   };
 
   //----------------------------------------------------------------------

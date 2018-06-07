@@ -41,7 +41,7 @@ namespace BOOM {
     //     the current event.
     // Returns:
     //   An integer 0, 1, or 2 indicating the state after the current event.
-    int determine_state(int previous_state, const string &label) {
+    int determine_state(int previous_state, const std::string &label) {
       if (previous_state == 0) {
         if (label == "background")
           return 0;
@@ -70,7 +70,7 @@ namespace BOOM {
         else if (label == "background")
           return 3;
       }
-      ostringstream err;
+      std::ostringstream err;
       err << "could not determine the next state, with initial state = "
           << previous_state << " and next event produced by " << label << endl;
       report_error(err.str());
@@ -360,7 +360,7 @@ namespace BOOM {
       try {
         previous_state = draw_previous_state(rng, t, current_state);
       } catch (std::exception &e) {
-        ostringstream err;
+        std::ostringstream err;
         err << e.what() << endl
             << "Error occurred in PoissonClusterProcess::backward_sampling"
             << " at time " << t << " (counting from 0)." << endl
@@ -620,7 +620,7 @@ namespace BOOM {
       const Ptr<PointProcess> &dp, const std::vector<int> &source) {
     add_data(dp);
     if (dp->number_of_events() != source.size()) {
-      ostringstream err;
+      std::ostringstream err;
       err << "Error in PoissonClusterProcess::add_supervised_data." << endl
           << "The size of source (" << source.size() << ") does not match the"
           << " number of events in the corresponding point process ("
@@ -629,7 +629,7 @@ namespace BOOM {
     }
     for (int i = 0; i < source.size(); ++i) {
       if (source[i] > 1) {
-        ostringstream err;
+        std::ostringstream err;
         err << "Error in PoissonClusterProcess::add_supervised_data." << endl
             << "source[" << i << "] = " << source[i] << endl
             << "legal values are " << endl
@@ -656,7 +656,7 @@ namespace BOOM {
     all_processes.push_back(secondary_death_.get());
     all_processes.push_back(secondary_traffic_.get());
 
-    std::map<PoissonProcess *, string> labels;
+    std::map<PoissonProcess *, std::string> labels;
     labels[background_.get()] = "background";
     labels[primary_birth_.get()] = "primary_birth";
     labels[primary_traffic_.get()] = "primary_traffic";
@@ -776,14 +776,14 @@ namespace BOOM {
   //----------------------------------------------------------------------
   bool PoissonClusterProcess::legal_transition(int r, int s) const {
     if (s < 0 || s > 3) {
-      ostringstream err;
+      std::ostringstream err;
       err << "Illegal value of s (" << s
           << ") in PoissonClusterProcess::legal_transition." << endl
           << "Legal values are 0, 1, 2, 3." << endl;
       report_error(err.str());
     }
     if (r < 0 || r > 3) {
-      ostringstream err;
+      std::ostringstream err;
       err << "Illegal value of r (" << r
           << ") in PoissonClusterProcess::legal_transition." << endl
           << "Legal values are 0, 1, 2, 3." << endl;
@@ -962,7 +962,7 @@ namespace BOOM {
     if (source < 0 || (primary && source == 1) || (!primary && source == 0) ||
         probability < .0001)
       return;
-    ostringstream err;
+    std::ostringstream err;
     err << "Positive probability was assigned to an impossible event, "
         << "based on known source. " << endl
         << "Source = " << source << " but probability " << probability

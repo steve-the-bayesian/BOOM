@@ -233,9 +233,10 @@ namespace BOOM {
   }
 
   //======================================================================
-  VectorListElement::VectorListElement(const Ptr<VectorParams> &prm,
-                                       const std::string &name,
-                                       const std::vector<string> &element_names)
+  VectorListElement::VectorListElement(
+      const Ptr<VectorParams> &prm,
+      const std::string &name,
+      const std::vector<std::string> &element_names)
       : RealValuedRListIoElement(name),
         prm_(prm),
         matrix_view_(0, 0, 0),
@@ -287,9 +288,10 @@ namespace BOOM {
     }
   }
   //======================================================================
-  GlmCoefsListElement::GlmCoefsListElement(const Ptr<GlmCoefs> &coefs,
-                                           const std::string &param_name,
-                                           const std::vector<string> &element_names)
+  GlmCoefsListElement::GlmCoefsListElement(
+      const Ptr<GlmCoefs> &coefs,
+      const std::string &param_name,
+      const std::vector<std::string> &element_names)
       : VectorListElement(coefs, param_name, element_names),
         coefs_(coefs)
   {}
