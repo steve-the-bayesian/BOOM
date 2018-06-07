@@ -114,7 +114,8 @@ namespace BOOM {
   // Returns:
   //   A heap-allocated pointer to the requested holiday.  The caller
   //   is responsible for deleting the returned object.
-  Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
+  Holiday *CreateNamedHoliday(const std::string &holiday_name,
+                              int days_before,
                               int days_after);
 
   //==========================================================================

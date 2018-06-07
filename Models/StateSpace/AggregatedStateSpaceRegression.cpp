@@ -49,14 +49,14 @@ namespace BOOM {
     return new FineNowcastingData(*this);
   }
 
-  ostream &FineNowcastingData::display(ostream &out) const {
+  std::ostream &FineNowcastingData::display(std::ostream &out) const {
     out << "x = " << x_->x() << endl
         << "   y = " << coarse_observation_ << " ["
-        << (coarse_observation_observed_ ? string("observed")
-                                         : string("missing"))
+        << (coarse_observation_observed_ ? std::string("observed")
+                                         : std::string("missing"))
         << "]" << endl
         << "   contains_end = "
-        << (contains_end_ ? string("contains_end") : string("regular")) << endl
+        << (contains_end_ ? std::string("contains_end") : std::string("regular")) << endl
         << "   fraction in previous period = (" << fraction_in_initial_period_
         << ")" << endl;
     return out;
@@ -88,7 +88,7 @@ namespace BOOM {
         contains_end_(contains_end),
         owns_matrix_(owns_matrix) {
     if (fraction_in_initial_period > 1.0 || fraction_in_initial_period <= 0.0) {
-      ostringstream err;
+      std::ostringstream err;
       err << "Error in constructor for AccumulatorTransitionMatrix:" << endl
           << "fraction_in_initial_period must be in (0, 1]" << endl;
       report_error(err.str());
@@ -127,7 +127,7 @@ namespace BOOM {
                                    const SparseVector &Z, bool new_time,
                                    double fraction_in_initial_period,
                                    const VEC &v) {
-    ostringstream err;
+    std::ostringstream err;
     int state_dim = T->nrow();
     err << "incompatible sizes in AccumulatorTransitionMatrix multiplication"
         << endl

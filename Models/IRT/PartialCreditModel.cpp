@@ -157,8 +157,8 @@ namespace BOOM {
       return new CVP(d, new SumConstraint(0.0));
     }
 
-    PCR::PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
-                            uint Nscales, const string &Name, bool id_d0)
+    PCR::PartialCreditModel(const std::string &Id, uint Mscore, uint which_sub,
+                            uint Nscales, const std::string &Name, bool id_d0)
         : Item(Id, Mscore, which_sub, Nscales, Name),
           ParamPolicy(new UnivParams(1.0), new UnivParams(0.0),
                       make_d_uint(Mscore, id_d0)),
@@ -171,9 +171,9 @@ namespace BOOM {
       setup();
     }
 
-    PCR::PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
+    PCR::PartialCreditModel(const std::string &Id, uint Mscore, uint which_sub,
                             uint Nscales, double a, double b, const Vector &d,
-                            const string &Name, bool id_d0)
+                            const std::string &Name, bool id_d0)
         : Item(Id, Mscore, which_sub, Nscales, Name),
           ParamPolicy(new UnivParams(a), new UnivParams(b),
                       make_d_vec(d, id_d0)),

@@ -28,22 +28,22 @@
 
 namespace BOOM {
 
-  std::vector<string> split_string(const std::string &);
-  std::vector<string> split_delimited(const std::string &s,
-                                      const std::string &delim);
-  inline std::vector<string> split_delimited(const std::string &s,
-                                             char delim) {
+  std::vector<std::string> split_string(const std::string &);
+  std::vector<std::string> split_delimited(const std::string &s,
+                                           const std::string &delim);
+  inline std::vector<std::string> split_delimited(const std::string &s,
+                                                  char delim) {
     return split_delimited(s, std::string(1, delim));
   }
 
-  inline std::vector<string> split(const std::string &s) {
+  inline std::vector<std::string> split(const std::string &s) {
     return split_string(s);
   }
-  inline std::vector<string> split(const std::string &s,
-                                   const std::string &d) {
+  inline std::vector<std::string> split(const std::string &s,
+                                        const std::string &d) {
     return split_delimited(s, d);
   }
-  inline std::vector<string> split(const std::string &s, char dlm) {
+  inline std::vector<std::string> split(const std::string &s, char dlm) {
     return split_delimited(s, dlm);
   }
 
@@ -80,7 +80,7 @@ namespace BOOM {
   // removes \r's, \n's etc from end
 
   std::string replace_all(const std::string &s, const char *, const char *);
-  std::string &replace_all(string &s, const char *, const char *);
+  std::string &replace_all(std::string &s, const char *, const char *);
 
   bool is_numeric(const std::string &s);
   

@@ -127,7 +127,7 @@ namespace BOOM {
     std::string error_message_;
 
    protected:
-    void set_status(MleStatus status, const string &error_message) {
+    void set_status(MleStatus status, const std::string &error_message) {
       status_ = status;
       error_message_ = error_message;
     }

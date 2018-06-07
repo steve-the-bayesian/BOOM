@@ -123,9 +123,10 @@ namespace BOOM {
     return mean_prior_->logp(mean) + sample_size_prior_->logp(sample_size);
   }
 
-  string BetaPosteriorSampler::error_message(const char *thing_being_drawn,
-                                             const std::exception *e) const {
-    ostringstream err;
+  std::string BetaPosteriorSampler::error_message(
+      const char *thing_being_drawn,
+      const std::exception *e) const {
+    std::ostringstream err;
     err << "The slice sampler generated an exception when drawing "
         << thing_being_drawn << " for the beta distribution.  " << endl
         << "Current parameter values are:  " << endl

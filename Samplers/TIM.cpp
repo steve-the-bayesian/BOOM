@@ -97,7 +97,7 @@ namespace BOOM {
     Vector gradient = old;
     Matrix Hessian(old.size(), old.size());
     double max_value;
-    string error_message;
+    std::string error_message;
     bool ok = max_nd2_careful(cand_, gradient, Hessian, max_value, f_, df_,
                               d2f_, 1e-5, error_message);
 

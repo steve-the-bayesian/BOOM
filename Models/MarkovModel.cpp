@@ -108,7 +108,8 @@ namespace BOOM {
     return new TimeSeries<MarkovData>(data, true);
   }
 
-  Ptr<MarkovDataSeries> make_markov_data(const std::vector<string> &raw_data) {
+  Ptr<MarkovDataSeries> make_markov_data(
+      const std::vector<std::string> &raw_data) {
     if (raw_data.empty()) return nullptr;
     Ptr<CatKey> key = make_catkey(raw_data);
     std::vector<Ptr<MarkovData>> data;
@@ -335,7 +336,7 @@ namespace BOOM {
     mle();
   }
 
-  MarkovModel::MarkovModel(const std::vector<string> &sdata)
+  MarkovModel::MarkovModel(const std::vector<std::string> &sdata)
       : DataPolicy(new MarkovSuf(number_of_unique_elements(sdata))) {
     uint S = suf()->state_space_size();
     NEW(TPM, Q1)(S);

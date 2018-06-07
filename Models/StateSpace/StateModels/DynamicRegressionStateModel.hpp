@@ -72,8 +72,8 @@ namespace BOOM {
     DynamicRegressionStateModel(const DynamicRegressionStateModel &rhs);
     DynamicRegressionStateModel *clone() const override;
 
-    void set_xnames(const std::vector<string> &xnames);
-    const std::vector<string> &xnames() const;
+    void set_xnames(const std::vector<std::string> &xnames);
+    const std::vector<std::string> &xnames() const;
 
     void clear_data() override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
@@ -149,7 +149,7 @@ namespace BOOM {
     uint xdim_;
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
-    std::vector<string> xnames_;
+    std::vector<std::string> xnames_;
 
     // Each model is the prior for the differences in regression
     // coefficients.

@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <ostream>
 #include "LinAlg/Matrix.hpp"  // includes Vector.hpp as well
 #include "LinAlg/Vector.hpp"
 #include "cpputil/math_utils.hpp"
@@ -88,7 +89,7 @@ namespace BOOM {
   double newton_raphson_min(Vector &theta, Vector &gradient, Matrix &hessian,
                             const d2Target &target, int &function_count,
                             double leps, bool &happy_ending,
-                            string &error_message) {
+                            std::string &error_message) {
     function_count = 0;
     happy_ending = true;
     error_message = "";
@@ -149,7 +150,7 @@ namespace BOOM {
           }
           if (!hessian.is_pos_def()) {
             happy_ending = false;
-            ostringstream err;
+            std::ostringstream err;
             err << "The Hessian matrix is not positive definite in "
                 << "newton_raphson_min." << endl
                 << hessian << endl;

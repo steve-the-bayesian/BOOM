@@ -132,7 +132,8 @@ namespace BOOM {
     }
 
     //------------------------------------------------------------
-    ostream &IrtModel::print_subscales(ostream &out, bool nl, bool decorate) {
+    std::ostream &IrtModel::print_subscales(
+        std::ostream &out, bool nl, bool decorate) {
       uint sz = 0;
       std::string sep = "   ";
       if (decorate) {
@@ -307,7 +308,7 @@ namespace BOOM {
       }
     }
 
-    void IrtModel::item_report(ostream &out, uint max_name_width) const {
+    void IrtModel::item_report(std::ostream &out, uint max_name_width) const {
       uint maxw = 0;
       for (ItemItC it = items.begin(); it != items.end(); ++it) {
         maxw = std::max<uint>(maxw, (*it)->name().size());

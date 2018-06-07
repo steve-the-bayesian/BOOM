@@ -71,7 +71,7 @@ namespace BOOM {
 
     // The argument is a vector of names to use for factor levels to
     // be modeled.
-    explicit MultinomialModel(const std::vector<string> &);
+    explicit MultinomialModel(const std::vector<std::string> &);
 
     explicit MultinomialModel(const MultinomialSuf &suf);
 

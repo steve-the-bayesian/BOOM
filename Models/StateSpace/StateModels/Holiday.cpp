@@ -341,7 +341,8 @@ namespace BOOM {
   //======================================================================
   // Factory method to create a Holiday given a string containing
   // the holiday name.
-  Holiday *CreateNamedHoliday(const string &holiday_name, int days_before,
+  Holiday *CreateNamedHoliday(const std::string &holiday_name,
+                              int days_before,
                               int days_after) {
     if (holiday_name == "NewYearsDay") {
       return new NewYearsDay(days_before, days_after);

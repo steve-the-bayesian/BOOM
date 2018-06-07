@@ -36,21 +36,21 @@ namespace BOOM {
      public:
       friend class IrtModel;
 
-      Subject(const string &Id, uint nscal);
-      Subject(const string &Id, const Vector &theta);
-      Subject(const string &Id, uint nscal, const Vector &background_vars);
+      Subject(const std::string &Id, uint nscal);
+      Subject(const std::string &Id, const Vector &theta);
+      Subject(const std::string &Id, uint nscal, const Vector &background_vars);
       Subject(const Subject &rhs);
       Subject *clone() const override;
 
       Response add_item(const Ptr<Item> &item, uint response);
-      Response add_item(const Ptr<Item> &item, const string &response);
+      Response add_item(const Ptr<Item> &item, const std::string &response);
       Response add_item(const Ptr<Item> &item, Response r);
 
       // find this subject's response to an item
 
       const ItemResponseMap &item_responses() const;
       Response response(const Ptr<Item> &) const;
-      Ptr<Item> find_item(const string &item_id, bool nag = false) const;
+      Ptr<Item> find_item(const std::string &item_id, bool nag = false) const;
 
       Ptr<VectorParams> Theta_prm();
       const Ptr<VectorParams> Theta_prm() const;
@@ -64,14 +64,14 @@ namespace BOOM {
       uint Nscales() const;
 
       virtual double loglike() const;
-      const string &id() const;
+      const std::string &id() const;
       SpdMatrix xtx() const;
       // returns \sum_i \Beta_i \Beta_i^T for betas
 
       Response simulate_response(const Ptr<Item> &item);
 
      private:
-      string id_;  // subject identifier
+      std::string id_;  // subject identifier
       ItemResponseMap responses_;
       Ptr<Item> search_helper;
       Ptr<VectorParams> Theta_;

@@ -162,7 +162,7 @@ namespace BOOM {
     uint p = parameters.size();
     gradient.resize(p);
     Hessian.resize(p, p);
-    string error_message;
+    std::string error_message;
     double logf;
     bool ok = max_nd2_careful(parameters, gradient, Hessian, logf,
                               Target(loglike), dTarget(loglike),

@@ -29,7 +29,7 @@ namespace BOOM {
     std::vector<std::string> &column(uint i);
     OutputTable &add_row(const std::vector<std::string> &);
     OutputTable &add_column(const std::vector<std::string> &);
-    OutputTable &add_to_column(const string &, uint i);
+    OutputTable &add_to_column(const std::string &, uint i);
 
     std::ostream &print(std::ostream &) const;
     void equalize_rows();

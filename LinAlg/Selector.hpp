@@ -201,9 +201,9 @@ namespace BOOM {
     void reset_included_positions();
 
     // Checks that the size of this is equal to 'p'.
-    void check_size_eq(uint p, const string &fun_name) const;
+    void check_size_eq(uint p, const std::string &fun_name) const;
     // Checks that the size of *this is greater than 'p'.
-    void check_size_gt(uint p, const string &fun_name) const;
+    void check_size_gt(uint p, const std::string &fun_name) const;
   };
   //______________________________________________________________________
 

@@ -67,7 +67,7 @@ namespace BOOM {
   }
 
   void NS::too_few_knots() const {
-    string msg = "you must have at least one knot to use a NaturalSpline";
+    std::string msg = "you must have at least one knot to use a NaturalSpline";
     report_error(msg);
   }
 

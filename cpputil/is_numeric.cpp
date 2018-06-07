@@ -28,7 +28,7 @@ namespace BOOM {
   inline bool is_dot(char c) { return (c == '.'); }
   inline bool is_sign(char c) { return (c == '-' || c == '+'); }
 
-  bool is_numeric(const string &s) {
+  bool is_numeric(const std::string &s) {
     // if all characters in s could be part of a numerical object
     // return true.  If any cannot return false.
 

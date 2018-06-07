@@ -83,7 +83,7 @@ namespace BOOM {
       uint len = labs_[i].size();
       if (len > labfw) labfw = len;
 
-      string s = std::to_string(counts_[i]);
+      std::string s = std::to_string(counts_[i]);
       len = s.size();
       if (len > countfw) countfw = len;
     }

@@ -21,8 +21,8 @@
 #include <sstream>
 
 namespace BOOM {
-  std::vector<string> default_vnames(uint sz, int indx_start) {
-    std::vector<string> ans;
+  std::vector<std::string> default_vnames(uint sz, int indx_start) {
+    std::vector<std::string> ans;
     for (uint i = 0; i < sz; ++i) {
       std::ostringstream msg;
       msg << "V." << static_cast<int>(i) + indx_start;

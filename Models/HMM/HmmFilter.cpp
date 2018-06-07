@@ -35,8 +35,8 @@ namespace BOOM {
   void hmm_recursion_error(const Matrix &P, const Vector &marg,
                            const Matrix &tmat, const Vector &wsp, uint i,
                            const Ptr<Data> &dp) {
-    string str;
-    ostringstream s(str);
+    std::string str;
+    std::ostringstream s(str);
     s << "error in HMM recursion at step " << i << ":" << endl;
     s << "marg:" << endl << marg << endl;
     s << "P: " << endl << P << endl;

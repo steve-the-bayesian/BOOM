@@ -30,7 +30,7 @@ namespace BOOM {
     return *this;
   }
 
-  OT &OT::add_to_column(const string &s, uint i) {
+  OT &OT::add_to_column(const std::string &s, uint i) {
     cols_[i].push_back(s);
     return *this;
   }

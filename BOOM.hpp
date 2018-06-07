@@ -20,11 +20,7 @@
 #ifndef BOOM_HPP
 #define BOOM_HPP
 
-#include <string>
 #include "uint.hpp"
 
-namespace BOOM{
-  using std::string;
-}
 
 #endif //BOOM_HPP

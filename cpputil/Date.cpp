@@ -219,13 +219,13 @@ namespace BOOM {
            number_of_leap_years_before_1970(year) + is_leap_year(year);
   }
 
-  Date::Date(const string &m, int d, int yyyy) {
+  Date::Date(const std::string &m, int d, int yyyy) {
     MonthNames month_name = str2month(m);
     set(month_name, d, yyyy);
   }
 
-  Date::Date(const string &mdy, char delim) {
-    std::vector<string> tmp = split_delimited(mdy, delim);
+  Date::Date(const std::string &mdy, char delim) {
+    std::vector<std::string> tmp = split_delimited(mdy, delim);
     MonthNames m = str2month(tmp[0]);
     int d, y;
     std::istringstream(tmp[1]) >> d;
@@ -611,8 +611,8 @@ namespace BOOM {
     return out;
   }
 
-  Date guess_date_format(const string &s, char delim) {
-    std::vector<string> fields = split_delimited(s, delim);
+  Date guess_date_format(const std::string &s, char delim) {
+    std::vector<std::string> fields = split_delimited(s, delim);
     int m, d, y;
     std::istringstream(fields[0]) >> m;
     std::istringstream(fields[1]) >> d;
@@ -640,7 +640,7 @@ namespace BOOM {
     return Date(m, d, y);
   }
 
-  string Date::str() const {
+  std::string Date::str() const {
     std::ostringstream os;
     os << *this;
     return os.str();
@@ -692,7 +692,7 @@ namespace BOOM {
     return unknown_month;
   }
 
-  DayNames str2day(const string &s) {
+  DayNames str2day(const std::string &s) {
     if (s.size() <= 4) {
       if (s == "Sun" || s == "sun") return Sun;
       if (s == "Mon" || s == "mon") return Mon;

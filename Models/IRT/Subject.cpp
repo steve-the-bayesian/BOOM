@@ -26,7 +26,7 @@
 namespace BOOM {
   namespace IRT {
 
-    Subject::Subject(const string &Id, uint nsub)
+    Subject::Subject(const std::string &Id, uint nsub)
         : id_(Id),
           responses_(),
           search_helper(new NullItem),
@@ -34,7 +34,7 @@ namespace BOOM {
           x_(),
           prototype() {}
 
-    Subject::Subject(const string &Id, const Vector &theta)
+    Subject::Subject(const std::string &Id, const Vector &theta)
         : id_(Id),
           responses_(),
           search_helper(new NullItem),
@@ -42,7 +42,7 @@ namespace BOOM {
           x_(),
           prototype() {}
 
-    Subject::Subject(const string &Id, uint nsub, const Vector &bg)
+    Subject::Subject(const std::string &Id, uint nsub, const Vector &bg)
         : id_(Id),
           responses_(),
           search_helper(new NullItem),
@@ -75,7 +75,7 @@ namespace BOOM {
       return r;
     }
 
-    Response Subject::add_item(const Ptr<Item> &it, const string &resp) {
+    Response Subject::add_item(const Ptr<Item> &it, const std::string &resp) {
       Response r = new OrdinalData(resp, it->possible_responses_);
       add_item(it, r);
       return r;
@@ -99,7 +99,7 @@ namespace BOOM {
       return out;
     }
 
-    Ptr<Item> Subject::find_item(const string &item_id, bool nag) const {
+    Ptr<Item> Subject::find_item(const std::string &item_id, bool nag) const {
       search_helper->id_ = item_id;
       IrIterC it = responses_.lower_bound(search_helper);
       if (it == responses_.end() || it->first->id() != item_id) {
@@ -124,7 +124,7 @@ namespace BOOM {
       return ans;
     }
 
-    const string &Subject::id() const { return id_; }
+    const std::string &Subject::id() const { return id_; }
 
     Ptr<VectorParams> Subject::Theta_prm() { return Theta_; }
     const Ptr<VectorParams> Subject::Theta_prm() const { return Theta_; }

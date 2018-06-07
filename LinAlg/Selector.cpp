@@ -43,7 +43,7 @@ namespace BOOM {
         else if (c == '0')
           ans[i] = false;
         else {
-          ostringstream err;
+          std::ostringstream err;
           err << "only 0's and 1's are allowed in the 'Selector' "
               << "string constructor " << endl
               << "you supplied:  " << endl
@@ -92,9 +92,9 @@ namespace BOOM {
     for (uint i = 0; i < pos.size(); ++i) add(pos[i]);
   }
 
-  void Selector::check_size_eq(uint p, const string &fun) const {
+  void Selector::check_size_eq(uint p, const std::string &fun) const {
     if (p == nvars_possible()) return;
-    ostringstream err;
+    std::ostringstream err;
 
     err << "error in function Selector::" << fun << endl
         << "Selector::nvars_possible() == " << nvars_possible() << endl
@@ -102,9 +102,9 @@ namespace BOOM {
     report_error(err.str());
   }
 
-  void Selector::check_size_gt(uint p, const string &fun) const {
+  void Selector::check_size_gt(uint p, const std::string &fun) const {
     if (p < nvars_possible()) return;
-    ostringstream err;
+    std::ostringstream err;
 
     err << "error in function Selector::" << fun << endl
         << "Selector::nvars_possible()== " << nvars_possible() << endl
@@ -279,7 +279,7 @@ namespace BOOM {
     uint nx = x.size();
     uint N = inc.nvars_possible();
     if (nx != N) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "Selector::select... x.size() = " << nx
           << " nvars_possible() = " << N << endl;
       report_error(msg.str());
@@ -307,7 +307,7 @@ namespace BOOM {
     uint n = inc.nvars();
     uint nx = x.size();
     if (nx != n) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "Selector::expand... x.size() = " << nx << " nvars() = " << n
           << endl;
       report_error(msg.str());
@@ -631,7 +631,7 @@ namespace BOOM {
   }
 
   istream &operator>>(istream &in, Selector &inc) {
-    string s;
+    std::string s;
     in >> s;
     uint n = s.size();
     std::vector<bool> tmp(n);

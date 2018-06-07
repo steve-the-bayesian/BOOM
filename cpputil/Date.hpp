@@ -62,7 +62,7 @@ namespace BOOM {
   //     leading "0" for months prior to October is optional.
   // Returns:
   //   The enum corresponding to the month in the input string.
-  MonthNames str2month(const string &month_name);
+  MonthNames str2month(const std::string &month_name);
 
   // Args:
   //   day_name: Name of the day of the week.  The following formats
@@ -71,7 +71,7 @@ namespace BOOM {
   //   * Three letter abbreviation (initial caps or all lower case).
   // Returns:
   //   The enum corresponding to the day of the week in the input string.
-  DayNames str2day(const string &day_name);
+  DayNames str2day(const std::string &day_name);
 
   std::ostream &operator<<(std::ostream &, const DayNames &);
 
@@ -84,8 +84,8 @@ namespace BOOM {
     explicit Date(int days_after_jan_1_1970);  // Unix time, but in days
     Date(int m, int dd, int yyyy);    // January 3, 2007 is Date(1, 3, 2007);
     Date(MonthNames m, int dd, int yyyy);       // Date(Jan, 3, 2007)
-    explicit Date(const string &mdy, char delim = '/');  // Date("Jan/3/2007")
-    Date(const string &m, int d, int yyyy);     // Date("January", 3, 2007);
+    explicit Date(const std::string &mdy, char delim = '/');  // Date("Jan/3/2007")
+    Date(const std::string &m, int d, int yyyy);     // Date("January", 3, 2007);
     Date(const Date &rhs);
     explicit Date(const struct tm &time_info);
 
@@ -128,7 +128,7 @@ namespace BOOM {
     long days_after_jan_1_1970() const;
     std::ostream &display(std::ostream &) const;
     std::ostream &display_month(std::ostream &) const;
-    string str() const;
+    std::string str() const;
 
     time_t to_time_t() const;
 
@@ -234,6 +234,6 @@ namespace BOOM {
   std::ostream &operator<<(std::ostream &, const Date &d);
   std::ostream &display(std::ostream &, DayNames,
                         calendar_format = Abbreviations);
-  Date guess_date_format(const string &s, char delim = '/');
+  Date guess_date_format(const std::string &s, char delim = '/');
 }  // namespace BOOM
 #endif  // BOOM_DATE_HPP

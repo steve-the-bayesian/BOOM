@@ -45,7 +45,7 @@ namespace BOOM {
         if (i < columns[j].size())
           out << columns[j][i];
         else
-          out << string(widths[j], ' ');
+          out << std::string(widths[j], ' ');
       }
       out << std::endl;
     }

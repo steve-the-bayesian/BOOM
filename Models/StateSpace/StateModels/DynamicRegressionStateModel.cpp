@@ -143,7 +143,7 @@ namespace BOOM {
     return new DynamicRegressionStateModel(*this);
   }
 
-  void DRSM::set_xnames(const std::vector<string> &xnames) {
+  void DRSM::set_xnames(const std::vector<std::string> &xnames) {
     if (xnames.size() != state_dimension()) {
       std::ostringstream err;
       err << "Error in DRSM::set_xnames." << endl
@@ -154,7 +154,7 @@ namespace BOOM {
     xnames_ = xnames;
   }
 
-  const std::vector<string> &DRSM::xnames() const { return xnames_; }
+  const std::vector<std::string> &DRSM::xnames() const { return xnames_; }
 
   void DRSM::clear_data() {
     for (int i = 0; i < coefficient_transition_model_.size(); ++i) {

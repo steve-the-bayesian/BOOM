@@ -18,12 +18,13 @@
 */
 
 #include <cctype>
-#include "BOOM.hpp"
+#include <string>
+
 namespace BOOM {
 
-  bool is_all_white(const string &s) {
+  bool is_all_white(const std::string &s) {
     // returns true if s is either empty or all white space
-    for (uint i = 0; i < s.size(); ++i)
+    for (size_t i = 0; i < s.size(); ++i)
       if (!isspace(s[i])) return false;
     return true;
   }

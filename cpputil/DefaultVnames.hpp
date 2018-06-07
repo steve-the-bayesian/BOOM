@@ -27,6 +27,6 @@ namespace BOOM {
 
   // produces default names for a set of variables of a given size
 
-  std::vector<string> default_vnames(uint sz, int indx_start = 0);
+  std::vector<std::string> default_vnames(uint sz, int indx_start = 0);
 }  // namespace BOOM
 #endif  // BOOM_DEFAULT_VNAMES_HPP

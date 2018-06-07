@@ -171,7 +171,7 @@ namespace BOOM{
                        dTarget differentiable_target,
                        d2Target twice_differentiable_target,
                        double epsilon,
-                       string &error_msg);
+                       std::string &error_msg);
 
   //--------- Methods: Each includes a full interface and an inline
   //--------- function providing a simpler interface
@@ -285,7 +285,7 @@ namespace BOOM{
                             int &function_call_count,
                             double eps,
                             bool & happy_ending,
-                            string &error_message);
+                            std::string &error_message);
 
   // Minimize a function using derivative-free simulated annealing.
   // Args:

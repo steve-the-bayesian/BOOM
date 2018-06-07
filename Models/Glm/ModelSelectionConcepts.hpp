@@ -29,7 +29,7 @@ namespace BOOM {
   namespace ModelSelection {
     class Variable : private RefCounted {
      public:
-      Variable(uint pos, double prob, const string &name = "");
+      Variable(uint pos, double prob, const std::string &name = "");
       Variable(const Variable &rhs);
       virtual Variable *clone() const = 0;
       ~Variable() override;
@@ -46,7 +46,7 @@ namespace BOOM {
       Ptr<BinomialModel> model();
       const Ptr<BinomialModel> model() const;
       virtual bool parents_are_present(const Selector &g) const = 0;
-      const string &name() const;
+      const std::string &name() const;
 
       virtual void add_to(VariableSelectionPrior &) const = 0;
 
@@ -59,13 +59,13 @@ namespace BOOM {
      private:
       uint pos_;
       Ptr<BinomialModel> mod_;
-      string name_;
+      std::string name_;
     };
     ostream &operator<<(ostream &out, const Variable &v);
     //______________________________________________________________________
     class MainEffect : public Variable {
      public:
-      MainEffect(uint position, double prob, const string &name = "");
+      MainEffect(uint position, double prob, const std::string &name = "");
       MainEffect *clone() const override;
       virtual bool observed() const;
       bool parents_are_present(const Selector &g) const override;
@@ -76,7 +76,7 @@ namespace BOOM {
     class MissingMainEffect : public MainEffect {
      public:
       MissingMainEffect(uint position, double prob, uint obs_ind_pos,
-                        const string &name);
+                        const std::string &name);
       MissingMainEffect(const MissingMainEffect &rhs);
       MissingMainEffect *clone() const override;
       double logp(const Selector &inc) const override;
@@ -92,7 +92,7 @@ namespace BOOM {
     class Interaction : public Variable {
      public:
       Interaction(uint position, double prob, const std::vector<uint> &parents,
-                  const string &name = "");
+                  const std::string &name = "");
       Interaction(const Interaction &rhs);
       Interaction *clone() const override;
       double logp(const Selector &inc) const override;

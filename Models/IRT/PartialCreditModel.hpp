@@ -71,12 +71,12 @@ namespace BOOM {
         ------------------------------------------------------------*/
 
      public:
-      PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
-                         uint Nscales, const string &Name = "",
+      PartialCreditModel(const std::string &Id, uint Mscore, uint which_sub,
+                         uint Nscales, const std::string &Name = "",
                          bool id_d0 = true);
-      PartialCreditModel(const string &Id, uint Mscore, uint which_sub,
+      PartialCreditModel(const std::string &Id, uint Mscore, uint which_sub,
                          uint Nscales, double a, double b, const Vector &d,
-                         const string &Name = "", bool id_d0 = true);
+                         const std::string &Name = "", bool id_d0 = true);
       PartialCreditModel(const PartialCreditModel &rhs);
       PartialCreditModel *clone() const override;
 

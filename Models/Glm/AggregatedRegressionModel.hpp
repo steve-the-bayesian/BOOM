@@ -53,7 +53,7 @@ namespace BOOM {
       // = f(z)
       virtual double log_jacobian(double y) const = 0;
 
-      virtual string name() const = 0;
+      virtual std::string name() const = 0;
     };
 
     class LogTransformation : public Transformation {
@@ -62,7 +62,7 @@ namespace BOOM {
       double inverse(double z) const override { return exp(z); }
       // Jacobian is 1/y, so log is -log(y)
       double log_jacobian(double y) const override { return -log(y); }
-      string name() const override { return "log"; }
+      std::string name() const override { return "log"; }
     };
 
     class SquareRootTransformation : public Transformation {
@@ -73,7 +73,7 @@ namespace BOOM {
       double log_jacobian(double y) const override {
         return -0.693147180559945 - .5 * log(y);
       }
-      string name() const override { return "sqrt"; }
+      std::string name() const override { return "sqrt"; }
     };
 
     class IdentityTransformation : public Transformation {
@@ -81,7 +81,7 @@ namespace BOOM {
       double operator()(double x) const override { return x; }
       double inverse(double y) const override { return y; }
       double log_jacobian(double y) const override { return 0; }
-      string name() const override { return ""; }
+      std::string name() const override { return ""; }
     };
 
     //======================================================================
@@ -92,7 +92,8 @@ namespace BOOM {
     // coefficients and standard deviation.
     class Group : public Data {
      public:
-      Group(const string &name, double total_value, const Transformation &f);
+      Group(const std::string &name, double total_value,
+            const Transformation &f);
       Group(const Group &rhs);
 
       // Virtual functions required by Data
@@ -132,7 +133,7 @@ namespace BOOM {
       void modify_unit_value(int which_unit_1, int which_unit_2);
 
       // Name of the group in the input data
-      string name_;
+      std::string name_;
 
       // Total value of all the units in the group
       double total_value_;
@@ -165,9 +166,9 @@ namespace BOOM {
     typedef Agreg::Group Group;
 
     AggregatedRegressionModel(const Matrix &design_matrix_,
-                              const std::vector<string> &group_names,
+                              const std::vector<std::string> &group_names,
                               const Vector &group_values,
-                              const string &transformation);
+                              const std::string &transformation);
 
     AggregatedRegressionModel(const AggregatedRegressionModel &rhs);
     AggregatedRegressionModel *clone() const override;
@@ -197,16 +198,16 @@ namespace BOOM {
     //     in group_names and group_values.  That is, if group_names[i] ==
     //     group_names[j] then group_values[i] should equal group_values[j].
     void initialize_groups(const Matrix &unit_level_predictors,
-                           const std::vector<string> &group_names,
+                           const std::vector<std::string> &group_names,
                            const Vector &group_values);
 
     // Create an appropriate transformation for use in the constructor.
     static Agreg::Transformation *create_transformation(
-        const string &transformation);
+        const std::string &transformation);
 
     // Returns the index (in groups_) of the group with the given name and
     // value.  If not present, a new group with these values is added.
-    int find_group(const string &group_name, double group_value);
+    int find_group(const std::string &group_name, double group_value);
 
     // Let the model's sufficient statistics know about changes that
     // have been made to individual unit responses.
@@ -220,7 +221,7 @@ namespace BOOM {
     Ptr<RegressionModel> model_;
 
     // A map to assist with reverse-lookup of group names.
-    std::map<string, int> group_positions_;
+    std::map<std::string, int> group_positions_;
   };
 
 }  // namespace BOOM

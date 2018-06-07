@@ -79,7 +79,7 @@ namespace BOOM {
   //======================================================================
 
   typedef MultinomialModel MM;
-  typedef std::vector<string> StringVector;
+  typedef std::vector<std::string> StringVector;
 
   MM::MultinomialModel(uint p)
       : ParamPolicy(new VectorParams(p, 1.0 / p)),
@@ -90,7 +90,7 @@ namespace BOOM {
   }
 
   uint count_levels(const StringVector &sv) {
-    std::set<string> s;
+    std::set<std::string> s;
     for (uint i = 0; i < sv.size(); ++i) s.insert(sv[i]);
     return s.size();
   }
@@ -180,7 +180,7 @@ namespace BOOM {
     check_logp();
     uint i = DAT(dp)->value();
     if (i >= dim()) {
-      string msg = "too large a value passed to MultinomialModel::pdf";
+      std::string msg = "too large a value passed to MultinomialModel::pdf";
       report_error(msg);
     }
     return logscale ? logp_[i] : pi(i);
@@ -190,7 +190,7 @@ namespace BOOM {
     check_logp();
     uint i = DAT(dp)->value();
     if (i >= dim()) {
-      string msg = "too large a value passed to MultinomialModel::pdf";
+      std::string msg = "too large a value passed to MultinomialModel::pdf";
       report_error(msg);
     }
     return logscale ? logp_[i] : pi(i);

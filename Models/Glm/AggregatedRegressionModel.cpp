@@ -30,7 +30,7 @@
 
 namespace BOOM {
   namespace Agreg {
-    Group::Group(const string &name, double value, const Transformation &F)
+    Group::Group(const std::string &name, double value, const Transformation &F)
         : name_(name), total_value_(value), f(F) {}
     //----------------------------------------------------------------------
     Group::Group(const Group &rhs)
@@ -202,9 +202,9 @@ namespace BOOM {
   //======================================================================
   typedef AggregatedRegressionModel ARM;
   ARM::AggregatedRegressionModel(const Matrix &design_matrix,
-                                 const std::vector<string> &group_names,
+                                 const std::vector<std::string> &group_names,
                                  const Vector &group_values,
-                                 const string &transformation)
+                                 const std::string &transformation)
       : f_(create_transformation(transformation)),
         f(*(f_.get())),
         model_(new RegressionModel(ncol(design_matrix))) {
@@ -233,7 +233,7 @@ namespace BOOM {
   // values.  Picks out the information for each group, and then creates
   // and stores a Group.
   void AggregatedRegressionModel::initialize_groups(
-      const Matrix &X, const std::vector<string> &group_names,
+      const Matrix &X, const std::vector<std::string> &group_names,
       const Vector &group_values) {
     if (nrow(X) != group_names.size() || nrow(X) != group_values.size()) {
       ostringstream err;
@@ -246,7 +246,7 @@ namespace BOOM {
     }
 
     for (int i = 0; i < group_names.size(); ++i) {
-      string group_name = group_names[i];
+      std::string group_name = group_names[i];
       int pos = find_group(group_name, group_values[i]);
       const Ptr<RegressionData> &dp(new RegressionData(0, X.row(i)));
       dat()[pos]->add_unit(dp);
@@ -263,9 +263,9 @@ namespace BOOM {
   // Returns the index of a group with the specified name.  If not
   // found, then a new Group with the specified value is added, and the
   // index of the new Group is returned.
-  int AggregatedRegressionModel::find_group(const string &group_name,
+  int AggregatedRegressionModel::find_group(const std::string &group_name,
                                             double group_value) {
-    std::map<string, int>::iterator it = group_positions_.find(group_name);
+    std::map<std::string, int>::iterator it = group_positions_.find(group_name);
     if (it != group_positions_.end()) {
       // found the group
       return it->second;
@@ -294,7 +294,7 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   Agreg::Transformation *AggregatedRegressionModel::create_transformation(
-      const string &name) {
+      const std::string &name) {
     if (name == "log") {
       return new Agreg::LogTransformation;
     } else if (name == "sqrt") {
