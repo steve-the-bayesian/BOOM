@@ -18,14 +18,13 @@
 
 #include "Models/Glm/PosteriorSamplers/AdaptiveSpikeSlabRegressionSampler.hpp"
 #include "distributions.hpp"
-
 #include <algorithm>
 
 namespace BOOM {
 
   AdaptiveSpikeSlabRegressionSampler::AdaptiveSpikeSlabRegressionSampler(
       RegressionModel *model,
-      const Ptr<MvnGivenScalarSigma> &slab,
+      const Ptr<MvnGivenScalarSigmaBase> &slab,
       const Ptr<GammaModelBase> &residual_precision_prior,
       const Ptr<VariableSelectionPrior> &spike,
       RNG &rng)
@@ -35,6 +34,7 @@ namespace BOOM {
        residual_precision_prior_(residual_precision_prior),
        spike_(spike),
        sigsq_sampler_(residual_precision_prior_),
+       allow_model_selection_(true),
        max_flips_(100),
        iteration_count_(0),
        step_size_(.001),
@@ -60,17 +60,19 @@ namespace BOOM {
   
   void AdaptiveSpikeSlabRegressionSampler::draw() {
     Selector included_coefficients = model_->coef().inc();
-    int flips = std::min<int>(max_flips_, included_coefficients.nvars_possible());
-    current_log_model_prob_ = log_model_prob(included_coefficients);
-    for (int i = 0; i < flips; ++i) {
-      double u = runif_mt(rng());
-      if (u < .5) {
-        birth_move(included_coefficients);
-      } else {
-        death_move(included_coefficients);
+    if (allow_model_selection_) {
+      int flips = std::min<int>(max_flips_, included_coefficients.nvars_possible());
+      current_log_model_prob_ = log_model_prob(included_coefficients);
+      for (int i = 0; i < flips; ++i) {
+        double u = runif_mt(rng());
+        if (u < .5) {
+          birth_move(included_coefficients);
+        } else {
+          death_move(included_coefficients);
+        }
       }
+      model_->coef().set_inc(included_coefficients);
     }
-    model_->coef().set_inc(included_coefficients);
     set_posterior_moments(included_coefficients);
     draw_residual_variance();
     draw_coefficients();
@@ -106,7 +108,7 @@ namespace BOOM {
   void AdaptiveSpikeSlabRegressionSampler::set_posterior_moments(
       const Selector &inclusion_indicators) {
     SpdMatrix unscaled_prior_precision =
-        inclusion_indicators.select(slab_->ominv());
+        inclusion_indicators.select(slab_->siginv()) * model_->sigsq();
     logdet_omega_inverse_ = unscaled_prior_precision.logdet();
     Vector prior_mean = inclusion_indicators.select(slab_->mu());
 

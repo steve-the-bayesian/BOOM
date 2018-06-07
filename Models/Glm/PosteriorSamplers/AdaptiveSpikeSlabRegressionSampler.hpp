@@ -49,7 +49,7 @@ namespace BOOM {
     //   rng:  The random number generator used to seed the RNG for this sampler.
     AdaptiveSpikeSlabRegressionSampler(
         RegressionModel *model,
-        const Ptr<MvnGivenScalarSigma> &slab,
+        const Ptr<MvnGivenScalarSigmaBase> &slab,
         const Ptr<GammaModelBase> &residual_precision_prior,
         const Ptr<VariableSelectionPrior> &spike,
         RNG &seeding_rng = GlobalRng::rng);
@@ -57,6 +57,23 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
+    // By default, model selection is turned on.  To turn it off call
+    // allow_model_selection(false).  This will freeze the coefficients in the
+    // included/excluded state they were in at the time of the call.
+    void allow_model_selection(bool allow = true) {
+      allow_model_selection_ = allow;
+    }
+
+    void set_sigma_upper_limit(double sigma_upper_limit) {
+      sigsq_sampler_.set_sigma_max(sigma_upper_limit);
+    }
+
+    // Set the number of attempted birth/death moves for each iteration.  The
+    // default is min(100, model_->xdim());
+    void limit_model_selection(int flips) {
+      max_flips_ = flips;
+    }
+    
     void birth_move(Selector &included_coefficients);
     void death_move(Selector &included_coefficients);
     
@@ -70,11 +87,13 @@ namespace BOOM {
     
    private:
     RegressionModel *model_;
-    Ptr<MvnGivenScalarSigma> slab_;
+    Ptr<MvnGivenScalarSigmaBase> slab_;
     Ptr<GammaModelBase> residual_precision_prior_;
     Ptr<VariableSelectionPrior> spike_;
     GenericGaussianVarianceSampler sigsq_sampler_;
 
+    bool allow_model_selection_;
+    
     // Compute the moments of the posterior distribution conditional on the set
     // of included coefficients.
     void set_posterior_moments(const Selector &inclusion_indicators);

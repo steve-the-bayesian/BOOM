@@ -4,6 +4,7 @@
 #include <exception>
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/AdaptiveSpikeSlabRegressionSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/SpikeSlabDaRegressionSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
 #include "Models/Glm/RegressionModel.hpp"
@@ -84,18 +85,38 @@ namespace {
     if (bma_method == "SSVS") {
       BOOM::RInterface::RegressionConjugateSpikeSlabPrior prior(
           r_spike_slab_prior, model->Sigsq_prm());
-      NEW(BregVsSampler, ssvs_sampler)(
-          model.get(),
-          prior.slab(),
-          prior.siginv_prior(),
-          prior.spike());
-      initialize_sampler(ssvs_sampler, prior);
-      model->set_method(ssvs_sampler);
-      BOOM::spikeslab::InitializeCoefficients(
-          model->Beta(),
-          prior.spike()->prior_inclusion_probabilities(),
-          model,
-          ssvs_sampler);
+      if (model->xdim() < 100) {
+        // If there are fewer than 100 predictors then use the classic SSVS
+        // sampler.
+        NEW(BregVsSampler, ssvs_sampler)(
+            model.get(),
+            prior.slab(),
+            prior.siginv_prior(),
+            prior.spike());
+        initialize_sampler(ssvs_sampler, prior);
+        model->set_method(ssvs_sampler);
+        BOOM::spikeslab::InitializeCoefficients(
+            model->Beta(),
+            prior.spike()->prior_inclusion_probabilities(),
+            model,
+            ssvs_sampler);
+      } else {
+        // More than 100 predictors use the adaptive sampler.  The only thing
+        // different from the preceding code block is that ssvs_sampler has a
+        // different type.
+        NEW(AdaptiveSpikeSlabRegressionSampler, ssvs_sampler)(
+            model.get(),
+            prior.slab(),
+            prior.siginv_prior(),
+            prior.spike());
+        initialize_sampler(ssvs_sampler, prior);
+        model->set_method(ssvs_sampler);
+        BOOM::spikeslab::InitializeCoefficients(
+            model->Beta(),
+            prior.spike()->prior_inclusion_probabilities(),
+            model,
+            ssvs_sampler);
+      }
     } else if (bma_method == "ODA") {
       BOOM::RInterface::IndependentRegressionSpikeSlabPrior prior(
           r_spike_slab_prior, model->Sigsq_prm());
