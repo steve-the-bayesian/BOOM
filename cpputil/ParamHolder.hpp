@@ -30,7 +30,7 @@ namespace BOOM {
   // variable to the value it had when this object was created.
   class RealValueHolder {
    public:
-    RealValueHolder(double &value)
+    explicit RealValueHolder(double &value)
         : value_(value), source_(&value)
     {}
     ~RealValueHolder() {*source_ = value_;}

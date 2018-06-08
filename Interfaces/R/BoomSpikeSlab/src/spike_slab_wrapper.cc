@@ -126,14 +126,10 @@ namespace {
     } else if (Rf_inherits(r_model_options, "OdaOptions")) {
       BOOM::RInterface::IndependentRegressionSpikeSlabPrior prior(
           r_spike_slab_prior, model->Sigsq_prm());
-      double eigenvalue_fudge_factor = .01;
-      double fallback_probability = 0.0;
-      eigenvalue_fudge_factor = Rf_asReal(getListElement(
-          r_model_options,
-          "eigenvalue.fudge.factor"));
-      fallback_probability = Rf_asReal(getListElement(
-          r_model_options,
-          "fallback.probability"));
+      double eigenvalue_fudge_factor = Rf_asReal(getListElement(
+          r_model_options, "eigenvalue.fudge.factor"));
+      double fallback_probability = Rf_asReal(getListElement(
+          r_model_options, "fallback.probability"));
       NEW(SpikeSlabDaRegressionSampler, oda_sampler)(
               model.get(),
               prior.slab(),
