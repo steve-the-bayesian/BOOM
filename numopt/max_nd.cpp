@@ -176,7 +176,7 @@ namespace BOOM {
     } while (!happy && ntries < maxtries);
 
     if (ntries >= maxtries) {
-      ostringstream err;
+      std::ostringstream err;
       err << "max_nd2 failed.   too many newton_raphson failures " << endl
           << "last error message was: " << endl
           << error_message;
