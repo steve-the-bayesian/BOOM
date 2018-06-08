@@ -728,7 +728,6 @@ predict.lm.spike <- function(object,
   }
 }
 
-
 SsvsOptions <- function(adaptive.cutoff = 100,
                         adaptive.step.size = .001,
                         target.acceptance.rate = .345) {
