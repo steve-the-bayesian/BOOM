@@ -334,7 +334,7 @@ namespace BOOM {
     // siginv = ominv / sigsq, so
     // ominv = siginv * sigsq.
     SpdMatrix unscaled_prior_precision =
-        inclusion_indicators.select(slab_->siginv()) * model_->sigsq();
+        inclusion_indicators.select(slab_->unscaled_precision());
     double ldoi = do_ldoi ? unscaled_prior_precision.logdet() : 0.0;
 
     Ptr<RegSuf> s = model_->suf();

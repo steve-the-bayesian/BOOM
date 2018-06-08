@@ -136,5 +136,5 @@ IndependentSpikeSlabPrior(x = NULL,
           )
   ## now 'prior' can be fed to 'lm.spike'
   x <- x[, -1]
-  model <- lm.spike(y ~ x, niter = 1000, prior = prior, method = "DA")
+  model <- lm.spike(y ~ x, niter = 1000, prior = prior, model.options = OdaOptions())
 }

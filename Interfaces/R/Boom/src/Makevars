@@ -8,7 +8,7 @@ all:	libboom.a
 
 PKG_CFLAGS = -DADD_ -DR_NO_REMAP 
 PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes 
-
+# PKG_LIBS = -lprofiler
 ############################################################################
 # Begin the list of all the BOOM source files.
 

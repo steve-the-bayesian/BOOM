@@ -74,20 +74,20 @@ namespace {
       SEXP r_design_matrix,
       SEXP r_response_vector,
       SEXP r_spike_slab_prior,
-      SEXP r_bma_method,
-      SEXP r_oda_options,
+      SEXP r_model_options,
       BOOM::RListIoManager *io_manager) {
     Matrix design_matrix(ToBoomMatrix(r_design_matrix));
     Ptr<RegressionModel> model(new RegressionModel(design_matrix.ncol()));
     initialize_model(model, design_matrix, ToBoomVector(r_response_vector));
 
-    std::string bma_method = ToString(r_bma_method);
-    if (bma_method == "SSVS") {
+    if (Rf_inherits(r_model_options, "SsvsOptions")) {
       BOOM::RInterface::RegressionConjugateSpikeSlabPrior prior(
           r_spike_slab_prior, model->Sigsq_prm());
-      if (model->xdim() < 100) {
-        // If there are fewer than 100 predictors then use the classic SSVS
-        // sampler.
+      double adaptive_cutoff = Rf_asReal(getListElement(
+          r_model_options, "adaptive.cutoff"));
+      if (model->xdim() <= adaptive_cutoff ) {
+        // If there are fewer than 'adaptive_cutoff' predictors then use the
+        // classic SSVS sampler.
         NEW(BregVsSampler, ssvs_sampler)(
             model.get(),
             prior.slab(),
@@ -101,14 +101,20 @@ namespace {
             model,
             ssvs_sampler);
       } else {
-        // More than 100 predictors use the adaptive sampler.  The only thing
-        // different from the preceding code block is that ssvs_sampler has a
-        // different type.
+        // There are more than 'adaptive_cutoff' predictors, so use the adaptive
+        // sampler.
         NEW(AdaptiveSpikeSlabRegressionSampler, ssvs_sampler)(
             model.get(),
             prior.slab(),
             prior.siginv_prior(),
             prior.spike());
+        double adaptive_step_size = Rf_asReal(getListElement(
+            r_model_options, "adaptive.step.size"));
+        double target_acceptance_rate = Rf_asReal(getListElement(
+            r_model_options, "target.acceptance.rate"));
+        ssvs_sampler->set_step_size(adaptive_step_size);
+        ssvs_sampler->set_target_acceptance_rate(target_acceptance_rate);
+        
         initialize_sampler(ssvs_sampler, prior);
         model->set_method(ssvs_sampler);
         BOOM::spikeslab::InitializeCoefficients(
@@ -117,19 +123,17 @@ namespace {
             model,
             ssvs_sampler);
       }
-    } else if (bma_method == "ODA") {
+    } else if (Rf_inherits(r_model_options, "OdaOptions")) {
       BOOM::RInterface::IndependentRegressionSpikeSlabPrior prior(
           r_spike_slab_prior, model->Sigsq_prm());
       double eigenvalue_fudge_factor = .01;
       double fallback_probability = 0.0;
-      if (!Rf_isNull(r_oda_options)) {
-        eigenvalue_fudge_factor = Rf_asReal(getListElement(
-            r_oda_options,
-            "eigenvalue.fudge.factor"));
-        fallback_probability = Rf_asReal(getListElement(
-            r_oda_options,
-            "fallback.probability"));
-      }
+      eigenvalue_fudge_factor = Rf_asReal(getListElement(
+          r_model_options,
+          "eigenvalue.fudge.factor"));
+      fallback_probability = Rf_asReal(getListElement(
+          r_model_options,
+          "fallback.probability"));
       NEW(SpikeSlabDaRegressionSampler, oda_sampler)(
               model.get(),
               prior.slab(),
@@ -187,8 +191,7 @@ extern "C" {
                                        SEXP r_error_distribution,
                                        SEXP r_niter,
                                        SEXP r_ping,
-                                       SEXP r_bma_method,
-                                       SEXP r_oda_options,
+                                       SEXP r_model_options,
                                        SEXP r_seed) {
     RErrorReporter error_reporter;
     RMemoryProtector protector;
@@ -202,8 +205,7 @@ extern "C" {
             r_design_matrix,
             r_response_vector,
             r_spike_slab_prior,
-            r_bma_method,
-            r_oda_options,
+            r_model_options,
             &io_manager);
       } else if (error_distribution == "student") {
         model = SpecifyStudentRegressionModel(

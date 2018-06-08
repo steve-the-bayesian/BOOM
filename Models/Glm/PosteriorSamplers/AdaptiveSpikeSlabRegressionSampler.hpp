@@ -73,6 +73,13 @@ namespace BOOM {
     void limit_model_selection(int flips) {
       max_flips_ = flips;
     }
+
+    void store_model_probs(bool store) {
+      store_model_probs_ = store;
+      if (!store) {
+        log_model_probabilities_.clear();
+      }
+    }
     
     void birth_move(Selector &included_coefficients);
     void death_move(Selector &included_coefficients);
@@ -84,6 +91,9 @@ namespace BOOM {
     double prior_ss() const {
       return 2 * residual_precision_prior_->beta();
     }
+
+    void set_step_size(double step_size);
+    void set_target_acceptance_rate(double rate);
     
    private:
     RegressionModel *model_;
@@ -150,6 +160,9 @@ namespace BOOM {
 
     // The log determinant of the prior precision.
     double logdet_omega_inverse_;
+
+    bool store_model_probs_;
+    std::map<Selector, double> log_model_probabilities_;
   };
   
 }  // namespace BOOM 

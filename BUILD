@@ -192,6 +192,7 @@ cc_library(
     hdrs = BOOM_HDRS,
     copts = [
         "-I/usr/local/include",
+        "-Wall",
         "-std=c++11",
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",

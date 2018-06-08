@@ -44,6 +44,8 @@ namespace BOOM {
     explicit MvnGivenScalarSigmaBase(const Ptr<UnivParams> &sigsq);
     double sigsq() const;
 
+    virtual const SpdMatrix &unscaled_precision() const = 0;
+
    private:
     // sigsq_ is a pointer to the residual variance parameter, e.g. in
     // a regression model.
@@ -84,6 +86,7 @@ namespace BOOM {
     // inverse.
     const SpdMatrix &Omega() const;
     const SpdMatrix &ominv() const;
+    const SpdMatrix &unscaled_precision() const override {return ominv();}
     double ldoi() const;
 
     void set_mu(const Vector &);

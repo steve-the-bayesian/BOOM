@@ -6,10 +6,7 @@ lm.spike <- function(formula,
                      error.distribution = c("gaussian", "student"),
                      contrasts = NULL,
                      drop.unused.levels = TRUE,
-                     bma.method = c("SSVS", "ODA"),
-                     oda.options = list(
-                         fallback.probability = 0.0,
-                         eigenvalue.fudge.factor = 0.01),
+                     model.options = SsvsOptions(),
                      ping = niter / 10,
                      seed = NULL,
                      ...) {
@@ -22,56 +19,34 @@ lm.spike <- function(formula,
   ##     included).
   ##   niter:  Desired number of MCMC iterations
   ##   data:  Optional data.frame containing the data described in 'formula'
-  ##   subset: An optional vector specifying a subset of observations
-  ##     to be used in the fitting process.
-  ##   prior: An object of class SpikeSlabPrior or
-  ##     IndependentSpikeSlabPrior.  If missing, a default prior will
-  ##     be generated using the arguments passed as ... .  If
-  ##     'bma.method' is SSVS then either a SpikeSlabPrior or
-  ##     IndependentSpikeSlabPrior can be used.  (A SpikeSlabPrior will
-  ##     be used as the default).  If 'bma.method' is ODA then an
-  ##     IndependentSpikeSlabPrior is required.
-  ##   error.distribution: Specify either Gaussian or Student T
-  ##     errors.  If the error distribution is student then the prior
-  ##     must be a StudentSpikeSlabPrior.
+  ##   subset: An optional vector specifying a subset of observations to be used
+  ##     in the fitting process.
+  ##   prior: An object of class SpikeSlabPrior or IndependentSpikeSlabPrior.
+  ##     If missing, a default prior will be generated using the arguments
+  ##     passed as ... .  If the SSVS sampling method is used then either a
+  ##     SpikeSlabPrior or IndependentSpikeSlabPrior can be used.  (A
+  ##     SpikeSlabPrior will be used as the default).  If the method is ODA then
+  ##     an IndependentSpikeSlabPrior is required.
+  ##   error.distribution: Specify either Gaussian or Student T errors.  If the
+  ##     error distribution is student then the prior must be a
+  ##     StudentSpikeSlabPrior.
   ##   contrasts: An optional list. See the 'contrasts.arg' of
   ##     ‘model.matrix.default’.
-  ##   drop.unused.levels: logical.  Should unobserved factor levels
-  ##     be dropped from the model?
-  ##   bma.method: The method to use for Bayesian model averaging.
-  ##     "SSVS" is stochastic search variable selection, which is the
-  ##     classic approach from George and McCulloch (1997).  "ODA" is
-  ##     orthoganal data augmentation, from Ghosh and Clyde (2011).
-  ##     It adds a set of latent observations that make the X'X matrix
-  ##     diagonal, simplifying complete data MCMC for model selection.
-  ##     ODA is likely to be faster than SSVS, but it is a newer
-  ##     method and not quite as battle tested.
-  ##   oda.options: A list (which is ignored unless bma.method ==
-  ##     "ODA") with the following elements:
-  ##     * fallback.probability: Each MCMC iteration will use SSVS
-  ##         instead of ODA with this probability.  In cases where the
-  ##         latent data have high leverage, ODA mixing can suffer.
-  ##         Mixing in a few SSVS steps can help keep an errant
-  ##         algorithm on track.
-  ##     * eigenvalue.fudge.factor: The latent X's will be chosen so
-  ##         that the complete data X'X matrix (after scaling) is a
-  ##         constant diagonal matrix equal to the largest eigenvalue
-  ##         of the observed (scaled) X'X times (1 +
-  ##         eigenvalue.fudge.factor).  This should be a small
-  ##         positive number.
-  ##   ping: Write a status update to the console every 'ping'
-  ##     iterations.
+  ##   drop.unused.levels: logical.  Should unobserved factor levels be dropped
+  ##     from the model?
+  ##   model.options: A list inheriting from SpikeSlabModelOptions, containing
+  ##     options and tuning parameters for the desired MCMC algorithm.  See
+  ##     SsvsOptions and OdaOptions.
+  ##   ping: Write a status update to the console every 'ping' iterations.
   ##   seed:  An integer to use for the C++ seed.
   ##   ... : Parameters to be passed to SpikeSlabPrior or
-  ##     IndependentSpikeSlabPrior., if 'prior' is not specified
-  ##     directly.
+  ##     IndependentSpikeSlabPrior, if 'prior' is not specified directly.
   ##
   ## Returns:
-  ##   An object of class 'lm.spike', which is a list containing the
-  ##   following values
-  ##   beta: A 'niter' by 'ncol(X)' matrix of regression coefficients
-  ##     many of which may be zero.  Each row corresponds to an MCMC
-  ##     iteration.
+  ##   An object of class 'lm.spike', which is a list containing the following
+  ##   values
+  ##   beta: A 'niter' by 'ncol(X)' matrix of regression coefficients many of
+  ##     which may be zero.  Each row corresponds to an MCMC iteration.
   ##   sigma: A vector of length 'niter' containing the MCMC draws of
   ##     the residual standard deviation parameter.
   ##   prior:  The prior that was used to fit the model.
@@ -91,7 +66,16 @@ lm.spike <- function(formula,
   y <- model.response(frame, "numeric")
 
   x <- model.matrix(model.terms, frame, contrasts)
-  bma.method <- match.arg(bma.method)
+
+  stopifnot(inherits(model.options, "SpikeSlabModelOptions"))
+  if (inherits(model.options, "SsvsOptions")) {
+    bma.method <- "SSVS"
+  } else if (inherits(model.options, "OdaOptions")) {
+    bma.method <- "ODA"
+  } else {
+    stop("Unknonwn sampling method in lm.spike.")
+  }
+  
   error.distribution <- match.arg(error.distribution)
   if (is.null(prior)) {
     if (error.distribution == "gaussian") {
@@ -107,12 +91,11 @@ lm.spike <- function(formula,
   stopifnot(inherits(prior, "SpikeSlabPriorBase"))
   if (error.distribution == "student") {
     stopifnot(inherits(prior, "StudentSpikeSlabPrior"))
+    stopifnot(inherits(model.options, "SsvsOptions"))
+    model.options$adaptive.cutoff <- Inf
   }
   if (bma.method == "ODA") {
     stopifnot(inherits(prior, "IndependentSpikeSlabPrior"))
-    stopifnot(is.list(oda.options))
-    check.scalar.probability(oda.options$fallback.probability)
-    check.positive.scalar(oda.options$eigenvalue.fudge.factor)
   }
 
   stopifnot(is.numeric(ping))
@@ -139,8 +122,7 @@ lm.spike <- function(formula,
                error.distribution,
                as.integer(niter),
                as.integer(ping),
-               bma.method,
-               oda.options,
+               model.options,
                seed)
   if (!is.null(colnames(x))) {
     colnames(ans$beta) <- colnames(x)
@@ -745,3 +727,59 @@ predict.lm.spike <- function(object,
     return(y.new)
   }
 }
+
+
+SsvsOptions <- function(adaptive.cutoff = 100,
+                        adaptive.step.size = .001,
+                        target.acceptance.rate = .345) {
+  ## "SSVS" is stochastic search variable selection, which is the classic
+  ## approach from George and McCulloch (1997).
+  ##
+  ## Args:
+  ##   adaptive.cutoff: The number of predictors above which the algorithm
+  ##     should switch from the SSVS method of George and McCulloch to the
+  ##     Adaptive method of Benson and Friel.  Make this zero to always use the
+  ##     adaptive method and infinite to always use SSVS.
+  ##   adaptive.step.size:  The step size parameter for the adaptive algorithm.
+  ##   target.acceptance.rate:  The target rate supplied to the adaptive algorithm.
+  ##
+  ## Returns:
+  ##   A list containing the options to use for the SSVS sampling method.
+  check.nonnegative.scalar(adaptive.cutoff)
+  check.positive.scalar(adaptive.step.size)
+  check.scalar.probability(target.acceptance.rate)
+  ans <- list(adaptive.cutoff = adaptive.cutoff,
+    adaptive.step.size = adaptive.step.size,
+    target.acceptance.rate = target.acceptance.rate)
+  class(ans) <- c("SsvsOptions", "SpikeSlabModelOptions")
+  return(ans)
+}
+
+OdaOptions <- function(fallback.probability = 0.0,
+                       eigenvalue.fudge.factor = 0.01) {
+  ## "ODA" is orthoganal data augmentation, from Ghosh and Clyde (2011).  It
+  ## adds a set of latent observations that make the X'X matrix diagonal,
+  ## simplifying complete data MCMC for model selection.  ODA is likely to be
+  ## faster than SSVS, but it is a newer method and not quite as battle tested.
+  ## Early indications are that it is not particularly robust.
+  ##
+  ## Args:
+  ##   fallback.probability: Each MCMC iteration will use SSVS instead of ODA
+  ##     with this probability.  In cases where the latent data have high
+  ##     leverage, ODA mixing can suffer.  Mixing in a few SSVS steps can help
+  ##     keep an errant algorithm on track.
+  ##   eigenvalue.fudge.factor: The latent X's will be chosen so that the
+  ##     complete data X'X matrix (after scaling) is a constant diagonal matrix
+  ##     equal to the largest eigenvalue of the observed (scaled) X'X times (1 +
+  ##     eigenvalue.fudge.factor).  This should be a small positive number.
+  ##
+  ## Returns:
+  ##   A list containing the options to use for the ODA sampling method.
+  check.scalar.probability(fallback.probability)
+  check.positive.scalar(eigenvalue.fudge.factor)
+  ans <- list(fallback.probability = fallback.probability,
+    eigenvalue.fudge.factor = eigenvalue.fudge.factor)
+  class(ans) <- c("OdaOptions", "SpikeSlabModelOptions")
+  return(ans)
+}
+  

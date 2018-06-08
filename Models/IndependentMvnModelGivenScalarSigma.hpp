@@ -73,6 +73,8 @@ namespace BOOM {
     const Vector &mu() const override;
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
+    const SpdMatrix &unscaled_precision() const override;
+    
     double ldsi() const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 

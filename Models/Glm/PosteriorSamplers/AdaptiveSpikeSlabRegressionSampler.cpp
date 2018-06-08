@@ -41,7 +41,8 @@ namespace BOOM {
        target_acceptance_rate_(.345),
        birth_rates_(model_->xdim(), 1.0),
        death_rates_(model_->xdim(), 1.0),
-       current_log_model_prob_(negative_infinity())
+       current_log_model_prob_(negative_infinity()),
+       store_model_probs_(true)
   {}
 
   double AdaptiveSpikeSlabRegressionSampler::logpri() const {
@@ -81,6 +82,13 @@ namespace BOOM {
 
   double AdaptiveSpikeSlabRegressionSampler::log_model_prob(
       const Selector &included_coefficients) {
+    if (store_model_probs_) {
+      auto lookup = log_model_probabilities_.find(included_coefficients);
+      if (lookup != log_model_probabilities_.end()) {
+        return lookup->second;
+      }
+    }
+
     if (included_coefficients.nvars() == 0) {
       // Integrate out sigma.  The empty model is handled as a special
       // case because information matrices cancel, and do not appear
@@ -101,6 +109,9 @@ namespace BOOM {
     }
     ans += .5 * (logdet_omega_inverse_ - unscaled_posterior_precision_.logdet())
         - (.5 * posterior_df_ - 1) * log(posterior_sum_of_squares_);
+    if (store_model_probs_) {
+      log_model_probabilities_[included_coefficients] = ans;
+    }
     return ans;
   }
 
@@ -108,7 +119,7 @@ namespace BOOM {
   void AdaptiveSpikeSlabRegressionSampler::set_posterior_moments(
       const Selector &inclusion_indicators) {
     SpdMatrix unscaled_prior_precision =
-        inclusion_indicators.select(slab_->siginv()) * model_->sigsq();
+        inclusion_indicators.select(slab_->unscaled_precision());
     logdet_omega_inverse_ = unscaled_prior_precision.logdet();
     Vector prior_mean = inclusion_indicators.select(slab_->mu());
 
@@ -222,6 +233,20 @@ namespace BOOM {
     double adjustment = step_size_ / ((1.0 + iteration_count_) / model_->xdim());
     adjustment *= (MH_alpha - target_acceptance_rate_);
     death_rates_[which_variable] *= exp(adjustment);
+  }
+
+  void AdaptiveSpikeSlabRegressionSampler::set_step_size(double step_size) {
+    if (step_size <= 0) {
+      report_error("Step size must be positive.");
+    }
+    step_size_ = step_size;
+  }
+
+  void AdaptiveSpikeSlabRegressionSampler::set_target_acceptance_rate(double rate) {
+    if (rate <= 0 || rate >= 1) {
+      report_error("Target acceptance rate must be strictly between 0 and 1.");
+    }
+    target_acceptance_rate_ = rate;
   }
   
 }  // namespace BOOM

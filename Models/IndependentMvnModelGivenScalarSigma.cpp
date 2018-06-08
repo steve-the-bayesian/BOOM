@@ -84,6 +84,12 @@ namespace BOOM {
     return sigma_scratch_;
   }
 
+  const SpdMatrix &IMMGS::unscaled_precision() const {
+    sigma_scratch_.resize(dim());
+    sigma_scratch_.diag() = 1.0 / unscaled_variance_diagonal();
+    return sigma_scratch_;
+  }
+  
   double IMMGS::ldsi() const {
     double ans = -dim() * log(sigsq());
     const Vector &v(unscaled_variance_diagonal());

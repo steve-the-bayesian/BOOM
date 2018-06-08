@@ -5,6 +5,8 @@
 \Rdversion{1.1}
 \alias{lm.spike}
 \alias{spikeslab}
+\alias{SsvsOptions}
+\alias{OdaOptions}
 \title{
   Spike and slab regression
 }
@@ -25,14 +27,19 @@ lm.spike(formula,
          error.distribution = c("gaussian", "student"),
          contrasts = NULL,
          drop.unused.levels = TRUE,
-         bma.method = c("SSVS", "ODA"),
-         oda.options = list(
-             fallback.probability = 0.0,
-             eigenvalue.fudge.factor = 0.01),
+         model.options = SsvsOptions(),
          ping = niter / 10,
          seed = NULL,
          ...)
+
+SsvsOptions(adaptive.cutoff = 100,
+            adaptive.step.size = .001,
+            target.acceptance.rate = .345)
+
+OdaOptions(fallback.probability = 0.0,
+           eigenvalue.fudge.factor = 0.01)
 }
+
 \arguments{
   \item{formula}{
     formula for the maximal model (with all variables included), this is
@@ -61,7 +68,8 @@ lm.spike(formula,
 
   \item{error.distribution}{Specify either Gaussian or Student T
     errors.  If the error distribution is student then the prior
-    must be a \code{\link{StudentSpikeSlabPrior}}.}
+    must be a \code{\link{StudentSpikeSlabPrior}} and the SSVS method
+    must be used.}
 
   \item{contrasts}{ An optional list. See the \code{contrasts.arg}
     argument of \code{\link{model.matrix.default}}.  }
@@ -69,30 +77,9 @@ lm.spike(formula,
   \item{drop.unused.levels}{Logical indicating whether unobserved factor
     levels should be dropped from the model.}
 
-  \item{bma.method}{ The MCMC method to use.  SSVS is the stochastic
-    search variable selection algorithm from George and McCulloch
-    (1998).  ODA is the orthogonal data augmentation method from Clyde
-    and Ghosh (2011).  }
-
-
-  \item{oda.options}{If bma.method == "ODA" then these are some options
-    for fine tuning the ODA algorithm.
-    \itemize{
-
-      \item \code{fallback.probability}: Each MCMC iteration will use
-      SSVS instead of ODA with this probability.  In cases where
-      the latent data have high leverage, ODA mixing can suffer.
-      Mixing in a few SSVS steps can help keep an errant algorithm
-      on track.
-
-      \item \code{eigenvalue.fudge.factor}: The latent X's will be
-      chosen so that the complete data X'X matrix (after scaling) is a
-      constant diagonal matrix equal to the largest eigenvalue of the
-      observed (scaled) X'X times (1 + eigenvalue.fudge.factor).  This
-      should be a small positive number.
-    }
-  }
-
+  \item{model.options}{A list containing the tuning parameters for the
+    desired MCMC method.  }
+  
   \item{ping}{The frequency with which to print status update messages
     to the screen.  For example, if \code{ping == 10} then an update
     will be printed every 10 MCMC iterations.}
@@ -104,21 +91,53 @@ lm.spike(formula,
   \item{\dots}{
     Extra arguments to be passed to \code{\link{SpikeSlabPrior}} (if
     \code{method == "SSVS"}) or \code{\link{IndependentSpikeSlabPrior}}
-    (if \code{method == "DA"}).
-}
+    (if \code{method == "ODA"}).}
 
+  \item{fallback.probability}{ When using the ODA method, each MCMC
+    iteration will use SSVS instead of ODA with this probability.  In
+    cases where the latent data have high leverage, ODA mixing can
+    suffer.  Mixing in a few SSVS steps can help keep an errant
+    algorithm on track.}
+
+  \item{eigenvalue.fudge.factor}{When using the ODA method, the latent
+    X's will be chosen so that the complete data X'X matrix (after
+    scaling) is a constant diagonal matrix equal to the largest
+    eigenvalue of the observed (scaled) X'X times (1 +
+    eigenvalue.fudge.factor).  This should be a small positive number.
+  }
+
+  \item{adaptive.cutoff}{The traditional SSVS method (sample every
+    predictor at every iteration) will be used when there are fewer than
+    this many predictors.  The adaptive method of Benson and Fried will
+    be used if there are more.}
+
+  \item{adaptive.step.size}{The step size scaling factor to use in the
+    adaptive SSVS algorithm.}
+
+  \item{target.acceptance.rate}{The target acceptance rate for the
+    adaptive SSVS algorithm.}
+  
 }
 
 \details{
 
-  Both methods ("DA" and "SSVS") draw each variable inclusion indicator
-  given all others, in a Gibbs sampler.  The DA method includes an extra
-  data augmentation step that renders each indicator conditionally
-  independent of the others given the latent data.  There is residual
-  dependence between successive MCMC steps introduced by the latent
-  data, but the paper by Ghosh and Clyde suggested that on balance
-  mixing should be improved.
+  There are two MCMC methods available.  SSVS is the stochastic search
+  variable selection algorithm from George and McCulloch (1998).  ODA is
+  the orthogonal data augmentation method from Clyde and Ghosh (2011).
+  Both sampling methods ("ODA" and "SSVS") draw each variable inclusion
+  indicator given all others, in a Gibbs sampler.  The ODA method
+  includes an extra data augmentation step that renders each indicator
+  conditionally independent of the others given the latent data.  There
+  is residual dependence between successive MCMC steps introduced by the
+  latent data, but the paper by Ghosh and Clyde suggested that on
+  balance mixing should be improved.
 
+  SSVS offers a choice between to implementations.  Classic SSVS
+  attempts to flip each coefficient in or out of the model every
+  iteration.  The adaptive method attempts to learn which coefficients
+  are likely to be included or excluded.  It then biases its 'birth' and
+  'death' moves towards candidates that are likely to succeed.
+  
   Regarding the overall compute time, the DA method decomposes the
   (potentially very large) model matrix one time, at the start of the
   algorithm.  But it then works with independent scalar updates.  The
@@ -129,7 +148,6 @@ lm.spike(formula,
   Finally, note that the two algorithms require slightly different
   priors.  The DA algorithm requires a priori independence, while the
   SSVS algorithm can work with arbitrary conjugate priors.
-
 }
 
 \value{
