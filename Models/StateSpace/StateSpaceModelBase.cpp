@@ -1114,13 +1114,18 @@ namespace BOOM {
       }
 
       log_likelihood += sparse_multivariate_kalman_update(
-          observation(t), conditional_state_mean, conditional_state_variance,
+          observation(t),
+          conditional_state_mean,
+          conditional_state_variance,
           kalman_storage_[t].kalman_gain_,
           kalman_storage_[t].forecast_precision_,
           kalman_storage_[t].forecast_precision_log_determinant_,
-          kalman_storage_[t].forecast_error_, is_missing_observation(t),
-          *observation_coefficients(t), observation_variance(t),
-          *state_transition_matrix(t), *state_variance_matrix(t));
+          kalman_storage_[t].forecast_error_,
+          is_missing_observation(t),
+          *observation_coefficients(t),
+          observation_variance(t),
+          *state_transition_matrix(t),
+          *state_variance_matrix(t));
     }
     if (!save_state_moments) {
       // We still record the final state mean and variance.
@@ -1154,14 +1159,17 @@ namespace BOOM {
                             mutable_state().col(t), t);
       }
       sparse_multivariate_kalman_update(
-          simulate_observation(rng, t), conditional_state_mean,
+          simulate_observation(rng, t),
+          conditional_state_mean,
           conditional_state_variance,
           simulation_kalman_storage_[t].kalman_gain_,
           simulation_kalman_storage_[t].forecast_precision_,
           simulation_kalman_storage_[t].forecast_precision_log_determinant_,
           simulation_kalman_storage_[t].forecast_error_,
-          is_missing_observation(t), *observation_coefficients(t),
-          observation_variance(t), *state_transition_matrix(t),
+          is_missing_observation(t),
+          *observation_coefficients(t),
+          observation_variance(t),
+          *state_transition_matrix(t),
           *state_variance_matrix(t));
     }
   }
@@ -1225,8 +1233,12 @@ namespace BOOM {
 
     // Kalman smoother: convert r[t] to r[t-1] and N[t] to N[t-1].
     sparse_multivariate_kalman_disturbance_smoother_update(
-        r, N, (*state_transition_matrix(t)), kalman_storage_[t].kalman_gain_,
-        *observation_coefficients(t), kalman_storage_[t].forecast_precision_,
+        r,
+        N,
+        (*state_transition_matrix(t)),
+        kalman_storage_[t].kalman_gain_,
+        *observation_coefficients(t),
+        kalman_storage_[t].forecast_precision_,
         kalman_storage_[t].forecast_error_);
   }
 
@@ -1259,7 +1271,8 @@ namespace BOOM {
 
   Vector MultivariateStateSpaceModelBase::simulate_observation(
       RNG &rng, int t) {
-    return rmvn_mt(rng, *observation_coefficients(t) * state(t),
+    return rmvn_mt(rng,
+                   *observation_coefficients(t) * state(t),
                    observation_variance(t));
   }
 
