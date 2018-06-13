@@ -37,6 +37,24 @@ namespace BOOM {
     //     screens have more horizontal than vertical space.
     AsciiDistributionCompare(const Vector &x, const Vector &y,
                              int xbuckets = 80, int ybuckets = 30);
+
+
+    // Compare a set of draws to a known true value.
+    // Args:
+    //   draws:  The simulated values.
+    //   truth:  The true value around which 'draws' should be centered.
+    //   xbuckets: The number of horizontal buckets (e.g. histogram bars) to use
+    //     in estimating the distribution of 'draws'.
+    //   ybuckets: The number of vertical buckets to use for drawing histogram
+    //     bars.  Generally xbuckets should be larger than ybuckets because
+    //     screens have more horizontal than vertical space.
+    //
+    // Effect:
+    //   Produces a rough empirical distribution of 'draws' plotted on an ASCII
+    //   graph, with a vertical line representing 'truth'.
+    AsciiDistributionCompare(const Vector &draws, double truth,
+                             int xbuckets = 80, int ybuckets = 30);
+    
     std::string print() const { return graph_.print(); }
 
    private:

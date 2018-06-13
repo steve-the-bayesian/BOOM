@@ -9,8 +9,8 @@ DEPS = [
 ]
 
 cc_test(
-    name = "logit_test",
-    srcs = ["logit_test.cc"],
+    name = "ascii_distribution_compare_test",
+    srcs = ["ascii_distribution_compare_test.cc"],
     copts = COPTS,
     deps = DEPS,
 )
@@ -18,6 +18,20 @@ cc_test(
 cc_test(
     name = "ecdf_test",
     srcs = ["ecdf_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "empirical_density_test",
+    srcs = ["empirical_density_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "logit_test",
+    srcs = ["logit_test.cc"],
     copts = COPTS,
     deps = DEPS,
 )
