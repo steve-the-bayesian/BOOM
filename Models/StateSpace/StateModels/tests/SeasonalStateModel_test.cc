@@ -5,10 +5,13 @@
 #include "Models/ChisqModel.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
+#include "stats/moments.hpp"
+#include "stats/AsciiDistributionCompare.hpp"
 
 #include "test_utils/test_utils.hpp"
 
@@ -135,6 +138,158 @@ namespace {
     EXPECT_DOUBLE_EQ(state_error[0], 0.0);
   }
 
+  //===========================================================================
+  // Simulate data from a 4-cycle with a 3-day duration.  Check that the cycle
+  // is correctly recovered, and that predictions from the model are reasonable.
+  TEST_F(SeasonalTest, SeasonDuration) {
+    //-----------  Simulate the data ------------------
+    Vector seasonal_frame(103);
+    seasonal_frame[0] = -100;
+    seasonal_frame[1] = 20;
+    seasonal_frame[2] = 50;
+
+    double true_seasonal_sd = .25;
+    for (int i = 3; i < seasonal_frame.size(); ++i) {
+      double past = seasonal_frame[i - 1] + seasonal_frame[i - 2]
+          + seasonal_frame[i - 3];
+      seasonal_frame[i] = rnorm(-past, true_seasonal_sd);
+    }
+    Vector seasonal(300);
+    int frame_cursor = 3;
+    for (int i = 0; i < 300; ++i) {
+      if (i % 3 == 0) {
+        seasonal[i] = seasonal_frame[frame_cursor++];
+      } else {
+        seasonal[i] = seasonal[i - 1];
+      }
+    }
+
+    double true_level_sd = .1;
+    Vector trend(300);
+    trend[0] = 0;
+    for (int i = 1; i < 300; ++i) {
+      trend[i] = trend[i - 1] + rnorm(0, true_level_sd);
+    }
+
+    double true_sigma_obs = .2;
+    Vector data(300);
+    for (int i = 0; i < 300; ++i) {
+      data[i] = trend[i] + seasonal[i] + rnorm(0, true_sigma_obs);
+    }
+
+    Vector training_data(ConstVectorView(data, 0, 275));
+    Vector holdout_data(ConstVectorView(data, 275, 25));
+    
+    //-----------  Build the model ------------------
+
+    NEW(StateSpaceModel, model)(training_data);
+    // Add a local level trend.
+    NEW(LocalLevelStateModel, level)(1.0);
+    NEW(ChisqModel, level_precision_prior)(1.0, true_level_sd);
+    NEW(ZeroMeanGaussianConjSampler, level_sampler)(
+        level.get(),
+        level_precision_prior);
+    level->set_method(level_sampler);
+    level->set_initial_state_mean(mean(data));
+    level->set_initial_state_variance(var(data));
+    model->add_state(level);
+
+    // Add seasonal effect.
+    NEW(SeasonalStateModel, seasonal_model)(4, 3);
+    NEW(ChisqModel, seasonal_precision_prior)(1, true_seasonal_sd);
+    NEW(ZeroMeanGaussianConjSampler, seasonal_sampler)(
+        seasonal_model.get(),
+        seasonal_precision_prior);
+    seasonal_model->set_method(seasonal_sampler);
+    seasonal_model->set_initial_state_mean(Vector(3, 0.0));
+    seasonal_model->set_initial_state_variance(SpdMatrix(3, var(data)));
+    model->add_state(seasonal_model);
+
+    // Sampler for observation model.
+    NEW(ChisqModel, observation_precision_prior)(1, true_sigma_obs);
+    NEW(ZeroMeanGaussianConjSampler, observation_model_sampler)(
+        model->observation_model(),
+        observation_precision_prior);
+    model->observation_model()->set_method(observation_model_sampler);
+
+    // Sampler for overall model.
+    NEW(StateSpacePosteriorSampler, sampler)(model.get());
+    model->set_method(sampler);
+
+    //-------------------- MCMC --------------------
+    int burn = 100;
+    for (int i = 0; i < burn; ++i) {
+      model->sample_posterior();
+    }
+
+    int niter = 500;
+    int time_dimension = training_data.size();
+    int horizon = holdout_data.size();
+    Matrix level_draws(niter, time_dimension);
+    Matrix seasonal_draws(niter, time_dimension);
+    Vector level_sd_draws(niter);
+    Vector seasonal_sd_draws(niter);
+    Matrix posterior_predictive(niter, horizon);
+    
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      level_draws.row(i) = model->state().row(0);
+      seasonal_draws.row(i) = model->state().row(1);
+      level_sd_draws[i] = level->sigma();
+      seasonal_sd_draws[i] = seasonal_model->sigma();
+      posterior_predictive.row(i) = model->simulate_forecast(
+          sampler->rng(), horizon, model->final_state());
+    }
+
+    //-------------------- Check the results --------------------
+    CheckMatrixStatus level_status = CheckMcmcMatrix(level_draws, trend);
+    EXPECT_TRUE(level_status.ok)
+        << "Level failed to cover: " << endl << level_status.error_message();
+
+    CheckMatrixStatus seasonal_status = CheckMcmcMatrix(seasonal_draws, seasonal);
+    EXPECT_TRUE(seasonal_status.ok)
+        << "Seasonal pattern failed to cover: " << endl
+        << seasonal_status.error_message();
+
+    if (!(level_status.ok && seasonal_status.ok)) {
+      std::ofstream raw_data_file("raw_data.txt");
+      raw_data_file << data;
+      std::ofstream level_file("level.txt");
+      level_file << trend << endl << level_draws;
+      std::ofstream seasonal_file("seasonal.txt");
+      seasonal_file << seasonal << endl << seasonal_draws;
+    }
+
+    bool level_sd_ok = CheckMcmcVector(level_sd_draws, .1);
+    EXPECT_TRUE(level_sd_ok)
+        << AsciiDistributionCompare(level_sd_draws, .1);
+    bool seasonal_sd_ok = CheckMcmcVector(seasonal_sd_draws, .25);
+    EXPECT_TRUE(seasonal_sd_ok)
+        << AsciiDistributionCompare(seasonal_sd_draws, .25);
+
+    if (!(level_sd_ok && seasonal_sd_ok)) {
+      std::ofstream level_sd_file("level_sd.txt");
+      level_sd_file << .1 << endl << level_sd_draws;
+      std::ofstream seasonal_sd_file("seasonal_sd.txt");
+      seasonal_sd_file << .25 << endl << seasonal_sd_draws;
+    }
+
+    //-------------------- Forecast ----------------------
+    CheckMatrixStatus forecast_status = CheckMcmcMatrix(
+        posterior_predictive, holdout_data);
+    EXPECT_TRUE(forecast_status.ok)
+        << "Coverage error for full forecast"
+        << forecast_status.error_message();
+
+    forecast_status = CheckMcmcMatrix(
+        SubMatrix(posterior_predictive, 0, niter - 1, 0, 5).to_matrix(),
+        Vector(ConstVectorView(holdout_data, 0, 6)));
+    EXPECT_TRUE(forecast_status.ok)
+        << "Coverage error for 6-step time horizon"
+        << forecast_status.error_message();
+  }
+
+  //===========================================================================
   TEST_F(SeasonalTest, Mcmc) {
     NEW(StateSpaceModel, model)(series_);
 
@@ -159,7 +314,6 @@ namespace {
     weekly_model->set_initial_state_variance(
         weekly_annual_cycle_->initial_state_variance());
     model->add_state(weekly_model);
-
 
     NEW(ChisqModel, observation_precision)(1, 1);
     NEW(ZeroMeanGaussianConjSampler, obs_sampler)(
@@ -204,5 +358,6 @@ namespace {
       week_file << true_state_.row(6) << endl << weekly_draws;
     }
   }
+
   
 }  // namespace

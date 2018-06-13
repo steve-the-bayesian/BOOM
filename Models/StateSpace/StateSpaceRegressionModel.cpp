@@ -86,8 +86,6 @@ namespace BOOM {
 
   //======================================================================
   void SSRM::setup() {
-    observe(regression_->coef_prm());
-    observe(regression_->Sigsq_prm());
     regression_->only_keep_sufstats(true);
   }
 
@@ -203,20 +201,15 @@ namespace BOOM {
   }
 
   Matrix SSRM::forecast(const Matrix &newX) {
-    full_kalman_filter();
-    ScalarKalmanStorage ks = final_kalman_storage();
+    kalman_filter();
+    Kalman::ScalarMarginalDistribution marg = get_filter().back();
     Matrix ans(nrow(newX), 2);
     int t0 = time_dimension();
     for (int t = 0; t < nrow(ans); ++t) {
       ans(t, 0) = regression_->predict(newX.row(t)) +
-                  observation_matrix(t + t0).dot(ks.a);
-      sparse_scalar_kalman_update(
-          0,  // y is missing, so fill in a dummy value
-          ks.a, ks.P, ks.K, ks.F, ks.v,
-          true,  // forecasts are missing data
-          observation_matrix(t + t0), observation_variance(t + t0),
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
-      ans(t, 1) = sqrt(ks.F);
+          observation_matrix(t + t0).dot(marg.state_mean());
+      marg.update(0, true, t + t0, this);
+      ans(t, 1) = sqrt(marg.prediction_variance());
     }
     return ans;
   }
@@ -230,12 +223,14 @@ namespace BOOM {
 
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    light_kalman_filter();
-    ScalarKalmanStorage kalman_storage = final_kalman_storage();
-    // The Kalman filter produces the forecast distribution for the
-    // next time period.  Since the observed data goes from 0 to t-1,
-    // kalman_storage contains the forecast distribution for time t.
-    Vector final_state = rmvn_robust(kalman_storage.a, kalman_storage.P);
+    kalman_filter();
+    // The Kalman filter produces the forecast distribution for the next time
+    // period.  Since the observed data goes from 0 to t-1, the final element of
+    // the filter contains the forecast distribution for time t.
+    Vector final_state = rmvn_robust_mt(
+        rng,
+        get_filter().back().state_mean(),
+        get_filter().back().state_variance());
     return simulate_forecast(rng, newX, final_state);
   }
 
@@ -271,20 +266,16 @@ namespace BOOM {
 
     Vector ans(nrow(newX));
     int t0 = time_dimension();
-    ScalarKalmanStorage ks(state_dimension());
-    ks.a = *state_transition_matrix(t0 - 1) * final_state;
-    ks.P = SpdMatrix(state_variance_matrix(t0 - 1)->dense());
+    Kalman::ScalarMarginalDistribution marg(state_dimension());
+    marg.set_state_mean(*state_transition_matrix(t0 - 1) * final_state);
+    marg.set_state_variance(SpdMatrix(state_variance_matrix(t0 - 1)->dense()));
 
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
-      sparse_scalar_kalman_update(
-          newY[t] - regression_model()->predict(newX.row(t)), ks.a, ks.P, ks.K,
-          ks.F, ks.v, missing, observation_matrix(t + t0),
-          observation_variance(t + t0), *state_transition_matrix(t + t0),
-          *state_variance_matrix(t + t0));
-      ans[t] = ks.v;
+      marg.update(newY[t] - regression_model()->predict(newX.row(t)), missing, t + t0, this);
+      ans[t] = marg.prediction_error();
       if (standardize) {
-        ans[t] /= sqrt(ks.F);
+        ans[t] /= sqrt(marg.prediction_variance());
       }
     }
     return ans;

@@ -251,9 +251,9 @@ namespace BOOM {
     }
     Vector ans(counts.size());
     int t0 = dat().size();
-    ScalarKalmanStorage ks(state_dimension());
-    ks.a = *state_transition_matrix(t0 - 1) * final_state;
-    ks.P = SpdMatrix(state_variance_matrix(t0 - 1)->dense());
+    Kalman::ScalarMarginalDistribution marg(state_dimension());
+    marg.set_state_mean(*state_transition_matrix(t0 - 1) * final_state);
+    marg.set_state_variance(state_variance_matrix(t0 - 1)->dense());
 
     // This function differs from one_step_holdout_prediction_errors
     // in StateSpaceRegressionModel because the response is on the
@@ -268,7 +268,9 @@ namespace BOOM {
       // 1) simulate next state.
       // 2) simulate w_t given state
       // 3) kalman update state given w_t.
-      Vector state = rmvn(ks.a, ks.P);
+      Vector state = rmvn_mt(rng,
+                             marg.state_mean(),
+                             marg.state_variance());
 
       double state_contribution = observation_matrix(t + t0).dot(state);
       double regression_contribution =
@@ -313,10 +315,8 @@ namespace BOOM {
       // y[t0+t].  That latent data is now used to update the Kalman
       // filter for the next time period.  It is important that we
       // discard the imputed state at this point.
-      sparse_scalar_kalman_update(
-          latent_observation - regression_contribution, ks.a, ks.P, ks.K, ks.F,
-          ks.v, missing, observation_matrix(t + t0), latent_variance,
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
+      marg.update(latent_observation - regression_contribution, missing,
+                  t + t0, this, latent_variance / observation_variance(t + t0));
     }
     return ans;
   }

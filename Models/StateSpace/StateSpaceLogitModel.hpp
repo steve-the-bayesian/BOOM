@@ -251,11 +251,6 @@ namespace BOOM {
         const Vector &final_state);
 
    private:
-    // Registers the observation model with the ParamPolicy, and sets
-    // observers on the model parameters to invalidate the Kalman
-    // filter if the parameters change values.
-    void setup();
-
     Ptr<BinomialLogitModel> observation_model_;
   };
 

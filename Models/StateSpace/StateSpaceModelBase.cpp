@@ -30,8 +30,8 @@
 
 namespace BOOM {
   namespace {
-    using SSSMB = ScalarStateSpaceModelBase;
     using Base = StateSpaceModelBase;
+    using ScalarBase = ScalarStateSpaceModelBase;
   }  // namespace
 
   //----------------------------------------------------------------------
@@ -41,8 +41,6 @@ namespace BOOM {
         state_positions_(1, 0),
         state_error_positions_(1, 0),
         state_is_fixed_(false),
-        kalman_filter_status_(NOT_CURRENT),
-        log_likelihood_is_current_(false),
         state_transition_matrix_(new BlockDiagonalMatrix),
         state_variance_matrix_(new BlockDiagonalMatrix),
         state_error_expander_(new BlockDiagonalMatrix),
@@ -56,8 +54,6 @@ namespace BOOM {
         state_positions_(1, 0),
         state_error_positions_(1, 0),
         state_is_fixed_(rhs.state_is_fixed_),
-        kalman_filter_status_(rhs.kalman_filter_status_),
-        log_likelihood_is_current_(rhs.log_likelihood_is_current_),
         state_transition_matrix_(new BlockDiagonalMatrix),
         state_variance_matrix_(new BlockDiagonalMatrix),
         state_error_expander_(new BlockDiagonalMatrix),
@@ -73,7 +69,7 @@ namespace BOOM {
     // that code changes in the future this constructor will probably need to
     // change as well.
     parameter_positions_.push_back(rhs.parameter_positions_[0]);
-    for (int s = 0; s < rhs.nstate(); ++s) {
+    for (int s = 0; s < rhs.number_of_state_models(); ++s) {
       add_state(rhs.state_model(s)->clone());
     }
     if (state_is_fixed_) state_ = rhs.state_;
@@ -89,9 +85,6 @@ namespace BOOM {
     state_error_dimension_ += m->state_error_dimension();
     next_position = state_error_positions_.back() + m->state_error_dimension();
     state_error_positions_.push_back(next_position);
-
-    std::vector<Ptr<Params>> params(m->parameter_vector());
-    for (int i = 0; i < params.size(); ++i) observe(params[i]);
 
     if (parameter_positions_.empty()) {
       // If no state has been added yet, add the size of the observation model
@@ -221,7 +214,7 @@ namespace BOOM {
   ParamVector Base::parameter_vector() {
     std::vector<Ptr<Params>> ans;
     concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
     }
     return ans;
@@ -230,7 +223,7 @@ namespace BOOM {
   const ParamVector Base::parameter_vector() const {
     std::vector<Ptr<Params>> ans;
     concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
     }
     return ans;
@@ -241,7 +234,7 @@ namespace BOOM {
                                              int s) const {
     int start = parameter_positions_[s];
     int size;
-    if (s + 1 == nstate()) {
+    if (s + 1 == number_of_state_models()) {
       size = model_parameters.size() - start;
     } else {
       size = parameter_positions_[s + 1] - start;
@@ -253,7 +246,7 @@ namespace BOOM {
       const Vector &model_parameters, int s) const {
     int start = parameter_positions_[s];
     int size;
-    if (s + 1 == nstate()) {
+    if (s + 1 == number_of_state_models()) {
       size = model_parameters.size() - start;
     } else {
       size = parameter_positions_[s + 1] - start;
@@ -281,11 +274,6 @@ namespace BOOM {
       return ConstVectorView(model_parameters, 0, size);
     }
   }
-  //----------------------------------------------------------------------
-  void Base::observe(const Ptr<Params> &parameter) {
-    parameter->add_observer([this]() { this->kalman_filter_is_not_current(); });
-  }
-
   //----------------------------------------------------------------------
   // TODO: This and other code involving model matrices is an optimization
   // opportunity.  Test it out to see if precomputation makes sense.
@@ -341,7 +329,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void Base::clear_client_data() {
     observation_model()->clear_data();
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->clear_data();
     }
     signal_complete_data_reset();
@@ -363,14 +351,14 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void Base::set_state_model_behavior(StateModel::Behavior behavior) {
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->set_behavior(behavior);
     }
   }
 
   //----------------------------------------------------------------------
   void Base::impute_state(RNG &rng) {
-    if (nstate() == 0) {
+    if (number_of_state_models() == 0) {
       report_error("No state has been defined.");
     }
     set_state_model_behavior(StateModel::MIXTURE);
@@ -446,7 +434,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void Base::Mstep(double epsilon) {
     observation_model()->find_posterior_mode(epsilon);
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->find_posterior_mode(epsilon);
     }
   }
@@ -454,7 +442,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   bool Base::check_that_em_is_legal() const {
     if (!observation_model()->can_find_posterior_mode()) return false;
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       if (!state_model(s)->can_find_posterior_mode()) {
         return false;
       }
@@ -465,8 +453,9 @@ namespace BOOM {
   //----------------------------------------------------------------------
   Matrix Base::state_posterior_means() const {
     Matrix ans(state_dimension(), time_dimension());
+    const KalmanFilterBase &filter(get_filter());
     for (int t = 0; t < time_dimension(); ++t) {
-      ans.col(t) = kalman_state_storage(t).a;
+      ans.col(t) = filter[t].state_mean();
     }
     return ans;
   }
@@ -475,23 +464,22 @@ namespace BOOM {
   Matrix Base::state_filtering_means() const {
     Matrix ans(state_dimension(), time_dimension());
     ans.col(0) = initial_state_mean();
+    const KalmanFilterBase &filter(get_filter());
     for (int t = 1; t < time_dimension(); ++t) {
-      ans.col(t) = kalman_state_storage(t - 1).a;
+      ans.col(t) = filter[t - 1].state_mean();
     }
     return ans;
   }
 
   //----------------------------------------------------------------------
   const SpdMatrix &Base::state_posterior_variance(int t) const {
-    return kalman_state_storage(t).P;
+    return get_filter()[t].state_variance();
   }
 
   //----------------------------------------------------------------------
   double Base::log_likelihood() {
-    if (!log_likelihood_is_current_) {
-      light_kalman_filter();
-    }
-    return log_likelihood_;
+    kalman_filter();
+    return get_filter().log_likelihood();
   }
 
   //----------------------------------------------------------------------
@@ -591,7 +579,7 @@ namespace BOOM {
       int t, const Vector &state_error_mean,
       const SpdMatrix &state_error_variance) {
     if (t >= 0) {
-      for (int s = 0; s < nstate(); ++s) {
+      for (int s = 0; s < number_of_state_models(); ++s) {
         state_model(s)->update_complete_data_sufficient_statistics(
             t, const_state_error_component(state_error_mean, s),
             state_error_variance_component(state_error_variance, s));
@@ -607,7 +595,7 @@ namespace BOOM {
     }
     const ConstVectorView now(state().col(t));
     const ConstVectorView then(state().col(t - 1));
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->observe_state(state_component(then, s),
                                     state_component(now, s), t, this);
     }
@@ -615,7 +603,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void Base::observe_initial_state() {
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       ConstVectorView state(state_component(state_.col(0), s));
       state_model(s)->observe_initial_state(state);
     }
@@ -626,7 +614,7 @@ namespace BOOM {
       Vector *gradient, int t, const Vector &state_error_mean,
       const SpdMatrix &state_error_variance) {
     if (t >= 0) {
-      for (int s = 0; s < nstate(); ++s) {
+      for (int s = 0; s < number_of_state_models(); ++s) {
         state_model(s)->increment_expected_gradient(
             state_parameter_component(*gradient, s), t,
             const_state_error_component(state_error_mean, s),
@@ -659,10 +647,9 @@ namespace BOOM {
     if (gradient) {
       *gradient = vectorize_params(true) * 0.0;
     }
-    // The call to full_kalman_filter() does two things.  First, it
-    // sets log_likelihood_, which is the return value. Second, it
-    // fills kalman_storage_ with filtered values.
-    full_kalman_filter();
+    // Compute log likelihood (the return value) and fill the kalman filter with
+    // current values.
+    kalman_filter();
 
     // This is the disturbance smoother from Durbin and Koopman, equation
     // (4.69).
@@ -709,14 +696,15 @@ namespace BOOM {
         // Now r is r_{t-1} and N is N_{t-1}.  From Durbin and Koopman (4.32)
         // E(alpha[t] | Y) = a[t] + P * r[t-1]
         // V(alpha[t] | Y) = P[t] - P[t] * N[t-1] * P[t]
-        SpdMatrix &P(kalman_state_storage(t).P);
-        kalman_state_storage(t).a += (P * r);
-        P -= sandwich(P, N);
+        const SpdMatrix &P(get_filter()[t].state_variance());
+        get_filter()[t].increment_state_mean(P * r);
+        get_filter()[t].increment_state_variance(-1 * sandwich(P, N));
       }
     }
     // The kalman filter is not current because it contains smoothed values.
-    set_kalman_filter_status(NOT_CURRENT);
-    return log_likelihood();
+    double loglike = get_filter().log_likelihood();
+    get_filter().set_status(KalmanFilterBase::NOT_CURRENT);
+    return loglike;
   }
 
   //----------------------------------------------------------------------
@@ -739,83 +727,37 @@ namespace BOOM {
     }
   }
 
-  // Call each of the model matrices once to make sure any parameter observer
-  // updates get done.
-  void Base::update_model_matrices() {
-    state_error_variance(0);
-    state_variance_matrix(0);
-    state_error_expander(0);
-    state_transition_matrix(0);
-  }
   //===========================================================================
-
-  SparseVector SSSMB::observation_matrix(int t) const {
+  SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
-    for (int s = 0; s < nstate(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       ans.concatenate(state_model(s)->observation_matrix(t));
     }
     return ans;
   }
   //----------------------------------------------------------------------
-  void SSSMB::kalman_filter(bool save_state_moments) {
-    if (kalman_filter_status() == MCMC_CURRENT && log_likelihood_is_current()) {
-      return;
-    }
-    check_kalman_storage(kalman_storage_, save_state_moments);
-    double log_likelihood = 0;
-    Vector conditional_state_mean = initial_state_mean();
-    SpdMatrix conditional_state_variance = initial_state_variance();
-    if (time_dimension() > 0) {
-      for (int t = 0; t < time_dimension(); ++t) {
-        if (save_state_moments) {
-          kalman_storage_[t].a = conditional_state_mean;
-          kalman_storage_[t].P = conditional_state_variance;
-        }
-
-        log_likelihood += sparse_scalar_kalman_update(
-            adjusted_observation(t), conditional_state_mean,
-            conditional_state_variance, kalman_storage_[t].K,
-            kalman_storage_[t].F, kalman_storage_[t].v,
-            is_missing_observation(t), observation_matrix(t),
-            observation_variance(t), *state_transition_matrix(t),
-            *state_variance_matrix(t));
-        if (!std::isfinite(log_likelihood)) {
-          set_log_likelihood(log_likelihood);
-          set_kalman_filter_status(NOT_CURRENT);
-          return;
-        }
-      }
-    }
-    if (!save_state_moments) {
-      // We still record the final state mean and variance.
-      kalman_storage_.back().a = conditional_state_mean;
-      kalman_storage_.back().P = conditional_state_variance;
-    }
-    set_kalman_filter_status(MCMC_CURRENT);
-    set_log_likelihood(log_likelihood);
+  void ScalarBase::kalman_filter() {
+    filter_.set_model(this);
+    filter_.update();
   }
+
   //----------------------------------------------------------------------
-  Vector SSSMB::one_step_prediction_errors(bool standardize) {
+  Vector ScalarBase::one_step_prediction_errors(bool standardize) {
+    kalman_filter();
     int n = time_dimension();
     Vector errors(n);
     if (n == 0) return errors;
-    if (kalman_filter_status() == NOT_CURRENT) {
-      light_kalman_filter();
-    }
     for (int i = 0; i < n; ++i) {
-      errors[i] = kalman_storage_[i].v;
-      if (standardize) {
-        errors[i] /= sqrt(kalman_storage_[i].F);
-      }
+      errors[i] = filter_.prediction_error(i, standardize);
     }
     return errors;
   }
 
   //----------------------------------------------------------------------
-  std::vector<Vector> SSSMB::state_contributions() const {
-    std::vector<Vector> ans(nstate());
+  std::vector<Vector> ScalarBase::state_contributions() const {
+    std::vector<Vector> ans(number_of_state_models());
     for (int t = 0; t < time_dimension(); ++t) {
-      for (int m = 0; m < nstate(); ++m) {
+      for (int m = 0; m < number_of_state_models(); ++m) {
         ConstVectorView state(state_component(this->state().col(t), m));
         ans[m].push_back(state_model(m)->observation_matrix(t).dot(state));
       }
@@ -824,7 +766,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  Vector SSSMB::state_contribution(int which_model) const {
+  Vector ScalarBase::state_contribution(int which_model) const {
     const Matrix &state(this->state());
     if (ncol(state) != time_dimension() || nrow(state) != state_dimension()) {
       ostringstream err;
@@ -845,50 +787,49 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  Vector SSSMB::regression_contribution() const { return Vector(); }
+  Vector ScalarBase::regression_contribution() const { return Vector(); }
 
   //----------------------------------------------------------------------
-  Vector SSSMB::observation_error_means() const {
-    Vector ans(kalman_storage_.size());
-    for (int i = 0; i < kalman_storage_.size(); ++i) {
-      ans[i] = kalman_storage_[i].v;
+  Vector ScalarBase::observation_error_means() const {
+    Vector ans(time_dimension());
+    for (int i = 0; i < time_dimension(); ++i) {
+      ans[i] = filter_.prediction_error(i);
     }
     return ans;
   }
 
   //----------------------------------------------------------------------
-  Vector SSSMB::observation_error_variances() const {
-    Vector ans(kalman_storage_.size());
-    for (int i = 0; i < kalman_storage_.size(); ++i) {
-      ans[i] = kalman_storage_[i].F;
+  Vector ScalarBase::observation_error_variances() const {
+    Vector ans(time_dimension());
+    for (int i = 0; i < time_dimension(); ++i) {
+      ans[i] = filter_[i].prediction_variance();
     }
     return ans;
   }
 
-  void SSSMB::update_model_matrices() {
-    observation_matrix(0);
-    observation_variance(0);
-    Base::update_model_matrices();
+  //----------------------------------------------------------------------
+  ScalarKalmanFilter &ScalarBase::get_filter() {
+    filter_.set_model(this);
+    return filter_;
   }
-
+  const ScalarKalmanFilter &ScalarBase::get_filter() const {
+    return filter_;
+  }
   //----------------------------------------------------------------------
   // Simulate alpha_+ and y_* = y - y_+.  While simulating y_*,
   // feed it into the light (no storage for P) Kalman filter.  The
-  // simulated state is stored in state_, while kalman_storage_ holds
-  // the output of the Kalman filter.
+  // simulated state is stored in state_.
   //
   // y_+ and alpha_+ will be simulated in parallel with
   // Kalman filtering and disturbance smoothing of y, and the results
   // will be subtracted to compute y_*.
-  void SSSMB::simulate_forward(RNG &rng) {
-    check_kalman_storage(kalman_storage_, false);
-    check_kalman_storage(simulation_kalman_storage_, false);
-    double log_likelihood = 0;
-    Vector observed_data_state_mean = initial_state_mean();
-    SpdMatrix observed_data_state_variance = initial_state_variance();
-
-    Vector simulated_data_state_mean = observed_data_state_mean;
-    SpdMatrix simulated_data_state_variance = observed_data_state_variance;
+  void ScalarBase::simulate_forward(RNG &rng) {
+    filter_.set_model(this);
+    filter_.update();
+    simulation_filter_.set_model(this);
+    simulation_filter_.clear();
+    Vector simulated_data_state_mean = initial_state_mean();
+    SpdMatrix simulated_data_state_variance = initial_state_variance();
     for (int t = 0; t < time_dimension(); ++t) {
       // simulate_state at time t
       if (t == 0) {
@@ -897,55 +838,8 @@ namespace BOOM {
         simulate_next_state(rng, mutable_state().col(t - 1),
                             mutable_state().col(t), t);
       }
-      sparse_scalar_kalman_update(
-          simulate_adjusted_observation(rng, t),
-          simulated_data_state_mean,
-          simulated_data_state_variance,
-          simulation_kalman_storage_[t].K,
-          simulation_kalman_storage_[t].F,
-          simulation_kalman_storage_[t].v,
-          is_missing_observation(t),
-          observation_matrix(t),
-          observation_variance(t),
-          *state_transition_matrix(t),
-          *state_variance_matrix(t));
-      log_likelihood += sparse_scalar_kalman_update(
-          adjusted_observation(t),
-          observed_data_state_mean,
-          observed_data_state_variance,
-          kalman_storage_[t].K,
-          kalman_storage_[t].F,
-          kalman_storage_[t].v,
-          is_missing_observation(t),
-          observation_matrix(t),
-          observation_variance(t),
-          (*state_transition_matrix(t)),
-          (*state_variance_matrix(t)));
-    }
-    set_kalman_filter_status(MCMC_CURRENT);
-    set_log_likelihood(log_likelihood);
-  }
-
-  void SSSMB::simulate_forward_and_filter(RNG &rng) {
-    check_kalman_storage(simulation_kalman_storage_, false);
-    Vector conditional_state_mean = initial_state_mean();
-    SpdMatrix conditional_state_variance = initial_state_variance();
-    for (int t = 0; t < time_dimension(); ++t) {
-      if (t == 0) {
-        simulate_initial_state(rng, mutable_state().col(0));
-      } else {
-        simulate_next_state(rng, mutable_state().col(t - 1),
-                            mutable_state().col(t), t);
-      }
-      double y_sim = simulate_adjusted_observation(rng, t);
-      sparse_scalar_kalman_update(
-          y_sim, conditional_state_mean, conditional_state_variance,
-          simulation_kalman_storage_[t].K,
-          simulation_kalman_storage_[t].F,
-          simulation_kalman_storage_[t].v, is_missing_observation(t),
-          observation_matrix(t), observation_variance(t),
-          (*state_transition_matrix(t)),
-          (*state_variance_matrix(t)));
+      simulation_filter_.update(
+          simulate_adjusted_observation(rng, t), t, false);
     }
   }
 
@@ -956,7 +850,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void SSSMB::update_observation_model_complete_data_sufficient_statistics(
+  void ScalarBase::update_observation_model_complete_data_sufficient_statistics(
       int, double, double) {
     report_error(
         "To use an EM algorithm the model must override"
@@ -964,7 +858,7 @@ namespace BOOM {
         "_statistics.");
   }
   //----------------------------------------------------------------------
-  void SSSMB::update_observation_model_gradient(VectorView, int, double,
+  void ScalarBase::update_observation_model_gradient(VectorView, int, double,
                                                 double) {
     report_error(
         "To numerically maximize the log likelihood or log "
@@ -972,16 +866,18 @@ namespace BOOM {
         "update_observation_model_gradient.");
   }
 
-  void SSSMB::update_observation_model(Vector &r, SpdMatrix &N, int t,
+  void ScalarBase::update_observation_model(Vector &r, SpdMatrix &N, int t,
                                        bool save_state_distributions,
                                        bool update_sufficient_statistics,
                                        Vector *gradient) {
     // Some syntactic sugar to make later formulas easier to read.  These are
     // bad variable names, but they match the math in Durbin and Koopman.
     const double H = observation_variance(t);
-    const double F = kalman_storage_[t].F;
-    const double v = kalman_storage_[t].v;
-    const Vector &K(kalman_storage_[t].K);
+    Kalman::ScalarMarginalDistribution &marg(get_filter()[t]);
+    
+    const double F = marg.prediction_variance();
+    const double v = marg.prediction_error();
+    const Vector &K(marg.kalman_gain());
 
     double u = v / F - K.dot(r);
     double D = (1.0 / F) + N.Mdist(K);
@@ -989,8 +885,8 @@ namespace BOOM {
     const double observation_error_mean = H * u;
     const double observation_error_variance = H - H * D * H;
     if (save_state_distributions) {
-      kalman_storage_[t].v = observation_error_mean;
-      kalman_storage_[t].F = observation_error_variance;
+      marg.set_prediction_error(observation_error_mean);
+      marg.set_prediction_variance(observation_error_variance);
     }
     if (update_sufficient_statistics) {
       update_observation_model_complete_data_sufficient_statistics(
@@ -1008,76 +904,16 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void SSSMB::check_kalman_storage(
-      std::vector<ScalarKalmanStorage> &kalman_storage,
-      bool save_state_moments) {
-    // Set a flag to be flipped if any of the checks fail.
-    bool ok = true;
-    if (kalman_storage.size() < time_dimension()) {
-      ok = false;
-    }
-
-    if (!kalman_storage.empty()) {
-      if (kalman_storage[0].K.size() != state_dimension()) {
-        ok = false;
-      }
-      if (save_state_moments) {
-        if (kalman_storage[0].a.size() != state_dimension()) {
-          ok = false;
-        }
-      }
-    }
-
-    // If any of the checks failed, blow kalman_storage away and refill with the
-    // right size elements.
-    if (!ok) {
-      kalman_storage.assign(
-          time_dimension(),
-          ScalarKalmanStorage(state_dimension(), save_state_moments));
-    }
-  }
-
-  //----------------------------------------------------------------------
-  double SSSMB::simulate_adjusted_observation(RNG &rng, int t) {
+  double ScalarBase::simulate_adjusted_observation(RNG &rng, int t) {
     double mu = observation_matrix(t).dot(state(t));
     return rnorm_mt(rng, mu, sqrt(observation_variance(t)));
   }
 
   //----------------------------------------------------------------------
-  // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
-  // disturbance smoother is equation (5) in Durbin and Koopman (2002).
-  Vector SSSMB::smooth_disturbances_fast(
-      std::vector<ScalarKalmanStorage> &filter) {
-    int n = time_dimension();
-    Vector r(state_dimension(), 0.0);
-    for (int t = n - 1; t >= 0; --t) {
-      // Upon entry r is r[t].
-      // On exit, r is r[t-1] and filter[t].K is r[t]
-
-      // The disturbance smoother is defined by the following formula:
-      // r[t-1] = Z[t] * v[t]/F[t] + (T[t]^T - Z[t] * K[t]^T)r[t]
-      //        = T[t]^T * r + Z[t] * (v[t]/F[t] - K.dot(r))
-
-      // Some syntactic sugar makes the formulas easier to match up
-      // with Durbin and Koopman.
-      double v = filter[t].v;
-      double F = filter[t].F;
-      double coefficient = (v / F) - filter[t].K.dot(r);
-
-      // Now produce r[t-1]
-      Vector rt_1 = state_transition_matrix(t)->Tmult(r);
-      observation_matrix(t).add_this_to(rt_1, coefficient);
-      filter[t].K = r;
-      r = rt_1;
-    }
-    return r;
-  }
-
-  //----------------------------------------------------------------------
-  // After a call to smooth_disturbances_fast() puts r[t] in
-  // kalman_storage_[t].K, this function propagates the r's forward to get
+  // After a call to fast_disturbance_smoother() puts r[t] in
+  // filter_[t].kalman_gain, this function propagates the r's forward to get
   // E(alpha | y), and add it to the simulated state.
-  void SSSMB::propagate_disturbances() {
+  void ScalarBase::propagate_disturbances() {
     if (time_dimension() <= 0) return;
     SpdMatrix P0 = initial_state_variance();
     Vector state_mean_sim = initial_state_mean() + P0 * r0_sim_;
@@ -1089,209 +925,16 @@ namespace BOOM {
 
     for (int t = 1; t < time_dimension(); ++t) {
       state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
-                       (*state_variance_matrix(t - 1)) *
-                           simulation_kalman_storage_[t - 1].K;
+          (*state_variance_matrix(t - 1)) *
+          simulation_filter_[t - 1].kalman_gain();
       state_mean_obs =
           (*state_transition_matrix(t - 1)) * state_mean_obs +
-          (*state_variance_matrix(t - 1)) * kalman_storage_[t - 1].K;
+          (*state_variance_matrix(t - 1)) * filter_[t - 1].kalman_gain();
 
       mutable_state().col(t).axpy(state_mean_obs - state_mean_sim);
       observe_state(t);
       observe_data_given_state(t);
     }
   }
-
-  //===========================================================================
-  void MultivariateStateSpaceModelBase::kalman_filter(bool save_state_moments) {
-    check_kalman_storage(kalman_storage_, save_state_moments);
-    Vector conditional_state_mean = initial_state_mean();
-    SpdMatrix conditional_state_variance = initial_state_variance();
-    double log_likelihood = 0;
-    for (int t = 0; t < time_dimension(); ++t) {
-      if (save_state_moments) {
-        kalman_storage_[t].a = conditional_state_mean;
-        kalman_storage_[t].P = conditional_state_variance;
-      }
-
-      log_likelihood += sparse_multivariate_kalman_update(
-          observation(t),
-          conditional_state_mean,
-          conditional_state_variance,
-          kalman_storage_[t].kalman_gain_,
-          kalman_storage_[t].forecast_precision_,
-          kalman_storage_[t].forecast_precision_log_determinant_,
-          kalman_storage_[t].forecast_error_,
-          is_missing_observation(t),
-          *observation_coefficients(t),
-          observation_variance(t),
-          *state_transition_matrix(t),
-          *state_variance_matrix(t));
-    }
-    if (!save_state_moments) {
-      // We still record the final state mean and variance.
-      kalman_storage_.back().a = conditional_state_mean;
-      kalman_storage_.back().P = conditional_state_variance;
-    }
-    set_kalman_filter_status(MCMC_CURRENT);
-    set_log_likelihood(log_likelihood);
-  }
-
-  void MultivariateStateSpaceModelBase::update_model_matrices() {
-    observation_variance(0);
-    observation_coefficients(0);
-    Base::update_model_matrices();
-  }
-  //---------------------------------------------------------------------------
-  void MultivariateStateSpaceModelBase::simulate_forward(RNG &rng) {
-    simulate_forward_and_filter(rng);
-    light_kalman_filter();
-  }
-
-  void MultivariateStateSpaceModelBase::simulate_forward_and_filter(RNG &rng) {
-    check_kalman_storage(simulation_kalman_storage_, false);
-    Vector conditional_state_mean = initial_state_mean();
-    SpdMatrix conditional_state_variance = initial_state_variance();
-    for (int t = 0; t < time_dimension(); ++t) {
-      if (t == 0) {
-        simulate_initial_state(rng, mutable_state().col(0));
-      } else {
-        simulate_next_state(rng, mutable_state().col(t - 1),
-                            mutable_state().col(t), t);
-      }
-      sparse_multivariate_kalman_update(
-          simulate_observation(rng, t),
-          conditional_state_mean,
-          conditional_state_variance,
-          simulation_kalman_storage_[t].kalman_gain_,
-          simulation_kalman_storage_[t].forecast_precision_,
-          simulation_kalman_storage_[t].forecast_precision_log_determinant_,
-          simulation_kalman_storage_[t].forecast_error_,
-          is_missing_observation(t),
-          *observation_coefficients(t),
-          observation_variance(t),
-          *state_transition_matrix(t),
-          *state_variance_matrix(t));
-    }
-  }
-
-  //----------------------------------------------------------------------
-  // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
-  // disturbance smoother is equation (5) in Durbin and Koopman (2002).
-  Vector MultivariateStateSpaceModelBase::smooth_disturbances_fast(
-      std::vector<MultivariateKalmanStorage> &filter) {
-    int n = time_dimension();
-    // The initial value of r, at time T is zero.
-    Vector r(state_dimension(), 0.0);
-    for (int t = n - 1; t >= 0; --t) {
-      // Upon entry r is r[t].
-      // On exit, r is r[t-1] and filter[t].r_ is r[t]
-
-      // The disturbance smoother is defined by the following formula:
-      // r[t-1] = Z[t]^T * (Finv[t] * v[t] - K[t]^T * r[t]) + T[t]^T * r[t]
-      //
-      // This formula is below formula 4.69 in Durbin and Koopman, second
-      // edition, page 96.
-      const SparseKalmanMatrix &Z(*observation_coefficients(t));
-      Vector rt_1 =
-          Z.Tmult(filter[t].forecast_precision_ * filter[t].forecast_error_ -
-                  filter[t].kalman_gain_.Tmult(r)) +
-          state_transition_matrix(t)->Tmult(r);
-      filter[t].r_ = r;
-      r = rt_1;
-    }
-    return r;
-  }
-
-  void MultivariateStateSpaceModelBase::update_observation_model(
-      Vector &r, SpdMatrix &N, int t, bool save_state_distributions,
-      bool update_sufficient_statistics, Vector *gradient) {
-    SpdMatrix H = observation_variance(t);
-    // u_t = F_t^{-1} v_t - K-t^T r_t
-    Vector u = kalman_storage_[t].forecast_precision_ *
-                   kalman_storage_[t].forecast_error_ -
-               kalman_storage_[t].kalman_gain_.Tmult(r);
-
-    // D_t = F_t^{-1} + K-t^T N_t K_t
-    SpdMatrix D = kalman_storage_[t].forecast_precision_ +
-                  sandwich_transpose(kalman_storage_[t].kalman_gain_, N);
-
-    const Vector observation_error_mean = H * u;
-    const SpdMatrix observation_error_variance = H - sandwich(H, D);
-    if (save_state_distributions) {
-      kalman_storage_[t].forecast_error_ = observation_error_mean;
-      kalman_storage_[t].forecast_precision_ = observation_error_variance;
-    }
-    if (update_sufficient_statistics) {
-      update_observation_model_complete_data_sufficient_statistics(
-          t, observation_error_mean, observation_error_variance);
-    }
-    if (gradient) {
-      update_observation_model_gradient(
-          observation_parameter_component(*gradient), t, observation_error_mean,
-          observation_error_variance);
-    }
-
-    // Kalman smoother: convert r[t] to r[t-1] and N[t] to N[t-1].
-    sparse_multivariate_kalman_disturbance_smoother_update(
-        r,
-        N,
-        (*state_transition_matrix(t)),
-        kalman_storage_[t].kalman_gain_,
-        *observation_coefficients(t),
-        kalman_storage_[t].forecast_precision_,
-        kalman_storage_[t].forecast_error_);
-  }
-
-  //----------------------------------------------------------------------
-  // After a call to smooth_disturbances_fast() puts r[t] in
-  // kalman_storage_[t].K, this function propagates the r's forward to get
-  // E(alpha | y), and add it to the simulated state.
-  void MultivariateStateSpaceModelBase::propagate_disturbances() {
-    if (time_dimension() <= 0) return;
-    SpdMatrix P0 = initial_state_variance();
-    Vector state_mean_sim = initial_state_mean() + P0 * r0_sim_;
-    Vector state_mean_obs = initial_state_mean() + P0 * r0_obs_;
-
-    mutable_state().col(0) += state_mean_obs - state_mean_sim;
-    observe_state(0);
-    observe_data_given_state(0);
-
-    for (int t = 1; t < time_dimension(); ++t) {
-      state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
-                       (*state_variance_matrix(t - 1)) *
-                           simulation_kalman_storage_[t - 1].r_;
-      state_mean_obs =
-          (*state_transition_matrix(t - 1)) * state_mean_obs +
-          (*state_variance_matrix(t - 1)) * kalman_storage_[t - 1].r_;
-      mutable_state().col(t).axpy(state_mean_obs - state_mean_sim);
-      observe_state(t);
-      observe_data_given_state(t);
-    }
-  }
-
-  Vector MultivariateStateSpaceModelBase::simulate_observation(
-      RNG &rng, int t) {
-    return rmvn_mt(rng,
-                   *observation_coefficients(t) * state(t),
-                   observation_variance(t));
-  }
-
-  void MultivariateStateSpaceModelBase::check_kalman_storage(
-      std::vector<MultivariateKalmanStorage> &storage,
-      bool save_state_moments) {
-    if (time_dimension() == 0) {
-      storage.clear();
-      return;
-    }
-    if (storage.size() == time_dimension() + 1 &&
-        (!save_state_moments ||
-         ((storage[0].a.size() == state_dimension()) &&
-          storage.back().a.size() == state_dimension()))) {
-      return;
-    }
-    storage.resize(
-        time_dimension(),
-        MultivariateKalmanStorage(1, state_dimension(), save_state_moments));
-  }
-
+  
 }  // namespace BOOM

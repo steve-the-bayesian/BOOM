@@ -33,14 +33,14 @@ namespace BOOM {
     m_->regression_model()->sample_posterior();
 
     // Don't re-sample the regression model (in position 0).
-    for (int s = 1; s < m_->nstate(); ++s) {
+    for (int s = 1; s < m_->number_of_state_models(); ++s) {
       m_->state_model(s)->sample_posterior();
     }
   }
 
   double ASSPS::logpri() const {
     double ans = m_->regression_model()->logpri();
-    for (int s = 1; s < m_->nstate(); ++s) {
+    for (int s = 1; s < m_->number_of_state_models(); ++s) {
       ans += m_->state_model(s)->logpri();
     }
     return ans;

@@ -79,7 +79,6 @@ namespace BOOM {
 
   //======================================================================
   void SSM::setup() {
-    observe(observation_model_->Sigsq_prm());
     observation_model_->only_keep_sufstats();
   }
 
@@ -158,25 +157,20 @@ namespace BOOM {
     }
   }
 
-  // TODO: should observation_matrix and
-  // observation_variance be called with t + t0 + 1?
+  // TODO: should observation_matrix and observation_variance be called with t +
+  // t0 + 1?
   Matrix SSM::forecast(int n) {
     // TODO: This method only works with truly Gaussian
     // state models.  We should put in a check to make sure that none
     // of the state models are T, normal mixture, etc.
-    full_kalman_filter();
-    ScalarKalmanStorage ks(final_kalman_storage());
+    kalman_filter();
+    Kalman::ScalarMarginalDistribution marg = get_filter().back();
     Matrix ans(n, 2);
     int t0 = time_dimension();
     for (int t = 0; t < n; ++t) {
-      ans(t, 0) = observation_matrix(t + t0).dot(ks.a);
-      sparse_scalar_kalman_update(
-          0,  // y is missing, so fill in a dummy value
-          ks.a, ks.P, ks.K, ks.F, ks.v,
-          true,  // forecasts are missing data
-          observation_matrix(t + t0), observation_variance(t + t0),
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
-      ans(t, 1) = sqrt(ks.F);
+      ans(t, 0) = observation_matrix(t + t0).dot(marg.state_mean());
+      marg.update(0, true, t + t0, this);
+      ans(t, 1) = sqrt(marg.prediction_variance());
     }
     return ans;
   }
@@ -194,60 +188,19 @@ namespace BOOM {
     return ans;
   }
 
-  Vector SSM::simulate_forecast_given_observed_data(
-      RNG &rng, int n, const Vector &observed_data) {
-    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    Vector ans(n);
-    int t0 = observed_data.size();
-    ScalarKalmanStorage ks(filter_observed_data(observed_data));
-    //  'state' starts out as state[t0], which is one after the final
-    //  state.
-    Vector state(rmvn(ks.a, ks.P));
-    for (int t = 0; t < n; ++t) {
-      ans[t] = rnorm_mt(rng, observation_matrix(t + t0).dot(state),
-                        sqrt(observation_variance(t + t0)));
-      state = simulate_next_state(rng, state, t + t0 + 1);
-    }
-    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MIXTURE);
-    return ans;
-  }
-
-  ScalarKalmanStorage SSM::filter_observed_data(const Vector &observed_data,
-                                                int t0) const {
-    ScalarKalmanStorage ks(state_dimension());
-    ks.a = initial_state_mean();
-    ks.P = initial_state_variance();
-    ks.F = observation_matrix(0).sandwich(ks.P) + observation_variance(0);
-    int n = observed_data.size();
-    if (n == 0) return ks;
-
-    for (int t = 0; t < n; ++t) {
-      double y = observed_data[t];
-      bool missing(y == BOOM::negative_infinity());
-      sparse_scalar_kalman_update(
-          y, ks.a, ks.P, ks.K, ks.F, ks.v, missing, observation_matrix(t0 + t),
-          observation_variance(t0 + t), *state_transition_matrix(t0 + t),
-          *state_variance_matrix(t0 + t));
-    }
-    return ks;
-  }
-
   Vector SSM::one_step_holdout_prediction_errors(
       const Vector &newY, const Vector &final_state, bool standardize) const {
     Vector ans(length(newY));
     int t0 = time_dimension();
-    ScalarKalmanStorage ks(state_dimension());
-    ks.a = *state_transition_matrix(t0 - 1) * final_state;
-    ks.P = SpdMatrix(state_variance_matrix(t0 - 1)->dense());
+    Kalman::ScalarMarginalDistribution marg(state_dimension());
+    marg.set_state_mean(*state_transition_matrix(t0 - 1) * final_state);
+    marg.set_state_variance(SpdMatrix(state_variance_matrix(t0 - 1)->dense()));
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
-      sparse_scalar_kalman_update(
-          newY[t], ks.a, ks.P, ks.K, ks.F, ks.v, missing,
-          observation_matrix(t + t0), observation_variance(t + t0),
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
-      ans[t] = ks.v;
+      marg.update(newY[t], missing, t + t0, this);
+      ans[t] = marg.prediction_error();
       if (standardize) {
-        ans[t] /= sqrt(ks.F);
+        ans[t] /= sqrt(marg.prediction_variance());
       }
     }
     return ans;

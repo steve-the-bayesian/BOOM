@@ -118,7 +118,6 @@ namespace BOOM {
   SSSRM::StateSpaceStudentRegressionModel(int xdim)
       : StateSpaceNormalMixture(xdim > 1),
         observation_model_(new TRegressionModel(xdim)) {
-    set_observers();
   }
 
   SSSRM::StateSpaceStudentRegressionModel(const Vector &response,
@@ -126,7 +125,6 @@ namespace BOOM {
                                           const std::vector<bool> &observed)
       : StateSpaceNormalMixture(ncol(predictors) > 0),
         observation_model_(new TRegressionModel(ncol(predictors))) {
-    set_observers();
     if ((ncol(predictors) == 1) &&
         (var(predictors.col(0)) < std::numeric_limits<double>::epsilon())) {
       set_regression_flag(false);
@@ -229,13 +227,13 @@ namespace BOOM {
     return ans;
   }
 
+  // Find the one step prediction errors for a holdout sample.
   Vector SSSRM::one_step_holdout_prediction_errors(RNG &rng,
                                                    const Vector &response,
                                                    const Matrix &predictors,
                                                    const Vector &final_state,
                                                    bool standardize) {
     TDataImputer data_imputer;
-
     if (nrow(predictors) != response.size()) {
       report_error(
           "Size mismatch in arguments provided to "
@@ -243,24 +241,26 @@ namespace BOOM {
     }
     Vector ans(response.size());
     int t0 = dat().size();
-    ScalarKalmanStorage ks(state_dimension());
-    ks.a = *state_transition_matrix(t0 - 1) * final_state;
-    ks.P = SpdMatrix(state_variance_matrix(t0 - 1)->dense());
+
     double sigma = observation_model_->sigma();
-    double sigsq = observation_model_->sigsq();
     double nu = observation_model_->nu();
+    Kalman::ScalarMarginalDistribution marg(state_dimension());
+    marg.set_state_mean(*state_transition_matrix(t0 - 1) * final_state);
+    marg.set_state_variance(SpdMatrix(state_variance_matrix(t0 - 1)->dense()));
+
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
       // 1) simulate next state.
       // 2) simulate w_t given state
       // 3) kalman update state given w_t.
-      double state_contribution = observation_matrix(t + t0).dot(ks.a);
+      double state_contribution =
+          observation_matrix(t + t0).dot(marg.state_mean());
       double regression_contribution =
           observation_model_->predict(predictors.row(t));
       double mu = state_contribution + regression_contribution;
       ans[t] = response[t] - mu;
       if (standardize) {
-        ans[t] /= sqrt(ks.F);
+        ans[t] /= sqrt(marg.prediction_variance());
       }
       
       // ans[t] is a random draw of the one step ahead prediction
@@ -269,25 +269,14 @@ namespace BOOM {
       // so we can compute ans[t+1].
 
       double weight = data_imputer.impute(rng, response[t] - mu, sigma, nu);
-      double latent_variance = sigsq / weight;
-
-      // The latent state was drawn from its predictive distribution
-      // given Y[t0 + t -1] and used to impute the latent data for
-      // y[t0+t].  That latent data is now used to update the Kalman
-      // filter for the next time period.  It is important that we
-      // discard the imputed state at this point.
-      sparse_scalar_kalman_update(
-          response[t] - regression_contribution, ks.a, ks.P, ks.K, ks.F, ks.v,
-          missing, observation_matrix(t + t0), latent_variance,
-          *state_transition_matrix(t + t0), *state_variance_matrix(t + t0));
+      // The latent state was drawn from its predictive distribution given Y[t0
+      // + t -1] and used to impute the latent data for y[t0+t].  That latent
+      // data is now used to update the Kalman filter for the next time period.
+      // It is important that we discard the imputed state at this point.
+      marg.update(response[t] - regression_contribution, missing,
+                  t + t0, this, 1.0 / weight);
     }
     return ans;
-  }
-
-  void SSSRM::set_observers() {
-    observe(observation_model_->coef_prm());
-    observe(observation_model_->Sigsq_prm());
-    observe(observation_model_->Nu_prm());
   }
 
   double SSSRM::student_marginal_variance() const {

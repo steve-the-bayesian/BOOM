@@ -407,7 +407,7 @@ namespace BOOM {
         regression_(rhs.regression_->clone()),
         observation_model_(rhs.observation_model_->clone()) {
     add_state(new AggregatedRegressionStateModel(regression_));
-    for (int s = 1; s < rhs.nstate(); ++s) {
+    for (int s = 1; s < rhs.number_of_state_models(); ++s) {
       add_state(rhs.state_model(s)->clone());
     }
     clear_data();

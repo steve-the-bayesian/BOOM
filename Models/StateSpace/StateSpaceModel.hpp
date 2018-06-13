@@ -84,26 +84,6 @@ namespace BOOM {
     // state.
     Vector simulate_forecast(RNG &rng, int n, const Vector &final_state);
 
-    // Simulate the next n time periods given current parameters and a
-    // specified set of observed data.  Uses negative_infinity() as a
-    // signal for missing data.
-    // Args:
-    //   n:  The number of time periods to forecast.
-    //   observed_data: A vector of observed data on which to base the
-    //     forecast.  This might be different than the data used to
-    //     fit the model.
-    Vector simulate_forecast_given_observed_data(RNG &rng, int n,
-                                                 const Vector &observed_data);
-
-    // Run the Kalman filter over the set of observed data, using
-    // negative_infinity() as a signal for missing data.  The .a and .P
-    // elements in the returned ScalarKalmanStorage give the mean and
-    // variance of the state one period after the last element in
-    // observed_data.  t0 is notional time period for
-    // observed_data[0], which will usually be 0.
-    ScalarKalmanStorage filter_observed_data(const Vector &observed_data,
-                                             int t0 = 0) const;
-
     // Return the vector of one-step-ahead predictions errors from a
     // holdout sample, following immediately after the training data.
     // 
