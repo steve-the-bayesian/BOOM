@@ -1282,18 +1282,15 @@ namespace BOOM {
   }
 
   Matrix block_diagonal(const Matrix &A, const Matrix &B) {
-    assert(A.is_square() && B.is_square());
-    uint n1 = A.nrow();
-    uint n2 = B.nrow();
+    Matrix ans(A.nrow() + B.nrow(),
+               A.ncol() + B.ncol(),
+               0.0);
+    SubMatrix Ablock(ans, 0, A.nrow() - 1, 0, A.ncol() - 1);
+    Ablock = A;
 
-    uint n = n1 + n2;
-    Matrix ans(n, n, 0.0);
-    for (uint i = 0; i < n1; ++i) {
-      std::copy(A.col_begin(i), A.col_end(i), ans.col_begin(i));
-    }
-    for (uint i = n1; i < n; ++i) {
-      std::copy(B.col_begin(i - n1), B.col_end(i - n1), ans.col_begin(i) + n1);
-    }
+    SubMatrix Bblock(ans, A.nrow(), ans.nrow() - 1,
+                     A.ncol(), ans.ncol() - 1);
+    Bblock = B;
     return ans;
   }
 

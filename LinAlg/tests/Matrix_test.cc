@@ -275,5 +275,40 @@ namespace {
     B = original_B;
     EXPECT_TRUE(MatrixEquals(Uinv(U), U.inv()));
   }
+
+  TEST_F(MatrixTest, BlockDiagonal) {
+    Matrix A(2, 2);
+    A.randomize();
+
+    Matrix B(2, 3);
+    B.randomize();
+
+    Matrix M = block_diagonal(A, B);
+    EXPECT_EQ(4, M.nrow());
+    EXPECT_EQ(5, M.ncol());
+    EXPECT_DOUBLE_EQ(M(0, 0), A(0, 0));
+    EXPECT_DOUBLE_EQ(M(0, 1), A(0, 1));
+    EXPECT_DOUBLE_EQ(M(0, 2), 0.0);
+    EXPECT_DOUBLE_EQ(M(0, 3), 0.0);
+    EXPECT_DOUBLE_EQ(M(0, 4), 0.0);
+    
+    EXPECT_DOUBLE_EQ(M(1, 0), A(1, 0));
+    EXPECT_DOUBLE_EQ(M(1, 1), A(1, 1));
+    EXPECT_DOUBLE_EQ(M(1, 2), 0.0);
+    EXPECT_DOUBLE_EQ(M(1, 3), 0.0);
+    EXPECT_DOUBLE_EQ(M(1, 4), 0.0);
+    
+    EXPECT_DOUBLE_EQ(M(2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(M(2, 1), 0.0);
+    EXPECT_DOUBLE_EQ(M(2, 2), B(0, 0));
+    EXPECT_DOUBLE_EQ(M(2, 3), B(0, 1));
+    EXPECT_DOUBLE_EQ(M(2, 4), B(0, 2));
+
+    EXPECT_DOUBLE_EQ(M(3, 0), 0.0);
+    EXPECT_DOUBLE_EQ(M(3, 1), 0.0);
+    EXPECT_DOUBLE_EQ(M(3, 2), B(1, 0));
+    EXPECT_DOUBLE_EQ(M(3, 3), B(1, 1));
+    EXPECT_DOUBLE_EQ(M(3, 4), B(1, 2));
+  }
   
 }  // namespace
