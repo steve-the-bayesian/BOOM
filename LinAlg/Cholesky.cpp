@@ -31,13 +31,13 @@ namespace BOOM {
     using std::endl;
   }  // namespace
 
-  Chol::Chol(const Matrix &m)
-      : lower_cholesky_triangle_(m.nrow(), m.ncol(), 0.0), pos_def_(true) {
-    if (!m.is_square()) {
+  void Chol::decompose(const Matrix &A) {
+    if (!A.is_square()) {
       pos_def_ = false;
       lower_cholesky_triangle_ = Matrix();
     } else {
-      Eigen::LLT<MatrixXd> eigen_cholesky(EigenMap(m));
+      lower_cholesky_triangle_.resize(A.nrow(), A.ncol());
+      Eigen::LLT<MatrixXd> eigen_cholesky(EigenMap(A));
       pos_def_ = eigen_cholesky.info() == Eigen::Success;
       EigenMap(lower_cholesky_triangle_) = eigen_cholesky.matrixL();
     }
