@@ -185,21 +185,14 @@ namespace BOOM {
     int holiday = impl_.which_holiday(time_now);
     if (holiday < 0) return;
     int day = impl_.which_day(time_now);
-    Ptr<StateSpace::TimeSeriesRegressionData> full_data =
-        model->dat()[time_now];
-    if (full_data->missing() == Data::missing_status::completely_missing) {
+    Ptr<StateSpace::TimeSeriesRegressionData> data = model->dat()[time_now];
+    if (data->missing() == Data::missing_status::completely_missing) {
       return;
     }
-    for (int i = 0; i < full_data->sample_size(); ++i) {
-      if (full_data->regression_data(i)->missing() ==
-          Data::missing_status::observed) {
-        double residual = full_data->regression_data(i)->y() -
-                          model->conditional_mean(time_now, i) +
-                          this->observation_matrix(time_now).dot(now);
-        daily_counts_[holiday][day] += 1.0;
-        daily_totals_[holiday][day] += residual;
-      }
-    }
+    Vector residuals = data->response() - model->conditional_mean(time_now);
+    residuals += this->observation_matrix(time_now).dot(now);
+    daily_counts_[holiday][day] += residuals.size();
+    daily_totals_[holiday][day] += sum(residuals);
   }
 
   SparseVector RHSM::observation_matrix(int time_now) const {

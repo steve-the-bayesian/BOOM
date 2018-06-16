@@ -42,6 +42,8 @@ namespace BOOM {
     class MarginalDistributionBase {
      public:
       MarginalDistributionBase(int dim);
+      virtual ~MarginalDistributionBase() {}
+      
       const Vector &state_mean() const {return state_mean_;}
       void set_state_mean(const Vector &state_mean) {state_mean_ = state_mean;}
       void increment_state_mean(const Vector &v) { state_mean_ += v; }

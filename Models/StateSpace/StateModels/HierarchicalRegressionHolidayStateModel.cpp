@@ -94,21 +94,15 @@ namespace BOOM {
     int day = impl_.which_day(time_now);
     // The residual contains the observed data minus the contributions from all
     // state models but this one.
-    Ptr<StateSpace::TimeSeriesRegressionData> full_data =
-        model->dat()[time_now];
-    if (full_data->missing() == Data::missing_status::completely_missing) {
+    Ptr<StateSpace::TimeSeriesRegressionData> data = model->dat()[time_now];
+    if (data->missing() == Data::missing_status::completely_missing) {
       return;
     }
-    int nobs = full_data->sample_size();
-    for (int i = 0; i < nobs; ++i) {
-      if (full_data->regression_data(i)->missing() ==
-          Data::missing_status::observed) {
-        double residual = full_data->regression_data(i)->y() -
-                          model->conditional_mean(time_now, i) +
-                          this->observation_matrix(time_now).dot(now);
-        model_->data_model(which_model)->suf()->add_mixture_data(
-            residual, daily_dummies(day), 1.0);
-      }
+    Vector residual = data->response() - model->conditional_mean(time_now);
+    residual += this->observation_matrix(time_now).dot(now);
+    for (int i = 0; i < residual.size(); ++i) {
+      model_->data_model(which_model)->suf()->add_mixture_data(
+          residual[i], daily_dummies(day), 1.0);
     }
   }
 

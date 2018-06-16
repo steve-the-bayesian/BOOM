@@ -56,6 +56,7 @@ namespace BOOM {
 
     RegSuf *clone() const override = 0;
 
+    virtual void fix_xtx(bool fixed = true) = 0;
     virtual uint size() const = 0;  // dimension of beta
     virtual double yty() const = 0;
     virtual Vector xty() const = 0;
@@ -104,6 +105,7 @@ namespace BOOM {
     void add_mixture_data(double y, const Vector &x, double prob) override;
     void add_mixture_data(double y, const ConstVectorView &x,
                           double prob) override;
+    void fix_xtx(bool fixed = true) override;
     uint size() const override;  // dimension of beta
     double yty() const override;
     Vector xty() const override;
@@ -163,7 +165,7 @@ namespace BOOM {
 
     // If fixed, then xtx will not be changed by a call to clear(),
     // add_mixture_data(), or any of the flavors of Update().
-    void fix_xtx(bool tf = true);
+    void fix_xtx(bool fixed = true) override;
 
     void clear() override;
     void add_mixture_data(double y, const Vector &x, double prob) override;

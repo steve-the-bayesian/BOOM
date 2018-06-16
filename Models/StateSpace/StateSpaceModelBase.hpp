@@ -240,7 +240,7 @@ namespace BOOM {
     //
     // Args:
     //   rng:  The random number generator to use for simulation.
-    void impute_state(RNG &rng);
+    virtual void impute_state(RNG &rng);
 
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information

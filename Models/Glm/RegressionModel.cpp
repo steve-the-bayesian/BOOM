@@ -124,6 +124,10 @@ namespace BOOM {
     x_column_sums_ = ColSums(X);
   }
 
+  void QrRegSuf::fix_xtx(bool) {
+    report_error("Cannot fix xtx using QR reg suf.");
+  }
+  
   uint QrRegSuf::size() const {  // dimension of beta
     //    if (!current) refresh_qr();
     return Qty.size();

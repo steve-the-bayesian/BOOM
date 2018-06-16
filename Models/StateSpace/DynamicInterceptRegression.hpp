@@ -24,14 +24,58 @@
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 
 namespace BOOM {
+
+  namespace StateSpace {
+
+    // A data type to use with DynamicInterceptRegressionModel.  Each object
+    // represents the data set available at a given time point.  There is a
+    // response vector and a predictor matrix, with potentially different
+    // numbers of observations at each time point.
+    class TimeSeriesRegressionData : public Data {
+     public:
+      TimeSeriesRegressionData(const Vector &response,
+                               const Matrix &predictors);
+      TimeSeriesRegressionData * clone() const override;
+
+      std::ostream &display(std::ostream &out) const override;
+
+      // Return the i'th observation at this time point.
+      const Ptr<RegressionData> &regression_data(int i) const {
+        return regression_data_[i];
+      }
+      Ptr<RegressionData> &regression_data(int i) {
+        return regression_data_[i];
+      }
+
+      // The number of observations at this time point.
+      int sample_size() const { return response_.size(); }
+
+      const Vector &response() const {return response_;}
+      const Matrix &predictors() const {return predictors_;}
+
+      // All observations are 'observed' so the observation vector returns all
+      // true.
+      const Selector &observed() const {return observed_;}
+      
+     private:
+      Vector response_;
+      Matrix predictors_;
+      std::vector<Ptr<RegressionData>> regression_data_;
+      Selector observed_;
+    };
+
+  }  // namespace StateSpace
+
   // A DynamicInterceptRegressionModel is a time series regression model where
   // the intercept term obeys a classic state space model, but where the
   // remaining regression coefficients are static.  Note that the number of
   // observations at each time point might differ.  The model is implemented as
-  // a multivariate state space model.  Through data augmentation you can extend
+  // a multivariate state space model.  Through data augmentation one can extend
   // this model to most GLM's with dynamic intercepts.
   //
   // The model is Y_t^T = [y_1t, y_2t, ... y_n_tt],
@@ -48,8 +92,8 @@ namespace BOOM {
   // MultiplexedData concept from StateSpaceModelBase, which should simplify it
   // considerably.
   class DynamicInterceptRegressionModel
-      : public MultivariateStateSpaceModelBase,
-        public IID_DataPolicy<StateSpace::MultiplexedRegressionData>,
+      : public ConditionalIidMultivariateStateSpaceModelBase,
+        public IID_DataPolicy<StateSpace::TimeSeriesRegressionData>,
         public PriorPolicy {
    public:
     explicit DynamicInterceptRegressionModel(int xdim);
@@ -63,13 +107,19 @@ namespace BOOM {
     RegressionModel *observation_model() override;
     const RegressionModel *observation_model() const override;
     void observe_data_given_state(int t) override;
-
+    
+    void impute_state(RNG &rng) override;
+    
     int time_dimension() const override { return dat().size(); }
     int xdim() const { return regression_->regression()->xdim(); }
 
     bool is_missing_observation(int t) const override {
       return dat()[t]->missing() == Data::completely_missing ||
-             dat()[t]->observed_sample_size() == 0;
+             dat()[t]->sample_size() == 0;
+    }
+
+    const Selector &observed_status(int t) const override {
+      return dat()[t]->observed();
     }
 
     // Need to override add_data so that x's can be shared with the
@@ -78,28 +128,30 @@ namespace BOOM {
 
     // Adds dp to the vector of data, as the most recent observation, and adds
     // the regression data in 'dp' to the underlying regression model.
-    void add_multiplexed_data(
-        const Ptr<StateSpace::MultiplexedRegressionData> &dp);
+    void add_data(const Ptr<StateSpace::TimeSeriesRegressionData> &dp) override;
+
+    void add_data(StateSpace::TimeSeriesRegressionData *dp) override;
 
     const SparseKalmanMatrix *observation_coefficients(int t) const override;
-    SpdMatrix observation_variance(int t) const override;
-    const Vector &observation(int t) const override { return observations_[t]; }
-
-    // Returns the conditional mean of a specific observation at time t, given
-    // state and model parameters.
+    double observation_variance(int t) const override;
+    const Vector &observation(int t) const override;
+    
+    // Returns the conditional mean the data at time t given state and model
+    // parameters.
     // Args:
     //   time:  The time index of the observation.
-    //   observation:  The specific observation number at the time index.
-    double conditional_mean(int time, int observation) const;
-
+    Vector conditional_mean(int time) const;
+    
    protected:
     void observe_state(int t) override;
 
    private:
-    // Reimplements the logic in the base class, but ???.
+    // Reimplements the logic in the base class, but optimized for the scalar
+    // observation variance.
     Vector simulate_observation(RNG &rng, int t) override;
 
     void initialize_regression_component(int xdim);
+
     void update_observation_model_complete_data_sufficient_statistics(
         int t, const Vector &observation_error_mean,
         const SpdMatrix &observation_error_variance) override {
@@ -126,10 +178,6 @@ namespace BOOM {
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].
     mutable SparseVerticalStripMatrix observation_coefficients_;
-
-    // Element t contains the response vector for time point t.  Elements can be
-    // of different sizes.
-    std::vector<Vector> observations_;
   };
 
 }  // namespace BOOM
