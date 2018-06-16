@@ -81,11 +81,13 @@ class GeneralStateContributionCallback
       : model_(model),
         has_regression_(-1) {}
 
-  int nrow() const override {return model_->nstate() + has_regression();}
+  int nrow() const override {
+    return model_->number_of_state_models() + has_regression();
+  }
   int ncol() const override {return model_->time_dimension();}
   BOOM::Matrix get_matrix() const override {
     BOOM::Matrix ans(nrow(), ncol());
-    for (int state = 0; state < model_->nstate(); ++state) {
+    for (int state = 0; state < model_->number_of_state_models(); ++state) {
       ans.row(state) = model_->state_contribution(state);
     }
     if (has_regression()) {

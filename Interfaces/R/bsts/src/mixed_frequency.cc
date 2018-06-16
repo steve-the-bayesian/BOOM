@@ -69,11 +69,11 @@ class StateContributionCallback : public BOOM::MatrixIoCallback {
  public:
   explicit StateContributionCallback(BOOM::ScalarStateSpaceModelBase *model)
       : model_(model) {}
-  int nrow() const override { return model_->nstate(); }
+  int nrow() const override { return model_->number_of_state_models(); }
   int ncol() const override { return model_->time_dimension(); }
   BOOM::Mat get_matrix() const override {
     BOOM::Mat ans(nrow(), ncol());
-    for (int state = 0; state < model_->nstate(); ++state) {
+    for (int state = 0; state < model_->number_of_state_models(); ++state) {
       ans.row(state) = model_->state_contribution(state);
     }
     return ans;

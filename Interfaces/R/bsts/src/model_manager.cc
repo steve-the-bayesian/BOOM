@@ -197,15 +197,16 @@ namespace BOOM {
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
         if (refilter) {
-          model->light_kalman_filter();
-          ScalarKalmanStorage storage = model->final_kalman_storage();
-          Vector state_mean = storage.a;
-          SpdMatrix state_variance = storage.P;
+          model->kalman_filter();
+          const Kalman::ScalarMarginalDistribution &marg(
+              model->get_filter().back());
+          Vector state_mean = marg.state_mean();
+          SpdMatrix state_variance = marg.state_variance();
           make_contemporaneous(
               state_mean,
               state_variance,
-              storage.F,
-              storage.v,
+              marg.prediction_variance(),
+              marg.prediction_error(),
               model->observation_matrix(model->time_dimension()).dense());
           final_state = rmvn(state_mean, state_variance);
         }
@@ -218,16 +219,16 @@ namespace BOOM {
         ScalarStateSpaceModelBase *model,
         SEXP r_state_specification,
         SEXP r_prediction_data) {
-      if (Rf_length(r_state_specification) < model->nstate()) {
+      if (Rf_length(r_state_specification) < model->number_of_state_models()) {
         std::ostringstream err;
         err << "The number of state components in the model: ("
-            << model->nstate() << ") does not match the size of "
+            << model->number_of_state_models() << ") does not match the size of "
             << "the state specification: ("
             << Rf_length(r_state_specification)
             << ") in UnpackDynamicRegressionForecastData.";
         report_error(err.str());
       }
-      for (int i = 0; i < model->nstate(); ++i) {
+      for (int i = 0; i < model->number_of_state_models(); ++i) {
         SEXP spec = VECTOR_ELT(r_state_specification, i);
         if (Rf_inherits(spec, "DynamicRegression")) {
           Matrix predictors = ToBoomMatrix(getListElement(

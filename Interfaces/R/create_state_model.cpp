@@ -744,7 +744,7 @@ namespace BOOM {
         if (!model) {
           return -1;
         } else {
-          for (int i = 0; i < model->nstate(); ++i) {
+          for (int i = 0; i < model->number_of_state_models(); ++i) {
             if (model->state_model(i).get() == state_model) {
               return i;
             }
