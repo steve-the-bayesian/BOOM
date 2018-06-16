@@ -708,6 +708,13 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
+  void Base::simulate_disturbances(RNG &rng) {
+    simulate_forward(rng);
+    smooth_simulated_disturbances();
+    smooth_observed_disturbances();
+  }
+
+  //----------------------------------------------------------------------
   // Send a signal to any observers of this model's data that the
   // complete data sufficient statistics should be reset.
   void Base::signal_complete_data_reset() {
@@ -727,6 +734,7 @@ namespace BOOM {
     }
   }
 
+  
   //===========================================================================
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
@@ -815,6 +823,15 @@ namespace BOOM {
   const ScalarKalmanFilter &ScalarBase::get_filter() const {
     return filter_;
   }
+
+  ScalarKalmanFilter &ScalarBase::get_simulation_filter() {
+    simulation_filter_.set_model(this);
+    return simulation_filter_;
+  }
+  const ScalarKalmanFilter &ScalarBase::get_simulation_filter() const {
+    return simulation_filter_;
+  }
+
   //----------------------------------------------------------------------
   // Simulate alpha_+ and y_* = y - y_+.  While simulating y_*,
   // feed it into the light (no storage for P) Kalman filter.  The
@@ -824,10 +841,9 @@ namespace BOOM {
   // Kalman filtering and disturbance smoothing of y, and the results
   // will be subtracted to compute y_*.
   void ScalarBase::simulate_forward(RNG &rng) {
-    filter_.set_model(this);
-    filter_.update();
-    simulation_filter_.set_model(this);
-    simulation_filter_.clear();
+    ScalarKalmanFilter &filter(get_filter());
+    filter.update();
+    ScalarKalmanFilter &simulation_filter(get_simulation_filter());
     Vector simulated_data_state_mean = initial_state_mean();
     SpdMatrix simulated_data_state_variance = initial_state_variance();
     for (int t = 0; t < time_dimension(); ++t) {
@@ -838,15 +854,10 @@ namespace BOOM {
         simulate_next_state(rng, mutable_state().col(t - 1),
                             mutable_state().col(t), t);
       }
-      simulation_filter_.update(
-          simulate_adjusted_observation(rng, t), t, false);
+      simulation_filter.update(
+          simulate_adjusted_observation(rng, t),
+          t, is_missing_observation(t));
     }
-  }
-
-  void StateSpaceModelBase::simulate_disturbances(RNG &rng) {
-    simulate_forward(rng);
-    smooth_simulated_disturbances();
-    smooth_observed_disturbances();
   }
 
   //----------------------------------------------------------------------
@@ -904,6 +915,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
+
   double ScalarBase::simulate_adjusted_observation(RNG &rng, int t) {
     double mu = observation_matrix(t).dot(state(t));
     return rnorm_mt(rng, mu, sqrt(observation_variance(t)));
@@ -916,8 +928,8 @@ namespace BOOM {
   void ScalarBase::propagate_disturbances() {
     if (time_dimension() <= 0) return;
     SpdMatrix P0 = initial_state_variance();
-    Vector state_mean_sim = initial_state_mean() + P0 * r0_sim_;
-    Vector state_mean_obs = initial_state_mean() + P0 * r0_obs_;
+    Vector state_mean_sim = initial_state_mean() + P0 * r0_sim();
+    Vector state_mean_obs = initial_state_mean() + P0 * r0_obs();
 
     mutable_state().col(0) += state_mean_obs - state_mean_sim;
     observe_state(0);

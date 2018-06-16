@@ -22,7 +22,8 @@
 #include <memory>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
-#include "Models/StateSpace/Filters/KalmanFilter.hpp"
+#include "Models/StateSpace/Filters/KalmanFilterBase.hpp"
+#include "Models/StateSpace/Filters/ScalarKalmanFilter.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/MultiplexedData.hpp"
@@ -250,6 +251,8 @@ namespace BOOM {
     // Return the KalmanFilter object responsible for filtering the data.
     virtual KalmanFilterBase & get_filter() = 0;
     virtual const KalmanFilterBase & get_filter() const = 0;
+    virtual KalmanFilterBase & get_simulation_filter() = 0;
+    virtual const KalmanFilterBase & get_simulation_filter() const = 0;
     
     //------------- Parameter estimation by MLE and MAP --------------------
     // Set model parameters to their maximum-likelihood estimates, and return
@@ -437,6 +440,10 @@ namespace BOOM {
         int t, const Vector &state_error_mean,
         const SpdMatrix &state_error_variance);
 
+    // Access the return values of the disturbance smoother.
+    const Vector &r0_sim() const { return r0_sim_; }
+    const Vector &r0_obs() const { return r0_obs_; }
+    
     Matrix &mutable_state() { return state_; }
 
     //-----Implementation details for the Kalman filter and smoother -----
@@ -525,14 +532,6 @@ namespace BOOM {
     // Code used to implement impute_state().
     void simulate_disturbances(RNG &rng);
 
-    // Run the fast disturbance smoother over the data in
-    // simulation_kalman_storage_.
-    virtual void smooth_simulated_disturbances() = 0;
-
-    // Run the fast disturbance smoother over the data in the actual kalman
-    // filter.
-    virtual void smooth_observed_disturbances() = 0;
-
     // After the simulated and observed disturbances have been smoothed,
     // propagate them forward to achieve a draw of latent state given observed
     // data and parameters.
@@ -598,6 +597,16 @@ namespace BOOM {
     mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
     mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
     mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
+
+    void smooth_simulated_disturbances() {
+      r0_sim_ = get_simulation_filter().fast_disturbance_smooth();
+    }
+    void smooth_observed_disturbances() {
+      r0_obs_ = get_filter().fast_disturbance_smooth();
+    }
+
+    Vector r0_sim_;
+    Vector r0_obs_;
   };
 
   //===========================================================================
@@ -660,6 +669,8 @@ namespace BOOM {
 
     ScalarKalmanFilter &get_filter() override;
     const ScalarKalmanFilter &get_filter() const override;
+    ScalarKalmanFilter &get_simulation_filter() override;
+    const ScalarKalmanFilter &get_simulation_filter() const override;
     
    protected:
     // Compute the contribution to the complete data sufficient statistics, for
@@ -668,13 +679,6 @@ namespace BOOM {
     void observe_state(int t) override;
 
     void simulate_forward(RNG &rng) override;
-
-    void smooth_simulated_disturbances() override {
-      r0_sim_ = simulation_filter_.fast_disturbance_smooth();
-    }
-    void smooth_observed_disturbances() override {
-      r0_obs_ = filter_.fast_disturbance_smooth();
-    }
 
     // Args:
     //   r: Durbin and Koopman's r vector, which is a scaled version of the
@@ -727,6 +731,8 @@ namespace BOOM {
         double observation_error_variance);
 
    private:
+    // Simulate an observed Y value (minus any regression effects from a static
+    // regression), conditional on the state at time t.
     double simulate_adjusted_observation(RNG &rng, int t);
 
     void propagate_disturbances() override;
@@ -735,10 +741,6 @@ namespace BOOM {
     // Data begins here.
     ScalarKalmanFilter filter_;
     ScalarKalmanFilter simulation_filter_;
-
-    // Workspace for disturbance smoothing.
-    Vector r0_sim_;
-    Vector r0_obs_;
   };
 
   //======================================================================
