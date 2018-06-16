@@ -65,12 +65,12 @@ namespace BOOM {
     // Fun the full Kalman filter over all the data held by the model.
     void update() override;
 
-    Vector fast_disturbance_smooth() override;
-      
     // Update the Kalman filter at time t given observation y, which might be
     // different than y[t] held by the model (e.g. when doing posterior
     // simulation).
     void update(double y, int t, bool missing = false);
+
+    Vector fast_disturbance_smooth() override;
 
     // Return the one-step prediction error held by the filter at time t.  If
     // 'standardize' is true then divide the prediction error by the square

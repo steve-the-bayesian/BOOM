@@ -24,6 +24,59 @@ namespace BOOM {
   //  namespace Kalman {
   //   }  // namespace Kalman
 
+  void MultivariateKalmanFilterBase::set_model(
+      MultivariateStateSpaceModelBase *model) {
+    if (model_ != model) {
+      model_ = model;
+      if (model_) {
+        observe_model_parameters(model_);
+      }
+    }
+  }
+  
+  void MultivariateKalmanFilterBase::update() {
+    if (!model_) {
+      report_error("Model must be set before calling update().");
+    }
+    ensure_size(model_->time_dimension());
+    clear();
+    node(0).set_state_mean(model_->initial_state_mean());
+    node(0).set_state_variance(model_->initial_state_variance());
+
+    for (int t = 0; t < model_->time_dimension(); ++t) {
+      if (t > 0) {
+        node(t).set_state_mean(node(t - 1).state_mean());
+        node(t).set_state_variance(node(t - 1).state_variance());
+      }
+      increment_log_likelihood(node(t).update(
+          model_->observation(t), model_->observed_status(t), t));
+      if (!std::isfinite(log_likelihood())) {
+        set_status(NOT_CURRENT);
+        return;
+      }
+    }
+    set_status(CURRENT);
+  }
+
+  void MultivariateKalmanFilterBase::update_single_observation(
+      const Vector &y,
+      const Selector &observed,
+      int t) {
+    if (!model_) {
+      report_error("Model must be set before calling update().");
+    }
+    ensure_size(t);
+    if (t == 0) {
+      node(t).set_state_mean(model_->initial_state_mean());
+      node(t).set_state_variance(model_->initial_state_variance());
+    } else {
+      node(t).set_state_mean(node(t - 1).state_mean());
+      node(t).set_state_variance(node(t - 1).state_variance());
+    }
+    increment_log_likelihood(node(t).update(y, observed, t));
+  }
+
+
   // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
   // disturbance smoother is equation (5) in Durbin and Koopman (2002).
   //

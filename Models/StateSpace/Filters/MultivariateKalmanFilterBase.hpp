@@ -34,11 +34,8 @@ namespace BOOM {
     class MultivariateMarginalDistributionBase
         : public MarginalDistributionBase {
      public:
-      MultivariateMarginalDistributionBase(int state_dim, int observation_dim)
-          : MarginalDistributionBase(state_dim),
-            prediction_error_(observation_dim),
-            kalman_gain_(state_dim, observation_dim),
-            r_(state_dim)
+      MultivariateMarginalDistributionBase(int state_dim)
+          : MarginalDistributionBase(state_dim)
       {}
 
       const Vector &prediction_error() const {
@@ -47,6 +44,10 @@ namespace BOOM {
       void set_prediction_error(const Vector &err) {
         prediction_error_ = err;
       }
+
+      virtual double update(const Vector &observation,
+                            const Selector &observed,
+                            int t) = 0;
 
       // Inverse of Var(y[t] | Y[t-1]).
       virtual SpdMatrix forecast_precision() const = 0;
@@ -102,6 +103,12 @@ namespace BOOM {
   // don't depend on the observation variance.
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
+    void set_model(MultivariateStateSpaceModelBase *model);
+    
+    void update() override;
+    void update_single_observation(
+        const Vector &observation, const Selector &observed, int t);
+    
     Vector fast_disturbance_smooth() override;
     Vector prediction_error(int t, bool standardize = false) const;
 
@@ -109,6 +116,14 @@ namespace BOOM {
         override = 0;
     const Kalman::MultivariateMarginalDistributionBase & operator[](size_t pos)
         const override = 0;
+
+    // Add nodes to the collection of marginal distributions until it is large
+    // enough to hold t elements.
+    virtual void ensure_size(int t) = 0;
+
+    const MultivariateStateSpaceModelBase *model() const {
+      return model_;
+    }
     
    protected:
     virtual Kalman::MultivariateMarginalDistributionBase &node(size_t t) = 0;

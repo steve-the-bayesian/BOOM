@@ -38,8 +38,12 @@ namespace BOOM {
      public:
       using ModelType = ConditionalIidMultivariateStateSpaceModelBase;
       
-      ConditionalIidMarginalDistribution(int state_dimension, int observation_dimension);
+      ConditionalIidMarginalDistribution(int state_dimension);
 
+      void set_model(ConditionalIidMultivariateStateSpaceModelBase *model) {
+        model_ = model;
+      }
+      
       // Args:
       //   observation: The vector of observed data at time t.  Note that some
       //     elements of 'observation' might be missing.
@@ -53,11 +57,10 @@ namespace BOOM {
       //
       // Returns:
       //   The contribution that observation makes to the log likelihood.
-      double update(const Vector &y, const Selector &observed, int t,
-                    const ModelType *model);
+      double update(const Vector &y, const Selector &observed, int t) override;
 
       // A Kalman filter update when the vector y is entirely missing.
-      double update(int t, const ModelType *model);
+      double fully_missing_update(int t);
       
       // Compute the forecast precision matrix: Var(y[t+1] | Y[t]).inverse().
       // The inputs required to make this computation are stored during a call
@@ -79,7 +82,7 @@ namespace BOOM {
      private:
       double forecast_precision_log_determinant_;
       double observation_variance_;
-      int t;
+      int time_index_;
       ModelType *model_;
 
       // The Cholesky root of the state conditional variance, before updating.
@@ -96,24 +99,24 @@ namespace BOOM {
    public:
     using MarginalType = Kalman::ConditionalIidMarginalDistribution;
     using ModelType = MarginalType::ModelType;
-    
     ConditionalIidKalmanFilter(ModelType *model = nullptr);
     void set_model(ModelType *model);
-
-    void update() override;
-
+    
     MarginalType & operator[](size_t pos) override {return node(pos);}
     const MarginalType & operator[](size_t pos) const override {
       return node(pos);
     }
 
+    void ensure_size(int t) override;
+    
    private:
-    ModelType *model_;
     std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;
 
-    MarginalType & node(size_t pos) override;
-    const MarginalType & node(size_t pos) const override;
+    MarginalType & node(size_t pos) override { return nodes_[pos]; }
+    const MarginalType & node(size_t pos) const override { return nodes_[pos]; }
 
+    ModelType *model_;
+    
   };
   
 }  // namespace BOOM

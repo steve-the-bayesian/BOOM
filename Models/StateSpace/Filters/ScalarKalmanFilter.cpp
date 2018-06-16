@@ -73,7 +73,7 @@ namespace BOOM {
   }
 
   void ScalarKalmanFilter::set_model(ScalarStateSpaceModelBase *model) {
-    if (model != model_) {
+    if (model_ != model) {
       model_ = model;
       if (model_) {
         observe_model_parameters(model_);
