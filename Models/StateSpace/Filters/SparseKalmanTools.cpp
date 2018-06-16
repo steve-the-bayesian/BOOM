@@ -163,7 +163,8 @@ namespace BOOM {
   // "matrix determinant lemma,"  which states det(A + UWV') =
   // det(W) * det(A) * det(W.inv + V'*A.inv*U).
   //
-  // Thus the log determinant of F is 
+  // Thus the determinant of F is
+  //     det(H) * det(P) * det(P.inv + Z'HZ)
   
   // SpdMatrix WoodburyInverse(const Vector &observation_precision,
   //                           const SparseKalmanMatrix &observation_coefficients,

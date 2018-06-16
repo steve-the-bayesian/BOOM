@@ -140,7 +140,7 @@ namespace BOOM {
 
     Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override {
+        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override {
       return expanded_predictors_[t];
     }
 

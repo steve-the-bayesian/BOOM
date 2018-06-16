@@ -23,7 +23,6 @@
 #include "Models/ModelTypes.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
-#include "Models/StateSpace/MultiplexedData.hpp"
 #include "uint.hpp"
 
 namespace BOOM {
@@ -31,6 +30,10 @@ namespace BOOM {
   class ScalarStateSpaceModelBase;
   class DynamicInterceptRegressionModel;
 
+  namespace StateSpace {
+    class TimeSeriesRegressionData;
+  }  // StateSpace
+  
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
   // time dependent, an error variance Q, which may be of smaller dimension than
@@ -79,7 +82,7 @@ namespace BOOM {
     virtual void observe_dynamic_intercept_regression_state(
         const ConstVectorView &then, const ConstVectorView &now, int time_now,
         DynamicInterceptRegressionModel *model) = 0;
-
+    
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.
     virtual void observe_initial_state(const ConstVectorView &state);
@@ -164,10 +167,7 @@ namespace BOOM {
     //   each of the observations at time t.
     virtual Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const {
-      return new IdenticalRowsMatrix(observation_matrix(t),
-                                     data_point.total_sample_size());
-    }
+        int t, const StateSpace::TimeSeriesRegressionData &data_point) const;
 
     virtual Vector initial_state_mean() const = 0;
     virtual SpdMatrix initial_state_variance() const = 0;

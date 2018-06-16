@@ -18,10 +18,14 @@
 */
 
 #include "Models/StateSpace/StateModels/StaticInterceptStateModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
-
+  namespace {
+    using SISM = StaticInterceptStateModel;
+  }
+  
   StaticInterceptStateModel::StaticInterceptStateModel()
       : state_transition_matrix_(new IdentityMatrix(1)),
         state_variance_matrix_(new ZeroMatrix(1)),

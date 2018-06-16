@@ -94,7 +94,7 @@ namespace BOOM {
 
     Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t const StateSpace::MultiplexedData &data_point) const override;
+        int t const StateSpace::TimeSeriesRegressionData &data_point) const override;
 
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;

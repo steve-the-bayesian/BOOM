@@ -18,6 +18,7 @@
 */
 
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 
@@ -51,4 +52,12 @@ namespace BOOM {
   }
 
   void StateModel::observe_initial_state(const ConstVectorView &state) {}
+
+  Ptr<SparseMatrixBlock>
+  StateModel::dynamic_intercept_regression_observation_coefficients(
+      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
+    return new IdenticalRowsMatrix(observation_matrix(t),
+                                   data_point.sample_size());
+  }
+  
 }  // namespace BOOM

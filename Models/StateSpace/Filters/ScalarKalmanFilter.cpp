@@ -16,18 +16,12 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/Filters/KalmanFilter.hpp"
+#include "Models/StateSpace/Filters/ScalarKalmanFilter.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
   namespace Kalman {
-    MarginalDistributionBase::MarginalDistributionBase(int dim)
-        : state_mean_(dim),
-          state_variance_(dim)
-    {}
-    
     double ScalarMarginalDistribution::update(
         double y, bool missing, int t, const ScalarStateSpaceModelBase *model,
         double observation_variance_scale_factor) {
@@ -74,23 +68,6 @@ namespace BOOM {
     }
   }  // namespace Kalman
 
-  //===========================================================================
-
-  // TODO: If the model adds new parameters after this function is called, then
-  // the new parameters will not be observed.  This can happen with a state
-  // space model when new components of state are added using add_state().
-  void KalmanFilterBase::observe_model_parameters(StateSpaceModelBase *model) {
-    for (auto &prm : model->parameter_vector()) {
-      prm->add_observer([this]() {this->mark_not_current();});
-    }
-  }
-
-  void KalmanFilterBase::clear() {
-    log_likelihood_ = 0;
-    status_ = NOT_CURRENT;
-  }
-  
-  //===========================================================================
   ScalarKalmanFilter::ScalarKalmanFilter(ScalarStateSpaceModelBase *model) {
     set_model(model);
   }
@@ -206,5 +183,8 @@ namespace BOOM {
     }
     return nodes_[n - 1];
   }
+
+
+
   
 }  // namespace BOOM

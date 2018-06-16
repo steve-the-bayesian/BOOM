@@ -18,6 +18,7 @@
 */
 
 #include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 
 namespace BOOM {
 
@@ -110,9 +111,11 @@ namespace BOOM {
 
   Ptr<SparseMatrixBlock>
   RegressionStateModel::dynamic_intercept_regression_observation_coefficients(
-      int t, const StateSpace::MultiplexedData &data_point) const {
-    return new DenseMatrix(Matrix(data_point.total_sample_size(), 1,
-                                  regression_->coef().predict(predictors_[t])));
+      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
+    return new DenseMatrix(Matrix(
+        data_point.sample_size(),
+        1,
+        regression_->coef().predict(data_point.predictors())));
   }
 
   Vector RegressionStateModel::initial_state_mean() const {

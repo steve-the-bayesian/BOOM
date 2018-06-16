@@ -18,9 +18,11 @@
 */
 
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 #include "stats/moments.hpp"
+
 
 namespace BOOM {
   namespace {
@@ -222,9 +224,9 @@ namespace BOOM {
 
   Ptr<SparseMatrixBlock>
   DRSM::dynamic_intercept_regression_observation_coefficients(
-      int t, const StateSpace::MultiplexedData &data_point) const {
+      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
     Ptr<DenseMatrix> ans = sparse_predictor_matrices_[t];
-    if (data_point.total_sample_size() != ans->nrow()) {
+    if (data_point.sample_size() != ans->nrow()) {
       report_error(
           "Mismatch between model data and "
           "DynamicRegressionStateModel data.");

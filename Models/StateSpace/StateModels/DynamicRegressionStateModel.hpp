@@ -97,12 +97,13 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override;
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override;
 
-    // The observation matrix is row t of the desing matrix.
+    // The observation matrix is row t of the design matrix.
     SparseVector observation_matrix(int t) const override;
 
     Ptr<SparseMatrixBlock>
     dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::MultiplexedData &data_point) const override;
+        int t,
+        const StateSpace::TimeSeriesRegressionData &data_point) const override;
 
     // The initial state is the value of the regression coefficients
     // at time 0.  Zero with a big variance is a good guess.
