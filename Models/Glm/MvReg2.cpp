@@ -77,7 +77,7 @@ namespace BOOM {
   SpdMatrix NS::SSE(const Matrix &B) const {
     SpdMatrix ans = yty();
     ans.add_inner2(B, xty(), -1);
-    ans += sandwich(B.t(), xtx());
+    ans += sandwich(B.transpose(), xtx());
     return ans;
   }
 

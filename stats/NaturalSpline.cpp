@@ -33,7 +33,7 @@ namespace BOOM {
     Vector tmplo = basis(lo, 2);
     Vector tmphi = basis(hi, 2);
     Matrix tmp = rbind(tmplo, tmphi);
-    QR qr(tmp.t());
+    QR qr(tmp.transpose());
     return qr;
   }
 

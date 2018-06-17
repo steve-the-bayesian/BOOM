@@ -75,7 +75,7 @@ namespace BOOM {
   Vector rmvn_ivar_mt(RNG &rng, const Vector &mu, const SpdMatrix &ivar) {
     // Draws a multivariate normal with mean mu and precision matrix
     // ivar.
-    Matrix U = ivar.chol().t();
+    Matrix U = ivar.chol().transpose();
     return rmvn_precision_upper_cholesky_mt(rng, mu, U);
   }
 

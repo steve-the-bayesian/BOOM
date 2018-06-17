@@ -295,7 +295,7 @@ namespace BOOM {
     const Matrix &X(dp->X());
 
     yyt_.add_outer(u);
-    xtx_ += sandwich(X.t(), siginv);  // sum of XT siginv X
+    xtx_ += sandwich(X.transpose(), siginv);  // sum of XT siginv X
     xty_ += X.Tmult(siginv * u);      //
   }
 

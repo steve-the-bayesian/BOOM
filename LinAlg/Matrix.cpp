@@ -629,7 +629,7 @@ namespace BOOM {
     return ans;
   }
 
-  Matrix Matrix::t() const {
+  Matrix Matrix::transpose() const {
     Matrix ans(nc_, nr_);
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < nc_; ++j) {
@@ -1276,7 +1276,7 @@ namespace BOOM {
     Matrix ans = A;
     ans.cbind(Rect);
 
-    Matrix tmp(Rect.t());
+    Matrix tmp(Rect.transpose());
     tmp.cbind(B);
     return ans.rbind(tmp);
   }

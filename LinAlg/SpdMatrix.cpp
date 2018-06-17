@@ -627,7 +627,7 @@ namespace BOOM {
 
   SpdMatrix as_symmetric(const Matrix &A) {
     assert(A.is_square());
-    Matrix ans = A.t();
+    Matrix ans = A.transpose();
     ans += A;
     ans /= 2.0;
     return SpdMatrix(ans, false);  // no symmetry check needed
@@ -685,7 +685,7 @@ namespace BOOM {
     for (int i = 0; i < nrow(eigenvectors); ++i) {
       eigenvectors.col(i) *= sqrt(eigenvalues[i]);
     }
-    return eigenvectors.t();
+    return eigenvectors.transpose();
   }
 
 }  // namespace BOOM

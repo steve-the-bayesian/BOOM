@@ -79,7 +79,7 @@ namespace BOOM {
     if (quick_and_dirty) {
       ans.reflect();
     } else {
-      ans = .5 * (ans + ans.t());
+      ans = .5 * (ans + ans.transpose());
     }
     return ans;
   }

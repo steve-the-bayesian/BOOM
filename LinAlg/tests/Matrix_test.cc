@@ -109,8 +109,8 @@ namespace {
 
     EXPECT_TRUE(MatrixEquals(MV, M.multT(V)));
 
-    EXPECT_TRUE(MatrixEquals(M.inner(), M.t() * M));
-    EXPECT_TRUE(MatrixEquals(M.outer(), M * M.t()));
+    EXPECT_TRUE(MatrixEquals(M.inner(), M.transpose() * M));
+    EXPECT_TRUE(MatrixEquals(M.outer(), M * M.transpose()));
   }
 
   TEST_F(MatrixTest, Inv) {
@@ -192,10 +192,10 @@ namespace {
   //   SpdMatrix original_sigma = Sigma;
   //   EXPECT_TRUE(MatrixEquals(
   //       Sigma.add_inner(X, 1.1),
-  //       original_sigma + X.t() * X * 1.1))
+  //       original_sigma + X.transpose() * X * 1.1))
   //       << "Sigma = " << endl << Sigma << endl
   //       << "Direct = " << endl
-  //       << original_sigma + X.t() * X * 1.1
+  //       << original_sigma + X.transpose() * X * 1.1
   //       << endl;
 
   //   Vector weights(X.nrow());
@@ -205,14 +205,14 @@ namespace {
   //   W.diag() = weights;
   //   EXPECT_TRUE(MatrixEquals(
   //       Sigma.add_inner(X, weights),
-  //       original_sigma + X.t() * W * X));
+  //       original_sigma + X.transpose() * W * X));
 
   //   Matrix Y(3, 4);
   //   Y.randomize();
   //   Sigma = original_sigma;
   //   EXPECT_TRUE(MatrixEquals(
   //       Sigma.add_inner2(X, Y, .3),
-  //       original_sigma + .3 * (X.t() * Y + Y.t() * X)));
+  //       original_sigma + .3 * (X.transpose() * Y + Y.transpose() * X)));
 
   // }
 
@@ -248,7 +248,8 @@ namespace {
     EXPECT_TRUE(VectorEquals(Lmult(L, v), L * v));
     EXPECT_TRUE(VectorEquals(Lsolve(L, v), L.inv() * v));
     Vector original_v = v;
-    EXPECT_TRUE(VectorEquals(LTsolve_inplace(L, v), L.t().inv() * original_v));
+    EXPECT_TRUE(VectorEquals(LTsolve_inplace(L, v),
+                             L.transpose().inv() * original_v));
     v = original_v;
     EXPECT_TRUE(VectorEquals(Lsolve_inplace(L, v), L.inv() * original_v));
     v = original_v;
@@ -259,11 +260,12 @@ namespace {
     Matrix original_B = B;
     EXPECT_TRUE(MatrixEquals(Lsolve_inplace(L, B), L.inv() * original_B));
     B = original_B;
-    EXPECT_TRUE(MatrixEquals(LTsolve_inplace(L, B), L.t().inv() * original_B));
+    EXPECT_TRUE(MatrixEquals(LTsolve_inplace(L, B),
+                             L.transpose().inv() * original_B));
     B = original_B;
     EXPECT_TRUE(MatrixEquals(Linv(L), L.inv()));
 
-    Matrix U = L.t();
+    Matrix U = L.transpose();
     EXPECT_TRUE(VectorEquals(Umult(U, v), U * v));
     EXPECT_TRUE(MatrixEquals(Umult(U, B), U * B));
     EXPECT_TRUE(VectorEquals(Usolve(U, v), U.inv() * v));

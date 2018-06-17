@@ -40,7 +40,7 @@ namespace BOOM {
     Matrix Beta(qr.solve(qr.QtY(Y)));
     Matrix resid = Y - XX * Beta;
     uint n = XX.nrow();
-    SpdMatrix Sig = resid.t() * resid / n;
+    SpdMatrix Sig = resid.transpose() * resid / n;
 
     set_Beta(Beta);
     set_Sigma(Sig);

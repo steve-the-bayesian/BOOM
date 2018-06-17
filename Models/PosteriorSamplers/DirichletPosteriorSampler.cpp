@@ -468,7 +468,7 @@ namespace BOOM {
         jacobian.add_eta_gradient(gradient, jacobian_matrix);
 
         if (nderiv > 1) {
-          Hessian = sandwich(jacobian_matrix.t(), phi_hessian);
+          Hessian = sandwich(jacobian_matrix.transpose(), phi_hessian);
           for (int r = 0; r < phi_gradient.size(); ++r) {
             for (int s = 0; s < phi_gradient.size(); ++s) {
               for (int t = 0; t < phi_gradient.size(); ++t) {

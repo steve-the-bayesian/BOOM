@@ -65,13 +65,13 @@ namespace {
 
     Matrix Q = qr.getQ();
     Vector qty = qr.Qty(response);
-    Vector qty2 = Q.t() * response;
+    Vector qty2 = Q.transpose() * response;
 
     Vector qr_coef = qr.Rsolve(qty);
     EXPECT_TRUE(VectorEquals(qr_coef, qr.getR().inv() * qty, 1e-5));
     
-    SpdMatrix xtx = predictors.t() * predictors;
-    Vector direct_coef = xtx.solve(predictors.t() * response);
+    SpdMatrix xtx = predictors.transpose() * predictors;
+    Vector direct_coef = xtx.solve(predictors.transpose() * response);
     EXPECT_TRUE(VectorEquals(qr_coef, direct_coef, 1e-5));
   }
   

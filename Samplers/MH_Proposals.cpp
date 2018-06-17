@@ -57,7 +57,7 @@ namespace BOOM {
     siginv_ = H;
     chol_ = cholesky.getL();
     ldsi_ = 2 * sum(log(diag(chol_)));
-    chol_ = chol_.t().inv();
+    chol_ = chol_.transpose().inv();
     // now chol_ is an upper triangular matrix with chol_ * chol_.t() = Sigma
   }
 

@@ -126,7 +126,7 @@ namespace BOOM {
     double ans = logprior(Sigma);
     if (ans == BOOM::negative_infinity()) return ans;
     ans += -.5 * (n_ * alpha * L.logdet() +
-                  L.solve(sqrt(alpha) * sumsq_upper_chol_.t()).sumsq());
+                  L.solve(sqrt(alpha) * sumsq_upper_chol_.transpose()).sumsq());
     return ans;
   }
   //----------------------------------------------------------------------

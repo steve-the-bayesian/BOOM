@@ -29,7 +29,7 @@ namespace {
 
     EXPECT_TRUE(MatrixEquals(spd,
                              svd_square.left() * DiagonalMatrix(svd_square.values())
-                             * svd_square.right().t()));
+                             * svd_square.right().transpose()));
 
     EXPECT_TRUE(MatrixEquals(spd.inv(),
                              svd_square.inv()));
@@ -53,7 +53,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         rectangle,
         svd_rect.left() * DiagonalMatrix(svd_rect.values())
-        * svd_rect.right().t()));
+        * svd_rect.right().transpose()));
 
   }
   

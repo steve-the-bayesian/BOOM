@@ -160,7 +160,7 @@ namespace BOOM {
       ans += dirichlet_loglike(Nu.row(i), &g_row, 0, sumlog.row(i), n);
       G.row(i) = g_row;
     }
-    G = G.t();
+    G = G.transpose();
     g.assign(G.begin(), G.end());
 
     // need to check that g is vectorized in the right way..  virtual

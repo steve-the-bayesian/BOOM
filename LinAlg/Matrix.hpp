@@ -223,7 +223,7 @@ namespace BOOM {
     Vector Tmult(const Vector &v) const;
 
     Matrix Id() const;
-    Matrix t() const;                    // SpdMatrix and DiagonalMatrix
+    Matrix transpose() const;            // SpdMatrix and DiagonalMatrix
     Matrix &transpose_inplace_square();  // asserts (is_square())
     Matrix inv() const;
     virtual SpdMatrix inner() const;  // X^T * X
@@ -390,7 +390,7 @@ namespace BOOM {
   Matrix el_mult(const Matrix &A, const Matrix &B);
   double el_mult_sum(const Matrix &A, const Matrix &B);
 
-  inline Matrix t(const Matrix &X) { return X.t(); }
+  inline Matrix t(const Matrix &X) { return X.transpose(); }
   inline uint nrow(const Matrix &X) { return X.nrow(); }
   inline uint ncol(const Matrix &X) { return X.ncol(); }
 

@@ -33,7 +33,7 @@ namespace {
     Matrix L = cholesky.getL();
     Matrix LT = cholesky.getLT();
 
-    EXPECT_TRUE(MatrixEquals(L.t(), LT));
+    EXPECT_TRUE(MatrixEquals(L.transpose(), LT));
     EXPECT_TRUE(MatrixEquals(spd, L * LT))
         << "original matrix = " << endl << spd
         << "recovered matrix = " << endl << L * LT << endl;
@@ -76,7 +76,7 @@ namespace {
     Matrix L = cholesky.getL();
     Matrix LT = cholesky.getLT();
 
-    EXPECT_TRUE(MatrixEquals(L.t(), LT));
+    EXPECT_TRUE(MatrixEquals(L.transpose(), LT));
     EXPECT_TRUE(MatrixEquals(spd, L * LT))
         << "original matrix = " << endl << spd
         << "recovered matrix = " << endl << L * LT << endl;

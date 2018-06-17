@@ -61,7 +61,7 @@ namespace {
     Sigma.randomize();
 
     Matrix L = Sigma.chol();
-    Matrix LLT = L * L.t();
+    Matrix LLT = L * L.transpose();
     EXPECT_TRUE(MatrixEquals(Sigma, LLT));
 
     SpdMatrix zero(4);
@@ -193,14 +193,14 @@ namespace {
     X.randomize();
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer(X, 1.2),
-        original_sigma + 1.2 * X * X.t()));
+        original_sigma + 1.2 * X * X.transpose()));
     
     Matrix Y(4, 2);
     Y.randomize();
     Sigma = original_sigma;
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer2(X, Y, .81),
-        original_sigma + .81 * (X * Y.t() + Y * X.t())));
+        original_sigma + .81 * (X * Y.transpose() + Y * X.transpose())));
 
     Vector v2(v.size());
     v2.randomize();
@@ -220,10 +220,10 @@ namespace {
     SpdMatrix original_sigma = Sigma;
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_inner(X, 1.1),
-        original_sigma + X.t() * X * 1.1))
+        original_sigma + X.transpose() * X * 1.1))
         << "Sigma = " << endl << Sigma << endl
         << "Direct = " << endl
-        << original_sigma + X.t() * X * 1.1
+        << original_sigma + X.transpose() * X * 1.1
         << endl;
 
     Vector weights(X.nrow());
@@ -233,14 +233,14 @@ namespace {
     W.diag() = weights;
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_inner(X, weights),
-        original_sigma + X.t() * W * X));
+        original_sigma + X.transpose() * W * X));
 
     Matrix Y(3, 4);
     Y.randomize();
     Sigma = original_sigma;
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_inner2(X, Y, .3),
-        original_sigma + .3 * (X.t() * Y + Y.t() * X)));
+        original_sigma + .3 * (X.transpose() * Y + Y.transpose() * X)));
   }
 
   TEST_F(SpdMatrixTest, Chol2Inv) {
@@ -283,7 +283,7 @@ namespace {
     M.randomize();
     EXPECT_TRUE(MatrixEquals(
         sandwich(M, Sigma),
-        M * Sigma * M.t()));
+        M * Sigma * M.transpose()));
   }
   
 }  // namespace

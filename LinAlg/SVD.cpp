@@ -49,7 +49,7 @@ namespace BOOM {
   const Matrix &SingularValueDecomposition::right() const { return right_; }
   Matrix SingularValueDecomposition::original_matrix() const {
     DiagonalMatrix Sigma(singular_values_);
-    Matrix ans = (left_ * Sigma) * right_.t();
+    Matrix ans = (left_ * Sigma) * right_.transpose();
     return ans;
   }
 

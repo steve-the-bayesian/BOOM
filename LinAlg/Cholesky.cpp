@@ -69,7 +69,7 @@ namespace BOOM {
 
   Matrix Chol::getLT() const {
     check();
-    return lower_cholesky_triangle_.t();
+    return lower_cholesky_triangle_.transpose();
   }
 
   // V = L LT

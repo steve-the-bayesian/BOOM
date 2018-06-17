@@ -25,7 +25,7 @@
 namespace BOOM {
 
   Vector get_stat_dist(const Matrix &Q) {
-    Matrix P = Q.t();  // transpose
+    Matrix P = Q.transpose();  // transpose
     P.diag() -= 1.0;
     P.row(0) = 1.0;
     Vector ans(Q.nrow(), 0.0);
