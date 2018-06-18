@@ -103,5 +103,22 @@ namespace {
                 1e-8);
   }
 
+  // If a matrix is rank deficient then the Cholesky decomposition should still
+  // produce a lower triangular matrix that multiplies to the original matrix.
+  TEST_F(CholeskyTest, RankDeficient) {
+    int dim = 10;
+    SpdMatrix deficient(dim);
+    for (int i = 0; i < 3; ++i) {
+      Vector x(dim);
+      x.randomize();
+      deficient.add_outer(x);
+    }
+    Chol cholesky(deficient);
+    SpdMatrix deficient_copy = cholesky.original_matrix();
+    EXPECT_TRUE(MatrixEquals(deficient, deficient_copy))
+        << "deficient:" << endl << deficient
+        << "reconstructed: " << endl << deficient_copy;
+  }
+  
   
 }  // namespace

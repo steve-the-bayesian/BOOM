@@ -22,6 +22,7 @@
 #include "Eigen/Cholesky"
 #include "LinAlg/EigenMap.hpp"
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -39,7 +40,20 @@ namespace BOOM {
       lower_cholesky_triangle_.resize(A.nrow(), A.ncol());
       Eigen::LLT<MatrixXd> eigen_cholesky(EigenMap(A));
       pos_def_ = eigen_cholesky.info() == Eigen::Success;
-      EigenMap(lower_cholesky_triangle_) = eigen_cholesky.matrixL();
+      if (pos_def_) {
+        EigenMap(lower_cholesky_triangle_) = eigen_cholesky.matrixL();
+      } else if (A.is_sym()) {
+        Eigen::LDLT<MatrixXd> eigen_cholesky_safe(EigenMap(A));
+        Vector D(A.nrow());
+        EigenMap(D) = eigen_cholesky_safe.vectorD();
+        EigenMap(lower_cholesky_triangle_) = eigen_cholesky_safe.matrixL();
+        for (int i = 0; i < lower_cholesky_triangle_.ncol(); ++i) {
+          lower_cholesky_triangle_.col(i) *= sqrt(D[i]);
+        }
+        EigenMap(lower_cholesky_triangle_) = 
+            eigen_cholesky_safe.transpositionsP().transpose() *
+            EigenMap(lower_cholesky_triangle_);
+      }
     }
   }
 
@@ -68,7 +82,6 @@ namespace BOOM {
   }
 
   Matrix Chol::getLT() const {
-    check();
     return lower_cholesky_triangle_.transpose();
   }
 
@@ -92,6 +105,7 @@ namespace BOOM {
 
   // returns the log of the determinant of A
   double Chol::logdet() const {
+    check();
     ConstVectorView d(diag(lower_cholesky_triangle_));
     double ans = 0;
     for (int i = 0; i < d.size(); ++i) {
@@ -101,6 +115,7 @@ namespace BOOM {
   }
 
   double Chol::det() const {
+    check();
     ConstVectorView d(diag(lower_cholesky_triangle_));
     double ans = d.prod();
     return ans * ans;

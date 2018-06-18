@@ -814,7 +814,7 @@ namespace BOOM {
       ostringstream err;
       err << "Matrix::operator+= wrong dimension:  "
           << "LHS[" << nrow() << "," << ncol() << "]   RHS[" << m.nrow() << ","
-          << m.ncol() << ")";
+          << m.ncol() << "]";
       report_error(err.str());
     }
     V += m.V;
@@ -838,7 +838,7 @@ namespace BOOM {
       ostringstream err;
       err << "Matrix::operator-= wrong dimension:  "
           << "LHS[" << nrow() << "," << ncol() << "]   RHS[" << m.nrow() << ","
-          << m.ncol() << ")";
+          << m.ncol() << "]";
       report_error(err.str());
     }
     V -= m.V;

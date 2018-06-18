@@ -46,6 +46,9 @@ namespace BOOM {
     uint dim() const;
 
     // The lower Cholesky triangle of A.
+    // If A is not positive definite then:
+    //   - this matrix will not in general be triangular, because of pivoting.
+    //   - the solve() and inv() methods will not work.
     Matrix getL(bool perform_check = true) const;
 
     // The upper Cholesky triangle of A.
