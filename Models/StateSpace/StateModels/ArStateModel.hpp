@@ -59,12 +59,6 @@ namespace BOOM {
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int t, ScalarStateSpaceModelBase *model) override;
 
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int t,
-        DynamicInterceptRegressionModel *model) override {
-      observe_state(then, now, t, nullptr);
-    }
-
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }
 

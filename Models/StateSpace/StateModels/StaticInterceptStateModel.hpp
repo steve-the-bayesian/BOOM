@@ -45,10 +45,6 @@ namespace BOOM {
                        int time_now,
                        ScalarStateSpaceModelBase *model) override {}
 
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override {}
-
     uint state_dimension() const override { return 1; }
 
     // The model is deterministic, so there is no state error.

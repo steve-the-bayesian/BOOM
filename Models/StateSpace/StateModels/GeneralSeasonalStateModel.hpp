@@ -64,12 +64,6 @@ namespace BOOM {
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
     
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then,
-        const ConstVectorView &now,
-        int time_now,
-        DynamicInterceptRegressionModel *model) override;
-
     // Simulates the state eror at time t, for moving to time t+1.
     // Args:
     //   rng:  The random number generator to use for the simulation.

@@ -79,9 +79,12 @@ namespace BOOM {
     //
     // Concrete classes that can observe the state without reference to the
     // observation model can implement this method in terms of observe_state.
+    // This is true of many classes, so it is the default implementation here.
     virtual void observe_dynamic_intercept_regression_state(
         const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) = 0;
+        DynamicInterceptRegressionModel *model) {
+      observe_state(then, now, time_now, nullptr);
+    }
     
     // Many models won't be able to do anything with an initial state, so the
     // default implementation is a no-op.
