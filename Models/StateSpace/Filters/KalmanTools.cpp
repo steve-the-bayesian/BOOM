@@ -41,7 +41,7 @@ namespace BOOM {
     a = T * a;
     a += K * v;
 
-    L = T.t();
+    L = T.transpose();
     L.add_outer(Z, K, -1);  // L is the transpose of Durbin and Koopman's L
     P = T * P * L + RQR;
 
@@ -59,7 +59,7 @@ namespace BOOM {
                                      double F, double v, const Vector &Z,
                                      const Matrix &T, Vector &r, Matrix &N,
                                      Matrix &L) {
-    L = T.t();
+    L = T.transpose();
     L.add_outer(Z, K, -1);  // L is the transpose of Durbin and Koopman's L
     r = L * r + Z * (v / F);
     N = sandwich(L, N);

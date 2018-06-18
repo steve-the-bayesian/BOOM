@@ -75,7 +75,7 @@ namespace BOOM {
     // Add *this to block
     virtual void add_to(SubMatrix block) const = 0;
 
-    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the dfault
+    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the default
     // is to throw an error.
     virtual void left_inverse(VectorView lhs,
                               const ConstVectorView &rhs) const;
@@ -900,11 +900,10 @@ namespace BOOM {
     double value_;
   };
 
-  //======================================================================
-  // A diagonal matrix whose diagonal entries are zero beyond a
-  // certain point.  Diagonal entry i is the product of a
-  // BOOM::UnivParams and a constant scalar factor.  Interesting
-  // special cases that can be handled include
+  //===========================================================================
+  // A diagonal matrix whose diagonal entries are zero beyond a certain point.
+  // Diagonal entry i is the product of a BOOM::UnivParams and a constant scalar
+  // factor.  Interesting special cases that can be handled include
   //  *) The entire diagonal is nonzero.
   //  *) All scale factors are 1.
   class UpperLeftDiagonalMatrix : public SparseMatrixBlock {
