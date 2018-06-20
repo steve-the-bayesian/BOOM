@@ -41,7 +41,7 @@ namespace BOOM {
     // A base class to handle quantities common to all marginal distributions.
     class MarginalDistributionBase {
      public:
-      MarginalDistributionBase(int dim);
+      explicit MarginalDistributionBase(int dim);
       virtual ~MarginalDistributionBase() {}
       
       const Vector &state_mean() const {return state_mean_;}
@@ -51,12 +51,35 @@ namespace BOOM {
       void set_state_variance(const SpdMatrix &var) { state_variance_ = var;}
       void increment_state_variance(const SpdMatrix &m) {state_variance_ += m;}
 
+      // Durbin and Koopman's r[t].  Recall that eta[t] is the error term for
+      // moving from state t to state t+1.  The conditional mean of eta[t] given
+      // all observed data is
+      // 
+      // hat(eta[t]) = Q[t] * R[t]' * r[t],
+      //
+      // where Q[t] is the error variance at time t (a model paramter), and R[t]
+      // is the error expander.  In this equation R[t]' is a contractor (moving
+      // from the state dimension to the error dimension).
+      const Vector &scaled_state_error() const {
+        return scaled_state_error_;
+      }
+
+      void set_scaled_state_error(const Vector &r) {
+        scaled_state_error_  = r;
+      }
+
      protected:
       SpdMatrix & mutable_state_variance() {return state_variance_;}
       
      private:
       Vector state_mean_;
       SpdMatrix state_variance_;
+
+      // The r[t] parameter computed from the Durbin-Koopman disturbance
+      // smoother.  DK do a poor job of explaining what r is, but it is a scaled
+      // version of the state error (see note above).  It is produced by
+      // smooth_disturbances_fast() and used by propagate_disturbances().
+      Vector scaled_state_error_;
     };
 
   }  // namespace Kalman
@@ -98,7 +121,7 @@ namespace BOOM {
     virtual void update() = 0;
 
     // Run the Durbin and Koopman fast disturbance smoother.
-    virtual Vector fast_disturbance_smooth() = 0;
+    virtual void fast_disturbance_smooth() = 0;
 
     void mark_not_current() {
       status_ = NOT_CURRENT;
@@ -111,6 +134,10 @@ namespace BOOM {
     void set_status(const KalmanFilterStatus &status) {
       status_ = status;
     }
+
+    const Vector &initial_scaled_state_error() const {
+      return initial_scaled_state_error_;
+    }
     
    protected:
     void increment_log_likelihood(double loglike) {
@@ -119,9 +146,18 @@ namespace BOOM {
 
     void observe_model_parameters(StateSpaceModelBase *model);
 
+    void set_initial_scaled_state_error(const Vector &err) {
+      initial_scaled_state_error_ = err;
+    }
+    
    private:
     KalmanFilterStatus status_;
     double log_likelihood_;
+
+    // Durbin and Koopman's r0 from the fast disturbance smoother (see equation
+    // (5) in Durbin and Koopman (2002, Biometrika), or equation 4.32 in Durbin
+    // and Koopman (2001, first edition)).
+    Vector initial_scaled_state_error_;
   };
   
 }  // namespace BOOM

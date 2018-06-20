@@ -413,7 +413,7 @@ namespace BOOM {
     //   A matrix with 'horizon + 1' columns, where column t contains the
     //   simulated state t periods after the final state at time
     //   time_dimension().  That means column zero contains final_state().  The
-    //   matrix values are simulatinos from the predictive distribution of the
+    //   matrix values are simulations from the predictive distribution of the
     //   state given data to time_dimension().
     Matrix simulate_state_forecast(RNG &rng, int horizon) const;
 
@@ -440,10 +440,6 @@ namespace BOOM {
         int t, const Vector &state_error_mean,
         const SpdMatrix &state_error_variance);
 
-    // Access the return values of the disturbance smoother.
-    const Vector &r0_sim() const { return r0_sim_; }
-    const Vector &r0_obs() const { return r0_obs_; }
-    
     Matrix &mutable_state() { return state_; }
 
     //-----Implementation details for the Kalman filter and smoother -----
@@ -529,13 +525,10 @@ namespace BOOM {
     // part of Durbin and Koopman's state-simulation algorithm.
     virtual void simulate_forward(RNG &rng) = 0;
 
-    // Code used to implement impute_state().
-    void simulate_disturbances(RNG &rng);
-
     // After the simulated and observed disturbances have been smoothed,
     // propagate them forward to achieve a draw of latent state given observed
     // data and parameters.
-    virtual void propagate_disturbances() = 0;
+    virtual void propagate_disturbances();
 
     // Send a signal to all data observers (typically just 1) that the
     // complete data sufficient statistics should be reset.
@@ -598,15 +591,6 @@ namespace BOOM {
     mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
     mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
 
-    void smooth_simulated_disturbances() {
-      r0_sim_ = get_simulation_filter().fast_disturbance_smooth();
-    }
-    void smooth_observed_disturbances() {
-      r0_obs_ = get_filter().fast_disturbance_smooth();
-    }
-
-    Vector r0_sim_;
-    Vector r0_obs_;
   };
 
   //===========================================================================
@@ -734,8 +718,6 @@ namespace BOOM {
     // Simulate an observed Y value (minus any regression effects from a static
     // regression), conditional on the state at time t.
     double simulate_adjusted_observation(RNG &rng, int t);
-
-    void propagate_disturbances() override;
 
     //-----------------------------------------------------------------------
     // Data begins here.

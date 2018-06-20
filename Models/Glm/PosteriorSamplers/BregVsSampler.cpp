@@ -357,12 +357,18 @@ namespace BOOM {
     DF_ = s->n() + prior_df();
     // SS_ starts off with the prior sum of squares from the prior on sigma^2.
     SS_ = prior_ss();
-
+    if (!std::isfinite(SS_)) {
+      report_error("Prior sum of squares is wrong.");
+    }
+    
     // Add in the sum of squared errors around posterior_mean_
     double likelihood_ss =
         s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
     SS_ += likelihood_ss;
-
+    if (!std::isfinite(SS_)) {
+      report_error("Quadratic form caused infinite SS.");
+    }
+    
     // Add in the sum of squares component arising from the discrepancy between
     // the prior and posterior means.
     SS_ += unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
@@ -370,6 +376,9 @@ namespace BOOM {
       report_error(
           "Illegal data caused negative sum of squares "
           "in Breg::set_reg_post_params.");
+    } else if (!std::isfinite(SS_)) {
+      report_error("Prior to Posterior Mahalanobis distance caused "
+                   "infinite SS.");
     }
     return ldoi;
   }

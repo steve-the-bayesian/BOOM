@@ -118,9 +118,7 @@ namespace BOOM {
              dat()[t]->sample_size() == 0;
     }
 
-    const Selector &observed_status(int t) const override {
-      return dat()[t]->observed();
-    }
+    const Selector &observed_status(int t) const override;
 
     // Need to override add_data so that x's can be shared with the
     // regression model.
@@ -132,7 +130,12 @@ namespace BOOM {
 
     void add_data(StateSpace::TimeSeriesRegressionData *dp) override;
 
+    // Return the observation coefficients Z[t] in the observation equation:
+    // y[t] = Z[t] * state[t] + error[t].  If some elements of y[t] are
+    // unobserved, the dimension of Z[t] will be reduced so that Z[t] * state[t]
+    // only gives the mean of the observed components.
     const SparseKalmanMatrix *observation_coefficients(int t) const override;
+    
     double observation_variance(int t) const override;
     const Vector &observation(int t) const override;
     

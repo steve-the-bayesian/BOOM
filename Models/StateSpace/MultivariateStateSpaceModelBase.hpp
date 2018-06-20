@@ -135,7 +135,7 @@ namespace BOOM {
 
    private:
     void simulate_forward(RNG &rng) override;
-    void propagate_disturbances() override;
+    //    void propagate_disturbances() override;
     virtual Vector simulate_observation(RNG &rng, int t) = 0;
 
     // Workspace for disturbance smoothing.

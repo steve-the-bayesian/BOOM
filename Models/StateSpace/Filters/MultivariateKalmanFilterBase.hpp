@@ -62,22 +62,6 @@ namespace BOOM {
       const Matrix &kalman_gain() const {return kalman_gain_;}
       void set_kalman_gain(const Matrix &gain) {kalman_gain_ = gain;}
       
-      // Durbin and Koopman's r[t].  Recall that eta[t] is the error term for
-      // moving from state t to state t+1.  The conditional mean of eta[t] given
-      // all observed data is hat(eta[t]) = Q[t] * R[t]' * r[t].
-      //
-      // Where Q[t] is the error variance at time t, and R[t] is the error
-      // expander.
-      // 
-      // In this equation R[t]' is a contractor (moving from the state dimension
-      // to the error dimension).
-      const Vector &scaled_state_error() const {
-        return r_;
-      }
-
-      void set_scaled_state_error(const Vector &r) {
-        r_  = r;
-      }
       
      private:
       // y[t] - E(y[t] | Y[t-1]).  The dimension matches y[t], which might vary
@@ -90,11 +74,6 @@ namespace BOOM {
       // dimension is S x m.
       Matrix kalman_gain_;
 
-      // Computed from the Durbin-Koopman disturbance smoother.  DK do a poor
-      // job of explaining what r_ is, but it is a scaled version of the state
-      // error (see note above).  It is produced by smooth_disturbances_fast()
-      // and used by propagate_disturbances().
-      Vector r_;
     };
   }  // namespace Kalman
 
@@ -103,13 +82,16 @@ namespace BOOM {
   // don't depend on the observation variance.
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
+    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model = nullptr) {
+      set_model(model);
+    }
     void set_model(MultivariateStateSpaceModelBase *model);
     
     void update() override;
     void update_single_observation(
         const Vector &observation, const Selector &observed, int t);
     
-    Vector fast_disturbance_smooth() override;
+    void fast_disturbance_smooth() override;
     Vector prediction_error(int t, bool standardize = false) const;
 
     Kalman::MultivariateMarginalDistributionBase & operator[](size_t pos)

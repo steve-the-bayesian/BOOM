@@ -367,7 +367,7 @@ namespace BOOM {
     } else {
       resize_state();
       clear_client_data();
-      simulate_disturbances(rng);
+      simulate_forward(rng);
       propagate_disturbances();
     }
   }
@@ -708,13 +708,6 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void Base::simulate_disturbances(RNG &rng) {
-    simulate_forward(rng);
-    smooth_simulated_disturbances();
-    smooth_observed_disturbances();
-  }
-
-  //----------------------------------------------------------------------
   // Send a signal to any observers of this model's data that the
   // complete data sufficient statistics should be reset.
   void Base::signal_complete_data_reset() {
@@ -925,23 +918,30 @@ namespace BOOM {
   // After a call to fast_disturbance_smoother() puts r[t] in
   // filter_[t].kalman_gain, this function propagates the r's forward to get
   // E(alpha | y), and add it to the simulated state.
-  void ScalarBase::propagate_disturbances() {
+  void Base::propagate_disturbances() {
     if (time_dimension() <= 0) return;
+    KalmanFilterBase &filter(get_filter());
+    filter.fast_disturbance_smooth();
+    KalmanFilterBase &simulation_filter(get_simulation_filter());
+    simulation_filter.fast_disturbance_smooth();
     SpdMatrix P0 = initial_state_variance();
-    Vector state_mean_sim = initial_state_mean() + P0 * r0_sim();
-    Vector state_mean_obs = initial_state_mean() + P0 * r0_obs();
+    
+    Vector state_mean_sim = initial_state_mean() +
+        P0 * simulation_filter.initial_scaled_state_error();
+    Vector state_mean_obs = initial_state_mean() +
+        P0 * filter.initial_scaled_state_error();
 
     mutable_state().col(0) += state_mean_obs - state_mean_sim;
     observe_state(0);
     observe_data_given_state(0);
-
+    
     for (int t = 1; t < time_dimension(); ++t) {
       state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
           (*state_variance_matrix(t - 1)) *
-          simulation_filter_[t - 1].kalman_gain();
+          simulation_filter[t - 1].scaled_state_error();
       state_mean_obs =
           (*state_transition_matrix(t - 1)) * state_mean_obs +
-          (*state_variance_matrix(t - 1)) * filter_[t - 1].kalman_gain();
+          (*state_variance_matrix(t - 1)) * filter[t - 1].scaled_state_error();
 
       mutable_state().col(t).axpy(state_mean_obs - state_mean_sim);
       observe_state(t);

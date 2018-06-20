@@ -29,7 +29,7 @@ namespace BOOM {
     class ScalarMarginalDistribution
         : public MarginalDistributionBase {
      public:
-      ScalarMarginalDistribution(int state_dimension)
+      explicit ScalarMarginalDistribution(int state_dimension)
           : MarginalDistributionBase(state_dimension), prediction_error_(0),
             prediction_variance_(0), kalman_gain_(state_dimension, 0) {}
 
@@ -58,7 +58,7 @@ namespace BOOM {
   // A Kalman filter for state space models with scalar outcomes.
   class ScalarKalmanFilter : public KalmanFilterBase {
    public:
-    ScalarKalmanFilter(ScalarStateSpaceModelBase *model = nullptr);
+    explicit ScalarKalmanFilter(ScalarStateSpaceModelBase *model = nullptr);
 
     void set_model(ScalarStateSpaceModelBase *model);
     
@@ -70,7 +70,8 @@ namespace BOOM {
     // simulation).
     void update(double y, int t, bool missing = false);
 
-    Vector fast_disturbance_smooth() override;
+    
+    void fast_disturbance_smooth() override;
 
     // Return the one-step prediction error held by the filter at time t.  If
     // 'standardize' is true then divide the prediction error by the square

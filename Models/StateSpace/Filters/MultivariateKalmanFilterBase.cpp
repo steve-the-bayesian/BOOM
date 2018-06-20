@@ -21,9 +21,10 @@
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
-  //  namespace Kalman {
-  //   }  // namespace Kalman
 
+  using std::cout;
+  using std::cerr;
+  
   void MultivariateKalmanFilterBase::set_model(
       MultivariateStateSpaceModelBase *model) {
     if (model_ != model) {
@@ -42,7 +43,6 @@ namespace BOOM {
     clear();
     node(0).set_state_mean(model_->initial_state_mean());
     node(0).set_state_variance(model_->initial_state_variance());
-
     for (int t = 0; t < model_->time_dimension(); ++t) {
       if (t > 0) {
         node(t).set_state_mean(node(t - 1).state_mean());
@@ -78,26 +78,40 @@ namespace BOOM {
 
 
   // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
-  // disturbance smoother is equation (5) in Durbin and Koopman (2002).
+  // disturbance smoother is equation (5) in Durbin and Koopman (2002,
+  // Biometrika).
   //
   // Returns:
-  //   Durbin and Koopman's r0.
-  Vector MultivariateKalmanFilterBase::fast_disturbance_smooth() {
+  //   Durbin and Koopman's r0.  Saves r[t] in node(t).scaled_state_error().
+  void MultivariateKalmanFilterBase::fast_disturbance_smooth() {
     if (!model_) {
       report_error("Model must be set before calling fast_disturbance_smooth().");
     }
 
     int n = model_->time_dimension();
     Vector r(model_->state_dimension(), 0.0);
+    std::cout << "In fast_disturbance_smooth:  " << std::endl;
     for (int t = n - 1; t >= 0; --t) {
+      std::cout << "-----------------------  t = " << t << std::endl;
       node(t).set_scaled_state_error(r);
       // Currently r is r[t].  This step of the loop turns it into r[t-1].
 
       // The disturbance smoother is defined by the following formula:
-      // r[t-1] = Z[t] * Finv[t] * v[t] + (T[t]^T - Z[t]^T * K[t]^T)r[t]
+      // r[t-1] = Z[t]^T * Finv[t] * v[t]
+      //          + (T[t]^T - Z[t]^T * K[t]^T) * r[t]
       //        = T[t]^T * r
-      //        + Z[t]^T * (Finv[t] * v[t] - K^T * r)
-
+      //          + Z[t]^T * (K[t]^T * r[t] + Finv[t] * v[t])
+      //
+      // Note that Durbin and Koopman (2002) is missing the transpose on Z in
+      // their equation (5).  The transpose is required to get the dimensions to
+      // match.
+      //
+      // If we stored (Z' * K') that would only be SxS.  Maybe put some smarts
+      // in depending on whether m or S is larger.
+      //
+      // K = TPZ'Finv
+      // Z' K' = Z' Finv Z P T'
+      //
       // Dimensions:
       //   T: S x S
       //   K: S x m
@@ -105,18 +119,21 @@ namespace BOOM {
       //   Finv: m x m
       //   v: m x 1
       //   r: S x 1
+      //
       
-      // Some syntactic sugar makes the formulas easier to match up
-      // with Durbin and Koopman.
-      Vector scaled_prediction_error = node(t).scaled_prediction_error();
-      Vector coefficient = scaled_prediction_error
-          - (node(t).kalman_gain().Tmult(r));
-
-      // Now produce r[t-1]
+      // Some syntactic sugar makes the formulas easier to match up with Durbin
+      // and Koopman.
+      cout << "Kalman gain = " << endl << node(t).kalman_gain() << endl;
+      cout << "K'r = " << node(t).kalman_gain().Tmult(r) << endl;
+      cout << "scaled prediction_error: " << node(t).scaled_prediction_error() << endl;
+      
       r = model_->state_transition_matrix(t)->Tmult(r)
-          + model_->observation_coefficients(t)->Tmult(coefficient);
+          + model_->observation_coefficients(t)->Tmult(
+              node(t).kalman_gain().Tmult(r) + node(t).scaled_prediction_error());
+
+      cout << "Now (after step " << t << ") r = " << r << endl;
     }
-    return r;
+    set_initial_scaled_state_error(r);
   }
 
 }  // namespace BOOM

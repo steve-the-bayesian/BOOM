@@ -23,6 +23,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Selector.hpp"
 #include "LinAlg/Cholesky.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -38,10 +39,14 @@ namespace BOOM {
      public:
       using ModelType = ConditionalIidMultivariateStateSpaceModelBase;
       
-      ConditionalIidMarginalDistribution(int state_dimension);
-
+      explicit ConditionalIidMarginalDistribution(int state_dimension);
+      
       void set_model(ConditionalIidMultivariateStateSpaceModelBase *model) {
         model_ = model;
+      }
+
+      void set_time_index(int time_index) {
+        time_index_ = time_index;
       }
       
       // Args:
@@ -77,13 +82,19 @@ namespace BOOM {
 
       // The prediction error is y[t] - E(y[t] | Y[t-1]).  The scaled prediction
       // error is forecast_precision() * prediction_error().
-      Vector scaled_prediction_error() const override;
-
+      Vector scaled_prediction_error() const override {
+        return scaled_prediction_error_;
+      }
+      void set_scaled_prediction_error(const Vector &err) {
+        scaled_prediction_error_ = err;
+      }
+      
      private:
       double forecast_precision_log_determinant_;
       double observation_variance_;
       int time_index_;
       ModelType *model_;
+      Vector scaled_prediction_error_;
 
       // The Cholesky root of the state conditional variance, before updating.
       // After updating state_variance is Durbin and Koopman's P[t+1], while
@@ -99,10 +110,11 @@ namespace BOOM {
    public:
     using MarginalType = Kalman::ConditionalIidMarginalDistribution;
     using ModelType = MarginalType::ModelType;
-    ConditionalIidKalmanFilter(ModelType *model = nullptr);
+
+    explicit ConditionalIidKalmanFilter(ModelType *model = nullptr);
     void set_model(ModelType *model);
     
-    MarginalType & operator[](size_t pos) override {return node(pos);}
+    MarginalType & operator[](size_t pos) override { return node(pos); }
     const MarginalType & operator[](size_t pos) const override {
       return node(pos);
     }
@@ -112,8 +124,18 @@ namespace BOOM {
    private:
     std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;
 
-    MarginalType & node(size_t pos) override { return nodes_[pos]; }
-    const MarginalType & node(size_t pos) const override { return nodes_[pos]; }
+    MarginalType & node(size_t pos) override {
+      if (pos >= nodes_.size()) {
+        report_error("Asking for a node past the end.");
+      }
+      return nodes_[pos];
+    }
+    const MarginalType & node(size_t pos) const override {
+      if (pos >= nodes_.size()) {
+        report_error("Asking for a const node past the end.");
+      }
+      return nodes_[pos];
+    }
 
     ModelType *model_;
     

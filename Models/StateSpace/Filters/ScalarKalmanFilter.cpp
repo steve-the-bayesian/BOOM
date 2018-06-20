@@ -116,7 +116,7 @@ namespace BOOM {
   //
   // Returns:
   //   Durbin and Koopman's r0.
-  Vector ScalarKalmanFilter::fast_disturbance_smooth() {
+  void ScalarKalmanFilter::fast_disturbance_smooth() {
     if (!model_) {
       report_error("Model must be set before calling fast_disturbance_smooth().");
     }
@@ -140,10 +140,10 @@ namespace BOOM {
       // Now produce r[t-1]
       Vector rt_1 = model_->state_transition_matrix(t)->Tmult(r);
       model_->observation_matrix(t).add_this_to(rt_1, coefficient);
-      nodes_[t].set_kalman_gain(r);
+      nodes_[t].set_scaled_state_error(r);
       r = rt_1;
     }
-    return r;
+    set_initial_scaled_state_error(r);
   }
   
   void ScalarKalmanFilter::update(double y, int t, bool missing) {

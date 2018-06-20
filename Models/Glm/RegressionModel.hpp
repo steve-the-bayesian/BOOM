@@ -137,7 +137,7 @@ namespace BOOM {
    private:
     mutable QR qr;
     mutable Vector Qty;
-    mutable double sumsqy;
+    mutable double sumsqy_;
     mutable bool current;
     mutable Vector x_column_sums_;
   };
@@ -204,7 +204,7 @@ namespace BOOM {
     mutable bool needs_to_reflect_;
     Vector xty_;
     bool xtx_is_fixed_;
-    double sumsqy;
+    double sumsqy_;
     double n_;
     double sumy_;
     Vector x_column_sums_;
@@ -214,7 +214,7 @@ namespace BOOM {
   NeRegSuf::NeRegSuf(Fwd b, Fwd e)
       : needs_to_reflect_(true),
         xtx_is_fixed_(false),
-        sumsqy(0.0),
+        sumsqy_(0.0),
         n_(0.0),
         sumy_(0.0)
   {
@@ -222,7 +222,7 @@ namespace BOOM {
     uint p = dp->xdim();
     xtx_ = SpdMatrix(p, 0.0);
     xty_ = Vector(p, 0.0);
-    sumsqy = 0.0;
+    sumsqy_ = 0.0;
     while (b != e) {
       update(*b);
       ++b;

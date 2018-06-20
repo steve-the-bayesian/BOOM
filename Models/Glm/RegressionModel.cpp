@@ -117,10 +117,10 @@ namespace BOOM {
   }  // namespace
   //======================================================================
   QrRegSuf::QrRegSuf(const Mat &X, const Vector &y)
-      : qr(X), Qty(), sumsqy(0.0), current(true) {
+      : qr(X), Qty(), sumsqy_(0.0), current(true) {
     Matrix Q(qr.getQ());
     Qty = y * Q;
-    sumsqy = y.dot(y);
+    sumsqy_ = y.dot(y);
     x_column_sums_ = ColSums(X);
   }
 
@@ -153,9 +153,9 @@ namespace BOOM {
     return inc.select(xty());
   }
 
-  double QrRegSuf::yty() const { return sumsqy; }
+  double QrRegSuf::yty() const { return sumsqy_; }
   void QrRegSuf::clear() {
-    sumsqy = 0;
+    sumsqy_ = 0;
     Qty = 0;
     qr = QR(SpdMatrix(Qty.size(), 0.0));
   }
@@ -198,13 +198,13 @@ namespace BOOM {
     uint dim_beta = rdp->xdim();
     Matrix X(n, dim_beta);
     Vector y(n);
-    sumsqy = 0.0;
+    sumsqy_ = 0.0;
     for (int i = 0; i < n; ++i) {
       rdp = DAT(raw_data[i]);
       y[i] = rdp->y();
       const Vector &x(rdp->x());
       X.set_row(i, x);
-      sumsqy += y[i] * y[i];
+      sumsqy_ += y[i] * y[i];
     }
     qr.decompose(X);
     X = qr.getQ();
@@ -215,7 +215,7 @@ namespace BOOM {
 
   double QrRegSuf::SSE() const {
     //    if (!current) refresh_qr();
-    return sumsqy - Qty.dot(Qty);
+    return sumsqy_ - Qty.dot(Qty);
   }
 
   double QrRegSuf::ybar() const {
@@ -225,7 +225,7 @@ namespace BOOM {
 
   double QrRegSuf::SST() const {
     //    if (!current) refresh_qr();
-    return sumsqy - n() * pow(ybar(), 2);
+    return sumsqy_ - n() * pow(ybar(), 2);
   }
 
   Vector QrRegSuf::xbar() const { return x_column_sums_ / n(); }
@@ -251,7 +251,7 @@ namespace BOOM {
     Vector ans = qr.vectorize();
     ans.reserve(ans.size() + Qty.size() + 2);
     ans.concat(Qty);
-    ans.push_back(sumsqy);
+    ans.push_back(sumsqy_);
     ans.push_back(current);
     return ans;
   }
@@ -265,7 +265,7 @@ namespace BOOM {
     Qty.resize(qr.ncol());
     std::copy(v, v + Qty.size(), Qty.begin());
     v += Qty.size();
-    sumsqy = *v;
+    sumsqy_ = *v;
     ++v;
     current = lround(*v);
     ++v;
@@ -278,7 +278,7 @@ namespace BOOM {
   }
 
   ostream &QrRegSuf::print(ostream &out) const {
-    return out << "sumsqy = " << yty() << endl
+    return out << "sumsqy_ = " << yty() << endl
                << "xty_ = " << xty() << endl
                << "xtx  = " << endl
                << xtx();
@@ -289,7 +289,7 @@ namespace BOOM {
         needs_to_reflect_(false),
         xty_(p),
         xtx_is_fixed_(false),
-        sumsqy(0.0),
+        sumsqy_(0.0),
         n_(0),
         sumy_(0.0),
         x_column_sums_(p) {}
@@ -297,13 +297,13 @@ namespace BOOM {
   NeRegSuf::NeRegSuf(const Matrix &X, const Vector &y)
       : needs_to_reflect_(false),
         xtx_is_fixed_(false),
-        sumsqy(y.normsq()),
+        sumsqy_(y.normsq()),
         n_(nrow(X)),
         sumy_(y.sum()),
         x_column_sums_(ColSums(X)) {
     xty_ = y * X;
     xtx_ = X.inner();
-    sumsqy = y.dot(y);
+    sumsqy_ = y.dot(y);
   }
 
   NeRegSuf::NeRegSuf(const SpdMatrix &XTX, const Vector &XTY, double YTY,
@@ -312,7 +312,7 @@ namespace BOOM {
         needs_to_reflect_(true),
         xty_(XTY),
         xtx_is_fixed_(false),
-        sumsqy(YTY),
+        sumsqy_(YTY),
         n_(n),
         sumy_(XTY[0]),
         x_column_sums_(xbar * n) {}
@@ -329,8 +329,11 @@ namespace BOOM {
       xtx_.add_outer(x, prob, false);
       needs_to_reflect_ = true;
     }
+    if (!std::isfinite(y)) {
+      report_error("Non-finite response variable in add_mixture_data.");
+    }
     xty_.axpy(x, y * prob);
-    sumsqy += y * y * prob;
+    sumsqy_ += y * y * prob;
     n_ += prob;
     sumy_ += y * prob;
     x_column_sums_.axpy(x, prob);
@@ -339,7 +342,7 @@ namespace BOOM {
   void NeRegSuf::clear() {
     if (!xtx_is_fixed_) xtx_ = 0.0;
     xty_ = 0.0;
-    sumsqy = 0.0;
+    sumsqy_ = 0.0;
     n_ = 0;
     sumy_ = 0.0;
     x_column_sums_ = 0.0;
@@ -355,12 +358,19 @@ namespace BOOM {
     if (xty_.empty()) xty_ = Vector(p, 0.0);
     const Vector &tmpx(rdp.x());  // add_intercept(rdp.x());
     double y = rdp.y();
+    if (!std::isfinite(y)) {
+      report_error("Non-finite response variable.");
+    }
     xty_.axpy(tmpx, y);
     if (!xtx_is_fixed_) {
       xtx_.add_outer(tmpx, 1.0, false);
       needs_to_reflect_ = true;
     }
-    sumsqy += y * y;
+    sumsqy_ += y * y;
+    if (!std::isfinite(sumsqy_)) {
+      report_error("Non-finite sum of squares.");
+    }
+    
     sumy_ += y;
     x_column_sums_.axpy(tmpx, 1.0);
   }
@@ -377,7 +387,7 @@ namespace BOOM {
     return inc.select(xtx_);
   }
   Vector NeRegSuf::xty(const Selector &inc) const { return inc.select(xty_); }
-  double NeRegSuf::yty() const { return sumsqy; }
+  double NeRegSuf::yty() const { return sumsqy_; }
 
   Vector NeRegSuf::beta_hat() const {
     reflect();
@@ -388,7 +398,7 @@ namespace BOOM {
     SpdMatrix ivar = xtx().inv();
     return yty() - ivar.Mdist(xty());
   }
-  double NeRegSuf::SST() const { return sumsqy - n() * pow(ybar(), 2); }
+  double NeRegSuf::SST() const { return sumsqy_ - n() * pow(ybar(), 2); }
   double NeRegSuf::n() const { return n_; }
   Vector NeRegSuf::xbar() const { return x_column_sums_ / n(); }
   double NeRegSuf::ybar() const { return sumy_ / n_; }
@@ -398,7 +408,7 @@ namespace BOOM {
     xtx_ += s->xtx_;  // Do we want to combine xtx_ if xtx_is_fixed_?
     needs_to_reflect_ = needs_to_reflect_ || s->needs_to_reflect_;
     xty_ += s->xty_;
-    sumsqy += s->sumsqy;
+    sumsqy_ += s->sumsqy_;
     sumy_ += s->sumy_;
     n_ += s->n_;
   }
@@ -408,7 +418,7 @@ namespace BOOM {
     xtx_ += s.xtx_;  // Do we want to combine xtx_ if xtx_is_fixed_?
     needs_to_reflect_ = needs_to_reflect_ || s.needs_to_reflect_;
     xty_ += s.xty_;
-    sumsqy += s.sumsqy;
+    sumsqy_ += s.sumsqy_;
     sumy_ += s.sumy_;
     n_ += s.n_;
   }
@@ -421,7 +431,7 @@ namespace BOOM {
     reflect();
     Vector ans = xtx_.vectorize(minimal);
     ans.concat(xty_);
-    ans.push_back(sumsqy);
+    ans.push_back(sumsqy_);
     ans.push_back(n_);
     ans.push_back(sumy_);
     return ans;
@@ -435,7 +445,7 @@ namespace BOOM {
     uint dim = xty_.size();
     xty_.assign(v, v + dim);
     v += dim;
-    sumsqy = *v;
+    sumsqy_ = *v;
     ++v;
     n_ = lround(*v);
     ++v;
@@ -452,7 +462,7 @@ namespace BOOM {
 
   ostream &NeRegSuf::print(ostream &out) const {
     reflect();
-    return out << "sumsqy = " << sumsqy << endl
+    return out << "sumsqy_ = " << sumsqy_ << endl
                << "sumy_  = " << sumy_ << endl
                << "n_     = " << n_ << endl
                << "xty_ = " << xty_ << endl

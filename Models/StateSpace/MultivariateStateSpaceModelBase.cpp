@@ -61,36 +61,36 @@ namespace BOOM {
     }
   }
 
-  // After a call to fast_disturbance_smoother() puts r[t] in
-  // filter_[t].scaled_state_error(), this function propagates the r's forward
-  // to get E(alpha | y), and add it to the simulated state.
-  void MvBase::propagate_disturbances() {
-    if (time_dimension() <= 0) return;
-    SpdMatrix P0 = initial_state_variance();
-    Vector state_mean_sim = initial_state_mean() + P0 * r0_sim();
-    Vector state_mean_obs = initial_state_mean() + P0 * r0_obs();
+  // // After a call to fast_disturbance_smoother() puts r[t] in
+  // // filter_[t].scaled_state_error(), this function propagates the r's forward
+  // // to get E(alpha | y), and add it to the simulated state.
+  // void MvBase::propagate_disturbances() {
+  //   if (time_dimension() <= 0) return;
+  //   SpdMatrix P0 = initial_state_variance();
+  //   Vector state_mean_sim = initial_state_mean() + P0 * r0_sim();
+  //   Vector state_mean_obs = initial_state_mean() + P0 * r0_obs();
 
-    mutable_state().col(0) += state_mean_obs - state_mean_sim;
-    observe_state(0);
-    observe_data_given_state(0);
+  //   mutable_state().col(0) += state_mean_obs - state_mean_sim;
+  //   observe_state(0);
+  //   observe_data_given_state(0);
 
-    const MultivariateKalmanFilterBase &simulation_filter(
-        get_simulation_filter());
-    const MultivariateKalmanFilterBase &filter(get_filter());
+  //   const MultivariateKalmanFilterBase &simulation_filter(
+  //       get_simulation_filter());
+  //   const MultivariateKalmanFilterBase &filter(get_filter());
     
-    for (int t = 1; t < time_dimension(); ++t) {
-      state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
-          (*state_variance_matrix(t - 1)) *
-          simulation_filter[t - 1].scaled_state_error();
-      state_mean_obs =
-          (*state_transition_matrix(t - 1)) * state_mean_obs +
-          (*state_variance_matrix(t - 1)) * filter[t - 1].scaled_state_error();
+  //   for (int t = 1; t < time_dimension(); ++t) {
+  //     state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
+  //         (*state_variance_matrix(t - 1)) *
+  //         simulation_filter[t - 1].scaled_state_error();
+  //     state_mean_obs =
+  //         (*state_transition_matrix(t - 1)) * state_mean_obs +
+  //         (*state_variance_matrix(t - 1)) * filter[t - 1].scaled_state_error();
 
-      mutable_state().col(t).axpy(state_mean_obs - state_mean_sim);
-      observe_state(t);
-      observe_data_given_state(t);
-    }
-  }
+  //     mutable_state().col(t).axpy(state_mean_obs - state_mean_sim);
+  //     observe_state(t);
+  //     observe_data_given_state(t);
+  //   }
+  // }
 
   void MvBase::update_observation_model(Vector &r, SpdMatrix &N, int t,
                                         bool save_state_distributions,

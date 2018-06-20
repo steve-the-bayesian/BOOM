@@ -87,13 +87,19 @@ namespace BOOM {
       // regression, so we need to add the regression component back in.
       Ptr<TimeSeriesRegressionData> data(dat()[t]);
       Vector state_contribution = (*observation_coefficients(t)) * state(t);
+      std::cout << "observation coefficients for time " << t << " are: "
+                << endl << observation_coefficients(t)->dense() << std::endl
+                << "State at time " << t << " is " << std::endl
+                << state(t) << std::endl;
+      
       RegressionModel *regression = regression_->regression();
       for (int i = 0; i < data->sample_size(); ++i) {
         const Ptr<RegressionData> &data_point(data->regression_data(i));
-        double regression_prediction = regression->predict(data_point->x());
+        double adjusted_observation =
+            data_point->y() - state_contribution[i]
+            + regression->predict(data_point->x());
         observation_model()->suf()->add_mixture_data(
-            data_point->y() - state_contribution[i] + regression_prediction,
-            data_point->x(), 1.0);
+            adjusted_observation, data_point->x(), 1.0);
       }
     }
   }
@@ -133,6 +139,10 @@ namespace BOOM {
     return dat()[t]->response();
   }
 
+  const Selector &DIRM::observed_status(int t) const {
+    return dat()[t]->observed();
+  }
+  
   Vector DIRM::conditional_mean(int time) const {
     return (*observation_coefficients(time) * state().col(time));
   }
@@ -147,9 +157,6 @@ namespace BOOM {
     const ConstVectorView now(state().col(t));
     const ConstVectorView then(state().col(t - 1));
     for (int s = 0; s < number_of_state_models(); ++s) {
-      report_error(
-          "Need to implement observe_dynamic_regression_state in all "
-          "StateModels.");
       state_model(s)->observe_dynamic_intercept_regression_state(
           state_component(then, s), state_component(now, s), t, this);
     }

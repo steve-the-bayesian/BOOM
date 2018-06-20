@@ -19,6 +19,7 @@
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -31,6 +32,7 @@ namespace BOOM {
     // TODO: Test this function against the update function in the other
     // multivariate marginal distributions to make sure they give the same
     // answer.
+
     double ConditionalIidMarginalDistribution::update(
         const Vector &observation,
         const Selector &observed,
@@ -44,49 +46,52 @@ namespace BOOM {
       const SparseKalmanMatrix &observation_coefficients(
           *model_->observation_coefficients(time_index_));
 
+      // Compute the forecast precision and its log determinant.
+      //
+      // TODO: replace forecast_precision using the formula from the binomial
+      // inverse theorem:
+      // Finv = H.inv - H.inv * Z * P * (P + P*Z'*H.inv*Z*P).inv * P * Z' * H.inv
       Matrix dense_observation_coefficients =
           observed.select_rows(observation_coefficients.dense());
-      SpdMatrix Z_inner = dense_observation_coefficients.inner();
-      SpdMatrix Pinv = root_state_conditional_variance_.inv();
+      SpdMatrix forecast_variance =
+          DiagonalMatrix(observed.nvars(), observation_variance_)
+          + sandwich(dense_observation_coefficients, state_variance());
+      SpdMatrix forecast_precision = forecast_variance.inv();
       
-      //----------------------------------------------------------------------
-      // Compute the forecast precision and its log determinant.
+      // SpdMatrix forecast_precision(observed.nvars(), 1.0 / observation_variance_);
+      // SpdMatrix increment =
+      //     (state_variance() +
+      //      sandwich(state_variance(), ZP.inner() / observation_variance_)).inv();
+      // increment /= square(observation_variance_);
+      // forecast_precision -= sandwich(ZP, increment);
       
-      // The forecast precision is determined by the Woodbury formula.  The
-      // forecast variance is F = H + ZPZ', where H is a constant times the
-      // identity and P is low dimensional.
+      // The log determinant of F.inverse is the negative log of det(H + ZPZ').
+      // That determinant can be computed using the "matrix determinant lemma,"
+      // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
       //
-      // The Woodbury formula tells us that F.inverse is
+      // Let L = chol(P)
+      // Set U = Z * L and V' = U'
       //
-      // Finv =H.inv - H.inv * Z * (P.inv + Z' * H.inv * Z).inv * Z' * H.inv
-      // Because H is a constant, this simplifies to.
-      //
-      // Hinv - Z * (P.inv + Z'Z / sigsq).inv * Z' / sigsq^2
-      SpdMatrix forecast_precision(observed.nvars(), 1.0 / observation_variance_);
-      forecast_precision -= observation_coefficients.sandwich(
-          (Pinv + Z_inner / observation_variance_).inv())
-          / square(observation_variance_);
-      
-      // This function also computes the log determinant of F.inverse, which is the
-      // negative log of det(H + ZPZ').  That determinant can be computed using the
-      // "matrix determinant lemma,"  which states det(A + UWV') =
-      // det(W) * det(A) * det(W.inv + V'*A.inv*U).
-      //
-      // Thus the determinant of Finv is the negative log of 
-      //     det(H) * det(P) * det(P.inv + Z'HZ)
-      //     = det(H) * det(P) * det(P.inv + Z'Z * sigsq)
-      forecast_precision_log_determinant_ =
-          -(observed.nvars()) * std::log(observation_variance_)
-          -root_state_conditional_variance_.logdet();
-      SpdMatrix inner =  Pinv + Z_inner * observation_variance_;
-      forecast_precision_log_determinant_ -= inner.logdet();
+      // Then  det(F) = det(I + L'Z' H.inv * ZL) * det(H)
+      //--------------------------------------------------
+      // Matrix ZL = observed.select_rows(
+      //     observation_coefficients * root_state_conditional_variance_.getL());
+      // SpdMatrix ZL_inner = ZL.inner();
+      // ZL_inner /= observation_variance_;
+      // ZL_inner.diag() += 1.0;
+      // forecast_precision_log_determinant_ =
+      //     -observed.nvars() * log(observation_variance_)
+      //     -ZL_inner.logdet();
 
-      //----------------------------------------------------------------------
+      forecast_precision_log_determinant_ = forecast_precision.logdet();
+      
       // Compute the one-step prediction error and log likelihood contribution.
       const SparseKalmanMatrix &transition(
           *model_->state_transition_matrix(time_index_));
-      Matrix kalman_gain = (transition * state_variance()) *
-          (dense_observation_coefficients.Tmult(forecast_precision));
+
+      // Kalman gain = TPZ'Finv
+      set_kalman_gain(transition * state_variance()
+                      * matTmult(dense_observation_coefficients, forecast_precision));
       Vector observation_mean = observed.select(
           observation_coefficients * state_mean());
       Vector observed_data = observed.select(observation);
@@ -95,13 +100,12 @@ namespace BOOM {
                                    forecast_precision,
                                    forecast_precision_log_determinant_,
                                    true);
-      Vector forecast_error = observed_data - observation_mean;
-      set_prediction_error(forecast_error);
+      set_prediction_error(observed_data - observation_mean);
+      set_scaled_prediction_error(forecast_precision * prediction_error());
 
-      //----------------------------------------------------------------------
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
-      set_state_mean(transition * state_mean() + kalman_gain * forecast_error);
+      set_state_mean(transition * state_mean() + kalman_gain() * prediction_error());
 
       // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
       // Var(state[t+1} | Y[t]).
@@ -114,8 +118,8 @@ namespace BOOM {
       //
       // Need to define TPZprime before modifying P (known here as
       // state_variance).
-      Matrix TPZprime = (transition * state_variance()).multT(
-          dense_observation_coefficients);
+      Matrix TPZprime = (dense_observation_coefficients *
+                         (transition * state_variance()).transpose()).transpose();
 
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
@@ -123,7 +127,7 @@ namespace BOOM {
       // Step 2: 
       // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
       // skipped if y is missing, because K is zero.
-      mutable_state_variance() -= TPZprime.multT(kalman_gain);
+      mutable_state_variance() -= TPZprime.multT(kalman_gain());
 
       // Step 3: P += RQR
       model_->state_variance_matrix(time_index_)->add_to(
@@ -132,7 +136,7 @@ namespace BOOM {
       return log_likelihood;
     }  // update
 
-
+    //===========================================================================
     double ConditionalIidMarginalDistribution::fully_missing_update(int t) {
       time_index_ = t;
       root_state_conditional_variance_.decompose(SpdMatrix());
@@ -140,13 +144,11 @@ namespace BOOM {
 
       forecast_precision_log_determinant_ = negative_infinity();
 
-      //----------------------------------------------------------------------
       // Compute the one-step prediction error and log likelihood contribution.
       const SparseKalmanMatrix  &transition(*model_->state_transition_matrix(t));
       double log_likelihood = 0;
       set_prediction_error(Vector(0));
 
-      //----------------------------------------------------------------------
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
       set_state_mean(transition * state_mean());
@@ -167,6 +169,7 @@ namespace BOOM {
       return log_likelihood;
     }  
 
+    //---------------------------------------------------------------------------
     SpdMatrix ConditionalIidMarginalDistribution::forecast_precision() const {
       SpdMatrix Pinv = root_state_conditional_variance_.inv();
       SpdMatrix Z_inner = model_->observed_status(time_index_).select_rows(
@@ -179,10 +182,6 @@ namespace BOOM {
       return precision;
     }
 
-    Vector ConditionalIidMarginalDistribution::scaled_prediction_error() const {
-      return forecast_precision() * prediction_error();
-    }
-    
   }  // namespace Kalman
 
   //===========================================================================
@@ -196,10 +195,11 @@ namespace BOOM {
   }
   
   void ConditionalIidKalmanFilter::ensure_size(int t) {
-    while(nodes_.size() <  t) {
+    while(nodes_.size() <=  t) {
       nodes_.push_back(Kalman::ConditionalIidMarginalDistribution(
           model()->state_dimension()));
       nodes_.back().set_model(model_);
+      nodes_.back().set_time_index(nodes_.size() - 1);
     }
   }
   
