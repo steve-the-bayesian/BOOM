@@ -96,6 +96,13 @@ namespace BOOM {
     return *this;
   }
 
+  SM &SM::operator=(double scalar) {
+    for (uint i = 0; i < nc_; ++i) {
+      col(i) = scalar;
+    }
+    return *this;
+  }
+  
   //------------------------------------------------------------
   uint SM::nrow() const { return nr_; }
   uint SM::ncol() const { return nc_; }

@@ -27,7 +27,7 @@ namespace BOOM {
     typedef double *col_iterator;
     typedef const double *const_col_iterator;
 
-    SubMatrix(double *v = 0, int nrow = 0, int ncol = 0);
+    explicit SubMatrix(double *v = 0, int nrow = 0, int ncol = 0);
     SubMatrix(Matrix &, uint rlo, uint rhi, uint clo, uint chi);
     SubMatrix(SubMatrix &, uint rlo, uint rhi, uint clo, uint chi);
     SubMatrix(const SubMatrix &rhs);
@@ -39,6 +39,8 @@ namespace BOOM {
     // as operator=(const Matrix &rhs)
     SubMatrix &operator=(const SubMatrix &rhs);
 
+    SubMatrix &operator=(double scalar);
+    
     // Pointer semantics: make the memory here point to the memory
     // there.
     SubMatrix &reset(Matrix &rhs, int rlo, int rhi, int clo, int chi);
