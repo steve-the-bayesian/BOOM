@@ -18,6 +18,7 @@
 
 #include "test_utils/test_utils.hpp"
 #include "cpputil/report_error.hpp"
+#include <fstream>
 
 namespace BOOM {
 
@@ -33,7 +34,8 @@ namespace BOOM {
       const Matrix &draws,
       const Vector &truth,
       double confidence,
-      bool control_multiple_comparisons) {
+      bool control_multiple_comparisons,
+      const std::string &filename) {
     if (confidence <= 0 || confidence >= 1) {
       report_error("Confidence must be strictly between 0 and 1.");
     }
@@ -64,10 +66,17 @@ namespace BOOM {
       status.ok = false;
       status.fraction_failing_to_cover = fraction_failing_to_cover;
     }
+
+    if (!status.ok && filename != "") {
+      std::ofstream error_file(filename);
+      error_file << truth << std::endl << draws;
+    }
+    
     return status;
   }
 
-  bool CheckMcmcVector(const Vector &draws, double truth, double confidence) {
+  bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
+                       const std::string &filename) {
     if (confidence <= 0 || confidence >= 1) {
       report_error("Confidence must be strictly between 0 and 1.");
     }
@@ -77,7 +86,12 @@ namespace BOOM {
     Vector v = sort(draws);
     double lo = sorted_vector_quantile(v, alpha_2);
     double hi = sorted_vector_quantile(v, 1 - alpha_2);
-    return lo <= truth && hi >= truth;
+    bool ok = lo <= truth && hi >= truth;
+    if (!ok && filename != "") {
+      std::ofstream error_file(filename);
+      error_file << truth << " " << draws;
+    }      
+    return ok;
   }
   
 }  // namespace BOOM

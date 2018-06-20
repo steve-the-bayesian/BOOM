@@ -99,6 +99,9 @@ namespace BOOM {
   //     'confidence' as long as it is consistent with the null hypothesis of
   //     'confidence'-level coverage, in the sense that it is no less than two
   //     binomial standard errors below 'confidence'.
+  //   filename: The name of a file to which the matrix will be printed if the
+  //     check fails.  The first row of the file will be the true value.  If the
+  //     file name is the empty string no file will be created.
   //
   // Returns:
   //   A status message with the value 'ok' indicating whether the check passed
@@ -107,7 +110,8 @@ namespace BOOM {
   CheckMatrixStatus CheckMcmcMatrix(const Matrix &draws,
                                     const Vector &truth,
                                     double confidence = .95,
-                                    bool control_multiple_comparisons = true);
+                                    bool control_multiple_comparisons = true,
+                                    const std::string &filename = "");
 
   // Check to see if a vector of Monte Carlo draws covers a known value.
   //
@@ -116,6 +120,9 @@ namespace BOOM {
   //   truth:  The true value against which 'draws' will be checked.
   //   confidence: The probability content of the credibility interval used to
   //     check coverage.
+  //   filename: The name of a file to which the matrix will be printed if the
+  //     check fails.  The first row of the file will be the true value.  If the
+  //     file name is the empty string no file will be created.
   //
   // Returns:
   //   A central credibility interval with probability content 'confidence' is
@@ -123,7 +130,8 @@ namespace BOOM {
   //   interval covers 'truth'.
   bool CheckMcmcVector(const Vector &draws,
                        double truth,
-                       double confidence = .95);
+                       double confidence = .95,
+                       const std::string &filename = "");
 
   // Returns true if the empirical CDF of the vector of data matches the
   // theoretical CDF to with the tolerance of a Kolmogorov-Smirnoff test.
