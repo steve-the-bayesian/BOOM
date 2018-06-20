@@ -669,15 +669,8 @@ namespace BOOM {
 
   void SEIFR::matrix_transpose_premultiply_inplace(SubMatrix m) const {
     conforms_to_rows(m.nrow());
-    m.row(position_) = value_ * m.row(0);
-    // Set the rows before position_ to zero.
-    if (position_ > 0) {
-      SubMatrix(m, 0, position_ - 1, 0, m.ncol() - 1) = 0;
-    }
-    // Set the rows after position_ to zero.
-    if (position_ < m.nrow() - 1) {
-      SubMatrix(m, position_ + 1, m.nrow() - 1, 0, m.ncol()) = 0;
-    }
+    m.col(0) = m.col(position_) * value_;
+    SubMatrix(m, 0, m.nrow() - 1, 1, m.ncol() - 1) = 0;
   }
 
   void SEIFR::add_to(SubMatrix block) const {

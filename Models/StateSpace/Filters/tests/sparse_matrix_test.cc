@@ -19,7 +19,11 @@ namespace {
   void CheckSparseMatrixBlock(
       const Ptr<SparseMatrixBlock> &sparse,
       const Matrix &dense) {
-    EXPECT_TRUE(MatrixEquals(sparse->dense(), dense));
+    EXPECT_TRUE(MatrixEquals(sparse->dense(), dense))
+        << "sparse->dense() = " << endl
+        << sparse->dense() << endl
+        << "dense = " << endl
+        << dense << endl;
     
     EXPECT_EQ(sparse->nrow(), dense.nrow())
         << endl << sparse->dense() << endl << dense;
@@ -36,8 +40,8 @@ namespace {
         << "sparse * rhs = " << lhs_vector << endl
         << "dense * rhs = " << dense * rhs_vector << endl;
 
-    Vector original_lhs = lhs_vector;
     lhs_vector.randomize();
+    Vector original_lhs = lhs_vector;
     rhs_vector.randomize();
     sparse->multiply_and_add(VectorView(lhs_vector), rhs_vector);
     EXPECT_TRUE(VectorEquals(lhs_vector, original_lhs + dense * rhs_vector))
@@ -73,14 +77,17 @@ namespace {
         << "sparse->matrix_multiply_inplace(rhs) = " << rhs_matrix << endl
         << "dense * rhs = " << dense * original_rhs_matrix << endl;
 
+      rhs_matrix.randomize();
       original_rhs_matrix = rhs_matrix;
       sparse->matrix_transpose_premultiply_inplace(SubMatrix(rhs_matrix));
       EXPECT_TRUE(MatrixEquals(rhs_matrix,
-                               dense.transpose() * original_rhs_matrix))
+                               original_rhs_matrix * dense.transpose()))
         << endl << sparse->dense() << endl << dense << endl
-        << "rhs = " << original_rhs_matrix << endl
-        << "sparse->matrix_transpose_multiply_inplace(rhs) = " << rhs_matrix << endl
-        << "dense * rhs = " << dense.transpose() * original_rhs_matrix << endl;
+        << "rhs = " << endl << original_rhs_matrix << endl
+        << "sparse->matrix_transpose_multiply_inplace(rhs) = "
+        << endl << rhs_matrix << endl
+        << "rhs * dense.transpose() = " << endl
+        << original_rhs_matrix * dense.transpose() << endl;
     }
 
     Matrix summand(dense.nrow(), dense.ncol());
@@ -183,7 +190,7 @@ namespace {
 
   TEST_F(SparseMatrixTest, Seasonal) {
     NEW(SeasonalStateSpaceMatrix, seasonal)(4);
-    Matrix seasonal_dense(4, 4, 0.0);
+    Matrix seasonal_dense(3, 3, 0.0);
     seasonal_dense.row(0) = -1;
     seasonal_dense.subdiag(1) = 1.0;
 
@@ -290,10 +297,11 @@ namespace {
     }
     CheckSparseMatrixBlock(sparse, dense);
 
-    Vector scale_factor(3);
+    Vector scale_factor(17);
     scale_factor.randomize();
     dense.diag() *= scale_factor;
-    NEW(UpperLeftDiagonalMatrix, sparse2)(params, 17, scale_factor);
+    NEW(UpperLeftDiagonalMatrix, sparse2)(
+        params, 17, ConstVectorView(scale_factor, 0, 3));
     CheckSparseMatrixBlock(sparse2, dense);
   }
 
@@ -319,18 +327,23 @@ namespace {
   }
 
   Matrix ConstraintMatrix(int dim) {
-    Matrix ans(dim, dim, 0.0);
-    ans.set_diag(1.0);
-    return ans - Matrix(dim, dim, 1.0 / dim);
+    Matrix ans(dim, dim, -1.0 / dim);
+    ans.diag() += 1.0;
+    return ans;
   }
   
   TEST_F(SparseMatrixTest, EffectConstrainedMatrixBlockTest) {
-    NEW(SeasonalStateSpaceMatrix, seasonal)(12);
+    NEW(SeasonalStateSpaceMatrix, seasonal)(4);
     NEW(EffectConstrainedMatrixBlock, constrained_seasonal)(
         seasonal);
-    CheckSparseMatrixBlock(constrained_seasonal,
-                           seasonal->dense() * ConstraintMatrix(11));
 
+    Matrix constraint_matrix(3, 3, -1.0/3);
+    constraint_matrix.diag() = (2.0 / 3);
+    
+    EXPECT_TRUE(MatrixEquals(constraint_matrix, ConstraintMatrix(3)));
+    
+    CheckSparseMatrixBlock(
+        constrained_seasonal, seasonal->dense() * ConstraintMatrix(3));
   }
 
   TEST_F(SparseMatrixTest, GenericSparseMatrixBlockTest) {

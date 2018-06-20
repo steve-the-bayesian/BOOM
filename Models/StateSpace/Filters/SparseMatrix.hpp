@@ -519,6 +519,9 @@ namespace BOOM {
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
     void add_to(SubMatrix block) const override {}
+    Matrix dense() const override {
+      return Matrix(0, 0);
+    }
   };
 
   //======================================================================
@@ -824,7 +827,9 @@ namespace BOOM {
     }
     void multiply_inplace(VectorView x) const override {
       conforms_to_cols(x.size());
-      x[which_element_] *= value();
+      double tmp_value = x[which_element_] * value();
+      x = 0;
+      x[which_element_] = tmp_value;
     }
     void add_to(SubMatrix block) const override {
       check_can_add(block);
@@ -917,6 +922,12 @@ namespace BOOM {
       check_scale_factor_dimension(diagonal, constant_scale_factor_);
     }
 
+    // Args:
+    //   diagonal: The vector of parameter values forming the nonzero part of
+    //     the matrix diagonal.
+    //   dim:  The number of (notional) rows and colums in the matrix.
+    //   scale_factor: A constant vector of numbers multiplying the diagonal
+    //     elements to produce the matrix diagonal.
     UpperLeftDiagonalMatrix(const std::vector<Ptr<UnivParams>> &diagonal,
                             int dim, const Vector &scale_factor)
         : diagonal_(diagonal), dim_(dim), constant_scale_factor_(scale_factor) {
@@ -1073,27 +1084,25 @@ namespace BOOM {
     int nrow() const override {return unconstrained_->nrow();}
     int ncol() const override {return unconstrained_->ncol();}
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
-      unconstrained_->multiply(lhs, rhs);
-      lhs -= mean(lhs);
+      unconstrained_->multiply(lhs, rhs - mean(rhs));
     }
 
     void multiply_and_add(VectorView lhs,
                           const ConstVectorView &rhs) const override {
       // lhs += this * rhs
-      Vector tmp = lhs;
-      multiply(lhs, tmp);
-      lhs += tmp;
+      Vector old_lhs = lhs;
+      multiply(lhs, rhs);
+      lhs += old_lhs;
     }
 
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override{
-      Vector tmp = rhs;
-      tmp -= mean(rhs);
-      unconstrained_->Tmult(lhs, tmp);
+      unconstrained_->Tmult(lhs, rhs);
+      lhs -= mean(lhs);
     }
 
     void multiply_inplace(VectorView x) const override {
-      unconstrained_->multiply_inplace(x);
       x -= mean(x);
+      unconstrained_->multiply_inplace(x);
     }
 
     void add_to(SubMatrix block) const override {
