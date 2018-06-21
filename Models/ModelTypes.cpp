@@ -126,6 +126,20 @@ namespace BOOM {
   //============================================================
   void MLE_Model::initialize_params() { mle(); }
 
+  MLE_Model::MLE_Model(MLE_Model &&rhs)
+      : Model(rhs),
+        status_(rhs.status_),
+        error_message_(rhs.error_message_) {}
+
+  MLE_Model & MLE_Model::operator=(MLE_Model &&rhs) {
+    if (&rhs != this) {
+      status_ = rhs.status_;
+      error_message_ = rhs.error_message_;
+      Model::operator=(rhs);
+    }
+    return *this;
+  }
+  
   //============================================================
   void LoglikeModel::mle() {
     LoglikeTF loglike(this);

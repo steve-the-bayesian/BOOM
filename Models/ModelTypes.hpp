@@ -114,6 +114,11 @@ namespace BOOM {
   class MLE_Model : virtual public Model {
    public:
     MLE_Model() : status_(NOT_CALLED) {}
+    MLE_Model(const MLE_Model &rhs) = default;
+    MLE_Model(MLE_Model &&rhs);
+    MLE_Model & operator=(const MLE_Model &rhs) = default;
+    MLE_Model & operator=(MLE_Model &&rhs); 
+    
     // Set the paramters to their maximum likelihood estimates.
     virtual void mle() = 0;
     virtual void initialize_params();
