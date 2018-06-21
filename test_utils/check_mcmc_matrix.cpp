@@ -29,7 +29,7 @@ namespace BOOM {
         << "Rate limit: " << failure_rate_limit * 100 << " (%) " << endl;
     return err.str();
   }
-  
+
   CheckMatrixStatus CheckMcmcMatrix(
       const Matrix &draws,
       const Vector &truth,
@@ -75,6 +75,26 @@ namespace BOOM {
     return status;
   }
 
+  std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
+                                    const Vector &hi) {
+    if (draws.ncol() != lo.size()
+        || draws.ncol() != hi.size()) {
+      report_error("Both 'lo' and 'hi' must have length equal to the number"                   " of columns in 'draws'.");
+    }
+    for (int i = 0; i < draws.ncol(); ++i) {
+      double min_draw = min(draws.col(i));
+      double max_draw = max(draws.col(i));
+      if (min_draw < lo[i] || max_draw > hi[i]) {
+        std::ostringstream err;
+        err << "The range of column " << i << " was ["
+            << min_draw << ", " << max_draw << "], which falls outside of ["
+            << lo[i] << ", " << hi[i] << "]." << std::endl;
+        return err.str();
+      }
+    }
+    return "";
+  }
+  
   bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
                        const std::string &filename) {
     if (confidence <= 0 || confidence >= 1) {
