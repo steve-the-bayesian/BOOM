@@ -47,6 +47,16 @@ namespace {
     EXPECT_TRUE(MatrixEquals(Q.Tmult(Q), SpdMatrix(3, 1.0)));
   }
 
+  TEST_F(QrTest, Determinant) {
+    Matrix A(2, 2);
+    A.randomize();
+    double a = A(0, 0);
+    double b = A(0, 1);
+    double c = A(1, 0);
+    double d = A(1, 1);
+    QR qr(A);
+    EXPECT_NEAR(qr.det(), a * d - b * c, 1e-6);
+  }
 
   TEST_F(QrTest, Regression) {
     Matrix predictors(100, 4);

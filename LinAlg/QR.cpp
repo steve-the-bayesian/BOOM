@@ -66,13 +66,22 @@ namespace BOOM {
     return ans;
   }
 
-  double QR::det() const { return R_.diag().prod(); }
+  double QR::det() const { return sign_ * (R_.diag().prod()); }
 
+  double QR::logdet() const {
+    double ans = 0;
+    for (double x : R_.diag()) {
+      ans += log(fabs(x));
+    }
+    return ans;
+  }
+  
   void QR::decompose(const Matrix &mat) {
     Q_ = Matrix(mat.nrow(), mat.ncol());
     R_ = Matrix(mat.ncol(), mat.ncol(), 0.0);
 
     Eigen::HouseholderQR<MatrixXd> eigen_qr(EigenMap(mat));
+    sign_ = 2 * (eigen_qr.hCoeffs().size() % 2) - 1;
 
     // Temporary is needed because you can't take the block() of a view.
     MatrixXd eigen_R = eigen_qr.matrixQR().triangularView<Upper>();

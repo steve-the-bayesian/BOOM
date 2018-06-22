@@ -278,6 +278,18 @@ namespace {
     EXPECT_TRUE(MatrixEquals(Uinv(U), U.inv()));
   }
 
+  TEST_F(MatrixTest, Determinant) {
+    Matrix A(2, 2);
+    A.randomize();
+    double a = A(0, 0);
+    double b = A(0, 1);
+    double c = A(1, 0);
+    double d = A(1, 1);
+    double epsilon = 1e-8;
+    EXPECT_NEAR(A.det(), a * d - b * c, epsilon);
+    EXPECT_NEAR(A.logdet(), log(fabs(a*d - b*c)), epsilon);
+  }
+  
   TEST_F(MatrixTest, BlockDiagonal) {
     Matrix A(2, 2);
     A.randomize();

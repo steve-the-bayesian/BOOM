@@ -688,11 +688,21 @@ namespace BOOM {
   double Matrix::trace() const { return accumulate(dbegin(), dend(), 0.0); }
 
   double Matrix::det() const {
-    assert(is_square());
+    if (!is_square()) {
+      report_error("The determinant only exists for square matrices.");
+    }
     QR qr(*this);
     return qr.det();
   }
 
+  double Matrix::logdet() const {
+    if (!is_square()) {
+      report_error("The determinant only exists for square matrices.");
+    }
+    QR qr(*this);
+    return qr.logdet();
+  }
+  
   Vector Matrix::singular_values() const {
     Vector values(std::min(nr_, nc_));
     ::Eigen::JacobiSVD<Eigen::MatrixXd> svd(

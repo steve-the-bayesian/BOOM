@@ -233,6 +233,10 @@ namespace BOOM {
     virtual Vector solve(const Vector &v) const;
     double trace() const;
     virtual double det() const;
+
+    // The log of the absolute value of the determinant.
+    virtual double logdet() const;
+    
     Vector singular_values() const;  // sorted largest to smallest
     uint rank(double prop = 1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times

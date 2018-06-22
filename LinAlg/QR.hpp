@@ -56,9 +56,12 @@ namespace BOOM {
     Vector Rsolve(const Vector &Qty) const;
     Matrix Rsolve(const Matrix &QtY) const;
 
-    // The determinant of the matrix that has been decomposed.
+    // The determinant of the decomposed matrix.
     double det() const;
 
+    // The log absolute value of the determinant of the decomposed matrix.
+    double logdet() const;
+    
     // Reset *this to the decomposition of the matrix m.
     void decompose(const Matrix &m);
 
@@ -80,6 +83,9 @@ namespace BOOM {
    private:
     Matrix Q_;
     Matrix R_;
+
+    // The sign of the determinant of Q.
+    int sign_;
   };
 }  // namespace BOOM
 #endif  // BOOM_NEWLA_QR_HPP

@@ -92,7 +92,7 @@ namespace BOOM {
 
     // Determinant of the matrix.
     double det() const override;
-    double logdet() const;
+    double logdet() const override;
     double logdet(bool &ok) const;
 
     // Returns this^{-1} * mat.  Throws an exception if this cannot be
