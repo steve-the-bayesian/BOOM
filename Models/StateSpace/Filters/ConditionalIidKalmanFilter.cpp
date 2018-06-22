@@ -20,6 +20,8 @@
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
+#include "LinAlg/QR.hpp"
+#include "cpputil/Constants.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -40,70 +42,87 @@ namespace BOOM {
       if (observed.nvars() == 0) {
         return fully_missing_update(t);
       }
+      double observation_variance = model_->observation_variance(t);
       const SparseKalmanMatrix &observation_coefficients(
           *model_->observation_coefficients(t));
-
-      // Compute the forecast precision and its log determinant.
-      //
-      // Ideally we could get rid of the forecast precision matrix, if we could
-      // compute both the scaled and unscaled prediction error.  The determinant
-      // of the forecast precision matrix would also be needed.
-      //
-      //  To evaluate the normal likelihood, we need the quadratic form:
-      //   error * precision * error == error.dot(scaled_error)
-      
-      // TODO: replace forecast_precision using the formula from the binomial
-      // inverse theorem:
-      // Finv = H.inv - H.inv * Z * P * (P + P*Z'*H.inv*Z*P).inv * P * Z' * H.inv
       Matrix dense_observation_coefficients =
           observed.select_rows(observation_coefficients.dense());
-      SpdMatrix forecast_variance =
-          DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
-          + sandwich(dense_observation_coefficients, state_variance());
-      SpdMatrix forecast_precision = forecast_variance.inv();
+      // Make a new member function called partial_observation_coefficients
+
+      Vector observation_mean = observed.select(
+          observation_coefficients * state_mean());
+      Vector observed_data = observed.select(observation);
+      set_prediction_error(observed_data - observation_mean);
+
+      // At this point the Kalman recursions compute the forecast precision Finv
+      // and its log determinant.  However, we can get rid of the forecast
+      // precision matrix, and replace it with the scaled error = Finv *
+      // prediction_error.
+      //
+      // To evaluate the normal likelihood, we need the quadratic form:
+      //   error * Finv * error == error.dot(scaled_error).
+      // We also need the log determinant of Finv.
+      //
+      // The forecast_precision can be computed using the binomial inverse
+      // theorem:
+      //  (A + UBV).inv =
+      //    A.inv - A.inv * U * (I + B * V * Ainv * U).inv * B * V * Ainv.
+      //
+      // When applied to F = H + Z P Z' the theorem gives
+      //
+      //   Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
+      //
+      // We don't compute this directly, we compute Finv * prediction_error.
+      SpdMatrix Z_inner = dense_observation_coefficients.inner();
+      Matrix inner_matrix = state_variance() * Z_inner / observation_variance;
+      inner_matrix.diag() += 1.0;
+      QR inner_qr(inner_matrix);
       
-      // SpdMatrix forecast_precision(observed.nvars(), 1.0 / observation_variance_);
-      // SpdMatrix increment =
-      //     (state_variance() +
-      //      sandwich(state_variance(), ZP.inner() / observation_variance_)).inv();
-      // increment /= square(observation_variance_);
-      // forecast_precision -= sandwich(ZP, increment);
+      Vector scaled_error =
+          state_variance() * (observation_coefficients.Tmult(prediction_error()));
+      scaled_error = inner_qr.solve(scaled_error);
+      //      scaled_error = inner_matrix.solve(scaled_error);
+      scaled_error = observation_coefficients * scaled_error;
+      scaled_error /= observation_variance;
+      scaled_error -= prediction_error();
+      scaled_error /= -1 * observation_variance;
+      set_scaled_prediction_error(scaled_error);
+
+      // SpdMatrix forecast_variance =
+      //     DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
+      //     + sandwich(dense_observation_coefficients, state_variance());
+      // SpdMatrix forecast_precision = forecast_variance.inv();
+      // if ((scaled_error - forecast_precision * prediction_error()).max_abs()
+      //     > 1e-4) {
+      //   report_error("bad scaled error");
+      // }
       
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
       //
-      // Let L = chol(P)
-      // Set U = Z * L and V' = U'
-      //
-      // Then  det(F) = det(I + L'Z' H.inv * ZL) * det(H)
-      //--------------------------------------------------
-      // Matrix ZL = observed.select_rows(
-      //     observation_coefficients * root_state_conditional_variance_.getL());
-      // SpdMatrix ZL_inner = ZL.inner();
-      // ZL_inner /= observation_variance_;
-      // ZL_inner.diag() += 1.0;
-      // forecast_precision_log_determinant_ =
-      //     -observed.nvars() * log(observation_variance_)
-      //     -ZL_inner.logdet();
+      // Let A = H, U = Z, V' = PZ'.  Then det(F) = det(I + PZ'Z / v) * det(H)
+      double forecast_precision_log_determinant =
+          -1 * (inner_qr.logdet()
+                + observed.nvars() * log(observation_variance));
+      
+      double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
+          + .5 * forecast_precision_log_determinant - .5 * prediction_error().dot(scaled_error);
 
       // Compute the one-step prediction error and log likelihood contribution.
       const SparseKalmanMatrix &transition(*model_->state_transition_matrix(t));
 
-      // Kalman gain = TPZ'Finv
-      set_kalman_gain(transition * state_variance()
-                      * matTmult(dense_observation_coefficients, forecast_precision));
-      Vector observation_mean = observed.select(
-          observation_coefficients * state_mean());
-      Vector observed_data = observed.select(observation);
-      double log_likelihood = dmvn(observation,
-                                   observation_mean,
-                                   forecast_precision,
-                                   forecast_precision.logdet(),
-                                   true);
-      set_prediction_error(observed_data - observation_mean);
-      set_scaled_prediction_error(forecast_precision * prediction_error());
-
+      // Kalman gain = TPZ'Finv = 
+      //
+      // TPZ' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv) = 
+      //
+      // T * PZ'Hinv * (I - Z * (I + P Z' Hinv Z).inv * PZ'Hinv) = 
+      Matrix PZprimeHinv = (observation_coefficients * state_variance()).transpose()
+          / observation_variance;
+      Matrix gain = -1 * (observation_coefficients * inner_qr.solve(PZprimeHinv));
+      gain.diag() += 1.0;
+      set_kalman_gain(transition * PZprimeHinv * gain);
+      
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
       set_state_mean(transition * state_mean() + kalman_gain() * prediction_error());
