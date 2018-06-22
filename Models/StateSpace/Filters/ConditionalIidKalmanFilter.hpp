@@ -54,7 +54,7 @@ namespace BOOM {
       //     viewed as meaningless.
       //   t:  The time index that this marginal distribution describes.
       //
-      // Returns:
+      // Returns: 
       //   The contribution that observation makes to the log likelihood.
       double update(const Vector &y, const Selector &observed, int t) override;
 
@@ -69,11 +69,30 @@ namespace BOOM {
       void set_scaled_prediction_error(const Vector &err) {
         scaled_prediction_error_ = err;
       }
-
+      void set_forecast_precision_log_determinant(double logdet) {
+        forecast_precision_log_determinant_ = logdet;
+      }
+      double forecast_precision_log_determinant() const {
+        return forecast_precision_log_determinant_;
+      }
+      
      private:
+      void small_sample_update(const Vector &observation,
+                               const Selector &observed,
+                               int t,
+                               const SparseKalmanMatrix &transition,
+                               const SparseKalmanMatrix &observation_coefficients);
+      void large_sample_update(const Vector &observation,
+                               const Selector &observed,
+                               int t,
+                               const SparseKalmanMatrix &transition,
+                               const SparseKalmanMatrix &observation_coefficients);
+                               
+      
       ModelType *model_;
       Vector scaled_prediction_error_;
-
+      double forecast_precision_log_determinant_;
+      
       // The Cholesky root of the state conditional variance, before updating.
       // After updating state_variance is Durbin and Koopman's P[t+1], while
       // this remains the Cholesky root of P[t].

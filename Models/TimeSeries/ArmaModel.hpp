@@ -51,6 +51,7 @@ namespace BOOM {
 
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 
@@ -80,6 +81,7 @@ namespace BOOM {
       multiply(lhs, rhs);
     }
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 

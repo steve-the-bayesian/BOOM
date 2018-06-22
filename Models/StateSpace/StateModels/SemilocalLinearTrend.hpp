@@ -49,6 +49,7 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     Mat dense() const override;
 

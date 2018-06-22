@@ -82,6 +82,13 @@ namespace BOOM {
     }
   }
 
+  SpdMatrix ASSTM::inner() const {
+    SpdMatrix ans(ncol(), 1.0);
+    matrix_multiply_inplace(SubMatrix(ans));
+    matrix_transpose_premultiply_inplace(SubMatrix(ans));
+    return ans;
+  }
+  
   void ASSTM::add_to(SubMatrix block) const {
     if (block.nrow() != nrow() || block.ncol() != ncol()) {
       report_error("Wrong sized argument.");
@@ -118,6 +125,13 @@ namespace BOOM {
     x = theta_ * (theta_.dot(x) * sigsq_);
   }
 
+  SpdMatrix ASSVM::inner() const {
+    SpdMatrix ans(ncol(), 1.0);
+    matrix_multiply_inplace(SubMatrix(ans));
+    matrix_transpose_premultiply_inplace(SubMatrix(ans));
+    return ans;
+  }
+  
   void ASSVM::add_to(SubMatrix block) const { block += dense(); }
 
   Matrix ASSVM::dense() const {

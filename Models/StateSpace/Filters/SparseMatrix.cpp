@@ -219,6 +219,19 @@ namespace BOOM {
     }
   }
 
+  SpdMatrix BlockDiagonalMatrixBlock::inner() const {
+    SpdMatrix ans(ncol());
+    int position = 0;
+    for (int b = 0; b < blocks_.size(); ++b) {
+      int local_dim = blocks_[b]->ncol();
+      SubMatrix inner_block(ans, position, position + local_dim - 1,
+                            position, position + local_dim - 1);
+      inner_block = blocks_[b]->inner();
+      position += local_dim;
+    }
+    return ans;
+  }
+  
   void BlockDiagonalMatrixBlock::add_to(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -314,6 +327,14 @@ namespace BOOM {
     report_error("multiply_inplace only works for square matrices.");
   }
 
+  SpdMatrix StackedMatrixBlock::inner() const {
+    SpdMatrix ans(nrow(), 0.0);
+    for (int b = 0; b < blocks_.size(); ++b) {
+      ans += blocks_[b]->inner();
+    }
+    return ans;
+  }
+  
   void StackedMatrixBlock::add_to(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -359,6 +380,15 @@ namespace BOOM {
     v[0] += v[1];
   }
 
+  SpdMatrix LocalLinearTrendMatrix::inner() const {
+    // 1 0 * 1 1  = 1 1
+    // 1 1   0 1    1 2
+    SpdMatrix ans(2);
+    ans = 1.0;
+    ans(1, 1) = 2.0;
+    return ans;
+  }
+  
   void LocalLinearTrendMatrix::add_to(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += 1;
@@ -455,6 +485,15 @@ namespace BOOM {
     }
   }
 
+  SpdMatrix SDMB::inner() const {
+    Matrix ans(nrow(), 0.0);
+    for (int i = 0; i < positions_.size(); ++i) {
+      int pos = positions_[i];
+      ans(pos, pos) = square(elements_[i]->value());
+    }
+    return ans;
+  }
+  
   void SDMB::add_to(SubMatrix block) const {
     conforms_to_cols(block.ncol());
     conforms_to_rows(block.nrow());
@@ -525,6 +564,19 @@ namespace BOOM {
     *now = total;
   }
 
+  SpdMatrix SSSM::inner() const {
+    // -1  1  0  0 .... 0          -1 -1 -1 -1 ... -1
+    // -1  0  1  0 .... 0           1  0  0  0 .... 0
+    // -1  0  0  1 .... 0           0  1  0  0 .... 0
+    // -1  0  0  0 .... 0           0  0  1  0 .... 0
+    // -1  0  0  0 .... 0           0  0  0  1 .... 0
+    SpdMatrix ans(nrow());
+    ans = 1.0;
+    ans.diag() = 2.0;
+    ans.diag().back() = 1.0;
+    return ans;
+  }
+  
   void SSSM::add_to(SubMatrix block) const {
     check_can_add(block);
     block.row(0) -= 1;
@@ -612,6 +664,10 @@ namespace BOOM {
     }
   }
 
+  SpdMatrix AutoRegressionTransitionMatrix::inner() const {
+    return dense().inner();
+  }
+  
   void AutoRegressionTransitionMatrix::add_to(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += autoregression_params_->value();
@@ -673,6 +729,12 @@ namespace BOOM {
     SubMatrix(m, 0, m.nrow() - 1, 1, m.ncol() - 1) = 0;
   }
 
+  SpdMatrix SEIFR::inner() const {
+    SpdMatrix ans(ncol(), 0.0);
+    ans(position_, position_) = square(value_);
+    return ans;
+  }
+  
   void SEIFR::add_to(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -811,6 +873,14 @@ namespace BOOM {
     }
   }
 
+  SpdMatrix GenericSparseMatrixBlock::inner() const {
+    SpdMatrix ans(ncol(), 0.0);
+    for (const auto &el : rows_) {
+      el.second.add_outer_product(ans);
+    }
+    return ans;
+  }
+  
   void GenericSparseMatrixBlock::add_to(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());

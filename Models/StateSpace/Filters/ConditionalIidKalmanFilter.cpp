@@ -42,9 +42,81 @@ namespace BOOM {
       if (observed.nvars() == 0) {
         return fully_missing_update(t);
       }
-      double observation_variance = model_->observation_variance(t);
+      const SparseKalmanMatrix &transition(*model_->state_transition_matrix(t));
       const SparseKalmanMatrix &observation_coefficients(
           *model_->observation_coefficients(t));
+      
+      if (observed.nvars() <= model_->state_dimension()) {
+        small_sample_update(observation, observed, t, transition, observation_coefficients);
+      } else {
+        large_sample_update(observation, observed, t, transition, observation_coefficients);
+      }
+      double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
+          + .5 * forecast_precision_log_determinant()
+          - .5 * prediction_error().dot(scaled_prediction_error());
+      
+      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
+      // E(state[t+1] | Y[t]).
+      set_state_mean(transition * state_mean() + kalman_gain() * prediction_error());
+
+      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
+      // Var(state[t+1} | Y[t]).
+      //
+      // The update formula is
+      //
+      // P[t+1] = T[t] * P[t] * T[t]'
+      //          - T[t] * P[t] * Z[t]' * K[t]'
+      //          + R[t] * Q[t] * R[t]'
+      //
+      // Need to define TPZprime before modifying P (known here as
+      // state_variance).
+      Matrix TPZprime = (observation_coefficients *
+                         (transition * state_variance()).transpose()).transpose();
+
+      // Step 1:  Set P = T * P * T.transpose()
+      transition.sandwich_inplace(mutable_state_variance());
+
+      // Step 2: 
+      // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
+      // skipped if y is missing, because K is zero.
+      mutable_state_variance() -= TPZprime.multT(kalman_gain());
+
+      // Step 3: P += RQR
+      model_->state_variance_matrix(t)->add_to(
+          mutable_state_variance());
+      mutable_state_variance().fix_near_symmetry();
+      return log_likelihood;
+    }  // update
+
+
+    void ConditionalIidMarginalDistribution::small_sample_update(
+        const Vector &observation,
+        const Selector &observed,
+        int t,
+        const SparseKalmanMatrix &transition,
+        const SparseKalmanMatrix &observation_coefficients) {
+      set_prediction_error(
+          observation - observation_coefficients * state_mean());
+
+      SpdMatrix forecast_variance =
+          DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
+          + observation_coefficients.sandwich(state_variance());
+      SpdMatrix forecast_precision = forecast_variance.inv();
+      set_forecast_precision_log_determinant(forecast_precision.logdet());
+      set_scaled_prediction_error(forecast_precision * prediction_error());
+
+      // Compute the one-step prediction error and log likelihood contribution.
+      set_kalman_gain(transition * state_variance() *
+                      observation_coefficients.Tmult(forecast_precision));
+    }
+
+    void ConditionalIidMarginalDistribution::large_sample_update(
+        const Vector &observation,
+        const Selector &observed,
+        int t,
+        const SparseKalmanMatrix &transition,
+        const SparseKalmanMatrix &observation_coefficients) {
+      double observation_variance = model_->observation_variance(t);
       Matrix dense_observation_coefficients =
           observed.select_rows(observation_coefficients.dense());
       // Make a new member function called partial_observation_coefficients
@@ -87,7 +159,7 @@ namespace BOOM {
       scaled_error -= prediction_error();
       scaled_error /= -1 * observation_variance;
       set_scaled_prediction_error(scaled_error);
-
+      
       // SpdMatrix forecast_variance =
       //     DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
       //     + sandwich(dense_observation_coefficients, state_variance());
@@ -102,15 +174,9 @@ namespace BOOM {
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
       //
       // Let A = H, U = Z, V' = PZ'.  Then det(F) = det(I + PZ'Z / v) * det(H)
-      double forecast_precision_log_determinant =
+      set_forecast_precision_log_determinant(
           -1 * (inner_qr.logdet()
-                + observed.nvars() * log(observation_variance));
-      
-      double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
-          + .5 * forecast_precision_log_determinant - .5 * prediction_error().dot(scaled_error);
-
-      // Compute the one-step prediction error and log likelihood contribution.
-      const SparseKalmanMatrix &transition(*model_->state_transition_matrix(t));
+                + observed.nvars() * log(observation_variance)));
 
       // Kalman gain = TPZ'Finv = 
       //
@@ -122,40 +188,8 @@ namespace BOOM {
       Matrix gain = -1 * (observation_coefficients * inner_qr.solve(PZprimeHinv));
       gain.diag() += 1.0;
       set_kalman_gain(transition * PZprimeHinv * gain);
-      
-      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
-      // E(state[t+1] | Y[t]).
-      set_state_mean(transition * state_mean() + kalman_gain() * prediction_error());
-
-      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
-      // Var(state[t+1} | Y[t]).
-      //
-      // The update formula is
-      //
-      // P[t+1] = T[t] * P[t] * T[t]'
-      //          - T[t] * P[t] * Z[t]' * K[t]'
-      //          + R[t] * Q[t] * R[t]'
-      //
-      // Need to define TPZprime before modifying P (known here as
-      // state_variance).
-      Matrix TPZprime = (dense_observation_coefficients *
-                         (transition * state_variance()).transpose()).transpose();
-
-      // Step 1:  Set P = T * P * T.transpose()
-      transition.sandwich_inplace(mutable_state_variance());
-
-      // Step 2: 
-      // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
-      // skipped if y is missing, because K is zero.
-      mutable_state_variance() -= TPZprime.multT(kalman_gain());
-
-      // Step 3: P += RQR
-      model_->state_variance_matrix(t)->add_to(
-          mutable_state_variance());
-      mutable_state_variance().fix_near_symmetry();
-      return log_likelihood;
-    }  // update
-
+    }
+    
     //===========================================================================
     double ConditionalIidMarginalDistribution::fully_missing_update(int t) {
       // Compute the one-step prediction error and log likelihood contribution.

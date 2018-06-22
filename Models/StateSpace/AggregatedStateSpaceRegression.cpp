@@ -141,9 +141,9 @@ namespace BOOM {
   //----------------------------------------------------------------------
 
   namespace {
-    // Keep in mind that you might not be multiplying a state vector.
-    // You probably are, but you might be multiplying a random column in
-    // a variance matrix, etc.
+    // Keep in mind that you might not be multiplying a state vector.  You
+    // probably are, but you might be multiplying a random column in a variance
+    // matrix, etc.
     template <class VEC>
     Vector Multiply(const SparseKalmanMatrix *T, const SparseVector &Z,
                     bool contains_end, double fraction_in_initial_period,
@@ -457,6 +457,10 @@ namespace BOOM {
     double y = alpha[state_dim - 2];
     // y is the imputed fine-scale observation from the Kalman filter.
 
+    if (!std::isfinite(y)) {
+      report_error("Observation is not finite.");
+    }
+    
     Ptr<RegressionData> dp(regression_->dat()[t]);
     // The state_mean is computed using the observation_matrix from
     // the client model, available from ScalarStateSpaceModelBase.

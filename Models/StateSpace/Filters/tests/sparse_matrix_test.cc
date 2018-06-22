@@ -99,6 +99,12 @@ namespace {
         << "B = " << original_summand << endl
         << "sparse->add_to(B) = " << summand << endl
         << "dense + B = " << dense + original_summand << endl;
+
+    SpdMatrix inner = sparse->inner();
+    EXPECT_TRUE(MatrixEquals(inner, dense.inner()))
+        << "inner = " << endl << inner << endl
+        << "dense.inner() = " << endl
+        << dense.inner();
   }
   
   void CheckLeftInverse(const Ptr<SparseMatrixBlock> &block,
@@ -331,6 +337,12 @@ namespace {
     ans.diag() += 1.0;
     return ans;
   }
+
+  TEST_F(SparseMatrixTest, ConstraintMatrixTest) {
+    Matrix dense = ConstraintMatrix(7);
+    NEW(EffectConstraintMatrix, sparse)(7);
+    CheckSparseMatrixBlock(sparse, dense);
+  }
   
   TEST_F(SparseMatrixTest, EffectConstrainedMatrixBlockTest) {
     NEW(SeasonalStateSpaceMatrix, seasonal)(4);
@@ -355,6 +367,16 @@ namespace {
     dense(3, 7) = 19;
     dense(5, 2) = -4;
     CheckSparseMatrixBlock(sparse, dense);
+
+
+    NEW(GenericSparseMatrixBlock, sparse_square)(7, 7);
+    (*sparse_square)(2, 5) = 17.4;
+    (*sparse_square)(4, 0) = -83;
+    Matrix square_dense(7, 7, 0.0);
+    square_dense(2, 5) = 17.4;
+    square_dense(4, 0) = -83;
+    CheckSparseMatrixBlock(sparse_square, square_dense);
+    
   }
   
 }  // namespace

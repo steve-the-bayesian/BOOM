@@ -156,6 +156,9 @@ namespace BOOM {
 
     Vector Tmult(const ConstVectorView &v) const override;
     void sandwich_inplace(SpdMatrix &P) const override;
+    SpdMatrix inner() const override {
+      return dense().inner();
+    }
     Matrix &add_to(Matrix &P) const override;
 
    private:
@@ -202,6 +205,9 @@ namespace BOOM {
     Vector operator*(const ConstVectorView &v) const override;
 
     Vector Tmult(const ConstVectorView &v) const override;
+    SpdMatrix inner() const override {
+      return dense().inner();
+    }
     Matrix &add_to(Matrix &m) const override;
 
    private:
@@ -257,29 +263,28 @@ namespace BOOM {
     // Number of fine scale time points ('weeks') in the training data.
     int time_dimension() const override;
 
-    // Number of elements in the state vector at a single time point,
-    // including the cumulator variables.  Because the cumulator
-    // variables are not accounted for by a StateModel, we need to
-    // overload this function and account for them by hand.
+    // Number of elements in the state vector at a single time point, including
+    // the cumulator variables.  Because the cumulator variables are not
+    // accounted for by a StateModel, we need to overload this function and
+    // account for them by hand.
     int state_dimension() const override;
 
-    // Variance of observed data w[t], given state alpha[t].  Durbin
-    // and Koopman's H.  For this model, this is 0.
+    // Variance of observed data w[t], given state alpha[t].  Durbin and
+    // Koopman's H.  For this model, this is 0.
     double observation_variance(int t) const override;
 
-    // An adjusted_observation(t) is w[t] after subtracting off
-    // regression effects not accounted for in the state model.  We
-    // can just return the W[t] portion of the week[t], if observed
-    // because our regression adjustment is already part of the state
-    // vector.
+    // An adjusted_observation(t) is w[t] after subtracting off regression
+    // effects not accounted for in the state model.  We can just return the
+    // W[t] portion of the week[t], if observed because our regression
+    // adjustment is already part of the state vector.
     double adjusted_observation(int t) const override;
 
     // Returns an indicator of whether W[t] is observed for week t.
     bool is_missing_observation(int t) const override;
 
-    // The regression model is the observation model for the
-    // non-cumulated client data.  The observation model for the
-    // cumulated data is a Gaussian model with zero variance.
+    // The regression model is the observation model for the non-cumulated
+    // client data.  The observation model for the cumulated data is a Gaussian
+    // model with zero variance.
     GaussianModel *observation_model() override {
       return observation_model_.get();
     }
@@ -287,8 +292,8 @@ namespace BOOM {
       return observation_model_.get();
     }
 
-    // Returns a pointer to the RegressionModel that manages the
-    // linear prediction based on contemporaneous covariates.
+    // Returns a pointer to the RegressionModel that manages the linear
+    // prediction based on contemporaneous covariates.
     RegressionModel *regression_model() { return regression_.get(); }
 
     // This function updates the regression portion of the model.

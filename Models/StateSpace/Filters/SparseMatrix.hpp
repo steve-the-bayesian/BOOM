@@ -79,6 +79,9 @@ namespace BOOM {
     // is to throw an error.
     virtual void left_inverse(VectorView lhs,
                               const ConstVectorView &rhs) const;
+
+    // this->transpose() * this;
+    virtual SpdMatrix inner() const = 0;
     
     // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
@@ -125,6 +128,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     void matrix_multiply_inplace(SubMatrix m) const override;
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -157,6 +161,7 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -181,6 +186,7 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView v) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
   };
@@ -208,6 +214,7 @@ namespace BOOM {
       lhs = m_.Tmult(rhs);
     }
     void multiply_inplace(VectorView x) const override { x = m_ * x; }
+    SpdMatrix inner() const override {return m_.inner();}
     void add_to(SubMatrix block) const override { block += m_; }
     Matrix dense() const override { return m_; }
 
@@ -243,6 +250,7 @@ namespace BOOM {
     DenseSpd *clone() const override { return new DenseSpd(*this); }
     const SpdMatrix &value() const override { return m_; }
     void set_matrix(const SpdMatrix &m) { m_ = m; }
+    SpdMatrix inner() const override {return m_.inner();}
 
    private:
     SpdMatrix m_;
@@ -256,6 +264,7 @@ namespace BOOM {
       return new DenseSpdParamView(*this);
     }
     const SpdMatrix &value() const override { return matrix_->value(); }
+    SpdMatrix inner() const override {return value().inner();}
 
    private:
     Ptr<SpdParams> matrix_;
@@ -298,6 +307,12 @@ namespace BOOM {
       for (int i = 0; i < m.nrow(); ++i) {
         m.row(i) *= diagonal_elements();
       }
+    }
+
+    SpdMatrix inner() const override {
+      SpdMatrix ans(nrow(), 0.0);
+      ans.diag() = pow(diagonal_elements(), 2);
+      return ans;
     }
 
     void add_to(SubMatrix block) const override {
@@ -399,8 +414,9 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
-
+    
    private:
     std::vector<Ptr<UnivParams>> elements_;
     std::vector<int> positions_;
@@ -432,6 +448,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     // x = (*this) * x;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 
@@ -445,6 +462,13 @@ namespace BOOM {
   // left block is a [p-1 X p-1] identity matrix (i.e. a shift-down
   // operator), and the lower right block is a [p-1 X 1] vector of
   // 0's.
+  //
+  // phi1 phi2  ....  phip
+  // 1    0       0   0
+  // 0    1       0   0
+  // ...
+  // 0    0       0   0
+  // 0    0       1   0
   class AutoRegressionTransitionMatrix : public SparseMatrixBlock {
    public:
     explicit AutoRegressionTransitionMatrix(const Ptr<GlmCoefs> &rho);
@@ -459,6 +483,7 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
     // virtual void matrix_multiply_inplace(SubMatrix m) const;
     // virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
@@ -498,6 +523,7 @@ namespace BOOM {
                       const ConstVectorView &rhs) const override {
       lhs = rhs;
     }
+    SpdMatrix inner() const override {return SpdMatrix(nrow(), 1.0);}
     
    private:
     int dim_;
@@ -522,6 +548,7 @@ namespace BOOM {
     Matrix dense() const override {
       return Matrix(0, 0);
     }
+    SpdMatrix inner() const override {return SpdMatrix(0);}
   };
 
   //======================================================================
@@ -560,6 +587,9 @@ namespace BOOM {
     void matrix_multiply_inplace(SubMatrix x) const override { x *= value(); }
     void matrix_transpose_premultiply_inplace(SubMatrix x) const override {
       x *= value();
+    }
+    SpdMatrix inner() const override {
+      return SpdMatrix(nrow(), square(value()));
     }
     void add_to(SubMatrix block) const override { block.diag() += value(); }
 
@@ -630,6 +660,11 @@ namespace BOOM {
       double tmp = x[0];
       x = 0;
       x[0] = tmp * value();
+    }
+    SpdMatrix inner() const override {
+      SpdMatrix ans(dim_, 0.0);
+      ans(0, 0) = square(value());
+      return ans;
     }
     void add_to(SubMatrix block) const override { block(0, 0) += value(); }
 
@@ -706,6 +741,12 @@ namespace BOOM {
           "square matrices.");
     }
 
+    SpdMatrix inner() const override {
+      SpdMatrix ans(ncol(), 0.0);
+      ans(0, 0) = 1.0;
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override { block(0, 0) += 1.0; }
 
     Matrix dense() const override {
@@ -713,7 +754,7 @@ namespace BOOM {
       ans(0, 0) = 1.0;
       return ans;
     }
-
+    
     void left_inverse(VectorView lhs,
                       const ConstVectorView &rhs) const override {
       lhs[0] = rhs[0];
@@ -780,6 +821,10 @@ namespace BOOM {
           "to square matrices.");
     }
 
+    SpdMatrix inner() const override {
+      return SpdMatrix(ncol(), 1.0);
+    }
+    
     void add_to(SubMatrix m) const override {
       conforms_to_rows(m.nrow());
       conforms_to_cols(m.ncol());
@@ -831,6 +876,13 @@ namespace BOOM {
       x = 0;
       x[which_element_] = tmp_value;
     }
+
+    SpdMatrix inner() const override {
+      SpdMatrix ans(ncol(), 0.0);
+      ans(which_element_, which_element_) = square(value());
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override {
       check_can_add(block);
       block(which_element_, which_element_) += value();
@@ -896,6 +948,8 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     void matrix_multiply_inplace(SubMatrix m) const override;
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
+
+    SpdMatrix inner() const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -967,6 +1021,14 @@ namespace BOOM {
       for (int i = diagonal_.size(); i < dim_; ++i) x[i] = 0;
     }
 
+    SpdMatrix inner() const override {
+      SpdMatrix ans(ncol(), 0.0);
+      for (int i = 0; i < diagonal_.size(); ++i) {
+        ans(i, i) = square(diagonal_[i]->value() * constant_scale_factor_[i]);
+      }
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override {
       conforms_to_rows(block.nrow());
       conforms_to_cols(block.ncol());
@@ -1037,6 +1099,10 @@ namespace BOOM {
       }
     }
 
+    SpdMatrix inner() const override {
+      return nrow_ * outer(dense_row_);
+    }
+    
     void add_to(SubMatrix block) const override {
       conforms_to_cols(block.ncol());
       conforms_to_rows(block.nrow());
@@ -1049,6 +1115,56 @@ namespace BOOM {
     SparseVector row_;
     Vector dense_row_;
     int nrow_;
+  };
+
+  //===========================================================================
+  // I - 11^T / dim.  This matrix removes the mean from a vector.  It is
+  // symmetric and idempotent.
+  class EffectConstraintMatrix : public SparseMatrixBlock {
+   public:
+    EffectConstraintMatrix(int dim) : dim_(dim) {}
+    EffectConstraintMatrix *clone() const override {
+      return new EffectConstraintMatrix(*this);
+    }
+    int nrow() const override {return dim_;}
+    int ncol() const override {return dim_;}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs = rhs;
+      lhs -= mean(lhs);
+    }
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs += rhs - mean(rhs);
+    }
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      multiply(lhs, rhs);
+    }
+    void multiply_inplace(VectorView x) const override {
+      x -= mean(x);
+    }
+
+    void add_to(SubMatrix block) const override {
+      conforms_to_rows(block.nrow());
+      conforms_to_cols(block.ncol());
+      block.diag() += 1.0;
+      block -= 1.0 / dim_;
+    }
+
+    // (I - 11t/s) * (I - 11t/s)
+    // = I - 11t/s - 11t/s + 11t * 11t / s^2)
+    // = I + (-1/s -1/s + s/s^2)11t
+    // = I - 11t/s
+    SpdMatrix inner() const override {
+      return dense();
+    }
+
+    Matrix dense() const override {
+      Matrix ans(dim_, dim_, -1.0 / dim_);
+      ans.diag() += 1.0;
+      return ans;
+    }
+    
+   private:
+    int dim_;
   };
 
   //===========================================================================
@@ -1105,6 +1221,17 @@ namespace BOOM {
       unconstrained_->multiply_inplace(x);
     }
 
+    SpdMatrix inner() const override {
+      SpdMatrix ans(unconstrained_->inner());
+      for (int i = 0; i < ans.nrow(); ++i) {
+        ans.row(i) -= mean(ans.row(i));
+      }
+      for (int i = 0; i < ans.ncol(); ++i) {
+        ans.col(i) -= mean(ans.col(i));
+      }
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override {
       block += dense();
     }
@@ -1157,6 +1284,9 @@ namespace BOOM {
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
+
+    SpdMatrix inner() const override;
+
     void add_to(SubMatrix block) const override;
 
     void insert_element(uint row, uint col, double value) {

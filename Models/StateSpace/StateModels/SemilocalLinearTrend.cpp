@@ -78,6 +78,17 @@ namespace BOOM {
     x[1] = phi * x[1] + (1 - phi) * x[2];
   }
 
+  SpdMatrix LMAT::inner() const {
+    SpdMatrix ans(3, 1.0);
+    ans(0, 1) = 1.0;
+    ans(1, 0) = 1.0;
+    double phi = phi_->value();
+    ans(1, 1) += phi * phi;
+    ans(1, 2) = ans(2, 1) = phi * (1 - phi);
+    ans(2, 2) += square(1 - phi);
+    return ans;
+  }
+  
   void LMAT::add_to(SubMatrix block) const {
     if (block.nrow() != 3 || block.ncol() != 3) {
       report_error("block is the wrong size in LMAT::add_to");
