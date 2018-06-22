@@ -79,11 +79,18 @@ namespace BOOM {
                                     const Vector &hi) {
     if (draws.ncol() != lo.size()
         || draws.ncol() != hi.size()) {
-      report_error("Both 'lo' and 'hi' must have length equal to the number"                   " of columns in 'draws'.");
+      report_error("Both 'lo' and 'hi' must have length equal to the number"
+                   " of columns in 'draws'.");
     }
     for (int i = 0; i < draws.ncol(); ++i) {
       double min_draw = min(draws.col(i));
       double max_draw = max(draws.col(i));
+      if (hi[i] < lo[i]) {
+        std::ostringstream err;
+        err << "hi < lo for element " << i
+            << ".  Please check the test inputs.";
+        report_error(err.str());
+      }
       if (min_draw < lo[i] || max_draw > hi[i]) {
         std::ostringstream err;
         err << "The range of column " << i << " was ["
