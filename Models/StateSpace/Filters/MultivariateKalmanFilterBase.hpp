@@ -49,12 +49,6 @@ namespace BOOM {
                             const Selector &observed,
                             int t) = 0;
 
-      // Inverse of Var(y[t] | Y[t-1]).
-      virtual SpdMatrix forecast_precision() const = 0;
-
-      // The log determinant of forecast_precision().
-      virtual double forecast_precision_log_determinant() const = 0;
-
       // Returns forecast_precision() * prediction_error().  This is Finv * v in
       // Durbin and Koopman notation.
       virtual Vector scaled_prediction_error() const = 0;

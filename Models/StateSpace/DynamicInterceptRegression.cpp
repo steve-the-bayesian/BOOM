@@ -87,10 +87,6 @@ namespace BOOM {
       // regression, so we need to add the regression component back in.
       Ptr<TimeSeriesRegressionData> data(dat()[t]);
       Vector state_contribution = (*observation_coefficients(t)) * state(t);
-      std::cout << "observation coefficients for time " << t << " are: "
-                << endl << observation_coefficients(t)->dense() << std::endl
-                << "State at time " << t << " is " << std::endl
-                << state(t) << std::endl;
       
       RegressionModel *regression = regression_->regression();
       for (int i = 0; i < data->sample_size(); ++i) {

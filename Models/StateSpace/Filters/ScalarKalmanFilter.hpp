@@ -70,7 +70,6 @@ namespace BOOM {
     // simulation).
     void update(double y, int t, bool missing = false);
 
-    
     void fast_disturbance_smooth() override;
 
     // Return the one-step prediction error held by the filter at time t.  If
@@ -88,7 +87,8 @@ namespace BOOM {
     }
       
     const Kalman::ScalarMarginalDistribution &back() const;
-      
+    int size() const override {return nodes_.size();}
+    
    private:
     ScalarStateSpaceModelBase *model_;
     std::vector<Kalman::ScalarMarginalDistribution> nodes_;

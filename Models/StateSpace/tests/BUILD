@@ -30,6 +30,7 @@ cc_test(
 
 genrule(
     name = "dynamic_intercept_regression_test_dsym",
+    testonly = True,
     srcs = [":dynamic_intercept_regression_test"],
     outs = ["dynamic_intercept_regression_test.dSYM"],
     cmd = "dsymutil $(location :dynamic_intercept_regression_test) -o $@",

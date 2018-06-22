@@ -39,12 +39,13 @@ namespace BOOM {
     if (!model_) {
       report_error("Model must be set before calling update().");
     }
-    ensure_size(model_->time_dimension());
     clear();
+    ensure_size(0);
     node(0).set_state_mean(model_->initial_state_mean());
     node(0).set_state_variance(model_->initial_state_variance());
     for (int t = 0; t < model_->time_dimension(); ++t) {
       if (t > 0) {
+        ensure_size(t);
         node(t).set_state_mean(node(t - 1).state_mean());
         node(t).set_state_variance(node(t - 1).state_variance());
       }
@@ -90,17 +91,12 @@ namespace BOOM {
 
     int n = model_->time_dimension();
     Vector r(model_->state_dimension(), 0.0);
-    std::cout << "In fast_disturbance_smooth:  " << std::endl;
     for (int t = n - 1; t >= 0; --t) {
-      std::cout << "-----------------------  t = " << t << std::endl;
-      node(t).set_scaled_state_error(r);
       // Currently r is r[t].  This step of the loop turns it into r[t-1].
-
+      // 
       // The disturbance smoother is defined by the following formula:
-      // r[t-1] = Z[t]^T * Finv[t] * v[t]
-      //          + (T[t]^T - Z[t]^T * K[t]^T) * r[t]
-      //        = T[t]^T * r
-      //          + Z[t]^T * (K[t]^T * r[t] + Finv[t] * v[t])
+      // r[t-1] = Z^T * Finv * v   +   (T^T - Z^T * K^T) * r[t]
+      //        = T^T * r[t]       -   Z^T * (K^T * r[t] - Finv * v)
       //
       // Note that Durbin and Koopman (2002) is missing the transpose on Z in
       // their equation (5).  The transpose is required to get the dimensions to
@@ -120,18 +116,10 @@ namespace BOOM {
       //   v: m x 1
       //   r: S x 1
       //
-      
-      // Some syntactic sugar makes the formulas easier to match up with Durbin
-      // and Koopman.
-      cout << "Kalman gain = " << endl << node(t).kalman_gain() << endl;
-      cout << "K'r = " << node(t).kalman_gain().Tmult(r) << endl;
-      cout << "scaled prediction_error: " << node(t).scaled_prediction_error() << endl;
-      
+      node(t).set_scaled_state_error(r);
       r = model_->state_transition_matrix(t)->Tmult(r)
-          + model_->observation_coefficients(t)->Tmult(
-              node(t).kalman_gain().Tmult(r) + node(t).scaled_prediction_error());
-
-      cout << "Now (after step " << t << ") r = " << r << endl;
+          - model_->observation_coefficients(t)->Tmult(
+              node(t).kalman_gain().Tmult(r) - node(t).scaled_prediction_error());
     }
     set_initial_scaled_state_error(r);
   }

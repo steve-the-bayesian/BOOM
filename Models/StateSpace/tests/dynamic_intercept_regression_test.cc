@@ -113,6 +113,8 @@ namespace {
               true_beta_.size());
   }
   
+  // With model parameters fixed at true values, check that the state can be
+  // recovered.
   TEST_F(DynamicInterceptRegressionModelTest, DrawStateGivenParams) {
     BuildModel();
     level_model_->clear_methods();
@@ -126,111 +128,115 @@ namespace {
         model_->dat()[0]->predictors() * true_beta_,
         model_->observation_coefficients(0)->dense().col(0)));
     
-    int niter = 40;
+    int niter = 200;
     Matrix level_draws(niter, time_dimension_);
     for (int i = 0; i < niter; ++i) {
-      cout << "========== Iteration " << i << " =================" << endl;
       model_->sample_posterior();
       level_draws.row(i) = model_->state().row(1);
     }
-
-    std::ofstream state_file("state-draws.txt");
-    state_file << level_ << endl << level_draws;
-    
     auto status = CheckMcmcMatrix(level_draws, level_, .95);
     EXPECT_TRUE(status.ok) << "Level state component did not cover." << endl
                            << status;
-    cout << model_->state();
+    // Make sure the distribution isn't insanely wide.
+    EXPECT_EQ("", CheckWithinRage(level_draws, level_ - 5, level_ + 5))
+        << "True level = " << level_;
   }
 
-  // TEST_F(DynamicInterceptRegressionModelTest, DrawParamsGivenState) {
-  //   time_dimension_ = 40;
-  //   BuildModel();
-  //   Matrix true_state = rbind(level_, level_);
-  //   true_state.row(0) = 1.0;
-  //   model_->permanently_set_state(true_state);
+  // With the state fixed at its true value, check that model parameters can be
+  // recovered.
+  TEST_F(DynamicInterceptRegressionModelTest, DrawParamsGivenState) {
+    time_dimension_ = 40;
+    BuildModel();
+    Matrix true_state = rbind(level_, level_);
+    true_state.row(0) = 1.0;
+    model_->permanently_set_state(true_state);
 
-  //   // Check the observation coefficients.
-  //   EXPECT_TRUE(VectorEquals(
-  //       model_->dat()[0]->predictors() * true_beta_,
-  //       model_->observation_coefficients(0)->dense().col(0)));
+    // Check the observation coefficients.
+    EXPECT_TRUE(VectorEquals(
+        model_->dat()[0]->predictors() * true_beta_,
+        model_->observation_coefficients(0)->dense().col(0)));
 
-  //   int niter = 100;
-  //   Vector sigma_level_draws(niter);
-  //   Vector sigma_obs_draws(niter);
-  //   Matrix beta_draws(niter, true_beta_.size());
-  //   for (int i = 0; i < niter; ++i) {
-  //     cout << "========== Iteration " << i << " =================" << endl;
-  //     model_->sample_posterior();
-  //     sigma_level_draws[i] = level_model_->sigma();
-  //     sigma_obs_draws[i] = model_->observation_model()->sigma();
-  //     beta_draws.row(i) = model_->observation_model()->Beta();
-  //   }
+    int niter = 200;
+    Vector sigma_level_draws(niter);
+    Vector sigma_obs_draws(niter);
+    Matrix beta_draws(niter, true_beta_.size());
+    for (int i = 0; i < niter; ++i) {
+      model_->sample_posterior();
+      sigma_level_draws[i] = level_model_->sigma();
+      sigma_obs_draws[i] = model_->observation_model()->sigma();
+      beta_draws.row(i) = model_->observation_model()->Beta();
+    }
 
-  //   EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_,
-  //                               .95, "sigma-level.txt"));
-  //   EXPECT_GT(var(sigma_level_draws), 0);
-  //   EXPECT_TRUE(CheckMcmcVector(sigma_obs_draws, true_observation_sd_,
-  //                               .95, "sigma-obs.txt"));
-  //   EXPECT_TRUE(var(sigma_obs_draws) > 0);
-  //   auto status = CheckMcmcMatrix(beta_draws, true_beta_, .95, true, "beta.txt");
-  //   EXPECT_TRUE(status.ok) << "Beta draws did not cover" << endl << status;
-  // }
+    EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_,
+                                .95, "sigma-level.txt"));
+    EXPECT_GT(var(sigma_level_draws), 0);
+    EXPECT_TRUE(CheckMcmcVector(sigma_obs_draws, true_observation_sd_,
+                                .95, "sigma-obs.txt"));
+    EXPECT_TRUE(var(sigma_obs_draws) > 0);
+    auto status = CheckMcmcMatrix(beta_draws, true_beta_, .95, true, "beta.txt");
+    EXPECT_TRUE(status.ok) << "Beta draws did not cover" << endl << status;
+  }
 
-  // TEST_F(DynamicInterceptRegressionModelTest, FixedRegression) {
-  //   SimulateData();
-  //   BuildModel();
-  //   model_->observation_model()->clear_methods();
-  //   int niter = 100;
-  //   Vector sigma_level_draws(niter);
-  //   for (int i = 0; i < niter; ++i) {
-  //     model_->sample_posterior();
-  //     sigma_level_draws[i] = level_model_->sigma();
-  //   }
-  //   EXPECT_TRUE(VectorEquals(true_beta_, model_->observation_model()->Beta()));
-  //   EXPECT_DOUBLE_EQ(true_observation_sd_, model_->observation_model()->sigma());
-  //   EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_))
-  //       << true_level_sd_ << " " << sigma_level_draws;
-  // }
-  
-  // TEST_F(DynamicInterceptRegressionModelTest, Mcmc) {
-  //   SimulateData();
-  //   BuildModel();
-  //   EXPECT_EQ(model_->observation_model()->Beta().size(),
-  //             true_beta_.size());
-  //   // Check the observation coefficients.
-  //   EXPECT_TRUE(VectorEquals(
-  //       model_->dat()[0]->predictors() * true_beta_,
-  //       model_->observation_coefficients(0)->dense().col(0)));
+  // With regression coefficients and observation fixed at their true values,
+  // check that the state and the the level variance parameter are recovered.
+  TEST_F(DynamicInterceptRegressionModelTest, FixedRegression) {
+    SimulateData();
+    BuildModel();
+    model_->observation_model()->clear_methods();
+    int niter = 200;
+    Vector sigma_level_draws(niter);
+    Matrix level_draws(niter, model_->time_dimension());
+    for (int i = 0; i < niter; ++i) {
+      model_->sample_posterior();
+      sigma_level_draws[i] = level_model_->sigma();
+      level_draws.row(i) = model_->state().row(1);
+    }
+    EXPECT_TRUE(VectorEquals(true_beta_, model_->observation_model()->Beta()));
+    EXPECT_DOUBLE_EQ(true_observation_sd_, model_->observation_model()->sigma());
+    EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_))
+        << true_level_sd_ << " " << sigma_level_draws;
+    auto status = CheckMcmcMatrix(level_draws, level_, .95, true,
+                                  "state-with-fixed-regression.txt");
+    EXPECT_TRUE(status.ok) << "State with fixed regression: " << status;
+  }
 
-  //   int niter = 10;
-  //   Vector sigma_level_draws(niter);
-  //   Vector sigma_obs_draws(niter);
-  //   Matrix beta_draws(niter, true_beta_.size());
-  //   for (int i = 0; i < niter; ++i) {
-  //     cout << "========== Iteration " << i << " =================" << endl;
-  //     model_->sample_posterior();
-  //     sigma_level_draws[i] = level_model_->sigma();
-  //     sigma_obs_draws[i] = model_->observation_model()->sigma();
-  //     beta_draws.row(i) = model_->observation_model()->Beta();
-  //   }
+  // A full MCMC check.
+  TEST_F(DynamicInterceptRegressionModelTest, Mcmc) {
+    SimulateData();
+    BuildModel();
+    EXPECT_EQ(model_->observation_model()->Beta().size(),
+              true_beta_.size());
 
-  //   EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_,
-  //                               .95, "sigma-level-mcmc.txt"))
-  //       << endl
-  //       << AsciiDistributionCompare(sigma_level_draws, true_level_sd_);
-  //   EXPECT_GT(var(sigma_level_draws), 0);
+    int niter = 200;
+    Vector sigma_level_draws(niter);
+    Vector sigma_obs_draws(niter);
+    Matrix beta_draws(niter, true_beta_.size());
+    Matrix level_draws(niter, model_->time_dimension());
+    for (int i = 0; i < niter; ++i) {
+      model_->sample_posterior();
+      sigma_level_draws[i] = level_model_->sigma();
+      sigma_obs_draws[i] = model_->observation_model()->sigma();
+      beta_draws.row(i) = model_->observation_model()->Beta();
+      level_draws.row(i) = model_->state().row(1);
+    }
+
+    EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_,
+                                .95, "sigma-level-mcmc.txt"))
+        << endl << AsciiDistributionCompare(sigma_level_draws, true_level_sd_);
+    EXPECT_GT(var(sigma_level_draws), 0);
     
-  //   EXPECT_TRUE(CheckMcmcVector(sigma_obs_draws, true_observation_sd_, .95,
-  //                               "sigma-obs.txt"))
-  //       << endl
-  //       << AsciiDistributionCompare(sigma_obs_draws, true_observation_sd_);
-  //   EXPECT_TRUE(var(sigma_obs_draws) > 0);
+    EXPECT_TRUE(CheckMcmcVector( sigma_obs_draws, true_observation_sd_, .95,
+                                 "sigma-obs.txt"))
+        << endl << AsciiDistributionCompare(
+            sigma_obs_draws, true_observation_sd_);
+    EXPECT_TRUE(var(sigma_obs_draws) > 0);
 
-  //   auto status = CheckMcmcMatrix(beta_draws, true_beta_, .95, true,
-  //                                 "beta-mcmc.txt");
-  //   EXPECT_TRUE(status.ok) << "Beta draws did not cover" << endl << status;
-  // }
+    auto status = CheckMcmcMatrix(beta_draws, true_beta_, .95, true,
+                                  "beta-mcmc.txt");
+    EXPECT_TRUE(status.ok) << "Beta draws did not cover" << endl << status;
 
+    status  = CheckMcmcMatrix(level_draws, level_);
+    EXPECT_TRUE(status.ok) << "State did not cover" << endl << status;
+  }
   
 }  // namespace

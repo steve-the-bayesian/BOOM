@@ -131,6 +131,9 @@ namespace BOOM {
     virtual const Kalman::MarginalDistributionBase & operator[](
         size_t pos) const = 0;
 
+    // The number of nodes.
+    virtual int size() const = 0;
+    
     void set_status(const KalmanFilterStatus &status) {
       status_ = status;
     }
@@ -138,6 +141,10 @@ namespace BOOM {
     const Vector &initial_scaled_state_error() const {
       return initial_scaled_state_error_;
     }
+
+    // The matrix of state means.  Each column of the matrix represents a time
+    // point.
+    Matrix state_mean() const;
     
    protected:
     void increment_log_likelihood(double loglike) {

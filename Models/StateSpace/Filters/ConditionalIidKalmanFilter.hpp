@@ -30,10 +30,10 @@ namespace BOOM {
   class ConditionalIidMultivariateStateSpaceModelBase;
   
   namespace Kalman {
-    // Marginal distribution representing the case where the observation error
-    // variance is a constant times the identity matrix.  The constant need not
-    // be the same for all t, but it must be the same for all observations at
-    // the same time point.
+    // Marginal distribution for a multivariate state space model with
+    // observation error variance equal to a constant times the identity matrix.
+    // The constant need not be the same for all t, but it must be the same for
+    // all observations at the same time point.
     class ConditionalIidMarginalDistribution
         : public MultivariateMarginalDistributionBase {
      public:
@@ -45,10 +45,6 @@ namespace BOOM {
         model_ = model;
       }
 
-      void set_time_index(int time_index) {
-        time_index_ = time_index;
-      }
-      
       // Args:
       //   observation: The vector of observed data at time t.  Note that some
       //     elements of 'observation' might be missing.
@@ -57,8 +53,6 @@ namespace BOOM {
       //     observed data.  If observed[i] == false then observation[i] should be
       //     viewed as meaningless.
       //   t:  The time index that this marginal distribution describes.
-      //   model: The model responsible for supplying the model matrices defining
-      //     the Kalman filter updates.
       //
       // Returns:
       //   The contribution that observation makes to the log likelihood.
@@ -67,19 +61,6 @@ namespace BOOM {
       // A Kalman filter update when the vector y is entirely missing.
       double fully_missing_update(int t);
       
-      // Compute the forecast precision matrix: Var(y[t+1] | Y[t]).inverse().
-      // The inputs required to make this computation are stored during a call
-      // to update().  The actual matrix is potentially very large, so it is not
-      // stored.  This function re-computes it.
-      SpdMatrix forecast_precision() const override;
-
-      // The log determinant fo the forecast precision matrix.  This is computed
-      // and stored during a call to update().  This function is just an
-      // accessor.
-      double forecast_precision_log_determinant() const override {
-        return forecast_precision_log_determinant_;
-      }
-
       // The prediction error is y[t] - E(y[t] | Y[t-1]).  The scaled prediction
       // error is forecast_precision() * prediction_error().
       Vector scaled_prediction_error() const override {
@@ -88,11 +69,8 @@ namespace BOOM {
       void set_scaled_prediction_error(const Vector &err) {
         scaled_prediction_error_ = err;
       }
-      
+
      private:
-      double forecast_precision_log_determinant_;
-      double observation_variance_;
-      int time_index_;
       ModelType *model_;
       Vector scaled_prediction_error_;
 
@@ -120,6 +98,7 @@ namespace BOOM {
     }
 
     void ensure_size(int t) override;
+    int size() const override { return nodes_.size(); }
     
    private:
     std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;

@@ -40,10 +40,23 @@ namespace BOOM {
     }
   }
 
+  Matrix KalmanFilterBase::state_mean() const {
+    Matrix ans;
+    int time_dimension = size();
+    if (time_dimension > 0) {
+      Vector v0 = (*this)[0].state_mean();
+      ans.resize(v0.size(), time_dimension);
+      ans.col(0) = v0;
+      for (int t = 1; t < time_dimension; ++t) {
+        ans.col(t) = (*this)[t].state_mean();
+      }
+    }
+    return ans;
+  }
+  
   void KalmanFilterBase::clear() {
     log_likelihood_ = 0;
     status_ = NOT_CURRENT;
   }
-  
   
 }  // namespace BOOM

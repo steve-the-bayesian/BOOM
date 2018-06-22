@@ -916,8 +916,8 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   // After a call to fast_disturbance_smoother() puts r[t] in
-  // filter_[t].kalman_gain, this function propagates the r's forward to get
-  // E(alpha | y), and add it to the simulated state.
+  // filter_[t].scaled_state_error, this function propagates the r's forward to
+  // get E(alpha | y), and add it to the simulated state.
   void Base::propagate_disturbances() {
     if (time_dimension() <= 0) return;
     KalmanFilterBase &filter(get_filter());
