@@ -84,5 +84,33 @@ namespace {
     Vector direct_coef = xtx.solve(predictors.transpose() * response);
     EXPECT_TRUE(VectorEquals(qr_coef, direct_coef, 1e-5));
   }
+
+  TEST_F(QrTest, Solve) {
+    Matrix A(4, 4);
+    A.randomize();
+
+    QR qr(A);
+    
+    // Find A.inv * B
+
+    Matrix B(4, 2);
+    B.randomize();
+
+    Matrix QB = qr.getQ().transpose() * B;
+    Matrix RinvQB = Usolve(qr.getR(), QB);
+    EXPECT_TRUE(MatrixEquals(A * RinvQB, B, 1e-5))
+        << "RinvQB = " << endl
+        << RinvQB;
+    
+    Matrix AinvB = qr.solve(B);
+    EXPECT_TRUE(MatrixEquals(A * AinvB, B, 1e-5));
+
+    Vector x(4);
+    x.randomize();
+
+    Vector Ainv_x = qr.solve(x);
+    EXPECT_TRUE(VectorEquals(A * Ainv_x, x, 1e-6));
+    
+  }
   
 }  // namespace

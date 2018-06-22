@@ -39,9 +39,7 @@ namespace BOOM {
   Matrix QR::getR() const { return R_; }
 
   Matrix QR::solve(const Matrix &B) const {
-    Matrix ans = Usolve(R_, B);
-    EigenMap(ans) = EigenMap(Q_).transpose() * EigenMap(ans);
-    return ans;
+    return Usolve(R_, QtY(B));
   }
 
   Vector QR::Qty(const Vector &y) const {
@@ -60,10 +58,7 @@ namespace BOOM {
   }
 
   Vector QR::solve(const Vector &B) const {
-    Vector Rinverse_B = Usolve(R_, B);
-    Vector ans(Q_.nrow());
-    EigenMap(ans) = EigenMap(Q_).transpose() * EigenMap(Rinverse_B);
-    return ans;
+    return Usolve(R_, Qty(B));
   }
 
   double QR::det() const { return sign_ * (R_.diag().prod()); }
