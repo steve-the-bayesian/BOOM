@@ -588,7 +588,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void ScalarStateSpaceModelBase::observe_state(int t) {
+  void Base::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
       return;
@@ -597,7 +597,7 @@ namespace BOOM {
     const ConstVectorView then(state().col(t - 1));
     for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->observe_state(state_component(then, s),
-                                    state_component(now, s), t, this);
+                                    state_component(now, s), t);
     }
   }
 

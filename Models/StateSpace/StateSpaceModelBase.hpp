@@ -443,11 +443,11 @@ namespace BOOM {
     Matrix &mutable_state() { return state_; }
 
     //-----Implementation details for the Kalman filter and smoother -----
-    // The 'observe_state' functions compute the contribution to the complete
-    // data sufficient statistics (for the observation and state models) once
-    // the state at time 't' has been imputed.
-    virtual void observe_state(int t) = 0;
-
+    // Compute the contribution to the complete data sufficient statistics, for
+    // the observation model and all the state models, once the state at time
+    // 't' has been imputed.
+    void observe_state(int t);
+    
     // The initial state can be treated specially, though the default for this
     // function is a no-op.  The initial state refers to the state at time 0
     // (other implementations sometimes assume the initial state is at time -1).
@@ -657,11 +657,6 @@ namespace BOOM {
     const ScalarKalmanFilter &get_simulation_filter() const override;
     
    protected:
-    // Compute the contribution to the complete data sufficient statistics, for
-    // the observation model and all the state models, once the state at time
-    // 't' has been imputed.
-    void observe_state(int t) override;
-
     void simulate_forward(RNG &rng) override;
 
     // Args:
