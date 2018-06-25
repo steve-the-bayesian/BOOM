@@ -1362,6 +1362,8 @@ namespace BOOM {
     // *this is non-square.
     virtual SpdMatrix sandwich_transpose(const SpdMatrix &P) const;
 
+    virtual SpdMatrix inner() const = 0;
+    
     // P += *this
     virtual Matrix &add_to(Matrix &P) const = 0;
     virtual SubMatrix add_to_submatrix(SubMatrix P) const;
@@ -1425,6 +1427,7 @@ namespace BOOM {
 
     using SparseKalmanMatrix::Tmult;
     Vector Tmult(const ConstVectorView &x) const override;
+    SpdMatrix inner() const override;
 
     // P -> this * P * this.transpose()
     void sandwich_inplace(SpdMatrix &P) const override;
@@ -1501,7 +1504,8 @@ namespace BOOM {
     Vector operator*(const ConstVectorView &v) const override;
 
     Vector Tmult(const ConstVectorView &v) const override;
-
+    SpdMatrix inner() const override;
+    
     // P += *this
     Matrix &add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;

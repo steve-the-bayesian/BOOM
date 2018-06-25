@@ -88,7 +88,7 @@ namespace BOOM {
       return log_likelihood;
     }  // update
 
-
+    //---------------------------------------------------------------------------
     void ConditionalIidMarginalDistribution::small_sample_update(
         const Vector &observation,
         const Selector &observed,
@@ -97,19 +97,17 @@ namespace BOOM {
         const SparseKalmanMatrix &observation_coefficients) {
       set_prediction_error(
           observation - observation_coefficients * state_mean());
-
       SpdMatrix forecast_variance =
           DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
           + observation_coefficients.sandwich(state_variance());
       SpdMatrix forecast_precision = forecast_variance.inv();
       set_forecast_precision_log_determinant(forecast_precision.logdet());
       set_scaled_prediction_error(forecast_precision * prediction_error());
-
-      // Compute the one-step prediction error and log likelihood contribution.
       set_kalman_gain(transition * state_variance() *
                       observation_coefficients.Tmult(forecast_precision));
     }
 
+    //---------------------------------------------------------------------------
     void ConditionalIidMarginalDistribution::large_sample_update(
         const Vector &observation,
         const Selector &observed,
@@ -117,9 +115,6 @@ namespace BOOM {
         const SparseKalmanMatrix &transition,
         const SparseKalmanMatrix &observation_coefficients) {
       double observation_variance = model_->observation_variance(t);
-      Matrix dense_observation_coefficients =
-          observed.select_rows(observation_coefficients.dense());
-      // Make a new member function called partial_observation_coefficients
 
       Vector observation_mean = observed.select(
           observation_coefficients * state_mean());
@@ -145,7 +140,7 @@ namespace BOOM {
       //   Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
       //
       // We don't compute this directly, we compute Finv * prediction_error.
-      SpdMatrix Z_inner = dense_observation_coefficients.inner();
+      SpdMatrix Z_inner = observation_coefficients.inner();
       Matrix inner_matrix = state_variance() * Z_inner / observation_variance;
       inner_matrix.diag() += 1.0;
       QR inner_qr(inner_matrix);
@@ -153,21 +148,11 @@ namespace BOOM {
       Vector scaled_error =
           state_variance() * (observation_coefficients.Tmult(prediction_error()));
       scaled_error = inner_qr.solve(scaled_error);
-      //      scaled_error = inner_matrix.solve(scaled_error);
       scaled_error = observation_coefficients * scaled_error;
       scaled_error /= observation_variance;
       scaled_error -= prediction_error();
       scaled_error /= -1 * observation_variance;
       set_scaled_prediction_error(scaled_error);
-      
-      // SpdMatrix forecast_variance =
-      //     DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
-      //     + sandwich(dense_observation_coefficients, state_variance());
-      // SpdMatrix forecast_precision = forecast_variance.inv();
-      // if ((scaled_error - forecast_precision * prediction_error()).max_abs()
-      //     > 1e-4) {
-      //   report_error("bad scaled error");
-      // }
       
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"

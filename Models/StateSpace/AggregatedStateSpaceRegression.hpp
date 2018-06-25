@@ -155,10 +155,10 @@ namespace BOOM {
     Vector operator*(const ConstVectorView &v) const override;
 
     Vector Tmult(const ConstVectorView &v) const override;
-    void sandwich_inplace(SpdMatrix &P) const override;
     SpdMatrix inner() const override {
       return dense().inner();
     }
+    void sandwich_inplace(SpdMatrix &P) const override;
     Matrix &add_to(Matrix &P) const override;
 
    private:

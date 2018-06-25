@@ -1132,6 +1132,18 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix BlockDiagonalMatrix::inner() const {
+    SpdMatrix ans(ncol(), 0.0);
+    int start = 0;
+    for (int b = 0; b < blocks_.size(); ++b) {
+      int end = start + blocks_[b]->ncol();
+      SubMatrix(ans, start, end - 1, start, end - 1)
+          = blocks_[b]->inner();
+      start = end;
+    }
+    return ans;
+  }
+
   // this * P * this.transpose.
   SpdMatrix BlockDiagonalMatrix::sandwich(const SpdMatrix &P) const {
     // If *this is rectangular then the result will not be the same dimension as
@@ -1333,6 +1345,28 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix SparseVerticalStripMatrix::inner() const {
+    SpdMatrix ans(ncol(), 0.0);
+    int row_start = 0;
+    std::vector<Matrix> dense_blocks;
+    dense_blocks.reserve(blocks_.size());
+    for (int b = 0; b < blocks_.size(); ++b) {
+      dense_blocks.push_back(blocks_[b]->dense());
+    }
+    
+    for (int b0 = 0; b0 < blocks_.size(); ++b0) {
+      int col_start = 0;
+      int row_end = row_start + nrow();
+      for (int b1 = b0; b1 < blocks_.size(); ++b1) {
+        int col_end = col_start + blocks_[b1]->ncol();
+        SubMatrix(ans, row_start, row_end - 1, col_start, col_end - 1)
+            = dense_blocks[b0].Tmult(dense_blocks[b1]);
+      }
+    }
+    ans.reflect();
+    return ans;
+  }
+  
   Matrix &SparseVerticalStripMatrix::add_to(Matrix &P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;

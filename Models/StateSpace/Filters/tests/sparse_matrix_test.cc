@@ -106,7 +106,7 @@ namespace {
         << "dense.inner() = " << endl
         << dense.inner();
   }
-  
+
   void CheckLeftInverse(const Ptr<SparseMatrixBlock> &block,
                         const Vector &rhs) {
     BlockDiagonalMatrix mat;
@@ -376,7 +376,46 @@ namespace {
     square_dense(2, 5) = 17.4;
     square_dense(4, 0) = -83;
     CheckSparseMatrixBlock(sparse_square, square_dense);
-    
+  }
+
+  TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {
+    BlockDiagonalMatrix sparse;
+    sparse.add_block(new LocalLinearTrendMatrix);
+    sparse.add_block(new SeasonalStateSpaceMatrix(4));
+    Matrix dense = sparse.dense();
+
+    EXPECT_EQ(2 + 3, sparse.nrow());
+    EXPECT_EQ(sparse.nrow(), sparse.ncol());
+
+    Vector v(sparse.ncol());
+    v.randomize();
+    EXPECT_TRUE(VectorEquals(sparse * v, dense * v));
+    EXPECT_TRUE(VectorEquals(sparse * VectorView(v), dense * VectorView(v)));
+    EXPECT_TRUE(VectorEquals(sparse * ConstVectorView(v),
+                             dense * ConstVectorView(v)));
+
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(v), dense.Tmult(v)));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(v)),
+                             dense.Tmult(VectorView(v))));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(ConstVectorView(v)),
+                             dense.Tmult(ConstVectorView(v))));
+
+    SpdMatrix V(5);
+    V.randomize();
+    SpdMatrix originalV = V;
+    sparse.sandwich_inplace(V);
+    EXPECT_TRUE(MatrixEquals(V, dense * originalV * dense.transpose()));
+
+    EXPECT_TRUE(MatrixEquals(sparse.sandwich(V), dense * V * dense.transpose()));
+
+    originalV = V;
+    EXPECT_TRUE(MatrixEquals(sparse.add_to(V), originalV + dense));
+
+    originalV = V;
+    sparse.sandwich_inplace_transpose(V);
+    EXPECT_TRUE(MatrixEquals(V, dense.transpose() * originalV * dense));
+
+    EXPECT_TRUE(MatrixEquals(dense.inner(), sparse.inner()));
   }
   
 }  // namespace

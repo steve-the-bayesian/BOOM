@@ -111,13 +111,16 @@ namespace BOOM {
     explicit ConditionalIidKalmanFilter(ModelType *model = nullptr);
     void set_model(ModelType *model);
     
-    MarginalType & operator[](size_t pos) override { return node(pos); }
-    const MarginalType & operator[](size_t pos) const override {
+    MarginalType &operator[](size_t pos) override { return node(pos); }
+    const MarginalType &operator[](size_t pos) const override {
       return node(pos);
     }
 
-    void ensure_size(int t) override;
+    // The number of time points in the model being filtered.
     int size() const override { return nodes_.size(); }
+
+    // Ensure space for at least t marginal distributions.
+    void ensure_size(int t) override;
     
    private:
     std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;
@@ -128,6 +131,7 @@ namespace BOOM {
       }
       return nodes_[pos];
     }
+
     const MarginalType & node(size_t pos) const override {
       if (pos >= nodes_.size()) {
         report_error("Asking for a const node past the end.");
@@ -136,7 +140,6 @@ namespace BOOM {
     }
 
     ModelType *model_;
-    
   };
   
 }  // namespace BOOM
