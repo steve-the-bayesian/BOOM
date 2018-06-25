@@ -118,6 +118,10 @@ namespace BOOM {
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
                               const Vector &hi);
   
+  // A non-empty return value is an error message indicating the first column of
+  // 'draws' to fall outside the range [lo, hi].
+  std::string CheckWithinRage(const Vector &draws, double lo, double hi);
+  
   // Check to see if a vector of Monte Carlo draws covers a known value.
   //
   // Args:

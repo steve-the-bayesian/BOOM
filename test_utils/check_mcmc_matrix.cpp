@@ -101,6 +101,22 @@ namespace BOOM {
     }
     return "";
   }
+
+  std::string CheckWithinRage(const Vector &draws, double lo, double hi) {
+    if (hi < lo) {
+      report_error("hi must be at least as large as lo.");
+    }
+    double min_draw = min(draws);
+    double max_draw = max(draws);
+    if (min_draw < lo || max_draw > hi) {
+      std::ostringstream err;
+      err << "The range of daws was [" << min_draw
+          << ", " << max_draw << "] which falls outside of ["
+          << lo << ", " << hi << "].";
+      return err.str();
+    }
+    return "";
+  }
   
   bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
                        const std::string &filename) {
