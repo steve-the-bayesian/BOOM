@@ -10,8 +10,12 @@ filegroup(
 
 cc_library(
     name = "test_utils",
-    #    srcs = ["test_utils.hpp"],
+    testonly = True,
     hdrs = ["state_space_test_utils.hpp"],
+    visibility = [
+        "//Models/StateSpace/StateModels/tests:__pkg__",
+        "//Models/StateSpace/tests:__pkg__",
+    ],
     deps = ["//:boom"],
 )
 
