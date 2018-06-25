@@ -362,7 +362,7 @@ namespace BOOM {
     }
     
     // Add in the sum of squared errors around posterior_mean_
-    double likelihood_ss =
+    double likelihood_ss = 
         s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
     SS_ += likelihood_ss;
     if (!std::isfinite(SS_)) {

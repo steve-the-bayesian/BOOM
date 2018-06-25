@@ -36,10 +36,10 @@ namespace BOOM {
     double sigsq = model_->sigsq();
 
     // coefficient_prior_->siginv() is Ominv/sigsq
-    SpdMatrix unscaled_prior_precision = sigsq * coefficient_prior_->siginv(); 
+    SpdMatrix unscaled_prior_precision = coefficient_prior_->unscaled_precision(); 
 
-    posterior_mean_ = model_->xty() + unscaled_prior_precision * prior_mean;
-    posterior_precision_ = unscaled_prior_precision + model_->xtx();
+    posterior_precision_ = unscaled_prior_precision + model_->suf()->xtx();
+    posterior_mean_ = model_->suf()->xty() + unscaled_prior_precision * prior_mean;
     posterior_mean_ = posterior_precision_.solve(posterior_mean_);
 
     SS_ = model_->suf()->relative_sse(posterior_mean_)
