@@ -104,6 +104,11 @@ namespace BOOM {
     DynamicInterceptRegressionModel(DynamicInterceptRegressionModel &&rhs) =
         default;
 
+    void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
+      state_models_.push_back(state_model);
+      StateSpaceModelBase::add_state(state_model);
+    }
+    
     RegressionModel *observation_model() override;
     const RegressionModel *observation_model() const override;
     void observe_data_given_state(int t) override;
@@ -145,9 +150,6 @@ namespace BOOM {
     //   time:  The time index of the observation.
     Vector conditional_mean(int time) const;
     
-   protected:
-    void observe_state(int t) override;
-
    private:
     // Reimplements the logic in the base class, but optimized for the scalar
     // observation variance.
@@ -175,8 +177,12 @@ namespace BOOM {
     // Data begins here.
     //--------------------------------------------------------------------------
     // The regression component of the model is the first state component.
-    Ptr<RegressionStateModel> regression_;
+    Ptr<RegressionDynamicInterceptStateModel> regression_;
 
+    // This set of state parallels the state_models_ vector in the base class.
+    // These are needed to provide the right version of observation_coefficients().
+    std::vector<Ptr<DynamicInterceptStateModel>> state_models_;
+    
     // The observation coefficients are a set of horizontal blocks
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].

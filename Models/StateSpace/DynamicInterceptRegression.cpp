@@ -121,12 +121,22 @@ namespace BOOM {
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
     for (int s = 0; s < number_of_state_models(); ++s) {
       observation_coefficients_.add_block(
-          state_model(s)->dynamic_intercept_regression_observation_coefficients(
-              t, data_point));
+          state_models_[s]->observation_coefficients(t, data_point));
     }
     return &observation_coefficients_;
   }
 
+  // const SparseKalmanMatrix *DIRM::partial_observation_coefficients(int t) const {
+  //   observation_coefficients_.clear();
+  //   const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
+  //   const Selector &observed(data_point.observed());
+  //   for (int s = 0; s < number_of_state_models(); ++s) {
+  //     observation_coefficients_.add_block(
+  //         state_model(s)->dynamic_intercept_regression_observation_coefficients(
+  //             t, data_point, observed));
+  //   }
+  // }
+  
   double DIRM::observation_variance(int t) const {
     return regression_->regression()->sigsq();
   }
@@ -144,21 +154,6 @@ namespace BOOM {
   }
 
   //===========================================================================
-  // protected:
-  void DIRM::observe_state(int t) {
-    if (t == 0) {
-      observe_initial_state();
-      return;
-    }
-    const ConstVectorView now(state().col(t));
-    const ConstVectorView then(state().col(t - 1));
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      state_model(s)->observe_dynamic_intercept_regression_state(
-          state_component(then, s), state_component(now, s), t, this);
-    }
-  }
-
-  //===========================================================================
   // private:
   Vector DIRM::simulate_observation(RNG &rng, int t) {
     Vector ans = (*observation_coefficients(t)) * state(t);
@@ -170,7 +165,8 @@ namespace BOOM {
   }
 
   void DIRM::initialize_regression_component(int xdim) {
-    regression_.reset(new RegressionStateModel(new RegressionModel(xdim)));
+    regression_.reset(new RegressionDynamicInterceptStateModel(
+        new RegressionModel(xdim)));
     add_state(regression_);
   }
 
