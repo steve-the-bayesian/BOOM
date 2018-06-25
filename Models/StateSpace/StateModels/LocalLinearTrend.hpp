@@ -28,14 +28,14 @@ namespace BOOM {
   //  mu[t+1] = mu[t] + delta[t] + u[t]
   //  delta[t+1] = delta[t] + v[t]
   class LocalLinearTrendStateModel : public ZeroMeanMvnModel,
-                                     public StateModel {
+                                     virtual public StateModel {
    public:
     LocalLinearTrendStateModel();
     LocalLinearTrendStateModel(const LocalLinearTrendStateModel &rhs);
     LocalLinearTrendStateModel *clone() const override;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override { return 2; }
     uint state_error_dimension() const override { return 2; }

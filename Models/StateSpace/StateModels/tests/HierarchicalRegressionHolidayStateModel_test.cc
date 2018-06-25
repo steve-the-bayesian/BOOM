@@ -74,7 +74,7 @@ namespace {
     level->set_initial_state_mean(y[0]);
     model.add_state(level);
 
-    NEW(HierarchicalRegressionHolidayStateModel, holiday_model)(
+    NEW(ScalarHierarchicalRegressionHolidayStateModel, holiday_model)(
         t0_, model.observation_model()->Sigsq_prm());
 
     NEW(MvnModel, holiday_mean_prior)(3);
@@ -90,6 +90,7 @@ namespace {
         nullptr);
     holiday_model->set_method(holiday_sampler);
     model.add_state(holiday_model);
+    holiday_model->set_model(&model);
 
     //----------------------------------------------------------------------    
     // Now test some stuff.
@@ -112,8 +113,7 @@ namespace {
     holiday_model->observe_state(
         ConstVectorView(state.col(first_holiday - 1), 1, 1),
         ConstVectorView(state.col(first_holiday - 2), 1, 1),
-        first_holiday - 1,
-        &model);
+        first_holiday - 1);
     EXPECT_DOUBLE_EQ(holiday_model->model()->data_model(0)->suf()->xtx()(0, 0),
                      1.0)
         << "X'X =" << endl
@@ -135,8 +135,7 @@ namespace {
     holiday_model->observe_state(
         ConstVectorView(state.col(first_holiday), 1, 1),
         ConstVectorView(state.col(first_holiday - 1), 1, 1),
-        first_holiday,
-        &model);
+        first_holiday);
     EXPECT_DOUBLE_EQ(holiday_model->model()->data_model(0)->suf()->xtx()(0, 0),
                      1.0);
     EXPECT_DOUBLE_EQ(holiday_model->model()->data_model(0)->suf()->xty()[0],
@@ -154,8 +153,7 @@ namespace {
     holiday_model->observe_state(
         ConstVectorView(state.col(second_holiday), 1, 1),
         ConstVectorView(state.col(second_holiday - 1), 1, 1),
-        second_holiday,
-        &model);
+        second_holiday);
     EXPECT_DOUBLE_EQ(holiday_model->model()->data_model(1)->suf()->xtx()(0, 0),
                      0.0);
     EXPECT_DOUBLE_EQ(holiday_model->model()->data_model(1)->suf()->xty()[0],

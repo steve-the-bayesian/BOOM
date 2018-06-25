@@ -71,7 +71,7 @@ namespace BOOM {
   //   model.model()->set_method(sampler);
   //   // Observe the time dimension, to build initial data structures.
   //   model.observe_time_dimension(83);
-  class HierarchicalRegressionHolidayStateModel : public StateModel,
+  class HierarchicalRegressionHolidayStateModel : virtual public StateModel,
                                                   public CompositeParamPolicy,
                                                   public NullDataPolicy,
                                                   public PriorPolicy {
@@ -88,9 +88,7 @@ namespace BOOM {
     HierarchicalRegressionHolidayStateModel(
         const Date &time_of_first_observation,
         const Ptr<UnivParams> &residual_variance);
-    HierarchicalRegressionHolidayStateModel *clone() const override {
-      return new HierarchicalRegressionHolidayStateModel(*this);
-    }
+    HierarchicalRegressionHolidayStateModel *clone() const override = 0;
 
     // Add a holiday to the set of holidays managed by this model.  The more,
     // similar holidays added the better, because there will be more
@@ -99,12 +97,6 @@ namespace BOOM {
     void add_holiday(const Ptr<Holiday> &holiday);
 
     void observe_time_dimension(int max_time) override;
-    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override { return impl_.state_dimension(); }
     uint state_error_dimension() const override {
@@ -178,6 +170,9 @@ namespace BOOM {
     // influence window.  Element 'day' is 1, all other elements are 0.
     const Vector &daily_dummies(int day) const { return daily_dummies_[day]; }
 
+   protected:
+    const RegressionHolidayBaseImpl &impl() const {return impl_;}
+    
    private:
     RegressionHolidayBaseImpl impl_;
 
@@ -189,6 +184,61 @@ namespace BOOM {
     std::vector<Vector> daily_dummies_;
   };
 
+  //===========================================================================
+  class ScalarStateSpaceModelBase;
+  class ScalarHierarchicalRegressionHolidayStateModel
+      : public HierarchicalRegressionHolidayStateModel {
+   public: 
+    ScalarHierarchicalRegressionHolidayStateModel(
+        const Date &time_of_first_observation,
+        const Ptr<UnivParams> &residual_variance)
+        : HierarchicalRegressionHolidayStateModel(
+              time_of_first_observation, residual_variance),
+          state_space_model_(nullptr) {}
+
+    ScalarHierarchicalRegressionHolidayStateModel *clone() const override {
+      return new ScalarHierarchicalRegressionHolidayStateModel(*this);
+    }
+
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now) override;
+
+    void set_model(const ScalarStateSpaceModelBase *state_space_model) {
+      state_space_model_ = state_space_model;
+    }
+    
+   private:
+    const ScalarStateSpaceModelBase *state_space_model_;
+  };
+
+  //===========================================================================
+  class DynamicInterceptRegressionModel;
+  class DynamicInterceptHierarchicalRegressionHolidayStateModel
+      : public HierarchicalRegressionHolidayStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    DynamicInterceptHierarchicalRegressionHolidayStateModel(
+        const Date &time_of_first_observation,
+        const Ptr<UnivParams> &residual_variance)
+        : HierarchicalRegressionHolidayStateModel(
+              time_of_first_observation, residual_variance),
+          state_space_model_(nullptr) {}
+          
+    DynamicInterceptHierarchicalRegressionHolidayStateModel *
+    clone() const override {
+      return new DynamicInterceptHierarchicalRegressionHolidayStateModel(*this);
+    }
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now) override;
+
+    void set_model(const DynamicInterceptRegressionModel *state_space_model) {
+      state_space_model_ = state_space_model;
+    }
+    
+   private:
+    const DynamicInterceptRegressionModel *state_space_model_;
+  };
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_HIERARCHICAL_REGRESSION_HOLIDAY_STATE_MODEL_HPP_

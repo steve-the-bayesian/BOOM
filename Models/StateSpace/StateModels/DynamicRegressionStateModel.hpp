@@ -56,7 +56,7 @@ namespace BOOM {
   // small and the series will be forecastable.  We also hope that 'a'
   // is large because it means that the sigma[i]'s will be similar to
   // one another.
-  class DynamicRegressionStateModel : public StateModel,
+  class DynamicRegressionStateModel : virtual public StateModel,
                                       public CompositeParamPolicy,
                                       public NullDataPolicy,
                                       public PriorPolicy {
@@ -77,10 +77,7 @@ namespace BOOM {
 
     void clear_data() override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override;
+                       int time_now) override;
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override;
     uint state_error_dimension() const override { return state_dimension(); }
@@ -99,11 +96,6 @@ namespace BOOM {
 
     // The observation matrix is row t of the design matrix.
     SparseVector observation_matrix(int t) const override;
-
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t,
-        const StateSpace::TimeSeriesRegressionData &data_point) const override;
 
     // The initial state is the value of the regression coefficients
     // at time 0.  Zero with a big variance is a good guess.
@@ -171,6 +163,13 @@ namespace BOOM {
     Ptr<UpperLeftDiagonalMatrix> transition_variance_matrix_;
   };
 
+    // Ptr<SparseMatrixBlock>
+    // dynamic_intercept_regression_observation_coefficients(
+    //     int t,
+    //     const StateSpace::TimeSeriesRegressionData &data_point) const override;
+
+
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_DYNAMIC_REGRESSION_STATE_MODEL_HPP_

@@ -165,20 +165,13 @@ namespace BOOM {
   }
 
   void DRSM::observe_state(const ConstVectorView &then,
-                           const ConstVectorView &now, int time_now,
-                           ScalarStateSpaceModelBase *) {
+                           const ConstVectorView &now, int time_now) {
     check_size(then.size());
     check_size(now.size());
     for (int i = 0; i < then.size(); ++i) {
       double change = now[i] - then[i];
       coefficient_transition_model_[i]->suf()->update_raw(change);
     }
-  }
-
-  void DRSM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then, const ConstVectorView &now, int time_now,
-      DynamicInterceptRegressionModel *) {
-    observe_state(then, now, time_now, nullptr);
   }
 
   void DRSM::observe_initial_state(const ConstVectorView &state) {}
@@ -220,18 +213,6 @@ namespace BOOM {
 
   SparseVector DRSM::observation_matrix(int t) const {
     return sparse_predictor_vectors_[t];
-  }
-
-  Ptr<SparseMatrixBlock>
-  DRSM::dynamic_intercept_regression_observation_coefficients(
-      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
-    Ptr<DenseMatrix> ans = sparse_predictor_matrices_[t];
-    if (data_point.sample_size() != ans->nrow()) {
-      report_error(
-          "Mismatch between model data and "
-          "DynamicRegressionStateModel data.");
-    }
-    return ans;
   }
 
   Vector DRSM::initial_state_mean() const { return initial_state_mean_; }
@@ -329,4 +310,19 @@ namespace BOOM {
     }
   }
 
+
+  // Ptr<SparseMatrixBlock>
+  // DRSM::dynamic_intercept_regression_observation_coefficients(
+  //     int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
+  //   Ptr<DenseMatrix> ans = sparse_predictor_matrices_[t];
+  //   if (data_point.sample_size() != ans->nrow()) {
+  //     report_error(
+  //         "Mismatch between model data and "
+  //         "DynamicRegressionStateModel data.");
+  //   }
+  //   return ans;
+  // }
+
+
+  
 }  // namespace BOOM

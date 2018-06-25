@@ -46,10 +46,10 @@ namespace BOOM {
   SLLTSM::StudentLocalLinearTrendStateModel(
       const StudentLocalLinearTrendStateModel &rhs)
       : Model(rhs),
+        StateModel(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
-        StateModel(rhs),
         observation_matrix_(rhs.observation_matrix_),
         state_transition_matrix_(new LocalLinearTrendMatrix),
         state_variance_matrix_(rhs.state_variance_matrix_->clone()),
@@ -85,8 +85,7 @@ namespace BOOM {
   }
 
   void SLLTSM::observe_state(const ConstVectorView &then,
-                             const ConstVectorView &now, int time_now,
-                             ScalarStateSpaceModelBase *) {
+                             const ConstVectorView &now, int time_now) {
     double level_now = now[0];
     double slope_now = now[1];
     double level_then = then[0];

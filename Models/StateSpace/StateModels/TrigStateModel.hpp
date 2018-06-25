@@ -42,7 +42,7 @@ namespace BOOM {
   //   T[t]     = Identity matrix.
   //   Q[t]     = diagonal variance matrix for the changes in the
   //              coefficients.
-  class TrigStateModel : public StateModel, public IndependentMvnModel {
+  class TrigStateModel : virtual public StateModel, public IndependentMvnModel {
    public:
     // Args:
     //   period: The number of time steps (need not be an integer) that it takes
@@ -56,7 +56,7 @@ namespace BOOM {
     TrigStateModel *clone() const override;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override { return 2 * frequencies_.size(); }
     uint state_error_dimension() const override { return state_dimension(); }
@@ -133,7 +133,7 @@ namespace BOOM {
   // The observation_matrix is (1, 0, 1, 0, ...), where the 1's pick out the
   // 'real' part of the state contributions.
   class HarmonicTrigStateModel
-      : public StateModel,
+      : virtual public StateModel,
         public CompositeParamPolicy,
         public NullDataPolicy,
         public PriorPolicy 
@@ -180,8 +180,7 @@ namespace BOOM {
     // Overrides from StateModel.  Please see documentation in the base class.
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override {
       return 2 * frequencies_.size();

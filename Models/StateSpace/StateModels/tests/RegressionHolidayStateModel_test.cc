@@ -96,7 +96,7 @@ namespace {
     level->set_initial_state_mean(y[0]);
     model.add_state(level);
 
-    NEW(RegressionHolidayStateModel, holiday_model)(
+    NEW(ScalarRegressionHolidayStateModel, holiday_model)(
         t0_, model.observation_model()->Sigsq_prm(), prior_);
     NEW(FixedDateHoliday, May18)(May, 18);
     holiday_model->add_holiday(May18);
@@ -117,11 +117,11 @@ namespace {
     model.permanently_set_state(state);
     
     int may_17_2004 = Date(May, 17, 2004) - t0_;
+    holiday_model->set_model(&model);
     holiday_model->observe_state(
         ConstVectorView(state.col(may_17_2004), 1, 1),
         ConstVectorView(state.col(may_17_2004 - 1), 1, 1),
-        may_17_2004,
-        &model);
+        may_17_2004);
 
     EXPECT_TRUE( VectorEquals(
         Vector({1, 0, 0}),
@@ -140,8 +140,7 @@ namespace {
     holiday_model->observe_state(
         ConstVectorView(state.col(may_18_2004), 1, 1),
         ConstVectorView(state.col(may_18_2004 - 1), 1, 1),
-        may_18_2004,
-        &model);
+        may_18_2004);
     EXPECT_TRUE( VectorEquals(
         Vector({1, 1, 0}),
         holiday_model->daily_counts(0)));
@@ -160,8 +159,7 @@ namespace {
     holiday_model->observe_state(
         ConstVectorView(state.col(july_4_2005), 1, 1),
         ConstVectorView(state.col(july_4_2005 - 1), 1, 1),
-        july_4_2005,
-        &model);
+        july_4_2005);
     EXPECT_TRUE( VectorEquals(
         Vector({1, 1, 0}),
         holiday_model->daily_counts(0)));

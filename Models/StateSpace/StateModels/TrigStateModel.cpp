@@ -60,8 +60,7 @@ namespace BOOM {
   }
 
   void TrigStateModel::observe_state(const ConstVectorView &then,
-                                     const ConstVectorView &now, int time_now,
-                                     ScalarStateSpaceModelBase *) {
+                                     const ConstVectorView &now, int time_now) {
     suf()->update_raw(now - then);
   }
 
@@ -185,8 +184,7 @@ namespace BOOM {
   void HarmonicTrigStateModel::observe_state(
       const ConstVectorView &then,
       const ConstVectorView &now,
-      int time_now,
-      ScalarStateSpaceModelBase *model) {
+      int time_now) {
     if (time_now <= 0) {
       report_error("observe_state called with time_now = 0.");
     }

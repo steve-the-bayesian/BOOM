@@ -72,8 +72,7 @@ namespace BOOM {
 
   void SSMB::observe_state(const ConstVectorView &then,
                            const ConstVectorView &now,
-                           int time_now,
-                           ScalarStateSpaceModelBase *) {
+                           int time_now) {
     if (new_season(time_now)) {
       if (then.size() != now.size() || then.size() != state_dimension()) {
         report_error(

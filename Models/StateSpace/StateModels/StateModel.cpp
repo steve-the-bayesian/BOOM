@@ -53,8 +53,7 @@ namespace BOOM {
 
   void StateModel::observe_initial_state(const ConstVectorView &state) {}
 
-  Ptr<SparseMatrixBlock>
-  StateModel::dynamic_intercept_regression_observation_coefficients(
+  Ptr<SparseMatrixBlock> DynamicInterceptStateModel::observation_coefficients(
       int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
     return new IdenticalRowsMatrix(observation_matrix(t),
                                    data_point.sample_size());

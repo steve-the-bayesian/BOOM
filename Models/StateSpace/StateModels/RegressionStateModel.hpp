@@ -32,7 +32,7 @@ namespace BOOM {
   // 'state' is a constant '1' with zero error, and a [1x1] identity matrix for
   // the state transition matrix.
 
-  class RegressionStateModel : public StateModel,
+  class RegressionStateModel : virtual public StateModel,
                                public CompositeParamPolicy,
                                public NullDataPolicy,
                                public PriorPolicy {
@@ -51,10 +51,7 @@ namespace BOOM {
     // should update an externally held pointer to regression_ each time a
     // state vector is observed.
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }
@@ -78,13 +75,6 @@ namespace BOOM {
     // '1', this adds the regression effect to the observation at time t.
     SparseVector observation_matrix(int t) const override;
 
-    // The observation coefficients at time t form a column vector with elements
-    // x[t, i] * beta.  Because the state is a scalar '1' this product adds the
-    // regression effect at time 't' to each element of the observation.
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override;
-
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
 
@@ -102,6 +92,26 @@ namespace BOOM {
 
     std::vector<Matrix> predictors_;
   };
+  
+  class RegressionDynamicInterceptStateModel
+      : public RegressionStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    RegressionDynamicInterceptStateModel *clone() const override {
+      return new RegressionDynamicInterceptStateModel(*this);
+    }
+    
+    RegressionDynamicInterceptStateModel(const Ptr<RegressionModel> &regression)
+        : RegressionStateModel(regression) {}
 
+    // The observation coefficients at time t form a column vector with elements
+    // x[t, i] * beta.  Because the state is a scalar '1' this product adds the
+    // regression effect at time 't' to each element of the observation.
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override;
+
+    
+  };
+  
 }  // namespace BOOM
 #endif  // BOOM_REGRESSION_STATE_MODEL_HPP_

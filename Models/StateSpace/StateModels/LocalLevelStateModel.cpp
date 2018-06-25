@@ -49,8 +49,7 @@ namespace BOOM {
   }
 
   void LLSM::observe_state(const ConstVectorView &then,
-                           const ConstVectorView &now, int time_now,
-                           ScalarStateSpaceModelBase *) {
+                           const ConstVectorView &now, int time_now) {
     double current_level = now[0];
     double previous_level = then[0];
     double diff = current_level - previous_level;

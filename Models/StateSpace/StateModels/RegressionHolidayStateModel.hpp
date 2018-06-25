@@ -160,7 +160,7 @@ namespace BOOM {
   // day in the window.  These dummy variables never co-occur, so X'X is a
   // diagonal matrix with diagonal elements containing occurrance counts for
   // each day.
-  class RegressionHolidayStateModel : public StateModel,
+  class RegressionHolidayStateModel : virtual public StateModel,
                                       public ManyParamPolicy,
                                       public NullDataPolicy,
                                       public NullPriorPolicy {
@@ -185,7 +185,7 @@ namespace BOOM {
     RegressionHolidayStateModel &operator=(RegressionHolidayStateModel &&rhs) =
         default;
 
-    RegressionHolidayStateModel *clone() const override;
+    RegressionHolidayStateModel *clone() const override = 0;
 
     // Add a holiday to the set of holidays modeled by this object.
     void add_holiday(const Ptr<Holiday> &holiday);
@@ -225,12 +225,6 @@ namespace BOOM {
     double residual_variance() const { return impl_.residual_variance_value(); }
 
     void observe_time_dimension(int max_time) override;
-    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override;
 
     uint state_dimension() const override {
       return impl_.state_dimension();
@@ -299,6 +293,15 @@ namespace BOOM {
       return holiday_mean_contributions_[i];
     }
 
+   protected:
+    void increment_daily_suf(int holiday, int day, double incremental_total,
+                             double incremental_count) {
+      daily_totals_[holiday][day] += incremental_total;
+      daily_counts_[holiday][day] += incremental_count;
+    }
+
+    const RegressionHolidayBaseImpl &impl() const {return impl_;}
+    
    private:
     RegressionHolidayBaseImpl impl_;
     std::vector<Ptr<VectorParams>> holiday_mean_contributions_;
@@ -309,6 +312,47 @@ namespace BOOM {
     RNG rng_;
   };
 
+  //===========================================================================
+  class ScalarStateSpaceModelBase;
+  class ScalarRegressionHolidayStateModel
+      : public RegressionHolidayStateModel {
+   public:
+    ScalarRegressionHolidayStateModel(const Date &time_of_first_observation,
+                                      const Ptr<UnivParams> &residual_variance,
+                                      const Ptr<GaussianModel> &prior,
+                                      RNG &seeding_rng = GlobalRng::rng)
+        : RegressionHolidayStateModel(time_of_first_observation,
+                                      residual_variance,
+                                      prior,
+                                      seeding_rng) {}
+    ScalarRegressionHolidayStateModel *clone()const override {
+      return new ScalarRegressionHolidayStateModel(*this);
+    }
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now) override;
+
+    void set_model(const ScalarStateSpaceModelBase *model) {
+      model_ = model;
+    }
+
+   private:
+    const ScalarStateSpaceModelBase *model_;
+  };
+
+  //===========================================================================
+  class DynamicInterceptRegressionModel;
+  class DynamicInterceptRegressionHolidayStateModel
+      : public RegressionHolidayStateModel {
+   public:
+    DynamicInterceptRegressionHolidayStateModel *clone() const override {
+      return new DynamicInterceptRegressionHolidayStateModel(*this);
+    }
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now) override;
+   private:
+    DynamicInterceptRegressionModel *model_;
+  };
+  
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_REGRESSION_HOLIDAY_STATE_MODEL_HPP_

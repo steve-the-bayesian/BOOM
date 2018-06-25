@@ -21,7 +21,7 @@
 namespace BOOM {
 
   // A state model composed of a superposition of other state models.
-  class CompositeStateModel : public StateModel {
+  class CompositeStateModel : virtual public StateModel {
    public:
    private:
     std::vector<Ptr<StateModel>> state_;
@@ -32,7 +32,7 @@ namespace BOOM {
 
   // The seasons are constrained to sum to zero at each time period.
   class GeneralSeasonalStateModel
-      : public StateModel {
+      : virtual public StateModel {
    public:
     explicit GeneralSeasonalStateModel(int season_duration);
     ~GeneralSeasonalStateModel(){}
@@ -49,8 +49,7 @@ namespace BOOM {
     void observe_time_dimension(int max_time) override;
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase &model) override;
+                       int time_now) override;
 
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override;

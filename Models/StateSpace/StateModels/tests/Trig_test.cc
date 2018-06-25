@@ -60,7 +60,7 @@ namespace {
     }
     Vector then = seq<double>(1.0, trig.state_dimension());
     Vector now = then + 2;
-    trig.observe_state(then, now, 3, nullptr);
+    trig.observe_state(then, now, 3);
     EXPECT_DOUBLE_EQ(1.0, trig.suf()->n());
     for (int i = 0; i < trig.state_dimension(); ++i) {
       EXPECT_DOUBLE_EQ(2, trig.suf()->sum(i));

@@ -92,8 +92,6 @@ namespace BOOM {
     }
   }
 
-  RHSM *RHSM::clone() const { return new RHSM(*this); }
-
   void RHSM::add_holiday(const Ptr<Holiday> &holiday) {
     impl_.add_holiday(holiday);
     int dim = holiday->maximum_window_width();
@@ -165,35 +163,6 @@ namespace BOOM {
     impl_.observe_time_dimension(max_time);
   }
 
-  void RHSM::observe_state(const ConstVectorView &then,
-                           const ConstVectorView &now, int time_now,
-                           ScalarStateSpaceModelBase *model) {
-    int holiday = impl_.which_holiday(time_now);
-    if (holiday < 0) return;
-    int day = impl_.which_day(time_now);
-    double residual =
-        model->adjusted_observation(time_now) -
-        model->observation_matrix(time_now).dot(model->state(time_now)) +
-        this->observation_matrix(time_now).dot(now);
-    daily_totals_[holiday][day] += residual;
-    daily_counts_[holiday][day] += 1.0;
-  }
-
-  void RHSM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then, const ConstVectorView &now, int time_now,
-      DynamicInterceptRegressionModel *model) {
-    int holiday = impl_.which_holiday(time_now);
-    if (holiday < 0) return;
-    int day = impl_.which_day(time_now);
-    Ptr<StateSpace::TimeSeriesRegressionData> data = model->dat()[time_now];
-    if (data->missing() == Data::missing_status::completely_missing) {
-      return;
-    }
-    Vector residuals = data->response() - model->conditional_mean(time_now);
-    residuals += this->observation_matrix(time_now).dot(now);
-    daily_counts_[holiday][day] += residuals.size();
-    daily_totals_[holiday][day] += sum(residuals);
-  }
 
   SparseVector RHSM::observation_matrix(int time_now) const {
     SparseVector ans(1);
@@ -204,4 +173,30 @@ namespace BOOM {
     return ans;
   }
 
+  void ScalarRegressionHolidayStateModel::observe_state(
+      const ConstVectorView &then, const ConstVectorView &now, int time_now) {
+    int holiday = impl().which_holiday(time_now);
+    if (holiday < 0) return;
+    int day = impl().which_day(time_now);
+    double residual =
+        model_->adjusted_observation(time_now) -
+        model_->observation_matrix(time_now).dot(model_->state(time_now)) +
+        this->observation_matrix(time_now).dot(now);
+    increment_daily_suf(holiday,  day, residual, 1.0);
+  }
+
+  void DynamicInterceptRegressionHolidayStateModel::observe_state(
+      const ConstVectorView &then, const ConstVectorView &now, int time_now) {
+    int holiday = impl().which_holiday(time_now);
+    if (holiday < 0) return;
+    int day = impl().which_day(time_now);
+    Ptr<StateSpace::TimeSeriesRegressionData> data = model_->dat()[time_now];
+    if (data->missing() == Data::missing_status::completely_missing) {
+      return;
+    }
+    Vector residuals = data->response() - model_->conditional_mean(time_now);
+    residuals += this->observation_matrix(time_now).dot(now);
+    increment_daily_suf(holiday, day, sum(residuals), residuals.size());
+  }
+  
 }  // namespace BOOM

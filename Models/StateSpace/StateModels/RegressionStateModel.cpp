@@ -51,17 +51,7 @@ namespace BOOM {
   // lies with the state space model that owns it.
   void RegressionStateModel::observe_state(const ConstVectorView &then,
                                            const ConstVectorView &now,
-                                           int time_now,
-                                           ScalarStateSpaceModelBase *model) {
-    ////////////// TODO!!!!!
-  }
-
-  // This function is a no-op.  The responsibility for observing state
-  // lies with the state space model that owns it.
-  void RegressionStateModel::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then, const ConstVectorView &now, int time_now,
-      DynamicInterceptRegressionModel *model) {
-    ////////////// TODO!!!!!
+                                           int time_now) {
   }
 
   uint RegressionStateModel::state_dimension() const { return 1; }
@@ -109,15 +99,6 @@ namespace BOOM {
     return ans;
   }
 
-  Ptr<SparseMatrixBlock>
-  RegressionStateModel::dynamic_intercept_regression_observation_coefficients(
-      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
-    return new DenseMatrix(Matrix(
-        data_point.sample_size(),
-        1,
-        regression_->coef().predict(data_point.predictors())));
-  }
-
   Vector RegressionStateModel::initial_state_mean() const {
     return Vector(1, 1.0);
   }
@@ -142,4 +123,13 @@ namespace BOOM {
     }
   }
 
+  Ptr<SparseMatrixBlock>
+  RegressionDynamicInterceptStateModel::observation_coefficients(
+      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
+    return new DenseMatrix(Matrix(
+        data_point.sample_size(),
+        1,
+        regression()->coef().predict(data_point.predictors())));
+  }
+  
 }  // namespace BOOM

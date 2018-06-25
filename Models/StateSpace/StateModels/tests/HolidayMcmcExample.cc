@@ -105,7 +105,7 @@ int main() {
   model->add_state(trend_model);
 
   NEW(GaussianModel, holiday_effect_prior)(0, 2);
-  NEW(RegressionHolidayStateModel, holiday_model)(
+  NEW(ScalarRegressionHolidayStateModel, holiday_model)(
       dates[0],
       model->observation_model()->Sigsq_prm(),
       holiday_effect_prior);

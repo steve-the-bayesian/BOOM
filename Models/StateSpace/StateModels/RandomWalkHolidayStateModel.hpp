@@ -48,7 +48,7 @@ namespace BOOM {
   // the holiday influences).  The transition matrix is always the
   // identity.  The error variance matrix is sigma^2 * outer(e[t]),
   // where e[t] is column t of the identity matrix.
-  class RandomWalkHolidayStateModel : public StateModel,
+  class RandomWalkHolidayStateModel : virtual public StateModel,
                                       public ZeroMeanGaussianModel {
    public:
     // Args:
@@ -60,12 +60,7 @@ namespace BOOM {
     RandomWalkHolidayStateModel(const Ptr<Holiday> &holiday, const Date &time_zero);
     RandomWalkHolidayStateModel *clone() const override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override {
-      observe_state(then, now, time_now, nullptr);
-    }
+                       int time_now) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }

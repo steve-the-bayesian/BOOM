@@ -52,7 +52,7 @@ namespace BOOM {
                              UnivParams>,  // slope tail thickness
         public IID_DataPolicy<DoubleData>,
         public PriorPolicy,
-        public StateModel {
+        virtual public StateModel {
    public:
     explicit StudentLocalLinearTrendStateModel(double sigma_level = 1.0,
                                                double nu_level = 1000,
@@ -65,7 +65,7 @@ namespace BOOM {
     void observe_time_dimension(int max_time) override;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override { return 2; }
     uint state_error_dimension() const override { return state_dimension(); }

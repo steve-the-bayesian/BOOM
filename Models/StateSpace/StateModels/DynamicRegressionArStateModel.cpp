@@ -95,8 +95,7 @@ namespace BOOM {
   }
 
   void DRASM::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now, int time_now,
-                            ScalarStateSpaceModelBase *) {
+                            const ConstVectorView &now, int time_now) {
     int pos = 0;
     for (int i = 0; i < xdim(); ++i) {
       double y = now[pos];
@@ -107,12 +106,6 @@ namespace BOOM {
       coefficient_transition_model_[i]->suf()->add_mixture_data(y, x, 1.0);
       pos += number_of_lags();
     }
-  }
-
-  void DRASM::observe_dynamic_intercept_regression_state(
-      const ConstVectorView &then, const ConstVectorView &now, int time_now,
-      DynamicInterceptRegressionModel *) {
-    return observe_state(then, now, time_now, nullptr);
   }
 
   void DRASM::observe_initial_state(const ConstVectorView &state) {
@@ -264,4 +257,5 @@ namespace BOOM {
     }
   }
 
+  
 }  // namespace BOOM

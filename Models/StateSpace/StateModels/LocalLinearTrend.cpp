@@ -37,8 +37,8 @@ namespace BOOM {
   }
 
   LLTSM::LocalLinearTrendStateModel(const LLTSM &rhs)
-      : ZeroMeanMvnModel(rhs),
-        StateModel(rhs),
+      : StateModel(rhs),
+        ZeroMeanMvnModel(rhs),
         observation_matrix_(rhs.observation_matrix_),
         state_transition_matrix_(new LocalLinearTrendMatrix),
         state_variance_matrix_(rhs.state_variance_matrix_->clone()),
@@ -49,8 +49,7 @@ namespace BOOM {
   LLTSM *LLTSM::clone() const { return new LLTSM(*this); }
 
   void LLTSM::observe_state(const ConstVectorView &then,
-                            const ConstVectorView &now, int time_now,
-                            ScalarStateSpaceModelBase *model) {
+                            const ConstVectorView &now, int time_now) {
     check_dim(then);
     check_dim(now);
 

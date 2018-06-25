@@ -32,7 +32,7 @@ namespace BOOM {
   // The state of this model is entirely determined by its initial distribution.
   // The transition matrix T is the number 1, and the residual variance matrix
   // is the number 0.
-  class StaticInterceptStateModel : public StateModel {
+  class StaticInterceptStateModel : virtual public StateModel {
    public:
     StaticInterceptStateModel();
     StaticInterceptStateModel(const StaticInterceptStateModel &rhs) = default;
@@ -42,8 +42,7 @@ namespace BOOM {
 
     // There is nothing to do here.
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override {}
+                       int time_now) override {}
 
     uint state_dimension() const override { return 1; }
 

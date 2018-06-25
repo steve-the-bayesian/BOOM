@@ -69,7 +69,7 @@ namespace BOOM {
   //   | 1 0 |
   //   | 0 1 |
   //   | 0 0 |
-  class SemilocalLinearTrendStateModel : public StateModel,
+  class SemilocalLinearTrendStateModel : virtual public StateModel,
                                          public CompositeParamPolicy,
                                          public IID_DataPolicy<VectorData>,
                                          public PriorPolicy {
@@ -81,7 +81,7 @@ namespace BOOM {
 
     void clear_data() override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     void observe_initial_state(const ConstVectorView &state) override;
     uint state_dimension() const override { return 3; }

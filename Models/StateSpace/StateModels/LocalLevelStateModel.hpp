@@ -24,13 +24,13 @@
 
 namespace BOOM {
 
-  class LocalLevelStateModel : public StateModel, public ZeroMeanGaussianModel {
+  class LocalLevelStateModel : virtual public StateModel, public ZeroMeanGaussianModel {
    public:
     explicit LocalLevelStateModel(double sigma = 1);
     LocalLevelStateModel(const LocalLevelStateModel &rhs);
     LocalLevelStateModel *clone() const override;
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }
@@ -67,6 +67,18 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  class LocalLevelDynamicInterceptStateModel
+      : public LocalLevelStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    explicit LocalLevelDynamicInterceptStateModel(double sigma = 1)
+        : LocalLevelStateModel(sigma) {}
+    
+    LocalLevelDynamicInterceptStateModel *clone() const override {
+      return new LocalLevelDynamicInterceptStateModel(*this);
+    }
+  };
+  
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP

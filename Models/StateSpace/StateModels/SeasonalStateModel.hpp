@@ -31,7 +31,7 @@ namespace BOOM {
   // Shared based class for different concrete realizations of seasonal state
   // models.
   class SeasonalStateModelBase : public ZeroMeanGaussianModel,
-                                 public StateModel {
+                                 virtual public StateModel {
    public:
     explicit SeasonalStateModelBase(int nseasons);
     SeasonalStateModelBase(const SeasonalStateModelBase &rhs);
@@ -42,8 +42,7 @@ namespace BOOM {
 
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
-                       int time_now,
-                       ScalarStateSpaceModelBase *model) override;
+                       int time_now) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }

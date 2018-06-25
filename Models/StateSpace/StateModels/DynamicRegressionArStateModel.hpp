@@ -45,7 +45,7 @@ namespace BOOM {
   //
   // The observation matrix is x(t, 0), 0, 0, 0, ..., x(t, 1), 0, 0, 0, ...,
   // x(t, 2), ...
-  class DynamicRegressionArStateModel : public StateModel,
+  class DynamicRegressionArStateModel : virtual public StateModel,
                                         public CompositeParamPolicy,
                                         public NullDataPolicy,
                                         public PriorPolicy {
@@ -57,15 +57,6 @@ namespace BOOM {
     //   lag: The number of lags to consider in each coefficient's time series
     //     model.
     DynamicRegressionArStateModel(const Matrix &predictors, int lags);
-
-    // For use with multiplexed data.
-    // Args:
-    //   predictors: Element t is the predictor matrix for time t.  Each row of
-    //     predictors[t] is an observation at time t.
-    //   lags: The number of lags to consider in each coefficient's time series
-    //     model.
-    DynamicRegressionArStateModel(const std::vector<Matrix> &predictors,
-                                  int lags);
 
     DynamicRegressionArStateModel(const DynamicRegressionArStateModel &rhs);
     DynamicRegressionArStateModel(DynamicRegressionArStateModel &&) = default;
@@ -96,10 +87,7 @@ namespace BOOM {
     void clear_data() override;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int time_now, ScalarStateSpaceModelBase *model) override;
-    void observe_dynamic_intercept_regression_state(
-        const ConstVectorView &then, const ConstVectorView &now, int time_now,
-        DynamicInterceptRegressionModel *model) override;
+                       int time_now) override;
 
     void observe_initial_state(const ConstVectorView &state) override;
 
@@ -138,12 +126,6 @@ namespace BOOM {
       return expanded_predictors_[t]->row(0);
     }
 
-    Ptr<SparseMatrixBlock>
-    dynamic_intercept_regression_observation_coefficients(
-        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override {
-      return expanded_predictors_[t];
-    }
-
     // The initial state is the value of the regression coefficients
     // at time 0.  Zero with a big variance is a good guess.
     Vector initial_state_mean() const override;
@@ -165,6 +147,20 @@ namespace BOOM {
     void set_xnames(const std::vector<std::string> &names);
     const std::vector<std::string> &xnames() const { return xnames_; }
 
+   protected:
+    // For use with multiplexed data.
+    // Args:
+    //   predictors: Element t is the predictor matrix for time t.  Each row of
+    //     predictors[t] is an observation at time t.
+    //   lags: The number of lags to consider in each coefficient's time series
+    //     model.
+    DynamicRegressionArStateModel(const std::vector<Matrix> &predictors,
+                                  int lags);
+
+    Ptr<GenericSparseMatrixBlock> expanded_predictors(int t) const {
+      return expanded_predictors_[t];
+    }
+    
    private:
     // Compute the state dimension from arguments passed to the constructor.
     int compute_state_dimension(const std::vector<Matrix> &predictors,
@@ -266,6 +262,33 @@ namespace BOOM {
     Vector initial_state_mean_;
     SpdMatrix initial_state_variance_;
   };
+
+  //===========================================================================
+  class DynamicRegressionDynamicInterceptArStateModel
+      : public DynamicRegressionArStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    // For use with multiplexed data.
+    // Args:
+    //   predictors: Element t is the predictor matrix for time t.  Each row of
+    //     predictors[t] is an observation at time t.
+    //   lags: The number of lags to consider in each coefficient's time series
+    //     model.
+    DynamicRegressionDynamicInterceptArStateModel(
+        const std::vector<Matrix> &predictors, int lags)
+        : DynamicRegressionArStateModel(predictors, lags) {}
+
+    DynamicRegressionDynamicInterceptArStateModel *clone() const override {
+      return new DynamicRegressionDynamicInterceptArStateModel(*this);
+    }
+
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override {
+      return expanded_predictors(t);
+    }
+    
+  };
+
 }  // namespace BOOM
 
 #endif  //  BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_

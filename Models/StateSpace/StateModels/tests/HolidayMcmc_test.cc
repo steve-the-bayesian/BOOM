@@ -123,7 +123,7 @@ namespace {
     model->add_state(trend_model);
 
     NEW(GaussianModel, holiday_effect_prior)(0, 2);
-    NEW(RegressionHolidayStateModel, holiday_model)(
+    NEW(ScalarRegressionHolidayStateModel, holiday_model)(
         dates[0],
         model->observation_model()->Sigsq_prm(),
         holiday_effect_prior);
@@ -131,6 +131,7 @@ namespace {
       holiday_model->add_holiday(holidays[i]);
     }
     model->add_state(holiday_model);
+    holiday_model->set_model(model.get());
 
     NEW(ChisqModel, observation_precision_prior)(1, 1);
     NEW(ZeroMeanGaussianConjSampler, observation_sampler)(

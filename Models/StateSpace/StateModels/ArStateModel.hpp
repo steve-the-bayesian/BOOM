@@ -50,14 +50,14 @@ namespace BOOM {
   // The shift portion of the stat transition is deterministic, so the
   // one-dimensional error is multiplied by
   // R_t = [1 0 0 0 0]^T
-  class ArStateModel : public StateModel, public ArModel {
+  class ArStateModel : virtual public StateModel, public ArModel {
    public:
     explicit ArStateModel(int number_of_lags = 1);
     ArStateModel(const ArStateModel &rhs);
     ArStateModel *clone() const override;
 
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
-                       int t, ScalarStateSpaceModelBase *model) override;
+                       int t) override;
 
     uint state_dimension() const override;
     uint state_error_dimension() const override { return 1; }
