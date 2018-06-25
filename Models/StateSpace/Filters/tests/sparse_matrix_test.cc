@@ -378,14 +378,10 @@ namespace {
     CheckSparseMatrixBlock(sparse_square, square_dense);
   }
 
-  TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {
-    BlockDiagonalMatrix sparse;
-    sparse.add_block(new LocalLinearTrendMatrix);
-    sparse.add_block(new SeasonalStateSpaceMatrix(4));
+  void CheckSparseKalmanMatrix(const SparseKalmanMatrix &sparse) {
     Matrix dense = sparse.dense();
-
-    EXPECT_EQ(2 + 3, sparse.nrow());
-    EXPECT_EQ(sparse.nrow(), sparse.ncol());
+    EXPECT_EQ(dense.nrow(), sparse.nrow());
+    EXPECT_EQ(dense.ncol(), sparse.ncol());
 
     Vector v(sparse.ncol());
     v.randomize();
@@ -393,29 +389,77 @@ namespace {
     EXPECT_TRUE(VectorEquals(sparse * VectorView(v), dense * VectorView(v)));
     EXPECT_TRUE(VectorEquals(sparse * ConstVectorView(v),
                              dense * ConstVectorView(v)));
+    
+    Vector tv(sparse.nrow());
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(tv), dense.Tmult(tv)));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(tv)),
+                             dense.Tmult(VectorView(tv))));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(ConstVectorView(tv)),
+                             dense.Tmult(ConstVectorView(tv))));
 
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(v), dense.Tmult(v)));
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(v)),
-                             dense.Tmult(VectorView(v))));
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(ConstVectorView(v)),
-                             dense.Tmult(ConstVectorView(v))));
-
-    SpdMatrix V(5);
+    SpdMatrix V(sparse.ncol());
     V.randomize();
     SpdMatrix originalV = V;
-    sparse.sandwich_inplace(V);
-    EXPECT_TRUE(MatrixEquals(V, dense * originalV * dense.transpose()));
+    if (sparse.nrow() == sparse.ncol()) {
+      sparse.sandwich_inplace(V);
+      EXPECT_TRUE(MatrixEquals(V, dense * originalV * dense.transpose()));
+
+      SpdMatrix tV(sparse.nrow());
+      tV.randomize();
+      SpdMatrix original_tV = tV;
+      sparse.sandwich_inplace_transpose(tV);
+      EXPECT_TRUE(MatrixEquals(tV, dense.transpose() * original_tV * dense));
+    }
 
     EXPECT_TRUE(MatrixEquals(sparse.sandwich(V), dense * V * dense.transpose()));
 
-    originalV = V;
-    EXPECT_TRUE(MatrixEquals(sparse.add_to(V), originalV + dense));
+    Matrix summand(sparse.nrow(), sparse.ncol());
+    summand.randomize();
+    Matrix original_summand = summand;
+    EXPECT_TRUE(MatrixEquals(sparse.add_to(summand), original_summand + dense));
 
-    originalV = V;
-    sparse.sandwich_inplace_transpose(V);
-    EXPECT_TRUE(MatrixEquals(V, dense.transpose() * originalV * dense));
 
-    EXPECT_TRUE(MatrixEquals(dense.inner(), sparse.inner()));
+    EXPECT_TRUE(MatrixEquals(dense.inner(), sparse.inner()))
+        << "Dense inner product: " << endl
+        << dense.inner() << endl
+        << "Sparse inner product: " << endl
+        << sparse.inner() << endl;
+  }
+  
+  TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {
+    BlockDiagonalMatrix sparse;
+    sparse.add_block(new LocalLinearTrendMatrix);
+    sparse.add_block(new SeasonalStateSpaceMatrix(4));
+    CheckSparseKalmanMatrix(sparse);
+  }
+
+  TEST_F(SparseMatrixTest, SparseVerticalStripMatrixTest) {
+    SparseVerticalStripMatrix sparse;
+    int nrows = 8;
+    SparseVector trend(2);
+    EXPECT_EQ(2, trend.size());
+    trend[0] = 1.0;
+    sparse.add_block(new IdenticalRowsMatrix(trend, nrows));
+    EXPECT_EQ(2, sparse.ncol());
+    
+    SparseVector seasonal(4);
+    seasonal[0] = 1.0;
+    sparse.add_block(new IdenticalRowsMatrix(seasonal, nrows));
+    EXPECT_EQ(6, sparse.ncol());
+    EXPECT_EQ(8, sparse.nrow());
+
+    Matrix dense = sparse.dense();
+    Vector zero(nrows, 0.0);
+    Vector one(nrows, 1.0);
+    EXPECT_EQ(dense.nrow(), nrows);
+    EXPECT_EQ(dense.ncol(), 6);
+    EXPECT_TRUE(VectorEquals(dense.col(0), one));
+    EXPECT_TRUE(VectorEquals(dense.col(1), zero));
+    EXPECT_TRUE(VectorEquals(dense.col(2), one));
+    EXPECT_TRUE(VectorEquals(dense.col(3), zero));
+    EXPECT_TRUE(VectorEquals(dense.col(4), zero));
+    EXPECT_TRUE(VectorEquals(dense.col(5), zero));
+    CheckSparseKalmanMatrix(sparse);
   }
   
 }  // namespace

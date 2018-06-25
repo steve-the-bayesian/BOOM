@@ -999,14 +999,8 @@ namespace BOOM {
   }
 
   Matrix SparseKalmanMatrix::dense() const {
-    Matrix ans(nrow(), ncol());
-    Vector v(ncol(), 0.0);
-    for (int i = 0; i < ncol(); ++i) {
-      v[i] = 1.0;
-      ans.col(i) = (*this) * v;
-      v[i] = 0.0;
-    }
-    return ans;
+    Matrix ans(nrow(), ncol(), 0.0);
+    return this->add_to(ans);
   }
 
   // Returns this * rhs.transpose().
@@ -1347,21 +1341,24 @@ namespace BOOM {
 
   SpdMatrix SparseVerticalStripMatrix::inner() const {
     SpdMatrix ans(ncol(), 0.0);
-    int row_start = 0;
     std::vector<Matrix> dense_blocks;
     dense_blocks.reserve(blocks_.size());
     for (int b = 0; b < blocks_.size(); ++b) {
       dense_blocks.push_back(blocks_[b]->dense());
     }
-    
+    int row_start = 0;
     for (int b0 = 0; b0 < blocks_.size(); ++b0) {
-      int col_start = 0;
-      int row_end = row_start + nrow();
+      BlockDiagonalMatrix row_block;
+      row_block.add_block(blocks_[b0]);
+      int col_start = row_start;
+      int row_end = row_start + blocks_[b0]->ncol();
       for (int b1 = b0; b1 < blocks_.size(); ++b1) {
         int col_end = col_start + blocks_[b1]->ncol();
         SubMatrix(ans, row_start, row_end - 1, col_start, col_end - 1)
-            = dense_blocks[b0].Tmult(dense_blocks[b1]);
+            = row_block.Tmult(dense_blocks[b1]);
+        col_start = col_end;
       }
+      row_start = row_end;
     }
     ans.reflect();
     return ans;
@@ -1398,7 +1395,11 @@ namespace BOOM {
   }
   void SparseVerticalStripMatrix::check_can_Tmult(int vector_size) const {
     if (nrow() != vector_size) {
-      report_error("Incompatible vector (transpose-)multiplication.");
+      std::ostringstream err;
+      err << "Incompatible vector (transpose-)multiplication.  "
+          << "This matrix has " << nrow() << " rows.  The target vector has "
+          << vector_size << " elements." << std::endl;
+      report_error(err.str());
     }
   }
 
