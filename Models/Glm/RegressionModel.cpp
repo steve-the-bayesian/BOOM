@@ -69,6 +69,12 @@ namespace BOOM {
     return ans;
   }
 
+  // (y - x*beta) * (y - x * beta)
+  // = beta^t xtx beta - 2 * beta * xty + yty
+  double RegSuf::relative_sse(const Vector &beta) const {
+    return xtx().Mdist(beta) - 2 * beta.dot(xty()) + yty();
+  }
+  
   AnovaTable RegSuf::anova() const {
     AnovaTable ans;
     double nobs = n();

@@ -81,7 +81,8 @@ namespace BOOM {
     // Compute the sum of square errors using the given set of
     // coefficients, taking advantage of sparsity.
     double relative_sse(const GlmCoefs &beta) const;
-
+    double relative_sse(const Vector &beta) const;
+    
     AnovaTable anova() const;
 
     virtual void add_mixture_data(double y, const Vector &x, double prob) = 0;
