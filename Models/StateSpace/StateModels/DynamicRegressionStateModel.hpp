@@ -144,8 +144,7 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
     std::vector<std::string> xnames_;
 
-    // Each model is the prior for the differences in regression
-    // coefficients.
+    // Each model is the prior for the differences in regression coefficients.
     std::vector<Ptr<ZeroMeanGaussianModel>> coefficient_transition_model_;
 
     // Predictor variables for use with scalar, non-multiplexed state space
@@ -162,13 +161,6 @@ namespace BOOM {
     Ptr<IdentityMatrix> transition_matrix_;
     Ptr<UpperLeftDiagonalMatrix> transition_variance_matrix_;
   };
-
-    // Ptr<SparseMatrixBlock>
-    // dynamic_intercept_regression_observation_coefficients(
-    //     int t,
-    //     const StateSpace::TimeSeriesRegressionData &data_point) const override;
-
-
   
 }  // namespace BOOM
 
