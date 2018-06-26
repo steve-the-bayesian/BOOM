@@ -478,8 +478,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   double Base::log_likelihood() {
-    kalman_filter();
-    return get_filter().log_likelihood();
+    return get_filter().compute_log_likelihood();
   }
 
   //----------------------------------------------------------------------
@@ -914,18 +913,22 @@ namespace BOOM {
     return rnorm_mt(rng, mu, sqrt(observation_variance(t)));
   }
 
-  //----------------------------------------------------------------------
-  // After a call to fast_disturbance_smoother() puts r[t] in
-  // filter_[t].scaled_state_error, this function propagates the r's forward to
-  // get E(alpha | y), and add it to the simulated state.
+  //---------------------------------------------------------------------------
+  // The call to simulate_forward fills the state matrix with simulated state
+  // values that have the right variance but the wrong mean.  This function
+  // subtracts off the wrong mean and adds in the correct one.  
   void Base::propagate_disturbances() {
     if (time_dimension() <= 0) return;
+    // Calling fast_disturbance_smoother() puts r[t] in
+    // filter_[t].scaled_state_error().
     KalmanFilterBase &filter(get_filter());
     filter.fast_disturbance_smooth();
     KalmanFilterBase &simulation_filter(get_simulation_filter());
     simulation_filter.fast_disturbance_smooth();
     SpdMatrix P0 = initial_state_variance();
-    
+
+    // Propagates the r's forward to get E(alpha | y), and add it to the
+    // simulated state.
     Vector state_mean_sim = initial_state_mean() +
         P0 * simulation_filter.initial_scaled_state_error();
     Vector state_mean_obs = initial_state_mean() +
