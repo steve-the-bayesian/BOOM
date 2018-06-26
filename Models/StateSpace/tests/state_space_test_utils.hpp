@@ -31,6 +31,21 @@ namespace BOOM {
     return ans;
   }
 
+  inline Vector SimulateLocalLinearTrend(
+      RNG &rng, int length, double initial_level, double initial_slope,
+      double level_sd, double slope_sd) {
+    Vector state = {initial_level, initial_slope};
+    Vector ans(length);
+    Matrix transition = rbind(Vector{1, 1}, Vector{0, 1});
+    for (int i = 0; i < length; ++i) {
+      ans[i] = state[0];
+      state = transition * state;
+      state[0] += rnorm_mt(rng, 0, level_sd);
+      state[1] += rnorm_mt(rng, 0, slope_sd);
+    }
+    return ans;
+  }
+  
   inline Matrix SeasonalStateMatrix(int num_seasons) {
     Matrix ans(num_seasons - 1, num_seasons - 1, 0.0);
     ans.row(0) = -1;

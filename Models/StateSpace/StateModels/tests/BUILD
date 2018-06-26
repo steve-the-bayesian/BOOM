@@ -28,6 +28,18 @@ cc_test(
 )
 
 cc_test(
+    name = "local_linear_trend_test",
+    srcs = ["local_linear_trend_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "//Models/StateSpace/tests:test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "HierarchicalRegressionHolidayStateModel_test",
     srcs = ["HierarchicalRegressionHolidayStateModel_test.cc"],
     copts = COPTS,

@@ -72,5 +72,15 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  //===========================================================================
+  class LocalLinearTrendDynamicInterceptStateModel
+      : public LocalLinearTrendStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    LocalLinearTrendDynamicInterceptStateModel *clone() const override {
+      return new LocalLinearTrendDynamicInterceptStateModel(*this);
+    }
+  };
+  
 }  // namespace BOOM
 #endif  // BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_
