@@ -53,6 +53,7 @@ namespace BOOM {
     }
     return ans;
   }
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_UTILS_HPP_

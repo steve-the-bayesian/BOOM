@@ -67,13 +67,13 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  //======================================================================
   class LocalLevelDynamicInterceptStateModel
       : public LocalLevelStateModel,
         public DynamicInterceptStateModel {
    public:
     explicit LocalLevelDynamicInterceptStateModel(double sigma = 1)
         : LocalLevelStateModel(sigma) {}
-    
     LocalLevelDynamicInterceptStateModel *clone() const override {
       return new LocalLevelDynamicInterceptStateModel(*this);
     }

@@ -226,14 +226,14 @@ namespace {
         << endl << AsciiDistributionCompare(sigma_level_draws, true_level_sd_);
     EXPECT_GT(var(sigma_level_draws), 0);
     
-    EXPECT_TRUE(CheckMcmcVector( sigma_obs_draws, true_observation_sd_, .95,
-                                 "sigma-obs.txt"))
+    EXPECT_TRUE(CheckMcmcVector(
+        sigma_obs_draws, true_observation_sd_, .95, "sigma-obs.txt"))
         << endl << AsciiDistributionCompare(
             sigma_obs_draws, true_observation_sd_);
     EXPECT_TRUE(var(sigma_obs_draws) > 0);
 
-    auto status = CheckMcmcMatrix(beta_draws, true_beta_, .95, true,
-                                  "beta-mcmc.txt");
+    auto status = CheckMcmcMatrix(
+        beta_draws, true_beta_, .95, true, "beta-mcmc.txt");
     EXPECT_TRUE(status.ok) << "Beta draws did not cover" << endl << status;
 
     status  = CheckMcmcMatrix(level_draws, level_);
