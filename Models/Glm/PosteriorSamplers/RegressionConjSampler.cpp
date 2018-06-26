@@ -33,17 +33,12 @@ namespace BOOM {
 
   void RCS::set_posterior_suf() {
     const Vector &prior_mean(coefficient_prior_->mu());
-    double sigsq = model_->sigsq();
-
-    // coefficient_prior_->siginv() is Ominv/sigsq
     SpdMatrix unscaled_prior_precision = coefficient_prior_->unscaled_precision(); 
-
     posterior_precision_ = unscaled_prior_precision + model_->suf()->xtx();
     posterior_mean_ = model_->suf()->xty() + unscaled_prior_precision * prior_mean;
     posterior_mean_ = posterior_precision_.solve(posterior_mean_);
-
     SS_ = model_->suf()->relative_sse(posterior_mean_)
-        + unscaled_prior_precision.Mdist(posterior_mean_ - prior_mean);
+        + unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
     DF_ = model_->suf()->n();
   }
 
