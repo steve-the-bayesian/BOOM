@@ -34,11 +34,18 @@ namespace BOOM {
     // TODO: Test this function against the update function in the other
     // multivariate marginal distributions to make sure they give the same
     // answer.
-
+    //
+    // TODO: Rework observation_coefficients() to
+    // partial_observation_coefficients() to account for data which is less than
+    // fully observed.
     double ConditionalIidMarginalDistribution::update(
         const Vector &observation,
         const Selector &observed,
         int t) {
+      if (!model_) {
+        report_error("ConditionalIidMarginalDistribution needs the model to be "
+                     "set by set_model() before calling update().");
+      }
       if (observed.nvars() == 0) {
         return fully_missing_update(t);
       }
@@ -137,9 +144,9 @@ namespace BOOM {
       //
       // When applied to F = H + Z P Z' the theorem gives
       //
-      //   Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
+      //   Finv = Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
       //
-      // We don't compute this directly, we compute Finv * prediction_error.
+      // We don't compute Finv directly, we compute Finv * prediction_error.
       SpdMatrix Z_inner = observation_coefficients.inner();
       Matrix inner_matrix = state_variance() * Z_inner / observation_variance;
       inner_matrix.diag() += 1.0;
@@ -192,11 +199,10 @@ namespace BOOM {
       // The update formula is
       //
       // P[t+1] = T[t] * P[t] * T[t]' + R[t] * Q[t] * R[t]'
-      //
+
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
-
-      // Step 3: P += RQR
+      // Step 2: P += RQR
       model_->state_variance_matrix(t)->add_to(mutable_state_variance());
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;

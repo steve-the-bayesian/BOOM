@@ -36,6 +36,7 @@ namespace BOOM {
   }
   
   void MultivariateKalmanFilterBase::update() {
+
     if (!model_) {
       report_error("Model must be set before calling update().");
     }

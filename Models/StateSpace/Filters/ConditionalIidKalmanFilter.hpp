@@ -77,26 +77,26 @@ namespace BOOM {
       }
       
      private:
+      // Compute prediction_error, scaled_prediction_error_,
+      // forecast_precision_log_determinant_, and kalman gain using the dense
+      // forecast variance matrix.
       void small_sample_update(const Vector &observation,
                                const Selector &observed,
                                int t,
                                const SparseKalmanMatrix &transition,
                                const SparseKalmanMatrix &observation_coefficients);
+      // Compute prediction_error, scaled_prediction_error_,
+      // forecast_precision_log_determinant_, and kalman gain _WITHOUT_
+      // computing the dense forecast variance matrix.
       void large_sample_update(const Vector &observation,
                                const Selector &observed,
                                int t,
                                const SparseKalmanMatrix &transition,
                                const SparseKalmanMatrix &observation_coefficients);
-                               
       
       ModelType *model_;
       Vector scaled_prediction_error_;
       double forecast_precision_log_determinant_;
-      
-      // The Cholesky root of the state conditional variance, before updating.
-      // After updating state_variance is Durbin and Koopman's P[t+1], while
-      // this remains the Cholesky root of P[t].
-      Chol root_state_conditional_variance_;
     };
    
   }  // namespace Kalman
