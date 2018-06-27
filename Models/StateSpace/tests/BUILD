@@ -11,12 +11,27 @@ filegroup(
 cc_library(
     name = "test_utils",
     testonly = True,
-    hdrs = ["state_space_test_utils.hpp"],
+    srcs = [
+        "DynamicInterceptTestFramework.cpp",
+        "StateSpaceTestFramework.cpp",
+    ],
+    hdrs = [
+        "DynamicInterceptTestFramework.hpp",
+        "StateSpaceTestFramework.hpp",
+        "TestFrameworkBase.hpp",
+        "state_space_test_utils.hpp",
+    ],
+    copts = ["-I/usr/local/include"],
     visibility = [
         "//Models/StateSpace/StateModels/tests:__pkg__",
         "//Models/StateSpace/tests:__pkg__",
     ],
-    deps = ["//:boom"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "//Models/StateSpace/StateModels/test_utils",
+        "@gtest",
+    ],
 )
 
 cc_test(
