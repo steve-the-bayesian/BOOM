@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/StateModels/test_utils/LocalLinearTrendModule.hpp"
+#include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
 
 #include "gtest/gtest.h"
 
@@ -28,71 +28,55 @@
 namespace BOOM {
   namespace StateSpaceTesting {
 
-    LocalLinearTrendModule::LocalLinearTrendModule(
-        double level_sd, double initial_level,
-        double slope_sd, double initial_slope)
+    LocalLevelModule::LocalLevelModule(double level_sd, double initial_level)
         : level_sd_(level_sd),
-          slope_sd_(slope_sd),
           initial_level_(initial_level),
-          initial_slope_(initial_slope),
-          trend_model_(new LocalLinearTrendDynamicInterceptStateModel),
+          trend_model_(new LocalLevelDynamicInterceptStateModel),
           level_precision_prior_(new ChisqModel(1.0, level_sd_)),
-          slope_precision_prior_(new ChisqModel(1.0, slope_sd_)),
-          level_precision_sampler_(new ZeroMeanMvnIndependenceSampler(
-              trend_model_.get(), level_precision_prior_, 0)),
-          slope_precision_sampler_(new ZeroMeanMvnIndependenceSampler(
-              trend_model_.get(), slope_precision_prior_, 1)),
+          level_precision_sampler_(new ZeroMeanGaussianConjSampler(
+              trend_model_.get(), level_precision_prior_)),
           cursor_(-1)
     {
-      Vector initial_mean = {initial_level_, initial_slope_};
-      SpdMatrix initial_variance(2);
-      initial_variance.set_diag(square(Vector{level_sd_, slope_sd_}));
-                 
       trend_model_->set_method(level_precision_sampler_);
-      trend_model_->set_method(slope_precision_sampler_);
-      trend_model_->set_initial_state_mean(initial_mean);
-      trend_model_->set_initial_state_variance(initial_variance);
+      trend_model_->set_initial_state_mean(initial_level);
+      trend_model_->set_initial_state_variance(level_sd_);
     }
 
-    void LocalLinearTrendModule::SimulateData(int time_dimension) {
+    void LocalLevelModule::SimulateData(int time_dimension) {
       trend_.resize(time_dimension);
       double level = initial_level_;
-      double slope = initial_slope_;
       for (int i = 0; i < time_dimension; ++i) {
         trend_[i] = level;
-        level += slope + rnorm(0, level_sd_);
-        slope += rnorm(0, slope_sd_);
+        level += rnorm(0, level_sd_);
       }
     }
 
-    void LocalLinearTrendModule::ImbueState(StateSpaceModelBase &model) {
+    void LocalLevelModule::ImbueState(StateSpaceModelBase &model) {
       state_model_index_ = model.number_of_state_models();
       model.add_state(trend_model_);
     }
     
-    void LocalLinearTrendModule::ImbueState(
+    void LocalLevelModule::ImbueState(
         DynamicInterceptRegressionModel &model) {
       state_model_index_ = model.number_of_state_models();
       model.add_state(trend_model_);
     }
     
-    void LocalLinearTrendModule::CreateObservationSpace(int niter) {
+    void LocalLevelModule::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
-      sigma_slope_draws_.resize(niter);
       cursor_ = 0;
     }
 
-    void LocalLinearTrendModule::ObserveDraws(
+    void LocalLevelModule::ObserveDraws(
         const StateSpaceModelBase &model) {
       const ConstSubMatrix state(model.full_state_subcomponent(state_model_index_));
       trend_draws_.row(cursor_) = state.row(0);
-      sigma_level_draws_[cursor_] = sqrt(trend_model_->Sigma()(0, 0));
-      sigma_slope_draws_[cursor_] = sqrt(trend_model_->Sigma()(1, 1));
+      sigma_level_draws_[cursor_] = trend_model_->sigma();
       ++cursor_;
     }
 
-    void LocalLinearTrendModule::Check() {
+    void LocalLevelModule::Check() {
       auto status = CheckMcmcMatrix(
           trend_draws_, trend_, .95, true, "trend.txt");
       EXPECT_TRUE(status.ok)
@@ -106,15 +90,8 @@ namespace BOOM {
           << "Innovation SD for local linear trend model, level component "
           << "did not cover true value." << std::endl
           << AsciiDistributionCompare(sigma_level_draws_, level_sd_);
-
-      EXPECT_GT(var(sigma_slope_draws_), 0)
-          << "sigma slop draws had zero variance";
-      EXPECT_TRUE(CheckMcmcVector(sigma_slope_draws_, slope_sd_, .95,
-                                  "sigma-slope.txt"))
-          << "Innovation SD for the slope portion of the local linear trend "
-          << "model did not cover true value." << std::endl
-          << AsciiDistributionCompare(sigma_slope_draws_, slope_sd_);
     }
     
   }  // namespace StateSpaceTesting
 }  //namespace BOOM
+
