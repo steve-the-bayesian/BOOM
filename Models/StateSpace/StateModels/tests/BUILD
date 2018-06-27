@@ -98,6 +98,8 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
+        "//Models/StateSpace/StateModels/test_utils",
+        "//Models/StateSpace/tests:test_utils",
         "@gtest//:main",
     ],
 )

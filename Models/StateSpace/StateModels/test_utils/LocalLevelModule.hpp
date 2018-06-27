@@ -21,7 +21,6 @@
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/ChisqModel.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
-
 #include "Models/StateSpace/StateModels/test_utils/StateTestModule.hpp"
 
 namespace BOOM {

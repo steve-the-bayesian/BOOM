@@ -13,10 +13,15 @@
 #include "stats/moments.hpp"
 #include "stats/AsciiDistributionCompare.hpp"
 
+#include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
+#include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
+#include "Models/StateSpace/StateModels/test_utils/SeasonalTestModule.hpp"
+
 #include "test_utils/test_utils.hpp"
 
 namespace {
   using namespace BOOM;
+  using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
   
@@ -289,6 +294,20 @@ namespace {
         << forecast_status.error_message();
   }
 
+  //===========================================================================
+  TEST_F(SeasonalTest, Framework) {
+    double true_sigma_obs = 1.2;
+    StateSpaceTestFramework state_space(true_sigma_obs);
+    StateModuleManager modules_;
+    modules_.AddModule(new LocalLevelModule(.1, 0.0));
+    modules_.AddModule(new SeasonalTestModule(.1, 7));
+    modules_.AddModule(new SeasonalTestModule(.1, weeks_per_year_, 7));
+    state_space.AddState(std::move(modules_));
+    int niter = 500;
+    int time_dimension = 500;
+    state_space.Test(niter, time_dimension);
+  }
+    
   //===========================================================================
   TEST_F(SeasonalTest, Mcmc) {
     NEW(StateSpaceModel, model)(series_);
