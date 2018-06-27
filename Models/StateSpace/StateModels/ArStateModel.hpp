@@ -96,5 +96,17 @@ namespace BOOM {
     bool stationary_initial_distribution_;
   };
 
+  class ArDynamicInterceptStateModel
+      : public ArStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    ArDynamicInterceptStateModel(int number_of_lags = 1)
+        : ArStateModel(number_of_lags) {}
+    ArDynamicInterceptStateModel * clone() const override {
+      return new ArDynamicInterceptStateModel(*this);
+    }
+      
+  };
+  
 }  // namespace BOOM
 #endif  //  BOOM_AR_STATE_MODEL_HPP_
