@@ -54,25 +54,32 @@ namespace BOOM {
 
   ADC::AsciiDistributionCompare(const Vector &draws, double truth, int xbuckets,
                                 int ybuckets) {
-    double xmin = std::min(min(draws), truth);
-    double xmax = std::max(max(draws), truth);
-    Vector density_values(xbuckets);
-    double dx = (xmax - xmin) / xbuckets;
-    EmpiricalDensity draws_density(draws);
-    double xx = xmin;
-    double max_density = 0;
-    for (int i = 0; i < xbuckets; ++i) {
-      density_values[i] = draws_density(xx);
-      max_density = std::max(max_density, density_values[i]);
-      xx += dx;
+    double xmin = min(draws);
+    double xmax = max(draws);
+    if (xmin == xmax) {
+      graph_ = AsciiGraph(std::min(xmin, truth), std::max(xmax, truth),
+                          0, 1, xbuckets, ybuckets);
+      graph_.plot_vertical_line(xmin, 'X');
+      graph_.plot_vertical_line(truth);
+    } else {
+      Vector density_values(xbuckets);
+      double dx = (xmax - xmin) / xbuckets;
+      EmpiricalDensity draws_density(draws);
+      double xx = xmin;
+      double max_density = 0;
+      for (int i = 0; i < xbuckets; ++i) {
+        density_values[i] = draws_density(xx);
+        max_density = std::max(max_density, density_values[i]);
+        xx += dx;
+      }
+      graph_ = AsciiGraph(xmin, xmax, 0, max_density, xbuckets, ybuckets);
+      xx = xmin;
+      for (int i = 0; i < xbuckets; ++i) {
+        graph_.plot(xx, density_values[i], 'X');
+        xx += dx;
+      }
+      graph_.plot_vertical_line(truth);
     }
-    graph_ = AsciiGraph(xmin, xmax, 0, max_density, xbuckets, ybuckets);
-    xx = xmin;
-    for (int i = 0; i < xbuckets; ++i) {
-      graph_.plot(xx, density_values[i], 'X');
-      xx += dx;
-    }
-    graph_.plot_vertical_line(truth);
   }
 
   
