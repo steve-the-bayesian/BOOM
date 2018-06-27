@@ -125,6 +125,15 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  class StaticInterceptDynamicInterceptStateModel
+      : public StaticInterceptStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    StaticInterceptDynamicInterceptStateModel * clone() const {
+      return new StaticInterceptDynamicInterceptStateModel(*this);
+    }
+  };
+  
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_STATIC_INTERCEPT_STATE_MODEL_HPP
