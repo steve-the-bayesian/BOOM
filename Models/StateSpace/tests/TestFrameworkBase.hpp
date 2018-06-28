@@ -31,11 +31,17 @@ namespace BOOM {
       void AddState(StateModuleManager &&state) {
         state_modules_ = std::move(state);
       }
+
+      // Run mcmc for 'burn' iterations.
+      virtual void Burn(int burn) = 0;
       
-      void Test(int niter, int time_dimension) {
+      void Test(int niter, int time_dimension, int burn = 0) {
         SimulateData(time_dimension);
         BuildModel();
         CreateObservationSpace(niter);
+        if (burn > 0) {
+          Burn(burn);
+        }
         RunMcmc(niter);
         Check();
       }

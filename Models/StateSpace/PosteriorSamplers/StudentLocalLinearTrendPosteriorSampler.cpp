@@ -27,9 +27,10 @@ namespace BOOM {
 
   namespace {
     // A local namespace for minor implementation details.
-    class NuPosterior {
+    class NuPosteriorFast {
      public:
-      NuPosterior(const BOOM::DoubleModel *nu_prior, const BOOM::GammaSuf *suf)
+      NuPosteriorFast(const BOOM::DoubleModel *nu_prior,
+                      const BOOM::GammaSuf *suf)
           : nu_prior_(nu_prior), suf_(suf) {}
 
       // Returns the un-normalized log posterior evaulated at nu.
@@ -45,12 +46,44 @@ namespace BOOM {
         ans -= nu2 * sum;
         return ans;
       }
-
      private:
       const BOOM::DoubleModel *nu_prior_;
       const BOOM::GammaSuf *suf_;
     };
 
+    class NuPosteriorRobust {
+     public:
+      // Args:
+      //   nu_prior_: A prior distribution for the tail thickness parameter of
+      //     the student T distribution.
+      //   residuals: A set of zero-mean data drawn from the T_nu(0, sigma)
+      //     distribution.
+      //    sigma: The scatter parameter of the T distribution describing
+      //      'residuals'.
+      NuPosteriorRobust(const BOOM::DoubleModel *nu_prior,
+                        const Vector &residuals,
+                        double sigma)
+          : nu_prior_(nu_prior), residuals_(residuals), sigma_(sigma) {}
+
+      // Return the un-normalized log posterior, conditional on mu and sigma
+      // evaluated at nu.
+      double operator()(double nu) const {
+        double ans = nu_prior_->logp(nu);
+        if (!std::isfinite(ans)) {
+          return ans;
+        }
+        for (double r : residuals_) {
+          ans += dstudent(r, 0, sigma_, nu, true);
+        }
+        return ans;
+      }
+
+     private:
+      const BOOM::DoubleModel *nu_prior_;
+      const BOOM::Vector &residuals_;
+      double sigma_;
+    };
+    
     typedef StudentLocalLinearTrendPosteriorSampler SLLTPS;
 
   }  // namespace
@@ -105,8 +138,16 @@ namespace BOOM {
   }
 
   void SLLTPS::draw_nu_level() {
-    NuPosterior logpost(nu_level_prior_.get(),
-                        &model_->nu_level_complete_data_suf());
+    std::function<double(double)> logpost;
+    if (model_->nu_level() > 20) {
+      logpost = NuPosteriorRobust(nu_level_prior_.get(),
+                                  model_->level_residuals(),
+                                  model_->sigma_level());
+    } else {
+      logpost = NuPosteriorFast(nu_level_prior_.get(),
+                                &model_->nu_level_complete_data_suf());
+    }
+
     ScalarSliceSampler sampler(logpost, true);
     sampler.set_lower_limit(0.0);
     double nu = sampler.draw(model_->nu_level());
@@ -114,8 +155,8 @@ namespace BOOM {
   }
 
   void SLLTPS::draw_nu_slope() {
-    NuPosterior logpost(nu_slope_prior_.get(),
-                        &model_->nu_slope_complete_data_suf());
+    NuPosteriorFast logpost(nu_slope_prior_.get(),
+                            &model_->nu_slope_complete_data_suf());
     ScalarSliceSampler sampler(logpost, true);
     sampler.set_lower_limit(0.0);
     double nu = sampler.draw(model_->nu_slope());

@@ -143,6 +143,19 @@ cc_test(
 )
 
 cc_test(
+    name = "student_local_linear_trend_test",
+    srcs = ["student_local_linear_trend_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "//Models/StateSpace/StateModels/test_utils",
+        "//Models/StateSpace/tests:test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "Trig_test",
     srcs = ["Trig_test.cc"],
     copts = COPTS + ["-g"],

@@ -134,7 +134,9 @@ namespace BOOM {
     const WeightedGaussianSuf &sigma_slope_complete_data_suf() const;
     const GammaSuf &nu_level_complete_data_suf() const;
     const GammaSuf &nu_slope_complete_data_suf() const;
-
+    const Vector &level_residuals() const {return level_residuals_;}
+    const Vector &slope_residuals() const {return slope_residuals_;}
+    
     // Posterior draws for the weights in the normal mixture
     // representation of the T distribution.  For Gaussian models the
     // weights will be around 1.  A large outlier has a small weight.
@@ -161,7 +163,25 @@ namespace BOOM {
     GammaSuf level_weight_sufficient_statistics_;
     GammaSuf slope_weight_sufficient_statistics_;
 
+    Vector level_residuals_;
+    Vector slope_residuals_;
+    
     StateModel::Behavior behavior_;
+  };
+
+  class StudentLocalLinearTrendDynamicInterceptStateModel
+      : public StudentLocalLinearTrendStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    using ThisModel =
+        StudentLocalLinearTrendDynamicInterceptStateModel;
+    
+    StudentLocalLinearTrendDynamicInterceptStateModel(
+        double sigma_level, double nu_level,
+        double sigma_slope, double nu_slope)
+        : StudentLocalLinearTrendStateModel(
+              sigma_level, nu_level, sigma_slope, nu_slope) {}
+    ThisModel *clone() const override {return new ThisModel(*this);}
   };
 
 }  // namespace BOOM

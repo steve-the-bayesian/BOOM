@@ -97,6 +97,7 @@ namespace BOOM {
     // 'then'.  That means we have to first update the complete data
     // sufficient statistics with the old weight before recording the
     // new weight.
+    level_residuals_.push_back(level_residual);
     level_complete_data_sufficient_statistics_.update_raw(
         level_residual, latent_level_scale_factors_[time_now - 1]);
     double level_alpha = .5 * (1 + nu_level());
@@ -107,6 +108,7 @@ namespace BOOM {
         latent_level_scale_factors_[time_now - 1]);
 
     double slope_residual = slope_now - slope_then;
+    slope_residuals_.push_back(slope_residual);
     slope_complete_data_sufficient_statistics_.update_raw(
         slope_residual, latent_slope_scale_factors_[time_now - 1]);
     double slope_alpha = .5 * (1 + nu_slope());
@@ -262,6 +264,8 @@ namespace BOOM {
     level_weight_sufficient_statistics_.clear();
     slope_complete_data_sufficient_statistics_.clear();
     slope_weight_sufficient_statistics_.clear();
+    level_residuals_.clear();
+    slope_residuals_.clear();
   }
 
   const WeightedGaussianSuf &SLLTSM::sigma_level_complete_data_suf() const {

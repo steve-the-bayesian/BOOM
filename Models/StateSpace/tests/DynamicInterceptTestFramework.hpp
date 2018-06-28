@@ -37,6 +37,9 @@ namespace BOOM {
       void SimulateData(int time_dimension) override;
       void BuildModel() override;
       void CreateObservationSpace(int niter) override;
+      void Burn(int burn) override {
+        for (int i = 0; i < burn; ++i) model_->sample_posterior();
+      }
       void RunMcmc(int niter) override;
       void Check() override;
       
