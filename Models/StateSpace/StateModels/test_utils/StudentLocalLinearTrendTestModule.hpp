@@ -62,8 +62,6 @@ namespace BOOM {
       Ptr<StudentLocalLinearTrendPosteriorSampler> trend_sampler_;
 
       Vector trend_;
-      int cursor_;
-
       Matrix trend_draws_;
       Vector sigma_level_draws_;
       Vector nu_level_draws_;

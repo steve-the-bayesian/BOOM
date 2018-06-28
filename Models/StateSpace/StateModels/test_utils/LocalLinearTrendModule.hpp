@@ -55,7 +55,7 @@ namespace BOOM {
       Ptr<ZeroMeanMvnIndependenceSampler> slope_precision_sampler_;
 
       Vector trend_;
-      int cursor_;
+      
       Matrix trend_draws_;
       Vector sigma_level_draws_;
       Vector sigma_slope_draws_;

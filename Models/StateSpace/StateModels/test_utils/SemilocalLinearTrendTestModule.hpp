@@ -69,7 +69,6 @@ namespace BOOM {
       Ptr<SemilocalLinearTrendDynamicInterceptStateModel> trend_model_;
       
       Vector trend_;
-      int cursor_;
       Matrix trend_draws_;
       Vector sigma_level_draws_;
       Vector sigma_slope_draws_;

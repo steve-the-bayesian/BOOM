@@ -56,16 +56,14 @@ namespace BOOM {
       trend_draws_.resize(niter, trend_.size());
       sigma_draws_.resize(niter);
       coefficient_draws_.resize(niter, ar_coefficients_.size());
-      cursor_ = 0;
     }
 
     void ArStateModelTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trend_draws_.row(cursor_) = state.row(0);
-      sigma_draws_[cursor_] = trend_model_->sigma();
-      coefficient_draws_.row(cursor_) = trend_model_->phi();
-      ++cursor_;
+      trend_draws_.row(cursor()) = state.row(0);
+      sigma_draws_[cursor()] = trend_model_->sigma();
+      coefficient_draws_.row(cursor()) = trend_model_->phi();
     }
 
     void ArStateModelTestModule::Check() {

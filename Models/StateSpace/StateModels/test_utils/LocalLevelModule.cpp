@@ -34,8 +34,7 @@ namespace BOOM {
           trend_model_(new LocalLevelDynamicInterceptStateModel),
           level_precision_prior_(new ChisqModel(1.0, level_sd_)),
           level_precision_sampler_(new ZeroMeanGaussianConjSampler(
-              trend_model_.get(), level_precision_prior_)),
-          cursor_(-1)
+              trend_model_.get(), level_precision_prior_))
     {
       trend_model_->set_method(level_precision_sampler_);
       trend_model_->set_initial_state_mean(initial_level);
@@ -54,14 +53,12 @@ namespace BOOM {
     void LocalLevelModule::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void LocalLevelModule::ObserveDraws(const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trend_draws_.row(cursor_) = state.row(0);
-      sigma_level_draws_[cursor_] = trend_model_->sigma();
-      ++cursor_;
+      trend_draws_.row(cursor()) = state.row(0);
+      sigma_level_draws_[cursor()] = trend_model_->sigma();
     }
 
     void LocalLevelModule::Check() {

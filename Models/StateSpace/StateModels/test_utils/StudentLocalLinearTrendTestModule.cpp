@@ -70,18 +70,16 @@ namespace BOOM {
       sigma_slope_draws_.resize(niter);
       nu_level_draws_.resize(niter);
       nu_slope_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void StudentLocalLinearTrendTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trend_draws_.row(cursor_) = state.row(0);
-      sigma_level_draws_[cursor_] = trend_model_->sigma_level();
-      sigma_slope_draws_[cursor_] = trend_model_->sigma_slope();
-      nu_level_draws_[cursor_] = trend_model_->nu_level();
-      nu_slope_draws_[cursor_] = trend_model_->nu_slope();
-      ++cursor_;
+      trend_draws_.row(cursor()) = state.row(0);
+      sigma_level_draws_[cursor()] = trend_model_->sigma_level();
+      sigma_slope_draws_[cursor()] = trend_model_->sigma_slope();
+      nu_level_draws_[cursor()] = trend_model_->nu_level();
+      nu_slope_draws_[cursor()] = trend_model_->nu_slope();
     }
 
     void StudentLocalLinearTrendTestModule::Check() {

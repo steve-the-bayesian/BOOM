@@ -75,8 +75,6 @@ namespace BOOM {
       Ptr<ZeroMeanGaussianConjSampler> sampler_;
 
       Vector seasonal_;
-      int cursor_;
-
       Matrix seasonal_draws_;
       Vector sigma_draws_;
     };

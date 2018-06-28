@@ -76,17 +76,15 @@ namespace BOOM {
     void TrigTestModule::CreateObservationSpace(int niter) {
       trig_draws_.resize(niter, trig_.size());
       sigma_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void TrigTestModule::ObserveDraws(const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trig_draws_.row(cursor_) = 0;
+      trig_draws_.row(cursor()) = 0;
       for (int i = 0; i < state.nrow(); i += 2) {
-        trig_draws_.row(cursor_) += state.row(i);
+        trig_draws_.row(cursor()) += state.row(i);
       }
-      sigma_draws_[cursor_] = trig_model_->error_distribution()->sigma();
-      ++cursor_;
+      sigma_draws_[cursor()] = trig_model_->error_distribution()->sigma();
     }
 
     void TrigTestModule::Check() {

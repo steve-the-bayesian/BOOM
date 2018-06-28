@@ -65,9 +65,6 @@ namespace BOOM {
       // The simulated data for the test.
       Vector trig_;
 
-      // Current MCMC iteration number.
-      int cursor_;
-
       // Space for observing MCMC draws.
       Matrix trig_draws_;
       Vector sigma_draws_;

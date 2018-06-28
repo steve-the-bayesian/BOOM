@@ -48,12 +48,10 @@ namespace BOOM {
       void Check() override;
       
      private:
-      
       double intercept_;
       Ptr<StaticInterceptDynamicInterceptStateModel> intercept_model_;
 
       Vector state_;
-      int cursor_;
       Vector intercept_draws_;
     };
     

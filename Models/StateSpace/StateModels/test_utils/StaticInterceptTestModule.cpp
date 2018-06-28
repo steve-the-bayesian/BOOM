@@ -26,8 +26,7 @@ namespace BOOM {
   namespace StateSpaceTesting {
     StaticInterceptTestModule::StaticInterceptTestModule(double intercept)
         : intercept_(intercept),
-          intercept_model_(new StaticInterceptDynamicInterceptStateModel),
-          cursor_(-1)
+          intercept_model_(new StaticInterceptDynamicInterceptStateModel)
     {
       intercept_model_->set_initial_state_mean(intercept_);
       intercept_model_->set_initial_state_variance(square(100.0));
@@ -39,13 +38,12 @@ namespace BOOM {
 
     void StaticInterceptTestModule::CreateObservationSpace(int niter) {
       intercept_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void StaticInterceptTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      intercept_draws_[cursor_++] = state(0, 0);
+      intercept_draws_[cursor()] = state(0, 0);
     }
 
     void StaticInterceptTestModule::Check() {

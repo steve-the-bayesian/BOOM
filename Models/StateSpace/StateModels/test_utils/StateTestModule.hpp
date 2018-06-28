@@ -29,7 +29,8 @@ namespace BOOM {
     // instances should included priors, samplers
     class StateModelTestModule {
      public:
-
+      StateModelTestModule() : state_model_index_(-1), cursor_(-1) {}
+      
       // Simulate the data for this state component.  After calling this method,
       // the data will be available by calling StateContribution().
       virtual void SimulateData(int time_dimension) = 0;
@@ -67,8 +68,13 @@ namespace BOOM {
       // data.
       virtual void Check() = 0;
 
+      void ResetCursor() {cursor_ = 0;}
+      void IncrementCursor() {++cursor_;}
+      int cursor() const {return cursor_;}
+      
      private:
       int state_model_index_;
+      int cursor_;
     };
 
     //===========================================================================
@@ -107,12 +113,14 @@ namespace BOOM {
       void CreateObservationSpace(int niter) {
         for (auto &module : modules_) {
           module->CreateObservationSpace(niter);
+          module->ResetCursor();
         }
       }
 
       void ObserveDraws(const StateSpaceModelBase &model) {
         for (auto &module : modules_) {
           module->ObserveDraws(model);
+          module->IncrementCursor();
         }
       }
 

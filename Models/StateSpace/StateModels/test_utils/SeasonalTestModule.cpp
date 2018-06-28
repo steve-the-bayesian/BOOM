@@ -38,8 +38,7 @@ namespace BOOM {
               pattern.size(), season_duration_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
-              seasonal_model_.get(), precision_prior_)),
-          cursor_(-1)
+              seasonal_model_.get(), precision_prior_))
     {
       seasonal_model_->set_method(sampler_);
       state_dim_ = initial_pattern_.size() - 1;
@@ -76,14 +75,12 @@ namespace BOOM {
     void SeasonalTestModule::CreateObservationSpace(int niter) {
       seasonal_draws_.resize(niter, seasonal_.size());
       sigma_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void SeasonalTestModule::ObserveDraws(const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      seasonal_draws_.row(cursor_) = state.row(0);
-      sigma_draws_[cursor_] = seasonal_model_->sigma();
-      ++cursor_;
+      seasonal_draws_.row(cursor()) = state.row(0);
+      sigma_draws_[cursor()] = seasonal_model_->sigma();
     }
 
     void SeasonalTestModule::Check() {

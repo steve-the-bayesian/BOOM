@@ -41,8 +41,7 @@ namespace BOOM {
           level_precision_sampler_(new ZeroMeanMvnIndependenceSampler(
               trend_model_.get(), level_precision_prior_, 0)),
           slope_precision_sampler_(new ZeroMeanMvnIndependenceSampler(
-              trend_model_.get(), slope_precision_prior_, 1)),
-          cursor_(-1)
+              trend_model_.get(), slope_precision_prior_, 1))
     {
       Vector initial_mean = {initial_level_, initial_slope_};
       SpdMatrix initial_variance(2);
@@ -69,16 +68,14 @@ namespace BOOM {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
       sigma_slope_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void LocalLinearTrendModule::ObserveDraws(
         const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trend_draws_.row(cursor_) = state.row(0);
-      sigma_level_draws_[cursor_] = sqrt(trend_model_->Sigma()(0, 0));
-      sigma_slope_draws_[cursor_] = sqrt(trend_model_->Sigma()(1, 1));
-      ++cursor_;
+      trend_draws_.row(cursor()) = state.row(0);
+      sigma_level_draws_[cursor()] = sqrt(trend_model_->Sigma()(0, 0));
+      sigma_slope_draws_[cursor()] = sqrt(trend_model_->Sigma()(1, 1));
     }
 
     void LocalLinearTrendModule::Check() {

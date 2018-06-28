@@ -82,17 +82,15 @@ namespace BOOM {
       sigma_slope_draws_.resize(niter);
       slope_mean_draws_.resize(niter);
       slope_ar_draws_.resize(niter);
-      cursor_ = 0;
     }
 
     void Module::ObserveDraws(const StateSpaceModelBase &model) {
       auto state = CurrentState(model);
-      trend_draws_.row(cursor_) = state.row(0);
-      sigma_level_draws_[cursor_] = level_model_->sigma();
-      sigma_slope_draws_[cursor_] = slope_model_->sigma();
-      slope_mean_draws_[cursor_] = slope_model_->mu();
-      slope_ar_draws_[cursor_] = slope_model_->phi();
-      ++cursor_;
+      trend_draws_.row(cursor()) = state.row(0);
+      sigma_level_draws_[cursor()] = level_model_->sigma();
+      sigma_slope_draws_[cursor()] = slope_model_->sigma();
+      slope_mean_draws_[cursor()] = slope_model_->mu();
+      slope_ar_draws_[cursor()] = slope_model_->phi();
     }
     
     void Module::Check() {

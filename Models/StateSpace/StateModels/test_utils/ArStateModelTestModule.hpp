@@ -56,7 +56,7 @@ namespace BOOM {
       // The simulated state.
       Vector trend_;
 
-      int cursor_;
+      
       Matrix trend_draws_;
       Vector sigma_draws_;
       Matrix coefficient_draws_;
