@@ -58,8 +58,8 @@ namespace BOOM {
   // Holiday models
   class Holiday;
   class RandomWalkHolidayStateModel;
-  class RegressionHolidayStateModel;
-  class HierarchicalRegressionHolidayStateModel;
+  class ScalarRegressionHolidayStateModel;
+  class ScalarHierarchicalRegressionHolidayStateModel;
 
 
   namespace RInterface {
@@ -151,9 +151,9 @@ namespace BOOM {
 
       RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
-      RegressionHolidayStateModel *CreateRegressionHolidayStateModel(
+      ScalarRegressionHolidayStateModel *CreateRegressionHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
-      HierarchicalRegressionHolidayStateModel *
+      ScalarHierarchicalRegressionHolidayStateModel *
       CreateHierarchicalRegressionHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
       

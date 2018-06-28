@@ -58,14 +58,13 @@
 #include "Models/TimeSeries/PosteriorSamplers/ArPosteriorSampler.hpp"
 #include "Models/TimeSeries/PosteriorSamplers/ArSpikeSlabSampler.hpp"
 
-
 #include <R_ext/Print.h>
 
 namespace BOOM {
   namespace RInterface {
 
-    StateModelFactory::StateModelFactory(RListIoManager * io_manager,
-                                         ScalarStateSpaceModelBase * model)
+    StateModelFactory::StateModelFactory(RListIoManager *io_manager,
+                                         ScalarStateSpaceModelBase *model)
         : io_manager_(io_manager),
           model_(model)
     {}
@@ -135,9 +134,9 @@ namespace BOOM {
         std::string method = ToString(getListElement(
             r_state_component, "method", true));
         if (method == "direct") {
-          return CreateTrigStateModel(r_state_component, prefix);
+          return CreateTrigRegressionStateModel(r_state_component, prefix);
         } else if (method == "harmonic") {
-          return CreateHarmonicTrigStateModel(r_state_component, prefix);
+          return CreateTrigStateModel(r_state_component, prefix);
         } else {
           std::ostringstream err;
           err << "Unknown method: " << method
@@ -490,13 +489,13 @@ namespace BOOM {
       return intercept;
     }
     //======================================================================
-    TrigStateModel *StateModelFactory::CreateTrigStateModel(
+    TrigStateModel *StateModelFactory::CreateTrigRegressionStateModel(
         SEXP r_state_component, const std::string &prefix) {
       double period = Rf_asReal(getListElement(r_state_component, "period"));
       Vector frequencies = ToBoomVector(getListElement(
           r_state_component, "frequencies"));
       TrigStateModel * trig_state_model(
-          new TrigStateModel(period, frequencies));
+          new TrigRegressionStateModel(period, frequencies));
 
       //-------------- set the prior and the posterior sampler.
       SdPrior sigma_prior(getListElement(r_state_component, "sigma.prior"));
@@ -531,13 +530,13 @@ namespace BOOM {
       return trig_state_model;
     }
     //======================================================================
-    HarmonicTrigStateModel * StateModelFactory::CreateHarmonicTrigStateModel(
+    TrigStateModel * StateModelFactory::CreateTrigStateModel(
         SEXP r_state_component, const std::string &prefix) {
       double period = Rf_asReal(getListElement(r_state_component, "period"));
       Vector frequencies = ToBoomVector(getListElement(
           r_state_component, "frequencies"));
-      HarmonicTrigStateModel * quasi_trig_state_model(
-          new HarmonicTrigStateModel(period, frequencies));
+      TrigStateModel * quasi_trig_state_model(
+          new TrigStateModel(period, frequencies));
 
       //-------------- set the prior and the posterior sampler.
       SdPrior sigma_prior(getListElement(r_state_component, "sigma.prior"));
@@ -924,7 +923,7 @@ namespace BOOM {
     }
 
     //=========================================================================
-    RegressionHolidayStateModel *
+    ScalarRegressionHolidayStateModel *
     StateModelFactory::CreateRegressionHolidayStateModel(
         SEXP r_state_specification, const std::string &prefix) {
       Date time_zero = ToBoomDate(getListElement(
@@ -933,10 +932,11 @@ namespace BOOM {
       NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
       NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
 
-      RegressionHolidayStateModel *holiday_model =
-          new RegressionHolidayStateModel(
+      ScalarRegressionHolidayStateModel *holiday_model =
+          new ScalarRegressionHolidayStateModel(
               time_zero, residual_variance, prior);
-
+      holiday_model->set_model(model_);
+      
       RMemoryProtector holiday_list_protector;
       SEXP r_holidays = holiday_list_protector.protect(
           getListElement(r_state_specification, "holidays"));
@@ -980,14 +980,15 @@ namespace BOOM {
     // Args:
     //   r_state_specification: An R object of class
     //     ShrinkageRegressionHolidayModel detailing the model to be built.
-    HierarchicalRegressionHolidayStateModel *
+    ScalarHierarchicalRegressionHolidayStateModel *
     StateModelFactory::CreateHierarchicalRegressionHolidayStateModel(
         SEXP r_state_specification, const std::string &prefix) {
       Date time_zero = ToBoomDate(getListElement(
           r_state_specification, "time0"));
-      HierarchicalRegressionHolidayStateModel *holiday_model =
-          new HierarchicalRegressionHolidayStateModel(
+      ScalarHierarchicalRegressionHolidayStateModel *holiday_model =
+          new ScalarHierarchicalRegressionHolidayStateModel(
               time_zero, GetResidualVarianceParameter());
+      holiday_model->set_model(model_);
       SEXP r_holidays = getListElement(r_state_specification, "holidays");
       int number_of_holidays = Rf_length(r_holidays);
       std::vector<std::string> holiday_names;

@@ -25,7 +25,7 @@ namespace BOOM {
   using std::cout;
   using std::endl;
 
-  TrigStateModel::TrigStateModel(double period, const Vector &frequencies)
+  TrigRegressionStateModel::TrigRegressionStateModel(double period, const Vector &frequencies)
       : IndependentMvnModel(2 * frequencies.size()),
         period_(period),
         frequencies_(frequencies),
@@ -35,7 +35,7 @@ namespace BOOM {
     if (frequencies_.empty()) {
       report_error(
           "At least one frequency needed to "
-          "initialize TrigStateModel.");
+          "initialize TrigRegressionStateModel.");
     }
     for (int i = 0; i < frequencies_.size(); ++i) {
       frequencies_[i] = 2 * Constants::pi * frequencies_[i] / period_;
@@ -43,7 +43,7 @@ namespace BOOM {
     set_mu(Vector(state_dimension(), 0));
   }
 
-  TrigStateModel::TrigStateModel(const TrigStateModel &rhs)
+  TrigRegressionStateModel::TrigRegressionStateModel(const TrigRegressionStateModel &rhs)
       : Model(rhs),
         StateModel(rhs),
         IndependentMvnModel(rhs),
@@ -55,16 +55,16 @@ namespace BOOM {
         initial_state_mean_(rhs.initial_state_mean_),
         initial_state_variance_(rhs.initial_state_variance_) {}
 
-  TrigStateModel *TrigStateModel::clone() const {
-    return new TrigStateModel(*this);
+  TrigRegressionStateModel *TrigRegressionStateModel::clone() const {
+    return new TrigRegressionStateModel(*this);
   }
 
-  void TrigStateModel::observe_state(const ConstVectorView &then,
+  void TrigRegressionStateModel::observe_state(const ConstVectorView &then,
                                      const ConstVectorView &now, int time_now) {
     suf()->update_raw(now - then);
   }
 
-  void TrigStateModel::update_complete_data_sufficient_statistics(
+  void TrigRegressionStateModel::update_complete_data_sufficient_statistics(
       int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
     suf()->update_expected_value(
@@ -72,12 +72,12 @@ namespace BOOM {
         state_error_variance.diag() + pow(state_error_mean, 2));
   }
 
-  void TrigStateModel::simulate_state_error(RNG &rng, VectorView eta,
+  void TrigRegressionStateModel::simulate_state_error(RNG &rng, VectorView eta,
                                             int t) const {
     eta = sim(rng);
   }
 
-  SparseVector TrigStateModel::observation_matrix(int t) const {
+  SparseVector TrigRegressionStateModel::observation_matrix(int t) const {
     Vector trig(state_dimension());
     for (int i = 0; i < frequencies_.size(); ++i) {
       trig[2 * i] = cos(frequencies_[i] * t);
@@ -86,33 +86,33 @@ namespace BOOM {
     return SparseVector(trig);
   }
 
-  Vector TrigStateModel::initial_state_mean() const {
+  Vector TrigRegressionStateModel::initial_state_mean() const {
     return initial_state_mean_;
   }
 
-  void TrigStateModel::set_initial_state_mean(const Vector &mean) {
+  void TrigRegressionStateModel::set_initial_state_mean(const Vector &mean) {
     if (mean.size() != state_dimension()) {
-      report_error("Initial state mean is the wrong size for TrigStateModel.");
+      report_error("Initial state mean is the wrong size for TrigRegressionStateModel.");
     }
     initial_state_mean_ = mean;
   }
 
-  SpdMatrix TrigStateModel::initial_state_variance() const {
+  SpdMatrix TrigRegressionStateModel::initial_state_variance() const {
     return initial_state_variance_;
   }
 
-  void TrigStateModel::set_initial_state_variance(const SpdMatrix &variance) {
+  void TrigRegressionStateModel::set_initial_state_variance(const SpdMatrix &variance) {
     if (nrow(variance) != state_dimension()) {
       report_error(
           "initial_state_variance is the wrong size "
-          "in TrigStateModel.");
+          "in TrigRegressionStateModel.");
     }
     initial_state_variance_ = variance;
   }
 
   //===========================================================================
-  HarmonicTrigStateModel::HarmonicTrigStateModel(double period,
-                                                 const Vector &frequencies)
+  TrigStateModel::TrigStateModel(double period,
+                                 const Vector &frequencies)
       : period_(period),
         frequencies_(frequencies),
         error_distribution_(new ZeroMeanGaussianModel),
@@ -143,8 +143,8 @@ namespace BOOM {
     }
   }
 
-  HarmonicTrigStateModel::HarmonicTrigStateModel(
-      const HarmonicTrigStateModel &rhs)
+  TrigStateModel::TrigStateModel(
+      const TrigStateModel &rhs)
       : StateModel(rhs),
         period_(rhs.period_),
         frequencies_(rhs.frequencies_),
@@ -160,8 +160,8 @@ namespace BOOM {
     ParamPolicy::add_model(error_distribution_);
   }
 
-  HarmonicTrigStateModel & HarmonicTrigStateModel::operator=(
-      const HarmonicTrigStateModel &rhs) {
+  TrigStateModel & TrigStateModel::operator=(
+      const TrigStateModel &rhs) {
     if (&rhs != this) {
       StateModel::operator=(rhs);
       period_ = rhs.period_;
@@ -181,7 +181,7 @@ namespace BOOM {
     return *this;
   }
 
-  void HarmonicTrigStateModel::observe_state(
+  void TrigStateModel::observe_state(
       const ConstVectorView &then,
       const ConstVectorView &now,
       int time_now) {
@@ -195,7 +195,7 @@ namespace BOOM {
     }
   }
 
-  void HarmonicTrigStateModel::update_complete_data_sufficient_statistics(
+  void TrigStateModel::update_complete_data_sufficient_statistics(
       int t,
       const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance)  {
@@ -208,7 +208,7 @@ namespace BOOM {
     ////////////////////////////////////////////////////////////////////////
   }
 
-  void HarmonicTrigStateModel::increment_expected_gradient(
+  void TrigStateModel::increment_expected_gradient(
       VectorView gradient,
       int t,
       const ConstVectorView &state_error_mean,
@@ -222,7 +222,7 @@ namespace BOOM {
     ////////////////////////////////////////////////////////////////////////
   }
 
-  void HarmonicTrigStateModel::simulate_state_error(
+  void TrigStateModel::simulate_state_error(
       RNG &rng, VectorView eta, int t) const {
     double sigma = error_distribution_->sigma();
     for (int i = 0; i < eta.size(); ++i) {
@@ -231,15 +231,15 @@ namespace BOOM {
   }
 
   Ptr<SparseMatrixBlock>
-  HarmonicTrigStateModel::state_transition_matrix(int t) const {
+  TrigStateModel::state_transition_matrix(int t) const {
     return state_transition_matrix_;
   }
 
-  void HarmonicTrigStateModel::set_initial_state_mean(
+  void TrigStateModel::set_initial_state_mean(
       const ConstVectorView &mean) {
     if (mean.size() != state_dimension()) {
       std::ostringstream err;
-      err << "Argument to HarmonicTrigStateModel::set_initial_state_mean is "
+      err << "Argument to TrigStateModel::set_initial_state_mean is "
           << "of size " << mean.size() << " but it should be of size "
           << state_dimension() << ".";
       report_error(err.str());
@@ -247,11 +247,11 @@ namespace BOOM {
     initial_state_mean_ = mean;
   }
 
-  void HarmonicTrigStateModel::set_initial_state_variance(
+  void TrigStateModel::set_initial_state_variance(
       const SpdMatrix &variance) {
     if (variance.nrow() != state_dimension()) {
       std::ostringstream err;
-      err << "Argument to HarmonicTrigStateModel::set_initial_state_variance "
+      err << "Argument to TrigStateModel::set_initial_state_variance "
           << "has " << variance.nrow() << " rows, but it should have "
           << state_dimension() << ".";
       report_error(err.str());

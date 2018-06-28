@@ -18,8 +18,12 @@
 #include "test_utils/test_utils.hpp"
 #include <fstream>
 
+#include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
+#include "Models/StateSpace/StateModels/test_utils/TrigTestModule.hpp"
+
 namespace {
   using namespace BOOM;
+  using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
   
@@ -43,7 +47,7 @@ namespace {
   inline double dsquare(double x) {return x * x;}
   //======================================================================
   TEST_F(TrigStateModelTest, ModelMatrices) {
-    TrigStateModel trig(period_, frequencies_);
+    TrigRegressionStateModel trig(period_, frequencies_);
     EXPECT_EQ(trig.state_dimension(), 2 * frequencies_.size());
 
     SparseVector Z = trig.observation_matrix(17.0);
@@ -69,6 +73,18 @@ namespace {
   }
 
   //======================================================================
+  TEST_F(TrigStateModelTest, StateSpaceFramework) {
+    StateSpaceTestFramework framework(1.2);
+    StateModuleManager modules;
+    int time_dimension = 200;
+    double period = time_dimension / 5.0;
+    Vector frequencies = {1, 2};
+    modules.AddModule(new TrigTestModule(period, frequencies, 0.3));
+    framework.AddState(std::move(modules));
+    int niter = 500;
+    framework.Test(niter, time_dimension);
+  }
+  //======================================================================
   TEST_F(TrigStateModelTest, HarmonicTrigMCMC) {
     int time_dimension = 200;
 
@@ -88,7 +104,7 @@ namespace {
     }
 
     StateSpaceModel model(y);
-    NEW(HarmonicTrigStateModel, trig_state)(period, {1.0, 2.0});
+    NEW(TrigStateModel, trig_state)(period, {1.0, 2.0});
     trig_state->set_initial_state_mean(
         Vector(trig_state->state_dimension(), 0.0));
     trig_state->set_initial_state_variance(
