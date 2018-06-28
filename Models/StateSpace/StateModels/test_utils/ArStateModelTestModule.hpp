@@ -36,8 +36,11 @@ namespace BOOM {
 
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return trend_; }
-      void ImbueState(StateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
+      Ptr<StateModel> get_state_model() override {return trend_model_;}
+      Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() override {
+        return trend_model_;
+      }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -52,9 +55,6 @@ namespace BOOM {
 
       // The simulated state.
       Vector trend_;
-
-      // The index of this the state model in the state model being monitored.
-      int state_model_index_;
 
       int cursor_;
       Matrix trend_draws_;

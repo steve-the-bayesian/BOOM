@@ -73,15 +73,6 @@ namespace BOOM {
       }
     }
 
-    void TrigTestModule::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trig_model_);
-    }
-    void TrigTestModule::ImbueState(DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trig_model_);
-    }
-
     void TrigTestModule::CreateObservationSpace(int niter) {
       trig_draws_.resize(niter, trig_.size());
       sigma_draws_.resize(niter);
@@ -89,8 +80,7 @@ namespace BOOM {
     }
 
     void TrigTestModule::ObserveDraws(const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       trig_draws_.row(cursor_) = 0;
       for (int i = 0; i < state.nrow(); i += 2) {
         trig_draws_.row(cursor_) += state.row(i);

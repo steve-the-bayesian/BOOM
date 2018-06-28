@@ -64,18 +64,6 @@ namespace BOOM {
       }
     }
 
-    void StudentLocalLinearTrendTestModule::ImbueState(
-        StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-
-    void StudentLocalLinearTrendTestModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-
     void StudentLocalLinearTrendTestModule::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
@@ -87,8 +75,7 @@ namespace BOOM {
 
     void StudentLocalLinearTrendTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       trend_draws_.row(cursor_) = state.row(0);
       sigma_level_draws_[cursor_] = trend_model_->sigma_level();
       sigma_slope_draws_[cursor_] = trend_model_->sigma_slope();

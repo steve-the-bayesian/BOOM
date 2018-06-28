@@ -35,15 +35,29 @@ namespace BOOM {
       virtual void SimulateData(int time_dimension) = 0;
       virtual const Vector &StateContribution() const = 0;
       
-      // Place the fully formed state model into model.
-      virtual void ImbueState(StateSpaceModelBase &model) = 0;
-      virtual void ImbueState(DynamicInterceptRegressionModel &model) = 0;
+      virtual Ptr<StateModel> get_state_model() = 0;
+      virtual Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() = 0;
 
+      // Place the fully formed state model into model.
+      void ImbueState(StateSpaceModelBase &model) {
+        state_model_index_ = model.number_of_state_models();
+        model.add_state(get_state_model());
+      }
+      void ImbueState(DynamicInterceptRegressionModel &model) {
+        state_model_index_ = model.number_of_state_models();
+        model.add_state(get_dynamic_intercept_state_model());
+      }
+      
       // Before starting the MCMC algorithm, call CreateObservationSpace with
       // the desired number of MCMC iterations.  This will create a set of
       // Vector and Matrix objects to store the MCMC draws so they can be
       // checked after the run ends.
       virtual void CreateObservationSpace(int niter) = 0;
+
+      const ConstSubMatrix CurrentState(const StateSpaceModelBase &model) {
+        return model.full_state_subcomponent(state_model_index_);
+      }
       
       // Record the current values of the state in the space created by
       // CreateObservationSpace.
@@ -52,6 +66,9 @@ namespace BOOM {
       // Check the MCMC draws vs the true values used to create the simulated
       // data.
       virtual void Check() = 0;
+
+     private:
+      int state_model_index_;
     };
 
     //===========================================================================

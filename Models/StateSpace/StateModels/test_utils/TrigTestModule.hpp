@@ -43,8 +43,11 @@ namespace BOOM {
 
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return trig_; }
-      void ImbueState(StateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
+      Ptr<StateModel> get_state_model() override {return trig_model_;}
+      Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() override {
+        return trig_model_;
+      }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -61,10 +64,6 @@ namespace BOOM {
 
       // The simulated data for the test.
       Vector trig_;
-
-      // The position of trig_model_ among the other state models in the state
-      // space model describing the data.
-      int state_model_index_;
 
       // Current MCMC iteration number.
       int cursor_;

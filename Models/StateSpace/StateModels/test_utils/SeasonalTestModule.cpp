@@ -39,8 +39,7 @@ namespace BOOM {
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               seasonal_model_.get(), precision_prior_)),
-          cursor_(-1),
-          state_model_index_(-1)
+          cursor_(-1)
     {
       seasonal_model_->set_method(sampler_);
       state_dim_ = initial_pattern_.size() - 1;
@@ -74,16 +73,6 @@ namespace BOOM {
       }
     }
 
-    void SeasonalTestModule::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(seasonal_model_);
-    }
-
-    void SeasonalTestModule::ImbueState(DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(seasonal_model_);
-    }
-
     void SeasonalTestModule::CreateObservationSpace(int niter) {
       seasonal_draws_.resize(niter, seasonal_.size());
       sigma_draws_.resize(niter);
@@ -91,8 +80,7 @@ namespace BOOM {
     }
 
     void SeasonalTestModule::ObserveDraws(const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       seasonal_draws_.row(cursor_) = state.row(0);
       sigma_draws_[cursor_] = seasonal_model_->sigma();
       ++cursor_;

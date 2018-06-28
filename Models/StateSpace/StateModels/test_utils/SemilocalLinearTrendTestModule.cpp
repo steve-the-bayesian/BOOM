@@ -76,15 +76,6 @@ namespace BOOM {
       }
     }
 
-    void Module::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-    void Module::ImbueState(DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-
     void Module::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
@@ -95,8 +86,7 @@ namespace BOOM {
     }
 
     void Module::ObserveDraws(const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       trend_draws_.row(cursor_) = state.row(0);
       sigma_level_draws_[cursor_] = level_model_->sigma();
       sigma_slope_draws_[cursor_] = slope_model_->sigma();

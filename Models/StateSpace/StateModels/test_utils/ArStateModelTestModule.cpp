@@ -52,17 +52,6 @@ namespace BOOM {
       trend_ = trend_model_->simulate(time_dimension);
     }
 
-    void ArStateModelTestModule::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-
-    void ArStateModelTestModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-
     void ArStateModelTestModule::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_draws_.resize(niter);
@@ -72,8 +61,7 @@ namespace BOOM {
 
     void ArStateModelTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       trend_draws_.row(cursor_) = state.row(0);
       sigma_draws_[cursor_] = trend_model_->sigma();
       coefficient_draws_.row(cursor_) = trend_model_->phi();

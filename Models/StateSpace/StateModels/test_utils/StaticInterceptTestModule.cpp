@@ -37,17 +37,6 @@ namespace BOOM {
       state_.assign(time_dimension, intercept_);
     }
 
-    void StaticInterceptTestModule::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(intercept_model_);
-    }
-
-    void StaticInterceptTestModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(intercept_model_);
-    }
-
     void StaticInterceptTestModule::CreateObservationSpace(int niter) {
       intercept_draws_.resize(niter);
       cursor_ = 0;
@@ -55,8 +44,7 @@ namespace BOOM {
 
     void StaticInterceptTestModule::ObserveDraws(
         const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(
-          state_model_index_));
+      auto state = CurrentState(model);
       intercept_draws_[cursor_++] = state(0, 0);
     }
 

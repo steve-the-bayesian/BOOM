@@ -38,8 +38,11 @@ namespace BOOM {
       StaticInterceptTestModule(double intercept);
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return state_; }
-      void ImbueState(StateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
+      Ptr<StateModel> get_state_model() override {return intercept_model_;}
+      Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() override {
+        return intercept_model_;
+      }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -51,8 +54,6 @@ namespace BOOM {
 
       Vector state_;
       int cursor_;
-      // The index of this the state model in the state model being monitored.
-      int state_model_index_;
       Vector intercept_draws_;
     };
     

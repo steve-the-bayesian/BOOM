@@ -51,26 +51,14 @@ namespace BOOM {
       }
     }
 
-    void LocalLevelModule::ImbueState(StateSpaceModelBase &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-    
-    void LocalLevelModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      state_model_index_ = model.number_of_state_models();
-      model.add_state(trend_model_);
-    }
-    
     void LocalLevelModule::CreateObservationSpace(int niter) {
       trend_draws_.resize(niter, trend_.size());
       sigma_level_draws_.resize(niter);
       cursor_ = 0;
     }
 
-    void LocalLevelModule::ObserveDraws(
-        const StateSpaceModelBase &model) {
-      const ConstSubMatrix state(model.full_state_subcomponent(state_model_index_));
+    void LocalLevelModule::ObserveDraws(const StateSpaceModelBase &model) {
+      auto state = CurrentState(model);
       trend_draws_.row(cursor_) = state.row(0);
       sigma_level_draws_[cursor_] = trend_model_->sigma();
       ++cursor_;

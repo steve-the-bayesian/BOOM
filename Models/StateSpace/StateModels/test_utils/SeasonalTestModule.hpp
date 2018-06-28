@@ -43,8 +43,11 @@ namespace BOOM {
 
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return seasonal_; }
-      void ImbueState(StateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
+      Ptr<StateModel> get_state_model() override {return seasonal_model_;}
+      Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() override {
+        return seasonal_model_;
+      }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -73,7 +76,6 @@ namespace BOOM {
 
       Vector seasonal_;
       int cursor_;
-      int state_model_index_;
 
       Matrix seasonal_draws_;
       Vector sigma_draws_;
