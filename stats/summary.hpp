@@ -27,7 +27,7 @@ namespace BOOM {
   // A collection of quantiles, plus the mean, for a numeric vector of data.
   class NumericSummary {
    public:
-    NumericSummary(const ConstVectorView &data);
+    explicit NumericSummary(const ConstVectorView &data);
     std::string to_string() const;
     std::ostream &print(std::ostream &out) const;
 
