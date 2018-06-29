@@ -27,7 +27,7 @@ namespace {
   TEST_F(ArStateModelTest, StateSpaceModelTest) {
     int niter = 400;
     StateSpaceTestFramework state_space(1.3);
-    state_space.AddState(std::move(modules_));
+    state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_);
   }
   //======================================================================
@@ -35,7 +35,7 @@ namespace {
     int niter = 300;
     Vector true_beta = {-3.2, 17.4, 12};
     DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);
-    framework.AddState(std::move(modules_));
+    framework.AddState(modules_);
     framework.Test(niter, time_dimension_);
   }
   

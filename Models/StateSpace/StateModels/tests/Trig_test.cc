@@ -80,7 +80,7 @@ namespace {
     double period = time_dimension / 5.0;
     Vector frequencies = {1, 2};
     modules.AddModule(new TrigTestModule(period, frequencies, 0.3));
-    framework.AddState(std::move(modules));
+    framework.AddState(modules);
     int niter = 500;
     framework.Test(niter, time_dimension);
   }

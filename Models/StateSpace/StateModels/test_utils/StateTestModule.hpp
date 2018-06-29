@@ -131,7 +131,7 @@ namespace BOOM {
       }
       
      private:
-      std::vector<std::unique_ptr<StateModelTestModule>> modules_;
+      std::vector<std::shared_ptr<StateModelTestModule>> modules_;
     };
     
   }  // namespace StateSpaceTesting

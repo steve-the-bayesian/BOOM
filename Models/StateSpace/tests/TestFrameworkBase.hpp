@@ -28,8 +28,8 @@ namespace BOOM {
     class TestFrameworkBase {
      public:
       virtual ~TestFrameworkBase() {}
-      void AddState(StateModuleManager &&state) {
-        state_modules_ = std::move(state);
+      void AddState(const StateModuleManager &state) {
+        state_modules_ = state;
       }
 
       // Run mcmc for 'burn' iterations.

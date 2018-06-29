@@ -14,15 +14,6 @@ namespace {
     }
   };
 
-  // days_into_influence_window
-  // maximum_window_width
-  // active
-  // date_on_or_after
-  // date_on_or_before
-  // nearest
-  // date(year)
-  
-
   TEST_F(HolidayTest, NewYears) {
     NewYearsDay nyd(2, 1);
 

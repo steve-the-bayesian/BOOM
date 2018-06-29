@@ -302,7 +302,7 @@ namespace {
     modules_.AddModule(new LocalLevelModule(.1, 0.0));
     modules_.AddModule(new SeasonalTestModule(.1, 7));
     modules_.AddModule(new SeasonalTestModule(.1, weeks_per_year_, 7));
-    state_space.AddState(std::move(modules_));
+    state_space.AddState(modules_);
     int niter = 500;
     int time_dimension = 500;
     state_space.Test(niter, time_dimension);

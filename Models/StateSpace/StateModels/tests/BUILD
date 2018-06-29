@@ -104,6 +104,19 @@ cc_test(
 )
 
 cc_test(
+    name = "random_walk_holiday_test",
+    srcs = ["random_walk_holiday_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "//Models/StateSpace/StateModels/test_utils",
+        "//Models/StateSpace/tests:test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "SeasonalStateModel_test",
     srcs = ["SeasonalStateModel_test.cc"],
     copts = COPTS,
