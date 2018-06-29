@@ -3,6 +3,7 @@
 #include "Models/StateSpace/StateModels/test_utils/HolidayTestModule.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
+#include "Models/StateSpace/tests/DynamicInterceptTestFramework.hpp"
 #include "cpputil/Date.hpp"
 #include "distributions.hpp"
 
@@ -51,35 +52,38 @@ namespace {
 
     Matrix variance(3, 3, 0.0);
     variance(0, 0) = square(sd_);
+    EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(10)->dense()))
+        << "dense: " << endl
+        << variance
+        << "sparse: " << model.state_variance_matrix(10)->dense();
+
+    variance(0, 0) = 0.0;
+    variance(1, 1) = square(sd_);
     EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(11)->dense()))
         << "dense: " << endl
         << variance
         << "sparse: " << model.state_variance_matrix(11)->dense();
 
-    variance(0, 0) = 0.0;
-    variance(1, 1) = square(sd_);
+    variance(1, 1) = 0;
+    variance(2, 2) = square(sd_);
     EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(12)->dense()))
         << "dense: " << endl
         << variance
         << "sparse: " << model.state_variance_matrix(12)->dense();
 
-    variance(1, 1) = 0;
-    variance(2, 2) = square(sd_);
+    variance(2, 2) = 0;
     EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(13)->dense()))
         << "dense: " << endl
         << variance
         << "sparse: " << model.state_variance_matrix(13)->dense();
-
-    variance(2, 2) = 0;
-    EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(10)->dense()))
-        << "dense: " << endl
-        << variance
-        << "sparse: " << model.state_variance_matrix(10)->dense();
     EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(14)->dense()))
         << "dense: " << endl
         << variance
         << "sparse: " << model.state_variance_matrix(14)->dense();
-    
+    EXPECT_TRUE(MatrixEquals(variance, model.state_variance_matrix(9)->dense()))
+        << "dense: " << endl
+        << variance
+        << "sparse: " << model.state_variance_matrix(9)->dense();
     
     // The transition matrix is always the identity.
     Matrix transition(3, 3);
@@ -91,11 +95,19 @@ namespace {
     
   }
   
-  TEST_F(RandomWalkHolidayStateModelTest, EverythingTest) {
+  TEST_F(RandomWalkHolidayStateModelTest, StateSpaceTest) {
     StateSpaceTestFramework state_space(1.2);
     state_space.AddState(modules_);
-    int niter = 500;
-    int time_dimension = 3 * 365;
-    state_space.Test(niter, time_dimension);
+    int niter = 200;
+    int time_dimension = 2 * 365;
+    state_space.Test(niter, time_dimension, 20);
+  }    
+
+  TEST_F(RandomWalkHolidayStateModelTest, DynamicInterceptTest) {
+    DynamicInterceptTestFramework dynamic(Vector{3, -1, 2.4}, 1.2, 3.0);
+    dynamic.AddState(modules_);
+    int niter = 200;
+    int time_dimension = 2 * 365;
+    dynamic.Test(niter, time_dimension);
   }    
 }  // namespace

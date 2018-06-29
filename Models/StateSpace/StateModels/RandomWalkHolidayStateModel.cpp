@@ -59,10 +59,10 @@ namespace BOOM {
 
   void RWHSM::simulate_state_error(RNG &rng, VectorView eta, int t) const {
     assert(eta.size() == state_dimension());
-    Date now = time_zero_ + t;
+    Date next = time_zero_ + t + 1;
     eta = 0;
-    if (holiday_->active(now)) {
-      int position = holiday_->days_into_influence_window(now);
+    if (holiday_->active(next)) {
+      int position = holiday_->days_into_influence_window(next);
       eta[position] = rnorm_mt(rng, 0, sigma());
     }
   }
@@ -72,9 +72,11 @@ namespace BOOM {
   }
 
   Ptr<SparseMatrixBlock> RWHSM::state_variance_matrix(int t) const {
-    Date now = time_zero_ + t;
-    if (holiday_->active(now)) {
-      int position = holiday_->days_into_influence_window(now);
+    // The relevant variance matrix is for the value of the state at the next
+    // time period.
+    Date next = time_zero_ + t + 1;
+    if (holiday_->active(next)) {
+      int position = holiday_->days_into_influence_window(next);
       return active_state_variance_matrix_[position];
     }
     return zero_state_variance_matrix_;

@@ -43,6 +43,8 @@ namespace BOOM {
       void RunMcmc(int niter) override;
       void Check() override;
 
+      const Vector &data() const {return data_;}
+      
      private:
       double observation_sd_;
       Ptr<StateSpaceModel> model_;
