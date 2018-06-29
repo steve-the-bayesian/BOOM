@@ -72,7 +72,8 @@ namespace BOOM {
         max_density = std::max(max_density, density_values[i]);
         xx += dx;
       }
-      graph_ = AsciiGraph(xmin, xmax, 0, max_density, xbuckets, ybuckets);
+      graph_ = AsciiGraph(std::min(xmin, truth), std::max(xmax, truth),
+                          0, max_density, xbuckets, ybuckets);
       xx = xmin;
       for (int i = 0; i < xbuckets; ++i) {
         graph_.plot(xx, density_values[i], 'X');
