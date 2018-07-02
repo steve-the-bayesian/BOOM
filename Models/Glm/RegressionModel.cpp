@@ -298,7 +298,8 @@ namespace BOOM {
         sumsqy_(0.0),
         n_(0),
         sumy_(0.0),
-        x_column_sums_(p) {}
+        x_column_sums_(p),
+        allow_non_finite_responses_(false) {}
 
   NeRegSuf::NeRegSuf(const Matrix &X, const Vector &y)
       : needs_to_reflect_(false),
@@ -306,7 +307,8 @@ namespace BOOM {
         sumsqy_(y.normsq()),
         n_(nrow(X)),
         sumy_(y.sum()),
-        x_column_sums_(ColSums(X)) {
+        x_column_sums_(ColSums(X)),
+        allow_non_finite_responses_(false) {
     xty_ = y * X;
     xtx_ = X.inner();
     sumsqy_ = y.dot(y);
@@ -321,7 +323,8 @@ namespace BOOM {
         sumsqy_(YTY),
         n_(n),
         sumy_(XTY[0]),
-        x_column_sums_(xbar * n) {}
+        x_column_sums_(xbar * n),
+        allow_non_finite_responses_(false) {}
 
   NeRegSuf *NeRegSuf::clone() const { return new NeRegSuf(*this); }
 
@@ -364,7 +367,7 @@ namespace BOOM {
     if (xty_.empty()) xty_ = Vector(p, 0.0);
     const Vector &tmpx(rdp.x());  // add_intercept(rdp.x());
     double y = rdp.y();
-    if (!std::isfinite(y)) {
+    if (!allow_non_finite_responses_ && !std::isfinite(y)) {
       report_error("Non-finite response variable.");
     }
     xty_.axpy(tmpx, y);
@@ -373,7 +376,7 @@ namespace BOOM {
       needs_to_reflect_ = true;
     }
     sumsqy_ += y * y;
-    if (!std::isfinite(sumsqy_)) {
+    if (!allow_non_finite_responses_ && !std::isfinite(sumsqy_)) {
       report_error("Non-finite sum of squares.");
     }
     

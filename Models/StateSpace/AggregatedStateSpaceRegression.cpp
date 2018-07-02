@@ -396,6 +396,7 @@ namespace BOOM {
   ASSR::AggregatedStateSpaceRegression(int number_of_predictors)
       : regression_(new RegressionModel(number_of_predictors)),
         observation_model_(new GaussianModel(0, 0)) {
+    regression_->suf().dcast<NeRegSuf>()->allow_non_finite_responses(true);
     add_state(new AggregatedRegressionStateModel(regression_));
   }
 

@@ -200,6 +200,10 @@ namespace BOOM {
     // reflect() fills the lower triangle as well, if needed.
     void reflect() const;
 
+    void allow_non_finite_responses(bool allow) {
+      allow_non_finite_responses_ = allow;
+    }
+    
    private:
     mutable SpdMatrix xtx_;
     mutable bool needs_to_reflect_;
@@ -209,6 +213,7 @@ namespace BOOM {
     double n_;
     double sumy_;
     Vector x_column_sums_;
+    bool allow_non_finite_responses_;
   };
 
   template <class Fwd>
