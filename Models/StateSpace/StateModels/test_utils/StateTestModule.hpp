@@ -41,11 +41,11 @@ namespace BOOM {
       get_dynamic_intercept_state_model() = 0;
 
       // Place the fully formed state model into model.
-      void ImbueState(StateSpaceModelBase &model) {
+      virtual void ImbueState(ScalarStateSpaceModelBase &model) {
         state_model_index_ = model.number_of_state_models();
         model.add_state(get_state_model());
       }
-      void ImbueState(DynamicInterceptRegressionModel &model) {
+      virtual void ImbueState(DynamicInterceptRegressionModel &model) {
         state_model_index_ = model.number_of_state_models();
         model.add_state(get_dynamic_intercept_state_model());
       }
@@ -98,7 +98,7 @@ namespace BOOM {
         return ans;
       }
       
-      void ImbueState(StateSpaceModelBase &model) {
+      void ImbueState(ScalarStateSpaceModelBase &model) {
         for (auto &module : modules_) {
           module->ImbueState(model);
         }

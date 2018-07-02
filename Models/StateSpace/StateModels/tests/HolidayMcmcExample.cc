@@ -106,9 +106,7 @@ int main() {
 
   NEW(GaussianModel, holiday_effect_prior)(0, 2);
   NEW(ScalarRegressionHolidayStateModel, holiday_model)(
-      dates[0],
-      model->observation_model()->Sigsq_prm(),
-      holiday_effect_prior);
+      dates[0], model.get(), holiday_effect_prior);
   model->add_state(holiday_model);
     
   NEW(StateSpacePosteriorSampler, sampler)(model.get());

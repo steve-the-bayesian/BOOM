@@ -5,11 +5,16 @@
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "cpputil/Date.hpp"
 #include "distributions.hpp"
+
+#include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
+#include "Models/StateSpace/StateModels/test_utils/HolidayTestModule.hpp"
+#include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
 #include "test_utils/test_utils.hpp"
 #include <fstream>
 
 namespace {
   using namespace BOOM;
+  using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
   
@@ -64,6 +69,24 @@ namespace {
                      impl.residual_variance_value());
   }
 
+  TEST_F(RegressionHolidayStateModelTest, WithStateSpace) {
+    StateModuleManager modules;
+    modules.AddModule(new LocalLevelModule(.2, 0));
+    
+    RegressionHolidayTestModule *reg_holiday_module =
+        new RegressionHolidayTestModule(t0_);
+    NEW(FixedDateHoliday, May18)(May, 18);
+    reg_holiday_module->AddHoliday(May18, Vector{-3, 4, 12});
+    NEW(FixedDateHoliday, July4)(Jul, 4);
+    reg_holiday_module->AddHoliday(July4, Vector{-5, 10, 2});
+    modules.AddModule(reg_holiday_module);
+
+    
+    StateSpaceTestFramework framework(.3);
+    framework.AddState(modules);
+    framework.Test(500, 3 * 365);
+  }
+  
   TEST_F(RegressionHolidayStateModelTest, RHSM) {
     Vector y(365 * 2);
     Vector mu(y.size());
@@ -97,7 +120,7 @@ namespace {
     model.add_state(level);
 
     NEW(ScalarRegressionHolidayStateModel, holiday_model)(
-        t0_, model.observation_model()->Sigsq_prm(), prior_);
+        t0_, &model, prior_);
     NEW(FixedDateHoliday, May18)(May, 18);
     holiday_model->add_holiday(May18);
     NEW(FixedDateHoliday, July4)(Jul, 4);
@@ -117,7 +140,6 @@ namespace {
     model.permanently_set_state(state);
     
     int may_17_2004 = Date(May, 17, 2004) - t0_;
-    holiday_model->set_model(&model);
     holiday_model->observe_state(
         ConstVectorView(state.col(may_17_2004), 1, 1),
         ConstVectorView(state.col(may_17_2004 - 1), 1, 1),

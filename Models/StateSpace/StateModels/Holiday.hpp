@@ -61,7 +61,6 @@ namespace BOOM {
     // Indicates whether this holiday is active on the given date.
     virtual bool active(const Date &arbitrary_date) const = 0;
 
-
    protected:
     // The dates of earliest and latest influence for a holiday occurring on
     // 'holiday_date' meaning that holiday_date is a date in the influence

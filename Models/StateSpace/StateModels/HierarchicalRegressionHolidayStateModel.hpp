@@ -60,12 +60,10 @@ namespace BOOM {
   //
   // Usage idiom:
   //   HierarchicalRegressionHolidayStateModel model.(time0, residual_variance);
-  //   // Add some holidays
-  //   model.add_holiday(h1);
+  //   model.add_holiday(h1);    
   //   model.add_holiday(h2);
   //   model.add_holiday(h3);
-  //   // Set the sampler.  Use any sampler you like, but this one is a good
-  //   // choice.
+  //   // Set any sampler you like, but this is a good choice.
   //   NEW(HierarchicalGaussianRegressionAsisSampler, sampler)(
   //     model.model(), prior1, prior2, rng);
   //   model.model()->set_method(sampler);
@@ -83,8 +81,6 @@ namespace BOOM {
     //     equation.  NOTE: The fact that this parameter is constant restricts
     //     this state model from being used with observation models that assume
     //     time-dependent variance, including GLM's.
-    // TODO: Lift the residual variance restriction.  It might be easier to
-    //    allow a bit of error back into the state equation
     HierarchicalRegressionHolidayStateModel(
         const Date &time_of_first_observation,
         const Ptr<UnivParams> &residual_variance);

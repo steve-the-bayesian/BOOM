@@ -75,7 +75,7 @@ namespace BOOM {
         }
       }
     }
-    
+
     void RandomWalkHolidayTestModule::CreateObservationSpace(int niter) {
       holiday_draws_.resize(niter, holiday_effect_.size());
       sd_draws_.resize(niter);
@@ -105,6 +105,80 @@ namespace BOOM {
           << AsciiDistributionCompare(sd_draws_, sd_) << std::endl
           << NumericSummary(sd_draws_);
     }
-    
+
+    //===========================================================================
+
+    RegressionHolidayTestModule::RegressionHolidayTestModule(const Date &day_zero)
+        : day_zero_(day_zero),
+          regression_coefficient_prior_(new GaussianModel(0, 1))
+    {}
+
+    void RegressionHolidayTestModule::AddHoliday(const Ptr<Holiday> &holiday,
+                                                 const Vector &pattern) {
+      if (pattern.size() != holiday->maximum_window_width()) {
+        report_error("Size of holiday effect does not match the holiday "
+                     "window width.");
+      }
+      holidays_.push_back(holiday);
+      holiday_patterns_.push_back(pattern);
+    }
+
+    void RegressionHolidayTestModule::SimulateData(int time_dimension) {
+      holiday_effect_.resize(time_dimension);
+      for (int t = 0; t < time_dimension; ++t) {
+        Date date = day_zero_ + t;
+        holiday_effect_[t] = 0.0;
+        for (int h = 0; h < holidays_.size(); ++h) {
+          if (holidays_[h]->active(date)) {
+            int position = holidays_[h]->days_into_influence_window(date);
+            holiday_effect_[t] = holiday_patterns_[h][position];
+            break;
+          }
+        }
+      }
+    }
+
+    void RegressionHolidayTestModule::ImbueState(ScalarStateSpaceModelBase &model) {
+      scalar_holiday_model_.reset(new ScalarRegressionHolidayStateModel(
+          day_zero_, &model, regression_coefficient_prior_));
+      for (const auto &h : holidays_) {
+        scalar_holiday_model_->add_holiday(h);
+      }
+      holiday_model_ = scalar_holiday_model_;
+      StateModelTestModule::ImbueState(model);
+    }
+      
+    void RegressionHolidayTestModule::ImbueState(
+        DynamicInterceptRegressionModel &model) {
+      dynamic_holiday_model_.reset(new DynamicInterceptRegressionHolidayStateModel(
+          day_zero_, &model, regression_coefficient_prior_));
+      for (const auto &h : holidays_) {
+        scalar_holiday_model_->add_holiday(h);
+      }
+      holiday_model_ = dynamic_holiday_model_;
+      StateModelTestModule::ImbueState(model);
+    }
+
+    void RegressionHolidayTestModule::CreateObservationSpace(int niter) {
+      holiday_effect_draws_.resize(niter, holiday_effect_.size());
+    }
+
+    void RegressionHolidayTestModule::ObserveDraws(
+        const StateSpaceModelBase &model) {
+      for (int t = 0; t < holiday_effect_.size(); ++t) {
+        // The state is just the scalar 1, so the value at time t is just the
+        // observation matrix.
+        holiday_effect_draws_(cursor(), t) =
+            holiday_model_->observation_matrix(t)[0];
+      }
+    }
+
+    void RegressionHolidayTestModule::Check() {
+      auto status = CheckMcmcMatrix(holiday_effect_draws_, holiday_effect_);
+      EXPECT_TRUE(status.ok)
+          << "Regression holiday state draws failed to cover." << std::endl
+          << status;
+    }
+
   }  // namespace StateSpaceTesting
 }  // namespace BOOM

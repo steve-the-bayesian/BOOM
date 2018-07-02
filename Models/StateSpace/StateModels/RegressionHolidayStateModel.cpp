@@ -20,6 +20,7 @@
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -38,9 +39,6 @@ namespace BOOM {
         state_error_variance_(new ZeroMatrix(1)),
         initial_state_mean_(1, 1.0),
         initial_state_variance_(1, 0.0) {
-    if (!residual_variance) {
-      report_error("residual_variance must be non-NULL");
-    }
   }
 
   void RHBI::observe_time_dimension(int max_time) {
@@ -145,6 +143,10 @@ namespace BOOM {
     for (int holiday = 0; holiday < number_of_holidays; ++holiday) {
       Vector holiday_pattern = holiday_mean_contributions_[holiday]->value();
       for (int day = 0; day < holiday_pattern.size(); ++day) {
+        // TODO: Consider replacing 'residual_variance' with a set of weighted
+        // Gaussian sufficient statistics, to be augmented when we
+        // observe_data().  This is the only place where the residual_variance
+        // is used.
         double posterior_precision =
             daily_counts_[holiday][day] / residual_variance() +
             1.0 / prior_->sigsq();
@@ -162,7 +164,6 @@ namespace BOOM {
   void RHSM::observe_time_dimension(int max_time) {
     impl_.observe_time_dimension(max_time);
   }
-
 
   SparseVector RHSM::observation_matrix(int time_now) const {
     SparseVector ans(1);
@@ -185,6 +186,21 @@ namespace BOOM {
     increment_daily_suf(holiday,  day, residual, 1.0);
   }
 
+  Ptr<UnivParams>
+  ScalarRegressionHolidayStateModel::extract_residual_variance_parameter(
+      ScalarStateSpaceModelBase &model) const {
+    if (ZeroMeanGaussianModel *gaussian =
+        dynamic_cast<ZeroMeanGaussianModel *>(model.observation_model())) {
+      return gaussian->Sigsq_prm();
+    } else if (RegressionModel *reg =
+               dynamic_cast<RegressionModel *>(model.observation_model())) {
+      return reg->Sigsq_prm();
+    } else {
+      report_error("Cannot extract residual variance parameter.");
+    }
+    return Ptr<UnivParams>(nullptr);
+  }
+  
   void DynamicInterceptRegressionHolidayStateModel::observe_state(
       const ConstVectorView &then, const ConstVectorView &now, int time_now) {
     int holiday = impl().which_holiday(time_now);

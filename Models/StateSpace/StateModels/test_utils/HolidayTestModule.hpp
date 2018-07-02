@@ -19,7 +19,9 @@
 */
 
 #include "Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp"
+#include "Models/StateSpace/StateModels/RegressionHolidayStateModel.hpp"
 #include "Models/ChisqModel.hpp"
+#include "Models/GaussianModel.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/StateSpace/StateModels/test_utils/StateTestModule.hpp"
 
@@ -67,7 +69,43 @@ namespace BOOM {
       Matrix holiday_draws_;
       Vector sd_draws_;
     };
+
+    //==========================================================================
+    class RegressionHolidayTestModule
+        : public StateModelTestModule {
+     public:
+      RegressionHolidayTestModule(const Date &day_zero);
+
+      void AddHoliday(const Ptr<Holiday> &holiday,
+                      const Vector &pattern);
+                                  
+      void SimulateData(int time_dimension) override;
+      const Vector &StateContribution() const override { return holiday_effect_; }
+      Ptr<StateModel> get_state_model() override {return scalar_holiday_model_;}
+      Ptr<DynamicInterceptStateModel>
+      get_dynamic_intercept_state_model() override {
+        return dynamic_holiday_model_;
+      }
+      void ImbueState(ScalarStateSpaceModelBase &model) override;
+      void ImbueState(DynamicInterceptRegressionModel &model) override;
+      void CreateObservationSpace(int niter) override;
+      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void Check() override;
+
+     private:
+      Date day_zero_;
+      Ptr<GaussianModel> regression_coefficient_prior_;
+
+      Ptr<RegressionHolidayStateModel> holiday_model_;
+      Ptr<ScalarRegressionHolidayStateModel> scalar_holiday_model_;
+      Ptr<DynamicInterceptRegressionHolidayStateModel> dynamic_holiday_model_;
+      std::vector<Ptr<Holiday>> holidays_;
+      std::vector<Vector> holiday_patterns_;
       
+      Vector holiday_effect_;
+      Matrix holiday_effect_draws_;
+    };
+
   }  // namespace StateSpaceTesting
 }  // namespace BOOM
 

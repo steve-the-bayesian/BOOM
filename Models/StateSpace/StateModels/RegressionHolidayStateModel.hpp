@@ -131,6 +131,10 @@ namespace BOOM {
       return residual_variance_->value();
     }
 
+    void set_residual_variance_prm(const Ptr<UnivParams> &sigsq) {
+      residual_variance_ = sigsq;
+    }
+    
    private:
     Date time_of_first_observation_;
     Ptr<UnivParams> residual_variance_;
@@ -160,6 +164,9 @@ namespace BOOM {
   // day in the window.  These dummy variables never co-occur, so X'X is a
   // diagonal matrix with diagonal elements containing occurrance counts for
   // each day.
+  //
+  // This is an abstract class because a concrete model class member is needed
+  // to implement observe_state.
   class RegressionHolidayStateModel : virtual public StateModel,
                                       public ManyParamPolicy,
                                       public NullDataPolicy,
@@ -222,7 +229,9 @@ namespace BOOM {
 
     // The numerical value of the residual variance parameter from the
     // observation equation.
-    double residual_variance() const { return impl_.residual_variance_value(); }
+    double residual_variance() const {
+      return impl_.residual_variance_value();
+    }
 
     void observe_time_dimension(int max_time) override;
 
@@ -318,23 +327,25 @@ namespace BOOM {
       : public RegressionHolidayStateModel {
    public:
     ScalarRegressionHolidayStateModel(const Date &time_of_first_observation,
-                                      const Ptr<UnivParams> &residual_variance,
+                                      ScalarStateSpaceModelBase *model,
                                       const Ptr<GaussianModel> &prior,
                                       RNG &seeding_rng = GlobalRng::rng)
         : RegressionHolidayStateModel(time_of_first_observation,
-                                      residual_variance,
+                                      extract_residual_variance_parameter(*model),
                                       prior,
-                                      seeding_rng) {}
+                                      seeding_rng),
+          model_(model)
+    {}
+    
     ScalarRegressionHolidayStateModel *clone()const override {
       return new ScalarRegressionHolidayStateModel(*this);
     }
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
 
-    void set_model(const ScalarStateSpaceModelBase *model) {
-      model_ = model;
-    }
-
+    virtual Ptr<UnivParams> extract_residual_variance_parameter(
+        ScalarStateSpaceModelBase &model) const;
+    
    private:
     const ScalarStateSpaceModelBase *model_;
   };
@@ -342,13 +353,21 @@ namespace BOOM {
   //===========================================================================
   class DynamicInterceptRegressionModel;
   class DynamicInterceptRegressionHolidayStateModel
-      : public RegressionHolidayStateModel {
+      : public RegressionHolidayStateModel,
+        public DynamicInterceptStateModel {
    public:
+    DynamicInterceptRegressionHolidayStateModel(
+        const Date &time_of_first_observation,
+        DynamicInterceptRegressionModel *model,
+        const Ptr<GaussianModel> &prior,
+        RNG &seeding_rng = GlobalRng::rng);
+    
     DynamicInterceptRegressionHolidayStateModel *clone() const override {
       return new DynamicInterceptRegressionHolidayStateModel(*this);
     }
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
+
    private:
     DynamicInterceptRegressionModel *model_;
   };

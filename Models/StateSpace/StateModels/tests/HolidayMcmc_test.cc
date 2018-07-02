@@ -124,14 +124,11 @@ namespace {
 
     NEW(GaussianModel, holiday_effect_prior)(0, 2);
     NEW(ScalarRegressionHolidayStateModel, holiday_model)(
-        dates[0],
-        model->observation_model()->Sigsq_prm(),
-        holiday_effect_prior);
+        dates[0], model.get(), holiday_effect_prior);
     for (int i = 0; i < holidays.size(); ++i) {
       holiday_model->add_holiday(holidays[i]);
     }
     model->add_state(holiday_model);
-    holiday_model->set_model(model.get());
 
     NEW(ChisqModel, observation_precision_prior)(1, 1);
     NEW(ZeroMeanGaussianConjSampler, observation_sampler)(
