@@ -65,14 +65,14 @@ namespace BOOM {
       auto status = CheckMcmcMatrix(
           trend_draws_, trend_, .95, true, "trend.txt");
       EXPECT_TRUE(status.ok)
-          <<  "Local linear trend failed to cover." << std::endl
+          <<  "Local level failed to cover." << std::endl
           << status;
 
       EXPECT_GT(var(sigma_level_draws_), 0)
           << "sigma level draws had zero variance";
       EXPECT_TRUE(CheckMcmcVector(sigma_level_draws_, level_sd_, .95,
                                   "sigma-level.txt"))
-          << "Innovation SD for local linear trend model, level component "
+          << "Innovation SD for local level model "
           << "did not cover true value." << std::endl
           << AsciiDistributionCompare(sigma_level_draws_, level_sd_);
     }
