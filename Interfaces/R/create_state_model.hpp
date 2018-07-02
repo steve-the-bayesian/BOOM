@@ -53,7 +53,7 @@ namespace BOOM {
   class MonthlyAnnualCycle;
   class SeasonalStateModel;
   class TrigStateModel;
-  class HarmonicTrigStateModel;
+  class TrigRegressionStateModel;
 
   // Holiday models
   class Holiday;
@@ -161,7 +161,7 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
       TrigStateModel *CreateTrigStateModel(
           SEXP r_state_component, const std::string &prefix);
-      HarmonicTrigStateModel *CreateHarmonicTrigStateModel(
+      TrigRegressionStateModel *CreateTrigRegressionStateModel(
           SEXP r_state_component, const std::string &prefix);
       MonthlyAnnualCycle *CreateMonthlyAnnualCycle(
           SEXP r_state_component, const std::string &prefix);

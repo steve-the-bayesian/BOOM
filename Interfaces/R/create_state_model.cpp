@@ -489,12 +489,12 @@ namespace BOOM {
       return intercept;
     }
     //======================================================================
-    TrigStateModel *StateModelFactory::CreateTrigRegressionStateModel(
+    TrigRegressionStateModel *StateModelFactory::CreateTrigRegressionStateModel(
         SEXP r_state_component, const std::string &prefix) {
       double period = Rf_asReal(getListElement(r_state_component, "period"));
       Vector frequencies = ToBoomVector(getListElement(
           r_state_component, "frequencies"));
-      TrigStateModel * trig_state_model(
+      TrigRegressionStateModel * trig_state_model(
           new TrigRegressionStateModel(period, frequencies));
 
       //-------------- set the prior and the posterior sampler.
@@ -933,7 +933,6 @@ namespace BOOM {
 
       ScalarRegressionHolidayStateModel *holiday_model =
           new ScalarRegressionHolidayStateModel(time_zero, model_, prior);
-      holiday_model->set_model(model_);
       
       RMemoryProtector holiday_list_protector;
       SEXP r_holidays = holiday_list_protector.protect(
