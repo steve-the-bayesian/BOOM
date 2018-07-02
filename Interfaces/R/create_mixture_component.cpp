@@ -34,8 +34,8 @@
 #include "Models/ZeroInflatedLognormalModel.hpp"
 #include "Models/ZeroInflatedPoissonModel.hpp"
 
-#include <r_interface/create_mixture_component.hpp>
-#include <r_interface/prior_specification.hpp>
+#include "r_interface/create_mixture_component.hpp"
+#include "r_interface/prior_specification.hpp"
 
 namespace BOOM {
   namespace RInterface {

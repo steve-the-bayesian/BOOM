@@ -19,7 +19,7 @@
 #ifndef BOOM_SEED_RNG_FROM_R_HPP_
 #define BOOM_SEED_RNG_FROM_R_HPP_
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 namespace BOOM{
   namespace RInterface{
 

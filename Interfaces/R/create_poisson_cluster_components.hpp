@@ -20,7 +20,7 @@
 #define BOOM_RINTERFACE_CREATE_POISSON_CLUSTER_COMPONENTS_HPP_
 
 #include "Models/PointProcess/PoissonClusterProcess.hpp"
-#include <r_interface/list_io.hpp>
+#include "r_interface/list_io.hpp"
 
 namespace BOOM{
   namespace RInterface{

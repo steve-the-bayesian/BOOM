@@ -20,7 +20,7 @@
 #ifndef BOOM_R_INTERFACE_CREATE_STATE_MODEL_HPP_
 #define BOOM_R_INTERFACE_CREATE_STATE_MODEL_HPP_
 
-#include <r_interface/list_io.hpp>
+#include "r_interface/list_io.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
 #include <functional>
 #include <list>

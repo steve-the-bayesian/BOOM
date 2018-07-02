@@ -19,7 +19,7 @@
 #ifndef BOOM_RINTERFACE_DETERMINE_NTHREADS_HPP_
 #define BOOM_RINTERFACE_DETERMINE_NTHREADS_HPP_
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 namespace BOOM{
   namespace RInterface{
     // If r_nthreads is an integer then that integer will be returned.

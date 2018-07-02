@@ -25,9 +25,9 @@
 #include "Models/PointProcess/PosteriorSamplers/HomogPoissonProcessPosteriorSampler.hpp"
 #include "Models/PointProcess/PosteriorSamplers/WeeklyCyclePoissonProcessSampler.hpp"
 
-#include <r_interface/prior_specification.hpp>
-#include <r_interface/boom_r_tools.hpp>
-#include <r_interface/list_io.hpp>
+#include "r_interface/prior_specification.hpp"
+#include "r_interface/boom_r_tools.hpp"
+#include "r_interface/list_io.hpp"
 
 namespace BOOM {
   namespace RInterface {

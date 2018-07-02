@@ -20,7 +20,7 @@
 #define BOOM_RINTERFACE_CREATE_POINT_PROCESS_HPP_
 
 #include "Models/PointProcess/PointProcess.hpp"
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 
 namespace BOOM{
   namespace RInterface{

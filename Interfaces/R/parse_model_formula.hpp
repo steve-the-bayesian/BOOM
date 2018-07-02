@@ -21,7 +21,7 @@
 
 #include <string>
 #include "stats/Design.hpp"
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 
 namespace BOOM {
   namespace RInterface {

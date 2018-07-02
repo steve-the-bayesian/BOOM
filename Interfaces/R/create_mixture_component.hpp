@@ -19,8 +19,8 @@
 #ifndef BOOM_RINTERFACE_CREATE_MIXTURE_COMPONENT_HPP_
 #define BOOM_RINTERFACE_CREATE_MIXTURE_COMPONENT_HPP_
 
-#include <r_interface/boom_r_tools.hpp>
-#include <r_interface/list_io.hpp>
+#include "r_interface/boom_r_tools.hpp"
+#include "r_interface/list_io.hpp"
 
 #include "Models/ModelTypes.hpp"
 #include <vector>

@@ -19,7 +19,7 @@
 #ifndef BOOM_R_PRIOR_SPECIFICATION_HPP_
 #define BOOM_R_PRIOR_SPECIFICATION_HPP_
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 #include "Models/ChisqModel.hpp"
 #include "Models/DoubleModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"

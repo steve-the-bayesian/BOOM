@@ -1,4 +1,4 @@
-#include <r_interface/prior_specification.hpp>
+#include "r_interface/prior_specification.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 #include "Models/MvnBase.hpp"
 #include "Models/MvnModel.hpp"

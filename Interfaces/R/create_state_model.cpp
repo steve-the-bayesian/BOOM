@@ -928,13 +928,11 @@ namespace BOOM {
         SEXP r_state_specification, const std::string &prefix) {
       Date time_zero = ToBoomDate(getListElement(
           r_state_specification, "time0"));
-      Ptr<UnivParams> residual_variance = GetResidualVarianceParameter();
       NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
       NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
 
       ScalarRegressionHolidayStateModel *holiday_model =
-          new ScalarRegressionHolidayStateModel(
-              time_zero, residual_variance, prior);
+          new ScalarRegressionHolidayStateModel(time_zero, model_, prior);
       holiday_model->set_model(model_);
       
       RMemoryProtector holiday_list_protector;

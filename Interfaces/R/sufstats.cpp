@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <r_interface/sufstats.hpp>
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/sufstats.hpp"
+#include "r_interface/boom_r_tools.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 
 namespace BOOM {

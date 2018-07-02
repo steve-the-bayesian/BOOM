@@ -19,7 +19,7 @@
 #ifndef BOOM_R_INTERFACE_SUFSTATS_HPP_
 #define BOOM_R_INTERFACE_SUFSTATS_HPP_
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 
 namespace BOOM {
   class RegSuf;

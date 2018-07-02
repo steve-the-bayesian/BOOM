@@ -21,7 +21,7 @@
 #include "cpputil/make_unique_preserve_order.hpp"
 #include "cpputil/report_error.hpp"
 
-#include <r_interface/parse_model_formula.hpp>
+#include "r_interface/parse_model_formula.hpp"
 #include <Rinternals.h>
 
 namespace BOOM {

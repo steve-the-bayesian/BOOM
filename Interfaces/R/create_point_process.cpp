@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <r_interface/create_point_process.hpp>
+#include "r_interface/create_point_process.hpp"
 
 #include "cpputil/DateTime.hpp"
 #include <vector>

@@ -19,7 +19,7 @@
 #include <string>
 #include <sstream>
 
-#include <r_interface/boom_r_tools.hpp>
+#include "r_interface/boom_r_tools.hpp"
 #include "cpputil/report_error.hpp"
 
 #include <R.h>

@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <r_interface/boom_r_tools.hpp>
-#include <r_interface/prior_specification.hpp>
+#include "r_interface/boom_r_tools.hpp"
+#include "r_interface/prior_specification.hpp"
 #include "Models/BetaModel.hpp"
 #include "Models/DiscreteUniformModel.hpp"
 #include "Models/GammaModel.hpp"
