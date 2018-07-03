@@ -187,10 +187,7 @@ namespace BOOM {
    public: 
     ScalarHierarchicalRegressionHolidayStateModel(
         const Date &time_of_first_observation,
-        const Ptr<UnivParams> &residual_variance)
-        : HierarchicalRegressionHolidayStateModel(
-              time_of_first_observation, residual_variance),
-          state_space_model_(nullptr) {}
+        ScalarStateSpaceModelBase *model);
 
     ScalarHierarchicalRegressionHolidayStateModel *clone() const override {
       return new ScalarHierarchicalRegressionHolidayStateModel(*this);
@@ -199,10 +196,6 @@ namespace BOOM {
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
 
-    void set_model(const ScalarStateSpaceModelBase *state_space_model) {
-      state_space_model_ = state_space_model;
-    }
-    
    private:
     const ScalarStateSpaceModelBase *state_space_model_;
   };
@@ -215,10 +208,7 @@ namespace BOOM {
    public:
     DynamicInterceptHierarchicalRegressionHolidayStateModel(
         const Date &time_of_first_observation,
-        const Ptr<UnivParams> &residual_variance)
-        : HierarchicalRegressionHolidayStateModel(
-              time_of_first_observation, residual_variance),
-          state_space_model_(nullptr) {}
+        DynamicInterceptRegressionModel *model);
           
     DynamicInterceptHierarchicalRegressionHolidayStateModel *
     clone() const override {
@@ -227,10 +217,6 @@ namespace BOOM {
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
 
-    void set_model(const DynamicInterceptRegressionModel *state_space_model) {
-      state_space_model_ = state_space_model;
-    }
-    
    private:
     const DynamicInterceptRegressionModel *state_space_model_;
   };

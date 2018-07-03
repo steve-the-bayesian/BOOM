@@ -107,13 +107,7 @@ namespace BOOM {
     }
 
     //===========================================================================
-
-    RegressionHolidayTestModule::RegressionHolidayTestModule(const Date &day_zero)
-        : day_zero_(day_zero),
-          regression_coefficient_prior_(new GaussianModel(0, 1))
-    {}
-
-    void RegressionHolidayTestModule::AddHoliday(const Ptr<Holiday> &holiday,
+    void RegressionHolidayTestModuleBase::AddHoliday(const Ptr<Holiday> &holiday,
                                                  const Vector &pattern) {
       if (pattern.size() != holiday->maximum_window_width()) {
         report_error("Size of holiday effect does not match the holiday "
@@ -123,7 +117,7 @@ namespace BOOM {
       holiday_patterns_.push_back(pattern);
     }
 
-    void RegressionHolidayTestModule::SimulateData(int time_dimension) {
+    void RegressionHolidayTestModuleBase::SimulateData(int time_dimension) {
       holiday_effect_.resize(time_dimension);
       for (int t = 0; t < time_dimension; ++t) {
         Date date = day_zero_ + t;
@@ -138,47 +132,132 @@ namespace BOOM {
       }
     }
 
-    void RegressionHolidayTestModule::ImbueState(ScalarStateSpaceModelBase &model) {
-      scalar_holiday_model_.reset(new ScalarRegressionHolidayStateModel(
-          day_zero_, &model, regression_coefficient_prior_));
-      for (const auto &h : holidays_) {
-        scalar_holiday_model_->add_holiday(h);
-      }
-      holiday_model_ = scalar_holiday_model_;
-      StateModelTestModule::ImbueState(model);
-    }
-      
-    void RegressionHolidayTestModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      dynamic_holiday_model_.reset(new DynamicInterceptRegressionHolidayStateModel(
-          day_zero_, &model, regression_coefficient_prior_));
-      for (const auto &h : holidays_) {
-        scalar_holiday_model_->add_holiday(h);
-      }
-      holiday_model_ = dynamic_holiday_model_;
-      StateModelTestModule::ImbueState(model);
-    }
-
-    void RegressionHolidayTestModule::CreateObservationSpace(int niter) {
+    void RegressionHolidayTestModuleBase::CreateObservationSpace(int niter) {
       holiday_effect_draws_.resize(niter, holiday_effect_.size());
     }
 
-    void RegressionHolidayTestModule::ObserveDraws(
+    void RegressionHolidayTestModuleBase::ObserveDraws(
         const StateSpaceModelBase &model) {
       for (int t = 0; t < holiday_effect_.size(); ++t) {
         // The state is just the scalar 1, so the value at time t is just the
         // observation matrix.
         holiday_effect_draws_(cursor(), t) =
-            holiday_model_->observation_matrix(t)[0];
+            holiday_model()->observation_matrix(t)[0];
       }
     }
 
-    void RegressionHolidayTestModule::Check() {
+    void RegressionHolidayTestModuleBase::Check() {
       auto status = CheckMcmcMatrix(holiday_effect_draws_, holiday_effect_);
       EXPECT_TRUE(status.ok)
           << "Regression holiday state draws failed to cover." << std::endl
           << status;
     }
 
+    //===========================================================================
+
+    RegressionHolidayTestModule::RegressionHolidayTestModule(const Date &day_zero)
+        : RegressionHolidayTestModuleBase(day_zero),
+          regression_coefficient_prior_(new GaussianModel(0, 1))
+    {}
+
+    void RegressionHolidayTestModule::ImbueState(ScalarStateSpaceModelBase &model) {
+      scalar_holiday_model_.reset(new ScalarRegressionHolidayStateModel(
+          day_zero(), &model, regression_coefficient_prior_));
+      holiday_model_ = scalar_holiday_model_;
+      SetHolidays();
+      StateModelTestModule::ImbueState(model);
+    }
+      
+    void RegressionHolidayTestModule::ImbueState(
+        DynamicInterceptRegressionModel &model) {
+      dynamic_holiday_model_.reset(new DynamicInterceptRegressionHolidayStateModel(
+          day_zero(), &model, regression_coefficient_prior_));
+      holiday_model_ = dynamic_holiday_model_;
+      SetHolidays();
+      StateModelTestModule::ImbueState(model);
+    }
+
+
+    //===========================================================================
+    namespace {
+      using HRHTM = HierarchicalRegressionHolidayTestModule;
+    }
+
+    HRHTM::HierarchicalRegressionHolidayTestModule(const Date &day_zero)
+        : RegressionHolidayTestModuleBase(day_zero) {}
+
+    void HRHTM::AddHoliday(const Ptr<Holiday> &holiday, const Vector &pattern) {
+      if (pattern.size() != holiday->maximum_window_width()) {
+        std::ostringstream err;
+        err << "The supplied pattern has length " << pattern.size()
+            << " but the associated holiday has window width "
+            << holiday->maximum_window_width() << ".";
+        report_error(err.str());
+      }
+      RegressionHolidayTestModuleBase::AddHoliday(holiday, pattern);
+    }
+
+    void HRHTM::ImbueState(ScalarStateSpaceModelBase &model) {
+      scalar_holiday_model_.reset(
+          new ScalarHierarchicalRegressionHolidayStateModel(
+              day_zero(), &model));
+      holiday_model_ = scalar_holiday_model_;
+      SetHolidays();
+      SetPrior();
+      StateModelTestModule::ImbueState(model);
+    }
+      
+    void HRHTM::ImbueState(
+        DynamicInterceptRegressionModel &model) {
+      dynamic_holiday_model_.reset(
+          new DynamicInterceptHierarchicalRegressionHolidayStateModel(
+              day_zero(), &model));
+      holiday_model_ = dynamic_holiday_model_;
+      SetHolidays();
+      SetPrior();
+      StateModelTestModule::ImbueState(model);
+    }
+
+    void HRHTM::SetPrior() {
+      const std::vector<Vector> &patterns(holiday_patterns());
+      if (patterns.empty()) {
+        report_error("No holiday patterns have been set.  Please call "
+                     "AddHoliday to add some.");
+      }
+
+      if (patterns.size() < 2) {
+        report_error("At least two (and preferably more) holidays are needed "
+                     "in order to estimate the cross-holiday variance.");
+      }
+      int dimension = patterns[0].size();
+      MvnSuf suf(dimension);
+      for (const auto &pattern : patterns) {
+        suf.update_raw(pattern);
+      }
+      
+      holiday_mean_prior_.reset(new MvnModel(suf.ybar(), suf.sample_var()));
+      holiday_precision_prior_.reset(new WishartModel(
+          dimension + 1, suf.sample_var()));
+
+      sampler_.reset(new HierGaussianRegressionAsisSampler(
+          holiday_model_->model(),
+          holiday_mean_prior_,
+          holiday_precision_prior_,
+          nullptr));
+      holiday_model_->set_method(sampler_);
+    }
+
+    void HRHTM::CreateObservationSpace(int niter) {
+      RegressionHolidayTestModuleBase::CreateObservationSpace(niter);
+    }
+    
+    void HRHTM::ObserveDraws(const StateSpaceModelBase &model) {
+      RegressionHolidayTestModuleBase::ObserveDraws(model);
+    }
+
+    void HRHTM::Check() {
+      RegressionHolidayTestModuleBase::Check();
+    }
+    
   }  // namespace StateSpaceTesting
 }  // namespace BOOM

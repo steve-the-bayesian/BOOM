@@ -26,10 +26,10 @@
 namespace BOOM {
 
   namespace {
-    using RHBI = RegressionHolidayBaseImpl;
+    using Impl = RegressionHolidayBaseImpl;
   }  // namespace
 
-  RHBI::RegressionHolidayBaseImpl(const Date &time_of_first_observation,
+  Impl::RegressionHolidayBaseImpl(const Date &time_of_first_observation,
                                   const Ptr<UnivParams> &residual_variance)
       : time_of_first_observation_(time_of_first_observation),
         residual_variance_(residual_variance),
@@ -41,7 +41,7 @@ namespace BOOM {
         initial_state_variance_(1, 0.0) {
   }
 
-  void RHBI::observe_time_dimension(int max_time) {
+  void Impl::observe_time_dimension(int max_time) {
     if (which_holiday_.size() == max_time) return;
     Date date = time_of_first_observation_;
     which_holiday_.resize(max_time);
@@ -69,8 +69,22 @@ namespace BOOM {
     }
   }
 
-  void RHBI::add_holiday(const Ptr<Holiday> &holiday) {
+  void Impl::add_holiday(const Ptr<Holiday> &holiday) {
     holidays_.push_back(holiday);
+  }
+
+  Ptr<UnivParams> Impl::extract_residual_variance_parameter(
+      ScalarStateSpaceModelBase &model) {
+    if (ZeroMeanGaussianModel *gaussian =
+        dynamic_cast<ZeroMeanGaussianModel *>(model.observation_model())) {
+      return gaussian->Sigsq_prm();
+    } else if (RegressionModel *reg =
+               dynamic_cast<RegressionModel *>(model.observation_model())) {
+      return reg->Sigsq_prm();
+    } else {
+      report_error("Cannot extract residual variance parameter.");
+    }
+    return Ptr<UnivParams>(nullptr);
   }
 
   //===========================================================================
@@ -174,6 +188,20 @@ namespace BOOM {
     return ans;
   }
 
+
+  ScalarRegressionHolidayStateModel::ScalarRegressionHolidayStateModel(
+      const Date &time_of_first_observation,
+      ScalarStateSpaceModelBase *model,
+      const Ptr<GaussianModel> &prior,
+      RNG &seeding_rng)
+      : RegressionHolidayStateModel(
+            time_of_first_observation,
+            Impl::extract_residual_variance_parameter(*model),
+            prior,
+            seeding_rng),
+          model_(model)
+    {}
+
   void ScalarRegressionHolidayStateModel::observe_state(
       const ConstVectorView &then, const ConstVectorView &now, int time_now) {
     int holiday = impl().which_holiday(time_now);
@@ -186,20 +214,6 @@ namespace BOOM {
     increment_daily_suf(holiday,  day, residual, 1.0);
   }
 
-  Ptr<UnivParams>
-  ScalarRegressionHolidayStateModel::extract_residual_variance_parameter(
-      ScalarStateSpaceModelBase &model) const {
-    if (ZeroMeanGaussianModel *gaussian =
-        dynamic_cast<ZeroMeanGaussianModel *>(model.observation_model())) {
-      return gaussian->Sigsq_prm();
-    } else if (RegressionModel *reg =
-               dynamic_cast<RegressionModel *>(model.observation_model())) {
-      return reg->Sigsq_prm();
-    } else {
-      report_error("Cannot extract residual variance parameter.");
-    }
-    return Ptr<UnivParams>(nullptr);
-  }
   
   void DynamicInterceptRegressionHolidayStateModel::observe_state(
       const ConstVectorView &then, const ConstVectorView &now, int time_now) {

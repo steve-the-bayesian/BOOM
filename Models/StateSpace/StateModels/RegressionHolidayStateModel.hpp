@@ -134,7 +134,10 @@ namespace BOOM {
     void set_residual_variance_prm(const Ptr<UnivParams> &sigsq) {
       residual_variance_ = sigsq;
     }
-    
+
+    static Ptr<UnivParams> extract_residual_variance_parameter(
+        ScalarStateSpaceModelBase &model);
+
    private:
     Date time_of_first_observation_;
     Ptr<UnivParams> residual_variance_;
@@ -329,23 +332,14 @@ namespace BOOM {
     ScalarRegressionHolidayStateModel(const Date &time_of_first_observation,
                                       ScalarStateSpaceModelBase *model,
                                       const Ptr<GaussianModel> &prior,
-                                      RNG &seeding_rng = GlobalRng::rng)
-        : RegressionHolidayStateModel(time_of_first_observation,
-                                      extract_residual_variance_parameter(*model),
-                                      prior,
-                                      seeding_rng),
-          model_(model)
-    {}
+                                      RNG &seeding_rng = GlobalRng::rng);
     
     ScalarRegressionHolidayStateModel *clone()const override {
       return new ScalarRegressionHolidayStateModel(*this);
     }
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
-
-    virtual Ptr<UnivParams> extract_residual_variance_parameter(
-        ScalarStateSpaceModelBase &model) const;
-    
+   
    private:
     const ScalarStateSpaceModelBase *model_;
   };

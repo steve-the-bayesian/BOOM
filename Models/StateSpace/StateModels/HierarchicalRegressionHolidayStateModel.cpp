@@ -28,6 +28,7 @@ namespace BOOM {
     using HRHSM = HierarchicalRegressionHolidayStateModel;
     using SHRHSM = ScalarHierarchicalRegressionHolidayStateModel;
     using DIHRSM = DynamicInterceptHierarchicalRegressionHolidayStateModel;
+    using Impl = RegressionHolidayBaseImpl;
   }  // namespace
 
   HRHSM::HierarchicalRegressionHolidayStateModel(
@@ -67,6 +68,15 @@ namespace BOOM {
     impl_.observe_time_dimension(max_time);
   }
 
+
+  SHRHSM::ScalarHierarchicalRegressionHolidayStateModel(
+        const Date &time_of_first_observation,
+        ScalarStateSpaceModelBase *model)
+        : HierarchicalRegressionHolidayStateModel(
+              time_of_first_observation,
+              Impl::extract_residual_variance_parameter(*model)),
+          state_space_model_(model) {}
+
   void SHRHSM::observe_state(const ConstVectorView &then,
                             const ConstVectorView &now, int time_now) {
     int which_model = impl().which_holiday(time_now);
@@ -85,6 +95,14 @@ namespace BOOM {
         residual, daily_dummies(day), 1.0);
   }
 
+  DIHRSM::DynamicInterceptHierarchicalRegressionHolidayStateModel(
+      const Date &time_of_first_observation,
+      DynamicInterceptRegressionModel *model)
+      : HierarchicalRegressionHolidayStateModel(
+            time_of_first_observation,
+            model->observation_model()->Sigsq_prm()),
+        state_space_model_(model) {}
+  
   void DIHRSM::observe_state(
       const ConstVectorView &then, const ConstVectorView &now, int time_now) {
     int which_model = impl().which_holiday(time_now);

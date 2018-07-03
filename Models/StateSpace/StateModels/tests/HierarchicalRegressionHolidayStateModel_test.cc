@@ -4,13 +4,17 @@
 #include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
+
 #include "cpputil/Date.hpp"
 #include "distributions.hpp"
 #include "test_utils/test_utils.hpp"
+#include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
+#include "Models/StateSpace/StateModels/test_utils/HolidayTestModule.hpp"
 #include <fstream>
 
 namespace {
   using namespace BOOM;
+  using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
   
@@ -75,7 +79,7 @@ namespace {
     model.add_state(level);
 
     NEW(ScalarHierarchicalRegressionHolidayStateModel, holiday_model)(
-        t0_, model.observation_model()->Sigsq_prm());
+        t0_, &model);
 
     NEW(MvnModel, holiday_mean_prior)(3);
     NEW(WishartModel, holiday_variance_prior)(3);
@@ -90,7 +94,6 @@ namespace {
         nullptr);
     holiday_model->set_method(holiday_sampler);
     model.add_state(holiday_model);
-    holiday_model->set_model(&model);
 
     //----------------------------------------------------------------------    
     // Now test some stuff.
@@ -195,6 +198,33 @@ namespace {
                      patterns(1, 1));
     EXPECT_DOUBLE_EQ(holiday_model->observation_matrix(second_holiday + 1)[0],
                      patterns(1, 2));
+  }
+
+  TEST_F(HierarchicalRegressionHolidayStateModelTest, StateSpaceFramework) {
+    StateSpaceTestFramework framework(1.2);
+    StateModuleManager modules;
+    HierarchicalRegressionHolidayTestModule *holiday_module(
+        new HierarchicalRegressionHolidayTestModule(t0_));
+    modules.AddModule(holiday_module);
+    
+    int number_of_holidays = 8;
+    Vector b0 = {.3, 1.5, -.2};
+    Date holiday_date = t0_ + 12;
+    std::vector<Ptr<Holiday>> holidays;
+    for (int i = 0; i < number_of_holidays; ++i) {
+      Vector pattern(3);
+      for (int day = 0; day < 3; ++day) {
+        pattern(day) = rnorm(b0[day], .2);
+      }
+      NEW(FixedDateHoliday, holiday)(
+          holiday_date.month(),
+          holiday_date.day());
+      holiday_module->AddHoliday(holiday, pattern);
+      holiday_date += 30;
+    }
+
+    framework.AddState(modules);
+    framework.Test(500, 3 * 365);
   }
   
 }  // namespace
