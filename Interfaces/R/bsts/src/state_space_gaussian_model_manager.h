@@ -27,7 +27,7 @@ namespace bsts {
 
 // A base class that handles "CreateModel" for both the regression and
 // non-regression flavors of Gaussian models.
-class GaussianModelManagerBase : public ModelManager {
+class GaussianModelManagerBase : public ScalarModelManager {
  public:
   ScalarStateSpaceModelBase * CreateModel(
       SEXP r_data_list,

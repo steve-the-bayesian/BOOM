@@ -26,7 +26,7 @@ namespace BOOM {
 namespace bsts {
 
 class StateSpacePoissonModelManager
-    : public ModelManager {
+    : public ScalarModelManager {
  public:
   StateSpacePoissonModelManager();
 

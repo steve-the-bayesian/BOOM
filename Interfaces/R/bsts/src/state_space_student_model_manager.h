@@ -80,7 +80,7 @@ class StateSpaceStudentHoldoutErrorSampler
 
 // The model manager for a student regression model.
 class StateSpaceStudentModelManager
-    : public ModelManager {
+    : public ScalarModelManager {
  public:
   StateSpaceStudentModelManager();
 

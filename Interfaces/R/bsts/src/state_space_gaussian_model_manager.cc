@@ -31,7 +31,7 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
     SEXP r_options,
     Vector *final_state,
     RListIoManager *io_manager) {
-  ScalarStateSpaceModelBase *model = ModelManager::CreateModel(
+  ScalarStateSpaceModelBase *model = ScalarModelManager::CreateModel(
       r_data_list,
       r_state_specification,
       r_prior,
