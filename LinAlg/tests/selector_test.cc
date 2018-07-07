@@ -12,7 +12,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class SelectorTest : public ::testing::Test {
    protected:
     SelectorTest() {
@@ -20,6 +20,34 @@ namespace {
     }
   };
 
+  TEST_F(SelectorTest, SelectRowsTest) {
+    Matrix big(10, 4);
+    big.randomize();
+
+    Selector inc(10, false);
+    inc.add(2);
+    inc.add(7);
+
+    Matrix small = inc.select_rows(big);
+    EXPECT_EQ(2, small.nrow());
+    EXPECT_EQ(4, small.ncol());
+    EXPECT_TRUE(VectorEquals(small.row(0), big.row(2)));
+
+    big.randomize();
+    ConstSubMatrix big_view(big);
+    small = inc.select_rows(big_view);
+    EXPECT_EQ(2, small.nrow());
+    EXPECT_EQ(4, small.ncol());
+    EXPECT_TRUE(VectorEquals(small.row(0), big.row(2)));
+
+    big.randomize();
+    SubMatrix mutable_big_view(big);
+    small = inc.select_rows(big_view);
+    EXPECT_EQ(2, small.nrow());
+    EXPECT_EQ(4, small.ncol());
+    EXPECT_TRUE(VectorEquals(small.row(0), big.row(2)));
+  }
+  
   TEST_F(SelectorTest, SparseSum) {
     Vector v(100);
     v.randomize();

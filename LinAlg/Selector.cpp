@@ -379,12 +379,29 @@ namespace BOOM {
     return ans;
   }
 
+  namespace {
+    template <class MATRIX>
+    Matrix select_rows_impl(const MATRIX &m, const Selector &inc) {
+      uint n = inc.nvars();
+      Matrix ans(n, m.ncol());
+      for (uint i = 0; i < n; ++i) ans.row(i) = m.row(inc.indx(i));
+      return ans;
+    }
+  }
+  
   Matrix Selector::select_rows(const Matrix &m) const {
-    if (include_all_) return m;
-    uint n = nvars();
-    Matrix ans(n, m.ncol());
-    for (uint i = 0; i < n; ++i) ans.row(i) = m.row(indx(i));
-    return ans;
+    if (include_all_ || nvars() == nvars_possible()) return m;
+    return select_rows_impl(m, *this);
+  }
+
+  Matrix Selector::select_rows(const SubMatrix &m) const {
+    if (include_all_ || nvars() == nvars_possible()) return m.to_matrix();
+    return select_rows_impl(m, *this);
+  }
+
+  Matrix Selector::select_rows(const ConstSubMatrix &m) const {
+    if (include_all_ || nvars() == nvars_possible()) return m.to_matrix();
+    return select_rows_impl(m, *this);
   }
 
   Matrix Selector::select_square(const Matrix &m) const {

@@ -29,6 +29,7 @@
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/Vector.hpp"
 
 #include "distributions/rng.hpp"
@@ -131,6 +132,8 @@ namespace BOOM {
     Matrix select_cols_add_int(const Matrix &M) const;
     Matrix select_square(const Matrix &M) const;  // selects rows and columns
     Matrix select_rows(const Matrix &M) const;
+    Matrix select_rows(const SubMatrix &M) const;
+    Matrix select_rows(const ConstSubMatrix &M) const;
 
     Vector select(const VectorView &x) const;
     Vector select(const ConstVectorView &x) const;
