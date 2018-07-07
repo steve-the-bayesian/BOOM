@@ -36,4 +36,15 @@ namespace {
         v[3] + v[12] + v[17]);
   }
 
+  // This test checks the Selector's ability to select from std::vector.
+  TEST_F(SelectorTest, VectorInt) {
+    std::vector<int> big = {1, 2, 3, 4, 5};
+    Selector inc("10010");
+    std::vector<int> small = inc.select(big);
+    EXPECT_EQ(2, small.size());
+    EXPECT_EQ(1, small[0]);
+    EXPECT_EQ(4, small[1]);
+  }
+
+  
 }  // namespace

@@ -59,47 +59,51 @@ namespace BOOM {
     Selector &append(bool new_last_element);
     Selector &append(const Selector &new_trailing_elements);
 
-    // Add element i to the included set.  If it is already present,
-    // then do nothing.
+    // Add element i to the included set.  If it is already present, then do
+    // nothing.
     Selector &add(uint i);
     Selector &operator+=(uint i) { return add(i); }
 
-    // Remove element i from the included set.  If it is already
-    // absent then do nothing.
+    // Remove element i from the included set.  If it is already absent then do
+    // nothing.
     Selector &drop(uint i);
     Selector &operator-=(uint i) { return drop(i); }
 
     // Add element i if it is absent, otherwise drop it.
     Selector &flip(uint i);
 
-    // Set union.  Add any elements that are present in rhs, while
-    // keeping any that are already present in *this.  Return *this.
+    // Set union.  Add any elements that are present in rhs, while keeping any
+    // that are already present in *this.  Return *this.
     Selector &operator+=(const Selector &rhs);
 
     // Intersection.  Drop any elements that are absent in rhs.
     Selector &operator*=(const Selector &rhs);
 
-    // Returns a selector of the same size as this, but with all
-    // elements flipped.
+    // Returns a selector of the same size as this, but with all elements
+    // flipped.
     Selector complement() const;
 
     // Add or drop all elements.
     void drop_all();
     void add_all();
 
-    uint nvars() const;           // =="n"
-    uint nvars_possible() const;  // =="N"
-    uint nvars_excluded() const;  // == N-n;
+    // The number of included items.
+    uint nvars() const;
+
+    // The number of excluded items.
+    uint nvars_excluded() const;
+
+    // The number of items (included + excluded).
+    uint nvars_possible() const; 
 
     // Returns an indicator of whether element i is included.
     bool inc(uint i) const;
 
-    // Returns true iff every included element in rhs is included in
-    // *this.
+    // Returns true iff every included element in rhs is included in *this.
     bool covers(const Selector &rhs) const;
 
-    // Returns the set union: locations which are in either Selector.
-    // Note that lower-case union is a reserved c++ keyword.
+    // Returns the set union: locations which are in either Selector.  Note that
+    // lower-case union is a reserved c++ keyword.
     Selector Union(const Selector &rhs) const;
 
     // Returns the set intersection, locations which are in both Selectors.
@@ -109,12 +113,12 @@ namespace BOOM {
     Selector exclusive_or(const Selector &rhs) const;
     Selector &cover(const Selector &rhs);  // makes *this cover rhs
 
-    // Returns the position of the ith nonzero element in the expanded
-    // sparse vector.
+    // Returns the position of the ith nonzero element in the expanded sparse
+    // vector.
     uint indx(uint i) const;  // i=0..n-1, ans in 0..N-1
 
-    // Returns the position in the condensed (dense) vector
-    // corresponding to position I in the expanded (sparse) vector.
+    // Returns the position in the condensed (dense) vector corresponding to
+    // position I in the expanded (sparse) vector.
     uint INDX(uint I) const;  // I=0..N-1, ans in 0..n-1
 
     // Convert the Selector to an explicit vector of 0's and 1's.
@@ -130,6 +134,10 @@ namespace BOOM {
 
     Vector select(const VectorView &x) const;
     Vector select(const ConstVectorView &x) const;
+
+    template <class T>
+    std::vector<T> select(const std::vector<T> &stuff) const;
+    
     SpdMatrix expand(const SpdMatrix &dense_part_of_sparse_matrix);
 
     Vector expand(const Vector &x) const;
@@ -169,9 +177,6 @@ namespace BOOM {
     double sparse_sum(const Vector &vector) const;
     
     template <class T>
-    std::vector<T> select(const std::vector<T> &v) const;
-
-    template <class T>
     T sub_select(const T &x, const Selector &rhs) const;
     // x is an object obtained by select(original_object).
     // this->covers(rhs).  sub_select(x,rhs) returns the object that
@@ -210,11 +215,6 @@ namespace BOOM {
   ostream &operator<<(ostream &, const Selector &);
   istream &operator>>(istream &, Selector &);
 
-  Selector find_contiguous_subset(const Vector &big, const Vector &small);
-  // find_contiguous_subset returns the indices of 'big' that contain
-  // the vector 'small.'  If 'small' is not found then an empty
-  // include is returned.
-
   template <class T>
   std::vector<T> select(const std::vector<T> &v, const std::vector<bool> &vb) {
     uint n = v.size();
@@ -228,10 +228,12 @@ namespace BOOM {
   template <class T>
   std::vector<T> Selector::select(const std::vector<T> &v) const {
     assert(v.size() == nvars_possible());
+    if (include_all_ || nvars() == nvars_possible()) return v;
     std::vector<T> ans;
     ans.reserve(nvars());
-    for (uint i = 0; i < nvars_possible(); ++i)
-      if (inc(i)) ans.push_back(v[i]);
+    for (uint i = 0; i < nvars(); ++i) {
+      ans.push_back(v[indx(i)]);
+    }
     return ans;
   }
 
@@ -246,6 +248,6 @@ namespace BOOM {
     }
     return tmp.select(x);
   }
-
+  
 }  // namespace BOOM
 #endif  // BOOM_SELECTOR_HPP

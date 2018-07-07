@@ -659,18 +659,4 @@ namespace BOOM {
     return true;
   }
 
-  Selector find_contiguous_subset(const Vector &big, const Vector &small) {
-    std::vector<bool> vec(big.size(), false);
-    Vector::const_iterator b = big.begin();
-    Vector::const_iterator it = big.begin();
-    Vector::const_iterator end = big.end();
-
-    for (uint i = 0; i < small.size(); ++i) {
-      it = std::find(it, end, small[i]);
-      uint I = it - b;
-      vec[I] = true;
-    }
-    return Selector(vec);
-  }
-
 }  // namespace BOOM
