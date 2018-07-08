@@ -261,6 +261,12 @@ namespace BOOM {
     return ConstVectorView(data, n, 1);
   }
 
+  Selector FindNonNA(const ConstVectorView &v) {
+    Selector ans(v.size(), true);
+    for (int i = 0; i < v.size(); ++i) ans[i] = !R_IsNA(v[i]);
+    return ans;
+  }
+  
   Vector ToBoomVector(SEXP v){
     return Vector(ToBoomVectorView(v));
   }

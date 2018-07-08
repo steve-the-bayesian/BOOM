@@ -167,14 +167,18 @@ namespace BOOM{
   // an exception will be thrown.
   std::string GetStringFromList(SEXP my_list, const std::string &name);
 
-  // If 'my_vector' is a numeric vector, it is converted to a
-  // BOOM::Vector.  Otherwise an exception will be thrown.
-  // ToBoomVector makes a copy of the underlying memory.
-  // ToBoomVectorView accesses the memory in the R object, without
-  // making a copy.
+  // If 'my_vector' is a numeric vector, it is converted to a BOOM::Vector.
+  // Otherwise an exception will be thrown.  ToBoomVector makes a copy of the
+  // underlying memory.  ToBoomVectorView accesses the memory in the R object,
+  // without making a copy.
   Vector ToBoomVector(SEXP my_vector);
   ConstVectorView ToBoomVectorView(const SEXP my_vector);
 
+  // Returns a Selector of the sizem size as v, with elements indicating which
+  // elements of v are observed.  This is equivalent to the R expression
+  // !is.na(v).
+  Selector FindNonNA(const ConstVectorView &v);
+  
   // If 'r_matrix' is an R matrix, it is converted to a BOOM::Matrix.
   // Otherwise an exception will be thrown.  ToBoomMatrix makes a copy
   // of the underlying memory.  ToBoomMatrixView accesses the memory
