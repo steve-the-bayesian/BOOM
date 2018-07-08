@@ -93,8 +93,6 @@ namespace BOOM {
     virtual double logpri() const = 0;  // evaluates current params
     virtual void set_method(const Ptr<PosteriorSampler> &) = 0;
     virtual int number_of_sampling_methods() const = 0;
-
-   protected:
     virtual PosteriorSampler *sampler(int i) = 0;
     virtual PosteriorSampler const *const sampler(int i) const = 0;
   };

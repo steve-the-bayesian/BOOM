@@ -42,7 +42,6 @@ namespace BOOM {
     // Returns the number of sampling methods that have been set.
     int number_of_sampling_methods() const override;
 
-   protected:
     PosteriorSampler *sampler(int i) override { return samplers_[i].get(); }
     PosteriorSampler const *const sampler(int i) const override {
       return samplers_[i].get();
