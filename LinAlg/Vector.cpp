@@ -464,7 +464,16 @@ namespace BOOM {
             << "y = " << y << endl;
         report_error(err.str());
       }
-      return EigenMap(x).dot(EigenMap(y));
+      if (y.stride() > 0) {
+        return EigenMap(x).dot(EigenMap(y));
+      } else {
+        // Stride can be negative for vector views that have been reversed.
+        double ans = 0;
+        for (int i = 0; i < x.size(); ++i) {
+          ans += x[i] * y[i];
+        }
+        return ans;
+      }
     }
 
     template <class V>

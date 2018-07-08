@@ -38,7 +38,16 @@ namespace BOOM {
   namespace {
     template <class V1, class V2>
     double dot_impl(const V1 &v1, const V2 &v2) {
-      return EigenMap(v1).dot(EigenMap(v2));
+      if (v1.stride() > 0 && v2.stride() > 0) {
+        return EigenMap(v1).dot(EigenMap(v2));
+      } else {
+        // Strides can be negative for vector views that have been reversed.
+        double ans = 0;
+        for (int i  = 0; i < v1.size(); ++i) {
+          ans += v1[i] * v2[i];
+        }
+        return ans;
+      }
     }
   }  // namespace
 
