@@ -81,32 +81,29 @@ namespace BOOM {
       // Adds all the state components listed in
       // r_state_specification_list to the model.
       // Args:
-      //   r_state_specification_list: An R list of state components
-      //     to be added to the model.  This function intended to
-      //     handle the state.specification argument in bsts.
-      //   prefix: An optional prefix added to the name of each state
-      //     component.
+      //   r_state_specification_list: An R list of state components to be added
+      //     to the model.  This function intended to handle the state
+      //     specification argument in bsts.
+      //   prefix: An optional prefix added to the name of each state component.
       void AddState(SEXP r_state_specification_list,
                     const std::string &prefix = "");
 
-      // Save the final state (i.e. at time T) of the model for use
-      // with prediction.  Do not call this function until after all
-      // components of state have been added.
+      // Save the final state (i.e. at time T) of the model for use with
+      // prediction.  Do not call this function until after all components of
+      // state have been added.
       // Args:
-      //   final_state: A pointer to a Vector to hold the state.  This
-      //     can be NULL if the state is only going to be recorded.
-      //     If state is going to be read, then final_state must be
-      //     non-NULL.  A non-NULL vector will be re-sized if it is
-      //     the wrong size.
-      //   list_element_name: The name of the final state vector in
-      //     the R list holding the MCMC output.
+      //   final_state: A pointer to a Vector to hold the state.  This can be
+      //     NULL if the state is only going to be recorded.  If state is going
+      //     to be read, then final_state must be non-NULL.  A non-NULL vector
+      //     will be re-sized if it is the wrong size.
+      //   list_element_name: The name of the final state vector in the R list
+      //     holding the MCMC output.
       void SaveFinalState(
           BOOM::Vector *final_state = NULL,
           const std::string & list_element_name = "final.state");
 
-      // Factory method for creating a StateModel based on inputs
-      // supplied to R.  Returns a smart pointer to the StateModel that
-      // gets created.
+      // Factory method for creating a StateModel based on inputs supplied to R.
+      // Returns a smart pointer to the StateModel that gets created.
       // Args:
       //   r_state_component: The portion of the state.specification list (that
       //     was supplied to R by the user), corresponding to the state model
@@ -165,8 +162,6 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
       MonthlyAnnualCycle *CreateMonthlyAnnualCycle(
           SEXP r_state_component, const std::string &prefix);
-
-      Ptr<UnivParams> GetResidualVarianceParameter();
 
       // A pointer to the object manaaging the R list that will record (or has
       // already recorded) the MCMC output.  This can be a nullptr if IoManager

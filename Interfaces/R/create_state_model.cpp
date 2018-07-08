@@ -81,16 +81,15 @@ namespace BOOM {
       InstallPostStateListElements();
     }
 
-    // A factory function that unpacks information from an R object
-    // created by AddXXX (where XXX is the name of a type of state
-    // model), and use it to build the appropriate BOOM StateModel.  The
-    // specific R function associated with each method is noted in the
-    // comments to the worker functions that implement each specific
-    // type.
+    // A factory function that unpacks information from an R object created by
+    // AddXXX (where XXX is the name of a type of state model), and use it to
+    // build the appropriate BOOM StateModel.  The specific R function
+    // associated with each method is noted in the comments to the worker
+    // functions that implement each specific type.
     // Args:
     //   r_state_component:  The R object created by AddXXX.
-    //   prefix: An optional prefix to be prepended to the name of the
-    //     state component in the io_manager.
+    //   prefix: An optional prefix to be prepended to the name of the state
+    //     component in the io_manager.
     // Returns:
     //   A BOOM smart pointer to the appropriately typed StateModel.
     Ptr<StateModel> StateModelFactory::CreateStateModel(
@@ -330,8 +329,8 @@ namespace BOOM {
       }
 
       //----------------------------------------------------------------------
-      // Now that the priors are all set, the last thing to do is to add
-      // the model parameters to the io_manager.
+      // Now that the priors are all set, the last thing to do is to add the
+      // model parameters to the io_manager.
       if (io_manager_) {
         io_manager_->add_list_element(
             new PartialSpdListElement(
@@ -607,9 +606,9 @@ namespace BOOM {
       }
 
       // Now create the prior for the slope model.  The prior has three
-      // components: a prior for the long run mean of the slope, a prior
-      // for the slope's AR coefficient, and a prior for the standard
-      // deviation of the AR1 process.
+      // components: a prior for the long run mean of the slope, a prior for the
+      // slope's AR coefficient, and a prior for the standard deviation of the
+      // AR1 process.
       NEW(GaussianModel, slope_mean_prior)(slope_mean_prior_spec.mu(),
                                            slope_mean_prior_spec.sigma());
 
@@ -618,8 +617,7 @@ namespace BOOM {
       NEW(ChisqModel, slope_sigma_prior)(slope_sd_prior_spec.prior_df(),
                                          slope_sd_prior_spec.prior_guess());
 
-      // The components have been created, so we can create the overall
-      // prior now.
+      // The components have been created.  Time to create the overall prior.
       NEW(NonzeroMeanAr1Sampler, slope_sampler)(slope.get(),
                                                 slope_mean_prior,
                                                 slope_ar_prior,
@@ -639,10 +637,10 @@ namespace BOOM {
         slope_sampler->force_ar1_positive();
       }
 
-      // The slope prior is built and configured.  Pack it in to the
-      // trend model.  Note that it goes in the trend model, not the
-      // slope model, because it is the trend model's "sample_posterior"
-      // method that will be called.
+      // The slope prior is built and configured.  Pack it in to the trend
+      // model.  Note that it goes in the trend model, not the slope model,
+      // because it is the trend model's "sample_posterior" method that will be
+      // called.
       trend->set_method(slope_sampler);
 
       NormalPrior level_initial_value_prior(getListElement(
@@ -650,8 +648,7 @@ namespace BOOM {
       NormalPrior slope_initial_value_prior(getListElement(
           r_state_component, "initial.slope.prior"));
 
-      // Finally, the last task is to set the prior for the initial
-      // value of the state
+      // The final task is to set the prior for the initial value of the state.
       trend->set_initial_level_mean(level_initial_value_prior.mu());
       trend->set_initial_slope_mean(slope_initial_value_prior.mu());
       trend->set_initial_level_sd(level_initial_value_prior.sigma());
@@ -685,8 +682,8 @@ namespace BOOM {
 
     namespace {
 
-      //  This code is shared between the SeasonalStateModel and the
-      //  MonthlyAnnualCycle.
+      // This code is shared between the SeasonalStateModel and the
+      // MonthlyAnnualCycle.
       template <class SEASONAL>
       void set_initial_state_prior(SEASONAL *component,
                                    SEXP r_state_component) {
@@ -863,11 +860,11 @@ namespace BOOM {
 
     //======================================================================
     // Creates a random walk holiday state model.
-
+    // Args:
     //   r_state_component: An R object inheriting from class
-    //     "RandomWalkHolidayStateModel".  
-    //   prefix: An optional prefix to be prepended to the name of the
-    //     state component in the io_manager.
+    //     "RandomWalkHolidayStateModel".
+    //   prefix: An optional prefix to be prepended to the name of the state
+    //     component in the io_manager.
     RandomWalkHolidayStateModel *
     StateModelFactory::CreateRandomWalkHolidayStateModel(
         SEXP r_state_component, const std::string &prefix) {
@@ -952,27 +949,6 @@ namespace BOOM {
       return holiday_model;
     }
 
-    Ptr<UnivParams> StateModelFactory::GetResidualVarianceParameter() {
-      // Get the residual variance from the observation model.  This requires a
-      // cast, and can only be done with observation models that use Gaussian
-      // errors.
-      Ptr<UnivParams> residual_variance;
-      PosteriorModeModel *observation_model = model_->observation_model();
-      if (ZeroMeanGaussianModel *gaussian =
-          dynamic_cast<ZeroMeanGaussianModel *>(observation_model)) {
-        residual_variance = gaussian->Sigsq_prm();
-      } else if (RegressionModel *regression =
-                 dynamic_cast<RegressionModel *>(observation_model)) {
-        residual_variance = regression->Sigsq_prm();
-      } else {
-        report_error("You have specified a state model that can only be "
-                     "used with Gaussian observation errors.  Maybe that will "
-                     "change one day (but what do we say to Death, Arya?).");
-        residual_variance = nullptr;
-      }
-      return residual_variance;
-    }
-          
     //=========================================================================
     // Args:
     //   r_state_specification: An R object of class
@@ -984,8 +960,7 @@ namespace BOOM {
           r_state_specification, "time0"));
       ScalarHierarchicalRegressionHolidayStateModel *holiday_model =
           new ScalarHierarchicalRegressionHolidayStateModel(
-              time_zero, GetResidualVarianceParameter());
-      holiday_model->set_model(model_);
+              time_zero, model_);
       SEXP r_holidays = getListElement(r_state_specification, "holidays");
       int number_of_holidays = Rf_length(r_holidays);
       std::vector<std::string> holiday_names;
