@@ -34,8 +34,9 @@ namespace BOOM {
         : sd_(sd),
           initial_pattern_(pattern),
           season_duration_(season_duration),
-          seasonal_model_(new SeasonalDynamicInterceptStateModel(
-              pattern.size(), season_duration_)),
+          seasonal_model_(new SeasonalStateModel(pattern.size(),
+                                                 season_duration_)),
+          adapter_(new DynamicInterceptStateModelAdapter(seasonal_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               seasonal_model_.get(), precision_prior_))

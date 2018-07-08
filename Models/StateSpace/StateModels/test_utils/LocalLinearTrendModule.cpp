@@ -35,7 +35,8 @@ namespace BOOM {
           slope_sd_(slope_sd),
           initial_level_(initial_level),
           initial_slope_(initial_slope),
-          trend_model_(new LocalLinearTrendDynamicInterceptStateModel),
+          trend_model_(new LocalLinearTrendStateModel),
+          adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
           level_precision_prior_(new ChisqModel(1.0, level_sd_)),
           slope_precision_prior_(new ChisqModel(1.0, slope_sd_)),
           level_precision_sampler_(new ZeroMeanMvnIndependenceSampler(

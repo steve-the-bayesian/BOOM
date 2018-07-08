@@ -45,9 +45,7 @@ namespace BOOM {
       const Vector &StateContribution() const override { return seasonal_; }
       Ptr<StateModel> get_state_model() override {return seasonal_model_;}
       Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return seasonal_model_;
-      }
+      get_dynamic_intercept_state_model() override { return adapter_; }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -70,7 +68,8 @@ namespace BOOM {
       Vector initial_pattern_;
       int season_duration_;
       int state_dim_;
-      Ptr<SeasonalDynamicInterceptStateModel> seasonal_model_;
+      Ptr<SeasonalStateModel> seasonal_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> precision_prior_;
       Ptr<ZeroMeanGaussianConjSampler> sampler_;
 

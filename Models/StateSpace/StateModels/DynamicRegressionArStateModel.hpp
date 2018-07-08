@@ -263,32 +263,6 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
-  //===========================================================================
-  class DynamicRegressionDynamicInterceptArStateModel
-      : public DynamicRegressionArStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    // For use with multiplexed data.
-    // Args:
-    //   predictors: Element t is the predictor matrix for time t.  Each row of
-    //     predictors[t] is an observation at time t.
-    //   lags: The number of lags to consider in each coefficient's time series
-    //     model.
-    DynamicRegressionDynamicInterceptArStateModel(
-        const std::vector<Matrix> &predictors, int lags)
-        : DynamicRegressionArStateModel(predictors, lags) {}
-
-    DynamicRegressionDynamicInterceptArStateModel *clone() const override {
-      return new DynamicRegressionDynamicInterceptArStateModel(*this);
-    }
-
-    Ptr<SparseMatrixBlock> observation_coefficients(
-        int t, const StateSpace::TimeSeriesRegressionData &data_point) const override {
-      return expanded_predictors(t);
-    }
-    
-  };
-
 }  // namespace BOOM
 
 #endif  //  BOOM_DYNAMIC_REGRESSION_AR_STATE_MODEL_HPP_

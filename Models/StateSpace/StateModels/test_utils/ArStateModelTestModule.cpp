@@ -30,8 +30,8 @@ namespace BOOM {
         double sd)
         : ar_coefficients_(ar_coefficients),
           sd_(sd),
-          trend_model_(new ArDynamicInterceptStateModel(
-              ar_coefficients_.size())),
+          trend_model_(new ArStateModel(ar_coefficients_.size())),
+          adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ArPosteriorSampler(trend_model_.get(), precision_prior_))
     {

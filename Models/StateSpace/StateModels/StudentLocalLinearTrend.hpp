@@ -169,20 +169,5 @@ namespace BOOM {
     StateModel::Behavior behavior_;
   };
 
-  class StudentLocalLinearTrendDynamicInterceptStateModel
-      : public StudentLocalLinearTrendStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    using ThisModel =
-        StudentLocalLinearTrendDynamicInterceptStateModel;
-    
-    StudentLocalLinearTrendDynamicInterceptStateModel(
-        double sigma_level, double nu_level,
-        double sigma_slope, double nu_slope)
-        : StudentLocalLinearTrendStateModel(
-              sigma_level, nu_level, sigma_slope, nu_slope) {}
-    ThisModel *clone() const override {return new ThisModel(*this);}
-  };
-
 }  // namespace BOOM
 #endif  // BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_

@@ -45,9 +45,7 @@ namespace BOOM {
       const Vector &StateContribution() const override { return trig_; }
       Ptr<StateModel> get_state_model() override {return trig_model_;}
       Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return trig_model_;
-      }
+      get_dynamic_intercept_state_model() override {return adapter_;}
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -56,7 +54,8 @@ namespace BOOM {
       double period_;
       Vector frequencies_;
       double sd_;
-      Ptr<TrigDynamicInterceptStateModel> trig_model_;
+      Ptr<TrigStateModel> trig_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
 
       // The prior for the error distribution.
       Ptr<ChisqModel> precision_prior_;

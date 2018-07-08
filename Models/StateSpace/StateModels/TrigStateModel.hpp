@@ -183,18 +183,6 @@ namespace BOOM {
   };
 
   //===========================================================================
-  class TrigDynamicInterceptStateModel
-      : public TrigStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    TrigDynamicInterceptStateModel(double period, const Vector &frequencies)
-        : TrigStateModel(period, frequencies) {}
-    TrigDynamicInterceptStateModel * clone() const {
-      return new TrigDynamicInterceptStateModel(*this);
-    }
-  };
-
-  //===========================================================================
   // A state model with trigonometric components (one sine and one cosine at
   // each frequency) that cycle 1, 2, 3, ..., number_of_frequencies times per
   // period.

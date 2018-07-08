@@ -53,7 +53,7 @@ namespace BOOM {
       Ptr<StateModel> get_state_model() override {return holiday_model_;}
       Ptr<DynamicInterceptStateModel>
       get_dynamic_intercept_state_model() override {
-        return holiday_model_;
+        return adapter_;
       }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
@@ -65,7 +65,8 @@ namespace BOOM {
       Date day_zero_;
       Ptr<Holiday> holiday_;
       
-      Ptr<RandomWalkHolidayDynamicInterceptStateModel> holiday_model_;
+      Ptr<RandomWalkHolidayStateModel> holiday_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> precision_prior_;
       Ptr<ZeroMeanGaussianConjSampler> sampler_;
 

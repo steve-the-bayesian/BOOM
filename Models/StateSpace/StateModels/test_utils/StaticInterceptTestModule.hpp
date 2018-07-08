@@ -40,16 +40,15 @@ namespace BOOM {
       const Vector &StateContribution() const override { return state_; }
       Ptr<StateModel> get_state_model() override {return intercept_model_;}
       Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return intercept_model_;
-      }
+      get_dynamic_intercept_state_model() override {return adapter_;}
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
       
      private:
       double intercept_;
-      Ptr<StaticInterceptDynamicInterceptStateModel> intercept_model_;
+      Ptr<StaticInterceptStateModel> intercept_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
 
       Vector state_;
       Vector intercept_draws_;

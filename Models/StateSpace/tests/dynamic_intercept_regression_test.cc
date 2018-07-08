@@ -64,15 +64,15 @@ namespace {
         model_->add_data(data_point);
       }
       
-      level_model_.reset(new LocalLevelDynamicInterceptStateModel(
-          true_level_sd_));
+      level_model_.reset(new LocalLevelStateModel(true_level_sd_));
       level_model_->set_initial_state_mean(level_[0]);
       level_model_->set_initial_state_variance(var(level_));
       NEW(ZeroMeanGaussianConjSampler, level_sampler)(
           level_model_.get(), level_precision_prior_);
       level_sampler->set_sigma_upper_limit(10);
       level_model_->set_method(level_sampler);
-      model_->add_state(level_model_);
+      level_adapter_.reset(new DynamicInterceptStateModelAdapter(level_model_));
+      model_->add_state(level_adapter_);
 
       NEW(MvnGivenScalarSigma, coefficient_prior)(
           SpdMatrix(true_beta_.size(), .01),
@@ -99,7 +99,8 @@ namespace {
     std::vector<Ptr<StateSpace::TimeSeriesRegressionData>> data_;
     Ptr<DynamicInterceptRegressionModel> model_;
     
-    Ptr<LocalLevelDynamicInterceptStateModel> level_model_;
+    Ptr<LocalLevelStateModel> level_model_;
+    Ptr<DynamicInterceptStateModelAdapter> level_adapter_;
     Ptr<ChisqModel> level_precision_prior_;
     Ptr<ChisqModel> residual_precision_prior_;
     Ptr<VariableSelectionPrior> spike_;

@@ -30,7 +30,8 @@ namespace BOOM {
         : period_(period),
           frequencies_(frequencies),
           sd_(sd),
-          trig_model_(new TrigDynamicInterceptStateModel(period_, frequencies_)),
+          trig_model_(new TrigStateModel(period_, frequencies_)),
+          adapter_(new DynamicInterceptStateModelAdapter(trig_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               trig_model_->error_distribution(),

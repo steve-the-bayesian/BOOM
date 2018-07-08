@@ -127,20 +127,5 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
-  class SemilocalLinearTrendDynamicInterceptStateModel
-      : public SemilocalLinearTrendStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    SemilocalLinearTrendDynamicInterceptStateModel(
-        const Ptr<ZeroMeanGaussianModel> &level,
-        const Ptr<NonzeroMeanAr1Model> &slope)
-        : SemilocalLinearTrendStateModel(level, slope) {}
-    SemilocalLinearTrendDynamicInterceptStateModel *clone() const
-        override {
-      return new SemilocalLinearTrendDynamicInterceptStateModel(*this);
-    }
-  };
-
-  
 }  // namespace BOOM
 #endif  // BOOM_SEMILOCAL_LINEAR_TREND_STATE_MODEL_HPP_

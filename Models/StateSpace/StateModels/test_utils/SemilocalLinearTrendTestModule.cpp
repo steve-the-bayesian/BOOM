@@ -52,8 +52,9 @@ namespace BOOM {
           slope_sampler_(new NonzeroMeanAr1Sampler(
               slope_model_.get(), slope_mean_prior_,
               slope_ar_prior_, slope_precision_prior_)),
-          trend_model_(new SemilocalLinearTrendDynamicInterceptStateModel(
-              level_model_, slope_model_))
+          trend_model_(new SemilocalLinearTrendStateModel(
+              level_model_, slope_model_)),
+          adapter_(new DynamicInterceptStateModelAdapter(trend_model_))
     {
       level_model_->set_method(level_sampler_);
       slope_model_->set_method(slope_sampler_);

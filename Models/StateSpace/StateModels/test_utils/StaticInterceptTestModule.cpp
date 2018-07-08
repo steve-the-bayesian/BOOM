@@ -26,7 +26,8 @@ namespace BOOM {
   namespace StateSpaceTesting {
     StaticInterceptTestModule::StaticInterceptTestModule(double intercept)
         : intercept_(intercept),
-          intercept_model_(new StaticInterceptDynamicInterceptStateModel)
+          intercept_model_(new StaticInterceptStateModel),
+          adapter_(new DynamicInterceptStateModelAdapter(intercept_model_))
     {
       intercept_model_->set_initial_state_mean(intercept_);
       intercept_model_->set_initial_state_variance(square(100.0));

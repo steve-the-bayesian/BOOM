@@ -31,7 +31,8 @@ namespace BOOM {
     LocalLevelModule::LocalLevelModule(double level_sd, double initial_level)
         : level_sd_(level_sd),
           initial_level_(initial_level),
-          trend_model_(new LocalLevelDynamicInterceptStateModel),
+          trend_model_(new LocalLevelStateModel),
+          adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
           level_precision_prior_(new ChisqModel(1.0, level_sd_)),
           level_precision_sampler_(new ZeroMeanGaussianConjSampler(
               trend_model_.get(), level_precision_prior_))

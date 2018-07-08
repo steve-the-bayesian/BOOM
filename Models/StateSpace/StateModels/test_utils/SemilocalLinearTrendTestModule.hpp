@@ -42,9 +42,7 @@ namespace BOOM {
       const Vector &StateContribution() const override { return trend_; }
       Ptr<StateModel> get_state_model() override {return trend_model_;}
       Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return trend_model_;
-      }
+      get_dynamic_intercept_state_model() override { return adapter_; }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -66,7 +64,8 @@ namespace BOOM {
       Ptr<ChisqModel> slope_precision_prior_;
       Ptr<NonzeroMeanAr1Sampler> slope_sampler_;
 
-      Ptr<SemilocalLinearTrendDynamicInterceptStateModel> trend_model_;
+      Ptr<SemilocalLinearTrendStateModel> trend_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
       
       Vector trend_;
       Matrix trend_draws_;

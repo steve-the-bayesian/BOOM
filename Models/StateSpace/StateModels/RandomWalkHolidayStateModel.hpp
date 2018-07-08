@@ -100,19 +100,6 @@ namespace BOOM {
         active_state_variance_matrix_;
   };
 
-  //===========================================================================
-  class RandomWalkHolidayDynamicInterceptStateModel
-      : public RandomWalkHolidayStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    RandomWalkHolidayDynamicInterceptStateModel(
-        const Ptr<Holiday> &holiday, const Date &time_zero)
-        : RandomWalkHolidayStateModel(holiday, time_zero) {}
-    RandomWalkHolidayDynamicInterceptStateModel *clone() const override {
-      return new RandomWalkHolidayDynamicInterceptStateModel(*this);
-    }
-  };
-  
 }  // namespace BOOM
 
 #endif  //  BOOM_RANDOM_WALK_HOLIDAY_STATE_MODEL_HPP_

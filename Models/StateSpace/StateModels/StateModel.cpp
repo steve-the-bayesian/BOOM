@@ -53,10 +53,22 @@ namespace BOOM {
 
   void StateModel::observe_initial_state(const ConstVectorView &state) {}
 
-  Ptr<SparseMatrixBlock> DynamicInterceptStateModel::observation_coefficients(
-      int t, const StateSpace::TimeSeriesRegressionData &data_point) const {
+  //===========================================================================
+  namespace {
+    using DISM = DynamicInterceptStateModel;
+    using DISMA = DynamicInterceptStateModelAdapter;
+  }
+
+  
+  Ptr<SparseMatrixBlock> DISM::observation_coefficients(
+      int t, const DataType &data_point) const {
     return new IdenticalRowsMatrix(observation_matrix(t),
                                    data_point.sample_size());
   }
+
+  DISMA::DynamicInterceptStateModelAdapter(const DISMA &rhs)
+      : DynamicInterceptStateModel(rhs),
+        base_(rhs.base_->clone())
+  {}
   
 }  // namespace BOOM

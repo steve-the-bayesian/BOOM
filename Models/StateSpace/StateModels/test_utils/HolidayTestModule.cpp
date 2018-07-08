@@ -36,8 +36,9 @@ namespace BOOM {
           initial_pattern_(initial_pattern),
           day_zero_(day_zero),
           holiday_(holiday),
-          holiday_model_(new RandomWalkHolidayDynamicInterceptStateModel(
+          holiday_model_(new RandomWalkHolidayStateModel(
               holiday_, day_zero_)),
+          adapter_(new DynamicInterceptStateModelAdapter(holiday_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               holiday_model_.get(), precision_prior_))

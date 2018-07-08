@@ -125,17 +125,6 @@ namespace BOOM {
     int time_of_first_observation_;
   };
 
-  class SeasonalDynamicInterceptStateModel
-      : public SeasonalStateModel,
-        public DynamicInterceptStateModel {
-   public:
-    SeasonalDynamicInterceptStateModel(int nseasons, int season_duration = 1)
-        : SeasonalStateModel(nseasons, season_duration) {}
-    SeasonalDynamicInterceptStateModel * clone() const override {
-      return new SeasonalDynamicInterceptStateModel(*this);
-    }
-  };
-  
   //======================================================================
   // A seasonal state model that rotates at the start of each new month.
   class MonthlyAnnualCycle : public SeasonalStateModelBase {

@@ -33,14 +33,11 @@ namespace BOOM {
      public:
       ArStateModelTestModule(const Vector &ar_coefficients,
                              double sd);
-
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return trend_; }
       Ptr<StateModel> get_state_model() override {return trend_model_;}
       Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return trend_model_;
-      }
+      get_dynamic_intercept_state_model() override { return adapter_; }
       void CreateObservationSpace(int niter) override;
       void ObserveDraws(const StateSpaceModelBase &model) override;
       void Check() override;
@@ -49,13 +46,13 @@ namespace BOOM {
       Vector ar_coefficients_;
       double sd_;
 
-      Ptr<ArDynamicInterceptStateModel> trend_model_;
+      Ptr<ArStateModel> trend_model_;
+      Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> precision_prior_;
       Ptr<ArPosteriorSampler> sampler_;
 
       // The simulated state.
       Vector trend_;
-
       
       Matrix trend_draws_;
       Vector sigma_draws_;
