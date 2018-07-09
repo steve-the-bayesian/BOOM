@@ -58,63 +58,80 @@ namespace BOOM {
   // Holiday models
   class Holiday;
   class RandomWalkHolidayStateModel;
-  class ScalarRegressionHolidayStateModel;
-  class ScalarHierarchicalRegressionHolidayStateModel;
 
+  class RegressionHolidayStateModel;
+  class ScalarRegressionHolidayStateModel;
+  class DynamicInterceptRegressionHolidayStateModel;
+
+  class HierarchicalRegressionHolidayStateModel;
+  class ScalarHierarchicalRegressionHolidayStateModel;
+  class DynamicInterceptHierarchicalRegressionHolidayStateModel;
 
   namespace RInterface {
-    // A factory for creating state components for use with state
-    // space models.
+    // A factory for creating state components for use with state space models.
+    // This class can be used to add state to a ScalarStateSpaceModelBase or a
+    // DynamicInterceptRegressionModel.  As new state space models are
+    // developed, it can be extended by adding an AddState method appropriate
+    // for the new model class.
     class StateModelFactory {
      public:
       // Args:
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
-      //   model: The model that will receive the state to be added.  If a
-      //     nullptr is passed then this factory can still call
-      //     CreateStateModel(), but AddState and SaveFinalState() will do
-      //     nothing.
-      StateModelFactory(RListIoManager *io_manager,
-                        ScalarStateSpaceModelBase *model);
+      StateModelFactory(RListIoManager *io_manager);
 
       // Adds all the state components listed in
       // r_state_specification_list to the model.
       // Args:
+      //   model: The model to which the state will be added.  This method is
+      //     overloaded on different model types.
       //   r_state_specification_list: An R list of state components to be added
       //     to the model.  This function intended to handle the state
       //     specification argument in bsts.
       //   prefix: An optional prefix added to the name of each state component.
-      void AddState(SEXP r_state_specification_list,
+      void AddState(ScalarStateSpaceModelBase *model,
+                    SEXP r_state_specification_list,
                     const std::string &prefix = "");
-
+      void AddState(DynamicInterceptRegressionModel *model,
+                    SEXP r_state_specification_list,
+                    const std::string &prefix = "");
+      
       // Save the final state (i.e. at time T) of the model for use with
       // prediction.  Do not call this function until after all components of
       // state have been added.
       // Args:
+      //   model:  A pointer to the model that owns the state.
       //   final_state: A pointer to a Vector to hold the state.  This can be
-      //     NULL if the state is only going to be recorded.  If state is going
-      //     to be read, then final_state must be non-NULL.  A non-NULL vector
-      //     will be re-sized if it is the wrong size.
+      //     nullptr if the state is only going to be recorded.  If state is
+      //     going to be read, then final_state must be non-NULL.  A non-NULL
+      //     vector will be re-sized if it is the wrong size.
       //   list_element_name: The name of the final state vector in the R list
       //     holding the MCMC output.
-      void SaveFinalState(
-          BOOM::Vector *final_state = NULL,
-          const std::string & list_element_name = "final.state");
+      void SaveFinalState(StateSpaceModelBase *model,
+                          BOOM::Vector *final_state = nullptr,
+                          const std::string & list_element_name = "final.state");
 
       // Factory method for creating a StateModel based on inputs supplied to R.
       // Returns a smart pointer to the StateModel that gets created.
       // Args:
+      //   model: The state space model to which this state model will be added.
       //   r_state_component: The portion of the state.specification list (that
       //     was supplied to R by the user), corresponding to the state model
       //     that needs to be created.
       //   prefix: A prefix to be added to the name field of the
       //     r_state_component in the io_manager.
       // Returns:
-      //   A Ptr to a StateModel that can be added as a component of
-      //   state to a state space model.
-      Ptr<StateModel> CreateStateModel(SEXP r_state_component,
+      //   A Ptr to a StateModel that can be added as a component of state to a
+      //   state space model.
+      Ptr<StateModel> CreateStateModel(ScalarStateSpaceModelBase *model,
+                                       SEXP r_state_component,
                                        const std::string &prefix);
+
+      Ptr<DynamicInterceptStateModel> CreateDynamicInterceptStateModel(
+          DynamicInterceptRegressionModel *model,
+          SEXP r_state_component,
+          const std::string &prefix);
 
       // Create a BOOM::Holiday from the supplied R object.
       // Args:
@@ -142,17 +159,44 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
 
       DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
-          SEXP r_state_component, const std::string &prefix);
+          SEXP r_state_component,
+          const std::string &prefix,
+          ScalarStateSpaceModelBase *model);
       DynamicRegressionArStateModel *CreateDynamicRegressionArStateModel(
-          SEXP r_state_component, const std::string &prefix);
+          SEXP r_state_component,
+          const std::string &prefix,
+          ScalarStateSpaceModelBase *model);
 
       RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
+
       ScalarRegressionHolidayStateModel *CreateRegressionHolidayStateModel(
-          SEXP r_state_component, const std::string &prefix);
+          SEXP r_state_component,
+          const std::string &prefix,
+          ScalarStateSpaceModelBase *model);
+      DynamicInterceptRegressionHolidayStateModel *
+      CreateDynamicInterceptRegressionHolidayStateModel(
+          SEXP r_state_component,
+          const std::string &prefix,
+          DynamicInterceptRegressionModel *model);
+      void ImbueRegressionHolidayStateModel(
+          RegressionHolidayStateModel *holiday_model,
+          SEXP r_state_component,
+          const std::string &prefix);
+      
       ScalarHierarchicalRegressionHolidayStateModel *
       CreateHierarchicalRegressionHolidayStateModel(
-          SEXP r_state_component, const std::string &prefix);
+          SEXP r_state_component,
+          const std::string &prefix,
+          ScalarStateSpaceModelBase *model);
+      DynamicInterceptHierarchicalRegressionHolidayStateModel *
+      CreateDIHRHSM(SEXP r_state_component,
+                    const std::string &prefix,
+                    DynamicInterceptRegressionModel *model);
+      void ImbueHierarchicalRegressionHolidayStateModel(
+          HierarchicalRegressionHolidayStateModel *holiday_model,
+          SEXP r_state_specification,
+          const std::string &prefix);
       
       SeasonalStateModel *CreateSeasonal(
           SEXP r_state_component, const std::string &prefix);
@@ -167,10 +211,6 @@ namespace BOOM {
       // already recorded) the MCMC output.  This can be a nullptr if IoManager
       // support is not desired.
       RListIoManager *io_manager_;
-
-      // The model that needs state added.  This can be a nullptr if the state
-      // space model is managed externally.
-      ScalarStateSpaceModelBase *model_;
 
       // Some state models (notably dynamic regression) introduce special
       // elements of state (like the paths of regression coefficients) that

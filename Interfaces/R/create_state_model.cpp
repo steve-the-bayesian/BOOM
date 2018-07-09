@@ -63,20 +63,20 @@
 namespace BOOM {
   namespace RInterface {
 
-    StateModelFactory::StateModelFactory(RListIoManager *io_manager,
-                                         ScalarStateSpaceModelBase *model)
-        : io_manager_(io_manager),
-          model_(model)
+    StateModelFactory::StateModelFactory(RListIoManager *io_manager)
+        : io_manager_(io_manager)
     {}
 
-    void StateModelFactory::AddState(SEXP r_state_specification_list,
+    void StateModelFactory::AddState(ScalarStateSpaceModelBase *model,
+                                     SEXP r_state_specification_list,
                                      const std::string &prefix) {
-      if (!model_) return;
+      if (!model) return;
       int number_of_state_models = Rf_length(r_state_specification_list);
       for (int i = 0; i < number_of_state_models; ++i) {
-        model_->add_state(
-            CreateStateModel(VECTOR_ELT(r_state_specification_list, i),
-                             prefix));
+        model->add_state(CreateStateModel(
+            model,
+            VECTOR_ELT(r_state_specification_list, i),
+            prefix));
       }
       InstallPostStateListElements();
     }
@@ -93,6 +93,7 @@ namespace BOOM {
     // Returns:
     //   A BOOM smart pointer to the appropriately typed StateModel.
     Ptr<StateModel> StateModelFactory::CreateStateModel(
+        ScalarStateSpaceModelBase *model,
         SEXP r_state_component,
         const std::string &prefix) {
       if (Rf_inherits(r_state_component, "AutoAr")) {
@@ -106,10 +107,12 @@ namespace BOOM {
             r_state_component, "model.options");
         if (Rf_inherits(
                 r_model_options, "DynamicRegressionRandomWalkOptions")) {
-          return CreateDynamicRegressionStateModel(r_state_component, prefix);
+          return CreateDynamicRegressionStateModel(
+              r_state_component, prefix, model);
         } else if (Rf_inherits(
             r_model_options, "DynamicRegressionArOptions")) {
-          return CreateDynamicRegressionArStateModel(r_state_component, prefix);
+          return CreateDynamicRegressionArStateModel(
+              r_state_component, prefix, model);
         } else {
           report_error("Unrecognized 'model.options' object in dynamic "
                        "regression state component.");
@@ -147,9 +150,10 @@ namespace BOOM {
         return CreateRandomWalkHolidayStateModel(r_state_component, prefix);
       } else if (Rf_inherits(
           r_state_component, "HierarchicalRegressionHolidayStateModel")) {
-        return CreateHierarchicalRegressionHolidayStateModel(r_state_component, prefix);
+        return CreateHierarchicalRegressionHolidayStateModel(
+            r_state_component, prefix, model);
       } else if (Rf_inherits(r_state_component, "RegressionHolidayStateModel")) {
-        return CreateRegressionHolidayStateModel(r_state_component, prefix);
+        return CreateRegressionHolidayStateModel(r_state_component, prefix, model);
       } else {
         std::ostringstream err;
         err << "Unknown object passed where state model expected." << endl;
@@ -170,29 +174,135 @@ namespace BOOM {
       }
     }
 
+    // A factory function that unpacks information from an R object created by
+    // AddXXX (where XXX is the name of a type of state model), and use it to
+    // build the appropriate BOOM StateModel.  The specific R function
+    // associated with each method is noted in the comments to the worker
+    // functions that implement each specific type.
+    // Args:
+    //   r_state_component:  The R object created by AddXXX.
+    //   prefix: An optional prefix to be prepended to the name of the state
+    //     component in the io_manager.
+    // Returns:
+    //   A BOOM smart pointer to the appropriately typed StateModel.
+    Ptr<DynamicInterceptStateModel>
+    StateModelFactory::CreateDynamicInterceptStateModel(
+        DynamicInterceptRegressionModel *model,
+        SEXP r_state_component,
+        const std::string &prefix) {
+      if (Rf_inherits(r_state_component, "AutoAr")) {
+        // AutoAr also inherits from ArProcess, so this case must be
+        // handled before ArProcess.
+        return new DynamicInterceptStateModelAdapter(
+            CreateAutoArStateModel(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "ArProcess")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateArStateModel(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "DynamicRegression")) {
+        // SEXP r_model_options = getListElement(
+        //     r_state_component, "model.options");
+        // if (Rf_inherits(
+        //         r_model_options, "DynamicRegressionRandomWalkOptions")) {
+        //   return CreateDynamicRegressionStateModel(r_state_component, prefix);
+        // } else if (Rf_inherits(
+        //     r_model_options, "DynamicRegressionArOptions")) {
+        //   return CreateDynamicRegressionArStateModel(r_state_component, prefix);
+        // } else {
+        //   report_error("Unrecognized 'model.options' object in dynamic "
+        //                "regression state component.");
+        //   return Ptr<StateModel>(nullptr);
+        // }
+      } else if (Rf_inherits(r_state_component, "LocalLevel")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateLocalLevel(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "LocalLinearTrend")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateLocalLinearTrend(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "Monthly")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateMonthlyAnnualCycle(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "Seasonal")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateSeasonal(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "SemilocalLinearTrend")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateSemilocalLinearTrend(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "StaticIntercept")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateStaticIntercept(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "StudentLocalLinearTrend")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateStudentLocalLinearTrend(r_state_component, prefix));
+      } else if (Rf_inherits(r_state_component, "Trig")) {
+        std::string method = ToString(getListElement(
+            r_state_component, "method", true));
+        if (method == "direct") {
+          return new DynamicInterceptStateModelAdapter(
+              CreateTrigRegressionStateModel(r_state_component, prefix));
+        } else if (method == "harmonic") {
+          return new DynamicInterceptStateModelAdapter(
+              CreateTrigStateModel(r_state_component, prefix));
+        } else {
+          std::ostringstream err;
+          err << "Unknown method: " << method
+              << " in state specification for trig state model.";
+          report_error(err.str());
+          return nullptr;
+        }
+      } else if (Rf_inherits(r_state_component, "RandomWalkHolidayStateModel")) {
+        return new DynamicInterceptStateModelAdapter(
+            CreateRandomWalkHolidayStateModel(r_state_component, prefix));
+      } else if (Rf_inherits(
+          r_state_component, "HierarchicalRegressionHolidayStateModel")) {
+        return CreateDIHRHSM(r_state_component, prefix, model);
+      } else if (Rf_inherits(r_state_component, "RegressionHolidayStateModel")) {
+        return CreateDynamicInterceptRegressionHolidayStateModel(
+            r_state_component, prefix, model);
+      } else {
+        std::ostringstream err;
+        err << "Unknown object passed where dynamic intercept state model "
+            << "expected." << endl;
+        std::vector<std::string> class_info = StringVector(
+            Rf_getAttrib(r_state_component, R_ClassSymbol));
+        if (class_info.empty()) {
+          err << "Object has no class attribute." << endl;
+        } else if (class_info.size() == 1) {
+          err << "Object is of class " << class_info[0] << "." << endl;
+        } else {
+          err << "Object has class:" << endl;
+          for (int i = 0; i < class_info.size(); ++i) {
+            err << "     " << class_info[i] << endl;
+          }
+          report_error(err.str());
+        }
+      }
+      return nullptr;
+    }
+    
     // A callback class for recording the final state that the
     // ScalarStateSpaceModelBase sampled in an MCMC iteration.
     class FinalStateCallback : public VectorIoCallback {
      public:
-      explicit FinalStateCallback(ScalarStateSpaceModelBase *model)
+      explicit FinalStateCallback(StateSpaceModelBase *model)
           : model_(model) {}
       virtual int dim() const {return model_->state_dimension();}
       virtual Vector get_vector() const { return model_->final_state();}
      private:
-      ScalarStateSpaceModelBase * model_;
+      StateSpaceModelBase * model_;
     };
 
     void StateModelFactory::SaveFinalState(
+        StateSpaceModelBase *model,
         Vector * final_state,
         const std::string & list_element_name) {
-      if (!model_) return;
+      if (!model) return;
       if (final_state) {
-        final_state->resize(model_->state_dimension());
+        final_state->resize(model->state_dimension());
       }
       if (io_manager_) {
         io_manager_->add_list_element(
             new NativeVectorListElement(
-                new BOOM::RInterface::FinalStateCallback(model_),
+                new BOOM::RInterface::FinalStateCallback(model),
                 list_element_name,
                 final_state));
       }
@@ -922,15 +1032,22 @@ namespace BOOM {
     //=========================================================================
     ScalarRegressionHolidayStateModel *
     StateModelFactory::CreateRegressionHolidayStateModel(
-        SEXP r_state_specification, const std::string &prefix) {
+        SEXP r_state_specification, const std::string &prefix,
+        ScalarStateSpaceModelBase *model) {
       Date time_zero = ToBoomDate(getListElement(
           r_state_specification, "time0"));
       NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
       NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
-
       ScalarRegressionHolidayStateModel *holiday_model =
-          new ScalarRegressionHolidayStateModel(time_zero, model_, prior);
-      
+          new ScalarRegressionHolidayStateModel(time_zero, model, prior);
+      ImbueRegressionHolidayStateModel(holiday_model, r_state_specification, prefix);
+      return holiday_model;
+    }
+
+    void StateModelFactory::ImbueRegressionHolidayStateModel(
+        RegressionHolidayStateModel *holiday_model,
+        SEXP r_state_specification,
+        const std::string &prefix) {
       RMemoryProtector holiday_list_protector;
       SEXP r_holidays = holiday_list_protector.protect(
           getListElement(r_state_specification, "holidays"));
@@ -940,12 +1057,29 @@ namespace BOOM {
         RMemoryProtector holiday_protector;
         SEXP r_holiday = holiday_protector.protect(VECTOR_ELT(r_holidays, i));
         Ptr<Holiday> holiday = CreateHoliday(r_holiday);
-        std::string holiday_name = ToString(getListElement(r_holiday, "name"));
+        std::string holiday_name =
+            prefix + ToString(getListElement(r_holiday, "name"));
         holiday_model->add_holiday(holiday);
         io_manager_->add_list_element(new VectorListElement(
             holiday_model->holiday_pattern_parameter(i),
             holiday_name));
       }
+    }
+
+    //=========================================================================
+    DynamicInterceptRegressionHolidayStateModel *
+    StateModelFactory::CreateDynamicInterceptRegressionHolidayStateModel(
+        SEXP r_state_specification, const std::string &prefix,
+        DynamicInterceptRegressionModel *model) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      NormalPrior prior_spec(getListElement(r_state_specification, "prior"));
+      NEW(GaussianModel, prior)(prior_spec.mu(), prior_spec.sigsq());
+      DynamicInterceptRegressionHolidayStateModel *holiday_model =
+          new DynamicInterceptRegressionHolidayStateModel(
+              time_zero, model, prior);
+      ImbueRegressionHolidayStateModel(
+          holiday_model, r_state_specification, prefix);
       return holiday_model;
     }
 
@@ -955,12 +1089,22 @@ namespace BOOM {
     //     ShrinkageRegressionHolidayModel detailing the model to be built.
     ScalarHierarchicalRegressionHolidayStateModel *
     StateModelFactory::CreateHierarchicalRegressionHolidayStateModel(
-        SEXP r_state_specification, const std::string &prefix) {
+        SEXP r_state_specification,
+        const std::string &prefix,
+        ScalarStateSpaceModelBase *model) {
       Date time_zero = ToBoomDate(getListElement(
           r_state_specification, "time0"));
       ScalarHierarchicalRegressionHolidayStateModel *holiday_model =
-          new ScalarHierarchicalRegressionHolidayStateModel(
-              time_zero, model_);
+          new ScalarHierarchicalRegressionHolidayStateModel(time_zero, model);
+      ImbueHierarchicalRegressionHolidayStateModel(
+          holiday_model, r_state_specification, prefix);
+      return holiday_model;
+    }
+      
+    void StateModelFactory::ImbueHierarchicalRegressionHolidayStateModel(
+        HierarchicalRegressionHolidayStateModel *holiday_model,
+        SEXP r_state_specification,
+        const std::string &prefix) {
       SEXP r_holidays = getListElement(r_state_specification, "holidays");
       int number_of_holidays = Rf_length(r_holidays);
       std::vector<std::string> holiday_names;
@@ -1013,6 +1157,19 @@ namespace BOOM {
       io_manager_->add_list_element(
           new SpdListElement(holiday_model->model()->prior()->Sigma_prm(),
                              prefix + "holiday.coefficient.variance"));
+    }
+
+    DynamicInterceptHierarchicalRegressionHolidayStateModel *
+    StateModelFactory::CreateDIHRHSM(SEXP r_state_specification,
+                                     const std::string &prefix,
+                                     DynamicInterceptRegressionModel *model) {
+      Date time_zero = ToBoomDate(getListElement(
+          r_state_specification, "time0"));
+      DynamicInterceptHierarchicalRegressionHolidayStateModel *holiday_model =
+          new DynamicInterceptHierarchicalRegressionHolidayStateModel(
+              time_zero, model);
+      ImbueHierarchicalRegressionHolidayStateModel(
+          holiday_model, r_state_specification, prefix);
       return holiday_model;
     }
     
@@ -1167,7 +1324,8 @@ namespace BOOM {
     DynamicRegressionStateModel *
     StateModelFactory::CreateDynamicRegressionStateModel(
         SEXP r_state_component,
-        const std::string &prefix) {
+        const std::string &prefix,
+        ScalarStateSpaceModelBase *model) {
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
       Matrix predictors = ToBoomMatrix(r_design_matrix);
@@ -1223,8 +1381,7 @@ namespace BOOM {
               vname.str()));
         }
 
-        // Store the hyperparameters describing the model for 1.0 /
-        // sigma^2.
+        // Store the hyperparameters describing the model for 1.0 / sigma^2.
         io_manager_->add_list_element(new UnivariateListElement(
             siginv_prior->Alpha_prm(),
             prefix + "siginv_shape_hyperparameter"));
@@ -1236,7 +1393,7 @@ namespace BOOM {
         NativeMatrixListElement *dynamic_regression_coefficients(
             new NativeMatrixListElement(
                 new DynamicRegressionRandomWalkStateCallback(
-                    model_,
+                    model,
                     dynamic_regression),
                 "dynamic.regression.coefficients",
                 nullptr));
@@ -1250,7 +1407,8 @@ namespace BOOM {
     DynamicRegressionArStateModel *
     StateModelFactory::CreateDynamicRegressionArStateModel(
         SEXP r_state_component,
-        const std::string &prefix) {
+        const std::string &prefix,
+        ScalarStateSpaceModelBase *model) {
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
 
@@ -1320,7 +1478,7 @@ namespace BOOM {
         // track the parameters of the state models.
         NativeMatrixListElement *dynamic_regression_coefficients(
             new NativeMatrixListElement(
-                new DynamicRegressionArStateCallback(model_, dynamic_regression),
+                new DynamicRegressionArStateCallback(model, dynamic_regression),
                 "dynamic.regression.coefficients",
                 nullptr));
         dynamic_regression_coefficients->set_row_names(xnames);
