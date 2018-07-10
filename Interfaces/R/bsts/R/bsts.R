@@ -595,7 +595,7 @@ BstsOptions <- function(save.state.contributions = TRUE,
     if (is.array(object[[i]]) && dim(object[[i]])[1] == niter) {
       array.dim <- dim(object[[i]])
       if (length(array.dim) == 2) {
-        object[[i]] <- object[[i]][1:ngood, drop = FALSE]
+        object[[i]] <- object[[i]][1:ngood, , drop = FALSE]
       } else if (length(array.dim) == 3) {
         object[[i]] <- object[[i]][1:ngood, , , drop = FALSE]
       } else if (length(array.dim) == 4) {
