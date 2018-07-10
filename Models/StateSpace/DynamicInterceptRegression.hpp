@@ -38,8 +38,15 @@ namespace BOOM {
     // numbers of observations at each time point.
     class TimeSeriesRegressionData : public Data {
      public:
+      // Args:
+      //   response:  The vector of response values for this time point.
+      //   predictors: The matrix of predictor variables for this time point.
+      //     The number of rows must match the length of response.
+      //   observed: Indicates which elements of 'response' are observed.  Its
+      //     length must match the length of response.
       TimeSeriesRegressionData(const Vector &response,
-                               const Matrix &predictors);
+                               const Matrix &predictors,
+                               const Selector &observed);
       TimeSeriesRegressionData * clone() const override;
 
       std::ostream &display(std::ostream &out) const override;
@@ -149,6 +156,11 @@ namespace BOOM {
     // Args:
     //   time:  The time index of the observation.
     Vector conditional_mean(int time) const;
+
+    // Return the time series of contributions of each state model to the
+    // intercept term.  It is an error to call this with state_model_index <= 1,
+    // because the first 'state model' is the regression state model, which 
+    Vector state_contribution(int state_model_index) const;
     
    private:
     // Reimplements the logic in the base class, but optimized for the scalar

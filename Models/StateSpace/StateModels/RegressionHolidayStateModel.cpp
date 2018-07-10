@@ -214,9 +214,27 @@ namespace BOOM {
     increment_daily_suf(holiday,  day, residual, 1.0);
   }
 
+  namespace {
+    using DIRHSM = DynamicInterceptRegressionHolidayStateModel;
+  }
   
-  void DynamicInterceptRegressionHolidayStateModel::observe_state(
-      const ConstVectorView &then, const ConstVectorView &now, int time_now) {
+  DIRHSM::DynamicInterceptRegressionHolidayStateModel(
+      const Date &time_of_first_observation,
+      DynamicInterceptRegressionModel *model,
+      const Ptr<GaussianModel> &prior,
+      RNG &seeding_rng)
+      : RegressionHolidayStateModel(
+            time_of_first_observation,
+            model->observation_model()->Sigsq_prm(),
+            prior,
+            seeding_rng),
+        model_(model)
+  {}
+
+  
+  void DIRHSM::observe_state(const ConstVectorView &then,
+                             const ConstVectorView &now,
+                             int time_now) {
     int holiday = impl().which_holiday(time_now);
     if (holiday < 0) return;
     int day = impl().which_day(time_now);

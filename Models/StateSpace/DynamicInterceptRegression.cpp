@@ -30,14 +30,19 @@ namespace BOOM {
   namespace StateSpace {
     TimeSeriesRegressionData::TimeSeriesRegressionData(
         const Vector &response,
-        const Matrix &predictors)
+        const Matrix &predictors,
+        const Selector &observed)
         : response_(response),
           predictors_(predictors),
-          observed_(response_.size(), true)
+          observed_(observed)
     {
       if (response_.size() != predictors_.nrow()) {
         report_error("Different numbers of observations in 'response' "
                      "and 'predictors'.");
+      }
+      if (response_.size() != observed.nvars_possible()) {
+        report_error("Observation indicator and response vector must "
+                     "be the same size.");
       }
       for (int i = 0; i < response_.size(); ++i) {
         regression_data_.push_back(new RegressionData(
@@ -153,6 +158,28 @@ namespace BOOM {
     return (*observation_coefficients(time) * state().col(time));
   }
 
+  Vector DIRM::state_contribution(int state_model_index) const {
+    if (state_model_index == 0) {
+      report_error("You can't use a Vector summarize the state contribution "
+                   "from the regression component because there can be more "
+                   "than one observation per time period.");
+    } else if (state_model_index < 0) {
+      report_error("state_model_index must be at least 1.");
+    } else if (state_model_index >= number_of_state_models()) {
+      report_error("state_model_index too large.");
+    }
+
+    Vector ans(time_dimension());
+    const Matrix &state(this->state());
+    for (int t = 0; t < time_dimension(); ++t) {
+      ConstVectorView local_state(
+          state_component(state.col(t), state_model_index));
+      ans[t] = state_model(state_model_index)->observation_matrix(t).dot(
+          local_state);
+    }
+    return ans;
+  }
+  
   //===========================================================================
   // private:
   Vector DIRM::simulate_observation(RNG &rng, int t) {
