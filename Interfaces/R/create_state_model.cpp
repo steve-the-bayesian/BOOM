@@ -35,6 +35,9 @@
 
 #include "Models/Hierarchical/PosteriorSamplers/HierGaussianRegressionAsisSampler.hpp"
 
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
+
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionArPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
@@ -74,6 +77,20 @@ namespace BOOM {
       int number_of_state_models = Rf_length(r_state_specification_list);
       for (int i = 0; i < number_of_state_models; ++i) {
         model->add_state(CreateStateModel(
+            model,
+            VECTOR_ELT(r_state_specification_list, i),
+            prefix));
+      }
+      InstallPostStateListElements();
+    }
+
+    void StateModelFactory::AddState(DynamicInterceptRegressionModel *model,
+                                     SEXP r_state_specification_list,
+                                     const std::string &prefix) {
+      if (!model) return;
+      int number_of_state_models = Rf_length(r_state_specification_list);
+      for (int i = 0; i < number_of_state_models; ++i) {
+        model->add_state(CreateDynamicInterceptStateModel(
             model,
             VECTOR_ELT(r_state_specification_list, i),
             prefix));
