@@ -75,6 +75,14 @@ namespace BOOM {
       double forecast_precision_log_determinant() const {
         return forecast_precision_log_determinant_;
       }
+
+      // This class uses dense matrix algebra if the number of observations in
+      // this time period is less than some multiple times the dimension of the
+      // state.  By default the multiple is 1, but it can be changed using this
+      // function.
+      static void set_large_sample_threshold_factor(double value) {
+        large_sample_threshold_factor = value;
+      }
       
      private:
       // Compute prediction_error, scaled_prediction_error_,
@@ -97,6 +105,8 @@ namespace BOOM {
       ModelType *model_;
       Vector scaled_prediction_error_;
       double forecast_precision_log_determinant_;
+
+      static double large_sample_threshold_factor;
     };
    
   }  // namespace Kalman

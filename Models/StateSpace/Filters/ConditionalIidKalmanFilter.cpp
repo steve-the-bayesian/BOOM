@@ -27,6 +27,8 @@
 namespace BOOM {
   namespace Kalman {
 
+    double ConditionalIidMarginalDistribution::large_sample_threshold_factor(1.0);
+    
     ConditionalIidMarginalDistribution::ConditionalIidMarginalDistribution(
         int state_dimension)
         : MultivariateMarginalDistributionBase(state_dimension) {}
@@ -53,7 +55,8 @@ namespace BOOM {
       const SparseKalmanMatrix &observation_coefficients(
           *model_->observation_coefficients(t));
       
-      if (observed.nvars() <= model_->state_dimension()) {
+      if (observed.nvars() <=
+          large_sample_threshold_factor * model_->state_dimension()) {
         small_sample_update(observation, observed, t, transition, observation_coefficients);
       } else {
         large_sample_update(observation, observed, t, transition, observation_coefficients);
