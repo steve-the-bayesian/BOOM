@@ -1,0 +1,5 @@
+language: C++
+
+script:
+  - bazel test //Bmath/... //LinAlg/... //Models/... //Samplers/... //TargetFun/... //cpputil/... //distributions/... //numopt/... //stats/...
+	
