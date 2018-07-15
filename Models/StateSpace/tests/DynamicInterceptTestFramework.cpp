@@ -56,7 +56,8 @@ namespace BOOM {
         for (int j = 0; j < nobs; ++j) {
           response[j] += rnorm_mt(GlobalRng::rng, 0, observation_sd_);
         }
-        NEW(StateSpace::TimeSeriesRegressionData, data_point)(response, predictors);
+        NEW(StateSpace::TimeSeriesRegressionData, data_point)(
+            response, predictors, Selector(response.size(), true));
         data_.push_back(data_point);
         xtx_ += predictors.inner();
         total_nobs_ += nobs;

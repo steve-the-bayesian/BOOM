@@ -251,7 +251,7 @@ namespace BOOM {
     }
     Vector ans(counts.size());
     int t0 = dat().size();
-    Kalman::ScalarMarginalDistribution marg(state_dimension());
+    Kalman::ScalarMarginalDistribution marg(this, nullptr, 0);
     marg.set_state_mean(*state_transition_matrix(t0 - 1) * final_state);
     marg.set_state_variance(state_variance_matrix(t0 - 1)->dense());
 

@@ -29,15 +29,17 @@ namespace BOOM {
     class ScalarMarginalDistribution
         : public MarginalDistributionBase {
      public:
-      explicit ScalarMarginalDistribution(int state_dimension)
-          : MarginalDistributionBase(state_dimension), prediction_error_(0),
-            prediction_variance_(0), kalman_gain_(state_dimension, 0) {}
-
+      explicit ScalarMarginalDistribution(const ScalarStateSpaceModelBase *model,
+                                          ScalarMarginalDistribution *previous,
+                                          int time_index);
       double update(double y,
                     bool missing,
                     int t,
                     const ScalarStateSpaceModelBase *model,
                     double observation_variance_scale_factor = 1.0);
+
+      Vector contemporaneous_state_mean() const override;
+      SpdMatrix contemporaneous_state_variance() const override;
       
       double prediction_error() const {return prediction_error_;}
       void set_prediction_error(double err) {prediction_error_ = err;}
@@ -49,6 +51,8 @@ namespace BOOM {
       void set_kalman_gain(const Vector &gain) {kalman_gain_ = gain;}
       
      private:
+      const ScalarStateSpaceModelBase *model_;
+      ScalarMarginalDistribution *previous_;
       double prediction_error_;
       double prediction_variance_;
       Vector kalman_gain_;
@@ -58,11 +62,9 @@ namespace BOOM {
   // A Kalman filter for state space models with scalar outcomes.
   class ScalarKalmanFilter : public KalmanFilterBase {
    public:
-    explicit ScalarKalmanFilter(ScalarStateSpaceModelBase *model = nullptr);
+    explicit ScalarKalmanFilter(ScalarStateSpaceModelBase *model);
 
-    void set_model(ScalarStateSpaceModelBase *model);
-    
-    // Fun the full Kalman filter over all the data held by the model.
+    // Run the full Kalman filter over all the data held by the model.
     void update() override;
 
     // Update the Kalman filter at time t given observation y, which might be

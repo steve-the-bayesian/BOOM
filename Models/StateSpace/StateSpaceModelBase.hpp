@@ -598,6 +598,7 @@ namespace BOOM {
   // period.
   class ScalarStateSpaceModelBase : public StateSpaceModelBase {
    public:
+    ScalarStateSpaceModelBase();
     ScalarStateSpaceModelBase *clone() const override = 0;
 
     //------------- Parameters for structural equations. --------------

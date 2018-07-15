@@ -147,6 +147,8 @@ namespace BOOM {
   class ConditionalIidMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
+    ConditionalIidMultivariateStateSpaceModelBase();
+
     // All observations at time t have this variance.
     virtual double observation_variance(int t) const = 0;
 

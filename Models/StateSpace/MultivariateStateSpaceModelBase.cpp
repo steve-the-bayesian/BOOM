@@ -105,6 +105,11 @@ namespace BOOM {
     using CiidBase = ConditionalIidMultivariateStateSpaceModelBase;
   }
 
+  CiidBase::ConditionalIidMultivariateStateSpaceModelBase()
+      : filter_(this),
+        simulation_filter_(this)
+  {}
+  
   Vector CiidBase::simulate_observation(RNG &rng, int t) {
     Vector ans = (*observation_coefficients(t)) * state().col(t);
     double sigma = sqrt(observation_variance(t));
@@ -115,7 +120,6 @@ namespace BOOM {
   }
 
   ConditionalIidKalmanFilter & CiidBase::get_filter() {
-    filter_.set_model(this);
     return filter_;
   }
 
@@ -124,7 +128,6 @@ namespace BOOM {
   }
 
   ConditionalIidKalmanFilter & CiidBase::get_simulation_filter() {
-    simulation_filter_.set_model(this);
     return simulation_filter_;
   }
 

@@ -24,19 +24,40 @@ namespace BOOM {
 
   using std::cout;
   using std::cerr;
-  
-  void MultivariateKalmanFilterBase::set_model(
-      MultivariateStateSpaceModelBase *model) {
-    if (model_ != model) {
-      model_ = model;
-      if (model_) {
-        observe_model_parameters(model_);
-      }
+
+  namespace Kalman {
+    namespace {
+      using Marginal = MultivariateMarginalDistributionBase;
     }
-  }
+    
+    Vector Marginal::contemporaneous_state_mean() const {
+      if (!previous()) {
+        return model()->initial_state_mean()
+            + model()->initial_state_variance()
+            * model()->observation_coefficients(0)->Tmult(scaled_state_error());
+      }
+      return previous()->state_mean()
+          + previous()->state_variance()
+          * model()->observation_coefficients(time_index())->Tmult(
+              scaled_state_error());
+    }
+
+    SpdMatrix Marginal::contemporaneous_state_variance() const {
+      SpdMatrix P = previous() ? model()->initial_state_variance()
+          : previous()->state_variance();
+      const SparseKalmanMatrix *observation_coefficients(
+          model()->observation_coefficients(time_index()));
+      return P - sandwich(
+          P, observation_coefficients->sandwich_transpose(forecast_precision()));
+    }
+     
+  }  // namespace Kalman
+
+  MultivariateKalmanFilterBase::MultivariateKalmanFilterBase(
+      MultivariateStateSpaceModelBase *model)
+      : model_(model) {}
   
   void MultivariateKalmanFilterBase::update() {
-
     if (!model_) {
       report_error("Model must be set before calling update().");
     }
@@ -51,7 +72,7 @@ namespace BOOM {
         node(t).set_state_variance(node(t - 1).state_variance());
       }
       increment_log_likelihood(node(t).update(
-          model_->observation(t), model_->observed_status(t), t));
+          model_->observation(t), model_->observed_status(t)));
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
         return;
@@ -75,7 +96,7 @@ namespace BOOM {
       node(t).set_state_mean(node(t - 1).state_mean());
       node(t).set_state_variance(node(t - 1).state_variance());
     }
-    increment_log_likelihood(node(t).update(y, observed, t));
+    increment_log_likelihood(node(t).update(y, observed));
   }
 
 

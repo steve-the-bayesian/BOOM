@@ -41,16 +41,37 @@ namespace BOOM {
     // A base class to handle quantities common to all marginal distributions.
     class MarginalDistributionBase {
      public:
-      explicit MarginalDistributionBase(int dim);
+      explicit MarginalDistributionBase(int dim, int time_index);
       virtual ~MarginalDistributionBase() {}
+
+      int time_index() const {
+        return time_index_;
+      }
       
+      // The marginal distribution at time t should be initialized with the
+      // state mean from distribution t-1.  After updating, the state_mean()
+      // refers to the mean of the state at time t+1 given data to time t.
       const Vector &state_mean() const {return state_mean_;}
       void set_state_mean(const Vector &state_mean) {state_mean_ = state_mean;}
       void increment_state_mean(const Vector &v) { state_mean_ += v; }
+
+      // The marginal distribution at time t should be initialized with the
+      // state variance from distribution t-1.  After updating, the
+      // state_variance() refers to the variance of the state at time t+1 given
+      // data to time t.
       const SpdMatrix &state_variance() const {return state_variance_;}
       void set_state_variance(const SpdMatrix &var) { state_variance_ = var;}
       void increment_state_variance(const SpdMatrix &m) {state_variance_ += m;}
 
+      // Convert the state mean and variance from forward-looking moments
+      // (e.g. E(state[t+1] | Data to t)) to contemporaneous moments
+      // (e.g. E(state[t] | Data to t)).
+      //
+      // If a[t] = E(state[t] | Data to t-1) then the contemporaneous state mean is
+      // a[t] + P[t] * Z[t].transpose() * Finv * v;
+      virtual Vector contemporaneous_state_mean() const = 0;
+      virtual SpdMatrix contemporaneous_state_variance() const = 0;
+      
       // Durbin and Koopman's r[t].  Recall that eta[t] is the error term for
       // moving from state t to state t+1.  The conditional mean of eta[t] given
       // all observed data is
@@ -72,6 +93,11 @@ namespace BOOM {
       SpdMatrix & mutable_state_variance() {return state_variance_;}
       
      private:
+      // The time point that this marginal distribution describes.
+      int time_index_;
+
+      // After updating, these describe the mean and variance of the state at
+      // time_index_ + 1 given data to time_index_.
       Vector state_mean_;
       SpdMatrix state_variance_;
 

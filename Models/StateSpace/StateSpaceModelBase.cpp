@@ -728,6 +728,9 @@ namespace BOOM {
 
   
   //===========================================================================
+  ScalarBase::ScalarStateSpaceModelBase() :
+      filter_(this), simulation_filter_(this) {}
+  
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -737,7 +740,6 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void ScalarBase::kalman_filter() {
-    filter_.set_model(this);
     filter_.update();
   }
 
@@ -809,7 +811,6 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   ScalarKalmanFilter &ScalarBase::get_filter() {
-    filter_.set_model(this);
     return filter_;
   }
   const ScalarKalmanFilter &ScalarBase::get_filter() const {
@@ -817,9 +818,9 @@ namespace BOOM {
   }
 
   ScalarKalmanFilter &ScalarBase::get_simulation_filter() {
-    simulation_filter_.set_model(this);
     return simulation_filter_;
   }
+  
   const ScalarKalmanFilter &ScalarBase::get_simulation_filter() const {
     return simulation_filter_;
   }

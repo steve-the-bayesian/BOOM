@@ -52,7 +52,7 @@ namespace {
           response[j] += rnorm(0, true_observation_sd_);
         }
         NEW(StateSpace::TimeSeriesRegressionData, data_point)(
-            response, predictors);
+            response, predictors, Selector(response.size(), true));
         data_.push_back(data_point);
       }
     }

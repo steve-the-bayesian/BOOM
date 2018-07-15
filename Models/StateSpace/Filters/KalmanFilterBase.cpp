@@ -21,8 +21,10 @@
 
 namespace BOOM {
   namespace Kalman {
-    MarginalDistributionBase::MarginalDistributionBase(int dim)
-        : state_mean_(dim), state_variance_(dim) {}
+    MarginalDistributionBase::MarginalDistributionBase(int dim, int time_index)
+        : time_index_(time_index),
+          state_mean_(dim),
+          state_variance_(dim) {}
   }  // namespace Kalman
 
   KalmanFilterBase::KalmanFilterBase()

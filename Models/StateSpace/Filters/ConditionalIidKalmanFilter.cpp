@@ -26,12 +26,21 @@
 
 namespace BOOM {
   namespace Kalman {
+    namespace {
+      using CIMD = ConditionalIidMarginalDistribution;
+    }  // namespace 
 
-    double ConditionalIidMarginalDistribution::large_sample_threshold_factor(1.0);
+    double CIMD::high_dimensional_threshold_factor(1.0);
     
-    ConditionalIidMarginalDistribution::ConditionalIidMarginalDistribution(
-        int state_dimension)
-        : MultivariateMarginalDistributionBase(state_dimension) {}
+    CIMD::ConditionalIidMarginalDistribution(
+        ConditionalIidMultivariateStateSpaceModelBase *model,
+        CIMD *previous,
+        int time_index)
+        : MultivariateMarginalDistributionBase(
+              model->state_dimension(), time_index),
+          model_(model),
+          previous_(previous)
+    {}
     
     // TODO: Test this function against the update function in the other
     // multivariate marginal distributions to make sure they give the same
@@ -40,26 +49,25 @@ namespace BOOM {
     // TODO: Rework observation_coefficients() to
     // partial_observation_coefficients() to account for data which is less than
     // fully observed.
-    double ConditionalIidMarginalDistribution::update(
-        const Vector &observation,
-        const Selector &observed,
-        int t) {
+    double CIMD::update(const Vector &observation, const Selector &observed) {
       if (!model_) {
         report_error("ConditionalIidMarginalDistribution needs the model to be "
                      "set by set_model() before calling update().");
       }
       if (observed.nvars() == 0) {
-        return fully_missing_update(t);
+        return fully_missing_update();
       }
-      const SparseKalmanMatrix &transition(*model_->state_transition_matrix(t));
+      const SparseKalmanMatrix &transition(
+          *model_->state_transition_matrix(time_index()));
       const SparseKalmanMatrix &observation_coefficients(
-          *model_->observation_coefficients(t));
+          *model_->observation_coefficients(time_index()));
       
-      if (observed.nvars() <=
-          large_sample_threshold_factor * model_->state_dimension()) {
-        small_sample_update(observation, observed, t, transition, observation_coefficients);
+      if (high_dimensional(observed)) {
+        large_sample_update(observation, observed, transition,
+                            observation_coefficients);
       } else {
-        large_sample_update(observation, observed, t, transition, observation_coefficients);
+        small_sample_update(observation, observed, transition,
+                            observation_coefficients);
       }
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
@@ -67,7 +75,8 @@ namespace BOOM {
       
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
-      set_state_mean(transition * state_mean() + kalman_gain() * prediction_error());
+      set_state_mean(transition * state_mean()
+                     + kalman_gain() * prediction_error());
 
       // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
       // Var(state[t+1} | Y[t]).
@@ -80,8 +89,9 @@ namespace BOOM {
       //
       // Need to define TPZprime before modifying P (known here as
       // state_variance).
-      Matrix TPZprime = (observation_coefficients *
-                         (transition * state_variance()).transpose()).transpose();
+      Matrix TPZprime = (
+          observation_coefficients *
+          (transition * state_variance()).transpose()).transpose();
 
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
@@ -92,23 +102,28 @@ namespace BOOM {
       mutable_state_variance() -= TPZprime.multT(kalman_gain());
 
       // Step 3: P += RQR
-      model_->state_variance_matrix(t)->add_to(
+      model_->state_variance_matrix(time_index())->add_to(
           mutable_state_variance());
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
     }  // update
 
+    bool CIMD::high_dimensional(const Selector &observed) const {
+      return observed.nvars() >
+          high_dimensional_threshold_factor * model_->state_dimension();
+    }
+
     //---------------------------------------------------------------------------
-    void ConditionalIidMarginalDistribution::small_sample_update(
+    void CIMD::small_sample_update(
         const Vector &observation,
         const Selector &observed,
-        int t,
         const SparseKalmanMatrix &transition,
         const SparseKalmanMatrix &observation_coefficients) {
       set_prediction_error(
           observation - observation_coefficients * state_mean());
       SpdMatrix forecast_variance =
-          DiagonalMatrix(observed.nvars(), model_->observation_variance(t))
+          DiagonalMatrix(observed.nvars(),
+                         model_->observation_variance(time_index()))
           + observation_coefficients.sandwich(state_variance());
       SpdMatrix forecast_precision = forecast_variance.inv();
       set_forecast_precision_log_determinant(forecast_precision.logdet());
@@ -118,13 +133,12 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
-    void ConditionalIidMarginalDistribution::large_sample_update(
+    void CIMD::large_sample_update(
         const Vector &observation,
         const Selector &observed,
-        int t,
         const SparseKalmanMatrix &transition,
         const SparseKalmanMatrix &observation_coefficients) {
-      double observation_variance = model_->observation_variance(t);
+      double observation_variance = model_->observation_variance(time_index());
 
       Vector observation_mean = observed.select(
           observation_coefficients * state_mean());
@@ -184,11 +198,46 @@ namespace BOOM {
       gain.diag() += 1.0;
       set_kalman_gain(transition * PZprimeHinv * gain);
     }
+
+    const MultivariateStateSpaceModelBase *CIMD::model() const {
+      return model_;
+    }
+
+    SpdMatrix CIMD::forecast_precision() const {
+      if (high_dimensional(model_->observed_status(time_index()))) {
+        return large_scale_forecast_precision();
+      }  else {
+        return direct_forecast_precision();
+      }
+    }
+    
+    SpdMatrix CIMD::direct_forecast_precision() const {
+      SpdMatrix ans = model_->observation_coefficients(time_index())->sandwich(
+          previous()->state_variance());
+      ans.diag() += model_->observation_variance(time_index());
+      return ans.inv();
+    }
+
+    SpdMatrix CIMD::large_scale_forecast_precision() const {
+      double observation_variance = model_->observation_variance(time_index());
+      const SparseKalmanMatrix *observation_coefficients =
+          model_->observation_coefficients(time_index());
+      Matrix inner = previous()->state_variance() *
+          observation_coefficients->inner() / observation_variance;
+      inner.diag() += 1.0;
+
+      SpdMatrix ans = observation_coefficients->sandwich(
+          inner.solve(previous()->state_variance()));
+      ans /= -square(observation_variance);
+      ans.diag() += 1.0 / observation_variance;
+      return ans;
+    }
     
     //===========================================================================
-    double ConditionalIidMarginalDistribution::fully_missing_update(int t) {
+    double CIMD::fully_missing_update() {
       // Compute the one-step prediction error and log likelihood contribution.
-      const SparseKalmanMatrix  &transition(*model_->state_transition_matrix(t));
+      const SparseKalmanMatrix  &transition(
+          *model_->state_transition_matrix(time_index()));
       double log_likelihood = 0;
       set_prediction_error(Vector(0));
 
@@ -206,7 +255,8 @@ namespace BOOM {
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
       // Step 2: P += RQR
-      model_->state_variance_matrix(t)->add_to(mutable_state_variance());
+      model_->state_variance_matrix(time_index())->add_to(
+          mutable_state_variance());
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
     }  
@@ -214,23 +264,16 @@ namespace BOOM {
   }  // namespace Kalman
 
   //===========================================================================
-  ConditionalIidKalmanFilter::ConditionalIidKalmanFilter(ModelType *model) {
-    set_model(model);
-  }
-
-  void ConditionalIidKalmanFilter::set_model(ModelType *model) {
-    model_ = model;
-    MultivariateKalmanFilterBase::set_model(model);
-    for (int i = 0; i < nodes_.size(); ++i) {
-      nodes_[i].set_model(model_);
-    }
-  }
+  ConditionalIidKalmanFilter::ConditionalIidKalmanFilter(ModelType *model)
+      : MultivariateKalmanFilterBase(model),
+        model_(model) {}
   
   void ConditionalIidKalmanFilter::ensure_size(int t) {
     while(nodes_.size() <=  t) {
+      Kalman::ConditionalIidMarginalDistribution *previous =
+          nodes_.empty() ? nullptr : &nodes_.back();
       nodes_.push_back(Kalman::ConditionalIidMarginalDistribution(
-          model()->state_dimension()));
-      nodes_.back().set_model(model_);
+          model_, previous, nodes_.size()));
     }
   }
   

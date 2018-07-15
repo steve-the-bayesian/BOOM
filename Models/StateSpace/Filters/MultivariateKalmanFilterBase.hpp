@@ -34,8 +34,8 @@ namespace BOOM {
     class MultivariateMarginalDistributionBase
         : public MarginalDistributionBase {
      public:
-      MultivariateMarginalDistributionBase(int state_dim)
-          : MarginalDistributionBase(state_dim)
+      MultivariateMarginalDistributionBase(int state_dim, int time_index)
+          : MarginalDistributionBase(state_dim, time_index)
       {}
 
       const Vector &prediction_error() const {
@@ -46,16 +46,24 @@ namespace BOOM {
       }
 
       virtual double update(const Vector &observation,
-                            const Selector &observed,
-                            int t) = 0;
+                            const Selector &observed) = 0;
 
+      virtual MultivariateMarginalDistributionBase *previous() = 0;
+      virtual const MultivariateMarginalDistributionBase *previous() const = 0;
+      virtual const MultivariateStateSpaceModelBase *model() const = 0;
+      
+      Vector contemporaneous_state_mean() const override;
+      SpdMatrix contemporaneous_state_variance() const override;
+      
       // Returns forecast_precision() * prediction_error().  This is Finv * v in
       // Durbin and Koopman notation.
       virtual Vector scaled_prediction_error() const = 0;
 
+      // forecast_precision() is expensive for high dimensional data.
+      virtual SpdMatrix forecast_precision() const = 0;
+      
       const Matrix &kalman_gain() const {return kalman_gain_;}
       void set_kalman_gain(const Matrix &gain) {kalman_gain_ = gain;}
-      
       
      private:
       // y[t] - E(y[t] | Y[t-1]).  The dimension matches y[t], which might vary
@@ -67,7 +75,6 @@ namespace BOOM {
       // Rows correspond to states and columns to observation elements, so the
       // dimension is S x m.
       Matrix kalman_gain_;
-
     };
   }  // namespace Kalman
 
@@ -76,10 +83,7 @@ namespace BOOM {
   // don't depend on the observation variance.
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
-    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model = nullptr) {
-      set_model(model);
-    }
-    void set_model(MultivariateStateSpaceModelBase *model);
+    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model);
     
     void update() override;
     void update_single_observation(
