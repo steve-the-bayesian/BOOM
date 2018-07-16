@@ -34,6 +34,15 @@ extern "C" {
       SEXP r_timeout_in_seconds,
       SEXP r_seed);
 
+  SEXP analysis_common_r_fit_dirm_(
+      SEXP r_data_list,
+      SEXP r_state_specification,
+      SEXP r_prior,
+      SEXP r_niter,
+      SEXP r_ping,
+      SEXP r_timeout_in_seconds,
+      SEXP r_seed);
+  
   SEXP analysis_common_r_predict_bsts_model_(
       SEXP r_bsts_object,
       SEXP r_prediction_data,
@@ -70,6 +79,7 @@ extern "C" {
   
   static R_CallMethodDef bsts_arg_description[] = {
     CALLDEF(analysis_common_r_fit_bsts_model_, 9),
+    CALLDEF(analysis_common_r_fit_dirm_, 7),
     CALLDEF(analysis_common_r_predict_bsts_model_, 5),
     CALLDEF(analysis_common_r_bsts_one_step_prediction_errors_, 3),
     CALLDEF(analysis_common_r_bsts_aggregate_time_series_, 3),

@@ -17,11 +17,13 @@
 #include <string>
 
 #include "model_manager.h"
+#include "dynamic_intercept_model_manager.h"
 #include "state_space_gaussian_model_manager.h"
 #include "state_space_logit_model_manager.h"
 #include "state_space_poisson_model_manager.h"
 #include "state_space_regression_model_manager.h"
 #include "state_space_student_model_manager.h"
+
 #include "utils.h"
 
 #include "r_interface/boom_r_tools.hpp"
@@ -44,53 +46,49 @@ namespace BOOM {
           timestamps_are_trivial_(true),
           number_of_time_points_(-1) {}
 
-    ModelManager * ModelManager::Create(SEXP r_bsts_object) {  // NOLINT
-      std::string family = ToString(getListElement(
-          r_bsts_object, "family"));
-      bool regression = !Rf_isNull(getListElement(
-          r_bsts_object, "predictors"));
+    ScalarModelManager * ScalarModelManager::Create(SEXP r_bsts_object) {  // NOLINT
+      std::string family = ToString(getListElement(r_bsts_object, "family"));
+      bool regression = !Rf_isNull(getListElement(r_bsts_object, "predictors"));
       int xdim = 0;
       if (regression) {
         xdim = Rf_ncols(getListElement(r_bsts_object, "predictors"));
       }
-      return ModelManager::Create(family, xdim);
+      return ScalarModelManager::Create(family, xdim);
     }
 
-    ModelManager *ModelManager::Create(const std::string &family_name,  
-                                       int xdim) {
-      ModelManager *ans = nullptr;
+    ScalarModelManager *ScalarModelManager::Create(
+        const std::string &family_name, int xdim) {
       if (family_name == "gaussian") {
         if (xdim > 0) {
           StateSpaceRegressionModelManager *manager =
               new StateSpaceRegressionModelManager;
           manager->SetPredictorDimension(xdim);
-          ans = manager;
+          return manager;
         } else {
-          ans = new StateSpaceModelManager;
+          return new StateSpaceModelManager;
         }
       } else if (family_name == "logit") {
         StateSpaceLogitModelManager *manager =
             new StateSpaceLogitModelManager;
         manager->SetPredictorDimension(xdim);
-        ans = manager;
+        return manager;
       } else if (family_name == "poisson") {
         StateSpacePoissonModelManager *manager =
             new StateSpacePoissonModelManager;
         manager->SetPredictorDimension(xdim);
-        ans = manager;
+        return manager;
       } else if (family_name == "student") {
         StateSpaceStudentModelManager *manager
             = new StateSpaceStudentModelManager;
         manager->SetPredictorDimension(xdim);
-        ans = manager;
+        return manager;
       } else {
         std::ostringstream err;
         err << "Unrecognized family name: " << family_name
             << " in ModelManager::Create.";
         report_error(err.str());
-        return nullptr;
       }
-      return ans;
+      return nullptr;
     }
 
     class FullStateCallback : public MatrixIoCallback {
@@ -103,7 +101,7 @@ namespace BOOM {
       StateSpaceModelBase *model_;
     };
     
-    ScalarStateSpaceModelBase * ModelManager::CreateModel(  // NOLINT
+    ScalarStateSpaceModelBase * ScalarModelManager::CreateModel(  // NOLINT
         SEXP r_data_list,
         SEXP r_state_specification,
         SEXP r_prior,
@@ -115,9 +113,11 @@ namespace BOOM {
           r_prior,
           r_options,
           io_manager);
-      RInterface::StateModelFactory state_model_factory(io_manager, model);
-      state_model_factory.AddState(r_state_specification);
-      state_model_factory.SaveFinalState(final_state);
+      RInterface::StateModelFactory state_model_factory(io_manager);
+      state_model_factory.AddState(model, r_state_specification, "");
+      SetDynamicRegressionStateComponentPositions(
+          state_model_factory.DynamicRegressionStateModelPositions());
+      state_model_factory.SaveFinalState(model, final_state);
 
       // The predict method does not set BstsOptions, so allow NULL here to
       // signal that options have not been set.
@@ -127,7 +127,7 @@ namespace BOOM {
         if (save_state_contribution) {
           io_manager->add_list_element(
               new NativeMatrixListElement(
-                  new GeneralStateContributionCallback(model),
+                  new ScalarStateContributionCallback(model),
                   "state.contributions",
                   nullptr));
         }
@@ -157,10 +157,10 @@ namespace BOOM {
       return model;
     }
 
-    Matrix ModelManager::Forecast(SEXP r_bsts_object,
-                                  SEXP r_prediction_data,
-                                  SEXP r_burn,
-                                  SEXP r_observed_data) {
+    Matrix ScalarModelManager::Forecast(SEXP r_bsts_object,
+                                        SEXP r_prediction_data,
+                                        SEXP r_burn,
+                                        SEXP r_observed_data) {
       RListIoManager io_manager;
       Vector final_state;
       SEXP r_state_specfication = getListElement(
@@ -216,7 +216,7 @@ namespace BOOM {
     }
 
     void ModelManager::UnpackDynamicRegressionForecastData(
-        ScalarStateSpaceModelBase *model,
+        StateSpaceModelBase *model,
         SEXP r_state_specification,
         SEXP r_prediction_data) {
       if (Rf_length(r_state_specification) < model->number_of_state_models()) {
@@ -228,12 +228,20 @@ namespace BOOM {
             << ") in UnpackDynamicRegressionForecastData.";
         report_error(err.str());
       }
+      std::deque<int> positions(dynamic_regression_state_positions().begin(),
+                                dynamic_regression_state_positions().end());
       for (int i = 0; i < model->number_of_state_models(); ++i) {
         SEXP spec = VECTOR_ELT(r_state_specification, i);
         if (Rf_inherits(spec, "DynamicRegression")) {
           Matrix predictors = ToBoomMatrix(getListElement(
               r_prediction_data, "dynamic.regression.predictors"));
-          Ptr<StateModel> state_model = model->state_model(i);
+          if (positions.empty()) {
+            report_error("Found a previously unseen dynamic regression state "
+                         "component.");
+          }
+          int pos = positions[0];
+          positions.pop_front();
+          Ptr<StateModel> state_model = model->state_model(pos);
           state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
               predictors);
         }

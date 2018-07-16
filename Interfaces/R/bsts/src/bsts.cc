@@ -32,10 +32,9 @@
 #include "cpputil/ThreadTools.hpp"
 
 extern "C" {
-  using BOOM::Vector;
-  using BOOM::Ptr;
-  using BOOM::bsts::ModelManager;
-  using BOOM::RCheckInterrupt;
+  using namespace BOOM;
+  using namespace BOOM::RInterface;
+  using namespace BOOM::bsts;
   using std::endl;
 
   SEXP analysis_common_r_fit_bsts_model_(
@@ -51,7 +50,7 @@ extern "C" {
     BOOM::RErrorReporter error_reporter;
     BOOM::RMemoryProtector protector;
     try {
-      BOOM::RInterface::seed_rng_from_R(r_seed);
+      seed_rng_from_R(r_seed);
       BOOM::RListIoManager io_manager;
       std::string family = BOOM::ToString(r_family);
       int xdim = 0;
@@ -59,9 +58,9 @@ extern "C" {
       if (!Rf_isNull(r_predictors)) {
         xdim = Rf_ncols(r_predictors);
       }
-      std::unique_ptr<ModelManager> model_manager(ModelManager::Create(
-          family, xdim));
-      Ptr<BOOM::ScalarStateSpaceModelBase> model(model_manager->CreateModel(
+      std::unique_ptr<ScalarModelManager> model_manager(
+          ScalarModelManager::Create(family, xdim));
+      Ptr<BOOM::Model> model(model_manager->CreateModel(
           r_data_list,
           r_state_specification,
           r_prior,
@@ -120,9 +119,9 @@ extern "C" {
       }
       return ans;
     } catch (std::exception &e) {
-      BOOM::RInterface::handle_exception(e);
+      handle_exception(e);
     } catch (...) {
-      BOOM::RInterface::handle_unknown_exception();
+      handle_unknown_exception();
     }
     return R_NilValue;
   }
@@ -170,18 +169,18 @@ extern "C" {
       SEXP r_observed_data,
       SEXP r_seed) {
     try {
-      BOOM::RInterface::seed_rng_from_R(r_seed);
+      seed_rng_from_R(r_seed);
       std::unique_ptr<ModelManager> model_manager(
-          ModelManager::Create(r_bsts_object));
+          ScalarModelManager::Create(r_bsts_object));
       return BOOM::ToRMatrix(model_manager->Forecast(
           r_bsts_object,
           r_prediction_data,
           r_burn,
           r_observed_data));
     } catch (std::exception &e) {
-      BOOM::RInterface::handle_exception(e);
+      handle_exception(e);
     } catch (...) {
-      BOOM::RInterface::handle_unknown_exception();
+      handle_unknown_exception();
     }
     return R_NilValue;
   }
@@ -214,8 +213,8 @@ extern "C" {
       BOOM::ThreadWorkerPool pool;
       pool.add_threads(desired_threads);
       for (int i = 0; i < cutpoints.size(); ++i) {
-        std::unique_ptr<ModelManager> model_manager(
-            ModelManager::Create(r_bsts_object));
+        std::unique_ptr<ScalarModelManager> model_manager(
+            ScalarModelManager::Create(r_bsts_object));
         futures.emplace_back(pool.submit(model_manager->CreateHoldoutSampler(
             r_bsts_object, cutpoints[i], standardize, &prediction_errors[i])));
       }
@@ -230,9 +229,9 @@ extern "C" {
       }
       return ans;
     } catch (std::exception &e) {
-      BOOM::RInterface::handle_exception(e);
+      handle_exception(e);
     } catch (...) {
-      BOOM::RInterface::handle_unknown_exception();
+      handle_unknown_exception();
     }
     return R_NilValue;
   }

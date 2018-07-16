@@ -204,12 +204,13 @@ RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
       new StandardDeviationListElement(model->regression_model()->Sigsq_prm(),
                                        "sigma.obs"));
 
-  BOOM::RInterface::StateModelFactory factory(&io_manager, model.get());
-  factory.AddState(state_specification);
+  BOOM::RInterface::StateModelFactory factory(&io_manager);
+  factory.AddState(model.get(), state_specification);
 
-  BOOM::RInterface::StateModelFactory augmented_factory(
-      &io_manager, augmented_model.get());
-  augmented_factory.AddState(state_specification, "augmented_");
+  BOOM::RInterface::StateModelFactory augmented_factory(&io_manager);
+  augmented_factory.AddState(augmented_model.get(),
+                             state_specification,
+                             "augmented_");
 
   AddRegressionPriorAndSetSampler(model, regression_prior, r_truth);
   model->set_method(
@@ -222,8 +223,9 @@ RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
 
   // We need to add final.state to io_manager last,
   // because we need to know how big the state vector is.
-  factory.SaveFinalState(final_state);
-  augmented_factory.SaveFinalState(augmented_final_state,
+  factory.SaveFinalState(model.get(), final_state);
+  augmented_factory.SaveFinalState(augmented_model.get(),
+                                   augmented_final_state,
                                    "augmented.final.state");
 
   if (save_state_history) {
