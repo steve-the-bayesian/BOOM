@@ -147,6 +147,11 @@ namespace BOOM {
     // unobserved, the dimension of Z[t] will be reduced so that Z[t] * state[t]
     // only gives the mean of the observed components.
     const SparseKalmanMatrix *observation_coefficients(int t) const override;
+
+    // A vector of observation coefficients giving the intercept term in the
+    // dynamic intercept regression.  The leading coefficient is zero, which
+    // removes the regression effect.
+    SparseVector non_regression_observation_matrix(int t) const;
     
     double observation_variance(int t) const override;
     const Vector &observation(int t) const override;
@@ -161,6 +166,24 @@ namespace BOOM {
     // intercept term.  It is an error to call this with state_model_index <= 1,
     // because the first 'state model' is the regression state model, which 
     Vector state_contribution(int state_model_index) const;
+
+    // Simulate a vector of observations from the model given the current set of
+    // model parameters and the final state.
+    //
+    // Args:
+    //   rng:  The random number generator to use for the forecast.
+    //   forecast_predictors: The matrix of predictor variables to use for the
+    //     forecast.
+    //   final_state: The value of the state vector as of the final time point
+    //     in the training data.
+    //   timestamps: A vector of integers giving the time index for each row of
+    //     forecast_predictors.  Timestamps are relative to the end of the
+    //     training data, so one time point beyond the training data is 0, two
+    //     timepoints are 1, etc.
+    Vector simulate_forecast(RNG &rng,
+                             const Matrix &forecast_predictors,
+                             const Vector &final_state,
+                             const std::vector<int> &timestamps);
     
    private:
     // Reimplements the logic in the base class, but optimized for the scalar

@@ -131,6 +131,18 @@ namespace BOOM {
     return &observation_coefficients_;
   }
 
+  SparseVector DIRM::non_regression_observation_matrix(int t) const {
+    // The initial vector is of size 1, which is the state dimension for the
+    // regression component.  By not specifying a coefficient, the coefficient
+    // is zero.
+    SparseVector ans(1);
+    // Start counting at 1, in order to skip the leading regression component.
+    for (int s = 1; s < number_of_state_models(); ++s) {
+      ans.concatenate(state_model(s)->observation_matrix(t));
+    }
+    return ans;
+  }
+  
   // const SparseKalmanMatrix *DIRM::partial_observation_coefficients(int t) const {
   //   observation_coefficients_.clear();
   //   const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
@@ -176,6 +188,44 @@ namespace BOOM {
           state_component(state.col(t), state_model_index));
       ans[t] = state_model(state_model_index)->observation_matrix(t).dot(
           local_state);
+    }
+    return ans;
+  }
+
+  Vector DIRM::simulate_forecast(RNG &rng,
+                                 const Matrix &forecast_predictors,
+                                 const Vector &final_state,
+                                 const std::vector<int> &timestamps) {
+    if (nrow(forecast_predictors) != timestamps.size()) {
+      report_error("different numbers of timestamps and forecast_predictors.");
+    }
+    if (final_state.size() != state_dimension()) {
+      std::ostringstream err;
+      err << "final state argument was of dimension " << final_state.size()
+          << " but model state dimension is " << state_dimension()
+          << "." << std::endl;
+      report_error(err.str());
+    }
+    Vector ans(timestamps.size());
+    int t0 = time_dimension();
+    int time = -1;
+    Vector state = final_state;
+    int index = 0;
+
+    // Move the state to the next time stamp.
+    // Simulate observations for all the data with that timestamp.
+    while(index < timestamps.size() && time < timestamps[index]) {
+      advance_to_timestamp(rng, time, state, timestamps[index], index);
+      double intercept = non_regression_observation_matrix(
+          t0 + timestamps[index]).dot(state);
+      while (index < timestamps.size() && time == timestamps[index]) {
+        double sigma = sqrt(observation_variance(t0 + time));
+        ans[index] = intercept
+            + observation_model()->coef().predict(
+                forecast_predictors.row(index))
+            + rnorm_mt(rng, 0, sigma);
+        ++index;
+      }
     }
     return ans;
   }
