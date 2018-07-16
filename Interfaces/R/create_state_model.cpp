@@ -216,19 +216,21 @@ namespace BOOM {
         return new DynamicInterceptStateModelAdapter(
             CreateArStateModel(r_state_component, prefix));
       } else if (Rf_inherits(r_state_component, "DynamicRegression")) {
-        // SEXP r_model_options = getListElement(
-        //     r_state_component, "model.options");
-        // if (Rf_inherits(
-        //         r_model_options, "DynamicRegressionRandomWalkOptions")) {
-        //   return CreateDynamicRegressionStateModel(r_state_component, prefix);
-        // } else if (Rf_inherits(
-        //     r_model_options, "DynamicRegressionArOptions")) {
-        //   return CreateDynamicRegressionArStateModel(r_state_component, prefix);
-        // } else {
-        //   report_error("Unrecognized 'model.options' object in dynamic "
-        //                "regression state component.");
-        //   return Ptr<StateModel>(nullptr);
-        // }
+        SEXP r_model_options = getListElement(
+            r_state_component, "model.options");
+        if (Rf_inherits(
+                r_model_options, "DynamicRegressionRandomWalkOptions")) {
+          return new DynamicInterceptStateModelAdapter(
+              CreateDynamicRegressionStateModel(r_state_component, prefix, model));
+        } else if (Rf_inherits(
+            r_model_options, "DynamicRegressionArOptions")) {
+          return new DynamicInterceptStateModelAdapter(
+              CreateDynamicRegressionArStateModel(r_state_component, prefix, model));
+        } else {
+          report_error("Unrecognized 'model.options' object in dynamic "
+                       "regression state component.");
+          return Ptr<DynamicInterceptStateModel>(nullptr);
+        }
       } else if (Rf_inherits(r_state_component, "LocalLevel")) {
         return new DynamicInterceptStateModelAdapter(
             CreateLocalLevel(r_state_component, prefix));
@@ -862,8 +864,8 @@ namespace BOOM {
       // Returns the position of the specified state model in the state space
       // model.  If the state space model is nullptr or the state model is not
       // found, then -1 is returned.
-      int state_model_position(ScalarStateSpaceModelBase *model,
-                               StateModel *state_model) {
+      int StateModelPosition(StateSpaceModelBase *model,
+                             StateModel *state_model) {
         if (!model) {
           return -1;
         } else {
@@ -1278,7 +1280,7 @@ namespace BOOM {
     class DynamicRegressionRandomWalkStateCallback : public BOOM::MatrixIoCallback {
      public:
       DynamicRegressionRandomWalkStateCallback(
-          BOOM::ScalarStateSpaceModelBase *model,
+          BOOM::StateSpaceModelBase *model,
           DynamicRegressionStateModel *state_model)
           : model_(model),
             state_model_(state_model),
@@ -1293,11 +1295,11 @@ namespace BOOM {
       }
 
       void determine_model_position() const {
-        model_position_ = state_model_position(model_, state_model_);
+        model_position_ = StateModelPosition(model_, state_model_);
       }
 
      private:
-      BOOM::ScalarStateSpaceModelBase *model_;
+      BOOM::StateSpaceModelBase *model_;
       DynamicRegressionStateModel *state_model_;
       mutable int model_position_;
     };
@@ -1306,7 +1308,7 @@ namespace BOOM {
     // coefficients in a DynamicRegressionArStateModel.
     class DynamicRegressionArStateCallback : public BOOM::MatrixIoCallback {
      public:
-      DynamicRegressionArStateCallback(BOOM::ScalarStateSpaceModelBase *model,
+      DynamicRegressionArStateCallback(BOOM::StateSpaceModelBase *model,
                                        DynamicRegressionArStateModel *state_model)
           : model_(model),
             state_model_(state_model),
@@ -1314,7 +1316,7 @@ namespace BOOM {
       int nrow() const override {return state_model_->xdim();}
       int ncol() const override {return model_->time_dimension();}
       BOOM::Matrix get_matrix() const override {
-        if (model_position_ < 0) determine_model_position();
+        if (model_position_ < 0) DetermineModelPosition();
         int lags = state_model_->number_of_lags();
         Matrix ans(nrow(), ncol());
         int row_index = 0;
@@ -1327,12 +1329,12 @@ namespace BOOM {
         return ans;
       }
 
-      void determine_model_position() const {
-        model_position_ = state_model_position(model_, state_model_);
+      void DetermineModelPosition() const {
+        model_position_ = StateModelPosition(model_, state_model_);
       }
 
      private:
-      BOOM::ScalarStateSpaceModelBase *model_;
+      BOOM::StateSpaceModelBase *model_;
       DynamicRegressionArStateModel *state_model_;
       mutable int model_position_;
     };
@@ -1342,7 +1344,9 @@ namespace BOOM {
     StateModelFactory::CreateDynamicRegressionStateModel(
         SEXP r_state_component,
         const std::string &prefix,
-        ScalarStateSpaceModelBase *model) {
+        StateSpaceModelBase *model) {
+      dynamic_regression_state_model_positions_.push_back(
+          model->number_of_state_models());
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
       Matrix predictors = ToBoomMatrix(r_design_matrix);
@@ -1425,9 +1429,11 @@ namespace BOOM {
     StateModelFactory::CreateDynamicRegressionArStateModel(
         SEXP r_state_component,
         const std::string &prefix,
-        ScalarStateSpaceModelBase *model) {
+        StateSpaceModelBase *model) {
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
+      dynamic_regression_state_model_positions_.push_back(
+          model->number_of_state_models());
 
       // Upack the predictors
       Matrix predictors = ToBoomMatrix(r_design_matrix);

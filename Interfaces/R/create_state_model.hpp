@@ -140,6 +140,10 @@ namespace BOOM {
       //   A BOOM::Holiday corresponding to 'holiday_spec'.
       static Ptr<Holiday> CreateHoliday(SEXP holiday_spec);
 
+      const std::vector<int> DynamicRegressionStateModelPositions() const {
+        return dynamic_regression_state_model_positions_;
+      }
+      
      private:
       // Concrete implementations of CreateStateModel.
 
@@ -161,11 +165,11 @@ namespace BOOM {
       DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
           SEXP r_state_component,
           const std::string &prefix,
-          ScalarStateSpaceModelBase *model);
+          StateSpaceModelBase *model);
       DynamicRegressionArStateModel *CreateDynamicRegressionArStateModel(
           SEXP r_state_component,
           const std::string &prefix,
-          ScalarStateSpaceModelBase *model);
+          StateSpaceModelBase *model);
 
       RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
@@ -229,7 +233,13 @@ namespace BOOM {
         post_state_list_elements_.clear();
       }
 
+      // A collection of list elements to be stored after the state model
+      // parameters.  Examples include dynamic regression coefficients.
       std::vector<RListIoElement *> post_state_list_elements_;
+
+      // The index of each dynamic regression state model, in the vector of
+      // state models held by the main state space model.
+      std::vector<int> dynamic_regression_state_model_positions_;
     };
 
   }  // namespace RInterface
