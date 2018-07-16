@@ -218,8 +218,5 @@ namespace BOOM {
     }
     return nodes_[n - 1];
   }
-
-
-
   
 }  // namespace BOOM

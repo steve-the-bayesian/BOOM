@@ -154,6 +154,10 @@ namespace BOOM {
 
     // Ensure space for at least t marginal distributions.
     void ensure_size(int t) override;
+
+    const MarginalType &back() const {
+      return nodes_.back();
+    }
     
    private:
     std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;
