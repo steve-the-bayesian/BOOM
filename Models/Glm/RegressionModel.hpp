@@ -264,12 +264,23 @@ namespace BOOM {
                           public EmMixtureComponent {
    public:
     explicit RegressionModel(uint p);
-    RegressionModel(const Vector &b, double Sigma);
+
+    // Args:
+    //   coefficients: The vector of regression coefficients.  All are included.
+    //   residual_sd: The standard deviation of the Gaussian errors around the
+    //     regression line.
+    RegressionModel(const Vector &coefficients, double residual_sd);
 
     // Use this constructor if the model needs to share parameters
     // with another model.  E.g. a mixture model with shared variance
     // parameter.
-    RegressionModel(const Ptr<GlmCoefs> &beta, const Ptr<UnivParams> &sigsq);
+    // Args:
+    //   coefficients:  The vector of regression coefficients.
+    //   residual_variance: The residual variance parameter.  Note the
+    //     constructor above is parameterized in terms of residual sd instead of
+    //     residual variance.
+    RegressionModel(const Ptr<GlmCoefs> &coefficients,
+                    const Ptr<UnivParams> &residual_variance);
 
     // Args:
     //   X: The design matrix of predictor variables.  Must contain an
@@ -281,13 +292,11 @@ namespace BOOM {
     //     at zero.
     RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle = true);
 
-    explicit RegressionModel(const DatasetType &d,
-                             bool include_all_variables = true);
     RegressionModel(const RegressionModel &rhs);
     RegressionModel *clone() const override;
 
-    // The number of variables currently included in the model,
-    // including the intercept, if present.
+    // The number of variables currently included in the model, including the
+    // intercept, if present.
     uint nvars() const;
 
     // The number of potential variables, including the intercept.
@@ -354,11 +363,10 @@ namespace BOOM {
     // including the intercept, are zero).
     double empty_loglike(Vector &g, Matrix &h, uint nd) const;
 
-    // If the model was formed using the QR decomposition, switch to
-    // using the normal equations.  The normal equations are
-    // computationally more efficient when doing variable selection or
-    // when the data is changing between MCMC iterations (as in finite
-    // mixtures).
+    // If the model was formed using the QR decomposition, switch to using the
+    // normal equations.  The normal equations are computationally more
+    // efficient when doing variable selection or when the data is changing
+    // between MCMC iterations (as in finite mixtures).
     void use_normal_equations();
 
     void add_mixture_data(const Ptr<Data> &, double prob) override;

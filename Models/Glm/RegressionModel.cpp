@@ -527,17 +527,11 @@ namespace BOOM {
   RM::RegressionModel(const Matrix &X, const Vector &y, bool start_at_mle)
       : GlmModel(),
         ParamPolicy(new GlmCoefs(X.ncol()), new UnivParams(1.0)),
-        DataPolicy(new QrRegSuf(X, y)) {
+        DataPolicy(new NeRegSuf(X, y)) {
     if (start_at_mle) {
       mle();
     }
   }
-
-  RM::RegressionModel(const DatasetType &d, bool include_all_variable)
-      : GlmModel(),
-        ParamPolicy(new GlmCoefs(d[0]->xdim(), include_all_variable),
-                    new UnivParams(1.0)),
-        DataPolicy(new NeRegSuf(d.begin(), d.end())) {}
 
   RM::RegressionModel(const RegressionModel &rhs)
       : Model(rhs),
