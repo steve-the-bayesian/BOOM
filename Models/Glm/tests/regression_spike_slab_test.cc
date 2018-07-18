@@ -20,56 +20,85 @@ namespace {
 
   class RegressionSpikeSlabTest : public ::testing::Test {
    protected:
-    RegressionSpikeSlabTest() {
+    RegressionSpikeSlabTest()
+        : nobs_(1000),
+          xdim_(10),
+          niter_(1000),
+          residual_sd_(0.3)
+    {
       GlobalRng::rng.seed(8675309);
     }
+
+    void SimulateCoefficients() {
+      coefficients_.resize(xdim_);
+      coefficients_.randomize();
+      VectorView zero_coefficients(coefficients_, 6);
+      zero_coefficients = 0.0;
+    }
+    
+    void SimulatePredictors() {
+      predictors_.resize(nobs_, xdim_);
+      predictors_.randomize();
+      predictors_.col(0) = 1.0;
+    }
+
+    void SimulateResponse() {
+      response_ = predictors_ * coefficients_;
+      for (int i = 0; i < response_.size(); ++i) {
+        response_[i] += rnorm_mt(GlobalRng::rng, 0, residual_sd_);
+      }
+    }
+
+    int nobs_;
+    int xdim_;
+    int niter_;
+    Matrix predictors_;
+    Vector response_;
+    double residual_sd_;
+    Vector coefficients_;
   };
 
+  inline double inclusion_probability(const ConstVectorView &coefficients) {
+    double ans = 0;
+    for (auto y : coefficients) {
+      ans += (y != 0);
+    }
+    return ans / coefficients.size();
+  }
+  
   TEST_F(RegressionSpikeSlabTest, Small) {
-    int nobs = 1000;
-    int nvars = 10;
-    int niter = 1000;
-    double residual_sd = 1.3;
-    Matrix predictors(nobs, nvars);
-    predictors.randomize();
-    predictors.col(0) = 1.0;
-    Vector coefficients(nvars);
-    coefficients.randomize();
-    for (int i = 6; i < nvars; ++i) {
-      coefficients[i] = 0.0;
-    }
-    Vector response = predictors * coefficients;
-    for (int i = 0; i < nobs; ++i) {
-      response[i] += rnorm(0, residual_sd); 
-    }
+    SimulatePredictors();
+    SimulateCoefficients();
+    VectorView(coefficients_, 6) = 0.0;
+    SimulateResponse();
 
-    NEW(RegressionModel, model)(predictors, response);
+    NEW(RegressionModel, model)(predictors_, response_);
     SpdMatrix xtx = model->suf()->xtx();
     NEW(MvnGivenScalarSigma, slab)(
-        Vector(nvars, 0), xtx / nobs, model->Sigsq_prm());
+        Vector(xdim_, 0), xtx / nobs_, model->Sigsq_prm());
     NEW(ChisqModel, residual_precision_prior)(1.0, 1.0);
-    NEW(VariableSelectionPrior, spike)(nvars, .5);
+    NEW(VariableSelectionPrior, spike)(xdim_, .5);
     NEW(AdaptiveSpikeSlabRegressionSampler, sampler)(
         model.get(), slab, residual_precision_prior, spike);
     model->set_method(sampler);
-    Vector sigma_draws(niter);
-    Matrix beta_draws(niter, nvars);
-    for (int i = 0; i < niter; ++i) {
+    Vector sigma_draws(niter_);
+    Matrix beta_draws(niter_, xdim_);
+    for (int i = 0; i < niter_; ++i) {
       model->sample_posterior();
       sigma_draws[i] = model->sigma();
       beta_draws.row(i) = model->Beta();
     }
 
-    NEW(RegressionModel, model2)(predictors, response);
+    NEW(RegressionModel, model2)(predictors_, response_);
     NEW(MvnGivenScalarSigma, slab2)(
-        Vector(nvars, 0), xtx / nobs, model2->Sigsq_prm());
+        Vector(xdim_, 0), xtx / nobs_, model2->Sigsq_prm());
     NEW(BregVsSampler, old_sampler)(
         model2.get(), slab2, residual_precision_prior, spike);
     model2->set_method(old_sampler);
     
-    Vector more_sigma_draws(niter);
-    Matrix more_beta_draws(niter, nvars);
-    for (int i = 0; i < niter; ++i) {
+    Vector more_sigma_draws(niter_);
+    Matrix more_beta_draws(niter_, xdim_);
+    for (int i = 0; i < niter_; ++i) {
       model2->sample_posterior();
       more_sigma_draws[i] = model2->sigma();
       more_beta_draws.row(i) = model2->Beta();
@@ -84,52 +113,34 @@ namespace {
         << AsciiDistributionCompare(beta_draws.col(3),
                                     more_beta_draws.col(3));
 
-
-    for (int i = 0; i < nvars; ++i) {
+    for (int i = 0; i < xdim_; ++i) {
       EXPECT_TRUE(EquivalentSimulations(beta_draws.col(i),
                                         more_beta_draws.col(i)));
     }
   }
 
   TEST_F(RegressionSpikeSlabTest, Large) {
-    int nobs = 1000;
-    int nvars = 100;
-    int niter = 1000;
-    double residual_sd = 0.3;
-    Matrix predictors(nobs, nvars);
-    predictors.randomize();
-    predictors.col(0) = 1.0;
-    Vector coefficients(nvars);
-    coefficients.randomize();
-    for (int i = 6; i < nvars; ++i) {
-      coefficients[i] = 0.0;
-    }
-    Vector response = predictors * coefficients;
-    for (int i = 0; i < nobs; ++i) {
-      response[i] += rnorm(0, residual_sd); 
-    }
+    xdim_ = 100;
+    SimulatePredictors();
+    SimulateCoefficients();
+    SimulateResponse();
 
-    NEW(RegressionModel, model)(predictors.ncol());
+    NEW(RegressionModel, model)(predictors_, response_, false);
     model->coef().drop_all();
     model->coef().add(0);
     
-    for (int i = 0; i < predictors.nrow(); ++i) {
-      NEW(RegressionData, dp)(response[i], predictors.row(i));
-      model->add_data(dp);
-    }
     SpdMatrix xtx = model->suf()->xtx();
     NEW(MvnGivenScalarSigma, slab)(
-        Vector(nvars, 0), xtx / nobs, model->Sigsq_prm());
+        Vector(xdim_, 0), xtx / nobs_, model->Sigsq_prm());
     NEW(ChisqModel, residual_precision_prior)(1.0, 1.0);
-    NEW(VariableSelectionPrior, spike)(nvars, 5.0 / nvars);
+    NEW(VariableSelectionPrior, spike)(xdim_, 5.0 / xdim_);
     NEW(AdaptiveSpikeSlabRegressionSampler, sampler)(
         model.get(), slab, residual_precision_prior, spike);
     model->set_method(sampler);
-    Vector sigma_draws(niter);
-    Matrix beta_draws(niter, nvars);
-    Vector size_draws(niter);
-    for (int i = 0; i < niter; ++i) {
-      std::cout << "iteration " << i << std::endl;
+    Vector sigma_draws(niter_);
+    Matrix beta_draws(niter_, xdim_);
+    Vector size_draws(niter_);
+    for (int i = 0; i < niter_; ++i) {
       model->sample_posterior();
       sigma_draws[i] = model->sigma();
       beta_draws.row(i) = model->Beta();
@@ -140,6 +151,58 @@ namespace {
     // The fraction of models with 8 or fewer included predictors should be
     // high.
     EXPECT_GE(size_distribution(8), .95);
+  }
+
+  TEST_F(RegressionSpikeSlabTest, PerfectCollinearity) {
+    xdim_ = 50;
+    niter_ *= 5;
+    SimulatePredictors();
+    predictors_.col(2) = 1.7 * predictors_.col(1);
+    predictors_.col(3) = -2.4 * predictors_.col(2);
+
+    // Pick some obvious values for coefficients that the model should be able
+    // to find easily.  Because of the perfect correlation, coefficient 1, 2,
+    // and 3 each have about a 1/3 chance of appearing.
+    coefficients_ = Vector(xdim_, 0.0);
+    coefficients_[0] = 12;
+    coefficients_[1] = 18;
+    coefficients_[2] = 0;
+    coefficients_[3] = 0;
+    coefficients_[4] = -4;
+    coefficients_[5] = 73;
+    
+    SimulateResponse();
+
+    NEW(RegressionModel, model)(predictors_, response_, false);
+    model->coef().drop_all();
+    model->coef().add(0);
+    SpdMatrix xtx = model->suf()->xtx();
+    NEW(MvnGivenScalarSigma, slab)(
+        Vector(xdim_, 0), xtx / nobs_, model->Sigsq_prm());
+    NEW(ChisqModel, residual_precision_prior)(1.0, 1.0);
+    NEW(VariableSelectionPrior, spike)(xdim_, 5.0 / xdim_);
+    NEW(BregVsSampler, sampler)(
+        model.get(), slab, residual_precision_prior, spike);
+    model->set_method(sampler);
+
+    Matrix beta_draws(niter_, xdim_);
+    Vector sigma_draws(niter_);
+    
+    for (int i = 0; i < niter_; ++i) {
+      model->sample_posterior();
+      sigma_draws[i] = model->sigma();
+      beta_draws.row(i) = model->Beta();
+    }
+
+    EXPECT_GE(inclusion_probability(beta_draws.col(0)), .9);
+    EXPECT_GE(inclusion_probability(beta_draws.col(1)), .20);
+    EXPECT_LE(inclusion_probability(beta_draws.col(1)), .40);
+    EXPECT_GE(inclusion_probability(beta_draws.col(2)), .20);
+    EXPECT_LE(inclusion_probability(beta_draws.col(2)), .40);
+    EXPECT_GE(inclusion_probability(beta_draws.col(3)), .20);
+    EXPECT_LE(inclusion_probability(beta_draws.col(3)), .40);
+    EXPECT_GE(inclusion_probability(beta_draws.col(4)), .9);
+    EXPECT_GE(inclusion_probability(beta_draws.col(5)), .9);
   }
   
 }  // namespace

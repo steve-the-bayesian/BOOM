@@ -243,7 +243,9 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void BVS::draw() {
-    if (max_nflips_ > 0) draw_model_indicators();
+    if (max_nflips_ > 0) {
+      draw_model_indicators();
+    }
     if (draw_beta_ || draw_sigma_) {
       set_reg_post_params(model_->coef().inc(), false);
     }
@@ -261,6 +263,41 @@ namespace BOOM {
     set_reg_post_params(model_->coef().inc(), true);
     model_->set_included_coefficients(posterior_mean_);
     model_->set_sigsq(SS_ / DF_);
+  }
+
+  void BVS::attempt_swap() {
+    if (correlation_map_.threshold() >= 1.0) {
+      return;
+    }
+    if (!correlation_map_.filled()) {
+      correlation_map_.fill(*model_->suf());
+    }
+    Selector included = model_->coef().inc();
+    if (included.nvars() == 0 ||
+        included.nvars() == included.nvars_possible()) {
+      return;
+    }
+    int index = included.random_included_position(rng());
+    double forward_proposal_weight;
+    int candidate = correlation_map_.propose_swap(
+        rng(), included, index, &forward_proposal_weight);
+    if (candidate < 0) return;
+    
+    double original_model_log_probability = log_model_prob(included);
+    included.drop(index);
+    included.add(candidate);
+    double reverse_proposal_weight = correlation_map_.proposal_weight(
+        included, candidate, index);
+    double log_MH_numerator =
+        log_model_prob(included) - log(forward_proposal_weight);
+    double log_MH_denominator =
+        original_model_log_probability - log(reverse_proposal_weight);
+    double logu = log(runif_mt(rng()));
+    if (logu < log_MH_numerator - log_MH_denominator) {
+      model_->coef().set_inc(included);
+    } else {
+      // reject the proposal by doing nothing.
+    }
   }
 
   //----------------------------------------------------------------------
@@ -307,6 +344,7 @@ namespace BOOM {
       logp = mcmc_one_flip(g, indx[i], logp);
     }
     model_->coef().set_inc(g);
+    attempt_swap();
   }
   //----------------------------------------------------------------------
   double BVS::logpri() const {

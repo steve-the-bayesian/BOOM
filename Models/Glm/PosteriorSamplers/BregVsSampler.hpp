@@ -23,6 +23,7 @@
 #include "Models/GammaModel.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/PosteriorSamplers/CorrelationMap.hpp"
 #include "Models/MvnGivenScalarSigma.hpp"
 #include "Models/MvnGivenSigma.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
@@ -150,6 +151,12 @@ namespace BOOM {
 
     void set_sigma_upper_limit(double sigma_upper_limit);
 
+    // The smallest value that an absolute correlation between variables must
+    // have before the variables can be considered for a swap move.
+    void set_correlation_swap_threshold(double threshold) {
+      correlation_map_.set_threshold(threshold);
+    }
+    
     // Sets the model parameters to their posterior mode, conditional on the
     // current include / exclude status of the regression coefficients.  Any
     // coefficient that is included will be optimized.  Any coefficient that is
@@ -160,6 +167,15 @@ namespace BOOM {
 
     bool posterior_mode_found() const { return true; }
 
+    // Propose a Metropolis-Hastings move in which a variable currently in the
+    // model is swapped for another variable currently out of the model.
+    //
+    // The proposal distribution chooses a coefficient uniformly at random from
+    // among the set of included coefficients.  It chooses a coefficient from
+    // among the excluded coefficients with probability proportional to the
+    // square of the correlation between the included and excluded variables.
+    void attempt_swap();
+    
    protected:
     double draw_sigsq_given_sufficient_statistics(double df, double ss) {
       return sigsq_sampler_.draw(rng(), df, ss);
@@ -167,9 +183,8 @@ namespace BOOM {
 
     // Does one MCMC draw on a specific element of a vector of inclusion
     // indicators, given all others.
-
+    //
     // Args:
-
     //   inclusion_indicators: The vector of inclusion indicators to be sampled.
     //   which_var: The position (element) in inclusion_indicators that might be
     //     changed.
@@ -223,6 +238,8 @@ namespace BOOM {
 
     GenericGaussianVarianceSampler sigsq_sampler_;
 
+    CorrelationMap correlation_map_;
+    
     double set_reg_post_params(const Selector &inclusion_indicators,
                                bool do_ldoi) const;
 
