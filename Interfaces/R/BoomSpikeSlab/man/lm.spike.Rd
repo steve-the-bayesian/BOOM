@@ -34,7 +34,8 @@ lm.spike(formula,
 
 SsvsOptions(adaptive.cutoff = 100,
             adaptive.step.size = .001,
-            target.acceptance.rate = .345)
+            target.acceptance.rate = .345,
+            correlation.swap.threshold = .8)
 
 OdaOptions(fallback.probability = 0.0,
            eigenvalue.fudge.factor = 0.01)
@@ -116,7 +117,12 @@ OdaOptions(fallback.probability = 0.0,
 
   \item{target.acceptance.rate}{The target acceptance rate for the
     adaptive SSVS algorithm.}
-  
+
+  \item{correlation.swap.threshold}{ The minimal absolute correlation
+    required for two variables to be considered for a swap move.  Swap
+    moves are currently only supported for less than
+    \code{adaptive.cutoff} variables.  }
+
 }
 
 \details{

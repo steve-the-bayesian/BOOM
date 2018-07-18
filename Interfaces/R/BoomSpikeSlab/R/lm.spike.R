@@ -730,7 +730,8 @@ predict.lm.spike <- function(object,
 
 SsvsOptions <- function(adaptive.cutoff = 100,
                         adaptive.step.size = .001,
-                        target.acceptance.rate = .345) {
+                        target.acceptance.rate = .345,
+                        correlation.swap.threshold = .8) {
   ## "SSVS" is stochastic search variable selection, which is the classic
   ## approach from George and McCulloch (1997).
   ##
@@ -741,15 +742,21 @@ SsvsOptions <- function(adaptive.cutoff = 100,
   ##     adaptive method and infinite to always use SSVS.
   ##   adaptive.step.size:  The step size parameter for the adaptive algorithm.
   ##   target.acceptance.rate:  The target rate supplied to the adaptive algorithm.
+  ##   correlation.swap.threshold: The minimal absolute correlation that
+  ##     two variables must have to be considered for a swap move.  Swap moves
+  ##     are currently only supported for less than 'adaptive.cutoff' variables.
   ##
   ## Returns:
   ##   A list containing the options to use for the SSVS sampling method.
   check.nonnegative.scalar(adaptive.cutoff)
   check.positive.scalar(adaptive.step.size)
   check.scalar.probability(target.acceptance.rate)
+  stopifnot(is.numeric(correlation.swap.threshold),
+    length(correlation.swap.threshold) == 1)
   ans <- list(adaptive.cutoff = adaptive.cutoff,
     adaptive.step.size = adaptive.step.size,
-    target.acceptance.rate = target.acceptance.rate)
+    target.acceptance.rate = target.acceptance.rate,
+    correlation.swap.threshold = correlation.swap.threshold)
   class(ans) <- c("SsvsOptions", "SpikeSlabModelOptions")
   return(ans)
 }

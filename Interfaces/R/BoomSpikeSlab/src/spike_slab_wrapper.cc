@@ -94,6 +94,9 @@ namespace {
             prior.siginv_prior(),
             prior.spike());
         initialize_sampler(ssvs_sampler, prior);
+        ssvs_sampler->set_correlation_swap_threshold(
+            Rf_asReal(getListElement(
+                r_model_options, "correlation.swap.threshold")));
         model->set_method(ssvs_sampler);
         BOOM::spikeslab::InitializeCoefficients(
             model->Beta(),
