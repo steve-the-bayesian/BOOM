@@ -21,6 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -58,9 +59,9 @@ namespace BOOM {
     return out;
   }
 
-  void VectorData::set(const Vector &rhs, bool sig) {
+  void VectorData::set(const Vector &rhs, bool signal_change) {
     x = rhs;
-    if (sig) {
+    if (signal_change) {
       signal();
     }
   }
@@ -78,7 +79,35 @@ namespace BOOM {
     signal();
     return x[i];
   }
+  //------------------------------------------------------------
+  PartiallyObservedVectorData::PartiallyObservedVectorData(
+      const Vector &y, const Selector &obs)
+      : VectorData(y),
+        obs_(obs) {
+    if (obs.empty()) {
+      obs_ = Selector(y.size(), true);
+    }
+    if (obs_.nvars() == obs_.nvars_possible()) {
+      set_missing_status(observed);
+    } else if (obs_.nvars() > 0) {
+      set_missing_status(partly_missing);
+    } else {
+      set_missing_status(completely_missing);
+    }
+  }
 
+  PartiallyObservedVectorData * PartiallyObservedVectorData::clone() const {
+    return new PartiallyObservedVectorData(*this);
+  }
+  
+  void PartiallyObservedVectorData::set(const Vector &rhs, bool signal_change) {
+    if (rhs.size() != obs_.nvars_possible()) {
+      report_error("Dimension changes are not possible with "
+                   "PartiallyObservedVectorData");
+    }
+    VectorData::set(rhs, signal_change);
+  }
+  
   //------------------------------------------------------------
   MatrixData::MatrixData(int r, int c, double val) : x(r, c, val) {}
 

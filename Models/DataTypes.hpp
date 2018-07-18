@@ -30,6 +30,7 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/Selector.hpp"
 
 #include <functional>
 #include "cpputil/Ptr.hpp"
@@ -79,14 +80,14 @@ namespace BOOM {
     friend void intrusive_ptr_release(Data *d);
   };
   //----------------------------------------------------------------------
-
-  //----------------------------------------------------------------------
   ostream &operator<<(ostream &out, const Data &d);
   ostream &operator<<(ostream &out, const Ptr<Data> &dp);
   void print_data(const Data &d);
 
-  //----------------------------------------------------------------------
-
+  //---------------------------------------------------------------------------
+  // The DataTraits class enforces a uniform interface for set() and value().
+  // It could probably be eliminated, but eliminating it is probably not worth
+  // the effort.
   template <class DAT>
   class DataTraits : virtual public Data {
    public:
@@ -97,7 +98,7 @@ namespace BOOM {
     virtual void set(const value_type &, bool) = 0;
     virtual const value_type &value() const = 0;
   };
-  //----------------------------------------------------------------------
+  //===========================================================================
   template <class T>
   class UnivData : public DataTraits<T> {  // univariate data
    public:
@@ -130,7 +131,6 @@ namespace BOOM {
   using DoubleData = UnivData<double>;
   using BinaryData = UnivData<bool>;
   //----------------------------------------------------------------------//
-
   class VectorData : public DataTraits<Vector> {
    public:
     explicit VectorData(uint n, double X = 0);
@@ -142,7 +142,7 @@ namespace BOOM {
     ostream &display(ostream &out) const override;
 
     const Vector &value() const override { return x; }
-    void set(const Vector &rhs, bool sig = true) override;
+    void set(const Vector &rhs, bool signal_change = true) override;
     virtual void set_element(double value, int position, bool sig = true);
 
     double operator[](uint) const;
@@ -150,6 +150,23 @@ namespace BOOM {
 
    private:
     Vector x;
+  };
+
+  //--------------------------------------------------------------------------
+  // A variant of VectorData that handles the partially missing case.
+  class PartiallyObservedVectorData : public VectorData {
+   public:
+    // Args:
+    //   y:  The numeric value of the data vector.
+    //   obs:  Indicates which components of y are observed.
+    PartiallyObservedVectorData(const Vector &y,
+                                const Selector &obs = Selector());
+    PartiallyObservedVectorData * clone() const override;
+    const Selector &observation_status() const { return obs_; }
+    void set(const Vector &value, bool signal_change = true) override;
+
+   private:
+    Selector obs_;
   };
   //----------------------------------------------------------------------//
   class MatrixData : public DataTraits<Mat> {
