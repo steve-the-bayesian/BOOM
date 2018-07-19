@@ -47,11 +47,6 @@ namespace BOOM {
 
     enum missing_status { observed = 0, completely_missing, partly_missing };
 
-   private:
-    missing_status missing_flag;
-    mutable std::vector<std::function<void(void)> > signals_;
-
-   public:
     Data() : missing_flag(observed) {}
     Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
     virtual Data *clone() const = 0;
@@ -78,6 +73,10 @@ namespace BOOM {
     }
     friend void intrusive_ptr_add_ref(Data *d);
     friend void intrusive_ptr_release(Data *d);
+
+   private:
+    missing_status missing_flag;
+    mutable std::vector<std::function<void(void)> > signals_;
   };
   //----------------------------------------------------------------------
   ostream &operator<<(ostream &out, const Data &d);
