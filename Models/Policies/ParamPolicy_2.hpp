@@ -18,7 +18,10 @@
 */
 #ifndef BOOM_PARAM_POLICY_2_HPP
 #define BOOM_PARAM_POLICY_2_HPP
+
 #include "Models/ModelTypes.hpp"
+#include "cpputil/report_error.hpp"
+
 namespace BOOM {
 
   template <class P1, class P2>
@@ -31,10 +34,14 @@ namespace BOOM {
     ParamPolicy_2();
     ParamPolicy_2(const Ptr<P1> &p1, Ptr<P2> p2);
     ParamPolicy_2(const ParamPolicy_2 &rhs);
+    ParamPolicy_2(ParamPolicy_2 &&rhs) = default;
     ParamPolicy_2<P1, P2> &operator=(const ParamPolicy_2 &rhs);
+    ParamPolicy_2<P1, P2> &operator=(ParamPolicy_2 &&rhs) = default;
 
-    void set_params(const Ptr<P1> &p1,
-                    Ptr<P2> p2);  // to be used during construction
+    // One can call set_params() to set the parameters of an empty ParamPolicy_2
+    // post-construction.
+    void set_params(const Ptr<P1> &p1, Ptr<P2> p2);
+    
     Ptr<P1> prm1() { return prm1_; }
     const Ptr<P1> prm1() const { return prm1_; }
     P1 &prm1_ref() { return *prm1_; }
@@ -46,38 +53,61 @@ namespace BOOM {
     const P2 &prm2_ref() const { return *prm2_; }
 
     // over-rides for abstract base Model
-    ParamVector parameter_vector() override { return t_; }
-    const ParamVector parameter_vector() const override { return t_; }
+    ParamVector parameter_vector() override { return parameter_vector_; }
+    const ParamVector parameter_vector() const override {
+      return parameter_vector_;
+    }
 
+    // Calling disable_parameter_1 removes parameter_1 from the vector of
+    // parameters.  Likewise for disable_parameter_2.
+    void disable_parameter_1() {
+      parameter_vector_ = ParamVector(1, prm2_);
+    }
+    void disable_parameter_2() {
+      parameter_vector_ = ParamVector(1, prm1_);
+    }
+    
    private:
     Ptr<P1> prm1_;
     Ptr<P2> prm2_;
-    ParamVector t_;
-    void set_t();
+    ParamVector parameter_vector_;
+
+    // An implementation utility to help set up the parameter_vector_ during
+    // copy construction and assignment.  To be called after prm1_ and prm2_ are
+    // constructed.
+    void copy_parameter_vector(const ParamPolicy_2 &rhs);
   };
   //------------------------------------------------------------
 
   template <class P1, class P2>
-  void ParamPolicy_2<P1, P2>::set_t() {
-    t_ = ParamVector(2);
-    t_[0] = prm1_;
-    t_[1] = prm2_;
-  }
-
-  template <class P1, class P2>
   ParamPolicy_2<P1, P2>::ParamPolicy_2() : prm1_(), prm2_() {
-    set_t();
+    parameter_vector_ = ParamVector{prm1_, prm2_};
   }
   template <class P1, class P2>
   ParamPolicy_2<P1, P2>::ParamPolicy_2(const Ptr<P1> &p1, Ptr<P2> p2)
-      : prm1_(p1), prm2_(p2) {
-    set_t();
+      : prm1_(p1), prm2_(p2), parameter_vector_{prm1_, prm2_} {
+  }
+
+  template <class P1, class P2>
+  void ParamPolicy_2<P1, P2>::copy_parameter_vector(const ParamPolicy_2 &rhs) {
+    if (rhs.parameter_vector_.size() == 2) {
+      parameter_vector_ = ParamVector{prm1_, prm2_};
+    } else if (rhs.parameter_vector_.size() == 1) {
+      if (rhs.parameter_vector_[0] == rhs.prm1_) {
+        disable_parameter_2();
+      } else if (rhs.parameter_vector_[0] == rhs.prm2_) {
+        disable_parameter_1();
+      } else {
+        report_error("Something went horribly wrong when copying "
+                     "ParamPolicy_2.");
+      }
+    }
   }
 
   template <class P1, class P2>
   ParamPolicy_2<P1, P2>::ParamPolicy_2(const ParamPolicy_2 &rhs)
       : Model(rhs), prm1_(rhs.prm1_->clone()), prm2_(rhs.prm2_->clone()) {
-    set_t();
+    copy_parameter_vector(rhs);
   }
 
   template <class P1, class P2>
@@ -86,7 +116,7 @@ namespace BOOM {
     if (&rhs != this) {
       prm1_ = rhs.prm1_->clone();
       prm2_ = rhs.prm2_->clone();
-      set_t();
+      copy_parameter_vector(rhs);
     }
     return *this;
   }
@@ -95,8 +125,9 @@ namespace BOOM {
   void ParamPolicy_2<P1, P2>::set_params(const Ptr<P1> &p1, Ptr<P2> p2) {
     prm1_ = p1;
     prm2_ = p2;
-    set_t();
+    parameter_vector_ = ParamVector{prm1_, prm2_};
   }
 
 }  // namespace BOOM
+
 #endif  // BOOM_PARAM_POLICY_2_HPP
