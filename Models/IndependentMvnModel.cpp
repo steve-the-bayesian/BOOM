@@ -184,6 +184,23 @@ namespace BOOM {
     return new IndependentMvnModel(*this);
   }
 
+  void IndependentMvnModel::add_mixture_data(const Ptr<Data> &dp, double weight) {
+    suf()->add_mixture_data(DAT(dp)->value(), weight);
+  }
+
+  void IndependentMvnModel::mle() {
+    double n = suf()->n();
+    if (n > 0) {
+      Vector ybar = suf()->sum() / suf()->n();
+      set_mu(ybar);
+      set_sigsq((suf()->sumsq() - n * square(ybar)) / n);
+    } else {
+      Vector zero(mu().size(), 0.0);
+      set_mu(zero);
+      set_sigsq(zero);
+    }
+  }
+  
   double IndependentMvnModel::Logp(const Vector &x, Vector &g, Matrix &h,
                                    uint nderivs) const {
     int d = x.size();

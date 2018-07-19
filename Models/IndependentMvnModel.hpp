@@ -20,6 +20,7 @@
 #ifndef BOOM_INDEPENDENT_MVN_MODEL_HPP
 #define BOOM_INDEPENDENT_MVN_MODEL_HPP
 
+#include "Models/EmMixtureComponent.hpp"
 #include "Models/MvnBase.hpp"
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
@@ -39,6 +40,8 @@ namespace BOOM {
     void update_expected_value(double sample_size, const Vector &expected_sum,
                                const Vector &expected_sum_of_squares);
 
+    const Vector &sum() const {return sum_;}
+    const Vector &sumsq() const {return sumsq_;}
     double sum(int i) const;
     double sumsq(int i) const;  // uncentered sum of squares
     double centered_sumsq(int i, double mu) const;
@@ -68,12 +71,16 @@ namespace BOOM {
         public ParamPolicy_2<VectorParams, VectorParams>,
         public SufstatDataPolicy<VectorData, IndependentMvnSuf>,
         public PriorPolicy,
-        virtual public MixtureComponent {
+        virtual public EmMixtureComponent {
    public:
     explicit IndependentMvnModel(int dim);
     IndependentMvnModel(const Vector &mean, const Vector &variance);
     IndependentMvnModel(const IndependentMvnModel &rhs);
     IndependentMvnModel *clone() const override;
+
+    void add_mixture_data(const Ptr<Data> &dp, double weight) override;
+    void mle() override;
+    
     // Several virtual functions from MvnBase are re-implemented here
     // for efficiency.
     double Logp(const Vector &x, Vector &g, Matrix &h,
