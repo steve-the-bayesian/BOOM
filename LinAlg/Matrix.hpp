@@ -204,6 +204,7 @@ namespace BOOM {
     // this^T * B
     virtual Matrix &Tmult(const DiagonalMatrix &B, Matrix &ans,
                           double scal = 1.0) const;
+    Matrix Tmult(const DiagonalMatrix &B) const;
     // this * B^T
     virtual Matrix &multT(const DiagonalMatrix &B, Matrix &ans,
                           double scal = 1.0) const;
@@ -227,6 +228,8 @@ namespace BOOM {
     Matrix &transpose_inplace_square();  // asserts (is_square())
     Matrix inv() const;
     virtual SpdMatrix inner() const;  // X^T * X
+    // Return this->transpose * diag(weights) * this
+    SpdMatrix inner(const ConstVectorView &weights) const;
     SpdMatrix outer() const;          // X * X^T
 
     virtual Matrix solve(const Matrix &mat) const;

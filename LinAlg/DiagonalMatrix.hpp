@@ -30,11 +30,11 @@ namespace BOOM {
   class Vector;
   class VectorView;
   class SpdMatrix;
-  // A DiagonalMatrix is logically a Matrix, but it has a different
-  // implementation.  The diagonal elements are stored in a Vector,
-  // and you cannot set off-diagonal elements.  The only way to set
-  // diagonal elements is to call the diag() function to access
-  // them, and then set them as a vector.
+  // A DiagonalMatrix is logically a square Matrix, but it has a different
+  // implementation.  The diagonal elements are stored in a Vector, and you
+  // cannot set off-diagonal elements.  The only way to set diagonal elements is
+  // to call the diag() function to access them, and then set them as you would
+  // a Vector.
   class DiagonalMatrix {
    public:
     DiagonalMatrix();
@@ -76,6 +76,8 @@ namespace BOOM {
     // Return ans.
     Matrix &Tmult(const Matrix &B, Matrix &ans, double scalar = 1.0) const;
 
+    Matrix Tmult(const Matrix &rhs) const;
+    
     // Fill 'ans' with scalar * this * B^T
     // Return ans.
     Matrix &multT(const Matrix &B, Matrix &ans, double scalar = 1.0) const;
@@ -108,6 +110,10 @@ namespace BOOM {
     Vector &mult(const Vector &v, Vector &ans, double scalar = 1.0) const;
     Vector &Tmult(const Vector &v, Vector &ans, double scalar = 1.0) const;
 
+    Vector operator*(const Vector &x) const;
+    Vector operator*(const VectorView &x) const;
+    Vector operator*(const ConstVectorView &x) const;
+    
     DiagonalMatrix t() const;
     DiagonalMatrix inv() const;
     DiagonalMatrix inner() const;  // returns X^tX
@@ -115,6 +121,7 @@ namespace BOOM {
     Matrix solve(const Matrix &mat) const;
     Vector solve(const Vector &v) const;
     double det() const;
+    double logdet() const;
     Vector singular_values() const;  // sorted largest to smallest
     uint rank(double prop = 1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
@@ -170,6 +177,17 @@ namespace BOOM {
   Matrix operator*(const DiagonalMatrix &m1, const SpdMatrix &m2);
   Matrix operator*(const SpdMatrix &m1, const DiagonalMatrix &m2);
 
+  // pre-multiplication
+  inline Vector operator*(const Vector &v, const DiagonalMatrix &m) {
+    return m * v;
+  }
+  inline Vector operator*(const VectorView &v, const DiagonalMatrix &m) {
+    return m * v;
+  }
+  inline Vector operator*(const ConstVectorView &v, const DiagonalMatrix &m) {
+    return m * v;
+  }
+  
   DiagonalMatrix operator/(const DiagonalMatrix &m1, const DiagonalMatrix &m2);
   DiagonalMatrix operator/(const DiagonalMatrix &d, double x);
   DiagonalMatrix operator/(double x, const DiagonalMatrix &d);

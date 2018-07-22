@@ -578,6 +578,20 @@ namespace BOOM {
     return ans;
   }
 
+  // this->Tmult(diagonal) is the transpose of diagonal * this
+  Matrix Matrix::Tmult(const DiagonalMatrix &diagonal) const {
+    if (nrow() != diagonal.nrow()) {
+      report_error("Incompatible matrices in Matrix::Tmult("
+                   "const DiagonalMatrix &).");
+    }
+    Matrix ans(ncol(), diagonal.nrow());
+    const ConstVectorView elements(diagonal.diag());
+    for (int i = 0; i < ans.ncol(); ++i) {
+      ans.col(i) = row(i) * elements[i];
+    }
+    return ans;
+  }
+  
   Matrix &Matrix::multT(const DiagonalMatrix &d, Matrix &ans,
                         double scal) const {
     return mult(d, ans, scal);
@@ -656,6 +670,17 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix Matrix::inner(const ConstVectorView &weights) const {
+    if (weights.size() != nrow()) {
+      report_error("Wrong size weight vector.");
+    }
+    Matrix tmp(*this);
+    for (int i = 0; i < weights.size(); ++i) {
+      tmp.row(i) *= weights[i];
+    }
+    return Tmult(tmp);
+  }
+  
   SpdMatrix Matrix::outer() const {
     SpdMatrix ans(nr_);
     EigenMap(ans).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(*this),

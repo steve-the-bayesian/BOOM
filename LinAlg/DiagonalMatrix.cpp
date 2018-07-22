@@ -24,6 +24,7 @@
 #include <functional>
 #include <numeric>
 #include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -83,6 +84,15 @@ namespace BOOM {
     return this->mult(B, ans, scal);
   }
 
+  Matrix DM::Tmult(const Matrix &rhs) const {
+    if (rhs.nrow() != this->nrow()) {
+      report_error("Incompatible matrices in DiagonalMatrix::Tmult.");
+    }
+    Matrix ans(nrow(), rhs.ncol());
+    Tmult(rhs, ans, 1.0);
+    return ans;
+  }
+  
   Matrix &DM::multT(const Matrix &B, Matrix &ans, double scal) const {
     assert(ncol() == B.nrow());
     ans.resize(B.ncol(), B.nrow());
@@ -158,6 +168,33 @@ namespace BOOM {
     return this->mult(v, ans, scal);
   }
 
+  namespace {
+    template <class VECTOR>
+    Vector mult_impl(const DiagonalMatrix &mat,
+                     const VECTOR &v) {
+      if (v.size() != mat.ncol()) {
+        report_error("Vector is incompatible with diagonal matrix.");
+      }
+
+      Vector ans(mat.nrow(), 0.0);
+      const ConstVectorView &diagonal(mat.diag());
+      for (int i = 0; i < mat.ncol(); ++i) {
+        ans[i] = v[i] * diagonal[i];
+      }
+      return ans;
+    }
+  }  // namespace 
+  
+  Vector DM::operator*(const Vector &v) const {
+    return mult_impl(*this, v);
+  }
+  Vector DM::operator*(const VectorView &v) const {
+    return mult_impl(*this, v);
+  }
+  Vector DM::operator*(const ConstVectorView &v) const {
+    return mult_impl(*this, v);
+  }
+  
   DiagonalMatrix DM::t() const { return *this; }
 
   DiagonalMatrix DM::inv() const {
@@ -175,6 +212,12 @@ namespace BOOM {
 
   double DM::det() const { return prod(); }
 
+  double DM::logdet() const {
+    double ans = 0;
+    for (auto el : diagonal_elements_) ans += log(el);
+    return ans;
+  }
+  
   ostream &DM::print(ostream &out) const {
     Matrix tmp(nrow(), ncol(), 0.0);
     tmp.diag() = diagonal_elements_;

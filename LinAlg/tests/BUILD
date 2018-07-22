@@ -36,6 +36,17 @@ cc_test(
 )
 
 cc_test(
+    name = "diagonal_matrix_test",
+    srcs = ["diagonal_matrix_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "SpdMatrix_test",
     srcs = ["SpdMatrix_test.cc"],
     copts = COPTS,

@@ -3,6 +3,7 @@
 #include "LinAlg/VectorView.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
 
@@ -323,6 +324,16 @@ namespace {
     EXPECT_DOUBLE_EQ(M(3, 2), B(1, 0));
     EXPECT_DOUBLE_EQ(M(3, 3), B(1, 1));
     EXPECT_DOUBLE_EQ(M(3, 4), B(1, 2));
+  }
+
+  TEST_F(MatrixTest, InnerProduct) {
+    Matrix square(3, 3);
+    square.randomize();
+    Vector weights(3);
+    weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        square.inner(weights),
+        square.transpose() * DiagonalMatrix(weights) * square));
   }
   
 }  // namespace
