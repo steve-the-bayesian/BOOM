@@ -208,7 +208,7 @@ namespace BOOM {
     for (int t = 0; t < nrow(ans); ++t) {
       ans(t, 0) = regression_->predict(newX.row(t)) +
           observation_matrix(t + t0).dot(marg.state_mean());
-      marg.update(0, true, t + t0, this);
+      marg.update(0, true, t + t0);
       ans(t, 1) = sqrt(marg.prediction_variance());
     }
     return ans;
@@ -273,7 +273,7 @@ namespace BOOM {
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
       marg.update(newY[t] - regression_model()->predict(newX.row(t)),
-                  missing, t + t0, this);
+                  missing, t + t0);
       ans[t] = marg.prediction_error();
       if (standardize) {
         ans[t] /= sqrt(marg.prediction_variance());

@@ -274,7 +274,7 @@ namespace BOOM {
       // data is now used to update the Kalman filter for the next time period.
       // It is important that we discard the imputed state at this point.
       marg.update(response[t] - regression_contribution, missing,
-                  t + t0, this, 1.0 / weight);
+                  t + t0, 1.0 / weight);
     }
     return ans;
   }

@@ -169,7 +169,7 @@ namespace BOOM {
     int t0 = time_dimension();
     for (int t = 0; t < n; ++t) {
       ans(t, 0) = observation_matrix(t + t0).dot(marg.state_mean());
-      marg.update(0, true, t + t0, this);
+      marg.update(0, true, t + t0);
       ans(t, 1) = sqrt(marg.prediction_variance());
     }
     return ans;
@@ -197,7 +197,7 @@ namespace BOOM {
     marg.set_state_variance(SpdMatrix(state_variance_matrix(t0 - 1)->dense()));
     for (int t = 0; t < ans.size(); ++t) {
       bool missing = false;
-      marg.update(newY[t], missing, t + t0, this);
+      marg.update(newY[t], missing, t + t0);
       ans[t] = marg.prediction_error();
       if (standardize) {
         ans[t] /= sqrt(marg.prediction_variance());

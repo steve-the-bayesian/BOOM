@@ -22,8 +22,8 @@
 
 namespace BOOM {
   namespace Kalman {
-
     namespace {
+      // Shorten the name.
       using Marginal = ScalarMarginalDistribution;
     }  // namespace 
     
@@ -38,22 +38,21 @@ namespace BOOM {
           prediction_variance_(0),
           kalman_gain_(model_->state_dimension(), 0) {}
     
-    double Marginal::update(
-        double y, bool missing, int t, const ScalarStateSpaceModelBase *model,
-        double observation_variance_scale_factor) {
-      const SparseVector observation_coefficients = model->observation_matrix(t);
+    double Marginal::update(double y, bool missing, int t,
+                            double observation_variance_scale_factor) {
+      const SparseVector observation_coefficients = model_->observation_matrix(t);
       Vector PZ = state_variance() * observation_coefficients;
 
       prediction_variance_ =
           observation_coefficients.dot(PZ) +
-          model->observation_variance(t) * observation_variance_scale_factor;
+          model_->observation_variance(t) * observation_variance_scale_factor;
       if (prediction_variance_ <= 0) {
         std::ostringstream err;
         err << "Found a zero (or negative) forecast variance!";
         report_error(err.str());
       }
       const SparseKalmanMatrix &state_transition_matrix(
-          *model->state_transition_matrix(t));
+          *model_->state_transition_matrix(t));
       Vector TPZ = state_transition_matrix * PZ;
 
       double loglike = 0;
@@ -78,7 +77,7 @@ namespace BOOM {
       if (!missing) {
         mutable_state_variance().Matrix::add_outer(TPZ, kalman_gain_, -1);
       }
-      model->state_variance_matrix(t)->add_to(mutable_state_variance());
+      model_->state_variance_matrix(t)->add_to(mutable_state_variance());
       mutable_state_variance().fix_near_symmetry();
       return loglike;
     }
@@ -134,8 +133,7 @@ namespace BOOM {
       increment_log_likelihood(nodes_[t].update(
           model_->adjusted_observation(t),
           model_->is_missing_observation(t),
-          t,
-          model_));
+          t));
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
         return;
@@ -197,7 +195,7 @@ namespace BOOM {
       nodes_[t].set_state_mean(nodes_[t-1].state_mean());
       nodes_[t].set_state_variance(nodes_[t-1].state_variance());
     }
-    increment_log_likelihood(nodes_[t].update(y, missing, t, model_));
+    increment_log_likelihood(nodes_[t].update(y, missing, t));
   }
   
   double ScalarKalmanFilter::prediction_error(int t, bool standardize) const {

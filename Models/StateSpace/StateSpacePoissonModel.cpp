@@ -316,7 +316,7 @@ namespace BOOM {
       // filter for the next time period.  It is important that we
       // discard the imputed state at this point.
       marg.update(latent_observation - regression_contribution, missing,
-                  t + t0, this, latent_variance / observation_variance(t + t0));
+                  t + t0, latent_variance / observation_variance(t + t0));
     }
     return ans;
   }

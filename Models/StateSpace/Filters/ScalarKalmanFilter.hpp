@@ -29,21 +29,45 @@ namespace BOOM {
     class ScalarMarginalDistribution
         : public MarginalDistributionBase {
      public:
+      // A marginal distribution for a single time point in which scalar data
+      // was (possibly) observed.
+      //
+      // Args:
+      //   model:  The model describing the data for this marginal distribution.
+      //   previous:  The marginal distribution for the preceding time point.
+      //   time_index:  The time index associated with this time period.
       explicit ScalarMarginalDistribution(const ScalarStateSpaceModelBase *model,
                                           ScalarMarginalDistribution *previous,
                                           int time_index);
+      // Update this marginal distribution to reflect the observed data at this
+      // time point, and the marginal information from the preceding time point.
+      //
+      // Args:
+      //    y:  The observed data point.
+      //    missing: If true then the value of y is ignored, and the state is
+      //      simply propagated forward.
+      //    t:  The time index associated with this marginal distribution.
+      //    model:
       double update(double y,
                     bool missing,
                     int t,
-                    const ScalarStateSpaceModelBase *model,
                     double observation_variance_scale_factor = 1.0);
 
+      // After the call to update(), state_mean() and state_variance() refer to
+      // the predictive mean and variance of the state at time_dimension() + 1
+      // given data to time_dimension().
+      //
+      // contemporaneous_state_XXX refers to the moments at the current time,
+      // given data to the current time.
       Vector contemporaneous_state_mean() const override;
       SpdMatrix contemporaneous_state_variance() const override;
-      
+
+      // The difference between the observed data at this time point, and the
+      // expected value given previous data.
       double prediction_error() const {return prediction_error_;}
       void set_prediction_error(double err) {prediction_error_ = err;}
 
+      // The variance of prediction_error() conditional on previous data.
       double prediction_variance() const {return prediction_variance_;}
       void set_prediction_variance(double var) {prediction_variance_ = var;}
 
@@ -95,8 +119,7 @@ namespace BOOM {
     ScalarStateSpaceModelBase *model_;
     std::vector<Kalman::ScalarMarginalDistribution> nodes_;
   };
-  
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_SCALAR_KALMAN_FILTER_HPP_

@@ -302,8 +302,8 @@ namespace BOOM {
       // + t -1] and used to impute the latent data for y[t0+t].  That latent
       // data is now used to update the Kalman filter for the next time period.
       // It is important that we discard the imputed state at this point.
-      marg.update(latent_observation - regression_contribution, missing, t + t0,
-                  this, weight);
+      marg.update(latent_observation - regression_contribution,
+                  missing, t + t0, weight);
     }
     return ans;
   }
