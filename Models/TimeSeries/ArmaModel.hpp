@@ -36,6 +36,9 @@ namespace BOOM {
   // ...
   // phi_p-1 0 0 0 ... 1
   // phi_p   0 0 0 ... 0
+  //
+  // This matrix is the transpose of the AutoRegressionTransitionMatrix found in
+  // Models/StateSpace/Filters/SparseMatrix.hpp.
   class ArmaStateSpaceTransitionMatrix : public SparseMatrixBlock {
    public:
     explicit ArmaStateSpaceTransitionMatrix(const Vector &expanded_phi);
@@ -52,6 +55,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 
@@ -63,9 +67,14 @@ namespace BOOM {
 
   // The variance of the state innovation errors for an ARMA model in state
   // space form.  The matrix has the structure RQR^T,  where
-  // R^T = 1 theta_1 theta_2 ... theta_{r-1}d
+  // R^T = 1 theta_1 theta_2 ... theta_{r-1}
   class ArmaStateSpaceVarianceMatrix : public SparseMatrixBlock {
    public:
+    // Args:
+    //   expanded_theta: The vector of MA coefficients, including the leading 1,
+    //     and with zero-padding at the end to match the length of the AR
+    //     coefficients in the event that the AR coefficients are longer.
+    //   sigsq:  The residual variance.
     ArmaStateSpaceVarianceMatrix(const Vector &expanded_theta, double sigsq);
     ArmaStateSpaceVarianceMatrix *clone() const override {
       return new ArmaStateSpaceVarianceMatrix(*this);
@@ -82,6 +91,7 @@ namespace BOOM {
     }
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 

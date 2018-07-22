@@ -83,9 +83,30 @@ namespace BOOM {
   }
 
   SpdMatrix ASSTM::inner() const {
-    SpdMatrix ans(ncol(), 1.0);
-    matrix_multiply_inplace(SubMatrix(ans));
-    matrix_transpose_premultiply_inplace(SubMatrix(ans));
+    SpdMatrix ans(ncol(), 0.0);
+    ans.diag() = 1.0;
+    ConstVectorView shifted_coefficients(
+        expanded_phi_, 0, expanded_phi_.size() - 1);
+    VectorView(ans.row(0), 1) = shifted_coefficients;
+    VectorView(ans.col(0), 1) = shifted_coefficients;
+    ans(0, 0) = expanded_phi_.dot(expanded_phi_);
+    return ans;
+  }
+
+  // This matrix is the transpose of the 
+  SpdMatrix ASSTM::inner(const ConstVectorView &weights) const {
+    SpdMatrix ans(ncol(), 0.0);
+    const ConstVectorView truncated_weights(weights, 0, weights.size() - 1);
+    const ConstVectorView truncated_coefficients(
+        expanded_phi_, 0, expanded_phi_.size() - 1);
+    VectorView(ans.diag(), 1) = truncated_weights;
+    VectorView(ans.row(0), 1) = truncated_weights * truncated_coefficients;
+    double qform = 0;
+    for (int i = 0; i < expanded_phi_.size(); ++i) {
+      qform += square(expanded_phi_[i]) * weights[i];
+    }
+    ans(0, 0) = qform;
+    ans.col(0) = ans.row(0);
     return ans;
   }
   
@@ -129,6 +150,21 @@ namespace BOOM {
     SpdMatrix ans(ncol(), 1.0);
     matrix_multiply_inplace(SubMatrix(ans));
     matrix_transpose_premultiply_inplace(SubMatrix(ans));
+    return ans;
+  }
+
+  // The matrix is theta * theta' * sigsq, so the inner product is
+  // theta theta' weights theta theta' * sigsq * sigsq.
+  //
+  // The theta' * weights * 
+  SpdMatrix ASSVM::inner(const ConstVectorView &weights) const {
+    SpdMatrix ans(nrow(), 0.0);
+    double inner = 0.0;
+    for (int i = 0; i < weights.size(); ++i) {
+      inner += weights[i] * square(theta_[i]);
+    }
+    inner *= square(sigsq_);
+    ans.add_outer(theta_, inner);
     return ans;
   }
   

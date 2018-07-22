@@ -88,6 +88,16 @@ namespace BOOM {
     ans(2, 2) += square(1 - phi);
     return ans;
   }
+
+  SpdMatrix LMAT::inner(const ConstVectorView &weights) const {
+    SpdMatrix ans(3, 0.0);
+    ans(0, 0) = ans(0, 1) = ans(1, 0) = weights[0];
+    double phi = phi_->value();
+    ans(1, 1) = weights[0] + weights[1] * square(phi);
+    ans(1, 2) = ans(2, 1) = weights[1] * phi * (1 - phi);
+    ans(2, 2) = weights[2] + weights[1] * square(1 - phi);
+    return ans;
+  }
   
   void LMAT::add_to(SubMatrix block) const {
     if (block.nrow() != 3 || block.ncol() != 3) {

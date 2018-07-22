@@ -82,6 +82,7 @@ namespace BOOM {
 
     // this->transpose() * this;
     virtual SpdMatrix inner() const = 0;
+    virtual SpdMatrix inner(const ConstVectorView &weights) const = 0;
     
     // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
@@ -129,6 +130,7 @@ namespace BOOM {
     void matrix_multiply_inplace(SubMatrix m) const override;
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -162,6 +164,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -187,6 +190,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView v) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
   };
@@ -215,6 +219,9 @@ namespace BOOM {
     }
     void multiply_inplace(VectorView x) const override { x = m_ * x; }
     SpdMatrix inner() const override {return m_.inner();}
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return m_.inner(weights);
+    }
     void add_to(SubMatrix block) const override { block += m_; }
     Matrix dense() const override { return m_; }
 
@@ -251,6 +258,9 @@ namespace BOOM {
     const SpdMatrix &value() const override { return m_; }
     void set_matrix(const SpdMatrix &m) { m_ = m; }
     SpdMatrix inner() const override {return m_.inner();}
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return m_.inner(weights);
+    }
 
    private:
     SpdMatrix m_;
@@ -265,6 +275,9 @@ namespace BOOM {
     }
     const SpdMatrix &value() const override { return matrix_->value(); }
     SpdMatrix inner() const override {return value().inner();}
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return value().inner(weights);
+    }
 
    private:
     Ptr<SpdParams> matrix_;
@@ -312,6 +325,18 @@ namespace BOOM {
     SpdMatrix inner() const override {
       SpdMatrix ans(nrow(), 0.0);
       ans.diag() = pow(diagonal_elements(), 2);
+      return ans;
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      SpdMatrix ans(nrow());
+      const Vector &diag(diagonal_elements());
+      for (int i = 0; i < ans.nrow(); ++i) {
+        ans(i, i) = square(diag[i]) * weights[i];
+      }
       return ans;
     }
 
@@ -415,6 +440,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     
    private:
@@ -449,6 +475,7 @@ namespace BOOM {
     // x = (*this) * x;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     Matrix dense() const override;
 
@@ -484,6 +511,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     // virtual void matrix_multiply_inplace(SubMatrix m) const;
     // virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
@@ -524,6 +552,11 @@ namespace BOOM {
       lhs = rhs;
     }
     SpdMatrix inner() const override {return SpdMatrix(nrow(), 1.0);}
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      SpdMatrix ans(nrow());
+      ans.diag() = weights;
+      return ans;
+    }
     
    private:
     int dim_;
@@ -549,6 +582,9 @@ namespace BOOM {
       return Matrix(0, 0);
     }
     SpdMatrix inner() const override {return SpdMatrix(0);}
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return SpdMatrix(0);
+    }
   };
 
   //======================================================================
@@ -591,6 +627,13 @@ namespace BOOM {
     SpdMatrix inner() const override {
       return SpdMatrix(nrow(), square(value()));
     }
+    
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      SpdMatrix ans(nrow());
+      ans.diag() = weights * square(value());
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override { block.diag() += value(); }
 
    private:
@@ -666,6 +709,16 @@ namespace BOOM {
       ans(0, 0) = square(value());
       return ans;
     }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      SpdMatrix ans(dim_, 0.0);
+      ans(0, 0) = square(value()) * weights[0];
+      return ans;
+    }
+    
     void add_to(SubMatrix block) const override { block(0, 0) += value(); }
 
    private:
@@ -742,9 +795,11 @@ namespace BOOM {
     }
 
     SpdMatrix inner() const override {
-      SpdMatrix ans(ncol(), 0.0);
-      ans(0, 0) = 1.0;
-      return ans;
+      return SpdMatrix(1, 1.0);
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return SpdMatrix(1, weights[0]);
     }
     
     void add_to(SubMatrix block) const override { block(0, 0) += 1.0; }
@@ -824,6 +879,15 @@ namespace BOOM {
     SpdMatrix inner() const override {
       return SpdMatrix(ncol(), 1.0);
     }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      SpdMatrix ans(ncol(), 0.0);
+      ans.diag() = ConstVectorView(weights, 0, ncol());
+      return ans;
+    }
     
     void add_to(SubMatrix m) const override {
       conforms_to_rows(m.nrow());
@@ -880,6 +944,16 @@ namespace BOOM {
     SpdMatrix inner() const override {
       SpdMatrix ans(ncol(), 0.0);
       ans(which_element_, which_element_) = square(value());
+      return ans;
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      SpdMatrix ans(ncol(), 0.0);
+      ans(which_element_, which_element_) =
+          square(value()) * weights[which_element_];
       return ans;
     }
     
@@ -950,6 +1024,7 @@ namespace BOOM {
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
 
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
 
    private:
@@ -1028,6 +1103,18 @@ namespace BOOM {
       }
       return ans;
     }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      SpdMatrix ans(ncol(), 0.0);
+      for (int i = 0; i < diagonal_.size(); ++i) {
+        ans(i, i) = square(diagonal_[i]->value() * constant_scale_factor_[i])
+            * weights[i];
+      }
+      return ans;
+    }
     
     void add_to(SubMatrix block) const override {
       conforms_to_rows(block.nrow());
@@ -1102,6 +1189,13 @@ namespace BOOM {
     SpdMatrix inner() const override {
       return nrow_ * outer(dense_row_);
     }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      if (weights.size() != nrow()) {
+        report_error("Wrong size weight vector.");
+      }
+      return sum(weights) * outer(dense_row_);
+    }
     
     void add_to(SubMatrix block) const override {
       conforms_to_cols(block.ncol());
@@ -1155,6 +1249,10 @@ namespace BOOM {
     // = I - 11t/s
     SpdMatrix inner() const override {
       return dense();
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return dense().inner(weights);
     }
 
     Matrix dense() const override {
@@ -1231,6 +1329,11 @@ namespace BOOM {
       }
       return ans;
     }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      // TODO:  This can probably be improved.
+      return dense().inner(weights); 
+    }
     
     void add_to(SubMatrix block) const override {
       block += dense();
@@ -1286,6 +1389,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
 
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
 
     void add_to(SubMatrix block) const override;
 
@@ -1362,7 +1466,11 @@ namespace BOOM {
     // *this is non-square.
     virtual SpdMatrix sandwich_transpose(const SpdMatrix &P) const;
 
+    // Returns this->transpose() * this
     virtual SpdMatrix inner() const = 0;
+
+    // Returns this->transpose * diag(weights) * this
+    virtual SpdMatrix inner(const ConstVectorView &weights) const = 0;
     
     // P += *this
     virtual Matrix &add_to(Matrix &P) const = 0;
@@ -1428,6 +1536,7 @@ namespace BOOM {
     using SparseKalmanMatrix::Tmult;
     Vector Tmult(const ConstVectorView &x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
 
     // P -> this * P * this.transpose()
     void sandwich_inplace(SpdMatrix &P) const override;
@@ -1505,6 +1614,7 @@ namespace BOOM {
 
     Vector Tmult(const ConstVectorView &v) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     
     // P += *this
     Matrix &add_to(Matrix &P) const override;

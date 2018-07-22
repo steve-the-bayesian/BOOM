@@ -158,6 +158,9 @@ namespace BOOM {
     SpdMatrix inner() const override {
       return dense().inner();
     }
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return dense().inner(weights);
+    }
     void sandwich_inplace(SpdMatrix &P) const override;
     Matrix &add_to(Matrix &P) const override;
 
@@ -207,6 +210,9 @@ namespace BOOM {
     Vector Tmult(const ConstVectorView &v) const override;
     SpdMatrix inner() const override {
       return dense().inner();
+    }
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return dense().inner(weights);
     }
     Matrix &add_to(Matrix &m) const override;
 

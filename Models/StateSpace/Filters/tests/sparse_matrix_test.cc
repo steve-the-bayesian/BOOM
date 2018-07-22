@@ -1,6 +1,10 @@
 #include "gtest/gtest.h"
 
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
+#include "Models/StateSpace/AggregatedStateSpaceRegression.hpp"
+#include "Models/TimeSeries/ArmaModel.hpp"
 
 #include "test_utils/test_utils.hpp"
 
@@ -105,6 +109,14 @@ namespace {
         << "inner = " << endl << inner << endl
         << "dense.inner() = " << endl
         << dense.inner();
+
+    Vector weights(sparse->nrow());
+    weights.randomize();
+    EXPECT_TRUE(MatrixEquals(sparse->inner(weights), dense.inner(weights)))
+        << "dense inner product: " << endl
+        << dense.inner(weights) << endl
+        << "sparse inner product: " << endl
+        << sparse->inner(weights);
   }
 
   void CheckLeftInverse(const Ptr<SparseMatrixBlock> &block,
@@ -155,6 +167,16 @@ namespace {
     CheckSparseMatrixBlock(T, Tdense);
   }
 
+  TEST_F(SparseMatrixTest, SemilocalLinearTrendMatrixTest) {
+    NEW(UnivParams, phi)(.7);
+    NEW(SemilocalLinearTrendMatrix, T)(phi);
+    Matrix dense = T->dense();
+    EXPECT_TRUE(VectorEquals(dense.row(0), Vector{1, 1, 0}));
+    EXPECT_TRUE(VectorEquals(dense.row(1), Vector{0, .7, .3}));
+    EXPECT_TRUE(VectorEquals(dense.row(2), Vector{0, 0, 1}));
+    CheckSparseMatrixBlock(T, dense);
+  }
+  
   TEST_F(SparseMatrixTest, DenseMatrixTest) {
     Matrix square(4, 4);
     square.randomize();
@@ -215,6 +237,24 @@ namespace {
     CheckSparseMatrixBlock(rho_kalman, rho_dense);
   }
 
+  TEST_F(SparseMatrixTest, ArmaTransition) {
+    Vector coefficients = {.8, .3, 0, 0};
+    NEW(ArmaStateSpaceTransitionMatrix, T)(coefficients);
+    Matrix dense = T->dense();
+    EXPECT_TRUE(VectorEquals(dense.col(0), coefficients));
+    EXPECT_TRUE(VectorEquals(dense.col(1), Vector{1, 0, 0, 0}));
+    EXPECT_TRUE(VectorEquals(dense.col(2), Vector{0, 1, 0, 0}));
+    EXPECT_TRUE(VectorEquals(dense.col(3), Vector{0, 0, 1, 0}));
+    CheckSparseMatrixBlock(T, dense);
+  }
+
+  TEST_F(SparseMatrixTest, ArmaVariance) {
+    Vector coefficients = {1, .2, .5, 0};
+    NEW(ArmaStateSpaceVarianceMatrix, V)(coefficients, 1.7);
+    Matrix dense = 1.7 * coefficients.outer();
+    CheckSparseMatrixBlock(V, dense);
+  }
+  
   TEST_F(SparseMatrixTest, EmptyTest) {
     Matrix empty;
     NEW(EmptyMatrix, empty_kalman)();
@@ -460,6 +500,28 @@ namespace {
     EXPECT_TRUE(VectorEquals(dense.col(4), zero));
     EXPECT_TRUE(VectorEquals(dense.col(5), zero));
     CheckSparseKalmanMatrix(sparse);
+  }
+
+  // Test the transition matrix from the Harvey cumulator in
+  // AggregatedStateSpaceRegression.
+  TEST_F(SparseMatrixTest, AccumulatorTransitionMatrixTest) {
+    NEW(SeasonalStateModel, seasonal_model)(4);
+    BlockDiagonalMatrix transition;
+    transition.add_block(seasonal_model->state_transition_matrix(3));
+    AccumulatorTransitionMatrix sparse(
+        &transition, seasonal_model->observation_matrix(3), 1.0, true);
+    CheckSparseKalmanMatrix(sparse);
+  }
+
+  // Test the state variance matrix from the Harvey cumulator in
+  // AggregatedStateSpaceRegression.
+  TEST_F(SparseMatrixTest, AccumulatorStateVarianceMatrixTest) {
+    NEW(SeasonalStateModel, seasonal_model)(4);
+    BlockDiagonalMatrix RQR;
+    RQR.add_block(seasonal_model->state_variance_matrix(7));
+    AccumulatorStateVarianceMatrix V(
+        &RQR, seasonal_model->observation_matrix(7), 1.2);
+    CheckSparseKalmanMatrix(V);
   }
   
 }  // namespace

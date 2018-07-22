@@ -34,6 +34,8 @@ namespace BOOM {
   //  1   1   0
   //  0  phi (1-phi)
   //  0   0   1
+  //
+  // This class is tested in the test suite for the other sparse matrices.
   class SemilocalLinearTrendMatrix : public SparseMatrixBlock {
    public:
     explicit SemilocalLinearTrendMatrix(const Ptr<UnivParams> &phi);
@@ -50,6 +52,7 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to(SubMatrix block) const override;
     Mat dense() const override;
 
