@@ -27,7 +27,7 @@
 
 namespace BOOM {
 
-  void SparseMatrixBlock::conforms_to_rows(int i) const {
+  void SparseKalmanMatrix::conforms_to_rows(int i) const {
     if (i == nrow()) return;
     std::ostringstream err;
     err << "object of length " << i
@@ -35,7 +35,7 @@ namespace BOOM {
     report_error(err.str());
   }
 
-  void SparseMatrixBlock::conforms_to_cols(int i) const {
+  void SparseKalmanMatrix::conforms_to_cols(int i) const {
     if (i == ncol()) return;
     std::ostringstream err;
     err << "object of length " << i
@@ -43,7 +43,51 @@ namespace BOOM {
     report_error(err.str());
   }
 
-  void SparseMatrixBlock::check_can_add(const SubMatrix &block) const {
+  namespace {
+    template <class VECTOR>
+    Vector sparse_multiply_impl(const SparseMatrixBlock &m, const VECTOR &v) {
+      m.conforms_to_cols(v.size());
+      Vector ans(m.nrow(), 0.0);
+      m.multiply(VectorView(ans), v);
+      return ans;
+    }
+  }  // namespace
+
+  Vector SparseMatrixBlock::operator*(const Vector &v) const {
+    return sparse_multiply_impl(*this, v);
+  }
+  Vector SparseMatrixBlock::operator*(const VectorView &v) const {
+    return sparse_multiply_impl(*this, v);
+  }
+  Vector SparseMatrixBlock::operator*(const ConstVectorView &v) const {
+    return sparse_multiply_impl(*this, v);
+  }
+  Matrix SparseMatrixBlock::operator*(const Matrix &rhs) const {
+    conforms_to_cols(rhs.nrow());
+    Matrix ans(nrow(), rhs.ncol());
+    for (int j = 0; j < rhs.ncol(); ++j) {
+      multiply(ans.col(j), rhs.col(j));
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixBlock::Tmult(const ConstVectorView &rhs) const {
+    conforms_to_rows(rhs.size());
+    Vector ans(ncol());
+    Tmult(VectorView(ans), rhs);
+    return ans;
+  }
+
+  Matrix SparseMatrixBlock::Tmult(const Matrix &rhs) const {
+    conforms_to_rows(rhs.nrow());
+    Matrix ans(ncol(), rhs.ncol());
+    for (int j = 0; j < ans.ncol(); ++j) {
+      Tmult(ans.col(j), rhs.col(j));
+    }
+    return ans;
+  }
+  
+  void SparseKalmanMatrix::check_can_add(const SubMatrix &block) const {
     if (block.nrow() != nrow() || block.ncol() != ncol()) {
       std::ostringstream err;
       err << "cant add SparseMatrix to SubMatrix: rows and columnns "
@@ -62,6 +106,17 @@ namespace BOOM {
     }
   }
 
+  Matrix SparseMatrixBlock::dense() const {
+    if (nrow() == ncol()) {
+      Matrix ans(nrow(), ncol(), 0.0);
+      ans.diag() = 1.0;
+      matrix_multiply_inplace(SubMatrix(ans));
+      return ans;
+    } else {
+      return *this * SpdMatrix(ncol(), 1.0);
+    }
+  }
+  
   void SparseMatrixBlock::matrix_transpose_premultiply_inplace(
       SubMatrix m) const {
     for (int i = 0; i < m.nrow(); ++i) {
@@ -75,22 +130,15 @@ namespace BOOM {
                  "either mathematically non-invertible, or the left_inverse "
                  "function simply has not been implemented.");
   }
+
+  Matrix & SparseMatrixBlock::add_to(Matrix &P) const {
+    add_to_block(SubMatrix(P));
+    return P;
+  }
   
-  Matrix SparseMatrixBlock::dense() const {
-    Matrix ans(nrow(), ncol());
-    if (nrow() == ncol()) {
-      ans.set_diag(1.0);
-      for (int i = 0; i < ncol(); ++i) {
-        this->multiply_inplace(ans.col(i));
-      }
-      return ans;
-    } else {
-      Matrix id(ncol(), ncol(), 0.0);
-      id.set_diag(1.0);
-      for (int i = 0; i < ncol(); ++i) {
-        multiply(ans.col(i), id.col(i));
-      }
-    }
+  Matrix SparseKalmanMatrix::dense() const {
+    Matrix ans(nrow(), ncol(), 0.0);
+    add_to(ans);
     return ans;
   }
 
@@ -247,7 +295,7 @@ namespace BOOM {
     return ans;
   }
   
-  void BlockDiagonalMatrixBlock::add_to(SubMatrix block) const {
+  void BlockDiagonalMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
     int position = 0;
@@ -255,7 +303,7 @@ namespace BOOM {
       int local_dim = blocks_[b]->nrow();
       SubMatrix local(block, position, position + local_dim - 1, position,
                       position + local_dim - 1);
-      blocks_[b]->add_to(local);
+      blocks_[b]->add_to_block(local);
       position += local_dim;
     }
   }
@@ -365,13 +413,13 @@ namespace BOOM {
     return ans;
   }
   
-  void StackedMatrixBlock::add_to(SubMatrix block) const {
+  void StackedMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
       SubMatrix lhs_block(block, position, position + ncol_ - 1, 0, ncol_ - 1);
-      blocks_[b]->add_to(lhs_block);
+      blocks_[b]->add_to_block(lhs_block);
       position += ncol_;
     }
   }
@@ -431,7 +479,7 @@ namespace BOOM {
     return ans;
   }
   
-  void LocalLinearTrendMatrix::add_to(SubMatrix block) const {
+  void LocalLinearTrendMatrix::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += 1;
     block(1, 1) += 1;
@@ -548,7 +596,7 @@ namespace BOOM {
     return ans;
   }
   
-  void SDMB::add_to(SubMatrix block) const {
+  void SDMB::add_to_block(SubMatrix block) const {
     conforms_to_cols(block.ncol());
     conforms_to_rows(block.nrow());
     for (int i = 0; i < positions_.size(); ++i) {
@@ -651,7 +699,7 @@ namespace BOOM {
     return ans;
   }
   
-  void SSSM::add_to(SubMatrix block) const {
+  void SSSM::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) -= 1;
     VectorView d(block.subdiag(1));
@@ -758,7 +806,7 @@ namespace BOOM {
     return ans;
   }
   
-  void AutoRegressionTransitionMatrix::add_to(SubMatrix block) const {
+  void AutoRegressionTransitionMatrix::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += autoregression_params_->value();
     VectorView d(block.subdiag(1));
@@ -831,7 +879,7 @@ namespace BOOM {
     return ans;
   }
   
-  void SEIFR::add_to(SubMatrix block) const {
+  void SEIFR::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
     block(0, position_) += value_;
@@ -987,7 +1035,7 @@ namespace BOOM {
     return ans;
   }
   
-  void GenericSparseMatrixBlock::add_to(SubMatrix block) const {
+  void GenericSparseMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
     for (const auto &row : rows_) {
@@ -1102,11 +1150,6 @@ namespace BOOM {
     this->add_to(tmp);
     P = tmp;
     return P;
-  }
-
-  Matrix SparseKalmanMatrix::dense() const {
-    Matrix ans(nrow(), ncol(), 0.0);
-    return this->add_to(ans);
   }
 
   // Returns this * rhs.transpose().
@@ -1382,7 +1425,7 @@ namespace BOOM {
   Matrix &BlockDiagonalMatrix::add_to(Matrix &P) const {
     for (int b = 0; b < blocks_.size(); ++b) {
       SubMatrix block = get_block(P, b, b);
-      blocks_[b]->add_to(block);
+      blocks_[b]->add_to_block(block);
     }
     return P;
   }
@@ -1390,7 +1433,7 @@ namespace BOOM {
   SubMatrix BlockDiagonalMatrix::add_to_submatrix(SubMatrix P) const {
     for (int b = 0; b < blocks_.size(); ++b) {
       SubMatrix block = get_submatrix_block(P, b, b);
-      blocks_[b]->add_to(block);
+      blocks_[b]->add_to_block(block);
     }
     return P;
   }
@@ -1519,7 +1562,7 @@ namespace BOOM {
     int start_column = 0;
     for (int i = 0; i < blocks_.size(); ++i) {
       int ncol = blocks_[i]->ncol();
-      blocks_[i]->add_to(
+      blocks_[i]->add_to_block(
           SubMatrix(P, 0, nrow() - 1, start_column, start_column + ncol - 1));
       start_column += ncol;
     }
@@ -1531,7 +1574,7 @@ namespace BOOM {
     int start_column = 0;
     for (int i = 0; i < blocks_.size(); ++i) {
       int ncol = blocks_[i]->ncol();
-      blocks_[i]->add_to(
+      blocks_[i]->add_to_block(
           SubMatrix(P, 0, nrow() - 1, start_column, start_column + ncol - 1));
       start_column += ncol;
     }

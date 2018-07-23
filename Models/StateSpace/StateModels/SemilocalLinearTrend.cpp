@@ -99,9 +99,9 @@ namespace BOOM {
     return ans;
   }
   
-  void LMAT::add_to(SubMatrix block) const {
+  void LMAT::add_to_block(SubMatrix block) const {
     if (block.nrow() != 3 || block.ncol() != 3) {
-      report_error("block is the wrong size in LMAT::add_to");
+      report_error("block is the wrong size in LMAT::add_to_block");
     }
     double phi = phi_->value();
     block(0, 0) += 1;

@@ -41,49 +41,84 @@
 #include "stats/moments.hpp"
 
 namespace BOOM {
+
   //======================================================================
-  // The SparseMatrixBlock classes are designed to be used as elements
-  // in a BlockDiagonalMatrix.  They only need to implement the
-  // functionality required by the DiagonalMatrix implementation.
-  class SparseMatrixBlock : private RefCounted {
+  // A SparseKalmanMatrix is a sparse matrix that can be used in the Kalman
+  // recursions.  This may get expanded to a more full fledged sparse matrix
+  // class later on, if need be.
+  class SparseKalmanMatrix : private RefCounted {
    public:
-    ~SparseMatrixBlock() override {}
-    virtual SparseMatrixBlock *clone() const = 0;
+    virtual ~SparseKalmanMatrix() {}
 
     virtual int nrow() const = 0;
     virtual int ncol() const = 0;
 
-    // lhs = this * rhs
-    virtual void multiply(VectorView lhs, const ConstVectorView &rhs) const = 0;
+    virtual Vector operator*(const Vector &v) const = 0;
+    virtual Vector operator*(const VectorView &v) const = 0;
+    virtual Vector operator*(const ConstVectorView &v) const = 0;
 
-    // lhs += this * rhs
-    virtual void multiply_and_add(VectorView lhs,
-                                  const ConstVectorView &rhs) const = 0;
+    virtual Matrix operator*(const Matrix &rhs) const;
 
-    // lhs = this.transpose() * rhs
-    virtual void Tmult(VectorView lhs, const ConstVectorView &rhs) const = 0;
+    virtual Vector Tmult(const ConstVectorView &v) const = 0;
+    virtual Matrix Tmult(const Matrix &rhs) const;
 
-    // Replace x with this * x.  Assumes *this is square.
-    virtual void multiply_inplace(VectorView x) const = 0;
+    // Replace the argument P with
+    //   this * P * this.transpose()
+    // This only works with square matrices.  Non-square matrices will throw.
+    virtual void sandwich_inplace(SpdMatrix &P) const;
+    virtual void sandwich_inplace_submatrix(SubMatrix P) const;
 
-    // m = this * m
-    virtual void matrix_multiply_inplace(SubMatrix m) const;
+    // Replace the argument P with
+    //    this->transpose() * P * this
+    // This only works with square matrices.  Non-square matrices will throw.
+    virtual void sandwich_inplace_transpose(SpdMatrix &P) const;
 
-    // m = m * this->t();
-    virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
+    // Returns *this * P * this->transpose().
+    // This is a valid call, even if *this is non-square.
+    virtual SpdMatrix sandwich(const SpdMatrix &P) const;
 
-    // Add *this to block
-    virtual void add_to(SubMatrix block) const = 0;
+    // Returns this->Tmult(P) * (*this), which is equivalent to
+    // calling this->transpose()->sandwich(P) (or it would be if
+    // this->transpose() was defined).  This is a valid call, even if
+    // *this is non-square.
+    virtual SpdMatrix sandwich_transpose(const SpdMatrix &P) const;
 
-    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the default
-    // is to throw an error.
-    virtual void left_inverse(VectorView lhs,
-                              const ConstVectorView &rhs) const;
-
-    // this->transpose() * this;
+    // Returns this->transpose() * this
     virtual SpdMatrix inner() const = 0;
+
+    // Returns this->transpose * diag(weights) * this
     virtual SpdMatrix inner(const ConstVectorView &weights) const = 0;
     
+    // P += *this
+    virtual Matrix &add_to(Matrix &P) const = 0;
+    virtual SubMatrix add_to_submatrix(SubMatrix P) const;
+
+    // Returns a dense matrix representation of *this.  Mainly for
+    // debugging and testing.
+    //
+    // The default implementation only works for square matrices.
+    // Child classes that can be non-square should override.
+    virtual Matrix dense() const;
+
+    // Returns this * rhs.transpose().
+    Matrix multT(const Matrix &rhs) const;
+
+    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
+    // blocks are non-invertible, in which case calling this function will
+    // report an error.
+    //
+    // The initial reason for this implementing this method is to evaluate the
+    // transition density for state space models when the error distribution is
+    // less than full rank.   In those settings we must be able to evaluate
+    // error_expander->left_inverse( new_state - T * old_state).
+    //
+    // Thus the only blocks that need to implement left_inverse are those used
+    // in an error expander somewhere.
+    virtual Vector left_inverse(const ConstVectorView &rhs) const {
+      report_error("left_inverse is not implemented for this SparseKalmanMatrix.");
+      return Vector(0);
+    }
+
     // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
 
@@ -91,18 +126,63 @@ namespace BOOM {
     void conforms_to_cols(int i) const;
 
     void check_can_add(const SubMatrix &block) const;
-
-    // Returns a dense version of 'this'.
-    virtual Matrix dense() const;
-
-    int ref_count() const { return RefCounted::ref_count(); }
-
    private:
-    friend void intrusive_ptr_add_ref(SparseMatrixBlock *m) { m->up_count(); }
-    friend void intrusive_ptr_release(SparseMatrixBlock *m) {
+    friend void intrusive_ptr_add_ref(SparseKalmanMatrix *m) { m->up_count(); }
+    friend void intrusive_ptr_release(SparseKalmanMatrix *m) {
       m->down_count();
       if (m->ref_count() == 0) delete m;
     }
+  };
+
+  Matrix operator*(const Matrix &lhs, const SparseKalmanMatrix &rhs);
+
+  // Returns lhs * rhs.transpose();
+  Matrix multT(const SpdMatrix &lhs, const SparseKalmanMatrix &rhs);
+
+  //======================================================================
+  // The SparseMatrixBlock classes are SparseKalmanMatrices that can be used as
+  // elements in a BlockDiagonalMatrix.
+  class SparseMatrixBlock : public SparseKalmanMatrix {
+   public:
+    ~SparseMatrixBlock() override {}
+    virtual SparseMatrixBlock *clone() const = 0;
+
+    // lhs = this * rhs
+    virtual void multiply(VectorView lhs, const ConstVectorView &rhs) const = 0;
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+    
+    // lhs += this * rhs
+    virtual void multiply_and_add(VectorView lhs,
+                                  const ConstVectorView &rhs) const = 0;
+
+    // lhs = this.transpose() * rhs
+    virtual void Tmult(VectorView lhs, const ConstVectorView &rhs) const = 0;
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+    
+    // Replace x with this * x.  Assumes *this is square.
+    virtual void multiply_inplace(VectorView x) const = 0;
+
+    // m = this * m
+    virtual void matrix_multiply_inplace(SubMatrix m) const;
+
+    Matrix dense() const override;
+    
+    // m = m * this->t();
+    virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
+
+    // Add *this to block
+    virtual void add_to_block(SubMatrix block) const = 0;
+    Matrix &add_to(Matrix &P) const override;
+    
+    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the default
+    // is to throw an error.
+    virtual void left_inverse(VectorView lhs,
+                              const ConstVectorView &rhs) const;
+    using SparseKalmanMatrix::left_inverse;
   };
 
   //===========================================================================
@@ -131,7 +211,7 @@ namespace BOOM {
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
 
    private:
     // Checks that this can multiply rhs, and that lhs is correctly sized to
@@ -165,7 +245,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
 
    private:
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
@@ -191,7 +271,7 @@ namespace BOOM {
     void multiply_inplace(VectorView v) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
   };
 
@@ -222,7 +302,7 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override {
       return m_.inner(weights);
     }
-    void add_to(SubMatrix block) const override { block += m_; }
+    void add_to_block(SubMatrix block) const override { block += m_; }
     Matrix dense() const override { return m_; }
 
    private:
@@ -246,7 +326,7 @@ namespace BOOM {
       lhs = value() * rhs;
     }
     void multiply_inplace(VectorView x) const override { x = value() * x; }
-    void add_to(SubMatrix block) const override { block += value(); }
+    void add_to_block(SubMatrix block) const override { block += value(); }
   };
 
   // A SparseMatrixBlock filled with a dense SpdMatrix.
@@ -340,7 +420,7 @@ namespace BOOM {
       return ans;
     }
 
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       block.diag() += diagonal_elements();
     }
   };
@@ -441,7 +521,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     
    private:
     std::vector<Ptr<UnivParams>> elements_;
@@ -476,7 +556,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
 
    private:
@@ -512,7 +592,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     // virtual void matrix_multiply_inplace(SubMatrix m) const;
     // virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
     Matrix dense() const override;
@@ -546,7 +626,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override {}
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
-    void add_to(SubMatrix block) const override { block.diag() += 1.0; }
+    void add_to_block(SubMatrix block) const override { block.diag() += 1.0; }
     void left_inverse(VectorView lhs,
                       const ConstVectorView &rhs) const override {
       lhs = rhs;
@@ -577,7 +657,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override {}
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
-    void add_to(SubMatrix block) const override {}
+    void add_to_block(SubMatrix block) const override {}
     Matrix dense() const override {
       return Matrix(0, 0);
     }
@@ -634,7 +714,7 @@ namespace BOOM {
       return ans;
     }
     
-    void add_to(SubMatrix block) const override { block.diag() += value(); }
+    void add_to_block(SubMatrix block) const override { block.diag() += value(); }
 
    private:
     int dim_;
@@ -671,7 +751,7 @@ namespace BOOM {
    public:
     explicit ZeroMatrix(int dim) : ConstantMatrix(dim, 0.0) {}
     ZeroMatrix *clone() const override { return new ZeroMatrix(*this); }
-    void add_to(SubMatrix block) const override {}
+    void add_to_block(SubMatrix block) const override {}
   };
 
   //======================================================================
@@ -719,7 +799,7 @@ namespace BOOM {
       return ans;
     }
     
-    void add_to(SubMatrix block) const override { block(0, 0) += value(); }
+    void add_to_block(SubMatrix block) const override { block(0, 0) += value(); }
 
    private:
     int dim_;
@@ -802,7 +882,7 @@ namespace BOOM {
       return SpdMatrix(1, weights[0]);
     }
     
-    void add_to(SubMatrix block) const override { block(0, 0) += 1.0; }
+    void add_to_block(SubMatrix block) const override { block(0, 0) += 1.0; }
 
     Matrix dense() const override {
       Matrix ans(nrow(), ncol(), 0.0);
@@ -889,7 +969,7 @@ namespace BOOM {
       return ans;
     }
     
-    void add_to(SubMatrix m) const override {
+    void add_to_block(SubMatrix m) const override {
       conforms_to_rows(m.nrow());
       conforms_to_cols(m.ncol());
       m.diag() += 1.0;
@@ -957,7 +1037,7 @@ namespace BOOM {
       return ans;
     }
     
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       check_can_add(block);
       block(which_element_, which_element_) += value();
     }
@@ -1025,7 +1105,7 @@ namespace BOOM {
 
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
 
    private:
     int nrow_;
@@ -1116,7 +1196,7 @@ namespace BOOM {
       return ans;
     }
     
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       conforms_to_rows(block.nrow());
       conforms_to_cols(block.ncol());
       for (int i = 0; i < diagonal_.size(); ++i) {
@@ -1197,7 +1277,7 @@ namespace BOOM {
       return sum(weights) * outer(dense_row_);
     }
     
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       conforms_to_cols(block.ncol());
       conforms_to_rows(block.nrow());
       for (int i = 0; i < nrow(); ++i) {
@@ -1236,7 +1316,7 @@ namespace BOOM {
       x -= mean(x);
     }
 
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       conforms_to_rows(block.nrow());
       conforms_to_cols(block.ncol());
       block.diag() += 1.0;
@@ -1331,11 +1411,15 @@ namespace BOOM {
     }
 
     SpdMatrix inner(const ConstVectorView &weights) const override {
-      // TODO:  This can probably be improved.
-      return dense().inner(weights); 
+      return EffectConstraintMatrix(ncol()).sandwich_transpose(
+          unconstrained_->inner(weights));
+    }
+
+    Matrix dense() const override {
+      return (*this) * SpdMatrix(ncol(), 1.0);
     }
     
-    void add_to(SubMatrix block) const override {
+    void add_to_block(SubMatrix block) const override {
       block += dense();
     }
     
@@ -1391,7 +1475,7 @@ namespace BOOM {
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
 
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
 
     void insert_element(uint row, uint col, double value) {
       insert_element_in_rows(row, col, value);
@@ -1424,89 +1508,6 @@ namespace BOOM {
     SparseVector empty_row_;
     SparseVector empty_column_;
   };
-
-  //======================================================================
-  // A SparseKalmanMatrix is a sparse matrix that can be used in the Kalman
-  // recursions.  This may get expanded to a more full fledged sparse matrix
-  // class later on, if need be.
-  class SparseKalmanMatrix {
-   public:
-    virtual ~SparseKalmanMatrix() {}
-
-    virtual int nrow() const = 0;
-    virtual int ncol() const = 0;
-
-    virtual Vector operator*(const Vector &v) const = 0;
-    virtual Vector operator*(const VectorView &v) const = 0;
-    virtual Vector operator*(const ConstVectorView &v) const = 0;
-
-    virtual Matrix operator*(const Matrix &rhs) const;
-
-    virtual Vector Tmult(const ConstVectorView &v) const = 0;
-    virtual Matrix Tmult(const Matrix &rhs) const;
-
-    // Replace the argument P with
-    //   this * P * this.transpose()
-    // This only works with square matrices.  Non-square matrices will throw.
-    virtual void sandwich_inplace(SpdMatrix &P) const;
-    virtual void sandwich_inplace_submatrix(SubMatrix P) const;
-
-    // Replace the argument P with
-    //    this->transpose() * P * this
-    // This only works with square matrices.  Non-square matrices will throw.
-    virtual void sandwich_inplace_transpose(SpdMatrix &P) const;
-
-    // Returns *this * P * this->transpose().
-    // This is a valid call, even if *this is non-square.
-    virtual SpdMatrix sandwich(const SpdMatrix &P) const;
-
-    // Returns this->Tmult(P) * (*this), which is equivalent to
-    // calling this->transpose()->sandwich(P) (or it would be if
-    // this->transpose() was defined).  This is a valid call, even if
-    // *this is non-square.
-    virtual SpdMatrix sandwich_transpose(const SpdMatrix &P) const;
-
-    // Returns this->transpose() * this
-    virtual SpdMatrix inner() const = 0;
-
-    // Returns this->transpose * diag(weights) * this
-    virtual SpdMatrix inner(const ConstVectorView &weights) const = 0;
-    
-    // P += *this
-    virtual Matrix &add_to(Matrix &P) const = 0;
-    virtual SubMatrix add_to_submatrix(SubMatrix P) const;
-
-    // Returns a dense matrix representation of *this.  Mainly for
-    // debugging and testing.
-    //
-    // The default implementation only works for square matrices.
-    // Child classes that can be non-square should override.
-    virtual Matrix dense() const;
-
-    // Returns this * rhs.transpose().
-    Matrix multT(const Matrix &rhs) const;
-
-    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
-    // blocks are non-invertible, in which case calling this function will
-    // report an error.
-    //
-    // The initial reason for this implementing this method is to evaluate the
-    // transition density for state space models when the error distribution is
-    // less than full rank.   In those settings we must be able to evaluate
-    // error_expander->left_inverse( new_state - T * old_state).
-    //
-    // Thus the only blocks that need to implement left_inverse are those used
-    // in an error expander somewhere.
-    virtual Vector left_inverse(const ConstVectorView &rhs) const {
-      report_error("left_inverse is not implemented for this SparseKalmanMatrix.");
-      return Vector(0);
-    }
-  };
-
-  Matrix operator*(const Matrix &lhs, const SparseKalmanMatrix &rhs);
-
-  // Returns lhs * rhs.transpose();
-  Matrix multT(const SpdMatrix &lhs, const SparseKalmanMatrix &rhs);
 
   //======================================================================
   // The state transition equation for a dynamic linear model will

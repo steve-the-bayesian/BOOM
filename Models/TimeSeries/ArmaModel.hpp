@@ -56,7 +56,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
 
    private:
@@ -92,7 +92,7 @@ namespace BOOM {
     void multiply_inplace(VectorView x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    void add_to(SubMatrix block) const override;
+    void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
 
    private:

@@ -110,7 +110,7 @@ namespace BOOM {
     return ans;
   }
   
-  void ASSTM::add_to(SubMatrix block) const {
+  void ASSTM::add_to_block(SubMatrix block) const {
     if (block.nrow() != nrow() || block.ncol() != ncol()) {
       report_error("Wrong sized argument.");
     }
@@ -168,7 +168,9 @@ namespace BOOM {
     return ans;
   }
   
-  void ASSVM::add_to(SubMatrix block) const { block += dense(); }
+  void ASSVM::add_to_block(SubMatrix block) const {
+    block += dense();
+  }
 
   Matrix ASSVM::dense() const {
     SpdMatrix ans(nrow(), 0.0);
