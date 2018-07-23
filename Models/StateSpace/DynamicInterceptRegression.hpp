@@ -192,22 +192,6 @@ namespace BOOM {
 
     void initialize_regression_component(int xdim);
 
-    void update_observation_model_complete_data_sufficient_statistics(
-        int t, const Vector &observation_error_mean,
-        const SpdMatrix &observation_error_variance) override {
-      report_error(
-          "EM algorithm is not yet supported for "
-          "DynamicInterceptRegressionModel.");
-    }
-
-    void update_observation_model_gradient(
-        VectorView gradient, int t, const Vector &state_error_mean,
-        const SpdMatrix &state_error_variance) override {
-      report_error(
-          "MAP estimation is not yet supported for "
-          "DynamicInterceptRegressionModel.");
-    }
-
     //--------------------------------------------------------------------------
     // Data begins here.
     //--------------------------------------------------------------------------
