@@ -23,6 +23,7 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -66,6 +67,18 @@ namespace BOOM {
     Matrix L = V.chol(okay);
     if (okay) return rmvn_L_mt(rng, mu, L);
     return rmvn_robust_mt(rng, mu, V);
+  }
+  //======================================================================
+  Vector rmvn_mt(RNG &rng, const Vector &mu, const DiagonalMatrix &V) {
+    Vector ans(mu);
+    const ConstVectorView variances(V.diag());
+    for (int i = 0; i < mu.size(); ++i) {
+      ans[i] += rnorm_mt(rng, 0, sqrt(variances[i]));
+    }
+    return ans;
+  }
+  Vector rmvn(const Vector &mu, const DiagonalMatrix &V) {
+    return rmvn_mt(GlobalRng::rng, mu, V);
   }
   //======================================================================
   Vector rmvn_ivar(const Vector &mu, const SpdMatrix &ivar) {

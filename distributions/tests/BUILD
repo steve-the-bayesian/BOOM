@@ -12,3 +12,14 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "mvn_test",
+    srcs = ["mvn_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
