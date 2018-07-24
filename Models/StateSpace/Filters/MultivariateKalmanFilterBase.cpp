@@ -19,6 +19,7 @@
 #include "Models/StateSpace/Filters/MultivariateKalmanFilterBase.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "cpputil/report_error.hpp"
+#include "cpputil/Constants.hpp"
 
 namespace BOOM {
 
@@ -28,6 +29,66 @@ namespace BOOM {
   namespace Kalman {
     namespace {
       using Marginal = MultivariateMarginalDistributionBase;
+    }
+
+    double Marginal::update(const Vector &observation,
+                            const Selector &observed) {
+      if (!model()) {
+        report_error("ConditionalIidMarginalDistribution needs the model to be "
+                     "set by set_model() before calling update().");
+      }
+      if (observed.nvars() == 0) {
+        return fully_missing_update();
+      }
+      const SparseKalmanMatrix &transition(
+          *model()->state_transition_matrix(time_index()));
+      const SparseKalmanMatrix &observation_coefficients(
+          *model()->observation_coefficients(time_index()));
+      
+      if (high_dimensional(observed)) {
+        high_dimensional_update(observation, observed, transition,
+                                observation_coefficients);
+      } else {
+        low_dimensional_update(observation, observed, transition,
+                               observation_coefficients);
+      }
+      double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
+          + .5 * forecast_precision_log_determinant()
+          - .5 * prediction_error().dot(scaled_prediction_error());
+      
+      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
+      // E(state[t+1] | Y[t]).
+      set_state_mean(transition * state_mean()
+                     + kalman_gain() * prediction_error());
+
+      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
+      // Var(state[t+1} | Y[t]).
+      //
+      // The update formula is
+      //
+      // P[t+1] = T[t] * P[t] * T[t]'
+      //          - T[t] * P[t] * Z[t]' * K[t]'
+      //          + R[t] * Q[t] * R[t]'
+      //
+      // Need to define TPZprime before modifying P (known here as
+      // state_variance).
+      Matrix TPZprime = (
+          observation_coefficients *
+          (transition * state_variance()).transpose()).transpose();
+
+      // Step 1:  Set P = T * P * T.transpose()
+      transition.sandwich_inplace(mutable_state_variance());
+
+      // Step 2: 
+      // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
+      // skipped if y is missing, because K is zero.
+      mutable_state_variance() -= TPZprime.multT(kalman_gain());
+
+      // Step 3: P += RQR
+      model()->state_variance_matrix(time_index())->add_to(
+          mutable_state_variance());
+      mutable_state_variance().fix_near_symmetry();
+      return log_likelihood;
     }
     
     Vector Marginal::contemporaneous_state_mean() const {
@@ -51,6 +112,39 @@ namespace BOOM {
           P, observation_coefficients->sandwich_transpose(forecast_precision()));
     }
      
+    //===========================================================================
+    double Marginal::fully_missing_update() {
+      // Compute the one-step prediction error and log likelihood contribution.
+      const SparseKalmanMatrix  &transition(
+          *model()->state_transition_matrix(time_index()));
+      double log_likelihood = 0;
+      set_prediction_error(Vector(0));
+
+      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
+      // E(state[t+1] | Y[t]).
+      set_state_mean(transition * state_mean());
+
+      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
+      // Var(state[t+1} | Y[t]).
+      //
+      // The update formula is
+      //
+      // P[t+1] = T[t] * P[t] * T[t]' + R[t] * Q[t] * R[t]'
+
+      // Step 1:  Set P = T * P * T.transpose()
+      transition.sandwich_inplace(mutable_state_variance());
+      // Step 2: P += RQR
+      model()->state_variance_matrix(time_index())->add_to(
+          mutable_state_variance());
+      mutable_state_variance().fix_near_symmetry();
+      return log_likelihood;
+    }  
+
+    bool MultivariateMarginalDistributionBase::high_dimensional(
+        const Selector &observed) const {
+      return observed.nvars() >
+          high_dimensional_threshold_factor() * model()->state_dimension();
+    }
   }  // namespace Kalman
 
   MultivariateKalmanFilterBase::MultivariateKalmanFilterBase(
@@ -80,7 +174,7 @@ namespace BOOM {
     }
     set_status(CURRENT);
   }
-
+  
   void MultivariateKalmanFilterBase::update_single_observation(
       const Vector &y,
       const Selector &observed,
@@ -98,7 +192,6 @@ namespace BOOM {
     }
     increment_log_likelihood(node(t).update(y, observed));
   }
-
 
   // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
   // disturbance smoother is equation (5) in Durbin and Koopman (2002,

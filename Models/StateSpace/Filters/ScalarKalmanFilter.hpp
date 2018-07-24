@@ -39,6 +39,7 @@ namespace BOOM {
       explicit ScalarMarginalDistribution(const ScalarStateSpaceModelBase *model,
                                           ScalarMarginalDistribution *previous,
                                           int time_index);
+
       // Update this marginal distribution to reflect the observed data at this
       // time point, and the marginal information from the preceding time point.
       //

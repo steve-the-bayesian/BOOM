@@ -30,7 +30,7 @@ namespace BOOM {
       using CIMD = ConditionalIidMarginalDistribution;
     }  // namespace 
 
-    double CIMD::high_dimensional_threshold_factor(1.0);
+    double CIMD::high_dimensional_threshold_factor_(1.0);
     
     CIMD::ConditionalIidMarginalDistribution(
         ConditionalIidMultivariateStateSpaceModelBase *model,
@@ -42,79 +42,8 @@ namespace BOOM {
           previous_(previous)
     {}
     
-    // TODO: Test this function against the update function in the other
-    // multivariate marginal distributions to make sure they give the same
-    // answer.
-    //
-    // TODO: Rework observation_coefficients() to
-    // partial_observation_coefficients() to account for data which is less than
-    // fully observed.
-    double CIMD::update(const Vector &observation, const Selector &observed) {
-      if (!model_) {
-        report_error("ConditionalIidMarginalDistribution needs the model to be "
-                     "set by set_model() before calling update().");
-      }
-      if (observed.nvars() == 0) {
-        return fully_missing_update();
-      }
-      const SparseKalmanMatrix &transition(
-          *model_->state_transition_matrix(time_index()));
-      const SparseKalmanMatrix &observation_coefficients(
-          *model_->observation_coefficients(time_index()));
-      
-      if (high_dimensional(observed)) {
-        large_sample_update(observation, observed, transition,
-                            observation_coefficients);
-      } else {
-        small_sample_update(observation, observed, transition,
-                            observation_coefficients);
-      }
-      double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
-          + .5 * forecast_precision_log_determinant()
-          - .5 * prediction_error().dot(scaled_prediction_error());
-      
-      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
-      // E(state[t+1] | Y[t]).
-      set_state_mean(transition * state_mean()
-                     + kalman_gain() * prediction_error());
-
-      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
-      // Var(state[t+1} | Y[t]).
-      //
-      // The update formula is
-      //
-      // P[t+1] = T[t] * P[t] * T[t]'
-      //          - T[t] * P[t] * Z[t]' * K[t]'
-      //          + R[t] * Q[t] * R[t]'
-      //
-      // Need to define TPZprime before modifying P (known here as
-      // state_variance).
-      Matrix TPZprime = (
-          observation_coefficients *
-          (transition * state_variance()).transpose()).transpose();
-
-      // Step 1:  Set P = T * P * T.transpose()
-      transition.sandwich_inplace(mutable_state_variance());
-
-      // Step 2: 
-      // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
-      // skipped if y is missing, because K is zero.
-      mutable_state_variance() -= TPZprime.multT(kalman_gain());
-
-      // Step 3: P += RQR
-      model_->state_variance_matrix(time_index())->add_to(
-          mutable_state_variance());
-      mutable_state_variance().fix_near_symmetry();
-      return log_likelihood;
-    }  // update
-
-    bool CIMD::high_dimensional(const Selector &observed) const {
-      return observed.nvars() >
-          high_dimensional_threshold_factor * model_->state_dimension();
-    }
-
     //---------------------------------------------------------------------------
-    void CIMD::small_sample_update(
+    void CIMD::low_dimensional_update(
         const Vector &observation,
         const Selector &observed,
         const SparseKalmanMatrix &transition,
@@ -133,7 +62,7 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
-    void CIMD::large_sample_update(
+    void CIMD::high_dimensional_update(
         const Vector &observation,
         const Selector &observed,
         const SparseKalmanMatrix &transition,
@@ -232,50 +161,7 @@ namespace BOOM {
       ans.diag() += 1.0 / observation_variance;
       return ans;
     }
-    
-    //===========================================================================
-    double CIMD::fully_missing_update() {
-      // Compute the one-step prediction error and log likelihood contribution.
-      const SparseKalmanMatrix  &transition(
-          *model_->state_transition_matrix(time_index()));
-      double log_likelihood = 0;
-      set_prediction_error(Vector(0));
-
-      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
-      // E(state[t+1] | Y[t]).
-      set_state_mean(transition * state_mean());
-
-      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
-      // Var(state[t+1} | Y[t]).
-      //
-      // The update formula is
-      //
-      // P[t+1] = T[t] * P[t] * T[t]' + R[t] * Q[t] * R[t]'
-
-      // Step 1:  Set P = T * P * T.transpose()
-      transition.sandwich_inplace(mutable_state_variance());
-      // Step 2: P += RQR
-      model_->state_variance_matrix(time_index())->add_to(
-          mutable_state_variance());
-      mutable_state_variance().fix_near_symmetry();
-      return log_likelihood;
-    }  
-
   }  // namespace Kalman
-
-  //===========================================================================
-  ConditionalIidKalmanFilter::ConditionalIidKalmanFilter(ModelType *model)
-      : MultivariateKalmanFilterBase(model),
-        model_(model) {}
-  
-  void ConditionalIidKalmanFilter::ensure_size(int t) {
-    while(nodes_.size() <=  t) {
-      Kalman::ConditionalIidMarginalDistribution *previous =
-          nodes_.empty() ? nullptr : &nodes_.back();
-      nodes_.push_back(Kalman::ConditionalIidMarginalDistribution(
-          model_, previous, nodes_.size()));
-    }
-  }
   
 }  // namespace BOOM
 

@@ -22,7 +22,6 @@
 #include "Models/StateSpace/Filters/MultivariateKalmanFilterBase.hpp"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Selector.hpp"
-#include "LinAlg/Cholesky.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -44,17 +43,6 @@ namespace BOOM {
           ConditionalIidMarginalDistribution *previous,
           int time_index);
       
-      // Args:
-      //   observation: The vector of observed data at time t.  Note that some
-      //     elements of 'observation' might be missing.
-      //   observed: Indicates which elements of 'observation' are actually
-      //     observed, with observed[i] == true indicating that observation[i] is
-      //     observed data.  If observed[i] == false then observation[i] should be
-      //     viewed as meaningless.
-      // Returns: 
-      //   The contribution that observation makes to the log likelihood.
-      double update(const Vector &y, const Selector &observed) override;
-
       ConditionalIidMarginalDistribution * previous() override {
         return previous_;
       }
@@ -68,55 +56,37 @@ namespace BOOM {
       // create a cycle in the include graph.
       const MultivariateStateSpaceModelBase *model() const override;
       
-      // A Kalman filter update when the vector y is entirely missing.
-      double fully_missing_update();
-      
-      // The prediction error is y[t] - E(y[t] | Y[t-1]).  The scaled prediction
-      // error is forecast_precision() * prediction_error().
-      Vector scaled_prediction_error() const override {
-        return scaled_prediction_error_;
-      }
-      void set_scaled_prediction_error(const Vector &err) {
-        scaled_prediction_error_ = err;
-      }
-
       SpdMatrix forecast_precision() const override;
       
-      void set_forecast_precision_log_determinant(double logdet) {
-        forecast_precision_log_determinant_ = logdet;
-      }
-      double forecast_precision_log_determinant() const {
-        return forecast_precision_log_determinant_;
-      }
-
       // This class uses dense matrix algebra if the number of observations in
       // this time period is less than some multiple times the dimension of the
       // state.  By default the multiple is 1, but it can be changed using this
       // function.
-      static void set_high_dimensional_threshold_factor(double value) {
-        high_dimensional_threshold_factor = value;
+      void set_high_dimensional_threshold_factor(double value) override {
+        high_dimensional_threshold_factor_ = value;
       }
-
-      // Check whether the vector of observations qualifies as high dimensional,
-      // which depends on both the dimension of the observation and the
-      // dimension of the state.
-      bool high_dimensional(const Selector &observed) const;
+      double high_dimensional_threshold_factor() const override {
+        return high_dimensional_threshold_factor_;
+      }
       
      private:
       // Compute prediction_error, scaled_prediction_error_,
       // forecast_precision_log_determinant_, and kalman gain using the dense
       // forecast variance matrix.
-      void small_sample_update(const Vector &observation,
-                               const Selector &observed,
-                               const SparseKalmanMatrix &transition,
-                               const SparseKalmanMatrix &observation_coefficients);
+      void low_dimensional_update(
+          const Vector &observation,
+          const Selector &observed,
+          const SparseKalmanMatrix &transition,
+          const SparseKalmanMatrix &observation_coefficients) override;
+
       // Compute prediction_error, scaled_prediction_error_,
       // forecast_precision_log_determinant_, and kalman gain _WITHOUT_
       // computing the dense forecast variance matrix.
-      void large_sample_update(const Vector &observation,
-                               const Selector &observed,
-                               const SparseKalmanMatrix &transition,
-                               const SparseKalmanMatrix &observation_coefficients);
+      void high_dimensional_update(
+          const Vector &observation,
+          const Selector &observed,
+          const SparseKalmanMatrix &transition,
+          const SparseKalmanMatrix &observation_coefficients) override;
 
       // Compute the forecast precision matrix using the definition.
       SpdMatrix direct_forecast_precision() const;
@@ -124,60 +94,18 @@ namespace BOOM {
       // Compute the forecast precision matrix using the binomial inverse
       // theorem.
       SpdMatrix large_scale_forecast_precision() const;
-      
+
+      //---------------------------------------------------------------------------
+      // Data section
       ModelType *model_;
       ConditionalIidMarginalDistribution *previous_;
-      Vector scaled_prediction_error_;
-      double forecast_precision_log_determinant_;
-
-      static double high_dimensional_threshold_factor;
+      static double high_dimensional_threshold_factor_;
     };
    
   }  // namespace Kalman
 
-  //===========================================================================
-  class ConditionalIidKalmanFilter
-      : public MultivariateKalmanFilterBase {
-   public:
-    using MarginalType = Kalman::ConditionalIidMarginalDistribution;
-    using ModelType = MarginalType::ModelType;
-
-    explicit ConditionalIidKalmanFilter(ModelType *model);
-    
-    MarginalType &operator[](size_t pos) override { return node(pos); }
-    const MarginalType &operator[](size_t pos) const override {
-      return node(pos);
-    }
-
-    // The number of time points in the model being filtered.
-    int size() const override { return nodes_.size(); }
-
-    // Ensure space for at least t marginal distributions.
-    void ensure_size(int t) override;
-
-    const MarginalType &back() const {
-      return nodes_.back();
-    }
-    
-   private:
-    std::vector<Kalman::ConditionalIidMarginalDistribution> nodes_;
-
-    MarginalType & node(size_t pos) override {
-      if (pos >= nodes_.size()) {
-        report_error("Asking for a node past the end.");
-      }
-      return nodes_[pos];
-    }
-
-    const MarginalType & node(size_t pos) const override {
-      if (pos >= nodes_.size()) {
-        report_error("Asking for a const node past the end.");
-      }
-      return nodes_[pos];
-    }
-
-    ModelType *model_;
-  };
+  using ConditionalIidKalmanFilter =
+      MultivariateKalmanFilter<Kalman::ConditionalIidMarginalDistribution>;
   
 }  // namespace BOOM
 

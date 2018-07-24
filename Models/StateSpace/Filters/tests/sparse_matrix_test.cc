@@ -97,11 +97,11 @@ namespace {
     Matrix summand(dense.nrow(), dense.ncol());
     summand.randomize();
     Matrix original_summand(summand);
-    sparse->add_to(SubMatrix(summand));
+    sparse->add_to_block(SubMatrix(summand));
     EXPECT_TRUE(MatrixEquals(summand, dense + original_summand))
         << endl << sparse->dense() << endl << dense << endl
         << "B = " << original_summand << endl
-        << "sparse->add_to(B) = " << summand << endl
+        << "sparse->add_to_block(B) = " << summand << endl
         << "dense + B = " << dense + original_summand << endl;
 
     SpdMatrix inner = sparse->inner();
