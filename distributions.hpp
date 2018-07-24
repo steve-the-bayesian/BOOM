@@ -195,6 +195,8 @@ namespace BOOM {
   // problem it calls rmvn_robust
   Vector rmvn(const Vector &Mu, const SpdMatrix &Sigma);
   Vector rmvn_mt(RNG &rng, const Vector &Mu, const SpdMatrix &Sigma);
+  Vector rmvn(const Vector &Mu, const DiagonalMatrix &Sigma);
+  Vector rmvn_mt(RNG &rng, const Vector &Mu, const DiagonalMatrix &Sigma);
 
   // rmvn_robust computes the spectral decomposition of Sigma which
   // can be done even if there is a zero pivot that would prevent the

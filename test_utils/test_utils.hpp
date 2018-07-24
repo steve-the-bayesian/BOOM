@@ -171,9 +171,9 @@ namespace BOOM {
   //   then this function returns 'true'.  If the null is rejected then 'false'
   //   is returned.  In other words, 'true' indicates that 'data1' and 'data2'
   //   are a match.
-  bool TwoSampleKsMatch(const ConstVectorView &data1,
-                        const ConstVectorView &data2,
-                        double significance = .05);
+  bool TwoSampleKs(const ConstVectorView &data1,
+                   const ConstVectorView &data2,
+                   double significance = .05);
   
   // Checks that two sets of Monte Carlo draws have roughly the same center and
   // spread.  The check is done by computing the .2 - .8 credible interval from

@@ -38,7 +38,7 @@ namespace BOOM {
     return maxdiff <= ks_critical_value(sorted_data.size(), significance);
   }
 
-  bool TwoSampleKS(
+  bool TwoSampleKs(
       const ConstVectorView &data1,
       const ConstVectorView &data2,
       double significance) {
