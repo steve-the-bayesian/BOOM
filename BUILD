@@ -211,7 +211,7 @@ cc_library(
 cc_library(
     name = "boom_test_utils",
     srcs = glob(["test_utils/*.cpp"]),
-    hdrs = ["test_utils/test_utils.hpp"],
+    hdrs = glob(["test_utils/*.hpp"]),
     copts = [
         "-I/usr/local/include",
         "-std=c++11",
