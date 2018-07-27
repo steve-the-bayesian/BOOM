@@ -39,18 +39,25 @@ namespace BOOM {
     void Update(const DoubleData &X) override;
     void update_raw(double y);
 
-    void update_expected_value(double expected_sample_size, double expected_sum,
+    void update_expected_value(double expected_sample_size,
+                               double expected_sum,
                                double expected_sum_of_squares);
 
     // Remove the effect of observation y from the sufficient
     // statistics, as if it were dropped from the data set.
     void remove(double y);
+
+    // Increment n by prob, sum by prob * y, and sumsq by prob * y^2.
     void add_mixture_data(double y, double prob);
+
     double sum() const;
+
     // sumsq returns the uncentered (raw) sum of squared y's: sum(y^2)
     double sumsq() const;
+
     // centered_sumsq returns sum((y - mu)^2).
     double centered_sumsq(double mu) const;
+
     double n() const;
 
     // The sample mean. If there is no data then ybar == 0.

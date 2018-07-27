@@ -21,10 +21,12 @@
 #define BOOM_INDEPENDENT_MVN_MODEL_HPP
 
 #include "Models/EmMixtureComponent.hpp"
+#include "Models/GaussianModelBase.hpp"
 #include "Models/MvnBase.hpp"
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/SufstatDataPolicy.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 
 namespace BOOM {
   class IndependentMvnSuf : public SufstatDetails<VectorData> {
@@ -36,18 +38,29 @@ namespace BOOM {
     void resize(int dim);
     void Update(const VectorData &) override;
     void update_raw(const Vector &y);
+    void update_single_dimension(double y, int position);
     void add_mixture_data(const Vector &v, double prob);
+
+    // Increment the sample size, sum, and sum_of_squares by specified amounts.
     void update_expected_value(double sample_size, const Vector &expected_sum,
                                const Vector &expected_sum_of_squares);
 
-    const Vector &sum() const {return sum_;}
-    const Vector &sumsq() const {return sumsq_;}
+    // The sum of observations for the variable in position i.
     double sum(int i) const;
-    double sumsq(int i) const;  // uncentered sum of squares
-    double centered_sumsq(int i, double mu) const;
-    double n() const;
 
+    // The sum of squares of observations for the variable in position i.
+    double sumsq(int i) const;  // uncentered sum of squares
+
+    // The centered sum of squared observations for the variable in position i.
+    double centered_sumsq(int i, double mu) const;
+
+    // The number of observations in position i.
+    double n(int i = 0) const;
+
+    // The sample mean of variable in position i.
     double ybar(int i) const;
+
+    // The sample variance of the variable in position i.
     double sample_var(int i) const;
 
     IndependentMvnSuf *abstract_combine(Sufstat *s) override;
@@ -61,9 +74,7 @@ namespace BOOM {
     ostream &print(ostream &out) const override;
 
    private:
-    Vector sum_;
-    Vector sumsq_;
-    double n_;
+    std::vector<GaussianSuf> suf_;
   };
 
   class IndependentMvnModel
@@ -88,6 +99,7 @@ namespace BOOM {
     const Vector &mu() const override;
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
+    DiagonalMatrix diagonal_variance() const;
     double ldsi() const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
