@@ -60,7 +60,7 @@ namespace BOOM {
   void IndependentMvnVarSampler::draw() {
     Ptr<IndependentMvnSuf> suf = model_->suf();
     for (int i = 0; i < model_->dim(); ++i) {
-      double sigsq = samplers_[i].draw(rng(), suf->n(),
+      double sigsq = samplers_[i].draw(rng(), suf->n(i),
                                        suf->centered_sumsq(i, model_->mu()[i]));
       model_->set_sigsq_element(sigsq, i);
     }
