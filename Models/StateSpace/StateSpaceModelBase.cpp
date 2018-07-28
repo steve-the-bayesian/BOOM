@@ -75,6 +75,28 @@ namespace BOOM {
     if (state_is_fixed_) state_ = rhs.state_;
   }
 
+  Base &Base::operator=(const Base &rhs) {
+    if (&rhs != this) {
+      Model::operator=(rhs);
+      state_dimension_ = 0;
+      state_error_dimension_ = 0;
+      state_positions_.resize(1, 0);
+      state_error_positions_.resize(1, 0);
+      state_is_fixed_ = rhs.state_is_fixed_;
+      state_transition_matrix_.reset(new BlockDiagonalMatrix);
+      state_variance_matrix_.reset(new BlockDiagonalMatrix);
+      state_error_expander_.reset(new BlockDiagonalMatrix);
+      state_error_variance_.reset(new BlockDiagonalMatrix);
+      parameter_positions_.clear();
+      parameter_positions_.push_back(rhs.parameter_positions_[0]);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        add_state(rhs.state_model(s)->clone());
+      }
+      if (state_is_fixed_) state_ = rhs.state_;
+    }
+    return *this;
+  }
+  
   //----------------------------------------------------------------------
   void Base::add_state(const Ptr<StateModel> &m) {
     state_models_.push_back(m);

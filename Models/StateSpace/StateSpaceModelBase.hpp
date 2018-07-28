@@ -40,8 +40,11 @@ namespace BOOM {
    public:
     StateSpaceModelBase();
     StateSpaceModelBase(const StateSpaceModelBase &rhs);
+    StateSpaceModelBase(StateSpaceModelBase &&rhs) = default;
     StateSpaceModelBase *clone() const override = 0;
-
+    StateSpaceModelBase &operator=(const StateSpaceModelBase &rhs);
+    StateSpaceModelBase &operator=(StateSpaceModelBase &&rhs) = default;
+    
     //----- sizes of things ------------
     // The number of time points in the training data.
     virtual int time_dimension() const = 0;
@@ -534,6 +537,12 @@ namespace BOOM {
     // complete data sufficient statistics should be reset.
     void signal_complete_data_reset();
 
+    // Some child classes maintain parallel vectors of state models.  When
+    // implementing the copy constructor, the state models in the base class
+    // need to be cleared out so that the overloaded add_state() in the child
+    // classes can maintain parallelism correctly.
+    void clear_state_models() { state_models_.clear(); }
+    
    private:
     // Reset the size of the state_ matrix so that it has state_dimension() rows
     // and time_dimension() columns.
