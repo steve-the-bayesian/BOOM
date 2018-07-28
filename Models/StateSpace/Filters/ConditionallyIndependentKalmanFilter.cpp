@@ -48,8 +48,9 @@ namespace BOOM {
       } else {
         variance = model_->initial_state_variance();
       }
-
-      SpdMatrix ans = model_->observation_coefficients(time_index())->sandwich(variance);
+      const Selector &observed(model_->observed_status(time_index()));
+      SpdMatrix ans = model_->observation_coefficients(
+          time_index(), observed)->sandwich(variance);
       ans.diag() += model_->observation_variance(time_index()).diag();
       return ans.inv();
     }
@@ -57,8 +58,9 @@ namespace BOOM {
     SpdMatrix Marginal::forecast_precision() const {
       DiagonalMatrix observation_precision =
           model_->observation_variance(time_index()).inv();
+      const Selector &observed(model_->observed_status(time_index()));
       const SparseKalmanMatrix *observation_coefficients(
-          model_->observation_coefficients(time_index()));
+          model_->observation_coefficients(time_index(), observed));
 
       SpdMatrix variance;
       if (previous()) {

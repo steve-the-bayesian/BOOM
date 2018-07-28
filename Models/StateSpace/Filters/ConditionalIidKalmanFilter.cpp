@@ -141,8 +141,9 @@ namespace BOOM {
     }
     
     SpdMatrix CIMD::direct_forecast_precision() const {
-      SpdMatrix ans = model_->observation_coefficients(time_index())->sandwich(
-          previous()->state_variance());
+      SpdMatrix ans = model_->observation_coefficients(
+          time_index(), model_->observed_status(time_index()))->sandwich(
+              previous()->state_variance());
       ans.diag() += model_->observation_variance(time_index());
       return ans.inv();
     }
@@ -150,7 +151,8 @@ namespace BOOM {
     SpdMatrix CIMD::large_scale_forecast_precision() const {
       double observation_variance = model_->observation_variance(time_index());
       const SparseKalmanMatrix *observation_coefficients =
-          model_->observation_coefficients(time_index());
+          model_->observation_coefficients(
+              time_index(), model_->observed_status(time_index()));
       Matrix inner = previous()->state_variance() *
           observation_coefficients->inner() / observation_variance;
       inner.diag() += 1.0;

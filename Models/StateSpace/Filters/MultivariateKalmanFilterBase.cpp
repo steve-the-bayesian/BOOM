@@ -43,7 +43,7 @@ namespace BOOM {
       const SparseKalmanMatrix &transition(
           *model()->state_transition_matrix(time_index()));
       const SparseKalmanMatrix &observation_coefficients(
-          *model()->observation_coefficients(time_index()));
+          *model()->observation_coefficients(time_index(), observed));
       
       if (high_dimensional(observed)) {
         high_dimensional_update(observation, observed, transition,
@@ -92,22 +92,25 @@ namespace BOOM {
     }
     
     Vector Marginal::contemporaneous_state_mean() const {
+      const Selector &observed(model()->observed_status(time_index()));
       if (!previous()) {
         return model()->initial_state_mean()
             + model()->initial_state_variance()
-            * model()->observation_coefficients(0)->Tmult(scaled_state_error());
+            * model()->observation_coefficients(0, observed)->Tmult(
+                scaled_state_error());
       }
       return previous()->state_mean()
           + previous()->state_variance()
-          * model()->observation_coefficients(time_index())->Tmult(
+          * model()->observation_coefficients(time_index(), observed)->Tmult(
               scaled_state_error());
     }
 
     SpdMatrix Marginal::contemporaneous_state_variance() const {
       SpdMatrix P = previous() ? model()->initial_state_variance()
           : previous()->state_variance();
+      const Selector &observed(model()->observed_status(time_index()));
       const SparseKalmanMatrix *observation_coefficients(
-          model()->observation_coefficients(time_index()));
+          model()->observation_coefficients(time_index(), observed));
       return P - sandwich(
           P, observation_coefficients->sandwich_transpose(forecast_precision()));
     }
@@ -232,8 +235,9 @@ namespace BOOM {
       //   r: S x 1
       //
       node(t).set_scaled_state_error(r);
+      const Selector &observed(model_->observed_status(t));
       r = model_->state_transition_matrix(t)->Tmult(r)
-          - model_->observation_coefficients(t)->Tmult(
+          - model_->observation_coefficients(t, observed)->Tmult(
               node(t).kalman_gain().Tmult(r) - node(t).scaled_prediction_error());
     }
     set_initial_scaled_state_error(r);
