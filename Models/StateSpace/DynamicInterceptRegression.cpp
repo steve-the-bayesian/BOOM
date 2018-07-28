@@ -91,7 +91,8 @@ namespace BOOM {
       // state mean contains contribution from all state elements, including the
       // regression, so we need to add the regression component back in.
       Ptr<TimeSeriesRegressionData> data(dat()[t]);
-      Vector state_contribution = (*observation_coefficients(t)) * state(t);
+      Vector state_contribution = (*observation_coefficients(
+          t, observed_status(t))) * state(t);
       
       RegressionModel *regression = regression_->regression();
       for (int i = 0; i < data->sample_size(); ++i) {
@@ -121,7 +122,8 @@ namespace BOOM {
     DataPolicy::add_data(dp);
   }
 
-  const SparseKalmanMatrix *DIRM::observation_coefficients(int t) const {
+  const SparseKalmanMatrix *DIRM::observation_coefficients(
+      int t, const Selector &) const {
     observation_coefficients_.clear();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -167,7 +169,8 @@ namespace BOOM {
   }
   
   Vector DIRM::conditional_mean(int time) const {
-    return (*observation_coefficients(time) * state().col(time));
+    return (*observation_coefficients(
+        time, observed_status(time)) * state().col(time));
   }
 
   Vector DIRM::state_contribution(int state_model_index) const {
@@ -233,7 +236,10 @@ namespace BOOM {
   //===========================================================================
   // private:
   Vector DIRM::simulate_observation(RNG &rng, int t) {
-    Vector ans = (*observation_coefficients(t)) * state(t);
+    Selector fully_observed(observation_dimension(), true);
+    const Selector &observed(
+        t >= time_dimension() ? fully_observed : observed_status(t));
+    Vector ans = (*observation_coefficients(t, observed)) * state(t);
     double residual_sd = sqrt(observation_variance(t));
     for (int i = 0; i < ans.size(); ++i) {
       ans[i] += rnorm_mt(rng, 0, residual_sd);

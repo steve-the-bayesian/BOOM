@@ -146,7 +146,14 @@ namespace BOOM {
     // y[t] = Z[t] * state[t] + error[t].  If some elements of y[t] are
     // unobserved, the dimension of Z[t] will be reduced so that Z[t] * state[t]
     // only gives the mean of the observed components.
-    const SparseKalmanMatrix *observation_coefficients(int t) const override;
+    //
+    // Args:
+    //   t: The time index for which observation coefficients are desired.
+    //   observed: Indicates which elements of the observation are observed.
+    //     NOTE: 'observed is not currently used for this model.  It is needed
+    //     to match the signature from the base class.
+    const SparseKalmanMatrix *observation_coefficients(
+        int t, const Selector &observed) const override;
 
     // A vector of observation coefficients giving the intercept term in the
     // dynamic intercept regression.  The leading coefficient is zero, which
