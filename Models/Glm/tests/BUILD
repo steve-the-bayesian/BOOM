@@ -4,6 +4,17 @@ COPTS = [
 ]
 
 cc_test(
+    name = "binomial_logit_test",
+    srcs = ["binomial_logit_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "regression_model_test",
     srcs = ["regression_model_test.cc"],
     copts = COPTS,

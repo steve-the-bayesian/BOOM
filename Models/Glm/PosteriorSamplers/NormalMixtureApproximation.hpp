@@ -42,29 +42,34 @@ namespace BOOM {
 
     // Use this constructor for a NormalMixtureApproximation with a
     // specified set of mixture components and mixing weights.
+    // Args:
+    //   mu:  Means of the mixture components.
+    //   sigma:  Standard deviations of the mixture components.
+    //   weights: A discrete probability distribution giving the mixing weights
+    //     for the mixture components.
+    //
+    // The lengths of mu, sigma, and weights must all be the same.
     NormalMixtureApproximation(const Vector &mu, const Vector &sigma,
                                const Vector &weights);
 
     // Use this constructor to find the approximation that best fits a
     // specific target distribution.
     // Args:
-    //   log_target_density: The log of the distribution to be
-    //     approximated.
-    //   initial_mu: A vector of initial values to use for the means
-    //     of the approximating mixture components.
-    //   initial_sigma: A vector of standard deviations to use as the
-    //     initial values for the approximating mixture components.
-    //   initial_weights: A vector to use as the initial values of the
-    //     mixing weights.
-    //   precision: The fitting algorithm will stop if the
-    //     Kullback-Leibler divergence between target and the
-    //     approximating mixture is less than this number.
-    //   max_evals: The maximum number of trials allowed for the
-    //     fitting algorithm.
-    //   initial_stepsize: A parameter passed to the NEWUOA fitting
+    //   log_target_density: The log of the distribution to be approximated.
+    //   initial_mu: A vector of initial values to use for the means of the
+    //     approximating mixture components.
+    //   initial_sigma: A vector of standard deviations to use as the initial
+    //     values for the approximating mixture components.
+    //   initial_weights: A vector to use as the initial values of the mixing
+    //     weights.
+    //   precision: The fitting algorithm will stop if the Kullback-Leibler
+    //     divergence between target and the approximating mixture is less than
+    //     this number.
+    //   max_evals: The maximum number of trials allowed for the fitting
     //     algorithm.
-    //   force_zero_mu: If true then then all mixture components will
-    //     be forced to have zero mean.
+    //   initial_stepsize: A parameter passed to the NEWUOA fitting algorithm.
+    //   force_zero_mu: If true then then all mixture components will be forced
+    //     to have zero mean.
     NormalMixtureApproximation(
         const ScalarTarget &log_target_density, const Vector &initial_mu,
         const Vector &initial_sigma, const Vector &initial_weights,
@@ -76,9 +81,9 @@ namespace BOOM {
     // specified values.
     void set(const Vector &mu, const Vector &sigma, const Vector &weights);
 
-    // If the dimension of the approximation is k, then the first k
-    // elements of theta are the k mu's, then the k values of
-    // log(sigma), then the k-1 values of log(weights / weights[0]).
+    // If the dimension of the approximation is k, then the first k elements of
+    // theta are the k mu's, then the k values of log(sigma), then the k-1
+    // values of log(weights / weights[0]).
     void set(const Vector &theta);
 
     // The number of mixture components used in the approximation.
@@ -89,19 +94,25 @@ namespace BOOM {
     const Vector &weights() const { return weights_; }
     const Vector &log_weights() const { return log_weights_; }
 
-    // Return the log of the approximating normal mixture density at
-    // x.
+    // Return the log of the approximating normal mixture density at x.
     double logp(double x) const;
 
-    // For a particular observation u drawn from the distribution
-    // being approximated, take a random draw of the mixture component
-    // that generated it.
+    // For a particular observation u drawn from the distribution being
+    // approximated, take a random draw of the mixture component that generated
+    // it.
     void unmix(RNG &rng, double u, double *mu, double *sigsq) const;
 
+    // The Kullback Leibler distance to the distribution being approximated.
     double kullback_leibler() const;
-    // Records the answer in state.
+
+    // Compute the Kullback Leibler distance to the specified target.  Records
+    // the answer in state.
     double kullback_leibler(const ScalarTarget &target);
 
+    // If the approximation was initialized by the optimization constructor,
+    // this method returns the number of function evaluations necessary to
+    // arrive at the current approximation.  If initialized using another
+    // constructor then -1 is returned.
     int number_of_function_evaluations() const;
 
     ostream &print(ostream &out) const;
@@ -168,17 +179,16 @@ namespace BOOM {
     int smallest_index() const;
     int largest_index() const;
 
-    // If a numerical approximation exists at index_value, then return
-    // it.  Otherwise return an interpolation between the two nearest
-    // indices.
+    // If a numerical approximation exists at index_value, then return it.
+    // Otherwise return an interpolation between the two nearest indices.
     NormalMixtureApproximation &approximate(int index_value);
 
-    // Save the current state of the table to a numeric vector that
-    // can be stored somewhere.
+    // Save the current state of the table to a numeric vector that can be
+    // stored somewhere.
     Vector serialize() const;
 
-    // Clear the current contents of the table, and replace it with
-    // the values read from serialized_state.
+    // Clear the current contents of the table, and replace it with the values
+    // read from serialized_state.
     void deserialize(const Vector &serialized_state);
 
    private:
@@ -188,8 +198,7 @@ namespace BOOM {
     std::vector<NormalMixtureApproximation> approximations_;
   };
 
-  // The density for -1 times the log of a gamma(nu, 1) random
-  // variable.
+  // The density for -1 times the log of a gamma(nu, 1) random variable.
   class NegLogGamma {
    public:
     explicit NegLogGamma(double nu) : nu_(nu) {}
@@ -201,9 +210,9 @@ namespace BOOM {
     double nu_;
   };
 
-  //======================================================================
-  // A base class for a distance metric for measuring the closeness
-  // between the NormalMixtureApproximation and the target function.
+  //===========================================================================
+  // A base class for a distance metric for measuring the closeness between the
+  // NormalMixtureApproximation and the target function.
   class ApproximationDistance {
    public:
     ApproximationDistance(const ScalarTarget &logf,
@@ -213,9 +222,8 @@ namespace BOOM {
 
     virtual ~ApproximationDistance() {}
 
-    // The distance metric is a function of a set of parameters
-    // contained in the vector theta.  A default method is provided,
-    // but it can be over-ridden.
+    // The distance metric is a function of a set of parameters contained in the
+    // vector theta.  A default method is provided, but it can be over-ridden.
     virtual double operator()(const Vector &theta) const;
 
     double current_distance() const;
@@ -253,5 +261,7 @@ namespace BOOM {
                     double guess_at_mode);
     double integrand(double x) const override;
   };
+  
 }  // namespace BOOM
+
 #endif  //  BOOM_NORMAL_MIXTURE_APPROXIMATION_HPP_
