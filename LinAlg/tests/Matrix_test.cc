@@ -3,6 +3,7 @@
 #include "LinAlg/VectorView.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "distributions.hpp"
 #include "cpputil/math_utils.hpp"
@@ -334,6 +335,22 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         square.inner(weights),
         square.transpose() * DiagonalMatrix(weights) * square));
+  }
+
+  TEST_F(MatrixTest, KroneckerProduct) {
+    Matrix A(2, 3);
+    A.randomize();
+    Matrix B(5, 4);
+    B.randomize();
+    Matrix K = Kronecker(A, B);
+    EXPECT_EQ(K.nrow(), 2 * 5);
+    EXPECT_EQ(K.ncol(), 3 * 4);
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_TRUE(MatrixEquals(const_block(K, i, j, 5, 4),
+                                 A(i, j) * B));
+      }
+    }
   }
   
 }  // namespace

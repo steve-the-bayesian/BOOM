@@ -499,4 +499,22 @@ namespace BOOM {
     return MatrixSubtract(lhs, rhs);
   }
 
+  SubMatrix block(Matrix &m, int block_row, int block_col,
+                  int block_row_size, int block_col_size) {
+    int first_row = block_row_size * block_row;
+    int last_row = first_row + block_row_size - 1;
+    int first_col = block_col_size * block_col;
+    int last_col = first_col + block_col_size - 1;
+    return SubMatrix(m, first_row, last_row, first_col, last_col);
+  }
+
+  ConstSubMatrix const_block(const Matrix &m, int block_row, int block_col,
+                             int block_row_size, int block_col_size) {
+    int first_row = block_row_size * block_row;
+    int last_row = first_row + block_row_size - 1;
+    int first_col = block_col_size * block_col;
+    int last_col = first_col + block_col_size - 1;
+    return ConstSubMatrix(m, first_row, last_row, first_col, last_col);
+  }
+  
 }  // namespace BOOM

@@ -183,6 +183,13 @@ namespace BOOM {
   Matrix operator-(const ConstSubMatrix &lhs, const SubMatrix &rhs);
   Matrix operator-(const ConstSubMatrix &lhs, const Matrix &rhs);
 
+  // Return a SubMatrix using block-matrix partitioning.  I.e. return block (3,
+  // 4) from a partitioned matrix, where each block element is a (2, 3) matrix.
+  SubMatrix block(Matrix &m, int block_row, int block_col,
+                  int block_row_size, int block_col_size);
+  ConstSubMatrix const_block(const Matrix &m, int block_row, int block_col,
+                  int block_row_size, int block_col_size);
+  
 }  // namespace BOOM
 
 #endif  // BOOM_SUBMATRIX_HPP
