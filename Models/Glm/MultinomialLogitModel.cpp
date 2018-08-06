@@ -58,7 +58,7 @@ namespace BOOM {
   //------------------------------------------------------------
   MLM::MultinomialLogitModel(
       const std::vector<Ptr<CategoricalData> > &responses,
-      const Matrix &Xsubject, const std::vector<Mat> &Xchoice)
+      const Matrix &Xsubject, const std::vector<Matrix> &Xchoice)
       : nch_(responses[0]->nlevels()), psub_(Xsubject.ncol()), pch_(0) {
     uint n = responses.size();
     if ((nrow(Xsubject) > 0 && nrow(Xsubject) != n) ||

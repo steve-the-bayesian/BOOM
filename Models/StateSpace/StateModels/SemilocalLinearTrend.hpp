@@ -54,7 +54,7 @@ namespace BOOM {
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to_block(SubMatrix block) const override;
-    Mat dense() const override;
+    Matrix dense() const override;
 
    private:
     Ptr<UnivParams> phi_;

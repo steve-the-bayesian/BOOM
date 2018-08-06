@@ -158,7 +158,7 @@ namespace BOOM {
     //     response.  If choice_characteristics is provided, this
     //     argument must match.
     void set_x(const Matrix &subject_characeristics,
-               const std::vector<Mat> &choice_characteristics,
+               const std::vector<Matrix> &choice_characteristics,
                int number_of_choices);
 
     Ptr<VectorParams> Mu_prm();

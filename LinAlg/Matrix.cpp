@@ -1422,4 +1422,27 @@ namespace BOOM {
     return Usolve_inplace(U, ans);
   }
 
+  Matrix Kronecker(const Matrix &A, const Matrix &B) {
+    uint nra = A.nrow();
+    uint nca = A.ncol();
+
+    Matrix tmp = A(0, 0) * B;
+    Matrix ans(tmp);
+    for (uint j = 1; j < nca; ++j) {
+      tmp = A(0, j) * B;
+      ans = cbind(ans, tmp);
+    }
+
+    for (uint i = 1; i < nra; ++i) {
+      tmp = A(i, 0) * B;
+      Matrix row(tmp);
+      for (uint j = 1; j < nca; ++j) {
+        tmp = A(i, j) * B;
+        row = cbind(row, tmp);
+      }
+      ans = rbind(ans, row);
+    }
+    return ans;
+  }
+  
 }  // namespace BOOM

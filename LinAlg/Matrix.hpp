@@ -303,7 +303,6 @@ namespace BOOM {
     inline bool inrange(uint i, uint j) const;
   };
 
-  typedef Matrix Mat;
   //======================================================================
   class LabeledMatrix : public Matrix {
    public:
@@ -478,6 +477,8 @@ namespace BOOM {
   Matrix &Usolve_inplace(const Matrix &U, Matrix &B);  // B = U^{-1}B
   Matrix Uinv(const Matrix &U);
 
+  Matrix Kronecker(const Matrix &A, const Matrix &B);
+  
 }  // namespace BOOM
 
 #endif  // BOOM_NEWLA_MATRIX_HPP

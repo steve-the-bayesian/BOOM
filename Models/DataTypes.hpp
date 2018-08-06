@@ -168,7 +168,7 @@ namespace BOOM {
     Selector obs_;
   };
   //----------------------------------------------------------------------//
-  class MatrixData : public DataTraits<Mat> {
+  class MatrixData : public DataTraits<Matrix> {
    public:
     MatrixData(int r, int c, double val = 0.0);
     explicit MatrixData(const Matrix &y);

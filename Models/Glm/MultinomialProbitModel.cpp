@@ -161,7 +161,7 @@ namespace BOOM {
   }
 
   Vector &MNP::eta(const Ptr<ChoiceData> &dp, Vector &ans) const {
-    const Mat &X(dp->X());
+    const Matrix &X(dp->X());
     Ptr<GlmCoefs> b(Beta_prm());
     uint M = dp->nchoices();
     ans.resize(M);

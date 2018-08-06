@@ -59,7 +59,7 @@ namespace BOOM {
     
    protected:
     std::vector<Ptr<MixtureComponent>> models_;
-    std::vector<Mat> P;
+    std::vector<Matrix> P;
     Vector pi, logp, logpi, one;
     Matrix logQ;
     Ptr<MarkovModel> markov_;

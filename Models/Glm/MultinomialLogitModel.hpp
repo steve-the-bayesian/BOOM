@@ -73,7 +73,7 @@ namespace BOOM {
     MultinomialLogitModel(
         const std::vector<Ptr<CategoricalData> > &responses,
         const Matrix &Xsubject_info,
-        const std::vector<Mat> &Xchoice_info = std::vector<Mat>());
+        const std::vector<Matrix> &Xchoice_info = std::vector<Matrix>());
 
     MultinomialLogitModel(const MultinomialLogitModel &rhs);
     MultinomialLogitModel *clone() const override;

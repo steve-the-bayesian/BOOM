@@ -130,9 +130,9 @@ namespace BOOM {
     mutable Vector logp_;
     mutable Matrix logQ_;
 
-    std::vector<Mat> P_;  // joint distribution of state in FB
-    mutable Vector pi_;   // marginal distribution of state in FB
-    Vector one_;          // vector of 1's of dimension state_space_size
+    std::vector<Matrix> P_;  // joint distribution of state in FB
+    mutable Vector pi_   ;   // marginal distribution of state in FB
+    Vector one_;             // vector of 1's of dimension state_space_size
   };
 
 }  // namespace BOOM

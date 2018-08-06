@@ -163,7 +163,8 @@ namespace BOOM {
 
   void MvnGivenXMultinomialLogit::set_x(
       const Matrix &subject_characeristics,
-      const std::vector<Mat> &choice_characteristics, int number_of_choices) {
+      const std::vector<Matrix> &choice_characteristics,
+      int number_of_choices) {
     bool have_choice_predictors = !choice_characteristics.empty();
 
     if (have_choice_predictors &&

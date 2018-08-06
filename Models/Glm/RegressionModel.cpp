@@ -122,7 +122,7 @@ namespace BOOM {
     }
   }  // namespace
   //======================================================================
-  QrRegSuf::QrRegSuf(const Mat &X, const Vector &y)
+  QrRegSuf::QrRegSuf(const Matrix &X, const Vector &y)
       : qr(X), Qty(), sumsqy_(0.0), current(true) {
     Matrix Q(qr.getQ());
     Qty = y * Q;

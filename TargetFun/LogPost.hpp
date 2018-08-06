@@ -71,7 +71,7 @@ namespace BOOM {
     double operator()(const Vector &z, Vector &g, Matrix &h) const;
 
    private:
-    std::function<double(const Vector &x, Vector &g, Mat &h)> d2loglike_;
+    std::function<double(const Vector &x, Vector &g, Matrix &h)> d2loglike_;
     Ptr<d2VectorModel> d2prior_;
   };
 
