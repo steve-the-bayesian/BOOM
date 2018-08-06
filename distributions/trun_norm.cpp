@@ -26,7 +26,6 @@
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 
-/*======================================================================*/
 namespace BOOM {
   double trun_norm(double a) { return trun_norm_mt(GlobalRng::rng, a); }
 
@@ -46,7 +45,7 @@ namespace BOOM {
     }
     return x;
   }
-  /*======================================================================*/
+  //=======================================================================
   double dtrun_norm(double x, double mu, double sig, double cut, bool below,
                     bool logscale) {
     /*  if(below) this function returns p(x | x<cut), otherwise it

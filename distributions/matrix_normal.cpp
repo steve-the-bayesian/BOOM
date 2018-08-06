@@ -30,27 +30,25 @@
 
 namespace BOOM {
 
-  double dmatrix_normal_ivar(const Matrix &Y, const Matrix &Mu,
-                             const SpdMatrix &Siginv, const SpdMatrix &Ominv,
+  double dmatrix_normal_ivar(const Matrix &Y,
+                             const Matrix &Mu,
+                             const SpdMatrix &Ominv,
+                             const SpdMatrix &Siginv,
                              bool logscale) {
     double ldoi = Ominv.logdet();
     double ldsi = Siginv.logdet();
     return dmatrix_normal_ivar(Y, Mu, Siginv, ldsi, Ominv, ldoi, logscale);
   }
 
-  double dmatrix_normal_ivar(const Matrix &Y, const Matrix &Mu,
-                             const SpdMatrix &Siginv, double ldsi,
-                             const SpdMatrix &Ominv, double ldoi,
+  double dmatrix_normal_ivar(const Matrix &Y,
+                             const Matrix &Mu,
+                             const SpdMatrix &Ominv,
+                             double ldoi,
+                             const SpdMatrix &Siginv,
+                             double ldsi,
                              bool logscale) {
-    // Y~ matrix_normal(Mu, Siginv, Ominv) if
-    // Vector(Y) ~ N(Vector(Mu), (Siginv \otimes Ominv)^{-1})
-    // Where dim(Y) = (xdim,ydim) , dim(Siginv) = ydim,
-    // dim(Ominv) = xdim
-
     Matrix E = Y - Mu;
-    Matrix A = Ominv * E;
-    Matrix B = E * Siginv;
-    double qform = traceAtB(A, B);
+    double qform = traceAtB(Ominv * E, E * Siginv);
 
     // qform = vec(Y-Mu)^T (Siginv \otimes Ominv) vec(Y-Mu)
     //  = tr(E^T Ominv E Siginv)    see Harville (1997) 16.2.15
@@ -67,14 +65,14 @@ namespace BOOM {
     return logscale ? ans : exp(ans);
   }
 
-  Matrix rmatrix_normal_ivar(const Matrix &Mu, const SpdMatrix &Siginv,
-                             const SpdMatrix &Ominv) {
-    return rmatrix_normal_ivar_mt(GlobalRng::rng, Mu, Siginv, Ominv);
+  Matrix rmatrix_normal_ivar(const Matrix &Mu, const SpdMatrix &Ominv,
+                             const SpdMatrix &Siginv) {
+    return rmatrix_normal_ivar_mt(GlobalRng::rng, Mu, Ominv, Siginv);
   }
 
   Matrix rmatrix_normal_ivar_mt(RNG &rng, const Matrix &Mu,
-                                const SpdMatrix &Siginv,
-                                const SpdMatrix &Ominv) {
+                                const SpdMatrix &Ominv,
+                                const SpdMatrix &Siginv) {
     uint xdim = Mu.nrow();
     uint ydim = Mu.ncol();
     Matrix Z(xdim, ydim);

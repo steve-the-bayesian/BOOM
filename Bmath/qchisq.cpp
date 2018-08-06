@@ -43,10 +43,8 @@
 #include "nmath.hpp"
 #include "dpq.hpp"
 namespace Rmath{
-
-double qchisq(double p, double df, int lower_tail, int log_p)
-{
+  double qchisq(double p, double df, int lower_tail, int log_p) {
     return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
-}
-}
+  }
+}  // namespace Rmath
 

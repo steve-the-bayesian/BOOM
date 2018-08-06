@@ -81,7 +81,10 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
     int i;
 
     /* test arguments and initialise */
-
+    // Code below checks errno, so make sure it is in a good state to begin
+    // with.
+    errno = 0;
+    
 #ifdef IEEE_754
     if (ISNAN(p) || ISNAN(alpha) || ISNAN(scale))
         return p + alpha + scale;
@@ -142,13 +145,22 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
         q = ch;
         p1 = 0.5*ch;
         p2 = p_ - pgamma(p1, alpha, 1, /*lower_tail*/true, /*log_p*/false);
-#ifdef IEEE_754
-        if(!R_FINITE(p2))
-#else
-        if(errno != 0)
-#endif
-                return std::numeric_limits<double>::quiet_NaN();
-
+// #ifdef IEEE_754
+//         if(!R_FINITE(p2))
+// #else
+//         if(errno != 0)
+// #endif
+//                 return std::numeric_limits<double>::quiet_NaN();
+        if (errno != 0) {
+          std::ostringstream err;
+          err << "Math error in qgamma: " << strerror(errno) << std::endl;
+          report_error(err.str());
+          return std::numeric_limits<double>::quiet_NaN();
+        }
+        if (!std::finite(p2)) {
+          return std::numeric_limits<double>::quiet_NaN();          
+        }
+        
         t = p2*exp(alpha*M_LN2+g+p1-c*log(ch));
         b = t/ch;
         a = 0.5*t - b*c;

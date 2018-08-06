@@ -34,9 +34,12 @@ namespace BOOM {
   class VectorView;
   class ConstVectorView;
 
+  //===========================================================================
+  // Truncated normal distribution.
+
+  // Implements adaptive rejection sampling for drawing from the
+  // truncated normal distribution given x>a>0.
   class TnSampler {
-    // Implements adaptive rejection sampling for drawing from the
-    // truncated normal distribution given x>a>0.
    public:
     explicit TnSampler(double a);      // Set the truncation point.
     double draw(RNG &);                // simluate a value
@@ -73,9 +76,9 @@ namespace BOOM {
     using IT = std::vector<double>::iterator;
   };
 
+  // Implements adaptive rejection sampling for drawing from the truncated
+  // standard normal distribution with 0 < lo < x < hi
   class Tn2Sampler {
-    // implements adaptive rejection sampling for drawinf from the
-    // truncated standard normal distribution with 0 < lo < x < hi
    public:
     Tn2Sampler(double lo, double hi);
     double draw(RNG &);
@@ -113,8 +116,9 @@ namespace BOOM {
     using IT = std::vector<double>::iterator;
   };
 
-  double trun_norm(double);
-  double trun_norm_mt(RNG &, double);
+  // Draw x from the truncated stanadard normal distribution given x >= cutpoint.
+  double trun_norm(double cutpoint);
+  double trun_norm_mt(RNG &, double cutpoint);
 
   // Returns the mean and the variance of the truncated normal
   // distribution, where the untruncated distribution is N(mu, sigma).
@@ -128,6 +132,10 @@ namespace BOOM {
   // Be aware that the standard deviation of the untruncated
   // distribution is input.  The variance of the truncated
   // distribution is output.
+  //
+  // Args:
+  //   mu, sigma: Parameters of the untruncated distribution.
+  //   cutpoint:  
   void trun_norm_moments(double mu, double sigma, double cutpoint,
                          bool positive_support, double *mean, double *variance);
 
@@ -160,12 +168,14 @@ namespace BOOM {
   double rtrun_exp(double lam, double lo, double hi);
   double rpiecewise_log_linear_mt(RNG &rng, double slope, double lo, double hi);
 
-  double rlexp(double loglam);               // log E(lam).  loglam = log(lam)
-  double rlexp_mt(RNG &rng, double loglam);  // log E(lam).  loglam = log(lam)
+  // Simulate the log of an exponential random variable with rate parameter
+  // exp(loglam).
+  double rlexp(double loglam);
+  double rlexp_mt(RNG &rng, double loglam);  
 
+  //===========================================================================
   // extreme value distribution with centrality parameter 'mu + gamma', where
   // gamma is Euler's constant -0.5772157... and variance 'sigma^2 * pi^2/6'.  
-
   double pexv(double x, double mu = 0, double sigma = 1, bool logscale = false);
   double dexv(double x, double mu = 0., double sigma = 1., bool logscale = false);
   double rexv_mt(RNG &rng, double mu = 0., double sigma = 1.);
@@ -235,9 +245,9 @@ namespace BOOM {
   // Args:
   //   y:  The location where the density is to be evalutated.
   //   mu: Mean of the distribution.
-  //  Siginv:  Precision (inverse variance) matrix.
-  //  ldsi:  Log determinant of sigma inverse.
-  //  logscale:  If true then the log of the density is returned.
+  //   Siginv:  Precision (inverse variance) matrix.
+  //   ldsi:  Log determinant of sigma inverse.
+  //   logscale:  If true then the log of the density is returned.
   //
   // Returns:
   //   The value of the multivariate normal density at the specified
@@ -249,31 +259,84 @@ namespace BOOM {
   double dmvn(const Vector &y, const Vector &mu, const SpdMatrix &Siginv,
               bool logscale);
 
-  // Y~ matrix_normal(Mu, Siginv, Ominv) if
-  // Vector(Y) ~ N(Vector(Mu), (Siginv \otimes Ominv)^{-1})
-
-  Matrix rmatrix_normal_ivar(const Matrix &Mu, const SpdMatrix &Siginv,
+  //===========================================================================
+  // The matrix-normal distribution
+  //
+  // Y ~ matrix_normal(Mu, Siginv, Ominv) if
+  // Y - Mu = Ominv^{-1/2} * E * Siginv^{-1/2}^T, where
+  //   * E is a matrix of IID standard normals,
+  //   * Ominv^{-1/2} is a matrix square root (e.g. Cholesky factor) of Omega
+  //     = Ominv.inverse().  Omega describes the variance and covariance among
+  //     the rows of the matrix.
+  //   * Siginv^{-1/2} is a matrix square root of Sigma = Siginv.inverse().
+  //     Sigma describes the variance and covariance among the columns of the
+  //     matrix.
+  //
+  // The matrix normal distribution is a restricted version of the general
+  // multivariate normal distribution that would describe the vector Vec(Y)
+  // obtained by stacking the columns of Y.  Its mean is Vec(Mu), and its
+  // variance is Sigma \otimes Omega.
+  //
+  // Some examples of the matrix normal distribution include:
+  //   * A matrix formed by stacking the transpose of n IID observations from
+  //     Mvn(mu, V).  The Mu matrix is formed by stacking mu.tranpsose() n
+  //     times.  Omega is the n X n identity matrix, and Sigma is V.
+  //
+  //   * The likelihood for a multivariate regression of Y on X (where rows of
+  //     Y are independent) with known residual variance Sigma is proportional
+  //     to MatNorm(BetaHat, X'X.inverse(), Sigma).  The notation is Y = X *
+  //     Beta + Error where Y is n x k, X is n x p, and Beta is p x k.
+  //
+  // More properties fo the matrix normal distribution can be found at
+  // https://en.wikipedia.org/wiki/Matrix_normal_distribution
+  //
+  // Args:
+  //   Y: The random variable.
+  //   Mu:  The mean of the distribution.
+  //   Siginv: The invserse of the 'column-variance' parameter Sigma.  Dimension
+  //     matches the number of columns in Mu.
+  //   ldsi:  Log determinant of Siginv.
+  //   Ominv: The inverse of the 'row-variance' parameter Omega.  Dimension
+  //     matches the number of rows in Mu.
+  //   ldoi:  Log determinant of Ominv.
+  //   logscale:  If true then the log of the density is returned.
+  //   rng:  The U(0, 1) random number generator to use for the simulation.
+  Matrix rmatrix_normal_ivar(const Matrix &Mu,
+                             const SpdMatrix &Siginv,
                              const SpdMatrix &Ominv);
-  Matrix rmatrix_normal_ivar_mt(RNG &rng, const Matrix &Mu,
+  Matrix rmatrix_normal_ivar_mt(RNG &rng,
+                                const Matrix &Mu,
                                 const SpdMatrix &Siginv,
                                 const SpdMatrix &Ominv);
-  double dmatrix_normal_ivar(const Matrix &Y, const Matrix &Mu,
-                             const SpdMatrix &Siginv, const SpdMatrix &Ominv,
+  double dmatrix_normal_ivar(const Matrix &Y,
+                             const Matrix &Mu,
+                             const SpdMatrix &Siginv,
+                             const SpdMatrix &Ominv,
                              bool logscale);
-  double dmatrix_normal_ivar(const Matrix &Y, const Matrix &Mu,
-                             const SpdMatrix &Siginv, double ldsi,
-                             const SpdMatrix &Ominv, double ldoi,
+  double dmatrix_normal_ivar(const Matrix &Y,
+                             const Matrix &Mu,
+                             const SpdMatrix &Siginv,
+                             double ldsi,
+                             const SpdMatrix &Ominv,
+                             double ldoi,
                              bool logscale);
 
-  //  uniforms shrinkage prior in usp.cpp
+  //===========================================================================
+  // The uniform shrinkage prior from Christiansen and Morris 1997.
+  //   f(x) = z0 / (z0 + x)^2
+  //   F(x) = x / (x + z0)
+  //
+  // This is a heavy tailed distribution that serves as a uniform prior on the
+  // amount of shrinkage in the Poisson-Gamma hierarchical model.  The median of
+  // the distribution is z0.  The mean does not exist.
   double dusp(double x, double z0, bool logscale);
   double pusp(double x, double z0, bool logscale);
   double qusp(double p, double z0);
-
   double rusp(double z0);
   double rusp_mt(RNG &rng, double z0);
 
-  //  SpdMatrix rWish( double,  SpdMatrix &);
+  //===========================================================================
+  // Wishart distribution.
   SpdMatrix rWish(double df, const SpdMatrix &sumsq_inv, bool inv = false);
   SpdMatrix rWish_mt(RNG &, double df, const SpdMatrix &sumsq_inv,
                      bool inv = false);
@@ -283,11 +346,16 @@ namespace BOOM {
                          bool inv = false);
   double dWish(const SpdMatrix &S, const SpdMatrix &sumsq, double df,
                bool logscale, bool inv = false);
+
+  // Inverse Wishart distribution.
   inline double dWishinv(const SpdMatrix &S, const SpdMatrix &sumsq, double df,
                          bool logscale) {
     return dWish(S, sumsq, df, logscale, true);
   }
 
+  //===========================================================================
+  // Dirichlet distribution, with all combinations of Vector, VectorView, and
+  // ConstVectorView.
   double ddirichlet(const Vector &x, const Vector &nu, bool logscale);
   double ddirichlet(const VectorView &x, const Vector &nu, bool logscale);
   double ddirichlet(const Vector &x, const VectorView &nu, bool logscale);
@@ -301,7 +369,9 @@ namespace BOOM {
   double ddirichlet(const ConstVectorView &x, const VectorView &nu,
                     bool logscale);
 
+  // The mean of the Dirichlet distribution.
   Vector mdirichlet(const Vector &nu);
+  
   double dirichlet_loglike(const Vector &nu, Vector *g, Matrix *h,
                            const Vector &sumlogpi, double nobs);
 
@@ -312,21 +382,26 @@ namespace BOOM {
   Vector rdirichlet(const ConstVectorView &nu);
   Vector rdirichlet_mt(RNG &rng, const ConstVectorView &nu);
 
+  //===========================================================================
+  // Multinomial distribution.
   uint rmulti(const Vector &);
   uint rmulti(const VectorView &);
   uint rmulti(const ConstVectorView &);
   uint rmulti_mt(RNG &rng, const Vector &);
   uint rmulti_mt(RNG &rng, const VectorView &);
   uint rmulti_mt(RNG &rng, const ConstVectorView &);
-
   int rmulti(int, int);
   int rmulti_mt(RNG &, int, int);
 
+  //===========================================================================
+  // Multivariate student T distribution, defined by
+  //
+  // Y ~ mvt(mu, Sigma, nu) <==> Y = mu + Sigma^{1/2} * error / sqrt(w) where
+  // 'error' is a vector of IID standard normals, and w ~ Gamma(nu/2, nu/2).
   double dmvt(const Vector &x, const Vector &mu, const SpdMatrix &Siginv,
               double nu, double ldsi, bool logscale);
   double dmvt(const Vector &x, const Vector &mu, const SpdMatrix &Siginv,
               double nu, bool logscale);
-
   Vector rmvt(const Vector &mu, const SpdMatrix &Sigma, double nu);
   Vector rmvt_ivar(const Vector &mu, const SpdMatrix &Sigma, double nu);
   Vector rmvt_mt(RNG &, const Vector &mu, const SpdMatrix &Sigma, double nu);
