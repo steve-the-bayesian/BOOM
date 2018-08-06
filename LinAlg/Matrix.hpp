@@ -158,7 +158,7 @@ namespace BOOM {
     dVector::iterator end();
     dVector::const_iterator begin() const;
     dVector::const_iterator end() const;
-
+    
     dVector::iterator col_begin(uint i);
     dVector::iterator col_end(uint i);
     dVector::const_iterator col_begin(uint i) const;
@@ -477,8 +477,16 @@ namespace BOOM {
   Matrix &Usolve_inplace(const Matrix &U, Matrix &B);  // B = U^{-1}B
   Matrix Uinv(const Matrix &U);
 
+  // Returns the Kronecker product of A and B, which is a A partitioned matrix
+  // A(0, 0)*B, A(0, 1)*B, ...
+  // A(1, 0)*B, A(1, 1)*B, ...
   Matrix Kronecker(const Matrix &A, const Matrix &B);
-  
+
+  // Vectorization operator 'vec' forms a Vector from A by stacking its columns.
+  inline Vector vec(const Matrix &A) {
+    return Vector(A.begin(), A.end());
+  }
+    
 }  // namespace BOOM
 
 #endif  // BOOM_NEWLA_MATRIX_HPP

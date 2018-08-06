@@ -352,5 +352,10 @@ namespace {
       }
     }
   }
+
+  TEST_F(MatrixTest, Vectorize) {
+    Matrix A = rbind(Vector{1, 2, 3}, Vector{4, 5, 6});
+    EXPECT_TRUE(VectorEquals(vec(A), Vector{1, 4, 2, 5, 3, 6}));
+  }
   
 }  // namespace
