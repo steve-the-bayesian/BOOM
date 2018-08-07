@@ -19,9 +19,9 @@
 #ifndef BOOM_MVT_REG_SAMPLER_HPP
 #define BOOM_MVT_REG_SAMPLER_HPP
 
-#include "Models/Glm/MvReg2.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
 #include "Models/Glm/MvtRegModel.hpp"
-#include "Models/Glm/PosteriorSamplers/MvRegSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/MultivariateRegressionSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/ScaledChisqModel.hpp"
 #include "Samplers/SliceSampler.hpp"
@@ -46,8 +46,10 @@ namespace BOOM {
    private:
     MvtRegModel *mod;
 
-    Ptr<MvReg> reg_model;  // update sufficient statistics but not data
-    Ptr<MvRegSampler> reg_sampler;
+    // update sufficient statistics but not data
+    Ptr<MultivariateRegressionModel> reg_model;
+    
+    Ptr<MultivariateRegressionSampler> reg_sampler;
 
     Ptr<ScaledChisqModel> nu_model;
     Ptr<DoubleModel> nu_prior;

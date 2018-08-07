@@ -22,7 +22,7 @@
 
 #include "Models/Glm/ChoiceData.hpp"
 #include "Models/Glm/Glm.hpp"  // for GlmCoefs
-#include "Models/Glm/MvReg2.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"

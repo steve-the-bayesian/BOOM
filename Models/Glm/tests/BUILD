@@ -15,6 +15,17 @@ cc_test(
 )
 
 cc_test(
+    name = "multivariate_regression_test",
+    srcs = ["multivariate_regression_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "regression_model_test",
     srcs = ["regression_model_test.cc"],
     copts = COPTS,

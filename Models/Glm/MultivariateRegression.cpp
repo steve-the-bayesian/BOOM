@@ -16,8 +16,10 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-#include "Models/Glm/MvReg2.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
+#include "LinAlg/Cholesky.hpp"
+#include "cpputil/Constants.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -157,7 +159,8 @@ namespace BOOM {
   //======================================================================
 
   typedef QrMvRegSuf QS;
-  QS::QrMvRegSuf(const Matrix &X, const Matrix &Y, MvReg *Owner)
+  QS::QrMvRegSuf(const Matrix &X, const Matrix &Y,
+                 MultivariateRegressionModel *Owner)
       : qr(X),
         owner(Owner),
         current(false),
@@ -170,7 +173,7 @@ namespace BOOM {
   }
 
   QS::QrMvRegSuf(const Matrix &X, const Matrix &Y, const Vector &W,
-                 MvReg *Owner)
+                 MultivariateRegressionModel *Owner)
       : qr(X),
         owner(Owner),
         current(false),
@@ -344,13 +347,17 @@ namespace BOOM {
   }
   //======================================================================
 
-  MvReg::MvReg(uint xdim, uint ydim)
+  namespace {
+    using MvReg = MultivariateRegressionModel;
+  }
+  
+  MvReg::MultivariateRegressionModel(uint xdim, uint ydim)
       : ParamPolicy(new MatrixParams(xdim, ydim), new SpdParams(ydim)),
         DataPolicy(new NeMvRegSuf(xdim, ydim)),
         PriorPolicy(),
         LoglikeModel() {}
 
-  MvReg::MvReg(const Matrix &X, const Matrix &Y)
+  MvReg::MultivariateRegressionModel(const Matrix &X, const Matrix &Y)
       : ParamPolicy(),
         DataPolicy(new QrMvRegSuf(X, Y, this)),
         PriorPolicy(),
@@ -361,18 +368,11 @@ namespace BOOM {
     mle();
   }
 
-  MvReg::MvReg(const Matrix &B, const SpdMatrix &V)
+  MvReg::MultivariateRegressionModel(const Matrix &B, const SpdMatrix &V)
       : ParamPolicy(new MatrixParams(B), new SpdParams(V)),
         DataPolicy(new NeMvRegSuf(B.nrow(), B.ncol())),
         PriorPolicy(),
         LoglikeModel() {}
-
-  MvReg::MvReg(const MvReg &rhs)
-      : Model(rhs),
-        ParamPolicy(rhs),
-        DataPolicy(rhs),
-        PriorPolicy(rhs),
-        LoglikeModel(rhs) {}
 
   MvReg *MvReg::clone() const { return new MvReg(*this); }
 
@@ -400,29 +400,39 @@ namespace BOOM {
     set_Sigma(suf()->SSE(Beta()) / suf()->n());
   }
 
-  double MvReg::loglike(const Vector &beta_siginv) const {
-    const double log2pi = 1.83787706641;
+  double MvReg::log_likelihood(const Matrix &Beta,
+                               const SpdMatrix &Sigma) const {
+    Chol Sigma_cholesky(Sigma);
+    double qform = trace(suf()->SSE(Beta) * Sigma_cholesky.inv());
+    double ldsi = -1 * Sigma_cholesky.logdet();
+    double n = suf()->n();
+    double normalizing_constant = -.5 * (n * ydim()) * Constants::log_2pi;
+    return normalizing_constant + .5 * n * ldsi - .5 * qform;
+  }
 
+  // The likelihood is \prod root(2pi)^-d |siginv|^{n/2} exp{-1/2 * trace(qform)}
+  double MvReg::log_likelihood_ivar(const Matrix &Beta,
+                                    const SpdMatrix &Siginv) const {
+    double qform = trace(suf()->SSE(Beta) * Siginv);
+    double n = suf()->n();
+    double normalizing_constant = -.5 * (n * ydim()) * Constants::log_2pi;
+    return normalizing_constant + .5 * n * Siginv.logdet() - .5 * qform;
+  }
+        
+  double MvReg::loglike(const Vector &beta_siginv) const {
     Matrix Beta(xdim(), ydim());
     Vector::const_iterator it = beta_siginv.cbegin();
     std::copy(it, it + Beta.size(), Beta.begin());
     it += Beta.size();
     SpdMatrix siginv(ydim());
     siginv.unvectorize(it, true);
-
-    const SpdMatrix &yty(suf()->yty());
-    const Matrix &xty(suf()->xty());
-    const SpdMatrix &xtx(suf()->xtx());
-
-    double qform = traceAB(siginv, yty) - 2 * traceAB(xty.multT(Beta), siginv) +
-                   traceAB(sandwich(Beta, siginv), xtx);
-
-    double ldsi = siginv.logdet();
-    double n = suf()->n();
-    double ans = log2pi * n / 2 + ldsi * n / 2 - .5 * qform;
-    return ans;
+    return log_likelihood_ivar(Beta, siginv);
   }
 
+  double MvReg::log_likelihood() const {
+    return log_likelihood_ivar(Beta(), Siginv());
+  }
+  
   double MvReg::pdf(const Ptr<Data> &dptr, bool logscale) const {
     Ptr<MvRegData> dp = DAT(dptr);
     Vector mu = predict(dp->x());

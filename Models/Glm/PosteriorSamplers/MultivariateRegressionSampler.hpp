@@ -18,18 +18,31 @@
 */
 #ifndef BOOM_MVREG_SAMPLER_HPP
 #define BOOM_MVREG_SAMPLER_HPP
-#include "Models/Glm/MvReg2.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
 
 namespace BOOM {
 
-  class MvRegSampler : public PosteriorSampler {
+  class MultivariateRegressionSampler : public PosteriorSampler {
    public:
-    // assumes Beta|Sigma ~ N(B, Sigma \otimes I/kappa)
+    // Assumes the prior distribution Beta|Sigma ~ N(B, Sigma \otimes I/kappa)
     // and Sigma^{-1} ~ Wishart(prior_df/2, SS/2);
-
-    MvRegSampler(MvReg *m, const Matrix &B, double kappa, double prior_df,
-                 const SpdMatrix &Sigma_guess,
-                 RNG &seeding_rng = GlobalRng::rng);
+    //
+    // Args:
+    //   model:  The model that needs posterior sampling.
+    //   coefficient_prior_mean: Rows correspond to predictor variables.
+    //     Columns to response variables.
+    //   kappa:  Prior sample size for estimating the coefficients.
+    //   prior_df:  Prior sample size for estimating the residual variance.
+    //   residual_variance_guess:  Prior guess at the residual variance.
+    //   rng: Random number generator used to seed this rng() method for this
+    //     object.
+    MultivariateRegressionSampler(
+        MultivariateRegressionModel *model,
+        const Matrix &coefficient_prior_mean,
+        double kappa,
+        double prior_df,
+        const SpdMatrix &residual_variance_guess,
+        RNG &seeding_rng = GlobalRng::rng);
 
     double logpri() const override;
     void draw() override;
@@ -37,12 +50,12 @@ namespace BOOM {
     void draw_Sigma();
 
    private:
-    MvReg *mod;
-    SpdMatrix SS;
-    double prior_df;
-    SpdMatrix Ominv;
-    double ldoi;
-    Matrix B;
+    MultivariateRegressionModel *model_;
+    SpdMatrix SS_;
+    double prior_df_;
+    SpdMatrix Ominv_;
+    double ldoi_;
+    Matrix beta_prior_mean_;
   };
 
 }  // namespace BOOM

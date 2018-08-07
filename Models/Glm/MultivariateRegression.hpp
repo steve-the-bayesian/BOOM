@@ -49,11 +49,12 @@ namespace BOOM {
     virtual void combine(const Ptr<MvRegSuf> &) = 0;
   };
   //------------------------------------------------------------
-  class MvReg;
+  class MultivariateRegressionModel;
   class QrMvRegSuf : public MvRegSuf, public SufstatDetails<MvRegData> {
    public:
-    QrMvRegSuf(const Matrix &X, const Matrix &Y, MvReg *);
-    QrMvRegSuf(const Matrix &X, const Matrix &Y, const Vector &w, MvReg *);
+    QrMvRegSuf(const Matrix &X, const Matrix &Y, MultivariateRegressionModel *);
+    QrMvRegSuf(const Matrix &X, const Matrix &Y, const Vector &w,
+               MultivariateRegressionModel *);
     QrMvRegSuf *clone() const override;
 
     void Update(const MvRegData &) override;
@@ -87,7 +88,7 @@ namespace BOOM {
     mutable Matrix y_;
     mutable Vector w_;
 
-    MvReg *owner;
+    MultivariateRegressionModel *owner;
 
     mutable bool current;
     mutable SpdMatrix yty_;
@@ -189,21 +190,22 @@ namespace BOOM {
 
   //============================================================
   // Multivariate regression, where both y_i and x_i are vectors.
-  class MvReg : public ParamPolicy_2<MatrixParams, SpdParams>,
-                public SufstatDataPolicy<MvRegData, MvRegSuf>,
-                public PriorPolicy,
-                public LoglikeModel {
+  class MultivariateRegressionModel
+      : public ParamPolicy_2<MatrixParams, SpdParams>,
+        public SufstatDataPolicy<MvRegData, MvRegSuf>,
+        public PriorPolicy,
+        public LoglikeModel {
    public:
     // Args:
     //   xdim: The dimension of the predictor, including the intercept
     //     (if any).
     //   ydim:  The dimension of the response.
-    MvReg(uint xdim, uint ydim);
+    MultivariateRegressionModel(uint xdim, uint ydim);
 
     // Args:
     //   X:  The design matrix.
     //   Y:  The matrix of responses.  The number of rows must match X.
-    MvReg(const Matrix &X, const Matrix &Y);
+    MultivariateRegressionModel(const Matrix &X, const Matrix &Y);
 
     // Args:
     //   B: The matrix of regression coefficients.  The number of rows
@@ -211,10 +213,14 @@ namespace BOOM {
     //     columns defines the dimension of the response.
     //   Sigma: The residual variance matrix.  Its dimension must
     //     match ncol(B).
-    MvReg(const Matrix &B, const SpdMatrix &Sigma);
+    MultivariateRegressionModel(const Matrix &B, const SpdMatrix &Sigma);
 
-    MvReg(const MvReg &rhs);
-    MvReg *clone() const override;
+    using MvReg = MultivariateRegressionModel;
+    MultivariateRegressionModel(const MvReg &rhs) = default;
+    MultivariateRegressionModel(MvReg &&rhs) = default;
+    MultivariateRegressionModel &operator=(const MvReg &rhs) = default;
+    MultivariateRegressionModel &operator=(MvReg &&rhs) = default;
+    MultivariateRegressionModel *clone() const override;
 
     // Dimension of the predictor (including the intercept, if any).
     uint xdim() const;
@@ -249,6 +255,11 @@ namespace BOOM {
     // The argument to loglike is a vector created by stacking the
     // columns of Beta, and the upper triangle of Sigma
     double loglike(const Vector &beta_sigma) const override;
+    //
+    double log_likelihood(const Matrix &Beta, const SpdMatrix &Sigma) const;
+    double log_likelihood_ivar(const Matrix &Beta, const SpdMatrix &Siginv) const;
+    double log_likelihood() const override;
+    
     virtual double pdf(const Ptr<Data> &, bool) const;
 
     // Returns x * Beta();
