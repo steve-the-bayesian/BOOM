@@ -157,7 +157,7 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
           report_error(err.str());
           return std::numeric_limits<double>::quiet_NaN();
         }
-        if (!std::finite(p2)) {
+        if (!std::isfinite(p2)) {
           return std::numeric_limits<double>::quiet_NaN();          
         }
         
