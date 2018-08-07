@@ -149,6 +149,13 @@ namespace {
     Matrix X = M.solve(M2);
     EXPECT_TRUE(MatrixEquals(M * X, M2));
   }
+
+  TEST_F(MatrixTest, Trace) {
+    Matrix M(4, 4);
+    M.randomize();
+    EXPECT_DOUBLE_EQ(M.trace(), trace(M));
+    EXPECT_DOUBLE_EQ(M.trace(), sum(M.diag()));
+  }
   
   TEST_F(MatrixTest, AddOuter) {
     Matrix M(4, 4);

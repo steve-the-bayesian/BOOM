@@ -710,7 +710,7 @@ namespace BOOM {
     return ans;
   }
 
-  double Matrix::trace() const { return accumulate(dbegin(), dend(), 0.0); }
+  double Matrix::trace() const {return diag().sum();}
 
   double Matrix::det() const {
     if (!is_square()) {
