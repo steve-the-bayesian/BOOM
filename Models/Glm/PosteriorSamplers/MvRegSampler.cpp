@@ -42,7 +42,7 @@ namespace BOOM {
     double ldsi = mod->ldsi();
     const Matrix &Beta(mod->Beta());
     double ans = dWish(Siginv, SS, prior_df, true);
-    ans += dmatrix_normal_ivar(Beta, B, Siginv, ldsi, Ominv, ldoi, true);
+    ans += dmatrix_normal_ivar(Beta, B, Ominv, ldoi, Siginv, ldsi, true);
     return ans;
   }
 
@@ -53,11 +53,10 @@ namespace BOOM {
 
   void MRS::draw_Beta() {
     Ptr<NeMvRegSuf> s(mod->suf().dcast<NeMvRegSuf>());
-
     SpdMatrix ivar = Ominv + s->xtx();
     Matrix Mu = s->xty() + Ominv * B;
     Mu = ivar.solve(Mu);
-    Matrix ans = rmatrix_normal_ivar(Mu, mod->Siginv(), ivar);
+    Matrix ans = rmatrix_normal_ivar(Mu, ivar, mod->Siginv());
     mod->set_Beta(ans);
   }
 
