@@ -163,38 +163,23 @@ namespace BOOM {
     virtual void set_behavior(Behavior) {}
   };
 
-  class DynamicInterceptStateModel
-      : virtual public StateModel {
+  //
+  class StateModelAdapter : virtual public StateModel {
    public:
-    DynamicInterceptStateModel *clone() const override = 0;
-
-    // Observation coefficients for a dynamic intercept regression model.
-    // Args:
-    //   t:  The time point for which coefficients are desired.
-    //   data_point:  The data point managed by the model at time t.
-    // Returns:
-    //   The return value is a sparse number_of_observations X state_dimension
-    //   matrix.  When multiplied by the state it gives the expected value for
-    //   each of the observations at time t.
-    using DataType = StateSpace::TimeSeriesRegressionData;
-    virtual Ptr<SparseMatrixBlock> observation_coefficients(
-        int t, const StateSpace::TimeSeriesRegressionData &data_point) const;
-  };
-
-  // The simple way to convert a StateModel into a DynamicInterceptStateModel.
-  class DynamicInterceptStateModelAdapter
-      : public DynamicInterceptStateModel {
-   public:
-    DynamicInterceptStateModelAdapter(const Ptr<StateModel> &base)
-        : base_(base) {}
-    DynamicInterceptStateModelAdapter(
-        const DynamicInterceptStateModelAdapter &rhs);
-    DynamicInterceptStateModelAdapter * clone() const override {
-      return new DynamicInterceptStateModelAdapter(*this);
+    StateModelAdapter(const Ptr<StateModel> &base) : base_(base) {}
+    StateModelAdapter(const StateModelAdapter &rhs)
+        : StateModel(rhs), base_(rhs.clone()) {}
+    StateModelAdapter *clone() const override {return new StateModelAdapter(*this);}
+    StateModelAdapter &operator=(const StateModelAdapter &rhs) {
+      if (&rhs != this) {
+        StateModel::operator=(rhs);
+        base_.reset(rhs.base_->clone());
+      }
+      return *this;
     }
 
     //---------------------------------------------------------------------------
-    // This section contains all the overrides expected from Model.
+    // Overrides required by Model.
     ParamVector parameter_vector() override {
       return base_->parameter_vector();
     }
@@ -223,7 +208,7 @@ namespace BOOM {
     }
     
     //---------------------------------------------------------------------------
-    // This section contains all the overrides expected from StateModel.
+    // Overrides required by StateModel.
     void observe_time_dimension(int max_time) override {
       base_->observe_time_dimension(max_time);
     }
@@ -305,6 +290,135 @@ namespace BOOM {
     
    private:
     Ptr<StateModel> base_;
+    
+  };
+  
+  //===========================================================================
+  // A variant of a state model for use with dynamic intercept regression
+  // models.
+  class DynamicInterceptStateModel
+      : virtual public StateModel {
+   public:
+    DynamicInterceptStateModel *clone() const override = 0;
+
+    // Observation coefficients for a dynamic intercept regression model.
+    // Args:
+    //   t:  The time point for which coefficients are desired.
+    //   data_point:  The data point managed by the model at time t.
+    // Returns:
+    //   The return value is a sparse number_of_observations X state_dimension
+    //   matrix.  When multiplied by the state it gives the expected value for
+    //   each of the observations at time t.
+    using DataType = StateSpace::TimeSeriesRegressionData;
+    virtual Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const DataType &data_point) const;
+  };
+
+  //===========================================================================
+  // The simple way to convert a StateModel into a DynamicInterceptStateModel.
+  class DynamicInterceptStateModelAdapter
+      : public DynamicInterceptStateModel,
+        public StateModelAdapter {
+   public:
+    explicit DynamicInterceptStateModelAdapter(const Ptr<StateModel> &base)
+        : StateModelAdapter(base) {}
+    DynamicInterceptStateModelAdapter(
+        const DynamicInterceptStateModelAdapter &rhs);
+    DynamicInterceptStateModelAdapter * clone() const override {
+      return new DynamicInterceptStateModelAdapter(*this);
+    }
+    
+    //---------------------------------------------------------------------------
+    // This section contains all the overrides expected from Model.
+    using StateModelAdapter::parameter_vector;
+    using StateModelAdapter::add_data;
+    using StateModelAdapter::clear_data;
+    using StateModelAdapter::combine_data;
+    using StateModelAdapter::sample_posterior;
+    using StateModelAdapter::logpri;
+    using StateModelAdapter::set_method;
+    using StateModelAdapter::number_of_sampling_methods;
+
+    //---------------------------------------------------------------------------
+    // This section contains all the overrides expected from StateModel.
+    using StateModelAdapter::observe_time_dimension;
+    using StateModelAdapter::observe_state;
+    using StateModelAdapter::observe_initial_state;
+    using StateModelAdapter::state_dimension;
+    using StateModelAdapter::state_error_dimension;
+    using StateModelAdapter::update_complete_data_sufficient_statistics;
+    using StateModelAdapter::increment_expected_gradient;
+    using StateModelAdapter::simulate_state_error;
+    using StateModelAdapter::simulate_initial_state;
+    using StateModelAdapter::state_transition_matrix;
+    using StateModelAdapter::state_variance_matrix;
+    using StateModelAdapter::state_error_expander;
+    using StateModelAdapter::state_error_variance;
+    using StateModelAdapter::observation_matrix;
+    using StateModelAdapter::initial_state_mean;
+    using StateModelAdapter::initial_state_variance;
+    using StateModelAdapter::set_behavior;
+
+   protected:
+    using StateModelAdapter::sampler;
+  };
+
+  //===========================================================================
+  class MultivariateStateModel : virtual public StateModel {
+   public:
+    MultivariateStateModel *clone() const override = 0;
+
+    virtual Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const Selector &observed) const = 0;
+  };
+
+  //===========================================================================
+  class MultivariateStateModelAdapter :
+      public MultivariateStateModel,
+      public StateModelAdapter {
+   public:
+    MultivariateStateModelAdapter(const Ptr<StateModel> &state_model);
+    MultivariateStateModelAdapter(const MultivariateStateModelAdapter &rhs);
+    MultivariateStateModelAdapter *clone() const override {
+      return new MultivariateStateModelAdapter(*this);
+    }
+
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const Selector &observed) const override;
+    
+    //---------------------------------------------------------------------------
+    // This section contains all the overrides expected from Model.
+    using StateModelAdapter::parameter_vector;
+    using StateModelAdapter::add_data;
+    using StateModelAdapter::clear_data;
+    using StateModelAdapter::combine_data;
+    using StateModelAdapter::sample_posterior;
+    using StateModelAdapter::logpri;
+    using StateModelAdapter::set_method;
+    using StateModelAdapter::number_of_sampling_methods;
+
+    //---------------------------------------------------------------------------
+    // This section contains all the overrides expected from StateModel.
+    using StateModelAdapter::observe_time_dimension;
+    using StateModelAdapter::observe_state;
+    using StateModelAdapter::observe_initial_state;
+    using StateModelAdapter::state_dimension;
+    using StateModelAdapter::state_error_dimension;
+    using StateModelAdapter::update_complete_data_sufficient_statistics;
+    using StateModelAdapter::increment_expected_gradient;
+    using StateModelAdapter::simulate_state_error;
+    using StateModelAdapter::simulate_initial_state;
+    using StateModelAdapter::state_transition_matrix;
+    using StateModelAdapter::state_variance_matrix;
+    using StateModelAdapter::state_error_expander;
+    using StateModelAdapter::state_error_variance;
+    using StateModelAdapter::observation_matrix;
+    using StateModelAdapter::initial_state_mean;
+    using StateModelAdapter::initial_state_variance;
+    using StateModelAdapter::set_behavior;
+
+   protected:
+    using StateModelAdapter::sampler;
   };
   
 }  // namespace BOOM

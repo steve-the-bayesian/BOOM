@@ -65,9 +65,5 @@ namespace BOOM {
                                    data_point.sample_size());
   }
 
-  DISMA::DynamicInterceptStateModelAdapter(const DISMA &rhs)
-      : DynamicInterceptStateModel(rhs),
-        base_(rhs.base_->clone())
-  {}
   
 }  // namespace BOOM

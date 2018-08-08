@@ -34,7 +34,7 @@ namespace BOOM {
     // Args:
     //   threshold: The minimal absolute value required for a correlation to be
     //     included in the map.
-    CorrelationMap(double threshold = .8);
+    explicit CorrelationMap(double threshold = .8);
 
     // Build a CorrelationMap to be filled by the sufficient statistics from a
     // regression model.

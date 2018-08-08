@@ -79,7 +79,7 @@ namespace BOOM {
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
-      StateModelFactory(RListIoManager *io_manager);
+      explicit StateModelFactory(RListIoManager *io_manager);
 
       // Adds all the state components listed in
       // r_state_specification_list to the model.

@@ -101,7 +101,8 @@ namespace BOOM {
       return new RegressionDynamicInterceptStateModel(*this);
     }
     
-    RegressionDynamicInterceptStateModel(const Ptr<RegressionModel> &regression)
+    explicit RegressionDynamicInterceptStateModel(
+        const Ptr<RegressionModel> &regression)
         : RegressionStateModel(regression) {}
 
     // The observation coefficients at time t form a column vector with elements

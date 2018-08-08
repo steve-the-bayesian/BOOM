@@ -35,7 +35,7 @@ namespace BOOM {
     class StaticInterceptTestModule
         : public StateModelTestModule {
      public:
-      StaticInterceptTestModule(double intercept);
+      explicit StaticInterceptTestModule(double intercept);
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return state_; }
       Ptr<StateModel> get_state_model() override {return intercept_model_;}

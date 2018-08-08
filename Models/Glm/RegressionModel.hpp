@@ -222,7 +222,8 @@ namespace BOOM {
         xtx_is_fixed_(false),
         sumsqy_(0.0),
         n_(0.0),
-        sumy_(0.0)
+        sumy_(0.0),
+        allow_non_finite_responses_(false)
   {
     Ptr<RegressionData> dp = *b;
     uint p = dp->xdim();

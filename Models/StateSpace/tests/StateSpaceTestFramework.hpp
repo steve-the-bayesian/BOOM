@@ -32,7 +32,7 @@ namespace BOOM {
     class StateSpaceTestFramework
         : public TestFrameworkBase {
      public:
-      StateSpaceTestFramework(double observation_sd);
+      explicit StateSpaceTestFramework(double observation_sd);
       
       void SimulateData(int time_dimension) override;
       void BuildModel() override;
