@@ -1296,7 +1296,7 @@ namespace BOOM {
   // symmetric and idempotent.
   class EffectConstraintMatrix : public SparseMatrixBlock {
    public:
-    EffectConstraintMatrix(int dim) : dim_(dim) {}
+    explicit EffectConstraintMatrix(int dim) : dim_(dim) {}
     EffectConstraintMatrix *clone() const override {
       return new EffectConstraintMatrix(*this);
     }
