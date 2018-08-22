@@ -61,7 +61,7 @@ extern "C" {
     BOOM::SubMatrix fine_series(REAL(r_fine_series),
                                 num_fine_rows,
                                 num_fine_time_points);
-    BOOM::Mat coarse_series(num_fine_rows, num_coarse_time_points);
+    BOOM::Matrix coarse_series(num_fine_rows, num_coarse_time_points);
 
     for (int iteration = 0; iteration < num_fine_rows; ++iteration) {
       double current = 0;

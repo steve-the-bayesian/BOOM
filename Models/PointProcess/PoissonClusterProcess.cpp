@@ -92,9 +92,11 @@ namespace BOOM {
       return std::pair<int, int>(i1, i2);
     }
 
+    using PCP = PoissonClusterProcess;
+    
   }  // unnamed namespace
 
-  PoissonClusterProcess::PoissonClusterProcess(
+  PCP::PoissonClusterProcess(
       const PoissonClusterComponentProcesses &components)
       : background_(components.background),
         primary_birth_(components.primary_birth),
@@ -107,7 +109,7 @@ namespace BOOM {
     initialize();
   }
 
-  PoissonClusterProcess::PoissonClusterProcess(
+  PCP::PoissonClusterProcess(
       const PoissonClusterComponentProcesses &components,
       const Ptr<MixtureComponent> &primary_mark_model,
       const Ptr<MixtureComponent> &secondary_mark_model)
@@ -123,7 +125,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  PoissonClusterProcess::PoissonClusterProcess(const PoissonClusterProcess &rhs)
+  PCP::PoissonClusterProcess(const PoissonClusterProcess &rhs)
       : Model(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
@@ -144,12 +146,12 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  PoissonClusterProcess *PoissonClusterProcess::clone() const {
+  PoissonClusterProcess *PCP::clone() const {
     return new PoissonClusterProcess(*this);
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::set_mark_models(
+  void PCP::set_mark_models(
       const Ptr<MixtureComponent> &primary_mark_model,
       const Ptr<MixtureComponent> &secondary_mark_model) {
     primary_mark_model_ = primary_mark_model;
@@ -159,7 +161,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::clear_client_data() {
+  void PCP::clear_client_data() {
     background_->clear_data();
     primary_birth_->clear_data();
     primary_death_->clear_data();
@@ -176,7 +178,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::impute_latent_data(RNG &rng) {
+  void PCP::impute_latent_data(RNG &rng) {
     const std::vector<Ptr<PointProcess> > &data(dat());
     last_loglike_ = 0;
     clear_client_data();
@@ -194,7 +196,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::sample_client_posterior() {
+  void PCP::sample_client_posterior() {
     background_->sample_posterior();
     primary_birth_->sample_posterior();
     primary_death_->sample_posterior();
@@ -206,7 +208,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double PoissonClusterProcess::logpri() const {
+  double PCP::logpri() const {
     double ans = background_->logpri() + primary_birth_->logpri() +
                  primary_death_->logpri() + primary_traffic_->logpri() +
                  secondary_traffic_->logpri() + secondary_death_->logpri();
@@ -217,7 +219,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double PoissonClusterProcess::conditional_event_loglikelihood(
+  double PCP::conditional_event_loglikelihood(
       int r, int s, const PointProcessEvent &event, double logp_primary,
       double logp_secondary, int source) const {
     std::vector<const PoissonProcess *> responsible_processes =
@@ -242,7 +244,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  double PoissonClusterProcess::conditional_cumulative_hazard(
+  double PCP::conditional_cumulative_hazard(
       const DateTime &t0, const DateTime &t1, int r) const {
     double ans = 0;
     const std::vector<PoissonProcess *> &active(active_processes_[r]);
@@ -253,13 +255,12 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  int PoissonClusterProcess::number_of_hmm_states() const {
+  int PCP::number_of_hmm_states() const {
     return activity_state_.size();
   }
 
   //----------------------------------------------------------------------
-  double PoissonClusterProcess::filter(const PointProcess &data,
-                                       const std::vector<int> &source) {
+  double PCP::filter(const PointProcess &data, const std::vector<int> &source) {
     // The filter is initialized at the beginning of the observation
     // window, which is <= the time of the first event.
     double loglike = initialize_filter(data);
@@ -272,7 +273,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   // Determine the a prior state of the filter at the beginning of the
   // observation window.  Make sure everything is sized correctly.
-  double PoissonClusterProcess::initialize_filter(const PointProcess &data) {
+  double PCP::initialize_filter(const PointProcess &data) {
     int S = number_of_hmm_states();
     int n = data.number_of_events();
     if (n == 0) return 0;
@@ -300,8 +301,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   // return log(p(events[t] | events[0..t-1]).
-  double PoissonClusterProcess::fwd_1(const PointProcess &data, int t,
-                                      int source) {
+  double PCP::fwd_1(const PointProcess &data, int t, int source) {
     Matrix &P(filter_[t]);
     P = negative_infinity();
     int S = number_of_hmm_states();
@@ -340,9 +340,11 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::backward_sampling(
-      RNG &rng, const PointProcess &data, const std::vector<int> &source,
-      Matrix &probability_of_activity, Matrix &probability_of_responsibility) {
+  void PCP::backward_sampling(RNG &rng,
+                              const PointProcess &data,
+                              const std::vector<int> &source,
+                              Matrix &probability_of_activity,
+                              Matrix &probability_of_responsibility) {
     int n = data.number_of_events();
     if (n == 0) {
       probability_of_responsibility = 0;
@@ -362,7 +364,7 @@ namespace BOOM {
       } catch (std::exception &e) {
         std::ostringstream err;
         err << e.what() << endl
-            << "Error occurred in PoissonClusterProcess::backward_sampling"
+            << "Error occurred in PCP::backward_sampling"
             << " at time " << t << " (counting from 0)." << endl
             << "Current state at time t is " << current_state << "." << endl;
 
@@ -395,7 +397,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::backward_smoothing(
+  void PCP::backward_smoothing(
       const PointProcess &data, const std::vector<int> &source,
       Matrix &probability_of_activity, Matrix &probability_of_responsibility) {
     int n = data.number_of_events();
@@ -408,7 +410,7 @@ namespace BOOM {
         ncol(probability_of_responsibility) != n) {
       report_error(
           "wrong size probability matrices in "
-          "PoissonClusterProcess::backward_smoothing");
+          "PCP::backward_smoothing");
     }
     bool have_source = !source.empty();
     for (int t = n - 1; t >= 0; --t) {
@@ -423,8 +425,8 @@ namespace BOOM {
     }
   }
 
-  void PoissonClusterProcess::backward_smoothing_step(
-      Matrix &transition_density, Vector &marginal) {
+  void PCP::backward_smoothing_step(Matrix &transition_density,
+                                    Vector &marginal) {
     wsp_ = one_ * transition_density;
     wsp_ *= marginal;
     for (int r = 0; r < nrow(transition_density); ++r) {
@@ -435,18 +437,17 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   // Draws the t-1 -> t transition given the state at t.
-  int PoissonClusterProcess::draw_previous_state(RNG &rng, int t,
-                                                 int current_state) {
+  int PCP::draw_previous_state(RNG &rng, int t, int current_state) {
     return rmulti_mt(rng, filter_[t].col(current_state));
   }
 
   //----------------------------------------------------------------------
-  bool PoissonClusterProcess::primary(const PoissonProcess *process) const {
+  bool PCP::primary(const PoissonProcess *process) const {
     return process == primary_traffic_.get() ||
            process == primary_birth_.get() || process == primary_death_.get();
   }
 
-  bool PoissonClusterProcess::secondary(const PoissonProcess *process) const {
+  bool PCP::secondary(const PoissonProcess *process) const {
     return process == background_.get() ||
            process == secondary_traffic_.get() ||
            process == secondary_death_.get();
@@ -454,7 +455,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   std::vector<PoissonProcess *>
-  PoissonClusterProcess::get_responsible_processes(int r, int s, int source) {
+  PCP::get_responsible_processes(int r, int s, int source) {
     ResponsibleProcessMap::iterator it =
         responsible_process_map_.find(index(r, s));
     if (it == responsible_process_map_.end()) {
@@ -465,8 +466,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   std::vector<const PoissonProcess *>
-  PoissonClusterProcess::get_responsible_processes(int r, int s,
-                                                   int source) const {
+  PCP::get_responsible_processes(int r, int s, int source) const {
     ResponsibleProcessMap::const_iterator it =
         responsible_process_map_.find(index(r, s));
     if (it == responsible_process_map_.end()) {
@@ -476,7 +476,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  std::vector<PoissonProcess *> PoissonClusterProcess::subset_matching_source(
+  std::vector<PoissonProcess *> PCP::subset_matching_source(
       std::vector<PoissonProcess *> &candidates, int source) {
     if (source < 0) return candidates;
     std::vector<PoissonProcess *> ans;
@@ -492,8 +492,8 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   std::vector<const PoissonProcess *>
-  PoissonClusterProcess::subset_matching_source(
-      const std::vector<PoissonProcess *> &candidates, int source) const {
+  PCP::subset_matching_source(const std::vector<PoissonProcess *> &candidates,
+                              int source) const {
     if (source < 0) {
       return std::vector<const PoissonProcess *>(candidates.begin(),
                                                  candidates.end());
@@ -510,8 +510,8 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  bool PoissonClusterProcess::matches_source(const PoissonProcess *process,
-                                             int source) const {
+  bool PCP::matches_source(const PoissonProcess *process,
+                           int source) const {
     if (source < 0) return true;
     if (source == 1) {
       return primary(process);
@@ -520,7 +520,7 @@ namespace BOOM {
     }
     report_error(
         "unknown process, source combination in "
-        "PoissonClusterProcess::matches_source");
+        "PCP::matches_source");
     return false;
   }
 
@@ -528,7 +528,7 @@ namespace BOOM {
   // Returns the process responsible for the transition at time t,
   // given the value of the transition.  If source < 0 (the expected
   // state in many cases, the source for this observation is missing.
-  PoissonProcess *PoissonClusterProcess::assign_responsibility(
+  PoissonProcess *PCP::assign_responsibility(
       RNG &rng, const PointProcess &data, int t, int previous_state,
       int current_state, int source) {
     std::vector<PoissonProcess *> candidates(
@@ -536,7 +536,7 @@ namespace BOOM {
     int n = candidates.size();
     if (n == 0) {
       std::ostringstream err;
-      err << "trouble in PoissonClusterProcess::assign_responsibility: "
+      err << "trouble in PCP::assign_responsibility: "
           << "no potential candidates in transition from state "
           << previous_state << " to " << current_state
           << " with source = " << source << "." << endl;
@@ -567,8 +567,8 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::attribute_event(
-      const PointProcessEvent &event, PoissonProcess *responsible_process) {
+  void PCP::attribute_event(const PointProcessEvent &event,
+                            PoissonProcess *responsible_process) {
     responsible_process->add_event(event.timestamp());
     if (event.has_mark() && !!primary_mark_model_) {
       mark_model(responsible_process)->add_data(event.mark_ptr());
@@ -576,10 +576,10 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::update_exposure_time(const PointProcess &data,
-                                                   int current_time,
-                                                   int previous_state,
-                                                   int current_state) {
+  void PCP::update_exposure_time(const PointProcess &data,
+                                 int current_time,
+                                 int previous_state,
+                                 int current_state) {
     std::vector<PoissonProcess *> &running(active_processes_[previous_state]);
     const DateTime &then(current_time > 0
                              ? data.event(current_time - 1).timestamp()
@@ -591,7 +591,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::clear_data() {
+  void PCP::clear_data() {
     DataPolicy::clear_data();
     clear_client_data();
     probability_of_responsibility_.clear();
@@ -599,13 +599,13 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::add_data(const Ptr<Data> &dp) {
+  void PCP::add_data(const Ptr<Data> &dp) {
     Ptr<PointProcess> d = DAT(dp);
     add_data(d);
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::add_data(const Ptr<PointProcess> &dp) {
+  void PCP::add_data(const Ptr<PointProcess> &dp) {
     int n = dp->number_of_events();
     int nproc = 3;
     Matrix activity(nproc, n, 0.0);
@@ -616,12 +616,12 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::add_supervised_data(
+  void PCP::add_supervised_data(
       const Ptr<PointProcess> &dp, const std::vector<int> &source) {
     add_data(dp);
     if (dp->number_of_events() != source.size()) {
       std::ostringstream err;
-      err << "Error in PoissonClusterProcess::add_supervised_data." << endl
+      err << "Error in PCP::add_supervised_data." << endl
           << "The size of source (" << source.size() << ") does not match the"
           << " number of events in the corresponding point process ("
           << dp->number_of_events() << ")";
@@ -630,7 +630,7 @@ namespace BOOM {
     for (int i = 0; i < source.size(); ++i) {
       if (source[i] > 1) {
         std::ostringstream err;
-        err << "Error in PoissonClusterProcess::add_supervised_data." << endl
+        err << "Error in PCP::add_supervised_data." << endl
             << "source[" << i << "] = " << source[i] << endl
             << "legal values are " << endl
             << "  0 (background or secondary process)" << endl
@@ -644,7 +644,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  PointProcess PoissonClusterProcess::simulate(
+  PointProcess PCP::simulate(
       RNG &rng, const DateTime &t0, const DateTime &t1,
       std::function<Data *()> primary_event_simulator,
       std::function<Data *()> secondary_event_simulator) const {
@@ -699,18 +699,18 @@ namespace BOOM {
     return ans;
   }
   //----------------------------------------------------------------------
-  const std::vector<Mat> &PoissonClusterProcess::probability_of_activity()
+  const std::vector<Matrix> & PCP::probability_of_activity()
       const {
     return probability_of_activity_;
   }
   //----------------------------------------------------------------------
-  const std::vector<Mat> &PoissonClusterProcess::probability_of_responsibility()
+  const std::vector<Matrix> & PCP::probability_of_responsibility()
       const {
     return probability_of_responsibility_;
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::record_activity(VectorView probs, int state) {
+  void PCP::record_activity(VectorView probs, int state) {
     const Selector &active(activity_state_[state]);
     for (int i = 0; i < active.nvars(); ++i) {
       int I = active.indx(i);
@@ -718,7 +718,7 @@ namespace BOOM {
     }
   }
 
-  void PoissonClusterProcess::record_activity_distribution(
+  void PCP::record_activity_distribution(
       VectorView probs, const Matrix &transition_distribution) {
     // Compute the probability distribution over which states were
     // active at time t-1.
@@ -733,8 +733,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::record_responsibility(VectorView probs,
-                                                    PoissonProcess *process) {
+  void PCP::record_responsibility(VectorView probs, PoissonProcess *process) {
     if (process == background_.get()) {
       ++probs[0];
     } else if (primary(process)) {
@@ -745,7 +744,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::record_responsibility_distribution(
+  void PCP::record_responsibility_distribution(
       VectorView probs, const Matrix &transition_distribution,
       const PointProcessEvent &event, int source) {
     int S = nrow(transition_distribution);
@@ -774,18 +773,18 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  bool PoissonClusterProcess::legal_transition(int r, int s) const {
+  bool PCP::legal_transition(int r, int s) const {
     if (s < 0 || s > 3) {
       std::ostringstream err;
       err << "Illegal value of s (" << s
-          << ") in PoissonClusterProcess::legal_transition." << endl
+          << ") in PCP::legal_transition." << endl
           << "Legal values are 0, 1, 2, 3." << endl;
       report_error(err.str());
     }
     if (r < 0 || r > 3) {
       std::ostringstream err;
       err << "Illegal value of r (" << r
-          << ") in PoissonClusterProcess::legal_transition." << endl
+          << ") in PCP::legal_transition." << endl
           << "Legal values are 0, 1, 2, 3." << endl;
       report_error(err.str());
     }
@@ -800,10 +799,13 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::allocate_probability(
-      int previous_state, int current_state, VectorView process_probs,
-      double transition_probability, double logp_primary, double logp_secondary,
-      const DateTime &timestamp, int source) {
+  void PCP::allocate_probability(int previous_state,
+                                 int current_state,
+                                 VectorView process_probs,
+                                 double transition_probability,
+                                 double logp_primary,
+                                 double logp_secondary,
+                                 const DateTime &timestamp, int source) {
     if (!legal_transition(previous_state, current_state)) return;
     bool primary = true;
     bool secondary_or_background = false;
@@ -893,18 +895,16 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  MixtureComponent *PoissonClusterProcess::mark_model(
-      const PoissonProcess *process) {
+  MixtureComponent *PCP::mark_model(const PoissonProcess *process) {
     if (primary(process)) return primary_mark_model_.get();
     if (secondary(process)) return secondary_mark_model_.get();
     report_error(
-        "Unknown process passed to PoissonClusterProcess::mark_model().");
+        "Unknown process passed to PCP::mark_model().");
     return 0;
   }
 
   //----------------------------------------------------------------------
-  const MixtureComponent *PoissonClusterProcess::mark_model(
-      const PoissonProcess *process) const {
+  const MixtureComponent *PCP::mark_model(const PoissonProcess *process) const {
     if (!primary_mark_model_) return 0;
 
     if (process == background_.get() || process == primary_death_.get() ||
@@ -918,7 +918,7 @@ namespace BOOM {
     }
 
     report_error(
-        "Unknown process passed to PoissonClusterProcess::mark_model.");
+        "Unknown process passed to PCP::mark_model.");
     return 0;
   }
 
@@ -926,7 +926,7 @@ namespace BOOM {
   // Begin private functions
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::register_models_with_param_policy() {
+  void PCP::register_models_with_param_policy() {
     ParamPolicy::clear();
     ParamPolicy::add_model(background_);
     ParamPolicy::add_model(primary_birth_);
@@ -939,7 +939,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::initialize() {
+  void PCP::initialize() {
     fill_state_maps();
     register_models_with_param_policy();
     setup_filter();
@@ -948,7 +948,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::setup_filter() {
+  void PCP::setup_filter() {
     int S = number_of_hmm_states();
     pi0_.resize(S);
     pi0_ = 1.0 / S;
@@ -957,8 +957,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::check_source(double probability, int source,
-                                           bool primary) {
+  void PCP::check_source(double probability, int source, bool primary) {
     if (source < 0 || (primary && source == 1) || (!primary && source == 0) ||
         probability < .0001)
       return;
@@ -972,7 +971,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void PoissonClusterProcess::fill_state_maps() {
+  void PCP::fill_state_maps() {
     // The three states in each selector are the background proces,
     // the primary process, and the secondary process
 

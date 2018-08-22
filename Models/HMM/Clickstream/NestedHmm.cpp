@@ -743,7 +743,7 @@ namespace BOOM {
 
     int i = 0;
     const Vector &phi2(session_model()->pi0());
-    std::vector<Mat> stacked_phi1(S2_);
+    std::vector<Matrix> stacked_phi1(S2_);
     for (int H = 0; H < S2_; ++H) {
       const Vector &pi0(event_model(H)->pi0());
       Matrix Pi0(S1_, S1_);

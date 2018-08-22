@@ -36,8 +36,6 @@
 
 // BOOM Linear algebra
 using BOOM::Vector;
-using BOOM::Mat;
-using BOOM::Spd;
 
 // Misc. BOOM
 using BOOM::AggregatedStateSpaceRegression;
@@ -71,8 +69,8 @@ class StateContributionCallback : public BOOM::MatrixIoCallback {
       : model_(model) {}
   int nrow() const override { return model_->number_of_state_models(); }
   int ncol() const override { return model_->time_dimension(); }
-  BOOM::Mat get_matrix() const override {
-    BOOM::Mat ans(nrow(), ncol());
+  BOOM::Matrix get_matrix() const override {
+    BOOM::Matrix ans(nrow(), ncol());
     for (int state = 0; state < model_->number_of_state_models(); ++state) {
       ans.row(state) = model_->state_contribution(state);
     }
@@ -150,7 +148,7 @@ void AddRegressionPriorAndSetSampler(
 
     SEXP r_state = getListElement(r_truth, "state");
     if (r_state != R_NilValue) {
-      Mat state = ToBoomMatrix(r_state);
+      BOOM::Matrix state = ToBoomMatrix(r_state);
       model->permanently_set_state(state);
     }
   }
@@ -270,7 +268,7 @@ RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
 void TranscribeResponseData(const Ptr<AggregatedStateSpaceRegression> &model,
                             const Ptr<StateSpaceModel> &augmented_model,
                             RErrorReporter *error_reporter) {
-  const Mat &state(model->state());
+  const BOOM::Matrix &state(model->state());
   std::vector<Ptr<BOOM::StateSpace::MultiplexedDoubleData> > &data(
       augmented_model->dat());
   int next_to_last_row = nrow(state) - 2;
@@ -297,7 +295,7 @@ std::vector<Ptr<FineNowcastingData> > ComputeTrainingData(
     SEXP r_membership_fraction,
     SEXP r_ends_interval) {
   const BOOM::Vector target_series(ToBoomVector(r_target_series));
-  const BOOM::Mat predictors(ToBoomMatrix(r_predictors));
+  const BOOM::Matrix predictors(ToBoomMatrix(r_predictors));
   const std::vector<int> which_coarse_interval(ToIntVector(
       r_which_coarse_interval));
   const BOOM::Vector membership_fraction(ToBoomVector(r_membership_fraction));

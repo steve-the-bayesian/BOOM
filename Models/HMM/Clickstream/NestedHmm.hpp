@@ -117,7 +117,7 @@ namespace BOOM {
     // matrices.  Element [H][(h0,y0)][(h1,y1)] is the conditional
     // probability of being absorbed into state (h1,y1) given session
     // type H and initial state (h0,y0).
-    //  std::vector<Mat> conditional_conversion_probs(
+    //  std::vector<Matrix> conditional_conversion_probs(
     //      const BOOM::include &abs)const;
 
     // initial distribution and transition matrix in (h,y) space
@@ -173,7 +173,7 @@ namespace BOOM {
     Ptr<UnivParams> logpost_;
 
     // stuff for the filter
-    mutable std::vector<Mat> P;
+    mutable std::vector<Matrix> P;
     mutable Vector pi_;
     mutable Vector logpi0_;
     mutable Vector logd_;

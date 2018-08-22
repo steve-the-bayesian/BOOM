@@ -261,8 +261,8 @@ namespace BOOM {
         std::function<Data *()> secondary_mark_simulator =
             NullDataGenerator()) const;
 
-    const std::vector<Mat> &probability_of_activity() const;
-    const std::vector<Mat> &probability_of_responsibility() const;
+    const std::vector<Matrix> &probability_of_activity() const;
+    const std::vector<Matrix> &probability_of_responsibility() const;
 
     void record_activity(VectorView activity_probs, int state);
     void record_responsibility(VectorView activity_probs,
@@ -379,7 +379,7 @@ namespace BOOM {
         ResponsibleProcessMap;
     ResponsibleProcessMap responsible_process_map_;
 
-    std::vector<Mat> filter_;
+    std::vector<Matrix> filter_;
     Vector pi0_;
     mutable Vector wsp_;
     Vector one_;
@@ -390,8 +390,8 @@ namespace BOOM {
     // add_data is called.  Each matrix has a number of rows equal to
     // the number of latent processes, and a number of columns equal
     // to the number of events in that subjects PointProcess data.
-    std::vector<Mat> probability_of_activity_;
-    std::vector<Mat> probability_of_responsibility_;
+    std::vector<Matrix> probability_of_activity_;
+    std::vector<Matrix> probability_of_responsibility_;
 
     enum InitializationStrategy {
       UniformInitialState = 0,
