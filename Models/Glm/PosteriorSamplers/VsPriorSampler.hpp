@@ -31,17 +31,18 @@ namespace BOOM {
     // which are a bunch of independent binomial probabilities 'pi'.
     // This sampler updates 'pi'.
 
-    typedef VariableSelectionPrior VSP;
-
    public:
-    VsPriorSampler(VSP *Vsp, const Ptr<BetaModel> &Beta,
+    VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                   const Ptr<BetaModel> &Beta,
                    RNG &seeding_rng = GlobalRng::rng);
-    VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
+    VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                   const std::vector<Ptr<BetaModel>> &Beta,
                    RNG &seeding_rng = GlobalRng::rng);
-    VsPriorSampler(VSP *Vsp, const Vector &pi_guess, const Vector &wgt,
+    VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                   const Vector &pi_guess, const Vector &wgt,
                    RNG &seeding_rng = GlobalRng::rng);
-
-    VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
+    VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                   const std::vector<Ptr<BetaModel>> &Beta,
                    const Selector &forced_in, const Selector &forced_out,
                    RNG &seeding_rng = GlobalRng::rng);
 
@@ -50,7 +51,7 @@ namespace BOOM {
     uint potential_nvars() const;
 
    private:
-    VSP *vsp;
+    StructuredVariableSelectionPrior *vsp;
     Selector forced_in_;
     Selector forced_out_;
     std::vector<Ptr<PosteriorSampler>> sam_;

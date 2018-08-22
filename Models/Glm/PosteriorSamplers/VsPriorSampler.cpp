@@ -24,9 +24,10 @@
 namespace BOOM {
 
   typedef VsPriorSampler VSPS;
-  typedef VariableSelectionPrior VSP;
 
-  VSPS::VsPriorSampler(VSP *Vsp, const Ptr<BetaModel> &Beta, RNG &seeding_rng)
+  VSPS::VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                       const Ptr<BetaModel> &Beta,
+                       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         vsp(Vsp),
         forced_in_(Vsp->potential_nvars(), false),
@@ -42,7 +43,9 @@ namespace BOOM {
     }
   }
 
-  VSPS::VsPriorSampler(VSP *Vsp, const Vector &pi_guess, const Vector &a_plus_b,
+  VSPS::VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                       const Vector &pi_guess,
+                       const Vector &a_plus_b,
                        RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         vsp(Vsp),
@@ -72,8 +75,10 @@ namespace BOOM {
     }
   }
 
-  VSPS::VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
-                       const Selector &forced_in, const Selector &forced_out,
+  VSPS::VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                       const std::vector<Ptr<BetaModel>> &Beta,
+                       const Selector &forced_in,
+                       const Selector &forced_out,
                        RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         vsp(Vsp),
@@ -96,7 +101,8 @@ namespace BOOM {
     }
   }
 
-  VSPS::VsPriorSampler(VSP *Vsp, const std::vector<Ptr<BetaModel>> &Beta,
+  VSPS::VsPriorSampler(StructuredVariableSelectionPrior *Vsp,
+                       const std::vector<Ptr<BetaModel>> &Beta,
                        RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         vsp(Vsp),

@@ -26,6 +26,7 @@
 namespace BOOM {
   namespace {
     typedef VariableSelectionPrior VSP;
+    typedef StructuredVariableSelectionPrior SVSP;
     typedef ModelSelection::Variable Variable;
   }  // namespace
 
@@ -81,7 +82,7 @@ namespace BOOM {
       }
     }
 
-    void MainEffect::add_to(VSP &vsp) const {
+    void MainEffect::add_to(SVSP &vsp) const {
       vsp.add_main_effect(pos(), prob(), name());
     }
 
@@ -122,7 +123,7 @@ namespace BOOM {
       return g[obs_ind_pos_];
     }
 
-    void MissingMainEffect::add_to(VSP &vsp) const {
+    void MissingMainEffect::add_to(SVSP &vsp) const {
       vsp.add_missing_main_effect(pos(), prob(), obs_ind_pos_, name());
     }
 
@@ -169,27 +170,31 @@ namespace BOOM {
       return true;
     }
 
-    void Interaction::add_to(VSP &vsp) const {
+    void Interaction::add_to(SVSP &vsp) const {
       vsp.add_interaction(pos(), prob(), parent_pos_, name());
     }
   }  // namespace ModelSelection
 
   //===========================================================================
-  VsSuf::VsSuf() {}
+  VariableSelectionSuf::VariableSelectionSuf() {}
 
-  VsSuf::VsSuf(const VsSuf &rhs)
+  VariableSelectionSuf::VariableSelectionSuf(const VariableSelectionSuf &rhs)
       : Sufstat(rhs), SufTraits(rhs), vars_(rhs.vars_) {}
 
-  VsSuf *VsSuf::clone() const { return new VsSuf(*this); }
+  VariableSelectionSuf *VariableSelectionSuf::clone() const {
+    return new VariableSelectionSuf(*this);
+  }
 
-  void VsSuf::add_var(const Ptr<Variable> &v) { vars_.push_back(v); }
+  void VariableSelectionSuf::add_var(const Ptr<Variable> &v) {
+    vars_.push_back(v);
+  }
 
-  void VsSuf::clear() {
+  void VariableSelectionSuf::clear() {
     uint n = vars_.size();
     for (uint i = 0; i < n; ++i) vars_[i]->model()->clear_suf();
   }
 
-  void VsSuf::Update(const GlmCoefs &beta) {
+  void VariableSelectionSuf::Update(const GlmCoefs &beta) {
     uint n = vars_.size();
     for (uint i = 0; i < n; ++i) {
       const Selector &g(beta.inc());
@@ -200,54 +205,135 @@ namespace BOOM {
     }
   }
 
-  void VsSuf::combine(const Ptr<VsSuf> &) {
-    report_error("cannot combine VsSuf");
+  void VariableSelectionSuf::combine(const Ptr<VariableSelectionSuf> &) {
+    report_error("cannot combine VariableSelectionSuf");
   }
 
-  void VsSuf::combine(const VsSuf &) { report_error("cannot combine VsSuf"); }
+  void VariableSelectionSuf::combine(const VariableSelectionSuf &) {
+    report_error("cannot combine VariableSelectionSuf");
+  }
 
-  VsSuf *VsSuf::abstract_combine(Sufstat *s) {
+  VariableSelectionSuf *VariableSelectionSuf::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
   }
 
-  Vector VsSuf::vectorize(bool) const {
-    report_error("cannot vectorize VsSuf");
+  Vector VariableSelectionSuf::vectorize(bool) const {
+    report_error("cannot vectorize VariableSelectionSuf");
     return Vector(1, 0.0);
   }
 
-  Vector::const_iterator VsSuf::unvectorize(Vector::const_iterator &v, bool) {
-    report_error("cannot unvectorize VsSuf");
+  Vector::const_iterator VariableSelectionSuf::unvectorize(
+      Vector::const_iterator &v, bool) {
+    report_error("cannot unvectorize VariableSelectionSuf");
     return v;
   }
 
-  Vector::const_iterator VsSuf::unvectorize(const Vector &v, bool minimal) {
+  Vector::const_iterator VariableSelectionSuf::unvectorize(
+      const Vector &v, bool minimal) {
     Vector::const_iterator it = v.begin();
     return unvectorize(it, minimal);
   }
 
-  ostream &VsSuf::print(ostream &out) const {
-    return out << "VsSuf is hard to print!";
+  ostream &VariableSelectionSuf::print(ostream &out) const {
+    return out << "VariableSelectionSuf is hard to print!";
   }
 
+  //===========================================================================
   VSP::VariableSelectionPrior()
-      : DataPolicy(new VsSuf), pi_(new VectorParams(0)) {}
+      : ParamPolicy(new VectorParams(0)),
+        current_(false)
+  {
+    observe_prior_inclusion_probabilities();
+  }
 
   VSP::VariableSelectionPrior(uint n, double inclusion_probability)
-      : DataPolicy(new VsSuf), pi_(new VectorParams(0)) {
+      : ParamPolicy(new VectorParams(n, inclusion_probability)),
+        current_(false)
+  {
+    if (inclusion_probability < 0 || inclusion_probability > 1) {
+      report_error("Prior inclusion probability must be between 0 and 1.");
+    }
+    observe_prior_inclusion_probabilities();
+  }
+
+  VSP::VariableSelectionPrior(const Vector &marginal_inclusion_probabilities) 
+      : ParamPolicy(new VectorParams(marginal_inclusion_probabilities)),
+        current_(false)
+  {
+    observe_prior_inclusion_probabilities();
+  }
+
+  VSP *VSP::clone() const {return new VSP(*this);}
+
+  double VSP::logp(const Selector &inc) const {
+    ensure_log_probabilities();
+    double ans = 0;
+    for (int i = 0; i < inc.nvars_possible(); ++i) {
+      ans += inc[i] ? log_inclusion_probabilities_[i] :
+          log_complementary_inclusion_probabilities_[i];
+      if (!std::isfinite(ans)) {
+        return negative_infinity();
+      }
+    }
+    return ans;
+  }
+
+  void VSP::make_valid(Selector &inc) const {
+    const Vector &probs(prior_inclusion_probabilities());
+    if (inc.nvars_possible() != probs.size()) {
+      report_error("Wrong size Selector passed to make_valid.");
+    }
+    for (int i = 0; i < probs.size(); ++i) {
+      if (probs[i] <= 0.0 && inc[i]) {
+        inc.flip(i);
+      }
+      if (probs[i] >= 1.0 && !inc[i]) {
+        inc.flip(i);
+      }
+    }
+  }
+
+  uint VSP::potential_nvars() const {
+    return prior_inclusion_probabilities().size();
+  }
+
+  void VSP::observe_prior_inclusion_probabilities() {
+    prm()->add_observer([this]() { this->current_ = false;});
+  }
+
+  void VSP::ensure_log_probabilities() const {
+    if (!current_) {
+      log_inclusion_probabilities_ = log(prior_inclusion_probabilities());
+      log_complementary_inclusion_probabilities_ =
+          log(1 - prior_inclusion_probabilities());
+      current_ = true;
+    }
+  }
+
+  std::ostream &VSP::print(std::ostream &out) const {
+    return out << prior_inclusion_probabilities() << std::endl;
+  }
+  
+  //===========================================================================
+  SVSP::StructuredVariableSelectionPrior()
+      : DataPolicy(new VariableSelectionSuf), pi_(new VectorParams(0)) {}
+
+  SVSP::StructuredVariableSelectionPrior(uint n, double inclusion_probability)
+      : DataPolicy(new VariableSelectionSuf), pi_(new VectorParams(0)) {
     for (uint i = 0; i < n; ++i) {
       add_main_effect(i, inclusion_probability);
     }
   }
 
-  VSP::VariableSelectionPrior(const Vector &marginal_inclusion_probabilities)
-      : DataPolicy(new VsSuf), pi_(new VectorParams(0)) {
+  SVSP::StructuredVariableSelectionPrior(const Vector &marginal_inclusion_probabilities)
+      : DataPolicy(new VariableSelectionSuf), pi_(new VectorParams(0)) {
     uint n = marginal_inclusion_probabilities.size();
     for (uint i = 0; i < n; ++i) {
       add_main_effect(i, marginal_inclusion_probabilities[i]);
     }
   }
 
-  VSP::VariableSelectionPrior(const VSP &rhs)
+  SVSP::StructuredVariableSelectionPrior(const SVSP &rhs)
       : Model(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
@@ -258,38 +344,38 @@ namespace BOOM {
     }
   }
 
-  VSP *VSP::clone() const { return new VSP(*this); }
+  SVSP *SVSP::clone() const { return new SVSP(*this); }
 
-  void VSP::check_size_eq(uint n, const std::string &fun) const {
+  void SVSP::check_size_eq(uint n, const std::string &fun) const {
     if (vars_.size() == n) return;
     ostringstream err;
-    err << "error in VSP::" << fun << endl
+    err << "error in SVSP::" << fun << endl
         << "you passed a vector of size " << n << " but there are "
         << vars_.size() << " variables." << endl;
     report_error(err.str());
   }
 
-  void VSP::check_size_gt(uint n, const std::string &fun) const {
+  void SVSP::check_size_gt(uint n, const std::string &fun) const {
     if (vars_.size() > n) return;
     ostringstream err;
-    err << "error in VSP::" << fun << endl
+    err << "error in SVSP::" << fun << endl
         << "you tried to access a variable at position " << n
         << ", but there are only " << vars_.size() << " variables." << endl;
     report_error(err.str());
   }
 
-  void VSP::set_prob(double prob, uint i) {
+  void SVSP::set_prob(double prob, uint i) {
     check_size_gt(i, "set_prob");
     vars_[i]->set_prob(prob);
   }
 
-  void VSP::set_probs(const Vector &pi) {
+  void SVSP::set_probs(const Vector &pi) {
     uint n = pi.size();
     check_size_eq(n, "set_probs");
     for (uint i = 0; i < n; ++i) vars_[i]->set_prob(pi[i]);
   }
 
-  Vector VSP::prior_inclusion_probabilities() const {
+  Vector SVSP::prior_inclusion_probabilities() const {
     Vector ans(potential_nvars());
     for (int i = 0; i < ans.size(); ++i) {
       ans[i] = prob(i);
@@ -297,29 +383,29 @@ namespace BOOM {
     return ans;
   }
 
-  double VSP::prob(uint i) const {
+  double SVSP::prob(uint i) const {
     check_size_gt(i, "prob");
     return vars_[i]->prob();
   }
 
-  void VSP::fill_pi() const {
+  void SVSP::fill_pi() const {
     uint n = vars_.size();
     Vector tmp(n);
     for (uint i = 0; i < n; ++i) tmp[i] = vars_[i]->prob();
     pi_->set(tmp);
   }
 
-  ParamVector VSP::parameter_vector() {
+  ParamVector SVSP::parameter_vector() {
     fill_pi();
     return ParamVector(1, pi_);
   }
 
-  const ParamVector VSP::parameter_vector() const {
+  const ParamVector SVSP::parameter_vector() const {
     fill_pi();
     return ParamVector(1, pi_);
   }
 
-  void VSP::unvectorize_params(const Vector &v, bool) {
+  void SVSP::unvectorize_params(const Vector &v, bool) {
     uint n = v.size();
     check_size_eq(n, "unvectorize_params");
     for (uint i = 0; i < n; ++i) {
@@ -328,19 +414,19 @@ namespace BOOM {
     }
   }
 
-  void VSP::mle() {
+  void SVSP::mle() {
     uint n = vars_.size();
     for (uint i = 0; i < n; ++i) vars_[i]->model()->mle();
   }
 
-  double VSP::pdf(const Ptr<Data> &dp, bool logscale) const {
+  double SVSP::pdf(const Ptr<Data> &dp, bool logscale) const {
     Ptr<GlmCoefs> d(DAT(dp));
     double ans = logp(d->inc());
     return logscale ? ans : exp(ans);
   }
 
-  Ptr<ModelSelection::Variable> VSP::variable(uint i) { return vars_[i]; }
-  const Ptr<Variable> &VSP::variable(uint i) const { return vars_[i]; }
+  Ptr<ModelSelection::Variable> SVSP::variable(uint i) { return vars_[i]; }
+  const Ptr<Variable> &SVSP::variable(uint i) const { return vars_[i]; }
 
   namespace {
     inline void draw(const Ptr<ModelSelection::Variable> &v, Selector &g,
@@ -353,7 +439,7 @@ namespace BOOM {
     }
   }  // namespace
 
-  Selector VSP::simulate(RNG &rng) const {
+  Selector SVSP::simulate(RNG &rng) const {
     uint n = potential_nvars();
     Selector ans(n, false);
     // Simulate main_effects.
@@ -375,14 +461,14 @@ namespace BOOM {
     return ans;
   }
 
-  uint VSP::potential_nvars() const { return vars_.size(); }
+  uint SVSP::potential_nvars() const { return vars_.size(); }
 
-  double VSP::logp(const Selector &inc) const {
+  double SVSP::logp(const Selector &included_coefficients) const {
     const double neg_inf = BOOM::negative_infinity();
     uint n = vars_.size();
     double ans = 0;
     for (uint i = 0; i < n; ++i) {
-      ans += vars_[i]->logp(inc);
+      ans += vars_[i]->logp(included_coefficients);
       if (ans <= neg_inf) {
         return ans;
       }
@@ -390,14 +476,14 @@ namespace BOOM {
     return ans;
   }
 
-  void VSP::make_valid(Selector &inc) const {
+  void SVSP::make_valid(Selector &inc) const {
     int n = vars_.size();
     for (int i = 0; i < n; ++i) {
       vars_[i]->make_valid(inc);
     }
   }
 
-  void VSP::add_main_effect(uint position, double prob,
+  void SVSP::add_main_effect(uint position, double prob,
                             const std::string &name) {
     NEW(MainEffect, me)(position, prob, name);
     observed_main_effects_.push_back(me);
@@ -406,7 +492,7 @@ namespace BOOM {
     suf()->add_var(v);
   }
 
-  void VSP::add_missing_main_effect(uint position, double prob, uint oi_pos,
+  void SVSP::add_missing_main_effect(uint position, double prob, uint oi_pos,
                                     const std::string &name) {
     NEW(MissingMainEffect, mme)(position, prob, oi_pos, name);
     suf()->add_var(mme);
@@ -414,7 +500,7 @@ namespace BOOM {
     missing_main_effects_.push_back(mme);
   }
 
-  void VSP::add_interaction(uint position, double prob,
+  void SVSP::add_interaction(uint position, double prob,
                             const std::vector<uint> &parents,
                             const std::string &name) {
     NEW(Interaction, inter)(position, prob, parents, name);
@@ -424,7 +510,7 @@ namespace BOOM {
     interactions_.push_back(inter);
   }
 
-  ostream &VSP::print(ostream &out) const {
+  ostream &SVSP::print(ostream &out) const {
     uint nv = vars_.size();
     for (uint i = 0; i < nv; ++i) {
       out << *(vars_[i]) << endl;
@@ -432,6 +518,8 @@ namespace BOOM {
     return out;
   }
 
-  ostream &operator<<(ostream &out, const VSP &vsp) { return vsp.print(out); }
+  ostream &operator<<(ostream &out, const VariableSelectionPriorBase &vsp) {
+    return vsp.print(out);
+  }
 
 }  // namespace BOOM

@@ -47,3 +47,15 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "variable_selection_prior_test",
+    srcs = ["variable_selection_prior_test.cc"],
+    copts = COPTS,
+    linkopts = ["-lprofiler"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)

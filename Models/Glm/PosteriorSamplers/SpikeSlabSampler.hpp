@@ -27,16 +27,16 @@
 
 namespace BOOM {
 
-  // A class to manage the elements of spike-and-slab posterior
-  // sampling common to GlmModel objects.  This class does not inherit
-  // from PosteriorSampler because it is intended to be an element of
-  // a model-specific PosteriorSampler class that can impute the
-  // latent variables needed to turn the GLM into a Gaussian problem.
+  // A class to manage the elements of spike-and-slab posterior sampling common
+  // to GlmModel objects.  This class does not inherit from PosteriorSampler
+  // because it is intended to be an element of a model-specific
+  // PosteriorSampler class that can impute the latent variables needed to turn
+  // the GLM into a Gaussian problem.
   //
-  // If the GlmModel has a residual variance parameter, this draw
-  // conditions on it.  The alternative is to integrate it out, which
-  // changes the form of log_model_prob from something that looks like
-  // a normal to something that looks like a T.
+  // If the GlmModel has a residual variance parameter, this draw conditions on
+  // it.  The alternative is to integrate it out, which changes the form of
+  // log_model_prob from something that looks like a normal to something that
+  // looks like a T.
   class SpikeSlabSampler {
    public:
     SpikeSlabSampler(GlmModel *model, const Ptr<MvnBase> &slab_prior,

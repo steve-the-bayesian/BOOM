@@ -41,18 +41,20 @@ namespace BOOM {
   class GlmCoefs;
   class VariableSelectionPrior;
 
-  class VsSuf : public SufstatDetails<GlmCoefs> {
+  //===========================================================================
+  // Sufficient statistics for a variable selection prior model.
+  class VariableSelectionSuf : public SufstatDetails<GlmCoefs> {
    public:
     typedef ModelSelection::Variable Variable;
-    VsSuf();
-    VsSuf(const VsSuf &rhs);
-    VsSuf *clone() const override;
+    VariableSelectionSuf();
+    VariableSelectionSuf(const VariableSelectionSuf &rhs);
+    VariableSelectionSuf *clone() const override;
     void clear() override;
     void Update(const GlmCoefs &) override;
     void add_var(const Ptr<Variable> &v);
-    void combine(const Ptr<VsSuf> &);
-    void combine(const VsSuf &);
-    VsSuf *abstract_combine(Sufstat *s) override;
+    void combine(const Ptr<VariableSelectionSuf> &);
+    void combine(const VariableSelectionSuf &);
+    VariableSelectionSuf *abstract_combine(Sufstat *s) override;
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
@@ -65,65 +67,133 @@ namespace BOOM {
     std::vector<Ptr<Variable>> vars_;
   };
 
-  //______________________________________________________________________
+  //===========================================================================
+  class VariableSelectionPriorBase : virtual public Model {
+   public:
+    // Evaluate the log prior probability of the set of included coefficients.
+    virtual double logp(const Selector &included_coefficients) const = 0;
 
-  class VariableSelectionPrior : public SufstatDataPolicy<GlmCoefs, VsSuf>,
-                                 public PriorPolicy {
+    // Modify the selector so that it starts in a region of positive
+    // probability.  Set any entries in inc to 0 if the corresponding prior
+    // inclusion probability is zero, and set them to 1 if the corresponding
+    // prior inclusion probability is 1.  Leave inc unchanged otherwise.
+    virtual void make_valid(Selector &inc) const = 0;
+
+    // The total number of potential predictor variables available.
+    virtual uint potential_nvars() const = 0;
+    
+    virtual ostream &print(ostream &out) const = 0;
+  };
+  
+  //===========================================================================
+  class VariableSelectionPrior
+      : public VariableSelectionPriorBase,
+        public ParamPolicy_1<VectorParams>,
+        public IID_DataPolicy<GlmCoefs>,
+        public PriorPolicy
+  {
+   public:
+    VariableSelectionPrior();
+    VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
+    VariableSelectionPrior(const Vector &marginal_inclusion_probabilities);
+    VariableSelectionPrior *clone() const override;
+    double logp(const Selector &included_coefficients) const override;
+
+    void set_prior_inclusion_probabilities(const Vector &probs) {
+      ParamPolicy::prm()->set(probs);
+    }
+    
+    const Vector &prior_inclusion_probabilities() const {
+      return ParamPolicy::prm_ref().value();
+    }
+
+    void make_valid(Selector &inc) const override;
+    uint potential_nvars() const override;
+
+    virtual ostream &print(ostream &out) const override;
+
+   private:
+    // Set an observer on the vector of prior inclusion probabilities so that
+    // the vectors of log probabilities will be marked not current if the raw
+    // probabilities change.
+    void observe_prior_inclusion_probabilities();
+
+    // If the vectors of log probabilities and their complements are not
+    // current, recompute them and mark them current.
+    //
+    // This function is logically const.
+    void ensure_log_probabilities() const;
+    
+    mutable bool current_;
+    mutable Vector log_inclusion_probabilities_;
+    mutable Vector log_complementary_inclusion_probabilities_;
+  };
+
+  //===========================================================================
+  // A variable selection prior that is aware of the different types of effects
+  // (e.g. main effects, interactions, indicator variables, etc).  It can be
+  // used to facilitate things like only including interaction terms if main
+  // effects are included.
+  class StructuredVariableSelectionPrior :
+      public VariableSelectionPriorBase,
+      public SufstatDataPolicy<GlmCoefs, VariableSelectionSuf>,
+      public PriorPolicy {
     typedef ModelSelection::Variable Variable;
     typedef ModelSelection::MainEffect MainEffect;
     typedef ModelSelection::MissingMainEffect MissingMainEffect;
-    //    typedef ModelSelection::ObsIndicator ObsIndicator;
     typedef ModelSelection::Interaction Interaction;
 
    public:
-    VariableSelectionPrior();
+    StructuredVariableSelectionPrior();
 
     // A prior for coefficients of dimension n, with marginal inclusion
     // probability.
-    explicit VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
+    explicit StructuredVariableSelectionPrior(
+        uint n, double inclusion_probability = 1.0);
 
     // Args:
     //   marginal_inclusion_probabilities: Each entry gives the marginal
     //     inclusion probability for the corresponding regression coefficient.
-    explicit VariableSelectionPrior(
+    explicit StructuredVariableSelectionPrior(
         const Vector &marginal_inclusion_probabilities);
 
-    VariableSelectionPrior(const VariableSelectionPrior &rhs);
-    VariableSelectionPrior *clone() const override;
+    StructuredVariableSelectionPrior(
+        const StructuredVariableSelectionPrior &rhs);
+    StructuredVariableSelectionPrior *clone() const override;
 
     void mle();
     double pdf(const Ptr<Data> &dp, bool logscale) const;
-    double logp(const Selector &inc) const;
-    void make_valid(Selector &inc) const;
+    double logp(const Selector &included_coefficients) const override;
+    void make_valid(Selector &inc) const override;
     const Ptr<Variable> &variable(uint i) const;
     Ptr<Variable> variable(uint i);
 
     Selector simulate(RNG &rng) const;
-    uint potential_nvars() const;
+    uint potential_nvars() const override;
 
     // A fully observed main effect has probability "prob" to be
     // present.
     void add_main_effect(uint position, double prob,
                          const std::string &name = "");
 
-    // A missing main effect has probability prob of being present if
-    // its observation indicator is present.  If the observation
-    // indicator is absent then the inclusion probability is 0.
+    // A missing main effect has probability prob of being present if its
+    // observation indicator is present.  If the observation indicator is absent
+    // then the inclusion probability is 0.
     void add_missing_main_effect(uint position, double prob, uint oi_pos,
                                  const std::string &name = "");
 
-    // an interaction has probability "prob" to be present if all of
-    // its parents are also present.  If any of its parents are absent
-    // then the interaction has inclusion probability 0.
+    // an interaction has probability "prob" to be present if all of its parents
+    // are also present.  If any of its parents are absent then the interaction
+    // has inclusion probability 0.
     void add_interaction(uint position, double prob,
                          const std::vector<uint> &parents,
                          const std::string &name = "");
 
-    // TODO: This class needs to be split apart.  The bit
-    // about interactions and main effects (which are dependent on one
-    // another) is at odds with the notion that there is a vector of
-    // prior inclusion probabilities (which implies independence).
-    // Most instances of this class assume the independence case.
+    // TODO: This class needs to be split apart.  The bit about interactions and
+    // main effects (which are dependent on one another) is at odds with the
+    // notion that there is a vector of prior inclusion probabilities (which
+    // implies independence).  Most instances of this class assume the
+    // independence case.
     Vector prior_inclusion_probabilities() const;
     double prob(uint i) const;
     void set_probs(const Vector &pi);
@@ -132,7 +202,7 @@ namespace BOOM {
     const ParamVector parameter_vector() const override;
     void unvectorize_params(const Vector &v, bool minimal = true) override;
 
-    ostream &print(ostream &out) const;
+    ostream &print(ostream &out) const override;
 
    private:
     std::vector<Ptr<Variable>> vars_;
@@ -146,7 +216,24 @@ namespace BOOM {
     void check_size_gt(uint n, const std::string &fun) const;
   };
 
-  ostream &operator<<(ostream &out, const VariableSelectionPrior &);
+  ostream &operator<<(ostream &out, const VariableSelectionPriorBase &);
 
+  //===========================================================================
+  // Model the include / exclude behavior for a set of coefficients that has
+  // been organized in a matrix.
+  //  
+  // class MatrixVariableSelectionPrior
+  //     : public ParamPolicy_1<MatrixParams>,
+  //       public IID_DataPolicy<MatrixGlmCoefs>,
+  //       public PriorPolicy {
+  //  public:
+    
+  //   const Matrix &prior_inclusion_probabilities() const {
+  //     return ParamPolicy::prm_ref();
+  //   }
+
+  //  private:
+  // };
+  
 }  // namespace BOOM
 #endif  // BOOM_VARIABLE_SELECTION_PRIOR_HPP
