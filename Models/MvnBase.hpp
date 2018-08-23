@@ -120,7 +120,7 @@ namespace BOOM {
     //
     // Returns:
     //   The log of the normal density with mean mu[inclusion] and
-    //   precision siginv[inclusion] evalueated at x_subset.
+    //   precision siginv[inclusion] evaluated at x_subset.
     virtual double logp_given_inclusion(const Vector &x_subset,
                                         Vector *gradient, Matrix *Hessian,
                                         const Selector &inclusion,

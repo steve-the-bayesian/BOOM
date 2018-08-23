@@ -24,3 +24,14 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "matrix_normal_test",
+    srcs = ["matrix_normal_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
