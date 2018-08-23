@@ -262,7 +262,7 @@ namespace BOOM {
   //===========================================================================
   // The matrix-normal distribution
   //
-  // Y ~ matrix_normal(Mu, Siginv, Ominv) if
+  // Y ~ matrix_normal(Mu, Ominv, Siginv) if
   // Y - Mu = Ominv^{-1/2} * E * Siginv^{-1/2}^T, where
   //   * E is a matrix of IID standard normals,
   //   * Ominv^{-1/2} is a matrix square root (e.g. Cholesky factor) of Omega
@@ -272,13 +272,16 @@ namespace BOOM {
   //     Sigma describes the variance and covariance among the columns of the
   //     matrix.
   //
+  // The order of Ominv, Siginv in the parameterization evokes the (rows,
+  // columns) convention.
+  //
   // The matrix normal distribution is a restricted version of the general
   // multivariate normal distribution that would describe the vector Vec(Y)
   // obtained by stacking the columns of Y.  Its mean is Vec(Mu), and its
   // variance is Sigma \otimes Omega.
   //
   // Some examples of the matrix normal distribution include:
-  //   * A matrix formed by stacking the transpose of n IID observations from
+  //   * A matrix formed by stacking (as rows) n IID observations from
   //     Mvn(mu, V).  The Mu matrix is formed by stacking mu.tranpsose() n
   //     times.  Omega is the n X n identity matrix, and Sigma is V.
   //
@@ -293,32 +296,32 @@ namespace BOOM {
   // Args:
   //   Y: The random variable.
   //   Mu:  The mean of the distribution.
-  //   Siginv: The invserse of the 'column-variance' parameter Sigma.  Dimension
-  //     matches the number of columns in Mu.
-  //   ldsi:  Log determinant of Siginv.
   //   Ominv: The inverse of the 'row-variance' parameter Omega.  Dimension
   //     matches the number of rows in Mu.
   //   ldoi:  Log determinant of Ominv.
+  //   Siginv: The invserse of the 'column-variance' parameter Sigma.  Dimension
+  //     matches the number of columns in Mu.
+  //   ldsi:  Log determinant of Siginv.
   //   logscale:  If true then the log of the density is returned.
   //   rng:  The U(0, 1) random number generator to use for the simulation.
   Matrix rmatrix_normal_ivar(const Matrix &Mu,
-                             const SpdMatrix &Siginv,
-                             const SpdMatrix &Ominv);
+                             const SpdMatrix &Ominv,
+                             const SpdMatrix &Siginv);
   Matrix rmatrix_normal_ivar_mt(RNG &rng,
                                 const Matrix &Mu,
-                                const SpdMatrix &Siginv,
-                                const SpdMatrix &Ominv);
+                                const SpdMatrix &Ominv,
+                                const SpdMatrix &Siginv);
   double dmatrix_normal_ivar(const Matrix &Y,
                              const Matrix &Mu,
-                             const SpdMatrix &Siginv,
                              const SpdMatrix &Ominv,
+                             const SpdMatrix &Siginv,
                              bool logscale);
   double dmatrix_normal_ivar(const Matrix &Y,
                              const Matrix &Mu,
-                             const SpdMatrix &Siginv,
-                             double ldsi,
                              const SpdMatrix &Ominv,
                              double ldoi,
+                             const SpdMatrix &Siginv,
+                             double ldsi,
                              bool logscale);
 
   //===========================================================================
