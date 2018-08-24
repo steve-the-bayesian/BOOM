@@ -74,5 +74,26 @@ namespace {
     EXPECT_EQ(4, small[1]);
   }
 
+  TEST_F(SelectorTest, SelectorMatrixTest) {
+    SelectorMatrix inc(3, 2, Selector("111101"));
+    EXPECT_EQ(3, inc.nrow());
+    EXPECT_EQ(2, inc.ncol());
+
+    EXPECT_TRUE(inc(0, 0));
+    EXPECT_TRUE(inc(1, 0));
+    EXPECT_TRUE(inc(2, 0));
+    EXPECT_TRUE(inc(0, 1));
+    EXPECT_FALSE(inc(1, 1));
+    EXPECT_TRUE(inc(2, 1));
+
+    inc.drop(0, 1);
+    EXPECT_FALSE(inc(0, 1));
+    inc.add(0, 1);
+    EXPECT_TRUE(inc(0, 1));
+    inc.flip(0, 1);
+    EXPECT_FALSE(inc(0, 1));
+    inc.flip(0, 1);
+    EXPECT_TRUE(inc(0, 1));
+  }
   
 }  // namespace

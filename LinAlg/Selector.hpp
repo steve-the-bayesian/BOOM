@@ -251,6 +251,38 @@ namespace BOOM {
     }
     return tmp.select(x);
   }
+
+  //===========================================================================
+  // A selector object indicating which elements in a matrix of coefficients are
+  // nonzero.
+  class SelectorMatrix {
+   public:
+    SelectorMatrix(int nrow, int ncol, bool include_all = true)
+        : selector_(nrow * ncol, include_all), nrow_(nrow), ncol_(ncol) {}
+    SelectorMatrix(int nrow, int ncol, const Selector &selector)
+        : selector_(selector), nrow_(nrow), ncol_(ncol) {}
+    int nrow() const {return nrow_;}
+    int ncol() const {return ncol_;}
+    bool operator()(int i, int j) const { return selector_[index(i, j)]; }
+
+    void flip(int i, int j) { selector_.flip(index(i, j)); }
+    void add(int i, int j) { selector_.add(index(i, j)); }
+    void drop(int i, int j) {selector_.drop(index(i, j)); }
+    
+   private:
+    // Return the index in the 'linear' selector corresponding to the given row
+    // and column.
+    int index(int row, int col) const { return col * nrow_ + row; }
+
+    // The selector elements map to the selector matrix elements in column-major
+    // order.
+    Selector selector_;
+    
+    int nrow_;
+    int ncol_;
+  };
+    
+
   
 }  // namespace BOOM
 #endif  // BOOM_SELECTOR_HPP
