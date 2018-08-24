@@ -221,19 +221,45 @@ namespace BOOM {
   //===========================================================================
   // Model the include / exclude behavior for a set of coefficients that has
   // been organized in a matrix.
-  //  
-  // class MatrixVariableSelectionPrior
-  //     : public ParamPolicy_1<MatrixParams>,
-  //       public IID_DataPolicy<MatrixGlmCoefs>,
-  //       public PriorPolicy {
-  //  public:
-    
-  //   const Matrix &prior_inclusion_probabilities() const {
-  //     return ParamPolicy::prm_ref();
-  //   }
+  class MatrixVariableSelectionPrior
+      : public ParamPolicy_1<MatrixParams>,
+        public IID_DataPolicy<MatrixGlmCoefs>,
+        public PriorPolicy {
+    public:
+    MatrixVariableSelectionPrior(const Matrix &prior_inclusion_probabilities);
 
-  //  private:
-  // };
+    MatrixVariableSelectionPrior *clone() const override {
+      return new MatrixVariableSelectionPrior(*this);
+    }
+    
+     const Matrix &prior_inclusion_probabilities() const {
+       return ParamPolicy::prm_ref().value();
+     }
+
+    double logp(const SelectorMatrix &included) const;
+
+    int nrow() const {return prior_inclusion_probabilities().nrow();}
+    int ncol() const {return prior_inclusion_probabilities().ncol();}
+    
+   private:
+    // Throw an error if any element of probs is outside the range [0, 1].
+    void check_probabilities(const Matrix &probs) const;
+    
+    // Set an observer on the vector of prior inclusion probabilities so that
+    // the vectors of log probabilities will be marked not current if the raw
+    // probabilities change.
+    void observe_prior_inclusion_probabilities();
+
+    // If the vectors of log probabilities and their complements are not
+    // current, recompute them and mark them current.
+    //
+    // This function is logically const.
+    void ensure_log_probabilities() const;
+    
+    mutable bool current_;
+    mutable Matrix log_inclusion_probabilities_;
+    mutable Matrix log_complementary_inclusion_probabilities_;
+   };
   
 }  // namespace BOOM
 #endif  // BOOM_VARIABLE_SELECTION_PRIOR_HPP

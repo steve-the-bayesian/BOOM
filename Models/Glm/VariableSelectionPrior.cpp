@@ -522,4 +522,61 @@ namespace BOOM {
     return vsp.print(out);
   }
 
+  //===========================================================================
+  namespace {
+    using MVSP = MatrixVariableSelectionPrior;
+  }
+
+  MVSP::MatrixVariableSelectionPrior(
+      const Matrix &prior_inclusion_probabilities)
+      : ParamPolicy(new MatrixParams(prior_inclusion_probabilities)),
+        current_(false)
+  {
+    check_probabilities(prior_inclusion_probabilities);
+    observe_prior_inclusion_probabilities();
+  }
+
+  double MVSP::logp(const SelectorMatrix &included) const {
+    if (included.nrow() != nrow() || included.ncol() != ncol()) {
+      report_error("Wrong size selector matrix passed to logp.");
+    }
+    ensure_log_probabilities();
+    double ans = 0;
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < ncol(); ++j) {
+        ans += included(i, j) ? log_inclusion_probabilities_(i, j)
+            : log_complementary_inclusion_probabilities_(i, j);
+        if (!std::isfinite(ans)) return negative_infinity();
+      }
+    }
+    return ans;
+  }
+
+  void MVSP::check_probabilities(const Matrix &probs) const {
+    for (int i = 0; i < probs.nrow(); ++i) {
+      for (int j = 0; j < probs.ncol(); ++j) {
+        if (probs(i, j) < 0.0 || probs(i, j) > 1.0) {
+          report_error("All probabilities must be in the range [0, 1].");
+        }
+      }
+    }
+  }
+
+  void MVSP::ensure_log_probabilities() const {
+    if (!current_) {
+      log_inclusion_probabilities_ = log(prior_inclusion_probabilities());
+      log_complementary_inclusion_probabilities_ =
+          log(1 - prior_inclusion_probabilities());
+      current_ = true;
+    }
+  }
+
+  void MVSP::observe_prior_inclusion_probabilities() {
+    prm()->add_observer(
+        [this]() {
+          this->current_ = false;
+        });
+  }
+  
+  
 }  // namespace BOOM

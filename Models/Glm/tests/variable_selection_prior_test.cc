@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Models/Glm/VariableSelectionPrior.hpp"
+#include "LinAlg/Selector.hpp"
 #include "distributions.hpp"
 
 #include "test_utils/test_utils.hpp"
@@ -76,7 +77,27 @@ namespace {
     EXPECT_DOUBLE_EQ(prior.logp(Selector("110")),
                      log(.25) + log(.5) + log(.7));
 
+  }
+
+  TEST_F(VariableSelectionPriorTest, MatrixPrior) {
+    Matrix prior_probs(2, 3);
+    prior_probs.randomize();
+
+    MatrixVariableSelectionPrior prior(prior_probs);
+    EXPECT_EQ(2, prior_probs.nrow());
+    EXPECT_EQ(3, prior_probs.ncol());
+
+    SelectorMatrix inc(2, 3, true);
+    inc.flip(1, 1);
+    inc.flip(1, 2);
+
+    EXPECT_DOUBLE_EQ(
+        prior.logp(inc),
+        log(prior_probs(0, 0)) + log(prior_probs(0, 1)) + log(prior_probs(0, 2))
+        + log(prior_probs(1, 0)) + log(1 - prior_probs(1, 1))
+        + log(1 - prior_probs(1, 2)));
     
   }
+  
   
 }  // namespace
