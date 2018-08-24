@@ -289,4 +289,57 @@ namespace BOOM {
     included_coefficients_current_ = true;
   }
 
+  //===========================================================================
+  MatrixGlmCoefs::MatrixGlmCoefs(int nrow, int ncol)
+      : MatrixParams(nrow, ncol, 0.0),
+        included_(nrow, ncol, true)
+  {}
+
+  MatrixGlmCoefs::MatrixGlmCoefs(const Matrix &coefficients)
+      : MatrixParams(coefficients),
+        included_(coefficients.nrow(), coefficients.ncol(), true)
+  {}
+
+  MatrixGlmCoefs::MatrixGlmCoefs(const Matrix &coefficients,
+                                 const SelectorMatrix &included)
+      : MatrixParams(coefficients),
+        included_(included)
+  {
+    check_dimension(included);
+    set_zeros();
+  }
+
+  Vector MatrixGlmCoefs::predict(const Vector &predictors) const {
+    return predictors * value();
+  }
+
+  void MatrixGlmCoefs::set(const Matrix &values, bool signal) {
+    MatrixParams::set(values, signal);
+    set_zeros();
+  }
+
+  void MatrixGlmCoefs::set_inclusion_pattern(const SelectorMatrix &included) {
+    check_dimension(included);
+    included_ = included;
+  }
+
+  void MatrixGlmCoefs::check_dimension(const SelectorMatrix &included) const {
+    if (included.nrow() != value().nrow()
+        || included.ncol() != value().ncol()) {
+      report_error("Coefficient matrix and selector matrix must be the "
+                   "same size.");
+    }
+  }
+  
+  void MatrixGlmCoefs::set_zeros() {
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < ncol(); ++j) {
+        if (!included_(i, j) && value()(i, j) != 0.0) {
+          set_element(i, j, 0.0);
+        }
+      }
+    }
+  }
+
+  
 }  // namespace BOOM

@@ -29,12 +29,14 @@ namespace BOOM {
   }
 
   MVTR::MvtRegModel(uint xdim, uint ydim)
-      : ParamPolicy(new MatrixParams(xdim, ydim), new SpdParams(ydim),
+      : ParamPolicy(new MatrixGlmCoefs(xdim, ydim),
+                    new SpdParams(ydim),
                     new UnivParams(default_df)) {}
 
   MVTR::MvtRegModel(const Matrix &X, const Matrix &Y, bool add_intercept)
-      : ParamPolicy(new MatrixParams(X.ncol() + add_intercept, Y.ncol()),
-                    new SpdParams(Y.ncol()), new UnivParams(default_df)) {
+      : ParamPolicy(new MatrixGlmCoefs(X.ncol() + add_intercept, Y.ncol()),
+                    new SpdParams(Y.ncol()),
+                    new UnivParams(default_df)) {
     Matrix XX(add_intercept ? cbind(1.0, X) : X);
     QR qr(XX);
     Matrix Beta(qr.solve(qr.QtY(Y)));
@@ -54,7 +56,7 @@ namespace BOOM {
   }
 
   MVTR::MvtRegModel(const Matrix &B, const SpdMatrix &Sigma, double nu)
-      : ParamPolicy(new MatrixParams(B),
+      : ParamPolicy(new MatrixGlmCoefs(B),
                     new SpdParams(Sigma),
                     new UnivParams(nu)) {}
 
@@ -76,10 +78,10 @@ namespace BOOM {
   double MVTR::ldsi() const { return Sigma_prm()->ldsi(); }
   double MVTR::nu() const { return Nu_prm()->value(); }
 
-  Ptr<MatrixParams> MVTR::Beta_prm() { return ParamPolicy::prm1(); }
+  Ptr<MatrixGlmCoefs> MVTR::Beta_prm() { return ParamPolicy::prm1(); }
   Ptr<SpdParams> MVTR::Sigma_prm() { return ParamPolicy::prm2(); }
   Ptr<UnivParams> MVTR::Nu_prm() { return ParamPolicy::prm3(); }
-  const Ptr<MatrixParams> MVTR::Beta_prm() const { return ParamPolicy::prm1(); }
+  const Ptr<MatrixGlmCoefs> MVTR::Beta_prm() const {return ParamPolicy::prm1();}
   const Ptr<SpdParams> MVTR::Sigma_prm() const { return ParamPolicy::prm2(); }
   const Ptr<UnivParams> MVTR::Nu_prm() const { return ParamPolicy::prm3(); }
 

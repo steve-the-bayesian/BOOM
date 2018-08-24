@@ -78,12 +78,12 @@ namespace BOOM {
     missing_status missing_flag;
     mutable std::vector<std::function<void(void)> > signals_;
   };
-  //----------------------------------------------------------------------
+  //======================================================================
   ostream &operator<<(ostream &out, const Data &d);
   ostream &operator<<(ostream &out, const Ptr<Data> &dp);
   void print_data(const Data &d);
 
-  //---------------------------------------------------------------------------
+  //==========================================================================-
   // The DataTraits class enforces a uniform interface for set() and value().
   // It could probably be eliminated, but eliminating it is probably not worth
   // the effort.
@@ -125,11 +125,11 @@ namespace BOOM {
     T value_;
   };
 
-  //----------------------------------------------------------------------//
+  //==========================================================================
   using IntData = UnivData<unsigned int>;
   using DoubleData = UnivData<double>;
   using BinaryData = UnivData<bool>;
-  //----------------------------------------------------------------------//
+  //==========================================================================
   class VectorData : public DataTraits<Vector> {
    public:
     explicit VectorData(uint n, double X = 0);
@@ -151,7 +151,7 @@ namespace BOOM {
     Vector x;
   };
 
-  //--------------------------------------------------------------------------
+  //==========================================================================
   // A variant of VectorData that handles the partially missing case.
   class PartiallyObservedVectorData : public VectorData {
    public:
@@ -167,7 +167,8 @@ namespace BOOM {
    private:
     Selector obs_;
   };
-  //----------------------------------------------------------------------//
+
+  //===========================================================================
   class MatrixData : public DataTraits<Matrix> {
    public:
     MatrixData(int r, int c, double val = 0.0);
@@ -187,6 +188,7 @@ namespace BOOM {
    private:
     Matrix x;
   };
+  
 }  // namespace BOOM
 
 #endif  // DATA_TYPES_H

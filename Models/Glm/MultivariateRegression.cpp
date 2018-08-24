@@ -352,7 +352,7 @@ namespace BOOM {
   }
   
   MvReg::MultivariateRegressionModel(uint xdim, uint ydim)
-      : ParamPolicy(new MatrixParams(xdim, ydim), new SpdParams(ydim)),
+      : ParamPolicy(new MatrixGlmCoefs(xdim, ydim), new SpdParams(ydim)),
         DataPolicy(new NeMvRegSuf(xdim, ydim)),
         PriorPolicy(),
         LoglikeModel() {}
@@ -364,12 +364,12 @@ namespace BOOM {
         LoglikeModel() {
     uint nx = X.ncol();
     uint ny = Y.ncol();
-    set_params(new MatrixParams(nx, ny), new SpdParams(ny));
+    set_params(new MatrixGlmCoefs(nx, ny), new SpdParams(ny));
     mle();
   }
 
   MvReg::MultivariateRegressionModel(const Matrix &B, const SpdMatrix &V)
-      : ParamPolicy(new MatrixParams(B), new SpdParams(V)),
+      : ParamPolicy(new MatrixGlmCoefs(B), new SpdParams(V)),
         DataPolicy(new NeMvRegSuf(B.nrow(), B.ncol())),
         PriorPolicy(),
         LoglikeModel() {}
@@ -384,8 +384,8 @@ namespace BOOM {
   const SpdMatrix &MvReg::Siginv() const { return Sigma_prm()->ivar(); }
   double MvReg::ldsi() const { return Sigma_prm()->ldsi(); }
 
-  Ptr<MatrixParams> MvReg::Beta_prm() { return prm1(); }
-  const Ptr<MatrixParams> MvReg::Beta_prm() const { return prm1(); }
+  Ptr<MatrixGlmCoefs> MvReg::Beta_prm() { return prm1(); }
+  const Ptr<MatrixGlmCoefs> MvReg::Beta_prm() const { return prm1(); }
   Ptr<SpdParams> MvReg::Sigma_prm() { return prm2(); }
   const Ptr<SpdParams> MvReg::Sigma_prm() const { return prm2(); }
 

@@ -265,6 +265,8 @@ namespace BOOM {
     int ncol() const {return ncol_;}
     bool operator()(int i, int j) const { return selector_[index(i, j)]; }
 
+    void add_all() {selector_.add_all();}
+    void drop_all() {selector_.drop_all();}
     void flip(int i, int j) { selector_.flip(index(i, j)); }
     void add(int i, int j) { selector_.add(index(i, j)); }
     void drop(int i, int j) {selector_.drop(index(i, j)); }

@@ -26,10 +26,11 @@
 #include "cpputil/Ptr.hpp"
 
 namespace BOOM {
-  class MvtRegModel : public ParamPolicy_3<MatrixParams, SpdParams, UnivParams>,
-                      public IID_DataPolicy<MvRegData>,
-                      public PriorPolicy,
-                      public LoglikeModel {
+  class MvtRegModel
+      : public ParamPolicy_3<MatrixGlmCoefs, SpdParams, UnivParams>,
+        public IID_DataPolicy<MvRegData>,
+        public PriorPolicy,
+        public LoglikeModel {
    public:
     MvtRegModel(uint xdim, uint ydim);
     MvtRegModel(const Matrix &X, const Matrix &Y, bool add_intercept = false);
@@ -47,10 +48,10 @@ namespace BOOM {
     double ldsi() const;
     double nu() const;
 
-    Ptr<MatrixParams> Beta_prm();
+    Ptr<MatrixGlmCoefs> Beta_prm();
     Ptr<SpdParams> Sigma_prm();
     Ptr<UnivParams> Nu_prm();
-    const Ptr<MatrixParams> Beta_prm() const;
+    const Ptr<MatrixGlmCoefs> Beta_prm() const;
     const Ptr<SpdParams> Sigma_prm() const;
     const Ptr<UnivParams> Nu_prm() const;
 

@@ -191,7 +191,7 @@ namespace BOOM {
   //============================================================
   // Multivariate regression, where both y_i and x_i are vectors.
   class MultivariateRegressionModel
-      : public ParamPolicy_2<MatrixParams, SpdParams>,
+      : public ParamPolicy_2<MatrixGlmCoefs, SpdParams>,
         public SufstatDataPolicy<MvRegData, MvRegSuf>,
         public PriorPolicy,
         public LoglikeModel {
@@ -233,6 +233,10 @@ namespace BOOM {
     const Matrix &Beta() const;
     void set_Beta(const Matrix &B);
 
+    const SelectorMatrix &included_coefficients() const {
+      return Beta_prm_ref().included_coefficients();
+    }
+    
     // Residual variance matrix.
     const SpdMatrix &Sigma() const;
     void set_Sigma(const SpdMatrix &V);
@@ -245,8 +249,10 @@ namespace BOOM {
     double ldsi() const;
 
     // Access to parameters.
-    Ptr<MatrixParams> Beta_prm();
-    const Ptr<MatrixParams> Beta_prm() const;
+    Ptr<MatrixGlmCoefs> Beta_prm();
+    const Ptr<MatrixGlmCoefs> Beta_prm() const;
+    const MatrixGlmCoefs &Beta_prm_ref() const {return prm1_ref();}
+    
     Ptr<SpdParams> Sigma_prm();
     const Ptr<SpdParams> Sigma_prm() const;
 
