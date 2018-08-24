@@ -107,6 +107,8 @@ bsts.prediction.errors(bsts.object,
 
   ## Compute out of sample prediction errors beyond times 80 and 120.
   errors <- bsts.prediction.errors(model, cutpoints = c(80, 120))
+  standardized.errors <- bsts.prediction.errors(
+      model, cutpoints = c(80, 120), standardize = TRUE)
   plot(model, "prediction.errors", cutpoints = c(80, 120))
   str(errors)     ## three matrices, with 400 ( = 500 - 100) rows
                   ## and length(y) columns
