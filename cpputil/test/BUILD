@@ -36,6 +36,17 @@ cc_test(
 )
 
 cc_test(
+    name = "redirector_test",
+    srcs = ["redirector_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "shuffle_test",
     srcs = ["shuffle_test.cc"],
     copts = COPTS,

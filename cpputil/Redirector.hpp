@@ -22,6 +22,15 @@
 #include <iosfwd>
 
 namespace BOOM {
+  // Redirect the output from one stream to another.
+  //
+  // Example:
+  // std::ostringstream out;
+  // {
+  //    Redirector redirect(std::cout, out);
+  //    std::cout << "foo bar baz";
+  // }
+  // std::cout << out.str();
   class Redirector {
    public:
     Redirector(std::ostream &from, std::ostream &to);
@@ -31,6 +40,6 @@ namespace BOOM {
     std::streambuf *from_buf_, *to_buf_;
     std::ostream *from_;
   };
-
+  
 }  // namespace BOOM
 #endif  // BOOM_STREAM_REDIRECTOR
