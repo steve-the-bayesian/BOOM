@@ -105,7 +105,10 @@ predict.bsts <- function(object,
   stopifnot(is.numeric(burn), length(burn) == 1, burn < object$niter)
   if (!is.null(olddata)) {
     olddata <- .FormatObservedDataForPredictions(object, olddata, na.action,
-                                                 olddata.timestamps)
+      olddata.timestamps)
+    original.series <- olddata$response
+  } else {
+    original.series <- object$original.series
   }
 
   stopifnot(is.null(seed) || length(seed) == 1)
@@ -125,7 +128,7 @@ predict.bsts <- function(object,
               "interval" = apply(predictive.distribution, 2,
                                  quantile, quantiles),
               "distribution" = predictive.distribution,
-              "original.series" = object$original.series)
+              "original.series" = original.series)
   class(ans) <- "bsts.prediction"
   return(ans)
 }

@@ -100,11 +100,11 @@
   return(predictors);
 }
 
-.ExtractResponse <- function(object, dataframe, na.action) {
+.ExtractResponse <- function(object, olddata, na.action) {
   if (object$has.regression) {
     Terms <- delete.response(terms(object))
     bsts.model.frame <- model.frame(Terms,
-                                    dataframe,
+                                    olddata,
                                     na.action = na.action,
                                     xlev = object$xlevels)
     if (!is.null(data.classes <- attr(Terms, "dataClasses"))) {
@@ -114,6 +114,8 @@
     if (is.matrix(response)) {
       stopifnot(ncol(response) == 2)
     }
+  } else if (!is.null(olddata)) {
+    response <- olddata
   } else {
     response <- object$original.series
   }
@@ -326,7 +328,6 @@
   } else {
     predictors <- NULL
   }
-
   response <- .ExtractResponse(bsts.object, olddata, na.action = na.action)
 
   if (bsts.object$family == "gaussian" ||

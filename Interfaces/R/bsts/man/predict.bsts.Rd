@@ -184,6 +184,24 @@
   model <- bsts(y, state.specification = ss, niter = 500)
   pred <- predict(model, horizon = 12, burn = 100)
   plot(pred)
+
+  ## An example using the olddata
+  full.pred <- pred
+  training <- window(y, end = c(1959, 12))
+  model <- bsts(training, state.specification = ss, niter = 500)
+  ## Predict the next 12 months.
+  pred <- predict(model, horizon = 12)
+  ## Compare the predictions to the actual data.
+  plot(pred)
+  lines(as.numeric(y, col = "red", lty = 2, lwd = 2))
+
+  ## Predict the 12 months of 1961 based on the posterior distribution
+  ## of the model fit to data through 1959, but with state filtered
+  ## through 1960.
+  updated.pred <- predict(model, horizon = 12, olddata = y)
+  par(mfrow = c(1, 2))
+  plot(full.pred, ylim = c(4, 7))
+  plot(updated.pred, ylim = c(4, 7))
 }
 \keyword{models}
 \keyword{regression}
