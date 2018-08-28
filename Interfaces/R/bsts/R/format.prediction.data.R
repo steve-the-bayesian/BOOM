@@ -102,7 +102,7 @@
 
 .ExtractResponse <- function(object, olddata, na.action) {
   if (object$has.regression) {
-    Terms <- delete.response(terms(object))
+    Terms <- terms(object)
     bsts.model.frame <- model.frame(Terms,
                                     olddata,
                                     na.action = na.action,

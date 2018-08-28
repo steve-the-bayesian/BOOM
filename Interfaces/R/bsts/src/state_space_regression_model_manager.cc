@@ -126,7 +126,7 @@ void SSRMF::AddDataFromBstsObject(SEXP r_bsts_object) {
 }
 
 void SSRMF::AddDataFromList(SEXP r_data_list) {
-  AddData(ToBoomVector(getListElement(r_data_list, "original.series")),
+  AddData(ToBoomVector(getListElement(r_data_list, "response")),
           ToBoomMatrix(getListElement(r_data_list, "predictors")),
           ToVectorBool(getListElement(r_data_list,
                                       "response.is.observed")));

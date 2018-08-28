@@ -177,6 +177,8 @@
 }
 
 \examples{
+
+  ## Making predictions when there is no regression component.
   data(AirPassengers)
   y <- log(AirPassengers)
   ss <- AddLocalLinearTrend(list(), y)
@@ -185,7 +187,7 @@
   pred <- predict(model, horizon = 12, burn = 100)
   plot(pred)
 
-  ## An example using the olddata
+  ## An example using the olddata argument.
   full.pred <- pred
   training <- window(y, end = c(1959, 12))
   model <- bsts(training, state.specification = ss, niter = 500)
@@ -202,6 +204,30 @@
   par(mfrow = c(1, 2))
   plot(full.pred, ylim = c(4, 7))
   plot(updated.pred, ylim = c(4, 7))
+
+  ## Examples including a regression component.
+  ## 
+  data(iclaims)
+  training <- initial.claims[1:402, ]
+  holdout1 <- initial.claims[403:450, ]
+  holdout2 <- initial.claims[451:456, ]
+
+  ss <- AddLocalLinearTrend(list(), training$iclaimsNSA)
+  ss <- AddSeasonal(ss, training$iclaimsNSA, nseasons = 52)
+  ## In real life you'd want more iterations...
+  model <- bsts(iclaimsNSA ~ ., state.specification = ss, data =
+                training, niter = 100)
+
+  ## Predict the holdout set given the training set.
+  ## This is really fast, because we can use saved state from the MCMC
+  ## algorithm.
+  pred.full <- predict(model, newdata = rbind(holdout1, holdout2))
+
+  ## Predict holdout 2, given training and holdout1.
+  ## This is much slower because we need to re-filter the 'olddata' before
+  ## simulating the predictions.
+  pred.update <- predict(model, newdata = holdout2,
+    olddata = rbind(training, holdout1))
 }
 \keyword{models}
 \keyword{regression}
