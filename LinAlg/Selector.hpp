@@ -258,30 +258,42 @@ namespace BOOM {
   class SelectorMatrix {
    public:
     SelectorMatrix(int nrow, int ncol, bool include_all = true)
-        : selector_(nrow * ncol, include_all), nrow_(nrow), ncol_(ncol) {}
-    SelectorMatrix(int nrow, int ncol, const Selector &selector)
-        : selector_(selector), nrow_(nrow), ncol_(ncol) {}
-    int nrow() const {return nrow_;}
-    int ncol() const {return ncol_;}
-    bool operator()(int i, int j) const { return selector_[index(i, j)]; }
+    {
+      for (int i = 0; i < ncol; ++i) {
+        columns_.push_back(Selector(nrow, include_all));
+      }
+    }
 
-    void add_all() {selector_.add_all();}
-    void drop_all() {selector_.drop_all();}
-    void flip(int i, int j) { selector_.flip(index(i, j)); }
-    void add(int i, int j) { selector_.add(index(i, j)); }
-    void drop(int i, int j) {selector_.drop(index(i, j)); }
+    SelectorMatrix(int nrow, int ncol, const Selector &selector) {
+      int counter = 0;
+      for (int j = 0; j < ncol; ++j) {
+        columns_[j].push_back(Selector(nrow));
+        for (int i = 0; i < nrow; ++i) {
+          columns_[j][i] = selector[counter++];
+        }
+      }
+    }
+
+    int nrow() const {
+      if (columns_.empty()) return 0;
+      return columns_[0].size();
+    }
+
+    int ncol() const {return columns_.size();}
+    bool operator()(int i, int j) const {return columns_[j][i];}
+
+    void add_all() {for (auto &el : columns_) el.add_all();}
+    void drop_all() {for (auto &el : columns_) el.drop_all();}
+    void flip(int i, int j) {columns_[j].flip(i);}
+    void add(int i, int j) {columns_[j].add(i);}
+    void drop(int i, int j) {columns_[j].drop(i);}
+
+    const Selector &col(int i) const {return columns_[i];}
     
    private:
-    // Return the index in the 'linear' selector corresponding to the given row
-    // and column.
-    int index(int row, int col) const { return col * nrow_ + row; }
-
     // The selector elements map to the selector matrix elements in column-major
     // order.
-    Selector selector_;
-    
-    int nrow_;
-    int ncol_;
+    std::vector<Selector> columns_;
   };
     
 
