@@ -267,7 +267,7 @@ namespace BOOM {
     SelectorMatrix(int nrow, int ncol, const Selector &selector) {
       int counter = 0;
       for (int j = 0; j < ncol; ++j) {
-        columns_[j].push_back(Selector(nrow));
+        columns_.emplace_back(nrow, false);
         for (int i = 0; i < nrow; ++i) {
           columns_[j][i] = selector[counter++];
         }

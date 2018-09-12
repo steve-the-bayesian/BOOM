@@ -166,7 +166,11 @@ namespace BOOM {
       (*this)[p] = false;
       std::vector<uint>::iterator it = std::lower_bound(
           included_positions_.begin(), included_positions_.end(), p);
-      included_positions_.erase(it);
+      if (it != included_positions_.end()) {
+        // The if- guard here is needed in case a selector is trying to drop a
+        // variable that it never added in the first place.
+        included_positions_.erase(it);
+      }
     }
     return *this;
   }
