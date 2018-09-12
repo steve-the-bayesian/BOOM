@@ -65,6 +65,7 @@ namespace BOOM {
     virtual void combine_data(const Model &, bool just_suf = true);
 
     const Ptr<S> suf() const { return suf_; }
+    Ptr<S> suf() {return suf_;}
     void clear_suf() { suf_->clear(); }
     void update_suf(const Ptr<DataType> &d) { suf_->update(d); }
     void refresh_suf();
