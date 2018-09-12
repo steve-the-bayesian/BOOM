@@ -15,6 +15,17 @@ cc_test(
 )
 
 cc_test(
+    name = "binomial_regression_data_test",
+    srcs = ["binomial_regression_data_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "multivariate_regression_test",
     srcs = ["multivariate_regression_test.cc"],
     copts = COPTS,

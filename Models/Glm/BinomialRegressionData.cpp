@@ -43,6 +43,18 @@ namespace BOOM {
     if (check_n) check();
   }
 
+  void BRD::increment(double incremental_y, double incremental_n) {
+    if (incremental_y > incremental_n) {
+      report_error("Incremental successes cannot exceed incremental trials.");
+    }
+    if (incremental_y < 0 || incremental_n < 0) {
+      report_error("Both incremental successes and incremental trials must "
+                   "be non-negative.");
+    }
+    n_ += incremental_n;
+    GlmData<DoubleData>::set_y(incremental_y + y());
+  }
+  
   double BRD::n() const { return n_; }
 
   void BRD::check() const {

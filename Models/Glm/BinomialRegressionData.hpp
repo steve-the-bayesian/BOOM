@@ -42,6 +42,8 @@ namespace BOOM {
     BinomialRegressionData *clone() const override;
     void set_n(double n, bool check = true);
     void set_y(double y, bool check = true);
+    void increment(double incremental_y, double incremental_n);
+    
     double n() const;
     void check() const;  // throws if n < y
     ostream &display(ostream &out) const override;
