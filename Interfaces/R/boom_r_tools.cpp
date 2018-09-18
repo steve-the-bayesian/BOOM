@@ -502,6 +502,18 @@ namespace BOOM {
     return ans;
   }
 
+  SEXP AllocateArray(const std::vector<int> &array_dimensions) {
+    RMemoryProtector protector;
+    SEXP r_dims;
+    protector.protect(r_dims = Rf_allocVector(INTSXP, array_dimensions.size()));
+    int *dims_data = INTEGER(r_dims);
+    for (int i = 0; i < array_dimensions.size(); ++i) {
+      dims_data[i] = array_dimensions[i];
+    }
+    SEXP r_array = protector.protect(Rf_allocArray(REALSXP, r_dims));
+    return r_array;
+  }
+  
   std::string ToString(SEXP r_string) {
     if (TYPEOF(r_string) == CHARSXP) {
       return CHAR(r_string);

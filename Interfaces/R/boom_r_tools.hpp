@@ -239,7 +239,8 @@ namespace BOOM{
   SEXP ToRVector(const Vector &boom_vector);
   SEXP ToRMatrix(const Matrix &boom_matrix);
   SEXP ToRArray(const ConstArrayView &boom_array);
-
+  SEXP AllocateArray(const std::vector<int> &array_dimensions);
+  
   // Convert a std::vector<int> to an R vector of integers.  A common case is
   // when the first argument contains a vector of positions in the C++
   // zero-offset system for indexing arrays.  In that case you can set add_one =
