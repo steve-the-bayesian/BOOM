@@ -111,6 +111,16 @@ MIXTURE_HDRS = glob([
     "Models/Mixtures/PosteriorSamplers/*.hpp",
 ])
 
+NNET_SRCS = glob([
+    "Models/Nnet/*.cpp",
+    "Models/Nnet/PosteriorSamplers/*.cpp",
+])
+
+NNET_HDRS = glob([
+    "Models/Nnet/*.hpp",
+    "Models/Nnet/PosteriorSamplers/*.hpp",
+])
+
 POINT_PROCESS_SRCS = glob([
     "Models/PointProcesses/*.cpp",
     "Models/PointProcesses/PosteriorSamplers/*.cpp",
@@ -153,6 +163,7 @@ BOOM_SRCS = BMATH_SRCS + \
             DISTRIBUTIONS_SRCS + \
             MATH_SRCS + \
             MODELS_SRCS + \
+            NNET_SRCS + \
             NUMOPT_SRCS + \
             STATS_SRCS + \
             GLM_SRCS + \
@@ -174,6 +185,7 @@ BOOM_HDRS = TOP_HDRS + \
             DISTRIBUTIONS_HDRS + \
             MATH_HDRS + \
             MODELS_HDRS + \
+            NNET_HDRS + \
             NUMOPT_HDRS + \
             STATS_HDRS + \
             GLM_HDRS + \
