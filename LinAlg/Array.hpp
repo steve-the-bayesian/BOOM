@@ -233,13 +233,12 @@ namespace BOOM {
     ArrayView &operator=(const VectorView &a);
     ArrayView &operator=(const ConstVectorView &a);
 
-    // 'slice' returns a lower dimensional view into an array.  If you
-    // have a 3-way array indexed by (i, j, k), and you want to get
-    // the (i, k) slice (that is, (i, 0, k), (i, 1, k), ...), then you
-    // call array.slice(i, -1, k).  The negative index says 'give me
-    // all of these', analogous to a missing index in R.  The return
-    // value is a view into the array with dimension equal to the
-    // number of negative arguments.
+    // 'slice' returns a lower dimensional view into an array.  If you have a
+    // 3-way array indexed by (i, j, k), and you want to get the (i, k) slice
+    // (that is, (i, 0, k), (i, 1, k), ...), then you call array.slice(i, -1,
+    // k).  The negative index says 'give me all of these', analogous to a
+    // missing index in R.  The return value is a view into the array with
+    // dimension equal to the number of negative arguments.
     ConstArrayView slice(const std::vector<int> &index) const;
     ConstArrayView slice(int x1) const;
     ConstArrayView slice(int x1, int x2) const;
