@@ -39,3 +39,7 @@ check.probability.distribution <- function(x) {
   }
   return(TRUE)
 }
+
+check.scalar.boolean <- function(x) {
+  stopifnot(is.logical(x), length(x) == 1)
+}

@@ -44,6 +44,9 @@ MODELS_SRCS := $(wildcard Models/*.cpp Models/Policies/*.cpp) \
 
 NUMOPT_SRCS := $(wildcard numopt/*.cpp)
 
+NNET_SRCS := $(wildcard Models/Nnet/*.cpp) \
+	  $(wildcard Models/Nnet/PosteriorSamplers/*.cpp)
+
 POINTPROCESS_SRCS := $(wildcard Models/PointProcess/*.cpp) \
 		  $(wildcard Models/PointProcess/PosteriorSamplers/*.cpp)
 
@@ -77,6 +80,7 @@ CXX_SRCS = ${R_INTERFACE_SRCS} \
 	${MIXTURE_SRCS} \
 	${MODELS_SRCS} \
 	${NUMOPT_SRCS} \
+	${NNET_SRCS} \
 	${POINTPROCESS_SRCS} \
 	${RMATH_SRCS} \
 	${SAMPLERS_SRCS} \

@@ -55,6 +55,7 @@ export(
   check.nonnegative.scalar,
   check.positive.scalar,
   check.probability.distribution,
+  check.scalar.boolean,
   check.scalar.integer,
   check.scalar.probability,
   dInverseWishart,
