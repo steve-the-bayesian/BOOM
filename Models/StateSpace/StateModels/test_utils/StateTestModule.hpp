@@ -30,6 +30,7 @@ namespace BOOM {
     class StateModelTestModule {
      public:
       StateModelTestModule() : state_model_index_(-1), cursor_(-1) {}
+      virtual ~StateModelTestModule() {}
       
       // Simulate the data for this state component.  After calling this method,
       // the data will be available by calling StateContribution().
