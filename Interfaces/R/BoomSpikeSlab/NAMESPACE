@@ -11,8 +11,10 @@ importFrom("stats", ".checkMFClasses", ".getXlevels", "as.formula",
            "terms", "update", "var")
 importFrom("utils", "help", "tail")
 
-export(CoefficientGroup,
+export(BayesNnet,
+       CoefficientGroup,
        GetPredictorMatrix,
+       HiddenLayer,
        IndependentSpikeSlabPrior,
        LogitZellnerPrior,
        NestedRegression,

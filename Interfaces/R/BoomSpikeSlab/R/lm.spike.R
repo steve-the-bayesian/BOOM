@@ -64,7 +64,6 @@ lm.spike <- function(formula,
   frame <- eval(frame, parent.frame())
   model.terms <- attr(frame, "terms")
   y <- model.response(frame, "numeric")
-
   x <- model.matrix(model.terms, frame, contrasts)
 
   stopifnot(inherits(model.options, "SpikeSlabModelOptions"))
