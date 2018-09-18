@@ -913,5 +913,63 @@ namespace BOOM {
     array_view_index_[0] = next_position();
     return array_buffer_.slice(array_view_index_);
   }
+  //======================================================================
+  RListOfMatricesListElement::RListOfMatricesListElement(
+      const std::string &name,
+      const std::vector<int> &rows,
+      const std::vector<int> &cols,
+      Callback *callback)
+      : RListIoElement(name),
+        rows_(rows),
+        cols_(cols),
+        callback_(callback)
+  {
+    if (rows_.size() != cols_.size()) {
+      report_error("The vectors listing the number of rows and columns in "
+                   "the stored matrices must be the same size.");
+    }
+  }
+  
+  SEXP RListOfMatricesListElement::prepare_to_write(int niter) {
+    RMemoryProtector protector;
+    int number_of_matrices = rows_.size();
+    SEXP r_buffer = protector.protect(
+        Rf_allocVector(VECSXP, number_of_matrices));
+    views_.clear();
+    for (int i = 0; i < number_of_matrices; ++i) {
+      std::vector<int> array_dims = {niter, rows_[i], cols_[i]};
+      SET_VECTOR_ELT(r_buffer, i, AllocateArray(array_dims));
+      views_.push_back(ArrayView(REAL(VECTOR_ELT(r_buffer, i)), array_dims));
+    }
+    StoreBuffer(r_buffer);
+    return r_buffer;
+  }
+
+  void RListOfMatricesListElement::prepare_to_stream(SEXP r_object) {
+    RListIoElement::prepare_to_stream(r_object);
+    SEXP r_buffer = rbuffer();
+    int number_of_matrices = Rf_length(r_buffer);
+    std::vector<int> array_dims = GetArrayDimensions(VECTOR_ELT(r_buffer, 0));
+    int niter = array_dims[0];
+    views_.clear();
+    for (int i = 0; i < number_of_matrices; ++i) {
+      views_.push_back(ArrayView(REAL(VECTOR_ELT(r_buffer, i)),
+                                std::vector<int>{niter, rows_[i], cols_[i]}));
+    }
+  }
+
+  void RListOfMatricesListElement::write() {
+    int iteration = next_position();
+    for (int layer = 0; layer < views_.size(); ++layer) {
+      views_[layer].slice(iteration, -1, -1) = callback_->get(layer);
+    }
+  }
+
+  void RListOfMatricesListElement::stream() {
+    int iteration = next_position();
+    for (int layer = 0; layer < views_.size(); ++layer) {
+      callback_->put(layer, views_[layer].slice(iteration, -1, -1));
+    }
+  }
 
 }  // namespace BOOM

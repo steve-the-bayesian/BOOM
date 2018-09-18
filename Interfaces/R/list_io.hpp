@@ -31,15 +31,14 @@
 
 #include "r_interface/boom_r_tools.hpp"
 
-//======================================================================
-// Note that the functions listed here throw exceptions.  Code that
-// uses them should be wrapped in a try-block where the catch
-// statement catches the exception and calls Rf_error() with an
-// appropriate error message.  The functions handle_exception(), and
-// handle_unknown_exception (in handle_exception.hpp), are suitable
-// defaults.  These try-blocks should be present in any code called
+//===========================================================================
+// The functions listed below may throw exceptions.  Code that uses them should
+// be wrapped in a try-block where the catch statement catches the exception and
+// calls Rf_error() with an appropriate error message.  The functions
+// handle_exception(), and handle_unknown_exception (in handle_exception.hpp),
+// are suitable defaults.  These try-blocks should be present in any code called
 // directly from R by .Call.
-//======================================================================
+// ==========================================================================
 
 namespace BOOM{
   class RListIoElement;
@@ -161,8 +160,8 @@ namespace BOOM{
     int position_;  // Current position in the rbuffer
     double *data_;  // Pointer to the first element in the rbuffer
   };
-
-  //----------------------------------------------------------------------
+  
+  //---------------------------------------------------------------------------
   // Most elements in the list will be arrays of fixed dimension storing real
   // numbers.  This class makes it easy to handle real valued data.
   class RealValuedRListIoElement : public RListIoElement {
@@ -179,14 +178,14 @@ namespace BOOM{
     double *data_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   class ListValuedRListIoElement : public RListIoElement {
    public:
     explicit ListValuedRListIoElement(const std::string &name);
     SEXP prepare_to_write(int niter) override;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For tracking an individual diagonal element of a variance matrix.
   class PartialSpdListElement : public RealValuedRListIoElement {
    public:
@@ -203,7 +202,7 @@ namespace BOOM{
     bool report_sd_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For managing UnivariateParams, stored in an R vector.
   class UnivariateListElement : public RealValuedRListIoElement {
    public:
@@ -214,7 +213,7 @@ namespace BOOM{
     Ptr<UnivParams> prm_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // A callback interface class for managing scalar quantities that are not
   // stored in a BOOM::Params object.  The purpose of a ScalarIoCallback is to
   // supply values for a NativeUnivariateListElement to write to the vector that
@@ -262,7 +261,7 @@ namespace BOOM{
     BOOM::VectorView vector_view_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Use this class when BOOM stores a variance, but you want to report a
   // standard deviation.
   class StandardDeviationListElement : public RealValuedRListIoElement {
@@ -276,7 +275,7 @@ namespace BOOM{
     Ptr<UnivParams> variance_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For managing VectorParams, stored in an R matrix.
   class VectorListElement : public RealValuedRListIoElement {
    public:
@@ -297,7 +296,7 @@ namespace BOOM{
     std::vector<std::string> element_names_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For vectors representing regression or glm coefficients.  These need
   // special attention when streaming, because include/exclude indicators must
   // be set correctly.
@@ -320,7 +319,7 @@ namespace BOOM{
     const std::vector<std::string> coefficient_names_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For reporting a vector of standard deviations when the model stores a
   // vector of variances.
   class SdVectorListElement : public RealValuedRListIoElement {
@@ -338,7 +337,7 @@ namespace BOOM{
     SubMatrix matrix_view_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // A mix-in class for handling row and column names for list elements that
   // store MCMC draws of matrices.
   class MatrixListElementBase : public RealValuedRListIoElement {
@@ -362,7 +361,7 @@ namespace BOOM{
     std::vector<std::string> col_names_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For managing MatrixParams, stored in an R 3-way array.
   class MatrixListElement : public MatrixListElementBase {
    public:
@@ -414,7 +413,7 @@ namespace BOOM{
     std::vector<std::string> group_names_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Stores a collection of UnivParams objects in a matrix.
   class UnivariateCollectionListElement
       : public RealValuedRListIoElement {
@@ -452,7 +451,7 @@ namespace BOOM{
     void stream() override;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // For managing SpdParams, stored in an R 3-way array.
   class SpdListElement : public MatrixListElementBase {
    public:
@@ -474,7 +473,7 @@ namespace BOOM{
     ArrayView array_view_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // A VectorIoCallback is a base class for managing native BOOM Vec objects
   // that are not part of VectorParams.  To use it, define a local class that
   // inherits from VectorIoCallback.  The class should store a pointer to the
@@ -515,7 +514,7 @@ namespace BOOM{
     SubMatrix matrix_view_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Please see the comments to VectorIoCallback, above.
   class MatrixIoCallback{
    public:
@@ -558,7 +557,7 @@ namespace BOOM{
     ArrayView array_view_;
   };
 
-  //----------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // A NativeArrayListElement manages output for one or more parameters where a
   // single MCMC iteration is represented by an R multidimensional array.  The
   // array has leading dimension niter (number of MCMC iterations).  The
@@ -589,6 +588,7 @@ namespace BOOM{
     virtual void read_from_array(const ArrayView &view) = 0;
   };
 
+  //---------------------------------------------------------------------------
   // Introductory comments given above ArrayIoCallback.
   class NativeArrayListElement : public RListIoElement {
    public:
@@ -621,7 +621,60 @@ namespace BOOM{
     // detailed in the comments to ArrayView::slice().
     std::vector<int> array_view_index_;
   };
+  
+  //---------------------------------------------------------------------------
+  // Stores a list whose elements are 3-way arrays, where element [i, , ] is the
+  // i'th draw of a matrix parameter.
+  class RListOfMatricesListElement : public RListIoElement {
+   public:
+    // A callback handles the job of getting the 
+    class Callback {
+     public:
+      virtual ~Callback() {}
 
+      // Get the value of the matrix to write to the current position in the
+      // specified layer.
+      virtual Matrix get(int layer) = 0;
+
+      // Take the second argument (taken from the stored R object) and use it to
+      // populate the model object.
+      virtual void put(int layer, const ConstArrayView &values) = 0;
+    };
+    
+    RListOfMatricesListElement(const std::string &name,
+                               const std::vector<int> &rows,
+                               const std::vector<int> &cols,
+                               Callback *callback);
+
+    // Allocates and returns the R object (usually a vector, matrix, or array),
+    // to be stored in the list.  It is the caller's responsibility to PROTECT
+    // this object, if needed.  The 'caller' will almost always be the
+    // RListIoManager, which has the PROTECT/UNPROTECT stuff safely hidden away
+    // so the caller won't need to worry about protecting the individual list
+    // elements.
+    SEXP prepare_to_write(int niter) override;
+
+    // Takes the list as an argument.  Finds the list element that this object
+    // is supposed to manage in the given object.  Set the input buffers
+    void prepare_to_stream(SEXP object) override;
+
+    // Leaf classes keep track of the position in the output buffer, and
+    // increment it whenever write() is called.
+    void write() override;
+
+    // Leaf classes keep track of the position in the input buffer, and
+    // increment it whenever stream() is called.
+    void stream() override;
+
+   private:
+    std::vector<int> rows_;
+    std::vector<int> cols_;
+    std::unique_ptr<Callback> callback_;
+
+    // Views into the arrays held by the data buffer.
+    std::vector<ArrayView> views_;
+  };
+  
 }  // namespace BOOM
 
 #endif  // BOOM_R_LIST_IO_HPP_
