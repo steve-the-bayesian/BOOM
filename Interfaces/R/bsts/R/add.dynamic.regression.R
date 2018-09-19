@@ -15,6 +15,48 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 DynamicRegressionRandomWalkOptions <- function(
+    sigma.prior = NULL,
+    sdy = NULL,
+    sdx = NULL) {
+  ## Args:
+  ##   sigma.prior: This can either be a single object of class 'SdPrior', a
+  ##     list of such priors, or NULL.  A single SdPrior will get expanded to a
+  ##     list.  Each list element describes the prior distribution for the
+  ##     innovation variance of the corresponding dynamic coefficient.  If NULL
+  ##     then a default prior will be assigned.
+  ##   sdy: The standard deviation of the response variable.  This is used to
+  ##     scale the default prior if sigma.prior is NULL.  It is unused
+  ##     otherwise.
+  ##   sdx: A vector containing the standard deviations of the predictor
+  ##     variables multiplied by the dynamic regression coefficients.  This is
+  ##     used to scale the default prior if sigma.prior is NULL.  It is unused
+  ##     otherwise.
+  ## Returns:
+  ##   An object that can be passed to AddDynamicRegression as the model.options argument. 
+  if (!is.null(sigma.prior)) {
+    stopifnot(inherits(sigma.prior, "SdPrior")
+      || is.list(sigma.prior) && sapply(sigma.prior, inherits, "SdPrior"))
+  } else {
+    if (is.null(sdy) || is.null(sdx)) {
+      stop("If 'sigma.prior' is NULL then both 'sdy' and 'sdx' must be supplied.")
+    }
+    if (any(sdx <= 0)) {
+      stop("All elements of sdx must be positive.")
+    }
+    
+    number.of.coefficients <- length(sdx)
+    sigma.prior <- list()
+    for (i in 1:number.of.coefficients) {
+      sigma.prior[[i]] <- SdPrior(.01 * sdy / sdx[i], 1)
+    }
+  }
+  ans <- list(sigma.prior = sigma.prior)
+  class(ans) <- c("DynamicRegressionRandomWalkOptions",
+    "DynamicRegressionOptions")
+  return(ans)
+}
+
+DynamicRegressionHierarchicalRandomWalkOptions <- function(
     sdy = NULL,
     sigma.mean.prior = NULL,
     shrinkage.parameter.prior = GammaPrior(a = 10, b = 1),
@@ -92,7 +134,7 @@ DynamicRegressionRandomWalkOptions <- function(
   ans <- list(sigma.mean.prior = sigma.mean.prior,
               shrinkage.parameter.prior = shrinkage.parameter.prior,
               sigma.max = sigma.max)
-  class(ans) <- c("DynamicRegressionRandomWalkOptions",
+  class(ans) <- c("DynamicRegressionHierarchicalRandomWalkOptions",
                   "DynamicRegressionOptions")
   return(ans)
 }
@@ -232,7 +274,7 @@ AddDynamicRegression <- function(
 
   model.options <- .CheckModelOptions(
       model.options = model.options,
-      xdim = ncol(predictors),
+      predictor.sd = predictor.sd,
       sigma.max.DEPRECATED = sigma.max.DEPRECATED,
       sigma.mean.prior.DEPRECATED = sigma.mean.prior.DEPRECATED,
       shrinkage.parameter.prior.DEPRECATED = shrinkage.parameter.prior.DEPRECATED,
@@ -252,7 +294,7 @@ AddDynamicRegression <- function(
 }
 
 .CheckModelOptions <- function(model.options,
-                               xdim,
+                               predictor.sd,
                                sigma.max.DEPRECATED,
                                sigma.mean.prior.DEPRECATED,
                                shrinkage.parameter.prior.DEPRECATED,
@@ -271,20 +313,20 @@ AddDynamicRegression <- function(
     }
     sdy <- sqrt(var(response, na.rm = TRUE))
     model.options <- DynamicRegressionRandomWalkOptions(
-        sdy = sdy,
-        sigma.mean.prior = sigma.mean.prior.DEPRECATED,
-        shrinkage.parameter.prior = shrinkage.parameter.prior.DEPRECATED,
-        sigma.max = sigma.max.DEPRECATED)
+      sdy = sdy,
+      sdx = predictor.sd,
+      NULL)
   }
   stopifnot(inherits(model.options, "DynamicRegressionOptions"))
 
   if (inherits(model.options, "DynamicRegressionArOptions")) {
     if (inherits(model.options$sigma.prior, "SdPrior")) {
-      model.options$sigma.prior <- RepList(model.options$sigma.prior, xdim)
+      model.options$sigma.prior <- RepList(
+        model.options$sigma.prior, length(predictor.sd))
     }
     stopifnot(is.list(model.options$sigma.prior),
               all(sapply(model.options$sigma.prior, inherits, "SdPrior")),
-              length(model.options$sigma.prior) == xdim)
+              length(model.options$sigma.prior) == length(predictor.sd))
   }
   return(model.options)
 }

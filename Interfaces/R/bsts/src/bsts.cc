@@ -129,39 +129,36 @@ extern "C" {
   // Returns the posterior predictive distribution of a model forecast
   // over a specified forecast period.
   // Args:
-  //   r_bsts_object: The object on which the predictions are to be
-  //     based, which was returned by the original call to bsts.
-  //   r_prediction_data: An R list containing any additional data
-  //     needed to make the prediction.  For simple state space models
-  //     this is just an integer giving the time horizon over which to
-  //     predict.  For models containing a regression component it
-  //     contains the future values of the X's.  For binomial (or
-  //     Poisson) models it contains a sequence of future trial counts
-  //     (or exposures).
-  //   r_burn: An integer giving the number of burn-in iterations to
-  //     discard.  Negative numbers will be treated as zero.  Numbers
-  //     greater than the number of MCMC iterations will raise an error.
-  //   r_observed_data: An R list containing the observed data on which
-  //     to base the prediction.  In typical cases this should be
-  //     R_NilValue (R's NULL) signaling that the observed data should
-  //     be taken from r_bsts_object.  However, if additional data have
-  //     been observed since the model was trained, or if the model is
-  //     being used to predict data that were part of the training set,
-  //     or some other application other than making predictions
-  //     starting from one time period after the training data ends,
-  //     then one can use this argument to pass the "training data" on
-  //     which the predictions should be based.  If this argument is
-  //     used, then the Kalman filter will be run over the supplied
-  //     data, which is expensive.  If this argument is left as
-  //     R_NilValue (NULL) then the "final.state" element of
-  //     r_bsts_object will be used as the basis for future predictions,
-  //     which is a computational savings over filtering from scratch.
+  //   r_bsts_object: The object on which the predictions are to be based, which
+  //     was returned by the original call to bsts.
+  //   r_prediction_data: An R list containing any additional data needed to
+  //     make the prediction.  For simple state space models this is just an
+  //     integer giving the time horizon over which to predict.  For models
+  //     containing a regression component it contains the future values of the
+  //     X's.  For binomial (or Poisson) models it contains a sequence of future
+  //     trial counts (or exposures).
+  //   r_burn: An integer giving the number of burn-in iterations to discard.
+  //     Negative numbers will be treated as zero.  Numbers greater than the
+  //     number of MCMC iterations will raise an error.
+  //   r_observed_data: An R list containing the observed data on which to base
+  //     the prediction.  In typical cases this should be R_NilValue (R's NULL)
+  //     signaling that the observed data should be taken from r_bsts_object.
+  //     However, if additional data have been observed since the model was
+  //     trained, or if the model is being used to predict data that were part
+  //     of the training set, or some other application other than making
+  //     predictions starting from one time period after the training data ends,
+  //     then one can use this argument to pass the "training data" on which the
+  //     predictions should be based.  If this argument is used, then the Kalman
+  //     filter will be run over the supplied data, which is expensive.  If this
+  //     argument is left as R_NilValue (NULL) then the "final.state" element of
+  //     r_bsts_object will be used as the basis for future predictions, which
+  //     is a computational savings over filtering from scratch.
   //
   // Returns:
-  //   An R matrix containing draws from the posterior predictive
-  //   distribution.  Rows of the matrix correspond to MCMC iterations,
-  //   and columns to time points.  The matrix will have 'burn' fewer
-  //   rows than the number of MCMC iterations in r_bsts_object.
+  //   An R matrix containing draws from the posterior predictive distribution.
+  //   Rows of the matrix correspond to MCMC iterations, and columns to time
+  //   points.  The matrix will have 'burn' fewer rows than the number of MCMC
+  //   iterations in r_bsts_object.
   SEXP analysis_common_r_predict_bsts_model_(
       SEXP r_bsts_object,
       SEXP r_prediction_data,
@@ -189,11 +186,11 @@ extern "C" {
   // training data or a set of holdout data.
   //
   // Args:
-  //   r_bsts_object: The object on which the predictions are to be
-  //     based, which was returned by the original call to bsts.
+  //   r_bsts_object: The object on which the predictions are to be based, which
+  //     was returned by the original call to bsts.
   //   r_cutpoints: A set of integers ranging from 1 to
-  //     bsts.object$number.of.time.points.  One bsts model run is needed for each
-  //     cutpoint, using data up to that cutpoint.
+  //     bsts.object$number.of.time.points.  One bsts model run is needed for
+  //     each cutpoint, using data up to that cutpoint.
   //
   // Returns:
   //    A list of R matrices with rows corresponding to MCMC draws and columns

@@ -56,10 +56,11 @@ namespace BOOM {
   // small and the series will be forecastable.  We also hope that 'a'
   // is large because it means that the sigma[i]'s will be similar to
   // one another.
-  class DynamicRegressionStateModel : virtual public StateModel,
-                                      public CompositeParamPolicy,
-                                      public NullDataPolicy,
-                                      public PriorPolicy {
+  class DynamicRegressionStateModel
+      : virtual public StateModel,
+        public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy {
    public:
     // Each row of X is a predictor vector for an observation.  This constructor
     // assumes a single observation for each time point.

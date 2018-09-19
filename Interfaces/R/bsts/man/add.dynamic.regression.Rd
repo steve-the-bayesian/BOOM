@@ -19,6 +19,7 @@
 \alias{DynamicRegressionOptions}
 \alias{DynamicRegressionArOptions}
 \alias{DynamicRegressionRandomWalkOptions}
+\alias{DynamicRegressionHierarchicalRandomWalkOptions}
 
 \Rdversion{1.1}
 \title{
@@ -31,24 +32,29 @@
   walk.  }
 
 \usage{
-  AddDynamicRegression(
-     state.specification,
-     formula,
-     data,
-     model.options = NULL,
-     sigma.mean.prior.DEPRECATED = NULL,
-     shrinkage.parameter.prior.DEPRECATED = GammaPrior(a = 10, b = 1),
-     sigma.max.DEPRECATED = NULL,
-     contrasts = NULL,
-     na.action = na.pass)
+AddDynamicRegression(
+    state.specification,
+    formula,
+    data,
+    model.options = NULL,
+    sigma.mean.prior.DEPRECATED = NULL,
+    shrinkage.parameter.prior.DEPRECATED = GammaPrior(a = 10, b = 1),
+    sigma.max.DEPRECATED = NULL,
+    contrasts = NULL,
+    na.action = na.pass)
 
- DynamicRegressionRandomWalkOptions(sdy = NULL,
-                                    sigma.mean.prior = NULL,
-                                    shrinkage.parameter.prior =
-                                    GammaPrior(a = 10, b = 1),
-                                    sigma.max = NULL)
+DynamicRegressionRandomWalkOptions(
+    sigma.prior = NULL,
+    sdy = NULL,
+    sdx = NULL)
 
- DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
+DynamicRegressionHierarchicalRandomWalkOptions(
+     sdy = NULL,
+     sigma.mean.prior = NULL,
+     shrinkage.parameter.prior = GammaPrior(a = 10, b = 1),
+     sigma.max = NULL)
+
+DynamicRegressionArOptions(lags = 1, sigma.prior = SdPrior(1, 1))
 }
 
 \arguments{
@@ -110,6 +116,10 @@
     are left \code{NULL}.  If all other arguments are non-\code{NULL}
     then \code{sdy} is not used.}
 
+  \item{sdx}{The vector of standard deviations of each predictor
+    variable in the dynamic regression.  Used only to scale the default
+    prior.  This argument is not used if a prior is specified directly.}
+  
   \item{lags}{The number of lags in the autoregressive process for the
     coefficients.}
 

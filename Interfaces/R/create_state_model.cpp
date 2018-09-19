@@ -1340,6 +1340,112 @@ namespace BOOM {
     };
 
     //======================================================================
+    void SetIndependentDynamicRegressionModelPriors(
+        DynamicRegressionStateModel *model,
+        SEXP r_model_options) {
+      SEXP r_sigma_prior = getListElement(r_model_options, "sigma.prior");
+      std::vector<Ptr<GammaModelBase>> precision_priors;
+      Vector sigma_max(model->xdim());
+      precision_priors.reserve(model->xdim());
+      if (Rf_inherits(r_sigma_prior, "SdPrior")) {
+        // A single SdPrior was supplied.
+        RInterface::SdPrior sd_prior_spec(r_sigma_prior);
+        for (int i = 0; i < model->xdim(); ++i) {
+          precision_priors.push_back(new ChisqModel(
+              sd_prior_spec.prior_df(),
+              sd_prior_spec.prior_guess()));
+          sigma_max[i] = sd_prior_spec.upper_limit();
+        }
+      } else {
+        // A list of SdPrior objects was supplied.
+        int xdim = Rf_length(r_sigma_prior);
+        if (xdim != model->xdim()) {
+          std::ostringstream err;
+          err << "The list of priors passed to the dynamic regression "
+              << "component contained " << xdim << " elements, but there "
+              << "are " << model->xdim() << "regressors.";
+          report_error(err.str());
+        }
+        for (int i = 0; i < xdim; ++i) {
+          RInterface::SdPrior sd_prior_spec(VECTOR_ELT(r_sigma_prior, i));
+          precision_priors.push_back(new ChisqModel(
+              sd_prior_spec.prior_df(),
+              sd_prior_spec.prior_guess()));
+          sigma_max[i] = sd_prior_spec.upper_limit();
+        }
+      }
+      NEW(DynamicRegressionIndependentPosteriorSampler, sampler)(
+          model, precision_priors);
+      for (int i = 0; i < model->xdim(); ++i) {
+        if (sigma_max[i] > 0 || std::isfinite(sigma_max[i])) {
+          for (int i = 0; i < model->xdim(); ++i) {
+            sampler->set_sigma_max(i, sigma_max[i]);
+          }
+        }
+      }
+      model->set_method(sampler);
+    }
+    //======================================================================
+    void SetHierarchicalDynamicRegressionModelPrior(
+        DynamicRegressionStateModel *model,
+        SEXP r_model_options,
+        RListIoManager *io_manager,
+        const std::string &prefix) {
+      Ptr<DoubleModel> sigma_mean_prior =
+          create_double_model(getListElement(
+              r_model_options, "sigma.mean.prior"));
+      Ptr<DoubleModel> shrinkage_parameter_prior =
+          create_double_model(getListElement(
+              r_model_options, "shrinkage.parameter.prior"));
+
+      NEW(GammaModel, siginv_prior)(1, 1);
+      NEW(GammaPosteriorSampler, hyperparameter_sampler)(
+          siginv_prior.get(),
+          sigma_mean_prior,
+          shrinkage_parameter_prior);
+      siginv_prior->set_method(hyperparameter_sampler);
+
+      NEW(DynamicRegressionPosteriorSampler, sampler)(
+          model, siginv_prior);
+      double sigma_max = Rf_asReal(getListElement(
+          r_model_options, "sigma.max"));
+      if (std::isfinite(sigma_max)) {
+        sampler->set_sigma_max(sigma_max);
+      }
+      model->set_method(sampler);
+
+      if (io_manager) {
+        // Store the hyperparameters describing the model for 1.0 / sigma^2.
+        io_manager->add_list_element(new UnivariateListElement(
+            siginv_prior->Alpha_prm(),
+            prefix + "siginv_shape_hyperparameter"));
+
+        io_manager->add_list_element(new UnivariateListElement(
+            siginv_prior->Beta_prm(),
+            prefix + "siginv_scale_hyperparameter"));
+      }
+      
+    }
+    //======================================================================
+    void SetDynamicRegressionModelPrior(
+        DynamicRegressionStateModel *model,
+        SEXP r_model_options,
+        RListIoManager *io_manager,
+        const std::string &prefix) {
+      if (Rf_inherits(
+          r_model_options,
+          "DynamicRegressionRandomWalkOptions")) {
+        SetIndependentDynamicRegressionModelPriors(model, r_model_options);
+      } else if (Rf_inherits(
+          r_model_options,
+          "DynamicRegressionHierarchicalRandomWalkOptions")) {
+        SetHierarchicalDynamicRegressionModelPrior(
+            model, r_model_options, io_manager, prefix);
+      } else {
+        report_error("Unrecognized object passed as r_model_options.");
+      }
+    }
+
     DynamicRegressionStateModel *
     StateModelFactory::CreateDynamicRegressionStateModel(
         SEXP r_state_component,
@@ -1368,29 +1474,11 @@ namespace BOOM {
       DynamicRegressionStateModel * dynamic_regression(
           new DynamicRegressionStateModel(predictors));
       dynamic_regression->set_xnames(xnames);
-
-      Ptr<DoubleModel> sigma_mean_prior =
-          create_double_model(getListElement(
-              r_model_options, "sigma.mean.prior"));
-      Ptr<DoubleModel> shrinkage_parameter_prior =
-          create_double_model(getListElement(
-              r_model_options, "shrinkage.parameter.prior"));
-
-      NEW(GammaModel, siginv_prior)(1, 1);
-      NEW(GammaPosteriorSampler, hyperparameter_sampler)(
-          siginv_prior.get(),
-          sigma_mean_prior,
-          shrinkage_parameter_prior);
-      siginv_prior->set_method(hyperparameter_sampler);
-
-      NEW(DynamicRegressionPosteriorSampler, sampler)(
-          dynamic_regression, siginv_prior);
-      double sigma_max = Rf_asReal(getListElement(
-          r_model_options, "sigma.max"));
-      if (std::isfinite(sigma_max)) {
-        sampler->set_sigma_max(sigma_max);
-      }
-      dynamic_regression->set_method(sampler);
+      SetDynamicRegressionModelPrior(
+          dynamic_regression,
+          r_model_options,
+          io_manager_,
+          prefix);
 
       if (io_manager_) {
         // Store the standard deviations for each variable.
@@ -1401,15 +1489,6 @@ namespace BOOM {
               dynamic_regression->Sigsq_prm(i),
               vname.str()));
         }
-
-        // Store the hyperparameters describing the model for 1.0 / sigma^2.
-        io_manager_->add_list_element(new UnivariateListElement(
-            siginv_prior->Alpha_prm(),
-            prefix + "siginv_shape_hyperparameter"));
-
-        io_manager_->add_list_element(new UnivariateListElement(
-            siginv_prior->Beta_prm(),
-            prefix + "siginv_scale_hyperparameter"));
 
         NativeMatrixListElement *dynamic_regression_coefficients(
             new NativeMatrixListElement(
