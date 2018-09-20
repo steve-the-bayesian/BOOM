@@ -17,6 +17,14 @@ check.positive.scalar <- function(x) {
   return(TRUE)
 }
 
+check.nonnegative.scalar <- function(x) {
+  okay <- is.numeric(x) && length(x) == 1 && x >= 0
+  if (!okay) {
+    stop("expected a non-negative scalar")
+  }
+  return(TRUE)
+}
+
 check.scalar.integer <- function(x) {
   okay <- is.numeric(x) && (length(x) == 1) && (abs(x - as.integer(x)) < 1e-10)
   if (!okay) {
@@ -24,12 +32,8 @@ check.scalar.integer <- function(x) {
   }
 }
 
-check.nonnegative.scalar <- function(x) {
-  okay <- is.numeric(x) && length(x) == 1 && x >= 0
-  if (!okay) {
-    stop("expected a non-negative scalar")
-  }
-  return(TRUE)
+check.scalar.boolean <- function(x) {
+  stopifnot(is.logical(x), length(x) == 1)
 }
 
 check.probability.distribution <- function(x) {
@@ -40,6 +44,3 @@ check.probability.distribution <- function(x) {
   return(TRUE)
 }
 
-check.scalar.boolean <- function(x) {
-  stopifnot(is.logical(x), length(x) == 1)
-}
