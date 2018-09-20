@@ -136,6 +136,20 @@ namespace BOOM{
   // class attribute exists an empty vector is returned.
   std::vector<std::string> GetS3Class(SEXP object);
 
+  // Report and error, using BOOM's report_error mechanism, arising from an
+  // object with the wrong class being passed to a function.
+  //
+  // Args:
+  //   error_message: An error message to be printed giving the context in which
+  //     the error occurred.  What sort object was expected, etc.
+  //   r_object:  The passed object that led to the error.
+  //
+  // Effects:
+  //   An error is reported.  The error message includes the first argument, a
+  //   list of the classes associated with r_object, and an indicator of whether
+  //   the object was NULL.
+  void ReportBadClass(const std::string &error_message, SEXP r_object);
+  
   // Returns a pair, with .first set to the number of rows, and
   // .second set to the number of columns.  If the argument is not a
   // matrix then an exception will be thrown.

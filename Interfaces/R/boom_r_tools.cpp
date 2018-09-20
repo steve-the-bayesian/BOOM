@@ -190,12 +190,32 @@ namespace BOOM {
     return StringVector(rclass);
   }
 
+  void ReportBadClass(const std::string &error_message, SEXP r_object) {
+    std::ostringstream err;
+    err << error_message << std::endl;
+    std::vector<std::string> classes = GetS3Class(r_object);
+    if (classes.empty()) {
+      err << "No class attribute!!" << std:: endl;
+    } else {
+      if (classes.size() == 1) {
+        err << "Object is of class " << classes[0] << std::endl;
+      }
+      else {
+        err << "The object has class attributes: ";
+        for (const auto &el : classes) err << el << " ";
+        err << endl;
+      }
+    }
+    if (Rf_isNull(r_object)) {
+      err << "Object is NULL." << std::endl;
+    }
+    report_error(err.str());
+  }
+  
   std::pair<int,int> GetMatrixDimensions(SEXP matrix){
     if(!Rf_isMatrix(matrix)){
-      report_error("GetMatrixDimensions called on a non-matrix object");
-      // TODO(stevescott): is there a way to find the name of
-      // offending argument in R, so that I can provide a better error
-      // message?
+      ReportBadClass("GetMatrixDimensions called on a non-matrix object",
+                     matrix);
     }
     RMemoryProtector protector;
     SEXP dims = protector.protect(Rf_getAttrib(matrix, R_DimSymbol));
@@ -227,7 +247,8 @@ namespace BOOM {
 
   std::vector<int> GetArrayDimensions(SEXP array) {
     if (!Rf_isArray(array)) {
-      report_error("GetArrayDimensions called on a non-array object.");
+      ReportBadClass("GetArrayDimensions called on a non-array object.",
+                     array);
     }
     RMemoryProtector protector;
     SEXP r_dims = protector.protect(Rf_getAttrib(array, R_DimSymbol));
