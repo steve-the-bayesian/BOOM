@@ -190,10 +190,10 @@ namespace BOOM {
   ConstSubMatrix const_block(const Matrix &m, int block_row, int block_col,
                   int block_row_size, int block_col_size);
 
-  inline nrow(const SubMatrix &m) {return m.nrow();}
-  inline nrow(const ConstSubMatrix &m) {return m.nrow();}
-  inline ncol(const SubMatrix &m) {return m.ncol();}
-  inline ncol(const ConstSubMatrix &m) {return m.ncol();}
+  inline int nrow(const SubMatrix &m) {return m.nrow();}
+  inline int nrow(const ConstSubMatrix &m) {return m.nrow();}
+  inline int ncol(const SubMatrix &m) {return m.ncol();}
+  inline int ncol(const ConstSubMatrix &m) {return m.ncol();}
   
 }  // namespace BOOM
 
