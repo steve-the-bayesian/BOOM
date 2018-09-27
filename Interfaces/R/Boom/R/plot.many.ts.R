@@ -58,9 +58,16 @@ PlotManyTs <- function (x, type = "l", gap = 0, boxes = TRUE, truth = NULL,
     if (missing(labs)) {
       labs <- dimnames(x)
       if (!is.null(labs)) {
-        if (!is.null(labs[[2]]) && !is.null(labs[[3]])) {
-          labs <- outer(labs[[2]], labs[[3]], paste, sep = ":")
+        sep <- ":"
+        if (is.null(labs[[2]])) {
+          labs[[2]] <- rep("", dim(x)[2])
+          sep <- ""
         }
+        if (is.null(labs[[3]])) {
+          labs[[3]] <- rep("", dim(x)[3])
+          sep <- ""
+        }
+        labs <- outer(labs[[3]], labs[[2]], paste, sep = sep)
       }
     }
     x <- matrix(aperm(x, c(1, 3, 2)), nrow = dx[1])
