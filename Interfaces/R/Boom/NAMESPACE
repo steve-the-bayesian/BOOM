@@ -58,6 +58,7 @@ export(
   check.scalar.boolean,
   check.scalar.integer,
   check.scalar.probability,
+  circles,
   dInverseWishart,
   dWishart,
   ddirichlet,
