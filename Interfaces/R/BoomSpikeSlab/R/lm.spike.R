@@ -659,32 +659,28 @@ predict.lm.spike <- function(object,
                              ...) {
   ## Prediction method for lm.spike
   ## Args:
-  ##   object: object of class "lm.spike" returned from the lm.spike
-  ##     function
-  ##   newdata: Either NULL, or else a data frame, matrix, or vector
-  ##     containing the predictors needed to make the prediction.  If
-  ##     'newdata' is 'NULL' then the predictors are taken from the
-  ##     training data used to create the model object.  Note that
-  ##     'object' does not store its training data, so the data
-  ##     objects used to fit the model must be present for the
-  ##     training data to be recreated.  If 'newdata' is a data.frame
-  ##     it must contain variables with the same names as the data
-  ##     frame used to fit 'object'.  If it is a matrix, it must have
-  ##     the same number of columns as object$beta.  (An intercept
-  ##     term will be implicitly added if the number of columns is one
-  ##     too small.)  If the dimension of object$beta is 1 or 2, then
-  ##     newdata can be a vector.
-  ##   burn: The number of MCMC iterations in 'object' that should be
-  ##     discarded.  If burn <= 0 then all iterations are kept.
+  ##   object: object of class "lm.spike" returned from the lm.spike function
+  ##   newdata: Either NULL, or else a data frame, matrix, or vector containing
+  ##     the predictors needed to make the prediction.  If 'newdata' is 'NULL'
+  ##     then the predictors are taken from the training data used to create the
+  ##     model object.  Note that 'object' does not store its training data, so
+  ##     the data objects used to fit the model must be present for the training
+  ##     data to be recreated.  If 'newdata' is a data.frame it must contain
+  ##     variables with the same names as the data frame used to fit 'object'.
+  ##     If it is a matrix, it must have the same number of columns as
+  ##     object$beta.  (An intercept term will be implicitly added if the number
+  ##     of columns is one too small.)  If the dimension of object$beta is 1 or
+  ##     2, then newdata can be a vector.
+  ##   burn: The number of MCMC iterations in 'object' that should be discarded.
+  ##     If burn <= 0 then all iterations are kept.
   ##   na.action: what to do about NA's.
-  ##   mean.only: Logical.  If TRUE then return the posterior mean of
-  ##     the predictive distribution.  If FALSE then return the entire
-  ##     distribution.
-  ##   ...: extra aguments ultimately passed to model.matrix (in the
-  ##     event that newdata is a data frame)
+  ##   mean.only: Logical.  If TRUE then return the posterior mean of the
+  ##     predictive distribution.  If FALSE then return the entire distribution.
+  ##   ...: extra aguments ultimately passed to model.matrix (in the event that
+  ##     newdata is a data frame)
   ## Returns:
-  ## A matrix of predictions, with each row corresponding to a row
-  ## in newdata, and each column to an MCMC iteration.
+  ##   A matrix of predictions, with each row corresponding to a row in newdata,
+  ##   and each column to an MCMC iteration.
 
   if (is.null(newdata)) {
     predictor.matrix <- model.matrix(object)

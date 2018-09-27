@@ -1,28 +1,25 @@
 GetPredictorMatrix <- function(object, newdata, na.action = na.omit, ...) {
-  ## Obtain the design matrix for making predictions based on a
-  ## glm.spike object.
+  ## Obtain the design matrix for making predictions based on a glm.spike
+  ## object.
   ##
   ## Args:
-  ##   object: An object of class glm.spike.  The object must be a
-  ##     list with the following elements
-  ##     * beta: a matrix of MCMC draws, with rows representing draws,
-  ##         and columns representing coefficients.
-  ##     * xlevels: the levels of any contrasts present in the original
-  ##         training data.
-  ##     * contrasts: the "contrasts" attribute of the original design
-  ##         matrix used to train the model.
+  ##   object: An object of class glm.spike.  The object must be a list with the
+  ##     following elements
+  ##     * beta: a matrix of MCMC draws, with rows representing draws, and
+  ##         columns representing coefficients.
+  ##     * xlevels: the levels of any contrasts present in the original training
+  ##         data.
+  ##     * contrasts: the "contrasts" attribute of the original design matrix
+  ##         used to train the model.
   ##     * terms: the terms of the formula used to fit the original model.
-  ##   newdata: A data frame, matrix, or vector containing the
-  ##     predictors needed to make a prediction.  If newdata is a
-  ##     matrix it must have the same number of columns as
-  ##     length(object$beta), unless it is off by one and the model
-  ##     contains an intercept, in which case an intercept term will
-  ##     be added.  If length(object$beta) == 1 (or 2, with one
-  ##     element containing an intercept) then newdata can be a
-  ##     numeric vector.
+  ##   newdata: A data frame, matrix, or vector containing the predictors needed
+  ##     to make a prediction.  If newdata is a matrix it must have the same
+  ##     number of columns as length(object$beta), unless it is off by one and
+  ##     the model contains an intercept, in which case an intercept term will
+  ##     be added.  If length(object$beta) == 1 (or 2, with one element
+  ##     containing an intercept) then newdata can be a numeric vector.
   ##   na.action:  what to do about NA's.
-  ##   ...: extra arguments passed to model.matrix (if newdata is a
-  ##     data frame).
+  ##   ...: extra arguments passed to model.matrix (if newdata is a data frame).
   ##
   ## Returns:
   ##   A matrix of predictor variables suitable for multiplication by

@@ -134,7 +134,7 @@ SpikeSlabPriorDirect <- function(coefficient.mean,
     prior.inclusion.probabilities = prior.inclusion.probabilities,
     max.flips = max.flips)
   ans$prior.df <- prior.sigma.sample.size
-  ans$sigma.guess <- sigma.guess
+  ans$sigma.guess <- prior.sigma.guess
   ans$sigma.upper.limit <- sigma.upper.limit
   class(ans) <- c("SpikeSlabPriorDirect", "SpikeSlabPriorBase")
   return(ans)
@@ -364,7 +364,7 @@ IndependentSpikeSlabPrior <- function(
   class(ans) <- c("IndependentSpikeSlabPrior", class(ans))
   return(ans)
 }
-
+##===========================================================================
 StudentIndependentSpikeSlabPrior <- function(
     predictor.matrix = NULL,
     response.vector = NULL,
@@ -492,6 +492,7 @@ SpikeSlabGlmPrior <- function(
   return(ans)
 }
 
+##===========================================================================
 SpikeSlabGlmPriorDirect <- function(coefficient.mean,
                                     coefficient.precision,
                                     prior.inclusion.probabilities,
@@ -554,51 +555,43 @@ LogitZellnerPrior <- function(
   ## Args:
   ##   predictors: The design matrix for the regression problem.  No
   ##     missing data is allowed.
-  ##   successes: The vector of responses, which can be binary or
-  ##     counts.  If binary they can be 0/1, TRUE/FALSE, or 1/-1.  If
-  ##     counts, then the 'trials' argument must be specified as well.
-  ##     This is only used to obtain the empirical overall success
-  ##     rate, so it can be left NULL if prior.success.probability is
-  ##     specified.
-  ##   trials: A vector of the same length as successes, giving the
-  ##     number of trials for each success count (trials cannot be
-  ##     less than successes).  If successes is binary (or NULL) then
-  ##     this can be NULL as well, signifying that there was only one
-  ##     trial per experiment.
-  ##   prior.success.probability: An a priori guess at the overall
-  ##     frequency of successes.  Used in two places: to set the prior
-  ##     mean of the intercept (if optional.coefficient.estimate is
-  ##     NULL) and to weight the information matrix in the "slab"
-  ##     portion of the prior.
-  ##   expected.model.size: A positive number less than ncol(x),
-  ##     representing a guess at the number of significant predictor
-  ##     variables.  Used to obtain the 'spike' portion of the spike
-  ##     and slab prior.
-  ##   prior.information.weight: A positive scalar.  Number of
-  ##     observations worth of weight that should be given to the
-  ##     prior estimate of beta.
-  ##   diagonal.shrinkage: The conditionally Gaussian prior for beta
-  ##     (the "slab") starts with a precision matrix equal to the
-  ##     information in a single observation.  However, this matrix
-  ##     might not be full rank.  The matrix can be made full rank by
-  ##     averaging with its diagonal.  diagonal.shrinkage is the
-  ##     weight given to the diaonal in this average.  Setting this to
-  ##     zero gives Zellner's g-prior.
-  ##   optional.coefficient.estimate: If desired, an estimate of the
-  ##     regression coefficients can be supplied.  In most cases this
-  ##     will be a difficult parameter to specify.  If omitted then a
-  ##     prior mean of zero will be used for all coordinates except
-  ##     the intercept, which will be set to
+  ##   successes: The vector of responses, which can be binary or counts.  If
+  ##     binary they can be 0/1, TRUE/FALSE, or 1/-1.  If counts, then the
+  ##     'trials' argument must be specified as well.  This is only used to
+  ##     obtain the empirical overall success rate, so it can be left NULL if
+  ##     prior.success.probability is specified.
+  ##   trials: A vector of the same length as successes, giving the number of
+  ##     trials for each success count (trials cannot be less than successes).
+  ##     If successes is binary (or NULL) then this can be NULL as well,
+  ##     signifying that there was only one trial per experiment.
+  ##   prior.success.probability: An a priori (scalar) guess at the overall
+  ##     frequency of successes.  Used in two places: to set the prior mean of
+  ##     the intercept (if optional.coefficient.estimate is NULL) and to weight
+  ##     the information matrix in the "slab" portion of the prior.
+  ##   expected.model.size: A positive number less than ncol(x), representing a
+  ##     guess at the number of significant predictor variables.  Used to obtain
+  ##     the 'spike' portion of the spike and slab prior.
+  ##   prior.information.weight: A positive scalar.  Number of observations
+  ##     worth of weight that should be given to the prior estimate of beta.
+  ##   diagonal.shrinkage: The conditionally Gaussian prior for beta (the
+  ##     "slab") starts with a precision matrix equal to the information in a
+  ##     single observation.  However, this matrix might not be full rank.  The
+  ##     matrix can be made full rank by averaging with its diagonal.
+  ##     diagonal.shrinkage is the weight given to the diaonal in this average.
+  ##     Setting this to zero gives Zellner's g-prior.
+  ##   optional.coefficient.estimate: If desired, an estimate of the regression
+  ##     coefficients can be supplied.  In most cases this will be a difficult
+  ##     parameter to specify.  If omitted then a prior mean of zero will be
+  ##     used for all coordinates except the intercept, which will be set to
   ##     logit(prior.success.probability).
-  ##   max.flips: The maximum number of variable inclusion indicators
-  ##     the sampler will attempt to sample each iteration.  If negative
-  ##     then all indicators will be sampled.
-  ##   prior.inclusion.probabilities: A vector of length
-  ##     number.of.variables giving the prior inclusion probability of
-  ##     each coefficient.  Each element must be between 0 and 1,
-  ##     inclusive.  If left as NULL then a default value will be
-  ##     created with all elements set to expected.model.size /
-  ##     number.of.variables.
+  ##   max.flips: The maximum number of variable inclusion indicators the
+  ##     sampler will attempt to sample each iteration.  If negative then all
+  ##     indicators will be sampled.
+  ##   prior.inclusion.probabilities: A vector of length number.of.variables
+  ##     giving the prior inclusion probability of each coefficient.  Each
+  ##     element must be between 0 and 1, inclusive.  If left as NULL then a
+  ##     default value will be created with all elements set to
+  ##     expected.model.size / number.of.variables.
   if (is.null(prior.success.probability)) {
     if (is.null(trials)) {
       prior.success.probability <- mean(successes > 0, na.rm = TRUE)
@@ -643,7 +636,7 @@ LogitZellnerPrior <- function(
   return(ans)
 }
 
-
+##===========================================================================
 PoissonZellnerPrior <- function(
     predictors,
     counts = NULL,
