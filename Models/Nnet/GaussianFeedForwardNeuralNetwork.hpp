@@ -41,14 +41,22 @@ namespace BOOM {
     }
 
     int number_of_observations() const override { return dat().size(); }
-    
-    double predict(const Vector &predictors) const {
+
+    double predict(const ConstVectorView &predictors) const {
       FeedForwardNeuralNetwork::fill_prediction_workspace(predictors);
       return terminal_layer_->predict(terminal_layer_inputs());
+    }
+    double predict(const VectorView &predictors) const {
+      return predict(ConstVectorView(predictors));
+    }
+    double predict(const Vector &predictors) const {
+      return predict(ConstVectorView(predictors));
     }
 
     Ptr<RegressionModel> terminal_layer() {return terminal_layer_;}
 
+    double residual_sd() const {return terminal_layer_->sigma();}
+    
     // Args:
     //   dim: The number of outputs in the last hidden layer (the layer farthest
     //     from the input data).

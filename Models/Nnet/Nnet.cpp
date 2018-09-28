@@ -34,7 +34,7 @@ namespace BOOM {
 
   HiddenLayer::HiddenLayer(const HiddenLayer &rhs) {
     models_.reserve(rhs.models_.size());
-    for (int i = 0; i < models_.size(); ++i) {
+    for (int i = 0; i < rhs.models_.size(); ++i) {
       models_.push_back(rhs.models_[i]->clone());
     }
   }
@@ -75,7 +75,8 @@ namespace BOOM {
     using FFNN = FeedForwardNeuralNetwork;
   }  // namespace
   
-  FFNN::FeedForwardNeuralNetwork() {}
+  FFNN::FeedForwardNeuralNetwork()
+      : finalized_(false) {}
 
   FFNN::FeedForwardNeuralNetwork(const FFNN &rhs)
       : ParamPolicy(rhs),
@@ -84,6 +85,7 @@ namespace BOOM {
     for (int i = 0; i < rhs.hidden_layers_.size(); ++i) {
       add_layer(rhs.hidden_layers_[i]->clone());
     }
+    finalized_ = rhs.finalized_;
   }
 
   FFNN & FFNN::operator=(const FFNN &rhs) {
@@ -93,6 +95,7 @@ namespace BOOM {
       for (int i = 0; i < rhs.hidden_layers_.size(); ++i) {
         add_layer(rhs.hidden_layers_[i]->clone());
       }
+      finalize_network_structure();
     }
     return *this;
   }
@@ -111,9 +114,14 @@ namespace BOOM {
     for (int i = 0; i < layer->output_dimension(); ++i) {
       ParamPolicy::add_model(layer->logistic_regression(i));
     }
-    restructure_terminal_layer(layer->output_dimension());
+    finalized_ = false;
   }
 
+  void FFNN::finalize_network_structure() {
+    restructure_terminal_layer(hidden_layers_.back()->output_dimension());
+    finalized_ = true;
+  }
+  
   void FFNN::fill_activation_probabilities(
       const Vector &inputs,
       std::vector<Vector> &activation_probs) const {

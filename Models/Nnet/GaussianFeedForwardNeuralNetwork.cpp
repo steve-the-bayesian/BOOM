@@ -26,7 +26,9 @@ namespace BOOM {
 
   GFFNN::GaussianFeedForwardNeuralNetwork()
       : terminal_layer_(new RegressionModel(1.0))
-  {}
+  {
+    ParamPolicy::add_model(terminal_layer_);
+  }
 
   GFFNN::GaussianFeedForwardNeuralNetwork(const GFFNN &rhs)
       : FeedForwardNeuralNetwork(rhs),
@@ -48,9 +50,11 @@ namespace BOOM {
   
   void GFFNN::restructure_terminal_layer(int dim) {
     if (dim != terminal_layer_->xdim()) {
+      ParamPolicy::drop_model(terminal_layer_);
       double sigsq = terminal_layer_->sigsq();
       terminal_layer_.reset(new RegressionModel(dim));
       terminal_layer_->set_sigsq(sigsq);
+      ParamPolicy::add_model(terminal_layer_);
     }
   }
   

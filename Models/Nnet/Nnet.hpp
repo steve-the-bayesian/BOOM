@@ -68,6 +68,7 @@ namespace BOOM {
     
     int input_dimension() const;
     int output_dimension() const {return models_.size();}
+    int number_of_nodes() const {return output_dimension();}
 
     // Args:
     //   inputs: The inputs to the hidden layer.  If this is the initial layer
@@ -111,6 +112,10 @@ namespace BOOM {
     // dimension of the preceding layer.
     void add_layer(const Ptr<HiddenLayer> &layer);
 
+    // Call this function after the last call to add_layer, so the terminal
+    // layer can be adjusted to the correct number of coefficients.
+    void finalize_network_structure();
+    
     // The number of observations in the training data.  
     virtual int number_of_observations() const = 0;
     
@@ -129,8 +134,9 @@ namespace BOOM {
     // Effects:
     //   Each element of activation_probs is filled with the probability that
     //   the corresponding node is active.
-    void fill_activation_probabilities(const Vector &inputs,
-                                       std::vector<Vector> &activation_probs) const;
+    void fill_activation_probabilities(
+        const Vector &inputs,
+        std::vector<Vector> &activation_probs) const;
     
     // Allocate a data structure that can be passed to
     // fill_activation_probabilities.
@@ -139,8 +145,9 @@ namespace BOOM {
     Ptr<HiddenLayer> hidden_layer(int i) {return hidden_layers_[i];}
 
    protected:
-    // TODO: get rid of this and replace it with a 'finalize' method.
-    // 
+    // This flag starts off false and is set to false each time add_layer is called.
+    bool finalized_;
+
     // To be called each time a hidden layer is added.  Concrete classes accept
     // this as a signal to resize or re-allocate the model implementing the
     // terminal layer if the dimension changes.
