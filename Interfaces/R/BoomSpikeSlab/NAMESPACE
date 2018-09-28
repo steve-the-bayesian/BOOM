@@ -20,16 +20,20 @@ export(BayesNnet,
        NestedRegression,
        MultinomialLogitSpikeSlabPrior,
        OdaOptions,
+       PartialDependencePlot,
        PlotLmSpikeCoefficients,
        PlotLmSpikeResiduals,
        PlotLogitSpikeFitSummary,
        PlotLogitSpikeResiduals,
+       PlotNetworkStructure,
        PlotProbitSpikeResiduals,
        PlotMarginalInclusionProbabilities,
        PlotModelSize,
        PoissonZellnerPrior,
        SpikeSlabGlmPrior,
+       SpikeSlabGlmPriorDirect,
        SpikeSlabPrior,
+       SpikeSlabPriorDirect,
        SpikeSlabPriorBase,
        ShrinkageRegression,
        SsvsOptions,
@@ -45,6 +49,7 @@ export(BayesNnet,
        plot.qreg.spike,
        plot.poisson.spike,
        poisson.spike,
+       predict.BayesNnet,
        predict.lm.spike,
        predict.logit.spike,
        predict.probit.spike,
@@ -81,6 +86,8 @@ S3method(predict, poisson.spike)
 
 S3method(plot, qreg.spike)
 S3method(predict, qreg.spike)
+
+S3method(predict, BayesNnet)
 
 S3method(print, summary.logit.spike)
 
