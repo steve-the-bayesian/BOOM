@@ -44,7 +44,8 @@ namespace BOOM {
       Vector prior_mean = ToBoomVector(getListElement(r_prior, "mu"));
       if (Rf_inherits(r_prior, "SpikeSlabPrior")
           || Rf_inherits(r_prior, "LogitZellnerPrior")
-          || Rf_inherits(r_prior, "PoissonZellnerPrior")) {
+          || Rf_inherits(r_prior, "PoissonZellnerPrior")
+          || Rf_inherits(r_prior, "SpikeSlabGlmPriorDirect")) {
         SpdMatrix prior_precision = ToBoomSpdMatrix(getListElement(
             r_prior, "siginv"));
         slab_.reset(new MvnModel(prior_mean, prior_precision, true));
@@ -73,7 +74,8 @@ namespace BOOM {
     {
       Vector mu = ToBoomVector(getListElement(
           r_spike_slab_prior, "mu"));
-      if (Rf_inherits(r_spike_slab_prior, "SpikeSlabPrior")) {
+      if (Rf_inherits(r_spike_slab_prior, "SpikeSlabPrior")
+          || Rf_inherits(r_spike_slab_prior, "SpikeSlabPriorDirect")) {
         slab_.reset(new MvnGivenScalarSigma(
             mu,
             ToBoomSpdMatrix(getListElement(r_spike_slab_prior, "siginv")),

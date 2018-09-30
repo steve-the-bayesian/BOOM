@@ -18,17 +18,31 @@ library(BoomSpikeSlab)
 # if (require(testthat) && require(mlbench)) {
 require(testthat)
 require(mlbench)
-  seed <- 8675309
-  set.seed(seed)
+seed <- 8675309
+set.seed(seed)
+data(BostonHousing)
+hidden.layers <- list(
+  HiddenLayer(10, expected.model.size = Inf))
+model <- BayesNnet(medv ~ ., hidden.layers = hidden.layers,
+  niter = 1000, data = BostonHousing, expected.model.size = Inf, seed = seed)
 
-  data(BostonHousing)
+reg <- lm.spike(medv ~ ., niter = 1000, data = BostonHousing)
+reg.burn <- SuggestBurnLogLikelihood(-reg$sigma)
+nnet.burn <- SuggestBurnLogLikelihood(-model$residual.sd)
+expect_gt(mean(reg$sigma[reg.burn:1000]),
+  mean(model$residual.sd[nnet.burn:1000]))
 
-  hidden.layers <- list(
-    HiddenLayer(5, MvnPrior(rep(0, 13), diag(rep(1, 13)))),
-    HiddenLayer(5, MvnPrior(rep(0, 5), diag(rep(1, 5)))),
-    HiddenLayer(5, MvnPrior(rep(0, 5), diag(rep(1, 5)))))
+pred <- predict(model)
+plot(model)
+plot(model, "resid")
+plot(model, "structure")
 
-  model <- BayesNnet(medv ~ ., layers = hidden.layers, niter = 100, data = BostonHousing)
-}
-
+hidden.layers <- list(
+  HiddenLayer(8, expected.model.size = Inf),
+  HiddenLayer(8, expected.model.size = Inf))
+deep.model <- BayesNnet(medv ~ ., hidden.layers = hidden.layers, niter = 1000,
+  data = BostonHousing, expected.model.size = Inf, seed = seed)
+deep.burn <- SuggestBurnLogLikelihood(-deep.model$residual.sd)
+expect_gt(mean(model$residual.sd[nnet.burn:1000]),
+  mean(deep.model$residual.sd[deep.burn:1000]))
 

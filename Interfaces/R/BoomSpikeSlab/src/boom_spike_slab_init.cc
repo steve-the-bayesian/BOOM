@@ -90,15 +90,15 @@ extern "C" {
       SEXP r_seed);
 
   SEXP boom_nested_regression_wrapper(
-    SEXP r_regression_suf_list,
-    SEXP r_coefficient_prior,
-    SEXP r_coefficient_mean_hyperprior,
-    SEXP r_coefficient_variance_hyperprior,
-    SEXP r_residual_precision_prior,
-    SEXP r_niter,
-    SEXP r_ping,
-    SEXP r_sampling_method,
-    SEXP r_seed);
+      SEXP r_regression_suf_list,
+      SEXP r_coefficient_prior,
+      SEXP r_coefficient_mean_hyperprior,
+      SEXP r_coefficient_variance_hyperprior,
+      SEXP r_residual_precision_prior,
+      SEXP r_niter,
+      SEXP r_ping,
+      SEXP r_sampling_method,
+      SEXP r_seed);
 
   SEXP analysis_common_r_do_feedforward(
       SEXP r_predictors,
@@ -108,7 +108,13 @@ extern "C" {
       SEXP r_niter,
       SEXP r_ping,
       SEXP r_seed);
-      
+
+  SEXP analysis_common_r_feedforward_prediction(
+      SEXP r_object,
+      SEXP r_predictors,
+      SEXP r_burn,
+      SEXP r_mean_only,
+      SEXP r_seed);
   
 static R_CallMethodDef spike_slab_arg_description[] = {
   CALLDEF(analysis_common_r_do_spike_slab, 9),
@@ -120,6 +126,7 @@ static R_CallMethodDef spike_slab_arg_description[] = {
   CALLDEF(boom_shrinkage_regression_wrapper, 6),
   CALLDEF(boom_nested_regression_wrapper, 9),
   CALLDEF(analysis_common_r_do_feedforward, 7),
+  CALLDEF(analysis_common_r_feedforward_prediction, 5),
   {NULL, NULL, 0}
 };
 

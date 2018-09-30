@@ -121,20 +121,20 @@ SpikeSlabPriorBase <- function(number.of.variables,
 SpikeSlabPriorDirect <- function(coefficient.mean,
                                  coefficient.precision,
                                  prior.inclusion.probabilities,
-                                 prior.sigma.sample.size,
-                                 prior.sigma.guess,
+                                 prior.df,
+                                 sigma.guess,
                                  max.flips = -1,
                                  sigma.upper.limit = Inf) {
-  check.positive.scalar(prior.sigma.guess)
-  check.positive.scalar(prior.sigma.sample.size)
+  check.positive.scalar(sigma.guess)
+  check.positive.scalar(prior.df)
   stopifnot(is.numeric(sigma.upper.limit), length(sigma.upper.limit) == 1)
   ans <- SpikeSlabGlmPriorDirect(
     coefficient.mean = coefficient.mean,
     coefficient.precision = coefficient.precision,
     prior.inclusion.probabilities = prior.inclusion.probabilities,
     max.flips = max.flips)
-  ans$prior.df <- prior.sigma.sample.size
-  ans$sigma.guess <- prior.sigma.guess
+  ans$prior.df <- prior.df
+  ans$sigma.guess <- sigma.guess
   ans$sigma.upper.limit <- sigma.upper.limit
   class(ans) <- c("SpikeSlabPriorDirect", "SpikeSlabPriorBase")
   return(ans)
@@ -495,7 +495,8 @@ SpikeSlabGlmPrior <- function(
 ##===========================================================================
 SpikeSlabGlmPriorDirect <- function(coefficient.mean,
                                     coefficient.precision,
-                                    prior.inclusion.probabilities,
+                                    prior.inclusion.probabilities = NULL,
+                                    expected.model.size = NULL,
                                     max.flips = -1) {
   ## A spike and slab prior for problems where you want to specify the
   ## parameters directly, rather than in terms of the predictors and response.
@@ -517,8 +518,19 @@ SpikeSlabGlmPriorDirect <- function(coefficient.mean,
   ##   A spike and slab prior that can be used for probit, logit, and Poisson
   ##   models.
   stopifnot(length(coefficient.mean) == nrow(coefficient.precision),
-    nrow(coefficient.precision) == ncol(coefficient.precision),
-    length(prior.inclusion.probabilities) == length(coefficient.mean))
+    nrow(coefficient.precision) == ncol(coefficient.precision))
+  if (is.null(prior.inclusion.probabilities)) {
+    if (is.null(expected.model.size)) {
+      stop(paste0(
+        "Either 'expected.model.size' or 'prior.inclusion.probabilities' ",
+        "must be specified."))
+    }
+    check.positive.scalar(expected.model.size)
+    xdim <- length(coefficient.mean)
+    prior.inclusion.probabilities <- rep(expected.model.size / xdim, xdim)
+    prior.inclusion.probabilities[prior.inclusion.probabilities > 1] <- 1
+    prior.inclusion.probabilities[prior.inclusion.probabilities < 0] <- 0
+  } 
   check.scalar.integer(max.flips)
   ans <- list(mu = coefficient.mean,
     siginv = coefficient.precision,

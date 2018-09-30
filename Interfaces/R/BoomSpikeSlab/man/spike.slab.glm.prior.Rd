@@ -2,9 +2,10 @@
 
 \Rdversion{1.1}
 \alias{SpikeSlabGlmPrior}
+\alias{SpikeSlabGlmPriorDirect}
 
 \title{
-  Zellner Prior for Glm's
+  Zellner Prior for Glm's.
 }
 
 \description{
@@ -24,6 +25,14 @@ SpikeSlabGlmPrior(
     optional.coefficient.estimate,
     max.flips,
     prior.inclusion.probabilities)
+
+SpikeSlabGlmPriorDirect(
+    coefficient.mean,
+    coefficient.precision,
+    prior.inclusion.probabilities = NULL,
+    expected.model.size = NULL,
+    max.flips = -1)
+
 }
 
 \arguments{
@@ -78,14 +87,21 @@ SpikeSlabGlmPrior(
     default set of probabilities is obtained by setting each element
     equal to \code{min(1, expected.model.size / ncol(x))}.}
 
+  \item{coefficient.mean}{The prior mean of the coefficients in the
+    maximal model (with all coefficients included).}
+
+  \item{coefficient.precision}{The prior precision (inverse variance) of
+    the coefficients in the maximal model (with all coefficients
+    included).}
+  
 }
 
 \details{ A Zellner-style spike and slab prior for generalized linear
-models.  Denote the vector of coefficients by \eqn{\beta}{beta}, and the
-vector of inclusion indicators by \eqn{\gamma}{gamma}.  These are linked
-by the relationship \eqn{\beta_i \ne 0}{beta[i] != 0} if \eqn{\gamma_i =
-1}{gamma[i] = 1} and \eqn{\beta_i = 0}{beta[i] == 0} if \eqn{\gamma_i =
-0}{gamma[i] = 0}.  The prior is
+  models.  Denote the vector of coefficients by \eqn{\beta}{beta}, and the
+  vector of inclusion indicators by \eqn{\gamma}{gamma}.  These are linked
+  by the relationship \eqn{\beta_i \ne 0}{beta[i] != 0} if \eqn{\gamma_i =
+    1}{gamma[i] = 1} and \eqn{\beta_i = 0}{beta[i] == 0} if \eqn{\gamma_i =
+    0}{gamma[i] = 0}.  The prior is
 
 \deqn{\beta | \gamma \sim N(b, V)}{beta | gamma ~ N(b, V),}
 \deqn{\gamma \sim B(\pi)}{gamma ~ Bernoulli(pi)}
@@ -114,6 +130,10 @@ elements set to \code{prior.success.probability * (1 -
 \eqn{V^{-1}} are both implicitly subscripted by \eqn{\gamma}{gamma},
 meaning that elements, rows, or columsn corresponding to gamma = 0
 should be omitted.
+
+The "Direct" version is intended for situations where the predictors are
+unavailable, or if the user wants more control over the prior precision
+matrix.
 
 }
 

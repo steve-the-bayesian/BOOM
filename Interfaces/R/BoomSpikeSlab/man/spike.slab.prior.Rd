@@ -1,9 +1,10 @@
 % Copyright 2010 Google Inc. All Rights Reserved.
 % Author: steve.the.bayesian@gmail.com (Steve Scott)
 
-\name{make.spike.slab.prior}
+\name{spike.slab.prior}
 \Rdversion{1.1}
 \alias{SpikeSlabPrior}
+\alias{SpikeSlabPriorDirect}
 \title{
   Create a spike and slab prior for use with lm.spike.
 }
@@ -24,6 +25,14 @@ SpikeSlabPrior(x,
                sdy = sd(as.numeric(y), na.rm = TRUE),
                prior.inclusion.probabilities = NULL,
                sigma.upper.limit = Inf)
+
+SpikeSlabPriorDirect(coefficient.mean,
+                     coefficient.precision,
+                     prior.inclusion.probabilities,
+                     prior.df,
+                     sigma.guess,
+                     max.flips = -1,
+                     sigma.upper.limit = Inf)
 
 }
 \arguments{
@@ -94,11 +103,22 @@ SpikeSlabPrior(x,
   \item{sigma.upper.limit}{The largest acceptable value for the residual
     standard deviation.  A non-positive number is interpreted as
     \code{Inf}.}
+
+  \item{coefficient.mean}{The prior mean of the coefficients in the
+    maximal model (with all variables included).}
+
+  \item{coefficient.precision}{The prior precision (inverse variance) of
+    the coefficients in the maximal model (with all variables
+    included).}
+
+  \item{sigma.guess}{Prior estimate of the residual standard deviation.}
+  
 }
 
 \value{
   A list with with the components necessary to run \code{lm.spike}.
 }
+
 \author{
   Steven L. Scott
 }

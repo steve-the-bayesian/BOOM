@@ -2,14 +2,15 @@ import(Boom)
 
 importFrom("grDevices", "gray")
 importFrom("graphics", "abline", "barplot", "boxplot", "hist", "legend", "par",
-           "plot", "strwidth")
-importFrom("stats", ".checkMFClasses", ".getXlevels", "as.formula",
-           "coef", "delete.response", "dt", "median", "model.frame",
-           "model.matrix", "model.matrix.default",
-           "model.response", "na.omit", "na.pass", "plogis", "plot.ts", "pnorm",
-           "qchisq", "qlogis", "qnorm", "quantile", "reshape", "rnorm", "rt", "sd",
-           "terms", "update", "var")
+           "plot", "points", "strwidth")
+importFrom("stats", ".checkMFClasses", ".getXlevels", "as.formula", "coef",
+           "delete.response", "dt", "median", "model.frame", "model.matrix",
+           "model.matrix.default", "model.response", "na.omit", "na.pass",
+           "plogis", "plot.ts", "pnorm", "predict", "qchisq", "qlogis", "qnorm",
+           "quantile", "reshape", "rnorm", "rt", "sd", "terms", "update", "var")
 importFrom("utils", "help", "tail")
+
+importFrom("igraph", "graph_from_data_frame")
 
 export(BayesNnet,
        CoefficientGroup,
@@ -21,6 +22,8 @@ export(BayesNnet,
        MultinomialLogitSpikeSlabPrior,
        OdaOptions,
        PartialDependencePlot,
+       PlotBayesNnetPredictions,
+       PlotBayesNnetResiduals,
        PlotLmSpikeCoefficients,
        PlotLmSpikeResiduals,
        PlotLogitSpikeFitSummary,
@@ -39,6 +42,7 @@ export(BayesNnet,
        SsvsOptions,
        StudentIndependentSpikeSlabPrior,
        StudentSpikeSlabPrior,
+       SuggestBurn,
        SummarizeSpikeSlabCoefficients,
        lm.spike,
        logit.spike,
@@ -87,6 +91,7 @@ S3method(predict, poisson.spike)
 S3method(plot, qreg.spike)
 S3method(predict, qreg.spike)
 
+S3method(plot, BayesNnet)
 S3method(predict, BayesNnet)
 
 S3method(print, summary.logit.spike)
