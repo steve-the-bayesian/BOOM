@@ -41,11 +41,18 @@ namespace BOOM {
         binary[i] = numeric[i] > .5;
       }
     }
-    inline void to_numeric(const std::vector<bool> &binary, Vector &numeric) {
+
+    inline void to_numeric(const std::vector<bool> &binary, VectorView &numeric) {
       for (int i = 0; i < numeric.size(); ++i) {
         numeric[i] = binary[i];
       }
     }
+
+    inline void to_numeric(const std::vector<bool> &binary, Vector &numeric) {
+      VectorView view(numeric);
+      to_numeric(binary, view);
+    }
+
   }  // namespace Nnet
   
   //===========================================================================

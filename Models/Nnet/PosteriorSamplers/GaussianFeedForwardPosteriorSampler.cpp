@@ -26,8 +26,11 @@ namespace BOOM {
     using GFFPS = GaussianFeedForwardPosteriorSampler;
   }  // namespace 
   
-  GFFPS::GaussianFeedForwardPosteriorSampler(RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng)
+  GFFPS::GaussianFeedForwardPosteriorSampler(
+      GaussianFeedForwardNeuralNetwork *model,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model)
   {}
 
   double GFFPS::logpri() const {
@@ -40,27 +43,22 @@ namespace BOOM {
     impute_hidden_layer_outputs(rng());
     draw_parameters_given_hidden_nodes();
   }
-
-  void GFFPS::ensure_imputers() {
-    while (imputers_.size() < model_->number_of_hidden_layers()) {
-      imputers_.push_back(HiddenLayerImputer(
-          model_->hidden_layer(imputers_.size()), imputers_.size()));
-    }
-  }
   
-  // The imputation method integrates out the latent data from preceding layers
-  // (i.e. preceding nodes are activated probabilistically), but it conditions
-  // on the latent data from the current layer and the layer above.
+  // The imputation method is a "collapsed Gibbs sampler" that integrates out
+  // latent data from preceding layers (i.e. preceding nodes are activated
+  // probabilistically), but conditions on the latent data from the current
+  // layer and the layer above.
   void GFFPS::impute_hidden_layer_outputs(RNG &rng) {
-    ensure_space_for_latent_data();
     int number_of_hidden_layers = model_->number_of_hidden_layers();
     if (number_of_hidden_layers == 0) return;
+    ensure_space_for_latent_data();
     clear_latent_data();
     std::vector<Vector> allocation_probs =
         model_->activation_probability_workspace();
     std::vector<Vector> complementary_allocation_probs = allocation_probs;
+    std::vector<Vector> workspace = allocation_probs;
     for (int i = 0; i < model_->dat().size(); ++i) {
-      Ptr<RegressionData> data_point = model_->dat()[i];
+      const Ptr<RegressionData> &data_point(model_->dat()[i]);
       Nnet::HiddenNodeValues &outputs(imputed_hidden_layer_outputs_[i]);
       model_->fill_activation_probabilities(data_point->x(), allocation_probs);
       impute_terminal_layer_inputs(rng, data_point->y(), outputs.back(),
@@ -73,12 +71,23 @@ namespace BOOM {
             rng,
             outputs,
             allocation_probs[layer - 1],
-            complementary_allocation_probs[layer - 1]);
+            complementary_allocation_probs[layer - 1],
+            workspace[layer - 1]);
       }
       imputers_[0].store_initial_layer_latent_data(outputs[0], data_point);
     }
   }
 
+  std::pair<double, double> summarize_logit_data(
+      const std::vector<Ptr<BinomialRegressionData>> &data) {
+    std::pair<double, double> ans = {0, 0};
+    for (int i = 0; i < data.size(); ++i) {
+      ans.first += data[i]->y();
+      ans.second += data[i]->n();
+    }
+    return ans;
+  }
+  
   // Simulate the parameters of the logistic and linear regression models,
   // conditional on sampled values of the data from the hidden nodes.
   //
@@ -100,57 +109,6 @@ namespace BOOM {
     for (int i = 0; i < model_->number_of_hidden_layers(); ++i) {
       imputers_[i].clear_latent_data();
     }
-  }
-  
-  // Args:
-  //   rng:  The random number generator.
-  //   binary_inputs: The value of the inputs to the terminal layer (i.e. the
-  //     outputs from the final hidden layer).  These will be updated by the
-  //     imputation.
-  //   logprob: On input this is a vector giving the marginal (un-logged)
-  //     probability that each input node is active.  These values will be
-  //     over-written by their logarithms.
-  //   logprob_complement: On input this is any vector with size matching
-  //     logprob.  On output its elements contain log(1 - exp(logprob)).
-  //
-  // Effects:
-  //   The latent data for the terminal layer is imputed, and the sufficient
-  //   statistics for the latent regression model in the terminal layer are
-  //   updated to included the imputed data.
-  void GFFPS::impute_terminal_layer_inputs(
-      RNG &rng,
-      double response,
-      std::vector<bool> &binary_inputs,
-      Vector &logprob,
-      Vector &logprob_complement) {
-    for (int i = 0; i < logprob.size(); ++i) {
-      logprob_complement[i] = log(1 - logprob[i]);
-      logprob[i] = log(logprob[i]);
-    }
-
-    Vector terminal_layer_inputs(binary_inputs.size());
-    for (int i = 0; i < binary_inputs.size(); ++i) {
-      terminal_layer_inputs[i] = binary_inputs[i];
-    }
-
-    double logp_original = terminal_inputs_log_full_conditional(
-        response, terminal_layer_inputs, logprob, logprob_complement);
-
-    for (int i = 0; i < terminal_layer_inputs.size(); ++i) {
-      terminal_layer_inputs[i] = 1 - terminal_layer_inputs[i];
-      double logp = terminal_inputs_log_full_conditional(
-          response, terminal_layer_inputs, logprob, logprob_complement);
-      double logprob = logp - lse2(logp, logp_original);
-      double logu = log(runif_mt(rng));
-      if (logu < logprob) {
-        logp_original = logprob;
-      } else {
-        terminal_layer_inputs[i] = 1 - terminal_layer_inputs[i];
-      }
-    }
-    model_->terminal_layer()->suf()->add_mixture_data(
-        response, terminal_layer_inputs, 1.0);
-    Nnet::to_binary(terminal_layer_inputs, binary_inputs);
   }
 
   // Args:
@@ -176,7 +134,7 @@ namespace BOOM {
         model_->terminal_layer()->sigma(),
         true);
     for (int i = 0; i < binary_inputs.size(); ++i) {
-      ans += binary_inputs[i] > 0 ? logprob[i] : logprob_complement[i];
+      ans += binary_inputs[i] > .5 ? logprob[i] : logprob_complement[i];
     }
     return ans;
   }
@@ -199,5 +157,57 @@ namespace BOOM {
     }
   }
   
-  
+  void GFFPS::ensure_imputers() {
+    while (imputers_.size() < model_->number_of_hidden_layers()) {
+      imputers_.push_back(HiddenLayerImputer(
+          model_->hidden_layer(imputers_.size()), imputers_.size()));
+    }
+  }
+
+  // Args:
+  //   rng:  The random number generator.
+  //   binary_inputs: The value of the inputs to the terminal layer (i.e. the
+  //     outputs from the final hidden layer).  These will be updated by the
+  //     imputation.
+  //   logprob: On input this is a vector giving the marginal (un-logged)
+  //     probability that each input node is active.  These values will be
+  //     over-written by their logarithms.
+  //   logprob_complement: On input this is any vector with size matching
+  //     logprob.  On output its elements contain log(1 - exp(logprob)).
+  //
+  // Effects:
+  //   The latent data for the terminal layer is imputed, and the sufficient
+  //   statistics for the latent regression model in the terminal layer are
+  //   updated to included the imputed data.
+  void GFFPS::impute_terminal_layer_inputs(
+      RNG &rng,
+      double response,
+      std::vector<bool> &binary_inputs,
+      Vector &logprob,
+      Vector &logprob_complement) {
+    for (int i = 0; i < logprob.size(); ++i) {
+      logprob_complement[i] = log(1 - logprob[i]);
+      logprob[i] = log(logprob[i]);
+    }
+    Vector terminal_layer_inputs(binary_inputs.size());
+    Nnet::to_numeric(binary_inputs, terminal_layer_inputs);
+    double logp_original = terminal_inputs_log_full_conditional(
+        response, terminal_layer_inputs, logprob, logprob_complement);
+    for (int i = 0; i < terminal_layer_inputs.size(); ++i) {
+      terminal_layer_inputs[i] = 1 - terminal_layer_inputs[i];
+      double logp = terminal_inputs_log_full_conditional(
+          response, terminal_layer_inputs, logprob, logprob_complement);
+      double log_input_prob = logp - lse2(logp, logp_original);
+      double logu = log(runif_mt(rng));
+      if (logu < log_input_prob) {
+        logp_original = logp;
+      } else {
+        terminal_layer_inputs[i] = 1 - terminal_layer_inputs[i];
+      }
+    }
+    model_->terminal_layer()->suf()->add_mixture_data(
+        response, terminal_layer_inputs, 1.0);
+    Nnet::to_binary(terminal_layer_inputs, binary_inputs);
+  }
+
 }  // namespace BOOM

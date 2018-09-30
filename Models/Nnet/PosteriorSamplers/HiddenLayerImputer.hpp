@@ -21,8 +21,12 @@
 #include "Models/Nnet/Nnet.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
-namespace BOOM {
+// Forward declaration of the test rig responsible for HiddenLayerImputer.
+namespace HiddenLayerImputerTestNamespace {
+  class HiddenLayerImputerTest;
+}
 
+namespace BOOM {
   // A HiddenLayerImputer manages the imputed data for a single hidden layer in
   // a feed forward neural network.
   class HiddenLayerImputer {
@@ -46,10 +50,20 @@ namespace BOOM {
     //   complementary_allocation_probs: On input this is an arbitrary vector of
     //     the same size as allocation_probs.  On output the entries are the
     //     logarithms of the probabilities complementary to allocation_probs.
+    //   input_workspace: A third vector of the same size as allocation_probs
+    //     for storing layer inputs as numeric values.
+    //
+    // Effects:
+    //   * The value of outputs[layer_index_ - 1] is updated by an MCMC draw from
+    //     its full conditional distribution.  If layer_index_ is zero then
+    //     the call is a no-op.
+    //   * The imputed latent data is added to the logistic regression models
+    //     implementing the managed node.
     void impute_inputs(RNG &rng,
                        Nnet::HiddenNodeValues &outputs,
                        Vector &allocation_probs,
-                       Vector &complementary_allocation_probs);
+                       Vector &complementary_allocation_probs,
+                       Vector &input_workspace);
 
     // The conditional distribution for the vector of inputs to this layer,
     // given the set of predictors and model parameters, and given the outputs
@@ -86,10 +100,16 @@ namespace BOOM {
     void store_initial_layer_latent_data(
         const std::vector<bool>  &outputs,
         const Ptr<GlmBaseData> &data_point);
-    
-   private:
+
+    // Store the latent data simulated from impute_inputs in the logistic
+    // regression models making up the hidden layer, and in the data store
+    // managed by this object.
     void store_latent_data(Nnet::HiddenNodeValues &outputs);
 
+   private:
+    // For testing.  Let the test rig access private data.
+    friend class HiddenLayerImputerTestNamespace::HiddenLayerImputerTest;
+    
     std::vector<Ptr<BinomialRegressionData>>
     get_initial_data(const Ptr<GlmBaseData> &data_point);
     
@@ -110,9 +130,6 @@ namespace BOOM {
     // predictors).
     int layer_index_;
 
-    // Workspace for representing the inputs as a Vector (vs. a vector<bool>).
-    Vector input_workspace_;
-
     // The active data store stores data that will be added to one of the
     // logistic regression models for the node.  The active data store is
     // cleared out each time you call clear_data, and each of its elements has
@@ -128,9 +145,9 @@ namespace BOOM {
     // clear this data structure once it grows more than say, 10x, times the
     // size of the data stored in the model.
     std::map<std::vector<bool>,
-             std::vector<Ptr<BinomialRegressionData>>> passive_data_store_;
+             std::vector<Ptr<BinomialRegressionData>>> long_term_data_store_;
 
-    // For storing data for the initial hidden layer.
+    // Stores data for the initial hidden layer.
     std::map<Ptr<VectorData>,
              std::vector<Ptr<BinomialRegressionData>>> initial_data_store_;
   };

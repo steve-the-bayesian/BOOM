@@ -27,7 +27,10 @@ namespace BOOM {
   class GaussianFeedForwardPosteriorSampler
       : public PosteriorSampler {
    public:
-    GaussianFeedForwardPosteriorSampler(RNG &seeding_rng = GlobalRng::rng);
+    GaussianFeedForwardPosteriorSampler(
+        GaussianFeedForwardNeuralNetwork *model,
+        RNG &seeding_rng = GlobalRng::rng);
+    
     double logpri() const override;
     void draw() override;
     
@@ -78,11 +81,12 @@ namespace BOOM {
                                       double response, 
                                       std::vector<bool> &inputs,
                                       Vector &wsp1, Vector &wsp2);
-    const Vector &imputed_terminal_node_inputs(int i) const;
 
     //----------------------------------------------------------------------
     // Data section.
     GaussianFeedForwardNeuralNetwork *model_;
+
+    // Each imputer is responsible for one hidden layer.
     std::vector<HiddenLayerImputer> imputers_;
 
     // imputed_hidden_layer_outputs_[i][layer][node] indicates whether the
