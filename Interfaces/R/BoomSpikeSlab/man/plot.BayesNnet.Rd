@@ -50,12 +50,29 @@
     function signature, then the corresponding plot function handles the
     plot request.
 
-    If \code{y} is the string "help" then this help page is opened in a
-    browser.
+    \itemize{
 
-    If \code{y} matches (or partially matches) the name of one of the
-    variables in the training data, then a partial dependence plot vs
-    that variable is produced.
+      \item{"predicted" (the default) plot actual vs predicted values
+        using \code{PlotBayesNnetPredictions}.}
+      
+      \item{"residual" plot residuals vs predicted values using
+        \code{PlotBayesNnetResiduals}.}
+      
+      \item{"structure" plot network structure using
+        \code{PlotNetworkStructure}.}
+      
+      \item{"partial" Draw the partial dependence plot for each
+        predictor variable in the training data.  This is an expensive
+        plot.  It might take a while to draw for large data sets or
+        complex models.}
+
+      \item{"help" show this help page in a browser}
+      
+    }
+
+    If \code{y} fails to match any of the above, but it (partially) the
+    name of one of the variables in the training data, then a partial
+    dependence plot vs that variable is produced.
   }
 
   \item{burn}{
@@ -63,15 +80,20 @@
   }
 
   \item{\dots}{ Additional arguments passed to the specific functions
-    that do the plotting.  }
+    that do the plotting.  For residual and predicted plots that is the
+    \code{\link{plot}} function.  For network structure it is
+    \code{\link[igraph]{plot.igraph}}.  For partial dependence plots it
+    is \code{\link{PartialDependencePlot}}.
+  }
 
 }
 
-\details{ The actual plotting will be handled by
-  \code{\link{PlotMarginalInclusionProbabilities}},
-  \code{\link{PlotLmSpikeCoefficients}},
-  \code{\link{PlotLmSpikeResiduals}}, or \code{\link{PlotModelSize}}.
-  See the appropriate function for more options.}
+\details{ Residual and predicted plots should be self explanatory.  The
+  network structure plot is fairly standard for neural network models.
+  The width of a line linking two nodes is determined by the absolute
+  value of the corresponding coefficient.
+
+}
 
 \author{
   Steven L. Scott
@@ -83,6 +105,7 @@
 }
 
 \examples{
+  ## See the examples in ?BayesNnet
 }
 
 \keyword{models}

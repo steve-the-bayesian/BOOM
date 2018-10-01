@@ -117,7 +117,7 @@ PartialDependencePlot <- function(model,
   } else {
     ## This branch plots the full predictive distribution.
     if (is.null(ylab)) {
-      ylab = "Distribution"
+      ylab <- as.character(model$call$formula[[2]])
     }
     if (is.null(ylim)) {
       if (show.points) {
@@ -128,16 +128,22 @@ PartialDependencePlot <- function(model,
     }
     if (is.factor(grid)) {
       boxplot(draws, xlab = xlab, ylab = ylab, ylim = ylim, pch = 20, ...)
-    } else {
-      PlotDynamicDistribution(draws, grid, xlab = xlab, ylab = ylab, ylim = ylim,
-        ...)
-    }
-  }
+      if (show.points) {
+        points(model$training.data[, which.variable],
+          model$response,
+          ...)
+      }
 
-  if (show.points) {
-    points(model$training.data[, which.variable],
-      model$response,
-      ...)
+
+    } else {
+
+      if (show.points) {
+        plot(model$training.data[, which.variable], model$response,
+          xlab = xlab, ylab = ylab, ylim = ylim, ...)
+      }
+      PlotDynamicDistribution(draws, grid, xlab = xlab, ylab = ylab, ylim = ylim,
+        add = show.points, ...)
+    }
   }
 
   if (report.time) {

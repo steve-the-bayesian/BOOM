@@ -99,9 +99,12 @@
     mean of the predictive distribution.  If \code{FALSE} then return
     the entire distribution.}
 
-  \item{seed}{Random seed for the C++ random number generator.}
+  \item{seed}{Random seed for the C++ random number generator.  This is
+    only needed for models that require C++ to implement their predict
+    method.}
   
-  \item{\dots}{Unused, but present for compatibility with generic \code{predict}.}
+  \item{\dots}{Unused, but present for compatibility with generic
+    \code{predict}.}
 
 }
 \value{

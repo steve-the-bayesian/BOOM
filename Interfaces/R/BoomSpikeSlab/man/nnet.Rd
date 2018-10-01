@@ -178,13 +178,28 @@ if (require(mlbench)) {
     data = BostonHousing)
 
   par(mfrow = c(1, 2))
-  plot(model)
-  plot(model, "residual")
-  ## See ?plot.BayesNnet for more plotting options.
+  plot(model)  # plots predicted vs actual.
+  plot(model, "residual") # plots 
+  par(mfrow = c(1,1))
+  plot(model, "structure")
+  ## Examine all partial dependence plots.
+  plot(model, "partial", pch = ".")
+
+  ## Examine a single partial dependence plot.
+  par(mfrow = c(1,1))
+  plot(model, "lstat", pch = ".")
 
   ## Check out the mixing performance.
   PlotManyTs(model$terminal.layer.coefficients)
   PlotMacf(model$terminal.layer.coefficients)
+
+  ## Get the posterior distribution of the function values for the
+  ## training data.
+  pred <- predict(model)
+
+  ## Get predictions for data at new points (though in this example I'm
+  ## reusing old points.
+  pred2 <- predict(model, newdata = BostonHousing[1:12, ])
 
 } else {
   cat("The Boston housing data from 'mlbench' is needed for this example.")
@@ -192,6 +207,4 @@ if (require(mlbench)) {
 
 }
 
-
 \keyword{models}
-\keyword{regression}

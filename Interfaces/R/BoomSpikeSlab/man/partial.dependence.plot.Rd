@@ -53,9 +53,11 @@
     function value is plotted.
   }
      
-  \item{show.points}{If \code{TRUE} then the scatterplot of x vs y is added to
-    the graph.  Otherwise the points are left off.}
-
+  \item{show.points}{If \code{TRUE} then the scatterplot of x vs y is
+    added to the graph.  Otherwise the points are left off.  Note that
+    the estimated function might not match the pattern in the
+    scatterplot, because the points in the scatterplot are not adjusted
+    for the values of the other X variables.  }
   
   \item{xlab}{Label for the X axis.  NULL produces a default label.
     Use "" for no label.}
@@ -96,6 +98,6 @@
 }
 
 \examples{
-
+  # Please see the code in ?BayesNnet
 }
 
