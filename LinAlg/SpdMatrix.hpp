@@ -206,6 +206,8 @@ namespace BOOM {
   Matrix chol(const SpdMatrix &Sigma);
   Matrix chol(const SpdMatrix &Sigma, bool &ok);
 
+  SpdMatrix Kronecker(const SpdMatrix &A, const SpdMatrix &B);
+  
   inline double logdet(const SpdMatrix &Sigma) { return Sigma.logdet(); }
 
   SpdMatrix chol2inv(const Matrix &L);

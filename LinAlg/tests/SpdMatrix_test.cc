@@ -285,5 +285,54 @@ namespace {
         sandwich(M, Sigma),
         M * Sigma * M.transpose()));
   }
+
+  TEST_F(SpdMatrixTest, KroneckerTest) {
+    SpdMatrix A(2);
+    SpdMatrix B(3);
+
+    A.randomize();
+    B.randomize();
+    SpdMatrix K = Kronecker(A, B);
+
+    EXPECT_DOUBLE_EQ(K(0, 0), A(0, 0) * B(0, 0));
+    EXPECT_DOUBLE_EQ(K(0, 1), A(0, 0) * B(0, 1));
+    EXPECT_DOUBLE_EQ(K(0, 2), A(0, 0) * B(0, 2));
+    EXPECT_DOUBLE_EQ(K(1, 0), A(0, 0) * B(1, 0));
+    EXPECT_DOUBLE_EQ(K(1, 1), A(0, 0) * B(1, 1));
+    EXPECT_DOUBLE_EQ(K(1, 2), A(0, 0) * B(1, 2));
+    EXPECT_DOUBLE_EQ(K(2, 0), A(0, 0) * B(2, 0));
+    EXPECT_DOUBLE_EQ(K(2, 1), A(0, 0) * B(2, 1));
+    EXPECT_DOUBLE_EQ(K(2, 2), A(0, 0) * B(2, 2));
+    
+    EXPECT_DOUBLE_EQ(K(0, 3), A(0, 1) * B(0, 0));
+    EXPECT_DOUBLE_EQ(K(0, 4), A(0, 1) * B(0, 1));
+    EXPECT_DOUBLE_EQ(K(0, 5), A(0, 1) * B(0, 2));
+    EXPECT_DOUBLE_EQ(K(1, 3), A(0, 1) * B(1, 0));
+    EXPECT_DOUBLE_EQ(K(1, 4), A(0, 1) * B(1, 1));
+    EXPECT_DOUBLE_EQ(K(1, 5), A(0, 1) * B(1, 2));
+    EXPECT_DOUBLE_EQ(K(2, 3), A(0, 1) * B(2, 0));
+    EXPECT_DOUBLE_EQ(K(2, 4), A(0, 1) * B(2, 1));
+    EXPECT_DOUBLE_EQ(K(2, 5), A(0, 1) * B(2, 2));
+    
+    EXPECT_DOUBLE_EQ(K(3, 0), A(1, 0) * B(0, 0));
+    EXPECT_DOUBLE_EQ(K(3, 1), A(1, 0) * B(0, 1));
+    EXPECT_DOUBLE_EQ(K(3, 2), A(1, 0) * B(0, 2));
+    EXPECT_DOUBLE_EQ(K(4, 0), A(1, 0) * B(1, 0));
+    EXPECT_DOUBLE_EQ(K(4, 1), A(1, 0) * B(1, 1));
+    EXPECT_DOUBLE_EQ(K(4, 2), A(1, 0) * B(1, 2));
+    EXPECT_DOUBLE_EQ(K(5, 0), A(1, 0) * B(2, 0));
+    EXPECT_DOUBLE_EQ(K(5, 1), A(1, 0) * B(2, 1));
+    EXPECT_DOUBLE_EQ(K(5, 2), A(1, 0) * B(2, 2));
+    
+    EXPECT_DOUBLE_EQ(K(3, 3), A(1, 1) * B(0, 0));
+    EXPECT_DOUBLE_EQ(K(3, 4), A(1, 1) * B(0, 1));
+    EXPECT_DOUBLE_EQ(K(3, 5), A(1, 1) * B(0, 2));
+    EXPECT_DOUBLE_EQ(K(4, 3), A(1, 1) * B(1, 0));
+    EXPECT_DOUBLE_EQ(K(4, 4), A(1, 1) * B(1, 1));
+    EXPECT_DOUBLE_EQ(K(4, 5), A(1, 1) * B(1, 2));
+    EXPECT_DOUBLE_EQ(K(5, 3), A(1, 1) * B(2, 0));
+    EXPECT_DOUBLE_EQ(K(5, 4), A(1, 1) * B(2, 1));
+    EXPECT_DOUBLE_EQ(K(5, 5), A(1, 1) * B(2, 2));
+  }
   
 }  // namespace

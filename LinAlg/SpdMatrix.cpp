@@ -688,4 +688,17 @@ namespace BOOM {
     return eigenvectors.transpose();
   }
 
+  SpdMatrix Kronecker(const SpdMatrix &A, const SpdMatrix &B) {
+    uint dima = A.nrow();
+    uint dimb = B.nrow();
+    SpdMatrix ans(dima * dimb);
+    for (int i = 0; i < dima; ++i) {
+      for (int j = i; j < dima; ++j) {
+        block(ans, i, j, dimb, dimb) = A(i, j) * B;
+      }
+    }
+    ans.reflect();
+    return ans;
+  }
+  
 }  // namespace BOOM
