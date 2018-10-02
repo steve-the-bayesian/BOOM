@@ -28,10 +28,10 @@ namespace BOOM {
 
   MatrixNormalModel::MatrixNormalModel(const Matrix &mu,
                                        const SpdMatrix &row_variance,
-                                       const SpdMatrix &col_variance)
+                                       const SpdMatrix &column_variance)
       : ParamPolicy_3(new MatrixParams(mu),
                       new SpdParams(row_variance),
-                      new SpdParams(col_variance))
+                      new SpdParams(column_variance))
   {}
 
   const Vector &MatrixNormalModel::mu() const {
@@ -40,19 +40,31 @@ namespace BOOM {
   }
 
   const SpdMatrix &MatrixNormalModel::Sigma() const {
-    variance_workspace_ = Kronecker(col_variance(), row_variance());
+    variance_workspace_ = Kronecker(column_variance(), row_variance());
     return variance_workspace_;
   }
   
   const SpdMatrix &MatrixNormalModel::siginv() const {
-    variance_workspace_ = Kronecker(col_precision(), row_precision());
+    variance_workspace_ = Kronecker(column_precision(), row_precision());
     return variance_workspace_;
+  }
+
+  Vector MatrixNormalModel::mvn_mean() const {
+    return vec(mean());
+  }
+
+  SpdMatrix MatrixNormalModel::mvn_variance() const {
+    return Kronecker(column_variance(), row_variance());
+  }
+
+  SpdMatrix MatrixNormalModel::mvn_precision() const {
+    return Kronecker(column_precision(), row_precision());
   }
 
   double MatrixNormalModel::logp(const Matrix &y) const {
     return dmatrix_normal_ivar(y, mean(),
                                row_precision(), row_precision_logdet(),
-                               col_precision(), col_precision_logdet(),
+                               column_precision(), column_precision_logdet(),
                                true);
   }
 
@@ -68,7 +80,7 @@ namespace BOOM {
       }
     }
     return mean() + (row_variance_param()->var_chol() * Z).multT(
-        col_variance_param()->var_chol());
+        column_variance_param()->var_chol());
   }
 
   Vector MatrixNormalModel::sim(RNG &rng) const {

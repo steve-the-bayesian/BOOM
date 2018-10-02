@@ -60,7 +60,7 @@ namespace BOOM {
     const SpdMatrix &siginv() const override;
     double ldsi() const override {
       // The crossing of rows and columns is intentional.
-      return nrow() * col_precision_logdet() + ncol() * row_precision_logdet();
+      return nrow() * column_precision_logdet() + ncol() * row_precision_logdet();
     }
     // See also the matrix versions of logp and simulate, below.
     double logp(const Vector &vectorized_matrix) const override;
@@ -82,11 +82,17 @@ namespace BOOM {
     Ptr<SpdParams> row_variance_param() {return prm2();}
     const Ptr<SpdParams> row_variance_param() const {return prm2();}
     
-    const SpdMatrix &col_variance() const {return prm3_ref().value();}
-    const SpdMatrix &col_precision() const {return prm3_ref().ivar();}
-    double col_precision_logdet() const {return prm3_ref().ldsi();}
-    Ptr<SpdParams> col_variance_param() {return prm3();}
-    const Ptr<SpdParams> col_variance_param() const {return prm3();}
+    const SpdMatrix &column_variance() const {return prm3_ref().value();}
+    const SpdMatrix &column_precision() const {return prm3_ref().ivar();}
+    double column_precision_logdet() const {return prm3_ref().ldsi();}
+    Ptr<SpdParams> column_variance_param() {return prm3();}
+    const Ptr<SpdParams> column_variance_param() const {return prm3();}
+
+    // The mean, variance, and precision of the distribution when transformed to
+    // a multivariate normal by stacking the columns of the random variable.
+    Vector mvn_mean() const;
+    SpdMatrix mvn_variance() const;
+    SpdMatrix mvn_precision() const;
     
     double logp(const Matrix &y) const;
     Matrix simulate(RNG &rng = GlobalRng::rng) const;
