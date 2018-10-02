@@ -645,7 +645,26 @@ namespace BOOM {
     this->swap(tmp);
     return *this;
   }
+  //============================================================
+  bool SelectorMatrix::all_in() const {
+    for (int i = 0; i < columns_.size(); ++i) {
+      if (columns_[i].nvars() < columns_[i].nvars_possible()) {
+        return false;
+      }
+    }
+    return true;
+  }
 
+  bool SelectorMatrix::all_out() const {
+    for (int i = 0; i < columns_.size(); ++i) {
+      if (columns_[i].nvars() > 0) return false;
+    }
+    return true;
+  }
+  
+
+  //============================================================
+  
   ostream &operator<<(ostream &out, const Selector &inc) {
     for (uint i = 0; i < inc.nvars_possible(); ++i) out << inc.inc(i);
     return out;

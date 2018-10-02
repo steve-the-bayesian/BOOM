@@ -94,6 +94,24 @@ namespace {
     EXPECT_FALSE(inc(0, 1));
     inc.flip(0, 1);
     EXPECT_TRUE(inc(0, 1));
+
+    EXPECT_FALSE(inc.all_in());
+    EXPECT_FALSE(inc.all_out());
+    inc.drop_all();
+    for (int i = 0; i < inc.nrow(); ++i) {
+      for (int j = 0; j < inc.ncol(); ++j) {
+        EXPECT_FALSE(inc(i, j));
+      }
+    }
+    EXPECT_TRUE(inc.all_out());
+
+    inc.add_all();
+    for (int i = 0; i < inc.nrow(); ++i) {
+      for (int j = 0; j < inc.ncol(); ++j) {
+        EXPECT_TRUE(inc(i, j));
+      }
+    }
+    EXPECT_TRUE(inc.all_in());
   }
   
 }  // namespace

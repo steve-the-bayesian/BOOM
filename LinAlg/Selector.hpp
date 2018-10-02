@@ -282,6 +282,12 @@ namespace BOOM {
     int ncol() const {return columns_.size();}
     bool operator()(int i, int j) const {return columns_[j][i];}
 
+    // Returns true iff all coefficients are included.
+    bool all_in() const;
+
+    // Returns true iff all coefficients are excluded.
+    bool all_out() const;
+    
     void add_all() {for (auto &el : columns_) el.add_all();}
     void drop_all() {for (auto &el : columns_) el.drop_all();}
     void flip(int i, int j) {columns_[j].flip(i);}
