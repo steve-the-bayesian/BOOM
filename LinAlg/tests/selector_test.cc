@@ -75,7 +75,8 @@ namespace {
   }
 
   TEST_F(SelectorTest, SelectorMatrixTest) {
-    SelectorMatrix inc(3, 2, Selector("111101"));
+    Selector inc_vec("111101");
+    SelectorMatrix inc(3, 2, inc_vec);
     EXPECT_EQ(3, inc.nrow());
     EXPECT_EQ(2, inc.ncol());
 
@@ -86,6 +87,8 @@ namespace {
     EXPECT_FALSE(inc(1, 1));
     EXPECT_TRUE(inc(2, 1));
 
+    EXPECT_EQ(inc_vec, inc.vectorize());
+    
     inc.drop(0, 1);
     EXPECT_FALSE(inc(0, 1));
     inc.add(0, 1);

@@ -295,6 +295,10 @@ namespace BOOM {
     void drop(int i, int j) {columns_[j].drop(i);}
 
     const Selector &col(int i) const {return columns_[i];}
+
+    // Returns the selector obtained by stacking the columns of the selector
+    // matrix.
+    Selector vectorize() const;
     
    private:
     // The selector elements map to the selector matrix elements in column-major

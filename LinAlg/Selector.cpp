@@ -662,7 +662,21 @@ namespace BOOM {
     return true;
   }
   
-
+  Selector SelectorMatrix::vectorize() const {
+    // Start with all elements out.
+    Selector ans(nrow() * ncol(), false);
+    int pos = 0;
+    for (int j = 0; j < ncol(); ++j) {
+      for (int i = 0; i < nrow(); ++i) {
+        // Note that pos needs to increment regardless of whether the
+        // conditional is true.
+        if ((*this)(i, j)) ans.add(pos);
+        ++pos;
+      }
+    }
+    return ans;
+  }
+  
   //============================================================
   
   ostream &operator<<(ostream &out, const Selector &inc) {
