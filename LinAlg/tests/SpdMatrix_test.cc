@@ -247,7 +247,7 @@ namespace {
     SpdMatrix Sigma(4);
     Sigma.randomize();
 
-    Chol cholesky(Sigma);
+    Cholesky cholesky(Sigma);
     Matrix L = cholesky.getL();
 
     EXPECT_TRUE(MatrixEquals(
