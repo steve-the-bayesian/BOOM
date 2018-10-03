@@ -172,14 +172,14 @@ namespace BOOM {
   //                           double logdet_observation_precision,
   //                           double &log_determinant) {
   //   Matrix Z = observation_coefficients.dense();
-  //   Chol rootP(state_conditional_variance);
+  //   Cholesky rootP(state_conditional_variance);
 
   //   for (int i = 0; i < Z.nrow(); ++i) {
   //     Z.row(i) *= sqrt(observation_precision[i]);
   //   }
       
   //   SpdMatrix inner = rootP.inv() + Z.inner();
-  //   Chol inner_chol(inner);
+  //   Cholesky inner_chol(inner);
     
   //   double logdet_state_variance = rootP.logdet();
   //   log_determinant =

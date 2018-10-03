@@ -126,7 +126,7 @@ namespace BOOM {
       // Refresh the parameter distribution.
       ////////////////
     }
-    Chol sample_variance_cholesky(sample_variance);
+    Cholesky sample_variance_cholesky(sample_variance);
     if (!sample_variance_cholesky.is_pos_def()) {
       report_error("Sample variance is not positive definite.");
     }

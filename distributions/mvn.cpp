@@ -107,7 +107,7 @@ namespace BOOM {
   }
 
   Vector rmvn_suf_mt(RNG &rng, const SpdMatrix &Ivar, const Vector &IvarMu) {
-    Chol L(Ivar);
+    Cholesky L(Ivar);
     uint n = IvarMu.size();
     Vector z(n);
     for (uint i = 0; i < n; ++i) z[i] = rnorm_mt(rng);

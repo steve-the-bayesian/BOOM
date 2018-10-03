@@ -107,7 +107,7 @@ namespace BOOM {
     CholStorage::CholStorage() : Storage(false) {}
 
     CholStorage::CholStorage(const SpdMatrix &S)
-        : Storage(true), L(Chol(S).getL()) {}
+        : Storage(true), L(Cholesky(S).getL()) {}
 
     CholStorage::CholStorage(const CholStorage &rhs) : Storage(rhs), L(rhs.L) {}
 
@@ -124,7 +124,7 @@ namespace BOOM {
     const Matrix &CholStorage::value() const { return L; }
 
     void CholStorage::refresh(const SpdStorage &S) {
-      Chol chol(S.value());
+      Cholesky chol(S.value());
       L = chol.getL();
       set_current();
     }

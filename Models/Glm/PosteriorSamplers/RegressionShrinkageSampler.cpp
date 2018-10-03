@@ -62,7 +62,7 @@ namespace BOOM {
     Vector scaled_posterior_mean = model_->suf()->xty() / model_->sigsq();
     scaled_posterior_mean += prior_precision_diagonal * prior_mean();
 
-    Chol cholesky(posterior_precision);
+    Cholesky cholesky(posterior_precision);
     Vector posterior_mean = cholesky.solve(scaled_posterior_mean);
 
     model_->set_Beta(rmvn_precision_upper_cholesky_mt(rng(), posterior_mean,

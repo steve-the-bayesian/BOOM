@@ -120,7 +120,7 @@ namespace BOOM {
   // likelihood assumes that n_ and the cholesky factor of sumsq_ have
   // been precomputed.
   double SepStratSampler::logp0(const SpdMatrix &Sigma, double alpha) const {
-    Chol L(Sigma);
+    Cholesky L(Sigma);
     if (!L.is_pos_def()) return BOOM::negative_infinity();
 
     double ans = logprior(Sigma);

@@ -65,7 +65,7 @@ namespace BOOM {
   double CS::logp(double r) {
     set_r(r);
 
-    Chol L(R_);
+    Cholesky L(R_);
     if (!L.is_pos_def()) {
       return BOOM::negative_infinity();
     }

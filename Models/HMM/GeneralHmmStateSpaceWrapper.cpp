@@ -88,7 +88,7 @@ namespace BOOM {
     // don't need to decompose twice (for inverse and log determinant of the
     // inverse).  The log determinant of the inverse matrix is -1 times the
     // log determinant of the original.
-    Chol variance_cholesky(model_->state_error_variance(old_time)->dense());
+    Cholesky variance_cholesky(model_->state_error_variance(old_time)->dense());
     return dmvn_zero_mean(scaled_change,
                           variance_cholesky.inv(),
                           -variance_cholesky.logdet(),

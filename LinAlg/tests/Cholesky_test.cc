@@ -25,7 +25,7 @@ namespace {
     SpdMatrix spd(4);
     spd.randomize();
 
-    Chol cholesky(spd);
+    Cholesky cholesky(spd);
     EXPECT_EQ(4, cholesky.nrow());
     EXPECT_EQ(4, cholesky.ncol());
     EXPECT_EQ(4, cholesky.dim());
@@ -66,7 +66,7 @@ namespace {
     SpdMatrix spd(4);
     spd.randomize();
 
-    Chol cholesky;
+    Cholesky cholesky;
     cholesky.decompose(spd);
 
     EXPECT_EQ(4, cholesky.nrow());
@@ -113,7 +113,7 @@ namespace {
       x.randomize();
       deficient.add_outer(x);
     }
-    Chol cholesky(deficient);
+    Cholesky cholesky(deficient);
     SpdMatrix deficient_copy = cholesky.original_matrix();
     EXPECT_TRUE(MatrixEquals(deficient, deficient_copy))
         << "deficient:" << endl << deficient

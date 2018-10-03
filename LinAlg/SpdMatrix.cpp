@@ -186,7 +186,7 @@ namespace BOOM {
     return chol(ok);
   }
   Matrix SpdMatrix::chol(bool &ok) const {
-    Chol cholesky(*this);
+    Cholesky cholesky(*this);
     if (!cholesky.is_pos_def()) {
       ok = false;
       return Matrix(0, 0);
@@ -206,7 +206,7 @@ namespace BOOM {
   }
 
   SpdMatrix SpdMatrix::inv(bool &ok) const {
-    Chol cholesky(*this);
+    Cholesky cholesky(*this);
     if (!cholesky.is_pos_def()) {
       ok = false;
       return SpdMatrix(0);
@@ -230,7 +230,7 @@ namespace BOOM {
   }
 
   double SpdMatrix::det() const {
-    Chol L(*this);
+    Cholesky L(*this);
     if (L.is_pos_def()) {
       return std::exp(L.logdet());
     } else {
@@ -284,7 +284,7 @@ namespace BOOM {
           "Number of rows in rhs does not match the number of columns "
           "in the SpdMatrix.");
     }
-    Chol cholesky(*this);
+    Cholesky cholesky(*this);
     if (!cholesky.is_pos_def()) {
       ostringstream msg;
       msg << "Matrix not positive definite in SpdMatrix::solve(Matrix)"
@@ -311,7 +311,7 @@ namespace BOOM {
     if (rhs.size() != this->ncol()) {
       report_error("The dimensions of the matrix and vector don't match.");
     }
-    Chol cholesky(*this);
+    Cholesky cholesky(*this);
     ok = cholesky.is_pos_def();
     if (!ok) {
       return Vector(rhs.size(), negative_infinity());

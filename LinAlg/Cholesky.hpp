@@ -23,17 +23,17 @@
 #include "LinAlg/SpdMatrix.hpp"
 
 namespace BOOM {
-  class Chol {
+  class Cholesky {
    public:
 
     // A default constructor for use when a cholesky object is needed, but the
     // matrix to be decomposed is not yet available.  It is the user's
     // responsibility to ensure that the decompose() method is called before any
     // other methods are called.
-    Chol() : pos_def_(false) {}
+    Cholesky() : pos_def_(false) {}
     
     // Compute and store the Cholesky factor of the matrix 'A'.
-    explicit Chol(const Matrix &A) { decompose(A); }
+    explicit Cholesky(const Matrix &A) { decompose(A); }
 
     // Compute and store the Cholesky factor of the matrix 'A'.  Any previous
     // decomposition is discarded.

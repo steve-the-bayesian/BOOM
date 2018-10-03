@@ -53,7 +53,7 @@ namespace BOOM {
     SpdMatrix precision = g.select(slab_->siginv());
     Vector scaled_mean = precision * g.select(slab_->mu());
     precision += g.select(suf().xtx());
-    Chol precision_cholesky_factor(precision);
+    Cholesky precision_cholesky_factor(precision);
     scaled_mean += g.select(suf().xty());
     Vector posterior_mean = precision_cholesky_factor.solve(scaled_mean);
     Vector beta = rmvn_precision_upper_cholesky_mt(

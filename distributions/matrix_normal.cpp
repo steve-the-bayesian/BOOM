@@ -81,8 +81,8 @@ namespace BOOM {
       zdata[i] = rnorm_mt(rng);
     }
 
-    Matrix Ominv_U(t(Chol(Ominv).getL()));
-    Matrix Lsig(Linv(Chol(Siginv).getL()));
+    Matrix Ominv_U(t(Cholesky(Ominv).getL()));
+    Matrix Lsig(Linv(Cholesky(Siginv).getL()));
 
     Matrix ans = Mu + Usolve(Ominv_U, Z) * Lsig;
     return ans;

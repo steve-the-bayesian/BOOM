@@ -86,6 +86,17 @@ namespace BOOM {
     double sigma_max_;
   };
 
+  // As above, but for drawing variance matrices rather than scalar variances.
+  class GenericGaussianVarianceMatrixSampler {
+   public:
+    GenericGaussianVarianceMatrixSampler(const Ptr<WishartModel> &prior);
+    SpdMatrix draw_precision(double data_df,
+                             const Spd &residual_sum_of_squares) const;
+    
+   private:
+    Ptr<WishartModel> prior_;
+  };
+  
 }  // namespace BOOM
 
 #endif  //  BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_

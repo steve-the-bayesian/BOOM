@@ -216,7 +216,7 @@ namespace BOOM {
 
   bool Matrix::is_pos_def() const {
     if (!is_square()) return false;
-    Chol choldc(*this);
+    Cholesky choldc(*this);
     return choldc.is_pos_def();
   }
 
