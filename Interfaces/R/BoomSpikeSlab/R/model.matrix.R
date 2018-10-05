@@ -1,6 +1,7 @@
 GetPredictorMatrix <- function(object, newdata, na.action = na.omit, ...) {
   ## Obtain the design matrix for making predictions based on a glm.spike
-  ## object.
+  ## object.  This function performs much the same role as model.matrix, but it
+  ## allows for the 'newdata' argument to be a vector, matrix, or data frame.
   ##
   ## Args:
   ##   object: An object of class glm.spike.  The object must be a list with the
@@ -53,11 +54,9 @@ GetPredictorMatrix <- function(object, newdata, na.action = na.omit, ...) {
   } else if (is.vector(newdata) && beta.dimension == 1) {
     X <- matrix(newdata, ncol=1)
   } else {
-    stop("Error in predict.lm.spike:  newdata must be a matrix,",
-         "or a data.frame,",
+    stop("Argument 'newdata' must be a matrix or data.frame,",
          "unless dim(beta) <= 2, in which case it can be a vector")
   }
-
   if (ncol(X) != beta.dimension) {
     stop("The number of coefficients does not match the number",
          "of predictors in lm.spike")
@@ -65,7 +64,7 @@ GetPredictorMatrix <- function(object, newdata, na.action = na.omit, ...) {
   return(X)
 }
 
-model.matrix.glm.spike <- function(object, ...) {
+model.matrix.glm.spike <- function(object, data = NULL, ...) {
   ## S3 generic implementing model.matrix for glm.spike objects.
   ##
   ## Args:
@@ -82,5 +81,8 @@ model.matrix.glm.spike <- function(object, ...) {
   ##   model.  If the training data is modified between when 'object'
   ##   is fit and when this function is called, the modifications will
   ##   be reflected in the returned value.
-  return(model.matrix.default(object, data = object$training.data))
+  if (is.null(data)) {
+    data = object$training.data
+  }
+  return(model.matrix.default(object, data = data))
 }
