@@ -661,6 +661,16 @@ namespace BOOM {
     }
     return true;
   }
+
+  Selector SelectorMatrix::row_or() const {
+    Selector ans(nrow(), false);
+    for (int j = 0; j < ncol(); ++j) {
+      for (int i = 0; i < nrow(); ++i) {
+        if (columns_[j][i]) ans.add(i);
+      }
+    }
+    return ans;
+  }
   
   Selector SelectorMatrix::vectorize() const {
     // Start with all elements out.

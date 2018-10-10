@@ -38,9 +38,9 @@ namespace BOOM {
 
   // TODO:  remove the inheritance from vector<bool>
   //
-  // A Selector models inclusion or exclusion from a set of positions.
-  // The job of a Selector is often to extract a subset of elements
-  // from a Vector or Matrix, resulting in a smaller Vector or Matrix.
+  // A Selector models inclusion or exclusion from a set of positions.  The job
+  // of a Selector is often to extract a subset of elements from a Vector or
+  // Matrix, resulting in a smaller Vector or Matrix.
   class Selector : public std::vector<bool> {
    public:
     Selector();
@@ -264,6 +264,11 @@ namespace BOOM {
       }
     }
 
+    // Args:
+    //   nrow: Number of rows.
+    //   ncol: Number of columns.
+    //   selector: Elements.  Size must be nrow * ncol.  The matrix is filled in
+    //     column major order (i.e. column-by-column).
     SelectorMatrix(int nrow, int ncol, const Selector &selector) {
       int counter = 0;
       for (int j = 0; j < ncol; ++j) {
@@ -274,6 +279,13 @@ namespace BOOM {
       }
     }
 
+    // The total number of included positions in the matrix.
+    int nvars() const {
+      int ans = 0;
+      for (const auto &col : columns_) ans += col.nvars();
+      return ans;
+    }
+    
     int nrow() const {
       if (columns_.empty()) return 0;
       return columns_[0].size();
@@ -287,7 +299,7 @@ namespace BOOM {
 
     // Returns true iff all coefficients are excluded.
     bool all_out() const;
-    
+
     void add_all() {for (auto &el : columns_) el.add_all();}
     void drop_all() {for (auto &el : columns_) el.drop_all();}
     void flip(int i, int j) {columns_[j].flip(i);}
@@ -295,6 +307,9 @@ namespace BOOM {
     void drop(int i, int j) {columns_[j].drop(i);}
 
     const Selector &col(int i) const {return columns_[i];}
+
+    // Indicate whether each row is included by at least one column.
+    Selector row_or() const;
 
     // Returns the selector obtained by stacking the columns of the selector
     // matrix.

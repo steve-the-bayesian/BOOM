@@ -80,6 +80,7 @@ namespace {
     EXPECT_EQ(3, inc.nrow());
     EXPECT_EQ(2, inc.ncol());
 
+    // Check that the input vector fills column-by-column.
     EXPECT_TRUE(inc(0, 0));
     EXPECT_TRUE(inc(1, 0));
     EXPECT_TRUE(inc(2, 0));
@@ -115,6 +116,17 @@ namespace {
       }
     }
     EXPECT_TRUE(inc.all_in());
+
+    SelectorMatrix wide(4, 3, Selector("100000010010"));
+    // 1 0 0
+    // 0 0 0
+    // 0 0 1
+    // 0 1 0
+    Selector any(wide.row_or());
+    EXPECT_TRUE(any[0]);
+    EXPECT_FALSE(any[1]);
+    EXPECT_TRUE(any[2]);
+    EXPECT_TRUE(any[3]);
   }
   
 }  // namespace
