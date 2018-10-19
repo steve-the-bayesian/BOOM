@@ -20,6 +20,60 @@ namespace {
     }
   };
 
+  TEST_F(SelectorTest, Equality) {
+    Selector s1("001");
+    Selector s2("101");
+    EXPECT_NE(s1, s2);
+    EXPECT_TRUE(s1 != s2);
+    EXPECT_FALSE(s1 == s2);
+    
+    s2.flip(0); // now 001
+    EXPECT_EQ(s1, s2);
+    EXPECT_TRUE(s1 == s2);
+    EXPECT_FALSE(s1 != s2);
+
+    s2.flip(0);
+    swap(s1, s2);
+    Selector s3("001");
+    EXPECT_EQ(s2, s3);
+    EXPECT_NE(s1, s3);
+    s3.flip(0);
+    EXPECT_EQ(s1, s3);
+    EXPECT_NE(s2, s3);
+  }
+
+  TEST_F(SelectorTest, Append) {
+    Selector s1("010");
+    EXPECT_EQ(s1.nvars(), 1);
+    EXPECT_EQ(s1.nvars_possible(), 3);
+
+    s1.push_back(true);
+    EXPECT_EQ(s1.nvars(), 2);
+    EXPECT_EQ(s1.nvars_possible(), 4);
+
+    s1.push_back(false);
+    EXPECT_EQ(s1.nvars(), 2);
+    EXPECT_EQ(s1.nvars_possible(), 5);
+
+    // Current state is "01010".
+    // Set it to "0100"
+    s1.erase(3);
+    EXPECT_EQ(s1.nvars(), 1);
+    EXPECT_EQ(s1.nvars_possible(), 4);
+    EXPECT_TRUE(s1[1]);
+  }
+
+  TEST_F(SelectorTest, ToVectorTest) {
+    Selector s("00010");
+    Vector v = s.to_Vector();
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_DOUBLE_EQ(v[0], 0);
+    EXPECT_DOUBLE_EQ(v[1], 0);
+    EXPECT_DOUBLE_EQ(v[2], 0);
+    EXPECT_DOUBLE_EQ(v[3], 1);
+    EXPECT_DOUBLE_EQ(v[4], 0);
+  }
+  
   TEST_F(SelectorTest, SelectRowsTest) {
     Matrix big(10, 4);
     big.randomize();

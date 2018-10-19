@@ -47,9 +47,9 @@ namespace BOOM {
     explicit Selector(uint p, bool all = true);  // all true or all false
 
     // Using this constructor, Selector s("10") would have s[0] = true
-    // and [1] = false;
+    // and s[1] = false.
     explicit Selector(const std::string &zeros_and_ones);
-    explicit Selector(const std::vector<bool> &);
+    explicit Selector(const std::vector<bool> &values);
     Selector(const std::vector<uint> &pos, uint n);
 
     bool operator==(const Selector &rhs) const;
@@ -57,9 +57,27 @@ namespace BOOM {
     void swap(Selector &rhs);
 
     // Append one or more elements elements to the end.  Return *this.
-    Selector &append(bool new_last_element);
     Selector &append(const Selector &new_trailing_elements);
 
+    void push_back(bool element);
+    void erase(uint which_element);
+
+    // Convert to a vector of 0's and 1's.
+    Vector to_Vector() const;
+    
+    //---------- Element counts ----------
+    
+    // The number of included items.
+    uint nvars() const;
+
+    // The number of excluded items.
+    uint nvars_excluded() const;
+
+    // The number of items (included + excluded).
+    uint nvars_possible() const; 
+
+    //---------- Adding and dropping variables ----------
+    
     // Add element i to the included set.  If it is already present, then do
     // nothing.
     Selector &add(uint i);
@@ -73,29 +91,14 @@ namespace BOOM {
     // Add element i if it is absent, otherwise drop it.
     Selector &flip(uint i);
 
-    // Set union.  Add any elements that are present in rhs, while keeping any
-    // that are already present in *this.  Return *this.
-    Selector &operator+=(const Selector &rhs);
-
-    // Intersection.  Drop any elements that are absent in rhs.
-    Selector &operator*=(const Selector &rhs);
-
-    // Returns a selector of the same size as this, but with all elements
-    // flipped.
-    Selector complement() const;
-
     // Add or drop all elements.
     void drop_all();
     void add_all();
 
-    // The number of included items.
-    uint nvars() const;
-
-    // The number of excluded items.
-    uint nvars_excluded() const;
-
-    // The number of items (included + excluded).
-    uint nvars_possible() const; 
+    //-------------- Set theory:  And, Or, Not, ... ------------------
+    // Returns a selector of the same size as this, but with all elements
+    // flipped.
+    Selector complement() const;
 
     // Returns an indicator of whether element i is included.
     bool inc(uint i) const;
@@ -107,13 +110,22 @@ namespace BOOM {
     // lower-case union is a reserved c++ keyword.
     Selector Union(const Selector &rhs) const;
 
+    // Set union.  Add any elements that are present in rhs, while keeping any
+    // that are already present in *this.  Return *this.
+    Selector &cover(const Selector &rhs);
+    Selector &operator+=(const Selector &rhs) {return this->cover(rhs);}
+
     // Returns the set intersection, locations which are in both Selectors.
     Selector intersection(const Selector &rhs) const;
 
+    // Intersection.  Drop any elements that are absent in rhs.
+    Selector &operator*=(const Selector &rhs);
+    
     // Returns a Selector that is 1 in places where this disagrees with rhs.
     Selector exclusive_or(const Selector &rhs) const;
-    Selector &cover(const Selector &rhs);  // makes *this cover rhs
 
+    // --------- Selecting subsets ----------
+    
     // Returns the position of the ith nonzero element in the expanded sparse
     // vector.
     uint indx(uint i) const;  // i=0..n-1, ans in 0..N-1
@@ -122,33 +134,46 @@ namespace BOOM {
     // position I in the expanded (sparse) vector.
     uint INDX(uint I) const;  // I=0..N-1, ans in 0..n-1
 
-    // Convert the Selector to an explicit vector of 0's and 1's.
-    Vector to_Vector() const;
+    // Returns the index of a randomly selected included (or excluded)
+    // element.  If no (all) elements are included then -1 is returned
+    // as an error code.
+    int random_included_position(RNG &rng) const;
+    int random_excluded_position(RNG &rng) const;
 
+    // Return the index of the first included value at or before 'position'.  If
+    // no elements in this position or lower are included, then return -1.
+    int first_included_at_or_before(uint position) const;
+    
     Vector select(const Vector &x) const;          // x includes intercept
-    Vector select_add_int(const Vector &x) const;  // intercept is implicit
+    Vector select(const VectorView &x) const;
+    Vector select(const ConstVectorView &x) const;
+
     SpdMatrix select(const SpdMatrix &) const;
     Matrix select_cols(const Matrix &M) const;
-    Matrix select_cols_add_int(const Matrix &M) const;
     Matrix select_square(const Matrix &M) const;  // selects rows and columns
     Matrix select_rows(const Matrix &M) const;
     Matrix select_rows(const SubMatrix &M) const;
     Matrix select_rows(const ConstSubMatrix &M) const;
 
-    Vector select(const VectorView &x) const;
-    Vector select(const ConstVectorView &x) const;
 
     template <class T>
     std::vector<T> select(const std::vector<T> &stuff) const;
     
     SpdMatrix expand(const SpdMatrix &dense_part_of_sparse_matrix);
-
     Vector expand(const Vector &x) const;
     Vector expand(const VectorView &x) const;
     Vector expand(const ConstVectorView &x) const;
 
     Vector &zero_missing_elements(Vector &v) const;
 
+    template <class T>
+    T sub_select(const T &x, const Selector &rhs) const;
+    // x is an object obtained by select(original_object).
+    // this->covers(rhs).  sub_select(x,rhs) returns the object that
+    // would have been obtained by rhs.select(original_object)
+
+    //---------- Sparse linear algebra ----------
+    
     // Fill ans with select_cols(M) * select(v).
     void sparse_multiply(const Matrix &M, const Vector &v,
                          VectorView ans) const;
@@ -178,25 +203,6 @@ namespace BOOM {
     double sparse_sum(const ConstVectorView &view) const;
     double sparse_sum(const VectorView &view) const;
     double sparse_sum(const Vector &vector) const;
-    
-    template <class T>
-    T sub_select(const T &x, const Selector &rhs) const;
-    // x is an object obtained by select(original_object).
-    // this->covers(rhs).  sub_select(x,rhs) returns the object that
-    // would have been obtained by rhs.select(original_object)
-
-    // Returns the index of a randomly selected included (or excluded)
-    // element.  If no (all) elements are included then -1 is returned
-    // as an error code.
-    int random_included_position(RNG &rng) const;
-    int random_excluded_position(RNG &rng) const;
-
-    void push_back(bool element);
-    void erase(uint which_element);
-
-    // Return the index of the first included value at or before 'position'.  If
-    // no elements in this position or lower are included, then return -1.
-    int first_included_at_or_before(uint position) const;
 
    private:
     // sorted vector of included indices
@@ -210,6 +216,7 @@ namespace BOOM {
 
     // Checks that the size of this is equal to 'p'.
     void check_size_eq(uint p, const std::string &fun_name) const;
+
     // Checks that the size of *this is greater than 'p'.
     void check_size_gt(uint p, const std::string &fun_name) const;
   };
