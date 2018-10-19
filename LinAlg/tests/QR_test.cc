@@ -45,6 +45,11 @@ namespace {
         << "B = " << endl << B << endl;
 
     EXPECT_TRUE(MatrixEquals(Q.Tmult(Q), SpdMatrix(3, 1.0)));
+
+    // Check that the R matrix you get when just_R is 'true' matches the usual
+    // case (where both Q and R are computed).
+    QR qr2(A, true);
+    EXPECT_TRUE(MatrixEquals(qr2.getR(), qr.getR()));
   }
 
   TEST_F(QrTest, Determinant) {
@@ -110,7 +115,6 @@ namespace {
 
     Vector Ainv_x = qr.solve(x);
     EXPECT_TRUE(VectorEquals(A * Ainv_x, x, 1e-6));
-    
   }
   
 }  // namespace

@@ -39,7 +39,7 @@ namespace BOOM {
     QR() {}
 
     // The QR decomposition of the matrix X.
-    explicit QR(const Matrix &m);
+    explicit QR(const Matrix &m, bool just_compute_R = false);
 
     // Extract the Q and R matrices from the decomposition.
     Matrix getQ() const;
@@ -63,7 +63,11 @@ namespace BOOM {
     double logdet() const;
     
     // Reset *this to the decomposition of the matrix m.
-    void decompose(const Matrix &m);
+    // Args:
+    //   m:  The matrix to decompose.
+    //   just_compute_R: If 'true' then only the R matrix is computed.  In this
+    //     case the only trustworthy method of this class is getR().
+    void decompose(const Matrix &m, bool just_compute_R = false);
 
     // Reset *this to an empty state.  After a call to clear() a call
     // to decompose() or unvectorize() must be made before the object
