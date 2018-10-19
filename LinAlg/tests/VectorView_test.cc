@@ -82,5 +82,11 @@ namespace {
     EXPECT_TRUE(VectorEquals(v_view_ / cw_view_, v_ / w_));
     EXPECT_TRUE(VectorEquals(cv_view_ / cw_view_, v_ / w_));
   }
+
+  TEST_F(VectorViewTest, SumLog) {
+    double x1 = sumlog(v_);
+    double x2 = sum(log(v_));
+    EXPECT_DOUBLE_EQ(x1, x2);
+  }
   
 }  // namespace

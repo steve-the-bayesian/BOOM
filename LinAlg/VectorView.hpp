@@ -271,6 +271,17 @@ namespace BOOM {
     ConstVectorView reverse() const;
   };
 
+  inline double sum(const ConstVectorView &view) { return view.sum(); }
+  inline double sum(const VectorView &view) { return view.sum(); }
+  template <class VEC>
+  double sumlog(const VEC &v) {
+    double ans = 0;
+    for (int i = 0; i < v.size(); ++i) {
+      ans += log(v[i]);
+    }
+    return ans;
+  }
+  
   // IO
   std::ostream &operator<<(std::ostream &out, const ConstVectorView &x);
   // prints to stdout.  This function is here so it can be called from gdb.
