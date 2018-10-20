@@ -683,6 +683,16 @@ namespace BOOM {
     }
     return ans;
   }
+
+  void SelectorMatrix::randomize() {
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < ncol(); ++j) {
+        if (runif_mt(GlobalRng::rng) < .5) {
+          flip(i, j);
+        }
+      }
+    }
+  }
   
   //============================================================
   

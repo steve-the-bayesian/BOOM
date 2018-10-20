@@ -264,8 +264,7 @@ namespace BOOM {
   // nonzero.
   class SelectorMatrix {
    public:
-    SelectorMatrix(int nrow, int ncol, bool include_all = true)
-    {
+    SelectorMatrix(int nrow, int ncol, bool include_all = true) {
       for (int i = 0; i < ncol; ++i) {
         columns_.push_back(Selector(nrow, include_all));
       }
@@ -321,6 +320,9 @@ namespace BOOM {
     // Returns the selector obtained by stacking the columns of the selector
     // matrix.
     Selector vectorize() const;
+
+    // Flip all bits with probability .5.
+    void randomize();
     
    private:
     // The selector elements map to the selector matrix elements in column-major
