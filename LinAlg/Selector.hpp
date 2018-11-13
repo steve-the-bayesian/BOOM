@@ -324,6 +324,10 @@ namespace BOOM {
     // Return the vector obtained by selecting the included elements of mat, and
     // then stacking them column-wise.
     Vector vector_select(const Matrix &mat) const;
+
+    // Expand the subset of selected values back to the matrix from which it was
+    // selected.
+    Matrix expand(const Vector &subset) const;
     
     // Flip all bits with probability .5.
     void randomize();

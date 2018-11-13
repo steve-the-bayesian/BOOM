@@ -189,5 +189,11 @@ namespace {
     EXPECT_DOUBLE_EQ(selected[0], selectable(0, 0));
     EXPECT_DOUBLE_EQ(selected[1], selectable(3, 1));
     EXPECT_DOUBLE_EQ(selected[2], selectable(2, 2));
+
+    Matrix expanded(4, 3, 0.0);
+    expanded(0, 0) = selectable(0, 0);
+    expanded(3, 1) = selectable(3, 1);
+    expanded(2, 2) = selectable(2, 2);
+    
   }  
 }  // namespace

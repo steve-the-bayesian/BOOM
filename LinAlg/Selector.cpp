@@ -698,6 +698,22 @@ namespace BOOM {
     }
     return ans;
   }
+
+  Matrix SelectorMatrix::expand(const Vector &values) const {
+    if (values.size() != nvars()) {
+      report_error("Wrong size argument to 'expand'.");
+    }
+    Matrix ans(nrow(), ncol(), 0.0);
+    int next = 0;
+    for (int j = 0; j < ncol(); ++j) {
+      for (int i = 0; i < nrow(); ++i) {
+        if ((*this)(i, j)) {
+          ans(i, j) = values[next++];
+        }
+      }
+    }
+    return ans;
+  }
   
   void SelectorMatrix::randomize() {
     for (int i = 0; i < nrow(); ++i) {
