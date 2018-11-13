@@ -1338,6 +1338,13 @@ namespace BOOM {
     return ans;
   }
 
+  Vector LTmult(const Matrix &L, const Vector &y) {
+    assert(L.is_square() && L.nrow() == y.size());
+    Vector ans(y);
+    EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
+    return ans;
+  }
+  
   Vector &Lsolve_inplace(const Matrix &L, Vector &b) {
     assert(L.is_square() && L.nrow() == b.size());
     EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(b));

@@ -255,6 +255,8 @@ namespace {
 
     Vector v(3);
     EXPECT_TRUE(VectorEquals(Lmult(L, v), L * v));
+    EXPECT_TRUE(VectorEquals(LTmult(L, v), L.transpose() * v));
+    
     EXPECT_TRUE(VectorEquals(Lsolve(L, v), L.inv() * v));
     Vector original_v = v;
     EXPECT_TRUE(VectorEquals(LTsolve_inplace(L, v),

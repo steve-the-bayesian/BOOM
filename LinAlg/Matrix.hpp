@@ -459,15 +459,18 @@ namespace BOOM {
   Matrix block_diagonal(const Matrix &A, const Matrix &B);
   // A and B both square
 
-  // routines for lower triangluar matrices
-  Vector Lmult(const Matrix &L, const Vector &y);
+  //---------------------------------------------------------------------------
+  // Routines for lower triangluar matrices.
+  Vector Lmult(const Matrix &L, const Vector &y);   // ans = L * y
+  Vector LTmult(const Matrix &L, const Vector &y);  // ans = L^T * y
   Vector Lsolve(const Matrix &L, const Vector &b);  // ans = L^{-1}b
-  Vector &LTsolve_inplace(const Matrix &L, Vector &b);
-  Vector &Lsolve_inplace(const Matrix &L, Vector &b);   // b = L^{-1}b
-  Matrix Lsolve(const Matrix &L, const Matrix &B);      // ans = L^{-1}B
-  Matrix &Lsolve_inplace(const Matrix &L, Matrix &B);   // B = L^{-1}B
-  Matrix &LTsolve_inplace(const Matrix &L, Matrix &B);  // B = L^{-1}B
-  Matrix Linv(const Matrix &L);
+  Vector &LTsolve_inplace(const Matrix &L, Vector &b);  // b = L^{T -1} * b
+  Vector &Lsolve_inplace(const Matrix &L, Vector &b);   // b = L^{-1} * b
+  Matrix Lsolve(const Matrix &L, const Matrix &B);      // ans = L^{-1} * B
+  Matrix &Lsolve_inplace(const Matrix &L, Matrix &B);   // B = L^{-1} * B
+  Matrix &LTsolve_inplace(const Matrix &L, Matrix &B);  // B = L^{T -1}* B
+  // Return the inverse of L (which is upper triangluar).
+  Matrix Linv(const Matrix &L);                      
 
   Vector Umult(const Matrix &U, const Vector &y);
   Matrix Umult(const Matrix &U, const Matrix &m);
