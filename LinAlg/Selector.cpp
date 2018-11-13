@@ -684,6 +684,21 @@ namespace BOOM {
     return ans;
   }
 
+  Vector SelectorMatrix::vector_select(const Matrix &mat) const {
+    if (mat.nrow() != nrow() || mat.ncol() != ncol()) {
+      report_error("Argument 'mat' is the wrong size.");
+    }
+    Vector ans;
+    for (int j = 0; j < ncol(); ++j) {
+      for (int i = 0; i < nrow(); ++i) {
+        if ((*this)(i, j)) {
+          ans.push_back(mat(i, j));
+        }
+      }
+    }
+    return ans;
+  }
+  
   void SelectorMatrix::randomize() {
     for (int i = 0; i < nrow(); ++i) {
       for (int j = 0; j < ncol(); ++j) {

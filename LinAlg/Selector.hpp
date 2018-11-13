@@ -321,6 +321,10 @@ namespace BOOM {
     // matrix.
     Selector vectorize() const;
 
+    // Return the vector obtained by selecting the included elements of mat, and
+    // then stacking them column-wise.
+    Vector vector_select(const Matrix &mat) const;
+    
     // Flip all bits with probability .5.
     void randomize();
     

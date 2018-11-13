@@ -181,6 +181,13 @@ namespace {
     EXPECT_FALSE(any[1]);
     EXPECT_TRUE(any[2]);
     EXPECT_TRUE(any[3]);
-  }
-  
+
+    Matrix selectable(4, 3);
+    selectable.randomize();
+    Vector selected = wide.vector_select(selectable);
+    EXPECT_EQ(3, selected.size());
+    EXPECT_DOUBLE_EQ(selected[0], selectable(0, 0));
+    EXPECT_DOUBLE_EQ(selected[1], selectable(3, 1));
+    EXPECT_DOUBLE_EQ(selected[2], selectable(2, 2));
+  }  
 }  // namespace
