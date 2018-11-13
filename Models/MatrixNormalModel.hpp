@@ -81,13 +81,19 @@ namespace BOOM {
     double row_precision_logdet() const {return prm2_ref().ldsi();}
     Ptr<SpdParams> row_variance_param() {return prm2();}
     const Ptr<SpdParams> row_variance_param() const {return prm2();}
+    const Matrix &row_precision_cholesky() const {
+      return prm2_ref().ivar_chol();
+    }
     
     const SpdMatrix &column_variance() const {return prm3_ref().value();}
     const SpdMatrix &column_precision() const {return prm3_ref().ivar();}
     double column_precision_logdet() const {return prm3_ref().ldsi();}
     Ptr<SpdParams> column_variance_param() {return prm3();}
     const Ptr<SpdParams> column_variance_param() const {return prm3();}
-
+    const Matrix &col_precision_cholesky() const {
+      return prm3_ref().ivar_chol();
+    }
+    
     // The mean, variance, and precision of the distribution when transformed to
     // a multivariate normal by stacking the columns of the random variable.
     Vector mvn_mean() const;
