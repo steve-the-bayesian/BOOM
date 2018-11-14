@@ -239,6 +239,10 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_sampler_;
 
     CorrelationMap correlation_map_;
+
+    // Keeps track of the number of times within the current draw that algorithm
+    // had to restart because of a degenerate information matrix.
+    int failure_count_;
     
     double set_reg_post_params(const Selector &inclusion_indicators,
                                bool do_ldoi) const;

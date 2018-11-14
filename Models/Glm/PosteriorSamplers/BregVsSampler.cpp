@@ -59,7 +59,8 @@ namespace BOOM {
         unscaled_posterior_precision_(1, negative_infinity()),
         DF_(negative_infinity()),
         SS_(negative_infinity()),
-        sigsq_sampler_(residual_precision_prior_) {
+        sigsq_sampler_(residual_precision_prior_),
+        failure_count_(0) {
     uint p = model_->nvars_possible();
     Vector b = Vector(p, 0.0);
     if (first_term_is_intercept) {
@@ -94,7 +95,8 @@ namespace BOOM {
         max_nflips_(indx.size()),
         draw_beta_(true),
         draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {
+        sigsq_sampler_(residual_precision_prior_),
+        failure_count_(0) {
     uint p = model_->nvars_possible();
     Vector b = Vector(p, 0.0);
     double ybar = model_->suf()->ybar();
@@ -152,7 +154,8 @@ namespace BOOM {
         max_nflips_(indx.size()),
         draw_beta_(true),
         draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+        sigsq_sampler_(residual_precision_prior_),
+        failure_count_(0) {}
   //----------------------------------------------------------------------
   BVS::BregVsSampler(RegressionModel *model,
                      const ZellnerPriorParameters &prior, RNG &seeding_rng)
@@ -169,7 +172,8 @@ namespace BOOM {
         max_nflips_(indx.size()),
         draw_beta_(true),
         draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+        sigsq_sampler_(residual_precision_prior_),
+        failure_count_(0) {}
   //----------------------------------------------------------------------
   BVS::BregVsSampler(RegressionModel *model,
                      const Ptr<MvnGivenScalarSigmaBase> &slab,
@@ -184,7 +188,8 @@ namespace BOOM {
         max_nflips_(indx.size()),
         draw_beta_(true),
         draw_sigma_(true),
-        sigsq_sampler_(residual_precision_prior_) {}
+        sigsq_sampler_(residual_precision_prior_),
+        failure_count_(0) {}
   //----------------------------------------------------------------------
   void BVS::limit_model_selection(uint n) { max_nflips_ = n; }
   void BVS::allow_model_selection(bool allow) {
@@ -316,10 +321,29 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void BVS::draw_beta() {
     if (model_is_empty()) return;
-    posterior_mean_ =
-        rmvn_ivar_mt(rng(), posterior_mean_,
-                     unscaled_posterior_precision_ / model_->sigsq());
-    model_->set_included_coefficients(posterior_mean_);
+    SpdMatrix posterior_precision =
+        unscaled_posterior_precision_ / model_->sigsq();
+    // The posterior precision might be nearly rank deficient.
+    bool ok = false;
+    Matrix posterior_precision_lower_cholesky = posterior_precision.chol(ok);
+    if (ok) {
+      posterior_mean_ = rmvn_precision_upper_cholesky_mt(
+          rng(), posterior_mean_,
+          posterior_precision_lower_cholesky.transpose());
+      model_->set_included_coefficients(posterior_mean_);
+      failure_count_ = 0;
+    } else {
+      // Handle the case where the information matrix is degenerate.  This
+      // should not happen mathematically, but it might happen for numerical
+      // reasons.  If we're here it is because the variable selection component
+      // messed up, so just bail on this draw and try again.
+      if (++failure_count_ > 10) {
+        report_error("The posterior information matrix is not positive "
+                     "definite.  Check your data or consider adjusting "
+                     "your prior.");
+      }
+      draw();
+    }
   }
   //----------------------------------------------------------------------
   void BVS::draw_model_indicators() {
