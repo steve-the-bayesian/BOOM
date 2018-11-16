@@ -25,6 +25,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -88,7 +89,11 @@ namespace BOOM {
   Vector rmvn_ivar_mt(RNG &rng, const Vector &mu, const SpdMatrix &ivar) {
     // Draws a multivariate normal with mean mu and precision matrix
     // ivar.
-    Matrix U = ivar.chol().transpose();
+    bool ok = false;
+    Matrix U = ivar.chol(ok).transpose();
+    if (!ok) {
+      report_error("Cholesky decomposition failed in rmvn_ivar_mt.");
+    }
     return rmvn_precision_upper_cholesky_mt(rng, mu, U);
   }
 
