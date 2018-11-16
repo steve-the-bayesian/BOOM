@@ -91,15 +91,23 @@ namespace {
     EXPECT_TRUE(MatrixEquals(d3.ivar(), precision_));
     EXPECT_TRUE(MatrixEquals(d3.var_chol(), variance_cholesky_.getL()));
     EXPECT_TRUE(MatrixEquals(d3.ivar_chol(), precision_cholesky_.getL()));
+    EXPECT_EQ(d3.ivar_chol().nrow(), dim_);
+    EXPECT_EQ(d3.ivar_chol().ncol(), dim_);
     EXPECT_NEAR(d3.ldsi(), precision_.logdet(), 1e-8);
 
     SpdData d4(dim_, 1.0);
     d4.set_ivar_chol(precision_cholesky_.getL());
-    EXPECT_TRUE(MatrixEquals(d4.var(), variance_));
-    EXPECT_TRUE(MatrixEquals(d4.ivar(), precision_));
     EXPECT_TRUE(MatrixEquals(d4.var_chol(), variance_cholesky_.getL()));
     EXPECT_TRUE(MatrixEquals(d4.ivar_chol(), precision_cholesky_.getL()));
+    EXPECT_TRUE(MatrixEquals(d4.var(), variance_));
+    EXPECT_TRUE(MatrixEquals(d4.ivar(), precision_));
     EXPECT_NEAR(d4.ldsi(), precision_.logdet(), 1e-8);
+  }
+
+  TEST_F(SpdDataTest, MyBug) {
+    SpdData d(4, 1.0);
+    EXPECT_EQ(d.ivar_chol().nrow(), 4);
+    EXPECT_EQ(d.ivar_chol().ncol(), 4);
   }
   
 }  // namespace

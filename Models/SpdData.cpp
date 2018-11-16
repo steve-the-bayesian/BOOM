@@ -35,30 +35,50 @@ namespace BOOM {
       } else if (sig_chol->current()) {
         sig->refresh_from_chol(*sig_chol);
       } else if (siginv_chol->current()) {
-        sig->refresh_from_chol(*siginv_chol, true);
+        sig->refresh_from_inverse_chol(*siginv_chol);
       } else if (siginv->current()) {
-        siginv_chol->refresh(*siginv);
-        sig->refresh_from_chol(*siginv_chol, true);
+        siginv_chol->set(siginv->value().chol());
+        sig->refresh_from_inverse_chol(*siginv_chol);
       } else {
         report_error("I'm lost in SpdData::ensure_current");
       }
     }
 
-    // Given four equivalent representations of the data in an SpdData object,
-    // find the current representation, and use it to refresh the primary
-    // representation.
+    // Ensure that the leading argument 'chol' contains a current representation
+    // of the matrix.
+    //
+    // Args:
+    //   chol:  Holds the cholesky decomposition of the desired matrix.
+    //   sig:  The desired matrix.
+    //   siginv_chol: The cholesky decomposition of the inverse of the desired
+    //     matrix.
+    //   siginv:  The inverse of the desired matrix.
+    //
+    // At any given point in time, each of these can be current or not, but
+    // there will always be at least one current one.  Look through the list,
+    // find a current representation, and use it to make sure chol is current.
     inline void ensure_chol_current(SPD::CholStorage *chol,
                                     SPD::SpdStorage *sig,
                                     SPD::CholStorage *siginv_chol,
                                     SPD::SpdStorage *siginv) {
+      // Step through the possibilities in increasing order of the necessary
+      // work.
       if (chol->current()) {
+        // If chol is current then we're done.
         return;
       } else if (sig->current()) {
-        chol->refresh(*sig);
+        // If sig is current then compute its Cholesky.
+        chol->set(sig->value().chol(), true);
       } else if (siginv_chol->current()) {
-        sig->refresh_from_chol(*siginv_chol, true);
+        // If the cholesky decomposition of the inverse is available then use it
+        // to compute Sigma.  Then decompose Sigma.
+        sig->refresh_from_inverse_chol(*siginv_chol);
+        chol->set(sig->value().chol(), true);
       } else if (siginv->current()) {
-        siginv_chol->refresh(*siginv);
+        // Compute everything.
+        siginv_chol->set(siginv->value().chol());
+        sig->refresh_from_inverse_chol(*siginv_chol);
+        chol->set(sig->value().chol(), true);
       } else {
         std::ostringstream err;
         err << "I'm lost in SpdData::ensure_chol_current.  "
@@ -122,13 +142,7 @@ namespace BOOM {
     }
 
     const Matrix &CholStorage::value() const { return L; }
-
-    void CholStorage::refresh(const SpdStorage &S) {
-      Cholesky chol(S.value());
-      L = chol.getL();
-      set_current();
-    }
-
+    
     //_____________________________________________________________________
 
     SpdStorage::SpdStorage() : Storage(false) {}
@@ -150,19 +164,19 @@ namespace BOOM {
       if (sig) signal();
     }
 
-    void SpdStorage::refresh_from_chol(const CholStorage &chol, bool inv) {
-      const Matrix &L(chol.value());
-      if (inv) {
-        sig_ = chol2inv(L);
-      } else {
-        sig_ = LLT(L);
-      }
+    void SpdStorage::refresh_from_chol(const CholStorage &chol) {
+      sig_ = LLT(chol.value());
       set_current();
     }
 
+    void SpdStorage::refresh_from_inverse_chol(const CholStorage &cholinv) {
+      sig_ = chol2inv(cholinv.value());
+      set_current();
+    }
+    
     void SpdStorage::refresh_from_inv(const SpdStorage &S, CholStorage &chol) {
-      chol.refresh(S);
-      refresh_from_chol(chol, true);
+      chol.set(S.value().chol(), true);
+      refresh_from_inverse_chol(chol);
     }
   }  // namespace SPD
 

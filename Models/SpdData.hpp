@@ -24,7 +24,21 @@
 
 namespace BOOM {
   namespace SPD {
-
+    // SpdData is often in the form of variance matrices and their inverses
+    // (sometimes known as precision or information matrices).  In each case
+    // (matrix and its inverse) the cholesky decomposition might be desired as
+    // well.  To handle these cases efficiently, the SpdData class uses lazy
+    // evaluation to store all four versions of a matrix.  The four versions are
+    // only computed if requested, and only the requested versions are stored,
+    // but all four can be requested.
+    //
+    // To impmlement the lazy evaluation, we create a class that stores an Spd
+    // and a similar class that stores its decomposition.  Each object keeps
+    // track of whether it represents the current version of the data by placing
+    // observers on all the other versions.  When a storage element is set
+    // (i.e. assigned a new value), the observers toggle a flag on the remaining
+    // three storage elements so that they know they are not current.
+    
     // Abstract base class for storing the different incarnations of a
     // symmetric positive definite matrix.  The class keeps track of
     // whether or not the currently stored data is current by placing
@@ -71,8 +85,8 @@ namespace BOOM {
       std::vector<std::function<void(void)> > signals_;
     };
 
-    //------------------------------------------------------------
-    class SpdStorage;
+    //---------------------------------------------------------------------
+    // Store the Cholesky decomposition of an SpdMatrix
     class CholStorage : public Storage {
      public:
       CholStorage();
@@ -81,14 +95,14 @@ namespace BOOM {
       CholStorage *clone() const override;
       uint dim() const override;
       void set(const Matrix &L, bool sig = true);
-      void refresh(const SpdStorage &);
       const Matrix &value() const;
 
      private:
       Matrix L;
     };
 
-    //------------------------------------------------------------
+    //---------------------------------------------------------------------
+    // Store the value of a symmetric positive definite matrix.
     class SpdStorage : public Storage {
      public:
       SpdStorage();
@@ -98,20 +112,20 @@ namespace BOOM {
       uint dim() const override;
       const SpdMatrix &value() const;
       void set(const SpdMatrix &, bool sig = true);
-      void refresh_from_chol(const CholStorage &, bool inv = false);
+
+      void refresh_from_chol(const CholStorage &);
+      void refresh_from_inverse_chol(const CholStorage &);
       void refresh_from_inv(const SpdStorage &, CholStorage &);
 
      private:
       SpdMatrix sig_;
     };
+
   }  // namespace SPD
   //____________________________________________________________
 
-  // This class stores a SpdMatrix matrix in several different formats.  It
-  // keeps both the original matrix (though of as a variance matrix),
-  // its inverse (ivar), as well as the cholesky triangles for these
-  // two matrices.  This is extravagant, but it prevents excessive
-  // computation.
+  // An SpdMatrix matrix (though of as a variance matrix), its inverse (ivar),
+  // and the lower Cholesky triangles of matrix and its inverse.  
   class SpdData : public DataTraits<Spd> {
    public:
     explicit SpdData(uint n, double diag = 1.0, bool ivar = false);
@@ -119,6 +133,11 @@ namespace BOOM {
     SpdData(const SpdData &rhs);
     SpdData *clone() const override;
 
+    // The number of elements in the matrix.
+    // Args:
+    //   minimal: If true then only the elements in the diagonal and the upper
+    //     triangle are counted.  Otherwise all elements (including elements
+    //     duplicated by symmetry) are counted.
     virtual uint size(bool minimal = true) const;
     virtual uint dim() const;
     ostream &display(ostream &out) const override;
@@ -130,6 +149,10 @@ namespace BOOM {
     const SpdMatrix &ivar() const;
     const Matrix &var_chol() const;
     const Matrix &ivar_chol() const;
+
+    // The log determinant of sigma-inverse.  This name was chosen because it
+    // appears as an argument in the multivariate normal probability
+    // distribution functions in the distributions library.
     double ldsi() const;
 
     void set_var(const SpdMatrix &, bool signal = true);
@@ -142,6 +165,7 @@ namespace BOOM {
     //   L:  The lower cholesky triangle for a correlation matrix.
     void set_S_Rchol(const Vector &sd, const Matrix &L);
 
+   private:
     // Check that the desired representation contains the desired
     // data.  If not then find and refresh from the current
     // representation.
@@ -150,7 +174,6 @@ namespace BOOM {
     void ensure_var_chol_current() const;
     void ensure_ivar_chol_current() const;
 
-   private:
     mutable std::shared_ptr<SPD::SpdStorage> var_;
     mutable std::shared_ptr<SPD::SpdStorage> ivar_;
     mutable std::shared_ptr<SPD::CholStorage> var_chol_;
