@@ -73,29 +73,41 @@ namespace BOOM {
 
     // Parameter accessors
     const Matrix &mean() const {return prm1_ref().value();}
-    Ptr<MatrixParams> mean_prm() {return prm1();}
-    const Ptr<MatrixParams> mean_prm() const {return prm1();}
-
     const SpdMatrix &row_variance() const {return prm2_ref().value();}
     const SpdMatrix &row_precision() const {return prm2_ref().ivar();}
-    double row_precision_logdet() const {return prm2_ref().ldsi();}
-    Ptr<SpdParams> row_variance_param() {return prm2();}
-    const Ptr<SpdParams> row_variance_param() const {return prm2();}
-    const Matrix &row_precision_cholesky() const {
-      return prm2_ref().ivar_chol();
-    }
-    
     const SpdMatrix &column_variance() const {return prm3_ref().value();}
     const SpdMatrix &column_precision() const {return prm3_ref().ivar();}
-    double column_precision_logdet() const {return prm3_ref().ldsi();}
+
+    // Parameter setters
+    void set_mean(const Matrix &mean) { prm1_ref().set(mean); }
+    void set_row_variance(const SpdMatrix &row_variance) {
+      prm2_ref().set_var(row_variance); }
+    void set_row_precision(const SpdMatrix &row_precision) {
+      prm2_ref().set_ivar(row_precision); }
+    void set_column_variance(const SpdMatrix &column_variance) {
+      prm3_ref().set_var(column_variance); }
+    void set_column_precision(const SpdMatrix &column_precision) {
+      prm3_ref().set_ivar(column_precision);}
+
+    // Parameter pointer access
+    Ptr<MatrixParams> mean_prm() {return prm1();}
+    const Ptr<MatrixParams> mean_prm() const {return prm1();}
+    Ptr<SpdParams> row_variance_param() {return prm2();}
+    const Ptr<SpdParams> row_variance_param() const {return prm2();}
     Ptr<SpdParams> column_variance_param() {return prm3();}
     const Ptr<SpdParams> column_variance_param() const {return prm3();}
+
+    // Cholesky decompositions and log determinants of the row and column
+    // variance parameters.
+    double row_precision_logdet() const {return prm2_ref().ldsi();}
+    const Matrix &row_precision_cholesky() const {
+      return prm2_ref().ivar_chol(); }
+    double column_precision_logdet() const {return prm3_ref().ldsi();}
     const Matrix &col_precision_cholesky() const {
-      return prm3_ref().ivar_chol();
-    }
+      return prm3_ref().ivar_chol(); }
     
-    // The mean, variance, and precision of the distribution when transformed to
-    // a multivariate normal by stacking the columns of the random variable.
+    // Mean, variance, and precision of the distribution when transformed to a
+    // multivariate normal by stacking the columns of the random variable.
     Vector mvn_mean() const;
     SpdMatrix mvn_variance() const;
     SpdMatrix mvn_precision() const;
