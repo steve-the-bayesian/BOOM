@@ -35,3 +35,14 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "spddata_test",
+    srcs = ["spddata_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
