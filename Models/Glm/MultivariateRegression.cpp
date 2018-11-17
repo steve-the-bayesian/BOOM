@@ -75,7 +75,21 @@ namespace BOOM {
   }
 
   Matrix NS::beta_hat() const { return xtx_.solve(xty_); }
-
+  Matrix NS::conditional_beta_hat(const SelectorMatrix &included) const {
+    Matrix ans(xdim(), ydim());
+    std::map<Selector, Cholesky> chol_map;
+    for (int i = 0; i < ydim(); ++i) {
+      const Selector &inc(included.col(i));
+      auto it = chol_map.find(inc);
+      if (it == chol_map.end()) {
+        chol_map[it->first] = Cholesky(inc.select(xtx()));
+        it = chol_map.find(inc);
+      } 
+      ans.col(i) = inc.expand(it->second.solve(inc.select(xty_.col(i))));
+    }
+    return ans;
+  }
+  
   SpdMatrix NS::SSE(const Matrix &B) const {
     SpdMatrix ans = yty();
     ans.add_inner2(B, xty(), -1);
@@ -334,6 +348,11 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix QS::conditional_beta_hat(const SelectorMatrix &included) const {
+    report_error("Not yet implemented.");
+    return Matrix(0, 0);
+  }
+  
   SpdMatrix QS::SSE(const Matrix &B) const {
     Matrix RB = qr.getR() * B;
     SpdMatrix ans = yty();
@@ -382,6 +401,9 @@ namespace BOOM {
   const Matrix &MvReg::Beta() const { return Beta_prm()->value(); }
   const SpdMatrix &MvReg::Sigma() const { return Sigma_prm()->var(); }
   const SpdMatrix &MvReg::Siginv() const { return Sigma_prm()->ivar(); }
+  const Matrix &MvReg::residual_precision_cholesky() const {
+    return Sigma_prm()->ivar_chol();
+  }
   double MvReg::ldsi() const { return Sigma_prm()->ldsi(); }
 
   Ptr<MatrixGlmCoefs> MvReg::Beta_prm() { return prm1(); }
@@ -402,7 +424,7 @@ namespace BOOM {
 
   double MvReg::log_likelihood(const Matrix &Beta,
                                const SpdMatrix &Sigma) const {
-    Chol Sigma_cholesky(Sigma);
+    Cholesky Sigma_cholesky(Sigma);
     double qform = trace(suf()->SSE(Beta) * Sigma_cholesky.inv());
     double ldsi = -1 * Sigma_cholesky.logdet();
     double n = suf()->n();

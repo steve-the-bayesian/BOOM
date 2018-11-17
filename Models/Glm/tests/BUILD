@@ -29,6 +29,7 @@ cc_test(
     name = "multivariate_regression_test",
     srcs = ["multivariate_regression_test.cc"],
     copts = COPTS,
+    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",

@@ -28,6 +28,7 @@
 
 namespace BOOM {
 
+  // Sufficient statsitics for multivariate regression models.
   class MvRegSuf : virtual public Sufstat {
    public:
     typedef std::vector<Ptr<MvRegData> > dataset_type;
@@ -43,12 +44,21 @@ namespace BOOM {
     virtual double n() const = 0;
     virtual double sumw() const = 0;
 
+    // Sum of squared errors around the coefficient matrix B.
     virtual SpdMatrix SSE(const Matrix &B) const = 0;
 
+    // Least squares estimate of the coefficient matrix.
     virtual Matrix beta_hat() const = 0;
+
+    virtual Matrix conditional_beta_hat(const SelectorMatrix &included) const = 0;
+    
     virtual void combine(const Ptr<MvRegSuf> &) = 0;
   };
-  //------------------------------------------------------------
+  
+  //---------------------------------------------------------------------------
+  // Sufficient statistics for the multivariate regression model based off the
+  // QR decomposition. X = QR, where Q is orthogonal and R is upper triangular.
+  // X'X and X'Y become R'R and R' * Q'Y
   class MultivariateRegressionModel;
   class QrMvRegSuf : public MvRegSuf, public SufstatDetails<MvRegData> {
    public:
@@ -59,6 +69,7 @@ namespace BOOM {
 
     void Update(const MvRegData &) override;
     Matrix beta_hat() const override;
+    Matrix conditional_beta_hat(const SelectorMatrix &included) const override;
     SpdMatrix SSE(const Matrix &B) const override;
     void clear() override;
 
@@ -98,7 +109,7 @@ namespace BOOM {
     mutable double sumw_;
   };
 
-  //------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Sufficient statistics for the multivariate regression model based
   // on the normal equations.
   class NeMvRegSuf : public MvRegSuf, public SufstatDetails<MvRegData> {
@@ -138,7 +149,8 @@ namespace BOOM {
     // Returns the least squares estimate of beta given the current
     // sufficient statistics.
     Matrix beta_hat() const override;
-
+    Matrix conditional_beta_hat(const SelectorMatrix &included) const override;
+                                
     // Returns the sum of squared errors assuming beta = B.
     SpdMatrix SSE(const Matrix &B) const override;
 
@@ -168,6 +180,7 @@ namespace BOOM {
     double n_;
   };
 
+  // Implementation for the sequence constructor.  It is assumed that b and e
   template <class Fwd>
   NeMvRegSuf::NeMvRegSuf(Fwd b, Fwd e) {
     Ptr<MvRegData> dp = *b;
@@ -245,6 +258,9 @@ namespace BOOM {
     const SpdMatrix &Siginv() const;
     void set_Siginv(const SpdMatrix &iV);
 
+    // The Cholesky decomposition of Siginv.
+    const Matrix &residual_precision_cholesky() const;
+    
     // log determinant of Siginv().
     double ldsi() const;
 
@@ -277,6 +293,7 @@ namespace BOOM {
 
     // no intercept
     Vector simulate_fake_x(RNG &rng = GlobalRng::rng) const;
+
   };
 }  // namespace BOOM
 #endif  // BOOM_MVREG_HPP
