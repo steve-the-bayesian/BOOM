@@ -26,27 +26,64 @@ namespace BOOM {
   class WishartModel;
 
   class MvnVarSampler : public PosteriorSampler {
-    // assumes y~N(mu, Sigma), with Sigma^-1~W(df, SS).  The prior on
-    // mu may or may not be conjugate.  The sampling step will
-    // condition on mu.  Use MvnConjVarSampler if you want to
-    // integrate out mu.
+    // assumes y~N(mu, Sigma), with Sigma^-1~W(df, SS).  The prior on mu may or
+    // may not be conjugate.  The sampling step will condition on mu.  Use
+    // MvnConjVarSampler if you want to integrate out mu.
    public:
-    MvnVarSampler(MvnModel *, double df, const SpdMatrix &SS,
+    // Args:
+    //   model:  The model to be sampled.
+    //   df: The degrees of freedom parameter for the Wishart distribution.  The
+    //     distribution is proper if df > dim - 1, where 'dim' is the dimension.
+    //   sum_of_squares: The sum of squares matrix.  The mean of the
+    //     distribution is sum_of_squares * df.
+    //   seeding_rng: The random number generator used to seed the RNG owned by
+    //     this object.
+    MvnVarSampler(MvnModel *model, double df, const SpdMatrix &sum_of_squares,
                   RNG &seeding_rng = GlobalRng::rng);
-    MvnVarSampler(MvnModel *, const Ptr<WishartModel> &siginv_prior,
+
+    // Args:
+    //   model:  The model to be sampled.
+    //   precision_prior:  The Wishart distribution to use as a prior.
+    //   seeding_rng: The random number generator used to seed the RNG owned by
+    //     this object.
+    MvnVarSampler(MvnModel *model, const Ptr<WishartModel> &precision_prior,
                   RNG &seeding_rng = GlobalRng::rng);
+
     double logpri() const override;
     void draw() override;
 
-    // Returns a draw of the precision matrix for an MvnModel.
+    // Args:
+    //   rng:  The random number generator to use for the draw.
+    //   data_sample_size: The sample size to use when computing the posterior
+    //     distribution.  This number gets added to the prior sample size
+    //     obtained from precision_prior.
+    //   data_centered_sum_of_squares: The sum of squares matrix from the data.
+    //     This gets added to the prior sum of squares obtained from
+    //     precision_prior.
+    //
+    // Returns:
+    //   A posterior draw of the precision matrix.
     static SpdMatrix draw_precision(
-        RNG &rng, double data_sample_size,
+        RNG &rng,
+        double data_sample_size,
         const SpdMatrix &data_centered_sum_of_squares,
         const WishartModel &precision_prior);
 
-    // Returns a draw of the variance matrix for an MvnModel.
+    // Args:
+    //   rng:  The random number generator to use for the draw.
+    //   data_sample_size: The sample size to use when computing the posterior
+    //     distribution.  This number gets added to the prior sample size
+    //     obtained from precision_prior.
+    //   data_centered_sum_of_squares: The sum of squares matrix from the data.
+    //     This gets added to the prior sum of squares obtained from
+    //     precision_prior.
+    //
+    // Returns:
+    //   A posterior draw of the variance matrix.  This is equivalent to (but
+    //   faster than) draw_precision(...).inv().
     static SpdMatrix draw_variance(
-        RNG &rng, double data_sample_size,
+        RNG &rng,
+        double data_sample_size,
         const SpdMatrix &data_centered_sum_of_squares,
         const WishartModel &precision_prior);
 

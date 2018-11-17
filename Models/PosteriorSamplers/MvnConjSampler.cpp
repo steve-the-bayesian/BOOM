@@ -73,31 +73,36 @@ namespace BOOM {
     typedef MvnConjSampler MCS;
   }  // namespace
 
-  MCS::MvnConjSampler(MvnModel *mod, const Vector &mu0, double kappa,
-                      const SpdMatrix &SigmaHat, double prior_df,
+  MCS::MvnConjSampler(MvnModel *model,
+                      const Vector &mean,
+                      double kappa,
+                      const SpdMatrix &SigmaHat,
+                      double prior_df,
                       RNG &seeding_rng)
       : ConjugateHierarchicalPosteriorSampler(seeding_rng),
-        mod_(mod),
-        mu_(new MvnGivenSigma(mu0, kappa, mod_->Sigma_prm())),
+        model_(model),
+        mu_(new MvnGivenSigma(mean, kappa, model_->Sigma_prm())),
         siginv_(new WishartModel(prior_df, SigmaHat)),
         prior_(mu_.get(), siginv_.get()),
         posterior_(mu_.get(), siginv_.get()) {}
 
-  MCS::MvnConjSampler(MvnModel *mod, const Ptr<MvnGivenSigma> &mu,
-                      const Ptr<WishartModel> &Siginv, RNG &seeding_rng)
+  MCS::MvnConjSampler(MvnModel *model,
+                      const Ptr<MvnGivenSigma> &mu,
+                      const Ptr<WishartModel> &Siginv,
+                      RNG &seeding_rng)
       : ConjugateHierarchicalPosteriorSampler(seeding_rng),
-        mod_(mod),
+        model_(model),
         mu_(mu),
         siginv_(Siginv),
         prior_(mu_.get(), siginv_.get()),
         posterior_(mu_.get(), siginv_.get()) {
-    if (mod_) {
-      mu_->set_Sigma(mod_->Sigma_prm());
+    if (model_) {
+      mu_->set_Sigma(model_->Sigma_prm());
     }
   }
 
   double MCS::logpri() const {
-    return mod_ ? log_prior_density(*mod_) : negative_infinity();
+    return model_ ? log_prior_density(*model_) : negative_infinity();
   }
 
   const Vector &MCS::mu0() const { return mu_->mu(); }
@@ -138,19 +143,19 @@ namespace BOOM {
   }
 
   void MCS::draw() {
-    if (mod_) {
-      draw_model_parameters(*mod_);
+    if (model_) {
+      draw_model_parameters(*model_);
     }
   }
 
   void MCS::find_posterior_mode(double) {
-    if (mod_) {
-      posterior_.compute_mvn_posterior(*(mod_->suf()));
-      mod_->set_mu(posterior_.mean());
+    if (model_) {
+      posterior_.compute_mvn_posterior(*(model_->suf()));
+      model_->set_mu(posterior_.mean());
       double scale_factor =
-          posterior_.variance_sample_size() - mod_->dim() - 1.0;
+          posterior_.variance_sample_size() - model_->dim() - 1.0;
       if (scale_factor < 0) scale_factor = 0.0;
-      mod_->set_siginv(posterior_.sum_of_squares() * scale_factor);
+      model_->set_siginv(posterior_.sum_of_squares() * scale_factor);
     }
   }
 

@@ -21,6 +21,7 @@
 #define BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_
 
 #include "Models/GammaModel.hpp"
+#include "Models/WishartModel.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
@@ -84,17 +85,6 @@ namespace BOOM {
    private:
     Ptr<GammaModelBase> prior_;
     double sigma_max_;
-  };
-
-  // As above, but for drawing variance matrices rather than scalar variances.
-  class GenericGaussianVarianceMatrixSampler {
-   public:
-    GenericGaussianVarianceMatrixSampler(const Ptr<WishartModel> &prior);
-    SpdMatrix draw_precision(double data_df,
-                             const Spd &residual_sum_of_squares) const;
-    
-   private:
-    Ptr<WishartModel> prior_;
   };
   
 }  // namespace BOOM

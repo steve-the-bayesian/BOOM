@@ -90,21 +90,4 @@ namespace BOOM {
     return prior_->logp(1.0 / sigsq) - 2 * log(sigsq);
   }
 
-  //===========================================================================
-  
-  SpdMatrix GenericGaussianVarianceMatrixSampler::draw_precision(
-      RNG &rng, double data_df, const SpdMatrix &residual_sum_of_squares) const {
-    SpdMatrix SS = residual_sum_of_squares + prior_->sumsq();
-    double df = data_df + prior_->nu();
-    return rWish_mt(rng, df, SS.inv(), false);
-  }
-
-  SpdMatrix GenericGaussianVarianceMatrixSampler::draw_variance(
-      RNG &rng, double data_df, const SpdMatrix &residual_sum_of_squares) const {
-    SpdMatrix SS = residual_sum_of_squares + prior_->sumsq();
-    double df = data_df + prior_->nu();
-    return rWish_mt(rng, df, SS.inv(), true);
-  }
-      
-  
 }  // namespace BOOM

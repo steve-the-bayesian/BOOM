@@ -24,13 +24,15 @@
 #include "Models/MvnModel.hpp"
 #include "Models/PosteriorSamplers/HierarchicalPosteriorSampler.hpp"
 #include "Models/WishartModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
 
   namespace NormalInverseWishart {
-    // Parameters of the normal inverse Wishart model for (mu,
-    // Siginv), where Siginv is the matrix inverse of the variance
-    // matrix Sigma.  The model is
+
+    // Parameters of the normal inverse Wishart model for (mu, Siginv), where
+    // Siginv is the matrix inverse of the variance matrix Sigma.  The model is
+    //
     //   (mu | Sigma) ~ N(mu0, Sigma / kappa)
     //         Sigma  ~ W(nu, sum_of_squares)
     //
@@ -42,11 +44,11 @@ namespace BOOM {
       NormalInverseWishartParameters(const MvnGivenSigma *mean_prior,
                                      const WishartModel *precision_prior);
 
-      // Updates the parameters of the Normal inverse Wishart model
-      // given data summarized in suf.
+      // Updates the parameters of the Normal inverse Wishart model given data
+      // summarized in suf.
+      //
       // Args:
-      //   suf: Sufficient statistics from observed multivariate normal
-      //     data.
+      //   suf: Sufficient statistics from observed multivariate normal data.
       //
       // Effects:
       //   Sets the 4 model parameters to their values in the posterior
@@ -75,11 +77,37 @@ namespace BOOM {
 
   class MvnConjSampler : public ConjugateHierarchicalPosteriorSampler {
    public:
-    MvnConjSampler(MvnModel *mod, const Vector &mu0, double kappa,
-                   const SpdMatrix &SigmaHat, double prior_df,
+    // Args:
+    //   model: The model to be sampled. Must be non-NULL.
+    //   mean: The prior mean of the mean parameter 'mu' in *model.
+    //   kappa: The prior sample size for the 'mu' parameter.  This is the
+    //     number of observations worth of weight to be placed on 'mean'
+    //     relative to the mean of the data.
+    //   Sigma_guess:  The prior mean of the variance parameter Sigma in *model.
+    //   prior_df: The prior sample size for the 'Sigma' parameter.  This si the
+    //     number of observations worth of weight to be placed on 'Sigma_guess'
+    //     relative to the sample variance of the data.
+    //   seeding_rng: The random number generator used to set the seed for this
+    //     object.
+    MvnConjSampler(MvnModel *model,
+                   const Vector &mean,
+                   double kappa,
+                   const SpdMatrix &Sigma_guess,
+                   double prior_df,
                    RNG &seeding_rng = GlobalRng::rng);
 
-    MvnConjSampler(MvnModel *mod, const Ptr<MvnGivenSigma> &mu,
+    // Args:
+    //   model: The model to be sampled.  Unlike the other constructor, the
+    //     'model' argument here CAN be nullptr if the sampler is going to be
+    //     used as part of a hierarchical model.
+    //   mu: Prior distribution for the 'mu' parameter in the model being
+    //     sampled.
+    //   Siginv: Prior distribution for the 'siginv' precision parameter in the
+    //     model being sampled.
+    //   seeding_rng: The random number generator used to set the seed for this
+    //     object.
+    MvnConjSampler(MvnModel *model,
+                   const Ptr<MvnGivenSigma> &mu,
                    const Ptr<WishartModel> &Siginv,
                    RNG &seeding_rng = GlobalRng::rng);
 
@@ -107,9 +135,10 @@ namespace BOOM {
                                 const MvnModel *model) const;
 
    private:
-    MvnModel *mod_;
+    MvnModel *model_;
     Ptr<MvnGivenSigma> mu_;
     Ptr<WishartModel> siginv_;
+    
     mutable NormalInverseWishart::NormalInverseWishartParameters prior_;
     mutable NormalInverseWishart::NormalInverseWishartParameters posterior_;
   };
