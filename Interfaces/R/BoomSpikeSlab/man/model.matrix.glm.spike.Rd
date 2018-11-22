@@ -9,13 +9,18 @@
 }
 
 \usage{
-  \method{model.matrix}{glm.spike}(object, \dots)
+  \method{model.matrix}{glm.spike}(object, data = NULL, \dots)
 }
 \arguments{
   \item{object}{
     An object of class \code{glm.spike}.
   }
 
+  \item{data}{ Either a data frame to use when building the model
+    matrix, or \code{NULL}.  If \code{NULL} then the training data from
+    \code{object} will be used.
+  }
+  
   \item{\dots}{
     Extra arguments passed to \code{\link{model.matrix.default}}.
   }

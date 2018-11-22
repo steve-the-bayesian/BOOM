@@ -6,6 +6,7 @@
 \alias{check.nonnegative.scalar}
 \alias{check.probability.distribution}
 \alias{check.scalar.integer}
+\alias{check.scalar.boolean}
 
 \description{Checks that data matches a concept}
 
@@ -15,6 +16,7 @@ check.positive.scalar(x)
 check.nonnegative.scalar(x)
 check.probability.distribution(x)
 check.scalar.integer(x)
+check.scalar.boolean(x)
 }
 
 \arguments{

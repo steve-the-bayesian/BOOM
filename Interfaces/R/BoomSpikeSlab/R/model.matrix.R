@@ -69,6 +69,8 @@ model.matrix.glm.spike <- function(object, data = NULL, ...) {
   ##
   ## Args:
   ##   object:  An object of class glm.spike.
+  ##   data: Either a data frame to use when building the model matrix, or NULL.
+  ##     If NULL then the training data from the original object will be used.
   ##   ...:  Extra arguments passed to model.matrix.default.
   ##
   ## Returns:

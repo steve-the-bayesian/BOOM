@@ -125,12 +125,12 @@ BayesNnet <- function(formula,
 plot.BayesNnet <- function(x, y = c("predicted", "residual", "structure",
   "partial", "help"), ...) {
   ## Match the 'y' argument against the supplied default values, or the data frame
-  stopifnot(is.character(y), length(y) == 1)
+  stopifnot(is.character(y))
   which.function <- try(match.arg(y), silent = TRUE)
   which.variable <- "all"
   if (inherits(which.function, "try-error")) {
     which.function <- "partial"
-    which.variable <- pmatch(y, names(model$training.data))
+    which.variable <- pmatch(y, names(x$training.data))
     if (is.na(which.variable)) {
       err <- paste0("The 'y' argument ", y, " must either match one of the plot types",
         " or one of the predictor variable names.")
