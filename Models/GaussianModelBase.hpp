@@ -103,6 +103,7 @@ namespace BOOM {
 
     double mean() const override { return mu(); }
     double variance() const override { return sigsq(); }
+    double sd() const {return sqrt(variance());}
 
     double pdf(const Ptr<Data> &dp, bool logscale) const override;
     double pdf(const Data *dp, bool logscale) const override;
