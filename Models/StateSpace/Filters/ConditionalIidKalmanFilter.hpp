@@ -62,7 +62,7 @@ namespace BOOM {
       // this time period is less than some multiple times the dimension of the
       // state.  By default the multiple is 1, but it can be changed using this
       // function.
-      void set_high_dimensional_threshold_factor(double value) override {
+      static void set_high_dimensional_threshold_factor(double value) {
         high_dimensional_threshold_factor_ = value;
       }
       double high_dimensional_threshold_factor() const override {

@@ -55,8 +55,7 @@ namespace BOOM {
       // An observation is considered to be high dimensional if its dimension is
       // at least 'threshold' * state_dimension.  This function sets
       // 'threshold'.
-      void set_high_dimensional_threshold_factor(
-          double threshold = 1.0) override {
+      static void set_high_dimensional_threshold_factor(double threshold = 1.0) {
         high_dimensional_threshold_factor_ = threshold;
       }
       double high_dimensional_threshold_factor() const override {

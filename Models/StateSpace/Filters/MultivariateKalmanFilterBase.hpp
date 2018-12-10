@@ -22,6 +22,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "Models/StateSpace/Filters/KalmanFilterBase.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BOOM {
 
@@ -40,7 +41,8 @@ namespace BOOM {
       //   time_index: The index of the time point described by this marginal
       //     distribution.
       MultivariateMarginalDistributionBase(int state_dim, int time_index)
-          : MarginalDistributionBase(state_dim, time_index)
+          : MarginalDistributionBase(state_dim, time_index),
+            forecast_precision_log_determinant_(negative_infinity())
       {}
 
       // The difference between the observed data at this time point and its
@@ -96,7 +98,6 @@ namespace BOOM {
       // to be high dimensional.
       virtual bool high_dimensional(const Selector &observed) const;
       virtual double high_dimensional_threshold_factor() const = 0;
-      virtual void set_high_dimensional_threshold_factor(double threshold = 1.0) = 0;
       
       // The marginal distribution for the previous time point.
       virtual MultivariateMarginalDistributionBase *previous() = 0;
