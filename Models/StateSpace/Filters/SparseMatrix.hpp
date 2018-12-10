@@ -284,6 +284,7 @@ namespace BOOM {
     DenseMatrix(const DenseMatrix &rhs) : SparseMatrixBlock(rhs), m_(rhs.m_) {}
     DenseMatrix *clone() const override { return new DenseMatrix(*this); }
     void resize(int rows, int cols) { m_.resize(rows, cols); }
+    void set(const Matrix &matrix) {m_ = matrix;}
     VectorView col(int i) { return m_.col(i); }
     int nrow() const override { return m_.nrow(); }
     int ncol() const override { return m_.ncol(); }
@@ -305,6 +306,9 @@ namespace BOOM {
     void add_to_block(SubMatrix block) const override { block += m_; }
     Matrix dense() const override { return m_; }
 
+    // Fast access to the underlying matrix without returning a copy.
+    const Matrix &matrix() const {return m_;}
+    
    private:
     Matrix m_;
   };
