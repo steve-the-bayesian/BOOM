@@ -57,7 +57,7 @@ namespace BOOM {
   }
 
   void MRS::draw_Beta() {
-    Ptr<NeMvRegSuf> s(model_->suf().dcast<NeMvRegSuf>());
+    Ptr<MvRegSuf> s(model_->suf().dcast<MvRegSuf>());
     SpdMatrix ivar = Ominv_ + s->xtx();
     Matrix Mu = s->xty() + Ominv_ * beta_prior_mean_;
     Mu = ivar.solve(Mu);

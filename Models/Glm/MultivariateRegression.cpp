@@ -26,16 +26,11 @@ namespace BOOM {
 
   //======================================================================
 
-  uint MvRegSuf::xdim() const { return xtx().nrow(); }
-  uint MvRegSuf::ydim() const { return yty().nrow(); }
-
-  //======================================================================
-  typedef NeMvRegSuf NS;
-
-  NS::NeMvRegSuf(uint xdim, uint ydim)
+  MvRegSuf::MvRegSuf(uint xdim, uint ydim)
       : yty_(ydim), xtx_(xdim), xty_(xdim, ydim), n_(0) {}
 
-  NS::NeMvRegSuf(const Matrix &X, const Matrix &Y)
+
+  MvRegSuf::MvRegSuf(const Matrix &X, const Matrix &Y)
       : yty_(Y.ncol()), xtx_(X.ncol()), xty_(X.ncol(), Y.ncol()), n_(0) {
     QR qr(X);
     Matrix R = qr.getR();
@@ -48,25 +43,24 @@ namespace BOOM {
     xty_ = R.Tmult(xty_);
   }
 
-  NS::NeMvRegSuf(const NS &rhs)
+  MvRegSuf::MvRegSuf(const MvRegSuf &rhs)
       : Sufstat(rhs),
-        MvRegSuf(rhs),
         SufTraits(rhs),
         yty_(rhs.yty_),
         xtx_(rhs.xtx_),
         xty_(rhs.xty_),
         n_(rhs.n_) {}
 
-  NS *NS::clone() const { return new NS(*this); }
+  MvRegSuf *MvRegSuf::clone() const { return new MvRegSuf(*this); }
 
-  void NS::Update(const MvRegData &d) {
+  void MvRegSuf::Update(const MvRegData &d) {
     const Vector &y(d.y());
     const Vector &x(d.x());
     double w = d.weight();
     update_raw_data(y, x, w);
   }
 
-  void NS::update_raw_data(const Vector &y, const Vector &x, double w) {
+  void MvRegSuf::update_raw_data(const Vector &y, const Vector &x, double w) {
     ++n_;
     sumw_ += w;
     xtx_.add_outer(x, w);
@@ -74,8 +68,8 @@ namespace BOOM {
     yty_.add_outer(y, w);
   }
 
-  Matrix NS::beta_hat() const { return xtx_.solve(xty_); }
-  Matrix NS::conditional_beta_hat(const SelectorMatrix &included) const {
+  Matrix MvRegSuf::beta_hat() const { return xtx_.solve(xty_); }
+  Matrix MvRegSuf::conditional_beta_hat(const SelectorMatrix &included) const {
     Matrix ans(xdim(), ydim());
     std::map<Selector, Cholesky> chol_map;
     for (int i = 0; i < ydim(); ++i) {
@@ -90,28 +84,28 @@ namespace BOOM {
     return ans;
   }
   
-  SpdMatrix NS::SSE(const Matrix &B) const {
+  SpdMatrix MvRegSuf::SSE(const Matrix &B) const {
     SpdMatrix ans = yty();
     ans.add_inner2(B, xty(), -1);
     ans += sandwich(B.transpose(), xtx());
     return ans;
   }
 
-  void NeMvRegSuf::clear() {
+  void MvRegSuf::clear() {
     yty_ = 0;
     xtx_ = 0;
     xty_ = 0;
     n_ = 0;
   }
 
-  const SpdMatrix &NS::yty() const { return yty_; }
-  const SpdMatrix &NS::xtx() const { return xtx_; }
-  const Matrix &NS::xty() const { return xty_; }
-  double NS::n() const { return n_; }
-  double NS::sumw() const { return sumw_; }
+  const SpdMatrix &MvRegSuf::yty() const { return yty_; }
+  const SpdMatrix &MvRegSuf::xtx() const { return xtx_; }
+  const Matrix &MvRegSuf::xty() const { return xty_; }
+  double MvRegSuf::n() const { return n_; }
+  double MvRegSuf::sumw() const { return sumw_; }
 
-  void NS::combine(const Ptr<MvRegSuf> &sp) {
-    Ptr<NS> s(sp.dcast<NS>());
+  void MvRegSuf::combine(const Ptr<MvRegSuf> &sp) {
+    Ptr<MvRegSuf> s(sp.dcast<MvRegSuf>());
     xty_ += s->xty_;
     xtx_ += s->xtx_;
     yty_ += s->yty_;
@@ -119,8 +113,8 @@ namespace BOOM {
     n_ += s->n_;
   }
 
-  void NS::combine(const MvRegSuf &sp) {
-    const NS &s(dynamic_cast<const NS &>(sp));
+  void MvRegSuf::combine(const MvRegSuf &sp) {
+    const MvRegSuf &s(dynamic_cast<const MvRegSuf &>(sp));
     xty_ += s.xty_;
     xtx_ += s.xtx_;
     yty_ += s.yty_;
@@ -128,7 +122,7 @@ namespace BOOM {
     n_ += s.n_;
   }
 
-  Vector NS::vectorize(bool minimal) const {
+  Vector MvRegSuf::vectorize(bool minimal) const {
     Vector ans = yty_.vectorize(minimal);
     ans.concat(xtx_.vectorize(minimal));
     Vector tmp(xty_.begin(), xty_.end());
@@ -138,11 +132,11 @@ namespace BOOM {
     return ans;
   }
 
-  NeMvRegSuf *NS::abstract_combine(Sufstat *s) {
+  MvRegSuf *MvRegSuf::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
   }
 
-  Vector::const_iterator NS::unvectorize(Vector::const_iterator &v,
+  Vector::const_iterator MvRegSuf::unvectorize(Vector::const_iterator &v,
                                          bool minimal) {
     yty_.unvectorize(v, minimal);
     xtx_.unvectorize(v, minimal);
@@ -157,12 +151,12 @@ namespace BOOM {
     return v;
   }
 
-  Vector::const_iterator NS::unvectorize(const Vector &v, bool minimal) {
+  Vector::const_iterator MvRegSuf::unvectorize(const Vector &v, bool minimal) {
     Vector::const_iterator it = v.begin();
     return unvectorize(it, minimal);
   }
 
-  ostream &NS::print(ostream &out) const {
+  ostream &MvRegSuf::print(ostream &out) const {
     out << "yty_ = " << yty_ << endl
         << "xty_ = " << xty_ << endl
         << "xtx_ = " << endl
@@ -170,200 +164,6 @@ namespace BOOM {
     return out;
   }
 
-  //======================================================================
-
-  typedef QrMvRegSuf QS;
-  QS::QrMvRegSuf(const Matrix &X, const Matrix &Y,
-                 MultivariateRegressionModel *Owner)
-      : qr(X),
-        owner(Owner),
-        current(false),
-        yty_(Y.ncol()),
-        xtx_(X.ncol()),
-        xty_(X.ncol(), Y.ncol()),
-        n_(0) {
-    refresh(X, Y);
-    current = true;
-  }
-
-  QS::QrMvRegSuf(const Matrix &X, const Matrix &Y, const Vector &W,
-                 MultivariateRegressionModel *Owner)
-      : qr(X),
-        owner(Owner),
-        current(false),
-        yty_(Y.ncol()),
-        xtx_(X.ncol()),
-        xty_(X.ncol(), Y.ncol()),
-        n_(0) {
-    refresh(X, Y, W);
-    current = true;
-  }
-
-  void QS::combine(const Ptr<MvRegSuf> &) {
-    report_error("cannot combine QrMvRegSuf");
-  }
-
-  void QS::combine(const MvRegSuf &) {
-    report_error("cannot combine QrMvRegSuf");
-  }
-
-  QrMvRegSuf *QS::abstract_combine(Sufstat *s) {
-    return abstract_combine_impl(this, s);
-  }
-
-  Vector QS::vectorize(bool) const {
-    report_error("cannot vectorize QrMvRegSuf");
-    return Vector(1, 0.0);
-  }
-
-  Vector::const_iterator QS::unvectorize(Vector::const_iterator &v, bool) {
-    report_error("cannot unvectorize QrMvRegSuf");
-    return v;
-  }
-
-  Vector::const_iterator QS::unvectorize(const Vector &v, bool minimal) {
-    report_error("cannot unvectorize QrMvRegSuf");
-    Vector::const_iterator it = v.begin();
-    return unvectorize(it, minimal);
-  }
-
-  ostream &QS::print(ostream &out) const {
-    out << "yty_ = " << yty_ << endl
-        << "xty_ = " << xty_ << endl
-        << "xtx_ = " << endl
-        << xtx_;
-    return out;
-  }
-
-  QS *QS::clone() const { return new QS(*this); }
-
-  const SpdMatrix &QS::xtx() const {
-    if (!current) refresh();
-    return xtx_;
-  }
-  const SpdMatrix &QS::yty() const {
-    if (!current) refresh();
-    return yty_;
-  }
-  const Matrix &QS::xty() const {
-    if (!current) refresh();
-    return xty_;
-  }
-  double QS::n() const {
-    if (!current) refresh();
-    return n_;
-  }
-  double QS::sumw() const {
-    if (!current) refresh();
-    return sumw_;
-  }
-
-  void QS::refresh(const Matrix &X, const Matrix &Y) const {
-    y_ = Y;
-    qr.decompose(X);
-    Matrix R(qr.getR());
-    xtx_ = 0;
-    xtx_.add_inner(R);
-
-    QR qry(Y);
-    xty_ = 0;
-    yty_.add_inner(qry.getR());
-
-    n_ = X.nrow();
-
-    xty_ = qr.getQ().Tmult(Y);
-    xty_ = R.Tmult(xty_);
-    current = true;
-  }
-
-  void QS::refresh(const Matrix &X, const Matrix &Y, const Vector &w) const {
-    y_ = Y;
-    Matrix x_(X);
-    uint nr = X.nrow();
-    sumw_ = 0;
-    for (uint i = 0; i < nr; ++i) {
-      sumw_ += w[i];
-      double rootw = sqrt(w[i]);
-      y_.row(i) *= rootw;
-      x_.row(i) *= rootw;
-    }
-    qr.decompose(x_);
-    Matrix R(qr.getR());
-    xtx_ = 0;
-    xtx_.add_inner(R);
-
-    QR qry(y_);
-    xty_ = 0;
-    yty_.add_inner(qry.getR());
-
-    n_ = X.nrow();
-
-    xty_ = qr.getQ().Tmult(y_);
-    xty_ = R.Tmult(xty_);
-    current = true;
-  }
-
-  void QS::refresh(const std::vector<Ptr<MvRegData> > &dv) const {
-    Ptr<MvRegData> dp = dv[0];
-    uint n = dv.size();
-    const Vector &x0(dp->x());
-    const Vector &y0(dp->y());
-
-    uint nx = x0.size();
-    uint ny = y0.size();
-    sumw_ = 0;
-    Matrix X(n, nx);
-    Matrix Y(n, ny);
-    for (uint i = 0; i < n; ++i) {
-      dp = dv[i];
-      double w = dp->weight();
-      sumw_ += w;
-      if (w == 1.0) {
-        X.set_row(i, dp->x());
-        Y.set_row(i, dp->y());
-      } else {
-        double rootw = sqrt(w);
-        X.set_row(i, dp->x() * rootw);
-        Y.set_row(i, dp->y() * rootw);
-      }
-    }
-    refresh(X, Y);
-  }
-
-  void QS::refresh() const { refresh(owner->dat()); }
-
-  void QS::clear() {
-    current = false;
-    n_ = 0;
-    xtx_ = 0;
-    xty_ = 0;
-    yty_ = 0;
-  }
-
-  void QS::Update(const MvRegData &) { current = false; }
-
-  Matrix QS::beta_hat() const {
-    Matrix ans = qr.getQ().Tmult(y_);
-    ans = qr.Rsolve(ans);
-    return ans;
-  }
-
-  Matrix QS::conditional_beta_hat(const SelectorMatrix &included) const {
-    report_error("Not yet implemented.");
-    return Matrix(0, 0);
-  }
-  
-  SpdMatrix QS::SSE(const Matrix &B) const {
-    Matrix RB = qr.getR() * B;
-    SpdMatrix ans = yty();
-    ans.add_inner(RB);
-
-    Matrix Qty = qr.getQ().Tmult(y_);
-    Matrix tmp = RB.Tmult(Qty);
-    ans.add_inner2(RB, Qty, -1.0);
-
-    return ans;
-  }
   //======================================================================
 
   namespace {
@@ -372,13 +172,13 @@ namespace BOOM {
   
   MvReg::MultivariateRegressionModel(uint xdim, uint ydim)
       : ParamPolicy(new MatrixGlmCoefs(xdim, ydim), new SpdParams(ydim)),
-        DataPolicy(new NeMvRegSuf(xdim, ydim)),
+        DataPolicy(new MvRegSuf(xdim, ydim)),
         PriorPolicy(),
         LoglikeModel() {}
 
   MvReg::MultivariateRegressionModel(const Matrix &X, const Matrix &Y)
       : ParamPolicy(),
-        DataPolicy(new QrMvRegSuf(X, Y, this)),
+        DataPolicy(new MvRegSuf(X, Y)),
         PriorPolicy(),
         LoglikeModel() {
     uint nx = X.ncol();
@@ -389,7 +189,7 @@ namespace BOOM {
 
   MvReg::MultivariateRegressionModel(const Matrix &B, const SpdMatrix &V)
       : ParamPolicy(new MatrixGlmCoefs(B), new SpdParams(V)),
-        DataPolicy(new NeMvRegSuf(B.nrow(), B.ncol())),
+        DataPolicy(new MvRegSuf(B.nrow(), B.ncol())),
         PriorPolicy(),
         LoglikeModel() {}
 

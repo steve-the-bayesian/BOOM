@@ -29,114 +29,34 @@
 namespace BOOM {
 
   // Sufficient statsitics for multivariate regression models.
-  class MvRegSuf : virtual public Sufstat {
-   public:
-    typedef std::vector<Ptr<MvRegData> > dataset_type;
-    typedef Ptr<dataset_type, false> dsetPtr;
-
-    MvRegSuf *clone() const override = 0;
-
-    uint xdim() const;
-    uint ydim() const;
-    virtual const SpdMatrix &yty() const = 0;
-    virtual const Matrix &xty() const = 0;
-    virtual const SpdMatrix &xtx() const = 0;
-    virtual double n() const = 0;
-    virtual double sumw() const = 0;
-
-    // Sum of squared errors around the coefficient matrix B.
-    virtual SpdMatrix SSE(const Matrix &B) const = 0;
-
-    // Least squares estimate of the coefficient matrix.
-    virtual Matrix beta_hat() const = 0;
-
-    virtual Matrix conditional_beta_hat(const SelectorMatrix &included) const = 0;
-    
-    virtual void combine(const Ptr<MvRegSuf> &) = 0;
-  };
-  
-  //---------------------------------------------------------------------------
-  // Sufficient statistics for the multivariate regression model based off the
-  // QR decomposition. X = QR, where Q is orthogonal and R is upper triangular.
-  // X'X and X'Y become R'R and R' * Q'Y
-  class MultivariateRegressionModel;
-  class QrMvRegSuf : public MvRegSuf, public SufstatDetails<MvRegData> {
-   public:
-    QrMvRegSuf(const Matrix &X, const Matrix &Y, MultivariateRegressionModel *);
-    QrMvRegSuf(const Matrix &X, const Matrix &Y, const Vector &w,
-               MultivariateRegressionModel *);
-    QrMvRegSuf *clone() const override;
-
-    void Update(const MvRegData &) override;
-    Matrix beta_hat() const override;
-    Matrix conditional_beta_hat(const SelectorMatrix &included) const override;
-    SpdMatrix SSE(const Matrix &B) const override;
-    void clear() override;
-
-    const SpdMatrix &yty() const override;
-    const Matrix &xty() const override;
-    const SpdMatrix &xtx() const override;
-    double n() const override;
-    double sumw() const override;
-
-    void refresh(const std::vector<Ptr<MvRegData> > &) const;
-    void refresh(const Matrix &X, const Matrix &Y) const;
-    void refresh(const Matrix &X, const Matrix &Y, const Vector &w) const;
-    void refresh() const;
-    void combine(const Ptr<MvRegSuf> &) override;
-    virtual void combine(const MvRegSuf &);
-    QrMvRegSuf *abstract_combine(Sufstat *s) override;
-
-    Vector vectorize(bool minimal = true) const override;
-    Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
-    ostream &print(ostream &out) const override;
-
-   private:
-    mutable QR qr;
-    mutable Matrix y_;
-    mutable Vector w_;
-
-    MultivariateRegressionModel *owner;
-
-    mutable bool current;
-    mutable SpdMatrix yty_;
-    mutable SpdMatrix xtx_;
-    mutable Matrix xty_;
-    mutable double n_;
-    mutable double sumw_;
-  };
-
-  //---------------------------------------------------------------------------
-  // Sufficient statistics for the multivariate regression model based
-  // on the normal equations.
-  class NeMvRegSuf : public MvRegSuf, public SufstatDetails<MvRegData> {
+  class MvRegSuf : virtual public SufstatDetails<MvRegData> {
    public:
     // Args:
     //   xdim:  The dimension of the x (predictor) variable.
     //   ydim:  The dimension of the y (response) variable.
-    NeMvRegSuf(uint xdim, uint ydim);
+    MvRegSuf(uint xdim, uint ydim);
 
     // Args:
     //   X:  The design matrix.
     //   Y:  The matrix of responses.
-    NeMvRegSuf(const Matrix &X, const Matrix &Y);
+    MvRegSuf(const Matrix &X, const Matrix &Y);
 
-    // Build an NeMvRegSuf from a sequence of smart or raw pointers to
+    // Build an MvRegSuf from a sequence of smart or raw pointers to
     // MvRegData.
     template <class Fwd>
-    NeMvRegSuf(Fwd b, Fwd e);
+    MvRegSuf(Fwd b, Fwd e);
 
-    NeMvRegSuf(const NeMvRegSuf &rhs);
-    NeMvRegSuf *clone() const override;
+    MvRegSuf(const MvRegSuf &rhs);
+    MvRegSuf *clone() const override;
 
     void clear() override;
 
+    uint xdim() const {return xtx().nrow();}
+    uint ydim() const {return yty().nrow();}
+    
     // Add data to the sufficient statistics managed by this object.
     void Update(const MvRegData &data) override;
-
+    
     // Add the individual data components to the sufficient statistics
     // managed by this object.
     // Args:
@@ -148,22 +68,22 @@ namespace BOOM {
 
     // Returns the least squares estimate of beta given the current
     // sufficient statistics.
-    Matrix beta_hat() const override;
-    Matrix conditional_beta_hat(const SelectorMatrix &included) const override;
+    Matrix beta_hat() const;
+    Matrix conditional_beta_hat(const SelectorMatrix &included) const;
                                 
     // Returns the sum of squared errors assuming beta = B.
-    SpdMatrix SSE(const Matrix &B) const override;
+    SpdMatrix SSE(const Matrix &B) const;
 
-    const SpdMatrix &yty() const override;  // sum_i y_i * y_i.transpose()
-    const Matrix &xty() const override;     // sum_i y_i * x_i.transpose()
-    const SpdMatrix &xtx() const override;  // sum_i x_i * x_i.transpose();
-    double n() const override;              // number of observations
-    double sumw() const override;           // sum of weights
+    const SpdMatrix &yty() const;  // sum_i y_i * y_i.transpose()
+    const Matrix &xty() const;     // sum_i y_i * x_i.transpose()
+    const SpdMatrix &xtx() const;  // sum_i x_i * x_i.transpose();
+    double n() const;              // number of observations
+    double sumw() const;           // sum of weights
 
     // Add the sufficient statistics managed by the argument to *this.
-    void combine(const Ptr<MvRegSuf> &) override;
+    void combine(const Ptr<MvRegSuf> &);
     virtual void combine(const MvRegSuf &);
-    NeMvRegSuf *abstract_combine(Sufstat *s) override;
+    MvRegSuf *abstract_combine(Sufstat *s) override;
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
@@ -182,7 +102,7 @@ namespace BOOM {
 
   // Implementation for the sequence constructor.  It is assumed that b and e
   template <class Fwd>
-  NeMvRegSuf::NeMvRegSuf(Fwd b, Fwd e) {
+  MvRegSuf::MvRegSuf(Fwd b, Fwd e) {
     Ptr<MvRegData> dp = *b;
     const Vector &x(dp->x());
     const Vector &y(dp->y());

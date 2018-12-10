@@ -74,7 +74,7 @@ namespace BOOM {
   }
 
   void MVTRS::impute_w() {
-    Ptr<NeMvRegSuf> rs = reg_model->suf().dcast<NeMvRegSuf>();
+    Ptr<MvRegSuf> rs = reg_model->suf();
     Ptr<GammaSuf> gs = nu_model->suf();
 
     const std::vector<Ptr<MvRegData> > &dat(mod->dat());
