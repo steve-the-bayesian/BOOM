@@ -152,9 +152,9 @@ YearPlot <- function(y, colors = NULL, ylab = NULL, ylim = NULL, legend = TRUE, 
     length = 365,
     by = "day")
   if(is.null(ylim)) {
-    ylim <- range(y)
+    ylim <- range(y, na.rm = TRUE)
   }
-  plot(ts.list[[1]], ylim = ylim, xlim = range(time.index),
+  plot(ts.list[[1]], ylim = ylim, xlim = range(time.index, na.rm = TRUE),
     ylab = ylab, ...)
   for (i in 2:length(years)) {
     lines(ts.list[[i]], lty = i, col = colors[i], ...)
@@ -204,7 +204,7 @@ MonthPlot <- function(y, seasonal.identifier = months, colors = NULL, ylab = NUL
     season <- season.names[i]
     index <- as.character(seasonal.identifier(index(y))) == season
     if (i == 1) {
-      plot(y[index], ylim = range(y), col = colors[i], ylab = ylab, ...)
+      plot(y[index], ylim = range(y, na.rm = TRUE), col = colors[i], ylab = ylab, ...)
     } else {
       lines(y[index], col = i, ...)
     }
