@@ -1,5 +1,6 @@
 COPTS = [
     "-I/usr/local/include",
+    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
 
@@ -69,7 +70,7 @@ cc_test(
     name = "Trig_test",
     srcs = ["Trig_test.cc"],
     copts = COPTS + ["-g"],
-    linkopts = ["-lprofiler"],
+#     linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
