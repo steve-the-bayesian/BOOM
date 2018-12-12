@@ -110,8 +110,6 @@ namespace BOOM {
     // regression effect at time 't' to each element of the observation.
     Ptr<SparseMatrixBlock> observation_coefficients(
         int t, const StateSpace::TimeSeriesRegressionData &data_point) const override;
-
-    
   };
   
 }  // namespace BOOM

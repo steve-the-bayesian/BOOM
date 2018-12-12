@@ -58,7 +58,7 @@ namespace BOOM {
     using DISM = DynamicInterceptStateModel;
     using DISMA = DynamicInterceptStateModelAdapter;
   }  // namespace 
-  
+
   Ptr<SparseMatrixBlock> DISM::observation_coefficients(
       int t, const DataType &data_point) const {
     return new IdenticalRowsMatrix(observation_matrix(t),

@@ -322,8 +322,6 @@ namespace BOOM {
    public:
     explicit DynamicInterceptStateModelAdapter(const Ptr<StateModel> &base)
         : StateModelAdapter(base) {}
-    DynamicInterceptStateModelAdapter(
-        const DynamicInterceptStateModelAdapter &rhs);
     DynamicInterceptStateModelAdapter * clone() const override {
       return new DynamicInterceptStateModelAdapter(*this);
     }
@@ -368,57 +366,37 @@ namespace BOOM {
    public:
     MultivariateStateModel *clone() const override = 0;
 
+    SparseVector observation_matrix(int t) const override {
+      report_error("MultivariateStateModel was used where a StateModel "
+                   "was expected.");
+      return SparseVector(0);
+    }
+    
+    // The coefficients (Z) in the observation equation.  The coefficients are
+    // arranged so that y = Z * state + error.  Thus columns of the observation
+    // coefficients Z correspond to the state dimension.
+    //
+    // Args:
+    //   t:  The time index of the observation.
+    //   observed: Indicates which elements of the outcome variable are observed
+    //     at time t.  Rows of Z corresponding to unobserved variables are
+    //     omitted.
     virtual Ptr<SparseMatrixBlock> observation_coefficients(
         int t, const Selector &observed) const = 0;
-  };
 
-  //===========================================================================
-  class MultivariateStateModelAdapter :
-      public MultivariateStateModel,
-      public StateModelAdapter {
-   public:
-    MultivariateStateModelAdapter(const Ptr<StateModel> &state_model);
-    MultivariateStateModelAdapter(const MultivariateStateModelAdapter &rhs);
-    MultivariateStateModelAdapter *clone() const override {
-      return new MultivariateStateModelAdapter(*this);
-    }
-
-    Ptr<SparseMatrixBlock> observation_coefficients(
-        int t, const Selector &observed) const override;
-    
-    //---------------------------------------------------------------------------
-    // This section contains all the overrides expected from Model.
-    using StateModelAdapter::parameter_vector;
-    using StateModelAdapter::add_data;
-    using StateModelAdapter::clear_data;
-    using StateModelAdapter::combine_data;
-    using StateModelAdapter::sample_posterior;
-    using StateModelAdapter::logpri;
-    using StateModelAdapter::set_method;
-    using StateModelAdapter::number_of_sampling_methods;
-
-    //---------------------------------------------------------------------------
-    // This section contains all the overrides expected from StateModel.
-    using StateModelAdapter::observe_time_dimension;
-    using StateModelAdapter::observe_state;
-    using StateModelAdapter::observe_initial_state;
-    using StateModelAdapter::state_dimension;
-    using StateModelAdapter::state_error_dimension;
-    using StateModelAdapter::update_complete_data_sufficient_statistics;
-    using StateModelAdapter::increment_expected_gradient;
-    using StateModelAdapter::simulate_state_error;
-    using StateModelAdapter::simulate_initial_state;
-    using StateModelAdapter::state_transition_matrix;
-    using StateModelAdapter::state_variance_matrix;
-    using StateModelAdapter::state_error_expander;
-    using StateModelAdapter::state_error_variance;
-    using StateModelAdapter::observation_matrix;
-    using StateModelAdapter::initial_state_mean;
-    using StateModelAdapter::initial_state_variance;
-    using StateModelAdapter::set_behavior;
-
-   protected:
-    using StateModelAdapter::sampler;
+    // Many multivariate state models will have identifiability constraints that
+    // need to be enforeced.  This function is to be called after the full state
+    // matrix has been imputed.  It will adjust the state and the parameters of
+    // this model so that the constraint is enforced.
+    //
+    // Enforcing parameter constraints after the fact is often easier than
+    // designing a posterior sampler that enforces them.
+    //
+    // MultivariateStateModel classes that have several different choices of
+    // potential constraints can defer this function to their posterior
+    // samplers.  In that case they will need to inherit from a policy that is
+    // aware that these posterior samplers provide this service.
+    virtual void impose_identifiability_constraints(SubMatrix state) = 0;
   };
   
 }  // namespace BOOM
