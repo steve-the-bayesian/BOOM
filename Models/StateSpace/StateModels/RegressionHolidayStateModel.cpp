@@ -21,6 +21,7 @@
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
+#include "Models/Glm/TRegression.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -81,6 +82,11 @@ namespace BOOM {
     } else if (RegressionModel *reg =
                dynamic_cast<RegressionModel *>(model.observation_model())) {
       return reg->Sigsq_prm();
+    } else if (TRegressionModel *student_reg =
+               dynamic_cast<TRegressionModel *>(model.observation_model())) {
+      return student_reg->Sigsq_prm();
+      /////////////
+      // TODO: expose the student variance inflator from the observation equation.
     } else {
       report_error("Cannot extract residual variance parameter.");
     }
@@ -204,14 +210,16 @@ namespace BOOM {
 
   void ScalarRegressionHolidayStateModel::observe_state(
       const ConstVectorView &then, const ConstVectorView &now, int time_now) {
-    int holiday = impl().which_holiday(time_now);
-    if (holiday < 0) return;
-    int day = impl().which_day(time_now);
-    double residual =
-        model_->adjusted_observation(time_now) -
-        model_->observation_matrix(time_now).dot(model_->state(time_now)) +
-        this->observation_matrix(time_now).dot(now);
-    increment_daily_suf(holiday,  day, residual, 1.0);
+    if (!model_->is_missing_observation(time_now)) {
+      int holiday = impl().which_holiday(time_now);
+      if (holiday < 0) return;
+      int day = impl().which_day(time_now);
+      double residual =
+          model_->adjusted_observation(time_now) -
+          model_->observation_matrix(time_now).dot(model_->state(time_now)) +
+          this->observation_matrix(time_now).dot(now);
+      increment_daily_suf(holiday, day, residual, 1.0);
+    }
   }
 
   namespace {
