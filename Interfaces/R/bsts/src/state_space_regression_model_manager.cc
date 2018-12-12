@@ -120,16 +120,16 @@ StateSpaceRegressionModel * SSRMF::CreateObservationModel(
 }
 
 void SSRMF::AddDataFromBstsObject(SEXP r_bsts_object) {
-  AddData(ToBoomVector(getListElement(r_bsts_object, "original.series")),
-          ToBoomMatrix(getListElement(r_bsts_object, "predictors")),
-          IsObserved(getListElement(r_bsts_object, "original.series")));
+  AddData(ToBoomVector(getListElement(r_bsts_object, "original.series", true)),
+          ToBoomMatrix(getListElement(r_bsts_object, "predictors", true)),
+          IsObserved(getListElement(r_bsts_object, "original.series", true)));
 }
 
 void SSRMF::AddDataFromList(SEXP r_data_list) {
-  AddData(ToBoomVector(getListElement(r_data_list, "response")),
-          ToBoomMatrix(getListElement(r_data_list, "predictors")),
+  AddData(ToBoomVector(getListElement(r_data_list, "response", true)),
+          ToBoomMatrix(getListElement(r_data_list, "predictors", true)),
           ToVectorBool(getListElement(r_data_list,
-                                      "response.is.observed")));
+                                      "response.is.observed", true)));
 }
 
 int SSRMF::UnpackForecastData(SEXP r_prediction_data) {

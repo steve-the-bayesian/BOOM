@@ -210,8 +210,7 @@ plot.bsts.prediction <- function(x,
   deltat <- tail(diff(tail(time, 2)), 1)
 
   if (is.null(ylim)) {
-    ylim <- range(prediction$distribution,
-                  original.series)
+    ylim <- range(prediction$distribution, original.series, na.rm = TRUE)
   }
 
   if (plot.original) {

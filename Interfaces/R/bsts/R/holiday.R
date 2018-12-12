@@ -206,8 +206,11 @@ DateRangeHoliday <- function(holiday.name,
   ##   A list containing the information in the arguments, properly formatted
   ##   for passing to C++ code.
   stopifnot(is.character(holiday.name), length(holiday.name) == 1)
-  start.date <- as.Date(start.date)
-  end.date <- as.Date(end.date)
+  start.date <- sort(as.Date(start.date))
+  end.date <- sort(as.Date(end.date))
+  ## Check that there are the same number of start dates and end dates, that
+  ## start.date is always before end date, and that the next start date always
+  ## happens after the end of this period's end date.
   stopifnot(length(start.date) == length(end.date),
             all(start.date <= end.date),
             all(tail(start.date, -1) > head(end.date, -1)))

@@ -257,7 +257,9 @@ AddDynamicRegression <- function(
     intercept.position <- grep("(Intercept)", colnames(predictors))
     predictors <- predictors[, -intercept.position, drop = FALSE]
   }
-  predictor.sd <- apply(predictors, 2, function(x) {sqrt(var(x))})
+
+  sdx <- function(x) return(sqrt(var(x, na.rm = TRUE)))
+  predictor.sd <- apply(predictors, 2, sdx)
   constant.predictors <- predictor.sd <= 0.0
   if (any(constant.predictors)) {
     bad.ones <- colnames(predictors)[constant.predictors]
@@ -266,6 +268,10 @@ AddDynamicRegression <- function(
     warning(msg)
   }
 
+  if (any(is.na(predictors))) {
+    stop("NA's are not allowed in the predictor matrix.")
+  }
+  
   stopifnot(ncol(predictors) >= 1)
   stopifnot(nrow(predictors) >= 1)
 
