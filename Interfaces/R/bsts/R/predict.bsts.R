@@ -218,7 +218,7 @@ plot.bsts.prediction <- function(x,
     plot(time,
          original.series,
          type = "l",
-         xlim = range(time, pred.time),
+         xlim = range(time, pred.time, na.rm = TRUE),
          ylim = ylim,
          ...)
   } else {
