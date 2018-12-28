@@ -91,5 +91,6 @@ namespace BOOM {
     // The sign of the determinant of Q.
     int sign_;
   };
+  
 }  // namespace BOOM
 #endif  // BOOM_NEWLA_QR_HPP

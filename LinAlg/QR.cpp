@@ -74,13 +74,18 @@ namespace BOOM {
   }
   
   void QR::decompose(const Matrix &mat, bool just_compute_R) {
-    R_ = Matrix(mat.ncol(), mat.ncol(), 0.0);
+    bool fat = mat.ncol() > mat.nrow();
+    if (fat) {
+      R_ = Matrix(mat.nrow(), mat.ncol());
+    } else {
+      R_ = Matrix(mat.ncol(), mat.ncol(), 0.0);
+    }
     Eigen::HouseholderQR<MatrixXd> eigen_qr(EigenMap(mat));
     sign_ = 2 * (eigen_qr.hCoeffs().size() % 2) - 1;
 
     // A temporary is needed because you can't take the block() of a view.
     MatrixXd eigen_R = eigen_qr.matrixQR().triangularView<Upper>();
-    EigenMap(R_) = eigen_R.block(0, 0, R_.ncol(), R_.ncol());
+    EigenMap(R_) = eigen_R.block(0, 0, R_.nrow(), R_.ncol());
 
     if (!just_compute_R) {
       // The Q matrix is stored as a vector of rotations, which logically make a
@@ -88,15 +93,17 @@ namespace BOOM {
       // shaped identity matrix.  Eigen's Identity class doesn't inherit from
       // MatrixBase, so it does not have the needed applyOnTheLeft member.  Thus
       // we work with a dense identity matrix.
-      //
-      // The name thin_Q is because we expect nrow() > ncol() in most settings.
-      // In the full QR decomposition 'fat_Q' will be square with dimension =
-      // max(nrow, ncol).
-      Q_ = Matrix(mat.nrow(), mat.ncol());
-      MatrixXd thin_Q(mat.nrow(), mat.ncol());
-      thin_Q.setIdentity();
-      thin_Q.applyOnTheLeft(eigen_qr.householderQ());
-      EigenMap(Q_) = thin_Q;
+      Eigen::MatrixXd eigenQ;
+      if (fat) {
+        Q_ = Matrix(mat.nrow(), mat.nrow());
+        eigenQ = Eigen::MatrixXd(mat.nrow(), mat.nrow());
+      } else {
+        Q_ = Matrix(mat.nrow(), mat.ncol());
+        eigenQ = Eigen::MatrixXd(mat.nrow(), mat.ncol());
+      }
+      eigenQ.setIdentity();
+      eigenQ.applyOnTheLeft(eigen_qr.householderQ());
+      EigenMap(Q_) = eigenQ;
     }
   }
 

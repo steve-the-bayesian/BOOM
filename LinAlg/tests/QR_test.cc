@@ -116,5 +116,39 @@ namespace {
     Vector Ainv_x = qr.solve(x);
     EXPECT_TRUE(VectorEquals(A * Ainv_x, x, 1e-6));
   }
+
+
+  // Check that the decomposition works as expected when a short, fat matrix is
+  // decomposed.  In this case Q should be nrow * nrow, R should be nrow * ncol,
+  // R should be upper triangular and A = Q * R.
+  TEST_F(QrTest, Trapezoid) {
+    Matrix A(4, 9);
+    A.randomize();
+    QR Aqr(A);
+    Matrix Q = Aqr.getQ();
+    Matrix R = Aqr.getR();
+
+    // Check the dimensions.
+    EXPECT_EQ(R.nrow(), A.nrow());
+    EXPECT_EQ(R.ncol(), A.ncol());
+
+    EXPECT_EQ(Q.nrow(), A.nrow());
+    EXPECT_EQ(Q.ncol(), A.nrow());
+
+    // Check that Q is orthogonal.
+    Matrix QTQ = Q.transpose() * Q;
+    EXPECT_TRUE(MatrixEquals(QTQ, SpdMatrix(A.nrow(), 1.0)));
+
+    // Check that the lower triangle of R is 0;
+    for (int i = 0; i < R.nrow(); ++i) {
+      for (int j = 0; j < i; ++j) {
+        EXPECT_DOUBLE_EQ(R(i, j), 0.0);
+      }
+    }
+
+    // Check that the decomposition recovers the original matrix.
+    Matrix reconstructed = Q * R;
+    EXPECT_TRUE(MatrixEquals(reconstructed, A));
+  }
   
 }  // namespace
