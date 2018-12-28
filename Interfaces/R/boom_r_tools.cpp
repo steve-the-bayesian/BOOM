@@ -622,7 +622,6 @@ namespace BOOM {
     }
   }
 
-
   RVectorFunction::RVectorFunction(SEXP r_vector_function)
       : function_name_(ToString(getListElement(
             r_vector_function, "function.name"))),
@@ -634,7 +633,6 @@ namespace BOOM {
                    "environment.");
     }
     call_string_ = function_name_ + "(" + argument_name_ + ")";
-
   }
 
   // If RVectorFunction_arg_ exists in r_env_ then delete it
@@ -659,12 +657,30 @@ namespace BOOM {
 
     // Next, create a call that we can pass to Rf_eval.
     // ParseStatus is an enum defined in .../include/R_ext/Parse.h
-    ParseStatus parse_status;
+    ParseStatus parse_status = PARSE_NULL;
+
+    // The arguments to R_ParseVector are:
+    //   call_string_:  The R code to evaluate, as a string.
+    //   1: The number of expressions to parse.  We are only evaluating the call
+    //     f(x) or f(x, ...), so we are only evaluating one expression.
+    //   parse_status:  An enum giving the result of the parse.
+    //   R_NilValue: An optional spot to attach a srcfile, in case R_ParseVector
+    //     is parsing a file.  R_NilValue is a signal that no such file is
+    //     present.
     SEXP r_call = protector.protect(R_ParseVector(
-        ToRString(call_string_), 1, &parse_status, R_NilValue));
+        ToRString(call_string_),
+        1,
+        &parse_status,
+        R_NilValue));
+
+    if (parse_status != PARSE_OK) {
+      std::ostringstream err;
+      err << "Could not parse expression: " << call_string_;
+      report_error(err.str());
+    }
+    
     return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
   }
-
   
   namespace {
     // Wrapper for R_CheckUserInterrupt.

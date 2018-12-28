@@ -12,8 +12,13 @@ extern "C" {
       SEXP r_ping,
       SEXP r_seed);
 
+  SEXP boom_evaluate_r_function(
+      SEXP r_function,
+      SEXP r_argument_value);
+  
   static R_CallMethodDef boom_misc_arg_description[] = {
     CALLDEF(boom_misc_slice_sampler_wrapper, 5),
+    CALLDEF(boom_evaluate_r_function, 2),
     {NULL, NULL, 0}
   };
 

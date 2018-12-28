@@ -1,6 +1,5 @@
 library(BoomMisc)
 library(testthat)
-library(BoomTestUtils)
 
 context("Slice sampler")
 

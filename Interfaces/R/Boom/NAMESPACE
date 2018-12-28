@@ -42,6 +42,7 @@ export(
   RegressionCoefficientConjugatePrior,
   RegressionSuf,
   RepList,
+  RVectorFunction,
   SdPrior,
   SuggestBurnLogLikelihood,
   ThinMatrix,

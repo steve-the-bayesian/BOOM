@@ -398,7 +398,7 @@ namespace BOOM{
     //       function signature.
     RVectorFunction(SEXP r_vector_function);
 
-    // The process of evaluatingt the function creates an object in the
+    // The process of evaluating the function creates an object in the
     // function's environment with an ugly name.  The destructor should remove
     // this object.
     ~RVectorFunction();
