@@ -24,7 +24,16 @@
 namespace BOOM {
   namespace StateSpaceTesting {
 
-    // The abstract base class 
+    // An abstract base class for testing state space models and their component
+    // state models.
+    //
+    // Idiom:
+    //   StateModuleManager state_modules;
+    //   state_modules.AddModule(new LocalLevelModule);
+    //   ConcreteTestFramework framework;
+    //   framework.AddState(state_modules);
+    //   int niter = 1000, time dimension = 100, burn = 100;
+    //   framework.Test(niter, time_dimension, burn);
     class TestFrameworkBase {
      public:
       virtual ~TestFrameworkBase() {}
