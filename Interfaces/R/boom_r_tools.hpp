@@ -384,8 +384,8 @@ namespace BOOM{
   // A functor representing a scalar-valued function of a single Vector valued
   // argument.  The canonical use case for this class is for users to be able to
   // define a log density in R and pass it to a PosteriorSampler in BOOM.  This
-  // approach will be much slower than defining everything in C++, but it can be
-  // quite convenient.
+  // approach will be much slower than defining everything in C++, but it is a 
+  // helpful tool in exposing C++ libraries to R.
   class RVectorFunction {
    public:
     // Args:

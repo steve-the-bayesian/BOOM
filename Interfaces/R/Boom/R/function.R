@@ -9,18 +9,21 @@ RVectorFunction <- function(f, ...) {
   ## 
   ## Returns:
   ##   A list containing the information needed to evaluate 'f' in C++ code.
+  stopifnot(is.function(f))
   dots <- list(...)
   if (length(dots) >= 1) {
     ## Handling extra arguments in C++ is hard, so wrap them up here in R.
     fwrapper <- function(x) {
       return(f(x, ...))
     }
-    return(RVectorFunction(fwrapper))
+  } else {
+    ## Wrapping the function like this also ensures we know its name.
+    fwrapper <- f
   }
   ans <- list(
-    function.name = deparse(substitute(f)),
-    env = environment(f),
-    thefun = f)
+    function.name = ("fwrapper"),
+    env = environment(fwrapper),
+    thefun = fwrapper)
   class(ans) <- "RVectorFunction"
   return(ans);
 }
