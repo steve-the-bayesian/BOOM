@@ -20,7 +20,6 @@
 #include "Models/PosteriorSamplers/MvnVarSampler.hpp"
 #include "cpputil/lse.hpp"
 #include "distributions.hpp"
-#include "LinAlg/BlockDiagonalSpd.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
