@@ -109,7 +109,9 @@ namespace BOOM {
     //------- Vector
     Vector &mult(const Vector &v, Vector &ans, double scalar = 1.0) const;
     Vector &Tmult(const Vector &v, Vector &ans, double scalar = 1.0) const;
-
+    void multiply_inplace(Vector &v) const;
+    void multiply_inplace(VectorView &v) const;
+    
     Vector operator*(const Vector &x) const;
     Vector operator*(const VectorView &x) const;
     Vector operator*(const ConstVectorView &x) const;

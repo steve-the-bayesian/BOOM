@@ -42,8 +42,8 @@ namespace BOOM {
     explicit QR(const Matrix &m, bool just_compute_R = false);
 
     // Extract the Q and R matrices from the decomposition.
-    Matrix getQ() const;
-    Matrix getR() const;
+    const Matrix &getQ() const {return Q_;}
+    const Matrix &getR() const {return R_;}
 
     Matrix solve(const Matrix &B) const;
     Vector solve(const Vector &b) const;

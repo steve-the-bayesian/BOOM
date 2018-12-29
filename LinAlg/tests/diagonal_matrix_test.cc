@@ -82,6 +82,10 @@ namespace {
     ConstVectorView cview(v);
     EXPECT_TRUE(VectorEquals(diagonal * cview, DenseMatrix(diagonal) * cview));
     EXPECT_TRUE(VectorEquals(cview *diagonal, cview * DenseMatrix(diagonal)));
+
+    Vector vcopy = v;
+    diagonal.multiply_inplace(v);
+    EXPECT_TRUE(VectorEquals(v, diagonal * vcopy));
   }
 
   TEST_F(DiagonalMatrixTest, InverseEtc) {

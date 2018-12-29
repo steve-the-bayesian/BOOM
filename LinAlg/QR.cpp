@@ -36,10 +36,6 @@ namespace BOOM {
     decompose(mat, just_compute_R);
   }
 
-  Matrix QR::getQ() const { return Q_; }
-
-  Matrix QR::getR() const { return R_; }
-
   Matrix QR::solve(const Matrix &B) const {
     return Usolve(R_, QtY(B));
   }

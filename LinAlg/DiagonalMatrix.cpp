@@ -183,7 +183,25 @@ namespace BOOM {
       }
       return ans;
     }
+
+    template <class VECTOR>
+    void in_place_multiplication(const Vector &diag, VECTOR &v) {
+      if (diag.size() != v.size()) {
+        report_error("wrong size argument for in_place_multiplication.");
+      }
+      for (int i = 0; i < v.size(); ++i) {
+        v[i] *= diag[i];
+      }
+    }
   }  // namespace 
+
+  void DM::multiply_inplace(Vector &v) const {
+    in_place_multiplication(diagonal_elements_, v);
+  }
+
+  void DM::multiply_inplace(VectorView &v) const {
+    in_place_multiplication(diagonal_elements_, v);
+  }
   
   Vector DM::operator*(const Vector &v) const {
     return mult_impl(*this, v);
