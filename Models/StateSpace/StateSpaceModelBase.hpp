@@ -45,7 +45,7 @@ namespace BOOM {
     StateSpaceModelBase &operator=(const StateSpaceModelBase &rhs);
     StateSpaceModelBase &operator=(StateSpaceModelBase &&rhs) = default;
     
-    //----- sizes of things ------------
+    //----- Sizes of things ------------
     // The number of time points in the training data.
     virtual int time_dimension() const = 0;
 
@@ -63,6 +63,40 @@ namespace BOOM {
     virtual bool is_missing_observation(int t) const = 0;
 
     //--------- Access to client models and model parameters ---------------
+    // Returns a pointer to the model responsible for the observation variance.
+    virtual PosteriorModeModel *observation_model() = 0;
+    virtual const PosteriorModeModel *observation_model() const = 0;
+
+    // Returns a pointer to the specified state model.
+    Ptr<StateModel> state_model(int s) { return state_models_[s]; }
+    const Ptr<StateModel> state_model(int s) const { return state_models_[s]; }
+
+    // Overrides that would normally be handled by a parameter policy.  These
+    // are needed to ensure that parameters are vectorized in the correct order.
+    ParamVector parameter_vector() override;
+    const ParamVector parameter_vector() const override;
+
+    // Return the subset of the vectorized set of model parameters pertaining to
+    // the observation model, or to a specific state model.  Can also be used to
+    // take subsets of gradients of functions of model parameters.
+    //
+    // Args:
+    //   model_parameters: A vector of model parameters, ordered in the same way
+    //     as model->vectorize_params(true).
+    //   s: The index of the state model for which a parameter subset is
+    //     desired.
+    //
+    // Returns:
+    //   The subset of the parameter vector corresponding to the specified
+    //   model.
+    VectorView state_parameter_component(Vector &model_parameters, int s) const;
+    ConstVectorView state_parameter_component(const Vector &model_parameters,
+                                              int s) const;
+    VectorView observation_parameter_component(Vector &model_parameters) const;
+    ConstVectorView observation_parameter_component(
+        const Vector &model_parameters) const;
+
+    // --------------------------- Access to state ---------------------------
     // Add structure to the state portion of the model.  This is for local
     // linear trend and different seasonal effects.  It is not for regression,
     // which this class will handle separately.  The state model should be
@@ -132,7 +166,9 @@ namespace BOOM {
     //   dimension of the state vector for the specified state model, and T is
     //   the number of time points.
     ConstSubMatrix full_state_subcomponent(int state_model_index) const;
+    SubMatrix mutable_full_state_subcomponent(int state_model_index);
 
+    
     // The next two functions are mainly used for debugging a simulation.  You
     // can 'permanently_set_state' to the 'true' state value, then see if the
     // model recovers the parameters.  These functions are unlikely to be useful
@@ -140,50 +176,13 @@ namespace BOOM {
     void permanently_set_state(const Matrix &state);
     void observe_fixed_state();
 
-    // Returns a pointer to the model responsible for the observation variance.
-    virtual PosteriorModeModel *observation_model() = 0;
-    virtual const PosteriorModeModel *observation_model() const = 0;
-
-    // Returns a pointer to the specified state model.
-    Ptr<StateModel> state_model(int s) {
-      return state_models_[s];
-    }
-    const Ptr<StateModel> state_model(int s) const {
-      return state_models_[s];
-    }
-
     // Parameters of initial state distribution, specified in the state models
     // given to add_state.  The initial state refers to the state at time 0
     // (other implementations sometimes assume the initial state is at time -1).
     virtual Vector initial_state_mean() const;
     virtual SpdMatrix initial_state_variance() const;
 
-    // Overrides that would normally be handled by a parameter policy.  These
-    // are needed to ensure that parameters are vectorized in the correct order.
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector() const override;
-
-    // Return the subset of the vectorized set of model parameters pertaining to
-    // the observation model, or to a specific state model.  Can also be used to
-    // take subsets of gradients of functions of model parameters.
-    //
-    // Args:
-    //   model_parameters: A vector of model parameters, ordered in the same way
-    //     as model->vectorize_params(true).
-    //   s: The index of the state model for which a parameter subset is
-    //     desired.
-    //
-    // Returns:
-    //   The subset of the parameter vector corresponding to the specified
-    //   model.
-    VectorView state_parameter_component(Vector &model_parameters, int s) const;
-    ConstVectorView state_parameter_component(const Vector &model_parameters,
-                                              int s) const;
-    VectorView observation_parameter_component(Vector &model_parameters) const;
-    ConstVectorView observation_parameter_component(
-        const Vector &model_parameters) const;
-
-    //------------- Parameters for structural equations. --------------
+    //------------- Model matrices for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
     virtual const SparseKalmanMatrix *state_transition_matrix(int t) const;
 
@@ -531,6 +530,9 @@ namespace BOOM {
     // After the simulated and observed disturbances have been smoothed,
     // propagate them forward to achieve a draw of latent state given observed
     // data and parameters.
+    //
+    // As the state is finalized, the state models and the observation model are
+    // updated to reflect the new state values.
     virtual void propagate_disturbances();
 
     // Send a signal to all data observers (typically just 1) that the

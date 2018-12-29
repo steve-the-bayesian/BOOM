@@ -98,7 +98,79 @@ namespace BOOM {
   }
   
   //----------------------------------------------------------------------
+  namespace {
+    void concatenate_parameter_vectors(std::vector<Ptr<Params>> &first,
+                                       const std::vector<Ptr<Params>> &second) {
+      std::copy(second.begin(), second.end(), std::back_inserter(first));
+    }
+  }  // namespace
+
+  ParamVector Base::parameter_vector() {
+    std::vector<Ptr<Params>> ans;
+    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
+    }
+    return ans;
+  }
+
+  const ParamVector Base::parameter_vector() const {
+    std::vector<Ptr<Params>> ans;
+    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
+    }
+    return ans;
+  }
+
+  //----------------------------------------------------------------------
+  VectorView Base::state_parameter_component(Vector &model_parameters,
+                                             int s) const {
+    int start = parameter_positions_[s];
+    int size;
+    if (s + 1 == number_of_state_models()) {
+      size = model_parameters.size() - start;
+    } else {
+      size = parameter_positions_[s + 1] - start;
+    }
+    return VectorView(model_parameters, start, size);
+  }
+
+  ConstVectorView Base::state_parameter_component(
+      const Vector &model_parameters, int s) const {
+    int start = parameter_positions_[s];
+    int size;
+    if (s + 1 == number_of_state_models()) {
+      size = model_parameters.size() - start;
+    } else {
+      size = parameter_positions_[s + 1] - start;
+    }
+    return ConstVectorView(model_parameters, start, size);
+  }
+
+  //----------------------------------------------------------------------
+  VectorView Base::observation_parameter_component(
+      Vector &model_parameters) const {
+    if (parameter_positions_.empty()) {
+      return VectorView(model_parameters);
+    } else {
+      int size = parameter_positions_[0];
+      return VectorView(model_parameters, 0, size);
+    }
+  }
+
+  ConstVectorView Base::observation_parameter_component(
+      const Vector &model_parameters) const {
+    if (parameter_positions_.empty()) {
+      return ConstVectorView(model_parameters);
+    } else {
+      int size = parameter_positions_[0];
+      return ConstVectorView(model_parameters, 0, size);
+    }
+  }
+  //----------------------------------------------------------------------
   void Base::add_state(const Ptr<StateModel> &m) {
+    m->set_index(state_models_.size());
     state_models_.push_back(m);
     state_dimension_ += m->state_dimension();
     int next_position = state_positions_.back() + m->state_dimension();
@@ -177,6 +249,14 @@ namespace BOOM {
     return contribution;
   }
 
+  SubMatrix Base::mutable_full_state_subcomponent(int state_model_index) {
+    int start = state_positions_[state_model_index];
+    int size = state_model(state_model_index)->state_dimension();
+    SubMatrix contribution(state_, start, start + size - 1, 0,
+                           time_dimension() - 1);
+    return contribution;
+  }
+  
   //----------------------------------------------------------------------
   void Base::permanently_set_state(const Matrix &state) {
     if ((ncol(state) != time_dimension()) ||
@@ -225,77 +305,6 @@ namespace BOOM {
     return ans;
   }
 
-  //----------------------------------------------------------------------
-  namespace {
-    void concatenate_parameter_vectors(std::vector<Ptr<Params>> &first,
-                                       const std::vector<Ptr<Params>> &second) {
-      std::copy(second.begin(), second.end(), std::back_inserter(first));
-    }
-  }  // namespace
-
-  ParamVector Base::parameter_vector() {
-    std::vector<Ptr<Params>> ans;
-    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
-    }
-    return ans;
-  }
-
-  const ParamVector Base::parameter_vector() const {
-    std::vector<Ptr<Params>> ans;
-    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
-    }
-    return ans;
-  }
-
-  //----------------------------------------------------------------------
-  VectorView Base::state_parameter_component(Vector &model_parameters,
-                                             int s) const {
-    int start = parameter_positions_[s];
-    int size;
-    if (s + 1 == number_of_state_models()) {
-      size = model_parameters.size() - start;
-    } else {
-      size = parameter_positions_[s + 1] - start;
-    }
-    return VectorView(model_parameters, start, size);
-  }
-
-  ConstVectorView Base::state_parameter_component(
-      const Vector &model_parameters, int s) const {
-    int start = parameter_positions_[s];
-    int size;
-    if (s + 1 == number_of_state_models()) {
-      size = model_parameters.size() - start;
-    } else {
-      size = parameter_positions_[s + 1] - start;
-    }
-    return ConstVectorView(model_parameters, start, size);
-  }
-
-  //----------------------------------------------------------------------
-  VectorView Base::observation_parameter_component(
-      Vector &model_parameters) const {
-    if (parameter_positions_.empty()) {
-      return VectorView(model_parameters);
-    } else {
-      int size = parameter_positions_[0];
-      return VectorView(model_parameters, 0, size);
-    }
-  }
-
-  ConstVectorView Base::observation_parameter_component(
-      const Vector &model_parameters) const {
-    if (parameter_positions_.empty()) {
-      return ConstVectorView(model_parameters);
-    } else {
-      int size = parameter_positions_[0];
-      return ConstVectorView(model_parameters, 0, size);
-    }
-  }
   //----------------------------------------------------------------------
   // TODO: This and other code involving model matrices is an optimization
   // opportunity.  Test it out to see if precomputation makes sense.
