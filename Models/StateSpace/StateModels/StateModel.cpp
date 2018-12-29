@@ -24,6 +24,10 @@
 
 namespace BOOM {
 
+  StateModel::StateModel()
+      : index_(-1)
+  {}
+  
   void StateModel::update_complete_data_sufficient_statistics(
       int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {

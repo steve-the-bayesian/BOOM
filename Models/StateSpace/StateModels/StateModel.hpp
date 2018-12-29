@@ -51,6 +51,7 @@ namespace BOOM {
       MIXTURE    // e.g. treat the t-distribution like a normal mixture.
     };
 
+    StateModel();
     ~StateModel() override {}
     StateModel *clone() const override = 0;
 
@@ -161,6 +162,15 @@ namespace BOOM {
     // (instead of simply conditionally Gaussian), the default
     // behavior for these member functions is a no-op.
     virtual void set_behavior(Behavior) {}
+
+    // The index of a state model is its position in the vector of state models
+    // maintained by the host model which owns the StateModel (e.g. a
+    // StateSpaceModel.
+    int index() const {return index_;}
+    void set_index(int i) { index_ = i; }
+    
+   private:
+    int index_;
   };
 
   //
@@ -383,20 +393,6 @@ namespace BOOM {
     //     omitted.
     virtual Ptr<SparseMatrixBlock> observation_coefficients(
         int t, const Selector &observed) const = 0;
-
-    // Many multivariate state models will have identifiability constraints that
-    // need to be enforeced.  This function is to be called after the full state
-    // matrix has been imputed.  It will adjust the state and the parameters of
-    // this model so that the constraint is enforced.
-    //
-    // Enforcing parameter constraints after the fact is often easier than
-    // designing a posterior sampler that enforces them.
-    //
-    // MultivariateStateModel classes that have several different choices of
-    // potential constraints can defer this function to their posterior
-    // samplers.  In that case they will need to inherit from a policy that is
-    // aware that these posterior samplers provide this service.
-    virtual void impose_identifiability_constraints(SubMatrix state) = 0;
   };
   
 }  // namespace BOOM
