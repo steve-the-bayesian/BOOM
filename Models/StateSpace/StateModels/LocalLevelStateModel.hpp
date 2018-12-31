@@ -20,10 +20,24 @@
 */
 
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
+
+#include "Models/Glm/MultivariateRegression.hpp"
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/NullDataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 
 namespace BOOM {
 
+  // The local level state model assumes
+  //
+  //      y[t] = mu[t] + epsilon[t]
+  //   mu[t+1] = mu[t] + eta[t].
+  //
+  // That is, it is a random walk observed in noise.  It is the simplest useful
+  // state model.
   class LocalLevelStateModel : virtual public StateModel, public ZeroMeanGaussianModel {
    public:
     explicit LocalLevelStateModel(double sigma = 1);
@@ -67,6 +81,157 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  //===========================================================================
+  // A local level model for describing multivariate outcomes.  The latent state
+  // consists of K independent random walks which are the 'factors'.  The series
+  // are linked to the factors accorrding to
+  //
+  //     E( y[t] | alpha[t] )= Z * alpha[t].
+  //
+  // Conditional on the the state and the observed data are almost a
+  // multivariate regression model.  However some constraints are needed in
+  // order to identify the model.  These are often expressed as the coefficient
+  // matrix needing to be zero on one side of the diagonal, with a unit
+  // diagonal.  The posterior sampler for this model will handle the
+  // constraints, as different constraints might be relevant for different
+  // modeling strategies.
+  class SharedLocalLevelStateModel
+      : virtual public MultivariateStateModel,
+        public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy
+  {
+   public:
+    // Args:
+    //   number_of_factors: The number of independent random walks to use in
+    //     this state model.  The number of factors is the state dimension.
+    //   ydim:  The dimension of the outcome variable at time t.
+    //   host:  The model in which this object is a component of state.
+    SharedLocalLevelStateModel(int number_of_factors,
+                               int ydim,
+                               MultivariateStateSpaceModelBase *host);
+    SharedLocalLevelStateModel(const SharedLocalLevelStateModel &rhs);
+    SharedLocalLevelStateModel(SharedLocalLevelStateModel &&rhs);
+    SharedLocalLevelStateModel &operator=(const SharedLocalLevelStateModel &rhs);
+    SharedLocalLevelStateModel &operator=(SharedLocalLevelStateModel &&rhs);
+    SharedLocalLevelStateModel *clone() const override;
+    
+    void clear_data() override;
+    void observe_state(const ConstVectorView &then, const ConstVectorView &now,
+                       int time_now) override;
+
+    //----------------------------------------------------------------------
+    // Sizes of things.
+    uint state_dimension() const override {return innovation_models_.size();}
+    uint state_error_dimension() const override {return state_dimension();}
+
+    // Syntactic sugar.
+    int number_of_factors() const {return state_dimension();}
+    
+    void simulate_state_error(RNG &rng, VectorView eta, int t) const override;
+    void simulate_initial_state(RNG &rng, VectorView eta) const override;
+
+    //--------------------------------------------------------------------------
+    // Model matrices.
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t, const Selector &observed) const override;
+
+    Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override {
+      return state_transition_matrix_;
+    }
+    Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override {
+      return state_variance_matrix_;
+    }
+    // The state error expander matrix is an identity matrix of the same
+    // dimension as the state_transition_matrix, so we just return that matrix.
+    Ptr<SparseMatrixBlock> state_error_expander(int t) const override {
+      return state_transition_matrix_;
+    }
+    // Because the error expander is the identity, the state variance matrix and
+    // the state error variance are the same thing.
+    Ptr<SparseMatrixBlock> state_error_variance(int t) const override {
+      return state_variance_matrix_;
+    }
+    
+    //--------------------------------------------------------------------------
+    // Initial state mean and variance.
+    Vector initial_state_mean() const override { return initial_state_mean_; }
+    void set_initial_state_mean(const Vector &m);
+    SpdMatrix initial_state_variance() const override {
+      return initial_state_variance_;
+    }
+    void set_initial_state_variance(const SpdMatrix &v);
+
+    //--------------------------------------------------------------------------
+    // Tools for working with the EM algorithm and numerical optimization.
+    // These are not currently implemented.
+    void update_complete_data_sufficient_statistics(
+        int t, const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    void increment_expected_gradient(
+        VectorView gradient, int t, const ConstVectorView &state_error_mean,
+        const ConstSubMatrix &state_error_variance) override;
+
+    //----------------------------------------------------------------------
+    // Methods intended for use with the posterior samplers managing this model.
+    //
+    // When the posterior sampler for this model updates the private model
+    // components it should call update_coefficients to push the updated values
+    // to where they are needed for Kalman filtering.
+    void update_coefficients();
+    Ptr<MultivariateRegressionModel> coefficient_model() {
+      return coefficient_model_;
+    }
+    Ptr<ZeroMeanGaussianModel> innovation_model(int i) {
+      return innovation_models_[i];
+    }
+
+    // Convert the regression coefficients linking the state to the observation
+    // equation so that they are lower triangular.  That is, in the equation y =
+    // Z * alpha + error, Z is lower triangular with 1's on the diagonal.  Z is
+    // the transpose of the coefficients in coefficient_model_.
+    void impose_identifiability_constraint() override;
+    
+   private:
+    // The model consists of number_of_factors latent series.
+    // innovation_models_[i] describes the innovation errors for series i.
+
+    // The host is the model object in which *this is a state component.  The
+    // host is needed for this model to properly implement observe_state,
+    // because the coefficient models needs to subtract away the contributions
+    // from other state models.
+    MultivariateStateSpaceModelBase *host_;
+
+    // The innovation models describe the movement of the individual factors
+    // from one time period to the next.
+    std::vector<Ptr<ZeroMeanGaussianModel>> innovation_models_;
+
+    // The coefficient model describes the contribution of this state model to
+    // the observation equation.  The multivariate regression model is organized
+    // as (xdim, ydim).  The 'X' in our case is the state, where we want y = Z *
+    // state, so we need the transpose of the coefficient matrix from the
+    // regression.
+    Ptr<MultivariateRegressionModel> coefficient_model_;
+    Ptr<DenseMatrix> observation_coefficients_;
+    Ptr<SparseMatrixBlock> empty_;
+
+    // The state transition matrix is a number_of_factors * number_of_factors
+    // identity matrix.
+    Ptr<IdentityMatrix> state_transition_matrix_;
+
+    // The state variance matrix is a view into variance parameters of the
+    // innovation models.
+    Ptr<DiagonalMatrixParamView> state_variance_matrix_;
+
+    Vector initial_state_mean_;
+    SpdMatrix initial_state_variance_;
+    Matrix initial_state_variance_cholesky_;
+
+    // Helper functions to be called in the constructor.
+    void set_param_policy();
+    void populate_model_matrices();
+  };
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP

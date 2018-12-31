@@ -168,6 +168,17 @@ namespace BOOM {
     // StateSpaceModel.
     int index() const {return index_;}
     void set_index(int i) { index_ = i; }
+
+    // Some models require constraints on the relationship between the state and
+    // the model parameters in order to maintain identifiability.  Not all do,
+    // so the default implementation of this function is a no-op.
+    //
+    // Effects:
+    //   Modify the parameters so that they satisfy whatever identifiability
+    //   constraints are assumed by the model.  Corresponding changes will be
+    //   made to the state.  The resulting model will be equivalent to before
+    //   this call, but for the constraints being satisfied.
+    virtual void impose_identifiability_constraint() {}
     
    private:
     int index_;
