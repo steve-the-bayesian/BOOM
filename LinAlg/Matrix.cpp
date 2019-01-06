@@ -664,7 +664,7 @@ namespace BOOM {
     return *this;
   }
 
-  SpdMatrix Matrix::inner() const {  // eventually return type will be SpdMatrix
+  SpdMatrix Matrix::inner() const {  
     SpdMatrix ans(nc_, 0.0);
     EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(*this);
     return ans;
@@ -672,7 +672,7 @@ namespace BOOM {
 
   SpdMatrix Matrix::inner(const ConstVectorView &weights) const {
     if (weights.size() != nrow()) {
-      report_error("Wrong size weight vector.");
+      report_error("Wrong size weight vector for Matrix::inner.");
     }
     Matrix tmp(*this);
     for (int i = 0; i < weights.size(); ++i) {

@@ -344,6 +344,22 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         square.inner(weights),
         square.transpose() * DiagonalMatrix(weights) * square));
+
+    Matrix skinny(8, 3);
+    Vector skinny_weights(8);
+    skinny.randomize();
+    skinny_weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        skinny.inner(skinny_weights),
+        skinny.transpose() * DiagonalMatrix(skinny_weights) * skinny));
+
+    Matrix fat(3, 8);
+    Vector fat_weights(fat.nrow());
+    fat.randomize();
+    fat_weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        fat.inner(fat_weights),
+        fat.transpose() * DiagonalMatrix(fat_weights) * fat));
   }
 
   TEST_F(MatrixTest, KroneckerProduct) {
