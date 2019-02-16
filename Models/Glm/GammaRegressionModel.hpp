@@ -93,7 +93,7 @@ namespace BOOM {
 
   //======================================================================
 
-  // A comparator "less" to be used with the map in
+  // A comparator ("less") to be used with the map in
   // GammaRegressionConditionalSuf.
   struct VectorPtrLess {
     bool operator()(const Ptr<VectorData> &lhs,
