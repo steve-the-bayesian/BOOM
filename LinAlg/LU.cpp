@@ -27,7 +27,11 @@ namespace BOOM {
 
     class LU_impl_ {
      public:
-      LU_impl_(const Matrix &foo) : dcmp_(EigenMap(foo)) {}
+      LU_impl_(const Matrix &foo) : dcmp_(EigenMap(foo)) {
+        permutation_sign_ = dcmp_.permutationP().determinant() *
+            dcmp_.permutationQ().determinant();
+      }
+      
       LU_impl_ * clone() const { return new LU_impl_(*this); }
       
       Vector solve(const ConstVectorView &rhs) const {
@@ -66,10 +70,31 @@ namespace BOOM {
       double det() const {
         return dcmp_.determinant();
       }
+
+      double logdet() const {
+        const Eigen::MatrixXd &lu(dcmp_.matrixLU());
+        int dim = lu.rows();
+        // Keep track of the number of negative signs in the diagonal elements
+        // of LU.
+        int numneg = (permutation_sign_ == -1);
+        double ans = 0;
+        for (int i = 0; i < dim; ++i) {
+          double x = lu(i, i);
+          if (x < 0) {
+            ++numneg;
+            ans += std::log(-x);
+          } else {
+            ans += std::log(x);
+          }
+        }
+        return numneg %2 == 0 ? ans : negative_infinity();
+      }
       
       
      private:
       Eigen::FullPivLU<Eigen::MatrixXd> dcmp_;
+      int permutation_sign_;
+      
     };
     
   } // namespace LuImpl
@@ -152,5 +177,12 @@ namespace BOOM {
     return impl_->det();
   }
 
+  double LU::logdet() const {
+    if (!impl_) {
+      report_error("Decompose a matrix before calling LU::logdet().");
+    }
+    return impl_->logdet();
+  }
+  
   
 }  // namespace BOOM

@@ -32,6 +32,14 @@ namespace {
     EXPECT_EQ(1, single.nrow());
     EXPECT_EQ(1, single.ncol());
     EXPECT_DOUBLE_EQ(0.0, single(0, 0));
+
+    Matrix from_string("1 2 | 5 4");
+    EXPECT_EQ(2, from_string.nrow());
+    EXPECT_EQ(2, from_string.ncol());
+    EXPECT_DOUBLE_EQ(from_string(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(from_string(0, 1), 2.0);
+    EXPECT_DOUBLE_EQ(from_string(1, 0), 5.0);
+    EXPECT_DOUBLE_EQ(from_string(1, 1), 4.0);
   }
 
   TEST_F(MatrixTest, Multiplication) {

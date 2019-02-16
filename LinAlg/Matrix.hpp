@@ -57,6 +57,14 @@ namespace BOOM {
     Matrix(uint nr, uint nc, double x = 0.0);
     Matrix(uint nr, uint nc, const double *m, bool byrow = false);
     Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow = false);
+
+    // Populate a matrix by a space-separated string, with rows separated by a
+    // row delimiter.
+    //
+    // Example:
+    // Matrix A("1 2 | 3 4") gives:
+    //   1 2
+    //   3 4
     Matrix(const std::string &s, const std::string &row_delim = "|");
 
     template <class FwdIt>

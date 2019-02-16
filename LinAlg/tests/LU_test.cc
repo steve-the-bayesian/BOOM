@@ -55,6 +55,14 @@ namespace {
     double d = A(1, 1);
     LU lu(A);
     EXPECT_NEAR(lu.det(), a * d - b * c, 1e-6);
+
+    Matrix B("4 1 | 1 5");
+    lu.decompose(B);
+    EXPECT_NEAR(std::log(lu.det()), lu.logdet(), 1e-7);
+
+    Matrix C("1 2 | 3 4");  // det is 4 - 6 = -2
+    lu.decompose(C);
+    EXPECT_DOUBLE_EQ(lu.logdet(), negative_infinity());
   }
   
 }  // namespace

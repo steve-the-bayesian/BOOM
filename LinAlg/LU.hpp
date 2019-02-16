@@ -73,6 +73,10 @@ namespace BOOM {
     // The determinant of A.
     double det() const;
 
+    // The log of the determinant of A.  If the determinant is negative this
+    // will produce negative infinity.
+    double logdet() const;
+
    private:
     std::unique_ptr<LuImpl::LU_impl_> impl_;
     
