@@ -19,7 +19,7 @@
 #include "Models/StateSpace/Filters/ConditionallyIndependentKalmanFilter.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
-#include "LinAlg/QR.hpp"
+#include "LinAlg/LU.hpp"
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {
@@ -117,13 +117,19 @@ namespace BOOM {
           observation_precision.diag());
       Matrix inner_matrix = state_variance() * Z_inner;
       inner_matrix.diag() += 1.0;
-      QR inner_qr(inner_matrix);
+      LU inner_lu(inner_matrix);
+      // inner_lu is the decomposition of I + P*Z'*Hinv*Z
+
+      Matrix inner_inv_P = inner_lu.solve(state_variance());
+      Vector scaled_error = observation_precision * (
+          observation_coefficients * inner_inv_P * observation_coefficients.Tmult(
+              observation_precision * prediction_error()));
       
-      Vector scaled_error =
-          observation_precision * 
-          (observation_coefficients * inner_qr.solve(
-              state_variance() * (observation_coefficients.Tmult(
-                  observation_precision * prediction_error()))));
+      // Vector scaled_error = 
+      //     observation_precision * 
+      //     (observation_coefficients * inner_lu.solve(
+      //         state_variance() * (observation_coefficients.Tmult(
+      //             observation_precision * prediction_error()))));
       set_scaled_prediction_error(
           observation_precision * prediction_error() - scaled_error);
 
@@ -132,10 +138,17 @@ namespace BOOM {
       // That determinant can be computed using the "matrix determinant lemma,"
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
       //
-      // Let A = H, U = Z, V' = PZ'.  Then det(F) = det(I + PZ' * Hinv * Z) * det(H)
-
+      // Let A = H, U = Z, V' = PZ'.
+      // Then det(F) = det(I + PZ' * Hinv * Z) * det(H)
       set_forecast_precision_log_determinant(
-          -1 * (inner_qr.logdet() + observation_precision.logdet()));
+          -1 * (inner_lu.logdet() + observation_precision.logdet()));
+
+      // K = T * P * Z' * Finv
+      //   = T*P* Z' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv)
+      Matrix ZtHinv = (observation_precision *
+                       observation_coefficients.dense()).transpose();
+      set_kalman_gain(ZtHinv - ZtHinv * (
+          observation_coefficients * inner_inv_P * ZtHinv));
     }
     
     void Marginal::low_dimensional_update(

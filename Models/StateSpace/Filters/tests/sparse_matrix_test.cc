@@ -183,10 +183,31 @@ namespace {
     NEW(DenseMatrix, square_kalman)(square);
     CheckSparseMatrixBlock(square_kalman, square);
 
-    Matrix rectangle(3, 4);
-    rectangle.randomize();
-    NEW(DenseMatrix, rectangle_kalman)(rectangle);
-    CheckSparseMatrixBlock(rectangle_kalman, rectangle);
+    Matrix fat_rectangle(3, 8);
+    fat_rectangle.randomize();
+    NEW(DenseMatrix, fat_rectangle_kalman)(fat_rectangle);
+    CheckSparseMatrixBlock(fat_rectangle_kalman, fat_rectangle);
+
+    Matrix skinny_rectangle(8, 3);
+    skinny_rectangle.randomize();
+    NEW(DenseMatrix, skinny_rectangle_kalman)(skinny_rectangle);
+    CheckSparseMatrixBlock(skinny_rectangle_kalman, skinny_rectangle);
+
+    // Check that inner_product works when there are multiple blocks.
+    BlockDiagonalMatrix skinny_blocks;
+    skinny_blocks.add_block(skinny_rectangle_kalman);
+    Matrix second_skinny_rectangle(5, 2);
+    second_skinny_rectangle.randomize();
+    NEW(DenseMatrix, second_skinny_rectangle_kalman)(second_skinny_rectangle);
+    skinny_blocks.add_block(second_skinny_rectangle_kalman);
+    EXPECT_EQ(skinny_blocks.nrow(),
+              skinny_rectangle_kalman->nrow()
+              + second_skinny_rectangle_kalman->nrow());
+    Vector skinny_blocks_weights(skinny_blocks.nrow());
+    skinny_blocks_weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        skinny_blocks.inner(skinny_blocks_weights),
+        skinny_blocks.dense().inner(skinny_blocks_weights)));
   }
 
   TEST_F(SparseMatrixTest, SpdTest) {

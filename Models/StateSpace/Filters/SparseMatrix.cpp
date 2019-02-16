@@ -1289,16 +1289,19 @@ namespace BOOM {
 
   SpdMatrix BlockDiagonalMatrix::inner(const ConstVectorView &weights) const {
     if (weights.size() != nrow()) {
-      report_error("Wrong size weight vector.");
+      report_error("Wrong size weight vector for BlockDiagonalMatrix.");
     }
     SpdMatrix ans(ncol(), 0.0);
-    int start = 0;
+    int ans_start = 0;
+    int weight_start = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
-      int end = start + blocks_[b]->ncol();
-      const ConstVectorView local_weights(weights, start, blocks_[b]->ncol());
-      SubMatrix(ans, start, end - 1, start, end - 1)
-          = blocks_[b]->inner(local_weights);
-      start = end;
+      const SparseMatrixBlock &block(*blocks_[b]);
+      int ans_end = ans_start + block.ncol();
+      const ConstVectorView local_weights(weights, weight_start, block.nrow());
+      SubMatrix(ans, ans_start, ans_end - 1, ans_start, ans_end - 1)
+          = block.inner(local_weights);
+      ans_start += block.ncol();
+      weight_start += block.nrow();
     }
     return ans;
   }

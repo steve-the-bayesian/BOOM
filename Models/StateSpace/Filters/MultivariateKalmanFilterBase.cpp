@@ -58,6 +58,7 @@ namespace BOOM {
       
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
+      
       set_state_mean(transition * state_mean()
                      + kalman_gain() * prediction_error());
 
