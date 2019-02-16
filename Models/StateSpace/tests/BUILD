@@ -57,6 +57,17 @@ genrule(
 )
 
 cc_test(
+    name = "multivariate_test",
+    srcs = ["multivariate_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "state_space_gaussian_model_test",
     srcs = ["state_space_gaussian_model_test.cc"],
     copts = COPTS,

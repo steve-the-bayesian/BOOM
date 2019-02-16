@@ -33,6 +33,15 @@ namespace BOOM {
     using MvBase = MultivariateStateSpaceModelBase;
   }  // namespace
 
+  MvBase &MvBase::operator=(const MvBase &rhs) {
+    if (&rhs != this) {
+      StateSpaceModelBase::operator=(rhs);
+      r0_sim_ = rhs.r0_sim_;
+      r0_obs_ = rhs.r0_obs_;
+    }
+    return *this;
+  }
+  
   //----------------------------------------------------------------------
   // Simulate alpha_+ and y_* = y - y_+.  While simulating y_*,
   // feed it into the light (no storage for P) Kalman filter.  The
@@ -111,7 +120,8 @@ namespace BOOM {
   {}
   
   Vector CiidBase::simulate_observation(RNG &rng, int t) {
-    Vector ans = (*observation_coefficients(t)) * state().col(t);
+    Vector ans = (*observation_coefficients(
+        t, observed_status(t))) * state().col(t);
     double sigma = sqrt(observation_variance(t));
     for (int i = 0; i < ans.size(); ++i) {
       ans[i] += rnorm_mt(rng, 0, sigma);
@@ -134,5 +144,23 @@ namespace BOOM {
   const ConditionalIidKalmanFilter & CiidBase::get_simulation_filter() const {
     return simulation_filter_;
   }
-  
+
+  //===========================================================================
+
+  namespace {
+    using CindBase = ConditionallyIndependentMultivariateStateSpaceModelBase;
+  }  // namespace
+
+  Vector CindBase::simulate_observation(RNG &rng, int t) {
+    Selector fully_observed(observation_dimension(), true);
+    Vector ans = (*observation_coefficients(
+        t, t >= time_dimension() ? fully_observed : observed_status(t)))
+        * state().col(t);
+    for (int i = 0; i < ans.size(); ++i) {
+      double sigma = sqrt(single_observation_variance(t, i));
+      ans[i] += rnorm_mt(rng, 0, sigma);
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

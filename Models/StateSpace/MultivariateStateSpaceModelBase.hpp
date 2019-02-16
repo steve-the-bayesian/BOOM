@@ -26,6 +26,8 @@
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 
+#include "Models/StateSpace/Filters/ConditionallyIndependentKalmanFilter.hpp"
+
 #include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
 
 #include "Models/StateSpace/StateModels/StateModel.hpp"
@@ -34,11 +36,32 @@
 
 namespace BOOM {
   //===========================================================================
+  // The general state space model is 
+  //        y[t] = Z[t] * alpha[t] + epsilon[t] 
+  //  alpha[t+1] = T[t] * alpha[t] + eta[t]
+  //
+  // The distinguishing feature of this class (and its children) is that y[t] is
+  // a vector.  The general state space structure applies to this model, but we
+  // can also structure things so that some components of state are
+  // variable-specific.  This allows for MCMC strategies like
+  //
+  // (1) Sample shared state given variable specific state.
+  // (2) Sample variable specific state givne shared state.
+  // (3) Sample parameters.
+  //
+  // This algorithm would have worse mixing behavior than the MCMC that just
+  // drew all state simultaneously, but the variable-specific portion can be
+  // multi-threaded, and each Kalman filter based simulation draws a much
+  // smaller state, so it has the potential to be fast.
   class MultivariateStateSpaceModelBase : public StateSpaceModelBase {
    public:
     MultivariateStateSpaceModelBase *clone() const override = 0;
-
+    MultivariateStateSpaceModelBase & operator=(
+        const MultivariateStateSpaceModelBase &rhs);
+    
     // ----- virtual functions required by the base class: ----------
+    // These must be implemented by the concrete class.
+    //---------------------------------------------------------------------------
     // virtual int time_dimension() const = 0;
     // virtual bool is_missing_observation(int t) const = 0;
     // virtual PosteriorModeModel *observation_model() = 0;
@@ -56,7 +79,13 @@ namespace BOOM {
     //---------------- Parameters for structural equations. -------------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
     // Note the lack of transpose on Z[t].
-    virtual const SparseKalmanMatrix *observation_coefficients(int t) const = 0;
+    //
+    // Args:
+    //   t: The time index for which observation coefficients are desired.
+    //   observed: Indicates which components of the observation at time t are
+    //     observed (as opposed to missing).
+    virtual const SparseKalmanMatrix *observation_coefficients(
+        int t, const Selector &observed) const = 0;
 
     // Return the KalmanFilter object responsible for filtering the data.
     MultivariateKalmanFilterBase & get_filter() override = 0;
@@ -71,6 +100,12 @@ namespace BOOM {
     // Elements of the returned value indicate which elements of observation(t)
     // are actually observed.  In the typical case all elements will be true.
     virtual const Selector &observed_status(int t) const = 0;
+
+    // Row dimension of the observation coefficients, which is the dimension of
+    // the data.
+    int observation_dimension() const {
+      return observed_status(0).nvars_possible();
+    }
     
     std::vector<Vector> state_contributions() const;
     
@@ -112,9 +147,9 @@ namespace BOOM {
     //     parameters and all observed y's.
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
-    virtual void update_observation_model_complete_data_sufficient_statistics(
-        int t, const Vector &observation_error_mean,
-        const SpdMatrix &observation_error_variance) = 0;
+    // virtual void update_observation_model_complete_data_sufficient_statistics(
+    //     int t, const Vector &observation_error_mean,
+    //     const SpdMatrix &observation_error_variance) = 0;
 
     // Increment the portion of the log-likelihood gradient pertaining to the
     // parameters of the observation model.
@@ -129,9 +164,9 @@ namespace BOOM {
     //     time t.
     //   observation_error_variance: The posterior variance of the observation
     //     error at time t.
-    virtual void update_observation_model_gradient(
-        VectorView gradient, int t, const Vector &observation_error_mean,
-        const SpdMatrix &observation_error_variance) = 0;
+    // virtual void update_observation_model_gradient(
+    //     VectorView gradient, int t, const Vector &observation_error_mean,
+    //     const SpdMatrix &observation_error_variance) = 0;
 
    private:
     void simulate_forward(RNG &rng) override;
@@ -174,13 +209,32 @@ namespace BOOM {
   class ConditionallyIndependentMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
+    ConditionallyIndependentMultivariateStateSpaceModelBase()
+        : filter_(this), simulation_filter_(this) {}
+
     // Variance of the observation error at time t.  Durbin and Koopman's H[t].
     virtual DiagonalMatrix observation_variance(int t) const = 0;
+
+    virtual double single_observation_variance(int t, int dim) const = 0;
     
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override;
+    void kalman_filter() override { filter_.update(); }
+
+    using Filter = ConditionallyIndependentKalmanFilter;
+    Filter &get_filter() override {return filter_;}
+    const Filter &get_filter() const override { return filter_; }
+    Filter &get_simulation_filter() override { return simulation_filter_; }
+    const Filter & get_simulation_filter() const override {
+      return simulation_filter_;
+    }
+
+    Vector simulate_observation(RNG &rng, int t) override;
+    
+   private:
+    ConditionallyIndependentKalmanFilter filter_;
+    ConditionallyIndependentKalmanFilter simulation_filter_;
   };
 
   //===========================================================================

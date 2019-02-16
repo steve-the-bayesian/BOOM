@@ -128,7 +128,8 @@ namespace {
     // Check the observation coefficients.
     EXPECT_TRUE(VectorEquals(
         model_->dat()[0]->predictors() * true_beta_,
-        model_->observation_coefficients(0)->dense().col(0)));
+        model_->observation_coefficients(
+            0, model_->observed_status(0))->dense().col(0)));
     
     int niter = 200;
     Matrix level_draws(niter, time_dimension_);
@@ -156,7 +157,8 @@ namespace {
     // Check the observation coefficients.
     EXPECT_TRUE(VectorEquals(
         model_->dat()[0]->predictors() * true_beta_,
-        model_->observation_coefficients(0)->dense().col(0)));
+        model_->observation_coefficients(
+            0, model_->observed_status(0))->dense().col(0)));
 
     int niter = 200;
     Vector sigma_level_draws(niter);

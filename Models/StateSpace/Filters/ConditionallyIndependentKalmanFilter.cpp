@@ -124,15 +124,8 @@ namespace BOOM {
       Vector scaled_error = observation_precision * (
           observation_coefficients * inner_inv_P * observation_coefficients.Tmult(
               observation_precision * prediction_error()));
-      
-      // Vector scaled_error = 
-      //     observation_precision * 
-      //     (observation_coefficients * inner_lu.solve(
-      //         state_variance() * (observation_coefficients.Tmult(
-      //             observation_precision * prediction_error()))));
       set_scaled_prediction_error(
           observation_precision * prediction_error() - scaled_error);
-
       
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"
@@ -150,7 +143,9 @@ namespace BOOM {
       set_kalman_gain(ZtHinv - ZtHinv * (
           observation_coefficients * inner_inv_P * ZtHinv));
     }
-    
+
+    // When dimensions are small the updates are trivial, and careful
+    // optimization is not necessary.
     void Marginal::low_dimensional_update(
         const Vector &observation,
         const Selector &observed,

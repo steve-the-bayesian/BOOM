@@ -18,30 +18,72 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/IndependentMvnModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+
 namespace BOOM {
 
   // A multivariate state space model that assumes conditionally independent
   // errors in the observation equation.  This model can be used to describe
   // time series that are quite highly correlated, but the correlations are
-  // // assumed to be fully captured by the state equation.
-  // class MultivariateStateSpaceModel
-  //     : pubic ConditionallyIndependentMultivariateStateSpaceModelBase
-  //       public IID_DataPolicy<VectorData>,
-  //       public PriorPolicy {
-  //  public:
+  // assumed to be fully captured by the state equation.
+  //
+  // The model is
+  //       y[t] = Z[t] * alpha[t] + error[t]
+  // alpha[t+1] = T[t] * alpha[t] + state_error[t]
+  //
+  // Unlike the scalar model, y[t] is a vector, which may be partially observed.
+  // The Z[t] coefficients combine the Z[t] coefficients from the scalar model
+  // with a set of regression coefficients for the different elements of y[t].
+  
+  class MultivariateStateSpaceModel
+      : public ConditionallyIndependentMultivariateStateSpaceModelBase,
+        public IID_DataPolicy<PartiallyObservedVectorData>,
+        public PriorPolicy {
+   public:
+    // Args:
+    //   dim: The dimension of the time series to be modeled (i.e. the number of
+    //     parallel time series).
+    MultivariateStateSpaceModel(int dim);
+    MultivariateStateSpaceModel(const MultivariateStateSpaceModel &rhs);
+    MultivariateStateSpaceModel(MultivariateStateSpaceModel &&rhs) = default;
+    MultivariateStateSpaceModel * clone() const override;
 
-  //   IndependentMvnModel *observation_model() override;
-  //   const IndependentMvnModel *observation_model() const override;
+    MultivariateStateSpaceModel & operator=(const MultivariateStateSpaceModel &rhs);
+    MultivariateStateSpaceModel & operator=(MultivariateStateSpaceModel &&rhs) = default;
+    
+    void add_state(const Ptr<MultivariateStateModel> &state_model);
+    
+    IndependentMvnModel *observation_model() override;
+    const IndependentMvnModel *observation_model() const override;
 
-  //   int time_dimension() const override;
-  //   void observe_data_given_state(int t) override;
+    void observe_data_given_state(int t) override;
+    int time_dimension() const override { return dat().size(); }
 
-  //   // Simulate the next 'horizon' time points
-  //   Matrix simulate_forecast(RNG &rng, int horizon, const Vector &final_state);
+    // Simulate the next 'horizon' time points
+    Matrix simulate_forecast(RNG &rng, int horizon,
+                             const Vector &final_state) const;
 
-  //  private:
-  //   Ptr<IndependentMvnModel> observation_model_;
-  // };
+    const SparseKalmanMatrix *observation_coefficients(
+        int t, const Selector &observed) const override;
+    DiagonalMatrix observation_variance(int t) const override;
+    double single_observation_variance(int t, int dim) const override;
+
+    const Vector &observation(int t) const override;
+    const Selector &observed_status(int t) const override;
+
+    using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
+
+    bool is_missing_observation(int t) const override {
+      return dat()[t]->missing() != Data::observed;
+    }
+
+   private:
+    Ptr<IndependentMvnModel> observation_model_;
+    std::vector<Ptr<MultivariateStateModel>> state_models_;
+
+    Ptr<BlockDiagonalMatrix> observation_coefficients_;
+  };
 
 }  // namespace BOOM
 

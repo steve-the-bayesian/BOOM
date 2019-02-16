@@ -179,7 +179,11 @@ namespace BOOM {
     // When the posterior sampler for this model updates the private model
     // components it should call update_coefficients to push the updated values
     // to where they are needed for Kalman filtering.
-    void update_coefficients();
+
+    // update_coefficients needs to be const because it part of the
+    // implementation of the logically const 'observation_coefficients' method.
+    void update_coefficients() const;
+    
     Ptr<MultivariateRegressionModel> coefficient_model() {
       return coefficient_model_;
     }
@@ -213,9 +217,15 @@ namespace BOOM {
     // state, so we need the transpose of the coefficient matrix from the
     // regression.
     Ptr<MultivariateRegressionModel> coefficient_model_;
-    Ptr<DenseMatrix> observation_coefficients_;
+    mutable Ptr<DenseMatrix> observation_coefficients_;
     Ptr<SparseMatrixBlock> empty_;
+    mutable bool observation_coefficients_current_;
 
+    // An observer to be placed on the observation coefficients to indicate that
+    // they have changed.
+    void set_observation_coefficients_observer();
+    
+    
     // The state transition matrix is a number_of_factors * number_of_factors
     // identity matrix.
     Ptr<IdentityMatrix> state_transition_matrix_;
@@ -230,7 +240,7 @@ namespace BOOM {
 
     // Helper functions to be called in the constructor.
     void set_param_policy();
-    void populate_model_matrices();
+    void initialize_model_matrices();
   };
 }  // namespace BOOM
 

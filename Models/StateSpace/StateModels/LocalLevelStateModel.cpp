@@ -148,6 +148,7 @@ namespace BOOM {
         coefficient_model_(new MultivariateRegressionModel(
             number_of_factors, ydim)),
         empty_(new EmptyMatrix),
+        observation_coefficients_current_(false),
         initial_state_mean_(0),
         initial_state_variance_(0),
         initial_state_variance_cholesky_(0, 0)
@@ -156,7 +157,8 @@ namespace BOOM {
       innovation_models_.push_back(new ZeroMeanGaussianModel);
     }
     set_param_policy();
-    populate_model_matrices();
+    initialize_model_matrices();
+    set_observation_coefficients_observer();
   }
 
   SLLSM::SharedLocalLevelStateModel(const SLLSM &rhs) {
@@ -175,7 +177,8 @@ namespace BOOM {
         innovation_models_.push_back(rhs.innovation_models_[i]->clone());
       }
       set_param_policy();
-      populate_model_matrices();
+      initialize_model_matrices();
+      set_observation_coefficients_observer();
     }
     return *this;
   }
@@ -193,6 +196,7 @@ namespace BOOM {
             rhs.initial_state_variance_cholesky_))
   {
     set_param_policy();
+    set_observation_coefficients_observer();
   }
 
   SLLSM & SLLSM::operator=(SLLSM &&rhs) {
@@ -206,6 +210,7 @@ namespace BOOM {
       initial_state_variance_ = std::move(rhs.initial_state_variance_);
       initial_state_variance_cholesky_ = std::move(rhs.initial_state_variance_cholesky_);
     }
+    set_observation_coefficients_observer();
     return *this;
   }
 
@@ -269,6 +274,9 @@ namespace BOOM {
   
   Ptr<SparseMatrixBlock> SLLSM::observation_coefficients(
       int t, const Selector &observed) const {
+    if (!observation_coefficients_current_) {
+      update_coefficients();
+    }
     if (observed.nvars() == observed.nvars_possible()) {
       return observation_coefficients_;
     } else if (observed.nvars() == 0) {
@@ -312,8 +320,11 @@ namespace BOOM {
     report_error("increment_expected_gradient is not implemented.");
   }
 
-  void SLLSM::update_coefficients() {
-    observation_coefficients_->set(coefficient_model_->Beta().transpose());
+  void SLLSM::update_coefficients() const {
+    if (!observation_coefficients_current_) {
+      observation_coefficients_->set(coefficient_model_->Beta().transpose());
+      observation_coefficients_current_ = true;
+    }
   }
 
   void SLLSM::set_param_policy() {
@@ -323,7 +334,7 @@ namespace BOOM {
     }
   }
 
-  void SLLSM::populate_model_matrices() {
+  void SLLSM::initialize_model_matrices() {
     // The multivariate regression model is organized as (xdim, ydim).  The 'X'
     // in our case is the state, where we want y = Z * state, so we need the
     // transpose of the coefficient matrix from the regression.
@@ -369,6 +380,12 @@ namespace BOOM {
     coefficient_model_->set_Beta(Rdiag.solve(R));
   }
 
-
+  void SLLSM::set_observation_coefficients_observer() {
+    std::function<void(void)> observer = [this]() {
+      this->observation_coefficients_current_ = false;
+    };
+    coefficient_model_->Beta_prm()->add_observer(observer);
+    observation_coefficients_current_ = false;
+  }
   
 }  // namespace BOOM
