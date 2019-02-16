@@ -14,6 +14,17 @@ cc_test(
 )
 
 cc_test(
+    name = "diagonal_matrix_test",
+    srcs = ["diagonal_matrix_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "Eigen_test",
     srcs = ["Eigen_test.cc"],
     copts = COPTS,
@@ -25,8 +36,8 @@ cc_test(
 )
 
 cc_test(
-    name = "Matrix_test",
-    srcs = ["Matrix_test.cc"],
+    name = "LU_test",
+    srcs = ["LU_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
@@ -36,8 +47,8 @@ cc_test(
 )
 
 cc_test(
-    name = "diagonal_matrix_test",
-    srcs = ["diagonal_matrix_test.cc"],
+    name = "Matrix_test",
+    srcs = ["Matrix_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
