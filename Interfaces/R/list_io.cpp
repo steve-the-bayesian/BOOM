@@ -793,12 +793,12 @@ namespace BOOM {
   GenericVectorListElement::GenericVectorListElement(
       StreamableVectorIoCallback *callback,
       const std::string &name)
-      : NativeVectorListElement(callback, nullptr, name)
+      : NativeVectorListElement(callback, name, nullptr)
   {
     if (callback) {
       callback_.reset(callback);
     } else {
-      callback_.reset(nullptr);
+      callback_.reset();
     }
   }
 
@@ -876,10 +876,12 @@ namespace BOOM {
   GenericMatrixListElement::GenericMatrixListElement(
       StreamableMatrixIoCallback *callback,
       const std::string &name)
-      : NativeMatrixListElement(callback, name)
+      : NativeMatrixListElement(callback, name, nullptr)
   {
     if (callback) {
       callback_.reset(callback);
+    } else {
+      callback_.reset();
     }
   }
 

@@ -540,7 +540,7 @@ namespace BOOM {
     
    private:
     std::shared_ptr<StreamableVectorIoCallback> callback_;
-  }
+  };
   
   //---------------------------------------------------------------------------
   // Please see the comments to VectorIoCallback, above.
@@ -553,6 +553,7 @@ namespace BOOM {
   };
 
   class StreamableMatrixIoCallback : public MatrixIoCallback {
+   public:
     virtual void put_matrix(const Matrix &mat) = 0;
   };
   
@@ -586,7 +587,7 @@ namespace BOOM {
    protected:
     void disable_buffer_check() {check_buffer_ = false;}
     const ConstArrayView next_draw() {
-      return array_view_.slice(next_position, -1, -1);
+      return array_view_.slice(next_position(), -1, -1);
     }
     
    private:
