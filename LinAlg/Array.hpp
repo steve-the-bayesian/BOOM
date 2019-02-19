@@ -83,11 +83,10 @@ namespace BOOM {
     double operator()(int x1, int x2, int x3, int x4, int x5) const;
     double operator()(int x1, int x2, int x3, int x4, int x5, int x6) const;
 
-    // Utillity functions for creating a std::vector<int> to be used
-    // as an index.  Up to 6 dimensions are supported.  More can be
-    // added if needed, but if arrays of greater than 6 dimensions
-    // are needed, then people will probably create the dimensions
-    // programmatically.
+    // Utillity functions for creating a std::vector<int> to be used as an
+    // index.  Up to 6 dimensions are supported.  More can be added if needed,
+    // but if arrays of greater than 6 dimensions are needed, then people will
+    // probably create the dimensions programmatically.
     static std::vector<int> index1(int x1);
     static std::vector<int> index2(int x1, int x2);
     static std::vector<int> index3(int x1, int x2, int x3);
@@ -174,13 +173,13 @@ namespace BOOM {
     void reset(const double *data, const std::vector<int> &dims,
                const std::vector<int> &strides);
 
-    // 'slice' returns a lower dimensional view into an array.  If you
-    // have a 3-way array indexed by (i, j, k), and you want to get
-    // the (i, k) slice (that is, (i, 0, k), (i, 1, k), ...), then you
-    // call array.slice(i, -1, k).  The negative index says 'give me
-    // all of these', analogous to a missing index in R.  The return
-    // value is a view into the array with dimension equal to the
-    // number of negative arguments.
+    // 'slice' returns a lower dimensional view into an array.  If you have a
+    // 3-way array indexed by (i, j, k), and you want to get the (i, k) slice
+    // (that is, (i, 0, k), (i, 1, k), ...), then you call array.slice(i, -1,
+    // k).  The negative index says 'give me all of these', analogous to a
+    // missing index in R, or the : symbol in Python.  The return value is a
+    // view into the array with dimension equal to the number of negative
+    // arguments.
     ConstArrayView slice(const std::vector<int> &index) const;
     ConstArrayView slice(int x1) const;
     ConstArrayView slice(int x1, int x2) const;
@@ -189,9 +188,8 @@ namespace BOOM {
     ConstArrayView slice(int x1, int x2, int x3, int x4, int x5) const;
     ConstArrayView slice(int x1, int x2, int x3, int x4, int x5, int x6) const;
 
-    // vector_slice() works in exactly the same way as slice(), but it
-    // returns a VectorView instead of an ArrayView.  Exactly one
-    // index must be negative.
+    // vector_slice() works in exactly the same way as slice(), but it returns a
+    // VectorView instead of an ArrayView.  Exactly one index must be negative.
     ConstVectorView vector_slice(const std::vector<int> &index) const;
     ConstVectorView vector_slice(int x1) const;
     ConstVectorView vector_slice(int x1, int x2) const;
