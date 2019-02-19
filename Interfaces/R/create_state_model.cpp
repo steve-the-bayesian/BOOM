@@ -67,7 +67,7 @@ namespace BOOM {
   namespace RInterface {
 
     StateModelFactory::StateModelFactory(RListIoManager *io_manager)
-        : io_manager_(io_manager)
+        : StateModelFactoryBase(io_manager)
     {}
 
     void StateModelFactory::AddState(ScalarStateSpaceModelBase *model,
@@ -310,7 +310,7 @@ namespace BOOM {
       StateSpaceModelBase * model_;
     };
 
-    void StateModelFactory::SaveFinalState(
+    void StateModelFactoryBase::SaveFinalState(
         StateSpaceModelBase *model,
         Vector * final_state,
         const std::string & list_element_name) {
@@ -318,8 +318,8 @@ namespace BOOM {
       if (final_state) {
         final_state->resize(model->state_dimension());
       }
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new NativeVectorListElement(
                 new BOOM::RInterface::FinalStateCallback(model),
                 list_element_name,
@@ -364,8 +364,8 @@ namespace BOOM {
       }
 
       // Add information about this parameter to the io_manager
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
+      if (io_manager()) {
+        io_manager()->add_list_element(new StandardDeviationListElement(
             level->Sigsq_prm(),
             prefix + "sigma.level"));
       }
@@ -460,15 +460,15 @@ namespace BOOM {
       //----------------------------------------------------------------------
       // Now that the priors are all set, the last thing to do is to add the
       // model parameters to the io_manager.
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new PartialSpdListElement(
                 local_linear_trend->Sigma_prm(),
                 prefix + "sigma.trend.level",
                 0,
                 true));
 
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new PartialSpdListElement(
                 local_linear_trend->Sigma_prm(),
                 prefix + "sigma.trend.slope",
@@ -567,20 +567,20 @@ namespace BOOM {
 
       //----------------------------------------------------------------------
       // Add parameters to io_manager.
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new StandardDeviationListElement(
                 robust_local_linear_trend->SigsqLevel_prm(),
                 prefix + "sigma.trend.level"));
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new StandardDeviationListElement(
                 robust_local_linear_trend->SigsqSlope_prm(),
                 prefix + "sigma.trend.slope"));
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new UnivariateListElement(
                 robust_local_linear_trend->NuLevel_prm(),
                 prefix + "nu.trend.level"));
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new UnivariateListElement(
                 robust_local_linear_trend->NuSlope_prm(),
                 prefix + "nu.trend.slope"));
@@ -588,14 +588,14 @@ namespace BOOM {
         bool save_weights = Rf_asInteger(getListElement(
             r_state_component, "save.weights"));
         if (save_weights) {
-          io_manager_->add_list_element(
+          io_manager()->add_list_element(
               new NativeVectorListElement(
                   new StudentLocalLinearTrendLevelWeightCallback(
                       robust_local_linear_trend),
                   prefix + "trend.level.weights",
                   NULL));
 
-          io_manager_->add_list_element(
+          io_manager()->add_list_element(
               new NativeVectorListElement(
                   new StudentLocalLinearTrendSlopeWeightCallback(
                       robust_local_linear_trend),
@@ -650,8 +650,8 @@ namespace BOOM {
       trig_state_model->set_initial_state_variance(initial_prior.Sigma());
 
       //-------------- adjust the io manager.
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new SdVectorListElement(trig_state_model->Sigsq_prm(),
                                     prefix + "trig.coefficient.sd"));
       }
@@ -688,8 +688,8 @@ namespace BOOM {
       quasi_trig_state_model->set_initial_state_variance(initial_prior.Sigma());
 
       //--------------- Adjust the IO manager.
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new StandardDeviationListElement(
                 quasi_trig_state_model->error_distribution()->Sigsq_prm(),
                 prefix + "trig.coefficient.sd"));
@@ -783,21 +783,21 @@ namespace BOOM {
       trend->set_initial_level_sd(level_initial_value_prior.sigma());
       trend->set_initial_slope_sd(slope_initial_value_prior.sigma());
 
-      if (io_manager_) {
-        io_manager_->add_list_element(
+      if (io_manager()) {
+        io_manager()->add_list_element(
             new StandardDeviationListElement(
                 level->Sigsq_prm(),
                 prefix + "trend.level.sd"));
 
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new UnivariateListElement(
                 slope->Mu_prm(),
                 prefix + "trend.slope.mean"));
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new UnivariateListElement(
                 slope->Phi_prm(),
                 prefix + "trend.slope.ar.coefficient"));
-        io_manager_->add_list_element(
+        io_manager()->add_list_element(
             new StandardDeviationListElement(
                 slope->Sigsq_prm(),
                 prefix + "trend.slope.sd"));
@@ -955,8 +955,8 @@ namespace BOOM {
       if (season_duration > 1) parameter_name << "." << season_duration;
 
       // Add information about this parameter to the io_manager
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
+      if (io_manager()) {
+        io_manager()->add_list_element(new StandardDeviationListElement(
             seasonal->Sigsq_prm(),
             prefix + parameter_name.str()));
       }
@@ -979,8 +979,8 @@ namespace BOOM {
       monthly->set_sigsq(square(sigma_prior_spec.initial_value()));
       set_initial_state_prior(monthly, r_state_component);
       set_posterior_sampler(monthly, sigma_prior_spec);
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
+      if (io_manager()) {
+        io_manager()->add_list_element(new StandardDeviationListElement(
             monthly->Sigsq_prm(),
             prefix + "Monthly"));
       }
@@ -1040,8 +1040,8 @@ namespace BOOM {
       std::ostringstream parameter_name;
       parameter_name  <<  "sigma." << holiday_name;
       // Add information about this parameter to the io_manager
-      if (io_manager_) {
-        io_manager_->add_list_element(new StandardDeviationListElement(
+      if (io_manager()) {
+        io_manager()->add_list_element(new StandardDeviationListElement(
             holiday_model->Sigsq_prm(),
             prefix + parameter_name.str()));
       }
@@ -1079,7 +1079,7 @@ namespace BOOM {
         std::string holiday_name =
             prefix + ToString(getListElement(r_holiday, "name"));
         holiday_model->add_holiday(holiday);
-        io_manager_->add_list_element(new VectorListElement(
+        io_manager()->add_list_element(new VectorListElement(
             holiday_model->holiday_pattern_parameter(i),
             holiday_name));
       }
@@ -1168,12 +1168,12 @@ namespace BOOM {
               holiday_coefficients,
               prefix + "holiday.coefficients");
       coefficient_io->set_group_names(holiday_names);
-      io_manager_->add_list_element(coefficient_io);
+      io_manager()->add_list_element(coefficient_io);
 
-      io_manager_->add_list_element(
+      io_manager()->add_list_element(
           new VectorListElement(holiday_model->model()->prior()->Mu_prm(),
                                 prefix + "holiday.coefficient.mean"));
-      io_manager_->add_list_element(
+      io_manager()->add_list_element(
           new SpdListElement(holiday_model->model()->prior()->Sigma_prm(),
                              prefix + "holiday.coefficient.variance"));
     }
@@ -1209,17 +1209,17 @@ namespace BOOM {
       }
       state_model->set_method(sampler);
 
-      if (io_manager_) {
+      if (io_manager()) {
         std::ostringstream phi_parameter_name;
         phi_parameter_name << prefix << "AR" << number_of_lags
                            << ".coefficients";
-        io_manager_->add_list_element(new GlmCoefsListElement(
+        io_manager()->add_list_element(new GlmCoefsListElement(
             state_model->Phi_prm(),
             phi_parameter_name.str()));
 
         std::ostringstream sigma_parameter_name;
         sigma_parameter_name << prefix << "AR" << number_of_lags << ".sigma";
-        io_manager_->add_list_element(new StandardDeviationListElement(
+        io_manager()->add_list_element(new StandardDeviationListElement(
             state_model->Sigsq_prm(),
             sigma_parameter_name.str()));
       }
@@ -1248,7 +1248,7 @@ namespace BOOM {
 
       state_model->set_method(sampler);
 
-      if (io_manager_) {
+      if (io_manager()) {
         std::ostringstream phi_parameter_name;
         phi_parameter_name << prefix << "AR" << number_of_lags
                            << ".coefficients";
@@ -1258,14 +1258,14 @@ namespace BOOM {
           column_name << "lag." << i + 1;
           column_names.push_back(column_name.str());
         }
-        io_manager_->add_list_element(new GlmCoefsListElement(
+        io_manager()->add_list_element(new GlmCoefsListElement(
             state_model->Phi_prm(),
             phi_parameter_name.str(),
             column_names));
 
         std::ostringstream sigma_parameter_name;
         sigma_parameter_name << prefix << "AR" << number_of_lags << ".sigma";
-        io_manager_->add_list_element(new StandardDeviationListElement(
+        io_manager()->add_list_element(new StandardDeviationListElement(
             state_model->Sigsq_prm(),
             sigma_parameter_name.str()));
       }
@@ -1451,8 +1451,7 @@ namespace BOOM {
         SEXP r_state_component,
         const std::string &prefix,
         StateSpaceModelBase *model) {
-      dynamic_regression_state_model_positions_.push_back(
-          model->number_of_state_models());
+      IdentifyDynamicRegression(model->number_of_state_models());
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
       Matrix predictors = ToBoomMatrix(r_design_matrix);
@@ -1477,15 +1476,15 @@ namespace BOOM {
       SetDynamicRegressionModelPrior(
           dynamic_regression,
           r_model_options,
-          io_manager_,
+          io_manager(),
           prefix);
 
-      if (io_manager_) {
+      if (io_manager()) {
         // Store the standard deviations for each variable.
         for (int i = 0; i < ncol(predictors); ++i) {
           std::ostringstream vname;
           vname << prefix << xnames[i] << ".sigma";
-          io_manager_->add_list_element(new StandardDeviationListElement(
+          io_manager()->add_list_element(new StandardDeviationListElement(
               dynamic_regression->Sigsq_prm(i),
               vname.str()));
         }
@@ -1498,7 +1497,7 @@ namespace BOOM {
                 "dynamic.regression.coefficients",
                 nullptr));
         dynamic_regression_coefficients->set_row_names(xnames);
-        post_state_list_elements_.push_back(dynamic_regression_coefficients);
+        AddPostStateListElement(dynamic_regression_coefficients);
       }
       return dynamic_regression;
     }
@@ -1511,8 +1510,7 @@ namespace BOOM {
         StateSpaceModelBase *model) {
       SEXP r_model_options = getListElement(r_state_component, "model.options");
       SEXP r_design_matrix(getListElement(r_state_component, "predictors"));
-      dynamic_regression_state_model_positions_.push_back(
-          model->number_of_state_models());
+      IdentifyDynamicRegression(model->number_of_state_models());
 
       // Upack the predictors
       Matrix predictors = ToBoomMatrix(r_design_matrix);
@@ -1551,7 +1549,7 @@ namespace BOOM {
           dynamic_regression, siginv_priors);
       dynamic_regression->set_method(sampler);
 
-      if (io_manager_) {
+      if (io_manager()) {
         std::vector<std::string> lag_names;
         lag_names.reserve(lags);
         for (int i = 0; i < lags; ++i) {
@@ -1563,13 +1561,13 @@ namespace BOOM {
         for (int i = 0; i < ncol(predictors); ++i) {
           std::ostringstream sigsq_param_name;
           sigsq_param_name << prefix << xnames[i] << ".sigma";
-          io_manager_->add_list_element(new StandardDeviationListElement(
+          io_manager()->add_list_element(new StandardDeviationListElement(
               dynamic_regression->coefficient_model(i)->Sigsq_prm(),
               sigsq_param_name.str()));
 
           std::ostringstream coefficient_param_name;
           coefficient_param_name << prefix << xnames[i] << ".ar.coefficients";
-          io_manager_->add_list_element(new GlmCoefsListElement(
+          io_manager()->add_list_element(new GlmCoefsListElement(
               dynamic_regression->coefficient_model(i)->coef_prm(),
               coefficient_param_name.str(),
               lag_names));
@@ -1584,7 +1582,7 @@ namespace BOOM {
                 "dynamic.regression.coefficients",
                 nullptr));
         dynamic_regression_coefficients->set_row_names(xnames);
-        post_state_list_elements_.push_back(dynamic_regression_coefficients);
+        AddPostStateListElement(dynamic_regression_coefficients);
       }
       return dynamic_regression;
     }
