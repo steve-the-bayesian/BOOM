@@ -19,6 +19,7 @@
 */
 
 #include "r_interface/list_io.hpp"
+#include "r_interface/create_state_model.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
 #include <functional>
 #include <list>
@@ -34,7 +35,12 @@
 
 namespace BOOM {
 
-  // Trend models
+  // Forward declarations.  
+
+  // Host model.
+  class MultivariateStateSpaceModelBase;
+  
+  // Trend models.  This list will grow over time as more models are added.
   class SharedLocalLevelStateModel;
 
   namespace RInterface {
@@ -83,8 +89,10 @@ namespace BOOM {
           const std::string &prefix);
 
 
+      // Specific functions to create specific state models.
       Ptr<MultivariateStateModel> CreateSharedLocalLevel(
           SEXP r_state_component,
+          MultivariateStateSpaceModelBase *model, 
           const std::string &prefix);
     };
     

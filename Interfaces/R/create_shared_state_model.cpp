@@ -27,8 +27,10 @@
 #include "r_interface/prior_specification.hpp"
 
 #include "Models/ChisqModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
 
 #include <R_ext/Print.h>
 
@@ -40,11 +42,11 @@ namespace BOOM {
         SEXP r_shared_state_specification,
         const std::string &prefix) {
       if (!model) return;
-      int number_of_state_models = Rf_length(r_state_specification_list);
+      int number_of_state_models = Rf_length(r_shared_state_specification);
       for (int i = 0; i < number_of_state_models; ++i) {
         model->add_state(CreateSharedStateModel(
             model,
-            VECTOR_ELT(r_state_specification_list, i),
+            VECTOR_ELT(r_shared_state_specification, i),
             prefix));
       }
       InstallPostStateListElements();
@@ -76,12 +78,12 @@ namespace BOOM {
       Vector get_vector() const override {
         Vector ans(dim());
         for (int i = 0; i < dim(); ++i) {
-          ans[i] = model_->innovation_model(i)->sigma()
+          ans[i] = model_->innovation_model(i)->sigma();
         }
         return ans;
       }
 
-      void put_vector(const ConstVectorView &view) {
+      void put_vector(const ConstVectorView &view) override {
         for (int i = 0; i < dim(); ++i) {
           model_->innovation_model(i)->set_sigsq(square(view[i]));
         }
@@ -96,11 +98,10 @@ namespace BOOM {
         SEXP r_state_component,
         MultivariateStateSpaceModelBase *model, 
         const std::string &prefix) {
-
       SEXP r_innovation_precision_priors = getListElement(
           r_state_component, "innovation.precision.priors");
       int nfactors = Rf_length(r_innovation_precision_priors);
-      Ptr<SharedLocalLevelStateModel> state_model(nfactors, model);
+      NEW(SharedLocalLevelStateModel, state_model)(nfactors, model);
 
       // Set the initial state distribution.
       state_model->set_initial_state_mean(ToBoomVector(getListElement(
@@ -114,7 +115,7 @@ namespace BOOM {
         RInterface::SdPrior prior_spec(VECTOR_ELT(
             r_innovation_precision_priors, i));
         innovation_precision_priors.push_back(new ChisqModel(
-            prior_guess.prior_df(),
+            prior_spec.prior_df(),
             prior_spec.prior_guess()));
       }
 
@@ -134,9 +135,11 @@ namespace BOOM {
 
         io_manager()->add_list_element(new MatrixListElement(
             state_model->coefficient_model()->Beta_prm(),
-            prefix + "coefficients"))
+            prefix + "coefficients"));
       }
+      return state_model;
     }
+
     
   }  // namespace RInterface
 }  // namespace BOOM
