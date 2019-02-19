@@ -743,7 +743,8 @@ namespace BOOM {
                                                    Vector *vector_buffer)
       : RealValuedRListIoElement(name),
         streaming_buffer_(vector_buffer),
-        matrix_view_(0, 0, 0)
+        matrix_view_(0, 0, 0),
+        check_buffer_(true)
   {
     // Protect against a NULL callback.
     if (callback) {
@@ -769,28 +770,47 @@ namespace BOOM {
   }
 
   void NativeVectorListElement::prepare_to_stream(SEXP object) {
-    if (!streaming_buffer_) return;
+    if (check_buffer_ && !streaming_buffer_) return;
     RealValuedRListIoElement::prepare_to_stream(object);
     int nrow = Rf_nrows(rbuffer());
     int ncol = Rf_ncols(rbuffer());
     matrix_view_.reset(SubMatrix(data(), nrow, ncol));
   }
 
+  VectorView NativeVectorListElement::next_row() {
+    return matrix_view_.row(next_position());
+  }
+  
   void NativeVectorListElement::write() {
-    matrix_view_.row(next_position()) = callback_->get_vector();
+    next_row() = callback_->get_vector();
   }
 
   void NativeVectorListElement::stream() {
-    if (!streaming_buffer_) return;
-    *streaming_buffer_ = matrix_view_.row(next_position());
+    if (check_buffer_ && !streaming_buffer_) return;
+    *streaming_buffer_ = next_row();
   }
+
+  GenericVectorListElement::GenericVectorListElement(
+      StreamableVectorIoCallback *callback,
+      const std::string &name)
+      : NativeVectorListElement(callback, nullptr, name)
+  {
+    if (callback) {
+      callback_.reset(callback);
+    } else {
+      callback_.reset(nullptr);
+    }
+  }
+
+  
   //======================================================================
   NativeMatrixListElement::NativeMatrixListElement(MatrixIoCallback *callback,
                                                    const std::string &name,
                                                    Matrix *streaming_buffer)
       : MatrixListElementBase(name),
         streaming_buffer_(streaming_buffer),
-        array_view_(0, ArrayBase::index3(0, 0, 0))
+        array_view_(0, ArrayBase::index3(0, 0, 0)),
+        check_buffer_(true)
   {
     // Protect against NULL.
     if (callback) {
@@ -853,6 +873,23 @@ namespace BOOM {
     return callback_->ncol();
   }
 
+  GenericMatrixListElement::GenericMatrixListElement(
+      StreamableMatrixIoCallback *callback,
+      const std::string &name)
+      : NativeMatrixListElement(callback, name)
+  {
+    if (callback) {
+      callback_.reset(callback);
+    }
+  }
+
+  void GenericMatrixListElement::stream() {
+    if (!callback_) {
+      report_error("Callback was never set.");
+    }
+    callback_->put_matrix(next_draw().to_matrix());
+  }
+  
   //======================================================================
   NativeArrayListElement::NativeArrayListElement(ArrayIoCallback *callback,
                                                  const std::string &name)

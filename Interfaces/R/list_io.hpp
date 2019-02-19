@@ -40,7 +40,7 @@
 // directly from R by .Call.
 // ==========================================================================
 
-namespace BOOM{
+namespace BOOM {
   class RListIoElement;
 
   // An RListIoManager manages an R list that is used to store the output of an
@@ -55,7 +55,7 @@ namespace BOOM{
   // int niter = 1000;
   // SEXP ans;
   // PROTECT(ans = io_manager.prepare_to_write(niter));
-  // for(int i = 0; i < niter; ++i){
+  // for(int i = 0; i < niter; ++i) {
   //   do_an_mcmc_iteration();
   //   io_manager.write();
   // }
@@ -69,7 +69,7 @@ namespace BOOM{
   // io_manager.prepare_to_stream();
   // int niter = 1000;
   // io_manager.advance(100);  // discard some burn-in
-  // for(int i = 0; i < niter; ++i){
+  // for(int i = 0; i < niter; ++i) {
   //   io_manager.stream();
   //   do_something_with_the_current_value();
   // }
@@ -134,7 +134,7 @@ namespace BOOM{
     virtual void stream() = 0;
 
     // Return the name of the component in the list.
-    const std::string &name()const;
+    const std::string &name() const;
 
     // Move position in stream forward by n places.
     void advance(int n);
@@ -143,7 +143,7 @@ namespace BOOM{
     // StoreBuffer must be called in derived classes to pass the SEXP that
     // manages the parameter to this base class.
     virtual void StoreBuffer(SEXP buffer);
-    SEXP rbuffer(){return rbuffer_;}
+    SEXP rbuffer() {return rbuffer_;}
 
     // Calling next_position() returns the current position and advances the
     // counter.  If you need it more than once, be sure to store it.
@@ -220,8 +220,8 @@ namespace BOOM{
   // it maintains.
   class ScalarIoCallback {
    public:
-    virtual ~ScalarIoCallback(){}
-    virtual double get_value()const=0;
+    virtual ~ScalarIoCallback() {}
+    virtual double get_value() const = 0;
   };
 
   // A callback class for saving log likelihood values.
@@ -346,8 +346,8 @@ namespace BOOM{
         : RealValuedRListIoElement(param_name) {}
     virtual int nrow() const = 0;
     virtual int ncol() const = 0;
-    const std::vector<std::string> & row_names()const;
-    const std::vector<std::string> & col_names()const;
+    const std::vector<std::string> & row_names() const;
+    const std::vector<std::string> & col_names() const;
     void set_row_names(const std::vector<std::string> &row_names);
     void set_col_names(const std::vector<std::string> &row_names);
 
@@ -374,8 +374,8 @@ namespace BOOM{
     void write() override;
     void stream() override;
 
-    int nrow()const override;
-    int ncol()const override;
+    int nrow() const override;
+    int ncol() const override;
 
    private:
     void CheckSize();
@@ -464,8 +464,8 @@ namespace BOOM{
     void write() override;
     void stream() override;
 
-    int nrow()const override;
-    int ncol()const override;
+    int nrow() const override;
+    int ncol() const override;
 
    private:
     void CheckSize();
@@ -480,16 +480,21 @@ namespace BOOM{
   // object you really care about, and which can supply the two necessary member
   // functions.  Then put the callback into a NativeVectorListElement, described
   // below.
-  class VectorIoCallback{
+  class VectorIoCallback {
    public:
-    virtual ~VectorIoCallback(){}
-    virtual int dim()const=0;
-    virtual Vector get_vector()const=0;
+    virtual ~VectorIoCallback() {}
+    virtual int dim() const = 0;
+    virtual Vector get_vector() const = 0;
   };
 
+  class StreamableVectorIoCallback : public VectorIoCallback {
+   public:
+    virtual void put_vector(const ConstVectorView &view) = 0;
+  };
+  
   // A NativeVectorListElement manages a native BOOM Vector that is not stored
   // in a VectorParams.
-  class NativeVectorListElement : public RealValuedRListIoElement{
+  class NativeVectorListElement : public RealValuedRListIoElement {
    public:
     // Args:
     //   callback: supplied access to the vectors that need to be recorded.
@@ -508,25 +513,52 @@ namespace BOOM{
     void write() override;
     void stream() override;
 
+   protected:
+    // Returns the next available row in matrix_view;
+    VectorView next_row();
+    void disable_buffer_check() { check_buffer_ = false; }
+    
    private:
     std::shared_ptr<VectorIoCallback> callback_;
     Vector *streaming_buffer_;
     SubMatrix matrix_view_;
+    bool check_buffer_;
   };
 
+  // A GenericVectorListElement manages a vector that is obtained and streamed
+  // from a callback.
+  class GenericVectorListElement : public NativeVectorListElement {
+   public:
+    GenericVectorListElement(StreamableVectorIoCallback *callback,
+                             const std::string &name);
+    void prepare_to_stream(SEXP object) override {
+      disable_buffer_check();
+      NativeVectorListElement::prepare_to_stream(object);
+    }
+    
+    void stream() override { callback_->put_vector(next_row()); }
+    
+   private:
+    std::shared_ptr<StreamableVectorIoCallback> callback_;
+  }
+  
   //---------------------------------------------------------------------------
   // Please see the comments to VectorIoCallback, above.
-  class MatrixIoCallback{
+  class MatrixIoCallback {
    public:
-    virtual ~MatrixIoCallback(){}
-    virtual int nrow()const = 0;
-    virtual int ncol()const = 0;
-    virtual Matrix get_matrix()const=0;
+    virtual ~MatrixIoCallback() {}
+    virtual int nrow() const = 0;
+    virtual int ncol() const = 0;
+    virtual Matrix get_matrix() const = 0;
   };
 
+  class StreamableMatrixIoCallback : public MatrixIoCallback {
+    virtual void put_matrix(const Matrix &mat) = 0;
+  };
+  
   // A NativeMatrixListElement manages a BOOM Mat/Matrix that is not stored in a
   // MatrixParams.
-  class NativeMatrixListElement : public MatrixListElementBase{
+  class NativeMatrixListElement : public MatrixListElementBase {
    public:
     // Args:
     //   callback: supplies access to the matrices that need recording.  This
@@ -548,15 +580,39 @@ namespace BOOM{
     void write() override;
     void stream() override;
 
-    int nrow()const override;
-    int ncol()const override;
+    int nrow() const override;
+    int ncol() const override;
 
+   protected:
+    void disable_buffer_check() {check_buffer_ = false;}
+    const ConstArrayView next_draw() {
+      return array_view_.slice(next_position, -1, -1);
+    }
+    
    private:
     std::shared_ptr<MatrixIoCallback> callback_;
     Matrix *streaming_buffer_;
     ArrayView array_view_;
+    bool check_buffer_;
   };
 
+  // Handles matrices by deferring to a callback.
+  class GenericMatrixListElement : public NativeMatrixListElement {
+   public:
+    GenericMatrixListElement(StreamableMatrixIoCallback *callback,
+                             const std::string &name);
+    void prepare_to_stream(SEXP object) override {
+      disable_buffer_check();
+      NativeMatrixListElement::prepare_to_stream(object);
+    }
+    
+    void stream() override;
+          
+   private:
+    std::shared_ptr<StreamableMatrixIoCallback> callback_;
+    
+  };
+  
   //---------------------------------------------------------------------------
   // A NativeArrayListElement manages output for one or more parameters where a
   // single MCMC iteration is represented by an R multidimensional array.  The
@@ -565,19 +621,19 @@ namespace BOOM{
   // callback provided to the constructor.
   class ArrayIoCallback {
    public:
-    virtual ~ArrayIoCallback(){}
+    virtual ~ArrayIoCallback() {}
 
     // Returns the dimensions of the array corresponding to one MCMC draw.  This
     // will have one less element than the R object holding the draws (which has
     // a leading dimension corresponding to MCMC iteration number).
-    virtual std::vector<int> dim()const = 0;
+    virtual std::vector<int> dim() const = 0;
 
     // Write the parameters to be stored.
     // Args:
     //   view: A view into an array (of dimension dim()) that holds the
     //     parameters.  The intent is for view to be a slice of the R array that
     //     will eventually be returned to the user.
-    virtual void write_to_array(ArrayView &view)const = 0;
+    virtual void write_to_array(ArrayView &view) const = 0;
 
     // Read parameters from a previously stored array.
     // Args:
