@@ -92,7 +92,7 @@ namespace {
       model->add_data(data_point);
     }
     
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, ydim, model.get());
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get());
     // Initial state mean and variance.
     Vector initial_state_mean(2, 0.0);
     SpdMatrix initial_state_variance(2, 1.0);

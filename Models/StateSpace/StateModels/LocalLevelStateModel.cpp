@@ -143,12 +143,11 @@ namespace BOOM {
   //===========================================================================
 
   SLLSM::SharedLocalLevelStateModel(
-      int number_of_factors, int ydim, MultivariateStateSpaceModelBase *host)
+      int number_of_factors, MultivariateStateSpaceModelBase *host)
       : host_(host),
         coefficient_model_(new MultivariateRegressionModel(
-            number_of_factors, ydim)),
+            number_of_factors, host->observation_dimension())),
         empty_(new EmptyMatrix),
-        observation_coefficients_current_(false),
         initial_state_mean_(0),
         initial_state_variance_(0),
         initial_state_variance_cholesky_(0, 0)
@@ -274,9 +273,6 @@ namespace BOOM {
   
   Ptr<SparseMatrixBlock> SLLSM::observation_coefficients(
       int t, const Selector &observed) const {
-    if (!observation_coefficients_current_) {
-      update_coefficients();
-    }
     if (observed.nvars() == observed.nvars_possible()) {
       return observation_coefficients_;
     } else if (observed.nvars() == 0) {
@@ -320,11 +316,8 @@ namespace BOOM {
     report_error("increment_expected_gradient is not implemented.");
   }
 
-  void SLLSM::update_coefficients() const {
-    if (!observation_coefficients_current_) {
-      observation_coefficients_->set(coefficient_model_->Beta().transpose());
-      observation_coefficients_current_ = true;
-    }
+  void SLLSM::sync_observation_coefficients() {
+    observation_coefficients_->set(coefficient_model_->Beta().transpose());
   }
 
   void SLLSM::set_param_policy() {
@@ -382,10 +375,9 @@ namespace BOOM {
 
   void SLLSM::set_observation_coefficients_observer() {
     std::function<void(void)> observer = [this]() {
-      this->observation_coefficients_current_ = false;
+      this->sync_observation_coefficients();
     };
     coefficient_model_->Beta_prm()->add_observer(observer);
-    observation_coefficients_current_ = false;
   }
   
 }  // namespace BOOM

@@ -41,7 +41,7 @@ namespace BOOM {
         SharedLocalLevelStateModel *model,
         const std::vector<Ptr<GammaModelBase>> &innovation_precision_priors,
         const Matrix &coefficient_prior_mean,
-        double observation_coefficient_prior_sample_size,
+        double coefficient_prior_sample_size,
         RNG &seeding_rng = GlobalRng::rng);
                                      
     void draw() override;
