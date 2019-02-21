@@ -101,6 +101,9 @@ namespace BOOM {
     // dimension is 3 or more then an exception is thrown.
     Matrix to_matrix() const;
 
+    virtual ostream & print(ostream &out) const = 0;
+    virtual std::string to_string() const = 0;
+    
    private:
     std::vector<int> dims_;
     std::vector<int> strides_;
@@ -111,6 +114,11 @@ namespace BOOM {
     void compute_strides();
     static int product(const std::vector<int> &dims);
   };
+
+  inline ostream & operator<<(ostream &out, const ConstArrayBase &array) {
+    return array.print(out);
+  }
+  
   //======================================================================
   class ArrayBase : public ConstArrayBase {
    public:
@@ -202,9 +210,14 @@ namespace BOOM {
     ConstArrayIterator begin() const;
     ConstArrayIterator end() const;
 
+    ostream &print(ostream &out) const override;
+    std::string to_string() const override;
+    
    private:
     const double *data_;
   };
+
+  
   //======================================================================
   class ArrayView : public ArrayBase {
    public:
@@ -278,6 +291,9 @@ namespace BOOM {
     ArrayIterator begin();
     ArrayIterator end();
 
+    ostream &print(ostream &out) const override;
+    std::string to_string() const override;
+    
    private:
     double *data_;
   };
@@ -298,6 +314,15 @@ namespace BOOM {
     Array(Array &&rhs) = default;
     Array &operator=(const Array &rhs) = default;
     Array &operator=(Array &&rhs) = default;
+
+    // The following assignment opertors expect the array to have the same size
+    // as the RHS, and will produce errors if the dimensions differ.
+    Array &operator=(const ArrayView &a);
+    Array &operator=(const ConstArrayView &a);
+    Array &operator=(const Matrix &a);
+    Array &operator=(const Vector &a);
+    Array &operator=(const VectorView &a);
+    Array &operator=(const ConstVectorView &a);
 
     template <class FwdIt>
     Array &assign(FwdIt begin, FwdIt end) {
@@ -365,8 +390,14 @@ namespace BOOM {
     const_iterator begin() const { return data_.begin(); }
     const_iterator end() const { return data_.end(); }
 
+    ostream &print(ostream &out) const override;
+    std::string to_string() const override;
+
    private:
     std::vector<double> data_;
   };
+
+  
+  
 }  // namespace BOOM
 #endif  // BOOM_ARRAY_HPP

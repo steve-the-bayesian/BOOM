@@ -343,6 +343,32 @@ namespace BOOM {
     return Matrix(0, 0);  // Never get here.
   }
 
+  namespace {
+    template <class ARRAY>
+    ostream &print_array(ostream &out, const ARRAY &array) {
+      if (array.ndim() == 1) {
+        out << array.vector_slice(-1) << std::endl;
+      } else {
+        int outer_dim = array.dim()[0];
+        for (int i = 0; i < outer_dim; ++i) {
+          std::vector<int> index(array.ndim(), -1);
+          index[0] = i;
+          array.slice(index).print(out);
+        }
+      }
+      return out;
+    }
+
+    template <class ARRAY>
+    std::string array_to_string(const ARRAY &array) {
+      std::ostringstream out;
+      print_array(out, array);
+      return out.str();
+    }
+
+  }  // namespace
+  
+  
   //======================================================================
   ArrayBase::ArrayBase() {}
 
@@ -558,6 +584,13 @@ namespace BOOM {
     return *this;
   }
 
+  ostream &ArrayView::print(ostream &out) const {
+    return print_array(out, *this);
+  }
+  std::string ArrayView::to_string() const {
+    return array_to_string(*this);
+  }
+  
   //======================================================================
   ConstArrayView::ConstArrayView(const Array &rhs)
       : ConstArrayBase(rhs), data_(rhs.data()) {}
@@ -648,6 +681,13 @@ namespace BOOM {
     return ans;
   }
 
+  ostream & ConstArrayView::print(ostream &out) const {
+    return print_array(out, *this);
+  }
+  std::string ConstArrayView::to_string() const {
+    return array_to_string(*this);
+  }
+  
   //======================================================================
   Array::Array(const std::vector<int> &dims, double initial_value)
       : ArrayBase(dims), data_(ConstArrayBase::size(), initial_value) {}
@@ -675,6 +715,31 @@ namespace BOOM {
     data_.assign(data, data + length);
   }
 
+  Array &Array::operator=(const ArrayView &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  Array &Array::operator=(const ConstArrayView &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  Array &Array::operator=(const Matrix &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  Array &Array::operator=(const Vector &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  Array &Array::operator=(const VectorView &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  Array &Array::operator=(const ConstVectorView &a) {
+    ArrayView(*this) = a;
+    return *this;
+  }
+  
   int ConstArrayBase::product(const std::vector<int> &dims) {
     int ans = 1;
     for (int i = 0; i < dims.size(); ++i) {
@@ -753,7 +818,6 @@ namespace BOOM {
                                       int x6) const {
     return this->vector_slice(index6(x1, x2, x3, x4, x5, x6));
   }
-
   VectorView Array::vector_slice(const std::vector<int> &index) {
     ArrayView view(*this);
     return view.vector_slice(index);
@@ -782,6 +846,12 @@ namespace BOOM {
     return (dim() == rhs.dim()) && (data_ == rhs.data_);
   }
 
+  ostream &Array::print(ostream &out) const {
+    return print_array(out, *this);
+  }
+  std::string Array::to_string() const {
+    return array_to_string(*this);
+  }
   //======================================================================
 
 }  // namespace BOOM

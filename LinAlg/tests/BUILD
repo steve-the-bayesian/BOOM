@@ -3,6 +3,17 @@ COPTS = [
 ]
 
 cc_test(
+    name = "array_test",
+    srcs = ["array_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
     name = "Cholesky_test",
     srcs = ["Cholesky_test.cc"],
     copts = COPTS,
