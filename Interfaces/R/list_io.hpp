@@ -655,8 +655,11 @@ namespace BOOM {
     //     deleted by the NativeArrayListElement destructor.
     //   name: The name of this object's component in the list managed by its
     //     RListIoManager.
+    //   allow_streaming: If false then calls to 'prepare_to_stream' and
+    //     'stream' are no-ops.
     NativeArrayListElement(ArrayIoCallback *callback,
-                           const std::string &name);
+                           const std::string &name,
+                           bool allow_streaming = true);
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
     void write() override;
@@ -677,6 +680,8 @@ namespace BOOM {
     // The leading index is the MCMC number.  All other positions are -1, as
     // detailed in the comments to ArrayView::slice().
     std::vector<int> array_view_index_;
+
+    bool allow_streaming_;
   };
   
   //---------------------------------------------------------------------------

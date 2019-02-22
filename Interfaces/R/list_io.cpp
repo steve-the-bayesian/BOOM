@@ -894,10 +894,12 @@ namespace BOOM {
   
   //======================================================================
   NativeArrayListElement::NativeArrayListElement(ArrayIoCallback *callback,
-                                                 const std::string &name)
+                                                 const std::string &name,
+                                                 bool allow_streaming)
       : RListIoElement(name),
         callback_(callback),
-        array_buffer_(NULL, std::vector<int>())
+        array_buffer_(NULL, std::vector<int>()),
+        allow_streaming_(allow_streaming)
   {
     if (!callback) {
       report_error("NULL callback passed to NativeArrayListElement.");
@@ -927,6 +929,7 @@ namespace BOOM {
   }
 
   void NativeArrayListElement::prepare_to_stream(SEXP object) {
+    if (!allow_streaming_) return;
     RListIoElement::prepare_to_stream(object);
     std::vector<int> array_dims = GetArrayDimensions(object);
     if (array_dims.empty()) {
@@ -944,6 +947,7 @@ namespace BOOM {
   }
 
   void NativeArrayListElement::stream() {
+    if (!allow_streaming_) return;
     ArrayView view(next_array_view());
     callback_->read_from_array(view);
   }
