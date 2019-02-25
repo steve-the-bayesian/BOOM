@@ -36,12 +36,11 @@ namespace BOOM {
       : SufstatImputeWorker<ChoiceData, SufficientStatistics>(
             global_suf, global_suf_mutex, rng, seeding_rng),
         model_(model),
-        mu_(Vector("5.09 3.29 1.82 1.24 0.76 0.39 0.04 -0.31 -0.67  -1.06")),
-        sigsq_inv_(
-            pow(Vector("4.5 2.02 1.1 0.42 0.2 0.11 0.08 0.08 0.09 0.15"), -1)),
+        mu_(Vector{5.09, 3.29, 1.82, 1.24, 0.76, 0.39, 0.04, -0.31, -0.67, -1.06}),
+        sigsq_inv_(pow(Vector({4.5, 2.02, 1.1, 0.42, 0.2, 0.11, 0.08, 0.08, 0.09, 0.15}), -1)),
         sd_(pow(sigsq_inv_, -0.5)),
-        log_mixing_weights_(log(Vector(
-            "0.004 0.04 0.168 0.147 0.125 0.101 0.104 0.116 0.107 0.088"))),
+        log_mixing_weights_(log(Vector({
+                0.004, 0.04, 0.168, 0.147, 0.125, 0.101, 0.104, 0.116, 0.107, 0.088}))),
         log_sampling_probs_(model_->log_sampling_probs()),
         downsampling_(log_sampling_probs_.size() == model_->Nchoices()),
         post_prob_(log_mixing_weights_),
