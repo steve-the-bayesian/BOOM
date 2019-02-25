@@ -396,8 +396,7 @@ namespace BOOM {
    private:
     std::vector<double> data_;
   };
-
-  
   
 }  // namespace BOOM
+
 #endif  // BOOM_ARRAY_HPP
