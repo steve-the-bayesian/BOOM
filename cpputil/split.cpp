@@ -38,28 +38,23 @@ namespace BOOM {
     typedef boost::escaped_list_separator<char> Sep;
     typedef boost::tokenizer<Sep> tokenizer;
 
-    try {
-      Sep sep("", delim, quotes);
-      tokenizer tk(s, sep);
-      if (delimited) {
-        std::vector<std::string> ans(tk.begin(), tk.end());
-        return ans;
-      }
-
-      std::vector<std::string> ans;
-      for (tokenizer::iterator it = tk.begin(); it != tk.end(); ++it) {
-        string s = *it;
-        if (!s.empty()) ans.push_back(s);
-      }
-      return ans;
-
-    } catch (std::exception &e) {
-      report_error(e.what());
-    } catch (...) {
-      report_error("caught unknown exception in StringSplitter::operator()");
+    Sep sep("", delim, quotes);
+    tokenizer tk(s, sep);
+    if (delimited) {
+      return std::vector<std::string>(tk.begin(), tk.end());
     }
-    std::vector<std::string> result;  // never get here
-    return result;
+
+    std::vector<std::string> ans;
+    for (tokenizer::iterator it = tk.begin(); it != tk.end(); ++it) {
+      string token = *it;
+      if (!token.empty()) ans.push_back(token);
+      if (ans.size() > s.size()) {
+        std::ostringstream err;
+        err << "Too many fields discovered in the string " << s;
+        report_error(err.str());
+      }
+    }
+    return ans;
   }
 
 }  // namespace BOOM

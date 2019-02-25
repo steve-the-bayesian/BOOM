@@ -67,6 +67,15 @@ namespace BOOM {
     if (have_comma) split = StringSplitter(",");
     std::vector<string> fields = split(s);
     uint n = fields.size();
+    if (n > s.size()) {
+      std::ostringstream err;
+      err << "Error splitting string into numeric fields." << std::endl
+          << "The string was " << s << "." << std::endl
+          << "The field delimiter was " << (have_comma ? "," : "whitespace.")
+          << std::endl
+          << n << " fields were produced by the split.";
+      report_error(err.str());
+    }
     reserve(n);
     for (uint i = 0; i < n; ++i) {
       double x = atof(fields[i].c_str());
