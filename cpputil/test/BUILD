@@ -56,3 +56,14 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "string_split_test",
+    srcs = ["string_split_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:main",
+    ],
+)
