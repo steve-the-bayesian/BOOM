@@ -19,6 +19,7 @@
 */
 
 #include <memory>
+#include "LinAlg/Array.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
@@ -55,9 +56,20 @@ namespace BOOM {
   // smaller state, so it has the potential to be fast.
   class MultivariateStateSpaceModelBase : public StateSpaceModelBase {
    public:
+    
+    // Args:
+    //   nseries: The number of time series being modeled.  Note that in some cases
+    //     (e.g. dynamic regression models) the answer varies time point by time
+    //     point.  Concrete classes can signal this by setting ydim <= 0.
+    MultivariateStateSpaceModelBase(int nseries) : nseries_(nseries) {}
     MultivariateStateSpaceModelBase *clone() const override = 0;
     MultivariateStateSpaceModelBase & operator=(
         const MultivariateStateSpaceModelBase &rhs);
+
+    // The number of series being modeled.  See the comments in the constructor.
+    // Child classes should check that nseries > 0, where a value <= 0 indicates
+    // a dimension that varies by time.
+    int nseries() const { return nseries_; }
     
     // ----- virtual functions required by the base class: ----------
     // These must be implemented by the concrete class.
@@ -78,7 +90,8 @@ namespace BOOM {
     
     //---------------- Parameters for structural equations. -------------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
-    // Note the lack of transpose on Z[t].
+    // Note the lack of transpose on Z[t], so in the case of a single time
+    // series Z[t] is a row vector.
     //
     // Args:
     //   t: The time index for which observation coefficients are desired.
@@ -101,14 +114,6 @@ namespace BOOM {
     // are actually observed.  In the typical case all elements will be true.
     virtual const Selector &observed_status(int t) const = 0;
 
-    // Row dimension of the observation coefficients, which is the dimension of
-    // the data.
-    int observation_dimension() const {
-      return observed_status(0).nvars_possible();
-    }
-    
-    std::vector<Vector> state_contributions() const;
-    
    protected:
     // Implements part of a single step of the E-step in the EM algorithm or
     // gradient computation for the gradient of the observed data log
@@ -170,9 +175,17 @@ namespace BOOM {
 
    private:
     void simulate_forward(RNG &rng) override;
+    
     //    void propagate_disturbances() override;
-    virtual Vector simulate_observation(RNG &rng, int t) = 0;
 
+    // Simulate a fake observation to use as part of the Durbin-Koopman state
+    // simulation algorithm.  
+    virtual Vector simulate_fake_observation(RNG &rng, int t) = 0;
+
+    // The number of time series being modeled.  If nseries_ <= 0 it is a signal
+    // that the dimension of the observed data changes with time.
+    int nseries_;
+    
     // Workspace for disturbance smoothing.
     Vector r0_sim_;
     Vector r0_obs_;
@@ -182,7 +195,7 @@ namespace BOOM {
   class ConditionalIidMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
-    ConditionalIidMultivariateStateSpaceModelBase();
+    ConditionalIidMultivariateStateSpaceModelBase(int nseries);
 
     // All observations at time t have this variance.
     virtual double observation_variance(int t) const = 0;
@@ -198,19 +211,29 @@ namespace BOOM {
     ConditionalIidKalmanFilter &get_simulation_filter() override;
     const ConditionalIidKalmanFilter &get_simulation_filter() const override;
 
-    Vector simulate_observation(RNG &rng, int t) override;
-    
    private:
+    // Simulate a fake observation at time t to use as part of the Durbin and
+    // Koopman data augmentation algorithm.
+    //
+    // This override handles the case where the dimension of the response is
+    // known.  If the dimension is time varying then this function will generate
+    // an error, so child classes involving time varying dimension must handle
+    // the time varying case with their own overrides.
+    Vector simulate_fake_observation(RNG &rng, int t) override;
+
     ConditionalIidKalmanFilter filter_;
     ConditionalIidKalmanFilter simulation_filter_;
   };
-  
+
   //===========================================================================
   class ConditionallyIndependentMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
-    ConditionallyIndependentMultivariateStateSpaceModelBase()
-        : filter_(this), simulation_filter_(this) {}
+    ConditionallyIndependentMultivariateStateSpaceModelBase(int nseries)
+        : MultivariateStateSpaceModelBase(nseries),
+          filter_(this),
+          simulation_filter_(this)
+    {}
 
     // Variance of the observation error at time t.  Durbin and Koopman's H[t].
     virtual DiagonalMatrix observation_variance(int t) const = 0;
@@ -230,9 +253,11 @@ namespace BOOM {
       return simulation_filter_;
     }
 
-    Vector simulate_observation(RNG &rng, int t) override;
     
    private:
+    // This function is 
+    Vector simulate_fake_observation(RNG &rng, int t) override;
+
     ConditionallyIndependentKalmanFilter filter_;
     ConditionallyIndependentKalmanFilter simulation_filter_;
   };
@@ -241,6 +266,10 @@ namespace BOOM {
   class GeneralMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
+    GeneralMultivariateStateSpaceModelBase(int nseries)
+        : MultivariateStateSpaceModelBase(nseries)
+    {}
+    
     virtual SpdMatrix observation_variance(int t) const = 0;
 
     //---------------- Prediction, filtering, smoothing ---------------

@@ -27,7 +27,8 @@ namespace BOOM {
   }  // namespace
 
   MSSM::MultivariateStateSpaceModel(int dim)
-      : observation_model_(new IndependentMvnModel(dim)),
+      : ConditionallyIndependentMultivariateStateSpaceModelBase(dim),
+        observation_model_(new IndependentMvnModel(dim)),
         observation_coefficients_(new BlockDiagonalMatrix)
   {}
         
@@ -40,7 +41,7 @@ namespace BOOM {
   {
     clear_state_models();
     for (int i = 0; i < rhs.state_models_.size(); ++i) {
-      add_state(rhs.state_models_[i]->clone());
+      add_shared_state(rhs.state_models_[i]->clone());
     }
   }
 
@@ -61,7 +62,7 @@ namespace BOOM {
   
   MSSM *MSSM::clone() const {return new MSSM(*this);} 
 
-  void MSSM::add_state(const Ptr<MultivariateStateModel> &state_model) {
+  void MSSM::add_shared_state(const Ptr<MultivariateStateModel> &state_model) {
     state_models_.push_back(state_model);
     StateSpaceModelBase::add_state(state_model);
   }
@@ -89,10 +90,10 @@ namespace BOOM {
 
   Matrix MSSM::simulate_forecast(RNG &rng, int horizon,
                                  const Vector &final_state) const {
-    Matrix ans(horizon, observation_dimension());
+    Matrix ans(horizon, nseries());
     int t0 = time_dimension();
     Vector state = final_state;
-    Selector observed(observation_dimension(), true);
+    Selector observed(nseries(), true);
     for (int t = 0; t < horizon; ++t) {
       state = simulate_next_state(rng, state, t + t0);
       ans.row(t) = rmvn_mt(
@@ -126,5 +127,5 @@ namespace BOOM {
   const Selector &MSSM::observed_status(int t) const {
     return dat()[t]->observation_status();
   }
-  
+
 }  // namespace BOOM

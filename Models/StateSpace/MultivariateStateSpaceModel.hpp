@@ -48,11 +48,12 @@ namespace BOOM {
     MultivariateStateSpaceModel(const MultivariateStateSpaceModel &rhs);
     MultivariateStateSpaceModel(MultivariateStateSpaceModel &&rhs) = default;
     MultivariateStateSpaceModel * clone() const override;
-
-    MultivariateStateSpaceModel & operator=(const MultivariateStateSpaceModel &rhs);
-    MultivariateStateSpaceModel & operator=(MultivariateStateSpaceModel &&rhs) = default;
+    MultivariateStateSpaceModel & operator=(
+        const MultivariateStateSpaceModel &rhs);
+    MultivariateStateSpaceModel & operator=(
+        MultivariateStateSpaceModel &&rhs) = default;
     
-    void add_state(const Ptr<MultivariateStateModel> &state_model);
+    void add_shared_state(const Ptr<MultivariateStateModel> &state_model);
     
     IndependentMvnModel *observation_model() override;
     const IndependentMvnModel *observation_model() const override;
@@ -78,6 +79,14 @@ namespace BOOM {
       return dat()[t]->missing() != Data::observed;
     }
 
+    // The contributions of each state model to the mean of the response at each
+    // time point.
+    //
+    // Returns:
+    //   A 3-way array, where element (s, t, d) gives the contribution of state
+    //   model s to dimension d of the response variable at time t.
+    Array state_contributions() const;
+    
    private:
     Ptr<IndependentMvnModel> observation_model_;
     std::vector<Ptr<MultivariateStateModel>> state_models_;

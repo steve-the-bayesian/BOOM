@@ -145,13 +145,18 @@ namespace BOOM {
   SLLSM::SharedLocalLevelStateModel(
       int number_of_factors, MultivariateStateSpaceModelBase *host)
       : host_(host),
-        coefficient_model_(new MultivariateRegressionModel(
-            number_of_factors, host->observation_dimension())),
         empty_(new EmptyMatrix),
         initial_state_mean_(0),
         initial_state_variance_(0),
         initial_state_variance_cholesky_(0, 0)
   {
+    if (host->nseries() <= 0) {
+      report_error("The SharedLocalLevelStateModel cannot be used with models "
+                   "where the number of dimensions varies with time. ");
+    }
+    coefficient_model_.reset(new MultivariateRegressionModel(
+        number_of_factors, host->nseries()));
+    
     for (int i = 0; i < number_of_factors; ++i) {
       innovation_models_.push_back(new ZeroMeanGaussianModel);
     }

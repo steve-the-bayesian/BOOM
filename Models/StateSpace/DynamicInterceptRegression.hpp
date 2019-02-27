@@ -195,7 +195,7 @@ namespace BOOM {
    private:
     // Reimplements the logic in the base class, but optimized for the scalar
     // observation variance.
-    Vector simulate_observation(RNG &rng, int t) override;
+    Vector simulate_fake_observation(RNG &rng, int t) override;
 
     void initialize_regression_component(int xdim);
 

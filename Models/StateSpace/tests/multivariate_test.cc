@@ -2,8 +2,10 @@
 
 #include "test_utils/test_utils.hpp"
 
-#include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
+#include "cpputil/math_utils.hpp"
 
+#include "Models/ChisqModel.hpp"
+#include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
@@ -15,14 +17,16 @@ namespace {
 
   using namespace BOOM;
   using std::endl;
+  using std::cout;
 
   class MultivariateStateSpaceModelTest : public ::testing::Test {
    protected:
-    MultivariateStateSpaceModelTest() {
-      GlobalRng::rng.seed(8675309);
+    MultivariateStateSpaceModelTest()
+        : sigma_obs_(.25) {
+      GlobalRng::rng.seed(8675310);
     }
 
-    // Generate fake parameters, and simulate the state and observed data.
+    // Generate fake parameters, simulate the state, and simulate observed data.
     // Args:
     //   time_dimension:  The number of time points to simulate.
     //   ydim:  The dimension of the response to simulate.
@@ -36,8 +40,12 @@ namespace {
       observed_data_.resize(time_dimension, ydim);
       observation_coefficients_.resize(ydim, nfactors);
       observation_coefficients_.randomize();
+      innovation_sigsq_ = Vector(nfactors);
+      innovation_sigsq_.randomize();
+      innovation_sigsq_ *= innovation_sigsq_;
+      Vector innovation_sd = sqrt(innovation_sigsq_);
       for (int i = 0; i < observation_coefficients_.nrow(); ++i) {
-        for (int j = 0; j < std::min<int>(i, observation_coefficients_.ncol()); ++j) {
+        for (int j = i; j < observation_coefficients_.ncol(); ++j) {
           observation_coefficients_(i, j) = 0.0;
         }
         if (i < observation_coefficients_.ncol()) {
@@ -46,16 +54,18 @@ namespace {
       }
       
       for (int i = 0; i < time_dimension; ++i) {
-        state += rnorm_vector(nfactors, 0, 1);
+        state += rnorm_vector(nfactors, 0, 1) * innovation_sd;
         state_.col(i) = state;
         observed_data_.row(i) = observation_coefficients_ * state
-            + rnorm_vector(ydim, 0, 1);
+            + rnorm_vector(ydim, 0, sigma_obs_);
       }
     }
 
     Matrix observed_data_;
     Matrix state_;
     Matrix observation_coefficients_;
+    Vector innovation_sigsq_;
+    double sigma_obs_;
   };
 
   //===========================================================================
@@ -79,14 +89,39 @@ namespace {
   }
 
   //===========================================================================
-  TEST_F(MultivariateStateSpaceModelTest, McmcTest) {
+  TEST_F(MultivariateStateSpaceModelTest, ModelMatricesTest) {
+    int ydim = 3;
+    int nfactors = 2;
+    int time_dimension = 10;
+    McmcSetup(time_dimension, ydim, nfactors);
+    
+    MultivariateStateSpaceModel model(ydim);
+    for (int i = 0; i < time_dimension; ++i) {
+      NEW(PartiallyObservedVectorData, data_point)(observed_data_.row(i));
+      model.add_data(data_point);
+    }
+    
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model);
+    model.add_shared_state(state_model);
+
+    Selector fully_observed(ydim, true);
+    EXPECT_EQ(model.observation_coefficients(0, fully_observed)->nrow(), ydim);
+    EXPECT_EQ(model.observation_coefficients(0, fully_observed)->ncol(),
+              nfactors);
+  }
+  
+  //===========================================================================
+  // TODO: move this to a function that depends on ydim.  Test with ydim == 2 to
+  // catch the low-dimensional update.
+  TEST_F(MultivariateStateSpaceModelTest, DrawHighDimensionalStateTest) {
     int time_dimension = 100;
-    int ydim = 6;
+    int ydim = 3;
     int nfactors = 2;
     int niter = 200;
     McmcSetup(time_dimension, ydim, nfactors);
 
     NEW(MultivariateStateSpaceModel, model)(ydim);
+    cout << "raw data: " << endl;
     for (int i = 0; i < observed_data_.nrow(); ++i) {
       NEW(PartiallyObservedVectorData, data_point)(observed_data_.row(i));
       model->add_data(data_point);
@@ -102,17 +137,24 @@ namespace {
     // Prior distribution and posterior sampler.
     std::vector<Ptr<GammaModelBase>> innovation_precision_priors;
     for (int i = 0; i < nfactors; ++i) {
-      innovation_precision_priors.push_back(new GammaModel(1, 1));
+      innovation_precision_priors.push_back(
+          new ChisqModel(1, sqrt(innovation_sigsq_[i])));
     }
     Matrix observation_coefficient_prior_mean(nfactors, ydim, 0.0);
-    NEW(SharedLocalLevelPosteriorSampler, state_sampler)(
+    NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
         state_model.get(),
         innovation_precision_priors,
         observation_coefficient_prior_mean,
         1.0);
-    state_model->set_method(state_sampler);
+    state_model->set_method(state_model_sampler);
     // Done configuring, so add the state model.
-    model->add_state(state_model);
+    for (int i = 0; i < nfactors; ++i) {
+      state_model->innovation_model(i)->set_sigsq(innovation_sigsq_[i]);
+    }
+
+    state_model->coefficient_model()->set_Beta(
+        observation_coefficients_.transpose());
+    model->add_shared_state(state_model);
 
     // Check that the model matrices are as expected.
     int time_index = 2;
@@ -129,7 +171,7 @@ namespace {
         << observation_coefficients_ << endl
         << "what the model has: " << endl
         << observation_coefficients;
-    
+
     // Need a prior for the observation model.
     std::vector<Ptr<GammaModelBase>> observation_model_priors;
     for (int i = 0; i < ydim; ++i) {
@@ -139,18 +181,38 @@ namespace {
         model->observation_model(),
         observation_model_priors);
     model->observation_model()->set_method(observation_model_sampler);
+    model->observation_model()->set_sigsq(Vector(ydim, square(sigma_obs_)));
 
     // Set the global sampler for the model.
     NEW(MultivariateStateSpaceModelSampler, sampler)(model.get());
     model->set_method(sampler);
     
     Array state_draws({niter, model->state_dimension(), model->time_dimension()});
-    Array observation_coefficient_draws({niter, ydim, model->state_dimension()});
-
+    
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
+      state_draws.slice(i, -1, -1) = model->state();
     }
+
+    auto status = CheckMcmcMatrix(state_draws.slice(-1, 0, -1).to_matrix(),
+                                  state_.row(0), .95, true, "factor1.txt");
+    EXPECT_TRUE(status.ok) << status.error_message();
+
+    // The imputed values of the state should fall within the range of the data
+    // at time t.
+    EXPECT_EQ("",
+              CheckWithinRage(state_draws.slice(-1, 0, -1).to_matrix(),
+                              Vector(state_.row(0)) - 10 * sigma_obs_,
+                              Vector(state_.row(0)) + 10 * sigma_obs_));
+
+    EXPECT_EQ("",
+              CheckWithinRage(state_draws.slice(-1, 1, -1).to_matrix(),
+                              Vector(state_.row(1)) - 10 * sigma_obs_,
+                              Vector(state_.row(1)) + 10 * sigma_obs_));
     
+    auto status2 = CheckMcmcMatrix(state_draws.slice(-1, 1, -1).to_matrix(),
+                                  state_.row(1), .95, true, "factor2.txt");
+    EXPECT_TRUE(status2.ok) << status2.error_message();
   }
 
   

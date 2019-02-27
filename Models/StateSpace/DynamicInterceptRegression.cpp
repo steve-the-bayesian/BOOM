@@ -63,7 +63,9 @@ namespace BOOM {
 
   //===========================================================================
   
-  DIRM::DynamicInterceptRegressionModel(int xdim) {
+  DIRM::DynamicInterceptRegressionModel(int xdim)
+      : ConditionalIidMultivariateStateSpaceModelBase(-1)
+  {
     initialize_regression_component(xdim);
   }
 
@@ -235,8 +237,9 @@ namespace BOOM {
   
   //===========================================================================
   // private:
-  Vector DIRM::simulate_observation(RNG &rng, int t) {
-    Selector fully_observed(observation_dimension(), true);
+  Vector DIRM::simulate_fake_observation(RNG &rng, int t) {
+    int number_of_observations = dat()[t]->sample_size();
+    Selector fully_observed(number_of_observations, true);
     const Selector &observed(
         t >= time_dimension() ? fully_observed : observed_status(t));
     Vector ans = (*observation_coefficients(t, observed)) * state(t);

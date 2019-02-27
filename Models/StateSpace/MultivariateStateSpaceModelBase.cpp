@@ -64,7 +64,7 @@ namespace BOOM {
         simulate_next_state(rng, mutable_state().col(t - 1),
                             mutable_state().col(t), t);
       }
-      Vector simulated_observation = simulate_observation(rng, t);
+      Vector simulated_observation = simulate_fake_observation(rng, t);
       simulation_filter.update_single_observation(
           simulated_observation, observed_status(t), t);
     }
@@ -101,6 +101,7 @@ namespace BOOM {
   //   }
   // }
 
+  
   void MvBase::update_observation_model(Vector &r, SpdMatrix &N, int t,
                                         bool save_state_distributions,
                                         bool update_sufficient_statistics,
@@ -114,20 +115,23 @@ namespace BOOM {
     using CiidBase = ConditionalIidMultivariateStateSpaceModelBase;
   }
 
-  CiidBase::ConditionalIidMultivariateStateSpaceModelBase()
-      : filter_(this),
+  CiidBase::ConditionalIidMultivariateStateSpaceModelBase(int nseries)
+      : MvBase(nseries),
+        filter_(this),
         simulation_filter_(this)
   {}
   
-  Vector CiidBase::simulate_observation(RNG &rng, int t) {
-    Vector ans = (*observation_coefficients(
-        t, observed_status(t))) * state().col(t);
-    double sigma = sqrt(observation_variance(t));
-    for (int i = 0; i < ans.size(); ++i) {
-      ans[i] += rnorm_mt(rng, 0, sigma);
-    }
-    return ans;
-  }
+  // A precondition is that the state at time t was simulated by the forward
+  // portion of the Durbin-Koopman data augmentation algorithm.
+  Vector CiidBase::simulate_fake_observation(RNG &rng, int t) {
+     Vector ans = (*observation_coefficients(
+         t, observed_status(t))) * state().col(t);
+     double sigma = sqrt(observation_variance(t));
+     for (int i = 0; i < ans.size(); ++i) {
+       ans[i] += rnorm_mt(rng, 0, sigma);
+     }
+     return ans;
+   }
 
   ConditionalIidKalmanFilter & CiidBase::get_filter() {
     return filter_;
@@ -151,10 +155,8 @@ namespace BOOM {
     using CindBase = ConditionallyIndependentMultivariateStateSpaceModelBase;
   }  // namespace
 
-  Vector CindBase::simulate_observation(RNG &rng, int t) {
-    Selector fully_observed(observation_dimension(), true);
-    Vector ans = (*observation_coefficients(
-        t, t >= time_dimension() ? fully_observed : observed_status(t)))
+  Vector CindBase::simulate_fake_observation(RNG &rng, int t) {
+    Vector ans = (*observation_coefficients(t, observed_status(t)))
         * state().col(t);
     for (int i = 0; i < ans.size(); ++i) {
       double sigma = sqrt(single_observation_variance(t, i));
