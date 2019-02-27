@@ -29,8 +29,6 @@ namespace BOOM {
   using Eigen::Lower;
   using Eigen::MatrixXd;
   using Eigen::Upper;
-  using std::cout;
-  using std::endl;
 
   QR::QR(const Matrix &mat, bool just_compute_R) {
     decompose(mat, just_compute_R);
