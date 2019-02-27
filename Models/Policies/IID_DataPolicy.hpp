@@ -123,8 +123,7 @@ namespace BOOM {
   template <class D>
   void IID_DataPolicy<D>::set_data(const DatasetType &d) {
     clear_data();
-    size_t n = d.size();
-    for (size_t i = 0; i < n; ++i) add_data(d[i]);
+    for (auto i = 0; i < d.size(); ++i) add_data(d[i]);
   }
 
   template <class D>
