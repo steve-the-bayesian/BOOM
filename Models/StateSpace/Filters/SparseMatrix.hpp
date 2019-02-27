@@ -126,6 +126,18 @@ namespace BOOM {
     void conforms_to_cols(int i) const;
 
     void check_can_add(const SubMatrix &block) const;
+
+    std::ostream & print(std::ostream &out = std::cout) const {
+      out << dense();
+      return out;
+    }
+
+    std::string to_string() const {
+      std::ostringstream out;
+      print(out);
+      return out.str();
+    }
+    
    private:
     friend void intrusive_ptr_add_ref(SparseKalmanMatrix *m) { m->up_count(); }
     friend void intrusive_ptr_release(SparseKalmanMatrix *m) {
