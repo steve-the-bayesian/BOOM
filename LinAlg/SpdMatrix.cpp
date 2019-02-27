@@ -73,7 +73,10 @@ namespace BOOM {
     if (check) {
       double d = A.distance_from_symmetry();
       if (d > .5) {
-        report_error("Matrix argument to SpdMatrix is not symmetric.");
+        std::ostringstream err;
+        err << "Non-symmetric matrix passed to SpdMatrix constructor."
+            << std::endl << A;
+        report_error(err.str());
       } else if (d > 1e-9) {
         fix_near_symmetry();
       }
