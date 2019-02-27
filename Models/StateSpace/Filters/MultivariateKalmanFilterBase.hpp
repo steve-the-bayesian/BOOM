@@ -33,6 +33,14 @@ namespace BOOM {
     // The marginal distribution of state when the observed data is
     // multivariate.  Note that the dimension of the observed data need not be
     // the same at each time point.
+    //
+    // Examples of concrete marginal distributions include:
+    // - The response variables are conditionally IID given state.  (e.g. a
+    //   dynamic regression model).
+    // - The response variables are conditionally independent given state, but
+    //   not identically distributed.
+    // - The response variables have an unspecified correlation matrix.
+    // - Others are possible.
     class MultivariateMarginalDistributionBase
         : public MarginalDistributionBase {
      public:
@@ -63,8 +71,10 @@ namespace BOOM {
       // forecast_precision_log_determinant() (for case 2) being called instead.
       virtual SpdMatrix forecast_precision() const = 0;
 
-      // The prediction error is y[t] - E(y[t] | Y[t-1]).  The scaled prediction
-      // error is forecast_precision() * prediction_error().
+      // The prediction error is y[t] - E(y[t] | Y[t-1]), where y[t] is the
+      // observation at time t, and Y[t-1] is the set of all preceding
+      // observations. The scaled prediction error is forecast_precision() *
+      // prediction_error().
       const Vector &scaled_prediction_error() const {
         return scaled_prediction_error_;
       }
@@ -72,12 +82,11 @@ namespace BOOM {
         scaled_prediction_error_ = err;
       }
 
+      // The log of the determinant of forecast_precision().
       double forecast_precision_log_determinant() const {
         return forecast_precision_log_determinant_;
       }
-      void set_forecast_precision_log_determinant(double logdet) {
-        forecast_precision_log_determinant_ = logdet;
-      }
+      void set_forecast_precision_log_determinant(double logdet);
 
       // The set of regression coefficients used to adjust the expected value of
       // the state given the prediction error.
@@ -94,12 +103,14 @@ namespace BOOM {
       virtual double update(const Vector &observation,
                             const Selector &observed);
 
-      // Different child classes can have different thresholds for what it means
-      // to be high dimensional.
+      // An observation is considered high dimensional if the number of observed
+      // series at a given time point exceeds the state dimension by a specified
+      // factor.  Different child classes can have different thresholds for what
+      // it means to be high dimensional.
       virtual bool high_dimensional(const Selector &observed) const;
       virtual double high_dimensional_threshold_factor() const = 0;
       
-      // The marginal distribution for the previous time point.
+      // The marginal distribution of the state at the preceding time point.
       virtual MultivariateMarginalDistributionBase *previous() = 0;
       virtual const MultivariateMarginalDistributionBase *previous() const = 0;
 
@@ -161,17 +172,31 @@ namespace BOOM {
   }  // namespace Kalman
 
   //===========================================================================
-  // A base class for handling the parts of the multivariate Kalman filter that
-  // don't depend on the observation variance.
+  // An intermediate base class for handling the parts of the multivariate
+  // Kalman filter that don't depend on the observation variance.  
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
+    // Args:
+    //   model:  The model to be filtered.
     MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model);
     
     void update() override;
+
+    // Update the marginal distribution at a single time point.  The simulation
+    // filter calls this method based on simulated data, so we can't rely on the
+    // stored model object to supply the data in all cases.
+    //
+    // Args:
+    //   observation:  The observed data at time t.
+    //   observed:  Indicates which elements of observation were actually observed.
+    //   t: The time point at which observation was observed.
     void update_single_observation(
         const Vector &observation, const Selector &observed, int t);
-    
+
+    // Run Durbin and Koopman's fast disturbance smoother.  
     void fast_disturbance_smooth() override;
+
+    // The prediction error at time t.
     Vector prediction_error(int t, bool standardize = false) const;
 
     Kalman::MultivariateMarginalDistributionBase & operator[](size_t pos)
@@ -192,7 +217,7 @@ namespace BOOM {
     virtual Kalman::MultivariateMarginalDistributionBase &node(size_t t) = 0;
     virtual const Kalman::MultivariateMarginalDistributionBase &node(
         size_t t) const = 0;
-
+    
    private:
     MultivariateStateSpaceModelBase *model_;
   };
@@ -231,6 +256,7 @@ namespace BOOM {
       }
     }
 
+    // The marginal distribution managed by the filter.
     const MarginalType &back() const {return nodes_.back();}
 
    protected:

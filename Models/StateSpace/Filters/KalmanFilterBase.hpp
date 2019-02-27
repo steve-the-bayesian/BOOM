@@ -35,33 +35,42 @@ namespace BOOM {
     //
     // Several base classes are needed for marginal distributions to account for
     // the fact that univariate and multivariate data must be handled
-    // differently, and that there are several potentially simplifying
-    // assumptions in the multivariate case.
+    // differently, and that there are several potential simplifying assumptions
+    // in the multivariate case.
+    //---------------------------------------------------------------------------
 
     // A base class to handle quantities common to all marginal distributions.
     class MarginalDistributionBase {
      public:
-      explicit MarginalDistributionBase(int dim, int time_index);
+      // Args:
+      //   state_dimension: The dimension of the state variable described by
+      //     this marginal distribution.
+      //   time_index: The index of the time point described by this
+      //     distribution.
+      explicit MarginalDistributionBase(int state_dimension, int time_index);
+
       virtual ~MarginalDistributionBase() {}
 
-      int time_index() const {
-        return time_index_;
-      }
+      // The time index for the time point described by this marginal
+      // distribution.
+      int time_index() const { return time_index_; }
       
       // The marginal distribution at time t should be initialized with the
       // state mean from distribution t-1.  After updating, the state_mean()
       // refers to the mean of the state at time t+1 given data to time t.
       const Vector &state_mean() const {return state_mean_;}
       void set_state_mean(const Vector &state_mean) {state_mean_ = state_mean;}
-      void increment_state_mean(const Vector &v) { state_mean_ += v; }
+      void increment_state_mean(const Vector &mean_increment) {
+        state_mean_ += mean_increment;
+      }
 
       // The marginal distribution at time t should be initialized with the
       // state variance from distribution t-1.  After updating, the
       // state_variance() refers to the variance of the state at time t+1 given
       // data to time t.
       const SpdMatrix &state_variance() const {return state_variance_;}
-      void set_state_variance(const SpdMatrix &var) { state_variance_ = var;}
-      void increment_state_variance(const SpdMatrix &m) {state_variance_ += m;}
+      void set_state_variance(const SpdMatrix &var); 
+      void increment_state_variance(const SpdMatrix &variance_increment);
 
       // Convert the state mean and variance from forward-looking moments
       // (e.g. E(state[t+1] | Data to t)) to contemporaneous moments
@@ -81,16 +90,14 @@ namespace BOOM {
       // where Q[t] is the error variance at time t (a model paramter), and R[t]
       // is the error expander.  In this equation R[t]' is a contractor (moving
       // from the state dimension to the error dimension).
-      const Vector &scaled_state_error() const {
-        return scaled_state_error_;
-      }
-
-      void set_scaled_state_error(const Vector &r) {
-        scaled_state_error_  = r;
+      const Vector &scaled_state_error() const { return scaled_state_error_; }
+      void set_scaled_state_error(const Vector &scaled_error) {
+        scaled_state_error_ = scaled_error;
       }
 
      protected:
       SpdMatrix & mutable_state_variance() {return state_variance_;}
+      void check_variance(const SpdMatrix &v) const;
       
      private:
       // The time point that this marginal distribution describes.
@@ -110,6 +117,7 @@ namespace BOOM {
 
   }  // namespace Kalman
 
+  //===========================================================================
   // A base class for Kalman filter objects.  This class keeps track of the log
   // likelihood, the status of the filter, and takes responsibility for setting
   // observers on parameters and data.
@@ -118,19 +126,50 @@ namespace BOOM {
     KalmanFilterBase();
     virtual ~KalmanFilterBase() {}
     
-    // The status of the Kalman filter.
+    //--------------------------------------------------------------------------
+    // Accessors and basic status.
+    //--------------------------------------------------------------------------
+
+    // The status of the Kalman filter object.
     // Values:
     //   NOT_CURRENT: The filter must be re-run before its entries can be used.
-    //   MCMC_CURRENT: neither parameter nor data have changed since
-    //     impute_state() was last called.  state posterior means and variances
-    //     are not available.
-    //   CURRENT: Neither parameters nor data have changed since
-    //     full_kalman_filter() was last called.
+    //   MCMC_CURRENT: parameters and data are unchanged since impute_state()
+    //     was last called.  state posterior means and variances are not
+    //     available.
+    //   CURRENT: Parameters and data are unchanged since full_kalman_filter()
+    //     was last called.
     enum KalmanFilterStatus { NOT_CURRENT, MCMC_CURRENT, CURRENT };
 
+    void set_status(const KalmanFilterStatus &status) { status_ = status; }
+
+    // Print the state mean of each marginal distribution.
+    virtual ostream & print(ostream &out) const;
+    std::string to_string() const;
+
+    // The marginal distribution at time t.
+    virtual Kalman::MarginalDistributionBase & operator[](size_t pos) = 0;
+    virtual const Kalman::MarginalDistributionBase & operator[](
+        size_t pos) const = 0;
+
+    // The number of nodes (time points) managed by the filter.
+    virtual int size() const = 0;
+
+    // Return the last computed value of log likelihood.
     double log_likelihood() const {
       return log_likelihood_;
     }
+
+    const Vector &initial_scaled_state_error() const {
+      return initial_scaled_state_error_;
+    }
+
+    // The matrix of state means.  Each column of the matrix represents a time
+    // point.
+    Matrix state_mean() const;
+
+    //--------------------------------------------------------------------------
+    // Filtering operations
+    //--------------------------------------------------------------------------
 
     double compute_log_likelihood() {
       if (status_ == NOT_CURRENT) {
@@ -143,40 +182,26 @@ namespace BOOM {
     // Set log likelihood to zero and status to NOT_CURRENT.
     void clear();
 
-    // Run the kalman filter over all the data contained in *model_.
+    // Concrete classes hold a pointer to a model object.  Calling update() runs
+    // the kalman filter over all the data contained in *model_.
     virtual void update() = 0;
 
     // Run the Durbin and Koopman fast disturbance smoother.
     virtual void fast_disturbance_smooth() = 0;
 
-    void mark_not_current() {
-      status_ = NOT_CURRENT;
-    }
-
-    virtual Kalman::MarginalDistributionBase & operator[](size_t pos) = 0;
-    virtual const Kalman::MarginalDistributionBase & operator[](
-        size_t pos) const = 0;
-
-    // The number of nodes.
-    virtual int size() const = 0;
-    
-    void set_status(const KalmanFilterStatus &status) {
-      status_ = status;
-    }
-
-    const Vector &initial_scaled_state_error() const {
-      return initial_scaled_state_error_;
-    }
-
-    // The matrix of state means.  Each column of the matrix represents a time
-    // point.
-    Matrix state_mean() const;
-    
    protected:
     void increment_log_likelihood(double loglike) {
       log_likelihood_ += loglike;
     }
 
+    // Set an observer on the parameters of model, so that when the parameters
+    // change this filter's status is set to NOT_CURRENT.
+    //
+    // If the model adds new parameters after this function is called, then the
+    // new parameters will not be observed.  This can happen with a state space
+    // model when new components of state are added using add_state().
+    //
+    // Thus the model for the filter should be set as late as possible.
     void observe_model_parameters(StateSpaceModelBase *model);
 
     void set_initial_scaled_state_error(const Vector &err) {
@@ -192,6 +217,10 @@ namespace BOOM {
     // and Koopman (2001, first edition)).
     Vector initial_scaled_state_error_;
   };
+
+  inline ostream &operator<<(ostream &out, const KalmanFilterBase &filter) {
+    return filter.print(out);
+  }
   
 }  // namespace BOOM
 

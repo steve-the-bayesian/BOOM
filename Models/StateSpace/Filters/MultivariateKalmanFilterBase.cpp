@@ -23,14 +23,19 @@
 
 namespace BOOM {
 
-  using std::cout;
-  using std::cerr;
-
   namespace Kalman {
     namespace {
       using Marginal = MultivariateMarginalDistributionBase;
     }
 
+    void Marginal::set_forecast_precision_log_determinant(double logdet) {
+      if (!std::isfinite(logdet)) {
+        report_error("forecast precision is not finite.");
+      }
+      forecast_precision_log_determinant_ = logdet;
+    }
+
+    //--------------------------------------------------------------------------
     double Marginal::update(const Vector &observation,
                             const Selector &observed) {
       if (!model()) {
@@ -55,7 +60,7 @@ namespace BOOM {
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(scaled_prediction_error());
-      
+
       // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
       // E(state[t+1] | Y[t]).
       
@@ -63,7 +68,7 @@ namespace BOOM {
                      + kalman_gain() * prediction_error());
 
       // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
-      // Var(state[t+1} | Y[t]).
+      // Var(state[t+1] | Y[t]).
       //
       // The update formula is
       //
@@ -79,7 +84,7 @@ namespace BOOM {
 
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
-
+      
       // Step 2: 
       // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
       // skipped if y is missing, because K is zero.
@@ -88,10 +93,18 @@ namespace BOOM {
       // Step 3: P += RQR
       model()->state_variance_matrix(time_index())->add_to(
           mutable_state_variance());
+      
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
     }
-    
+
+    //----------------------------------------------------------------------
+    bool Marginal::high_dimensional(const Selector &observed) const {
+      return observed.nvars() >
+          high_dimensional_threshold_factor() * model()->state_dimension();
+    }
+  
+    //----------------------------------------------------------------------
     Vector Marginal::contemporaneous_state_mean() const {
       const Selector &observed(model()->observed_status(time_index()));
       if (!previous()) {
@@ -106,6 +119,7 @@ namespace BOOM {
               scaled_state_error());
     }
 
+    //----------------------------------------------------------------------
     SpdMatrix Marginal::contemporaneous_state_variance() const {
       SpdMatrix P = previous() ? model()->initial_state_variance()
           : previous()->state_variance();
@@ -115,8 +129,8 @@ namespace BOOM {
       return P - sandwich(
           P, observation_coefficients->sandwich_transpose(forecast_precision()));
     }
-     
-    //===========================================================================
+
+    //----------------------------------------------------------------------
     double Marginal::fully_missing_update() {
       // Compute the one-step prediction error and log likelihood contribution.
       const SparseKalmanMatrix  &transition(
@@ -142,15 +156,11 @@ namespace BOOM {
           mutable_state_variance());
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
-    }  
-
-    bool MultivariateMarginalDistributionBase::high_dimensional(
-        const Selector &observed) const {
-      return observed.nvars() >
-          high_dimensional_threshold_factor() * model()->state_dimension();
     }
+    
   }  // namespace Kalman
 
+  //===========================================================================
   MultivariateKalmanFilterBase::MultivariateKalmanFilterBase(
       MultivariateStateSpaceModelBase *model)
       : model_(model) {}
@@ -160,17 +170,9 @@ namespace BOOM {
       report_error("Model must be set before calling update().");
     }
     clear();
-    ensure_size(0);
-    node(0).set_state_mean(model_->initial_state_mean());
-    node(0).set_state_variance(model_->initial_state_variance());
     for (int t = 0; t < model_->time_dimension(); ++t) {
-      if (t > 0) {
-        ensure_size(t);
-        node(t).set_state_mean(node(t - 1).state_mean());
-        node(t).set_state_variance(node(t - 1).state_variance());
-      }
-      increment_log_likelihood(node(t).update(
-          model_->observation(t), model_->observed_status(t)));
+      update_single_observation(
+          model_->observation(t), model_->observed_status(t), t);
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
         return;
@@ -214,8 +216,8 @@ namespace BOOM {
       // Currently r is r[t].  This step of the loop turns it into r[t-1].
       // 
       // The disturbance smoother is defined by the following formula:
-      // r[t-1] = Z^T * Finv * v   +   (T^T - Z^T * K^T) * r[t]
-      //        = T^T * r[t]       -   Z^T * (K^T * r[t] - Finv * v)
+      // r[t-1] = Z' * Finv * v   +   (T' - Z' * K') * r[t]
+      //        = T' * r[t]       -   Z' * (K' * r[t] - Finv * v)
       //
       // Note that Durbin and Koopman (2002) is missing the transpose on Z in
       // their equation (5).  The transpose is required to get the dimensions to
@@ -228,12 +230,12 @@ namespace BOOM {
       // Z' K' = Z' Finv Z P T'
       //
       // Dimensions:
-      //   T: S x S
-      //   K: S x m
-      //   Z: m x S
+      //   T:    S x S
+      //   K:    S x m
+      //   Z:    m x S
       //   Finv: m x m
-      //   v: m x 1
-      //   r: S x 1
+      //   v:    m x 1
+      //   r:    S x 1
       //
       node(t).set_scaled_state_error(r);
       const Selector &observed(model_->observed_status(t));
@@ -244,4 +246,12 @@ namespace BOOM {
     set_initial_scaled_state_error(r);
   }
 
+  Vector MultivariateKalmanFilterBase::prediction_error(int t, bool standardize) const {
+    if (standardize) {
+      return (*this)[t].scaled_prediction_error();
+    } else {
+      return (*this)[t].prediction_error();
+    }
+  }
+  
 }  // namespace BOOM

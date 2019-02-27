@@ -23,6 +23,7 @@
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {
+  
   namespace Kalman {
     namespace {
       using Marginal = ConditionallyIndependentMarginalDistribution;
@@ -80,15 +81,20 @@ namespace BOOM {
       return ans;      
     }
 
+    // Effects:
+    // 4 things are set.
+    // 1) prediction_error
+    // 2) scaled_prediction_error
+    // 3) forecast_precision_log_determinant
+    // 4) kalman_gain
     void Marginal::high_dimensional_update(
         const Vector &observation,
         const Selector &observed,
         const SparseKalmanMatrix &transition,
         const SparseKalmanMatrix &observation_coefficients) {
-      Vector observation_mean = observed.select(
-          observation_coefficients * state_mean());
-      Vector observed_data = observed.select(observation);
-      set_prediction_error(observed_data - observation_mean);
+      set_prediction_error(
+          observed.select(observation)
+          - observed.select(observation_coefficients * state_mean()));
 
       // At this point the Kalman recursions compute the forecast precision Finv
       // and its log determinant.  However, we can get rid of the forecast
@@ -99,8 +105,9 @@ namespace BOOM {
       //   error * Finv * error == error.dot(scaled_error).
       // We also need the log determinant of Finv.
       //
-      // The forecast_precision can be computed using the binomial inverse
-      // theorem:
+      // The forecast_precision can be computed using a version of the binomial
+      // inverse theorem:
+      //
       //  (A + UBV).inv =
       //    A.inv - A.inv * U * (I + B * V * Ainv * U).inv * B * V * Ainv.
       //
@@ -108,40 +115,48 @@ namespace BOOM {
       //
       //   Finv = Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv
       //
+      // This helps because H is diagonal.  The only matrix that needs to be
+      // inverted is (I + PZ'HinvZ), which is a state x state matrix.
+      // 
       // We don't compute Finv directly, we compute Finv * prediction_error.
       DiagonalMatrix observation_precision =
           model_->observation_variance(time_index()).inv();
 
-      // Z_inner = Z' Hinv Z
-      Matrix Z_inner = observation_coefficients.inner(
-          observation_precision.diag());
-      Matrix inner_matrix = state_variance() * Z_inner;
+      // Set inner_matrix to I + P * Z' * Hinv * Z
+      SpdMatrix ZTZ = observation_coefficients.inner(observation_precision.diag());
+      // Note: the product of two SPD matrices need not be symmetric.
+      Matrix inner_matrix = state_variance() * ZTZ;
       inner_matrix.diag() += 1.0;
       LU inner_lu(inner_matrix);
-      // inner_lu is the decomposition of I + P*Z'*Hinv*Z
-
+      
+      // inner_inv_P is inner.inv() * state_variance.  This matrix need not be
+      // symmetric.
       Matrix inner_inv_P = inner_lu.solve(state_variance());
-      Vector scaled_error = observation_precision * (
-          observation_coefficients * inner_inv_P * observation_coefficients.Tmult(
-              observation_precision * prediction_error()));
+      
+      Matrix HinvZ = observation_precision * observation_coefficients.dense();
       set_scaled_prediction_error(
-          observation_precision * prediction_error() - scaled_error);
+          observation_precision * prediction_error()
+          - HinvZ * inner_inv_P * HinvZ.Tmult(prediction_error()));
       
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
       //
-      // Let A = H, U = Z, V' = PZ'.
+      // https://en.wikipedia.org/wiki/Matrix_determinant_lemma#Generalization
+      //
+      // With F = H + ZPZ', and setting A = H, U = Z, V' = PZ'.
       // Then det(F) = det(I + PZ' * Hinv * Z) * det(H)
       set_forecast_precision_log_determinant(
-          -1 * (inner_lu.logdet() + observation_precision.logdet()));
+          observation_precision.logdet() - inner_lu.logdet());
 
-      // K = T * P * Z' * Finv
-      //   = T*P* Z' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv)
-      Matrix ZtHinv = (observation_precision *
-                       observation_coefficients.dense()).transpose();
-      set_kalman_gain(ZtHinv - ZtHinv * (
-          observation_coefficients * inner_inv_P * ZtHinv));
+      // The Kalman gain is:  K = T * P * Z' * Finv.
+      // Substituting the expression for Finv from above gives
+      //
+      // K = T * P * Z' *
+      //   (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv)
+      Matrix ZtHinv = HinvZ.transpose();
+      set_kalman_gain(transition * state_variance() *
+                      (ZtHinv - ZTZ * inner_inv_P * ZtHinv));
     }
 
     // When dimensions are small the updates are trivial, and careful
@@ -152,7 +167,8 @@ namespace BOOM {
         const SparseKalmanMatrix &transition,
         const SparseKalmanMatrix &observation_coefficients) {
       set_prediction_error(
-          observation - observation_coefficients * state_mean());
+          observed.select(observation)
+          - observed.select(observation_coefficients * state_mean()));
       SpdMatrix forecast_variance = model_->observation_variance(time_index()) +
           observation_coefficients.sandwich(state_variance());
       SpdMatrix forecast_precision = forecast_variance.inv();
@@ -161,7 +177,6 @@ namespace BOOM {
       set_kalman_gain(transition * state_variance() *
                       observation_coefficients.Tmult(forecast_precision));
     }
-
     
   }  // namespace Kalman
 }  // namespace BOOM
