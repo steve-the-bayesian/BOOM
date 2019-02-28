@@ -20,7 +20,6 @@
 #ifndef BOOM_SPARSE_VECTOR_HPP_
 #define BOOM_SPARSE_VECTOR_HPP_
 
-#include <boost/shared_ptr.hpp>
 #include <map>
 
 #include "LinAlg/SubMatrix.hpp"
