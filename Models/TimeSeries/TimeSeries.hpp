@@ -20,7 +20,7 @@
 #ifndef BOOM_TIME_SERIES_BASE_CLASS_HPP
 #define BOOM_TIME_SERIES_BASE_CLASS_HPP
 
-#include <boost/type_traits/is_base_of.hpp>
+#include <type_traits>
 #include <sstream>
 #include <vector>
 #include "Models/DataTypes.hpp"
@@ -33,7 +33,7 @@ namespace BOOM {
   template <class D>
   bool linked(const Ptr<D> &d) {
     // true if either prev or next is set
-    bool linkable = boost::is_base_of<MarkovLink<D>, D>::value;
+    bool linkable = std::is_base_of<MarkovLink<D>, D>::value;
     if (!linkable) return false;
     return (!!d->next() || !!d->prev());
   }
@@ -116,7 +116,7 @@ namespace BOOM {
   };
 
   template <class D>
-  struct time_series_data_adder<D, boost::true_type> {
+  struct time_series_data_adder<D, std::true_type> {
     void operator()(const Ptr<D> &last, Ptr<D> d) {
       if (linked(d)) {
         // If the links for d are already set, then do nothing.
@@ -128,7 +128,7 @@ namespace BOOM {
   };
 
   template <class D>
-  struct is_linkable : public boost::is_base_of<MarkovLink<D>, D> {};
+  struct is_linkable : public std::is_base_of<MarkovLink<D>, D> {};
 
   template <class D, class T = is_linkable<D> >
   struct time_series_link_clearer {
@@ -136,7 +136,7 @@ namespace BOOM {
   };
 
   template <class D>
-  struct time_series_link_clearer<D, boost::true_type> {
+  struct time_series_link_clearer<D, std::true_type> {
     void operator()(const Ptr<D> &d) { d->clear_links(); }
   };
 
@@ -146,7 +146,7 @@ namespace BOOM {
   };
 
   template <class D>
-  struct set_links_impl<D, boost::true_type> {
+  struct set_links_impl<D, std::true_type> {
     void operator()(std::vector<Ptr<D> > &v) {
       uint n = v.size();
       if (n == 0) return;

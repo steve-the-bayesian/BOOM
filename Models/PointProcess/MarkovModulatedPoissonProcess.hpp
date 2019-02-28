@@ -21,7 +21,7 @@
 
 #include <vector>
 
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 #include <memory>
 
 #include "Models/PointProcess/PointProcess.hpp"
@@ -188,7 +188,7 @@ namespace BOOM {
       // The process id of a PoissonProcess * is its position in
       // processes_.  We need this to resolve calls with
       // PoissonProcess * arguments.
-      boost::unordered_map<const PoissonProcess *, int> process_id_;
+      std::unordered_map<const PoissonProcess *, int> process_id_;
 
       // The mixture component id of a PoissonProcess * is the index of
       // the corresponding pointer in minimal_mixture_components_
@@ -511,7 +511,7 @@ namespace BOOM {
     // introducing a class MmppComponentProcess that was a
     // PoissonProcess wrapper with extra fields for id_number and
     // MixtureComponent *.
-    boost::unordered_map<const PoissonProcess *, int> process_id_;
+    std::unordered_map<const PoissonProcess *, int> process_id_;
 
     //------------------------------------------------------------
     // This storage is used between calls to add_component_process()
@@ -570,7 +570,7 @@ namespace BOOM {
     // data from a supervised or semi-supervised training problem.
     // This is where the 'source' information is stored after a call
     // to add_supervised_data().
-    typedef boost::unordered_map<const PointProcess *, SourceVector> SourceMap;
+    typedef std::unordered_map<const PointProcess *, SourceVector> SourceMap;
     SourceMap known_source_store_;
   };
 

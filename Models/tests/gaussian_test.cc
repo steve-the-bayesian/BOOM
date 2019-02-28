@@ -115,7 +115,7 @@ namespace {
   }
 
   TEST_F(GaussianTest, log_integrated_likelihood_mu_sigsq) {
-    int nobs = 4;
+    int nobs = 8;
     Vector y(nobs);
     GaussianSuf suf;
     for (int j = 0; j < nobs; ++j) {
@@ -141,7 +141,7 @@ namespace {
     double quadrature_ans = log(integral.integrate());
     double ans = GaussianModelBase::log_integrated_likelihood(
         suf, mu0, kappa, df, ss);
-    EXPECT_NEAR(quadrature_ans, ans, 1e-4);
+    EXPECT_NEAR(fabs(quadrature_ans - ans) / fabs(ans), 0, 1e-4);
   }  
 
   TEST_F(GaussianTest, LogLikelihood_from_suf) {

@@ -197,7 +197,7 @@ namespace {
 
     Vector y1 = full_matrix.solve(x);
     Vector y2 = composite_cholesky.solve(x);
-    EXPECT_TRUE(VectorEquals(y1, y2, 1e-6))
+    EXPECT_TRUE(VectorEquals(y1, y2, 1e-4))
         << endl
         << "right answer: " << y1 << endl
         << "answer given: " << y2 << endl
@@ -205,7 +205,7 @@ namespace {
 
     EXPECT_NEAR(composite_cholesky.Mdist(y2),
                 full_matrix.Mdist(y2),
-                1e-6);
+                1e-4);
     
     //----------------------------------------------------------------------
     // Now exclude some variables and check again.

@@ -337,7 +337,7 @@ namespace BOOM {
     }
 
     int ProcessInfo::process_id(const PoissonProcess *process) const {
-      boost::unordered_map<const PoissonProcess *, int>::const_iterator it =
+      std::unordered_map<const PoissonProcess *, int>::const_iterator it =
           process_id_.find(process);
       if (it == process_id_.end()) {
         report_error("Unknown process passed to ProcessInfo::process_id().");
@@ -995,7 +995,7 @@ namespace BOOM {
   }
 
   int MMPP::process_id(const PoissonProcess *process) const {
-    boost::unordered_map<const PoissonProcess *, int>::const_iterator it =
+    std::unordered_map<const PoissonProcess *, int>::const_iterator it =
         process_id_.find(process);
     if (it == process_id_.end()) {
       return -1;
