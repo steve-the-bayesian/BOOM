@@ -315,7 +315,10 @@ namespace BOOM {
     const Selector &col(int i) const {return columns_[i];}
 
     // Indicate whether each row is included by at least one column.
-    Selector row_or() const;
+    Selector row_any() const;
+    
+    // Indicate whether each row is included in all columns.
+    Selector row_all() const;
 
     // Returns the selector obtained by stacking the columns of the selector
     // matrix.

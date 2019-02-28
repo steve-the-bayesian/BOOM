@@ -659,11 +659,24 @@ namespace BOOM {
     return true;
   }
 
-  Selector SelectorMatrix::row_or() const {
+  Selector SelectorMatrix::row_any() const {
     Selector ans(nrow(), false);
     for (int j = 0; j < ncol(); ++j) {
       for (int i = 0; i < nrow(); ++i) {
         if (columns_[j][i]) ans.add(i);
+      }
+    }
+    return ans;
+  }
+
+  Selector SelectorMatrix::row_all() const {
+    Selector ans(nrow(), true);
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < ncol(); ++j) {
+        if (!columns_[j][i]) {
+          ans.drop(i);
+          break;
+        }
       }
     }
     return ans;

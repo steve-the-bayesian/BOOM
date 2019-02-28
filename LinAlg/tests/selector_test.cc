@@ -176,12 +176,18 @@ namespace {
     // 0 0 0
     // 0 0 1
     // 0 1 0
-    Selector any(wide.row_or());
+    Selector any(wide.row_any());
     EXPECT_TRUE(any[0]);
     EXPECT_FALSE(any[1]);
     EXPECT_TRUE(any[2]);
     EXPECT_TRUE(any[3]);
 
+    Selector all(wide.row_all());
+    EXPECT_FALSE(all[0]);
+    EXPECT_FALSE(all[0]);
+    EXPECT_FALSE(all[0]);
+    EXPECT_FALSE(all[3]);
+    
     Matrix selectable(4, 3);
     selectable.randomize();
     Vector selected = wide.vector_select(selectable);
@@ -194,6 +200,14 @@ namespace {
     expanded(0, 0) = selectable(0, 0);
     expanded(3, 1) = selectable(3, 1);
     expanded(2, 2) = selectable(2, 2);
+
+    wide.add(3, 0);
+    wide.add(3, 2);
+    all = wide.row_all();
+    EXPECT_FALSE(all[0]);
+    EXPECT_FALSE(all[0]);
+    EXPECT_FALSE(all[0]);
+    EXPECT_TRUE(all[3]);
     
   }  
 }  // namespace
