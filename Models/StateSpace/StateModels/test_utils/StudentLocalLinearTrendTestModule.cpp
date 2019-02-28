@@ -37,9 +37,9 @@ namespace BOOM {
           trend_model_(new StudentLocalLinearTrendStateModel(
               level_sd_, nu_level_, slope_sd_, nu_slope_)),
           adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
-          level_precision_prior_(new ChisqModel(1.0, level_sd_)),
+          level_precision_prior_(new ChisqModel(2.0, level_sd_)),
           nu_level_prior_(new UniformModel(1.0, 100.0)),
-          slope_precision_prior_(new ChisqModel(1.0, slope_sd_)),
+          slope_precision_prior_(new ChisqModel(2.0, slope_sd_)),
           nu_slope_prior_(new UniformModel(1.0, 100.0)),
           trend_sampler_(new StudentLocalLinearTrendPosteriorSampler(
               trend_model_.get(),
@@ -84,11 +84,9 @@ namespace BOOM {
     }
 
     void StudentLocalLinearTrendTestModule::Check() {
-      auto status = CheckMcmcMatrix(
-          trend_draws_, trend_, .95, true, "trend.txt");
-      EXPECT_TRUE(status.ok)
-          <<  "Student local linear trend failed to cover." << std::endl
-          << status;
+      EXPECT_EQ("", CheckStochasticProcess(
+          trend_draws_, trend_, .95, .1, "trend.txt"))
+          <<  "Student local linear trend failed to cover.";
 
       EXPECT_GT(var(sigma_level_draws_), 0)
           << "sigma level draws had zero variance";

@@ -93,9 +93,9 @@ namespace BOOM {
 
       EXPECT_GT(var(sigma_draws_), 0)
           << "sigma level draws had zero variance";
-      EXPECT_TRUE(CheckMcmcVector(sigma_draws_, sd_, .95,
+      EXPECT_TRUE(CheckMcmcVector(sigma_draws_, sd_, .99,
                                   "sigma-seasonal.txt"))
-          << "Innovation SD for local linear trend model, level component "
+          << "Innovation SD for seasonal component "
           << "did not cover true value." << std::endl
           << AsciiDistributionCompare(sigma_draws_, sd_);
     }

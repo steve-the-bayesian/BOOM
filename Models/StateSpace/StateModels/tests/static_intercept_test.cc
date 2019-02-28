@@ -14,7 +14,7 @@ namespace {
   class StaticInterceptStateModelTest : public ::testing::Test {
    protected:
     StaticInterceptStateModelTest()
-        : time_dimension_(100)
+        : time_dimension_(200)
     {
       GlobalRng::rng.seed(8675309);
       Vector ar_coefficients = {.6, .2};
@@ -34,7 +34,7 @@ namespace {
   }
   //======================================================================
   TEST_F(StaticInterceptStateModelTest, DynamicInterceptRegressionModelTest) {
-    int niter = 300;
+    int niter = 400;
     Vector true_beta = {-3.2, 17.4, 12};
     DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);
     framework.AddState(modules_);

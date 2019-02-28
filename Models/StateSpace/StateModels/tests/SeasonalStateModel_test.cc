@@ -15,6 +15,7 @@
 
 #include "Models/StateSpace/tests/StateSpaceTestFramework.hpp"
 #include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
+#include "Models/StateSpace/StateModels/test_utils/StaticInterceptTestModule.hpp"
 #include "Models/StateSpace/StateModels/test_utils/SeasonalTestModule.hpp"
 
 #include "test_utils/test_utils.hpp"
@@ -251,12 +252,11 @@ namespace {
     EXPECT_TRUE(level_status.ok)
         << "Level failed to cover: " << endl << level_status.error_message();
 
-    CheckMatrixStatus seasonal_status = CheckMcmcMatrix(seasonal_draws, seasonal);
-    EXPECT_TRUE(seasonal_status.ok)
-        << "Seasonal pattern failed to cover: " << endl
-        << seasonal_status.error_message();
+    std::string error_message = CheckStochasticProcess(
+        seasonal_draws, seasonal, .95, .1, "seasonal_draws.txt");
+    EXPECT_EQ("", error_message) << "Seasonal pattern failed to cover.";
 
-    if (!(level_status.ok && seasonal_status.ok)) {
+    if (!(level_status.ok && error_message == "")) {
       std::ofstream raw_data_file("raw_data.txt");
       raw_data_file << data;
       std::ofstream level_file("level.txt");
@@ -299,12 +299,12 @@ namespace {
     double true_sigma_obs = 1.2;
     StateSpaceTestFramework state_space(true_sigma_obs);
     StateModuleManager modules_;
-    modules_.AddModule(new LocalLevelModule(.1, 0.0));
-    modules_.AddModule(new SeasonalTestModule(.1, 7));
-    modules_.AddModule(new SeasonalTestModule(.1, weeks_per_year_, 7));
+    modules_.AddModule(new StaticInterceptTestModule(3.7));
+    modules_.AddModule(new SeasonalTestModule(.8, 7));
+    modules_.AddModule(new SeasonalTestModule(1.1, weeks_per_year_, 7));
     state_space.AddState(modules_);
     int niter = 500;
-    int time_dimension = 500;
+    int time_dimension = 400;
     state_space.Test(niter, time_dimension);
   }
     
@@ -362,11 +362,11 @@ namespace {
         << status.error_message();
     both_ok &= status.ok;
     
-    status = CheckMcmcMatrix(weekly_draws, true_state_.row(6));
-    EXPECT_TRUE(status.ok)
+    std::string error_message = CheckStochasticProcess(weekly_draws, true_state_.row(6));
+    EXPECT_EQ(error_message, "")
         << "Weekly annual cycle failed to cover." << endl
         << status.error_message();
-    both_ok &= status.ok;
+    both_ok &= error_message == "";
 
     if (!both_ok) {
       std::ofstream series_file("raw.data");

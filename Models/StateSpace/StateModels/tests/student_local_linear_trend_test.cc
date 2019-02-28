@@ -20,7 +20,7 @@ namespace {
       double initial_slope = 0.0;
       double level_sd = 0.3;
       double slope_sd = 0.1;
-      double nu_level = 5.0;
+      double nu_level = 2.0;
       double nu_slope = 20.0;
       modules_.AddModule(new StudentLocalLinearTrendTestModule(
           level_sd, initial_level, nu_level,
@@ -32,7 +32,7 @@ namespace {
 
   //======================================================================
   TEST_F(StudentLocalLinearTrendStateModelTest, StateSpaceModelTest) {
-    int niter = 200;
+    int niter = 500;
     int burn = 100;
     StateSpaceTestFramework state_space(1.3);
     state_space.AddState(modules_);
@@ -41,7 +41,7 @@ namespace {
   //======================================================================
   TEST_F(StudentLocalLinearTrendStateModelTest,
          DynamicInterceptRegressionModelTest) {
-    int niter = 200;
+    int niter = 500;
     int burn = 100;
     Vector true_beta = {-3.2, 17.4, 12};
     DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);

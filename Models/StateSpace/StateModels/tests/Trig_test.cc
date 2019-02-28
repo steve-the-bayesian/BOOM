@@ -76,7 +76,7 @@ namespace {
   TEST_F(TrigStateModelTest, StateSpaceFramework) {
     StateSpaceTestFramework framework(1.2);
     StateModuleManager modules;
-    int time_dimension = 200;
+    int time_dimension = 300;
     double period = time_dimension / 5.0;
     Vector frequencies = {1, 2};
     modules.AddModule(new TrigTestModule(period, frequencies, 0.3));
