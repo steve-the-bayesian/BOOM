@@ -28,8 +28,6 @@
 namespace BOOM {
   namespace {
     using Eigen::MatrixXd;
-    using std::cout;
-    using std::endl;
   }  // namespace
 
   void Cholesky::decompose(const Matrix &A) {

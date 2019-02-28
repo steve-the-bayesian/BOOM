@@ -26,8 +26,6 @@
 namespace BOOM {
   namespace {
     using Eigen::MatrixXd;
-    using std::cout;
-    using std::endl;
   }  // namespace
 
   EigenDecomposition::EigenDecomposition(const Matrix &mat, bool vectors)

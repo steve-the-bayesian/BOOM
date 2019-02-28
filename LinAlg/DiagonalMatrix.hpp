@@ -18,7 +18,6 @@
 */
 #ifndef BOOM_NEWLA_DIAGONAL_MATRIX_HPP
 #define BOOM_NEWLA_DIAGONAL_MATRIX_HPP
-#include <boost/shared_ptr.hpp>
 #include <iosfwd>
 #include <vector>
 #include "LinAlg/Matrix.hpp"
