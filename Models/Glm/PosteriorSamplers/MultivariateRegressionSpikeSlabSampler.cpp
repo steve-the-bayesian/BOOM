@@ -31,6 +31,8 @@ namespace BOOM {
   void CompositeCholesky::decompose(const Matrix &row_cholesky,
                                     const Matrix &siginv_cholesky,
                                     const SelectorMatrix &included) {
+    report_error("More work is needed on decompose.  "
+                 "Call decompose_simple instead.");
     if (included.nrow() != row_cholesky.nrow()
         || included.ncol() != siginv_cholesky.ncol()) {
       std::ostringstream err;
@@ -52,24 +54,30 @@ namespace BOOM {
 
     int ydim = included.ncol();
     int xdim = included.nrow();
-    Selector in_any_column = included.row_or();
+    // The rows of the selector matrix correspond to variables.  The columns
+    // correspond to dimensions of Y.
+    Selector in_any_column = included.row_any();
     int number_of_active_predictors = in_any_column.nvars();
 
     // The full precision matrix, which we don't deal with directly, has row
-    // dimension (xdim*ydim).  We subset this matrix twice.  First by excluding
-    // X's that are inactive for all Y's. This reduces it to
-    // number_of_active_predictors*ydim.  Second by excluding X's that are
-    // active for some Y's but not others, which reduces it to included.nvars().
+    // dimension (xdim * ydim).  We subset this matrix twice.  First by
+    // excluding X's that are inactive for all Y's. This reduces it to
+    // number_of_active_predictors * ydim, in both the row and column dimension.
+    // Second by excluding X's that are active for some Y's but not others,
+    // which reduces it to included.nvars().
     int active_precision_dimension = number_of_active_predictors * ydim;
     int precision_dimension = included.nvars();
 
-    // Logically, we now want subset of rows of siginv \otimes ominv, which is
-    // the Kronecker product of two lower triangular matrices.  As such it has
-    // lower triangular blocks in addition to being globally lower triangular.
-    // However, if we had that matrix we'd just need to transpose so we could
-    // feed it into the QR decomposition.  Thus qr_workspace is built holding
-    // the transpose.  In the code below we refer to a row of the logical matrix
-    // as a 'row' but store it as a column of qr_workspace.
+    // Logically, we now want subset of rows of siginv_cholesky \otimes
+    // row_cholesky, which is the Kronecker product of two lower triangular
+    // matrices.  Thus the product has lower triangular blocks in addition to
+    // being globally lower triangular.  After taking the subset, we would
+    // compute the LQ decomposition (i.e. QR transpose).
+    // 
+    // Thus qr_workspace is built holding the transpose so that it can be fed to
+    // QR.  In the code below we adopt notation according to the 'notional'
+    // problem, and refer to a row of the logical matrix as a 'row', but we
+    // actually store it as a column of qr_workspace.
     Matrix qr_workspace(active_precision_dimension,
                         precision_dimension,
                         0.0);
@@ -115,7 +123,51 @@ namespace BOOM {
       if (chol_(i, i) < 0) chol_.col(i) *= -1;
     }
   }
+  //---------------------------------------------------------------------------
+  // Like decompose, but we don't try to eliminate the X's that never appear.
+  // This is computationlly less efficient, but easier to get correct.  One day
+  // this will be a test case against decompose(), but until the latter can be
+  // proved correct use this instead.
+  void CompositeCholesky::decompose_simple(const Matrix &row_cholesky,
+                                           const Matrix &siginv_cholesky,
+                                           const SelectorMatrix &included) {
+    if (included.all_in()) {
+      chol_ = Kronecker(siginv_cholesky, row_cholesky);
+    }
 
+    int ydim = included.ncol();
+    int xdim = included.nrow();
+    Matrix qr_workspace(xdim * ydim, included.nvars());
+    
+    int column = -1;
+    for (int j = 0; j < ydim; ++j) {
+      for (int i = 0; i < xdim; ++i) {
+        if (included(i, j)) {
+          ConstVectorView ominv_row(row_cholesky.row(i));
+          ConstVectorView siginv_row(siginv_cholesky.row(j));
+
+          Vector row(xdim * ydim, 0.0);
+          for (int block = 0; block <= j; ++block) {
+            int start = block * xdim;
+            int block_size = xdim;
+            VectorView(row, start, block_size) = ominv_row * siginv_row[block];
+          }
+          qr_workspace.col(++column) = row;
+        }
+      }
+    }
+    QR qr(qr_workspace);
+    chol_ = qr.getR().transpose();
+    for (int i = 0; i < chol_.ncol(); ++i) {
+      if (chol_(i, i) < 0) {
+        chol_.col(i) *= -1;
+      }
+    }
+    
+  }
+
+  //---------------------------------------------------------------------------
+  
   Vector CompositeCholesky::solve(const ConstVectorView &x) const {
     if (chol_.nrow() != x.size()) {
       report_error("Argument 'x' is the wrong size.");

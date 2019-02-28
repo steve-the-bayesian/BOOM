@@ -49,7 +49,7 @@ namespace BOOM {
                       const Matrix siginv_cholesky,
                       const SelectorMatrix &included)
     {
-      decompose(row_cholesky, siginv_cholesky, included);
+      decompose_simple(row_cholesky, siginv_cholesky, included);
     }
 
     // The log determinant of the matrix represented by the cholesky
@@ -69,6 +69,11 @@ namespace BOOM {
     void decompose(const Matrix &row_cholesky,
                    const Matrix &siginv_cholesky,
                    const SelectorMatrix &included);
+
+    // Set chol_ from the given inputs.
+    void decompose_simple(const Matrix &row_cholesky,
+                          const Matrix &siginv_cholesky,
+                          const SelectorMatrix &included);
 
     int nrow() const {return chol_.nrow();}
     int ncol() const {return chol_.ncol();}
