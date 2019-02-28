@@ -24,6 +24,18 @@
 
 namespace BOOM {
 
+  RNG::RNG()
+      : generator_(std::random_device()())
+  {}
+
+  RNG::RNG(long seed)
+      : generator_(seed)
+  {}
+
+  void RNG::seed() {
+    generator_.seed(std::random_device()());
+  }
+  
   unsigned long seed_rng(RNG &rng) {
     long ans = 0;
     while (ans <= 2) {
@@ -36,10 +48,5 @@ namespace BOOM {
   unsigned long seed_rng() { return seed_rng(GlobalRng::rng); }
 
   RNG GlobalRng::rng(8675309);
-
-  void GlobalRng::seed_with_timestamp() {
-    long seed = static_cast<long>(time(NULL));
-    rng.seed(seed);
-  }
 
 }  // namespace BOOM

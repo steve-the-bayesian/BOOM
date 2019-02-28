@@ -405,7 +405,6 @@ namespace Rmath{
   inline double lgammafn2(double x, int &i){
     int tmp;
     int ix(lround(-x));
-    // boost::numeric_cast<int>(-x));
     i = (x<=0 && (ix%2==0)) ? -1 : 1;
     return boost::math::lgamma(x, &tmp);
   }

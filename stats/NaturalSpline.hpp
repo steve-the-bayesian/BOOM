@@ -22,7 +22,6 @@
 #include "LinAlg/QR.hpp"
 #include "LinAlg/Vector.hpp"
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 
 namespace BOOM {

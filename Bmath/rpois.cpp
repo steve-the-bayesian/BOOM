@@ -52,7 +52,7 @@
  *    ACM Trans. Math. Software 8, 163-179.
  */
 
-#include <boost/random/poisson_distribution.hpp>
+#include <random>
 #include "nmath.hpp"
 
 #define a0      -0.5
@@ -73,8 +73,8 @@
 namespace Rmath{
 
 double rpois_mt(BOOM::RNG &rng, double mu){
-  boost::poisson_distribution<unsigned int, double> dist(mu);
-  return dist(rng);
+  std::poisson_distribution<unsigned int> dist(mu);
+  return dist(rng.generator());
 }
 
 double rpois(double mu)
