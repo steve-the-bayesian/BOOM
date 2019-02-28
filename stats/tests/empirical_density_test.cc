@@ -22,17 +22,16 @@ namespace {
       draws[i] = rnorm(3, 7);
     }
     EmpiricalDensity density(draws);
-    double max_density = dnorm(3, 3, 7);
-
     double err = 0;
     Matrix eval(draws.size(), 3);
     eval.col(0) = sort(draws);
-    for (int i = 0; i < nrow(eval); ++i) {
+    for (int i = 1; i < nrow(eval); ++i) {
       eval(i, 1) = density(eval(i, 0));
       eval(i, 2) = dnorm(eval(i, 0), 3, 7);
-      err = std::max(err, fabs(eval(i, 2) - eval(i, 1)));
+      double dx = eval(i, 0) - eval(i - 1, 0);
+      err += fabs(eval(i, 1) - eval(i, 2)) * dx;
     }
-    EXPECT_LT(err / max_density, .03) << eval;
+    EXPECT_LT(err, .05);
   }
 
   TEST_F(EmpiricalDensityTest, Exponential) {
@@ -41,17 +40,16 @@ namespace {
       draws[i] = rexp(3);
     }
     EmpiricalDensity density(draws);
-    double max_density = dexp(0, 3);
-
     double err = 0;
     Matrix eval(draws.size(), 3);
     eval.col(0) = sort(draws);
-    for (int i = 0; i < nrow(eval); ++i) {
+    for (int i = 1; i < nrow(eval); ++i) {
       eval(i, 1) = density(eval(i, 0));
       eval(i, 2) = dexp(eval(i, 0), 3);
-      err = std::max(err, fabs(eval(i, 2) - eval(i, 1)));
+      double dx = eval(i, 0) - eval(i-1, 0);
+      err += fabs(eval(i, 1) - eval(i, 2)) * dx;
     }
-    EXPECT_LT(err / max_density, .05) << eval;
+    EXPECT_LT(err, .05);
   }
   
 }  // namespace
