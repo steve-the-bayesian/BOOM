@@ -52,6 +52,7 @@ namespace BOOM {
     return m.max_abs() < tol;
   }
 
+  //===========================================================================
   // The data structure returned from check_mcmc_matrix().
   struct CheckMatrixStatus {
     CheckMatrixStatus()
@@ -82,6 +83,7 @@ namespace BOOM {
     return(out);
   }
   
+  //===========================================================================
   // Check to see if a matrix of Monte Carlo draws covers a known set of true
   // values acceptably well.
   //
@@ -113,6 +115,39 @@ namespace BOOM {
                                     bool control_multiple_comparisons = true,
                                     const std::string &filename = "");
 
+  // A check similar to CheckMcmcMatrix, but designed for stochastic processes
+  // or other functions exhibiting serial correlation, which can mess up the
+  // multiple comparisons adjustments used by CheckMcmcMatrix.
+  //
+  // Args:
+  //   draws: A matrix of Monte Carlo draws to be checked.  Each row is a draw
+  //     and each column is a variable.
+  //   truth: A vector of true values against which draws will be compared.
+  //     truth.size() must match ncol(draws).
+  //   confidence: The confidence associated with the marginal posterior
+  //     intervals used to determine coverage.
+  //   sd_ratio_threshold: One of the testing diagnostics compares the standard
+  //     deviation of the centered draws to the standard deviation of the true
+  //     function.  If that ratio is less than this threshold the diagnostic is
+  //     passed.
+  //   filename: The name of a file to which the matrix will be printed if the
+  //     check fails.  The first row of the file will be the true value.  If the
+  //     file name is the empty string no file will be created.
+  //
+  // Details:
+  //   Half the marginal confidence intervals should cover, and the residual
+  //   standard deviation should be small relative to the standard deviation of
+  //   truth.
+  //
+  // Returns:
+  //   An error message.  An empty message means the test passed.
+  std::string CheckStochasticProcess(const Matrix &draws,
+                                     const Vector &truth,
+                                     double confidence = .95,
+                                     double sd_ratio_threshold = .1, 
+                                     const std::string &filename = "");
+  
+  //===========================================================================
   // A non-empty return value is an error message indicating the first column of
   // 'draws' to fall outside the range [lo, hi].
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
@@ -122,6 +157,7 @@ namespace BOOM {
   // 'draws' to fall outside the range [lo, hi].
   std::string CheckWithinRage(const Vector &draws, double lo, double hi);
   
+  //===========================================================================
   // Check to see if a vector of Monte Carlo draws covers a known value.
   //
   // Args:
@@ -142,6 +178,7 @@ namespace BOOM {
                        double confidence = .95,
                        const std::string &filename = "");
 
+  //===========================================================================
   // Returns true if the empirical CDF of the vector of data matches the
   // theoretical CDF to with the tolerance of a Kolmogorov-Smirnoff test.
   // Args:
@@ -159,6 +196,7 @@ namespace BOOM {
                           const std::function<double(double)> &cdf,
                           double significance = .05);
 
+  //===========================================================================
   // Performs a 2-sample Kolmogorov Smirnoff test that the two sets of draws are
   // from the same distribution.
   //
@@ -175,6 +213,7 @@ namespace BOOM {
                    const ConstVectorView &data2,
                    double significance = .05);
   
+  //===========================================================================
   // Checks that two sets of Monte Carlo draws have roughly the same center and
   // spread.  The check is done by computing the .2 - .8 credible interval from
   // one set of draws, and checking that it covers the .3 - .7 interval for the
