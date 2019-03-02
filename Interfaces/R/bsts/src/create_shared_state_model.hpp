@@ -18,8 +18,9 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "create_state_model.hpp"
+
 #include "r_interface/list_io.hpp"
-#include "r_interface/create_state_model.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
 #include <functional>
 #include <list>

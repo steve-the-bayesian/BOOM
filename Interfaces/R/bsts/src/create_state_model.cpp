@@ -14,7 +14,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-#include "r_interface/create_state_model.hpp"
+#include "create_state_model.hpp"
+
 #include <string>
 #include "cpputil/report_error.hpp"
 #include "cpputil/Date.hpp"
