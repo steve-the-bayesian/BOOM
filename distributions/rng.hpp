@@ -35,7 +35,10 @@ namespace BOOM {
     // Seed with a specified value.
     RNG(long seed);
 
+    // Seed from a C++ standard random device, if one is present.
     void seed();
+
+    // Seed using a specified value.
     void seed(long seed) {generator_.seed(seed);}
 
     // Simulate a U[0, 1) random deviate.
@@ -50,7 +53,7 @@ namespace BOOM {
     std::uniform_real_distribution<double> dist_;
   };
 
-  
+  // The GlobalRng is a singleton.
   struct GlobalRng {
    public:
     static RNG rng;
