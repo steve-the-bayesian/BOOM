@@ -65,7 +65,7 @@
 #include <R_ext/Print.h>
 
 namespace BOOM {
-  namespace RInterface {
+  namespace bsts {
 
     StateModelFactory::StateModelFactory(RListIoManager *io_manager)
         : StateModelFactoryBase(io_manager)
@@ -1588,5 +1588,5 @@ namespace BOOM {
       return dynamic_regression;
     }
 
-  }  // namespace RInterface
+  }  // namespace bsts
 }  // namespace BOOM

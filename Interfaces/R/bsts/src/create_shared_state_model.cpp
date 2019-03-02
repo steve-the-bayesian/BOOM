@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "r_interface/create_shared_state_model.hpp"
+#include "r_interface/create_shared_state_model.h"
 
 #include <string>
 #include "cpputil/report_error.hpp"
@@ -35,7 +35,7 @@
 #include <R_ext/Print.h>
 
 namespace BOOM {
-  namespace RInterface {
+  namespace bsts {
 
     void SharedStateModelFactory::AddState(
         MultivariateStateSpaceModelBase *model,
@@ -139,8 +139,7 @@ namespace BOOM {
       }
       return state_model;
     }
-
     
-  }  // namespace RInterface
+  }  // namespace bsts
 }  // namespace BOOM
     
