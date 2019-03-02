@@ -191,6 +191,12 @@ namespace BOOM {
                              const Matrix &forecast_predictors,
                              const Vector &final_state,
                              const std::vector<int> &timestamps);
+
+    Matrix state_contributions(int which_state_model) const override {
+      report_error("Need to fix state_contributions for DynamicInterceptModel.");
+      const Matrix &state(this->state());
+      return state;
+    }
     
    private:
     // Reimplements the logic in the base class, but optimized for the scalar

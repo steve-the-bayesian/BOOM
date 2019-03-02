@@ -73,20 +73,14 @@ namespace BOOM {
     const Vector &observation(int t) const override;
     const Selector &observed_status(int t) const override;
 
+    Matrix state_contributions(int which_state_model) const override;
+    
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
     bool is_missing_observation(int t) const override {
       return dat()[t]->missing() != Data::observed;
     }
 
-    // The contributions of each state model to the mean of the response at each
-    // time point.
-    //
-    // Returns:
-    //   A 3-way array, where element (s, t, d) gives the contribution of state
-    //   model s to dimension d of the response variable at time t.
-    Array state_contributions() const;
-    
    private:
     Ptr<IndependentMvnModel> observation_model_;
     std::vector<Ptr<MultivariateStateModel>> state_models_;

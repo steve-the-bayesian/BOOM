@@ -114,6 +114,14 @@ namespace BOOM {
     // are actually observed.  In the typical case all elements will be true.
     virtual const Selector &observed_status(int t) const = 0;
 
+    // The contributions of each state model to the mean of the response at each
+    // time point.
+    //
+    // Returns:
+    //   Matrix element (t, d) gives the contribution of state model
+    //   which_state_model to dimension d of the response variable at time t.
+    virtual Matrix state_contributions(int which_state_model) const = 0;
+    
    protected:
     // Implements part of a single step of the E-step in the EM algorithm or
     // gradient computation for the gradient of the observed data log

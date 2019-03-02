@@ -128,4 +128,32 @@ namespace BOOM {
     return dat()[t]->observation_status();
   }
 
+  Matrix MSSM::state_contributions(int which_state_model) const {
+    const Matrix &state(this->state());
+    if (ncol(state) != time_dimension() || nrow(state) != state_dimension()) {
+      ostringstream err;
+      err << "state is the wrong size in "
+          << "ScalarStateSpaceModelBase::state_contribution" << endl
+          << "State contribution matrix has " << ncol(state) << " columns.  "
+          << "Time dimension is " << time_dimension() << "." << endl
+          << "State contribution matrix has " << nrow(state) << " rows.  "
+          << "State dimension is " << state_dimension() << "." << endl;
+      report_error(err.str());
+    }
+    if (nseries() <= 0) {
+      report_error("Error in state_contributions: the dimension of y is "
+                   "time varying.");
+    }
+    Matrix ans(time_dimension(), nseries());
+
+    Selector observed(nseries(), true);
+    for (int t = 0; t < time_dimension(); ++t) {
+      ConstVectorView local_state(state_component(
+          state.col(t), which_state_model));
+      ans.row(t) = *(state_models_[which_state_model]->observation_coefficients(
+          t, observed)) * local_state;
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

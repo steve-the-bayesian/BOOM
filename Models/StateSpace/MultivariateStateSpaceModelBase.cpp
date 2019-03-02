@@ -101,7 +101,6 @@ namespace BOOM {
   //   }
   // }
 
-  
   void MvBase::update_observation_model(Vector &r, SpdMatrix &N, int t,
                                         bool save_state_distributions,
                                         bool update_sufficient_statistics,
