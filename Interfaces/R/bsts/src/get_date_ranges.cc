@@ -20,8 +20,9 @@
 #include <ctime>
 #include <iostream>
 
+#include "create_state_model.h"
+
 #include "r_interface/boom_r_tools.hpp"
-#include "r_interface/create_state_model.hpp"
 #include "r_interface/handle_exception.hpp"
 #include "r_interface/list_io.hpp"
 #include "r_interface/print_R_timestamp.hpp"
@@ -52,7 +53,7 @@ extern "C" {
       SEXP r_timestamps) {
     try {
       Ptr<Holiday> holiday =
-          BOOM::RInterface::StateModelFactory::CreateHoliday(r_holiday);
+          BOOM::bsts::StateModelFactory::CreateHoliday(r_holiday);
       std::vector<Date> dates = BOOM::ToBoomDateVector(r_timestamps);
       std::vector<std::pair<int, int>> date_ranges;
       bool previous_day_was_holiday = false;

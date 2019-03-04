@@ -20,6 +20,7 @@
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 
 namespace BOOM {
   namespace bsts {
@@ -32,7 +33,7 @@ namespace BOOM {
     // designed for multi-threading.  This base class provides the interface for
     // computing the prediction errors.
     class HoldoutErrorSamplerImpl {
-   public:
+     public:
       virtual ~HoldoutErrorSamplerImpl() {}
 
       // Simulate from the distribution of one-step prediction errors given data
@@ -45,18 +46,19 @@ namespace BOOM {
     // A null class that can be used by model families that do not support one
     // step prediction errors (e.g. logit and Poisson).
     class NullErrorSampler : public HoldoutErrorSamplerImpl {
-   public:
+     public:
       void sample_holdout_prediction_errors() override {}
     };
 
     // A pimpl-based functor for computing out of sample prediction errors, with
     // the appropriate interface for submitting to a ThreadPool.
     class HoldoutErrorSampler {
-   public:
+     public:
       explicit HoldoutErrorSampler(HoldoutErrorSamplerImpl *impl)
           : impl_(impl) {}
       void operator()() {impl_->sample_holdout_prediction_errors();}
-   private:
+      
+     private:
       std::unique_ptr<HoldoutErrorSamplerImpl> impl_;
     };
 
@@ -76,7 +78,7 @@ namespace BOOM {
     // being created (e.g. Scalar vs Multivariate), and then on the error
     // distribution within that model family.
     class ModelManager {
-   public:
+     public:
       ModelManager();
 
       virtual ~ModelManager() {}
@@ -132,30 +134,6 @@ namespace BOOM {
           Vector *final_state,
           RListIoManager *io_manager) = 0;
 
-      // Returns a set of draws from the posterior predictive distribution.
-      // Args:
-      //   r_bsts_object:  The R object created from a previous call to bsts().
-      //   r_prediction_data: Data needed to make the prediction.  This might be
-      //     a data frame for models that have a regression component, or a
-      //     vector of exposures or trials for binomial or Poisson data.
-      //   r_options: If any special options need to be passed in order to do
-      //     the prediction, they should be included here.
-      //   r_observed_data: In most cases, the prediction takes place starting
-      //     with the time period immediately following the last observation in
-      //     the training data.  If so then r_observed_data should be
-      //     R_NilValue, and the observed data will be taken from r_bsts_object.
-      //     However, if more data have been added (or if some data should be
-      //     omitted) from the training data, a new set of training data can be
-      //     passed here.
-      //
-      // Returns:
-      //   An R matrix, with rows corresponding to MCMC draws and columns to
-      //   time, containing posterior predictive draws for the forecast.
-      virtual Matrix Forecast(
-          SEXP r_bsts_object,
-          SEXP r_prediction_data,
-          SEXP r_burn,
-          SEXP r_observed_data) = 0;
 
       // Time stamps are considered trivial if either (a) no time stamp
       // information was provided by the user, or (b) each time stamp contains
@@ -182,6 +160,8 @@ namespace BOOM {
         return forecast_timestamps_;
       }
 
+      // The locations (indices) in the vector of state models of any dynamic
+      // regression state components.
       const std::vector<int> & dynamic_regression_state_positions() const {
         return dynamic_regression_state_positions_;
       }
@@ -284,11 +264,8 @@ namespace BOOM {
       //     "logit", "poisson", or "student".
       //   xdim: Dimension of the predictors in the observation model
       //     regression.  This can be zero if there are no regressors.
-      //   r_timestamp_info: The timestamp.info object created by
-      //     .ComputeTimestampInfo.  If there are multiple observations at any
-      //     timestamp then a DynamicInterceptModelManager will be created.
-      //     Otherwise a ScalarModelManager will be created.
-      static ScalarModelManager * Create(const std::string &family_name, int xdim);
+      static ScalarModelManager * Create(
+          const std::string &family_name, int xdim);
 
       // Create a model manager by reinstantiating a previously constructed bsts
       // model.
@@ -316,13 +293,6 @@ namespace BOOM {
       //     distributions like binomial or Poisson this can be NULL.
       //   r_options: Model or family specific options such as the technique to
       //     use for model averaging (ODA vs SVSS).
-      //   family: A text string indicating the desired model family for the
-      //     observation equation.
-      //   save_state_contribution: A flag indicating whether the state-level
-      //     contributions should be saved by the io_manager.
-      //   save_prediction_errors: A flag indicating whether the one-step
-      //     prediction errors from the Kalman filter should be saved by the
-      //     io_manager.
       //   final_state: A pointer to a Vector to hold the state at the final
       //     time point.  This can be a nullptr if the state is only going to be
       //     recorded, but it must point to a Vector if the state is going to be
@@ -364,8 +334,8 @@ namespace BOOM {
       // Returns:
       //   An R matrix, with rows corresponding to MCMC draws and columns to
       //   time, containing posterior predictive draws for the forecast.
-      Matrix Forecast(SEXP r_bsts_object, SEXP r_prediction_data,
-                      SEXP r_burn, SEXP r_observed_data) override;
+      virtual Matrix Forecast(SEXP r_bsts_object, SEXP r_prediction_data,
+                              SEXP r_burn, SEXP r_observed_data);
 
       // Returns a HoldoutErrorSampler that holds a family specific
       // implementation pointer that samples one-step prediction errors for data
@@ -392,7 +362,7 @@ namespace BOOM {
           SEXP r_bsts_object, int cutpoint, bool standardize,
           BOOM::Matrix *prediction_error_output) = 0;
 
-   private:
+     private:
       // Create the specific StateSpaceModel suitable for the given model
       // family.  The posterior sampler for the model is set, and entries for
       // its model parameters are created in io_manager.  This function does not
@@ -418,6 +388,65 @@ namespace BOOM {
       virtual Vector SimulateForecast(const Vector &final_state) = 0;
     };
 
+    //=========================================================================
+    // A base class for model managers handling models describing multiple time
+    // series.
+    class MultivariateModelManagerBase : public ModelManager {
+     public:
+
+      // Create a MultivariateModelManager instance suitable for working with a
+      // specified model family.
+      //
+      // Args:
+      //   family: A string indicating the familiy of the error distribution.
+      //     Currently only "gaussian" is supported.
+      //   xdim: The dimension (number of columns) of the predictor matrix.
+      //     This can be zero if there are no regressors.
+      static MultivariateModelManagerBase * Create(
+          const std::string &family, int xdim);
+
+      // Create a MultivariateModelManager by reinstantiating a previously
+      // constructed bsts model.
+      // Args:
+      //   r_bsts_object:  An mbsts model object.
+      static MultivariateModelManagerBase * Create(SEXP r_bsts_object);
+
+      MultivariateStateSpaceModelBase * CreateModel(
+          SEXP r_data_list,
+          SEXP r_state_specification,
+          SEXP r_prior,
+          SEXP r_options,
+          Vector *final_state,
+          RListIoManager *io_manager);
+
+      // Forecast future values of the multivariate time series.
+      virtual Array Forecast(
+          SEXP r_mbsts_object,
+          SEXP r_prediction_data,
+          SEXP r_burn,
+          SEXP r_observed_data) = 0;
+      
+     private:
+      // Create the specific StateSpaceModel suitable for the given model
+      // family.  The posterior sampler for the model is set, and entries for
+      // its model parameters are created in io_manager.  This function does not
+      // add state to the the model.  It is primarily intended to aid the
+      // implementation of CreateModel.
+      //
+      // The arguments are documented in the comment to CreateModel.
+      //
+      // Returns:
+      //   A pointer to the created model.  The pointer is owned by a Ptr in the
+      //   the child class, so working with the raw pointer privately is
+      //   exception safe.
+      virtual MultivariateStateSpaceModelBase * CreateObservationModel(
+          SEXP r_data_list,
+          SEXP r_prior,
+          SEXP r_options,
+          RListIoManager *io_manager) = 0;
+      
+    };
+    
   }  // namespace bsts
 }  // namespace BOOM
 

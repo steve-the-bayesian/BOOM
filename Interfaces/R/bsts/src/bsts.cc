@@ -19,9 +19,9 @@
 
 #include "model_manager.h"
 #include "utils.h"
+#include "create_state_model.h"
 
 #include "r_interface/boom_r_tools.hpp"
-#include "r_interface/create_state_model.hpp"
 #include "r_interface/handle_exception.hpp"
 #include "r_interface/list_io.hpp"
 #include "r_interface/print_R_timestamp.hpp"

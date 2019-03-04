@@ -25,9 +25,9 @@
 #include "state_space_student_model_manager.h"
 
 #include "utils.h"
+#include "create_state_model.h"
 
 #include "r_interface/boom_r_tools.hpp"
-#include "r_interface/create_state_model.hpp"
 #include "r_interface/list_io.hpp"
 
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
@@ -113,7 +113,7 @@ namespace BOOM {
           r_prior,
           r_options,
           io_manager);
-      RInterface::StateModelFactory state_model_factory(io_manager);
+      StateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model, r_state_specification, "");
       SetDynamicRegressionStateComponentPositions(
           state_model_factory.DynamicRegressionStateModelPositions());
@@ -303,5 +303,59 @@ namespace BOOM {
       }
     }
 
+    //=========================================================================
+    MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
+        SEXP r_mbsts_object) {
+      std::string family = ToString(getListElement(r_mbsts_object, "family"));
+      bool regression = !Rf_isNull(getListElement(r_mbsts_object, "predictors"));
+      int xdim = 0;
+      if (regression) {
+        xdim = Rf_ncols(getListElement(r_mbsts_object, "predictors"));
+      }
+      return MultivariateModelManagerBase::Create(family, xdim);
+    }
+
+    //--------------------------------------------------------------------------    
+    MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
+        const std::string &family, int xdim) {
+
+      if (family == "gaussian") {
+        StateSpaceMultivariateGaussianModelManager *manager =
+            new StateSpaceMultivariateGaussianModelManager;
+        manager->SetPredictorDimension(xdim);
+        return manager;
+      } else {
+        report_error("For now, only Gaussian families are supported in the "
+                     "multivariate case.");
+      }
+      return manager;
+    }
+
+    //--------------------------------------------------------------------------
+    MultivariateStateSpaceModelBase * MultivariateModelManagerBase::CreateModel(  
+        SEXP r_data_list,
+        SEXP r_shared_state_specification,
+        SEXP r_prior,
+        SEXP r_options,
+        Vector *final_state,
+        RListIoManager *io_manager) {
+      
+      MultivariateStateSpaceModelBase *model = CreateObservationModel(
+          r_data_list,
+          r_prior,
+          r_options,
+          io_manager);
+      SharedStateModelFactory shared_state_model_factory(io_manager);
+      shared_state_model_factory.AddState(model, r_state_specification, "");
+      SetDynamicRegressionStateComponentPositions(
+          shared_state_model_factory.DynamicRegressionStateModelPositions());
+      shared_state_model_factory.SaveFinalState(model, final_state);
+
+      // The predict method does not set BstsOptions, so let NULL for r_options
+      // here be a signal that options have not been set.
+      return model;
+    }
+
+    
   }  // namespace bsts
 }  // namespace BOOM

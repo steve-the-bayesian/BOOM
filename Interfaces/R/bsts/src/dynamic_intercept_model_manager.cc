@@ -15,7 +15,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "dynamic_intercept_model_manager.h"
-#include "r_interface/create_state_model.hpp"
+#include "create_state_model.h"
+
 #include "r_interface/prior_specification.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
@@ -47,7 +48,7 @@ namespace BOOM {
         RListIoManager *io_manager) {
       UnpackTimestampInfo(r_data_list);
       AddDataFromList(r_data_list);
-      RInterface::StateModelFactory state_model_factory(io_manager);
+      StateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model_.get(), r_state_specification);
       using Marginal = Kalman::ConditionalIidMarginalDistribution;
       Marginal::set_high_dimensional_threshold_factor(

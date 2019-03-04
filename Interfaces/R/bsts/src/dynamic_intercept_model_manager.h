@@ -93,7 +93,7 @@ namespace BOOM {
       Matrix Forecast(SEXP r_dirm_object,
                       SEXP r_prediction_data,
                       SEXP r_burn,
-                      SEXP r_observed_data) override;
+                      SEXP r_observed_data); 
 
    protected:
       int UnpackForecastData(SEXP r_prediction_data) override;
