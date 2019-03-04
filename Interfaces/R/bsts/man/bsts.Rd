@@ -16,7 +16,7 @@
 
 \alias{bsts}
 \name{bsts}
-\title{Bayesian structural time series}
+\title{Bayesian Structural Time Series}
 \Rdversion{1.1}
 \description{
 
