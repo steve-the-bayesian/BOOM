@@ -44,7 +44,7 @@ namespace BOOM {
     // Args:
     //   dim: The dimension of the time series to be modeled (i.e. the number of
     //     parallel time series).
-    MultivariateStateSpaceModel(int dim);
+    explicit MultivariateStateSpaceModel(int dim);
     MultivariateStateSpaceModel(const MultivariateStateSpaceModel &rhs);
     MultivariateStateSpaceModel(MultivariateStateSpaceModel &&rhs) = default;
     MultivariateStateSpaceModel * clone() const override;

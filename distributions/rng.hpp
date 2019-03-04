@@ -33,7 +33,7 @@ namespace BOOM {
     RNG();
 
     // Seed with a specified value.
-    RNG(long seed);
+    explicit RNG(long seed);
 
     // Seed from a C++ standard random device, if one is present.
     void seed();

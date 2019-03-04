@@ -69,7 +69,7 @@ namespace BOOM {
   namespace bsts {
     class StateModelFactoryBase {
      public:
-      StateModelFactoryBase(RListIoManager *io_manager)
+      explicit StateModelFactoryBase(RListIoManager *io_manager)
           : io_manager_(io_manager)
       {}
 

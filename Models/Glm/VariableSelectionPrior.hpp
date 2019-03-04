@@ -95,7 +95,8 @@ namespace BOOM {
    public:
     VariableSelectionPrior();
     VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
-    VariableSelectionPrior(const Vector &marginal_inclusion_probabilities);
+    explicit VariableSelectionPrior(
+        const Vector &marginal_inclusion_probabilities);
     VariableSelectionPrior *clone() const override;
     double logp(const Selector &included_coefficients) const override;
 
@@ -226,7 +227,8 @@ namespace BOOM {
         public IID_DataPolicy<MatrixGlmCoefs>,
         public PriorPolicy {
     public:
-    MatrixVariableSelectionPrior(const Matrix &prior_inclusion_probabilities);
+    explicit MatrixVariableSelectionPrior(
+        const Matrix &prior_inclusion_probabilities);
 
     MatrixVariableSelectionPrior *clone() const override {
       return new MatrixVariableSelectionPrior(*this);

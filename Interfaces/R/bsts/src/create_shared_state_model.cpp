@@ -69,7 +69,8 @@ namespace BOOM {
     class SharedLocalLevelVarianceManager
         : public StreamableVectorIoCallback {
      public:
-      SharedLocalLevelVarianceManager(SharedLocalLevelStateModel *model)
+      explicit SharedLocalLevelVarianceManager(
+          SharedLocalLevelStateModel *model)
           : model_(model)
       {}
       

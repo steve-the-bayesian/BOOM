@@ -27,7 +27,7 @@ namespace BOOM {
 
     class LU_impl_ {
      public:
-      LU_impl_(const Matrix &foo) : dcmp_(EigenMap(foo)) {
+      explicit LU_impl_(const Matrix &foo) : dcmp_(EigenMap(foo)) {
         permutation_sign_ = dcmp_.permutationP().determinant() *
             dcmp_.permutationQ().determinant();
       }
