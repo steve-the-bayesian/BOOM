@@ -21,6 +21,7 @@
 #include "r_interface/list_io.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
 
 namespace BOOM {
@@ -94,6 +95,28 @@ namespace BOOM {
       mutable int has_regression_;
     };
 
+    //======================================================================
+    class MultivariateStateContributionCallback
+        : public ArrayIoCallback {
+     public:
+      std::vector<int> dim() const override {
+        return { model_->number_of_state_models(),
+              model_->time_dimension(),
+              model_->nseries()};
+      }
+
+      void write_to_array(ArrayView &view) const override {
+        view = model_->state_contributions();
+      }
+
+      void read_from_array(const ArrayView &view) override {
+        report_error("State contributions should not be streamed.");
+      }
+      
+     private:
+      const MultivariateStateSpaceModelBase *model_;
+    };
+    
     //======================================================================
     class DynamicInterceptStateContributionCallback
         : public MatrixIoCallback {
