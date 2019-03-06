@@ -165,7 +165,6 @@ HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
           getListElement(r_bsts_object, "state.specification"),
           getListElement(r_bsts_object, "prior"),
           getListElement(r_bsts_object, "model.options"),
-          nullptr,
           &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 

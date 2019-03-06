@@ -23,9 +23,11 @@
 #include "state_space_poisson_model_manager.h"
 #include "state_space_regression_model_manager.h"
 #include "state_space_student_model_manager.h"
+#include "state_space_multivariate_gaussian_model_manager.h"
 
 #include "utils.h"
 #include "create_state_model.h"
+#include "create_shared_state_model.h"
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
@@ -106,7 +108,6 @@ namespace BOOM {
         SEXP r_state_specification,
         SEXP r_prior,
         SEXP r_options,
-        Vector *final_state,
         RListIoManager *io_manager) {
       ScalarStateSpaceModelBase *model = CreateObservationModel(
           r_data_list,
@@ -117,7 +118,7 @@ namespace BOOM {
       state_model_factory.AddState(model, r_state_specification, "");
       SetDynamicRegressionStateComponentPositions(
           state_model_factory.DynamicRegressionStateModelPositions());
-      state_model_factory.SaveFinalState(model, final_state);
+      state_model_factory.SaveFinalState(model, &final_state());
 
       // The predict method does not set BstsOptions, so allow NULL here to
       // signal that options have not been set.
@@ -190,7 +191,6 @@ namespace BOOM {
                                         SEXP r_burn,
                                         SEXP r_observed_data) {
       RListIoManager io_manager;
-      Vector final_state;
       SEXP r_state_specfication = getListElement(
           r_bsts_object, "state.specification");
       ScalarStateSpaceModelBase *model = CreateModel(
@@ -198,7 +198,6 @@ namespace BOOM {
           r_state_specfication,
           R_NilValue,
           R_NilValue,
-          &final_state,
           &io_manager);
       bool refilter;
       if (Rf_isNull(r_observed_data)) {
@@ -222,6 +221,7 @@ namespace BOOM {
           model, r_state_specfication, r_prediction_data);
 
       Matrix ans(iterations_after_burnin, forecast_horizon);
+      Vector final_state;
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
         if (refilter) {
@@ -320,15 +320,14 @@ namespace BOOM {
         const std::string &family, int xdim) {
 
       if (family == "gaussian") {
-        StateSpaceMultivariateGaussianModelManager *manager =
-            new StateSpaceMultivariateGaussianModelManager;
-        manager->SetPredictorDimension(xdim);
+        MultivariateGaussianModelManager *manager =
+            new MultivariateGaussianModelManager(xdim);
         return manager;
       } else {
         report_error("For now, only Gaussian families are supported in the "
                      "multivariate case.");
       }
-      return manager;
+      return nullptr;
     }
 
     //--------------------------------------------------------------------------
@@ -337,7 +336,6 @@ namespace BOOM {
         SEXP r_shared_state_specification,
         SEXP r_prior,
         SEXP r_options,
-        Vector *final_state,
         RListIoManager *io_manager) {
       
       MultivariateStateSpaceModelBase *model = CreateObservationModel(
@@ -346,10 +344,11 @@ namespace BOOM {
           r_options,
           io_manager);
       SharedStateModelFactory shared_state_model_factory(io_manager);
-      shared_state_model_factory.AddState(model, r_state_specification, "");
+      shared_state_model_factory.AddState(
+          model, r_shared_state_specification, "");
       SetDynamicRegressionStateComponentPositions(
           shared_state_model_factory.DynamicRegressionStateModelPositions());
-      shared_state_model_factory.SaveFinalState(model, final_state);
+      shared_state_model_factory.SaveFinalState(model, &final_state());
 
       // The predict method does not set BstsOptions, so let NULL for r_options
       // here be a signal that options have not been set.

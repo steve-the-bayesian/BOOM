@@ -44,7 +44,6 @@ namespace BOOM {
         SEXP r_state_specification,
         SEXP r_regression_prior,
         SEXP r_options,
-        Vector *final_state,
         RListIoManager *io_manager) {
       UnpackTimestampInfo(r_data_list);
       AddDataFromList(r_data_list);
@@ -82,7 +81,8 @@ namespace BOOM {
           new StandardDeviationListElement(regression->Sigsq_prm(),
                                            "sigma.obs"));
 
-      state_model_factory.SaveFinalState(model_.get(), final_state);
+      // TODO(steve):  does final state need to be sized first?
+      state_model_factory.SaveFinalState(model_.get(), &final_state());
 
       io_manager->add_list_element(
           new NativeMatrixListElement(
@@ -98,7 +98,6 @@ namespace BOOM {
                              SEXP r_burn,
                              SEXP r_observed_data) {
       RListIoManager io_manager;
-      Vector final_state;
       SEXP r_state_specfication = getListElement(
           r_bsts_object, "state.specification");
       model_.reset(CreateModel(
@@ -106,7 +105,6 @@ namespace BOOM {
           r_state_specfication,
           R_NilValue,
           R_NilValue,
-          &final_state,
           &io_manager));
       bool refilter;
       if (Rf_isNull(r_observed_data)) {
@@ -136,13 +134,13 @@ namespace BOOM {
           model_->kalman_filter();
           const Kalman::MarginalDistributionBase &marg(
               model_->get_filter().back());
-          final_state = rmvn(marg.contemporaneous_state_mean(),
+          final_state() = rmvn(marg.contemporaneous_state_mean(),
                              marg.contemporaneous_state_variance());
         }
         ans.row(i) = model_->simulate_forecast(
             rng(),
             forecast_predictors_,
-            final_state,
+            final_state(),
             ForecastTimestamps());
       }
       return ans;

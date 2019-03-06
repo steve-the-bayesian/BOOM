@@ -14,7 +14,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-#include "create_state_model.hpp"
+#include "create_state_model.h"
 
 #include <string>
 #include "cpputil/report_error.hpp"
@@ -67,6 +67,8 @@
 namespace BOOM {
   namespace bsts {
 
+    using namespace BOOM::RInterface;
+    
     StateModelFactory::StateModelFactory(RListIoManager *io_manager)
         : StateModelFactoryBase(io_manager)
     {}
@@ -322,9 +324,7 @@ namespace BOOM {
       if (io_manager()) {
         io_manager()->add_list_element(
             new NativeVectorListElement(
-                new BOOM::RInterface::FinalStateCallback(model),
-                list_element_name,
-                final_state));
+                new FinalStateCallback(model), list_element_name, final_state));
       }
     }
 

@@ -106,7 +106,9 @@ namespace BOOM {
       }
 
       void write_to_array(ArrayView &view) const override {
-        view = model_->state_contributions();
+        for (int s = 0; s < model_->number_of_state_models(); ++s) {
+          view.slice(s, -1, -1) = model_->state_contributions(s);
+        }
       }
 
       void read_from_array(const ArrayView &view) override {

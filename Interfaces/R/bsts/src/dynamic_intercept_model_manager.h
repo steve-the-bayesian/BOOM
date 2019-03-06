@@ -45,11 +45,6 @@ namespace BOOM {
       //   r_options: A list containing 'large.sample.threshold.factor', a
       //     non-negative scalar that determines the cutoff between dense and
       //     sparse linear algebra in the Kalman filter updates for this model.
-      //   final_state:
-      //   final_state: A pointer to a Vector to hold the state at the final
-      //     time point.  This can be a nullptr if the state is only going to be
-      //     recorded, but it must point to a Vector if the state is going to be
-      //     read from an existing object.
       //   io_manager: The io_manager responsible for writing MCMC output to an
       //     R object, or streaming it from an existing object.
       //
@@ -65,7 +60,6 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,  
-          Vector *final_state,
           RListIoManager *io_manager) override;
 
       // Args:
@@ -97,6 +91,8 @@ namespace BOOM {
 
    protected:
       int UnpackForecastData(SEXP r_prediction_data) override;
+
+      Vector &final_state() {return final_state_;}
       
    private:
       void AddData(const Vector &response, const Matrix &predictors,
@@ -108,6 +104,8 @@ namespace BOOM {
 
       // The predictor matrix for forecasting.
       Matrix forecast_predictors_;
+
+      Vector final_state_;
     };
     
   } // namespace bsts

@@ -65,7 +65,6 @@ extern "C" {
           r_state_specification,
           r_prior,
           r_options,
-          nullptr,
           &io_manager));
 
       // Do one posterior sampling step before getting ready to write.  This
@@ -167,7 +166,7 @@ extern "C" {
       SEXP r_seed) {
     try {
       seed_rng_from_R(r_seed);
-      std::unique_ptr<ModelManager> model_manager(
+      std::unique_ptr<ScalarModelManager> model_manager(
           ScalarModelManager::Create(r_bsts_object));
       return BOOM::ToRMatrix(model_manager->Forecast(
           r_bsts_object,

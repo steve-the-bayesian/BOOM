@@ -112,10 +112,6 @@ namespace BOOM {
       //   save_prediction_errors: A flag indicating whether the one-step
       //     prediction errors from the Kalman filter should be saved by the
       //     io_manager.
-      //   final_state: A pointer to a Vector to hold the state at the final
-      //     time point.  This can be a nullptr if the state is only going to be
-      //     recorded, but it must point to a Vector if the state is going to be
-      //     read from an existing object.
       //   io_manager: The io_manager responsible for writing MCMC output to an
       //     R object, or streaming it from an existing object.
       //
@@ -131,7 +127,6 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,
-          Vector *final_state,
           RListIoManager *io_manager) = 0;
 
 
@@ -228,8 +223,11 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prediction_data);
 
+      Vector &final_state() {return final_state_;}
+      
      private:
       RNG rng_;
+      Vector final_state_;
 
       //----------------------------------------------------------------------
       // Time stamps are trivial the timestamp information was NULL, or if there
@@ -293,10 +291,6 @@ namespace BOOM {
       //     distributions like binomial or Poisson this can be NULL.
       //   r_options: Model or family specific options such as the technique to
       //     use for model averaging (ODA vs SVSS).
-      //   final_state: A pointer to a Vector to hold the state at the final
-      //     time point.  This can be a nullptr if the state is only going to be
-      //     recorded, but it must point to a Vector if the state is going to be
-      //     read from an existing object.
       //   io_manager: The io_manager responsible for writing MCMC output to an
       //     R object, or streaming it from an existing object.
       //
@@ -312,7 +306,6 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,
-          Vector *final_state,
           RListIoManager *io_manager) override;
 
       // Returns a set of draws from the posterior predictive distribution.
@@ -416,7 +409,6 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,
-          Vector *final_state,
           RListIoManager *io_manager);
 
       // Forecast future values of the multivariate time series.

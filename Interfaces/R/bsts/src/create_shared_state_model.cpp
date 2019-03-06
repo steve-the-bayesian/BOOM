@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "r_interface/create_shared_state_model.h"
+#include "create_shared_state_model.h"
 
 #include <string>
 #include "cpputil/report_error.hpp"

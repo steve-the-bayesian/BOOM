@@ -29,14 +29,12 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
     SEXP r_state_specification,
     SEXP r_prior,
     SEXP r_options,
-    Vector *final_state,
     RListIoManager *io_manager) {
   ScalarStateSpaceModelBase *model = ScalarModelManager::CreateModel(
       r_data_list,
       r_state_specification,
       r_prior,
       r_options,
-      final_state,
       io_manager);
 
   // It is only possible to compute log likelihood for Gaussian models.
@@ -163,7 +161,6 @@ HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
       getListElement(r_bsts_object, "state.specification"),
       getListElement(r_bsts_object, "prior"),
       getListElement(r_bsts_object, "model.options"),
-      nullptr,
       &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 

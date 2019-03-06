@@ -34,7 +34,6 @@ class GaussianModelManagerBase : public ScalarModelManager {
       SEXP r_state_specification,
       SEXP r_prior,
       SEXP r_options,
-      Vector *final_state,
       RListIoManager *io_manager) override;
 };
 
