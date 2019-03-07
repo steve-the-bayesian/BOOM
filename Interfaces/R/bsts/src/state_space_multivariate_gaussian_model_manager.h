@@ -18,20 +18,54 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-namespace BOOM {
+#include "model_manager.h"
 
+#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+
+namespace BOOM {
   namespace bsts {
 
-    class StateSpaceMultivariateGaussianModelManager
+    class MultivariateGaussianModelManager
         : public MultivariateModelManagerBase {
       
      public:
-      
       // When you create the observation model add the state contributions to
       // the io_manager.
 
-     private:
+      // Args:
+      //   xdim: The dimension of the predictor variables.  This can be zero,
+      //     indicating that no predictors are present.  A negative value is a
+      //     signal that the predictor dimension will be set later.
+      MultivariateGaussianModelManager(int xdim = -1);
 
+      MultivariateStateSpaceModel * CreateObservationModel(
+          SEXP r_data_list,
+          SEXP r_prior,
+          SEXP r_options,
+          RListIoManager *io_manager) override;
+
+      void AddDataFromBstsObject(SEXP r_bsts_object) override;
+      void AddDataFromList(SEXP r_data_list) override;
+      int UnpackForecastData(SEXP r_prediction_data) override;
+
+      // Forecast future values of the multivariate time series.
+      Array Forecast(SEXP r_mbsts_object,
+                     SEXP r_prediction_data,
+                     SEXP r_burn,
+                     SEXP r_observed_data) override;
+      
+     private:
+      // TODO: How to handle the observation indicators.
+      void AddData(const Matrix &responses,
+                   const Matrix &predictors,
+                   const SelectorMatrix &observed);
+
+      
+      Ptr<MultivariateStateSpaceModel> model_;
+      int predictor_dimension_;
+
+      Matrix forecast_predictors_;
+      
     };
     
   }  // namespace bsts
