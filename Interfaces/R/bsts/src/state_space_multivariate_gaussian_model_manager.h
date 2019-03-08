@@ -19,7 +19,7 @@
 */
 
 #include "model_manager.h"
-
+#include "LinAlg/Selector.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
 
 namespace BOOM {
@@ -36,7 +36,7 @@ namespace BOOM {
       //   xdim: The dimension of the predictor variables.  This can be zero,
       //     indicating that no predictors are present.  A negative value is a
       //     signal that the predictor dimension will be set later.
-      MultivariateGaussianModelManager(int xdim = -1);
+      MultivariateGaussianModelManager(int ydim, int xdim);
 
       MultivariateStateSpaceModel * CreateObservationModel(
           SEXP r_data_list,
@@ -60,8 +60,14 @@ namespace BOOM {
                    const Matrix &predictors,
                    const SelectorMatrix &observed);
 
+
+      void BuildModelAndAssignData(SEXP r_data_list);
+      void AssignSampler(SEXP r_prior);
+      void ConfigureIo(RListIoManager *io_manager);
+      
       
       Ptr<MultivariateStateSpaceModel> model_;
+      int ydim_;
       int predictor_dimension_;
 
       Matrix forecast_predictors_;

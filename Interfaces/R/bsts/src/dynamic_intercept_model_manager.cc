@@ -49,6 +49,8 @@ namespace BOOM {
       AddDataFromList(r_data_list);
       StateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model_.get(), r_state_specification);
+      SetDynamicRegressionStateComponentPositions(
+          state_model_factory.DynamicRegressionStateModelPositions());
       using Marginal = Kalman::ConditionalIidMarginalDistribution;
       Marginal::set_high_dimensional_threshold_factor(
           Rf_asReal(getListElement(
@@ -151,6 +153,39 @@ namespace BOOM {
           r_prediction_data, "predictors"));
       UnpackForecastTimestamps(r_prediction_data);
       return forecast_predictors_.nrow();
+    }
+
+    void Manager::UnpackDynamicRegressionForecastData(
+        StateSpaceModelBase *model,
+        SEXP r_state_specification,
+        SEXP r_prediction_data) {
+      if (Rf_length(r_state_specification) < model->number_of_state_models()) {
+        std::ostringstream err;
+        err << "The number of state components in the model: ("
+            << model->number_of_state_models() << ") does not match the size of "
+            << "the state specification: ("
+            << Rf_length(r_state_specification)
+            << ") in UnpackDynamicRegressionForecastData.";
+        report_error(err.str());
+      }
+      std::deque<int> positions(dynamic_regression_state_positions().begin(),
+                                dynamic_regression_state_positions().end());
+      for (int i = 0; i < model->number_of_state_models(); ++i) {
+        SEXP spec = VECTOR_ELT(r_state_specification, i);
+        if (Rf_inherits(spec, "DynamicRegression")) {
+          Matrix predictors = ToBoomMatrix(getListElement(
+              r_prediction_data, "dynamic.regression.predictors"));
+          if (positions.empty()) {
+            report_error("Found a previously unseen dynamic regression state "
+                         "component.");
+          }
+          int pos = positions[0];
+          positions.pop_front();
+          Ptr<StateModel> state_model = model->state_model(pos);
+          state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
+              predictors);
+        }
+      }
     }
     
     void Manager::AddData(const Vector &response,

@@ -17,7 +17,6 @@
 #include <string>
 
 #include "model_manager.h"
-#include "dynamic_intercept_model_manager.h"
 #include "state_space_gaussian_model_manager.h"
 #include "state_space_logit_model_manager.h"
 #include "state_space_poisson_model_manager.h"
@@ -33,7 +32,6 @@
 #include "r_interface/list_io.hpp"
 
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
-#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
@@ -116,8 +114,6 @@ namespace BOOM {
           io_manager);
       StateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model, r_state_specification, "");
-      SetDynamicRegressionStateComponentPositions(
-          state_model_factory.DynamicRegressionStateModelPositions());
       state_model_factory.SaveFinalState(model, &final_state());
 
       // The predict method does not set BstsOptions, so allow NULL here to
@@ -217,8 +213,6 @@ namespace BOOM {
         report_error("Forecast called with NULL prediction data.");
       }
       int forecast_horizon = UnpackForecastData(r_prediction_data);
-      UnpackDynamicRegressionForecastData(
-          model, r_state_specfication, r_prediction_data);
 
       Matrix ans(iterations_after_burnin, forecast_horizon);
       Vector final_state;
@@ -241,39 +235,6 @@ namespace BOOM {
         ans.row(i) = SimulateForecast(final_state);
       }
       return ans;
-    }
-
-    void ModelManager::UnpackDynamicRegressionForecastData(
-        StateSpaceModelBase *model,
-        SEXP r_state_specification,
-        SEXP r_prediction_data) {
-      if (Rf_length(r_state_specification) < model->number_of_state_models()) {
-        std::ostringstream err;
-        err << "The number of state components in the model: ("
-            << model->number_of_state_models() << ") does not match the size of "
-            << "the state specification: ("
-            << Rf_length(r_state_specification)
-            << ") in UnpackDynamicRegressionForecastData.";
-        report_error(err.str());
-      }
-      std::deque<int> positions(dynamic_regression_state_positions().begin(),
-                                dynamic_regression_state_positions().end());
-      for (int i = 0; i < model->number_of_state_models(); ++i) {
-        SEXP spec = VECTOR_ELT(r_state_specification, i);
-        if (Rf_inherits(spec, "DynamicRegression")) {
-          Matrix predictors = ToBoomMatrix(getListElement(
-              r_prediction_data, "dynamic.regression.predictors"));
-          if (positions.empty()) {
-            report_error("Found a previously unseen dynamic regression state "
-                         "component.");
-          }
-          int pos = positions[0];
-          positions.pop_front();
-          Ptr<StateModel> state_model = model->state_model(pos);
-          state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
-              predictors);
-        }
-      }
     }
 
     void ModelManager::UnpackTimestampInfo(SEXP r_data_list) {
@@ -307,21 +268,24 @@ namespace BOOM {
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         SEXP r_mbsts_object) {
       std::string family = ToString(getListElement(r_mbsts_object, "family"));
-      bool regression = !Rf_isNull(getListElement(r_mbsts_object, "predictors"));
+      int ydim = Rf_ncols(getListElement(
+          r_mbsts_object, "original.series", true));
+      bool regression = !Rf_isNull(getListElement(
+          r_mbsts_object, "predictors", true));
       int xdim = 0;
       if (regression) {
         xdim = Rf_ncols(getListElement(r_mbsts_object, "predictors"));
       }
-      return MultivariateModelManagerBase::Create(family, xdim);
+      return MultivariateModelManagerBase::Create(family, ydim, xdim);
     }
 
     //--------------------------------------------------------------------------    
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
-        const std::string &family, int xdim) {
+        const std::string &family, int ydim, int xdim) {
 
       if (family == "gaussian") {
         MultivariateGaussianModelManager *manager =
-            new MultivariateGaussianModelManager(xdim);
+            new MultivariateGaussianModelManager(ydim, xdim);
         return manager;
       } else {
         report_error("For now, only Gaussian families are supported in the "
@@ -346,8 +310,6 @@ namespace BOOM {
       SharedStateModelFactory shared_state_model_factory(io_manager);
       shared_state_model_factory.AddState(
           model, r_shared_state_specification, "");
-      SetDynamicRegressionStateComponentPositions(
-          shared_state_model_factory.DynamicRegressionStateModelPositions());
       shared_state_model_factory.SaveFinalState(model, &final_state());
 
       // The predict method does not set BstsOptions, so let NULL for r_options

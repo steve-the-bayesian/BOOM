@@ -21,6 +21,8 @@
 #include "utils.h"
 
 #include "create_state_model.h"
+#include "create_shared_state_model.h"
+#include "state_space_multivariate_gaussian_model_manager.h"
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/handle_exception.hpp"
@@ -29,6 +31,8 @@
 #include "r_interface/seed_rng_from_R.hpp"
 
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+
 #include "cpputil/report_error.hpp"
 #include "cpputil/ThreadTools.hpp"
 
@@ -38,11 +42,13 @@ extern "C" {
   using BOOM::bsts::ModelManager;
   using BOOM::RCheckInterrupt;
   using std::endl;
-
-  SEXP analysis_common_r_fit_bsts_model_(
+  using BOOM::bsts::MultivariateGaussianModelManager;
+  
+  SEXP analysis_common_r_fit_multivariate_bsts_model_(
       SEXP r_data_list,
       SEXP r_state_specification,
       SEXP r_prior,
+      SEXP r_options,
       SEXP r_niter,
       SEXP r_ping,
       SEXP r_seed) {
@@ -56,13 +62,16 @@ extern "C" {
       if (!Rf_isNull(r_predictors)) {
         xdim = Rf_ncols(r_predictors);
       }
-      std::unique_ptr<MultivariateModelManager> model_manager(
-          MultivariateModelManager::Create(xdim));
+      int ydim = Rf_ncols(BOOM::getListElement(r_data_list, "response"));
+      // TODO(steve): generalize this to handle other model families.
+      std::unique_ptr<MultivariateGaussianModelManager> model_manager(
+          new MultivariateGaussianModelManager(ydim, xdim));
 
       Ptr<BOOM::MultivariateStateSpaceModelBase> model(model_manager->CreateModel(
           r_data_list,
           r_state_specification,
           r_prior,
+          r_options,
           &io_manager));
 
       // Do one posterior sampling step before getting ready to write.  This
@@ -90,9 +99,8 @@ extern "C" {
               << "iteration " << i << ".  Aborting." << std::endl
               << e.what() << std::endl;
           error_reporter.SetError(err.str());
-          return BOOM::appendListElement(ans,
-                                         ToRVector(Vector(1, i)),
-                                         "ngood");
+          return BOOM::appendListElement(
+              ans, ToRVector(Vector(1, i)), "ngood");
         }
       }
       return ans;

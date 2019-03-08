@@ -26,7 +26,6 @@ namespace BOOM {
   namespace bsts {
 
     class ScalarModelManager;
-    class DynamicInterceptModelManager;
     
     //===========================================================================
     // The code that computes out of sample one-step prediction errors is
@@ -83,8 +82,6 @@ namespace BOOM {
 
       virtual ~ModelManager() {}
 
-      // TODO: remove 
-      
       // Creates a BOOM state space model suitable for learning with MCMC.
       // Args:
       //   r_data_list: An R list containing the data to be modeled in the
@@ -105,13 +102,6 @@ namespace BOOM {
       //     distributions like binomial or Poisson this can be NULL.
       //   r_options: Model or family specific options such as the technique to
       //     use for model averaging (ODA vs SVSS).
-      //   family: A text string indicating the desired model family for the
-      //     observation equation.
-      //   save_state_contribution: A flag indicating whether the state-level
-      //     contributions should be saved by the io_manager.
-      //   save_prediction_errors: A flag indicating whether the one-step
-      //     prediction errors from the Kalman filter should be saved by the
-      //     io_manager.
       //   io_manager: The io_manager responsible for writing MCMC output to an
       //     R object, or streaming it from an existing object.
       //
@@ -128,7 +118,6 @@ namespace BOOM {
           SEXP r_prior,
           SEXP r_options,
           RListIoManager *io_manager) = 0;
-
 
       // Time stamps are considered trivial if either (a) no time stamp
       // information was provided by the user, or (b) each time stamp contains
@@ -155,28 +144,7 @@ namespace BOOM {
         return forecast_timestamps_;
       }
 
-      // The locations (indices) in the vector of state models of any dynamic
-      // regression state components.
-      const std::vector<int> & dynamic_regression_state_positions() const {
-        return dynamic_regression_state_positions_;
-      }
-      
      protected:
-
-      // If the model contains any dynamic regression state components, the
-      // model manager needs to know where they are located in the model, so
-      // that the appropriate predictors can be assigned during forecasting.
-      //
-      // Args:
-      //   positions: A vector with length matching the number of dynamic
-      //     regression components in the model.  This will most often be 1 or
-      //     0.  Each element is the index of a dynamic regression state
-      //     component, so that a call to model->state_model(index) returns a
-      //     dynamic regression state model.
-      void SetDynamicRegressionStateComponentPositions(
-          const std::vector<int> &positions) {
-        dynamic_regression_state_positions_ = positions;
-      }
       
       // Checks to see if r_data_list has a field named timestamp.info, and use
       // it to populate the follwoing fields: number_of_time_points_,
@@ -208,21 +176,6 @@ namespace BOOM {
       //    The number of periods to be forecast.
       virtual int UnpackForecastData(SEXP r_prediction_data) = 0;
 
-      // Unpacks forecast data for the dynamic regression state component,
-      // if one is present in the model.
-      // Args:
-      //   model:  The model to be forecast.
-      //   r_state_specification: The R list of state specfication elements,
-      //     used to determine the position of the dynamic regression component.
-      //   r_prediction_data: A list.  If a dynamic regression component is
-      //     present this list must contain an element named
-      //     "dynamic.regression.predictors", which is an R matrix containing
-      //     the forecast predictors for the dynamic regression component.
-      void UnpackDynamicRegressionForecastData(
-          StateSpaceModelBase *model,
-          SEXP r_state_specification,
-          SEXP r_prediction_data);
-
       Vector &final_state() {return final_state_;}
       
      private:
@@ -246,10 +199,6 @@ namespace BOOM {
       // forecast_timestamps_ will be empty.
       std::vector<int> forecast_timestamps_;
 
-      // The index of each dynamic regression state component is stored here,
-      // where 'index' refers to the state component's position in the list of
-      // state models stored in the primary state space model.
-      std::vector<int> dynamic_regression_state_positions_;
     };
 
     //===========================================================================
@@ -393,10 +342,12 @@ namespace BOOM {
       // Args:
       //   family: A string indicating the familiy of the error distribution.
       //     Currently only "gaussian" is supported.
+      //   ydim: Dimension of the response being modeled.  The number of time
+      //     series.
       //   xdim: The dimension (number of columns) of the predictor matrix.
       //     This can be zero if there are no regressors.
       static MultivariateModelManagerBase * Create(
-          const std::string &family, int xdim);
+          const std::string &family, int ydim, int xdim);
 
       // Create a MultivariateModelManager by reinstantiating a previously
       // constructed bsts model.
@@ -411,7 +362,27 @@ namespace BOOM {
           SEXP r_options,
           RListIoManager *io_manager);
 
-      // Forecast future values of the multivariate time series.
+      // Returns a set of draws from the posterior predictive distribution of
+      // the multivariate time series.
+      //      
+      // Args:
+      //   r_bsts_object:  The R object created from a previous call to bsts().
+      //   r_prediction_data: Data needed to make the prediction.  This might be
+      //     a data frame for models that have a regression component, or a
+      //     vector of exposures or trials for binomial or Poisson data.
+      //   r_options: If any special options need to be passed in order to do
+      //     the prediction, they should be included here.
+      //   r_observed_data: In most cases, the prediction takes place starting
+      //     with the time period immediately following the last observation in
+      //     the training data.  If so then r_observed_data should be
+      //     R_NilValue, and the observed data will be taken from r_bsts_object.
+      //     However, if more data have been added (or if some data should be
+      //     omitted) from the training data, a new set of training data can be
+      //     passed here.
+      //
+      // Returns:
+      //   An array with dimension [iterations, time, ydim] containing draws
+      //   from the posterior predictive distribution.
       virtual Array Forecast(
           SEXP r_mbsts_object,
           SEXP r_prediction_data,

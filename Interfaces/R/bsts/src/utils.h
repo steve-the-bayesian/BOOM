@@ -19,6 +19,7 @@
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
+#include "LinAlg/Selector.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
@@ -39,7 +40,8 @@ namespace BOOM {
     // Element is of the response is true iff element i of the input is
     // not NA.
     std::vector<bool> IsObserved(SEXP r_vector);
-
+    SelectorMatrix IsObserved(const Matrix &matrix);
+    
     //======================================================================
     // Record the state of a DynamicRegressionStateModel in the io_manager.
     // Args:

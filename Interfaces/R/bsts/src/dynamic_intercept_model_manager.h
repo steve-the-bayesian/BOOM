@@ -19,6 +19,7 @@
 
 #include "model_manager.h"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 
 namespace BOOM {
   namespace bsts {
@@ -35,7 +36,6 @@ namespace BOOM {
 
       // Create a new DynamicInterceptRegressionModel.
       // Args:
-
       //   r_data_list: An R list containing 'predictors' (a matrix) and
       //     'response' (a vector).
       //   r_state_specification: An R list of state specification objects used
@@ -89,6 +89,30 @@ namespace BOOM {
                       SEXP r_burn,
                       SEXP r_observed_data); 
 
+      // If the model contains any dynamic regression state components, the
+      // model manager needs to know where they are located in the model, so
+      // that the appropriate predictors can be assigned during forecasting.
+      //
+      // Args:
+      //   positions: A vector with length matching the number of dynamic
+      //     regression components in the model.  This will most often be 1 or
+      //     0.  Each element is the index of a dynamic regression state
+      //     component, so that a call to model->state_model(index) returns a
+      //     dynamic regression state model.
+      void SetDynamicRegressionStateComponentPositions(
+          const std::vector<int> &positions) {
+        dynamic_regression_state_positions_ = positions;
+      }
+      
+      // TODO(steve): Move dynamic_regression_state_positions to the right model
+      // manager for dynamic regression models.
+      //
+      // The locations (indices) in the vector of state models of any dynamic
+      // regression state components.
+      const std::vector<int> & dynamic_regression_state_positions() const {
+        return dynamic_regression_state_positions_;
+      }
+
    protected:
       int UnpackForecastData(SEXP r_prediction_data) override;
 
@@ -100,12 +124,32 @@ namespace BOOM {
       void AddDataFromList(SEXP r_data_list) override;
       void AddDataFromBstsObject(SEXP r_bsts_object) override;
 
+      // Unpacks forecast data for the dynamic regression state component,
+      // if one is present in the model.
+      // Args:
+      //   model:  The model to be forecast.
+      //   r_state_specification: The R list of state specfication elements,
+      //     used to determine the position of the dynamic regression component.
+      //   r_prediction_data: A list.  If a dynamic regression component is
+      //     present this list must contain an element named
+      //     "dynamic.regression.predictors", which is an R matrix containing
+      //     the forecast predictors for the dynamic regression component.
+      void UnpackDynamicRegressionForecastData(
+          StateSpaceModelBase *model,
+          SEXP r_state_specification,
+          SEXP r_prediction_data);
+
       Ptr<DynamicInterceptRegressionModel> model_;
 
       // The predictor matrix for forecasting.
       Matrix forecast_predictors_;
 
       Vector final_state_;
+
+      // The index of each dynamic regression state component is stored here,
+      // where 'index' refers to the state component's position in the list of
+      // state models stored in the primary state space model.
+      std::vector<int> dynamic_regression_state_positions_;
     };
     
   } // namespace bsts

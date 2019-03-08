@@ -43,5 +43,3 @@ ss <- AddDynamicRegression(list(), y ~ predictors,
   model.options = DynamicRegressionRandomWalkOptions(
     sigma.prior = SdPrior(beta.sd[1], 1)))
 model <- bsts(y, state.specification = ss, niter = 100)
-
-
