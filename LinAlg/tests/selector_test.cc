@@ -187,6 +187,12 @@ namespace {
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[3]);
+
+    Selector row2 = wide.row(2);
+    EXPECT_EQ(3, row2.nvars_possible());
+    EXPECT_FALSE(row2[0]);
+    EXPECT_FALSE(row2[1]);
+    EXPECT_TRUE(row2[2]);
     
     Matrix selectable(4, 3);
     selectable.randomize();

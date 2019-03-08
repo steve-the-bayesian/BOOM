@@ -313,6 +313,7 @@ namespace BOOM {
     void drop(int i, int j) {columns_[j].drop(i);}
 
     const Selector &col(int i) const {return columns_[i];}
+    Selector row(int i) const;
 
     // Indicate whether each row is included by at least one column.
     Selector row_any() const;
