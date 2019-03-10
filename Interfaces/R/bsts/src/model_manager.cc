@@ -215,9 +215,9 @@ namespace BOOM {
       int forecast_horizon = UnpackForecastData(r_prediction_data);
 
       Matrix ans(iterations_after_burnin, forecast_horizon);
-      Vector final_state;
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
+        Vector final_state = this->final_state();
         if (refilter) {
           model->kalman_filter();
           const Kalman::ScalarMarginalDistribution &marg(

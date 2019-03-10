@@ -1,5 +1,4 @@
 library(bsts)
-library(tidyverse)
 set.seed(12345)
 
 trend <- cumsum(rnorm(1095, 0, .1))
@@ -44,19 +43,22 @@ my.horizon = 15
 ## Note adding the time stamps here doesn't help either
 pred <- predict(object = model, horizon = my.horizon)
 ## Make a data frame for plotting
-plot.info <- data.frame(Date = time(y), 
-                        value = y, 
-                        predict.mean = NA,
-                        predict.upper = NA,
-                        predict.lower = NA
-                       )
-plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.mean = pred$mean
-plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.lower = pred$interval[1,]
-plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.upper = pred$interval[2,]
-## Let's make a pretty plot to demonstrate the problem
-filter(plot.info, Date > time(test.data)[1] - 25 & Date < time(test.data)[my.horizon] + 10)  %>% 
-    ggplot(aes(x = Date, y = value)) +
-    geom_line() +
-    geom_line(aes(y = predict.mean), col = "Forest Green") + # The prediction
-    geom_line(aes(y = predict.lower), col = "Forest Green", lty = 2) + # lower bound
-    geom_line(aes(y = predict.upper), col = "Forest Green", lty = 2)  # upper bound
+plot(pred)
+
+## plot.info <- data.frame(Date = time(y), 
+##                         value = y, 
+##                         predict.mean = NA,
+##                         predict.upper = NA,
+##                         predict.lower = NA
+##                        )
+## plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.mean = pred$mean
+## plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.lower = pred$interval[1,]
+## plot.info[plot.info$Date %in% time(test.data)[1:my.horizon],]$predict.upper = pred$interval[2,]
+
+## ## Let's make a pretty plot to demonstrate the problem
+## filter(plot.info, Date > time(test.data)[1] - 25 & Date < time(test.data)[my.horizon] + 10)  %>% 
+##     ggplot(aes(x = Date, y = value)) +
+##     geom_line() +
+##     geom_line(aes(y = predict.mean), col = "Forest Green") + # The prediction
+##     geom_line(aes(y = predict.lower), col = "Forest Green", lty = 2) + # lower bound
+##     geom_line(aes(y = predict.upper), col = "Forest Green", lty = 2)  # upper bound
