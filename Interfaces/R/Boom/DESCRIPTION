@@ -20,6 +20,6 @@ Description: A C++ library for Bayesian modeling, with an emphasis on Markov
 License: LGPL-2.1 | file LICENSE
 Depends: MASS, R(>= 3.1.0)
 Suggests: testthat
-LinkingTo: BH (>= 1.65.0), RcppEigen(>= 0.3.3.4.0)
+LinkingTo: BH (>= 1.65.0)
 Encoding: UTF-8
 SystemRequirements: GNU Make, C++11

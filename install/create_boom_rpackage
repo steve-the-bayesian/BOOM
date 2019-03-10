@@ -93,13 +93,13 @@ HDRS="$HDRS `find numopt -name "*.hpp"`"
 HDRS="$HDRS `find Samplers -name "*.hpp"`"
 HDRS="$HDRS `find stats -name "*.hpp"`"
 HDRS="$HDRS `find TargetFun -name "*.hpp"`"
-#HDRS="$HDRS `find Eigen -name "*.h"`"
+HDRS="$HDRS `find Eigen -name "*.h"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/inst/include
 
 ## Put the headers from Interfaces/R in the r_interface directory.
 mkdir $BOOM_DIR/inst/include/r_interface
 cp Interfaces/R/*.hpp $BOOM_DIR/inst/include/r_interface
-#cp Eigen/* $BOOM_DIR/inst/include/Eigen/
+cp Eigen/* $BOOM_DIR/inst/include/Eigen/
 #echo "Ignore the message about not being able to copy Eigen/src."
 
 ##----------------------------------------------------------------------
