@@ -115,9 +115,6 @@ namespace BOOM {
     // and that observe_time_dimension() has been called with a number larger
     // than t.
     int which_day(int t) const {
-      if (t > which_day_.size()) {
-        report_error("A time point was supplied outside the declared range.");
-      }
       return (t >= 0 && t < which_day_.size()) ? which_day_[t] : -1;
     }
 
