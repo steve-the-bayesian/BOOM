@@ -188,12 +188,13 @@ namespace BOOM {
   SparseVector RHSM::observation_matrix(int time_now) const {
     SparseVector ans(1);
     int holiday = impl_.which_holiday(time_now);
-    if (holiday < 0) return ans;
+    if (holiday < 0) {
+      return ans;
+    }
     int day = impl_.which_day(time_now);
     ans[0] = holiday_mean_contributions_[holiday]->value()[day];
     return ans;
   }
-
 
   ScalarRegressionHolidayStateModel::ScalarRegressionHolidayStateModel(
       const Date &time_of_first_observation,
