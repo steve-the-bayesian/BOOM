@@ -187,7 +187,7 @@ namespace BOOM {
   //
   class StateModelAdapter : virtual public StateModel {
    public:
-    StateModelAdapter(const Ptr<StateModel> &base) : base_(base) {}
+    explicit StateModelAdapter(const Ptr<StateModel> &base) : base_(base) {}
     StateModelAdapter(const StateModelAdapter &rhs)
         : StateModel(rhs), base_(rhs.clone()) {}
     StateModelAdapter *clone() const override {return new StateModelAdapter(*this);}
