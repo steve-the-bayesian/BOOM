@@ -175,7 +175,7 @@ namespace BOOM {
       // Returns:
       //    The number of periods to be forecast.
       virtual int UnpackForecastData(SEXP r_prediction_data) = 0;
-
+      
       Vector &final_state() {return final_state_;}
       
      private:

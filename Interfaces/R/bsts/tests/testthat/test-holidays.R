@@ -37,12 +37,15 @@ train.data <- y[time(y) < cut.date]
 test.data <- y[time(y) >= cut.date]
 ss <- AddLocalLevel(list(), train.data)
 ss <- AddRegressionHoliday(ss, train.data, holiday.list = holiday.list)
-model <- bsts(train.data, state.specification = ss, niter = 500, ping = 0)
-## Now let's make a prediction covering MemorialDay
-my.horizon = 15
-## Note adding the time stamps here doesn't help either
+model <- bsts(train.data, state.specification = ss, niter = 100, ping = 0)
+
+## Now make a prediction covering MemorialDay
+cat("Starting the prediction.\n")
+my.horizon <- 15
 pred <- predict(object = model, horizon = my.horizon)
 plot(pred, plot.original = 365)
 points(index(test.data), test.data)
 
-# There should be a negative spike at Memorial Memorial day, but there is not.
+test_that("Holiday covers true values", {
+  expect_true(CheckMcmcMatrix(pred$distribution), test.data[1:15])
+}

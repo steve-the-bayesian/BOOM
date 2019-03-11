@@ -213,7 +213,10 @@ namespace BOOM {
         report_error("Forecast called with NULL prediction data.");
       }
       int forecast_horizon = UnpackForecastData(r_prediction_data);
-
+      int max_time = model->time_dimension() + forecast_horizon;
+      for (int s = 0; s < model->number_of_state_models(); ++s) {
+        model->state_model(s)->observe_time_dimension(max_time);
+      }
       Matrix ans(iterations_after_burnin, forecast_horizon);
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
