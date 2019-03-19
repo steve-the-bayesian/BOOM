@@ -218,7 +218,7 @@ namespace BOOM {
     return ans;
   }
 
-  ostream &operator<<(ostream &out, const SparseVector &z) {
+  std::ostream &operator<<(std::ostream &out, const SparseVector &z) {
     int n = z.size();
     if (n == 0) return out;
     out << z[0];
