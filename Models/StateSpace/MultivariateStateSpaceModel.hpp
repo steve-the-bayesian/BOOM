@@ -53,7 +53,7 @@ namespace BOOM {
     MultivariateStateSpaceModel & operator=(
         MultivariateStateSpaceModel &&rhs) = default;
     
-    void add_shared_state(const Ptr<MultivariateStateModel> &state_model);
+    void add_shared_state(const Ptr<SharedStateModel> &state_model);
     
     IndependentMvnModel *observation_model() override;
     const IndependentMvnModel *observation_model() const override;
@@ -83,7 +83,7 @@ namespace BOOM {
 
    private:
     Ptr<IndependentMvnModel> observation_model_;
-    std::vector<Ptr<MultivariateStateModel>> state_models_;
+    std::vector<Ptr<SharedStateModel>> state_models_;
 
     Ptr<BlockDiagonalMatrix> observation_coefficients_;
   };

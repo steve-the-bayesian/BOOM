@@ -62,7 +62,7 @@ namespace BOOM {
   
   MSSM *MSSM::clone() const {return new MSSM(*this);} 
 
-  void MSSM::add_shared_state(const Ptr<MultivariateStateModel> &state_model) {
+  void MSSM::add_shared_state(const Ptr<SharedStateModel> &state_model) {
     state_models_.push_back(state_model);
     StateSpaceModelBase::add_state(state_model);
   }

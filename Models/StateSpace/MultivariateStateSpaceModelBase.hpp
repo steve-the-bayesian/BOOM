@@ -260,7 +260,6 @@ namespace BOOM {
     const Filter & get_simulation_filter() const override {
       return simulation_filter_;
     }
-
     
    private:
     // This function is 
