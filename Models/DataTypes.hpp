@@ -51,7 +51,7 @@ namespace BOOM {
     Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
     virtual Data *clone() const = 0;
     virtual ~Data() = default;
-    virtual ostream &display(ostream &) const = 0;
+    virtual std::ostream &display(std::ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
     void signal() const {
@@ -79,8 +79,8 @@ namespace BOOM {
     mutable std::vector<std::function<void(void)> > signals_;
   };
   //======================================================================
-  ostream &operator<<(ostream &out, const Data &d);
-  ostream &operator<<(ostream &out, const Ptr<Data> &dp);
+  std::ostream &operator<<(std::ostream &out, const Data &d);
+  std::ostream &operator<<(std::ostream &out, const Ptr<Data> &dp);
   void print_data(const Data &d);
 
   //==========================================================================-
@@ -116,7 +116,7 @@ namespace BOOM {
         this->signal();
       }
     }
-    ostream &display(ostream &out) const {
+    std::ostream &display(std::ostream &out) const {
       out << value_;
       return out;
     }
@@ -138,7 +138,7 @@ namespace BOOM {
     VectorData *clone() const override;
 
     uint dim() const { return x.size(); }
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     const Vector &value() const override { return x; }
     void set(const Vector &rhs, bool signal_change = true) override;
@@ -179,7 +179,7 @@ namespace BOOM {
     uint nrow() const { return x.nrow(); }
     uint ncol() const { return x.ncol(); }
 
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     const Matrix &value() const override { return x; }
     void set(const Matrix &rhs, bool sig = true) override;

@@ -50,7 +50,7 @@ namespace BOOM {
 
     ConditionalMixtureData(const ConditionalMixtureData &rhs);
     ConditionalMixtureData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     // The individual data point being modeled by the mixture.
     const Data *data() const;

@@ -45,7 +45,7 @@ namespace BOOM {
     }
   }
 
-  ostream &operator<<(ostream &out, const ParamVector &v) {
+  std::ostream &operator<<(std::ostream &out, const ParamVector &v) {
     out << vectorize(v, false);
     return out;
   }

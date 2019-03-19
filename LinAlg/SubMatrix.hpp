@@ -92,7 +92,7 @@ namespace BOOM {
     double sum() const;
 
     Matrix to_matrix() const;
-    ostream &display(ostream &out, int precision) const;
+    std::ostream &display(std::ostream &out, int precision) const;
 
    private:
     double *start_;
@@ -103,7 +103,7 @@ namespace BOOM {
 
     friend class ConstSubMatrix;
   };
-  ostream &operator<<(ostream &out, const SubMatrix &m);
+  std::ostream &operator<<(std::ostream &out, const SubMatrix &m);
 
   //======================================================================
   // A view into a rectangular subset of a matrix.
@@ -152,7 +152,7 @@ namespace BOOM {
     double sum() const;
 
     Matrix to_matrix() const;
-    ostream &display(ostream &out, int precision) const;
+    std::ostream &display(std::ostream &out, int precision) const;
 
    private:
     const double *start_;
@@ -161,7 +161,7 @@ namespace BOOM {
     const double *cols(int i) const { return start_ + stride * i; }
   };
 
-  ostream &operator<<(ostream &out, const ConstSubMatrix &m);
+  std::ostream &operator<<(std::ostream &out, const ConstSubMatrix &m);
   bool operator==(const Matrix &lhs, const SubMatrix &rhs);
   bool operator==(const Matrix &lhs, const ConstSubMatrix &rhs);
   bool operator==(const SubMatrix &lhs, const Matrix &rhs);

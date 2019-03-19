@@ -33,7 +33,7 @@ namespace BOOM {
     MvnMetaAnalysisDPMPriorData(const Vector &y,
                                 const SpdMatrix &observation_variance);
     MvnMetaAnalysisDPMPriorData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     Vector observation() const { return observation_->value(); }
     SpdMatrix observation_variance() const { return observation_variance_; }
 

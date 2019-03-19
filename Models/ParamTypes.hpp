@@ -75,7 +75,7 @@ namespace BOOM {
   Vector vectorize(const ParamVector &v, bool minimal = true);
   void unvectorize(ParamVector &pvec, const Vector &v, bool minimal = true);
 
-  ostream &operator<<(ostream &out, const ParamVector &v);
+  std::ostream &operator<<(std::ostream &out, const ParamVector &v);
 
   //============================================================
 

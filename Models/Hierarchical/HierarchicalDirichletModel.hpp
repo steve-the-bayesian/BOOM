@@ -39,7 +39,7 @@ namespace BOOM {
     explicit HierarchicalDirichletData(uint dimension);
     explicit HierarchicalDirichletData(const MultinomialSuf &suf);
     HierarchicalDirichletData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     const MultinomialSuf &suf() { return counts_; }
 
    private:

@@ -36,7 +36,7 @@ namespace BOOM {
     HierarchicalZeroInflatedGammaData(int n0, int n1, double sum,
                                       double sumlog);
     HierarchicalZeroInflatedGammaData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     int number_of_zeros() const;
     int number_of_positives() const;
     double sum() const;

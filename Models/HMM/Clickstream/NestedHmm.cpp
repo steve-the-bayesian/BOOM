@@ -134,7 +134,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   double NestedHmm::last_logpost() const { return logpost_->value(); }
   //----------------------------------------------------------------------
-  void NestedHmm::print_params(ostream &out) const {
+  void NestedHmm::print_params(std::ostream &out) const {
     out << "phi2 = " << session_model()->pi0() << endl
         << "Phi2 = " << endl
         << session_model()->Q();
@@ -156,7 +156,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void NestedHmm::print_event(ostream &out, const char *msg,
+  void NestedHmm::print_event(std::ostream &out, const char *msg,
                               const Ptr<Stream> &u, const Ptr<Session> &session,
                               const Ptr<Event> &event, int j) const {
     out << msg << " for stream "
@@ -171,7 +171,7 @@ namespace BOOM {
     print_filter(out, j);
   }
   //----------------------------------------------------------------------
-  void NestedHmm::print_filter(ostream &out, int j) const {
+  void NestedHmm::print_filter(std::ostream &out, int j) const {
     for (int i = 0; i <= j; ++i) {
       out << "filter for transition " << i << endl << P[i] << endl;
     }
@@ -407,7 +407,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
 
-  ostream &NestedHmm::write_suf(ostream &out) const {
+  std::ostream &NestedHmm::write_suf(std::ostream &out) const {
     out << "  Session Model:" << endl
         << "      init  = " << session_model()->suf()->init() << endl
         << "      trans = " << endl

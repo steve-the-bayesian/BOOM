@@ -51,10 +51,10 @@ namespace BOOM {
     virtual int max_levels() const { return -1; }
 
     // Print the value of this key to the stream 'out'.
-    virtual ostream &print(ostream &out) const = 0;
+    virtual std::ostream &print(std::ostream &out) const = 0;
 
     // Print the label corresponding to 'value' on the stream 'out'.
-    virtual ostream &print(uint value, ostream &out) const;
+    virtual std::ostream &print(uint value, std::ostream &out) const;
 
     // If true then the CategoricalData can be worked with as strings.
     virtual bool allows_strings() const { return false; }
@@ -87,7 +87,7 @@ namespace BOOM {
   class UnboundedIntCatKey : public CatKeyBase {
    public:
     UnboundedIntCatKey() = default;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
   };
 
   //======================================================================
@@ -96,7 +96,7 @@ namespace BOOM {
    public:
     explicit FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
     int max_levels() const override { return max_levels_; }
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     int max_levels_;
@@ -155,10 +155,10 @@ namespace BOOM {
     void relabel(const std::vector<std::string> &new_labels);
 
     // Print the value of this key to the stream 'out'.
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
     // Print the level that corresponds to a particular value.
-    ostream &print(uint value, ostream &out) const override;
+    std::ostream &print(uint value, std::ostream &out) const override;
 
    private:
     std::vector<std::string> labs_;
@@ -166,7 +166,7 @@ namespace BOOM {
     std::vector<uint> map_levels(const std::vector<std::string> &sv) const;
   };
 
-  inline ostream &operator<<(ostream &out, const CatKeyBase &k) {
+  inline std::ostream &operator<<(std::ostream &out, const CatKeyBase &k) {
     return k.print(out);
   }
 
@@ -219,7 +219,7 @@ namespace BOOM {
     bool comparable(const CategoricalData &rhs) const;
 
     // input-output
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     void set_key(const Ptr<CatKeyBase> &key) { key_ = key; }
 

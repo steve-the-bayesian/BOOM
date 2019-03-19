@@ -178,12 +178,12 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
-  ostream &SM::display(ostream &out, int precision) const {
+  std::ostream &SM::display(std::ostream &out, int precision) const {
     ConstSubMatrix m(*this);
     return m.display(out, precision);
   }
 
-  ostream &operator<<(ostream &out, const SubMatrix &m) {
+  std::ostream &operator<<(std::ostream &out, const SubMatrix &m) {
     return m.display(out, 5);
   }
 
@@ -394,7 +394,7 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
-  ostream &CSM::display(ostream &out, int precision) const {
+  std::ostream &CSM::display(std::ostream &out, int precision) const {
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
       for (uint j = 0; j < ncol(); ++j)
@@ -404,7 +404,7 @@ namespace BOOM {
     return out;
   }
   //------------------------------------------------------------
-  ostream &operator<<(ostream &out, const ConstSubMatrix &m) {
+  std::ostream &operator<<(std::ostream &out, const ConstSubMatrix &m) {
     return m.display(out, 5);
   }
 

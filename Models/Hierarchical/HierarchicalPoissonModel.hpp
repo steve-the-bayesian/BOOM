@@ -31,7 +31,7 @@ namespace BOOM {
    public:
     HierarchicalPoissonData(double event_count, double exposure);
     HierarchicalPoissonData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     double event_count() const { return event_count_; }
     double exposure() const { return exposure_; }
 

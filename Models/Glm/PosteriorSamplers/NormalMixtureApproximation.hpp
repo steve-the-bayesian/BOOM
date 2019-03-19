@@ -115,7 +115,7 @@ namespace BOOM {
     // constructor then -1 is returned.
     int number_of_function_evaluations() const;
 
-    ostream &print(ostream &out) const;
+    std::ostream &print(std::ostream &out) const;
 
     Vector serialize() const;
     Vector::const_iterator deserialize(Vector::const_iterator begin);
@@ -156,7 +156,7 @@ namespace BOOM {
     int number_of_function_evaluations_;
   };
 
-  inline ostream &operator<<(ostream &out,
+  inline std::ostream &operator<<(std::ostream &out,
                              const NormalMixtureApproximation &approximation) {
     return approximation.print(out);
   }

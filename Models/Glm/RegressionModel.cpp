@@ -93,7 +93,7 @@ namespace BOOM {
     return ans;
   }
 
-  ostream &AnovaTable::display(ostream &out) const {
+  std::ostream &AnovaTable::display(std::ostream &out) const {
     out << "ANOVA Table:" << endl
         << "\tdf\tSum Sq.\t\tMean Sq.\tF:  " << F << endl
         << "Model\t" << df_model << "\t" << SSM << "\t\t" << MSM << endl
@@ -102,12 +102,12 @@ namespace BOOM {
         << "Total\t" << df_total << "\t" << SST << endl;
     return out;
   }
-  ostream &operator<<(ostream &out, const AnovaTable &tab) {
+  std::ostream &operator<<(std::ostream &out, const AnovaTable &tab) {
     tab.display(out);
     return out;
   }
   //======================================================================
-  ostream &RegSuf::print(ostream &out) const {
+  std::ostream &RegSuf::print(std::ostream &out) const {
     out << "sample size: " << n() << endl
         << "xty: " << xty() << endl
         << "xtx: " << endl
@@ -283,7 +283,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &QrRegSuf::print(ostream &out) const {
+  std::ostream &QrRegSuf::print(std::ostream &out) const {
     return out << "sumsqy_ = " << yty() << endl
                << "xty_ = " << xty() << endl
                << "xtx  = " << endl
@@ -469,7 +469,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &NeRegSuf::print(ostream &out) const {
+  std::ostream &NeRegSuf::print(std::ostream &out) const {
     reflect();
     return out << "sumsqy_ = " << sumsqy_ << endl
                << "sumy_  = " << sumy_ << endl

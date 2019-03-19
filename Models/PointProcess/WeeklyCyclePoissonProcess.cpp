@@ -128,7 +128,7 @@ namespace BOOM {
     return this->unvectorize(it, minimal);
   }
 
-  ostream &WS::print(ostream &out) const {
+  std::ostream &WS::print(std::ostream &out) const {
     out << "Counts (top) and exposure times:" << endl;
     out << setw(4) << " ";
     for (int d = 0; d < 7; ++d) {

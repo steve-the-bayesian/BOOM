@@ -34,7 +34,7 @@ namespace BOOM {
     PointProcessEvent(const DateTime &time);  // NOLINT
     PointProcessEvent(const DateTime &time, const Ptr<Data> &mark);
     PointProcessEvent *clone() const override;
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     const DateTime &timestamp() const;
     const Data *mark() const;
@@ -76,7 +76,7 @@ namespace BOOM {
     PointProcess(const PointProcess &rhs);
 
     PointProcess *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     uint number_of_events() const;
     double window_duration() const;  // Time is measured in days.

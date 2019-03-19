@@ -54,7 +54,7 @@ namespace BOOM {
         const AugmentedTimeSeries &rhs);  // clones pointers
 
     virtual uint size(bool minimal) const;
-    virtual ostream &display(ostream &out) const;
+    virtual std::ostream &display(std::ostream &out) const;
     //    virtual istream & read(istream & in);
 
     void set_x0(const Ptr<FIRST> &);
@@ -125,7 +125,7 @@ namespace BOOM {
   }
 
   template <class D, class F>
-  ostream &AugmentedTimeSeries<D, F>::display(ostream &out) const {
+  std::ostream &AugmentedTimeSeries<D, F>::display(std::ostream &out) const {
     x0_->display(out);
     TimeSeries<D>::display(out);
     return out;

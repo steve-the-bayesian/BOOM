@@ -39,7 +39,7 @@ namespace BOOM {
       int number_of_page_categories_including_eos() const;
 
      private:
-      ostream &display(ostream &out) const override { return out; }
+      std::ostream &display(std::ostream &out) const override { return out; }
       int size(bool = true) const { return 0; }
       std::vector<Ptr<Session> > sessions_;
     };

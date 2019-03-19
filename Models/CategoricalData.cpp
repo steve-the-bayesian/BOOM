@@ -39,7 +39,7 @@ namespace BOOM {
     }
   }
 
-  ostream &CatKeyBase::print(uint value, ostream &out) const {
+  std::ostream &CatKeyBase::print(uint value, std::ostream &out) const {
     out << value;
     return out;
   }
@@ -51,12 +51,12 @@ namespace BOOM {
     return 0;
   }
   //======================================================================
-  ostream &UnboundedIntCatKey::print(ostream &out) const {
+  std::ostream &UnboundedIntCatKey::print(std::ostream &out) const {
     out << "Numeric data with no upper bound.";
     return out;
   }
   //======================================================================
-  ostream &FixedSizeIntCatKey::print(ostream &out) const {
+  std::ostream &FixedSizeIntCatKey::print(std::ostream &out) const {
     out << "Numeric data with upper bound " << max_levels();
     return out;
   }
@@ -155,7 +155,7 @@ namespace BOOM {
     labs_ = new_labels;
   }
 
-  ostream &CatKey::print(ostream &out) const {
+  std::ostream &CatKey::print(std::ostream &out) const {
     uint nlab = labs_.size();
     for (uint i = 0; i < nlab; ++i) {
       out << "level " << i << " = " << labs_[i] << std::endl;
@@ -163,7 +163,7 @@ namespace BOOM {
     return out;
   }
 
-  ostream &CatKey::print(uint value, ostream &out) const {
+  std::ostream &CatKey::print(uint value, std::ostream &out) const {
     if (value >= labs_.size()) {
       out << "NA";
     } else {
@@ -272,11 +272,13 @@ namespace BOOM {
     report_error("comparison between incompatible categorical variables");
   }
   //------------------------------------------------------------
-  ostream &CategoricalData::display(ostream &out) const {
+  std::ostream &CategoricalData::display(std::ostream &out) const {
     return key_->print(value(), out);
   }
 
-  void CategoricalData::print_key(ostream &out) const { out << *key_ << endl; }
+  void CategoricalData::print_key(std::ostream &out) const {
+    out << *key_ << endl;
+  }
 
   //======================================================================
 

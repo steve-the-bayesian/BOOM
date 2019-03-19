@@ -140,7 +140,7 @@ namespace BOOM {
     //     duplicated by symmetry) are counted.
     virtual uint size(bool minimal = true) const;
     virtual uint dim() const;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     const SpdMatrix &value() const override;
     void set(const SpdMatrix &v, bool sig = true) override;

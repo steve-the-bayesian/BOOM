@@ -35,7 +35,7 @@ namespace BOOM {
     WeightedData(const WeightedData &rhs);
     WeightedData *clone() const override { return new WeightedData(*this); }
 
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     virtual void set_weight(const weight_type &w);
     const weight_type &weight() const;
@@ -61,7 +61,7 @@ namespace BOOM {
       : Data(rhs), dat_(rhs.dat_->clone()), w_(rhs.w_->clone()) {}
 
   template <class D, class W>
-  ostream &WeightedData<D, W>::display(ostream &out) const {
+  std::ostream &WeightedData<D, W>::display(std::ostream &out) const {
     w_->display(out);
     out << " ";
     dat_->display(out);

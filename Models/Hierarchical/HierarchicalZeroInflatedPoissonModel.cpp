@@ -39,7 +39,7 @@ namespace BOOM {
     return new ZeroInflatedPoissonData(*this);
   }
 
-  ostream &ZeroInflatedPoissonData::display(ostream &out) const {
+  std::ostream &ZeroInflatedPoissonData::display(std::ostream &out) const {
     return suf_.print(out);
   }
 

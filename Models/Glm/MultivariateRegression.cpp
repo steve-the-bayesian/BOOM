@@ -156,7 +156,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &MvRegSuf::print(ostream &out) const {
+  std::ostream &MvRegSuf::print(std::ostream &out) const {
     out << "yty_ = " << yty_ << endl
         << "xty_ = " << xty_ << endl
         << "xtx_ = " << endl

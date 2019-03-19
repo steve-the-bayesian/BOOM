@@ -44,7 +44,7 @@ namespace BOOM {
 
   uint BinomialData::size(bool) const { return 2; }
 
-  ostream &BinomialData::display(ostream &out) const {
+  std::ostream &BinomialData::display(std::ostream &out) const {
     out << "(" << trials_ << ", " << successes_ << ")";
     return out;
   }
@@ -168,7 +168,9 @@ namespace BOOM {
     return ans;
   }
 
-  ostream &BS::print(ostream &out) const { return out << sum_ << " " << nobs_; }
+  std::ostream &BS::print(std::ostream &out) const {
+    return out << sum_ << " " << nobs_;
+  }
 
   BM::BinomialModel(double p)
       : ParamPolicy(new UnivParams(p)), DataPolicy(new BS) {

@@ -156,7 +156,7 @@ namespace BOOM {
 
   DataTable *DataTable::clone() const { return new DataTable(*this); }
 
-  ostream &DataTable::display(ostream &out) const { return print(out); }
+  std::ostream &DataTable::display(std::ostream &out) const { return print(out); }
 
   //--- build a DataTable by appending variables ---
   void DataTable::append_variable(const Vector &v, const std::string &name) {
@@ -411,7 +411,7 @@ namespace BOOM {
   // }
 
   //------------------------------------------------------------
-  ostream &DataTable::print(ostream &out, uint from, uint to) const {
+  std::ostream &DataTable::print(std::ostream &out, uint from, uint to) const {
     if (to > nobs()) {
       to = nobs();
     }
@@ -453,7 +453,7 @@ namespace BOOM {
     return out;
   }
   //------------------------------------------------------------
-  ostream &operator<<(ostream &out, const DataTable &dt) {
+  std::ostream &operator<<(std::ostream &out, const DataTable &dt) {
     dt.print(out, 0, dt.nobs());
     return out;
   }

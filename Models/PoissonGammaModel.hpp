@@ -37,7 +37,7 @@ namespace BOOM {
     bool operator!=(const PoissonData &rhs) const;
 
     virtual uint size(bool minimal = true) const;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     int number_of_trials() const;
     int number_of_events() const;

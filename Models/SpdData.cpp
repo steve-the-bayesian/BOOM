@@ -242,7 +242,7 @@ namespace BOOM {
     }
   }
 
-  ostream &SpdData::display(ostream &out) const {
+  std::ostream &SpdData::display(std::ostream &out) const {
     out << var() << endl;
     return out;
   }

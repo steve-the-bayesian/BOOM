@@ -36,7 +36,7 @@ namespace BOOM {
 
     // Required virtual functions...
     HealthStateData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     // If the subject switched treatment groups during the time period
     // covered by this data point, then split_treatment can be used to

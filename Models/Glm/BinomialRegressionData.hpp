@@ -46,7 +46,7 @@ namespace BOOM {
     
     double n() const;
     void check() const;  // throws if n < y
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
    private:
     // Number of binomial trials.

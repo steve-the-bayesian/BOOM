@@ -31,7 +31,7 @@ namespace BOOM {
     return new CompositeData(*this);
   }
 
-  ostream &CompositeData::display(ostream &out) const {
+  std::ostream &CompositeData::display(std::ostream &out) const {
     uint n = dat_.size();
     for (uint i = 0; i < n; ++i) {
       dat_[i]->display(out) << " ";

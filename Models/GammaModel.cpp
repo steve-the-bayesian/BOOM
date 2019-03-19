@@ -91,7 +91,7 @@ namespace BOOM {
   double GammaSuf::sum() const { return sum_; }
   double GammaSuf::sumlog() const { return sumlog_; }
   double GammaSuf::n() const { return n_; }
-  ostream &GammaSuf::display(ostream &out) const {
+  std::ostream &GammaSuf::display(std::ostream &out) const {
     out << "gamma::sum    = " << sum_ << endl
         << "gamma::sumlog = " << sumlog_ << endl
         << "gamma::n      = " << n_ << endl;
@@ -138,7 +138,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &GammaSuf::print(ostream &out) const {
+  std::ostream &GammaSuf::print(std::ostream &out) const {
     return out << n_ << " " << sum_ << " " << sumlog_;
   }
   //======================================================================

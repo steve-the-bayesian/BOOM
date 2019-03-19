@@ -29,7 +29,7 @@ namespace BOOM {
     return new HierarchicalPoissonData(*this);
   }
 
-  ostream &HierarchicalPoissonData::display(ostream &out) const {
+  std::ostream &HierarchicalPoissonData::display(std::ostream &out) const {
     out << event_count_ << " " << exposure_;
     return out;
   }

@@ -52,7 +52,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
     // forwarded calls to reg_suf_...
     double n() const { return reg_suf_->n(); }

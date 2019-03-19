@@ -202,7 +202,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &MvnSuf::print(ostream &out) const {
+  std::ostream &MvnSuf::print(std::ostream &out) const {
     out << n_ << endl << ybar_ << endl << sumsq_;
     return out;
   }

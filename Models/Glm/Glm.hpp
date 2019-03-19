@@ -80,7 +80,7 @@ namespace BOOM {
     GlmData *clone() const override;
 
     // required virtual functions
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     const value_type &y() const;
     void set_y(const value_type &Y);
@@ -112,7 +112,7 @@ namespace BOOM {
       return new WeightedGlmData(*this);
     }
 
-    ostream &display(ostream &out) const override {
+    std::ostream &display(std::ostream &out) const override {
       out << *weight_ << " ";
       return (Base::display(out));
     }
@@ -195,7 +195,7 @@ namespace BOOM {
   }
 
   template <class D>
-  ostream &GlmData<D>::display(ostream &out) const {
+  std::ostream &GlmData<D>::display(std::ostream &out) const {
     y_->display(out);
     out << " ";
     Xptr()->display(out);

@@ -92,7 +92,7 @@ namespace BOOM {
     return unvectorize(b, minimal);
   }
 
-  ostream &WGS::print(ostream &out) const {
+  std::ostream &WGS::print(std::ostream &out) const {
     out << "n      = " << n_ << endl
         << "sum_   = " << sum_ << endl
         << "sumsq_ = " << sumsq_ << endl

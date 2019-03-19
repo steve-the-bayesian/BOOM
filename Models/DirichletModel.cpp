@@ -95,7 +95,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &DS::print(ostream &out) const { return out << n_ << " " << sumlog_; }
+  std::ostream &DS::print(std::ostream &out) const { return out << n_ << " " << sumlog_; }
   //======================================================================
   using DM = BOOM::DirichletModel;
 

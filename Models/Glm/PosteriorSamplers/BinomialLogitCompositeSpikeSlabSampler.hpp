@@ -82,7 +82,7 @@ namespace BOOM {
     void set_sampler_weights(double da_weight, double rwm_weight,
                              double tim_weight);
 
-    ostream &time_report(ostream &out) const;
+    std::ostream &time_report(std::ostream &out) const;
 
    private:
     BinomialLogitModel *m_;

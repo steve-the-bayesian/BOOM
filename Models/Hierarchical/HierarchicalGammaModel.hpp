@@ -35,7 +35,7 @@ namespace BOOM {
     HierarchicalGammaData *clone() const override {
       return new HierarchicalGammaData(*this);
     }
-    ostream &display(ostream &out) const override { return out << suf_; }
+    std::ostream &display(std::ostream &out) const override { return out << suf_; }
     const GammaSuf &suf() const { return suf_; }
 
    private:

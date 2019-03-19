@@ -35,7 +35,7 @@ namespace BOOM {
 
   mDPMData* mDPMData::clone() const { return new mDPMData(*this); }
 
-  ostream& mDPMData::display(ostream& out) const {
+  std::ostream& mDPMData::display(std::ostream& out) const {
     out << observation() << " " << observation_variance().vectorize();
     return out;
   }

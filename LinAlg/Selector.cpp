@@ -748,12 +748,12 @@ namespace BOOM {
   
   //============================================================
   
-  ostream &operator<<(ostream &out, const Selector &inc) {
+  std::ostream &operator<<(std::ostream &out, const Selector &inc) {
     for (uint i = 0; i < inc.nvars_possible(); ++i) out << inc.inc(i);
     return out;
   }
 
-  istream &operator>>(istream &in, Selector &inc) {
+  std::istream &operator>>(std::istream &in, Selector &inc) {
     std::string s;
     in >> s;
     uint n = s.size();

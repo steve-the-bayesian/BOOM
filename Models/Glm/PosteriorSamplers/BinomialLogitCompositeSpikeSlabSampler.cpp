@@ -255,7 +255,7 @@ namespace BOOM {
     return number_of_full_chunks + has_partial_chunk;
   }
 
-  ostream &BLCSSS::time_report(ostream &out) const {
+  std::ostream &BLCSSS::time_report(std::ostream &out) const {
     out << move_accounting_.to_matrix();
     return out;
   }

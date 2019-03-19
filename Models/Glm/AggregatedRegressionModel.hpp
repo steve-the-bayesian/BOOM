@@ -98,7 +98,7 @@ namespace BOOM {
 
       // Virtual functions required by Data
       Group *clone() const override;
-      ostream &display(ostream &out) const override;
+      std::ostream &display(std::ostream &out) const override;
       virtual uint size(bool minimal = true) const;
 
       // Add a new unit to an existing Group.  The RegressionData has two

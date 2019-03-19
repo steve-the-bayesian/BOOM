@@ -124,7 +124,7 @@ namespace BOOM {
       // mean and variance of theta's for subjects that were assigned
       // this item
 
-      ostream &display_item_params(ostream &,
+      std::ostream &display_item_params(std::ostream &,
                                    bool decorate = true) const override;
 
      private:

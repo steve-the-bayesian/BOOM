@@ -222,8 +222,8 @@ namespace BOOM {
   };
   //______________________________________________________________________
 
-  ostream &operator<<(ostream &, const Selector &);
-  istream &operator>>(istream &, Selector &);
+  std::ostream &operator<<(std::ostream &, const Selector &);
+  std::istream &operator>>(std::istream &, Selector &);
 
   template <class T>
   std::vector<T> select(const std::vector<T> &v, const std::vector<bool> &vb) {

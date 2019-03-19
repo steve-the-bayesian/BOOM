@@ -41,7 +41,7 @@ namespace BOOM {
   
   //----------------------------------------------------------------------
   void BinomialLogitDataImputer::debug_status_message(
-      ostream &out, double number_of_trials, double number_of_successes,
+      std::ostream &out, double number_of_trials, double number_of_successes,
       double linear_predictor) const {
     out << "number_of_trials:    " << number_of_trials << endl
         << "number_of_successes: " << number_of_successes << endl

@@ -59,7 +59,7 @@ namespace BOOM {
 
    protected:
     // Adds a human readable message to 'err'.
-    void debug_status_message(ostream &err, double number_of_trials,
+    void debug_status_message(std::ostream &err, double number_of_trials,
                               double number_of_successes, double eta) const;
   };
 

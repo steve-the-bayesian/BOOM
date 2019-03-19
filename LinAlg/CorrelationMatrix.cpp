@@ -24,7 +24,6 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 
-using namespace std;
 namespace BOOM {
 
   typedef CorrelationMatrix CM;

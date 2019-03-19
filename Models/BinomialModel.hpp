@@ -39,7 +39,7 @@ namespace BOOM {
     BinomialData *clone() const override;
 
     virtual uint size(bool minimal = true) const;
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     int64_t trials() const;
     int64_t n() const;
@@ -88,7 +88,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     double sum_, nobs_;

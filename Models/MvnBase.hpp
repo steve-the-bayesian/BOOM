@@ -70,7 +70,7 @@ namespace BOOM {
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
 
-    ostream &print(ostream &) const override;
+    std::ostream &print(std::ostream &) const override;
 
    private:
     Vector ybar_;
@@ -84,7 +84,7 @@ namespace BOOM {
     void check_dimension(const Vector &y);
   };
 
-  inline ostream &operator<<(ostream &out, const MvnSuf &s) {
+  inline std::ostream &operator<<(std::ostream &out, const MvnSuf &s) {
     return s.print(out);
   }
   //------------------------------------------------------------

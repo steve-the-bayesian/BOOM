@@ -76,7 +76,7 @@ namespace BOOM {
     return reg_suf_->unvectorize(v, minimal);
   }
 
-  ostream &ArSuf::print(ostream &out) const {
+  std::ostream &ArSuf::print(std::ostream &out) const {
     reg_suf_->print(out);
     out << "lags:" << endl;
     for (int i = 0; i < lags_.size(); ++i) {

@@ -66,7 +66,7 @@ namespace BOOM {
     virtual double n() const;
     virtual double sumw() const;     // sum of weights
     virtual double sumlogw() const;  // sum of weights
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
     void combine(const Ptr<WeightedRegSuf> &);
     void combine(const WeightedRegSuf &);
     WeightedRegSuf *abstract_combine(Sufstat *s) override;
@@ -89,7 +89,7 @@ namespace BOOM {
     void make_symmetric() const;
   };
 
-  inline ostream &operator<<(ostream &out, const WeightedRegSuf &s) {
+  inline std::ostream &operator<<(std::ostream &out, const WeightedRegSuf &s) {
     return s.print(out);
   }
 

@@ -66,7 +66,7 @@ namespace BOOM {
 
   WRS *WRS::clone() const { return new WRS(*this); }
 
-  ostream &WRS::print(ostream &out) const {
+  std::ostream &WRS::print(std::ostream &out) const {
     out << "xtwx_   = " << endl
         << xtx() << endl
         << "xtwy_   = " << xtwy_ << endl

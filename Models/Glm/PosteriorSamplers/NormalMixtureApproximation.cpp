@@ -381,7 +381,7 @@ namespace BOOM {
     }
   }
 
-  ostream &NormalMixtureApproximation::print(ostream &out) const {
+  std::ostream &NormalMixtureApproximation::print(std::ostream &out) const {
     out << "mu:      " << std::setprecision(15) << mu_ << endl
         << "sigma:   " << sigma_ << endl
         << "weights: " << weights_ << endl

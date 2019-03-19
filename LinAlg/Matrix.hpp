@@ -24,9 +24,6 @@
 #include "LinAlg/VectorView.hpp"
 
 namespace BOOM {
-  using std::istream;
-  using std::ostream;
-
   class Vector;
   class VectorView;
   class SpdMatrix;
@@ -300,9 +297,9 @@ namespace BOOM {
     // The value of the entry with the largest absolute value.
     double max_abs() const;
 
-    virtual ostream &display(ostream &out, int precision = 5) const;
-    ostream &write(ostream &, bool nl = true) const;
-    istream &read(istream &);
+    virtual std::ostream &display(std::ostream &out, int precision = 5) const;
+    std::ostream &write(std::ostream &, bool nl = true) const;
+    std::istream &read(std::istream &);
 
    protected:
     Vector V;
@@ -327,7 +324,7 @@ namespace BOOM {
     const std::vector<std::string> &row_names() const { return row_names_; }
     const std::vector<std::string> &col_names() const { return col_names_; }
 
-    ostream &display(ostream &out, int precision = 5) const override;
+    std::ostream &display(std::ostream &out, int precision = 5) const override;
     Matrix drop_labels() const;
 
    private:
@@ -385,11 +382,11 @@ namespace BOOM {
   inline bool Matrix::inrange(uint i, uint j) const {
     return i < nr_ && j < nc_;
   }
-  ostream &operator<<(ostream &out, const Matrix &x);
+  std::ostream &operator<<(std::ostream &out, const Matrix &x);
 
   // Print the matrix to stdout.
   void print(const Matrix &m);
-  istream &operator>>(istream &in, Matrix &m);
+  std::istream &operator>>(std::istream &in, Matrix &m);
   // reads until a blank line is found or the end of a line
 
   inline double trace(const Matrix &m) { return m.trace(); }

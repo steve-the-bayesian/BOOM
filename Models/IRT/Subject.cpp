@@ -81,14 +81,14 @@ namespace BOOM {
       return r;
     }
 
-    ostream &Subject::display(ostream &out) const {
+    std::ostream &Subject::display(std::ostream &out) const {
       out << id();
       if (!x_.empty()) out << x_;
       out << endl;
       return out;
     }
 
-    ostream &Subject::display_responses(ostream &out) const {
+    std::ostream &Subject::display_responses(std::ostream &out) const {
       // display Subject_id \t Item_id \t response
       for (IrIterC it = responses_.begin(); it != responses_.end(); ++it) {
         Ptr<Item> item = it->first;

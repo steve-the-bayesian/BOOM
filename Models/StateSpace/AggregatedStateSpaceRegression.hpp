@@ -103,7 +103,7 @@ namespace BOOM {
                        double fraction_of_value_in_initial_period);
     FineNowcastingData(const FineNowcastingData &rhs);
     FineNowcastingData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     Ptr<RegressionData> regression_data() const;
     double fraction_in_initial_period() const;

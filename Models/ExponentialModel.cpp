@@ -87,7 +87,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &ExpSuf::print(ostream &out) const {
+  std::ostream &ExpSuf::print(std::ostream &out) const {
     return out << n_ << " " << sum_;
   }
   //======================================================================

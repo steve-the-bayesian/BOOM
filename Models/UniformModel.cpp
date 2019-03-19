@@ -108,7 +108,9 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &US::print(ostream &out) const { return out << lo_ << " " << hi_; }
+  std::ostream &US::print(std::ostream &out) const {
+    return out << lo_ << " " << hi_;
+  }
 
   //======================================================================
   UM::UniformModel(double a, double b)

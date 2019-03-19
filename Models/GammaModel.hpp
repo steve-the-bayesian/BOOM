@@ -49,7 +49,7 @@ namespace BOOM {
     double sum() const;
     double sumlog() const;
     double n() const;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     virtual void combine(const Ptr<GammaSuf> &s);
     virtual void combine(const GammaSuf &s);
@@ -59,7 +59,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     // Sum of the observations.

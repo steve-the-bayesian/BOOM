@@ -34,7 +34,7 @@ namespace BOOM {
       virtual Variable *clone() const = 0;
       ~Variable() override;
 
-      virtual ostream &print(ostream &) const;
+      virtual std::ostream &print(std::ostream &) const;
       virtual double logp(const Selector &inc) const;
 
       // Put inc is in a valid state (where logp > -infinity).
@@ -61,7 +61,7 @@ namespace BOOM {
       Ptr<BinomialModel> mod_;
       std::string name_;
     };
-    ostream &operator<<(ostream &out, const Variable &v);
+    std::ostream &operator<<(std::ostream &out, const Variable &v);
     //______________________________________________________________________
     class MainEffect : public Variable {
      public:
