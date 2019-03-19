@@ -1,3 +1,6 @@
+#ifndef BOOM_CPPUTIL_THREAD_TOOLS_HPP_
+#define BOOM_CPPUTIL_THREAD_TOOLS_HPP_
+
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2016 Steven L. Scott
@@ -16,9 +19,6 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
-
-#ifndef BOOM_CPPUTIL_THREAD_TOOLS_HPP_
-#define BOOM_CPPUTIL_THREAD_TOOLS_HPP_
 
 #include <chrono>
 #include <condition_variable>
