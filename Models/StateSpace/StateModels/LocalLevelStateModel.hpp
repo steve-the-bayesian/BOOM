@@ -96,7 +96,7 @@ namespace BOOM {
   // constraints, as different constraints might be relevant for different
   // modeling strategies.
   class SharedLocalLevelStateModel
-      : virtual public MultivariateStateModel,
+      : virtual public SharedStateModel,
         public CompositeParamPolicy,
         public NullDataPolicy,
         public PriorPolicy

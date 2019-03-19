@@ -383,12 +383,12 @@ namespace BOOM {
   };
 
   //===========================================================================
-  class MultivariateStateModel : virtual public StateModel {
+  class SharedStateModel : virtual public StateModel {
    public:
-    MultivariateStateModel *clone() const override = 0;
+    SharedStateModel *clone() const override = 0;
 
     SparseVector observation_matrix(int t) const override {
-      report_error("MultivariateStateModel was used where a StateModel "
+      report_error("SharedStateModel was used where a StateModel "
                    "was expected.");
       return SparseVector(0);
     }
