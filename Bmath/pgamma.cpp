@@ -177,7 +177,7 @@ double pgamma(double x, double alph, double scale, int lower_tail, int log_p) {
 #ifndef IEEE_754
     /* Underflow check :*/
     // set exp(E) = 0 for E < elimit !
-    const double elimit = M_LN2*(numeric_limits<double>::min_exponent);
+    const double elimit = M_LN2*(std::numeric_limits<double>::min_exponent);
     if (arg < elimit)
         sum = 0.;
     else

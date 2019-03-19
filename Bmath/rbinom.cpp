@@ -86,7 +86,7 @@ unsigned int rbinom(int  nin, double pp)
     //    if (n != nin) ML_ERR_return_NAN;
 
     if ( !R_FINITE(pp) ||pp < 0. || pp > 1.){
-      ostringstream err;
+      std::ostringstream err;
       err << "must have 0<= p <= 1 in rbinom" << std::endl
           << "n = " << nin << std::endl
           << "p = " << pp << std::endl;

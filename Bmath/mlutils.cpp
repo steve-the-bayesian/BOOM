@@ -118,9 +118,9 @@ int R_IsNaNorNA(double x)
 int R_IsNaNorNA(double x)
 {
 # ifndef HAVE_ISNAN
-    return (x == numeric_limits<double>::quiet_NaN());
+  return (x == std::numeric_limits<double>::quiet_NaN());
 # else
-    return (isnan(x) != 0 || x == numeric_limits<double>::quiet_NaN());
+  return (isnan(x) != 0 || x == std::numeric_limits<double>::quiet_NaN());
 # endif
 }
 
@@ -165,10 +165,7 @@ double R_pow(double x, double y) /* = x ^ y */
 #ifdef IEEE_754
         return(x + y);
 #else
-        return(
-               // NA_REAL
-               numeric_limits<double>::quiet_NaN()
-               );
+        return std::numeric_limits<double>::quiet_NaN(); 
 #endif
     }
     if(!R_FINITE(x)) {
