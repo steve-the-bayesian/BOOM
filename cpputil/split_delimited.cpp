@@ -20,11 +20,10 @@
 #include <vector>
 
 namespace BOOM {
-  using namespace std;
-  using std::string;
-
-  vector<string> split_delimited(const string &s, const string &delims) {
-    vector<string> ans;
+  std::vector<std::string> split_delimited(
+      const std::string &s,
+      const std::string &delims) {
+    std::vector<std::string> ans;
     typedef std::string::size_type sz;
     sz b = 0;
     bool done = false;

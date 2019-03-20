@@ -22,27 +22,26 @@
 #include <iostream>
 namespace BOOM {
 
-  using namespace std;
-  typedef basic_ios<char>::pos_type pos_type;
+  typedef std::basic_ios<char>::pos_type pos_type;
 
   std::ifstream &gll(std::ifstream &in) {
     // sets in so that it points to the last line of a data file
 
-    in.seekg(0, ios_base::beg);
+    in.seekg(0, std::ios_base::beg);
     pos_type begin = in.tellg();
 
-    in.seekg(-1, ios_base::end);
+    in.seekg(-1, std::ios_base::end);
     pos_type end = in.tellg();
 
     if (begin == end) return in;
 
     char c = in.peek();
     while ((c == '\n' || c == '\r') && in.tellg() > 0) {
-      in.seekg(-1, ios_base::cur);
+      in.seekg(-1, std::ios_base::cur);
       c = in.peek();
     }
     do {
-      in.seekg(-1, ios_base::cur);
+      in.seekg(-1, std::ios_base::cur);
       c = in.peek();
     } while (c != '\n' && c != '\r' && in.tellg() > 0);
     pos_type now = in.tellg();

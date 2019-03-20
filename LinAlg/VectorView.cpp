@@ -33,8 +33,7 @@
 #include "distributions.hpp"
 
 namespace BOOM {
-  using namespace std;
-
+  
   namespace {
     template <class V1, class V2>
     double dot_impl(const V1 &v1, const V2 &v2) {
