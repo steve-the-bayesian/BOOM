@@ -38,6 +38,9 @@ namespace BOOM {
     template <class FwdIt>  // *FwdIt is a Ptr<Model>
     CompositeParamPolicy(FwdIt b, FwdIt e);
 
+    // When a composite model is copied, the sub models are not copied.  This is
+    // because the owning model often needs to take some sort of additional
+    // action prior to adding a model.
     CompositeParamPolicy(
         const CompositeParamPolicy &rhs);  // components not copied
     CompositeParamPolicy(CompositeParamPolicy &&rhs) = default;
