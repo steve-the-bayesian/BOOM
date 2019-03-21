@@ -26,63 +26,42 @@
 #include "LinAlg/VectorView.hpp"
 #include "LinAlg/SubMatrix.hpp"
 
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
+#include "Models/StateSpace/StateModels/StateModel.hpp"
+
 namespace BOOM {
   namespace StateSpaceUtils {
 
-    // Much of the work done by state space models involves dividing work among
-    // the state models.  A StateModelVector keeps track of the state models
-    // stored by a state space model, and handles things like keeping track of the
-    // state dimension and state error dimension, and finding the subvector of a
-    // full state vector associated with a particular state model.
-
-    template <class STATE_MODEL>
-    class StateModelVector {
+    // A StateModelVector manages state models for a state space model.  It
+    // stores the models, keeps track of where the state for each model begins
+    // and ends, and handles tasks like partitioning a state vector into
+    // model-specific bits.  A StateModelVector knows the type of the state
+    // model it holds.  This base class captures the parts of the interface of a
+    // StateModelVector that don't depend on the type of state model being
+    // stored.
+    class StateModelVectorBase {
      public:
+      virtual ~StateModelVectorBase();
 
-      StateModelVector()
-          : state_dimension_(0),
-            state_error_dimension_(0),
-            state_positions_(1, 0),
-            state_error_positions_(1, 0)
-      {}
-    
-      void add_state(Ptr<STATE_MODEL> state_model) {
-        state_model->set_index(state_models_.size());
-        state_models_.push_back(state_model);
-        state_dimension_ += state_model->state_dimension();
-        int next_position = state_positions_.back()
-            + state_model->state_dimension();
-        state_positions_.push_back(next_position);
+      // The dimension of the state vector associated with the stored models.
+      int state_dimension() const { return state_dimension_; }
 
-        state_error_dimension_ += state_model->state_error_dimension();
-        next_position = state_error_positions_.back()
-            + state_model->state_error_dimension();
-        state_error_positions_.push_back(next_position);
-      }
+      // The number of state models stored by this object.
+      int size() const { return state_models_.size(); }
 
-      void clear() {
-        state_models_.clear();
-        state_dimension_ = 0;
-        state_error_dimension_ = 0;
-        state_positions_.clear();
-        state_positions_.push_back(0);
-        state_error_positions_.clear();
-        state_error_positions_.push_back(0);
-      }
-    
-      Ptr<STATE_MODEL> operator[](int s) {return state_models_[s];}
-      const Ptr<STATE_MODEL> operator[](int s) const {return state_models_[s];}
+      // Clear the state model vector and all associated metadata.  Return the
+      // object to the state produced by the default constructor.
+      virtual void clear();
 
-      int state_dimension() const {
-        return state_dimension_;
-      }
+      // Clear the data from the stored models.
+      void clear_data();
 
-      int size() const {
-        return state_models_.size();
-      }
-
-      // Takes the full state vector as input, and returns the component of the
-      // state vector belonging to state model s.
+      // Access to individual state models.
+      StateModelBase *state_model(int s);
+      const StateModelBase *state_model(int s) const;
+      
+      //----------------------------------------------------------------------
+      // The subset of the full state vector belonging to state model s.
       //
       // Args:
       //   state:  The full state vector.
@@ -90,25 +69,14 @@ namespace BOOM {
       //
       // Returns:
       //   The subset of the 'state' argument corresponding to state model 's'.
-      VectorView state_component(Vector &state, int s) const {
-        int start = state_positions_[s];
-        int size = state_models_[s]->state_dimension();
-        return VectorView(state, start, size);
-      }
-      VectorView state_component(VectorView &state, int s) const {
-        int start = state_positions_[s];
-        int size = state_models_[s]->state_dimension();
-        return VectorView(state, start, size);
-      }
-      ConstVectorView state_component(const ConstVectorView &state,
-                                      int s) const {
-        int start = state_positions_[s];
-        int size = state_models_[s]->state_dimension();
-        return ConstVectorView(state, start, size);
-      }
+      VectorView state_component(Vector &state, int s) const;
+      VectorView state_component(VectorView &state, int s) const;
+      ConstVectorView state_component(
+          const ConstVectorView &state, int s) const;
 
-      // Return the component of the full state error vector corresponding to a
-      // given state model.
+      //----------------------------------------------------------------------
+      // The subset of the vector of state errors (or innovations) corresponding
+      // to state model s.
       //
       // Args:
       //   full_state_error: The error for the full state vector (i.e. all state
@@ -116,36 +84,28 @@ namespace BOOM {
       //   state_model_number:  The index of the desired state model.
       //
       // Returns:
-      //   The error vector for just the specified state model.
-      ConstVectorView const_state_error_component(const Vector &full_state_error,
-                                                  int state_model_number) const {
-        int start = state_error_positions_[state_model_number];
-        int size = state_models_[state_model_number]->state_error_dimension();
-        return ConstVectorView(full_state_error, start, size);
-      }
-      VectorView state_error_component(Vector &full_state_error,
-                                       int state_model_number) const {
-        int start = state_error_positions_[state_model_number];
-        int size = state_models_[state_model_number]->state_error_dimension();
-        return VectorView(full_state_error, start, size);
-      }
+      //   The subset of 'full_state_error' for the specified state model.
+      ConstVectorView const_state_error_component(
+          const Vector &full_state_error, int state_model_number) const;
+      VectorView state_error_component(
+          Vector &full_state_error, int state_model_number) const;
 
-      // Returns the subcomponent of the (block diagonal) error variance matrix
+      //----------------------------------------------------------------------
+      // The subcomponent of the block-diagonal error variance matrix
       // corresponding to a specific state model.
       //
       // Args:
       //   full_error_variance:  The full state error variance matrix.
-      //   state: The index of the state model defining the desired sub-component.
+      //   state_model_index: The index of the desired state model.
+      //
+      // Returns:
+      //   The diagonal block of full_error_variance corresponding to
+      //   state_model_index.
       ConstSubMatrix state_error_variance_component(
-          const SpdMatrix &full_error_variance, int state) const {
-        int start = state_error_positions_[state];
-        int size = state_models_[state]->state_error_dimension();
-        return ConstSubMatrix(full_error_variance, start, start + size - 1, start,
-                              start + size - 1);
-      }
+          const SpdMatrix &full_error_variance, int state_model_index) const;
 
       //----------------------------------------------------------------------
-      // Returns the complete state vector (across time, so the return value is a
+      // The complete state vector (across time, so the return value is a
       // matrix) for a specified state component.
       //
       // Args:
@@ -154,27 +114,32 @@ namespace BOOM {
       //   state_model_index:  The index of the desired state model.
       //
       // Returns:
-      //   A matrix giving the imputed value of the state vector for the specified
-      //   state model.  The matrix has S rows and T columns, where S is the
-      //   dimension of the state vector for the specified state model, and T is
-      //   the number of time points.
+      //   A matrix containing the imputed value of the state vector for the
+      //   specified state model.  The matrix has S rows and T columns, where S
+      //   is the dimension of the state vector for the specified state model,
+      //   and T is the number of time points.
       ConstSubMatrix full_state_subcomponent(
-          const Matrix &state, int state_model_index) const {
-        int start = state_positions_[state_model_index];
-        int size = state_models_[state_model_index]->state_dimension();
-        return ConstSubMatrix(state, start, start + size - 1, 0,
-                              state.ncol() - 1);
-      }
+          const Matrix &state, int state_model_index) const;
       SubMatrix mutable_full_state_subcomponent(
-          Matrix &state, int state_model_index) {
-        int start = state_positions_[state_model_index];
-        int size = state_models_[state_model_index]->state_dimension();
-        return SubMatrix(state, start, start + size - 1, 0,
-                         state.ncol() - 1);
-      }
-    
+          Matrix &state, int state_model_index) const;
+
+      // Structural matrices for Kalman filtering.
+      const SparseKalmanMatrix *state_transition_matrix(int t) const;
+      const SparseKalmanMatrix *state_variance_matrix(int t) const;
+      const SparseKalmanMatrix *state_error_expander(int t) const;
+      const SparseKalmanMatrix *state_error_variance(int t) const;      
+      
+     protected:
+      // Child classes should call this method when implementing add_state.
+      void add_state_model(Ptr<StateModelBase> state_model);
+
+      // Child classes should call this method when implementing clear().
+      // Clears the vector of state model pointers, and resets all metadata
+      // accordingly.
+      void clear_state_models();
+      
      private:
-      std::vector<Ptr<STATE_MODEL>> state_models_;
+      std::vector<Ptr<StateModelBase>> state_models_;
 
       // Dimension of the latent state vector.  Constructors set state_dimension
       // to zero.  It is incremented during calls to add_state.
@@ -197,6 +162,36 @@ namespace BOOM {
       // different because state errors can be lower dimensional than the states
       // themselves.
       std::vector<int> state_error_positions_;
+
+      // Model matrices for Kalman filtering.
+      mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
+      mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
+      mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
+      mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
+    };
+    
+    // Concrete StateModelVector objects are parameterized by the type of the
+    // state model they store.
+    template <class STATE_MODEL>
+    class StateModelVector : public StateModelVectorBase{
+     public:
+      void add_state(Ptr<STATE_MODEL> state_model) {
+        add_state_model(state_model);
+        state_models_.push_back(state_model);
+      }
+
+      // Clear the vector of models and restore the state of the object to that
+      // produced by the default constructor.
+      void clear() {
+        state_models_.clear();
+        clear_state_models();
+      }
+
+      Ptr<STATE_MODEL> operator[](int s) {return state_models_[s];}
+      const Ptr<STATE_MODEL> operator[](int s) const {return state_models_[s];}
+
+     private:
+      std::vector<Ptr<STATE_MODEL>> state_models_;
     };
     
   }  // namespace StateSpaceUtils  
