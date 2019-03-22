@@ -41,6 +41,15 @@ namespace BOOM {
     // stored.
     class StateModelVectorBase {
      public:
+      StateModelVectorBase()
+          : state_dimension_(0),
+            state_error_dimension_(0),
+            state_transition_matrix_(new BlockDiagonalMatrix),
+            state_variance_matrix_(new BlockDiagonalMatrix),
+            state_error_expander_(new BlockDiagonalMatrix),
+            state_error_variance_(new BlockDiagonalMatrix)
+      {}
+      
       virtual ~StateModelVectorBase();
 
       // The dimension of the state vector associated with the stored models.
