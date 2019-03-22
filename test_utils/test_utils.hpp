@@ -78,7 +78,8 @@ namespace BOOM {
   };
 
   // Printing a status object prints its error message.
-  inline ostream & operator<<(ostream &out, const CheckMatrixStatus &status) {
+  inline std::ostream & operator<<(std::ostream &out,
+                                   const CheckMatrixStatus &status) {
     out << status.error_message();
     return(out);
   }

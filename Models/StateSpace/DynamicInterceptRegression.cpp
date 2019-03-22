@@ -63,9 +63,7 @@ namespace BOOM {
 
   //===========================================================================
   
-  DIRM::DynamicInterceptRegressionModel(int xdim)
-      : ConditionalIidMultivariateStateSpaceModelBase(-1)
-  {
+  DIRM::DynamicInterceptRegressionModel(int xdim) {
     initialize_regression_component(xdim);
   }
 
@@ -75,6 +73,9 @@ namespace BOOM {
     regression_->regression()->set_Beta(rhs.regression_->regression()->Beta());
     regression_->regression()->set_sigsq(
         rhs.regression_->regression()->sigsq());
+    for (int s = 0; s < rhs.number_of_shared_state_models(); ++s) {
+      add_state(rhs.state_model(s)->clone());
+    }
   }
 
   RegressionModel *DIRM::observation_model() {
@@ -86,7 +87,8 @@ namespace BOOM {
   }
 
   void DIRM::observe_data_given_state(int t) {
-    if (!is_missing_observation(t)) {
+    const Selector &observed(observed_status(t));
+    if (observed.nvars() > 0) {
       // Unless the data point is completely missing, add the regression
       // component of its data to the regression model.  We will do this by
       // subtracting the state mean from the y value of each observation.  The
@@ -108,8 +110,26 @@ namespace BOOM {
     }
   }
 
+  void DIRM::observe_state(int t) {
+    if (t == 0) {
+      for (int s = 0; s < state_models_.size(); ++s) {
+        state_model(s)->observe_initial_state(
+            state_models_.state_component(state_.col(0), s));
+      }
+    } else {
+      const ConstVectorView now(state().col(t));
+      const ConstVectorView then(state().col(t - 1));
+      for (int s = 0; s < state_models_.size(); ++s) {
+        state_models_[s]->observe_state(
+            state_models_.state_component(then, s),
+            state_models_.state_component(now, s),
+            t);
+      }
+    }
+  }
+  
   void DIRM::impute_state(RNG &rng) {
-    StateSpaceModelBase::impute_state(rng);
+    MultivariateStateSpaceModelBase::impute_state(rng);
     observation_model()->suf()->fix_xtx();
   }
   
@@ -128,30 +148,18 @@ namespace BOOM {
       int t, const Selector &) const {
     observation_coefficients_.clear();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
-    for (int s = 0; s < number_of_state_models(); ++s) {
+    for (int s = 0; s < number_of_shared_state_models(); ++s) {
       observation_coefficients_.add_block(
           state_models_[s]->observation_coefficients(t, data_point));
     }
     return &observation_coefficients_;
   }
 
-  SparseVector DIRM::non_regression_observation_matrix(int t) const {
-    // The initial vector is of size 1, which is the state dimension for the
-    // regression component.  By not specifying a coefficient, the coefficient
-    // is zero.
-    SparseVector ans(1);
-    // Start counting at 1, in order to skip the leading regression component.
-    for (int s = 1; s < number_of_state_models(); ++s) {
-      ans.concatenate(state_model(s)->observation_matrix(t));
-    }
-    return ans;
-  }
-  
   // const SparseKalmanMatrix *DIRM::partial_observation_coefficients(int t) const {
   //   observation_coefficients_.clear();
   //   const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
   //   const Selector &observed(data_point.observed());
-  //   for (int s = 0; s < number_of_state_models(); ++s) {
+  //   for (int s = 0; s < number_of_shared_state_models(); ++s) {
   //     observation_coefficients_.add_block(
   //         state_model(s)->dynamic_intercept_regression_observation_coefficients(
   //             t, data_point, observed));
@@ -164,6 +172,10 @@ namespace BOOM {
 
   const Vector &DIRM::observation(int t) const {
     return dat()[t]->response();
+  }
+
+  ConstVectorView DIRM::adjusted_observation(int time) const {
+    return ConstVectorView(observation(time));
   }
 
   const Selector &DIRM::observed_status(int t) const {
@@ -182,17 +194,25 @@ namespace BOOM {
                    "than one observation per time period.");
     } else if (state_model_index < 0) {
       report_error("state_model_index must be at least 1.");
-    } else if (state_model_index >= number_of_state_models()) {
+    } else if (state_model_index >= number_of_shared_state_models()) {
       report_error("state_model_index too large.");
+    } else if (!state_models_[state_model_index]->is_pure_function_of_time()) {
+      std::ostringstream err;
+      err << "The model in position " << state_model_index
+          << " is not a pure function of time.";
+      report_error(err.str());
     }
 
     Vector ans(time_dimension());
     const Matrix &state(this->state());
+    TimeSeriesRegressionData dummy_data(
+        Vector(1, 0.0), Matrix(1, 1, 0.0), Selector(1, true));
     for (int t = 0; t < time_dimension(); ++t) {
       ConstVectorView local_state(
-          state_component(state.col(t), state_model_index));
-      ans[t] = state_model(state_model_index)->observation_matrix(t).dot(
-          local_state);
+          state_models_.state_component(state.col(t), state_model_index));
+      Vector tmp = *state_model(state_model_index)->observation_coefficients(
+          t, dummy_data) * local_state;
+      ans[t] = tmp[0];
     }
     return ans;
   }
@@ -204,10 +224,10 @@ namespace BOOM {
     if (nrow(forecast_predictors) != timestamps.size()) {
       report_error("different numbers of timestamps and forecast_predictors.");
     }
-    if (final_state.size() != state_dimension()) {
+    if (final_state.size() != shared_state_dimension()) {
       std::ostringstream err;
       err << "final state argument was of dimension " << final_state.size()
-          << " but model state dimension is " << state_dimension()
+          << " but model state dimension is " << shared_state_dimension()
           << "." << std::endl;
       report_error(err.str());
     }
@@ -216,19 +236,21 @@ namespace BOOM {
     int time = -1;
     Vector state = final_state;
     int index = 0;
+    int xdim = ncol(forecast_predictors);
 
     // Move the state to the next time stamp.
     // Simulate observations for all the data with that timestamp.
     while(index < timestamps.size() && time < timestamps[index]) {
       advance_to_timestamp(rng, time, state, timestamps[index], index);
-      double intercept = non_regression_observation_matrix(
-          t0 + timestamps[index]).dot(state);
       while (index < timestamps.size() && time == timestamps[index]) {
+        TimeSeriesRegressionData data_point(
+            Vector(1, 0.0),
+            Matrix(1, xdim, forecast_predictors.row(index)),
+            Selector(1, true));
+        Vector yhat = *observation_coefficients(
+            t0 + time, data_point.observed()) * state;
         double sigma = sqrt(observation_variance(t0 + time));
-        ans[index] = intercept
-            + observation_model()->coef().predict(
-                forecast_predictors.row(index))
-            + rnorm_mt(rng, 0, sigma);
+        ans[index] = yhat[0] + rnorm_mt(rng, 0, sigma);
         ++index;
       }
     }
@@ -242,7 +264,7 @@ namespace BOOM {
     Selector fully_observed(number_of_observations, true);
     const Selector &observed(
         t >= time_dimension() ? fully_observed : observed_status(t));
-    Vector ans = (*observation_coefficients(t, observed)) * state(t);
+    Vector ans = (*observation_coefficients(t, observed)) * shared_state(t);
     double residual_sd = sqrt(observation_variance(t));
     for (int i = 0; i < ans.size(); ++i) {
       ans[i] += rnorm_mt(rng, 0, residual_sd);
@@ -254,6 +276,7 @@ namespace BOOM {
     regression_.reset(new RegressionDynamicInterceptStateModel(
         new RegressionModel(xdim)));
     add_state(regression_);
+    ParamPolicy::add_model(regression_);
   }
 
 }  // namespace BOOM
