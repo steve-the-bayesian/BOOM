@@ -27,23 +27,23 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class LocalLevelModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       LocalLevelModule(double level_sd, double initial_level);
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return trend_; }
       Ptr<StateModel> get_state_model() override {return trend_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override { return adapter_; }
+      // Ptr<DynamicInterceptStateModel>
+      // get_dynamic_intercept_state_model() override { return adapter_; }
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
       
      private:
       double level_sd_;
       double initial_level_;
       Ptr<LocalLevelStateModel> trend_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
+      // Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> level_precision_prior_;
       Ptr<ZeroMeanGaussianConjSampler> level_precision_sampler_;
 

@@ -27,10 +27,9 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class TrigTestModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       // Args:
-
       //   period: The number of time steps (need not be an integer) that it
       //     takes for the longest cycle to repeat.  E.g. 7 for a day of week
       //     cycle, or 12/52.178/365.25 for an annual cycle based on
@@ -44,10 +43,10 @@ namespace BOOM {
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return trig_; }
       Ptr<StateModel> get_state_model() override {return trig_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {return adapter_;}
+      // Ptr<DynamicInterceptStateModel>
+      // get_dynamic_intercept_state_model() override {return adapter_;}
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
       
      private:
@@ -55,7 +54,7 @@ namespace BOOM {
       Vector frequencies_;
       double sd_;
       Ptr<TrigStateModel> trig_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
+      // Ptr<DynamicInterceptStateModelAdapter> adapter_;
 
       // The prior for the error distribution.
       Ptr<ChisqModel> precision_prior_;

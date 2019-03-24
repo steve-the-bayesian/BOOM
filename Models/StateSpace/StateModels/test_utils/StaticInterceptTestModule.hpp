@@ -33,22 +33,20 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class StaticInterceptTestModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       explicit StaticInterceptTestModule(double intercept);
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return state_; }
       Ptr<StateModel> get_state_model() override {return intercept_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {return adapter_;}
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
       
      private:
       double intercept_;
       Ptr<StaticInterceptStateModel> intercept_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
+      // Ptr<DynamicInterceptStateModelAdapter> adapter_;
 
       Vector state_;
       Vector intercept_draws_;

@@ -31,7 +31,7 @@ namespace BOOM {
           frequencies_(frequencies),
           sd_(sd),
           trig_model_(new TrigStateModel(period_, frequencies_)),
-          adapter_(new DynamicInterceptStateModelAdapter(trig_model_)),
+          // adapter_(new DynamicInterceptStateModelAdapter(trig_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               trig_model_->error_distribution(),
@@ -79,7 +79,8 @@ namespace BOOM {
       sigma_draws_.resize(niter);
     }
 
-    void TrigTestModule::ObserveDraws(const StateSpaceModelBase &model) {
+    void TrigTestModule::ObserveDraws(
+        const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       trig_draws_.row(cursor()) = 0;
       for (int i = 0; i < state.nrow(); i += 2) {

@@ -29,28 +29,33 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class ArStateModelTestModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
-      ArStateModelTestModule(const Vector &ar_coefficients,
-                             double sd);
-      void SimulateData(int time_dimension) override;
-      const Vector &StateContribution() const override { return trend_; }
-      Ptr<StateModel> get_state_model() override {return trend_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override { return adapter_; }
-      void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
-      void Check() override;
+        ArStateModelTestModule(const Vector &ar_coefficients, double sd);
       
+      void SimulateData(int time_dimension) override;
+      
+      Ptr<StateModel> get_state_model() override {
+        return trend_model_;
+      }
+
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override {
+        auto state = CurrentState(model);
+        trend_draws_.row(cursor()) = state.row(0);
+        sigma_draws_[cursor()] = trend_model_->sigma();
+        coefficient_draws_.row(cursor()) = trend_model_->phi();
+      }
+      
+      const Vector &StateContribution() const override { return trend_; }
+      void CreateObservationSpace(int niter) override;
+      void Check() override;
+
      private:
       Vector ar_coefficients_;
       double sd_;
 
       Ptr<ArStateModel> trend_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
-      Ptr<ChisqModel> precision_prior_;
-      Ptr<ArPosteriorSampler> sampler_;
-
+      
       // The simulated state.
       Vector trend_;
       

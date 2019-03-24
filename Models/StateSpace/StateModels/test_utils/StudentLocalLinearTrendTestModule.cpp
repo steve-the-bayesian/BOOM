@@ -36,7 +36,7 @@ namespace BOOM {
           nu_slope_(nu_slope),
           trend_model_(new StudentLocalLinearTrendStateModel(
               level_sd_, nu_level_, slope_sd_, nu_slope_)),
-          adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
+          // adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
           level_precision_prior_(new ChisqModel(2.0, level_sd_)),
           nu_level_prior_(new UniformModel(1.0, 100.0)),
           slope_precision_prior_(new ChisqModel(2.0, slope_sd_)),
@@ -74,7 +74,7 @@ namespace BOOM {
     }
 
     void StudentLocalLinearTrendTestModule::ObserveDraws(
-        const StateSpaceModelBase &model) {
+        const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       trend_draws_.row(cursor()) = state.row(0);
       sigma_level_draws_[cursor()] = trend_model_->sigma_level();

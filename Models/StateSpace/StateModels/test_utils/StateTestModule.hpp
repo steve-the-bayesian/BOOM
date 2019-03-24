@@ -26,7 +26,15 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     // A collection of objects used to test a specific StateModel.  Concrete
-    // instances should included priors, samplers
+    // instances should included priors, samplers.
+    //
+    // STATE_MODEL_TYPE can be StateModel, DynamicInterceptStateModel, or
+    // SharedStateModel
+    //
+    // MODEL_TYPE can be StateSpaceModelBase, DynamicInterceptRegressionModel,
+    // or MultivariateStateSpaceModelBase
+    template <class STATE_MODEL_TYPE = StateModel,
+              class MODEL_TYPE = StateSpaceModelBase>
     class StateModelTestModule {
      public:
       StateModelTestModule() : state_model_index_(-1), cursor_(-1) {}
@@ -37,33 +45,27 @@ namespace BOOM {
       virtual void SimulateData(int time_dimension) = 0;
       virtual const Vector &StateContribution() const = 0;
       
-      virtual Ptr<StateModel> get_state_model() = 0;
-      virtual Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() = 0;
+      virtual Ptr<STATE_MODEL_TYPE> get_state_model() = 0;
 
       // Place the fully formed state model into model.
-      virtual void ImbueState(ScalarStateSpaceModelBase &model) {
+      virtual void ImbueState(MODEL_TYPE &model) {
         state_model_index_ = model.number_of_state_models();
         model.add_state(get_state_model());
       }
-      virtual void ImbueState(DynamicInterceptRegressionModel &model) {
-        state_model_index_ = model.number_of_state_models();
-        model.add_state(get_dynamic_intercept_state_model());
-      }
-      
+
       // Before starting the MCMC algorithm, call CreateObservationSpace with
       // the desired number of MCMC iterations.  This will create a set of
       // Vector and Matrix objects to store the MCMC draws so they can be
       // checked after the run ends.
       virtual void CreateObservationSpace(int niter) = 0;
 
-      const ConstSubMatrix CurrentState(const StateSpaceModelBase &model) {
+      const ConstSubMatrix CurrentState(const MODEL_TYPE &model) {
         return model.full_state_subcomponent(state_model_index_);
       }
       
       // Record the current values of the state in the space created by
       // CreateObservationSpace.
-      virtual void ObserveDraws(const StateSpaceModelBase &model) = 0;
+      virtual void ObserveDraws(const MODEL_TYPE &model) = 0;
 
       // Check the MCMC draws vs the true values used to create the simulated
       // data.
@@ -79,9 +81,12 @@ namespace BOOM {
     };
 
     //===========================================================================
+    // A container for managing a collection of StateModelTestModule objects.
+    template <class STATE_MODEL_TYPE = StateModel,
+              class MODEL_TYPE = StateSpaceModelBase>
     class StateModuleManager {
      public:
-      void AddModule(StateModelTestModule *module) {
+      void AddModule(StateModelTestModule<STATE_MODEL_TYPE, MODEL_TYPE> *module) {
         modules_.emplace_back(module);
       }
 
@@ -99,13 +104,7 @@ namespace BOOM {
         return ans;
       }
       
-      void ImbueState(ScalarStateSpaceModelBase &model) {
-        for (auto &module : modules_) {
-          module->ImbueState(model);
-        }
-      }
-
-      void ImbueState(DynamicInterceptRegressionModel &model) {
+      void ImbueState(MODEL_TYPE &model) {
         for (auto &module : modules_) {
           module->ImbueState(model);
         }
@@ -118,7 +117,7 @@ namespace BOOM {
         }
       }
 
-      void ObserveDraws(const StateSpaceModelBase &model) {
+      void ObserveDraws(const MODEL_TYPE &model) {
         for (auto &module : modules_) {
           module->ObserveDraws(model);
           module->IncrementCursor();
@@ -132,7 +131,10 @@ namespace BOOM {
       }
       
      private:
-      std::vector<std::shared_ptr<StateModelTestModule>> modules_;
+      std::vector<std::shared_ptr<
+                    StateModelTestModule<
+                      STATE_MODEL_TYPE,
+                      MODEL_TYPE>>> modules_;
     };
     
   }  // namespace StateSpaceTesting

@@ -53,8 +53,8 @@ namespace BOOM {
               slope_model_.get(), slope_mean_prior_,
               slope_ar_prior_, slope_precision_prior_)),
           trend_model_(new SemilocalLinearTrendStateModel(
-              level_model_, slope_model_)),
-          adapter_(new DynamicInterceptStateModelAdapter(trend_model_))
+              level_model_, slope_model_))
+          // adapter_(new DynamicInterceptStateModelAdapter(trend_model_))
     {
       level_model_->set_method(level_sampler_);
       slope_model_->set_method(slope_sampler_);
@@ -85,7 +85,7 @@ namespace BOOM {
       slope_ar_draws_.resize(niter);
     }
 
-    void Module::ObserveDraws(const StateSpaceModelBase &model) {
+    void Module::ObserveDraws(const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       trend_draws_.row(cursor()) = state.row(0);
       sigma_level_draws_[cursor()] = level_model_->sigma();
