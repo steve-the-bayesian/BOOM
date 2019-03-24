@@ -72,5 +72,18 @@ namespace BOOM {
     SpdMatrix initial_state_variance_;
   };
 
+  //===========================================================================
+  class LocalLinearTrendDynamicInterceptModel
+      : public DynamicInterceptStateModel,
+        public LocalLinearTrendStateModel {
+   public:
+    LocalLinearTrendDynamicInterceptModel *clone() const override;
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t,
+        const StateSpace::TimeSeriesRegressionData &data_point) const override;
+    
+    bool is_pure_function_of_time() const override { return true; }
+  };
+
 }  // namespace BOOM
 #endif  // BOOM_LOCAL_LINEAR_TREND_STATE_MODEL_HPP_

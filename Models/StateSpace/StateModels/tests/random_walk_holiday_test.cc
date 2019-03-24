@@ -36,7 +36,7 @@ namespace {
     Vector initial_pattern_;
     Ptr<Holiday> holiday_;
     double sd_;
-    StateModuleManager modules_;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules_;
   };
 
   TEST_F(RandomWalkHolidayStateModelTest, ModelMatrices) {
@@ -103,11 +103,4 @@ namespace {
     state_space.Test(niter, time_dimension, 20);
   }    
 
-  TEST_F(RandomWalkHolidayStateModelTest, DynamicInterceptTest) {
-    DynamicInterceptTestFramework dynamic(Vector{3, -1, 2.4}, 1.2, 3.0);
-    dynamic.AddState(modules_);
-    int niter = 200;
-    int time_dimension = 2 * 365;
-    dynamic.Test(niter, time_dimension);
-  }    
 }  // namespace

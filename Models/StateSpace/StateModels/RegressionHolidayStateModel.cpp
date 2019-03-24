@@ -255,5 +255,13 @@ namespace BOOM {
     residuals += this->observation_matrix(time_now).dot(now);
     increment_daily_suf(holiday, day, sum(residuals), residuals.size());
   }
+
+  Ptr<SparseMatrixBlock> DIRHSM::observation_coefficients(
+      int t,
+      const StateSpace::TimeSeriesRegressionData &data_point) const {
+    return new IdenticalRowsMatrix(
+        observation_matrix(t), data_point.sample_size());
+  }
+
   
 }  // namespace BOOM

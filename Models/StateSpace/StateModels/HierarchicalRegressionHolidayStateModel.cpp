@@ -126,6 +126,13 @@ namespace BOOM {
     }
   }
 
+  Ptr<SparseMatrixBlock> DIHRSM::observation_coefficients(
+      int t,
+      const StateSpace::TimeSeriesRegressionData &data_point) const {
+    return new IdenticalRowsMatrix(observation_matrix(t),
+                                   data_point.sample_size());
+  }
+  
   SparseVector HRHSM::observation_matrix(int t) const {
     SparseVector ans(1);
     if (impl_.which_holiday(t) < 0) {

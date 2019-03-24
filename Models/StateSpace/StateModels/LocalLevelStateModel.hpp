@@ -27,6 +27,7 @@
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 
 namespace BOOM {
@@ -82,6 +83,33 @@ namespace BOOM {
   };
 
   //===========================================================================
+  class DynamicInterceptLocalLevelStateModel
+      : public LocalLevelStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    explicit DynamicInterceptLocalLevelStateModel(double sigma = 1.0)
+        : LocalLevelStateModel(sigma)
+    {}
+
+    DynamicInterceptLocalLevelStateModel *clone() const override {
+      return new DynamicInterceptLocalLevelStateModel(*this);
+    }
+    
+    bool is_pure_function_of_time() const override {return true;}
+
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t,
+        const StateSpace::TimeSeriesRegressionData &data_point) const override {
+      // In single threaded code we could optimize here by creating a single
+      // IdenticalRowsMatrix and changing the number of rows each time.
+      //
+      // In multi-threaded code that would create a race condition.
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.sample_size());
+    }
+  };
+
+  //===========================================================================
   // A local level model for describing multivariate outcomes.  The latent state
   // consists of K independent random walks which are the 'factors'.  The series
   // are linked to the factors accorrding to
@@ -107,8 +135,10 @@ namespace BOOM {
     //     this state model.  The number of factors is the state dimension.
     //   ydim:  The dimension of the outcome variable at time t.
     //   host:  The model in which this object is a component of state.
+    //   nseries:  The number of observed time series being modeled.
     SharedLocalLevelStateModel(int number_of_factors,
-                               MultivariateStateSpaceModelBase *host);
+                               MultivariateStateSpaceModelBase *host,
+                               int nseries);
     SharedLocalLevelStateModel(const SharedLocalLevelStateModel &rhs);
     SharedLocalLevelStateModel(SharedLocalLevelStateModel &&rhs);
     SharedLocalLevelStateModel &operator=(const SharedLocalLevelStateModel &rhs);

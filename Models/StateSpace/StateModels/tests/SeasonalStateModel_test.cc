@@ -298,7 +298,7 @@ namespace {
   TEST_F(SeasonalTest, Framework) {
     double true_sigma_obs = 1.2;
     StateSpaceTestFramework state_space(true_sigma_obs);
-    StateModuleManager modules_;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules_;
     modules_.AddModule(new StaticInterceptTestModule(3.7));
     modules_.AddModule(new SeasonalTestModule(.8, 7));
     modules_.AddModule(new SeasonalTestModule(1.1, weeks_per_year_, 7));

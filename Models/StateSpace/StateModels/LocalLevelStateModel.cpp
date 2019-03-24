@@ -143,20 +143,15 @@ namespace BOOM {
   //===========================================================================
 
   SLLSM::SharedLocalLevelStateModel(
-      int number_of_factors, MultivariateStateSpaceModelBase *host)
+      int number_of_factors, MultivariateStateSpaceModelBase *host, int nseries)
       : host_(host),
         empty_(new EmptyMatrix),
         initial_state_mean_(0),
         initial_state_variance_(0),
         initial_state_variance_cholesky_(0, 0)
   {
-    if (host->nseries() <= 0) {
-      report_error("The SharedLocalLevelStateModel cannot be used with models "
-                   "where the number of dimensions varies with time. ");
-    }
     coefficient_model_.reset(new MultivariateRegressionModel(
-        number_of_factors, host->nseries()));
-    
+        number_of_factors, nseries));
     for (int i = 0; i < number_of_factors; ++i) {
       innovation_models_.push_back(new ZeroMeanGaussianModel);
     }
@@ -256,7 +251,7 @@ namespace BOOM {
     Vector residual_y =
         observed.select(host_->observation(time_now)) -
         (*host_->observation_coefficients(time_now, observed) 
-         * host_->state(time_now))
+         * host_->shared_state(time_now))
         + observed.select(observation_coefficients_->matrix() * now);
 
     coefficient_model_->suf()->update_raw_data(residual_y, now, 1.0);
