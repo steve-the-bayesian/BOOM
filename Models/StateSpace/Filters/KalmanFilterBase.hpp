@@ -25,7 +25,6 @@
 #include "LinAlg/Selector.hpp"
 
 namespace BOOM {
-  class StateSpaceModelBase;
   namespace Kalman {
     //---------------------------------------------------------------------------
     // The Kalman filter sequentially updates a set of marginal distributions

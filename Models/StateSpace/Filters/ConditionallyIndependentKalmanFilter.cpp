@@ -33,8 +33,8 @@ namespace BOOM {
     
     Marginal::ConditionallyIndependentMarginalDistribution(
         ModelType *model, MarginalType *previous, int time_index)
-        : MultivariateMarginalDistributionBase(model->state_dimension(),
-                                               time_index),
+        : MultivariateMarginalDistributionBase(
+              model->state_dimension(), time_index),
           model_(model),
           previous_(previous) {}
 

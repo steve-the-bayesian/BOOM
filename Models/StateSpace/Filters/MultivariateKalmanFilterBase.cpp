@@ -100,8 +100,8 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     bool Marginal::high_dimensional(const Selector &observed) const {
-      return observed.nvars() >
-          high_dimensional_threshold_factor() * model()->state_dimension();
+      return observed.nvars() > high_dimensional_threshold_factor()
+          * model()->state_dimension();
     }
   
     //----------------------------------------------------------------------
@@ -172,7 +172,9 @@ namespace BOOM {
     clear();
     for (int t = 0; t < model_->time_dimension(); ++t) {
       update_single_observation(
-          model_->observation(t), model_->observed_status(t), t);
+          model_->adjusted_observation(t),
+          model_->observed_status(t),
+          t);
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
         return;

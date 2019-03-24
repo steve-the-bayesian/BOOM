@@ -128,7 +128,7 @@ namespace {
       model->add_data(new PartiallyObservedVectorData(data.row(i)));
     }
 
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get());
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get(), ydim);
     state_model->set_initial_state_mean(Vector(nfactors, 0.0));
     state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
     Matrix Beta = state_model->coefficient_model()->Beta();
@@ -137,7 +137,7 @@ namespace {
     state_model->innovation_model(0)->set_sigsq(20.1);
     state_model->innovation_model(1)->set_sigsq(1.8);
     
-    model->add_shared_state(state_model);
+    model->add_state(state_model);
     Vector sigma_obs(ydim);
     sigma_obs.randomize();
     model->observation_model()->set_sigsq(sigma_obs * sigma_obs);
