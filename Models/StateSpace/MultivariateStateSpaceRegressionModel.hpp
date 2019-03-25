@@ -103,22 +103,31 @@ namespace BOOM {
         public IID_DataPolicy<TimeSeriesRegressionData>,
         public PriorPolicy
   {
-    friend class MockScalarStateSpaceModel;
    public:
     // Args:
     //   nseries:  The number of time series being modeled.
-    MultivariateStateSpaceRegressionModel(int nseries);
+    explicit MultivariateStateSpaceRegressionModel(int nseries);
     
     int time_dimension() const;
 
     // Dimension of shared state.
     int state_dimension() const;
+
+    // The dimension of the series-specific state associated with a particular
+    // time series.
     int series_state_dimension(int which_series) const;
-    
+
+    // The number of time series being modeled.
     int nseries() const {return nseries_;}
 
+    // Add state to the "shared-state" portion of the state space.
     void add_state(const Ptr<SharedStateModel> &state_model);
-    
+
+    // Add state to the state model for an individual time series.
+    // 
+    // Args:
+    //   state_model:  The state model defining the state to be added.
+    //   series:  The index of the scalar time series described by the state.
     void add_series_specific_state(const Ptr<StateModel> &state_model,
                                    int series) {
       total_state_dimension_ += state_model->state_dimension();
