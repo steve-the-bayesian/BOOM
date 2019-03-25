@@ -19,7 +19,7 @@
 #include "Models/StateSpace/tests/DynamicInterceptTestFramework.hpp"
 #include "gtest/gtest.h"
 
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicInterceptRegressionPosteriorSampler.hpp"
 #include "distributions.hpp"
 #include "test_utils/test_utils.hpp"
 #include "stats/AsciiDistributionCompare.hpp"
@@ -76,7 +76,7 @@ namespace BOOM {
           coefficient_prior,
           residual_precision_prior_);
       model_->observation_model()->set_method(regression_sampler);
-      NEW(StateSpacePosteriorSampler, sampler)(model_.get());
+      NEW(DynamicInterceptRegressionPosteriorSampler, sampler)(model_.get());
       model_->set_method(sampler);
     }
 

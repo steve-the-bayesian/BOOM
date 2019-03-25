@@ -18,8 +18,14 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/PriorPolicy.hpp"
+
 #include "Models/IndependentMvnModel.hpp"
+
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/StateModelVector.hpp"
 
 namespace BOOM {
 
@@ -38,13 +44,14 @@ namespace BOOM {
   
   class MultivariateStateSpaceModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
+        public CompositeParamPolicy,
         public IID_DataPolicy<PartiallyObservedVectorData>,
         public PriorPolicy {
    public:
     // Args:
-    //   dim: The dimension of the time series to be modeled (i.e. the number of
+    //   nseries: The dimension of the time series to be modeled (i.e. the number of
     //     parallel time series).
-    explicit MultivariateStateSpaceModel(int dim);
+    explicit MultivariateStateSpaceModel(int nseries);
     MultivariateStateSpaceModel(const MultivariateStateSpaceModel &rhs);
     MultivariateStateSpaceModel(MultivariateStateSpaceModel &&rhs) = default;
     MultivariateStateSpaceModel * clone() const override;
@@ -53,13 +60,29 @@ namespace BOOM {
     MultivariateStateSpaceModel & operator=(
         MultivariateStateSpaceModel &&rhs) = default;
     
-    void add_shared_state(const Ptr<SharedStateModel> &state_model);
-    
+    void add_state(const Ptr<SharedStateModel> &state_model);
+
     IndependentMvnModel *observation_model() override;
     const IndependentMvnModel *observation_model() const override;
 
+    SharedStateModel *state_model(int s) override {
+      return state_models_[s].get();
+    }
+    const SharedStateModel *state_model(int s) const override {
+      return state_models_[s].get();
+    }
+
+    void observe_state(int t) override;
+    
     void observe_data_given_state(int t) override;
     int time_dimension() const override { return dat().size(); }
+    int nseries() const {return nseries_;}
+    int state_dimension() const override {
+      return state_models_.state_dimension();
+    }
+    int number_of_state_models() const override {
+      return state_models_.size();
+    }
 
     // Simulate the next 'horizon' time points
     Matrix simulate_forecast(RNG &rng, int horizon,
@@ -71,19 +94,31 @@ namespace BOOM {
     double single_observation_variance(int t, int dim) const override;
 
     const Vector &observation(int t) const override;
+    ConstVectorView adjusted_observation(int t) const override {
+      return ConstVectorView(observation(t));
+    }
     const Selector &observed_status(int t) const override;
 
     Matrix state_contributions(int which_state_model) const override;
     
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
-    bool is_missing_observation(int t) const override {
+    bool is_missing_observation(int t) const {
       return dat()[t]->missing() != Data::observed;
     }
 
    private:
+    StateModelVectorBase &state_model_vector() override {
+      return state_models_;
+    }
+    
+    const StateModelVectorBase &state_model_vector() const override {
+      return state_models_;
+    }
+    
+    int nseries_;
     Ptr<IndependentMvnModel> observation_model_;
-    std::vector<Ptr<SharedStateModel>> state_models_;
+    StateSpaceUtils::StateModelVector<SharedStateModel> state_models_;
 
     Ptr<BlockDiagonalMatrix> observation_coefficients_;
   };

@@ -28,7 +28,8 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class DynamicInterceptTestFramework
-        : public TestFrameworkBase {
+        : public TestFrameworkBase<DynamicInterceptStateModel,
+                                   DynamicInterceptRegressionModel> {
      public:
       DynamicInterceptTestFramework(const Vector &coefficients,
                                     double observation_sd,

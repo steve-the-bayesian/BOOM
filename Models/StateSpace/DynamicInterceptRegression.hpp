@@ -116,13 +116,8 @@ namespace BOOM {
       ParamPolicy::add_model(state_model);
     }
 
-    int shared_state_dimension() const override {
+    int state_dimension() const override {
       return state_models_.state_dimension();
-    }
-
-    const Matrix &state() const { return state_; }
-    const ConstVectorView state(int t) const {
-      return state_.col(t);
     }
     
     RegressionModel *observation_model() override;
@@ -135,7 +130,7 @@ namespace BOOM {
     int time_dimension() const override { return dat().size(); }
     int xdim() const { return regression_->regression()->xdim(); }
 
-    int number_of_shared_state_models() const override {
+    int number_of_state_models() const override {
       return state_models_.size();
     }
     DynamicInterceptStateModel *state_model(int s) override {
@@ -221,9 +216,16 @@ namespace BOOM {
 
     Matrix state_contributions(int which_state_model) const override {
       report_error("Need to fix state_contributions for DynamicInterceptModel.");
-      return state_;
+      return Matrix(0, 0);
     }
 
+    // The next two functions are mainly used for debugging a simulation.  You
+    // can 'permanently_set_state' to the 'true' state value, then see if the
+    // model recovers the parameters.  These functions are unlikely to be useful
+    // in an actual data analysis.
+    //    void permanently_set_state(const Matrix &state);
+    void observe_fixed_state();
+    
    private:
     // Reimplements the logic in the base class, but optimized for the scalar
     // observation variance.
@@ -253,7 +255,6 @@ namespace BOOM {
     // number of rows is the number of elements in y[t].
     mutable SparseVerticalStripMatrix observation_coefficients_;
 
-    Matrix state_;
   };
 
 }  // namespace BOOM

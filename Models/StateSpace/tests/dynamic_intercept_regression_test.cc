@@ -3,7 +3,7 @@
 #include "Models/ChisqModel.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicInterceptRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
@@ -64,15 +64,15 @@ namespace {
         model_->add_data(data_point);
       }
       
-      level_model_.reset(new LocalLevelStateModel(true_level_sd_));
+      level_model_.reset(new DynamicInterceptLocalLevelStateModel(
+          true_level_sd_));
       level_model_->set_initial_state_mean(level_[0]);
       level_model_->set_initial_state_variance(var(level_));
       NEW(ZeroMeanGaussianConjSampler, level_sampler)(
           level_model_.get(), level_precision_prior_);
       level_sampler->set_sigma_upper_limit(10);
       level_model_->set_method(level_sampler);
-      level_adapter_.reset(new DynamicInterceptStateModelAdapter(level_model_));
-      model_->add_state(level_adapter_);
+      model_->add_state(level_model_);
 
       NEW(MvnGivenScalarSigma, coefficient_prior)(
           SpdMatrix(true_beta_.size(), .01),
@@ -87,7 +87,8 @@ namespace {
       model_->observation_model()->set_Beta(true_beta_);
       model_->observation_model()->set_sigsq(square(true_observation_sd_));
 
-      NEW(StateSpacePosteriorSampler, sampler)(model_.get());
+      NEW(DynamicInterceptRegressionPosteriorSampler, sampler)(
+          model_.get());
       model_->set_method(sampler);
     }
       
@@ -99,8 +100,7 @@ namespace {
     std::vector<Ptr<StateSpace::TimeSeriesRegressionData>> data_;
     Ptr<DynamicInterceptRegressionModel> model_;
     
-    Ptr<LocalLevelStateModel> level_model_;
-    Ptr<DynamicInterceptStateModelAdapter> level_adapter_;
+    Ptr<DynamicInterceptLocalLevelStateModel> level_model_;
     Ptr<ChisqModel> level_precision_prior_;
     Ptr<ChisqModel> residual_precision_prior_;
     Ptr<VariableSelectionPrior> spike_;
@@ -135,7 +135,7 @@ namespace {
     Matrix level_draws(niter, time_dimension_);
     for (int i = 0; i < niter; ++i) {
       model_->sample_posterior();
-      level_draws.row(i) = model_->state().row(1);
+      level_draws.row(i) = model_->shared_state().row(1);
     }
     auto status = CheckMcmcMatrix(level_draws, level_, .95);
     EXPECT_TRUE(status.ok) << "Level state component did not cover." << endl
@@ -193,7 +193,7 @@ namespace {
     for (int i = 0; i < niter; ++i) {
       model_->sample_posterior();
       sigma_level_draws[i] = level_model_->sigma();
-      level_draws.row(i) = model_->state().row(1);
+      level_draws.row(i) = model_->shared_state().row(1);
     }
     EXPECT_TRUE(VectorEquals(true_beta_, model_->observation_model()->Beta()));
     EXPECT_DOUBLE_EQ(true_observation_sd_, model_->observation_model()->sigma());
@@ -221,7 +221,7 @@ namespace {
       sigma_level_draws[i] = level_model_->sigma();
       sigma_obs_draws[i] = model_->observation_model()->sigma();
       beta_draws.row(i) = model_->observation_model()->Beta();
-      level_draws.row(i) = model_->state().row(1);
+      level_draws.row(i) = model_->shared_state().row(1);
     }
 
     EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_level_sd_,

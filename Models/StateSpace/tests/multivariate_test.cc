@@ -101,8 +101,8 @@ namespace {
       model.add_data(data_point);
     }
     
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model);
-    model.add_shared_state(state_model);
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model, ydim);
+    model.add_state(state_model);
 
     Selector fully_observed(ydim, true);
     EXPECT_EQ(model.observation_coefficients(0, fully_observed)->nrow(), ydim);
@@ -127,7 +127,7 @@ namespace {
       model->add_data(data_point);
     }
     
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get());
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get(), ydim);
     // Initial state mean and variance.
     Vector initial_state_mean(2, 0.0);
     SpdMatrix initial_state_variance(2, 1.0);
@@ -154,7 +154,7 @@ namespace {
 
     state_model->coefficient_model()->set_Beta(
         observation_coefficients_.transpose());
-    model->add_shared_state(state_model);
+    model->add_state(state_model);
 
     // Check that the model matrices are as expected.
     int time_index = 2;
@@ -191,7 +191,7 @@ namespace {
     
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
-      state_draws.slice(i, -1, -1) = model->state();
+      state_draws.slice(i, -1, -1) = model->shared_state();
     }
 
     auto status = CheckMcmcMatrix(state_draws.slice(-1, 0, -1).to_matrix(),

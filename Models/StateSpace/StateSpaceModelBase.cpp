@@ -36,28 +36,12 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   Base::StateSpaceModelBase()
-      : state_dimension_(0),
-        state_error_dimension_(0),
-        state_positions_(1, 0),
-        state_error_positions_(1, 0),
-        state_is_fixed_(false),
-        state_transition_matrix_(new BlockDiagonalMatrix),
-        state_variance_matrix_(new BlockDiagonalMatrix),
-        state_error_expander_(new BlockDiagonalMatrix),
-        state_error_variance_(new BlockDiagonalMatrix)
+      : state_is_fixed_(false)
   {}
 
   Base::StateSpaceModelBase(const Base &rhs)
       : Model(rhs),
-        state_dimension_(0),
-        state_error_dimension_(0),
-        state_positions_(1, 0),
-        state_error_positions_(1, 0),
-        state_is_fixed_(rhs.state_is_fixed_),
-        state_transition_matrix_(new BlockDiagonalMatrix),
-        state_variance_matrix_(new BlockDiagonalMatrix),
-        state_error_expander_(new BlockDiagonalMatrix),
-        state_error_variance_(new BlockDiagonalMatrix) {
+        state_is_fixed_(rhs.state_is_fixed_) {
     // Normally the parameter_positions_ vector starts off empty, and gets
     // modified by add_state.  However, if the vector is empty the first call to
     // add_state calls observation_model(), a virtual function, to get the size
@@ -78,17 +62,8 @@ namespace BOOM {
   Base &Base::operator=(const Base &rhs) {
     if (&rhs != this) {
       Model::operator=(rhs);
-      state_dimension_ = 0;
-      state_error_dimension_ = 0;
-      state_positions_.resize(1, 0);
-      state_error_positions_.resize(1, 0);
+      state_models_.clear();
       state_is_fixed_ = rhs.state_is_fixed_;
-      state_transition_matrix_.reset(new BlockDiagonalMatrix);
-      state_variance_matrix_.reset(new BlockDiagonalMatrix);
-      state_error_expander_.reset(new BlockDiagonalMatrix);
-      state_error_variance_.reset(new BlockDiagonalMatrix);
-      parameter_positions_.clear();
-      parameter_positions_.push_back(rhs.parameter_positions_[0]);
       for (int s = 0; s < number_of_state_models(); ++s) {
         add_state(rhs.state_model(s)->clone());
       }
@@ -170,93 +145,21 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void Base::add_state(const Ptr<StateModel> &m) {
-    m->set_index(state_models_.size());
-    state_models_.push_back(m);
-    state_dimension_ += m->state_dimension();
-    int next_position = state_positions_.back() + m->state_dimension();
-    state_positions_.push_back(next_position);
-
-    state_error_dimension_ += m->state_error_dimension();
-    next_position = state_error_positions_.back() + m->state_error_dimension();
-    state_error_positions_.push_back(next_position);
-
-    if (parameter_positions_.empty()) {
-      // If no state has been added yet, add the size of the observation model
-      // parameters, which come before the state model parameters in the
-      // parameter vector.
-      //
-      // Also see the note in the copy constructor.  If this code changes, the
-      // copy constructor will probably need to change as well.
-      parameter_positions_.push_back(
-          observation_model()->vectorize_params(true).size());
-    }
-    parameter_positions_.push_back(parameter_positions_.back() +
-                                   m->vectorize_params(true).size());
+      state_models_.add_state(m);
+      if (parameter_positions_.empty()) {
+        // If no state has been added yet, add the size of the observation model
+        // parameters, which come before the state model parameters in the
+        // parameter vector.
+        //
+        // Also see the note in the copy constructor.  If this code changes, the
+        // copy constructor will probably need to change as well.
+        parameter_positions_.push_back(
+            observation_model()->vectorize_params(true).size());
+      }
+      parameter_positions_.push_back(parameter_positions_.back() +
+                                     m->vectorize_params(true).size());
   }
 
-  //----------------------------------------------------------------------
-  VectorView Base::state_component(Vector &state, int s) const {
-    int start = state_positions_[s];
-    int size = state_model(s)->state_dimension();
-    return VectorView(state, start, size);
-  }
-
-  //----------------------------------------------------------------------
-  VectorView Base::state_component(VectorView &state, int s) const {
-    int start = state_positions_[s];
-    int size = state_model(s)->state_dimension();
-    return VectorView(state, start, size);
-  }
-
-  //----------------------------------------------------------------------
-  ConstVectorView Base::state_component(const ConstVectorView &state,
-                                        int s) const {
-    int start = state_positions_[s];
-    int size = state_model(s)->state_dimension();
-    return ConstVectorView(state, start, size);
-  }
-
-  //----------------------------------------------------------------------
-  ConstVectorView Base::const_state_error_component(const Vector &full_state_error,
-                                                    int state_model_number) const {
-    int start = state_error_positions_[state_model_number];
-    int size = state_model(state_model_number)->state_error_dimension();
-    return ConstVectorView(full_state_error, start, size);
-  }
-
-  VectorView Base::state_error_component(Vector &full_state_error,
-                                         int state_model_number) const {
-    int start = state_error_positions_[state_model_number];
-    int size = state_model(state_model_number)->state_error_dimension();
-    return VectorView(full_state_error, start, size);
-  }
-
-  //----------------------------------------------------------------------
-  ConstSubMatrix Base::state_error_variance_component(
-      const SpdMatrix &full_error_variance, int state) const {
-    int start = state_error_positions_[state];
-    int size = state_model(state)->state_error_dimension();
-    return ConstSubMatrix(full_error_variance, start, start + size - 1, start,
-                          start + size - 1);
-  }
-
-  //----------------------------------------------------------------------
-  ConstSubMatrix Base::full_state_subcomponent(int state_model_index) const {
-    int start = state_positions_[state_model_index];
-    int size = state_model(state_model_index)->state_dimension();
-    ConstSubMatrix contribution(state_, start, start + size - 1, 0,
-                                time_dimension() - 1);
-    return contribution;
-  }
-
-  SubMatrix Base::mutable_full_state_subcomponent(int state_model_index) {
-    int start = state_positions_[state_model_index];
-    int size = state_model(state_model_index)->state_dimension();
-    SubMatrix contribution(state_, start, start + size - 1, 0,
-                           time_dimension() - 1);
-    return contribution;
-  }
-  
   //----------------------------------------------------------------------
   void Base::permanently_set_state(const Matrix &state) {
     if ((ncol(state) != time_dimension()) ||
@@ -293,9 +196,9 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   SpdMatrix Base::initial_state_variance() const {
-    SpdMatrix ans(state_dimension_);
+    SpdMatrix ans(state_dimension());
     int lo = 0;
-    for (int s = 0; s < state_models_.size(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       Ptr<StateModel> this_state_model = state_model(s);
       int hi = lo + this_state_model->state_dimension() - 1;
       SubMatrix block(ans, lo, hi, lo, hi);
@@ -306,63 +209,9 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  // TODO: This and other code involving model matrices is an optimization
-  // opportunity.  Test it out to see if precomputation makes sense.
-  const SparseKalmanMatrix *Base::state_transition_matrix(int t) const {
-    // Size comparisons should be made with respect to state_dimension_, not
-    // state_dimension() which is virtual.
-    if (state_transition_matrix_->nrow() != state_dimension_ ||
-        state_transition_matrix_->ncol() != state_dimension_) {
-      state_transition_matrix_->clear();
-      for (int s = 0; s < state_models_.size(); ++s) {
-        state_transition_matrix_->add_block(
-            state_model(s)->state_transition_matrix(t));
-      }
-    } else {
-      // If we're in this block, then the matrix must have been created already,
-      // and we just need to update the blocks.
-      for (int s = 0; s < state_models_.size(); ++s) {
-        state_transition_matrix_->replace_block(
-            s, state_model(s)->state_transition_matrix(t));
-      }
-    }
-    return state_transition_matrix_.get();
-  }
-
-  //----------------------------------------------------------------------
-  const SparseKalmanMatrix *Base::state_variance_matrix(int t) const {
-    state_variance_matrix_->clear();
-    for (int s = 0; s < state_models_.size(); ++s) {
-      state_variance_matrix_->add_block(
-          state_model(s)->state_variance_matrix(t));
-    }
-    return state_variance_matrix_.get();
-  }
-
-  //----------------------------------------------------------------------
-  const SparseKalmanMatrix *Base::state_error_expander(int t) const {
-    state_error_expander_->clear();
-    for (int s = 0; s < state_models_.size(); ++s) {
-      state_error_expander_->add_block(state_model(s)->state_error_expander(t));
-    }
-    return state_error_expander_.get();
-  }
-
-  //----------------------------------------------------------------------
-  const SparseKalmanMatrix *Base::state_error_variance(int t) const {
-    state_error_variance_->clear();
-    for (int s = 0; s < state_models_.size(); ++s) {
-      state_error_variance_->add_block(state_model(s)->state_error_variance(t));
-    }
-    return state_error_variance_.get();
-  }
-
-  //----------------------------------------------------------------------
   void Base::clear_client_data() {
     observation_model()->clear_data();
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      state_model(s)->clear_data();
-    }
+    state_models_.clear_data();
     signal_complete_data_reset();
   }
 
@@ -381,7 +230,7 @@ namespace BOOM {
   }
 
   //----------------------------------------------------------------------
-  void Base::set_state_model_behavior(StateModel::Behavior behavior) {
+  void Base::set_state_model_behavior(StateModelBase::Behavior behavior) {
     for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->set_behavior(behavior);
     }
@@ -536,7 +385,7 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void Base::simulate_initial_state(RNG &rng, VectorView state0) const {
-    for (int s = 0; s < state_models_.size(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->simulate_initial_state(
           rng, state_component(state0, s));
     }
@@ -566,7 +415,7 @@ namespace BOOM {
       state = simulate_next_state(rng, state, time_dimension() + time++);
     }
     if (time != timestamp) {
-      ostringstream err;
+      std::ostringstream err;
       err << "Timestamps out of order for observation " << observation_index
           << " with time = " << time << " and timestamps[" << observation_index
           << "] = " << timestamp << ".";
@@ -594,8 +443,8 @@ namespace BOOM {
   Vector Base::simulate_state_error(RNG &rng, int t) const {
     // simulate N(0, RQR) for the state at time t+1, using the
     // variance matrix at time t.
-    Vector ans(state_dimension_, 0);
-    for (int s = 0; s < state_models_.size(); ++s) {
+    Vector ans(state_dimension(), 0);
+    for (int s = 0; s < number_of_state_models(); ++s) {
       VectorView eta(state_component(ans, s));
       state_model(s)->simulate_state_error(rng, eta, t);
     }
@@ -752,8 +601,8 @@ namespace BOOM {
     if (nrow(state_) != state_dimension() || ncol(state_) != time_dimension()) {
       state_.resize(state_dimension(), time_dimension());
     }
-    for (int s = 0; s < state_models_.size(); ++s) {
-      state_models_[s]->observe_time_dimension(time_dimension());
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      state_model(s)->observe_time_dimension(time_dimension());
     }
   }
 

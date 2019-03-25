@@ -26,33 +26,42 @@ namespace BOOM {
     using MSSM = MultivariateStateSpaceModel;
   }  // namespace
 
-  MSSM::MultivariateStateSpaceModel(int dim)
-      : ConditionallyIndependentMultivariateStateSpaceModelBase(dim),
-        observation_model_(new IndependentMvnModel(dim)),
+  MSSM::MultivariateStateSpaceModel(int nseries)
+      : nseries_(nseries),
+        observation_model_(new IndependentMvnModel(nseries)),
         observation_coefficients_(new BlockDiagonalMatrix)
-  {}
+  {
+    ParamPolicy::add_model(observation_model_);
+  }
         
   MSSM::MultivariateStateSpaceModel(const MSSM &rhs)
       : ConditionallyIndependentMultivariateStateSpaceModelBase(rhs),
+        ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         observation_model_(rhs.observation_model_->clone()),
         observation_coefficients_(new BlockDiagonalMatrix)
   {
-    clear_state_models();
+    nseries_ = rhs.nseries_;
+    ParamPolicy::add_model(observation_model_);
+    state_models_.clear();
     for (int i = 0; i < rhs.state_models_.size(); ++i) {
-      add_shared_state(rhs.state_models_[i]->clone());
+      add_state(rhs.state_models_[i]->clone());
     }
   }
 
   MSSM & MSSM::operator=(const MSSM &rhs) {
     if (&rhs != this) {
       ConditionallyIndependentMultivariateStateSpaceModelBase::operator=(rhs);
+      ParamPolicy::operator=(rhs);
       DataPolicy::operator=(rhs);
       PriorPolicy::operator=(rhs);
+      nseries_ = rhs.nseries_;
       observation_model_.reset(rhs.observation_model_->clone());
       observation_coefficients_.reset(new BlockDiagonalMatrix);
-      clear_state_models();
+      ParamPolicy::clear();
+      ParamPolicy::add_model(observation_model_);
+      state_models_.clear();
       for (int i = 0; i < rhs.state_models_.size(); ++i) {
         add_state(rhs.state_models_[i]->clone());
       }
@@ -62,9 +71,9 @@ namespace BOOM {
   
   MSSM *MSSM::clone() const {return new MSSM(*this);} 
 
-  void MSSM::add_shared_state(const Ptr<SharedStateModel> &state_model) {
-    state_models_.push_back(state_model);
-    StateSpaceModelBase::add_state(state_model);
+  void MSSM::add_state(const Ptr<SharedStateModel> &state_model) {
+    ParamPolicy::add_model(state_model);
+    state_models_.add_state(state_model);
   }
   
   IndependentMvnModel *MSSM::observation_model() {
@@ -75,10 +84,26 @@ namespace BOOM {
     return observation_model_.get();
   }
 
+  void MSSM::observe_state(int t) {
+    if (t == 0) {
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_initial_state(
+            state_component(shared_state().col(0), s));
+      }
+    } else {
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_state(
+            state_component(shared_state().col(t - 1), s),
+            state_component(shared_state().col(t), s),
+            t);
+      }
+    }
+  }
+  
   void MSSM::observe_data_given_state(int t) {
     if (!is_missing_observation(t)) {
       const Selector &observed(observed_status(t));
-      Vector mu = *observation_coefficients(t, observed) * state(t);
+      Vector mu = *observation_coefficients(t, observed) * shared_state(t);
       const Vector &obs(observation(t));
       for (int i = 0; i < observed.nvars(); ++i) {
         int I = observed.indx(i);
@@ -129,14 +154,16 @@ namespace BOOM {
   }
 
   Matrix MSSM::state_contributions(int which_state_model) const {
-    const Matrix &state(this->state());
-    if (ncol(state) != time_dimension() || nrow(state) != state_dimension()) {
+    if (ncol(shared_state()) != time_dimension()
+        || nrow(shared_state()) != state_dimension()) {
       ostringstream err;
       err << "state is the wrong size in "
           << "ScalarStateSpaceModelBase::state_contribution" << endl
-          << "State contribution matrix has " << ncol(state) << " columns.  "
+          << "State contribution matrix has " << ncol(shared_state())
+          << " columns.  "
           << "Time dimension is " << time_dimension() << "." << endl
-          << "State contribution matrix has " << nrow(state) << " rows.  "
+          << "State contribution matrix has " << nrow(shared_state())
+          << " rows.  "
           << "State dimension is " << state_dimension() << "." << endl;
       report_error(err.str());
     }
@@ -149,7 +176,7 @@ namespace BOOM {
     Selector observed(nseries(), true);
     for (int t = 0; t < time_dimension(); ++t) {
       ConstVectorView local_state(state_component(
-          state.col(t), which_state_model));
+          shared_state().col(t), which_state_model));
       ans.row(t) = *(state_models_[which_state_model]->observation_coefficients(
           t, observed)) * local_state;
     }

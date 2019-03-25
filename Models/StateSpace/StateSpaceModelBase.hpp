@@ -1,3 +1,5 @@
+#ifndef BOOM_STATE_SPACE_MODEL_BASE_HPP_
+#define BOOM_STATE_SPACE_MODEL_BASE_HPP_
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
@@ -16,10 +18,14 @@
   with this library; if not, write to the Free Software Foundation, Inc., 51
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
-#ifndef BOOM_STATE_SPACE_MODEL_BASE_HPP_
-#define BOOM_STATE_SPACE_MODEL_BASE_HPP_
 
 #include <memory>
+#include "cpputil/ThreadTools.hpp"
+#include "cpputil/math_utils.hpp"
+
+// There is an include order issue here.  ThreadTools.hpp must come before the
+// headers listed below.  Otherwise there is an 
+
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "Models/StateSpace/Filters/KalmanFilterBase.hpp"
@@ -29,8 +35,8 @@
 #include "Models/StateSpace/MultiplexedData.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
 #include "Models/StateSpace/StateModels/StateModel.hpp"
-#include "cpputil/ThreadTools.hpp"
-#include "cpputil/math_utils.hpp"
+#include "Models/StateSpace/StateModelVector.hpp"
+
 
 namespace BOOM {
   //===========================================================================
@@ -50,12 +56,16 @@ namespace BOOM {
     virtual int time_dimension() const = 0;
 
     // Number of elements in the state vector at a single time point.
-    virtual int state_dimension() const { return state_dimension_; }
+    virtual int state_dimension() const {
+      return state_models_.state_dimension();
+    }
 
     // The number of state models.  Presently, a fixed regression model does not
     // count as a state model, nor does a Harvey Cumulator.  This may change in
     // the future.
-    int number_of_state_models() const { return state_models_.size(); }
+    virtual int number_of_state_models() const {
+      return state_models_.size();
+    }
 
     // Returns true if observation t is missing, and false otherwise.  If the
     // observation at time t is multivariate, then is_missing_observation(t) ==
@@ -68,8 +78,10 @@ namespace BOOM {
     virtual const PosteriorModeModel *observation_model() const = 0;
 
     // Returns a pointer to the specified state model.
-    Ptr<StateModel> state_model(int s) { return state_models_[s]; }
-    const Ptr<StateModel> state_model(int s) const { return state_models_[s]; }
+    virtual Ptr<StateModel> state_model(int s) { return state_models_[s]; }
+    virtual const Ptr<StateModel> state_model(int s) const {
+      return state_models_[s];
+    }
 
     // Overrides that would normally be handled by a parameter policy.  These
     // are needed to ensure that parameters are vectorized in the correct order.
@@ -126,9 +138,15 @@ namespace BOOM {
     //
     // Returns:
     //   The subset of the 'state' argument corresponding to state model 's'.
-    VectorView state_component(Vector &state, int s) const;
-    VectorView state_component(VectorView &state, int s) const;
-    ConstVectorView state_component(const ConstVectorView &state, int s) const;
+    VectorView state_component(Vector &state, int s) const {
+      return state_models_.state_component(state, s);
+    }
+    VectorView state_component(VectorView &state, int s) const {
+      return state_models_.state_component(state, s);
+    }
+    ConstVectorView state_component(const ConstVectorView &state, int s) const {
+      return state_models_.state_component(state, s);
+    }
 
     // Return the component of the full state error vector corresponding to a
     // given state model.
@@ -141,9 +159,15 @@ namespace BOOM {
     // Returns:
     //   The error vector for just the specified state model.
     ConstVectorView const_state_error_component(const Vector &full_state_error,
-                                                int state_model_number) const;
+                                                int state_model_number) const {
+      return state_models_.const_state_error_component(
+          full_state_error, state_model_number);
+    }
     VectorView state_error_component(Vector &full_state_error,
-                                     int state_model_number) const;
+                                     int state_model_number) const {
+      return state_models_.state_error_component(
+          full_state_error, state_model_number);
+    }
 
     // Returns the subcomponent of the (block diagonal) error variance matrix
     // corresponding to a specific state model.
@@ -152,8 +176,11 @@ namespace BOOM {
     //   full_error_variance:  The full state error variance matrix.
     //   state: The index of the state model defining the desired sub-component.
     ConstSubMatrix state_error_variance_component(
-        const SpdMatrix &full_error_variance, int state) const;
-
+        const SpdMatrix &full_error_variance, int state) const {
+      return state_models_.state_error_variance_component(
+          full_error_variance, state);
+    }
+    
     // Returns the complete state vector (across time, so the return value is a
     // matrix) for a specified state component.
     //
@@ -165,9 +192,13 @@ namespace BOOM {
     //   state model.  The matrix has S rows and T columns, where S is the
     //   dimension of the state vector for the specified state model, and T is
     //   the number of time points.
-    ConstSubMatrix full_state_subcomponent(int state_model_index) const;
-    SubMatrix mutable_full_state_subcomponent(int state_model_index);
-
+    ConstSubMatrix full_state_subcomponent(int state_model_index) const {
+      return state_models_.full_state_subcomponent(state_, state_model_index);
+    }
+    SubMatrix mutable_full_state_subcomponent(int state_model_index) {
+      return state_models_.mutable_full_state_subcomponent(
+          state_, state_model_index);
+    }
     
     // The next two functions are mainly used for debugging a simulation.  You
     // can 'permanently_set_state' to the 'true' state value, then see if the
@@ -184,24 +215,32 @@ namespace BOOM {
 
     //------------- Model matrices for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
-    virtual const SparseKalmanMatrix *state_transition_matrix(int t) const;
+    virtual const SparseKalmanMatrix *state_transition_matrix(int t) const {
+      return state_models_.state_transition_matrix(t);
+    }
 
     // Durbin and Koopman's RQR^T.  Built from state models, often less than
     // full rank.
-    virtual const SparseKalmanMatrix *state_variance_matrix(int t) const;
+    virtual const SparseKalmanMatrix *state_variance_matrix(int t) const {
+      return state_models_.state_variance_matrix(t);
+    }
 
     // Durbin and Koopman's R matrix from the transition equation:
     //    state[t+1] = (T[t] * state[t]) + (R[t] * state_error[t]).
     //
     // This is the matrix that takes the low dimensional state_errors and turns
     // them into error terms for states.
-    virtual const SparseKalmanMatrix *state_error_expander(int t) const;
+    virtual const SparseKalmanMatrix *state_error_expander(int t) const {
+      return state_models_.state_error_expander(t);
+    }
 
     // The full rank variance matrix for the errors in the transition equation.
     // This is Durbin and Koopman's Q[t].  The errors with this variance are
     // multiplied by state_error_expander(t) to produce the errors described by
     // state_variance_matrix(t).
-    virtual const SparseKalmanMatrix *state_error_variance(int t) const;
+    virtual const SparseKalmanMatrix *state_error_variance(int t) const {
+      return state_models_.state_error_variance(t);
+    }
 
     //----------------- Access to data -----------------
     // Clears sufficient statistics for state models and for the client model
@@ -552,30 +591,8 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     // data starts here
-    std::vector<Ptr<StateModel>> state_models_;
-
-    // Dimension of the latent state vector.  Constructors set state_dimension
-    // to zero.  It is incremented during calls to add_state.
-    int state_dimension_;
-
-    // At construction time state_error_dimension_ is set to zero.  It is
-    // incremented during calls to add_state.  It gives the dimension of the
-    // state innovation vector (from the transition equation), which can be of
-    // lower dimension than the state itself.
-    int state_error_dimension_;
-
-    // state_positions_[s] is the index in the state vector where the state for
-    // state_models_[s] begins.  There will be one more entry in this vector
-    // than the number of state models.  The last entry can be ignored.
-    std::vector<int> state_positions_;
-
-    // state_error_positions_[s] is the index in the vector of state errors
-    // where the error for state_models_[s] begins.  This vector should have the
-    // same number of elements as state_positions_, but the entries can be
-    // different because state errors can be lower dimensional than the states
-    // themselves.
-    std::vector<int> state_error_positions_;
-
+    StateSpaceUtils::StateModelVector<StateModel> state_models_;
+    
     // Position [s] is the index in the vector of parameters where the parameter
     // for state model s begins.  Note that the parameter vector for the
     // observation model begins in element 0.
@@ -595,13 +612,6 @@ namespace BOOM {
     // complete data sufficient statistics.  Gaussian models do not need
     // observers, but mixtures of Gaussians typically do.
     std::vector<StateSpace::SufstatManager> data_observers_;
-
-    // Model matrices for Kalman filtering.
-    mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
-    mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
-    mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
-    mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
-
   };
 
   //===========================================================================
@@ -732,9 +742,8 @@ namespace BOOM {
     ScalarKalmanFilter simulation_filter_;
   };
 
-  //======================================================================
-
   namespace StateSpaceUtils {
+
     // A helper class to manage the logical const-ness of evaluating a state
     // space model's log likelihood function.
     //
@@ -778,8 +787,9 @@ namespace BOOM {
      private:
       mutable StateSpaceModelBase *model_;
     };
-  }  // namespace StateSpaceUtils
 
+  }  // namespace StateSpaceUtils
+  
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_MODEL_BASE_HPP_

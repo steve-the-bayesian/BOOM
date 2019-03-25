@@ -73,7 +73,7 @@ namespace BOOM {
     regression_->regression()->set_Beta(rhs.regression_->regression()->Beta());
     regression_->regression()->set_sigsq(
         rhs.regression_->regression()->sigsq());
-    for (int s = 0; s < rhs.number_of_shared_state_models(); ++s) {
+    for (int s = 0; s < rhs.number_of_state_models(); ++s) {
       add_state(rhs.state_model(s)->clone());
     }
   }
@@ -96,7 +96,7 @@ namespace BOOM {
       // regression, so we need to add the regression component back in.
       Ptr<TimeSeriesRegressionData> data(dat()[t]);
       Vector state_contribution = (*observation_coefficients(
-          t, observed_status(t))) * state(t);
+          t, observed_status(t))) * shared_state(t);
       
       RegressionModel *regression = regression_->regression();
       for (int i = 0; i < data->sample_size(); ++i) {
@@ -114,11 +114,11 @@ namespace BOOM {
     if (t == 0) {
       for (int s = 0; s < state_models_.size(); ++s) {
         state_model(s)->observe_initial_state(
-            state_models_.state_component(state_.col(0), s));
+            state_models_.state_component(shared_state().col(0), s));
       }
     } else {
-      const ConstVectorView now(state().col(t));
-      const ConstVectorView then(state().col(t - 1));
+      const ConstVectorView now(shared_state().col(t));
+      const ConstVectorView then(shared_state().col(t - 1));
       for (int s = 0; s < state_models_.size(); ++s) {
         state_models_[s]->observe_state(
             state_models_.state_component(then, s),
@@ -148,24 +148,13 @@ namespace BOOM {
       int t, const Selector &) const {
     observation_coefficients_.clear();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
-    for (int s = 0; s < number_of_shared_state_models(); ++s) {
+    for (int s = 0; s < number_of_state_models(); ++s) {
       observation_coefficients_.add_block(
           state_models_[s]->observation_coefficients(t, data_point));
     }
     return &observation_coefficients_;
   }
 
-  // const SparseKalmanMatrix *DIRM::partial_observation_coefficients(int t) const {
-  //   observation_coefficients_.clear();
-  //   const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
-  //   const Selector &observed(data_point.observed());
-  //   for (int s = 0; s < number_of_shared_state_models(); ++s) {
-  //     observation_coefficients_.add_block(
-  //         state_model(s)->dynamic_intercept_regression_observation_coefficients(
-  //             t, data_point, observed));
-  //   }
-  // }
-  
   double DIRM::observation_variance(int t) const {
     return regression_->regression()->sigsq();
   }
@@ -184,7 +173,7 @@ namespace BOOM {
   
   Vector DIRM::conditional_mean(int time) const {
     return (*observation_coefficients(
-        time, observed_status(time)) * state().col(time));
+        time, observed_status(time)) * shared_state().col(time));
   }
 
   Vector DIRM::state_contribution(int state_model_index) const {
@@ -194,7 +183,7 @@ namespace BOOM {
                    "than one observation per time period.");
     } else if (state_model_index < 0) {
       report_error("state_model_index must be at least 1.");
-    } else if (state_model_index >= number_of_shared_state_models()) {
+    } else if (state_model_index >= number_of_state_models()) {
       report_error("state_model_index too large.");
     } else if (!state_models_[state_model_index]->is_pure_function_of_time()) {
       std::ostringstream err;
@@ -204,7 +193,7 @@ namespace BOOM {
     }
 
     Vector ans(time_dimension());
-    const Matrix &state(this->state());
+    const Matrix &state(this->shared_state());
     TimeSeriesRegressionData dummy_data(
         Vector(1, 0.0), Matrix(1, 1, 0.0), Selector(1, true));
     for (int t = 0; t < time_dimension(); ++t) {
@@ -224,10 +213,10 @@ namespace BOOM {
     if (nrow(forecast_predictors) != timestamps.size()) {
       report_error("different numbers of timestamps and forecast_predictors.");
     }
-    if (final_state.size() != shared_state_dimension()) {
+    if (final_state.size() != state_dimension()) {
       std::ostringstream err;
       err << "final state argument was of dimension " << final_state.size()
-          << " but model state dimension is " << shared_state_dimension()
+          << " but model state dimension is " << state_dimension()
           << "." << std::endl;
       report_error(err.str());
     }
@@ -279,4 +268,6 @@ namespace BOOM {
     ParamPolicy::add_model(regression_);
   }
 
+
+  
 }  // namespace BOOM

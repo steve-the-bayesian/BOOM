@@ -30,7 +30,7 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class StateSpaceTestFramework
-        : public TestFrameworkBase {
+        : public TestFrameworkBase<StateModel, ScalarStateSpaceModelBase> {
      public:
       explicit StateSpaceTestFramework(double observation_sd);
       
