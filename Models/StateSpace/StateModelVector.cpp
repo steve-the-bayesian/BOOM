@@ -43,6 +43,11 @@ namespace BOOM {
       state_positions_.push_back(0);
       state_error_positions_.clear();
       state_error_positions_.push_back(0);
+
+      state_transition_matrix_->clear();
+      state_variance_matrix_->clear();
+      state_error_expander_->clear();
+      state_error_variance_->clear();
     }
 
     void StateModelVectorBase::clear_data() {

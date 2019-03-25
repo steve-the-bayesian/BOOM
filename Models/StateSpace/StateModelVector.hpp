@@ -42,15 +42,15 @@ namespace BOOM {
     class StateModelVectorBase {
      public:
       StateModelVectorBase()
-          : state_dimension_(0),
-            state_error_dimension_(0),
-            state_transition_matrix_(new BlockDiagonalMatrix),
+          : state_transition_matrix_(new BlockDiagonalMatrix),
             state_variance_matrix_(new BlockDiagonalMatrix),
             state_error_expander_(new BlockDiagonalMatrix),
             state_error_variance_(new BlockDiagonalMatrix)
-      {}
+      {
+        clear_state_models();
+      }
       
-      virtual ~StateModelVectorBase();
+      virtual ~StateModelVectorBase() {}
 
       // The dimension of the state vector associated with the stored models.
       int state_dimension() const { return state_dimension_; }
@@ -58,10 +58,10 @@ namespace BOOM {
       // The number of state models stored by this object.
       int size() const { return state_models_.size(); }
 
-      // Clear the state model vector and all associated metadata.  Return the
-      // object to the state produced by the default constructor.
-      virtual void clear();
-
+      // Clear the vector of models and restore the state of the object to that
+      // produced by the default constructor.
+      virtual void clear() = 0;
+      
       // Clear the data from the stored models.
       void clear_data();
 
@@ -191,7 +191,7 @@ namespace BOOM {
 
       // Clear the vector of models and restore the state of the object to that
       // produced by the default constructor.
-      void clear() {
+      void clear() override {
         state_models_.clear();
         clear_state_models();
       }
