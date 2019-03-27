@@ -59,7 +59,7 @@ namespace BOOM {
     if (add_self_Hessian) {
       add_logdet_Hessian(ans);
     }
-    return ans;
+    return std::move(ans);
   }
 
   void Jacobian::transform_second_order_gradient(

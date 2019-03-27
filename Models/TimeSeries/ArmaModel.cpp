@@ -175,7 +175,7 @@ namespace BOOM {
   Matrix ASSVM::dense() const {
     SpdMatrix ans(nrow(), 0.0);
     ans.add_outer(theta_, sigsq_);
-    return ans;
+    return std::move(ans);
   }
 
   //======================================================================
