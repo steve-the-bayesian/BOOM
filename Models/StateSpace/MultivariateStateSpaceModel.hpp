@@ -59,6 +59,10 @@ namespace BOOM {
         const MultivariateStateSpaceModel &rhs);
     MultivariateStateSpaceModel & operator=(
         MultivariateStateSpaceModel &&rhs) = default;
+
+    void add_virtual_state(const Ptr<StateModelBase> &state_model) override {
+      add_state(state_model.dcast<SharedStateModel>());
+    }
     
     void add_state(const Ptr<SharedStateModel> &state_model);
 

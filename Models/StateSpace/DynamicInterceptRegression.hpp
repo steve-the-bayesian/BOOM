@@ -111,6 +111,10 @@ namespace BOOM {
     DynamicInterceptRegressionModel(DynamicInterceptRegressionModel &&rhs) =
         default;
 
+    void add_virtual_state(const Ptr<StateModelBase> &state_model) override {
+      add_state(state_model.dcast<DynamicInterceptStateModel>());
+    }
+    
     void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
       state_models_.add_state(state_model);
       ParamPolicy::add_model(state_model);

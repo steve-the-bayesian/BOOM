@@ -64,12 +64,12 @@ namespace BOOM {
         const MultivariateStateSpaceModelBase &rhs);
 
     virtual int time_dimension() const = 0;
+
+    // The 'state' component of this model refers to the components of state
+    // shared across all time series.
     virtual int state_dimension() const = 0;
     virtual int number_of_state_models() const = 0;
 
-    virtual StateModelBase *state_model(int s) = 0;
-    virtual const StateModelBase *state_model(int s) const = 0;
-    
     // ----- virtual functions required by the base class: ----------
     // These must be implemented by the concrete class.
     //---------------------------------------------------------------------------
@@ -168,6 +168,20 @@ namespace BOOM {
     //    void signal_complete_data_reset();
 
     //---------------- Access to state ---------------------------------------
+    // A cast will be necessary in the child classes.
+    virtual void add_virtual_state(
+        const Ptr<StateModelBase> &state_model) = 0;
+    
+    virtual StateModelBase *state_model(int s) = 0;
+    virtual const StateModelBase *state_model(int s) const = 0;
+
+    ConstVectorView final_state() const {
+      if (time_dimension() <= 0) {
+        report_error("State size is zero.");
+      }
+      return shared_state(time_dimension() - 1);
+    }
+    
     VectorView state_component(Vector &full_state, int s) const {
       return state_model_vector().state_component(full_state, s);
     }
