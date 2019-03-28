@@ -19,11 +19,8 @@
 */
 
 #include "create_state_model.h"
-
 #include "r_interface/list_io.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
-#include <functional>
-#include <list>
 
 //==============================================================================
 // The functions listed here throw exceptions.  Code that uses them should be
@@ -52,11 +49,16 @@ namespace BOOM {
      public:
 
       // Args:
+      //   nseries:  The number of time series begin modeled.
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
-      explicit SharedStateModelFactory(RListIoManager *io_manager)
-          : StateModelFactoryBase(io_manager) {}
+      explicit SharedStateModelFactory(int nseries,
+                                       RListIoManager *io_manager)
+          : StateModelFactoryBase(io_manager),
+            nseries_(nseries)
+      {}
+            
 
       // Adds all the state components listed in
       // r_state_specification_list to the model.
@@ -70,7 +72,25 @@ namespace BOOM {
                     SEXP r_shared_state_specification,
                     const std::string &prefix = "");
 
+      // Save the final state (i.e. at time T) of the model for use with
+      // prediction.  Do not call this function until after all components of
+      // state have been added.
+      // Args:
+      //   model:  A pointer to the model that owns the state.
+      //   final_state: A pointer to a Vector to hold the state.  This can be
+      //     nullptr if the state is only going to be recorded.  If state is
+      //     going to be read, then final_state must be non-NULL.  A non-NULL
+      //     vector will be re-sized if it is the wrong size.
+      //   list_element_name: The name of the final state vector in the R list
+      //     holding the MCMC output.
+      void SaveFinalState(MultivariateStateSpaceModelBase *model,
+                          BOOM::Vector *final_state = nullptr,
+                          const std::string &list_element_name = "final.state");
+
      private:
+      // The number of time series being modeled.
+      int nseries_;
+      
       // A factory function that unpacks information from an R object created by
       // AddXXX (where XXX is the name of a type of state model), and use it to
       // build the appropriate BOOM StateModel.  The specific R function
@@ -84,14 +104,14 @@ namespace BOOM {
       //
       // Returns:
       //   A BOOM smart pointer to the appropriately typed MultivariateStateModel.
-      Ptr<MultivariateStateModel> CreateSharedStateModel(
+      Ptr<SharedStateModel> CreateSharedStateModel(
           MultivariateStateSpaceModelBase *model,
           SEXP r_state_component,
           const std::string &prefix);
 
 
       // Specific functions to create specific state models.
-      Ptr<MultivariateStateModel> CreateSharedLocalLevel(
+      Ptr<SharedStateModel> CreateSharedLocalLevel(
           SEXP r_state_component,
           MultivariateStateSpaceModelBase *model, 
           const std::string &prefix);

@@ -82,43 +82,6 @@ namespace BOOM {
 
       virtual ~ModelManager() {}
 
-      // Creates a BOOM state space model suitable for learning with MCMC.
-      // Args:
-      //   r_data_list: An R list containing the data to be modeled in the
-      //     format expected by the requested model family.  This list generally
-      //     contains an object called 'response' and a logical vector named
-      //     'response.is.observed'.  If the model is a (generalized) regression
-      //     model then it will contain a 'predictors' object as well, otherwise
-      //     'predictors' will be NULL.  For logit or Poisson models an
-      //     additional component should be present giving the number of trials
-      //     or the exposure.
-      //   r_state_specification: The R list created by the state configuration
-      //     functions (e.g. AddLocalLinearTrend, AddSeasonal, etc).
-      //   r_prior: The prior distribution for the observation model.  If the
-      //     model is a regression model (determined by whether r_data_list
-      //     contains a non-NULL 'predictors' element) then this must be some
-      //     form of spike and slab prior.  Otherwise it is a prior for the
-      //     error in the observation equation.  For single parameter error
-      //     distributions like binomial or Poisson this can be NULL.
-      //   r_options: Model or family specific options such as the technique to
-      //     use for model averaging (ODA vs SVSS).
-      //   io_manager: The io_manager responsible for writing MCMC output to an
-      //     R object, or streaming it from an existing object.
-      //
-      // Returns:
-      //  A pointer to the created model.  The pointer is owned by a Ptr
-      //  in the model manager, and should be caught by a Ptr in the caller.
-      //
-      // Side Effects:
-      //   The returned pointer is also held in a smart pointer owned by
-      //   the child class.
-      virtual StateSpaceModelBase * CreateModel(
-          SEXP r_data_list,
-          SEXP r_state_specification,
-          SEXP r_prior,
-          SEXP r_options,
-          RListIoManager *io_manager) = 0;
-
       // Time stamps are considered trivial if either (a) no time stamp
       // information was provided by the user, or (b) each time stamp contains
       // one observation and there are no gaps in the  observation series.
@@ -250,12 +213,12 @@ namespace BOOM {
       // Side Effects:
       //   The returned pointer is also held in a smart pointer owned by
       //   the child class.
-      ScalarStateSpaceModelBase * CreateModel(
+      virtual ScalarStateSpaceModelBase * CreateModel(
           SEXP r_data_list,
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,
-          RListIoManager *io_manager) override;
+          RListIoManager *io_manager);
 
       // Returns a set of draws from the posterior predictive distribution.
       // Args:
@@ -355,6 +318,36 @@ namespace BOOM {
       //   r_bsts_object:  An mbsts model object.
       static MultivariateModelManagerBase * Create(SEXP r_bsts_object);
 
+      // Creates a BOOM state space model suitable for learning with MCMC.
+      // Args:
+      //   r_data_list: An R list containing the data to be modeled in the
+      //     format expected by the requested model family.  This list generally
+      //     contains an object called 'response' and a logical vector named
+      //     'response.is.observed'.  If the model is a (generalized) regression
+      //     model then it will contain a 'predictors' object as well, otherwise
+      //     'predictors' will be NULL.  For logit or Poisson models an
+      //     additional component should be present giving the number of trials
+      //     or the exposure.
+      //   r_state_specification: The R list created by the state configuration
+      //     functions (e.g. AddLocalLinearTrend, AddSeasonal, etc).
+      //   r_prior: The prior distribution for the observation model.  If the
+      //     model is a regression model (determined by whether r_data_list
+      //     contains a non-NULL 'predictors' element) then this must be some
+      //     form of spike and slab prior.  Otherwise it is a prior for the
+      //     error in the observation equation.  For single parameter error
+      //     distributions like binomial or Poisson this can be NULL.
+      //   r_options: Model or family specific options such as the technique to
+      //     use for model averaging (ODA vs SVSS).
+      //   io_manager: The io_manager responsible for writing MCMC output to an
+      //     R object, or streaming it from an existing object.
+      //
+      // Returns:
+      //  A pointer to the created model.  The pointer is owned by a Ptr
+      //  in the model manager, and should be caught by a Ptr in the caller.
+      //
+      // Side Effects:
+      //   The returned pointer is also held in a smart pointer owned by
+      //   the child class.
       MultivariateStateSpaceModelBase * CreateModel(
           SEXP r_data_list,
           SEXP r_state_specification,

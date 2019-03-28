@@ -44,7 +44,7 @@ namespace BOOM {
       if (!model) return;
       int number_of_state_models = Rf_length(r_shared_state_specification);
       for (int i = 0; i < number_of_state_models; ++i) {
-        model->add_state(CreateSharedStateModel(
+        model->add_virtual_state(CreateSharedStateModel(
             model,
             VECTOR_ELT(r_shared_state_specification, i),
             prefix));
@@ -52,7 +52,31 @@ namespace BOOM {
       InstallPostStateListElements();
     }
 
-    Ptr<MultivariateStateModel>
+    class SharedFinalStateCallback : public VectorIoCallback {
+     public:
+      explicit SharedFinalStateCallback(MultivariateStateSpaceModelBase *model)
+          : model_(model) {}
+      int dim() const override {return model_->state_dimension();}
+      Vector get_vector() const override {return model_->final_state();}
+     private:
+      MultivariateStateSpaceModelBase *model_;
+    };
+
+    void SharedStateModelFactory::SaveFinalState(
+        MultivariateStateSpaceModelBase *model,
+        BOOM::Vector *final_state,
+        const std::string &list_element_name) {
+      if (!(model && final_state && io_manager())) return;
+      final_state->resize(model->state_dimension());
+      io_manager()->add_list_element(
+          new NativeVectorListElement(
+              new SharedFinalStateCallback(model),
+              list_element_name,
+              final_state));
+    }
+
+    
+    Ptr<SharedStateModel>
     SharedStateModelFactory::CreateSharedStateModel(
         MultivariateStateSpaceModelBase *model,
         SEXP r_state_component,
@@ -94,15 +118,14 @@ namespace BOOM {
       SharedLocalLevelStateModel *model_;
     };
 
-    Ptr<MultivariateStateModel>
-    SharedStateModelFactory::CreateSharedLocalLevel(
+    Ptr<SharedStateModel> SharedStateModelFactory::CreateSharedLocalLevel(
         SEXP r_state_component,
         MultivariateStateSpaceModelBase *model, 
         const std::string &prefix) {
       SEXP r_innovation_precision_priors = getListElement(
           r_state_component, "innovation.precision.priors");
       int nfactors = Rf_length(r_innovation_precision_priors);
-      NEW(SharedLocalLevelStateModel, state_model)(nfactors, model);
+      NEW(SharedLocalLevelStateModel, state_model)(nfactors, model, nseries_);
 
       // Set the initial state distribution.
       state_model->set_initial_state_mean(ToBoomVector(getListElement(

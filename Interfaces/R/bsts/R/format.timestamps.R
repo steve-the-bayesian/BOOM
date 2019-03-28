@@ -20,7 +20,7 @@
   ##     timestamps then the timestamps will be processed.
   ##   data: an optional data frame, list or environment (or object
   ##     coercible by ‘as.data.frame’ to a data frame) containing the
-  ##     variables in the bsts model.
+  ##     variables in the bsts model. 
   ##   timestamps: A vector of user-supplied timestamps (of the same length as
   ##     'response'), or NULL.
   ##
@@ -62,6 +62,7 @@
   }
 
   stopifnot(number.of.observations == length(timestamps))
+  
   regular.timestamps <- RegularizeTimestamps(timestamps)
   ans <- list(timestamps.are.trivial = IsRegular(timestamps),
               number.of.time.points = length(regular.timestamps),

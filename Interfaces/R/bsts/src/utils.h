@@ -101,10 +101,17 @@ namespace BOOM {
     class MultivariateStateContributionCallback
         : public ArrayIoCallback {
      public:
+      MultivariateStateContributionCallback(
+          const MultivariateStateSpaceModelBase *model,
+          int nseries)
+          : model_(model),
+            nseries_(nseries)
+      {}
+      
       std::vector<int> dim() const override {
-        return { model_->number_of_state_models(),
-              model_->time_dimension(),
-              model_->nseries()};
+        return {model_->number_of_state_models(),
+                model_->time_dimension(),
+                nseries_};
       }
 
       void write_to_array(ArrayView &view) const override {
@@ -119,6 +126,7 @@ namespace BOOM {
       
      private:
       const MultivariateStateSpaceModelBase *model_;
+      const int nseries_;
     };
     
     //======================================================================

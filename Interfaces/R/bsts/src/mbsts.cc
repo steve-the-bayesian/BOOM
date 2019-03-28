@@ -43,6 +43,7 @@ extern "C" {
   using BOOM::RCheckInterrupt;
   using std::endl;
   using BOOM::bsts::MultivariateGaussianModelManager;
+  using BOOM::getListElement;
   
   SEXP analysis_common_r_fit_multivariate_bsts_model_(
       SEXP r_data_list,
@@ -73,6 +74,10 @@ extern "C" {
           r_prior,
           r_options,
           &io_manager));
+
+      // The number of time series being modeled.
+      int nseries = Rf_asInteger(getListElement(r_data_list, "nseries", true));
+      BOOM::bsts::SharedStateModelFactory state_factory(nseries, &io_manager);
 
       // Do one posterior sampling step before getting ready to write.  This
       // will ensure that any dynamically allocated objects have the correct

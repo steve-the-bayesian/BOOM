@@ -60,7 +60,7 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,  
-          RListIoManager *io_manager) override;
+          RListIoManager *io_manager);
 
       // Args:
       //   r_dirm_object: The dynamic regression model object from R, to be used
@@ -135,7 +135,7 @@ namespace BOOM {
       //     "dynamic.regression.predictors", which is an R matrix containing
       //     the forecast predictors for the dynamic regression component.
       void UnpackDynamicRegressionForecastData(
-          StateSpaceModelBase *model,
+          DynamicInterceptRegressionModel *model,
           SEXP r_state_specification,
           SEXP r_prediction_data);
 

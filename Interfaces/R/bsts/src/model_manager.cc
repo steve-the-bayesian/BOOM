@@ -310,7 +310,10 @@ namespace BOOM {
           r_prior,
           r_options,
           io_manager);
-      SharedStateModelFactory shared_state_model_factory(io_manager);
+      std::pair<int, int> dims = GetMatrixDimensions(getListElement(
+          r_data_list, "response", true));
+      int nseries = dims.second;
+      SharedStateModelFactory shared_state_model_factory(nseries, io_manager);
       shared_state_model_factory.AddState(
           model, r_shared_state_specification, "");
       shared_state_model_factory.SaveFinalState(model, &final_state());

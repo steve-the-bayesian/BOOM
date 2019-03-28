@@ -15,10 +15,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "dynamic_intercept_model_manager.h"
-#include "create_state_model.h"
+#include "create_dynamic_intercept_state_model.h"
 
 #include "r_interface/prior_specification.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicInterceptRegressionPosteriorSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "distributions.hpp"
 
@@ -47,7 +47,7 @@ namespace BOOM {
         RListIoManager *io_manager) {
       UnpackTimestampInfo(r_data_list);
       AddDataFromList(r_data_list);
-      StateModelFactory state_model_factory(io_manager);
+      DynamicInterceptStateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model_.get(), r_state_specification);
       SetDynamicRegressionStateComponentPositions(
           state_model_factory.DynamicRegressionStateModelPositions());
@@ -72,7 +72,7 @@ namespace BOOM {
       }
       regression->set_method(regression_sampler);
 
-      NEW(StateSpacePosteriorSampler, sampler)(model_.get());
+      NEW(DynamicInterceptRegressionPosteriorSampler, sampler)(model_.get());
       model_->set_method(sampler);
       
       //---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ namespace BOOM {
     }
 
     void Manager::UnpackDynamicRegressionForecastData(
-        StateSpaceModelBase *model,
+        DynamicInterceptRegressionModel *model,
         SEXP r_state_specification,
         SEXP r_prediction_data) {
       if (Rf_length(r_state_specification) < model->number_of_state_models()) {
@@ -181,7 +181,7 @@ namespace BOOM {
           }
           int pos = positions[0];
           positions.pop_front();
-          Ptr<StateModel> state_model = model->state_model(pos);
+          Ptr<DynamicInterceptStateModel> state_model = model->state_model(pos);
           state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
               predictors);
         }
