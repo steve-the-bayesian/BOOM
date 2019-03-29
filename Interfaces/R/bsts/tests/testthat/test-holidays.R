@@ -1,5 +1,7 @@
+library(testthat)
 library(bsts)
-set.seed(12345)
+seed <- 8675309
+set.seed(seed)
 
 trend <- cumsum(rnorm(1095, 0, .1))
 dates <- seq.Date(from = as.Date("2014-01-01"), length = length(trend), by = "day")
@@ -37,15 +39,16 @@ train.data <- y[time(y) < cut.date]
 test.data <- y[time(y) >= cut.date]
 ss <- AddLocalLevel(list(), train.data)
 ss <- AddRegressionHoliday(ss, train.data, holiday.list = holiday.list)
-model <- bsts(train.data, state.specification = ss, niter = 100, ping = 0)
+model <- bsts(train.data, state.specification = ss, niter = 100, ping = 0,
+  seed = seed)
 
 ## Now make a prediction covering MemorialDay
 cat("Starting the prediction.\n")
 my.horizon <- 15
-pred <- predict(object = model, horizon = my.horizon)
+pred <- predict(object = model, horizon = my.horizon, seed = seed)
 plot(pred, plot.original = 365)
 points(index(test.data), test.data)
 
 test_that("Holiday covers true values", {
-  expect_true(CheckMcmcMatrix(pred$distribution), test.data[1:15])
-}
+  expect_true(CheckMcmcMatrix(pred$distribution, test.data[1:15]))
+})
