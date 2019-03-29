@@ -17,7 +17,7 @@
     }
 }
 \usage{
-date(gdp)
+data(gdp)
 }
 \format{data frame}
 \source{OECD website: See

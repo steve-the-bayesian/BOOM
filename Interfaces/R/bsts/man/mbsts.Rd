@@ -15,7 +15,7 @@
 % Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 \alias{mbsts}
-\name{bsts}
+\name{mbsts}
 \title{Multivariate Bayesian Structural Time Series}
 \Rdversion{1.1}
 \description{
