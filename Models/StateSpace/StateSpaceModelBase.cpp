@@ -196,7 +196,8 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   SpdMatrix Base::initial_state_variance() const {
-    SpdMatrix ans(state_dimension());
+    // Ensure that the base state dimension is called.
+    SpdMatrix ans(Base::state_dimension());
     int lo = 0;
     for (int s = 0; s < number_of_state_models(); ++s) {
       Ptr<StateModel> this_state_model = state_model(s);
