@@ -78,6 +78,10 @@ namespace BOOM {
     return unvectorize(b);
   }
 
+  void UnivParamsObserver::set(const double &rhs, bool Signal) {
+    report_error("set is disabled.");
+  }
+
   //============================================================
   typedef VectorData VD;
 

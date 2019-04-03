@@ -54,7 +54,7 @@ namespace BOOM {
     virtual std::ostream &display(std::ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
-    void signal() const {
+    void signal() {
       uint n = signals_.size();
       for (uint i = 0; i < n; ++i) {
         signals_[i]();
@@ -76,7 +76,7 @@ namespace BOOM {
 
    private:
     missing_status missing_flag;
-    mutable std::vector<std::function<void(void)> > signals_;
+    std::vector<std::function<void(void)> > signals_;
   };
   //======================================================================
   std::ostream &operator<<(std::ostream &out, const Data &d);
