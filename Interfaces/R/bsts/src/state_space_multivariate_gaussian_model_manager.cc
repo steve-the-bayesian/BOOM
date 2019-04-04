@@ -33,35 +33,62 @@ namespace BOOM {
     Manager::MultivariateGaussianModelManager(
         int ydim, int xdim)
         : ydim_(ydim),
-          predictor_dimension_(xdim) {}
+          predictor_dimension_(xdim)
+    {}
 
-    MultivariateStateSpaceModel * Manager::CreateObservationModel(
+    MultivariateStateSpaceRegressionModel *Manager::CreateModel(
+        SEXP r_data_list,
+        SEXP r_shared_state_specification,
+        SEXP r_series_state_specification,
+        SEXP r_prior,
+        SEXP r_options,
+        RListIoManager *io_manager) {
+      CreateObservationModel(r_data_list, r_prior, r_options, io_manager);
+      SharedStateModelFactory shared_state_model_factory(nseries_, io_manager);
+      shared_state_model_factory.AddState(
+          model_.get(), r_shared_state_specification, "");
+      if (!Rf_isNull(r_series_state_specification)) {
+        for (int i = 0; i < nseries_; ++i) {
+          StateModelFactory series_state_factory(io_manager);
+          std::ostringstream prefix;
+          prefix << "Series" << i << ".";
+          series_state_factory.AddState(
+              model_->series_specific_model(i),
+              VECTOR_ELT(r_series_state_specification, i),
+              prefix.str());
+        }
+      }
+      // TODO: save final state
+      
+      // TODO: save state contributions.
+
+      // TODO: save prediction errors.
+
+      // TODO: save full state
+      return model_.get();
+    }
+    
+    MultivariateStateSpaceRegressionModel * Manager::CreateObservationModel(
         SEXP r_data_list,
         SEXP r_prior,
         SEXP r_options,
         RListIoManager *io_manager) {
-      model_.reset(new MultivariateStateSpaceModel(ydim_));
+      model_.reset(new MultivariateStateSpaceRegressionModel(ydim_));
       AddDataFromList(r_data_list);
       AssignSampler(r_prior);
       ConfigureIo(io_manager);
       return model_.get();
     }
 
+    // Populate the model with data passed to the mbsts model fitting function.
     void Manager::AddDataFromList(SEXP r_data_list) {
       if (!Rf_isNull(r_data_list)) {
-        Matrix responses;
-        // If data was from R then use it to build the model.  This is the case
-        // for model training.
-        if (Rf_inherits(r_data_list, "mbsts")) {
-          SEXP r_responses = getListElement(r_data_list, "original.series");
-          responses = ToBoomMatrix(r_responses);
-        } else {
-          responses = ToBoomMatrix(getListElement(r_data_list, "response"));
-        }
+        ConstVectorView responses = ToBoomVectorView(
+            getListElement(r_data_list, "response"));
         SelectorMatrix response_is_observed = IsObserved(responses);
         SEXP r_predictors = getListElement(r_data_list, "predictors");
-        bool regression = !Rf_isNull(r_predictors);
-        Matrix predictors = regression ? ToBoomMatrix(r_predictors) :
+        bool has_regression = !Rf_isNull(r_predictors);
+        Matrix predictors = has_regression ? ToBoomMatrix(r_predictors) :
             Matrix(responses.nrow(), 1, 1.0);
         UnpackTimestampInfo(r_data_list);
 
@@ -119,9 +146,7 @@ namespace BOOM {
         model_->set_method(sampler);
       }
     }
-    
 
-    
     void Manager::ConfigureIo(RListIoManager *io_manager) {
       io_manager->add_list_element(
           new SdVectorListElement(
@@ -132,11 +157,18 @@ namespace BOOM {
 
     // TODO(steve): Right now this model does not handle predictors. Fix it so
     // it does, and handle them appropriately here.
-    void Manager::AddData(const Matrix &responses,
+    void Manager::AddData(const Vector &responses,
                           const Matrix &predictors,
-                          const SelectorMatrix &observed) {
-      for (int i = 0; i < responses.nrow(); ++i) {
-        Selector observed_i = observed.row(i);
+                          const Selector &observed) {
+      for (int i = 0; i < responses.size(); ++i) {
+        NEW(TimeSeriesRegressionData, data_point)(
+            responses[i], predictors.row(i),
+            observed[i]);
+        model_->add_data_point(data_point,
+                               TimestampMapping(i),
+                               SeriesMapping(i))
+      }
+      for (int t = 0; t < NumberOfTimePoints(); ++t) {
         NEW(PartiallyObservedVectorData, data_point)(
             responses.row(i), observed_i);
         if (observed_i.nvars() == 0) {

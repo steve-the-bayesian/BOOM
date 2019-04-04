@@ -20,7 +20,7 @@
 
 #include "model_manager.h"
 #include "LinAlg/Selector.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 
 namespace BOOM {
   namespace bsts {
@@ -33,12 +33,28 @@ namespace BOOM {
       // the io_manager.
 
       // Args:
+      //   ydim: The number of time series being modeled.
       //   xdim: The dimension of the predictor variables.  This can be zero,
       //     indicating that no predictors are present.  A negative value is a
       //     signal that the predictor dimension will be set later.
       MultivariateGaussianModelManager(int ydim, int xdim);
 
-      MultivariateStateSpaceModel * CreateObservationModel(
+      // Args:
+      //   r_data_list:  A list that contains the following elements:
+      //     - response:  A numeric vector.
+      //     - predictors: A matrix.  The number of rows must equal the length of
+      //       'response.'
+      //     - timestamps: An R object of class TimestampInfo.  The timestamps
+      //        are used to group individual responses into a response vector.
+      //   r_prior: TBD.
+      //   r_options:  Currently unused.
+      //   io_manager: The input-output manager used to write to (and read from)
+      //     the mbsts model object.
+      //
+      // Returns:
+      //   The nearly fully formed model.  Data is assigned, as is the posterior
+      //   sampler for the overall model.  State is not assigned here.
+      MultivariateStateSpaceRegressionModel * CreateObservationModel(
           SEXP r_data_list,
           SEXP r_prior,
           SEXP r_options,
@@ -60,18 +76,15 @@ namespace BOOM {
                    const Matrix &predictors,
                    const SelectorMatrix &observed);
 
-
       void BuildModelAndAssignData(SEXP r_data_list);
       void AssignSampler(SEXP r_prior);
       void ConfigureIo(RListIoManager *io_manager);
       
-      
-      Ptr<MultivariateStateSpaceModel> model_;
+      Ptr<MultivariateStateSpaceRegressionModel> model_;
       int ydim_;
       int predictor_dimension_;
 
       Matrix forecast_predictors_;
-      
     };
     
   }  // namespace bsts
