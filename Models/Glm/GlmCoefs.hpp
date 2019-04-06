@@ -45,8 +45,11 @@ namespace BOOM {
     void add_all();
 
     //---- size querries...
-    uint size(bool minimal =
-                  true) const override;  // number included/possible covariates
+    // Args:
+    //   minimal: If true, return the number of included coefficients.
+    //     Otherwise return the number of available coefficients
+    uint size(bool minimal = true) const override;
+    
     uint nvars() const;
     uint nvars_possible() const;
     uint nvars_excluded() const;
