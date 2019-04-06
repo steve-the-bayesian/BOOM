@@ -6,6 +6,8 @@
 #include "Models/StateSpace/AggregatedStateSpaceRegression.hpp"
 #include "Models/TimeSeries/ArmaModel.hpp"
 
+#include "distributions.hpp"
+
 #include "test_utils/test_utils.hpp"
 
 namespace {
@@ -523,6 +525,36 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  TEST_F(SparseMatrixTest, StackedRegressionCoefficients) {
+    std::vector<Ptr<GlmCoefs>> beta;
+    for (int i = 0; i < 6; ++i) {
+      beta.push_back(new GlmCoefs(rnorm_vector(4, 0.0, 1.0)));
+    }
+    
+    StackedRegressionCoefficients sparse;
+    for (int i = 0; i < beta.size(); ++i) {
+      sparse.add_row(beta[i]);
+    }
+    EXPECT_EQ(sparse.nrow(), beta.size());
+    EXPECT_EQ(sparse.ncol(), 4);
+    
+    // Check the matrix when everything is included.
+    CheckSparseKalmanMatrix(sparse);
+
+    // Now drop a few elements and make sure everything still works.
+    beta[0]->drop(1);
+    beta[1]->drop_all();
+    Matrix dense = sparse.dense();
+    
+    // Check that the dense matrix is as expected.
+    Matrix manual_dense(sparse.nrow(), sparse.ncol());
+    for (int i = 0; i < beta.size(); ++i) {
+      manual_dense.row(i) = beta[i]->Beta();
+    }
+    EXPECT_TRUE(MatrixEquals(manual_dense, dense));
+    CheckSparseKalmanMatrix(sparse);
+  }
+  
   // Test the transition matrix from the Harvey cumulator in
   // AggregatedStateSpaceRegression.
   TEST_F(SparseMatrixTest, AccumulatorTransitionMatrixTest) {

@@ -1525,6 +1525,42 @@ namespace BOOM {
   };
 
   //======================================================================
+  // A matrix formed by stacking a set of GlmCoefs.
+  class StackedRegressionCoefficients : public SparseKalmanMatrix {
+   public:
+    const GlmCoefs &coefficients(int i) const { return *coefficients_[i]; }
+    void add_row(const Ptr<GlmCoefs> &beta);
+    
+    int nrow() const override {return coefficients_.size();}
+    int ncol() const override {
+      if (coefficients_.empty()) {
+        return 0;
+      } else {
+        return coefficients_[0]->nvars_possible();
+      }
+    }
+
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+
+    // Expose the matrix-matrix multiplication operator from the base class.
+    using SparseKalmanMatrix::operator*;
+
+    using SparseKalmanMatrix::Tmult;
+    Vector Tmult(const ConstVectorView &x) const override;
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    Matrix &add_to(Matrix &P) const override;
+    SubMatrix add_to_submatrix(SubMatrix P) const override;
+
+   private:
+    // Each coefficient vector is one row in the matrix.
+    std::vector<Ptr<GlmCoefs>> coefficients_;
+  };
+  
+  //======================================================================
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will
   // typically be:  SeasonalStateSpaceMatrix, IdentityMatrix, etc.

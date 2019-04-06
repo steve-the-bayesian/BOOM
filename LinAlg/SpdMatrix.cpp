@@ -374,11 +374,15 @@ namespace BOOM {
                               double weight, const Selector &inc) {
       assert(S.nrow() == v.size());
       assert(inc.nvars_possible() == v.size());
-      for (int i = 0; i < inc.nvars(); ++i) {
-        int I = inc.indx(i);
-        for (int j = i; j < inc.nvars(); ++j) {
-          int J = inc.indx(j);
-          S(I, J) += weight * v[I] * v[J];
+      if (inc.nvars_possible() == inc.nvars()) {
+        add_outer_impl(S, v, weight);
+      } else {
+        for (int i = 0; i < inc.nvars(); ++i) {
+          int I = inc.indx(i);
+          for (int j = i; j < inc.nvars(); ++j) {
+            int J = inc.indx(j);
+            S(I, J) += weight * v[I] * v[J];
+          }
         }
       }
     }
