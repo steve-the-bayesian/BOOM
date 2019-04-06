@@ -35,6 +35,7 @@
 #include "Eigen/Core"
 #include "LinAlg/Eigen.hpp"
 #include "LinAlg/EigenMap.hpp"
+#include "LinAlg/Selector.hpp"
 
 namespace BOOM {
   using Eigen::MatrixXd;
@@ -367,6 +368,21 @@ namespace BOOM {
       if (S.nrow() == 0) return;
       EigenMap(S).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(v), w);
     }
+
+    template <class VECTOR>
+    void add_outer_subset_impl(SpdMatrix &S, const VECTOR &v,
+                              double weight, const Selector &inc) {
+      assert(S.nrow() == v.size());
+      assert(inc.nvars_possible() == v.size());
+      for (int i = 0; i < inc.nvars(); ++i) {
+        int I = inc.indx(i);
+        for (int j = i; j < inc.nvars(); ++j) {
+          int J = inc.indx(j);
+          S(I, J) += weight * v[I] * v[J];
+        }
+      }
+    }
+    
   }  // namespace
 
   SpdMatrix &SpdMatrix::add_outer(const Vector &v, double w, bool force_sym) {
@@ -375,6 +391,13 @@ namespace BOOM {
     return *this;
   }
 
+  SpdMatrix &SpdMatrix::add_outer(const Vector &v, const Selector &inc,
+                                  double weight, bool force_sym) {
+    add_outer_subset_impl(*this, v, weight, inc);
+    if (force_sym) reflect();
+    return *this;
+  }
+  
   SpdMatrix &SpdMatrix::add_outer(const VectorView &v, double w,
                                   bool force_sym) {
     add_outer_impl<VectorView>(*this, v, w);
@@ -382,9 +405,22 @@ namespace BOOM {
     return *this;
   }
 
+  SpdMatrix &SpdMatrix::add_outer(const VectorView &v, const Selector &inc,
+                                  double weight, bool force_sym) {
+    add_outer_subset_impl(*this, v, weight, inc);
+    if (force_sym) reflect();
+    return *this;
+  }
+
   SpdMatrix &SpdMatrix::add_outer(const ConstVectorView &v, double w,
                                   bool force_sym) {
     add_outer_impl<ConstVectorView>(*this, v, w);
+    if (force_sym) reflect();
+    return *this;
+  }
+  SpdMatrix &SpdMatrix::add_outer(const ConstVectorView &v, const Selector &inc,
+                                  double weight, bool force_sym) {
+    add_outer_subset_impl(*this, v, weight, inc);
     if (force_sym) reflect();
     return *this;
   }

@@ -24,6 +24,8 @@
 
 namespace BOOM {
 
+  class Selector;
+  
   class SpdMatrix : public Matrix {
     // symmetric, positive definite matrix with 'square' storage
     // (i.e. 0's are stored)
@@ -121,14 +123,33 @@ namespace BOOM {
     // Mahalinobis distance from 0:  x^T (*this) x
     double Mdist(const Vector &x) const;
 
+    // Increment *this by w * x * x.transpose().
+    // Args:
+    //   x: The vector whose outer product augments *this.
+    //   w: The coefficient (weight) multiplying the outer product.
+    //   force_sym: If true then reflect() is called at the end of the
+    //     calculation.  Otherwise only the upper triangle is computed.  If many
+    //     outer products are to be summed, it is more efficient to call
+    //     reflect() at the end.
+    //
+    //   inc: For overloads that have an 'inc' parameter, only the positions
+    //     flagged by 'inc' will be updated.
     SpdMatrix &add_outer(const Vector &x, double w = 1.0,
                          bool force_sym = true);  // *this+= w*x*x^T
+    SpdMatrix &add_outer(const Vector &x, const Selector &inc,
+                         double w = 1.0, bool force_sym = true);
     SpdMatrix &add_outer(const VectorView &x, double w = 1.0,
-                         bool force_sym = true);  // *this+= w*x*x^T
+                         bool force_sym = true);
+    SpdMatrix &add_outer(const VectorView &x, const Selector &inc,
+                         double w = 1.0, bool force_sym = true);
     SpdMatrix &add_outer(const ConstVectorView &x, double w = 1.0,
-                         bool force_sym = true);  // *this+= w*x*x^T
+                         bool force_sym = true);
+    SpdMatrix &add_outer(const ConstVectorView &x, const Selector &inc,
+                         double w = 1.0, bool force_sym = true);
+
+    // Increment *this by w * X * X.transpose().
     SpdMatrix &add_outer(const Matrix &X, double w = 1.0,
-                         bool force_sym = true);  // *this+= w*X*X^T
+                         bool force_sym = true);  
 
     SpdMatrix &add_inner(const Matrix &x, double w = 1.0);
     SpdMatrix &add_inner(const Matrix &X, const Vector &w,

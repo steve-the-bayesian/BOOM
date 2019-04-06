@@ -48,6 +48,7 @@ namespace BOOM {
 
     // Using this constructor, Selector s("10") would have s[0] = true
     // and s[1] = false.
+    explicit Selector(const char *zeros_and_ones);
     explicit Selector(const std::string &zeros_and_ones);
     explicit Selector(const std::vector<bool> &values);
     Selector(const std::vector<uint> &pos, uint n);

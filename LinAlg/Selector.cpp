@@ -62,7 +62,7 @@ namespace BOOM {
       : std::vector<bool>(p, all), include_all_(all) {
     reset_included_positions();
   }
-
+  
   Selector::Selector(const std::string &zeros_and_ones)
       : std::vector<bool>(to_vector_bool(zeros_and_ones)), include_all_(false) {
     reset_included_positions();
@@ -71,6 +71,10 @@ namespace BOOM {
     }
   }
 
+  Selector::Selector(const char *zeros_and_ones)
+      : Selector(std::string(zeros_and_ones))
+  {}
+  
   Selector::Selector(const std::vector<bool> &values)
       : std::vector<bool>(values), include_all_(false) {
     reset_included_positions();

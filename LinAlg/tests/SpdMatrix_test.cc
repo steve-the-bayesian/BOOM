@@ -2,6 +2,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/Selector.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Cholesky.hpp"
 #include "distributions.hpp"
@@ -162,19 +163,23 @@ namespace {
 
     Vector v(4);
     v.randomize();
+    Selector inc("1001");
 
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer(v, 1.7),
         original_sigma + 1.7 * v.outer()));
 
-    cout << "Checking VectorView" << endl;
+    Sigma = original_sigma;
+    EXPECT_TRUE(MatrixEquals(
+        Sigma.add_outer(v, inc, 1.7),
+        original_sigma + 1.7 * inc.expand(inc.select(v.outer()))));
+    
     Sigma = original_sigma;
     VectorView view(v);
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer(view, 1.4),
         original_sigma + 1.4 * v.outer()));
 
-    cout << "Checking ConstVectorView" << endl;
     Sigma = original_sigma;
     const VectorView const_view(v);
     EXPECT_TRUE(MatrixEquals(
