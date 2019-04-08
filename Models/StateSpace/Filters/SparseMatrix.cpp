@@ -329,6 +329,12 @@ namespace BOOM {
     return *this;
   }
 
+  void StackedMatrixBlock::clear() {
+    blocks_.clear();
+    nrow_ = 0;
+    ncol_ = 0;
+  }
+  
   void StackedMatrixBlock::add_block(const Ptr<SparseMatrixBlock> &block) {
     if (nrow_ == 0) {
       nrow_ = block->nrow();

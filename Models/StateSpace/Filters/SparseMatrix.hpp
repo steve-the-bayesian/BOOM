@@ -248,6 +248,8 @@ namespace BOOM {
     int nrow() const override { return nrow_; }
     int ncol() const override { return ncol_; }
 
+    // Remove all entries from blocks_ and set nrow_ and ncol_ to zero.
+    void clear();
     void add_block(const Ptr<SparseMatrixBlock> &block);
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_and_add(VectorView lhs,
