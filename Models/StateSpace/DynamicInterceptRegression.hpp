@@ -111,10 +111,6 @@ namespace BOOM {
     DynamicInterceptRegressionModel(DynamicInterceptRegressionModel &&rhs) =
         default;
 
-    void add_virtual_state(const Ptr<StateModelBase> &state_model) override {
-      add_state(state_model.dcast<DynamicInterceptStateModel>());
-    }
-    
     void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
       state_models_.add_state(state_model);
       ParamPolicy::add_model(state_model);
@@ -182,10 +178,10 @@ namespace BOOM {
       return state_models_.state_error_variance(t);
     }
 
+    ConstVectorView observation(int t) const override;
     ConstVectorView adjusted_observation(int time) const override;
-    
+
     double observation_variance(int t) const override;
-    const Vector &observation(int t) const override;
     
     // Returns the conditional mean the data at time t given state and model
     // parameters.

@@ -159,12 +159,12 @@ namespace BOOM {
     return regression_->regression()->sigsq();
   }
 
-  const Vector &DIRM::observation(int t) const {
+  ConstVectorView DIRM::observation(int t) const {
     return dat()[t]->response();
   }
 
   ConstVectorView DIRM::adjusted_observation(int time) const {
-    return ConstVectorView(observation(time));
+    return observation(time);
   }
 
   const Selector &DIRM::observed_status(int t) const {
