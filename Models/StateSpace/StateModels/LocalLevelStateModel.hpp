@@ -204,7 +204,6 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     // Methods intended for use with the posterior samplers managing this model.
-    
     Ptr<MultivariateRegressionModel> coefficient_model() {
       return coefficient_model_;
     }
