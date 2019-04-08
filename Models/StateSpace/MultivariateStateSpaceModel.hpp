@@ -60,10 +60,6 @@ namespace BOOM {
     MultivariateStateSpaceModel & operator=(
         MultivariateStateSpaceModel &&rhs) = default;
 
-    void add_virtual_state(const Ptr<StateModelBase> &state_model) override {
-      add_state(state_model.dcast<SharedStateModel>());
-    }
-    
     void add_state(const Ptr<SharedStateModel> &state_model);
 
     IndependentMvnModel *observation_model() override;
@@ -97,9 +93,9 @@ namespace BOOM {
     DiagonalMatrix observation_variance(int t) const override;
     double single_observation_variance(int t, int dim) const override;
 
-    const Vector &observation(int t) const override;
+    ConstVectorView observation(int t) const override;
     ConstVectorView adjusted_observation(int t) const override {
-      return ConstVectorView(observation(t));
+      return observation(t);
     }
     const Selector &observed_status(int t) const override;
 

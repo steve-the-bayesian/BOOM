@@ -146,9 +146,10 @@ namespace BOOM {
     return observation_model()->sigsq(dim);
   }
 
-  const Vector &MSSM::observation(int t) const {
-    return dat()[t]->value();
+  ConstVectorView MSSM::observation(int t) const {
+    return ConstVectorView(dat()[t]->value());
   }
+  
   const Selector &MSSM::observed_status(int t) const {
     return dat()[t]->observation_status();
   }
