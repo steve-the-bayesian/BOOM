@@ -40,10 +40,9 @@
 // directly from R by .Call.
 //======================================================================
 
-// If Rinternals.h has already been included and R_NO_REMAP has not
-// yet been defined, then we throw a compiler error to prevent madness
-// caused by R's preprocessor renaming of things like length() and
-// error().
+// If Rinternals.h has already been included and R_NO_REMAP has not yet been
+// defined, then throw a compiler error to prevent madness caused by R's
+// preprocessor renaming of things like length() and error().
 #ifndef R_NO_REMAP
 #define R_NO_REMAP
 #ifdef R_INTERNALS_H_
@@ -187,6 +186,9 @@ namespace BOOM{
   // without making a copy.
   Vector ToBoomVector(SEXP my_vector);
   ConstVectorView ToBoomVectorView(const SEXP my_vector);
+
+  // Returns true iff x is set to R's NA value.
+  bool isNA(double x);
 
   // Returns a Selector of the sizem size as v, with elements indicating which
   // elements of v are observed.  This is equivalent to the R expression

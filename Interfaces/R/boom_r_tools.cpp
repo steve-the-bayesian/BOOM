@@ -25,6 +25,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
+#include "R_ext/Arith.h"  // for R_IsNA
 
 namespace BOOM {
 
@@ -286,6 +287,10 @@ namespace BOOM {
     Selector ans(v.size(), true);
     for (int i = 0; i < v.size(); ++i) ans[i] = !R_IsNA(v[i]);
     return ans;
+  }
+
+  bool isNA(double x) {
+    return R_IsNA(x);
   }
   
   Vector ToBoomVector(SEXP v){
@@ -563,7 +568,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   Factor::Factor(SEXP r_factor)
       : values_(Rf_length(r_factor)),
         levels_(new CatKey(GetFactorLevels(r_factor)))
