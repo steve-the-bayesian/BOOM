@@ -49,9 +49,9 @@ namespace BOOM {
   // (2) Sample variable specific state given shared state.
   // (3) Sample parameters.
   //
-  // This algorithm would have worse mixing behavior than the MCMC that just
-  // drew all state simultaneously, but the variable-specific portion can be
-  // multi-threaded, and each Kalman filter based simulation draws a much
+  // This algorithm would have slightly worse mixing behavior than the MCMC that
+  // just drew all state simultaneously, but the variable-specific portion can
+  // be multi-threaded, and each Kalman filter based simulation draws a much
   // smaller state, so it has the potential to be fast.
   class MultivariateStateSpaceModelBase : virtual public Model {
    public:
@@ -87,12 +87,6 @@ namespace BOOM {
     void set_state_model_behavior(StateModel::Behavior behavior);
 
     virtual void impute_state(RNG &rng);
-    // virtual void update_observation_model(Vector &r, SpdMatrix &N, int t,
-    //     bool save_state_distributions, bool update_sufficient_statistics,
-    //     Vector *gradient) = 0;
-    // virtual void simulate_forward(RNG &rng) = 0;
-    // virtual void smooth_observed_disturbances() = 0;
-    // virtual void propagate_disturbances() = 0;
     
     //---------------- Parameters for structural equations. -------------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
@@ -142,7 +136,7 @@ namespace BOOM {
 
     //----------------- Access to data -----------------
     // Returns the value of y observed at time t.
-    virtual const Vector &observation(int t) const = 0;
+    virtual ConstVectorView observation(int t) const = 0;
 
     // Some models contain components other than the shared state component.
     // Learning for such models involves subtracting off contributions from
@@ -169,8 +163,6 @@ namespace BOOM {
 
     //---------------- Access to state ---------------------------------------
     // A cast will be necessary in the child classes.
-    virtual void add_virtual_state(
-        const Ptr<StateModelBase> &state_model) = 0;
     
     virtual StateModelBase *state_model(int s) = 0;
     virtual const StateModelBase *state_model(int s) const = 0;

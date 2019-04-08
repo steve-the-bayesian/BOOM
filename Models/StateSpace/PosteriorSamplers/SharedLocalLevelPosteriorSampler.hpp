@@ -29,12 +29,27 @@ namespace BOOM {
   class SharedLocalLevelPosteriorSampler
       : public PosteriorSampler {
    public:
+    // A posterior sampler for the shared local level model.  The prior is a
+    // product of independent inverse gamma distributions on the innovation
+    // variances, with an independent matrix normal prior on the observation
+    // coefficients.  If there are k "local level" factors alpha_1, ..., alpha_k
+    // obeying alpha_{jt+1} = alpha_{jt} + eta_{jt}, where eta_{jt} ~ N(0,
+    // tausq_{j}) then 1/tausq_j ~ Gamma(a, b), independent of everything else.
+    //
+    // The prior for the coefficients is matrix normal.  If y[t] = Z * alpha[t]
+    // + epsilon[t] ~ N(0, Sigma[t])
+    //
     // Args:
     //   model: The shared local level state model to be sampled.
     //   innovation_precision_priors: Independent prior distributions for the
     //     precisions of the random walk innovations.  One prior is needed for
     //     each random factor in 'model.'
-    //   observation_coefficient_prior.
+
+    //   coefficient_prior_mean: A 'ydim x nfactors' matrix containing the prior
+    //     mean of the observation coefficients.
+
+    //   
+    
     //   seeding_rng: The random number generator used to seed the RNG for this
     //     sampler.
     SharedLocalLevelPosteriorSampler(
