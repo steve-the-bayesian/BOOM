@@ -54,6 +54,12 @@ namespace BOOM {
     Ptr<VectorData> Xptr() { return x_; }
     const Ptr<VectorData> Xptr() const { return x_; }
 
+    // Replace the representation of x_ by a new pointer.  This is an unusual
+    // operation.
+    void set_Xptr(const Ptr<VectorData> &x) {
+      x_ = x;
+    }
+    
    private:
     Ptr<VectorData> x_;
   };
@@ -87,6 +93,12 @@ namespace BOOM {
 
     Ptr<DAT> Yptr() { return y_; }
 
+    // Replace the representation of the response with a new object.  This is an
+    // unusual operation.
+    void set_Yptr(const Ptr<DAT> &y) {
+      y_ = y;
+    }
+    
    private:
     // If an intercept is desired, it must be explicitly included.
     Ptr<DAT> y_;
