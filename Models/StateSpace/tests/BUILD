@@ -68,6 +68,17 @@ cc_test(
 )
 
 cc_test(
+    name = "multivariate_state_space_regression_test",
+    srcs = ["multivariate_state_space_regression_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "state_space_gaussian_model_test",
     srcs = ["state_space_gaussian_model_test.cc"],
     copts = COPTS,
