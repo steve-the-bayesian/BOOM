@@ -17,13 +17,13 @@
 */
 
 #include "utils.h"
-#include "state_space_multivariate_gaussian_model_manager.h"
+#include "multivariate_gaussian_model_manager.h"
 
 #include "LinAlg/Selector.hpp"
 #include "Models/GammaModel.hpp"
 #include "Models/ChisqModel.hpp"
 #include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceRegressionModelSampler.hpp"
 #include "r_interface/prior_specification.hpp"
 
 namespace BOOM {
@@ -90,14 +90,14 @@ namespace BOOM {
         bool has_regression = !Rf_isNull(r_predictors);
         Matrix predictors = has_regression ? ToBoomMatrix(r_predictors) :
             Matrix(responses.nrow(), 1, 1.0);
-        UnpackTimestampInfo(r_data_list);
+        timestamp_info_.Unpack(r_data_list);
 
         int sample_size = responses.nrow();
         if (predictors.nrow() != sample_size) {
           report_error("Predictors and responses have different number "
                        "of rows.");
         }
-        AddData(responses, predictors, IsObserved(responses));
+        AddData(responses, predictors);
       }
     }
 
@@ -106,12 +106,14 @@ namespace BOOM {
         report_error("In AddDataFromBstsObject, argument must inherit "
                      "from class 'mbsts'.");
       }
-      UnpackTimestampInfo(r_bsts_object);
+      timestamp_info_.Unpack(r_bsts_object);
       Matrix responses = ToBoomMatrix(getListElement(
           r_bsts_object, "original.series"));
       Matrix predictors = ToBoomMatrix(getListElement(
           r_bsts_object, "predictors"));
-      AddData(responses, predictors, IsObserved(responses));
+      std::vector<int> series = ToIntVector(getListElement(
+          r_bsts_object, "series"));
+      AddData(responses, predictors, series);
     }
     
     void Manager::AssignSampler(SEXP r_prior) {
@@ -154,27 +156,19 @@ namespace BOOM {
               "sigma.obs"));
     }
 
-
-    // TODO(steve): Right now this model does not handle predictors. Fix it so
-    // it does, and handle them appropriately here.
+    //--------------------------------------------------------------------------
     void Manager::AddData(const Vector &responses,
                           const Matrix &predictors,
-                          const Selector &observed) {
+                          const std::vector<int> &series) {
       for (int i = 0; i < responses.size(); ++i) {
         NEW(TimeSeriesRegressionData, data_point)(
-            responses[i], predictors.row(i),
-            observed[i]);
-        model_->add_data_point(data_point,
-                               TimestampMapping(i),
-                               SeriesMapping(i))
-      }
-      for (int t = 0; t < NumberOfTimePoints(); ++t) {
-        NEW(PartiallyObservedVectorData, data_point)(
-            responses.row(i), observed_i);
-        if (observed_i.nvars() == 0) {
+            responses[i],
+            predictors.row(i),
+            series[i],
+            timestamp_info_.mapping(i));
+        bool missing = BOOM::isNA(responses[i]);
+        if (missing) {
           data_point->set_missing_status(Data::completely_missing);
-        } else if (observed_i.nvars() < observed_i.nvars_possible()) {
-          data_point->set_missing_status(Data::partly_missing);
         }
         model_->add_data(data_point);
       }

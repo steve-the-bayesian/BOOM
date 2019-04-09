@@ -84,6 +84,8 @@ namespace BOOM {
       int ydim_;
       int predictor_dimension_;
 
+      TimestampInfo timestamp_info_;
+      
       Matrix forecast_predictors_;
     };
     
