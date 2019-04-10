@@ -40,6 +40,9 @@ namespace BOOM {
   // can_find_posterior_mode method to return true.
   class PosteriorSampler : private RefCounted {
    public:
+    // Args:
+    //   seeding_rng: The random number generator used to set the seed
+    //     for the RNG owned by this sampler.
     explicit PosteriorSampler(RNG &seeding_rng);
     PosteriorSampler(const PosteriorSampler &);
     virtual void draw() = 0;
