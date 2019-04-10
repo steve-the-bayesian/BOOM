@@ -74,6 +74,9 @@ namespace BOOM {
 
     //--------- Access to client models and model parameters ---------------
     // Returns a pointer to the model responsible for the observation variance.
+    //
+    // Some multivariate models use a proxy state space model for which there is
+    // no observation model, in which case the return value can be nullptr.
     virtual PosteriorModeModel *observation_model() = 0;
     virtual const PosteriorModeModel *observation_model() const = 0;
 

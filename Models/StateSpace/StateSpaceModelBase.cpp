@@ -82,7 +82,10 @@ namespace BOOM {
 
   ParamVector Base::parameter_vector() {
     std::vector<Ptr<Params>> ans;
-    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
+    if (observation_model()) {
+      concatenate_parameter_vectors(
+          ans, observation_model()->parameter_vector());
+    }
     for (int s = 0; s < number_of_state_models(); ++s) {
       concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
     }
@@ -91,7 +94,10 @@ namespace BOOM {
 
   const ParamVector Base::parameter_vector() const {
     std::vector<Ptr<Params>> ans;
-    concatenate_parameter_vectors(ans, observation_model()->parameter_vector());
+    if (observation_model()) {
+      concatenate_parameter_vectors(
+          ans, observation_model()->parameter_vector());
+    }
     for (int s = 0; s < number_of_state_models(); ++s) {
       concatenate_parameter_vectors(ans, state_model(s)->parameter_vector());
     }
@@ -146,7 +152,7 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void Base::add_state(const Ptr<StateModel> &m) {
       state_models_.add_state(m);
-      if (parameter_positions_.empty()) {
+      if (parameter_positions_.empty() && observation_model()) {
         // If no state has been added yet, add the size of the observation model
         // parameters, which come before the state model parameters in the
         // parameter vector.
@@ -211,7 +217,9 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void Base::clear_client_data() {
-    observation_model()->clear_data();
+    if (observation_model()) {
+      observation_model()->clear_data();
+    }
     state_models_.clear_data();
     signal_complete_data_reset();
   }
@@ -314,7 +322,9 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void Base::Mstep(double epsilon) {
-    observation_model()->find_posterior_mode(epsilon);
+    if (observation_model()) {
+      observation_model()->find_posterior_mode(epsilon);
+    }
     for (int s = 0; s < number_of_state_models(); ++s) {
       state_model(s)->find_posterior_mode(epsilon);
     }
@@ -322,7 +332,10 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   bool Base::check_that_em_is_legal() const {
-    if (!observation_model()->can_find_posterior_mode()) return false;
+    if (observation_model()
+        && !observation_model()->can_find_posterior_mode()) {
+      return false;
+    }
     for (int s = 0; s < number_of_state_models(); ++s) {
       if (!state_model(s)->can_find_posterior_mode()) {
         return false;

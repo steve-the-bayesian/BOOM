@@ -40,7 +40,11 @@ namespace BOOM {
       latent_data_initialized_ = true;
       impute_nonstate_latent_data();
     }
-    model_->observation_model()->sample_posterior();
+    // Multivariate state space models sometimes use proxies that don't have an
+    // explicit observation model.
+    if (model_->observation_model()) {
+      model_->observation_model()->sample_posterior();
+    }
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
       model_->state_model(s)->sample_posterior();
     }
@@ -55,7 +59,12 @@ namespace BOOM {
   }
 
   double SSPS::logpri() const {
-    double ans = model_->observation_model()->logpri();
+    double ans = 0;
+    // Multivariate state space models sometimes use proxies that don't have an
+    // explicit observation model.
+    if (model_->observation_model()) {
+      ans += model_->observation_model()->logpri();
+    }
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
       ans += model_->state_model(s)->logpri();
     }
