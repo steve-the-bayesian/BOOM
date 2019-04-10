@@ -47,7 +47,7 @@ namespace BOOM {
       report_error("Series ID too large.");
     }
     data_is_finalized_ = false;
-    time_dimension_ = std::max<int>(time_dimension_, dp->timestamp());
+    time_dimension_ = std::max<int>(time_dimension_, 1 + dp->timestamp());
     data_indices_[dp->series()][dp->timestamp()] = dat().size();
     IID_DataPolicy<TimeSeriesRegressionData>::add_data(dp);
   }
@@ -61,7 +61,7 @@ namespace BOOM {
   }
 
   void MSSRM::clear_data() {
-    time_dimension_ = -1;
+    time_dimension_ = 0;
     response_matrix_.resize(0, 0);
     observed_ = SelectorMatrix(0, 0);
     data_is_finalized_ = false;
@@ -69,7 +69,7 @@ namespace BOOM {
     IID_DataPolicy<TimeSeriesRegressionData>::clear_data();
   }
   
-  void MSSRM::finalize_data() {
+  void MSSRM::finalize_data() const {
     if (!data_is_finalized_) {
       if (time_dimension_ <= 0) {
         return;
@@ -119,7 +119,7 @@ namespace BOOM {
   //===========================================================================
   MSSRM::MultivariateStateSpaceRegressionModel(int xdim, int nseries)
       : nseries_(nseries),
-        time_dimension_(-1),
+        time_dimension_(0),
         observation_model_(new IndependentRegressionModels(xdim, nseries)),
         has_series_specific_state_(false),
         response_matrix_(0, 0),
@@ -137,6 +137,7 @@ namespace BOOM {
   }
 
   double MSSRM::observed_data(int series, int time) const {
+    finalize_data();
     return response_matrix(series, time);
   }
   
@@ -161,13 +162,13 @@ namespace BOOM {
   }
 
   void MSSRM::impute_shared_state_given_series_state(RNG &rng) {
-    subtract_series_specific_state();
+    isolate_shared_state();
     MultivariateStateSpaceModelBase::impute_state(rng);
   }
 
   void MSSRM::impute_series_state_given_shared_state(RNG &rng) {
     if (has_series_specific_state()) {
-      subtract_shared_state();
+      isolate_series_specific_state();
       for (int s = 0; s < nseries(); ++s) {
         proxy_models_[s]->impute_state(rng);
       }
@@ -255,7 +256,7 @@ namespace BOOM {
   }
 
   // TODO(steve):  Subtract regression component as well.
-  void MSSRM::subtract_series_specific_state() {
+  void MSSRM::isolate_shared_state() {
     adjusted_data_workspace_.resize(nseries(), time_dimension());
     for (int time = 0; time < time_dimension(); ++time) {
       for (int series = 0; series < nseries(); ++series) {
@@ -274,7 +275,7 @@ namespace BOOM {
   }
 
   // TODO(steve):  Subtract regression component as well.
-  void MSSRM::subtract_shared_state() {
+  void MSSRM::isolate_series_specific_state() {
     adjusted_data_workspace_.resize(nseries(), time_dimension());
     Selector observed(nseries(), true);
     for (int time = 0; time < time_dimension(); ++time) {
