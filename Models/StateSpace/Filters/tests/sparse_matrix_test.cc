@@ -7,6 +7,7 @@
 #include "Models/TimeSeries/ArmaModel.hpp"
 
 #include "distributions.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 
 #include "test_utils/test_utils.hpp"
 
@@ -487,6 +488,12 @@ namespace {
         << dense.inner() << endl
         << "Sparse inner product: " << endl
         << sparse.inner() << endl;
+
+    Vector weights(dense.nrow());
+    weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        dense.Tmult(DiagonalMatrix(weights) * dense),
+        sparse.inner(weights)));
   }
   
   TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {

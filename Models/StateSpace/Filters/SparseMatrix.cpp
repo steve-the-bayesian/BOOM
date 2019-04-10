@@ -408,12 +408,12 @@ namespace BOOM {
     if (weights.size() != nrow()) {
       report_error("Weight vector was the wrong size.");
     }
-    SpdMatrix ans(nrow(), 0.0);
+    SpdMatrix ans(ncol(), 0.0);
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
       int local_dim = blocks_[b]->nrow();
       const ConstVectorView local_weights(weights, position, local_dim);
-      ans += blocks_[b]->inner();
+      ans += blocks_[b]->inner(local_weights);
       position += local_dim;
     }
     return ans;
