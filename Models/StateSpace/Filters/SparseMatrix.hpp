@@ -260,7 +260,11 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to_block(SubMatrix block) const override;
 
+    Matrix dense() const override;
+    
    private:
+    // Each block must have the same number of columns, which are determined by
+    // the first block added.
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
     int nrow_, ncol_;
   };

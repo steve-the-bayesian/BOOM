@@ -397,7 +397,7 @@ namespace BOOM {
   }
 
   SpdMatrix StackedMatrixBlock::inner() const {
-    SpdMatrix ans(nrow(), 0.0);
+    SpdMatrix ans(ncol(), 0.0);
     for (int b = 0; b < blocks_.size(); ++b) {
       ans += blocks_[b]->inner();
     }
@@ -424,12 +424,25 @@ namespace BOOM {
     conforms_to_cols(block.ncol());
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
-      SubMatrix lhs_block(block, position, position + ncol_ - 1, 0, ncol_ - 1);
+      SubMatrix lhs_block(block, position, position + blocks_[b]->nrow() - 1,
+                          0, ncol_ - 1);
       blocks_[b]->add_to_block(lhs_block);
-      position += ncol_;
+      position += blocks_[b]->nrow();
     }
   }
 
+  Matrix StackedMatrixBlock::dense() const {
+    Matrix ans(nrow(), ncol());
+    int position = 0;
+    for (int b = 0; b < blocks_.size(); ++b) {
+      SubMatrix ans_block(ans, position, position + blocks_[b]->nrow() - 1,
+                          0, ncol_ - 1);
+      ans_block = blocks_[b]->dense();
+      position += blocks_[b]->nrow();
+    }
+    return ans;
+  }
+  
   //======================================================================
   LocalLinearTrendMatrix *LocalLinearTrendMatrix::clone() const {
     return new LocalLinearTrendMatrix(*this);

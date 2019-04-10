@@ -525,6 +525,27 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  TEST_F(SparseMatrixTest, StackedMatrixBlockTest) {
+    StackedMatrixBlock tall;
+    Matrix tall_dense(6, 2);
+    tall_dense.randomize();
+    tall.add_block(new DenseMatrix(tall_dense));
+    CheckSparseKalmanMatrix(tall);
+
+    StackedMatrixBlock square;
+    SpdMatrix square_dense(2);
+    square_dense.randomize();
+    square.add_block(new DenseMatrix(square_dense));
+    CheckSparseKalmanMatrix(square);
+
+    // Check that things work okay with multiple matrices in the stack.
+    tall.add_block(new DenseMatrix(square_dense));
+    tall.add_block(new DenseMatrix(tall_dense));
+    EXPECT_EQ(6 + 2 + 6, tall.nrow());
+    EXPECT_EQ(2, tall.ncol());
+    CheckSparseKalmanMatrix(tall);
+  }
+  
   TEST_F(SparseMatrixTest, StackedRegressionCoefficients) {
     std::vector<Ptr<GlmCoefs>> beta;
     for (int i = 0; i < 6; ++i) {
