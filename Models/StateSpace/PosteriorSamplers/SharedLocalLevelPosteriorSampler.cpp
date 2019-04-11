@@ -49,7 +49,7 @@ namespace BOOM {
     observation_coefficient_sampler_.reset(
         new MultivariateRegressionSampler(
             model_->coefficient_model().get(),
-            coefficient_prior_mean,
+            coefficient_prior_mean.transpose(),
             observation_coefficient_prior_sample_size,
             1.0,
             SpdMatrix(innovation_precision_priors_.size()),

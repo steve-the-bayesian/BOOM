@@ -184,11 +184,9 @@ namespace BOOM {
     
     //--------------------------------------------------------------------------
     // Initial state mean and variance.
-    Vector initial_state_mean() const override { return initial_state_mean_; }
+    Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &m);
-    SpdMatrix initial_state_variance() const override {
-      return initial_state_variance_;
-    }
+    SpdMatrix initial_state_variance() const override;
     void set_initial_state_variance(const SpdMatrix &v);
 
     //--------------------------------------------------------------------------

@@ -144,7 +144,7 @@ namespace {
     NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
         state_model.get(),
         innovation_precision_priors,
-        observation_coefficient_prior_mean,
+        observation_coefficient_prior_mean.transpose(),
         1.0);
     state_model->set_method(state_model_sampler);
     // Done configuring, so add the state model.

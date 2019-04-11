@@ -34,8 +34,8 @@ namespace BOOM {
       : ZeroMeanGaussianModel(sigma),
         state_transition_matrix_(new IdentityMatrix(1)),
         state_variance_matrix_(new ConstantMatrixParamView(1, Sigsq_prm())),
-        initial_state_mean_(1),
-        initial_state_variance_(1) {}
+        initial_state_mean_(1, 0.0),
+        initial_state_variance_(1, 1.0) {}
 
   LLSM::LocalLevelStateModel(const LocalLevelStateModel &rhs)
       : Model(rhs),
@@ -283,6 +283,14 @@ namespace BOOM {
     }
   }
 
+  Vector SLLSM::initial_state_mean() const {
+    if (initial_state_mean_.size() != state_dimension()) {
+      report_error("Initial state mean has not been set in "
+                   "SharedLocalLevelStateModel.");
+    }
+    return initial_state_mean_;
+  }
+  
   void SLLSM::set_initial_state_mean(const Vector &mean) {
     if (mean.size() != state_dimension()) {
       report_error("Wrong size argument in set_initial_state_mean.");
@@ -290,6 +298,14 @@ namespace BOOM {
     initial_state_mean_ = mean;
   }
 
+  SpdMatrix SLLSM::initial_state_variance() const {
+    if (initial_state_variance_.nrow() != state_dimension()) {
+      report_error("Initial state variance has not been set in "
+                   "SharedLocalLevelStateModel.");
+    }
+    return initial_state_variance_;
+  }
+  
   void SLLSM::set_initial_state_variance(const SpdMatrix &variance) {
     if (variance.nrow() != state_dimension()) {
       report_error("Wrong size argument in set_initial_state_variance.");

@@ -11,7 +11,7 @@
 #include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceRegressionPosteriorSampler.hpp"
 #include "distributions.hpp"
 #include "LinAlg/Array.hpp"
 
@@ -139,7 +139,8 @@ namespace {
         model->add_data(data_point);
       }
     }
-
+    EXPECT_EQ(sample_size, model->time_dimension());
+    
     //---------------------------------------------------------------------------
     // Define the state model.
     NEW(SharedLocalLevelStateModel, state_model)(
@@ -155,10 +156,12 @@ namespace {
         observation_coefficient_prior_mean,
         .01);
     state_model->set_method(state_model_sampler);
+    state_model->set_initial_state_mean(Vector(nfactors, 0.0));
+    state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
     model->add_state(state_model);
 
     //---------------------------------------------------------------------------
-    // Set the prior for the regression model.
+    // Set the prior and sampler for the regression model.
     for (int i = 0; i < ydim; ++i) {
       Vector beta_prior_mean(xdim, 0.0);
       SpdMatrix beta_precision(xdim, 1.0);
@@ -171,8 +174,30 @@ namespace {
     }
 
 
+    //
+    NEW(MultivariateStateSpaceRegressionPosteriorSampler, sampler)(
+        model.get());
+    model->set_method(sampler);
+
     
+    model->sample_posterior();
+
+    int niter = 500;
+    Matrix factor0_draws(niter, sample_size);
+    Matrix factor1_draws(niter, sample_size);
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      factor0_draws.row(i) = model->shared_state().row(0);
+      factor1_draws.row(i) = model->shared_state().row(1);
+    }
+
+    CheckMcmcMatrix(factor0_draws, state.row(0));
+    CheckMcmcMatrix(factor1_draws, state.row(1));
+    std::ofstream factor0_file("factor0.txt");
+    factor0_file << rbind(state.row(0), factor0_draws);
     
+    std::ofstream factor1_file("factor1.txt");
+    factor1_file << rbind(state.row(1), factor1_draws);
   }
   
 }  // namespace

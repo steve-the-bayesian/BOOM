@@ -29,11 +29,28 @@
 namespace BOOM {
 
   //===========================================================================
-  // Store y, x_series, x_shared, series_id, timestamp?
+  // The data type represents a scalar entry in the "matrix" of time series
+  // data.  By organizing the data this way, we can allow for each "data point"
+  // to have its own set of regressors, which would be difficult to do if the
+  // response data were an actual matrix.
   class TimeSeriesRegressionData : public RegressionData {
    public:
-    TimeSeriesRegressionData(double y, const Vector &x, int series,
+    // Args:
+    //   y: The response variable.
+    //   x: A vector of predictors.
+    //   series: The identifier of the time series (0.. number of series - 1) to
+    //     which this observation belongs.
+    //   timestamp: The time-index of the time series (0.. sample_size - 1)
+    //     containing this observation.
+    TimeSeriesRegressionData(double y,
+                             const Vector &x,
+                             int series,
                              int timestamp);
+    
+    // As above, but y and x are Ptr's.  If Y and X are matrices, with the same
+    // X's applying to each time series in Y, then this constructor is more
+    // space efficient than the one above, because multiple Ptr's can point the
+    // the same predictor vector.
     TimeSeriesRegressionData(const Ptr<DoubleData> &y,
                              const Ptr<VectorData> &x,
                              int series,
@@ -43,7 +60,14 @@ namespace BOOM {
       return new TimeSeriesRegressionData(*this);
     }
 
+    // The index of the time series to which this data point corresponds.  If
+    // you think about a multivariate time series as a matrix, with rows
+    // representing time, this is the column identifier.
     int series() const {return which_series_;}
+
+    // The time-index of the time series to which this data point belongs.  If
+    // you think about a multivariate time series as a matrix, with rows
+    // representing time, this is the run number.
     int timestamp() const {return timestamp_index_;}
     
    private:
@@ -52,34 +76,39 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // The following is an implementation detail for
-  // MultivariateStateSpaceRegressionModel, which maintains a set of
-  // ScalarKalmanFilter objects to handle simulating from series-specific state.
-  // Each of these models needs a "state space model" to supply the kalman
-  // matrices and data.  This class defines a proxy state space model to fill
-  // that role.
+  // An implementation detail for MultivariateStateSpaceRegressionModel, which
+  // maintains a set of ScalarKalmanFilter objects to handle simulating from
+  // series-specific state.  Each of these models needs a "state space model" to
+  // supply the kalman matrices and data.  This class defines a proxy state
+  // space model to fill that role.  The proxy model keeps a pointer to the host
+  // model from which it draws data and parameters.
   //
-  // The proxy model keeps a pointer to the host model from which it draws data
-  // and parameters.
+  // However, if there is series-specific state it is owned by the proxy.
   class MultivariateStateSpaceRegressionModel;
   class ProxyScalarStateSpaceModel : public StateSpaceModel {
    public:
     // Args:
     //   model:  The host model.
-    //   which_series: The series in the host model that this object describes.
+    //   which_series: The index of the time series that this object describes.
     ProxyScalarStateSpaceModel(MultivariateStateSpaceRegressionModel *model,
                                int which_series);
-      
+
+    // The number of distinct time points in the host model.
     int time_dimension() const override;
-    
+
+    // The value of the time series specific to this proxy.  The host should
+    // have subtracted any regression effects or shared state before this
+    // function is called.
     double adjusted_observation(int t) const override;
+
     bool is_missing_observation(int t) const override;
     
    private:
-    // Disabling add_data.
-    void add_data(const Ptr<StateSpace::MultiplexedDoubleData> &data_point) override;
+    // The add_data method is disabled.
+    void add_data(const Ptr<StateSpace::MultiplexedDoubleData>
+                  &data_point) override;
     void add_data(const Ptr<Data> &data_point) override;
-    
+
     MultivariateStateSpaceRegressionModel *model_;
     int which_series_;
   };
@@ -89,19 +118,17 @@ namespace BOOM {
   // vector Y[t] as it moves throughout time.  The model is a state space model
   // of the form
   //
-  //        Y[t] = Z[t] * alpha[t] + epsilon[t]
+  //        Y[t] = Z[t] * alpha[t] + B * X[t] + epsilon[t]
   //  alpha[t+1] = T[t] * alpha[t] + R[t] * eta[t].
   //
-  // There is structure to alpha[t] that can be used for more efficient
-  // learning.  The state consists of two types of state components: shared and
-  // series-specific.  A shared state component is a regular state component
-  // from a dynamic factor model, with a matrix Z[t] mapping state to outcomes.
-  // A series specific model maintains a separate element of state for each
-  // dimension of Y[t].
+  // The state alpha[t] consists of two types: shared and series-specific.  A
+  // shared state component is a regular state component from a dynamic factor
+  // model, with a matrix Z[t] mapping state to outcomes.  A series specific
+  // model maintains a separate element of state for each dimension of Y[t].
   //
-  // The learning algorithm can cycle back and forth between (draw shared state
-  // given data and series-specific state), (draw series-specific state), and
-  // (draw parameters given complete data).
+  // The learning algorithm can cycle between (draw shared state given data and
+  // series-specific state), (draw series-specific state), and (draw parameters
+  // given complete data).
   //
   // The model assumes that errors from each state component are independent of
   // other state components (given model parameters), and that the observation
@@ -110,6 +137,28 @@ namespace BOOM {
   // model makes the further simplifying assumption that Var(epsilon[t]) is
   // diagonal, so that any cross sectional correlations between elements of Y[t]
   // are captured by shared state.
+  //
+  // Thus epsilon[t] ~ N(0, diag(sigma^2)).  There is a different sigma^2 for
+  // each series, but the off-diagonal elements are all zero.  Internally this
+  // means the regression is handled by nseries() separate regression models.
+  // Each can have its own prior, which can be linked by a hierarchy.
+  //
+  //---------------------------------------------------------------------------
+  // The basic usage idiom is
+  // NEW(MultivariateStateSpaceRegressionModel, model)(xdim, ydim);
+  // for() { model->add_data(data_point); }
+  // model->add_state(shared_state_model_1);
+  // model->add_state(shared_state_model_2);
+  // ...
+  // model->series_specific_model(0)->add_state(series_specific_state_model_11);
+  // model->series_specific_model(0)->add_state(series_specific_state_model_12);
+  // model->series_specific_model(1)->add_state(series_specific_state_model_21);
+  // model->observation_model()->set_method(prior_for_regression_part);
+  //
+  // The posterior samplers for the individual state models must be set
+  // separately.  Likewise for the samplers for the regression models.  If
+  // (e.g.) a hierarchical regression is desired then that is a new posterior
+  // sampler class for IndependentRegressionModels.
   class MultivariateStateSpaceRegressionModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
         public CompositeParamPolicy,
@@ -122,6 +171,8 @@ namespace BOOM {
     //   nseries:  The number of time series being modeled.
     explicit MultivariateStateSpaceRegressionModel(int xdim, int nseries);
 
+    // This is a complex model with lots of subordinate parts.  Copying it
+    // correctly would be really hard, so copying is disallowed.
     MultivariateStateSpaceRegressionModel(
         const MultivariateStateSpaceRegressionModel &rhs) = delete;
     MultivariateStateSpaceRegressionModel &operator=(
@@ -130,82 +181,17 @@ namespace BOOM {
         MultivariateStateSpaceRegressionModel &&rhs) = delete;
     MultivariateStateSpaceRegressionModel &operator=(
         MultivariateStateSpaceRegressionModel &&rhs) = delete;
-    
+
+    // An error will be reported if someone attempts to clone this model.
     MultivariateStateSpaceRegressionModel *clone() const override {
       report_error("Model cannot be copied.");
       return nullptr;
     }
 
-    //-----------------------------------------------------------------
-    // Dimension of shared state.
-    int state_dimension() const override {
-      return shared_state_models_.state_dimension();
-    }
-    
-    int number_of_state_models() const override {
-      return shared_state_models_.size();
-    }
-
-    SharedStateModel *state_model(int s) override {
-      if (s <= 0 || s >= shared_state_models_.size()) {
-        return nullptr;
-      } else {
-        return shared_state_models_[s].get();
-      }
-    }
-
-    const SharedStateModel *state_model(int s) const override {
-      return shared_state_models_[s].get();
-    }
-    
-    //-----------------------------------------------------------------
-    // Data policy overrides and augmentations.
-    
-    // The number of time points that have been observed.
-    int time_dimension() const override {return time_dimension_;}
-
-    // Adding data to this model also adjusts time_dimension_.
-    void add_data(const Ptr<Data> &dp) override;
-    void add_data(const Ptr<TimeSeriesRegressionData> &dp) override;
-    void add_data(TimeSeriesRegressionData *dp) override;
-    void clear_data() override;
-
-    // Scalar data access.
-    double response_matrix(int series, int time) const {
-      finalize_data();
-      return response_matrix_(series, time);
-    }
-
-    // Vector data access.
-    ConstVectorView observation(int t) const override {
-      finalize_data();
-      return response_matrix_.col(t);
-    }
-
-    const Selector &observed_status(int t) const override {
-      finalize_data();
-      return observed_.col(t);
-    }
-    
-    // To be called after add_data has been called for the last time.
-    // This method is logically const so that it can be called by accessors.
-    void finalize_data() const;
-    
-    // The dimension of the series-specific state associated with a particular
-    // time series.
-    int series_state_dimension(int which_series) const {
-      if (proxy_models_.empty()) {
-        return 0;
-      } else {
-        return proxy_models_[which_series]->state_dimension();
-      }
-    }
-    
-    // The number of time series being modeled.  This is an override of the
-    // nseries() method in the data policy.
-    int nseries() const {return nseries_;}
-
-    int xdim() const {return observation_model_->xdim();}
+    //------------------------------------------------------------------------
+    // Access to state models.  Access to state comes from the "grandparent"
+    // base class
+    //------------------------------------------------------------------------
     
     // Add state to the "shared-state" portion of the state space.
     void add_state(const Ptr<SharedStateModel> &state_model);
@@ -225,19 +211,106 @@ namespace BOOM {
     bool has_series_specific_state() const {
       return has_series_specific_state_;
     }
+
+    // Dimension of shared state.
+    int state_dimension() const override {
+      return shared_state_models_.state_dimension();
+    }
+    
+    // The dimension of the series-specific state associated with a particular
+    // time series.
+    int series_state_dimension(int which_series) const {
+      if (proxy_models_.empty()) {
+        return 0;
+      } else {
+        return proxy_models_[which_series]->state_dimension();
+      }
+    }
+
+    int number_of_state_models() const override {
+      return shared_state_models_.size();
+    }
+
+    SharedStateModel *state_model(int s) override {
+      if (s < 0 || s >= shared_state_models_.size()) {
+        return nullptr;
+      } else {
+        return shared_state_models_[s].get();
+      }
+    }
+
+    const SharedStateModel *state_model(int s) const override {
+      return shared_state_models_[s].get();
+    }
+
+    // Impute both the shared and series-specific state, each conditional on the
+    // other.
+    void impute_state(RNG &rng) override;
+    
+    //-----------------------------------------------------------------------
+    // Data policy overrides, and access to raw data.
+    //-----------------------------------------------------------------------
+    
+    // The number of time points that have been observed.
+    int time_dimension() const override {return time_dimension_;}
+
+    // The number of time series being modeled.  
+    int nseries() const {return nseries_;}
+
+    // The dimension of the predictors.
+    int xdim() const {return observation_model_->xdim();}
+
+    // Adding data to this model adjusts time_dimension_, data_indices_, and
+    // data_is_finalized_.
+    void add_data(const Ptr<Data> &dp) override;
+    void add_data(const Ptr<TimeSeriesRegressionData> &dp) override;
+    void add_data(TimeSeriesRegressionData *dp) override;
+
+    // An override is needed so model-specific meta-data can be cleared as well.
+    void clear_data() override;
+
+    // Scalar data access.
+    double response_matrix(int series, int time) const {
+      finalize_data();
+      return response_matrix_(series, time);
+    }
+
+    // A flag indicating whether a specific series was observed at time t.
+    bool is_observed(int series, int time) const {
+      finalize_data();
+      return observed_(series, time);
+    }
+    
+    // Vector data access.
+    ConstVectorView observation(int t) const override {
+      finalize_data();
+      return response_matrix_.col(t);
+    }
+
+    const Selector &observed_status(int t) const override {
+      finalize_data();
+      return observed_.col(t);
+    }
     
     // Returns the observed data point for the given series at the given time
     // point.  If that data point is missing, negative_infinity is returned.
     double observed_data(int series, int time) const;
 
+    // The response value after contributions from "other models" has been
+    // subtracted off.  It is the caller's responsibility to do the subtracting
+    // (e.g. with isolate_shared_state() or isolate_series_specific_state()).
     double adjusted_observation(int series, int time) const {
       return adjusted_data_workspace_(series, time);
     }
 
+    // The vector of adjusted observations across all time series at time t.
     ConstVectorView adjusted_observation(int time) const override {
       return adjusted_data_workspace_.col(time);
     }
 
+    //--------------------------------------------------------------------------
+    // Kalman filter parameters.
+    //--------------------------------------------------------------------------
     const SparseKalmanMatrix *observation_coefficients(
         int t, const Selector &observed) const override;
     
@@ -246,15 +319,6 @@ namespace BOOM {
     double single_observation_variance(int t, int dim) const override {
       return observation_model_->model(dim)->sigsq();
     }
-    
-    // Returns a flag indicating whether the requested series was observed at
-    // the requested time.
-    bool is_observed(int series, int time) const {
-      finalize_data();
-      return observed_(series, time);
-    }
-    
-    void impute_state(RNG &rng) override;
 
     Ptr<ProxyScalarStateSpaceModel> series_specific_model(int index) {
       return proxy_models_[index];
@@ -268,11 +332,21 @@ namespace BOOM {
       return observation_model_.get();
     }
 
-    //    void kalman_filter() override;
-
+    // The contribution of a particular state model to the mean of the response.
+    //
+    // Args:
+    //   which_state_model:  The index of the desired state model.
+    // 
+    // Returns:
+    //   A matrix with rows corresponding to dimension of Y, and columns
+    //   corresponding to time.
     Matrix state_contributions(int which_state_model) const override;
       
    private:
+    // To be called after add_data has been called for the last time.
+    // This method is logically const so that it can be called by accessors.
+    void finalize_data() const;
+    
     // Populate the vector of proxy models with 'nseries_' empty models.
     void initialize_proxy_models();
 
@@ -299,11 +373,6 @@ namespace BOOM {
       return shared_state_models_;
     }
     
-    // Returns a view into series_specific_state_component for a particular
-    // state model, series, and point in time.
-    ConstVectorView series_specific_state_component(
-        int series, int time, int state_model_index) const;
-    
     void impute_shared_state_given_series_state(RNG &rng);
     void impute_series_state_given_shared_state(RNG &rng);
 
@@ -315,8 +384,13 @@ namespace BOOM {
     // shared state.
     void isolate_series_specific_state();
 
+    // The contribution of the series_specific state to the given series at the
+    // given time.
+    double series_specific_state_contribution(int series, int time) const;
+    
     //--------------------------------------------------------------------------
     // Data section.
+    //--------------------------------------------------------------------------
     
     // The number of series being modeled. 
     int nseries_;
@@ -338,7 +412,10 @@ namespace BOOM {
     
     // The observation model.  
     Ptr<IndependentRegressionModels> observation_model_;
-    
+
+    // The observation coefficients from the shared state portion of the model.
+    // This does not include the regression coefficients from the regression
+    // model, nor does it include the series-specific state.
     mutable Ptr<StackedMatrixBlock> observation_coefficients_;
     
     // Initially set to false.  Flips to true if any state is assigned to proxy
@@ -349,12 +426,10 @@ namespace BOOM {
     // point.  Time flows horizontally, so each column is a single time point.
     mutable Matrix response_matrix_;
     mutable SelectorMatrix observed_;
-    
-    mutable bool data_is_finalized_;
 
-    // Shared state components.  The columns of shared_state_ represent time
-    // points.  The rows represent state variables.
-    Matrix shared_state_;
+    // A flag that gets set to false each time a new data point is added.  This
+    // flag is checked each time observed_data_ is called.
+    mutable bool data_is_finalized_;
 
     // A workspace where observed data can be modified by subtracting off
     // components on which we wish to condition.
@@ -366,6 +441,11 @@ namespace BOOM {
 
     // A flag to keep track of whether the observation variance is current.
     mutable bool observation_variance_current_;
+
+    // A Selector of size nseries() with all elements included.  Useful for
+    // calling observation_coefficients when you want to assume all elements are
+    // included.
+    Selector dummy_selector_;
   };
 
 }  // namespace BOOM

@@ -32,7 +32,7 @@ namespace {
         : sample_size_(100),
           xdim_(4),
           true_trend_sd_(.3),
-          true_observation_sd_(1.2),
+          true_observation_sd_(.2),
           true_coefficient_sd_(.8)
     {
       GlobalRng::rng.seed(8675309);
@@ -110,7 +110,7 @@ namespace {
     SimulateData();
     BuildModel();
 
-    int niter = 200;
+    int niter = 400;
     Vector sigma_obs_draws(niter);
     Vector sigma_level_draws(niter);
     Matrix coefficient_sd_draws(niter, xdim_);
@@ -143,7 +143,8 @@ namespace {
       }
     }
 
-    EXPECT_TRUE(CheckMcmcVector(sigma_obs_draws, true_observation_sd_));
+    EXPECT_TRUE(CheckMcmcVector(sigma_obs_draws, true_observation_sd_,
+                                .98, "sigma_obs_draws.txt"));
     EXPECT_TRUE(CheckMcmcVector(sigma_level_draws, true_trend_sd_));
     auto coef_sd_status = CheckMcmcMatrix(
         coefficient_sd_draws, Vector(xdim_, true_coefficient_sd_));
