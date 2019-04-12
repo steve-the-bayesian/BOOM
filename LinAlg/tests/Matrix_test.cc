@@ -158,6 +158,97 @@ namespace {
     EXPECT_TRUE(MatrixEquals(M * X, M2));
   }
 
+  template <class MAT1, class MAT2> 
+  void CheckFieldOperators(const MAT1 &x, const MAT2 &y, const std::string &msg) {
+    double a = 1.7;
+    Matrix z = x + y;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) + y(0, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) + y(0, 1)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) + y(1, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) + y(1, 1)) << msg;
+
+    z = x - y;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) - y(0, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) - y(0, 1)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) - y(1, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) - y(1, 1)) << msg;
+
+    z = x / y;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) / y(0, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) / y(0, 1)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) / y(1, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) / y(1, 1)) << msg;
+
+    z = x + a;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) + a) << msg;
+
+    z = x - a;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) - a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) - a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) - a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) - a) << msg;
+
+    z = a + x;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) + a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) + a) << msg;
+
+    z = a - x;
+    EXPECT_DOUBLE_EQ(z(0, 0), a - x(0, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), a - x(0, 1)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), a - x(1, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), a - x(1, 1)) << msg;
+
+    z = x * a;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) * a) << msg;
+
+    z = x / a;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) / a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) / a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) / a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) / a) << msg;
+    
+    z = a * x;
+    EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) * a) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) * a) << msg;
+
+    z = a / x;
+    EXPECT_DOUBLE_EQ(z(0, 0), a / x(0, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(0, 1), a / x(0, 1)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 0), a / x(1, 0)) << msg;
+    EXPECT_DOUBLE_EQ(z(1, 1), a / x(1, 1)) << msg;
+  }
+
+  TEST_F(MatrixTest, FieldOperators) {
+    Matrix x(2, 2);
+    Matrix y(2, 2);
+    x.randomize();
+    y.randomize();
+    SubMatrix xview(x);
+    SubMatrix yview(y);
+    ConstSubMatrix cxview(x);
+    ConstSubMatrix cyview(y);
+
+    CheckFieldOperators(x, y, "mat, mat");
+    CheckFieldOperators(x, yview, "mat, view");
+    CheckFieldOperators(x, cyview, "mat, const view");
+    CheckFieldOperators(xview, y, "view, mat");
+    CheckFieldOperators(xview, yview, "view, view");
+    CheckFieldOperators(xview, cyview, "view, const view");
+    CheckFieldOperators(cxview, y, "const view, mat");
+    CheckFieldOperators(cxview, yview, "const view, view");
+    CheckFieldOperators(cxview, cyview, "const view, const view");
+  }
+  
   TEST_F(MatrixTest, Trace) {
     Matrix M(4, 4);
     M.randomize();

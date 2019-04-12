@@ -885,6 +885,35 @@ namespace BOOM {
     return *this;
   }
 
+  namespace {
+    template <class MAT> 
+    Matrix & incremental_division_impl(Matrix &m1, const MAT &m2) {
+      if (m1.nrow() != m2.nrow() || m1.ncol() != m2.ncol()) {
+        report_error("Element-wise division requires matrices have the "
+                     "same dimension.");
+      }
+      for (int i = 0; i < m1.nrow(); ++i) {
+        for (int j = 0; j < m1.ncol(); ++j) {
+          m1(i, j) /= m2(i, j);
+        }
+      }
+      return m1;
+    }
+        
+  } // namespace 
+  
+  Matrix &Matrix::operator/=(const Matrix &m) {
+    return incremental_division_impl(*this, m);
+  }
+
+  Matrix &Matrix::operator/=(const SubMatrix &m) {
+    return incremental_division_impl(*this, m);
+  }
+
+  Matrix &Matrix::operator/=(const ConstSubMatrix &m) {
+    return incremental_division_impl(*this, m);
+  }
+
   Matrix &Matrix::operator-=(const ConstSubMatrix &m) {
     SubMatrix lhs(*this);
     lhs -= m;
@@ -978,12 +1007,6 @@ namespace BOOM {
       }
     }
     return in;
-  }
-
-  Matrix operator-(const double y, const Matrix &x) {
-    Matrix ans = -x;
-    ans += y;
-    return ans;
   }
 
   Matrix operator/(const double y, const Matrix &x) {

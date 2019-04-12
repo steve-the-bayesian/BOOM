@@ -110,8 +110,8 @@ namespace BOOM {
   class ConstSubMatrix {
    public:
     typedef const double *const_col_iterator;
-    ConstSubMatrix(const Matrix &);
-    ConstSubMatrix(const SubMatrix &);
+    explicit ConstSubMatrix(const Matrix &);
+    explicit ConstSubMatrix(const SubMatrix &);
 
     // Args:
     //   m:  The matrix to be subsetted.
@@ -172,17 +172,49 @@ namespace BOOM {
   bool operator==(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs);
 
   Matrix operator+(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs);
-  Matrix operator+(const SubMatrix &lhs, const ConstSubMatrix &rhs);
-  Matrix operator+(const Matrix &lhs, const ConstSubMatrix &rhs);
   Matrix operator+(const ConstSubMatrix &lhs, const SubMatrix &rhs);
   Matrix operator+(const ConstSubMatrix &lhs, const Matrix &rhs);
+  Matrix operator+(const SubMatrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator+(const SubMatrix &lhs, const SubMatrix &rhs);
+  Matrix operator+(const SubMatrix &lhs, const Matrix &rhs);
+  Matrix operator+(const Matrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator+(const Matrix &lhs, const SubMatrix &rhs);
+  Matrix operator+(const ConstSubMatrix &lhs, double rhs);
+  Matrix operator+(double lhs, const ConstSubMatrix &rhs);
+  Matrix operator+(const SubMatrix &lhs, double rhs);
+  Matrix operator+(double lhs, const SubMatrix &rhs);
 
   Matrix operator-(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs);
-  Matrix operator-(const SubMatrix &lhs, const ConstSubMatrix &rhs);
-  Matrix operator-(const Matrix &lhs, const ConstSubMatrix &rhs);
   Matrix operator-(const ConstSubMatrix &lhs, const SubMatrix &rhs);
   Matrix operator-(const ConstSubMatrix &lhs, const Matrix &rhs);
+  Matrix operator-(const SubMatrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator-(const SubMatrix &lhs, const SubMatrix &rhs);
+  Matrix operator-(const SubMatrix &lhs, const Matrix &rhs);
+  Matrix operator-(const Matrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator-(const Matrix &lhs, const SubMatrix &rhs);
+  Matrix operator-(const ConstSubMatrix &lhs, double rhs);
+  Matrix operator-(double lhs, const ConstSubMatrix &rhs);
+  Matrix operator-(const SubMatrix &lhs, double rhs);
+  Matrix operator-(double lhs, const SubMatrix &rhs);
 
+  Matrix operator*(const ConstSubMatrix &x, double y);
+  Matrix operator*(const SubMatrix &x, double y);
+  Matrix operator*(double x, const ConstSubMatrix &y);
+  Matrix operator*(double x, const SubMatrix &y);
+  
+  Matrix operator/(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator/(const ConstSubMatrix &lhs, const SubMatrix &rhs);
+  Matrix operator/(const ConstSubMatrix &lhs, const Matrix &rhs);
+  Matrix operator/(const SubMatrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator/(const SubMatrix &lhs, const SubMatrix &rhs);
+  Matrix operator/(const SubMatrix &lhs, const Matrix &rhs);
+  Matrix operator/(const Matrix &lhs, const ConstSubMatrix &rhs);
+  Matrix operator/(const Matrix &lhs, const SubMatrix &rhs);
+  Matrix operator/(const ConstSubMatrix &lhs, double rhs);
+  Matrix operator/(double lhs, const ConstSubMatrix &rhs);
+  Matrix operator/(const SubMatrix &lhs, double rhs);
+  Matrix operator/(double lhs, const SubMatrix &rhs);
+  
   // Return a SubMatrix using block-matrix partitioning.  I.e. return block (3,
   // 4) from a partitioned matrix, where each block element is a (2, 3) matrix.
   SubMatrix block(Matrix &m, int block_row, int block_col,

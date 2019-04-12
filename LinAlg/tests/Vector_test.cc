@@ -311,6 +311,8 @@ namespace {
   //     being compared.  E.g. "vector-vector"
   template <class V1, class V2>
   void CheckFieldOperators(const V1 &x, const V2 &y, const std::string &msg) {
+    ASSERT_GE(x.size(), 3) << "Need to pass a vector of size >= 3.";
+
     Vector z = x + y;
     double a = 1.2;
     EXPECT_DOUBLE_EQ(z[0], x[0] + y[0] ) << msg;
