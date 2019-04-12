@@ -299,109 +299,78 @@ namespace BOOM {
     return ConstVectorView(v.data() + start, size, v.stride());
   }
 
-  inline Vector operator+(const VectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans += y;
-    return ans;
-  }
-  inline Vector operator+(const ConstVectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans += y;
-    return ans;
-  }
-  inline Vector operator+(const VectorView &x, const ConstVectorView &y) {
-    Vector ans(x);
-    ans += y;
-    return ans;
-  }
+  // Field operations for VectorView.  Interactions with double and Vector are
+  // defined in Vector.cpp
+  // Addition
   inline Vector operator+(const ConstVectorView &x, const ConstVectorView &y) {
     Vector ans(x);
     ans += y;
     return ans;
   }
-
-  inline Vector operator-(const VectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans -= y;
-    return ans;
+  inline Vector operator+(const ConstVectorView &x, const VectorView &y) {
+    return x + ConstVectorView(y);
   }
-  inline Vector operator-(const ConstVectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans -= y;
-    return ans;
+  inline Vector operator+(const VectorView &x, const ConstVectorView &y) {
+    return ConstVectorView(x) + y;
   }
-  inline Vector operator-(const VectorView &x, const ConstVectorView &y) {
-    Vector ans(x);
-    ans -= y;
-    return ans;
+  inline Vector operator+(const VectorView &x, const VectorView &y) {
+    return ConstVectorView(x) + ConstVectorView(y);
   }
+  
+  // Subtraction
   inline Vector operator-(const ConstVectorView &x, const ConstVectorView &y) {
     Vector ans(x);
     ans -= y;
     return ans;
   }
-
-  inline Vector operator*(double x, const VectorView &v) {
-    Vector ans(v);
-    ans *= x;
-    return ans;
+  inline Vector operator-(const VectorView &x, const VectorView &y) {
+    return ConstVectorView(x) - ConstVectorView(y);
   }
-  inline Vector operator*(const VectorView &v, double x) {
-    Vector ans(v);
-    ans *= x;
-    return ans;
+  inline Vector operator-(const ConstVectorView &x, const VectorView &y) {
+    return x - ConstVectorView(y);
   }
-  inline Vector operator*(double x, const ConstVectorView &v) {
-    Vector ans(v);
-    ans *= x;
-    return ans;
-  }
-  inline Vector operator*(const ConstVectorView &v, double x) {
-    Vector ans(v);
-    ans *= x;
-    return ans;
+  inline Vector operator-(const VectorView &x, const ConstVectorView &y) {
+    return ConstVectorView(x) - y;
   }
 
-  inline Vector operator*(const VectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans *= y;
-    return ans;
-  }
-  inline Vector operator*(const ConstVectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans *= y;
-    return ans;
-  }
-  inline Vector operator*(const VectorView &x, const ConstVectorView &y) {
-    Vector ans(x);
-    ans *= y;
-    return ans;
-  }
+  // Multipliplication
+  Vector operator*(double x, const VectorView &v);
+  Vector operator*(double x, const ConstVectorView &v);
+  Vector operator*(const VectorView &v, double x);
+  Vector operator*(const ConstVectorView &v, double x);
   inline Vector operator*(const ConstVectorView &x, const ConstVectorView &y) {
     Vector ans(x);
     ans *= y;
     return ans;
   }
+  inline Vector operator*(const VectorView &x, const VectorView &y) {
+    return ConstVectorView(x) * ConstVectorView(y);
+  }
+  inline Vector operator*(const ConstVectorView &x, const VectorView &y) {
+    return x * ConstVectorView(y);
+  }
+  inline Vector operator*(const VectorView &x, const ConstVectorView &y) {
+    return ConstVectorView(x) * y;
+  }
 
-  inline Vector operator/(const VectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans /= y;
-    return ans;
-  }
-  inline Vector operator/(const ConstVectorView &x, const VectorView &y) {
-    Vector ans(x);
-    ans /= y;
-    return ans;
-  }
-  inline Vector operator/(const VectorView &x, const ConstVectorView &y) {
-    Vector ans(x);
-    ans /= y;
-    return ans;
-  }
+  // Division
+  Vector operator/(double x, const VectorView &v);
+  Vector operator/(double x, const ConstVectorView &v);
+  Vector operator/(const VectorView &v, double x);
+  Vector operator/(const ConstVectorView &v, double x);
   inline Vector operator/(const ConstVectorView &x, const ConstVectorView &y) {
     Vector ans(x);
     ans /= y;
     return ans;
+  }
+  inline Vector operator/(const VectorView &x, const VectorView &y) {
+    return ConstVectorView(x) / ConstVectorView(y);
+  }
+  inline Vector operator/(const ConstVectorView &x, const VectorView &y) {
+    return x / ConstVectorView(y);
+  }
+  inline Vector operator/(const VectorView &x, const ConstVectorView &y) {
+    return ConstVectorView(x) / y;
   }
 
   // Return a view giving the last 'size' elements of the vector or view.  If

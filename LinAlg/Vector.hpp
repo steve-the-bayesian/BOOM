@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 
-#include "boost/operators.hpp"
 #include "cpputil/math_utils.hpp"
 #include "distributions/rng.hpp"
 #include "uint.hpp"
@@ -39,15 +38,8 @@ namespace BOOM {
   class ConstVectorView;
 
   class Vector
-      : public std::vector<double>,
-        boost::field_operators<
-            Vector,
-            boost::addable<Vector, double,
-                           boost::subtractable<
-                               Vector, double,
-                               boost::multipliable<
-                                   Vector, double,
-                                   boost::dividable<Vector, double> > > > > {
+      : public std::vector<double>
+  {
    public:
     typedef std::vector<double> dVector;
     typedef dVector::iterator iterator;
@@ -237,40 +229,44 @@ namespace BOOM {
   Vector str2vec(const std::string &line);
   Vector scan_vector(const std::string &fname);
 
-  // operators not covered by boost
-  Vector operator/(double a, const Vector &x);
-  Vector operator/(double a, const VectorView &x);
-  Vector operator/(double a, const ConstVectorView &x);
-  Vector operator/(const ConstVectorView &x, double a);
-  Vector operator/(const VectorView &x, double a);
-
+  // Field operators for Vector x Vector.
+  Vector operator+(const Vector &a, const Vector &b);
+  Vector operator-(const Vector &a, const Vector &b);
+  Vector operator*(const Vector &a, const Vector &b);
+  Vector operator/(const Vector &a, const Vector &b);
+  
+  // Field operators for Vector x double.
+  Vector operator+(const Vector &x, double a);
+  Vector operator+(double a, const Vector &x);
+  Vector operator-(const Vector &x, double a);
   Vector operator-(double a, const Vector &x);
-  Vector operator-(double a, const VectorView &x);
-  Vector operator-(double a, const ConstVectorView &x);
-  Vector operator-(const ConstVectorView &x, double a);
-  Vector operator-(const VectorView &x, double a);
+  Vector operator*(const Vector &x, double a);
+  Vector operator*(double a, const Vector &x);
+  Vector operator/(const Vector &x, double a);
+  Vector operator/(double a, const Vector &x);
+
+  // Field operators for Vector x VectorView
+  Vector operator+(const Vector &x, const VectorView &y);
+  Vector operator+(const VectorView &x, const Vector &y);
+  Vector operator-(const Vector &x, const VectorView &y);
+  Vector operator-(const VectorView &x, const Vector &y);
+  Vector operator*(const Vector &x, const VectorView &y);
+  Vector operator*(const VectorView &x, const Vector &y);
+  Vector operator/(const Vector &x, const VectorView &y);
+  Vector operator/(const VectorView &x, const Vector &y);
+
+  // Field operators for Vector x ConstVectorView
+  Vector operator+(const Vector &x, const ConstVectorView &y);
+  Vector operator+(const ConstVectorView &x, const Vector &y);
+  Vector operator-(const Vector &x, const ConstVectorView &y);
+  Vector operator-(const ConstVectorView &x, const Vector &y);
+  Vector operator*(const Vector &x, const ConstVectorView &y);
+  Vector operator*(const ConstVectorView &x, const Vector &y);
+  Vector operator/(const Vector &x, const ConstVectorView &y);
+  Vector operator/(const ConstVectorView &x, const Vector &y);
 
   // Operators between VectorView and ConstVectorView are defined in
   // VectorView.hpp.
-  Vector operator+(const ConstVectorView &x, const Vector &y);
-  Vector operator+(const Vector &x, const ConstVectorView &y);
-  Vector operator+(const VectorView &x, const Vector &y);
-  Vector operator+(const Vector &x, const VectorView &y);
-
-  Vector operator-(const ConstVectorView &x, const Vector &y);
-  Vector operator-(const Vector &x, const ConstVectorView &y);
-  Vector operator-(const VectorView &x, const Vector &y);
-  Vector operator-(const Vector &x, const VectorView &y);
-
-  Vector operator*(const ConstVectorView &x, const Vector &y);
-  Vector operator*(const Vector &x, const ConstVectorView &y);
-  Vector operator*(const VectorView &x, const Vector &y);
-  Vector operator*(const Vector &x, const VectorView &y);
-
-  Vector operator/(const ConstVectorView &x, const Vector &y);
-  Vector operator/(const Vector &x, const ConstVectorView &y);
-  Vector operator/(const VectorView &x, const Vector &y);
-  Vector operator/(const Vector &x, const VectorView &y);
 
   // unary transformations
   Vector operator-(const Vector &x);  // unary minus

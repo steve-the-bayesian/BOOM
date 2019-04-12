@@ -546,47 +546,98 @@ namespace BOOM {
     return ans;
   }
 
+  // Field operators for Vector - double.
+  // Addition
+  Vector operator+(const ConstVectorView &x, double a) {
+    Vector ans(x);
+    ans += a;
+    return ans;
+  }
+  Vector operator+(double a, const ConstVectorView &x) {
+    return x + a;
+  }
+  Vector operator+(double a, const Vector &x) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(const Vector &x, double a) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(double a, const VectorView &x) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(const VectorView &x, double a) {
+    return ConstVectorView(x) + a;
+  }
+      
+  // Vector-double subraction
+  Vector operator-(double a, const ConstVectorView &x) {
+    Vector ans(x.size(), a);
+    ans -= x;
+    return ans;
+  }
+  Vector operator-(const ConstVectorView &x, double a) {
+    return x + (-a);
+  }
+  Vector operator-(double a, const Vector &x) {
+    return a - ConstVectorView(x);
+  }
+  Vector operator-(const Vector &x, double a) {
+    return ConstVectorView(x) - a;
+  }
+  Vector operator-(double a, const VectorView &x) {
+    return a - ConstVectorView(x);
+  }
+  Vector operator-(const VectorView &x, double a) {
+    return ConstVectorView(x) - a;
+  }
+
+  // Vector-double multipliplication
+  Vector operator*(double a, const ConstVectorView &x) {
+    Vector ans(x);
+    ans *= a;
+    return ans;
+  }
+  Vector operator*(const ConstVectorView &x, double a) {
+    return a * x;
+  }
+  Vector operator*(double a, const VectorView &x) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(const VectorView &x, double a) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(double a, const Vector &x) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(const Vector &x, double a) {
+    return a * ConstVectorView(x);
+  }
+
+  // Vector-double division
   Vector operator/(double a, const ConstVectorView &x) {
     Vector ans(x.size(), a);
     ans /= x;
     return ans;
-  }
-  Vector operator/(double a, const Vector &x) {
-    ConstVectorView xx(x);
-    return a / xx;
-  }
-  Vector operator/(double a, const VectorView &x) {
-    ConstVectorView xx(x);
-    return a / xx;
   }
   Vector operator/(const ConstVectorView &x, double a) {
     Vector ans(x);
     ans /= a;
     return ans;
   }
+  Vector operator/(double a, const Vector &x) {
+    return a / ConstVectorView(x);
+  }
+  Vector operator/(double a, const VectorView &x) {
+    return a / ConstVectorView(x);
+  }
   Vector operator/(const VectorView &x, double a) {
     return ConstVectorView(x) / a;
   }
-
-  Vector operator-(double a, const ConstVectorView &x) {
-    Vector ans(-x);
-    ans += a;
-    return ans;
+  Vector operator/(const Vector &x, double a) {
+    return ConstVectorView(x) / a;
   }
-  Vector operator-(double a, const Vector &x) {
-    ConstVectorView xx(x);
-    return a - xx;
-  }
-  Vector operator-(double a, const VectorView &x) {
-    ConstVectorView xx(x);
-    return a - xx;
-  }
-  Vector operator-(const ConstVectorView &x, double a) {
-    Vector ans(x);
-    ans -= a;
-    return ans;
-  }
-
+  
+  
   namespace {
     template <class V1, class V2>
     Vector vector_add(const V1 &v1, const V2 &v2) {
@@ -613,57 +664,72 @@ namespace BOOM {
     }
   }  // namespace
 
-  Vector operator+(const ConstVectorView &x, const Vector &y) {
-    return vector_add(y, x);
-  }
-  Vector operator+(const Vector &x, const ConstVectorView &y) {
+  // Vector-Vector
+  Vector operator+(const Vector &x, const Vector &y) {
     return vector_add(x, y);
   }
-  Vector operator+(const VectorView &x, const Vector &y) {
-    return vector_add(y, x);
+  Vector operator-(const Vector &x, const Vector &y) {
+    return vector_subtract(x, y);
   }
+  Vector operator*(const Vector &x, const Vector &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator/(const Vector &x, const Vector &y) {
+    return vector_divide(x, y);
+  }
+
+  // Vector-VectorView
   Vector operator+(const Vector &x, const VectorView &y) {
     return vector_add(x, y);
   }
-
-  Vector operator-(const ConstVectorView &x, const Vector &y) {
-    return vector_subtract(x, y);
+  Vector operator+(const VectorView &x, const Vector &y) {
+    return vector_add(x, y);
   }
-  Vector operator-(const Vector &x, const ConstVectorView &y) {
+  Vector operator-(const Vector &x, const VectorView &y) {
     return vector_subtract(x, y);
   }
   Vector operator-(const VectorView &x, const Vector &y) {
     return vector_subtract(x, y);
   }
-  Vector operator-(const Vector &x, const VectorView &y) {
-    return vector_subtract(x, y);
-  }
-
-  Vector operator*(const ConstVectorView &x, const Vector &y) {
-    return vector_multiply(y, x);
-  }
-  Vector operator*(const Vector &x, const ConstVectorView &y) {
-    return vector_multiply(x, y);
-  }
-  Vector operator*(const VectorView &x, const Vector &y) {
-    return vector_multiply(y, x);
-  }
   Vector operator*(const Vector &x, const VectorView &y) {
     return vector_multiply(x, y);
   }
-
-  Vector operator/(const ConstVectorView &x, const Vector &y) {
-    return vector_divide(x, y);
+  Vector operator*(const VectorView &x, const Vector &y) {
+    return vector_multiply(x, y);
   }
-  Vector operator/(const Vector &x, const ConstVectorView &y) {
+  Vector operator/(const Vector &x, const VectorView &y) {
     return vector_divide(x, y);
   }
   Vector operator/(const VectorView &x, const Vector &y) {
     return vector_divide(x, y);
   }
-  Vector operator/(const Vector &x, const VectorView &y) {
+
+  // Vector-ConstVectorView
+  Vector operator+(const Vector &x, const ConstVectorView &y) {
+    return vector_add(x, y);
+  }
+  Vector operator+(const ConstVectorView &x, const Vector &y) {
+    return vector_add(x, y);
+  }
+  Vector operator-(const Vector &x, const ConstVectorView &y) {
+    return vector_subtract(x, y);
+  }
+  Vector operator-(const ConstVectorView &x, const Vector &y) {
+    return vector_subtract(x, y);
+  }
+  Vector operator*(const Vector &x, const ConstVectorView &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator*(const ConstVectorView &x, const Vector &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator/(const Vector &x, const ConstVectorView &y) {
     return vector_divide(x, y);
   }
+  Vector operator/(const ConstVectorView &x, const Vector &y) {
+    return vector_divide(x, y);
+  }
+  
 
   // unary transformations
   Vector operator-(const Vector &x) {
