@@ -25,12 +25,22 @@
 namespace BOOM {
   class StringSplitter {
    public:
-    explicit StringSplitter(const std::string &sep = " \t", bool allow_quotes = true);
+    // The default splitter uses either spaces or tabs to separate fields.
+    explicit StringSplitter(const std::string &sep = " \t",
+                            bool allow_quotes = true);
+
+    // Split the string 's' into a vector of strings.
     std::vector<std::string> operator()(const std::string &s) const;
 
    private:
+    // The set of characters used as field delimiters.
     std::string delim;
+
+    // The set of characters to interpret as quotes.
     std::string quotes;
+
+    // The splitter is delimited if it uses something other than white space to
+    // separate fields.
     bool delimited;
   };
 

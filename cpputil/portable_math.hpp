@@ -26,7 +26,7 @@
 #ifdef _MSC_VER
 #include <boost/math/special_functions/fpclassify.hpp>
 namespace std {
-  using boost::math::isnan;
+  inline bool isnan(double x) { return x != x; }
 }
 #endif  // _MSC_VER
 
@@ -35,8 +35,10 @@ namespace std {
 // provide.
 #include <boost/math/special_functions/fpclassify.hpp>
 namespace std {
+  inline bool isnan(double x) {
+    return x != x;
+  }
   using boost::math::isfinite;
-  using boost::math::isnan;
 }  // namespace std
 #endif  // __sun
 
