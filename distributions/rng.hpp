@@ -20,12 +20,9 @@
 #ifndef BOOM_DISTRIBUTIONS_RNG_HPP
 #define BOOM_DISTRIBUTIONS_RNG_HPP
 
-// #include <boost/random/ranlux.hpp>
 #include <random>
 
 namespace BOOM {
-  //  typedef boost::random::ranlux64_base_01 RNG;
-
   // A random number generator for simulating real valued U[0, 1) deviates.
   class RNG {
    public:
