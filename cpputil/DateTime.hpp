@@ -19,15 +19,13 @@
 
 #ifndef BOOM_DATE_TIME_HPP
 #define BOOM_DATE_TIME_HPP
-#include <boost/operators.hpp>
 #include <string>
 #include "cpputil/Date.hpp"
 
 namespace BOOM {
 
   // A DateTime is a point in continuous time.
-  class DateTime : public boost::totally_ordered<DateTime>,
-                   public boost::additive<DateTime, double> {
+  class DateTime {
    public:
     // Default constructor uses "now" in local time, with one second
     // resolution.
@@ -51,7 +49,18 @@ namespace BOOM {
              TimeScale timescale = day_scale);
 
     bool operator<(const DateTime &rhs) const;
-    bool operator==(const DateTime &rhs) const;
+    bool operator==(const DateTime &rhs) const {
+      return d_ == rhs.d_ && t_ == rhs.t_;
+    }
+    // The remaining operations are in terms of < and ==.
+    bool operator!=(const DateTime &rhs) const {
+      return !(*this == rhs);
+    }
+    bool operator<=(const DateTime &rhs) const {
+      return *this == rhs || *this < rhs;
+    }
+    bool operator>=(const DateTime &rhs) const {return !(*this < rhs);}
+    bool operator>(const DateTime &rhs) const {return ! (*this <= rhs);}
 
     DateTime &operator+=(double days);
     DateTime &operator-=(double days);
@@ -120,6 +129,15 @@ namespace BOOM {
 
   std::ostream &operator<<(std::ostream &out, const DateTime &dt);
 
+  inline DateTime operator+(const DateTime &time, double duration) {
+    DateTime ans(time);
+    ans += duration;
+    return ans;
+  }
+  inline DateTime operator-(const DateTime &time, double duration) {
+    return time + (-duration);
+  }
+  
 }  // namespace BOOM
 
 #endif  // BOOM_DATE_TIME_HPP

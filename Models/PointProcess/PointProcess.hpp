@@ -19,16 +19,12 @@
 #ifndef BOOM_POINT_PROCESS_DATA_HPP_
 #define BOOM_POINT_PROCESS_DATA_HPP_
 
-#include <boost/operators.hpp>
 #include "Models/DataTypes.hpp"
 #include "cpputil/DateTime.hpp"
 
 namespace BOOM {
 
-  class PointProcessEvent
-      : public Data,
-        public boost::less_than_comparable<PointProcessEvent>,
-        public boost::less_than_comparable<PointProcessEvent, DateTime> {
+  class PointProcessEvent : public Data {
    public:
     // Implicit conversion from DateTime is intentional.
     PointProcessEvent(const DateTime &time);  // NOLINT
@@ -43,7 +39,7 @@ namespace BOOM {
 
     bool operator<(const PointProcessEvent &rhs) const;
     bool operator<(const DateTime &rhs) const;
-
+    
    private:
     DateTime timestamp_;
     Ptr<Data> mark_;
