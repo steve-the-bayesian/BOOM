@@ -38,7 +38,16 @@ namespace BOOM {
     bool has_mark() const;
 
     bool operator<(const PointProcessEvent &rhs) const;
+
+    // Comparisons to DateTime.
     bool operator<(const DateTime &rhs) const;
+    bool operator==(const DateTime &rhs) const;
+    bool operator!=(const DateTime &rhs) const {return !(*this == rhs);}
+    bool operator<=(const DateTime &rhs) const {
+      return *this < rhs || *this == rhs;
+    }
+    bool operator>(const DateTime &rhs) const {return !(*this <= rhs);}
+    bool operator>=(const DateTime &rhs) const {return !(*this < rhs);}
     
    private:
     DateTime timestamp_;

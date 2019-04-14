@@ -49,9 +49,8 @@ namespace BOOM {
              TimeScale timescale = day_scale);
 
     bool operator<(const DateTime &rhs) const;
-    bool operator==(const DateTime &rhs) const {
-      return d_ == rhs.d_ && t_ == rhs.t_;
-    }
+    bool operator==(const DateTime &rhs) const;
+    
     // The remaining operations are in terms of < and ==.
     bool operator!=(const DateTime &rhs) const {
       return !(*this == rhs);
