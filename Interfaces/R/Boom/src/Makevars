@@ -4,9 +4,17 @@ all:	libboom.a
 # passed to make can be specified here.
 # -k:  keep going
 # -j 8: use 8 threads
-MAKEFLAGS=" -k -j 8 "
+MAKEFLAGS=" -j 8 "
 
-PKG_CFLAGS = -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR
+# An explanation for the cflags listed below:
+# - ADD_ is probably no longer needed.  It was necessary for communicating with
+#   Fortran, which I no longer do.
+# - R_NO_REMAP disables R macros which map things like Rf_error to error.
+# - BOOST_NO_AUTO_PTR: not sure what this does.
+# - EIGEN_WARNINGS_DISABLED: By default Eigen ignores certain warnings that it
+#   considers spurious.  This flag turns off the disabling.
+
+PKG_CFLAGS = -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR -DEIGEN_WARNINGS_DISABLED
 PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes 
 # PKG_LIBS = -lprofiler
 ############################################################################
