@@ -89,7 +89,8 @@ namespace BOOM {
       return nullptr;
     }
 
-
+    // ---------------------------------------------------------------------------
+    // A callback class that handles I/O for the variance parameters.
     class SharedLocalLevelVarianceManager
         : public StreamableVectorIoCallback {
      public:
@@ -117,7 +118,8 @@ namespace BOOM {
      private:
       SharedLocalLevelStateModel *model_;
     };
-
+    // ---------------------------------------------------------------------------
+    
     Ptr<SharedStateModel> SharedStateModelFactory::CreateSharedLocalLevel(
         SEXP r_state_component,
         MultivariateStateSpaceModelBase *model, 

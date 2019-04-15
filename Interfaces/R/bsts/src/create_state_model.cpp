@@ -47,6 +47,7 @@
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 #include "Models/StateSpace/StateModels/HierarchicalRegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
+
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/RandomWalkHolidayStateModel.hpp"

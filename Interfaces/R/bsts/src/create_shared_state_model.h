@@ -58,7 +58,6 @@ namespace BOOM {
           : StateModelFactoryBase(io_manager),
             nseries_(nseries)
       {}
-            
 
       // Adds all the state components listed in
       // r_state_specification_list to the model.
