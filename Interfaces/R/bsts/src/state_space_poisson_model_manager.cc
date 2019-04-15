@@ -47,7 +47,7 @@ namespace {
 SSPMM::StateSpacePoissonModelManager()
     : predictor_dimension_(-1) {}
 
-StateSpacePoissonModel * SSPMM::CreateObservationModel(
+StateSpacePoissonModel * SSPMM::CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

@@ -39,12 +39,43 @@
 namespace BOOM {
   namespace bsts {
 
+    TimestampInfo::TimestampInfo(SEXP r_data_list) {
+      Unpack(r_data_list);
+    }
+    
+    void TimestampInfo::Unpack(SEXP r_data_list) {
+      SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
+      timestamps_are_trivial_ = Rf_asLogical(getListElement(
+          r_timestamp_info, "timestamps.are.trivial"));
+      number_of_time_points_ = Rf_asInteger(getListElement(
+          r_timestamp_info, "number.of.time.points"));
+      if (!timestamps_are_trivial_) {
+        timestamp_mapping_ = ToIntVector(getListElement(
+            r_timestamp_info, "timestamp.mapping"));
+      }
+    }
+
+    void TimestampInfo::UnpackForecastTimestamps(SEXP r_prediction_data) {
+      SEXP r_forecast_timestamps = getListElement(
+          r_prediction_data, "timestamps");
+      if (!Rf_isNull(r_forecast_timestamps)) {
+        forecast_timestamps_ = ToIntVector(getListElement(
+            r_forecast_timestamps, "timestamp.mapping"));
+        for (int i = 1; i < forecast_timestamps_.size(); ++i) {
+          if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
+            report_error("Time stamps for multiplex predictions must be "
+                         "in increasing order.");
+          }
+        }
+      }
+    }
+
+    //==========================================================================
+    
     // The model manager will be thread safe as long as it is created from the
     // home thread.
     ModelManager::ModelManager()
-        : rng_(seed_rng(GlobalRng::rng)),
-          timestamps_are_trivial_(true),
-          number_of_time_points_(-1) {}
+        : rng_(seed_rng(GlobalRng::rng)) {}
 
     ScalarModelManager * ScalarModelManager::Create(SEXP r_bsts_object) {  
       std::string family = ToString(getListElement(r_bsts_object, "family"));
@@ -107,7 +138,7 @@ namespace BOOM {
         SEXP r_prior,
         SEXP r_options,
         RListIoManager *io_manager) {
-      ScalarStateSpaceModelBase *model = CreateObservationModel(
+      ScalarStateSpaceModelBase *model = CreateBareModel(
           r_data_list,
           r_prior,
           r_options,
@@ -240,33 +271,6 @@ namespace BOOM {
       return ans;
     }
 
-    void ModelManager::UnpackTimestampInfo(SEXP r_data_list) {
-      SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
-      timestamps_are_trivial_ = Rf_asLogical(getListElement(
-          r_timestamp_info, "timestamps.are.trivial"));
-      number_of_time_points_ = Rf_asInteger(getListElement(
-          r_timestamp_info, "number.of.time.points"));
-      if (!timestamps_are_trivial_) {
-        timestamp_mapping_ = ToIntVector(getListElement(
-            r_timestamp_info, "timestamp.mapping"));
-      }
-    }
-
-    void ModelManager::UnpackForecastTimestamps(SEXP r_prediction_data) {
-      SEXP r_forecast_timestamps = getListElement(
-          r_prediction_data, "timestamps");
-      if (!Rf_isNull(r_forecast_timestamps)) {
-        forecast_timestamps_ = ToIntVector(getListElement(
-            r_forecast_timestamps, "timestamp.mapping"));
-        for (int i = 1; i < forecast_timestamps_.size(); ++i) {
-          if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
-            report_error("Time stamps for multiplex predictions must be "
-                         "in increasing order.");
-          }
-        }
-      }
-    }
-
     //=========================================================================
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         SEXP r_mbsts_object) {
@@ -305,7 +309,7 @@ namespace BOOM {
         SEXP r_options,
         RListIoManager *io_manager) {
       
-      MultivariateStateSpaceModelBase *model = CreateObservationModel(
+      MultivariateStateSpaceModelBase *model = CreateBareModel(
           r_data_list,
           r_prior,
           r_options,

@@ -46,7 +46,7 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
   return model;
 }
 
-StateSpaceModel * StateSpaceModelManager::CreateObservationModel(
+StateSpaceModel * StateSpaceModelManager::CreateBareModel(
     SEXP r_data_list,
     SEXP r_prior,
     SEXP r_options,

@@ -84,7 +84,7 @@ namespace BOOM {
      public:
       StateSpaceStudentModelManager();
 
-      StateSpaceStudentRegressionModel * CreateObservationModel(
+      StateSpaceStudentRegressionModel * CreateBareModel(
           SEXP r_data_list,
           SEXP r_prior,
           SEXP r_options,

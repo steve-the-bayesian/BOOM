@@ -74,7 +74,7 @@ class StateSpaceModelManager
   //   r_prior:  An R object of class SdPrior.
   //   r_options:  Not used.
   //   io_manager:  The io_manager that will record the MCMC draws.
-  StateSpaceModel * CreateObservationModel(
+  StateSpaceModel * CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

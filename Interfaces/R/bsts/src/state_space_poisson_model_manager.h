@@ -30,7 +30,7 @@ class StateSpacePoissonModelManager
  public:
   StateSpacePoissonModelManager();
 
-  StateSpacePoissonModel * CreateObservationModel(
+  StateSpacePoissonModel * CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

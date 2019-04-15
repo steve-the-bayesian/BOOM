@@ -64,7 +64,7 @@ class StateSpaceRegressionModelManager
  public:
   StateSpaceRegressionModelManager();
 
-  StateSpaceRegressionModel * CreateObservationModel(
+  StateSpaceRegressionModel * CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

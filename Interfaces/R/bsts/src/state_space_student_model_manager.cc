@@ -31,7 +31,7 @@ typedef StateSpaceStudentModelManager SSSMM;
 SSSMM::StateSpaceStudentModelManager()
     : predictor_dimension_(-1) {}
 
-StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
+StateSpaceStudentRegressionModel * SSSMM::CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

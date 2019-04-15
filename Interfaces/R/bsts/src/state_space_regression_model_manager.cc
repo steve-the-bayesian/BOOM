@@ -37,7 +37,7 @@ typedef StateSpaceRegressionModelManager SSRMF;
 StateSpaceRegressionModelManager::StateSpaceRegressionModelManager()
     : predictor_dimension_(-1) {}
 
-StateSpaceRegressionModel * SSRMF::CreateObservationModel(
+StateSpaceRegressionModel * SSRMF::CreateBareModel(
     SEXP r_data_list,
     SEXP r_prior,
     SEXP r_options,
@@ -92,7 +92,7 @@ StateSpaceRegressionModel * SSRMF::CreateObservationModel(
     if (predictor_dimension_ < 0) {
       report_error("If r_data_list is not passed, you must call "
                    "SetPredictorDimension before calling "
-                   "CreateObservationModel.");
+                   "CreateBareModel.");
     }
     model_.reset(new StateSpaceRegressionModel(predictor_dimension_));
   }

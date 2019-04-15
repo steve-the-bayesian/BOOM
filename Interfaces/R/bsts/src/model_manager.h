@@ -25,6 +25,57 @@
 namespace BOOM {
   namespace bsts {
 
+    // 
+    class TimestampInfo {
+     public:
+      TimestampInfo() : trivial_(true),
+                        number_of_time_points_(-1)
+      {}
+      
+      explicit TimestampInfo(SEXP r_data_list);
+
+      void Unpack(SEXP r_data_list);
+
+      void UnpackForecastTimestamps(SEXP r_prediction_data);
+
+      void set_time_dimension(int dim) {
+        number_of_time_points = dim;
+      }
+      
+      bool trivial() const {return trivial_;}
+      int number_of_time_points() const {return number_of_time_points_;}
+
+      // The index of the time point to which observation i belongs.  The index
+      // is in C's 0-based counting system.
+      int mapping(int i) const {
+        return trivial_ ? i : timestamp_mapping_[i] - 1;
+      }
+
+      const std::vector<int> &forecast_timestamps() const {
+        return forecast_timestamps_;
+      }
+      
+     private:
+      // Timestamps are trivial if the time points are uniformly spaced, no time
+      // point is skipped, and there is a single observation per time point.
+      bool trivial_;
+
+      // The number of distinct time points.  Some of these might contain only
+      // missing data.
+      int number_of_time_points_;
+      
+      // timestamp_mapping_[i] gives the index of the time point to which
+      // observation i belongs.  The indices are stored relative to 1 (as is the
+      // custom in R).
+      std::vector<int> timestamp_mapping_;
+
+      // Indicates the number of time points past the end of the training data
+      // for each forecast data point.  For example, if the next three time
+      // points are to be forecast, this will be [1, 2, 3]. If data are not
+      // multiplexed then forecast_timestamps_ will be empty.
+      std::vector<int> forecast_timestamps_;
+    };
+
     class ScalarModelManager;
     
     //===========================================================================
@@ -86,33 +137,35 @@ namespace BOOM {
       // information was provided by the user, or (b) each time stamp contains
       // one observation and there are no gaps in the  observation series.
       bool TimestampsAreTrivial() const {
-        return timestamps_are_trivial_;
+        return timestamp_info_.trivial();
       }
 
       // Because of missing data, or multiplexed observations, the number of
       // time points might be different than the sample size.
       int NumberOfTimePoints() const {
-        return number_of_time_points_;
+        return timestamp_info_.number_of_time_points();
       }
 
-      // Returns the timestamp number (index) of observation i.  Converts from
-      // R's unit based indexing system to C's 0-based system.
+      // Returns the timestamp number (index) of observation i.  The index is
+      // given in C's 0-based counting system.
       int TimestampMapping(int i) const {
-        return timestamps_are_trivial_ ? i : timestamp_mapping_[i] - 1;
+        return timestamp_info_.mapping(i);
+            .trivial() ? i : timestamp_info_.mapping(i) - 1;
       }
 
       RNG & rng() {return rng_;}
 
       const std::vector<int> &ForecastTimestamps() {
-        return forecast_timestamps_;
+        return timestamp_info_.forecast_timestamps();
       }
 
      protected:
-      
       // Checks to see if r_data_list has a field named timestamp.info, and use
       // it to populate the follwoing fields: number_of_time_points_,
       // timestamps_are_trivial_, and timestamp_mapping_.
-      void UnpackTimestampInfo(SEXP r_data_list);
+      void UnpackTimestampInfo(SEXP r_data_list) {
+        timestamp_info_.Unpack(r_data_list);
+      }
 
       // Checks to see if r_prediction_data (which is an R list) contains an
       // element with the name 'timestamps', which is a vector of integers
@@ -122,7 +175,9 @@ namespace BOOM {
       // Timestamps must be non-decreasing, and their length must be the same
       // dimension as the number of rows in the covariate matrix used for
       // predictions.
-      void UnpackForecastTimestamps(SEXP r_prediction_data);
+      void UnpackForecastTimestamps(SEXP r_prediction_data) {
+        timestamp_info_.UnpackForecastTimestamps(r_prediction_data);
+      }
 
       // Add data to the model object managed by the child classes.  The data
       // can come either from a previous bsts object, or from an R list
@@ -145,23 +200,7 @@ namespace BOOM {
       RNG rng_;
       Vector final_state_;
 
-      //----------------------------------------------------------------------
-      // Time stamps are trivial the timestamp information was NULL, or if there
-      // is at most one observation at each time point.
-      bool timestamps_are_trivial_;
-
-      // The number of distinct time points.
-      int number_of_time_points_;
-
-      // Indicates the time point (in R's 1-based counting system) to which each
-      // observation belongs.
-      std::vector<int> timestamp_mapping_;
-
-      // Indicates the number of time points past the end of the training data
-      // for each forecast data point.  If data are not multiplexed then
-      // forecast_timestamps_ will be empty.
-      std::vector<int> forecast_timestamps_;
-
+      TimestampInfo timestamp_info_;
     };
 
     //===========================================================================
@@ -280,7 +319,7 @@ namespace BOOM {
       //   A pointer to the created model.  The pointer is owned by a Ptr in the
       //   the child class, so working with the raw pointer privately is
       //   exception safe.
-      virtual ScalarStateSpaceModelBase * CreateObservationModel(
+      virtual ScalarStateSpaceModelBase * CreateBareModel(
           SEXP r_data_list,
           SEXP r_prior,
           SEXP r_options,
@@ -295,7 +334,7 @@ namespace BOOM {
 
     //=========================================================================
     // A base class for model managers handling models describing multiple time
-    // series.
+    // series.  The number of time series is assumed known and fixed.
     class MultivariateModelManagerBase : public ModelManager {
      public:
 
@@ -328,14 +367,17 @@ namespace BOOM {
       //     'predictors' will be NULL.  For logit or Poisson models an
       //     additional component should be present giving the number of trials
       //     or the exposure.
-      //   r_state_specification: The R list created by the state configuration
-      //     functions (e.g. AddLocalLinearTrend, AddSeasonal, etc).
+      //   r_shared_state_specification: An R list specifying the state models
+      //     shared across multiple series.  
+      //   r_series_state_specification: A list of lists, containing the state
+      //     specification for the series-specific portion of state.  The outer
+      //     list may be NULL (R_NilValue), to indicate that no series-specic
+      //     state component exists.  However, if non-NULL it must have length
+      //     equal to the number of series being modeled.
       //   r_prior: The prior distribution for the observation model.  If the
       //     model is a regression model (determined by whether r_data_list
-      //     contains a non-NULL 'predictors' element) then this must be some
-      //     form of spike and slab prior.  Otherwise it is a prior for the
-      //     error in the observation equation.  For single parameter error
-      //     distributions like binomial or Poisson this can be NULL.
+      //     contains a non-NULL 'predictors' element) then this must be a list
+      //     of spike and slab priors.  Otherwise it must be a list of SdPriors.
       //   r_options: Model or family specific options such as the technique to
       //     use for model averaging (ODA vs SVSS).
       //   io_manager: The io_manager responsible for writing MCMC output to an
@@ -348,12 +390,13 @@ namespace BOOM {
       // Side Effects:
       //   The returned pointer is also held in a smart pointer owned by
       //   the child class.
-      MultivariateStateSpaceModelBase * CreateModel(
+      virtual MultivariateStateSpaceModelBase * CreateModel(
           SEXP r_data_list,
-          SEXP r_state_specification,
+          SEXP r_shared_state_specification,
+          SEXP r_series_state_specification,
           SEXP r_prior,
           SEXP r_options,
-          RListIoManager *io_manager);
+          RListIoManager *io_manager) = 0;
 
       // Returns a set of draws from the posterior predictive distribution of
       // the multivariate time series.
@@ -395,7 +438,7 @@ namespace BOOM {
       //   A pointer to the created model.  The pointer is owned by a Ptr in the
       //   the child class, so working with the raw pointer privately is
       //   exception safe.
-      virtual MultivariateStateSpaceModelBase * CreateObservationModel(
+      virtual MultivariateStateSpaceModelBase * CreateBareModel(
           SEXP r_data_list,
           SEXP r_prior,
           SEXP r_options,
