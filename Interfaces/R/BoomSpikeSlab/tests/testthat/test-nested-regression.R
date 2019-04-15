@@ -20,6 +20,8 @@ library(testthat)
 seed <- 8675309
 set.seed(seed)
 
+cat("test-nestedregression\n")
+
 SimulateNestedRegressionData <- function() {
   beta.hyperprior.mean <- c(8, 6, 7, 5)
   xdim <- length(beta.hyperprior.mean)

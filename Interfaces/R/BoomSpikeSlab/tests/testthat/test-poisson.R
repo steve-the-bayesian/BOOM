@@ -24,6 +24,9 @@ test_that("Poisson without model selection matches MLE", {
 
 seed <- as.integer(8675309)
 set.seed(seed)
+
+cat("test-poisson\n")
+
 n <- 100
   number.of.variables <- 4
   design <- matrix(rnorm(n * number.of.variables), nrow = n)

@@ -16,6 +16,8 @@
 library(BoomSpikeSlab)
 library(testthat)
 
+cat("test-mlm\n")
+
 rmulti <- function (prob) {
   ## Sample from heterogeneous multinomial distributions.
     if (is.vector(prob)) {

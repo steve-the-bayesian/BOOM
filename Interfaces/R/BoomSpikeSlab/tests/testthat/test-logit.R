@@ -18,6 +18,8 @@ library(BoomSpikeSlab)
 library(testthat)
 library(MASS)
 
+cat("test-logit\n")
+
 test_that("Calls with the same random seed return the same draws", {
   n <- 100
   niter <- 1000

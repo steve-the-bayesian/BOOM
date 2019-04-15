@@ -7,6 +7,8 @@ ngood <- 2
 niter <- 100
 sigma <- .8
 
+cat("test-repeatability\n")
+
 x <- cbind(1, matrix(rnorm(nobs * (p - 1)), nrow = nobs))
 beta <- c(rnorm(ngood), rep(0, p - ngood))
 y <- rnorm(nobs, x %*% beta, sigma)

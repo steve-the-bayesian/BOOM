@@ -19,6 +19,8 @@ library(testthat)
 require(MASS)
 set.seed(31417)
 
+cat("test-probit\n")
+
 test_that("random seed gives repeatability", {
   ## Ensure that calls with the same random seed return the same
   ## draws.

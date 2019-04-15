@@ -20,6 +20,9 @@ require(testthat)
 require(mlbench)
 seed <- 8675309
 set.seed(seed)
+
+cat("test-nnet\n")
+
 data(BostonHousing)
 hidden.layers <- list(
   HiddenLayer(10, expected.model.size = Inf))
