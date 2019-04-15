@@ -160,8 +160,7 @@ namespace BOOM {
       const std::string &name,
       double *streaming_buffer)
       : RealValuedRListIoElement(name),
-        streaming_buffer_(streaming_buffer),
-        vector_view_(0, 0, 0)
+        streaming_buffer_(streaming_buffer)
   {
     if (callback) {
       callback_.reset(callback);
@@ -785,6 +784,7 @@ namespace BOOM {
     return callback_->ncol();
   }
 
+  //======================================================================  
   GenericMatrixListElement::GenericMatrixListElement(
       StreamableMatrixIoCallback *callback,
       const std::string &name)
