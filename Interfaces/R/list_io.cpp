@@ -80,25 +80,18 @@ namespace BOOM {
     position_ = 0;
   }
 
-  int RListIoElement::next_position() {
-    return position_++;
-  }
-
   const std::string &RListIoElement::name()const {return name_;}
 
   void RListIoElement::advance(int n) {position_ += n;}
+
+  int RListIoElement::next_position() {
+    return position_++;
+  }
 
   //======================================================================
   RealValuedRListIoElement::RealValuedRListIoElement(const std::string &name)
       : RListIoElement(name)
   {}
-
-  void RealValuedRListIoElement::StoreBuffer(SEXP buf) {
-    data_ = REAL(buf);
-    RListIoElement::StoreBuffer(buf);
-  }
-
-  double * RealValuedRListIoElement::data() { return data_; }
 
   SEXP RealValuedRListIoElement::prepare_to_write(int niter) {
     RMemoryProtector protector;
@@ -112,6 +105,29 @@ namespace BOOM {
     data_ = REAL(rbuffer());
   }
 
+  void RealValuedRListIoElement::StoreBuffer(SEXP buf) {
+    data_ = REAL(buf);
+    RListIoElement::StoreBuffer(buf);
+  }
+
+  //======================================================================
+  SEXP VectorValuedRListIoElement::prepare_to_write(int niter) {
+    RMemoryProtector protector;
+    SEXP buffer;
+    protector.protect(buffer = SetColnames(Rf_allocMatrix(
+        REALSXP, niter, dim()), element_names_));
+    StoreBuffer(buffer);
+    matrix_view_.reset(SubMatrix(data(), niter, dim()));
+    return buffer;
+  }
+
+  void VectorValuedRListIoElement::prepare_to_stream(SEXP object) {
+    RealValuedRListIoElement::prepare_to_stream(object);
+    matrix_view_.reset(SubMatrix(data(),
+                                 Rf_nrows(rbuffer()),
+                                 Rf_ncols(rbuffer())));
+  }
+  
   //======================================================================
   ListValuedRListIoElement::ListValuedRListIoElement(const std::string &name)
       : RListIoElement(name)
@@ -124,42 +140,6 @@ namespace BOOM {
     return buffer;
   }
 
-  //======================================================================
-  PartialSpdListElement::PartialSpdListElement(const Ptr<SpdParams> &prm,
-                                               const std::string &name,
-                                               int which, bool
-                                               report_sd)
-      : RealValuedRListIoElement(name),
-        prm_(prm),
-        which_(which),
-        report_sd_(report_sd) {}
-
-  void PartialSpdListElement::write() {
-    CheckSize();
-    double variance = prm_->var()(which_, which_);
-    data()[next_position()] = report_sd_ ? sqrt(variance) : variance;
-  }
-
-  void PartialSpdListElement::stream() {
-    CheckSize();
-    SpdMatrix Sigma = prm_->var();
-    double v = data()[next_position()];
-    if (report_sd_) v *= v;
-    Sigma(which_, which_) = v;
-    prm_->set_var(Sigma);
-  }
-
-  void PartialSpdListElement::CheckSize() {
-    if (nrow(prm_->var()) <= which_) {
-      std::ostringstream err;
-      err << "Sizes do not match in PartialSpdListElement..."
-          << endl
-          << "Matrix has " << nrow(prm_->var()) << " rows, but "
-          << "you're trying to access row " << which_
-          << endl;
-      report_error(err.str().c_str());
-    }
-  }
   //======================================================================
   UnivariateListElement::UnivariateListElement(const Ptr<UnivParams> &prm,
                                                const std::string &name)
@@ -174,6 +154,30 @@ namespace BOOM {
   void UnivariateListElement::stream() {
     prm_->set(data()[next_position()]);
   }
+  //======================================================================
+  NativeUnivariateListElement::NativeUnivariateListElement(
+      ScalarIoCallback *callback,
+      const std::string &name,
+      double *streaming_buffer)
+      : RealValuedRListIoElement(name),
+        streaming_buffer_(streaming_buffer),
+        vector_view_(0, 0, 0)
+  {
+    if (callback) {
+      callback_.reset(callback);
+    }
+  }
+
+  void NativeUnivariateListElement::write() {
+    data()[next_position()] = callback_->get_value();
+  }
+
+  void NativeUnivariateListElement::stream() {
+    if(streaming_buffer_){
+      *streaming_buffer_ = data()[next_position()];
+    }
+  }
+
   //======================================================================
   StandardDeviationListElement::StandardDeviationListElement(
       const Ptr<UnivParams> &variance, const std::string &name)
@@ -191,97 +195,30 @@ namespace BOOM {
   }
 
   //======================================================================
-  NativeUnivariateListElement::NativeUnivariateListElement(
-      ScalarIoCallback *callback,
-      const std::string &name,
-      double *streaming_buffer)
-      : RealValuedRListIoElement(name),
-        streaming_buffer_(streaming_buffer),
-        vector_view_(0, 0, 0)
-  {
-    if (callback) {
-      callback_.reset(callback);
-    }
-  }
-
-  SEXP NativeUnivariateListElement::prepare_to_write(int niter) {
-    if (!callback_) {
-      report_error(
-          "NULL callback in NativeUnivariateListElement::prepare_to_write");
-    }
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_allocVector(REALSXP, niter));
-    StoreBuffer(buffer);
-    vector_view_.reset(data(), niter, 1);
-    return buffer;
-  }
-
-  void NativeUnivariateListElement::prepare_to_stream(SEXP object) {
-    if (!streaming_buffer_) return;
-    RealValuedRListIoElement::prepare_to_stream(object);
-    vector_view_.reset(data(), Rf_length(rbuffer()), 1);
-  }
-
-  void NativeUnivariateListElement::write() {
-    vector_view_[next_position()] = callback_->get_value();
-  }
-
-  void NativeUnivariateListElement::stream() {
-    if(streaming_buffer_){
-      *streaming_buffer_ = vector_view_[next_position()];
-    }
-  }
-
-  //======================================================================
   VectorListElement::VectorListElement(
       const Ptr<VectorParams> &prm,
       const std::string &name,
       const std::vector<std::string> &element_names)
-      : RealValuedRListIoElement(name),
-        prm_(prm),
-        matrix_view_(0, 0, 0),
-        element_names_(element_names)
+      : VectorValuedRListIoElement(name, element_names),
+        prm_(prm)
   {}
-
-  SEXP VectorListElement::prepare_to_write(int niter) {
-    // The call to size should not return the minimial size.  It
-    // should return the full size, because that's what we're going to
-    // write to the R list.
-    int dim = prm_->size(false);
-    RMemoryProtector protector;
-    SEXP buffer;
-    protector.protect(
-        buffer =
-        SetColnames(Rf_allocMatrix(REALSXP, niter, dim),
-                    element_names_));
-    StoreBuffer(buffer);
-    matrix_view_.reset(SubMatrix(data(), niter, dim));
-    return buffer;
-  }
-
-  void VectorListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    int nrow = Rf_nrows(rbuffer());
-    int ncol = Rf_ncols(rbuffer());
-    matrix_view_.reset(SubMatrix(data(), nrow, ncol));
-  }
 
   void VectorListElement::write() {
     CheckSize();
-    matrix_view_.row(next_position()) = prm_->value();
+    matrix_view().row(next_position()) = prm_->value();
   }
 
   void VectorListElement::stream() {
     CheckSize();
-    prm_->set(matrix_view_.row(next_position()));
+    prm_->set(matrix_view().row(next_position()));
   }
 
   void VectorListElement::CheckSize() {
-    if (matrix_view_.ncol() != prm_->size(false)) {
+    if (matrix_view().ncol() != prm_->size(false)) {
       std::ostringstream err;
       err << "sizes do not match in VectorListElement::stream/write..."
           << endl
-          << "buffer has space for " << matrix_view_.ncol() << " elements, "
+          << "buffer has space for " << matrix_view().ncol() << " elements, "
           << " but you're trying to access " << prm_->size(false)
           ;
       report_error(err.str().c_str());
@@ -306,50 +243,123 @@ namespace BOOM {
   //======================================================================
   SdVectorListElement::SdVectorListElement(const Ptr<VectorParams> &prm,
                                            const std::string &name)
-      : RealValuedRListIoElement(name),
-        prm_(prm),
-        matrix_view_(0, 0, 0)
+      : VectorValuedRListIoElement(name),
+        prm_(prm)
   {}
-
-  SEXP SdVectorListElement::prepare_to_write(int niter) {
-    int dim = prm_->size();
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_allocMatrix(REALSXP, niter, dim));
-    StoreBuffer(buffer);
-    matrix_view_.reset(SubMatrix(data(), niter, dim));
-    return buffer;
-  }
-
-  void SdVectorListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    int nrow = Rf_nrows(rbuffer());
-    int ncol = Rf_ncols(rbuffer());
-    matrix_view_.reset(SubMatrix(data(), nrow, ncol));
-  }
 
   void SdVectorListElement::write() {
     CheckSize();
-    matrix_view_.row(next_position()) = sqrt(prm_->value());
+    matrix_view().row(next_position()) = sqrt(prm_->value());
   }
 
   void SdVectorListElement::stream() {
     CheckSize();
-    Vector sd = matrix_view_.row(next_position());
+    Vector sd = matrix_view().row(next_position());
     prm_->set(sd * sd);
   }
 
   void SdVectorListElement::CheckSize() {
-    if (matrix_view_.ncol() != prm_->size(false)) {
+    if (matrix_view().ncol() != prm_->size(false)) {
       std::ostringstream err;
       err << "sizes do not match in SdVectorListElement::stream/write..."
           << endl
-          << "buffer has space for " << matrix_view_.ncol() << " elements, "
+          << "buffer has space for " << matrix_view().ncol() << " elements, "
           << " but you're trying to access " << prm_->size(false)
           ;
       report_error(err.str().c_str());
     }
   }
 
+  //======================================================================
+  UnivariateCollectionListElement::UnivariateCollectionListElement(
+      const std::vector<Ptr<UnivParams>> &parameters,
+      const std::string &name)
+      : VectorValuedRListIoElement(name),
+        parameters_(parameters)
+  {}
+
+  void UnivariateCollectionListElement::write() {
+    CheckSize();
+    int row = next_position();
+    for (int i = 0; i < parameters_.size(); ++i) {
+      matrix_view()(row, i) = parameters_[i]->value();
+    }
+  }
+
+  void UnivariateCollectionListElement::stream() {
+    CheckSize();
+    int row = next_position();
+    for (int i = 0; i < parameters_.size(); ++i) {
+      parameters_[i]->set(matrix_view()(row, i));
+    }
+  }
+
+  void UnivariateCollectionListElement::CheckSize() {
+    if (matrix_view().ncol() != parameters_.size()) {
+      std::ostringstream err;
+      err << "The R buffer has " << matrix_view().ncol()
+          << " columns, but space is needed for "
+          << parameters_.size() << " parameters.";
+      report_error(err.str());
+    }
+  }
+
+  //======================================================================
+  void SdCollectionListElement::write() {
+    CheckSize();
+    int row = next_position();
+    for (int i = 0; i < parameters().size(); ++i) {
+      matrix_view()(row, i) = sqrt(parameters()[i]->value());
+    }
+  }
+
+  void SdCollectionListElement::stream() {
+    CheckSize();
+    int row = next_position();
+    for (int i = 0; i < parameters().size(); ++i) {
+      parameters()[i]->set(square(matrix_view()(row, i)));
+    }
+  }
+
+  //======================================================================
+  NativeVectorListElement::NativeVectorListElement(VectorIoCallback *callback,
+                                                   const std::string &name,
+                                                   Vector *streaming_buffer)
+      : VectorValuedRListIoElement(name),
+        streaming_buffer_(streaming_buffer),
+        check_buffer_(true)
+  {
+    // Protect against a NULL callback.
+    if (callback) {
+      callback_.reset(callback);
+    }
+  }
+
+  void NativeVectorListElement::write() {
+    next_row() = callback_->get_vector();
+  }
+
+  void NativeVectorListElement::stream() {
+    if (check_buffer_ && !streaming_buffer_) return;
+    *streaming_buffer_ = next_row();
+  }
+
+  VectorView NativeVectorListElement::next_row() {
+    return matrix_view().row(next_position());
+  }
+
+  //===========================================================================  
+  GenericVectorListElement::GenericVectorListElement(
+      StreamableVectorIoCallback *callback,
+      const std::string &name)
+      : NativeVectorListElement(callback, name, nullptr)
+  {
+    if (callback) {
+      callback_.reset(callback);
+    } else {
+      callback_.reset();
+    }
+  }
 
   //======================================================================
   const std::vector<std::string> & MatrixListElementBase::row_names()const{
@@ -399,7 +409,6 @@ namespace BOOM {
   }
 
   //======================================================================
-
   MatrixListElement::MatrixListElement(const Ptr<MatrixParams> &m,
                                        const std::string &param_name)
       : MatrixListElementBase(param_name),
@@ -593,72 +602,41 @@ namespace BOOM {
     }
   }
   //======================================================================
-  UnivariateCollectionListElement::UnivariateCollectionListElement(
-      const std::vector<Ptr<UnivParams>> &parameters,
-      const std::string &name)
+  PartialSpdListElement::PartialSpdListElement(const Ptr<SpdParams> &prm,
+                                               const std::string &name,
+                                               int which, bool
+                                               report_sd)
       : RealValuedRListIoElement(name),
-        parameters_(parameters)
-  {}
+        prm_(prm),
+        which_(which),
+        report_sd_(report_sd) {}
 
-  SEXP UnivariateCollectionListElement::prepare_to_write(int niter) {
-    RMemoryProtector protector;
-    int dim = parameters_.size();
-    SEXP buffer = protector.protect(Rf_allocMatrix(REALSXP, niter, dim));
-    StoreBuffer(buffer);
-    matrix_view_.reset(SubMatrix(data(), niter, dim));
-    return buffer;
-  }
-
-  void UnivariateCollectionListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    int nrow = Rf_nrows(rbuffer());
-    int ncol = Rf_ncols(rbuffer());
-    matrix_view_.reset(SubMatrix(data(), nrow, ncol));
-  }
-
-  void UnivariateCollectionListElement::write() {
+  void PartialSpdListElement::write() {
     CheckSize();
-    int row = next_position();
-    for (int i = 0; i < parameters_.size(); ++i) {
-      matrix_view_(row, i) = parameters_[i]->value();
-    }
+    double variance = prm_->var()(which_, which_);
+    data()[next_position()] = report_sd_ ? sqrt(variance) : variance;
   }
 
-  void UnivariateCollectionListElement::stream() {
+  void PartialSpdListElement::stream() {
     CheckSize();
-    int row = next_position();
-    for (int i = 0; i < parameters_.size(); ++i) {
-      parameters_[i]->set(matrix_view_(row, i));
-    }
+    SpdMatrix Sigma = prm_->var();
+    double v = data()[next_position()];
+    if (report_sd_) v *= v;
+    Sigma(which_, which_) = v;
+    prm_->set_var(Sigma);
   }
 
-  void UnivariateCollectionListElement::CheckSize() {
-    if (matrix_view_.ncol() != parameters_.size()) {
+  void PartialSpdListElement::CheckSize() {
+    if (nrow(prm_->var()) <= which_) {
       std::ostringstream err;
-      err << "The R buffer has " << matrix_view_.ncol()
-          << " columns, but space is needed for "
-          << parameters_.size() << " parameters.";
-      report_error(err.str());
+      err << "Sizes do not match in PartialSpdListElement..."
+          << endl
+          << "Matrix has " << nrow(prm_->var()) << " rows, but "
+          << "you're trying to access row " << which_
+          << endl;
+      report_error(err.str().c_str());
     }
   }
-
-  //======================================================================
-  void SdCollectionListElement::write() {
-    CheckSize();
-    int row = next_position();
-    for (int i = 0; i < parameters().size(); ++i) {
-      matrix_view()(row, i) = sqrt(parameters()[i]->value());
-    }
-  }
-
-  void SdCollectionListElement::stream() {
-    CheckSize();
-    int row = next_position();
-    for (int i = 0; i < parameters().size(); ++i) {
-      parameters()[i]->set(square(matrix_view()(row, i)));
-    }
-  }
-
   //======================================================================
 
   SpdListElement::SpdListElement(const Ptr<SpdParams> &m,
@@ -733,72 +711,6 @@ namespace BOOM {
           << "dimensions of parameter: [" << value.nrow() << ", " << value.ncol()
           << "].";
       report_error(err.str().c_str());
-    }
-  }
-
-  //======================================================================
-
-  NativeVectorListElement::NativeVectorListElement(VectorIoCallback *callback,
-                                                   const std::string &name,
-                                                   Vector *vector_buffer)
-      : RealValuedRListIoElement(name),
-        streaming_buffer_(vector_buffer),
-        matrix_view_(0, 0, 0),
-        check_buffer_(true)
-  {
-    // Protect against a NULL callback.
-    if (callback) {
-      callback_.reset(callback);
-    }
-  }
-
-  SEXP NativeVectorListElement::prepare_to_write(int niter) {
-    if (!callback_) {
-      report_error(
-          "NULL callback in NativeVectorListElement::prepare_to_write");
-    }
-    int dim = callback_->dim();
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_allocMatrix(REALSXP, niter, dim));
-    StoreBuffer(buffer);
-    matrix_view_.reset(SubMatrix(data(), niter, dim));
-    if (matrix_view_.ncol() != callback_->dim()) {
-      report_error(
-          "wrong size buffer set up for NativeVectorListElement::write");
-    }
-    return buffer;
-  }
-
-  void NativeVectorListElement::prepare_to_stream(SEXP object) {
-    if (check_buffer_ && !streaming_buffer_) return;
-    RealValuedRListIoElement::prepare_to_stream(object);
-    int nrow = Rf_nrows(rbuffer());
-    int ncol = Rf_ncols(rbuffer());
-    matrix_view_.reset(SubMatrix(data(), nrow, ncol));
-  }
-
-  VectorView NativeVectorListElement::next_row() {
-    return matrix_view_.row(next_position());
-  }
-  
-  void NativeVectorListElement::write() {
-    next_row() = callback_->get_vector();
-  }
-
-  void NativeVectorListElement::stream() {
-    if (check_buffer_ && !streaming_buffer_) return;
-    *streaming_buffer_ = next_row();
-  }
-
-  GenericVectorListElement::GenericVectorListElement(
-      StreamableVectorIoCallback *callback,
-      const std::string &name)
-      : NativeVectorListElement(callback, name, nullptr)
-  {
-    if (callback) {
-      callback_.reset(callback);
-    } else {
-      callback_.reset();
     }
   }
 
