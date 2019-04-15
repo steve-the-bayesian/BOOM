@@ -15,7 +15,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "utils.h"
-#include "R_ext/Arith.h"  // for R_IsNA
 
 namespace BOOM {
   namespace bsts {
@@ -57,7 +56,7 @@ namespace BOOM {
       std::vector<bool> ans(n);
       double *data = REAL(Rf_coerceVector(r_vector, REALSXP));
       for (int i = 0; i < n; ++i) {
-        ans[i] = !R_IsNA(data[i]);
+        ans[i] = !IsNA(data[i]);
       }
       return ans;
     }
@@ -66,7 +65,7 @@ namespace BOOM {
       SelectorMatrix ans(matrix.nrow(), matrix.ncol(), true);
       for (int i = 0; i < matrix.nrow(); ++i) {
         for (int j = 0; j < matrix.ncol(); ++j) {
-          if (R_IsNA(matrix(i, j))) {
+          if (IsNA(matrix(i, j))) {
             ans.drop(i, j);
           }
         }
