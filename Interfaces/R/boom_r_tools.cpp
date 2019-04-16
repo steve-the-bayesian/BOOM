@@ -246,6 +246,37 @@ namespace BOOM {
     return r_matrix;
   }
 
+  SEXP SetDimnames(SEXP r_array,
+                   const std::vector<std::vector<std::string>> &dimnames) {
+    if (dimnames.empty()) return r_array;
+    std::vector<int> dim = GetArrayDimensions(r_array);
+    if (dim.size() != dimnames.size()) {
+      std::ostringstream err;
+      err << "dimnames has length " << dimnames.size()
+          << " which does not match the number of dimension in the array: " 
+          << dim.size();
+      report_error(err.str());
+    }
+    RMemoryProtector protector;
+    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, dim.size()));
+    for (int i = 0; i < dim.size(); ++i) {
+      if (dimnames[i].empty()) {
+        SET_VECTOR_ELT(r_dimnames, i, R_NilValue);
+      } else {
+        if (dimnames[i].size() != dim[i]) {
+          std::ostringstream err;
+          err << "Wrong number of names (" << dimnames[i].size()
+              << ") in dimension " << i << " of the array, which has extent "
+              << dim[i] <<".";
+          report_error(err.str());
+        }
+        SET_VECTOR_ELT(r_dimnames, i, CharacterVector(dimnames[i]));
+      }
+    }
+    Rf_dimnamesgets(r_array, r_dimnames);
+    return r_array;
+  }
+  
   std::vector<int> GetArrayDimensions(SEXP array) {
     if (!Rf_isArray(array)) {
       ReportBadClass("GetArrayDimensions called on a non-array object.",
