@@ -213,6 +213,96 @@ namespace BOOM {
   };
 
   //---------------------------------------------------------------------------
+  class MatrixValuedRListIoElement : public RealValuedRListIoElement {
+   public:
+    MatrixValuedRListIoElement(
+        const std::string &name,
+        const std::vector<std::string> &row_names = std::vector<std::string>(),
+        const std::vector<std::string> &col_names = std::vector<std::string>())
+        : RealValuedRListIoElement(name),
+          array_view_(nullptr, std::vector<int>{0, 0, 0}),
+          row_names_(row_names),
+          col_names_(col_names)
+    {}
+
+    // The R object is an array with dimensions [ndraws x nrow x ncol].
+    virtual int nrow() const = 0;
+    virtual int ncol() const = 0;
+
+    SEXP prepare_to_write(int niter) override;
+    void prepare_to_stream(SEXP object) override;
+
+    void set_row_names(const std::vector<std::string> &names) {
+      row_names_ = names;
+    }
+
+    void set_col_names(const std::vector<std::string> &names) {
+      col_names_ = names;
+    }
+    
+   protected:
+    ArrayView &array_view() {return array_view_;}
+    
+   private:
+    void set_buffer_dimnames(SEXP buffer);
+
+    // A three dimensional view of the data in the stored R object.
+    ArrayView array_view_;
+
+    // The first array dimension is MCMC iteration, which needs no names.
+    std::vector<std::string> row_names_;
+    std::vector<std::string> col_names_;
+  };
+
+  //---------------------------------------------------------------------------
+  class ArrayValuedRListIoElement : public RealValuedRListIoElement {
+   public:
+    // Args:
+    //   dim: The dimension of the array.  Do not include MCMC iterations.
+    //     I.e. if storing draws of RxC matrices, dimension 0 is R and dimension
+    //     1 is C.
+    //   name:  The name of the entry in the model object.
+    ArrayValuedRListIoElement(const std::vector<int> &dim,
+                              const std::string &name);
+
+    SEXP prepare_to_write(int niter) override;
+    void prepare_to_stream(SEXP object) override;
+
+    // The dimensions of a single entry in the array.  The number of MCMC
+    // iterations must be prepended to get the actual dimensions of the array
+    // stored in the R object. I.e. if the object is storing draws of RxC
+    // matrices, dimension 0 is R and dimension 1 is C.
+    const std::vector<int> &dim() const { return dim_; }
+
+    // Args:
+    //   dim: The Count dimensions from zero.  The dimensions in question are of
+    //     a single random variable, so the dimension corresponding to mcmc
+    //     iterations should not be counted.  To make it painfully clear, if the
+    //     object is storing draws of RxC matrices, dimension 0 is R and
+    //     dimension 1 is C.
+    //   names:  The names of the level of that dimension.
+    // Effects:
+    //   The R-array managed by the 
+    void set_dimnames(int dim, const std::vector<std::string> &names);
+
+   protected:
+    ArrayView & array_view() {return array_view_;}
+    
+   private:
+    // The dimension of a single entry in the array.  It does not include the
+    // leading dimension for mcmc iterations.
+    std::vector<int> dim_;
+
+    // A view into the stored array object.
+    ArrayView array_view_;
+
+    // This vector may be empty, or any of its elements may be empty.  Otherwise
+    // its length must match that of dims_, and any non-empty element
+    // dimnames_[i] must have length matching dims_[i].  
+    std::vector<std::vector<std::string>> dimnames_;
+  };
+  
+  //---------------------------------------------------------------------------
   // Handles write and stream setup for quantities stored as a list in the model
   // object.
   class ListValuedRListIoElement : public RListIoElement {
@@ -372,9 +462,8 @@ namespace BOOM {
   class SdCollectionListElement
       : public UnivariateCollectionListElement {
    public:
-    SdCollectionListElement(
-        const std::vector<Ptr<UnivParams>> &variances,
-        const std::string &param_name)
+    SdCollectionListElement(const std::vector<Ptr<UnivParams>> &variances,
+                            const std::string &param_name)
         : UnivariateCollectionListElement(variances, param_name) {}
     void write() override;
     void stream() override;
@@ -449,61 +538,40 @@ namespace BOOM {
   };
   
   //---------------------------------------------------------------------------
-  // A mix-in class for handling row and column names for list elements that
-  // store MCMC draws of matrices.
-  class MatrixListElementBase : public RealValuedRListIoElement {
-   public:
-    explicit MatrixListElementBase(const std::string &param_name)
-        : RealValuedRListIoElement(param_name) {}
-    virtual int nrow() const = 0;
-    virtual int ncol() const = 0;
-    const std::vector<std::string> & row_names() const;
-    const std::vector<std::string> & col_names() const;
-    void set_row_names(const std::vector<std::string> &row_names);
-    void set_col_names(const std::vector<std::string> &row_names);
-
-   protected:
-    // Children of this class should call set_buffer_dimnames(buffer)
-    // when they prepare_to_write().
-    void set_buffer_dimnames(SEXP buffer);
-
-   private:
-    std::vector<std::string> row_names_;
-    std::vector<std::string> col_names_;
-  };
-
-  //---------------------------------------------------------------------------
   // For managing MatrixParams, stored in an R 3-way array.
-  class MatrixListElement : public MatrixListElementBase {
+  class MatrixListElement : public MatrixValuedRListIoElement {
    public:
-    MatrixListElement(const Ptr<MatrixParams> &m,
-                      const std::string &param_name);
+    MatrixListElement(
+        const Ptr<MatrixParams> &m,
+        const std::string &param_name,
+        const std::vector<std::string> &row_names = std::vector<std::string>(),
+        const std::vector<std::string> &col_names = std::vector<std::string>());
 
-    // Allocate an array to hold the matrix draws.
-    SEXP prepare_to_write(int niter) override;
-    void prepare_to_stream(SEXP object) override;
     void write() override;
     void stream() override;
-
     int nrow() const override;
     int ncol() const override;
 
    private:
     void CheckSize();
     Ptr<MatrixParams> prm_;
-    ArrayView array_view_;
   };
 
   //---------------------------------------------------------------------------
   // For managing vectors of coefficients in a hierarchical model.
   class HierarchicalVectorListElement
-      : public RealValuedRListIoElement {
+      : public MatrixValuedRListIoElement {
    public:
-    // Use this constructor if you have a list of parameter vectors
-    // already collected.
+    // A typedef to make the constructor args fit on one line.
+    using StringVector std::vector<std::string>; 
+    
+    // Use this constructor if you have a list of parameter vectors already
+    // collected.
     HierarchicalVectorListElement(
         const std::vector<Ptr<VectorParams>> &parameters,
-        const std::string &param_name);
+        const std::string &param_name,
+        const StringVector &group_names = StringVector(),
+        const StringVector &variable_names = StringVector());
 
     // Use this constructor if you plan to add parameter vectors one at a time.
     // This use case obviously requires holding onto the list element pointer
@@ -511,18 +579,21 @@ namespace BOOM {
     explicit HierarchicalVectorListElement(const std::string &param_name);
 
     void add_vector(const Ptr<VectorParams> &vector);
-    SEXP prepare_to_write(int niter) override;
-    void prepare_to_stream(SEXP object) override;
     void write() override;
     void stream() override;
-    void set_group_names(const std::vector<std::string> &group_names);
+
+    int nrow() const override { return parameters_.size(); }
+    int ncol() const override {
+      return parameters_.empty() ? 0 : parameters_[0]->dim();
+    }
+    
+    void set_group_names(const std::vector<std::string> &group_names) {
+      set_row_names(group_names);
+    }
 
    private:
-    void set_buffer_group_names(SEXP buffer);
     void CheckSize();
     std::vector<Ptr<VectorData>> parameters_;
-    ArrayView array_view_;
-    std::vector<std::string> group_names_;
   };
 
   //---------------------------------------------------------------------------
@@ -544,24 +615,21 @@ namespace BOOM {
   
   //---------------------------------------------------------------------------
   // For managing SpdParams, stored in an R 3-way array.
-  class SpdListElement : public MatrixListElementBase {
+  class SpdListElement : public MatrixValuedRListIoElement {
    public:
-    SpdListElement(const Ptr<SpdParams> &m,
-                   const std::string &param_name);
-
-    // Allocate an array to hold the matrix draws.
-    SEXP prepare_to_write(int niter) override;
-    void prepare_to_stream(SEXP object) override;
+    SpdListElement(
+        const Ptr<SpdParams> &m,
+        const std::string &param_name,
+        const std::vector<std::string> &row_names = std::vector<std::string>(),
+        const std::vector<std::string> &col_names = std::vector<std::string>());
     void write() override;
     void stream() override;
-
-    int nrow() const override;
-    int ncol() const override;
+    int nrow() const override {return prm_->dim();}
+    int ncol() const override {return prm_->dim();}
 
    private:
     void CheckSize();
     Ptr<SpdParams> prm_;
-    ArrayView array_view_;
   };
 
   //---------------------------------------------------------------------------
@@ -587,7 +655,7 @@ namespace BOOM {
   
   // A NativeMatrixListElement manages a BOOM Mat/Matrix that is not stored in a
   // MatrixParams.
-  class NativeMatrixListElement : public MatrixListElementBase {
+  class NativeMatrixListElement : public MatrixValuedRListIoElement {
    public:
     // Args:
     //   callback: supplies access to the matrices that need recording.  This
@@ -601,27 +669,28 @@ namespace BOOM {
     //
     // Note that it is pointless to create this object if both callback and
     // streaming_buffer are NULL.
-    NativeMatrixListElement(MatrixIoCallback *callback,
-                            const std::string &name,
-                            Matrix *streaming_buffer);
-    SEXP prepare_to_write(int niter) override;
-    void prepare_to_stream(SEXP object) override;
+    NativeMatrixListElement(
+        MatrixIoCallback *callback,
+        const std::string &name,
+        Matrix *streaming_buffer,
+        const std::vector<std::string> &row_names = std::vector<std::string>(),
+        const std::vector<std::string> &col_names = std::vector<std::string>());
+    
     void write() override;
     void stream() override;
 
-    int nrow() const override;
-    int ncol() const override;
+    int nrow() const override {return callback_->nrow();}
+    int ncol() const override {return callback_->ncol();}
 
    protected:
     void disable_buffer_check() {check_buffer_ = false;}
     const ConstArrayView next_draw() {
-      return array_view_.slice(next_position(), -1, -1);
+      return array_view().slice(next_position(), -1, -1);
     }
     
    private:
     std::shared_ptr<MatrixIoCallback> callback_;
     Matrix *streaming_buffer_;
-    ArrayView array_view_;
     bool check_buffer_;
   };
 
@@ -673,7 +742,7 @@ namespace BOOM {
 
   //---------------------------------------------------------------------------
   // Introductory comments given above ArrayIoCallback.
-  class NativeArrayListElement : public RListIoElement {
+  class NativeArrayListElement : public ArrayValuedRListIoElement {
    public:
     // Args:
     //   callback: A pointer to an object descended from class ArrayIoCallback.
@@ -686,8 +755,6 @@ namespace BOOM {
     NativeArrayListElement(ArrayIoCallback *callback,
                            const std::string &name,
                            bool allow_streaming = true);
-    SEXP prepare_to_write(int niter) override;
-    void prepare_to_stream(SEXP object) override;
     void write() override;
     void stream() override;
 
@@ -698,9 +765,6 @@ namespace BOOM {
     ArrayView next_array_view();
 
     std::shared_ptr<ArrayIoCallback> callback_;
-
-    // A view into the R buffer holding the data.
-    ArrayView array_buffer_;
 
     // An index used to subscript array_buffer_ when calling next_array_view().
     // The leading index is the MCMC number.  All other positions are -1, as

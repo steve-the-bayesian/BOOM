@@ -129,6 +129,95 @@ namespace BOOM {
   }
   
   //======================================================================
+  SEXP MatrixValuedRListIoElement::prepare_to_write(int niter) {
+    RMemoryProtector protector;
+    SEXP buffer = protector.protect(Rf_alloc3DArray(
+        REALSXP, niter, nrow(), ncol()));
+    set_buffer_dimnames(buffer);
+    StoreBuffer(buffer);
+    array_view_.reset(data(), Array::index3(niter, nrow(), ncol()));
+    return buffer;
+  }
+
+  void MatrixValuedRListIoElement::prepare_to_stream(SEXP object) {
+    RealValuedRListIoElement::prepare_to_stream(object);
+    RMemoryProtector protector;
+    SEXP r_array_dims = protector.protect(Rf_getAttrib(rbuffer(), R_DimSymbol));
+    int * array_dims = INTEGER(r_array_dims);
+    array_view_.reset(data(), std::vector<int>(array_dims, array_dims + 3));
+  }
+  
+  void MatrixValuedRListIoElement::set_buffer_dimnames(SEXP buffer) {
+    // Set the dimnames on the buffer
+    RMemoryProtector protector;
+    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, 3));
+    // The leading dimension (MCMC iteration number) does not get
+    // names.
+    SET_VECTOR_ELT(r_dimnames, 0, R_NilValue);
+
+    if (!row_names_.empty()) {
+      if (row_names_.size() != nrow()) {
+        report_error("row names were the wrong size in "
+                     "MatrixValuedRListElement");
+      }
+      SET_VECTOR_ELT(r_dimnames, 1, CharacterVector(row_names_));
+    } else {
+      SET_VECTOR_ELT(r_dimnames, 1, R_NilValue);
+    }
+
+    if (!col_names_.empty()) {
+      if (col_names_.size() != ncol()) {
+        report_error("col names were the wrong size in "
+                     "MatrixValuedRListElement");
+      }
+      SET_VECTOR_ELT(r_dimnames, 2, CharacterVector(col_names_));
+    } else {
+      SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
+    }
+    Rf_dimnamesgets(buffer, r_dimnames);
+  }
+  
+  //======================================================================
+  ArrayValuedRListIoElement::ArrayValuedRListIoElement(
+      const std::vector<int> &dim, const std::string &name)
+      : RealValuedRListIoElement(name),
+        dim_(dim),
+        array_view_(nullptr, std::vector<int>(dim.size(), 0)),
+        dimnames_()
+  {}
+
+  SEXP ArrayValuedRListIoElement::prepare_to_write(int niter) {
+    RMemoryProtector protector;
+    std::vector<int> buffer_dims(dim_);
+    // Add in the leading dimension for MCMC iterations.
+    buffer_dims.insert(buffer_dims.begin(), niter);
+    SEXP buffer = protector.protect(AllocateArray(buffer_dims));
+    if (!dimnames_.empty()) {
+      std::vector<std::vector<std::string>> buffer_dimnames = dimnames_;
+      buffer_dimnames.insert(buffer_dimnames.begin(),
+                             std::vector<std::string>());
+      buffer = SetDimnames(buffer, buffer_dimnames);
+    }
+    StoreBuffer(buffer);
+    array_view_.reset(data(), buffer_dims);
+    return buffer;
+  }
+
+  void ArrayValuedRListIoElement::prepare_to_stream(SEXP object) {
+    RealValuedRListIoElement::prepare_to_stream(object);
+    std::vector<int> buffer_dims = GetArrayDimensions(rbuffer());
+    array_view_.reset(data(), buffer_dims);
+  }
+
+  void ArrayValuedRListIoElement::set_dimnames(
+      int dim, const std::vector<std::string> &names) {
+    if (dimnames_.empty()) {
+      dimnames_.resize(dim_.size());
+    }
+    dimnames_[dim] = names;
+  }
+  
+  //======================================================================
   ListValuedRListIoElement::ListValuedRListIoElement(const std::string &name)
       : RListIoElement(name)
   {}
@@ -361,104 +450,22 @@ namespace BOOM {
   }
 
   //======================================================================
-  const std::vector<std::string> & MatrixListElementBase::row_names()const{
-    return row_names_;
-  }
-
-  const std::vector<std::string> & MatrixListElementBase::col_names()const{
-    return row_names_;
-  }
-
-  void MatrixListElementBase::set_row_names(
-      const std::vector<std::string> &row_names){
-    row_names_ = row_names;
-  }
-
-  void MatrixListElementBase::set_col_names(
-      const std::vector<std::string> &col_names){
-    col_names_ = col_names;
-  }
-
-  void MatrixListElementBase::set_buffer_dimnames(SEXP buffer) {
-    // Set the dimnames on the buffer
-    RMemoryProtector protector;
-    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, 3));
-    // The leading dimension (MCMC iteration number) does not get
-    // names.
-    SET_VECTOR_ELT(r_dimnames, 0, R_NilValue);
-
-    if (!row_names_.empty()) {
-      if (row_names_.size() != nrow()) {
-        report_error("row names were the wrong size in MatrixListElement");
-      }
-      SET_VECTOR_ELT(r_dimnames, 1, CharacterVector(row_names_));
-    } else {
-      SET_VECTOR_ELT(r_dimnames, 1, R_NilValue);
-    }
-
-    if (!col_names_.empty()) {
-      if (col_names_.size() != ncol()) {
-        report_error("col names were the wrong size in MatrixListElement");
-      }
-      SET_VECTOR_ELT(r_dimnames, 2, CharacterVector(col_names_));
-    } else {
-      SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
-    }
-    Rf_dimnamesgets(buffer, r_dimnames);
-  }
-
-  //======================================================================
   MatrixListElement::MatrixListElement(const Ptr<MatrixParams> &m,
-                                       const std::string &param_name)
-      : MatrixListElementBase(param_name),
-        prm_(m),
-        array_view_(0, Array::index3(0, 0, 0))
+                                       const std::string &param_name,
+                                       const std::vector<std::string> &row_names,
+                                       const std::vector<std::string> &col_names)
+      : MatrixValuedRListIoElement(param_name, row_names, col_names),
+        prm_(m)
   {}
-
-  SEXP MatrixListElement::prepare_to_write(int niter) {
-    int nr = prm_->nrow();
-    int nc = prm_->ncol();
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_alloc3DArray(REALSXP, niter, nr, nc));
-    set_buffer_dimnames(buffer);
-    StoreBuffer(buffer);
-    array_view_.reset(data(), Array::index3(niter, nr, nc));
-    return buffer;
-  }
 
   void MatrixListElement::write() {
     CheckSize();
-    const Matrix &m(prm_->value());
-    int iteration = next_position();
-    int nr = m.nrow();
-    int nc = m.ncol();
-    for(int i = 0; i < nr; ++i){
-      for(int j = 0; j < nc; ++j){
-        array_view_(iteration, i, j) = m(i, j);
-      }
-    }
-  }
-
-  void MatrixListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    RMemoryProtector protector;
-    SEXP r_array_dims = protector.protect(Rf_getAttrib(rbuffer(), R_DimSymbol));
-    int * array_dims = INTEGER(r_array_dims);
-    array_view_.reset(data(), std::vector<int>(array_dims, array_dims + 3));
+    array_view().slice(next_position(), -1, -1) = prm_->value();
   }
 
   void MatrixListElement::stream() {
     CheckSize();
-    int iteration = next_position();
-    int nr = prm_->nrow();
-    int nc = prm_->ncol();
-    Matrix tmp(nr, nc);
-    for(int i = 0; i < nr; ++i) {
-      for(int j = 0; j < nc; ++j) {
-      tmp(i, j) = array_view_(iteration, i, j);
-      }
-    }
-    prm_->set(tmp);
+    prm_->set(array_view().slice(next_position(), -1, -1).to_matrix());
   }
 
   int MatrixListElement::nrow()const {
@@ -470,7 +477,7 @@ namespace BOOM {
   }
 
   void MatrixListElement::CheckSize() {
-    const std::vector<int> & dims(array_view_.dim());
+    const std::vector<int> & dims(array_view().dim());
     const Matrix & value(prm_->value());
     if(value.nrow() != dims[1] ||
        value.ncol() != dims[2]) {
@@ -488,9 +495,10 @@ namespace BOOM {
   //======================================================================
   HierarchicalVectorListElement::HierarchicalVectorListElement(
       const std::vector<Ptr<VectorParams>> &parameters,
-      const std::string &param_name)
-      : RealValuedRListIoElement(param_name),
-        array_view_(0, Array::index3(0, 0, 0))
+      const std::string &param_name,
+      const std::vector<std::string> &group_names,
+      const std::vector<std::string> &variable_names)
+      : MatrixValuedRListIoElement(param_name, group_names, variable_names)
   {
     parameters_.reserve(parameters.size());
     for (int i = 0; i < parameters.size(); ++i) {
@@ -500,8 +508,7 @@ namespace BOOM {
 
   HierarchicalVectorListElement::HierarchicalVectorListElement(
       const std::string &param_name)
-      : RealValuedRListIoElement(param_name),
-        array_view_(0, Array::index3(0, 0, 0))
+      : MatrixValuedRListIoElement(param_name)
   {}
 
   void HierarchicalVectorListElement::add_vector(const Ptr<VectorParams> &v) {
@@ -518,75 +525,24 @@ namespace BOOM {
     parameters_.push_back(v);
   }
 
-  SEXP HierarchicalVectorListElement::prepare_to_write(int niter) {
-    int number_of_groups = parameters_.size();
-    int dim = parameters_[0]->dim();
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_alloc3DArray(
-        REALSXP, niter, number_of_groups, dim));
-    set_buffer_group_names(buffer);
-    StoreBuffer(buffer);
-    array_view_.reset(data(), Array::index3(niter, number_of_groups, dim));
-    return buffer;
-  }
-
-  void HierarchicalVectorListElement::set_buffer_group_names(SEXP buffer) {
-    if (group_names_.empty()) return;
-    RMemoryProtector protector;
-    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, 3));
-    // The leading dimension (MCMC iteration number) does not get
-    // names.
-    SET_VECTOR_ELT(r_dimnames, 0, R_NilValue);
-    SET_VECTOR_ELT(r_dimnames, 1, CharacterVector(group_names_));
-    SET_VECTOR_ELT(r_dimnames, 2, R_NilValue);
-    Rf_dimnamesgets(buffer, r_dimnames);
-  }
-
-  void HierarchicalVectorListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    RMemoryProtector protector;
-    SEXP r_array_dims = protector.protect(Rf_getAttrib(rbuffer(), R_DimSymbol));
-    int * array_dims = INTEGER(r_array_dims);
-    array_view_.reset(data(), std::vector<int>(array_dims, array_dims + 3));
-  }
-
   void HierarchicalVectorListElement::write() {
     CheckSize();
     int iteration = next_position();
-    int dimension = parameters_[0]->dim();
     for (int i = 0; i < parameters_.size(); ++i) {
-      const Vector &value(parameters_[i]->value());
-      for (int j = 0; j < dimension; ++j) {
-        array_view_(iteration, i, j) = value[j];
-      }
+      array_view().slice(iteration, i, -1) = parameters_[i]->value();
     }
   }
 
   void HierarchicalVectorListElement::stream() {
     CheckSize();
     int iteration = next_position();
-    int dimension = parameters_[0]->dim();
-    Vector values(dimension);
     for (int i = 0; i < parameters_.size(); ++i) {
-      for (int j = 0; j < dimension; ++j) {
-        values[j] = array_view_(iteration, i, j);
-      }
-      parameters_[i]->set(values);
+      parameters_[i]->set(array_view().vector_slice(iteration, i, -1));
     }
   }
-
-  void HierarchicalVectorListElement::set_group_names(
-      const std::vector<std::string> &group_names) {
-    if (group_names.size() != parameters_.size()) {
-      report_error("Vector of group names must be the same size as the "
-                   "number of groups.");
-    }
-    group_names_ = group_names;
-  }
-  
 
   void HierarchicalVectorListElement::CheckSize() {
-    const std::vector<int> &dims(array_view_.dim());
+    const std::vector<int> &dims(array_view().dim());
     if (dims[1] != parameters_.size() ||
         dims[2] != parameters_[0]->dim()) {
       std::ostringstream err;
@@ -639,66 +595,25 @@ namespace BOOM {
   //======================================================================
 
   SpdListElement::SpdListElement(const Ptr<SpdParams> &m,
-                                 const std::string &param_name)
-      : MatrixListElementBase(param_name),
-        prm_(m),
-        array_view_(0, Array::index3(0, 0, 0))
+                                 const std::string &param_name,
+                                 const std::vector<std::string> &row_names,
+                                 const std::vector<std::string> &col_names)
+      : MatrixValuedRListIoElement(param_name, row_names, col_names),
+        prm_(m)
   {}
-
-  SEXP SpdListElement::prepare_to_write(int niter) {
-    int dim = prm_->dim();
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(Rf_alloc3DArray(REALSXP, niter, dim, dim));
-    StoreBuffer(buffer);
-    array_view_.reset(data(), Array::index3(niter, dim, dim));
-    return buffer;
-  }
 
   void SpdListElement::write() {
     CheckSize();
-    const Matrix &m(prm_->value());
-    int iteration = next_position();
-    int nr = m.nrow();
-    int nc = m.ncol();
-    for(int i = 0; i < nr; ++i){
-      for(int j = 0; j < nc; ++j){
-        array_view_(iteration, i, j) = m(i, j);
-      }
-    }
-  }
-
-  void SpdListElement::prepare_to_stream(SEXP object) {
-    RealValuedRListIoElement::prepare_to_stream(object);
-    RMemoryProtector protector;
-    SEXP r_array_dims = protector.protect(Rf_getAttrib(rbuffer(), R_DimSymbol));
-    int * array_dims = INTEGER(r_array_dims);
-    array_view_.reset(data(), std::vector<int>(array_dims, array_dims + 3));
+    array_view().slice(next_position(), -1, -1) = prm_->value();
   }
 
   void SpdListElement::stream() {
     CheckSize();
-    int iteration = next_position();
-    int nr = prm_->dim();
-    int nc = prm_->dim();
-    Matrix tmp(nr, nc);
-    for(int i = 0; i < nr; ++i) {
-      for(int j = 0; j < nc; ++j) {
-      tmp(i, j) = array_view_(iteration, i, j);
-      }
-    }
-    prm_->set(tmp);
-  }
-
-  int SpdListElement::nrow()const {
-    return prm_->dim();
-  }
-
-  int SpdListElement::ncol()const {
-    return prm_->dim();
+    prm_->set(array_view().slice(next_position(), -1, -1).to_matrix());
   }
 
   void SpdListElement::CheckSize() {
-    const std::vector<int> & dims(array_view_.dim());
+    const std::vector<int> & dims(array_view().dim());
     const Matrix & value(prm_->value());
     if(value.nrow() != dims[1] ||
        value.ncol() != dims[2]) {
@@ -712,15 +627,16 @@ namespace BOOM {
       report_error(err.str().c_str());
     }
   }
-
   
   //======================================================================
-  NativeMatrixListElement::NativeMatrixListElement(MatrixIoCallback *callback,
-                                                   const std::string &name,
-                                                   Matrix *streaming_buffer)
-      : MatrixListElementBase(name),
+  NativeMatrixListElement::NativeMatrixListElement(
+      MatrixIoCallback *callback,
+      const std::string &name,
+      Matrix *streaming_buffer,
+      const std::vector<std::string> &row_names,
+      const std::vector<std::string> &col_names)
+      : MatrixValuedRListIoElement(name, row_names, col_names),
         streaming_buffer_(streaming_buffer),
-        array_view_(0, ArrayBase::index3(0, 0, 0)),
         check_buffer_(true)
   {
     // Protect against NULL.
@@ -729,59 +645,13 @@ namespace BOOM {
     }
   }
 
-  SEXP NativeMatrixListElement::prepare_to_write(int niter) {
-    if (!callback_) {
-      report_error(
-          "NULL callback in NativeMatrixListElement::prepare_to_write.");
-    }
-    RMemoryProtector protector;
-    SEXP buffer = protector.protect(
-        Rf_alloc3DArray(REALSXP, niter, callback_->nrow(), callback_->ncol()));
-    set_buffer_dimnames(buffer);
-    StoreBuffer(buffer);
-    array_view_.reset(data(),
-                      Array::index3(niter,
-                                    callback_->nrow(),
-                                    callback_->ncol()));
-    return buffer;
-  }
-
-  void NativeMatrixListElement::prepare_to_stream(SEXP object) {
-    if (!streaming_buffer_) return;
-    RealValuedRListIoElement::prepare_to_stream(object);
-    RMemoryProtector protector;
-    SEXP r_array_dims = protector.protect(Rf_getAttrib(rbuffer(), R_DimSymbol));
-    int *array_dims(INTEGER(r_array_dims));
-    std::vector<int> dims(array_dims, array_dims + 3);
-    array_view_.reset(data(), dims);
-  }
-
   void NativeMatrixListElement::write() {
-    Matrix tmp = callback_->get_matrix();
-    int niter = next_position();
-    for (int i = 0; i < callback_->nrow(); ++i) {
-      for (int j = 0; j < callback_->ncol(); ++j) {
-        array_view_(niter, i, j) = tmp(i, j);
-      }
-    }
+    array_view().slice(next_position(), -1, -1) = callback_->get_matrix();
   }
 
   void NativeMatrixListElement::stream() {
     if (!streaming_buffer_) return;
-    int niter = next_position();
-    for (int i = 0; i < streaming_buffer_->nrow(); ++i) {
-      for (int j = 0; j < streaming_buffer_->ncol(); ++j) {
-        (*streaming_buffer_)(i, j) = array_view_(niter, i, j);
-      }
-    }
-  }
-
-  int NativeMatrixListElement::nrow()const {
-    return callback_->nrow();
-  }
-
-  int NativeMatrixListElement::ncol()const {
-    return callback_->ncol();
+    *streaming_buffer_ = array_view().slice(next_position(), -1, -1).to_matrix();
   }
 
   //======================================================================  
@@ -808,50 +678,15 @@ namespace BOOM {
   NativeArrayListElement::NativeArrayListElement(ArrayIoCallback *callback,
                                                  const std::string &name,
                                                  bool allow_streaming)
-      : RListIoElement(name),
+      : ArrayValuedRListIoElement(callback->dim(), name),
         callback_(callback),
-        array_buffer_(NULL, std::vector<int>()),
+        array_view_index_(callback->dim().size() + 1, -1),
         allow_streaming_(allow_streaming)
   {
     if (!callback) {
       report_error("NULL callback passed to NativeArrayListElement.");
     }
   }
-
-  SEXP NativeArrayListElement::prepare_to_write(int niter) {
-    std::vector<int> dims = callback_->dim();
-    std::vector<int> array_dims(dims.size() + 1);
-    array_dims[0] = niter;
-    std::copy(dims.begin(), dims.end(), array_dims.begin() + 1);
-    RMemoryProtector protector;
-    SEXP r_array_dimensions =protector.protect(Rf_allocVector(
-        INTSXP, array_dims.size()));
-    int * rdims = INTEGER(r_array_dimensions);
-    for (int i = 0; i < array_dims.size(); ++i) {
-      rdims[i] = array_dims[i];
-    }
-
-    SEXP r_buffer = protector.protect(Rf_allocArray(
-        REALSXP, r_array_dimensions));
-    StoreBuffer(r_buffer);
-
-    array_buffer_.reset(REAL(r_buffer), array_dims);
-    array_view_index_.assign(array_dims.size(), -1);
-    return r_buffer;
-  }
-
-  void NativeArrayListElement::prepare_to_stream(SEXP object) {
-    if (!allow_streaming_) return;
-    RListIoElement::prepare_to_stream(object);
-    std::vector<int> array_dims = GetArrayDimensions(object);
-    if (array_dims.empty()) {
-      report_error("object is not an array in "
-                   "NativeArrayListElement::prepare_to_stream.");
-    }
-    array_buffer_.reset(REAL(rbuffer()), array_dims);
-    array_view_index_.assign(array_dims.size(), -1);
-  }
-
 
   void NativeArrayListElement::write() {
     ArrayView view(next_array_view());
@@ -866,8 +701,9 @@ namespace BOOM {
 
   ArrayView NativeArrayListElement::next_array_view() {
     array_view_index_[0] = next_position();
-    return array_buffer_.slice(array_view_index_);
+    return array_view().slice(array_view_index_);
   }
+
   //======================================================================
   RListOfMatricesListElement::RListOfMatricesListElement(
       const std::string &name,
