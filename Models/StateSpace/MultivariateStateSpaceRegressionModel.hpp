@@ -341,7 +341,13 @@ namespace BOOM {
     //   A matrix with rows corresponding to dimension of Y, and columns
     //   corresponding to time.
     Matrix state_contributions(int which_state_model) const override;
-      
+
+    StateSpaceUtils::StateModelVector<SharedStateModel>
+    &state_model_vector() override { return shared_state_models_; }
+    
+    const StateSpaceUtils::StateModelVector<SharedStateModel>
+    &state_model_vector() const override { return shared_state_models_; }
+    
    private:
     // To be called after add_data has been called for the last time.
     // This method is logically const so that it can be called by accessors.
@@ -365,13 +371,6 @@ namespace BOOM {
     
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
-    StateModelVectorBase &state_model_vector() override {
-      return shared_state_models_;
-    }
-    
-    const StateModelVectorBase &state_model_vector() const override {
-      return shared_state_models_;
-    }
     
     void impute_shared_state_given_series_state(RNG &rng);
     void impute_series_state_given_shared_state(RNG &rng);

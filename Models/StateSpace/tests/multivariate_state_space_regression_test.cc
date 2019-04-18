@@ -11,7 +11,7 @@
 #include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "distributions.hpp"
 #include "LinAlg/Array.hpp"
 

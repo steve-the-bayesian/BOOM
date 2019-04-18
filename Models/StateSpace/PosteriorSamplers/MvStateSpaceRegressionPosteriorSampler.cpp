@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 

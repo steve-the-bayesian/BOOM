@@ -18,6 +18,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+// The name of this file is abbreviated to stay below the 100 character limit
+// in ancient, archaic tar formats.
 #include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
@@ -27,7 +29,6 @@ namespace BOOM {
       : public PosteriorSampler {
    public:
     // Args:
-
     //   model: The model to be managed.  Calling this constructor sets a
     //     StateSpacePosteriorSampler for each of the proxy models managing
     //     series-specific state.  It is assumed that posterior samplers will be
