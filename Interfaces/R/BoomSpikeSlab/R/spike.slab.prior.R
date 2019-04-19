@@ -136,7 +136,9 @@ SpikeSlabPriorDirect <- function(coefficient.mean,
   ans$prior.df <- prior.df
   ans$sigma.guess <- sigma.guess
   ans$sigma.upper.limit <- sigma.upper.limit
-  class(ans) <- c("SpikeSlabPriorDirect", "SpikeSlabPriorBase")
+  class(ans) <- c("SpikeSlabPriorDirect",
+    "SpikeSlabPrior",
+    "SpikeSlabPriorBase")
   return(ans)
 }
 ###======================================================================

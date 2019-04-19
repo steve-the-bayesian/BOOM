@@ -477,6 +477,50 @@ MvnIndependentSigmaPrior <- function(mvn.prior, sd.prior.list) {
   return(ans)
 }
 
+ScaledMatrixNormalPrior <- function(mean, nu) {
+  # A prior for multivariate regression coefficients Beta, such that
+  # Beta | Sigma ~ MatrixNormal(mu, X'X / nu, Sigma)
+  #
+  # Args:
+  #   mean:  A matrix of the same size as Beta (ydim * xdim).
+  #   nu: A scalar controlling the amount of prior correlation attributable to
+  #     rows of beta.  In the context of multivariate regression, rows of beta
+  #     correspond ot different Y variables.  A useful value for nu is kappa /
+  #     sample.size, where kappa is the number of prior observations worth of
+  #     weight you wish to give to 'mean'.
+  #
+  # Details:
+  #   The Sigma parameter is obtained elsewhere.
+  stopifnot(is.matrix(mean))
+  stopifnot(is.numeric(sample.size),
+    length(sample.size) == 1,
+    sample.size > 0)
+  ans <- list("mean" = mean, "sample.size" = sample.size)
+  class(ans) <- c("ScaledMatrixNormalPrior", "Prior")
+  return(ans)
+}
+                                    
+MultivariateRegressionConjugatePrior <-function(coefficient.prior,
+                                                variance.prior) {
+  ## A conjguate prior for a multivariate regression model.
+  ##
+  ## Args:
+  ##   coefficient.prior: An object of class ScaledMatrixNormalPrior
+  ##     representing the prior on the regression coefficients.
+  ##   variance.prior: An object of class InverseWishartPrior representing the
+  ##     prior on the variance matrix.
+  ##
+  ## Returns:
+  ##   A list containing the two arguments, after checking that they are the
+  ##   right type.  The return value is marked with a class attribute
+  ##   documenting its role.
+  stopifnot(inherits(coefficient.prior, "ScaledMatrixNormalPrior"),
+    inherits(variance.prior, "InverseWishartPrior"))
+  ans <- list(coefficient = coefficient.prior, variance = variance.prior)
+  class(ans) <- c("MultivariateRegressionConjugatePrior", "Prior")
+  return(ans)
+}
+                                                 
 RegressionCoefficientConjugatePrior <- function(
     mean,
     sample.size,

@@ -563,7 +563,7 @@ namespace BOOM {
       : public MatrixValuedRListIoElement {
    public:
     // A typedef to make the constructor args fit on one line.
-    using StringVector std::vector<std::string>; 
+    using StringVector = std::vector<std::string>; 
     
     // Use this constructor if you have a list of parameter vectors already
     // collected.
