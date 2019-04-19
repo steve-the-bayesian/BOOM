@@ -56,7 +56,7 @@ namespace BOOM {
       std::vector<bool> ans(n);
       double *data = REAL(Rf_coerceVector(r_vector, REALSXP));
       for (int i = 0; i < n; ++i) {
-        ans[i] = !IsNA(data[i]);
+        ans[i] = !BOOM::isNA(data[i]);
       }
       return ans;
     }
@@ -65,7 +65,7 @@ namespace BOOM {
       SelectorMatrix ans(matrix.nrow(), matrix.ncol(), true);
       for (int i = 0; i < matrix.nrow(); ++i) {
         for (int j = 0; j < matrix.ncol(); ++j) {
-          if (IsNA(matrix(i, j))) {
+          if (BOOM::isNA(matrix(i, j))) {
             ans.drop(i, j);
           }
         }
