@@ -47,23 +47,25 @@ namespace BOOM {
       }
       const SparseKalmanMatrix &transition(
           *model()->state_transition_matrix(time_index()));
-      const SparseKalmanMatrix &observation_coefficients(
+
+      // The subset of observation coefficients corresponding to elements of
+      // 'observation' which are actually observed.
+      const SparseKalmanMatrix &observation_coefficient_subset(
           *model()->observation_coefficients(time_index(), observed));
       
       if (high_dimensional(observed)) {
         high_dimensional_update(observation, observed, transition,
-                                observation_coefficients);
+                                observation_coefficient_subset);
       } else {
         low_dimensional_update(observation, observed, transition,
-                               observation_coefficients);
+                               observation_coefficient_subset);
       }
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(scaled_prediction_error());
 
-      // Update the state mean from a[t] = E(state_t | Y[t-1]) to a[t+1] =
-      // E(state[t+1] | Y[t]).
-      
+      // Update the state mean from a[t]   = E(state_t    | Y[t-1]) to 
+      //                            a[t+1] = E(state[t+1] | Y[t]).
       set_state_mean(transition * state_mean()
                      + kalman_gain() * prediction_error());
 
@@ -72,14 +74,14 @@ namespace BOOM {
       //
       // The update formula is
       //
-      // P[t+1] = T[t] * P[t] * T[t]'
+      // P[t+1] =   T[t] * P[t] * T[t]'
       //          - T[t] * P[t] * Z[t]' * K[t]'
       //          + R[t] * Q[t] * R[t]'
       //
       // Need to define TPZprime before modifying P (known here as
       // state_variance).
       Matrix TPZprime = (
-          observation_coefficients *
+          observation_coefficient_subset *
           (transition * state_variance()).transpose()).transpose();
 
       // Step 1:  Set P = T * P * T.transpose()

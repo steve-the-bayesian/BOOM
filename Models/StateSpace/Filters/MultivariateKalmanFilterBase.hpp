@@ -50,11 +50,14 @@ namespace BOOM {
       //     distribution.
       MultivariateMarginalDistributionBase(int state_dim, int time_index)
           : MarginalDistributionBase(state_dim, time_index),
-            forecast_precision_log_determinant_(negative_infinity())
-      {}
+            forecast_precision_log_determinant_(negative_infinity()) {}
 
       // The difference between the observed data at this time point and its
-      // expected value given past data.
+      // expected value given past data.  If any data elements are missing, they
+      // are omitted from the prediction error.  To get a prediction error of
+      // the same dimension as the original observation call
+      // observed.expand(prediction_error) where observed is the Selector
+      // associated with the observation.
       const Vector &prediction_error() const {return prediction_error_;}
       void set_prediction_error(const Vector &err) {prediction_error_ = err;}
 
@@ -97,9 +100,22 @@ namespace BOOM {
       // time point, and the marginal information from the preceding time point.
       //
       // Args:
-      //    observation:  The observed data at this time point.
+      //    observation: The full vector of responses at this time point,
+      //      including dummy values for those which are unobserved.
       //    observed: Indicates which elements of observation are actually
       //      observed.
+      //
+      // Preconditions:
+      //   state_mean and state_variance have been set to the conditional mean
+      //   and variance of this period's state given preceding data.
+      //
+      // Postconditions:
+      //   state_mean and state_variance are updated to give the conditional
+      //   mean and variance of the NEXT time period given data to THIS time
+      //   period.  The other data members of this class are also populated.
+      //
+      // Returns:
+      //   The log likelihood log p(y_t | Y_{t-1}).
       virtual double update(const Vector &observation,
                             const Selector &observed);
 

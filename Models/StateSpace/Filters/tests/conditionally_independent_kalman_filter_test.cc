@@ -183,6 +183,9 @@ namespace {
 
     EXPECT_TRUE(is_pos_def(marg0_lo.state_variance()));
     EXPECT_TRUE(is_pos_def(marg0_hi.state_variance()));
+
+    //--------------------------------------------------------------------------
+    // 
     
     Kalman::ConditionallyIndependentMarginalDistribution marg1_lo(
         model.get(), &marg0_lo, 1);
@@ -208,6 +211,22 @@ namespace {
                 1e-7);
     EXPECT_TRUE(MatrixEquals(marg1_hi.kalman_gain(),
                              marg1_lo.kalman_gain()));
+
+    //--------------------------------------------------------------------------
+    // Now try again with one missing observation.
+    observed.drop(1);
+    marg0_lo.update(data.row(0), observed);
+    marg0_hi.update(data.row(0), observed);
+    EXPECT_TRUE(VectorEquals(marg0_hi.prediction_error(),
+                             marg0_lo.prediction_error()));
+    EXPECT_TRUE(VectorEquals(marg0_hi.scaled_prediction_error(),
+                             marg0_lo.scaled_prediction_error()));
+    EXPECT_NEAR(marg0_hi.forecast_precision_log_determinant(),
+                marg0_lo.forecast_precision_log_determinant(),
+                1e-7);
+    EXPECT_TRUE(MatrixEquals(marg0_hi.kalman_gain(),
+                             marg0_lo.kalman_gain()));
+    
   }
 
 }  // namespace
