@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
 #include "distributions.hpp"
@@ -214,6 +215,34 @@ namespace {
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[0]);
     EXPECT_TRUE(all[3]);
-    
-  }  
+  }
+
+  TEST_F(SelectorTest, DiagonalMatrixTest) {
+    Selector empty(4, false);
+    Selector full(4, true);
+    Selector one(4, false);
+    one.add(2);
+    Selector three(4, true);
+    three.drop(2);
+
+    Vector v(4);
+    v.randomize();
+    DiagonalMatrix dmat(v);
+
+    EXPECT_EQ(empty.select_square(dmat).nrow(), 0);
+    EXPECT_EQ(empty.select_square(dmat).ncol(), 0);
+    EXPECT_EQ(full.select_square(dmat).nrow(), 4);
+    EXPECT_EQ(full.select_square(dmat).ncol(), 4);
+    EXPECT_TRUE(VectorEquals(full.select_square(dmat).diag(), v));
+
+    EXPECT_EQ(one.select_square(dmat).nrow(), 1);
+    EXPECT_EQ(one.select_square(dmat).ncol(), 1);
+    EXPECT_TRUE(VectorEquals( one.select_square(dmat).diag(), one.select(v)));
+
+    EXPECT_EQ(three.select_square(dmat).nrow(), 3);
+    EXPECT_EQ(three.select_square(dmat).ncol(), 3);
+    EXPECT_TRUE(VectorEquals(three.select_square(dmat).diag(),
+                             three.select(v)));
+  }
+  
 }  // namespace

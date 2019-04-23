@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/SubMatrix.hpp"
@@ -156,6 +157,10 @@ namespace BOOM {
     Matrix select_rows(const SubMatrix &M) const;
     Matrix select_rows(const ConstSubMatrix &M) const;
 
+    DiagonalMatrix select_square(const DiagonalMatrix &diag) const;
+    DiagonalMatrix select(const DiagonalMatrix &diag) const {
+      return select_square(diag);
+    }
 
     template <class T>
     std::vector<T> select(const std::vector<T> &stuff) const;

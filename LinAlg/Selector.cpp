@@ -449,6 +449,10 @@ namespace BOOM {
     return select_rows_impl(m, *this);
   }
 
+  DiagonalMatrix Selector::select_square(const DiagonalMatrix &d) const {
+    return DiagonalMatrix(select(d.diag()));
+  }
+  
   namespace {
     template <class V>
     Vector inc_expand(const V &x, const Selector &inc) {
