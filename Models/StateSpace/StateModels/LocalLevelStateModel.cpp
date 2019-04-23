@@ -293,7 +293,11 @@ namespace BOOM {
   
   void SLLSM::set_initial_state_mean(const Vector &mean) {
     if (mean.size() != state_dimension()) {
-      report_error("Wrong size argument in set_initial_state_mean.");
+      std::ostringstream err;
+      err << "Wrong size argument in set_initial_state_mean. \n"
+          << "State dimension is " << state_dimension()
+          << " but the proposed mean is " << mean;
+      report_error(err.str());
     }
     initial_state_mean_ = mean;
   }

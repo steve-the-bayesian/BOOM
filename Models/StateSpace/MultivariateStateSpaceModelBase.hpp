@@ -97,6 +97,10 @@ namespace BOOM {
     //   t: The time index for which observation coefficients are desired.
     //   observed: Indicates which components of the observation at time t are
     //     observed (as opposed to missing).
+    //
+    // Returns:
+    //   A subset of the observation coefficients at time t.  Row j of Z[t] is
+    //   included if and only if observed[j] == true.
     virtual const SparseKalmanMatrix *observation_coefficients(
         int t, const Selector &observed) const = 0;
 
