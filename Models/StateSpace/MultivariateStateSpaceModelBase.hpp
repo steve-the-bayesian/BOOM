@@ -249,7 +249,8 @@ namespace BOOM {
     void resize_state();
     
     // Simulate a fake observation to use as part of the Durbin-Koopman state
-    // simulation algorithm.  
+    // simulation algorithm.  If observed_status(t) is less than fully observed,
+    // only the observed parts should be simulated.
     virtual Vector simulate_fake_observation(RNG &rng, int t) = 0;
 
     Matrix shared_state_;

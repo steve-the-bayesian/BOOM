@@ -86,7 +86,8 @@ namespace BOOM {
         shared_state_.col(t) = simulate_next_state(
             rng, ConstVectorView(shared_state_.col(t - 1)), t);
       }
-      Vector simulated_observation = simulate_fake_observation(rng, t);
+      Vector simulated_observation = observed_status(t).expand(
+          simulate_fake_observation(rng, t));
       simulation_filter.update_single_observation(
           simulated_observation, observed_status(t), t);
     }
