@@ -170,7 +170,19 @@ namespace BOOM {
     Vector expand(const VectorView &x) const;
     Vector expand(const ConstVectorView &x) const;
 
-    Vector &zero_missing_elements(Vector &v) const;
+    // Fill the missing elements of a vector with specfic values.
+    // Args:
+    //   v: The vector to be partially filled.
+    //   value/values:  The values to be filled in for v[i] where *this[i] is false.
+    //     In the vector version, values must have size nvars_excluded().
+    // Returns:
+    //   The excluded elements of v are filled with the supplied values, and the
+    //   modified v is returned.
+    Vector &zero_missing_elements(Vector &v) const {
+      return fill_missing_elements(v, 0.0); }
+    Vector &fill_missing_elements(Vector &v, double value) const;
+    Vector &fill_missing_elements(Vector &v,
+                                  const ConstVectorView &values) const;
 
     template <class T>
     T sub_select(const T &x, const Selector &rhs) const;

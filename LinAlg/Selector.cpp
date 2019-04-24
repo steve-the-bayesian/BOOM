@@ -496,16 +496,34 @@ namespace BOOM {
     return inc_expand(x, *this);
   }
 
-  Vector &Selector::zero_missing_elements(Vector &v) const {
-    uint N = nvars_possible();
-    check_size_eq(v.size(), "zero_missing_elements");
-    const Selector &inc(*this);
-    for (uint i = 0; i < N; ++i) {
-      if (!inc[i]) v[i] = 0;
+  Vector &Selector::fill_missing_elements(Vector &v, double value) const {
+    int vsize = v.size();
+    check_size_eq(vsize, "fill_missing_elements");
+    for (int i = 0; i < vsize; ++i) {
+      if (!(*this)[i]) {
+        v[i] = value;
+      }
     }
     return v;
   }
 
+  Vector &Selector::fill_missing_elements(Vector &v,
+                                          const ConstVectorView &values) const {
+    if (values.size() != nvars_excluded()) {
+      report_error("Wrong size values vector supplied to fill_missing_"
+                   "elements.");
+    }
+    int vsize = v.size();
+    check_size_eq(vsize, "fill_missing_elements");
+    int next_value = 0;
+    for (int i = 0; i < vsize; ++i) {
+      if (!(*this)[i]) {
+        v[i] = values[next_value++];
+      }
+    }
+    return v;
+  }
+  
   void Selector::sparse_multiply(const Matrix &m, const Vector &v,
                                  VectorView ans) const {
     bool m_already_sparse = ncol(m) == nvars();
