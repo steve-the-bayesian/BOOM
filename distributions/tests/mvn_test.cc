@@ -49,4 +49,46 @@ namespace {
         << AsciiDistributionCompare(Mdist1, Mdist2);
   }
 
+  TEST(ImputeMvnTest, ImputeGivesRightDistribution) {
+    GlobalRng::rng.seed(8675309);
+    Vector mu(5);
+    mu.randomize();
+    SpdMatrix Sigma(5);
+    Sigma.randomize();
+
+    Vector y = rmvn(mu, Sigma);
+    Vector z = y;
+    Selector observed("11010");
+    observed.fill_missing_elements(y, -99);
+    z[2] = -99;
+    z[4] = -99;
+    EXPECT_TRUE(VectorEquals(y, z));
+
+    // Check that impute_mvn changes the two specified values and no others.
+    y = impute_mvn(y, mu, Sigma, observed);
+    EXPECT_NE(y[2], -99);
+    EXPECT_NE(y[4], -99);
+    z[2] = y[2];
+    z[4] = y[4];
+    EXPECT_TRUE(VectorEquals(y, z));
+
+    
+    int niter = 10000;
+    Matrix draws(niter, 5);
+    Matrix original_draws(niter, 5);
+    for (int i = 0; i < niter; ++i) {
+      Vector y = rmvn(mu, Sigma);
+      original_draws.row(i) = y;
+      draws.row(i) = impute_mvn(y, mu, Sigma, observed);
+    }
+    EXPECT_TRUE(VectorEquals(original_draws.col(0), draws.col(0)));
+    EXPECT_TRUE(VectorEquals(original_draws.col(1), draws.col(1)));
+    EXPECT_FALSE(VectorEquals(original_draws.col(2), draws.col(2)));
+    EXPECT_TRUE(VectorEquals(original_draws.col(3), draws.col(3)));
+    EXPECT_FALSE(VectorEquals(original_draws.col(4), draws.col(4)));
+
+    EXPECT_TRUE(TwoSampleKs(draws.col(2), original_draws.col(2)));
+    EXPECT_TRUE(TwoSampleKs(draws.col(4), original_draws.col(4)));
+  }
+
 }  // namespace 
