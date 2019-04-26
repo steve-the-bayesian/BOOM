@@ -38,6 +38,13 @@ cp Interfaces/R/Boom/NAMESPACE $BOOM_DIR
 ##----------------------------------------------------------------------
 ## Source:
 ## Create the source directory and copy top-level files.
+backup_files=`find . -name "\.#*"`
+if [ ! -z $backup_files ]
+then
+    echo "Removing backup files: $backup_files"
+    rm $backup_files
+fi
+
 echo "Copying source files"
 mkdir $BOOM_DIR/src
 cp Interfaces/R/*.cpp $BOOM_DIR/src
