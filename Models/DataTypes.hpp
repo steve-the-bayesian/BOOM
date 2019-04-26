@@ -161,9 +161,11 @@ namespace BOOM {
     PartiallyObservedVectorData(const Vector &y,
                                 const Selector &obs = Selector());
     PartiallyObservedVectorData * clone() const override;
-    const Selector &observation_status() const { return obs_; }
     void set(const Vector &value, bool signal_change = true) override;
 
+    Selector &observation_status() { return obs_; }
+    const Selector &observation_status() const { return obs_; }
+    
    private:
     Selector obs_;
   };
