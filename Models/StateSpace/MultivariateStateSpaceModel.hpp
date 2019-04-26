@@ -108,6 +108,9 @@ namespace BOOM {
     }
 
    private:
+    // 
+    void impute_missing_observations(int t, RNG &rng) override;
+    
     StateModelVectorBase &state_model_vector() override {
       return state_models_;
     }
@@ -115,6 +118,10 @@ namespace BOOM {
     const StateModelVectorBase &state_model_vector() const override {
       return state_models_;
     }
+
+    //---------------------------------------------------------------------------
+    // Data section
+    //---------------------------------------------------------------------------
     
     int nseries_;
     Ptr<IndependentMvnModel> observation_model_;

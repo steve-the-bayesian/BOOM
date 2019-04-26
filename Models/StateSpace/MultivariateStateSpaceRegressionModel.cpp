@@ -17,6 +17,7 @@
 */
 
 #include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -77,6 +78,7 @@ namespace BOOM {
         response_matrix_(0, 0),
         observed_(0, 0, false),
         data_is_finalized_(false),
+        workspace_status_(UNSET),
         observation_variance_(nseries),
         observation_variance_current_(false),
         dummy_selector_(nseries, true)
@@ -240,6 +242,47 @@ namespace BOOM {
     }
   }
 
+  void MSSRM::impute_missing_observations(int t, RNG &rng) {
+    const Selector &observed(observed_status(t));
+    if (observed.nvars() == observed.nvars_possible()) {
+      // If the observation is fully observed there is nothing to do.
+      return;
+    } else {
+      Selector missing(observed.complement());
+      Vector imputed = *observation_coefficients(t, missing) * shared_state(t);
+      for (int i = 0; i < missing.nvars(); ++i) {
+        int I = missing.indx(i);
+        double shared_effect = imputed[i];
+        double series_effect = proxy_models_[I]->observation_matrix(t).dot(
+            proxy_models_[I]->state(t));
+        int data_index = data_indices_[I][t];
+        const RegressionModel &regression(*observation_model_->model(I));
+        double regression_effect = regression.predict(dat()[data_index]->x());
+        double error = rnorm_mt(rng, 0, regression.sigma());
+        dat()[data_index]->set_y(shared_effect + series_effect
+                                 + regression_effect + error);
+        
+        switch (workspace_status_) {
+          case UNSET:
+            // Do nothing.
+          break;
+          
+          case SHOWS_SHARED_EFFECTS:
+            adjusted_data_workspace_(I, t) = shared_effect + error;
+            break;
+            
+          case SHOWS_SERIES_EFFECTS:
+            adjusted_data_workspace_(I, t) = series_effect + error;
+            break;
+
+          default:
+            report_error("Unrecognized status for adjusted_data_workspace.");
+        }
+                      
+      }
+    }
+  }
+  
   void MSSRM::impute_shared_state_given_series_state(RNG &rng) {
     isolate_shared_state();
     MultivariateStateSpaceModelBase::impute_state(rng);
@@ -271,6 +314,7 @@ namespace BOOM {
         }
       }
     }
+    workspace_status_ = SHOWS_SHARED_EFFECTS;
   }
 
   void MSSRM::isolate_series_specific_state() {
@@ -290,6 +334,7 @@ namespace BOOM {
         
       }
     }
+    workspace_status_ = SHOWS_SERIES_EFFECTS;
   }
 
   double MSSRM::series_specific_state_contribution(int series, int time) const {

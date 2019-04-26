@@ -238,22 +238,17 @@ namespace BOOM {
     // Residual y is the residual remaining after the other state components
     // have made their contributions.
     //
-    // This function assumes that the state of the model has been set.
-    const Selector &observed = host_->observed_status(time_now);
-    if (observed.nvars() != observed.nvars_possible()) {
-      std::ostringstream err;
-      err << "The SharedLocalLevelStateModel assumes all observations are "
-          << "fully observed.  ";
-      // Once the MultivariateRegressionModel can handle partially observed data
-      // then we can lift this restriction.  Not a huge priority though.
-      report_error(err.str());
-    }
-    Vector residual_y =
-        observed.select(host_->observation(time_now)) -
-        (*host_->observation_coefficients(time_now, observed) 
-         * host_->shared_state(time_now))
-        + observed.select(observation_coefficients_->matrix() * now);
-
+    // This logic assumes that (1) the state of the model has been set, (2) that
+    // any missing values have been imputed, and (3) any other additive effects
+    // have been subtracted off.
+    Selector fully_observed(host_->state_dimension(), true);
+    // Subtract off the effect of other state models, and add in the effect of
+    // this one, so that the only effect present is from this state model and
+    // random error.
+    Vector residual_y = host_->adjusted_observation(time_now)
+        - (*host_->observation_coefficients(time_now, fully_observed))
+        * host_->shared_state(time_now)
+        + observation_coefficients_->matrix() * now;
     coefficient_model_->suf()->update_raw_data(residual_y, now, 1.0);
   }
 

@@ -60,7 +60,7 @@ namespace BOOM {
       resize_state();
       clear_client_data();
       simulate_forward(rng);
-      propagate_disturbances();
+      propagate_disturbances(rng);
     }
   }
     
@@ -73,8 +73,10 @@ namespace BOOM {
   // Kalman filtering and disturbance smoothing of y, and the results
   // will be subtracted to compute y_*.
   void MvBase::simulate_forward(RNG &rng) {
-    MultivariateKalmanFilterBase &filter(get_filter());
-    filter.update();
+    // Filter the observed data.
+    get_filter().update();
+
+    // Simulate and filter the fake data.
     MultivariateKalmanFilterBase &simulation_filter(get_simulation_filter());
     Vector simulated_data_state_mean = initial_state_mean();
     SpdMatrix simulated_data_state_variance = initial_state_variance();
@@ -151,7 +153,7 @@ namespace BOOM {
   // AFTER a call to fast_disturbance_smoother() puts r[t] in
   // filter_[t].scaled_state_error(), this function propagates the r's forward
   // to get E(alpha | y), and add it to the simulated state.
-  void MvBase::propagate_disturbances() {
+  void MvBase::propagate_disturbances(RNG &rng) {
     if (time_dimension() <= 0) return;
     SpdMatrix P0 = initial_state_variance();
     MultivariateKalmanFilterBase &simulation_filter(
@@ -166,6 +168,7 @@ namespace BOOM {
         + P0 * filter.initial_scaled_state_error();
 
     shared_state_.col(0) += state_mean_obs - state_mean_sim;
+    impute_missing_observations(0, rng);
     observe_state(0);
     observe_data_given_state(0);
     
@@ -178,6 +181,7 @@ namespace BOOM {
           (*state_variance_matrix(t - 1)) * filter[t - 1].scaled_state_error();
 
       shared_state_.col(t).axpy(state_mean_obs - state_mean_sim);
+      impute_missing_observations(t, rng);
       observe_state(t);
       observe_data_given_state(t);
     }

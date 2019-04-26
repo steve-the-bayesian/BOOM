@@ -198,6 +198,7 @@ namespace BOOM {
       return state_model_vector().full_state_subcomponent(
           shared_state_, state_model_index);
     }
+    
     SubMatrix mutable_full_state_subcomponent(int state_model_index) {
       return state_model_vector().mutable_full_state_subcomponent(
           shared_state_, state_model_index);
@@ -245,7 +246,13 @@ namespace BOOM {
     Vector simulate_state_error(RNG &rng, int t) const;
     
     void simulate_forward(RNG &rng);
-    void propagate_disturbances();
+    void propagate_disturbances(RNG &rng);
+
+    // If observation t is not fully observed, impute its missing values.  This
+    // is a full imputation, including regression and series-level state model
+    // effects.
+    virtual void impute_missing_observations(int t, RNG &rng) = 0;
+    
     void resize_state();
     
     // Simulate a fake observation to use as part of the Durbin-Koopman state

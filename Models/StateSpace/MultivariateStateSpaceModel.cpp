@@ -184,4 +184,25 @@ namespace BOOM {
     return ans;
   }
 
+  void MSSM::impute_missing_observations(int t, RNG &rng) {
+    const Selector &observed(observed_status(t));
+    if (observed.nvars() == observed.nvars_possible()) {
+      // If the observation is fully observed there is nothing to do.
+      return;
+    } else {
+      // If the observation is partially or completely missing then imputing is
+      // easy because the residual variance is diagonal.
+      Selector missing(observed.complement());
+      Vector imputed = *observation_coefficients(t, missing) * shared_state(t);
+      Ptr<PartiallyObservedVectorData> data_point = dat()[t];
+      for (int i = 0; i < missing.nvars(); ++i) {
+        int I = missing.indx(i);
+        double sd = sqrt(single_observation_variance(t, I));
+        data_point->set_element(imputed[i] + rnorm_mt(rng, 0, sd),
+                                I);
+      }
+    }
+
+  }
+  
 }  // namespace BOOM

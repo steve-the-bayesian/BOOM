@@ -307,7 +307,7 @@ namespace BOOM {
     ConstVectorView adjusted_observation(int time) const override {
       return adjusted_data_workspace_.col(time);
     }
-
+   
     //--------------------------------------------------------------------------
     // Kalman filter parameters.
     //--------------------------------------------------------------------------
@@ -371,7 +371,7 @@ namespace BOOM {
     
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
-    
+    void impute_missing_observations(int t, RNG &rng) override;
     void impute_shared_state_given_series_state(RNG &rng);
     void impute_series_state_given_shared_state(RNG &rng);
 
@@ -434,6 +434,13 @@ namespace BOOM {
     // components on which we wish to condition.
     Matrix adjusted_data_workspace_;
 
+    enum WorkspaceStatus {
+      UNSET,
+      SHOWS_SHARED_EFFECTS,
+      SHOWS_SERIES_EFFECTS
+    };
+    WorkspaceStatus workspace_status_;
+    
     // A workspace to copy the residual variances stored in observation_model_
     // in the data structure expected by the model.
     mutable DiagonalMatrix observation_variance_;
