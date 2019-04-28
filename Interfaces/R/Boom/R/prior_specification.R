@@ -492,10 +492,8 @@ ScaledMatrixNormalPrior <- function(mean, nu) {
   # Details:
   #   The Sigma parameter is obtained elsewhere.
   stopifnot(is.matrix(mean))
-  stopifnot(is.numeric(sample.size),
-    length(sample.size) == 1,
-    sample.size > 0)
-  ans <- list("mean" = mean, "sample.size" = sample.size)
+  stopifnot(is.numeric(nu), length(nu) == 1, nu > 0)
+  ans <- list("mean" = mean, "nu" = nu)
   class(ans) <- c("ScaledMatrixNormalPrior", "Prior")
   return(ans)
 }
