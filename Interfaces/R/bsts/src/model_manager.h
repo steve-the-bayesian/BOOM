@@ -39,7 +39,7 @@ namespace BOOM {
       void UnpackForecastTimestamps(SEXP r_prediction_data);
 
       void set_time_dimension(int dim) {
-        number_of_time_points = dim;
+        number_of_time_points_ = dim;
       }
       
       bool trivial() const {return trivial_;}
@@ -149,8 +149,7 @@ namespace BOOM {
       // Returns the timestamp number (index) of observation i.  The index is
       // given in C's 0-based counting system.
       int TimestampMapping(int i) const {
-        return timestamp_info_.mapping(i);
-            .trivial() ? i : timestamp_info_.mapping(i) - 1;
+        return timestamp_info_.trivial() ? i : timestamp_info_.mapping(i) - 1;
       }
 
       RNG & rng() {return rng_;}

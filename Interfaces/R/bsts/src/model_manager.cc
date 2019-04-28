@@ -22,7 +22,7 @@
 #include "state_space_poisson_model_manager.h"
 #include "state_space_regression_model_manager.h"
 #include "state_space_student_model_manager.h"
-#include "state_space_multivariate_gaussian_model_manager.h"
+#include "multivariate_gaussian_model_manager.h"
 
 #include "utils.h"
 #include "create_state_model.h"
@@ -45,11 +45,11 @@ namespace BOOM {
     
     void TimestampInfo::Unpack(SEXP r_data_list) {
       SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
-      timestamps_are_trivial_ = Rf_asLogical(getListElement(
+      trivial_ = Rf_asLogical(getListElement(
           r_timestamp_info, "timestamps.are.trivial"));
       number_of_time_points_ = Rf_asInteger(getListElement(
           r_timestamp_info, "number.of.time.points"));
-      if (!timestamps_are_trivial_) {
+      if (!trivial_) {
         timestamp_mapping_ = ToIntVector(getListElement(
             r_timestamp_info, "timestamp.mapping"));
       }
@@ -302,31 +302,6 @@ namespace BOOM {
     }
 
     //--------------------------------------------------------------------------
-    MultivariateStateSpaceModelBase * MultivariateModelManagerBase::CreateModel(  
-        SEXP r_data_list,
-        SEXP r_shared_state_specification,
-        SEXP r_prior,
-        SEXP r_options,
-        RListIoManager *io_manager) {
-      
-      MultivariateStateSpaceModelBase *model = CreateBareModel(
-          r_data_list,
-          r_prior,
-          r_options,
-          io_manager);
-      std::pair<int, int> dims = GetMatrixDimensions(getListElement(
-          r_data_list, "response", true));
-      int nseries = dims.second;
-      SharedStateModelFactory shared_state_model_factory(nseries, io_manager);
-      shared_state_model_factory.AddState(
-          model, r_shared_state_specification, "");
-      shared_state_model_factory.SaveFinalState(model, &final_state());
-
-      // The predict method does not set BstsOptions, so let NULL for r_options
-      // here be a signal that options have not been set.
-      return model;
-    }
-
     
   }  // namespace bsts
 }  // namespace BOOM
