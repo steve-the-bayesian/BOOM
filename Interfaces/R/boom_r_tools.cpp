@@ -51,6 +51,7 @@ namespace BOOM {
     if (expect_answer && elmt == R_NilValue) {
       std::ostringstream warning;
       warning << "Could not find list element named: " << name << endl;
+      Rf_PrintValue(list);
       report_warning(warning.str());
     }
     return elmt;
