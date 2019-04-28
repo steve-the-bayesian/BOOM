@@ -59,15 +59,21 @@ namespace BOOM {
             nseries_(nseries)
       {}
 
+      using SharedStateModelVector =
+          StateSpaceUtils::StateModelVector<SharedStateModel>;
+      
       // Adds all the state components listed in
       // r_state_specification_list to the model.
       // Args:
       //   model: The model to which the state will be added.  
+      //   state_models: The state model vector holding the shared state models.
+      //     This is typically owned by 'model'.
       //   r_state_specification_list: An R list of state components to be added
       //     to the model.  This function intended to handle the state
       //     specification argument in bsts.
       //   prefix: An optional prefix added to the name of each state component.
-      void AddState(MultivariateStateSpaceModelBase *model,
+      void AddState(SharedStateModelVector &state_models,
+                    MultivariateStateSpaceModelBase *model,
                     SEXP r_shared_state_specification,
                     const std::string &prefix = "");
 

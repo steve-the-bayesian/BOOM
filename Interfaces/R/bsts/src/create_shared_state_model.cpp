@@ -38,13 +38,14 @@ namespace BOOM {
   namespace bsts {
 
     void SharedStateModelFactory::AddState(
+        SharedStateModelVector &state_models,
         MultivariateStateSpaceModelBase *model,
         SEXP r_shared_state_specification,
         const std::string &prefix) {
       if (!model) return;
       int number_of_state_models = Rf_length(r_shared_state_specification);
       for (int i = 0; i < number_of_state_models; ++i) {
-        model->add_virtual_state(CreateSharedStateModel(
+        state_models.add_state(CreateSharedStateModel(
             model,
             VECTOR_ELT(r_shared_state_specification, i),
             prefix));
@@ -74,14 +75,13 @@ namespace BOOM {
               list_element_name,
               final_state));
     }
-
     
     Ptr<SharedStateModel>
     SharedStateModelFactory::CreateSharedStateModel(
         MultivariateStateSpaceModelBase *model,
         SEXP r_state_component,
         const std::string &prefix) {
-      if (Rf_inherits(r_state_component, "")) {
+      if (Rf_inherits(r_state_component, "SharedLocalLevel")) {
         return CreateSharedLocalLevel(r_state_component, model, prefix);
       } else {
         report_error("Unrecognized shared state model.");
@@ -130,12 +130,12 @@ namespace BOOM {
       NEW(SharedLocalLevelStateModel, state_model)(nfactors, model, nseries_);
 
       // Set the initial state distribution.
-      state_model->set_initial_state_mean(ToBoomVector(getListElement(
-          r_state_component, "initial.state.mean")));
-      state_model->set_initial_state_variance(ToBoomSpdMatrix(getListElement(
-          r_state_component, "initial.state.variance")));
+      RInterface::MvnPrior initial_state_prior(getListElement(
+          r_state_component, "initial.state.prior", true));
+      state_model->set_initial_state_mean(initial_state_prior.mu());
+      state_model->set_initial_state_variance(initial_state_prior.Sigma());
       
-      // Set the prior.
+      // Set the prior on the innovation variances.
       std::vector<Ptr<GammaModelBase>> innovation_precision_priors;
       for (int i = 0; i < nfactors; ++i) {
         RInterface::SdPrior prior_spec(VECTOR_ELT(
@@ -145,13 +145,17 @@ namespace BOOM {
             prior_spec.prior_guess()));
       }
 
+      // Set the prior on the observation coefficients.
+      RInterface::ScaledMatrixNormalPrior coefficient_prior(
+          getListElement(r_state_component, "coefficient.prior"));
+
+      // Set the posterior sampler for the overall state model.
       NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
           state_model.get(),
           innovation_precision_priors,
-          ToBoomMatrix(getListElement(
-              r_state_component, "observation.coefficient.prior.mean")),
-          Rf_asReal(getListElement(
-              r_state_component, "coefficient.prior.sample.size")));
+          coefficient_prior.mean(),
+          coefficient_prior.sample_size());
+      state_model->set_method(state_model_sampler);
 
       // Set the io manager, if there is one.
       if (io_manager()) {
