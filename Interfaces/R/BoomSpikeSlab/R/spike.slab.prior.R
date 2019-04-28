@@ -113,7 +113,7 @@ SpikeSlabPriorBase <- function(number.of.variables,
               sigma.guess = sigma.guess,
               prior.df = prior.df,
               sigma.upper.limit = sigma.upper.limit)
-  class(ans) <- "SpikeSlabPriorBase"
+  class(ans) <- c("SpikeSlabPriorBase", "Prior")
   return(ans)
 }
 
@@ -136,9 +136,7 @@ SpikeSlabPriorDirect <- function(coefficient.mean,
   ans$prior.df <- prior.df
   ans$sigma.guess <- sigma.guess
   ans$sigma.upper.limit <- sigma.upper.limit
-  class(ans) <- c("SpikeSlabPriorDirect",
-    "SpikeSlabPrior",
-    "SpikeSlabPriorBase")
+  class(ans) <- c("SpikeSlabPriorDirect", "SpikeSlabPrior", class(ans))
   return(ans)
 }
 ###======================================================================
@@ -490,7 +488,7 @@ SpikeSlabGlmPrior <- function(
   xtwx <- diagonal.shrinkage * d + (1 - diagonal.shrinkage) * xtwx
   xtwx <- xtwx * prior.information.weight
   ans$siginv <- xtwx
-  class(ans) <- c("SpikeSlabGlmPrior", class(ans))
+  class(ans) <- c("SpikeSlabGlmPrior", "Prior", class(ans))
   return(ans)
 }
 
@@ -538,7 +536,7 @@ SpikeSlabGlmPriorDirect <- function(coefficient.mean,
     siginv = coefficient.precision,
     prior.inclusion.probabilities = prior.inclusion.probabilities,
     max.flips = max.flips)
-  class(ans) <- c("SpikeSlabGlmPriorDirect", "SpikeSlabPriorBase")
+  class(ans) <- c("SpikeSlabGlmPriorDirect", "SpikeSlabPriorBase", "Prior")
   return(ans)
 }
 
