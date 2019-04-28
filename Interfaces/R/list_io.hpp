@@ -29,6 +29,9 @@
 #include "Models/SpdParams.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
 
+#include "cpputil/RefCounted.hpp"
+#include "cpputil/Ptr.hpp"
+
 #include "r_interface/boom_r_tools.hpp"
 
 //===========================================================================
@@ -101,14 +104,14 @@ namespace BOOM {
     void advance(int n);
 
    private:
-    std::vector<std::shared_ptr<RListIoElement> > elements_;
+    std::vector<Ptr<RListIoElement> > elements_;
   };
 
   //======================================================================
   // An RListIoelement takes care of allocating space, recording to, and
   // streaming parameters from an R list.  One instance is required for each
   // distinct parameter in the model output list.
-  class RListIoElement {
+  class RListIoElement : private RefCounted {
    public:
     explicit RListIoElement(const std::string &name);
     virtual ~RListIoElement();
@@ -155,6 +158,15 @@ namespace BOOM {
     RListIoElement(const RListIoElement &rhs);
     void operator=(const RListIoElement &rhs);
 
+    friend void intrusive_ptr_add_ref(RListIoElement *d) {
+      d->up_count();
+    }
+    
+    friend void intrusive_ptr_release(RListIoElement *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
+    
     std::string name_;
     SEXP rbuffer_;  // The R object holding the BOOM output
     int position_;  // Current position in the rbuffer
@@ -327,10 +339,17 @@ namespace BOOM {
   // stored in a BOOM::Params object.  The purpose of a ScalarIoCallback is to
   // supply values for a NativeUnivariateListElement to write to the vector that
   // it maintains.
-  class ScalarIoCallback {
+  class ScalarIoCallback : private RefCounted {
    public:
     virtual ~ScalarIoCallback() {}
     virtual double get_value() const = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(ScalarIoCallback *d) { d->up_count(); }
+    friend void intrusive_ptr_release(ScalarIoCallback *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
   };
 
   //---------------------------------------------------------------------------
@@ -362,7 +381,7 @@ namespace BOOM {
     void write() override;
     void stream() override;
    private:
-    std::shared_ptr<ScalarIoCallback> callback_;
+    Ptr<ScalarIoCallback> callback_;
 
     // The data from streaming are placed in *streaming_buffer_;
     double *streaming_buffer_;
@@ -476,11 +495,18 @@ namespace BOOM {
   // object you really care about, and which can supply the two necessary member
   // functions.  Then put the callback into a NativeVectorListElement, described
   // below.
-  class VectorIoCallback {
+  class VectorIoCallback : private RefCounted {
    public:
     virtual ~VectorIoCallback() {}
     virtual int dim() const = 0;
     virtual Vector get_vector() const = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(VectorIoCallback *d) { d->up_count(); }
+    friend void intrusive_ptr_release(VectorIoCallback *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
   };
 
   class StreamableVectorIoCallback : public VectorIoCallback {
@@ -502,8 +528,8 @@ namespace BOOM {
     //   streaming_buffer: A pointer to a Vector that will populated when
     //     streaming.  This can be NULL if streaming is not desired.
     NativeVectorListElement(VectorIoCallback *callback,
-                         const std::string &name,
-                         Vector *streaming_buffer);
+                            const std::string &name,
+                            Vector *streaming_buffer);
     void write() override;
     void stream() override;
     int dim() const override { return callback_->dim(); }
@@ -514,7 +540,7 @@ namespace BOOM {
     void disable_buffer_check() { check_buffer_ = false; }
     
    private:
-    std::shared_ptr<VectorIoCallback> callback_;
+    Ptr<VectorIoCallback> callback_;
     Vector *streaming_buffer_;
     bool check_buffer_;
   };
@@ -534,7 +560,7 @@ namespace BOOM {
     void stream() override { callback_->put_vector(next_row()); }
     
    private:
-    std::shared_ptr<StreamableVectorIoCallback> callback_;
+    Ptr<StreamableVectorIoCallback> callback_;
   };
   
   //---------------------------------------------------------------------------
@@ -638,12 +664,19 @@ namespace BOOM {
   // MatrixIoCallback.  The class should store a pointer to the object you
   // really care about, and which can supply the necessary member functions.
   // Then put the callback into a NativeVectorListElement, described below.
-  class MatrixIoCallback {
+  class MatrixIoCallback : public RefCounted {
    public:
     virtual ~MatrixIoCallback() {}
     virtual int nrow() const = 0;
     virtual int ncol() const = 0;
     virtual Matrix get_matrix() const = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(MatrixIoCallback *d) { d->up_count(); }
+    friend void intrusive_ptr_release(MatrixIoCallback *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
   };
 
   // A MatrixIoCallback that stores streamed values other than in the internal
@@ -689,7 +722,7 @@ namespace BOOM {
     }
     
    private:
-    std::shared_ptr<MatrixIoCallback> callback_;
+    Ptr<MatrixIoCallback> callback_;
     Matrix *streaming_buffer_;
     bool check_buffer_;
   };
@@ -706,7 +739,7 @@ namespace BOOM {
     void stream() override;
           
    private:
-    std::shared_ptr<StreamableMatrixIoCallback> callback_;
+    Ptr<StreamableMatrixIoCallback> callback_;
   };
   
   //---------------------------------------------------------------------------
@@ -715,7 +748,7 @@ namespace BOOM {
   // array has leading dimension niter (number of MCMC iterations).  The
   // remaining dimensions are specified by the dim() member function of the
   // callback provided to the constructor.
-  class ArrayIoCallback {
+  class ArrayIoCallback : private RefCounted {
    public:
     virtual ~ArrayIoCallback() {}
 
@@ -738,8 +771,17 @@ namespace BOOM {
     //     of the R array to which the parameters were written by
     //     write_to_array().
     virtual void read_from_array(const ArrayView &view) = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(ArrayIoCallback *d) {d->up_count();}
+    friend void intrusive_ptr_release(ArrayIoCallback *d) {
+      d->down_count();
+      if (d->ref_count() == 0) delete d;
+    }
   };
 
+  
+  
   //---------------------------------------------------------------------------
   // Introductory comments given above ArrayIoCallback.
   class NativeArrayListElement : public ArrayValuedRListIoElement {
@@ -764,7 +806,7 @@ namespace BOOM {
     // because it corresponds to a single MCMC iteration.
     ArrayView next_array_view();
 
-    std::shared_ptr<ArrayIoCallback> callback_;
+    Ptr<ArrayIoCallback> callback_;
 
     // An index used to subscript array_buffer_ when calling next_array_view().
     // The leading index is the MCMC number.  All other positions are -1, as

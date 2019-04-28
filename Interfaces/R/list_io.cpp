@@ -23,7 +23,7 @@
 namespace BOOM {
 
   void RListIoManager::add_list_element(RListIoElement *element) {
-    elements_.push_back(std::shared_ptr<RListIoElement>(element));
+    elements_.push_back(Ptr<RListIoElement>(element));
   }
 
   SEXP RListIoManager::prepare_to_write(int niter) {
