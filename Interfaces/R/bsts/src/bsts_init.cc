@@ -76,6 +76,16 @@ extern "C" {
   SEXP analysis_common_r_get_date_ranges_(
       SEXP r_holiday,
       SEXP r_timestamps);
+
+  SEXP analysis_common_r_fit_multivariate_bsts_model_(
+      SEXP r_data_list,
+      SEXP r_state_specification,
+      SEXP r_series_state_specification,
+      SEXP r_prior,
+      SEXP r_options,
+      SEXP r_niter,
+      SEXP r_ping,
+      SEXP r_seed);
   
   static R_CallMethodDef bsts_arg_description[] = {
     CALLDEF(analysis_common_r_fit_bsts_model_, 9),
@@ -85,6 +95,7 @@ extern "C" {
     CALLDEF(analysis_common_r_bsts_aggregate_time_series_, 3),
     CALLDEF(analysis_common_r_bsts_fit_mixed_frequency_model_, 11),
     CALLDEF(analysis_common_r_get_date_ranges_, 2),
+    CALLDEF(analysis_common_r_fit_multivariate_bsts_model_, 8),
     {NULL, NULL, 0}  // NOLINT
   };
 
