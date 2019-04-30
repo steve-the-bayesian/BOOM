@@ -438,7 +438,8 @@ namespace BOOM{
     // The environment in which to find the R function.
     SEXP r_env_;
 
-    // The call we will use to get the output, something like "f(argument_name_)"
+    // The call we will use to get the output, something like
+    // "f(argument_name_)"
     std::string call_string_;
   };
 

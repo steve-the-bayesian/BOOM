@@ -131,7 +131,7 @@ namespace BOOM {
     }
     SET_VECTOR_ELT(ans, n, new_element);
 
-    SEXP old_list_names = Rf_getAttrib(list, R_NamesSymbol);
+    SEXP old_list_names = protector.protect(Rf_getAttrib(list, R_NamesSymbol));
     SEXP list_names = protector.protect(Rf_allocVector(STRSXP, n+1));
 
     if(!Rf_isNull(old_list_names)){
@@ -705,7 +705,7 @@ namespace BOOM {
     //     is parsing a file.  R_NilValue is a signal that no such file is
     //     present.
     SEXP r_call = protector.protect(R_ParseVector(
-        ToRString(call_string_),
+        protector.protect(ToRString(call_string_)),
         1,
         &parse_status,
         R_NilValue));
@@ -717,6 +717,12 @@ namespace BOOM {
     }
     
     return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
+
+    // NOTE: rchk raised a warning about passing output from Rf_eval directly to
+    // Rf_asReal.
+    SEXP r_function_output = protector.protect(
+        Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
+    return Rf_asReal(r_function_output);
   }
   
   namespace {
