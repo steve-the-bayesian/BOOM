@@ -242,12 +242,17 @@ namespace BOOM {
     // any missing values have been imputed, and (3) any other additive effects
     // have been subtracted off.
     Selector fully_observed(host_->state_dimension(), true);
+
     // Subtract off the effect of other state models, and add in the effect of
     // this one, so that the only effect present is from this state model and
     // random error.
-    Vector residual_y = host_->adjusted_observation(time_now)
-        - (*host_->observation_coefficients(time_now, fully_observed))
-        * host_->shared_state(time_now)
+    //
+    // The first "state" calculation below uses the full state vector.  The
+    // second uses 'now' which is a subset.
+    Vector residual_y =
+        host_->adjusted_observation(time_now)
+        - (*host_->observation_coefficients(time_now, fully_observed)
+           * host_->shared_state(time_now))
         + observation_coefficients_->matrix() * now;
     coefficient_model_->suf()->update_raw_data(residual_y, now, 1.0);
   }
@@ -346,8 +351,10 @@ namespace BOOM {
     // The multivariate regression model is organized as (xdim, ydim).  The 'X'
     // in our case is the state, where we want y = Z * state, so we need the
     // transpose of the coefficient matrix from the regression.
-    observation_coefficients_.reset(new DenseMatrix(
-        coefficient_model_->Beta().transpose()));
+    Matrix Beta = coefficient_model_->Beta();
+    Beta = 0.0;
+    Beta.diag() = 1.0;
+    observation_coefficients_.reset(new DenseMatrix(Beta.transpose()));
 
     if (!empty_) {
       empty_.reset(new EmptyMatrix);
@@ -358,7 +365,6 @@ namespace BOOM {
     for (int i = 0; i < innovation_models_.size(); ++i) {
       state_variance_matrix_->add_variance(innovation_models_[i]->Sigsq_prm());
     }
-    
   }
 
   // The logic here is :

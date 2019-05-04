@@ -5,6 +5,8 @@
 #include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 
+#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+
 #include "test_utils/test_utils.hpp"
 
 namespace {
@@ -57,5 +59,30 @@ namespace {
     StateSpaceTestFramework state_space(1.3);
     state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_);
+  }
+
+  TEST_F(LocalLevelStateModelTest, SharedModelTest) {
+    int nseries = 12;
+    int nfactors = 3;
+    MultivariateStateSpaceModel model(nseries);
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model, nseries);
+    model.add_state(state_model);
+
+    EXPECT_TRUE(MatrixEquals(
+        state_model->state_transition_matrix(3)->dense(),
+        SpdMatrix(nfactors, 1.0)));
+
+    Selector observed(nseries, true);
+    EXPECT_EQ(state_model->observation_coefficients(3, observed)->nrow(),
+              nseries);
+    EXPECT_EQ(state_model->observation_coefficients(3, observed)->ncol(),
+              nfactors);
+    Matrix Z = state_model->observation_coefficients(3, observed)->dense();
+    EXPECT_DOUBLE_EQ(Z(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(Z(1, 1), 1.0);
+    EXPECT_DOUBLE_EQ(Z(2, 2), 1.0);
+    EXPECT_DOUBLE_EQ(Z(0, 1), 0.0);
+    EXPECT_DOUBLE_EQ(Z(0, 2), 0.0);
+    EXPECT_DOUBLE_EQ(Z(1, 2), 0.0);
   }
 }  // namespace
