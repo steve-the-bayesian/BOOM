@@ -1,5 +1,6 @@
 BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
-                         se.truth = NULL, color="white", ...) {
+                        se.truth = NULL, color="white", truth.color = "black",
+                        ...) {
   ## Compares the marginal distributions of the columns of a matrix
   ## against a vector of true values.  Useful for validating an MCMC
   ## algorithm against simulated data where you know the true
@@ -18,6 +19,8 @@ BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
   ##     known then setting se.truth will add reference lines at +/- 2
   ##     standard errors.
   ##   color:  A vector of colors to use for the different boxes.
+  ##   truth.color: A vector of colors to use for the segments showing the true
+  ##     values.
   ##   ...:  Extra arguments passed to boxplot.
   ##
   if(!is.null(truth)){
@@ -42,13 +45,13 @@ BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
   if(is.null(vnames)) vnames <- paste(1:nx)
 
   if(length(color) < nx) color <- rep(color, length.out=nx)
-  boxplot(split(x, col(x)), names=vnames, col=color, ...)
+  boxplot(split(x, col(x)), names = vnames, col = color, ...)
 
   if(!is.null(truth)){
-    AddSegments(1:ncol(x), truth, lwd=3)
+    AddSegments(1:ncol(x), truth, lwd = 3, col = truth.color)
     if(!is.null(se.truth)){
-      AddSegments(1:ncol(x), truth+2*se.truth, lwd=1, lty=2)
-      AddSegments(1:ncol(x), truth-2*se.truth, lwd=1, lty=2)
+      AddSegments(1:ncol(x), truth + 2 * se.truth, lwd = 1, lty = 2)
+      AddSegments(1:ncol(x), truth - 2 * se.truth, lwd = 1, lty = 2)
     }
   }
 }
