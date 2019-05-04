@@ -165,7 +165,7 @@ namespace BOOM {
 
         io_manager()->add_list_element(new MatrixListElement(
             state_model->coefficient_model()->Beta_prm(),
-            prefix + "coefficients"));
+            prefix + "shared.local.level.coefficients"));
       }
       return state_model;
     }
