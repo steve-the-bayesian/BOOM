@@ -113,9 +113,9 @@ namespace BOOM {
   //======================================================================
   SEXP VectorValuedRListIoElement::prepare_to_write(int niter) {
     RMemoryProtector protector;
-    SEXP buffer;
-    protector.protect(buffer = SetColnames(Rf_allocMatrix(
-        REALSXP, niter, dim()), element_names_));
+    SEXP buffer = protector.protect(SetColnames(
+        protector.protect(Rf_allocMatrix(REALSXP, niter, dim())),
+        element_names_));
     StoreBuffer(buffer);
     matrix_view_.reset(SubMatrix(data(), niter, dim()));
     return buffer;
