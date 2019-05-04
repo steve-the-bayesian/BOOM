@@ -109,7 +109,7 @@ namespace BOOM {
     virtual const MultivariateKalmanFilterBase & get_filter() const = 0;
     virtual MultivariateKalmanFilterBase & get_simulation_filter() = 0;
     virtual const MultivariateKalmanFilterBase & get_simulation_filter() const = 0;
-    
+
     // Durbin and Koopman's T[t] built from state models.
     virtual const SparseKalmanMatrix *state_transition_matrix(int t) const {
       return state_model_vector().state_transition_matrix(t);
@@ -189,9 +189,8 @@ namespace BOOM {
       return state_model_vector().state_component(full_state, s);
     }
 
-    const Matrix &shared_state() const {
-      return shared_state_;
-    }
+    const Matrix &shared_state() const { return shared_state_; }
+
     ConstVectorView shared_state(int t) const {return shared_state().col(t);}
 
     ConstSubMatrix full_state_subcomponent(int state_model_index) const {
@@ -207,6 +206,9 @@ namespace BOOM {
     Vector initial_state_mean() const;
     SpdMatrix initial_state_variance() const;
 
+    // Set the shared state to the specified value, and mark the state as
+    // 'fixed' so that it will no longer be updated by calls to 'impute_state'.
+    // This function is intended for debugging purposes only.
     void permanently_set_state(const Matrix &state);
 
    protected:
@@ -265,37 +267,15 @@ namespace BOOM {
   };
 
   //===========================================================================
-  class ConditionalIidMultivariateStateSpaceModelBase
+  class GeneralMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
-    ConditionalIidMultivariateStateSpaceModelBase();
+    virtual SpdMatrix observation_variance(int t) const = 0;
 
-    // All observations at time t have this variance.
-    virtual double observation_variance(int t) const = 0;
-
+    //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override {
-      filter_.update();
-    }
-
-    ConditionalIidKalmanFilter &get_filter() override;
-    const ConditionalIidKalmanFilter &get_filter() const override;
-    ConditionalIidKalmanFilter &get_simulation_filter() override;
-    const ConditionalIidKalmanFilter &get_simulation_filter() const override;
-
-   private:
-    // Simulate a fake observation at time t to use as part of the Durbin and
-    // Koopman data augmentation algorithm.
-    //
-    // This override handles the case where the dimension of the response is
-    // known.  If the dimension is time varying then this function will generate
-    // an error, so child classes involving time varying dimension must handle
-    // the time varying case with their own overrides.
-    Vector simulate_fake_observation(RNG &rng, int t) override;
-
-    ConditionalIidKalmanFilter filter_;
-    ConditionalIidKalmanFilter simulation_filter_;
+    void kalman_filter() override;
   };
 
   //===========================================================================
@@ -334,16 +314,39 @@ namespace BOOM {
   };
 
   //===========================================================================
-  class GeneralMultivariateStateSpaceModelBase
+  class ConditionalIidMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
-    virtual SpdMatrix observation_variance(int t) const = 0;
+    ConditionalIidMultivariateStateSpaceModelBase();
 
-    //---------------- Prediction, filtering, smoothing ---------------
+    // All observations at time t have this variance.
+    virtual double observation_variance(int t) const = 0;
+
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override;
+    void kalman_filter() override {
+      filter_.update();
+    }
+
+    ConditionalIidKalmanFilter &get_filter() override;
+    const ConditionalIidKalmanFilter &get_filter() const override;
+    ConditionalIidKalmanFilter &get_simulation_filter() override;
+    const ConditionalIidKalmanFilter &get_simulation_filter() const override;
+
+   private:
+    // Simulate a fake observation at time t to use as part of the Durbin and
+    // Koopman data augmentation algorithm.
+    //
+    // This override handles the case where the dimension of the response is
+    // known.  If the dimension is time varying then this function will generate
+    // an error, so child classes involving time varying dimension must handle
+    // the time varying case with their own overrides.
+    Vector simulate_fake_observation(RNG &rng, int t) override;
+
+    ConditionalIidKalmanFilter filter_;
+    ConditionalIidKalmanFilter simulation_filter_;
   };
+
 
 } // namespace BOOM
 

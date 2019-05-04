@@ -43,7 +43,6 @@ namespace BOOM {
   {}
   
   //===========================================================================
-  
   PSSSM::ProxyScalarStateSpaceModel(
       MultivariateStateSpaceRegressionModel *model,
       int which_series)
@@ -55,6 +54,7 @@ namespace BOOM {
   double PSSSM::adjusted_observation(int t) const {
     return model_->adjusted_observation(which_series_, t);
   }
+
   bool PSSSM::is_missing_observation(int t) const {
     return model_->is_observed(which_series_, t);
   }
@@ -207,13 +207,13 @@ namespace BOOM {
   void MSSRM::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
-      return;
-    }
-    const ConstVectorView now(shared_state(t));
-    const ConstVectorView then(shared_state(t - 1));
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      state_model(s)->observe_state(state_component(then, s),
-                                    state_component(now, s), t);
+    } else {
+      const ConstVectorView now(shared_state(t));
+      const ConstVectorView then(shared_state(t - 1));
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_state(state_component(then, s),
+                                      state_component(now, s), t);
+      }
     }
   }
 
@@ -278,7 +278,6 @@ namespace BOOM {
           default:
             report_error("Unrecognized status for adjusted_data_workspace.");
         }
-                      
       }
     }
   }
@@ -315,6 +314,7 @@ namespace BOOM {
       }
     }
     workspace_status_ = SHOWS_SHARED_EFFECTS;
+    //    std::cout << "adjusted data workspace: " << std::endl << adjusted_data_workspace_ << std::endl;
   }
 
   void MSSRM::isolate_series_specific_state() {

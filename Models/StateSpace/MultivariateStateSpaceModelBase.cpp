@@ -214,7 +214,6 @@ namespace BOOM {
     state_is_fixed_ = true;
     shared_state_ = state;
   }
-    
 
   // Ensure that state_ is large enough to hold the results of
   // impute_state().
@@ -227,7 +226,6 @@ namespace BOOM {
       state_model(s)->observe_time_dimension(time_dimension());
     }
   }
-
   
   //===========================================================================
 

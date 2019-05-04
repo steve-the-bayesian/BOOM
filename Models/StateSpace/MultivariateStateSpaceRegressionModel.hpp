@@ -69,6 +69,12 @@ namespace BOOM {
     // you think about a multivariate time series as a matrix, with rows
     // representing time, this is the run number.
     int timestamp() const {return timestamp_index_;}
+
+    std::ostream &display(std::ostream &out) const override {
+      out << "series " << which_series_ << "\n"
+          << "time   " << timestamp_index_ << "\n";
+      return RegressionData::display(out);
+    }
     
    private:
     int which_series_;
