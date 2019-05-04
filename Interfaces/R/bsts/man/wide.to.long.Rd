@@ -26,10 +26,10 @@
 \arguments{
 
   \item{response}{For \code{WideToLong} this is a matrix, with rows
-  representing time and columns representing variables.  This can be a
-  \code{\link{zoo}} matrix with timestamps as an index.
+    representing time and columns representing variables.  This can be a
+    \code{\link{zoo}} matrix with timestamps as an index.
 
-  For \code{LongToWide}, \code{response} is a vector.}
+    For \code{LongToWide}, \code{response} is a vector.}
 
   \item{na.rm}{If TRUE then missing values will be omitted from the
     returned data frame (their absence denoting missingness).
@@ -41,16 +41,12 @@
 
   \item{timestamps}{A variable of the same length as \code{response},
     indicating the time period to which each observation belongs.}  
+}
 
-  \value{
-
-    \code{LongToWide} returns a zoo matrix with the time series in
-    wide format.
-
-    \code{WideToLong} returns a 3-column data frame with columns "time",
-    "series", and "values".
-    
-  }
+\value{
+  \code{LongToWide} returns a zoo matrix with the time series in wide format.
+  \code{WideToLong} returns a 3-column data frame with columns "time", "series", and "values".
+}
 
 \author{
   Steven L. Scott \email{steve.the.bayesian@gmail.com}
