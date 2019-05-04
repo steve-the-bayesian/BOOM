@@ -294,15 +294,16 @@ LongToWide <- function(response, series.id, timestamps) {
   stopifnot(length(response) == length(series.id),
     length(response) == length(timestamps))
   unique.times <- sort(unique(timestamps))
-  unique.names <- unique(series.id)
+  series.id <- as.factor(series.id)
+  unique.names <- levels(series.id)
   ntimes <- length(unique.times)
   nseries <- length(unique.names)
-
+  
   ans <- matrix(nrow = ntimes, ncol = nseries)
   if (ntimes == 0 || nseries == 0) {
     return(ans)
   }
-  colnames(ans) <- as.character(unique(series.id))
+  colnames(ans) <- as.character(levels(series.id))
 
   for (i in 1:ntimes) {
     index <- timestamps == unique.times[i]
