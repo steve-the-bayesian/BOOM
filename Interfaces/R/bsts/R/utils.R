@@ -347,9 +347,10 @@ WideToLong <- function(response, na.rm = TRUE) {
   if (is.null(vnames)) {
     vnames <- base::make.names(1:nseries)
   }
-
+  ntimes <- length(unique(timestamps))
+  
   values <- as.numeric(t(response))
-  labels <- rep(vnames, times = nseries)
+  labels <- factor(rep(vnames, times = ntimes), levels = vnames)
   timestamps <- rep(timestamps, each = nseries)
   
   ans <- data.frame("time" = timestamps, "series" = labels, "values" = values)

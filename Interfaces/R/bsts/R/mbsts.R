@@ -14,17 +14,19 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-
-# This is a multivariate version of the univariate bsts function.  For now we
-# are only supporting Gaussian observations.  In the future the plan is to
-# expand to the same set of reward distributions supported by bsts.  This
-# function may actually merge with bsts in the future, because it is quite
-# similar.
+# ===========================================================================
+# This is a multivariate version of the univariate bsts function.  For now it
+# only supports Gaussian observations.  In the future the plan is to expand to
+# the same set of reward distributions supported by bsts.  This function may
+# actually merge with bsts in the future.  It is quite similar.
 #
-# Expected usage:
+# Expected usage 1:
 #   Matrix y, Matrix x
 #   ss <- AddSharedLocalLevel(list(), y)
 #   model <- mbsts(y ~ x, state.specification = ss, niter = 1000)
+#
+# Expected usage 2:
+#   Data frame with columns for time stamp and series identifier.
 #
 # There are two data formats to support.  Wide and tall.  If you want regressors
 # then you'll need tall.  Tall data requires an "id" and a "timestamp" variable.
@@ -36,9 +38,9 @@
 # predictors.
 #
 # There should be a role for shrinkage across series in choosing the prior.
+# That comes later.
 #
 # Args:
-
 #   formula: Either a formula as one would supply to lm(), or a matrix of data.
 #     If a matrix, rows represent time, and columns represent time series.  If a
 #     matrix is supplied then set data.format to "wide".
@@ -77,16 +79,18 @@
 #   niter: a positive integer giving the desired number of MCMC draws
 #   ping: A scalar.  If ping > 0 then the program will print a status message to
 #     the screen every 'ping' MCMC iterations.
-#   data.format: Indicates whether the data are in wide or long form.
+#   data.format: Indicates whether the data are in wide or long form.  Wide data
+#     will be converted to long format using Bsts::WideToLong.
 #   seed: The seed for the C++ random number generator.
 #   ...: Extra arguments are passed to DefaultMbstsPrior().
 mbsts <- function(formula,
                   shared.state.specification,
-                  series.state.specification,
-                  data,
+                  series.state.specification = NULL,
+                  data = NULL,
                   timestamps = NULL,
                   series.id = NULL,
-                  prior = DefaultMbstsPrior(),  # TODO
+                  prior = NULL,  # TODO
+                  opts = NULL,
                   contrasts = NULL,
                   na.action = na.pass,
                   niter,
@@ -101,15 +105,19 @@ mbsts <- function(formula,
   if (!is.null(seed)) {
     seed <- as.integer(seed)
   }
-  has.regression <- !is.matrix(formula)
+
+  # The first step is to properly format the data.  We need an object called
+  # data.list that contains the following:
+  #  - predictors: a matrix of predictors
+  #  - response: a vector of responses
+  #  - series: a factor indicating the time series each element of 'response'
+  #      belongs to.
+  #  - timestamp.info: A list created by .ComputeTimestampInfo
+  #
+  # The coming if/then block is longer than you'd like, but it needs to take
+  # place here so the 'model.matrix' black magic can work.
+  has.regression <- is.language(formula)
   if (has.regression) {
-    ## If the model has a regression component then the data must be in long
-    ## format.
-    if (data.format == "wide") {
-      stop("Problems with a regression component require data in long format. ",
-        "See help(bsts::ToLong) for help converting your data.")
-    }
-    
     function.call <- match.call()
     my.model.frame <- match.call(expand.dots = FALSE)
     frame.match <- match(c("formula", "data", "na.action"),
@@ -134,144 +142,185 @@ mbsts <- function(formula,
     if (any(is.na(predictors))) {
       stop("bsts does not allow NA's in the predictors, only the responses.")
     }
-
-    response <- model.response(my.model.frame, "numeric")
-    stopifnot(nrow(response) == nrow(predictors))
+    response <- model.response(my.model.frame, "any")
+    if (data.format == "wide") {
+      response.frame <- WideToLong(response)
+      if (is.null(timestamps)) {
+        timestamps <- response.frame$time
+      } else {
+        timestamps <- timestamps[response.frame$time]
+      }
+      series.id <- response.frame$series.id
+      expanded.predictors <- predictors[series.id, ]
+      response <- response.frame$values
+    }
+    stopifnot(length(response) == nrow(predictors))
   } else {
     ## If there is no regression component the data could be in either long or
     ## wide format.  Make sure it is long.
     response <- formula
+
     if (data.format == "wide") {
-      response.frame <- ToLong(response)
+      # Handle a data frames like a matrix.
+      if (is.data.frame(response) && all(sapply(response, is.numeric))) {
+        response <- as.matrix(response)
+        ## TODO: Ensure we don't lose zoo timestamps here.
+      }
+      response.frame <- WideToLong(response)
       timestamps <- response.frame$time
       series.id <- response.frame$series
       response <- response.frame$values
     }
-    predictors <- NULL
-  }
 
-  if (is.null(predictors)) {
-    predictors <- matrix(1.0, nrow = sample.size, ncol = 1)
+    if (is.data.frame(response) || is.matrix(response)) {
+      stop("Please change data.format to 'wide' if passing matrix-valued time series")
+    }
+    
+    predictors <- matrix(1, nrow = length(response), ncol = 1)
+    colnames(predictors) <- "Intercept"
   }
-  
-  if (missing(data)) {
-    # This should be handled in the argument list by setting a default argument
-    # data = NULL, but doing that messes up the "regression black magic" section
-    # above.
-    data <- NULL
-  }
-
-  data.list <- list(response = response,
+  series.id <- as.factor(series.id)
+  nseries <- length(levels(series.id))
+  data.list <- list(
     predictors = predictors,
-    series.id = series.id,
-    timestamp.info = .ComputeTimestampInfo(
-      rep(1, length(timestamps)), NULL, timestamps)
-  )
+    response = response,
+    series = series.id,
+    timestamp.info = .ComputeTimestampInfo(predictors, NULL, timestamps))
   
-  if (is.null(prior)) {
-    stop("Need to implement a default prior")
-    ## We want a vector of SdPrior's for the residual variance.  We want a
-    ## shrinkage spike-and-slab prior for the coefficients... Need to work this
-    ## out.
-  }
-  stopifnot(inherits(prior, "mbstsPrior"))
+  #------------------------------------------------------------------------
+  # Check the format of the state specification.
+  #------------------------------------------------------------------------
+  spec <- .CheckMbstsStateSpecification(shared.state.specification,
+    series.state.specification, nseries)
+  shared.state.specification <- spec[[1]]
+  series.state.specification <- spec[[2]]
 
+  #------------------------------------------------------------------------
+  # Ensure the prior has the proper format.
+  #------------------------------------------------------------------------
+  if (is.null(prior)) {
+    prior <- .DefaultMbstsPrior(predictors, response, series.id)
+  }
+  # The prior for the observation model is a list of spike adn slab priors.
+  stopifnot(is.list(prior), length(prior) == nseries,
+    all(sapply(prior, inherits, "SpikeSlabPrior")))
+
+  #------------------------------------------------------------------------
+  # Check that options is either NULL or a list.  A bit of faith is needed that
+  # the list is formatted correctly.
+  # ------------------------------------------------------------------------
+  if (!is.null(opts)) {
+    stopifnot(is.list(opts))
+  }
+  
+  #------------------------------------------------------------------------  
+  # Check that all the scalars are actually scalars.
+  #------------------------------------------------------------------------  
+  if (!is.null(seed)) {
+    seed <- as.integer(seed)
+    stopifnot(length(seed) == 1)
+  }
+  check.scalar.integer(niter)
+  check.scalar.integer(ping)
+
+  #------------------------------------------------------------------------  
+  # Do the work!
+  #------------------------------------------------------------------------  
   ans <- .Call("analysis_common_r_fit_multivariate_bsts_model_",
     data.list,
     shared.state.specification,
     series.state.specification,
     prior,
-    NULL,  # slot for model.options.
-    niter,
-    ping,
+    opts, 
+    as.integer(niter),
+    as.integer(ping),
     seed)
-
-  ### Next do cleanup.
+  ans$has.regression <- has.regression
+  ans$shared.state.specification <- shared.state.specification
+  ans$series.state.specification <- series.state.specification
+  ans$prior <- prior
+  ans$niter <- niter
+  ans$timestamp.info <- data.list$timestamp.info
+  ans$series.id <- series.id
+  ans$original.series <- response
+  ans$predictors <- predictors
   
-}
-
-ToWide <- function(response, series.id, timestamps) {
-  ## Convert a multivariate time series in "long" format to "wide" format.
-  ##
-  ## Args:
-  ##   response:  The time series values.
-  ##   series.id: A vector of labels of the same length as 'response' indicating
-  ##     the time series to wihch each element of 'response' belongs.
-  ##   timestamps:  The time period to which each observation belongs.
-  ##
-  ## Returns:
-  ##   A zoo matrix with rows corresponding to time stamps and columns
-  ##   corresponding to different time series.  The matrix elements are the
-  ##   'response' values.
-  ##
-  ## Note:
-  ##   This could be done with 'reshape'.  I have reworked things by hand in the
-  ##   interest of readability.
-  stopifnot(length(response) == length(series.id),
-    length(response) == length(timestamps))
-  unique.times <- sort(unique(timestamps))
-  unique.names <- unique(series.id)
-  ntimes <- length(unique.times)
-  nseries <- length(unique.names)
-
-  ans <- matrix(nrow = ntimes, ncol = nseries)
-  if (ntimes == 0 || nseries == 0) {
-    return(ans)
-  }
-  colnames(ans) <- as.character(unique(series.id))
-
-  for (i in 1:ntimes) {
-    index <- timestamps == unique.times[i]
-    observed <- as.character(series.id[index])
-    ans[i, observed] <- response[index]
-  }
-  ans <- zoo(ans, unique.times)
+  #------------------------------------------------------------------------  
+  # Final formatting.
+  #------------------------------------------------------------------------  
+  # Set dimnames.
+  series.names <- as.character(levels(series.id))
+  predictor.names <- colnames(predictors)
+  state.model.names <- sapply(shared.state.specification,
+    function(x) x$name)
+  
+  dimnames(ans$regression.coefficients) <- list(
+    NULL, series.names, predictor.names)
+  dimnames(ans$shared.state.contributions) <- list(
+    NULL, state.model.names, series.names, NULL)
+  
+  class(ans) <- "mbsts"
   return(ans)
 }
 
-ToLong <- function(response, na.rm = TRUE) {
-  ## Convert a multiple time series in wide format, to long format.
-  ##
-  ## Args:
-  ##   respponse: A time series matrix (or zoo matrix).  Rows represent time
-  ##     points.  Columns are different series.
-  ##   na.rm: If TRUE then 
-  ##
-  ## Returns:
-  ##   A data frame in "long" format containing three values:
-  ##   - The first column contains the timestamps.
-  ##   - The second column contains a factor indicating which column is being
-  ##      measured.
-  ##   - The third column contains the value of the time series.
-  ##
-  ## Note:
-  ##   This could be done with 'reshape'.  I have reworked things by hand in the
-  ##   interest of readability.
-  stopifnot(is.matrix(response))
-  if (nrow(response) == 0) {
-    return(NULL)
-  }
-  nseries <- ncol(response)
-  
-  if (is.zoo(response)) {
-    timestamps <- index(response)
-  } else {
-    timestamps <- 1:nrow(response);
-  }
-  vnames <- colnames(response)
-  if (is.null(vnames)) {
-    vnames <- base::make.names(1:nseries)
-  }
-
-  values <- as.numeric(t(response))
-  labels <- rep(vnames, times = nseries)
-  timestamps <- rep(timestamps, each = nseries)
-  
-  ans <- data.frame("time" = timestamps, "series" = labels, "values" = values)
-  if (na.rm) {
-    missing <- is.na(values)
-    ans <- ans[!missing, ]
+.DefaultMbstsPrior <- function(predictors, response, series) {
+  ## Set a default prior on each of the regression models in the mbsts
+  ## observation equation.
+  ans <- list()
+  for (s in sort(unique(series))) {
+    index <- series == s
+    data.list <- list(predictors = predictors[index, , drop = FALSE],
+      response = response[index])
+    ans[[s]] <- bsts:::.SetDefaultPrior(data.list, family = "gaussian")
   }
   return(ans)
+}
+
+.CheckMbstsStateSpecification <- function(shared.state.specification,
+                                          series.state.specification,
+                                          nseries) {
+  # Check that the shared- and series-specific state specifictions are filled
+  # with legal values.
+  #
+  # Args:
+  #   shared.state.specification: A list of SharedStateSpecification objects
+  #     defining the components of state that are shared across multiple series.
+  #   series.state.specification: A list of StateSpecification objects defining
+  #     the series-specific components of state.  There are two options for how
+  #     this argument can be formatted.
+  #     - It can be a single list with StateSpecification objects as elements.  In
+  #       this case each object will be used to define the series-specific state
+  #       for each time series in the response.
+  #     - It can be a list with length matching the number of time series to be
+  #       modeled.  Each list element is a list of StateSpecification objects
+  #       defining the series-specific state for the corresponding time series.
+  #       This option is less convenient, but allows greater control.
+  #   nseries: The number of time series.
+  #
+  # Returns:
+  #   A 2-item list containing (1) the shared.state.specification, and (2) the
+  #   series.state.specification, possibly after expanding it.
+  stopifnot(is.list(shared.state.specification),
+    all(sapply(shared.state.specification, inherits, "SharedStateModel")))
+
+  # The series.state.specification might be an empty list.
+  stopifnot(is.null(series.state.specification)
+    || is.list(series.state.specification))
+  # If series state specification is not NULL it is either a list of state
+  # specificiations to be repeated for each time series, or it is a list of such
+  # specifications.
+  if (!is.null(series.state.specification) &&
+        all(sapply(series.state.specification, inherits, "StateModel"))) {
+    series.state.specification <- RepList(series.state.specification, nseries)
+  }
+  if (!is.null(series.state.specification)) {
+    stopifnot(is.list(series.state.specification),
+      length(series.state.specification) == nseries)
+    for (i in 1:nseries) {
+      stopifnot(is.list(series.state.specification[[i]]),
+        all(sapply(series.state.specification[[i]], inherits, "StateModel")))
+    }
+  }
+  return(list(shared.state.specification, series.state.specification))
 }
 

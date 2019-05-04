@@ -129,9 +129,13 @@ AddSharedLocalLevel <- function(state.specification,
   ## Set the prior on the initial state.
   ##----------------------------------------------------------------------
   if (missing(initial.state.prior)) {
+    # When specifying the Matrix in MvnPrior, nrow and ncol must be specified to
+    # thwart diag behaving differently when passed a scalar.
     initial.state.prior <- MvnPrior(
-      rep(0, nfactors),
-      diag(rep(max(sdy), nfactors)))
+      mean = rep(0, nfactors),
+      variance = diag(rep(max(sdy), nfactors),
+        nrow = nfactors,
+        ncol = nfactors))
   }
 
   level <- list(name = "trend",
