@@ -15,6 +15,17 @@ cc_test(
 )
 
 cc_test(
+    name = "exponential_increment_model_test",
+    srcs = ["exponential_increment_model_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "independent_mvn_test",
     srcs = ["independent_mvn_test.cc"],
     copts = COPTS,
