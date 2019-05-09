@@ -16,6 +16,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+//#include <iostream>
+
 #include "test_utils/test_utils.hpp"
 #include "stats/ECDF.hpp"
 #include "stats/ks_critical_value.hpp"
@@ -29,13 +31,28 @@ namespace BOOM {
     ECDF ecdf(data);
     const Vector &sorted_data(ecdf.sorted_data());
     double maxdiff = negative_infinity();
+    int64_t maxdiff_index = -1;
+    double maxdiff_ecdf = negative_infinity();
+    double maxdiff_cdf = negative_infinity();
     for (int64_t i = 0; i < sorted_data.size(); ++i) {
       double delta = fabs(ecdf(sorted_data[i]) - cdf(sorted_data[i]));
       if (delta > maxdiff) {
         maxdiff = delta;
+        maxdiff_index = i;
+        maxdiff_ecdf = ecdf(sorted_data[i]);
+        maxdiff_cdf = cdf(sorted_data[i]);
       }
     }
-    return maxdiff <= ks_critical_value(sorted_data.size(), significance);
+
+    double critical_value = ks_critical_value(sorted_data.size(), significance);
+    // if (maxdiff > critical_value) {
+    //   std::cout << "maximum difference of " << maxdiff
+    //             << " occurred at position " << maxdiff_index
+    //             << " with ECDF = " << maxdiff_ecdf << " and CDF = "
+    //             << maxdiff_cdf << std::endl;
+    // }
+    
+    return maxdiff <= critical_value;
   }
 
   bool TwoSampleKs(
