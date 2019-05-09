@@ -32,8 +32,18 @@ namespace BOOM {
     CumulativeProbitModel(const CumulativeProbitModel &rhs);
     CumulativeProbitModel *clone() const override;
 
-    double link_inv(double) const override;
-    double dlink_inv(double) const override;
+    double link(double prob) const override;
+
+    // Gaussian CDF
+    double link_inv(double eta) const override;
+
+    // Gaussian density
+    double dlink_inv(double eta) const override;
+
+    // Derivative of Gaussian density.
+    double ddlink_inv(double eta) const override {
+      return -eta * dlink_inv(eta);
+    }
 
    private:
     double simulate_latent_variable(RNG &rng) const override;

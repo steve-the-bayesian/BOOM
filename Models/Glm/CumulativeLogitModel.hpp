@@ -31,8 +31,10 @@ namespace BOOM {
     CumulativeLogitModel(const CumulativeLogitModel &rhs);
     CumulativeLogitModel *clone() const override;
 
-    double link_inv(double) const override;
-    double dlink_inv(double) const override;
+    double link(double prob) const override;
+    double link_inv(double eta) const override;
+    double dlink_inv(double eta) const override;
+    double ddlink_inv(double eta) const override {return 1.0;}
 
    private:
     double simulate_latent_variable(RNG &rng) const override;

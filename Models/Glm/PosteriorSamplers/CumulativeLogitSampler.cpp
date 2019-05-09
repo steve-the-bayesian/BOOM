@@ -58,28 +58,28 @@ namespace BOOM {
   }
 
   void CLS::impute_latent_data() {
-    suf_.clear();
-    std::vector<Ptr<OrdinalRegressionData> > data(m_->dat());
-    uint maxscore = m_->maxscore();
-    uint n = data.size();
-    for (int i = 0; i < n; ++i) {
-      uint y = data[i]->y();
-      const Vector &x(data[i]->x());
-      double eta = m_->predict(x);
-      double z = 0;
-      if (y == 0) {
-        z = rtrun_logit_mt(rng(), eta, 1, 0, false);
-      } else if (y == maxscore) {
-        z = rtrun_logit_mt(rng(), eta, 1, m_->delta(maxscore - 1), true);
-      } else {
-        double lo = m_->delta(y - 1);
-        double hi = m_->delta(y);
-        z = rtrun_logit_2_mt(rng(), eta, 1, lo, hi);
-      }
-      double r = fabs(z - eta);
-      double lambda = Logit::draw_lambda_mt(rng(), r);
-      suf_.add_data(data[i]->x(), z, 1.0 / lambda);
-    }
+    // suf_.clear();
+    // std::vector<Ptr<OrdinalRegressionData> > data(m_->dat());
+    // uint nlevels = m_->nlevels();
+    // uint n = data.size();
+    // for (int i = 0; i < n; ++i) {
+    //   uint y = data[i]->y();
+    //   const Vector &x(data[i]->x());
+    //   double eta = m_->predict(x);
+    //   double z = 0;
+    //   if (y == 0) {
+    //     z = rtrun_logit_mt(rng(), eta, 1, 0, false);
+    //   } else if (y == nlevels - 1) {
+    //     z = rtrun_logit_mt(rng(), eta, 1, m_->delta(nlevels - 1), true);
+    //   } else {
+    //     double lo = m_->delta(y - 1);
+    //     double hi = m_->delta(y);
+    //     z = rtrun_logit_2_mt(rng(), eta, 1, lo, hi);
+    //   }
+    //   double r = fabs(z - eta);
+    //   double lambda = Logit::draw_lambda_mt(rng(), r);
+    //   suf_.add_data(data[i]->x(), z, 1.0 / lambda);
+    // }
   }
 
   void CLS::draw_beta() {
@@ -111,21 +111,21 @@ namespace BOOM {
   }  // anonymous namespace
 
   void CLS::draw_delta() {
-    delta_ = m_->delta();
-    int k = delta_.size();
-    for (int i = 0; i < k; ++i) {
-      double lo = i == 0 ? 0 : delta_[i - 1];
-      bool top = i == k - 1;
-      double hi = top ? BOOM::infinity() : delta_[i + 1];
-      PartialTarget f(m_->delta_log_likelihood(), i, delta_);
-      ScalarSliceSampler sam(f, true);
-      if (!top)
-        sam.set_limits(lo, hi);
-      else
-        sam.set_lower_limit(lo);
-      delta_[i] = sam.draw(delta_[i]);
-    }
-    m_->set_delta(delta_);
+    // delta_ = m_->delta();
+    // int k = delta_.size();
+    // for (int i = 0; i < k; ++i) {
+    //   double lo = i == 0 ? 0 : delta_[i - 1];
+    //   bool top = i == k - 1;
+    //   double hi = top ? BOOM::infinity() : delta_[i + 1];
+    //   PartialTarget f(m_->delta_log_likelihood(), i, delta_);
+    //   ScalarSliceSampler sam(f, true);
+    //   if (!top)
+    //     sam.set_limits(lo, hi);
+    //   else
+    //     sam.set_lower_limit(lo);
+    //   delta_[i] = sam.draw(delta_[i]);
+    // }
+    // m_->set_delta(delta_);
   }
 
 }  // namespace BOOM

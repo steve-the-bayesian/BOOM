@@ -34,6 +34,8 @@ namespace BOOM {
 
   CLM *CLM::clone() const { return new CLM(*this); }
 
+  double CLM::link(double prob) const { return qlogis(prob); }
+  
   double CLM::link_inv(double eta) const { return plogis(eta); }
 
   double CLM::dlink_inv(double eta) const { return dlogis(eta); }

@@ -35,6 +35,8 @@ namespace BOOM {
 
   CPM *CPM::clone() const { return new CPM(*this); }
 
+  double CPM::link(double prob) const {return qnorm(prob); }
+  
   double CPM::link_inv(double eta) const { return pnorm(eta); }
 
   double CPM::dlink_inv(double eta) const { return dnorm(eta); }
