@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 AddSharedLocalLevel <- function(state.specification,
-                                y,
+                                response,
                                 nfactors, 
                                 sigma.prior = NULL,
                                 coefficient.prior = NULL,
@@ -71,14 +71,13 @@ AddSharedLocalLevel <- function(state.specification,
   stopifnot(is.list(state.specification))
   stopifnot(is.numeric(nfactors), length(nfactors) == 1, nfactors >= 1)
   
-  if (!missing(y)) {
-    stopifnot(is.numeric(y))
-    if (is.matrix(y)) {
-      response.matrix <- y
+  if (!missing(response)) {
+    stopifnot(is.numeric(response))
+    if (is.matrix(response)) {
+      response.matrix <- response
     } else {
-      response.matrix <- LongToWide(y, series.id, timestamps)
+      response.matrix <- LongToWide(response, series.id, timestamps)
     }
-    
     stopifnot(is.matrix(response.matrix))
     sdy <- apply(response.matrix, 2, sd, na.rm = TRUE)
   }
@@ -137,6 +136,8 @@ AddSharedLocalLevel <- function(state.specification,
         nrow = nfactors,
         ncol = nfactors))
   }
+  stopifnot(inherits(initial.state.prior, "MvnPrior"),
+    length(initial.state.prior$mean) == nfactors)
 
   level <- list(name = "trend",
     innovation.precision.priors = sigma.prior,

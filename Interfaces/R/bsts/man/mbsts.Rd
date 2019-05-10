@@ -27,55 +27,87 @@
 
 \usage{
 mbsts(formula,
-     state.specification,
-     data,
-     prior = NULL,
-     contrasts = NULL,
-     na.action = na.pass,
-     niter,
-     ping = niter / 10,
-     seed = NULL,
-     ...)
+      shared.state.specification,
+      series.state.specification = NULL,
+      data = NULL,
+      timestamps = NULL,
+      series.id = NULL,
+      prior = NULL,  # TODO
+      opts = NULL,
+      contrasts = NULL,
+      na.action = na.pass,
+      niter,
+      ping = niter / 10,
+      data.format = c("long", "wide"),
+      seed = NULL,
+      ...) 
 }
 
 \arguments{
 
-  \item{formula}{ A formula describing the regression portion of the
+  \item{formula}{A formula describing the regression portion of the
     relationship between y and X.
 
     If no regressors are desired then the formula can be replaced by a
     numeric matrix giving the multivariate time series to be modeled.
-
-    If the response variable is of class \code{\link[zoo]{zoo}},
-    \code{\link[xts]{xts}}, or \code{\link{ts}}, then the time series
-    information it contains will be used in many of the plotting methods
-    called from \code{\link{plot.bsts}}.
-    
   }
 
-  \item{state.specification}{A list with elements created by
-    \code{\link{AddSharedLocalLevel}}, \code{\link{AddSeasonal}}, and
-    similar functions for adding components of state.  }
+  \item{shared.state.specification}{A list with elements created by
+    \code{\link{AddSharedLocalLevel}}, and similar functions for adding
+    components of state.
+
+    This list defines the components of state which are shared across
+    all time series.  These are the "factors" in the dynamic factor
+    model.
+  }
+
+  \item{series.state.specification}{ This argument specifies state
+    components needed by a particular series.  Not all series need have
+    the same state components (e.g. some series may require a seasonal
+    component, while others do not).  It can be \code{NULL}, indicating
+    that there are no series-specific state components.
+
+    It can be a list of elements created by \code{\link{AddLocalLevel}},
+    \code{\link{AddSeasonal}}, and similar functions for adding state
+    component to scalar bsts models.  In this case the same,
+    independent, individual components will be added to each series.
+    For example, each series will get its own independent Seasonal state
+    component if AddSeasonal was used to add a seasonal component to
+    this argument.
+
+    In its most general form, this argument can be a list of lists, some
+    of which can be NULL, but with non-NULL lists specifying state
+    components for individual series, as above.
+  }
 
   \item{data}{An optional data frame, list or environment (or object
-    coercible by \code{\link{as.data.frame}} to a data frame) containing the
-    variables in the model.  If not found in \code{data}, the variables
-    are taken from \code{environment(formula)}, typically the
-    environment from which \code{\link{bsts}} is called.}
+    coercible by \code{\link{as.data.frame}} to a data frame) containing
+    the variables mentioned in the \code{formula} argument.  If not
+    found in \code{data}, the variables are taken from
+    \code{environment(formula)}, typically the environment from which
+    \code{\link{bsts}} is called.}
 
-  \item{prior}{If regressors are supplied in the model formula, then
-    this is a prior distribution for the regression component of the
-    model, as created by
-    \code{\link[BoomSpikeSlab]{MultivariateSpikeSlabPrior}}.  The prior
-    for the time series component of the model will be specified during
-    the creation of state.specification.  This argument is only used if
-    a formula is specified.
 
-    If the model contains no regressors, then this is simply the prior
-    on the residual variance, expressed as an object created
-    by \code{\link[Boom]{WishartPrior}}.
+  \item{timestamps}{A vector of timestamps indicating the time of each
+    observation.  If \code{data.format} is \code{"long"} then this
+    argument is required.  If "wide" data is passed then it is optional.
+
+    TODO:  TEST THIS under wide and long formats in regression and
+    non-regression settings.
   }
 
+  \item{series.id}{A factor (or object coercible to factor) indicating
+    the series to which each observation in "long" format belongs.  This
+    argument is ignored for data in "wide" format.  }
+  
+  \item{prior}{A list of \code{\link{SpikeSlabPrior}} objects, one for
+    each time series.  Or this argument can be NULL in which case a
+    default prior will be used.  Note that the prior is on both the
+    regression coefficients and the residual sd for each time series. }
+
+  \item{opts}{A list containing model options.  This is currently only
+    used for debugging, so leave this as \code{NULL}.}
+  
   \item{contrasts}{An optional list containing the names of contrast
     functions to use when converting factors numeric variables in a
     regression formula.  This argument works exactly as it does in
@@ -100,16 +132,22 @@ mbsts(formula,
     If ping > 0 then the program will print a status message to the
     screen every \code{ping} MCMC iterations.}
 
-  \item{model.options}{An object (list) returned by
-    \code{\link{BstsOptions}}.  See that function for details.  }
 
+  \item{data.format}{Whether the data are store in wide (each row is a
+    time point, and columns are values from different series) or long
+    (each row is the value of a particular series at a particular point
+    in time) format.  For \code{"long"} see \code{timestamps} and
+    \code{series.id}.
+  }
+  
   \item{seed}{An integer to use as the random seed for the underlying
     C++ code.  If \code{NULL} then the seed will be set using the
     clock.}
 
   \item{...}{ Extra arguments to be passed to
-    \code{\link[BoomSpikeSlab]{MultivariateSpikeSlabPrior}} (see the
-    entry for the \code{prior} argument, above).}  }
+    \code{\link[BoomSpikeSlab]{SpikeSlabPrior}} (see the
+    entry for the \code{prior} argument, above).}
+}
 
 
 \value{
@@ -168,121 +206,97 @@ mbsts(formula,
 }
 
 \examples{
-  ## Example 1:  Time series (ts) data
-  data(AirPassengers)
-  y <- log(AirPassengers)
-  ss <- AddLocalLinearTrend(list(), y)
-  ss <- AddSeasonal(ss, y, nseasons = 12)
-  model <- bsts(y, state.specification = ss, niter = 500)
-  pred <- predict(model, horizon = 12, burn = 100)
-  par(mfrow = c(1,2))
-  plot(model)
-  plot(pred)
+seed <- 8675309
+set.seed(seed)
 
-\dontrun{
+ntimes <- 250
+nseries <- 20
+nfactors <- 6
+residual.sd <- 1.2
+state.innovation.sd <- .75
 
-  MakePlots <- function(model, ask = TRUE) {
-    ## Make all the plots callable by plot.bsts.
-    opar <- par(ask = ask)
-    on.exit(par(opar))
-    plot.types <- c("state", "components", "residuals",
-                    "prediction.errors", "forecast.distribution")
-    for (plot.type in plot.types) {
-      plot(model, plot.type)
-    }
-    if (model$has.regression) {
-      regression.plot.types <- c("coefficients", "predictors", "size")
-      for (plot.type in regression.plot.types) {
-        plot(model, plot.type)
-      }
-    }
-  }
-
-  ## Example 2: GOOG is the Google stock price, an xts series of daily
-  ##            data.
-  data(goog)
-  ss <- AddSemilocalLinearTrend(list(), goog)
-  model <- bsts(goog, state.specification = ss, niter = 500)
-  MakePlots(model)
-
-  ## Example 3:  Change GOOG to be zoo, and not xts.
-  goog <- zoo(goog, index(goog))
-  ss <- AddSemilocalLinearTrend(list(), goog)
-  model <- bsts(goog, state.specification = ss, niter = 500)
-  MakePlots(model)
-
-  ## Example 4:  Naked numeric data works too
-  y <- rnorm(100)
-  ss <- AddLocalLinearTrend(list(), y)
-  model <- bsts(y, state.specification = ss, niter = 500)
-  MakePlots(model)
-
-  ## Example 5:  zoo data with intra-day measurements
-  y <- zoo(rnorm(100),
-           seq(from = as.POSIXct("2012-01-01 7:00 EST"), len = 100, by = 100))
-  ss <- AddLocalLinearTrend(list(), y)
-  model <- bsts(y, state.specification = ss, niter = 500)
-  MakePlots(model)
-
-\dontrun{
-  ## Example 6:  Including regressors
-  data(iclaims)
-  ss <- AddLocalLinearTrend(list(), initial.claims$iclaimsNSA)
-  ss <- AddSeasonal(ss, initial.claims$iclaimsNSA, nseasons = 52)
-  model <- bsts(iclaimsNSA ~ ., state.specification = ss, data =
-                initial.claims, niter = 1000)
-  plot(model)
-  plot(model, "components")
-  plot(model, "coefficients")
-  plot(model, "predictors")
+##---------------------------------------------------------------------------
+## simulate latent state for fake data.
+##---------------------------------------------------------------------------
+state <- matrix(rnorm(ntimes * nfactors, 0, state.innovation.sd), nrow = ntimes)
+for (i in 1:ncol(state)) {
+  state[, i] <- cumsum(state[, i])
 }
+state.xtx <- crossprod(state)
+
+##---------------------------------------------------------------------------
+## Simulate "observed" data from state.
+##---------------------------------------------------------------------------
+observation.coefficients <- matrix(rnorm(nseries * nfactors), nrow = nseries)
+print("observation.coefficients =\n", observation.coefficients)
+diag(observation.coefficients) <- 1.0
+observation.coefficients[upper.tri(observation.coefficients)] <- 0
+
+errors <- matrix(rnorm(nseries * ntimes, 0, residual.sd), ncol = ntimes)
+y <- t(observation.coefficients \%*\% t(state) + errors)
+
+cat("simulated y (first 10 rows): \n")
+print(y[1:10, ])
+
+##---------------------------------------------------------------------------
+## Plot the data.
+##---------------------------------------------------------------------------
+par(mfrow=c(1,2))
+plot.ts(y, plot.type="single", col = rainbow(nseries), main = "observed data")
+plot.ts(state, plot.type = "single", col = 1:nfactors, main = "latent state")
+
+##---------------------------------------------------------------------------
+## Fit the model
+##---------------------------------------------------------------------------
+ss <- AddSharedLocalLevel(list(), y, nfactors = nfactors)
+
+opts <- list("fixed.state" = t(state),
+  fixed.residual.sd = rep(residual.sd, nseries),
+  fixed.regression.coefficients = matrix(rep(0, nseries), ncol = 1))
+
+model <- mbsts(y, shared.state.specification = ss, niter = 100,
+  data.format = "wide", seed = seed)
+
+##---------------------------------------------------------------------------
+## Plot the state
+##---------------------------------------------------------------------------
+par(mfrow=c(1, nfactors))
+ylim <- range(model$shared.state, state)
+for (j in 1:nfactors) {
+  PlotDynamicDistribution(model$shared.state[, j, ], ylim=ylim)
+  lines(state[, j], col = "blue")
 }
 
-\dontrun{
-  ## Example 7:  Regressors with multiple time stamps.
-  number.of.time.points <- 50
-  sample.size.per.time.point <- 10
-  total.sample.size <- number.of.time.points * sample.size.per.time.point
-  sigma.level <- .1
-  sigma.obs <- 1
-
-  ## Simulate some fake data with a local level state component.
-  trend <- cumsum(rnorm(number.of.time.points, 0, sigma.level))
-  predictors <- matrix(rnorm(total.sample.size * 2), ncol = 2)
-  colnames(predictors) <- c("X1", "X2")
-  coefficients <- c(-10, 10)
-  regression <- as.numeric(predictors \%*\% coefficients)
-  y.hat <- rep(trend, sample.size.per.time.point) + regression
-  y <- rnorm(length(y.hat), y.hat, sigma.obs)
-
-  ## Create some time stamps, with multiple observations per time stamp.
-  first <- as.POSIXct("2013-03-24")
-  dates <- seq(from = first, length = number.of.time.points, by = "month")
-  timestamps <- rep(dates, sample.size.per.time.point)
-
-  ## Run the model with a local level trend, and an unnecessary seasonal component.
-  ss <- AddLocalLevel(list(), y)
-  ss <- AddSeasonal(ss, y, nseasons = 7)
-  model <- bsts(y ~ predictors, ss, niter = 250, timestamps = timestamps,
-                seed = 8675309)
-  plot(model)
-  plot(model, "components")
+##---------------------------------------------------------------------------
+## Plot the factor loadings.
+##---------------------------------------------------------------------------
+opar <- par(mfrow=c(nfactors,1), mar=c(0, 4, 0, 4), omi=rep(.25, 4))
+burn <- 10
+for(j in 1:nfactors) {
+  BoxplotTrue(model$shared.local.level.coefficients[-(1:burn), j, ],
+    t(observation.coefficients[, j]), axes=F, truth.color="blue")
+  abline(h=0, lty=3)
+  box()
+  axis(2)
 }
+axis(1)
+par(opar)
 
-## Example 8: Non-Gaussian data
-## Poisson counts of shark attacks in Florida.
-data(shark)
-logshark <- log1p(shark$Attacks)
-ss.level <- AddLocalLevel(list(), y = logshark)
-model <- bsts(shark$Attacks, ss.level, niter = 500,
-              ping = 250, family = "poisson", seed = 8675309)
-
-## Poisson data can have an 'exposure' as the second column of a
-## two-column matrix.
-model <- bsts(cbind(shark$Attacks, shark$Population / 1000),
-              state.specification = ss.level, niter = 500, 
-              family = "poisson", ping = 250, seed = 8675309)
-
+##---------------------------------------------------------------------------
+## Plot the predicted values of the series.
+##---------------------------------------------------------------------------
+index <- 1:12
+nr <- floor(sqrt(length(index)))
+nc <- ceiling(length(index) / nr)
+opar <- par(mfrow = c(nr, nc), mar = c(2, 4, 1, 2))
+for (i in index) {
+  PlotDynamicDistribution(
+    model$shared.state.contributions[, 1, i, ]
+    + model$regression.coefficients[, i, 1]
+  , ylim=range(y))
+  points(y[, i], col="blue", pch = ".", cex = .2)
+}
+par(opar)
 }
 \keyword{models}
 \keyword{regression}

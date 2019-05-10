@@ -271,7 +271,7 @@ mbsts <- function(formula,
     index <- series == s
     data.list <- list(predictors = predictors[index, , drop = FALSE],
       response = response[index])
-    ans[[s]] <- bsts:::.SetDefaultPrior(data.list, family = "gaussian")
+    ans[[s]] <- .SetDefaultPrior(data.list, family = "gaussian")
   }
   return(ans)
 }
