@@ -136,7 +136,8 @@ namespace BOOM {
       return Cutpoints_prm()->value();
     }
     void set_cutpoint_vector(const Vector &minimal_cutpoints);
-
+    void set_cutpoint(int index, double value);
+    
     // An observed 'y' implies a latent 'z' between lower_cutpoint(y)
     // and upper_cutpoint(y).
     double upper_cutpoint(int y) const;
@@ -183,7 +184,6 @@ namespace BOOM {
     //   true if the constraints are satisfied.
     bool check_cutpoints(const Vector &cutpoints) const;
 
-   private:
     // interface is complicated
     double full_loglike(
         const Vector &beta,
@@ -196,7 +196,8 @@ namespace BOOM {
         uint nderiv,
         bool use_beta_derivs,
         bool use_cutpoint_derivs) const;
-
+    
+   private:
     // Simulate latent variable from the link distribution.
     virtual double simulate_latent_variable(
         RNG &rng = GlobalRng::rng) const = 0;

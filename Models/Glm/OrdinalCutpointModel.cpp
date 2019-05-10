@@ -44,7 +44,7 @@ namespace BOOM {
         return negative_infinity();
       } else if (y == 0) {
         return 0;
-      } else if (y < cutpoint_vector.size()) {
+      } else if (y <= cutpoint_vector.size()) {
         return cutpoint_vector[y - 1];
       } else {
         return infinity();
@@ -57,7 +57,7 @@ namespace BOOM {
         return negative_infinity();
       } else if (y == 1) {
         return 0;
-      } else if (y - 1 < cutpoint_vector.size()) {
+      } else if (y - 1 <= cutpoint_vector.size()) {
         return cutpoint_vector[y - 2];
       } else {
         return infinity();
@@ -192,6 +192,10 @@ namespace BOOM {
     Cutpoints_prm()->set(cutpoints);
   }
 
+  void OCM::set_cutpoint(int index, double value) {
+    Cutpoints_prm()->set_element(value, index);
+  }
+  
   double OCM::upper_cutpoint(int y) const {
     return compute_upper_cutpoint(y, cutpoint_vector());
   }
@@ -276,8 +280,10 @@ namespace BOOM {
       Vector x = inclusion.select(data_point.x());
       
       double btx = included_beta.dot(x);
-      double d1 = upper_cutpoint(y) - btx;
-      double d0 = lower_cutpoint(y) - btx;
+      // d1 and d0 are the upper and lower quantiles of the standardized
+      // distribution corresponding to y.
+      double d1 = compute_upper_cutpoint(y, cutpoints) - btx;
+      double d0 = compute_lower_cutpoint(y, cutpoints) - btx;
 
       // Upper and lower function values at the shifted cutpoints.
       double F1 = link_inv(d1);
@@ -316,11 +322,11 @@ namespace BOOM {
           // Another way to say all this is that d logp / d cutpoints = f1 *
           // e(y+1) - f0 * e(y), where e(y) is a vector of all 0's except a 1 in
           // slot y - 2.  If y < 2 then e(y) is a vector of all 0's.
-          if (upper_cutpoint_index > 0
+          if (upper_cutpoint_index >= 0
               && upper_cutpoint_index < cutpoints.size()) {
             cutpoint_gradient[upper_cutpoint_index] += f1;
           }
-          if (lower_cutpoint_index > 0
+          if (lower_cutpoint_index >= 0
               && lower_cutpoint_index < cutpoint_gradient.size()) {
             cutpoint_gradient[lower_cutpoint_index] -= f0;
           }
@@ -346,9 +352,9 @@ namespace BOOM {
             beta_Hessian.add_outer(x, x, quotient_rule_coefficient);
           }
 
-          bool has_upper = upper_cutpoint_index > 0
+          bool has_upper = upper_cutpoint_index >= 0
               && upper_cutpoint_index < cutpoints.size();
-          bool has_lower = lower_cutpoint_index > 0
+          bool has_lower = lower_cutpoint_index >= 0
               && lower_cutpoint_index < cutpoints.size();
 
           if (use_cutpoint_derivs) {
@@ -374,11 +380,11 @@ namespace BOOM {
             // full Hessian.
             if (has_upper) {
               cross_Hessian.col(upper_cutpoint_index).axpy(
-                  x, -df1 - square(f1) + f1 * f0);
+                  x, -df1 + f1 * (f1 - f0));
             }
             if (has_lower) {
               cross_Hessian.col(lower_cutpoint_index).axpy(
-                  x, df0 + square(f0) - f1 * f0);
+                  x, df0 - f0 * (f1 - f0));
             }
           }
         } // nderiv > 1
@@ -496,10 +502,17 @@ namespace BOOM {
   }
 
   double OrdinalLogitModel::ddlink_inv(double eta) const {
-    double F = link_inv(eta);
     double exp_minus_eta = exp(-eta);
-    double f = exp_minus_eta * square(F);
-    return exp_minus_eta * F * (2 * f - F);
+    if (std::isfinite(exp_minus_eta)) {
+      double F = link_inv(eta);
+      double f = dlink_inv(eta);
+      return exp_minus_eta * F * (2 * f - F);
+    } else {
+      // if exp_minus_eta is not finite then eta must be negative.  Various
+      // arguments (e.g. L'Hoptial's rule) show the answer in this case to be
+      // zero.
+      return 0;
+    }
   }
   
 }  // namespace BOOM

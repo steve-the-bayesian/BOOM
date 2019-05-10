@@ -29,6 +29,9 @@
 
 #include "Models/MvnBase.hpp"
 #include "Models/VectorModel.hpp"
+
+#include "Samplers/UnivariateSliceSampler.hpp"
+
 #include "distributions/rng.hpp"
 
 namespace BOOM {
@@ -36,9 +39,17 @@ namespace BOOM {
   class OrdinalLogitPosteriorSampler
       : public PosteriorSampler {
    public:
+    // Args:
+    //   model: The model to be managed.
+    //   coefficient_prior: Prior distribution on the coefficients of the model.
+    //   cutpoint_prior: Prior distribution on the vector of cutpoints.  Only
+    //     positive, finite cutpoints are considered.  The prior should assign
+    //     weight zero to illegal cutpoint configurations.
+    //   seeding_rng: The random number generator used to seed the RNG for this
+    //     sampler.
     OrdinalLogitPosteriorSampler(OrdinalLogitModel *model,
                                  const Ptr<MvnBase> &coefficient_prior,
-                                 const Ptr<VectorModel> &delta_prior,
+                                 const Ptr<VectorModel> &cutpoint_prior,
                                  RNG &seeding_rng = GlobalRng::rng);
     void draw() override;
     double logpri() const override;
@@ -46,24 +57,24 @@ namespace BOOM {
    private:
     void impute_latent_data();
     void draw_beta();
-    void draw_delta();
+    void draw_cutpoints();
 
     OrdinalLogitModel *model_;
     Ptr<MvnBase> coefficient_prior_;
-    Ptr<VectorModel> delta_prior_;
+    Ptr<VectorModel> cutpoint_prior_;
 
     WeightedRegSuf complete_data_suf_;
     OrdinalLogitImputer imputer_;
-    NormalMixtureApproximation logit_mixture_;
+    LogitMixtureApproximation logit_mixture_;
 
     SpikeSlabSampler coefficient_sampler_;
 
-    // Need a sampler for delta.
-    
+    // Separate cutpoint samplers are maintained so that the upper and lower
+    // limits for each can be manipulated.
+    std::vector<ScalarSliceSampler> cutpoint_samplers_;
   };
-
   
-}
+}  // namespace BOOM
 
 #endif  //  BOOM_ORDINAL_LOGIT_POSTEIROR_SAMPLER_HPP_
 

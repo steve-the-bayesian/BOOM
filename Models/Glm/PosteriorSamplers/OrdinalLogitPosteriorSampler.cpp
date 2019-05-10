@@ -19,38 +19,49 @@
 #include "Models/Glm/PosteriorSamplers/OrdinalLogitPosteriorSampler.hpp"
 #include "distributions.hpp"
 
+#include <cmath>
+
 namespace BOOM {
 
   OrdinalLogitPosteriorSampler::OrdinalLogitPosteriorSampler(
       OrdinalLogitModel *model,
       const Ptr<MvnBase> &coefficient_prior,
-      const Ptr<VectorModel> &delta_prior,
+      const Ptr<VectorModel> &cutpoint_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         coefficient_prior_(coefficient_prior),
-        delta_prior_(delta_prior),
+        cutpoint_prior_(cutpoint_prior),
         complete_data_suf_(coefficient_prior_->dim()),
-        logit_mixture_(
-            Vector(9, 0.0),
-            Vector{0.88437229872213, 1.16097607474416, 1.28021991084306,
-                  1.3592552924727, 1.67589879794907, 2.20287232043947,
-                  2.20507148325819, 2.91944313615144, 3.90807611741308},
-            Vector{0.038483985581272, 0.13389889791451, 0.0657842076622429,
-                  0.105680086433879, 0.345939491553619, 0.0442261124345564,
-                  0.193289780660134, 0.068173066865908, 0.00452437089387876}),
         coefficient_sampler_(model_, coefficient_prior_, nullptr)
-  {}
+  {
+    for (int i = 0; i < model_->cutpoint_vector().size(); ++i) {
+      auto cutpoint_i_logpost = [model, cutpoint_prior, i](double x) {
+        Vector cutpoints = model->cutpoint_vector();
+        cutpoints[i] = x;
+        double log_prior = cutpoint_prior->logp(cutpoints);
+        if (!std::isfinite(log_prior)) {
+          return log_prior;
+        }
+        Vector bg, dg;
+        Matrix bH, dH, cH;
+        return log_prior + model->full_loglike(
+            model->Beta(), cutpoints, bg, dg, bH, dH, cH, 0, false, false);
+      };
+      cutpoint_samplers_.push_back(ScalarSliceSampler(
+          cutpoint_i_logpost, false, 1.0, &rng()));
+    }
+  }
 
   double OrdinalLogitPosteriorSampler::logpri() const {
     return coefficient_prior_->logp(model_->Beta())
-        + delta_prior_->logp(model_->cutpoint_vector());
+        + cutpoint_prior_->logp(model_->cutpoint_vector());
   }
 
   void OrdinalLogitPosteriorSampler::draw() {
     impute_latent_data();
     draw_beta();
-    draw_delta();
+    draw_cutpoints();
   }
 
   void OrdinalLogitPosteriorSampler::impute_latent_data() {
@@ -72,7 +83,24 @@ namespace BOOM {
     coefficient_sampler_.draw_beta(rng(), complete_data_suf_);
   }
 
-  void OrdinalLogitPosteriorSampler::draw_delta() {
+  void OrdinalLogitPosteriorSampler::draw_cutpoints() {
+    for (int i = 0; i < model_->cutpoint_vector().size(); ++i) {
+      if (i > 0) {
+        cutpoint_samplers_[i].set_lower_limit(model_->cutpoint_vector()[i - 1]);
+      } else {
+        cutpoint_samplers_[i].set_lower_limit(0);
+      }
+
+      if (i + 1 < model_->cutpoint_vector().size()) {
+        cutpoint_samplers_[i].set_upper_limit(model_->cutpoint_vector()[i + 1]);
+      } else {
+        cutpoint_samplers_[i].set_upper_limit(infinity());
+      }
+
+      double cutpoint = cutpoint_samplers_[i].draw(
+          model_->cutpoint_vector()[i]);
+      model_->set_cutpoint(i, cutpoint);
+    }
     
   }
   
