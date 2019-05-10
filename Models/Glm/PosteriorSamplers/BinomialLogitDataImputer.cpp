@@ -26,20 +26,6 @@
 
 namespace BOOM {
 
-  //======================================================================
-  // A zero-mean scale mixture of normals approximation to the
-  // logistic distribution.
-  const NormalMixtureApproximation
-      BinomialLogitDataImputer::mixture_approximation(
-          Vector(9, 0.0),
-          Vector({0.88437229872213, 1.16097607474416, 1.28021991084306,
-                  1.3592552924727, 1.67589879794907, 2.20287232043947,
-                  2.20507148325819, 2.91944313615144, 3.90807611741308}),
-          Vector({0.038483985581272, 0.13389889791451, 0.0657842076622429,
-                  0.105680086433879, 0.345939491553619, 0.0442261124345564,
-                  0.193289780660134, 0.068173066865908, 0.00452437089387876}));
-  
-  //----------------------------------------------------------------------
   void BinomialLogitDataImputer::debug_status_message(
       std::ostream &out, double number_of_trials, double number_of_successes,
       double linear_predictor) const {

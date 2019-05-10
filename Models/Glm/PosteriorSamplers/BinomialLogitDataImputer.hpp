@@ -48,7 +48,7 @@ namespace BOOM {
                                              double log_odds) const = 0;
 
     // A finite mixture approximation to the logistic distribution.
-    static const NormalMixtureApproximation mixture_approximation;
+    static const LogitMixtureApproximation mixture_approximation;
 
     // Rather than impute the exact latent data for each trial,
     // approximate methods can be used to draw the sum of the latent
