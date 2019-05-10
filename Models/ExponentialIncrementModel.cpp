@@ -89,12 +89,13 @@ namespace BOOM {
   
 
   double EIM::logp(const Vector &x) const {
-    if (x.size() != 1 + models_.size()) {
+    if (x.size() != models_.size()) {
       return negative_infinity();
     }
     double ans = 0;
     for (int i = 0; i < models_.size(); ++i) {
-      ans += models_[i]->logp(x[i + 1] - x[i]);
+      double dx = (i == 0) ? x[0] : x[i] - x[i - 1];
+      ans += models_[i]->logp(dx);
     }
     return ans;
   }
