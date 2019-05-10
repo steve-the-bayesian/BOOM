@@ -65,7 +65,9 @@ namespace BOOM {
     if (!VectorEquals(analytic_gradient, numeric_gradient, epsilon)) {
       err << "gradient does not match." << endl
           << "analytic    numeric" << endl
-          << cbind(analytic_gradient, numeric_gradient);
+          << cbind(analytic_gradient, numeric_gradient)
+          << "maximum absolute deviation: "
+          << (numeric_gradient - analytic_gradient).max_abs();
       return err.str();
     }
 
@@ -75,7 +77,10 @@ namespace BOOM {
           << "Analytic Hessian: " << endl
           << analytic_hessian
           << "Numeric Hessian: " << endl
-          << numeric_hessian;
+          << numeric_hessian
+          << "maximum absolute deviation: "
+          << (numeric_hessian - analytic_hessian).max_abs();
+          
       return err.str();
     }
     return "";
