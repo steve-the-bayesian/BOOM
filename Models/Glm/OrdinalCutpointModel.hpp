@@ -244,6 +244,41 @@ namespace BOOM {
     }
   };
 
+  //===========================================================================
+  class OrdinalProbitModel : public OrdinalCutpointModel {
+   public:
+    OrdinalProbitModel(int xdim, int nlevels)
+        : OrdinalCutpointModel(xdim, nlevels) {}
+    
+    OrdinalProbitModel(const Vector &beta, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, cutpoints) {}
+
+    OrdinalProbitModel(const Vector &beta, Selector &inclusion, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, inclusion, cutpoints) {}
+
+    OrdinalProbitModel(const Selector &inclusion, uint Maxscore)
+        : OrdinalCutpointModel(inclusion, Maxscore) {}
+
+    OrdinalProbitModel(const Matrix &X, const Vector &y)
+        : OrdinalCutpointModel(X, y) {}
+
+    OrdinalProbitModel * clone() const override {
+      return new OrdinalProbitModel(*this);
+    }
+
+    // Link function, inverse, and derivative.
+    double link(double prob) const override {return qnorm(prob);}
+    double link_inv(double eta) const override { return pnorm(eta); }
+    double dlink_inv(double eta) const override { return dnorm(eta); }
+    double ddlink_inv(double eta) const override;
+
+   private:
+    // Simulate the unconstrained zero-mean error term.
+    double simulate_latent_variable(RNG &rng = GlobalRng::rng) const override {
+      return rnorm_mt(rng);
+    }
+  };
+
   
 }  // namespace BOOM
 

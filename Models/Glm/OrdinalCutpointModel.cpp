@@ -514,5 +514,13 @@ namespace BOOM {
       return 0;
     }
   }
+
+  double OrdinalProbitModel::ddlink_inv(double eta) const {
+    if (std::isfinite(eta)) {
+      return -eta * dnorm(eta);
+    } else {
+      return 0;
+    }
+  }
   
 }  // namespace BOOM
