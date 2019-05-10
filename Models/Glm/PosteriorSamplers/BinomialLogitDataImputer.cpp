@@ -25,7 +25,8 @@
 #include "distributions/trun_logit.hpp"
 
 namespace BOOM {
-
+  const LogitMixtureApproximation BinomialLogitDataImputer::mixture_approximation;
+  
   void BinomialLogitDataImputer::debug_status_message(
       std::ostream &out, double number_of_trials, double number_of_successes,
       double linear_predictor) const {

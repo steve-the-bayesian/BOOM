@@ -163,8 +163,7 @@ namespace BOOM {
 
   //======================================================================
   // A finite normal mixture approximation to the standard logistic distribution.
-  class LogitMixtureApproximation
-      : public NormalMixtureApproximation {
+  class LogitMixtureApproximation : public NormalMixtureApproximation {
    public:
     LogitMixtureApproximation();
   };
