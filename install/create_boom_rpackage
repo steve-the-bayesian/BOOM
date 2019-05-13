@@ -109,6 +109,20 @@ cp Interfaces/R/*.hpp $BOOM_DIR/inst/include/r_interface
 cp Eigen/* $BOOM_DIR/inst/include/Eigen/
 #echo "Ignore the message about not being able to copy Eigen/src."
 
+## Fix warning supression in Eigen, which violates CRAN policy
+fname=$BOOM_DIR/inst/include/Eigen/src/Core/arch/SSE/Complex.h
+gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
+gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
+
+fname=$BOOM_DIR/inst/include/Eigen/src/Core/util/DisableStupidWarnings.h
+
+gsed -i 's|#pragma clang diagnostic ignored|// #pragma clang diagnostic ignored|g' $fname
+gsed -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fname
+
+gsed -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
+gsed -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
+
+
 ##----------------------------------------------------------------------
 ## Build the package:
 
