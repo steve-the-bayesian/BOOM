@@ -222,7 +222,6 @@ state <- matrix(rnorm(ntimes * nfactors, 0, state.innovation.sd), nrow = ntimes)
 for (i in 1:ncol(state)) {
   state[, i] <- cumsum(state[, i])
 }
-state.xtx <- crossprod(state)
 
 ##---------------------------------------------------------------------------
 ## Simulate "observed" data from state.
@@ -235,6 +234,7 @@ observation.coefficients[upper.tri(observation.coefficients)] <- 0
 errors <- matrix(rnorm(nseries * ntimes, 0, residual.sd), ncol = ntimes)
 y <- t(observation.coefficients \%*\% t(state) + errors)
 
+\dontrun{
 cat("simulated y (first 10 rows): \n")
 print(y[1:10, ])
 
@@ -244,6 +244,7 @@ print(y[1:10, ])
 par(mfrow=c(1,2))
 plot.ts(y, plot.type="single", col = rainbow(nseries), main = "observed data")
 plot.ts(state, plot.type = "single", col = 1:nfactors, main = "latent state")
+}
 
 ##---------------------------------------------------------------------------
 ## Fit the model
@@ -270,6 +271,7 @@ for (j in 1:nfactors) {
 ##---------------------------------------------------------------------------
 ## Plot the factor loadings.
 ##---------------------------------------------------------------------------
+\dontrun{
 opar <- par(mfrow=c(nfactors,1), mar=c(0, 4, 0, 4), omi=rep(.25, 4))
 burn <- 10
 for(j in 1:nfactors) {
@@ -281,6 +283,7 @@ for(j in 1:nfactors) {
 }
 axis(1)
 par(opar)
+}
 
 ##---------------------------------------------------------------------------
 ## Plot the predicted values of the series.
