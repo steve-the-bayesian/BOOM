@@ -178,19 +178,22 @@
 
 \examples{
 
+# The number of MCMC draws in the following examples is artificially low.
+
+
   ## Making predictions when there is no regression component.
   data(AirPassengers)
   y <- log(AirPassengers)
   ss <- AddLocalLinearTrend(list(), y)
   ss <- AddSeasonal(ss, y, nseasons = 12)
-  model <- bsts(y, state.specification = ss, niter = 500)
+  model <- bsts(y, state.specification = ss, niter = 250)
   pred <- predict(model, horizon = 12, burn = 100)
   plot(pred)
 
   ## An example using the olddata argument.
   full.pred <- pred
   training <- window(y, end = c(1959, 12))
-  model <- bsts(training, state.specification = ss, niter = 500)
+  model <- bsts(training, state.specification = ss, niter = 250)
   ## Predict the next 12 months.
   pred <- predict(model, horizon = 12)
   ## Compare the predictions to the actual data.
@@ -212,6 +215,11 @@
   holdout1 <- initial.claims[403:450, ]
   holdout2 <- initial.claims[451:456, ]
 
+\dontrun{
+
+## This example puts the total run time over 5 seconds, which is a CRAN
+## violation.
+
   ss <- AddLocalLinearTrend(list(), training$iclaimsNSA)
   ss <- AddSeasonal(ss, training$iclaimsNSA, nseasons = 52)
   ## In real life you'd want more iterations...
@@ -228,6 +236,7 @@
   ## simulating the predictions.
   pred.update <- predict(model, newdata = holdout2,
     olddata = rbind(training, holdout1))
+}
 }
 \keyword{models}
 \keyword{regression}

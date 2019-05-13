@@ -200,10 +200,11 @@ SimulateDirmData <- function(observation.sd = 1, trend.sd = .1,
 }
 
 
-data <- SimulateDirmData()
+data <- SimulateDirmData(time.dimension = 20)
 ss <- AddLocalLevel(list(), data$response)
 
-model <- dirm(data$response ~ data$predictors, ss, niter = 500,
+# In real life you'd want more than 50 MCMC iterations.
+model <- dirm(data$response ~ data$predictors, ss, niter = 50,
   timestamps = data$timestamps)
 
 

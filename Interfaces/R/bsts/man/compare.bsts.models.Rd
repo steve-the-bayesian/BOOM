@@ -85,10 +85,10 @@ CompareBstsModels(model.list,
   data(AirPassengers)
   y <- log(AirPassengers)
   ss <- AddLocalLinearTrend(list(), y)
-  trend.only <- bsts(y, ss, niter = 500)
+  trend.only <- bsts(y, ss, niter = 250)
 
   ss <- AddSeasonal(ss, y, nseasons = 12)
-  trend.and.seasonal <- bsts(y, ss, niter = 500)
+  trend.and.seasonal <- bsts(y, ss, niter = 250)
 
   CompareBstsModels(list(trend = trend.only,
                          "trend and seasonal" = trend.and.seasonal))
