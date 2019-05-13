@@ -68,6 +68,22 @@ namespace BOOM {
     report_error("add_data is disabled.");
   }
 
+  // This is StateSpaceModel::simulate_forecast, but with a zero residual
+  // variance.
+  Vector PSSSM::simulate_state_contribution_forecast(
+      RNG &rng, int horizon, const Vector &final_state) {
+    Vector ans(horizon, 0.0);
+    if (state_dimension() > 0) {
+      Vector state = final_state;
+      int t0 = time_dimension();
+      for (int t = 0; t < horizon; ++t) {
+        state = simulate_next_state(rng, state, t + t0);
+        ans[t] = observation_matrix(t + t0).dot(state);
+      }
+    }
+    return ans;
+  }
+  
   //===========================================================================
   MSSRM::MultivariateStateSpaceRegressionModel(int xdim, int nseries)
       : nseries_(nseries),
@@ -87,6 +103,48 @@ namespace BOOM {
     set_observation_variance_observers();
   }
 
+  Matrix MSSRM::simulate_forecast(
+      RNG &rng,
+      const Matrix &forecast_data,
+      const Vector &final_shared_state,
+      const std::vector<Vector> &series_specific_final_state) {
+    int horizon = forecast_data.nrow() / nseries();
+    if (horizon * nseries() != forecast_data.nrow()) {
+      report_error("The number of rows in forecast_data must be an "
+                   "integer multiple of the number of series.");
+    }
+    Matrix forecast(nseries(), horizon, 0.0);
+    // Add series specific component.
+    if (has_series_specific_state_) {
+      for (int j = 0; j < nseries(); ++j) {
+        forecast.row(j) =
+            proxy_models_[j]->simulate_state_contribution_forecast(
+                rng, horizon, series_specific_final_state[j]);
+      }
+    }
+
+    // Add shared state component.
+    int time = 0;
+    Vector state = final_shared_state;
+    Selector fully_observed(nseries(), true);
+    int t0 = time_dimension();
+    for (int t = 0; t < horizon; ++t) {
+      advance_to_timestamp(rng, time, state, t, t);
+      forecast.col(t) += *observation_coefficients(t + t0, fully_observed) * state;
+    }
+
+    // Add regression component and residual error.
+    int index = 0;
+    for (int t = 0; t < horizon; ++t) {
+      for (int j = 0; j < nseries(); ++j) {
+        forecast(j, t) += observation_model()->model(j)->predict(
+            forecast_data.row(index))
+            + rnorm_mt(rng, 0, observation_model()->model(j)->sigma());
+      }
+    }
+    return forecast;
+  }
+  
   void MSSRM::add_state(const Ptr<SharedStateModel> &state_model) {
     shared_state_models_.add_state(state_model);
   }

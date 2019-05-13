@@ -108,6 +108,26 @@ namespace BOOM {
     double adjusted_observation(int t) const override;
 
     bool is_missing_observation(int t) const override;
+
+    // Simulate 'horizon' time periods beyond time_dimension().
+    //
+    // Args:
+    //   rng: The [0, 1) random number generator to use for the simulation.
+    //   horizon: The number of periods beyond 'time_dimension()' to simulate.
+    //   final_state:  The value of the state at time time_dimension() - 1.
+    //
+    // Returns:
+    //   A draw from the predictive distribution of the state contribution over
+    //   the next 'horizon' time periods.
+    Vector simulate_state_contribution_forecast(
+        RNG &rng, int horizon, const Vector &final_state);
+
+    // Ensure all state models are capable of handling times up to t-1.
+    void observe_time_dimension(int t) {
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_time_dimension(t);
+      }
+    }
     
    private:
     // The add_data method is disabled.
@@ -193,6 +213,32 @@ namespace BOOM {
       report_error("Model cannot be copied.");
       return nullptr;
     }
+
+    // Simulate a multi-period forecast.
+    // Args:
+    //   rng:  The [0, 1) random number generator to use for the simulation.
+    //   forecast_predictors: A matrix containing the predictor variables to use
+    //     for the forecast.  The number of rows in the matrix is nseries() *
+    //     forecast_horizon.  The rows are assumed to go (time0, series0),
+    //     (time0, series1), ..., (time1, series0), (time1, series1), ...
+    //   final_shared_state: The vector of shared state as of the final training
+    //     data point at time_dimension() - 1.
+    //   series_specific_final_state: This argument can be empty if there is no
+    //     series-specific state in the model.  Otherwise, it must have length
+    //     nseries(), where each element is the series specific state vector at
+    //     time time_dimension() - 1 for the corresponding series.  Individual
+    //     elements can be empty if there is no series-specific state for that
+    //     series.
+    //
+    // Returns:
+    //   A matrix containing draws of the next 'forecast_horizon' time periods.
+    //   Each series corresponds to a row in the returned matrix, while columns
+    //   correspond to time.  The simulation includes simulated residual error.
+    Matrix simulate_forecast(
+        RNG &rng,
+        const Matrix &forecast_predictors,
+        const Vector &final_shared_state,
+        const std::vector<Vector> &series_specific_final_state);
 
     //------------------------------------------------------------------------
     // Access to state models.  Access to state comes from the "grandparent"
@@ -353,7 +399,19 @@ namespace BOOM {
     
     const StateSpaceUtils::StateModelVector<SharedStateModel>
     &state_model_vector() const override { return shared_state_models_; }
-    
+
+    // Ensure that all state and proxy models are aware of times up to time 't'.
+    void observe_time_dimension(int t) {
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_time_dimension(t);
+      }
+      for (int m = 0; m < proxy_models_.size(); ++m) {
+        if (!!proxy_models_[m]) {
+          proxy_models_[m]->observe_time_dimension(t);
+        }
+      }
+    }
+
    private:
     // To be called after add_data has been called for the last time.
     // This method is logically const so that it can be called by accessors.
