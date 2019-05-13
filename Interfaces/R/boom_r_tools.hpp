@@ -219,6 +219,7 @@ namespace BOOM{
   // in the R object, without making a copy.
   Matrix ToBoomMatrix(SEXP r_matrix);
   ConstSubMatrix ToBoomMatrixView(SEXP r_matrix);
+  SubMatrix ToBoomMutableMatrixView(SEXP r_matrix);
 
   // If 'r_array' is an R multi-way array then it is converted to an
   // equivalent BOOM::Array.  Otherwise an exception will be thrown.

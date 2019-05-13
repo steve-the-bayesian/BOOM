@@ -331,13 +331,23 @@ namespace BOOM {
 
   ConstSubMatrix ToBoomMatrixView(SEXP m) {
     if (!Rf_isMatrix(m)) {
-      report_error("ToBoomMatrix called with a non-matrix argument");
+      report_error("ToBoomMatrixView called with a non-matrix argument");
     }
     std::pair<int,int> dims = GetMatrixDimensions(m);
     RMemoryProtector protector;
     m = protector.protect(Rf_coerceVector(m, REALSXP));
     ConstSubMatrix ans(REAL(m), dims.first, dims.second);
     return ans;
+  }
+
+  SubMatrix ToBoomMutableMatrixView(SEXP m) {
+    if (!Rf_isMatrix(m)) {
+      report_error("ToBoomMutableMatrixView called with a non-matrix argument");
+    }
+    std::pair<int,int> dims = GetMatrixDimensions(m);
+    RMemoryProtector protector;
+    m = protector.protect(Rf_coerceVector(m, REALSXP));
+    return SubMatrix(REAL(m), dims.first, dims.second);
   }
 
   Array ToBoomArray(SEXP r_array) {
