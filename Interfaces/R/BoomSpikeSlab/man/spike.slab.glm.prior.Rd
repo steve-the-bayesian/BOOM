@@ -156,5 +156,4 @@ matrix.
     "The Practical Implementation of Bayesian Model Selection"
     \emph{Lecture Notes-Monograph Series}, Vol. 38, pp. 65-134.
   Institute of Mathematical Statistics.
-  \url{http://www.jstor.org/stable/4356164}
 }

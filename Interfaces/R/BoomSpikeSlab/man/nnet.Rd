@@ -171,10 +171,10 @@ if (require(mlbench)) {
   hidden.layers <- list(
     HiddenLayer(10, expected.model.size = Inf))
 
-  ## In real life you'd want more 100 MCMC draws.
+  ## In real life you'd want more 50 MCMC draws.
   model <- BayesNnet(medv ~ .,
     hidden.layers = hidden.layers,
-    niter = 100,
+    niter = 50,
     data = BostonHousing)
 
   par(mfrow = c(1, 2))

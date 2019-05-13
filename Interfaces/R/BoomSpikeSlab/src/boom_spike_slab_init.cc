@@ -12,7 +12,6 @@ extern "C" {
       SEXP r_error_distribution,
       SEXP r_niter,
       SEXP r_ping,
-      SEXP r_bma_method,
       SEXP r_oda_options,
       SEXP r_seed);
 
@@ -117,7 +116,7 @@ extern "C" {
       SEXP r_seed);
   
 static R_CallMethodDef spike_slab_arg_description[] = {
-  CALLDEF(analysis_common_r_do_spike_slab, 9),
+  CALLDEF(analysis_common_r_do_spike_slab, 8),
   CALLDEF(logit_spike_slab_wrapper, 12),
   CALLDEF(analysis_common_r_multinomial_logit_spike_slab, 14),
   CALLDEF(analysis_common_r_poisson_regression_spike_slab, 9),
