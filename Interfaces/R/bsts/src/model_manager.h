@@ -258,28 +258,6 @@ namespace BOOM {
           SEXP r_options,
           RListIoManager *io_manager);
 
-      // Returns a set of draws from the posterior predictive distribution.
-      // Args:
-      //   r_bsts_object:  The R object created from a previous call to bsts().
-      //   r_prediction_data: Data needed to make the prediction.  This might be
-      //     a data frame for models that have a regression component, or a
-      //     vector of exposures or trials for binomial or Poisson data.
-      //   r_options: If any special options need to be passed in order to do
-      //     the prediction, they should be included here.
-      //   r_observed_data: In most cases, the prediction takes place starting
-      //     with the time period immediately following the last observation in
-      //     the training data.  If so then r_observed_data should be
-      //     R_NilValue, and the observed data will be taken from r_bsts_object.
-      //     However, if more data have been added (or if some data should be
-      //     omitted) from the training data, a new set of training data can be
-      //     passed here.
-      //
-      // Returns:
-      //   An R matrix, with rows corresponding to MCMC draws and columns to
-      //   time, containing posterior predictive draws for the forecast.
-      virtual Matrix Forecast(SEXP r_bsts_object, SEXP r_prediction_data,
-                              SEXP r_burn, SEXP r_observed_data);
-
       // Returns a HoldoutErrorSampler that holds a family specific
       // implementation pointer that samples one-step prediction errors for data
       // in r_bsts_object beyond observation number 'cutpoint'.  This object can
@@ -305,6 +283,28 @@ namespace BOOM {
           SEXP r_bsts_object, int cutpoint, bool standardize,
           BOOM::Matrix *prediction_error_output) = 0;
 
+      // Returns a set of draws from the posterior predictive distribution.
+      // Args:
+      //   r_bsts_object:  The R object created from a previous call to bsts().
+      //   r_prediction_data: Data needed to make the prediction.  This might be
+      //     a data frame for models that have a regression component, or a
+      //     vector of exposures or trials for binomial or Poisson data.
+      //   r_options: If any special options need to be passed in order to do
+      //     the prediction, they should be included here.
+      //   r_observed_data: In most cases, the prediction takes place starting
+      //     with the time period immediately following the last observation in
+      //     the training data.  If so then r_observed_data should be
+      //     R_NilValue, and the observed data will be taken from r_bsts_object.
+      //     However, if more data have been added (or if some data should be
+      //     omitted) from the training data, a new set of training data can be
+      //     passed here.
+      //
+      // Returns:
+      //   An R matrix, with rows corresponding to MCMC draws and columns to
+      //   time, containing posterior predictive draws for the forecast.
+      virtual Matrix Forecast(SEXP r_bsts_object, SEXP r_prediction_data,
+                              SEXP r_burn, SEXP r_observed_data);
+
      private:
       // Create the specific StateSpaceModel suitable for the given model
       // family.  The posterior sampler for the model is set, and entries for
@@ -329,6 +329,7 @@ namespace BOOM {
       // the data obtained by UnpackForecastData(), and simulates one draw from
       // the posterior predictive forecast distribution.
       virtual Vector SimulateForecast(const Vector &final_state) = 0;
+
     };
 
     //=========================================================================
@@ -407,13 +408,6 @@ namespace BOOM {
       //     vector of exposures or trials for binomial or Poisson data.
       //   r_options: If any special options need to be passed in order to do
       //     the prediction, they should be included here.
-      //   r_observed_data: In most cases, the prediction takes place starting
-      //     with the time period immediately following the last observation in
-      //     the training data.  If so then r_observed_data should be
-      //     R_NilValue, and the observed data will be taken from r_bsts_object.
-      //     However, if more data have been added (or if some data should be
-      //     omitted) from the training data, a new set of training data can be
-      //     passed here.
       //
       // Returns:
       //   An array with dimension [iterations, time, ydim] containing draws
@@ -421,8 +415,7 @@ namespace BOOM {
       virtual Array Forecast(
           SEXP r_mbsts_object,
           SEXP r_prediction_data,
-          SEXP r_burn,
-          SEXP r_observed_data) = 0;
+          SEXP r_burn) = 0;
       
      private:
       // Create the specific StateSpaceModel suitable for the given model

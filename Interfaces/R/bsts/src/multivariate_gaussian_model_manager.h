@@ -55,10 +55,20 @@ namespace BOOM {
       int UnpackForecastData(SEXP r_prediction_data) override;
 
       // Forecast future values of the multivariate time series.
+      //
+      // Args:
+      //   r_mbsts_object:  The model object created by 'mbsts.'
+      //   r_prediction_data: An R list containing any additional data needed to
+      //     make the prediction.  For simple state space models this is just an
+      //     integer giving the time horizon over which to predict.  For models
+      //     containing a regression component it contains the future values of
+      //     the X's, along with 'series' and 'timestamps' for each X vector.
+      //   r_burn: An integer giving the number of burn-in iterations to discard.
+      //     Negative numbers will be treated as zero.  Numbers greater than the
+      //     number of MCMC iterations will raise an error.
       Array Forecast(SEXP r_mbsts_object,
                      SEXP r_prediction_data,
-                     SEXP r_burn,
-                     SEXP r_observed_data) override;
+                     SEXP r_burn) override;
       
      private:
       // Args:
@@ -91,16 +101,20 @@ namespace BOOM {
       void BuildModelAndAssignData(SEXP r_data_list);
       void AssignSampler(SEXP r_prior, SEXP r_options);
       void ConfigureIo(RListIoManager *io_manager);
-
+      void SaveFinalState(RListIoManager *io_manager);
       void SetModelOptions(SEXP r_options);
       
       Ptr<MultivariateStateSpaceRegressionModel> model_;
       int nseries_;
       int predictor_dimension_;
-
       TimestampInfo timestamp_info_;
-      
+
+      // A matrix of predictor variables for the forecast.  The first nseries_
+      // rows are for the 1-step forecast.  The next nseries_ rows are for the
+      // 2-step forecast, etc.  
       Matrix forecast_predictors_;
+
+      std::vector<BOOM::Vector> series_specific_final_state_;
     };
     
   }  // namespace bsts

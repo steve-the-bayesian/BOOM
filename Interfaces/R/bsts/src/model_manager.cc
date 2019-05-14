@@ -55,6 +55,15 @@ namespace BOOM {
       }
     }
 
+    // Args:
+    //   r_prediction_data: A list containing an object named 'timestamps',
+    //     which is a list containing the following objects.  
+    //     - timestamp.mapping: A vector of integers indicating the timestamp to
+    //         which each observation belongs.
+    //
+    // Effects:
+    //   The forecast_timestamps_ element in the TimestampInfo object gets
+    //   populated.
     void TimestampInfo::UnpackForecastTimestamps(SEXP r_prediction_data) {
       SEXP r_forecast_timestamps = getListElement(
           r_prediction_data, "timestamps");
@@ -236,6 +245,7 @@ namespace BOOM {
       }
       int niter = Rf_asInteger(getListElement(r_bsts_object, "niter"));
       int burn = std::max<int>(0, Rf_asInteger(r_burn));
+      if (burn < 0) burn = 0;
       io_manager.prepare_to_stream(r_bsts_object);
       io_manager.advance(burn);
       int iterations_after_burnin = niter - burn;

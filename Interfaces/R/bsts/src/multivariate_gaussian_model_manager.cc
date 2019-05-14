@@ -104,7 +104,7 @@ namespace BOOM {
           model_.get(),
           r_shared_state_specification,
           "");
-
+      shared_state_model_factory.SaveFinalState(model_.get(), &final_state());
       // Consider a new list_io element here.
       if (!Rf_isNull(r_series_state_specification)) {
         for (int i = 0; i < nseries_; ++i) {
@@ -116,8 +116,11 @@ namespace BOOM {
               VECTOR_ELT(r_series_state_specification, i),
               prefix.str());
         }
+        series_specific_final_state_.resize(model_->nseries());
+        shared_state_model_factory.SaveSubordinateFinalState(
+            model_.get(),
+            &series_specific_final_state_);
       }
-      // TODO: save final state
 
       // Save state contributions.
       io_manager->add_list_element(new NativeArrayListElement(
@@ -136,6 +139,59 @@ namespace BOOM {
       
       return model_.get();
     }
+
+    // Args:
+    //   r_mbsts_object: The R object returned by 'mbsts' representing the
+    //     multivariate bsts model.
+    //   r_prediction_data: A list containing the following:
+
+    //     - A matrix named 'predictors'.  This matrix contains one row for each
+    //       forecast point for each series.  The first 'nseries' rows
+    //       correspond to the first time point.  The next 'nseries' points to
+    //       the next time point, and so on.  This matrix is necessary even if
+    //       only contains intercept terms.
+    //     - 
+    Array Manager::Forecast(SEXP r_mbsts_object,
+                            SEXP r_prediction_data,
+                            SEXP r_burn) {
+      RListIoManager io_manager;
+      SEXP r_shared_state_specification = getListElement(
+          r_mbsts_object, "shared.state.specification", true);
+      SEXP r_series_state_specification = getListElement(
+          r_mbsts_object, "series.state.specification", true);
+      Ptr<MultivariateStateSpaceRegressionModel> model = CreateModel(
+          R_NilValue,
+          r_shared_state_specification,
+          r_series_state_specification,
+          R_NilValue,
+          R_NilValue,
+          &io_manager);
+      AddDataFromBstsObject(r_mbsts_object);
+      int niter = Rf_asInteger(getListElement(r_mbsts_object, "niter", true));
+      int burn = Rf_asInteger(r_burn);
+      if (burn < 0) burn = 0;
+
+      io_manager.prepare_to_stream(r_mbsts_object);
+      io_manager.advance(burn);
+      int iterations_after_burnin = niter - burn;
+
+      int forecast_horizon = UnpackForecastData(r_prediction_data);
+      model->observe_time_dimension(
+          model->time_dimension() + forecast_horizon);
+
+      Array ans(std::vector<int>{iterations_after_burnin,
+              model_->nseries(), forecast_horizon});
+      
+      for (int i = 0; i < iterations_after_burnin; ++i) {
+        io_manager.stream();
+        ans.slice(i, -1, -1) = model_->simulate_forecast(
+            GlobalRng::rng,
+            forecast_predictors_,
+            final_state(),
+            series_specific_final_state_);
+      }
+      return ans;
+    }
     
     MultivariateStateSpaceRegressionModel * Manager::CreateBareModel(
         SEXP r_data_list,
@@ -151,6 +207,7 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
+    // For setting model state and parameters for debugging.
     void Manager::SetModelOptions(SEXP r_options) {
       if (Rf_isNull(r_options)) return;
       
@@ -158,8 +215,6 @@ namespace BOOM {
       if (!Rf_isNull(r_fixed_state)) {
         model_->permanently_set_state(ToBoomMatrix(r_fixed_state));
       }
-
-
     }
 
     //---------------------------------------------------------------------------
@@ -386,17 +441,10 @@ namespace BOOM {
 
     // TOOD(steve): handle predictors in the regression case.
     int Manager::UnpackForecastData(SEXP r_prediction_data) {
-      int horizon = Rf_asInteger(getListElement(
-          r_prediction_data, "horizon", true));
-      return horizon;
-    }
-
-    Array Manager::Forecast(SEXP r_mbsts_object,
-                            SEXP r_prediction_data,
-                            SEXP r_burn,
-                            SEXP r_observed_data) {
-      report_error("Forecast is not yet implemented.");
-      return Array();
+      forecast_predictors_ = BOOM::ToBoomMatrix(getListElement(
+          r_prediction_data, "predictors"));
+      UnpackForecastTimestamps(r_prediction_data);
+      return forecast_predictors_.nrow() / nseries_;
     }
     
   }  // namespace bsts

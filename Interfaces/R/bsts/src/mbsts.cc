@@ -138,7 +138,7 @@ extern "C" {
               << e.what() << std::endl;
           error_reporter.SetError(err.str());
           return BOOM::appendListElement(
-              ans, ToRVector(Vector(1, i)), "ngood");
+              ans, BOOM::ToRVector(Vector(1, i)), "ngood");
         }
       }
       return ans;
@@ -150,4 +150,42 @@ extern "C" {
     return R_NilValue;
   }
 
+  // Args:
+  //   r_mbsts_object:  A model object produced by 'mbsts'.
+  //   r_prediction_data: A list containing the predictors and any supplemental
+  //     information needed to carry out the prediction.
+  //   r_burn:  The number of iterations in r_mbsts_object to discard as burn-in.
+  //   r_seed: An integer (or NULL) to use as the seed for the C++ random number
+  //     generator.
+  //
+  // Returns:
+  //   A 3-way array with dimensions [draws, series, time] containing draws from
+  //   the posterior predictive distribution.
+  SEXP analysis_common_r_predict_multivariate_bsts_model_(
+      SEXP r_mbsts_object,
+      SEXP r_prediction_data,
+      SEXP r_burn,
+      SEXP r_seed) {
+    try {
+      BOOM::RInterface::seed_rng_from_R(r_seed);
+
+      BOOM::Factor series(BOOM::getListElement(r_mbsts_object, "series.id", true));
+      int ydim = series.number_of_levels();
+      int xdim = BOOM::ToBoomMatrixView(BOOM::getListElement(
+          r_mbsts_object, "predictors", true)).ncol();
+      
+      std::unique_ptr<MultivariateGaussianModelManager> model_manager(
+          new MultivariateGaussianModelManager(ydim, xdim));
+      return BOOM::ToRArray(model_manager->Forecast(
+          r_mbsts_object,
+          r_prediction_data,
+          r_burn));
+    } catch (std::exception &e) {
+      BOOM::RInterface::handle_exception(e);
+    } catch (...) {
+      BOOM::RInterface::handle_unknown_exception();
+    }
+    return R_NilValue;
+  }
+  
 }  // extern "C"

@@ -86,6 +86,12 @@ extern "C" {
       SEXP r_niter,
       SEXP r_ping,
       SEXP r_seed);
+
+  SEXP analysis_common_r_predict_multivariate_bsts_model_(
+      SEXP r_mbsts_object,
+      SEXP r_prediction_data,
+      SEXP r_burn,
+      SEXP r_seed);
   
   static R_CallMethodDef bsts_arg_description[] = {
     CALLDEF(analysis_common_r_fit_bsts_model_, 9),
@@ -96,6 +102,7 @@ extern "C" {
     CALLDEF(analysis_common_r_bsts_fit_mixed_frequency_model_, 11),
     CALLDEF(analysis_common_r_get_date_ranges_, 2),
     CALLDEF(analysis_common_r_fit_multivariate_bsts_model_, 8),
+    CALLDEF(analysis_common_r_predict_multivariate_bsts_model_, 4),
     {NULL, NULL, 0}  // NOLINT
   };
 

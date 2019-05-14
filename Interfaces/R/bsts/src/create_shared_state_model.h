@@ -21,9 +21,10 @@
 #include "create_state_model.h"
 #include "r_interface/list_io.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
+#include <Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp>
 
 //==============================================================================
-// The functions listed here throw exceptions.  Code that uses them should be
+// The functions declared here throw exceptions.  Code that uses them should be
 // wrapped in a try-block where the catch statement catches the exception and
 // calls Rf_error() with an appropriate error message.  The functions
 // handle_exception(), and handle_unknown_exception (in handle_exception.hpp),
@@ -38,7 +39,7 @@ namespace BOOM {
   // Host model.
   class MultivariateStateSpaceModelBase;
   
-  // Trend models.  This list will grow over time as more models are added.
+  // State models.  This list will grow over time as more models are added.
   class SharedLocalLevelStateModel;
 
   namespace bsts {
@@ -88,10 +89,22 @@ namespace BOOM {
       //     vector will be re-sized if it is the wrong size.
       //   list_element_name: The name of the final state vector in the R list
       //     holding the MCMC output.
-      void SaveFinalState(MultivariateStateSpaceModelBase *model,
-                          BOOM::Vector *final_state = nullptr,
-                          const std::string &list_element_name = "final.state");
+      void SaveFinalState(
+          MultivariateStateSpaceModelBase *model,
+          BOOM::Vector *final_state = nullptr,
+          const std::string &list_element_name = "final.shared.state");
 
+      // For models that contain subordinate state space models for series
+      // specfic state effects.  The output will be stored in a list of
+      // matrices.  mbsts.model[[j]] is a matrix corresponding to time series j,
+      // with rows corresponding to MCMC draws, and columns to the state vector
+      // at final time T.
+      void SaveSubordinateFinalState(
+          MultivariateStateSpaceRegressionModel *model,
+          std::vector<BOOM::Vector> *final_state = nullptr,
+          const std::string &list_element_name = "final.series.specific.state");
+                                     
+      
      private:
       // The number of time series being modeled.
       int nseries_;
