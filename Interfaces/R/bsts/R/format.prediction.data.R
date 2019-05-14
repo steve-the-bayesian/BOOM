@@ -17,7 +17,7 @@
 .ExtractPredictors <- function(
     object,
     newdata,
-    xdim = ncol(object$coefficients),
+    xdim = NULL,
     na.action) {
   ## Create the matrix of predictors from a newdata, using an object's
   ##   * terms
@@ -40,12 +40,34 @@
   ##       vector can be passed.
   ##     newdata can also contain predictors needed for dynamic regression
   ##     state components.
+  ## 
+  ##     If the model is multivariate, then newdata must be structured so that
+  ##     its first 'nseries' rows describe the 'nseries' time series in the
+  ##     first forecast period.  The next 'nseries' rows describe the second
+  ##     forecast period, etc.
+  ##
   ##   xdim: The dimension of the set of coefficients that will be
   ##     used for prediction.
   ##
   ## Returns:
   ##   The matrix of predictors defined by newdata and the regression
   ##   model structure.
+
+  if (is.null(xdim)) {
+    beta <- object$coefficients
+    if (is.null(beta)) {
+      stop(paste0("Cannot extract predictors for a model with no ",
+        "regression component."))
+    }
+    if (length(dim(beta)) == 2) {
+      xdim <- ncol(beta)
+    } else if (length(dim(beta)) == 3) {
+      xdim <- dim(beta)[3]
+    } else {
+      stop("'coefficients' element should have dimension 2 or 3.")
+    }
+  }
+  
   if (is.null(newdata)) {
     stop("You need to supply 'newdata' when making predictions with ",
          "a bsts object that has a regression component.")
@@ -61,9 +83,8 @@
     if (!is.null(data.classes)) {
       .checkMFClasses(data.classes, newdata.frame)
     }
-    predictors <- model.matrix(Terms,
-                                  newdata.frame,
-                                  contrasts.arg = object$contrasts)
+    predictors <- model.matrix(
+      Terms, newdata.frame, contrasts.arg = object$contrasts)
 
     if ((inherits(object, "DynamicRegression"))
         && ("(Intercept)" %in% colnames(predictors))) {
@@ -195,7 +216,7 @@
   }
 }
 
-.FormatPredictionData <- function(
+.FormatBstsPredictionData <- function(
     object,
     newdata,
     horizon,
@@ -241,23 +262,36 @@
 
   if (object$family == "gaussian" || object$family == "student") {
     if (object$has.regression) {
-      return(list("predictors" = predictors))
+      ans <- list("predictors" = predictors)
     } else {
-      return(list("horizon" = as.integer(horizon)))
+      ans <- list("horizon" = as.integer(horizon))
     }
   } else if (object$family == "logit") {
-    return(list(
-        "predictors" = predictors,
-        "trials" = .FormatTrialsOrExposure(
-            trials.or.exposure, newdata, horizon)))
+    ans <- list(
+      "predictors" = predictors,
+      "trials" = .FormatTrialsOrExposure(trials.or.exposure, newdata, horizon))
   } else if (object$family == "poisson") {
-    return(list(
-        "predictors" = predictors,
-        "exposure" = .FormatTrialsOrExposure(
-            trials.or.exposure, newdata, horizon)))
+    ans <- list(
+      "predictors" = predictors,
+      "exposure" = .FormatTrialsOrExposure(
+        trials.or.exposure, newdata, horizon))
   } else {
-    stop("Unrecognized object family in .BstsFormatPredictionData")
+    stop("Unrecognized object family in .FormatBstsPredictionData")
   }
+  return(.ExtractDynamicRegressionPredictors(ans, object, newdata))
+}
+
+.FormatMultivariatePredictionData <- function(object, newdata, horizon, na.action) {
+  if (object$has.regression) {
+    predictors <- .ExtractPredictors(
+      object, newdata, na.action = na.action)
+    horizon <- nrow(predictors) / object$nseries
+  } else {
+    predictors <- matrix(rep(1, horizon * object$nseries), ncol = 1)
+  }
+
+  return(list("predictors" = predictors,
+    "horizon" = horizon))
 }
 
 .FormatTrialsOrExposure <- function(arg,

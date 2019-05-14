@@ -19,11 +19,12 @@
 \title{Multivariate Bayesian Structural Time Series}
 \Rdversion{1.1}
 \description{
-
   Fit a multivariate Bayesian structural time series model, also known
   as a "dynamic factor model."  
 
-}
+  ** NOTE ** This code is experimental.  Please feel free to experiment
+  with it and report any bugs to the maintainer.  Expect it to improve
+  substantially in the next release.  }
 
 \usage{
 mbsts(formula,

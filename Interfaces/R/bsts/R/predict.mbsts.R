@@ -1,4 +1,4 @@
-# Copyright 2018 Google LLC. All Rights Reserved.
+# Copyright 2019 Steven L. Scott. All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,18 +14,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-predict.bsts <- function(object,
-                         newdata = NULL,
-                         timestamps = NULL,
-                         horizon = 1,
-                         burn = SuggestBurn(.1, object),
-                         na.action = na.exclude,
-                         olddata = NULL,
-                         olddata.timestamps = NULL,
-                         trials.or.exposure = 1,
-                         quantiles = c(.025, .975),
-                         seed = NULL,
-                         ...) {
+predict.mbsts <- function(object,
+                          newdata = NULL,
+                          timestamps = NULL,
+                          horizon = 1,
+                          burn = SuggestBurn(.1, object),
+                          na.action = na.exclude,
+                          quantiles = c(.025, .975),
+                          seed = NULL,
+                          ...) {
   ## Args:
   ##   object:  an object of class 'bsts' created using the function 'bsts'
   ##   newdata: a vector, matrix, or data frame containing the predictor
@@ -54,24 +51,6 @@ predict.bsts <- function(object,
   ##     discarded.
   ##   na.action: A function determining what should be done with missing values
   ##     in newdata.
-  ##   olddata: An optional data frame including variables with the same names
-  ##     as the data used to fit 'object'.  If 'olddata' is missing then it is
-  ##     assumed that the first entry in 'newdata' immediately follows the last
-  ##     entry in the training data for 'object'.  If 'olddata' is supplied then
-  ##     it will be filtered to get the distribution of the next state before a
-  ##     prediction is made, and it is assumed that the first entry in 'newdata'
-  ##     comes immediately after the last entry in 'olddata'.
-  ##   olddata.timestamps: A set of timestamps corresponding to the observations
-  ##     supplied in olddata.  If olddata is not supplied this is not used.  If
-  ##     olddata is supplied and this is NULL then trivial timestamps (1, 2,
-  ##     ...) will be assumed.  Otherwise this argument behaves like the
-  ##     'timestamps' argument to the 'bsts' function.
-  ##   trials.or.exposure: For logit or Poisson models, the number of binomial
-  ##     trials (or the exposure time) to assume at each time point in the
-  ##     forecast period.  This can either be a scalar (if the number of trials
-  ##     is to be the same for each time period), or it can be a vector with
-  ##     length equal to 'horizon' (if the model contains no regression term) or
-  ##     'nrow(newdata)' if the model contains a regression term.
   ##   quantiles: A numeric vector of length 2 giving the lower and upper
   ##     quantiles to use for the forecast interval estimate.
   ##   seed: An integer to use as the C++ random seed.  If NULL then the C++
@@ -80,54 +59,72 @@ predict.bsts <- function(object,
   ##     method.
   ##
   ## Returns:
-  ##   An object of class 'bsts.prediction', which is a list with the
+  ##   An object of class 'mbsts.prediction', which is a list with the
   ##   following elements:
-  ##   mean: A numeric vector giving the posterior mean of the
+  ##   mean: A numeric matrix giving the posterior mean of the
   ##     predictive distribution at each time point.
-  ##   interval: A two-column matrix giving the lower and upper limits
+  ##   interval: An nseries x time x 2 array giving the lower and upper limits
   ##     of the 95% prediction interval at each time point.
-  ##   distribution: A matrix of draws from the posterior predictive
-  ##     distribution.  Each column corresponds to a time point.  Each
-  ##     row is an MCMC draw.
-  ##   original.series: The original series used to fit 'object'.
-  ##     This is used by the plot method to plot the original series
+  ##   distribution: A niter x nseries x time array of draws from the posterior
+  ##     predictive distribution.  
+  ##   original.series: The original series used to fit 'object', in wide
+  ##     format.  This is used by the plot method to plot the original series
   ##     and the prediction together.
   stopifnot(inherits(object, "bsts"))
-  prediction.data <- .FormatBstsPredictionData(
-    object, newdata, horizon, trials.or.exposure, na.action)
+
+  prediction.data <- .FormatMultivariatePredictionData(
+    object, newdata, horizon, na.action)
+  
   prediction.data$timestamps <- .ExtractPredictionTimestamps(
-      object, newdata, timestamps)
+    object, newdata, timestamps)
   stopifnot(is.numeric(burn), length(burn) == 1, burn < object$niter)
-  if (!is.null(olddata)) {
-    olddata <- .FormatObservedDataForPredictions(object, olddata, na.action,
-      olddata.timestamps)
-    original.series <- olddata$response
-  } else {
-    original.series <- object$original.series
-  }
+  original.series <- object$original.series
 
   stopifnot(is.null(seed) || length(seed) == 1)
   if (!is.null(seed)) {
     seed <- as.integer(seed)
   }
-  predictive.distribution <- .Call("analysis_common_r_predict_bsts_model_",
-                                   object,
-                                   prediction.data,
-                                   burn,
-                                   olddata,
-                                   seed = seed,
-                                   PACKAGE = "bsts")
+  predictive.distribution <- .Call(
+    "analysis_common_r_predict_multivariate_bsts_model_",
+    object,
+    prediction.data,
+    burn,
+    seed = seed,
+    PACKAGE = "bsts")
 
   ans <- list("mean" = colMeans(predictive.distribution),
-              "median" = apply(predictive.distribution, 2, median),
-              "interval" = apply(predictive.distribution, 2,
-                                 quantile, quantiles),
-              "distribution" = predictive.distribution,
-              "original.series" = original.series)
+    "median" = apply(predictive.distribution, 2, median),
+    "interval" = apply(predictive.distribution, 2,
+      quantile, quantiles),
+    "distribution" = predictive.distribution,
+    "original.series" = original.series)
   class(ans) <- "bsts.prediction"
   return(ans)
 }
 
+###----------------------------------------------------------------------
+.FormatMultivariatePredictionData <- function(object, newdata, horizon, na.action) {
+  ## Args:
+  ##   object:  An mbsts model object.
+  ##   newdata: The data needed to make future predictions.  In simple
+  ##     Gaussian models with no predictors this is not used.  In
+  ##     models with a regression component it must be one of the
+  ##     following.
+  ##     * a data.frame containing variables with names and types
+  ##       matching those used in fitting the original model
+  ##     * a matrix with the number of columns matching
+  ##       object$coefficients.  If the number of columns is one too
+  ##       few, an intercept term will be added.
+  ##     * If object$coefficients is based on a single predictor, a
+  ##       vector can be passed.
+  ##     newdata can also contain information about binomial trials,
+  ##     poisson exposures, or predictors needed for dynamic regression
+  ##     state components.
+  ##   horizon: An integer giving the number of forecast periods.
+
+  stop("NEED TO IMPLEMENT THIS!!!!!!!!!")
+  
+}
 ###----------------------------------------------------------------------
 plot.bsts.prediction <- function(x,
                                  y = NULL,
