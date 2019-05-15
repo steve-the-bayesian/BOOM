@@ -143,26 +143,28 @@ namespace BOOM {
     // Args:
     //   r_mbsts_object: The R object returned by 'mbsts' representing the
     //     multivariate bsts model.
-    //   r_prediction_data: A list containing the following:
-
-    //     - A matrix named 'predictors'.  This matrix contains one row for each
-    //       forecast point for each series.  The first 'nseries' rows
-    //       correspond to the first time point.  The next 'nseries' points to
-    //       the next time point, and so on.  This matrix is necessary even if
-    //       only contains intercept terms.
-    //     - 
+    //   r_prediction_data: A list containing the data needed to make the
+    //     forecast.  See UnpackForecastData.  The list must contain
+    //     - A matrix named 'predictors' organized such that the first 'nseries'
+    //       rows correspond to the first forecast time point, the next
+    //       'nseries' to the second, and so on.
+    //     - A 'timestamp info' object describing the timestamps for the
+    //       forecast.  See UnpackForecastTimestamps().
+    //   r_burn: An integer specifying the number of MCMC iterations in
+    //     r_mbsts_object to discard as burn-in.  A negative number will be
+    //     treated as zero.
+    //
+    // Returns:
+    //   An array of dimension [niter x nseries x horizon] containing draws from
+    //   the posterior predictive distribution.
     Array Manager::Forecast(SEXP r_mbsts_object,
                             SEXP r_prediction_data,
                             SEXP r_burn) {
       RListIoManager io_manager;
-      SEXP r_shared_state_specification = getListElement(
-          r_mbsts_object, "shared.state.specification", true);
-      SEXP r_series_state_specification = getListElement(
-          r_mbsts_object, "series.state.specification", true);
       Ptr<MultivariateStateSpaceRegressionModel> model = CreateModel(
           R_NilValue,
-          r_shared_state_specification,
-          r_series_state_specification,
+          getListElement(r_mbsts_object, "shared.state.specification", true),
+          getListElement(r_mbsts_object, "series.state.specification", false),
           R_NilValue,
           R_NilValue,
           &io_manager);
@@ -254,7 +256,7 @@ namespace BOOM {
           r_bsts_object, "original.series")));
       Matrix predictors = ToBoomMatrix(getListElement(
           r_bsts_object, "predictors"));
-      Factor series(getListElement(r_bsts_object, "series"));
+      Factor series(getListElement(r_bsts_object, "series.id"));
       AddData(responses, predictors, series);
     }
 

@@ -14,13 +14,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-.ComputeTimestampInfo <- function(response, data, timestamps) {
+.ComputeTimestampInfo <- function(response, data = NULL, timestamps = NULL) {
   ## Args:
   ##   response: A vector or matrix.  If the response is a zoo object with
   ##     timestamps then the timestamps will be processed.
-  ##   data: an optional data frame, list or environment (or object
-  ##     coercible by ‘as.data.frame’ to a data frame) containing the
-  ##     variables in the bsts model. 
+  ##   data: an optional data frame, list or environment (or object coercible by
+  ##     ‘as.data.frame’ to a data frame) containing the variables in the bsts
+  ##     model.  This is only used as source of timestamps if they are not
+  ##     provided otherwise.
   ##   timestamps: A vector of user-supplied timestamps (of the same length as
   ##     'response'), or NULL.
   ##

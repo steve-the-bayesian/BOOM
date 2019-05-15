@@ -65,20 +65,15 @@ predict.mbsts <- function(object,
   ##     predictive distribution at each time point.
   ##   interval: An nseries x time x 2 array giving the lower and upper limits
   ##     of the 95% prediction interval at each time point.
-  ##   distribution: A niter x nseries x time array of draws from the posterior
+  ##   distribution: A [niter x nseries x time] array of draws from the posterior
   ##     predictive distribution.  
   ##   original.series: The original series used to fit 'object', in wide
   ##     format.  This is used by the plot method to plot the original series
   ##     and the prediction together.
-  stopifnot(inherits(object, "bsts"))
-
+  stopifnot(inherits(object, "mbsts"))
   prediction.data <- .FormatMultivariatePredictionData(
-    object, newdata, horizon, na.action)
-  
-  prediction.data$timestamps <- .ExtractPredictionTimestamps(
-    object, newdata, timestamps)
+    object, newdata, horizon, na.action, timestamps)
   stopifnot(is.numeric(burn), length(burn) == 1, burn < object$niter)
-  original.series <- object$original.series
 
   stopifnot(is.null(seed) || length(seed) == 1)
   if (!is.null(seed)) {
@@ -97,145 +92,51 @@ predict.mbsts <- function(object,
     "interval" = apply(predictive.distribution, 2,
       quantile, quantiles),
     "distribution" = predictive.distribution,
-    "original.series" = original.series)
+    "original.series" = object$original.series)
   class(ans) <- "bsts.prediction"
   return(ans)
 }
 
-###----------------------------------------------------------------------
-.FormatMultivariatePredictionData <- function(object, newdata, horizon, na.action) {
-  ## Args:
-  ##   object:  An mbsts model object.
-  ##   newdata: The data needed to make future predictions.  In simple
-  ##     Gaussian models with no predictors this is not used.  In
-  ##     models with a regression component it must be one of the
-  ##     following.
-  ##     * a data.frame containing variables with names and types
-  ##       matching those used in fitting the original model
-  ##     * a matrix with the number of columns matching
-  ##       object$coefficients.  If the number of columns is one too
-  ##       few, an intercept term will be added.
-  ##     * If object$coefficients is based on a single predictor, a
-  ##       vector can be passed.
-  ##     newdata can also contain information about binomial trials,
-  ##     poisson exposures, or predictors needed for dynamic regression
-  ##     state components.
-  ##   horizon: An integer giving the number of forecast periods.
+###---------------------------------------------------------------------------
+# Private section.  Also see related code in predict.bsts.R.
+###---------------------------------------------------------------------------
 
-  stop("NEED TO IMPLEMENT THIS!!!!!!!!!")
-  
-}
-###----------------------------------------------------------------------
-plot.bsts.prediction <- function(x,
-                                 y = NULL,
-                                 burn = 0,
-                                 plot.original = TRUE,
-                                 median.color = "blue",
-                                 median.type = 1,
-                                 median.width = 3,
-                                 interval.quantiles = c(.025, .975),
-                                 interval.color = "green",
-                                 interval.type = 2,
-                                 interval.width = 2,
-                                 style = c("dynamic", "boxplot"),
-                                 ylim = NULL,
-                                 ...) {
-  ## Plots the posterior predictive distribution found in the
-  ## 'prediction' object.
+.FormatMultivariatePredictionData <- function(
+    object, newdata, horizon, na.action, timestamps) {
   ## Args:
-  ##   x: An object with class 'bsts.prediction', generated
-  ##     using the 'predict' method for a 'bsts' object.
-  ##   y: A dummy argument needed to match the signature of the plot()
-  ##     generic function.  It is not used.
-  ##   burn: The number of observations you wish to discard as burn-in
-  ##     from the posterior predictive distribution.  This is in
-  ##     addition to the burn-in discarded using predict.bsts.
-  ##   plot.original: Logical or numeric.  If TRUE then the prediction
-  ##     is plotted after a time series plot of the original series.
-  ##     If FALSE, the prediction fills the entire plot.  If numeric,
-  ##     then it specifies the number of trailing observations of the
-  ##     original time series to plot.
-  ##   median.color: The color to use for the posterior median of the
-  ##     prediction.
-  ##   median.type: The type of line (lty) to use for the posterior median
-  ##     of the prediction.
-  ##   median.width: The width of line (lwd) to use for the posterior median
-  ##     of the prediction.
-  ##   interval.quantiles: The lower and upper limits of the credible
-  ##     interval to be plotted.
-  ##   interval.color: The color to use for the upper and lower limits
-  ##     of the 95% credible interval for the prediction.
-  ##   interval.type: The type of line (lty) to use for the upper and
-  ##     lower limits of the 95% credible inerval for of the
-  ##     prediction.
-  ##   interval.width: The width of line (lwd) to use for the upper and
-  ##     lower limits of the 95% credible inerval for of the
-  ##     prediction.
-  ##   style: What type of plot should be produced?  A
-  ##     DynamicDistribution plot, or a time series boxplot.
-  ##   ylim:  Limits on the vertical axis.
-  ##   ...: Extra arguments to be passed to PlotDynamicDistribution()
-  ##     and lines().
+  ##   object:  An mbsts model object on which to base the prediction.
+  ##   newdata: A matrix or data frame containing the variables needed to make
+  ##     predictions at future values.  If a data frame, it must contain the
+  ##     variables of the same names and types as those appearing in the
+  ##     'formula' argument used to creat 'object.'  If a matrix, the number of
+  ##     columns must match object$coefficients.  If the number of columns is
+  ##     one too few then an intercept term will be added in the first column.
+  ##     The data must be organized so that the first 'object$nseries' rows correspond
+  ##     to the first forecast time, the next 'nseries' rows to the second
+  ##     forecast time, etc.
+  ##   horizon: This argument is only used if 'object' contains no regression
+  ##     component.  An integer giving the desired number of forecast periods.
+  ##   na.action: Passed to .ExtractPredictors (where it is passed to
+  ##     model.matrix).
+  ##
   ## Returns:
-  ##   This function is called for its side effect, which is to
-  ##   produce a plot on the current graphics device.
-
-  prediction <- x
-  if (burn > 0) {
-    prediction$distribution <-
-        prediction$distribution[-(1:burn), , drop = FALSE]
-    prediction$median <- apply(prediction$distribution, 2, median)
-    prediction$interval <- apply(prediction$distribution, 2,
-                                 quantile, c(.025, .975))
-  }
-  prediction$interval <- apply(prediction$distribution, 2,
-                               quantile, interval.quantiles)
-
-  original.series <- prediction$original.series
-  if (is.numeric(plot.original)) {
-    original.series <- tail(original.series, plot.original)
-    plot.original <- TRUE
-  }
-  n1 <- ncol(prediction$distribution)
-
-  time <- index(original.series)
-  deltat <- tail(diff(tail(time, 2)), 1)
-
-  if (is.null(ylim)) {
-    ylim <- range(prediction$distribution, original.series, na.rm = TRUE)
-  }
-
-  if (plot.original) {
-    pred.time <- tail(time, 1) + (1:n1) * deltat
-    plot(time,
-         original.series,
-         type = "l",
-         xlim = range(time, pred.time, na.rm = TRUE),
-         ylim = ylim,
-         ...)
+  ##   A list containing the prediction data, in a format suitable for passing
+  ##   to the .Call function call in predict.mbsts.
+  if (object$has.regression) {
+    predictors <- .ExtractPredictors(
+      object, newdata, na.action = na.action)
+    horizon <- nrow(predictors) / object$nseries
   } else {
-    pred.time <- tail(time, 1) + (1:n1) * deltat
+    predictors <- matrix(rep(1, horizon * object$nseries), ncol = 1)
   }
+  timestamps <- .ExtractPredictionTimestamps(object, newdata, timestamps)
+  ans <- list("predictors" = predictors,
+    "horizon" = horizon,
+    "timestamps" = timestamps)
 
-  style <- match.arg(style)
-  if (style == "dynamic") {
-    PlotDynamicDistribution(curves = prediction$distribution,
-                            timestamps = pred.time,
-                            add = plot.original,
-                            ylim = ylim,
-                            ...)
-  } else {
-    TimeSeriesBoxplot(prediction$distribution,
-                      time = pred.time,
-                      add = plot.original,
-                      ylim = ylim,
-                      ...)
-  }
-  lines(pred.time, prediction$median, col = median.color,
-        lty = median.type, lwd = median.width, ...)
-  for (i in 1:nrow(prediction$interval)) {
-    lines(pred.time, prediction$interval[i, ], col = interval.color,
-          lty = interval.type, lwd = interval.width, ...)
-  }
-  return(invisible(NULL))
+  ## TODO(when dynamic regression is added to mbsts, add a call similar to
+  ## .ExtractDynamicRegressionPredictors.  See the example in predict.bsts.R.
+  return(ans)
 }
+
+

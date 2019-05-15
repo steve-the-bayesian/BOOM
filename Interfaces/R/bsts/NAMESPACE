@@ -119,6 +119,8 @@ S3method(residuals, bsts)
 S3method(plot, bsts.prediction)
 S3method(plot, bsts.mixed)
 
+S3method(predict, mbsts)
+
 # Plot methods for specific state components
 S3method(plot, StateModel)
 S3method(plot, HierarchicalRegressionHolidayStateModel)

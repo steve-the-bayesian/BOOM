@@ -253,6 +253,8 @@ mbsts <- function(formula,
   predictor.names <- colnames(predictors)
   state.model.names <- sapply(shared.state.specification,
     function(x) x$name)
+  ans$nseries <- length(series.names)
+
   
   dimnames(ans$regression.coefficients) <- list(
     NULL, series.names, predictor.names)

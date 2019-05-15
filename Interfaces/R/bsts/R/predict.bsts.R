@@ -253,31 +253,32 @@ plot.bsts.prediction <- function(x,
     horizon,
     trials.or.exposure,
     na.action) {
+  ## Package the data on which to base the prediction in the form expected by
+  ## underlying C++ code.
+  ##
   ## Args:
   ##   object:  A bsts model object.
-  ##   newdata: The data needed to make future predictions.  In simple
-  ##     Gaussian models with no predictors this is not used.  In
-  ##     models with a regression component it must be one of the
-  ##     following.
-  ##     * a data.frame containing variables with names and types
-  ##       matching those used in fitting the original model
-  ##     * a matrix with the number of columns matching
-  ##       object$coefficients.  If the number of columns is one too
-  ##       few, an intercept term will be added.
-  ##     * If object$coefficients is based on a single predictor, a
-  ##       vector can be passed.
-  ##     newdata can also contain information about binomial trials,
-  ##     poisson exposures, or predictors needed for dynamic regression
-  ##     state components.
+  ##   newdata: The data needed to make future predictions.  In simple Gaussian
+  ##     models with no predictors this is not used.  In models with a
+  ##     regression component it must be one of the following.
+  ##     * A data.frame containing variables with names and types matching those
+  ##       used in fitting the original model.
+  ##     * A matrix with the number of columns matching object$coefficients.  If
+  ##       the number of columns is one too few, an intercept term will be
+  ##       added.
+  ##     * If object$coefficients is based on a single predictor, a vector can
+  ##       be passed.
+  ##     newdata can also contain information about binomial trials, poisson
+  ##     exposures, or predictors needed for dynamic regression state
+  ##     components.
   ##   horizon: An integer giving the number of forecast periods.
-  ##   trials.or.exposure: If the model family is poisson or logit,
-  ##     this argument specifies the number of binomial trials or the
-  ##     Poisson exposure times.  If used, it must be one of the
-  ##     following:
-  ##     * A string naming a column in newdata containing the trials
-  ##       or exposure field.
-  ##     * A single number giving the number of trials or length of
-  ##       exposure time to use for all predictions.
+  ##   trials.or.exposure: If the model family is poisson or logit, this
+  ##     argument specifies the number of binomial trials or the Poisson
+  ##     exposure times.  If used, it must be one of the following:
+  ##     * A string naming a column in newdata containing the trials or exposure
+  ##       field.
+  ##     * A single number giving the number of trials or length of exposure
+  ##       time to use for all predictions.
   ##     * A vector of numbers to use as the trials or exposure times.
   ##     If the final option is used, its length must be 'horizon'.
   ##
