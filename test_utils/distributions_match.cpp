@@ -31,16 +31,16 @@ namespace BOOM {
     ECDF ecdf(data);
     const Vector &sorted_data(ecdf.sorted_data());
     double maxdiff = negative_infinity();
-    int64_t maxdiff_index = -1;
-    double maxdiff_ecdf = negative_infinity();
-    double maxdiff_cdf = negative_infinity();
+    //    int64_t maxdiff_index = -1;
+    //    double maxdiff_ecdf = negative_infinity();
+    //double maxdiff_cdf = negative_infinity();
     for (int64_t i = 0; i < sorted_data.size(); ++i) {
       double delta = fabs(ecdf(sorted_data[i]) - cdf(sorted_data[i]));
       if (delta > maxdiff) {
         maxdiff = delta;
-        maxdiff_index = i;
-        maxdiff_ecdf = ecdf(sorted_data[i]);
-        maxdiff_cdf = cdf(sorted_data[i]);
+        //   maxdiff_index = i;
+        //   maxdiff_ecdf = ecdf(sorted_data[i]);
+        //   maxdiff_cdf = cdf(sorted_data[i]);
       }
     }
 

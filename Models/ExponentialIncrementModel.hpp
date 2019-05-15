@@ -40,8 +40,9 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-    ExponentialIncrementModel(const Vector &increment_rates);
-    ExponentialIncrementModel(
+    explicit ExponentialIncrementModel(const Vector &increment_rates);
+    
+    explicit ExponentialIncrementModel(
         const std::vector<Ptr<ExponentialModel>> &increment_models);
 
     ExponentialIncrementModel(const ExponentialIncrementModel &rhs);

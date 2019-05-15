@@ -271,7 +271,7 @@ namespace BOOM{
     //----------------------------------------------------------------------
     class ScaledMatrixNormalPrior {
      public:
-      ScaledMatrixNormalPrior(SEXP r_prior);
+      explicit ScaledMatrixNormalPrior(SEXP r_prior);
       const Matrix &mean() const {return mean_;}
       double sample_size() const {return sample_size_;}
      private:

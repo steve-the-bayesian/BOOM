@@ -48,7 +48,7 @@ namespace BOOM {
     class MultivariateStateContributionsCallback
         : public ::BOOM::ArrayIoCallback {
      public:
-      MultivariateStateContributionsCallback(
+      explicit MultivariateStateContributionsCallback(
           MultivariateStateSpaceRegressionModel *model)
           : model_(model) {}
 
@@ -77,7 +77,7 @@ namespace BOOM {
     class MultivariateSaveFullStateCallback
         : public ::BOOM::MatrixIoCallback {
      public:
-      MultivariateSaveFullStateCallback(
+      explicit MultivariateSaveFullStateCallback(
           MultivariateStateSpaceRegressionModel *model)
           : model_(model) {}
 
