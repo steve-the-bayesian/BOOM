@@ -4,7 +4,7 @@ importFrom("grDevices", "dev.off", "gray", "pdf", "rainbow")
 
 importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "box",
   "boxplot", "hist", "legend", "lines", "par", "plot", "points",
-  "polygon", "title", "close.screen", "screen", "split.screen",
+  "polygon", "text", "title", "close.screen", "screen", "split.screen",
   "strheight", "strwidth")
 
 importFrom("stats", ".checkMFClasses", ".getXlevels", "acf", "delete.response",
