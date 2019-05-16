@@ -67,6 +67,20 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   }
   state.means <- apply(contributions, c(1, 3, 4), sum)
   labels <- colnames(original)
+
+  predictors <- LongToWideArray(model$predictors, model$series.id,
+    model$timestamp.info$timestamps)
+  coefficients <- model$regression.coefficients
+
+  niter <- dim(coefficients)[1]
+  nseries <- dim(coefficients)[2]
+  time.dimension <- dim(predictors)[2]
+  regression.effects <- array(0, dim = c(niter, nseries, time.dimension))
+  for (m in 1:nseries) {
+    regression.effects[, m, ] <- coefficients[, m, ] %*% t(predictors[m, , ])
+  }
+
+  state.means <- state.means + regression.effects
   
   nplots <- ncol(original)
   plot.rows <- max(1, floor(sqrt(nplots)))

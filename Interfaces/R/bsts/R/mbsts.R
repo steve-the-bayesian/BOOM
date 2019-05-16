@@ -319,7 +319,8 @@ mbsts <- function(formula,
     stopifnot(is.list(series.state.specification),
       length(series.state.specification) == nseries)
     for (i in 1:nseries) {
-      stopifnot(is.list(series.state.specification[[i]]),
+      stopifnot(is.null(series.state.specification[[i]]) ||
+                          is.list(series.state.specification[[i]]),
         all(sapply(series.state.specification[[i]], inherits, "StateModel")))
     }
   }

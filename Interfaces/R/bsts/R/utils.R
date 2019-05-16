@@ -274,6 +274,39 @@ Shorten <- function(words) {
   return(time0)
 }
 
+LongToWideArray <- function(predictor.matrix, series.id, timestamps) {
+  ## Convert a matrix of predictors into an array with dimensions [series, time,
+  ## xdim]
+  ##
+  ## Args:
+  ##   predictor.matrix:  A matrix of predictor variables.
+  ##   series.id: A factor indicating the series to which each row of
+  ##     predictor.matrix belongs.
+  ##   timestamps: A vector of timestamps indicating the time period to which
+  ##     each row of predictor.matrix belongs.
+  ##
+  ## Returns:
+  ##   A 3-way array containing the information in predictor.matrix, organized
+  ##   according to series and time.
+  unique.times <- sort(unique(timestamps))
+  series.id <- as.factor(series.id)
+  unique.names <- levels(series.id)
+  ntimes <- length(unique.times)
+  nseries <- length(unique.names)
+  xdim <- ncol(predictor.matrix)
+  
+  ans <- array(NA, dim = c(nseries, ntimes, xdim))
+  dimnames(ans) <- list(unique.names, as.character(unique.times),
+    colnames(predictor.matrix))
+  for (series in 1:nseries) {
+    index <- as.numeric(series.id) == series
+    series.predictors <- predictor.matrix[index, , drop = FALSE]
+    series.timestamps <- as.character(timestamps[index])
+    ans[series, series.timestamps, ] <- series.predictors
+  }
+  return(ans)
+}
+
 LongToWide <- function(response, series.id, timestamps) {
   ## Convert a multivariate time series in "long" format to "wide" format.
   ##
