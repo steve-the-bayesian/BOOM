@@ -14,8 +14,7 @@ MAKEFLAGS=" -j 8 "
 # - EIGEN_WARNINGS_DISABLED: By default Eigen ignores certain warnings that it
 #   considers spurious.  This flag turns off the disabling.
 
-PKG_CFLAGS = -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR -DEIGEN_WARNINGS_DISABLED
-PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes 
+PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR -DEIGEN_WARNINGS_DISABLED
 # PKG_LIBS = -lprofiler
 ############################################################################
 # Begin the list of all the BOOM source files.
