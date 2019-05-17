@@ -27,6 +27,9 @@ namespace BOOM {
   }
 
   SEXP RListIoManager::prepare_to_write(int niter) {
+    if (elements_.empty()) {
+      return R_NilValue;
+    }
     RMemoryProtector protector;
     SEXP ans = protector.protect(Rf_allocVector(VECSXP, elements_.size()));
     SEXP param_names = protector.protect(
@@ -42,6 +45,9 @@ namespace BOOM {
   }
 
   void RListIoManager::prepare_to_stream(SEXP object) {
+    if (elements_.empty()) {
+      return;
+    }
     for (int i = 0; i < elements_.size(); ++i) {
       elements_[i]->prepare_to_stream(object);
     }
@@ -88,6 +94,55 @@ namespace BOOM {
     return position_++;
   }
 
+  //======================================================================
+  SubordinateModelIoElement::SubordinateModelIoElement(const std::string &name)
+      : RListIoElement(name) {}
+
+  void SubordinateModelIoElement::add_subordinate_model(
+      RListIoManager *io_manager, const std::string &name) {
+    if (!io_manager) {
+      report_error("NULL/nullptr arguments are not allowed.");
+    }
+    io_managers_.push_back(io_manager);
+    subcomponent_names_.push_back(name);
+  }
+
+  SEXP SubordinateModelIoElement::prepare_to_write(int niter) {
+    RMemoryProtector protector;
+    SEXP buffer = protector.protect(Rf_allocVector(VECSXP, io_managers_.size()));
+    for (int i = 0; i < io_managers_.size(); ++i) {
+      SET_VECTOR_ELT(buffer, i, io_managers_[i]->prepare_to_write(niter));
+    }
+    StoreBuffer(setListNames(buffer, subcomponent_names_));
+    return rbuffer();
+  }
+
+  void SubordinateModelIoElement::prepare_to_stream(SEXP object) {
+    RListIoElement::prepare_to_stream(object);
+    SEXP buffer = rbuffer();
+    for (int i = 0; i < io_managers_.size(); ++i) {
+      io_managers_[i]->prepare_to_stream(buffer);
+    }
+  }
+
+  void SubordinateModelIoElement::write() {
+    for (int i = 0; i < io_managers_.size(); ++i) {
+      io_managers_[i]->write();
+    }
+  }
+
+  void SubordinateModelIoElement::stream() {
+    for (int i = 0; i < io_managers_.size(); ++i) {
+      io_managers_[i]->stream();
+    }
+  }
+
+  void SubordinateModelIoElement::advance(int n) {
+    for (auto el : io_managers_) {
+      el->advance(n);
+    }
+  }
+  
   //======================================================================
   RealValuedRListIoElement::RealValuedRListIoElement(const std::string &name)
       : RListIoElement(name)

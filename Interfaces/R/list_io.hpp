@@ -140,7 +140,7 @@ namespace BOOM {
     const std::string &name() const;
 
     // Move position in stream forward by n places.
-    void advance(int n);
+    virtual void advance(int n);
 
    protected:
     // StoreBuffer must be called in derived classes to pass the SEXP that
@@ -173,6 +173,34 @@ namespace BOOM {
     double *data_;  // Pointer to the first element in the rbuffer
   };
 
+  //===========================================================================
+  // A list element that stores an arbitrarily complex list of components,
+  // effectively a sub-model.
+  class SubordinateModelIoElement : public RListIoElement {
+   public:
+    // Args:
+    //   name:  The name of the list element storing the submodels.
+    SubordinateModelIoElement(const std::string &name);
+
+    // Add a new sub-model to the list.  
+    // Args:
+    //   io_manager: The object in charge of storing the pieces of the new
+    //     sub-model.  This will be stored as a raw pointer.  Ownership is not
+    //     transferred.
+    //   name:  The name of the sub-model.
+    void add_subordinate_model(RListIoManager *io_manager, const std::string &name);
+    
+    SEXP prepare_to_write(int niter) override;
+    void prepare_to_stream(SEXP object) override;
+    void write() override;
+    void stream() override;
+    void advance(int n) override;
+
+   private:
+    std::vector<RListIoManager *> io_managers_;
+    std::vector<std::string> subcomponent_names_;
+  };
+  
   //===========================================================================
   // Mix-in classes to handle allocation and streaming for vector, matrix,
   // array, and list data structures.

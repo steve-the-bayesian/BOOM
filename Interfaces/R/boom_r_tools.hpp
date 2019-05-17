@@ -322,9 +322,7 @@ namespace BOOM{
     CategoricalData to_categorical_data(int i)const;
 
     // The names of the factor levels.
-    const std::vector<std::string> labels() const {
-      return levels_->labels();
-    }
+    std::vector<std::string> labels() const { return levels_->labels(); }
 
     // Allocates and returns a vector of categorical data objects.
     std::vector<Ptr<CategoricalData> > vector_of_observations() const;
