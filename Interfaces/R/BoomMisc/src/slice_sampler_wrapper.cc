@@ -14,8 +14,6 @@ namespace {
 
 extern "C" {
   using namespace BOOM;  // NOLINT
-  using std::cout;
-  using std::endl;
   SEXP boom_misc_slice_sampler_wrapper(
       SEXP r_vector_function,
       SEXP r_initial_value,

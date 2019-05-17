@@ -22,8 +22,6 @@
 #include "distributions.hpp"
 
 namespace BOOM {
-  using std::cout;
-  using std::endl;
 
   TrigRegressionStateModel::TrigRegressionStateModel(double period, const Vector &frequencies)
       : IndependentMvnModel(2 * frequencies.size()),

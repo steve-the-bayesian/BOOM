@@ -140,10 +140,6 @@ namespace BOOM {
         + model_->suf()->relative_sse(
             GlmCoefs(posterior_mean_, inclusion_indicators))
         + unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
-    if (!std::isfinite(posterior_sum_of_squares_)) {
-      std::cout << "Found an infinite posterior sum of squares." << std::endl;
-    }
-
   }
   
   //---------------------------------------------------------------------------  
