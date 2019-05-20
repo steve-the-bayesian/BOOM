@@ -103,6 +103,8 @@ namespace BOOM {
     // first 'n' elements in an MCMC sample.
     void advance(int n);
 
+    bool empty() const {return elements_.empty();}
+    
    private:
     std::vector<Ptr<RListIoElement> > elements_;
   };
@@ -141,7 +143,7 @@ namespace BOOM {
 
     // Move position in stream forward by n places.
     virtual void advance(int n);
-
+    
    protected:
     // StoreBuffer must be called in derived classes to pass the SEXP that
     // manages the parameter to this base class.
@@ -184,11 +186,12 @@ namespace BOOM {
 
     // Add a new sub-model to the list.  
     // Args:
-    //   io_manager: The object in charge of storing the pieces of the new
-    //     sub-model.  This will be stored as a raw pointer.  Ownership is not
-    //     transferred.
     //   name:  The name of the sub-model.
-    void add_subordinate_model(RListIoManager *io_manager, const std::string &name);
+    void add_subordinate_model(const std::string &name);
+
+    RListIoManager * subordinate_io_manager(int i) {
+      return io_managers_[i].get();
+    }
     
     SEXP prepare_to_write(int niter) override;
     void prepare_to_stream(SEXP object) override;
@@ -197,7 +200,7 @@ namespace BOOM {
     void advance(int n) override;
 
    private:
-    std::vector<RListIoManager *> io_managers_;
+    std::vector<std::unique_ptr<RListIoManager>> io_managers_;
     std::vector<std::string> subcomponent_names_;
   };
   

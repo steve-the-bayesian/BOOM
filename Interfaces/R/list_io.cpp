@@ -47,9 +47,10 @@ namespace BOOM {
   void RListIoManager::prepare_to_stream(SEXP object) {
     if (elements_.empty()) {
       return;
-    }
-    for (int i = 0; i < elements_.size(); ++i) {
-      elements_[i]->prepare_to_stream(object);
+    } else {
+      for (int i = 0; i < elements_.size(); ++i) {
+        elements_[i]->prepare_to_stream(object);
+      }
     }
   }
 
@@ -82,6 +83,8 @@ namespace BOOM {
   }
 
   void RListIoElement::prepare_to_stream(SEXP object) {
+    // It is tempting to set the 'expect_answer' flag in getListElement here.
+    // But there are instances where the expected return value is R_NilValue.
     rbuffer_ = getListElement(object, name_);
     position_ = 0;
   }
@@ -98,12 +101,8 @@ namespace BOOM {
   SubordinateModelIoElement::SubordinateModelIoElement(const std::string &name)
       : RListIoElement(name) {}
 
-  void SubordinateModelIoElement::add_subordinate_model(
-      RListIoManager *io_manager, const std::string &name) {
-    if (!io_manager) {
-      report_error("NULL/nullptr arguments are not allowed.");
-    }
-    io_managers_.push_back(io_manager);
+  void SubordinateModelIoElement::add_subordinate_model(const std::string &name) {
+    io_managers_.emplace_back(new RListIoManager);
     subcomponent_names_.push_back(name);
   }
 
@@ -120,26 +119,37 @@ namespace BOOM {
   void SubordinateModelIoElement::prepare_to_stream(SEXP object) {
     RListIoElement::prepare_to_stream(object);
     SEXP buffer = rbuffer();
+    // The buffer is a list.  Each list element is either NULL, or else a list
+    // that should be treated as a subordinate model object.
     for (int i = 0; i < io_managers_.size(); ++i) {
-      io_managers_[i]->prepare_to_stream(buffer);
+      if (!io_managers_[i]->empty()) {
+        SEXP subordinate_model_object = VECTOR_ELT(buffer, i);
+        io_managers_[i]->prepare_to_stream(subordinate_model_object);
+      }
     }
   }
 
   void SubordinateModelIoElement::write() {
     for (int i = 0; i < io_managers_.size(); ++i) {
-      io_managers_[i]->write();
+      if (!io_managers_[i]->empty()) {
+        io_managers_[i]->write();
+      }
     }
   }
 
   void SubordinateModelIoElement::stream() {
     for (int i = 0; i < io_managers_.size(); ++i) {
-      io_managers_[i]->stream();
+      if (!io_managers_[i]->empty()) {
+        io_managers_[i]->stream();
+      }
     }
   }
 
   void SubordinateModelIoElement::advance(int n) {
-    for (auto el : io_managers_) {
-      el->advance(n);
+    for (auto &el : io_managers_) {
+      if (!el->empty()) {
+        el->advance(n);
+      }
     }
   }
   
