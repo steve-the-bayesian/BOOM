@@ -35,6 +35,10 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
                                  ylim = NULL,
                                  gap = 0, 
                                  ...) {
+  ## Plot the conditional mean of each series given all observed data.  The
+  ## conditional mean includes contributions from shared latent state,
+  ## regression effects, and series-specific latent state, if present.
+  ## 
   ## Args:
   ##   mbsts.object:  The model object to be plotted.
   ##   series.id: Which series should be plotted?  An integer, logical, or
@@ -68,9 +72,11 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   state.means <- apply(contributions, c(1, 3, 4), sum)
   labels <- colnames(original)
 
-  predictors <- LongToWideArray(model$predictors, model$series.id,
-    model$timestamp.info$timestamps)
-  coefficients <- model$regression.coefficients
+  predictors <- LongToWideArray(
+    mbsts.object$predictors,
+    mbsts.object$series.id,
+    mbsts.object$timestamp.info$timestamps)
+  coefficients <- mbsts.object$regression.coefficients
 
   niter <- dim(coefficients)[1]
   nseries <- dim(coefficients)[2]
@@ -80,6 +86,12 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
     regression.effects[, m, ] <- coefficients[, m, ] %*% t(predictors[m, , ])
   }
 
+  ### TODO: allow for subsetting in regression effects.
+
+  ### TODO: add in series-specific effects.
+
+  ### DONTSUBMIT
+  
   state.means <- state.means + regression.effects
   
   nplots <- ncol(original)

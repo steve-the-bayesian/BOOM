@@ -91,13 +91,13 @@ namespace BOOM {
     //---------------------------------------------------------------------------
     
     MultivariateStateSpaceRegressionModel *Manager::CreateModel(
-        SEXP r_data_list,
+        SEXP r_data_list_or_model_object,
         SEXP r_shared_state_specification,
         SEXP r_series_state_specification,
         SEXP r_prior,
         SEXP r_options,
         RListIoManager *io_manager) {
-      CreateBareModel(r_data_list, r_prior, r_options, io_manager);
+      CreateBareModel(r_data_list_or_model_object, r_prior, r_options, io_manager);
       SharedStateModelFactory shared_state_model_factory(nseries_, io_manager);
       shared_state_model_factory.AddState(
           model_->state_model_vector(),
@@ -105,21 +105,46 @@ namespace BOOM {
           r_shared_state_specification,
           "");
       shared_state_model_factory.SaveFinalState(model_.get(), &final_state());
-      // Consider a new list_io element here.
+
       if (!Rf_isNull(r_series_state_specification)) {
+        // Output for the series specific state models is stored in a list named
+        // "series.specific."  Its list elements are the names of the series
+        // being modeled.  series.specific[[3]] contains all the MCMC draws of
+        // model parameters for series 3, as well as its series specific state
+        // contributions.
+        BOOM::Factor series_id(getListElement(
+            r_data_list_or_model_object, "series.id", true));
+        std::vector<std::string> series_names = series_id.labels();
+
+        Ptr<SubordinateModelIoElement> subordinate_model_io(
+            new SubordinateModelIoElement("series.specific"));
+        io_manager->add_list_element(subordinate_model_io.get());
+        
         for (int i = 0; i < nseries_; ++i) {
-          StateModelFactory series_state_factory(io_manager);
-          std::ostringstream prefix;
-          prefix << "series" << i << ".";
-          series_state_factory.AddState(
-              model_->series_specific_model(i).get(),
-              VECTOR_ELT(r_series_state_specification, i),
-              prefix.str());
+          SEXP r_local_state_specification =
+              VECTOR_ELT(r_series_state_specification, i);
+          subordinate_model_io->add_subordinate_model(series_names[i]);
+          series_specific_final_state_.push_back(Vector());
+          if (!Rf_isNull(r_local_state_specification)) {
+            // Make the io list element aware that there is state to be stored
+            // for series i.
+            RListIoManager *subordinate_io_manager = 
+                subordinate_model_io->subordinate_io_manager(i);
+            StateModelFactory series_state_factory(subordinate_io_manager);
+            ProxyScalarStateSpaceModel *subordinate_model =
+                model_->series_specific_model(i).get();
+            series_state_factory.AddState(subordinate_model,
+                                          r_local_state_specification);
+            subordinate_io_manager->add_list_element(
+                new NativeMatrixListElement(
+                    new ScalarStateContributionCallback(subordinate_model),
+                    "state.contributions",
+                    nullptr));
+            series_state_factory.SaveFinalState(subordinate_model,
+                                                &series_specific_final_state_[i]);
+
+          }
         }
-        series_specific_final_state_.resize(model_->nseries());
-        shared_state_model_factory.SaveSubordinateFinalState(
-            model_.get(),
-            &series_specific_final_state_);
       }
 
       // Save state contributions.
@@ -144,7 +169,7 @@ namespace BOOM {
     //   r_mbsts_object: The R object returned by 'mbsts' representing the
     //     multivariate bsts model.
     //   r_prediction_data: A list containing the data needed to make the
-    //     forecast.  See UnpackForecastData.  The list must contain
+    //     forecast.  See UnpackForecastData.  The list must contain:
     //     - A matrix named 'predictors' organized such that the first 'nseries'
     //       rows correspond to the first forecast time point, the next
     //       'nseries' to the second, and so on.
@@ -162,7 +187,7 @@ namespace BOOM {
                             SEXP r_burn) {
       RListIoManager io_manager;
       Ptr<MultivariateStateSpaceRegressionModel> model = CreateModel(
-          R_NilValue,
+          r_mbsts_object,
           getListElement(r_mbsts_object, "shared.state.specification", true),
           getListElement(r_mbsts_object, "series.state.specification", false),
           R_NilValue,
@@ -196,13 +221,13 @@ namespace BOOM {
     }
     
     MultivariateStateSpaceRegressionModel * Manager::CreateBareModel(
-        SEXP r_data_list,
+        SEXP r_data_list_or_model_object,
         SEXP r_prior,
         SEXP r_options,
         RListIoManager *io_manager) {
       model_.reset(new MultivariateStateSpaceRegressionModel(
           predictor_dimension_, nseries_));
-      AddDataFromList(r_data_list);
+      AddDataFromList(r_data_list_or_model_object);
       AssignSampler(r_prior, r_options);
       ConfigureIo(io_manager);
       return model_.get();
@@ -222,7 +247,9 @@ namespace BOOM {
     //---------------------------------------------------------------------------
     // Populate the model with data passed to the mbsts model fitting function.
     void Manager::AddDataFromList(SEXP r_data_list) {
-      if (!Rf_isNull(r_data_list)) {
+      if (Rf_inherits(r_data_list, "mbsts")) {
+        return AddDataFromBstsObject(r_data_list);
+      } else if (!Rf_isNull(r_data_list)) {
         ConstVectorView responses = ToBoomVectorView(
             getListElement(r_data_list, "response"));
         int sample_size = responses.size();
@@ -237,7 +264,7 @@ namespace BOOM {
                        "of rows.");
         }
 
-        Factor series(getListElement(r_data_list, "series", true));
+        Factor series(getListElement(r_data_list, "series.id", true));
         if (series.length() != sample_size) {
           report_error("Series indicators and responses have different sizes.");
         }

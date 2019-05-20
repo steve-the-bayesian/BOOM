@@ -184,8 +184,9 @@ mbsts <- function(formula,
   data.list <- list(
     predictors = predictors,
     response = response,
-    series = series.id,
-    timestamp.info = .ComputeTimestampInfo(predictors, NULL, timestamps))
+    series.id = series.id,
+    timestamp.info = .ComputeTimestampInfo(predictors, NULL, timestamps)
+  )
   
   #------------------------------------------------------------------------
   # Check the format of the state specification.
@@ -225,7 +226,7 @@ mbsts <- function(formula,
 
   #------------------------------------------------------------------------  
   # Do the work!
-  #------------------------------------------------------------------------  
+  #------------------------------------------------------------------------
   ans <- .Call("analysis_common_r_fit_multivariate_bsts_model_",
     data.list,
     shared.state.specification,

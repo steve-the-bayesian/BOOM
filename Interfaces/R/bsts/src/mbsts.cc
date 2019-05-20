@@ -95,7 +95,7 @@ extern "C" {
       if (!Rf_isNull(r_predictors)) {
         xdim = Rf_ncols(r_predictors);
       }
-      BOOM::Factor series(BOOM::getListElement(r_data_list, "series"));
+      BOOM::Factor series(BOOM::getListElement(r_data_list, "series.id", true));
       int ydim = series.number_of_levels();
 
       // TODO(steve): generalize this to handle other model families.  Each
