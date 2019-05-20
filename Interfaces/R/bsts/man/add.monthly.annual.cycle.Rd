@@ -114,7 +114,7 @@ AddMonthlyAnnualCycle(state.specification,
   ss <- AddMonthlyAnnualCycle(ss, response)
 
   ## In real life you'll probably want more iterations.
-  model <- bsts(response, state.specification = ss, niter = 250)
+  model <- bsts(response, state.specification = ss, niter = 200)
   plot(model)
   plot(model, "monthly")
 }

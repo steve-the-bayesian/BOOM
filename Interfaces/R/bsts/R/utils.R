@@ -141,8 +141,7 @@ DateToPOSIX <- function(timestamps) {
   return(as.POSIXct(as.character(timestamps)))
 }
 
-
-
+###----------------------------------------------------------------------
 StateSizes <- function(state.specification) {
   ## Returns a vector giving the number of dimensions used by each state
   ## component in the state vector.
@@ -154,14 +153,15 @@ StateSizes <- function(state.specification) {
   ##   A numeric vector giving the dimension of each state component.
   state.component.names <- sapply(state.specification, function(x) x$name)
   state.sizes <- sapply(state.specification, function(x) x$size)
-  if (any(is.na(state.sizes) ||
-          any(is.null(state.sizes)) ||
-          any(!is.numeric(state.sizes)))) {
+  if (any(is.na(state.sizes)) ||
+        any(is.null(state.sizes)) ||
+        any(!is.numeric(state.sizes))) {
     stop("One or more state components were missing the 'size' attribute.")
   }
   names(state.sizes) <- state.component.names
   return(state.sizes)
 }
+
 ###----------------------------------------------------------------------
 SuggestBurn <- function(proportion, bsts.object) {
   ## Suggests a size of a burn-in sample to be discarded from the MCMC

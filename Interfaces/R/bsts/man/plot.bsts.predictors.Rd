@@ -60,7 +60,6 @@
                 na.action = na.omit)
   plot(model, "predictors")
 }
-
 \seealso{
   \code{\link{bsts}}
   \code{\link[Boom]{PlotDynamicDistribution}}

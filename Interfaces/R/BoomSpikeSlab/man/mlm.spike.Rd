@@ -295,15 +295,16 @@ response <- as.factor(choice.levels[rmulti(prob)])
 simulated.data <- as.data.frame(X[, -1])
 simulated.data$response <- response
 
+# NOTE: The number of MCMC iterations is artificially small to reduce
+# the run time.
 model <- mlm.spike(response ~ Alabama + Alaska,
                    response ~ foo + bar + baz + qux,
-                   niter = 500,
+                   niter = 100,
                    choice.name.separator = ":",
                    expected.subject.model.size = -1,
                    expected.choice.model.size = -1,
                    data = simulated.data,
                    proposal.weights = c("DA" = .8, "RWM" = .1, "TIM" = .1))
-
 }
 
 \keyword{models}
