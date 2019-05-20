@@ -473,6 +473,9 @@ namespace BOOM {
       IndependentRegressionSpikeSlabPrior prior(r_prior, model->Sigsq_prm());
       NEW(BregVsSampler, sampler)(model, prior.slab(), prior.siginv_prior(),
                                   prior.spike());
+      if (prior.sigma_upper_limit() > 0 && prior.sigma_upper_limit() < infinity()) {
+        sampler->set_sigma_upper_limit(prior.sigma_upper_limit());
+      }
       model->set_method(sampler);
       InitializeSpikeSlabCoefficients(
           model->Beta(), prior.spike()->prior_inclusion_probabilities(),
@@ -483,6 +486,9 @@ namespace BOOM {
       RegressionConjugateSpikeSlabPrior prior(r_prior, model->Sigsq_prm());
       NEW(BregVsSampler, sampler)(
           model, prior.slab(), prior.siginv_prior(), prior.spike());
+      if (prior.sigma_upper_limit() > 0 && prior.sigma_upper_limit() < infinity()) {
+        sampler->set_sigma_upper_limit(prior.sigma_upper_limit());
+      }
       model->set_method(sampler);
       InitializeSpikeSlabCoefficients(
           model->Beta(),
