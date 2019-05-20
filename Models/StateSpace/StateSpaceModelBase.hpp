@@ -469,6 +469,10 @@ namespace BOOM {
     // functions of other elements.
     virtual Vector simulate_state_error(RNG &rng, int t) const;
 
+    // Reset the size of the state_ matrix so that it has state_dimension() rows
+    // and time_dimension() columns.
+    void resize_state();
+
    protected:
     // Update the complete data sufficient statistics for the state models,
     // given the posterior distribution of the state error at time t (for the
@@ -586,12 +590,8 @@ namespace BOOM {
     // need to be cleared out so that the overloaded add_state() in the child
     // classes can maintain parallelism correctly.
     void clear_state_models() { state_models_.clear(); }
-    
-   private:
-    // Reset the size of the state_ matrix so that it has state_dimension() rows
-    // and time_dimension() columns.
-    void resize_state();
 
+   private:
     //----------------------------------------------------------------------
     // data starts here
     StateSpaceUtils::StateModelVector<StateModel> state_models_;

@@ -108,7 +108,13 @@ namespace BOOM {
   template <class VEC>
   double do_dot(const VEC &v, const std::map<int, double> &m, int size) {
     if (v.size() != size) {
-      report_error("incompatible vector in SparseVector dot product");
+      std::ostringstream err;
+      err << "incompatible vector in SparseVector dot product: \n"
+          << "dense vector: " << v << "\n";
+      for (const auto &el : m) {
+        err << "sparse[" << el.first << "] = " << el.second << "\n";
+      }
+      report_error(err.str());
     }
     double ans = 0;
     for (Cit it = m.begin(); it != m.end(); ++it)

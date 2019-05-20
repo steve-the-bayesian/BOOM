@@ -90,7 +90,6 @@ namespace BOOM {
         time_dimension_(0),
         observation_model_(new IndependentRegressionModels(xdim, nseries)),
         observation_coefficients_(new StackedMatrixBlock),
-        has_series_specific_state_(false),
         response_matrix_(0, 0),
         observed_(0, 0, false),
         data_is_finalized_(false),
@@ -115,7 +114,7 @@ namespace BOOM {
     }
     Matrix forecast(nseries(), horizon, 0.0);
     // Add series specific component.
-    if (has_series_specific_state_) {
+    if (has_series_specific_state()) {
       for (int j = 0; j < nseries(); ++j) {
         forecast.row(j) =
             proxy_models_[j]->simulate_state_contribution_forecast(
@@ -149,6 +148,15 @@ namespace BOOM {
     shared_state_models_.add_state(state_model);
   }
 
+  bool MSSRM::has_series_specific_state() const {
+    for (int i = 0; i < proxy_models_.size(); ++i) {
+      if (proxy_models_[i]->state_dimension() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   void MSSRM::impute_state(RNG &rng) {
     impute_shared_state_given_series_state(rng);
     impute_series_state_given_shared_state(rng);
@@ -239,7 +247,6 @@ namespace BOOM {
 
   void MSSRM::initialize_proxy_models() {
     proxy_models_.clear();
-    has_series_specific_state_ = false;
     proxy_models_.reserve(nseries_);
     for (int i = 0; i < nseries_; ++i) {
       proxy_models_.push_back(new ProxyScalarStateSpaceModel(this, i));
@@ -262,6 +269,12 @@ namespace BOOM {
     observation_variance_current_ = true;
   }
 
+  void MSSRM::resize_subordinate_state() {
+    for (int series = 0; series < nseries(); ++series) {
+      proxy_models_[series]->resize_state();
+    }
+  }
+  
   void MSSRM::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
@@ -341,6 +354,7 @@ namespace BOOM {
   }
   
   void MSSRM::impute_shared_state_given_series_state(RNG &rng) {
+    resize_subordinate_state();
     isolate_shared_state();
     MultivariateStateSpaceModelBase::impute_state(rng);
   }
@@ -349,7 +363,9 @@ namespace BOOM {
     if (has_series_specific_state()) {
       isolate_series_specific_state();
       for (int s = 0; s < nseries(); ++s) {
-        proxy_models_[s]->impute_state(rng);
+        if (proxy_models_[s]->state_dimension() > 0) {
+          proxy_models_[s]->impute_state(rng);
+        }
       }
     }
   }
@@ -396,10 +412,13 @@ namespace BOOM {
   }
 
   double MSSRM::series_specific_state_contribution(int series, int time) const {
-    return has_series_specific_state_ ? 
-        proxy_models_[series]->observation_matrix(time).dot(
-            proxy_models_[series]->state(time))
-        : 0.0;
+    if (proxy_models_.empty()) return 0;
+    const ProxyScalarStateSpaceModel &proxy(*proxy_models_[series]);
+    if (proxy.state_dimension() == 0) {
+      return 0;
+    } else {
+      return proxy.observation_matrix(time).dot(proxy.state(time));
+    }
   }
   
 }  // namespace BOOM
