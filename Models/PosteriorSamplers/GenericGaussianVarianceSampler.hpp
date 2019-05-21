@@ -41,11 +41,10 @@ namespace BOOM {
     GenericGaussianVarianceSampler(const Ptr<GammaModelBase> &prior,
                                    double sigma_max);
 
-    // Sets the largest acceptable value for sigma (the standard
-    // deviation, not the variance).  This can be infinity() if you
-    // want to remove a previously set value.  It can also be 0, if
-    // you want to constrain all draws of sigsq to be zero.  If
-    // sigma_max is negative an error is reported.
+    // Sets the largest acceptable value for sigma (the standard deviation, not
+    // the variance).  This can be infinity() if you want to remove a previously
+    // set value.  It can also be 0, if you want to constrain all draws of sigsq
+    // to be zero.  If sigma_max is negative an error is reported.
     void set_sigma_max(double sigma_max);
 
     double sigma_max() const { return sigma_max_; }

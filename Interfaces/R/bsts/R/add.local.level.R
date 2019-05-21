@@ -98,7 +98,7 @@ AddSharedLocalLevel <- function(state.specification,
     for (i in 1:nfactors) {
       sigma.prior[[i]] <- SdPrior(sigma.guess = .01 * sdy[i],
         sample.size = 1,
-        upper.limit = sdy[i])
+        upper.limit = .1 * sdy[i])
     }
   }
   if (inherits(sigma.prior, "SdPrior")) {

@@ -228,12 +228,15 @@ namespace BOOM {
       
       // Set the prior on the innovation variances.
       std::vector<Ptr<GammaModelBase>> innovation_precision_priors;
+      Vector sigma_upper_limits;
+      sigma_upper_limits.reserve(nfactors);
       for (int i = 0; i < nfactors; ++i) {
         RInterface::SdPrior prior_spec(VECTOR_ELT(
             r_innovation_precision_priors, i));
         innovation_precision_priors.push_back(new ChisqModel(
             prior_spec.prior_df(),
             prior_spec.prior_guess()));
+        sigma_upper_limits.push_back(prior_spec.upper_limit());
       }
 
       // Set the prior on the observation coefficients.
@@ -246,6 +249,7 @@ namespace BOOM {
           innovation_precision_priors,
           coefficient_prior.mean(),
           coefficient_prior.sample_size());
+      state_model_sampler->set_sigma_upper_limit(sigma_upper_limits);
       state_model->set_method(state_model_sampler);
 
       // Set the io manager, if there is one.
