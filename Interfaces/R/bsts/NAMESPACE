@@ -121,6 +121,7 @@ S3method(plot, bsts.mixed)
 
 S3method(plot, mbsts)
 S3method(predict, mbsts)
+S3method(plot, mbsts.prediction)
 
 # Plot methods for specific state components
 S3method(plot, StateModel)

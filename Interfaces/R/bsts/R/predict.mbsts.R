@@ -87,13 +87,23 @@ predict.mbsts <- function(object,
     seed = seed,
     PACKAGE = "bsts")
 
-  ans <- list("mean" = colMeans(predictive.distribution),
-    "median" = apply(predictive.distribution, 2, median),
-    "interval" = apply(predictive.distribution, 2,
-      quantile, quantiles),
+  ans <- list(
+    "mean" = apply(predictive.distribution, c(2, 3), mean),
+    "median" = apply(predictive.distribution, c(2, 3), median),
+    "interval" = aperm(
+      apply(predictive.distribution, c(2, 3), quantile, quantiles),
+      c(2, 1, 3)),
     "distribution" = predictive.distribution,
-    "original.series" = object$original.series)
-  class(ans) <- "bsts.prediction"
+    "original.series" = LongToWide(
+      object$original.series,
+      series.id = object$series.id,
+      timestamps = object$timestamp.info$timestamps))
+  class(ans) <- "mbsts.prediction"
+  series.names <- colnames(ans$original.series)
+  rownames(ans$mean) <- series.names
+  rownames(ans$median) <- series.names
+  dimnames(ans$interval) <- list(series.names, NULL, NULL)
+  dimnames(ans$distribution) <- list(NULL, series.names, NULL)
   return(ans)
 }
 

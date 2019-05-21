@@ -68,6 +68,8 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   if (!is.null(series.id)) {
     original <- original[, series.id, drop = FALSE]
     contributions <- contributions[, , series.id, , drop = FALSE]
+  } else {
+    series.id <- 1:ncol(original)
   }
   state.means <- apply(contributions, c(1, 3, 4), sum)
   labels <- colnames(original)
@@ -86,13 +88,24 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
     regression.effects[, m, ] <- coefficients[, m, ] %*% t(predictors[m, , ])
   }
 
-  ### TODO: allow for subsetting in regression effects.
+  regression.effects <- regression.effects[, series.id, , drop = FALSE]
 
-  ### TODO: add in series-specific effects.
-
-  ### DONTSUBMIT
+  series.specific.effects <- array(0, dim = c(niter, nseries, time.dimension))
+  if (!is.null(mbsts.object$series.specific)) {
+    for (m in seq_along(mbsts.object$series.specific)) {
+      subordinate.model <- mbsts.object$series.specific[[m]]
+      if (!is.null(subordinate.model)) {
+        state <- subordinate.model$state.contributions
+        state <- rowSums(aperm(state, c(1, 3, 2)), dims = 2)
+        series.specific.effects[, m, ] <- series.specific.effects[, m, ] + state
+      }
+    }
+  }
   
-  state.means <- state.means + regression.effects
+  series.specific.effects <-
+    series.specific.effects[, series.id, , drop = FALSE]
+
+  state.means <- state.means + regression.effects + series.specific.effects
   
   nplots <- ncol(original)
   plot.rows <- max(1, floor(sqrt(nplots)))
@@ -160,3 +173,125 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
     }
   }
 }
+
+#===========================================================================
+plot.mbsts.prediction <- function(x,
+                                  y = NULL,
+                                  burn = 0,
+                                  plot.original = TRUE,
+                                  median.color = "blue",
+                                  median.type = 1,
+                                  median.width = 3,
+                                  interval.quantiles = c(.025, .975),
+                                  interval.color = "green",
+                                  interval.type = 2,
+                                  interval.width = 2,
+                                  style = c("dynamic", "boxplot"),
+                                  ylim = NULL,
+                                  same.scale = TRUE,
+                                  ...) {
+  ## Plot the results of an mbsts prediction.
+  ##
+  ## Args:
+  ##   
+  prediction <- x
+  nseries <- nrow(prediction$mean)
+  series.id <- y
+  if (is.null(series.id)) {
+    series.id <- 1:nseries
+  } else {
+    prediction$mean <- prediction$mean[series.id, , drop = FALSE]
+    prediction$median <- prediction$median[series.id, , drop = FALSE]
+    prediction$distribution <- prediction$distribution[, series.id, ,
+      drop = FALSE]
+    prediction$original.series <- prediction$original.series[, series.id,
+      drop = FALSE]
+  }
+
+  if (burn > 0) {
+    prediction$distribution <-
+      prediction$distribution[-(1:burn), , , drop = FALSE]
+    prediction$median <- apply(prediction$distribution, c(2, 3), median)
+  }
+  prediction$interval <- aperm(apply(prediction$distribution, c(2, 3),
+    quantile, interval.quantiles), c(2, 1, 3))
+
+  original.series <- prediction$original.series
+  if (is.numeric(plot.original)) {
+    original.series <- tail(original.series, plot.original)
+    plot.original <- TRUE
+  }
+  n1 <- tail(dim(prediction$distribution), 1)
+
+  # The predict() method stores the prediction as a zoo object.
+  time <- index(original.series)
+  deltat <- tail(diff(tail(time, 2)), 1)
+
+  nseries.subset <- ncol(original.series)
+  nrows <- max(1, floor(sqrt(nseries.subset)))
+  ncols <- ceiling(nseries.subset / nrows)
+
+  opar <- par(mfrow=c(nrows, ncols))
+  on.exit(par(opar))
+
+  series.names <- colnames(prediction$original.series)
+  
+  if (is.null(ylim)) {
+    if (same.scale) {
+      original.ylim <- range(original.series, prediction$distribution, na.rm = TRUE)
+      ylim <- original.ylim
+    } else {
+      original.ylim <- NULL
+      ylim <- NULL
+    }
+  } else {
+    original.ylim <- ylim
+  }
+  
+  for (series in 1:nseries.subset) {
+    if (is.null(original.ylim)) {
+      ylim <- range(prediction$distribution[series, , ],
+        original.series[, series],
+        na.rm = TRUE)
+    } else {
+      ylim <- original.ylim
+    }
+
+    if (plot.original) {
+      pred.time <- tail(time, 1) + (1:n1) * deltat
+      plot(time,
+        original.series[, series],
+        type = "l",
+        xlim = range(time, pred.time, na.rm = TRUE),
+        ylim = ylim,
+        ylab = series.names[series],
+        ...)
+    } else {
+      pred.time <- tail(time, 1) + (1:n1) * deltat
+    }
+
+    style <- match.arg(style)
+    if (style == "dynamic") {
+      PlotDynamicDistribution(curves = prediction$distribution[, series, ],
+        timestamps = pred.time,
+        add = plot.original,
+        ylim = ylim,
+        ylab = series.names[series],
+        ...)
+    } else {
+      TimeSeriesBoxplot(prediction$distribution[, series, ],
+        time = pred.time,
+        add = plot.original,
+        ylim = ylim,
+        ylab = series.names[series],
+        ...)
+    }
+    lines(pred.time, prediction$median[series, ], col = median.color,
+      lty = median.type, lwd = median.width, ...)
+    for (i in 1:length(interval.quantiles)) {
+      lines(pred.time, prediction$interval[series, i, ], col = interval.color,
+        lty = interval.type, lwd = interval.width, ...)
+    }
+  }
+}
+  
