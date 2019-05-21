@@ -38,11 +38,3 @@ test_that("Models are identical", {
   expect_true(all(model$coefficients == model2$coefficients))
   expect_true(all(model$sigma.obs == model2$sigma.obs))
   })
-
-model <- dirm(response ~ predictors, ss, niter = 500, data = data,
-  timestamps = data$timestamps,
-  seed = 8675309,
-  expected.model.size = 20)
-
-
-
