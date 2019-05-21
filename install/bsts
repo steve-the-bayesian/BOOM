@@ -1,4 +1,13 @@
 #!/bin/bash
 
+## Some tests take too long to run on CRAN.  These can be wrapped in conditional
+## blocks such as
+##
+##   if (Sys.getenv("NOT_CRAN") != "") { do.long.test() }
+##
+## When the package is checked by CRAN these tests will not be run, but they
+## will run locally.
+NOT_CRAN=1
+
 PACKAGE=bsts ./install/install.package $@
 
