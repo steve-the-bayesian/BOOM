@@ -29,7 +29,7 @@ namespace BOOM {
     typedef DirichletProcessSliceSampler DPSS;
     typedef DirichletProcessMixtureModel DPMM;
     typedef DirichletProcessMixtureComponent DpMixtureComponent;
-    const bool print_mcmc_details = false;
+    //    const bool print_mcmc_details = false;
   }  // namespace
 
   DPSS::DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
