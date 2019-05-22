@@ -53,7 +53,19 @@ namespace BOOM {
     // NOLINTNEXTLINE  Implicit conversions are intentional.
     Ptr(T *p, bool add_ref = true) : managed_pointer_(p, add_ref) {}
     Ptr(const Ptr &rhs) = default;
+
+    // CRAN complains about an ASAN test failure, which may be a false alarm.
+    // If it is not, then the failure has something to do with this move
+    // constructor.  See https://github.com/steve-the-bayesian/BOOM/issues/35
+    // 
     Ptr(Ptr &&rhs) = default;
+    // If the default move constructor is not used, then it seems the following
+    // constructor should be used instead.  Not sure how this would be different
+    // than the default.
+    //    
+    // Ptr(Ptr &&rhs)
+    //     : managed_pointer_(std::move(rhs.managed_pointer_))
+    // {}
 
     // NOLINTNEXTLINE  Implicit conversions are intentional.
     template <class Y> Ptr(const Ptr<Y, true> &rhs)

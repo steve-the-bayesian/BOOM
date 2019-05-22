@@ -36,6 +36,17 @@ cc_test(
 )
 
 cc_test(
+    name = "ptr_test",
+    srcs = ["ptr_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "redirector_test",
     srcs = ["redirector_test.cc"],
     copts = COPTS,
