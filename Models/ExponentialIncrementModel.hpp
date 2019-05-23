@@ -28,11 +28,11 @@
 namespace BOOM {
 
   // A model for a vector of increasing values.  The initial value of the vector
-  // is arbitrary (assumed to be zero).  The successive increments are assumed
-  // to be independent exponential random variables.
+  // is an exponential random variable.  Successive increments also independent
+  // exponential random variables.
   //
   // The density of vector x is \prod_i Exp(diff(x)_i, lambda_i), where Exp is
-  // the exponential density.
+  // the exponential density.  
   class ExponentialIncrementModel
       : public VectorModel,
         public CompositeParamPolicy,
@@ -59,6 +59,7 @@ namespace BOOM {
     // Overrides from VectorModel.
     //--------------------------------------------------------------------------
     double logp(const Vector &x) const override;
+
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
    private:

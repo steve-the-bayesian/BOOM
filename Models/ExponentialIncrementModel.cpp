@@ -102,10 +102,10 @@ namespace BOOM {
 
   Vector EIM::sim(RNG &rng) const {
     Vector ans;
-    ans.reserve(models_.size() + 1);
-    ans.push_back(0);
+    ans.reserve(models_.size());
     for (int i = 0; i < models_.size(); ++i) {
-      ans.push_back(ans.back() + models_[i]->sim(rng));
+      double increment = models_[i]->sim(rng);
+      ans.push_back(i == 0 ? increment : ans.back() + increment);
     }
     return ans;
   }
