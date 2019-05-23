@@ -101,7 +101,10 @@ namespace BOOM {
     double logp(const Selector &included_coefficients) const override;
 
     void set_prior_inclusion_probabilities(const Vector &probs) {
-      ParamPolicy::prm()->set(probs);
+      ParamPolicy::prm_ref().set(probs);
+    }
+    void set_prior_inclusion_probability(int i, double value) {
+      ParamPolicy::prm_ref().set_element(value, i);
     }
     
     const Vector &prior_inclusion_probabilities() const {
