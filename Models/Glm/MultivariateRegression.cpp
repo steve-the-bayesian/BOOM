@@ -211,11 +211,39 @@ namespace BOOM {
   Ptr<SpdParams> MvReg::Sigma_prm() { return prm2(); }
   const Ptr<SpdParams> MvReg::Sigma_prm() const { return prm2(); }
 
-  void MvReg::set_Beta(const Matrix &B) { Beta_prm()->set(B); }
+  void MvReg::set_Beta(const Matrix &B) {
+    if (B.nrow() != xdim()) {
+      report_error("Matrix passed to set_Beta has the wrong number of rows.");
+    }
+    if (B.ncol() != ydim()) {
+      report_error("Matrix passed to set_Beta has the wrong number "
+                   "of columns.");
+    }
 
-  void MvReg::set_Sigma(const SpdMatrix &V) { Sigma_prm()->set_var(V); }
+    for (int i = 0; i < B.nrow(); ++i) {
+      for (int j = 0; j < B.ncol(); ++j) {
+        if (!std::isfinite(B(i, j))) {
+          report_error("Non-finite regression coefficient.");
+        }
+      }
+    }
+    
+    Beta_prm()->set(B);
+  }
 
-  void MvReg::set_Siginv(const SpdMatrix &iV) { Sigma_prm()->set_ivar(iV); }
+  void MvReg::set_Sigma(const SpdMatrix &V) {
+    if (V.nrow() != ydim()) {
+      report_error("Wrong size variance matrix passed to set_Sigma.");
+    }
+    Sigma_prm()->set_var(V);
+  }
+
+  void MvReg::set_Siginv(const SpdMatrix &iV) {
+    if (iV.nrow() != ydim()) {
+      report_error("Wrong size precision matrix passed to set_Siginv.");
+    }
+    Sigma_prm()->set_ivar(iV);
+  }
 
   void MvReg::mle() {
     set_Beta(suf()->beta_hat());
