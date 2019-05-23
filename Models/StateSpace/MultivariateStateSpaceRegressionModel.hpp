@@ -304,7 +304,7 @@ namespace BOOM {
     int time_dimension() const override {return time_dimension_;}
 
     // The number of time series being modeled.  
-    int nseries() const {return nseries_;}
+    int nseries() const override {return nseries_;}
 
     // The dimension of the predictors.
     int xdim() const {return observation_model_->xdim();}

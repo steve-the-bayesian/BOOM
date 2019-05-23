@@ -211,6 +211,12 @@ namespace BOOM {
     // This function is intended for debugging purposes only.
     void permanently_set_state(const Matrix &state);
 
+    // The number of time series being modeled.  Not all model types know this.
+    // For example the number of series in a dynamic intercept model changes
+    // from time point to time point.  For this reason the default
+    // implementation is to return -1.
+    virtual int nseries() const { return -1; }
+    
    protected:
     // Access to the state model vector owned by descendents.
     using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
@@ -346,8 +352,7 @@ namespace BOOM {
     ConditionalIidKalmanFilter filter_;
     ConditionalIidKalmanFilter simulation_filter_;
   };
-
-
+  
 } // namespace BOOM
 
 

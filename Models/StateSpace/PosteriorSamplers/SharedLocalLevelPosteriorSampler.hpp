@@ -21,52 +21,79 @@
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
-#include "Models/GammaModel.hpp"
-#include "Models/Glm/PosteriorSamplers/MultivariateRegressionSampler.hpp"
+#include "Models/MvnBase.hpp"
+#include "Models/Glm/VariableSelectionPrior.hpp"
+#include "Models/Glm/PosteriorSamplers/SpikeSlabSampler.hpp"
 
 namespace BOOM {
 
+  // A posterior sampler for the shared local level model.  The local level
+  // model assumes k "factors" in the vector alpha are linearly related to m
+  // observed series in y:
+  //
+  //          y[t] = Z * alpha[t] + epsilon[t]
+  //    alpha[t+1] =     alpha[t] + eta[t]
+  //
+  // The parameters in this model are Z, which contains a constrained set of
+  // regression coefficients, and the variance matrix for eta.
+  //
+  // The prior assumed here is a product of independent inverse gamma
+  // distributions on the innovation variances, with a sequence of independent
+  // regression priors on Z.
+  //
+  // This model contains both scale and rotation indeterminacies, because Z *
+  // alpha = Z * M * M.inv() * alpha for any matrix M.
+  //
+  // The scale issue can be resolved by fixing the innovation variance, e.g. at
+  // the identity.
+  //
+  // The rotation issue can be solved by making the Z matrix lower triangular
+  // (e.g. zero above the diagonal).  Z is tall and skinny, becasue there are
+  // more time series than factors.  Making it lower triangular means the first
+  // time series is only affected by the first factor.  The second is affected
+  // by the first two factors, etc.  This is uncompelling, because if the first
+  // 4 series are driven by one factor, and the next 3 by another, this
+  // structure gets lost in the identifiability constraint.  Hmmmm... but the
+  // coefficients can be zero...., so let's give this a try.
+  //
+  // The prior on the coefficients is a row-wise spike and slab prior.  The
+  // spikes are modified to enforce zeros on the 
   class SharedLocalLevelPosteriorSampler
       : public PosteriorSampler {
    public:
-    // A posterior sampler for the shared local level model.  The prior is a
-    // product of independent inverse gamma distributions on the innovation
-    // variances, with an independent matrix normal prior on the observation
-    // coefficients.  If there are k "local level" factors alpha_1, ..., alpha_k
-    // obeying alpha_{jt+1} = alpha_{jt} + eta_{jt}, where eta_{jt} ~ N(0,
-    // tausq_{j}) then 1/tausq_j ~ Gamma(a, b), independent of everything else.
-    //
-    // The prior for the coefficients is matrix normal.  If y[t] = Z * alpha[t]
-    // + epsilon[t] ~ N(0, Sigma[t])
-    //
     // Args:
     //   model: The shared local level state model to be sampled.
     //   innovation_precision_priors: Independent prior distributions for the
     //     precisions of the random walk innovations.  One prior is needed for
     //     each random factor in 'model.'
-
     //   coefficient_prior_mean: A 'ydim x nfactors' matrix containing the prior
     //     mean of the observation coefficients.
-
-    //   
-    
     //   seeding_rng: The random number generator used to seed the RNG for this
     //     sampler.
     SharedLocalLevelPosteriorSampler(
         SharedLocalLevelStateModel *model,
-        const std::vector<Ptr<GammaModelBase>> &innovation_precision_priors,
-        const Matrix &coefficient_prior_mean,
-        double coefficient_prior_sample_size,
+        const std::vector<Ptr<MvnBase>> &slabs,
+        const std::vector<Ptr<VariableSelectionPrior>> &spikes,
         RNG &seeding_rng = GlobalRng::rng);
                                      
     void draw() override;
     double logpri() const override;
-    
+
    private:
+    void draw_inclusion_indicators(int which_series);
+    void draw_coefficients_given_inclusion(int which_series);
+    
     SharedLocalLevelStateModel *model_;
-    std::vector<Ptr<GammaModelBase>> innovation_precision_priors_;
-    std::vector<GenericGaussianVarianceSampler> variance_samplers_;
-    Ptr<MultivariateRegressionSampler> observation_coefficient_sampler_;
+    std::vector<Ptr<MvnBase>> slabs_;
+    std::vector<Ptr<VariableSelectionPrior>> spikes_;
+
+    // In most Glm's the coefficients are GlmCoefs, which carry their own
+    // Selector objects indicating which coefficients are included.  In this
+    // case the coefficients are rows or columns in a matrix, so the inclusion
+    // indicators have to be stored externally.
+    std::vector<Selector> inclusion_indicators_;
+    
+    std::vector<SpikeSlabSampler> samplers_;
   };
   
 }  // namespace BOOM

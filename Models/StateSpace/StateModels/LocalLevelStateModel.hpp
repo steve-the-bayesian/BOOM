@@ -153,7 +153,8 @@ namespace BOOM {
     // Sizes of things.
     uint state_dimension() const override {return innovation_models_.size();}
     uint state_error_dimension() const override {return state_dimension();}
-
+    int nseries() const {return coefficient_model_->ydim();}
+    
     // Syntactic sugar.
     int number_of_factors() const {return state_dimension();}
     

@@ -377,21 +377,21 @@ namespace BOOM {
   //
   // NOTE:  still need to scale by diag(R)
   void SLLSM::impose_identifiability_constraint() {
-    Matrix Beta = coefficient_model_->Beta();
-    QR BetaQr(Beta);
-    Matrix R = BetaQr.getR();
-    DiagonalMatrix Rdiag(R.diag());
-    const Matrix &Q(BetaQr.getQ());
+    // Matrix Beta = coefficient_model_->Beta();
+    // QR BetaQr(Beta);
+    // Matrix R = BetaQr.getR();
+    // DiagonalMatrix Rdiag(R.diag());
+    // const Matrix &Q(BetaQr.getQ());
         
-    coefficient_model_->set_Beta(BetaQr.getR());
-    SubMatrix state = host_->mutable_full_state_subcomponent(index());
-    Vector workspace(state.nrow());
-    for (int i = 0; i < state.ncol(); ++i) {
-      workspace = Q.Tmult(state.col(i));
-      Rdiag.multiply_inplace(workspace);
-      state.col(i) = workspace;
-    }
-    coefficient_model_->set_Beta(Rdiag.solve(R));
+    // coefficient_model_->set_Beta(BetaQr.getR());
+    // SubMatrix state = host_->mutable_full_state_subcomponent(index());
+    // Vector workspace(state.nrow());
+    // for (int i = 0; i < state.ncol(); ++i) {
+    //   workspace = Q.Tmult(state.col(i));
+    //   Rdiag.multiply_inplace(workspace);
+    //   state.col(i) = workspace;
+    // }
+    // coefficient_model_->set_Beta(Rdiag.solve(R));
   }
 
   void SLLSM::set_observation_coefficients_observer() {

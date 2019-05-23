@@ -5,7 +5,7 @@
 #include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 
-#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 
 #include "test_utils/test_utils.hpp"
 
@@ -64,7 +64,7 @@ namespace {
   TEST_F(LocalLevelStateModelTest, SharedModelTest) {
     int nseries = 12;
     int nfactors = 3;
-    MultivariateStateSpaceModel model(nseries);
+    MultivariateStateSpaceRegressionModel model(1, nseries);
     NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model, nseries);
     model.add_state(state_model);
 
