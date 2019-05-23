@@ -219,15 +219,6 @@ namespace BOOM {
       report_error("Matrix passed to set_Beta has the wrong number "
                    "of columns.");
     }
-
-    for (int i = 0; i < B.nrow(); ++i) {
-      for (int j = 0; j < B.ncol(); ++j) {
-        if (!std::isfinite(B(i, j))) {
-          report_error("Non-finite regression coefficient.");
-        }
-      }
-    }
-    
     Beta_prm()->set(B);
   }
 
