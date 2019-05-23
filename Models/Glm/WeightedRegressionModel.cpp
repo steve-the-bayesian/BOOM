@@ -38,7 +38,11 @@ namespace BOOM {
     Matrix tmpx = add_intercept(X);
     uint p = tmpx.nrow();
     setup_mat(p);
-    reweight(tmpx, y, w);
+    if (w.empty()) {
+      recompute(tmpx, y, Vector(y.size()d, 1.0));
+    } else {
+      recompute(tmpx, y, w);
+    }
   }
 
   WRS::WeightedRegSuf(const Matrix &X, const Vector &y) {
@@ -46,13 +50,13 @@ namespace BOOM {
     uint p = tmpx.nrow();
     setup_mat(p);
     Vector w(y.size(), 1.0);
-    reweight(tmpx, y, w);
+    recompute(tmpx, y, w);
   }
 
   WRS::WeightedRegSuf(const dsetPtr &dat) {
     uint p = dat->front()->xdim();
     setup_mat(p);
-    reweight(dat);
+    recompute(dat);
   }
 
   WRS::WeightedRegSuf(const WeightedRegSuf &rhs)
@@ -133,14 +137,14 @@ namespace BOOM {
     sym_ = false;
   }
 
-  void WRS::reweight(const Matrix &X, const Vector &y, const Vector &w) {
+  void WRS::recompute(const Matrix &X, const Vector &y, const Vector &w) {
     uint n = w.size();
     assert(y.size() == n && X.nrow() == n);
     clear();
     for (uint i = 0; i < n; ++i) add_data(X.row(i), y[i], w[i]);
   }
 
-  void WRS::reweight(const dsetPtr &dp) {
+  void WRS::recompute(const dsetPtr &dp) {
     clear();
     for (uint i = 0; i < dp->size(); ++i) update((*dp)[i]);
   }
@@ -150,6 +154,16 @@ namespace BOOM {
 
   void WRS::set_xtwy(const Vector &xtwy) { xtwy_ = xtwy; }
 
+  void WRS::reset(const SpdMatrix &xtwx, const Vector &xtwy, double ytwy,
+                  double sample_size, double sum_weights, double sum_log_weights) {
+    xtwx_ = xtwx;
+    xtwy_ = xtwy;
+    n_ = sample_size;
+    yt_w_y_ = ytwy;
+    sumlogw_ = sum_log_weights;
+    sym_ = true;
+  }
+  
   //------------------------------------------------------------
 
   void WRS::add_data(const Vector &x, double y, double w) {

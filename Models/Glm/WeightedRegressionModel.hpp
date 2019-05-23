@@ -33,21 +33,43 @@ namespace BOOM {
     typedef std::vector<Ptr<WeightedRegressionData> > dataset_type;
     typedef Ptr<dataset_type, false> dsetPtr;
 
-    explicit WeightedRegSuf(int p);                    // dimension of beta
-    WeightedRegSuf(const Matrix &X, const Vector &y);  // w implicitly 1.0
-    WeightedRegSuf(const Matrix &X, const Vector &y, const Vector &w);
-    explicit WeightedRegSuf(const dsetPtr &dat);
+    // Args:
+    //   xdim:  Number of predictor variables.
+    explicit WeightedRegSuf(int xdim);
+
+    // Args:
+    //   X:  The matrix of predictors.
+    //   y:  The vector of responses.
+    //   w: The vector of weights.  If w is empty all weights are assumed to be
+    //     1.0.
+    WeightedRegSuf(const Matrix &X, const Vector &y, const Vector &w = Vector());
+
+    // Args:
+    //   data:  The data vector.  Each entry is an observation.
+    explicit WeightedRegSuf(
+        const std::vector<Ptr<WeightedRegressionData>> &data);
+
     WeightedRegSuf(const WeightedRegSuf &rhs);  // value semantics
 
     WeightedRegSuf *clone() const override;
 
-    virtual void reweight(const Matrix &X, const Vector &y, const Vector &w);
-    virtual void reweight(const dsetPtr &dat);
+    // Recompute the sufficient statistics (from scratch).
+    // Args:
+    //   X:  The matrix of predictors.
+    //   y:  The vector of responses.
+    //   w:  The vector of weights.
+    // w and y must have the same length, which must match the number of rows in
+    //   X.
+    virtual void recompute(const Matrix &X, const Vector &y, const Vector &w);
+    virtual void recompute(
+        const std::vector<Ptr<WeightedRegressionData>> &data);
 
+    // Set the sufficient statistics to values computed externally.
+    void reset(const SpdMatrix &xtwx, const Vector &xtwy, double ytwy,
+               double sample_size, double sum_weights, double sum_log_weights);
     void set_xtwx(const SpdMatrix &xtwx);
     void set_xtwy(const Vector &xtwy);
 
-    //    virtual void Update(const RegressionData &);
     void Update(const WeightedRegressionData &) override;
     void add_data(const Vector &x, double y, double w);
 
