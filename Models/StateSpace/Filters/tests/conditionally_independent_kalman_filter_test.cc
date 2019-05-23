@@ -3,7 +3,7 @@
 
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 
 
 #include "LinAlg/DiagonalMatrix.hpp"
@@ -123,9 +123,12 @@ namespace {
     Matrix data(sample_size, ydim);
     data.randomize();
 
-    NEW(MultivariateStateSpaceModel, model)(ydim);
+    NEW(MultivariateStateSpaceRegressionModel, model)(0, ydim);
     for (int i = 0; i < sample_size; ++i) {
-      model->add_data(new PartiallyObservedVectorData(data.row(i)));
+      for (int j = 0; j < ydim; ++j) {
+        NEW(TimeSeriesRegressionData, data_point)(data(i, j), Vector(1, 1.0), j, i);
+        model->add_data(data_point);
+      }
     }
 
     NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get(), ydim);
@@ -140,8 +143,9 @@ namespace {
     model->add_state(state_model);
     Vector sigma_obs(ydim);
     sigma_obs.randomize();
-    model->observation_model()->set_sigsq(sigma_obs * sigma_obs);
-
+    for (int i = 0; i < ydim; ++i) {
+      model->observation_model()->model(i)->set_sigsq(square(sigma_obs[i]));
+    }
     SpdMatrix state_variance(nfactors);
     state_variance.randomize();
     Vector state_mean(nfactors);

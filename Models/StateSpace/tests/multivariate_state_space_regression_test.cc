@@ -150,11 +150,13 @@ namespace {
       innovation_precision_priors.push_back(new ChisqModel(1.0, .10));
     }
     Matrix observation_coefficient_prior_mean(ydim, nfactors, 0.0);
+
+    NEW(MvnModel, slab)(Vector(nfactors, 0.0), SpdMatrix(nfactors, 1.0));
+    NEW(VariableSelectionPrior, spike)(nfactors, 1.0);
     NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
         state_model.get(),
-        innovation_precision_priors,
-        observation_coefficient_prior_mean,
-        .01);
+        std::vector<Ptr<MvnBase>>(ydim, slab),
+        std::vector<Ptr<VariableSelectionPrior>>(ydim, spike));
     state_model->set_method(state_model_sampler);
     state_model->set_initial_state_mean(Vector(nfactors, 0.0));
     state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
