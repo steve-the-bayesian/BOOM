@@ -39,24 +39,16 @@ namespace BOOM {
     uint p = tmpx.nrow();
     setup_mat(p);
     if (w.empty()) {
-      recompute(tmpx, y, Vector(y.size()d, 1.0));
+      recompute(tmpx, y, Vector(y.size(), 1.0));
     } else {
       recompute(tmpx, y, w);
     }
   }
 
-  WRS::WeightedRegSuf(const Matrix &X, const Vector &y) {
-    Matrix tmpx = add_intercept(X);
-    uint p = tmpx.nrow();
-    setup_mat(p);
-    Vector w(y.size(), 1.0);
-    recompute(tmpx, y, w);
-  }
-
-  WRS::WeightedRegSuf(const dsetPtr &dat) {
-    uint p = dat->front()->xdim();
-    setup_mat(p);
-    recompute(dat);
+  WRS::WeightedRegSuf(const std::vector<Ptr<WeightedRegressionData>> &data) {
+    uint xdim = data.front()->xdim();
+    setup_mat(xdim);
+    recompute(data);
   }
 
   WRS::WeightedRegSuf(const WeightedRegSuf &rhs)
@@ -144,9 +136,9 @@ namespace BOOM {
     for (uint i = 0; i < n; ++i) add_data(X.row(i), y[i], w[i]);
   }
 
-  void WRS::recompute(const dsetPtr &dp) {
+  void WRS::recompute(const std::vector<Ptr<WeightedRegressionData>> &data) {
     clear();
-    for (uint i = 0; i < dp->size(); ++i) update((*dp)[i]);
+    for (uint i = 0; i < data.size(); ++i) update(data[i]);
   }
 
   //------------------------------------------------------------
