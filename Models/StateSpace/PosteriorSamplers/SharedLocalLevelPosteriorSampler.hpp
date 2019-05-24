@@ -79,6 +79,8 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
+    void limit_model_selection(int max_flips);
+    
    private:
     void draw_inclusion_indicators(int which_series);
     void draw_coefficients_given_inclusion(int which_series);

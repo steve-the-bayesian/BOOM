@@ -155,6 +155,38 @@ namespace BOOM {
   }
  
   //===========================================================================
+  MvnGivenXMvRegSuf::MvnGivenXMvRegSuf(
+      const Ptr<VectorParams> &mean,
+      const Ptr<UnivParams> &prior_sample_size,
+      const Vector &precision_diagonal,
+      double diagonal_weight,
+      const Ptr<MvRegSuf> &suf)
+      : MvnGivenXBase(mean, prior_sample_size, precision_diagonal, diagonal_weight),
+        suf_(suf)
+  {}
+
+  MvnGivenXMvRegSuf::MvnGivenXMvRegSuf(const MvnGivenXMvRegSuf &rhs)
+      : Model(rhs),
+        MvnGivenXBase(rhs),
+        suf_(rhs.suf_->clone())
+  {}
+
+  void MvnGivenXMvRegSuf::set_precision_matrix() const {
+    if (current()) return;
+    if (!suf_) {
+      report_error("Sufficient statistics must be set.");
+    }
+    SpdMatrix xtx = suf_->xtx();
+    double n = suf_->n();
+    if (n <= 0) {
+      xtx *= 0;
+    } else {
+      xtx /= n;
+    }
+    store_precision_matrix(std::move(xtx));
+  }
+  
+  //===========================================================================
   MvnGivenXWeightedRegSuf::MvnGivenXWeightedRegSuf(
       const Ptr<VectorParams> &mean,
       const Ptr<UnivParams> &prior_sample_size,

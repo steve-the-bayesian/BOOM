@@ -119,4 +119,10 @@ namespace BOOM {
     model_->coefficient_model()->set_Beta(coefficients.transpose());
   }
 
+  void SharedLocalLevelPosteriorSampler::limit_model_selection(int max_flips) {
+    for (int i = 0; i < samplers_.size(); ++i) {
+      samplers_[i].limit_model_selection(max_flips);
+    }
+  }
+  
 }  // namespace BOOM

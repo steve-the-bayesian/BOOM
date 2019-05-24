@@ -26,6 +26,7 @@
 
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
 
 namespace BOOM {
 
@@ -187,6 +188,30 @@ namespace BOOM {
    private:
     void set_precision_matrix() const override;
     Ptr<RegSuf> suf_;
+  };
+
+  //---------------------------------------------------------------------------
+  // When the information about X comes from the sufficient statistics from a
+  // multivariate regression.
+  class MvnGivenXMvRegSuf : public MvnGivenXBase {
+   public:
+    MvnGivenXMvRegSuf(const Ptr<VectorParams> &mean,
+                      const Ptr<UnivParams> &prior_sample_size,
+                      const Vector &precision_diagonal = Vector(),
+                      double diagonal_weight = 0,
+                      const Ptr<MvRegSuf> &suf = Ptr<MvRegSuf>(nullptr));
+
+    MvnGivenXMvRegSuf(const MvnGivenXMvRegSuf &rhs);
+    
+    MvnGivenXMvRegSuf * clone() const override {
+      return new MvnGivenXMvRegSuf(*this);
+    }
+  
+    void set_suf(const Ptr<MvRegSuf> &suf) { suf_ = suf; }
+    
+   private:
+    void set_precision_matrix() const override;
+    Ptr<MvRegSuf> suf_;
   };
 
   //---------------------------------------------------------------------------
