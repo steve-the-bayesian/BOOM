@@ -541,6 +541,73 @@ SpikeSlabGlmPriorDirect <- function(coefficient.mean,
 }
 
 ###======================================================================
+ConditionalZellnerPrior <- function(xdim, 
+                                    optional.coefficient.estimate = NULL,
+                                    expected.model.size = 1,
+                                    prior.information.weight = .01,
+                                    diagonal.shrinkage = .5,
+                                    max.flips = -1,
+                                    prior.inclusion.probabilities = NULL) {
+  ## A Zellner-style prior where the predictor matrix, and potentially the
+  ## residual variance parameter, will be obtained elsewhere.  C++ code that
+  ## takes this prior object must know where the X information comes from.
+  ##
+  ## Args:
+  ##   optional.coefficient.estimate: If desired, an estimate of the
+  ##     regression coefficients can be supplied.  In most cases this
+  ##     will be a difficult parameter to specify.  If omitted then a
+  ##     prior mean of zero will be used for all coordinates except
+  ##     the intercept, which will be set to mean(y).
+  ##   expected.model.size: A positive number less than ncol(x),
+  ##     representing a guess at the number of significant predictor
+  ##     variables.  Used to obtain the 'spike' portion of the spike
+  ##     and slab prior.
+  ##   prior.information.weight: A positive scalar.  Number of observations
+  ##     worth of weight that should be given to the prior estimate of beta.
+  ##   diagonal.shrinkage: The conditionally Gaussian prior for beta (the
+  ##     "slab") starts with a precision matrix equal to the information in a
+  ##     single observation.  However, this matrix might not be full rank.  The
+  ##     matrix can be made full rank by averaging with its diagonal.
+  ##     diagonal.shrinkage is the weight given to the diaonal in this average.
+  ##     Setting this to zero gives Zellner's g-prior.
+  ##   max.flips: The maximum number of variable inclusion indicators the
+  ##     sampler will attempt to sample each iteration.  If negative then all
+  ##     indicators will be sampled.
+  ##   prior.inclusion.probabilities: A vector of length number.of.variables
+  ##     giving the prior inclusion probability of each coefficient.  Each
+  ##     element must be between 0 and 1, inclusive.  If left as NULL then a
+  ##     default value will be created with all elements set to
+  ##     expected.model.size / number.of.variables.
+  stopifnot(check.positive.scalar(diagonal.shrinkage))
+  stopifnot(check.positive.scalar(prior.information.weight))
+  
+  if (!is.null(optional.coefficient.estimate)) {
+    xdim <- length(optional.coefficient.estimate)
+  }
+  stopifnot(xdim > 0)
+  if (is.null(optional.coefficient.estimate)) {
+    optional.coefficient.estimate <- rep(0, xdim)
+  }
+
+  if (is.null(prior.inclusion.probabilities)) {
+    stopifnot(check.positive.scalar(expected.model.size))
+    prior.inclusion.probabilities <- rep(expected.model.size / xdim, xdim)
+    prior.inclusion.probabilities[prior.inclusion.probabilities > 1] <- 1
+    prior.inclusion.probabilities[prior.inclusion.probabilities < 0] <- 0
+  }
+
+  stopifnot(check.scalar.integer(max.flips))
+  ans <- list(
+    prior.mean = optional.coefficient.estimate,
+    prior.information.weight = prior.information.weight,
+    diagonal.shrinkage = diagonal.shrinkage,
+    max.flips = as.integer(max.flips),
+    prior.inclusion.probabilities = prior.inclusion.probabilities)
+  class(ans) <- c("ConditionalZellnerPrior", "Prior")
+  return(ans)
+}
+                                    
+###======================================================================
 LogitZellnerPrior <- function(
     predictors,
     successes = NULL,
