@@ -31,8 +31,10 @@ namespace BOOM {
   //============================================================
   typedef WeightedRegSuf WRS;
 
-  WRS::WeightedRegSuf(int p)
-      : xtwx_(p, 0.0), xtwy_(p, 0.0), n_(0.0), yt_w_y_(0.0), sym_(false) {}
+  WRS::WeightedRegSuf(int p) {
+    setup_mat(p);
+    clear();
+  }
 
   WRS::WeightedRegSuf(const Matrix &X, const Vector &y, const Vector &w) {
     Matrix tmpx = add_intercept(X);
@@ -51,15 +53,6 @@ namespace BOOM {
     recompute(data);
   }
 
-  WRS::WeightedRegSuf(const WeightedRegSuf &rhs)
-      : Sufstat(rhs),
-        SufstatDetails<DataType>(rhs),
-        xtwx_(rhs.xtwx_),
-        xtwy_(rhs.xtwy_),
-        n_(rhs.n_),
-        yt_w_y_(rhs.yt_w_y_),
-        sym_(rhs.sym_) {}
-
   WRS *WRS::clone() const { return new WRS(*this); }
 
   std::ostream &WRS::print(std::ostream &out) const {
@@ -68,6 +61,7 @@ namespace BOOM {
         << "xtwy_   = " << xtwy_ << endl
         << "n_      = " << n_ << endl
         << "yt_w_y_ = " << yt_w_y_ << endl
+        << "sumw_   = " << sumw_ << endl
         << "sumlogw_= " << sumlogw_ << endl;
     return out;
   }
@@ -77,6 +71,7 @@ namespace BOOM {
     xtwy_ += s->xtwy_;
     n_ += s->n_;
     yt_w_y_ += s->yt_w_y_;
+    sumw_ += s->sumw_;
     sumlogw_ += s->sumlogw_;
     sym_ = sym_ && s->sym_;
   }
@@ -86,6 +81,7 @@ namespace BOOM {
     xtwy_ += s.xtwy_;
     n_ += s.n_;
     yt_w_y_ += s.yt_w_y_;
+    sumw_ += s.sumw_;
     sumlogw_ += s.sumlogw_;
     sym_ = sym_ && s.sym_;
   }
@@ -99,6 +95,7 @@ namespace BOOM {
     ans.concat(xtwy_);
     ans.push_back(n_);
     ans.push_back(yt_w_y_);
+    ans.push_back(sumw_);
     ans.push_back(sumlogw_);
     return ans;
   }
@@ -111,6 +108,8 @@ namespace BOOM {
     n_ = *v;
     ++v;
     yt_w_y_ = *v;
+    ++v;
+    sumw_ = *v;
     ++v;
     sumlogw_ = *v;
     ++v;
@@ -152,6 +151,7 @@ namespace BOOM {
     xtwy_ = xtwy;
     n_ = sample_size;
     yt_w_y_ = ytwy;
+    sumw_ = sum_weights;
     sumlogw_ = sum_log_weights;
     sym_ = true;
   }
@@ -161,6 +161,7 @@ namespace BOOM {
   void WRS::add_data(const Vector &x, double y, double w) {
     ++n_;
     yt_w_y_ += w * y * y;
+    sumw_ += w;
     sumlogw_ += log(w);
     xtwx_.add_outer(x, w, false);
     xtwy_.axpy(x, w * y);
@@ -170,7 +171,7 @@ namespace BOOM {
   void WRS::clear() {
     xtwx_ = 0.0;
     xtwy_ = 0.0;
-    yt_w_y_ = n_ = sumlogw_ = 0.0;
+    sumw_ = yt_w_y_ = n_ = sumlogw_ = 0.0;
     sym_ = false;
   }
 
@@ -205,7 +206,7 @@ namespace BOOM {
 
   double WRS::SST() const { return yty() / sumw() - pow(ybar(), 2); }
   double WRS::n() const { return n_; }
-  double WRS::sumw() const { return xtwx_(0, 0); }
+  double WRS::sumw() const { return sumw_;}
   double WRS::sumlogw() const { return sumlogw_; }
   double WRS::ybar() const { return xtwy_[0] / sumw(); }
 

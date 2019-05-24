@@ -49,7 +49,8 @@ namespace BOOM {
     explicit WeightedRegSuf(
         const std::vector<Ptr<WeightedRegressionData>> &data);
 
-    WeightedRegSuf(const WeightedRegSuf &rhs);  // value semantics
+    WeightedRegSuf(const WeightedRegSuf &rhs) = default;
+    WeightedRegSuf(WeightedRegSuf &&rhs) = default;
 
     WeightedRegSuf *clone() const override;
 
@@ -104,6 +105,7 @@ namespace BOOM {
     Vector xtwy_;
     double n_;  // xtx_(0,0) is the sum of the weights,
     double yt_w_y_;
+    double sumw_;
     double sumlogw_;
     mutable bool sym_;
 
