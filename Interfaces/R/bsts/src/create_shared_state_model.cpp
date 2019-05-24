@@ -27,6 +27,7 @@
 #include "r_interface/prior_specification.hpp"
 
 #include "Models/ChisqModel.hpp"
+#include "Models/Glm/MvnGivenX.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
@@ -215,9 +216,7 @@ namespace BOOM {
         SEXP r_state_component,
         MultivariateStateSpaceModelBase *model, 
         const std::string &prefix) {
-      SEXP r_innovation_precision_priors = getListElement(
-          r_state_component, "innovation.precision.priors");
-      int nfactors = Rf_length(r_innovation_precision_priors);
+      int nfactors = lround(Rf_asReal(getListElement(r_state_component, "size")));
       NEW(SharedLocalLevelStateModel, state_model)(nfactors, model, nseries_);
 
       // Set the initial state distribution.
@@ -226,30 +225,33 @@ namespace BOOM {
       state_model->set_initial_state_mean(initial_state_prior.mu());
       state_model->set_initial_state_variance(initial_state_prior.Sigma());
       
-      // Set the prior on the innovation variances.
-      std::vector<Ptr<GammaModelBase>> innovation_precision_priors;
-      Vector sigma_upper_limits;
-      sigma_upper_limits.reserve(nfactors);
-      for (int i = 0; i < nfactors; ++i) {
-        RInterface::SdPrior prior_spec(VECTOR_ELT(
-            r_innovation_precision_priors, i));
-        innovation_precision_priors.push_back(new ChisqModel(
-            prior_spec.prior_df(),
-            prior_spec.prior_guess()));
-        sigma_upper_limits.push_back(prior_spec.upper_limit());
-      }
-
       // Set the prior on the observation coefficients.
-      RInterface::ScaledMatrixNormalPrior coefficient_prior(
-          getListElement(r_state_component, "coefficient.prior"));
+      std::vector<Ptr<VariableSelectionPrior>> spikes;
+      std::vector<Ptr<MvnBase>> slabs;
+      SEXP r_coefficient_priors = getListElement(
+          r_state_component, "coefficient.priors", true);
+      // r_coefficient_priors is a list containing nseries
+      // 'ConditionalZellnerPrior' objects.
+      if (Rf_length(r_coefficient_priors) != nseries_) {
+        report_error("Wrong number of coefficient priors given.");
+      }
+      for (int i = 0; i < nseries_; ++i) {
+        RInterface::ConditionalZellnerPrior this_series_prior(VECTOR_ELT(
+            r_coefficient_priors, i));
+        spikes.push_back(this_series_prior.spike());
+        NEW(MvnGivenXMvRegSuf, slab)(
+            new VectorParams(this_series_prior.mean()),
+            new UnivParams(this_series_prior.prior_information_weight()),
+            Vector(),
+            this_series_prior.diagonal_shrinkage(),
+            state_model->coefficient_model()->suf());
+        slabs.push_back(slab);
+      }
 
       // Set the posterior sampler for the overall state model.
       NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
-          state_model.get(),
-          innovation_precision_priors,
-          coefficient_prior.mean(),
-          coefficient_prior.sample_size());
-      state_model_sampler->set_sigma_upper_limit(sigma_upper_limits);
+          state_model.get(), slabs, spikes);
+      
       state_model->set_method(state_model_sampler);
 
       // Set the io manager, if there is one.

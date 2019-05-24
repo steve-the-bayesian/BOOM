@@ -31,7 +31,6 @@
 #include "r_interface/seed_rng_from_R.hpp"
 
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "cpputil/ThreadTools.hpp"

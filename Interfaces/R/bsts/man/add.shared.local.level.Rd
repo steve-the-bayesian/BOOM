@@ -30,12 +30,12 @@
      state.specification,
      response,
      nfactors, 
-     sigma.prior = NULL,
      coefficient.prior = NULL,
      initial.state.prior = NULL,
      timestamps = NULL,
      series.id = NULL,
-     sdy)
+     sdy,
+     ...)
 }
 
 \arguments{
@@ -51,15 +51,6 @@
 
   \item{nfactors}{The number of latent factors to include in the model.
     This is the dimension of the state for this model component.}
-
-  \item{sigma.prior}{There are three options for this argument, which
-    specifies a prior distribution on the standard deviation of the
-    innovation errors.  It can be \code{NULL}, in which case a default
-    prior is used.  It can be an object of class
-    \code{\link[Boom]{SdPrior}}, in which case the same prior will be
-    used for all residual variance parameters.  In its most general form
-    it can be a list of \code{\link[Boom]{SdPrior}} objects, specifying
-    independent priors on the innovation standard deviations.  }
 
   \item{coefficient.prior}{Prior distribution on the observation
     coefficients.  This currently must be a
@@ -84,7 +75,10 @@
     modeled.  This argument is only necessary if \code{response} cannot
     be supplied directly.}
 
-}
+  \item{\dots}{Extra arguments passed to
+    \code{\link[BoomSpikeSlab]{ConditionalZellnerPrior}}, used to create
+    a default prior for the observation coefficients when
+    \code{coefficient.prior} is left as \code{NULL}.}
 
 \value{ Returns a list with the elements necessary to specify a local
   linear trend state model.}

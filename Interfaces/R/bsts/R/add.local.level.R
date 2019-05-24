@@ -17,23 +17,22 @@
 AddSharedLocalLevel <- function(state.specification,
                                 response,
                                 nfactors, 
-                                sigma.prior = NULL,
                                 coefficient.prior = NULL,
                                 initial.state.prior = NULL,
                                 timestamps = NULL,
                                 series.id = NULL,
-                                sdy) {
+                                sdy,
+                                ...) {
   ## A local level model for multivariate time series.  If the state of the
   ## model is alpha[t] then the state equation is
   ##
   ##            y[t] = Z * alpha[t] + epsilon[t]
   ##    alpha[t + 1] = alpha[t] + eta[t]
   ##
-  ## The variance of eta[t] is diagonal, with elements sigma_eta^2[k].  The
-  ## coefficient matrix Z is not time varying.  It is zero above the diagonal in
-  ## order to preserve identifiability.  This means that the first time series
-  ## is only affected by the first factor.  The second is affected by the first
-  ## and second factors, etc.
+  ## For identification purposes, the variance of eta[t] is the identity matrix,
+  ## and the coefficient matrix Z It is zero above the diagonal.  This means
+  ## that the first time series is only affected by the first factor.  The
+  ## second is affected by the first and second factors, etc.  
   ##
   ## Args:
   ##   state.specification: A list of state components to which a shared local
@@ -42,16 +41,15 @@ AddSharedLocalLevel <- function(state.specification,
   ##     time points and columns are variables.  This argument can be omitted if
   ##     sdy is provided.
   ##   nfactors: An integer giving the number of latent factors in the model.
-  ##   sigma.prior: The prior distribution for the innovation standard deviation
-  ##     (sigma_eta) in the local level model.  It can be specified in one of
-  ##     three ways.
-  ##     - It can be an object created by SdPrior, in which case the same prior
-  ##       is used for all factors.
-  ##     - It can be a list of SdPrior objects, one for each factor.
-  ##     - It can be NULL, in which case a default prior will be used, based on
-  ##       the sample mean and variance of the observed data.
-  ##   coefficient.prior: Matrix normal prior, or NULL.  Spike and slab version
-  ##     coming soon.
+  ##   coefficient.prior: An object (or a list of objects) inheriting from
+  ##     SpikeSlabPriorBase.  If a list is passed it must have 'nseries'
+  ##     elements, where 'nseries' is the number of time series being modeled.
+  ##     If a single object is passed it will be copied into a list of 'nseries'
+  ##     identical prior objects.  List element i specifies the prior
+  ##     distribution on the set of observation coefficients for time series i.
+  ##     Note that identifiability constriants will be imposed by underlying
+  ##     code, so that if series k < 'nfactors', only the first 'k' factors will
+  ##     have positive prior probability for series k.
   ##   initial.state.prior: An object created by MvnPrior giving the prior
   ##     distribution on the values of the initial state (i.e. the state as of
   ##     the first observation).
@@ -63,10 +61,12 @@ AddSharedLocalLevel <- function(state.specification,
   ##   sdy: A vector giving the sample standard deviation for each column in y.
   ##     This will be ignored if y is provided, or if both sigma.prior and
   ##     initial.state.prior are supplied directly.
+  ##   ...: Extra arguments passed to ConditionalZellnerPrior, as a prior on the
+  ##     observation coefficients.
   ##
   ## Returns:
   ##   state.specification, after appending the information necessary
-  ##   to define a local level model
+  ##   to define a shared local level model.
   if (missing(state.specification)) state.specification <- list()
   stopifnot(is.list(state.specification))
   stopifnot(is.numeric(nfactors), length(nfactors) == 1, nfactors >= 1)
@@ -82,47 +82,30 @@ AddSharedLocalLevel <- function(state.specification,
     sdy <- apply(response.matrix, 2, sd, na.rm = TRUE)
   }
   stopifnot(is.numeric(sdy), all(sdy > 0))
-  ydim <- length(sdy)
+  nseries <- length(sdy)
+  if (nseries < 1) {
+    stop("There are no time series to model.")
+  }
 
   nfactors <- as.integer(nfactors)
   stopifnot(length(nfactors) == 1)
   
   ##----------------------------------------------------------------------
-  ## Set the prior on the innovation variances.
-  ##----------------------------------------------------------------------
-  if (is.null(sigma.prior)) {
-    ## The prior distribution says that sigma is small, and can be no
-    ## larger than the sample standard deviation of the time series
-    ## being modeled.
-    sigma.prior <- list()
-    for (i in 1:nfactors) {
-      sigma.prior[[i]] <- SdPrior(sigma.guess = .01 * sdy[i],
-        sample.size = 1,
-        upper.limit = .1 * sdy[i])
-    }
-  }
-  if (inherits(sigma.prior, "SdPrior")) {
-    sigma.prior <- Boom::RepList(sigma.prior, nfactors)
-  }
-  # Ensure that sigma.prior is a list of length 'nfactors' containing SdPrior
-  # elements.
-  stopifnot(is.list(sigma.prior),
-    length(sigma.prior) == nfactors,
-    all(sapply(sigma.prior, inherits, "SdPrior")))
-
-
-  ##----------------------------------------------------------------------
   # Set the prior on the observation coefficients.
   ##----------------------------------------------------------------------
-  # The coefficients Z satisfy Y[t] = Z * alpha, so the coefficients ydim rows
-  # and nfactors columns.
+  # The coefficients Z satisfy Y[t] = Z * alpha, so the coefficients have
+  # 'nseries' rows and 'nfactors' columns.
   if (is.null(coefficient.prior)) {
-    #### TBD
-    coefficient.prior <- ScaledMatrixNormalPrior(
-      mean = matrix(0, nrow = ydim, ncol = nfactors),
-      nu = 1.0)
+    coefficient.prior <- list()
+    for (i in 1:nseries) {
+      coefficient.prior[[i]] <- ConditionalZellnerPrior(nfactors, ...)
+    }
   }
-  stopifnot(inherits(coefficient.prior, "ScaledMatrixNormalPrior"))
+  if (inherits(coefficient.prior, "ConditionalZellnerPrior")) {
+    coefficient.prior <- RepList(coefficient.prior, nseries)
+  }
+  stopifnot(is.list(coefficient.prior),
+    all(sapply(coefficient.prior, inherits, "ConditionalZellnerPrior")))
   
   ##----------------------------------------------------------------------
   ## Set the prior on the initial state.
@@ -140,8 +123,7 @@ AddSharedLocalLevel <- function(state.specification,
     length(initial.state.prior$mean) == nfactors)
 
   level <- list(name = "trend",
-    innovation.precision.priors = sigma.prior,
-    coefficient.prior = coefficient.prior,
+    coefficient.priors = coefficient.prior,
     initial.state.prior = initial.state.prior,
     size = nfactors)
   class(level) <- c("SharedLocalLevel", "SharedStateModel")
