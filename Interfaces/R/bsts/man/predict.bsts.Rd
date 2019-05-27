@@ -23,9 +23,9 @@
   of a \code{\link{bsts}} object.}
 \usage{
 \method{predict}{bsts}(object,
+        horizon = 1,
         newdata = NULL,
         timestamps = NULL,
-        horizon = 1,
         burn = SuggestBurn(.1, object),
         na.action = na.exclude,
         olddata = NULL,
@@ -40,6 +40,11 @@
 
   \item{object}{An object of class \code{bsts} created by a call to the
     function \code{\link{bsts}}.}
+
+  \item{horizon}{An integer specifying the number of periods into the
+    future you wish to predict.  If \code{object} contains a regression
+    component then the forecast horizon is \code{nrow(X)}, and this
+    argument is not used.}
 
   \item{newdata}{a vector, matrix, or data frame containing the
     predictor variables to use in making the prediction.  This is only
@@ -64,11 +69,6 @@
     larger) time steps following the last time stamp in \code{object}.
     If \code{NULL}, then the requested predictions are interpreted as
     being at 1, 2, 3, ... steps following the training data.  }
-
-  \item{horizon}{An integer specifying the number of periods into the
-    future you wish to predict.  If \code{object} contains a regression
-    component then the forecast horizon is \code{nrow(X)}, and this
-    argument is not used.}
 
   \item{burn}{An integer describing the number of MCMC
     iterations in \code{object} to be discarded as burn-in.  If

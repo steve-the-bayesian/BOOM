@@ -79,6 +79,7 @@
     \code{\link[BoomSpikeSlab]{ConditionalZellnerPrior}}, used to create
     a default prior for the observation coefficients when
     \code{coefficient.prior} is left as \code{NULL}.}
+}
 
 \value{ Returns a list with the elements necessary to specify a local
   linear trend state model.}
