@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 predict.mbsts <- function(object,
+                          horizon = 1,
                           newdata = NULL,
                           timestamps = NULL,
-                          horizon = 1,
                           burn = SuggestBurn(.1, object),
                           na.action = na.exclude,
                           quantiles = c(.025, .975),
@@ -25,6 +25,9 @@ predict.mbsts <- function(object,
                           ...) {
   ## Args:
   ##   object:  an object of class 'bsts' created using the function 'bsts'
+  ##   horizon: An integer specifying the number of periods into the future you
+  ##     wish to predict.  If 'object' contains a regression component then the
+  ##     forecast horizon is nrow(X) and this argument is not used.
   ##   newdata: a vector, matrix, or data frame containing the predictor
   ##     variables to use in making the prediction.  This is only required if
   ##     'object' contains a regression component.  If a data frame, it must
@@ -43,9 +46,6 @@ predict.mbsts <- function(object,
   ##     as integer (0 or larger) time steps following the last time stamp in
   ##     'object'.  If NULL, then the requested predictions are interpreted as
   ##     being at 1, 2, 3, ... steps following the training data.
-  ##   horizon: An integer specifying the number of periods into the future you
-  ##     wish to predict.  If 'object' contains a regression component then the
-  ##     forecast horizon is nrow(X) and this argument is not used.
   ##   burn: An integer describing the number of MCMC iterations in 'object' to
   ##     be discarded as burn-in.  If burn <= 0 then no burn-in period will be
   ##     discarded.

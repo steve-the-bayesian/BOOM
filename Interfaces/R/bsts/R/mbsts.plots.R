@@ -124,16 +124,6 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
     ylim <- range(original, state.means, na.rm = TRUE)
   } 
 
-  .AddTimeAxis <- function(side, time) {
-    if (inherits(time, "Date")) {
-      axis.Date(side, time, xpd = NA)
-    } else if (inherits(time, "POSIXt")) {
-      axis.POSIXct(1, as.POSIXct(time), xpd = NA)
-    } else {
-      axis(side, xpd = NA)
-    }
-  }
-  
   for (j in 1:plot.rows) {
     for (k in 1:plot.cols) {
       m <- m + 1
@@ -152,9 +142,9 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
 
         # Add the horizontal axis
         if (IsOdd(k) && j == plot.rows) {
-          .AddTimeAxis(1, time)
+          .AddDateAxis(time, 1)
         } else if (IsEven(k) && j == 1) {
-          .AddTimeAxis(3, time)
+          .AddDateAxis(time, 3)
         }
 
         # Add the vertical axis
@@ -189,6 +179,7 @@ plot.mbsts.prediction <- function(x,
                                   style = c("dynamic", "boxplot"),
                                   ylim = NULL,
                                   same.scale = TRUE,
+                                  gap = 0, 
                                   ...) {
   ## Plot the results of an mbsts prediction.
   ##
@@ -228,14 +219,18 @@ plot.mbsts.prediction <- function(x,
   deltat <- tail(diff(tail(time, 2)), 1)
 
   nseries.subset <- ncol(original.series)
-  nrows <- max(1, floor(sqrt(nseries.subset)))
-  ncols <- ceiling(nseries.subset / nrows)
+  plot.rows <- max(1, floor(sqrt(nseries.subset)))
+  plot.cols <- ceiling(nseries.subset / plot.rows)
 
-  opar <- par(mfrow=c(nrows, ncols))
+  opar <- par(
+    mfrow = c(plot.rows, plot.cols),
+    mar = rep(gap / 2, 4),
+    oma = c(4, 4, 4, 4))
   on.exit(par(opar))
 
   series.names <- colnames(prediction$original.series)
-  
+
+  scale.individually <- !same.scale && is.null(ylim)
   if (is.null(ylim)) {
     if (same.scale) {
       original.ylim <- range(original.series, prediction$distribution, na.rm = TRUE)
@@ -247,50 +242,72 @@ plot.mbsts.prediction <- function(x,
   } else {
     original.ylim <- ylim
   }
-  
-  for (series in 1:nseries.subset) {
-    if (is.null(original.ylim)) {
-      ylim <- range(prediction$distribution[series, , ],
-        original.series[, series],
-        na.rm = TRUE)
-    } else {
-      ylim <- original.ylim
-    }
 
-    if (plot.original) {
-      pred.time <- tail(time, 1) + (1:n1) * deltat
-      plot(time,
-        original.series[, series],
-        type = "l",
-        xlim = range(time, pred.time, na.rm = TRUE),
-        ylim = ylim,
-        ylab = series.names[series],
-        ...)
-    } else {
-      pred.time <- tail(time, 1) + (1:n1) * deltat
-    }
+  series <- 0  
+  for (row in 1:plot.rows) {
+    for (col in 1:plot.cols) {
+      series <- series + 1
+      if (scale.individually) {
+        ylim <- range(prediction$distribution[series, , ],
+          original.series[, series],
+          na.rm = TRUE)
+      } else {
+        ylim <- original.ylim
+      }
 
-    style <- match.arg(style)
-    if (style == "dynamic") {
-      PlotDynamicDistribution(curves = prediction$distribution[, series, ],
-        timestamps = pred.time,
-        add = plot.original,
-        ylim = ylim,
-        ylab = series.names[series],
-        ...)
-    } else {
-      TimeSeriesBoxplot(prediction$distribution[, series, ],
-        time = pred.time,
-        add = plot.original,
-        ylim = ylim,
-        ylab = series.names[series],
-        ...)
-    }
-    lines(pred.time, prediction$median[series, ], col = median.color,
-      lty = median.type, lwd = median.width, ...)
-    for (i in 1:length(interval.quantiles)) {
-      lines(pred.time, prediction$interval[series, i, ], col = interval.color,
-        lty = interval.type, lwd = interval.width, ...)
+      if (plot.original) {
+        pred.time <- tail(time, 1) + (1:n1) * deltat
+        plot(time,
+          original.series[, series],
+          type = "l",
+          xlim = range(time, pred.time, na.rm = TRUE),
+          ylim = ylim,
+          ylab = series.names[series],
+          axes = FALSE,
+          ...)
+        box()
+      } else {
+        pred.time <- tail(time, 1) + (1:n1) * deltat
+      }
+      
+      style <- match.arg(style)
+      if (style == "dynamic") {
+        PlotDynamicDistribution(curves = prediction$distribution[, series, ],
+          timestamps = pred.time,
+          add = plot.original,
+          ylim = ylim,
+          ylab = series.names[series],
+          axes = FALSE,
+          ...)
+      } else {
+        TimeSeriesBoxplot(prediction$distribution[, series, ],
+          time = pred.time,
+          add = plot.original,
+          ylim = ylim,
+          ylab = series.names[series],
+          axes = FALSE,
+          ...)
+      }
+      lines(pred.time, prediction$median[series, ], col = median.color,
+        lty = median.type, lwd = median.width, ...)
+      for (i in 1:length(interval.quantiles)) {
+        lines(pred.time, prediction$interval[series, i, ], col = interval.color,
+          lty = interval.type, lwd = interval.width, ...)
+      }
+
+      if (IsEven(row) && (col == 1)) {
+        axis(2)
+      } else if(IsOdd(row) && (col == plot.cols)) {
+        axis(4)
+      }
+
+      if (!scale.individually) {
+        if (IsOdd(col) && (row == plot.rows)) {
+          .AddDateAxis(time, 1)
+        } else if (IsEven(col) && (row == 1)) {
+          .AddDateAxis(time, 3)
+        }
+      }
     }
   }
 }
