@@ -80,6 +80,7 @@ AddSharedLocalLevel <- function(state.specification,
     }
     stopifnot(is.matrix(response.matrix))
     sdy <- apply(response.matrix, 2, sd, na.rm = TRUE)
+    series.names <- colnames(response.matrix)
   }
   stopifnot(is.numeric(sdy), all(sdy > 0))
   nseries <- length(sdy)
@@ -125,6 +126,7 @@ AddSharedLocalLevel <- function(state.specification,
   level <- list(name = "trend",
     coefficient.priors = coefficient.prior,
     initial.state.prior = initial.state.prior,
+    series.names = colnames(response.matrix),
     size = nfactors)
   class(level) <- c("SharedLocalLevel", "SharedStateModel")
 
