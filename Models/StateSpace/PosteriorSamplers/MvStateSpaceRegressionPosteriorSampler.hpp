@@ -55,8 +55,6 @@ namespace BOOM {
   
 }  // namespace BOOM
 
-
-
 #endif  //  BOOM_STATE_SPACE_MULTIVARIATE_REGRESSION_POSTERIOR_SAMPLER_HPP_
 
 

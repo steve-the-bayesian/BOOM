@@ -59,7 +59,7 @@ namespace BOOM {
     for (int i = 0; i < spikes_.size(); ++i) {
       Selector inclusion_indicator(model_->state_dimension(), true);
       for (int j = i + 1; j < model_->state_dimension(); ++j) {
-        spikes_[i]->set_prior_inclusion_probability(i, 0.0);
+        spikes_[i]->set_prior_inclusion_probability(j, 0.0);
         coefficients(i, j) = 0.0;
         inclusion_indicator.drop(j);
       }
@@ -78,6 +78,7 @@ namespace BOOM {
     }
   }
 
+  //===========================================================================
   double SLLPS::logpri() const {
     double ans = 0;
     const Matrix &transposed_coefficients(
@@ -97,6 +98,7 @@ namespace BOOM {
     return ans;
   }
 
+  //===========================================================================
   void SLLPS::draw() {
     Matrix coefficients = model_->coefficient_model()->Beta().transpose();
     WeightedRegSuf suf(model_->number_of_factors());
@@ -119,6 +121,7 @@ namespace BOOM {
     model_->coefficient_model()->set_Beta(coefficients.transpose());
   }
 
+  //===========================================================================
   void SharedLocalLevelPosteriorSampler::limit_model_selection(int max_flips) {
     for (int i = 0; i < samplers_.size(); ++i) {
       samplers_[i].limit_model_selection(max_flips);
