@@ -201,7 +201,7 @@ bsts <- function(formula,
     ## section above.
     data <- NULL
   }
-  timestamp.info <- .ComputeTimestampInfo(response, data, timestamps)
+  timestamp.info <- TimestampInfo(response, data, timestamps)
   formatted.data.and.options <- .FormatBstsDataAndOptions(
       family, response, predictors, model.options, timestamp.info)
   data.list <- formatted.data.and.options$data.list

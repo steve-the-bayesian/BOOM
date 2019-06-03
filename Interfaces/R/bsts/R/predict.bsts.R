@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 predict.bsts <- function(object,
+                         horizon = 1,
                          newdata = NULL,
                          timestamps = NULL,
-                         horizon = 1,
                          burn = SuggestBurn(.1, object),
                          na.action = na.exclude,
                          olddata = NULL,
@@ -414,7 +414,7 @@ plot.bsts.prediction <- function(x,
     stop("Unknown model family in .FormatObservedDataForPredictions")
   }
   observed.data$response.is.observed <- !is.na(observed.data$response)
-  observed.data$timestamp.info <- .ComputeTimestampInfo(
+  observed.data$timestamp.info <- TimestampInfo(
       observed.data$response, observed.data$predictors, olddata.timestamps)
   return(observed.data)
 }

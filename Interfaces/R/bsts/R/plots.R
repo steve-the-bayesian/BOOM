@@ -686,9 +686,9 @@ PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
 
   if (is.null(ylim)) {
     if (show.actuals) {
-      ylim <- range(state, bsts.object$original.series)
+      ylim <- range(state, bsts.object$original.series, na.rm = TRUE)
     } else {
-      ylim <- range(state)
+      ylim <- range(state, na.rm = TRUE)
     }
   }
   
@@ -889,7 +889,7 @@ PlotDynamicRegression <- function(
     beta <- beta[-(1:burn), , , drop = FALSE]
   }
   if (is.null(ylim) && same.scale == TRUE) {
-    ylim <- range(beta)
+    ylim <- range(beta, na.rm = TRUE)
   }
   
   layout <- match.arg(layout)
@@ -909,7 +909,7 @@ PlotDynamicRegression <- function(
   need.ylim <- is.null(ylim)
   for (variable in 1:number.of.variables) {
     if (need.ylim) {
-      ylim <- range(beta[, variable, ])
+      ylim <- range(beta[, variable, ], na.rm = TRUE)
     }      
     if (style == "boxplot") {
       TimeSeriesBoxplot(beta[, variable, ],
@@ -961,9 +961,9 @@ PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
 
   holiday.effects <- .FindHolidayEffects(model, holiday$name)
   if (is.null(ylim)) {
-    ylim <- range(holiday.effects)
+    ylim <- range(holiday.effects, na.rm = TRUE)
     if (show.raw.data) {
-      ylim <- range(ylim, raw.data)
+      ylim <- range(ylim, raw.data, na.rm = TRUE)
     } 
   }
 

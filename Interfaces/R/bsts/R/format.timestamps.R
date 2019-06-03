@@ -1,3 +1,5 @@
+# Copyright 2019 Steven L. Scott.  All rights reserved.
+#
 # Copyright 2018 Google LLC. All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or
@@ -14,7 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-.ComputeTimestampInfo <- function(response, data = NULL, timestamps = NULL) {
+TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
   ## Args:
   ##   response: A vector or matrix.  If the response is a zoo object with
   ##     timestamps then the timestamps will be processed.
@@ -26,20 +28,29 @@
   ##     'response'), or NULL.
   ##
   ## Returns:
-  ##   A list with the following entries:
+  ##   An object of class TimestampInfo, which is a list containing the
+  ##   following elements:
+  ##
   ##   * timestamps.are.trivial: Logical.  TRUE indicates that 'timestamps' are
-  ##     NULL, or there are no duplicates and no skipped values.
+  ##     either NULL, or that there are no duplicates and no skipped values.  If
+  ##     timestamps are trivial then the response is a simple uninterrupted
+  ##     sequence (like you'd expect at time series to be.
+  ##
   ##   * number.of.time.points: The number of unique time points contained in
   ##       the data, including any skipped time points containing no
   ##       observations.
+  ## 
   ##   * timestamps: the time stamps taken from the original response or zoo
-  ##       data frame containing the data.  This might be NULL.
+  ##       data frame containing the data.  This might be NULL.  It might also
+  ##       contain duplicate values.
+  ##
   ##   * regular.timestamps: A regular grid of timestamps containing the
   ##       smallest and largest and largest entries in 'timestamps', with an
   ##       increment equal to the smallest nonzero increment in 'timestamps'.
   ##       This will be NULL if 'timestamps' is NULL.
+  ##
   ##   * timestamp.mapping: This is only present if timestamps.are.trivial is
-  ##       FALSE.  It is a numeric vector giving the entry in
+  ##       FALSE.  It is a numeric vector giving the index of the entry in
   ##       'regular.timestamps' to which each observation in 'response' is
   ##       associated.
   if (is.null(timestamps)) {
@@ -49,44 +60,47 @@
       timestamps <- index(data)
     }
   }
-
   number.of.observations <-
       if (is.matrix(response)) nrow(response) else length(response)
 
   if (is.null(timestamps)) {
+    ## Handle the trivial case when no timestamps are passed.
     number.of.time.points <- number.of.observations
     stopifnot(number.of.time.points > 0)
-    return(list(timestamps.are.trivial = TRUE,
+    ans <- list(timestamps.are.trivial = TRUE,
                 number.of.time.points = number.of.time.points,
                 timestamps = 1:number.of.observations,
-                regular.timestamps = 1:number.of.time.points))
+                regular.timestamps = 1:number.of.time.points)
+  } else {
+    ## If timestamps were passed then process them.
+    stopifnot(number.of.observations == length(timestamps))
+    regular.timestamps <- RegularizeTimestamps(timestamps)
+    ans <- list(timestamps.are.trivial = IsRegular(timestamps),
+      number.of.time.points = length(regular.timestamps),
+      timestamps = timestamps,
+      regular.timestamps = regular.timestamps)
+    if (!ans$timestamps.are.trivial) {
+      ## A hack to handle numeric timestamps appropriately.
+      class(timestamps) <- class(regular.timestamps)
+      ans$timestamp.mapping <- zoo::MATCH(timestamps, regular.timestamps)
+    }
+    if (length(ans$regular.timestamps) > 2 * length(ans$timestamps)) {
+      warning("Expanding the time series to a regular interval resulted ",
+        "in very large amounts of missing data.")
+    }
   }
-
-  stopifnot(number.of.observations == length(timestamps))
-  
-  regular.timestamps <- RegularizeTimestamps(timestamps)
-  ans <- list(timestamps.are.trivial = IsRegular(timestamps),
-              number.of.time.points = length(regular.timestamps),
-              timestamps = timestamps,
-              regular.timestamps = regular.timestamps)
-  if (!ans$timestamps.are.trivial) {
-    ## A hack to handle numeric timestamps appropriately.
-    class(timestamps) <- class(regular.timestamps)
-    ans$timestamp.mapping <- zoo::MATCH(timestamps, regular.timestamps)
-  }
-  if (length(ans$regular.timestamps) > 2 * length(ans$timestamps)) {
-    warning("Expanding the time series to a regular interval resulted ",
-            "in very large amounts of missing data.")
-  }
+  class(ans) <- "TimestampInfo"
   return(ans)
 }
 
 NoDuplicates <- function(timestamps) {
-  ## Returns TRUE if the vector of timestamps contains no duplicate values.
+  ## Returns TRUE iff the vector of timestamps contains no duplicate values.
   return(length(timestamps) == length(unique(timestamps)))
 }
 
 HasDuplicateTimestamps <- function(bsts.object) {
+  # Returns TRUE iff the object has nontrivial timestamps and at least one time
+  # stamp is associated with more than one observation.
   if (bsts.object$timestamp.info$timestamps.are.trivial) {
     return(FALSE)
   }

@@ -28,7 +28,8 @@
   ##   predictors: The matrix of predictor variables.  This can be
   ##     NULL if the model has no regression component.
   ##   model.options:  Options returned by BstsOptions().
-  ##   timestamp.info:  The object returned by .ComputeTimestampInfo.
+  ##   timestamp.info: An object of class TimestampInfo describing the time
+  ##     stamps associated with the responses.
   ##
   ## Returns:  A list with two elements:  data.list and model.options.
 
