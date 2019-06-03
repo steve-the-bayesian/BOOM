@@ -126,6 +126,10 @@ Vector StateSpaceModelManager::SimulateForecast(const Vector &final_state) {
 void StateSpaceModelManager::AddData(
     const Vector &response,
     const std::vector<bool> &response_is_observed) {
+  if (response.empty()) {
+    report_error("Empty response vector.");
+  }
+  
   if (!response_is_observed.empty()
       && (response.size() != response_is_observed.size())) {
     report_error("Vectors do not match in StateSpaceModelManager::AddData.");

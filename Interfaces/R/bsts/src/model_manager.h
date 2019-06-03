@@ -25,7 +25,7 @@
 namespace BOOM {
   namespace bsts {
 
-    // 
+    // A summary of the timestamps accompanying the time series.
     class TimestampInfo {
      public:
       TimestampInfo() : trivial_(true),
@@ -34,6 +34,13 @@ namespace BOOM {
       
       explicit TimestampInfo(SEXP r_data_list);
 
+      // Args:
+      //   r_data_list: A list containing an object named 'timestamp.info' which
+      //     is an R object of class TimestampInfo.
+      //
+      // Effects:
+      //   The timestamp.info object is extracted, and its contents are used to
+      //   populate this object.
       void Unpack(SEXP r_data_list);
 
       void UnpackForecastTimestamps(SEXP r_prediction_data);
@@ -149,7 +156,7 @@ namespace BOOM {
       // Returns the timestamp number (index) of observation i.  The index is
       // given in C's 0-based counting system.
       int TimestampMapping(int i) const {
-        return timestamp_info_.trivial() ? i : timestamp_info_.mapping(i) - 1;
+        return timestamp_info_.trivial() ? i : timestamp_info_.mapping(i);
       }
 
       RNG & rng() {return rng_;}
