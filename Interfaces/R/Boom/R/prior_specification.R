@@ -524,10 +524,9 @@ RegressionCoefficientConjugatePrior <- function(
     sample.size,
     additional.prior.precision = numeric(0),
     diagonal.weight = 0) {
-  ## A conditional prior for the coefficients (beta) in a linear
-  ## regression model.  The prior is conditional on the residual
-  ## variance sigma^2, the sample size n, and the design matrix X.
-  ## The prior is
+  ## A conditional prior for the coefficients (beta) in a linear regression
+  ## model.  The prior is conditional on the residual variance sigma^2, the
+  ## sample size n, and the design matrix X.  The prior is
   ##
   ##      beta | sigsq, X ~ N(b, sigsq * (Lambda^{-1} + V))
   ##
