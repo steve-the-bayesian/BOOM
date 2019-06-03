@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#ifndef DATA_TYPES_H
-#define DATA_TYPES_H
+#ifndef BOOM_MODELS_DATA_TYPES_H
+#define BOOM_MODELS_DATA_TYPES_H
 
 #include <cmath>
 #include <map>  // for STL's map container
@@ -193,4 +193,4 @@ namespace BOOM {
   
 }  // namespace BOOM
 
-#endif  // DATA_TYPES_H
+#endif  // BOOM_MODELS_DATA_TYPES_H

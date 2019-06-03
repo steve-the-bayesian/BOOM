@@ -209,6 +209,9 @@ namespace BOOM {
     // Set the shared state to the specified value, and mark the state as
     // 'fixed' so that it will no longer be updated by calls to 'impute_state'.
     // This function is intended for debugging purposes only.
+    //
+    // Args:
+    //   state:  The state matrix.  Columns are time. Rows are state elements.
     void permanently_set_state(const Matrix &state);
 
     // The number of time series being modeled.  Not all model types know this.

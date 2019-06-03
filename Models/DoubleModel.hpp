@@ -39,26 +39,47 @@ namespace BOOM {
     virtual double variance() const = 0;
   };
 
+  // A DoubleModel that is differentiable with respect to the random variable.
   class dDoubleModel : virtual public DoubleModel {
-    // the 'diff' is for differentiable
    public:
     virtual double dlogp(double x, double &g) const = 0;
     dDoubleModel *clone() const override = 0;
   };
 
+  // A DoubleModel that is twice differentiable with respect to the random
+  // variable.
   class d2DoubleModel : public dDoubleModel {
    public:
     virtual double d2logp(double x, double &g, double &h) const = 0;
     d2DoubleModel *clone() const override = 0;
   };
 
+  // A DoubleModel that is twice differentiable with respect to the random
+  // variable.  
   class DiffDoubleModel : public d2DoubleModel {
-    // the 'diff' is for differentiable
    public:
+    // Args:
+    //   x: The value of the random variable where the density and derivatives
+    //     are to be evaluated.
+    //   g: First derivative (gradient) of the log density at x.  Computed only
+    //     if nd > 0.
+    //   h: Second derivative (Hessian) of the log density at x.  Computed only
+    //     if nd > 1.
+    //   nd: Number of derivatives to compute.
+    //
+    // Returns:
+    //   The log density at x.
     virtual double Logp(double x, double &g, double &h, uint nd) const = 0;
+
+    // The log density at x. Equivalent to Logp(x, double g, double h, 0);
     double logp(double x) const override;
+
+    // Equivalent to Logp(x, g, double h, 1);
     double dlogp(double x, double &g) const override;
+
+    // Equivalent to Logp(x, g, h, 2);
     double d2logp(double x, double &g, double &h) const override;
+
     DiffDoubleModel *clone() const override = 0;
   };
 
