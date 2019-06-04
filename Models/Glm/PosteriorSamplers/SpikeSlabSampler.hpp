@@ -73,10 +73,29 @@ namespace BOOM {
     //--------------------------------------------------------------------------
     // External interface: These functions do not touch the managed model, and
     // are safe to use if model_ is nullptr.
+    //
+    // Args:
+    //   rng:  The random number generator to use for the draw.
+    //   coefficients:  The vector of coefficients to draw.
+    //   inclusion_indicators: Indicates which coefficient values may be
+    //     nonzero.  Some might be zero anyway, e.g. because the vector was
+    //     initialized to zero on startup.
+    //   suf:  The sufficient statistics to use for the draw.
+    //   sigsq:  The value of the residual variance parameter, if present.
+    //   full_set: If true then the coefficient vector is full size, including
+    //     structural zeros.  If false then the coefficient vector only includes
+    //     the included coefficients.
+    //
+    // Effects:
+    //   The included subset of full_coefficients is updated with a draw from
+    //   its conditional posterior distribution.
     void draw_coefficients_given_inclusion(
-        RNG &rng, Vector &included_coefficients,
+        RNG &rng,
+        Vector &full_coefficients,
         const Selector &inclusion_indicators,
-        const WeightedRegSuf &suf, double sigsq = 1.0) const;
+        const WeightedRegSuf &suf,
+        double sigsq = 1.0,
+        bool full_set = true) const;
 
     void draw_inclusion_indicators(RNG &rng,
                                    Selector &inclusion,

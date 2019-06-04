@@ -102,18 +102,23 @@ namespace BOOM {
       return;
     }
     Vector coefficients = model_->included_coefficients();
-    draw_coefficients_given_inclusion(rng, coefficients, inclusion_indicators, suf, sigsq);
+    draw_coefficients_given_inclusion(rng, coefficients, inclusion_indicators,
+                                      suf, sigsq, false);
     // If model selection is turned off and some elements of beta
     // happen to be zero (because, e.inclusion_indicators., of a
     // failed MH step) we don't want the dimension of beta to change.
-    model_->set_included_coefficients(coefficients);
+    model_->set_included_coefficients(coefficients, inclusion_indicators);
   }
 
   void SSS::draw_coefficients_given_inclusion(
       RNG &rng, Vector &coefficients, const Selector &inclusion_indicators,
-      const WeightedRegSuf &suf, double sigsq) const {
+      const WeightedRegSuf &suf, double sigsq, bool full_set) const {
     if (inclusion_indicators.nvars() == 0) {
-      coefficients = 0.0;
+      if (full_set) {
+        coefficients = 0.0;
+      } else {
+        coefficients.clear();
+      }
       return;
     }
     SpdMatrix precision = inclusion_indicators.select(slab_prior_->siginv());
@@ -122,8 +127,12 @@ namespace BOOM {
     precision += inclusion_indicators.select(suf.xtx()) / sigsq;
     precision_mu += inclusion_indicators.select(suf.xty()) / sigsq;
     Vector mean = precision.solve(precision_mu);
-    coefficients = inclusion_indicators.expand(
-        rmvn_ivar_mt(rng, mean, precision));
+    Vector draw = rmvn_ivar_mt(rng, mean, precision);
+    if (full_set) {
+      coefficients = inclusion_indicators.expand(draw);
+    } else {
+      coefficients = draw;
+    }
   }
   
   double SSS::logpri() const {
