@@ -710,7 +710,7 @@ LogitZellnerPrior <- function(
 
   ## All LogitPrior objects will have a 'prior.success.probability'
   ## field.
-  ans$prior.success.probability <- prior.success.probability
+  ans$prior.success.probability = prior.success.probability
   class(ans) <- c("LogitZellnerPrior", "LogitPrior", class(ans))
   return(ans)
 }

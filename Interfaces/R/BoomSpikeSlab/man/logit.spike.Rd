@@ -53,11 +53,10 @@ logit.spike(formula,
   \item{subset}{ An optional vector specifying a subset of observations
     to be used in the fitting process.  }
 
-  \item{prior}{A n object inheriting from \code{\link{LogitPrior}} and
-    \code{\link{SpikeSlabPriorBase}}.  If \code{prior} is supplied it
+  \item{prior}{A n object inheriting from
+    \code{\link{SpikeSlabGlmPrior}}.  If \code{prior} is supplied it
     will be used.  Otherwise a prior distribution will constructed by
-    calling \code{\link{LogitZellnerPrior}} with the remaining
-    arguments. }
+    calling \code{\link{LogitZellnerPrior}}.}
 
   \item{na.action}{A function which indicates what should happen when
     the data contain \code{NA}s.  The default is set by the
@@ -115,9 +114,9 @@ logit.spike(formula,
     should be \code{NULL} or an int.  If \code{NULL} the seed value will
     be taken from the global \code{\link{.Random.seed}} object.}
 
-  \item{\dots}{
-    Extra arguments to be passed to \code{\link{SpikeSlabPrior}}.
-  }
+  \item{\dots}{ Extra arguments passed to
+    \code{\link{LogitZellnerPrior}} in the case where \code{prior} is
+    \code{NULL}.  }
 
 }
 \value{
