@@ -199,7 +199,7 @@ namespace BOOM {
       // Returns:
       //    The number of periods to be forecast.
       virtual int UnpackForecastData(SEXP r_prediction_data) = 0;
-      
+
       Vector &final_state() {return final_state_;}
       
      private:
@@ -313,6 +313,27 @@ namespace BOOM {
                               SEXP r_burn, SEXP r_observed_data);
 
      private:
+      // If the model contains a dynamic regression component then unpack the
+      // predictors and tack them on the end of the dynamic regression state
+      // model object.
+      //
+      // Args:
+      //   r_prediction_data: An R list containing data needed for prediction.
+      //     The signal that a dynamic regression model is present is that
+      //     r_prediction_data contains an element named
+      //     dynamic.regression.predictors.
+      //   model:  The model containing a dynamic regression state model.
+      //
+      // Effects:
+      //   dynamic.regression.predictors is extracted from r_prediction_data,
+      //   and converted to a matrix.  The matrix is appended to the dynamic
+      //   regression component of model.
+      //
+      //   This function assumes that only one dynamic regression component
+      //   exists.
+      void UnpackDynamicRegressionForecastData(
+          SEXP r_prediction_data, ScalarStateSpaceModelBase *model);
+      
       // Create the specific StateSpaceModel suitable for the given model
       // family.  The posterior sampler for the model is set, and entries for
       // its model parameters are created in io_manager.  This function does not

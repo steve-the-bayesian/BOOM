@@ -32,6 +32,7 @@
 #include "r_interface/list_io.hpp"
 
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
@@ -254,6 +255,7 @@ namespace BOOM {
         report_error("Forecast called with NULL prediction data.");
       }
       int forecast_horizon = UnpackForecastData(r_prediction_data);
+      UnpackDynamicRegressionForecastData(r_prediction_data, model);
       int max_time = model->time_dimension() + forecast_horizon;
       for (int s = 0; s < model->number_of_state_models(); ++s) {
         model->state_model(s)->observe_time_dimension(max_time);
@@ -281,6 +283,34 @@ namespace BOOM {
       return ans;
     }
 
+    void ScalarModelManager::UnpackDynamicRegressionForecastData(
+        SEXP r_prediction_data, ScalarStateSpaceModelBase *model) {
+      SEXP r_dynamic_regression_predictors = getListElement(
+          r_prediction_data, "dynamic.regression.predictors");
+      if (Rf_isNull(r_dynamic_regression_predictors)) {
+        return;
+      }
+      for (int s = 0; s < model->number_of_state_models(); ++s) {
+        DynamicRegressionStateModel *dreg =
+            dynamic_cast<DynamicRegressionStateModel *>(
+                model->state_model(s).get());
+        if (dreg) {
+          dreg->add_forecast_data(ToBoomMatrix(
+              r_dynamic_regression_predictors));
+          return;
+        }
+
+        DynamicRegressionArStateModel *dregar =
+            dynamic_cast<DynamicRegressionArStateModel *>(
+                model->state_model(s).get());
+        if (dregar) {
+          dregar->add_forecast_data(ToBoomMatrix(
+              r_dynamic_regression_predictors));
+          return;
+        }
+      }
+    }
+    
     //=========================================================================
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         SEXP r_mbsts_object) {

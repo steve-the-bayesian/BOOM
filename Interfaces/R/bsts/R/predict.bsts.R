@@ -480,7 +480,9 @@ plot.bsts.prediction <- function(x,
          "dynamic regression component.")
   }
   if (any(dynamic.regression)) {
-    dynamic.regression <-
+    ## dynamic.regression is now a list of dynamic regression state
+    ## specification objects.
+    dynamic.regression <- 
         seq_along(bsts.object$state.specification)[dynamic.regression]
     for (d in dynamic.regression) {
       dr.object <- bsts.object$state.specification[[d]]
@@ -500,7 +502,7 @@ plot.bsts.prediction <- function(x,
     newdata,
     xdim = NULL,
     na.action) {
-  ## Create the matrix of predictors from a newdata, using an object's
+  ## Create the matrix of predictors from newdata, using an object's
   ##   * terms
   ##   * xlevels
   ##   * contrasts
@@ -533,7 +535,6 @@ plot.bsts.prediction <- function(x,
   ## Returns:
   ##   The matrix of predictors defined by newdata and the regression
   ##   model structure.
-
   if (is.null(xdim)) {
     beta <- object$coefficients
     if (is.null(beta)) {
@@ -589,7 +590,8 @@ plot.bsts.prediction <- function(x,
       predictors <- cbind(1, predictors)
     }
     if (ncol(predictors) != xdim) {
-      stop("Wrong number of columns in newdata")
+      stop(paste("Wrong number of columns in newdata. ",
+        "Consider passing a data frame?"))
     }
 
     na.rows <- rowSums(is.na(predictors)) > 0
