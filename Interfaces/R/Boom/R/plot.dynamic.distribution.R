@@ -59,7 +59,7 @@ PlotDynamicDistribution <- function(curves,
     }
 
     if (!add) {
-      if (!is.finite(ylim)) {
+      if (!all(is.finite(ylim))) {
         ylim <- range(quantile.matrix, na.rm = TRUE)
       }
       plot(timestamps,

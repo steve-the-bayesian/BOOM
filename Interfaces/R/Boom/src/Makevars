@@ -3,8 +3,8 @@ all:	libboom.a
 # When compiling remotely (e.g. on CRAN's winbuilder) flags to be
 # passed to make can be specified here.
 # -k:  keep going
-# -j 8: use 8 threads
-MAKEFLAGS=" -j 8 "
+# -j 16: use 16 threads
+MAKEFLAGS=" -j 16 "
 
 # An explanation for the cflags listed below:
 # - ADD_ is probably no longer needed.  It was necessary for communicating with
