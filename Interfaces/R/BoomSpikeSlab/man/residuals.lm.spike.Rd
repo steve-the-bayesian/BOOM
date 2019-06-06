@@ -74,4 +74,3 @@
   residuals(model)
   residuals(model, mean.only = TRUE)
 }
-\keyword{models, regression}
