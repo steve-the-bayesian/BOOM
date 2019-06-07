@@ -26,6 +26,11 @@ namespace BOOM {
   class IndependentRegressionModelsPosteriorSampler
       : public PosteriorSampler {
    public:
+    // Args:
+    //   model: The model to be managed.  Each sub-regression in model must have
+    //     its own posterior samplers assigned.
+    //   seeding_rng: The random number generator used to seed the RNG owned by
+    //     this posterior sampler.
     IndependentRegressionModelsPosteriorSampler(
         IndependentRegressionModels *model,
         RNG &seeding_rng = GlobalRng::rng)
