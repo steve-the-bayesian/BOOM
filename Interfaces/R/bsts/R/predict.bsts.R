@@ -310,7 +310,10 @@ plot.bsts.prediction <- function(x,
   } else {
     stop("Unrecognized object family in .FormatBstsPredictionData")
   }
-  return(.ExtractDynamicRegressionPredictors(ans, object, newdata))
+  ## If the model object contains any dynamic regression components, add them
+  ## here.
+  ans <- .ExtractDynamicRegressionPredictors(ans, object, newdata)
+  return(ans)
 }
 
 ###---------------------------------------------------------------------------
