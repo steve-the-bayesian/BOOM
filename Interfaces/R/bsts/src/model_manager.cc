@@ -33,6 +33,7 @@
 
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
