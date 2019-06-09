@@ -352,6 +352,8 @@ namespace BOOM {
     double logp = log_model_prob(g);
 
     if (!std::isfinite(logp)) {
+      // If the model starts from an illegal configuration, legalize it (move it
+      // to a place of positive prior probability) before we begin.
       spike_->make_valid(g);
       logp = log_model_prob(g);
     }
