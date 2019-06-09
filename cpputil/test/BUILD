@@ -14,6 +14,17 @@ cc_test(
 )
 
 cc_test(
+    name = "concatenate_strings_test",
+    srcs = ["concatenate_strings_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "param_holder_test",
     srcs = ["param_holder_test.cc"],
     copts = COPTS,

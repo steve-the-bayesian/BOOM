@@ -83,6 +83,17 @@ namespace BOOM {
   std::string &replace_all(std::string &s, const char *, const char *);
 
   bool is_numeric(const std::string &s);
+
+  // Concatenate the contents in a vector of strings to a single string.
+  //
+  // Args:
+  //   string_vector:  The strings to concatenate.
+  //   sep:  A separator to follow all but the last element.
+  //
+  // Returns:
+  //   A string formed by concatenating the elements of string_vector.
+  std::string concatenate(const std::vector<std::string> &string_vector,
+                          const std::string &sep = " ");
   
 }  // namespace BOOM
 
