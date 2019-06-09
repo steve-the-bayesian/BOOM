@@ -109,6 +109,17 @@ namespace BOOM {
 
     bool is_missing_observation(int t) const override;
 
+    ZeroMeanGaussianModel *observation_model() override { return nullptr; }
+    const ZeroMeanGaussianModel *observation_model() const override {
+      return nullptr;
+    }
+
+    double observation_variance(int t) const override;
+
+    // Because the proxy model has no observation model,
+    // observe_data_given_state is a no-op.
+    void observe_data_given_state(int t) override {}
+    
     // Simulate 'horizon' time periods beyond time_dimension().
     //
     // Args:
@@ -135,7 +146,7 @@ namespace BOOM {
                   &data_point) override;
     void add_data(const Ptr<Data> &data_point) override;
 
-    MultivariateStateSpaceRegressionModel *model_;
+    MultivariateStateSpaceRegressionModel *host_;
     int which_series_;
   };
 
@@ -343,7 +354,9 @@ namespace BOOM {
     
     // Returns the observed data point for the given series at the given time
     // point.  If that data point is missing, negative_infinity is returned.
-    double observed_data(int series, int time) const;
+    double observed_data(int series, int time) const {
+      return response_matrix(series, time);
+    }
 
     // The response value after contributions from "other models" has been
     // subtracted off.  It is the caller's responsibility to do the subtracting
@@ -436,7 +449,7 @@ namespace BOOM {
     void impute_missing_observations(int t, RNG &rng) override;
     void impute_shared_state_given_series_state(RNG &rng);
     void impute_series_state_given_shared_state(RNG &rng);
-
+    
     // Sets adjusted_data_workspace_ to observed_data minus contributions from
     // series specific state.
     void isolate_shared_state();

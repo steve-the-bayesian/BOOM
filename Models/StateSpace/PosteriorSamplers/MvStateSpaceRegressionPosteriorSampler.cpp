@@ -26,7 +26,7 @@ namespace BOOM {
     using MSSRPS = MultivariateStateSpaceRegressionPosteriorSampler;
     using MSSRM = MultivariateStateSpaceRegressionModel;
   }  // namespace
-  
+
   MSSRPS::MultivariateStateSpaceRegressionPosteriorSampler(
       MSSRM *model, RNG &rng)
       : PosteriorSampler(rng),
@@ -51,35 +51,36 @@ namespace BOOM {
       model_->impute_state(rng());
       latent_data_initialized_ = true;
       impute_nonstate_latent_data();
-      if (model_->has_series_specific_state()) {
-        for (int i = 0; i < model_->nseries(); ++i) {
-          model_->series_specific_model(i)->sample_posterior();
-        }
-      }
-    }
-    // Multivariate state space models sometimes use proxies that don't have an
-    // explicit observation model.
-    if (model_->observation_model()) {
-      model_->observation_model()->sample_posterior();
-    }
+    } // End latent data initialization.
+
+    // Sample regression parameters and residual variance parameters.
+    model_->observation_model()->sample_posterior();
+      
+    // Sample parameters for the shared state models.
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
       model_->state_model(s)->sample_posterior();
     }
+
+    // Sample parameters for proxy models if any series specific state is
+    // present.
+    if (model_->has_series_specific_state()) {
+      for (int j = 0; j < model_->nseries(); ++j) {
+        ProxyScalarStateSpaceModel &proxy(*model_->series_specific_model(j));
+        for (int s = 0; s < proxy.number_of_state_models(); ++s) {
+          proxy.state_model(s)->sample_posterior();
+        }
+      }
+    }
+    
     // The complete data sufficient statistics for the observation model and the
     // state models are updated when calling impute_state.  The non-state latent
     // data should be imputed immediately before that, so the complete data
     // sufficient statistics reflect all the latent data correctly.
     impute_nonstate_latent_data();
     
-    if (model_->has_series_specific_state()) {
-      for (int j = 0; j < model_->nseries(); ++j) {
-        model_->series_specific_model(j)->sample_posterior();
-      }
-    }
-    
-    model_->impute_state(rng());
     // End with a call to impute_state() so that the internal state of
     // the Kalman filter matches up with the parameter draws.
+    model_->impute_state(rng());
   }
 
   double MSSRPS::logpri() const {
@@ -89,7 +90,11 @@ namespace BOOM {
     }
     if (model_->has_series_specific_state()) {
       for (int p = 0; p < model_->nseries(); ++p) {
-        ans += model_->series_specific_model(p)->logpri();
+        const ProxyScalarStateSpaceModel &proxy(
+            *model_->series_specific_model(p));
+        for (int s = 0; s < proxy.number_of_state_models(); ++s) {
+          ans += proxy.state_model(s)->logpri();
+        }
       }
     }
     return ans;

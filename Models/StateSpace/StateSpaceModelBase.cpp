@@ -151,19 +151,23 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   void Base::add_state(const Ptr<StateModel> &m) {
-      state_models_.add_state(m);
-      if (parameter_positions_.empty() && observation_model()) {
-        // If no state has been added yet, add the size of the observation model
-        // parameters, which come before the state model parameters in the
-        // parameter vector.
-        //
-        // Also see the note in the copy constructor.  If this code changes, the
-        // copy constructor will probably need to change as well.
-        parameter_positions_.push_back(
-            observation_model()->vectorize_params(true).size());
-      }
+    state_models_.add_state(m);
+    if (parameter_positions_.empty() && observation_model()) {
+      // If no state has been added yet, add the size of the observation model
+      // parameters, which come before the state model parameters in the
+      // parameter vector.
+      //
+      // Also see the note in the copy constructor.  If this code changes, the
+      // copy constructor will probably need to change as well.
+      parameter_positions_.push_back(
+          observation_model()->vectorize_params(true).size());
+    }
+    if (parameter_positions_.empty()) {
+      parameter_positions_.push_back(m->vectorize_params(true).size());
+    } else {
       parameter_positions_.push_back(parameter_positions_.back() +
                                      m->vectorize_params(true).size());
+    }
   }
 
   //----------------------------------------------------------------------
@@ -733,6 +737,7 @@ namespace BOOM {
     ScalarKalmanFilter &simulation_filter(get_simulation_filter());
     Vector simulated_data_state_mean = initial_state_mean();
     SpdMatrix simulated_data_state_variance = initial_state_variance();
+
     for (int t = 0; t < time_dimension(); ++t) {
       // simulate_state at time t
       if (t == 0) {

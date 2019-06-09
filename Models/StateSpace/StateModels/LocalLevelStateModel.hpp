@@ -1,6 +1,7 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
 #define BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
+// Copyright 2019 Steven L. Scott.
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -207,6 +208,16 @@ namespace BOOM {
       return coefficient_model_;
     }
 
+    // A setter helps prevent the user from forgetting to transpose the
+    // observation coefficients.
+    //
+    // Args:
+    //   Z: The matrix of observation coefficients.  nseries rows by
+    //     number_of_factors.  columns.
+    void set_observation_coefficients(const Matrix &Z) {
+      coefficient_model_->set_Beta(Z.transpose());
+    }
+    
     // Copy the observation coefficients from the regression model to the state
     // matrix.  Note that the state coefficient matrix is the transpose of the
     // regression coefficient matrix.
