@@ -15,6 +15,9 @@ MAKEFLAGS=" -j 16 "
 #   considers spurious.  This flag turns off the disabling.
 
 PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR -DEIGEN_WARNINGS_DISABLED
+# Sanitizers:  Uncomment one of the following lines to enable the corresponding sanitizer.
+# PKG_CXXFLAGS= -fsanitize=address
+# PKG_CXXFLAGS= -fsanitize=undefined
 # PKG_LIBS = -lprofiler
 ############################################################################
 # Begin the list of all the BOOM source files.
