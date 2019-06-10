@@ -18,14 +18,19 @@
 #include "r_interface/list_io.hpp"
 #include "r_interface/boom_r_tools.hpp"
 #include "cpputil/math_utils.hpp"
+#include "cpputil/string_utils.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
   void RListIoManager::add_list_element(RListIoElement *element) {
-    elements_.push_back(Ptr<RListIoElement>(element));
+    add_list_element(Ptr<RListIoElement>(element));
   }
 
+  void RListIoManager::add_list_element(const Ptr<RListIoElement> &element) {
+    elements_.push_back(element);
+  }
+  
   SEXP RListIoManager::prepare_to_write(int niter) {
     if (elements_.empty()) {
       return R_NilValue;
@@ -72,6 +77,14 @@ namespace BOOM {
     }
   }
 
+  std::vector<std::string> RListIoManager::element_names() const {
+    std::vector<std::string> ans;
+    for (const auto &el : elements_) {
+      ans.push_back(el->name());
+    }
+    return ans;
+  }
+
   //======================================================================
   RListIoElement::RListIoElement(const std::string &name) : name_(name) {}
 
@@ -85,7 +98,7 @@ namespace BOOM {
   void RListIoElement::prepare_to_stream(SEXP object) {
     // It is tempting to set the 'expect_answer' flag in getListElement here.
     // But there are instances where the expected return value is R_NilValue.
-    rbuffer_ = getListElement(object, name_);
+    rbuffer_ = getListElement(object, name_, true);
     position_ = 0;
   }
 
@@ -117,10 +130,10 @@ namespace BOOM {
   }
 
   void SubordinateModelIoElement::prepare_to_stream(SEXP object) {
-    RListIoElement::prepare_to_stream(object);
-    SEXP buffer = rbuffer();
+    SEXP buffer = getListElement(object, name(), true);
     // The buffer is a list.  Each list element is either NULL, or else a list
     // that should be treated as a subordinate model object.
+
     for (int i = 0; i < io_managers_.size(); ++i) {
       if (!io_managers_[i]->empty()) {
         SEXP subordinate_model_object = VECTOR_ELT(buffer, i);
@@ -146,13 +159,13 @@ namespace BOOM {
   }
 
   void SubordinateModelIoElement::advance(int n) {
-    for (auto &el : io_managers_) {
-      if (!el->empty()) {
-        el->advance(n);
+    for (int i = 0; i < io_managers_.size(); ++i) {
+      if (!io_managers_[i]->empty()) {
+        io_managers_[i]->advance(n);
       }
     }
   }
-  
+
   //======================================================================
   RealValuedRListIoElement::RealValuedRListIoElement(const std::string &name)
       : RListIoElement(name)
@@ -479,6 +492,7 @@ namespace BOOM {
                                                    const std::string &name,
                                                    Vector *streaming_buffer)
       : VectorValuedRListIoElement(name),
+        callback_(nullptr),
         streaming_buffer_(streaming_buffer),
         check_buffer_(true)
   {
@@ -715,8 +729,11 @@ namespace BOOM {
   }
 
   void NativeMatrixListElement::stream() {
-    if (!streaming_buffer_) return;
-    *streaming_buffer_ = array_view().slice(next_position(), -1, -1).to_matrix();
+    if (!streaming_buffer_) {
+      return;
+    }
+    *streaming_buffer_ =
+        array_view().slice(next_position(), -1, -1).to_matrix();
   }
 
   //======================================================================  

@@ -82,6 +82,7 @@ namespace BOOM {
     // The class takes over ownership of 'element', and deletes it when *this
     // goes out of scope.
     void add_list_element(RListIoElement *element);
+    void add_list_element(const Ptr<RListIoElement> &element);
 
     // Returns a list with the necessary names and storage for keeping track of
     // 'niter' parameters worth of output.
@@ -104,7 +105,12 @@ namespace BOOM {
     void advance(int n);
 
     bool empty() const {return elements_.empty();}
-    
+
+    int number_of_elements() const {return elements_.size();}
+
+    // The names of the managed list elements.
+    std::vector<std::string> element_names() const;
+
    private:
     std::vector<Ptr<RListIoElement> > elements_;
   };
@@ -178,6 +184,18 @@ namespace BOOM {
   //===========================================================================
   // A list element that stores an arbitrarily complex list of components,
   // effectively a sub-model.
+  //
+  // Suppose your model was a mixture of bsts models, for example.  You have a
+  // global io_manager and want to add all the bsts models to a list element
+  // named 'bsts'.  You build a bsts model by calling
+  // BuildBstsModel(options, &io_manager);
+  //
+  // Ptr<SubordinateModelIoElement> subordinate_model_manager(
+  //     new SubordinateModelIoElement("bsts"));
+  // io_manager->add_list_element(subordinate_model_manager);
+  // subordinate_model_manager->add_subordinate_model("component0");
+  // BuildBstsModel(options,
+  //                subordinate_model_manager->subordinate_io_manager(0));
   class SubordinateModelIoElement : public RListIoElement {
    public:
     // Args:
@@ -728,8 +746,8 @@ namespace BOOM {
     //     on destruction.
     //   name: the name of the component in the list.
     //   streaming_buffer: A pointer to a BOOM matrix that will receive the
-    //     contents of the R list when streaming.  This can be NULL if streaming
-    //     is not desired.
+    //     contents of the R list when streaming.  This can be nullptr if
+    //     streaming is not desired.
     //
     // Note that it is pointless to create this object if both callback and
     // streaming_buffer are NULL.
