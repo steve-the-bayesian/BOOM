@@ -31,6 +31,7 @@
 #include "r_interface/seed_rng_from_R.hpp"
 
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "LinAlg/SubMatrix.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "cpputil/ThreadTools.hpp"
@@ -43,6 +44,7 @@ extern "C" {
   using std::endl;
   using BOOM::bsts::MultivariateGaussianModelManager;
   using BOOM::getListElement;
+  using BOOM::ConstSubMatrix;
 
   // Args:
   //   r_data_list: A list containing the following entries:

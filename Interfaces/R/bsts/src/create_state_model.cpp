@@ -107,10 +107,12 @@ namespace BOOM {
     // build the appropriate BOOM StateModel.  The specific R function
     // associated with each method is noted in the comments to the worker
     // functions that implement each specific type.
+    //
     // Args:
     //   r_state_component:  The R object created by AddXXX.
     //   prefix: An optional prefix to be prepended to the name of the state
     //     component in the io_manager.
+    //
     // Returns:
     //   A BOOM smart pointer to the appropriately typed StateModel.
     Ptr<StateModel> StateModelFactory::CreateStateModel(
@@ -203,16 +205,17 @@ namespace BOOM {
           : model_(model) {}
       virtual int dim() const {return model_->state_dimension();}
       virtual Vector get_vector() const { return model_->final_state();}
+      
      private:
       StateSpaceModelBase * model_;
     };
 
     void StateModelFactory::SaveFinalState(
         StateSpaceModelBase *model,
-        Vector * final_state,
+        Vector *final_state,
         const std::string & list_element_name) {
-      if (!model) return;
-      if (final_state) {
+      // If either model or final_state is nullptr then do nothing.
+      if (model && final_state) {
         final_state->resize(model->state_dimension());
         if (io_manager()) {
           io_manager()->add_list_element(

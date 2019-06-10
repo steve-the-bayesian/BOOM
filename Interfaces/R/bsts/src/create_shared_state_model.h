@@ -93,17 +93,6 @@ namespace BOOM {
           MultivariateStateSpaceModelBase *model,
           BOOM::Vector *final_state = nullptr,
           const std::string &list_element_name = "final.shared.state");
-
-      // For models that contain subordinate state space models for series
-      // specfic state effects.  The output will be stored in a list of
-      // matrices.  mbsts.model[[j]] is a matrix corresponding to time series j,
-      // with rows corresponding to MCMC draws, and columns to the state vector
-      // at final time T.
-      void SaveSubordinateFinalState(
-          MultivariateStateSpaceRegressionModel *model,
-          std::vector<BOOM::Vector> *final_state = nullptr,
-          const std::string &list_element_name = "final.series.specific.state");
-                                     
       
      private:
       // The number of time series being modeled.
