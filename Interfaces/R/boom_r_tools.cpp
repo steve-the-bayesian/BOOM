@@ -725,14 +725,8 @@ namespace BOOM {
       err << "Could not parse expression: " << call_string_;
       report_error(err.str());
     }
-    
-    return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
 
-    // NOTE: rchk raised a warning about passing output from Rf_eval directly to
-    // Rf_asReal.
-    SEXP r_function_output = protector.protect(
-        Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
-    return Rf_asReal(r_function_output);
+    return Rf_asReal(protector.protect(Rf_eval(VECTOR_ELT(r_call, 0), r_env_)));
   }
   
   namespace {
