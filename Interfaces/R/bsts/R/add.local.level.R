@@ -99,7 +99,14 @@ AddSharedLocalLevel <- function(state.specification,
   if (is.null(coefficient.prior)) {
     coefficient.prior <- list()
     for (i in 1:nseries) {
-      coefficient.prior[[i]] <- ConditionalZellnerPrior(nfactors, ...)
+      ## Normally regression coefficients are centered around zero.  In this
+      ## case it makes sense to center around 1.  Really this should be a
+      ## hierarchical prior where it makes sense to center the hyperprior around
+      ## 1.  TODO(steve)
+      coefficient.prior[[i]] <- ConditionalZellnerPrior(
+        nfactors,
+        optional.coefficient.estimate = rep(1, nfactors),
+        ...)
     }
   }
   if (inherits(coefficient.prior, "ConditionalZellnerPrior")) {

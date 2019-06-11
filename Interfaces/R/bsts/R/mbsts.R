@@ -112,7 +112,7 @@ mbsts <- function(formula,
   #  - response: a vector of responses
   #  - series: a factor indicating the time series each element of 'response'
   #      belongs to.
-  #  - timestamp.info: A list created by .ComputeTimestampInfo
+  #  - timestamp.info: A list created by TimestampInfo
   #
   # The coming if/then block is longer than you'd like, but it needs to take
   # place here so the 'model.matrix' black magic can work.
@@ -185,7 +185,7 @@ mbsts <- function(formula,
     predictors = predictors,
     response = response,
     series.id = series.id,
-    timestamp.info = .ComputeTimestampInfo(predictors, NULL, timestamps)
+    timestamp.info = TimestampInfo(predictors, NULL, timestamps)
   )
   
   #------------------------------------------------------------------------
