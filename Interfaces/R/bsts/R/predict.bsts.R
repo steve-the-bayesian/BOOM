@@ -182,7 +182,6 @@ plot.bsts.prediction <- function(x,
   ## Returns:
   ##   This function is called for its side effect, which is to
   ##   produce a plot on the current graphics device.
-
   prediction <- x
   if (burn > 0) {
     prediction$distribution <-

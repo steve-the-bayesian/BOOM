@@ -17,6 +17,12 @@
 plot.mbsts <- function(x,
                        y = c("means", "help"),
                        ...) {
+  ## S3 method for plotting an mbsts object.
+  ## Args:
+  ##   x: The ojbect to plot.
+  ##   y: A string giving the type of plot desired.
+  ##   ...: Named arguments passed to the specific functions implementing the
+  ##     plots.  See the plot.mbsts source for a list of these functions.
   y <- match.arg(y)
   if (y == "means") {
     PlotMbstsSeriesMeans(x, ...)
@@ -178,19 +184,72 @@ plot.mbsts.prediction <- function(x,
                                   interval.width = 2,
                                   style = c("dynamic", "boxplot"),
                                   ylim = NULL,
+                                  series.id = NULL, 
                                   same.scale = TRUE,
                                   gap = 0, 
                                   ...) {
   ## Plot the results of an mbsts prediction.
   ##
   ## Args:
-  ##   
+  ##   x: An object of class mbsts.prediction.
+  ##   y: An alias for series.id, see below.
+  ##   burn:  The number of MCMC iterations to discard as burn-in.
+  ##   plot.original: Logical or numeric.  If TRUE then the prediction is
+  ##     plotted after a time series plot of the original series.  If FALSE, the
+  ##     prediction fills the entire plot.  If numeric, then it specifies the
+  ##     number of trailing observations of the original time series to plot.
+  ##   median.color: The color to use for the posterior median of the
+  ##     prediction.
+  ##   median.type: The type of line (lty) to use for the posterior median of
+  ##     the prediction.
+  ##   median.width: The width of line (lwd) to use for the posterior median of
+  ##     the prediction.
+  ##   interval.quantiles: The lower and upper limits of the credible interval
+  ##     to be plotted.
+  ##   interval.color: The color to use for the upper and lower limits of the
+  ##     95% credible interval for the prediction.
+  ##   interval.type: The type of line (lty) to use for the upper and lower
+  ##     limits of the 95% credible inerval for of the prediction.
+  ##   interval.width: The width of line (lwd) to use for the upper and lower
+  ##     limits of the 95% credible inerval for of the prediction.
+  ##   style: What type of plot should be produced?  A dynamic distribution
+  ##     plot, or a time series boxplot.
+  ##   ylim:  Limits on the vertical axis.
+  ##   series.id: A factor, string, or integer used to indicate which of the
+  ##     multivariate series to plot.  If NULL then predictions for all series
+  ##     will be plotted.  If there are many series this can make the plot
+  ##     unreadable.
+  ##   same.scale: Logical.  If TRUE then all predictions are plotted with the
+  ##     same scale, and limits are drawn on the Y axis. If FALSE then each
+  ##     prediction is drawn to fill its plot region, and no tick marks are
+  ##     drawn on the y axis.  If ylim is specified then it is used for all
+  ##     plots, and same.scale is ignored.
+  ##   gap: The amount of space to leave between plots, measured in lines of
+  ##     text.
+  ##   ...: Extra arguments to be passed to PlotDynamicDistribution(),
+  ##     TimeSeriesBoxplot(), or lines().
   prediction <- x
   nseries <- nrow(prediction$mean)
+  if (!is.null(series.id) && is.null(y)) {
+    y <- series.id
+  }
   series.id <- y
+  
   if (is.null(series.id)) {
     series.id <- 1:nseries
   } else {
+    if (is.logical(series.id)) {
+      stopifnot(length(series.id) == nseries)
+    } else if (is.numeric(series.id)) {
+      stopifnot(series.id == unique(series.id),
+        all(series.id %in% 1:nseries))
+    } else if (is.character(series.id)) {
+      series.id <- pmatch(series.id, dimnames(prediction$mean)[[1]], nomatch = "")
+      if (any(series.id == "")) {
+        stop("Some series names did not match.")
+      }
+    }
+    
     prediction$mean <- prediction$mean[series.id, , drop = FALSE]
     prediction$median <- prediction$median[series.id, , drop = FALSE]
     prediction$distribution <- prediction$distribution[, series.id, ,
@@ -244,55 +303,60 @@ plot.mbsts.prediction <- function(x,
   }
 
   series <- 0  
+  pred.time <- tail(time, 1) + (1:n1) * deltat
   for (row in 1:plot.rows) {
     for (col in 1:plot.cols) {
       series <- series + 1
-      if (scale.individually) {
-        ylim <- range(prediction$distribution[series, , ],
-          original.series[, series],
-          na.rm = TRUE)
-      } else {
-        ylim <- original.ylim
-      }
+      if (series <= nseries.subset) {
+        if (scale.individually) {
+          ylim <- range(prediction$distribution[series, , ],
+            original.series[, series],
+            na.rm = TRUE)
+        } else {
+          ylim <- original.ylim
+        }
 
-      if (plot.original) {
-        pred.time <- tail(time, 1) + (1:n1) * deltat
-        plot(time,
-          original.series[, series],
-          type = "l",
-          xlim = range(time, pred.time, na.rm = TRUE),
-          ylim = ylim,
-          ylab = series.names[series],
-          axes = FALSE,
-          ...)
-        box()
+        if (plot.original) {
+          plot(time,
+            original.series[, series],
+            type = "l",
+            xlim = range(time, pred.time, na.rm = TRUE),
+            ylim = ylim,
+            ylab = series.names[series],
+            axes = FALSE,
+            ...)
+          box()
+        } else {
+          pred.time <- tail(time, 1) + (1:n1) * deltat
+        }
+        
+        style <- match.arg(style)
+        if (style == "dynamic") {
+          PlotDynamicDistribution(curves = prediction$distribution[, series, ],
+            timestamps = pred.time,
+            add = plot.original,
+            ylim = ylim,
+            ylab = series.names[series],
+            axes = FALSE,
+            ...)
+        } else {
+          TimeSeriesBoxplot(prediction$distribution[, series, ],
+            time = pred.time,
+            add = plot.original,
+            ylim = ylim,
+            ylab = series.names[series],
+            axes = FALSE,
+            ...)
+        }
+        lines(pred.time, prediction$median[series, ], col = median.color,
+          lty = median.type, lwd = median.width, ...)
+        for (i in 1:length(interval.quantiles)) {
+          lines(pred.time, prediction$interval[series, i, ], col = interval.color,
+            lty = interval.type, lwd = interval.width, ...)
+        }
       } else {
-        pred.time <- tail(time, 1) + (1:n1) * deltat
-      }
-      
-      style <- match.arg(style)
-      if (style == "dynamic") {
-        PlotDynamicDistribution(curves = prediction$distribution[, series, ],
-          timestamps = pred.time,
-          add = plot.original,
-          ylim = ylim,
-          ylab = series.names[series],
-          axes = FALSE,
-          ...)
-      } else {
-        TimeSeriesBoxplot(prediction$distribution[, series, ],
-          time = pred.time,
-          add = plot.original,
-          ylim = ylim,
-          ylab = series.names[series],
-          axes = FALSE,
-          ...)
-      }
-      lines(pred.time, prediction$median[series, ], col = median.color,
-        lty = median.type, lwd = median.width, ...)
-      for (i in 1:length(interval.quantiles)) {
-        lines(pred.time, prediction$interval[series, i, ], col = interval.color,
-          lty = interval.type, lwd = interval.width, ...)
+        total.time <- c(time, pred.time)
+        plot(total.time, rep(0, length(total.time)), type = "n", axes = FALSE)
       }
 
       if (IsEven(row) && (col == 1)) {
