@@ -43,6 +43,16 @@ namespace {
     EXPECT_NE(s2, s3);
   }
 
+  TEST_F(SelectorTest, Complement) {
+    Selector s1("101001101");
+    Selector s2 = s1.complement();
+    EXPECT_EQ(s2.nvars_possible(), s1.nvars_possible());
+    for (int i = 0; i < s1.nvars_possible(); ++i) {
+      EXPECT_EQ(s1[i], !s2[i]);
+    }
+  }
+
+  
   TEST_F(SelectorTest, Indexing) {
     Selector s1("101001101");
     EXPECT_EQ(s1.nvars(), 5);
