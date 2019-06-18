@@ -131,10 +131,12 @@ namespace BOOM {
     // Returns the position of the ith nonzero element in the expanded sparse
     // vector.
     uint indx(uint i) const;  // i=0..n-1, ans in 0..N-1
+    uint sparse_index(uint dense_index) const { return indx(dense_index); }
 
     // Returns the position in the condensed (dense) vector corresponding to
     // position I in the expanded (sparse) vector.
     uint INDX(uint I) const;  // I=0..N-1, ans in 0..n-1
+    uint dense_index(uint sparse_index) const { return INDX(sparse_index); }
 
     // Returns the index of a randomly selected included (or excluded)
     // element.  If no (all) elements are included then -1 is returned
