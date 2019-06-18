@@ -122,13 +122,13 @@ NNET_HDRS = glob([
 ])
 
 POINT_PROCESS_SRCS = glob([
-    "Models/PointProcesses/*.cpp",
-    "Models/PointProcesses/PosteriorSamplers/*.cpp",
+    "Models/PointProcess/*.cpp",
+    "Models/PointProcess/PosteriorSamplers/*.cpp",
 ])
 
 POINT_PROCESS_HDRS = glob([
-    "Models/PointProcesses/*.hpp",
-    "Models/PointProcesses/PosteriorSamplers/*.hpp",
+    "Models/PointProcess/*.hpp",
+    "Models/PointProcess/PosteriorSamplers/*.hpp",
 ])
 
 STATE_SPACE_SRCS = glob([

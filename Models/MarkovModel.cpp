@@ -74,7 +74,7 @@ namespace BOOM {
   void MD::set_prev(const Ptr<MD> &p) { links.set_prev(p); }
   void MD::set_next(const Ptr<MD> &p) { links.set_next(p); }
 
-  ostream &MD::display(ostream &out) const {
+  std::ostream &MD::display(std::ostream &out) const {
     return CategoricalData::display(out);
   }
 

@@ -36,9 +36,8 @@ namespace BOOM {
     }  // namespace
 
     SpikeSlabGlmPrior::SpikeSlabGlmPrior(SEXP r_prior)
-        : prior_inclusion_probabilities_(ToBoomVector(getListElement(
-              r_prior, "prior.inclusion.probabilities"))),
-          spike_(new VariableSelectionPrior(prior_inclusion_probabilities_)),
+        : spike_(new VariableSelectionPrior(ToBoomVector(getListElement(
+              r_prior, "prior.inclusion.probabilities", true)))),
           max_flips_(GetMaxFlips(r_prior))
     {
       Vector prior_mean = ToBoomVector(getListElement(r_prior, "mu"));
@@ -60,12 +59,26 @@ namespace BOOM {
       }
     }
 
+    ConditionalZellnerPrior::ConditionalZellnerPrior(
+        SEXP r_prior) {
+      if (!Rf_inherits(r_prior, "ConditionalZellnerPrior")) {
+        report_error("Expected a ConditionalZellnerPrior.");
+      }
+      spike_.reset(new VariableSelectionPrior(ToBoomVector(getListElement(
+          r_prior, "prior.inclusion.probabilities", true))));
+      prior_mean_ = ToBoomVector(getListElement(r_prior, "prior.mean", true));
+      diagonal_shrinkage_ = Rf_asReal(getListElement(
+          r_prior, "diagonal.shrinkage", true));
+      prior_information_weight_ = Rf_asReal(getListElement(
+          r_prior, "prior.information.weight", true));
+      max_flips_ = GetMaxFlips(r_prior);
+    }
+    
     RegressionConjugateSpikeSlabPrior::RegressionConjugateSpikeSlabPrior(
         SEXP r_spike_slab_prior,
         const Ptr<UnivParams> &residual_variance)
-        : prior_inclusion_probabilities_(ToBoomVector(getListElement(
-              r_spike_slab_prior, "prior.inclusion.probabilities"))),
-          spike_(new VariableSelectionPrior(prior_inclusion_probabilities_)),
+        : spike_(new VariableSelectionPrior(ToBoomVector(getListElement(
+              r_spike_slab_prior, "prior.inclusion.probabilities")))),
           siginv_prior_(new ChisqModel(
               Rf_asReal(getListElement(r_spike_slab_prior, "prior.df")),
               Rf_asReal(getListElement(r_spike_slab_prior, "sigma.guess")))),
@@ -129,9 +142,8 @@ namespace BOOM {
 
     IndependentRegressionSpikeSlabPrior::IndependentRegressionSpikeSlabPrior(
         SEXP r_prior, const Ptr<UnivParams> &sigsq)
-        : prior_inclusion_probabilities_(ToBoomVector(getListElement(
-              r_prior, "prior.inclusion.probabilities"))),
-          spike_(new VariableSelectionPrior(prior_inclusion_probabilities_)),
+        : spike_(new VariableSelectionPrior(ToBoomVector(getListElement(
+              r_prior, "prior.inclusion.probabilities", true)))),
           slab_(new IndependentMvnModelGivenScalarSigma(
               ToBoomVector(getListElement(r_prior, "mu")),
               ToBoomVector(getListElement(r_prior, "prior.variance.diagonal")),

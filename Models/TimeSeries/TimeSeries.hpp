@@ -66,7 +66,7 @@ namespace BOOM {
     // reset their links so they point in sequence.
     void set_links();
 
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
     uint element_size(bool minimal = true) const;  // size of one data point
     uint length() const;                           // length of the series
     virtual uint size(bool minimal = true) const;
@@ -224,7 +224,7 @@ namespace BOOM {
   }
 
   template <class D>
-  ostream &TimeSeries<D>::display(ostream &out) const {
+  std::ostream &TimeSeries<D>::display(std::ostream &out) const {
     for (uint i = 0; i < length(); ++i) {
       (*this)[i]->display(out);
       out << std::endl;

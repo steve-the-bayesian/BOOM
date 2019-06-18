@@ -54,6 +54,12 @@ namespace BOOM {
     Ptr<VectorData> Xptr() { return x_; }
     const Ptr<VectorData> Xptr() const { return x_; }
 
+    // Replace the representation of x_ by a new pointer.  This is an unusual
+    // operation.
+    void set_Xptr(const Ptr<VectorData> &x) {
+      x_ = x;
+    }
+    
    private:
     Ptr<VectorData> x_;
   };
@@ -80,13 +86,19 @@ namespace BOOM {
     GlmData *clone() const override;
 
     // required virtual functions
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     const value_type &y() const;
     void set_y(const value_type &Y);
 
     Ptr<DAT> Yptr() { return y_; }
 
+    // Replace the representation of the response with a new object.  This is an
+    // unusual operation.
+    void set_Yptr(const Ptr<DAT> &y) {
+      y_ = y;
+    }
+    
    private:
     // If an intercept is desired, it must be explicitly included.
     Ptr<DAT> y_;
@@ -112,7 +124,7 @@ namespace BOOM {
       return new WeightedGlmData(*this);
     }
 
-    ostream &display(ostream &out) const override {
+    std::ostream &display(std::ostream &out) const override {
       out << *weight_ << " ";
       return (Base::display(out));
     }
@@ -195,7 +207,7 @@ namespace BOOM {
   }
 
   template <class D>
-  ostream &GlmData<D>::display(ostream &out) const {
+  std::ostream &GlmData<D>::display(std::ostream &out) const {
     y_->display(out);
     out << " ";
     Xptr()->display(out);

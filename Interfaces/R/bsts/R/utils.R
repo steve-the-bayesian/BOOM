@@ -141,8 +141,7 @@ DateToPOSIX <- function(timestamps) {
   return(as.POSIXct(as.character(timestamps)))
 }
 
-
-
+###----------------------------------------------------------------------
 StateSizes <- function(state.specification) {
   ## Returns a vector giving the number of dimensions used by each state
   ## component in the state vector.
@@ -154,14 +153,15 @@ StateSizes <- function(state.specification) {
   ##   A numeric vector giving the dimension of each state component.
   state.component.names <- sapply(state.specification, function(x) x$name)
   state.sizes <- sapply(state.specification, function(x) x$size)
-  if (any(is.na(state.sizes) ||
-          any(is.null(state.sizes)) ||
-          any(!is.numeric(state.sizes)))) {
+  if (any(is.na(state.sizes)) ||
+        any(is.null(state.sizes)) ||
+        any(!is.numeric(state.sizes))) {
     stop("One or more state components were missing the 'size' attribute.")
   }
   names(state.sizes) <- state.component.names
   return(state.sizes)
 }
+
 ###----------------------------------------------------------------------
 SuggestBurn <- function(proportion, bsts.object) {
   ## Suggests a size of a burn-in sample to be discarded from the MCMC
@@ -273,3 +273,125 @@ Shorten <- function(words) {
   stopifnot(inherits(time0, "POSIXt"))
   return(time0)
 }
+
+LongToWideArray <- function(predictor.matrix, series.id, timestamps) {
+  ## Convert a matrix of predictors into an array with dimensions [series, time,
+  ## xdim]
+  ##
+  ## Args:
+  ##   predictor.matrix:  A matrix of predictor variables.
+  ##   series.id: A factor indicating the series to which each row of
+  ##     predictor.matrix belongs.
+  ##   timestamps: A vector of timestamps indicating the time period to which
+  ##     each row of predictor.matrix belongs.
+  ##
+  ## Returns:
+  ##   A 3-way array containing the information in predictor.matrix, organized
+  ##   according to series and time.
+  unique.times <- sort(unique(timestamps))
+  series.id <- as.factor(series.id)
+  unique.names <- levels(series.id)
+  ntimes <- length(unique.times)
+  nseries <- length(unique.names)
+  xdim <- ncol(predictor.matrix)
+  
+  ans <- array(NA, dim = c(nseries, ntimes, xdim))
+  dimnames(ans) <- list(unique.names, as.character(unique.times),
+    colnames(predictor.matrix))
+  for (series in 1:nseries) {
+    index <- as.numeric(series.id) == series
+    series.predictors <- predictor.matrix[index, , drop = FALSE]
+    series.timestamps <- as.character(timestamps[index])
+    ans[series, series.timestamps, ] <- series.predictors
+  }
+  return(ans)
+}
+
+LongToWide <- function(response, series.id, timestamps) {
+  ## Convert a multivariate time series in "long" format to "wide" format.
+  ##
+  ## Args:
+  ##   response:  The time series values.
+  ##   series.id: A vector of labels of the same length as 'response' indicating
+  ##     the time series to wihch each element of 'response' belongs.
+  ##   timestamps:  The time period to which each observation belongs.
+  ##
+  ## Returns:
+  ##   A zoo matrix with rows corresponding to time stamps and columns
+  ##   corresponding to different time series.  The matrix elements are the
+  ##   'response' values.
+  ##
+  ## Note:
+  ##   This could be done with 'reshape'.  I have reworked things by hand in the
+  ##   interest of readability.
+  stopifnot(length(response) == length(series.id),
+    length(response) == length(timestamps))
+  unique.times <- sort(unique(timestamps))
+  series.id <- as.factor(series.id)
+  unique.names <- levels(series.id)
+  ntimes <- length(unique.times)
+  nseries <- length(unique.names)
+  
+  ans <- matrix(nrow = ntimes, ncol = nseries)
+  if (ntimes == 0 || nseries == 0) {
+    return(ans)
+  }
+  colnames(ans) <- as.character(levels(series.id))
+
+  for (i in 1:ntimes) {
+    index <- timestamps == unique.times[i]
+    observed <- as.character(series.id[index])
+    ans[i, observed] <- response[index]
+  }
+  ans <- zoo(ans, unique.times)
+  return(ans)
+}
+
+WideToLong <- function(response, na.rm = TRUE) {
+  ## Convert a multiple time series in wide format, to long format.
+  ##
+  ## Args:
+  ##   respponse: A time series matrix (or zoo matrix).  Rows represent time
+  ##     points.  Columns are different series.
+  ##   na.rm: If TRUE then missing values in the time series matrix will be
+  ##     omitted from the returned data frame.
+  ##
+  ## Returns:
+  ##   A data frame in "long" format containing three columns:
+  ##   - The first column contains the timestamps.
+  ##   - The second column contains a factor indicating which column is being
+  ##      measured.
+  ##   - The third column contains the value of the time series.
+  ##
+  ## Note:
+  ##   This could be done with 'reshape'.  I have reworked things by hand in the
+  ##   interest of readability.
+  stopifnot(is.matrix(response))
+  if (nrow(response) == 0) {
+    return(NULL)
+  }
+  nseries <- ncol(response)
+  
+  if (is.zoo(response)) {
+    timestamps <- index(response)
+  } else {
+    timestamps <- 1:nrow(response);
+  }
+  vnames <- colnames(response)
+  if (is.null(vnames)) {
+    vnames <- base::make.names(1:nseries)
+  }
+  ntimes <- length(unique(timestamps))
+  
+  values <- as.numeric(t(response))
+  labels <- factor(rep(vnames, times = ntimes), levels = vnames)
+  timestamps <- rep(timestamps, each = nseries)
+  
+  ans <- data.frame("time" = timestamps, "series" = labels, "values" = values)
+  if (na.rm) {
+    missing <- is.na(values)
+    ans <- ans[!missing, ]
+  }
+  return(ans)
+}
+

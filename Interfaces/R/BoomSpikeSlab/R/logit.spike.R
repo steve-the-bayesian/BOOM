@@ -23,63 +23,61 @@ logit.spike <- function(formula,
   ## spike-and-slab prior.
   ##
   ## Args:
-  ##   formula: model formula, as would be passed to 'glm', specifying
-  ##     the maximal model (i.e. the model with all predictors
-  ##     included).
+  ##   formula: model formula, as would be passed to 'glm', specifying the
+  ##     maximal model (i.e. the model with all predictors included).
   ##   niter:  desired number of MCMC iterations
   ##   data:  optional data.frame containing the data described in 'formula'
-  ##   subset: an optional vector specifying a subset of observations
-  ##     to be used in the fitting process.
-  ##   prior: an optional object inheriting from LogitPrior and
-  ##     SpikeSlabPriorBase.  If missing, a prior will be constructed
-  ##     by calling LogitZellnerPrior with the remaining arguments.
-  ##   na.action: a function which indicates what should happen when
-  ##     the data contain ‘NA’s.  The default is set by the
-  ##     ‘na.action’ setting of ‘options’, and is ‘na.fail’ if that is
-  ##     unset.  The ‘factory-fresh’ default is ‘na.omit’.  Another
-  ##     possible value is ‘NULL’, no action.  Value ‘na.exclude’ can
-  ##     be useful.
+  ##   subset: an optional vector specifying a subset of observations to be used
+  ##     in the fitting process.
+  ##   prior: an optional object inheriting from SpikeSlabGlmPrior.  If missing,
+  ##     a prior will be constructed by calling LogitZellnerPrior with the
+  ##     remaining arguments.
+  ##   na.action: a function which indicates what should happen when the data
+  ##     contain ‘NA’s.  The default is set by the ‘na.action’ setting of
+  ##     ‘options’, and is ‘na.fail’ if that is unset.  The ‘factory-fresh’
+  ##     default is ‘na.omit’.  Another possible value is ‘NULL’, no action.
+  ##     Value ‘na.exclude’ can be useful.
   ##   contrasts: an optional list. See the ‘contrasts.arg’ of
   ##     ‘model.matrix.default’.  An optional list.
-  ##   drop.unused.levels: should factor levels that are unobserved be
-  ##     dropped from the model?
-  ##   initial.value: Initial value of logistic regression
-  ##     coefficients for the MCMC algorithm.  Can be given as a
-  ##     numeric vector, a 'logit.spike' object, or a 'glm' object.
-  ##     If a 'logit.spike' object is used for initialization, it is
-  ##     assumed to be a previous MCMC run to which 'niter' futher
-  ##     iterations should be added.  If a 'glm' object is supplied,
-  ##     its coefficients will be used as the initial values in the
+  ##   drop.unused.levels: should factor levels that are unobserved be dropped
+  ##     from the model?
+  ##   initial.value: Initial value of logistic regression coefficients for the
+  ##     MCMC algorithm.  Can be given as a numeric vector, a 'logit.spike'
+  ##     object, or a 'glm' object.  If a 'logit.spike' object is used for
+  ##     initialization, it is assumed to be a previous MCMC run to which
+  ##     'niter' futher iterations should be added.  If a 'glm' object is
+  ##     supplied, its coefficients will be used as the initial values in the
   ##     MCMC simulation.
   ##   ping: if positive, then print a status update every 'ping' MCMC
   ##     iterations.
   ##   nthreads:  The number of threads to use when imputing latent data.
-  ##   clt.threshold: The smallest number of successes or failures
-  ##     needed to do use asymptotic data augmentation.
-  ##   mh.chunk.size: The largest number of parameters to draw
-  ##     together in a single Metropolis-Hastings proposal.  A
-  ##     non-positive number means to use a single chunk.
-  ##   proposal.df: The degrees of freedom parameter for the
-  ##     multivariate T proposal distribution used for
-  ##     Metropolis-Hastings updates.  A nonpositive number means to
-  ##     use a Gaussian proposal.
+  ##   clt.threshold: The smallest number of successes or failures needed to do
+  ##     use asymptotic data augmentation.
+  ##   mh.chunk.size: The largest number of parameters to draw together in a
+  ##     single Metropolis-Hastings proposal.  A non-positive number means to
+  ##     use a single chunk.
+  ##   proposal.df: The degrees of freedom parameter for the multivariate T
+  ##     proposal distribution used for Metropolis-Hastings updates.  A
+  ##     nonpositive number means to use a Gaussian proposal.
   ##   sampler.weights: A 3-vector representing a discrete probability
   ##     distribution.  What fraction of the time should the sampler spend.  The
   ##     vector must have names "DA", "TIM", and "RWM" corresponding to data
   ##     augmentation, tailored independence Metropolis, and random walk
   ##     Metropolis.
-  ##   seed: Seed to use for the C++ random number generator.  NULL or
-  ##     an int.  If NULL, then the seed will be taken from the global
-  ##     .Random.seed object.
+  ##   seed: Seed to use for the C++ random number generator.  NULL or an int.
+  ##     If NULL, then the seed will be taken from the global .Random.seed
+  ##     object.
   ##   ... : parameters to be passed to LogitZellnerPrior.
   ##
   ## Returns:
   ##   An object of class 'logit.spike', which is a list containing the
   ##   following values
-  ##   beta: A 'niter' by 'ncol(X)' matrix of regression coefficients
-  ##     many of which may be zero.  Each row corresponds to an MCMC
-  ##     iteration.
-  ##   prior:  The prior that was used to fit the model.
+  ## 
+  ##   - beta: A 'niter' by 'ncol(X)' matrix of regression coefficients
+  ##       many of which may be zero.  Each row corresponds to an MCMC
+  ##       iteration.
+  ##   - prior:  The prior that was used to fit the model.
+  ## 
   ##  In addition, the returned object contains sufficient details for
   ##  the call to model.matrix in the predict.lm.spike method.
   stopifnot(is.numeric(sampler.weights),
@@ -101,10 +99,10 @@ logit.spike <- function(formula,
   mt <- attr(mf, "terms")
   response <- model.response(mf, "any")
 
-  ## Unpack the vector of trials.  If y is a 2-column matrix then the
-  ## first column is the vector of success counts and the second is
-  ## the vector of failure counts.  Otherwise y is just a vector, and
-  ## the vector of trials should just be a column of 1's.
+  ## Unpack the vector of trials.  If y is a 2-column matrix then the first
+  ## column is the vector of success counts and the second is the vector of
+  ## failure counts.  Otherwise y is just a vector, and the vector of trials
+  ## should just be a column of 1's.
   if (!is.null(dim(response)) && length(dim(response)) > 1) {
     stopifnot(length(dim(response)) == 2, ncol(response) == 2)
     ## If the user passed a formula like "cbind(successes, failures) ~
@@ -121,8 +119,7 @@ logit.spike <- function(formula,
   if (is.null(prior)) {
     prior <- LogitZellnerPrior(design, response, ...)
   }
-  stopifnot(inherits(prior, "SpikeSlabPriorBase"))
-  stopifnot(inherits(prior, "LogitPrior"))
+  stopifnot(inherits(prior, "SpikeSlabGlmPrior"))
 
   if (!is.null(initial.value)) {
     if (inherits(initial.value, "logit.spike")) {
@@ -184,8 +181,8 @@ logit.spike <- function(formula,
   ans$call <- cl
   ans$terms <- mt
 
-  ## The next few entries are needed by some of the diagnostics plots
-  ## and by summary.logit.spike.
+  ## The next few entries are needed by some of the diagnostics plots and by
+  ## summary.logit.spike.
   fitted.logits <- design %*% t(ans$beta)
   log.likelihood.contributions <-
       response * fitted.logits +
@@ -204,10 +201,10 @@ logit.spike <- function(formula,
   ans$fitted.probabilities <- rowMeans(fitted.probabilities)
   ans$fitted.logits <- rowMeans(fitted.logits)
 
-  # Chop observed data into 10 buckets.  Equal numbers of data points
-  # in each bucket.  Compare the average predicted success probability
-  # of the observations in that bucket with the empirical success
-  # probability for that bucket.
+  # Chop observed data into 10 buckets.  Equal numbers of data points in each
+  # bucket.  Compare the average predicted success probability of the
+  # observations in that bucket with the empirical success probability for that
+  # bucket.
   #
   # dimension of fitted values is nobs x niter
 
@@ -222,15 +219,13 @@ logit.spike <- function(formula,
   colnames(ans$beta) <- colnames(design)
 
   if (has.data) {
-    ## Note, if a data.frame was passed as an argument to this function
-    ## then saving the data frame will be cheaper than saving the
-    ## model.frame.
+    ## Note, if a data.frame was passed as an argument to this function then
+    ## saving the data frame will be cheaper than saving the model.frame.
     ans$training.data <- data
   } else {
-    ## If the model was called with a formula referring to objects in
-    ## another environment, then saving the model frame will capture
-    ## these variables so they can be used to recreate the design
-    ## matrix.
+    ## If the model was called with a formula referring to objects in another
+    ## environment, then saving the model frame will capture these variables so
+    ## they can be used to recreate the design matrix.
     ans$training.data <- mf
   }
 
@@ -246,19 +241,19 @@ predict.logit.spike <- function(object, newdata, burn = 0,
   ## Args:
   ##   object: object of class "logit.spike" returned from the logit.spike
   ##     function
-  ##   newdata: A data frame including variables with the same names
-  ##     as the data frame used to fit 'object'.
-  ##   burn: The number of MCMC iterations in 'object' that should be
-  ##     discarded.  If burn < 0 then all iterations are kept.
-  ##   type: The type of prediction desired.  If 'prob' then the
-  ##     prediction is returned on the probability scale.  If 'logit'
-  ##     then it is returned on the logit scale (i.e. the scale of the
-  ##     linear predictor).  Also accepts 'link' and 'response' for
-  ##     compatibility with predict.glm.
+  ##   newdata: A data frame including variables with the same names as the data
+  ##     frame used to fit 'object'.
+  ##   burn: The number of MCMC iterations in 'object' that should be discarded.
+  ##     If burn < 0 then all iterations are kept.
+  ##   type: The type of prediction desired.  If 'prob' then the prediction is
+  ##     returned on the probability scale.  If 'logit' then it is returned on
+  ##     the logit scale (i.e. the scale of the linear predictor).  Also accepts
+  ##     'link' and 'response' for compatibility with predict.glm.
   ##   ...: unused, but present for compatibility with generic predict().
+  ##
   ## Returns:
-  ##   A matrix of predictions, with each row corresponding to a row
-  ##   in newdata, and each column to an MCMC iteration.
+  ##   A matrix of predictions, with each row corresponding to a row in newdata,
+  ##   and each column to an MCMC iteration.
   type <- match.arg(type)
   predictors <- GetPredictorMatrix(object, newdata, na.action = na.action, ...)
   beta <- object$beta
@@ -317,22 +312,21 @@ PlotLogitSpikeResiduals <- function(model, ...) {
   ##
   ## Details:
   ##
-  ## The "deviance residuals" are defined as the signed square root
-  ## each observation's contribution to log likelihood.  The sign of
-  ## the residual is positive if half or more of the trials associated
-  ## with an observation are successes.  The sign is negative
-  ## otherwise.
+  ## The "deviance residuals" are defined as the signed square root each
+  ## observation's contribution to log likelihood.  The sign of the residual is
+  ## positive if half or more of the trials associated with an observation are
+  ## successes.  The sign is negative otherwise.
   ##
-  ##  The "contribution to log likelihood" is taken to be the posterior mean
-  ##  of an observations log likelihood contribution, averaged over the life
-  ##  of the MCMC chain.
+  ##  The "contribution to log likelihood" is taken to be the posterior mean of
+  ##  an observations log likelihood contribution, averaged over the life of the
+  ##  MCMC chain.
   ##
-  ##  The deviance residual is plotted against the fitted value, again
-  ##  averaged over the life of the MCMC chain.
+  ##  The deviance residual is plotted against the fitted value, again averaged
+  ##  over the life of the MCMC chain.
   ##
-  ##  The plot also shows the .95 and .99 bounds from the square root
-  ##  of a chi-square(1) random variable.  As a rough approximation,
-  ##  about 5% and 1% of the data should lie outside these bounds.
+  ##  The plot also shows the .95 and .99 bounds from the square root of a
+  ##  chi-square(1) random variable.  As a rough approximation, about 5% and 1%
+  ##  of the data should lie outside these bounds.
   residuals <- model$deviance.residuals
   fitted <- model$fitted.logits
   plot(fitted,
@@ -422,15 +416,17 @@ summary.logit.spike <- function(
     coefficients = TRUE,
     ...) {
   ## Summary method for logit.spike coefficients
+  ##
   ## Args:
   ##   object:  an object of class 'logit.spike'
-  ##   burn: an integer giving the number of MCMC iterations to
-  ##     discard as burn-in
-  ##   order: Logical indicating whether the output should be ordered
-  ##     according to posterior inclusion probabilities
+  ##   burn: an integer giving the number of MCMC iterations to discard as
+  ##     burn-in
+  ##   order: Logical indicating whether the output should be ordered according
+  ##     to posterior inclusion probabilities
+  ##
   ## Returns:
-  ## An object of class 'summary.logit.spike' that summarizes the
-  ## model coefficients as in SummarizeSpikeSlabCoefficients.
+  ##   An object of class 'summary.logit.spike' that summarizes the model
+  ##   coefficients as in SummarizeSpikeSlabCoefficients.
   if (coefficients) {
     coefficient.table <-
         SummarizeSpikeSlabCoefficients(object$beta, burn, order)

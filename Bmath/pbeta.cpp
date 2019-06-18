@@ -72,7 +72,7 @@ double pbeta_raw(double x, double pin, double qin, int lower_tail, int log_p)
     bratio(pin, qin, x, x1, &w, &wc, &ierr, log_p); /* -> ./toms708.c */
     /* ierr = 8 is about inaccuracy in extreme cases */
     if(ierr && (ierr != 8 || log_p) ) {
-      ostringstream err;
+      std::ostringstream err;
       err << "pbeta_raw() -> bratio() gave error code " << ierr << ".";
       report_error(err.str());
     }

@@ -40,7 +40,7 @@ namespace BOOM {
     return new HierarchicalZeroInflatedGammaData(*this);
   }
 
-  ostream &HierarchicalZeroInflatedGammaData::display(ostream &out) const {
+  std::ostream &HierarchicalZeroInflatedGammaData::display(std::ostream &out) const {
     out << number_of_zeros_ << " " << number_of_positives_ << " " << sum_ << " "
         << sum_of_logs_of_positives_;
     return out;

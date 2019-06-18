@@ -135,7 +135,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &WMS::print(ostream &out) const {
+  std::ostream &WMS::print(std::ostream &out) const {
     return out << "sum_ = " << sum_ << endl
                << "n_ = " << n_ << endl
                << "sumw_ = " << sumw_ << endl

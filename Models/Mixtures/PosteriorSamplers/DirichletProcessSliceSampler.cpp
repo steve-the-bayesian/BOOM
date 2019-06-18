@@ -29,7 +29,7 @@ namespace BOOM {
     typedef DirichletProcessSliceSampler DPSS;
     typedef DirichletProcessMixtureModel DPMM;
     typedef DirichletProcessMixtureComponent DpMixtureComponent;
-    const bool print_mcmc_details = false;
+    //    const bool print_mcmc_details = false;
   }  // namespace
 
   DPSS::DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
@@ -232,11 +232,11 @@ namespace BOOM {
 
   //----------------------------------------------------------------------
   void DPSS::attempt_merge_move(int data_index_1, int data_index_2) {
-    if (print_mcmc_details) {
-      std::cout << "Attempting to merge clusters "
-                << model_->cluster_indicator(data_index_1) << " and "
-                << model_->cluster_indicator(data_index_2) << "." << std::endl;
-    }
+    // if (print_mcmc_details) {
+    //   std::cout << "Attempting to merge clusters "
+    //             << model_->cluster_indicator(data_index_1) << " and "
+    //             << model_->cluster_indicator(data_index_2) << "." << std::endl;
+    // }
     MoveTimer timer = move_accounting_.start_time("Merge");
     SplitMerge::Proposal proposal =
         split_merge_strategy_->propose_merge(data_index_1, data_index_2, rng());
@@ -245,25 +245,25 @@ namespace BOOM {
     if (logu < log_MH_alpha) {
       model_->accept_split_merge_proposal(proposal);
       move_accounting_.record_acceptance("Merge");
-      if (print_mcmc_details) {
-        std::cout << "Merge successful with log alpha = " << log_MH_alpha << "."
-                  << std::endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "Merge successful with log alpha = " << log_MH_alpha << "."
+      //             << std::endl;
+      // }
     } else {
       // Proposal failed, leave things as they are.
       move_accounting_.record_rejection("Merge");
-      if (print_mcmc_details) {
-        std::cout << "Merge failed with log alpha = " << log_MH_alpha << "."
-                  << std::endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "Merge failed with log alpha = " << log_MH_alpha << "."
+      //             << std::endl;
+      // }
     }
   }
   //----------------------------------------------------------------------
   void DPSS::attempt_split_move(int data_index_1, int data_index_2) {
-    if (print_mcmc_details) {
-      std::cout << "Attempting to split cluster "
-                << model_->cluster_indicator(data_index_1) << std::endl;
-    }
+    // if (print_mcmc_details) {
+    //   std::cout << "Attempting to split cluster "
+    //             << model_->cluster_indicator(data_index_1) << std::endl;
+    // }
     MoveTimer time = move_accounting_.start_time("Split");
     SplitMerge::Proposal proposal =
         split_merge_strategy_->propose_split(data_index_1, data_index_2, rng());
@@ -272,16 +272,16 @@ namespace BOOM {
     if (logu < log_MH_alpha) {
       model_->accept_split_merge_proposal(proposal);
       move_accounting_.record_acceptance("Split");
-      if (print_mcmc_details) {
-        std::cout << "Split was successful with log_alpha = " << log_MH_alpha
-                  << "." << std::endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "Split was successful with log_alpha = " << log_MH_alpha
+      //             << "." << std::endl;
+      // }
     } else {
       move_accounting_.record_rejection("Split");
-      if (print_mcmc_details) {
-        std::cout << "Split failed with log_alpha = " << log_MH_alpha << "."
-                  << std::endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "Split failed with log_alpha = " << log_MH_alpha << "."
+      //             << std::endl;
+      // }
     }
   }
   //----------------------------------------------------------------------
@@ -313,17 +313,17 @@ namespace BOOM {
     double log_target_density_ratio = log_likelihood_ratio + log_prior_ratio +
                                       log_allocation_probability_ratio +
                                       log_mixing_weight_prior_ratio;
-    if (print_mcmc_details) {
-      std::cout << "positive numbers favor splits" << endl
-                << "   log likelihood ratio:       " << log_likelihood_ratio
-                << std::endl
-                << "   log_prior_ratio:            " << log_prior_ratio
-                << std::endl
-                << "   log_prior_allocation_ratio: "
-                << log_allocation_probability_ratio << std::endl
-                << "   log stick ratio:            "
-                << log_mixing_weight_prior_ratio << std::endl;
-    }
+    // if (print_mcmc_details) {
+    //   std::cout << "positive numbers favor splits" << endl
+    //             << "   log likelihood ratio:       " << log_likelihood_ratio
+    //             << std::endl
+    //             << "   log_prior_ratio:            " << log_prior_ratio
+    //             << std::endl
+    //             << "   log_prior_allocation_ratio: "
+    //             << log_allocation_probability_ratio << std::endl
+    //             << "   log stick ratio:            "
+    //             << log_mixing_weight_prior_ratio << std::endl;
+    // }
     double log_MH_ratio = log_target_density_ratio -
                           proposal.log_split_to_merge_probability_ratio();
 

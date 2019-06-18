@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#ifndef DATA_TYPES_H
-#define DATA_TYPES_H
+#ifndef BOOM_MODELS_DATA_TYPES_H
+#define BOOM_MODELS_DATA_TYPES_H
 
 #include <cmath>
 #include <map>  // for STL's map container
@@ -51,10 +51,10 @@ namespace BOOM {
     Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
     virtual Data *clone() const = 0;
     virtual ~Data() = default;
-    virtual ostream &display(ostream &) const = 0;
+    virtual std::ostream &display(std::ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
-    void signal() const {
+    void signal() {
       uint n = signals_.size();
       for (uint i = 0; i < n; ++i) {
         signals_[i]();
@@ -76,11 +76,11 @@ namespace BOOM {
 
    private:
     missing_status missing_flag;
-    mutable std::vector<std::function<void(void)> > signals_;
+    std::vector<std::function<void(void)> > signals_;
   };
   //======================================================================
-  ostream &operator<<(ostream &out, const Data &d);
-  ostream &operator<<(ostream &out, const Ptr<Data> &dp);
+  std::ostream &operator<<(std::ostream &out, const Data &d);
+  std::ostream &operator<<(std::ostream &out, const Ptr<Data> &dp);
   void print_data(const Data &d);
 
   //==========================================================================-
@@ -116,7 +116,7 @@ namespace BOOM {
         this->signal();
       }
     }
-    ostream &display(ostream &out) const {
+    std::ostream &display(std::ostream &out) const {
       out << value_;
       return out;
     }
@@ -138,7 +138,7 @@ namespace BOOM {
     VectorData *clone() const override;
 
     uint dim() const { return x.size(); }
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     const Vector &value() const override { return x; }
     void set(const Vector &rhs, bool signal_change = true) override;
@@ -161,9 +161,11 @@ namespace BOOM {
     PartiallyObservedVectorData(const Vector &y,
                                 const Selector &obs = Selector());
     PartiallyObservedVectorData * clone() const override;
-    const Selector &observation_status() const { return obs_; }
     void set(const Vector &value, bool signal_change = true) override;
 
+    Selector &observation_status() { return obs_; }
+    const Selector &observation_status() const { return obs_; }
+    
    private:
     Selector obs_;
   };
@@ -179,7 +181,7 @@ namespace BOOM {
     uint nrow() const { return x.nrow(); }
     uint ncol() const { return x.ncol(); }
 
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     const Matrix &value() const override { return x; }
     void set(const Matrix &rhs, bool sig = true) override;
@@ -191,4 +193,4 @@ namespace BOOM {
   
 }  // namespace BOOM
 
-#endif  // DATA_TYPES_H
+#endif  // BOOM_MODELS_DATA_TYPES_H

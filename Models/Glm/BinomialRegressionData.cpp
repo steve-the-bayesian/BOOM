@@ -67,7 +67,7 @@ namespace BOOM {
     }
   }
 
-  ostream &BRD::display(ostream &out) const {
+  std::ostream &BRD::display(std::ostream &out) const {
     out << n_ << " ";
     return GlmData<DoubleData>::display(out);
   }

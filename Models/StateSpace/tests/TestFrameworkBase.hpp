@@ -28,16 +28,20 @@ namespace BOOM {
     // state models.
     //
     // Idiom:
-    //   StateModuleManager state_modules;
+    //   StateModuleManager<StateModel, ScalarStateSpaceModelBase> state_modules;
     //   state_modules.AddModule(new LocalLevelModule);
     //   ConcreteTestFramework framework;
     //   framework.AddState(state_modules);
     //   int niter = 1000, time dimension = 100, burn = 100;
     //   framework.Test(niter, time_dimension, burn);
+    template <class STATE_MODEL_TYPE = StateModel,
+              class MODEL_TYPE = StateSpaceModelBase>
     class TestFrameworkBase {
      public:
       virtual ~TestFrameworkBase() {}
-      void AddState(const StateModuleManager &state) {
+      
+      void AddState(const StateModuleManager<
+                    STATE_MODEL_TYPE, MODEL_TYPE> &state) {
         state_modules_ = state;
       }
 
@@ -56,8 +60,14 @@ namespace BOOM {
       }
 
      protected:
-      StateModuleManager & state_modules() { return state_modules_; }
-      const StateModuleManager & state_modules() const {return state_modules_;}
+      StateModuleManager<STATE_MODEL_TYPE, MODEL_TYPE> & state_modules() {
+        return state_modules_;
+      }
+
+      const StateModuleManager<STATE_MODEL_TYPE, MODEL_TYPE> &
+      state_modules() const {
+        return state_modules_;
+      }
       
      private:
       virtual void SimulateData(int time_dimension) = 0;
@@ -66,7 +76,7 @@ namespace BOOM {
       virtual void RunMcmc(int niter) = 0;
       virtual void Check() = 0;
 
-      StateModuleManager state_modules_;
+      StateModuleManager<STATE_MODEL_TYPE, MODEL_TYPE> state_modules_;
     };
         
   } // namespace StateSpaceTesting

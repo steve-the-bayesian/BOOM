@@ -33,7 +33,7 @@ namespace BOOM {
 
   HDD *HDD::clone() const { return new HDD(*this); }
 
-  ostream &HDD::display(ostream &out) const { return out << counts_; }
+  std::ostream &HDD::display(std::ostream &out) const { return out << counts_; }
 
   HDM::HierarchicalDirichletModel(double sample_size, const Vector &mean)
       : HierarchicalBase(new DirichletModel(sample_size * mean)) {

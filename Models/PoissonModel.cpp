@@ -112,7 +112,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &PoissonSuf::print(ostream &out) const {
+  std::ostream &PoissonSuf::print(std::ostream &out) const {
     return out << sum_ << " " << n_;
   }
 

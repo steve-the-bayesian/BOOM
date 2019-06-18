@@ -24,6 +24,10 @@
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
+#include "Models/Glm/MultivariateRegression.hpp"
+
 namespace BOOM {
 
   class GlmModel;
@@ -57,55 +61,182 @@ namespace BOOM {
   // The "Mu" parameter is the prior mean.  Mu decreases in
   // relevance as kappa->0
   //
-  // Users of this class must manage xtwx_ explicitly.  For problems
-  // where X and weights are fixed then add_x should be called once
-  // per row of X shortly after initialization.  For problems where X
-  // or w change frequently then clear_xtwx() and add_x() should be
-  // called as needed to manage the changes.
-  class MvnGivenX : public MvnBase,
-                    public ParamPolicy_2<VectorParams, UnivParams>,
-                    public IID_DataPolicy<GlmCoefs>,
-                    public PriorPolicy {
+  class MvnGivenXBase : public MvnBase,
+                        public ParamPolicy_2<VectorParams, UnivParams>,
+                        public IID_DataPolicy<GlmCoefs>,
+                        public PriorPolicy {
    public:
-    MvnGivenX(const Vector &Mu, double kappa, double diag_wgt = 0);
+    // Args:
+    //   mean:  The mean of the distribution.
+    //   prior_sample_size:  The number of observations worth of prior weight.
+    //   precision_diagonal:  The diagonal that X'X is to be averaged with.  
+    //   diagonal_weight: A number between 0 and 1 indicating the weight to put
+    //     on the diagonal when X'X is averaged with its diagonal.
+    MvnGivenXBase(const Ptr<VectorParams> &mean,
+                  const Ptr<UnivParams> &prior_sample_size,
+                  const Vector &precision_diagonal = Vector(),
+                  double diagonal_weight = 0);
 
-    MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &kappa,
-              double diag_wgt = 0);
-    MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &kappa,
-              const Vector &Lambda, double diag_wgt = 0);
-    MvnGivenX(const MvnGivenX &rhs);
+    MvnGivenXBase(const MvnGivenXBase &rhs) = default;
+    MvnGivenXBase(MvnGivenXBase &&rhs) = default;
 
-    MvnGivenX *clone() const override;
-    virtual void initialize_params();
-    virtual void add_x(const Vector &x, double w = 1.0);
-    virtual void clear_xtwx();
-    virtual const SpdMatrix &xtwx() const;
+    MvnGivenXBase *clone() const override = 0;
 
-    uint dim() const override;
-    const Vector &mu() const override;
-    double kappa() const;
+    //---------------------------------------------------------------------------
+    // MvnBase overrides
+    //---------------------------------------------------------------------------
+    uint dim() const override {return mu().size();}
+    const Vector &mu() const override {return Mu_prm()->value();}
+    double kappa() const {return Kappa_prm()->value();}
+
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
     double ldsi() const override;
-
-    const Ptr<VectorParams> Mu_prm() const;
-    const Ptr<UnivParams> Kappa_prm() const;
-    Ptr<VectorParams> Mu_prm();
-    Ptr<UnivParams> Kappa_prm();
-
-    double diagonal_weight() const;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
+    //---------------------------------------------------------------------------
+    // Parameter access
+    //---------------------------------------------------------------------------
+    const Ptr<VectorParams> Mu_prm() const {return prm1();}
+    Ptr<VectorParams> Mu_prm() {return prm1();}
+    
+    const Ptr<UnivParams> Kappa_prm() const {return prm2();}
+    Ptr<UnivParams> Kappa_prm() {return prm2();}
+
+    double diagonal_weight() const { return diagonal_weight_; }
+
+    // Note that diagonal might be empty.
+    const Vector &diagonal() const { return diagonal_; }
+    
+    // An observer that can be set when the precision matrix is determined by
+    // outside data that might change.
+    std::function<void(void)> observer() {
+      return [this]() {this->current_ = false;};
+    }
+
+   protected:
+    bool current() const {return current_;}
+    void mark_not_current() const {current_ = false;}
+
+    void store_precision_matrix(SpdMatrix &&xtx) const;
    private:
-    virtual void set_ivar() const;  // logical constness
-
+    // Sets the value of precision_, and sets current_ to true.
+    virtual void set_precision_matrix() const = 0;
+    
+    // The weight to give to the diagonal in the average of diagonal_ and X'X.
     double diagonal_weight_;
-    Vector Lambda_;  // prior if no X's.  may be unallocated
 
-    mutable Ptr<SpdParams> ivar_;
-    SpdMatrix xtwx_;
-    double sumw_;
+    // The diagonal is the prior precision if there are no X's.  It may be
+    // unallocated in which case the diagonal is taken to be diag(X'X).
+    Vector diagonal_;    
+
+    // The actual matrix used to hold the precision.
+    mutable Ptr<SpdData> precision_;
+
+    // An observer flag.
     mutable bool current_;
+  };
+
+  //---------------------------------------------------------------------------
+  // MvnGivenX that directly stores the matrix.
+  //
+  // Users of this class must manage xtwx_ explicitly.  For problems where X and
+  // weights are fixed then add_x should be called once per row of X shortly
+  // after initialization.  For problems where X or w change frequently then
+  // clear_xtwx() and add_x() should be called as needed to manage the changes.
+  class MvnGivenX : public MvnGivenXBase {
+   public:
+    MvnGivenX(const Ptr<VectorParams> &mean,
+              const Ptr<UnivParams> &prior_sample_size,
+              const Vector &precision_diagonal = Vector(),
+              double diagonal_weight = 0);
+
+    MvnGivenX * clone() const override {
+      return new MvnGivenX(*this);
+    }
+    
+    void add_x(const Vector &x, double w = 1.0);
+    void clear_xtwx();
+    void set_xtwx(const SpdMatrix &xtwx);
+
+   private:
+    void set_precision_matrix() const override; 
+
+    mutable SpdMatrix xtwx_;
+    double sumw_;
+  };
+
+  //---------------------------------------------------------------------------
+  // The link to X is provided through a pointer to regression sufficient
+  // statistics.
+  class MvnGivenXRegSuf : public MvnGivenXBase {
+   public:
+    MvnGivenXRegSuf(const Ptr<VectorParams> &mean,
+                    const Ptr<UnivParams> &prior_sample_size,
+                    const Vector &precision_diagonal = Vector(),
+                    double diagonal_weight = 0,
+                    const Ptr<RegSuf> &suf = Ptr<RegSuf>(nullptr));
+
+    MvnGivenXRegSuf(const MvnGivenXRegSuf &rhs);
+    
+    MvnGivenXRegSuf * clone() const override {
+      return new MvnGivenXRegSuf(*this);
+    }
+  
+    void set_suf(const Ptr<RegSuf> &suf) { suf_ = suf; }
+    
+   private:
+    void set_precision_matrix() const override;
+    Ptr<RegSuf> suf_;
+  };
+
+  //---------------------------------------------------------------------------
+  // When the information about X comes from the sufficient statistics from a
+  // multivariate regression.
+  class MvnGivenXMvRegSuf : public MvnGivenXBase {
+   public:
+    MvnGivenXMvRegSuf(const Ptr<VectorParams> &mean,
+                      const Ptr<UnivParams> &prior_sample_size,
+                      const Vector &precision_diagonal = Vector(),
+                      double diagonal_weight = 0,
+                      const Ptr<MvRegSuf> &suf = Ptr<MvRegSuf>(nullptr));
+
+    MvnGivenXMvRegSuf(const MvnGivenXMvRegSuf &rhs);
+    
+    MvnGivenXMvRegSuf * clone() const override {
+      return new MvnGivenXMvRegSuf(*this);
+    }
+  
+    void set_suf(const Ptr<MvRegSuf> &suf) { suf_ = suf; }
+    
+   private:
+    void set_precision_matrix() const override;
+    Ptr<MvRegSuf> suf_;
+  };
+
+  //---------------------------------------------------------------------------
+  // The link to X is provided through a pointer to weighted regression
+  // sufficient statistics.
+  class MvnGivenXWeightedRegSuf : public MvnGivenXBase {
+   public:
+    MvnGivenXWeightedRegSuf(
+        const Ptr<VectorParams> &mean,
+        const Ptr<UnivParams> &prior_sample_size,
+        const Vector &precision_diagonal = Vector(),
+        double diagonal_weight = 0,
+        const Ptr<WeightedRegSuf> &suf = Ptr<WeightedRegSuf>(nullptr));
+
+    MvnGivenXWeightedRegSuf(const MvnGivenXWeightedRegSuf &rhs);
+    
+    MvnGivenXWeightedRegSuf * clone() const override {
+      return new MvnGivenXWeightedRegSuf(*this);
+    }
+    
+    void set_suf(const Ptr<WeightedRegSuf> &suf) { suf_ = suf; }
+    
+   private:
+    void set_precision_matrix() const override;
+    Ptr<WeightedRegSuf> suf_;
   };
 
   //----------------------------------------------------------------------

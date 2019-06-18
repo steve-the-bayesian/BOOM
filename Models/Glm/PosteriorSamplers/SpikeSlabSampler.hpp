@@ -39,8 +39,17 @@ namespace BOOM {
   // looks like a T.
   class SpikeSlabSampler {
    public:
+    // Args:
+    //   model: The model to be managed.  This can be nullptr.
+    //   slab_prior: The conditional normal model defining 
+    //     p(coefficients | inclusion).
+    //   spike_prior: The marginal inclusion probabilities for the coefficients.
     SpikeSlabSampler(GlmModel *model, const Ptr<MvnBase> &slab_prior,
                      const Ptr<VariableSelectionPrior> &spike_prior);
+
+    //--------------------------------------------------------------------------
+    // Internal interface: These functions operate on the managed model, and
+    // assume it is not nullptr.
     double logpri() const;
 
     // Performs one MCMC sweep along the inclusion indicators for the
@@ -56,10 +65,43 @@ namespace BOOM {
     void draw_model_indicators(RNG &rng, const WeightedRegSuf &suf,
                                double sigsq = 1.0);
 
+    
     // Draws the set of included Glm coefficients given complete data
     // sufficient statistics.
     void draw_beta(RNG &rng, const WeightedRegSuf &suf, double sigsq = 1.0);
 
+    //--------------------------------------------------------------------------
+    // External interface: These functions do not touch the managed model, and
+    // are safe to use if model_ is nullptr.
+    //
+    // Args:
+    //   rng:  The random number generator to use for the draw.
+    //   coefficients:  The vector of coefficients to draw.
+    //   inclusion_indicators: Indicates which coefficient values may be
+    //     nonzero.  Some might be zero anyway, e.g. because the vector was
+    //     initialized to zero on startup.
+    //   suf:  The sufficient statistics to use for the draw.
+    //   sigsq:  The value of the residual variance parameter, if present.
+    //   full_set: If true then the coefficient vector is full size, including
+    //     structural zeros.  If false then the coefficient vector only includes
+    //     the included coefficients.
+    //
+    // Effects:
+    //   The included subset of full_coefficients is updated with a draw from
+    //   its conditional posterior distribution.
+    void draw_coefficients_given_inclusion(
+        RNG &rng,
+        Vector &full_coefficients,
+        const Selector &inclusion_indicators,
+        const WeightedRegSuf &suf,
+        double sigsq = 1.0,
+        bool full_set = true) const;
+
+    void draw_inclusion_indicators(RNG &rng,
+                                   Selector &inclusion,
+                                   const WeightedRegSuf &suf,
+                                   double sigsq = 1.0) const;
+    
     // If tf == true then draw_model_indicators is a no-op.  Otherwise
     // model indicators will be sampled each iteration.
     void allow_model_selection(bool tf);
@@ -80,7 +122,7 @@ namespace BOOM {
     //     have a separate residual variance parameter should use
     //     sigsq = 1.0.
     double log_model_prob(const Selector &g, const WeightedRegSuf &suf,
-                          double sigsq) const;
+                          double sigsq = 1.0) const;
 
     // A single MCMC step for a single position in the set of
     // coefficient indicators 'g'.
@@ -98,7 +140,7 @@ namespace BOOM {
     //     sigsq = 1.0.
     double mcmc_one_flip(RNG &rng, Selector &g, int which_variable,
                          double logp_old, const WeightedRegSuf &suf,
-                         double sigsq);
+                         double sigsq = 1.0) const;
 
     GlmModel *model_;
     Ptr<MvnBase> slab_prior_;

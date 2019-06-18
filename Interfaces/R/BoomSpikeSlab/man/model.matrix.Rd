@@ -63,4 +63,3 @@
   \code{\link{predict.lm.spike}}
 }
 
-\keyword{ models, regression}

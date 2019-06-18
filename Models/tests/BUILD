@@ -10,9 +10,20 @@ cc_test(
     copts = COPTS,
     includes = ["@gtest"],
     deps = [
-	"//:boom",
-	"//:boom_test_utils",
-	"@gtest//:main",
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "exponential_increment_model_test",
+    srcs = ["exponential_increment_model_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -23,7 +34,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -34,7 +45,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -45,6 +56,6 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )

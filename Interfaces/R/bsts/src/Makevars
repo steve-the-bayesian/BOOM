@@ -1,5 +1,9 @@
 BOOM_DIR = `$(R_HOME)/bin/Rscript -e "cat(system.file(package='Boom'))"`
 BOOM_LIB = ${BOOM_DIR}/lib${R_ARCH}/libboom.a
-PKG_LIBS = ${BOOM_LIB}
-PKG_CPPFLAGS = -I${BOOM_DIR}/include -DADD_ -DR_NO_REMAP -DRLANGUAGE 
+PKG_LIBS = ${BOOM_LIB} 
+PKG_CPPFLAGS = -I${BOOM_DIR}/include -DADD_ -DR_NO_REMAP -DRLANGUAGE
+
+# PKG_CXXFLAGS= -fsanitize=address
+# PKG_CXXFLAGS= -fsanitize=undefined
+
 CXX_STD = CXX11

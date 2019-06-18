@@ -420,7 +420,7 @@ namespace BOOM {
       // remove_mean_effect().
       void replace_mean_effect();
 
-      ostream &print(ostream &out) const;
+      std::ostream &print(std::ostream &out) const;
 
       // Args:
       //   parent_id:  The id of the parent of this node.
@@ -458,7 +458,7 @@ namespace BOOM {
       double cutpoint_;     // Used iff this is not a leaf.
     };
 
-    inline ostream &operator<<(ostream &out, const TreeNode &node) {
+    inline std::ostream &operator<<(std::ostream &out, const TreeNode &node) {
       return node.print(out);
     }
 
@@ -592,7 +592,7 @@ namespace BOOM {
       // each leaf's mean effect from the residuals for that leaf.
       void replace_mean_effect();
 
-      ostream &print(ostream &out) const;
+      std::ostream &print(std::ostream &out) const;
 
       // For serialization purposes, the tree can be stored as a
       // 3-column matrix.  The columns are:
@@ -623,7 +623,7 @@ namespace BOOM {
       void register_special_nodes(TreeNode *node);
     };
 
-    inline ostream &operator<<(ostream &out, const Tree &tree) {
+    inline std::ostream &operator<<(std::ostream &out, const Tree &tree) {
       return tree.print(out);
     }
 

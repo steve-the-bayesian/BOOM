@@ -15,9 +15,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "dynamic_intercept_model_manager.h"
-#include "r_interface/create_state_model.hpp"
+#include "create_dynamic_intercept_state_model.h"
+
 #include "r_interface/prior_specification.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicInterceptRegressionPosteriorSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "distributions.hpp"
 
@@ -43,12 +44,13 @@ namespace BOOM {
         SEXP r_state_specification,
         SEXP r_regression_prior,
         SEXP r_options,
-        Vector *final_state,
         RListIoManager *io_manager) {
       UnpackTimestampInfo(r_data_list);
       AddDataFromList(r_data_list);
-      RInterface::StateModelFactory state_model_factory(io_manager);
+      DynamicInterceptStateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model_.get(), r_state_specification);
+      SetDynamicRegressionStateComponentPositions(
+          state_model_factory.DynamicRegressionStateModelPositions());
       using Marginal = Kalman::ConditionalIidMarginalDistribution;
       Marginal::set_high_dimensional_threshold_factor(
           Rf_asReal(getListElement(
@@ -70,7 +72,7 @@ namespace BOOM {
       }
       regression->set_method(regression_sampler);
 
-      NEW(StateSpacePosteriorSampler, sampler)(model_.get());
+      NEW(DynamicInterceptRegressionPosteriorSampler, sampler)(model_.get());
       model_->set_method(sampler);
       
       //---------------------------------------------------------------------------
@@ -81,7 +83,8 @@ namespace BOOM {
           new StandardDeviationListElement(regression->Sigsq_prm(),
                                            "sigma.obs"));
 
-      state_model_factory.SaveFinalState(model_.get(), final_state);
+      // TODO(steve):  does final state need to be sized first?
+      state_model_factory.SaveFinalState(model_.get(), &final_state());
 
       io_manager->add_list_element(
           new NativeMatrixListElement(
@@ -97,7 +100,6 @@ namespace BOOM {
                              SEXP r_burn,
                              SEXP r_observed_data) {
       RListIoManager io_manager;
-      Vector final_state;
       SEXP r_state_specfication = getListElement(
           r_bsts_object, "state.specification");
       model_.reset(CreateModel(
@@ -105,7 +107,6 @@ namespace BOOM {
           r_state_specfication,
           R_NilValue,
           R_NilValue,
-          &final_state,
           &io_manager));
       bool refilter;
       if (Rf_isNull(r_observed_data)) {
@@ -135,13 +136,13 @@ namespace BOOM {
           model_->kalman_filter();
           const Kalman::MarginalDistributionBase &marg(
               model_->get_filter().back());
-          final_state = rmvn(marg.contemporaneous_state_mean(),
+          final_state() = rmvn(marg.contemporaneous_state_mean(),
                              marg.contemporaneous_state_variance());
         }
         ans.row(i) = model_->simulate_forecast(
             rng(),
             forecast_predictors_,
-            final_state,
+            final_state(),
             ForecastTimestamps());
       }
       return ans;
@@ -152,6 +153,39 @@ namespace BOOM {
           r_prediction_data, "predictors"));
       UnpackForecastTimestamps(r_prediction_data);
       return forecast_predictors_.nrow();
+    }
+
+    void Manager::UnpackDynamicRegressionForecastData(
+        DynamicInterceptRegressionModel *model,
+        SEXP r_state_specification,
+        SEXP r_prediction_data) {
+      if (Rf_length(r_state_specification) < model->number_of_state_models()) {
+        std::ostringstream err;
+        err << "The number of state components in the model: ("
+            << model->number_of_state_models() << ") does not match the size of "
+            << "the state specification: ("
+            << Rf_length(r_state_specification)
+            << ") in UnpackDynamicRegressionForecastData.";
+        report_error(err.str());
+      }
+      std::deque<int> positions(dynamic_regression_state_positions().begin(),
+                                dynamic_regression_state_positions().end());
+      for (int i = 0; i < model->number_of_state_models(); ++i) {
+        SEXP spec = VECTOR_ELT(r_state_specification, i);
+        if (Rf_inherits(spec, "DynamicRegression")) {
+          Matrix predictors = ToBoomMatrix(getListElement(
+              r_prediction_data, "dynamic.regression.predictors"));
+          if (positions.empty()) {
+            report_error("Found a previously unseen dynamic regression state "
+                         "component.");
+          }
+          int pos = positions[0];
+          positions.pop_front();
+          Ptr<DynamicInterceptStateModel> state_model = model->state_model(pos);
+          state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
+              predictors);
+        }
+      }
     }
     
     void Manager::AddData(const Vector &response,

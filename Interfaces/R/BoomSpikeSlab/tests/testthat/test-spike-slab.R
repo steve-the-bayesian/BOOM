@@ -20,6 +20,8 @@ library(testthat)
 seed <- 8675309
 set.seed(seed)
 
+cat("test-spike-slab\n")
+
 n <- 200
 p <- 10
 ngood = 3

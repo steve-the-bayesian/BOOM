@@ -381,7 +381,7 @@ namespace BOOM {
     }
   }
 
-  ostream &NormalMixtureApproximation::print(ostream &out) const {
+  std::ostream &NormalMixtureApproximation::print(std::ostream &out) const {
     out << "mu:      " << std::setprecision(15) << mu_ << endl
         << "sigma:   " << sigma_ << endl
         << "weights: " << weights_ << endl
@@ -411,6 +411,17 @@ namespace BOOM {
     set(mu, sigma, weights);
     return begin;
   }
+
+  //======================================================================
+  LogitMixtureApproximation::LogitMixtureApproximation()
+      : NormalMixtureApproximation(
+            Vector(9, 0.0),
+            Vector{0.88437229872213, 1.16097607474416, 1.28021991084306,
+                  1.3592552924727, 1.67589879794907, 2.20287232043947,
+                  2.20507148325819, 2.91944313615144, 3.90807611741308},
+            Vector{0.038483985581272, 0.13389889791451, 0.0657842076622429,
+                  0.105680086433879, 0.345939491553619, 0.0442261124345564,
+                  0.193289780660134, 0.068173066865908, 0.00452437089387876}) {}
 
   //======================================================================
   NormalMixtureApproximationTable::NormalMixtureApproximationTable() {}

@@ -19,8 +19,10 @@
 
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
+#include "LinAlg/Selector.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
 
 namespace BOOM {
@@ -38,7 +40,8 @@ namespace BOOM {
     // Element is of the response is true iff element i of the input is
     // not NA.
     std::vector<bool> IsObserved(SEXP r_vector);
-
+    SelectorMatrix IsObserved(const Matrix &matrix);
+    
     //======================================================================
     // Record the state of a DynamicRegressionStateModel in the io_manager.
     // Args:
@@ -62,9 +65,19 @@ namespace BOOM {
     class ScalarStateContributionCallback
         : public MatrixIoCallback {
      public:
+      // Args:
+      //   model:  The model from which final state is to be obtained.
       explicit ScalarStateContributionCallback(ScalarStateSpaceModelBase *model)
           : model_(model),
-            has_regression_(-1) {}
+            has_regression_(-1)
+      {
+        if (!model) {
+          report_error("Null model passed to ScalarStateContributionCallback.");
+        }
+        if (model->state_dimension() <= 0) {
+          report_error("Model has no state.");
+        }
+      }
 
       int nrow() const override {
         return model_->number_of_state_models() + has_regression();
@@ -94,6 +107,38 @@ namespace BOOM {
       mutable int has_regression_;
     };
 
+    //======================================================================
+    class MultivariateStateContributionCallback
+        : public ArrayIoCallback {
+     public:
+      MultivariateStateContributionCallback(
+          const MultivariateStateSpaceModelBase *model,
+          int nseries)
+          : model_(model),
+            nseries_(nseries)
+      {}
+      
+      std::vector<int> dim() const override {
+        return {model_->number_of_state_models(),
+                model_->time_dimension(),
+                nseries_};
+      }
+
+      void write_to_array(ArrayView &view) const override {
+        for (int s = 0; s < model_->number_of_state_models(); ++s) {
+          view.slice(s, -1, -1) = model_->state_contributions(s);
+        }
+      }
+
+      void read_from_array(const ArrayView &view) override {
+        report_error("State contributions should not be streamed.");
+      }
+      
+     private:
+      const MultivariateStateSpaceModelBase *model_;
+      const int nseries_;
+    };
+    
     //======================================================================
     class DynamicInterceptStateContributionCallback
         : public MatrixIoCallback {

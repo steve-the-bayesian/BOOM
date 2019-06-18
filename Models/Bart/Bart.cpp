@@ -767,7 +767,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    ostream &TreeNode::print(ostream &out) const {
+    std::ostream &TreeNode::print(std::ostream &out) const {
       for (int i = 0; i < depth_; ++i) {
         out << ".";
       }
@@ -1053,7 +1053,7 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    ostream &Tree::print(ostream &out) const { return root_->print(out); }
+    std::ostream &Tree::print(std::ostream &out) const { return root_->print(out); }
 
     //----------------------------------------------------------------------
     Matrix Tree::to_matrix() const {

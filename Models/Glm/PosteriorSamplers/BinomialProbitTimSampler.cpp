@@ -81,6 +81,9 @@ namespace BOOM {
 
   void BinomialProbitTimSampler::draw() {
     const Selector &included_coefficients(model_->inc());
+    if (included_coefficients.nvars() == 0) {
+      return;
+    }
     auto it = samplers_.find(included_coefficients);
     if (it == samplers_.end()) {
       LogPosterior log_posterior(model_, prior_);

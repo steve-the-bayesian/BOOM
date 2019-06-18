@@ -24,7 +24,7 @@ namespace {
           level_sd, initial_level, slope_sd, initial_slope));
     }
     int time_dimension_;
-    StateModuleManager modules_;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules_;
   };
 
   //======================================================================
@@ -33,14 +33,6 @@ namespace {
     StateSpaceTestFramework state_space(1.3);
     state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_);
-  }
-  //======================================================================
-  TEST_F(LocalLinearTrendStateModelTest, DynamicInterceptRegressionModelTest) {
-    int niter = 300;
-    Vector true_beta = {-3.2, 17.4, 12};
-    DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);
-    framework.AddState(modules_);
-    framework.Test(niter, time_dimension_);
   }
   
 }  // namespace

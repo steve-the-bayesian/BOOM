@@ -23,6 +23,7 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/Selector.hpp"
 
 #include "distributions/Rmath_dist.hpp"
 #include "distributions/rng.hpp"
@@ -240,6 +241,23 @@ namespace BOOM {
   Vector rmvn_suf(const SpdMatrix &Ivar, const Vector &IvarMu);
   Vector rmvn_suf_mt(RNG &rng, const SpdMatrix &Ivar, const Vector &IvarMu);
 
+  // Return the vector 'observation' with the missing bits filled in.
+  // Args:
+  //   observation: 
+  //   mean: The mean vector of the multivariate normal distribution from which
+  //     'observation' was drawn.
+  //   variance: The variance matrix of the multivariate normal distribution
+  //     from which 'observation' was drawn.
+  //   observed: The selector indicating which elements in 'observation' were
+  //     observed.  The observed elements will remain unchanged.  The unobserved
+  //     elements will be imputed.
+  //   rng: A U(0, 1) random number generator to use as a source of random
+  //     numbers.
+  Vector &impute_mvn(Vector &observation,
+                     const Vector &mean, const SpdMatrix &variance,
+                     const Selector &observed,
+                     RNG &rng = GlobalRng::rng);
+  
   //======================================================================
   // Evaluates the multivariate normal density function.
   // Args:

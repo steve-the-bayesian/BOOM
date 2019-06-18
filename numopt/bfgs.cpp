@@ -32,7 +32,6 @@
 #include <vector>
 
 namespace BOOM {
-  using namespace std;
 
   const double stepredn = 0.2;
   const double acctol = 0.0001;
@@ -181,7 +180,7 @@ namespace BOOM {
         /* Resets unless has just been reset */
       }
       if (trace && (iter % nREPORT == 0)) {
-        ostringstream msg;
+        std::ostringstream msg;
         msg << "iter " << std::setw(4) << iter << " value " << f << endl;
         report_message(msg);
       }
@@ -189,7 +188,7 @@ namespace BOOM {
       if (gradcount - ilast > 2 * n) ilast = gradcount; /* periodic restart */
     } while (count != n || ilast != gradcount);
     if (trace) {
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "final value " << Fmin << endl;
       if (iter < maxit)
         msg << "converged" << endl;

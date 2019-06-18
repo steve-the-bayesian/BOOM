@@ -1,6 +1,8 @@
 library(BoomSpikeSlab)
 library(testthat)
 
+cat("test-swap-move\n")
+
 nobs <- 1000
 xdim <- 20
 predictors <- matrix(rnorm(nobs * xdim), nrow = nobs, ncol = xdim)

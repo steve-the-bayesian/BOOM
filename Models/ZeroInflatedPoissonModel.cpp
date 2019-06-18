@@ -101,7 +101,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &ZeroInflatedPoissonSuf::print(ostream &out) const {
+  std::ostream &ZeroInflatedPoissonSuf::print(std::ostream &out) const {
     out << "number of zeros:     " << number_of_zeros_ << endl
         << "number of positives: " << number_of_positives_ << endl
         << "sum of positives:    " << sum_of_positives_ << endl;

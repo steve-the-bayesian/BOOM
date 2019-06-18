@@ -17,21 +17,23 @@
 #include <string>
 
 #include "model_manager.h"
-#include "dynamic_intercept_model_manager.h"
 #include "state_space_gaussian_model_manager.h"
 #include "state_space_logit_model_manager.h"
 #include "state_space_poisson_model_manager.h"
 #include "state_space_regression_model_manager.h"
 #include "state_space_student_model_manager.h"
+#include "multivariate_gaussian_model_manager.h"
 
 #include "utils.h"
+#include "create_state_model.h"
+#include "create_shared_state_model.h"
 
 #include "r_interface/boom_r_tools.hpp"
-#include "r_interface/create_state_model.hpp"
 #include "r_interface/list_io.hpp"
 
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionArStateModel.hpp"
 
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
@@ -39,12 +41,52 @@
 namespace BOOM {
   namespace bsts {
 
+    TimestampInfo::TimestampInfo(SEXP r_data_list) {
+      Unpack(r_data_list);
+    }
+    
+    void TimestampInfo::Unpack(SEXP r_data_list) {
+      SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
+      trivial_ = Rf_asLogical(getListElement(
+          r_timestamp_info, "timestamps.are.trivial"));
+      number_of_time_points_ = Rf_asInteger(getListElement(
+          r_timestamp_info, "number.of.time.points"));
+      if (!trivial_) {
+        timestamp_mapping_ = ToIntVector(getListElement(
+            r_timestamp_info, "timestamp.mapping"));
+      }
+    }
+
+    // Args:
+    //   r_prediction_data: A list containing an object named 'timestamps',
+    //     which is a list containing the following objects.  
+    //     - timestamp.mapping: A vector of integers indicating the timestamp to
+    //         which each observation belongs.
+    //
+    // Effects:
+    //   The forecast_timestamps_ element in the TimestampInfo object gets
+    //   populated.
+    void TimestampInfo::UnpackForecastTimestamps(SEXP r_prediction_data) {
+      SEXP r_forecast_timestamps = getListElement(
+          r_prediction_data, "timestamps");
+      if (!Rf_isNull(r_forecast_timestamps)) {
+        forecast_timestamps_ = ToIntVector(getListElement(
+            r_forecast_timestamps, "timestamp.mapping"));
+        for (int i = 1; i < forecast_timestamps_.size(); ++i) {
+          if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
+            report_error("Time stamps for multiplex predictions must be "
+                         "in increasing order.");
+          }
+        }
+      }
+    }
+
+    //==========================================================================
+    
     // The model manager will be thread safe as long as it is created from the
     // home thread.
     ModelManager::ModelManager()
-        : rng_(seed_rng(GlobalRng::rng)),
-          timestamps_are_trivial_(true),
-          number_of_time_points_(-1) {}
+        : rng_(seed_rng(GlobalRng::rng)) {}
 
     ScalarModelManager * ScalarModelManager::Create(SEXP r_bsts_object) {  
       std::string family = ToString(getListElement(r_bsts_object, "family"));
@@ -106,18 +148,15 @@ namespace BOOM {
         SEXP r_state_specification,
         SEXP r_prior,
         SEXP r_options,
-        Vector *final_state,
         RListIoManager *io_manager) {
-      ScalarStateSpaceModelBase *model = CreateObservationModel(
+      ScalarStateSpaceModelBase *model = CreateBareModel(
           r_data_list,
           r_prior,
           r_options,
           io_manager);
-      RInterface::StateModelFactory state_model_factory(io_manager);
+      StateModelFactory state_model_factory(io_manager);
       state_model_factory.AddState(model, r_state_specification, "");
-      SetDynamicRegressionStateComponentPositions(
-          state_model_factory.DynamicRegressionStateModelPositions());
-      state_model_factory.SaveFinalState(model, final_state);
+      state_model_factory.SaveFinalState(model, &final_state());
 
       // The predict method does not set BstsOptions, so allow NULL here to
       // signal that options have not been set.
@@ -190,7 +229,6 @@ namespace BOOM {
                                         SEXP r_burn,
                                         SEXP r_observed_data) {
       RListIoManager io_manager;
-      Vector final_state;
       SEXP r_state_specfication = getListElement(
           r_bsts_object, "state.specification");
       ScalarStateSpaceModelBase *model = CreateModel(
@@ -198,7 +236,6 @@ namespace BOOM {
           r_state_specfication,
           R_NilValue,
           R_NilValue,
-          &final_state,
           &io_manager);
       bool refilter;
       if (Rf_isNull(r_observed_data)) {
@@ -210,6 +247,7 @@ namespace BOOM {
       }
       int niter = Rf_asInteger(getListElement(r_bsts_object, "niter"));
       int burn = std::max<int>(0, Rf_asInteger(r_burn));
+      if (burn < 0) burn = 0;
       io_manager.prepare_to_stream(r_bsts_object);
       io_manager.advance(burn);
       int iterations_after_burnin = niter - burn;
@@ -218,12 +256,15 @@ namespace BOOM {
         report_error("Forecast called with NULL prediction data.");
       }
       int forecast_horizon = UnpackForecastData(r_prediction_data);
-      UnpackDynamicRegressionForecastData(
-          model, r_state_specfication, r_prediction_data);
-
+      UnpackDynamicRegressionForecastData(r_prediction_data, model);
+      int max_time = model->time_dimension() + forecast_horizon;
+      for (int s = 0; s < model->number_of_state_models(); ++s) {
+        model->state_model(s)->observe_time_dimension(max_time);
+      }
       Matrix ans(iterations_after_burnin, forecast_horizon);
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
+        Vector final_state = this->final_state();
         if (refilter) {
           model->kalman_filter();
           const Kalman::ScalarMarginalDistribution &marg(
@@ -243,65 +284,65 @@ namespace BOOM {
       return ans;
     }
 
-    void ModelManager::UnpackDynamicRegressionForecastData(
-        StateSpaceModelBase *model,
-        SEXP r_state_specification,
-        SEXP r_prediction_data) {
-      if (Rf_length(r_state_specification) < model->number_of_state_models()) {
-        std::ostringstream err;
-        err << "The number of state components in the model: ("
-            << model->number_of_state_models() << ") does not match the size of "
-            << "the state specification: ("
-            << Rf_length(r_state_specification)
-            << ") in UnpackDynamicRegressionForecastData.";
-        report_error(err.str());
+    void ScalarModelManager::UnpackDynamicRegressionForecastData(
+        SEXP r_prediction_data, ScalarStateSpaceModelBase *model) {
+      SEXP r_dynamic_regression_predictors = getListElement(
+          r_prediction_data, "dynamic.regression.predictors");
+      if (Rf_isNull(r_dynamic_regression_predictors)) {
+        return;
       }
-      std::deque<int> positions(dynamic_regression_state_positions().begin(),
-                                dynamic_regression_state_positions().end());
-      for (int i = 0; i < model->number_of_state_models(); ++i) {
-        SEXP spec = VECTOR_ELT(r_state_specification, i);
-        if (Rf_inherits(spec, "DynamicRegression")) {
-          Matrix predictors = ToBoomMatrix(getListElement(
-              r_prediction_data, "dynamic.regression.predictors"));
-          if (positions.empty()) {
-            report_error("Found a previously unseen dynamic regression state "
-                         "component.");
-          }
-          int pos = positions[0];
-          positions.pop_front();
-          Ptr<StateModel> state_model = model->state_model(pos);
-          state_model.dcast<DynamicRegressionStateModel>()->add_forecast_data(
-              predictors);
+      for (int s = 0; s < model->number_of_state_models(); ++s) {
+        DynamicRegressionStateModel *dreg =
+            dynamic_cast<DynamicRegressionStateModel *>(
+                model->state_model(s).get());
+        if (dreg) {
+          dreg->add_forecast_data(ToBoomMatrix(
+              r_dynamic_regression_predictors));
+          return;
+        }
+
+        DynamicRegressionArStateModel *dregar =
+            dynamic_cast<DynamicRegressionArStateModel *>(
+                model->state_model(s).get());
+        if (dregar) {
+          dregar->add_forecast_data(ToBoomMatrix(
+              r_dynamic_regression_predictors));
+          return;
         }
       }
     }
-
-    void ModelManager::UnpackTimestampInfo(SEXP r_data_list) {
-      SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
-      timestamps_are_trivial_ = Rf_asLogical(getListElement(
-          r_timestamp_info, "timestamps.are.trivial"));
-      number_of_time_points_ = Rf_asInteger(getListElement(
-          r_timestamp_info, "number.of.time.points"));
-      if (!timestamps_are_trivial_) {
-        timestamp_mapping_ = ToIntVector(getListElement(
-            r_timestamp_info, "timestamp.mapping"));
+    
+    //=========================================================================
+    MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
+        SEXP r_mbsts_object) {
+      std::string family = ToString(getListElement(r_mbsts_object, "family"));
+      int ydim = Rf_ncols(getListElement(
+          r_mbsts_object, "original.series", true));
+      bool regression = !Rf_isNull(getListElement(
+          r_mbsts_object, "predictors", true));
+      int xdim = 0;
+      if (regression) {
+        xdim = Rf_ncols(getListElement(r_mbsts_object, "predictors"));
       }
+      return MultivariateModelManagerBase::Create(family, ydim, xdim);
     }
 
-    void ModelManager::UnpackForecastTimestamps(SEXP r_prediction_data) {
-      SEXP r_forecast_timestamps = getListElement(
-          r_prediction_data, "timestamps");
-      if (!Rf_isNull(r_forecast_timestamps)) {
-        forecast_timestamps_ = ToIntVector(getListElement(
-            r_forecast_timestamps, "timestamp.mapping"));
-        for (int i = 1; i < forecast_timestamps_.size(); ++i) {
-          if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
-            report_error("Time stamps for multiplex predictions must be "
-                         "in increasing order.");
-          }
-        }
+    //--------------------------------------------------------------------------    
+    MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
+        const std::string &family, int ydim, int xdim) {
+
+      if (family == "gaussian") {
+        MultivariateGaussianModelManager *manager =
+            new MultivariateGaussianModelManager(ydim, xdim);
+        return manager;
+      } else {
+        report_error("For now, only Gaussian families are supported in the "
+                     "multivariate case.");
       }
+      return nullptr;
     }
 
+    //--------------------------------------------------------------------------
+    
   }  // namespace bsts
 }  // namespace BOOM

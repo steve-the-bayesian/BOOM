@@ -38,7 +38,7 @@ namespace BOOM {
     //----------------------------------------------------------------------
     Group *Group::clone() const { return new Group(*this); }
     //----------------------------------------------------------------------
-    ostream &Group::display(ostream &out) const {
+    std::ostream &Group::display(std::ostream &out) const {
       out << "name        = " << name_ << endl
           << "total_value = " << total_value_ << endl;
       int n = unit_data_.size();

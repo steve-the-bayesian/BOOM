@@ -38,22 +38,20 @@
 
 #include "nmath.hpp"
 #include "dpq.hpp"
-namespace Rmath{
-
-double dlogis(double x, double location, double scale, int give_log)
-{
+namespace Rmath {
+  double dlogis(double x, double location, double scale, int give_log) {
     double e, f;
 #ifdef IEEE_754
     if (ISNAN(x) || ISNAN(location) || ISNAN(scale))
-        return x + location + scale;
+      return x + location + scale;
 #endif
     if (scale <= 0.0)
-        ML_ERR_return_NAN;
+      ML_ERR_return_NAN;
 
-    x = (x - location) / scale;
+    x = fabs((x - location) / scale);
     e = exp(-x);
     f = 1.0 + e;
     return give_log ? -(x + log(scale * f * f)) : e / (scale * f * f);
-}
-}
+  }
+}  // namespace Rmath
 

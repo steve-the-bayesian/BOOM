@@ -66,7 +66,8 @@ namespace {
   class HiddenLayerParametersCallback
       : public RListOfMatricesListElement::Callback {
    public:
-    HiddenLayerParametersCallback(GaussianFeedForwardNeuralNetwork *model)
+    explicit HiddenLayerParametersCallback(
+        GaussianFeedForwardNeuralNetwork *model)
         : model_(model) {}
     Matrix get(int layer) override {
       Ptr<HiddenLayer> lyr = model_->hidden_layer(layer);

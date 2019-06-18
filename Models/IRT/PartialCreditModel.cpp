@@ -359,7 +359,7 @@ namespace BOOM {
       n += 1.0;
     }
 
-    ostream &PCR::display_item_params(ostream &out, bool) const {
+    std::ostream &PCR::display_item_params(std::ostream &out, bool) const {
       out << a() << " " << b() << " " << d() << " ";
       return out;
     }

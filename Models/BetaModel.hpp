@@ -42,7 +42,7 @@ namespace BOOM {
     BetaSuf *abstract_combine(Sufstat *s) override;
     void combine(const Ptr<BetaSuf> &s);
     void combine(const BetaSuf &s);
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,

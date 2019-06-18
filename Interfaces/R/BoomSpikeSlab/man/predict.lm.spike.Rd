@@ -144,4 +144,3 @@
   new.x <- cbind(1, matrix(rnorm(100 * (p-1)), ncol = (p-1)))
   pred <- predict(model, newdata = new.x, burn = 100)
 }
-\keyword{models, regression}

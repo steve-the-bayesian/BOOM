@@ -93,7 +93,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &BS::print(ostream &out) const {
+  std::ostream &BS::print(std::ostream &out) const {
     out << n_ << " " << sumlog_ << " " << sumlogc_;
     return out;
   }

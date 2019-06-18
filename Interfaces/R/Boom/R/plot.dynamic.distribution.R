@@ -59,6 +59,9 @@ PlotDynamicDistribution <- function(curves,
     }
 
     if (!add) {
+      if (!all(is.finite(ylim))) {
+        ylim <- range(quantile.matrix, na.rm = TRUE)
+      }
       plot(timestamps,
            ylo,
            xlim = xlim,
@@ -98,7 +101,7 @@ PlotDynamicDistribution <- function(curves,
   ## quantile.matrix is the actual matrix of quantiles that are used
   ## to draw the curve polygons
   quantile.matrix <- t(apply(curves, 2, quantile, probs = qtl, na.rm = TRUE))
-
+  
   nc <- ncol(quantile.matrix)
   number.of.quantile.steps <- (nc + 1) / 2
   if (number.of.quantile.steps < 3) {
@@ -119,7 +122,7 @@ PlotDynamicDistribution <- function(curves,
     }
   }
   if (is.null(xlim)) {
-    xlim <- range(timestamps)
+    xlim <- range(timestamps, na.rm = TRUE)
   }
   if (inherits(xlim, "POSIXt")) {
     xlim <- as.POSIXct(xlim)

@@ -17,6 +17,8 @@
 library(BoomSpikeSlab)
 library(testthat)
 
+cat("test-quantile\n")
+
 test_that("quantile regression runs with Gaussian data", {
   set.seed(8675309)
   n <- 50

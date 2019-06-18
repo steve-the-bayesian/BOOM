@@ -16,8 +16,9 @@
 
 #include <sstream>
 
+#include "create_state_model.h"
+
 #include "r_interface/boom_r_tools.hpp"
-#include "r_interface/create_state_model.hpp"
 #include "r_interface/handle_exception.hpp"
 #include "r_interface/list_io.hpp"
 #include "r_interface/print_R_timestamp.hpp"
@@ -202,10 +203,10 @@ RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
       new StandardDeviationListElement(model->regression_model()->Sigsq_prm(),
                                        "sigma.obs"));
 
-  BOOM::RInterface::StateModelFactory factory(&io_manager);
+  BOOM::bsts::StateModelFactory factory(&io_manager);
   factory.AddState(model.get(), state_specification);
 
-  BOOM::RInterface::StateModelFactory augmented_factory(&io_manager);
+  BOOM::bsts::StateModelFactory augmented_factory(&io_manager);
   augmented_factory.AddState(augmented_model.get(),
                              state_specification,
                              "augmented_");

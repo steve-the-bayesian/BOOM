@@ -75,7 +75,7 @@ namespace BOOM {
   Vector vectorize(const ParamVector &v, bool minimal = true);
   void unvectorize(ParamVector &pvec, const Vector &v, bool minimal = true);
 
-  ostream &operator<<(ostream &out, const ParamVector &v);
+  std::ostream &operator<<(std::ostream &out, const ParamVector &v);
 
   //============================================================
 
@@ -94,6 +94,47 @@ namespace BOOM {
                                        bool minimal = true) override;
   };
 
+  //===========================================================================
+  // A UnivParams that gets its value from somewhere else.  This parameter
+  // cannot be cloned or copied.
+  class UnivParamsObserver : public UnivParams {
+   public:
+    UnivParamsObserver()
+        : current_(false)
+    {}
+    UnivParamsObserver(const UnivParamsObserver &rhs) = delete;
+    UnivParamsObserver & operator=(const UnivParamsObserver &rhs) = delete;
+
+    // Observe a Data object (which might be a parameter), so that *this will be
+    // marked not current if the data changes.
+    //
+    // The observed value need not be held in a Data object, but it often will
+    // be, so this function is provided as a convenience.
+    void observe(Ptr<Data> dp) {
+      dp->add_observer([this]() {this->invalidate();});
+    }
+    
+    const double &value() const override {
+      if (!current_) retrieve_value();
+      return UnivParams::value();
+    }
+    
+   private:
+    // Obtain the value from wherever is being watched, call
+    // UnivParams::set(value, false), and set current_ to true.
+    //
+    // This function must be logically const.
+    virtual void retrieve_value() const = 0;
+
+    // Mark the parameter as not current.
+    void invalidate() { current_ = false; }
+
+    // The parameter cannot be set using this function.
+    void set(const double &rhs, bool Signal) override;
+    
+    mutable bool current_;
+  };
+  
   //------------------------------------------------------------
   class VectorParams : public VectorData, virtual public Params {
    public:

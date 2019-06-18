@@ -22,12 +22,14 @@
 namespace BOOM {
   namespace RInterface {
     void seed_rng_from_R(SEXP rseed) {
-      if (Rf_isNull(rseed)) {
-        BOOM::GlobalRng::seed_with_timestamp();
-      } else {
+      if (!Rf_isNull(rseed)) {
         int seed = Rf_asInteger(rseed);
         BOOM::GlobalRng::rng.seed(seed);
+        // Some c++ algorithms (e.g. random_shuffle) are seeded by srand.
         srand(seed);
+      } else {
+        // If seed is NULL then seed the global RNG by std::random_device.
+        BOOM::GlobalRng::rng.seed();
       }
     }
   }  // namespace RInterface

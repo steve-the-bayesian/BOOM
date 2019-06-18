@@ -92,10 +92,9 @@ namespace BOOM {
   SSRM::StateSpaceRegressionModel(int xdim)
       : regression_(new RegressionModel(xdim)) {
     setup();
-    // Note that in this constructor the regression model will still
-    // need to have data added, so we can't call fix_xtx().  This
-    // means that the xtx matrix will be re-computed with each trip
-    // through the data.
+    // Note that in this constructor the regression model will still need to
+    // have data added, so we can't call fix_xtx().  This means that the xtx
+    // matrix will be re-computed with each trip through the data.
   }
 
   SSRM::StateSpaceRegressionModel(const Vector &y, const Matrix &X,
@@ -218,7 +217,7 @@ namespace BOOM {
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX,
                                  const Vector &final_state) {
     return simulate_multiplex_forecast(rng, newX, final_state,
-                                       seq<int>(1, nrow(newX)));
+                                       seq<int>(0, nrow(newX) - 1));
   }
 
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX) {

@@ -178,12 +178,12 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
-  ostream &SM::display(ostream &out, int precision) const {
+  std::ostream &SM::display(std::ostream &out, int precision) const {
     ConstSubMatrix m(*this);
     return m.display(out, precision);
   }
 
-  ostream &operator<<(ostream &out, const SubMatrix &m) {
+  std::ostream &operator<<(std::ostream &out, const SubMatrix &m) {
     return m.display(out, 5);
   }
 
@@ -394,7 +394,7 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
-  ostream &CSM::display(ostream &out, int precision) const {
+  std::ostream &CSM::display(std::ostream &out, int precision) const {
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
       for (uint j = 0; j < ncol(); ++j)
@@ -404,7 +404,7 @@ namespace BOOM {
     return out;
   }
   //------------------------------------------------------------
-  ostream &operator<<(ostream &out, const ConstSubMatrix &m) {
+  std::ostream &operator<<(std::ostream &out, const ConstSubMatrix &m) {
     return m.display(out, 5);
   }
 
@@ -455,15 +455,16 @@ namespace BOOM {
       view += m2;
       return ans;
     }
+    template <class MAT>
+    Matrix MatrixAddScalar(const MAT &m, double x) {
+      Matrix ans(m);
+      ans += x;
+      return ans;
+    }
+
   }  // namespace
 
   Matrix operator+(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs) {
-    return MatrixAdd(lhs, rhs);
-  }
-  Matrix operator+(const SubMatrix &lhs, const ConstSubMatrix &rhs) {
-    return MatrixAdd(lhs, rhs);
-  }
-  Matrix operator+(const Matrix &lhs, const ConstSubMatrix &rhs) {
     return MatrixAdd(lhs, rhs);
   }
   Matrix operator+(const ConstSubMatrix &lhs, const SubMatrix &rhs) {
@@ -471,6 +472,33 @@ namespace BOOM {
   }
   Matrix operator+(const ConstSubMatrix &lhs, const Matrix &rhs) {
     return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const SubMatrix &lhs, const ConstSubMatrix &rhs) {
+    return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const SubMatrix &lhs, const SubMatrix &rhs) {
+    return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const SubMatrix &lhs, const Matrix &rhs) {
+    return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const Matrix &lhs, const ConstSubMatrix &rhs) {
+    return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const Matrix &lhs, const SubMatrix &rhs) {
+    return MatrixAdd(lhs, rhs);
+  }
+  Matrix operator+(const ConstSubMatrix &lhs, double rhs) {
+    return MatrixAddScalar(lhs, rhs);
+  }
+  Matrix operator+(const SubMatrix &lhs, double rhs) {
+    return MatrixAddScalar(lhs, rhs);
+  }
+  Matrix operator+(double lhs, const ConstSubMatrix &rhs) {
+    return MatrixAddScalar(rhs, lhs);
+  }
+  Matrix operator+(double lhs, const SubMatrix &rhs) {
+    return MatrixAddScalar(rhs, lhs);
   }
 
   namespace {
@@ -481,15 +509,16 @@ namespace BOOM {
       view -= m2;
       return ans;
     }
+
+    template <class MAT>
+    Matrix MatrixSubtractFromScalar(double x, const MAT &m) {
+      Matrix ans(m.nrow(), m.ncol(), x);
+      ans -= m;
+      return ans;
+    }
   }  // namespace
 
   Matrix operator-(const ConstSubMatrix &lhs, const ConstSubMatrix &rhs) {
-    return MatrixSubtract(lhs, rhs);
-  }
-  Matrix operator-(const SubMatrix &lhs, const ConstSubMatrix &rhs) {
-    return MatrixSubtract(lhs, rhs);
-  }
-  Matrix operator-(const Matrix &lhs, const ConstSubMatrix &rhs) {
     return MatrixSubtract(lhs, rhs);
   }
   Matrix operator-(const ConstSubMatrix &lhs, const SubMatrix &rhs) {
@@ -498,7 +527,108 @@ namespace BOOM {
   Matrix operator-(const ConstSubMatrix &lhs, const Matrix &rhs) {
     return MatrixSubtract(lhs, rhs);
   }
+  Matrix operator-(const SubMatrix &lhs, const ConstSubMatrix &rhs) {
+    return MatrixSubtract(lhs, rhs);
+  }
+  Matrix operator-(const SubMatrix &lhs, const SubMatrix &rhs) {
+    return MatrixSubtract(lhs, rhs);
+  }
+  Matrix operator-(const SubMatrix &lhs, const Matrix &rhs) {
+    return MatrixSubtract(lhs, rhs);
+  }
+  Matrix operator-(const Matrix &lhs, const ConstSubMatrix &rhs) {
+    return MatrixSubtract(lhs, rhs);
+  }
+  Matrix operator-(const Matrix &lhs, const SubMatrix &rhs) {
+    return MatrixSubtract(lhs, rhs);
+  }
+  Matrix operator-(const ConstSubMatrix &lhs, double rhs) {
+    return MatrixAddScalar(lhs, -rhs);
+  }
+  Matrix operator-(const SubMatrix &lhs, double rhs) {
+    return MatrixAddScalar(lhs, -rhs);
+  }
+  Matrix operator-(double lhs, const ConstSubMatrix &rhs) {
+    return MatrixSubtractFromScalar(lhs, rhs);
+  }
+  Matrix operator-(double lhs, const SubMatrix &rhs) {
+    return MatrixSubtractFromScalar(lhs, rhs);
+  }
 
+  namespace {
+    template <class MAT>
+    Matrix MatrixScalarMultiply(const MAT &x, double y) {
+      Matrix ans(x);
+      ans *= y;
+      return ans;
+    }
+    
+    template <class MAT1, class MAT2>
+    Matrix MatrixElementDivide(const MAT1 &x, const MAT2 &y) {
+      Matrix ans(x);
+      ans /= y;
+      return ans;
+    }
+
+    template <class MAT>
+    Matrix ScalarDivideMatrix(double x, const MAT &m) {
+      Matrix ans(m.nrow(), m.ncol(), x);
+      ans /= m;
+      return ans;
+    }
+    
+  }  // namespace 
+
+  Matrix operator*(const ConstSubMatrix &x, double y) {
+    return MatrixScalarMultiply(x, y);
+  }
+  Matrix operator*(const SubMatrix &x, double y) {
+    return MatrixScalarMultiply(x, y);
+  }
+  Matrix operator*(double x, const ConstSubMatrix &y) {
+    return MatrixScalarMultiply(y, x);
+  }
+  Matrix operator*(double x, const SubMatrix &y) {
+    return MatrixScalarMultiply(y, x);
+  }
+  
+  Matrix operator/(const ConstSubMatrix &x, const ConstSubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const ConstSubMatrix &x, const SubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const ConstSubMatrix &x, const Matrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const SubMatrix &x, const ConstSubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const SubMatrix &x, const SubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const SubMatrix &x, const Matrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const Matrix &x, const ConstSubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const Matrix &x, const SubMatrix &y) {
+    return MatrixElementDivide(x, y);
+  }
+  Matrix operator/(const ConstSubMatrix &x, double y) {
+    return x * (1.0 / y);
+  }
+  Matrix operator/(const SubMatrix &x, double y) {
+    return x * (1.0 / y);
+  }
+  Matrix operator/(double x, const ConstSubMatrix &y) {
+    return ScalarDivideMatrix(x, y);
+  }
+  Matrix operator/(double x, const SubMatrix &y) {
+    return ScalarDivideMatrix(x, y);
+  }
+  
   SubMatrix block(Matrix &m, int block_row, int block_col,
                   int block_row_size, int block_col_size) {
     int first_row = block_row_size * block_row;

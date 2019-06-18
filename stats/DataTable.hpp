@@ -122,7 +122,7 @@ namespace BOOM {
     uint nlevels(uint i) const;  // 1 for continuous, nlevels for categorical
 
     //--- look inside ---
-    std::ostream &print(ostream &out, uint from = 0,
+    std::ostream &print(std::ostream &out, uint from = 0,
                         uint to = std::numeric_limits<uint>::max()) const;
 
     const std::vector<VariableType> &display_variable_types() const;

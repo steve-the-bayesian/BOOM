@@ -36,12 +36,13 @@ namespace BOOM {
         max_flips_(-1),
         allow_model_selection_(true) {}
 
-  // Performs one MCMC sweep along the inclusion indicators for the
-  // managed GlmModel.
-  void SSS::draw_model_indicators(RNG &rng, const WeightedRegSuf &suf,
-                                  double sigsq) {
+  // Performs one MCMC sweep along the provided set of inclusion indicators.
+  void SSS::draw_inclusion_indicators(
+      RNG &rng,
+      Selector &inclusion_indicators,
+      const WeightedRegSuf &suf,
+      double sigsq) const {
     if (!allow_model_selection_) return;
-    Selector inclusion_indicators = model_->coef().inc();
     std::vector<int> indx =
         seq<int>(0, inclusion_indicators.nvars_possible() - 1);
     // I'd like to rely on std::random_shuffle for this, but I want
@@ -63,24 +64,61 @@ namespace BOOM {
       ostringstream err;
       err << "SpikeSlabSampler did not start with a "
           << "legal configuration." << endl
-          << "Selector vector:  " << inclusion_indicators << endl
-          << "beta: " << model_->included_coefficients() << endl;
+          << "Selector vector:  " << inclusion_indicators << endl;
+      if (model_) {
+        err << "beta: " << model_->included_coefficients() << endl;
+      }
       report_error(err.str());
     }
 
     uint n = inclusion_indicators.nvars_possible();
     if (max_flips_ > 0) n = std::min<int>(n, max_flips_);
     for (int i = 0; i < n; ++i) {
-      logp =
-          mcmc_one_flip(rng, inclusion_indicators, indx[i], logp, suf, sigsq);
+      logp = mcmc_one_flip(
+          rng, inclusion_indicators, indx[i], logp, suf, sigsq);
     }
+  }
+  
+  // Performs one MCMC sweep along the inclusion indicators for the
+  // managed GlmModel.
+  void SSS::draw_model_indicators(
+      RNG &rng, const WeightedRegSuf &suf, double sigsq) {
+    if (!allow_model_selection_) return;
+    if (!model_) {
+      report_error("No model was set.");
+    }
+    Selector inclusion_indicators = model_->coef().inc();
+    draw_inclusion_indicators(rng, inclusion_indicators, suf, sigsq);
     model_->coef().set_inc(inclusion_indicators);
   }
 
   void SSS::draw_beta(RNG &rng, const WeightedRegSuf &suf, double sigsq) {
+    if (!model_) {
+      report_error("No model was set.");
+    }
     Selector inclusion_indicators = model_->coef().inc();
     if (inclusion_indicators.nvars() == 0) {
       model_->drop_all();
+      return;
+    }
+    Vector coefficients = model_->included_coefficients();
+    draw_coefficients_given_inclusion(rng, coefficients, inclusion_indicators,
+                                      suf, sigsq, false);
+    // If model selection is turned off and some elements of beta
+    // happen to be zero (because, e.inclusion_indicators., of a
+    // failed MH step) we don't want the dimension of beta to change.
+    model_->set_included_coefficients(coefficients, inclusion_indicators);
+  }
+
+  void SSS::draw_coefficients_given_inclusion(
+      RNG &rng, Vector &coefficients, const Selector &inclusion_indicators,
+      const WeightedRegSuf &suf, double sigsq, bool full_set) const {
+    if (inclusion_indicators.nvars() == 0) {
+      if (full_set) {
+        coefficients = 0.0;
+      } else {
+        coefficients.clear();
+      }
       return;
     }
     SpdMatrix precision = inclusion_indicators.select(slab_prior_->siginv());
@@ -88,16 +126,19 @@ namespace BOOM {
         precision * inclusion_indicators.select(slab_prior_->mu());
     precision += inclusion_indicators.select(suf.xtx()) / sigsq;
     precision_mu += inclusion_indicators.select(suf.xty()) / sigsq;
-    Vector coefficients = precision.solve(precision_mu);
-    coefficients = rmvn_ivar_mt(rng, coefficients, precision);
-
-    // If model selection is turned off and some elements of beta
-    // happen to be zero (because, e.inclusion_indicators., of a
-    // failed MH step) we don't want the dimension of beta to change.
-    model_->set_included_coefficients(coefficients, inclusion_indicators);
+    Vector mean = precision.solve(precision_mu);
+    Vector draw = rmvn_ivar_mt(rng, mean, precision);
+    if (full_set) {
+      coefficients = inclusion_indicators.expand(draw);
+    } else {
+      coefficients = draw;
+    }
   }
-
+  
   double SSS::logpri() const {
+    if (!model_) {
+      report_error("No model was set.");
+    }
     const Selector &inclusion_indicators(model_->coef().inc());
     double ans = spike_prior_->logp(inclusion_indicators);  // p(gamma)
     if (ans == BOOM::negative_infinity()) return ans;
@@ -149,7 +190,7 @@ namespace BOOM {
 
   double SSS::mcmc_one_flip(RNG &rng, Selector &mod, int which_var,
                             double logp_old, const WeightedRegSuf &suf,
-                            double sigsq) {
+                            double sigsq) const {
     mod.flip(which_var);
     double logp_new = log_model_prob(mod, suf, sigsq);
     double u = runif_mt(rng, 0, 1);

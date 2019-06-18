@@ -3,7 +3,7 @@
 
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModel.hpp"
+#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
 
 
 #include "LinAlg/DiagonalMatrix.hpp"
@@ -123,12 +123,15 @@ namespace {
     Matrix data(sample_size, ydim);
     data.randomize();
 
-    NEW(MultivariateStateSpaceModel, model)(ydim);
+    NEW(MultivariateStateSpaceRegressionModel, model)(0, ydim);
     for (int i = 0; i < sample_size; ++i) {
-      model->add_data(new PartiallyObservedVectorData(data.row(i)));
+      for (int j = 0; j < ydim; ++j) {
+        NEW(TimeSeriesRegressionData, data_point)(data(i, j), Vector(1, 1.0), j, i);
+        model->add_data(data_point);
+      }
     }
 
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get());
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, model.get(), ydim);
     state_model->set_initial_state_mean(Vector(nfactors, 0.0));
     state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
     Matrix Beta = state_model->coefficient_model()->Beta();
@@ -137,11 +140,12 @@ namespace {
     state_model->innovation_model(0)->set_sigsq(20.1);
     state_model->innovation_model(1)->set_sigsq(1.8);
     
-    model->add_shared_state(state_model);
+    model->add_state(state_model);
     Vector sigma_obs(ydim);
     sigma_obs.randomize();
-    model->observation_model()->set_sigsq(sigma_obs * sigma_obs);
-
+    for (int i = 0; i < ydim; ++i) {
+      model->observation_model()->model(i)->set_sigsq(square(sigma_obs[i]));
+    }
     SpdMatrix state_variance(nfactors);
     state_variance.randomize();
     Vector state_mean(nfactors);
@@ -183,6 +187,9 @@ namespace {
 
     EXPECT_TRUE(is_pos_def(marg0_lo.state_variance()));
     EXPECT_TRUE(is_pos_def(marg0_hi.state_variance()));
+
+    //--------------------------------------------------------------------------
+    // 
     
     Kalman::ConditionallyIndependentMarginalDistribution marg1_lo(
         model.get(), &marg0_lo, 1);
@@ -208,6 +215,22 @@ namespace {
                 1e-7);
     EXPECT_TRUE(MatrixEquals(marg1_hi.kalman_gain(),
                              marg1_lo.kalman_gain()));
+
+    //--------------------------------------------------------------------------
+    // Now try again with one missing observation.
+    observed.drop(1);
+    marg0_lo.update(data.row(0), observed);
+    marg0_hi.update(data.row(0), observed);
+    EXPECT_TRUE(VectorEquals(marg0_hi.prediction_error(),
+                             marg0_lo.prediction_error()));
+    EXPECT_TRUE(VectorEquals(marg0_hi.scaled_prediction_error(),
+                             marg0_lo.scaled_prediction_error()));
+    EXPECT_NEAR(marg0_hi.forecast_precision_log_determinant(),
+                marg0_lo.forecast_precision_log_determinant(),
+                1e-7);
+    EXPECT_TRUE(MatrixEquals(marg0_hi.kalman_gain(),
+                             marg0_lo.kalman_gain()));
+    
   }
 
 }  // namespace

@@ -33,8 +33,8 @@ namespace BOOM {
     
     Marginal::ConditionallyIndependentMarginalDistribution(
         ModelType *model, MarginalType *previous, int time_index)
-        : MultivariateMarginalDistributionBase(model->state_dimension(),
-                                               time_index),
+        : MultivariateMarginalDistributionBase(
+              model->state_dimension(), time_index),
           model_(model),
           previous_(previous) {}
 
@@ -42,6 +42,7 @@ namespace BOOM {
       return model_;
     }
 
+    //---------------------------------------------------------------------------
     SpdMatrix Marginal::direct_forecast_precision() const {
       SpdMatrix variance;
       if (previous()) {
@@ -55,11 +56,15 @@ namespace BOOM {
       ans.diag() += model_->observation_variance(time_index()).diag();
       return ans.inv();
     }
-    
+
+    //---------------------------------------------------------------------------
     SpdMatrix Marginal::forecast_precision() const {
+      const Selector &observed(model_->observed_status(time_index()));
+      
       DiagonalMatrix observation_precision =
           model_->observation_variance(time_index()).inv();
-      const Selector &observed(model_->observed_status(time_index()));
+
+      
       const SparseKalmanMatrix *observation_coefficients(
           model_->observation_coefficients(time_index(), observed));
 
@@ -91,10 +96,10 @@ namespace BOOM {
         const Vector &observation,
         const Selector &observed,
         const SparseKalmanMatrix &transition,
-        const SparseKalmanMatrix &observation_coefficients) {
-      set_prediction_error(
-          observed.select(observation)
-          - observed.select(observation_coefficients * state_mean()));
+        const SparseKalmanMatrix &observation_coefficient_subset) {
+      Vector observed_subset = observed.select(observation);
+      set_prediction_error(observed_subset
+                           - observation_coefficient_subset * state_mean());
 
       // At this point the Kalman recursions compute the forecast precision Finv
       // and its log determinant.  However, we can get rid of the forecast
@@ -119,11 +124,14 @@ namespace BOOM {
       // inverted is (I + PZ'HinvZ), which is a state x state matrix.
       // 
       // We don't compute Finv directly, we compute Finv * prediction_error.
-      DiagonalMatrix observation_precision =
-          model_->observation_variance(time_index()).inv();
+
+      // observation_precision refers to the precision of the observed subset.
+      DiagonalMatrix observation_precision(observed.select(
+          1.0 / model_->observation_variance(time_index()).diag()));
 
       // Set inner_matrix to I + P * Z' * Hinv * Z
-      SpdMatrix ZTZ = observation_coefficients.inner(observation_precision.diag());
+      SpdMatrix ZTZ = observation_coefficient_subset.inner(
+          observation_precision.diag());
       // Note: the product of two SPD matrices need not be symmetric.
       Matrix inner_matrix = state_variance() * ZTZ;
       inner_matrix.diag() += 1.0;
@@ -133,7 +141,8 @@ namespace BOOM {
       // symmetric.
       Matrix inner_inv_P = inner_lu.solve(state_variance());
       
-      Matrix HinvZ = observation_precision * observation_coefficients.dense();
+      Matrix HinvZ = observation_precision *
+          observation_coefficient_subset.dense();
       set_scaled_prediction_error(
           observation_precision * prediction_error()
           - HinvZ * inner_inv_P * HinvZ.Tmult(prediction_error()));
@@ -165,17 +174,18 @@ namespace BOOM {
         const Vector &observation,
         const Selector &observed,
         const SparseKalmanMatrix &transition,
-        const SparseKalmanMatrix &observation_coefficients) {
+        const SparseKalmanMatrix &observation_coefficient_subset) {
       set_prediction_error(
           observed.select(observation)
-          - observed.select(observation_coefficients * state_mean()));
-      SpdMatrix forecast_variance = model_->observation_variance(time_index()) +
-          observation_coefficients.sandwich(state_variance());
+          - observation_coefficient_subset * state_mean());
+      SpdMatrix forecast_variance =
+          observed.select_square(model_->observation_variance(time_index())) +
+          observation_coefficient_subset.sandwich(state_variance());
       SpdMatrix forecast_precision = forecast_variance.inv();
       set_forecast_precision_log_determinant(forecast_precision.logdet());
       set_scaled_prediction_error(forecast_precision * prediction_error());
       set_kalman_gain(transition * state_variance() *
-                      observation_coefficients.Tmult(forecast_precision));
+                      observation_coefficient_subset.Tmult(forecast_precision));
     }
     
   }  // namespace Kalman

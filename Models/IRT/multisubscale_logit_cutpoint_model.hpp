@@ -37,7 +37,7 @@ namespace BOOM {
       MultisubscaleLogitCutpointModel(const MLCM &rhs);
       MLCM *clone() const override;
 
-      ostream &display_item_params(ostream &, bool decorate = true) const;
+      std::ostream &display_item_params(std::ostream &, bool decorate = true) const;
 
       // set to observed proportions assuming theta=0
       void initialize_params() override;

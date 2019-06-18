@@ -77,13 +77,13 @@ namespace BOOM {
           const Vector &observation,
           const Selector &observed,
           const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) override;
+          const SparseKalmanMatrix &observation_coefficient_subset) override;
 
       void low_dimensional_update(
           const Vector &observation,
           const Selector &observed,
           const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) override;
+          const SparseKalmanMatrix &observation_coefficient_subset) override;
 
       ModelType *model_;
       MarginalType *previous_;

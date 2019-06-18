@@ -70,7 +70,7 @@ namespace {
   }
 
   TEST_F(RegressionHolidayStateModelTest, WithStateSpace) {
-    StateModuleManager modules;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules;
     modules.AddModule(new LocalLevelModule(.2, 0));
     
     RegressionHolidayTestModule *reg_holiday_module =

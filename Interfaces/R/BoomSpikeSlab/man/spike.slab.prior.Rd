@@ -5,6 +5,8 @@
 \Rdversion{1.1}
 \alias{SpikeSlabPrior}
 \alias{SpikeSlabPriorDirect}
+\alias{ConditionalZellnerPrior}
+
 \title{
   Create a spike and slab prior for use with lm.spike.
 }
@@ -33,6 +35,15 @@ SpikeSlabPriorDirect(coefficient.mean,
                      sigma.guess,
                      max.flips = -1,
                      sigma.upper.limit = Inf)
+
+
+ConditionalZellnerPrior(xdim, 
+                        optional.coefficient.estimate = NULL,
+                        expected.model.size = 1,
+                        prior.information.weight = .01,
+                        diagonal.shrinkage = .5,
+                        max.flips = -1,
+                        prior.inclusion.probabilities = NULL)
 
 }
 \arguments{
@@ -94,6 +105,8 @@ SpikeSlabPriorDirect(coefficient.mean,
   \item{mean.y}{The mean of the response vector, for use in cases when
     specifying the response vector is undesirable.}
 
+  \item{xdim}{The dimension of the predictor matrix.}
+  
   \item{sdy}{The standard deviation of the response vector, for use in
     cases when specifying the response vector is undesirable.}
 
@@ -117,6 +130,17 @@ SpikeSlabPriorDirect(coefficient.mean,
 
 \value{
   A list with with the components necessary to run \code{lm.spike}.
+
+  \code{SpikeSlabPrior} is intended for use in traditional regression
+  problems, when the matrix of predictors and the vector of responses
+  are available to the modeler.
+
+  \code{ConditionalZellnerPrior} is intended for cases where the
+  predictor variables are potentially unknown, because they depend on
+  model parameters or latent variables, for example.  For models that
+  support ConditionalZellnerPrior, the underlying C++ code must know
+  where to find the relevant predictors on which to condition the prior.
+  
 }
 
 \author{

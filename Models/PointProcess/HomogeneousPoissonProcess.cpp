@@ -97,7 +97,7 @@ namespace BOOM {
     return this->unvectorize(b, minimal);
   }
 
-  ostream &PoissonProcessSuf::print(ostream &out) const {
+  std::ostream &PoissonProcessSuf::print(std::ostream &out) const {
     out << number_of_events_ << " " << exposure_time_;
     return out;
   }

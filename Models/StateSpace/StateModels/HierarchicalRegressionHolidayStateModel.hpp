@@ -217,6 +217,14 @@ namespace BOOM {
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
 
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t,
+        const StateSpace::TimeSeriesRegressionData &data_point) const override;
+    
+    bool is_pure_function_of_time() const override {
+      return true;
+    }
+    
    private:
     const DynamicInterceptRegressionModel *state_space_model_;
   };

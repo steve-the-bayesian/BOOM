@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
 #include "distributions.hpp"
@@ -187,6 +188,12 @@ namespace {
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[3]);
+
+    Selector row2 = wide.row(2);
+    EXPECT_EQ(3, row2.nvars_possible());
+    EXPECT_FALSE(row2[0]);
+    EXPECT_FALSE(row2[1]);
+    EXPECT_TRUE(row2[2]);
     
     Matrix selectable(4, 3);
     selectable.randomize();
@@ -208,6 +215,60 @@ namespace {
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[0]);
     EXPECT_TRUE(all[3]);
-    
-  }  
+  }
+
+  TEST_F(SelectorTest, DiagonalMatrixTest) {
+    Selector empty(4, false);
+    Selector full(4, true);
+    Selector one(4, false);
+    one.add(2);
+    Selector three(4, true);
+    three.drop(2);
+
+    Vector v(4);
+    v.randomize();
+    DiagonalMatrix dmat(v);
+
+    EXPECT_EQ(empty.select_square(dmat).nrow(), 0);
+    EXPECT_EQ(empty.select_square(dmat).ncol(), 0);
+    EXPECT_EQ(full.select_square(dmat).nrow(), 4);
+    EXPECT_EQ(full.select_square(dmat).ncol(), 4);
+    EXPECT_TRUE(VectorEquals(full.select_square(dmat).diag(), v));
+
+    EXPECT_EQ(one.select_square(dmat).nrow(), 1);
+    EXPECT_EQ(one.select_square(dmat).ncol(), 1);
+    EXPECT_TRUE(VectorEquals( one.select_square(dmat).diag(), one.select(v)));
+
+    EXPECT_EQ(three.select_square(dmat).nrow(), 3);
+    EXPECT_EQ(three.select_square(dmat).ncol(), 3);
+    EXPECT_TRUE(VectorEquals(three.select_square(dmat).diag(),
+                             three.select(v)));
+  }
+
+  TEST_F(SelectorTest, FillMissingValues) {
+    Vector x(5);
+    x.randomize();
+
+    Selector all(5, true);
+    Selector none(5, false);
+
+    EXPECT_TRUE(VectorEquals(x, all.fill_missing_elements(x, 3.0)));
+    EXPECT_TRUE(VectorEquals(Vector(5, 3.0),
+                             none.fill_missing_elements(x, 3.0)));
+
+    x.randomize();
+    Selector three("11010");
+    Vector y = x;
+    three.fill_missing_elements(x, 3.0);
+    y[2] = 3.0;
+    y[4] = 3.0;
+    EXPECT_TRUE(VectorEquals(x, y));
+
+    Vector values = {1.2, 2.4};
+    three.fill_missing_elements(x, values);
+    y[2] = 1.2;
+    y[4] = 2.4;
+    EXPECT_TRUE(VectorEquals(x, y));
+  }
+  
 }  // namespace

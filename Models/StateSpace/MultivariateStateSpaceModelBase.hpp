@@ -26,12 +26,11 @@
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
-
 #include "Models/StateSpace/Filters/ConditionallyIndependentKalmanFilter.hpp"
-
 #include "Models/StateSpace/PosteriorSamplers/SufstatManager.hpp"
-
 #include "Models/StateSpace/StateModels/StateModel.hpp"
+#include "Models/StateSpace/StateModelVector.hpp"
+
 #include "cpputil/ThreadTools.hpp"
 #include "cpputil/math_utils.hpp"
 
@@ -47,46 +46,47 @@ namespace BOOM {
   // variable-specific.  This allows for MCMC strategies like
   //
   // (1) Sample shared state given variable specific state.
-  // (2) Sample variable specific state givne shared state.
+  // (2) Sample variable specific state given shared state.
   // (3) Sample parameters.
   //
-  // This algorithm would have worse mixing behavior than the MCMC that just
-  // drew all state simultaneously, but the variable-specific portion can be
-  // multi-threaded, and each Kalman filter based simulation draws a much
+  // This algorithm would have slightly worse mixing behavior than the MCMC that
+  // just drew all state simultaneously, but the variable-specific portion can
+  // be multi-threaded, and each Kalman filter based simulation draws a much
   // smaller state, so it has the potential to be fast.
-  class MultivariateStateSpaceModelBase : public StateSpaceModelBase {
+  class MultivariateStateSpaceModelBase : virtual public Model {
    public:
+    MultivariateStateSpaceModelBase()
+        : state_is_fixed_(false)
+    {}
     
-    // Args:
-    //   nseries: The number of time series being modeled.  Note that in some cases
-    //     (e.g. dynamic regression models) the answer varies time point by time
-    //     point.  Concrete classes can signal this by setting ydim <= 0.
-    MultivariateStateSpaceModelBase(int nseries) : nseries_(nseries) {}
     MultivariateStateSpaceModelBase *clone() const override = 0;
     MultivariateStateSpaceModelBase & operator=(
         const MultivariateStateSpaceModelBase &rhs);
 
-    // The number of series being modeled.  See the comments in the constructor.
-    // Child classes should check that nseries > 0, where a value <= 0 indicates
-    // a dimension that varies by time.
-    int nseries() const { return nseries_; }
-    
+    virtual int time_dimension() const = 0;
+
+    // The 'state' component of this model refers to the components of state
+    // shared across all time series.
+    virtual int state_dimension() const = 0;
+    virtual int number_of_state_models() const = 0;
+
     // ----- virtual functions required by the base class: ----------
     // These must be implemented by the concrete class.
     //---------------------------------------------------------------------------
-    // virtual int time_dimension() const = 0;
     // virtual bool is_missing_observation(int t) const = 0;
-    // virtual PosteriorModeModel *observation_model() = 0;
-    // virtual const PosteriorModeModel *observation_model() const = 0;
-    // virtual void kalman_filter() = 0;
-    // virtual void observe_state(int t) = 0;
-    // virtual void observe_data_given_state(int t) = 0;
-    // virtual void update_observation_model(Vector &r, SpdMatrix &N, int t,
-    //     bool save_state_distributions, bool update_sufficient_statistics,
-    //     Vector *gradient) = 0;
-    // virtual void simulate_forward(RNG &rng) = 0;
-    // virtual void smooth_observed_disturbances() = 0;
-    // virtual void propagate_disturbances() = 0;
+    virtual Model *observation_model() = 0;
+    virtual const Model *observation_model() const = 0;
+    
+    virtual void kalman_filter() = 0;
+    virtual void observe_state(int t) = 0;
+    virtual void observe_data_given_state(int t) = 0;
+
+    // Sets the behavior of all client state models to 'behavior.'  State models
+    // that can be represented as mixtures of normals should be set to MIXTURE
+    // during data augmentation, and MARGINAL during forecasting.
+    void set_state_model_behavior(StateModel::Behavior behavior);
+
+    virtual void impute_state(RNG &rng);
     
     //---------------- Parameters for structural equations. -------------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
@@ -97,105 +97,236 @@ namespace BOOM {
     //   t: The time index for which observation coefficients are desired.
     //   observed: Indicates which components of the observation at time t are
     //     observed (as opposed to missing).
+    //
+    // Returns:
+    //   A subset of the observation coefficients at time t.  Row j of Z[t] is
+    //   included if and only if observed[j] == true.
     virtual const SparseKalmanMatrix *observation_coefficients(
         int t, const Selector &observed) const = 0;
 
     // Return the KalmanFilter object responsible for filtering the data.
-    MultivariateKalmanFilterBase & get_filter() override = 0;
-    const MultivariateKalmanFilterBase & get_filter() const override = 0;
-    MultivariateKalmanFilterBase & get_simulation_filter() override = 0;
-    const MultivariateKalmanFilterBase & get_simulation_filter() const override = 0;
-    
+    virtual MultivariateKalmanFilterBase & get_filter() = 0;
+    virtual const MultivariateKalmanFilterBase & get_filter() const = 0;
+    virtual MultivariateKalmanFilterBase & get_simulation_filter() = 0;
+    virtual const MultivariateKalmanFilterBase & get_simulation_filter() const = 0;
+
+    // Durbin and Koopman's T[t] built from state models.
+    virtual const SparseKalmanMatrix *state_transition_matrix(int t) const {
+      return state_model_vector().state_transition_matrix(t);
+    }
+
+    // Durbin and Koopman's RQR^T.  Built from state models, often less than
+    // full rank.
+    virtual const SparseKalmanMatrix *state_variance_matrix(int t) const {
+      return state_model_vector().state_variance_matrix(t);
+    }
+
+    // Durbin and Koopman's R matrix from the transition equation:
+    //    state[t+1] = (T[t] * state[t]) + (R[t] * state_error[t]).
+    //
+    // This is the matrix that takes the low dimensional state_errors and turns
+    // them into error terms for states.
+    virtual const SparseKalmanMatrix *state_error_expander(int t) const {
+      return state_model_vector().state_error_expander(t);
+    }
+
+    // The full rank variance matrix for the errors in the transition equation.
+    // This is Durbin and Koopman's Q[t].  The errors with this variance are
+    // multiplied by state_error_expander(t) to produce the errors described by
+    // state_variance_matrix(t).
+    virtual const SparseKalmanMatrix *state_error_variance(int t) const {
+      return state_model_vector().state_error_variance(t);
+    }
+
     //----------------- Access to data -----------------
     // Returns the value of y observed at time t.
-    virtual const Vector &observation(int t) const = 0;
+    virtual ConstVectorView observation(int t) const = 0;
+
+    // Some models contain components other than the shared state component.
+    // Learning for such models involves subtracting off contributions from
+    // other components, leaving just the contributions from the shared state
+    // multivariate model.
+    //
+    // Returns the residual observation obtained after subtracting off
+    // components other than shared state components.
+    virtual ConstVectorView adjusted_observation(int time) const = 0;
 
     // Elements of the returned value indicate which elements of observation(t)
     // are actually observed.  In the typical case all elements will be true.
     virtual const Selector &observed_status(int t) const = 0;
 
-   protected:
-    // Implements part of a single step of the E-step in the EM algorithm or
-    // gradient computation for the gradient of the observed data log
-    // likelihood.
+    // The contributions of each state model to the mean of the response at each
+    // time point.
+    //
+    // Returns:
+    //   Matrix element (t, d) gives the contribution of state model
+    //   which_state_model to dimension d of the response variable at time t.
+    virtual Matrix state_contributions(int which_state_model) const = 0;
+
+    //    void signal_complete_data_reset();
+
+    //---------------- Access to state ---------------------------------------
+    // A cast will be necessary in the child classes.
+    
+    virtual StateModelBase *state_model(int s) = 0;
+    virtual const StateModelBase *state_model(int s) const = 0;
+
+    ConstVectorView final_state() const {
+      if (time_dimension() <= 0) {
+        report_error("State size is zero.");
+      }
+      return shared_state(time_dimension() - 1);
+    }
+    
+    VectorView state_component(Vector &full_state, int s) const {
+      return state_model_vector().state_component(full_state, s);
+    }
+    VectorView state_component(VectorView &full_state, int s) const {
+      return state_model_vector().state_component(full_state, s);
+    }
+    ConstVectorView state_component(
+        const ConstVectorView &full_state, int s) const {
+      return state_model_vector().state_component(full_state, s);
+    }
+
+    const Matrix &shared_state() const { return shared_state_; }
+
+    ConstVectorView shared_state(int t) const {return shared_state().col(t);}
+
+    ConstSubMatrix full_state_subcomponent(int state_model_index) const {
+      return state_model_vector().full_state_subcomponent(
+          shared_state_, state_model_index);
+    }
+    
+    SubMatrix mutable_full_state_subcomponent(int state_model_index) {
+      return state_model_vector().mutable_full_state_subcomponent(
+          shared_state_, state_model_index);
+    }
+    
+    Vector initial_state_mean() const;
+    SpdMatrix initial_state_variance() const;
+
+    // Set the shared state to the specified value, and mark the state as
+    // 'fixed' so that it will no longer be updated by calls to 'impute_state'.
+    // This function is intended for debugging purposes only.
     //
     // Args:
-    //   r: Durbin and Koopman's r vector, which is a scaled version of the
-    //     smoothed state mean.  On entry r is r[t].  On exit it is r[t-1].
-    //   N: Durbin and Koopman's N matrix, which is a scaled version of the
-    //     smoothed state variance. On entry N is N[t].  On exit it is N[t-1].
-    //   t:  The time index for the update.
-    //   save_state_distributions: If true then the observation error mean and
-    //     variance (if y is univariate) or precision (if y is multivariate)
-    //     will be saved in the Kalman filter.
-    //   update_sufficient_statistics: If true then the complete data sufficient
-    //     statistics for the observation model will be updated as in the E-step
-    //     of the EM algorithm.
-    //   gradient: If non-NULL then the observation model portion of the
-    //     gradient will be incremented to reflect information at time t.
+    //   state:  The state matrix.  Columns are time. Rows are state elements.
+    void permanently_set_state(const Matrix &state);
+
+    // The number of time series being modeled.  Not all model types know this.
+    // For example the number of series in a dynamic intercept model changes
+    // from time point to time point.  For this reason the default
+    // implementation is to return -1.
+    virtual int nseries() const { return -1; }
+    
+   protected:
+    // Access to the state model vector owned by descendents.
+    using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
+    virtual StateModelVectorBase & state_model_vector() = 0;
+    virtual const StateModelVectorBase & state_model_vector() const = 0;
+
+    // Advance the state vector to a future time stamp.  This method is used to
+    // implement simulations from the posterior predictive distribution.
+    // Args:
+    //   rng:  The random number generator.
+    //   time: The current time stamp of the state vector, as a number of time
+    //     steps from the end of the training data.
+    //   state:  The current value of the state vector.
+    //   timestamp: The timestamp to advance to.  This must be no smaller than
+    //     'time'.  On exit, 'time' will equal 'timestamp'.
+    //   observation_index: This is only used to print an error message, if
+    //     needed.  It is the observation number for the data point being
+    //     predicted.
     //
     // Side effects:
-    //   r and N are "downdated" to time t-1 throug a call to the disturbance
-    //   smoother.  The Kalman filter is updated by the smoothing recursions.
-    void update_observation_model(Vector &r, SpdMatrix &N, int t,
-                                  bool save_state_distributions,
-                                  bool update_sufficient_statistics,
-                                  Vector *gradient) override;
+    //   On exit, 'time' is advanced to 'timestamp', and 'state' is a draw from
+    //   the state vector at time time_dimension() + timestamp.
+    void advance_to_timestamp(RNG &rng, int &time, Vector &state,
+                              int timestamp, int observation_index) const;
 
-    // Update the complete data sufficient statistics for the observation model
-    // based on the posterior distribution of the observation model error term
-    // at time t.
-    //
-    // Args:
-    //   t: The time of the observation.
-    //   observation_error_mean: Mean of the observation error given model
-    //     parameters and all observed y's.
-    //   observation_error_variance: Variance of the observation error given
-    //     model parameters and all observed y's.
-    // virtual void update_observation_model_complete_data_sufficient_statistics(
-    //     int t, const Vector &observation_error_mean,
-    //     const SpdMatrix &observation_error_variance) = 0;
+    Vector simulate_next_state(RNG &rng, const ConstVectorView &last,
+                               int t) const;
 
-    // Increment the portion of the log-likelihood gradient pertaining to the
-    // parameters of the observation model.
-    //
-    // Args:
-    //   gradient: The subset of the log likelihood gradient pertaining to the
-    //     observation model.  The gradient will be incremented by the
-    //     derivatives of log likelihood with respect to the observation model
-    //     parameters.
-    //   t:  The time index of the observation error.
-    //   observation_error_mean: The posterior mean of the observation error at
-    //     time t.
-    //   observation_error_variance: The posterior variance of the observation
-    //     error at time t.
-    // virtual void update_observation_model_gradient(
-    //     VectorView gradient, int t, const Vector &observation_error_mean,
-    //     const SpdMatrix &observation_error_variance) = 0;
+    virtual void clear_client_data();
+    void observe_fixed_state();
 
    private:
-    void simulate_forward(RNG &rng) override;
+    // Implementation for impute_state.  
+    void simulate_initial_state(RNG &rng, VectorView initial_state) const;
+    Vector simulate_state_error(RNG &rng, int t) const;
     
-    //    void propagate_disturbances() override;
+    void simulate_forward(RNG &rng);
+    void propagate_disturbances(RNG &rng);
 
+    // If observation t is not fully observed, impute its missing values.  This
+    // is a full imputation, including regression and series-level state model
+    // effects.
+    virtual void impute_missing_observations(int t, RNG &rng) = 0;
+    
+    void resize_state();
+    
     // Simulate a fake observation to use as part of the Durbin-Koopman state
-    // simulation algorithm.  
+    // simulation algorithm.  If observed_status(t) is less than fully observed,
+    // only the observed parts should be simulated.
     virtual Vector simulate_fake_observation(RNG &rng, int t) = 0;
 
-    // The number of time series being modeled.  If nseries_ <= 0 it is a signal
-    // that the dimension of the observed data changes with time.
-    int nseries_;
+    Matrix shared_state_;
+    bool state_is_fixed_;
+  };
+
+  //===========================================================================
+  class GeneralMultivariateStateSpaceModelBase
+      : public MultivariateStateSpaceModelBase {
+   public:
+    virtual SpdMatrix observation_variance(int t) const = 0;
+
+    //---------------- Prediction, filtering, smoothing ---------------
+    // Run the full Kalman filter over the observed data, saving the information
+    // in the filter_ object.  The log likelihood is computed as a by-product.
+    void kalman_filter() override;
+  };
+
+  //===========================================================================
+  class ConditionallyIndependentMultivariateStateSpaceModelBase
+      : public MultivariateStateSpaceModelBase {
+   public:
+    ConditionallyIndependentMultivariateStateSpaceModelBase()
+        : filter_(this),
+          simulation_filter_(this)
+    {}
+
+    // Variance of the observation error at time t.  Durbin and Koopman's H[t].
+    virtual DiagonalMatrix observation_variance(int t) const = 0;
+
+    virtual double single_observation_variance(int t, int dim) const = 0;
     
-    // Workspace for disturbance smoothing.
-    Vector r0_sim_;
-    Vector r0_obs_;
+    //---------------- Prediction, filtering, smoothing ---------------
+    // Run the full Kalman filter over the observed data, saving the information
+    // in the filter_ object.  The log likelihood is computed as a by-product.
+    void kalman_filter() override { filter_.update(); }
+
+    using Filter = ConditionallyIndependentKalmanFilter;
+    Filter &get_filter() override {return filter_;}
+    const Filter &get_filter() const override { return filter_; }
+    Filter &get_simulation_filter() override { return simulation_filter_; }
+    const Filter & get_simulation_filter() const override {
+      return simulation_filter_;
+    }
+    
+   private:
+    // This function is 
+    Vector simulate_fake_observation(RNG &rng, int t) override;
+
+    ConditionallyIndependentKalmanFilter filter_;
+    ConditionallyIndependentKalmanFilter simulation_filter_;
   };
 
   //===========================================================================
   class ConditionalIidMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
-    ConditionalIidMultivariateStateSpaceModelBase(int nseries);
+    ConditionalIidMultivariateStateSpaceModelBase();
 
     // All observations at time t have this variance.
     virtual double observation_variance(int t) const = 0;
@@ -224,60 +355,7 @@ namespace BOOM {
     ConditionalIidKalmanFilter filter_;
     ConditionalIidKalmanFilter simulation_filter_;
   };
-
-  //===========================================================================
-  class ConditionallyIndependentMultivariateStateSpaceModelBase
-      : public MultivariateStateSpaceModelBase {
-   public:
-    ConditionallyIndependentMultivariateStateSpaceModelBase(int nseries)
-        : MultivariateStateSpaceModelBase(nseries),
-          filter_(this),
-          simulation_filter_(this)
-    {}
-
-    // Variance of the observation error at time t.  Durbin and Koopman's H[t].
-    virtual DiagonalMatrix observation_variance(int t) const = 0;
-
-    virtual double single_observation_variance(int t, int dim) const = 0;
-    
-    //---------------- Prediction, filtering, smoothing ---------------
-    // Run the full Kalman filter over the observed data, saving the information
-    // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override { filter_.update(); }
-
-    using Filter = ConditionallyIndependentKalmanFilter;
-    Filter &get_filter() override {return filter_;}
-    const Filter &get_filter() const override { return filter_; }
-    Filter &get_simulation_filter() override { return simulation_filter_; }
-    const Filter & get_simulation_filter() const override {
-      return simulation_filter_;
-    }
-
-    
-   private:
-    // This function is 
-    Vector simulate_fake_observation(RNG &rng, int t) override;
-
-    ConditionallyIndependentKalmanFilter filter_;
-    ConditionallyIndependentKalmanFilter simulation_filter_;
-  };
-
-  //===========================================================================
-  class GeneralMultivariateStateSpaceModelBase
-      : public MultivariateStateSpaceModelBase {
-   public:
-    GeneralMultivariateStateSpaceModelBase(int nseries)
-        : MultivariateStateSpaceModelBase(nseries)
-    {}
-    
-    virtual SpdMatrix observation_variance(int t) const = 0;
-
-    //---------------- Prediction, filtering, smoothing ---------------
-    // Run the full Kalman filter over the observed data, saving the information
-    // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override;
-  };
-
+  
 } // namespace BOOM
 
 

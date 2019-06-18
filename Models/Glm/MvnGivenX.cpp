@@ -27,113 +27,198 @@
 
 namespace BOOM {
 
-  MvnGivenX::MvnGivenX(const Vector &Mu, double nobs, double diag)
-      : ParamPolicy(new VectorParams(Mu), new UnivParams(nobs)),
-        diagonal_weight_(diag),
-        Lambda_(Mu.length(), 0),
-        ivar_(new SpdParams(Mu.length(), 0.0)),
-        xtwx_(Mu.length(), 0.0),
-        sumw_(0) {}
+  MvnGivenXBase::MvnGivenXBase(const Ptr<VectorParams> &mean,
+                               const Ptr<UnivParams> &prior_sample_size,
+                               const Vector &diagonal,
+                               double diagonal_weight)
+      : ParamPolicy(mean, prior_sample_size),
+        diagonal_weight_(diagonal_weight),
+        diagonal_(diagonal),
+        precision_(new SpdData(mean->dim())),
+        current_(false)
+  {}
 
-  MvnGivenX::MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &nobs,
-                       double diag)
-      : ParamPolicy(Mu, nobs),
-        diagonal_weight_(diag),
-        Lambda_(Mu->dim(), 0),
-        ivar_(new SpdParams(Mu->dim(), 0.0)),
-        xtwx_(Mu->dim(), 0.0),
-        sumw_(0) {}
-
-  MvnGivenX::MvnGivenX(const Ptr<VectorParams> &Mu, const Ptr<UnivParams> &nobs,
-                       const Vector &Lambda, double diag)
-      : ParamPolicy(Mu, nobs),
-        diagonal_weight_(diag),
-        Lambda_(Lambda),
-        ivar_(new SpdParams(Mu->dim(), 0.0)),
-        xtwx_(Mu->dim(), 0.0),
-        sumw_(0) {
-    assert(Lambda_.size() == Mu->dim());
+  const SpdMatrix &MvnGivenXBase::Sigma() const {
+    set_precision_matrix();
+    return precision_->var();
   }
 
-  MvnGivenX::MvnGivenX(const MvnGivenX &rhs)
-      : Model(rhs),
-        VectorModel(rhs),
-        MvnBase(rhs),
-        ParamPolicy(rhs),
-        DataPolicy(rhs),
-        PriorPolicy(rhs),
-        diagonal_weight_(rhs.diagonal_weight_),
-        Lambda_(rhs.Lambda_),
-        ivar_(rhs.ivar_->clone()),
-        xtwx_(rhs.xtwx_),
-        sumw_(rhs.sumw_) {}
+  const SpdMatrix &MvnGivenXBase::siginv() const {
+    set_precision_matrix();
+    return precision_->ivar();
+  }
 
-  MvnGivenX *MvnGivenX::clone() const { return new MvnGivenX(*this); }
+  double MvnGivenXBase::ldsi() const {
+    set_precision_matrix();
+    return precision_->ldsi();
+  }
+
+  Vector MvnGivenXBase::sim(RNG &rng) const {
+    return rmvn_mt(rng, mu(), Sigma());
+  }
+
+  //===========================================================================
+  MvnGivenX::MvnGivenX(const Ptr<VectorParams> &mean,
+                       const Ptr<UnivParams> &prior_sample_size,
+                       const Vector &diagonal,
+                       double diagonal_weight)
+      : MvnGivenXBase(mean, prior_sample_size, diagonal, diagonal_weight),
+        xtwx_(mean->dim(), 0.0),
+        sumw_(0.0)
+  {}
 
   void MvnGivenX::add_x(const Vector &x, double w) {
     xtwx_.add_outer(x, w, false);
     sumw_ += w;
-    current_ = false;
+    mark_not_current();
   }
 
   void MvnGivenX::clear_xtwx() {
     xtwx_ = 0;
     sumw_ = 0;
-    current_ = false;
+    mark_not_current();
   }
 
-  const SpdMatrix &MvnGivenX::xtwx() const { return xtwx_; }
-
-  void MvnGivenX::initialize_params() {}
-
-  const Ptr<VectorParams> MvnGivenX::Mu_prm() const { return prm1(); }
-  const Ptr<UnivParams> MvnGivenX::Kappa_prm() const { return prm2(); }
-  Ptr<VectorParams> MvnGivenX::Mu_prm() { return prm1(); }
-  Ptr<UnivParams> MvnGivenX::Kappa_prm() { return prm2(); }
-  double MvnGivenX::diagonal_weight() const { return diagonal_weight_; }
-  uint MvnGivenX::dim() const { return mu().size(); }
-  const Vector &MvnGivenX::mu() const { return Mu_prm()->value(); }
-  double MvnGivenX::kappa() const { return Kappa_prm()->value(); }
-
-  const SpdMatrix &MvnGivenX::Sigma() const {
-    if (!current_) set_ivar();
-    return ivar_->var();
-  }
-
-  const SpdMatrix &MvnGivenX::siginv() const {
-    if (!current_) set_ivar();
-    return ivar_->ivar();
-  }
-
-  double MvnGivenX::ldsi() const {
-    if (!current_) set_ivar();
-    return ivar_->ldsi();
-  }
-
-  void MvnGivenX::set_ivar() const {
+  void MvnGivenX::set_precision_matrix() const {
+    if (current()) return;
     SpdMatrix ivar = xtwx_;
-    if (sumw_ > 0.0) {
+    ivar.reflect();
+    if (sumw_ > 0) {
       ivar /= sumw_;
-      double w = diagonal_weight_;
-
-      if (w >= 1.0) {
-        ivar.set_diag(ivar.diag());
-      } else if (w > 0.0) {
-        ivar *= (1 - w);
-        ivar.diag() /= (1 - w);
-      }
-    } else
+    } else {
       ivar *= 0.0;
-
-    ivar.diag() += Lambda_;
-
-    ivar_->set_ivar(ivar);
-    current_ = true;
+    }
+    store_precision_matrix(std::move(ivar));
   }
 
-  Vector MvnGivenX::sim(RNG &rng) const { return rmvn_mt(rng, mu(), Sigma()); }
+  // Args:
+  //   ivar: the precision matrix before averaging with its diagonal or
+  //     multiplying by prior information weight.  In the canonical example ivar
+  //     == X'X / n.
+  void MvnGivenXBase::store_precision_matrix(SpdMatrix &&ivar) const {
+    // Average ivar with the diagonal.
+    if (diagonal_weight_ >= 1.0) {
+      if (diagonal().empty()) {
+        ivar.set_diag(ivar.diag(), true);
+      } else {
+        ivar.set_diag(diagonal(), true);
+      }
+    } else if (diagonal_weight_ > 0) {
+      if (diagonal().empty()) {
+        // ominv = a * D(X'X) + (1 - a) * X'X
+        // The diagonal is unchanged.  The off-diagonal elements are multiplied by 1-a.
+        ivar *= (1 - diagonal_weight_);
+        ivar.diag() /= (1 - diagonal_weight_);
+      } else {
+        ivar *= (1 - diagonal_weight_);
+        ivar.diag().axpy(diagonal(), diagonal_weight_);
+      }
+    } else {
+      // diagonal_weight_ is zero.  Leave ivar alone.
+    }
+    
+    precision_->set_ivar(ivar * kappa());
+    current_ = true;
+  }                     
 
-  //______________________________________________________________________
+  
+  //===========================================================================
+  MvnGivenXRegSuf::MvnGivenXRegSuf(
+      const Ptr<VectorParams> &mean,
+      const Ptr<UnivParams> &prior_sample_size,
+      const Vector &precision_diagonal,
+      double diagonal_weight,
+      const Ptr<RegSuf> &suf)
+      : MvnGivenXBase(mean, prior_sample_size, precision_diagonal,
+                      diagonal_weight),
+        suf_(suf)
+  {}
+
+  MvnGivenXRegSuf::MvnGivenXRegSuf(const MvnGivenXRegSuf &rhs)
+      : Model(rhs),
+        MvnGivenXBase(rhs),
+        suf_(rhs.suf_->clone())
+  {}
+
+  void MvnGivenXRegSuf::set_precision_matrix() const {
+    if (current()) return;
+    if (!suf_) {
+      report_error("Sufficient statistics must be set.");
+    }
+    SpdMatrix xtx = suf_->xtx();
+    double n = suf_->n();
+    if (n <= 0) {
+      xtx *= 0;
+      n = 1;
+    }
+    store_precision_matrix(xtx / n);
+  }
+ 
+  //===========================================================================
+  MvnGivenXMvRegSuf::MvnGivenXMvRegSuf(
+      const Ptr<VectorParams> &mean,
+      const Ptr<UnivParams> &prior_sample_size,
+      const Vector &precision_diagonal,
+      double diagonal_weight,
+      const Ptr<MvRegSuf> &suf)
+      : MvnGivenXBase(mean, prior_sample_size, precision_diagonal, diagonal_weight),
+        suf_(suf)
+  {}
+
+  MvnGivenXMvRegSuf::MvnGivenXMvRegSuf(const MvnGivenXMvRegSuf &rhs)
+      : Model(rhs),
+        MvnGivenXBase(rhs),
+        suf_(rhs.suf_->clone())
+  {}
+
+  void MvnGivenXMvRegSuf::set_precision_matrix() const {
+    if (current()) return;
+    if (!suf_) {
+      report_error("Sufficient statistics must be set.");
+    }
+    SpdMatrix xtx = suf_->xtx();
+    double n = suf_->n();
+    if (n <= 0) {
+      xtx *= 0;
+    } else {
+      xtx /= n;
+    }
+    store_precision_matrix(std::move(xtx));
+  }
+  
+  //===========================================================================
+  MvnGivenXWeightedRegSuf::MvnGivenXWeightedRegSuf(
+      const Ptr<VectorParams> &mean,
+      const Ptr<UnivParams> &prior_sample_size,
+      const Vector &precision_diagonal,
+      double diagonal_weight,
+      const Ptr<WeightedRegSuf> &suf)
+      : MvnGivenXBase(mean, prior_sample_size, precision_diagonal, diagonal_weight),
+        suf_(suf)
+  {}
+
+  MvnGivenXWeightedRegSuf::MvnGivenXWeightedRegSuf(
+      const MvnGivenXWeightedRegSuf &rhs)
+      : Model(rhs),
+        MvnGivenXBase(rhs),
+        suf_(rhs.suf_->clone())
+  {}
+  
+  void MvnGivenXWeightedRegSuf::set_precision_matrix() const {
+    if (current()) return;
+    if (!suf_) {
+      report_error("Sufficient statistics must be set.");
+    }
+    SpdMatrix xtwx = suf_->xtx();
+    double n = suf_->sumw();
+    if (n <= 0) {
+      xtwx *= 0;
+      n = 1;
+    }
+    store_precision_matrix(xtwx / n);
+  }
+
+  //===========================================================================
 
   MvnGivenXMultinomialLogit::MvnGivenXMultinomialLogit(
       const Vector &beta_prior_mean, double prior_sample_size,

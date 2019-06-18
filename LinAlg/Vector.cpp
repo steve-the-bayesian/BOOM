@@ -41,15 +41,13 @@
 
 #include "LinAlg/EigenMap.hpp"
 
-using namespace std;
-
 namespace BOOM {
   typedef std::vector<double> dVector;
 
 #ifndef NDEBUG
   inline void check_range(uint n, uint size) {
     if (n >= size) {
-      ostringstream out;
+      std::ostringstream out;
       out << "Vector subscript " << n << " out of bounds in Vector of size "
           << size << std::endl;
       report_error(out.str());
@@ -61,11 +59,11 @@ namespace BOOM {
 
   Vector::Vector(uint n, double x) : dVector(n, x) {}
 
-  Vector::Vector(const string &s) {
+  Vector::Vector(const std::string &s) {
     bool have_comma = s.find(',') < std::string::npos;
     StringSplitter split;
     if (have_comma) split = StringSplitter(",");
-    std::vector<string> fields = split(s);
+    std::vector<std::string> fields = split(s);
     uint n = fields.size();
     if (n > s.size()) {
       std::ostringstream err;
@@ -83,9 +81,9 @@ namespace BOOM {
     }
   }
 
-  Vector::Vector(const string &s, const string &delim) {
+  Vector::Vector(const std::string &s, const std::string &delim) {
     StringSplitter split(delim);
-    std::vector<string> fields = split(s);
+    std::vector<std::string> fields = split(s);
     uint n = fields.size();
     reserve(n);
     for (uint i = 0; i < n; ++i) {
@@ -197,7 +195,7 @@ namespace BOOM {
   }
 
   //------------- input/output -----------------------
-  ostream &Vector::write(ostream &out, bool nl) const {
+  std::ostream &Vector::write(std::ostream &out, bool nl) const {
     if (!empty()) {
       out << operator[](0);
     }
@@ -206,7 +204,7 @@ namespace BOOM {
     return out;
   }
 
-  istream &Vector::read(istream &in) {
+  std::istream &Vector::read(std::istream &in) {
     for (uint i = 0; i < size(); ++i) in >> operator[](i);
     return in;
   }
@@ -467,7 +465,7 @@ namespace BOOM {
     template <class V>
     double dot_impl(const Vector &x, const V &y) {
       if (y.size() != x.size()) {
-        ostringstream err;
+        std::ostringstream err;
         err << "Dot product between two vectors of different sizes:" << endl
             << "x = " << x << endl
             << "y = " << y << endl;
@@ -516,7 +514,7 @@ namespace BOOM {
   }
   //============== non member functions from Vector.hpp =============
 
-  Vector scan_vector(const string &fname) {
+  Vector scan_vector(const std::string &fname) {
     std::ifstream in(fname.c_str());
     Vector ans;
     double x;
@@ -531,8 +529,8 @@ namespace BOOM {
     v = x;
   }
 
-  typedef std::vector<string> svec;
-  Vector str2vec(const string &line) {
+  typedef std::vector<std::string> svec;
+  Vector str2vec(const std::string &line) {
     StringSplitter split;
     svec sv = split(line);
     return str2vec(sv);
@@ -542,53 +540,104 @@ namespace BOOM {
     uint n = sv.size();
     Vector ans(n);
     for (uint i = 0; i < n; ++i) {
-      istringstream tmp(sv[i]);
+      std::istringstream tmp(sv[i]);
       tmp >> ans[i];
     }
     return ans;
   }
 
+  // Field operators for Vector - double.
+  // Addition
+  Vector operator+(const ConstVectorView &x, double a) {
+    Vector ans(x);
+    ans += a;
+    return ans;
+  }
+  Vector operator+(double a, const ConstVectorView &x) {
+    return x + a;
+  }
+  Vector operator+(double a, const Vector &x) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(const Vector &x, double a) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(double a, const VectorView &x) {
+    return ConstVectorView(x) + a;
+  }
+  Vector operator+(const VectorView &x, double a) {
+    return ConstVectorView(x) + a;
+  }
+      
+  // Vector-double subraction
+  Vector operator-(double a, const ConstVectorView &x) {
+    Vector ans(x.size(), a);
+    ans -= x;
+    return ans;
+  }
+  Vector operator-(const ConstVectorView &x, double a) {
+    return x + (-a);
+  }
+  Vector operator-(double a, const Vector &x) {
+    return a - ConstVectorView(x);
+  }
+  Vector operator-(const Vector &x, double a) {
+    return ConstVectorView(x) - a;
+  }
+  Vector operator-(double a, const VectorView &x) {
+    return a - ConstVectorView(x);
+  }
+  Vector operator-(const VectorView &x, double a) {
+    return ConstVectorView(x) - a;
+  }
+
+  // Vector-double multipliplication
+  Vector operator*(double a, const ConstVectorView &x) {
+    Vector ans(x);
+    ans *= a;
+    return ans;
+  }
+  Vector operator*(const ConstVectorView &x, double a) {
+    return a * x;
+  }
+  Vector operator*(double a, const VectorView &x) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(const VectorView &x, double a) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(double a, const Vector &x) {
+    return a * ConstVectorView(x);
+  }
+  Vector operator*(const Vector &x, double a) {
+    return a * ConstVectorView(x);
+  }
+
+  // Vector-double division
   Vector operator/(double a, const ConstVectorView &x) {
     Vector ans(x.size(), a);
     ans /= x;
     return ans;
-  }
-  Vector operator/(double a, const Vector &x) {
-    ConstVectorView xx(x);
-    return a / xx;
-  }
-  Vector operator/(double a, const VectorView &x) {
-    ConstVectorView xx(x);
-    return a / xx;
   }
   Vector operator/(const ConstVectorView &x, double a) {
     Vector ans(x);
     ans /= a;
     return ans;
   }
+  Vector operator/(double a, const Vector &x) {
+    return a / ConstVectorView(x);
+  }
+  Vector operator/(double a, const VectorView &x) {
+    return a / ConstVectorView(x);
+  }
   Vector operator/(const VectorView &x, double a) {
     return ConstVectorView(x) / a;
   }
-
-  Vector operator-(double a, const ConstVectorView &x) {
-    Vector ans(-x);
-    ans += a;
-    return ans;
+  Vector operator/(const Vector &x, double a) {
+    return ConstVectorView(x) / a;
   }
-  Vector operator-(double a, const Vector &x) {
-    ConstVectorView xx(x);
-    return a - xx;
-  }
-  Vector operator-(double a, const VectorView &x) {
-    ConstVectorView xx(x);
-    return a - xx;
-  }
-  Vector operator-(const ConstVectorView &x, double a) {
-    Vector ans(x);
-    ans -= a;
-    return ans;
-  }
-
+  
+  
   namespace {
     template <class V1, class V2>
     Vector vector_add(const V1 &v1, const V2 &v2) {
@@ -615,57 +664,72 @@ namespace BOOM {
     }
   }  // namespace
 
-  Vector operator+(const ConstVectorView &x, const Vector &y) {
-    return vector_add(y, x);
-  }
-  Vector operator+(const Vector &x, const ConstVectorView &y) {
+  // Vector-Vector
+  Vector operator+(const Vector &x, const Vector &y) {
     return vector_add(x, y);
   }
-  Vector operator+(const VectorView &x, const Vector &y) {
-    return vector_add(y, x);
+  Vector operator-(const Vector &x, const Vector &y) {
+    return vector_subtract(x, y);
   }
+  Vector operator*(const Vector &x, const Vector &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator/(const Vector &x, const Vector &y) {
+    return vector_divide(x, y);
+  }
+
+  // Vector-VectorView
   Vector operator+(const Vector &x, const VectorView &y) {
     return vector_add(x, y);
   }
-
-  Vector operator-(const ConstVectorView &x, const Vector &y) {
-    return vector_subtract(x, y);
+  Vector operator+(const VectorView &x, const Vector &y) {
+    return vector_add(x, y);
   }
-  Vector operator-(const Vector &x, const ConstVectorView &y) {
+  Vector operator-(const Vector &x, const VectorView &y) {
     return vector_subtract(x, y);
   }
   Vector operator-(const VectorView &x, const Vector &y) {
     return vector_subtract(x, y);
   }
-  Vector operator-(const Vector &x, const VectorView &y) {
-    return vector_subtract(x, y);
-  }
-
-  Vector operator*(const ConstVectorView &x, const Vector &y) {
-    return vector_multiply(y, x);
-  }
-  Vector operator*(const Vector &x, const ConstVectorView &y) {
-    return vector_multiply(x, y);
-  }
-  Vector operator*(const VectorView &x, const Vector &y) {
-    return vector_multiply(y, x);
-  }
   Vector operator*(const Vector &x, const VectorView &y) {
     return vector_multiply(x, y);
   }
-
-  Vector operator/(const ConstVectorView &x, const Vector &y) {
-    return vector_divide(x, y);
+  Vector operator*(const VectorView &x, const Vector &y) {
+    return vector_multiply(x, y);
   }
-  Vector operator/(const Vector &x, const ConstVectorView &y) {
+  Vector operator/(const Vector &x, const VectorView &y) {
     return vector_divide(x, y);
   }
   Vector operator/(const VectorView &x, const Vector &y) {
     return vector_divide(x, y);
   }
-  Vector operator/(const Vector &x, const VectorView &y) {
+
+  // Vector-ConstVectorView
+  Vector operator+(const Vector &x, const ConstVectorView &y) {
+    return vector_add(x, y);
+  }
+  Vector operator+(const ConstVectorView &x, const Vector &y) {
+    return vector_add(x, y);
+  }
+  Vector operator-(const Vector &x, const ConstVectorView &y) {
+    return vector_subtract(x, y);
+  }
+  Vector operator-(const ConstVectorView &x, const Vector &y) {
+    return vector_subtract(x, y);
+  }
+  Vector operator*(const Vector &x, const ConstVectorView &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator*(const ConstVectorView &x, const Vector &y) {
+    return vector_multiply(x, y);
+  }
+  Vector operator/(const Vector &x, const ConstVectorView &y) {
     return vector_divide(x, y);
   }
+  Vector operator/(const ConstVectorView &x, const Vector &y) {
+    return vector_divide(x, y);
+  }
+  
 
   // unary transformations
   Vector operator-(const Vector &x) {
@@ -785,7 +849,7 @@ namespace BOOM {
     return ans;
   }
 
-  ostream &operator<<(ostream &out, const Vector &v) {
+  std::ostream &operator<<(std::ostream &out, const Vector &v) {
     return v.write(out, false);
   }
 
@@ -793,8 +857,8 @@ namespace BOOM {
 
   void print_vector(const Vector &v) { print(v); }
 
-  istream &operator>>(istream &in, Vector &v) {
-    string s;
+  std::istream &operator>>(std::istream &in, Vector &v) {
+    std::string s;
     do {
       getline(in, s);
     } while (is_all_white(s));
@@ -802,8 +866,8 @@ namespace BOOM {
     return in;
   }
 
-  Vector read_Vector(istream &in) {
-    string line;
+  Vector read_Vector(std::istream &in) {
+    std::string line;
     getline(in, line);
     return str2vec(line);
   }

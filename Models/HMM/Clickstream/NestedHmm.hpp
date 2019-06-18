@@ -90,7 +90,7 @@ namespace BOOM {
     // Fit the model (find the MLE) using an EM algorithm.
     double EM(double epsilon, bool bayes = true);
 
-    ostream &write_suf(ostream &) const;
+    std::ostream &write_suf(std::ostream &) const;
 
     // Sets the number of threads to use for data imputation.
     void set_threads(int n);
@@ -124,11 +124,11 @@ namespace BOOM {
     Matrix augmented_Q(int H) const;
     Vector augmented_pi0(int H) const;
 
-    void print_params(ostream &out) const;  // for debugging
-    void print_event(ostream &out, const char *msg, const Ptr<Stream> &u,
+    void print_params(std::ostream &out) const;  // for debugging
+    void print_event(std::ostream &out, const char *msg, const Ptr<Stream> &u,
                      const Ptr<Session> &session, const Ptr<Event> &event,
                      int event_number) const;
-    void print_filter(ostream &out, int j) const;
+    void print_filter(std::ostream &out, int j) const;
     //------------------------------------------------------------
 
     // Returns a Matrix, with rows corresponding to sessions, and

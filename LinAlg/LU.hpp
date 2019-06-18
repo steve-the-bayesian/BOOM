@@ -43,7 +43,7 @@ namespace BOOM {
     
     // Args:
     //   square_matrix:  The matrix to be decomposed.
-    LU(const Matrix &square_matrix);
+    explicit LU(const Matrix &square_matrix);
 
     // The 'rule of 5' members are trivial, but they must be defined because the
     // type of impl_ is hidden.

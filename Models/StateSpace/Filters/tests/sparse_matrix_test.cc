@@ -6,6 +6,9 @@
 #include "Models/StateSpace/AggregatedStateSpaceRegression.hpp"
 #include "Models/TimeSeries/ArmaModel.hpp"
 
+#include "distributions.hpp"
+#include "LinAlg/DiagonalMatrix.hpp"
+
 #include "test_utils/test_utils.hpp"
 
 namespace {
@@ -485,6 +488,12 @@ namespace {
         << dense.inner() << endl
         << "Sparse inner product: " << endl
         << sparse.inner() << endl;
+
+    Vector weights(dense.nrow());
+    weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        dense.Tmult(DiagonalMatrix(weights) * dense),
+        sparse.inner(weights)));
   }
   
   TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {
@@ -523,6 +532,57 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  TEST_F(SparseMatrixTest, StackedMatrixBlockTest) {
+    StackedMatrixBlock tall;
+    Matrix tall_dense(6, 2);
+    tall_dense.randomize();
+    tall.add_block(new DenseMatrix(tall_dense));
+    CheckSparseKalmanMatrix(tall);
+
+    StackedMatrixBlock square;
+    SpdMatrix square_dense(2);
+    square_dense.randomize();
+    square.add_block(new DenseMatrix(square_dense));
+    CheckSparseKalmanMatrix(square);
+
+    // Check that things work okay with multiple matrices in the stack.
+    tall.add_block(new DenseMatrix(square_dense));
+    tall.add_block(new DenseMatrix(tall_dense));
+    EXPECT_EQ(6 + 2 + 6, tall.nrow());
+    EXPECT_EQ(2, tall.ncol());
+    CheckSparseKalmanMatrix(tall);
+  }
+  
+  TEST_F(SparseMatrixTest, StackedRegressionCoefficients) {
+    std::vector<Ptr<GlmCoefs>> beta;
+    for (int i = 0; i < 6; ++i) {
+      beta.push_back(new GlmCoefs(rnorm_vector(4, 0.0, 1.0)));
+    }
+    
+    StackedRegressionCoefficients sparse;
+    for (int i = 0; i < beta.size(); ++i) {
+      sparse.add_row(beta[i]);
+    }
+    EXPECT_EQ(sparse.nrow(), beta.size());
+    EXPECT_EQ(sparse.ncol(), 4);
+    
+    // Check the matrix when everything is included.
+    CheckSparseKalmanMatrix(sparse);
+
+    // Now drop a few elements and make sure everything still works.
+    beta[0]->drop(1);
+    beta[1]->drop_all();
+    Matrix dense = sparse.dense();
+    
+    // Check that the dense matrix is as expected.
+    Matrix manual_dense(sparse.nrow(), sparse.ncol());
+    for (int i = 0; i < beta.size(); ++i) {
+      manual_dense.row(i) = beta[i]->Beta();
+    }
+    EXPECT_TRUE(MatrixEquals(manual_dense, dense));
+    CheckSparseKalmanMatrix(sparse);
+  }
+  
   // Test the transition matrix from the Harvey cumulator in
   // AggregatedStateSpaceRegression.
   TEST_F(SparseMatrixTest, AccumulatorTransitionMatrixTest) {

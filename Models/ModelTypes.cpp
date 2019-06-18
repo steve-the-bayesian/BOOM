@@ -43,11 +43,11 @@ namespace BOOM {
       nmax = std::max(nmax, n);
     }
     Vector ans(N);
-    Vector wsp(nmax);
+    Vector workspace(nmax);
     Vector::iterator it = ans.begin();
     for (uint i = 0; i < nprm; ++i) {
-      wsp = prm[i]->vectorize(minimal);
-      it = std::copy(wsp.begin(), wsp.end(), it);
+      workspace = prm[i]->vectorize(minimal);
+      it = std::copy(workspace.begin(), workspace.end(), it);
     }
     return ans;
   }

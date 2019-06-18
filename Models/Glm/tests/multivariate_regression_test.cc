@@ -31,6 +31,9 @@ namespace {
       int xdim = coefficients_.nrow();
       int ydim = coefficients_.ncol();
       coefficients_.randomize();
+      predictors_.resize(sample_size, xdim);
+      response_.resize(sample_size, ydim);
+      
       if (inclusion_prob < 1.0) {
         for (int i = 0; i < xdim; ++i) {
           for (int j = 0; j < ydim; ++j) {
@@ -52,6 +55,9 @@ namespace {
         Vector response = rmvn(yhat, Sigma_);
         NEW(MvRegData, data_point)(response, predictors);
         model.add_data(data_point);
+
+        predictors_.row(i) = predictors;
+        response_.row(i) = response;
       }
     }
 
@@ -91,11 +97,43 @@ namespace {
     
       return sampler;
     }
-
     
     Matrix coefficients_;
     SpdMatrix Sigma_;
+    Matrix predictors_;
+    Matrix response_;
   };
+
+  //===========================================================================
+  TEST_F(MultivariateRegressionTest, SufficientStatistics) {
+    int xdim = 4;
+    int ydim = 3;
+    int sample_size = 20;
+    MultivariateRegressionModel model(xdim, ydim);
+    PopulateModel(model, 1.0, sample_size);
+
+    SpdMatrix xtx = predictors_.transpose() * predictors_;
+    EXPECT_TRUE(MatrixEquals(xtx, model.suf()->xtx()));
+    
+    Matrix xty = predictors_.transpose() * response_;
+    EXPECT_TRUE(MatrixEquals(xty, model.suf()->xty()));
+
+    Matrix yty = response_.transpose() * response_;
+    EXPECT_TRUE(MatrixEquals(yty, model.suf()->yty()));
+
+    EXPECT_DOUBLE_EQ(predictors_.nrow(), model.suf()->n());
+
+    // Now test 'update raw data'
+    Ptr<MvRegSuf> suf = model.suf();
+    suf->clear();
+    for (int i = 0; i < sample_size; ++i) {
+      suf->update_raw_data(response_.row(i), predictors_.row(i), 1.0);
+    }
+    EXPECT_TRUE(MatrixEquals(xtx, suf->xtx()));
+    EXPECT_TRUE(MatrixEquals(xty, suf->xty()));
+    EXPECT_TRUE(MatrixEquals(yty, suf->yty()));
+    EXPECT_DOUBLE_EQ(predictors_.nrow(), suf->n());
+  }
 
   //===========================================================================
   TEST_F(MultivariateRegressionTest, LogLikelihood) {

@@ -134,7 +134,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &GS::print(ostream &out) const {
+  std::ostream &GS::print(std::ostream &out) const {
     return out << n_ << " " << sum_ << " " << sumsq_;
   }
 

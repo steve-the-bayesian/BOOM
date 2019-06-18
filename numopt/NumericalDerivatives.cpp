@@ -81,7 +81,7 @@ namespace BOOM {
     } else {
       ans = .5 * (ans + ans.transpose());
     }
-    return ans;
+    return std::move(ans);
   }
 
   double NumericalDerivatives::homogeneous_scalar_second_derivative(

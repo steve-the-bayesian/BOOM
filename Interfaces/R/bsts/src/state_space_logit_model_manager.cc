@@ -29,7 +29,7 @@ StateSpaceLogitModelManager::StateSpaceLogitModelManager()
     : predictor_dimension_(-1),
       clt_threshold_(5) {}
 
-StateSpaceLogitModel * StateSpaceLogitModelManager::CreateObservationModel(
+StateSpaceLogitModel * StateSpaceLogitModelManager::CreateBareModel(
     SEXP r_data_list,
     SEXP r_prior,
     SEXP r_options,

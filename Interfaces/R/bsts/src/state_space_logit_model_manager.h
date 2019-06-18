@@ -42,7 +42,7 @@ class StateSpaceLogitModelManager
   //     MCMC sampler.  Can be NULL.
   //   io_manager: The io_manager that will link the MCMC draws to the
   //     R list receiving them.
-  StateSpaceLogitModel * CreateObservationModel(
+  StateSpaceLogitModel * CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,

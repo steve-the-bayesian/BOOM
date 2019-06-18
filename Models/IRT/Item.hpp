@@ -73,11 +73,11 @@ namespace BOOM {
       void set_response_names(const StringVector &levels);
       const StringVector &possible_responses() const;
 
-      void report(ostream &, uint namewidth = 0) const;
+      void report(std::ostream &, uint namewidth = 0) const;
       Vector response_histogram() const;
 
-      ostream &display(ostream &) const;
-      virtual ostream &display_item_params(ostream &,
+      std::ostream &display(std::ostream &) const;
+      virtual std::ostream &display_item_params(std::ostream &,
                                            bool decorate = true) const = 0;
 
       Response simulate_response(const Vector &Theta) const;
@@ -112,7 +112,7 @@ namespace BOOM {
      public:
       NullItem() : Item("Null", 1, 0, 1, "Null") {}
       NullItem *clone() const override { return new NullItem(*this); }
-      ostream &display_item_params(ostream &out, bool = true) const override {
+      std::ostream &display_item_params(std::ostream &out, bool = true) const override {
         return out;
       }
       const Vector &beta() const override { return b; }

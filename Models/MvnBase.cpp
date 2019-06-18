@@ -202,7 +202,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &MvnSuf::print(ostream &out) const {
+  std::ostream &MvnSuf::print(std::ostream &out) const {
     out << n_ << endl << ybar_ << endl << sumsq_;
     return out;
   }
@@ -224,6 +224,9 @@ namespace BOOM {
                                        Matrix *Hessian,
                                        const Selector &included,
                                        bool reset_derivatives) const {
+    if (included.nvars() == 0) {
+      return 0.0;
+    }
     Vector mu0 = included.select(mu());
     SpdMatrix precision = included.select(siginv());
     double ans = dmvn(x_subset, mu0, precision, precision.logdet(), true);

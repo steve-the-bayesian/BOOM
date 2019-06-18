@@ -56,7 +56,6 @@ extern "C" {
           r_state_specification,
           r_prior,
           r_options, 
-          nullptr,
           &io_manager));
 
       // Do one posterior sampling step before getting ready to write.  This

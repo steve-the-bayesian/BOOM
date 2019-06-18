@@ -40,10 +40,9 @@
 // directly from R by .Call.
 //======================================================================
 
-// If Rinternals.h has already been included and R_NO_REMAP has not
-// yet been defined, then we throw a compiler error to prevent madness
-// caused by R's preprocessor renaming of things like length() and
-// error().
+// If Rinternals.h has already been included and R_NO_REMAP has not yet been
+// defined, then throw a compiler error to prevent madness caused by R's
+// preprocessor renaming of things like length() and error().
 #ifndef R_NO_REMAP
 #define R_NO_REMAP
 #ifdef R_INTERNALS_H_
@@ -172,6 +171,24 @@ namespace BOOM{
   //   Row names, if they previously existed, are removed.
   SEXP SetColnames(SEXP r_matrix, const std::vector<std::string> &column_names);
 
+  // Set the dimnames attributes for an R multi-way array.
+  // Args:
+  //   r_array:  The array on which to set the dimnames attribute.
+  //   dimnames: A collection of dimnames.
+  // Returns:
+  //  If dimnames is empty then r_array is returned unchanged.  If dimnames is
+  //  non-empty then the returned object is r_array with dimnames assigned.
+  //  Because it is the same object, it inherits the PROTECT status of the
+  //  r_array argument.  It is the user's responsibility not to PROTECT twice.
+  // Details:
+  //   The dimnames argument can be empty, signifying that there are no dimnames
+  //   for any dimension, or it can have length equal to dim(r_array).  In the
+  //   latter case, any element can either be empty, signifying no dimnames for
+  //   that dimension, or it can be a vector with length equal to the extent of
+  //   that dimension.
+  SEXP SetDimnames(SEXP r_array,
+                   const std::vector<std::vector<std::string>> &dimnames);
+  
   // Returns a vector of dimensions for an R multi-way array.  If the
   // argument is not an array, then an exception will be thrown.
   std::vector<int> GetArrayDimensions(SEXP array);
@@ -188,6 +205,9 @@ namespace BOOM{
   Vector ToBoomVector(SEXP my_vector);
   ConstVectorView ToBoomVectorView(const SEXP my_vector);
 
+  // Returns true iff x is set to R's NA value.
+  bool isNA(double x);
+
   // Returns a Selector of the sizem size as v, with elements indicating which
   // elements of v are observed.  This is equivalent to the R expression
   // !is.na(v).
@@ -199,6 +219,7 @@ namespace BOOM{
   // in the R object, without making a copy.
   Matrix ToBoomMatrix(SEXP r_matrix);
   ConstSubMatrix ToBoomMatrixView(SEXP r_matrix);
+  SubMatrix ToBoomMutableMatrixView(SEXP r_matrix);
 
   // If 'r_array' is an R multi-way array then it is converted to an
   // equivalent BOOM::Array.  Otherwise an exception will be thrown.
@@ -301,9 +322,7 @@ namespace BOOM{
     CategoricalData to_categorical_data(int i)const;
 
     // The names of the factor levels.
-    const std::vector<std::string> labels() const {
-      return levels_->labels();
-    }
+    std::vector<std::string> labels() const { return levels_->labels(); }
 
     // Allocates and returns a vector of categorical data objects.
     std::vector<Ptr<CategoricalData> > vector_of_observations() const;
@@ -418,7 +437,8 @@ namespace BOOM{
     // The environment in which to find the R function.
     SEXP r_env_;
 
-    // The call we will use to get the output, something like "f(argument_name_)"
+    // The call we will use to get the output, something like
+    // "f(argument_name_)"
     std::string call_string_;
   };
 

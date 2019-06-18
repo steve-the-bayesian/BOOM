@@ -46,7 +46,7 @@ namespace BOOM {
     ChoiceData *clone() const override;
 
     //--------- virtual function over-rides ----
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     //--------- choice information ----
     uint nchoices() const;     // number of possible choices

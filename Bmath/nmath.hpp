@@ -62,14 +62,12 @@
 #endif
 
 namespace Rmath{
-  using namespace std;
-  using std::string;
   using std::isnan;
   typedef bool Rboolean;
 
-  void mathlib_error(const string &s);
-  void mathlib_error(const string &s, int d);
-  void mathlib_error(const string &s, double d);
+  void mathlib_error(const std::string &s);
+  void mathlib_error(const std::string &s, int d);
+  void mathlib_error(const std::string &s, double d);
 
   const double ML_POSINF = std::numeric_limits<double>::infinity();
   const double ML_NEGINF = -1*std::numeric_limits<double>::infinity();
@@ -77,7 +75,7 @@ namespace Rmath{
   inline bool ISNAN(double x){return std::isnan(x);}
   int R_IsNaNorNA(double);
   inline bool R_finite(double x){
-    if(isnan(x)) return false;
+    if(std::isnan(x)) return false;
     if(x==ML_POSINF || x== ML_NEGINF) return false;
     return true;
   }

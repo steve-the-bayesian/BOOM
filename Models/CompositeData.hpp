@@ -38,7 +38,7 @@ namespace BOOM {
     explicit CompositeData(const std::vector<Ptr<Data>> &d);
 
     CompositeData *clone() const override;
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     // Number of composite data elements.  This can be smaller than
     // size() when some elements are vectors, matrices, regression

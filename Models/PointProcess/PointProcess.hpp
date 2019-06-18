@@ -19,22 +19,18 @@
 #ifndef BOOM_POINT_PROCESS_DATA_HPP_
 #define BOOM_POINT_PROCESS_DATA_HPP_
 
-#include <boost/operators.hpp>
 #include "Models/DataTypes.hpp"
 #include "cpputil/DateTime.hpp"
 
 namespace BOOM {
 
-  class PointProcessEvent
-      : public Data,
-        public boost::less_than_comparable<PointProcessEvent>,
-        public boost::less_than_comparable<PointProcessEvent, DateTime> {
+  class PointProcessEvent : public Data {
    public:
     // Implicit conversion from DateTime is intentional.
     PointProcessEvent(const DateTime &time);  // NOLINT
     PointProcessEvent(const DateTime &time, const Ptr<Data> &mark);
     PointProcessEvent *clone() const override;
-    ostream &display(ostream &) const override;
+    std::ostream &display(std::ostream &) const override;
 
     const DateTime &timestamp() const;
     const Data *mark() const;
@@ -42,8 +38,17 @@ namespace BOOM {
     bool has_mark() const;
 
     bool operator<(const PointProcessEvent &rhs) const;
-    bool operator<(const DateTime &rhs) const;
 
+    // Comparisons to DateTime.
+    bool operator<(const DateTime &rhs) const;
+    bool operator==(const DateTime &rhs) const;
+    bool operator!=(const DateTime &rhs) const {return !(*this == rhs);}
+    bool operator<=(const DateTime &rhs) const {
+      return *this < rhs || *this == rhs;
+    }
+    bool operator>(const DateTime &rhs) const {return !(*this <= rhs);}
+    bool operator>=(const DateTime &rhs) const {return !(*this < rhs);}
+    
    private:
     DateTime timestamp_;
     Ptr<Data> mark_;
@@ -76,7 +81,7 @@ namespace BOOM {
     PointProcess(const PointProcess &rhs);
 
     PointProcess *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
 
     uint number_of_events() const;
     double window_duration() const;  // Time is measured in days.

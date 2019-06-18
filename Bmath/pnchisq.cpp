@@ -31,7 +31,7 @@
 #include "dpq.hpp"
 #include <stdexcept>
 #include <sstream>
-using namespace std;
+
 namespace Rmath{
 
 /*----------- DEBUGGING -------------
@@ -62,7 +62,8 @@ double pnchisq_raw(double x, double f, double theta,
     double ans, lam, u, v, x2, f2, t, term, bound, f_x_2n, f_2n;
     int n, flag;
 
-    const double my_dbl_min_exp = M_LN2 * numeric_limits<double>::min_exponent;
+    const double my_dbl_min_exp =
+        M_LN2 * std::numeric_limits<double>::min_exponent;
     /*= -708.3964 for IEEE double precision */
 
     if (x <= 0.)        return 0.;
@@ -70,7 +71,7 @@ double pnchisq_raw(double x, double f, double theta,
 
     lam = .5 * theta;
     if(-lam < my_dbl_min_exp){
-      ostringstream err;
+      std::ostringstream err;
       err << "non centrality parameter (=" << theta
           << ") too large for current algorithm" << std::endl;
       report_error(err.str());
@@ -83,8 +84,8 @@ double pnchisq_raw(double x, double f, double theta,
     f_x_2n = f - x;
 
 
-    if(f2 * numeric_limits<double>::epsilon() > 0.125 &&
-       fabs(t = x2 - f2) < sqrt(numeric_limits<double>::epsilon()) * f2) {
+    if(f2 * std::numeric_limits<double>::epsilon() > 0.125 &&
+       fabs(t = x2 - f2) < sqrt(std::numeric_limits<double>::epsilon()) * f2) {
         /* evade cancellation error */
         t = exp((1 - t)*(2 - t/(f2 + 1))) / sqrt(2*M_PI*(f2 + 1));
     }
@@ -100,7 +101,7 @@ double pnchisq_raw(double x, double f, double theta,
     }
 
     if(t <= 0) {
-      ostringstream err;
+      std::ostringstream err;
       err << "too large x (=" << theta << ")"
           << " or centrality parameter " << x
           << " for current algorithm.  Result is probably invalid!";

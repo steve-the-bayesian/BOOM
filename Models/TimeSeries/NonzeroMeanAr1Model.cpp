@@ -93,7 +93,7 @@ namespace BOOM {
     return this->unvectorize(it, minimal);
   }
 
-  ostream &Ar1Suf::print(ostream &out) const {
+  std::ostream &Ar1Suf::print(std::ostream &out) const {
     out << "first_value_ = " << first_value_ << endl
         << "sum_         = " << sum_ << endl
         << "n_           = " << n_ << endl

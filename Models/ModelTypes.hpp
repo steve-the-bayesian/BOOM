@@ -119,7 +119,11 @@ namespace BOOM {
     
     // Set the paramters to their maximum likelihood estimates.
     virtual void mle() = 0;
+
+    // Initialize an MCMC run by setting parameters to their maximum likelihood
+    // estimates.
     virtual void initialize_params();
+    
     enum MleStatus { NOT_CALLED = -1, FAILURE = 0, SUCCESS = 1 };
     MleStatus mle_status() const { return status_; }
     const std::string &mle_error_message() const { return error_message_; }
@@ -202,7 +206,7 @@ namespace BOOM {
     bool can_increment_log_prior_gradient() const;
   };
   //======================================================================
-  class LoglikeModel : virtual public MLE_Model {
+  class LoglikeModel : public MLE_Model {
    public:
     // Evaluate log likelihood at the given parameter vector.
     virtual double loglike(const Vector &theta) const = 0;

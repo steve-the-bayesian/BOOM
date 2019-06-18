@@ -42,7 +42,7 @@ namespace BOOM {
     PoissonRegressionData(int64_t y, const Ptr<VectorData> &x, double exposure);
 
     PoissonRegressionData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     double exposure() const;
     double log_exposure() const;
 

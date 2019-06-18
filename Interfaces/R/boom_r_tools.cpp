@@ -25,6 +25,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
+#include "R_ext/Arith.h"  // for R_IsNA
 
 namespace BOOM {
 
@@ -33,7 +34,7 @@ namespace BOOM {
   }  // namespace 
   
   SEXP getListElement(SEXP list, const std::string &name, bool expect_answer) {
-    SEXP elmt = R_NilValue;
+    SEXP element = R_NilValue;
     SEXP names = Rf_getAttrib(list, R_NamesSymbol);
     if(Rf_isNull(names)){
       std::ostringstream err;
@@ -44,15 +45,16 @@ namespace BOOM {
     }
     for(int i = 0; i < Rf_length(list); i++)
       if(name == CHAR(STRING_ELT(names, i))){
-        elmt = VECTOR_ELT(list, i);
+        element = VECTOR_ELT(list, i);
         break;
       }
-    if (expect_answer && elmt == R_NilValue) {
+    if (expect_answer && element == R_NilValue) {
       std::ostringstream warning;
       warning << "Could not find list element named: " << name << endl;
+      Rf_PrintValue(list);
       report_warning(warning.str());
     }
-    return elmt;
+    return element;
   }
 
   // Returns a vector of list names.  If an element does not have a
@@ -129,7 +131,7 @@ namespace BOOM {
     }
     SET_VECTOR_ELT(ans, n, new_element);
 
-    SEXP old_list_names = Rf_getAttrib(list, R_NamesSymbol);
+    SEXP old_list_names = protector.protect(Rf_getAttrib(list, R_NamesSymbol));
     SEXP list_names = protector.protect(Rf_allocVector(STRSXP, n+1));
 
     if(!Rf_isNull(old_list_names)){
@@ -245,6 +247,37 @@ namespace BOOM {
     return r_matrix;
   }
 
+  SEXP SetDimnames(SEXP r_array,
+                   const std::vector<std::vector<std::string>> &dimnames) {
+    if (dimnames.empty()) return r_array;
+    std::vector<int> dim = GetArrayDimensions(r_array);
+    if (dim.size() != dimnames.size()) {
+      std::ostringstream err;
+      err << "dimnames has length " << dimnames.size()
+          << " which does not match the number of dimension in the array: " 
+          << dim.size();
+      report_error(err.str());
+    }
+    RMemoryProtector protector;
+    SEXP r_dimnames = protector.protect(Rf_allocVector(VECSXP, dim.size()));
+    for (int i = 0; i < dim.size(); ++i) {
+      if (dimnames[i].empty()) {
+        SET_VECTOR_ELT(r_dimnames, i, R_NilValue);
+      } else {
+        if (dimnames[i].size() != dim[i]) {
+          std::ostringstream err;
+          err << "Wrong number of names (" << dimnames[i].size()
+              << ") in dimension " << i << " of the array, which has extent "
+              << dim[i] <<".";
+          report_error(err.str());
+        }
+        SET_VECTOR_ELT(r_dimnames, i, CharacterVector(dimnames[i]));
+      }
+    }
+    Rf_dimnamesgets(r_array, r_dimnames);
+    return r_array;
+  }
+  
   std::vector<int> GetArrayDimensions(SEXP array) {
     if (!Rf_isArray(array)) {
       ReportBadClass("GetArrayDimensions called on a non-array object.",
@@ -287,6 +320,10 @@ namespace BOOM {
     for (int i = 0; i < v.size(); ++i) ans[i] = !R_IsNA(v[i]);
     return ans;
   }
+
+  bool isNA(double x) {
+    return R_IsNA(x);
+  }
   
   Vector ToBoomVector(SEXP v){
     return Vector(ToBoomVectorView(v));
@@ -294,13 +331,23 @@ namespace BOOM {
 
   ConstSubMatrix ToBoomMatrixView(SEXP m) {
     if (!Rf_isMatrix(m)) {
-      report_error("ToBoomMatrix called with a non-matrix argument");
+      report_error("ToBoomMatrixView called with a non-matrix argument");
     }
     std::pair<int,int> dims = GetMatrixDimensions(m);
     RMemoryProtector protector;
     m = protector.protect(Rf_coerceVector(m, REALSXP));
     ConstSubMatrix ans(REAL(m), dims.first, dims.second);
     return ans;
+  }
+
+  SubMatrix ToBoomMutableMatrixView(SEXP m) {
+    if (!Rf_isMatrix(m)) {
+      report_error("ToBoomMutableMatrixView called with a non-matrix argument");
+    }
+    std::pair<int,int> dims = GetMatrixDimensions(m);
+    RMemoryProtector protector;
+    m = protector.protect(Rf_coerceVector(m, REALSXP));
+    return SubMatrix(REAL(m), dims.first, dims.second);
   }
 
   Array ToBoomArray(SEXP r_array) {
@@ -563,7 +610,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   Factor::Factor(SEXP r_factor)
       : values_(Rf_length(r_factor)),
         levels_(new CatKey(GetFactorLevels(r_factor)))
@@ -668,7 +715,7 @@ namespace BOOM {
     //     is parsing a file.  R_NilValue is a signal that no such file is
     //     present.
     SEXP r_call = protector.protect(R_ParseVector(
-        ToRString(call_string_),
+        protector.protect(ToRString(call_string_)),
         1,
         &parse_status,
         R_NilValue));
@@ -678,8 +725,8 @@ namespace BOOM {
       err << "Could not parse expression: " << call_string_;
       report_error(err.str());
     }
-    
-    return Rf_asReal(Rf_eval(VECTOR_ELT(r_call, 0), r_env_));
+
+    return Rf_asReal(protector.protect(Rf_eval(VECTOR_ELT(r_call, 0), r_env_)));
   }
   
   namespace {

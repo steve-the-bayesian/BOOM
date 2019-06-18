@@ -53,6 +53,9 @@ namespace BOOM {
     double logpri() const override;
     void draw() override;
 
+    // Truncate the support for the standard deviations to [0, sigma_max[i]).
+    void set_sigma_max(const Vector &sigma_max);
+    
    private:
     IndependentMvnModel *model_;
     std::vector<Ptr<GammaModelBase>> priors_;

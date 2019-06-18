@@ -11,7 +11,18 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "binomial_probit_test",
+    srcs = ["binomial_probit_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -22,7 +33,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -34,7 +45,30 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "mvn_given_x_test",
+    srcs = ["mvn_given_x_test.cc"],
+    copts = COPTS,
+    linkopts = ["-lprofiler"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "ordinal_logit_test",
+    srcs = ["ordinal_logit_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -45,7 +79,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -57,7 +91,19 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "student_spike_slab_test",
+    srcs = ["student_spike_slab_test.cc"],
+    copts = COPTS,
+    linkopts = ["-lprofiler"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -69,6 +115,6 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )

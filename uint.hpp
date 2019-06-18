@@ -18,9 +18,11 @@
 */
 #ifndef BOOM_UINT_HPP
 #define BOOM_UINT_HPP
+
 namespace BOOM{
-// TODO: Remove all instances of uint and replace them with int64_t.
-//  typedef unsigned int uint;
+  // TODO: Remove all instances of uint and replace them with int64_t.
+  //  typedef unsigned int uint;
   typedef long uint;
 }  // namespace BOOM
+
 #endif

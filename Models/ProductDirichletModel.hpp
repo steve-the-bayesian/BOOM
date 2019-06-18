@@ -45,7 +45,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     Matrix sumlog_;

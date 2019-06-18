@@ -30,7 +30,7 @@ namespace BOOM {
     // If infer_model_selection is true then zero-valued coefficients
     // will be marked as excluded from the model.
     explicit GlmCoefs(const Vector &b, bool infer_model_selection = false);
-    GlmCoefs(const Vector &b, const Selector &Inc);
+    explicit GlmCoefs(const Vector &b, const Selector &Inc);
     GlmCoefs(const GlmCoefs &rhs);
     GlmCoefs *clone() const override;
 
@@ -45,8 +45,11 @@ namespace BOOM {
     void add_all();
 
     //---- size querries...
-    uint size(bool minimal =
-                  true) const override;  // number included/possible covariates
+    // Args:
+    //   minimal: If true, return the number of included coefficients.
+    //     Otherwise return the number of available coefficients
+    uint size(bool minimal = true) const override;
+    
     uint nvars() const;
     uint nvars_possible() const;
     uint nvars_excluded() const;
@@ -104,13 +107,14 @@ namespace BOOM {
   class MatrixGlmCoefs : public MatrixParams {
    public:
     // All coefficients included.  Initial value is zero.
-    MatrixGlmCoefs(int nrow, int ncol);
+    explicit MatrixGlmCoefs(int nrow, int ncol);
 
     // All coefficients are included.
-    MatrixGlmCoefs(const Matrix &coefficients);
+    explicit MatrixGlmCoefs(const Matrix &coefficients);
 
     // Specify which coefficients are included.
-    MatrixGlmCoefs(const Matrix &coefficients, const SelectorMatrix &included);
+    explicit MatrixGlmCoefs(const Matrix &coefficients,
+                            const SelectorMatrix &included);
 
     MatrixGlmCoefs *clone() const override {return new MatrixGlmCoefs(*this);}
     

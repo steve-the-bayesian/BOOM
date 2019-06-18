@@ -40,10 +40,10 @@ namespace BOOM {
     double MSM, MSE;
     double df_error, df_model, df_total;
     double F, p_value;
-    ostream &display(ostream &out) const;
+    std::ostream &display(std::ostream &out) const;
   };
 
-  ostream &operator<<(ostream &out, const AnovaTable &tab);
+  std::ostream &operator<<(std::ostream &out, const AnovaTable &tab);
 
   Matrix add_intercept(const Matrix &X);
   Vector add_intercept(const Vector &X);
@@ -90,9 +90,9 @@ namespace BOOM {
                                   double prob) = 0;
     virtual void combine(const Ptr<RegSuf> &) = 0;
 
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
   };
-  inline ostream &operator<<(ostream &out, const RegSuf &suf) {
+  inline std::ostream &operator<<(std::ostream &out, const RegSuf &suf) {
     return suf.print(out);
   }
   //------------------------------------------------------------------
@@ -133,7 +133,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     mutable QR qr;
@@ -194,7 +194,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
     // Adding data only updates the upper triangle of xtx_.  Calling
     // reflect() fills the lower triangle as well, if needed.

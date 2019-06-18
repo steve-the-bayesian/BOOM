@@ -48,7 +48,7 @@ namespace BOOM {
                                              double log_odds) const = 0;
 
     // A finite mixture approximation to the logistic distribution.
-    static const NormalMixtureApproximation mixture_approximation;
+    static const LogitMixtureApproximation mixture_approximation;
 
     // Rather than impute the exact latent data for each trial,
     // approximate methods can be used to draw the sum of the latent
@@ -59,7 +59,7 @@ namespace BOOM {
 
    protected:
     // Adds a human readable message to 'err'.
-    void debug_status_message(ostream &err, double number_of_trials,
+    void debug_status_message(std::ostream &err, double number_of_trials,
                               double number_of_successes, double eta) const;
   };
 

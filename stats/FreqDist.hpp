@@ -70,14 +70,14 @@ namespace BOOM {
     // Returns 0 if the label was not found.
     int count(const std::string &label) const;
 
-   private:
-    std::vector<std::string> labs_;
-    std::vector<int> counts_;
-
    protected:
     FrequencyDistribution() {}
     void reset(const std::vector<int> &counts,
                const std::vector<std::string> &labels);
+    
+   private:
+    std::vector<std::string> labs_;
+    std::vector<int> counts_;
   };
 
   class BucketedFrequencyDistribution : public FrequencyDistribution {

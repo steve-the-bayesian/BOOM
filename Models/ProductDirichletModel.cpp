@@ -80,7 +80,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &PDS::print(ostream &out) const {
+  std::ostream &PDS::print(std::ostream &out) const {
     return out << n_ << endl << sumlog_;
   }
   //============================================================

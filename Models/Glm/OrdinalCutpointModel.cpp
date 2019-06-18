@@ -32,46 +32,77 @@
 #include <stdexcept>
 
 namespace BOOM {
-  inline double compute_delta(uint m, const Vector &v, uint maxscore) {
-    if (m <= maxscore && m > 1) {
-      return v(m - 2);
-    } else if (m == 0) {
-      return BOOM::negative_infinity();
-    } else if (m == 1) {
-      return 0.0;
-    } else if (m == maxscore + 1) {
-      return BOOM::infinity();
+
+  namespace {
+    // Some locally used free functions.
+    
+    // An observed value y implies a latent value z between
+    // compute_lower_cutpoint(y) and compute_lower_cutpoint(y).
+    inline double compute_upper_cutpoint(
+        int y, const Vector &cutpoint_vector) {
+      if (y < 0) {
+        return negative_infinity();
+      } else if (y == 0) {
+        return 0;
+      } else if (y <= cutpoint_vector.size()) {
+        return cutpoint_vector[y - 1];
+      } else {
+        return infinity();
+      }
     }
-    report_error("m out of bounds in OrdinalCutpointModel::delta");
-    return 0.0;
-  }
+
+    inline double compute_lower_cutpoint(
+        int y, const Vector &cutpoint_vector) {
+      if (y <= 0) {
+        return negative_infinity();
+      } else if (y == 1) {
+        return 0;
+      } else if (y - 1 <= cutpoint_vector.size()) {
+        return cutpoint_vector[y - 2];
+      } else {
+        return infinity();
+      }
+    }
+    
+    inline Vector make_default_cutpoint_vector(uint nlevels) {
+      if (nlevels <= 2) return Vector();
+      Vector cutpoints(nlevels - 2);
+      for (int i = 0; i < cutpoints.size(); ++i) cutpoints[i] = i + 1;
+      return cutpoints;
+    }
+  }  // namespace
+  
 
   typedef OrdinalCutpointModel OCM;
 
-  // logically, delta goes from 2..Maxscore
-  // with base zero vectors it goes from 0..Maxscore-2
-
-  inline Vector make_delta(uint maxscore) {
-    if (maxscore < 2) return Vector();
-    Vector delta(maxscore - 1);
-    for (int i = 0; i < delta.size(); ++i) delta[i] = i + 1;
-    return delta;
+  OCM::OrdinalCutpointModel(int xdim, int nlevels)
+      : ParamPolicy(new GlmCoefs(xdim),
+                    new VectorParams(make_default_cutpoint_vector(nlevels)))
+  {
+    if (xdim < 1) {
+      report_error("Predictor dimension must be at least 1.");
+    }
   }
 
   OCM::OrdinalCutpointModel(const Vector &b, const Vector &d)
-      : ParamPolicy(new GlmCoefs(b), new VectorParams(d)) {}
+      : ParamPolicy(new GlmCoefs(b), new VectorParams(d)) {
+    check_cutpoints(d);
+  }
 
   OCM::OrdinalCutpointModel(const Vector &b, const Selector &Inc,
                             const Vector &d)
-      : ParamPolicy(new GlmCoefs(b, Inc), new VectorParams(d)) {}
+      : ParamPolicy(new GlmCoefs(b, Inc), new VectorParams(d)) {
+    check_cutpoints(d);
+  }
 
-  OCM::OrdinalCutpointModel(const Selector &Inc, uint Maxscore)
+  OCM::OrdinalCutpointModel(const Selector &Inc, uint nlevels)
       : ParamPolicy(new GlmCoefs(Vector(Inc.nvars(), 0.0), Inc),
-                    new VectorParams(make_delta(Maxscore))) {}
+                    new VectorParams(make_default_cutpoint_vector(nlevels))) {}
 
   OCM::OrdinalCutpointModel(const Matrix &X, const Vector &Y)
       : ParamPolicy(new GlmCoefs(X.ncol()),
-                    new VectorParams(make_delta(lround(max(Y))))) {
+                    new VectorParams(make_default_cutpoint_vector(
+                        lround(max(Y)) - 1))) {
     uint n = Y.size();
     std::vector<uint> y_int(n);
     for (uint i = 0; i < n; ++i) y_int[i] = rint(Y[i]);  // round to nearest int
@@ -90,13 +121,14 @@ namespace BOOM {
         DataPolicy(rhs),
         PriorPolicy(rhs),
         GlmModel(rhs),
-        NumOptModel(rhs) {}
+        NumOptModel(rhs),
+        MixtureComponent(rhs)
+  {}
 
-  //  OCM * OCM::clone() const {return new OCM(*this);}
-
-  double OCM::pdf(const Ptr<Data> &dp, bool logscale) const {
-    Ptr<OrdinalRegressionData> dpo = DAT(dp);
-    return pdf(dpo->y(), dpo->x(), logscale);
+  double OCM::pdf(const Data *dp, bool logscale) const {
+    const OrdinalRegressionData *data_point =
+        dynamic_cast<const OrdinalRegressionData*>(dp);
+    return pdf(data_point->y(), data_point->x(), logscale);
   }
 
   double OCM::pdf(const Ptr<OrdinalRegressionData> &dpo, bool logscale) const {
@@ -109,18 +141,17 @@ namespace BOOM {
   }
 
   double OCM::pdf(uint y, const Vector &X, bool logscale) const {
-    uint M = maxscore();
-    if (y > M) {
+    if (y >= nlevels()) {
       report_error("ordinal data out of bounds in OrdinalCutpointModel::pdf");
     }
     double btx = predict(X);  // X may or may not contain intercept
-    double F1 = y == M ? 1.0 : link_inv(delta(y + 1) - btx);
-    double F0 = y == 0 ? 0.0 : link_inv(delta(y) - btx);
+    double F1 = link_inv(upper_cutpoint(y) - btx);
+    double F0 = link_inv(lower_cutpoint(y) - btx);
     double ans = F1 - F0;
     return logscale ? log(ans) : ans;
   }
 
-  bool OCM::check_delta(const Vector &d) const {
+  bool OCM::check_cutpoints(const Vector &d) const {
     if (d.empty()) return true;  // a zero length vector is okay
     if (d[0] <= 0) return false;
     for (uint i = 1; i < d.size(); ++i) {
@@ -132,16 +163,15 @@ namespace BOOM {
   }
 
   double OCM::log_likelihood(const Vector &full_beta,
-                             const Vector &delta) const {
+                             const Vector &cutpoints) const {
     const std::vector<Ptr<OrdinalRegressionData> > &data(dat());
     int n = data.size();
     double ans = 0;
-    int M = maxscore();
     for (int i = 0; i < n; ++i) {
       double eta = full_beta.dot(data[i]->x());
       uint y = data[i]->y();
-      double F1 = y == M ? 1.0 : link_inv(compute_delta(y + 1, delta, M) - eta);
-      double F0 = y == 0 ? 0.0 : link_inv(compute_delta(y, delta, M) - eta);
+      double F1 = link_inv(compute_upper_cutpoint(y, cutpoints) - eta);
+      double F0 = link_inv(compute_lower_cutpoint(y, cutpoints) - eta);
       ans += log(F1 - F0);
     }
     return ans;
@@ -152,21 +182,31 @@ namespace BOOM {
   Ptr<GlmCoefs> OCM::coef_prm() { return ParamPolicy::prm1(); }
   const Ptr<GlmCoefs> OCM::coef_prm() const { return ParamPolicy::prm1(); }
 
-  Ptr<VectorParams> OCM::Delta_prm() { return ParamPolicy::prm2(); }
-  const Ptr<VectorParams> OCM::Delta_prm() const { return ParamPolicy::prm2(); }
-
-  const Vector &OCM::delta() const { return Delta_prm()->value(); }
-  double OCM::delta(uint m) const {
-    return compute_delta(m, delta(), maxscore());
+  Ptr<VectorParams> OCM::Cutpoints_prm() { return ParamPolicy::prm2(); }
+  const Ptr<VectorParams> OCM::Cutpoints_prm() const {
+    return ParamPolicy::prm2();
   }
 
-  void OCM::set_delta(const Vector &d) { Delta_prm()->set(d); }
+  void OCM::set_cutpoint_vector(const Vector &cutpoints) {
+    check_cutpoints(cutpoints);
+    Cutpoints_prm()->set(cutpoints);
+  }
 
-  uint OCM::maxscore() const { return delta().size() + 1; }
+  void OCM::set_cutpoint(int index, double value) {
+    Cutpoints_prm()->set_element(value, index);
+  }
+  
+  double OCM::upper_cutpoint(int y) const {
+    return compute_upper_cutpoint(y, cutpoint_vector());
+  }
 
+  double OCM::lower_cutpoint(int y) const {
+    return compute_lower_cutpoint(y, cutpoint_vector());
+  }
+  
   Ptr<OrdinalRegressionData> OCM::sim(RNG &rng) {
     if (!simulation_key_) {
-      simulation_key_ = new FixedSizeIntCatKey(maxscore() + 1);
+      simulation_key_ = new FixedSizeIntCatKey(nlevels());
     }
 
     Vector x(xdim());
@@ -176,118 +216,186 @@ namespace BOOM {
     }
 
     double eta = predict(x) + simulate_latent_variable(rng);
-    int y = maxscore();
-    for (uint m = 0; m < maxscore(); ++m) {
-      if (eta < delta(m)) {
+    int y = -1;
+    for (uint m = 0; m < nlevels(); ++m) {
+      if (eta >= (lower_cutpoint(m))) {
         y = m;
         break;
       }
+    }
+    if (y == -1) {
+      report_error("Simulation error in OrdinalCutpointModel::sim().");
     }
     NEW(OrdinalData, yp)(y, simulation_key_);
     NEW(OrdinalRegressionData, ans)(yp, new VectorData(x));
     return ans;
   }
 
-  Vector fix_bad_delta(const Vector &beta, const Vector &delta);
-
-  Vector fix_bad_delta(const Vector &beta, const Vector &delta) {
-    //    assert(delta.lo() == 2);
-    Vector gbeta(beta.size(), 0.0);
-    Vector gdelta(delta.size(), 0.0);
-    double lim = 0.0;
-    if (delta.front() <= 0) gdelta.front() = -delta.front();
-    for (uint i = 1; i < delta.size(); ++i) {
-      if (delta[i] >= lim)
-        gdelta[i] = gdelta[i - 1];
-      else
-        gdelta[i] = 1 + gdelta[i - 1] + (lim - delta[i]);
-      lim = std::max(lim, delta[i]);
-    }
-    return concat(gbeta, gdelta);
-  }
-
-  double OCM::bd_loglike(Vector &gbeta, Vector &gdelta, Matrix &Hbeta,
-                         Matrix &Hdelta, Matrix &Hbd, uint nd, bool b_derivs,
-                         bool d_derivs) const {
-    Vector beta(this->included_coefficients());
-    const Vector &delta(this->delta());
+  
+  //---------------------------------------------------------------------------
+  double OCM::full_loglike(const Vector &beta,
+                           const Vector &cutpoints, 
+                           Vector &beta_gradient,
+                           Vector &cutpoint_gradient,
+                           Matrix &beta_Hessian,
+                           Matrix &cutpoint_Hessian,
+                           Matrix &cross_Hessian,
+                           uint nderiv,
+                           bool use_beta_derivs,
+                           bool use_cutpoint_derivs) const {
     double ans = 0;
-    if (b_derivs) {
-      if (nd > 0) {
-        gbeta.resize(beta.size());
-        gbeta = 0.0;
-        if (nd > 1) {
-          Hbeta.resize(beta.size(), beta.size());
-          Hbeta = 0.0;
-        }
+    const Selector &inclusion(coef().inc());
+    int nvars = inclusion.nvars();
+    Vector included_beta = inclusion.select(beta);
+
+    //--------------------------------------------------
+    // Resize and initialize derivatives.
+    if (use_beta_derivs && nderiv > 0) {
+      
+      beta_gradient.resize(nvars);
+      beta_gradient = 0.0;
+      if (nderiv > 1) {
+        beta_Hessian.resize(nvars, nvars);
+        beta_Hessian = 0.0;
       }
     }
-    if (d_derivs) {
-      if (nd > 0) {
-        gdelta = 0.0;
-        if (nd > 1) Hdelta = 0.0;
+    if (use_cutpoint_derivs && nderiv > 0) {
+      int ncutpoints = cutpoints.size();
+      cutpoint_gradient.resize(ncutpoints);
+      cutpoint_gradient = 0.0;
+      if (nderiv > 1) {
+        cutpoint_Hessian.resize(ncutpoints, ncutpoints);
+        cutpoint_Hessian = 0.0;
       }
     }
-    if (d_derivs && b_derivs && nd > 1) {
-      Hbd = 0.0;
+    if (use_cutpoint_derivs && use_beta_derivs && nderiv > 1) {
+      cross_Hessian.resize(nvars, cutpoints.size());
+      cross_Hessian = 0.0;
     }
 
-    //------ local class -----------
-    class vdelta {  // virtual wrapper for delta
-      const Vector &d;
-      uint mscr;
+    const std::vector<Ptr<OrdinalRegressionData>> &data(dat());
+    for (uint i = 0; i < data.size(); ++i) {
+      const OrdinalRegressionData &data_point(*data[i]);
+      int y = data_point.y();
+      Vector x = inclusion.select(data_point.x());
+      
+      double btx = included_beta.dot(x);
+      // d1 and d0 are the upper and lower quantiles of the standardized
+      // distribution corresponding to y.
+      double d1 = compute_upper_cutpoint(y, cutpoints) - btx;
+      double d0 = compute_lower_cutpoint(y, cutpoints) - btx;
 
-     public:
-      explicit vdelta(const Vector &Delta)
-          : d(Delta), mscr(d.size() + 1) {}
+      // Upper and lower function values at the shifted cutpoints.
+      double F1 = link_inv(d1);
+      double F0 = link_inv(d0);
 
-      double operator()(uint i) {
-        if (i <= 0)
-          return BOOM::negative_infinity();
-        else if (i == 1)
-          return 0.0;
-        else if (i <= mscr)
-          return d[i - 2];
-        return BOOM::infinity();
-      }
-    };  //------- end of vdelta local class ------
-
-    const DatasetType &v(dat());
-    uint M = maxscore();
-    vdelta Delta(delta);
-    for (uint i = 0; i < v.size(); ++i) {
-      const uint &y(v[i]->y());
-      Vector x = coef().inc().select(v[i]->x());
-
-      // the current model params are used to select the variables in
-      // x() which are to be included.  The selection assures that x
-      // and the function argument beta are of compatible dimension.
-
-      double btx = beta.dot(x);
-      double d1 = y == M ? 0 : Delta(y + 1) - btx;
-      double d0 = y == 0 ? 0 : Delta(y) - btx;
-      double F1 = y == M ? 1.0 : link_inv(d1);
-      double F0 = y == 0 ? 0 : link_inv(d0);
       double prob = F1 - F0;
       ans += log(prob);
-      if (nd > 0) {
-        double f1 = y == M ? 0 : dlink_inv(d1) / prob;
-        double f0 = y == 0 ? 0 : dlink_inv(d0) / prob;
+
+      if (nderiv > 0) {
+        // Handle first derivatives.
+        
+        // There are two "fake" cutpoints at -infinity and zero before the
+        // first cutpoint in the vector.  Thus 'upper' and 'lower' are
+        // determined by:
+        int upper_cutpoint_index = y + 1 - 2;
+        int lower_cutpoint_index = y - 2;
+        
+        // Derivatives of F1 and F0 with respect to their function arguments at
+        // the shifted cutpoints.
+        double f1 = dlink_inv(d1) / prob;
+        double f0 = dlink_inv(d0) / prob;
         double df = f1 - f0;
 
-        if (b_derivs) gbeta = -df * x;
-        if (d_derivs) {
-          gdelta = 0;
-          if (y < M && y > 0) gdelta[y + 1] = f1;
-          if (y >= 2) gdelta[y] = -f0;
+        if (use_beta_derivs) {
+          // The chain rule introduces an extra factor of (-x).
+          beta_gradient -= df * x;
         }
-      }
-    }
+        
+        if (use_cutpoint_derivs) {
+          // The chain rule multiplies f1 by 1 if the upper cutpoint is in the
+          // cutpoint vector, and 0 otherwise.  The increment goes in the slot
+          // corresponding to the upper cutpoint.  The chain rule multiplies f0
+          // by 1 if the lower cutpoint is in the cutpoint vector, and 0
+          // otherwise.  
+          // 
+          // Another way to say all this is that d logp / d cutpoints = f1 *
+          // e(y+1) - f0 * e(y), where e(y) is a vector of all 0's except a 1 in
+          // slot y - 2.  If y < 2 then e(y) is a vector of all 0's.
+          if (upper_cutpoint_index >= 0
+              && upper_cutpoint_index < cutpoints.size()) {
+            cutpoint_gradient[upper_cutpoint_index] += f1;
+          }
+          if (lower_cutpoint_index >= 0
+              && lower_cutpoint_index < cutpoint_gradient.size()) {
+            cutpoint_gradient[lower_cutpoint_index] -= f0;
+          }
+        }
+
+        if (nderiv > 1) {
+          // Handle second derivatives
+          
+          // The beta Hessian is the derivative of the beta gradient.
+          // Derivatives by the quotient rule.
+          double df1 = ddlink_inv(d1) / prob;
+          double df0 = ddlink_inv(d0) / prob;
+
+          double quotient_rule_coefficient = (df1 - df0) - square(f1 - f0);
+
+          if (use_beta_derivs) {
+            // [(F1 - F0) * (df1 - df0) * x * x'] - [(f1 - f0)^2 * x * x']
+            //  --------------------------------------------------
+            //       (F1 - F0)^2
+            //
+            // note that fx and dfx are already divided by (F1 - F0), so that
+            // factor disappears.
+            beta_Hessian.add_outer(x, x, quotient_rule_coefficient);
+          }
+
+          bool has_upper = upper_cutpoint_index >= 0
+              && upper_cutpoint_index < cutpoints.size();
+          bool has_lower = lower_cutpoint_index >= 0
+              && lower_cutpoint_index < cutpoints.size();
+
+          if (use_cutpoint_derivs) {
+            if (has_upper) {
+              cutpoint_Hessian(upper_cutpoint_index, upper_cutpoint_index) +=
+                  df1 - square(f1);
+            }
+            if (has_lower) {
+              cutpoint_Hessian(lower_cutpoint_index, lower_cutpoint_index) -=
+                  df0 + square(f0);
+            }
+            if (has_upper && has_lower) {
+              cutpoint_Hessian(lower_cutpoint_index, upper_cutpoint_index)
+                  += f0 * f1;
+              cutpoint_Hessian(upper_cutpoint_index, lower_cutpoint_index)
+                  += f0 * f1;
+            }
+          }
+
+          if (use_cutpoint_derivs && use_beta_derivs) {
+            // Cross hessian has beta along rows, and cutpoints along columns.
+            // It is not symmetric.  It occurs along with its transpose in the
+            // full Hessian.
+            if (has_upper) {
+              cross_Hessian.col(upper_cutpoint_index).axpy(
+                  x, -df1 + f1 * (f1 - f0));
+            }
+            if (has_lower) {
+              cross_Hessian.col(lower_cutpoint_index).axpy(
+                  x, df0 - f0 * (f1 - f0));
+            }
+          }
+        } // nderiv > 1
+      }  // nderiv > 0
+    }  // for 
     return ans;
   }
-
-  double OCM::Loglike(const Vector &beta_delta, Vector &g, Matrix &h,
-                      uint nd) const {
+  
+  //---------------------------------------------------------------------------
+  double OCM::Loglike(const Vector &beta_delta, Vector &g, Matrix &Hessian,
+                      uint nderiv) const {
     // model is parameterized so that Pr(y = m) = F(delta(m + 1)|eta) -
     // F(delta(m)|eta) if you draw a picture of F with cutpoints
     // delta, the area corresponding to the event Y=m lies to the
@@ -295,24 +403,29 @@ namespace BOOM {
 
     int beta_dim = inc().nvars();
     Vector beta(ConstVectorView(beta_delta, 0, beta_dim));
-    Vector delta(ConstVectorView(beta_delta, beta_dim));
+    Vector cutpoints(ConstVectorView(beta_delta, beta_dim));
 
-    Vector gbeta, gdelta;
-    Matrix Hbeta, Hdelta, Hbd;
-    if (nd > 0) {
-      gbeta = beta;
-      gdelta = delta;
-      if (nd > 1) {
-        Hbeta = Matrix(beta.size(), beta.size());
-        Hdelta = Matrix(delta.size(), delta.size());
-        Hbd = Matrix(beta.size(), delta.size());
+    Vector beta_gradient, cutpoint_gradient;
+    Matrix beta_Hessian, cutpoint_Hessian, cross_Hessian;
+    if (nderiv > 0) {
+      beta_gradient.resize(beta_dim);
+      cutpoint_gradient.resize(cutpoints.size());
+      if (nderiv > 1) {
+        beta_Hessian.resize(beta.size(), beta.size());
+        cutpoint_Hessian.resize(cutpoints.size(), cutpoints.size());
+        cross_Hessian.resize(beta.size(), cutpoints.size());
       }
     }
-    double ans =
-        bd_loglike(gbeta, gdelta, Hbeta, Hdelta, Hbd, nd, nd > 0, nd > 0);
-    if (nd > 0) {
-      g = concat(gbeta, gdelta);
-      if (nd > 1) h = unpartition(Hbeta, Hbd, Hdelta);
+    double ans = full_loglike(
+        beta, cutpoints, beta_gradient, cutpoint_gradient, beta_Hessian,
+        cutpoint_Hessian, cross_Hessian, nderiv, nderiv > 0, nderiv > 0);
+
+    if (nderiv > 0) {
+      g = concat(beta_gradient, cutpoint_gradient);
+      if (nderiv > 1) {
+        Hessian = unpartition(
+            beta_Hessian, cross_Hessian, cutpoint_Hessian);
+      }
     }
     return ans;
   }
@@ -320,28 +433,44 @@ namespace BOOM {
   //======================================================================
   Vector OCM::CDF(const Vector &x) const {
     double eta = predict(x);
-    Vector ans(maxscore() + 1);
+    Vector ans(nlevels());
     ans[0] = link_inv(-eta);
-    for (uint i = 1; i < maxscore(); ++i) {
-      ans[i] = link_inv(delta(i + 1) - eta);
+    for (uint i = 1; i < nlevels() - 1; ++i) {
+      ans[i] = link_inv(upper_cutpoint(i) - eta);
     }
-    ans[maxscore()] = 1;
+    ans[nlevels() - 1] = 1;
     return ans;
   }
 
-  void OCM::initialize_params() { mle(); }
+  void OCM::initialize_params() {
+    if (dat().size() > 0) {
+      mle();
+    } else {
+      initialize_params(Vector(nlevels(), 0.0));
+    }
+  }
+  
   void OCM::initialize_params(const Vector &counts) {
+    if (counts.size() != nlevels()) {
+      report_error("Vector of counts did not align with the number of "
+                   "factor levels.");
+    }
+      
     Vector hist = counts;
+    // Add a unit information prior to ensure each element is positive.
+    hist += 1.0 / hist.size();
+    
     hist.normalize_prob();
     double sum = hist[0];
-    double b0 = qlogis(sum);
+    double b0 = link(sum);
+    
     uint I = 0;  // chaged from I=2 when adopting zero index vectors
-    Vector Delta(delta());
-    for (uint i = 1; i < maxscore(); ++i) {
+    Vector cutpoint_vector = this->cutpoint_vector();
+    for (uint i = 1; i < cutpoint_vector.size(); ++i) {
       sum += hist[i];
-      Delta(I++) = link_inv(sum - b0);
+      cutpoint_vector(I++) = link(sum) - b0;
     }
-    set_delta(Delta);
+    set_cutpoint_vector(cutpoint_vector);
     Vector b(Beta());
     b = 0;
     b[0] = b0;
@@ -350,27 +479,48 @@ namespace BOOM {
 
   namespace {
     typedef OrdinalCutpointBetaLogLikelihood OCBLL;
-    typedef OrdinalCutpointDeltaLogLikelihood OCDLL;
+    typedef OrdinalCutpointLogLikelihood OCLL;
   }  // namespace
 
-  OCDLL OCM::delta_log_likelihood() const { return OCDLL(this); }
+  OCLL OCM::cutpoint_log_likelihood() const { return OCLL(this); }
 
   OCBLL OCM::beta_log_likelihood() const { return OCBLL(this); }
 
   OCBLL::OrdinalCutpointBetaLogLikelihood(const OCM *m) : m_(m) {}
 
   double OCBLL::operator()(const Vector &beta) const {
-    const Vector &delta(m_->delta());
-    return m_->log_likelihood(beta, delta);
+    return m_->log_likelihood(beta, m_->cutpoint_vector());
   }
 
-  OCDLL::OrdinalCutpointDeltaLogLikelihood(const OCM *m) : m_(m) {}
+  OCLL::OrdinalCutpointLogLikelihood(const OCM *m) : m_(m) {}
 
-  double OCDLL::operator()(const Vector &delta) const {
-    bool ok = m_->check_delta(delta);
+  double OCLL::operator()(const Vector &delta) const {
+    bool ok = m_->check_cutpoints(delta);
     if (!ok) return BOOM::negative_infinity();
     const Vector &beta(m_->Beta());
     return m_->log_likelihood(beta, delta);
   }
 
+  double OrdinalLogitModel::ddlink_inv(double eta) const {
+    double exp_minus_eta = exp(-eta);
+    if (std::isfinite(exp_minus_eta)) {
+      double F = link_inv(eta);
+      double f = dlink_inv(eta);
+      return exp_minus_eta * F * (2 * f - F);
+    } else {
+      // if exp_minus_eta is not finite then eta must be negative.  Various
+      // arguments (e.g. L'Hoptial's rule) show the answer in this case to be
+      // zero.
+      return 0;
+    }
+  }
+
+  double OrdinalProbitModel::ddlink_inv(double eta) const {
+    if (std::isfinite(eta)) {
+      return -eta * dnorm(eta);
+    } else {
+      return 0;
+    }
+  }
+  
 }  // namespace BOOM

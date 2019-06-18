@@ -17,6 +17,8 @@
 library(BoomSpikeSlab)
 library(testthat)
 
+cat("test-shrinkage-regression\n")
+
 test_that("Shrinkage regression runs", {
   seed <- 8675309
   set.seed(seed)

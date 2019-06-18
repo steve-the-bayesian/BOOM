@@ -55,7 +55,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &) const override;
+    std::ostream &print(std::ostream &) const override;
 
    private:
     double sum_;    // sum y[i] * w[i]

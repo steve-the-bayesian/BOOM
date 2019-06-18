@@ -93,7 +93,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &WishartSuf::print(ostream &out) const {
+  std::ostream &WishartSuf::print(std::ostream &out) const {
     return out << "n_ = " << n_ << endl
                << "sumldw_ = " << sumldw_ << endl
                << "sumW_ = " << endl

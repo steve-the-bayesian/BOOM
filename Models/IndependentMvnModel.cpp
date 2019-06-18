@@ -136,7 +136,7 @@ namespace BOOM {
     return unvectorize(vi, minimal);
   }
 
-  ostream &IndependentMvnSuf::print(ostream &out) const {
+  std::ostream &IndependentMvnSuf::print(std::ostream &out) const {
     Matrix tmp(suf_.size(), 3);
     for (int i = 0; i < suf_.size(); ++i) {
       tmp(i, 0) = n(i);

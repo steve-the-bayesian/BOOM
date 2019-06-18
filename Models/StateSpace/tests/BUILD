@@ -44,7 +44,7 @@ cc_test(
         ":test_utils",
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -58,13 +58,13 @@ genrule(
 )
 
 cc_test(
-    name = "multivariate_test",
-    srcs = ["multivariate_test.cc"],
+    name = "multivariate_state_space_regression_test",
+    srcs = ["multivariate_state_space_regression_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -76,6 +76,18 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "state_space_regression_model_test",
+    srcs = ["state_space_regression_model_test.cc"],
+    copts = COPTS,
+    data = [":testdata"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )

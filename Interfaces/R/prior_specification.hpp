@@ -31,7 +31,8 @@
 namespace BOOM{
 
   class MarkovModel;
-
+  class RegressionModel;
+  
   namespace RInterface{
     // Convenience classes for communicating commonly used R objects
     // to BOOM.  Each object has a corresponding R function that will
@@ -268,6 +269,17 @@ namespace BOOM{
     };
 
     //----------------------------------------------------------------------
+    class ScaledMatrixNormalPrior {
+     public:
+      explicit ScaledMatrixNormalPrior(SEXP r_prior);
+      const Matrix &mean() const {return mean_;}
+      double sample_size() const {return sample_size_;}
+     private:
+      Matrix mean_;
+      double sample_size_;
+    };
+
+    //----------------------------------------------------------------------
     // A discrete prior over the integers {lo, ..., hi}.
     class DiscreteUniformPrior {
      public:
@@ -306,33 +318,69 @@ namespace BOOM{
     };
 
     //----------------------------------------------------------------------
-    // This class is for handling spike and slab priors where there is
-    // no residual variance parameter.  See the R help files for
-    // SpikeSlabPrior or IndependentSpikeSlabPrior.
+    // This class is for handling spike and slab priors where there is no
+    // residual variance parameter.  See the R help files for SpikeSlabPrior or
+    // IndependentSpikeSlabPrior.
     class SpikeSlabGlmPrior {
      public:
       // Args:
-      //   r_prior: An R object inheriting from SpikeSlabPriorBase.
-      //     Elements of 'prior' relating to the residual variance are
-      //     ignored.  If 'prior' inherits from
-      //     IndependentSpikeSlabPrior then the slab will be an
+      //   r_prior: An R object inheriting from SpikeSlabPriorBase.  Elements of
+      //     'prior' relating to the residual variance are ignored.  If 'prior'
+      //     inherits from IndependentSpikeSlabPrior then the slab will be an
       //     IndependentMvnModel.  Otherwise it will be an MvnModel.
       explicit SpikeSlabGlmPrior(SEXP r_prior);
       virtual ~SpikeSlabGlmPrior() {}
       const Vector &prior_inclusion_probabilities() {
-        return prior_inclusion_probabilities_;
+        return spike_->prior_inclusion_probabilities();
       }
       Ptr<VariableSelectionPrior> spike() {return spike_;}
       Ptr<MvnBase> slab() {return slab_;}
       int max_flips() const {return max_flips_;}
 
      private:
-      Vector prior_inclusion_probabilities_;
       Ptr<VariableSelectionPrior> spike_;
       Ptr<MvnBase> slab_;
       int max_flips_;
     };
+    
+    //----------------------------------------------------------------------
+    // beta | X, sigsq ~ N(b, sigsq * V), where
+    //   V^{-1} = kappa * (a * Diag(X'X/n) + (1 - a) * X'X/n)
+    //
+    // The "X" must come from somewhere else, as must the 'sigsq'.
+    //
+    // Notation:
+    //   a: diagonal_shrinkage
+    //   kappa: prior_information_weight
+    //   mu: prior_mean
+    //   max_flips: The maximum number of in/out flips that the MCMC algorithm
+    //     will try.  max_flips < 0 is a signal that the number of proposed
+    //     flips is unconstrained.
+    class ConditionalZellnerPrior {
+     public:
+      explicit ConditionalZellnerPrior(SEXP r_prior);
 
+      const Vector &prior_inclusion_probabilities() {
+        return spike_->prior_inclusion_probabilities();
+      }
+
+      Ptr<VariableSelectionPrior> spike() const {return spike_;}
+      const Vector &mean() const {return prior_mean_;}
+      double diagonal_shrinkage() const {return diagonal_shrinkage_;}
+      double prior_information_weight() const {
+        return prior_information_weight_;
+      }
+      int max_flips() const {return max_flips_;}
+      
+     private:
+      Ptr<VariableSelectionPrior> spike_;
+      
+      Vector prior_mean_;
+      double diagonal_shrinkage_;
+      double prior_information_weight_;
+      int max_flips_;
+    };
+    
     //----------------------------------------------------------------------
     // This is for the standard Zellner G prior in the regression
     // setting.  See the R help files for SpikeSlabPrior.
@@ -347,7 +395,8 @@ namespace BOOM{
           SEXP r_prior,
           const Ptr<UnivParams> &residual_variance);
       const Vector &prior_inclusion_probabilities() {
-        return prior_inclusion_probabilities_;}
+        return spike_->prior_inclusion_probabilities();
+      }
       Ptr<VariableSelectionPrior> spike() {return spike_;}
       Ptr<MvnGivenScalarSigmaBase> slab() {return slab_;}
       Ptr<ChisqModel> siginv_prior() {return siginv_prior_;}
@@ -355,7 +404,6 @@ namespace BOOM{
       double sigma_upper_limit() const {return sigma_upper_limit_;}
 
      private:
-      Vector prior_inclusion_probabilities_;
       Ptr<VariableSelectionPrior> spike_;
       Ptr<MvnGivenScalarSigmaBase> slab_;
       Ptr<ChisqModel> siginv_prior_;
@@ -408,6 +456,20 @@ namespace BOOM{
       Ptr<ChisqModel> siginv_prior_;
       double sigma_upper_limit_;
     };
+
+    // A unified interface for setting the prior distribution of a regression
+    // model.
+    // Args:
+    //   model:  The model for which a posterior sampler is to be set.
+    //   prior:  An R object specifying one of the following:
+    //     - RegressionNonconjugateSpikeSlabPrior
+    //     - RegressionConjugateSpikeSlabPrior
+    //     - IndependentRegressionSpikeSlabPrior
+    //     - TODO(steve): Add shrinkage regression
+    // Effects:
+    //   A posterior sampler is extracted from r_prior and assigned to model.
+    void SetRegressionSampler(RegressionModel *model, SEXP r_prior);
+    
     //----------------------------------------------------------------------
     class ArSpikeSlabPrior
         : public RegressionNonconjugateSpikeSlabPrior {
@@ -441,7 +503,8 @@ namespace BOOM{
       IndependentRegressionSpikeSlabPrior(
           SEXP prior, const Ptr<UnivParams> &sigsq);
       const Vector &prior_inclusion_probabilities() {
-        return prior_inclusion_probabilities_;}
+        return spike_->prior_inclusion_probabilities();
+      }
       Ptr<VariableSelectionPrior> spike() {return spike_;}
       Ptr<IndependentMvnModelGivenScalarSigma> slab() {return slab_;}
       Ptr<ChisqModel> siginv_prior() {return siginv_prior_;}
@@ -449,7 +512,6 @@ namespace BOOM{
       double sigma_upper_limit() const {return sigma_upper_limit_;}
 
      private:
-      Vector prior_inclusion_probabilities_;
       Ptr<VariableSelectionPrior> spike_;
       Ptr<IndependentMvnModelGivenScalarSigma> slab_;
       Ptr<ChisqModel> siginv_prior_;

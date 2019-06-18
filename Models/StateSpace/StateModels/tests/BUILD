@@ -12,7 +12,7 @@ cc_test(
         "//:boom",
         "//:boom_test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -24,7 +24,7 @@ cc_test(
         "//:boom",
         "//:boom_test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -36,7 +36,7 @@ cc_test(
         "//:boom",
         "//:boom_test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -49,7 +49,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -62,7 +62,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -72,7 +72,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -82,7 +82,7 @@ cc_test(
     copts = COPTS,
     deps = [
         "//:boom",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -104,7 +104,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -117,7 +117,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -130,7 +130,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -143,7 +143,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -156,7 +156,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -169,7 +169,7 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -183,6 +183,6 @@ cc_test(
         "//:boom_test_utils",
         "//Models/StateSpace/StateModels/test_utils",
         "//Models/StateSpace/tests:test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )

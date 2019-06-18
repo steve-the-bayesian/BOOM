@@ -54,7 +54,7 @@ namespace BOOM {
     return new PoissonRegressionData(*this);
   }
 
-  ostream &PoissonRegressionData::display(ostream &out) const {
+  std::ostream &PoissonRegressionData::display(std::ostream &out) const {
     out << "[" << exposure_ << "]  ";
     return GlmData<IntData>::display(out);
   }

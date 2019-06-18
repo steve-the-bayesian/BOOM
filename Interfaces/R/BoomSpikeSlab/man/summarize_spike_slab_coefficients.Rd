@@ -71,4 +71,3 @@
   summary(model)
   SummarizeSpikeSlabCoefficients(model$beta, burn = 100)
 }
-\keyword{ models, regression}

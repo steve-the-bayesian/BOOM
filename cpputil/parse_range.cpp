@@ -26,18 +26,15 @@
 #include "uint.hpp"
 
 namespace BOOM {
-  using namespace std;
-  using std::string;
-  typedef RangeParser RP;
-
-  vector<unsigned> parse_range(const string &s) {
-    RP rp;
+  
+  std::vector<unsigned> parse_range(const std::string &s) {
+    RangeParser rp;
     return rp(s);
   }
 
-  RP::RangeParser() : not_found(string::npos) {}
+  RangeParser::RangeParser() : not_found(std::string::npos) {}
 
-  vector<unsigned int> RP::operator()(const string &s) {
+  std::vector<unsigned int> RangeParser::operator()(const std::string &s) {
     range = s;
     check_range();
     ans.clear();
@@ -48,8 +45,8 @@ namespace BOOM {
     return ans;
   }
 
-  void RP::find_block() {
-    sz comma_pos = range.find(',');
+  void RangeParser::find_block() {
+    std::string::size_type comma_pos = range.find(',');
     if (comma_pos == not_found) {
       block = range;
       range.clear();
@@ -60,25 +57,25 @@ namespace BOOM {
     }
   }
 
-  void RP::parse_block() {
-    sz dash_pos = block.find('-');
+  void RangeParser::parse_block() {
+    std::string::size_type dash_pos = block.find('-');
     if (dash_pos == not_found) {
       uint number = atoi(block.c_str());
       ans.push_back(number);
     } else {
-      istringstream in(block);
+      std::istringstream in(block);
       char dash;
       uint from, to;
       in >> from >> dash >> to;
-      vector<uint> irng = seq(from, to);
+      std::vector<uint> irng = seq(from, to);
       std::copy(irng.begin(), irng.end(), back_inserter(ans));
     }
   }
 
-  void RP::check_range() {
-    sz bad = range.find_first_not_of("0123456789,-");
+  void RangeParser::check_range() {
+    std::string::size_type bad = range.find_first_not_of("0123456789,-");
     if (bad == not_found) return;
-    ostringstream msg;
+    std::ostringstream msg;
     msg << "Illegal characters passed to RangeParser(string) : " << range
         << std::endl
         << " only positive integers, commas (,) , and dashes (-) allowed.";

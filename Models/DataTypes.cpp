@@ -25,11 +25,11 @@
 
 namespace BOOM {
 
-  ostream &operator<<(ostream &out, const Ptr<Data> &dp) {
+  std::ostream &operator<<(std::ostream &out, const Ptr<Data> &dp) {
     return dp->display(out);
   }
 
-  ostream &operator<<(ostream &out, const Data &d) {
+  std::ostream &operator<<(std::ostream &out, const Data &d) {
     d.display(out);
     return out;
   }
@@ -54,7 +54,7 @@ namespace BOOM {
       : Data(rhs), Traits(rhs), x(rhs.x) {}
   VectorData *VectorData::clone() const { return new VectorData(*this); }
 
-  ostream &VectorData::display(ostream &out) const {
+  std::ostream &VectorData::display(std::ostream &out) const {
     out << x;
     return out;
   }
@@ -117,7 +117,7 @@ namespace BOOM {
       : Data(rhs), Traits(rhs), x(rhs.x) {}
 
   MatrixData *MatrixData::clone() const { return new MatrixData(*this); }
-  ostream &MatrixData::display(ostream &out) const {
+  std::ostream &MatrixData::display(std::ostream &out) const {
     out << x << std::endl;
     return out;
   }

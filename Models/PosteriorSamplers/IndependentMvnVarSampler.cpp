@@ -66,4 +66,17 @@ namespace BOOM {
     }
   }
 
+  void IndependentMvnVarSampler::set_sigma_max(const Vector &sigma_max) {
+    if (sigma_max.size() != samplers_.size()) {
+      std::ostringstream err;
+      err << "Size mismatch in set_sigma_match.  Vector of samplers has size "
+          << samplers_.size() << " but vector of limits has size "
+          << sigma_max.size() << ".\n";
+      report_error(err.str());
+    }
+    for (int i = 0; i < sigma_max.size(); ++i) {
+      samplers_[i].set_sigma_max(sigma_max[i]);
+    }
+  }
+  
 }  // namespace BOOM

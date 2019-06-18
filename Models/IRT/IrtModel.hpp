@@ -50,7 +50,8 @@ namespace BOOM {
 
       void set_subscale_names(const StringVector &);
       const StringVector &subscale_names();
-      ostream &print_subscales(ostream &, bool nl = true, bool decorate = true);
+      std::ostream &print_subscales(
+          std::ostream &, bool nl = true, bool decorate = true);
 
       uint nscales() const;  // number of subscales
       uint nsubjects() const;
@@ -76,7 +77,7 @@ namespace BOOM {
       PriPtr subject_prior();
 
       //----------- io functions -------
-      void item_report(ostream &, uint max_name_width = 40) const;
+      void item_report(std::ostream &, uint max_name_width = 40) const;
       void item_report(const std::string &fname) const;
 
      private:

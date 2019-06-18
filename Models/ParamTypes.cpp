@@ -45,7 +45,7 @@ namespace BOOM {
     }
   }
 
-  ostream &operator<<(ostream &out, const ParamVector &v) {
+  std::ostream &operator<<(std::ostream &out, const ParamVector &v) {
     out << vectorize(v, false);
     return out;
   }
@@ -76,6 +76,10 @@ namespace BOOM {
   Vector::const_iterator UnivParams::unvectorize(const Vector &v, bool) {
     Vector::const_iterator b = v.begin();
     return unvectorize(b);
+  }
+
+  void UnivParamsObserver::set(const double &rhs, bool Signal) {
+    report_error("set is disabled.");
   }
 
   //============================================================

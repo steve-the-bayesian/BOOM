@@ -44,8 +44,8 @@ namespace BOOM {
     //   number_of_successes: The number of binomial successes for
     //     this observation.  Must be non-negative and must not exceed
     //     number_of_trials.
-    //   eta: The linear predictor (probit of success) in each binomial
-    //     trial.
+    //   linear_predictor: The linear predictor (probit of success) in each
+    //     binomial trial.
     //
     // Returns:
     //   The sum of the latent Gaussian responses associated with this
@@ -53,7 +53,7 @@ namespace BOOM {
     //   the upper tail, and n[i] - y[i] will be from the distribution
     //   truncated to the lower tail.
     double impute(RNG &rng, double number_of_trials, double number_of_successes,
-                  double eta) const;
+                  double linear_predictor) const;
 
     // The smallest number_of_trials for which approximate
     // augmentation takes place.

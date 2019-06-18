@@ -40,7 +40,7 @@ namespace BOOM {
     explicit ZeroInflatedPoissonData(const ZeroInflatedPoissonSuf &suf);
     ZeroInflatedPoissonData(const ZeroInflatedPoissonData &rhs);
     ZeroInflatedPoissonData *clone() const override;
-    ostream &display(ostream &out) const override;
+    std::ostream &display(std::ostream &out) const override;
     const ZeroInflatedPoissonSuf &suf() const;
 
    private:

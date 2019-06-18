@@ -25,6 +25,10 @@
 namespace BOOM {
   class StateSpacePosteriorSampler : public PosteriorSampler {
    public:
+    // Args:
+    //   model:  The state space model to be managed.
+    //   seeding_rng: The random number generator used to set the seed
+    //     for the RNG owned by this sampler.
     explicit StateSpacePosteriorSampler(StateSpaceModelBase *model,
                                         RNG &seeding_rng = GlobalRng::rng);
     void draw() override;

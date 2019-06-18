@@ -9,7 +9,18 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "concatenate_strings_test",
+    srcs = ["concatenate_strings_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -20,7 +31,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -31,7 +42,18 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "ptr_test",
+    srcs = ["ptr_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -42,7 +64,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -53,7 +75,7 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )
 
@@ -64,6 +86,6 @@ cc_test(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )

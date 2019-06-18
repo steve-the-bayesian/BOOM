@@ -53,13 +53,12 @@
  */
 
 #include "nmath.hpp"
-namespace Rmath{
+namespace Rmath {
 
-void gammalims(double *xmin, double *xmax)
-{
-/* FIXME: Even better: If IEEE, #define these in nmath.h
-          and don't call gammalims() at all
-*/
+  void gammalims(double *xmin, double *xmax) {
+    /* FIXME: Even better: If IEEE, #define these in nmath.h
+       and don't call gammalims() at all
+    */
 #ifdef IEEE_754
     *xmin = -170.5674972726612;
     *xmax =  171.61447887182298;/*(3 Intel/Sparc architectures)*/
@@ -70,45 +69,45 @@ void gammalims(double *xmin, double *xmax)
     alnsml = log(d1mach(1));
     *xmin = -alnsml;
     for (i=1; i<=10; ++i) {
-        xold = *xmin;
-        xln = log(*xmin);
-        *xmin -= *xmin * ((*xmin + .5) * xln - *xmin - .2258 + alnsml) /
-                (*xmin * xln + .5);
-        if (fabs(*xmin - xold) < .005) {
-            *xmin = -(*xmin) + .01;
-            goto find_xmax;
-        }
+      xold = *xmin;
+      xln = log(*xmin);
+      *xmin -= *xmin * ((*xmin + .5) * xln - *xmin - .2258 + alnsml) /
+          (*xmin * xln + .5);
+      if (fabs(*xmin - xold) < .005) {
+        *xmin = -(*xmin) + .01;
+        goto find_xmax;
+      }
     }
 
     /* unable to find xmin */
 
     ML_ERROR(ME_NOCONV);
-    *xmin = *xmax = numeric_limits<double>::quiet_NaN();
+    *xmin = *xmax = std::numeric_limits<double>::quiet_NaN();
 
-find_xmax:
+ find_xmax:
 
     alnbig = log(d1mach(2));
     *xmax = alnbig;
     for (i=1; i<=10; ++i) {
-        xold = *xmax;
-        xln = log(*xmax);
-        *xmax -= *xmax * ((*xmax - .5) * xln - *xmax + .9189 - alnbig) /
-                (*xmax * xln - .5);
-        if (fabs(*xmax - xold) < .005) {
-            *xmax += -.01;
-            goto done;
-        }
+      xold = *xmax;
+      xln = log(*xmax);
+      *xmax -= *xmax * ((*xmax - .5) * xln - *xmax + .9189 - alnbig) /
+          (*xmax * xln - .5);
+      if (fabs(*xmax - xold) < .005) {
+        *xmax += -.01;
+        goto done;
+      }
     }
 
     /* unable to find xmax */
 
     ML_ERROR(ME_NOCONV);
-    *xmin = *xmax = numeric_limits<double>::quiet_NaN();
+    *xmin = *xmax = std::numeric_limits<double>::quiet_NaN();
 
-done:
+ done:
     *xmin = std::max(*xmin, -(*xmax) + 1);
 #endif
-}
+  }
 
-}
+}  // namespace Rmath
 

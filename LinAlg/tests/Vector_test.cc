@@ -303,6 +303,98 @@ namespace {
                      fabs(v[0]) + fabs(v[1]) + fabs(v[2]) + fabs(v[3]));
   }
 
+  // Given two vector-like objects x and y, check the field operations between
+  // them and between the first and a scalar.
+  // Args:
+  //   x, y: The vectors to compare.
+  //   msg: A message to print in the event of an error, identifying the case
+  //     being compared.  E.g. "vector-vector"
+  template <class V1, class V2>
+  void CheckFieldOperators(const V1 &x, const V2 &y, const std::string &msg) {
+    ASSERT_GE(x.size(), 3) << "Need to pass a vector of size >= 3.";
 
+    Vector z = x + y;
+    double a = 1.2;
+    EXPECT_DOUBLE_EQ(z[0], x[0] + y[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] + y[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] + y[2] ) << msg;
+
+    z = x - y;
+    EXPECT_DOUBLE_EQ(z[0], x[0] - y[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] - y[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] - y[2] ) << msg;
+
+    z = x * y;
+    EXPECT_DOUBLE_EQ(z[0], x[0] * y[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] * y[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] * y[2] ) << msg;
+
+    z = x / y;
+    EXPECT_DOUBLE_EQ(z[0], x[0] / y[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] / y[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] / y[2] ) << msg;
+
+    z = a + x;
+    EXPECT_DOUBLE_EQ(z[0], x[0] + a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] + a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] + a ) << msg;
+
+    z = a - x;
+    EXPECT_DOUBLE_EQ(z[0], a - x[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], a - x[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], a - x[2] ) << msg;
+
+    z = x + a;
+    EXPECT_DOUBLE_EQ(z[0], x[0] + a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] + a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] + a ) << msg;
+
+    z = x - a;
+    EXPECT_DOUBLE_EQ(z[0], x[0] - a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] - a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] - a ) << msg;
+
+    z = a * x;
+    EXPECT_DOUBLE_EQ(z[0], x[0] * a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] * a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] * a ) << msg;
+
+    z = a / x;
+    EXPECT_DOUBLE_EQ(z[0], a / x[0] ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], a / x[1] ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], a / x[2] ) << msg;
+
+    z = x * a;
+    EXPECT_DOUBLE_EQ(z[0], x[0] * a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] * a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] * a ) << msg;
+
+    z = x / a;
+    EXPECT_DOUBLE_EQ(z[0], x[0] / a ) << msg;
+    EXPECT_DOUBLE_EQ(z[1], x[1] / a ) << msg;
+    EXPECT_DOUBLE_EQ(z[2], x[2] / a ) << msg;
+  }
+
+  TEST_F(VectorTest, FieldOperators) {
+    Vector x(3);
+    Vector y(3);
+    x.randomize();
+    y.randomize();
+    VectorView xview(x);
+    VectorView yview(y);
+    ConstVectorView cxview(x);
+    ConstVectorView cyview(y);
+
+    CheckFieldOperators(x, y, "vector, vector");
+    CheckFieldOperators(xview, y, "view, vector");
+    CheckFieldOperators(cxview, y, "const view, vector");
+    CheckFieldOperators(x, yview, "vector, view");
+    CheckFieldOperators(xview, yview, "view, view");
+    CheckFieldOperators(cxview, yview, "const view, view");
+    CheckFieldOperators(x, cyview, "vector, const view");
+    CheckFieldOperators(xview, cyview, "view, const view");
+    CheckFieldOperators(cxview, cyview, "const view, const view");
+
+  }
   
 }  // namespace

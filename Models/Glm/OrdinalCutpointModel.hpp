@@ -1,4 +1,7 @@
+// Copyright (C) 2019 Steven L. Scott
+
 // Copyright 2018 Google LLC. All Rights Reserved.
+
 /*
   Copyright (C) 2005 Steven L. Scott
 
@@ -28,16 +31,15 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "TargetFun/TargetFun.hpp"
 
-// Model:  Y can be 0... M-1
-// Pr(Y-m) = F(d[m]-btx) - F(d[m-1] - btx)
-// where F is the link function and btx is "beta transpose x"
-// d[] is the set of cutpoints with identifiability constraints:
-// d[-1] = -infinity, d[0] = 0, d[M-1]=infinity
+#include "distributions.hpp"
 
 namespace BOOM {
 
   class OrdinalCutpointModel;
 
+  //===========================================================================
+  // A target function for evaluating the conditional log likelihood of beta
+  // given cutpoints.
   class OrdinalCutpointBetaLogLikelihood : public TargetFun {
    public:
     explicit OrdinalCutpointBetaLogLikelihood(const OrdinalCutpointModel *m_);
@@ -47,51 +49,104 @@ namespace BOOM {
     const OrdinalCutpointModel *m_;
   };
 
-  class OrdinalCutpointDeltaLogLikelihood : public TargetFun {
+  //===========================================================================
+  // A target function for evaluating the conditional log likelihood of
+  // cutpoints given beta.
+  class OrdinalCutpointLogLikelihood : public TargetFun {
    public:
-    explicit OrdinalCutpointDeltaLogLikelihood(const OrdinalCutpointModel *m_);
-    double operator()(const Vector &delta) const override;
+    explicit OrdinalCutpointLogLikelihood(const OrdinalCutpointModel *m_);
+    double operator()(const Vector &minimal_cutpoints) const override;
 
    private:
     const OrdinalCutpointModel *m_;
   };
 
+  //===========================================================================
+  // An ordinal cutpoint model is a generalized linear model for ordinal data.
+  // THe response Y can assume values in {0... M-1}.
+  //
+  // The model is Pr(Y == m) = F(d[m] - eta) - F(d[m-1] - eta) where F is the link
+  // function (a cumulative distribution function, often the logistic function,
+  // or normal CDF) and eta is "linear predictor".
+  //
+  // The notional vector d[] contains the set of cutpoints with identifiability
+  // constraints: d[-1] = -infinity, d[0] = 0, d[M-1]=infinity, with d[i] < d[i+1]
+  // otherwise.
   class OrdinalCutpointModel : public ParamPolicy_2<GlmCoefs, VectorParams>,
                                public IID_DataPolicy<OrdinalRegressionData>,
                                public PriorPolicy,
                                public GlmModel,
-                               public NumOptModel {
+                               public NumOptModel,
+                               public MixtureComponent {
    public:
-    OrdinalCutpointModel(const Vector &beta, const Vector &delta);
+    // Initialize parameters to be 
+    OrdinalCutpointModel(int xdim, int nlevels);
+    OrdinalCutpointModel(const Vector &beta, const Vector &cutpoints);
     OrdinalCutpointModel(const Vector &beta, const Selector &Inc,
-                         const Vector &delta);
+                         const Vector &cutpoints);
     OrdinalCutpointModel(const Selector &Inc, uint Maxscore);
     OrdinalCutpointModel(const Matrix &X, const Vector &y);
     OrdinalCutpointModel(const OrdinalCutpointModel &rhs);
+    
+    OrdinalCutpointModel(OrdinalCutpointModel &&rhs) = default;
 
     OrdinalCutpointModel *clone() const override = 0;
 
-    // link_inv(eta) = probability
-    // link(prob) = eta
-    virtual double link_inv(double) const = 0;   // logit or probit
-    virtual double dlink_inv(double) const = 0;  // derivative of link_inv
+    int number_of_observations() const override { return dat().size(); }
 
+    // The link function, mapping a probaility to the real line.
+    virtual double link(double p) const = 0;
+    
+    // The inverse of the link function.
+    // Args:
+    //   eta: The value of the random variable's mean on the unconstrained
+    //     'linear predictor' scale.
+    // 
+    // Returns: The value of the random variable's mean on the [0, 1]
+    //   probability scale.
+    virtual double link_inv(double eta) const = 0;   
+
+    // The derivative of link_inv.
+    virtual double dlink_inv(double eta) const = 0;
+
+    // Second derivative of link_inv.
+    virtual double ddlink_inv(double eta) const = 0;
+
+    int nlevels() const {
+      return cutpoint_vector().size() + 2;
+    }
+    
+    //---------------------------------------------------------------------------
+    // Access to model parameters.
+    //---------------------------------------------------------------------------
     GlmCoefs &coef() override;
     const GlmCoefs &coef() const override;
     Ptr<GlmCoefs> coef_prm() override;
     const Ptr<GlmCoefs> coef_prm() const override;
 
-    Ptr<VectorParams> Delta_prm();
-    const Ptr<VectorParams> Delta_prm() const;
+    // The vector of cutpoints.  Vector elements must 
+    Ptr<VectorParams> Cutpoints_prm();
+    const Ptr<VectorParams> Cutpoints_prm() const;
 
-    // inherits [Bb]eta()/set_[Bb]eta() from GlmModel
-    double delta(uint) const;  // delta[0] = - infinity, delta[1] = 0
-    const Vector &delta() const;
-    void set_delta(const Vector &d);
+    // Access to regression coefficients is inherited from GlmModel.
 
-    // Check to see if Delta satisfies constraint.
-    bool check_delta(const Vector &Delta) const;
+    // The minimal vector of model cutpoints.  Cutpoints are in increasing
+    // order, and there are nlevels() - 2 of them.
+    const Vector &cutpoint_vector() const {
+      return Cutpoints_prm()->value();
+    }
+    void set_cutpoint_vector(const Vector &minimal_cutpoints);
+    void set_cutpoint(int index, double value);
+    
+    // An observed 'y' implies a latent 'z' between lower_cutpoint(y)
+    // and upper_cutpoint(y).
+    double upper_cutpoint(int y) const;
+    double lower_cutpoint(int y) const;
 
+    //---------------------------------------------------------------------------
+    // Computing log likelihood.
+    //---------------------------------------------------------------------------
+    
     // Args:
     //   beta_delta: A vector with leading elements corresponding to
     //     the set of nonzero "included" regression coefficients.  The
@@ -107,34 +162,124 @@ namespace BOOM {
     double log_likelihood(const Vector &beta, const Vector &delta) const;
     using LoglikeModel::log_likelihood;
     OrdinalCutpointBetaLogLikelihood beta_log_likelihood() const;
-    OrdinalCutpointDeltaLogLikelihood delta_log_likelihood() const;
+    OrdinalCutpointLogLikelihood cutpoint_log_likelihood() const;
 
     void initialize_params() override;
     void initialize_params(const Vector &counts);
 
     Vector CDF(const Vector &x) const;  // Pr(Y<y)
 
-    virtual double pdf(const Ptr<Data> &, bool) const;
+    double pdf(const Data*, bool logscale) const override;
     double pdf(const Ptr<OrdinalRegressionData> &, bool) const;
     double pdf(const OrdinalData &y, const Vector &x, bool logscale) const;
     double pdf(uint y, const Vector &x, bool logscale) const;
 
-    uint maxscore() const;  // maximum possible score allowed
-
     Ptr<OrdinalRegressionData> sim(RNG &rng = GlobalRng::rng);
 
-   private:
-    // interface is complicated
-    double bd_loglike(Vector &gbeta, Vector &gdelta, Matrix &Hbeta,
-                      Matrix &Hdelta, Matrix &Hbd, uint nd, bool b_derivs,
-                      bool d_derivs) const;
-    Ptr<CatKeyBase> simulation_key_;
+    // Check whether a candidate vector of cutpoints satisfies the necessary
+    // constraints.  All elements of Delta must be positive, and Delta[i] <
+    // Delta[i+1] for all i.
+    //
+    // Returns:
+    //   true if the constraints are satisfied.
+    bool check_cutpoints(const Vector &cutpoints) const;
 
+    // interface is complicated
+    double full_loglike(
+        const Vector &beta,
+        const Vector &cutpoints,
+        Vector &beta_gradient,
+        Vector &cutpoint_gradient,
+        Matrix &beta_Hessian,
+        Matrix &cutpoint_Hessian,
+        Matrix &cross_Hessian,
+        uint nderiv,
+        bool use_beta_derivs,
+        bool use_cutpoint_derivs) const;
+    
+   private:
     // Simulate latent variable from the link distribution.
     virtual double simulate_latent_variable(
         RNG &rng = GlobalRng::rng) const = 0;
+
+    //---------------------------------------------------------------------------
+    // Data section.
+    //---------------------------------------------------------------------------
+    Ptr<CatKeyBase> simulation_key_;
+
   };
 
+  //===========================================================================
+  class OrdinalLogitModel : public OrdinalCutpointModel {
+   public:
+    OrdinalLogitModel(int xdim, int nlevels)
+        : OrdinalCutpointModel(xdim, nlevels) {}
+    
+    OrdinalLogitModel(const Vector &beta, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, cutpoints) {}
+
+    OrdinalLogitModel(const Vector &beta, Selector &inclusion, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, inclusion, cutpoints) {}
+
+    OrdinalLogitModel(const Selector &inclusion, uint Maxscore)
+        : OrdinalCutpointModel(inclusion, Maxscore) {}
+
+    OrdinalLogitModel(const Matrix &X, const Vector &y)
+        : OrdinalCutpointModel(X, y) {}
+
+    OrdinalLogitModel * clone() const override {
+      return new OrdinalLogitModel(*this);
+    }
+
+    // Link function, inverse, and derivative.
+    double link(double prob) const override {return qlogis(prob);}
+    double link_inv(double eta) const override { return plogis(eta); }
+    double dlink_inv(double eta) const override { return dlogis(eta); }
+    double ddlink_inv(double eta) const override;
+
+   private:
+    // Simulate the unconstrained zero-mean error term.
+    double simulate_latent_variable(RNG &rng = GlobalRng::rng) const override {
+      return rlogis_mt(rng);
+    }
+  };
+
+  //===========================================================================
+  class OrdinalProbitModel : public OrdinalCutpointModel {
+   public:
+    OrdinalProbitModel(int xdim, int nlevels)
+        : OrdinalCutpointModel(xdim, nlevels) {}
+    
+    OrdinalProbitModel(const Vector &beta, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, cutpoints) {}
+
+    OrdinalProbitModel(const Vector &beta, Selector &inclusion, const Vector &cutpoints)
+        : OrdinalCutpointModel(beta, inclusion, cutpoints) {}
+
+    OrdinalProbitModel(const Selector &inclusion, uint Maxscore)
+        : OrdinalCutpointModel(inclusion, Maxscore) {}
+
+    OrdinalProbitModel(const Matrix &X, const Vector &y)
+        : OrdinalCutpointModel(X, y) {}
+
+    OrdinalProbitModel * clone() const override {
+      return new OrdinalProbitModel(*this);
+    }
+
+    // Link function, inverse, and derivative.
+    double link(double prob) const override {return qnorm(prob);}
+    double link_inv(double eta) const override { return pnorm(eta); }
+    double dlink_inv(double eta) const override { return dnorm(eta); }
+    double ddlink_inv(double eta) const override;
+
+   private:
+    // Simulate the unconstrained zero-mean error term.
+    double simulate_latent_variable(RNG &rng = GlobalRng::rng) const override {
+      return rnorm_mt(rng);
+    }
+  };
+
+  
 }  // namespace BOOM
 
 #endif  // ORDINAL_CUTPOINT_MODEL_HPP

@@ -56,4 +56,3 @@
   model <- lm.spike(y ~ x, niter=niter)
   summary(model)
 }
-\keyword{models, regression}

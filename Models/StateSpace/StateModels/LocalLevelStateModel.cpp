@@ -34,8 +34,8 @@ namespace BOOM {
       : ZeroMeanGaussianModel(sigma),
         state_transition_matrix_(new IdentityMatrix(1)),
         state_variance_matrix_(new ConstantMatrixParamView(1, Sigsq_prm())),
-        initial_state_mean_(1),
-        initial_state_variance_(1) {}
+        initial_state_mean_(1, 0.0),
+        initial_state_variance_(1, 1.0) {}
 
   LLSM::LocalLevelStateModel(const LocalLevelStateModel &rhs)
       : Model(rhs),
@@ -143,20 +143,15 @@ namespace BOOM {
   //===========================================================================
 
   SLLSM::SharedLocalLevelStateModel(
-      int number_of_factors, MultivariateStateSpaceModelBase *host)
+      int number_of_factors, MultivariateStateSpaceModelBase *host, int nseries)
       : host_(host),
         empty_(new EmptyMatrix),
         initial_state_mean_(0),
         initial_state_variance_(0),
         initial_state_variance_cholesky_(0, 0)
   {
-    if (host->nseries() <= 0) {
-      report_error("The SharedLocalLevelStateModel cannot be used with models "
-                   "where the number of dimensions varies with time. ");
-    }
     coefficient_model_.reset(new MultivariateRegressionModel(
-        number_of_factors, host->nseries()));
-    
+        number_of_factors, nseries));
     for (int i = 0; i < number_of_factors; ++i) {
       innovation_models_.push_back(new ZeroMeanGaussianModel);
     }
@@ -243,22 +238,22 @@ namespace BOOM {
     // Residual y is the residual remaining after the other state components
     // have made their contributions.
     //
-    // This function assumes that the state of the model has been set.
-    const Selector &observed = host_->observed_status(time_now);
-    if (observed.nvars() != observed.nvars_possible()) {
-      std::ostringstream err;
-      err << "The SharedLocalLevelStateModel assumes all observations are "
-          << "fully observed.  ";
-      // Once the MultivariateRegressionModel can handle partially observed data
-      // then we can lift this restriction.  Not a huge priority though.
-      report_error(err.str());
-    }
-    Vector residual_y =
-        observed.select(host_->observation(time_now)) -
-        (*host_->observation_coefficients(time_now, observed) 
-         * host_->state(time_now))
-        + observed.select(observation_coefficients_->matrix() * now);
+    // This logic assumes that (1) the state of the model has been set, (2) that
+    // any missing values have been imputed, and (3) any other additive effects
+    // have been subtracted off.
+    Selector fully_observed(host_->state_dimension(), true);
 
+    // Subtract off the effect of other state models, and add in the effect of
+    // this one, so that the only effect present is from this state model and
+    // random error.
+    //
+    // The first "state" calculation below uses the full state vector.  The
+    // second uses 'now' which is a subset.
+    Vector residual_y =
+        host_->adjusted_observation(time_now)
+        - (*host_->observation_coefficients(time_now, fully_observed)
+           * host_->shared_state(time_now))
+        + observation_coefficients_->matrix() * now;
     coefficient_model_->suf()->update_raw_data(residual_y, now, 1.0);
   }
 
@@ -288,13 +283,33 @@ namespace BOOM {
     }
   }
 
+  Vector SLLSM::initial_state_mean() const {
+    if (initial_state_mean_.size() != state_dimension()) {
+      report_error("Initial state mean has not been set in "
+                   "SharedLocalLevelStateModel.");
+    }
+    return initial_state_mean_;
+  }
+  
   void SLLSM::set_initial_state_mean(const Vector &mean) {
     if (mean.size() != state_dimension()) {
-      report_error("Wrong size argument in set_initial_state_mean.");
+      std::ostringstream err;
+      err << "Wrong size argument in set_initial_state_mean. \n"
+          << "State dimension is " << state_dimension()
+          << " but the proposed mean is " << mean;
+      report_error(err.str());
     }
     initial_state_mean_ = mean;
   }
 
+  SpdMatrix SLLSM::initial_state_variance() const {
+    if (initial_state_variance_.nrow() != state_dimension()) {
+      report_error("Initial state variance has not been set in "
+                   "SharedLocalLevelStateModel.");
+    }
+    return initial_state_variance_;
+  }
+  
   void SLLSM::set_initial_state_variance(const SpdMatrix &variance) {
     if (variance.nrow() != state_dimension()) {
       report_error("Wrong size argument in set_initial_state_variance.");
@@ -336,8 +351,10 @@ namespace BOOM {
     // The multivariate regression model is organized as (xdim, ydim).  The 'X'
     // in our case is the state, where we want y = Z * state, so we need the
     // transpose of the coefficient matrix from the regression.
-    observation_coefficients_.reset(new DenseMatrix(
-        coefficient_model_->Beta().transpose()));
+    Matrix Beta = coefficient_model_->Beta();
+    Beta = 0.0;
+    Beta.diag() = 1.0;
+    observation_coefficients_.reset(new DenseMatrix(Beta.transpose()));
 
     if (!empty_) {
       empty_.reset(new EmptyMatrix);
@@ -348,7 +365,6 @@ namespace BOOM {
     for (int i = 0; i < innovation_models_.size(); ++i) {
       state_variance_matrix_->add_variance(innovation_models_[i]->Sigsq_prm());
     }
-    
   }
 
   // The logic here is :
@@ -361,21 +377,21 @@ namespace BOOM {
   //
   // NOTE:  still need to scale by diag(R)
   void SLLSM::impose_identifiability_constraint() {
-    Matrix Beta = coefficient_model_->Beta();
-    QR BetaQr(Beta);
-    Matrix R = BetaQr.getR();
-    DiagonalMatrix Rdiag(R.diag());
-    const Matrix &Q(BetaQr.getQ());
+    // Matrix Beta = coefficient_model_->Beta();
+    // QR BetaQr(Beta);
+    // Matrix R = BetaQr.getR();
+    // DiagonalMatrix Rdiag(R.diag());
+    // const Matrix &Q(BetaQr.getQ());
         
-    coefficient_model_->set_Beta(BetaQr.getR());
-    SubMatrix state = host_->mutable_full_state_subcomponent(index());
-    Vector workspace(state.nrow());
-    for (int i = 0; i < state.ncol(); ++i) {
-      workspace = Q.Tmult(state.col(i));
-      Rdiag.multiply_inplace(workspace);
-      state.col(i) = workspace;
-    }
-    coefficient_model_->set_Beta(Rdiag.solve(R));
+    // coefficient_model_->set_Beta(BetaQr.getR());
+    // SubMatrix state = host_->mutable_full_state_subcomponent(index());
+    // Vector workspace(state.nrow());
+    // for (int i = 0; i < state.ncol(); ++i) {
+    //   workspace = Q.Tmult(state.col(i));
+    //   Rdiag.multiply_inplace(workspace);
+    //   state.col(i) = workspace;
+    // }
+    // coefficient_model_->set_Beta(Rdiag.solve(R));
   }
 
   void SLLSM::set_observation_coefficients_observer() {

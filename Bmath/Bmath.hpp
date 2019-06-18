@@ -48,7 +48,6 @@
 #include <cmath>
 #include "distributions/rng.hpp"
 #include <vector>
-#include <boost/math/special_functions/gamma.hpp>
 #include "cpputil/report_error.hpp"
 
 /*-- Mathlib as part of R --  define this for standalone : */
@@ -400,13 +399,6 @@ namespace Rmath{
 #else
     return std::lgamma(x);
 #endif
-  }
-
-  inline double lgammafn2(double x, int &i){
-    int tmp;
-    int ix(lround(-x));
-    i = (x<=0 && (ix%2==0)) ? -1 : 1;
-    return boost::math::lgamma(x, &tmp);
   }
 
   double        digamma(double);

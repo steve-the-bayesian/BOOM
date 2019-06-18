@@ -29,14 +29,12 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
     SEXP r_state_specification,
     SEXP r_prior,
     SEXP r_options,
-    Vector *final_state,
     RListIoManager *io_manager) {
   ScalarStateSpaceModelBase *model = ScalarModelManager::CreateModel(
       r_data_list,
       r_state_specification,
       r_prior,
       r_options,
-      final_state,
       io_manager);
 
   // It is only possible to compute log likelihood for Gaussian models.
@@ -48,7 +46,7 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
   return model;
 }
 
-StateSpaceModel * StateSpaceModelManager::CreateObservationModel(
+StateSpaceModel * StateSpaceModelManager::CreateBareModel(
     SEXP r_data_list,
     SEXP r_prior,
     SEXP r_options,
@@ -128,6 +126,10 @@ Vector StateSpaceModelManager::SimulateForecast(const Vector &final_state) {
 void StateSpaceModelManager::AddData(
     const Vector &response,
     const std::vector<bool> &response_is_observed) {
+  if (response.empty()) {
+    report_error("Empty response vector.");
+  }
+  
   if (!response_is_observed.empty()
       && (response.size() != response_is_observed.size())) {
     report_error("Vectors do not match in StateSpaceModelManager::AddData.");
@@ -163,7 +165,6 @@ HoldoutErrorSampler StateSpaceModelManager::CreateHoldoutSampler(
       getListElement(r_bsts_object, "state.specification"),
       getListElement(r_bsts_object, "prior"),
       getListElement(r_bsts_object, "model.options"),
-      nullptr,
       &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 

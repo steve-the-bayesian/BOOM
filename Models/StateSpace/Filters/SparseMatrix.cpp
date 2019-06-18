@@ -329,6 +329,12 @@ namespace BOOM {
     return *this;
   }
 
+  void StackedMatrixBlock::clear() {
+    blocks_.clear();
+    nrow_ = 0;
+    ncol_ = 0;
+  }
+  
   void StackedMatrixBlock::add_block(const Ptr<SparseMatrixBlock> &block) {
     if (nrow_ == 0) {
       nrow_ = block->nrow();
@@ -391,7 +397,7 @@ namespace BOOM {
   }
 
   SpdMatrix StackedMatrixBlock::inner() const {
-    SpdMatrix ans(nrow(), 0.0);
+    SpdMatrix ans(ncol(), 0.0);
     for (int b = 0; b < blocks_.size(); ++b) {
       ans += blocks_[b]->inner();
     }
@@ -402,12 +408,12 @@ namespace BOOM {
     if (weights.size() != nrow()) {
       report_error("Weight vector was the wrong size.");
     }
-    SpdMatrix ans(nrow(), 0.0);
+    SpdMatrix ans(ncol(), 0.0);
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
       int local_dim = blocks_[b]->nrow();
       const ConstVectorView local_weights(weights, position, local_dim);
-      ans += blocks_[b]->inner();
+      ans += blocks_[b]->inner(local_weights);
       position += local_dim;
     }
     return ans;
@@ -418,12 +424,25 @@ namespace BOOM {
     conforms_to_cols(block.ncol());
     int position = 0;
     for (int b = 0; b < blocks_.size(); ++b) {
-      SubMatrix lhs_block(block, position, position + ncol_ - 1, 0, ncol_ - 1);
+      SubMatrix lhs_block(block, position, position + blocks_[b]->nrow() - 1,
+                          0, ncol_ - 1);
       blocks_[b]->add_to_block(lhs_block);
-      position += ncol_;
+      position += blocks_[b]->nrow();
     }
   }
 
+  Matrix StackedMatrixBlock::dense() const {
+    Matrix ans(nrow(), ncol());
+    int position = 0;
+    for (int b = 0; b < blocks_.size(); ++b) {
+      SubMatrix ans_block(ans, position, position + blocks_[b]->nrow() - 1,
+                          0, ncol_ - 1);
+      ans_block = blocks_[b]->dense();
+      position += blocks_[b]->nrow();
+    }
+    return ans;
+  }
+  
   //======================================================================
   LocalLinearTrendMatrix *LocalLinearTrendMatrix::clone() const {
     return new LocalLinearTrendMatrix(*this);
@@ -1061,6 +1080,85 @@ namespace BOOM {
     }
   }
 
+  //======================================================================
+  void StackedRegressionCoefficients::add_row(const Ptr<GlmCoefs> &beta) {
+    if (!coefficients_.empty()) {
+      if (beta->nvars_possible() != coefficients_[0]->nvars_possible()) {
+        report_error("All coefficient vectors must be the same size.");
+      }
+    }
+    coefficients_.push_back(beta);
+  }
+
+  namespace {
+    template <class VECTOR>
+    Vector stacked_regression_vector_mult(
+        const VECTOR &v, const StackedRegressionCoefficients &coef) {
+      Vector ans(coef.nrow());
+      for (int i = 0; i < coef.nrow(); ++i) {
+        ans[i] = coef.coefficients(i).predict(v);
+      }
+      return ans;
+    }
+  }  // namespace
+  
+  Vector StackedRegressionCoefficients::operator*(
+      const Vector &v) const {
+    return stacked_regression_vector_mult(v, *this);
+  }
+  Vector StackedRegressionCoefficients::operator*(
+      const VectorView &v) const {
+    return stacked_regression_vector_mult(v, *this);
+  }
+  Vector StackedRegressionCoefficients::operator*(
+      const ConstVectorView &v) const {
+    return stacked_regression_vector_mult(v, *this);
+  }
+
+  Vector StackedRegressionCoefficients::Tmult(
+      const ConstVectorView &x) const {
+    Vector ans(ncol());
+    for (int i = 0; i < ncol(); ++i) {
+      ans[i] = 0;
+      for (int j = 0; j < nrow(); ++j) {
+        ans[i] += coefficients_[j]->value()[i] * x[i];
+      }
+    }
+    return ans;
+  }
+
+  SpdMatrix StackedRegressionCoefficients::inner() const {
+    SpdMatrix ans(ncol(), 0.0);
+    for (int i = 0; i < nrow(); ++i) {
+      ans.add_outer(coefficients_[i]->value(), coefficients_[i]->inc());
+    }
+    return ans;
+  }
+
+  SpdMatrix StackedRegressionCoefficients::inner(
+      const ConstVectorView &weights) const {
+    SpdMatrix ans(ncol(), 0.0);
+    for (int i = 0; i < nrow(); ++i) {
+      ans.add_outer(coefficients_[i]->value(),
+                    coefficients_[i]->inc(), weights[i]);
+    }
+    return ans;
+  }
+
+  Matrix &StackedRegressionCoefficients::add_to(Matrix &P) const {
+    for (int i = 0; i < nrow(); ++i) {
+      P.row(i) += coefficients_[i]->value();
+    }
+    return P;
+  }
+
+  SubMatrix StackedRegressionCoefficients::add_to_submatrix(SubMatrix P) const {
+    for (int i = 0; i < nrow(); ++i) {
+      P.row(i) += coefficients_[i]->value();
+    }
+    return P;
+  }
+  
   //======================================================================
   Matrix SparseKalmanMatrix::operator*(const Matrix &rhs) const {
     int nr = nrow();

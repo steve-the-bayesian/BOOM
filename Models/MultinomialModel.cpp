@@ -75,7 +75,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &MS::print(ostream &out) const { return out << counts_; }
+  std::ostream &MS::print(std::ostream &out) const { return out << counts_; }
   //======================================================================
 
   typedef MultinomialModel MM;

@@ -57,7 +57,7 @@ namespace BOOM {
 
   uint PoissonData::size(bool) const { return 2; }
 
-  ostream &PoissonData::display(ostream &out) const {
+  std::ostream &PoissonData::display(std::ostream &out) const {
     out << "[" << trials_ << ", " << events_ << "]";
     return out;
   }

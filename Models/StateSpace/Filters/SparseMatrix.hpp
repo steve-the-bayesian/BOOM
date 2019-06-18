@@ -248,6 +248,8 @@ namespace BOOM {
     int nrow() const override { return nrow_; }
     int ncol() const override { return ncol_; }
 
+    // Remove all entries from blocks_ and set nrow_ and ncol_ to zero.
+    void clear();
     void add_block(const Ptr<SparseMatrixBlock> &block);
     void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
     void multiply_and_add(VectorView lhs,
@@ -258,7 +260,11 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to_block(SubMatrix block) const override;
 
+    Matrix dense() const override;
+    
    private:
+    // Each block must have the same number of columns, which are determined by
+    // the first block added.
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
     int nrow_, ncol_;
   };
@@ -1524,6 +1530,42 @@ namespace BOOM {
     SparseVector empty_column_;
   };
 
+  //======================================================================
+  // A matrix formed by stacking a set of GlmCoefs.
+  class StackedRegressionCoefficients : public SparseKalmanMatrix {
+   public:
+    const GlmCoefs &coefficients(int i) const { return *coefficients_[i]; }
+    void add_row(const Ptr<GlmCoefs> &beta);
+    
+    int nrow() const override {return coefficients_.size();}
+    int ncol() const override {
+      if (coefficients_.empty()) {
+        return 0;
+      } else {
+        return coefficients_[0]->nvars_possible();
+      }
+    }
+
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+
+    // Expose the matrix-matrix multiplication operator from the base class.
+    using SparseKalmanMatrix::operator*;
+
+    using SparseKalmanMatrix::Tmult;
+    Vector Tmult(const ConstVectorView &x) const override;
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    Matrix &add_to(Matrix &P) const override;
+    SubMatrix add_to_submatrix(SubMatrix P) const override;
+
+   private:
+    // Each coefficient vector is one row in the matrix.
+    std::vector<Ptr<GlmCoefs>> coefficients_;
+  };
+  
   //======================================================================
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will

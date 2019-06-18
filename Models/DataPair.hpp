@@ -30,7 +30,7 @@ namespace BOOM {
         : Data(rhs), d1_(rhs.d1_->clone()), d2_(rhs.d2_->clone()) {}
     DataPair *clone() const override { return new DataPair(*this); }
 
-    ostream &display(ostream &out) const override {
+    std::ostream &display(std::ostream &out) const override {
       return d1_->display(out) << " " << d2_->display(out);
     }
     virtual istream &read(istream &in) {

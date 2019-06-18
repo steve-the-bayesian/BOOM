@@ -31,8 +31,8 @@ namespace BOOM {
       : ZeroMeanGaussianModel(1.0),  // initial value for sigsq
         nseasons_(nseasons),
         T0_(new SeasonalStateSpaceMatrix(nseasons)),
-        RQR0_(
-            new UpperLeftCornerMatrixParamView(state_dimension(), Sigsq_prm())),
+        RQR0_(new UpperLeftCornerMatrixParamView(
+            state_dimension(), Sigsq_prm())),
         state_error_variance_at_new_season_(
             new UpperLeftCornerMatrixParamView(1, Sigsq_prm())),
         T1_(new IdentityMatrix(state_dimension())),

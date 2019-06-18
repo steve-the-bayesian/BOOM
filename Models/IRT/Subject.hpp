@@ -57,8 +57,8 @@ namespace BOOM {
       const Vector &Theta() const;
       void set_Theta(const Vector &v);
 
-      ostream &display(ostream &) const override;
-      ostream &display_responses(ostream &) const;
+      std::ostream &display(std::ostream &) const override;
+      std::ostream &display_responses(std::ostream &) const;
 
       uint Nitems() const;
       uint Nscales() const;

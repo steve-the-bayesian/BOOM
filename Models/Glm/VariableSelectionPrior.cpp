@@ -42,13 +42,13 @@ namespace BOOM {
 
     Variable::~Variable() {}
 
-    ostream &Variable::print(ostream &out) const {
+    std::ostream &Variable::print(std::ostream &out) const {
       out << "Variable " << name_ << " position " << pos_ << " probability "
           << mod_->prob() << " ";
       return out;
     }
 
-    ostream &operator<<(ostream &out, const Variable &v) {
+    std::ostream &operator<<(std::ostream &out, const Variable &v) {
       return v.print(out);
     }
 
@@ -234,7 +234,7 @@ namespace BOOM {
     return unvectorize(it, minimal);
   }
 
-  ostream &VariableSelectionSuf::print(ostream &out) const {
+  std::ostream &VariableSelectionSuf::print(std::ostream &out) const {
     return out << "VariableSelectionSuf is hard to print!";
   }
 
@@ -510,7 +510,7 @@ namespace BOOM {
     interactions_.push_back(inter);
   }
 
-  ostream &SVSP::print(ostream &out) const {
+  std::ostream &SVSP::print(std::ostream &out) const {
     uint nv = vars_.size();
     for (uint i = 0; i < nv; ++i) {
       out << *(vars_[i]) << endl;
@@ -518,7 +518,7 @@ namespace BOOM {
     return out;
   }
 
-  ostream &operator<<(ostream &out, const VariableSelectionPriorBase &vsp) {
+  std::ostream &operator<<(std::ostream &out, const VariableSelectionPriorBase &vsp) {
     return vsp.print(out);
   }
 

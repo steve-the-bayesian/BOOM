@@ -48,7 +48,7 @@ namespace BOOM {
     return new CMD(*this);
   }
 
-  ostream &CMD::display(ostream &out) const {
+  std::ostream &CMD::display(std::ostream &out) const {
     data_->display(out) << endl;
     mixture_category_data_->display(out);
     return out;

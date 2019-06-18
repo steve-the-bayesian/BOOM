@@ -31,6 +31,8 @@ probs <- runif(sample.size)
 successes <- rbinom(sample.size, trials, probs)
 p.hat <- sum(successes) / sum(trials)
 
+cat("test-logit-zellner-prior\n")
+
 ComputePrecision <- function(predictors,
                              weight,
                              prior.information.weight,

@@ -27,7 +27,7 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class SeasonalTestModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       // Args:
       //   sd:  The standard deviation of the state innovation errors.
@@ -44,10 +44,10 @@ namespace BOOM {
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return seasonal_; }
       Ptr<StateModel> get_state_model() override {return seasonal_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override { return adapter_; }
+      // Ptr<DynamicInterceptStateModel>
+      // get_dynamic_intercept_state_model() override { return adapter_; }
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
 
       // Given a seasonal pattern, convert it to state by subtracting the mean,
@@ -69,7 +69,7 @@ namespace BOOM {
       int season_duration_;
       int state_dim_;
       Ptr<SeasonalStateModel> seasonal_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
+      // Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> precision_prior_;
       Ptr<ZeroMeanGaussianConjSampler> sampler_;
 

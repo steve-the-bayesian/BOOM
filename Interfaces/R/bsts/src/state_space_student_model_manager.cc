@@ -31,7 +31,7 @@ typedef StateSpaceStudentModelManager SSSMM;
 SSSMM::StateSpaceStudentModelManager()
     : predictor_dimension_(-1) {}
 
-StateSpaceStudentRegressionModel * SSSMM::CreateObservationModel(
+StateSpaceStudentRegressionModel * SSSMM::CreateBareModel(
       SEXP r_data_list,
       SEXP r_prior,
       SEXP r_options,
@@ -165,7 +165,6 @@ HoldoutErrorSampler SSSMM::CreateHoldoutSampler(
           getListElement(r_bsts_object, "state.specification"),
           getListElement(r_bsts_object, "prior"),
           getListElement(r_bsts_object, "model.options"),
-          nullptr,
           &io_manager));
   AddDataFromBstsObject(r_bsts_object);
 

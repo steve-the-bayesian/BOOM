@@ -40,7 +40,7 @@ namespace BOOM {
     return new HealthStateData(*this);
   }
 
-  ostream &HealthStateData::display(ostream &out) const {
+  std::ostream &HealthStateData::display(std::ostream &out) const {
     out << *value_ << endl
         << "treatment = " << treatment_ << endl
         << "initial_treatment = " << initial_treatment_ << endl

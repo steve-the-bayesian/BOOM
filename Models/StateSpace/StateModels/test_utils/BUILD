@@ -11,6 +11,6 @@ cc_library(
     deps = [
         "//:boom",
         "//:boom_test_utils",
-        "@gtest//:main",
+        "@gtest//:gtest_main",
     ],
 )

@@ -84,4 +84,3 @@
   hist(model$sigma)  ## should be near 8
   summary(model)
 }
-\keyword{ models, regression}

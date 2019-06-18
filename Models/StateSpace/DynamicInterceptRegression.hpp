@@ -19,11 +19,13 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
+#include "Models/StateSpace/StateModelVector.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
@@ -94,12 +96,10 @@ namespace BOOM {
   // contribute constant columns to Z (i.e. each has identical elements within
   // the same column).  However, dynamic regression models, for example will
   // contribute different predictor values for each element of Y.
-  //
-  // TODO: Once this works and all GLM's have been implemented, remove the
-  // MultiplexedData concept from StateSpaceModelBase, which should simplify it
-  // considerably.
+  //  
   class DynamicInterceptRegressionModel
       : public ConditionalIidMultivariateStateSpaceModelBase,
+        public CompositeParamPolicy,
         public IID_DataPolicy<StateSpace::TimeSeriesRegressionData>,
         public PriorPolicy {
    public:
@@ -112,24 +112,34 @@ namespace BOOM {
         default;
 
     void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
-      state_models_.push_back(state_model);
-      StateSpaceModelBase::add_state(state_model);
+      state_models_.add_state(state_model);
+      ParamPolicy::add_model(state_model);
+    }
+
+    int state_dimension() const override {
+      return state_models_.state_dimension();
     }
     
     RegressionModel *observation_model() override;
     const RegressionModel *observation_model() const override;
     void observe_data_given_state(int t) override;
+    void observe_state(int t) override;
     
     void impute_state(RNG &rng) override;
     
     int time_dimension() const override { return dat().size(); }
     int xdim() const { return regression_->regression()->xdim(); }
 
-    bool is_missing_observation(int t) const override {
-      return dat()[t]->missing() == Data::completely_missing ||
-             dat()[t]->sample_size() == 0;
+    int number_of_state_models() const override {
+      return state_models_.size();
     }
-
+    DynamicInterceptStateModel *state_model(int s) override {
+      return state_models_[s].get();
+    }
+    const DynamicInterceptStateModel *state_model(int s) const override {
+      return state_models_[s].get();
+    }
+    
     const Selector &observed_status(int t) const override;
 
     // Need to override add_data so that x's can be shared with the
@@ -155,13 +165,23 @@ namespace BOOM {
     const SparseKalmanMatrix *observation_coefficients(
         int t, const Selector &observed) const override;
 
-    // A vector of observation coefficients giving the intercept term in the
-    // dynamic intercept regression.  The leading coefficient is zero, which
-    // removes the regression effect.
-    SparseVector non_regression_observation_matrix(int t) const;
-    
+    const SparseKalmanMatrix *state_transition_matrix(int t) const override {
+      return state_models_.state_transition_matrix(t);
+    }
+    const SparseKalmanMatrix *state_variance_matrix(int t) const override {
+      return state_models_.state_variance_matrix(t);
+    }
+    const SparseKalmanMatrix *state_error_expander(int t) const override {
+      return state_models_.state_error_expander(t);
+    }
+    const SparseKalmanMatrix *state_error_variance(int t) const override {
+      return state_models_.state_error_variance(t);
+    }
+
+    ConstVectorView observation(int t) const override;
+    ConstVectorView adjusted_observation(int time) const override;
+
     double observation_variance(int t) const override;
-    const Vector &observation(int t) const override;
     
     // Returns the conditional mean the data at time t given state and model
     // parameters.
@@ -169,9 +189,11 @@ namespace BOOM {
     //   time:  The time index of the observation.
     Vector conditional_mean(int time) const;
 
-    // Return the time series of contributions of each state model to the
-    // intercept term.  It is an error to call this with state_model_index <= 1,
-    // because the first 'state model' is the regression state model, which 
+    // The contribution of a single state model to the intercept term.
+    // Args:
+    //   state_model_index: The state model for which contributions are
+    //     desired. It is an error to call this with state_model_index <= 1,
+    //     because the first 'state model' is the regression state model.
     Vector state_contribution(int state_model_index) const;
 
     // Simulate a vector of observations from the model given the current set of
@@ -191,12 +213,35 @@ namespace BOOM {
                              const Matrix &forecast_predictors,
                              const Vector &final_state,
                              const std::vector<int> &timestamps);
+
+    Matrix state_contributions(int which_state_model) const override {
+      report_error("Need to fix state_contributions for DynamicInterceptModel.");
+      return Matrix(0, 0);
+    }
+
+    // The next two functions are mainly used for debugging a simulation.  You
+    // can 'permanently_set_state' to the 'true' state value, then see if the
+    // model recovers the parameters.  These functions are unlikely to be useful
+    // in an actual data analysis.
+    //    void permanently_set_state(const Matrix &state);
+    void observe_fixed_state();
     
    private:
+    // The state models for DIRM do not require complete data, so overriding
+    // this with a no-op.
+    void impute_missing_observations(int t, RNG &rng) override {}
+
     // Reimplements the logic in the base class, but optimized for the scalar
     // observation variance.
     Vector simulate_fake_observation(RNG &rng, int t) override;
 
+    StateModelVectorBase &state_model_vector() override {
+      return state_models_;
+    }
+    const StateModelVectorBase &state_model_vector() const override {
+      return state_models_;
+    }
+    
     void initialize_regression_component(int xdim);
 
     //--------------------------------------------------------------------------
@@ -207,12 +252,13 @@ namespace BOOM {
 
     // This set of state parallels the state_models_ vector in the base class.
     // These are needed to provide the right version of observation_coefficients().
-    std::vector<Ptr<DynamicInterceptStateModel>> state_models_;
+    StateSpaceUtils::StateModelVector<DynamicInterceptStateModel> state_models_;
     
     // The observation coefficients are a set of horizontal blocks
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].
     mutable SparseVerticalStripMatrix observation_coefficients_;
+
   };
 
 }  // namespace BOOM

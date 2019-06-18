@@ -1,3 +1,4 @@
+// Copyright 2019 Steven L. Scott.
 // Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
@@ -18,6 +19,7 @@
 */
 
 #include "Models/StateSpace/MultiplexedData.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -28,6 +30,9 @@ namespace BOOM {
     // and observed_sample_size_ are set correctly, but it does not actually
     // store data.
     void MultiplexedData::add_data(const Ptr<Data> &dp) {
+      if (!dp) {
+        report_error("A null data point wa passed to MultiplexedData::add_data.");
+      }
       if (dp->missing() == Data::observed) {
         ++observed_sample_size_;
         if (this->missing() == Data::completely_missing) {

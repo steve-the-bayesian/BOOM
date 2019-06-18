@@ -202,7 +202,7 @@ namespace {
 
   TEST_F(HierarchicalRegressionHolidayStateModelTest, StateSpaceFramework) {
     StateSpaceTestFramework framework(1.2);
-    StateModuleManager modules;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules;
     HierarchicalRegressionHolidayTestModule *holiday_module(
         new HierarchicalRegressionHolidayTestModule(t0_));
     modules.AddModule(holiday_module);

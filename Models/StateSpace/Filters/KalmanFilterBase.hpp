@@ -25,7 +25,6 @@
 #include "LinAlg/Selector.hpp"
 
 namespace BOOM {
-  class StateSpaceModelBase;
   namespace Kalman {
     //---------------------------------------------------------------------------
     // The Kalman filter sequentially updates a set of marginal distributions
@@ -143,7 +142,7 @@ namespace BOOM {
     void set_status(const KalmanFilterStatus &status) { status_ = status; }
 
     // Print the state mean of each marginal distribution.
-    virtual ostream & print(ostream &out) const;
+    virtual std::ostream & print(std::ostream &out) const;
     std::string to_string() const;
 
     // The marginal distribution at time t.
@@ -185,7 +184,7 @@ namespace BOOM {
     // Concrete classes hold a pointer to a model object.  Calling update() runs
     // the kalman filter over all the data contained in *model_.
     virtual void update() = 0;
-
+    
     // Run the Durbin and Koopman fast disturbance smoother.
     virtual void fast_disturbance_smooth() = 0;
 
@@ -193,16 +192,6 @@ namespace BOOM {
     void increment_log_likelihood(double loglike) {
       log_likelihood_ += loglike;
     }
-
-    // Set an observer on the parameters of model, so that when the parameters
-    // change this filter's status is set to NOT_CURRENT.
-    //
-    // If the model adds new parameters after this function is called, then the
-    // new parameters will not be observed.  This can happen with a state space
-    // model when new components of state are added using add_state().
-    //
-    // Thus the model for the filter should be set as late as possible.
-    void observe_model_parameters(StateSpaceModelBase *model);
 
     void set_initial_scaled_state_error(const Vector &err) {
       initial_scaled_state_error_ = err;
@@ -218,7 +207,8 @@ namespace BOOM {
     Vector initial_scaled_state_error_;
   };
 
-  inline ostream &operator<<(ostream &out, const KalmanFilterBase &filter) {
+  inline std::ostream &operator<<(std::ostream &out,
+                                  const KalmanFilterBase &filter) {
     return filter.print(out);
   }
   

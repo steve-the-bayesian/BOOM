@@ -62,7 +62,7 @@ namespace BOOM {
       : std::vector<bool>(p, all), include_all_(all) {
     reset_included_positions();
   }
-
+  
   Selector::Selector(const std::string &zeros_and_ones)
       : std::vector<bool>(to_vector_bool(zeros_and_ones)), include_all_(false) {
     reset_included_positions();
@@ -71,6 +71,10 @@ namespace BOOM {
     }
   }
 
+  Selector::Selector(const char *zeros_and_ones)
+      : Selector(std::string(zeros_and_ones))
+  {}
+  
   Selector::Selector(const std::vector<bool> &values)
       : std::vector<bool>(values), include_all_(false) {
     reset_included_positions();
@@ -445,6 +449,10 @@ namespace BOOM {
     return select_rows_impl(m, *this);
   }
 
+  DiagonalMatrix Selector::select_square(const DiagonalMatrix &d) const {
+    return DiagonalMatrix(select(d.diag()));
+  }
+  
   namespace {
     template <class V>
     Vector inc_expand(const V &x, const Selector &inc) {
@@ -488,16 +496,34 @@ namespace BOOM {
     return inc_expand(x, *this);
   }
 
-  Vector &Selector::zero_missing_elements(Vector &v) const {
-    uint N = nvars_possible();
-    check_size_eq(v.size(), "zero_missing_elements");
-    const Selector &inc(*this);
-    for (uint i = 0; i < N; ++i) {
-      if (!inc[i]) v[i] = 0;
+  Vector &Selector::fill_missing_elements(Vector &v, double value) const {
+    int vsize = v.size();
+    check_size_eq(vsize, "fill_missing_elements");
+    for (int i = 0; i < vsize; ++i) {
+      if (!(*this)[i]) {
+        v[i] = value;
+      }
     }
     return v;
   }
 
+  Vector &Selector::fill_missing_elements(Vector &v,
+                                          const ConstVectorView &values) const {
+    if (values.size() != nvars_excluded()) {
+      report_error("Wrong size values vector supplied to fill_missing_"
+                   "elements.");
+    }
+    int vsize = v.size();
+    check_size_eq(vsize, "fill_missing_elements");
+    int next_value = 0;
+    for (int i = 0; i < vsize; ++i) {
+      if (!(*this)[i]) {
+        v[i] = values[next_value++];
+      }
+    }
+    return v;
+  }
+  
   void Selector::sparse_multiply(const Matrix &m, const Vector &v,
                                  VectorView ans) const {
     bool m_already_sparse = ncol(m) == nvars();
@@ -659,6 +685,14 @@ namespace BOOM {
     return true;
   }
 
+  Selector SelectorMatrix::row(int i) const {
+    Selector ans(ncol(), true);
+    for (int j = 0; j < ncol(); ++j) {
+      if (!(*this)(i, j)) ans.drop(j);
+    }
+    return ans;
+  }
+  
   Selector SelectorMatrix::row_any() const {
     Selector ans(nrow(), false);
     for (int j = 0; j < ncol(); ++j) {
@@ -740,12 +774,12 @@ namespace BOOM {
   
   //============================================================
   
-  ostream &operator<<(ostream &out, const Selector &inc) {
+  std::ostream &operator<<(std::ostream &out, const Selector &inc) {
     for (uint i = 0; i < inc.nvars_possible(); ++i) out << inc.inc(i);
     return out;
   }
 
-  istream &operator>>(istream &in, Selector &inc) {
+  std::istream &operator>>(std::istream &in, Selector &inc) {
     std::string s;
     in >> s;
     uint n = s.size();

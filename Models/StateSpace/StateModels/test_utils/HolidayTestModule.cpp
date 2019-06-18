@@ -38,7 +38,7 @@ namespace BOOM {
           holiday_(holiday),
           holiday_model_(new RandomWalkHolidayStateModel(
               holiday_, day_zero_)),
-          adapter_(new DynamicInterceptStateModelAdapter(holiday_model_)),
+          // adapter_(new DynamicInterceptStateModelAdapter(holiday_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               holiday_model_.get(), precision_prior_))
@@ -83,7 +83,7 @@ namespace BOOM {
     }
 
     void RandomWalkHolidayTestModule::ObserveDraws(
-        const StateSpaceModelBase &model) {
+        const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       int iter = cursor();
       for (int t = 0; t < state.ncol(); ++t) {
@@ -138,7 +138,7 @@ namespace BOOM {
     }
 
     void RegressionHolidayTestModuleBase::ObserveDraws(
-        const StateSpaceModelBase &model) {
+        const ScalarStateSpaceModelBase &model) {
       for (int t = 0; t < holiday_effect_.size(); ++t) {
         // The state is just the scalar 1, so the value at time t is just the
         // observation matrix.
@@ -168,16 +168,6 @@ namespace BOOM {
       SetHolidays();
       StateModelTestModule::ImbueState(model);
     }
-      
-    void RegressionHolidayTestModule::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      dynamic_holiday_model_.reset(new DynamicInterceptRegressionHolidayStateModel(
-          day_zero(), &model, regression_coefficient_prior_));
-      holiday_model_ = dynamic_holiday_model_;
-      SetHolidays();
-      StateModelTestModule::ImbueState(model);
-    }
-
 
     //===========================================================================
     namespace {
@@ -208,17 +198,6 @@ namespace BOOM {
       StateModelTestModule::ImbueState(model);
     }
       
-    void HRHTM::ImbueState(
-        DynamicInterceptRegressionModel &model) {
-      dynamic_holiday_model_.reset(
-          new DynamicInterceptHierarchicalRegressionHolidayStateModel(
-              day_zero(), &model));
-      holiday_model_ = dynamic_holiday_model_;
-      SetHolidays();
-      SetPrior();
-      StateModelTestModule::ImbueState(model);
-    }
-
     void HRHTM::SetPrior() {
       const std::vector<Vector> &patterns(holiday_patterns());
       if (patterns.empty()) {
@@ -252,7 +231,7 @@ namespace BOOM {
       RegressionHolidayTestModuleBase::CreateObservationSpace(niter);
     }
     
-    void HRHTM::ObserveDraws(const StateSpaceModelBase &model) {
+    void HRHTM::ObserveDraws(const ScalarStateSpaceModelBase &model) {
       RegressionHolidayTestModuleBase::ObserveDraws(model);
     }
 

@@ -4,7 +4,7 @@ importFrom("grDevices", "dev.off", "gray", "pdf", "rainbow")
 
 importFrom("graphics", "abline", "axis", "axis.Date", "axis.POSIXct", "box",
   "boxplot", "hist", "legend", "lines", "par", "plot", "points",
-  "polygon", "title", "close.screen", "screen", "split.screen",
+  "polygon", "text", "title", "close.screen", "screen", "split.screen",
   "strheight", "strwidth")
 
 importFrom("stats", ".checkMFClasses", ".getXlevels", "acf", "delete.response",
@@ -28,6 +28,7 @@ export(AcfDist,
   AddRegressionHoliday,
   AddSeasonal,
   AddSemilocalLinearTrend,
+  AddSharedLocalLevel,
   AddStaticIntercept,
   AddStudentLocalLinearTrend,
   AddTrig,
@@ -58,11 +59,13 @@ export(AcfDist,
   IsRegular,
   LastDayInMonth,
   LastWeekdayInMonthHoliday,
+  LongToWide,
   MATCH.NumericTimestamps,
   MatchWeekToMonth,
   MaxWindowWidth,
   MaxWindowWidth.default,
   MaxWindowWidth.DateRangeHoliday,
+  mbsts,
   MonthDistance,
   MonthPlot,
   NamedHoliday,
@@ -104,6 +107,7 @@ export(AcfDist,
   weekday.names,
   WeekEndsMonth,
   WeekEndsQuarter,
+  WideToLong,
   YearMonToPOSIX,
   YearPlot)
 
@@ -114,6 +118,10 @@ S3method(residuals, bsts)
 
 S3method(plot, bsts.prediction)
 S3method(plot, bsts.mixed)
+
+S3method(plot, mbsts)
+S3method(predict, mbsts)
+S3method(plot, mbsts.prediction)
 
 # Plot methods for specific state components
 S3method(plot, StateModel)

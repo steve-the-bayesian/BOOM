@@ -5,6 +5,8 @@
 #include "Models/StateSpace/StateModels/test_utils/LocalLevelModule.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 
+#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+
 #include "test_utils/test_utils.hpp"
 
 namespace {
@@ -24,7 +26,7 @@ namespace {
       modules_.AddModule(new LocalLevelModule(level_sd, initial_level));
     }
     int time_dimension_;
-    StateModuleManager modules_;
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules_;
   };
 
   //======================================================================
@@ -58,12 +60,29 @@ namespace {
     state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_);
   }
-  //======================================================================
-  TEST_F(LocalLevelStateModelTest, DynamicInterceptRegressionModelTest) {
-    int niter = 200;
-    Vector true_beta = {-3.2, 17.4, 12};
-    DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);
-    framework.AddState(modules_);
-    framework.Test(niter, time_dimension_);
+
+  TEST_F(LocalLevelStateModelTest, SharedModelTest) {
+    int nseries = 12;
+    int nfactors = 3;
+    MultivariateStateSpaceRegressionModel model(1, nseries);
+    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model, nseries);
+    model.add_state(state_model);
+
+    EXPECT_TRUE(MatrixEquals(
+        state_model->state_transition_matrix(3)->dense(),
+        SpdMatrix(nfactors, 1.0)));
+
+    Selector observed(nseries, true);
+    EXPECT_EQ(state_model->observation_coefficients(3, observed)->nrow(),
+              nseries);
+    EXPECT_EQ(state_model->observation_coefficients(3, observed)->ncol(),
+              nfactors);
+    Matrix Z = state_model->observation_coefficients(3, observed)->dense();
+    EXPECT_DOUBLE_EQ(Z(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(Z(1, 1), 1.0);
+    EXPECT_DOUBLE_EQ(Z(2, 2), 1.0);
+    EXPECT_DOUBLE_EQ(Z(0, 1), 0.0);
+    EXPECT_DOUBLE_EQ(Z(0, 2), 0.0);
+    EXPECT_DOUBLE_EQ(Z(1, 2), 0.0);
   }
 }  // namespace

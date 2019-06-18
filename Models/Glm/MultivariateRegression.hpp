@@ -90,7 +90,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     SpdMatrix yty_;
@@ -149,10 +149,14 @@ namespace BOOM {
     MultivariateRegressionModel(const Matrix &B, const SpdMatrix &Sigma);
 
     using MvReg = MultivariateRegressionModel;
-    MultivariateRegressionModel(const MvReg &rhs) = default;
-    MultivariateRegressionModel(MvReg &&rhs) = default;
-    MultivariateRegressionModel &operator=(const MvReg &rhs) = default;
-    MultivariateRegressionModel &operator=(MvReg &&rhs) = default;
+    MultivariateRegressionModel(
+        const MultivariateRegressionModel &rhs) = default;
+    MultivariateRegressionModel(
+        MultivariateRegressionModel &&rhs) = default;
+    MultivariateRegressionModel &operator=(
+        const MultivariateRegressionModel &rhs) = default;
+    MultivariateRegressionModel &operator=(
+        MultivariateRegressionModel &&rhs) = default;
     MultivariateRegressionModel *clone() const override;
 
     // Dimension of the predictor (including the intercept, if any).

@@ -116,7 +116,7 @@ dirm <- function(formula,
     ## section above.
     data <- NULL
   }
-  timestamp.info <- .ComputeTimestampInfo(response, data, timestamps)
+  timestamp.info <- TimestampInfo(response, data, timestamps)
 
   data.list <- list(response = as.numeric(response),
     predictors = predictors,

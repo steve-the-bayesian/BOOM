@@ -125,7 +125,6 @@ namespace BOOM {
 
 namespace NelderMeadStatlib {
 
-  using namespace std;
   using namespace BOOM;
 
   void nelmin(const Target &fn, int n, Vector &start, Vector &xmin,

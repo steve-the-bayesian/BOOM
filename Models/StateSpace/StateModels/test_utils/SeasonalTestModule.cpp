@@ -36,7 +36,7 @@ namespace BOOM {
           season_duration_(season_duration),
           seasonal_model_(new SeasonalStateModel(pattern.size(),
                                                  season_duration_)),
-          adapter_(new DynamicInterceptStateModelAdapter(seasonal_model_)),
+          // adapter_(new DynamicInterceptStateModelAdapter(seasonal_model_)),
           precision_prior_(new ChisqModel(1.0, sd_)),
           sampler_(new ZeroMeanGaussianConjSampler(
               seasonal_model_.get(), precision_prior_))
@@ -78,7 +78,8 @@ namespace BOOM {
       sigma_draws_.resize(niter);
     }
 
-    void SeasonalTestModule::ObserveDraws(const StateSpaceModelBase &model) {
+    void SeasonalTestModule::ObserveDraws(
+        const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       seasonal_draws_.row(cursor()) = state.row(0);
       sigma_draws_[cursor()] = seasonal_model_->sigma();

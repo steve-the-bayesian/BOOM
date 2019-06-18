@@ -33,7 +33,7 @@ namespace BOOM {
   namespace StateSpaceTesting {
 
     class RandomWalkHolidayTestModule
-        : public StateModelTestModule {
+        : public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       // Args:
       //   holiday:  The holiday to be modeled.
@@ -51,12 +51,12 @@ namespace BOOM {
       void SimulateData(int time_dimension) override;
       const Vector &StateContribution() const override { return holiday_effect_; }
       Ptr<StateModel> get_state_model() override {return holiday_model_;}
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return adapter_;
-      }
+      // Ptr<DynamicInterceptStateModel>
+      // get_dynamic_intercept_state_model() override {
+      //   return adapter_;
+      // }
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
 
      private:
@@ -66,7 +66,7 @@ namespace BOOM {
       Ptr<Holiday> holiday_;
       
       Ptr<RandomWalkHolidayStateModel> holiday_model_;
-      Ptr<DynamicInterceptStateModelAdapter> adapter_;
+      // Ptr<DynamicInterceptStateModelAdapter> adapter_;
       Ptr<ChisqModel> precision_prior_;
       Ptr<ZeroMeanGaussianConjSampler> sampler_;
 
@@ -77,7 +77,7 @@ namespace BOOM {
 
     //==========================================================================
     class RegressionHolidayTestModuleBase:
-        public StateModelTestModule {
+        public StateModelTestModule<StateModel, ScalarStateSpaceModelBase> {
      public:
       RegressionHolidayTestModuleBase(const Date &day_zero)
           : day_zero_(day_zero) {}
@@ -94,7 +94,7 @@ namespace BOOM {
       }
 
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
 
       const Date &day_zero() const {return day_zero_;}
@@ -134,12 +134,7 @@ namespace BOOM {
         return scalar_holiday_model_;
       }
 
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return dynamic_holiday_model_;
-      }
       void ImbueState(ScalarStateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
 
      private:
       void AddHolidayToModel(const Ptr<Holiday> &h) override {
@@ -155,7 +150,7 @@ namespace BOOM {
 
       Ptr<RegressionHolidayStateModel> holiday_model_;
       Ptr<ScalarRegressionHolidayStateModel> scalar_holiday_model_;
-      Ptr<DynamicInterceptRegressionHolidayStateModel> dynamic_holiday_model_;
+      // Ptr<DynamicInterceptRegressionHolidayStateModel> dynamic_holiday_model_;
       std::vector<Ptr<Holiday>> holidays_;
       std::vector<Vector> holiday_patterns_;
     };
@@ -170,16 +165,10 @@ namespace BOOM {
       Ptr<StateModel> get_state_model() override {
         return scalar_holiday_model_;
       }
-
-      Ptr<DynamicInterceptStateModel>
-      get_dynamic_intercept_state_model() override {
-        return dynamic_holiday_model_;
-      }
-
+      
       void ImbueState(ScalarStateSpaceModelBase &model) override;
-      void ImbueState(DynamicInterceptRegressionModel &model) override;
       void CreateObservationSpace(int niter) override;
-      void ObserveDraws(const StateSpaceModelBase &model) override;
+      void ObserveDraws(const ScalarStateSpaceModelBase &model) override;
       void Check() override;
 
      private:
@@ -196,8 +185,8 @@ namespace BOOM {
       // These two model pointers start off as nullptr.  A call to ImbueState
       // sets one of them to the model being tested.
       Ptr<ScalarHierarchicalRegressionHolidayStateModel> scalar_holiday_model_;
-      Ptr<DynamicInterceptHierarchicalRegressionHolidayStateModel>
-      dynamic_holiday_model_;
+      // Ptr<DynamicInterceptHierarchicalRegressionHolidayStateModel>
+      // dynamic_holiday_model_;
 
       // After ImbueState(), holiday_model_ points to one of the two models
       // above.

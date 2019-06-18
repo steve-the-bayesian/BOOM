@@ -17,28 +17,21 @@ namespace {
         : time_dimension_(200)
     {
       GlobalRng::rng.seed(8675309);
-      Vector ar_coefficients = {.6, .2};
-      modules_.AddModule(new StaticInterceptTestModule(3.6));
-      modules_.AddModule(new ArStateModelTestModule(ar_coefficients, 0.4));
     }
+    
     int time_dimension_;
-    StateModuleManager modules_;
   };
 
   //======================================================================
   TEST_F(StaticInterceptStateModelTest, StateSpaceModelTest) {
     int niter = 400;
+    Vector ar_coefficients = {.6, .2};
+    StateModuleManager<StateModel, ScalarStateSpaceModelBase> modules;
+    modules.AddModule(new StaticInterceptTestModule(3.6));
+    modules.AddModule(new ArStateModelTestModule(ar_coefficients, 0.4));
     StateSpaceTestFramework state_space(1.3);
-    state_space.AddState(modules_);
+    state_space.AddState(modules);
     state_space.Test(niter, time_dimension_);
-  }
-  //======================================================================
-  TEST_F(StaticInterceptStateModelTest, DynamicInterceptRegressionModelTest) {
-    int niter = 400;
-    Vector true_beta = {-3.2, 17.4, 12};
-    DynamicInterceptTestFramework framework(true_beta, 1.3, 3.0);
-    framework.AddState(modules_);
-    framework.Test(niter, time_dimension_);
   }
   
 }  // namespace

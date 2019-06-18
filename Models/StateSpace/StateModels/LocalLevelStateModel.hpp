@@ -1,6 +1,7 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
 #define BOOM_STATE_SPACE_LOCAL_LEVEL_STATE_MODEL_HPP
+// Copyright 2019 Steven L. Scott.
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2008 Steven L. Scott
 
@@ -27,6 +28,7 @@
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
+#include "Models/StateSpace/DynamicInterceptRegression.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 
 namespace BOOM {
@@ -82,6 +84,33 @@ namespace BOOM {
   };
 
   //===========================================================================
+  class DynamicInterceptLocalLevelStateModel
+      : public LocalLevelStateModel,
+        public DynamicInterceptStateModel {
+   public:
+    explicit DynamicInterceptLocalLevelStateModel(double sigma = 1.0)
+        : LocalLevelStateModel(sigma)
+    {}
+
+    DynamicInterceptLocalLevelStateModel *clone() const override {
+      return new DynamicInterceptLocalLevelStateModel(*this);
+    }
+    
+    bool is_pure_function_of_time() const override {return true;}
+
+    Ptr<SparseMatrixBlock> observation_coefficients(
+        int t,
+        const StateSpace::TimeSeriesRegressionData &data_point) const override {
+      // In single threaded code we could optimize here by creating a single
+      // IdenticalRowsMatrix and changing the number of rows each time.
+      //
+      // In multi-threaded code that would create a race condition.
+      return new IdenticalRowsMatrix(observation_matrix(t),
+                                     data_point.sample_size());
+    }
+  };
+
+  //===========================================================================
   // A local level model for describing multivariate outcomes.  The latent state
   // consists of K independent random walks which are the 'factors'.  The series
   // are linked to the factors accorrding to
@@ -96,7 +125,7 @@ namespace BOOM {
   // constraints, as different constraints might be relevant for different
   // modeling strategies.
   class SharedLocalLevelStateModel
-      : virtual public MultivariateStateModel,
+      : virtual public SharedStateModel,
         public CompositeParamPolicy,
         public NullDataPolicy,
         public PriorPolicy
@@ -107,8 +136,10 @@ namespace BOOM {
     //     this state model.  The number of factors is the state dimension.
     //   ydim:  The dimension of the outcome variable at time t.
     //   host:  The model in which this object is a component of state.
+    //   nseries:  The number of observed time series being modeled.
     SharedLocalLevelStateModel(int number_of_factors,
-                               MultivariateStateSpaceModelBase *host);
+                               MultivariateStateSpaceModelBase *host,
+                               int nseries);
     SharedLocalLevelStateModel(const SharedLocalLevelStateModel &rhs);
     SharedLocalLevelStateModel(SharedLocalLevelStateModel &&rhs);
     SharedLocalLevelStateModel &operator=(const SharedLocalLevelStateModel &rhs);
@@ -123,7 +154,8 @@ namespace BOOM {
     // Sizes of things.
     uint state_dimension() const override {return innovation_models_.size();}
     uint state_error_dimension() const override {return state_dimension();}
-
+    int nseries() const {return coefficient_model_->ydim();}
+    
     // Syntactic sugar.
     int number_of_factors() const {return state_dimension();}
     
@@ -154,11 +186,9 @@ namespace BOOM {
     
     //--------------------------------------------------------------------------
     // Initial state mean and variance.
-    Vector initial_state_mean() const override { return initial_state_mean_; }
+    Vector initial_state_mean() const override;
     void set_initial_state_mean(const Vector &m);
-    SpdMatrix initial_state_variance() const override {
-      return initial_state_variance_;
-    }
+    SpdMatrix initial_state_variance() const override;
     void set_initial_state_variance(const SpdMatrix &v);
 
     //--------------------------------------------------------------------------
@@ -174,11 +204,20 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     // Methods intended for use with the posterior samplers managing this model.
-    
     Ptr<MultivariateRegressionModel> coefficient_model() {
       return coefficient_model_;
     }
 
+    // A setter helps prevent the user from forgetting to transpose the
+    // observation coefficients.
+    //
+    // Args:
+    //   Z: The matrix of observation coefficients.  nseries rows by
+    //     number_of_factors.  columns.
+    void set_observation_coefficients(const Matrix &Z) {
+      coefficient_model_->set_Beta(Z.transpose());
+    }
+    
     // Copy the observation coefficients from the regression model to the state
     // matrix.  Note that the state coefficient matrix is the transpose of the
     // regression coefficient matrix.

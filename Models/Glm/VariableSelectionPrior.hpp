@@ -61,7 +61,7 @@ namespace BOOM {
                                        bool minimal = true) override;
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     std::vector<Ptr<Variable>> vars_;
@@ -82,7 +82,7 @@ namespace BOOM {
     // The total number of potential predictor variables available.
     virtual uint potential_nvars() const = 0;
     
-    virtual ostream &print(ostream &out) const = 0;
+    virtual std::ostream &print(std::ostream &out) const = 0;
   };
   
   //===========================================================================
@@ -95,12 +95,16 @@ namespace BOOM {
    public:
     VariableSelectionPrior();
     VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
-    VariableSelectionPrior(const Vector &marginal_inclusion_probabilities);
+    explicit VariableSelectionPrior(
+        const Vector &marginal_inclusion_probabilities);
     VariableSelectionPrior *clone() const override;
     double logp(const Selector &included_coefficients) const override;
 
     void set_prior_inclusion_probabilities(const Vector &probs) {
-      ParamPolicy::prm()->set(probs);
+      ParamPolicy::prm_ref().set(probs);
+    }
+    void set_prior_inclusion_probability(int i, double value) {
+      ParamPolicy::prm_ref().set_element(value, i);
     }
     
     const Vector &prior_inclusion_probabilities() const {
@@ -110,7 +114,7 @@ namespace BOOM {
     void make_valid(Selector &inc) const override;
     uint potential_nvars() const override;
 
-    virtual ostream &print(ostream &out) const override;
+    virtual std::ostream &print(std::ostream &out) const override;
 
    private:
     // Set an observer on the vector of prior inclusion probabilities so that
@@ -202,7 +206,7 @@ namespace BOOM {
     const ParamVector parameter_vector() const override;
     void unvectorize_params(const Vector &v, bool minimal = true) override;
 
-    ostream &print(ostream &out) const override;
+    std::ostream &print(std::ostream &out) const override;
 
    private:
     std::vector<Ptr<Variable>> vars_;
@@ -216,7 +220,7 @@ namespace BOOM {
     void check_size_gt(uint n, const std::string &fun) const;
   };
 
-  ostream &operator<<(ostream &out, const VariableSelectionPriorBase &);
+  std::ostream &operator<<(std::ostream &out, const VariableSelectionPriorBase &);
 
   //===========================================================================
   // Model the include / exclude behavior for a set of coefficients that has
@@ -226,7 +230,8 @@ namespace BOOM {
         public IID_DataPolicy<MatrixGlmCoefs>,
         public PriorPolicy {
     public:
-    MatrixVariableSelectionPrior(const Matrix &prior_inclusion_probabilities);
+    explicit MatrixVariableSelectionPrior(
+        const Matrix &prior_inclusion_probabilities);
 
     MatrixVariableSelectionPrior *clone() const override {
       return new MatrixVariableSelectionPrior(*this);

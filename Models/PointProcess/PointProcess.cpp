@@ -35,7 +35,7 @@ namespace BOOM {
     return new PointProcessEvent(*this);
   }
 
-  ostream &PointProcessEvent::display(ostream &out) const {
+  std::ostream &PointProcessEvent::display(std::ostream &out) const {
     out << timestamp_;
     if (!!mark_) out << *mark_;
     return out;
@@ -197,7 +197,7 @@ namespace BOOM {
 
   PointProcess *PointProcess::clone() const { return new PointProcess(*this); }
 
-  ostream &PointProcess::display(ostream &out) const {
+  std::ostream &PointProcess::display(std::ostream &out) const {
     out << begin_ << "--- beginning of observation window" << endl;
     for (int i = 0; i < number_of_events(); ++i) {
       out << events_[i] << endl;

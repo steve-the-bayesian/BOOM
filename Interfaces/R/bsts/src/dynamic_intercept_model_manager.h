@@ -19,6 +19,7 @@
 
 #include "model_manager.h"
 #include "Models/StateSpace/DynamicInterceptRegression.hpp"
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 
 namespace BOOM {
   namespace bsts {
@@ -35,7 +36,6 @@ namespace BOOM {
 
       // Create a new DynamicInterceptRegressionModel.
       // Args:
-
       //   r_data_list: An R list containing 'predictors' (a matrix) and
       //     'response' (a vector).
       //   r_state_specification: An R list of state specification objects used
@@ -45,11 +45,6 @@ namespace BOOM {
       //   r_options: A list containing 'large.sample.threshold.factor', a
       //     non-negative scalar that determines the cutoff between dense and
       //     sparse linear algebra in the Kalman filter updates for this model.
-      //   final_state:
-      //   final_state: A pointer to a Vector to hold the state at the final
-      //     time point.  This can be a nullptr if the state is only going to be
-      //     recorded, but it must point to a Vector if the state is going to be
-      //     read from an existing object.
       //   io_manager: The io_manager responsible for writing MCMC output to an
       //     R object, or streaming it from an existing object.
       //
@@ -65,8 +60,7 @@ namespace BOOM {
           SEXP r_state_specification,
           SEXP r_prior,
           SEXP r_options,  
-          Vector *final_state,
-          RListIoManager *io_manager) override;
+          RListIoManager *io_manager);
 
       // Args:
       //   r_dirm_object: The dynamic regression model object from R, to be used
@@ -93,10 +87,36 @@ namespace BOOM {
       Matrix Forecast(SEXP r_dirm_object,
                       SEXP r_prediction_data,
                       SEXP r_burn,
-                      SEXP r_observed_data) override;
+                      SEXP r_observed_data); 
+
+      // If the model contains any dynamic regression state components, the
+      // model manager needs to know where they are located in the model, so
+      // that the appropriate predictors can be assigned during forecasting.
+      //
+      // Args:
+      //   positions: A vector with length matching the number of dynamic
+      //     regression components in the model.  This will most often be 1 or
+      //     0.  Each element is the index of a dynamic regression state
+      //     component, so that a call to model->state_model(index) returns a
+      //     dynamic regression state model.
+      void SetDynamicRegressionStateComponentPositions(
+          const std::vector<int> &positions) {
+        dynamic_regression_state_positions_ = positions;
+      }
+      
+      // TODO(steve): Move dynamic_regression_state_positions to the right model
+      // manager for dynamic regression models.
+      //
+      // The locations (indices) in the vector of state models of any dynamic
+      // regression state components.
+      const std::vector<int> & dynamic_regression_state_positions() const {
+        return dynamic_regression_state_positions_;
+      }
 
    protected:
       int UnpackForecastData(SEXP r_prediction_data) override;
+
+      Vector &final_state() {return final_state_;}
       
    private:
       void AddData(const Vector &response, const Matrix &predictors,
@@ -104,10 +124,32 @@ namespace BOOM {
       void AddDataFromList(SEXP r_data_list) override;
       void AddDataFromBstsObject(SEXP r_bsts_object) override;
 
+      // Unpacks forecast data for the dynamic regression state component,
+      // if one is present in the model.
+      // Args:
+      //   model:  The model to be forecast.
+      //   r_state_specification: The R list of state specfication elements,
+      //     used to determine the position of the dynamic regression component.
+      //   r_prediction_data: A list.  If a dynamic regression component is
+      //     present this list must contain an element named
+      //     "dynamic.regression.predictors", which is an R matrix containing
+      //     the forecast predictors for the dynamic regression component.
+      void UnpackDynamicRegressionForecastData(
+          DynamicInterceptRegressionModel *model,
+          SEXP r_state_specification,
+          SEXP r_prediction_data);
+
       Ptr<DynamicInterceptRegressionModel> model_;
 
       // The predictor matrix for forecasting.
       Matrix forecast_predictors_;
+
+      Vector final_state_;
+
+      // The index of each dynamic regression state component is stored here,
+      // where 'index' refers to the state component's position in the list of
+      // state models stored in the primary state space model.
+      std::vector<int> dynamic_regression_state_positions_;
     };
     
   } // namespace bsts

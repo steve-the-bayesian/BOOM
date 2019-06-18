@@ -36,7 +36,7 @@ namespace BOOM {
           initial_level_(initial_level),
           initial_slope_(initial_slope),
           trend_model_(new LocalLinearTrendStateModel),
-          adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
+          // adapter_(new DynamicInterceptStateModelAdapter(trend_model_)),
           level_precision_prior_(new ChisqModel(1.0, level_sd_)),
           slope_precision_prior_(new ChisqModel(1.0, slope_sd_)),
           level_precision_sampler_(new ZeroMeanMvnIndependenceSampler(
@@ -72,7 +72,7 @@ namespace BOOM {
     }
 
     void LocalLinearTrendModule::ObserveDraws(
-        const StateSpaceModelBase &model) {
+        const ScalarStateSpaceModelBase &model) {
       auto state = CurrentState(model);
       trend_draws_.row(cursor()) = state.row(0);
       sigma_level_draws_[cursor()] = sqrt(trend_model_->Sigma()(0, 0));

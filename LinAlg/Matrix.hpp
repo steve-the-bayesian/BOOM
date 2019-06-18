@@ -24,29 +24,13 @@
 #include "LinAlg/VectorView.hpp"
 
 namespace BOOM {
-  using std::istream;
-  using std::ostream;
-
   class Vector;
   class VectorView;
   class SpdMatrix;
   class DiagonalMatrix;
   class SubMatrix;
   class ConstSubMatrix;
-  class Matrix
-      : public boost::addable<
-            Matrix,
-            boost::subtractable<
-                Matrix,
-                boost::dividable<
-                    Matrix,
-                    boost::addable<
-                        Matrix, double,
-                        boost::subtractable<
-                            Matrix, double,
-                            boost::multipliable<
-                                Matrix, double,
-                                boost::dividable<Matrix, double> > > > > > > {
+  class Matrix {
    public:
     typedef std::vector<double> dVector;
 
@@ -288,6 +272,10 @@ namespace BOOM {
     Matrix &operator-=(const SubMatrix &m);
     Matrix &operator-=(const ConstSubMatrix &m);
 
+    Matrix &operator/=(const Matrix &m);
+    Matrix &operator/=(const SubMatrix &m);
+    Matrix &operator/=(const ConstSubMatrix &m);
+    
     Matrix &exp();  // in place exponentiation
     Matrix &log();  // in place logarithm
 
@@ -300,9 +288,9 @@ namespace BOOM {
     // The value of the entry with the largest absolute value.
     double max_abs() const;
 
-    virtual ostream &display(ostream &out, int precision = 5) const;
-    ostream &write(ostream &, bool nl = true) const;
-    istream &read(istream &);
+    virtual std::ostream &display(std::ostream &out, int precision = 5) const;
+    std::ostream &write(std::ostream &, bool nl = true) const;
+    std::istream &read(std::istream &);
 
    protected:
     Vector V;
@@ -327,7 +315,7 @@ namespace BOOM {
     const std::vector<std::string> &row_names() const { return row_names_; }
     const std::vector<std::string> &col_names() const { return col_names_; }
 
-    ostream &display(ostream &out, int precision = 5) const override;
+    std::ostream &display(std::ostream &out, int precision = 5) const override;
     Matrix drop_labels() const;
 
    private:
@@ -385,22 +373,68 @@ namespace BOOM {
   inline bool Matrix::inrange(uint i, uint j) const {
     return i < nr_ && j < nc_;
   }
-  ostream &operator<<(ostream &out, const Matrix &x);
+  std::ostream &operator<<(std::ostream &out, const Matrix &x);
 
   // Print the matrix to stdout.
   void print(const Matrix &m);
-  istream &operator>>(istream &in, Matrix &m);
+  std::istream &operator>>(std::istream &in, Matrix &m);
   // reads until a blank line is found or the end of a line
 
   inline double trace(const Matrix &m) { return m.trace(); }
-  Matrix operator-(const double y, const Matrix &x);
-  Matrix operator/(const double y, const Matrix &x);
-  inline Matrix operator-(const Matrix &x) { return -1 * x; }
 
-  // element-by-element operations
-  //     Matrix operator+(const Matrix &m1, const Matrix &m2);
-  //     Matrix operator-(const Matrix &m1, const Matrix &m2);
-  //    Matrix operator/(const Matrix &m1, const Matrix &m2);
+  // Matrix - Matrix element-by-element operations
+  inline Matrix operator+(const Matrix &m1, const Matrix &m2) {
+    Matrix ans(m1);
+    ans += m2;
+    return ans;
+  }
+  inline Matrix operator-(const Matrix &m1, const Matrix &m2) {
+    Matrix ans(m1);
+    ans -= m2;
+    return ans;
+  }
+  inline Matrix operator/(const Matrix &m1, const Matrix &m2) {
+    Matrix ans(m1);
+    ans /= m2;
+    return ans;
+  }
+
+  // Matrix - double Field operators 
+  inline Matrix operator+(const Matrix &m, double a) {
+    Matrix ans(m);
+    ans += a;
+    return ans;
+  }
+  inline Matrix operator+(double a, const Matrix &m) {
+    return m + a;
+  }
+  inline Matrix operator-(const Matrix &m, double a) {
+    return m + (-a);
+  }
+  inline Matrix operator-(double a, const Matrix &m) {
+    Matrix ans(m.nrow(), m.ncol(), a);
+    ans -= m;
+    return ans;
+  }
+  inline Matrix operator*(const Matrix &m, double a) {
+    Matrix ans(m);
+    ans *= a;
+    return ans;
+  }
+  inline Matrix operator*(double a, const Matrix &m) {
+    return m * a;
+  }
+  
+  Matrix operator/(double a, const Matrix &m);
+  inline Matrix operator/(const Matrix &m, double a) {
+    Matrix ans(m);
+    ans /= a;
+    return ans;
+  }
+
+  // Unary minus.
+  inline Matrix operator-(const Matrix &x) { return -1.0 * x; }
+
   Matrix el_mult(const Matrix &A, const Matrix &B);
   double el_mult_sum(const Matrix &A, const Matrix &B);
 

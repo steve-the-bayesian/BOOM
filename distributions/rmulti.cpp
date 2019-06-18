@@ -26,7 +26,6 @@
 #include <sstream>
 #include "cpputil/report_error.hpp"
 
-using namespace std;
 namespace BOOM {
 
   int rmulti(int lo, int hi) { return rmulti_mt(GlobalRng::rng, lo, hi); }

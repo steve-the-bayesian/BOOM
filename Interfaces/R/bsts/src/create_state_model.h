@@ -60,34 +60,19 @@ namespace BOOM {
 
   class RegressionHolidayStateModel;
   class ScalarRegressionHolidayStateModel;
-  class DynamicInterceptRegressionHolidayStateModel;
+  //  class DynamicInterceptRegressionHolidayStateModel;
 
   class HierarchicalRegressionHolidayStateModel;
   class ScalarHierarchicalRegressionHolidayStateModel;
-  class DynamicInterceptHierarchicalRegressionHolidayStateModel;
+  //  class DynamicInterceptHierarchicalRegressionHolidayStateModel;
 
-  namespace RInterface {
+  namespace bsts {
     class StateModelFactoryBase {
      public:
-      StateModelFactoryBase(RListIoManager *io_manager)
+      explicit StateModelFactoryBase(RListIoManager *io_manager)
           : io_manager_(io_manager)
       {}
 
-      // Save the final state (i.e. at time T) of the model for use with
-      // prediction.  Do not call this function until after all components of
-      // state have been added.
-      // Args:
-      //   model:  A pointer to the model that owns the state.
-      //   final_state: A pointer to a Vector to hold the state.  This can be
-      //     nullptr if the state is only going to be recorded.  If state is
-      //     going to be read, then final_state must be non-NULL.  A non-NULL
-      //     vector will be re-sized if it is the wrong size.
-      //   list_element_name: The name of the final state vector in the R list
-      //     holding the MCMC output.
-      void SaveFinalState(StateSpaceModelBase *model,
-                          BOOM::Vector *final_state = nullptr,
-                          const std::string & list_element_name = "final.state");
-      
       const std::vector<int> DynamicRegressionStateModelPositions() const {
         return dynamic_regression_state_model_positions_;
       }
@@ -119,14 +104,12 @@ namespace BOOM {
       }
 
       RListIoManager * io_manager() {return io_manager_;}
-
      
      private:
       // A pointer to the object manaaging the R list that will record (or has
       // already recorded) the MCMC output.  This can be a nullptr if IoManager
       // support is not desired.
       RListIoManager *io_manager_;
-
 
       // A collection of list elements to be stored after the state model
       // parameters.  Examples include dynamic regression coefficients.
@@ -162,9 +145,9 @@ namespace BOOM {
       void AddState(ScalarStateSpaceModelBase *model,
                     SEXP r_state_specification_list,
                     const std::string &prefix = "");
-      void AddState(DynamicInterceptRegressionModel *model,
-                    SEXP r_state_specification_list,
-                    const std::string &prefix = "");
+      // void AddState(DynamicInterceptRegressionModel *model,
+      //               SEXP r_state_specification_list,
+      //               const std::string &prefix = "");
       
       // Factory method for creating a StateModel based on inputs supplied to R.
       // Returns a smart pointer to the StateModel that gets created.
@@ -182,10 +165,10 @@ namespace BOOM {
                                        SEXP r_state_component,
                                        const std::string &prefix);
 
-      Ptr<DynamicInterceptStateModel> CreateDynamicInterceptStateModel(
-          DynamicInterceptRegressionModel *model,
-          SEXP r_state_component,
-          const std::string &prefix);
+      // Ptr<DynamicInterceptStateModel> CreateDynamicInterceptStateModel(
+      //     DynamicInterceptRegressionModel *model,
+      //     SEXP r_state_component,
+      //     const std::string &prefix);
 
       // Create a BOOM::Holiday from the supplied R object.
       // Args:
@@ -194,9 +177,24 @@ namespace BOOM {
       //   A BOOM::Holiday corresponding to 'holiday_spec'.
       static Ptr<Holiday> CreateHoliday(SEXP holiday_spec);
 
+      // Save the final state (i.e. at time T) of the model for use with
+      // prediction.  Do not call this function until after all components of
+      // state have been added.
+      // Args:
+      //   model:  A pointer to the model that owns the state.
+      //   final_state: A pointer to a Vector to hold the state.  This can be
+      //     nullptr if the state is only going to be recorded.  If state is
+      //     going to be read, then final_state must be non-NULL.  A non-NULL
+      //     vector will be re-sized if it is the wrong size.
+      //   list_element_name: The name of the final state vector in the R list
+      //     holding the MCMC output.
+      void SaveFinalState(
+          StateSpaceModelBase *model,
+          BOOM::Vector *final_state = nullptr,
+          const std::string & list_element_name = "final.state");
+      
      private:
       // Concrete implementations of CreateStateModel.
-
       LocalLevelStateModel *CreateLocalLevel(
           SEXP r_state_component, const std::string &prefix);
       LocalLinearTrendStateModel *CreateLocalLinearTrend(
@@ -211,7 +209,6 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
       ArStateModel *CreateAutoArStateModel(
           SEXP r_state_component, const std::string &prefix);
-
       DynamicRegressionStateModel *CreateDynamicRegressionStateModel(
           SEXP r_state_component,
           const std::string &prefix,
@@ -220,38 +217,34 @@ namespace BOOM {
           SEXP r_state_component,
           const std::string &prefix,
           StateSpaceModelBase *model);
-
       RandomWalkHolidayStateModel *CreateRandomWalkHolidayStateModel(
           SEXP r_state_component, const std::string &prefix);
-
       ScalarRegressionHolidayStateModel *CreateRegressionHolidayStateModel(
           SEXP r_state_component,
           const std::string &prefix,
           ScalarStateSpaceModelBase *model);
-      DynamicInterceptRegressionHolidayStateModel *
-      CreateDynamicInterceptRegressionHolidayStateModel(
-          SEXP r_state_component,
-          const std::string &prefix,
-          DynamicInterceptRegressionModel *model);
+      // DynamicInterceptRegressionHolidayStateModel *
+      // CreateDynamicInterceptRegressionHolidayStateModel(
+      //     SEXP r_state_component,
+      //     const std::string &prefix,
+      //     DynamicInterceptRegressionModel *model);
       void ImbueRegressionHolidayStateModel(
           RegressionHolidayStateModel *holiday_model,
           SEXP r_state_component,
           const std::string &prefix);
-      
       ScalarHierarchicalRegressionHolidayStateModel *
       CreateHierarchicalRegressionHolidayStateModel(
           SEXP r_state_component,
           const std::string &prefix,
           ScalarStateSpaceModelBase *model);
-      DynamicInterceptHierarchicalRegressionHolidayStateModel *
-      CreateDIHRHSM(SEXP r_state_component,
-                    const std::string &prefix,
-                    DynamicInterceptRegressionModel *model);
+      // DynamicInterceptHierarchicalRegressionHolidayStateModel *
+      // CreateDIHRHSM(SEXP r_state_component,
+      //               const std::string &prefix,
+      //               DynamicInterceptRegressionModel *model);
       void ImbueHierarchicalRegressionHolidayStateModel(
           HierarchicalRegressionHolidayStateModel *holiday_model,
           SEXP r_state_specification,
           const std::string &prefix);
-      
       SeasonalStateModel *CreateSeasonal(
           SEXP r_state_component, const std::string &prefix);
       TrigStateModel *CreateTrigStateModel(
@@ -262,6 +255,6 @@ namespace BOOM {
           SEXP r_state_component, const std::string &prefix);
     };
 
-  }  // namespace RInterface
+  }  // namespace bsts
 }  // namespace BOOM
 #endif  // BOOM_R_INTERFACE_CREATE_STATE_MODEL_HPP_

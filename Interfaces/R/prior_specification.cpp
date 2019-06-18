@@ -28,6 +28,10 @@
 #include "Models/PoissonModel.hpp"
 #include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
 #include "Models/UniformModel.hpp"
+
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+
 #include "cpputil/math_utils.hpp"
 #include "distributions.hpp"
 
@@ -253,6 +257,13 @@ namespace BOOM {
           sd_(ToBoomVector(getListElement(prior, "sd")))
     {}
 
+    //==========================================================================
+    ScaledMatrixNormalPrior::ScaledMatrixNormalPrior(SEXP r_prior)
+        : mean_(ToBoomMatrix(getListElement(r_prior, "mean", true))),
+          sample_size_(Rf_asReal(getListElement(r_prior, "nu", true)))
+    {}
+    
+    //==========================================================================
     DiscreteUniformPrior::DiscreteUniformPrior(SEXP prior)
         :lo_(Rf_asInteger(getListElement(prior, "lower.limit"))),
          hi_(Rf_asInteger(getListElement(prior, "upper.limit")))
@@ -407,5 +418,99 @@ namespace BOOM {
       }
     }
 
+
+    //===========================================================================
+    // Setting priors for regression models.
+    //===========================================================================
+
+
+    // Set the coefficients equal to their initial values, and determine
+    // which coefficients are initially excluded (i.e. forced to zero).
+    // Args:
+    //   initial_beta:  Vector containing initial coefficients.
+    //   prior_inclusion_probabilities: Prior probabilities that each
+    //     coefficient is nonzero.
+    //   model:  The model that owns the coefficients.
+    //   sampler:  The sampler that will make posterior draws for the model.
+    template<class SAMPLER>
+    void InitializeSpikeSlabCoefficients(
+        const BOOM::Vector &initial_beta,
+        const BOOM::Vector &prior_inclusion_probabilities,
+        Ptr<GlmModel>  model,
+        BOOM::Ptr<SAMPLER> sampler) {
+      model->set_Beta(initial_beta);
+      if (min(prior_inclusion_probabilities) >= 1.0) {
+        // Ensure all coefficients are included if you're not going to
+        // do model averaging.
+        sampler->allow_model_selection(false);
+        model->coef().add_all();
+      } else {
+        // Model averaging is desired.  "Small" coefficients start off
+        // excluded from the model.  Large ones start off included.
+        // Adding or dropping is idempotent, so no need to worry about
+        // dropping an already excluded coefficient.
+        for (int i = 0; i < initial_beta.size(); ++i) {
+          if (fabs(initial_beta[i]) < 1e-8) {
+            model->coef().drop(i);
+          } else {
+            model->coef().add(i);
+          }
+
+          // Respect absolute prior opinions about coefficients,
+          // regardless of whether the initial coefficient is large or
+          // small,
+          if (prior_inclusion_probabilities[i] >= 1.0) {
+            model->add(i);
+          } else if (prior_inclusion_probabilities[i] <= 0.0) {
+            model->drop(i);
+          }
+        }
+      }
+    }
+
+    inline void SetIndependentSpikeSlabPrior(RegressionModel *model,
+                                             SEXP r_prior) {
+      IndependentRegressionSpikeSlabPrior prior(r_prior, model->Sigsq_prm());
+      NEW(BregVsSampler, sampler)(model, prior.slab(), prior.siginv_prior(),
+                                  prior.spike());
+      if (prior.sigma_upper_limit() > 0 && prior.sigma_upper_limit() < infinity()) {
+        sampler->set_sigma_upper_limit(prior.sigma_upper_limit());
+      }
+      model->set_method(sampler);
+      InitializeSpikeSlabCoefficients(
+          model->Beta(), prior.spike()->prior_inclusion_probabilities(),
+          model, sampler);
+    }
+
+    inline void SetSpikeSlabPrior(RegressionModel *model, SEXP r_prior) {
+      RegressionConjugateSpikeSlabPrior prior(r_prior, model->Sigsq_prm());
+      NEW(BregVsSampler, sampler)(
+          model, prior.slab(), prior.siginv_prior(), prior.spike());
+      if (prior.sigma_upper_limit() > 0 && prior.sigma_upper_limit() < infinity()) {
+        sampler->set_sigma_upper_limit(prior.sigma_upper_limit());
+      }
+      model->set_method(sampler);
+      InitializeSpikeSlabCoefficients(
+          model->Beta(),
+          prior.spike()->prior_inclusion_probabilities(),
+          model,
+          sampler);
+    }
+          
+    void SetRegressionSampler(RegressionModel *model, SEXP r_prior) {
+      if (Rf_inherits(r_prior, "RegressionCoefficientConjugatePrior")) {
+        report_error("TODO");
+      } else if (Rf_inherits(r_prior, "RegressionConjugatePrior")) {
+        report_error("TODO");
+      } else if (Rf_inherits(r_prior, "SpikeSlabPrior")) {
+        SetSpikeSlabPrior(model, r_prior);
+      } else if (Rf_inherits(r_prior, "IndependentSpikeSlabPrior")) {
+        report_error("TODO");
+      } else {
+        ReportBadClass("Unsupported object passed to SetRegressionSampler.",
+                       r_prior);
+      }
+    }
+    
   }  // namespace RInterface
 }  // namespace BOOM

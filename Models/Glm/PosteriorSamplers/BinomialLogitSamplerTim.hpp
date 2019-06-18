@@ -55,7 +55,7 @@ namespace BOOM {
     //     distribution.  If nu <= 0 then a Gaussian proposal will be
     //     used.
     //   seeding_rng: The random number generator used to set the seed
-    //     for this sampler's RNG.
+    //     for the RNG owned by this sampler.
     BinomialLogitSamplerTim(BinomialLogitModel *model,
                             const Ptr<MvnBase> &prior,
                             bool mode_is_stable = true, double nu = 3,
