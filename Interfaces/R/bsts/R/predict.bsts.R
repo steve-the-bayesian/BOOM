@@ -96,7 +96,7 @@ predict.bsts <- function(object,
   prediction.data <- .FormatBstsPredictionData(
     object, newdata, horizon, trials.or.exposure, na.action)
   prediction.data$timestamps <- .ExtractPredictionTimestamps(
-      object, newdata, timestamps)
+    object, newdata, timestamps)
   stopifnot(is.numeric(burn), length(burn) == 1, burn < object$niter)
   if (!is.null(olddata)) {
     olddata <- .FormatObservedDataForPredictions(object, olddata, na.action,
