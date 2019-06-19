@@ -43,6 +43,35 @@ namespace {
     EXPECT_NE(s2, s3);
   }
 
+  TEST_F(SelectorTest, Complement) {
+    Selector s1("101001101");
+    Selector s2 = s1.complement();
+    EXPECT_EQ(s2.nvars_possible(), s1.nvars_possible());
+    for (int i = 0; i < s1.nvars_possible(); ++i) {
+      EXPECT_EQ(s1[i], !s2[i]);
+    }
+  }
+
+  
+  TEST_F(SelectorTest, Indexing) {
+    Selector s1("101001101");
+    EXPECT_EQ(s1.nvars(), 5);
+    EXPECT_EQ(s1.nvars_possible(), 9);
+    EXPECT_EQ(s1.nvars_excluded(), 4);
+
+    EXPECT_EQ(0, s1.indx(0));
+    EXPECT_EQ(2, s1.indx(1));
+    EXPECT_EQ(5, s1.indx(2));
+    EXPECT_EQ(6, s1.indx(3));
+    EXPECT_EQ(8, s1.indx(4));
+
+    EXPECT_EQ(0, s1.INDX(0));
+    EXPECT_EQ(1, s1.INDX(2));
+    EXPECT_EQ(2, s1.INDX(5));
+    EXPECT_EQ(3, s1.INDX(6));
+    EXPECT_EQ(4, s1.INDX(8));    
+  }
+  
   TEST_F(SelectorTest, Append) {
     Selector s1("010");
     EXPECT_EQ(s1.nvars(), 1);

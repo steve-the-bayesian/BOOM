@@ -223,7 +223,7 @@ namespace BOOM {
                                  const Vector &final_state) {
     return simulate_multiplex_forecast(rng, forecast_predictors, trials,
                                        final_state,
-                                       seq<int>(1, nrow(forecast_predictors)));
+                                       seq<int>(0, nrow(forecast_predictors) - 1));
   }
 
   Vector SSLM::simulate_multiplex_forecast(RNG &rng,

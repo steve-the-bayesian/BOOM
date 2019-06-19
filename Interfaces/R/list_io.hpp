@@ -200,7 +200,7 @@ namespace BOOM {
    public:
     // Args:
     //   name:  The name of the list element storing the submodels.
-    SubordinateModelIoElement(const std::string &name);
+    explicit SubordinateModelIoElement(const std::string &name);
 
     // Add a new sub-model to the list.  
     // Args:

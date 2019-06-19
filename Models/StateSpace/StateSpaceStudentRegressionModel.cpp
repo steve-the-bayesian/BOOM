@@ -205,7 +205,7 @@ namespace BOOM {
   Vector SSSRM::simulate_forecast(RNG &rng, const Matrix &predictors,
                                   const Vector &final_state) {
     return simulate_multiplex_forecast(rng, predictors, final_state,
-                                       seq<int>(1, nrow(predictors)));
+                                       seq<int>(0, nrow(predictors) - 1));
   }
 
   Vector SSSRM::simulate_multiplex_forecast(
