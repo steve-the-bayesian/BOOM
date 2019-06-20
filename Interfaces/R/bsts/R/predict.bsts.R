@@ -312,13 +312,20 @@ plot.bsts.prediction <- function(x,
   ## If the model object contains any dynamic regression components, add them
   ## here.
   ans <- .ExtractDynamicRegressionPredictors(ans, object, newdata)
+
+  ## Handle the case where there is no static regression, but there is a dynamic
+  ## regression.
+  if (!is.null(ans$dynamic.regression.predictors)) {
+    if (nrow(ans$dynamic.regression.predictors) != nrow(ans$predictors)
+      && all(ans$predictors == 1)) {
+      ans$predictors <- matrix(rep( 1, nrow(ans$dynamic.regression.predictors)))
+    }
+  }
   return(ans)
 }
 
 ###---------------------------------------------------------------------------
-.FormatTrialsOrExposure <- function(arg,
-                                    newdata,
-                                    horizon = nrow(newdata)) {
+.FormatTrialsOrExposure <- function(arg, newdata, horizon) {
   ## Get the number of binomial trials, or Poisson exposure times, for
   ## forecasting binomial or Poisson data.
   ##
@@ -333,11 +340,23 @@ plot.bsts.prediction <- function(x,
   ##     frame containing a column with the corresponding name, filled
   ##     with the vector of trials or exposure times to be used.  If
   ##     'arg' is numeric then 'newdata' is not used.
-  ##   horizon:  An integer giving the number of forecast periods.
+  ##   horizon: An integer giving the number of forecast periods.  This is only
+  ##     needed if newdata is NULL.
   ##
   ## Returns:
   ##   A numeric vector of length 'horizon' containing the trials or
   ##   exposure time to use in each foreacst period.
+  if (is.data.frame(newdata) || is.matrix(newdata)) {
+    horizon <- nrow(newdata)
+  } else if (is.zoo(newdata)) {
+    if (!is.null(nrow(newdata))) {
+      horizon <- nrow(newdata)
+    } else {
+      horizon <- length(newdata)
+    }
+  } else if (is.numeric(newdata)) {
+    horizon <- length(newdata)
+  }
   if (is.character(arg)) {
    arg <- newdata[, arg]
   }
@@ -555,6 +574,9 @@ plot.bsts.prediction <- function(x,
   if (is.null(newdata)) {
     stop("You need to supply 'newdata' when making predictions with ",
          "a bsts object that has a regression component.")
+  }
+  if (is.zoo(newdata)) {
+    newdata <- as.data.frame(newdata)
   }
   if (is.data.frame(newdata)) {
     Terms <- delete.response(terms(object))
