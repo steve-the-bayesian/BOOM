@@ -1,6 +1,6 @@
 BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
                         se.truth = NULL, color="white", truth.color = "black",
-                        ...) {
+                        ylim = NULL, ...) {
   ## Compares the marginal distributions of the columns of a matrix
   ## against a vector of true values.  Useful for validating an MCMC
   ## algorithm against simulated data where you know the true
@@ -21,6 +21,7 @@ BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
   ##   color:  A vector of colors to use for the different boxes.
   ##   truth.color: A vector of colors to use for the segments showing the true
   ##     values.
+  ##   ylim:  A sorted 2-vector giving the limits of the vertical axis.
   ##   ...:  Extra arguments passed to boxplot.
   ##
   if(!is.null(truth)){
@@ -37,6 +38,16 @@ BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
     stop("need to supply argument 'truth' to plot se.truth in boxplot.true")
   }
 
+  if (is.null(ylim)) {
+    ylim <- range(x, na.rm = TRUE)
+    if (!is.null(truth)) {
+      ylim <- range(truth, ylim, na.rm = TRUE)
+      if (!is.null(se.truth)) {
+        ylim <- range(ylim, truth - 2 * se.truth, truth + 2 * se.truth)
+      }
+    }
+  }
+  
   if(center && !is.null(truth)){
     x <- x - matrix(rep(truth, nrow(x)), ncol=length(truth), byrow=TRUE)
     truth <- truth-truth
@@ -45,7 +56,7 @@ BoxplotTrue <- function(x, truth=NULL, vnames=NULL, center=FALSE,
   if(is.null(vnames)) vnames <- paste(1:nx)
 
   if(length(color) < nx) color <- rep(color, length.out=nx)
-  boxplot(split(x, col(x)), names = vnames, col = color, ...)
+  boxplot(split(x, col(x)), names = vnames, col = color, ylim = ylim, ...)
 
   if(!is.null(truth)){
     AddSegments(1:ncol(x), truth, lwd = 3, col = truth.color)

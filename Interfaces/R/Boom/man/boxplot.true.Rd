@@ -16,7 +16,8 @@
 }
 \usage{
 BoxplotTrue(x, truth = NULL, vnames = NULL, center = FALSE,
-            se.truth = NULL, color = "white", truth.color = "black", ...)
+            se.truth = NULL, color = "white", truth.color = "black",
+            ylim = NULL, ...)
 }
 
 \arguments{
@@ -47,6 +48,10 @@ BoxplotTrue(x, truth = NULL, vnames = NULL, center = FALSE,
     A color (or vector of colors) to use for the segments representing
     true values.
   }
+
+  \item{ylim}{Limits for the vertical axis.  If \code{NULL} then the
+    axis will be scaled to fit \code{x}, \code{truth}, and \code{truth + 
+      c(2, -2) * se.truth}}
   
   \item{\dots}{
     additional arguments to \code{\link{boxplot}}.
