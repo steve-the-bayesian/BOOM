@@ -152,6 +152,7 @@ namespace BOOM {
     double sum() const;
 
     Matrix to_matrix() const;
+    Matrix transpose() const;
     std::ostream &display(std::ostream &out, int precision) const;
 
    private:

@@ -394,6 +394,16 @@ namespace BOOM {
     return ans;
   }
   //------------------------------------------------------------
+  Matrix CSM::transpose() const {
+    Matrix ans(ncol(), nrow());
+    for (int i = 0; i < nrow(); ++i) {
+      for (int j = 0; j < ncol(); ++j) {
+        ans(j, i) = (*this)(i, j);
+      }
+    }
+    return ans;
+  }
+  //------------------------------------------------------------
   std::ostream &CSM::display(std::ostream &out, int precision) const {
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
