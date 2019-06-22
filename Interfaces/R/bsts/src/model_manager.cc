@@ -316,7 +316,7 @@ namespace BOOM {
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         SEXP r_mbsts_object) {
       std::string family = ToString(getListElement(r_mbsts_object, "family"));
-      int ydim = Rf_ncols(getListElement(
+      int nseries = Rf_ncols(getListElement(
           r_mbsts_object, "original.series", true));
       bool regression = !Rf_isNull(getListElement(
           r_mbsts_object, "predictors", true));
@@ -324,16 +324,16 @@ namespace BOOM {
       if (regression) {
         xdim = Rf_ncols(getListElement(r_mbsts_object, "predictors"));
       }
-      return MultivariateModelManagerBase::Create(family, ydim, xdim);
+      return MultivariateModelManagerBase::Create(family, nseries, xdim);
     }
 
     //--------------------------------------------------------------------------    
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
-        const std::string &family, int ydim, int xdim) {
+        const std::string &family, int nseries, int xdim) {
 
       if (family == "gaussian") {
         MultivariateGaussianModelManager *manager =
-            new MultivariateGaussianModelManager(ydim, xdim);
+            new MultivariateGaussianModelManager(nseries, xdim);
         return manager;
       } else {
         report_error("For now, only Gaussian families are supported in the "

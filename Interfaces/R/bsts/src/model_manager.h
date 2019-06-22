@@ -372,12 +372,12 @@ namespace BOOM {
       // Args:
       //   family: A string indicating the familiy of the error distribution.
       //     Currently only "gaussian" is supported.
-      //   ydim: Dimension of the response being modeled.  The number of time
+      //   nseries: Dimension of the response being modeled.  The number of time
       //     series.
       //   xdim: The dimension (number of columns) of the predictor matrix.
       //     This can be zero if there are no regressors.
       static MultivariateModelManagerBase * Create(
-          const std::string &family, int ydim, int xdim);
+          const std::string &family, int nseries, int xdim);
 
       // Create a MultivariateModelManager by reinstantiating a previously
       // constructed bsts model.
@@ -438,12 +438,11 @@ namespace BOOM {
       //     the prediction, they should be included here.
       //
       // Returns:
-      //   An array with dimension [iterations, time, ydim] containing draws
+      //   An array with dimension [iterations, time, nseries] containing draws
       //   from the posterior predictive distribution.
-      virtual Array Forecast(
-          SEXP r_mbsts_object,
-          SEXP r_prediction_data,
-          SEXP r_burn) = 0;
+      virtual Array Forecast(SEXP r_mbsts_object,
+                             SEXP r_prediction_data,
+                             SEXP r_burn) = 0;
       
      private:
       // Create the specific StateSpaceModel suitable for the given model

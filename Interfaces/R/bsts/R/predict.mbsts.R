@@ -59,17 +59,17 @@ predict.mbsts <- function(object,
   ##     method.
   ##
   ## Returns:
-  ##   An object of class 'mbsts.prediction', which is a list with the
+  ##   An object of class 'mbsts.prediction', which is a list containing the
   ##   following elements:
-  ##   mean: A numeric matrix giving the posterior mean of the
-  ##     predictive distribution at each time point.
-  ##   interval: An nseries x time x 2 array giving the lower and upper limits
-  ##     of the 95% prediction interval at each time point.
-  ##   distribution: A [niter x nseries x time] array of draws from the posterior
-  ##     predictive distribution.  
-  ##   original.series: The original series used to fit 'object', in wide
-  ##     format.  This is used by the plot method to plot the original series
-  ##     and the prediction together.
+  ##   - mean: A numeric matrix giving the posterior mean of the predictive
+  ##       distribution at each time point.
+  ##   - interval: An nseries x time x 2 array giving the lower and upper limits
+  ##       of the 95% prediction interval at each time point.
+  ##   - distribution: A [niter x nseries x time] array of draws from the
+  ##       posterior predictive distribution.
+  ##   - original.series: The original series used to fit 'object', in wide
+  ##       format.  This is used by the plot method to plot the original series
+  ##       and the prediction together.
   stopifnot(inherits(object, "mbsts"))
   prediction.data <- .FormatMultivariatePredictionData(
     object, newdata, horizon, na.action, timestamps)

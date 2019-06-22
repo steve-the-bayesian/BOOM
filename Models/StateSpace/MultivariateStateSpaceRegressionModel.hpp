@@ -386,6 +386,11 @@ namespace BOOM {
       return proxy_models_[index];
     }
 
+    const Ptr<ProxyScalarStateSpaceModel>
+    series_specific_model(int index) const {
+      return proxy_models_[index];
+    }
+
     IndependentRegressionModels *observation_model() override {
       return observation_model_.get();
     }

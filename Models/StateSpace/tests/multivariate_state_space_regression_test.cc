@@ -39,6 +39,32 @@ namespace {
     }
   };
 
+  std::vector<Vector> gather_state_specific_final_state(
+      const MultivariateStateSpaceRegressionModel &model) {
+    std::vector<Vector> ans(model.nseries());
+    int last_time = model.time_dimension() - 1;
+    if (last_time > 0) {
+      for (int i = 0; i < ans.size(); ++i) {
+        if (model.series_specific_model(i)->state_dimension() > 0) {
+          ans[i] = model.series_specific_model(i)->state().col(last_time);
+        }
+      }
+    }
+    return ans;
+  }
+
+  // Repeat each row of 'mat' for 'times' times, then move to the next row.
+  Matrix repeat_rows(const Matrix &mat, int times) {
+    Matrix ans(mat.nrow() * times, mat.ncol());
+    int index = 0;
+    for (int i = 0; i < mat.nrow(); ++i) {
+      for (int j = 0; j < times; ++j) {
+        ans.row(index++) = mat.row(i);
+      }
+    }
+    return ans;
+  }
+  
   //===========================================================================
   TEST_F(MultivariateStateSpaceRegressionModelTest, EmptyTest) {}
 
@@ -98,16 +124,17 @@ namespace {
     int xdim = 3;
     int nseries = 6;
     int nfactors = 2;
-    int sample_size = 100;
-    double factor_sd = .3;
+    int sample_size = 200;
+    int test_size = 20;
+    double factor_sd = 1.0;  // The model assumes factor_sd is 1.
     double residual_sd = .1;
 
     //----------------------------------------------------------------------
     // Simulate the state.
-    Matrix state(nfactors, sample_size);
+    Matrix state(nfactors, sample_size + test_size);
     for (int factor = 0; factor < nfactors; ++factor) {
       state(factor, 0) = rnorm();
-      for (int time = 1; time < sample_size; ++time) {
+      for (int time = 1; time < sample_size + test_size; ++time) {
         state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
       }
     }
@@ -126,19 +153,19 @@ namespace {
     // Set up the regression coefficients and the predictors.
     Matrix regression_coefficients(nseries, xdim);
     regression_coefficients.randomize();
-    Matrix predictors(sample_size, xdim);
+    Matrix predictors(sample_size + test_size, xdim);
     predictors.randomize();
 
     // Simulate the response.
-    Matrix response(sample_size, nseries);
-    for (int i = 0; i < sample_size; ++i) {
+    Matrix response(sample_size + test_size, nseries);
+    for (int i = 0; i < sample_size + test_size; ++i) {
       Vector yhat = observation_coefficients * state.col(i)
           + regression_coefficients * predictors.row(i);
       for (int j = 0; j < nseries; ++j) {
         response(i, j) = yhat[j] + rnorm(0, residual_sd);
       }
     }
-
+    
     //----------------------------------------------------------------------
     // Define the model.
     NEW(MultivariateStateSpaceRegressionModel, model)(xdim, nseries);
@@ -163,10 +190,15 @@ namespace {
 
     NEW(MvnModel, slab)(Vector(nfactors, 0.0), SpdMatrix(nfactors, 1.0));
     NEW(VariableSelectionPrior, spike)(nfactors, 1.0);
+    std::vector<Ptr<VariableSelectionPrior>> spikes;
+    for (int i = 0; i < nseries; ++i) {
+      spikes.push_back(spike->clone());
+    }
+    
     NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
         state_model.get(),
         std::vector<Ptr<MvnBase>>(nseries, slab),
-        std::vector<Ptr<VariableSelectionPrior>>(nseries, spike));
+        spikes);
     state_model->set_method(state_model_sampler);
     state_model->set_initial_state_mean(Vector(nfactors, 0.0));
     state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
@@ -184,25 +216,128 @@ namespace {
           beta_prior, residual_precision_prior);
       model->observation_model()->model(i)->set_method(regression_sampler);
     }
+    NEW(IndependentRegressionModelsPosteriorSampler, observation_model_sampler)(
+        model->observation_model());
+    model->observation_model()->set_method(observation_model_sampler);
+    
 
     NEW(MultivariateStateSpaceRegressionPosteriorSampler, sampler)(
         model.get());
     model->set_method(sampler);
     int niter = 500;
+    int burn = 3000;
     Matrix factor0_draws(niter, sample_size);
     Matrix factor1_draws(niter, sample_size);
-    for (int i = 0; i < niter; ++i) {
+
+    Array state_contribution_draws(
+        std::vector<int>{niter, nseries, sample_size});
+    state_contribution_draws.slice(0, -1, -1) =
+        observation_coefficients * state;
+    
+    Array prediction_draws(std::vector<int>{
+        niter, model->nseries(), test_size});
+    Array observation_coefficient_draws(
+        std::vector<int>{niter, nseries, nfactors});
+    
+    Matrix test_predictors = ConstSubMatrix(
+        predictors,
+        sample_size, sample_size + test_size - 1,
+        0, ncol(predictors) - 1).to_matrix();
+    test_predictors = repeat_rows(test_predictors, nseries);
+    model->observe_time_dimension(sample_size + test_size);
+
+    // ofstream prediction_out("prediction.draws");
+    // prediction_out << ConstSubMatrix(response, sample_size, sample_size + test_size - 1,
+    //                                  0, nseries - 1).transpose();
+
+    // ofstream observation_coefficient_out("observation_coefficient.draws");
+    // observation_coefficient_out << vec(observation_coefficients) << "\n";
+
+    Matrix residual_sd_draws(niter, nseries);
+    Selector fully_observed(2, true);
+
+    for (int i = 0; i < burn; ++i) {
       model->sample_posterior();
+    }
+    
+    for (int i = 0; i < niter; ++i) {
+      // if (i % (niter / 10) == 0) {
+      //   cout << "------ draw " << i << " ---------\n";
+      // }
+      //      << model->state_model(0)->observation_coefficients(0, fully_observed)->dense();
+      model->sample_posterior();
+
+      state_contribution_draws.slice(i, -1, -1) = model->state_contributions(0);
+      
       factor0_draws.row(i) = model->shared_state().row(0);
       factor1_draws.row(i) = model->shared_state().row(1);
+      Matrix Z = model->observation_coefficients(0, fully_observed)->dense();
+      observation_coefficient_draws.slice(i, -1, -1) = Z;
+      //      observation_coefficient_out << vec(Z) << "\n";
+
+      for (int series = 0; series < nseries; ++series) {
+        residual_sd_draws(i, series) =
+            model->observation_model()->model(series)->sigma();
+      }
+      
+      prediction_draws.slice(i, -1, -1) = model->simulate_forecast(
+          GlobalRng::rng,
+          test_predictors,
+          model->shared_state().last_col(),
+          gather_state_specific_final_state(*model));
+      //      prediction_out << prediction_draws.slice(i, -1, -1).to_matrix();
     }
 
-    CheckMcmcMatrix(factor0_draws, state.row(0));
-    CheckMcmcMatrix(factor1_draws, state.row(1));
-    //    std::ofstream("factor0.txt") << rbind(state.row(0), factor0_draws);
-    //    std::ofstream("factor1.txt") << rbind(state.row(1), factor1_draws);
+    Vector residual_sd_vector(nseries, residual_sd);
+    // ofstream("residual_sd.draws") << residual_sd_vector << "\n"
+    //                               << residual_sd_draws;
+    auto status = CheckMcmcMatrix(residual_sd_draws, residual_sd_vector);
+    EXPECT_TRUE(status.ok) << status;
+
+    // Factor draws are not identified.  Factors * observation coefficients is
+    // identified.
+    status = CheckMcmcMatrix(factor0_draws, state.row(0));
+    EXPECT_TRUE(status.ok) << status;
+    
+    status = CheckMcmcMatrix(factor1_draws, state.row(1));
+    EXPECT_TRUE(status.ok) << status;
   }
 
+  /*
+    // R code for viewing the results.
+    
+    plot.predictions <- function(fname, nseries, burn = 0) {
+      library(Boom)
+      draws.mat <- mscan(fname)
+      truth <- draws.mat[1:nseries, ]
+      draws.mat <- draws.mat[-(1:nseries), ]
+      niter <- nrow(draws.mat) / nseries
+      ntimes <- ncol(draws.mat)
+      draws <- aperm(array(draws.mat, dim = c(nseries, niter, ntimes)), c(2, 1, 3))
+      if (burn > 0) {
+        draws <- draws[-(1:burn), , ]
+      }
+      
+      nr <- max(1, floor(sqrt(nseries)))
+      nc <- ceiling(nseries / nr)
+      opar <- par(mfrow = c(nr, nc))
+      for (i in 1:nseries) {
+      PlotDynamicDistribution(draws[, i, ], ylim = range(draws, truth))
+      lines(truth[i, ], lty = 2, col = "green")
+      }
+    }
+
+    plot.observation.coefs <- function() {
+      library(Boom)
+      coefs <- mscan("observation_coefficient.draws")
+      BoxplotTrue(coefs[-1, ], truth = coefs[1, ])
+    }
+    
+    f1 <- mscan("factor1.draws")
+    PlotDynamicDistribution(f1[-1, ])
+    lines(f1[1, ], col = "green")
+   */
+  
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
   
   // A test case with both shared state and a single series that has series
@@ -302,10 +437,9 @@ namespace {
     std::vector<Ptr<VariableSelectionPrior>> spikes;
     std::vector<Ptr<MvnBase>> slabs;
     for (int i = 0; i < model->nseries(); ++i) {
+      // Inclusion probabilities will get adjusted in the constructor for the
+      // posterior sampler.
       Vector inc_probs(nfactors, 1.0);
-      for (int j = i + 1; j < inc_probs.size(); ++j) {
-        inc_probs[j] = 0.0;
-      }
       NEW(VariableSelectionPrior, spike)(inc_probs);
       spikes.push_back(spike);
 

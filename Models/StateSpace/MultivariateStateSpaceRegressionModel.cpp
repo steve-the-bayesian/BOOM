@@ -121,7 +121,7 @@ namespace BOOM {
     // Add series specific component.
     if (has_series_specific_state()) {
       for (int j = 0; j < nseries(); ++j) {
-        forecast.row(j) =
+        forecast.row(j) +=
             proxy_models_[j]->simulate_state_contribution_forecast(
                 rng, horizon, series_specific_final_state[j]);
       }
@@ -134,16 +134,16 @@ namespace BOOM {
     int t0 = time_dimension();
     for (int t = 0; t < horizon; ++t) {
       advance_to_timestamp(rng, time, state, t, t);
-      forecast.col(t) += *observation_coefficients(t + t0, fully_observed) * state;
+      forecast.col(t) += *observation_coefficients(time + t0, fully_observed) * state;
     }
 
     // Add regression component and residual error.
     int index = 0;
     for (int t = 0; t < horizon; ++t) {
-      for (int j = 0; j < nseries(); ++j) {
-        forecast(j, t) += observation_model()->model(j)->predict(
+      for (int series = 0; series < nseries(); ++series) {
+        forecast(series, t) += observation_model()->model(series)->predict(
             forecast_data.row(index))
-            + rnorm_mt(rng, 0, observation_model()->model(j)->sigma());
+            + rnorm_mt(rng, 0, observation_model()->model(series)->sigma());
       }
     }
     return forecast;
@@ -322,16 +322,22 @@ namespace BOOM {
       Selector missing(observed.complement());
       Vector imputed = *observation_coefficients(t, missing) * shared_state(t);
       for (int i = 0; i < missing.nvars(); ++i) {
-        int I = missing.indx(i);
+        int series = missing.indx(i);
         double shared_effect = imputed[i];
-        double series_effect = proxy_models_[I]->observation_matrix(t).dot(
-            proxy_models_[I]->state(t));
-        int data_index = data_indices_[I][t];
-        const RegressionModel &regression(*observation_model_->model(I));
+        double series_effect = 0;
+        if (this->has_series_specific_state()
+            && series_state_dimension(series) > 0) {
+          series_effect = proxy_models_[series]->observation_matrix(t).dot(
+              proxy_models_[series]->state(t));
+        }
+        int data_index = data_indices_[series][t];
+        const RegressionModel &regression(*observation_model_->model(series));
         double regression_effect = regression.predict(dat()[data_index]->x());
         double error = rnorm_mt(rng, 0, regression.sigma());
-        dat()[data_index]->set_y(shared_effect + series_effect
-                                 + regression_effect + error);
+        dat()[data_index]->set_y(shared_effect
+                                 + series_effect
+                                 + regression_effect
+                                 + error);
         
         switch (workspace_status_) {
           case UNSET:
@@ -339,11 +345,11 @@ namespace BOOM {
           break;
           
           case SHOWS_SHARED_EFFECTS:
-            adjusted_data_workspace_(I, t) = shared_effect + error;
+            adjusted_data_workspace_(series, t) = shared_effect + error;
             break;
             
           case SHOWS_SERIES_EFFECTS:
-            adjusted_data_workspace_(I, t) = series_effect + error;
+            adjusted_data_workspace_(series, t) = series_effect + error;
             break;
 
           default:

@@ -311,7 +311,7 @@ namespace BOOM {
         // (0) samplers for the individual regression models in the observation
         //     model.
         // (1) the observation_model_sampler and
-        // (2) the sampler for the primary model.
+        // (2) the sampler for the main state space model.
         //
         // (1) and (2) are trivial.
 
@@ -325,6 +325,9 @@ namespace BOOM {
               VECTOR_ELT(r_prior, i));
         }
 
+        //----------------------------------------------------------------------
+        // For debugging purposes the function can be called with options to fix
+        // the model parameters at specific values.
         bool fixed_coefficients = false;
         bool fixed_residual_sd = false;
         if (!Rf_isNull(r_options)) {
@@ -357,6 +360,7 @@ namespace BOOM {
           report_error("If you fix one set of regression parameters you "
                        "must fix both.");
         }
+        //----------------------------------------------------------------------
 
         if (!fixed_coefficients) {
           NEW(IndependentRegressionModelsPosteriorSampler,
