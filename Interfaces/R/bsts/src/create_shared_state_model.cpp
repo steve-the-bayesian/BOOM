@@ -165,10 +165,6 @@ namespace BOOM {
 
       // Set the io manager, if there is one.
       if (io_manager()) {
-        io_manager()->add_list_element(new GenericVectorListElement(
-            new SharedLocalLevelVarianceManager(state_model.get()),
-            prefix + "shared.sigma.level"));
-
         io_manager()->add_list_element(new MatrixListElement(
             state_model->coefficient_model()->Beta_prm(),
             prefix + "shared.local.level.coefficients"));
