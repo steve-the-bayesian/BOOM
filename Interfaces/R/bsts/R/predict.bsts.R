@@ -290,7 +290,7 @@ plot.bsts.prediction <- function(x,
   } else {
     predictors <- matrix(rep(1, horizon), ncol = 1)
   }
-
+  
   if (object$family == "gaussian" || object$family == "student") {
     if (object$has.regression) {
       ans <- list("predictors" = predictors)
@@ -316,8 +316,9 @@ plot.bsts.prediction <- function(x,
   ## Handle the case where there is no static regression, but there is a dynamic
   ## regression.
   if (!is.null(ans$dynamic.regression.predictors)) {
-    if (nrow(ans$dynamic.regression.predictors) != nrow(ans$predictors)
-      && all(ans$predictors == 1)) {
+    if (is.null(ans$predictors)
+      || (nrow(ans$dynamic.regression.predictors) != nrow(ans$predictors)
+        && all(ans$predictors == 1))) {
       ans$predictors <- matrix(rep( 1, nrow(ans$dynamic.regression.predictors)))
     }
   }
