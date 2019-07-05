@@ -28,6 +28,7 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/SufstatDataPolicy.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
+#include "stats/moments.hpp"
 
 namespace BOOM {
   class IndependentMvnSuf : public SufstatDetails<VectorData> {
@@ -147,6 +148,7 @@ namespace BOOM {
     const Ptr<VectorParams> Sigsq_prm() const {return prm2();}
     const VectorParams &Sigsq_ref() const {return prm2_ref();}
     const Vector &sigsq() const override {return Sigsq_ref().value();}
+    double sigsq(int i) const override {return sigsq()[i];}
     void set_sigsq(const Vector &sigsq);
     void set_sigsq_element(double sigsq, int position);
   };
@@ -171,6 +173,7 @@ namespace BOOM {
     const Ptr<VectorParams> Sigsq_prm() const {return prm();}
     const VectorParams &Sigsq_ref() const {return prm_ref();}
     const Vector &sigsq() const override {return Sigsq_ref().value();}
+    double sigsq(int i) const override {return sigsq()[i];}
     void set_sigsq(const Vector &sigsq) {Sigsq_prm()->set(sigsq);}
     void set_sigsq_element(double sigsq, int position) {
       Sigsq_prm()->set_element(sigsq, position);
