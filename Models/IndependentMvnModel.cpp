@@ -148,56 +148,20 @@ namespace BOOM {
   }
 
   //======================================================================
-  IndependentMvnModel::IndependentMvnModel(int dim)
-      : ParamPolicy(new VectorParams(dim, 0.0), new VectorParams(dim, 1.0)),
-        DataPolicy(new IndependentMvnSuf(dim)),
-        sigma_scratch_(dim),
+
+  IndependentMvnBase::IndependentMvnBase(int dim)
+      : DataPolicy(new IndependentMvnSuf(dim)),
+        sigma_scratch_(dim, 0.0),
         g_(dim),
-        h_(dim, dim) {}
-
-  IndependentMvnModel::IndependentMvnModel(const Vector &mean,
-                                           const Vector &variance)
-      : ParamPolicy(new VectorParams(mean), new VectorParams(variance)),
-        DataPolicy(new IndependentMvnSuf(mean.size())),
-        sigma_scratch_(mean.size()),
-        g_(mean.size()),
-        h_(mean.size(), mean.size()) {
-    if (mean.size() != variance.size()) {
-      report_error(
-          "The mean and the variance must be equal-sized "
-          "vectors in IndependentMvnModel constructor");
-    }
-  }
-
-  IndependentMvnModel::IndependentMvnModel(const IndependentMvnModel &rhs)
-      : Model(rhs),
-        MvnBase(rhs),
-        ParamPolicy(rhs),
-        DataPolicy(rhs),
-        PriorPolicy(rhs),
-        sigma_scratch_(rhs.dim()),
-        g_(rhs.dim()),
-        h_(rhs.dim(), rhs.dim()) {}
-
-  IndependentMvnModel *IndependentMvnModel::clone() const {
-    return new IndependentMvnModel(*this);
-  }
-
-  void IndependentMvnModel::add_mixture_data(const Ptr<Data> &dp, double weight) {
+        h_(dim, dim)
+  {}
+  
+  void IndependentMvnBase::add_mixture_data(const Ptr<Data> &dp, double weight) {
     suf()->add_mixture_data(DAT(dp)->value(), weight);
   }
 
-  void IndependentMvnModel::mle() {
-    const auto &sufstat(*suf());
-    for (int i = 0; i < dim(); ++i) {
-      set_mu_element(sufstat.ybar(i), i);
-      double ni = sufstat.n(i);
-      set_sigsq_element((ni - 1) * sufstat.sample_var(i) / ni, i);
-    }
-  }
-  
-  double IndependentMvnModel::Logp(const Vector &x, Vector &g, Matrix &h,
-                                   uint nderivs) const {
+  double IndependentMvnBase::Logp(const Vector &x, Vector &g, Matrix &h,
+                                  uint nderivs) const {
     int d = x.size();
     double qform = 0;
     double ldsi = 0;
@@ -224,23 +188,21 @@ namespace BOOM {
     return 0.5 * (ldsi - qform - d * log2pi);
   }
 
-  const Vector &IndependentMvnModel::mu() const { return Mu_ref().value(); }
-
-  DiagonalMatrix IndependentMvnModel::diagonal_variance() const {
+  DiagonalMatrix IndependentMvnBase::diagonal_variance() const {
     return DiagonalMatrix(sigsq());
   }
   
-  const SpdMatrix &IndependentMvnModel::Sigma() const {
+  const SpdMatrix &IndependentMvnBase::Sigma() const {
     sigma_scratch_.set_diag(sigsq());
     return sigma_scratch_;
   }
 
-  const SpdMatrix &IndependentMvnModel::siginv() const {
+  const SpdMatrix &IndependentMvnBase::siginv() const {
     sigma_scratch_.set_diag(1.0 / sigsq());
     return sigma_scratch_;
   }
 
-  double IndependentMvnModel::ldsi() const {
+  double IndependentMvnBase::ldsi() const {
     double ans = 0;
     const Vector &sigsq(this->sigsq());
     for (int i = 0; i < length(mu()); ++i) {
@@ -249,7 +211,7 @@ namespace BOOM {
     return ans;
   }
 
-  Vector IndependentMvnModel::sim(RNG &rng) const {
+  Vector IndependentMvnBase::sim(RNG &rng) const {
     Vector ans(mu());
     for (int i = 0; i < ans.size(); ++i) {
       ans += rnorm_mt(rng, 0, sigma(i));
@@ -257,28 +219,49 @@ namespace BOOM {
     return ans;
   }
 
-  Ptr<VectorParams> IndependentMvnModel::Mu_prm() { return prm1(); }
-  const Ptr<VectorParams> IndependentMvnModel::Mu_prm() const { return prm1(); }
-  const VectorParams &IndependentMvnModel::Mu_ref() const { return prm1_ref(); }
-
-  Ptr<VectorParams> IndependentMvnModel::Sigsq_prm() { return prm2(); }
-  const Ptr<VectorParams> IndependentMvnModel::Sigsq_prm() const {
-    return prm2();
+  double IndependentMvnBase::pdf(const Data *dp, bool logscale) const {
+    double ans = Logp(DAT(dp)->value(), g_, h_, 0);
+    return logscale ? ans : exp(ans);
   }
-  const VectorParams &IndependentMvnModel::Sigsq_ref() const {
-    return prm2_ref();
+  
+  //======================================================================
+  IndependentMvnModel::IndependentMvnModel(int dim)
+      : IndependentMvnBase(dim),
+        ParamPolicy(new VectorParams(dim, 0.0), new VectorParams(dim, 1.0))
+  {}
+
+  IndependentMvnModel::IndependentMvnModel(const Vector &mean,
+                                           const Vector &variance)
+      : IndependentMvnBase(mean.size()),
+        ParamPolicy(new VectorParams(mean), new VectorParams(variance))
+  {
+    if (mean.size() != variance.size()) {
+      report_error(
+          "The mean and the variance must be equal-sized "
+          "vectors in IndependentMvnModel constructor");
+    }
   }
 
-  const Vector &IndependentMvnModel::sigsq() const {
-    return Sigsq_ref().value();
+  IndependentMvnModel::IndependentMvnModel(const IndependentMvnModel &rhs)
+      : Model(rhs),
+        IndependentMvnBase(rhs),
+        ParamPolicy(rhs),
+        PriorPolicy(rhs)
+  {}
+
+  IndependentMvnModel *IndependentMvnModel::clone() const {
+    return new IndependentMvnModel(*this);
   }
 
-  double IndependentMvnModel::mu(int i) const { return mu()[i]; }
-
-  double IndependentMvnModel::sigsq(int i) const { return sigsq()[i]; }
-
-  double IndependentMvnModel::sigma(int i) const { return sqrt(sigsq(i)); }
-
+  void IndependentMvnModel::mle() {
+    const auto &sufstat(*suf());
+    for (int i = 0; i < dim(); ++i) {
+      set_mu_element(sufstat.ybar(i), i);
+      double ni = sufstat.n(i);
+      set_sigsq_element((ni - 1) * sufstat.sample_var(i) / ni, i);
+    }
+  }
+  
   void IndependentMvnModel::set_mu(const Vector &mu) { Mu_prm()->set(mu); }
 
   void IndependentMvnModel::set_mu_element(double value, int position) {
@@ -293,8 +276,41 @@ namespace BOOM {
     Sigsq_prm()->set_element(sigsq, position);
   }
 
-  double IndependentMvnModel::pdf(const Data *dp, bool logscale) const {
-    double ans = Logp(DAT(dp)->value(), g_, h_, 0);
-    return logscale ? ans : exp(ans);
+  //===========================================================================
+  ZeroMeanIndependentMvnModel::ZeroMeanIndependentMvnModel(int dim)
+      : IndependentMvnBase(dim),
+        ParamPolicy(new VectorParams(dim, 1.0)),
+        zero_(dim, 0.0)
+  {}
+
+  ZeroMeanIndependentMvnModel::ZeroMeanIndependentMvnModel(
+      const Vector &variance)
+      : IndependentMvnBase(variance.size()),
+        ParamPolicy(new VectorParams(variance)),
+        zero_(variance.size(), 0.0)
+  {}
+
+  ZeroMeanIndependentMvnModel::ZeroMeanIndependentMvnModel(
+      const ZeroMeanIndependentMvnModel &rhs)
+      : IndependentMvnBase(rhs),
+        zero_(rhs.dim(), 0.0),
+        sigma_scratch_(rhs.dim()),
+        g_(rhs.dim()),
+        h_(rhs.dim(), rhs.dim())
+  {}
+
+  ZeroMeanIndependentMvnModel *ZeroMeanIndependentMvnModel::clone() const {
+    return new ZeroMeanIndependentMvnModel(*this);
   }
+
+  void ZeroMeanIndependentMvnModel::mle() {
+    const auto &sufstat(*suf());
+    for (int i = 0; i < dim(); ++i) {
+      double sample_size = sufstat.n(i);
+      if (sample_size > 0) {
+        set_sigsq_element(sufstat.sumsq(i) / sample_size, i);
+      }
+    }
+  }
+  
 }  // namespace BOOM

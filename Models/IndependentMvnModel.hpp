@@ -23,6 +23,7 @@
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/GaussianModelBase.hpp"
 #include "Models/MvnBase.hpp"
+#include "Models/Policies/ParamPolicy_1.hpp"
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/SufstatDataPolicy.hpp"
@@ -77,58 +78,110 @@ namespace BOOM {
     std::vector<GaussianSuf> suf_;
   };
 
-  class IndependentMvnModel
+  //===========================================================================
+  // A base class containing code shared by IndependentMvnModel and
+  // ZeroMeanIndependentMvnModel.
+  class IndependentMvnBase
       : public MvnBase,
-        public ParamPolicy_2<VectorParams, VectorParams>,
         public SufstatDataPolicy<VectorData, IndependentMvnSuf>,
-        public PriorPolicy,
-        virtual public EmMixtureComponent {
+        virtual public EmMixtureComponent         
+  {
    public:
-    explicit IndependentMvnModel(int dim);
-    IndependentMvnModel(const Vector &mean, const Vector &variance);
-    IndependentMvnModel(const IndependentMvnModel &rhs);
-    IndependentMvnModel *clone() const override;
-
-    void add_mixture_data(const Ptr<Data> &dp, double weight) override;
-    void mle() override;
+    IndependentMvnBase(int dim);
+    IndependentMvnBase * clone() const override = 0;
     
-    // Several virtual functions from MvnBase are re-implemented here
-    // for efficiency.
+    void add_mixture_data(const Ptr<Data> &dp, double weight) override;
+
     double Logp(const Vector &x, Vector &g, Matrix &h,
                 uint nderivs) const override;
-    const Vector &mu() const override;
+
+    // mu() is inherited from mvnbase
+    const Vector &mu() const override = 0;
+    virtual double mu(int i) const {return mu()[i];}
+    
+    virtual const Vector &sigsq() const = 0;
+    virtual double sigsq(int i) const {return sigsq()[i];}
+    virtual double sigma(int i) const {return sqrt(sigsq(i));}
+
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
     DiagonalMatrix diagonal_variance() const;
     double ldsi() const override;
     Vector sim(RNG &rng = GlobalRng::rng) const override;
 
-    Ptr<VectorParams> Mu_prm();
-    const Ptr<VectorParams> Mu_prm() const;
-    const VectorParams &Mu_ref() const;
-
-    Ptr<VectorParams> Sigsq_prm();
-    const Ptr<VectorParams> Sigsq_prm() const;
-    const VectorParams &Sigsq_ref() const;
-
-    const Vector &sigsq() const;
-    double mu(int i) const;
-    double sigsq(int i) const;
-    double sigma(int i) const;
-
-    void set_mu(const Vector &mu);
-    void set_mu_element(double value, int position);
-    void set_sigsq(const Vector &sigsq);
-    void set_sigsq_element(double sigsq, int position);
-
     double pdf(const Data *dp, bool logscale) const override;
     int number_of_observations() const override { return dat().size(); }
 
    private:
+    // Scratch space for computing variance and precision matrices.
     mutable SpdMatrix sigma_scratch_;
+
+    // Scratch space for computing gradients and hessians.
     mutable Vector g_;
     mutable Matrix h_;
   };
 
+  //===========================================================================
+  class IndependentMvnModel
+      : public IndependentMvnBase,
+        public ParamPolicy_2<VectorParams, VectorParams>,
+        public PriorPolicy {
+   public:
+    explicit IndependentMvnModel(int dim);
+    IndependentMvnModel(const Vector &mean, const Vector &variance);
+    IndependentMvnModel(const IndependentMvnModel &rhs);
+    IndependentMvnModel *clone() const override;
+
+    void mle() override;
+    
+    // Several virtual functions from MvnBase are re-implemented here
+    // for efficiency.
+    Ptr<VectorParams> Mu_prm() {return prm1();}
+    const Ptr<VectorParams> Mu_prm() const {return prm1();}
+    const VectorParams &Mu_ref() const {return prm1_ref();}
+    const Vector &mu() const override {return Mu_ref().value();}
+    void set_mu(const Vector &mu);
+    void set_mu_element(double value, int position);
+
+    Ptr<VectorParams> Sigsq_prm() {return prm2();}
+    const Ptr<VectorParams> Sigsq_prm() const {return prm2();}
+    const VectorParams &Sigsq_ref() const {return prm2_ref();}
+    const Vector &sigsq() const override {return Sigsq_ref().value();}
+    void set_sigsq(const Vector &sigsq);
+    void set_sigsq_element(double sigsq, int position);
+  };
+
+  //===========================================================================
+  class ZeroMeanIndependentMvnModel
+      : public IndependentMvnBase,
+        public ParamPolicy_1<VectorParams>,
+        public PriorPolicy
+  {
+   public:
+    explicit ZeroMeanIndependentMvnModel(int dim);
+    ZeroMeanIndependentMvnModel(const Vector &variance);
+    ZeroMeanIndependentMvnModel(const ZeroMeanIndependentMvnModel &rhs);
+    ZeroMeanIndependentMvnModel *clone() const override;
+
+    void mle() override;
+
+    const Vector &mu() const override {return zero_;}
+
+    Ptr<VectorParams> Sigsq_prm() {return prm();}
+    const Ptr<VectorParams> Sigsq_prm() const {return prm();}
+    const VectorParams &Sigsq_ref() const {return prm_ref();}
+    const Vector &sigsq() const override {return Sigsq_ref().value();}
+    void set_sigsq(const Vector &sigsq) {Sigsq_prm()->set(sigsq);}
+    void set_sigsq_element(double sigsq, int position) {
+      Sigsq_prm()->set_element(sigsq, position);
+    }
+    
+   private:
+    Vector zero_;
+    mutable SpdMatrix sigma_scratch_;
+    mutable Vector g_;
+    mutable Matrix h_;
+  };
+  
 }  // namespace BOOM
 #endif  //  BOOM_INDEPENDENT_MVN_MODEL_HPP
