@@ -110,6 +110,7 @@ predict.bsts <- function(object,
   if (!is.null(seed)) {
     seed <- as.integer(seed)
   }
+
   predictive.distribution <- .Call("analysis_common_r_predict_bsts_model_",
                                    object,
                                    prediction.data,
@@ -309,6 +310,7 @@ plot.bsts.prediction <- function(x,
   } else {
     stop("Unrecognized object family in .FormatBstsPredictionData")
   }
+
   ## If the model object contains any dynamic regression components, add them
   ## here.
   ans <- .ExtractDynamicRegressionPredictors(ans, object, newdata)
@@ -513,6 +515,10 @@ plot.bsts.prediction <- function(x,
                                        xdim = ncol(dr.object$predictors),
                                        na.action)
       prediction.data$dynamic.regression.predictors <- as.matrix(predictors)
+      if (prediction.data$horizon == 1) {
+        prediction.data$horizon <-
+          nrow(prediction.data$dynamic.regression.predictors)
+      }
     }
   }
   return(prediction.data)

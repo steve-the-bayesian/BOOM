@@ -225,6 +225,10 @@ ss <- AddDynamicRegression(ss, y ~ x)
 ## iterations. See comment above about the random seed.
 model <- bsts(y, state.specification = ss, niter = 100, seed = 8675309)
 plot(model, "dynamic", burn = 10)
+
+xx <- rnorm(10)
+pred <- predict(model, newdata = xx)
+plot(pred)
 }
 
 \seealso{
