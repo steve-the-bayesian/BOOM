@@ -97,7 +97,7 @@ namespace BOOM {
       RMemoryProtector protector;
       SEXP rinitial_value = protector.protect(
           getListElement(prior, "initial.value"));
-      if (rinitial_value == R_NilValue) {
+      if (rinitial_value != R_NilValue) {
         initial_value_ = Rf_asReal(rinitial_value);
       } else {
         initial_value_ = a_ / b_;
