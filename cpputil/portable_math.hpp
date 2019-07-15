@@ -23,8 +23,19 @@
 // by the standard, pull the implementation from boost into namespace
 // std.
 
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// TODO(steve): This file is one of the last few remnants of the boost library
+// in BOOM. All the boost code contained herein has been commented out.  Once we
+// determine that it runs on all the platforms that CRAN supports, remove the
+// comments pertaining to boost.
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+
 #ifdef _MSC_VER
-#include <boost/math/special_functions/fpclassify.hpp>
+// #include <boost/math/special_functions/fpclassify.hpp>
 namespace std {
   inline bool isnan(double x) { return x != x; }
 }
@@ -33,18 +44,24 @@ namespace std {
 #ifdef __sun
 // Provide versions of isnan and isfinite that solaris chooses not to
 // provide.
-#include <boost/math/special_functions/fpclassify.hpp>
+// #include <boost/math/special_functions/fpclassify.hpp>
 namespace std {
   inline bool isnan(double x) {
     return x != x;
   }
-  using boost::math::isfinite;
+  //  using boost::math::isfinite;
+  inline bool isfinite(double x) {
+    return x == x
+        && x <= std::numeric_limits<double>::max()
+        && x >= std::numeric_limits<double>::min();
+  }
 }  // namespace std
 #endif  // __sun
 
-#include <boost/math/special_functions/round.hpp>
+//#include <boost/math/special_functions/round.hpp>
 namespace BOOM {
-  using boost::math::lround;
+  //   using boost::math::lround;
+  using std::lround;
 }
 
 #endif  // BOOM_PORTABLE_MATH_HPP_

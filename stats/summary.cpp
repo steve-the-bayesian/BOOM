@@ -21,6 +21,7 @@
 #include "stats/moments.hpp"
 
 #include <iomanip>
+#include <sstream>
 
 namespace BOOM {
 
@@ -39,7 +40,7 @@ namespace BOOM {
     print(out);
     return out.str();
   }
-  
+
   std::ostream &NumericSummary::print(std::ostream &out) const {
     using std::endl;
     auto precision = out.precision();
@@ -52,5 +53,5 @@ namespace BOOM {
     out << std::setprecision(precision);
     return out;
   }
-  
+
 } // namespace BOOM
