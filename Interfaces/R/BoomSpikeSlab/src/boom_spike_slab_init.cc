@@ -114,7 +114,14 @@ extern "C" {
       SEXP r_burn,
       SEXP r_mean_only,
       SEXP r_seed);
-  
+
+  SEXP boom_spike_slab_Bspline_basis(SEXP r_data_vector,
+                                     SEXP r_sorted_knots);
+  SEXP boom_spike_slab_Mspline_basis(SEXP r_data_vector,
+                                     SEXP r_sorted_knots);
+  SEXP boom_spike_slab_Ispline_basis(SEXP r_data_vector,
+                                     SEXP r_sorted_knots);
+
 static R_CallMethodDef spike_slab_arg_description[] = {
   CALLDEF(analysis_common_r_do_spike_slab, 8),
   CALLDEF(logit_spike_slab_wrapper, 12),
@@ -126,6 +133,10 @@ static R_CallMethodDef spike_slab_arg_description[] = {
   CALLDEF(boom_nested_regression_wrapper, 9),
   CALLDEF(analysis_common_r_do_feedforward, 7),
   CALLDEF(analysis_common_r_feedforward_prediction, 5),
+
+  CALLDEF(boom_spike_slab_Bspline_basis, 2),
+  CALLDEF(boom_spike_slab_Mspline_basis, 2),
+  CALLDEF(boom_spike_slab_Ispline_basis, 2),
   {NULL, NULL, 0}
 };
 

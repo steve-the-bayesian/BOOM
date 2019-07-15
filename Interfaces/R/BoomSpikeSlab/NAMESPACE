@@ -13,14 +13,17 @@ importFrom("utils", "help", "tail")
 importFrom("igraph", "graph_from_data_frame")
 
 export(BayesNnet,
+       BsplineBasis,
        CoefficientGroup,
+       ConditionalZellnerPrior,
        GetPredictorMatrix,
        HiddenLayer,
        IndependentSpikeSlabPrior,
-       ConditionalZellnerPrior,
+       IsplineBasis,
        LogitZellnerPrior,
-       NestedRegression,
+       MsplineBasis,
        MultinomialLogitSpikeSlabPrior,
+       NestedRegression,
        OdaOptions,
        PartialDependencePlot,
        PlotBayesNnetPredictions,
@@ -96,5 +99,7 @@ S3method(plot, BayesNnet)
 S3method(predict, BayesNnet)
 
 S3method(print, summary.logit.spike)
+
+S3method(knots, SplineBasis)
 
 useDynLib(BoomSpikeSlab, .registration = TRUE)
