@@ -232,7 +232,8 @@ namespace {
     Array state_contribution_draws(
         std::vector<int>{niter, nseries, sample_size});
     state_contribution_draws.slice(0, -1, -1) =
-        observation_coefficients * state;
+        observation_coefficients * ConstSubMatrix(state, 0, state.nrow() - 1,
+                                                  0, sample_size - 1).to_matrix();
     
     Array prediction_draws(std::vector<int>{
         niter, model->nseries(), test_size});
