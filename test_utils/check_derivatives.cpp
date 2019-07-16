@@ -19,6 +19,7 @@
 #include "test_utils/check_derivatives.hpp"
 #include "test_utils/test_utils.hpp"
 #include "numopt/NumericalDerivatives.hpp"
+#include <sstream>
 
 namespace BOOM {
 
@@ -41,7 +42,7 @@ namespace BOOM {
       return true;
     }
   }
-  
+
   std::string CheckDerivatives(DerivativeTestTarget target,
                                const Vector &evaluation_point,
                                double epsilon) {
@@ -60,7 +61,7 @@ namespace BOOM {
     if (all_zeros(analytic_gradient, analytic_hessian, epsilon)) {
       return "Test function was constant at evaluation point.";
     }
-    
+
     Vector numeric_gradient = derivs.gradient(evaluation_point);
     if (!VectorEquals(analytic_gradient, numeric_gradient, epsilon)) {
       err << "gradient does not match." << endl
@@ -80,7 +81,7 @@ namespace BOOM {
           << numeric_hessian
           << "maximum absolute deviation: "
           << (numeric_hessian - analytic_hessian).max_abs();
-          
+
       return err.str();
     }
     return "";
@@ -110,7 +111,7 @@ namespace BOOM {
     if (fabs(g) < epsilon && fabs(h) < epsilon) {
       return "Test function was constant at the evaluation point.";
     }
-    
+
     ScalarNumericalDerivatives derivs([target](double x) {
         double g, h;
         return target(x, g, h, 0);
@@ -137,7 +138,5 @@ namespace BOOM {
 
     return "";
   }
-  
+
 }  // namespace BOOM
-
-
