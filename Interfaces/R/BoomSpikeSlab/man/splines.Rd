@@ -16,9 +16,9 @@
 
 }
 \usage{
-  BsplineBasis(x, knots)
-  MsplineBasis(x, knots)
-  IsplineBasis(x, knots)
+  BsplineBasis(x, knots = NULL, numknots = 3)
+  MsplineBasis(x, knots = NULL, numknots = 3)
+  IsplineBasis(x, knots = NULL, numknots = 3)
 
   \method{knots}{SplineBasis}(Fn, ...)
 
@@ -34,6 +34,10 @@
     smallest and largest elements in \code{knots} defines the range of
     the expansion.  These knots are (notionally) replicated infinitely
     many times.  }
+
+  \item{numknots}{If the knot vector is \code{NULL} then create a vector
+    of length \code{numknots} that partitions \code{x} into
+    \code{numknots} + 1 eqiprobable segments.}
 
   \item{Fn}{A spline basis matrix.}
 
@@ -63,6 +67,8 @@
 }
 
 \references{
+  deBoor, "A Practical Guide to Splines".
+
   George and McCulloch (1997), "Approaches to Bayesian Variable
   Selection", \emph{Statistica Sinica}, \bold{7}, 339 -- 373.
   \url{http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n26.pdf}
