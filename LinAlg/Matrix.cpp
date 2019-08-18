@@ -590,7 +590,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   Matrix &Matrix::multT(const DiagonalMatrix &d, Matrix &ans,
                         double scal) const {
     return mult(d, ans, scal);
@@ -663,7 +663,7 @@ namespace BOOM {
     return *this;
   }
 
-  SpdMatrix Matrix::inner() const {  
+  SpdMatrix Matrix::inner() const {
     SpdMatrix ans(nc_, 0.0);
     EigenMap(ans) = EigenMap(*this).transpose() * EigenMap(*this);
     return ans;
@@ -679,7 +679,7 @@ namespace BOOM {
     }
     return Tmult(tmp);
   }
-  
+
   SpdMatrix Matrix::outer() const {
     SpdMatrix ans(nr_);
     EigenMap(ans).selfadjointView<Eigen::Upper>().rankUpdate(EigenMap(*this),
@@ -726,7 +726,7 @@ namespace BOOM {
     QR qr(*this);
     return qr.logdet();
   }
-  
+
   Vector Matrix::singular_values() const {
     Vector values(std::min(nr_, nc_));
     ::Eigen::JacobiSVD<Eigen::MatrixXd> svd(
@@ -886,7 +886,7 @@ namespace BOOM {
   }
 
   namespace {
-    template <class MAT> 
+    template <class MAT>
     Matrix & incremental_division_impl(Matrix &m1, const MAT &m2) {
       if (m1.nrow() != m2.nrow() || m1.ncol() != m2.ncol()) {
         report_error("Element-wise division requires matrices have the "
@@ -899,9 +899,9 @@ namespace BOOM {
       }
       return m1;
     }
-        
-  } // namespace 
-  
+
+  } // namespace
+
   Matrix &Matrix::operator/=(const Matrix &m) {
     return incremental_division_impl(*this, m);
   }
@@ -1011,10 +1011,9 @@ namespace BOOM {
 
   Matrix operator/(const double y, const Matrix &x) {
     Matrix ans = x;
-    transform(ans.begin(),
-              ans.end(),
-              ans.begin(),
-              bind1st(std::divides<double>(), y));
+    for (auto &el : ans) {
+      el = y / el;
+    }
     return ans;
   }
 
@@ -1364,7 +1363,7 @@ namespace BOOM {
     EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
     return ans;
   }
-  
+
   Vector &Lsolve_inplace(const Matrix &L, Vector &b) {
     assert(L.is_square() && L.nrow() == b.size());
     EigenMap(L).triangularView<Eigen::Lower>().solveInPlace(EigenMap(b));
@@ -1471,5 +1470,5 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
 }  // namespace BOOM
