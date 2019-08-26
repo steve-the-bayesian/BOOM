@@ -52,6 +52,10 @@ namespace BOOM {
     return timestamp_ < rhs.timestamp_;
   }
 
+  bool PointProcessEvent::operator==(const DateTime &rhs) const {
+    return timestamp_ == rhs;
+  }
+  
   bool PointProcessEvent::operator<(const DateTime &rhs) const {
     return timestamp_ < rhs;
   }
