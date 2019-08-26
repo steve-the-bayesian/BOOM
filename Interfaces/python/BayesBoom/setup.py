@@ -35,7 +35,7 @@ linalg_headers = glob("../../../LinAlg/*.hpp")
 math_sources = glob("../../../math/*.cpp") + glob("../../../math/cephes/*.cpp")
 
 numopt_sources = glob("../../../numopt/*.cpp")
-numopt_headers = glob("../../../numopt.hpp") + glob("../../../numopt/*.hpp")
+numopt_headers = ["../../../numopt.hpp"] + glob("../../../numopt/*.hpp")
 
 rmath_sources = glob("../../../Bmath/*.cpp")
 rmath_headers = glob("../../../Bmath/*.hpp")
@@ -61,6 +61,8 @@ models_headers = (
     + glob("../../../Models/Policies/*.hpp")
     + glob("../../../Models/PosteriorSamplers/*.hpp"))
 
+# Specific model classes to be added later, glm's hmm's, etc.
+
 boom_library_sources = (
     distributions_sources
     + linalg_sources
@@ -82,7 +84,7 @@ ext_modules = [
         'Boom',
         sources=boom_sources,
         include_dirs=[
-            "../..",
+            "../../../../..",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
