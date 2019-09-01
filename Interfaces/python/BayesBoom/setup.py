@@ -21,45 +21,56 @@ class get_pybind_include(object):
         import pybind11
         return pybind11.get_include(self.user)
 
-boom_headers = glob("../../../*.hpp")
 
-distributions_sources = glob("../../../distributions/*.cpp")
+def find_boom_root(dirpath):
+    if os.path.basename(dirpath) == "BOOM":
+        return dirpath
+    elif dirpath == "/":
+        raise Exception(f"Cannot find BOOM on path {dirpath}.")
+    else:
+        return find_boom_root(os.path.dirname(dirpath))
+    
+BOOM = find_boom_root(os.path.getcwd())
+    
+boom_headers = glob(f"{BOOM}/*.hpp")
+
+distributions_sources = glob(f"{BOOM}/distributions/*.cpp")
 distributions_headers = (
-    ["../../../distributions.hpp"]
-    + glob("../../../distributions/*.hpp")
+    [f"{BOOM}/distributions.hpp"]
+    + glob(f"{BOOM}/distributions/*.hpp")
     )
 
-linalg_sources = glob("../../../LinAlg/*.cpp")
-linalg_headers = glob("../../../LinAlg/*.hpp")
+linalg_sources = glob(f"{BOOM}/LinAlg/*.cpp")
+linalg_headers = glob(f"{BOOM}/LinAlg/*.hpp")
 
-math_sources = glob("../../../math/*.cpp") + glob("../../../math/cephes/*.cpp")
+math_sources = glob(f"{BOOM}/math/*.cpp") + glob(f"{BOOM}/math/cephes/*.cpp")
 
-numopt_sources = glob("../../../numopt/*.cpp")
-numopt_headers = ["../../../numopt.hpp"] + glob("../../../numopt/*.hpp")
+numopt_sources = glob(f"{BOOM}/numopt/*.cpp")
+numopt_headers = ["{BOOM}/numopt.hpp"] + glob(f"{BOOM}/numopt/*.hpp")
 
-rmath_sources = glob("../../../Bmath/*.cpp")
-rmath_headers = glob("../../../Bmath/*.hpp")
+rmath_sources = glob(f"{BOOM}/Bmath/*.cpp")
+rmath_headers = glob(f"{BOOM}/Bmath/*.hpp")
 
-samplers_sources = glob("../../../Samplers/*.cpp")
-samplers_headers = glob("../../../Samplers/*.hpp")
+samplers_sources = glob(f"{BOOM}/Samplers/*.cpp")
+samplers_headers = glob(f"{BOOM}/Samplers/*.hpp")
 
-stats_sources = glob("../../../stats/*.cpp")
-stats_headers = glob("../../../stats/*.hpp")
+stats_sources = glob(f"{BOOM}/stats/*.cpp")
+stats_headers = glob(f"{BOOM}/stats/*.hpp")
 
-targetfun_sources = glob("../../../TargetFun/*.cpp")
-targetfun_headers = glob("../../../TargetFun/*.hpp")
+targetfun_sources = glob(f"{BOOM}/TargetFun/*.cpp")
+targetfun_headers = glob(f"{BOOM}/TargetFun/*.hpp")
 
-utils_sources = glob("../../../cpputil/*.cpp")
-utils_headers = glob("../../../cpputil/*.hpp")
+utils_sources = glob(f"{BOOM}/cpputil/*.cpp")
+utils_headers = glob(f"{BOOM}/cpputil/*.hpp")
 
 models_sources = (
-    glob("../../../Models/*.cpp")
-    + glob("../../../Models/PosteriorSamplers/*.cpp")
-    + glob("../../../Models/Policies/*.cpp"))
+    glob(f"{BOOM}/Models/*.cpp")
+    + glob(f"{BOOM}/Models/PosteriorSamplers/*.cpp")
+    + glob(f"{BOOM}/Models/Policies/*.cpp"))
 models_headers = (
-    glob("../../../Models/*.hpp")
-    + glob("../../../Models/Policies/*.hpp")
-    + glob("../../../Models/PosteriorSamplers/*.hpp"))
+    glob(f"{BOOM}/Models/*.hpp")
+    + glob(f"{BOOM}/Models/Policies/*.hpp")
+    + glob(f"{BOOM}/Models/PosteriorSamplers/*.hpp"))
 
 # Specific model classes to be added later, glm's hmm's, etc.
 
@@ -84,7 +95,7 @@ ext_modules = [
         'Boom',
         sources=boom_sources,
         include_dirs=[
-            "../../../../..",
+            "{BOOM}/../..",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
