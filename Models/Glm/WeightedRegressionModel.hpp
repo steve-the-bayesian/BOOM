@@ -31,7 +31,6 @@ namespace BOOM {
    public:
     typedef WeightedRegressionData data_type;
     typedef std::vector<Ptr<WeightedRegressionData> > dataset_type;
-    typedef Ptr<dataset_type, false> dsetPtr;
 
     // Args:
     //   xdim:  Number of predictor variables.

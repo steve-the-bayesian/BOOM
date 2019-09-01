@@ -24,7 +24,7 @@
 namespace BOOM {
 
   MixtureDataPolicy::MixtureDataPolicy(int number_of_latent_levels)
-      : dat_(new std::vector<Ptr<Data>>) {
+  {
     if (number_of_latent_levels > 0) {
       pkey_ = new FixedSizeIntCatKey(number_of_latent_levels);
     } else {
@@ -35,7 +35,7 @@ namespace BOOM {
   MixtureDataPolicy::MixtureDataPolicy(const MixtureDataPolicy &rhs)
       : Model(rhs),
         DataTraits(rhs),
-        dat_(new std::vector<Ptr<DataType>>(*rhs.dat_)),
+        dat_(rhs.dat_),
         latent_(std::vector<Ptr<CategoricalData>>(rhs.latent_)),
         pkey_(rhs.pkey_) {
     // copy pointer elements for observed data
@@ -49,7 +49,7 @@ namespace BOOM {
   MixtureDataPolicy &MixtureDataPolicy::operator=(
       const MixtureDataPolicy &rhs) {
     if (&rhs != this) {
-      dat_ = new std::vector<Ptr<DataType>>(*rhs.dat_);
+      dat_ = rhs.dat_;
       latent_ = rhs.latent_;
     }
     return *this;
@@ -74,11 +74,6 @@ namespace BOOM {
   const std::vector<Ptr<CategoricalData>> &MixtureDataPolicy::latent_data()
       const {
     return latent_;
-  }
-
-  void MixtureDataPolicy::set_data(const dsetPtr &d) {
-    clear_data();
-    for (uint i = 0; i < d->size(); ++i) add_data((*d)[i]);
   }
 
   void MixtureDataPolicy::add_data(const Ptr<DataType> &d) {
@@ -125,9 +120,9 @@ namespace BOOM {
 
   void MixtureDataPolicy::combine_data(const Model &other, bool) {
     const MixtureDataPolicy &m(dynamic_cast<const MixtureDataPolicy &>(other));
-    const std::vector<Ptr<Data>> &d(*m.dat_);
-    dat_->reserve(dat_->size() + d.size());
-    dat_->insert(dat_->end(), d.begin(), d.end());
+    const std::vector<Ptr<Data>> &d(m.dat_);
+    dat_.reserve(dat_.size() + d.size());
+    dat_.insert(dat_.end(), d.begin(), d.end());
 
     const std::vector<Ptr<CategoricalData>> &mis(m.latent_);
     latent_.reserve(latent_.size() + mis.size());

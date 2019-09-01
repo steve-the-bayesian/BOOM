@@ -32,7 +32,6 @@ namespace BOOM {
     typedef Data DataType;
     typedef MixtureDataPolicy DataPolicy;
     typedef std::vector<Ptr<DataType>> DatasetType;
-    typedef Ptr<DatasetType, false> dsetPtr;
 
    public:
     explicit MixtureDataPolicy(int number_of_latent_levels);
@@ -42,15 +41,14 @@ namespace BOOM {
 
     void clear_data() override;
 
-    DatasetType &dat() override { return *dat_; }
-    const DatasetType &dat() const override { return *dat_; }
+    DatasetType &dat() override { return dat_; }
+    const DatasetType &dat() const override { return dat_; }
 
     // The mixture indicators specifying which components are responsible for
     // each observation.
     std::vector<Ptr<CategoricalData>> &latent_data();
     const std::vector<Ptr<CategoricalData>> &latent_data() const;
 
-    virtual void set_data(const dsetPtr &d);
     virtual void set_data(const DatasetType &d);
 
     template <class FwdIt>
@@ -79,7 +77,7 @@ namespace BOOM {
     int which_mixture_component(int observation_number) const;
 
    private:
-    dsetPtr dat_;  // Model owns pointer to its data.
+    std::vector<Ptr<Data>> dat_;  
     std::vector<Ptr<CategoricalData>> latent_;
     Ptr<CatKeyBase> pkey_;
 

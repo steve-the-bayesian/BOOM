@@ -20,7 +20,6 @@
 #ifndef BOOM_SMART_PTR_H
 #define BOOM_SMART_PTR_H
 
-#include <boost/intrusive_ptr.hpp>
 #include <memory>
 
 #define NEW(T, y) Ptr<T> y = new T
@@ -32,282 +31,156 @@
 
 namespace BOOM {
 
-  template <class T, bool INTRUSIVE = true>
-  class Ptr;
-
-  //======================================================================
+  // Ptr is modeled off of boost::intrusive_ptr.  Until late 2019 it was
+  // implemented in terms of intrusive_ptr, but the dependence was eliminated so
+  // that BOOM could be independent of boost.
   template <class T>
-  class Ptr<T, true> {  // intrusive pointers
+  class Ptr {  // intrusive pointers
    public:
     typedef T element_type;
-    typedef Ptr<T, false> this_type;
-    typedef T *this_type::*unspecified_bool_type;
 
-    const boost::intrusive_ptr<T> &get_boost() const {
-      return managed_pointer_;
+    Ptr() : managed_pointer_(nullptr) {}
+        
+    // NOLINTNEXTLINE  Implicit conversions are intentional.
+    Ptr(T *p, bool add_ref = true) : managed_pointer_(p) {
+      if (p  && add_ref) {
+        intrusive_ptr_add_ref(managed_pointer_);
+      }
     }
-    boost::intrusive_ptr<T> &get_boost() { return managed_pointer_; }
+    
+    Ptr(const Ptr &rhs)
+        : managed_pointer_(rhs.managed_pointer_)
+    {
+      bump_up();
+    }
 
-    Ptr() = default;
-
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    Ptr(T *p, bool add_ref = true) : managed_pointer_(p, add_ref) {}
-    Ptr(const Ptr &rhs) = default;
-
-    // CRAN complains about an ASAN test failure, which may be a false alarm.
-    // If it is not, then the failure has something to do with this move
-    // constructor.  See https://github.com/steve-the-bayesian/BOOM/issues/35
-    // 
-    Ptr(Ptr &&rhs) = default;
-    // If the default move constructor is not used, then it seems the following
-    // constructor should be used instead.  Not sure how this would be different
-    // than the default.
-    //    
-    // Ptr(Ptr &&rhs)
-    //     : managed_pointer_(std::move(rhs.managed_pointer_))
-    // {}
+    // Move the managed pointer to a new home.  Do not adjust the reference
+    // count.  Leave rhs in an empty state.
+    Ptr(Ptr &&rhs)
+        : managed_pointer_(rhs.managed_pointer_) {
+      rhs.managed_pointer_ = nullptr;
+    }
 
     // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <class Y> Ptr(const Ptr<Y, true> &rhs)
-        : managed_pointer_(rhs.get_boost()) {}
+    template <class Y> Ptr(const Ptr<Y> &rhs)
+        : managed_pointer_(rhs.get()) {
+      bump_up();
+    }
 
-    ~Ptr() {}  // deletes pt
+    ~Ptr() {
+      bump_down();
+    }  
 
     Ptr &operator=(const Ptr &rhs) {
       if (&rhs != this) {
-        managed_pointer_ = rhs.managed_pointer_;
+        set(rhs.managed_pointer_);
       }
       return *this;
     }
 
     template <class Y>
-    Ptr &operator=(const Ptr<Y, true> &rhs) {
-      managed_pointer_ = rhs.get_boost();
+    Ptr &operator=(const Ptr<Y> &rhs) {
+      set(rhs.get());
       return *this;
     }
 
     template <class Y>
     Ptr &operator=(T *r) {
-      managed_pointer_ = r;
+      set(r);
       return *this;
     }
 
     template <class U>
-    bool operator<(const Ptr<U, true> &rhs) const {
-      return get() < rhs.get();
+    bool operator<(const Ptr<U> &rhs) const {
+      return managed_pointer_ < rhs.get();
     }
 
-    T &operator*() const { return *managed_pointer_; }
-    T *operator->() const { return managed_pointer_.operator->(); }
-    T *get() const { return managed_pointer_.get(); }
-
-    template <class U>
-    Ptr<U, true> dcast() const {
-      return Ptr<U, true>(dynamic_cast<U *>(managed_pointer_.get()));
+    T &operator*() const {
+      assert(managed_pointer_ != nullptr);
+      return *managed_pointer_;
+    }
+    T *operator->() const {
+      assert(managed_pointer_ != nullptr);
+      return managed_pointer_;
     }
 
-    template <class U>
-    Ptr<U, true> scast() const {
-      return Ptr<U, true>(static_cast<U *>(managed_pointer_.get()));
-    }
+    T *get() const { return managed_pointer_; }
 
     template <class U>
-    Ptr<U, true> rcast() const {
-      return Ptr<U, true>(reinterpret_cast<U *>(managed_pointer_.get()));
+    Ptr<U> dcast() const {
+      return Ptr<U>(dynamic_cast<U *>(managed_pointer_));
     }
 
     template <class U>
-    Ptr<U, true> ccast() const {
-      return Ptr<U, true>(const_cast<U *>(managed_pointer_.get()));
+    Ptr<U> scast() const {
+      return Ptr<U>(static_cast<U *>(managed_pointer_));
     }
 
-    operator unspecified_bool_type() const {
-      return !managed_pointer_ ? 0 : &this_type::get_boost();
+    template <class U>
+    Ptr<U> rcast() const {
+      return Ptr<U>(reinterpret_cast<U *>(managed_pointer_));
+    }
+
+    template <class U>
+    Ptr<U> ccast() const {
+      return Ptr<U>(const_cast<U *>(managed_pointer_));
+    }
+
+    explicit operator bool () const noexcept {
+      return managed_pointer_;
     }  // never throws
 
     bool operator!() const { return !managed_pointer_; }
 
     template <class OTHER>
     bool operator==(const Ptr<OTHER> &rhs) const {
-      return managed_pointer_.get() == rhs.get();
+      return managed_pointer_ == rhs.get();
     }
 
     template <class OTHER>
     bool operator!=(const Ptr<OTHER> &rhs) const {
-      return managed_pointer_.get() != rhs.get();
+      return managed_pointer_ != rhs.get();
     }
 
-    void swap(Ptr &b) { managed_pointer_.swap(b.get_boost()); }
-    void reset() { managed_pointer_.reset(); }
-    void reset(T *new_value) { managed_pointer_.reset(new_value); }
-
-   private:
-    boost::intrusive_ptr<T> managed_pointer_;
-  };
-
-  //======================================================================
-  template <class T>
-  class Ptr<T, false> {
-   public:
-    const std::shared_ptr<T> &get_boost() const { return managed_pointer_; }
-    std::shared_ptr<T> &get_boost() { return managed_pointer_; }
-
-    typedef T element_type;
-    typedef Ptr<T, false> this_type;
-    typedef T *this_type::*unspecified_bool_type;
-
-    Ptr() : managed_pointer_() {}
-
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <class Y> Ptr(Y *p)
-        : managed_pointer_(p) {}
-
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <class Y, class D> Ptr(Y *p, D d)
-        : managed_pointer_(p, d) {}
+    void swap(Ptr &b) {
+      // Reference counts follow managed_pointer_ and b.managed_pointer_, so no
+      // adjustments are needed.
+      std::swap(managed_pointer_, b.managed_pointer_);
+    }
     
-    ~Ptr() {}
-
-    Ptr(const Ptr &rhs) : managed_pointer_(rhs.managed_pointer_) {}
-
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <class Y> Ptr(const Ptr<Y> &rhs)
-        : managed_pointer_(rhs.get_boost()) {}
-
-    // NOLINTNEXTLINE  Implicit conversions are intentional.
-    template <class Y> Ptr(const std::shared_ptr<T> &rhs)
-        : managed_pointer_(rhs) {}
-
-    Ptr &operator=(const Ptr &rhs) {
-      if (&rhs == this) return *this;
-      managed_pointer_ = rhs.managed_pointer_;
-      return *this;
+    void reset(T *new_value = nullptr) {
+      set(new_value);
     }
-
-    template <class Y>
-    Ptr &operator=(const Ptr<Y> &rhs) {
-      managed_pointer_ = rhs.get_boost();
-      return *this;
-    }
-
-    template <class Y>
-    Ptr &operator=(Y *rhs) {  // normal boost pointers prohibit this
-      if (managed_pointer_.get() == rhs) return *this;
-      if (!rhs)
-        managed_pointer_.reset();
-      else
-        Ptr(rhs).swap(*this);
-      return *this;
-    }
-
-    Ptr &operator=(const std::shared_ptr<T> &rhs) {
-      managed_pointer_ = rhs;
-      return *this;
-    }
-
-    inline void reset() { managed_pointer_.reset(); }
-    template <class Y>
-    inline void reset(Y *p) {
-      managed_pointer_.reset(p);
-    }
-    template <class Y, class D>
-    inline void reset(Y *p, D d) {
-      managed_pointer_.reset(p, d);
-    }
-
-    bool operator!() const { return !managed_pointer_; }
-
-    T &operator*() const { return *managed_pointer_; }
-    T *operator->() const { return managed_pointer_.operator->(); }
-    T *get() const { return managed_pointer_.get(); }
-
-    bool operator<(const Ptr<T, false> &rhs) const { return get() < rhs.get(); }
-
-    bool unique() const { return managed_pointer_.unique(); }
-    long use_count() const { return managed_pointer_.use_count(); }
-
-    void swap(Ptr &b) { managed_pointer_.swap(b.get_boost()); }
-
-    template <class U>
-    Ptr<U, false> dcast() const {
-      return Ptr<U, false>(boost::dynamic_pointer_cast<U>(managed_pointer_));
-    }
-
-    template <class U>
-    Ptr<U, false> scast() const {
-      return Ptr<U, false>(boost::static_pointer_cast<U>(managed_pointer_));
-    }
-
-    template <class U>
-    Ptr<U, false> ccast() const {
-      return Ptr<U, false>(boost::const_pointer_cast<U>(managed_pointer_));
-    }
-
-    template <class U>
-    friend bool operator<(const Ptr &, const Ptr<U, false> &);
-
-    template <class A, class B>
-    friend std::basic_ostream<A, B> operator<<(std::basic_ostream<A, B> &os,
-                                               const Ptr &);
-
-    template <class D>
-    friend D *get_deleter(const Ptr<T, false> &);
 
    private:
-    std::shared_ptr<T> managed_pointer_;
+    T * managed_pointer_;
+
+    // Increase the reference count of the managed pointer by 1.
+    void bump_up() {
+      if (managed_pointer_) {
+        intrusive_ptr_add_ref(managed_pointer_);
+      }
+    }
+
+    // Decrease the reference count of the managed pointer by 1.
+    void bump_down() {
+      if (managed_pointer_) {
+        intrusive_ptr_release(managed_pointer_);
+      }
+    }
+    
+    void set(const T *rhs) const {
+      bump_down();
+      managed_pointer_ = rhs;
+      bump_up();
+    }
+    
+    void set(T* rhs) {
+      bump_down();
+      managed_pointer_ = rhs;
+      bump_up();
+    }
   };
-
-  //-------------------------------------------------------
-
-  template <class T, class U>
-  inline bool operator==(const Ptr<T, false> &a, const Ptr<U, false> &b) {
-    return a.get() == b.get();
-  }
-
-  template <class T, class U>
-  inline bool operator!=(const Ptr<T, false> &a, const Ptr<U, false> &b) {
-    return a.get() != b.get();
-  }
-
-  template <class T, class U>
-  inline bool operator<(const Ptr<T, false> &a, const Ptr<T, false> &b) {
-    return a.managed_pointer_ < b.managed_pointer_;
-  }
-
-  //-------------------------------------------------------
-  template <class T>
-  inline void swap(Ptr<T, false> &a, Ptr<T, false> &b) {
-    a.swap(b);
-  }
-
-  template <class T>
-  inline T *get_pointer(Ptr<T, false> &a) {
-    return a.get();
-  }
-
-  //-------------------------------------------------------
-  template <class A, class B, class T>
-  inline std::basic_ostream<A, B> &operator<<(std::basic_ostream<A, B> &os,
-                                              const Ptr<T, false> &a) {
-    os << a.managed_pointer_;
-    return os;
-  }
-
-  template <class T, class D>
-  inline D *get_deleter(const Ptr<T, false> &a) {
-    return a.managed_pointer_.get_deleter();
-  }
-
-  template <class To, class From>
-  Ptr<To, false> dcast(const Ptr<From, false> &a) {
-    std::shared_ptr<To> tmp = boost::dynamic_pointer_cast<To>(a.get_boost());
-    return Ptr<To, false>(tmp);
-  }
-
-  template <class To, class From>
-  Ptr<To, true> dcast(const Ptr<From, true> &a) {
-    return Ptr<To>(dynamic_cast<To *>(a.get()));
-  }
 
 }  // namespace BOOM
 

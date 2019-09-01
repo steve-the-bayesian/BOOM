@@ -27,7 +27,6 @@ namespace BOOM {
    public:
     typedef D DataType;
     typedef std::vector<Ptr<DataType> > DatasetType;
-    typedef Ptr<DatasetType, false> dsetPtr;
     typedef DefaultDataInfoPolicy<D> DataTraits;
 
     virtual DatasetType &dat() = 0;
@@ -48,7 +47,6 @@ namespace BOOM {
    public:
     typedef Data DataType;
     typedef std::vector<Ptr<DataType> > DatasetType;
-    typedef Ptr<DatasetType, false> dsetPtr;
     typedef DefaultDataInfoPolicy<Data> DataTraits;
 
     virtual DatasetType &dat() = 0;

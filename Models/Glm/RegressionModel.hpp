@@ -52,7 +52,6 @@ namespace BOOM {
   class RegSuf : virtual public Sufstat {
    public:
     typedef std::vector<Ptr<RegressionData> > dataset_type;
-    typedef Ptr<dataset_type, false> dsetPtr;
 
     RegSuf *clone() const override = 0;
 
