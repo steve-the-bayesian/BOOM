@@ -2,6 +2,7 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
+import os
 from glob import glob
 
 __version__ = '0.0.1'
@@ -20,57 +21,47 @@ class get_pybind_include(object):
     def __str__(self):
         import pybind11
         return pybind11.get_include(self.user)
-
-
-def find_boom_root(dirpath):
-    if os.path.basename(dirpath) == "BOOM":
-        return dirpath
-    elif dirpath == "/":
-        raise Exception(f"Cannot find BOOM on path {dirpath}.")
-    else:
-        return find_boom_root(os.path.dirname(dirpath))
     
-BOOM = find_boom_root(os.path.getcwd())
     
-boom_headers = glob(f"{BOOM}/*.hpp")
+boom_headers = glob("*.hpp")
 
-distributions_sources = glob(f"{BOOM}/distributions/*.cpp")
+distributions_sources = glob("distributions/*.cpp")
 distributions_headers = (
-    [f"{BOOM}/distributions.hpp"]
-    + glob(f"{BOOM}/distributions/*.hpp")
+    ["distributions.hpp"]
+    + glob("distributions/*.hpp")
     )
 
-linalg_sources = glob(f"{BOOM}/LinAlg/*.cpp")
-linalg_headers = glob(f"{BOOM}/LinAlg/*.hpp")
+linalg_sources = glob("LinAlg/*.cpp")
+linalg_headers = glob("LinAlg/*.hpp")
 
-math_sources = glob(f"{BOOM}/math/*.cpp") + glob(f"{BOOM}/math/cephes/*.cpp")
+math_sources = glob("math/*.cpp") + glob("math/cephes/*.cpp")
 
-numopt_sources = glob(f"{BOOM}/numopt/*.cpp")
-numopt_headers = ["{BOOM}/numopt.hpp"] + glob(f"{BOOM}/numopt/*.hpp")
+numopt_sources = glob("numopt/*.cpp")
+numopt_headers = ["{BOOM}/numopt.hpp"] + glob("numopt/*.hpp")
 
-rmath_sources = glob(f"{BOOM}/Bmath/*.cpp")
-rmath_headers = glob(f"{BOOM}/Bmath/*.hpp")
+rmath_sources = glob("Bmath/*.cpp")
+rmath_headers = glob("Bmath/*.hpp")
 
-samplers_sources = glob(f"{BOOM}/Samplers/*.cpp")
-samplers_headers = glob(f"{BOOM}/Samplers/*.hpp")
+samplers_sources = glob("Samplers/*.cpp")
+samplers_headers = glob("Samplers/*.hpp")
 
-stats_sources = glob(f"{BOOM}/stats/*.cpp")
-stats_headers = glob(f"{BOOM}/stats/*.hpp")
+stats_sources = glob("stats/*.cpp")
+stats_headers = glob("stats/*.hpp")
 
-targetfun_sources = glob(f"{BOOM}/TargetFun/*.cpp")
-targetfun_headers = glob(f"{BOOM}/TargetFun/*.hpp")
+targetfun_sources = glob("TargetFun/*.cpp")
+targetfun_headers = glob("TargetFun/*.hpp")
 
-utils_sources = glob(f"{BOOM}/cpputil/*.cpp")
-utils_headers = glob(f"{BOOM}/cpputil/*.hpp")
+utils_sources = glob("cpputil/*.cpp")
+utils_headers = glob("cpputil/*.hpp")
 
 models_sources = (
-    glob(f"{BOOM}/Models/*.cpp")
-    + glob(f"{BOOM}/Models/PosteriorSamplers/*.cpp")
-    + glob(f"{BOOM}/Models/Policies/*.cpp"))
+    glob("Models/*.cpp")
+    + glob("Models/PosteriorSamplers/*.cpp")
+    + glob("Models/Policies/*.cpp"))
 models_headers = (
-    glob(f"{BOOM}/Models/*.hpp")
-    + glob(f"{BOOM}/Models/Policies/*.hpp")
-    + glob(f"{BOOM}/Models/PosteriorSamplers/*.hpp"))
+    glob("Models/*.hpp")
+    + glob("Models/Policies/*.hpp")
+    + glob("Models/PosteriorSamplers/*.hpp"))
 
 # Specific model classes to be added later, glm's hmm's, etc.
 
@@ -86,16 +77,16 @@ boom_library_sources = (
     + utils_sources
     + models_sources)
 
-boom_extension_sources = ["./Models/GaussianModel.cpp"]
+boom_extension_sources = ["pybind11/Models/GaussianModel.cpp"]
 
 boom_sources = boom_library_sources + boom_extension_sources
 
 ext_modules = [
     Extension(
-        'Boom',
+        'BayesBoom',
         sources=boom_sources,
         include_dirs=[
-            "{BOOM}/../..",
+            os.getcwd(),
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -147,7 +138,7 @@ class BuildExt(build_ext):
     }
 
     if sys.platform == 'darwin':
-        darwin_opts = ['-stdlib=libc++', '-mmacosx-version-min=10.14']
+        darwin_opts = ['-stdlib=libc++', '-mmacosx-version-min=10.14', '-Wno-sign-compare']
         c_opts['unix'] += darwin_opts
         l_opts['unix'] += darwin_opts
 

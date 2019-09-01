@@ -1,0 +1,113 @@
+#!/bin/bash
+
+usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+
+DO_INSTALL=0
+DO_CHECK=0
+
+while getopts :ci option; do
+    case "${option}" in
+        i)
+            DO_INSTALL=1
+            ;;
+        c)
+            DO_CHECK=1
+            ;;
+        \?)
+	    echo "Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+BOOM_DIR='python_package/BayesBoom'
+
+## If there is already a Boom directory then delete it.
+if [ -d "$BOOM_DIR" ]; then
+    echo "Removing previous directory $BOOM_DIR"
+    rm -rf $BOOM_DIR
+fi
+
+## create a Boom subdirectory and copy the relevant files into it.
+mkdir -p $BOOM_DIR
+echo "Copying top level files"
+cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
+
+##----------------------------------------------------------------------
+## Source:
+## Create the source directory and copy top-level files.
+backup_files=`find . -name "\.#*"`
+if [ ! -z $backup_files ]
+then
+    echo "Removing backup files: $backup_files"
+    rm $backup_files
+fi
+
+echo "Copying source files"
+## Populate the various source directories.
+SRCS=`find Bmath -name "*.cpp"`
+SRCS="$SRCS `find cpputil -name "*.cpp"`"
+SRCS="$SRCS `find distributions -name "*.cpp"`"
+SRCS="$SRCS `find LinAlg -name "*.cpp"`"
+SRCS="$SRCS `find math -name "*.cpp"`"
+SRCS="$SRCS `find Models -name "*.cpp"`"
+SRCS="$SRCS `find numopt -name "*.cpp"`"
+SRCS="$SRCS `find Samplers -name "*.cpp"`"
+SRCS="$SRCS `find stats -name "*.cpp"`"
+SRCS="$SRCS `find TargetFun -name "*.cpp"`"
+./install/install_headers.py $SRCS $BOOM_DIR/
+
+echo "Done copying source files."
+
+##----------------------------------------------------------------------
+## Copy the pybind11 bindings
+
+echo "copying pybind11 bindings"
+mkdir $BOOM_DIR/pybind11
+cp Interfaces/python/BayesBoom/Models/*.cpp $BOOM_DIR/pybind11/Models
+echo "done copying pybind11 bindings"
+
+
+##----------------------------------------------------------------------
+## Headers:
+## Create the include directory, and add in the top level header files.
+echo "copying headers"
+mkdir -p $BOOM_DIR/include
+cp *.hpp $BOOM_DIR
+
+## Put a couple of local implementation files in the source directories that
+## expect them.
+echo "copying cephus to $BOOM_DIR/math/cephes/cephus_impl.hpp"
+cp math/cephes/cephes_impl.hpp $BOOM_DIR/math/cephes/cephus_impl.hpp
+cp Bmath/*.hpp $BOOM_DIR/Bmath
+echo "done copying cephus"
+
+## Copy the bulk of the header files to the relevant sub directories.
+HDRS=`find Bmath -name "*.hpp"`
+HDRS="$HDRS `find cpputil -name "*.hpp"`"
+HDRS="$HDRS `find distributions -name "*.hpp"`"
+HDRS="$HDRS `find LinAlg -name "*.hpp"`"
+HDRS="$HDRS `find math -name "*.hpp"`"
+HDRS="$HDRS `find Models -name "*.hpp"`"
+HDRS="$HDRS `find numopt -name "*.hpp"`"
+HDRS="$HDRS `find Samplers -name "*.hpp"`"
+HDRS="$HDRS `find stats -name "*.hpp"`"
+HDRS="$HDRS `find TargetFun -name "*.hpp"`"
+HDRS="$HDRS `find Eigen -name "*.h"`"
+./install/install_headers.py $HDRS $BOOM_DIR/
+echo "done copying headers"
+
+
+cp -r Eigen/* $BOOM_DIR/Eigen/
+#echo "Ignore the message about not being able to copy Eigen/src."
+
+
+##----------------------------------------------------------------------
+## Build the package:
+
+cd python_package
+pip3 --verbose install ./BayesBoom
+
+
+

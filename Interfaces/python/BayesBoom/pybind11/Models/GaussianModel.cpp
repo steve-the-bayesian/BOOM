@@ -1,6 +1,6 @@
 #include <pybind11/pybind11.h>
 
-#include "../../../../Models/GaussianModel.hpp"
+#include "Models/GaussianModel.hpp"
 
 
 namespace py = pybind11;
