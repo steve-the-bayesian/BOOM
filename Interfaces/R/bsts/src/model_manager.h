@@ -71,7 +71,8 @@ namespace BOOM {
       //   The index of the time point (again, in C's 0-offset counting system)
       //   to which the specified observation belongs.
       int mapping(int observation_number) const {
-        return trivial_ ? i : timestamp_mapping_[observation_number] - 1;
+        return trivial_ ? observation_number
+            : timestamp_mapping_[observation_number] - 1;
       }
 
       const std::vector<int> &forecast_timestamps() const {
