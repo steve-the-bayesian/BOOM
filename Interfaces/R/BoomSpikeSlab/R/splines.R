@@ -64,6 +64,10 @@ IsplineBasis <- function(x, knots = NULL, numknots = 3) {
   return(ans)
 }
 
+knots <- function(Fn, ...) {
+  UseMethod("knots")
+}
+
 knots.SplineBasis <- function(Fn, ...) {
   ## Args:
   ##   Fn: A BOOM spline basis matrix.

@@ -1,6 +1,6 @@
 COPTS = [
     "-I/usr/local/include",
-    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",    
+    "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
 
@@ -41,7 +41,6 @@ cc_test(
     name = "multivariate_regression_test",
     srcs = ["multivariate_regression_test.cc"],
     copts = COPTS,
-    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -53,7 +52,6 @@ cc_test(
     name = "mvn_given_x_test",
     srcs = ["mvn_given_x_test.cc"],
     copts = COPTS,
-    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -87,7 +85,6 @@ cc_test(
     name = "regression_spike_slab_test",
     srcs = ["regression_spike_slab_test.cc"],
     copts = COPTS,
-    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -99,7 +96,6 @@ cc_test(
     name = "student_spike_slab_test",
     srcs = ["student_spike_slab_test.cc"],
     copts = COPTS,
-    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -111,7 +107,6 @@ cc_test(
     name = "variable_selection_prior_test",
     srcs = ["variable_selection_prior_test.cc"],
     copts = COPTS,
-    linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",

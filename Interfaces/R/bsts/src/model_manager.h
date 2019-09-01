@@ -36,8 +36,16 @@ namespace BOOM {
 
       // Args:
       //   r_data_list: A list containing an object named 'timestamp.info' which
-      //     is an R object of class TimestampInfo.
-      //
+      //     is an R object of class TimestampInfo.  The list contains the
+      //     following named elements:
+      //     - timestamps.are.trivial: Scalar boolean.
+      //     - number.of.time.points:  Scalar integer.
+      //     - timestamp.mapping: Either R_NilValue (if timestamps are trivial)
+      //         or a numeric vector containing the index of the timestamp to
+      //         which each observation belongs.  These indices are in R's
+      //         unit-offset counting system.  The member function 'mapping'
+      //         handles the conversion to the C++ 0-offset counting system.
+      // 
       // Effects:
       //   The timestamp.info object is extracted, and its contents are used to
       //   populate this object.
@@ -54,8 +62,17 @@ namespace BOOM {
 
       // The index of the time point to which observation i belongs.  The index
       // is in C's 0-based counting system.
-      int mapping(int i) const {
-        return trivial_ ? i : timestamp_mapping_[i] - 1;
+      //
+      // Args:
+      //   observation_number: The index of an observation (row in the data)
+      //     in C's 0-offset counting system.
+      //
+      // Returns:
+      //   The index of the time point (again, in C's 0-offset counting system)
+      //   to which the specified observation belongs.
+      int mapping(int observation_number) const {
+        return trivial_ ? observation_number
+            : timestamp_mapping_[observation_number] - 1;
       }
 
       const std::vector<int> &forecast_timestamps() const {
@@ -155,8 +172,8 @@ namespace BOOM {
 
       // Returns the timestamp number (index) of observation i.  The index is
       // given in C's 0-based counting system.
-      int TimestampMapping(int i) const {
-        return timestamp_info_.trivial() ? i : timestamp_info_.mapping(i);
+      int TimestampMapping(int observation_number) const {
+        return timestamp_info_.mapping(observation_number);
       }
 
       RNG & rng() {return rng_;}

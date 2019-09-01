@@ -1,6 +1,6 @@
 Package: Boom
-Version: 0.9.1
-Date: 2019-06-03
+Version: 0.9.2
+Date: 2019-09-01
 Title: Bayesian Object Oriented Modeling
 Author: Steven L. Scott is the sole author and creator of the BOOM project.
    Some code in the BOOM libraries has been modified from other open source
