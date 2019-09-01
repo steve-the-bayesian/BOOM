@@ -68,7 +68,7 @@ TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
     number.of.time.points <- number.of.observations
     stopifnot(number.of.time.points > 0)
     ans <- list(timestamps.are.trivial = TRUE,
-                number.of.time.points = number.of.time.points,
+                number.of.time.points = as.integer(number.of.time.points),
                 timestamps = 1:number.of.observations,
                 regular.timestamps = 1:number.of.time.points)
   } else {
@@ -76,13 +76,14 @@ TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
     stopifnot(number.of.observations == length(timestamps))
     regular.timestamps <- RegularizeTimestamps(timestamps)
     ans <- list(timestamps.are.trivial = IsRegular(timestamps),
-      number.of.time.points = length(regular.timestamps),
+      number.of.time.points = as.integer(length(regular.timestamps)),
       timestamps = timestamps,
       regular.timestamps = regular.timestamps)
     if (!ans$timestamps.are.trivial) {
       ## A hack to handle numeric timestamps appropriately.
       class(timestamps) <- class(regular.timestamps)
-      ans$timestamp.mapping <- zoo::MATCH(timestamps, regular.timestamps)
+      ans$timestamp.mapping <- as.integer(
+        zoo::MATCH(timestamps, regular.timestamps))
     }
     if (length(ans$regular.timestamps) > 2 * length(ans$timestamps)) {
       warning("Expanding the time series to a regular interval resulted ",

@@ -209,7 +209,8 @@ namespace BOOM {
       int observation_number = 0;
       for (int t = 0; t < NumberOfTimePoints(); ++t) {
         Selector current(response.size());
-        while(TimestampMapping(observation_number) == t) {
+        while(observation_number < response.size() &&
+              TimestampMapping(observation_number) == t) {
           current.add(observation_number++);
         }
         AddData(current.select(response),
