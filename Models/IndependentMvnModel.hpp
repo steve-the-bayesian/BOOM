@@ -88,7 +88,7 @@ namespace BOOM {
         virtual public EmMixtureComponent         
   {
    public:
-    IndependentMvnBase(int dim);
+    explicit IndependentMvnBase(int dim);
     IndependentMvnBase * clone() const override = 0;
     
     void add_mixture_data(const Ptr<Data> &dp, double weight) override;
@@ -161,7 +161,7 @@ namespace BOOM {
   {
    public:
     explicit ZeroMeanIndependentMvnModel(int dim);
-    ZeroMeanIndependentMvnModel(const Vector &variance);
+    explicit ZeroMeanIndependentMvnModel(const Vector &variance);
     ZeroMeanIndependentMvnModel(const ZeroMeanIndependentMvnModel &rhs);
     ZeroMeanIndependentMvnModel *clone() const override;
 
