@@ -1,0 +1,3 @@
+When submitting to CRAN include the note:
+"rchk issues are false positives as confirmed by Tomas Kalibera"
+from correspondence with Uwe Ligges on June 7, 2019.
