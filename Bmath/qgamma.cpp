@@ -52,6 +52,7 @@
  *      Percentage Points of the Chi-Squared Distribution.
  *      Applied Statistics 24, page 385.  */
 
+#include <cstring>
 #include "nmath.hpp"
 #include "dpq.hpp"
 namespace Rmath{
@@ -153,7 +154,7 @@ double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
 //                 return std::numeric_limits<double>::quiet_NaN();
         if (errno != 0) {
           std::ostringstream err;
-          err << "Math error in qgamma: " << strerror(errno) << std::endl;
+          err << "Math error in qgamma: " << std::strerror(errno) << std::endl;
           report_error(err.str());
           return std::numeric_limits<double>::quiet_NaN();
         }
