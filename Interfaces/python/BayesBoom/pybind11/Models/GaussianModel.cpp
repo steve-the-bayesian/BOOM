@@ -2,18 +2,25 @@
 
 #include "Models/GaussianModel.hpp"
 
-
 namespace py = pybind11;
 
-PYBIND11_MODULE(BayesBoom, boom) {
+namespace BOOM {
 
-  boom.doc() = "A library for Bayesian modeling, and assorted "
-      "other useful bits.";
+  PYBIND11_MODULE(BayesBoom, boom) {
 
-  py::class<GaussianModel, Model>(boom, "GaussianModel")
-      .def(py::init<double mean = 0.0, double sd = 1.0>())
-      .def("set_mean_sd", &GaussianModel::set_params)
-      ;
+    boom.doc() = "A library for Bayesian modeling, and assorted "
+        "other useful bits.";
+
+    //    py::class_<GaussianModel, Model>(boom, "GaussianModel")
+    py::class_<GaussianModel>(boom, "GaussianModel")    
+        .def(py::init<double, double>(),
+             py::arg("mean") = 0.0, py::arg("sd") = 1.0)
+        .def("set_mean_sd", &GaussianModel::set_params,
+             py::arg("mean"),
+             py::arg("sd"))
+        ;
     
   
-}  // namespace boompy
+  }  // Module
+
+}  // namespace BOOM

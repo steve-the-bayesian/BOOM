@@ -65,9 +65,8 @@ echo "Done copying source files."
 
 echo "copying pybind11 bindings"
 mkdir $BOOM_DIR/pybind11
-cp Interfaces/python/BayesBoom/Models/*.cpp $BOOM_DIR/pybind11/Models
+ditto Interfaces/python/BayesBoom/pybind11 $BOOM_DIR/pybind11
 echo "done copying pybind11 bindings"
-
 
 ##----------------------------------------------------------------------
 ## Headers:
@@ -98,8 +97,9 @@ HDRS="$HDRS `find Eigen -name "*.h"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/
 echo "done copying headers"
 
-
-cp -r Eigen/* $BOOM_DIR/Eigen/
+# On Linux this would be cp --parents, but that option does
+# not exist on OS X.
+ditto  Eigen/ $BOOM_DIR/Eigen/
 #echo "Ignore the message about not being able to copy Eigen/src."
 
 
