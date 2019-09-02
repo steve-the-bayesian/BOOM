@@ -1,17 +1,24 @@
 #!/bin/bash
 
-usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+usage () { echo "Usage: $0 [-c] [-r] [-C] 1>&2; exit 0";
+           echo " -i: Install the package"
+           echo " -c: Check the package using R CMD CHECK"
+           echo " -C: Check the package for submission to CRAN using R CMD CHECK --as-cran"
+         }
 
 DO_INSTALL=0
 DO_CHECK=0
 
-while getopts :ci option; do
+while getopts :ciC option; do
     case "${option}" in
         i)
             DO_INSTALL=1
             ;;
         c)
             DO_CHECK=1
+            ;;
+        C)
+            DO_CHECK_AS_CRAN=1
             ;;
         \?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -132,6 +139,10 @@ R CMD build Boom
 
 if [[ $DO_CHECK = 1 ]]; then
     MAKEFLAGS=" j 16 " R CMD CHECK Boom_*.tar.gz
+fi
+
+if [[ $DO_CHECK_AS_CRAN = 1 ]]; then
+    MAKEFLAGS=" j 16 " R CMD CHECK --as-cran Boom_*.tar.gz
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then

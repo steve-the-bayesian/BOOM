@@ -18,6 +18,7 @@
 */
 #include "stats/Bspline.hpp"
 #include <sstream>
+#include <algorithm>
 #include "LinAlg/Matrix.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
