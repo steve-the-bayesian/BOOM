@@ -42,3 +42,10 @@ cc_test(
     copts = COPTS,
     deps = DEPS,
 )
+
+cc_test(
+    name = "spline_test",
+    srcs = ["spline_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
