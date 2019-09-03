@@ -10,11 +10,10 @@ MAKEFLAGS=" -j 16 "
 # - ADD_ is probably no longer needed.  It was necessary for communicating with
 #   Fortran, which I no longer do.
 # - R_NO_REMAP disables R macros which map things like Rf_error to error.
-# - BOOST_NO_AUTO_PTR: not sure what this does.
 # - EIGEN_WARNINGS_DISABLED: By default Eigen ignores certain warnings that it
 #   considers spurious.  This flag turns off the disabling.
 
-PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DADD_ -DR_NO_REMAP -DBOOST_NO_AUTO_PTR -DEIGEN_WARNINGS_DISABLED
+PKG_CPPFLAGS = -I. -I../inst/include -IBmath -Imath/cephes -DADD_ -DR_NO_REMAP -DEIGEN_WARNINGS_DISABLED
 # Sanitizers:  Uncomment one of the following lines to enable the corresponding sanitizer.
 # PKG_CXXFLAGS= -fsanitize=address
 # PKG_CXXFLAGS= -fsanitize=undefined
