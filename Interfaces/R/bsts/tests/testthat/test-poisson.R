@@ -55,6 +55,6 @@ test_that("Poisson bsts", {
     ss.reg, niter = 500, family = "poisson", seed = seed)
   pred <- predict(model, newdata = shark.test, trials.or.exposure = max(model$exposure))
   expect_that(pred, is_a("bsts.prediction"))
-  expect_equals(ncol(pred), 6)
+  expect_equal(ncol(pred), 6)
 })
 

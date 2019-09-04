@@ -57,15 +57,14 @@ test_that("predict method runs without crashing for DLM's", {
   ss <- AddLocalLinearTrend(list(), train$iclaimsNSA)
   ss <- AddSeasonal(ss, train$iclaimsNSA, nseasons = 52)
   # Dynamic regression component
-  ss <- AddDynamicRegression(ss,
-    formula = iclaimsNSA ~ unemployment.office,
+  ss <- AddDynamicRegression(ss, formula = iclaimsNSA ~ unemployment.office,
     data = train)
 
   # Train it
-  model <- bsts(train$iclaimsNSA ,
-    state.specification = ss,
-    niter = 1000)
-  test_subset <- cbind(test$department.of.unemployment)
+  model <- bsts(train$iclaimsNSA, state.specification = ss, niter = 1000)
+  test_subset <- cbind(
+    "department.of.unemployment" = test$department.of.unemployment,
+    "unemployment.office" = test$unemployment.office)
   pred <- predict(model, newdata = test_subset)
 })
 
@@ -89,6 +88,6 @@ test_that("predict method runs without crashing for DLM's with static regressors
     state.specification = ss,
     niter = 100)
 
-  test_subset <- cbind(test$department.of.unemployment)
+  test_subset <- cbind("department.of.unemployment" = test$department.of.unemployment)
   pred <- predict(model, newdata = test_subset)
 })
