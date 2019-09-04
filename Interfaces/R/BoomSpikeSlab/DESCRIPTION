@@ -13,7 +13,7 @@ Description: Spike and slab regression with a variety of residual error
   to handle Bayesian variable selection and model averaging.  See
   <DOI:10.1504/IJMMNO.2014.059942> for an explanation of the Gaussian case.
 Depends: Boom (>= 0.9.2) , R (>= 3.1.0)
-LinkingTo: BH (>= 1.65.0), Boom(>= 0.9.1)
+LinkingTo: Boom(>= 0.9.2)
 Suggests: MASS, testthat, mlbench
 Imports: igraph
 Version: 1.2.1

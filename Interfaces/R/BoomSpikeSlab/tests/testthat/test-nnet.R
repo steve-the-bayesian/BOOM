@@ -26,14 +26,16 @@ cat("test-nnet\n")
 data(BostonHousing)
 hidden.layers <- list(
   HiddenLayer(10, expected.model.size = Inf))
+nnet.niter <- 1000
 model <- BayesNnet(medv ~ ., hidden.layers = hidden.layers,
-  niter = 1000, data = BostonHousing, expected.model.size = Inf, seed = seed)
+  niter = nnet.niter, data = BostonHousing, expected.model.size = Inf, seed = seed)
 
-reg <- lm.spike(medv ~ ., niter = 1000, data = BostonHousing)
+reg.niter <- 1000
+reg <- lm.spike(medv ~ ., niter = reg.niter, data = BostonHousing)
 reg.burn <- SuggestBurnLogLikelihood(-reg$sigma)
 nnet.burn <- SuggestBurnLogLikelihood(-model$residual.sd)
-expect_gt(mean(reg$sigma[reg.burn:1000]),
-  mean(model$residual.sd[nnet.burn:1000]))
+expect_gt(mean(reg$sigma[reg.burn:reg.niter]),
+  mean(model$residual.sd[nnet.burn:nnet.niter]))
 
 pred <- predict(model)
 plot(model)
