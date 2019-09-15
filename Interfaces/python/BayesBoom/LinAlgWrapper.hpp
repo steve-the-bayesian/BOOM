@@ -7,6 +7,8 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
+namespace py = pybind11;
+
 namespace BayesBoom {
   using namespace BOOM;
   
@@ -23,19 +25,19 @@ namespace BayesBoom {
         .def("length", &Vector::length)
         ;
 
-    py::class <VectorView>(boom, "VectorView")
-        .def(py::init<Vector &>())
-        ;
+    // py::class_ <VectorView>(boom, "VectorView")
+    //     .def(py::init<Vector &>())
+    //     ;
 
-    py::class <ConstVectorView>(boom, "ConstVectorView")
-        .def(py::init<const Vector &>())
-        ;
+    // py::class_ <ConstVectorView>(boom, "ConstVectorView")
+    //     .def(py::init<const Vector &>())
+    //     ;
 
-    py::class <Matrix>(boom, "Matrix")
-        ;
+    // py::class_ <Matrix>(boom, "Matrix")
+    //     ;
 
-    py::class <SpdMatrix, Matrix>(boom, "SpdMatrix")
-        ;
+    // py::class_ <SpdMatrix, Matrix>(boom, "SpdMatrix")
+    //     ;
   
   }  // Module BOOM
 

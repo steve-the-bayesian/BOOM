@@ -11,14 +11,20 @@ def getopts(argv):
         argv = argv[1:]  # Reduce the argument list by copying it starting from index 1.
     return opts
 
-def copy_many_files(filename_list, dest_dir):
+def copy_many_files(filename_list, dest_dir, verbose=False):
     for fname in filename_list:
         dest = os.path.normpath(os.path.join(dest_dir, fname))
-#        print('copying ', fname, ' to ', dest)
-        target_directory = os.path.dirname(dest)
-        if not os.path.exists(target_directory):
-            os.makedirs(target_directory)
-        shutil.copy(fname, dest)
+        if os.path.isdir(fname):
+            if verbose:
+                print(f"Doing nothing for {fname} because it is a directory.")
+            pass
+        else:
+            if verbose:
+                print('copying ', fname, ' to ', dest)
+            target_directory = os.path.dirname(dest)
+            if not os.path.exists(target_directory):
+                os.makedirs(target_directory)
+            shutil.copy(fname, dest)
 
 if __name__ == '__main__':
     from sys import argv
