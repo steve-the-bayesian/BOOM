@@ -1,11 +1,22 @@
 #include <pybind11/pybind11.h>
 
 #include "Models/GaussianModel.hpp"
+#include "LinAlg/Vector.hpp"
 
 namespace py = pybind11;
 
-namespace BOOM {
+namespace BayesBoom {
+  using namespace BOOM;
+  
+  template <class MODEL>
+  void set_double_data(Ptr<MODEL> &model, const Vector &data) {
+    for (int i = 0; i < data.size(); ++i) {
+      NEW(DoubleData, data_point)(data[i]);
+      model->add_data(data_point);
+    }
+  }
 
+  
   PYBIND11_MODULE(BayesBoom, boom) {
 
     boom.doc() = "A library for Bayesian modeling, and assorted "
@@ -18,6 +29,10 @@ namespace BOOM {
         .def("set_mean_sd", &GaussianModel::set_params,
              py::arg("mean"),
              py::arg("sd"))
+        .def("mean", &GaussianModel::mu)
+        .def("sd", &GaussianModel::sigma)
+        .def("variance", &GaussianModel::sigsq)
+        //        .def("set_data", &set_double_data, this)
         ;
     
   
