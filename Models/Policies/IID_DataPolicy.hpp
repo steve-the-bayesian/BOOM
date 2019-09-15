@@ -29,11 +29,10 @@ namespace BOOM {
    public:
     typedef D DataType;
     typedef IID_DataPolicy<D> DataPolicy;
-    typedef std::vector<Ptr<DataType> > DatasetType;
     typedef DefaultDataInfoPolicy<D> Info;
 
     IID_DataPolicy();
-    explicit IID_DataPolicy(const DatasetType &d);
+    explicit IID_DataPolicy(const std::vector<Ptr<DataType>> &d);
     template <class FwdIt>
     IID_DataPolicy(FwdIt Begin, FwdIt End);
 
@@ -46,14 +45,14 @@ namespace BOOM {
     }
 
     virtual void clear_data();
-    virtual void set_data(const DatasetType &d);
+    virtual void set_data(const std::vector<Ptr<DataType>> &data_set);
     virtual void add_data(const Ptr<Data> &dp);
     virtual void add_data(DataType *dp) { add_data(Ptr<DataType>(dp)); }
     virtual void add_data(const Ptr<DataType> &dp);
     virtual void remove_data(const Ptr<Data> &dp);
 
-    DatasetType &dat() { return dat_; }
-    const DatasetType &dat() const { return dat_; }
+    std::vector<Ptr<DataType>> &dat() { return dat_; }
+    const std::vector<Ptr<DataType>> &dat() const { return dat_; }
 
     template <class FwdIt>
     void set_data(FwdIt Beg, FwdIt End);
@@ -79,7 +78,7 @@ namespace BOOM {
     }
 
    private:
-    DatasetType dat_;
+    std::vector<Ptr<DataType>> dat_;
     std::vector<std::function<void(void)> > observers_;
   };
   //======================================================================
@@ -98,7 +97,7 @@ namespace BOOM {
   IID_DataPolicy<D>::IID_DataPolicy() {}
 
   template <class D>
-  IID_DataPolicy<D>::IID_DataPolicy(const DatasetType &d) : dat_(d) {}
+  IID_DataPolicy<D>::IID_DataPolicy(const std::vector<Ptr<DataType>> &d) : dat_(d) {}
 
   template <class D>
   template <class FwdIt>
@@ -121,7 +120,7 @@ namespace BOOM {
   }
 
   template <class D>
-  void IID_DataPolicy<D>::set_data(const DatasetType &d) {
+  void IID_DataPolicy<D>::set_data(const std::vector<Ptr<DataType>> &d) {
     clear_data();
     for (auto i = 0; i < d.size(); ++i) add_data(d[i]);
   }
