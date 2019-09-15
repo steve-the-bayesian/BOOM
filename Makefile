@@ -103,6 +103,8 @@ TIMESERIES_HDRS := $(wildcard Models/TimeSeries/*.hpp) \
 UTIL_SRCS := $(wildcard cpputil/*.cpp)
 UTIL_HDRS := $(wildcard cpputil/*.hpp)
 
+EIGEN_HDRS = UTIL_HDRS := $(wildcard Eigen/*)
+
 CXX_SRCS = ${BART_SRCS} \
 	${DISTRIBUTION_SRCS} \
 	${GLM_SRCS} \
@@ -127,6 +129,7 @@ CXX_SRCS = ${BART_SRCS} \
 CXX_HDRS = ${TOP_HDRS} \
 	${BART_HDRS} \
 	${DISTRIBUTION_HDRS} \
+	#{EIGEN_HDRS} \
 	${GLM_HDRS} \
 	${HIERARCHICAL_HDRS} \
 	${HMM_HDRS} \
@@ -145,6 +148,7 @@ CXX_HDRS = ${TOP_HDRS} \
 	${TARGETFUN_HDRS} \
 	${TIMESERIES_HDRS} \
 	${UTIL_HDRS}
+
 
 CXX_STD = CXX11
 
