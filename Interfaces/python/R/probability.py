@@ -25,6 +25,31 @@ def dnorm(x, mu, sigma, log=False):
     else:
         return sp.norm.pdf(x, mu, sigma)
 
-def pnorm(x, mu, sigma, log=False):
+
+def pnorm(x, mu, sigma, lower=True, log=False):
     """
+    Normal cumulative distribuion function.
     """
+    if log:
+        if lower:
+            return sp.norm.logcdf(x, loc=mu, scale=sigma)
+        else:
+            return sp.norm.logsf(x, loc=mu, scale=sigma)
+    else:
+        if lower:
+            return sp.norm.cdf(x, loc=mu, scale=sigma)
+        else:
+            return sp.norm.sf(x, loc=mu, scale=sigma)
+
+
+def qnorm(x, mu, sigma, lower=True, log=False):
+    """
+    Quantiles of the normal distribuion.
+    """
+    if log:
+        x = np.exp(x)
+
+    if lower:
+        return sp.norm.ppf(x, mu, sigma)
+    else:
+        return sp.norm.ppf(1 - x, mu, sigma)
