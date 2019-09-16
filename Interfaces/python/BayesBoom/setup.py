@@ -77,7 +77,10 @@ boom_library_sources = (
     + utils_sources
     + models_sources)
 
-boom_extension_sources = ["pybind11/Models/GaussianModel.cpp"]
+boom_extension_sources = [
+    "Models/GaussianModel.cpp",
+    "LinAlg/LinAlgWrapper.cpp",
+]
 
 boom_sources = boom_library_sources + boom_extension_sources
 
