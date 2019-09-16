@@ -28,7 +28,11 @@ namespace BayesBoom {
                GaussianModelBase,
                Ptr<GaussianModel>>(boom, "GaussianModel")
         .def(py::init<double, double>(),
-             py::arg("mean") = 0.0, py::arg("sd") = 1.0)
+             py::arg("mean") = 0.0, py::arg("sd") = 1.0,
+             "Args:\n"
+             "\n"
+             "  mean:  Mean of the distribution.\n"
+             "  sd:  Standard deviation of the distribution.\n")
         .def("set_mean_sd", &GaussianModel::set_params,
              py::arg("mean"),
              py::arg("sd"))
@@ -46,7 +50,6 @@ namespace BayesBoom {
           "  data: a boom.Vector containing the data values."
           )
         .def("sample_posterior", &GaussianModel::sample_posterior)
-        .def("set_method", &GaussianModel::set_method)
         .def_property_readonly("sigsq_parameter",
                                [] (const GaussianModel &model) {
                                  return model.Sigsq_prm();

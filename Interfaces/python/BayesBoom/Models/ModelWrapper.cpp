@@ -20,16 +20,16 @@ namespace BayesBoom {
                model->set_method(sampler);
              },
           py::arg("sampler"),
-          "Set 'sampler' as a posteriors sampling method.  More than one "
-          "sampler can be set for the model (e.g. one for the mean and one "
-          "for the variance).  If multiple samplers are present then each is "
-          "called every time 'sample_posterior' is invoked."
+          "Set 'sampler' as a posteriors sampling method.  More than one\n "
+          "sampler can be set for the model (e.g. one for the mean and one \n"
+          "for the variance).  If multiple samplers are present then each is \n"
+          "called every time 'sample_posterior' is invoked.\n"
           )
         .def("sample_posterior", &Model::sample_posterior,
-             "Take one draw from the posterior distribution of model "
-             "parameters given data.  The work for this draw is "
-             "performed by any posterior samplers that have been assigned "
-             "to this model by  'set_method'.")
+             "Take one draw from the posterior distribution of model \n"
+             "parameters given data.  The work for this draw is \n"
+             "performed by any posterior samplers that have been assigned \n"
+             "to this model by  'set_method'.\n")
         ;
 
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(
