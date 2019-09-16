@@ -13,7 +13,7 @@ namespace BayesBoom {
   // files.
   void LinAlg_def(py::module &);
   void GaussianModel_def(py::module &);
-
+  void Spline_def(py::module &);
   
   PYBIND11_MODULE(BayesBoom, boom) {
     boom.doc() = "A library for Bayesian modeling, and assorted "
@@ -21,6 +21,7 @@ namespace BayesBoom {
     
     // Calling these functions here defines the classes in the module.
     LinAlg_def(boom);
+    Spline_def(boom);
     GaussianModel_def(boom);
     
   }  // Module BOOM

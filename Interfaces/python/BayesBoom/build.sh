@@ -10,5 +10,7 @@ c++ -shared -O3 -Wall  -std=c++11 -fPIC -undefined dynamic_lookup -I'/usr/local/
 
 c++ -shared -O3 -Wall  -std=c++11 -fPIC -undefined dynamic_lookup -I'/usr/local/include/BOOM' `python3 -m pybind11 --includes` -lboom Models/GaussianModel.cpp -o GaussianModel.o
 
-c++ -v -Wall -shared -std=c++11 -fPIC -undefined dynamic_lookup module.o GaussianModel.o LinAlgWrapper.o -oBayesBoom`python3-config --extension-suffix`
+c++ -shared -O3 -Wall  -std=c++11 -fPIC -undefined dynamic_lookup -I'/usr/local/include/BOOM' `python3 -m pybind11 --includes` -lboom stats/BsplineWrapper.cpp -o Bspline.o
+
+c++ -v -Wall -shared -std=c++11 -fPIC -undefined dynamic_lookup module.o GaussianModel.o LinAlgWrapper.o Bspline.o -oBayesBoom`python3-config --extension-suffix`
 

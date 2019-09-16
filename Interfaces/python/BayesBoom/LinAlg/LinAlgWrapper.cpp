@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
+#include <pybind11/operators.h>
 #include <memory>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
