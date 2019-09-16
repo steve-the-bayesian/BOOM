@@ -27,14 +27,26 @@ namespace BOOM {
   // One dimensional function minimization using Brent's method.
   class BrentMinimizer {
    public:
+    // Args:
+    //   target: The scalar function (of a scalar argument) to be minimized.
     explicit BrentMinimizer(const ScalarTarget &target);
 
+    // Minimize the target function.
+    // Args:
+    //   starting_value:  The x-value from which the minimization should begin.
+    //   second_candidate: A second value near the starting point, used to
+    //     initially bracket the minimum.
     void minimize(double starting_value, double second_candidate);
     void minimize(double starting_value);
 
+    // The value of x at which the target achieves a min.
     double minimizing_x() const;
+
+    // The minimum function output.
     double minimum_value() const;
 
+    // Set the tolerance: the acceptable window size around the minimizing
+    // value.
     void set_tolerance(double tol);
 
    private:
@@ -44,6 +56,7 @@ namespace BOOM {
     double tolerance_;
   };
 
+  // Maximize, rather than minimize, a target.
   class BrentMaximizer {
    public:
     explicit BrentMaximizer(const ScalarTarget &f);
@@ -59,6 +72,7 @@ namespace BOOM {
     ScalarNegation f_;
     BrentMinimizer minimizer_;
   };
+
 
 }  // namespace BOOM
 

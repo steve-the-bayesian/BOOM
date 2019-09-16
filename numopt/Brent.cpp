@@ -107,10 +107,9 @@ namespace BOOM {
     }
   }
 
-  // The following code was obtained from netlib.org from the file
-  // brent.shar.  I modified the function argument to be a
-  // std::function, and changed the function signature to ANSI syntax
-  // (from K&R).
+  // The following code was obtained from netlib.org from the file brent.shar.
+  // Steven L. Scott modified the function argument to be a std::function, and
+  // changed the function signature to ANSI syntax (from K&R).
   /*************************************************************************
    *                          C math library
    * function FMINBR - one-dimensional search for a function minimum
