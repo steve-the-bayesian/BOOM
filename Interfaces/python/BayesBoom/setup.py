@@ -78,8 +78,11 @@ boom_library_sources = (
     + models_sources)
 
 boom_extension_sources = [
-    "Models/GaussianModel.cpp",
-    "LinAlg/LinAlgWrapper.cpp",
+    ["module.cpp"]
+    + glob(["Models/*.cpp"]),
+    + glob(["LinAlg/*.cpp"]),
+    + glob(["Samplers/*.cpp"]),
+    + glob(["stats/*.cpp"]),
 ]
 
 boom_sources = boom_library_sources + boom_extension_sources
@@ -97,7 +100,6 @@ ext_modules = [
         language='c++'
     ),
 ]
-
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689

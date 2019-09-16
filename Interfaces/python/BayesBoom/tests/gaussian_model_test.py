@@ -9,7 +9,7 @@ class GaussianModelTest(unittest.TestCase):
 
     def test_moments(self):
         model = boom.GaussianModel(1, 2)
-        self.assertEqual(1.0, model.mean())
+        self.assertEqual(1.0, model.mean)
         
 if __name__ == "__main__":
     unittest.main()

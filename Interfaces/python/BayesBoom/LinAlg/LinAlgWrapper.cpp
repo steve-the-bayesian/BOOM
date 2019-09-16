@@ -14,6 +14,7 @@ namespace BayesBoom {
   using namespace BOOM;
 
   void LinAlg_def(py::module &boom) {
+
     py::class_<Vector, std::unique_ptr<Vector>>(boom, "Vector")
         .def(py::init<int, double>(), py::arg("size"), py::arg("value") = 0.0,
              "Create a Vector of the requested size filled with a constant value.")
@@ -31,6 +32,7 @@ namespace BayesBoom {
              "For a dense vector this is always 1.")
         .def("length", &Vector::length, "The number of elements in the vector.")
         .def("size", &Vector::length, "The number of elements in the vector.")
+        .def("to_numpy", [](const Vector &v) {return EigenMap(v);})
         .def("__repr__",
              [](const Vector &v) {
                std::ostringstream out;
@@ -61,6 +63,7 @@ namespace BayesBoom {
         .def("to_numpy",
              [](const Matrix &m) {return EigenMap(m);},
              "Convert the matrix to a numpy array." )
+        .def("to_numpy", [](const Vector &v) {return EigenMap(v);})
         .def("__repr__",
              [](const Matrix &m) {
                std::ostringstream out;
@@ -92,5 +95,3 @@ namespace BayesBoom {
   }  // ends the LinAlg_def function.
 
 }  // namespace BayesBoom
-
-
