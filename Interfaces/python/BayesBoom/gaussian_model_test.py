@@ -43,7 +43,6 @@ class GaussianModelTest(unittest.TestCase):
         model.set_method(sampler)
         for i in range(100):
             model.sample_posterior()
-            print(f"{model.mean}, {model.sd}")
 
 
 if __name__ == "__main__":

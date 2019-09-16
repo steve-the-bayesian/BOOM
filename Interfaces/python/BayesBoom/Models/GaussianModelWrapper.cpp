@@ -13,16 +13,19 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 namespace BayesBoom {
   using namespace BOOM;
 
+  // Define the classes related to Gaussian model.
   void GaussianModel_def(py::module &boom) {
 
-    py::class_<GaussianModelBase, Model, Ptr<GaussianModelBase>>(
-        boom, "GaussianModelBase")
+    py::class_<GaussianModelBase,
+               Model,
+               Ptr<GaussianModelBase>>(boom, "GaussianModelBase")
         .def_property_readonly("mean", &GaussianModelBase::mu)
         .def_property_readonly("sd", &GaussianModelBase::sigma)
         .def_property_readonly("variance", &GaussianModelBase::sigsq)
         ;
 
-    py::class_<GaussianModel, GaussianModelBase,
+    py::class_<GaussianModel,
+               GaussianModelBase,
                Ptr<GaussianModel>>(boom, "GaussianModel")
         .def(py::init<double, double>(),
              py::arg("mean") = 0.0, py::arg("sd") = 1.0)
@@ -42,6 +45,8 @@ namespace BayesBoom {
           "Args:\n"
           "  data: a boom.Vector containing the data values."
           )
+        .def("sample_posterior", &GaussianModel::sample_posterior)
+        .def("set_method", &GaussianModel::set_method)
         .def_property_readonly("sigsq_parameter",
                                [] (const GaussianModel &model) {
                                  return model.Sigsq_prm();
@@ -58,8 +63,7 @@ namespace BayesBoom {
 
     py::class_<GaussianModelGivenSigma,
                GaussianModelBase,
-               Ptr<GaussianModelGivenSigma>>(
-        boom, "GaussianModelGivenSigma")
+               Ptr<GaussianModelGivenSigma>>(boom, "GaussianModelGivenSigma")
         .def(py::init<
              const Ptr<UnivParams> &,
              double,
@@ -80,8 +84,9 @@ namespace BayesBoom {
              )
         ;
 
-    py::class_<GaussianConjSampler, PosteriorSampler, Ptr<GaussianConjSampler>>(
-        boom, "GaussianConjugateSampler")
+    py::class_<GaussianConjSampler,
+               PosteriorSampler,
+               Ptr<GaussianConjSampler>>(boom, "GaussianConjugateSampler")
         .def(py::init([] (GaussianModel *model,
                           const Ptr<GaussianModelGivenSigma> &mean,
                           const Ptr<GammaModelBase> &precision,

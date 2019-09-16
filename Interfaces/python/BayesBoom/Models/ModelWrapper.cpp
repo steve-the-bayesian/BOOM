@@ -32,9 +32,6 @@ namespace BayesBoom {
              "to this model by  'set_method'.")
         ;
 
-    py::class_<PriorPolicy, Model, Ptr<PriorPolicy>>(boom, "PriorPolicy")
-        ;
-
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(
         boom, "PosteriorSampler")
         .def("draw", &PosteriorSampler::draw)
