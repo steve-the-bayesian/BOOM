@@ -29,6 +29,7 @@ def dnorm(x, mu, sigma, log=False):
 def pnorm(x, mu, sigma, lower=True, log=False):
     """
     Normal cumulative distribuion function.
+
     """
     if log:
         if lower:
@@ -45,6 +46,7 @@ def pnorm(x, mu, sigma, lower=True, log=False):
 def qnorm(x, mu, sigma, lower=True, log=False):
     """
     Quantiles of the normal distribuion.
+
     """
     if log:
         x = np.exp(x)
@@ -53,3 +55,11 @@ def qnorm(x, mu, sigma, lower=True, log=False):
         return sp.norm.ppf(x, mu, sigma)
     else:
         return sp.norm.ppf(1 - x, mu, sigma)
+
+def rnorm(n, mu, sigma):
+    """
+    Random deviates from the normal distribution.
+
+    """
+
+    return np.random.randn(n) * sigma + mu
