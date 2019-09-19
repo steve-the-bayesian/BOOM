@@ -93,10 +93,16 @@ def ls(*args, hide_underscore=True):
 # Need the formula language so we can ask for conditional distributions.  This
 # function is better than pd.value_counts because it handles numpy and list
 # data too.
-def table(args):
+def table(*args):
+    """
+    Compute a frequency table of one or more categorial variables.
+    """
     if len(args) == 1:
-        x = pd.Series(args[0])
-        return x.value_counts()
+        if isinstance(args[0], pd.DataFrame):
+            return args[0].crosstab(margins=True)
+        else:
+            x = pd.Series(args[0])
+            return x.value_counts()
     else:
-        x = pd.DataFrame(args)
+        x = pd.DataFrame(*args)
         return x.crosstab(margins=True)
