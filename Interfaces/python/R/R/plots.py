@@ -162,20 +162,17 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     bar_locations = group_means.index.categories.mid.values
     lower = np.array([x.left for x in group_means.index.values])
     upper = np.array([x.right for x in group_means.index.values])
-
     bar_widths = .8 * (upper - lower)
 
     ax.barh(bar_locations, group_means, height=bar_widths)
     ax.set_xticks(bar_locations)
     labels = [str(lab) for lab in group_means.index.values]
-    ax.set_yticklabels(labels)a
+    ax.set_yticklabels(labels)
     ax.set_ylabel("Predicted Proportions")
 
     xticks = pretty_plot_ticks(np.min(predicted), np.max(predicted), 5)
     ax.set_xticks(xticks)
     ax.set_xlabel("Observed Proportions")
-
-    pdb.set_trace()
 
     if fig is not None:
         fig.show()
