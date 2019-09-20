@@ -82,8 +82,8 @@ def pretty(list_of_strings, width=80, hide_underscore=True):
 def ls(*args, hide_underscore=True):
     """ List the contents of one or more objects.
     """
-    if len(args) == 0:
-        pretty(dir())
+    if len([*args]) == 0:
+        pretty(sorted(globals()), hide_underscore=hide_underscore)
     else:
         for i in range(len(args)):
             pretty(dir(args[i]), hide_underscore=hide_underscore)

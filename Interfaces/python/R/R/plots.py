@@ -95,7 +95,7 @@ def plot_dynamic_distribution(
     """
 
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
     quantile_points = np.arange(0, 1, quantile_step)
     curve_quantiles = np.quantile(curves, q=quantile_points, axis=0)
@@ -148,7 +148,7 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     """
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10))["actual"].mean()
     bar_locations = group_means.index.categories.mid.values
@@ -171,7 +171,7 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     return fig, ax
 
 
-def barplot(x, labels=None, zero=True, ax=None, xlab="", ylab="", **kwargs):
+def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     """Make a horizonal bar plot.
     Args:
       x:  Array-like collection of numbers to plot.
@@ -186,7 +186,7 @@ def barplot(x, labels=None, zero=True, ax=None, xlab="", ylab="", **kwargs):
     """
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
     x = x[::-1]
     if labels is not None:
@@ -206,9 +206,7 @@ def barplot(x, labels=None, zero=True, ax=None, xlab="", ylab="", **kwargs):
         hi = 0.0
 
     ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
-    ax.set_xlabel(xlab)
-    ax.set_ylabel(ylab)
-
+    set_options(ax, **kwargs)
     if fig is not None:
         fig.tight_layout()
         fig.show()
@@ -219,9 +217,9 @@ def plot(x, y, ax=None, **kwargs):
     # TODO: make this generic
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
-    ax.scatter(x, y)
+    ax.scatter(x, y, **kwargs)
     set_options(ax, **kwargs)
 
     if fig is not None:
@@ -233,7 +231,7 @@ def plot(x, y, ax=None, **kwargs):
 def hist(x, ax=None, **kwargs):
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
     ax.hist(x)
     set_options(ax, **kwargs)
@@ -258,7 +256,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     #     if isinstance(x, pd.Series):
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -275,7 +273,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 def boxplot(x, labels=None, ax=None, **kwargs):
     fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
+        fig, ax = plt.subplots(1, 1)
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
