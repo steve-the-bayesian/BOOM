@@ -213,3 +213,77 @@ def barplot(x, labels=None, zero=True, ax=None, xlab="", ylab="", **kwargs):
         fig.tight_layout()
         fig.show()
     return fig, ax
+
+
+def plot(x, y, ax=None, **kwargs):
+    # TODO: make this generic
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, **kwargs)
+
+    ax.scatter(x, y)
+    set_options(ax, **kwargs)
+
+    if fig is not None:
+        fig.tight_layout()
+        fig.show()
+    return fig, ax
+
+
+def hist(x, ax=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, **kwargs)
+
+    ax.hist(x)
+    set_options(ax, **kwargs)
+    if fig is not None:
+        fig.tight_layout()
+        fig.show()
+    return fig, ax
+
+
+def set_options(ax, xlab="", ylab="", xlim=None, ylim=None, **kwargs):
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+
+
+def plot_ts(x, timestamps=None, ax=None, **kwargs):
+    """ Plot a time series."""
+    # if timestamps is None:
+    #     if isinstance(x, pd.Series):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, **kwargs)
+
+    if timestamps is None:
+        if isinstance(x, pd.Series):
+            timestamps = x.index
+
+    ax.plot(x)
+    set_options(ax, **kwargs)
+    if fig is not None:
+        fig.tight_layout()
+        fig.show()
+    return fig, ax
+
+
+def boxplot(x, labels=None, ax=None, **kwargs):
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, **kwargs)
+
+    if labels is None and isinstance(x, pd.DataFrame):
+        labels = x.columns
+
+    ax.boxplot(x, vert=False)
+    set_options(ax, **kwargs)
+
+    if fig is not None:
+        fig.tight_layout()
+        fig.show()
+    return fig, ax
