@@ -106,3 +106,10 @@ def table(*args):
     else:
         x = pd.DataFrame(*args)
         return x.crosstab(margins=True)
+
+
+def range(x):
+    """
+    Return the smallest and largest entries in x.
+    """
+    return np.quantile(x, q=[0, 1])

@@ -128,14 +128,6 @@ def plot_dynamic_distribution(
     return ax
 
 
-def hl2(actual, predicted, ax=None, **kwargs):
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1, **kwargs)
-    group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
-        pd.qcut(predicted, 10))["actual"].mean()
-
-
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     """Construct a Hosmer Lemeshow plot on the supplied axes.  A Hosmer Lemeshow
     plot partitions the predicted values into groups, and compares the
@@ -175,5 +167,49 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     ax.set_xlabel("Observed Proportions")
 
     if fig is not None:
+        fig.show()
+    return fig, ax
+
+
+def barplot(x, labels=None, zero=True, ax=None, xlab="", ylab="", **kwargs):
+    """Make a horizonal bar plot.
+    Args:
+      x:  Array-like collection of numbers to plot.
+      labels: Labels for the bars.  If x is a pd.Series then labels==None means
+        to take the labels from the series index.  Otherwise None means don't
+        plot labels.
+      zero:  Bool.  Should zero be forcibly included in the numeric axis.
+      xlab: Label for the horizonal "numeric" axis.
+      ylab: Label for the vertical "categorial" axis.
+      kwargs: extra arguments passed to plt.subplots or plt.barh.
+
+    """
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, **kwargs)
+
+    x = x[::-1]
+    if labels is not None:
+        labels = labels[::-1]
+
+    if labels is None and isinstance(x, pd.Series):
+        labels = [str(lab) for lab in x.index]
+    bar_locations = np.arange(len(x))
+    ax.barh(bar_locations, x, height=.8, **kwargs)
+    ax.set_yticks(bar_locations)
+    ax.set_yticklabels(labels)
+    lo = np.nanmin(x)
+    hi = np.nanmax(x)
+    if zero and lo > 0:
+        lo = 0.0
+    if zero and hi < 0:
+        hi = 0.0
+
+    ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+
+    if fig is not None:
+        fig.tight_layout()
         fig.show()
     return fig, ax

@@ -9,7 +9,7 @@ def as_numeric(x):
     return np.array(x)
 
 
-def dnorm(x, mu, sigma, log=False):
+def dnorm(x, mu=0, sigma=1, log=False):
     """Normal density function.
 
     :param x: number, list or numpy array
@@ -26,7 +26,7 @@ def dnorm(x, mu, sigma, log=False):
         return sp.norm.pdf(x, mu, sigma)
 
 
-def pnorm(x, mu, sigma, lower=True, log=False):
+def pnorm(x, mu=0, sigma=1, lower=True, log=False):
     """
     Normal cumulative distribuion function.
 
@@ -43,7 +43,7 @@ def pnorm(x, mu, sigma, lower=True, log=False):
             return sp.norm.sf(x, loc=mu, scale=sigma)
 
 
-def qnorm(x, mu, sigma, lower=True, log=False):
+def qnorm(x, mu=0, sigma=1, lower=True, log=False):
     """
     Quantiles of the normal distribuion.
 
@@ -56,7 +56,8 @@ def qnorm(x, mu, sigma, lower=True, log=False):
     else:
         return sp.norm.ppf(1 - x, mu, sigma)
 
-def rnorm(n, mu, sigma):
+
+def rnorm(n, mu=0, sigma=1):
     """
     Random deviates from the normal distribution.
 
