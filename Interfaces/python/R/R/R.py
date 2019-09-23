@@ -108,8 +108,9 @@ def table(*args):
         return x.crosstab(margins=True)
 
 
-def range(x):
-    """
-    Return the smallest and largest entries in x.
+def data_range(x):
+    """Return the smallest and largest entries in x.  The capital R distinguishes
+    this function from the python built-in 'range'.
+
     """
     return np.quantile(x, q=[0, 1])
