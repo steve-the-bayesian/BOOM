@@ -221,15 +221,21 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     return fig, ax
 
 
-def plot(x, y, ax=None, **kwargs):
+def plot(x, y, s=None, ax=None, **kwargs):
     # TODO: make this generic
     fig = None
     if ax is None:
         fig, ax = plt.subplots(1, 1)
-
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
-    ax.scatter(x, y, **kwargs)
+    sample_size = len(y)
+
+    if s is None:
+        s = 20 / np.sqrt(len(y))
+    if sample_size < 1e+4:
+        ax.scatter(x, y, s=s, **kwargs)
+    else:
+        ax.hexbin(x, y, **kwargs)
     _set_plot_options(ax, **plot_options)
 
     global _last_axis_
@@ -237,10 +243,12 @@ def plot(x, y, ax=None, **kwargs):
     return fig, ax
 
 
-def points(x, y, ax=None, **kwargs):
+def points(x, y, s=None, ax=None, **kwargs):
     if ax is None:
         global _last_axis_
         ax = _last_axis_
+    if s is None:
+        s = 20 / np.sqrt(len(y))
     ax.scatter(x, y, **kwargs)
 
 
