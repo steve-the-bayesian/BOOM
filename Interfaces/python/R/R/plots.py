@@ -259,12 +259,24 @@ def lines(x, y, ax=None, **kwargs):
     ax.plot(x, y, **kwargs)
 
 
-def hist(x, ax=None, **kwargs):
+def lines_gaussian_kde(kde, ax=None, **kwargs):
+    """Add a kernel density estimate to the plot.
+    """
+    if ax is None:
+        global _last_axis_
+        ax = _last_axis_
+    xlim = ax.get_xlim()
+    x = np.linspace(xlim[0], xlim[1])
+    y = kde.pdf(x)
+    ax.plot(x, y, **kwargs)
+
+
+def hist(x, ax=None, density=False, edgecolor="black", color=".75", **kwargs):
     fig = None
     if ax is None:
         fig, ax = plt.subplots(1, 1)
     plot_options, kwargs = _skim_plot_options(**kwargs)
-    ax.hist(x, **kwargs)
+    ax.hist(x, edgecolor=edgecolor, density=density, color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
     global _last_axis_
     _last_axis_ = ax
@@ -330,8 +342,24 @@ def boxplot(x, labels=None, ax=None, **kwargs):
 
 
 def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
-    # TODO: documentation.
-    # TODO: This does not work after calling show().
+    """Add a line with specified slope and intercept to a plot.
+
+    Args:
+      a: The intercept of the line.
+      b: The slope of the line.
+      h: Draw a horizontal line at this y value.
+      v: Draw a vertical line at this x value.
+      ax: The set of "axes" that will receive the plot.  If None then
+        _last_axis_ will be used.
+      **kwargs:  Additional arguments passed to 'plt.plot'.
+
+    Returns:
+      None
+
+    Effect:
+      The requested line is plotted on 'ax'.
+
+    """
     global _last_axis_
     if ax is None:
         ax = _last_axis_
@@ -349,11 +377,11 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
 
     x = [p0[0], p1[0]]
     y = [p0[1], p1[1]]
-    ax.plot(x, y)
+    ax.plot(x, y, **kwargs)
 
 
 def pretty_plot_ticks(low, high, n):
-    """Return a set of 'pretty' tick labels.
+    """Return a set of 'pretty' tick locations.
 
     Args:
       low: The lower end of the plotting range.

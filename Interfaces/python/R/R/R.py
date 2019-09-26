@@ -1,10 +1,19 @@
 import pandas as pd
 import numpy as np
+from inspect import isfunction, getsource
 
 
-class Dframe(pd.DataFrame):
+class omit:
+    """For use in indexing. my_data[omit(bad_integers), :] omits the bad rows.
+    """
+
+
+class data_frame(pd.DataFrame):
     """A data frame that indexes like R.  self[] takes two entries, rows and
     columns.
+
+    TODO: flesh out the indexer, and check that all the pandas methods still
+    work.
 
     """
 
@@ -80,10 +89,18 @@ def pretty(list_of_strings, width=80, hide_underscore=True):
 
 
 def ls(*args, hide_underscore=True):
-    """ List the contents of one or more objects.
+    """List the contents of one or more objects.  If passed a function then print
+    the body of the function.
+
     """
+
     if len([*args]) == 0:
-        pretty(sorted(globals()), hide_underscore=hide_underscore)
+        print("If you're trying to list the global namespace type "
+              "'pretty(dir())'.")
+        print("(The interactive namespace is not available to modules.)")
+#        pretty(sorted(globals()), hide_underscore=hide_underscore)
+    elif len([*args]) == 1 and isfunction(args[0]):
+        print(getsource(args[0]))
     else:
         for i in range(len(args)):
             pretty(dir(args[i]), hide_underscore=hide_underscore)

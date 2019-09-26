@@ -1,4 +1,6 @@
-from .R import Dframe, pretty, ls, table, data_range
+# flake8: noqa
+
+from .R import data_frame, pretty, ls, table, data_range
 
 from .plots import (
     plot_dynamic_distribution,
@@ -13,3 +15,5 @@ from .plots import (
     )
 
 from .probability import dnorm, pnorm, qnorm, rnorm
+
+from .stats import density
