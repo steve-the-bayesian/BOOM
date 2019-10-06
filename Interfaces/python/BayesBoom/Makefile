@@ -11,9 +11,9 @@ all:	BayesBoom.cpython-37m-darwin.so
 # MAKEFLAGS=" -k -j 8 "
 
 # CFLAGS = -I. -I./Bmath -I./math/cephes -DADD_ -O3 -Wall -fPIC
-CPPFLAGS = -O3 -Wall  -std=c++11 -fPIC -I'/usr/local/include/BOOM' `python3 -m pybind11 --includes` 
+CPPFLAGS = -O3 -Wall  -std=c++11 -fPIC -I'/usr/local/include/BOOM' `python3 -m pybind11 --includes`
 
-SRCS := module.cpp $(wildcard */*.cpp)
+SRCS := module.cpp $(wildcard */*.cpp) Models/StateSpace/StateSpaceModelWrapper.cpp
 OBJECTS = ${SRCS:.cpp=.o}
 	echo "srcs= ${SRCS}"
 
@@ -22,4 +22,4 @@ BayesBoom.cpython-37m-darwin.so: ${OBJECTS}
 
 .PHONY: clean
 clean:
-	rm *.o *.so */*.o
+	rm ${OBJECTS}

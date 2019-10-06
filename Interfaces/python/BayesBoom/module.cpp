@@ -8,7 +8,8 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 
 namespace BayesBoom {
   // Forward definitions of all the class definitions to be added in other
-  // files.
+  // files.  Each of these is defined in a local cpp file, but invoked here.
+  // That way all the definitions occur within the same module.
   void distribution_def(py::module &);
   void LinAlg_def(py::module &);
   void Spline_def(py::module &);
@@ -17,6 +18,7 @@ namespace BayesBoom {
   void Parameter_def(py::module &);
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
+  void StateSpaceModel_def(py::module &);
 
   PYBIND11_MODULE(BayesBoom, boom) {
     boom.doc() = "A library for Bayesian modeling, and assorted "
