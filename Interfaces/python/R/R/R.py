@@ -131,3 +131,21 @@ def data_range(x):
 
     """
     return np.quantile(x, q=[0, 1])
+
+
+def corr(*args):
+    '''Compute the correlation among one or more objects.  If a single matrix or
+    data frame is passed, or if a collection of vectors is passed, then return
+    the correlation matrix.  If a pair of vectors is passed, return the number.
+
+    This function corrects the stupid default in numpy which assumes variables
+    are rows rather than columns.
+
+    '''
+    if len(args) == 1:
+        x = args[0]
+    else:
+        x = np.stack(args, axis=1)
+        if x.shape[1] == 2:
+            return np.corrcoef(x, rowvar=False)[0, 1]
+    return np.corrcoef(x, rowvar=False)
