@@ -24,7 +24,7 @@
 #include "cpputil/math_utils.hpp"
 
 // There is an include order issue here.  ThreadTools.hpp must come before the
-// headers listed below.  Otherwise there is an 
+// headers listed below.  Otherwise there is an
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
@@ -50,7 +50,7 @@ namespace BOOM {
     StateSpaceModelBase *clone() const override = 0;
     StateSpaceModelBase &operator=(const StateSpaceModelBase &rhs);
     StateSpaceModelBase &operator=(StateSpaceModelBase &&rhs) = default;
-    
+
     //----- Sizes of things ------------
     // The number of time points in the training data.
     virtual int time_dimension() const = 0;
@@ -183,7 +183,7 @@ namespace BOOM {
       return state_models_.state_error_variance_component(
           full_error_variance, state);
     }
-    
+
     // Returns the complete state vector (across time, so the return value is a
     // matrix) for a specified state component.
     //
@@ -202,7 +202,7 @@ namespace BOOM {
       return state_models_.mutable_full_state_subcomponent(
           state_, state_model_index);
     }
-    
+
     // The next two functions are mainly used for debugging a simulation.  You
     // can 'permanently_set_state' to the 'true' state value, then see if the
     // model recovers the parameters.  These functions are unlikely to be useful
@@ -297,7 +297,7 @@ namespace BOOM {
     virtual const KalmanFilterBase & get_filter() const = 0;
     virtual KalmanFilterBase & get_simulation_filter() = 0;
     virtual const KalmanFilterBase & get_simulation_filter() const = 0;
-    
+
     //------------- Parameter estimation by MLE and MAP --------------------
     // Set model parameters to their maximum-likelihood estimates, and return
     // the likelihood at the MLE.  Note that some state models cannot be used
@@ -495,7 +495,7 @@ namespace BOOM {
     // the observation model and all the state models, once the state at time
     // 't' has been imputed.
     void observe_state(int t);
-    
+
     // The initial state can be treated specially, though the default for this
     // function is a no-op.  The initial state refers to the state at time 0
     // (other implementations sometimes assume the initial state is at time -1).
@@ -595,7 +595,7 @@ namespace BOOM {
     //----------------------------------------------------------------------
     // data starts here
     StateSpaceUtils::StateModelVector<StateModel> state_models_;
-    
+
     // Position [s] is the index in the vector of parameters where the parameter
     // for state model s begins.  Note that the parameter vector for the
     // observation model begins in element 0.
@@ -680,7 +680,7 @@ namespace BOOM {
     const ScalarKalmanFilter &get_filter() const override;
     ScalarKalmanFilter &get_simulation_filter() override;
     const ScalarKalmanFilter &get_simulation_filter() const override;
-    
+
    protected:
     void simulate_forward(RNG &rng) override;
 
@@ -792,7 +792,7 @@ namespace BOOM {
     };
 
   }  // namespace StateSpaceUtils
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_MODEL_BASE_HPP_

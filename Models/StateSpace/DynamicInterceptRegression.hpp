@@ -1,6 +1,6 @@
-// Copyright 2018 Google LLC. All Rights Reserved.
 #ifndef BOOM_DYNAMIC_INTERCEPT_REGRESSION_MODEL_HPP_
 #define BOOM_DYNAMIC_INTERCEPT_REGRESSION_MODEL_HPP_
+// Copyright 2018 Google LLC. All Rights Reserved.
 /*
   Copyright (C) 2005-2017 Steven L. Scott
 
@@ -70,7 +70,7 @@ namespace BOOM {
       // All observations are 'observed' so the observation vector returns all
       // true.
       const Selector &observed() const {return observed_;}
-      
+
      private:
       Vector response_;
       Matrix predictors_;
@@ -96,7 +96,7 @@ namespace BOOM {
   // contribute constant columns to Z (i.e. each has identical elements within
   // the same column).  However, dynamic regression models, for example will
   // contribute different predictor values for each element of Y.
-  //  
+  //
   class DynamicInterceptRegressionModel
       : public ConditionalIidMultivariateStateSpaceModelBase,
         public CompositeParamPolicy,
@@ -119,14 +119,14 @@ namespace BOOM {
     int state_dimension() const override {
       return state_models_.state_dimension();
     }
-    
+
     RegressionModel *observation_model() override;
     const RegressionModel *observation_model() const override;
     void observe_data_given_state(int t) override;
     void observe_state(int t) override;
-    
+
     void impute_state(RNG &rng) override;
-    
+
     int time_dimension() const override { return dat().size(); }
     int xdim() const { return regression_->regression()->xdim(); }
 
@@ -139,7 +139,7 @@ namespace BOOM {
     const DynamicInterceptStateModel *state_model(int s) const override {
       return state_models_[s].get();
     }
-    
+
     const Selector &observed_status(int t) const override;
 
     // Need to override add_data so that x's can be shared with the
@@ -182,7 +182,7 @@ namespace BOOM {
     ConstVectorView adjusted_observation(int time) const override;
 
     double observation_variance(int t) const override;
-    
+
     // Returns the conditional mean the data at time t given state and model
     // parameters.
     // Args:
@@ -225,7 +225,7 @@ namespace BOOM {
     // in an actual data analysis.
     //    void permanently_set_state(const Matrix &state);
     void observe_fixed_state();
-    
+
    private:
     // The state models for DIRM do not require complete data, so overriding
     // this with a no-op.
@@ -241,7 +241,7 @@ namespace BOOM {
     const StateModelVectorBase &state_model_vector() const override {
       return state_models_;
     }
-    
+
     void initialize_regression_component(int xdim);
 
     //--------------------------------------------------------------------------
@@ -253,7 +253,7 @@ namespace BOOM {
     // This set of state parallels the state_models_ vector in the base class.
     // These are needed to provide the right version of observation_coefficients().
     StateSpaceUtils::StateModelVector<DynamicInterceptStateModel> state_models_;
-    
+
     // The observation coefficients are a set of horizontal blocks
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].

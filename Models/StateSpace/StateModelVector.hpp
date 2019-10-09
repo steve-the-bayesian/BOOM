@@ -49,7 +49,53 @@ namespace BOOM {
       {
         clear_state_models();
       }
-      
+
+      StateModelVectorBase(const StateModelVectorBase &rhs)
+      {
+        clear_state_models();
+        for (int m = 0; m < rhs.state_models_.size(); ++m) {
+          add_state_model(rhs.state_models_[m]);
+        }
+      }
+
+      StateModelVectorBase(StateModelVectorBase &&rhs):
+          state_models_(std::move(rhs.state_models_)),
+          state_dimension_(rhs.state_dimension_),
+          state_error_dimension_(rhs.state_error_dimension_),
+          state_positions_(std::move(rhs.state_positions_)),
+          state_error_positions_(std::move(rhs.state_error_positions_)),
+          state_transition_matrix_(std::move(rhs.state_transition_matrix_)),
+          state_variance_matrix_(std::move(rhs.state_variance_matrix_)),
+          state_error_expander_(std::move(rhs.state_error_expander_)),
+          state_error_variance_(std::move(rhs.state_error_variance_))
+      {}
+
+      StateModelVectorBase & operator=(const StateModelVectorBase &rhs) {
+        if (&rhs != this) {
+          clear_state_models();
+          for (int m = 0; m < rhs.state_models_.size(); ++m) {
+            add_state_model(rhs.state_models_[m]);
+          }
+        }
+        return *this;
+      }
+
+      StateModelVectorBase &operator=(StateModelVectorBase &&rhs) {
+        if (&rhs != this) {
+          clear_state_models();
+          state_models_ = std::move(rhs.state_models_);
+          state_dimension_ = rhs.state_dimension_;
+          state_error_dimension_ = rhs.state_error_dimension_;
+          state_positions_ = std::move(rhs.state_positions_);
+          state_error_positions_ = std::move(rhs.state_error_positions_);
+          state_transition_matrix_ = std::move(rhs.state_transition_matrix_);
+          state_variance_matrix_ = std::move(rhs.state_variance_matrix_);
+          state_error_expander_ = std::move(rhs.state_error_expander_);
+          state_error_variance_ = std::move(rhs.state_error_variance_);
+        }
+        return *this;
+      }
+
       virtual ~StateModelVectorBase() {}
 
       // The dimension of the state vector associated with the stored models.
@@ -61,14 +107,14 @@ namespace BOOM {
       // Clear the vector of models and restore the state of the object to that
       // produced by the default constructor.
       virtual void clear() = 0;
-      
+
       // Clear the data from the stored models.
       void clear_data();
 
       // Access to individual state models.
       StateModelBase *state_model(int s);
       const StateModelBase *state_model(int s) const;
-      
+
       //----------------------------------------------------------------------
       // The subset of the full state vector belonging to state model s.
       //
@@ -136,8 +182,8 @@ namespace BOOM {
       const SparseKalmanMatrix *state_transition_matrix(int t) const;
       const SparseKalmanMatrix *state_variance_matrix(int t) const;
       const SparseKalmanMatrix *state_error_expander(int t) const;
-      const SparseKalmanMatrix *state_error_variance(int t) const;      
-      
+      const SparseKalmanMatrix *state_error_variance(int t) const;
+
      protected:
       // Child classes should call this method when implementing add_state.
       void add_state_model(Ptr<StateModelBase> state_model);
@@ -146,7 +192,7 @@ namespace BOOM {
       // Clears the vector of state model pointers, and resets all metadata
       // accordingly.
       void clear_state_models();
-      
+
      private:
       std::vector<Ptr<StateModelBase>> state_models_;
 
@@ -178,7 +224,7 @@ namespace BOOM {
       mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
       mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
     };
-    
+
     // Concrete StateModelVector objects are parameterized by the type of the
     // state model they store.
     template <class STATE_MODEL>
@@ -202,8 +248,8 @@ namespace BOOM {
      private:
       std::vector<Ptr<STATE_MODEL>> state_models_;
     };
-    
-  }  // namespace StateSpaceUtils  
+
+  }  // namespace StateSpaceUtils
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_STATE_MODEL_VECTOR_HPP_
