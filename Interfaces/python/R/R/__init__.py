@@ -1,6 +1,6 @@
 # flake8: noqa
 
-from .R import data_frame, pretty, ls, table, data_range
+from .R import data_frame, pretty, ls, table, data_range, corr
 
 from .plots import (
     plot_dynamic_distribution,
