@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <memory>
@@ -21,11 +22,15 @@ namespace BayesBoom {
     py::class_<Vector, std::unique_ptr<Vector>>(boom, "Vector")
         .def(py::init<int, double>(), py::arg("size"), py::arg("value") = 0.0,
              "Create a Vector of the requested size filled with a constant value.")
+        .def(py::init(
+            [] (const std::vector<double> &v) {
+              return std::unique_ptr<Vector>(new Vector(v));
+            }),  "Create a Vector from a python list of floats.")
         .def(py::init( [] (Eigen::Ref<Eigen::VectorXd> numpy_array) {
               VectorView view(numpy_array.data(), numpy_array.size(), 1);
               return std::unique_ptr<Vector>(new Vector(view));
             }),
-          "Create a Vector from a numpy array.")
+          "Create a Vector from a numpy array.  Be sure the dtype is float!")
         .def("all_finite", &Vector::all_finite,
              "Returns true iff all elements are finite.")
         .def_property_readonly("randomize", &Vector::randomize,
@@ -37,7 +42,7 @@ namespace BayesBoom {
                                "The number of elements in the vector.")
         .def_property_readonly("size", &Vector::length,
                                "The number of elements in the vector.")
-        .def("to_numpy", [](const Vector &v) {return EigenMap(v);})
+        .def("to_numpy", [](const Vector &v) {return Eigen::VectorXd(EigenMap(v));})
         .def("__getitem__", [](const Vector &v, int i) {return v[i];}, py::is_operator())
         .def("__setitem__", [](Vector &v, int i, double value) {return v[i] = value;},
              py::is_operator())
@@ -79,9 +84,9 @@ namespace BayesBoom {
         .def_property_readonly("nrow", &Matrix::nrow, "The number of rows in the matrix.")
         .def_property_readonly("ncol", &Matrix::ncol, "The number of columns in the matrix.")
         .def("to_numpy",
-             [](const Matrix &m) {return EigenMap(m);},
+             [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
              "Convert the matrix to a numpy array." )
-        .def("to_numpy", [](const Vector &v) {return EigenMap(v);})
+        .def("to_numpy", [](const Vector &v) {return Eigen::VectorXd(EigenMap(v));})
         .def(py::self + py::self)
         .def(py::self - py::self)
         .def(py::self * py::self)
