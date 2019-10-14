@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # This script copies the BOOM library into a format suitable for exporting into
-# python.
+# python.  It puts the 'setup.py' script and package files at the top, copies
+# the C++ library below, and puts the pybind11 bindings in a pybind11 folder.
+#
+# On exit, the .../python_package/BayesBoom directory is suitable for
+# installation with pip.
 
 usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
 
@@ -110,4 +114,5 @@ ditto  Eigen/ $BOOM_DIR/Eigen/
 ## Build the package:
 
 cd python_package
+# CC="ccache clang++" CXX="ccache"
 pip3 --verbose install ./BayesBoom
