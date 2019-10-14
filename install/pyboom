@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script copies the BOOM library into a format suitable for exporting into
+# python.
+
 usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
 
 DO_INSTALL=0
@@ -65,7 +68,7 @@ echo "Done copying source files."
 
 echo "copying pybind11 bindings"
 mkdir $BOOM_DIR/pybind11
-ditto Interfaces/python/BayesBoom/pybind11 $BOOM_DIR/pybind11
+ditto Interfaces/python/BayesBoom/ $BOOM_DIR/pybind11
 echo "done copying pybind11 bindings"
 
 ##----------------------------------------------------------------------
@@ -108,6 +111,3 @@ ditto  Eigen/ $BOOM_DIR/Eigen/
 
 cd python_package
 pip3 --verbose install ./BayesBoom
-
-
-
