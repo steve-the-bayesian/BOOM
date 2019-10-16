@@ -64,6 +64,11 @@ namespace BOOM {
       return ans;
     }
 
+    if (std::isnan(x)) {
+      ans = x;
+      return ans;
+    }
+
     const Vector &sorted_knots(SplineBase::knots());
     // To find the knot in the left endpoint of the knot span, we first find the
     // first knot larger than x, then back up one spot.
