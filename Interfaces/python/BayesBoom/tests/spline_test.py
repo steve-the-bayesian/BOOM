@@ -36,8 +36,6 @@ class SplineTest(unittest.TestCase):
         knots = np.arange(-3, 4)
         spline = boom.Bspline(boom.Vector(knots))
         spline.basis(1.2)
-        import pdb
-        pdb.set_trace()
 
 if __name__ == "__main__":
     unittest.main()
