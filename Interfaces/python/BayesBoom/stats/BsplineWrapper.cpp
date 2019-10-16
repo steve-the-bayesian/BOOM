@@ -15,8 +15,10 @@ namespace BayesBoom {
 
     py::class_<SplineBase> (boom, "SplineBase")
         .def("basis", &SplineBase::basis, py::arg("x: float"),
+             py::return_value_policy::copy,
              "Spline basis expansion at x.")
         .def("basis_matrix", &SplineBase::basis_matrix, py::arg("x: Vector"),
+             py::return_value_policy::copy,
              "Spline basis matrix expansion of the Vector x.")
         .def_property_readonly("dim", &SplineBase::basis_dimension,
                                "The dimension of the expanded basis.")
@@ -36,9 +38,8 @@ namespace BayesBoom {
         .def(py::init<const Vector &, int>(), py::arg("knots"), py::arg("degree") = 3,
              "Create a Bspline basis.\n\n")
         .def("basis", (Vector (Bspline::*)(double)) &Bspline::basis, py::arg("x"),
+             py::return_value_policy::copy,
              "The basis function expansion at x.")
-        .def("basis", (Matrix (Bspline::*)(const Vector &)) &Bspline::basis,
-             "A spline basis matrix expansion of the vector x.")
         .def_property_readonly("order", &Bspline::order,
                                "The order of the spline. (1 + degree).")
         .def_property_readonly("degree", &Bspline::degree, "The degree of the spline.")
