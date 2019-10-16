@@ -117,11 +117,25 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     return fig, ax
 
 
+def plot_grid_size(nplots: int):
+    """Compute the number of rows and columns needed to plot 'nplots'.
+
+    :param nplots:
+        The desired number of plots.
+
+    :return tuple:
+        The number of rows, and columns, needed to plot that many plots.
+
+    """
+    nr = int(max(1, np.sqrt(nplots)))
+    nc = int(np.ceil(nplots / nr))
+    return nr, nc
+
+
 def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
     nseries = series.shape[1]
-    nr = int(max(1, np.sqrt(nseries)))
-    nc = int(np.ceil(nseries / nr))
+    nr, nc = plot_grid_size(nseries)
     gap *= .2
     fig, ax = plt.subplots(nr, nc)
     fig.subplots_adjust(hspace=gap, wspace=gap)

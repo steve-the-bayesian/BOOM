@@ -8,6 +8,7 @@ from .plots import (
     hosmer_lemeshow_plot,
     barplot,
     plot,
+    plot_grid_size,
     hist,
     plot_ts,
     boxplot,
