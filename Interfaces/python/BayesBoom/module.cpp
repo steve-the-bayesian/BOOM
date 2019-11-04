@@ -18,6 +18,7 @@ namespace BayesBoom {
   void Parameter_def(py::module &);
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
+  void GlmModel_def(py::module &);
   void StateSpaceModel_def(py::module &);
 
   PYBIND11_MODULE(BayesBoom, boom) {
