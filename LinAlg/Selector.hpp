@@ -66,9 +66,9 @@ namespace BOOM {
 
     // Convert to a vector of 0's and 1's.
     Vector to_Vector() const;
-    
+
     //---------- Element counts ----------
-    
+
     // The number of included items.
     uint nvars() const;
 
@@ -76,10 +76,10 @@ namespace BOOM {
     uint nvars_excluded() const;
 
     // The number of items (included + excluded).
-    uint nvars_possible() const; 
+    uint nvars_possible() const;
 
     //---------- Adding and dropping variables ----------
-    
+
     // Add element i to the included set.  If it is already present, then do
     // nothing.
     Selector &add(uint i);
@@ -122,12 +122,12 @@ namespace BOOM {
 
     // Intersection.  Drop any elements that are absent in rhs.
     Selector &operator*=(const Selector &rhs);
-    
+
     // Returns a Selector that is 1 in places where this disagrees with rhs.
     Selector exclusive_or(const Selector &rhs) const;
 
     // --------- Selecting subsets ----------
-    
+
     // Returns the position of the ith nonzero element in the expanded sparse
     // vector.
     uint indx(uint i) const;  // i=0..n-1, ans in 0..N-1
@@ -147,7 +147,7 @@ namespace BOOM {
     // Return the index of the first included value at or before 'position'.  If
     // no elements in this position or lower are included, then return -1.
     int first_included_at_or_before(uint position) const;
-    
+
     Vector select(const Vector &x) const;          // x includes intercept
     Vector select(const VectorView &x) const;
     Vector select(const ConstVectorView &x) const;
@@ -166,7 +166,7 @@ namespace BOOM {
 
     template <class T>
     std::vector<T> select(const std::vector<T> &stuff) const;
-    
+
     SpdMatrix expand(const SpdMatrix &dense_part_of_sparse_matrix);
     Vector expand(const Vector &x) const;
     Vector expand(const VectorView &x) const;
@@ -193,7 +193,7 @@ namespace BOOM {
     // would have been obtained by rhs.select(original_object)
 
     //---------- Sparse linear algebra ----------
-    
+
     // Fill ans with select_cols(M) * select(v).
     void sparse_multiply(const Matrix &M, const Vector &v,
                          VectorView ans) const;
@@ -223,6 +223,10 @@ namespace BOOM {
     double sparse_sum(const ConstVectorView &view) const;
     double sparse_sum(const VectorView &view) const;
     double sparse_sum(const Vector &vector) const;
+
+    const std::vector<uint> &included_positions() const {
+      return included_positions_;
+    }
 
    private:
     // sorted vector of included indices
@@ -311,7 +315,7 @@ namespace BOOM {
       for (const auto &col : columns_) ans += col.nvars();
       return ans;
     }
-    
+
     int nrow() const {
       if (columns_.empty()) return 0;
       return columns_[0].size();
@@ -337,7 +341,7 @@ namespace BOOM {
 
     // Indicate whether each row is included by at least one column.
     Selector row_any() const;
-    
+
     // Indicate whether each row is included in all columns.
     Selector row_all() const;
 
@@ -352,17 +356,17 @@ namespace BOOM {
     // Expand the subset of selected values back to the matrix from which it was
     // selected.
     Matrix expand(const Vector &subset) const;
-    
+
     // Flip all bits with probability .5.
     void randomize();
-    
+
    private:
     // The selector elements map to the selector matrix elements in column-major
     // order.
     std::vector<Selector> columns_;
   };
-    
 
-  
+
+
 }  // namespace BOOM
 #endif  // BOOM_SELECTOR_HPP
