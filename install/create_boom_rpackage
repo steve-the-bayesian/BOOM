@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This script involves a call to install_headers.py in the same directory.
+# Please make sure that that first line in that file points to an appropriate
+# python interpreter.
+
 usage () { echo "Usage: $0 [-c] [-r] [-C] 1>&2; exit 0";
            echo " -i: Install the package"
            echo " -c: Check the package using R CMD CHECK"
@@ -148,5 +152,3 @@ fi
 if [[ $DO_INSTALL = 1 ]]; then
     MAKEFLAGS=" j 16 " R CMD INSTALL Boom_*.tar.gz
 fi
-
-
