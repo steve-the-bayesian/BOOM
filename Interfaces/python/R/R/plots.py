@@ -258,6 +258,8 @@ def plot(x, y, s=None, ax=None, **kwargs):
 
 
 def points(x, y, s=None, ax=None, **kwargs):
+    """Add points to a plot.  The most recent plot is used by default.
+    """
     if ax is None:
         global _last_axis_
         ax = _last_axis_
@@ -267,6 +269,9 @@ def points(x, y, s=None, ax=None, **kwargs):
 
 
 def lines(x, y, ax=None, **kwargs):
+    """Add lines to the most recent plot.
+
+    """
     if ax is None:
         global _last_axis_
         ax = _last_axis_
@@ -285,7 +290,14 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     ax.plot(x, y, **kwargs)
 
 
-def hist(x, ax=None, density=False, edgecolor="black", color=".75", **kwargs):
+def hist(x, ax=None, density: bool = False, edgecolor="black", color=".75",
+         **kwargs):
+    """Plot a histogram of x.
+    Args:
+      x: The variable to be plotted.
+      density: If True then the area of the histogram bars sums to 1.
+
+    """
     fig = None
     if ax is None:
         fig, ax = plt.subplots(1, 1)
@@ -299,6 +311,14 @@ def hist(x, ax=None, density=False, edgecolor="black", color=".75", **kwargs):
 
 def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
                        **kwargs):
+    """Remove plotting options used by the R package from other options supplied by
+    kwargs.  This allows the remaining options to be later passed to pyplot.
+
+    Returns:
+      plot_options:  The options expected by R plotting functions.a
+      kwargs:  Everything not pulled into plot_options.
+
+    """
     plot_options = {'xlab': xlab,
                     'ylab': ylab,
                     'xlim': xlim,

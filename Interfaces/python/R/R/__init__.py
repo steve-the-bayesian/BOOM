@@ -3,16 +3,18 @@
 from .R import data_frame, pretty, ls, table, data_range, corr
 
 from .plots import (
+    abline,
+    barplot,
+    boxplot,
+    hist,
+    hosmer_lemeshow_plot,
+    lines,
+    plot,
     plot_dynamic_distribution,
     plot_many_ts,
-    hosmer_lemeshow_plot,
-    barplot,
-    plot,
     plot_grid_size,
-    hist,
     plot_ts,
-    boxplot,
-    abline,
+    points,
     )
 
 from .probability import dnorm, pnorm, qnorm, rnorm
