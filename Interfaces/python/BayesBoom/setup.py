@@ -203,8 +203,7 @@ boom_extension_sources = (
     + glob("pybind11/distributions/*.cpp")
 )
 
-boom_sources = boom_library_sources + boom_extension_sources
-
+boom_sources = boom_extension_sources + boom_library_sources
 
 # ---------------------------------------------------------------------------
 # From

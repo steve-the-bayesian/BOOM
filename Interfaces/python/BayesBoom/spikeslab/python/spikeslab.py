@@ -3,7 +3,8 @@ import pandas as pd
 import patsy
 import BayesBoom as boom
 
-class SpikeSlabPriorBase:
+
+class RegressionSpikeSlabPrior:
     """Components of spike and slab priors that are shared regardless of the model
     type.
 
@@ -36,8 +37,8 @@ class SpikeSlabPriorBase:
 
           optional_coefficient_estimate: A vector of length number.of.variables
             to use as the prior mean of the regression coefficients.  This can
-            also be None, in which case the prior mean for the intercept will be
-            set to mean.y, and the prior mean for all slopes will be 0.
+            also be None, in which case the prior mean for the intercept will
+            be set to mean.y, and the prior mean for all slopes will be 0.
 
           mean.y: The mean of the response variable.  Used to create a sensible
             default prior mean for the regression coefficients when
@@ -56,10 +57,9 @@ class SpikeSlabPriorBase:
             standard deviation.
 
         """
-        pass
 
 
-class SpikeSlabPrior(SpikeSlabPriorBase):
+class RegressionSpikeSlabPrior(SpikeSlabPriorBase):
     def __init__(self,
                  x,
                  y=None,
@@ -80,15 +80,56 @@ class SpikeSlabPrior(SpikeSlabPriorBase):
         self._uscaled_prior_precsion = x.T @ x
         if mean_y is None:
             if y is None:
-                throw Exception("Either y or mean_y must be specified.")
+                raise Exception("Either 'y' or 'mean_y' must be specified.")
             mean_y = np.mean(y)
         if optional_coefficient_estimate is None:
             optional_coefficient_estimate = np.zeros(x.shape[1])
+
+    def slab(self, boom_sigsq_prm):
+        """Return a BayesBoom.MvnGivenScalarSigma model.
+
+        Args:
+          boom_sigsq_prm: A BOOM::Ptr<UnivParams> to the residual variance
+            parameter for the regression model.
+
+        Returns:
+          A BOOM::Ptr<MvnGivenScalarSigma> model that can serve as the slab in
+          a spike and slab regression model.
+
+        """
+
+
+
+    def spike(self):
         pass
+
+
 
 
 class lm_spike:
     """Fit a linear model with a spike and slab prior using MCMC.
+
+    Typical use:
+
+    from BayesBoom.spikeslab import lm_spike
+    from sklearn.model_selection import train_test_split
+
+    data = pd.read_csv("mydata.csv")
+    train_data, pred_data = train_test_split(data, test_size=100)
+
+    model = lm_spike('y ~ .', niter=1000, data=train_data)
+    pred = model.predict(pred_data)
+
+    model.plot()
+    model.plot("coefficients")
+    model.plot("inc")
+    model.plot("resid")
+
+    model.summary()
+    model.residuals()
+
+    pred.plot()
+
     """
 
     def __init__(self,
@@ -137,7 +178,10 @@ class lm_spike:
                                            boom.Vector(response),
                                            False)
         sampler = boom.BregVsSampler(
-            self._model, prior.slab, prior.residual_precision, prior.spike)
+            self._model,
+            prior.slab(self._model.Sigsq_prm),
+            prior.residual_precision,
+            prior.spike)
         self._model.set_method(sampler)
 
         self._coefficient_draws = []
@@ -157,10 +201,15 @@ class lm_spike:
                 beta.included_coefficients())
 
     def plot(self, what=None):
-        pass
+        plot_types = [
+            "",
+            ""
+            ]
 
     def predict(self, newdata, burn=None, seed=None):
-        pass
+        """
+        Return an LmSpikePrediciton object.
+        """
 
     def suggest_burn(self):
         pass

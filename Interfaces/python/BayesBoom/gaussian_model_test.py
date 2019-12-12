@@ -26,6 +26,16 @@ class GaussianModelTest(unittest.TestCase):
                         4 * sigma / np.sqrt(len(data)))
         self.assertLess(np.abs(model.sd - sigma), .1)
 
+    def test_parameters(self):
+        """When parameters are modified outside the object, the object properties
+        should change.  This is testing that pointers are being stored.
+
+        """
+        model = boom.GaussianModel(0, 1)
+        mu_prm = model.mean_parameter
+        mu_prm.set(2.0)
+        self.assertAlmostEqual(model.mean, 2.0)
+
     def test_mcmc(self):
         model = boom.GaussianModel()
         mu = -16

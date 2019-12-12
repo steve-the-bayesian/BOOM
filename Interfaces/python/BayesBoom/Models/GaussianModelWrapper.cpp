@@ -50,6 +50,11 @@ namespace BayesBoom {
           "  data: a boom.Vector containing the data values."
           )
         .def("sample_posterior", &GaussianModel::sample_posterior)
+        .def_property_readonly("mean_parameter",
+                               [] (const GaussianModel &model) {
+                                 return model.Mu_prm();
+                               },
+                               "The parameter object representing the model variance.")
         .def_property_readonly("sigsq_parameter",
                                [] (const GaussianModel &model) {
                                  return model.Sigsq_prm();

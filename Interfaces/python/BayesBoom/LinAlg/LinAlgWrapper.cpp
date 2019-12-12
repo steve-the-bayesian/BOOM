@@ -56,6 +56,9 @@ namespace BayesBoom {
         .def(py::self - float())
         .def(py::self * float())
         .def(py::self / float())
+        .def("normsq",
+             &Vector::normsq,
+             "The square norm (L2 norm) of the vector.  The sum of squared elements.")
         .def("__repr__",
              [](const Vector &v) {
                std::ostringstream out;
@@ -65,6 +68,7 @@ namespace BayesBoom {
         ;
     py::implicitly_convertible<Eigen::VectorXd, Vector>();
 
+    // =========================================================================
     py::class_<Matrix>(boom, "Matrix")
         .def(py::init<int, int, double>(),
              py::arg("nrow") = 0,
@@ -83,6 +87,9 @@ namespace BayesBoom {
           )
         .def_property_readonly("nrow", &Matrix::nrow, "The number of rows in the matrix.")
         .def_property_readonly("ncol", &Matrix::ncol, "The number of columns in the matrix.")
+        .def("inv",
+             &Matrix::inv,
+             "Return the inverse of the matrix.  The matrix itself is unchanged.")
         .def("to_numpy",
              [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
              "Convert the matrix to a numpy array." )
@@ -105,6 +112,7 @@ namespace BayesBoom {
              })
         ;
 
+    // ===========================================================================
     py::class_<SpdMatrix, Matrix>(boom, "SpdMatrix")
         .def(py::init<int, double>(),
              py::arg("dim") = 0,
@@ -112,17 +120,34 @@ namespace BayesBoom {
              "Create a symmetric positive definite matrix of the given dimension. "
              "The diagonal elements are constant and equal to 'digaonal_value'. "
              )
-        .def(py::init( [] (const Eigen::Ref<Eigen::MatrixXd> &numpy_spd) {
+        .def(py::init([] (const Eigen::MatrixXd &numpy_spd) {
               return std::unique_ptr<SpdMatrix>(
-                  new SpdMatrix(Matrix(
-                      numpy_spd.rows(),
-                      numpy_spd.cols(),
-                      numpy_spd.data(),
-                      false)));
-            }),
-            "Create a symmetric positive definite matrix by copying data "
-          "from a 2-D numpy array."
-            )
+                  new SpdMatrix(numpy_spd.cols(),
+                                numpy_spd.data(),
+                                false));
+                       }),
+          "Create a symmetric positive definite matrix by copying data "
+          "from a 2-D numpy array.")
+        .def(py::init([] (const Matrix &m) {
+                        return std::unique_ptr<SpdMatrix>(
+                            new SpdMatrix(m));
+                      }),
+            "Create a symmetric positive definite matrix from a regular "
+            "Matrix object")
+        .def("inv",
+             &Matrix::inv,
+             "Return the inverse of the matrix.  The matrix itself is unchanged.")
+        .def("Mdist",
+             [](const SpdMatrix &S, const Vector &x, const Vector &y) {
+               return S.Mdist(x, y);
+             },
+             "The Mahalanobis distance from x to y with respect to this object.\n"
+             "Args:\n"
+             "  x, y: Boom Vectors"
+             "Returns:\n"
+             "  The scalar distance from x to y: (x - y)^T * this * (x - y)."
+
+             )
         ;
 
     py::class_<Cholesky>(boom, "Cholesky")
