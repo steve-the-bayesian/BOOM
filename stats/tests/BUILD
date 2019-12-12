@@ -1,6 +1,4 @@
-COPTS = [
-    "-I/usr/local/include",
-]
+COPTS = []
 
 DEPS = [
     "//:boom",

@@ -1,5 +1,4 @@
 COPTS = [
-    "-I/usr/local/include",
     "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
     #    "-fsanitize=memory",

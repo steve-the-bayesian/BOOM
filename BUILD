@@ -203,7 +203,6 @@ cc_library(
     srcs = BOOM_SRCS,
     hdrs = BOOM_HDRS,
     copts = [
-        "-I/usr/local/include",
         "-Wall",
         "-std=c++11",
         "-isystem $(GENDIR)",
@@ -225,7 +224,6 @@ cc_library(
     srcs = glob(["test_utils/*.cpp"]),
     hdrs = glob(["test_utils/*.hpp"]),
     copts = [
-        "-I/usr/local/include",
         "-std=c++11",
     ],
     visibility = ["//visibility:public"],
