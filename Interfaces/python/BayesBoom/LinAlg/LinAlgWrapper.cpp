@@ -141,6 +141,9 @@ namespace BayesBoom {
         .def("inv",
              &Matrix::inv,
              "Return the inverse of the matrix.  The matrix itself is unchanged.")
+        .def("max_abs",
+             &Matrix::max_abs,
+             "The absolute value of the matrix element with the largest absolute value.")
         .def("to_numpy",
              [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
              "Convert the matrix to a numpy array." )

@@ -31,16 +31,16 @@ class MomentsTest(unittest.TestCase):
         self.assertLess((meany - mu).normsq(), .01)
 
         V = var(y)
-        self.assertLess((V.diag() - Sigma.diag()).normsq(), .01)
+        self.assertLess((V.diag() - Sigma.diag()).normsq(), .05)
 
         R = cor(y)
         Rtrue = Sigma.to_numpy()
         for i in range(3):
             for j in range(3):
-                Rtrue[i, j] /=
+                Rtrue[i, j] = Sigma[i, j] / np.sqrt(Sigma[i, i] * Sigma[j, j])
+        Rtrue = boom.SpdMatrix(Rtrue)
 
-
-
+        self.assertLess((Rtrue - R).max_abs(), .01)
 
 
 if __name__ == "__main__":
