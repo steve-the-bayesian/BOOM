@@ -204,7 +204,15 @@ namespace BayesBoom {
              )
         .def("diag", [] (SpdMatrix &m) {return m.diag();},
              "The diagonal elements of the matrix, as a VectorView.")
-
+        .def(py::self + py::self)
+        .def(py::self - py::self)
+        .def(py::self * py::self)
+        .def(py::self / py::self)
+        .def(py::self += py::self)
+        .def(py::self + float())
+        .def(py::self - float())
+        .def(py::self * float())
+        .def(py::self / float())
         ;
 
     py::class_<Cholesky>(boom, "Cholesky")

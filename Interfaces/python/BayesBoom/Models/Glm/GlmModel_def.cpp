@@ -17,6 +17,11 @@ namespace BayesBoom {
 
   void GlmModel_def(py::module &boom) {
 
+    py::class_<GlmCoefs,
+               VectorParams,
+               Ptr<GlmCoefs>>(boom, "GlmCoefs")
+        ;
+
     py::class_<GlmModel,
                Ptr<GlmModel>>(boom, "GlmModel")
         .def_property_readonly(
@@ -47,6 +52,18 @@ namespace BayesBoom {
              "  start_at_mle: If True then the model parameters will be initialized "
              "to the maximum likelihood estimate (which will be undefined if X is "
              "less than full rank).  If False then model parameters begin at default levels.")
+        .def_property_readonly(
+            "Sigsq_prm",
+            [](RegressionModel &m) {
+              return m.Sigsq_prm();
+            },
+            "The parameter object representing the residual variance.  boom.UnivParams")
+        .def_property_readonly(
+            "coefficients",
+            [](RegressionModel &m) {
+              return m.coef();
+            },
+            "The parameter object representing the model coefficients.  boom.GlmCoefs")
         ;
 
 

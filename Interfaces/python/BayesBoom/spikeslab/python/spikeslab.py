@@ -70,8 +70,6 @@ class RegressionSpikeSlabPrior:
             standard deviation.
 
         """
-        import pdb
-        pdb.set_trace()
         if isinstance(x, np.ndarray):
             x = boom.Matrix(x)
         assert isinstance(x, boom.Matrix)
@@ -81,7 +79,7 @@ class RegressionSpikeSlabPrior:
                 raise Exception("Either 'y' or 'mean_y' must be specified.")
             if isinstance(y, np.ndarray):
                 y = boom.Vector(y)
-            mean_y = y.mean()
+            mean_y = boom.mean(y)
         if optional_coefficient_estimate is None:
             optional_coefficient_estimate = np.zeros(x.ncol)
             optional_coefficient_estimate[0] = mean_y
@@ -94,19 +92,24 @@ class RegressionSpikeSlabPrior:
         diag_view = self._unscaled_prior_precision.diag()
         diag_view /= ods
 
+        import pdb
+        pdb.set_trace()
+
         if prior_inclusion_probabilities is None:
-            potential_nvars = x.shape[1]
+            potential_nvars = x.ncol
             prob = expected_model_size / potential_nvars
             if prob > 1:
                 prob = 1
             if prob < 0:
                 prob = 0
-            prior_inclusion_probabilities = np.fill(potential_nvars, prob)
-        self._prior_inclusion_probabilities = boom.Vector(
-            prior_inclusion_probabilities)
+            self._prior_inclusion_probabilities = boom.Vector(
+                potential_nvars, prob)
+        else:
+            self._prior_inclusion_probabilities = boom.Vector(
+                prior_inclusion_probabilities)
 
         if sdy is None:
-            sdy = np.std(y)
+            sdy = boom.sd(y)
         sample_variance = sdy**2
         expected_residual_variance = (1 - expected_r2) * sample_variance
         self._residual_variance_prior = boom.ChisqModel(
@@ -229,7 +232,7 @@ class lm_spike:
                 boom.print_timestamp(i, ping)
             self._model.sample_posterior()
             self._residual_sd = self._model.sigma()
-            beta = self._model.coef()
+            beta = self._model.coef
             self._inclusion.append(
                 np.array(beta.inc().included_positions().copy()))
             self._coefficient_draws.append(
