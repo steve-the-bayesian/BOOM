@@ -2,6 +2,7 @@
 #include <pybind11/eigen.h>
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 #include "stats/Spline.hpp"
 #include "stats/Bspline.hpp"
 #include "stats/moments.hpp"
@@ -16,9 +17,9 @@ namespace BayesBoom {
 
     boom.def("mean", [](const Matrix &m){return mean(m);},
              "Returns the mean of each column of m as a boom.Vector.");
-    boom.def("var", [](const Matrix &m){return mean(m);},
+    boom.def("var", [](const Matrix &m){return var(m);},
              "Returns the variance matrix of the data in a boom.Matrix.");
-    boom.def("cor", [](const Matrix &m){return mean(m);},
+    boom.def("cor", [](const Matrix &m){return cor(m);},
              "Returns the correlation matrix of the data in a boom.Matrix.");
 
     boom.def("mean", [](const Vector &m){return mean(m);},
