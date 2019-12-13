@@ -154,6 +154,24 @@ namespace BayesBoom {
              })
         ;
 
+    //=========================================================================
+
+    py::class_<MvnGivenScalarSigma,
+               MvnBase,
+               Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma")
+        .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
+             py::arg("ominv"),
+             py::arg("sigsq"),
+             ""
+             )
+        .def(py::init<const Vector &, const SpdMatrix&, const Ptr<UnivParams> &>(),
+             py::arg("mu"),
+             py::arg("ominv"),
+             py::arg("sigsq"),
+             ""
+             )
+        ;
+
   }  // Module
 
 }  // namespace BayesBoom

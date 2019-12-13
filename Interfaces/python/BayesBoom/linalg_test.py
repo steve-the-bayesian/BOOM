@@ -21,6 +21,7 @@ class LinAlgTest(unittest.TestCase):
         self.assertTrue(np.array_equal(
             v3.to_numpy(),
             np.array([1.0 / 3, 1.0, 3.0])))
+        self.assertEqual(len(v), v.length)
 
     def test_matrix(self):
         m = boom.Matrix(np.array([[1.0, 2], [3, 4.0]]))
@@ -28,6 +29,19 @@ class LinAlgTest(unittest.TestCase):
         m2 = m * m
         m2n = mn @ mn
         self.assertTrue(np.array_equal(m2.to_numpy(), m2n))
+
+    def test_spd(self):
+        X = np.random.randn(100, 4)
+        xtx = X.T @ X / X.shape[0]
+        S = boom.SpdMatrix(xtx)
+
+    def test_vector_view(self):
+        v = boom.Vector(np.array([1.0, 2.0, -3.0]))
+        vv = boom.VectorView(v)
+        vv[0] = -0.1
+        self.assertEqual(v[0], vv[0])
+        vv /= 2.0
+        self.assertEqual(v[1], 1.0)
 
 
 if __name__ == "__main__":

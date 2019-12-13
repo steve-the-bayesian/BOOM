@@ -9,7 +9,20 @@ class RegressionSpikeSlabPrior:
     type.
 
     """
-    def __init__(self):
+    def __init__(self,
+                 x,
+                 y=None,
+                 expected_r2=.5,
+                 prior_df=.01,
+                 expected_model_size=1,
+                 prior_information_weight=.01,
+                 diagonal_shrinkage=.5,
+                 optional_coefficient_estimate=None,
+                 max_flips=-1,
+                 mean_y=None,
+                 sdy=None,
+                 prior_inclusion_probabilities=None,
+                 sigma_upper_limit=np.Inf):
         """Computes information that is shared by the different implementation of spike
         and slab priors.  Currently, the only difference between the different
         priors is the prior variance on the regression coefficients.  When that
@@ -57,33 +70,48 @@ class RegressionSpikeSlabPrior:
             standard deviation.
 
         """
+        import pdb
+        pdb.set_trace()
+        if isinstance(x, np.ndarray):
+            x = boom.Matrix(x)
+        assert isinstance(x, boom.Matrix)
 
-
-class RegressionSpikeSlabPrior(SpikeSlabPriorBase):
-    def __init__(self,
-                 x,
-                 y=None,
-                 expected_r2=.5,
-                 prior_df=.01,
-                 expected_model_size=1,
-                 prior_information_weight=.01,
-                 diagonal_shrinkage=.5,
-                 optional_coefficient_estimate=None,
-                 max_flips=-1,
-                 mean_y=None,
-                 sdy=None,
-                 prior_inclusion_probabilities=None,
-                 sigma_upper_limit=np.Inf):
-        assert isinstance(x, np.ndarray)
-        assert len(x.shape) == 2
-
-        self._uscaled_prior_precsion = x.T @ x
         if mean_y is None:
             if y is None:
                 raise Exception("Either 'y' or 'mean_y' must be specified.")
-            mean_y = np.mean(y)
+            if isinstance(y, np.ndarray):
+                y = boom.Vector(y)
+            mean_y = y.mean()
         if optional_coefficient_estimate is None:
-            optional_coefficient_estimate = np.zeros(x.shape[1])
+            optional_coefficient_estimate = np.zeros(x.ncol)
+            optional_coefficient_estimate[0] = mean_y
+        self._mean = boom.Vector(optional_coefficient_estimate)
+
+        sample_size = x.nrow
+        ods = 1. - diagonal_shrinkage
+        scale_factor = prior_information_weight * ods / sample_size
+        self._unscaled_prior_precision = x.inner() * scale_factor
+        diag_view = self._unscaled_prior_precision.diag()
+        diag_view /= ods
+
+        if prior_inclusion_probabilities is None:
+            potential_nvars = x.shape[1]
+            prob = expected_model_size / potential_nvars
+            if prob > 1:
+                prob = 1
+            if prob < 0:
+                prob = 0
+            prior_inclusion_probabilities = np.fill(potential_nvars, prob)
+        self._prior_inclusion_probabilities = boom.Vector(
+            prior_inclusion_probabilities)
+
+        if sdy is None:
+            sdy = np.std(y)
+        sample_variance = sdy**2
+        expected_residual_variance = (1 - expected_r2) * sample_variance
+        self._residual_variance_prior = boom.ChisqModel(
+            prior_df,
+            np.sqrt(expected_residual_variance))
 
     def slab(self, boom_sigsq_prm):
         """Return a BayesBoom.MvnGivenScalarSigma model.
@@ -97,13 +125,16 @@ class RegressionSpikeSlabPrior(SpikeSlabPriorBase):
           a spike and slab regression model.
 
         """
+        return boom.MvnGivenScalarSigma(
+            self._mean, self._unscaled_prior_precision, boom_sigsq_prm)
 
-
-
+    @property
     def spike(self):
-        pass
+        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
 
-
+    @property
+    def residual_variance(self):
+        return self._residual_variance_prior
 
 
 class lm_spike:
@@ -135,16 +166,16 @@ class lm_spike:
     def __init__(self,
                  formula: str,
                  niter: int,
-                 data: DataFrame,
-                 prior: SpikeSlabPrior = None,
+                 data: pd.DataFrame,
+                 prior: RegressionSpikeSlabPrior = None,
                  ping: int = None,
                  seed: int = None,
                  **kwargs):
         """Create and a model object and run a specified number of MCMC iterations.
 
         Args:
-          formula: A model formula that can be interpreted by the 'patsy' module
-            to produce a model matrix from 'data'.
+          formula: A model formula that can be interpreted by the 'patsy'
+            module to produce a model matrix from 'data'.
           niter: The desired number of MCMC iterations.
           data: A pd.DataFrame containing the data with which to train the
             model.
@@ -162,21 +193,25 @@ class lm_spike:
         """
 
         response, predictors = patsy.dmatrices(formula, data)
-        xdim = predictors.shape[1]
-        sample_size = predictors.shape[0]
+        # xdim = predictors.shape[1]
+        # sample_size = predictors.shape[0]
         assert isinstance(niter, int)
-        assert int > 0
+        assert niter > 0
         if ping is None:
-            ping = niter / 10
+            ping = int(niter / 10)
         assert isinstance(ping, int)
 
         if seed is not None:
             assert isinstance(seed, int)
             boom.GlobalRng.rng.seed(seed)
 
-        self._model = boom.RegressionModel(boom.Matrix(predictors),
-                                           boom.Vector(response),
-                                           False)
+        X = boom.Matrix(predictors)
+        y = boom.Vector(response)
+
+        self._model = boom.RegressionModel(X, y, False)
+        if prior is None:
+            prior = RegressionSpikeSlabPrior(x=X, y=y, **kwargs)
+
         sampler = boom.BregVsSampler(
             self._model,
             prior.slab(self._model.Sigsq_prm),
@@ -199,11 +234,12 @@ class lm_spike:
                 np.array(beta.inc().included_positions().copy()))
             self._coefficient_draws.append(
                 beta.included_coefficients())
+            self._log_likelihood[i] = self._model.log_likelihood()
 
-    def plot(self, what=None):
+    def plot(self, what=None, **kwargs):
         plot_types = [
-            "",
-            ""
+            "coefficients",
+            "inclusion"
             ]
 
     def predict(self, newdata, burn=None, seed=None):

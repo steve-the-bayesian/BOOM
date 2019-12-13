@@ -4,6 +4,7 @@
 #include "LinAlg/Matrix.hpp"
 #include "stats/Spline.hpp"
 #include "stats/Bspline.hpp"
+#include "stats/moments.hpp"
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -11,7 +12,21 @@ namespace py = pybind11;
 namespace BayesBoom {
   using namespace BOOM;
 
-  void Spline_def(py::module &boom) {
+  void stats_def(py::module &boom) {
+
+    boom.def("mean", [](const Matrix &m){return mean(m);},
+             "Returns the mean of each column of m as a boom.Vector.");
+    boom.def("var", [](const Matrix &m){return mean(m);},
+             "Returns the variance matrix of the data in a boom.Matrix.");
+    boom.def("cor", [](const Matrix &m){return mean(m);},
+             "Returns the correlation matrix of the data in a boom.Matrix.");
+
+    boom.def("mean", [](const Vector &m){return mean(m);},
+             "Returns the mean ofa boom.Vector.");
+    boom.def("var", [](const Vector &m){return mean(m);},
+             "Returns the variance ofa boom.Vector.");
+    boom.def("sd", [](const Vector &m){return mean(m);},
+             "Returns the standard deviation ofa boom.Vector.");
 
     py::class_<SplineBase> (boom, "SplineBase")
         .def("basis", &SplineBase::basis, py::arg("x: float"),

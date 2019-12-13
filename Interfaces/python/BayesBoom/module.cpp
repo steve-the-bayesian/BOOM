@@ -12,7 +12,7 @@ namespace BayesBoom {
   // That way all the definitions occur within the same module.
   void distribution_def(py::module &);
   void LinAlg_def(py::module &);
-  void Spline_def(py::module &);
+  void stats_def(py::module &);
 
   void Model_def(py::module &);
   void Parameter_def(py::module &);
@@ -29,13 +29,15 @@ namespace BayesBoom {
     // Calling these functions here defines the classes in the module.
     distribution_def(boom);
     LinAlg_def(boom);
-    Spline_def(boom);
+    stats_def(boom);
 
     Model_def(boom);
     Parameter_def(boom);
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
+
+    GlmModel_def(boom);
 
   }  // Module BOOM
 

@@ -38,6 +38,7 @@ namespace BayesBoom {
         .def_property_readonly("stride", &Vector::stride,
              "The distance between consecutive elements.  "
              "For a dense vector this is always 1.")
+        .def("__len__", &Vector::length)
         .def_property_readonly("length", &Vector::length,
                                "The number of elements in the vector.")
         .def_property_readonly("size", &Vector::length,
@@ -56,6 +57,10 @@ namespace BayesBoom {
         .def(py::self - float())
         .def(py::self * float())
         .def(py::self / float())
+        .def(py::self += float())
+        .def(py::self -= float())
+        .def(py::self *= float())
+        .def(py::self /= float())
         .def("normsq",
              &Vector::normsq,
              "The square norm (L2 norm) of the vector.  The sum of squared elements.")
@@ -67,6 +72,36 @@ namespace BayesBoom {
              })
         ;
     py::implicitly_convertible<Eigen::VectorXd, Vector>();
+
+    // =========================================================================
+    py::class_<VectorView>(boom, "VectorView")
+        .def(py::init(
+            [](Vector &v, int first) {
+              return VectorView(v, first);
+            }),
+             py::arg("v"),
+             py::arg("first") = 0,
+             "Create a VectorView from a boom.Vector.\n\n"
+             "Args:\n"
+             "  v:  The vector containing data for the view.\n"
+             "  first: The first element in the view.")
+        .def("__getitem__", [](const VectorView &v, int i) {return v[i];}, py::is_operator())
+        .def("__setitem__", [](VectorView &v, int i, double value) {return v[i] = value;},
+             py::is_operator())
+        .def(py::self + py::self)
+        .def(py::self - py::self)
+        .def(py::self * py::self)
+        .def(py::self / py::self)
+        .def(py::self += py::self)
+        .def(py::self *= py::self)
+        .def(py::self + float())
+        .def(py::self - float())
+        .def(py::self * float())
+        .def(py::self += float())
+        .def(py::self -= float())
+        .def(py::self *= float())
+        .def(py::self /= float())
+        ;
 
     // =========================================================================
     py::class_<Matrix>(boom, "Matrix")
@@ -87,6 +122,9 @@ namespace BayesBoom {
           )
         .def_property_readonly("nrow", &Matrix::nrow, "The number of rows in the matrix.")
         .def_property_readonly("ncol", &Matrix::ncol, "The number of columns in the matrix.")
+        .def("inner",
+             [](const Matrix &m) {return m.inner();},
+             "If this matrix is X, return X'X as a boom.SpdMatrix.")
         .def("inv",
              &Matrix::inv,
              "Return the inverse of the matrix.  The matrix itself is unchanged.")
@@ -148,6 +186,9 @@ namespace BayesBoom {
              "  The scalar distance from x to y: (x - y)^T * this * (x - y)."
 
              )
+        .def("diag", [] (SpdMatrix &m) {return m.diag();},
+             "The diagonal elements of the matrix, as a VectorView.")
+
         ;
 
     py::class_<Cholesky>(boom, "Cholesky")
