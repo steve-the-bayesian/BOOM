@@ -121,11 +121,18 @@ namespace BayesBoom {
           "Create a Matrix from a 2-D numpy array."
           )
         .def("__getitem__",
-             [](const Matrix &m, int i, int j) {return m(i, j);},
+             [](const Matrix &m, py::tuple ij) {
+               int i = ij[0].cast<int>();
+               int j = ij[1].cast<int>();
+               return m(i, j);},
              "Element access.")
         .def("__setitem__",
-             [](Matrix &m, int i, int j, double value) {return m(i, j) = value;},
-             "Element access.")
+             [](Matrix &m, py::tuple ij, double value) {
+               int i = ij[0].cast<int>();
+               int j = ij[1].cast<int>();
+               m(i, j) = value;
+             },
+             "Element assignment.")
         .def_property_readonly("nrow", &Matrix::nrow, "The number of rows in the matrix.")
         .def_property_readonly("ncol", &Matrix::ncol, "The number of columns in the matrix.")
         .def("inner",

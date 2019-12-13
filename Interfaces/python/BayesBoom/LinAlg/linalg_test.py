@@ -30,6 +30,11 @@ class LinAlgTest(unittest.TestCase):
         m2n = mn @ mn
         self.assertTrue(np.array_equal(m2.to_numpy(), m2n))
 
+        # Test assignment
+        m[0, 1] = 8.3
+        self.assertEqual(m[0, 1], 8.3)
+        self.assertEqual(m[0, 0], 1.0)
+
     def test_spd(self):
         X = np.random.randn(100, 4)
         xtx = X.T @ X / X.shape[0]
