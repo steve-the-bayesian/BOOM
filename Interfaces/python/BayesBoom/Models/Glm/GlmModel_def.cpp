@@ -23,6 +23,7 @@ namespace BayesBoom {
         ;
 
     py::class_<GlmModel,
+               Model,
                Ptr<GlmModel>>(boom, "GlmModel")
         .def_property_readonly(
             "coef",
@@ -64,6 +65,8 @@ namespace BayesBoom {
               return m.coef();
             },
             "The parameter object representing the model coefficients.  boom.GlmCoefs")
+        .def("set_method",
+             &RegressionModel::set_method)
         ;
 
 

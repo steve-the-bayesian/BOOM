@@ -2,6 +2,7 @@ import BayesBoom as boom
 # from BayesBoom.spikeslab import lm_spike
 import numpy as np
 import pandas as pd
+import pdb
 
 sample_size = 10000
 ngood = 3

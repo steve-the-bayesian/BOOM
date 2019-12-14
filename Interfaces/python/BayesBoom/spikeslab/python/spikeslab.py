@@ -92,9 +92,6 @@ class RegressionSpikeSlabPrior:
         diag_view = self._unscaled_prior_precision.diag()
         diag_view /= ods
 
-        import pdb
-        pdb.set_trace()
-
         if prior_inclusion_probabilities is None:
             potential_nvars = x.ncol
             prob = expected_model_size / potential_nvars
@@ -112,7 +109,7 @@ class RegressionSpikeSlabPrior:
             sdy = boom.sd(y)
         sample_variance = sdy**2
         expected_residual_variance = (1 - expected_r2) * sample_variance
-        self._residual_variance_prior = boom.ChisqModel(
+        self._residual_precision_prior = boom.ChisqModel(
             prior_df,
             np.sqrt(expected_residual_variance))
 
@@ -136,8 +133,8 @@ class RegressionSpikeSlabPrior:
         return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
 
     @property
-    def residual_variance(self):
-        return self._residual_variance_prior
+    def residual_precision(self):
+        return self._residual_precision_prior
 
 
 class lm_spike:
@@ -220,16 +217,15 @@ class lm_spike:
             prior.slab(self._model.Sigsq_prm),
             prior.residual_precision,
             prior.spike)
+        import pdb
+        pdb.set_trace()
         self._model.set_method(sampler)
-
         self._coefficient_draws = []
         self._inclusion = []
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
 
         for i in range(niter):
-            if ping > 0:
-                boom.print_timestamp(i, ping)
             self._model.sample_posterior()
             self._residual_sd = self._model.sigma()
             beta = self._model.coef
