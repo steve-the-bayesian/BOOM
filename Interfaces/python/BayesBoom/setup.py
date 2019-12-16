@@ -303,6 +303,8 @@ class BuildExt(build_ext):
                        '-Wno-sign-compare']
         c_opts['unix'] += darwin_opts
         l_opts['unix'] += darwin_opts
+    elif sys.platform == 'linux':
+        c_opts['unix'] = ['-Wno-sign-compare']
 
     def build_extensions(self):
         ct = self.compiler.compiler_type

@@ -69,10 +69,18 @@ echo "Done copying source files."
 
 ##----------------------------------------------------------------------
 ## Copy the pybind11 bindings
-
 echo "copying pybind11 bindings"
 mkdir $BOOM_DIR/pybind11
-ditto Interfaces/python/BayesBoom/ $BOOM_DIR/pybind11
+if [[ $OSTYPE =~ "darwin" ]]; then
+    echo "This looks like a mac.  Copying files with ditto."
+    ditto Interfaces/python/BayesBoom/ $BOOM_DIR/pybind11
+elif [[ $OSTYPE =~ "linux" ]]; then
+    echo "This looks like linux.  Copying files with cp -R."
+    cp -R Interfaces/python/BayesBoom/* $BOOM_DIR/pybind11
+else
+    echo "ERROR copying files.  Could not determine the OS."
+fi
+
 echo "done copying pybind11 bindings"
 
 ##----------------------------------------------------------------------
@@ -104,11 +112,18 @@ HDRS="$HDRS `find Eigen -name "*.h"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/
 echo "done copying headers"
 
-# On Linux this would be cp --parents, but that option does
-# not exist on OS X.
-ditto  Eigen/ $BOOM_DIR/Eigen/
-#echo "Ignore the message about not being able to copy Eigen/src."
-
+if [[ $OSTYPE =~ "darwin" ]]; then
+    # On Linux this would be cp --parents, but that option does
+    # not exist on OS X.
+    echo "This looks like a Mac.  Copying Eigen files with ditto."
+    ditto  Eigen/ $BOOM_DIR/Eigen/
+    #echo "Ignore the message about not being able to copy Eigen/src."
+elif [[ $OSTYPE =~ "linux" ]]; then
+    echo "This looks like Linux.  Copying Eigen files with cp --parents."
+    cp -R Eigen/* $BOOM_DIR/Eigen/
+else
+    echo "Unfamiliar OS.  I'm not going to copy Eigen files."
+fi
 
 ##----------------------------------------------------------------------
 ## Build the package:
