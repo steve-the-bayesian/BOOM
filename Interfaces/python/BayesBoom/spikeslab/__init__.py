@@ -1,1 +1,1 @@
-import .python.lm_spike
+import .spikeslab
