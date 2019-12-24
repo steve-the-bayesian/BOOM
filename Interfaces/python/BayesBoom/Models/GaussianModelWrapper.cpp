@@ -95,12 +95,12 @@ namespace BayesBoom {
     py::class_<GaussianConjSampler,
                PosteriorSampler,
                Ptr<GaussianConjSampler>>(boom, "GaussianConjugateSampler")
-        .def(py::init([] (GaussianModel *model,
+        .def(py::init([] (Ptr<GaussianModel> model,
                           const Ptr<GaussianModelGivenSigma> &mean,
                           const Ptr<GammaModelBase> &precision,
                           RNG &seeding_rng = BOOM::GlobalRng::rng) {
                         return new GaussianConjSampler(
-                            model, mean, precision, seeding_rng);
+                            model.get(), mean, precision, seeding_rng);
                       }
                       ),
              py::arg("model"),

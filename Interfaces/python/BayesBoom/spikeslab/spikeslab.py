@@ -217,8 +217,6 @@ class lm_spike:
             prior.slab(self._model.Sigsq_prm),
             prior.residual_precision,
             prior.spike)
-        import pdb
-        pdb.set_trace()
         self._model.set_method(sampler)
         self._coefficient_draws = []
         self._inclusion = []
@@ -227,12 +225,12 @@ class lm_spike:
 
         for i in range(niter):
             self._model.sample_posterior()
-            self._residual_sd = self._model.sigma()
-            beta = self._model.coef
-            self._inclusion.append(
-                np.array(beta.inc().included_positions().copy()))
-            self._coefficient_draws.append(
-                beta.included_coefficients())
+            self._residual_sd[i] = self._model.sigma
+            # beta = self._model.coef
+            # self._inclusion.append(
+            #     np.array(beta.inc().included_positions().copy()))
+            # self._coefficient_draws.append(
+            #     beta.included_coefficients())
             self._log_likelihood[i] = self._model.log_likelihood()
 
     def plot(self, what=None, **kwargs):

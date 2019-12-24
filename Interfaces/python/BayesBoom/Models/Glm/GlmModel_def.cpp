@@ -41,7 +41,8 @@ namespace BayesBoom {
 
     py::class_<RegressionModel,
                GlmModel,
-               Ptr<RegressionModel>>(boom, "RegressionModel")
+               Ptr<RegressionModel>>(
+                   boom, "RegressionModel", py::multiple_inheritance())
         .def(py::init<Matrix, Vector, bool>(),
              py::arg("X"),
              py::arg("y"),
@@ -52,7 +53,8 @@ namespace BayesBoom {
              "  y:  boom.Vector of responses.\n"
              "  start_at_mle: If True then the model parameters will be initialized "
              "to the maximum likelihood estimate (which will be undefined if X is "
-             "less than full rank).  If False then model parameters begin at default levels.")
+             "less than full rank).  If False then model parameters begin at "
+             "default levels.")
         .def_property_readonly(
             "Sigsq_prm",
             [](RegressionModel &m) {
@@ -65,8 +67,17 @@ namespace BayesBoom {
               return m.coef();
             },
             "The parameter object representing the model coefficients.  boom.GlmCoefs")
+        .def_property_readonly(
+            "sigma",
+            [](const RegressionModel &m){
+              return m.sigma();
+            })
         .def("set_method",
              &RegressionModel::set_method)
+        .def("log_likelihood",
+             [](const RegressionModel& m) {
+               return m.log_likelihood();
+             })
         ;
 
 
@@ -85,12 +96,12 @@ namespace BayesBoom {
                PosteriorSampler,
                Ptr<BregVsSampler>>(boom, "BregVsSampler")
         .def(py::init(
-            [](RegressionModel *model,
+            [](Ptr<RegressionModel> model,
                const Ptr<MvnGivenScalarSigma> &slab,
                const Ptr<GammaModelBase> &residual_precision_prior,
                const Ptr<VariableSelectionPrior> &spike,
                RNG &seeding_rng) {
-              return new BregVsSampler(model, slab, residual_precision_prior,
+              return new BregVsSampler(model.get(), slab, residual_precision_prior,
                                        spike, seeding_rng);
             }),
              py::arg("model"),
