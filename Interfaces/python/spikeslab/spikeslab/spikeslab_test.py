@@ -1,5 +1,5 @@
+import spikeslab
 import BayesBoom as boom
-# from BayesBoom.spikeslab import lm_spike
 import numpy as np
 import pandas as pd
 import pdb
@@ -23,4 +23,4 @@ x_formula = "+".join(x for x in data.columns)
 data["y"] = y
 formula = f"y ~ {x_formula}"
 
-model = lm_spike(formula, niter=100, data=data)
+model = spikeslab.lm_spike(formula, niter=100, data=data)

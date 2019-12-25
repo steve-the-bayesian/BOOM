@@ -262,8 +262,6 @@ class lm_spike:
 
     def _sparsify(self, glm_coefs):
         # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
-        import pdb
-        pdb.set_trace()
         inc = glm_coefs.inc.included_positions
         zeros = np.zeros(len(inc))
         return scipy.sparse.csr_matrix(
