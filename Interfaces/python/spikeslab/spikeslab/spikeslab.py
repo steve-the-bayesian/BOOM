@@ -31,6 +31,12 @@ def dot(data_frame, omit=[]):
       omit=["y"])**2 can be used to specify all 2-way interactions.
 
     """
+
+    # Allow 'omit' to be a string, for the common case where there is just one
+    # name to omit.
+    if isinstance(omit, str):
+        omit = [omit]
+
     vnames = [x for x in data_frame.columns if x not in omit]
     ans = "(" + "+".join(x for x in vnames) + ")"
     return ans

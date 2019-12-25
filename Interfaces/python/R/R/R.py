@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from inspect import isfunction, getsource
+import time
 
 
 class omit:
@@ -86,6 +87,15 @@ def pretty(list_of_strings, width=80, hide_underscore=True):
             print(line)
             line = padded
     print(line)
+
+
+def print_timestamp(iteration_number, ping):
+    if ping <= 0:
+        return
+    if iteration_number % ping == 0:
+        timestamp = time.asctime()
+        sep = ' =-=-=-=-=-=-=-=-=-=-= '
+        print(sep + timestamp + f" Iteration {iteration_number} " + sep)
 
 
 def ls(*args, hide_underscore=True):
