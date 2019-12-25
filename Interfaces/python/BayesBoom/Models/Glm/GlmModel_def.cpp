@@ -2,6 +2,7 @@
 
 #include "Models/ModelTypes.hpp"
 #include "Models/Glm/Glm.hpp"
+#include "Models/Glm/GlmCoefs.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
@@ -20,8 +21,20 @@ namespace BayesBoom {
     py::class_<GlmCoefs,
                VectorParams,
                Ptr<GlmCoefs>>(boom, "GlmCoefs")
+        .def_property_readonly(
+            "inc",
+            [](const GlmCoefs &coefs) {return coefs.inc();},
+            "The Selector object indicating which variables are included "
+            "or excluded.")
+        .def_property_readonly(
+            "included_coefficients",
+            &GlmCoefs::included_coefficients,
+            "The vector of coefficients corresponding to the subset of "
+            "included variables.")
         ;
 
+    // Base class for generalized linear models: regression, logistic
+    // regression, Poisson regression, etc.
     py::class_<GlmModel,
                Model,
                Ptr<GlmModel>>(boom, "GlmModel")
@@ -36,8 +49,11 @@ namespace BayesBoom {
         .def("add", &GlmModel::add, "Add the variable in the specified position.")
         .def("drop", &GlmModel::add, "Drop the variable in the specified position.")
         .def("flip", &GlmModel::add, "Flip the variable in the specified position.")
+        .def_property_readonly(
+            "coef",
+            [](const GlmModel &m) {return m.coef();},
+            "The object containing the model coefficients.")
         ;
-
 
     py::class_<RegressionModel,
                GlmModel,

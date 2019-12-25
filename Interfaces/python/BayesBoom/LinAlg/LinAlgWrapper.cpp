@@ -3,12 +3,14 @@
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <memory>
-#include "LinAlg/Vector.hpp"
-#include "LinAlg/VectorView.hpp"
-#include "LinAlg/Matrix.hpp"
-#include "LinAlg/SpdMatrix.hpp"
+
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/EigenMap.hpp"
+#include "LinAlg/Matrix.hpp"
+#include "LinAlg/Selector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/VectorView.hpp"
 
 
 
@@ -254,6 +256,30 @@ namespace BayesBoom {
                                "Is the original matrix positive definite.")
         ;
 
+    py::class_<Selector>(boom, "Selector")
+        .def(py::init<BOOM::uint, bool>(),
+             py::arg("dim"),
+             py::arg("all") = true,
+             "Create a selector of all True or all False entries.\n"
+             "Args:\n"
+             "  dim:  The number of potential elements.\n"
+             "  all:  If True include all elements.  If False exclude all elements.")
+        .def_property_readonly("nvars", &Selector::nvars,
+                               "The number of included variables.")
+        .def_property_readonly("nvars_possible", &Selector::nvars_possible,
+                               "The number of available variables.")
+        .def_property_readonly("nvars_excluded", &Selector::nvars_excluded,
+                               "The number of excluded variables.")
+        .def("add", &Selector::add, "Add the variable in position i.")
+        .def("drop", &Selector::add, "Drop (remove) the variable in position i.")
+        .def("flip", &Selector::add,
+             "Flip the variable in position i.  If it is in, drop it.  "
+             "If it is out, add it.")
+        .def_property_readonly(
+            "included_positions",
+            &Selector::included_positions,
+            "A vector of integers giving the location of included positions.")
+        ;
 
   }  // ends the LinAlg_def function.
 

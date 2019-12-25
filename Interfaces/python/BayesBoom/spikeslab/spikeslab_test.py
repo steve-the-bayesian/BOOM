@@ -5,10 +5,13 @@ import pandas as pd
 import pdb
 
 sample_size = 10000
-ngood = 3
+ngood = 5
 nbad = 30
 x = np.random.randn(sample_size, ngood + nbad)
+
 beta = np.array([1.2, .8, 2.7])
+beta = np.random.randn(ngood) * 4
+
 b0 = 7.2
 residual_sd = .3
 yhat = b0 + x[:, :ngood] @ beta

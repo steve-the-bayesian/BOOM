@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import patsy
 import BayesBoom as boom
+import scipy.sparse
 
 
 class RegressionSpikeSlabPrior:
@@ -207,6 +208,7 @@ class lm_spike:
 
         X = boom.Matrix(predictors)
         y = boom.Vector(response)
+        nvars = X.ncol
 
         self._model = boom.RegressionModel(X, y, False)
         if prior is None:
@@ -218,20 +220,33 @@ class lm_spike:
             prior.residual_precision,
             prior.spike)
         self._model.set_method(sampler)
-        self._coefficient_draws = []
-        self._inclusion = []
+        # A lil matrix is a "linked list" matrix.  This is an efficient method
+        # for constructing matrices.  It should be converted to a different
+        # matrix type before doing anything with it.
+        self._coefficient_draws = scipy.sparse.lil_matrix((niter, nvars))
         self._residual_sd = np.zeros(niter)
         self._log_likelihood = np.zeros(niter)
 
         for i in range(niter):
             self._model.sample_posterior()
             self._residual_sd[i] = self._model.sigma
-            # beta = self._model.coef
-            # self._inclusion.append(
-            #     np.array(beta.inc().included_positions().copy()))
-            # self._coefficient_draws.append(
-            #     beta.included_coefficients())
+            beta = self._model.coef
+            self._coefficient_draws[i, :] = self._sparsify(beta)
             self._log_likelihood[i] = self._model.log_likelihood()
+
+        # Convert the coefficient draws to sparse column format.  Predictions
+        # vs this format should take the form X @ beta, not beta @ X.
+        self._coefficient_draws = self._coefficient_draws.tocsc()
+
+    def _sparsify(self, glm_coefs):
+        # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
+        inc = glm_coefs.inc.included_positions
+        zeros = np.zeros(len(inc))
+        return scipy.sparse.csr_matrix(
+            (glm_coefs.included_coefficients.to_numpy(),
+             (zeros, inc)),
+            shape=(1, glm_coefs.inc.nvars_possible)
+        )
 
     def plot(self, what=None, **kwargs):
         plot_types = [
@@ -243,6 +258,8 @@ class lm_spike:
         """
         Return an LmSpikePrediciton object.
         """
+        self._coefficient_draws = self._coefficient_draws.tocsc()
+
 
     def suggest_burn(self):
         pass
