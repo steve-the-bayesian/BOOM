@@ -238,16 +238,6 @@ class lm_spike:
         # vs this format should take the form X @ beta, not beta @ X.
         self._coefficient_draws = self._coefficient_draws.tocsc()
 
-    def _sparsify(self, glm_coefs):
-        # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
-        inc = glm_coefs.inc.included_positions
-        zeros = np.zeros(len(inc))
-        return scipy.sparse.csr_matrix(
-            (glm_coefs.included_coefficients.to_numpy(),
-             (zeros, inc)),
-            shape=(1, glm_coefs.inc.nvars_possible)
-        )
-
     def plot(self, what=None, **kwargs):
         plot_types = [
             "coefficients",
@@ -269,3 +259,15 @@ class lm_spike:
 
     def residuals(self, burn=None):
         pass
+
+    def _sparsify(self, glm_coefs):
+        # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
+        import pdb
+        pdb.set_trace()
+        inc = glm_coefs.inc.included_positions
+        zeros = np.zeros(len(inc))
+        return scipy.sparse.csr_matrix(
+            (glm_coefs.included_coefficients.to_numpy(),
+             (zeros, inc)),
+            shape=(1, glm_coefs.inc.nvars_possible)
+        )
