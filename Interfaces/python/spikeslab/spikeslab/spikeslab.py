@@ -5,6 +5,37 @@ import BayesBoom as boom
 import scipy.sparse
 
 
+def dot(data_frame, omit=[]):
+    """
+
+    Build a formula string by "summing" all entries except those on an 'omit
+    list'.  This would typically include the name of the variable on the left
+    hand side of the equation.
+
+    This function is named for the 'dot' operator in R, where a formula given
+    as 'y ~ .' means "regress y on all other variables".  The R dot operator
+    can also be used to specify interactions, as in y ~ .^2.  To allow for
+    similar specifications, the return value of this function is wrapped in
+    paraentheses "()".
+
+    Args:
+
+      data_frame: The data frame from which to build the equation.  A list or
+        array of column names is also acceptable.
+
+      omit:  A list of names to omit.
+
+    Returns:
+      A string containing the list of names in data_frame, separated by '+'.
+      The return value begins with '(' and ends with ')' so that y~dot(data,
+      omit=["y"])**2 can be used to specify all 2-way interactions.
+
+    """
+    vnames = [x for x in data_frame.columns if x not in omit]
+    ans = "(" + "+".join(x for x in vnames) + ")"
+    return ans
+
+
 class RegressionSpikeSlabPrior:
     """Components of spike and slab priors that are shared regardless of the model
     type.
@@ -252,9 +283,16 @@ class lm_spike:
 
 
     def suggest_burn(self):
-        pass
+        """
+        Pass log-likelihood to the R package.
+        """
 
     def summary(self, burn=None):
+        """Return a summary of model fit, including something like R^2, and residual
+        sd, along with a table of coefficients, standard deviations, and
+        marginal inclusion probabilities.
+
+        """
         pass
 
     def residuals(self, burn=None):

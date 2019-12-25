@@ -1,4 +1,4 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
@@ -325,6 +325,7 @@ class BuildExt(build_ext):
 
 setup(
     name='BayesBoom',
+    packages=find_packages(),
     version=__version__,
     author='Steven L. Scott',
     author_email='steve.the.bayesian@gmail.com',
