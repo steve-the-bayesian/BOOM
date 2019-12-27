@@ -159,3 +159,24 @@ def corr(*args):
         if x.shape[1] == 2:
             return np.corrcoef(x, rowvar=False)[0, 1]
     return np.corrcoef(x, rowvar=False)
+
+
+def first_true(boolean_array):
+    """Returns the index of the first True element in the array-like boolean_array.
+    Returns None if no True values are found.
+
+    """
+    return next((i for i, v in enumerate(boolean_array) if v), None)
+
+
+def unique_match(value, legal_value_list):
+    """If 'value' uniquely matches only one value in legal_value_list, then return
+    the corresponding value in legal_value_list.  If not then return None.
+
+    """
+
+    matches = np.array([x.startswith(value) for x in legal_value_list])
+    if matches.sum() != 1:
+        return None
+    else:
+        return legal_value_list[first_true(matches)]

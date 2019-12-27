@@ -15,3 +15,5 @@ class TableTest(unittest.TestCase):
 
     def test_univariate(self):
         tab = table(self.regions)
+        self.assertEqual(len(tab), 4)
+        self.assertEqual(np.sum(tab), 100)

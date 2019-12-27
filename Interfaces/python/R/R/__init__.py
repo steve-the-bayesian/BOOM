@@ -2,6 +2,8 @@
 
 from .R import data_frame, pretty, ls, table, data_range, corr
 
+from .mcmc import suggest_burn
+
 from .plots import (
     abline,
     barplot,
