@@ -218,6 +218,9 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     bar_locations = np.arange(len(x))
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
+    if labels is None:
+        labels = [""] * len(x)
+
     ax.barh(bar_locations, x, height=.8, **kwargs)
     ax.set_yticks(bar_locations)
     ax.set_yticklabels(labels)
@@ -235,7 +238,7 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     return fig, ax
 
 
-def plot(x, y, s=None, ax=None, **kwargs):
+def plot(x, y, s=None, ax=None, hexbin_threshold=1e+5, **kwargs):
     # TODO: make this generic
     fig = None
     if ax is None:
@@ -246,7 +249,7 @@ def plot(x, y, s=None, ax=None, **kwargs):
 
     if s is None:
         s = 20 / np.sqrt(len(y))
-    if sample_size < 1e+4:
+    if sample_size < hexbin_threshold:
         ax.scatter(x, y, s=s, **kwargs)
     else:
         ax.hexbin(x, y, **kwargs)

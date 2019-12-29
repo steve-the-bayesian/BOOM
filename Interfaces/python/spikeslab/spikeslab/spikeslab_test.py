@@ -1,6 +1,5 @@
 import unittest
-import spikeslab
-from spikeslab import dot
+from spikeslab import dot, lm_spike
 import numpy as np
 import pandas as pd
 import scipy.sparse
@@ -11,13 +10,14 @@ class SpikeSlabTest(unittest.TestCase):
         np.random.seed(8675309)
 
     def test_mcmc(self):
+        # Run the test with a big sample size and a small residual SD, so
+        # you'll be sure to find the right answer.
         sample_size = 10000
         ngood = 5
         nbad = 30
-        niter = 100
+        niter = 250
         x = np.random.randn(sample_size, ngood + nbad)
 
-        beta = np.array([1.2, .8, 2.7])
         beta = np.random.randn(ngood) * 4
 
         b0 = 7.2
@@ -31,7 +31,7 @@ class SpikeSlabTest(unittest.TestCase):
         data["y"] = y
         formula = "y ~ " + dot(data, ["y"])
 
-        model = spikeslab.lm_spike(formula, niter=niter, data=data)
+        model = lm_spike(formula, niter=niter, data=data)
         self.assertTrue(isinstance(
             model._coefficient_draws,
             scipy.sparse.csc_matrix)
@@ -41,7 +41,17 @@ class SpikeSlabTest(unittest.TestCase):
 
         self.assertEqual(len(model._residual_sd), niter)
         self.assertTrue(np.all(model._residual_sd > 0))
+
+        # Test the read-only properties
         self.assertEqual(len(model._log_likelihood), niter)
+        self.assertEqual(model.xdim, 1 + ngood + nbad)
+
+        # Test the predict method.
+        pred = model.predict(data, burn=3)
+        self.assertTrue(isinstance(pred, np.ndarray))
+        self.assertEqual(len(pred.shape), 2)
+        self.assertEqual(pred.shape[0], niter-3)
+        self.assertEqual(pred.shape[1], sample_size)
 
     def test_dot(self):
         X = pd.DataFrame(np.random.randn(10, 3), columns=["X1", "X2", "X3"])
