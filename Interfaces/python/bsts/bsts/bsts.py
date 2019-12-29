@@ -1,5 +1,7 @@
 import BayesBoom as Boom
 import patsy
+import spikeslab as ss
+
 
 class Bsts:
     """A Bayesian structural time series model.
@@ -11,8 +13,6 @@ class Bsts:
         assert family in set(["gaussian", "poisson", "binomial", "student"])
         self._model = None
         self._state_models = []
-        self._model_manager =
-
 
     def add_local_level(self):
         pass
