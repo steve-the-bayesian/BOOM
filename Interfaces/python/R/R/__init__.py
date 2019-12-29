@@ -1,6 +1,6 @@
 # flake8: noqa
 
-from .R import data_frame, pretty, ls, table, data_range, corr
+from .R import data_frame, pretty, ls, table, data_range, corr, unique_match
 
 from .mcmc import suggest_burn
 

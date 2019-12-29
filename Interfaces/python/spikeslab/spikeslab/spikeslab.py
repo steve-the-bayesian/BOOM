@@ -3,6 +3,7 @@ import pandas as pd
 import patsy
 import BayesBoom as boom
 import scipy.sparse
+import R
 
 
 def dot(data_frame, omit=[]):
@@ -19,10 +20,8 @@ def dot(data_frame, omit=[]):
     paraentheses "()".
 
     Args:
-
       data_frame: The data frame from which to build the equation.  A list or
         array of column names is also acceptable.
-
       omit:  A list of names to omit.
 
     Returns:
@@ -230,7 +229,8 @@ class lm_spike:
 
         """
 
-        response, predictors = patsy.dmatrices(formula, data)
+        response, predictors = patsy.dmatrices(formula, data, eval_env=1)
+        self._x_design_info = predictors.design_info
         # xdim = predictors.shape[1]
         # sample_size = predictors.shape[0]
         assert isinstance(niter, int)
@@ -240,8 +240,7 @@ class lm_spike:
         assert isinstance(ping, int)
 
         if seed is not None:
-            assert isinstance(seed, int)
-            boom.GlobalRng.rng.seed(seed)
+            boom.GlobalRng.rng.seed(int(seed))
 
         X = boom.Matrix(predictors)
         y = boom.Vector(response)
@@ -275,23 +274,173 @@ class lm_spike:
         # vs this format should take the form X @ beta, not beta @ X.
         self._coefficient_draws = self._coefficient_draws.tocsc()
 
-    def plot(self, what=None, **kwargs):
-        plot_types = [
-            "coefficients",
-            "inclusion"
+        self._fitted_values = self.predict(predictors).mean(axis=0)
+        self._residuals = y.to_numpy() - self._fitted_values
+
+    @property
+    def xdim(self):
+        return self._model.xdim
+
+    @property
+    def log_likelihood(self):
+        return self._log_likelihood
+
+    @property
+    def residuals(self):
+        return self._residuals
+
+    @property
+    def fitted_values(self):
+        return self._fitted_values
+
+    @property
+    def xnames(self):
+        # A list of strings containing the column names of the predictors.
+        return self._x_design_info.column_names
+
+    def inclusion_probs(self, burn=None):
+        """
+        Args:
+          burn:  The number of MCMC iterations to discard as burn-in.
+
+        Returns:
+          A pd.Series containing the marginal probability that each coefficient
+          is nonzero.  The series is indexed by the set of variable names.
+
+        """
+        if burn is None:
+            burn = R.suggest_burn(self.log_likelihood)
+        draws = self._coefficient_draws
+        probs = np.array(
+            [
+                np.mean(draws[burn:, i] != 0) for i in range(draws.shape[1])
             ]
+        )
+        return pd.Series(probs, index=self.xnames)
+
+    def coefficient_positive_probability(self, burn=None):
+        """
+        Args:
+          burn:  The number of MCMC iterations to discard as burn-in.
+
+        Returns:
+          A pd.Series containing the marginal probability that each coefficient
+          is positive.
+
+        """
+        if burn is None:
+            burn = R.suggest_burn(self.log_likelihood)
+        draws = self._coefficient_draws
+        probs = np.array(
+            [
+                np.mean(draws[burn:, i] > 0) for i in range(draws.shape[1])
+            ]
+        )
+        return pd.Series(probs, index=self.xnames)
+
+    def plot(self, what=None, **kwargs):
+        """Plot an aspect of the model.
+
+        Args:
+          what: The type of plot desired.  Acceptable choices are
+            "inclusion", "coefficients", "residual", and "predicted".
+
+          kwargs: Extra arguments are passed to the specific plot function
+            being called.
+
+        """
+
+        plot_types = ["inclusion", "coefficients", "residual", "predicted"]
+        if what is None:
+            what = plot_types[0]
+        what = R.unique_match(what, plot_types)
+        if what == "coefficients":
+            return self.plot_coefficients(**kwargs)
+        elif what == "inclusion":
+            return self.plot_inclusion(**kwargs)
+        elif what == "residual":
+            return self.plot_residual(**kwargs)
+        elif what == "predicted":
+            return self.plot_predicted(**kwargs)
+        else:
+            raise Exception(f"Unknown plot type {what}.")
+
+    def plot_inclusion(self, burn=None, inclusion_threshold=0,
+                       unit_scale=True, number_of_variables=None,
+                       ax=None, **kwargs):
+        """A barplot showing the marginal inclusion probability of each variable.
+
+        """
+        inc = self.inclusion_probs(burn=burn)
+        pos = self.coefficient_positive_probability(burn=burn)
+        colors = np.array([str(x) for x in pos])
+        index = np.argsort(inc.values)[::-1]
+
+        if number_of_variables is None:
+            number_of_variables = np.sum(inc >= inclusion_threshold)
+        inc = inc[index[:number_of_variables]]
+        pos = pos[index[:number_of_variables]]
+        colors = colors[index[:number_of_variables]]
+        foo = R.barplot(inc,
+                        ax=ax,
+                        color=colors[::-1],
+                        linewidth=.25,
+                        edgecolor="black",
+                        xlab="Marginal Inclusion Probability",
+                        ylab="Variable",
+                        **kwargs)
+        return foo
+
+    def plot_coefficients(self, **kwargs):
+        """A boxplot showing the values of the coefficients.
+        """
+
+    def plot_residual(self, hexbin_threshold=1e+5,
+                      xlab="fitted", ylab="residual"):
+        """A plot of the residuals vs the predicted values.
+
+        """
+        fig, ax = R.plot(self.fitted_values, self.residuals,
+                         hexbin_threshold=hexbin_threshold,
+                         xlab=xlab, ylab=ylab)
+        if len(self.residuals) > hexbin_threshold:
+            abs_resid = np.abs(self.residuals)
+            n = len(abs_resid) - 100
+            top_resids = np.argpartition(abs_resid, n)[n:]
+            ax.scatter(self.fitted_values[top_resids],
+                       self.residuals[top_resids],
+                       s=5,
+                       color="yellow")
+        ax.axhline(color="black", linewidth=.5)
+        return fig, ax
+
+    def plot_predicted(self, xlab="fitted", ylab="actual"):
+        """A plot of predicted values vs actual values.
+
+        """
+        fig, ax = R.plot(self.fitted_values,
+                         self.residuals + self.fitted_values,
+                         xlab=xlab,
+                         ylab=ylab)
+        return fig, ax
 
     def predict(self, newdata, burn=None, seed=None):
         """
         Return an LmSpikePrediciton object.
         """
-        self._coefficient_draws = self._coefficient_draws.tocsc()
-
-
-    def suggest_burn(self):
-        """
-        Pass log-likelihood to the R package.
-        """
+        if burn is None:
+            burn = R.suggest_burn(self.log_likelihood)
+        if seed is not None:
+            boom.GlobalRng.rng.seed(int(seed))
+        if isinstance(newdata, np.ndarray) and len(newdata.shape) == 1:
+            newdata = newdata.reshape(1, -1)
+        if isinstance(newdata, np.ndarray) and newdata.shape[1] == self.xdim:
+            predictors = newdata
+        else:
+            predictors = patsy.build_design_matrices(
+                [self._x_design_info],
+                data=newdata)[0]
+        return self._coefficient_draws[burn:, :] @ predictors.T
 
     def summary(self, burn=None):
         """Return a summary of model fit, including something like R^2, and residual
@@ -299,10 +448,7 @@ class lm_spike:
         marginal inclusion probabilities.
 
         """
-        pass
-
-    def residuals(self, burn=None):
-        pass
+        return lm_spike_summary(self)
 
     def _sparsify(self, glm_coefs):
         # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
@@ -313,3 +459,13 @@ class lm_spike:
              (zeros, inc)),
             shape=(1, glm_coefs.inc.nvars_possible)
         )
+
+
+class lm_spike_summary:
+    """Summarizes the fit of an lm_spike model.
+    """
+
+    def __repr__(self):
+        return """A spike and slab model summary!
+        Put R2, residual_sd, and top 10 coefficients here.
+        """

@@ -55,6 +55,23 @@ namespace BayesBoom {
             "The object containing the model coefficients.")
         ;
 
+    py::class_<RegSuf,
+               Ptr<RegSuf>>(
+                   boom, "RegSuf", py::multiple_inheritance())
+        .def_property_readonly(
+            "sample_mean",
+            [](const RegSuf &s) { return s.ybar(); },
+            "The sample mean of the training data.")
+        .def_property_readonly(
+            "sample_variance",
+            [](const RegSuf &s) {
+              Vector beta(s.size());
+              beta[0] = s.ybar();
+              return s.relative_sse(beta) / (s.n() - 1.0);
+            },
+            "Sample variance of the training data.")
+        ;
+
     py::class_<RegressionModel,
                GlmModel,
                Ptr<RegressionModel>>(
@@ -72,6 +89,10 @@ namespace BayesBoom {
              "less than full rank).  If False then model parameters begin at "
              "default levels.")
         .def_property_readonly(
+            "suf",
+            [](const RegressionModel &m) {return m.suf();},
+            "RegSuf object containing the sufficient statistics for the model.")
+        .def_property_readonly(
             "Sigsq_prm",
             [](RegressionModel &m) {
               return m.Sigsq_prm();
@@ -87,7 +108,14 @@ namespace BayesBoom {
             "sigma",
             [](const RegressionModel &m){
               return m.sigma();
-            })
+            },
+            "The residual standard deviation.")
+        .def_property_readonly(
+            "suf",
+            [](const RegressionModel &m) {
+              return m.suf();
+            },
+            "The sufficient statistics for the regression model.")
         .def("set_method",
              &RegressionModel::set_method)
         .def("log_likelihood",
