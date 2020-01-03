@@ -1,6 +1,9 @@
 import BayesBoom as boom
+import numpy as np
 import patsy
 from abc import ABC, abstractmethod
+import spikeslab as ss
+
 
 # Define state models.
 
@@ -129,6 +132,7 @@ class LocalLevelModel(StateModel):
         self.sigma_draws[i] = self._state_model.sigma
         self.state_contribution[i, :] = state_matrix[self._state_index, :]
 
+
 # ===========================================================================
 class Bsts:
     """A Bayesian structural time series model.
@@ -160,5 +164,6 @@ class Bsts:
     def _record_state(self, i):
         """Record the state from the
         """
+        state_matrix = self._model.state()
         for m in self._state_models:
             m.record_state(i, state_matrix)

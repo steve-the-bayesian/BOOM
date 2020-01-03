@@ -8,7 +8,6 @@ import R
 
 def dot(data_frame, omit=[]):
     """
-
     Build a formula string by "summing" all entries except those on an 'omit
     list'.  This would typically include the name of the variable on the left
     hand side of the equation.
@@ -22,12 +21,25 @@ def dot(data_frame, omit=[]):
     Args:
       data_frame: The data frame from which to build the equation.  A list or
         array of column names is also acceptable.
-      omit:  A list of names to omit.
+
+      omit: A list of names (strings) to omit.  As a convenience, if a single
+        variable is to be omitted a single string can be passed instead of a
+        list containing that single string.
 
     Returns:
       A string containing the list of names in data_frame, separated by '+'.
       The return value begins with '(' and ends with ')' so that y~dot(data,
       omit=["y"])**2 can be used to specify all 2-way interactions.
+
+    Examples:
+      formula = "y ~ " + dot(my_data_frame, "y")
+      # Returns "y ~ (X1 + X2 + X3 + extraneous_user_id)"
+
+      formula = "y ~ " + dot(my_data_frame, ["y", "extraneous_user_id"])
+      # Returns "y ~ (X1 + X2 + X3)"
+
+      formula = f"y ~ {dot(my_data_frame, omit=["y", "extraneous_user_id"])}**2
+      # Returns "y ~ (X1 + X2 + X3)**2"
 
     """
 
