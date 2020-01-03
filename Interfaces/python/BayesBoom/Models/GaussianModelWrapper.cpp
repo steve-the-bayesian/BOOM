@@ -3,7 +3,9 @@
 #include "Models/GaussianModelBase.hpp"
 #include "Models/GaussianModel.hpp"
 #include "Models/GaussianModelGivenSigma.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 #include "Models/PosteriorSamplers/GaussianConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -22,10 +24,14 @@ namespace BayesBoom {
         .def_property_readonly("mean", &GaussianModelBase::mu)
         .def_property_readonly("sd", &GaussianModelBase::sigma)
         .def_property_readonly("variance", &GaussianModelBase::sigsq)
+        .def_property_readonly("mu", &GaussianModelBase::mu)
+        .def_property_readonly("sigma", &GaussianModelBase::sigma)
+        .def_property_readonly("sigsq", &GaussianModelBase::sigsq)
         ;
 
     py::class_<GaussianModel,
                GaussianModelBase,
+               PriorPolicy,
                Ptr<GaussianModel>>(boom, "GaussianModel")
         .def(py::init<double, double>(),
              py::arg("mean") = 0.0, py::arg("sd") = 1.0,
@@ -71,6 +77,7 @@ namespace BayesBoom {
 
     py::class_<GaussianModelGivenSigma,
                GaussianModelBase,
+               PriorPolicy,
                Ptr<GaussianModelGivenSigma>>(boom, "GaussianModelGivenSigma")
         .def(py::init<
              const Ptr<UnivParams> &,
@@ -116,6 +123,58 @@ namespace BayesBoom {
         .def("draw", &GaussianConjSampler::draw,
              "Simulate one draw from the posterior distribution.  "
              "Updated paramater draws are stored in the model.")
+        ;
+
+
+    py::class_<ZeroMeanGaussianModel,
+               GaussianModelBase,
+               PriorPolicy,
+               Ptr<ZeroMeanGaussianModel>>(boom, "ZeroMeanGaussianModel")
+        .def(py::init<double>(),
+             py::arg("sigma") = 1.0,
+             "Args:\n"
+             "  sigma:  Standard deviation of the distribution.")
+        .def("set_data", [](ZeroMeanGaussianModel &model, const Vector &data) {
+            for (const auto &el: data) {
+              NEW(DoubleData, data_point)(el);
+              model.add_data(data_point);
+            }
+          },
+          py::arg("data"),
+          "Assign the data in the supplied vector to the model.  \n"
+          "Args:\n"
+          "  data: a boom.Vector containing the data values."
+          )
+        ;
+
+    py::class_<ZeroMeanGaussianConjSampler,
+               PosteriorSampler,
+               Ptr<ZeroMeanGaussianConjSampler>>(boom, "ZeroMeanGaussianConjSampler")
+        .def(py::init(
+            [] (Ptr<ZeroMeanGaussianModel> model,
+                const Ptr<GammaModelBase> &siginv_prior,
+                RNG &seeding_rng) {
+              return new ZeroMeanGaussianConjSampler(
+                  model.get(), siginv_prior, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("siginv_prior"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Create a ZeroMeanGaussianConjSampler -- The conjugate sampler "
+             "for a ZeroMeanGaussianModel.\n"
+             "\n\nArgs:\n"
+             "  model:  The model to be sampled.\n"
+             "  siginv_prior:  GammaModelBase: Prior distribution for the "
+             "precision of the innovation errors.\n"
+             "  rng:  Random number generator used to seed the RNG of this "
+             "sampler."
+             )
+        .def("set_sigma_upper_limit",
+             &ZeroMeanGaussianConjSampler::set_sigma_upper_limit,
+             py::arg("upper_limit") = BOOM::infinity(),
+             "Truncate the support for the standard deviation, so that it "
+             "does not go above 'upper_limit'.\n"
+             )
         ;
 
 

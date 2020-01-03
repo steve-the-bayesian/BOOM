@@ -55,5 +55,29 @@ class GaussianModelTest(unittest.TestCase):
             model.sample_posterior()
 
 
+class ZeroMeanGaussianModelTest(unittest.TestCase):
+
+    def setUp(self):
+        self.model = boom.ZeroMeanGaussianModel(2.3)
+
+    def test_parameters(self):
+        self.assertAlmostEqual(self.model.sd, 2.3)
+        self.assertEqual(0.0, self.model.mean)
+
+    def test_mcmc(self):
+        true_sigma = 2.3
+        data = np.random.randn(100) * true_sigma
+        prior = boom.ChisqModel(1.0, 1.0)
+        self.model.set_data(boom.Vector(data))
+        sampler = boom.ZeroMeanGaussianConjSampler(self.model, prior)
+        self.model.set_method(sampler)
+        niter = 1000
+        draws = np.zeros(niter)
+        for i in range(niter):
+            self.model.sample_posterior()
+            draws[i] = self.model.sigma
+        self.assertNotAlmostEqual(draws[0], draws[-1])
+
+
 if __name__ == "__main__":
     unittest.main()

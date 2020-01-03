@@ -74,6 +74,7 @@ namespace BayesBoom {
 
     py::class_<RegressionModel,
                GlmModel,
+               PriorPolicy,
                Ptr<RegressionModel>>(
                    boom, "RegressionModel", py::multiple_inheritance())
         .def(py::init<Matrix, Vector, bool>(),
@@ -116,8 +117,6 @@ namespace BayesBoom {
               return m.suf();
             },
             "The sufficient statistics for the regression model.")
-        .def("set_method",
-             &RegressionModel::set_method)
         .def("log_likelihood",
              [](const RegressionModel& m) {
                return m.log_likelihood();

@@ -80,6 +80,7 @@ namespace BayesBoom {
 
     py::class_<MvnModel,
                MvnBaseWithParams,
+               PriorPolicy,
                BOOM::Ptr<MvnModel>>(boom, "MvnModel")
         .def(py::init<uint, double, double>(),
              py::arg("dim"),
@@ -158,6 +159,7 @@ namespace BayesBoom {
 
     py::class_<MvnGivenScalarSigma,
                MvnBase,
+               PriorPolicy,
                Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma")
         .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
              py::arg("ominv"),
