@@ -279,7 +279,7 @@ class lm_spike:
             self._model.sample_posterior()
             self._residual_sd[i] = self._model.sigma
             beta = self._model.coef
-            self._coefficient_draws[i, :] = self._sparsify(beta)
+            self._coefficient_draws[i, :] = self.sparsify(beta)
             self._log_likelihood[i] = self._model.log_likelihood()
 
         # Convert the coefficient draws to sparse column format.  Predictions
@@ -462,7 +462,8 @@ class lm_spike:
         """
         return lm_spike_summary(self)
 
-    def _sparsify(self, glm_coefs):
+    @classmethod
+    def sparsify(cls, glm_coefs):
         # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
         inc = glm_coefs.inc.included_positions
         zeros = np.zeros(len(inc))
