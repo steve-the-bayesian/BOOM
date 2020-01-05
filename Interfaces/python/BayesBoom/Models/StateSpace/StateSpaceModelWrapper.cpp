@@ -2,6 +2,8 @@
 
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
+#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -63,6 +65,37 @@ namespace BayesBoom {
              "Kalman filter.")
         ;
 
+    py::class_<StateSpaceModel,
+               ScalarStateSpaceModelBase,
+               PriorPolicy,
+               Ptr<StateSpaceModel>>(boom, "StateSpaceModel")
+        .def(py::init<>(),
+             "Create a state space model.")
+        ;
+
+    py::class_<StateSpaceRegressionModel,
+               ScalarStateSpaceModelBase,
+               PriorPolicy,
+               Ptr<StateSpaceRegressionModel>>(boom, "StateSpaceRegressionModel")
+        .def(py::init<int>(),
+             py::arg("xdim"),
+             "Args:\n\n"
+             "  xdim:  The dimension of the predictor variables.")
+        ;
+
+    py::class_<StateSpacePosteriorSampler,
+               PosteriorSampler,
+               Ptr<StateSpacePosteriorSampler>>(boom, "StateSpacePosteriorSampler")
+        .def(py::init([] (Ptr<StateSpaceModelBase> model, RNG &seeding_rng) {
+                        return new StateSpacePosteriorSampler(
+                            model.get(), seeding_rng); }),
+            py::arg("model"),
+            py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+            "Args:\n\n"
+            "  model: The model to be sampled.\n"
+            "  seeding_rng: The random number generator used to seed the"
+            "RNG in this sampler.")
+          ;
 
 
   }  // StateSpaceModel_def

@@ -21,6 +21,7 @@ namespace BayesBoom {
   void MvnModel_def(py::module &);
   void GlmModel_def(py::module &);
   void StateSpaceModel_def(py::module &);
+  void StateModel_def(py::module &);
 
   PYBIND11_MODULE(BayesBoom, boom) {
     boom.doc() = "A library for Bayesian modeling, and assorted "
@@ -38,6 +39,8 @@ namespace BayesBoom {
     MvnModel_def(boom);
 
     GlmModel_def(boom);
+    StateSpaceModel_def(boom);
+    StateModel_def(boom);
 
   }  // Module BOOM
 

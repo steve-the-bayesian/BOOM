@@ -11,13 +11,12 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 namespace BayesBoom {
   using namespace BOOM;
 
-  void StateSpaceModel_def(py::module &boom) {
+  void StateModel_def(py::module &boom) {
 
     // Base class
     py::class_<LocalLevelStateModel,
                StateModel,
                ZeroMeanGaussianModel,
-               Model,
                BOOM::Ptr<LocalLevelStateModel>>(boom, "LocalLevelStateModel")
         .def(py::init<double>(),
              py::arg("sigma") = 1.0,
@@ -27,8 +26,19 @@ namespace BayesBoom {
             "state_dimension", &LocalLevelStateModel::state_dimension,
             "Dimension of the state vector.")
         .def_property_readonly(
-            "state_error_dimension", &LocalLevelStateModel::state_error_dimension,
+            "state_error_dimension",
+            &LocalLevelStateModel::state_error_dimension,
             "Dimension of the innovation term.")
+        .def("set_initial_state_mean",
+             &LocalLevelStateModel::set_initial_state_mean,
+             py::arg("mean"),
+             "Set the mean of the initial state distribution to the "
+             "specified value.")
+        .def("set_initial_state_variance",
+             &LocalLevelStateModel::set_initial_state_variance,
+             py::arg("variance"),
+             "Set the variance of the initial state distribution to the "
+             "specified value.")
         ;
 
 
