@@ -16,6 +16,6 @@ setup(
     url='https://github.com/steve-the-bayesian/BOOM',
     description='Bayesian structural time series.',
     long_description=read("README"),
-    packages=["spikeslab"],
+    packages=["bsts"],
     zip_safe=True,
 )
