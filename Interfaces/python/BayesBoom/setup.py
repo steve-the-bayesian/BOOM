@@ -198,7 +198,9 @@ boom_library_sources = (
 boom_extension_sources = (
     ["pybind11/module.cpp"]
     + glob("pybind11/Models/*.cpp")
-    + glob("pybind11/Models/*/*.cpp")
+    + glob("pybind11/Models/Glm/*.cpp")
+    + glob("pybind11/Models/StateSpace/*.cpp")
+    + glob("pybind11/Models/StateSpace/StateModels/*.cpp")
     + glob("pybind11/LinAlg/*.cpp")
     + glob("pybind11/stats/*.cpp")
     + glob("pybind11/distributions/*.cpp")
