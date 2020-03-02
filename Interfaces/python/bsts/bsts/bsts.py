@@ -19,6 +19,7 @@ class Bsts:
         self._model = None
         self._state_models = []
         self._state_dimension = 0
+        self._family = family
 
     def add_state(self, state_model: StateModel):
         """Add a component of state to the model.
@@ -170,7 +171,7 @@ class Bsts:
             boom.Matrix(predictors),
             is_observed)
 
-        ## handle upper_limit
+        # handle upper_limit
 
         spikeslab.set_posterior_sampler(self._model.observation_model, prior)
         for state_model in self._state_models:
