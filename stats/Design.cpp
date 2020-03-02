@@ -462,7 +462,7 @@ namespace BOOM {
 
   bool ContextualEffect::eval(const std::vector<int> &experiment_levels,
                               const std::vector<int> &context_levels) const {
-    return experiment_effect_.eval(experiment_levels) *
+    return experiment_effect_.eval(experiment_levels) &&
            context_effect_.eval(context_levels);
   }
 
