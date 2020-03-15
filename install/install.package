@@ -76,17 +76,16 @@ PACKAGE_VERSION=`ls ${PACKAGE}_*.tar.gz`
 
 if [[ $DO_CHECK = 1 ]]; then
     echo "Checking $PACKAGE"
-    MAKEFLAGS=" -j 8 " R CMD CHECK $PACKAGE_VERSION
+    MAKEFLAGS=" -j 8 " R CMD check $PACKAGE_VERSION
 fi
 
 if [[ $DO_CHECK_AS_CRAN = 1 ]]; then
     echo "Checking $PACKAGE"
-    MAKEFLAGS=" -j 8 " R CMD CHECK --as-cran $PACKAGE_VERSION
+    MAKEFLAGS=" -j 8 " R CMD check --as-cran $PACKAGE_VERSION
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
     echo "Installing $PACKAGE"
     MAKEFLAGS=" -j 8 " R CMD INSTALL $PACKAGE_VERSION
 fi
-echo "PACKAGE = $PACKAGE" 
-
+echo "PACKAGE = $PACKAGE"
