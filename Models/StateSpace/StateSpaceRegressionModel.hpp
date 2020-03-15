@@ -92,6 +92,7 @@ namespace BOOM {
     StateSpaceRegressionModel(const StateSpaceRegressionModel &rhs);
     StateSpaceRegressionModel *clone() const override;
 
+    // The number of time points in the data.
     int time_dimension() const override { return dat().size(); }
 
     // Variance of observed data y[t], given state alpha[t].  Durbin
