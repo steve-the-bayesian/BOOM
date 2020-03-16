@@ -122,16 +122,23 @@ cp Eigen/* $BOOM_DIR/inst/include/Eigen/
 
 ## Fix warning supression in Eigen, which violates CRAN policy
 fname=$BOOM_DIR/inst/include/Eigen/src/Core/arch/SSE/Complex.h
-gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
-gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
+
+if [[ $OSTYPE =~ "darwin" ]]; then
+    SED=gsed
+elif [[ $OSTYPE =~ "linux" ]]; then
+    SED=sed
+fi
+
+$SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
+$SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
 
 fname=$BOOM_DIR/inst/include/Eigen/src/Core/util/DisableStupidWarnings.h
 
-gsed -i 's|#pragma clang diagnostic ignored|// #pragma clang diagnostic ignored|g' $fname
-gsed -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fname
+$SED -i 's|#pragma clang diagnostic ignored|// #pragma clang diagnostic ignored|g' $fname
+$SED -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fname
 
-gsed -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
-gsed -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
+$SED -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
+$SED -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
 
 
 ##----------------------------------------------------------------------
