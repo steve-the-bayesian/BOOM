@@ -43,3 +43,14 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "trun_gamma_test",
+    srcs = ["trun_gamma_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
