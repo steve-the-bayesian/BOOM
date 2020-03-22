@@ -96,3 +96,37 @@ test_that("predict method runs without crashing for DLM's with static regressors
   pred <- predict(model, newdata = test)
 
 })
+
+test_that("dynamic regression fails gracefully with non-trivial time stamps", {
+  library(bsts)
+  ## From AddDynamicRegression example
+  set.seed(8675309)
+  n <- 1000
+  x <- matrix(rnorm(n))
+
+  # beta follows a random walk with sd = .1 starting at -12.
+  beta <- cumsum(rnorm(n, 0, .1)) - 12
+
+  # level is a local level model with sd = 1 starting at 18.
+  level <- cumsum(rnorm(n)) + 18
+
+  # sigma.obs is .1
+  error <- rnorm(n, 0, .1)
+
+  y <- level + x * beta + error
+
+  ss <- list()
+  ss <- AddLocalLevel(ss, y)
+  ss <- AddDynamicRegression(ss, y ~ x)
+
+  ## This works:
+  model <- bsts(y, state.specification = ss, niter = 100, seed = 8675309)
+
+  ## This fails and crashes R:
+  new_timestamps <- sort(sample(1:2000, 1000))
+  expect_error(
+    model <- bsts(y, state.specification = ss, niter = 100, seed = 8675309,
+      timestamps = new_timestamps),
+    "Dynamic regression models are only supported with trivial time stamps.")
+
+})
