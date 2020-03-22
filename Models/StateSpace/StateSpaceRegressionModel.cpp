@@ -217,7 +217,7 @@ namespace BOOM {
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX,
                                  const Vector &final_state) {
     return simulate_multiplex_forecast(rng, newX, final_state,
-                                       seq<int>(1, nrow(newX)));
+                                       seq<int>(0, nrow(newX) - 1));
   }
 
   Vector SSRM::simulate_forecast(RNG &rng, const Matrix &newX) {
@@ -233,7 +233,8 @@ namespace BOOM {
     return simulate_forecast(rng, newX, final_state);
   }
 
-  Vector SSRM::simulate_multiplex_forecast(RNG &rng, const Matrix &newX,
+  Vector SSRM::simulate_multiplex_forecast(RNG &rng,
+                                           const Matrix &newX,
                                            const Vector &final_state,
                                            const std::vector<int> &timestamps) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);

@@ -1,3 +1,4 @@
+
 set.seed(8675309)
 
 library(bsts)
@@ -84,10 +85,14 @@ test_that("predict method runs without crashing for DLM's with static regressors
     data = train)
 
   # Train it
-  model <- bsts(train$iclaimsNSA ~ train$idaho.unemployment,
+  model <- bsts(iclaimsNSA ~ idaho.unemployment,
     state.specification = ss,
-    niter = 100)
+    niter = 100,
+    data = train)
 
-  test_subset <- cbind("department.of.unemployment" = test$department.of.unemployment)
-  pred <- predict(model, newdata = test_subset)
+  test.subset <- cbind(test,
+    "department.of.unemployment" = test$department.of.unemployment)
+  #  pred <- predict(model, newdata = test.subset)
+  pred <- predict(model, newdata = test)
+
 })

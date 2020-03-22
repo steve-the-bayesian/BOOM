@@ -32,7 +32,7 @@ DynamicRegressionRandomWalkOptions <- function(
   ##     used to scale the default prior if sigma.prior is NULL.  It is unused
   ##     otherwise.
   ## Returns:
-  ##   An object that can be passed to AddDynamicRegression as the model.options argument. 
+  ##   An object that can be passed to AddDynamicRegression as the model.options argument.
   if (!is.null(sigma.prior)) {
     # sigma.prior must either be an SdPrior or a list of SdPrior objects.
     stopifnot(inherits(sigma.prior, "SdPrior")
@@ -44,7 +44,7 @@ DynamicRegressionRandomWalkOptions <- function(
     if (any(sdx <= 0)) {
       stop("All elements of sdx must be positive.")
     }
-    
+
     number.of.coefficients <- length(sdx)
     sigma.prior <- list()
     for (i in 1:number.of.coefficients) {
@@ -272,7 +272,7 @@ AddDynamicRegression <- function(
   if (any(is.na(predictors))) {
     stop("NA's are not allowed in the predictor matrix.")
   }
-  
+
   stopifnot(ncol(predictors) >= 1)
   stopifnot(nrow(predictors) >= 1)
 

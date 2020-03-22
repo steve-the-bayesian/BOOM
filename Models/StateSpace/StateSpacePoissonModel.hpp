@@ -199,6 +199,28 @@ namespace BOOM {
     Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
                              const Vector &exposure, const Vector &final_state);
 
+    // Returns a vector of draws from the posterior predictive distribution for
+    // a multiplexed prediction problem.  That is, a prediction problem where
+    // some time periods to be predicted have more than one observation with
+    // different covariates.
+    //
+    // Args:
+    //   forecast_predictors: A matrix of predictors to use for the forecast
+    //     period.  If no regression component is desired, then a single column
+    //     matrix of 1's (an intercept) should be supplied so that the length of
+    //     the forecast period can be determined.
+    //   exposure: A vector giving the Poisson exposure associated with
+    //     each time point in the forecast period.
+    //   final_state: A draw of the value of the state vector at the final time
+    //     period in the training data.
+    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
+    //     gives the number of time periods after time_dimension() at which to
+    //     make the prediction.  A zero-value in timestamps corresponds to one
+    //     period after the end of the training data.
+    //
+    // Returns:
+    //   A vector of draws with length equal to nrow(forecast_predictors), from
+    //   the posterior distribution of the conditional state at time t.
     Vector simulate_multiplex_forecast(RNG &rng,
                                        const Matrix &forecast_predictors,
                                        const Vector &exposure,
