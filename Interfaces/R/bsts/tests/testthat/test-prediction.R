@@ -73,7 +73,7 @@ test_that("Off by one error is solved", {
   set.seed(102)
   weekly.sim <- arima.sim(list(ma=-0.1), n = 52, sd = 0.01)
   weekly.sim <- exp(diffinv(weekly.sim, differences = 1, xi = log(200)))[-1]
-  plot(weekly.sim, type = "l")
+#  plot(weekly.sim, type = "l")
 
   seqindx <- c(seq(1, N, by =  7), N + 1)
   daily.sim.allocate <- do.call(rbind, lapply(1:(length(seqindx) - 1), function(i){

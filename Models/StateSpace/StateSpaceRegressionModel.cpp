@@ -245,7 +245,8 @@ namespace BOOM {
     Vector ans(forecast_dimension);
     int t0 = time_dimension();
     Vector state = final_state;
-    int time = 0;
+    // The time stamp of "final state" is t0 - 1.
+    int time = -1;
     for (int i = 0; i < forecast_dimension; ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
       ans[i] = rnorm_mt(rng, observation_matrix(t0 + time).dot(state),

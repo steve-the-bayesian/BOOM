@@ -229,7 +229,8 @@ namespace BOOM {
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
     int t0 = time_dimension();
-    int time = 0;
+    // The time stamp of "final state" is t0 - 1.
+    int time = -1;
     for (int i = 0; i < ans.size(); ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
       double eta = observation_matrix(time + t0).dot(state) +

@@ -235,7 +235,8 @@ namespace BOOM {
     Vector ans(nrow(forecast_predictors));
     Vector state = final_state;
     int t0 = dat().size();
-    int time = 0;
+    // The time stamp of "final state" is t0 - 1.
+    int time = -1;
     for (int i = 0; i < ans.size(); ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
       double eta = observation_matrix(t0 + time).dot(state) +
@@ -297,7 +298,7 @@ namespace BOOM {
       double latent_observation = precision_weighted_sum / total_precision;
       double latent_variance = 1.0 / total_precision;
       double weight = latent_variance / Constants::pi_squared_over_3;
-      
+
       // The latent state was drawn from its predictive distribution given Y[t0
       // + t -1] and used to impute the latent data for y[t0+t].  That latent
       // data is now used to update the Kalman filter for the next time period.
