@@ -21,8 +21,11 @@
 namespace BOOM {
   namespace StateSpace {
 
-    RegressionDataTimePoint::RegressionDataTimePoint(
-        const RegressionDataTimePoint &rhs)
+    namespace {
+      using RDTP = RegressionDataTimePoint;
+    }  // namespace
+
+    RDTP::RegressionDataTimePoint(const RegressionDataTimePoint &rhs)
         : xdim_(rhs.xdim_),
           suf_(nullptr)
     {
@@ -35,7 +38,7 @@ namespace BOOM {
       }
     }
 
-    std::ostream &RegressionDataTimePoint::display(std::ostream &out) const {
+    std::ostream &RDTP::display(std::ostream &out) const {
       if (!!suf_) {
         out << "sufficient statistics for " << suf_->n() << " observations."
             << std::endl;
@@ -47,7 +50,7 @@ namespace BOOM {
       return out;
     }
 
-    void RegressionDataTimePoint::add_data(const Ptr<RegressionData> &dp) {
+    void RDTP::add_data(const Ptr<RegressionData> &dp) {
       if (xdim_ == -1) {
         xdim_ = dp->xdim();
       } else {
@@ -75,7 +78,15 @@ namespace BOOM {
   }  // namespace StateSpace
 
 
-  void TimeSeriesRegressionDataPolicy::add_data(const Ptr<Data> &dp) {
+  //===========================================================================
+  namespace {
+    using TSRDP = TimeSeriesRegressionDataPolicy;
+  }  // namespace
+
+  TSRDP::TimeSeriesRegressionDataPolicy(int xdim)
+      : xdim_(xdim) {}
+
+  void TSRDP::add_data(const Ptr<Data> &dp) {
     Ptr<RegressionData> reg_ptr = dp.dcast<RegressionData>();
     if (!!reg_ptr) {
       add_data(reg_ptr);
@@ -94,33 +105,58 @@ namespace BOOM {
     report_error(err.str());
   }
 
-  void TimeSeriesRegressionDataPolicy::add_data(const Ptr<RegressionData> &dp) {
+  void TSRDP::add_data(const Ptr<RegressionData> &dp) {
     if (data_.empty()) {
-      data_.push_back(new StateSpace::RegressionDataTimePoint());
+      data_.push_back(new StateSpace::RegressionDataTimePoint(xdim_));
     }
     data_.back()->add_data(dp);
   }
 
-  void TimeSeriesRegressionDataPolicy::add_data(
+  void TSRDP::add_data(
       const Ptr<RegressionData> &dp,
       int time) {
     while (time >= data_.size()) {
-      data_.push_back(new StateSpace::RegressionDataTimePoint());
+      data_.push_back(new StateSpace::RegressionDataTimePoint(xdim_));
     }
     data_[time]->add_data(dp);
   }
 
-  void TimeSeriesRegressionDataPolicy::add_data(
+  void TSRDP::add_data(
       const Ptr<StateSpace::RegressionDataTimePoint> &dp) {
     data_.push_back(dp);
   }
 
-  void TimeSeriesRegressionDataPolicy::clear_data() {
+  void TSRDP::clear_data() {
     data_.clear();
   }
 
-  void TimeSeriesRegressionDataPolicy::combine_data(
+  void TSRDP::combine_data(
       const Model &other_model, bool just_suf) {
     report_error("Not implemented.");
   }
+
+  //===========================================================================
+
+  namespace {
+    using DRM = DynamicRegressionModel;
+  }  // namespace
+
+  DRM::DynamicRegressionModel(int xdim) : TSRDP(xdim) {}
+
+
+  DRM::DynamicRegressionModel(const DRM &rhs)
+      : Model(rhs),
+        ManyParamPolicy(rhs),
+        TimeSeriesRegressionDataPolicy(rhs),
+        PriorPolicy(rhs),
+        residual_variance_(rhs.residual_variance_->clone())
+  {
+    ManyParamPolicy::clear();
+    ManyParamPolicy::add_params(residual_variance_)
+    for (int i = 0; i < rhs.coefficients_.size(); ++i) {
+      coefficients_.push_back(rhs.coefficients_[i]->clone());
+      ManyParamPolicy::add_params(coefficients_.back());
+    }
+  }
+
 }  // namespace BOOM

@@ -38,6 +38,14 @@ namespace BOOM {
   }
 
   void DRDGS::draw_inclusion_indicators() {
+    for (j = 0; j < model_->xdim(); ++j) {
+
+      // Can we do forward-backward here?
+
+      // Do Direct Gibbs first and see where the trouble spots are.
+
+
+    }
   }
 
   void DRDGS::draw_coefficients_given_inclusion() {

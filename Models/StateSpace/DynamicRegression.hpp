@@ -36,8 +36,9 @@ namespace BOOM {
   namespace StateSpace {
     class RegressionDataTimePoint : public Data {
      public:
-      //
+      // Default constructor sets xdim to -1.
       RegressionDataTimePoint(): xdim_(-1), suf_(nullptr) {}
+
       RegressionDataTimePoint(const RegressionDataTimePoint &rhs);
       RegressionDataTimePoint(RegressionDataTimePoint &&rhs) = default;
 
@@ -71,6 +72,9 @@ namespace BOOM {
       }
 
      private:
+      // xdim_ is set to -1 by the default constructor, and updated when the
+      // first data point is added.  Adding data that conflicts with xdim raises
+      // an error.
       int xdim_;
 
       std::vector<Ptr<RegressionData>> raw_data_;
@@ -85,6 +89,10 @@ namespace BOOM {
   class TimeSeriesRegressionDataPolicy
       : public DefaultDataInfoPolicy<StateSpace::RegressionDataTimePoint> {
    public:
+
+    TimeSeriesRegressionDataPolicy(int xdim);
+
+    int xdim() const {return xdim_;}
 
     // Mandatory overrides.
 
@@ -124,6 +132,9 @@ namespace BOOM {
     }
 
    private:
+    // Number of predictor variables.
+    int xdim_;
+
     // Storage for data at a time point.  Once the number of observations
     // exceeds xdim data are stored as sufficient statistics rather than raw
     // observations.
@@ -161,8 +172,24 @@ namespace BOOM {
     DynamicRegressionModel(DynamicRegressionModel &&rhs) = default;
 
    private:
+    //
     std::vector<Ptr<GlmCoefs>> coefficients_;
     Ptr<UnivParams> residual_variance_;
+
+    // The variance that describes the rate at which each ACTIVE coefficient
+    // changes over time:
+    //
+    //    beta[j, t+1] = beta[j, t] + N(0, innovation_variances_[j])
+    //
+    // Note that these variances include information about the scale of the
+    // predictor variables multiplying the coefficients.
+    std::vector<Ptr<UnivParams>> innovation_variances_;
+
+    // A 2-state Markov model describes the frequency of jumps in and out of the
+    // model.  This is the temporal equivalent of the "prior inclusion
+    // probabilities" in a static model.  In a later edition of this model we
+    // might want to have more of these.
+    Ptr<MarkovModel> inclusion_transition_model_
   };
 
 }  // namespace BOOM
