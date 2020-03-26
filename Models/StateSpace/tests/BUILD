@@ -34,6 +34,19 @@ cc_library(
 )
 
 cc_test(
+    name = "dynamic_regression_test",
+    srcs = ["dynamic_regression_test.cc"],
+    copts = COPTS,
+    data = [":testdata"],
+    deps = [
+        ":test_utils",
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "dynamic_intercept_regression_test",
     srcs = ["dynamic_intercept_regression_test.cc"],
     copts = COPTS,

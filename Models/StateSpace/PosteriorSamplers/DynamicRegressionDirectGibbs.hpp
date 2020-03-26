@@ -35,7 +35,7 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
-    void logpri() const override;
+    double logpri() const override;
 
     void draw_inclusion_indicators();
     void draw_coefficients_given_inclusion();

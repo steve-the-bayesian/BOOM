@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/NakajimaWestSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionDirectGibbs.hpp"
 
 namespace BOOM {
 
@@ -32,8 +32,26 @@ namespace BOOM {
     draw_transition_probabilities();
   }
 
+  double DRDGS::logpri() const {
+    report_error("Not implemented.");
+    return -1;
+  }
+
+  void DRDGS::draw_inclusion_indicators() {
+  }
+
+  void DRDGS::draw_coefficients_given_inclusion() {
+  }
+
+  void DRDGS::draw_residual_variance() {
+  }
+
+  void DRDGS::draw_state_innovation_variance() {
+  }
+
   void DRDGS::draw_transition_probabilities() {
     report_error("Not implemented.");
   }
+
 
 }  // namespace BOOM

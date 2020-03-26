@@ -20,6 +20,7 @@
 */
 
 #include "Models/Policies/CompositeParamPolicy.hpp"
+#include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
@@ -36,9 +37,9 @@ namespace BOOM {
     class RegressionDataTimePoint : public Data {
      public:
       //
-      RegressionDataTimePoint(): suf_(nullptr) {}
+      RegressionDataTimePoint(): xdim_(-1), suf_(nullptr) {}
       RegressionDataTimePoint(const RegressionDataTimePoint &rhs);
-      RegressionDataTimePoint(const RegressionDataTimePoint &&rhs) = default;
+      RegressionDataTimePoint(RegressionDataTimePoint &&rhs) = default;
 
       // Mandatory overrides.
       RegressionDataTimePoint * clone() const override {
@@ -53,6 +54,7 @@ namespace BOOM {
       void add_data(const Ptr<RegressionData> &dp);
 
       bool using_suf() const {return !!suf_;}
+
       const NeRegSuf &suf() const {
         if (!suf_) {
           report_error("Not enough data to use sufficient statistics.");
@@ -69,6 +71,7 @@ namespace BOOM {
       }
 
      private:
+      int xdim_;
 
       std::vector<Ptr<RegressionData>> raw_data_;
 
@@ -78,6 +81,7 @@ namespace BOOM {
     };
   }  // namespace StateSpace
 
+  // Data policy for managing
   class TimeSeriesRegressionDataPolicy
       : public DefaultDataInfoPolicy<StateSpace::RegressionDataTimePoint> {
    public:
@@ -97,15 +101,34 @@ namespace BOOM {
     // Add a new time point.
     void add_data(const Ptr<StateSpace::RegressionDataTimePoint> &dp);
 
+    std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() {return data_;}
+    const std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() const {
+      return data_;
+    }
+
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
+
+    // The number of observed or implied time points.
+    int time_dimension() const {
+      return data_.size();
+    }
+
+    // The total number of observations.
+    int sample_size() const {
+      int ans = 0;
+      for (int i = 0; i < data_.size(); ++i) {
+        ans += data_[i]->sample_size();
+      }
+      return ans;
+    }
 
    private:
     // Storage for data at a time point.  Once the number of observations
     // exceeds xdim data are stored as sufficient statistics rather than raw
     // observations.
 
-    std::vector<StateSpace::RegressionDataTimePoint> data_;
+    std::vector<Ptr<StateSpace::RegressionDataTimePoint>> data_;
   };
 
 
