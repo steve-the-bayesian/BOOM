@@ -424,7 +424,7 @@ PlotNetworkStructure <- function(model, ...) {
   terminal.layer.offset <- (max.nodes - 1) / 2
 
   input.layer.layout <- cbind("layer" = 0,
-  "position.in.layer" = (1:nrow(input.nodes)) + initial.layer.node.offset)
+    "position.in.layer" = (1:nrow(input.nodes)) + initial.layer.node.offset)
   hidden.layer.layout <- cbind(hidden.nodes[, c("layer", "position.in.layer")])
   hidden.layer.layout[,2] <- hidden.layer.layout[, 2] +
     hidden.layer.node.offsets[hidden.layer.layout[, 1]]
