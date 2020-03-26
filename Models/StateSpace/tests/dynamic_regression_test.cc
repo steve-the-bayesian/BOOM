@@ -26,7 +26,7 @@ namespace {
 
   class RegressionDataTimePointTest : public ::testing::Test {
    protected:
-
+    RegressionDataTimePointTest() {}
   };
 
   TEST_F(RegressionDataTimePointTest, blah) {
