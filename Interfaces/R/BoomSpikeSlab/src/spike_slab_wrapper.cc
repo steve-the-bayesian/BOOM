@@ -52,7 +52,6 @@ namespace {
   void initialize_regression_model_data(Ptr<RegressionModel> model,
                                         const Matrix &design_matrix,
                                         const Vector &response_vector) {
-    size_t n = design_matrix.nrow();
     NEW(NeRegSuf, suf)(design_matrix, response_vector);
     model->suf()->combine(suf);
   }
