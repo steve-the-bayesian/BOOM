@@ -92,6 +92,17 @@ namespace BOOM {
   }
   //----------------------------------------------------------------------
   inline double pm_med(double pm, double T) {
+    // An implementation detail of the interpolation scheme between successive
+    // quantile points.
+    //
+    // Args:
+    //   pm: One of the stored probability values.  The probability label for
+    //     quantiles_[m].
+    //   T: A sample size.
+    //
+    // Returns:
+    //   The median of pm, 1/(2T) and 1 - 1/(2T).  The latter two are the lower
+    //   and upper extremes of a data set with 2T entries.
     if (T < 1) return pm;
     double lo = .5 / T;
     double hi = 1 - .5 / T;
@@ -102,6 +113,7 @@ namespace BOOM {
       return hi;  // lo hi pm
     return pm;    // lo pm hi
   }
+
   double IQagent::Fq(double x) const {
     if (x < quantiles_[0]) return 0;
     if (x >= quantiles_.back()) return 1;

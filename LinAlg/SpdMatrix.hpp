@@ -25,14 +25,14 @@
 namespace BOOM {
 
   class Selector;
-  
+
   class SpdMatrix : public Matrix {
     // symmetric, positive definite matrix with 'square' storage
     // (i.e. 0's are stored)
    public:
     SpdMatrix();
     SpdMatrix(uint dim, double diag = 0.0);
-    SpdMatrix(uint dim, double *m, bool ColMajor = true);
+    SpdMatrix(uint dim, const double *m, bool ColMajor = true);
     template <class FwdIt>
     explicit SpdMatrix(FwdIt Beg, FwdIt End);
 
@@ -149,7 +149,7 @@ namespace BOOM {
 
     // Increment *this by w * X * X.transpose().
     SpdMatrix &add_outer(const Matrix &X, double w = 1.0,
-                         bool force_sym = true);  
+                         bool force_sym = true);
 
     SpdMatrix &add_inner(const Matrix &x, double w = 1.0);
     SpdMatrix &add_inner(const Matrix &X, const Vector &w,
@@ -228,7 +228,7 @@ namespace BOOM {
   Matrix chol(const SpdMatrix &Sigma, bool &ok);
 
   SpdMatrix Kronecker(const SpdMatrix &A, const SpdMatrix &B);
-  
+
   inline double logdet(const SpdMatrix &Sigma) { return Sigma.logdet(); }
 
   SpdMatrix chol2inv(const Matrix &L);

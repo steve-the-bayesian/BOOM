@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <vector>
+#include <string>
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {

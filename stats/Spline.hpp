@@ -19,6 +19,7 @@
 #ifndef BOOM_SPLINE_HPP
 #define BOOM_SPLINE_HPP
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 
 namespace BOOM {
   // A base class providing features shared by different spline bases.
@@ -36,7 +37,11 @@ namespace BOOM {
     explicit SplineBase(const Vector &knots);
     virtual ~SplineBase() {}
 
+    // The spline basis expansion (value of each basis function) at x.
     virtual Vector basis(double x) const = 0;
+
+    // Row i of the returned matrix is the basis expansion of x[i].
+    Matrix basis_matrix(const Vector &x) const;
 
     // The dimension of the spline basis (i.e. the dimension of the
     // vector returned by a call to 'basis()'.

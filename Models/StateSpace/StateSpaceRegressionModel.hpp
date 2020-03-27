@@ -92,6 +92,7 @@ namespace BOOM {
     StateSpaceRegressionModel(const StateSpaceRegressionModel &rhs);
     StateSpaceRegressionModel *clone() const override;
 
+    // The number of time points in the data.
     int time_dimension() const override { return dat().size(); }
 
     // Variance of observed data y[t], given state alpha[t].  Durbin
@@ -126,9 +127,10 @@ namespace BOOM {
     //   newX:  The matrix of predictors where forecasts are needed.
     //   final_state: Contains the simulated state values for the model as of
     //     the time of the final observation in the training data.
-    //   timestamps: Each entry corresponds to a row in newX, and gives the
-    //     number of time periods after the end of the training data at which to
-    //     make the prediction.
+    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
+    //     gives the number of time periods after time_dimension() at which to
+    //     make the prediction.  A zero-value in timestamps corresponds to one
+    //     period after the end of the training data.
     //
     // Returns:
     //   A vector of forecasts simulated from the posterior predictive

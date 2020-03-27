@@ -1,0 +1,25 @@
+INSTALLATION
+===========================================================================
+This module needs to be installed from the top level of the BOOM project directory.
+From there, type ./install/pyboom
+
+This process moves code around, so if you see a refence in setup.py or a similar
+file to a directory that does not appear to exist in the BOOM git repo, don't
+freak out.  That directory will most likely be present in the package
+distribution.
+
+The package created by the install script is the one to be published on PyPi,
+etc.
+
+
+ORGANIZATION
+===========================================================================
+This directory branch contains two types of code.
+     - Binding code that uses pybind11 to expose BOOM C++ code in python.
+     - Module code for python modules designed to be used directly.
+
+The binding code won't necessarily expose every member of a C++ object.  In some
+cases NO members will be exposed.  Members can be exposed incrementally as
+needed.
+
+The pybind11 docs are online here: https://pybind11.readthedocs.io/en/stable/.

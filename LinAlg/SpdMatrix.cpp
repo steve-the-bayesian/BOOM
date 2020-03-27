@@ -49,7 +49,7 @@ namespace BOOM {
     if (dim > 0) set_diag(x);
   }
 
-  SpdMatrix::SpdMatrix(uint n, double *x, bool ColMajor)
+  SpdMatrix::SpdMatrix(uint n, const double *x, bool ColMajor)
       : Matrix(n, n, x, ColMajor) {}
 
   SpdMatrix::SpdMatrix(const Vector &v, bool minimal) {
@@ -386,7 +386,7 @@ namespace BOOM {
         }
       }
     }
-    
+
   }  // namespace
 
   SpdMatrix &SpdMatrix::add_outer(const Vector &v, double w, bool force_sym) {
@@ -401,7 +401,7 @@ namespace BOOM {
     if (force_sym) reflect();
     return *this;
   }
-  
+
   SpdMatrix &SpdMatrix::add_outer(const VectorView &v, double w,
                                   bool force_sym) {
     add_outer_impl<VectorView>(*this, v, w);
@@ -743,5 +743,5 @@ namespace BOOM {
     ans.reflect();
     return ans;
   }
-  
+
 }  // namespace BOOM

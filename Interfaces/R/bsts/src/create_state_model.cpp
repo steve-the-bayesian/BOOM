@@ -69,7 +69,7 @@ namespace BOOM {
   namespace bsts {
 
     using namespace BOOM::RInterface;
-    
+
     StateModelFactory::StateModelFactory(RListIoManager *io_manager)
         : StateModelFactoryBase(io_manager)
     {}
@@ -196,7 +196,7 @@ namespace BOOM {
         return nullptr;
       }
     }
-    
+
     // A callback class for recording the final state that the
     // ScalarStateSpaceModelBase sampled in an MCMC iteration.
     class FinalStateCallback : public VectorIoCallback {
@@ -205,7 +205,7 @@ namespace BOOM {
           : model_(model) {}
       virtual int dim() const {return model_->state_dimension();}
       virtual Vector get_vector() const { return model_->final_state();}
-      
+
      private:
       StateSpaceModelBase * model_;
     };
@@ -587,10 +587,12 @@ namespace BOOM {
 
       //--------------- Adjust the IO manager.
       if (io_manager()) {
+        std::ostringstream sd_element_name;
+        sd_element_name << prefix << "trig.coefficient.sd" << "." << period;
         io_manager()->add_list_element(
             new StandardDeviationListElement(
                 quasi_trig_state_model->error_distribution()->Sigsq_prm(),
-                prefix + "trig.coefficient.sd"));
+                sd_element_name.str()));
       }
       return quasi_trig_state_model;
     }
@@ -899,7 +901,7 @@ namespace BOOM {
       SEXP r_holiday = getListElement(r_state_component, "holiday");
       Ptr<Holiday> holiday = CreateHoliday(r_holiday);
       std::string holiday_name = ToString(getListElement(r_holiday, "name"));
-          
+
       Date time0 = ToBoomDate(getListElement(r_state_component, "time0"));
       SdPrior sigma_prior_spec(getListElement(
           r_state_component, "sigma.prior"));
@@ -1017,7 +1019,7 @@ namespace BOOM {
           holiday_model, r_state_specification, prefix);
       return holiday_model;
     }
-      
+
     void StateModelFactory::ImbueHierarchicalRegressionHolidayStateModel(
         HierarchicalRegressionHolidayStateModel *holiday_model,
         SEXP r_state_specification,
@@ -1061,7 +1063,7 @@ namespace BOOM {
         holiday_coefficients.push_back(
             holiday_model->model()->data_model(i)->coef_prm());
       }
-      HierarchicalVectorListElement *coefficient_io =  
+      HierarchicalVectorListElement *coefficient_io =
           new HierarchicalVectorListElement(
               holiday_coefficients,
               prefix + "holiday.coefficients");
@@ -1089,7 +1091,7 @@ namespace BOOM {
     //       holiday_model, r_state_specification, prefix);
     //   return holiday_model;
     // }
-    
+
     //======================================================================
     ArStateModel * StateModelFactory::CreateArStateModel(
         SEXP r_state_component, const std::string & prefix) {
@@ -1322,7 +1324,7 @@ namespace BOOM {
             siginv_prior->Beta_prm(),
             prefix + "siginv_scale_hyperparameter"));
       }
-      
+
     }
     //======================================================================
     void SetDynamicRegressionModelPrior(

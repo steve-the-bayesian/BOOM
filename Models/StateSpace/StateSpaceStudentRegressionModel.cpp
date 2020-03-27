@@ -169,7 +169,7 @@ namespace BOOM {
   }
 
   double SSSRM::observation_variance(int t) const {
-    if (t > time_dimension() ||
+    if (t >= time_dimension() ||
         dat()[t]->missing() == Data::completely_missing ||
         dat()[t]->observed_sample_size() == 0) {
       return student_marginal_variance();
@@ -217,7 +217,8 @@ namespace BOOM {
     int t0 = dat().size();
     double sigma = observation_model_->sigma();
     double nu = observation_model_->nu();
-    int time = 0;
+    // The time stamp of "final state" is t0 - 1.
+    int time = -1;
     for (int i = 0; i < nrow(predictors); ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
       double mu = observation_model_->predict(predictors.row(i)) +
@@ -262,7 +263,7 @@ namespace BOOM {
       if (standardize) {
         ans[t] /= sqrt(marg.prediction_variance());
       }
-      
+
       // ans[t] is a random draw of the one step ahead prediction
       // error at time t0+t given observed data to time t0+t-1.  We
       // now proceed with the steps needed to update the Kalman filter

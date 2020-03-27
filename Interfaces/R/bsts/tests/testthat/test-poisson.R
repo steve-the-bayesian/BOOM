@@ -6,7 +6,7 @@ logshark <- log1p(shark$Attacks)
 seed <- 8675309
 
 test_that("Poisson bsts", {
-  
+
   ss.level <- AddLocalLevel(list(), y = logshark)
   model.level <- bsts(shark$Attacks, ss.level, niter = 500,
     ping = 250, family = "poisson", seed = seed)
@@ -23,6 +23,7 @@ test_that("Poisson bsts", {
   model <- bsts(shark$Attacks, ss, niter = 500, family = "poisson", ping = 250,
     seed = seed)
   expect_that(model, is_a("bsts"))
+
   expect_true(all(abs(model$state.contributions) < 10))
 
   ss <- AddLocalLinearTrend(list(), logshark,
@@ -32,7 +33,7 @@ test_that("Poisson bsts", {
     family = "poisson", seed = seed)
   expect_that(model, is_a("bsts"))
   expect_true(all(abs(model$state.contributions) < 10))
-  
+
   ss.semi <- AddSemilocalLinearTrend(list(), y = logshark)
   model.semi <- bsts(shark$Attacks, ss.semi, niter = 500,
     ping = 250, family = "poisson", seed = seed)
@@ -55,6 +56,5 @@ test_that("Poisson bsts", {
     ss.reg, niter = 500, family = "poisson", seed = seed)
   pred <- predict(model, newdata = shark.test, trials.or.exposure = max(model$exposure))
   expect_that(pred, is_a("bsts.prediction"))
-  expect_equals(ncol(pred), 6)
+  expect_equal(ncol(pred$distribution), 6)
 })
-

@@ -10,8 +10,6 @@ importFrom("stats", ".checkMFClasses", ".getXlevels", "as.formula", "coef",
            "quantile", "reshape", "rnorm", "rt", "sd", "terms", "update", "var")
 importFrom("utils", "help", "tail")
 
-importFrom("igraph", "graph_from_data_frame")
-
 export(BayesNnet,
        BsplineBasis,
        CoefficientGroup,

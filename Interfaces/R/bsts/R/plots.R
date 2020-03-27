@@ -125,10 +125,10 @@ YearPlot <- function(y, colors = NULL, ylab = NULL, ylim = NULL, legend = TRUE, 
   if (inherits(index(y), "Date")) {
     index(y) <- DateToPOSIX(index(y))
   }
-  
+
   years <- sort(unique(sapply(strsplit(as.character(index(y)), "-"),
     function(x) as.numeric(x[1]))))
-  
+
   ts.list <- list()
   for (i in 1:length(years)) {
     year <- years[i]
@@ -199,7 +199,7 @@ MonthPlot <- function(y, seasonal.identifier = months, colors = NULL, ylab = NUL
     colors <- 1:length(season.names)
   }
   stopifnot(length(colors) >= length(season.names))
-  
+
   for (i in 1:length(season.names)) {
     season <- season.names[i]
     index <- as.character(seasonal.identifier(index(y))) == season
@@ -455,7 +455,7 @@ PlotBstsComponents <- function(bsts.object,
   ##   components: A numeric index vector indicating which state components to
   ##     plot.
   ##   ...: Extra arguments passed to PlotDynamicDistribution.
-  ## 
+  ##
   ## Returns:
   ##   Produces a plot on the current graphics device.  Returns invisible NULL.
   stopifnot(is.numeric(components),
@@ -464,13 +464,13 @@ PlotBstsComponents <- function(bsts.object,
     min(components) >= 1,
     max(components) <= length(bsts.object$state.specification))
   components <- unique(components)
-  
+
   state.specification <- bsts.object$state.specification[components]
   number.of.components <- length(state.specification)
   if (bsts.object$has.regression) {
     number.of.components <- number.of.components + 1
   }
-  
+
   if (is.null(time)) {
     time <- bsts.object$timestamp.info$regular.timestamps
   }
@@ -493,7 +493,7 @@ PlotBstsComponents <- function(bsts.object,
   par(mfrow = c(num.rows, num.cols))
   cex <- par("cex")
   par(mfrow = c(1,1), cex= cex)
-  
+
   screen.numbers <- split.screen(screen.matrix)
   on.exit({close.screen(screen.numbers); par(original.par)})
 
@@ -633,7 +633,7 @@ plot.StateModel <- function(x,
   title(main = state.specification$name)
   return(invisible(NULL))
 }
-  
+
 ###----------------------------------------------------------------------
 PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
                           time, show.actuals = TRUE,
@@ -691,7 +691,7 @@ PlotBstsState <- function(bsts.object, burn = SuggestBurn(.1, bsts.object),
       ylim <- range(state, na.rm = TRUE)
     }
   }
-  
+
   if (style == "boxplot") {
     TimeSeriesBoxplot(state, time = time, ylim = ylim, ...)
   } else {
@@ -891,7 +891,7 @@ PlotDynamicRegression <- function(
   if (is.null(ylim) && same.scale == TRUE) {
     ylim <- range(beta, na.rm = TRUE)
   }
-  
+
   layout <- match.arg(layout)
   if (layout == "square") {
     num.rows <- floor(sqrt(number.of.variables))
@@ -910,7 +910,7 @@ PlotDynamicRegression <- function(
   for (variable in 1:number.of.variables) {
     if (need.ylim) {
       ylim <- range(beta[, variable, ], na.rm = TRUE)
-    }      
+    }
     if (style == "boxplot") {
       TimeSeriesBoxplot(beta[, variable, ],
         time = time, ylim = ylim, ...)
@@ -948,7 +948,7 @@ PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
   ## Effects:
   ##   A set of boxplots are drawn on the current graphics device showing the
   ##   posterior distribution of the impact of the holiday during each day of
-  ##   its influence window.  
+  ##   its influence window.
   date.ranges <- DateRange(holiday, model$timestamp.info$timestamps)
   raw.data<- list()
   for (i in 1:nrow(date.ranges)) {
@@ -964,7 +964,7 @@ PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
     ylim <- range(holiday.effects, na.rm = TRUE)
     if (show.raw.data) {
       ylim <- range(ylim, raw.data, na.rm = TRUE)
-    } 
+    }
   }
 
   boxplot(holiday.effects, ylim = ylim, ...)
@@ -1007,5 +1007,3 @@ PlotHoliday <- function(holiday, model, show.raw.data = TRUE,
   stop(paste0("Could not find a holiday named ", holiday.name, "."))
   return(NULL)
 }
-
-      

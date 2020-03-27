@@ -40,7 +40,6 @@ namespace BOOM {
     void update_cdf();
 
    private:
-    void flush();
     void set_default_probs();
 
     double Fq(double x) const;

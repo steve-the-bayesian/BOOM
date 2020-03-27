@@ -63,7 +63,7 @@ AddTrig <- function(state.specification = NULL,
             length(frequencies) > 0,
             all(frequencies > 0))
   method <- match.arg(method)
-  
+
   ## Check the prior on the sinusoid coefficient increments.
   if (is.null(sigma.prior)) {
     sigma.prior <- SdPrior(0.01 * sdy, upper.limit = sdy)
@@ -83,7 +83,7 @@ AddTrig <- function(state.specification = NULL,
 
   ## All data has been checked and gathered at this point.  Return the
   ## object.
-  trig <- list(name = "trig",
+  trig <- list(name = paste0("trig.", period),
                frequencies = frequencies,
                period = period,
                sigma.prior = sigma.prior,

@@ -62,7 +62,7 @@ namespace BOOM {
       : std::vector<bool>(p, all), include_all_(all) {
     reset_included_positions();
   }
-  
+
   Selector::Selector(const std::string &zeros_and_ones)
       : std::vector<bool>(to_vector_bool(zeros_and_ones)), include_all_(false) {
     reset_included_positions();
@@ -74,7 +74,7 @@ namespace BOOM {
   Selector::Selector(const char *zeros_and_ones)
       : Selector(std::string(zeros_and_ones))
   {}
-  
+
   Selector::Selector(const std::vector<bool> &values)
       : std::vector<bool>(values), include_all_(false) {
     reset_included_positions();
@@ -115,7 +115,7 @@ namespace BOOM {
     for (int i = 0; i < rhs.included_positions_.size(); ++i) {
       add(rhs.included_positions_[i] + n0);
     }
-    include_all_ *= rhs.include_all_;
+    include_all_ = include_all_ && rhs.include_all_;
     return *this;
   }
 
@@ -245,10 +245,10 @@ namespace BOOM {
   Selector &Selector::cover(const Selector &rhs) {
     check_size_eq(rhs.nvars_possible(), "cover");
     for (uint i = 0; i < rhs.nvars(); ++i)
-      add(rhs.indx(i));  
+      add(rhs.indx(i));
     return *this;
   }
-  
+
   Selector Selector::intersection(const Selector &rhs) const {
     Selector ans(*this);
     ans *= rhs;
@@ -265,7 +265,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   // Returns a Selector of the same size as this, which includes all
   // the elements where *this and that differ.  *this and that must be
   // the same size.
@@ -369,7 +369,7 @@ namespace BOOM {
       for (uint i = 0; i < n; ++i) ans[i] = x[inc.indx(i)];
       return ans;
     }
-  }  // namespace 
+  }  // namespace
 
   Vector Selector::select(const Vector &x) const {
     return inc_select<Vector>(x, *this);
@@ -433,7 +433,7 @@ namespace BOOM {
       return ans;
     }
   }
-  
+
   Matrix Selector::select_rows(const Matrix &m) const {
     if (include_all_ || nvars() == nvars_possible()) return m;
     return select_rows_impl(m, *this);
@@ -452,7 +452,7 @@ namespace BOOM {
   DiagonalMatrix Selector::select_square(const DiagonalMatrix &d) const {
     return DiagonalMatrix(select(d.diag()));
   }
-  
+
   namespace {
     template <class V>
     Vector inc_expand(const V &x, const Selector &inc) {
@@ -473,8 +473,8 @@ namespace BOOM {
       }
       return ans;
     }
-  }  // namespace 
-  
+  }  // namespace
+
   SpdMatrix Selector::expand(const SpdMatrix &dense_matrix) {
     SpdMatrix sparse_matrix(nvars_possible());
     uint dense_n = nvars();
@@ -523,7 +523,7 @@ namespace BOOM {
     }
     return v;
   }
-  
+
   void Selector::sparse_multiply(const Matrix &m, const Vector &v,
                                  VectorView ans) const {
     bool m_already_sparse = ncol(m) == nvars();
@@ -627,8 +627,8 @@ namespace BOOM {
       }
       return ans;
     }
-  }  // namespace 
-  
+  }  // namespace
+
   double Selector::sparse_sum(const Vector &v) const {
     return sparse_sum_impl(*this, v);
   }
@@ -692,7 +692,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   Selector SelectorMatrix::row_any() const {
     Selector ans(nrow(), false);
     for (int j = 0; j < ncol(); ++j) {
@@ -715,7 +715,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   Selector SelectorMatrix::vectorize() const {
     // Start with all elements out.
     Selector ans(nrow() * ncol(), false);
@@ -761,7 +761,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void SelectorMatrix::randomize() {
     for (int i = 0; i < nrow(); ++i) {
       for (int j = 0; j < ncol(); ++j) {
@@ -771,9 +771,9 @@ namespace BOOM {
       }
     }
   }
-  
+
   //============================================================
-  
+
   std::ostream &operator<<(std::ostream &out, const Selector &inc) {
     for (uint i = 0; i < inc.nvars_possible(); ++i) out << inc.inc(i);
     return out;

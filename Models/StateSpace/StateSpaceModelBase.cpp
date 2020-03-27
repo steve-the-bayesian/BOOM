@@ -71,7 +71,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   //----------------------------------------------------------------------
   namespace {
     void concatenate_parameter_vectors(std::vector<Ptr<Params>> &first,
@@ -624,11 +624,11 @@ namespace BOOM {
     }
   }
 
-  
+
   //===========================================================================
   ScalarBase::ScalarStateSpaceModelBase() :
       filter_(this), simulation_filter_(this) {}
-  
+
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -718,7 +718,7 @@ namespace BOOM {
   ScalarKalmanFilter &ScalarBase::get_simulation_filter() {
     return simulation_filter_;
   }
-  
+
   const ScalarKalmanFilter &ScalarBase::get_simulation_filter() const {
     return simulation_filter_;
   }
@@ -777,7 +777,7 @@ namespace BOOM {
     // bad variable names, but they match the math in Durbin and Koopman.
     const double H = observation_variance(t);
     Kalman::ScalarMarginalDistribution &marg(get_filter()[t]);
-    
+
     const double F = marg.prediction_variance();
     const double v = marg.prediction_error();
     const Vector &K(marg.kalman_gain());
@@ -816,7 +816,7 @@ namespace BOOM {
   //---------------------------------------------------------------------------
   // The call to simulate_forward fills the state matrix with simulated state
   // values that have the right variance but the wrong mean.  This function
-  // subtracts off the wrong mean and adds in the correct one.  
+  // subtracts off the wrong mean and adds in the correct one.
   void Base::propagate_disturbances() {
     if (time_dimension() <= 0) return;
     // Calling fast_disturbance_smoother() puts r[t] in
@@ -837,7 +837,7 @@ namespace BOOM {
     mutable_state().col(0) += state_mean_obs - state_mean_sim;
     observe_state(0);
     observe_data_given_state(0);
-    
+
     for (int t = 1; t < time_dimension(); ++t) {
       state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
           (*state_variance_matrix(t - 1)) *
@@ -851,5 +851,5 @@ namespace BOOM {
       observe_data_given_state(t);
     }
   }
-  
+
 }  // namespace BOOM

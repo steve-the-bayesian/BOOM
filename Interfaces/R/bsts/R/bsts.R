@@ -237,6 +237,12 @@ bsts <- function(formula,
       prior$max.flips <- -1
     }
   }
+
+  ## Check state compatibility.  There are some combinations of options and
+  ## state models that just don't work together.
+  .CheckCompatibility(data.list, state.specification, model.options,
+    family)
+
   ##----------------------------------------------------------------------
   ans <- .Call("analysis_common_r_fit_bsts_model_",
                data.list,
@@ -610,4 +616,22 @@ BstsOptions <- function(save.state.contributions = TRUE,
   object$niter <- ngood
   object$ngood <- NULL
   return(object)
+}
+
+.CheckCompatibility <- function(data.list, state.specification,
+                                model.options, family) {
+  ## Ensure that any incompatible combinations of state models, model options,
+  ## data formats, etc. raise an error in R before they get to crash C++.
+  ##
+  ## Args:
+  ##   data.list: A list containing the packaged data to be sent to C++.
+  ##   state.specification:  A list of state component objects.
+  ##   model.options:  A list of model options.
+  ##   family: string denoting the model family.
+  dynamic.regression <- any(sapply(state.specification,
+    inherits, "DynamicRegression"))
+
+  if (!data.list$timestamp.info$timestamps.are.trivial && dynamic.regression) {
+    stop("Dynamic regression models are only supported with trivial time stamps.")
+  }
 }

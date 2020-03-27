@@ -128,7 +128,24 @@ namespace BOOM {
     Vector simulate_forecast(RNG &rng, const Matrix &predictors,
                              const Vector &final_state);
 
-    Vector simulate_multiplex_forecast(RNG &rng, const Matrix &predictors,
+    // Simulate a forecast based on multiplexed data, where multiple
+    // observations can have the same timestamp.
+    //
+    // Args:
+    //   rng:  The random number generator.
+    //   predictors:  The matrix of predictors where forecasts are needed.
+    //   final_state: Contains the simulated state values for the model as of
+    //     the time of the final observation in the training data.
+    //   timestamps: Each entry corresponds to a row in forecast_predictors, and
+    //     gives the number of time periods after time_dimension() at which to
+    //     make the prediction.  A zero-value in timestamps corresponds to one
+    //     period after the end of the training data.
+    //
+    // Returns:
+    //   A vector of forecasts simulated from the posterior predictive
+    //   distribution.  Each entry corresponds to a row of newX.
+    Vector simulate_multiplex_forecast(RNG &rng,
+                                       const Matrix &predictors,
                                        const Vector &final_state,
                                        const std::vector<int> &timestamps);
 

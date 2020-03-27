@@ -59,7 +59,7 @@ namespace BOOM {
     void set_Xptr(const Ptr<VectorData> &x) {
       x_ = x;
     }
-    
+
    private:
     Ptr<VectorData> x_;
   };
@@ -98,7 +98,7 @@ namespace BOOM {
     void set_Yptr(const Ptr<DAT> &y) {
       y_ = y;
     }
-    
+
    private:
     // If an intercept is desired, it must be explicitly included.
     Ptr<DAT> y_;
@@ -147,19 +147,24 @@ namespace BOOM {
   typedef WeightedGlmData<DoubleData> WeightedRegressionData;
   typedef WeightedGlmData<VectorData> WeightedMvRegData;
 
+  // Base class for generalized linear models.  Regression models, Poisson
+  // regression, logistic regression, etc.
   class GlmModel : virtual public PosteriorModeModel {
    public:
     GlmModel();
     GlmModel(const GlmModel &rhs);
     GlmModel *clone() const override = 0;
 
+    // The coefficients relating the model to the predictor variables.  All
+    // models have these.  Some models have other parameters too.
     virtual GlmCoefs &coef() = 0;
     virtual const GlmCoefs &coef() const = 0;
     virtual Ptr<GlmCoefs> coef_prm() = 0;
     virtual const Ptr<GlmCoefs> coef_prm() const = 0;
 
     uint xdim() const;
-    //---- model selection ----
+    // Utiliteis for variable selection.  These are syntactic sugar pass-through
+    // calls to the underlying GlmCoefs owned by the model.
     void add_all();
     void drop_all();
     void drop_all_but_intercept();
@@ -169,20 +174,28 @@ namespace BOOM {
     const Selector &inc() const;
     bool inc(uint p) const;
 
+    // The set of model coefficients for the subset of included variables.
     Vector included_coefficients() const;
     void set_included_coefficients(const Vector &b);
 
     // Set the included coefficients to those
     void set_included_coefficients(const Vector &beta, const Selector &inc);
 
-    //---------------
-    virtual const Vector &Beta() const;  // reports 0 for excluded positions
+    // The full set of model coefficients, with 0's in positions corresponding
+    // to excluded variables.
+    virtual const Vector &Beta() const;
 
-    // Set the full vector of regression coefficients to Beta.
+    // Setting the full vector of coefficients does not affect the 'inclusion
+    // vector'.  It is up to the caller to ensure that excluded variables have
+    // 0's in the right places.
     void set_Beta(const Vector &Beta);
 
-    double Beta(uint I) const;  // I indexes possible covariates
+    // The I'th coefficient from the full coefficient vector.
+    double Beta(uint I) const;
 
+    // Return the dot product of x and coefs().  The dimension of x must either
+    // be the number of included predictor variables, or the number of available
+    // predictor variables.
     virtual double predict(const Vector &x) const;
     virtual double predict(const VectorView &x) const;
     virtual double predict(const ConstVectorView &x) const;

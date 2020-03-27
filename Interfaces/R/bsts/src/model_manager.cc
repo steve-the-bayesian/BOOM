@@ -41,54 +41,14 @@
 namespace BOOM {
   namespace bsts {
 
-    TimestampInfo::TimestampInfo(SEXP r_data_list) {
-      Unpack(r_data_list);
-    }
-    
-    void TimestampInfo::Unpack(SEXP r_data_list) {
-      SEXP r_timestamp_info = getListElement(r_data_list, "timestamp.info");
-      trivial_ = Rf_asLogical(getListElement(
-          r_timestamp_info, "timestamps.are.trivial"));
-      number_of_time_points_ = Rf_asInteger(getListElement(
-          r_timestamp_info, "number.of.time.points"));
-      if (!trivial_) {
-        timestamp_mapping_ = ToIntVector(getListElement(
-            r_timestamp_info, "timestamp.mapping"));
-      }
-    }
-
-    // Args:
-    //   r_prediction_data: A list containing an object named 'timestamps',
-    //     which is a list containing the following objects.  
-    //     - timestamp.mapping: A vector of integers indicating the timestamp to
-    //         which each observation belongs.
-    //
-    // Effects:
-    //   The forecast_timestamps_ element in the TimestampInfo object gets
-    //   populated.
-    void TimestampInfo::UnpackForecastTimestamps(SEXP r_prediction_data) {
-      SEXP r_forecast_timestamps = getListElement(
-          r_prediction_data, "timestamps");
-      if (!Rf_isNull(r_forecast_timestamps)) {
-        forecast_timestamps_ = ToIntVector(getListElement(
-            r_forecast_timestamps, "timestamp.mapping"));
-        for (int i = 1; i < forecast_timestamps_.size(); ++i) {
-          if (forecast_timestamps_[i] < forecast_timestamps_[i - 1]) {
-            report_error("Time stamps for multiplex predictions must be "
-                         "in increasing order.");
-          }
-        }
-      }
-    }
-
     //==========================================================================
-    
+
     // The model manager will be thread safe as long as it is created from the
     // home thread.
     ModelManager::ModelManager()
         : rng_(seed_rng(GlobalRng::rng)) {}
 
-    ScalarModelManager * ScalarModelManager::Create(SEXP r_bsts_object) {  
+    ScalarModelManager * ScalarModelManager::Create(SEXP r_bsts_object) {
       std::string family = ToString(getListElement(r_bsts_object, "family"));
       bool regression = !Rf_isNull(getListElement(r_bsts_object, "predictors"));
       int xdim = 0;
@@ -142,8 +102,8 @@ namespace BOOM {
      private:
       StateSpaceModelBase *model_;
     };
-    
-    ScalarStateSpaceModelBase * ScalarModelManager::CreateModel(  
+
+    ScalarStateSpaceModelBase * ScalarModelManager::CreateModel(
         SEXP r_data_list,
         SEXP r_state_specification,
         SEXP r_prior,
@@ -311,7 +271,7 @@ namespace BOOM {
         }
       }
     }
-    
+
     //=========================================================================
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         SEXP r_mbsts_object) {
@@ -327,7 +287,7 @@ namespace BOOM {
       return MultivariateModelManagerBase::Create(family, nseries, xdim);
     }
 
-    //--------------------------------------------------------------------------    
+    //--------------------------------------------------------------------------
     MultivariateModelManagerBase * MultivariateModelManagerBase::Create(
         const std::string &family, int nseries, int xdim) {
 
@@ -343,6 +303,6 @@ namespace BOOM {
     }
 
     //--------------------------------------------------------------------------
-    
+
   }  // namespace bsts
 }  // namespace BOOM

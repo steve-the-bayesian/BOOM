@@ -191,8 +191,10 @@ namespace BOOM {
     //     forecast period.
     //   final_state: A draw of the value of the state vector at the
     //     final time period in the training data.
-    Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
-                             const Vector &trials, const Vector &final_state);
+    Vector simulate_forecast(RNG &rng,
+                             const Matrix &forecast_predictors,
+                             const Vector &trials,
+                             const Vector &final_state);
 
     // Returns a vector of draws from the posterior predictive distribution for
     // a multiplexed prediction problem.  That is, a prediction problem where
@@ -211,8 +213,9 @@ namespace BOOM {
     //   final_state: A draw of the value of the state vector at the
     //     final time period in the training data.
     //   timestamps: Each entry corresponds to a row in forecast_predictors, and
-    //     gives the number of time periods after the end of the training data
-    //     at which to make the prediction.
+    //     gives the number of time periods after time_dimension() at which to
+    //     make the prediction.  A zero-value in timestamps corresponds to one
+    //     period after the end of the training data.
     //
     // Returns:
     //   A vector of draws with length equal to nrow(forecast_predictors), from

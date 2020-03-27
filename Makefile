@@ -10,18 +10,18 @@ all:	libboom.a
 # -j 8: use 8 threads
 # MAKEFLAGS=" -k -j 8 "
 
-CFLAGS = -I. -I./Bmath -I./math/cephes -DADD_ -O3 
-CPPFLAGS = -I. -I./Bmath -I./math/cephes -std=c++11 -DADD_ -O3 
+CFLAGS = -I. -I./Bmath -I./math/cephes -DADD_ -O3
+CPPFLAGS = -I. -I./Bmath -I./math/cephes -std=c++11 -DADD_ -O3
 
 ############################################################################
 # Begin the list of all the BOOM source files.
 
 TOP_HDRS := $(wildcard *.hpp)
 
-BART_SRCS := 
+BART_SRCS :=
 # BART_SRCS := $(wildcard Models/Bart/*.cpp) \
 # 	  $(wildcard Models/Bart/PosteriorSamplers/*.cpp)
-BART_HDRS := 
+BART_HDRS :=
 
 DISTRIBUTION_SRCS := $(wildcard distributions/*.cpp)
 DISTRIBUTION_HDRS := distributions.hpp $(wildcard distributions/*.hpp)
@@ -144,7 +144,7 @@ CXX_HDRS = ${TOP_HDRS} \
 	${STATESPACE_HDRS} \
 	${TARGETFUN_HDRS} \
 	${TIMESERIES_HDRS} \
-	${UTIL_HDRS}
+	${UTIL_HDRS} \
 
 CXX_STD = CXX11
 
@@ -160,11 +160,12 @@ libboom.a: ${OBJECTS}
 	   ${AR} rc $@ $^
 
 .PHONY: install
-install: libboom.a 
+install: libboom.a
 	install libboom.a /usr/local/lib
 	rm -rf /usr/local/include/BOOM
 	mkdir -p /usr/local/include/BOOM
 	./install/install_headers.py $(HDRS) /usr/local/include/BOOM
+	./install/install_headers.py `find ./Eigen -name "*" | gsed 's|\.\/||g' | awk 'NR > 1{print}'` /usr/local/include/BOOM
 
 .PHONY: clean
 clean:

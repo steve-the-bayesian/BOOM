@@ -93,7 +93,7 @@ namespace BOOM {
    public:
     MvnBase *clone() const override = 0;
     virtual uint dim() const;
-    double Logp(const Vector &x, Vector &g, Matrix &h,
+    double Logp(const Vector &x_subset, Vector &gradient, Matrix &Hessian,
                 uint nderiv) const override;
     // Args:
     //   x_subset: A subset (determined by 'inclusion') of the vector of random

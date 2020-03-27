@@ -202,7 +202,7 @@ extern "C" {
       std::vector<int> cutpoints = BOOM::ToIntVector(r_cutpoints, true);
       std::vector<BOOM::Matrix> prediction_errors(cutpoints.size());
       bool standardize = Rf_asLogical(r_standardize);
-      
+
       std::vector<std::future<void>> futures;
       int desired_threads = std::min<int>(
           cutpoints.size(), std::thread::hardware_concurrency() - 1);

@@ -1,0 +1,3 @@
+This is a library intended for R programmers transitioning to python.  It
+exposes several basic computational tasks using R conventions.  In many (but not
+all) places this is just syntactic sugar.

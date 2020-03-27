@@ -291,20 +291,23 @@ plot.bsts.prediction <- function(x,
   } else {
     predictors <- matrix(rep(1, horizon), ncol = 1)
   }
+  horizon <- as.integer(horizon)
   
   if (object$family == "gaussian" || object$family == "student") {
     if (object$has.regression) {
-      ans <- list("predictors" = predictors)
+      ans <- list("predictors" = predictors, horizon = horizon)
     } else {
-      ans <- list("horizon" = as.integer(horizon))
+      ans <- list("horizon" = horizon)
     }
   } else if (object$family == "logit") {
     ans <- list(
       "predictors" = predictors,
+      "horizon" = horizon,
       "trials" = .FormatTrialsOrExposure(trials.or.exposure, newdata, horizon))
   } else if (object$family == "poisson") {
     ans <- list(
       "predictors" = predictors,
+      "horizon" = horizon,
       "exposure" = .FormatTrialsOrExposure(
         trials.or.exposure, newdata, horizon))
   } else {
