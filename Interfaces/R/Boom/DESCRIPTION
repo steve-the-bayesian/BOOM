@@ -1,6 +1,6 @@
 Package: Boom
-Version: 0.9.3
-Date: 2019-10-03
+Version: 0.9.4
+Date: 2020-03-26
 Title: Bayesian Object Oriented Modeling
 Author: Steven L. Scott is the sole author and creator of the BOOM project.
    Some code in the BOOM libraries has been modified from other open source
@@ -18,7 +18,7 @@ Description: A C++ library for Bayesian modeling, with an emphasis on Markov
    functions), its primary purpose is to install the BOOM C++ library on your
    system so that other packages can link against it.
 License: LGPL-2.1 | file LICENSE
-Depends: MASS, R(>= 3.1.0)
+Depends: MASS, R(>= 3.5.0)
 Suggests: testthat
 Encoding: UTF-8
 SystemRequirements: GNU Make, C++11
