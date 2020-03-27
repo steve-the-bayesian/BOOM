@@ -19,25 +19,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/ManyParamPolicy.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
-#include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
-#include "Models/StateSpace/StateSpaceModelBase.hpp"
-#include "Models/StateSpace/DynamicInterceptRegression.hpp"
-#include "Models/StateSpace/StateModelVector.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
-#include "Models/StateSpace/StateSpaceRegressionModel.hpp"
-#include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
+#include "Models/Glm/RegressionModel.hpp"
+#include "Models/MarkovModel.hpp"
 
 namespace BOOM {
   namespace StateSpace {
     class RegressionDataTimePoint : public Data {
      public:
       // Default constructor sets xdim to -1.
-      RegressionDataTimePoint(): xdim_(-1), suf_(nullptr) {}
+      RegressionDataTimePoint(int xdim = -1): xdim_(xdim), suf_(nullptr) {}
 
       RegressionDataTimePoint(const RegressionDataTimePoint &rhs);
       RegressionDataTimePoint(RegressionDataTimePoint &&rhs) = default;
@@ -85,7 +77,8 @@ namespace BOOM {
     };
   }  // namespace StateSpace
 
-  // Data policy for managing
+  //===========================================================================
+  // Data policy for managing time series regression data.
   class TimeSeriesRegressionDataPolicy
       : public DefaultDataInfoPolicy<StateSpace::RegressionDataTimePoint> {
    public:
@@ -189,7 +182,7 @@ namespace BOOM {
     // model.  This is the temporal equivalent of the "prior inclusion
     // probabilities" in a static model.  In a later edition of this model we
     // might want to have more of these.
-    Ptr<MarkovModel> inclusion_transition_model_
+    Ptr<MarkovModel> inclusion_transition_model_;
   };
 
 }  // namespace BOOM

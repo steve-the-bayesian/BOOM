@@ -152,7 +152,7 @@ namespace BOOM {
         residual_variance_(rhs.residual_variance_->clone())
   {
     ManyParamPolicy::clear();
-    ManyParamPolicy::add_params(residual_variance_)
+    ManyParamPolicy::add_params(residual_variance_);
     for (int i = 0; i < rhs.coefficients_.size(); ++i) {
       coefficients_.push_back(rhs.coefficients_[i]->clone());
       ManyParamPolicy::add_params(coefficients_.back());

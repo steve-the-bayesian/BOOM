@@ -37,15 +37,22 @@ namespace BOOM {
     return -1;
   }
 
+  double DRDGS::log_model_prob(const Selector &model, int t, int j) {
+
+  }
+
   void DRDGS::draw_inclusion_indicators() {
-    for (j = 0; j < model_->xdim(); ++j) {
+    for (int t = 0; i < model_->time_dimension(); ++t) {
+      for (int j = 0; j < model_->xdim(); ++j) {
+        // Can we do forward-backward here?
+        // Do Direct Gibbs first and see where the trouble spots are.
+            mcmc_one_flip(model_->inclusion_indicators(t), j);
+        Selector &inc(
+            double original_logprob = log_model_prob(inc, t);
+            inc.flip(j);
 
-      // Can we do forward-backward here?
-
-      // Do Direct Gibbs first and see where the trouble spots are.
-
-
-    }
+            }
+      }
   }
 
   void DRDGS::draw_coefficients_given_inclusion() {
