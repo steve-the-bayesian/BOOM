@@ -113,7 +113,8 @@ namespace BOOM {
     double hi = knots[k + 1];
     double lam = -1 * dlogf[k];
     double cand;
-    if (lam == 0) {
+    if (lam == 0 ||
+        fabs(hi - lo) < std::sqrt(std::numeric_limits<double>::epsilon())) {
       cand = runif_mt(rng, lo, hi);
     } else {
       cand = rtrun_exp_mt(rng, lam, lo, hi);
