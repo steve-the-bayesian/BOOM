@@ -64,7 +64,7 @@ namespace {
     }
     return ans;
   }
-  
+
   //===========================================================================
   TEST_F(MultivariateStateSpaceRegressionModelTest, EmptyTest) {}
 
@@ -84,7 +84,7 @@ namespace {
   TEST_F(MultivariateStateSpaceRegressionModelTest, ModelTest) {
     int ydim = 4;
     int xdim = 3;
-        
+
     MultivariateStateSpaceRegressionModel model(xdim, ydim);
     EXPECT_EQ(0, model.state_dimension());
     EXPECT_EQ(0, model.number_of_state_models());
@@ -165,7 +165,7 @@ namespace {
         response(i, j) = yhat[j] + rnorm(0, residual_sd);
       }
     }
-    
+
     //----------------------------------------------------------------------
     // Define the model.
     NEW(MultivariateStateSpaceRegressionModel, model)(xdim, nseries);
@@ -177,7 +177,7 @@ namespace {
       }
     }
     EXPECT_EQ(sample_size, model->time_dimension());
-    
+
     //---------------------------------------------------------------------------
     // Define the state model.
     NEW(SharedLocalLevelStateModel, state_model)(
@@ -194,7 +194,7 @@ namespace {
     for (int i = 0; i < nseries; ++i) {
       spikes.push_back(spike->clone());
     }
-    
+
     NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
         state_model.get(),
         std::vector<Ptr<MvnBase>>(nseries, slab),
@@ -219,7 +219,7 @@ namespace {
     NEW(IndependentRegressionModelsPosteriorSampler, observation_model_sampler)(
         model->observation_model());
     model->observation_model()->set_method(observation_model_sampler);
-    
+
 
     NEW(MultivariateStateSpaceRegressionPosteriorSampler, sampler)(
         model.get());
@@ -234,12 +234,12 @@ namespace {
     state_contribution_draws.slice(0, -1, -1) =
         observation_coefficients * ConstSubMatrix(state, 0, state.nrow() - 1,
                                                   0, sample_size - 1).to_matrix();
-    
+
     Array prediction_draws(std::vector<int>{
         niter, model->nseries(), test_size});
     Array observation_coefficient_draws(
         std::vector<int>{niter, nseries, nfactors});
-    
+
     Matrix test_predictors = ConstSubMatrix(
         predictors,
         sample_size, sample_size + test_size - 1,
@@ -260,7 +260,7 @@ namespace {
     for (int i = 0; i < burn; ++i) {
       model->sample_posterior();
     }
-    
+
     for (int i = 0; i < niter; ++i) {
       // if (i % (niter / 10) == 0) {
       //   cout << "------ draw " << i << " ---------\n";
@@ -269,7 +269,7 @@ namespace {
       model->sample_posterior();
 
       state_contribution_draws.slice(i, -1, -1) = model->state_contributions(0);
-      
+
       factor0_draws.row(i) = model->shared_state().row(0);
       factor1_draws.row(i) = model->shared_state().row(1);
       Matrix Z = model->observation_coefficients(0, fully_observed)->dense();
@@ -280,7 +280,7 @@ namespace {
         residual_sd_draws(i, series) =
             model->observation_model()->model(series)->sigma();
       }
-      
+
       prediction_draws.slice(i, -1, -1) = model->simulate_forecast(
           GlobalRng::rng,
           test_predictors,
@@ -297,16 +297,18 @@ namespace {
 
     // Factor draws are not identified.  Factors * observation coefficients is
     // identified.
-    status = CheckMcmcMatrix(factor0_draws, state.row(0));
-    EXPECT_TRUE(status.ok) << status;
-    
-    status = CheckMcmcMatrix(factor1_draws, state.row(1));
-    EXPECT_TRUE(status.ok) << status;
+    // status = CheckMcmcMatrix(factor0_draws, state.row(0));
+    // EXPECT_TRUE(status.ok) << status;
+
+    // status = CheckMcmcMatrix(factor1_draws, state.row(1));
+    // EXPECT_TRUE(status.ok) << status;
+
+    std::cerr << "Low confidence in tests.  Some commented out.";
   }
 
   /*
     // R code for viewing the results.
-    
+
     plot.predictions <- function(fname, nseries, burn = 0) {
       library(Boom)
       draws.mat <- mscan(fname)
@@ -318,7 +320,7 @@ namespace {
       if (burn > 0) {
         draws <- draws[-(1:burn), , ]
       }
-      
+
       nr <- max(1, floor(sqrt(nseries)))
       nc <- ceiling(nseries / nr)
       opar <- par(mfrow = c(nr, nc))
@@ -333,14 +335,14 @@ namespace {
       coefs <- mscan("observation_coefficient.draws")
       BoxplotTrue(coefs[-1, ], truth = coefs[1, ])
     }
-    
+
     f1 <- mscan("factor1.draws")
     PlotDynamicDistribution(f1[-1, ])
     lines(f1[1, ], col = "green")
    */
-  
+
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-  
+
   // A test case with both shared state and a single series that has series
   // specific state (in this case a seasonal model).
   TEST_F(MultivariateStateSpaceRegressionModelTest, SharedPlusIndividualTest) {
@@ -365,7 +367,7 @@ namespace {
         state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
       }
     }
-    
+
     Matrix observation_coefficients(nseries, nfactors);
     observation_coefficients.randomize();
     observation_coefficients.diag() = 1.0;
@@ -378,7 +380,7 @@ namespace {
 
     // The columns of state_contribution are time points.  The rows are series.
     Matrix state_contribution = (observation_coefficients * state).transpose();
-    
+
     //----------------------------------------------------------------------
     // Simulate the regression component.
     //----------------------------------------------------------------------
@@ -400,18 +402,18 @@ namespace {
       seasonal_pattern = seasonal_matrix * ConstVectorView(seasonal_pattern);
       seasonal_pattern[0] += rnorm(0, seasonal_innovation_sd);
     }
-    
+
     //----------------------------------------------------------------------
     // Simulate errors, and add them to get responses.
     //----------------------------------------------------------------------
     Vector errors = rnorm_vector(nseries * sample_size, 0, residual_sd);
-    
+
     //==========================================================================
     // Construct the model
     //==========================================================================
 
     NEW(MultivariateStateSpaceRegressionModel, model)(xdim, nseries);
-    
+
     //----------------------------------------------------------------------
     // Add data
     //----------------------------------------------------------------------
@@ -428,7 +430,7 @@ namespace {
         model->add_data(data_point);
       }
     }
-    
+
     //----------------------------------------------------------------------
     // Add state models
     //----------------------------------------------------------------------
@@ -456,7 +458,7 @@ namespace {
         state_model.get(), slabs, spikes);
     state_model->set_observation_coefficients(observation_coefficients);
     state_model->set_method(state_model_sampler);
-    
+
     // Add the initial distribution for the state model.
     state_model->set_initial_state_mean(Vector(nfactors, 0.0));
     state_model->set_initial_state_variance(SpdMatrix(nfactors, 100.0));
@@ -546,7 +548,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         model->series_specific_model(special_series)->initial_state_variance(),
         SpdMatrix(6, 100.0)));
-    
+
     //----------------------------------------------------------------------
     // Add Sampler for the model.
     //----------------------------------------------------------------------
@@ -566,7 +568,7 @@ namespace {
     Matrix residual_sd_draws(niter, nseries);
     Matrix innovation_sd_draws(niter, nfactors);
     Vector seasonal_sd_draws(niter);
-    
+
     for (int i = 0; i < niter; ++i) {
       //      model->sample_posterior();
       model->impute_state(GlobalRng::rng);
@@ -597,5 +599,5 @@ namespace {
       temp_model_state_draws.row(i) = temp_model.state_contribution(0);
     }
   }
-  
+
 }  // namespace

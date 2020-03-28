@@ -46,14 +46,14 @@ cc_test(
     ],
 )
 
-genrule(
-    name = "dynamic_intercept_regression_test_dsym",
-    testonly = True,
-    srcs = [":dynamic_intercept_regression_test"],
-    outs = ["dynamic_intercept_regression_test.dSYM"],
-    cmd = "dsymutil $(location :dynamic_intercept_regression_test) -o $@",
-    output_to_bindir = True,
-)
+# genrule(
+#     name = "dynamic_intercept_regression_test_dsym",
+#     testonly = True,
+#     srcs = [":dynamic_intercept_regression_test"],
+#     outs = ["dynamic_intercept_regression_test.dSYM"],
+#     cmd = "dsymutil $(location :dynamic_intercept_regression_test) -o $@",
+#     output_to_bindir = True,
+# )
 
 cc_test(
     name = "multivariate_state_space_regression_test",
