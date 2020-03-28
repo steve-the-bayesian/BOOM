@@ -117,19 +117,15 @@ namespace BOOM {
 
   template <class D>
   TimeSeries<D> &TimeSeries<D>::operator=(const TimeSeries<D> &rhs) {
-    if (&rhs == this) return *this;
-    // changed 10/21/2005.  No longer clones underlying data
-    //    clone_series(rhs);
-    std::vector<Ptr<D> >::operator=(rhs);  // now just the pointers are copied
+    if (&rhs != this) {
+      this->clear();
+      this->reserve(rhs.size());
+      for (const auto &el : rhs) {
+        this->push_back(el->clone());
+      }
+    }
     return *this;
   }
-
-  // template <class D>
-  // template <class FwdIt>
-  // TimeSeries<D> &TimeSeries<D>::ref(FwdIt Beg, FwdIt End) {
-  //   std::vector<Ptr<D> >::assign(Beg, End);
-  //   return *this;
-  // }
 
   template <class D>
   TimeSeries<D> *TimeSeries<D>::clone() const {

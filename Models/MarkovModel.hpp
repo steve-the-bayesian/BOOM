@@ -95,7 +95,8 @@ namespace BOOM {
   Ptr<TimeSeries<MarkovData>> make_markov_data(
       const std::vector<std::string> &raw_data);
 
-  // Template specializations for TimeSeries<MarkovData> copy and assignment.
+  // Copy constructor for TimeSeries<MarkovData> copies underlying data and
+  // resets links.
   template<>
   inline TimeSeries<MarkovData>::TimeSeries(const TimeSeries<MarkovData> &rhs)
       : Data(rhs), std::vector<Ptr<MarkovData>>() {
@@ -109,6 +110,8 @@ namespace BOOM {
     }
   }
 
+  // Assignment operator for TimeSeries<MarkovData> copies underlying data and
+  // resets links.
   template <>
   inline TimeSeries<MarkovData> &TimeSeries<MarkovData>::operator=(
       const TimeSeries<MarkovData> &rhs) {
