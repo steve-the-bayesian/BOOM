@@ -122,7 +122,13 @@ namespace BOOM {
 
   void ArModel::set_sigsq(double sigsq) { Sigsq_prm()->set(sigsq); }
 
-  void ArModel::set_phi(const Vector &phi) { Phi_prm()->set(phi); }
+  void ArModel::set_phi(const Vector &phi) {
+    if (phi.size() == coef().nvars_possible()) {
+      coef().set_Beta(phi);
+    } else {
+      coef().set_included_coefficients(phi);
+    }
+  }
 
   Ptr<GlmCoefs> ArModel::Phi_prm() { return prm1(); }
   const Ptr<GlmCoefs> ArModel::Phi_prm() const { return prm1(); }

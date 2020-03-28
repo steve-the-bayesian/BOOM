@@ -178,9 +178,6 @@ namespace BOOM {
     Vector included_coefficients() const;
     void set_included_coefficients(const Vector &b);
 
-    // Set the included coefficients to those
-    void set_included_coefficients(const Vector &beta, const Selector &inc);
-
     // The full set of model coefficients, with 0's in positions corresponding
     // to excluded variables.
     virtual const Vector &Beta() const;

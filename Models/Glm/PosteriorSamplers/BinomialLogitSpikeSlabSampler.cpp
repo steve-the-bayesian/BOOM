@@ -62,7 +62,7 @@ namespace BOOM {
     // If model selection is turned off and some elements of beta
     // happen to be zero (because, e.g., of a failed MH step) we don't
     // want the dimension of beta to change.
-    model_->set_included_coefficients(beta, g);
+    model_->set_included_coefficients(beta);
   }
 
   double BLSSS::logpri() const {
@@ -140,7 +140,6 @@ namespace BOOM {
     log_posterior_at_mode_ = negative_infinity();
     try {
       BinomialLogitUnNormalizedLogPosterior logpost(model_, slab_.get());
-      const Selector &inc(model_->coef().inc());
       Vector beta(model_->included_coefficients());
       int dim = beta.size();
       if (dim == 0) {
@@ -157,7 +156,7 @@ namespace BOOM {
             dTarget(logpost), d2Target(logpost), epsilon, error_message);
         if (ok) {
           posterior_mode_found_ = true;
-          model_->set_included_coefficients(beta, inc);
+          model_->set_included_coefficients(beta);
           return;
         } else {
           log_posterior_at_mode_ = negative_infinity();

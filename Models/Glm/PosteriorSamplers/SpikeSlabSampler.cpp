@@ -78,7 +78,7 @@ namespace BOOM {
           rng, inclusion_indicators, indx[i], logp, suf, sigsq);
     }
   }
-  
+
   // Performs one MCMC sweep along the inclusion indicators for the
   // managed GlmModel.
   void SSS::draw_model_indicators(
@@ -107,7 +107,7 @@ namespace BOOM {
     // If model selection is turned off and some elements of beta
     // happen to be zero (because, e.inclusion_indicators., of a
     // failed MH step) we don't want the dimension of beta to change.
-    model_->set_included_coefficients(coefficients, inclusion_indicators);
+    model_->set_included_coefficients(coefficients);
   }
 
   void SSS::draw_coefficients_given_inclusion(
@@ -134,7 +134,7 @@ namespace BOOM {
       coefficients = draw;
     }
   }
-  
+
   double SSS::logpri() const {
     if (!model_) {
       report_error("No model was set.");
