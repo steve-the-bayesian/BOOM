@@ -26,7 +26,6 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/SufstatDataPolicy.hpp"
 #include "Models/TimeSeries/TimeSeries.hpp"
-#include "Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp"
 
 namespace BOOM {
 
@@ -77,13 +76,12 @@ namespace BOOM {
   //
   // with epsilon[t] \sim N(0, sigma^2).
   //
-  // The parameters of this model are the vector of autoregression
-  // coefficients phi[1]...phi[p], and the innovation variance
-  // sigma^2.
+  // The parameters of this model are the vector of autoregression coefficients
+  // phi[1]...phi[p], and the innovation variance sigma^2.
   //
-  // NOTE: AR models aren't usually thought of as being GLM's, but
-  //   ArModel inherits from GlmModel so that it can take advantage of
-  //   tools for spike and slab sampling.
+  // NOTE: AR models aren't usually thought of as being GLM's, but ArModel
+  //   inherits from GlmModel so that it can take advantage of tools for spike
+  //   and slab sampling.
   class ArModel : public GlmModel,
                   public ParamPolicy_2<GlmCoefs, UnivParams>,
                   public SufstatDataPolicy<DoubleData, ArSuf>,

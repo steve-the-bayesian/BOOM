@@ -55,7 +55,6 @@ namespace BOOM {
 
   HMM::HiddenMarkovModel(const HMM &rhs)
       : Model(rhs),
-        DataInfoPolicy(rhs),
         DataPolicy(rhs),
         ParamPolicy(),
         PriorPolicy(rhs),
@@ -105,8 +104,6 @@ namespace BOOM {
 
   void HMM::fix_pi0(const Vector &Pi0) { mark_->fix_pi0(Pi0); }
   void HMM::fix_pi0_stationary() { mark_->fix_pi0_stationary(); }
-  void HMM::fix_pi0_uniform() { mark_->fix_pi0_uniform(); }
-  void HMM::free_pi0() { mark_->free_pi0(); }
   bool HMM::pi0_fixed() const { return mark_->pi0_fixed(); }
 
   uint HMM::state_space_size() const { return mix_.size(); }
@@ -190,7 +187,6 @@ namespace BOOM {
 
   HMM_EM::HMM_EM(const HMM_EM &rhs)
       : Model(rhs),
-        DataInfoPolicy(rhs),
         HiddenMarkovModel(rhs),
         mix_(rhs.mix_),
         eps(rhs.eps) {
