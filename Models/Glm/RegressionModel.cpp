@@ -74,7 +74,7 @@ namespace BOOM {
   double RegSuf::relative_sse(const Vector &beta) const {
     return xtx().Mdist(beta) - 2 * beta.dot(xty()) + yty();
   }
-  
+
   AnovaTable RegSuf::anova() const {
     AnovaTable ans;
     double nobs = n();
@@ -133,7 +133,7 @@ namespace BOOM {
   void QrRegSuf::fix_xtx(bool) {
     report_error("Cannot fix xtx using QR reg suf.");
   }
-  
+
   uint QrRegSuf::size() const {  // dimension of beta
     //    if (!current) refresh_qr();
     return Qty.size();
@@ -379,7 +379,7 @@ namespace BOOM {
     if (!allow_non_finite_responses_ && !std::isfinite(sumsqy_)) {
       report_error("Non-finite sum of squares.");
     }
-    
+
     sumy_ += y;
     x_column_sums_.axpy(tmpx, 1.0);
   }
@@ -413,23 +413,16 @@ namespace BOOM {
   double NeRegSuf::ybar() const { return sumy_ / n_; }
 
   void NeRegSuf::combine(const Ptr<RegSuf> &sp) {
-    Ptr<NeRegSuf> s(sp.dcast<NeRegSuf>());
-    xtx_ += s->xtx_;  // Do we want to combine xtx_ if xtx_is_fixed_?
-    needs_to_reflect_ = needs_to_reflect_ || s->needs_to_reflect_;
-    xty_ += s->xty_;
-    sumsqy_ += s->sumsqy_;
-    sumy_ += s->sumy_;
-    n_ += s->n_;
+    combine(*sp);
   }
 
-  void NeRegSuf::combine(const RegSuf &sp) {
-    const NeRegSuf &s(dynamic_cast<const NeRegSuf &>(sp));
-    xtx_ += s.xtx_;  // Do we want to combine xtx_ if xtx_is_fixed_?
-    needs_to_reflect_ = needs_to_reflect_ || s.needs_to_reflect_;
-    xty_ += s.xty_;
-    sumsqy_ += s.sumsqy_;
-    sumy_ += s.sumy_;
-    n_ += s.n_;
+  void NeRegSuf::combine(const RegSuf &other) {
+    xtx_ += other.xtx();  // Do we want to combine xtx_ if xtx_is_fixed_?
+    needs_to_reflect_ = true;
+    xty_ += other.xty();
+    sumsqy_ += other.yty();
+    sumy_ += other.n() * other.ybar();
+    n_ += other.n();
   }
 
   NeRegSuf *NeRegSuf::abstract_combine(Sufstat *s) {

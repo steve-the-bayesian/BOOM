@@ -64,10 +64,20 @@ namespace BOOM {
       spike_slab_sampler_.limit_model_selection(nflips);
     }
 
+    // Truncate the support of the residual standard deviation prior so that it
+    // is less than an upper limit.  The limit can be infinity().
     void set_sigma_upper_limit(double sigma_upper_limit) {
       sigsq_sampler_.set_sigma_max(sigma_upper_limit);
     }
 
+    // Args:
+    //   truncate: If true then trunacate the support of the prior distribution
+    //     to coefficients implying stationarity.  If false then remove any such
+    //     restriction that might be in place.
+    //
+    // Effect:
+    //   If the current set of coefficients are outside the stationary region,
+    //   they are shrunk towards zero until stationarity is acheived.
     void truncate_support(bool truncate);
 
    private:
@@ -75,6 +85,14 @@ namespace BOOM {
     void draw_phi_univariate();
     void draw_sigma_full_conditional();
     void set_sufficient_statistics();
+
+    // A utility to call when phi is outside the bounds of stationarity.  Shrink
+    // phi towards zero until stationarity is achieved.
+    //
+    // Returns:
+    //  true if phi could be shrunk to a value implying stationarity.  False
+    //  otherwise.
+    bool shrink_phi(Vector &phi);
 
     ArModel *model_;
     Ptr<MvnBase> slab_;

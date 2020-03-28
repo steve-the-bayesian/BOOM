@@ -200,7 +200,7 @@ namespace BOOM {
   }
 
   bool SSPM::is_missing_observation(int t) const {
-    return t > time_dimension() ||
+    return t >= time_dimension() ||
            dat()[t]->missing() == Data::completely_missing ||
            dat()[t]->observed_sample_size() == 0;
   }

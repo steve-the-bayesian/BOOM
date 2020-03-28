@@ -85,7 +85,7 @@ cc_test(
     ],
 )
 
-cc_test(
+cc_binary(
     name = "HolidayMcmcExample",
     srcs = ["HolidayMcmcExample.cc"],
     copts = COPTS,

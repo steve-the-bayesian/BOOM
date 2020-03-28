@@ -169,7 +169,7 @@ namespace BOOM {
   }
 
   double SSSRM::observation_variance(int t) const {
-    if (t > time_dimension() ||
+    if (t >= time_dimension() ||
         dat()[t]->missing() == Data::completely_missing ||
         dat()[t]->observed_sample_size() == 0) {
       return student_marginal_variance();

@@ -38,10 +38,10 @@ namespace BOOM {
   double rpiecewise_log_linear_mt(RNG &rng, double slope, double lo,
                                   double hi) {
     // First handle all the strange cases.
-    if (lo > hi) {
-      report_error("Limits are reversed in rpiecewise_log_linear_mt.");
-    } else if (lo == hi) {
+    if (fabs(hi - lo) < 1e-7) {
       return lo;
+    } else if (lo > hi) {
+      report_error("Limits are reversed in rpiecewise_log_linear_mt.");
     } else if ((lo == negative_infinity() && slope <= 0) ||
                (hi == infinity() && slope >= 0)) {
       report_error(

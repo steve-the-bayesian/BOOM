@@ -192,7 +192,7 @@ namespace BOOM {
   int SSLM::time_dimension() const { return dat().size(); }
 
   double SSLM::observation_variance(int t) const {
-    if (t > time_dimension()) {
+    if (t >= time_dimension()) {
       return Constants::pi_squared_over_3;
     }
     return dat()[t]->latent_data_overall_variance();
@@ -206,7 +206,7 @@ namespace BOOM {
   }
 
   bool SSLM::is_missing_observation(int t) const {
-    return t > time_dimension() ||
+    return t >= time_dimension() ||
            dat()[t]->missing() == Data::completely_missing ||
            dat()[t]->observed_sample_size() == 0;
   }

@@ -49,7 +49,7 @@ namespace BOOM {
     //   minimal: If true, return the number of included coefficients.
     //     Otherwise return the number of available coefficients
     uint size(bool minimal = true) const override;
-    
+
     uint nvars() const;
     uint nvars_possible() const;
     uint nvars_excluded() const;
@@ -65,12 +65,10 @@ namespace BOOM {
 
     //------ operations for only included variables --------
     Vector included_coefficients() const;
+
+    // Set the included coefficients to b.  The dimension of b must match
+    // nvars().
     void set_included_coefficients(const Vector &b);
-    // Args:
-    //   b:  The nonzero elements of beta.
-    //   inc: Indicates the positions of the nonzero elements.  Must
-    //     satisfy inc.nvars() == beta.size().
-    void set_included_coefficients(const Vector &b, const Selector &inc);
 
     //----- operations for both included and excluded variables ----
     const Vector &Beta() const;  // reports 0 for excluded positions
@@ -90,6 +88,10 @@ namespace BOOM {
 
    private:
     Selector inc_;
+
+    // included_coefficients_ is a view into the full coefficient vector.
+    // included_coefficients_current_ is a flag indicating whether or not the
+    // view needs to be refreshed.
     mutable Vector included_coefficients_;
     mutable bool included_coefficients_current_;
 
@@ -117,7 +119,7 @@ namespace BOOM {
                             const SelectorMatrix &included);
 
     MatrixGlmCoefs *clone() const override {return new MatrixGlmCoefs(*this);}
-    
+
     int nrow() const {return value().nrow();}
     int ncol() const {return value().ncol();}
 
@@ -125,13 +127,13 @@ namespace BOOM {
     // correspond to different outcomes.
     int xdim() const {return nrow();}
     int ydim() const {return ncol();}
-    
+
     Vector predict(const Vector &predictors) const;
 
     // Args:
     //   values: The full matrix of coefficients, including all 0's for excluded
     //     variables.  Nonzero values for coefficients that have been excluded
-    //     will be 
+    //     will be
     void set(const Matrix &values, bool signal = true) override;
 
     void set_inclusion_pattern(const SelectorMatrix &included);
@@ -143,7 +145,7 @@ namespace BOOM {
     void flip(int i, int j) {included_.flip(i, j);}
 
     const SelectorMatrix &included_coefficients() const { return included_; }
-    
+
    private:
     // Keeps track of which coefficients are included (i.e. not forced to zero).
     SelectorMatrix included_;
@@ -151,10 +153,10 @@ namespace BOOM {
     // Throws an error if the dimension of the selector matrix does not match
     // the dimension of the matrix parameter.
     void check_dimension(const SelectorMatrix &included) const;
-    
+
     // Set all excluded coefficients to zero.
     void set_zeros();
   };
-  
+
 }  // namespace BOOM
 #endif  // BOOM_GLM_COEFS_HPP
