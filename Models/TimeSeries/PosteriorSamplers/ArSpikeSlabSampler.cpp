@@ -131,6 +131,10 @@ namespace BOOM {
       Selector conditional(p, true);
       conditional.drop(i);
 
+      if (conditional.nvars() == 0) {
+        continue;
+      }
+
       double conditional_mean = swept_precision.conditional_mean(
           conditional.select(phi), posterior_mean)[0];
       double conditional_sd = sqrt(swept_precision.residual_variance()(0, 0));
