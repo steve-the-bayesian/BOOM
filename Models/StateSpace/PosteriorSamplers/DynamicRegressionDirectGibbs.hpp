@@ -43,7 +43,29 @@ namespace BOOM {
     void draw_state_innovation_variance();
     void draw_transition_probabilities();
 
-    void log_model_prob(const Selector &inc, int t) const;
+
+    // The unnormalized log posterior proportional to p(gamma[t] | *), where * is
+    // everything but the model coefficients, which are assumed integrated out.
+    //
+    // The prior distribution on beta is simpler than the general g-prior, because
+    // betas, conditional in inclusion, are independent across predictors.  The
+    // only aspect of the prior that needs to be evaluated is element j.
+    double log_model_prob(const Selector &inclusion_indicators,
+                          int time_index,
+                          int predictor_index) const;
+
+    // The log of the prior inclusion probability at a given time/predictor
+    // index, conditional on neighboring values.
+    double log_inclusion_prior(const Selector &inclusion_indicators,
+                               int time_index,
+                               int predictor_index) const;
+
+    // A single MCMC draw of the inclusion indicator at a given time index and
+    // predictor index.  This draw integrates out the regression coefficients,
+    // but conditions on everything else.
+    void mcmc_one_flip(Selector &inclusion_indicators,
+                       int time_index,
+                       int predictor_index);
 
    private:
     DynamicRegressionModel *model_;

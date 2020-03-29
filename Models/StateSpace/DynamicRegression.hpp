@@ -164,8 +164,33 @@ namespace BOOM {
     }
     DynamicRegressionModel(DynamicRegressionModel &&rhs) = default;
 
-   private:
+
+    // The vector of inclusion indicators at time t.
+    const Selector &inclusion_indicators(int time_index) const {
+      return coefficients_[time_index]->inc();
+    }
+    void set_inclusion_indicators(const Selector &inc, int time_index) const {
+      coefficients_[time_index]->set_inc(inc);
+    }
+
+    // Args:
+    //   time_index:  The index of a time point.
+    //   predictor_index:  The index of a predictor variable.
     //
+    // Returns:
+    //   Whether the specified variable is included at the specified time.
+    bool inclusion_indicator(int time_index, int predictor_index) const {
+      return coefficients_[time_index]->inc(predictor_index);
+    }
+
+    // The log of the transition probability for an inclusion indicator.  One of
+    // the big simplifying assumptions for this model is that this is the same
+    // for all indicators and across all times.
+    double log_transition_probability(bool from, bool to) const {
+      return inclusion_transition_model_->log_transition_probability(from, to);
+    }
+
+   private:
     std::vector<Ptr<GlmCoefs>> coefficients_;
     Ptr<UnivParams> residual_variance_;
 
