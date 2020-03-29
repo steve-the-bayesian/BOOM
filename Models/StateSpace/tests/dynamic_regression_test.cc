@@ -32,7 +32,6 @@ namespace {
   TEST_F(RegressionDataTimePointTest, blah) {
     NEW(RegressionDataTimePoint, dp)();
     EXPECT_EQ(0, dp->sample_size());
-    EXPECT_FALSE(dp->using_suf());
   }
 
   class DynamicRegressionModelTest : public ::testing::Test {

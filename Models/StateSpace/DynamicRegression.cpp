@@ -21,6 +21,7 @@
 namespace BOOM {
   namespace StateSpace {
 
+    //=========================================================================
     namespace {
       using RDTP = RegressionDataTimePoint;
     }  // namespace
@@ -65,13 +66,50 @@ namespace BOOM {
         suf_->update(dp);
       } else {
         raw_data_.push_back(dp);
+        yty_ += square(dp->y());
         if (raw_data_.size() >= dp->xdim()) {
           suf_.reset(new NeRegSuf(dp->xdim()));
           for (const auto &el : raw_data_) {
             suf_->update(el);
           }
           raw_data_.clear();
+          yty_ = negative_infinity();
         }
+      }
+    }
+
+    int RDTP::sample_size() const {
+      if (!suf_) {
+        return raw_data_.size();
+      } else {
+        return lround(suf_->n());
+      }
+    }
+
+    std::pair<SpdMatrix, Vector> RDTP::xtx_xty(const Selector &inc) const {
+      if (inc.nvars() == 0) {
+        return std::make_pair(SpdMatrix(0), Vector(0));
+      }
+
+      if (!suf_) {
+        SpdMatrix xtx(inc.nvars(), 0.0);
+        Vector xty(inc.nvars(), 0.0);
+        for (const auto &el : raw_data_) {
+          Vector x = inc.select(el->x());
+          xtx.add_outer(x, 1.0, false);
+          xty.axpy(x, el->y());
+        }
+        return std::make_pair(xtx, xty);
+      } else {
+        return std::make_pair(suf_->xtx(inc), suf_->xty(inc));
+      }
+    }
+
+    double RDTP::yty() const {
+      if (!suf_) {
+        return yty_;
+      } else {
+        return suf_->yty();
       }
     }
 

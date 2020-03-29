@@ -67,6 +67,11 @@ namespace BOOM {
                        int time_index,
                        int predictor_index);
 
+    // The diagonal of the prior variance matrix of the regression coefficients
+    // at time t.  Only the diagonal is returned because the variables are
+    // independent.
+    Vector compute_prior_variance(const Selector &inc, int time_index) const;
+
    private:
     DynamicRegressionModel *model_;
   };
