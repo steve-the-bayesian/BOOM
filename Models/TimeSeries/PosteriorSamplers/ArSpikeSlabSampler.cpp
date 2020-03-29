@@ -87,7 +87,11 @@ namespace BOOM {
     }
     if (!ok) {
       model_->set_phi(original_phi);
-      draw_phi_univariate();
+      try {
+        draw_phi_univariate();
+      } catch(...) {
+        model_->set_phi(original_phi);
+      }
     }
   }
 
