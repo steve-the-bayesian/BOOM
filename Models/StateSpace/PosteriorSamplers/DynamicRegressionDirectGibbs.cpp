@@ -25,6 +25,20 @@ namespace BOOM {
     using DRDGS = DynamicRegressionDirectGibbsSampler;
   }
 
+  DRDGS::DynamicRegressionDirectGibbsSampler(
+      DynamicRegressionModel *model,
+      const Matrix &prior_transition_counts,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        transition_probability_sampler_(
+            new MarkovConjSampler(model_->inclusion_transition_model_.get(),
+                                  prior_transition_counts,
+                                  seeding_rng)) {
+    model_->inclusion_transition_model_->set_method(
+        transition_probability_sampler_);
+  }
+
   void DRDGS::draw() {
     draw_inclusion_indicators();
     draw_coefficients_given_inclusion();
@@ -162,7 +176,19 @@ namespace BOOM {
   }
 
   void DRDGS::draw_transition_probabilities() {
-    report_error("Not implemented.");
+    Matrix transition_counts(2, 2, 0.0);
+    for (int j = 0; j < model_->xdim(); ++j) {
+      bool then = model_->inclusion_indicator(0, j);
+      for (int t = 1; t < model_->time_dimension(); ++t) {
+        bool now = model_->inclusion_indicator(t, j);
+        ++transition_counts(then, now);
+        then = now;
+      }
+    }
+    Ptr<MarkovSuf> suf = model_->inclusion_transition_model_->suf();
+    suf->clear();
+    suf->add_transition_distribution(transition_counts);
+    model_->inclusion_transition_model_->sample_posterior();
   }
 
 }  // namespace BOOM

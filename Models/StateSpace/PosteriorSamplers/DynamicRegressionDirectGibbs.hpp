@@ -20,6 +20,7 @@
 
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/StateSpace/DynamicRegression.hpp"
+#include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
 
 namespace BOOM {
 
@@ -32,15 +33,20 @@ namespace BOOM {
    public:
     DynamicRegressionDirectGibbsSampler(
         DynamicRegressionModel *model,
+        const Matrix &prior_transition_counts,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;
 
+    // Draw each inclusion indicator by a direct Gibbs sampler, integrating over
+    // the model coefficients, but conditioning on everything else.
     void draw_inclusion_indicators();
+
     void draw_coefficients_given_inclusion();
     void draw_residual_variance();
     void draw_state_innovation_variance();
+
     void draw_transition_probabilities();
 
 
@@ -74,6 +80,8 @@ namespace BOOM {
 
    private:
     DynamicRegressionModel *model_;
+    Ptr<MarkovConjSampler> transition_probability_sampler_;
+
   };
 
 

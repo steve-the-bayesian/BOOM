@@ -159,6 +159,8 @@ namespace BOOM {
         public TimeSeriesRegressionDataPolicy,
         public PriorPolicy {
    public:
+    friend class DynamicRegressionDirectGibbsSampler;
+
     explicit DynamicRegressionModel(int xdim);
     DynamicRegressionModel(const DynamicRegressionModel &rhs);
     DynamicRegressionModel *clone() const override {
