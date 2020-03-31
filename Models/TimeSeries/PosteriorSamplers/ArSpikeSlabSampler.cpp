@@ -87,7 +87,11 @@ namespace BOOM {
     }
     if (!ok) {
       model_->set_phi(original_phi);
-      draw_phi_univariate();
+      try {
+        draw_phi_univariate();
+      } catch(...) {
+        model_->set_phi(original_phi);
+      }
     }
   }
 
@@ -126,6 +130,10 @@ namespace BOOM {
       swept_precision.RSW(i);
       Selector conditional(p, true);
       conditional.drop(i);
+
+      if (conditional.nvars() == 0) {
+        continue;
+      }
 
       double conditional_mean = swept_precision.conditional_mean(
           conditional.select(phi), posterior_mean)[0];
