@@ -342,7 +342,7 @@ PlotNetworkStructure <- function(model, ...) {
   ## NOTE: This function depends on having igraph installed.  Igraph is a big
   ## package with lots of dependencies, so it is optional.  If igraph is not
   ## installed then calling this function prints an error message.
-  ok  <- require(igraph, quietly = TRUE)
+  ok <- requireNamespace("igraph", quietly = TRUE)
   if (!ok) {
     warning("Plotting network structure requires the 'igraph' package.  ",
       "Please install using 'install.packages'.")
