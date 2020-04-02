@@ -1,5 +1,5 @@
-#ifndef BOOM_NAKAJIMA_WEST_SAMPLER_HPP_
-#define BOOM_NAKAJIMA_WEST_SAMPLER_HPP_
+#ifndef BOOM_DYNAMIC_REGRESSION_DIRECT_GIBBS_SAMPLER_HPP_
+#define BOOM_DYNAMIC_REGRESSION_DIRECT_GIBBS_SAMPLER_HPP_
 /*
   Copyright (C) 2005-2020 Steven L. Scott
 
@@ -43,15 +43,24 @@ namespace BOOM {
     // the model coefficients, but conditioning on everything else.
     void draw_inclusion_indicators();
 
+    // Sample the coefficients at each time point, conditional on the inclusion
+    // indicators, using forward-filtering backward-sampling.
     void draw_coefficients_given_inclusion();
+
+    // Sample the residual variance, given all else, from its full conditional.
     void draw_residual_variance();
+
+    // Sample the state innovation variances, given all else, from their full
+    // conditional distributions.
     void draw_state_innovation_variance();
 
+    // Sample the transition probabilities for the inclusion indicators from
+    // their full conditional.
     void draw_transition_probabilities();
 
-
-    // The unnormalized log posterior proportional to p(gamma[t] | *), where * is
-    // everything but the model coefficients, which are assumed integrated out.
+    // The unnormalized log posterior proportional to p(gamma[t] | *), where *
+    // is everything but the dynamic regression coefficients, which are assumed
+    // integrated out.
     //
     // The prior distribution on beta is simpler than the general g-prior, because
     // betas, conditional in inclusion, are independent across predictors.  The
@@ -74,18 +83,17 @@ namespace BOOM {
                        int predictor_index);
 
     // The diagonal of the prior variance matrix of the regression coefficients
-    // at time t.  Only the diagonal is returned because the variables are
-    // independent.
+    // at time t, conditional on inclusion indicators and hyperparameters.  Only
+    // the diagonal is returned because the variables are independent.
     Vector compute_prior_variance(const Selector &inc, int time_index) const;
 
    private:
     DynamicRegressionModel *model_;
     Ptr<MarkovConjSampler> transition_probability_sampler_;
-
   };
 
 
 }  // namespace BOOM
 
 
-#endif   // BOOM_NAKAJIMA_WEST_SAMPLER_HPP_
+#endif   // BOOM_DYNAMIC_REGRESSION_DIRECT_GIBBS_SAMPLER_HPP_

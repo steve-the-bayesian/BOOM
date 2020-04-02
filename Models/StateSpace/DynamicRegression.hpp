@@ -19,12 +19,17 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "LinAlg/Vector.hpp"
+#include "LinAlg/SpdMatrix.hpp"
 #include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/MarkovModel.hpp"
+#include "Models/ZeroMeanGaussianModel.hpp"
 
 namespace BOOM {
+  class DynamicRegressionModel;
+
   namespace StateSpace {
     class RegressionDataTimePoint : public Data {
      public:
@@ -73,6 +78,66 @@ namespace BOOM {
       // raw_data_ is cleared and suf_ is populated.
       Ptr<NeRegSuf> suf_;
     };
+
+    // A node for a contemporaneous Kalman filter.  Conceptually this represents
+    // p(beta[gamma, t] | Y[t]).
+    class DynamicRegressionKalmanFilterNode {
+     public:
+      using Node = DynamicRegressionKalmanFilterNode;
+
+      // Compute the distribution of today's state given today's data and the
+      // previous node.
+      //
+      // Args:
+      //   previous: The node for the previous period, giving p(beta[t-1] |
+      //     Y[t-1]).
+      //   data:  Data for the current time period t.
+      //   model: The DynamicRegressionModel that will supply all the state space
+      //     matrices and other filter inputs not specified as arguments.
+      //   time_index:  The current time t.
+      //
+      // Returns:
+      //   The conditional log likelihood of data given previous.
+      //
+      // Effects:
+      //   state_mean_ and state_variance_ are computed.  Their dimension may
+      //   change if the inclusion indicators for time t have changed since the
+      //   last update.
+      double update(const Node &previous, const RegressionDataTimePoint &data,
+                    const DynamicRegressionModel &model, int t);
+
+      // Simulate the coefficients for the given time index, conditional on
+      // inclusion indicators, model parameters and the simulated value at time
+      // t+1.
+      void simulate_coefficients(
+          DynamicRegressionModel &model, int time_index, RNG &rng);
+
+      const Vector &state_mean() const {return state_mean_;}
+      const SpdMatrix &state_variance() const {return state_variance_;}
+      const SpdMatrix &state_precision() const;
+
+     private:
+      Vector state_mean_;
+
+      // Storing the variance as SpdData means that we can easily switch back
+      // and forth between precision and variance.
+      Ptr<SpdData> state_variance_;
+    };
+
+    //==========================================================================
+    // A Kalman filter for dynamic regression models.
+    class DynamicRegressionKalmanFilter {
+     public:
+      double impute_state(DynamicRegressionModel &model, RNG &rng);
+      double filter(const DynamicRegressionModel &model);
+      void simulate_coefficients(DynamicRegressionModel &model, RNG &rng);
+
+     private:
+      Vector initial_mean_;
+      SpdMatrix initial_variance_;
+      std::vector<DynamicRegressionKalmanFilterNode> nodes_;a
+    };
+
   }  // namespace StateSpace
 
   //===========================================================================
@@ -196,7 +261,7 @@ namespace BOOM {
 
     double residual_variance() const {return residual_variance_->value();}
     double innovation_variance(int j) const {
-      return innovation_variances_[j]->value();
+      return innovation_error_models_[j]->sigsq();
     }
 
    private:
@@ -206,11 +271,11 @@ namespace BOOM {
     // The variance that describes the rate at which each ACTIVE coefficient
     // changes over time:
     //
-    //    beta[j, t+1] = beta[j, t] + N(0, innovation_variances_[j])
+    //    beta[j, t+1] = beta[j, t] + N(0, innovation_variance(j))
     //
     // Note that these variances include information about the scale of the
     // predictor variables multiplying the coefficients.
-    std::vector<Ptr<UnivParams>> innovation_variances_;
+    std::vector<Ptr<ZeroMeanGaussianModel>> innovation_error_models_;
 
     // A 2-state Markov model describes the frequency of jumps in and out of the
     // model.  This is the temporal equivalent of the "prior inclusion

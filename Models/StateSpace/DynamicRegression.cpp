@@ -113,6 +113,69 @@ namespace BOOM {
       }
     }
 
+  //===========================================================================
+    double DynamicRegressionKalmanFilterNode::update(
+        const DynamicRegressionKalmanFilterNode &previous,
+        const RegressionDataTimePoint &data,
+        const DynamicRegressionModel &model,
+        int time_index) {
+      //=======================================================================
+      //=======================================================================
+      //=======================================================================
+      // DO THIS!!!
+      //=======================================================================
+      //=======================================================================
+      //=======================================================================
+    }
+
+    void DynamicRegressionKalmanFilterNode::simulate_coefficients(
+        DynamicRegressionModel &model, int time_index, RNG &rng) {
+      if (time_index < 0 || time_index >= model.time_dimension()) {
+        std::ostringstream err;
+        err << "time_index of " << time_index << " out of bounds for model with"
+            << " time_dimension = " << model.time_dimension() << ".";
+        report_error(err.str());
+      } else if (time_index + 1 == model.time_dimension()) {
+        Vector beta = rmvn_L_mt(rng, state_mean(), state_variance_->var_chol());
+        model.set_included_coefficients(time_index, beta);
+      } else {
+        //=====================================================================
+        //=====================================================================
+        //=====================================================================
+        // DO THIS!!!
+        //=====================================================================
+        //=====================================================================
+        //=====================================================================
+      }
+    }
+
+    //======================================================================
+    double DynamicRegressionKalmanFilter::filter(
+        const DynamicRegressionModel &model) {
+      ensure_storage(model.time_dimension());
+      double ans = nodes_[0].initialize(
+          model.data(0), model.inclusion_indicators(0));
+      for (int t = 1; t < model.time_dimension(); ++t) {
+        ans += nodes_[t].update(nodes_[t-1], model.data(t), model, t);
+      }
+      return ans;
+    }
+
+    void DynamicRegressionKalmanFilter::simulate_coefficients(
+        DynamicRegressionModel &model, RNG &rng) {
+      for (int t = model.time_dimension() - 1; t >= 0 --t) {
+        Vector beta = nodes_[t].simulate_coefficients(model, t, rng);
+        model.set_included_coefficients(t, beta);
+      }
+    }
+
+    double DynamicRegressionKalmanFilter::impute_state(
+        DynamicRegressionModel &model, RNG &rng) {
+      double ans = filter(model);
+      simulate_coefficients(model, rng);
+      return ans;
+    }
+
   }  // namespace StateSpace
 
 
