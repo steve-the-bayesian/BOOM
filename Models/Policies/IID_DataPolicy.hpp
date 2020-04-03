@@ -72,7 +72,7 @@ namespace BOOM {
     virtual void combine_data(const Model &mod, bool just_suf = true);
 
     void signal() {
-      for (int i = 0; i < observers_.size(); ++i) {
+      for (size_t i = 0; i < observers_.size(); ++i) {
         observers_[i]();
       }
     }
