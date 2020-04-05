@@ -63,7 +63,7 @@ namespace BOOM {
     const Vector &mu() const override;
     const SpdMatrix &Sigma() const override;
     const SpdMatrix &siginv() const override;
-    const Matrix &Sigma_chol() const;
+    Matrix Sigma_chol() const;
     double ldsi() const override;
     double nu() const;
 

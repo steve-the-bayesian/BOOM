@@ -131,8 +131,7 @@ namespace {
     }
     double monte_carlo_marginal_loglike = lse(draws) - log(niter);
 
-    Cholesky sigma_chol(Sigma);
-    SpdMatrix siginv = sigma_chol.inv();
+    SpdMatrix siginv = Sigma.inv();
     SpdMatrix unscaled_posterior_precision = xtx + siginv;
     Cholesky unscaled_posterior_precision_chol(unscaled_posterior_precision);
     Vector posterior_mean = unscaled_posterior_precision_chol.solve(
@@ -145,7 +144,7 @@ namespace {
         yty,
         sample_size,
         b0,
-        sigma_chol.getL(),
+        siginv.chol(),
         posterior_mean,
         unscaled_posterior_precision_chol.getL());
 
