@@ -43,10 +43,6 @@ namespace BOOM {
     // the model coefficients, but conditioning on everything else.
     void draw_inclusion_indicators();
 
-    // Sample the coefficients at each time point, conditional on the inclusion
-    // indicators, using forward-filtering backward-sampling.
-    void draw_coefficients_given_inclusion();
-
     // Sample the residual variance, given all else, from its full conditional.
     void draw_residual_variance();
 
@@ -62,9 +58,10 @@ namespace BOOM {
     // is everything but the dynamic regression coefficients, which are assumed
     // integrated out.
     //
-    // The prior distribution on beta is simpler than the general g-prior, because
-    // betas, conditional in inclusion, are independent across predictors.  The
-    // only aspect of the prior that needs to be evaluated is element j.
+    // The prior distribution on beta is simpler than the general g-prior,
+    // because betas, conditional in inclusion, are independent across
+    // predictors.  The only aspect of the prior that needs to be evaluated is
+    // element j.
     double log_model_prob(const Selector &inclusion_indicators,
                           int time_index,
                           int predictor_index) const;
@@ -85,7 +82,11 @@ namespace BOOM {
     // The diagonal of the prior variance matrix of the regression coefficients
     // at time t, conditional on inclusion indicators and hyperparameters.  Only
     // the diagonal is returned because the variables are independent.
-    Vector compute_prior_variance(const Selector &inc, int time_index) const;
+    //
+    // This function returns the _unscaled_ variance.  The actual variance is
+    // the unscaled variance times the residual variance (sigsq).
+    Vector compute_unscaled_prior_variance(
+        const Selector &inc, int time_index) const;
 
    private:
     DynamicRegressionModel *model_;

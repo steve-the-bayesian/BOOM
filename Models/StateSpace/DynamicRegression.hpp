@@ -23,6 +23,7 @@
 #include "LinAlg/SpdMatrix.hpp"
 #include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
+#include "Models/SpdParams.hpp"
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/MarkovModel.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
@@ -31,9 +32,17 @@ namespace BOOM {
   class DynamicRegressionModel;
 
   namespace StateSpace {
+
+    // A regression data set at a point in time.  If fewer than 'xdim' data
+    // points are observed then the data set is stored as raw data.  When xdim
+    // or more data points are present then the raw data are discarded, and
+    // sufficient statistics are used instead.
     class RegressionDataTimePoint : public Data {
      public:
-      // Default constructor sets xdim to -1.
+      // Args:
+      //   xdim: The dimension of the predictor variable.  The default value of
+      //   -1 is a signal that the dimension is unknown.  It will be set on the
+      //   first call to add_data().
       RegressionDataTimePoint(int xdim = -1): xdim_(xdim), suf_(nullptr) {}
 
       RegressionDataTimePoint(const RegressionDataTimePoint &rhs);
@@ -46,11 +55,13 @@ namespace BOOM {
 
       std::ostream &display(std::ostream &out) const override;
 
+      int xdim() const {return xdim_;}
+
       //-------- Accumulate data about this time point.
 
       // Add the data point to the managed collection of data.  If the number of
-      // data points exceeds the predictor dimension, switch from storing raw
-      // data to storing sufficient statistics.
+      // data points exceeds the predictor dimension, calling add_data will
+      // switch from storing raw data to storing sufficient statistics.
       void add_data(const Ptr<RegressionData> &dp);
 
       //-------- Sufficient statisitcs for this time point ------
@@ -79,11 +90,80 @@ namespace BOOM {
       Ptr<NeRegSuf> suf_;
     };
 
-    // A node for a contemporaneous Kalman filter.  Conceptually this represents
-    // p(beta[gamma, t] | Y[t]).
+    //=========================================================================
+    // A SelectorMatrix is formed by taking the columns of the identity
+    // matrix chosen by a Selector.
+    //
+    // If G1 and G2 are selector matrices, the ProductSelectorMatrix is G2' *
+    // G1.
+    class ProductSelectorMatrix {
+     public:
+      ProductSelectorMatrix(const Selector &inc1, const Selector &inc2)
+          : inc1_(inc1), inc2_(inc2) {}
+
+      int nrow() const {return inc2_.nvars();}
+      int ncol() const {return inc1_.nvars();}
+
+      // A dense matrix representation of the ProductSelectorMatrix.
+      Matrix dense() const;
+
+      Vector operator*(const Vector &v) const;
+      Vector operator*(const ConstVectorView &v) const;
+
+      // Returns this * P * this'
+      SpdMatrix sandwich(const SpdMatrix &P) const;
+
+      DiagonalMatrix sandwich(const DiagonalMatrix &D) const;
+
+      ProductSelectorMatrix transpose() const {
+        return ProductSelectorMatrix(inc2_, inc1_);
+      }
+
+     private:
+      // inc1_ and inc2_ are the selectors for the first and second time
+      // periods.
+      Selector inc1_;
+      Selector inc2_;
+    };
+
+    //==========================================================================
+    // A node for a contemporaneous Kalman filter describing the
+    // DynamicRegressionModel defined below.  A node represents the conditional
+    // distribution of the included coefficients at time t, given the inclusion
+    // indicators, model parameters, and all data up to and including t.
+    //
+    // The distribution is defined up to the residual variance parameter sigsq.
+    // Each node gives a mean and an unscaled variance.  The actual variance is
+    // the unscaled variance times sigsq.
     class DynamicRegressionKalmanFilterNode {
      public:
       using Node = DynamicRegressionKalmanFilterNode;
+
+      DynamicRegressionKalmanFilterNode()
+          : state_mean_(1, 0.0),
+            state_variance_(new SpdParams(SpdMatrix(1, 1.0))) {}
+
+      // To be called by the Node managing the first data point in a data set.
+      // Set the distribution conditional on the data and a pre-specified prior.
+      //
+      // Args:
+      //   inc:  Inclusion indicators for the initial time point.
+      //   initial_mean: Prior state mean for initial time point, given
+      //     that all variables are included.
+      //   unscaled_initial_precision: Prior state precision for initial time
+      //     point, given that all variables are included.  The precision is
+      //     "unscaled" because it must be divided by the residual variance to
+      //     get the actual precision.
+      //   data:  Initial data point.
+      //   sigsq: The residual variance parameter.
+      //
+      // Returns:
+      //   The log likelihood of the initial data point.
+      double initialize(const Selector &inc,
+                        const Vector &initial_mean,
+                        const SpdMatrix &unscaled_initial_precision,
+                        const RegressionDataTimePoint &data,
+                        double sigsq);
 
       // Compute the distribution of today's state given today's data and the
       // previous node.
@@ -109,33 +189,77 @@ namespace BOOM {
       // Simulate the coefficients for the given time index, conditional on
       // inclusion indicators, model parameters and the simulated value at time
       // t+1.
-      void simulate_coefficients(
-          DynamicRegressionModel &model, int time_index, RNG &rng);
+      Vector simulate_coefficients(
+          const DynamicRegressionModel &model, int time_index, RNG &rng);
 
+      // The conditional mean of the included regression coefficients at time t,
+      // given inclusion indicators, model parameters, and data up to and
+      // including time t.
       const Vector &state_mean() const {return state_mean_;}
-      const SpdMatrix &state_variance() const {return state_variance_;}
-      const SpdMatrix &state_precision() const;
+
+      // The unscaled conditional variance and precision of the included
+      // regression coefficients at time t, given inclusion indicators, model
+      // parameters, and data up to and including time t.  The actual
+      // conditional variance is the unscaled variance times the scalar residual
+      // variance parameter sigsq.
+      const SpdMatrix &unscaled_state_variance() const {
+        return state_variance_->var();
+      }
+      const SpdMatrix &unscaled_state_precision() const {
+        return state_variance_->ivar();
+      }
 
      private:
       Vector state_mean_;
 
       // Storing the variance as SpdData means that we can easily switch back
       // and forth between precision and variance.
-      Ptr<SpdData> state_variance_;
+      Ptr<SpdParams> state_variance_;
     };
 
     //==========================================================================
     // A Kalman filter for dynamic regression models.
     class DynamicRegressionKalmanFilter {
      public:
+
+      // Args:
+      //   model:  The model whose coefficients are to be imputed.
+      //   rng:  Random number generator to use for the imputation.
+      //
+      // Returns:
+      //   The log likelihood of the observed data in the model.  This is a
+      //   byproduct of Kalman filtering.
+      //
+      // Effects:
+      //   Filter nodes are updated to the conditional mean and variance given
+      //   data up to the time point they represent.  Model coefficients are set
+      //   to imputed values.  The imputation is done conditional on inclusion
+      //   vectors, observed data, and model parameters.
       double impute_state(DynamicRegressionModel &model, RNG &rng);
+
+      // Args:
+      //   model: The model containing the filter parameters and the data to be
+      //     filtered.
+      //
+      // Returns:
+      //   The log likelihood of the filtered data.
+      //
+      // Effects:
+      //   The filter nodes are updated with the conditional mean and variance
+      //   of the regression coefficients, given other model parameters,
+      //   inclusion indicators, and observed data up to the time point they
+      //   represent.
       double filter(const DynamicRegressionModel &model);
+
+
       void simulate_coefficients(DynamicRegressionModel &model, RNG &rng);
 
      private:
+      void ensure_storage(int number_of_time_points);
+
       Vector initial_mean_;
       SpdMatrix initial_variance_;
-      std::vector<DynamicRegressionKalmanFilterNode> nodes_;a
+      std::vector<DynamicRegressionKalmanFilterNode> nodes_;
     };
 
   }  // namespace StateSpace
@@ -155,8 +279,9 @@ namespace BOOM {
     void clear_data() override;
     void combine_data(const Model &other_model, bool just_suf = true) override;
 
-    // Specific meanings of "add data".
-
+    //------------------------------------------------------------
+    // Different ways of adding data.
+    //
     // Add dp to the last time point.
     void add_data(const Ptr<RegressionData> &dp);
 
@@ -167,7 +292,8 @@ namespace BOOM {
     // Add a new time point.
     void add_data(const Ptr<StateSpace::RegressionDataTimePoint> &dp);
 
-    //
+    //------------------------------------------------------------
+    // Accessing data and sufficient statistics.
     std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() {return data_;}
     const std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() const {
       return data_;
@@ -190,6 +316,13 @@ namespace BOOM {
       }
       return ans;
     }
+
+   protected:
+    // To be overloaded by the main model class.
+    //
+    // Ensure that any data structures that depend on time are populated with at
+    // least time_dimension() elements.
+    virtual void ensure_time_dimension() = 0;
 
    private:
     // Number of predictor variables.
@@ -233,24 +366,20 @@ namespace BOOM {
     }
     DynamicRegressionModel(DynamicRegressionModel &&rhs) = default;
 
-    // The vector of inclusion indicators at time t.
-    const Selector &inclusion_indicators(int time_index) const {
-      return coefficients_[time_index]->inc();
+    // The prior distribution for the initial set of regression coefficients.
+    void set_initial_state_mean(const Vector &mean);
+    const Vector &initial_state_mean() const {
+      return initial_state_mean_;
     }
 
-    void set_inclusion_indicators(const Selector &inc, int time_index) {
-      coefficients_[time_index]->set_inc(inc);
+    // The initial state variance is unscaled.
+    void set_unscaled_initial_state_variance(const SpdMatrix &variance);
+    const SpdMatrix &unscaled_initial_state_precision() const {
+      return unscaled_initial_state_variance_->ivar();
     }
 
-    // Args:
-    //   time_index:  The index of a time point.
-    //   predictor_index:  The index of a predictor variable.
-    //
-    // Returns:
-    //   Whether the specified variable is included at the specified time.
-    bool inclusion_indicator(int time_index, int predictor_index) const {
-      return coefficients_[time_index]->inc(predictor_index);
-    }
+    // ----------------------------------------------------------------------
+    // Static (non-time-varying) parameters.
 
     // The log of the transition probability for an inclusion indicator.  One of
     // the big simplifying assumptions for this model is that this is the same
@@ -259,29 +388,90 @@ namespace BOOM {
       return inclusion_transition_model_->log_transition_probability(from, to);
     }
 
+    // The "sigma squared" parameter describing the variance of the residuals.
     double residual_variance() const {return residual_variance_->value();}
-    double innovation_variance(int j) const {
-      return innovation_error_models_[j]->sigsq();
+
+    // The "unscaled" variance describing a one-time-period change in the
+    // specified coefficient.  The actual variance is the unscaled variance
+    // times the residual variance.
+    double unscaled_innovation_variance(int predictor_index) const {
+      return innovation_error_models_[predictor_index]->sigsq();
     }
+
+    // The vector of unscaled innovation variance parameters across all
+    // coefficients.
+    const Vector &unscaled_innovation_variances() const;
+
+    // ----------------------------------------------------------------------
+    // Regression coefficients and inclusion indicators.
+    // Args:
+    //   time_index:  The index of a time point.
+    //   predictor_index:  The index of a predictor variable.
+
+    // Returns:
+    //   Whether the specified predictor is included at the specified time.
+    bool inclusion_indicator(int time_index, int predictor_index) const {
+      return coefficients_[time_index]->inc(predictor_index);
+    }
+
+    // The vector of inclusion indicators at time t.
+    const Selector &inclusion_indicators(int time_index) const {
+      return coefficients_[time_index]->inc();
+    }
+
+    void set_inclusion_indicators(int time_index, const Selector &inc) {
+      coefficients_[time_index]->set_inc(inc);
+    }
+
+    Vector included_coefficients(int time_index) const {
+      return coefficients_[time_index]->included_coefficients();
+    }
+
+    void set_included_coefficients(int time_index, const Vector &beta) {
+      coefficients_[time_index]->set_included_coefficients(beta);
+    }
+
+    double draw_coefficients_given_inclusion(RNG &rng) {
+      return filter_.impute_state(*this, rng);
+    }
+
+   protected:
+    void ensure_time_dimension() override;
 
    private:
     std::vector<Ptr<GlmCoefs>> coefficients_;
     Ptr<UnivParams> residual_variance_;
 
+    // Prior distribution of the initial state vector, conditional on all
+    // variables being included.
+    Vector initial_state_mean_;
+    // The variance is unscaled.  sigsq * unscaled is the actual variance.
+    Ptr<SpdParams> unscaled_initial_state_variance_;
+
     // The variance that describes the rate at which each ACTIVE coefficient
     // changes over time:
     //
-    //    beta[j, t+1] = beta[j, t] + N(0, innovation_variance(j))
+    //    beta[j, t+1] = beta[j, t] + N(0, sigsq * innovation_variance(j))
     //
     // Note that these variances include information about the scale of the
-    // predictor variables multiplying the coefficients.
+    // predictor variables multiplying the coefficients, but the residual
+    // variance is factored out.
     std::vector<Ptr<ZeroMeanGaussianModel>> innovation_error_models_;
+
+    mutable bool innovation_variances_current_;
+    mutable Vector innovation_variances_;
+    void observe_innovation_variances() {
+      innovation_variances_current_ = false;
+    }
+    void refresh_innovation_variances() const;
 
     // A 2-state Markov model describes the frequency of jumps in and out of the
     // model.  This is the temporal equivalent of the "prior inclusion
     // probabilities" in a static model.  In a later edition of this model we
     // might want to have more of these.
     Ptr<MarkovModel> inclusion_transition_model_;
+
+    StateSpace::DynamicRegressionKalmanFilter filter_;
   };
 
 }  // namespace BOOM

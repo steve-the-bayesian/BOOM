@@ -17,10 +17,11 @@
 */
 
 #include "Models/StateSpace/DynamicRegression.hpp"
+#include "distributions.hpp"
+#include "LinAlg/Cholesky.hpp"
 
 namespace BOOM {
   namespace StateSpace {
-
     //=========================================================================
     namespace {
       using RDTP = RegressionDataTimePoint;
@@ -99,6 +100,7 @@ namespace BOOM {
           xtx.add_outer(x, 1.0, false);
           xty.axpy(x, el->y());
         }
+        xtx.reflect();
         return std::make_pair(xtx, xty);
       } else {
         return std::make_pair(suf_->xtx(inc), suf_->xty(inc));
@@ -113,40 +115,169 @@ namespace BOOM {
       }
     }
 
-  //===========================================================================
+    //===========================================================================
+    namespace {
+      using PSM = ProductSelectorMatrix;
+    }
+    Matrix PSM::dense() const {
+      Matrix ans(inc2_.nvars(), inc1_.nvars(), 0.0);
+      for (int i = 0; i < inc2_.nvars(); ++i) {
+        int I = inc2_.indx(i);
+        if (inc1_[I]) {
+          ans(i, inc1_.INDX(I)) = 1.0;
+        }
+      }
+      return ans;
+    }
+
+    Vector PSM::operator*(const Vector &v) const {
+      return *this * (ConstVectorView(v));
+    }
+
+    Vector PSM::operator*(const ConstVectorView &v) const {
+      Vector ans(inc2_.nvars(), 0.0);
+      for (int i = 0; i < ans.size(); ++i) {
+        int I = inc2_.indx(i);
+        if (inc1_[I]) {
+          ans[i] = v[inc1_.INDX(I)];
+        }
+      }
+      return ans;
+    }
+
+    DiagonalMatrix PSM::sandwich(const DiagonalMatrix &d) const {
+      return DiagonalMatrix(*this * d.diag());
+    }
+
+    SpdMatrix PSM::sandwich(const SpdMatrix &P) const {
+      SpdMatrix ans(inc2_.nvars(), 0.0);
+      for (int i = 0; i < ans.nrow(); ++i) {
+        int  I = inc2_.indx(i);
+        if (inc1_[I]) {
+          for (int j = 0; j < ans.ncol(); ++j) {
+            int J = inc2_.indx(j);
+            if (inc1_[J]) {
+              ans(i, j) = P(inc1_.INDX(I), inc1_.INDX(J));
+            }
+          }
+        }
+      }
+      return ans;
+    }
+
+
+    //===========================================================================
+
+    double DynamicRegressionKalmanFilterNode::initialize(
+        const Selector &inc,
+        const Vector &initial_mean,
+        const SpdMatrix &unscaled_initial_precision,
+        const RegressionDataTimePoint &data,
+        double sigsq) {
+      Vector prior_mean = inc.select(initial_mean);
+      SpdMatrix unscaled_prior_precision =
+          inc.select(unscaled_initial_precision);
+
+      std::pair<SpdMatrix, Vector> suf = data.xtx_xty(inc);
+      const SpdMatrix &xtx(suf.first);
+      const Vector &xty(suf.second);
+
+      state_variance_->set_ivar(xtx + unscaled_prior_precision);
+      state_mean_ = unscaled_state_variance() * (
+          xty + unscaled_prior_precision * prior_mean);
+
+      return RegressionModel::marginal_log_likelihood(
+          sigsq, xtx, xty, data.yty(), data.sample_size(),
+          prior_mean, unscaled_prior_precision.chol(),
+          state_mean_, state_variance_->ivar_chol());
+    }
+
+    // Set the mean and variance of this distribution (at time t) to match
+    // p(beta[t, inc] | Y_t).
+    //
+    // Args:
+    //   previous:  describes p(beta[t-1, inc] | Y_t-1)
+    //   data: The data set at time t.
+    //   model:  The model describing the data.
+    //   time_index: t.
+    //
+    // Effects:
+    //   The mean and variance are set to match
     double DynamicRegressionKalmanFilterNode::update(
         const DynamicRegressionKalmanFilterNode &previous,
         const RegressionDataTimePoint &data,
         const DynamicRegressionModel &model,
         int time_index) {
-      //=======================================================================
-      //=======================================================================
-      //=======================================================================
-      // DO THIS!!!
-      //=======================================================================
-      //=======================================================================
-      //=======================================================================
+
+      ProductSelectorMatrix transition_matrix(
+          model.inclusion_indicators(time_index - 1),
+          model.inclusion_indicators(time_index));
+
+      // The marginal distribution of beta[t+1] = T * beta[t] + diagonal.x
+      Vector prior_mean = transition_matrix * previous.state_mean();
+      SpdMatrix prior_variance =
+          transition_matrix.sandwich(previous.unscaled_state_variance());
+      const Selector &inc(model.inclusion_indicators(time_index));
+      prior_variance.diag() += inc.select(model.unscaled_innovation_variances());
+
+      // Do a standard Bayes update here to get
+      SpdMatrix unscaled_prior_precision = prior_variance.inv();
+      std::pair<SpdMatrix, Vector> suf = data.xtx_xty(inc);
+      const SpdMatrix &xtx(suf.first);
+      const Vector &xty(suf.second);
+      SpdMatrix unscaled_posterior_precision = unscaled_prior_precision + xtx;
+
+      state_variance_->set_ivar(unscaled_posterior_precision);
+      state_mean_ = state_variance_->var() *
+          (xty + unscaled_prior_precision * prior_mean);
+
+      double ans = RegressionModel::marginal_log_likelihood(
+          model.residual_variance(), xtx, xty, data.yty(), data.sample_size(),
+          prior_mean, unscaled_prior_precision.chol(),
+          state_mean_, state_variance_->ivar_chol());
+
+      return ans;
     }
 
-    void DynamicRegressionKalmanFilterNode::simulate_coefficients(
-        DynamicRegressionModel &model, int time_index, RNG &rng) {
+
+    Vector DynamicRegressionKalmanFilterNode::simulate_coefficients(
+        const DynamicRegressionModel &model, int time_index, RNG &rng) {
+      double sigma = std::sqrt(model.residual_variance());
       if (time_index < 0 || time_index >= model.time_dimension()) {
         std::ostringstream err;
         err << "time_index of " << time_index << " out of bounds for model with"
             << " time_dimension = " << model.time_dimension() << ".";
         report_error(err.str());
       } else if (time_index + 1 == model.time_dimension()) {
-        Vector beta = rmvn_L_mt(rng, state_mean(), state_variance_->var_chol());
-        model.set_included_coefficients(time_index, beta);
+        return rmvn_L_mt(rng, state_mean(),
+                         sigma * state_variance_->var_chol());
       } else {
-        //=====================================================================
-        //=====================================================================
-        //=====================================================================
-        // DO THIS!!!
-        //=====================================================================
-        //=====================================================================
-        //=====================================================================
+        // If x ~ N(mu, Omega) and y~ N(Ax, Sigma) then
+        // x | y ~ N(mu1, V1), with
+        // V1^{-1} = omega^{-1} + A' Siginv A, and
+        // mu = V1 * (Omega^{-1} mu + A' Siginv y)
+
+        const Selector &inc_next(model.inclusion_indicators(time_index + 1));
+        const Selector &inc_now(model.inclusion_indicators(time_index));
+        Vector beta_next = model.included_coefficients(time_index + 1);
+
+        ProductSelectorMatrix A_transpose(inc_next, inc_now);
+
+        DiagonalMatrix siginv(
+            1.0 / inc_next.select(model.unscaled_innovation_variances()));
+
+        SpdMatrix unscaled_precision =
+            unscaled_state_precision() + A_transpose.sandwich(siginv);
+        Cholesky precision_chol(unscaled_precision);
+
+        Vector mean = precision_chol.solve(
+            unscaled_state_precision() * state_mean()
+            + A_transpose * (siginv * beta_next));
+
+        return rmvn_precision_upper_cholesky_mt(
+            rng, mean, sigma * precision_chol.getLT());
       }
+      return Vector(0);
     }
 
     //======================================================================
@@ -154,16 +285,20 @@ namespace BOOM {
         const DynamicRegressionModel &model) {
       ensure_storage(model.time_dimension());
       double ans = nodes_[0].initialize(
-          model.data(0), model.inclusion_indicators(0));
+          model.inclusion_indicators(0),
+          model.initial_state_mean(),
+          model.unscaled_initial_state_precision(),
+          *model.data(0),
+          model.residual_variance());
       for (int t = 1; t < model.time_dimension(); ++t) {
-        ans += nodes_[t].update(nodes_[t-1], model.data(t), model, t);
+        ans += nodes_[t].update(nodes_[t-1], *model.data(t), model, t);
       }
       return ans;
     }
 
     void DynamicRegressionKalmanFilter::simulate_coefficients(
         DynamicRegressionModel &model, RNG &rng) {
-      for (int t = model.time_dimension() - 1; t >= 0 --t) {
+      for (int t = model.time_dimension() - 1; t >= 0; --t) {
         Vector beta = nodes_[t].simulate_coefficients(model, t, rng);
         model.set_included_coefficients(t, beta);
       }
@@ -174,6 +309,13 @@ namespace BOOM {
       double ans = filter(model);
       simulate_coefficients(model, rng);
       return ans;
+    }
+
+    void DynamicRegressionKalmanFilter::ensure_storage(
+        int number_of_time_points) {
+      if (nodes_.size() < number_of_time_points) {
+        nodes_.resize(number_of_time_points);
+      }
     }
 
   }  // namespace StateSpace
@@ -211,6 +353,7 @@ namespace BOOM {
       data_.push_back(new StateSpace::RegressionDataTimePoint(xdim_));
     }
     data_.back()->add_data(dp);
+    ensure_time_dimension();
   }
 
   void TSRDP::add_data(
@@ -220,11 +363,13 @@ namespace BOOM {
       data_.push_back(new StateSpace::RegressionDataTimePoint(xdim_));
     }
     data_[time]->add_data(dp);
+    ensure_time_dimension();
   }
 
   void TSRDP::add_data(
       const Ptr<StateSpace::RegressionDataTimePoint> &dp) {
     data_.push_back(dp);
+    ensure_time_dimension();
   }
 
   void TSRDP::clear_data() {
@@ -242,7 +387,27 @@ namespace BOOM {
     using DRM = DynamicRegressionModel;
   }  // namespace
 
-  DRM::DynamicRegressionModel(int xdim) : TSRDP(xdim) {}
+  DRM::DynamicRegressionModel(int xdim) :
+      TSRDP(xdim),
+      residual_variance_(new UnivParams(1.0)),
+      initial_state_mean_(xdim),
+      unscaled_initial_state_variance_(new SpdParams(xdim)),
+      innovation_variances_current_(false),
+      innovation_variances_(xdim),
+      inclusion_transition_model_(new MarkovModel(2))
+  {
+    if (xdim <= 0) {
+      report_error("xdim must be positive in DynamicRegressionModel.");
+    }
+    for (int i = 0; i < xdim; ++i) {
+      NEW(ZeroMeanGaussianModel, innovation_model)(1.0);
+      innovation_model->Sigsq_prm()->add_observer(
+          [this]() {this->observe_innovation_variances();});
+      innovation_error_models_.push_back(innovation_model);
+      ManyParamPolicy::add_params(innovation_model->Sigsq_prm());
+    }
+    innovation_variances_current_ = false;
+  }
 
 
   DRM::DynamicRegressionModel(const DRM &rhs)
@@ -258,6 +423,51 @@ namespace BOOM {
       coefficients_.push_back(rhs.coefficients_[i]->clone());
       ManyParamPolicy::add_params(coefficients_.back());
     }
+
+    //////
+    //////
+    //////
+    //////  TODO(finish this when the class is complete.
+    //////
+    //////
+    //////
+  }
+
+  void DRM::set_initial_state_mean(const Vector &mean) {
+    if (mean.size() != xdim()) {
+      report_error("Wrong size mean passed to set_initial_state_mean.");
+    }
+    initial_state_mean_ = mean;
+  }
+
+  void DRM::set_unscaled_initial_state_variance(const SpdMatrix &variance) {
+    if (variance.nrow() != xdim()) {
+      report_error("Wrong size variance passed to set_initial_state_variance.");
+    }
+    unscaled_initial_state_variance_->set_var(variance);
+  }
+
+  const Vector &DRM::unscaled_innovation_variances() const {
+    refresh_innovation_variances();
+    return innovation_variances_;
+  }
+
+  void DRM::ensure_time_dimension() {
+    while (coefficients_.size() < time_dimension()) {
+      Vector beta(xdim(), 0.0);
+      // Variables begin as all excluded.
+      Selector inc(xdim(), false);
+      NEW(GlmCoefs, coefs)(beta, inc);
+      coefficients_.push_back(coefs);
+    }
+  }
+
+  void DRM::refresh_innovation_variances() const {
+    if (innovation_variances_current_) return;
+    for (int i = 0; i < innovation_error_models_.size(); ++i) {
+      innovation_variances_[i] = innovation_error_models_[i]->sigsq();
+    }
+    innovation_variances_current_ = true;
   }
 
 }  // namespace BOOM

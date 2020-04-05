@@ -41,7 +41,7 @@ namespace BOOM {
 
   void DRDGS::draw() {
     draw_inclusion_indicators();
-    draw_coefficients_given_inclusion();
+    model_->draw_coefficients_given_inclusion(rng());
     draw_residual_variance();
     draw_state_innovation_variance();
     draw_transition_probabilities();
@@ -60,7 +60,7 @@ namespace BOOM {
     if (log(u) > logp_new - logp_old) {
       inc.flip(predictor_index); // reject the draw
     }
-    // Default value is to keep the flip.
+    // Otherwise keep the draw, in which case no further action is needed.
   }
 
   // The unnormalized log posterior proportional to p(gamma[t] | *), where * is
@@ -70,7 +70,7 @@ namespace BOOM {
   // betas, conditional in inclusion, are independent across predictors.  The
   // only aspect of the prior that needs to be evaluated is element j.
   double DRDGS::log_model_prob(const Selector &inc, int t, int j) const {
-    Vector prior_variance = this->compute_prior_variance(inc, t);
+    Vector prior_variance = this->compute_unscaled_prior_variance(inc, t);
     std::pair<SpdMatrix, Vector> suf = model_->data(t)->xtx_xty(inc);
 
     const SpdMatrix &xtx(suf.first);
@@ -98,7 +98,8 @@ namespace BOOM {
     return ans;
   }
 
-  Vector DRDGS::compute_prior_variance(const Selector &inc, int t) const {
+  Vector DRDGS::compute_unscaled_prior_variance(
+      const Selector &inc, int t) const {
     // For the set of included variables, look left and right until you find the
     // first exclusion.
 
@@ -108,8 +109,8 @@ namespace BOOM {
     Vector ans(inc.nvars());
     for (int i = 0; i < inc.nvars(); ++i) {
       int I = inc.indx(i);
-      // left and right are the number of spaces to the left or right of t that
-      // must be moved to finde the first excluded value.
+      // 'left' and 'right' are the number of spaces to the left or right of t
+      // that must be moved to find the first excluded value.
       double left_steps = -1;
       for (int left = 1; left <= t; ++left) {
         if (!model_->inclusion_indicator(t - left, I)) {
@@ -132,7 +133,7 @@ namespace BOOM {
       }
       double interval_length = left_steps + right_steps;
       double condition_factor = 1.0 - left_steps / interval_length;
-      ans[i] = model_->innovation_variance(I) * condition_factor;
+      ans[i] = model_->unscaled_innovation_variance(I) * condition_factor;
     }
     return ans;
   }
@@ -159,13 +160,7 @@ namespace BOOM {
         // Do Direct Gibbs first and see where the trouble spots are.
         mcmc_one_flip(inc, t, j);
       }
-      model_->set_inclusion_indicators(inc, t);
-    }
-  }
-
-
-  void DRDGS::draw_coefficients_given_inclusion() {
-    for (int t = 0; t < model_->time_dimension(); ++t) {
+      model_->set_inclusion_indicators(t, inc);
     }
   }
 
