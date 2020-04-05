@@ -89,6 +89,7 @@ namespace BOOM {
       uint I = indx(i);
       if (!new_inc[I]) Beta(I) = 0;
     }
+    included_coefficients_current_ = false;
     inc_ = new_inc;
   }
 
