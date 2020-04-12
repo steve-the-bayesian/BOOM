@@ -76,6 +76,10 @@ namespace BOOM {
       // The sum of squares of the y variable.
       double yty() const;
 
+      // The sum of squared errors relative to a given set of regression
+      // coefficients.
+      double SSE(const GlmCoefs &coefs) const;
+
      private:
       // xdim_ is set to -1 by the default constructor, and updated when the
       // first data point is added.  Adding data that conflicts with xdim raises
@@ -384,12 +388,16 @@ namespace BOOM {
     // The log of the transition probability for an inclusion indicator.  One of
     // the big simplifying assumptions for this model is that this is the same
     // for all indicators and across all times.
-    double log_transition_probability(bool from, bool to) const {
-      return inclusion_transition_model_->log_transition_probability(from, to);
+    double log_transition_probability(
+        bool from, bool to, int predictor_index) const {
+      return inclusion_transition_models_[predictor_index]->
+          log_transition_probability(from, to);
     }
 
     // The "sigma squared" parameter describing the variance of the residuals.
     double residual_variance() const {return residual_variance_->value();}
+    double residual_sd() const {return sqrt(residual_variance());}
+    void set_residual_variance(double sigsq) {residual_variance_->set(sigsq);}
 
     // The "unscaled" variance describing a one-time-period change in the
     // specified coefficient.  The actual variance is the unscaled variance
@@ -423,6 +431,12 @@ namespace BOOM {
       coefficients_[time_index]->set_inc(inc);
     }
 
+    // The regression coefficient of the requested variable at the requested
+    // time.  This will be zero if the coefficient is excluded.
+    double coefficient(int time_index, int predictor_index) const {
+      return coefficients_[time_index]->Beta(predictor_index);
+    }
+
     Vector included_coefficients(int time_index) const {
       return coefficients_[time_index]->included_coefficients();
     }
@@ -431,8 +445,20 @@ namespace BOOM {
       coefficients_[time_index]->set_included_coefficients(beta);
     }
 
+    const GlmCoefs & coef(int time_index) const {
+      return *coefficients_[time_index];
+    }
+
     double draw_coefficients_given_inclusion(RNG &rng) {
       return filter_.impute_state(*this, rng);
+    }
+
+    Ptr<MarkovModel> transition_model(int predictor_index) {
+      return inclusion_transition_models_[predictor_index];
+    }
+
+    Ptr<ZeroMeanGaussianModel> innovation_error_model(int predictor_index) {
+      return innovation_error_models_[predictor_index];
     }
 
    protected:
@@ -458,6 +484,11 @@ namespace BOOM {
     // variance is factored out.
     std::vector<Ptr<ZeroMeanGaussianModel>> innovation_error_models_;
 
+    // The next few items are a bit of structure that allows the variances from
+    // innovation_error_models_ to be returned as a Vector.  That is an
+    // operation which occurs in an inner loop, so it needs to be fast.  We set
+    // up an observer pattern where the vector of variances can watch the model
+    // parameters.
     mutable bool innovation_variances_current_;
     mutable Vector innovation_variances_;
     void observe_innovation_variances() {
@@ -467,9 +498,9 @@ namespace BOOM {
 
     // A 2-state Markov model describes the frequency of jumps in and out of the
     // model.  This is the temporal equivalent of the "prior inclusion
-    // probabilities" in a static model.  In a later edition of this model we
-    // might want to have more of these.
-    Ptr<MarkovModel> inclusion_transition_model_;
+    // probabilities" in a static model.  There is one Markov model per
+    // coefficient.
+    std::vector<Ptr<MarkovModel>> inclusion_transition_models_;
 
     StateSpace::DynamicRegressionKalmanFilter filter_;
   };

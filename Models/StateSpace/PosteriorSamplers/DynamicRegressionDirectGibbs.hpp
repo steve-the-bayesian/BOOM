@@ -21,6 +21,8 @@
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/StateSpace/DynamicRegression.hpp"
 #include "Models/PosteriorSamplers/MarkovConjSampler.hpp"
+#include "Models/ChisqModel.hpp"
+#include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 
 namespace BOOM {
 
@@ -33,7 +35,13 @@ namespace BOOM {
    public:
     DynamicRegressionDirectGibbsSampler(
         DynamicRegressionModel *model,
-        const Matrix &prior_transition_counts,
+        double residual_variance_prior_sample_size,
+        double residual_sd_prior_guess,
+        const Vector &innovation_variance_prior_sample_size,
+        const Vector &innovation_sd_prior_guess,
+        const Vector &prior_inclusion_probabiliites,
+        const Vector &expected_time_between_transitions,
+        const Vector &transition_probability_prior_sample_size,
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
@@ -88,9 +96,31 @@ namespace BOOM {
     Vector compute_unscaled_prior_variance(
         const Selector &inc, int time_index) const;
 
+
+    // The transition probability matrix of a 2-state Markov chain can be
+    // deduced from the stationary distribution and the expected duration of a
+    // visit to state 1.  The transition probability matrix times a prior sample
+    // size gives the "prior counts" parameter of a Markov conjugate prior.
+    //
+    // Args:
+    //   prior_success_prob:  The stationary probability of being in state 1.
+    //   expected_time: The expected length of a visit to state 1.  This must be
+    //     >= 1.
+    //   sample_size: The number of observations worth of weight to assign the
+    //     prior guess.
+    //
+    // Returns:
+    //   A matrix of prior counts.
+    static Matrix infer_Markov_prior(double prior_success_prob,
+                                     double expected_time,
+                                     double sample_size);
+
    private:
     DynamicRegressionModel *model_;
-    Ptr<MarkovConjSampler> transition_probability_sampler_;
+
+    Ptr<ChisqModel> residual_precision_prior_;
+    GenericGaussianVarianceSampler residual_variance_sampler_;
+
   };
 
 

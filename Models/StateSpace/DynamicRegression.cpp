@@ -115,6 +115,22 @@ namespace BOOM {
       }
     }
 
+    double RDTP::SSE(const GlmCoefs &beta) const {
+      double ans = 0;
+      if (!suf_) {
+        for (int i = 0; i < sample_size(); ++i) {
+          double yhat = beta.predict(raw_data_[i]->x());
+          ans += square(raw_data_[i]->y() - yhat);
+        }
+      } else {
+        Vector b(beta.included_coefficients());
+        ans = suf_->xtx(beta.inc()).Mdist(b)
+            - 2 * b.dot(suf_->xty(beta.inc()))
+            + suf_->yty();
+      }
+      return ans;
+    }
+
     //===========================================================================
     namespace {
       using PSM = ProductSelectorMatrix;
@@ -393,8 +409,7 @@ namespace BOOM {
       initial_state_mean_(xdim),
       unscaled_initial_state_variance_(new SpdParams(xdim)),
       innovation_variances_current_(false),
-      innovation_variances_(xdim),
-      inclusion_transition_model_(new MarkovModel(2))
+      innovation_variances_(xdim)
   {
     if (xdim <= 0) {
       report_error("xdim must be positive in DynamicRegressionModel.");
@@ -405,10 +420,13 @@ namespace BOOM {
           [this]() {this->observe_innovation_variances();});
       innovation_error_models_.push_back(innovation_model);
       ManyParamPolicy::add_params(innovation_model->Sigsq_prm());
+
+      NEW(MarkovModel, transition)(2);
+      inclusion_transition_models_.push_back(transition);
+      ManyParamPolicy::add_params(transition->Q_prm());
     }
     innovation_variances_current_ = false;
   }
-
 
   DRM::DynamicRegressionModel(const DRM &rhs)
       : Model(rhs),

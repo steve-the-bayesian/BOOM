@@ -307,6 +307,127 @@ namespace {
   //===========================================================================
   class DynamicRegressionDirectGibbsTest : public ::testing::Test {
    protected:
+    DynamicRegressionDirectGibbsTest() {
+    }
+
+    Selector simulate_inc(const Selector &inc_prev,
+                          const std::vector<Matrix> &transition_probabilities) {
+      Selector inc = inc_prev;
+      for (int i = 0; i < inc.nvars_possible(); ++i) {
+        bool included = runif() < transition_probabilities[i](inc_prev[i], 1);
+        if (included) {
+          inc.add(i);
+        } else {
+          inc.drop(i);
+        }
+      }
+      return inc;
+    }
+
+    Vector simulate_beta(const Vector &beta_prev, const Selector &inc,
+                         const Vector &innovation_sd) {
+      Vector beta = beta_prev;
+      for (int i = 0; i < beta.size(); ++i) {
+        if (inc[i]) {
+          beta[i] += rnorm(0, innovation_sd[i]);
+        } else {
+          beta[i] = 0;
+        }
+      }
+      return beta;
+    }
+
   };
+
+  TEST_F(DynamicRegressionDirectGibbsTest, InferMarkovPriorTest) {
+    using Sampler = DynamicRegressionDirectGibbsSampler;
+    Matrix P = Sampler::infer_Markov_prior(.3, 8, 1.0);
+    EXPECT_NEAR(P.row(0).sum(), 1.0, 1e-6);
+    EXPECT_NEAR(P.row(1).sum(), 1.0, 1e-6);
+
+    P = Sampler::infer_Markov_prior(.85, 20, 1.0);
+    EXPECT_NEAR(P.row(0).sum(), 1.0, 1e-6);
+    EXPECT_NEAR(P.row(1).sum(), 1.0, 1e-6);
+
+    P = Sampler::infer_Markov_prior(.6, 12, 1.0);
+    EXPECT_NEAR(P.row(0).sum(), 1.0, 1e-6);
+    EXPECT_NEAR(P.row(1).sum(), 1.0, 1e-6);
+  }
+
+  TEST_F(DynamicRegressionDirectGibbsTest, McmcTest) {
+    int time_dimension = 20;
+    int sample_size_per_period = 100;
+    int xdim = 3;
+    double residual_sd = 1.2;
+
+    Vector innovation_sd = {.002, .001, .0004};
+    Vector b0 = {3.0, -1.7, 9.8};
+    Vector beta_prev = b0;
+    Selector g0("111");
+    Selector inc_prev = g0;
+
+    Vector stationary_probabilities = {.999, .999, .999};
+    Vector expected_durations = {800, 2000, 1200};
+    std::vector<Matrix> transition_probabilities;
+    for (int i = 0; i < 3; ++i) {
+      transition_probabilities.push_back(
+          DynamicRegressionDirectGibbsSampler::infer_Markov_prior(
+              stationary_probabilities[i],
+              expected_durations[i],
+              1.0));
+      std::cout << "transition_probabilities[" << i << "] = \n"
+                << transition_probabilities.back()
+                << "\n";
+    }
+
+    NEW(DynamicRegressionModel, model)(xdim);
+    Matrix beta_path(xdim, time_dimension);
+
+    for (int t = 0; t < time_dimension; ++t) {
+      beta_path.col(t) = beta_prev;
+      NEW(RegressionDataTimePoint, time_point)(
+          simulate_data(sample_size_per_period, beta_prev, residual_sd));
+      model->add_data(time_point);
+      Selector inc = simulate_inc(inc_prev, transition_probabilities);
+      Vector beta = simulate_beta(beta_prev, inc, innovation_sd);
+      beta_prev = beta;
+      inc_prev = inc;
+    }
+    std::cout << "True beta path: " << std::endl
+              << beta_path.transpose() << std::endl;
+
+    NEW(DynamicRegressionDirectGibbsSampler, sampler)(
+        model.get(),
+        1.0,
+        residual_sd,
+        Vector{1, 1, 1},
+        innovation_sd,
+        stationary_probabilities,
+        expected_durations,
+        Vector{1, 1, 1});
+    model->set_method(sampler);
+
+    int niter = 100;
+    Vector residual_sd_draws(niter);
+    Matrix innovation_sd_draws(niter, xdim);
+    Matrix final_beta_draws(niter, xdim);
+
+    model->set_residual_variance(square(residual_sd));
+    for (int j = 0; j < xdim; ++j) {
+      model->innovation_error_model(j)->set_sigsq(square(innovation_sd[j]));
+      model->transition_model(j)->set_Q(transition_probabilities[j]);
+    }
+
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      residual_sd_draws[i] = model->residual_sd();
+      innovation_sd_draws.row(i) = sqrt(model->unscaled_innovation_variances());
+      final_beta_draws.row(i) = model->coef(time_dimension - 1).Beta();
+    }
+    // EXPECT_NE(residual_sd_draws[0], residual_sd_draws.back());
+    // EXPECT_NE(innovation_sd_draws(0, 0), innovation_sd_draws(niter - 1, 0));
+
+    std::cout << final_beta_draws << beta_path.last_col() << std::endl;
+  }
 
 }  // namespace
