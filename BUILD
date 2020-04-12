@@ -214,6 +214,7 @@ cc_library(
         "-L/usr/local/lib",
         "-L/usr/lib",
         #        "-lprofiler",
+        "-lpthread",
         "-lm",
     ],
     visibility = ["//visibility:public"],
