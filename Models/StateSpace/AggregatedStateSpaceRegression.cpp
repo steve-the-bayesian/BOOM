@@ -461,7 +461,7 @@ namespace BOOM {
     if (!std::isfinite(y)) {
       report_error("Observation is not finite.");
     }
-    
+
     Ptr<RegressionData> dp(regression_->dat()[t]);
     // The state_mean is computed using the observation_matrix from
     // the client model, available from ScalarStateSpaceModelBase.

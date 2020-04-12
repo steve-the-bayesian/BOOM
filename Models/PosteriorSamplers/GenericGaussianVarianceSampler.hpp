@@ -46,7 +46,6 @@ namespace BOOM {
     // set value.  It can also be 0, if you want to constrain all draws of sigsq
     // to be zero.  If sigma_max is negative an error is reported.
     void set_sigma_max(double sigma_max);
-
     double sigma_max() const { return sigma_max_; }
 
     // Draws a value for the residual variance (not standard
@@ -84,7 +83,7 @@ namespace BOOM {
     Ptr<GammaModelBase> prior_;
     double sigma_max_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_GENERIC_GAUSSIAN_VARIANCE_SAMPLER_HPP_

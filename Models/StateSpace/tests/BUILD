@@ -3,6 +3,12 @@ COPTS = [
     "-Wno-sign-compare",
 ]
 
+SANITIZERS = [
+        "-fsanitize=address",
+        "-fsanitize=undefined",
+        "-fsanitize=vptr",
+    ]
+
 filegroup(
     name = "testdata",
     data = ["airpassengers.txt"],
@@ -15,6 +21,7 @@ cc_library(
         "DynamicInterceptTestFramework.cpp",
         "StateSpaceTestFramework.cpp",
     ],
+    copts = COPTS,
     hdrs = [
         "DynamicInterceptTestFramework.hpp",
         "StateSpaceTestFramework.hpp",
@@ -49,7 +56,8 @@ cc_test(
 cc_test(
     name = "dynamic_intercept_regression_test",
     srcs = ["dynamic_intercept_regression_test.cc"],
-    copts = COPTS,
+    copts = COPTS + SANITIZERS,
+    linkopts = SANITIZERS,
     data = [":testdata"],
     deps = [
         ":test_utils",
@@ -57,6 +65,16 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+)
+
+cc_test(
+    name = "mixed_frequency_test",
+    srcs = ["mixed_frequency_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:gtest_main"
+    ]
 )
 
 # genrule(

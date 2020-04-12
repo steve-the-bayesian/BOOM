@@ -221,9 +221,17 @@ namespace BOOM {
     typedef MarkovData DataPointType;
     typedef TimeSeries<MarkovData> DataSeriesType;
 
-    explicit MarkovModel(uint S);
+    // Initialize model parameters to the uniform distribution.
+    explicit MarkovModel(uint state_size);
+
+    // Initialize the transition probability matrix to Q.  Fix the initial state
+    // distribution to uniform.
     explicit MarkovModel(const Matrix &Q);
+
+    // Set the transition probability matrix to Q, and the initial state
+    // distribution to pi0.
     MarkovModel(const Matrix &Q, const Vector &pi0);
+
     explicit MarkovModel(const std::vector<uint> &);
     explicit MarkovModel(const std::vector<std::string> &);
 

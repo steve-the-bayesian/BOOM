@@ -276,6 +276,11 @@ namespace BOOM {
         PriorPolicy(),
         LoglikeModel() {
     fix_pi0(Vector(state_size, 1.0 / state_size));
+    Matrix transition_probabilities = Q();
+    for (uint s = 0; s < state_size; ++s) {
+      transition_probabilities.row(s) = pi0();
+    }
+    set_Q(transition_probabilities);
   }
 
   MarkovModel::MarkovModel(const Matrix &Q)

@@ -50,7 +50,7 @@ namespace BOOM {
 
     TimeSeries();
     explicit TimeSeries(const D &);
-    explicit TimeSeries(const std::vector<Ptr<D> > &v);
+    explicit TimeSeries(const std::vector<Ptr<D>> &v);
 
     TimeSeries(const TimeSeries &);                   // value semantics
     TimeSeries<D> *clone() const override;            // value semantics
