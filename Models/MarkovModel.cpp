@@ -44,7 +44,7 @@ namespace BOOM {
         prev_(nullptr),
         next_(nullptr) {}
 
-  MarkovData::MarkovData(uint val, Ptr<MarkovData> &last)
+  MarkovData::MarkovData(uint val, Ptr<MarkovData> last)
       : CategoricalData(val, last->key()) {
     set_prev(last.get());
   }

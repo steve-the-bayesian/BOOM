@@ -54,8 +54,9 @@ namespace BOOM {
     explicit MarkovData(uint val, const Ptr<CatKeyBase> &key);
     explicit MarkovData(const std::string &value, const Ptr<CatKey> &key);
 
-    // Create MarkovData
-    explicit MarkovData(uint val, Ptr<MarkovData> &last);
+    // Create MarkovData.  The use of an object for the second argument (instead
+    // of a const ref) is intentional.
+    explicit MarkovData(uint val, Ptr<MarkovData> last);
 
     // Copies of MarkovData will need to reset links to neighbors.
     MarkovData(const MarkovData &);
