@@ -22,10 +22,11 @@ namespace BayesBoom {
   void GlmModel_def(py::module &);
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
+  void DynamicRegressionModel_def(py::module &);
 
   PYBIND11_MODULE(BayesBoom, boom) {
-    boom.doc() = "A library for Bayesian modeling, and assorted "
-        "other useful bits.";
+    boom.doc() = "BOOM stands for 'Bayesian Object Oriented Models'.  "
+        "It is also the sound your computer makes when it crashes.";
 
     // Calling these functions here defines the classes in the module.
     distribution_def(boom);
@@ -41,6 +42,8 @@ namespace BayesBoom {
     GlmModel_def(boom);
     StateSpaceModel_def(boom);
     StateModel_def(boom);
+
+    DynamicRegressionModel_def(boom);
 
   }  // Module BOOM
 
