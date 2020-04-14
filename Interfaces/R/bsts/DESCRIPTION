@@ -1,6 +1,6 @@
 Package: bsts
-Version: 0.9.3
-Date: 2020-03-26
+Version: 0.9.4
+Date: 2020-04-14
 Title: Bayesian Structural Time Series
 Author: Steven L. Scott <steve.the.bayesian@gmail.com>
 Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
@@ -9,6 +9,6 @@ Description: Time series regression using dynamic linear models fit using
   other sources.
 Depends: BoomSpikeSlab (>= 1.2.2), zoo (>= 1.8), xts, Boom (>= 0.9.4), R(>= 3.4.0)
 Suggests: testthat
-LinkingTo: Boom (>= 0.9.4)
+LinkingTo: Boom (>= 0.9.5)
 License: LGPL-2.1 | file LICENSE
 Encoding: UTF-8
