@@ -16,6 +16,20 @@ namespace {
   using std::endl;
   using std::cout;
 
+  // Fetal lamb data from several HMM papers.  E.g. Scott (2002), JASA.
+  std::vector<int> lamb_data = {
+    0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0,
+    0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 0, 0, 0, 0, 0, 7, 3, 2, 3, 2, 4, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+    0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0,
+    1, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 2, 0, 1, 2, 1,
+    1, 2, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 4, 0, 0, 2, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  };
+
   Vector to_rows(const Matrix &mat) {
     int dim = mat.nrow() * mat.ncol();
     int start = 0;
@@ -27,7 +41,7 @@ namespace {
     }
     return ans;
   }
-  
+
   class HmmTest : public ::testing::Test {
    protected:
     HmmTest() {
@@ -73,16 +87,8 @@ namespace {
         mark);
     NEW(HmmPosteriorSampler, sampler)(model.get());
     model->set_method(sampler);
-    
-    std::ifstream lamb("./Models/HMM/tests/fetal.lamb.data");
-    EXPECT_TRUE(lamb) << "Could not open fetal.lamb.data file.";
-    std::vector<int> lamb_data;
-    int measurement;
-    while(lamb >> measurement) {
-      lamb_data.push_back(measurement);
-    }
-    EXPECT_EQ(240, lamb_data.size());
 
+    EXPECT_EQ(lamb_data.size(), 240);
     for (int i = 0; i < lamb_data.size(); ++i) {
       NEW(IntData, dp)(lamb_data[i]);
       model->add_data(dp);
@@ -100,7 +106,7 @@ namespace {
     }
 
     // The prior distributions that we used identify the model so there is no
-    // issue with label switching.  The values 
+    // issue with label switching.  The values
     auto status = CheckMcmcMatrix(lambda_draws, Vector{.02, .46, 3.13});
     EXPECT_TRUE(status.ok) << "Lambda draws failed to cover" << status;
 
@@ -111,5 +117,5 @@ namespace {
     EXPECT_TRUE(status.ok) << "Transition_Probablity_Draws failed to cover"
                            << status;
   }
-  
+
 }  // namespace

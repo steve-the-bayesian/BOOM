@@ -116,6 +116,8 @@ namespace BOOM {
   }
 
   namespace {
+    const double log2pi = 1.83787706640935;
+
     Vector ColSums(const Matrix &m) {
       Vector one(nrow(m), 1.0);
       return one * m;
@@ -618,7 +620,6 @@ namespace BOOM {
     b.pop_back();
     if (b.empty()) return empty_loglike(g, h, nd);
     double n = suf()->n();
-    const double log2pi = 1.83787706640935;
     double SSE = yty() - 2 * b.dot(xty()) + xtx().Mdist(b);
     // It is tempting to compute ans using log_likelihood(), but some
     // of the pieces are also needed for derivatives, and we don't
@@ -652,6 +653,37 @@ namespace BOOM {
     double SSE = suf.yty() - 2 * beta.dot(suf.xty()) + suf.xtx().Mdist(beta);
     const double log2pi = 1.83787706640935;
     return -.5 * (n * log2pi + n * log(sigsq) + SSE / sigsq);
+  }
+
+  double RM::marginal_log_likelihood(
+      double sigsq,
+      const SpdMatrix &xtx,
+      const Vector &xty,
+      double yty,
+      double n,
+      const Vector &prior_mean,
+      const Matrix &unscaled_prior_precision_lower_cholesky,
+      const Vector &posterior_mean,
+      const Matrix &unscaled_posterior_precision_cholesky) {
+
+    // SSE is the sum of square errors when evaluated at the
+    // posterior mean of beta.
+    double SSE = xtx.Mdist(posterior_mean) - 2 * posterior_mean.dot(xty) + yty;
+
+    // SSP is the Mahalanobis distance from the prior to the posterior mean,
+    // relative to the unscaled prior precision.
+    Vector prior_posterior_distance = Lmult(
+        unscaled_prior_precision_lower_cholesky,
+        (prior_mean - posterior_mean));
+    double SSP = prior_posterior_distance.dot(prior_posterior_distance);
+
+    // The log determinant of ominv is twice the sum of the logs of the diagonal
+    // of the cholesky factor, which cancels out the 0.5 factor.
+    double ans = -.5 * n * (log2pi + log(sigsq));
+    ans += sum(log(abs(unscaled_prior_precision_lower_cholesky.diag())));
+    ans -= sum(log(abs(unscaled_posterior_precision_cholesky.diag())));
+    ans -= 0.5 * (SSE + SSP) / sigsq;
+    return ans;
   }
 
   // Log likelihood when beta is empty, so that xbeta = 0.  In this

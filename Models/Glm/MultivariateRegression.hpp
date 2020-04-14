@@ -53,10 +53,10 @@ namespace BOOM {
 
     uint xdim() const {return xtx().nrow();}
     uint ydim() const {return yty().nrow();}
-    
+
     // Add data to the sufficient statistics managed by this object.
     void Update(const MvRegData &data) override;
-    
+
     // Add the individual data components to the sufficient statistics
     // managed by this object.
     // Args:
@@ -70,7 +70,7 @@ namespace BOOM {
     // sufficient statistics.
     Matrix beta_hat() const;
     Matrix conditional_beta_hat(const SelectorMatrix &included) const;
-                                
+
     // Returns the sum of squared errors assuming beta = B.
     SpdMatrix SSE(const Matrix &B) const;
 
@@ -173,7 +173,7 @@ namespace BOOM {
     const SelectorMatrix &included_coefficients() const {
       return Beta_prm_ref().included_coefficients();
     }
-    
+
     // Residual variance matrix.
     const SpdMatrix &Sigma() const;
     void set_Sigma(const SpdMatrix &V);
@@ -183,8 +183,8 @@ namespace BOOM {
     void set_Siginv(const SpdMatrix &iV);
 
     // The Cholesky decomposition of Siginv.
-    const Matrix &residual_precision_cholesky() const;
-    
+    Matrix residual_precision_cholesky() const;
+
     // log determinant of Siginv().
     double ldsi() const;
 
@@ -192,7 +192,7 @@ namespace BOOM {
     Ptr<MatrixGlmCoefs> Beta_prm();
     const Ptr<MatrixGlmCoefs> Beta_prm() const;
     const MatrixGlmCoefs &Beta_prm_ref() const {return prm1_ref();}
-    
+
     Ptr<SpdParams> Sigma_prm();
     const Ptr<SpdParams> Sigma_prm() const;
 
@@ -205,7 +205,7 @@ namespace BOOM {
     double log_likelihood(const Matrix &Beta, const SpdMatrix &Sigma) const;
     double log_likelihood_ivar(const Matrix &Beta, const SpdMatrix &Siginv) const;
     double log_likelihood() const override;
-    
+
     virtual double pdf(const Ptr<Data> &, bool) const;
 
     // Returns x * Beta();

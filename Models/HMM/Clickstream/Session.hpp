@@ -46,6 +46,8 @@ namespace BOOM {
       // 2) the last element is NOT equal to EOS
       // then an error is reported using report_error().
       void check_eos();
+
+      void set_links();
     };
 
   }  // namespace Clickstream

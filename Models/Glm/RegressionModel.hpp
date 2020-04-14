@@ -81,7 +81,7 @@ namespace BOOM {
     // coefficients, taking advantage of sparsity.
     double relative_sse(const GlmCoefs &beta) const;
     double relative_sse(const Vector &beta) const;
-    
+
     AnovaTable anova() const;
 
     virtual void add_mixture_data(double y, const Vector &x, double prob) = 0;
@@ -202,7 +202,7 @@ namespace BOOM {
     void allow_non_finite_responses(bool allow) {
       allow_non_finite_responses_ = allow;
     }
-    
+
    private:
     mutable SpdMatrix xtx_;
     mutable bool needs_to_reflect_;
@@ -353,6 +353,45 @@ namespace BOOM {
     // dimension as the predictor matrix used to construct suf.
     static double log_likelihood(const Vector &beta, double sigsq,
                                  const RegSuf &suf);
+
+    // The marginal log likelihood of a regression model, given sigsq.  In a
+    // context involving variable selection, this function assumes that all
+    // inputs have already been selected down.
+    //
+    // Args:
+    //   sigsq:  The residual variance parameter.
+    //   xtx:  The predictor cross product matrix X'X.
+    //   xty:  The inner product of the predictor and response: X'y.
+    //   yty:  The sum of the squares of the response: y'y.
+    //   n:  The sample size.
+    //   prior_mean:  The prior mean of the regression coefficients.
+    //   unscaled_prior_precision_lower_cholesky: The lower Cholesky triangle of
+    //     the unscaled prior precision of the regression coefficients.  The
+    //     actual precision matrix is unscaled_prior_precision / sigsq.
+    //   posterior_mean:  The posterior mean of the regression coefficients.
+    //   unscaled_posterior_precision_cholesky: The Cholesky triangle (either
+    //     upper or lower) of the unscaled posterior precision.  Dividing the
+    //     unscaled precision by sigsq gives the actual precision.
+    //
+    // Returns:
+    //   The marginal log likelihood log p(data | sigsq), integrating out the
+    //   regression coefficients.
+    //
+    // Notes:
+    //   This function is designed to be called in the middle of a
+    //   prior-to-posterior computation, when Cholesky triangles of all the
+    //   relevant matrices have already been computed.  The design sacrifices a
+    //   bit of convenience to avoid duplicating work.
+    static double marginal_log_likelihood(
+        double sigsq,
+        const SpdMatrix &xtx,
+        const Vector &xty,
+        double yty,
+        double n,
+        const Vector &prior_mean,
+        const Matrix &unscaled_prior_precision_lower_cholesky,
+        const Vector &posterior_mean,
+        const Matrix &unscaled_posterior_precision_cholesky);
 
     virtual double pdf(const Ptr<Data> &, bool) const;
     double pdf(const Data *, bool) const override;

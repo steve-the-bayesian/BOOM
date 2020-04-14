@@ -78,12 +78,12 @@ namespace BOOM {
       if (it == chol_map.end()) {
         chol_map[it->first] = Cholesky(inc.select(xtx()));
         it = chol_map.find(inc);
-      } 
+      }
       ans.col(i) = inc.expand(it->second.solve(inc.select(xty_.col(i))));
     }
     return ans;
   }
-  
+
   SpdMatrix MvRegSuf::SSE(const Matrix &B) const {
     SpdMatrix ans = yty();
     ans.add_inner2(B, xty(), -1);
@@ -169,7 +169,7 @@ namespace BOOM {
   namespace {
     using MvReg = MultivariateRegressionModel;
   }
-  
+
   MvReg::MultivariateRegressionModel(uint xdim, uint ydim)
       : ParamPolicy(new MatrixGlmCoefs(xdim, ydim), new SpdParams(ydim)),
         DataPolicy(new MvRegSuf(xdim, ydim)),
@@ -201,7 +201,7 @@ namespace BOOM {
   const Matrix &MvReg::Beta() const { return Beta_prm()->value(); }
   const SpdMatrix &MvReg::Sigma() const { return Sigma_prm()->var(); }
   const SpdMatrix &MvReg::Siginv() const { return Sigma_prm()->ivar(); }
-  const Matrix &MvReg::residual_precision_cholesky() const {
+  Matrix MvReg::residual_precision_cholesky() const {
     return Sigma_prm()->ivar_chol();
   }
   double MvReg::ldsi() const { return Sigma_prm()->ldsi(); }
@@ -259,7 +259,7 @@ namespace BOOM {
     double normalizing_constant = -.5 * (n * ydim()) * Constants::log_2pi;
     return normalizing_constant + .5 * n * Siginv.logdet() - .5 * qform;
   }
-        
+
   double MvReg::loglike(const Vector &beta_siginv) const {
     Matrix Beta(xdim(), ydim());
     Vector::const_iterator it = beta_siginv.cbegin();
@@ -273,7 +273,7 @@ namespace BOOM {
   double MvReg::log_likelihood() const {
     return log_likelihood_ivar(Beta(), Siginv());
   }
-  
+
   double MvReg::pdf(const Ptr<Data> &dptr, bool logscale) const {
     Ptr<MvRegData> dp = DAT(dptr);
     Vector mu = predict(dp->x());

@@ -52,7 +52,7 @@ namespace BOOM {
                       const SpdMatrix &column_variance);
 
     MatrixNormalModel * clone() const override {return new MatrixNormalModel(*this);}
-    
+
     // MvnBase interface.
     uint dim() const override {return nrow() * ncol();}
     const Vector &mu() const override;
@@ -100,21 +100,21 @@ namespace BOOM {
     // Cholesky decompositions and log determinants of the row and column
     // variance parameters.
     double row_precision_logdet() const {return prm2_ref().ldsi();}
-    const Matrix &row_precision_cholesky() const {
+    Matrix row_precision_cholesky() const {
       return prm2_ref().ivar_chol(); }
     double column_precision_logdet() const {return prm3_ref().ldsi();}
-    const Matrix &col_precision_cholesky() const {
+    Matrix col_precision_cholesky() const {
       return prm3_ref().ivar_chol(); }
-    
+
     // Mean, variance, and precision of the distribution when transformed to a
     // multivariate normal by stacking the columns of the random variable.
     Vector mvn_mean() const;
     SpdMatrix mvn_variance() const;
     SpdMatrix mvn_precision() const;
-    
+
     double logp(const Matrix &y) const;
     Matrix simulate(RNG &rng = GlobalRng::rng) const;
-    
+
    private:
     // Scratch space to use when implementing the MvnBase interface.
     mutable Vector mean_workspace_;
@@ -123,6 +123,3 @@ namespace BOOM {
 }
 
 #endif  // BOOM_MATRIX_NORMAL_MODEL_HPP_
-
-
-

@@ -33,90 +33,104 @@
 
 namespace BOOM {
 
-  typedef MarkovData MD;
-  typedef CategoricalData CD;
 
-  MD::MarkovData(uint val, uint Nlev) : CD(val, Nlev) { clear_links(); }
+  MarkovData::MarkovData(uint val, uint Nlev)
+      : CategoricalData(val, Nlev),
+        prev_(nullptr),
+        next_(nullptr) {}
 
-  MD::MarkovData(uint val, const Ptr<CatKeyBase> &key) : CD(val, key) {
-    clear_links();
+  MarkovData::MarkovData(uint val, const Ptr<CatKeyBase> &key)
+      : CategoricalData(val, key),
+        prev_(nullptr),
+        next_(nullptr) {}
+
+  MarkovData::MarkovData(uint val, Ptr<MarkovData> last)
+      : CategoricalData(val, last->key()) {
+    set_prev(last.get());
   }
 
-  MD::MarkovData(uint val, const Ptr<MarkovData> &last) : CD(val, last->key()) {
-    set_prev(last);
-    last->set_next(this);
-  }
+  MarkovData::MarkovData(const std::string &value, const Ptr<CatKey> &key)
+      : CategoricalData(value, key) {}
 
-  MD::MarkovData(const std::string &value, const Ptr<CatKey> &key)
-      : CD(value, key) {}
-
-  MD::MarkovData(const MarkovData &rhs, bool copy_links) : Data(rhs), CD(rhs) {
-    if (copy_links) {
-      links = rhs.links;
-    } else {
+  MarkovData::MarkovData(const MarkovData &rhs) :
+      Data(rhs), CategoricalData(rhs) {
       clear_links();
+  }
+
+  MarkovData *MarkovData::clone() const {
+    return new MarkovData(*this);
+  }
+
+  void MarkovData::set_prev(MarkovData *prev, bool reciprocate) {
+    prev_ = prev;
+    if (prev && reciprocate) {
+      prev->set_next(this, false);
     }
   }
 
-  MD *MD::create() const {
-    return new MD(*this, false);
-  }  // does not copy links
+  void MarkovData::set_next(MarkovData *next, bool reciprocate) {
+    next_ = next;
+    if (next && reciprocate) {
+      next->set_prev(this, false);
+    }
+  }
 
-  MD *MD::clone() const { return new MD(*this, true); }  // copies links
+  void MarkovData::unset_prev() {
+    if (!!prev_) {
+      prev_->unset_next();
+    }
+    prev_ = nullptr;
+  }
 
-  void MD::unset_prev() { links.unset_prev(); }
-  void MD::unset_next() { links.unset_next(); }
-  void MD::clear_links() { links.clear_links(); }
+  void MarkovData::unset_next() {
+    if (!!next_) {
+      next_->unset_prev();
+    }
+    next_ = nullptr;
+  }
 
-  MD *MD::prev() const { return links.prev(); }
-  MD *MD::next() const { return links.next(); }
+  void MarkovData::clear_links() {
+    unset_prev();
+    unset_next();
+  }
 
-  void MD::set_prev(const Ptr<MD> &p) { links.set_prev(p); }
-  void MD::set_next(const Ptr<MD> &p) { links.set_next(p); }
-
-  std::ostream &MD::display(std::ostream &out) const {
+  std::ostream &MarkovData::display(std::ostream &out) const {
     return CategoricalData::display(out);
   }
 
   //------------------------------------------------------------
-  typedef MarkovDataSeries MDS;
-  typedef TimeSeries<MarkovData> TS;
-
-  template <class STRING_OR_UINT>
-  Ptr<MarkovDataSeries> make_markov_data_series(
-      const std::vector<uint> &raw_data, const Ptr<CatKeyBase> &key) {
-    NEW(MarkovData, last)(raw_data[0], key);
-    uint n = raw_data.size();
-    std::vector<Ptr<MarkovData>> dvec;
-    dvec.reserve(n);
-    dvec.push_back(last);
-    for (uint i = 1; i < n; ++i) {
-      NEW(MarkovData, dp)(raw_data[i], last);
-      dvec.push_back(dp);
-      last = dp;
-    }
-    return new TimeSeries<MarkovData>(dvec, false);
-  }
-
-  Ptr<MarkovDataSeries> make_markov_data(const std::vector<uint> &raw_data) {
+  Ptr<TimeSeries<MarkovData>> make_markov_data(
+      const std::vector<uint> &raw_data) {
     int max = *max_element(raw_data.begin(), raw_data.end());
-    Ptr<CatKeyBase> key = new FixedSizeIntCatKey(max + 1);
-    std::vector<Ptr<MarkovData>> data;
+    NEW(TimeSeries<MarkovData>, series)();
+    series->reserve(raw_data.size());
     for (int i = 0; i < raw_data.size(); ++i) {
-      NEW(MarkovData, dp)(raw_data[i], key);
+      if (i > 0) {
+        Ptr<MarkovData> prev = series->back();
+        NEW(MarkovData, dp)(raw_data[i], prev);
+        series->push_back(dp);
+      } else {
+        // nlevels = max + 1
+        NEW(MarkovData, dp)(raw_data[i], max + 1);
+        series->push_back(dp);
+      }
     }
-    return new TimeSeries<MarkovData>(data, true);
+    return series;
   }
 
-  Ptr<MarkovDataSeries> make_markov_data(
+  Ptr<TimeSeries<MarkovData>> make_markov_data(
       const std::vector<std::string> &raw_data) {
     if (raw_data.empty()) return nullptr;
     Ptr<CatKey> key = make_catkey(raw_data);
-    std::vector<Ptr<MarkovData>> data;
+    NEW(TimeSeries<MarkovData>, series)();
     for (int i = 0; i < raw_data.size(); ++i) {
-      NEW(MarkovData, dp)(raw_data[i], key);
+        NEW(MarkovData, dp)(raw_data[i], key);
+        if (i > 0) {
+          dp->set_prev(series->back().get());
+        }
+        series->push_back(dp);
     }
-    return new TimeSeries<MarkovData>(data, true);
+    return series;
   }
 
   //------------------------------------------------------------
@@ -135,8 +149,8 @@ namespace BOOM {
 
   MarkovSuf *MarkovSuf::clone() const { return new MarkovSuf(*this); }
 
-  void MarkovSuf::Update(const MD &dat) {
-    MD *prev = dat.prev();
+  void MarkovSuf::Update(const MarkovData &dat) {
+    const MarkovData *prev = dat.prev();
     if (!prev)
       init_(dat.value()) += 1;
     else {
@@ -156,7 +170,7 @@ namespace BOOM {
 
   void MarkovSuf::add_mixture_data(const Ptr<MarkovData> &dp, double prob) {
     uint now = dp->value();
-    MD *prev = dp->prev();
+    MarkovData *prev = dp->prev();
     if (!prev)
       init_(now) += prob;
     else {
@@ -255,67 +269,28 @@ namespace BOOM {
 
   //======================================================================
 
-  typedef TransitionProbabilityMatrix TPM;
-  typedef MatrixParams MP;
-
-  TPM::TransitionProbabilityMatrix(uint S) : MP(S, S, 1.0 / S) {}
-
-  TPM::TransitionProbabilityMatrix(const Matrix &M) : MP(M) {}
-
-  TPM::TransitionProbabilityMatrix(const TPM &rhs)
-      : Data(rhs), Params(rhs), MP(rhs) {}
-
-  TPM *TPM::clone() const { return new TPM(*this); }
-
-  Vector::const_iterator TPM::unvectorize(Vector::const_iterator &v,
-                                          bool minimal) {
-    Vector::const_iterator ans = MP::unvectorize(v, minimal);
-    notify();
-    return ans;
-  }
-
-  Vector::const_iterator TPM::unvectorize(const Vector &v, bool minimal) {
-    Vector::const_iterator ans = MP::unvectorize(v, minimal);
-    notify();
-    return ans;
-  }
-
-  void TPM::set(const Matrix &m, bool) {
-    MP::set(m);
-    notify();
-  }
-
-  void TPM::add_observer(const Ptr<VectorParams> &vp) const {
-    observers.insert(vp);
-  }
-
-  void TPM::delete_observer(const Ptr<VectorParams> &vp) const {
-    observers.erase(vp);
-  }
-
-  void TPM::notify() const {
-    for (const auto &el : observers) {
-      el->set(get_stat_dist(value()));
-    }
-  }
-
-  //------------------------------------------------------------
-  MarkovModel::MarkovModel(uint StateSize)
-      : ParamPolicy(new TPM(StateSize), new VectorParams(StateSize)),
-        DataPolicy(new MarkovSuf(StateSize)),
+  MarkovModel::MarkovModel(uint state_size)
+      : ParamPolicy(new MatrixParams(state_size, state_size),
+                    new VectorParams(state_size)),
+        DataPolicy(new MarkovSuf(state_size)),
         PriorPolicy(),
         LoglikeModel() {
-    fix_pi0_uniform();
+    fix_pi0(Vector(state_size, 1.0 / state_size));
+    Matrix transition_probabilities = Q();
+    for (uint s = 0; s < state_size; ++s) {
+      transition_probabilities.row(s) = pi0();
+    }
+    set_Q(transition_probabilities);
   }
 
   MarkovModel::MarkovModel(const Matrix &Q)
-      : ParamPolicy(new TPM(Q), new VectorParams(Q.nrow())),
+      : ParamPolicy(new MatrixParams(Q), new VectorParams(Q.nrow())),
         DataPolicy(new MarkovSuf(Q.nrow())) {
-    fix_pi0_uniform();
+    fix_pi0(Vector(state_space_size(), 1.0 / state_space_size()));
   }
 
   MarkovModel::MarkovModel(const Matrix &Q, const Vector &Pi0)
-      : ParamPolicy(new TPM(Q), new VectorParams(Pi0)),
+      : ParamPolicy(new MatrixParams(Q), new VectorParams(Pi0)),
         DataPolicy(new MarkovSuf(Q.nrow())) {}
 
   template <class T>
@@ -327,11 +302,11 @@ namespace BOOM {
   MarkovModel::MarkovModel(const std::vector<uint> &idata)
       : DataPolicy(new MarkovSuf(number_of_unique_elements(idata))) {
     uint S = suf()->state_space_size();
-    NEW(TPM, Q1)(S);
+    NEW(MatrixParams, Q1)(S, S);
     NEW(VectorParams, Pi0)(S);
     ParamPolicy::set_params(Q1, Pi0);
 
-    Ptr<MarkovDataSeries> ts = make_markov_data(idata);
+    Ptr<TimeSeries<MarkovData>> ts = make_markov_data(idata);
     add_data_series(ts);
     mle();
   }
@@ -339,24 +314,23 @@ namespace BOOM {
   MarkovModel::MarkovModel(const std::vector<std::string> &sdata)
       : DataPolicy(new MarkovSuf(number_of_unique_elements(sdata))) {
     uint S = suf()->state_space_size();
-    NEW(TPM, Q1)(S);
+    NEW(MatrixParams, Q1)(S, S);
     NEW(VectorParams, Pi0)(S);
     ParamPolicy::set_params(Q1, Pi0);
 
-    Ptr<MarkovDataSeries> ts = make_markov_data(sdata);
+    Ptr<TimeSeries<MarkovData>> ts = make_markov_data(sdata);
     add_data_series(ts);
     mle();
   }
 
   MarkovModel::MarkovModel(const MarkovModel &rhs)
       : Model(rhs),
-        DataInfoPolicy(rhs),
         ParamPolicy(rhs),
         DataPolicy(rhs),
         PriorPolicy(rhs),
         LoglikeModel(rhs),
         EmMixtureComponent(rhs),
-        pi0_status(rhs.pi0_status) {}
+        initial_distribution_status_(rhs.initial_distribution_status_) {}
 
   MarkovModel *MarkovModel::clone() const { return new MarkovModel(*this); }
 
@@ -379,7 +353,7 @@ namespace BOOM {
     if (!!dp1)
       ans = pdf(*dp1, logscale);
     else {
-      Ptr<MarkovDataSeries> dpn = dp.dcast<MarkovDataSeries>();
+      Ptr<TimeSeries<MarkovData>> dpn = dp.dcast<TimeSeries<MarkovData>>();
       if (!!dpn)
         ans = pdf(*dpn, logscale);
       else
@@ -392,7 +366,8 @@ namespace BOOM {
     const MarkovData *dp1 = dynamic_cast<const MarkovData *>(dp);
     if (dp1) return pdf(*dp1, logscale);
 
-    const MarkovDataSeries *dp2 = dynamic_cast<const MarkovDataSeries *>(dp);
+    const TimeSeries<MarkovData> *dp2 =
+        dynamic_cast<const TimeSeries<MarkovData> *>(dp);
     if (dp2) return pdf(*dp2, logscale);
     BadMarkovData();
     return 0;
@@ -401,14 +376,15 @@ namespace BOOM {
   double MarkovModel::pdf(const MarkovData &dat, bool logscale) const {
     double ans;
     if (!!dat.prev()) {
-      MD *prev = dat.prev();
+      const MarkovData *prev = dat.prev();
       ans = Q(prev->value(), dat.value());
     } else
       ans = pi0(dat.value());
     return logscale ? safelog(ans) : ans;
   }
 
-  double MarkovModel::pdf(const MarkovDataSeries &dat, bool logscale) const {
+  double MarkovModel::pdf(const TimeSeries<MarkovData> &dat,
+                          bool logscale) const {
     double ans = 0.0;
     for (uint i = 0; i != dat.length(); ++i) {
       ans += pdf(*(dat[i]), true);
@@ -424,26 +400,23 @@ namespace BOOM {
     }
     set_Q(Q);
 
-    if (pi0_status == Free) {
+    if (initial_distribution_status_ == Free) {
       const Vector &tmp(suf()->init());
       set_pi0(tmp / sum(tmp));
-    } else if (pi0_status == Stationary) {
+    } else if (initial_distribution_status_ == Stationary) {
       set_pi0(get_stat_dist(Q));
     }
   }
 
   double MarkovModel::loglike(const Vector &serialized_params) const {
-    const Vector &icount(suf()->init());
-    const Matrix &tcount(suf()->trans());
-
-    int S = state_space_size();
-    TransitionProbabilityMatrix transition_probabilities(S);
+    const Vector &initial_state_count(suf()->init());
+    const Matrix &transition_counts(suf()->trans());
 
     Vector logpi0(log(pi0()));
-    Matrix logQ(log(Q()));
 
-    double ans = icount.dot(logpi0);
-    ans += el_mult_sum(tcount, logQ);
+    double ans = initial_state_count.dot(logpi0);
+    ans += el_mult_sum(transition_counts,
+                       log_transition_probabilities());
     return ans;
   }
 
@@ -451,36 +424,38 @@ namespace BOOM {
 
   void MarkovModel::fix_pi0(const Vector &Pi0) {
     set_pi0(Pi0);
-    pi0_status = Known;
-  }
-  void MarkovModel::fix_pi0_uniform() {
-    uint S = state_space_size();
-    set_pi0(Vector(S, 1.0 / S));
-    pi0_status = Uniform;
-  }
-  void MarkovModel::fix_pi0_stationary() {
-    // need to observe Q and change when it changes
-    Q_prm()->add_observer(Pi0_prm());
-    set_pi0(stat_dist());
-    pi0_status = Stationary;
+    initial_distribution_status_ = Known;
   }
 
-  void MarkovModel::free_pi0() {
-    if (pi0_status == Stationary) {
-      Q_prm()->delete_observer(Pi0_prm());
-    }
-    pi0_status = Free;
+  void MarkovModel::fix_pi0_stationary() {
+    Q_prm()->add_observer(
+        [this]() {
+          this->set_pi0(this->stat_dist());
+        });
+    initial_distribution_status_ = Stationary;
   }
 
   uint MarkovModel::state_space_size() const { return Q().nrow(); }
 
-  Ptr<TPM> MarkovModel::Q_prm() { return ParamPolicy::prm1(); }
+  Ptr<MatrixParams> MarkovModel::Q_prm() { return ParamPolicy::prm1(); }
 
-  const Ptr<TPM> MarkovModel::Q_prm() const { return ParamPolicy::prm1(); }
+  const Ptr<MatrixParams> MarkovModel::Q_prm() const {
+    return ParamPolicy::prm1();
+  }
 
   const Matrix &MarkovModel::Q() const { return Q_prm()->value(); }
   void MarkovModel::set_Q(const Matrix &Q) const { Q_prm()->set(Q); }
   double MarkovModel::Q(uint i, uint j) const { return Q()(i, j); }
+
+  const Matrix &MarkovModel::log_transition_probabilities() const {
+    ensure_log_probabilities_are_current();
+    return log_transition_probabilities_;
+  }
+
+  double MarkovModel::log_transition_probability(int from, int to) const {
+    ensure_log_probabilities_are_current();
+    return log_transition_probabilities_(from, to);
+  }
 
   Ptr<VectorParams> MarkovModel::Pi0_prm() { return ParamPolicy::prm2(); }
   const Ptr<VectorParams> MarkovModel::Pi0_prm() const {
@@ -493,12 +468,25 @@ namespace BOOM {
 
   double MarkovModel::pi0(int i) const { return pi0()(i); }
 
-  bool MarkovModel::pi0_fixed() const { return pi0_status != Free; }
+  bool MarkovModel::pi0_fixed() const {
+    return initial_distribution_status_ != Free;
+  }
 
   void MarkovModel::resize(uint S) {
     suf()->resize(S);
     set_pi0(Vector(S, 1.0 / S));
     set_Q(Matrix(S, S, 1.0 / S));
+  }
+
+  void MarkovModel::observe_transition_probabilities() {
+    log_transition_probabilities_current_ = false;
+  }
+
+  void MarkovModel::ensure_log_probabilities_are_current() const {
+    if (!log_transition_probabilities_current_) {
+      log_transition_probabilities_ = log(Q());
+      log_transition_probabilities_current_ = true;
+    }
   }
 
   //______________________________________________________________________

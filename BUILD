@@ -73,11 +73,15 @@ GLM_HDRS = glob([
 
 HMM_SRCS = glob([
     "Models/HMM/*.cpp",
+    "Models/HMM/Clickstream/*.cpp",
+    "Models/HMM/Clickstream/PosteriorSamplers/*.cpp",
     "Models/HMM/PosteriorSamplers/*.cpp",
 ])
 
 HMM_HDRS = glob([
     "Models/HMM/*.hpp",
+    "Models/HMM/Clickstream/*.hpp",
+    "Models/HMM/Clickstream/PosteriorSamplers/*.hpp",
     "Models/HMM/PosteriorSamplers/*.hpp",
 ])
 
@@ -208,13 +212,16 @@ cc_library(
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
         #        "-g",
+#        "-fsanitize=address",
     ],
     #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
         #        "-lprofiler",
+        "-lpthread",
         "-lm",
+#        "-fsanitize=address"
     ],
     visibility = ["//visibility:public"],
 )
@@ -225,6 +232,7 @@ cc_library(
     hdrs = glob(["test_utils/*.hpp"]),
     copts = [
         "-std=c++11",
+        "-Wno-sign-compare",
     ],
     visibility = ["//visibility:public"],
     deps = [":boom"],

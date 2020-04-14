@@ -31,9 +31,8 @@
 #include "Models/Policies/ParamPolicy_2.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
-#include "Models/TimeSeries/MarkovLink.hpp"
-#include "Models/TimeSeries/TimeSeries.hpp"
 #include "Models/TimeSeries/TimeSeriesSufstatDataPolicy.hpp"
+#include "Models/TimeSeries/TimeSeries.hpp"
 
 #include "Models/Sufstat.hpp"
 
@@ -43,45 +42,98 @@
 namespace BOOM {
 
   //====================================================================
+  // MarkovData is a CategoricalData node in a linked list.
   class MarkovData : public CategoricalData {
-    MarkovLink<MarkovData> links;
-
    public:
-    //------- onstructors, destructors, copy, = ==
+
+    // Clear links to neighboring data points before destruction.
+    ~MarkovData() {clear_links();}
+
+    // Create MarkovData that needs to be linked to other data.
     MarkovData(uint val, uint Nlevels);
     explicit MarkovData(uint val, const Ptr<CatKeyBase> &key);
-    explicit MarkovData(uint val, const Ptr<MarkovData> &last);
-
     explicit MarkovData(const std::string &value, const Ptr<CatKey> &key);
-    MarkovData(const MarkovData &, bool copy_links = false);
 
-    virtual MarkovData *create() const;  // does not copy links
+    // Create MarkovData.  The use of an object for the second argument (instead
+    // of a const ref) is intentional.
+    explicit MarkovData(uint val, Ptr<MarkovData> last);
+
+    // Copies of MarkovData will need to reset links to neighbors.
+    MarkovData(const MarkovData &);
+
     MarkovData *clone() const override;  // copies links
 
-    MarkovData *prev() const;
-    MarkovData *next() const;
+    // Links to neighbors.
+    MarkovData *prev() {return prev_;}
+    const MarkovData *prev() const {return prev_;}
+    MarkovData *next() {return next_;}
+    const MarkovData *next() const {return next_;}
+
+    // Args:
+    //   next, prev:  Links to the next or previous data point.
+    //   reciprocate: If true then also set the link in the reverse dicrection.
+    void set_prev(MarkovData *prev, bool reciprocate = true);
+    void set_next(MarkovData *next, bool reciprocate = true);
+
+    // Unlink *this from neighboring observations.  This also adjusts the links
+    // in the neighbors.
+    void clear_links();
     void unset_prev();
     void unset_next();
-    void clear_links();
-    void set_prev(const Ptr<MarkovData> &p);
-    void set_next(const Ptr<MarkovData> &n);
 
     std::ostream &display(std::ostream &) const override;
+
+   private:
+    // Data stored as raw pointers to avoid ownership cycles.
+    MarkovData *prev_;
+    MarkovData *next_;
   };
   //=====================================================================
-  typedef TimeSeries<MarkovData> MarkovDataSeries;
-  Ptr<MarkovDataSeries> make_markov_data(
+  // Create series of MarkovData from a vector of uint's or strings.
+  Ptr<TimeSeries<MarkovData>> make_markov_data(
       const std::vector<uint> &raw_data);
-  Ptr<MarkovDataSeries> make_markov_data(
+
+  Ptr<TimeSeries<MarkovData>> make_markov_data(
       const std::vector<std::string> &raw_data);
-  Ptr<MarkovDataSeries> make_markov_data(
-      const std::vector<std::string> &raw_data,
-      const std::vector<std::string> &order);
+
+  // Copy constructor for TimeSeries<MarkovData> copies underlying data and
+  // resets links.
+  template<>
+  inline TimeSeries<MarkovData>::TimeSeries(const TimeSeries<MarkovData> &rhs)
+      : Data(rhs), std::vector<Ptr<MarkovData>>() {
+    reserve(rhs.size());
+    for (size_t i = 0; i < rhs.size(); ++i) {
+      Ptr<MarkovData> dp = rhs[i]->clone();
+      if (i > 0) {
+        dp->set_prev(back().get());
+      }
+      push_back(dp);
+    }
+  }
+
+  // Assignment operator for TimeSeries<MarkovData> copies underlying data and
+  // resets links.
+  template <>
+  inline TimeSeries<MarkovData> &TimeSeries<MarkovData>::operator=(
+      const TimeSeries<MarkovData> &rhs) {
+    if (&rhs != this) {
+      this->clear();
+      this->reserve(rhs.size());
+      for (size_t i = 0; i < rhs.size(); ++i) {
+        Ptr<MarkovData> dp = rhs[i]->clone();
+        if (i > 0) {
+          dp->set_prev(this->back().get());
+        }
+        this->push_back(dp);
+      }
+    }
+    return *this;
+  }
 
   //=====================================================================
   const bool debug_markov_update_suf(false);
   class MarkovSuf
-      : public TimeSeriesSufstatDetails<MarkovData, MarkovDataSeries> {
+      : public TimeSeriesSufstatDetails<MarkovData, TimeSeries<MarkovData>> {
    public:
     explicit MarkovSuf(uint S);
     MarkovSuf(const MarkovSuf &sf);
@@ -153,48 +205,33 @@ namespace BOOM {
 
   //======================================================================
 
-  class TransitionProbabilityMatrix : public MatrixParams {
-   public:
-    explicit TransitionProbabilityMatrix(uint S);
-    explicit TransitionProbabilityMatrix(const Matrix &);
-    TransitionProbabilityMatrix(const TransitionProbabilityMatrix &);
-    TransitionProbabilityMatrix *clone() const override;
-
-    Vector::const_iterator unvectorize(Vector::const_iterator &v,
-                                       bool minimal = true) override;
-    Vector::const_iterator unvectorize(const Vector &v,
-                                       bool minimal = true) override;
-    void set(const Matrix &m, bool signal = true) override;
-
-    void add_observer(const Ptr<VectorParams> &) const;
-    void delete_observer(const Ptr<VectorParams> &) const;
-
-   private:
-    typedef std::set<Ptr<VectorParams> > ObsSet;
-    mutable ObsSet observers;
-    void notify() const;
-  };
-
-  //======================================================================
   class ProductDirichletModel;
   class DirichletModel;
   class MarkovConjSampler;
 
   class MarkovModel
-      : public ParamPolicy_2<TransitionProbabilityMatrix, VectorParams>,
-        public TimeSeriesSufstatDataPolicy<MarkovData, MarkovDataSeries,
+      : public ParamPolicy_2<MatrixParams, VectorParams>,
+        public TimeSeriesSufstatDataPolicy<MarkovData,
+                                           TimeSeries<MarkovData>,
                                            MarkovSuf>,
         public PriorPolicy,
         public LoglikeModel,
         public EmMixtureComponent {
    public:
     typedef MarkovData DataPointType;
-    typedef MarkovDataSeries DataSeriesType;
-    typedef TransitionProbabilityMatrix TPM;
+    typedef TimeSeries<MarkovData> DataSeriesType;
 
-    explicit MarkovModel(uint S);
+    // Initialize model parameters to the uniform distribution.
+    explicit MarkovModel(uint state_size);
+
+    // Initialize the transition probability matrix to Q.  Fix the initial state
+    // distribution to uniform.
     explicit MarkovModel(const Matrix &Q);
+
+    // Set the transition probability matrix to Q, and the initial state
+    // distribution to pi0.
     MarkovModel(const Matrix &Q, const Vector &pi0);
+
     explicit MarkovModel(const std::vector<uint> &);
     explicit MarkovModel(const std::vector<std::string> &);
 
@@ -203,8 +240,6 @@ namespace BOOM {
 
     void fix_pi0(const Vector &Pi0);
     void fix_pi0_stationary();
-    void fix_pi0_uniform();
-    void free_pi0();
     bool pi0_fixed() const;
 
     double pdf(const Ptr<Data> &dp, bool logscale) const;
@@ -220,11 +255,13 @@ namespace BOOM {
 
     uint state_space_size() const;
 
-    Ptr<TPM> Q_prm();
-    const Ptr<TPM> Q_prm() const;
+    Ptr<MatrixParams> Q_prm();
+    const Ptr<MatrixParams> Q_prm() const;
     virtual const Matrix &Q() const;
     virtual void set_Q(const Matrix &Q) const;
     double Q(uint, uint) const;
+    double log_transition_probability(int from, int to) const;
+    const Matrix &log_transition_probabilities() const;
 
     Ptr<VectorParams> Pi0_prm();
     const Ptr<VectorParams> Pi0_prm() const;
@@ -245,9 +282,33 @@ namespace BOOM {
     virtual void resize(uint S);
 
    private:
+    // An observer to be placed on the transition probability matrix Q.  When Q
+    // changes it flips the flag so that we know that
+    // log_transition_probabilities_ needs to be refreshed.
+    void observe_transition_probabilities();
+
+    // Refresh the log_transition_probabilities_, if needed.
+    void ensure_log_probabilities_are_current() const;
+
     Ptr<MarkovData> dpp;  // data point prototype
-    enum Pi0Status { Free, Uniform, Stationary, Known };
-    Pi0Status pi0_status;
+
+    // How should the stationary distribution be treated:
+    //   Free: It is a free parameter to be estimated.
+    //   Stationary: It is the stationary distribution of the transition
+    //     probability matrix.
+    //   Known:  It is set to known values.
+    enum InitialDistributionStrategy { Free, Stationary, Known };
+    InitialDistributionStrategy initial_distribution_status_;
+
+    // If the initial distribution is set to be the stationary distribution of Q
+    // then
+    mutable bool pi0_current_;
+    mutable Vector pi0_workspace_;
+
+    // The log of the transition probability matrix Q, and a flag to keep the
+    // two in sync.
+    mutable bool log_transition_probabilities_current_;
+    mutable Matrix log_transition_probabilities_;
   };
 
 }  // namespace BOOM

@@ -26,9 +26,7 @@ namespace BOOM {
 
   MCS::MarkovConjSampler(MarkovModel *Mod, const Ptr<ProductDirichletModel> &Q,
                          const Ptr<DirichletModel> &pi0, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), mod_(Mod), Q_(Q), pi0_(pi0) {
-    mod_->free_pi0();
-  }
+      : PosteriorSampler(seeding_rng), mod_(Mod), Q_(Q), pi0_(pi0) {}
 
   MCS::MarkovConjSampler(MarkovModel *Mod, const Ptr<ProductDirichletModel> &Q,
                          RNG &seeding_rng)
@@ -39,9 +37,7 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         mod_(Mod),
         Q_(new ProductDirichletModel(Nu)),
-        pi0_(new DirichletModel(nu)) {
-    mod_->free_pi0();
-  }
+        pi0_(new DirichletModel(nu)) {}
 
   MCS::MarkovConjSampler(MarkovModel *Mod, const Matrix &Nu, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),

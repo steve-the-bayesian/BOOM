@@ -286,7 +286,7 @@ namespace BOOM {
   const SpdMatrix &MBP::Sigma() const { return prm2_ref().var(); }
   const SpdMatrix &MBP::siginv() const { return prm2_ref().ivar(); }
   double MBP::ldsi() const { return prm2_ref().ldsi(); }
-  const Matrix &MBP::Sigma_chol() const { return prm2_ref().var_chol(); }
+  Matrix MBP::Sigma_chol() const { return prm2_ref().var_chol(); }
 
   void MBP::set_mu(const Vector &v) { prm1_ref().set(v); }
   void MBP::set_Sigma(const SpdMatrix &s) { prm2_ref().set_var(s); }

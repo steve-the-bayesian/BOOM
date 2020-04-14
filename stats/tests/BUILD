@@ -1,4 +1,4 @@
-COPTS = []
+COPTS = ["-Wno-sign-compare"]
 
 DEPS = [
     "//:boom",

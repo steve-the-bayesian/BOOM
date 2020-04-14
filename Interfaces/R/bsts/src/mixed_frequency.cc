@@ -191,9 +191,12 @@ void AddRegressionPriorAndSetSampler(
 //     record, and stream the model parameters and related information.
 RListIoManager SpecifyModel(const Ptr<AggregatedStateSpaceRegression> &model,
                             const Ptr<StateSpaceModel> &augmented_model,
-                            SEXP state_specification, SEXP regression_prior,
-                            bool save_state_history, Vector *final_state,
-                            Vector *augmented_final_state, SEXP r_truth) {
+                            SEXP state_specification,
+                            SEXP regression_prior,
+                            bool save_state_history,
+                            Vector *final_state,
+                            Vector *augmented_final_state,
+                            SEXP r_truth) {
   RListIoManager io_manager;
 
   io_manager.add_list_element(
@@ -353,7 +356,7 @@ extern "C" {
     try {
       BOOM::RInterface::seed_rng_from_R(r_seed);
 
-      std::vector<Ptr<FineNowcastingData> > data = ComputeTrainingData(
+      std::vector<Ptr<FineNowcastingData>> data = ComputeTrainingData(
           r_target_series,
           r_predictors,
           r_which_coarse_interval,
