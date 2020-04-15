@@ -33,6 +33,17 @@ namespace BayesBoom {
             "included variables.")
         ;
 
+    // A single data point for a regression model.
+    py::class_<RegressionData,
+               Ptr<RegressionData>>(boom, "RegressionData")
+        .def(py::init<double, Vector>(),
+             py::arg("y"),
+             py::arg("x"),
+             "Args:\n\n"
+             "  y: Response"
+             "  x: BOOM::Vector of predictors.")
+        ;
+
     // Base class for generalized linear models: regression, logistic
     // regression, Poisson regression, etc.
     py::class_<GlmModel,

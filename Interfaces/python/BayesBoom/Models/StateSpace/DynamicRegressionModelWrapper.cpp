@@ -14,13 +14,28 @@ namespace BayesBoom {
   void DynamicRegressionModel_def(py::module &boom) {
 
     py::class_<RegressionDataTimePoint,
-               Data,
                Ptr<RegressionDataTimePoint>>(boom, "RegressionDataTimePoint")
+        .def(py::init<int>(), py::arg("xdim") = -1,
+             "Args\n\n"
+             "  xdim: The dimension of the predictor variable.  The default "
+             "value of -1 is a signal that the dimension is unknown.  "
+             "It will be set on the first call to add_data().")
+        .def("add_data", [](RegressionDataTimePoint &point,
+                          const Ptr<RegressionData> &data_point) {
+               point.add_data(data_point); },
+             "  Add an observation to the time point.")
+        .def_property_readonly(
+            "xdim",
+            &RegressionDataTimePoint::xdim,
+            "The dimension of the predictor variable.")
+        .def_property_readonly(
+            "sample_size",
+            &RegressionDataTimePoint::sample_size,
+            "The number of regression observations at this time point")
         ;
 
 
     py::class_<DynamicRegressionModel,
-               Model,
                PriorPolicy,
                BOOM::Ptr<DynamicRegressionModel>>(boom, "DynamicRegressionModel")
         .def(py::init<int>(), py::arg("xdim"),
