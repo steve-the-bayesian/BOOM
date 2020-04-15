@@ -274,7 +274,9 @@ namespace BOOM {
                     new VectorParams(state_size)),
         DataPolicy(new MarkovSuf(state_size)),
         PriorPolicy(),
-        LoglikeModel() {
+        LoglikeModel(),
+        log_transition_probabilities_current_(false)
+  {
     fix_pi0(Vector(state_size, 1.0 / state_size));
     Matrix transition_probabilities = Q();
     for (uint s = 0; s < state_size; ++s) {
@@ -284,14 +286,14 @@ namespace BOOM {
   }
 
   MarkovModel::MarkovModel(const Matrix &Q)
-      : ParamPolicy(new MatrixParams(Q), new VectorParams(Q.nrow())),
-        DataPolicy(new MarkovSuf(Q.nrow())) {
-    fix_pi0(Vector(state_space_size(), 1.0 / state_space_size()));
+      : MarkovModel(Q, Vector(Q.nrow(), 1.0 / Q.nrow())) {
+    fix_pi0(pi0());
   }
 
   MarkovModel::MarkovModel(const Matrix &Q, const Vector &Pi0)
       : ParamPolicy(new MatrixParams(Q), new VectorParams(Pi0)),
-        DataPolicy(new MarkovSuf(Q.nrow())) {}
+        DataPolicy(new MarkovSuf(Q.nrow())),
+        log_transition_probabilities_current_(false){}
 
   template <class T>
   uint number_of_unique_elements(const std::vector<T> &v) {

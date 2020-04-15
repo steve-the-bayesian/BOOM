@@ -301,7 +301,7 @@ namespace BOOM {
     InitialDistributionStrategy initial_distribution_status_;
 
     // If the initial distribution is set to be the stationary distribution of Q
-    // then
+    // then the following workspace is needed to ensure its current value.
     mutable bool pi0_current_;
     mutable Vector pi0_workspace_;
 
