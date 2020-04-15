@@ -35,12 +35,12 @@ namespace BOOM {
    public:
     DynamicRegressionDirectGibbsSampler(
         DynamicRegressionModel *model,
-        double residual_variance_prior_sample_size,
         double residual_sd_prior_guess,
-        const Vector &innovation_variance_prior_sample_size,
+        double residual_sd_prior_sample_size,
         const Vector &innovation_sd_prior_guess,
-        const Vector &prior_inclusion_probabiliites,
-        const Vector &expected_time_between_transitions,
+        const Vector &innovation_sd_prior_sample_size,
+        const Vector &prior_inclusion_probabilities,
+        const Vector &expected_inclusion_duration,
         const Vector &transition_probability_prior_sample_size,
         RNG &seeding_rng = GlobalRng::rng);
 

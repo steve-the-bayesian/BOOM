@@ -29,10 +29,10 @@ namespace BOOM {
 
   DRDGS::DynamicRegressionDirectGibbsSampler(
       DynamicRegressionModel *model,
-      double residual_variance_prior_sample_size,
-      double residual_variance_prior_guess,
-      const Vector &innovation_variance_prior_sample_size,
-      const Vector &innovation_variance_prior_guess,
+      double residual_sd_prior_guess,
+      double residual_sd_prior_sample_size,
+      const Vector &innovation_sd_prior_guess,
+      const Vector &innovation_sd_prior_sample_size,
       const Vector &prior_inclusion_probabilities,
       const Vector &expected_time_between_transitions,
       const Vector &transition_probability_prior_sample_size,
@@ -40,16 +40,16 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         model_(model),
         residual_precision_prior_(new ChisqModel(
-            residual_variance_prior_sample_size,
-            residual_variance_prior_guess)),
+            residual_sd_prior_sample_size,
+            residual_sd_prior_guess)),
         residual_variance_sampler_(residual_precision_prior_)
   {
     for (int j = 0; j < model_->xdim(); ++j) {
       // Set the posterior sampler for the innovation variance associated with
       // variable j.
       NEW(ChisqModel, innovation_precision_prior)(
-          innovation_variance_prior_sample_size[j],
-          innovation_variance_prior_guess[j]);
+          innovation_sd_prior_sample_size[j],
+          innovation_sd_prior_guess[j]);
       NEW(ZeroMeanGaussianConjSampler, innovation_variance_sampler)(
           model_->innovation_error_model(j).get(),
           innovation_precision_prior,
