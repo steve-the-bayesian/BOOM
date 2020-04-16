@@ -64,3 +64,35 @@ def rnorm(n, mu=0, sigma=1):
     """
 
     return np.random.randn(n) * sigma + mu
+
+
+def rmarkov(n: int, P: np.ndarray, pi0=None):
+    """
+    Simulation a Markov chain of length n from transition probability matrix P,
+    with initial distribution pi0.  The state space is the set of integers in
+    {0, ..., S-1} where S is the number of rows in P.
+
+    Args:
+      n:  The length of the Markov chain to simulate.
+      P: A transition probability matrix.  A square matrix of non-negative
+         elements, where each row sums to 1.
+      pi0: The distribution of the state at time 0.  A vector of non-negative
+        numbers summing to 1.
+
+    Returns:
+      A numpy array of integer dtype containing the simulated Markov chain..
+    """
+    assert(isinstance(P, np.ndarray))
+    assert(len(P.shape) == 2)
+    S = P.shape[0]
+    assert(P.shape[1] == S)
+    assert(S > 0)
+    if pi0 is None:
+        pi0 = np.ones(S) / S
+    assert(len(pi0) == S)
+
+    ans = np.full(n, -1)
+    ans[0] = np.random.choice(range(S), p=pi0)
+    for i in range(1, n):
+        ans[i] = np.random.choice(range(S), p=P[ans[i-1], :])
+    return(ans)

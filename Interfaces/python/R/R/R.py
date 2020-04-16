@@ -5,7 +5,8 @@ import time
 
 
 class omit:
-    """For use in indexing. my_data[omit(bad_integers), :] omits the bad rows.
+    """
+    For use in indexing. my_data[omit(bad_integers), :] omits the bad rows.
     """
 
 
@@ -99,9 +100,9 @@ def print_timestamp(iteration_number, ping):
 
 
 def ls(*args, hide_underscore=True):
-    """List the contents of one or more objects.  If passed a function then print
+    """
+    List the contents of one or more objects.  If passed a function then print
     the body of the function.
-
     """
 
     if len([*args]) == 0:
@@ -136,22 +137,22 @@ def table(*args):
 
 
 def data_range(x):
-    """Return the smallest and largest entries in x.  The capital R distinguishes
-    this function from the python built-in 'range'.
-
+    """
+    Return the smallest and largest entries in x.  The name distinguishes this
+    function from the python built-in 'range'.
     """
     return np.quantile(x, q=[0, 1])
 
 
 def corr(*args):
-    '''Compute the correlation among one or more objects.  If a single matrix or
+    """
+    Compute the correlation among one or more objects.  If a single matrix or
     data frame is passed, or if a collection of vectors is passed, then return
     the correlation matrix.  If a pair of vectors is passed, return the number.
 
     This function corrects the stupid default in numpy which assumes variables
     are rows rather than columns.
-
-    '''
+    """
     if len(args) == 1:
         x = args[0]
     else:
@@ -162,17 +163,17 @@ def corr(*args):
 
 
 def first_true(boolean_array):
-    """Returns the index of the first True element in the array-like boolean_array.
+    """
+    Returns the index of the first True element in the array-like boolean_array.
     Returns None if no True values are found.
-
     """
     return next((i for i, v in enumerate(boolean_array) if v), None)
 
 
 def unique_match(value, legal_value_list):
-    """If 'value' uniquely matches only one value in legal_value_list, then return
+    """
+    If 'value' uniquely matches only one value in legal_value_list, then return
     the corresponding value in legal_value_list.  If not then return None.
-
     """
 
     matches = np.array([x.startswith(value) for x in legal_value_list])
