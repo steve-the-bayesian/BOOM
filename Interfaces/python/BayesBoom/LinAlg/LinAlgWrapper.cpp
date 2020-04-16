@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
+#include <pybind11/numpy.h>
 #include <memory>
 
 #include "LinAlg/Cholesky.hpp"
@@ -74,6 +75,7 @@ namespace BayesBoom {
              })
         ;
     py::implicitly_convertible<Eigen::VectorXd, Vector>();
+    py::implicitly_convertible<py::array, Vector>();
 
     // =========================================================================
     py::class_<VectorView>(boom, "VectorView")
@@ -168,6 +170,9 @@ namespace BayesBoom {
              })
         ;
 
+    py::implicitly_convertible<py::array<
+      double, py::array::f_style|py::array::forecast>, Matrix>();
+
     // ===========================================================================
     py::class_<SpdMatrix, Matrix>(boom, "SpdMatrix")
         .def(py::init<int, double>(),
@@ -216,6 +221,8 @@ namespace BayesBoom {
         .def(py::self * float())
         .def(py::self / float())
         ;
+
+    py::implicitly_convertible<py::array, SpdMatrix>();
 
     py::class_<Cholesky>(boom, "Cholesky")
         .def(py::init<const Matrix &>(),

@@ -35,6 +35,20 @@ class LinAlgTest(unittest.TestCase):
         self.assertEqual(m[0, 1], 8.3)
         self.assertEqual(m[0, 0], 1.0)
 
+    # Check that a numpy array can be implicitly converted to a Matrix.  This
+    # is done by adding a Matrix to an np.array.  The result is a Matrix.
+    def test_implicit_conversion(self):
+        X = np.random.randn(3, 4)
+        bX = boom.Matrix(X)
+        Y = np.random.randn(3, 4)
+        Z = X + Y
+        bZ = bX + Y
+        self.assertTrue(isinstance(bZ, boom.Matrix))
+        # Check that numpy addition and boom addition get the same answer.
+        # This also checks fortran vs C ordering.
+        delta = bZ - Z
+        self.assertLess(delta.max_abs(), 1e-15)
+
     def test_spd(self):
         X = np.random.randn(100, 4)
         xtx = X.T @ X / X.shape[0]
@@ -49,5 +63,14 @@ class LinAlgTest(unittest.TestCase):
         self.assertEqual(v[1], 1.0)
 
 
-if __name__ == "__main__":
+_debug_mode = False
+
+if _debug_mode:
+    import pdb
+    rig = LinAlgTest()
+    rig.setUp()
+    pdb.set_trace()
+    rig.test_implicit_conversion()
+
+elif __name__ == "__main__":
     unittest.main()
