@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
                 unique_match)
 
