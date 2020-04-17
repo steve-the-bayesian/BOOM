@@ -204,7 +204,9 @@ namespace BOOM {
 
   const Vector &GlmCoefs::Beta() const { return VectorParams::value(); }
 
-  double GlmCoefs::Beta(uint i) const { return VectorParams::value()[i]; }
+  double GlmCoefs::Beta(uint dense_index) const {
+    return VectorParams::value()[dense_index];
+  }
 
   void GlmCoefs::set_Beta(const Vector &tmp) {
     if (tmp.size() != nvars_possible()) {

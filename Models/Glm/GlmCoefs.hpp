@@ -79,9 +79,7 @@ namespace BOOM {
     // excluded, then those elements will be set to zero.
     void set_Beta(const Vector &beta);
 
-    //
-    //    double &Beta(uint I);       // I indexes possible covariates
-    double Beta(uint I) const;  // I indexes possible covariates
+    double Beta(uint dense_index) const;
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
