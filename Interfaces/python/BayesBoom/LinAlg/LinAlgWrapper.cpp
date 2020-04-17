@@ -170,8 +170,7 @@ namespace BayesBoom {
              })
         ;
 
-    py::implicitly_convertible<py::array<
-      double, py::array::f_style|py::array::forecast>, Matrix>();
+    py::implicitly_convertible<py::array, Matrix>();
 
     // ===========================================================================
     py::class_<SpdMatrix, Matrix>(boom, "SpdMatrix")

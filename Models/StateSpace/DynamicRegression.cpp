@@ -40,6 +40,21 @@ namespace BOOM {
       }
     }
 
+    RDTP::RegressionDataTimePoint(const Matrix &X, const Vector &y)
+        : RegressionDataTimePoint(ncol(X)) {
+      if (nrow(X) != y.size()) {
+        report_error("Length of y must match the number of columns in X.");
+      }
+      if (nrow(X) >= ncol(X)) {
+        suf_.reset(new NeRegSuf(X, y));
+      } else {
+        for (int i = 0; i < nrow(X); ++i) {
+          NEW(RegressionData, dp)(y[i], X.row(i));
+          add_data(dp);
+        }
+      }
+    }
+
     std::ostream &RDTP::display(std::ostream &out) const {
       if (!!suf_) {
         out << "sufficient statistics for " << suf_->n() << " observations."

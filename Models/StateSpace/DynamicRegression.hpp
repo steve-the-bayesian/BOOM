@@ -45,6 +45,11 @@ namespace BOOM {
       //   first call to add_data().
       RegressionDataTimePoint(int xdim = -1): xdim_(xdim), suf_(nullptr) {}
 
+      // Args:
+      //   X:  Matrix of predictors.
+      //   y:  Vector of repsonses.
+      RegressionDataTimePoint(const Matrix &X, const Vector &y);
+
       RegressionDataTimePoint(const RegressionDataTimePoint &rhs);
       RegressionDataTimePoint(RegressionDataTimePoint &&rhs) = default;
 
@@ -55,6 +60,7 @@ namespace BOOM {
 
       std::ostream &display(std::ostream &out) const override;
 
+      // Dimension of the predictor variable.
       int xdim() const {return xdim_;}
 
       //-------- Accumulate data about this time point.
@@ -255,7 +261,10 @@ namespace BOOM {
       //   represent.
       double filter(const DynamicRegressionModel &model);
 
-
+      // Run the "backward simulator" to simulate the set of included regression
+      // coefficients for the model.  The draw is made conditional on inclusion
+      // indicators.  This function assumes that the filtering step has just
+      // completed.
       void simulate_coefficients(DynamicRegressionModel &model, RNG &rng);
 
      private:
@@ -445,7 +454,11 @@ namespace BOOM {
       coefficients_[time_index]->set_included_coefficients(beta);
     }
 
-    const GlmCoefs & coef(int time_index) const {
+    GlmCoefs &coef(int time_index) {
+      return *coefficients_[time_index];
+    }
+
+    const GlmCoefs &coef(int time_index) const {
       return *coefficients_[time_index];
     }
 
