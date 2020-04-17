@@ -54,11 +54,13 @@ namespace BOOM {
     uint nvars_possible() const;
     uint nvars_excluded() const;
 
-    //--- the main job of glm's...
+    // GlmCoefs can call predict on a vector of dimension nvars (i.e. the set of
+    // included variables) or nvars_possible (all variables).
     double predict(const Vector &x) const;
     double predict(const VectorView &x) const;
     double predict(const ConstVectorView &x) const;
 
+    //
     Vector predict(const Matrix &design_matrix) const;
     void predict(const Matrix &design_matrix, Vector &result) const;
     void predict(const Matrix &design_matrix, VectorView result) const;
@@ -72,13 +74,14 @@ namespace BOOM {
 
     //----- operations for both included and excluded variables ----
     const Vector &Beta() const;  // reports 0 for excluded positions
-    // Consider whether to call infer_sparsity after calling set_Beta.
-    void set_Beta(const Vector &);
-    double &Beta(uint I);       // I indexes possible covariates
-    double Beta(uint I) const;  // I indexes possible covariates
 
-    // Drop all coefficients with value 0.  Add all others.
-    void infer_sparsity();
+    // Set the dense vector of coefficients to beta.  If any elements are
+    // excluded, then those elements will be set to zero.
+    void set_Beta(const Vector &beta);
+
+    //
+    //    double &Beta(uint I);       // I indexes possible covariates
+    double Beta(uint I) const;  // I indexes possible covariates
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
@@ -95,6 +98,7 @@ namespace BOOM {
     mutable Vector included_coefficients_;
     mutable bool included_coefficients_current_;
 
+    void set_excluded_coefficients_to_zero();
     void inc_from_beta(const Vector &v);
     uint indx(uint i) const { return inc_.indx(i); }
     void wrong_size_beta(const Vector &b) const;

@@ -65,6 +65,10 @@ namespace BOOM {
         report_error(err.str());
       }
     }
+
+    if (n < N) {
+      set_excluded_coefficients_to_zero();
+    }
   }
 
   GlmCoefs::GlmCoefs(const GlmCoefs &rhs)
@@ -84,13 +88,9 @@ namespace BOOM {
 
   void GlmCoefs::set_inc(const Selector &new_inc) {
     assert(new_inc.nvars_possible() == inc_.nvars_possible());
-    uint n = nvars();
-    for (uint i = 0; i < n; ++i) {
-      uint I = indx(i);
-      if (!new_inc[I]) Beta(I) = 0;
-    }
     included_coefficients_current_ = false;
     inc_ = new_inc;
+    set_excluded_coefficients_to_zero();
   }
 
   void GlmCoefs::add(uint i) {
@@ -100,7 +100,7 @@ namespace BOOM {
 
   void GlmCoefs::drop(uint i) {
     inc_.drop(i);
-    Beta(i) = 0;
+    set_element(0.0, i, true);
   }
 
   void GlmCoefs::flip(uint i) {
@@ -174,6 +174,11 @@ namespace BOOM {
 
   void GlmCoefs::predict(const Matrix &design_matrix, VectorView ans) const {
     uint number_of_variables_included = this->nvars();
+    if (design_matrix.ncol() == number_of_variables_included) {
+      ans = design_matrix * included_coefficients();
+      return;
+    }
+
     uint total_number_of_variables = this->nvars_possible();
     if (number_of_variables_included >= .25 * total_number_of_variables) {
       ans = design_matrix * Beta();
@@ -201,11 +206,6 @@ namespace BOOM {
 
   double GlmCoefs::Beta(uint i) const { return VectorParams::value()[i]; }
 
-  double &GlmCoefs::Beta(uint i) {
-    included_coefficients_current_ = false;
-    return VectorParams::operator[](i);
-  }
-
   void GlmCoefs::set_Beta(const Vector &tmp) {
     if (tmp.size() != nvars_possible()) {
       std::ostringstream err;
@@ -216,19 +216,7 @@ namespace BOOM {
     }
     included_coefficients_current_ = false;
     VectorParams::set(tmp);
-  }
-
-  // Drop coefficients whose value is zero.  Add coefficients whose
-  // value is nonzero.
-  void GlmCoefs::infer_sparsity() {
-    const Vector &beta(Beta());
-    for (int i = 0; i < beta.size(); ++i) {
-      if (beta[i] == 0.0) {
-        drop(i);
-      } else {
-        add(i);
-      }
-    }
+    set_excluded_coefficients_to_zero();
   }
 
   //------- virtual function overloads ---------------
@@ -257,6 +245,15 @@ namespace BOOM {
   }
 
   //____________________ private stuff ___________
+
+  // To be called when setting the full coefficient vector.  If nonzero values
+  // were passed for excluded coefficients, set them to zero.
+  void GlmCoefs::set_excluded_coefficients_to_zero() {
+    Selector excluded = inc().complement();
+    for (auto i : excluded.included_positions()) {
+      set_element(0.0, i, true);
+    }
+  }
 
   void GlmCoefs::inc_from_beta(const Vector &b) {
     uint n = b.size();
