@@ -272,6 +272,8 @@ namespace {
     model.set_residual_variance(2.3);
     EXPECT_DOUBLE_EQ(2.3, model.residual_variance());
     EXPECT_DOUBLE_EQ(sqrt(2.3), model.residual_sd());
+    double sd = model.residual_sd();
+    EXPECT_DOUBLE_EQ(model.residual_variance(), sd * sd);
   }
 
   TEST_F(DynamicRegressionModelTest, CoefficientTest) {

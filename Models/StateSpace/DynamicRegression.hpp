@@ -405,7 +405,7 @@ namespace BOOM {
 
     // The "sigma squared" parameter describing the variance of the residuals.
     double residual_variance() const {return residual_variance_->value();}
-    double residual_sd() const {return sqrt(residual_variance());}
+    double residual_sd() const {return std::sqrt(residual_variance());}
     void set_residual_variance(double sigsq) {residual_variance_->set(sigsq);}
 
     // The "unscaled" variance describing a one-time-period change in the
