@@ -159,7 +159,7 @@ namespace BOOM {
     //   y:  The numeric value of the data vector.
     //   obs:  Indicates which components of y are observed.
     explicit PartiallyObservedVectorData(const Vector &y,
-                                const Selector &obs = Selector());
+                                         const Selector &obs = Selector());
     PartiallyObservedVectorData * clone() const override;
     void set(const Vector &value, bool signal_change = true) override;
 

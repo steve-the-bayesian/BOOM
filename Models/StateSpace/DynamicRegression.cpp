@@ -234,7 +234,8 @@ namespace BOOM {
     //   time_index: t.
     //
     // Effects:
-    //   The mean and variance are set to match
+    //   The mean and variance are set to match the conditional mean and
+    //   variance of the regression coefficients given data to time t.
     double DynamicRegressionKalmanFilterNode::update(
         const DynamicRegressionKalmanFilterNode &previous,
         const RegressionDataTimePoint &data,

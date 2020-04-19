@@ -406,8 +406,8 @@ namespace {
         model.get(),
         1.0,
         residual_sd,
-        Vector{1, 1, 1},
         innovation_sd,
+        Vector{1, 1, 1},
         stationary_probabilities,
         expected_durations,
         Vector{1, 1, 1});

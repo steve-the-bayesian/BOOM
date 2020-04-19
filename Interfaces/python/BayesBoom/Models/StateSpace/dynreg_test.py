@@ -110,6 +110,7 @@ class DynregTest(unittest.TestCase):
 
         self.assertEqual(11, time_point.sample_size)
 
+    # ---------------------------------------------------------------------------
     def model_smoke_test(self):
         xdim = 3
         typical_sample_size = 30
@@ -138,6 +139,7 @@ class DynregTest(unittest.TestCase):
         for i in range(10):
             model.sample_posterior()
 
+    # ---------------------------------------------------------------------------
     def test_draw_inclusion_indicators(self):
         """
         Check that the model draws the inclusion indicators conditional on all
@@ -172,6 +174,7 @@ class DynregTest(unittest.TestCase):
         cor = R.corr(inclusion_vector, mean_vector)
         self.assertGreater(cor, .6)
 
+    # ---------------------------------------------------------------------------
     def test_draw_coefficients(self):
         # Make the coefficients big, so that effects are obvious.
         unscaled_innovation_sd = np.array([10, 20, 30])
@@ -201,6 +204,7 @@ class DynregTest(unittest.TestCase):
         cor = R.corr(mean_vector, beta_vector)
         self.assertGreater(cor, .9)
 
+    # ---------------------------------------------------------------------------
     def test_draw_residual_variance(self):
         """
         Check that the MCMC algorithm draws the true residual_sd given all other
@@ -229,6 +233,7 @@ class DynregTest(unittest.TestCase):
         self.assertTrue(test_utils.check_mcmc_vector(
             draws, self._residual_sd))
 
+    # ---------------------------------------------------------------------------
     def test_draw_state_innovation_variance(self):
         data, coefficients, inclusion = self.simulate_data_from_model(
             time_dimension=100,
@@ -254,6 +259,7 @@ class DynregTest(unittest.TestCase):
             test_utils.check_mcmc_matrix(draws, self._unscaled_innovation_sd)
         )
 
+    # ---------------------------------------------------------------------------
     def test_draw_transition_probabilities(self):
         data, coefficients, inclusion = self.simulate_data_from_model(
             time_dimension=100,
@@ -291,15 +297,55 @@ class DynregTest(unittest.TestCase):
             self.assertTrue(test_utils.check_mcmc_vector(
                 draws[:, i, 1, 1], self._p11[i]))
 
+    # ---------------------------------------------------------------------------
+    def mcmc_test(self):
+        data, coefficients, inclusion = self.simulate_data_from_model(
+            time_dimension=100,
+            typical_sample_size=500,
+            xdim=self._xdim,
+            residual_sd=self._residual_sd,
+            unscaled_innovation_sd=self._unscaled_innovation_sd,
+            p00=self._p00,
+            p11=self._p11)
+
+        model, sampler = self.setup_model(
+            data, coefficients, inclusion, self._residual_sd,
+            self._unscaled_innovation_sd, self._p00, self._p11)
+
+        niter = 1000
+        transition_probability_draws = np.full((niter, self._xdim, 2, 2), -1.0)
+
+        for i in range(niter):
+            sampler.draw()
+            for j in range(self._xdim):
+                transition_probability_draws[i, j, :, :] = (
+                    model.transition_probabilities(j).to_numpy()
+                )
+
+        # Check that each draw sums to 1 across columns.
+        row_sums = transition_probability_draws.sum(axis=3)
+        self.assertAlmostEqual(np.max(row_sums), 1.0)
+        self.assertAlmostEqual(np.min(row_sums), 1.0)
+
+        # Check that there is some MCMC variation.
+        sd = np.std(transition_probability_draws, axis=0)
+        self.assertTrue(np.all(sd > 0))
+
+        for i in range(self._xdim):
+            self.assertTrue(test_utils.check_mcmc_vector(
+                transition_probability_draws[:, i, 0, 0], self._p00[i]))
+            self.assertTrue(test_utils.check_mcmc_vector(
+                transition_probability_draws[:, i, 1, 1], self._p11[i]))
+
 
 debug_mode_ = False
 
 if debug_mode_:
-    import pdb
     print("Hello, world!")
     rig = DynregTest()
     rig.setUp()
-#     pdb.set_trace()
+#    import pdb
+#    pdb.set_trace()
     rig.test_draw_inclusion_indicators()
     rig.test_draw_coefficients()
     rig.test_draw_residual_variance()
