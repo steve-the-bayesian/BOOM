@@ -116,7 +116,6 @@ namespace BOOM {
     }
     ans += jacobian_->logdet();
     if (nderiv > 0) {
-      Matrix J = jacobian_->matrix();
       gradient = jacobian_->transform_gradient(original_gradient, true);
       if (!gradient.all_finite()) {
         report_error("Illegal values in transformed gradient.");

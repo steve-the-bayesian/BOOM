@@ -103,7 +103,7 @@ namespace BOOM {
 
     virtual ostream & print(ostream &out) const = 0;
     virtual std::string to_string() const = 0;
-    
+
    private:
     std::vector<int> dims_;
     std::vector<int> strides_;
@@ -118,7 +118,7 @@ namespace BOOM {
   inline ostream & operator<<(ostream &out, const ConstArrayBase &array) {
     return array.print(out);
   }
-  
+
   //======================================================================
   class ArrayBase : public ConstArrayBase {
    public:
@@ -212,12 +212,12 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
-    
+
    private:
     const double *data_;
   };
 
-  
+
   //======================================================================
   class ArrayView : public ArrayBase {
    public:
@@ -293,7 +293,7 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
-    
+
    private:
     double *data_;
   };
@@ -306,7 +306,7 @@ namespace BOOM {
 
     // Sets data to zero
     Array() {}
-    Array(const std::vector<int> &dims, double initial_value = 0);
+    explicit Array(const std::vector<int> &dims, double initial_value = 0);
     Array(const std::vector<int> &dims, const std::vector<double> &data);
     Array(const std::vector<int> &dims, const double *data);
 
@@ -396,7 +396,7 @@ namespace BOOM {
    private:
     std::vector<double> data_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_ARRAY_HPP

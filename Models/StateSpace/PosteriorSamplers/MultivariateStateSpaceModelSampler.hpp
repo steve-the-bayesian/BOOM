@@ -27,27 +27,24 @@ namespace BOOM {
   class MultivariateStateSpaceModelSampler
       : public PosteriorSampler {
    public:
-    MultivariateStateSpaceModelSampler(
+    explicit MultivariateStateSpaceModelSampler(
         MultivariateStateSpaceModelBase *model,
         RNG &seeding_rng = GlobalRng::rng);
-    
+
     void draw() override;
     double logpri() const override;
 
     // If the state models or error distribution are mixtures of normals, then
     // unmix them.
     virtual void impute_nonstate_latent_data() {}
-    
+
     void impose_identifiability_constraints();
-    
+
    private:
     MultivariateStateSpaceModelBase *model_;
     bool latent_data_initialized_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_MULTIVARIATE_STATE_SPACE_MODEL_POSTERIOR_SAMPLER_HPP_
-
-
-

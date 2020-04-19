@@ -173,8 +173,6 @@ namespace BOOM {
   }
 
   Vector NS::basis_exterior(double, uint) const {
-    uint sz = nknots() - order_;
-    if (!icpt) --sz;
     return Vector(basis_dim(), 0.0);
   }
 

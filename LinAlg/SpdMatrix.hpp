@@ -31,8 +31,8 @@ namespace BOOM {
     // (i.e. 0's are stored)
    public:
     SpdMatrix();
-    SpdMatrix(uint dim, double diag = 0.0);
-    SpdMatrix(uint dim, const double *m, bool ColMajor = true);
+    explicit SpdMatrix(uint dim, double diag = 0.0);
+    explicit SpdMatrix(uint dim, const double *m, bool ColMajor = true);
     template <class FwdIt>
     explicit SpdMatrix(FwdIt Beg, FwdIt End);
 

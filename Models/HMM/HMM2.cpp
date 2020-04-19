@@ -199,11 +199,10 @@ namespace BOOM {
 
   void HMM_EM::find_mode(bool bayes) {
     double oldloglike = Estep(bayes);
-    double loglike = oldloglike;
     double crit = eps + 1;
     while (crit > eps) {
       Mstep(bayes);
-      loglike = Estep(bayes);
+      double loglike = Estep(bayes);
       crit = loglike - oldloglike;
       oldloglike = loglike;
     }

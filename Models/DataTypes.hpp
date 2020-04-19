@@ -158,14 +158,14 @@ namespace BOOM {
     // Args:
     //   y:  The numeric value of the data vector.
     //   obs:  Indicates which components of y are observed.
-    PartiallyObservedVectorData(const Vector &y,
+    explicit PartiallyObservedVectorData(const Vector &y,
                                 const Selector &obs = Selector());
     PartiallyObservedVectorData * clone() const override;
     void set(const Vector &value, bool signal_change = true) override;
 
     Selector &observation_status() { return obs_; }
     const Selector &observation_status() const { return obs_; }
-    
+
    private:
     Selector obs_;
   };
@@ -190,7 +190,7 @@ namespace BOOM {
    private:
     Matrix x;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_MODELS_DATA_TYPES_H

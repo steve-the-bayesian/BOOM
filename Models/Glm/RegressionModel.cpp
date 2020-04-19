@@ -180,9 +180,8 @@ namespace BOOM {
     return qr.solve(y);
   }
 
-  void QrRegSuf::Update(const DataType &dp) {
-    current = false;
-    Ptr<DataType> d = dp.clone();
+  void QrRegSuf::Update(const DataType &) {
+    report_error("QrRegSuf cannot handle updating.");
   }  // QR not built for updating
 
   void QrRegSuf::add_mixture_data(double, const Vector &, double) {

@@ -57,7 +57,7 @@ namespace BOOM {
     //     and consider all of its variables to be knowns.  Otherwise,
     //     consider m to be a variance matrix, and consider all its
     //     variables to be unknowns.
-    SweptVarianceMatrix(const SpdMatrix &m, bool inverse = false);
+    explicit SweptVarianceMatrix(const SpdMatrix &m, bool inverse = false);
 
     // Sweep the given index, or set of indices into the "known"
     // component.

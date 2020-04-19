@@ -49,7 +49,7 @@ namespace BOOM {
     // Matrix A("1 2 | 3 4") gives:
     //   1 2
     //   3 4
-    Matrix(const std::string &s, const std::string &row_delim = "|");
+    explicit Matrix(const std::string &s, const std::string &row_delim = "|");
 
     template <class FwdIt>
     Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc);
@@ -150,7 +150,7 @@ namespace BOOM {
     dVector::iterator end();
     dVector::const_iterator begin() const;
     dVector::const_iterator end() const;
-    
+
     dVector::iterator col_begin(uint i);
     dVector::iterator col_end(uint i);
     dVector::const_iterator col_begin(uint i) const;
@@ -231,7 +231,7 @@ namespace BOOM {
 
     // The log of the absolute value of the determinant.
     virtual double logdet() const;
-    
+
     Vector singular_values() const;  // sorted largest to smallest
     uint rank(double prop = 1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
@@ -275,7 +275,7 @@ namespace BOOM {
     Matrix &operator/=(const Matrix &m);
     Matrix &operator/=(const SubMatrix &m);
     Matrix &operator/=(const ConstSubMatrix &m);
-    
+
     Matrix &exp();  // in place exponentiation
     Matrix &log();  // in place logarithm
 
@@ -399,7 +399,7 @@ namespace BOOM {
     return ans;
   }
 
-  // Matrix - double Field operators 
+  // Matrix - double Field operators
   inline Matrix operator+(const Matrix &m, double a) {
     Matrix ans(m);
     ans += a;
@@ -424,7 +424,7 @@ namespace BOOM {
   inline Matrix operator*(double a, const Matrix &m) {
     return m * a;
   }
-  
+
   Matrix operator/(double a, const Matrix &m);
   inline Matrix operator/(const Matrix &m, double a) {
     Matrix ans(m);
@@ -512,7 +512,7 @@ namespace BOOM {
   Matrix &Lsolve_inplace(const Matrix &L, Matrix &B);   // B = L^{-1} * B
   Matrix &LTsolve_inplace(const Matrix &L, Matrix &B);  // B = L^{T -1}* B
   // Return the inverse of L (which is upper triangluar).
-  Matrix Linv(const Matrix &L);                      
+  Matrix Linv(const Matrix &L);
 
   Vector Umult(const Matrix &U, const Vector &y);
   Matrix Umult(const Matrix &U, const Matrix &m);
@@ -531,7 +531,7 @@ namespace BOOM {
   inline Vector vec(const Matrix &A) {
     return Vector(A.begin(), A.end());
   }
-    
+
 }  // namespace BOOM
 
 #endif  // BOOM_NEWLA_MATRIX_HPP
