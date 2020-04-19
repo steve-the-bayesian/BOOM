@@ -81,7 +81,7 @@ namespace BOOM {
     draw_inclusion_indicators();
     model_->draw_coefficients_given_inclusion(rng());
     draw_residual_variance();
-    draw_state_innovation_variance();
+    draw_unscaled_state_innovation_variance();
     draw_transition_probabilities();
   }
 
@@ -232,25 +232,24 @@ namespace BOOM {
     model_->set_residual_variance(sigsq);
   }
 
-  void DRDGS::draw_state_innovation_variance() {
+  void DRDGS::draw_unscaled_state_innovation_variance() {
     // The innovation variance is the variance of the innovation model times the
     // residual variance.  To preserve this definition, we must divide dbeta[t]
     // by sigma.
     double sigma = model_->residual_sd();
 
     for (int j = 0; j < model_->xdim(); ++j) {
-      Ptr<ZeroMeanGaussianModel> innovation_model =
-          model_->innovation_error_model(j);
-      innovation_model->suf()->clear();
+      Ptr<GaussianSuf> suf = model_->innovation_error_model(j)->suf();
+      suf->clear();
+      // The for loop starts from 1 to allow differencing.
       for (int t = 1; t < model_->time_dimension(); ++t) {
-        if (model_->inclusion_indicator(t, j)
-            && model_->inclusion_indicator(t - 1, j)) {
+        if (model_->inclusion_indicator(t, j)) {
           double dbeta = model_->coefficient(t, j)
               - model_->coefficient(t - 1, j);
-          innovation_model->suf()->update_raw(dbeta / sigma);
+          suf->update_raw(dbeta / sigma);
         }
       }
-      innovation_model->sample_posterior();
+      model_->innovation_error_model(j)->sample_posterior();
     }
   }
 

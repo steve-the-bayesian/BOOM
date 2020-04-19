@@ -56,7 +56,7 @@ namespace BOOM {
 
     // Sample the state innovation variances, given all else, from their full
     // conditional distributions.
-    void draw_state_innovation_variance();
+    void draw_unscaled_state_innovation_variance();
 
     // Sample the transition probabilities for the inclusion indicators from
     // their full conditional.
