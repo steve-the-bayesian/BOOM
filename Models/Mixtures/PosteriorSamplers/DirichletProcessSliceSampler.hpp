@@ -36,9 +36,10 @@ namespace BOOM {
     //     model.
     //   seeding_rng: The external RNG used to seed the RNG owned by this
     //     sampler.
-    DirichletProcessSliceSampler(DirichletProcessMixtureModel *model,
-                                 int initial_clusters = 1,
-                                 RNG &seeding_rng = GlobalRng::rng);
+    explicit DirichletProcessSliceSampler(
+        DirichletProcessMixtureModel *model,
+        int initial_clusters = 1,
+        RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
 

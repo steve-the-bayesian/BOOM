@@ -134,10 +134,9 @@ namespace BOOM {
     //------------------------------------------------------------
     std::ostream &IrtModel::print_subscales(
         std::ostream &out, bool nl, bool decorate) {
-      uint sz = 0;
       std::string sep = "   ";
       if (decorate) {
-        sz = find_max_length(subscale_names());
+        uint sz = find_max_length(subscale_names());
         out << std::string(2, '-') << sep << std::string(sz, '-') << endl;
       }
 

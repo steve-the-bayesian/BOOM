@@ -81,10 +81,10 @@ namespace BOOM {
 
     // The total number of potential predictor variables available.
     virtual uint potential_nvars() const = 0;
-    
+
     virtual std::ostream &print(std::ostream &out) const = 0;
   };
-  
+
   //===========================================================================
   class VariableSelectionPrior
       : public VariableSelectionPriorBase,
@@ -94,7 +94,7 @@ namespace BOOM {
   {
    public:
     VariableSelectionPrior();
-    VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
+    explicit VariableSelectionPrior(uint n, double inclusion_probability = 1.0);
     explicit VariableSelectionPrior(
         const Vector &marginal_inclusion_probabilities);
     VariableSelectionPrior *clone() const override;
@@ -106,7 +106,7 @@ namespace BOOM {
     void set_prior_inclusion_probability(int i, double value) {
       ParamPolicy::prm_ref().set_element(value, i);
     }
-    
+
     const Vector &prior_inclusion_probabilities() const {
       return ParamPolicy::prm_ref().value();
     }
@@ -127,7 +127,7 @@ namespace BOOM {
     //
     // This function is logically const.
     void ensure_log_probabilities() const;
-    
+
     mutable bool current_;
     mutable Vector log_inclusion_probabilities_;
     mutable Vector log_complementary_inclusion_probabilities_;
@@ -236,7 +236,7 @@ namespace BOOM {
     MatrixVariableSelectionPrior *clone() const override {
       return new MatrixVariableSelectionPrior(*this);
     }
-    
+
      const Matrix &prior_inclusion_probabilities() const {
        return ParamPolicy::prm_ref().value();
      }
@@ -245,11 +245,11 @@ namespace BOOM {
 
     int nrow() const {return prior_inclusion_probabilities().nrow();}
     int ncol() const {return prior_inclusion_probabilities().ncol();}
-    
+
    private:
     // Throw an error if any element of probs is outside the range [0, 1].
     void check_probabilities(const Matrix &probs) const;
-    
+
     // Set an observer on the vector of prior inclusion probabilities so that
     // the vectors of log probabilities will be marked not current if the raw
     // probabilities change.
@@ -260,11 +260,11 @@ namespace BOOM {
     //
     // This function is logically const.
     void ensure_log_probabilities() const;
-    
+
     mutable bool current_;
     mutable Matrix log_inclusion_probabilities_;
     mutable Matrix log_complementary_inclusion_probabilities_;
    };
-  
+
 }  // namespace BOOM
 #endif  // BOOM_VARIABLE_SELECTION_PRIOR_HPP
