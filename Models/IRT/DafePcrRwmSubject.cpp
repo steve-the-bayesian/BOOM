@@ -101,7 +101,6 @@ namespace BOOM {
     void SS::accumulate_moments(std::pair<Ptr<Item>, Response> ir) {
       Ptr<Item> it = ir.first;
       Ptr<PCR> pcr = it.dcast<PCR>();
-      Response r = ir.second;
       double a = pcr->a();
       uint M = it->maxscore();
       uint which = pcr->which_subscale();

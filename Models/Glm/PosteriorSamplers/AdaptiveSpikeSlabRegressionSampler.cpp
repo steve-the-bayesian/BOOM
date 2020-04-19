@@ -58,7 +58,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void AdaptiveSpikeSlabRegressionSampler::draw() {
     Selector included_coefficients = model_->coef().inc();
     if (allow_model_selection_) {
@@ -123,8 +123,6 @@ namespace BOOM {
     logdet_omega_inverse_ = unscaled_prior_precision.logdet();
     Vector prior_mean = inclusion_indicators.select(slab_->mu());
 
-    SpdMatrix xtx = model_->suf()->xtx(inclusion_indicators);
-    
     unscaled_posterior_precision_ =
         unscaled_prior_precision
         + model_->suf()->xtx(inclusion_indicators);
@@ -141,8 +139,8 @@ namespace BOOM {
             GlmCoefs(posterior_mean_, inclusion_indicators))
         + unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
   }
-  
-  //---------------------------------------------------------------------------  
+
+  //---------------------------------------------------------------------------
   // set_posterior_moments must have been called prior to calling draw_coefficients.
   void AdaptiveSpikeSlabRegressionSampler::draw_coefficients() {
     Vector coefficients = rmvn_ivar_mt(
@@ -157,7 +155,7 @@ namespace BOOM {
     double sigsq = sigsq_sampler_.draw(rng(), data_df, data_sumsq);
     model_->set_sigsq(sigsq);
   }
-  
+
   void AdaptiveSpikeSlabRegressionSampler::birth_move(
       Selector &included_coefficients) {
     const Selector excluded = included_coefficients.complement();
@@ -166,7 +164,7 @@ namespace BOOM {
     }
     Vector weights = excluded.select(birth_rates_);
     int which = rmulti_mt(rng(), weights);
-    
+
     uint candidate_index = excluded.indx(which);
     included_coefficients.add(candidate_index);
 
@@ -195,7 +193,7 @@ namespace BOOM {
     adjustment *= (MH_alpha - target_acceptance_rate_);
     birth_rates_[which_variable] *= exp(adjustment);
   }
-  
+
   void AdaptiveSpikeSlabRegressionSampler::death_move(
       Selector &included_coefficients) {
     if (included_coefficients.nvars() == 0) {
@@ -244,5 +242,5 @@ namespace BOOM {
     }
     target_acceptance_rate_ = rate;
   }
-  
+
 }  // namespace BOOM

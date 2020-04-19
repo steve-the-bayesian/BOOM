@@ -84,7 +84,6 @@ namespace BOOM {
     if (mod_->pi0_fixed()) return ans;
 
     check_pi0();
-    nu = this->nu();
 
     ans +=
         ddirichlet(trans_.select(mod_->pi0()), trans_.select(this->nu()), true);

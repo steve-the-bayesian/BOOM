@@ -30,8 +30,8 @@ namespace BOOM {
   // class will simply call them all.
   class NestedHmmPosteriorSampler : public PosteriorSampler {
    public:
-    NestedHmmPosteriorSampler(NestedHmm *model,
-                              RNG &seeding_rng = GlobalRng::rng);
+    explicit NestedHmmPosteriorSampler(NestedHmm *model,
+                                       RNG &seeding_rng = GlobalRng::rng);
     double logpri() const override;
     void draw() override;
 

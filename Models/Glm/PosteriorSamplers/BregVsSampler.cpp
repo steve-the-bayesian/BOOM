@@ -62,15 +62,15 @@ namespace BOOM {
         sigsq_sampler_(residual_precision_prior_),
         failure_count_(0) {
     uint p = model_->nvars_possible();
-    Vector b = Vector(p, 0.0);
+    Vector prior_mean = Vector(p, 0.0);
     if (first_term_is_intercept) {
-      b[0] = model_->suf()->ybar();
+      prior_mean[0] = model_->suf()->ybar();
     }
     SpdMatrix ominv(model_->suf()->xtx());
     double n = model_->suf()->n();
     ominv *= prior_nobs / n;
     slab_ = check_slab_dimension(
-        new MvnGivenScalarSigma(ominv, model_->Sigsq_prm()));
+        new MvnGivenScalarSigma(prior_mean, ominv, model_->Sigsq_prm()));
 
     double prob = expected_model_size / p;
     if (prob > 1) prob = 1.0;
@@ -287,7 +287,7 @@ namespace BOOM {
     int candidate = correlation_map_.propose_swap(
         rng(), included, index, &forward_proposal_weight);
     if (candidate < 0) return;
-    
+
     double original_model_log_probability = log_model_prob(included);
     included.drop(index);
     included.add(candidate);
@@ -424,15 +424,15 @@ namespace BOOM {
     if (!std::isfinite(SS_)) {
       report_error("Prior sum of squares is wrong.");
     }
-    
+
     // Add in the sum of squared errors around posterior_mean_
-    double likelihood_ss = 
+    double likelihood_ss =
         s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
     SS_ += likelihood_ss;
     if (!std::isfinite(SS_)) {
       report_error("Quadratic form caused infinite SS.");
     }
-    
+
     // Add in the sum of squares component arising from the discrepancy between
     // the prior and posterior means.
     SS_ += unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);

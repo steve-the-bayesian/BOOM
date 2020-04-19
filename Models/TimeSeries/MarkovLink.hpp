@@ -47,10 +47,10 @@ namespace BOOM {
   };
 
   template <class D>
-  MarkovLink<D>::MarkovLink() {
-    prev_ = Ptr<D>();
-    next_ = Ptr<D>();
-  }
+  MarkovLink<D>::MarkovLink()
+      : prev_(nullptr),
+        next_(nullptr)
+  {}
 
   template <class D>
   MarkovLink<D>::MarkovLink(const Ptr<D> &last) : prev_(last) {

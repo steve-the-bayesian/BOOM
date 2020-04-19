@@ -46,7 +46,7 @@ namespace BOOM {
       return ans;
     }
     const char *start = s.data();
-    const char *pos = start;
+    const char *pos;
     const char *end = start + s.size();
     // Test cases
     // 3,

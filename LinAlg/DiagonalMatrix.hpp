@@ -37,7 +37,7 @@ namespace BOOM {
   class DiagonalMatrix {
    public:
     DiagonalMatrix();
-    DiagonalMatrix(uint dimension, double diagonal_elements = 0.0);
+    explicit DiagonalMatrix(uint dimension, double diagonal_elements = 0.0);
     explicit DiagonalMatrix(const Vector &diagonal_elements);
     explicit DiagonalMatrix(const VectorView &diagonal_elements);
     explicit DiagonalMatrix(const ConstVectorView &diagonal_elements);
@@ -76,7 +76,7 @@ namespace BOOM {
     Matrix &Tmult(const Matrix &B, Matrix &ans, double scalar = 1.0) const;
 
     Matrix Tmult(const Matrix &rhs) const;
-    
+
     // Fill 'ans' with scalar * this * B^T
     // Return ans.
     Matrix &multT(const Matrix &B, Matrix &ans, double scalar = 1.0) const;
@@ -110,11 +110,11 @@ namespace BOOM {
     Vector &Tmult(const Vector &v, Vector &ans, double scalar = 1.0) const;
     void multiply_inplace(Vector &v) const;
     void multiply_inplace(VectorView &v) const;
-    
+
     Vector operator*(const Vector &x) const;
     Vector operator*(const VectorView &x) const;
     Vector operator*(const ConstVectorView &x) const;
-    
+
     DiagonalMatrix t() const;
     DiagonalMatrix inv() const;
     DiagonalMatrix inner() const;  // returns X^tX
@@ -188,7 +188,7 @@ namespace BOOM {
   inline Vector operator*(const ConstVectorView &v, const DiagonalMatrix &m) {
     return m * v;
   }
-  
+
   DiagonalMatrix operator/(const DiagonalMatrix &m1, const DiagonalMatrix &m2);
   DiagonalMatrix operator/(const DiagonalMatrix &d, double x);
   DiagonalMatrix operator/(double x, const DiagonalMatrix &d);

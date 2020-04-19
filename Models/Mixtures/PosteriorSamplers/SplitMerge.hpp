@@ -230,8 +230,9 @@ namespace BOOM {
       //     the annealing_factor.  The annealing factor balances between splits
       //     and merges.  Numbers close to 1 tend to yield more splits.  Numbers
       //     closer to zero tend to yield more merges.
-      SingleObservationSplitStrategy(DirichletProcessMixtureModel *model,
-                                     double annealing_factor = 1.0);
+      explicit SingleObservationSplitStrategy(
+          DirichletProcessMixtureModel *model,
+          double annealing_factor = 1.0);
 
       Proposal propose_split(int data_index_1, int data_index_2,
                              RNG &rng) override;

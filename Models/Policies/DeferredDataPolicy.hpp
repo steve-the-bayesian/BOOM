@@ -31,16 +31,17 @@ namespace BOOM {
   class DeferredDataPolicy : virtual public Model {
    public:
     typedef DeferredDataPolicy DataPolicy;
-    
+
     DeferredDataPolicy() {}
     explicit DeferredDataPolicy(const Ptr<Model> &model) : model_(model) {}
 
     // Copy and assignment reset the model pointer to nullptr, with the
     // expectation that it will be set in the downstream implementation using
     // set_model.
-    DeferredDataPolicy(const DeferredDataPolicy &rhs) : Model(rhs) {
-      model_ = nullptr;
-    }
+    DeferredDataPolicy(const DeferredDataPolicy &rhs)
+        : Model(rhs),
+          model_(nullptr)
+    {}
 
     DeferredDataPolicy & operator=(const DeferredDataPolicy &rhs) {
       if (&rhs != this) {
@@ -56,7 +57,7 @@ namespace BOOM {
     void set_model(const Ptr<Model> &model) {
       model_ = model;
     }
-    
+
     void add_data(const Ptr<Data> &dp) override {
       check_model("add_data");
       model_->add_data(dp);
@@ -72,7 +73,7 @@ namespace BOOM {
       check_model("combine_data");
       model_->combine_data(other_model, just_suf);
     }
-        
+
    private:
     // If the model pointer is nullptr then report an error.
     // Args:
@@ -87,7 +88,7 @@ namespace BOOM {
     }
     Ptr<Model> model_;
   };
-  
+
 }
 
 #endif //  BOOM_DEFERRED_DATA_POLICY_HPP_
