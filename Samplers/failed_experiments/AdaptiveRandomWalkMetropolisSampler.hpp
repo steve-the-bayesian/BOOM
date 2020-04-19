@@ -30,9 +30,10 @@ namespace BOOM {
   class AdaptiveRandomWalkMetropolisSampler : public Sampler {
    public:
     typedef std::function<double(const Vector &)> LogDensity;
-    AdaptiveRandomWalkMetropolisSampler(const LogDensity &log_density,
-                                        double smoothing_weight_on_past = .95,
-                                        RNG *rng = nullptr);
+    explicit AdaptiveRandomWalkMetropolisSampler(
+        const LogDensity &log_density,
+        double smoothing_weight_on_past = .95,
+        RNG *rng = nullptr);
     Vector draw(const Vector &old) override;
 
    private:

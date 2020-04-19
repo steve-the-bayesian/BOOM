@@ -29,6 +29,7 @@ namespace BOOM {
 
     RDTP::RegressionDataTimePoint(const RegressionDataTimePoint &rhs)
         : xdim_(rhs.xdim_),
+          yty_(0.0),
           suf_(nullptr)
     {
       if (!!rhs.suf_) {
