@@ -73,7 +73,7 @@ def check_mcmc_matrix(draws, truth, confidence: float = .95,
     coverage_indicators = np.full(dim, False)
     fails_to_cover = 0
     for i in range(dim):
-        coverage_indicators[i] = covers(draws[i], truth[i], confidence)
+        coverage_indicators[i] = covers(draws[:, i], truth[i], confidence)
         if not coverage_indicators[i]:
             fails_to_cover += 1
 
