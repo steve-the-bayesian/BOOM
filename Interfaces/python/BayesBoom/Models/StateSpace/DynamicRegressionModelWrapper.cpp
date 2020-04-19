@@ -155,7 +155,9 @@ namespace BayesBoom {
              "  The  regression coefficients at time t.")
         .def_property_readonly(
             "residual_sd",
-            &DynamicRegressionModel::residual_sd,
+            [](const DynamicRegressionModel &model) {
+              return model.residual_sd();
+            },
              "Residual standard deviation")
         .def("set_residual_sd",
              [](DynamicRegressionModel &model, double residual_sd) {
@@ -165,7 +167,8 @@ namespace BayesBoom {
         .def_property_readonly(
             "unscaled_innovation_sds",
             [](DynamicRegressionModel &model) {
-              return sqrt(model.unscaled_innovation_variances());},
+              return sqrt(model.unscaled_innovation_variances());
+            },
             "Vector of unscaled innovation standard deviations.  Multiply by \n"
             "residual SD to get the actual innovation standard deviations.")
         .def("set_unscaled_innovation_sds",
@@ -188,6 +191,18 @@ namespace BayesBoom {
              "    Multipying by the residual standard deviation gives the \n"
              "    actual innovation SD."
              )
+        .def("transition_probabilities",
+             [](DynamicRegressionModel &model, int pred) {
+               return model.transition_model(pred)->Q();
+             },
+             "Transition probability matrix for the requested coefficient.\n\n"
+             "Args:\n"
+             "  pred:  The index of a predictor.  An integer from 0 to "
+             "xdim - 1.\n\n"
+             "Returns:\n"
+             "  A Matrix containing the transition probabilities of the \n"
+             "  Markov chain defining the inclusion indicators for the \n"
+             "  requested predictor.\n")
         .def("set_transition_probabilities",
              [](DynamicRegressionModel &model,
                 const Vector &p00,
@@ -283,13 +298,22 @@ namespace BayesBoom {
              "durations.\n"
              "  seeding_rng:  The random number generator used to seed the "
              "RNG in this sampler.\n")
-        .def("draw", &DRDGS::draw,
+        .def("draw",
+             &DRDGS::draw,
              "Perform one posterior sampling iteration on the managed model.\n")
-        .def("draw_residual_variance", &DRDGS::draw_residual_variance)
-        .def("draw_inclusion_indicators", &DRDGS::draw_inclusion_indicators)
+        .def("draw_residual_variance",
+             &DRDGS::draw_residual_variance,
+             "Draw the residual variance parameter.")
+        .def("draw_inclusion_indicators",
+             &DRDGS::draw_inclusion_indicators,
+             "Simulate the vector of inclusion indicators at each time point.")
+        .def("draw_unscaled_state_innovation_variance",
+             &DRDGS::draw_unscaled_state_innovation_variance,
+             "Simulate the state innovation error variances, up to the residual "
+             "variance proportionality constant")
         .def("draw_transition_probabilities",
-             &DRDGS::draw_transition_probabilities)
-        .def("draw_residual_variance", &DRDGS::draw_residual_variance)
+             &DRDGS::draw_transition_probabilities,
+             "Simulate the Markov chain transition probabilities.")
         ;
   }  // StateSpaceModel_def
 

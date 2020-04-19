@@ -2,6 +2,8 @@ import unittest
 import BayesBoom as boom
 import numpy as np
 import R
+import test_utils
+
 
 class DynregTest(unittest.TestCase):
     def setUp(self):
@@ -49,13 +51,12 @@ class DynregTest(unittest.TestCase):
 
         coefficients = np.zeros((xdim, time_dimension))
         for j in range(xdim):
+            sd = unscaled_innovation_sd[j] * residual_sd
             for t in range(time_dimension):
                 prev = 0 if t == 0 else coefficients[j, t-1]
-                coefficients[j, t] = (
-                    prev +
-                    np.random.randn(1) * residual_sd * unscaled_innovation_sd[j]
+                coefficients[j, t] = inclusion[j, t] * (
+                    prev + np.random.randn(1) * sd
                 )
-                coefficients[j, t] *= inclusion[j, t]
 
         data = []
         for t in range(time_dimension):
@@ -79,7 +80,7 @@ class DynregTest(unittest.TestCase):
             model,
             1.0,
             1.0,
-            boom.Vector(np.array([1.0] * xdim)),
+            boom.Vector(self._unscaled_innovation_sd),
             boom.Vector(np.array([1.0] * xdim)),
             boom.Vector(np.array([.25] * xdim)),
             boom.Vector(np.array([2.0] * xdim)),
@@ -138,6 +139,11 @@ class DynregTest(unittest.TestCase):
             model.sample_posterior()
 
     def test_draw_inclusion_indicators(self):
+        """
+        Check that the model draws the inclusion indicators conditional on all
+        other unknowns fixed at their true values.  The regression coefficients
+        are integrated out and not conditioned on.
+        """
         # Make the coefficients big, so that effects are obvious.
         unscaled_innovation_sd = np.array([10, 20, 30])
         data, coefficients, inclusion = self.simulate_data_from_model(
@@ -196,6 +202,10 @@ class DynregTest(unittest.TestCase):
         self.assertGreater(cor, .9)
 
     def test_draw_residual_variance(self):
+        """
+        Check that the MCMC algorithm draws the true residual_sd given all other
+        unknowns fixed at their true values.
+        """
         data, coefficients, inclusion = self.simulate_data_from_model(
             time_dimension=100,
             typical_sample_size=500,
@@ -210,24 +220,79 @@ class DynregTest(unittest.TestCase):
             self._unscaled_innovation_sd, self._p00, self._p11)
 
         niter = 1000
-        draws = np.full(niter, -1)
+        draws = np.full(niter, -1.0)
 
         for i in range(niter):
             sampler.draw_residual_variance()
             draws[i] = model.residual_sd
 
-        import pdb
-        pdb.set_trace()
-        print("Look at draws of the residual sd.")
-
+        self.assertTrue(test_utils.check_mcmc_vector(
+            draws, self._residual_sd))
 
     def test_draw_state_innovation_variance(self):
-        pass
+        data, coefficients, inclusion = self.simulate_data_from_model(
+            time_dimension=100,
+            typical_sample_size=500,
+            xdim=self._xdim,
+            residual_sd=self._residual_sd,
+            unscaled_innovation_sd=self._unscaled_innovation_sd,
+            p00=self._p00,
+            p11=self._p11)
+
+        model, sampler = self.setup_model(
+            data, coefficients, inclusion, self._residual_sd,
+            self._unscaled_innovation_sd, self._p00, self._p11)
+
+        niter = 1000
+        draws = np.full((niter, self._xdim), -1.0)
+
+        for i in range(niter):
+            sampler.draw_unscaled_state_innovation_variance()
+            draws[i, :] = model.unscaled_innovation_sds.to_numpy()
+
+        self.assertTrue(
+            test_utils.check_mcmc_matrix(draws, self._unscaled_innovation_sd)
+        )
 
     def test_draw_transition_probabilities(self):
-        pass
+        data, coefficients, inclusion = self.simulate_data_from_model(
+            time_dimension=100,
+            typical_sample_size=500,
+            xdim=self._xdim,
+            residual_sd=self._residual_sd,
+            unscaled_innovation_sd=self._unscaled_innovation_sd,
+            p00=self._p00,
+            p11=self._p11)
 
-debug_mode_ = True
+        model, sampler = self.setup_model(
+            data, coefficients, inclusion, self._residual_sd,
+            self._unscaled_innovation_sd, self._p00, self._p11)
+
+        niter = 1000
+        draws = np.full((niter, self._xdim, 2, 2), -1.0)
+
+        for i in range(niter):
+            sampler.draw_transition_probabilities()
+            for j in range(self._xdim):
+                draws[i, j, :, :] = model.transition_probabilities(j).to_numpy()
+
+        # Check that each draw sums to 1 across columns.
+        row_sums = draws.sum(axis=3)
+        self.assertAlmostEqual(np.max(row_sums), 1.0)
+        self.assertAlmostEqual(np.min(row_sums), 1.0)
+
+        # Check that there is some MCMC variation.
+        sd = np.std(draws, axis=0)
+        self.assertTrue(np.all(sd > 0))
+
+        for i in range(self._xdim):
+            self.assertTrue(test_utils.check_mcmc_vector(
+                draws[:, i, 0, 0], self._p00[i]))
+            self.assertTrue(test_utils.check_mcmc_vector(
+                draws[:, i, 1, 1], self._p11[i]))
+
+
+debug_mode_ = False
 
 if debug_mode_:
     import pdb
@@ -238,6 +303,8 @@ if debug_mode_:
     rig.test_draw_inclusion_indicators()
     rig.test_draw_coefficients()
     rig.test_draw_residual_variance()
+    rig.test_draw_state_innovation_variance()
+    rig.test_draw_transition_probabilities()
     print("All done!")
 
 elif __name__ == "__main__":
