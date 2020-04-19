@@ -1,6 +1,5 @@
 import scipy.stats as sp
 import numpy as np
-from numbers import Number
 
 # expose R's equivalent of pnorm, qnorm, etc.
 

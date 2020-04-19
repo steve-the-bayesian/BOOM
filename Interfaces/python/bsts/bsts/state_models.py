@@ -1,10 +1,10 @@
 import BayesBoom as boom
 import numpy as np
-import patsy
+# import patsy
 from abc import ABC, abstractmethod
-import spikeslab
+# import spikeslab
 import R
-import scipy.sparse
+# import scipy.sparse
 
 
 # ===========================================================================

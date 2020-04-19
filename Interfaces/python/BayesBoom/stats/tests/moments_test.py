@@ -1,7 +1,8 @@
 import unittest
 import BayesBoom as boom
 import numpy as np
-from BayesBoom import mean, var, sd, cor
+from BayesBoom import mean, var, cor
+
 
 class MomentsTest(unittest.TestCase):
 
