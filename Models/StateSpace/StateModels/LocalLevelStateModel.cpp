@@ -163,7 +163,7 @@ namespace BOOM {
   SLLSM::SharedLocalLevelStateModel(const SLLSM &rhs) {
     operator=(rhs);
   }
-  
+
   SLLSM & SLLSM::operator=(const SLLSM &rhs) {
     if (&rhs != this) {
       coefficient_model_ = rhs.coefficient_model_->clone();
@@ -214,7 +214,7 @@ namespace BOOM {
   }
 
   SLLSM * SLLSM::clone() const {return new SLLSM(*this);}
-  
+
   void SLLSM::clear_data() {
     for (int i = 0; i < innovation_models_.size(); ++i) {
       innovation_models_[i]->clear_data();
@@ -270,7 +270,7 @@ namespace BOOM {
     }
     eta = rmvn_mt(rng, initial_state_mean_, initial_state_variance_);
   }
-  
+
   Ptr<SparseMatrixBlock> SLLSM::observation_coefficients(
       int t, const Selector &observed) const {
     if (observed.nvars() == observed.nvars_possible()) {
@@ -290,7 +290,7 @@ namespace BOOM {
     }
     return initial_state_mean_;
   }
-  
+
   void SLLSM::set_initial_state_mean(const Vector &mean) {
     if (mean.size() != state_dimension()) {
       std::ostringstream err;
@@ -309,7 +309,7 @@ namespace BOOM {
     }
     return initial_state_variance_;
   }
-  
+
   void SLLSM::set_initial_state_variance(const SpdMatrix &variance) {
     if (variance.nrow() != state_dimension()) {
       report_error("Wrong size argument in set_initial_state_variance.");
@@ -351,8 +351,7 @@ namespace BOOM {
     // The multivariate regression model is organized as (xdim, ydim).  The 'X'
     // in our case is the state, where we want y = Z * state, so we need the
     // transpose of the coefficient matrix from the regression.
-    Matrix Beta = coefficient_model_->Beta();
-    Beta = 0.0;
+    Matrix Beta = coefficient_model_->Beta() * 0.0;
     Beta.diag() = 1.0;
     observation_coefficients_.reset(new DenseMatrix(Beta.transpose()));
 
@@ -382,7 +381,7 @@ namespace BOOM {
     // Matrix R = BetaQr.getR();
     // DiagonalMatrix Rdiag(R.diag());
     // const Matrix &Q(BetaQr.getQ());
-        
+
     // coefficient_model_->set_Beta(BetaQr.getR());
     // SubMatrix state = host_->mutable_full_state_subcomponent(index());
     // Vector workspace(state.nrow());
@@ -400,5 +399,5 @@ namespace BOOM {
     };
     coefficient_model_->Beta_prm()->add_observer(observer);
   }
-  
+
 }  // namespace BOOM
