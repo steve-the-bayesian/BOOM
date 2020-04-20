@@ -54,8 +54,12 @@ namespace BOOM {
     //     definite.
     //   check: If true, then throw an exception if m is not
     //     symmetric.  Skip the check if 'check' is false.
+    //
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const Matrix &m, bool check = true);
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const SubMatrix &m, bool check = true);
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const ConstSubMatrix &m, bool check = true);
 
     SpdMatrix &operator=(const Matrix &);
