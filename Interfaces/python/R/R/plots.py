@@ -2,11 +2,492 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import numbers
+from abc import ABC, abstractmethod
 
 from R import data_range
 
 _last_figure_ = None
 _last_axis_ = None
+
+_active_graphics_devices = {}
+_current_graphics_device = None
+_largest_graphics_device_number = 0
+
+
+class GraphicsDevice(ABC):
+    """
+    Manages a plt.figure and a set of axes.
+    """
+
+    def __init__(self):
+        global _largest_graphics_device_number
+        global _current_graphics_device
+        self._number = _largest_graphics_device_number + 1
+        _largest_graphics_device_number = self._number
+        _active_graphics_devices[self._number] = self
+        _current_graphics_device = self
+
+        self._figure, self._axes = plt.subplots(1, 1)
+        self._axes_cursor = None
+        self._nrow = 1
+        self._ncol = 1
+
+    def __del__(self):
+        plt.close(self._figure)
+
+    @property
+    def next_axes(self):
+        if hasattr(self._axes, "shape"):
+            shape = self._axes.shape
+            if min(shape) == 1:
+                self._increment_1d_cursor()
+            else:
+                self._increment_2d_cursor()
+        else:
+            self._axes = self._figure.subplots(1, 1)
+        return self.current_axes
+
+    def _increment_1d_cursor(self):
+        dim = max(self._nrow, self._ncol)
+        self._axes_cursor += 1
+        if self._axes_cursor >= dim:
+            self._axes_cursor = 0
+            # We need nrow and ncol here because
+            self._axes = self._figure.subplots(self._nrow, self._ncol)
+
+    def _increment_2d_cursor(self):
+        i, j = self._axes_cursor
+        j += 1
+        if j >= self._axes.shape[1]:
+            j = 0
+            i += 1
+            if i >= self._axes.shape[0]:
+                self._figure, self._axes = plt.subplots(
+                    self._axes.shape[0], self._axes.shape[1])
+                i, j = 0, 0
+        self._axes_cursor = (i, j)
+
+    @property
+    def current_axes(self):
+        if self._nrow > 1 or self._ncol > 1:
+            return self._axes[self._axes_cursor]
+        else:
+            return self._axes
+
+    @abstractmethod
+    def draw_current_axes(self):
+        """
+        """
+
+
+class InteractiveGraphicsDevice(GraphicsDevice):
+    """
+    A private stack manages the set of active graphics devices.
+    """
+
+    def __init__(self):
+        super().__init__()
+        plt.show(block=False)
+        plt.pause(.001)
+
+    def draw_current_axes(self):
+        """
+
+        """
+        plt.pause(.001)
+
+class PdfGraphicsDevice(GraphicsDevice):
+    """
+    Destructor generates a PDF file that gets generated when the graphics
+    device is deleted.
+    """
+
+    def __init__(self, filename, width=5, height=5):
+        self._filename = filename
+
+    def __del__(self):
+        """
+        Create the pdf file upon deletion.
+        """
+        if self._figure is not None:
+            self._figure.save(self._filename)
+
+    def draw_current_axes(self):
+        """
+        """
+        pass
+
+
+
+def get_current_graphics_device():
+    """
+    Returns the current graphics device, if one exists.  Otherwise create and
+    return an interactive graphics device.
+    """
+    global _current_graphics_device
+    if _current_graphics_device is not None:
+        return _current_graphics_device
+    else:
+        return InteractiveGraphicsDevice()
+
+
+
+# ===========================================================================
+# Graphics related utilities.  These do not interact with a figure, axes, or
+# graphics device.
+# ===========================================================================
+def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
+                       **kwargs):
+    """
+    Remove plotting options used by the R package from other options supplied by
+    kwargs.  This allows the remaining options to be later passed to pyplot.
+
+    Returns:
+      plot_options:  The options expected by R plotting functions.a
+      kwargs:  Everything not pulled into plot_options.
+    """
+    plot_options = {'xlab': xlab,
+                    'ylab': ylab,
+                    'xlim': xlim,
+                    'ylim': ylim,
+                    'title': title}
+    return plot_options, kwargs
+
+
+def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
+                      **kwargs):
+    if xlab != "":
+        ax.set_xlabel(xlab)
+    if ylab != "":
+        ax.set_ylabel(ylab)
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+    if title != "":
+        ax.set_title(title)
+
+
+def pretty_plot_ticks(low, high, n):
+    """
+    Return a set of 'pretty' tick locations.
+
+    Args:
+      low: The lower end of the plotting range.
+      high: The upper end of the plotting range.
+      n: The desired number of ticks.
+
+    Returns:
+      A np.array with 'pretty' values suitable for tick labels.  The length of
+      the array will typically not be exactly 'n'.  Its lower endpoint will be
+      <= low and its upper endpoint will be >= high.
+
+    Taken from StackOverflow:
+    https://stackoverflow.com/questions/43075617/python-function-equivalent-to-rs-pretty
+    """
+    def nicenumber(x, round):
+        exp = np.floor(np.log10(x))
+        f = x / 10**exp
+
+        if round:
+            if f < 1.5:
+                nf = 1.
+            elif f < 3.:
+                nf = 2.
+            elif f < 7.:
+                nf = 5.
+            else:
+                nf = 10.
+        else:
+            if f <= 1.:
+                nf = 1.
+            elif f <= 2.:
+                nf = 2.
+            elif f <= 5.:
+                nf = 5.
+            else:
+                nf = 10.
+
+        return nf * 10.**exp
+
+    range = nicenumber(high - low, False)
+    d = nicenumber(range / (n - 1), True)
+    miny = np.floor(low / d) * d
+    maxy = np.ceil(high / d) * d
+    return np.arange(miny, maxy+0.5*d, d)
+
+
+def plot_grid_size(nplots: int):
+    """
+    Compute the number of rows and columns needed to plot 'nplots'.
+
+    :param nplots:
+        The desired number of plots.
+
+    :return tuple:
+        The number of rows, and columns, needed to plot that many plots.
+    """
+    nr = int(max(1, np.sqrt(nplots)))
+    nc = int(np.ceil(nplots / nr))
+    return nr, nc
+
+
+# ===========================================================================
+# Low level plot functions.  These interact with the current axes object in the
+# current graphics device.  They do not advance to the next axes.
+# ===========================================================================
+def points(x, y, s=None, **kwargs):
+    """
+    Add points to the plot showing on the current graphics device.
+    """
+    device = get_current_graphics_device()
+    ax = device.current_axes()
+    if s is None:
+        s = 20 / np.sqrt(len(y))
+    ax.scatter(x, y, **kwargs)
+
+
+def lines(x, y, **kwargs):
+    """
+    Add lines to the most recent plot.
+    """
+    device = get_current_graphics_device()
+    ax = device.current_axes()
+    ax.plot(x, y, **kwargs)
+
+
+def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
+    """
+    Add a line with specified slope and intercept to a plot.
+
+    Args:
+      a: The intercept of the line.
+      b: The slope of the line.
+      h: Draw a horizontal line at this y value.
+      v: Draw a vertical line at this x value.
+      **kwargs:  Additional arguments passed to 'plt.plot'.
+
+    Returns:
+      None
+
+    Effect:
+      The requested line is plotted on 'ax'.
+    """
+    device = get_current_graphics_device()
+    ax = device.current_axes
+    if ax is None:
+        ax = _last_axis_
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    if h is not None:
+        p0 = xlim[0], h
+        p1 = xlim[1], h
+    elif v is not None:
+        p0 = v, ylim[0]
+        p1 = v, ylim[1]
+    else:
+        p0 = xlim[0], a + b * xlim[0]
+        p1 = xlim[1], a + b * xlim[1]
+
+    x = [p0[0], p1[0]]
+    y = [p0[1], p1[1]]
+    ax.plot(x, y, **kwargs)
+
+
+# ===========================================================================
+# High level plot functions.  These advance to the next active axes object in
+# the graphics device.  If the graphics device is already at the last set of
+# axes, the plot resets.
+# ===========================================================================
+
+def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
+    """
+    For now, a 'plot' is a scatterplot.  At some point I will make 'plot'
+    generic as with R.
+    """
+    device = get_current_graphics_device()
+    ax = device.next_axes
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+
+    if y is None:
+        y = x
+        x = np.arange(len(y))
+
+    sample_size = len(x)
+
+    if s is None:
+        s = 20 / np.sqrt(sample_size)
+    if sample_size < hexbin_threshold:
+        ax.scatter(x, y, s=s, **kwargs)
+    else:
+        ax.hexbin(x, y, **kwargs)
+    _set_plot_options(ax, **plot_options)
+
+    device.draw_current_axes()
+
+    return device
+
+
+def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
+         **kwargs):
+    """
+    Plot a histogram of x.
+
+    Args:
+      x: The variable to be plotted.
+      density: If True then the area of the histogram bars sums to 1.
+    """
+    device = get_current_graphics_device()
+    if add:
+        ax = device.current_axes
+    else:
+        ax = device.next_axes
+
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+    ax.hist(x, edgecolor=edgecolor, density=density, color=color, **kwargs)
+    _set_plot_options(ax, **plot_options)
+    device.draw_current_axes()
+    return device
+
+
+def barplot(x, labels=None, zero=True, **kwargs):
+    """Make a horizonal bar plot.
+    Args:
+      x:  Array-like collection of numbers to plot.
+      labels: Labels for the bars.  If x is a pd.Series then labels==None means
+        to take the labels from the series index.  Otherwise None means don't
+        plot labels.
+      zero:  Bool.  Should zero be forcibly included in the numeric axis.
+      xlab: Label for the horizonal "numeric" axis.
+      ylab: Label for the vertical "categorial" axis.
+      kwargs: extra arguments passed to plt.subplots or plt.barh.
+
+    """
+    device = get_current_graphics_device()
+    ax = device.next_axes
+
+    x = x[::-1]
+    if labels is not None:
+        labels = labels[::-1]
+
+    if labels is None and isinstance(x, pd.Series):
+        labels = [str(lab) for lab in x.index]
+    bar_locations = np.arange(len(x))
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+
+    if labels is None:
+        labels = [""] * len(x)
+
+    ax.barh(bar_locations, x, height=.8, **kwargs)
+    ax.set_yticks(bar_locations)
+    ax.set_yticklabels(labels)
+    lo = np.nanmin(x)
+    hi = np.nanmax(x)
+    if zero and lo > 0:
+        lo = 0.0
+    if zero and hi < 0:
+        hi = 0.0
+
+    ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
+    _set_plot_options(ax, **plot_options)
+    return device
+
+
+def boxplot(x, labels=None, add=False, **kwargs):
+    device = get_current_graphics_device()
+    if add:
+        ax = device.current_axes
+    else:
+        ax = device.next_axes
+
+    if labels is None and isinstance(x, pd.DataFrame):
+        labels = x.columns
+
+    ax.boxplot(x, vert=False)
+    _set_plot_options(ax, **kwargs)
+
+    return device
+
+
+def plot_ts(x, timestamps=None, ax=None, **kwargs):
+    """ Plot a time series."""
+    # if timestamps is None:
+    #     if isinstance(x, pd.Series):
+
+    device = get_current_graphics_device()
+    ax = device.next_axes
+
+    if timestamps is None:
+        if isinstance(x, pd.Series):
+            timestamps = x.index
+
+    ax.plot(x)
+    _set_plot_options(ax, **kwargs)
+
+    return device
+
+
+# ===========================================================================
+# Custom plots
+# ===========================================================================
+def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
+                 **kwargs):
+    nseries = series.shape[1]
+    nr, nc = plot_grid_size(nseries)
+    gap *= .2
+    fig, ax = plt.subplots(nr, nc)
+    fig.subplots_adjust(hspace=gap, wspace=gap)
+
+    series_number = 0
+    if same_scale:
+        ylim = data_range(series)
+
+    if truth is not None:
+        if isinstance(truth, numbers.Number):
+            truth = np.full(nseries, truth)
+
+    for i in range(nr):
+        for j in range(nc):
+            ax[i, j].set_frame_on(True)
+            ax[i, j].xaxis.set_tick_params(bottom=False, top=False,
+                                           labelbottom=False, labeltop=False)
+            ax[i, j].yaxis.set_tick_params(left=False, right=False,
+                                           labelleft=False, labelright=False)
+
+            # In the top and bottom row, set x axis to be either the bottom or
+            # the top.
+            if i == 0:
+                if (j % 2) == 1:
+                    ax[i, j].xaxis.set_tick_params(
+                        top=True, labeltop=True)
+
+            if i + 1 == nr:
+                if (j % 2) == 0:
+                    ax[i, j].xaxis.set_tick_params(
+                        bottom=True, labelbottom=True)
+
+            if same_scale:
+                # In the left or right column, set the y axis to be either the
+                # left or the right.
+                ax[i, j].set_ylim(ylim)
+                if j == 0 and (i % 2) == 0:
+                    ax[i, j].yaxis.set_tick_params(left=True, labelleft=True)
+                if j + 1 == nc and (i % 2) == 1:
+                    ax[i, j].yaxis.set_tick_params(right=True, labelright=True)
+                    ax[i, j].yaxis.tick_right()
+
+            else:
+                if ylim is not None:
+                    print("setting ylim")
+                    ax[i, j].set_ylim(ylim)
+
+            if series_number < nseries:
+                ax[i, j].plot(series[:, series_number])
+                if truth is not None:
+                    abline(ax=ax[i, j], h=truth[series_number])
+                series_number += 1
+
+    return fig, ax
 
 
 def plot_dynamic_distribution(
@@ -117,176 +598,9 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     return fig, ax
 
 
-def plot_grid_size(nplots: int):
-    """Compute the number of rows and columns needed to plot 'nplots'.
-
-    :param nplots:
-        The desired number of plots.
-
-    :return tuple:
-        The number of rows, and columns, needed to plot that many plots.
-
-    """
-    nr = int(max(1, np.sqrt(nplots)))
-    nc = int(np.ceil(nplots / nr))
-    return nr, nc
-
-
-def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
-                 **kwargs):
-    nseries = series.shape[1]
-    nr, nc = plot_grid_size(nseries)
-    gap *= .2
-    fig, ax = plt.subplots(nr, nc)
-    fig.subplots_adjust(hspace=gap, wspace=gap)
-
-    series_number = 0
-    if same_scale:
-        ylim = data_range(series)
-
-    if truth is not None:
-        if isinstance(truth, numbers.Number):
-            truth = np.full(nseries, truth)
-
-    for i in range(nr):
-        for j in range(nc):
-            ax[i, j].set_frame_on(True)
-            ax[i, j].xaxis.set_tick_params(bottom=False, top=False,
-                                           labelbottom=False, labeltop=False)
-            ax[i, j].yaxis.set_tick_params(left=False, right=False,
-                                           labelleft=False, labelright=False)
-
-            # In the top and bottom row, set x axis to be either the bottom or
-            # the top.
-            if i == 0:
-                if (j % 2) == 1:
-                    ax[i, j].xaxis.set_tick_params(
-                        top=True, labeltop=True)
-
-            if i + 1 == nr:
-                if (j % 2) == 0:
-                    ax[i, j].xaxis.set_tick_params(
-                        bottom=True, labelbottom=True)
-
-            if same_scale:
-                # In the left or right column, set the y axis to be either the
-                # left or the right.
-                ax[i, j].set_ylim(ylim)
-                if j == 0 and (i % 2) == 0:
-                    ax[i, j].yaxis.set_tick_params(left=True, labelleft=True)
-                if j + 1 == nc and (i % 2) == 1:
-                    ax[i, j].yaxis.set_tick_params(right=True, labelright=True)
-                    ax[i, j].yaxis.tick_right()
-
-            else:
-                if ylim is not None:
-                    print("setting ylim")
-                    ax[i, j].set_ylim(ylim)
-
-            if series_number < nseries:
-                ax[i, j].plot(series[:, series_number])
-                if truth is not None:
-                    abline(ax=ax[i, j], h=truth[series_number])
-                series_number += 1
-
-    return fig, ax
-
-
-def barplot(x, labels=None, zero=True, ax=None, **kwargs):
-    """Make a horizonal bar plot.
-    Args:
-      x:  Array-like collection of numbers to plot.
-      labels: Labels for the bars.  If x is a pd.Series then labels==None means
-        to take the labels from the series index.  Otherwise None means don't
-        plot labels.
-      zero:  Bool.  Should zero be forcibly included in the numeric axis.
-      xlab: Label for the horizonal "numeric" axis.
-      ylab: Label for the vertical "categorial" axis.
-      kwargs: extra arguments passed to plt.subplots or plt.barh.
-
-    """
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-
-    x = x[::-1]
-    if labels is not None:
-        labels = labels[::-1]
-
-    if labels is None and isinstance(x, pd.Series):
-        labels = [str(lab) for lab in x.index]
-    bar_locations = np.arange(len(x))
-    plot_options, kwargs = _skim_plot_options(**kwargs)
-
-    if labels is None:
-        labels = [""] * len(x)
-
-    ax.barh(bar_locations, x, height=.8, **kwargs)
-    ax.set_yticks(bar_locations)
-    ax.set_yticklabels(labels)
-    lo = np.nanmin(x)
-    hi = np.nanmax(x)
-    if zero and lo > 0:
-        lo = 0.0
-    if zero and hi < 0:
-        hi = 0.0
-
-    ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
-    _set_plot_options(ax, **plot_options)
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
-
-
-def plot(x, y=None, s=None, ax=None, hexbin_threshold=1e+5, **kwargs):
-    # TODO: make this generic
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-    plot_options, kwargs = _skim_plot_options(**kwargs)
-
-    if y is None:
-        y = x
-        x = np.arange(len(y))
-
-    sample_size = len(x)
-
-    if s is None:
-        s = 20 / np.sqrt(sample_size)
-    if sample_size < hexbin_threshold:
-        ax.scatter(x, y, s=s, **kwargs)
-    else:
-        ax.hexbin(x, y, **kwargs)
-    _set_plot_options(ax, **plot_options)
-
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
-
-
-def points(x, y, s=None, ax=None, **kwargs):
-    """Add points to a plot.  The most recent plot is used by default.
-    """
-    if ax is None:
-        global _last_axis_
-        ax = _last_axis_
-    if s is None:
-        s = 20 / np.sqrt(len(y))
-    ax.scatter(x, y, **kwargs)
-
-
-def lines(x, y, ax=None, **kwargs):
-    """Add lines to the most recent plot.
-
-    """
-    if ax is None:
-        global _last_axis_
-        ax = _last_axis_
-    ax.plot(x, y, **kwargs)
-
-
 def lines_gaussian_kde(kde, ax=None, **kwargs):
-    """Add a kernel density estimate to the plot.
+    """
+    Add a kernel density estimate to the plot.
     """
     if ax is None:
         global _last_axis_
@@ -295,176 +609,3 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
-
-
-def hist(x, ax=None, density: bool = False, edgecolor="black", color=".75",
-         **kwargs):
-    """Plot a histogram of x.
-    Args:
-      x: The variable to be plotted.
-      density: If True then the area of the histogram bars sums to 1.
-
-    """
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-    plot_options, kwargs = _skim_plot_options(**kwargs)
-    ax.hist(x, edgecolor=edgecolor, density=density, color=color, **kwargs)
-    _set_plot_options(ax, **plot_options)
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
-
-
-def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
-                       **kwargs):
-    """Remove plotting options used by the R package from other options supplied by
-    kwargs.  This allows the remaining options to be later passed to pyplot.
-
-    Returns:
-      plot_options:  The options expected by R plotting functions.a
-      kwargs:  Everything not pulled into plot_options.
-
-    """
-    plot_options = {'xlab': xlab,
-                    'ylab': ylab,
-                    'xlim': xlim,
-                    'ylim': ylim,
-                    'title': title}
-    return plot_options, kwargs
-
-
-def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
-                      **kwargs):
-    if xlab != "":
-        ax.set_xlabel(xlab)
-    if ylab != "":
-        ax.set_ylabel(ylab)
-    if xlim is not None:
-        ax.set_xlim(xlim)
-    if ylim is not None:
-        ax.set_ylim(ylim)
-    if title != "":
-        ax.set_title(title)
-
-
-def plot_ts(x, timestamps=None, ax=None, **kwargs):
-    """ Plot a time series."""
-    # if timestamps is None:
-    #     if isinstance(x, pd.Series):
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-
-    if timestamps is None:
-        if isinstance(x, pd.Series):
-            timestamps = x.index
-
-    ax.plot(x)
-    _set_plot_options(ax, **kwargs)
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
-
-
-def boxplot(x, labels=None, ax=None, **kwargs):
-    fig = None
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-
-    if labels is None and isinstance(x, pd.DataFrame):
-        labels = x.columns
-
-    ax.boxplot(x, vert=False)
-    _set_plot_options(ax, **kwargs)
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
-
-
-def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
-    """Add a line with specified slope and intercept to a plot.
-
-    Args:
-      a: The intercept of the line.
-      b: The slope of the line.
-      h: Draw a horizontal line at this y value.
-      v: Draw a vertical line at this x value.
-      ax: The set of "axes" that will receive the plot.  If None then
-        _last_axis_ will be used.
-      **kwargs:  Additional arguments passed to 'plt.plot'.
-
-    Returns:
-      None
-
-    Effect:
-      The requested line is plotted on 'ax'.
-
-    """
-    global _last_axis_
-    if ax is None:
-        ax = _last_axis_
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    if h is not None:
-        p0 = xlim[0], h
-        p1 = xlim[1], h
-    elif v is not None:
-        p0 = v, ylim[0]
-        p1 = v, ylim[1]
-    else:
-        p0 = xlim[0], a + b * xlim[0]
-        p1 = xlim[1], a + b * xlim[1]
-
-    x = [p0[0], p1[0]]
-    y = [p0[1], p1[1]]
-    ax.plot(x, y, **kwargs)
-
-
-def pretty_plot_ticks(low, high, n):
-    """Return a set of 'pretty' tick locations.
-
-    Args:
-      low: The lower end of the plotting range.
-      high: The upper end of the plotting range.
-      n: The desired number of ticks.
-
-    Returns:
-      A np.array with 'pretty' values suitable for tick labels.  The length of
-      the array will typically not be exactly 'n'.  Its lower endpoint will be
-      <= low and its upper endpoint will be >= high.
-
-    Taken from StackOverflow:
-    https://stackoverflow.com/questions/43075617/python-function-equivalent-to-rs-pretty
-
-    """
-    def nicenumber(x, round):
-        exp = np.floor(np.log10(x))
-        f = x / 10**exp
-
-        if round:
-            if f < 1.5:
-                nf = 1.
-            elif f < 3.:
-                nf = 2.
-            elif f < 7.:
-                nf = 5.
-            else:
-                nf = 10.
-        else:
-            if f <= 1.:
-                nf = 1.
-            elif f <= 2.:
-                nf = 2.
-            elif f <= 5.:
-                nf = 5.
-            else:
-                nf = 10.
-
-        return nf * 10.**exp
-
-    range = nicenumber(high - low, False)
-    d = nicenumber(range / (n - 1), True)
-    miny = np.floor(low / d) * d
-    maxy = np.ceil(high / d) * d
-    return np.arange(miny, maxy+0.5*d, d)
