@@ -5,8 +5,6 @@ import spikeslab
 import R
 import scipy.sparse
 
-from state_models import StateModel
-
 
 class SparseDynamicRegressionModel:
     """
@@ -26,11 +24,16 @@ class SparseDynamicRegressionModel:
     The conditional distribution of beta[j, t] given beta[j, t-1], and given
     that both are nonzero, is normal with mean b_jt = T_ij b_jt-1, and variance
     tau^2.
+
+    Expected Use:
+
+    model = SparseDynamicRegressionModel(3)
+
     """
 
     def __init__(self,
-                 xdim: int,
-                 residual_precision_prior: boom.GammaModelBase,
+                 formula,
+                 data,
                  innovation_precision_priors,
                  prior_inclusion_probabilities,
                  expected_inclusion_duration,
@@ -70,8 +73,38 @@ class SparseDynamicRegressionModel:
             np.random.seed(seed)
             boom.GlobalRng.rng.seed(seed)
 
+    def set_prior(self):
+        pass
 
-    def train(self, formula, data, niter: int, ping: int = None):
+    def set_data(self, formula, data, timestamps):
+        """
+        Partitiion the DataFrame 'data' into chunks defined by 'timestamps',
+        pass it through the 'formula', and convert the output to the
+        expected BayesBoom objects.
+
+        Args:
+
+          formula: A string defining a formula as interpreted by the 'patsy'
+            library.
+
+          data: A data frame containing the variables in 'formula', and
+            maybe other variables as well.  Extraneous variables will be
+            ignored.
+
+          timestamps: A vector-like object containing objects that can be
+            ordered.  E.g. a vector of dates, or integers.  Each element of
+            'timestamps' corresponds to a row of 'data', and determines
+            which the time point to which that row belongs.
+        """
+
+        unique_time_points = sorted(set(timestamps))
+        responses, predictors = patsy.dmatrices(formula, data, eval_env=1)
+        for time_stamp in unique_time_points:
+            subset = timestamps == time_stamp
+            response, predictors = pasty.dmatrices(formula, data, eval_env=1)
+
+
+    def train(self, formula, data, timestamps, niter: int, ping: int = None):
         """
         Train a bsts model by running a specified number of MCMC iterations.
 
@@ -120,13 +153,22 @@ class SparseDynamicRegressionModel:
 
     @property
     def xdim(self):
+        """
+        The number of potential predictor variables.
+        """
         return self._model.xdim
 
     @property
     def time_dimension(self):
+        """
+        The number of time points in the model's data.
+        """
         return self._model.time_dimension
 
     def _allocate_space(self, niter):
+        """
+        Create space to store 'niter' MCMC draws.
+        """
         self._beta_draws = np.zeros((niter, self.xdim, self.time_dimension))
         self._residual_sd_draws = np.zeros((niter))
         self._innovation_sd_draws = np.zeros((niter, self.xdim))

@@ -475,7 +475,8 @@ class lm_spike:
 
 
 class lm_spike_summary:
-    """Summarizes the fit of an lm_spike model.
+    """
+    Summarizes the fit of an lm_spike model.
     """
 
     def __repr__(self):

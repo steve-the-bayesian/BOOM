@@ -6,9 +6,6 @@ from abc import ABC, abstractmethod
 
 from R import data_range
 
-_last_figure_ = None
-_last_axis_ = None
-
 _active_graphics_devices = {}
 _current_graphics_device = None
 _largest_graphics_device_number = 0
@@ -20,8 +17,12 @@ class GraphicsDevice(ABC):
     """
 
     def __init__(self):
+        """
+        Creating a new graphics device updates the global set of devices
+        """
         global _largest_graphics_device_number
         global _current_graphics_device
+        global _active_graphics_devices
         self._number = _largest_graphics_device_number + 1
         _largest_graphics_device_number = self._number
         _active_graphics_devices[self._number] = self
@@ -34,9 +35,16 @@ class GraphicsDevice(ABC):
 
     def __del__(self):
         plt.close(self._figure)
+        global _active_graphics_devices
+        del _active_graphics_devices[self._number]
 
     @property
     def next_axes(self):
+        """
+        The next set of axes on which a plot is to be drawn.  If the last set of
+        available axes has been exhausted, the stored Figure is refreshed with
+        new axes of the same dimension.
+        """
         if hasattr(self._axes, "shape"):
             shape = self._axes.shape
             if min(shape) == 1:
@@ -47,28 +55,11 @@ class GraphicsDevice(ABC):
             self._axes = self._figure.subplots(1, 1)
         return self.current_axes
 
-    def _increment_1d_cursor(self):
-        dim = max(self._nrow, self._ncol)
-        self._axes_cursor += 1
-        if self._axes_cursor >= dim:
-            self._axes_cursor = 0
-            # We need nrow and ncol here because
-            self._axes = self._figure.subplots(self._nrow, self._ncol)
-
-    def _increment_2d_cursor(self):
-        i, j = self._axes_cursor
-        j += 1
-        if j >= self._axes.shape[1]:
-            j = 0
-            i += 1
-            if i >= self._axes.shape[0]:
-                self._figure, self._axes = plt.subplots(
-                    self._axes.shape[0], self._axes.shape[1])
-                i, j = 0, 0
-        self._axes_cursor = (i, j)
-
     @property
     def current_axes(self):
+        """
+        The current set of axes.
+        """
         if self._nrow > 1 or self._ncol > 1:
             return self._axes[self._axes_cursor]
         else:
@@ -77,7 +68,67 @@ class GraphicsDevice(ABC):
     @abstractmethod
     def draw_current_axes(self):
         """
+        A hook to be called after the graphics device is updated.
         """
+
+    def _create_subplots(self, nrow, ncol):
+        """
+        Set the graphics device to use multiple rows and/or columns of plots.
+        """
+        self._axes = self._figure.subplots(nrow, ncol)
+        self._nrow = nrow
+        self._ncol = ncol
+        if min(nrow, ncol) > 1:
+            self._axes_cursor = (0, 0)
+        elif max(nrow, ncol) > 1:
+            self._axes_cursor = 0
+        else:
+            self._axes_cursor = None
+
+    def _increment_1d_cursor(self):
+        """
+        Increment the self._axes cursor when self._axes is a 1-d array.
+        """
+        dim = max(self._nrow, self._ncol)
+        self._axes_cursor += 1
+        if self._axes_cursor >= dim:
+            self._axes_cursor = 0
+            # We need nrow and ncol here because a 1-d axes might be a row, or
+            # a column.
+            self._axes = self._figure.subplots(self._nrow, self._ncol)
+
+    def _increment_2d_cursor(self):
+        """
+        Increment self._axes_cursor when self._axes is two-dimensional.
+        """
+        i, j = self._axes_cursor
+        j += 1
+        if j >= self._axes.shape[1]:
+            j = 0
+            i += 1
+            if i >= self._axes.shape[0]:
+                self._axes = self._figure.subplots(
+                    self._axes.shape[0], self._axes.shape[1])
+                i, j = 0, 0
+        self._axes_cursor = (i, j)
+
+
+def dev_new():
+    return InteractiveGraphicsDevice()
+
+
+def dev_set(device_number: int):
+    """
+    Set the current graphics device to the device with the given number.
+
+    """
+    global _active_graphics_devices
+    device = _current_graphics_device.get(device_number, None)
+    if device is None:
+        raise Exception(f"Graphics device {device_number} does note exist.")
+    else:
+        global _current_graphics_device
+        _current_graphics_device = device
 
 
 class InteractiveGraphicsDevice(GraphicsDevice):
@@ -116,7 +167,6 @@ class PdfGraphicsDevice(GraphicsDevice):
         """
         """
         pass
-
 
 
 def get_current_graphics_device():
@@ -273,10 +323,10 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
     Effect:
       The requested line is plotted on 'ax'.
     """
-    device = get_current_graphics_device()
-    ax = device.current_axes
     if ax is None:
-        ax = _last_axis_
+        device = get_current_graphics_device()
+        ax = device.current_axes
+
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     if h is not None:
@@ -525,9 +575,9 @@ def plot_dynamic_distribution(
       **kwargs: Extra arguments passed to .... ???
 
     """
-    fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1)
+        device = get_current_graphics_device()
+        ax = device.next_axes
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -550,9 +600,6 @@ def plot_dynamic_distribution(
     _set_plot_options(**plot_options)
     ax.set_xlabel(xlab)
     ax.set_ylabel(ylab)
-    global _last_axis_
-    _last_axis_ = ax
-    return ax
 
 
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
