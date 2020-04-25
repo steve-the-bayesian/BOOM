@@ -71,6 +71,15 @@ namespace BOOM {
     std::vector<Ptr<CategoricalData>> data_;
   };
 
+  //===========================================================================
+  // TODO(steve):  We will need this to
+  class DateTimeVariable {
+   public:
+   private:
+    std::vector<DateTime> data_;
+  };
+
+  //===========================================================================
   // class OrdinalVariable {
   //   public:
   //   OrdinalVariable() = default;
@@ -91,7 +100,7 @@ namespace BOOM {
   class DataTable : public Data {
    public:
     typedef std::vector<double> dvector;
-    enum VariableType { unknown = -1, continuous, categorical };
+    enum VariableType { unknown = -1, continuous, categorical, datetime };
     typedef std::vector<std::string> StringVector;
 
     //--- constructors ---
@@ -113,8 +122,11 @@ namespace BOOM {
     std::ostream &display(std::ostream &out) const override;
 
     //--- build a DataTable by appending variables ---
-    void append_variable(const Vector &v, const std::string &name);
-    void append_variable(const CategoricalVariable &cv, const std::string &name);
+    //
+    // If the data table is empty, appending the first variable determines the
+    // number of rows.
+    virtual void append_variable(const Vector &v, const std::string &name);
+    virtual void append_variable(const CategoricalVariable &cv, const std::string &name);
 
     //--- size  ---
     uint nvars() const;          // number of variables stored in the table
@@ -127,6 +139,8 @@ namespace BOOM {
 
     const std::vector<VariableType> &display_variable_types() const;
 
+    // The names of the variables stored in the table.  These are the "column
+    // names."
     StringVector &vnames();
     const StringVector &vnames() const;
 
@@ -172,6 +186,29 @@ namespace BOOM {
   };
 
   std::vector<VariableSummary> summarize(const DataTable &table);
+
+  //===========================================================================
+  // PartiallyMissingDataTable
+
+  class PartiallyMissingDataTable : public DataTable {
+   public:
+    PartiallyMissingDataTable();
+
+    // The append_variable functions inherited from DataTable will be
+    // implemented by append_potentially_missing_variable.
+    void append_variable(const Vector &numeric, const string &vname) override;
+    void append_variable(const CategoricalVariable &cv,
+                         const std::string &name) override;
+
+    // Each element of the CategoricalVariable indicates missingness by the
+    // missing data flag it inherits from Data.
+    //
+    //
+    void append_potentially_missing_variable(
+        const Vector &numeric, const string &vname, double missing_value_key);
+
+   private:
+  };
 
 }  // namespace BOOM
 #endif  // BOOM_DATA_TABLE_HPP
