@@ -72,11 +72,12 @@ class RegressionSpikeSlabPrior:
                  sdy=None,
                  prior_inclusion_probabilities=None,
                  sigma_upper_limit=np.Inf):
-        """Computes information that is shared by the different implementation of spike
-        and slab priors.  Currently, the only difference between the different
-        priors is the prior variance on the regression coefficients.  When that
-        changes, change this class accordingly, and change all the classes that
-        inherit from it.
+        """
+        Computes information that is shared by the different implementation of
+        spike and slab priors.  Currently, the only difference between the
+        different priors is the prior variance on the regression coefficients.
+        When that changes, change this class accordingly, and change all the
+        classes that inherit from it.
 
         Args:
           number_of_variables: The number of columns in the design matrix for
@@ -117,7 +118,6 @@ class RegressionSpikeSlabPrior:
 
           sigma_upper_limit: The largest acceptable value for the residual
             standard deviation.
-
         """
         if isinstance(x, np.ndarray):
             x = boom.Matrix(x)

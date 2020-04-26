@@ -14,7 +14,8 @@ class SdPrior:
 
     def __init__(self, sigma_guess, sample_size=.01, initial_value=None,
                  fixed=False, upper_limit=np.inf):
-        """Create an SdPrior.
+        """
+        Create an SdPrior.
 
         Args:
           sigma_guess:  Guess at the value of the standard deviation.
@@ -26,7 +27,6 @@ class SdPrior:
             an MCMC algorithm.  This is mainly for debugging and is not always
             respected.
           upper_limit: Upper limit on the value of 'sigma'.
-
         """
         self.sigma_guess = float(sigma_guess)
         self.sample_size = float(sample_size)

@@ -6,4 +6,6 @@ from .state_models import (
     SeasonalStateModel,
 )
 
+from .data import AirPassengers
+
 __all__ = [Bsts, StateModel, LocalLevelStateModel, SeasonalStateModel]
