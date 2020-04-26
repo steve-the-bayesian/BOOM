@@ -27,7 +27,8 @@ def suggest_burn(loglike, fraction: float = 0.1, quantile: float = 0.9):
     if fraction < 0:
         # A signal that no burnin is desired.
         return 0
-    assert fraction <= 1.0
+    if fraction > 1.0:
+        raise Exception("'fraction' must be a number between 0 and 1.")
     cutpoint = int((1.0 - fraction) * len(loglike))
     if cutpoint == 0:
         return 0

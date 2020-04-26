@@ -8,4 +8,5 @@ from .state_models import (
 
 from .data import AirPassengers
 
-__all__ = [Bsts, StateModel, LocalLevelStateModel, SeasonalStateModel]
+__all__ = ["Bsts", "StateModel", "LocalLevelStateModel",
+           "SeasonalStateModel", "AirPassengers"]

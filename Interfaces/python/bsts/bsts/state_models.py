@@ -58,13 +58,14 @@ class StateModel(ABC):
         """
 
     @abstractmethod
-    def allocate_space(self, niter):
+    def allocate_space(self, niter, time_dimension):
         """
         Allocate the space needed to call 'record_state' the given number of
         times.
 
         Args:
-          niter:  The number of iterations worth of space to be allocated.
+          niter:  Number of iterations (draws) to be stored.
+          time_dimension:  Number of time points in the training data.
         """
 
     @abstractmethod
