@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 
+#include "Models/ChisqModel.hpp"
 #include "Models/GaussianModelBase.hpp"
 #include "Models/GaussianModel.hpp"
 #include "Models/GaussianModelGivenSigma.hpp"
@@ -119,7 +120,9 @@ namespace BayesBoom {
              "Args:\n"
              "  model: the model to be managed by this sampler.\n"
              "  mean_prior: A prior distribution for the mean of 'model'.\n"
-             "  precision_prior: A prior_distribution for the precision (reciprocal variance)")
+             "  precision_prior: A prior_distribution for the precision \n"
+             "    (reciprocal variance)")
+
         .def("draw", &GaussianConjSampler::draw,
              "Simulate one draw from the posterior distribution.  "
              "Updated paramater draws are stored in the model.")
@@ -151,11 +154,11 @@ namespace BayesBoom {
                PosteriorSampler,
                Ptr<ZeroMeanGaussianConjSampler>>(boom, "ZeroMeanGaussianConjSampler")
         .def(py::init(
-            [] (Ptr<ZeroMeanGaussianModel> model,
-                const Ptr<GammaModelBase> &siginv_prior,
+            [] (ZeroMeanGaussianModel &model,
+                GammaModelBase &siginv_prior,
                 RNG &seeding_rng) {
               return new ZeroMeanGaussianConjSampler(
-                  model.get(), siginv_prior, seeding_rng);
+                  &model, Ptr<GammaModelBase>(&siginv_prior), seeding_rng);
             }),
              py::arg("model"),
              py::arg("siginv_prior"),

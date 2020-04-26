@@ -4,6 +4,8 @@
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 
+#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -36,7 +38,7 @@ namespace BayesBoom {
             &LocalLevelStateModel::state_error_dimension,
             "Dimension of the innovation term.")
         .def("set_initial_state_mean",
-             [] (Ptr<LocalLevelStateModel> model, const Vector &mean) {
+             [] (Ptr<LocalLevelStateModel> model, double mean) {
                model->set_initial_state_mean(mean);
              },
              py::arg("mean"),
@@ -49,6 +51,22 @@ namespace BayesBoom {
              py::arg("variance"),
              "Set the variance of the initial state distribution to the "
              "specified value.")
+        .def("set_posterior_sampler",
+             [] (LocalLevelStateModel &model,
+                 const Ptr<GammaModelBase> &prior,
+                 RNG &seeding_rng) {
+               NEW(ZeroMeanGaussianConjSampler, sampler)(
+                   &model, prior, seeding_rng);
+               model.set_method(sampler);
+               return sampler; },
+             py::arg("prior"),
+             py::arg("rng") = BOOM::GlobalRng::rng,
+             "Args:\n"
+             "  prior:  Prior distribution on the innovation precision.\n\n"
+             "Returns:\n"
+             "  The posterior sampler, which has already been assigned to \n"
+             "  the model.  Assigning it again will cause duplicate MCMC moves."
+             )
         ;
 
     py::class_<SeasonalStateModel,
@@ -61,6 +79,17 @@ namespace BayesBoom {
              "Args:\n"
              "  nseasons: Number of seasons in the the model.\n"
              "  season_duration: Number of time periods each season lasts.\n")
+        .def_property_readonly("nseasons", &SeasonalStateModel::nseasons)
+        .def_property_readonly("season_duration",
+                               &SeasonalStateModel::season_duration)
+        .def_property_readonly(
+            "state_dimension",
+            &SeasonalStateModel::state_dimension,
+            "Dimension of the state vector.")
+        .def_property_readonly(
+            "state_error_dimension",
+            &SeasonalStateModel::state_error_dimension,
+            "Dimension of the error term for this state component.")
         .def("set_initial_state_mean",
              &SeasonalStateModel::set_initial_state_mean,
              py::arg("mu"),
