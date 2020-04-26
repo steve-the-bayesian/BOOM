@@ -585,7 +585,8 @@ def plot_dynamic_distribution(
     curve_quantiles = np.quantile(curves, q=quantile_points, axis=0)
     if timestamps is None:
         timestamps = np.arange(curves.shape[1])
-    assert(len(timestamps) == curves.shape[1])
+    if len(timestamps) != curves.shape[1]:
+        raise Exception("len(timestamps) must match curves.shape[1].")
 
     for i in range(int(np.floor(len(quantile_points) / 2))):
         lo = curve_quantiles[i, :]

@@ -366,7 +366,8 @@ class GaussianObservationModelManager:
 class StateSpaceRegressionModelFactory:
 
     def __init__(self, formula):
-        assert isinstance(formula, str)
+        if not isinstance(formula, str):
+            raise Exception("formula must be a string.")
         self._formula = formula
 
     def create_model(self, prior, data):
@@ -384,7 +385,8 @@ class StateSpaceRegressionModelFactory:
           so they will be available for future predictions.
 
         """
-        assert isinstance(prior, spikeslab.RegressionSpikeSlabPrior)
+        if not isinstance(prior, spikeslab.RegressionSpikeSlabPrior):
+            raise Exception("Unexpected type for prior.")
         response, predictors = patsy.dmatrices(self._formula, data)
         is_observed = ~np.isnan(response)
 
