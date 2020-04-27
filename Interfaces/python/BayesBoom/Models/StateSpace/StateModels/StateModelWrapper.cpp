@@ -5,6 +5,7 @@
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
+#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -69,6 +70,58 @@ namespace BayesBoom {
              )
         ;
 
+    py::class_<LocalLinearTrendStateModel,
+               StateModel,
+               BOOM::Ptr<LocalLinearTrendStateModel>>(
+                   boom,
+                   "LocalLinearTrendStateModel")
+        .def(py::init<>())
+        .def_property_readonly(
+            "state_dimension",
+            &LocalLinearTrendStateModel::state_dimension)
+        .def_property_readonly(
+            "state_error_dimension",
+            &LocalLinearTrendStateModel::state_error_dimension)
+        .def("set_initial_state_mean",
+             &LocalLinearTrendStateModel::set_initial_state_mean,
+             py::arg("mean"),
+             "Args:\n"
+             "  mean:  A Vector of length 2 giving the prior mean of the \n"
+             "    state at time 0.")
+        .def("set_initial_state_variance",
+             &LocalLinearTrendStateModel::set_initial_state_variance,
+             py::arg("variance"),
+             "Args:\n"
+             "  variance:  SpdMatrix of dimension 2 giving the prior \n"
+             "    variance of the state at time 0.")
+        .def("set_posterior_sampler",
+             [](LocalLinearTrendStateModel &state_model,
+                GammaModelBase &level_sigma_prior,
+                double level_sigma_upper_limit,
+                GammaModelBase &slope_sigma_prior,
+                double slope_sigma_upper_limit,
+                BOOM::RNG &seeding_rng) {
+
+               NEW(ZeroMeanMvnIndependenceSampler, sigma_level_sampler)(
+                   &state_model,
+                   Ptr<GammaModelBase>(&level_sigma_prior),
+                   0,
+                   seeding_rng);
+               sigma_level_sampler->set_sigma_upper_limit(
+                   level_sigma_upper_limit);
+               state_model.set_method(sigma_level_sampler);
+
+               NEW(ZeroMeanMvnIndependenceSampler, sigma_slope_sampler)(
+                   &state_model,
+                   Ptr<GammaModelBase>(&slope_sigma_prior),
+                   1,
+                   seeding_rng);
+               sigma_slope_sampler->set_sigma_upper_limit(
+                   slope_sigma_upper_limit);
+               state_model.set_method(sigma_slope_sampler);
+             })
+        ;
+
     py::class_<SeasonalStateModel,
                StateModel,
                ZeroMeanGaussianModel,
@@ -97,17 +150,17 @@ namespace BayesBoom {
              "  mu: Vector of size 'nseasons' - 1 giving the mean of the state "
              "at time 0.\n")
         .def("set_initial_state_variance",
-             [] (Ptr<SeasonalStateModel> seasonal,
-                     const BOOM::SpdMatrix &variance) {
-               seasonal->set_initial_state_variance(variance);
+             [] (SeasonalStateModel &seasonal,
+                 const BOOM::SpdMatrix &variance) {
+               seasonal.set_initial_state_variance(variance);
              },
              py::arg("variance"),
              "Args: \n"
              "  variance: SpdMatrix of size 'nseasons' - 1 giving the variance"
              " of the state at time 0.\n")
         .def("set_initial_state_variance",
-             [] (Ptr<SeasonalStateModel> seasonal, double variance) {
-               seasonal->set_initial_state_variance(variance);
+             [] (SeasonalStateModel &seasonal, double variance) {
+               seasonal.set_initial_state_variance(variance);
              },
              py::arg("variance"),
              "Args: \n"

@@ -3,6 +3,7 @@ from .bsts import Bsts
 from .state_models import (
     StateModel,
     LocalLevelStateModel,
+    LocalLinearTrendStateModel,
     SeasonalStateModel,
 )
 

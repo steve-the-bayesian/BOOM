@@ -39,3 +39,7 @@ class SdPrior:
     @property
     def sum_of_squares(self):
         return self.sigma_guess**2 * self.sample_size
+
+    def create_chisq_model(self):
+        import BayesBoom as boom
+        return boom.ChisqModel(self.sample_size, self.sigma_guess)
