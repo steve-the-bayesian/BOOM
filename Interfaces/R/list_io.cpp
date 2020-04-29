@@ -30,7 +30,7 @@ namespace BOOM {
   void RListIoManager::add_list_element(const Ptr<RListIoElement> &element) {
     elements_.push_back(element);
   }
-  
+
   SEXP RListIoManager::prepare_to_write(int niter) {
     if (elements_.empty()) {
       return R_NilValue;
@@ -205,7 +205,7 @@ namespace BOOM {
                                  Rf_nrows(rbuffer()),
                                  Rf_ncols(rbuffer())));
   }
-  
+
   //======================================================================
   SEXP MatrixValuedRListIoElement::prepare_to_write(int niter) {
     RMemoryProtector protector;
@@ -224,7 +224,7 @@ namespace BOOM {
     int * array_dims = INTEGER(r_array_dims);
     array_view_.reset(data(), std::vector<int>(array_dims, array_dims + 3));
   }
-  
+
   void MatrixValuedRListIoElement::set_buffer_dimnames(SEXP buffer) {
     // Set the dimnames on the buffer
     RMemoryProtector protector;
@@ -254,7 +254,7 @@ namespace BOOM {
     }
     Rf_dimnamesgets(buffer, r_dimnames);
   }
-  
+
   //======================================================================
   ArrayValuedRListIoElement::ArrayValuedRListIoElement(
       const std::vector<int> &dim, const std::string &name)
@@ -294,7 +294,7 @@ namespace BOOM {
     }
     dimnames_[dim] = names;
   }
-  
+
   //======================================================================
   ListValuedRListIoElement::ListValuedRListIoElement(const std::string &name)
       : RListIoElement(name)
@@ -403,7 +403,13 @@ namespace BOOM {
     VectorListElement::stream();
     beta_ = coefs_->Beta();
     coefs_->set_Beta(beta_);
-    coefs_->infer_sparsity();
+    for (size_t i = 0; i < beta_.size(); ++i) {
+      if (beta_[i] == 0.0) {
+        coefs_->drop(i);
+      } else {
+        coefs_->add(i);
+      }
+    }
   }
 
   //======================================================================
@@ -515,7 +521,7 @@ namespace BOOM {
     return matrix_view().row(next_position());
   }
 
-  //===========================================================================  
+  //===========================================================================
   GenericVectorListElement::GenericVectorListElement(
       StreamableVectorIoCallback *callback,
       const std::string &name)
@@ -706,7 +712,7 @@ namespace BOOM {
       report_error(err.str().c_str());
     }
   }
-  
+
   //======================================================================
   NativeMatrixListElement::NativeMatrixListElement(
       MatrixIoCallback *callback,
@@ -736,7 +742,7 @@ namespace BOOM {
         array_view().slice(next_position(), -1, -1).to_matrix();
   }
 
-  //======================================================================  
+  //======================================================================
   GenericMatrixListElement::GenericMatrixListElement(
       StreamableMatrixIoCallback *callback,
       const std::string &name)
@@ -755,7 +761,7 @@ namespace BOOM {
     }
     callback_->put_matrix(next_draw().to_matrix());
   }
-  
+
   //======================================================================
   NativeArrayListElement::NativeArrayListElement(ArrayIoCallback *callback,
                                                  const std::string &name,
@@ -802,7 +808,7 @@ namespace BOOM {
                    "the stored matrices must be the same size.");
     }
   }
-  
+
   SEXP RListOfMatricesListElement::prepare_to_write(int niter) {
     RMemoryProtector protector;
     int number_of_matrices = rows_.size();
