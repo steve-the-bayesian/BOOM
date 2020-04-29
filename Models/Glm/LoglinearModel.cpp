@@ -123,6 +123,16 @@ namespace BOOM {
   }
 
   //===========================================================================
+  void LoglinearModelSuf::add_main_effect(
+      const Ptr<CategoricalMainEffect> &main_effect) {
+    main_effects_.push_back(main_effect);
+    int which = main_effect->which_variable();
+    int nlevels = main_effect->nlevels();
+
+
+  }
+
+  //===========================================================================
 
   double LoglinearModel::logp(const MultivariateCategoricalData &data) const {
     return coef().predict(encoder_.encode_categorical_data(data));

@@ -61,25 +61,53 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // An encoder that only handles categorical data.
-
-  class CategoricalDataEncoder {
+  // An encoder that only handles categorical data.  The behavior of a
+  // CategoricalDataEncoder is similar to a DataEncoder from Encoders.hpp, but
+  // the purpose is to encode data from a MultivariateCategoricalData, not from
+  // a DataTable.
+  //
+  // The classes are similar, but different enough that concrete
+  // CategoricalDataEncoder classes should be implemented through composition
+  // rather than inheritance.
+  class CategoricalDataEncoder : private RefCounted {
    public:
-    virtual Vector encode_categorical_data(
-        const MultivariateCategoricalData &data) const = 0;
+
+    // A vector containing a 1/0/-1 effects encoding of the input data.
+    virtual Vector encode(const MultivariateCategoricalData &data) const = 0;
+
+    // The number of columns in the Vector returned by 'encode'.
     virtual int dim() const = 0;
+
+    // The indices of the variables driving this effect.
+    virtual std::vector<int> which_variables() const = 0;
+
+    // The number of levels in each variable.
+    virtual std::vector<int> dimensions() const = 0;
+
+   private:
+    friend void intrusive_ptr_add_ref(CategoricalDataEncoder *d) {
+      d->up_count();
+    }
+    friend void intrusive_ptr_release(CategoricalDataEncoder *d) {
+      d->down_count();
+      if (d->ref_count() == 0) {
+        delete d;
+      }
+    }
   };
   //---------------------------------------------------------------------------
-
   class CategoricalMainEffect :
-      public EffectsEncoder,
       public CategoricalDataEncoder {
    public:
-    CategoricalMainEffect(int which_variable, const Ptr<CatKey> &key);
+    CategoricalMainEffect(int which_variable, const Ptr<CatKey> &key)
+        : encoder_(which_variable, key) {}
 
-    Vector encode_categorical_data(
-        const MultivariateCategoricalData &data) const override;
-    int dim() const override {return EffectsEncoder::dim();}
+    Vector encode(const MultivariateCategoricalData &data) const override;
+    int dim() const override {return encoder_->dim();}
+    int nlevels() const {return dim() + 1;}
+
+   private:
+    EffectsEncoder encoder_;
   };
 
   //---------------------------------------------------------------------------
@@ -127,6 +155,41 @@ namespace BOOM {
     // raw pointers are okay because the base class maintains the objects in
     // Ptr's.
     std::vector<CategoricalDataEncoder *> categorical_encoders_;
+  };
+
+  //===========================================================================
+  // The sufficient statistics for a log linear model are the marginal cross
+  // tabulations for each effect in the model.
+  class LoglinearModelSuf : public SufstatDetails<MultivariateCategoricalData> {
+   public:
+    LoglinearModelSuf() {}
+    LoglinearModelSuf *clone() const override {
+      return new LoglinearModelSuf(*this);
+    }
+
+    void add_main_effect(const Ptr<CategoricalMainEffect> &main_effect);
+    void add_interaction(const Ptr<CategoricalInteractionEncoder> &interaction);
+
+    // Clear the data but keep the information about model structure.
+    void clear() override { cross_tabulations_.clear(); }
+
+    // Clear everything.
+    void clear_data_and_structure() {
+      clear();
+      main_effects_.clear();
+      interactions_.clear();
+    }
+
+    void Update(const MultivariateCategoricalData &data) const override;
+
+   private:
+    std::vector<CategoricalMainEffect> main_effects_;
+    std::vector<CategoricalInteractionEncoder> interactions_;
+
+    // Cross tabulations are indexed by a vector containing the indices of the
+    // tabulated variables.  For example, a 3-way interaction might include
+    // variables 0, 2, and 5.  The indices must be in order.
+    std::map<std::vector<int>, Array> cross_tabulations_;
   };
 
   //===========================================================================
