@@ -360,18 +360,19 @@ namespace BOOM {
     return first_element.size();
   }
 
-  uint DataTable::nobs() const {
-    if (variable_types_.empty()) {
-      return 0;
-    }
-    if (variable_types_[0] == continuous)
-      return continuous_variables_[0].size();
-    return categorical_variables_[0].size();
-  }
-
   uint DataTable::nlevels(uint i) const {
     if (variable_types_[i] == continuous) return 1;
     return categorical_variables_[i][0]->nlevels();
+  }
+
+  int DataTable::nrow() const {
+    if (!continuous_variables_.empty()) {
+      return continuous_variables_[0].size();
+    } else if (!categorical_variables_.empty()) {
+      return categorical_variables_[0].size();
+    } else {
+      return 0;
+    }
   }
 
   DataTable::VariableType DataTable::variable_type(uint which_column) const {

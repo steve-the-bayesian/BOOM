@@ -118,7 +118,8 @@ namespace BOOM {
 
     //--- size  ---
     uint nvars() const;          // number of variables stored in the table
-    uint nobs() const;           // number of observations
+    int nrow() const;            // number of rows
+    int nobs() const {return nrow();}  // syntactic sugar.
     uint nlevels(uint i) const;  // 1 for continuous, nlevels for categorical
 
     //--- look inside ---
