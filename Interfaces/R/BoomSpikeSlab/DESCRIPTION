@@ -1,6 +1,6 @@
 Package: BoomSpikeSlab
-Version: 1.2.2
-Date: 2020-03-26
+Version: 1.2.3
+Date: 2020-04-29
 Title: MCMC for Spike and Slab Regression
 Author: Steven L. Scott <steve.the.bayesian@gmail.com>
 Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>

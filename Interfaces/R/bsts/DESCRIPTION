@@ -7,7 +7,7 @@ Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
 Description: Time series regression using dynamic linear models fit using
   MCMC. See Scott and Varian (2014) <DOI:10.1504/IJMMNO.2014.059942>, among many
   other sources.
-Depends: BoomSpikeSlab (>= 1.2.2), zoo (>= 1.8), xts, Boom (>= 0.9.6), R(>= 3.4.0)
+Depends: BoomSpikeSlab (>= 1.2.3), zoo (>= 1.8), xts, Boom (>= 0.9.6), R(>= 3.4.0)
 Suggests: testthat
 LinkingTo: Boom (>= 0.9.6)
 License: LGPL-2.1 | file LICENSE
