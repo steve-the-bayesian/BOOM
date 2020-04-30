@@ -323,6 +323,11 @@ namespace BOOM {
     Array &operator=(const Vector &a);
     Array &operator=(const VectorView &a);
     Array &operator=(const ConstVectorView &a);
+    Array &operator=(double x);
+
+    Array &operator+=(const Array &rhs);
+    Array &operator+=(const ConstArrayView &rhs);
+
 
     template <class FwdIt>
     Array &assign(FwdIt begin, FwdIt end) {
@@ -394,7 +399,7 @@ namespace BOOM {
     std::string to_string() const override;
 
    private:
-    std::vector<double> data_;
+    Vector data_;
   };
 
 }  // namespace BOOM

@@ -16,7 +16,10 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <vector>
+#include <algorithm>
 #include "Models/Glm/LoglinearModel.hpp"
+#include "Models/SufstatAbstractCombineImpl.hpp"
 
 namespace BOOM {
 
@@ -49,43 +52,62 @@ namespace BOOM {
   }
   //===========================================================================
   CategoricalMainEffect::CategoricalMainEffect(
-      int which_variable, const Ptr<CatKey> &key):
-      EffectsEncoder(which_variable, key)
+      int which_variable, const Ptr<CatKeyBase> &key)
+      : encoder_(which_variable, key),
+        which_variables_(1, which_variable),
+        nlevels_(1, encoder_.dim() + 1)
   {}
 
-  Vector CategoricalMainEffect::encode_categorical_data(const MCD &data) const {
-    return encode(data[which_variable()]);
+  Vector CategoricalMainEffect::encode(const MCD &data) const {
+    return encoder_.encode(data[encoder_.which_variable()]);
   }
 
   //===========================================================================
   CategoricalInteractionEncoder::CategoricalInteractionEncoder(
-      const Ptr<CategoricalMainEffect> &main1,
-      const Ptr<CategoricalMainEffect> &main2)
-      : InteractionEncoder(main1, main2),
-        enc1_(main1.get()),
-        enc2_(main2.get())
-  {}
+      const Ptr<CategoricalDataEncoder> &enc1,
+      const Ptr<CategoricalDataEncoder> &enc2)
+      : enc1_(enc1),
+        enc2_(enc2)
+  {
+    // Check to make sure that the interaction has no common factors.
+    std::vector<int> intersection;
+    std::set_intersection(enc1_->which_variables().begin(),
+                          enc1_->which_variables().end(),
+                          enc2_->which_variables().begin(),
+                          enc2_->which_variables().end(),
+                          std::back_inserter(intersection));
+    if (!intersection.empty()) {
+      report_error("The terms in an interaction should not have sub-terms "
+                   "in common.");
+    }
 
-  CategoricalInteractionEncoder::CategoricalInteractionEncoder(
-      const Ptr<CategoricalMainEffect> &main_effect,
-      const Ptr<CategoricalInteractionEncoder> &interaction)
-      : InteractionEncoder(main_effect, interaction),
-        enc1_(main_effect.get()),
-        enc2_(interaction.get())
-  {}
+    // Dump all the 'nlevels' information into a map so that we can look it up
+    // after merging the 'which_variables' information.
+    std::map<int, int> level_map;
+    for (size_t i = 0; i < enc1_->which_variables().size(); ++i) {
+      level_map[enc1_->which_variables()[i]] = enc1_->nlevels()[i];
+    }
+    for (size_t i = 0; i < enc2_->which_variables().size(); ++i) {
+      level_map[enc2_->which_variables()[i]] = enc2_->nlevels()[i];
+    }
 
-  CategoricalInteractionEncoder::CategoricalInteractionEncoder(
-      const Ptr<CategoricalInteractionEncoder> &interaction1,
-      const Ptr<CategoricalInteractionEncoder> &interaction2)
-      : InteractionEncoder(interaction1, interaction2),
-        enc1_(interaction1.get()),
-        enc2_(interaction2.get())
-  {}
+    // Build "which_variables".
+    std::merge(enc1_->which_variables().begin(),
+               enc1_->which_variables().end(),
+               enc2_->which_variables().begin(),
+               enc2_->which_variables().end(),
+               back_inserter(which_variables_));
 
-  Vector CategoricalInteractionEncoder::encode_categorical_data(
-      const MCD &data) const {
-    Vector v1 = enc1_->encode_categorical_data(data);
-    Vector v2 = enc2_->encode_categorical_data(data);
+    // Build "nlevels".
+    for (const auto &el : which_variables_) {
+      nlevels_.push_back(level_map[el]);
+    }
+
+  }
+
+  Vector CategoricalInteractionEncoder::encode(const MCD &data) const {
+    Vector v1 = enc1_->encode(data);
+    Vector v2 = enc2_->encode(data);
     Vector ans(dim());
     int index = 0;
     for (size_t i = 0; i < v1.size(); ++i) {
@@ -97,45 +119,153 @@ namespace BOOM {
   }
 
   //===========================================================================
-  void CategoricalDatasetEncoder::add_main_effect(
-      const Ptr<CategoricalMainEffect> &main_effect) {
-    DatasetEncoder::add_encoder(main_effect);
-    categorical_encoders_.push_back(main_effect.get());
+  void CategoricalDatasetEncoder::add_effect(
+      const Ptr<CategoricalDataEncoder> &effect) {
+    encoders_.push_back(effect);
+    dim_ += effect->dim();
   }
 
-  void CategoricalDatasetEncoder::add_interaction(
-      const Ptr<CategoricalInteractionEncoder> &interaction) {
-    DatasetEncoder::add_encoder(interaction);
-    categorical_encoders_.push_back(interaction.get());
-  }
-
-  Vector CategoricalDatasetEncoder::encode_categorical_data(
-      const MultivariateCategoricalData &data) const {
+  Vector CategoricalDatasetEncoder::encode(const MCD &data) const {
     uint start = 0;
     Vector ans(dim(), 0.0);
-    for (int i = 0; i < categorical_encoders_.size(); ++i) {
-      uint dim = categorical_encoders_[i]->dim();
+    for (int i = 0; i < encoders_.size(); ++i) {
+      uint dim = encoders_[i]->dim();
       VectorView view(ans, start, dim);
-      view = categorical_encoders_[i]->encode_categorical_data(data);
+      view = encoders_[i]->encode(data);
       start += dim;
     }
     return ans;
   }
 
   //===========================================================================
-  void LoglinearModelSuf::add_main_effect(
-      const Ptr<CategoricalMainEffect> &main_effect) {
-    main_effects_.push_back(main_effect);
-    int which = main_effect->which_variable();
-    int nlevels = main_effect->nlevels();
+  std::ostream &LoglinearModelSuf::print(std::ostream &out) const {
+    out << "sufficient statistics for a log linear model\n";
+    return out;
+  }
 
+  Vector LoglinearModelSuf::vectorize(bool minimal) const {
+    Vector ans;
+    for (const auto &el : cross_tabulations_) {
+      ans.concat(Vector(el.second.begin(), el.second.end()));
+    }
+    return ans;
+  }
 
+  Vector::const_iterator LoglinearModelSuf::unvectorize(
+      Vector::const_iterator &v, bool) {
+    for (auto &el : cross_tabulations_) {
+      std::copy(v, v + el.second.size(), el.second.begin());
+      v += el.second.size();
+    }
+    return v;
+  }
+
+  Vector::const_iterator LoglinearModelSuf::unvectorize(
+      const Vector &v, bool minimal) {
+    auto vit = v.cbegin();
+    return unvectorize(vit, minimal);
+  }
+
+  void LoglinearModelSuf::clear() {
+    for (auto &el : cross_tabulations_) {
+      cross_tabulations_[el.first] = 0.0;
+    }
+  }
+
+  void LoglinearModelSuf::clear_data_and_structure() {
+    clear();
+    effects_.clear();
+  }
+
+  void LoglinearModelSuf::Update(const MCD &data) {
+    // Each element in the for loop is a "margin" of the table.  el.first
+    // indicates which variables are involved in the margin.  el.second is the
+    // cross tabulation.
+    for (auto &el : cross_tabulations_) {
+      std::vector<int> index = el.first;
+      // Replace each element of 'index' with the value of the variable at that
+      // index.
+      for (int j = 0; j < index.size(); ++j) {
+        const CategoricalData &variable(data[index[j]]);
+        index[j] = variable.value();
+      }
+      ++el.second[index];
+    }
+  }
+
+  void LoglinearModelSuf::add_effect(
+      const Ptr<CategoricalDataEncoder> &effect) {
+    effects_.push_back(effect);
+    cross_tabulations_[effect->which_variables()] = Array(
+        effect->nlevels(), 0.0);
+    valid_ = false;
+  }
+
+  void LoglinearModelSuf::combine(const LoglinearModelSuf &rhs) {
+    for (const auto &el : rhs.cross_tabulations_) {
+      cross_tabulations_[el.first] += el.second;
+    }
+  }
+
+  void LoglinearModelSuf::combine(const Ptr<LoglinearModelSuf> &rhs) {
+    combine(*rhs);
+  }
+
+  LoglinearModelSuf *LoglinearModelSuf::abstract_combine(Sufstat *s) {
+    return abstract_combine_impl(this, s);
   }
 
   //===========================================================================
 
+  LoglinearModel::LoglinearModel()
+      : ParamPolicy(new GlmCoefs(0)),
+        DataPolicy(new LoglinearModelSuf)
+  {}
+
+  LoglinearModel::LoglinearModel(const DataTable &table)
+      : ParamPolicy(nullptr),
+        DataPolicy(new LoglinearModelSuf)
+  {
+    std::vector<int> categorical_variables;
+    for (int j = 0; j < table.nvars(); ++j) {
+      if (table.variable_type(j) == DataTable::VariableType::categorical) {
+        categorical_variables.push_back(j);
+      }
+    }
+
+    if (categorical_variables.empty()) {
+      report_error("There were no categorical variables in the data table.");
+    }
+    for (size_t i = 0; i < table.nrow(); ++i) {
+      NEW(MultivariateCategoricalData, data_point)();
+      for (size_t j = 0; j < categorical_variables.size(); ++j) {
+        data_point->push_back(table.get_nominal(
+            categorical_variables[j])[i]);
+      }
+      add_data(data_point);
+    }
+  }
+
+  void LoglinearModel::add_data(const Ptr<MCD> &data) {
+    if (main_effects_.empty()) {
+      for (int i = 0; i < data->nvars(); ++i) {
+        NEW(CategoricalMainEffect, main_effect)(i, (*data)[i].key());
+        add_effect(main_effect);
+        main_effects_.push_back(main_effect);
+      }
+    }
+    DataPolicy::add_data(data);
+  }
+
+
+  void LoglinearModel::add_effect(const Ptr<CategoricalDataEncoder> &effect) {
+    encoder_.add_effect(effect);
+    suf()->add_effect(effect);
+    set_prm(new GlmCoefs(encoder_.dim()));
+  }
+
   double LoglinearModel::logp(const MultivariateCategoricalData &data) const {
-    return coef().predict(encoder_.encode_categorical_data(data));
+    return coef().predict(encoder_.encode(data));
   }
 
 }

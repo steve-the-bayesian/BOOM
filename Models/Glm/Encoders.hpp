@@ -63,7 +63,7 @@ namespace BOOM {
   class EffectsEncoder : public MainEffectsEncoder {
    public:
     // The reference level is the last listed level in key.
-    explicit EffectsEncoder(int which_variable, const Ptr<CatKey> &key);
+    explicit EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key);
 
     int dim() const override;
     Vector encode(const CategoricalData &data) const;
@@ -71,7 +71,7 @@ namespace BOOM {
     Matrix encode_dataset(const DataTable &data) const override;
 
    private:
-    Ptr<CatKey> key_;
+    Ptr<CatKeyBase> key_;
   };
 
   //===========================================================================
@@ -122,7 +122,6 @@ namespace BOOM {
     std::vector<Ptr<DataEncoder>> encoders_;
   };
 
-
-}
+}  // namespace BOOM
 
 #endif  // BOOM_GLM_ENCODERS_HPP_

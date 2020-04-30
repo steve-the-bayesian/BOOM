@@ -18,12 +18,17 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <map>
+
 #include "Models/CategoricalData.hpp"
+#include "Models/Sufstat.hpp"
 #include "Models/Policies/ParamPolicy_1.hpp"
-#include "Models/Policies/IID_DataPolicy.hpp"
+#include "Models/Policies/SufstatDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
 #include "Models/Glm/Encoders.hpp"
+
+#include "LinAlg/Array.hpp"
 
 #include "distributions/rng.hpp"
 #include "stats/DataTable.hpp"
@@ -79,10 +84,10 @@ namespace BOOM {
     virtual int dim() const = 0;
 
     // The indices of the variables driving this effect.
-    virtual std::vector<int> which_variables() const = 0;
+    virtual const std::vector<int> &which_variables() const = 0;
 
     // The number of levels in each variable.
-    virtual std::vector<int> dimensions() const = 0;
+    virtual const std::vector<int> &nlevels() const = 0;
 
    private:
     friend void intrusive_ptr_add_ref(CategoricalDataEncoder *d) {
@@ -95,66 +100,63 @@ namespace BOOM {
       }
     }
   };
+
   //---------------------------------------------------------------------------
-  class CategoricalMainEffect :
-      public CategoricalDataEncoder {
+  class CategoricalMainEffect : public CategoricalDataEncoder {
    public:
-    CategoricalMainEffect(int which_variable, const Ptr<CatKey> &key)
-        : encoder_(which_variable, key) {}
+    CategoricalMainEffect(int which_variable, const Ptr<CatKeyBase> &key);
 
     Vector encode(const MultivariateCategoricalData &data) const override;
-    int dim() const override {return encoder_->dim();}
-    int nlevels() const {return dim() + 1;}
+    int dim() const override {return encoder_.dim();}
+    const std::vector<int> &which_variables() const override {
+      return which_variables_;
+    }
+    const std::vector<int> &nlevels() const override {return nlevels_;}
 
    private:
     EffectsEncoder encoder_;
+    std::vector<int> which_variables_;
+    std::vector<int> nlevels_;
   };
 
   //---------------------------------------------------------------------------
   class CategoricalInteractionEncoder :
-      public InteractionEncoder,
       public CategoricalDataEncoder {
    public:
-    CategoricalInteractionEncoder(
-        const Ptr<CategoricalMainEffect> &main1,
-        const Ptr<CategoricalMainEffect> &main2);
+    CategoricalInteractionEncoder(const Ptr<CategoricalDataEncoder> &enc1,
+                                  const Ptr<CategoricalDataEncoder> &enc2);
 
-    CategoricalInteractionEncoder(
-        const Ptr<CategoricalMainEffect> &main,
-        const Ptr<CategoricalInteractionEncoder> &interaction);
-
-    CategoricalInteractionEncoder(
-        const Ptr<CategoricalInteractionEncoder> &interaction1,
-        const Ptr<CategoricalInteractionEncoder> &interaction2);
-
-    Vector encode_categorical_data(
-        const MultivariateCategoricalData &data) const;
-
-    int dim() const override {return InteractionEncoder::dim();}
+    Vector encode(const MultivariateCategoricalData &data) const;
+    int dim() const override {return enc1_->dim() * enc2_->dim();}
+    const std::vector<int> &which_variables() const override {
+      return which_variables_;
+    }
+    const std::vector<int> &nlevels() const {return nlevels_;}
 
    private:
-    CategoricalDataEncoder *enc1_;
-    CategoricalDataEncoder *enc2_;
+    Ptr<CategoricalDataEncoder> enc1_;
+    Ptr<CategoricalDataEncoder> enc2_;
+    std::vector<int> which_variables_;
+    std::vector<int> nlevels_;
   };
 
   //---------------------------------------------------------------------------
-  class CategoricalDatasetEncoder
-      : public DatasetEncoder,
-        public CategoricalDataEncoder {
+  class CategoricalDatasetEncoder {
    public:
-    void add_main_effect(const Ptr<CategoricalMainEffect> &main);
-    void add_interaction(const Ptr<CategoricalInteractionEncoder> &interaction);
+    CategoricalDatasetEncoder() : dim_(0) {}
 
-    int dim() const override {return DatasetEncoder::dim();}
+    void add_effect(const Ptr<CategoricalDataEncoder> &effect);
 
-    Vector encode_categorical_data(
-        const MultivariateCategoricalData &data) const override;
+    int dim() const {return dim_;}
+
+    Vector encode(const MultivariateCategoricalData &data) const;
 
    private:
     // This set of encoders parallels the set maintined by DatasetEncoder.  The
     // raw pointers are okay because the base class maintains the objects in
     // Ptr's.
-    std::vector<CategoricalDataEncoder *> categorical_encoders_;
+    std::vector<Ptr<CategoricalDataEncoder>> encoders_;
+    int dim_;
   };
 
   //===========================================================================
@@ -162,40 +164,52 @@ namespace BOOM {
   // tabulations for each effect in the model.
   class LoglinearModelSuf : public SufstatDetails<MultivariateCategoricalData> {
    public:
-    LoglinearModelSuf() {}
+    LoglinearModelSuf() : valid_(false) {}
     LoglinearModelSuf *clone() const override {
       return new LoglinearModelSuf(*this);
     }
 
-    void add_main_effect(const Ptr<CategoricalMainEffect> &main_effect);
-    void add_interaction(const Ptr<CategoricalInteractionEncoder> &interaction);
+    std::ostream &print(std::ostream &out) const override;
+
+    // vectorize/unvectorize packs the data but not the sizes or model
+    // structure.
+    Vector vectorize(bool minimal = true) const override;
+    Vector::const_iterator unvectorize(
+        Vector::const_iterator &v, bool minimal=true) override;
+    Vector::const_iterator unvectorize(
+        const Vector &v, bool minimal=true) override;
+
+    void add_effect(const Ptr<CategoricalDataEncoder> &effect);
 
     // Clear the data but keep the information about model structure.
-    void clear() override { cross_tabulations_.clear(); }
+    void clear() override;
 
     // Clear everything.
-    void clear_data_and_structure() {
-      clear();
-      main_effects_.clear();
-      interactions_.clear();
-    }
+    void clear_data_and_structure();
 
-    void Update(const MultivariateCategoricalData &data) const override;
+    void Update(const MultivariateCategoricalData &data) override;
+
+    // Note that 'combine' assumes that the two suf's being combined have the
+    // same structure.
+    void combine(const LoglinearModelSuf &suf);
+    void combine(const Ptr<LoglinearModelSuf> &suf);
+    LoglinearModelSuf *abstract_combine(Sufstat *s);
 
    private:
-    std::vector<CategoricalMainEffect> main_effects_;
-    std::vector<CategoricalInteractionEncoder> interactions_;
+    std::vector<Ptr<CategoricalDataEncoder>> effects_;
 
     // Cross tabulations are indexed by a vector containing the indices of the
     // tabulated variables.  For example, a 3-way interaction might include
     // variables 0, 2, and 5.  The indices must be in order.
     std::map<std::vector<int>, Array> cross_tabulations_;
+
+    bool valid_;
   };
 
   //===========================================================================
   class LoglinearModel
       : public ParamPolicy_1<GlmCoefs>,
-        public IID_DataPolicy<MultivariateCategoricalData>,
+        public SufstatDataPolicy<MultivariateCategoricalData, LoglinearModelSuf>,
         public PriorPolicy {
    public:
     LoglinearModel();
@@ -204,6 +218,12 @@ namespace BOOM {
     explicit LoglinearModel(const DataTable &table);
 
     LoglinearModel *clone() const override;
+
+    void add_data(const Ptr<MultivariateCategoricalData> &data_point) override;
+    void add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
+    void add_data(MultivariateCategoricalData *dp) {
+      add_data(Ptr<MultivariateCategoricalData>(dp));
+    }
 
     // Perform one Gibbs sampling pass over the data point.
     void impute(MultivariateCategoricalData &data_point, RNG &rng);
@@ -218,10 +238,15 @@ namespace BOOM {
     double logp(const MultivariateCategoricalData &data_point) const;
 
    private:
+    // Add the effect to the encoder, to the sufficient statistics, and resize
+    // the coefficient vector.
+    void add_effect(const Ptr<CategoricalDataEncoder> &effect);
+
+    // The main_effects are used to build interaction terms.
+    std::vector<Ptr<CategoricalMainEffect>> main_effects_;
+
     CategoricalDatasetEncoder encoder_;
   };
-
-
 
 }  // namespace BOOM
 

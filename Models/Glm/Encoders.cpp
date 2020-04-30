@@ -17,13 +17,19 @@
 */
 
 #include "Models/Glm/Encoders.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
-  EffectsEncoder::EffectsEncoder(int which_variable, const Ptr<CatKey> &key)
+  EffectsEncoder::EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key)
       : MainEffectsEncoder(which_variable),
         key_(key)
-  {}
+  {
+    if (key_->max_levels() <= 0) {
+      report_error("A categorical data key used to create an EffectsEncoder "
+                   "must have a defined maximum number of levels. ");
+    }
+  }
 
   int EffectsEncoder::dim() const {
     return key_->max_levels() - 1;
