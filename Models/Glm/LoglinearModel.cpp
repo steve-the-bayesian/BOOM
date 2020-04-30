@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include "cpputil/ToString.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
 
@@ -216,7 +217,7 @@ namespace BOOM {
 
   void LoglinearModelSuf::refresh(const std::vector<Ptr<MCD>> &data) {
     clear();
-    for (const autl &el : data) {
+    for (const auto &el : data) {
       Update(*el);
     }
   }
@@ -268,7 +269,11 @@ namespace BOOM {
   const Array &LoglinearModelSuf::margin(const std::vector<int> &index) const {
     const auto it = cross_tabulations_.find(index);
     if (it == cross_tabulations_.end()) {
+      std::ostringstream err;
+      err << "Index " << ToString(index) << " not found.";
+      report_error(err.str());
     }
+    return it->second;
   }
 
   //===========================================================================

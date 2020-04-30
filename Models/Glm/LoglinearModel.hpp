@@ -19,6 +19,7 @@
 */
 
 #include <map>
+#include <cstdint>
 
 #include "Models/CategoricalData.hpp"
 #include "Models/Sufstat.hpp"
@@ -224,7 +225,7 @@ namespace BOOM {
     // variables 0, 2, and 5.  The indices must be in order.
     std::map<std::vector<int>, Array> cross_tabulations_;
 
-    int64_t sample_size;
+    std::int64_t sample_size_;
 
     // The state of the object.  The state becomes invalid each time an effect
     // is added.  The state can be made valid by calling clear() or refresh().
