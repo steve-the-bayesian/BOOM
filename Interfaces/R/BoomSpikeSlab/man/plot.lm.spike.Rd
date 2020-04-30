@@ -19,7 +19,7 @@
 \usage{
   \method{plot}{lm.spike}(x,
      y = c("inclusion", "coefficients", "scaled.coefficients",
-              "residuals", "size", "help"),
+              "residuals", "fit", "size", "help"),
      burn = SuggestBurnLogLikelihood(x$log.likelihood),
      ...)
 }
