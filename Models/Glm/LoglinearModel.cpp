@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <cstdint>
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
 
@@ -61,9 +62,12 @@ namespace BOOM {
   Vector CategoricalMainEffect::encode(const MCD &data) const {
     return encoder_.encode(data[encoder_.which_variable()]);
   }
+  Vector CategoricalMainEffect::encode(const std::vector<int> &data) const {
+    return encoder_.encode(data[encoder_.which_variable()]);
+  }
 
   //===========================================================================
-  CategoricalInteractionEncoder::CategoricalInteractionEncoder(
+  CategoricalInteraction::CategoricalInteraction(
       const Ptr<CategoricalDataEncoder> &enc1,
       const Ptr<CategoricalDataEncoder> &enc2)
       : enc1_(enc1),
@@ -105,36 +109,67 @@ namespace BOOM {
 
   }
 
-  Vector CategoricalInteractionEncoder::encode(const MCD &data) const {
-    Vector v1 = enc1_->encode(data);
-    Vector v2 = enc2_->encode(data);
-    Vector ans(dim());
-    int index = 0;
-    for (size_t i = 0; i < v1.size(); ++i) {
-      for (size_t j = 0; j < v2.size(); ++j) {
-        ans[index++] = v1[i] * v2[j];
+  namespace {
+    template <class DATA>
+    Vector encode_interaction(
+        const DATA &data,
+        int dim,
+        const CategoricalDataEncoder &enc1,
+        const CategoricalDataEncoder &enc2) {
+      Vector v1 = enc1.encode(data);
+      Vector v2 = enc2.encode(data);
+      Vector ans(dim);
+      int index = 0;
+      for (size_t i = 0; i < v1.size(); ++i) {
+        for (size_t j = 0; j < v2.size(); ++j) {
+          ans[index++] = v1[i] * v2[j];
+        }
       }
+      return ans;
     }
-    return ans;
+  } //
+
+  Vector CategoricalInteraction::encode(
+      const std::vector<int> &data) const {
+    return encode_interaction(data, dim(), *enc1_, *enc2_);
+  }
+
+  Vector CategoricalInteraction::encode(const MCD &data) const {
+    return encode_interaction(data, dim(), *enc1_, *enc2_);
   }
 
   //===========================================================================
-  void CategoricalDatasetEncoder::add_effect(
+  void MultivariateCategoricalEncoder::add_effect(
       const Ptr<CategoricalDataEncoder> &effect) {
     encoders_.push_back(effect);
     dim_ += effect->dim();
   }
 
-  Vector CategoricalDatasetEncoder::encode(const MCD &data) const {
-    uint start = 0;
-    Vector ans(dim(), 0.0);
-    for (int i = 0; i < encoders_.size(); ++i) {
-      uint dim = encoders_[i]->dim();
-      VectorView view(ans, start, dim);
-      view = encoders_[i]->encode(data);
-      start += dim;
+  namespace {
+    template <class DATA>
+    Vector encode_variable(
+        const DATA &data,
+        const std::vector<Ptr<CategoricalDataEncoder>> &encoders,
+        int dim) {
+      uint start = 0;
+      Vector ans(dim, 0.0);
+      for (int i = 0; i < encoders.size(); ++i) {
+        uint encoder_dim = encoders[i]->dim();
+        VectorView view(ans, start, encoder_dim);
+        view = encoders[i]->encode(data);
+        start += encoder_dim;
+      }
+      return ans;
     }
-    return ans;
+  }  // namespace
+
+  Vector MultivariateCategoricalEncoder::encode(
+      const MCD &data) const {
+    return encode_variable(data, encoders_, dim());
+  }
+  Vector MultivariateCategoricalEncoder::encode(
+      const std::vector<int> &data) const {
+    return encode_variable(data, encoders_, dim());
   }
 
   //===========================================================================
@@ -170,6 +205,8 @@ namespace BOOM {
     for (auto &el : cross_tabulations_) {
       cross_tabulations_[el.first] = 0.0;
     }
+    sample_size_ = 0;
+    valid_ = true;
   }
 
   void LoglinearModelSuf::clear_data_and_structure() {
@@ -177,10 +214,21 @@ namespace BOOM {
     effects_.clear();
   }
 
+  void LoglinearModelSuf::refresh(const std::vector<Ptr<MCD>> &data) {
+    clear();
+    for (const autl &el : data) {
+      Update(*el);
+    }
+  }
+
   void LoglinearModelSuf::Update(const MCD &data) {
     // Each element in the for loop is a "margin" of the table.  el.first
     // indicates which variables are involved in the margin.  el.second is the
     // cross tabulation.
+    if (!valid_) {
+      report_error("LoglinearModelSuf::Update called from an invalid state.");
+    }
+    ++sample_size_;
     for (auto &el : cross_tabulations_) {
       std::vector<int> index = el.first;
       // Replace each element of 'index' with the value of the variable at that
@@ -198,7 +246,9 @@ namespace BOOM {
     effects_.push_back(effect);
     cross_tabulations_[effect->which_variables()] = Array(
         effect->nlevels(), 0.0);
-    valid_ = false;
+    if (sample_size_ > 0) {
+      valid_ = false;
+    }
   }
 
   void LoglinearModelSuf::combine(const LoglinearModelSuf &rhs) {
@@ -213,6 +263,12 @@ namespace BOOM {
 
   LoglinearModelSuf *LoglinearModelSuf::abstract_combine(Sufstat *s) {
     return abstract_combine_impl(this, s);
+  }
+
+  const Array &LoglinearModelSuf::margin(const std::vector<int> &index) const {
+    const auto it = cross_tabulations_.find(index);
+    if (it == cross_tabulations_.end()) {
+    }
   }
 
   //===========================================================================
@@ -265,6 +321,10 @@ namespace BOOM {
   }
 
   double LoglinearModel::logp(const MultivariateCategoricalData &data) const {
+    return coef().predict(encoder_.encode(data));
+  }
+
+  double LoglinearModel::logp(const std::vector<int> &data) const {
     return coef().predict(encoder_.encode(data));
   }
 

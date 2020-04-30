@@ -67,6 +67,7 @@ namespace BOOM {
 
     int dim() const override;
     Vector encode(const CategoricalData &data) const;
+    Vector encode(int level) const;
     Matrix encode(const CategoricalVariable &variable) const;
     Matrix encode_dataset(const DataTable &data) const override;
 

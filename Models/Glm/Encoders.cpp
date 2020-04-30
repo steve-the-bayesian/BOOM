@@ -36,11 +36,15 @@ namespace BOOM {
   }
 
   Vector EffectsEncoder::encode(const CategoricalData &data) const {
-    if (data.value() == key_->max_levels() - 1) {
+    return encode(data.value());
+  }
+
+  Vector EffectsEncoder::encode(int level) const {
+    if (level == key_->max_levels() - 1) {
       return Vector(dim(), -1);
     } else {
       Vector ans(dim(), 0.0);
-      ans[data.value()] = 1.0;
+      ans[level] = 1.0;
       return ans;
     }
   }
