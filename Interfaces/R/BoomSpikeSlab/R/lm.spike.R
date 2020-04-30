@@ -74,7 +74,7 @@ lm.spike <- function(formula,
   } else {
     stop("Unknonwn sampling method in lm.spike.")
   }
-  
+
   error.distribution <- match.arg(error.distribution)
   if (is.null(prior)) {
     if (error.distribution == "gaussian") {
@@ -188,7 +188,7 @@ lm.spike <- function(formula,
 plot.lm.spike <- function(
     x,
     y = c("inclusion", "coefficients", "scaled.coefficients",
-        "residuals", "size", "help"),
+        "residuals", "fit", "size", "help"),
     burn = SuggestBurnLogLikelihood(x$log.likelihood),
     ...) {
   ## S3 method for plotting lm.spike objects.
@@ -207,6 +207,8 @@ plot.lm.spike <- function(
     return(PlotModelSize(x$beta, burn = burn, ...))
   } else if (y == "residuals") {
     PlotLmSpikeResiduals(x, burn = burn, ...)
+  } else if (y == "fit") {
+    PlotLmSpikeFit(x, burn=burn, ...)
   } else if (y == "help") {
     help("plot.lm.spike", package = "BoomSpikeSlab", help_type = "html")
   } else {
@@ -444,7 +446,7 @@ PlotLmSpikeCoefficients <- function(beta,
 }
 
 ##----------------------------------------------------------------------
-PlotLmSpikeResiduals <- function(
+PlotLmSpikeFit <- function(
     object,
     burn = SuggestBurnLogLikelihood(object$log.likelihood),
     ...) {
@@ -458,9 +460,41 @@ PlotLmSpikeResiduals <- function(
   ##   NULL
   ##
   ## Details:
-  ##   Plots residuals vs predicted values, after discarding the
-  ##   requested burn-in.  Residuals are posterior mean residuals, and
-  ##   predicted values are posterior mean predictions.
+  ##   Plots predicted vs actual values, after discarding the requested burn-in.
+  ##   Residuals are posterior mean residuals, and predicted values are
+  ##   posterior mean predictions.
+  predictors <- model.matrix(object)
+  beta <- object$beta
+  if (burn > 0) {
+    beta <- beta[-(1:burn), , drop = FALSE]
+  }
+  predictions <- rowMeans(predictors %*% t(beta))
+  plot(predictions,
+    object$response,
+    xlab = "Posterior mean predictions",
+    ylab = "Actual values",
+    ...)
+  return(NULL)
+}
+
+##----------------------------------------------------------------------
+PlotLmSpikeResiduals <- function(
+    object,
+    burn = SuggestBurnLogLikelihood(object$log.likelihood),
+    ...) {
+  ## Args:
+  ##   object: An lm.spike model object.
+  ##   burn: Number of MCMC iterations to discard.  If burn <= 0 then no
+  ##     iterations are discarded.
+  ##   ...: Extra arguments passed to 'plot'.
+  ##
+  ## Returns:
+  ##   NULL
+  ##
+  ## Details:
+  ##   Plots residuals vs predicted values, after discarding the requested
+  ##   burn-in.  Residuals are posterior mean residuals, and predicted values
+  ##   are posterior mean predictions.
   predictors <- model.matrix(object)
   beta <- object$beta
   if (burn > 0) {
@@ -783,4 +817,3 @@ OdaOptions <- function(fallback.probability = 0.0,
   class(ans) <- c("OdaOptions", "SpikeSlabModelOptions")
   return(ans)
 }
-  
