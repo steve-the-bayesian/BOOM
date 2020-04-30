@@ -318,11 +318,35 @@ namespace BOOM {
     DataPolicy::add_data(data);
   }
 
+  void LoglinearModel::add_interaction(
+      const std::vector<int> &which_variables) {
+    std::vector<int> vars(which_variables);
+    std::sort(vars.begin(), vars.end());
+    if (vars.size() < 2) {
+      report_error("An interaction requires at least 2 variables.");
+    }
+    for (int i = 0; i < vars.size(); ++i) {
+      if (vars[i] < 0 || vars[i] >= main_effects_.size()) {
+        report_error("Index out of bounds in 'add_interaction'.");
+      }
+      if (i > 0 && vars[i] == vars[i-1]) {
+        report_error("Duplicate index found in 'add_interaction'.");
+      }
+    }
 
-  void LoglinearModel::add_effect(const Ptr<CategoricalDataEncoder> &effect) {
-    encoder_.add_effect(effect);
-    suf()->add_effect(effect);
-    set_prm(new GlmCoefs(encoder_.dim()));
+    NEW(CategoricalInteraction, interaction)(
+        main_effects_[vars[0]], main_effects_[vars[1]]);
+    for (int i = 2; i < vars.size(); ++i) {
+      Ptr<CategoricalDataEncoder> first = interaction;
+      interaction = new CategoricalInteraction(
+          first, main_effects_[vars[i]]);
+    }
+
+    add_effect(interaction);
+  }
+
+  void LoglinearModel::refresh_suf() {
+    suf()->refresh(dat());
   }
 
   double LoglinearModel::logp(const MultivariateCategoricalData &data) const {
@@ -331,6 +355,13 @@ namespace BOOM {
 
   double LoglinearModel::logp(const std::vector<int> &data) const {
     return coef().predict(encoder_.encode(data));
+  }
+
+  // Private method used to
+  void LoglinearModel::add_effect(const Ptr<CategoricalDataEncoder> &effect) {
+    encoder_.add_effect(effect);
+    suf()->add_effect(effect);
+    set_prm(new GlmCoefs(encoder_.dim()));
   }
 
 }

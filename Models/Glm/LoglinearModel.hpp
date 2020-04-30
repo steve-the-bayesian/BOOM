@@ -190,10 +190,14 @@ namespace BOOM {
     Vector::const_iterator unvectorize(
         const Vector &v, bool minimal=true) override;
 
-    // Add a main effect or interaction to the model structure.  If previous
-    // data has already been allocated to the object, adding an effect
+    // Add a main effect or interaction to the model structure.
+    //
+    // If data has already been allocated to the object, adding an effect
     // invalidates the object.  To put it back in a valid state call "refresh"
     // and pass the original data.
+    //
+    // If all elements of model structure are added prior to calling
+    // Update. Then no refreshing is needed.
     void add_effect(const Ptr<CategoricalDataEncoder> &effect);
 
     // Clear the data but keep the information about model structure.  Set the
@@ -206,6 +210,10 @@ namespace BOOM {
     // Clear the data and recompute the sufficient statistics.
     void refresh(const std::vector<Ptr<MultivariateCategoricalData>> &data);
 
+    // It is an error to update the sufficient statistics with new data when the
+    // object is in an invalid state.  The easiest way to prevent this from
+    // happening is to add all elements of model structure before calling
+    // update.
     void Update(const MultivariateCategoricalData &data) override;
 
     // Note that 'combine' assumes that the two suf's being combined have the
@@ -214,7 +222,18 @@ namespace BOOM {
     void combine(const Ptr<LoglinearModelSuf> &suf);
     LoglinearModelSuf *abstract_combine(Sufstat *s);
 
-    // If the object is in an invalid state
+    // Args:
+    //   index: The indices of the variables in the desired margin.  For main
+    //     effects the index will just contain one number.  For 2-way
+    //     interactions it will contain 2 numbers, and for k-way interactions it
+    //     will contain k numbers.  The elements of 'index' should be in
+    //     increasing order: [0, 3, 4] is okay.  [3, 0, 4] is not.
+    //
+    // Returns:
+    //   An array with dimensions corresponding to the variables in the desired
+    //   margin.  The index of each array dimension corresponds to the level of
+    //   that variable.  The array entry at (for example) (i, j, k) is the
+    //   number of times X0 == i, X1 == j, and X2 == k.
     const Array &margin(const std::vector<int> &index) const;
 
    private:
@@ -238,9 +257,16 @@ namespace BOOM {
         public SufstatDataPolicy<MultivariateCategoricalData, LoglinearModelSuf>,
         public PriorPolicy {
    public:
+
+    // An empty LoglinearModel.  The fisrt time this model calls add_data main
+    // effects will be added for each variable in the added data point.
+    // If interactions are later added, then
     LoglinearModel();
 
-    // Buid a LoglinearModel from the categorical variables in a DataTable.
+    // Build a LoglinearModel from the categorical variables in a DataTable.
+    //
+    // A model built with this constructor must call refresh_suf() after all
+    // model structure is added.
     explicit LoglinearModel(const DataTable &table);
 
     LoglinearModel *clone() const override;
@@ -258,6 +284,8 @@ namespace BOOM {
     int nvars() const;
 
     void add_interaction(const std::vector<int> &variable_postiions);
+
+    void refresh_suf();
 
     const GlmCoefs &coef() const {return prm_ref();}
 
