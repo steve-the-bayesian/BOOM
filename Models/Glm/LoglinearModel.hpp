@@ -255,7 +255,8 @@ namespace BOOM {
   class LoglinearModel
       : public ParamPolicy_1<GlmCoefs>,
         public SufstatDataPolicy<MultivariateCategoricalData, LoglinearModelSuf>,
-        public PriorPolicy {
+        public PriorPolicy,
+        public MLE_Model {
    public:
 
     // An empty LoglinearModel.  The fisrt time this model calls add_data main
@@ -291,6 +292,8 @@ namespace BOOM {
 
     double logp(const MultivariateCategoricalData &data_point) const;
     double logp(const std::vector<int> &data_point) const;
+
+    void mle() override;
 
    private:
     // Add the effect to the encoder, to the sufficient statistics, and resize
