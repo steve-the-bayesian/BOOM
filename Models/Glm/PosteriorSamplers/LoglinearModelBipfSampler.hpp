@@ -38,7 +38,7 @@ namespace BOOM {
 
     double logpri() const override;
 
-    void draw_effect(const std::vector<int> &index);
+    void draw_effect_parameters(int effect_index);
 
    private:
     LoglinearModel *model_;

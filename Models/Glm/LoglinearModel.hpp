@@ -59,6 +59,10 @@ namespace BOOM {
       data_.push_back(scalar);
     }
 
+    Ptr<CategoricalData> mutable_element(int i) {
+      return data_[i];
+    }
+
     // Recover the variable in position i.
     const CategoricalData & operator[](int i) const {
       return *data_[i];
@@ -159,11 +163,16 @@ namespace BOOM {
     MultivariateCategoricalEncoder() : dim_(0) {}
 
     void add_effect(const Ptr<CategoricalDataEncoder> &effect);
+    int number_of_effects() const {return encoders_.size();}
 
     int dim() const {return dim_;}
 
     Vector encode(const MultivariateCategoricalData &data) const;
     Vector encode(const std::vector<int> &data) const;
+
+    const CategoricalDataEncoder &encoder(int i) const {
+      return *(encoders_[i]);
+    }
 
    private:
     std::vector<Ptr<CategoricalDataEncoder>> encoders_;
@@ -295,7 +304,25 @@ namespace BOOM {
 
     void mle() override;
 
+    // Fill each missing value in the data set with draws from the discrete
+    // uniform distribution over the range of that variable.
+    void initialize_missing_data(RNG &rng);
+
+    // Make one Gibbs sampling pass through the data, filling in each
+    // observation conditional on observed and all other missing data.
+    void impute_missing_data(RNG &rng);
+
+    int number_of_effects() const {return encoder_.number_of_effects();}
+    const CategoricalDataEncoder &encoder(int i) const {
+      return encoder_.encoder(i);
+    }
+
    private:
+    // Implementation for impute_missing_data.
+    void impute_single_variable(
+        MultivariateCategoricalData &observation, int position, RNG &rng,
+        std::vector<int> &workspace);
+
     // Add the effect to the encoder, to the sufficient statistics, and resize
     // the coefficient vector.
     void add_effect(const Ptr<CategoricalDataEncoder> &effect);

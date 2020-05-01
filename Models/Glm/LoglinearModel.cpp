@@ -22,6 +22,7 @@
 #include "cpputil/ToString.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/SufstatAbstractCombineImpl.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -347,6 +348,48 @@ namespace BOOM {
 
   void LoglinearModel::refresh_suf() {
     suf()->refresh(dat());
+  }
+
+  void LoglinearModel::initialize_missing_data(RNG &rng) {
+    for (auto &observation : dat()) {
+      int nvars = observation->nvars();
+      for (int i = 0; i < nvars; ++i) {
+        Ptr<CategoricalData> variable = observation->mutable_element(i);
+        if (variable->missing() != Data::missing_status::observed) {
+          int level = rmulti_mt(rng, 0, variable->nlevels() - 1);
+          variable->set(level);
+        }
+      }
+    }
+  }
+
+  void LoglinearModel::impute_missing_data(RNG &rng) {
+    std::vector<int> workspace(nvars());
+    for (auto &observation : dat()) {
+      for (int i = 0; i < nvars(); ++i) {
+        Ptr<CategoricalData> variable = observation->mutable_element(i);
+        if (variable->missing() != Data::missing_status::observed) {
+          impute_single_variable(*observation, i, rng, workspace);
+        }
+      }
+    }
+  }
+
+  void LoglinearModel::impute_single_variable(
+      MCD &observation, int position, RNG &rng, std::vector<int> &workspace) {
+    Ptr<CategoricalData> variable = observation.mutable_element(position);
+    for (int i = 0; i < nvars(); ++i) {
+      workspace[i] = observation[i].value();
+    }
+    int nlevels = variable->nlevels();
+    Vector prob(nlevels);
+    for (int i = 0; i < nlevels; ++i) {
+      workspace[position] = i;
+      prob = logp(workspace);
+    }
+    prob.normalize_logprob();
+    int level = rmulti_mt(rng, prob);
+    variable->set(level);
   }
 
   double LoglinearModel::logp(const MultivariateCategoricalData &data) const {

@@ -31,8 +31,8 @@ namespace BOOM {
   {}
 
   void BIPF::draw() {
-    for (const auto &el : model_->suf()->cross_tabulations()) {
-      draw_effect_parameters(el.first, el.second);
+    for (int i = 0; i < model_->number_of_effects(); ++i) {
+      draw_effect_parameters(i);
     }
 
   }
@@ -41,12 +41,10 @@ namespace BOOM {
     return negative_infinity();
   }
 
-  void BIPF::draw_effect_parameters(const std::vector<int> &index,
-                                    const Array &margin) {
-
-    Array params(margin);
-
-
+  void BIPF::draw_effect_parameters(int effect_index) {
+    const CategoricalDataEncoder &encoder(model_->encoder(effect_index));
+    const std::vector<int> &which_variables(encoder.which_variables());
+    const Array& counts(model_->suf()->margin(which_variables));
   }
 
 }  // namespace BOOM
