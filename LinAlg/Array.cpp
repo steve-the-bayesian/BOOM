@@ -892,6 +892,24 @@ namespace BOOM {
     return (dim() == rhs.dim()) && (data_ == rhs.data_);
   }
 
+  ArrayIterator Array::abegin() {
+    return ArrayIterator(this);
+  }
+  ArrayIterator Array::aend() {
+    ArrayIterator it(this);
+    it.set_to_end();
+    return it;
+  }
+
+  ConstArrayIterator Array::abegin() const {
+    return ConstArrayIterator(this);
+  }
+  ConstArrayIterator Array::aend() const {
+    ConstArrayIterator it(this);
+    it.set_to_end();
+    return it;
+  }
+
   ostream &Array::print(ostream &out) const {
     return print_array(out, *this);
   }
