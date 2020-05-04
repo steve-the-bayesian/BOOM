@@ -47,10 +47,10 @@ namespace {
     NEW(CategoricalMainEffect, size_encoder)(1, sizes_);
     NEW(CategoricalMainEffect, shape_encoder)(2, shapes_);
 
-    CategoricalDatasetEncoder encoder;
-    encoder.add_main_effect(color_encoder);
-    encoder.add_main_effect(size_encoder);
-    encoder.add_main_effect(shape_encoder);
+    // CategoricalDatasetEncoder encoder;
+    // encoder.add_main_effect(color_encoder);
+    // encoder.add_main_effect(size_encoder);
+    // encoder.add_main_effect(shape_encoder);
 
   }
 

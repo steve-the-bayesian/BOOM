@@ -32,6 +32,8 @@ namespace BOOM {
    public:
     // Add a spot for the prior.
     LoglinearModelBipfSampler(LoglinearModel *model,
+                              double prior_count = 1.0,
+                              double min_scale = 1e-10,
                               RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
@@ -42,6 +44,8 @@ namespace BOOM {
 
    private:
     LoglinearModel *model_;
+    double prior_count_;
+    double min_scale_;
   };
 
 }  // namespace BOOM

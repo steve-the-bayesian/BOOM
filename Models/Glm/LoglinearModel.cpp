@@ -144,7 +144,21 @@ namespace BOOM {
   void MultivariateCategoricalEncoder::add_effect(
       const Ptr<CategoricalDataEncoder> &effect) {
     encoders_.push_back(effect);
+    encoders_by_index_[effect->which_variables()] = effect;
+    effect_position_[effect->which_variables()] = dim_;
     dim_ += effect->dim();
+  }
+
+  int MultivariateCategoricalEncoder::effect_position(
+      const std::vector<int> &index) const {
+    auto it = effect_position_.find(index);
+    if (it == effect_position_.end()) {
+      std::ostringstream err;
+      err << "The requested effect: [" << ToString(index)
+          << "] was not found in the encoder.";
+      report_error(err.str());
+    }
+    return it->second;
   }
 
   namespace {
@@ -152,9 +166,14 @@ namespace BOOM {
     Vector encode_variable(
         const DATA &data,
         const std::vector<Ptr<CategoricalDataEncoder>> &encoders,
-        int dim) {
+        int dim,
+        bool add_intercept) {
       uint start = 0;
       Vector ans(dim, 0.0);
+      if (add_intercept) {
+        ans[0] = 1;
+        ++start;
+      }
       for (int i = 0; i < encoders.size(); ++i) {
         uint encoder_dim = encoders[i]->dim();
         VectorView view(ans, start, encoder_dim);
@@ -167,11 +186,28 @@ namespace BOOM {
 
   Vector MultivariateCategoricalEncoder::encode(
       const MCD &data) const {
-    return encode_variable(data, encoders_, dim());
+    return encode_variable(data, encoders_, dim(), add_intercept_);
   }
   Vector MultivariateCategoricalEncoder::encode(
       const std::vector<int> &data) const {
-    return encode_variable(data, encoders_, dim());
+    return encode_variable(data, encoders_, dim(), add_intercept_);
+  }
+
+  const CategoricalDataEncoder &MultivariateCategoricalEncoder::encoder(
+      int i) const {
+    return *encoders_[i];
+  }
+
+  const CategoricalDataEncoder &MultivariateCategoricalEncoder::encoder(
+      const std::vector<int> &index) const {
+    auto it = encoders_by_index_.find(index);
+    if (it == encoders_by_index_.end()) {
+      std::ostringstream err;
+      err << "The requested effect: [" << ToString(index) << "] was not "
+          << "found in the MultivariateCategoricalEncoder.";
+      report_error(err.str());
+    }
+    return *it->second;
   }
 
   //===========================================================================
@@ -308,6 +344,10 @@ namespace BOOM {
     }
   }
 
+  LoglinearModel * LoglinearModel::clone() const {
+    return new LoglinearModel(*this);
+  }
+
   void LoglinearModel::add_data(const Ptr<MCD> &data) {
     if (main_effects_.empty()) {
       for (int i = 0; i < data->nvars(); ++i) {
@@ -317,6 +357,14 @@ namespace BOOM {
       }
     }
     DataPolicy::add_data(data);
+  }
+
+  int LoglinearModel::nvars() const {
+    if (dat().empty()) {
+      return 0;
+    } else {
+      return dat()[0]->nvars();
+    }
   }
 
   void LoglinearModel::add_interaction(
@@ -348,6 +396,17 @@ namespace BOOM {
 
   void LoglinearModel::refresh_suf() {
     suf()->refresh(dat());
+  }
+
+  void LoglinearModel::set_effect_coefficients(
+      const Vector &coefficients,
+      int effect_index) {
+    const CategoricalDataEncoder &enc(encoder_.encoder(effect_index));
+    int start = encoder_.effect_position(enc.which_variables());
+    if (coefficients.size() != enc.dim()) {
+      report_error("Dimension mismatch when setting effect coefficients.");
+    }
+    prm()->set_subset(coefficients, start);
   }
 
   void LoglinearModel::initialize_missing_data(RNG &rng) {

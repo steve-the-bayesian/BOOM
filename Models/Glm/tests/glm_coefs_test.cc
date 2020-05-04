@@ -146,6 +146,11 @@ namespace {
     EXPECT_TRUE(VectorEquals(
         c1.Beta(), Vector{8, 5, 0, 0, 9}));
 
+    // When setting a subset, make sure the right elements are set to zero.
+    c1.set_inc(Selector("11011"));
+    c1.set_Beta(Vector{1, 2, 3, 4, 5});
+    c1.set_subset(Vector{10, 9, 8}, 1);
+    EXPECT_TRUE(VectorEquals(c1.Beta(), Vector{1, 10, 0, 8, 5}));
   }
 
 }  // namespace

@@ -46,7 +46,8 @@ namespace BOOM {
     MultivariateCategoricalData(const MultivariateCategoricalData &rhs);
     MultivariateCategoricalData(MultivariateCategoricalData &&rhs) = default;
     MultivariateCategoricalData & operator=(const MultivariateCategoricalData &rhs);
-    MultivariateCategoricalData &operator=(MultivariateCategoricalData &&rhs) = default;
+    MultivariateCategoricalData &operator=(
+        MultivariateCategoricalData &&rhs) = default;
 
     MultivariateCategoricalData *clone() const override {
       return new MultivariateCategoricalData(*this);
@@ -83,7 +84,11 @@ namespace BOOM {
 
     // A vector containing a 1/0/-1 effects encoding of the input data.
     virtual Vector encode(const MultivariateCategoricalData &data) const = 0;
-    Vector encode(const std::vector<int> &data) const;
+
+    // Args:
+    //   data: The full data vector.  Each element is an entry in
+    //     MultivariateCategoricalData.
+    virtual Vector encode(const std::vector<int> &data) const = 0;
 
     // The number of columns in the Vector returned by 'encode'.
     virtual int dim() const = 0;
@@ -160,22 +165,39 @@ namespace BOOM {
   // The "parent" encoder class containing main effects and interactions.
   class MultivariateCategoricalEncoder {
    public:
-    MultivariateCategoricalEncoder() : dim_(0) {}
+    MultivariateCategoricalEncoder(bool add_intercept=true)
+        : add_intercept_(add_intercept),
+          dim_(add_intercept_)
+    {}
 
     void add_effect(const Ptr<CategoricalDataEncoder> &effect);
     int number_of_effects() const {return encoders_.size();}
+    int effect_position(const std::vector<int> &which_variables) const;
 
     int dim() const {return dim_;}
 
     Vector encode(const MultivariateCategoricalData &data) const;
     Vector encode(const std::vector<int> &data) const;
 
-    const CategoricalDataEncoder &encoder(int i) const {
-      return *(encoders_[i]);
-    }
+    const CategoricalDataEncoder &encoder(int i) const;
+    const CategoricalDataEncoder &encoder(
+        const std::vector<int> &which_variables) const;
 
    private:
+    // Encoders are stored in a vector, to preserve order, and simultaneously in
+    // a map, for easy lookup by index.
     std::vector<Ptr<CategoricalDataEncoder>> encoders_;
+    std::map<std::vector<int>, Ptr<CategoricalDataEncoder>> encoders_by_index_;
+
+    // effect_position_[eff] is the index in the parameter vector corresponding
+    // to the first element of effect eff.  The entries in eff_ are unique and
+    // sorted in ascending order.
+    std::map<std::vector<int>, int> effect_position_;
+
+    // If true then prepend a constant '1' corresponding to the intercept term
+    // when calling 'encode'.
+    bool add_intercept_;
+
     int dim_;
   };
 
@@ -245,6 +267,8 @@ namespace BOOM {
     //   number of times X0 == i, X1 == j, and X2 == k.
     const Array &margin(const std::vector<int> &index) const;
 
+    std::int64_t sample_size() const {return sample_size_;}
+
    private:
     std::vector<Ptr<CategoricalDataEncoder>> effects_;
 
@@ -264,8 +288,7 @@ namespace BOOM {
   class LoglinearModel
       : public ParamPolicy_1<GlmCoefs>,
         public SufstatDataPolicy<MultivariateCategoricalData, LoglinearModelSuf>,
-        public PriorPolicy,
-        public MLE_Model {
+        public PriorPolicy {
    public:
 
     // An empty LoglinearModel.  The fisrt time this model calls add_data main
@@ -299,10 +322,13 @@ namespace BOOM {
 
     const GlmCoefs &coef() const {return prm_ref();}
 
+    void set_effect_coefficients(const Vector &coefficients,
+                                 int encoder_index);
+    void set_effect_coefficients(const Vector &coefficients,
+                                 const std::vector<int> &index);
+
     double logp(const MultivariateCategoricalData &data_point) const;
     double logp(const std::vector<int> &data_point) const;
-
-    void mle() override;
 
     // Fill each missing value in the data set with draws from the discrete
     // uniform distribution over the range of that variable.

@@ -48,36 +48,44 @@ namespace BOOM {
   void Data::set_missing_status(missing_status m) { missing_flag = m; }
 
   //------------------------------------------------------------
-  VectorData::VectorData(uint n, double X) : x(n, X) {}
-  VectorData::VectorData(const Vector &y) : x(y) {}
+  VectorData::VectorData(uint n, double X) : data_(n, X) {}
+  VectorData::VectorData(const Vector &y) : data_(y) {}
   VectorData::VectorData(const VectorData &rhs)
-      : Data(rhs), Traits(rhs), x(rhs.x) {}
+      : Data(rhs), Traits(rhs), data_(rhs.data_) {}
   VectorData *VectorData::clone() const { return new VectorData(*this); }
 
   std::ostream &VectorData::display(std::ostream &out) const {
-    out << x;
+    out << data_;
     return out;
   }
 
   void VectorData::set(const Vector &rhs, bool signal_change) {
-    x = rhs;
+    data_ = rhs;
     if (signal_change) {
       signal();
     }
   }
 
   void VectorData::set_element(double value, int position, bool sig) {
-    x[position] = value;
+    data_[position] = value;
     if (sig) {
       signal();
     }
   }
 
-  double VectorData::operator[](uint i) const { return x[i]; }
+  void VectorData::set_subset(const Vector &subset, int start, bool signal) {
+    VectorView view(data_, start, subset.size());
+    view = subset;
+    if (signal) {
+      this->signal();
+    }
+  }
+
+  double VectorData::operator[](uint i) const { return data_[i]; }
 
   double &VectorData::operator[](uint i) {
     signal();
-    return x[i];
+    return data_[i];
   }
   //------------------------------------------------------------
   PartiallyObservedVectorData::PartiallyObservedVectorData(
@@ -99,7 +107,7 @@ namespace BOOM {
   PartiallyObservedVectorData * PartiallyObservedVectorData::clone() const {
     return new PartiallyObservedVectorData(*this);
   }
-  
+
   void PartiallyObservedVectorData::set(const Vector &rhs, bool signal_change) {
     if (rhs.size() != obs_.nvars_possible()) {
       report_error("Dimension changes are not possible with "
@@ -107,7 +115,7 @@ namespace BOOM {
     }
     VectorData::set(rhs, signal_change);
   }
-  
+
   //------------------------------------------------------------
   MatrixData::MatrixData(int r, int c, double val) : x(r, c, val) {}
 
