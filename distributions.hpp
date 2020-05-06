@@ -136,7 +136,7 @@ namespace BOOM {
   //
   // Args:
   //   mu, sigma: Parameters of the untruncated distribution.
-  //   cutpoint:  
+  //   cutpoint:
   void trun_norm_moments(double mu, double sigma, double cutpoint,
                          bool positive_support, double *mean, double *variance);
 
@@ -172,11 +172,19 @@ namespace BOOM {
   // Simulate the log of an exponential random variable with rate parameter
   // exp(loglam).
   double rlexp(double loglam);
-  double rlexp_mt(RNG &rng, double loglam);  
+  double rlexp_mt(RNG &rng, double loglam);
+
+  // Generalized extreme value distribution.
+
+  // The GIG(x | lambda, chi, psi) distribution has density proportional to
+  //  x^{lambda - 1} \exp(-0.5 * (psi * x + chi / x))
+  double dgig(double x, double lambda, double psi, double chi, bool logscale = false);
+  double rgig_mt(RNG &rng, double lambda, double psi, double chi);
+  double gig_mean(double lambda, double psi, double chi);
 
   //===========================================================================
   // extreme value distribution with centrality parameter 'mu + gamma', where
-  // gamma is Euler's constant -0.5772157... and variance 'sigma^2 * pi^2/6'.  
+  // gamma is Euler's constant -0.5772157... and variance 'sigma^2 * pi^2/6'.
   double pexv(double x, double mu = 0, double sigma = 1, bool logscale = false);
   double dexv(double x, double mu = 0., double sigma = 1., bool logscale = false);
   double rexv_mt(RNG &rng, double mu = 0., double sigma = 1.);
@@ -243,7 +251,7 @@ namespace BOOM {
 
   // Return the vector 'observation' with the missing bits filled in.
   // Args:
-  //   observation: 
+  //   observation:
   //   mean: The mean vector of the multivariate normal distribution from which
   //     'observation' was drawn.
   //   variance: The variance matrix of the multivariate normal distribution
@@ -257,7 +265,7 @@ namespace BOOM {
                      const Vector &mean, const SpdMatrix &variance,
                      const Selector &observed,
                      RNG &rng = GlobalRng::rng);
-  
+
   //======================================================================
   // Evaluates the multivariate normal density function.
   // Args:
@@ -392,7 +400,7 @@ namespace BOOM {
 
   // The mean of the Dirichlet distribution.
   Vector mdirichlet(const Vector &nu);
-  
+
   double dirichlet_loglike(const Vector &nu, Vector *g, Matrix *h,
                            const Vector &sumlogpi, double nobs);
 

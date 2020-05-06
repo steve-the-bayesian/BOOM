@@ -1,4 +1,16 @@
-COPTS = []
+COPTS = ["--std=c++17"]
+COMMON_DEPS = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ]
+
+cc_test(
+    name = "bessel_test",
+    srcs = ["bessel_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+    )
 
 cc_test(
     name = "chisq_test",
@@ -21,6 +33,13 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "gig_test",
+    srcs = ["gig_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS
+    )
 
 cc_test(
     name = "mvn_test",
