@@ -135,7 +135,9 @@ namespace BOOM {
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const;
     Vector getvar(uint which_column) const;
+    double getvar(int which_row, int which_column) const;
     CategoricalVariable get_nominal(uint which_column) const;
+    Ptr<CategoricalData> get_nominal(int which_row, int which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column, const StringVector
     //    &ord) const;
