@@ -71,5 +71,20 @@ namespace BOOM {
     int error_code_;
   };
 
+  class CumulativeDistributionFunction {
+   public:
+    CumulativeDistributionFunction(const std::function<double(double)> &pdf)
+        : pdf_(pdf) {}
+
+    double operator()(double x) {
+      Integral ans(pdf_, negative_infinity(), x);
+      return ans.integrate();
+    }
+
+   private:
+    std::function<double(double)> pdf_;
+  };
+
+
 }  // namespace BOOM
 #endif  // BOOM_NUMERICAL_INTEGRAL_HPP_
