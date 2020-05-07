@@ -30,6 +30,19 @@ namespace BOOM {
     using MCD = MultivariateCategoricalData;
   }  // namespace
 
+  MCD::MultivariateCategoricalData(const DataTable &table, int row_number,
+                                   double frequency)
+      : frequency_(frequency) {
+    if (row_number >= table.nrow()) {
+      report_error("The requested row does not exist in the data table.");
+    }
+    for (int i = 0; i < table.nvars(); ++i) {
+      if (table.variable_type(i) == DataTable::VariableType::categorical) {
+        data_.push_back(table.get_nominal(row_number, i));
+      }
+    }
+  }
+
   MCD::MultivariateCategoricalData(const MCD &rhs) {
     operator=(rhs);
   }
@@ -46,12 +59,23 @@ namespace BOOM {
 
   std::ostream &MCD::display(std::ostream &out) const {
     for (size_t i = 0; i < data_.size(); ++i) {
-      out << *data_[i];
+      out << *(data_[i]);
       if (i + 1 < data_.size()) {
         out << ' ';
       }
     }
+    if (frequency_ != 1.0) {
+      out << ' ' << frequency_;
+    }
     return out;
+  }
+
+  std::vector<int> MCD::to_vector() const {
+    std::vector<int> ans(data_.size());
+    for (int i = 0; i < data_.size(); ++i) {
+      ans[i] = data_[i]->value();
+    }
+    return ans;
   }
   //===========================================================================
   CategoricalMainEffect::CategoricalMainEffect(
@@ -122,8 +146,10 @@ namespace BOOM {
       Vector v2 = enc2.encode(data);
       Vector ans(dim);
       int index = 0;
-      for (size_t i = 0; i < v1.size(); ++i) {
-        for (size_t j = 0; j < v2.size(); ++j) {
+      // The order here must match the order in which we iterate through an
+      // array.  The 'i' index must change most rapidly.
+      for (size_t j = 0; j < v2.size(); ++j) {
+        for (size_t i = 0; i < v1.size(); ++i) {
           ans[index++] = v1[i] * v2[j];
         }
       }
@@ -266,16 +292,17 @@ namespace BOOM {
     if (!valid_) {
       report_error("LoglinearModelSuf::Update called from an invalid state.");
     }
-    ++sample_size_;
+    sample_size_ += data.frequency();
     for (auto &el : cross_tabulations_) {
       std::vector<int> index = el.first;
-      // Replace each element of 'index' with the value of the variable at that
-      // index.
+      // index starts off containing the indices of the variables involved in an
+      // effect.  Replace each element of 'index' with the value of the variable
+      // at that index.
       for (int j = 0; j < index.size(); ++j) {
         const CategoricalData &variable(data[index[j]]);
         index[j] = variable.value();
       }
-      ++el.second[index];
+      el.second[index] += data.frequency();
     }
   }
 

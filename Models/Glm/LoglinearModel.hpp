@@ -41,7 +41,23 @@ namespace BOOM {
   class MultivariateCategoricalData
       : public Data {
    public:
-    MultivariateCategoricalData() {}
+    // Args:
+    //   data: The vector of categorical data defining an observation.  If
+    //     desired, this can be empty at construction time and built up using
+    //     calls to push_back.
+    //   frequency: The number of observations represented by this data point.
+    //     For data representing individual observations in a data table,
+    //     frequency will be 1.  For data representing cells in a contingency
+    //     table frequency is typically an integer > 1.
+    MultivariateCategoricalData(
+        const std::vector<Ptr<CategoricalData>> &data = {},
+        double frequency = 1.0)
+        : data_(data), frequency_(frequency) {}
+
+    // Create a data point by reading the categorical variables from a row of
+    // the data table.  If there are no categorical variables in the table the
+    // resulting data point has nvars == 0.
+    MultivariateCategoricalData(const DataTable &table, int row_number, double frequency = 1.0);
 
     MultivariateCategoricalData(const MultivariateCategoricalData &rhs);
     MultivariateCategoricalData(MultivariateCategoricalData &&rhs) = default;
@@ -72,8 +88,13 @@ namespace BOOM {
     // The number of variables in the collection.
     int nvars() const { return data_.size(); }
 
+    double frequency() const {return frequency_;}
+
+    std::vector<int> to_vector() const;
+
    private:
     std::vector<Ptr<CategoricalData>> data_;
+    double frequency_;
   };
 
   //===========================================================================
@@ -315,6 +336,9 @@ namespace BOOM {
 
     // The number of categorical variables being modeled.
     int nvars() const;
+
+    // The number of elements in the (dense) parameter vector.
+    int dim() const { return coef().nvars_possible(); }
 
     void add_interaction(const std::vector<int> &variable_postiions);
 

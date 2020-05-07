@@ -208,7 +208,7 @@ cc_library(
     hdrs = BOOM_HDRS,
     copts = [
         "-Wall",
-        "-std=c++11",
+        "-std=c++17",
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
         #        "-g",
@@ -231,7 +231,7 @@ cc_library(
     srcs = glob(["test_utils/*.cpp"]),
     hdrs = glob(["test_utils/*.hpp"]),
     copts = [
-        "-std=c++11",
+        "-std=c++17",
         "-Wno-sign-compare",
     ],
     visibility = ["//visibility:public"],

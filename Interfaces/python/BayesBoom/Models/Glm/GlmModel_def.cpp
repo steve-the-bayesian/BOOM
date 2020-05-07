@@ -1,9 +1,11 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "Models/ModelTypes.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
 #include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/LoglinearModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
@@ -134,7 +136,67 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<LoglinearModel,
+               PriorPolicy,
+               Ptr<LoglinearModel>>(
+                   boom, "LoglinearModel", py::multiple_inheritance())
+        .def(py::init(
+            []() {
+              return new LoglinearModel;
+            }),
+             "An empty LoglinearModel.  The fisrt time this model calls \n"
+             "add_data main effects will be added for each variable in \n"
+             "the added data point. ")
+        .def("add_data",
+             [](LoglinearModel &model, const Matrix &integer_codes) {
+             },
+             py::arg("integer_codes"),
+             "Args: \n"
+             "  integer_codes:  A Matrix containing codes for the data to \n"
+             "    be modeled.  Each variable is coded from 0 to nlevels - 1.\n"
+             "    A value less than 0, or a NaN is interpreted as missing. \n")
+        .def_property_readonly(
+            "nvars", &LoglinearModel::nvars,
+            "The number of variables being modeled.")
+        .def("add_interaction",
+             [](LoglinearModel &model,
+                const std::vector<int> &interaction) {
+               model.add_interaction(interaction);
+             },
+             py::arg("interaction"),
+             "Args:\n"
+             "  interaction:  A list of integer valued indices identifying\n"
+             "    the variables in the interaction.  The indices should be in\n"
+             "    ascending order.")
+        .def("logp",
+             [](const LoglinearModel &model,
+                const std::vector<int> data_values) {
+               return model.logp(data_values);
+             },
+             "Args:\n"
+             "  data_values: The integer codes identifying the levels of a \n"
+             "    single data point.\n\n"
+             "Returns:\n"
+             "   The un-normalized log density of the input data.  ")
+        .def("initialize_missing_data",
+             &LoglinearModel::initialize_missing_data,
+             "Fill any missing values with uniform draws across the \n"
+             "level-range of the appropriate variable.")
+        .def("impute_missing_data",
+             [](LoglinearModel &model, RNG &rng) {
+               model.impute_missing_data(rng);
+             },
+             "Args:\n"
+             "  rng: A Boom random number generator.\n\n"
+             "Perform one Gibbs sampling pass over the missing data.  Each \n"
+             "missing observation is imputed given all other missing and \n"
+             "observed data, and model parameters.")
+        ;
 
+
+    //===========================================================================
+    // Priors and posterior samplers.
+    //===========================================================================
     py::class_<VariableSelectionPrior,
                Ptr<VariableSelectionPrior>>(boom, "VariableSelectionPrior")
         .def(py::init<const Vector &>(),

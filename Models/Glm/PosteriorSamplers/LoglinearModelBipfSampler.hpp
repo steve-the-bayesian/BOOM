@@ -41,6 +41,7 @@ namespace BOOM {
     double logpri() const override;
 
     void draw_effect_parameters(int effect_index);
+    void draw_intercept();
 
    private:
     LoglinearModel *model_;

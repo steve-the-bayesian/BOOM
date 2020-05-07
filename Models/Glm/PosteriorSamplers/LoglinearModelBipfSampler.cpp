@@ -39,10 +39,17 @@ namespace BOOM {
     for (int i = 0; i < model_->number_of_effects(); ++i) {
       draw_effect_parameters(i);
     }
+    draw_intercept();
   }
 
   double BIPF::logpri() const {
     return negative_infinity();
+  }
+
+  void BIPF::draw_intercept() {
+    double n = model_->suf()->sample_size();
+    double b0 = rgamma_mt(rng(), n + prior_count_, n + prior_count_);
+    model_->prm()->set_element(log(b0), 0);
   }
 
   void BIPF::draw_effect_parameters(int effect_index) {
@@ -68,6 +75,9 @@ namespace BOOM {
 
     // The count in adjusted_counts might be negative.
     Vector coefficients(adjusted_counts.size());
+
+    sample_size = 0;
+
     for (size_t i = 0; i < adjusted_counts.size(); ++i) {
       coefficients[i] = log(rtrun_gamma_mt(
           rng(),
