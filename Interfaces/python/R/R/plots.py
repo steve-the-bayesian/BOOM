@@ -585,7 +585,8 @@ def plot_dynamic_distribution(
     curve_quantiles = np.quantile(curves, q=quantile_points, axis=0)
     if timestamps is None:
         timestamps = np.arange(curves.shape[1])
-    assert(len(timestamps) == curves.shape[1])
+    if len(timestamps) != curves.shape[1]:
+        raise Exception("len(timestamps) must match curves.shape[1].")
 
     for i in range(int(np.floor(len(quantile_points) / 2))):
         lo = curve_quantiles[i, :]
@@ -620,9 +621,9 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
       ax: The axes object containing the plot.
 
     """
-    fig = None
     if ax is None:
-        fig, ax = plt.subplots(1, 1)
+        device = get_current_graphics_device()
+        ax = device.next_axes
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10))["actual"].mean()
     bar_locations = group_means.index.categories.mid.values
@@ -640,9 +641,7 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     ax.set_xticks(xticks)
     ax.set_xlabel("Observed Proportions")
 
-    global _last_axis_
-    _last_axis_ = ax
-    return fig, ax
+    return ax
 
 
 def lines_gaussian_kde(kde, ax=None, **kwargs):
@@ -650,8 +649,8 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     Add a kernel density estimate to the plot.
     """
     if ax is None:
-        global _last_axis_
-        ax = _last_axis_
+        device = get_current_graphics_device()
+        ax = device.current_axes
     xlim = ax.get_xlim()
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)

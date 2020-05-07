@@ -198,9 +198,13 @@ namespace BOOM {
     // View from first_element to the end.  These constructors are
     // non-explicit because I want automatic conversions from Vector
     // and VectorView to ConstVectorView to be legal.
+    // cppcheck-suppress noExplicitConstructor
     ConstVectorView(const Vector &v, uint first_element = 0);
+    // cppcheck-suppress noExplicitConstructor
     ConstVectorView(const VectorView &rhs, uint first_element = 0);
+    // cppcheck-suppress noExplicitConstructor
     ConstVectorView(const ConstVectorView &v, uint first_element = 0);
+    // cppcheck-suppress noExplicitConstructor
     ConstVectorView(const std::vector<double> &v, uint first_element = 0);
 
     // View from first_element to first_element + length - 1
@@ -281,7 +285,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   // IO
   std::ostream &operator<<(std::ostream &out, const ConstVectorView &x);
   // prints to stdout.  This function is here so it can be called from gdb.
@@ -316,7 +320,7 @@ namespace BOOM {
   inline Vector operator+(const VectorView &x, const VectorView &y) {
     return ConstVectorView(x) + ConstVectorView(y);
   }
-  
+
   // Subtraction
   inline Vector operator-(const ConstVectorView &x, const ConstVectorView &y) {
     Vector ans(x);

@@ -101,7 +101,7 @@ PlotDynamicDistribution <- function(curves,
   ## quantile.matrix is the actual matrix of quantiles that are used
   ## to draw the curve polygons
   quantile.matrix <- t(apply(curves, 2, quantile, probs = qtl, na.rm = TRUE))
-  
+
   nc <- ncol(quantile.matrix)
   number.of.quantile.steps <- (nc + 1) / 2
   if (number.of.quantile.steps < 3) {
@@ -111,13 +111,17 @@ PlotDynamicDistribution <- function(curves,
   lower.quantile <- quantile.matrix[, 1]
   upper.quantile <- quantile.matrix[, nc]
   if (is.null(timestamps)) {
-    ## Try converting the colnames of 'curves' to a POSIX time
-    ## object.  Signal failure by returning NULL.
-    timestamps <- tryCatch(as.POSIXct(colnames(curves)),
-                           error = function(e) {return(NULL)})
+    if (!is.null(colnames(curves))) {
+      ## Try converting the colnames of 'curves' to a POSIX time
+      ## object.  Signal failure by returning NULL.
+      timestamps <- tryCatch(
+        as.POSIXct(colnames(curves)),
+        error = function(e) {return(NULL)}
+      )
+    }
     ## If the conversion failed, then just use the natural numbers
     ## 1, 2, ... as timestamps.
-    if (is.null(timestamps)) {
+    if (is.null(timestamps) || length(timestamps) == 0) {
       timestamps <- 1:ncol(curves)
     }
   }
@@ -127,7 +131,7 @@ PlotDynamicDistribution <- function(curves,
   if (inherits(xlim, "POSIXt")) {
     xlim <- as.POSIXct(xlim)
   }
-  
+
   .FilledPlot(timestamps,
               cbind(lower.quantile, upper.quantile),
               poly.color = gray(1 - 1/number.of.quantile.steps),

@@ -81,15 +81,18 @@ def rmarkov(n: int, P: np.ndarray, pi0=None):
     Returns:
       A numpy array of integer dtype containing the simulated Markov chain..
     """
-    assert(isinstance(P, np.ndarray))
-    assert(len(P.shape) == 2)
+    P = np.array(P)
+    if len(P.shape) != 2 or P.shape[0] != P.shape[1]:
+        raise Exception("P must be a square matrix.")
     S = P.shape[0]
-    assert(P.shape[1] == S)
-    assert(S > 0)
     if pi0 is None:
         pi0 = np.ones(S) / S
-    assert(len(pi0) == S)
+    else:
+        pi0 = np.array(pi0).flatten()
 
+    if len(pi0) != S:
+        raise Exception("Initial distribution must have the same "
+                        "dimension as the transition probability matrix.")
     ans = np.full(n, -1)
     ans[0] = np.random.choice(range(S), p=pi0)
     for i in range(1, n):

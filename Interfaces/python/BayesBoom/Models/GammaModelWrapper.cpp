@@ -23,7 +23,7 @@ namespace BayesBoom {
 
     py::class_<GammaModel,
                GammaModelBase,
-               BOOM::Ptr<GammaModel> >(boom, "GammaModel")
+               BOOM::Ptr<GammaModel>>(boom, "GammaModel")
         .def(py::init<double, double>(),
              py::arg("a") = 1.0, py::arg("b") = 1.0,
              "Args:\n"
@@ -46,7 +46,9 @@ namespace BayesBoom {
           })
         ;
 
-    py::class_<ChisqModel, GammaModelBase, Ptr<ChisqModel>>(boom, "ChisqModel")
+    py::class_<ChisqModel,
+               GammaModelBase,
+               Ptr<ChisqModel>>(boom, "ChisqModel")
         .def(py::init<double, double>(),
              py::arg("df") = 1.0,
              py::arg("sigma_estimate") = 1.0,

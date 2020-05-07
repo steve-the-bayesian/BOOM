@@ -124,7 +124,7 @@ namespace BOOM {
     //------------------------------------------------------------
     inline uint find_max_length(const StringVector &v) {
       uint n = v.size();
-      uint sz;
+      uint sz = 0;
       for (uint i = 0; i < n; ++i) {
         sz = std::max<uint>(sz, v[i].size());
       }
