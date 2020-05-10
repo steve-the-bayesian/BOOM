@@ -80,6 +80,14 @@ class StateModel(ABC):
             state vector associated with the corresponding time point.
         """
 
+    @abstractmethod
+    def plot_state_contribution(self, ax, **kwargs):
+        """
+        Plot the contribution of this state model to the conditional mean at
+        time t on the supplied set of axes.  This is often a dynamic
+        distribution plot.
+        """
+
 
 # ---------------------------------------------------------------------------
 class LocalLevelStateModel(StateModel):
@@ -163,6 +171,19 @@ class LocalLevelStateModel(StateModel):
                             "Try calling set_state_index.")
         self.state_contribution[i, :] = state_matrix[self._state_index, :]
 
+    def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
+        if burn > 0:
+            curves = self.state_contribution[burn:, :]
+        else:
+            curves = self.state_contribution
+
+        R.plot_dynamic_distribution(
+            curves=curves,
+            timestamps=time,
+            ax=ax,
+            ylim=ylim,
+            **kwargs)
+
 
 # ===========================================================================
 class LocalLinearTrendStateModel(StateModel):
@@ -243,6 +264,19 @@ class LocalLinearTrendStateModel(StateModel):
         self.sigma_level[i] = self._state_model.sigma_level
         self.sigma_slope[i] = self._state_model.sigma_slope
         self.state_contribution[i, :] = state_matrix[self._state_index, :]
+
+    def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
+        if burn > 0:
+            curves = self.state_contribution[burn:, :]
+        else:
+            curves = self.state_contribution
+
+        R.plot_dynamic_distribution(
+            curves=curves,
+            timestamps=time,
+            ax=ax,
+            ylim=ylim,
+            **kwargs)
 
     def _set_posterior_sampler(
             self, y, level_sigma_prior, slope_sigma_prior, sdy):
