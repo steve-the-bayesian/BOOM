@@ -47,27 +47,25 @@ namespace BOOM {
 
     void impute(RNG &rng);
 
+    void impute_atoms(RNG &rng);
+
    private:
     Ptr<DataFrame> original_data_;
     Ptr<DataFrame> imputed_data_;
+
+    std::vector<Vector> atoms_;
+
+    // Describes the component to which each observation belongs.  This model
+    // controls the sharing of information across variables.
+    //
+    // The "emission distribution" for this model is the
+    Ptr<FiniteMixtureModel> observation_class_model_;
+
+    std::vector<Ptr<FiniteMixtureModel>> atom_models_;
+
+    Ptr<MultivariateRegressionModel> complete_data_model_;
   };
 
-
-  // Extends the parent class by assigning a prior probability that one or more
-  // levels of each variable might be errors, and should be treated as missing
-  // data to be imputed.
-  class MvRegCopulaDataCorrector
-      : public MvRegCopulaDataImputer
-  {
-   public:
-
-    void impute(RNG &rng);
-
-   private:
-  };
-
-
-
-}
+}  // namespace BOOM
 
 #endif  // BOOM_MVREG_COPULA_DATA_IMPUTER_HPP_

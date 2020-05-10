@@ -16,8 +16,42 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include ""
+#include "Models/Impute/MvRegCopulaDataImputer.hpp"
 
 namespace BOOM {
 
-}
+  void MvRegCopulaDataImputer::impute(RNG &rng) {
+    impute_atoms(rng);
+    impute_missing_status(rng);
+    impute_mixture_class(rng);
+
+    impute_missing_numerics(rng);
+    refresh_ecdf();
+
+    sample_regression_parameters(rng);
+  }
+
+  Vector MvRegCopulaDataImputer::impute_row(
+      const Vector &input,
+      const Selector &missing,
+      const Vector &predictors,
+      RNG &rng) {
+
+    Vector ans(input.size());
+    Vector mean = complete_data_model_->predict(predictors);
+  }
+
+  void MvRegCopulaDataImputer::impute_atoms(RNG &rng) {
+    for (int i = 0; i < dat().size(); ++i) {
+
+    }
+  }
+
+  void MvRegCopulaDataImputer::impute_missing_numerics(RNG &rng) {
+
+  }
+
+
+
+
+}  // namespace BOOMx
