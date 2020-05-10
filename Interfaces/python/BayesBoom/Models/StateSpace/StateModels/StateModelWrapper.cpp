@@ -82,6 +82,18 @@ namespace BayesBoom {
         .def_property_readonly(
             "state_error_dimension",
             &LocalLinearTrendStateModel::state_error_dimension)
+        .def_property_readonly(
+            "sigma_level",
+            [] (const LocalLinearTrendStateModel &model) {
+              return sqrt(model.Sigma()(0, 0));
+            },
+            "Innovation standard deviation for the level component.")
+        .def_property_readonly(
+            "sigma_slope",
+            [] (const LocalLinearTrendStateModel &model) {
+              return sqrt(model.Sigma()(1, 1));
+            },
+            "Innovation standard deviation for the slope component.")
         .def("set_initial_state_mean",
              &LocalLinearTrendStateModel::set_initial_state_mean,
              py::arg("mean"),

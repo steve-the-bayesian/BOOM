@@ -104,7 +104,8 @@ class Bsts:
         state_model.set_state_index(self._state_dimension)
         self._state_dimension += state_model.state_dimension
 
-    def train(self, data, niter: int, formula=None, prior=None, ping: int = None):
+    def train(self, data, niter: int, formula=None, prior=None,
+              ping: int = None):
         """
         Train a bsts model by running a specified number of MCMC iterations.
 
@@ -135,10 +136,33 @@ class Bsts:
         """
         self._create_model(formula, data, prior)
         self._allocate_space(niter)
+        self._niter = niter
 
         for i in range(niter):
             self._model.sample_posterior()
             self._record_draws(i)
+
+    @property
+    def original_series(self):
+        if hasattr(self, "_original_series"):
+            return self._original_series
+        else:
+            return None
+
+    @property
+    def log_likelihood(self):
+        """
+        The vector of log liklelihood values associated with the MCMC run.  This
+        only exists if the model is Gaussian.  Otherwise None is returned.
+        """
+        if (
+                hasattr(self, "_observation_model_manager")
+                and hasattr(self._observation_model_manager,
+                            "_log_likelihood")
+        ):
+            return self._observation_model_manager._log_likelihood
+        else:
+            return None
 
     def plot(self, what=None, **kwargs):
         plot_types = ["state", "components", "coefficients", "inclusion",
@@ -178,11 +202,50 @@ class Bsts:
         else:
             raise Exception(f"Don't know how to plot {what}.")
 
+    def plot_state(self,
+                   burn=None,
+                   time=None,
+                   show_actuals=True,
+                   style=None,
+                   scale=None,
+                   ylim=None,
+                   ax=None,
+                   **kwargs):
+        if style is None:
+            style = "dynamic"
+        style = R.unique_match(style, ["dynamic", "boxplot"])
+
+        if scale is None:
+            scale = "linear"
+        scale = R.unique_match(scale, ["linear", "mean"])
+
+        niter = self._niter
+        if burn is None:
+            # TODO: this will only work for Guassian models.  DA models will
+            # not have a log_likelihood.
+            burn = R.suggest_burn(self.log_likelihood)
+            if burn is None:
+                burn = niter / 10
+
+        if time is None:
+            time = self.original_series.index
+
+        state_contribution = np.zeros((niter, len(time)))
+        for model in self._state_models:
+            state_contribution += model.state_contribution
+
+        R.plot_dynamic_distribution(
+            curves=state_contribution,
+            timestamps=time,
+            ax=ax,
+            **kwargs)
+
     def predict(self, horizon, newdata):
         """
         Returns:
             A BstsPrediction object containing the predictions.
         """
+
     def _record_draws(self, iteration: int):
         """
         Record the parameters and state from each state model.
@@ -225,15 +288,16 @@ class Bsts:
         Effects:
           self._model is created, populated with data and assigned a posterior
             sampler.
+          self._original_series is populated with the time series being modeled.
         """
         factory = StateSpaceModelFactory.create(self._family, formula)
         self._model = factory.create_model(prior, data)
+        self._original_series = factory._original_series
         self._observation_model_manager = (
             factory.create_observation_model_manager()
         )
         for state_model in self._state_models:
             self._model.add_state(state_model._state_model)
-
 
 
 class BstsPrediction:
@@ -257,9 +321,13 @@ class ObservationModelManager(ABC):
         """
 
     @abstractmethod
-    def record_draw(self, iteration, model):
+    def record_draw(self, iteration: int, model):
         """
         Record the model parameters at the given iteration.
+
+        Args:
+          iteration: The iteration number of the draw to record.
+          model: The state space model object from which to extract the draw.
         """
 
 
@@ -273,7 +341,10 @@ class GaussianStateSpaceModelFactory:
         Args:
           prior: an R.SdPrior object describing the prior distribution on the
             residual variance paramter.
-          data:  The time series of observations.
+          data:  The time series of observations as a Pandas Series.
+
+        Returns:
+          A boom.StateSpaceModel object.
         """
         boom_data = boom.Vector(data.values)
         is_observed = ~data.isna()
@@ -294,6 +365,8 @@ class GaussianStateSpaceModelFactory:
         sampler = boom.StateSpacePosteriorSampler(
             self._model, boom.GlobalRng.rng)
         self._model.set_method(sampler)
+
+        self._original_series = data
 
         return self._model
 
@@ -351,6 +424,7 @@ class GaussianObservationModelManager:
 
     def allocate_space(self, niter: int):
         self._residual_sd = np.empty(niter)
+        self._log_likelihood = np.empty(niter)
 
         if self._xdim > 0:
             self._coefficients = scipy.sparse.lil_matrix(
@@ -358,6 +432,7 @@ class GaussianObservationModelManager:
 
     def record_draw(self, iteration: int, model):
         self._residual_sd[iteration] = model.residual_sd
+        self._log_likelihood[iteration] = model.log_likelihood
         if self._xdim > 0:
             self._coefficients[iteration, :] = spikeslab.lm_spike.sparsify(
                 model.coef)
@@ -396,6 +471,9 @@ class StateSpaceRegressionModelFactory:
             is_observed)
 
         spikeslab.set_posterior_sampler(self._model.observation_model, prior)
+        self._original_series = response
+
+        return self._model
 
     def create_observation_model_manager(self):
         return GaussianObservationModelManager(self._model.xdim)
