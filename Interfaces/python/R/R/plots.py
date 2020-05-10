@@ -11,6 +11,14 @@ _current_graphics_device = None
 _largest_graphics_device_number = 0
 
 
+class AxesWrapper:
+    def __init__(self, ax):
+        self.ax = ax
+
+    def __del__(self):
+        plt.pause(.001)
+
+
 class GraphicsDevice(ABC):
     """
     Manages a plt.figure and a set of axes.
@@ -123,11 +131,11 @@ def dev_set(device_number: int):
 
     """
     global _active_graphics_devices
+    global _current_graphics_device
     device = _current_graphics_device.get(device_number, None)
     if device is None:
         raise Exception(f"Graphics device {device_number} does note exist.")
     else:
-        global _current_graphics_device
         _current_graphics_device = device
 
 
@@ -143,9 +151,11 @@ class InteractiveGraphicsDevice(GraphicsDevice):
 
     def draw_current_axes(self):
         """
-
         """
+        # TODO(steve):  experiment with this.
+        # self.current_axes.draw()
         plt.pause(.001)
+
 
 class PdfGraphicsDevice(GraphicsDevice):
     """
@@ -179,7 +189,6 @@ def get_current_graphics_device():
         return _current_graphics_device
     else:
         return InteractiveGraphicsDevice()
-
 
 
 # ===========================================================================
@@ -549,7 +558,8 @@ def plot_dynamic_distribution(
         col="black",
         ax=None,
         **kwargs):
-    """Plot a dynamic distribution represented by a collection of curves simulated
+    """
+    Plot a dynamic distribution represented by a collection of curves simulated
     from that distribution.
 
     Args:
@@ -573,11 +583,12 @@ def plot_dynamic_distribution(
         The label for the horizontal axis.
 
       **kwargs: Extra arguments passed to .... ???
-
     """
+    redraw = False
     if ax is None:
         device = get_current_graphics_device()
         ax = device.next_axes
+        redraw = True
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
@@ -598,9 +609,10 @@ def plot_dynamic_distribution(
                         lw=.0000,
                         alpha=(i / len(quantile_points)))
 
-    _set_plot_options(**plot_options)
-    ax.set_xlabel(xlab)
-    ax.set_ylabel(ylab)
+    _set_plot_options(ax, **plot_options)
+    if redraw:
+        device = get_current_graphics_device()
+        device.draw_current_axes()
 
 
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):

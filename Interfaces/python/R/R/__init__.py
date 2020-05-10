@@ -12,6 +12,7 @@ from .plots import (
     abline,
     barplot,
     boxplot,
+    get_current_graphics_device,
     hist,
     hosmer_lemeshow_plot,
     lines,

@@ -241,7 +241,7 @@ class LocalLinearTrendStateModel(StateModel):
 
     def record_state(self, i, state_matrix):
         self.sigma_level[i] = self._state_model.sigma_level
-        self.sigma_slope[i] = self._stat_model.sigma_slope
+        self.sigma_slope[i] = self._state_model.sigma_slope
         self.state_contribution[i, :] = state_matrix[self._state_index, :]
 
     def _set_posterior_sampler(

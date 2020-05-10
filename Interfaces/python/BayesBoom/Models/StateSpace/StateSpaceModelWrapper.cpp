@@ -48,9 +48,9 @@ namespace BayesBoom {
              "Args:\n"
              "  state: state model to be added.   Posterior samplers and initial "
              "state priors should be set before adding.")
-        .def("log_likelihood", [](StateSpaceModelBase &model) {
-            return model.log_likelihood();
-          },
+        .def_property_readonly(
+            "log_likelihood",
+            [](StateSpaceModelBase &model) { return model.log_likelihood(); },
              "The log likelihood associated with the current model parameters.  "
              "If the Kalman filter is current this is already computed.  If not, "
              "then computing log likelihood requires a Kalman filter pass through "
