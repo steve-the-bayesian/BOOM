@@ -279,6 +279,12 @@ namespace BOOM {
     Matrix &exp();  // in place exponentiation
     Matrix &log();  // in place logarithm
 
+    // The sum of the elements in each column.  The result has size ncol().
+    Vector col_sums() const;
+
+    // The sum of the elements in each row.  The result has size nrow().
+    Vector row_sums() const;
+
     virtual double sum() const;
     virtual double abs_norm() const;
     virtual double sumsq() const;
