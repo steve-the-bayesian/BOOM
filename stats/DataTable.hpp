@@ -20,15 +20,17 @@
 #ifndef BOOM_DATA_TABLE_HPP
 #define BOOM_DATA_TABLE_HPP
 
+#include <limits>
 #include "uint.hpp"
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
 #include "LinAlg/Vector.hpp"
 
-#include <limits>
 #include "Models/CategoricalData.hpp"
 #include "Models/DataTypes.hpp"
+
+#include "cpputil/DateTime.hpp"
 
 namespace BOOM {
 
@@ -196,7 +198,7 @@ namespace BOOM {
 
     // The append_variable functions inherited from DataTable will be
     // implemented by append_potentially_missing_variable.
-    void append_variable(const Vector &numeric, const string &vname) override;
+    void append_variable(const Vector &numeric, const std::string &vname) override;
     void append_variable(const CategoricalVariable &cv,
                          const std::string &name) override;
 
@@ -205,7 +207,7 @@ namespace BOOM {
     //
     //
     void append_potentially_missing_variable(
-        const Vector &numeric, const string &vname, double missing_value_key);
+        const Vector &numeric, const std::string &vname, double missing_value_key);
 
    private:
   };
