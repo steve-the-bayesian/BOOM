@@ -30,13 +30,13 @@ typedef vector<double>::const_iterator CIT;
 namespace BOOM {
 
   IQagent::IQagent(uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(VEC(0)) {
+      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(Vector(0)) {
     set_default_probs();
     quantiles_.resize(probs_.size());
   }
   //-----------------------------------------------------------------------
-  IQagent::IQagent(const VEC& probs, uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs), ecdf_(VEC(0)) {
+  IQagent::IQagent(const Vector& probs, uint Bufsize)
+      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs), ecdf_(Vector(0)) {
     std::sort(probs_.begin(), probs_.end());
     quantiles_.resize(probs_.size());
   }
@@ -158,7 +158,7 @@ namespace BOOM {
   void IQagent::update_cdf() {
     if (data_buffer_.empty()) return;
     ecdf_ = ECDF(data_buffer_);
-    const VEC& sorted_data(ecdf_.sorted_data());
+    const Vector &sorted_data(ecdf_.sorted_data());
     data_buffer_.reserve(sorted_data.size() + quantiles_.size());
     data_buffer_.clear();
     std::merge(sorted_data.begin(), sorted_data.end(), quantiles_.begin(),
