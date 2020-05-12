@@ -46,5 +46,32 @@ namespace BOOM {
     Ptr<DirichletModel> pri_;
   };
 
+
+  // A constrained multinomial Dirichlet sampler allows some of the
+  // probabilities in the multinomial to be set to zero.
+  class ConstrainedMultinomialDirichletSampler
+      : public PosteriorSampler {
+   public:
+    // Args:
+    //   model:  The model to be sampled.
+    //   prior_counts: The vector of prior counts as in the
+    //     MultinomialDirichletSampler.  If any prior counts are negative, the
+    //     corresponding probabilities will be set to zero.
+    //   seeding_rng: The random number generator used to seed the RNG for this
+    //     PosteriorSampler object.
+    ConstrainedMultinomialDirichletSampler(
+        MultinomialModel *model,
+        const Vector &prior_counts,
+        RNG &seeding_rng = GlobalRng::rng);
+
+    void draw() override;
+    double logpri() const override;
+
+   private:
+    MultinomialModel *model_;
+    Vector prior_counts_;
+    void check_at_least_one_positive(const Vector &counts);
+  };
+
 }  // namespace BOOM
 #endif  // BOOM_MULTINOMIAL_DIRICHLET_SAMPLER_HPP

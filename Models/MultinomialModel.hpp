@@ -96,7 +96,7 @@ namespace BOOM {
     double pdf(const Data *dp, bool logscale) const override;
     double pdf(const Ptr<Data> &dp, bool logscale) const;
     void add_mixture_data(const Ptr<Data> &, double prob);
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override { return suf()->n().sum(); }
 
     uint simdat(RNG &rng = GlobalRng::rng) const;
 
