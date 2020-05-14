@@ -24,15 +24,57 @@
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Policies/NullPriorPolicy.hpp"
 #include "Models/Glm/MultivariateRegression.hpp"
-#include "Models/FiniteMixtureModel.hpp"
 #include "Models/MultinomialModel.hpp"
 #include "Models/WishartModel.hpp"
 #include "Models/ChisqModel.hpp"
+
+#include "LinAlg/SWEEP.hpp"
 
 #include "stats/IQagent.hpp"
 #include "distributions/rng.hpp"
 
 namespace BOOM {
+
+  namespace Imputer {
+
+    //======================================================================
+    // Multivariate regression data augmented with slots for error-corrected
+    // data (possibly containing discrete atoms), and error corrected
+    // transformed data.
+    class CompleteData : public Data {
+     public:
+      // Args:
+      //   observed: The observed data on which the augmented data should be
+      //     based.
+      CompleteData(const Ptr<MvRegData> &observed);
+
+      CompleteData * clone() const override;
+      std::ostream &display(std::ostream &out) const override;
+
+      const MvRegData *observed_data() const {return observed_data_.get();}
+
+      // The observed data.
+      const Vector &y_observed() const { return observed_data_->y(); }
+      const Vector &x() const { return observed_data_->x(); }
+
+      // The complete data, on the original scale.  This is the data that should
+      // be recorded as an imputation.
+      const Vector &y_true() const { return y_true_; }
+      void set_y_true(int i, double y) { y_true_[i] = y; }
+      void set_y_true(const Vector &y) { y_true_ = y; }
+
+      // The complete data (no atoms) on the transformed scale.  This is the bit
+      // that should be multivariate normal.
+      const Vector &y_numeric() const { return y_numeric_; }
+      void set_y_numeric(const Vector &numeric) { y_numeric_ = numeric; }
+      void set_y_numeric(int i, double y) { y_numeric_[i] = y; }
+
+     private:
+      Ptr<MvRegData> observed_data_;
+      Vector y_true_;
+      Vector y_numeric_;
+    };
+  };
 
   //===========================================================================
   // Describes the joint distribution of the true and observed data for a single
@@ -52,20 +94,19 @@ namespace BOOM {
         public NullPriorPolicy
   {
    public:
-    ErrorCorrectionModel(const Vector &atoms);
+    explicit ErrorCorrectionModel(const Vector &atoms);
 
     ErrorCorrectionModel * clone() const override;
 
     // The log probability of the observed value.
     double logp(double observed) const;
 
-    int number_of_observations() const {
-      return marginal_of_true_data_->number_of_observations();
-    }
-
     // Set a conjugate prior distribution on the marginal distribution of the
     // true categories.  The length of prior_counts must be atoms.size() + 1,
     // with the extra category at the end corresponding to the continuous cell.
+    //
+    // The prior can specify that an atom should have zero probability of being
+    // the true value.  The signal for this is a negative count.
     void set_conjugate_prior_for_true_categories(const Vector &prior_counts);
 
     // Set a conjugate prior distribution on each conditional distribution of
@@ -76,11 +117,50 @@ namespace BOOM {
     //     corresponds to a "true" category (so the number of rows is
     //     atoms.size() + 1).  Each column corresponds to an "observed"
     //     category, so the number of columns must be atoms.size() + 2.
+    //
+    // The prior can specify that a given atom can never be observed when a
+    // specific atom (either the same or another) is true.  The signal for this
+    // is a negative prior count.
     void set_conjugate_prior_for_observation_categories(
         const Matrix &prior_counts);
 
     void sample_posterior() override;
     double logpri() const override;
+
+    void clear_data() override;
+
+    // Impute the atom responsible for the true value of the given observed
+    // value.
+    //
+    // Args:
+    //   observed_value:  The value that was actually observed.  This might be NaN.
+    //   rng:  A random number generator.
+    //   update: If true, then the imputed value will be used to update the
+    //     sufficient statistics of the relevant sub-models.  This is what you
+    //     want if the imputation is done as part of an MCMC algorithm to learn
+    //     the model parameters.  If learning model parameters is not part of
+    //     the current workflow then set this to false.
+    //
+    // Returns:
+    //   An int representing the atoms responsible for the true and observed
+    //   value.
+    int impute_atom(double observed_value, RNG &rng, bool update);
+
+    // Return the value of y_true given the atom responsible for y_true.  This
+    // is either equal to the atom value, or to the observed numeric value.  The
+    // latter might be NaN, in which case NaN is returned.
+    double true_value(int true_atom, double observed) const;
+
+    // Return the value of y_numeric.  This is either NaN, or the observed value
+    // (which might be NaN).
+    double numeric_value(int true_atom, double observed) const;
+
+    const Vector &atoms() const {return atoms_;}
+    int number_of_atoms() const {return atoms_.size();}
+
+    // Returns the atom to which y corresponds.  This can be either a 'true'
+    // atom or an 'observed' atom.
+    int category_map(double y) const;
 
    private:
     // A collection of point mass values from the observed data.  Some of these
@@ -92,9 +172,6 @@ namespace BOOM {
     // the final category.  NA is not a possible value for the truth.
     Vector atoms_;
 
-    // Returns the atom to which y corresponds.
-    int category_map(double y) const;
-
     // The marginal distribution of the true data category.  The first
     // atoms_.size() elements are marginal probabilities for the atoms.  The
     // terminal element is the marginal probability for the
@@ -103,9 +180,11 @@ namespace BOOM {
     // Note: some probabilities in these models will be 0.
     std::vector<Ptr<MultinomialModel>> conditional_observed_given_true_;
 
+    mutable Matrix joint_distribution_;
     mutable Vector observed_log_probability_table_;
-    mutable bool observed_log_probability_table_current_;
-    void ensure_observed_log_probability_table_current() const;
+    mutable bool workspace_is_current_;
+    Vector wsp_;
+    void ensure_workspace_current() const;
   };
 
   //===========================================================================
@@ -114,19 +193,25 @@ namespace BOOM {
   // observed data given the observation-level mixture class indicator.
   class ConditionallyIndependentCategoryModel
       : public CompositeParamPolicy,
-        public IID_DataPolicy<VectorData>,
-        public PriorPolicy,
-        public MixtureComponent {
+        public NullDataPolicy,
+        public PriorPolicy {
    public:
-    ConditionallyIndependentCategoryModel(const std::vector<Vector> &atoms);
+    explicit ConditionallyIndependentCategoryModel(
+        const std::vector<Vector> &atoms);
 
     ConditionallyIndependentCategoryModel * clone() const override {
       return new ConditionallyIndependentCategoryModel(*this);
     }
 
-    double pdf(const Data *dp, bool logscale) const override;
-    int number_of_observations() const override {
-      return observed_data_models_[0]->number_of_observations();
+    void clear_data() override;
+
+    void impute_atoms(Imputer::CompleteData &data, RNG &rng,
+                      bool update_complete_data_suf);
+
+    double logp(const Vector &observed) const;
+
+    const ErrorCorrectionModel &model(int variable_index) const {
+      return *observed_data_models_[variable_index];
     }
 
    private:
@@ -163,24 +248,50 @@ namespace BOOM {
                            int xdim,
                            RNG &seeding_rng = GlobalRng::rng);
 
+    MvRegCopulaDataImputer *clone() const override;
+
+    // Data management needs overrides because the class maintains a separate
+    // vector of complete data.
+    void clear_data() override;
+    void add_data(const Ptr<MvRegData> &data) override;
+    void add_data(const Ptr<Data> &data) override {return add_data(DAT(data));}
+    void add_data(MvRegData *data) override {return add_data(Ptr<MvRegData>(data));}
+    void remove_data(const Ptr<Data> &data) override;
+
+    // Clears the data from the clustering and complete data models.
+    void clear_client_data();
+
     // Given an input, return a draw from the imputation distribution.  This
     // will contain any relevant atoms.
     //
     // Args:
-    //   input: The actually observed values in the data, including errors and
-    //     NaN's.
-    //   predictors:  The vector of predictor variables.
-    //   rng: Random number generator used to make the prediction.
-    Vector impute_row(const Vector &input,
-                      const ConstVectorView &predictors,
-                      RNG &rng) const;
+    //   data:  An instance of CompleteData to be imputed.
+    //   rng: The random number generator used to simulate the missing
+    //     components of 'data'.
+    //   update_complete_data_suf: If true then update the complete data
+    //     sufficient statistics of the component models.
+    //
+    // Effects:
+    //   The missing elements of 'data' are filled with random draws from the
+    //   posterior distribution.
+    void impute_row(Ptr<Imputer::CompleteData> &data,
+                    RNG &rng,
+                    bool update_complete_data_suf);
 
-    Vector impute_continuous_values(
-        const Vector &y, const ConstVectorView &x, RNG &rng) const;
+    int impute_cluster(Ptr<Imputer::CompleteData> &data, RNG &rng) const;
+    int impute_cluster(Ptr<Imputer::CompleteData> &data, RNG &rng,
+                       bool update_complete_data_suf);
 
     // Posterior samplers need to be assigned to the components of the cluster
     // model.
-    Ptr<FiniteMixtureModel> cluster_model() {return cluster_model_;}
+    Ptr<MultinomialModel> cluster_mixing_distribution() {
+      return cluster_mixing_distribution_;
+    }
+
+    Ptr<ConditionallyIndependentCategoryModel> cluster_mixture_component(
+        int component) {
+      return cluster_mixture_components_[component];
+    }
 
     // Need access to the regression model so we can set a prior.
     Ptr<MultivariateRegressionModel> regression() {return complete_data_model_;}
@@ -194,10 +305,10 @@ namespace BOOM {
     //
     // The "emission distribution" for this model is a
     // ConditionallyIndependentCategoryModel.
-    Ptr<FiniteMixtureModel> cluster_model_;
+    Ptr<MultinomialModel> cluster_mixing_distribution_;
 
     // The mixture components in cluster_model_;
-    std::vector<Ptr<ConditionallyIndependentCategoryModel>> mixture_components_;
+    std::vector<Ptr<ConditionallyIndependentCategoryModel>> cluster_mixture_components_;
 
     // The complete data model describes the relationship among the continuous
     // variables.  In the event that an observation is driven by an atom, the
@@ -205,8 +316,15 @@ namespace BOOM {
     Ptr<MultivariateRegressionModel> complete_data_model_;
 
     std::vector<IQagent> empirical_distributions_;
+    void initialize_empirical_distributions(int ydim);
+
+    std::vector<Ptr<Imputer::CompleteData>> complete_data_;
 
     RNG rng_;
+
+    SweptVarianceMatrix swept_sigma_;
+
+    mutable Vector wsp_;
   };
 
 }  // namespace BOOM

@@ -63,6 +63,20 @@ namespace BOOM {
     return rmvn_mt(GlobalRng::rng, mu, V);
   }
 
+  Matrix rmvn_repeated(int sample_size, const SpdMatrix &Sigma) {
+    int ydim = Sigma.nrow();
+    Matrix ans(sample_size, ydim);
+    Matrix L = Sigma.chol();
+    for (int i = 0; i < sample_size; ++i) {
+      Vector draw(ydim);
+      for (int j = 0; j < ydim; ++j) {
+        draw[j] = rnorm_mt(GlobalRng::rng, 0, 1);
+      }
+      ans.row(i) = L * draw;
+    }
+    return ans;
+  }
+
   Vector rmvn_mt(RNG &rng, const Vector &mu, const SpdMatrix &V) {
     bool okay = true;
     Matrix L = V.chol(okay);
@@ -134,8 +148,8 @@ namespace BOOM {
     if (observation.size() != observed.nvars_possible()) {
       report_error("observation and observed must be the same size.");
     }
-    
-    // The distribution we want is N(mu, V), with 
+
+    // The distribution we want is N(mu, V), with
     //  V = Sig11 - Sig12 Sig22.inv Sig.21
     // and
     // mu = mu1 - Sig12 Sig22.inv (y2 - mu2)

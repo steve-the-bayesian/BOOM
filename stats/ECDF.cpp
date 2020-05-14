@@ -32,26 +32,35 @@ namespace BOOM {
   }
 
   double ECDF::fplus(double x) const {
+    if (sorted_data_.empty()) {
+      report_error("An empty empirical CDF cannot be evaluated.");
+    }
     double ans = std::upper_bound(sorted_data_.begin(), sorted_data_.end(), x) -
-                 sorted_data_.begin();
+        sorted_data_.begin();
     return ans / sorted_data_.size();
   }
 
   double ECDF::fminus(double x) const {
+    if (sorted_data_.empty()) {
+      report_error("An empty empirical CDF cannot be evaluated.");
+    }
     double ans = std::lower_bound(sorted_data_.begin(), sorted_data_.end(), x) -
-                 sorted_data_.begin();
+        sorted_data_.begin();
     return ans / sorted_data_.size();
   }
 
   double ECDF::quantile(double probability) const {
+    if (sorted_data_.empty()) {
+      report_error("An empty empirical CDF cannot be evaluated.");
+    }
     double min_prob = 1.0 / sorted_data_.size();
-    
+
     if (probability < min_prob) {
       return sorted_data_[0];
     } else if (probability >= 1.0) {
       return sorted_data_.back();
-    } 
-    
+    }
+
     int index = probability * sorted_data_.size();
     if ((sorted_data_.size() - probability * index) < min_prob
         || index + 1 == sorted_data_.size()) {
