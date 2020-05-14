@@ -28,6 +28,7 @@
 // BOOM, and (d), make the order of the arguments agree with the author's paper
 // and the wikipedia entry on the GIG distribution.
 
+#include <cmath>
 #include "distributions.hpp"  // for rgamma
 #include "distributions/rng.hpp"
 #include "cpputil/report_error.hpp"
@@ -106,8 +107,11 @@ namespace BOOM {
   // The mean of the GIG distribution.
   double gig_mean(double lambda, double psi, double chi) {
     double arg = sqrt(psi * chi);
-    double numerator = sqrt(chi) * std::cyl_bessel_k(lambda + 1, arg);
-    double denominator = sqrt(psi) * std::cyl_bessel_k(lambda, arg);
+    // TODO: swap in the standard library function once it is widely available (c++17).
+    // double numerator = sqrt(chi) * std::cyl_bessel_k(lambda + 1, arg);
+    // double denominator = sqrt(psi) * std::cyl_bessel_k(lambda, arg);
+    double numerator = sqrt(chi) * bessel_k(arg, lambda + 1, 1);
+    double denominator = sqrt(psi) * bessel_k(arg, lambda, 1);
     return numerator / denominator;
   }
 

@@ -41,7 +41,7 @@ constexpr double sqxmin_BESS_K = 1.49e-154;
   Linux (around 2001-02) gives 2.14946906753213e-08
   Solaris 2.5.1		 gives 2.14911933289084e-08
 */
-constexpr double M_eps_sinc = 2.149e-8;
+// constexpr double M_eps_sinc = 2.149e-8;
 
 
 #define min0(x, y) (((x) <= (y)) ? (x) : (y))
