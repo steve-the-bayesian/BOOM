@@ -139,7 +139,7 @@ namespace BOOM {
     CategoricalMainEffect(int which_variable, const Ptr<CatKeyBase> &key);
 
     Vector encode(const MultivariateCategoricalData &data) const override;
-    Vector encode(const std::vector<int> &data) const;
+    Vector encode(const std::vector<int> &data) const override;
     int dim() const override {return encoder_.dim();}
     const std::vector<int> &which_variables() const override {
       return which_variables_;
@@ -167,8 +167,8 @@ namespace BOOM {
     CategoricalInteraction(const Ptr<CategoricalDataEncoder> &enc1,
                            const Ptr<CategoricalDataEncoder> &enc2);
 
-    Vector encode(const MultivariateCategoricalData &data) const;
-    Vector encode(const std::vector<int> &data) const;
+    Vector encode(const MultivariateCategoricalData &data) const override;
+    Vector encode(const std::vector<int> &data) const override;
     int dim() const override {return enc1_->dim() * enc2_->dim();}
     const std::vector<int> &which_variables() const override {
       return which_variables_;
@@ -272,7 +272,7 @@ namespace BOOM {
     // same structure.
     void combine(const LoglinearModelSuf &suf);
     void combine(const Ptr<LoglinearModelSuf> &suf);
-    LoglinearModelSuf *abstract_combine(Sufstat *s);
+    LoglinearModelSuf *abstract_combine(Sufstat *s) override;
 
     // Args:
     //   index: The indices of the variables in the desired margin.  For main

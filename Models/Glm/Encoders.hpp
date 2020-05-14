@@ -85,7 +85,7 @@ namespace BOOM {
       return encoder1_->dim() * encoder2_->dim();
     }
 
-    Matrix encode_dataset(const DataTable &table) const {
+    Matrix encode_dataset(const DataTable &table) const override {
       Matrix m1 = encoder1_->encode_dataset(table);
       Matrix m2 = encoder2_->encode_dataset(table);
 
@@ -116,7 +116,7 @@ namespace BOOM {
 
     int dim() const override {return dim_;}
 
-    Matrix encode_dataset(const DataTable &data) const;
+    Matrix encode_dataset(const DataTable &data) const override;
 
    private:
     int dim_;
