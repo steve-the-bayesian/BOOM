@@ -77,6 +77,8 @@ namespace BOOM {
     return observed_log_probability_table_[category_map(y)];
   }
 
+  // If there are 3 atoms, this function returns 0, 1, or 2 if y is one of the
+  // atomic values.  Otherwise it returns 3 if y is not NaN, and 4 if it is NaN.
   int ErrorCorrectionModel::category_map(double y) const {
     if (std::isnan(y)) {
       return observed_log_probability_table_.size() - 1;
@@ -280,7 +282,6 @@ namespace BOOM {
         empirical_distributions_[i].add(y[i]);
       }
     }
-
 
     complete_data_.push_back(complete);
   }
