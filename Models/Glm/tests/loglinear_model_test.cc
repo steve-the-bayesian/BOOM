@@ -253,46 +253,46 @@ namespace {
     }
     model->refresh_suf();
 
-    NEW(LoglinearModelBipfSampler, sampler)(model.get());
-    model->set_method(sampler);
-    int niter = 1000;
+    // NEW(LoglinearModelBipfSampler, sampler)(model.get());
+    // model->set_method(sampler);
+    // int niter = 1000;
 
-    Matrix draws(niter, model->coef().nvars_possible());
-    for (int i = 0; i < niter; ++i) {
-      model->sample_posterior();
-      draws.row(i) = model->coef().Beta();
-    }
+    // Matrix draws(niter, model->coef().nvars_possible());
+    // for (int i = 0; i < niter; ++i) {
+    //   model->sample_posterior();
+    //   draws.row(i) = model->coef().Beta();
+    // }
 
-    std::ofstream out("loglin_single.out");
-    out << draws;
+    // std::ofstream out("loglin_single.out");
+    // out << draws;
   }
 
   TEST_F(LoglinearModelTest, TestMcmc) {
-    NEW(LoglinearModel, model)();
-    data_ = get_minn38_data();
-    for (int i = 0; i < data_.size(); ++i) {
-      model->add_data(data_[i]);
-    }
-    model->add_interaction({0, 1});
-    model->add_interaction({0, 2});
-    model->add_interaction({0, 3});
-    model->add_interaction({1, 2});
-    model->add_interaction({1, 3});
-    model->add_interaction({2, 3});
-    model->refresh_suf();
+    // NEW(LoglinearModel, model)();
+    // data_ = get_minn38_data();
+    // for (int i = 0; i < data_.size(); ++i) {
+    //   model->add_data(data_[i]);
+    // }
+    // model->add_interaction({0, 1});
+    // model->add_interaction({0, 2});
+    // model->add_interaction({0, 3});
+    // model->add_interaction({1, 2});
+    // model->add_interaction({1, 3});
+    // model->add_interaction({2, 3});
+    // model->refresh_suf();
 
-    NEW(LoglinearModelBipfSampler, sampler)(model.get());
-    model->set_method(sampler);
-    int niter = 1000;
+    // NEW(LoglinearModelBipfSampler, sampler)(model.get());
+    // model->set_method(sampler);
+    // int niter = 1000;
 
-    Matrix draws(niter, model->coef().nvars_possible());
-    for (int i = 0; i < niter; ++i) {
-      model->sample_posterior();
-      draws.row(i) = model->coef().Beta();
-    }
+    // Matrix draws(niter, model->coef().nvars_possible());
+    // for (int i = 0; i < niter; ++i) {
+    //   model->sample_posterior();
+    //   draws.row(i) = model->coef().Beta();
+    // }
 
-    std::ofstream out("loglin.out");
-    out << draws;
+    // std::ofstream out("loglin.out");
+    // out << draws;
   }
 
 }  // namespace

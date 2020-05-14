@@ -49,7 +49,7 @@ namespace BOOM {
   // An encoder that depends on at most 1 variable.
   class MainEffectsEncoder : public DataEncoder {
    public:
-    MainEffectsEncoder(int which_variable):
+    explicit MainEffectsEncoder(int which_variable):
         which_variable_(which_variable)
     {}
 

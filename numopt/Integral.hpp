@@ -73,7 +73,8 @@ namespace BOOM {
 
   class CumulativeDistributionFunction {
    public:
-    CumulativeDistributionFunction(const std::function<double(double)> &pdf)
+    explicit CumulativeDistributionFunction(
+        const std::function<double(double)> &pdf)
         : pdf_(pdf) {}
 
     double operator()(double x) {

@@ -53,6 +53,13 @@ namespace BOOM {
   }
 
   void BIPF::draw_effect_parameters(int effect_index) {
+
+    //
+    // TODO: This needs to be redone with the GIG distribution.
+    //
+    report_error("The loglinear model posterior sampler needs to be"
+                 " redone with draws from the GIG distribution.");
+
     const CategoricalDataEncoder &encoder(model_->encoder(effect_index));
     const std::vector<int> &which_variables(encoder.which_variables());
 
@@ -75,8 +82,6 @@ namespace BOOM {
 
     // The count in adjusted_counts might be negative.
     Vector coefficients(adjusted_counts.size());
-
-    sample_size = 0;
 
     for (size_t i = 0; i < adjusted_counts.size(); ++i) {
       coefficients[i] = log(rtrun_gamma_mt(

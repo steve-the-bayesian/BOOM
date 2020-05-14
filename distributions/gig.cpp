@@ -276,7 +276,7 @@ namespace {
     double x0;          /* splitting point T-concave / T-convex */
     double a;           /* auxiliary variable */
 
-    double U, V, X;     /* random numbers */
+    double U, X;     /* random numbers */
     double hx;          /* hat at X */
 
     /* -- Check arguments ---------------------------------------------------- */
@@ -326,7 +326,7 @@ namespace {
     do {
 
       /* get uniform random number */
-      V = Atot * rng();
+      double V = Atot * rng();
 
       do {
 
@@ -380,7 +380,7 @@ namespace {
   double _rgig_ROU_shift_alt_mt(RNG &rng, double lambda, double lambda_old,
                               double omega, double alpha) {
     double s, t;       /* auxiliary variables */
-    double U, V, X;    /* random variables */
+    double V, X;    /* random variables */
 
     double p, q;       /* coefficents of depressed cubic */
     double fi, fak;    /* auxiliary results for Cardano's rule */
@@ -431,7 +431,7 @@ namespace {
     /* -- Generate sample ---------------------------------------------------- */
 
     do {
-      U = uminus + rng() * (uplus - uminus);    /* U(u-,u+)  */
+      double U = uminus + rng() * (uplus - uminus);    /* U(u-,u+)  */
       V = rng();                                /* U(0,vmax) */
       X = U/V + xm;
     }                                         /* Acceptance/Rejection */
@@ -514,7 +514,7 @@ namespace {
     d = (-u1t + (u2t + (-u3t + u4t/nu)/nu)/nu)/nu;
 
     /* log(K_nu(x)) */
-    res = log(1.+d) - nu*eta - 0.5*(log(2.*nu*sz) - M_LNPI);
+    res = log1p(d) - nu*eta - 0.5*(log(2.*nu*sz) - M_LNPI);
 
     return (islog ? res : exp(res));
   }
