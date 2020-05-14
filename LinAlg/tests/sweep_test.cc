@@ -69,6 +69,33 @@ namespace {
 
     Matrix coef = Sigma_22.to_matrix().solve(Sigma_12.to_matrix().transpose());
     EXPECT_TRUE(MatrixEquals(coef.transpose(), swp.Beta()));
+
+    Vector y  = {8, 6, 7, 5};
+    double conditional_mean =
+        (coef.transpose() * (ConstVectorView(y, 1) - ConstVectorView(mean, 1)))[0]
+        + 1.2;
+
+    Vector yhat = swp.conditional_mean(ConstVectorView(y, 1), mean);
+    EXPECT_NEAR(yhat[0], conditional_mean, 1e-4);
+  }
+
+  TEST_F(SweepTest, VarianceTest) {
+    SweptVarianceMatrix swp(spd_);
+
+    swp.SWP(1);
+    swp.SWP(2);
+    swp.SWP(3);
+
+    // V = Sigma22 - Sigma21 * Sigma11^-1 Sigma12
+
+    Matrix Sigma12 = SubMatrix(spd_, 0, 0, 1, 3).to_matrix();
+    Matrix Sigma21 = Sigma12.transpose();
+    SpdMatrix Sigma22 = SubMatrix(spd_, 1, 3, 1, 3).to_matrix();
+
+    double residual_variance =
+        spd_(0, 0) - (Sigma12 * Sigma22.inv() * Sigma21)(0, 0);
+    EXPECT_NEAR(residual_variance, swp.residual_variance()(0, 0), 1e-4);
+
   }
 
 }  // namespace

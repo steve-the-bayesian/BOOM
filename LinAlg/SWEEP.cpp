@@ -94,7 +94,7 @@ namespace BOOM {
   //------------------------------------------------------------
   Vector SVM::conditional_mean(const Vector &known_subset,
                                const Vector &unconditional_mean) const {
-    return (known_subset - Beta() * swept_.select(unconditional_mean)) +
+    return Beta() * (known_subset - swept_.select(unconditional_mean)) +
            swept_.complement().select(unconditional_mean);
   }
   //------------------------------------------------------------
