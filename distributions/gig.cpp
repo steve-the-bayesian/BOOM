@@ -210,7 +210,7 @@ namespace {
     double xm, nc;     /* location of mode; c=log(f(xm)) normalization constant */
     double ym, um;     /* location of maximum of x*sqrt(f(x)); umax of MBR */
     double s, t;       /* auxiliary variables */
-    double U, V, X;    /* random variables */
+    double V, X;    /* random variables */
     int count = 0;     /* counter for total number of iterations */
 
     /* -- Setup -------------------------------------------------------------- */
@@ -241,7 +241,7 @@ namespace {
 
     do {
       ++count;
-      U = um * rng();              /* U(0,umax) */
+      double U = um * rng();              /* U(0,umax) */
       V = rng();                   /* U(0,vmax) */
       X = U/V;
     }                              /* Acceptance/Rejection */
@@ -276,7 +276,7 @@ namespace {
     double x0;          /* splitting point T-concave / T-convex */
     double a;           /* auxiliary variable */
 
-    double U, X;     /* random numbers */
+    double X;     /* random numbers */
     double hx;          /* hat at X */
 
     /* -- Check arguments ---------------------------------------------------- */
@@ -361,7 +361,7 @@ namespace {
       } while(0);
 
       /* accept or reject */
-      U = rng() * hx;
+      double U = rng() * hx;
 
       if (log(U) <= (lambda - 1.0) * log(X) - omega / 2.0 * (X + 1.0 / X)) {
         /* store random point */

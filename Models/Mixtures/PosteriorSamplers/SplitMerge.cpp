@@ -27,7 +27,6 @@
 namespace BOOM {
   namespace SplitMerge {
 
-    const bool print_mcmc_details = false;
     namespace {
       typedef SingleObservationSplitStrategy SOSS;
       typedef DirichletProcessMixtureComponent DpMixtureComponent;
@@ -456,18 +455,18 @@ namespace BOOM {
       double log_proposal_density_split =
           split_log_prior + split_log_likelihood + log_allocation_probability +
           split1_mixing_weight_fraction_density + split2_location_log_density;
-      if (print_mcmc_details) {
-        std::cout << "   log split proposal density:  "
-                  << log_proposal_density_split << endl
-                  << "          prior:           " << split_log_prior << endl
-                  << "          likelihood:      " << split_log_likelihood
-                  << endl
-                  << "          allocation       " << log_allocation_probability
-                  << endl
-                  << "          mixing fraction: " << split_log_prior << endl
-                  << "          split2 location: "
-                  << split2_location_log_density << endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "   log split proposal density:  "
+      //             << log_proposal_density_split << endl
+      //             << "          prior:           " << split_log_prior << endl
+      //             << "          likelihood:      " << split_log_likelihood
+      //             << endl
+      //             << "          allocation       " << log_allocation_probability
+      //             << endl
+      //             << "          mixing fraction: " << split_log_prior << endl
+      //             << "          split2 location: "
+      //             << split2_location_log_density << endl;
+      // }
 
       // The merge proposal has the following steps:
       // 1) randomly choose 2 observations.
@@ -494,15 +493,15 @@ namespace BOOM {
       double log_proposal_density_merged = merged_log_prior +
                                            merged_log_likelihood +
                                            empty_mixing_weight_fraction_density;
-      if (print_mcmc_details) {
-        std::cout << "   log merged proposal density: "
-                  << log_proposal_density_merged << endl
-                  << "          prior:            " << merged_log_prior << endl
-                  << "          likelihood:       " << merged_log_likelihood
-                  << endl
-                  << "          mixing fraction:  "
-                  << empty_mixing_weight_fraction_density << endl;
-      }
+      // if (print_mcmc_details) {
+      //   std::cout << "   log merged proposal density: "
+      //             << log_proposal_density_merged << endl
+      //             << "          prior:            " << merged_log_prior << endl
+      //             << "          likelihood:       " << merged_log_likelihood
+      //             << endl
+      //             << "          mixing fraction:  "
+      //             << empty_mixing_weight_fraction_density << endl;
+      // }
       return log_proposal_density_split - log_proposal_density_merged;
     }
 
