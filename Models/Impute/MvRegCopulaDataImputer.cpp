@@ -18,6 +18,7 @@
 
 #include "Models/Impute/MvRegCopulaDataImputer.hpp"
 #include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
+#include "distributions.hpp"
 
 namespace BOOM {
 
@@ -25,21 +26,43 @@ namespace BOOM {
     using CICM = ConditionallyIndependentCategoryModel;
   }  // namespace
   //===========================================================================
+  namespace Imputer {
+    CompleteData::CompleteData(const Ptr<MvRegData> &observed)
+        : observed_data_(observed),
+          y_true_(observed->y()),
+          y_numeric_(observed->y())
+    {}
+
+    CompleteData *CompleteData::clone() const {
+      return new CompleteData(*this);
+    }
+
+    std::ostream &CompleteData::display(std::ostream &out) const {
+      out << *observed_data_ << "\n"
+          << "true: " << y_true_ << "\n"
+          << "numeric: " << y_numeric_ << std::endl;
+      return out;
+    }
+
+  }  // namespace Imputer
+  //===========================================================================
   ErrorCorrectionModel::ErrorCorrectionModel(const Vector &atoms)
       : atoms_(atoms),
         marginal_of_true_data_(new MultinomialModel(atoms.size() + 1)),
+        joint_distribution_(atoms.size() + 1, atoms.size() + 2),
         observed_log_probability_table_(atoms.size() + 2),
-        observed_log_probability_table_current_(false)
+        workspace_is_current_(false)
   {
     marginal_of_true_data_->Pi_prm()->add_observer(
         [this]() {
-          this->observed_log_probability_table_current_ = false;
+          this->workspace_is_current_ = false;
         });
-    for (int i = 0; i < atoms.size(); ++i) {
+
+    for (int i = 0; i <= atoms.size(); ++i) {
       NEW(MultinomialModel, conditional_model)(atoms.size() + 2);
       conditional_model->Pi_prm()->add_observer(
           [this]() {
-            this->observed_log_probability_table_current_ = false;
+            this->workspace_is_current_ = false;
           });
       conditional_observed_given_true_.push_back(conditional_model);
     }
@@ -50,7 +73,7 @@ namespace BOOM {
   }
 
   double ErrorCorrectionModel::logp(double y) const {
-    ensure_observed_log_probability_table_current();
+    ensure_workspace_current();
     return observed_log_probability_table_[category_map(y)];
   }
 
@@ -67,23 +90,22 @@ namespace BOOM {
     return observed_log_probability_table_.size() - 2;
   }
 
-  void ErrorCorrectionModel::ensure_observed_log_probability_table_current() const {
-    if (observed_log_probability_table_current_) {
+  void ErrorCorrectionModel::ensure_workspace_current() const {
+    if (workspace_is_current_) {
       return;
     }
 
     int true_dim = atoms_.size() + 1;
     int obs_dim = true_dim + 1;
-    Matrix probs(true_dim, obs_dim);
     for (int truth = 0; truth < true_dim; ++truth) {
       for (int obs = 0; obs < obs_dim; ++obs) {
-        probs(truth, obs) =
+        joint_distribution_(truth, obs) =
             marginal_of_true_data_->pi(truth)
             * conditional_observed_given_true_[truth]->pi(obs);
       }
     }
-    observed_log_probability_table_ = log(probs.col_sums());
-    observed_log_probability_table_current_ = true;
+    observed_log_probability_table_ = log(joint_distribution_.col_sums());
+    workspace_is_current_ = true;
   }
 
   void ErrorCorrectionModel::set_conjugate_prior_for_true_categories(
@@ -120,6 +142,45 @@ namespace BOOM {
     return ans;
   }
 
+  void ErrorCorrectionModel::clear_data() {
+    marginal_of_true_data_->clear_data();
+    for (int i = 0; i < conditional_observed_given_true_.size(); ++i) {
+      conditional_observed_given_true_[i]->clear_data();
+    }
+  }
+
+  int ErrorCorrectionModel::impute_atom(double observed, RNG &rng,
+                                         bool update) {
+    ensure_workspace_current();
+    int observed_atom = category_map(observed);
+    wsp_ = joint_distribution_.col(observed_atom);
+    wsp_.normalize_prob();
+    int true_atom = rmulti_mt(rng, wsp_);
+    if (update) {
+      marginal_of_true_data_->suf()->update_raw(true_atom);
+      conditional_observed_given_true_[true_atom]->suf()->update_raw(observed_atom);
+    }
+    return true_atom;
+  }
+
+  double ErrorCorrectionModel::true_value(int true_atom,
+                                          double observed_value) const {
+    if (true_atom < atoms_.size()) {
+      return atoms_[true_atom];
+    } else {
+      return observed_value;
+    }
+  }
+
+  double ErrorCorrectionModel::numeric_value(int true_atom,
+                                             double observed_value) const {
+    if (true_atom == atoms_.size()) {
+      return observed_value;
+    } else {
+      return std::numeric_limits<double>::quiet_NaN();
+    }
+  }
+
   //===========================================================================
   CICM::ConditionallyIndependentCategoryModel(const std::vector<Vector> &atoms)
   {
@@ -129,64 +190,199 @@ namespace BOOM {
     }
   }
 
-  double CICM::pdf(const Data *dp, bool logscale) const {
-    const PartiallyObservedVectorData *data = dynamic_cast<
-      const PartiallyObservedVectorData*>(dp);
-    double logp = 0;
-    for (int i = 0; i < observed_data_models_.size(); ++i) {
-      logp += observed_data_models_[i]->logp(data->value()[i]);
+  double CICM::logp(const Vector &observed) const {
+    double ans = 0;
+    for (int i = 0; i < observed.size(); ++i) {
+      ans += observed_data_models_[i]->logp(observed[i]);
     }
-    return logp;
+    return ans;
+  }
+
+  void CICM::clear_data() {
+    DataPolicy::clear_data();
+    for (size_t i = 0; i < observed_data_models_.size(); ++i) {
+      observed_data_models_[i]->clear_data();
+    }
+  }
+
+  void CICM::impute_atoms(Imputer::CompleteData &data, RNG &rng,
+                          bool update_complete_data_suf) {
+    const Vector &observed(data.y_observed());
+    for (int i = 0; i < observed.size(); ++i) {
+      // True atom is the atom responsible for the true value.
+      int true_atom = observed_data_models_[i]->impute_atom(
+          observed[i], rng, update_complete_data_suf);
+
+      data.set_y_true(i, observed_data_models_[i]->true_value(
+          true_atom, observed[i]));
+      data.set_y_numeric(i, observed_data_models_[i]->numeric_value(
+          true_atom, observed[i]));
+    }
   }
 
   //===========================================================================
   MvRegCopulaDataImputer::MvRegCopulaDataImputer(
       int num_clusters, const std::vector<Vector> &atoms, int xdim, RNG &seeding_rng)
-      : complete_data_model_(new MultivariateRegressionModel(xdim, atoms.size())),
-        rng_(seed_rng(seeding_rng))
+      : cluster_mixing_distribution_(new MultinomialModel(num_clusters)),
+        complete_data_model_(new MultivariateRegressionModel(xdim, atoms.size())),
+        rng_(seed_rng(seeding_rng)),
+        swept_sigma_(SpdMatrix(0))
   {
-    NEW(MultinomialModel, mixing_weights)(num_clusters);
     for (int s = 0; s < num_clusters; ++s) {
       NEW(ConditionallyIndependentCategoryModel, component)(atoms);
-      mixture_components_.push_back(component);
+      cluster_mixture_components_.push_back(component);
     }
-    cluster_model_.reset(new FiniteMixtureModel(
-        mixture_components_, mixing_weights));
   }
 
+  void MvRegCopulaDataImputer::initialize_empirical_distributions(int ydim) {
+    Vector probs(99);
+    for (int i = 0; i < probs.size(); ++i) {
+      probs[i] = (i + 1.0) / 100.0;
+    }
+    for (int i = 0; i < ydim; ++i) {
+      empirical_distributions_.push_back(IQagent(probs, uint(1e+6)));
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  MvRegCopulaDataImputer *MvRegCopulaDataImputer::clone() const {
+    return new MvRegCopulaDataImputer(*this);
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::clear_data() {
+    DataPolicy::clear_data();
+    complete_data_.clear();
+    clear_client_data();
+  }
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::clear_client_data() {
+    cluster_mixing_distribution_->clear_data();
+    for (size_t s = 0; s < cluster_mixture_components_.size(); ++s) {
+      cluster_mixture_components_[s]->clear_data();
+    }
+    complete_data_model_->clear_data();
+  }
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::add_data(const Ptr<MvRegData> &data) {
+    NEW(Imputer::CompleteData, complete)(data);
+    DataPolicy::add_data(data);
+
+    if (empirical_distributions_.empty()) {
+      initialize_empirical_distributions(data->y().size());
+    }
+
+    const Vector &y(data->y());
+    for (size_t i = 0; i < y.size(); ++i) {
+      const auto &model = cluster_mixture_components_[0]->model(i);
+      int atom = model.category_map(y[i]);
+      if (atom == model.number_of_atoms()) {
+        empirical_distributions_[i].add(y[i]);
+      }
+    }
+
+
+    complete_data_.push_back(complete);
+  }
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::remove_data(const Ptr<Data> &data) {
+    DataPolicy::remove_data(data);
+    for (auto it = complete_data_.begin(); it != complete_data_.end(); ++it) {
+      const Ptr<Imputer::CompleteData> &data_point(*it);
+      if (data_point->observed_data() == data.get()) {
+        complete_data_.erase(it);
+      }
+    }
+  }
   //---------------------------------------------------------------------------
   double MvRegCopulaDataImputer::logpri() const {
     return negative_infinity();
   }
 
   //---------------------------------------------------------------------------
-  Vector MvRegCopulaDataImputer::impute_row(
-      const Vector &input,
-      const ConstVectorView &predictors,
-      RNG &rng) const {
+  int MvRegCopulaDataImputer::impute_cluster(
+      Ptr<Imputer::CompleteData> &data, RNG &rng) const {
+    int S = cluster_mixture_components_.size();
+    wsp_ = cluster_mixing_distribution_->logpi();
+    for (uint s = 0; s < S; ++s) {
+      wsp_[s] += cluster_mixture_components_[s]->logp(data->y_observed());
+    }
+    wsp_.normalize_logprob();
+    int component = rmulti_mt(rng, wsp_);
+    return component;
+  }
+  //---------------------------------------------------------------------------
+  int MvRegCopulaDataImputer::impute_cluster(
+      Ptr<Imputer::CompleteData> &data,
+      RNG &rng,
+      bool update_complete_data_suf) {
 
-    Vector ans(input.size());
-    Vector mean = complete_data_model_->predict(predictors);
-    return mean;
+    int component = impute_cluster(data, rng);
+    if (update_complete_data_suf) {
+      cluster_mixing_distribution_->suf()->update_raw(component);
+    }
+    return component;
   }
 
-  Vector MvRegCopulaDataImputer::impute_continuous_values(
-      const Vector &y,
-      const ConstVectorView &x,
-      RNG &rng) const {
-    return Vector(0);
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::impute_row(Ptr<Imputer::CompleteData> &data,
+                                          RNG &rng,
+                                          bool update_complete_data_suf) {
+    int component = impute_cluster(data, rng, update_complete_data_suf);
+    cluster_mixture_components_[component]->impute_atoms(
+        *data, rng, update_complete_data_suf);
+
+    Vector numeric = data->y_numeric();
+    Selector observed(numeric.size(), true);
+    for (int i = 0; i < numeric.size(); ++i) {
+      if (std::isnan(numeric[i])) {
+        observed.drop(i);
+      } else {
+        numeric[i] = qnorm(empirical_distributions_[i].cdf(numeric[i]));
+      }
+    }
+
+    if (observed.nvars() < observed.nvars_possible()) {
+      Vector mean = complete_data_model_->predict(data->x());
+      Vector imputed_numeric;
+      if (observed.nvars() == 0) {
+        imputed_numeric = rmvn_mt(rng, mean, complete_data_model_->Sigma());
+      } else {
+        swept_sigma_.SWP(observed);
+        Vector conditional_mean = swept_sigma_.conditional_mean(
+            observed.select(numeric), mean);
+        Vector imputed_values = rmvn_mt(rng, conditional_mean, swept_sigma_.residual_variance());
+
+        observed.fill_missing_elements(numeric, imputed_values);
+
+        // TODO: update the empirical CDF.
+
+        // transform back.
+        for (int i = 0; i < numeric.size(); ++i) {
+          if (observed[i]) {
+            numeric[i] = data->y_observed()[i];
+          } else {
+            numeric[i] = empirical_distributions_[i].quantile(pnorm(numeric[i]));
+          }
+        }
+        data->set_y_numeric(numeric);
+      }
+    }
   }
 
   //---------------------------------------------------------------------------
   void MvRegCopulaDataImputer::sample_posterior() {
-    cluster_model_->sample_posterior();
-
-    complete_data_model_->suf()->clear_y_keep_x();
-    for (int i = 0; i < dat().size(); ++i) {
-      auto data_point = dat()[i];
-      Vector y = impute_continuous_values(
-          data_point->y(), data_point->x(), rng_);
-      complete_data_model_->suf()->update_y_not_x(y, data_point->x(), 1.0);
+    for (int i = 0; i < empirical_distributions_.size(); ++i) {
+      empirical_distributions_[i].update_cdf();
+    }
+    clear_client_data();
+    swept_sigma_ = SweptVarianceMatrix(complete_data_model_->Sigma());
+    for (int i = 0; i < complete_data_.size(); ++i) {
+      impute_row(complete_data_[i], rng_, true);
+    }
+    cluster_mixing_distribution_->sample_posterior();
+    for (int s = 0; s < cluster_mixture_components_.size(); ++s) {
+      cluster_mixture_components_[s]->sample_posterior();
     }
     complete_data_model_->sample_posterior();
   }

@@ -49,9 +49,14 @@ namespace BOOM {
     FiniteMixtureModel(const FiniteMixtureModel &rhs);
     FiniteMixtureModel *clone() const override;
 
+    // Clear data from mixture components and the mixing distribution.
     void clear_component_data();
+
     void impute_latent_data(RNG &rng) override;
     void class_membership_probability(const Ptr<Data> &, Vector &ans) const;
+    int impute_observation(const Ptr<Data> &data, RNG &rng) const;
+    int impute_observation(const Ptr<Data> &data, RNG &rng,
+                            bool update_complete_data_suf);
     double last_loglike() const;
 
     double pdf(const Ptr<Data> &dp, bool logscale) const;

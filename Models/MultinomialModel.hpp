@@ -88,6 +88,7 @@ namespace BOOM {
 
     const double &pi(int s) const;
     const Vector &pi() const;
+    const Vector &logpi() const;
     void set_pi(const Vector &probs);
 
     double loglike(const Vector &probs) const override;
@@ -103,7 +104,6 @@ namespace BOOM {
    private:
     mutable Vector logp_;
     mutable bool logp_current_;
-    void observe_logp();
     void set_observer();
     void check_logp() const;
   };

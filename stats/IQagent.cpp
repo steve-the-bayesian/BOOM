@@ -36,7 +36,7 @@ namespace BOOM {
   }
   //-----------------------------------------------------------------------
   IQagent::IQagent(const Vector& probs, uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs), ecdf_(Vector(0)) {
+      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs) {
     std::sort(probs_.begin(), probs_.end());
     quantiles_.resize(probs_.size());
   }

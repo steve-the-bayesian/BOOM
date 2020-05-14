@@ -145,12 +145,17 @@ namespace BOOM {
   const Ptr<VectorParams> MM::Pi_prm() const { return ParamPolicy::prm(); }
 
   void MM::set_observer() {
-    Pi_prm()->add_observer([this]() { this->observe_logp(); });
+    Pi_prm()->add_observer([this]() { this->logp_current_ = false;});
   }
 
   uint MM::nlevels() const { return pi().size(); }
   const double &MM::pi(int s) const { return pi()[s]; }
   const Vector &MM::pi() const { return Pi_prm()->value(); }
+  const Vector &MM::logpi() const {
+    check_logp();
+    return logp_;
+  }
+
   void MM::set_pi(const Vector &probs) {
     Pi_prm()->set(probs);
     check_logp();
@@ -202,8 +207,6 @@ namespace BOOM {
     uint i = DAT(dp)->value();
     suf()->add_mixture_data(i, prob);
   }
-
-  void MM::observe_logp() { logp_current_ = false; }
 
   void MM::check_logp() const {
     if (logp_current_) return;

@@ -46,6 +46,11 @@ namespace {
     model.suf()->update_raw(1);
     model.suf()->update_raw(2);
     EXPECT_EQ(3, model.number_of_observations());
+
+    model.set_pi(Vector{.5, .2, .3});
+    EXPECT_NEAR(model.logpi()[0], log(.5), 1e-8);
+    EXPECT_NEAR(model.logpi()[1], log(.2), 1e-8);
+    EXPECT_NEAR(model.logpi()[2], log(.3), 1e-8);
   }
 
   TEST_F(MultinomialTest, McmcTest) {
