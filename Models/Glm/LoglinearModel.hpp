@@ -173,7 +173,7 @@ namespace BOOM {
     const std::vector<int> &which_variables() const override {
       return which_variables_;
     }
-    const std::vector<int> &nlevels() const {return nlevels_;}
+    const std::vector<int> &nlevels() const override {return nlevels_;}
 
    private:
     Ptr<CategoricalDataEncoder> enc1_;
@@ -326,8 +326,8 @@ namespace BOOM {
     LoglinearModel *clone() const override;
 
     void add_data(const Ptr<MultivariateCategoricalData> &data_point) override;
-    void add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
-    void add_data(MultivariateCategoricalData *dp) {
+    void add_data(const Ptr<Data> &dp) override { add_data(DAT(dp)); }
+    void add_data(MultivariateCategoricalData *dp) override {
       add_data(Ptr<MultivariateCategoricalData>(dp));
     }
 
