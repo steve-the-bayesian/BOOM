@@ -87,8 +87,10 @@ namespace BOOM {
   }
 
   VV::VectorView(Vector &v, uint first)
-      : V(v.data() + first), nelem_(v.size() - first), stride_(1) {
-    if (first >= v.size()) {
+      : V(v.data() + first), nelem_(v.size() - first), stride_( 1) {
+    // Allow first to be zero in the case of empty vectors, so we can can have a
+    // VectorView into an empty.
+    if ( (first > 0) && (first >= v.size())) {
       report_error("First element in view is past the end of the hosting "
                    "vector.");
     }
