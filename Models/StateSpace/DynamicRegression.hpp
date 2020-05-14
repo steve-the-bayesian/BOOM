@@ -308,8 +308,12 @@ namespace BOOM {
 
     //------------------------------------------------------------
     // Accessing data and sufficient statistics.
-    std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() {return data_;}
-    const std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() const {
+    std::vector<Ptr<StateSpace::RegressionDataTimePoint>> &dat() override {
+      return data_;
+    }
+
+    const std::vector<Ptr<StateSpace::RegressionDataTimePoint>>
+    &dat() const override {
       return data_;
     }
 

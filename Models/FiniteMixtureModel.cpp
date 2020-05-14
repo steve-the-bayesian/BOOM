@@ -119,6 +119,27 @@ namespace BOOM {
     }
   }
 
+  int FMM::impute_observation(const Ptr<Data> &data, RNG &rng,
+                              bool update_complete_data_suf) {
+    int component = impute_observation(data, rng);
+    if (update_complete_data_suf) {
+      mixing_dist_->suf()->update_raw(component);
+      mixture_components_[component]->add_data(data);
+    }
+    return component;
+  }
+
+  int FMM::impute_observation(const Ptr<Data> &data, RNG &rng) const {
+    int S = number_of_mixture_components();
+    wsp_ = logpi();
+    for (uint s = 0; s < S; ++s) {
+      wsp_[s] += mixture_components_[s]->pdf(data.get(), true);
+    }
+    wsp_.normalize_logprob();
+    int component = rmulti_mt(rng, wsp_);
+    return component;
+  }
+
   void FMM::class_membership_probability(const Ptr<Data> &dp,
                                          Vector &ans) const {
     int S = number_of_mixture_components();

@@ -66,6 +66,16 @@ namespace BOOM {
     virtual void update_raw_data(const Vector &Y, const Vector &X,
                                  double w = 1.0);
 
+    // Clear the sufficient statistics that depend on y, but not the ones that
+    // depend on X.  This is a useful optimization in some latent variable
+    // models.
+    void clear_y_keep_x();
+
+    // Update the sufficient statistics that depend on y, but not the ones that
+    // depend only on X.  This is a useful optimization in some latent variable
+    // models.
+    void update_y_not_x(const Vector &y, const Vector &x, double w);
+
     // Returns the least squares estimate of beta given the current
     // sufficient statistics.
     Matrix beta_hat() const;

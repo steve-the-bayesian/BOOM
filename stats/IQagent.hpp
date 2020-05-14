@@ -24,16 +24,15 @@
 //
 
 #include <vector>
+#include "LinAlg/Vector.hpp"
 #include "stats/ECDF.hpp"
 #include "uint.hpp"
 
 namespace BOOM {
   class IQagent {
-    typedef std::vector<double> VEC;
-
    public:
     explicit IQagent(uint BufSize = 20);
-    explicit IQagent(const VEC& probs, uint BufSize = 20);
+    explicit IQagent(const Vector& probs, uint BufSize = 20);
     void add(double x);
     double quantile(double prob) const;
     double cdf(double x) const;
@@ -48,14 +47,15 @@ namespace BOOM {
     double find_xminus(double p) const;
 
     uint max_buffer_size_, nobs_;
-    VEC data_buffer_;
-    VEC probs_;
-    VEC quantiles_;
+    Vector data_buffer_;
+    Vector probs_;
+    Vector quantiles_;
 
     ECDF ecdf_;
-    VEC Fplus_;
-    VEC Fminus_;
+    Vector Fplus_;
+    Vector Fminus_;
   };
 
 }  // namespace BOOM
+
 #endif  // BOOM_IQ_AGENT_HPP

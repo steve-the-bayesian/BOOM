@@ -85,7 +85,7 @@ plot.Seasonal <- function(x,
                           style = c("dynamic", "boxplot"),
                           ylim = NULL,
                           ...) {
-  ## S3 method for plotting a RegressionHolidayStateModel
+  ## S3 method for plotting a Seasonal state model.
   ##
   ## Args:
   ##   x: An object inheriting from RegressionHolidayStateModel.
@@ -116,7 +116,7 @@ plot.Seasonal <- function(x,
   if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
     stop("The state specification is not part of the bsts object.")
   }
-  
+
   if (state.specification$nseasons == 7 &&
         state.specification$season.duration == 1) {
     PlotDayOfWeekCycle(bsts.object, burn = burn, time = time, ylim = ylim,

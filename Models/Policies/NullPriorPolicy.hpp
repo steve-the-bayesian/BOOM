@@ -35,7 +35,6 @@ namespace BOOM {
     // order they were set.
     void sample_posterior() override {}
     double logpri() const override { return 0; }
-    void set_method(const Ptr<PosteriorSampler> &) override {}
 
     // Returns the number of sampling methods that have been set.
     int number_of_sampling_methods() const override { return 0; }

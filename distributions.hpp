@@ -217,6 +217,9 @@ namespace BOOM {
   Vector rmvn(const Vector &Mu, const DiagonalMatrix &Sigma);
   Vector rmvn_mt(RNG &rng, const Vector &Mu, const DiagonalMatrix &Sigma);
 
+  // Simulate sample_size draws from N(0, Sigma).
+  Matrix rmvn_repeated(int sample_size, const SpdMatrix &Sigma);
+
   // rmvn_robust computes the spectral decomposition of Sigma which
   // can be done even if there is a zero pivot that would prevent the
   // Cholesky decomposition from working, so it can be used even if

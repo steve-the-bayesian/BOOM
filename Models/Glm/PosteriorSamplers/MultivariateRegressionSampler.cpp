@@ -26,19 +26,18 @@ namespace BOOM {
   MRS::MultivariateRegressionSampler(
       MultivariateRegressionModel *model,
       const Matrix &Beta_guess,
-      double prior_beta_nobs,
+      double coefficient_prior_sample_size,
       double prior_df,
-      const SpdMatrix &Sigma_guess,
+      const SpdMatrix &residual_variance_guess,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
-        SS_(Sigma_guess * prior_df),
+        SS_(residual_variance_guess * prior_df),
         prior_df_(prior_df),
         Ominv_(model_->xdim()),
         beta_prior_mean_(Beta_guess) {
-    double kappa = prior_beta_nobs;
-    Ominv_.set_diag(kappa);
-    ldoi_ = model_->ydim() * log(kappa);
+    Ominv_.set_diag(coefficient_prior_sample_size);
+    ldoi_ = model_->ydim() * log(coefficient_prior_sample_size);
   }
 
   double MRS::logpri() const {
