@@ -221,6 +221,11 @@ namespace BOOM {
     set_excluded_coefficients_to_zero();
   }
 
+  void GlmCoefs::set_subset(const Vector &beta_subset, int start, bool signal) {
+    VectorParams::set_subset(beta_subset, start, signal);
+    set_excluded_coefficients_to_zero();
+  }
+
   //------- virtual function overloads ---------------
 
   Vector GlmCoefs::vectorize(bool minimal) const {

@@ -174,6 +174,14 @@ namespace BOOM {
   double rlexp(double loglam);
   double rlexp_mt(RNG &rng, double loglam);
 
+  // Generalized extreme value distribution.
+
+  // The GIG(x | lambda, chi, psi) distribution has density proportional to
+  //  x^{lambda - 1} \exp(-0.5 * (psi * x + chi / x))
+  double dgig(double x, double lambda, double psi, double chi, bool logscale = false);
+  double rgig_mt(RNG &rng, double lambda, double psi, double chi);
+  double gig_mean(double lambda, double psi, double chi);
+
   //===========================================================================
   // extreme value distribution with centrality parameter 'mu + gamma', where
   // gamma is Euler's constant -0.5772157... and variance 'sigma^2 * pi^2/6'.

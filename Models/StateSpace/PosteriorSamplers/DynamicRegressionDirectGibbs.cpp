@@ -116,11 +116,11 @@ namespace BOOM {
                                int predictor_index) const {
     double ans = log_inclusion_prior(inc, time_index, predictor_index);
     if (inc.nvars() == 0) {
-      double SSE = model_->data(time_index)->yty();
+      // double SSE = model_->data(time_index)->yty();
 
       // TODO: Take the -inf line out.  it is only present for debugging.
       return negative_infinity();
-      return ans - 0.5 * SSE / model_->residual_variance();
+      // return ans - 0.5 * SSE / model_->residual_variance();
     }
     Vector unscaled_prior_variance =
         compute_unscaled_prior_variance(inc, time_index);

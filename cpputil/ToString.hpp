@@ -34,6 +34,19 @@ namespace BOOM {
     out << object;
     return out.str();
   }
+
+  template <class T>
+  std::string ToString(const std::vector<T> &vector) {
+    std::ostringstream out;
+    for (size_t i = 0; i < vector.size(); ++i) {
+      out << vector[i];
+      if (i + 1 < vector.size()) {
+        out << " ";
+      }
+    }
+    return out.str();
+  }
+
 }  // namespace BOOM
 
 #endif  //  BOOM_TO_STRING_HPP_

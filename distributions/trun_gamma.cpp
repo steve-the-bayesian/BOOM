@@ -109,9 +109,9 @@ namespace BOOM {
 
   double rtg_init(double x, double a, double b, double cut, double logpstar) {
     /*
-     * finds a value of x such that dtrun_gamma(x,a,b,cut,true) <
-     * logpstar.  This function will only be called if cut > mode, in
-     * which case dtrun_gamma is a decreasing function.
+     * finds a value of x such that dtrun_gamma(x,a,b,cut,true,false) <
+     * logpstar.  This function will only be called if cut > mode, in which case
+     * dtrun_gamma is a decreasing function.
      */
 
     double f = dtrun_gamma(x, a, b, cut, true) - logpstar;

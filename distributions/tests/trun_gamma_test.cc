@@ -39,4 +39,15 @@ namespace {
     }
   }
 
+  TEST(TrunGammaTest, negative_alpha) {
+    double a = -3.8;
+    double b = 1.2;
+    double cut = 1e-10;
+    int n = 10000;
+    Vector draws(n);
+    for (int i = 0; i < n; ++i) {
+      draws[i] = rtrun_gamma_mt(GlobalRng::rng, a, b, cut);
+    }
+  }
+
 }  // namespace

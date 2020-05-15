@@ -176,7 +176,7 @@ namespace BOOM {
     } else {
       // If the table is NOT empty, check if the observations for the added
       // variable is same for the previous variables.
-      if (nobs() != v.size()) {
+      if (nobs() > 0 && nobs() != v.size()) {
         report_error(
             "Wrong sized include vector in "
             "DataTable::append_variable");
@@ -210,7 +210,7 @@ namespace BOOM {
     } else {
       // If the table is NOT empty, check if the number of observations
       // for the added variable is same for the previous variables.
-      if (nobs() != cv.size()) {
+      if (nobs() > 0 && nobs() != cv.size()) {
         report_error(
             "Wrong sized include vector in "
             "DataTable::append_variable");
@@ -360,18 +360,23 @@ namespace BOOM {
     return first_element.size();
   }
 
-  uint DataTable::nobs() const {
-    if (variable_types_.empty()) {
-      return 0;
-    }
-    if (variable_types_[0] == continuous)
-      return continuous_variables_[0].size();
-    return categorical_variables_[0].size();
-  }
-
   uint DataTable::nlevels(uint i) const {
     if (variable_types_[i] == continuous) return 1;
     return categorical_variables_[i][0]->nlevels();
+  }
+
+  int DataTable::nrow() const {
+    if (variable_types_.empty()) {
+      return 0;
+    }
+    if (variable_types_[0] == continuous) {
+      return continuous_variables_[0].size();
+    } else if (variable_types_[0] == categorical) {
+      return categorical_variables_[0].size();
+    } else {
+      report_error("Can't determine size.");
+    }
+    return -1;
   }
 
   DataTable::VariableType DataTable::variable_type(uint which_column) const {
@@ -387,9 +392,22 @@ namespace BOOM {
     return ans;
   }
 
+  double DataTable::getvar(int row, int col) const {
+    if (variable_types_[col] == continuous) {
+      return continuous_variables_[col][row];
+    } else {
+      return negative_infinity();
+    }
+  }
+
   CategoricalVariable DataTable::get_nominal(uint n) const {
     if (variable_types_[n] != categorical) wrong_type_error(1, n);
     return categorical_variables_[n];
+  }
+
+  Ptr<CategoricalData> DataTable::get_nominal(int row, int col) const {
+    if (variable_types_[col] != categorical) wrong_type_error(1, col);
+    return categorical_variables_[col][row];
   }
 
   // DataTable::OrdinalVariable DataTable::get_ordinal(uint n)const{

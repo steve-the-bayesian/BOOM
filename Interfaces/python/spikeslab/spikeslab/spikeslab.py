@@ -121,7 +121,9 @@ class RegressionSpikeSlabPrior:
         """
         if isinstance(x, np.ndarray):
             x = boom.Matrix(x)
-        assert isinstance(x, boom.Matrix)
+        if not isinstance(x, boom.Matrix):
+            raise Exception(
+                "x should either be a 2-dimensional np.array or a boom.Matrix.")
 
         if mean_y is None:
             if y is None:
@@ -245,11 +247,13 @@ class lm_spike:
         self._x_design_info = predictors.design_info
         # xdim = predictors.shape[1]
         # sample_size = predictors.shape[0]
-        assert isinstance(niter, int)
-        assert niter > 0
+        niter = int(niter)
+        if niter <= 0:
+            raise Exception("niter should be a positive integer.")
+
         if ping is None:
             ping = int(niter / 10)
-        assert isinstance(ping, int)
+        ping = int(ping)
 
         if seed is not None:
             boom.GlobalRng.rng.seed(int(seed))

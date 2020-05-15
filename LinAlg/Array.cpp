@@ -22,7 +22,9 @@
 #include <cstdarg>
 #include <sstream>
 #include "cpputil/report_error.hpp"
+#include "cpputil/ToString.hpp"
 #include "distributions.hpp"
+
 
 namespace BOOM {
 
@@ -366,9 +368,18 @@ namespace BOOM {
       return out.str();
     }
 
+    bool all_ones(const std::vector<int> &v) {
+      for (const auto &el : v) {
+        if (el != 1) {
+          return false;
+        }
+      }
+      return true;
+    }
+
   }  // namespace
-  
-  
+
+
   //======================================================================
   ArrayBase::ArrayBase() {}
 
@@ -590,7 +601,7 @@ namespace BOOM {
   std::string ArrayView::to_string() const {
     return array_to_string(*this);
   }
-  
+
   //======================================================================
   ConstArrayView::ConstArrayView(const Array &rhs)
       : ConstArrayBase(rhs), data_(rhs.data()) {}
@@ -687,7 +698,7 @@ namespace BOOM {
   std::string ConstArrayView::to_string() const {
     return array_to_string(*this);
   }
-  
+
   //======================================================================
   Array::Array(const std::vector<int> &dims, double initial_value)
       : ArrayBase(dims), data_(ConstArrayBase::size(), initial_value) {}
@@ -739,7 +750,42 @@ namespace BOOM {
     ArrayView(*this) = a;
     return *this;
   }
-  
+  Array &Array::operator=(double x) {
+    data_ = x;
+    return *this;
+  }
+
+
+  Array &Array::operator+=(const Array &rhs) {
+    if (dim() == rhs.dim()) {
+      data_ += rhs.data_;
+    } else {
+      report_error("Can't add arrays with different dims.");
+    }
+    return *this;
+  }
+
+  Array &Array::operator+=(const ConstArrayView &rhs) {
+    if (dim() !=  rhs.dim()) {
+      std::ostringstream err;
+      err << "Attempt to add an array of dimension "
+          << ToString(rhs.dim()) << " to an array of dimension "
+          << ToString(dim()) << ".";
+      report_error(err.str());
+    }
+
+    if (all_ones(rhs.strides())) {
+      data_ += ConstVectorView(rhs.data(), rhs.size(), 1);
+    } else {
+      auto it = begin();
+      for (auto cit = rhs.begin(); cit != rhs.end(); ++cit) {
+        *it += *cit;
+        ++it;
+      }
+    }
+    return *this;
+  }
+
   int ConstArrayBase::product(const std::vector<int> &dims) {
     int ans = 1;
     for (int i = 0; i < dims.size(); ++i) {
@@ -844,6 +890,24 @@ namespace BOOM {
 
   bool Array::operator==(const Array &rhs) const {
     return (dim() == rhs.dim()) && (data_ == rhs.data_);
+  }
+
+  ArrayIterator Array::abegin() {
+    return ArrayIterator(this);
+  }
+  ArrayIterator Array::aend() {
+    ArrayIterator it(this);
+    it.set_to_end();
+    return it;
+  }
+
+  ConstArrayIterator Array::abegin() const {
+    return ConstArrayIterator(this);
+  }
+  ConstArrayIterator Array::aend() const {
+    ConstArrayIterator it(this);
+    it.set_to_end();
+    return it;
   }
 
   ostream &Array::print(ostream &out) const {

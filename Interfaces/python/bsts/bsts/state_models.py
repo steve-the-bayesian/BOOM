@@ -120,17 +120,20 @@ class LocalLevelStateModel(StateModel):
             sigma_prior = R.SdPrior(sigma_guess=.01 * sdy,
                                     sample_size=.01,
                                     upper_limit=sdy)
-        assert(isinstance(sigma_prior, R.SdPrior))
+            if not isinstance(sigma_prior, R.SdPrior):
+                raise Exception("sigma_prior should be an R.SdPrior.")
 
         if initial_state_prior is None:
             if initial_y is None:
                 initial_y = y[0]
             if sdy is None:
                 sdy = np.std(y)
-            assert isinstance(initial_y, float)
-            assert isinstance(sdy, float)
+            initial_y = float(initial_y)
+            sdy = float(sdy)
             initial_state_prior = boom.GaussianModel(initial_y, sdy**2)
-        assert(isinstance(initial_state_prior, boom.GaussianModel))
+        if not isinstance(initial_state_prior, boom.GaussianModel):
+            raise Exception(
+                "initial_state_prior should be a boom.GaussianModel.")
 
         self._state_model = boom.LocalLevelStateModel()
         self._state_model.set_initial_state_mean(initial_state_prior.mu)

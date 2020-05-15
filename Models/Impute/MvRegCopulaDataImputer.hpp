@@ -46,7 +46,7 @@ namespace BOOM {
       // Args:
       //   observed: The observed data on which the augmented data should be
       //     based.
-      CompleteData(const Ptr<MvRegData> &observed);
+      explicit CompleteData(const Ptr<MvRegData> &observed);
 
       CompleteData * clone() const override;
       std::ostream &display(std::ostream &out) const override;

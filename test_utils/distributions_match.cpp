@@ -23,6 +23,7 @@
 #include "stats/ks_critical_value.hpp"
 
 namespace BOOM {
+
   bool DistributionsMatch(
       const Vector &data,
       const std::function<double(double)> &cdf,
@@ -51,7 +52,7 @@ namespace BOOM {
     //             << " with ECDF = " << maxdiff_ecdf << " and CDF = "
     //             << maxdiff_cdf << std::endl;
     // }
-    
+
     return maxdiff <= critical_value;
   }
 
@@ -91,13 +92,12 @@ namespace BOOM {
       return lo1 <= lo2 && hi1 >= hi2;
     }
   }  // namespace
-  
+
   bool EquivalentSimulations(const ConstVectorView &draws1,
                              const ConstVectorView &draws2) {
     ECDF ecdf1(draws1);
     ECDF ecdf2(draws2);
     return CheckCoverage(ecdf1, ecdf2) && CheckCoverage(ecdf2, ecdf1);
   }
-  
-}  // namespace BOOM
 
+}  // namespace BOOM
