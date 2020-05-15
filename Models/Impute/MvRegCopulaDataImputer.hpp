@@ -162,6 +162,15 @@ namespace BOOM {
       return marginal_of_true_data_->pi();
     }
 
+    Matrix atom_error_probs() const {
+      Matrix ans(number_of_atoms() + 1, number_of_atoms() + 2);
+      for (int i = 0; i < number_of_atoms(); ++i) {
+        ans.row(i) = conditional_observed_given_true_[i]->pi();
+      }
+      ans.last_row() = conditional_observed_given_true_.back()->pi();
+      return ans;
+    }
+
     // Returns the atom to which y corresponds.  This can be either a 'true'
     // atom or an 'observed' atom.
     int category_map(double y) const;
@@ -312,6 +321,7 @@ namespace BOOM {
     }
 
     const Vector &atom_probs(int cluster, int variable_index) const;
+    Matrix atom_error_probs(int cluster, int variable_index) const;
 
     void set_atom_prior(const Vector &prior_counts, int variable_index);
     void set_atom_error_prior(const Matrix &prior_counts, int variable_index);

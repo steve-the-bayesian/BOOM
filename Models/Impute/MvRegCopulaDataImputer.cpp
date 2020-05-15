@@ -396,6 +396,13 @@ namespace BOOM {
   }
 
   //---------------------------------------------------------------------------
+  Matrix MvRegCopulaDataImputer::atom_error_probs(
+      int cluster, int variable_index) const {
+    return cluster_mixture_components_[cluster]->model(
+        variable_index).atom_error_probs();
+  }
+
+  //---------------------------------------------------------------------------
   void MvRegCopulaDataImputer::set_atom_prior(const Vector &prior_counts,
                                               int variable_index) {
     for (int s = 0; s < cluster_mixture_components_.size(); ++s) {
