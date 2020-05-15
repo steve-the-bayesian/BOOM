@@ -46,6 +46,15 @@ namespace BayesBoom {
              "  x: BOOM::Vector of predictors.")
         ;
 
+    py::class_<MvRegData, Ptr<MvRegData>>(boom, "MvRegData")
+        .def(py::init<Vector, Vector>(),
+             py::arg("y"),
+             py::arg("x"),
+             "Args:\n\n"
+             "  y: BayesBoom.Vector of responses."
+             "  x: BayesBoom.Vector of predictors.")
+        ;
+
     // Base class for generalized linear models: regression, logistic
     // regression, Poisson regression, etc.
     py::class_<GlmModel,
