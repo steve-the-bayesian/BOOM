@@ -416,7 +416,6 @@ namespace BOOM {
 
   //---------------------------------------------------------------------------
   void MvRegCopulaDataImputer::set_default_prior_for_mixing_weights() {
-
     NEW(MultinomialDirichletSampler, sampler)(
         cluster_mixing_distribution_.get(),
         Vector(nclusters(), 1.0 / nclusters()));

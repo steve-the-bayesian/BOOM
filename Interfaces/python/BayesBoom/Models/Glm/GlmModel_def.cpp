@@ -144,7 +144,7 @@ namespace BayesBoom {
             []() {
               return new LoglinearModel;
             }),
-             "An empty LoglinearModel.  The fisrt time this model calls \n"
+             "An empty LoglinearModel.  The first time this model calls \n"
              "add_data main effects will be added for each variable in \n"
              "the added data point. ")
         .def("add_data",

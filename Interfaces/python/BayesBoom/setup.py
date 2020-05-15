@@ -114,6 +114,13 @@ hierarchical_headers = (
     + glob("Models/Hierarchical/PosteriorSamplers/*.hpp")
     )
 
+impute_sources = (
+    glob("Models/Impute/*.cpp")
+    )
+impute_headers = (
+    glob("Models/Impute/*.hpp")
+    )
+
 irt_sources = (
     glob("Models/IRT/*.cpp")
     + glob("Models/IRT/PosteriorSamplers/*.cpp")
@@ -187,6 +194,7 @@ boom_library_sources = (
     + glm_sources
     + hmm_sources
     + hierarchical_sources
+    + impute_sources
     + irt_sources
     + mixture_sources
     + nnet_sources
@@ -199,6 +207,7 @@ boom_extension_sources = (
     ["pybind11/module.cpp"]
     + glob("pybind11/Models/*.cpp")
     + glob("pybind11/Models/Glm/*.cpp")
+    + glob("pybind11/Models/Impute/*.cpp")
     + glob("pybind11/Models/StateSpace/*.cpp")
     + glob("pybind11/Models/StateSpace/StateModels/*.cpp")
     + glob("pybind11/LinAlg/*.cpp")
