@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "Models/ModelTypes.hpp"
 #include "Models/Glm/Glm.hpp"
