@@ -158,6 +158,10 @@ namespace BOOM {
     const Vector &atoms() const {return atoms_;}
     int number_of_atoms() const {return atoms_.size();}
 
+    const Vector &atom_probs() const {
+      return marginal_of_true_data_->pi();
+    }
+
     // Returns the atom to which y corresponds.  This can be either a 'true'
     // atom or an 'observed' atom.
     int category_map(double y) const;
@@ -212,6 +216,10 @@ namespace BOOM {
 
     const ErrorCorrectionModel &model(int variable_index) const {
       return *observed_data_models_[variable_index];
+    }
+
+    Ptr<ErrorCorrectionModel> mutable_model(int variable_index) {
+      return observed_data_models_[variable_index];
     }
 
    private:
@@ -298,6 +306,16 @@ namespace BOOM {
 
     double logpri() const override;
     void sample_posterior() override;
+
+    int nclusters() const {
+      return cluster_mixing_distribution_->dim();
+    }
+
+    const Vector &atom_probs(int cluster, int variable_index) const;
+
+    void set_atom_prior(const Vector &prior_counts, int variable_index);
+    void set_atom_error_prior(const Matrix &prior_counts, int variable_index);
+    void set_default_prior_for_mixing_weights();
 
    private:
     // Describes the component to which each observation belongs.  This model

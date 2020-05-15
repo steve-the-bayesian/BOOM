@@ -178,6 +178,6 @@ namespace BayesBoom {
              )
         ;
 
-  }
+  }  // module definition
 
 }  // namespace BayesBoom

@@ -388,4 +388,39 @@ namespace BOOM {
     complete_data_model_->sample_posterior();
   }
 
+  //---------------------------------------------------------------------------
+  const Vector &MvRegCopulaDataImputer::atom_probs(
+      int cluster, int variable_index) const {
+    return cluster_mixture_components_[cluster]->model(
+        variable_index).atom_probs();
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::set_atom_prior(const Vector &prior_counts,
+                                              int variable_index) {
+    for (int s = 0; s < cluster_mixture_components_.size(); ++s) {
+      cluster_mixture_components_[s]->mutable_model(
+          variable_index)->set_conjugate_prior_for_true_categories(prior_counts);
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::set_atom_error_prior(
+      const Matrix &prior_counts, int variable_index) {
+    for (int s = 0; s < cluster_mixture_components_.size(); ++s) {
+      cluster_mixture_components_[s]->mutable_model(
+          variable_index)->set_conjugate_prior_for_observation_categories(
+              prior_counts);
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::set_default_prior_for_mixing_weights() {
+
+    NEW(MultinomialDirichletSampler, sampler)(
+        cluster_mixing_distribution_.get(),
+        Vector(nclusters(), 1.0 / nclusters()));
+    cluster_mixing_distribution_->set_method(sampler);
+  }
+
 }  // namespace BOOMx
