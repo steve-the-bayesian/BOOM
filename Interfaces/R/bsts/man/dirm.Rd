@@ -155,7 +155,7 @@ dirm(formula,
   Durbin and Koopman (2001), "Time series analysis by state space
   methods", Oxford University Press.
 
-  Goerge and McCulloch (1997)
+  George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
 
