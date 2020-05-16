@@ -275,6 +275,9 @@ namespace BOOM {
 
     MvRegCopulaDataImputer *clone() const override;
 
+    int xdim() const {return complete_data_model_->xdim();}
+    int ydim() const {return complete_data_model_->ydim();}
+
     // Data management needs overrides because the class maintains a separate
     // vector of complete data.
     void clear_data() override;

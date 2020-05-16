@@ -54,6 +54,10 @@ namespace BayesBoom {
              "Args:\n"
              "  data_point:  Object of type boom.MvRegData.  The y variable \n"
              "    should indicate missing values with NaN.\n")
+        .def_property_readonly("xdim", &MvRegCopulaDataImputer::xdim,
+                               "dimension of the predictor variable")
+        .def_property_readonly("ydim", &MvRegCopulaDataImputer::ydim,
+                               "dimension of the numeric data")
         .def_property_readonly(
             "coefficients",
             [](MvRegCopulaDataImputer &imputer) {
