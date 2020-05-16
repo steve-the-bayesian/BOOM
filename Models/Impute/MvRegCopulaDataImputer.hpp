@@ -218,6 +218,8 @@ namespace BOOM {
 
     void clear_data() override;
 
+    int ydim() const {return observed_data_models_.size();}
+
     void impute_atoms(Imputer::CompleteData &data, RNG &rng,
                       bool update_complete_data_suf);
 
@@ -329,9 +331,13 @@ namespace BOOM {
     const Vector &atom_probs(int cluster, int variable_index) const;
     Matrix atom_error_probs(int cluster, int variable_index) const;
 
+    // Set default priors for everything.
+    void set_default_priors();
+
     void set_atom_prior(const Vector &prior_counts, int variable_index);
     void set_atom_error_prior(const Matrix &prior_counts, int variable_index);
     void set_default_prior_for_mixing_weights();
+    void set_default_regression_prior();
 
    private:
     // Describes the component to which each observation belongs.  This model

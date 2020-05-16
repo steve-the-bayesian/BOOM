@@ -87,16 +87,7 @@ namespace BayesBoom {
             },
             "The marginal probability that each atom is the 'truth'.")
         .def("set_default_regression_prior",
-             [](MvRegCopulaDataImputer &imputer, int xdim, int ydim) {
-               Ptr<MultivariateRegressionModel> reg = imputer.regression();
-               NEW(MultivariateRegressionSampler, regression_sampler)(
-                   reg.get(),
-                   Matrix(xdim, ydim, 0.0),
-                   1.0,
-                   ydim + 1,
-                   SpdMatrix(ydim, 1.0));
-               reg->set_method(regression_sampler);
-             },
+             &MvRegCopulaDataImputer::set_default_regression_prior,
              "Set a 'nearly flat' prior on the regression coefficients and residual "
              "variance.")
         .def("set_default_prior_for_mixing_weights",

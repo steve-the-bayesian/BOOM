@@ -18,6 +18,7 @@
 
 #include "Models/Impute/MvRegCopulaDataImputer.hpp"
 #include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/MultivariateRegressionSampler.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -369,6 +370,43 @@ namespace BOOM {
         data->set_y_numeric(numeric);
       }
     }
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::set_default_priors() {
+    set_default_regression_prior();
+    set_default_prior_for_mixing_weights();
+    for (size_t s = 0; s < cluster_mixture_components_.size(); ++s) {
+      Ptr<ConditionallyIndependentCategoryModel> component =
+          cluster_mixture_components_[s];
+      for (int j = 0; j < component->ydim(); ++j) {
+        Ptr<ErrorCorrectionModel> model = component->mutable_model(j);
+        int num_atoms = model->number_of_atoms();
+        Vector truth_prior_counts(num_atoms + 1, .1 / num_atoms);
+        truth_prior_counts.back() = .9;
+        model->set_conjugate_prior_for_true_categories(truth_prior_counts);
+
+        Matrix error_prior_counts(num_atoms + 1, num_atoms + 2, -1.0);
+        for (int i = 0; i <= num_atoms; ++i) {
+          error_prior_counts(i, i) = 1.0;
+          error_prior_counts(i, num_atoms + 1) = 1.0;
+        }
+        model->set_conjugate_prior_for_observation_categories(
+            error_prior_counts);
+      }
+    }
+  }
+
+  void MvRegCopulaDataImputer::set_default_regression_prior() {
+    int xdim = complete_data_model_->xdim();
+    int ydim = complete_data_model_->ydim();
+    NEW(MultivariateRegressionSampler, regression_sampler)(
+        complete_data_model_.get(),
+        Matrix(xdim, ydim, 0.0),
+        1.0,
+        ydim + 1,
+        SpdMatrix(ydim, 1.0));
+    complete_data_model_->set_method(regression_sampler);
   }
 
   //---------------------------------------------------------------------------
