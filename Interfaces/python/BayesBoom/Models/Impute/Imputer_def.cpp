@@ -74,18 +74,19 @@ namespace BayesBoom {
             "nclusters",
             &MvRegCopulaDataImputer::nclusters,
             "The number of clusters in the error pattern matching model.")
-        .def(
-            "atom_probs",
-            [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
-              return imputer.atom_probs(cluster, variable_index);
-            },
-            "The marginal probability that each atom is the 'truth'.")
-        .def(
-            "atom_error_probs",
-            [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
-              return imputer.atom_error_probs(cluster, variable_index);
-            },
-            "The marginal probability that each atom is the 'truth'.")
+        .def("atom_probs",
+             [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
+               return imputer.atom_probs(cluster, variable_index);
+             },
+             "The marginal probability that each atom is the 'truth'.")
+        .def("atom_error_probs",
+             [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
+               return imputer.atom_error_probs(cluster, variable_index);
+             },
+             "The marginal probability that each atom is the 'truth'.")
+        .def("set_default_priors",
+             &MvRegCopulaDataImputer::set_default_priors,
+             "Set default priors on everything.")
         .def("set_default_regression_prior",
              &MvRegCopulaDataImputer::set_default_regression_prior,
              "Set a 'nearly flat' prior on the regression coefficients and residual "
