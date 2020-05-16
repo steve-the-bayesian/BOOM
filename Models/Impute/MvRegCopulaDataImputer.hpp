@@ -207,7 +207,7 @@ namespace BOOM {
   class ConditionallyIndependentCategoryModel
       : public CompositeParamPolicy,
         public NullDataPolicy,
-        public PriorPolicy {
+        public NullPriorPolicy {
    public:
     explicit ConditionallyIndependentCategoryModel(
         const std::vector<Vector> &atoms);
@@ -229,6 +229,12 @@ namespace BOOM {
 
     Ptr<ErrorCorrectionModel> mutable_model(int variable_index) {
       return observed_data_models_[variable_index];
+    }
+
+    void sample_posterior() override {
+      for (size_t i = 0; i < observed_data_models_.size(); ++i) {
+        observed_data_models_[i]->sample_posterior();
+      }
     }
 
    private:
