@@ -212,6 +212,12 @@ namespace BOOM {
     return ans;
   }
 
+  void ErrorCorrectionModel::set_atom_error_probs(const Matrix &probs) {
+    for (int i = 0; i < conditional_observed_given_true_.size(); ++i) {
+      conditional_observed_given_true_[i]->set_pi(probs.row(i));
+    }
+  }
+
   //===========================================================================
   CICM::ConditionallyIndependentCategoryModel(const std::vector<Vector> &atoms)
   {
@@ -471,6 +477,18 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix MvRegCopulaDataImputer::impute_data_set(
+      const std::vector<Ptr<MvRegData>> &data) {
+    int sample_size = data.size();
+    Matrix ans(sample_size, ydim());
+    for (int i = 0; i < sample_size; ++i) {
+      NEW(Imputer::CompleteData, complete_data)(data[i]);
+      impute_row(complete_data, rng_, false);
+      ans.row(i) = complete_data->y_true();
+    }
+    return ans;
+  }
+
   void MvRegCopulaDataImputer::set_default_regression_prior() {
     int xdim = complete_data_model_->xdim();
     int ydim = complete_data_model_->ydim();
@@ -507,11 +525,22 @@ namespace BOOM {
         variable_index).atom_probs();
   }
 
+  void MvRegCopulaDataImputer::set_atom_probs(
+      int cluster, int variable_index, const Vector &values) {
+    cluster_mixture_components_[cluster]->mutable_model(
+        variable_index)->set_atom_probs(values);
+  }
   //---------------------------------------------------------------------------
   Matrix MvRegCopulaDataImputer::atom_error_probs(
       int cluster, int variable_index) const {
     return cluster_mixture_components_[cluster]->model(
         variable_index).atom_error_probs();
+  }
+
+  void MvRegCopulaDataImputer::set_atom_error_probs(
+      int cluster, int variable_index, const Matrix &values) {
+    cluster_mixture_components_[cluster]->mutable_model(
+        variable_index)->set_atom_error_probs(values);
   }
 
   //---------------------------------------------------------------------------

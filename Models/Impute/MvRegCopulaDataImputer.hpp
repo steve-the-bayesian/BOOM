@@ -161,8 +161,12 @@ namespace BOOM {
     const Vector &atom_probs() const {
       return marginal_of_true_data_->pi();
     }
+    void set_atom_probs(const Vector &probs) {
+      marginal_of_true_data_->set_pi(probs);
+    }
 
     Matrix atom_error_probs() const;
+    void set_atom_error_probs(const Matrix &probs);
 
     // Returns the atom to which y corresponds.  This can be either a 'true'
     // atom or an 'observed' atom.
@@ -341,7 +345,11 @@ namespace BOOM {
     }
 
     const Vector &atom_probs(int cluster, int variable_index) const;
+    void set_atom_probs(int cluster, int variable_index, const Vector &probs);
+
     Matrix atom_error_probs(int cluster, int variable_index) const;
+    void set_atom_error_probs(int cluster, int variable_index,
+                              const Matrix &probs);
 
     // Set default priors for everything.
     void set_default_priors();
@@ -353,6 +361,8 @@ namespace BOOM {
 
     // Return the imputed values of the numeric variables.
     Matrix imputed_data() const;
+
+    Matrix impute_data_set(const std::vector<Ptr<MvRegData>> &data);
 
    private:
     // Describes the component to which each observation belongs.  This model

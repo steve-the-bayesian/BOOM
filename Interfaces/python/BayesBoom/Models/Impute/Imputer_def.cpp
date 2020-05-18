@@ -124,6 +124,20 @@ namespace BayesBoom {
                imputer.sample_posterior();
              },
              "Take one draw from the posterior distribution")
+        .def("impute_data_set",
+             [](MvRegCopulaDataImputer &imputer,
+                const std::vector<Ptr<MvRegData>> &data) {
+               return imputer.impute_data_set(data);
+             },
+             "Return a Boom.Matrix containing the imputed draws.")
+        .def("set_residual_variance",
+             [](MvRegCopulaDataImputer &imputer, const Matrix &Sigma) {
+               imputer.regression()->set_Sigma(SpdMatrix(Sigma));
+             })
+        .def("set_coefficients",
+             [](MvRegCopulaDataImputer &imputer, const Matrix &Beta) {
+               imputer.regression()->set_Beta(Beta);
+             })
         ;
   }
 }  // namespace BayesBoom
