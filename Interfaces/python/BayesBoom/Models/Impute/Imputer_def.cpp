@@ -138,6 +138,10 @@ namespace BayesBoom {
              [](MvRegCopulaDataImputer &imputer, const Matrix &Beta) {
                imputer.regression()->set_Beta(Beta);
              })
+        .def("set_atom_probs",
+             &MvRegCopulaDataImputer::set_atom_probs)
+        .def("set_atom_error_probs",
+             &MvRegCopulaDataImputer::set_atom_error_probs)
         ;
   }
 }  // namespace BayesBoom
