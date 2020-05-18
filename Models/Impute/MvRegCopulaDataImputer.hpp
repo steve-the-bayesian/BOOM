@@ -143,7 +143,7 @@ namespace BOOM {
     //
     // Returns:
     //   An int representing the atoms responsible for the true and observed
-    //   value.
+    //   value, and the numeric value of the observation.
     int impute_atom(double observed_value, RNG &rng, bool update);
 
     // Return the value of y_true given the atom responsible for y_true.  This
@@ -162,14 +162,7 @@ namespace BOOM {
       return marginal_of_true_data_->pi();
     }
 
-    Matrix atom_error_probs() const {
-      Matrix ans(number_of_atoms() + 1, number_of_atoms() + 2);
-      for (int i = 0; i < number_of_atoms(); ++i) {
-        ans.row(i) = conditional_observed_given_true_[i]->pi();
-      }
-      ans.last_row() = conditional_observed_given_true_.back()->pi();
-      return ans;
-    }
+    Matrix atom_error_probs() const;
 
     // Returns the atom to which y corresponds.  This can be either a 'true'
     // atom or an 'observed' atom.
@@ -220,6 +213,20 @@ namespace BOOM {
 
     int ydim() const {return observed_data_models_.size();}
 
+    // Args:
+    //   data:  The data point to impute.
+    //   rng:  The random numer generator to use for the imputation.
+    //   update_complete_data_suf: If true then the complete data sufficient
+    //     statistics for the component models will be updated with the imputed
+    //     values.
+    //
+    // Effects:
+    //   The atom responsible for each variable is imputed.  The results are
+    //   stored in y_true and y_numeric.  If a variable is attributed to an
+    //   atom, then y_true is set to the atom value and y_numeric is set to NaN.
+    //   If a variable is attributed to the continuous atom then y_true is set
+    //   to the observed value and y_numeric is set to that value.  y_numeric is
+    //   not transformed to normality.
     void impute_atoms(Imputer::CompleteData &data, RNG &rng,
                       bool update_complete_data_suf);
 
@@ -277,6 +284,8 @@ namespace BOOM {
 
     int xdim() const {return complete_data_model_->xdim();}
     int ydim() const {return complete_data_model_->ydim();}
+
+    std::vector<Vector> atoms() const;
 
     // Data management needs overrides because the class maintains a separate
     // vector of complete data.
@@ -342,6 +351,9 @@ namespace BOOM {
     void set_default_prior_for_mixing_weights();
     void set_default_regression_prior();
 
+    // Return the imputed values of the numeric variables.
+    Matrix imputed_data() const;
+
    private:
     // Describes the component to which each observation belongs.  This model
     // controls the sharing of information across variables.
@@ -357,6 +369,14 @@ namespace BOOM {
     // variables.  In the event that an observation is driven by an atom, the
     // unobserved continuous part is to be imputed and used to fit the model.
     Ptr<MultivariateRegressionModel> complete_data_model_;
+
+    // Transformations map y from the observed scale to the hopefully normal
+    // scale.  The archetypal transform is log.
+    std::vector<std::function<double(double)>> transformations_;
+
+    // Inverse transformations map the normal scale back to the observed scale.
+    // The archetypal inverse transformation is exp.
+    std::vector<std::function<double(double)>> inverse_transformations_;
 
     std::vector<IQagent> empirical_distributions_;
     void initialize_empirical_distributions(int ydim);

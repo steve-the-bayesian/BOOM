@@ -20,11 +20,21 @@
 #include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/MultivariateRegressionSampler.hpp"
 #include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
   namespace {
     using CICM = ConditionallyIndependentCategoryModel;
+
+    void check_for_nan(const Vector &v) {
+      for (int i = 0; i < v.size(); ++i) {
+        if (std::isnan(v[i])) {
+          report_error("Found a NaN where it shouldn't exist.");
+        }
+      }
+    }
+
   }  // namespace
   //===========================================================================
   namespace Imputer {
@@ -75,7 +85,11 @@ namespace BOOM {
 
   double ErrorCorrectionModel::logp(double y) const {
     ensure_workspace_current();
-    return observed_log_probability_table_[category_map(y)];
+    double ans = observed_log_probability_table_[category_map(y)];
+    if (std::isnan(ans)) {
+      report_error("Found a NaN in logp.");
+    }
+    return ans;
   }
 
   // If there are 3 atoms, this function returns 0, 1, or 2 if y is one of the
@@ -153,7 +167,7 @@ namespace BOOM {
   }
 
   int ErrorCorrectionModel::impute_atom(double observed, RNG &rng,
-                                         bool update) {
+                                        bool update) {
     ensure_workspace_current();
     int observed_atom = category_map(observed);
     wsp_ = joint_distribution_.col(observed_atom);
@@ -166,22 +180,36 @@ namespace BOOM {
     return true_atom;
   }
 
-  double ErrorCorrectionModel::true_value(int true_atom,
-                                          double observed_value) const {
+  double ErrorCorrectionModel::true_value(
+      int true_atom, double observed_value) const {
     if (true_atom < atoms_.size()) {
       return atoms_[true_atom];
     } else {
-      return observed_value;
+      if (category_map(observed_value) == atoms_.size()) {
+        return observed_value;
+      } else {
+        return std::numeric_limits<double>::quiet_NaN();
+      }
     }
   }
 
+  // When the true value is atomic the numeric value is NaN.
   double ErrorCorrectionModel::numeric_value(int true_atom,
                                              double observed_value) const {
-    if (true_atom == atoms_.size()) {
+    if (true_atom == atoms_.size() && category_map(observed_value) == atoms_.size()) {
       return observed_value;
     } else {
       return std::numeric_limits<double>::quiet_NaN();
     }
+  }
+
+  Matrix ErrorCorrectionModel::atom_error_probs() const {
+    Matrix ans(number_of_atoms() + 1, number_of_atoms() + 2);
+    for (int i = 0; i < number_of_atoms(); ++i) {
+      ans.row(i) = conditional_observed_given_true_[i]->pi();
+    }
+    ans.last_row() = conditional_observed_given_true_.back()->pi();
+    return ans;
   }
 
   //===========================================================================
@@ -197,6 +225,9 @@ namespace BOOM {
     double ans = 0;
     for (int i = 0; i < observed.size(); ++i) {
       ans += observed_data_models_[i]->logp(observed[i]);
+      if (std::isnan(ans)) {
+        report_error("logp produced a NaN");
+      }
     }
     return ans;
   }
@@ -215,7 +246,6 @@ namespace BOOM {
       // True atom is the atom responsible for the true value.
       int true_atom = observed_data_models_[i]->impute_atom(
           observed[i], rng, update_complete_data_suf);
-
       data.set_y_true(i, observed_data_models_[i]->true_value(
           true_atom, observed[i]));
       data.set_y_numeric(i, observed_data_models_[i]->numeric_value(
@@ -251,7 +281,15 @@ namespace BOOM {
   MvRegCopulaDataImputer *MvRegCopulaDataImputer::clone() const {
     return new MvRegCopulaDataImputer(*this);
   }
+  //---------------------------------------------------------------------------
 
+  std::vector<Vector> MvRegCopulaDataImputer::atoms() const {
+    std::vector<Vector> ans;
+    for (int i = 0; i < ydim(); ++i) {
+      ans.push_back(cluster_mixture_components_[0]->model(i).atoms());
+    }
+    return ans;
+  }
   //---------------------------------------------------------------------------
   void MvRegCopulaDataImputer::clear_data() {
     DataPolicy::clear_data();
@@ -331,45 +369,72 @@ namespace BOOM {
                                           RNG &rng,
                                           bool update_complete_data_suf) {
     int component = impute_cluster(data, rng, update_complete_data_suf);
+
+    // Fill y_true and y_numeric with values, which might include missing
+    // values.  If y_true is an atomic value then y_numeric will be missing.  If
+    // y_true is non-atomic and missing then both y_numeric and y_true will be
+    // missing.
     cluster_mixture_components_[component]->impute_atoms(
         *data, rng, update_complete_data_suf);
 
-    Vector numeric = data->y_numeric();
-    Selector observed(numeric.size(), true);
-    for (int i = 0; i < numeric.size(); ++i) {
-      if (std::isnan(numeric[i])) {
+    // The remainder of this function fills in the missing numeric values.
+
+    // Determine which numeric values need to be imputed.  As of this point the
+    // numeric values have not been transformed to normality.
+    Vector imputed_numeric = data->y_numeric();
+    Selector observed(imputed_numeric.size(), true);
+    for (int i = 0; i < imputed_numeric.size(); ++i) {
+      if (std::isnan(imputed_numeric[i])) {
+        // Can't transform to normality.
         observed.drop(i);
       } else {
-        numeric[i] = qnorm(empirical_distributions_[i].cdf(numeric[i]));
+        // imputed_numeric[i] = log1p(imputed_numeric[i]);
+        // Transform to normality.
+         double uniform = empirical_distributions_[i].cdf(imputed_numeric[i]);
+         double shrinkage = .999;
+         uniform = shrinkage * uniform + (1 - shrinkage) / 2.0;
+         if (uniform <= 0.0 || uniform >= 1.0) {
+           report_error("Need to shrink the extremes.");
+         }
+         imputed_numeric[i] = qnorm(uniform);
       }
     }
 
+    // Impute those numeric values that need imputing.
     if (observed.nvars() < observed.nvars_possible()) {
       Vector mean = complete_data_model_->predict(data->x());
-      Vector imputed_numeric;
       if (observed.nvars() == 0) {
         imputed_numeric = rmvn_mt(rng, mean, complete_data_model_->Sigma());
       } else {
         swept_sigma_.SWP(observed);
         Vector conditional_mean = swept_sigma_.conditional_mean(
-            observed.select(numeric), mean);
+            observed.select(imputed_numeric), mean);
         Vector imputed_values = rmvn_mt(rng, conditional_mean, swept_sigma_.residual_variance());
-
-        observed.fill_missing_elements(numeric, imputed_values);
-
-        // TODO: update the empirical CDF.
-
-        // transform back.
-        for (int i = 0; i < numeric.size(); ++i) {
-          if (observed[i]) {
-            numeric[i] = data->y_observed()[i];
-          } else {
-            numeric[i] = empirical_distributions_[i].quantile(pnorm(numeric[i]));
-          }
-        }
-        data->set_y_numeric(numeric);
+        observed.fill_missing_elements(imputed_numeric, imputed_values);
       }
+
+      // Transform imputed data back to observed scale.
+      Vector y_true = data->y_true();
+      for (int i = 0; i < imputed_numeric.size(); ++i) {
+        if (std::isnan(y_true[i])) {
+          y_true[i] = empirical_distributions_[i].quantile(
+              pnorm(imputed_numeric[i]));
+          // y_true[i] = expm1(imputed_numeric[i]);
+        }
+      }
+      data->set_y_numeric(imputed_numeric);
+      data->set_y_true(y_true);
+    } else {
+      // Handle the fully observed case.
+      data->set_y_numeric(imputed_numeric);
     }
+
+    if (update_complete_data_suf) {
+      check_for_nan(data->y_numeric());
+      complete_data_model_->suf()->update_raw_data(
+          data->y_numeric(), data->x(), 1.0);
+    }
+
   }
 
   //---------------------------------------------------------------------------
@@ -387,14 +452,23 @@ namespace BOOM {
         model->set_conjugate_prior_for_true_categories(truth_prior_counts);
 
         Matrix error_prior_counts(num_atoms + 1, num_atoms + 2, -1.0);
-        for (int i = 0; i <= num_atoms; ++i) {
+        for (int i = 0; i < num_atoms; ++i) {
           error_prior_counts(i, i) = 1.0;
           error_prior_counts(i, num_atoms + 1) = 1.0;
         }
+        error_prior_counts.last_row() = 1.0;
         model->set_conjugate_prior_for_observation_categories(
             error_prior_counts);
       }
     }
+  }
+
+  Matrix MvRegCopulaDataImputer::imputed_data() const {
+    Matrix ans(complete_data_.size(), ydim());
+    for (int i = 0; i < complete_data_.size(); ++i) {
+      ans.row(i) = complete_data_[i]->y_true();
+    }
+    return ans;
   }
 
   void MvRegCopulaDataImputer::set_default_regression_prior() {
