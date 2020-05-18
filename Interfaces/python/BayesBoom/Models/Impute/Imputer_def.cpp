@@ -39,11 +39,6 @@ namespace BayesBoom {
              "  xdim:  The dimension of the predictor variable.\n"
              "  seeding_rng:  A boom random number generator used to seed the \n"
              "    RNG in this object.")
-        .def("sample_posterior",
-             [](MvRegCopulaDataImputer &imputer) {
-               imputer.sample_posterior();
-             },
-             "Take one draw from the posterior distribution")
         .def("add_data",
              [](MvRegCopulaDataImputer &imputer,
                 const Ptr<MvRegData> &data_point) {
@@ -54,6 +49,10 @@ namespace BayesBoom {
              "Args:\n"
              "  data_point:  Object of type boom.MvRegData.  The y variable \n"
              "    should indicate missing values with NaN.\n")
+        .def_property_readonly("xdim", &MvRegCopulaDataImputer::xdim,
+                               "dimension of the predictor variable")
+        .def_property_readonly("ydim", &MvRegCopulaDataImputer::ydim,
+                               "dimension of the numeric data")
         .def_property_readonly(
             "coefficients",
             [](MvRegCopulaDataImputer &imputer) {
@@ -74,29 +73,28 @@ namespace BayesBoom {
             "nclusters",
             &MvRegCopulaDataImputer::nclusters,
             "The number of clusters in the error pattern matching model.")
-        .def(
-            "atom_probs",
-            [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
-              return imputer.atom_probs(cluster, variable_index);
-            },
-            "The marginal probability that each atom is the 'truth'.")
-        .def(
-            "atom_error_probs",
-            [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
-              return imputer.atom_error_probs(cluster, variable_index);
-            },
-            "The marginal probability that each atom is the 'truth'.")
-        .def("set_default_regression_prior",
-             [](MvRegCopulaDataImputer &imputer, int xdim, int ydim) {
-               Ptr<MultivariateRegressionModel> reg = imputer.regression();
-               NEW(MultivariateRegressionSampler, regression_sampler)(
-                   reg.get(),
-                   Matrix(xdim, ydim, 0.0),
-                   1.0,
-                   ydim + 1,
-                   SpdMatrix(ydim, 1.0));
-               reg->set_method(regression_sampler);
+        .def_property_readonly("imputed_data",
+                               &MvRegCopulaDataImputer::imputed_data,
+                               "The numeric portion of the imputed data set.")
+        .def_property_readonly("atoms",
+                               &MvRegCopulaDataImputer::atoms,
+                               "The atoms for each y variable.")
+        .def("atom_probs",
+             [](const MvRegCopulaDataImputer &imputer, int cluster,
+                int variable_index) {
+               return imputer.atom_probs(cluster, variable_index);
              },
+             "The marginal probability that each atom is the 'truth'.")
+        .def("atom_error_probs",
+             [](const MvRegCopulaDataImputer &imputer, int cluster, int variable_index) {
+               return imputer.atom_error_probs(cluster, variable_index);
+             },
+             "The marginal probability that each atom is the 'truth'.")
+        .def("set_default_priors",
+             &MvRegCopulaDataImputer::set_default_priors,
+             "Set default priors on everything.")
+        .def("set_default_regression_prior",
+             &MvRegCopulaDataImputer::set_default_regression_prior,
              "Set a 'nearly flat' prior on the regression coefficients and residual "
              "variance.")
         .def("set_default_prior_for_mixing_weights",
@@ -107,7 +105,13 @@ namespace BayesBoom {
                 int variable_index) {
                imputer.set_atom_prior(prior_counts, variable_index);
              },
-             "TODO: docstring")
+             "Args:\n"
+             "  prior_counts: Vector of prior counts indicating the likelihood \n"
+             "    that each atom is the true value.  Negative counts indicate\n"
+             "    an a-priori assertion that the level cannot be the true value.\n"
+             "    The size of the vector must be one larger than the number of \n"
+             "    atoms, with the final element corresponding to the continuous atom.\n"
+             "  variable_index:  Index of the variable to which the prior refers.\n")
         .def("set_atom_error_prior",
              [](MvRegCopulaDataImputer &imputer,
                 const Matrix &prior_counts,
@@ -115,6 +119,11 @@ namespace BayesBoom {
                imputer.set_atom_error_prior(prior_counts, variable_index);
              },
              "TODO: docstring")
+        .def("sample_posterior",
+             [](MvRegCopulaDataImputer &imputer) {
+               imputer.sample_posterior();
+             },
+             "Take one draw from the posterior distribution")
         ;
   }
 }  // namespace BayesBoom

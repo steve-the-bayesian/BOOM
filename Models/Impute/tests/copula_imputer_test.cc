@@ -99,6 +99,18 @@ namespace {
   }
 
   TEST_F(ErrorCorrectionModelTest, ImputeAtomTest) {
+
+    Vector atoms = {0.0, 99999.0};
+
+    ErrorCorrectionModel model(atoms);
+
+    EXPECT_TRUE(std::isnan(model.true_value(2, 0.0)));
+    EXPECT_TRUE(std::isnan(model.true_value(2, 99999.0)));
+    EXPECT_DOUBLE_EQ(37.2, model.true_value(2, 37.2));
+
+    EXPECT_DOUBLE_EQ(37.2, model.numeric_value(2, 37.2));
+    EXPECT_TRUE(std::isnan(model.numeric_value(2, 0.0)));
+    EXPECT_TRUE(std::isnan(model.numeric_value(2, 99999.0)));
   }
 
   TEST_F(MvRegCopulaDataImputerTest, Construction) {
@@ -165,7 +177,7 @@ namespace {
         SpdMatrix(ydim, 1.0));
     reg->set_method(regression_sampler);
 
-    int niter = 100;
+    int niter = 10;
     for (int i = 0; i < niter; ++i) {
       imputer.sample_posterior();
     }

@@ -23,12 +23,6 @@ namespace BayesBoom {
   void LinAlg_def(py::module &boom) {
 
     py::class_<Vector, std::unique_ptr<Vector>>(boom, "Vector")
-        .def(py::init<int, double>(), py::arg("size"), py::arg("value") = 0.0,
-             "Create a Vector of the requested size filled with a constant value.")
-        .def(py::init(
-            [] (const std::vector<double> &v) {
-              return std::unique_ptr<Vector>(new Vector(v));
-            }),  "Create a Vector from a python list of floats.")
         .def(py::init( [] (Eigen::Ref<Eigen::VectorXd> numpy_array) {
               VectorView view(numpy_array.data(), numpy_array.size(), 1);
               return std::unique_ptr<Vector>(new Vector(view));

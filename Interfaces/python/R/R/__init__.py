@@ -14,6 +14,7 @@ from .plots import (
     boxplot,
     get_current_graphics_device,
     hist,
+    histabunch,
     hosmer_lemeshow_plot,
     lines,
     plot,
