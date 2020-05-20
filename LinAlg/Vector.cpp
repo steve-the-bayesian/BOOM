@@ -379,13 +379,16 @@ namespace BOOM {
     int n = size();
     if (n == 0) {
       report_error("Vector::normalize_logprob called for empty vector");
+    } else if (n == 1) {
+      x[0] = 1.0;
+    } else {
+      double m = max();
+      for (uint i = 0; i < n; ++i) {
+        x[i] = std::exp(x[i] - m);
+        nc += x[i];
+      }
+      x /= nc;
     }
-    double m = max();
-    for (uint i = 0; i < n; ++i) {
-      x[i] = std::exp(x[i] - m);
-      nc += x[i];
-    }
-    x /= nc;
     return *this;  // might want to change this
   }
 
@@ -568,7 +571,7 @@ namespace BOOM {
   Vector operator+(const VectorView &x, double a) {
     return ConstVectorView(x) + a;
   }
-      
+
   // Vector-double subraction
   Vector operator-(double a, const ConstVectorView &x) {
     Vector ans(x.size(), a);
@@ -636,8 +639,8 @@ namespace BOOM {
   Vector operator/(const Vector &x, double a) {
     return ConstVectorView(x) / a;
   }
-  
-  
+
+
   namespace {
     template <class V1, class V2>
     Vector vector_add(const V1 &v1, const V2 &v2) {
@@ -729,7 +732,7 @@ namespace BOOM {
   Vector operator/(const ConstVectorView &x, const Vector &y) {
     return vector_divide(x, y);
   }
-  
+
 
   // unary transformations
   Vector operator-(const Vector &x) {

@@ -14,7 +14,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class ArrayTest : public ::testing::Test {
    protected:
     ArrayTest() {
@@ -50,7 +50,7 @@ namespace {
     array(0, 0, 2) = 3;
     array(0, 1, 0) = 4;
     array(0, 1, 1) = 5;
-    
+
     // Check that the array is printed correctly.
     std::string array_string = array.to_string();
     EXPECT_EQ(array_string.substr(0, 10),
@@ -59,8 +59,23 @@ namespace {
 
   // TODO
   TEST_F(ArrayTest, ArrayViewTest) { }
-  
+
   // TODO
   TEST_F(ArrayTest, ConstArrayViewTest) { }
-  
+
+  TEST_F(ArrayTest, IterationOrder) {
+    Array arr(std::vector<int>{3, 4, 5});
+    arr.randomize();
+
+    auto it = arr.abegin();
+    EXPECT_EQ(it.position(), (std::vector<int>{0, 0, 0}));
+    ++it;
+    EXPECT_EQ(it.position(), (std::vector<int>{1, 0, 0}));
+    ++it;
+    EXPECT_EQ(it.position(), (std::vector<int>{2, 0, 0}));
+    ++it;
+    EXPECT_EQ(it.position(), (std::vector<int>{0, 1, 0}));
+    EXPECT_DOUBLE_EQ(*it, arr[it.position()]);
+  }
+
 }  // namespace

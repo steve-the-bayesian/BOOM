@@ -68,6 +68,18 @@ namespace BOOM {
     yty_.add_outer(y, w);
   }
 
+  void MvRegSuf::clear_y_keep_x() {
+    sumw_ = 0;
+    xty_ = 0;
+    yty_ = 0;
+  }
+
+  void MvRegSuf::update_y_not_x(const Vector &y, const Vector &x, double w) {
+    sumw_ += w;
+    xty_.add_outer(x, y, w);
+    yty_.add_outer(y, w);
+  }
+
   Matrix MvRegSuf::beta_hat() const { return xtx_.solve(xty_); }
   Matrix MvRegSuf::conditional_beta_hat(const SelectorMatrix &included) const {
     Matrix ans(xdim(), ydim());

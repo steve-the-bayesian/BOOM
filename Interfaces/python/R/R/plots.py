@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
+
 import numbers
 from abc import ABC, abstractmethod
 
@@ -186,7 +188,7 @@ def get_current_graphics_device():
 # graphics device.
 # ===========================================================================
 def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
-                       **kwargs):
+                       main="", **kwargs):
     """
     Remove plotting options used by the R package from other options supplied by
     kwargs.  This allows the remaining options to be later passed to pyplot.
@@ -199,12 +201,13 @@ def _skim_plot_options(xlab="", ylab="", xlim=None, ylim=None, title="",
                     'ylab': ylab,
                     'xlim': xlim,
                     'ylim': ylim,
+                    'main': main,
                     'title': title}
     return plot_options, kwargs
 
 
 def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
-                      **kwargs):
+                      main="", **kwargs):
     if xlab != "":
         ax.set_xlabel(xlab)
     if ylab != "":
@@ -213,6 +216,8 @@ def _set_plot_options(ax, xlab="", ylab="", xlim=None, ylim=None, title="",
         ax.set_xlim(xlim)
     if ylim is not None:
         ax.set_ylim(ylim)
+    if main != "":
+        title = main
     if title != "":
         ax.set_title(title)
 
@@ -378,7 +383,7 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
 
 
 def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
-         **kwargs):
+         ax=None, **kwargs):
     """
     Plot a histogram of x.
 
@@ -387,10 +392,11 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       density: If True then the area of the histogram bars sums to 1.
     """
     device = get_current_graphics_device()
-    if add:
-        ax = device.current_axes
-    else:
-        ax = device.next_axes
+    if ax is None:
+        if add:
+            ax = device.current_axes
+        else:
+            ax = device.next_axes
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x, edgecolor=edgecolor, density=density, color=color, **kwargs)
@@ -399,8 +405,10 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
     return device
 
 
-def barplot(x, labels=None, zero=True, **kwargs):
-    """Make a horizonal bar plot.
+def barplot(x, labels=None, zero=True, ax=None, **kwargs):
+    """
+    Make a horizonal bar plot.
+
     Args:
       x:  Array-like collection of numbers to plot.
       labels: Labels for the bars.  If x is a pd.Series then labels==None means
@@ -412,8 +420,11 @@ def barplot(x, labels=None, zero=True, **kwargs):
       kwargs: extra arguments passed to plt.subplots or plt.barh.
 
     """
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        device = get_current_graphics_device()
+        ax = device.next_axes
+    else:
+        device = None
 
     x = x[::-1]
     if labels is not None:
@@ -479,10 +490,73 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 # ===========================================================================
 # Custom plots
 # ===========================================================================
+
+def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
+    nvars = data.shape[1]
+    nr, nc = plot_grid_size(nvars)
+    fig, ax = plt.subplots(nr, nc)
+
+    def is_all_missing(y):
+        return y.count() == 0
+
+    def is_numeric(y):
+        if isinstance(y, np.ndarray):
+            y = pd.Series(y)
+        return is_numeric_dtype(y) and len(y.value_counts()) >= min_continuous
+
+    def is_categorical(y):
+        return not is_numeric(y)
+
+    def hist_categorical(y, vname, max_levels, ax):
+        if isinstance(np.ndarray(y)):
+            y = pd.Series(y)
+
+        counts = y.value_counts()
+        if counts.shape[0] > max_levels:
+            counts = counts.sort_values(ascending=False)
+            counts = counts[:max_levels]
+        barplot(counts, ax=ax, main=vname)
+
+    def hist_numeric(y, vname, ax):
+        hist(y, ax=ax, main=vname)
+
+    def plot_all_missing(vname, ax):
+        pass
+
+    vnames = data.columns
+    plot_number = 0
+    for row in range(nr):
+        for col in range(nc):
+            # Life would be better if we could reshape ax to ensure that it was
+            # a matrix.  But alas.
+            if len(ax.shape) == 2:
+                ax_index = (row, col)
+            else:
+                ax_index = row + col
+            if plot_number < nvars:
+                vname = vnames[plot_number]
+                y = data.loc[:, vname]
+
+                if is_all_missing(y):
+                    plot_all_missing(vname, ax[ax_index])
+                elif is_numeric(y):
+                    hist_numeric(y, vname, ax[ax_index])
+                elif is_categorical(y):
+                    hist_categorical(y, vname, max_levels, ax=ax[ax_index])
+                plot_number += 1
+
+
 def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
-    nseries = series.shape[1]
-    nr, nc = plot_grid_size(nseries)
+    if len(series.shape) == 2:
+        nseries = series.shape[1]
+        nr, nc = plot_grid_size(nseries)
+    elif len(series.shape) == 3:
+        nr, nc = series.shape[1], series.shape[2]
+        nseries = nr * nc
+    else:
+        raise Exception("Wrong shape for 'series' argument to plot_many_ts.")
+
     gap *= .2
     fig, ax = plt.subplots(nr, nc)
     fig.subplots_adjust(hspace=gap, wspace=gap)
@@ -493,7 +567,10 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
 
     if truth is not None:
         if isinstance(truth, numbers.Number):
-            truth = np.full(nseries, truth)
+            truth = np.ones((nr, nc)) * truth
+        elif len(truth.shape) == 1:
+            truth = np.concatenate(
+                truth, np.zeros(nr * nc - nseries)).reshape((nr, nc))
 
     for i in range(nr):
         for j in range(nc):
@@ -531,9 +608,13 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                     ax[i, j].set_ylim(ylim)
 
             if series_number < nseries:
-                ax[i, j].plot(series[:, series_number])
+                if len(series.shape) == 2:
+                    the_series = series[:, series_number]
+                else:
+                    the_series = series[:, i, j]
+                ax[i, j].plot(the_series)
                 if truth is not None:
-                    abline(ax=ax[i, j], h=truth[series_number])
+                    abline(ax=ax[i, j], h=truth[i, j])
                 series_number += 1
 
     return fig, ax
@@ -606,9 +687,10 @@ def plot_dynamic_distribution(
 
 
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
-    """Construct a Hosmer Lemeshow plot on the supplied axes.  A Hosmer Lemeshow
-    plot partitions the predicted values into groups, and compares the
-    midpoint of each group with the observed proportion in the group.
+    """
+    Construct a Hosmer Lemeshow plot on the supplied axes.  A Hosmer Lemeshow
+    plot partitions the predicted values into groups, and compares the midpoint
+    of each group with the observed proportion in the group.
 
     Args:
       actual: The actual set of 0's and 1's being modeled.

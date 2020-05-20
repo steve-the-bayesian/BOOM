@@ -1030,6 +1030,22 @@ namespace BOOM {
     return traceAtB(A, B);
   }
 
+  Vector Matrix::row_sums() const {
+    Vector ans(nrow());
+    for (int i = 0; i < nrow(); ++i) {
+      ans[i] = row(i).sum();
+    }
+    return ans;
+  }
+
+  Vector Matrix::col_sums() const {
+    Vector ans(ncol());
+    for (int i = 0; i < ncol(); ++i) {
+      ans[i] = col(i).sum();
+    }
+    return ans;
+  }
+
   double Matrix::sum() const { return accumulate(V.begin(), V.end(), 0.0); }
 
   double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }

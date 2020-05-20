@@ -59,17 +59,18 @@ namespace BOOM {
     //     variables to be unknowns.
     explicit SweptVarianceMatrix(const SpdMatrix &m, bool inverse = false);
 
-    // Sweep the given index, or set of indices into the "known"
-    // component.
+    // Sweep the given index, or set of indices into the "known" component.
+    // Calling SWP on an already swept index is a no-op.
     void SWP(uint index_to_sweep);
     void SWP(const Selector &variables_to_sweep);
 
-    // Sweep the given index from the "known" component back to the
-    // "unknown" component.
+    // Sweep the given index from the "known" component back to the "unknown"
+    // component.  Calling RSW on an unswept index is a no-op.
     void RSW(uint index_to_unsweep);
 
-    // The matrix of regression coefficients for E(unknown | known).
-    // The dimension
+    // The matrix of regression coefficients for E(unknown | known).  The
+    // dimension of Beta is unswept-rows by swept-columns, so it is to be called
+    // as Beta() * known, not known * Beta().
     Matrix Beta() const;  // to compute E(unswept | swept)
 
     // Compute the conditional mean of the unknowns given the knowns.
@@ -103,8 +104,6 @@ namespace BOOM {
     // swept_[i] is true iff variable i is in the known set.
     Selector swept_;
 
-    // Implementation of steps common to both SWP and RSW.
-    void do_sweep(uint sweep_index);
   };
 }  // namespace BOOM
 

@@ -137,18 +137,23 @@ namespace BOOM {
     VectorData(const VectorData &rhs);
     VectorData *clone() const override;
 
-    uint dim() const { return x.size(); }
+    uint dim() const { return data_.size(); }
     std::ostream &display(std::ostream &out) const override;
 
-    const Vector &value() const override { return x; }
+    const Vector &value() const override { return data_; }
     void set(const Vector &rhs, bool signal_change = true) override;
     virtual void set_element(double value, int position, bool sig = true);
+
+    // Set the contiguous subset of elements from start to start + subset.size()
+    // - 1 with the elements of subset.
+    virtual void set_subset(const Vector &subset, int start,
+                            bool signal = true);
 
     double operator[](uint) const;
     double &operator[](uint);
 
    private:
-    Vector x;
+    Vector data_;
   };
 
   //==========================================================================

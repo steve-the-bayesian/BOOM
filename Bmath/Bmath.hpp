@@ -411,6 +411,7 @@ namespace Rmath{
 
   double        choose(double, double);
   double        lchoose(double, double);
+  double        bessel_k(double, double, double);
 
   /* General Support Functions */
 

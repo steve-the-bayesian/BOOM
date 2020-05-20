@@ -88,6 +88,7 @@ namespace BOOM {
 
     const double &pi(int s) const;
     const Vector &pi() const;
+    const Vector &logpi() const;
     void set_pi(const Vector &probs);
 
     double loglike(const Vector &probs) const override;
@@ -96,14 +97,13 @@ namespace BOOM {
     double pdf(const Data *dp, bool logscale) const override;
     double pdf(const Ptr<Data> &dp, bool logscale) const;
     void add_mixture_data(const Ptr<Data> &, double prob);
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override { return suf()->n().sum(); }
 
     uint simdat(RNG &rng = GlobalRng::rng) const;
 
    private:
     mutable Vector logp_;
     mutable bool logp_current_;
-    void observe_logp();
     void set_observer();
     void check_logp() const;
   };

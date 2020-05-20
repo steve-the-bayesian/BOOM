@@ -95,6 +95,14 @@ HIERARCHICAL_HDRS = glob([
     "Models/Hierarchical/PosteriorSamplers/*.hpp",
 ])
 
+IMPUTE_SRCS = glob([
+    "Models/Impute/*.cpp"
+])
+
+IMPUTE_HDRS = glob([
+    "Models/Impute/*.hpp"
+])
+
 IRT_SRCS = glob([
     "Models/IRT/*.cpp",
     "Models/IRT/PosteriorSamplers/*.cpp",
@@ -173,6 +181,7 @@ BOOM_SRCS = BMATH_SRCS + \
             GLM_SRCS + \
             HMM_SRCS + \
             HIERARCHICAL_SRCS + \
+            IMPUTE_SRCS + \
             IRT_SRCS + \
             MIXTURE_SRCS + \
             POINT_PROCESS_SRCS + \
@@ -195,6 +204,7 @@ BOOM_HDRS = TOP_HDRS + \
             GLM_HDRS + \
             HMM_HDRS + \
             HIERARCHICAL_HDRS + \
+            IMPUTE_HDRS + \
             IRT_HDRS + \
             MIXTURE_HDRS + \
             POINT_PROCESS_HDRS + \
@@ -208,7 +218,7 @@ cc_library(
     hdrs = BOOM_HDRS,
     copts = [
         "-Wall",
-        "-std=c++11",
+        "-std=c++17",
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
         #        "-g",
@@ -231,7 +241,7 @@ cc_library(
     srcs = glob(["test_utils/*.cpp"]),
     hdrs = glob(["test_utils/*.hpp"]),
     copts = [
-        "-std=c++11",
+        "-std=c++17",
         "-Wno-sign-compare",
     ],
     visibility = ["//visibility:public"],

@@ -340,4 +340,8 @@ namespace BOOM {
   double choose(double n, double p) { return Rmath::choose(n, p); }
   double lchoose(double n, double p) { return Rmath::lchoose(n, p); }
 
+  double bessel_k(double a, double b, double c) {
+    return Rmath::bessel_k(a, b, c);
+  }
+
 }  // namespace BOOM

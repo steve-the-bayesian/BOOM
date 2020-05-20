@@ -61,14 +61,6 @@ namespace BOOM {
     template <class FwdIt>
     void set_data_raw(FwdIt Beg, FwdIt End);
 
-    template <class FwdIt>
-    void add_data_seq(FwdIt Beg, FwdIt End);
-
-    template <class Cont>
-    void add_data_seq(const Cont &c) {
-      this->add_data_seq(c.begin(), c.end());
-    }
-
     virtual void combine_data(const Model &mod, bool just_suf = true);
 
     void signal() {
@@ -129,15 +121,6 @@ namespace BOOM {
   template <class FwdIt>
   void IID_DataPolicy<D>::set_data(FwdIt Beg, FwdIt End) {
     clear_data();
-    while (Beg != End) {
-      add_data(*Beg);
-      ++Beg;
-    }
-  }
-
-  template <class D>
-  template <class FwdIt>
-  void IID_DataPolicy<D>::add_data_seq(FwdIt Beg, FwdIt End) {
     while (Beg != End) {
       add_data(*Beg);
       ++Beg;

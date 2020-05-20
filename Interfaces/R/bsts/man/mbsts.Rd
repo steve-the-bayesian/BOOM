@@ -20,7 +20,7 @@
 \Rdversion{1.1}
 \description{
   Fit a multivariate Bayesian structural time series model, also known
-  as a "dynamic factor model."  
+  as a "dynamic factor model."
 
   ** NOTE ** This code is experimental.  Please feel free to experiment
   with it and report any bugs to the maintainer.  Expect it to improve
@@ -41,7 +41,7 @@ mbsts(formula,
       ping = niter / 10,
       data.format = c("long", "wide"),
       seed = NULL,
-      ...) 
+      ...)
 }
 
 \arguments{
@@ -100,7 +100,7 @@ mbsts(formula,
   \item{series.id}{A factor (or object coercible to factor) indicating
     the series to which each observation in "long" format belongs.  This
     argument is ignored for data in "wide" format.  }
-  
+
   \item{prior}{A list of \code{\link{SpikeSlabPrior}} objects, one for
     each time series.  Or this argument can be NULL in which case a
     default prior will be used.  Note that the prior is on both the
@@ -108,7 +108,7 @@ mbsts(formula,
 
   \item{opts}{A list containing model options.  This is currently only
     used for debugging, so leave this as \code{NULL}.}
-  
+
   \item{contrasts}{An optional list containing the names of contrast
     functions to use when converting factors numeric variables in a
     regression formula.  This argument works exactly as it does in
@@ -140,7 +140,7 @@ mbsts(formula,
     in time) format.  For \code{"long"} see \code{timestamps} and
     \code{series.id}.
   }
-  
+
   \item{seed}{An integer to use as the random seed for the underlying
     C++ code.  If \code{NULL} then the seed will be set using the
     clock.}
@@ -185,10 +185,10 @@ mbsts(formula,
   Durbin and Koopman (2001), "Time series analysis by state space
   methods", Oxford University Press.
 
-  Goerge and McCulloch (1997)
+  George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
-  
+
 }
 
 \author{

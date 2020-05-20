@@ -79,6 +79,18 @@ namespace BOOM {
     // excluded, then those elements will be set to zero.
     void set_Beta(const Vector &beta);
 
+    // Set the a subset of beta to the requested value.  If any elements of the
+    // subset are excluded, those values will be set to zero, regardless of
+    // their value in beta_subset.
+    //
+    // Args:
+    //   beta_subset:  The vector of values to be assigned.
+    //   start: The position in the dense vector "Beta" where the assignment
+    //     should be made.
+    //   signal:  Should observers be signalled about the assignment.
+    void set_subset(const Vector &beta_subset, int start,
+                    bool signal = true) override;
+
     double Beta(uint dense_index) const;
 
     Vector vectorize(bool minimal = true) const override;
