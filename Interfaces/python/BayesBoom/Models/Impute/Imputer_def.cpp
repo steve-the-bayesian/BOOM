@@ -142,6 +142,15 @@ namespace BayesBoom {
              &MvRegCopulaDataImputer::set_atom_probs)
         .def("set_atom_error_probs",
              &MvRegCopulaDataImputer::set_atom_error_probs)
+        .def_property_readonly(
+            "empirical_distributions",
+            &MvRegCopulaDataImputer::empirical_distributions,
+            "The approximate numerical distribution of each numeric variable")
+        .def("set_empirical_distributions",
+             &MvRegCopulaDataImputer::set_empirical_distributions,
+             "Restore the empirical distributions from serialized state.")
         ;
-  }
+
+  }  // module boom
+
 }  // namespace BayesBoom

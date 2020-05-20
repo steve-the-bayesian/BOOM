@@ -364,6 +364,19 @@ namespace BOOM {
 
     Matrix impute_data_set(const std::vector<Ptr<MvRegData>> &data);
 
+    // Code needed to save/restore models.
+    const std::vector<IQagent> empirical_distributions() const {
+      return empirical_distributions_;
+    }
+    void set_empirical_distributions(
+        const std::vector<IQagent> &empirical_distributions) {
+      empirical_distributions_ = empirical_distributions;
+    }
+
+    std::vector<IqAgentState> empirical_distribution_state() const;
+    void restore_empirical_distributions(
+        const std::vector<IqAgentState> &state);
+
    private:
     // Describes the component to which each observation belongs.  This model
     // controls the sharing of information across variables.
@@ -395,7 +408,9 @@ namespace BOOM {
 
     RNG rng_;
 
-    SweptVarianceMatrix swept_sigma_;
+    mutable SweptVarianceMatrix swept_sigma_;
+    mutable bool swept_sigma_current_;
+    void ensure_swept_sigma_current() const;
 
     mutable Vector wsp_;
   };

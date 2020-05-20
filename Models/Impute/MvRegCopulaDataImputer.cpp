@@ -265,12 +265,15 @@ namespace BOOM {
       : cluster_mixing_distribution_(new MultinomialModel(num_clusters)),
         complete_data_model_(new MultivariateRegressionModel(xdim, atoms.size())),
         rng_(seed_rng(seeding_rng)),
-        swept_sigma_(SpdMatrix(0))
+        swept_sigma_(SpdMatrix(0)),
+        swept_sigma_current_(false)
   {
     for (int s = 0; s < num_clusters; ++s) {
       NEW(ConditionallyIndependentCategoryModel, component)(atoms);
       cluster_mixture_components_.push_back(component);
     }
+    complete_data_model_->Sigma_prm()->add_observer(
+        [this]() {this->swept_sigma_current_ = false;} );
   }
 
   void MvRegCopulaDataImputer::initialize_empirical_distributions(int ydim) {
@@ -374,6 +377,7 @@ namespace BOOM {
   void MvRegCopulaDataImputer::impute_row(Ptr<Imputer::CompleteData> &data,
                                           RNG &rng,
                                           bool update_complete_data_suf) {
+    ensure_swept_sigma_current();
     int component = impute_cluster(data, rng, update_complete_data_suf);
 
     // Fill y_true and y_numeric with values, which might include missing
@@ -489,6 +493,24 @@ namespace BOOM {
     return ans;
   }
 
+
+  std::vector<IqAgentState>
+  MvRegCopulaDataImputer::empirical_distribution_state() const {
+    std::vector<IqAgentState> ans;
+    for (int i = 0; i < empirical_distributions_.size(); ++i) {
+      ans.push_back(empirical_distributions_[i].save_state());
+    }
+    return ans;
+  }
+
+  void MvRegCopulaDataImputer::restore_empirical_distributions(
+      const std::vector<IqAgentState> &state) {
+    empirical_distributions_.clear();
+    for (int i = 0; i < state.size(); ++i) {
+      empirical_distributions_.push_back(IQagent(state[i]));
+    }
+  }
+
   void MvRegCopulaDataImputer::set_default_regression_prior() {
     int xdim = complete_data_model_->xdim();
     int ydim = complete_data_model_->ydim();
@@ -507,7 +529,6 @@ namespace BOOM {
       empirical_distributions_[i].update_cdf();
     }
     clear_client_data();
-    swept_sigma_ = SweptVarianceMatrix(complete_data_model_->Sigma());
     for (int i = 0; i < complete_data_.size(); ++i) {
       impute_row(complete_data_[i], rng_, true);
     }
@@ -568,6 +589,13 @@ namespace BOOM {
         cluster_mixing_distribution_.get(),
         Vector(nclusters(), 1.0 / nclusters()));
     cluster_mixing_distribution_->set_method(sampler);
+  }
+
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::ensure_swept_sigma_current() const {
+    if (swept_sigma_current_) return;
+    swept_sigma_ = SweptVarianceMatrix(complete_data_model_->Sigma());
+    swept_sigma_current_ = true;
   }
 
 }  // namespace BOOMx
