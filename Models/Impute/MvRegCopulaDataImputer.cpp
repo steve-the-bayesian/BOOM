@@ -680,7 +680,6 @@ namespace BOOM {
   }
 
   void MvRegCopulaDataImputer::impute_all_rows() {
-    std::cout << "imputing data for " << complete_data_.size() << "rows.";
     clear_client_data();
     for (size_t i = 0; i < complete_data_.size(); ++i) {
       impute_row(complete_data_[i], rng_, true);
