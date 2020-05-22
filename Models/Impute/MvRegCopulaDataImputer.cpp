@@ -16,6 +16,8 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <future>
+
 #include "Models/Impute/MvRegCopulaDataImputer.hpp"
 #include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/MultivariateRegressionSampler.hpp"
@@ -64,19 +66,27 @@ namespace BOOM {
         observed_log_probability_table_(atoms.size() + 2),
         workspace_is_current_(false)
   {
-    marginal_of_true_data_->Pi_prm()->add_observer(
-        [this]() {
-          this->workspace_is_current_ = false;
-        });
 
     for (int i = 0; i <= atoms.size(); ++i) {
       NEW(MultinomialModel, conditional_model)(atoms.size() + 2);
-      conditional_model->Pi_prm()->add_observer(
-          [this]() {
-            this->workspace_is_current_ = false;
-          });
       conditional_observed_given_true_.push_back(conditional_model);
     }
+    set_observers();
+  }
+
+  ErrorCorrectionModel::ErrorCorrectionModel(const ErrorCorrectionModel &rhs)
+      : atoms_(rhs.atoms_),
+        marginal_of_true_data_(rhs.marginal_of_true_data_->clone()),
+        joint_distribution_(rhs.joint_distribution_),
+        observed_log_probability_table_(rhs.observed_log_probability_table_),
+        workspace_is_current_(false),
+        wsp_(rhs.wsp_)
+  {
+    for (int i = 0; i < rhs.conditional_observed_given_true_.size(); ++i) {
+      conditional_observed_given_true_.push_back(
+          rhs.conditional_observed_given_true_[i]->clone());
+    }
+    set_observers();
   }
 
   ErrorCorrectionModel *ErrorCorrectionModel::clone() const {
@@ -218,12 +228,46 @@ namespace BOOM {
     }
   }
 
+  void ErrorCorrectionModel::combine_sufficient_statistics(
+      const ErrorCorrectionModel &other) {
+    marginal_of_true_data_->suf()->combine(
+        other.marginal_of_true_data_->suf());
+    for (size_t m = 0; m < conditional_observed_given_true_.size(); ++m) {
+      conditional_observed_given_true_[m]->suf()->combine(
+          other.conditional_observed_given_true_[m]->suf());
+    }
+  }
+
+  void ErrorCorrectionModel::copy_parameters(
+      const ErrorCorrectionModel &other) {
+  }
+
+  void ErrorCorrectionModel::set_observers() {
+    marginal_of_true_data_->Pi_prm()->add_observer(
+        [this]() {
+          this->workspace_is_current_ = false;
+        });
+
+    for (int i = 0; i < conditional_observed_given_true_.size(); ++i) {
+      conditional_observed_given_true_[i]->Pi_prm()->add_observer(
+          [this]() {
+            this->workspace_is_current_ = false;
+          });
+    }
+  }
+
   //===========================================================================
   CICM::ConditionallyIndependentCategoryModel(const std::vector<Vector> &atoms)
   {
     for (int i = 0; i < atoms.size(); ++i) {
       NEW(ErrorCorrectionModel, model)(atoms[i]);
       observed_data_models_.push_back(model);
+    }
+  }
+
+  CICM::ConditionallyIndependentCategoryModel(const CICM &rhs) {
+    for (int i = 0; i < rhs.ydim(); ++i) {
+      observed_data_models_.push_back(rhs.observed_data_models_[i]->clone());
     }
   }
 
@@ -259,6 +303,18 @@ namespace BOOM {
     }
   }
 
+  void CICM::combine_sufficient_statistics(const CICM &other) {
+    for (int i = 0; i < ydim(); ++i) {
+      observed_data_models_[i]->combine_sufficient_statistics(other.model(i));
+    }
+  }
+
+  void CICM::copy_parameters(const CICM &other) {
+    for (int i = 0; i < ydim(); ++i) {
+      observed_data_models_[i]->copy_parameters(other.model(i));
+    }
+  }
+
   //===========================================================================
   MvRegCopulaDataImputer::MvRegCopulaDataImputer(
       int num_clusters, const std::vector<Vector> &atoms, int xdim, RNG &seeding_rng)
@@ -274,6 +330,20 @@ namespace BOOM {
     }
     complete_data_model_->Sigma_prm()->add_observer(
         [this]() {this->swept_sigma_current_ = false;} );
+  }
+
+  MvRegCopulaDataImputer::MvRegCopulaDataImputer(const MvRegCopulaDataImputer &rhs)
+      : cluster_mixing_distribution_(rhs.cluster_mixing_distribution_->clone()),
+        complete_data_model_(rhs.complete_data_model_->clone()),
+        empirical_distributions_(rhs.empirical_distributions_),
+        swept_sigma_(SpdMatrix(1)),
+        swept_sigma_current_(false)
+  {
+    rng_.seed(seed_rng(rhs.rng_));
+    for (int i = 0; i < rhs.cluster_mixture_components_.size(); ++i) {
+      cluster_mixture_components_.push_back(
+          rhs.cluster_mixture_components_[i]->clone());
+    }
   }
 
   void MvRegCopulaDataImputer::initialize_empirical_distributions(int ydim) {
@@ -525,6 +595,11 @@ namespace BOOM {
 
   //---------------------------------------------------------------------------
   void MvRegCopulaDataImputer::sample_posterior() {
+    if (!workers_.empty()) {
+      sample_posterior_multithreaded();
+      return;
+    }
+
     for (int i = 0; i < empirical_distributions_.size(); ++i) {
       empirical_distributions_[i].update_cdf();
     }
@@ -539,6 +614,109 @@ namespace BOOM {
     complete_data_model_->sample_posterior();
   }
 
+  //---------------------------------------------------------------------------
+  void MvRegCopulaDataImputer::sample_posterior_multithreaded() {
+    for (int i = 0; i < empirical_distributions_.size(); ++i) {
+      empirical_distributions_[i].update_cdf();
+    }
+    broadcast_parameters();
+
+    // Do the imputation
+    std::vector<std::future<void>> futures;
+    for (int i = 0; i < workers_.size(); ++i) {
+      MvRegCopulaDataImputer *worker = workers_[i].get();
+      futures.emplace_back(thread_pool_.submit(
+          [worker]() {
+            worker->impute_all_rows();
+          }));
+    }
+    for (int i = 0; i < workers_.size(); ++i) {
+      futures[i].get();
+    }
+
+    reduce_sufficient_statistics();
+
+    cluster_mixing_distribution_->sample_posterior();
+    for (int s = 0; s < cluster_mixture_components_.size(); ++s) {
+      cluster_mixture_components_[s]->sample_posterior();
+    }
+    complete_data_model_->sample_posterior();
+  }
+
+  void MvRegCopulaDataImputer::setup_worker_pool(int nworkers) {
+    shut_down_worker_pool();
+    if (nworkers <= 0) {
+      return;
+    } else {
+      for (int i = 0; i < nworkers; ++i) {
+        // Check the copy constructor.  Workers don't sample their own
+        // parameters, so no need to set priors on workers.
+        workers_.push_back(clone());
+      }
+      distribute_data_to_workers();
+      thread_pool_.set_number_of_threads(nworkers);
+    }
+  }
+
+  void MvRegCopulaDataImputer::shut_down_worker_pool() {
+    thread_pool_.set_number_of_threads(0);
+    workers_.clear();
+  }
+
+  void MvRegCopulaDataImputer::distribute_data_to_workers() {
+    size_t data_per_worker = complete_data_.size() / workers_.size();
+    auto b = complete_data_.begin();
+    auto e = complete_data_.end();
+    for (size_t i = 0; i < workers_.size(); ++i) {
+      workers_[i]->complete_data_.clear();
+      if (i + 1 == workers_.size()) {
+        std::copy(b, e, std::back_inserter(workers_[i]->complete_data_));
+      } else {
+        std::copy(b, b + data_per_worker,
+                  std::back_inserter(workers_[i]->complete_data_));
+        b += data_per_worker;
+      }
+    }
+  }
+
+  void MvRegCopulaDataImputer::impute_all_rows() {
+    std::cout << "imputing data for " << complete_data_.size() << "rows.";
+    clear_client_data();
+    for (size_t i = 0; i < complete_data_.size(); ++i) {
+      impute_row(complete_data_[i], rng_, true);
+    }
+  }
+
+  void MvRegCopulaDataImputer::reduce_sufficient_statistics() {
+    clear_client_data();
+    for (size_t i = 0; i < workers_.size(); ++i) {
+      complete_data_model_->suf()->combine(
+          workers_[i]->complete_data_model_->suf());
+      cluster_mixing_distribution_->suf()->combine(
+          workers_[i]->cluster_mixing_distribution_->suf());
+      for (int s = 0; s < nclusters(); ++s) {
+        cluster_mixture_components_[s]->combine_sufficient_statistics(
+            *(workers_[i]->cluster_mixture_component(s)));
+      }
+    }
+  }
+
+  void MvRegCopulaDataImputer::broadcast_parameters() {
+    for (size_t i = 0; i < workers_.size(); ++i) {
+      workers_[i]->complete_data_model_->set_Beta(
+          complete_data_model_->Beta());
+      workers_[i]->complete_data_model_->set_Sigma(
+          complete_data_model_->Sigma());
+
+      workers_[i]->cluster_mixing_distribution_->set_pi(
+          cluster_mixing_distribution_->pi());
+
+      for (int s = 0; s < nclusters(); ++s) {
+        workers_[i]->cluster_mixture_components_[s]->copy_parameters(
+            *cluster_mixture_components_[s]);
+      }
+    }
+  }
   //---------------------------------------------------------------------------
   const Vector &MvRegCopulaDataImputer::atom_probs(
       int cluster, int variable_index) const {

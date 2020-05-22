@@ -33,6 +33,8 @@
 #include "stats/IQagent.hpp"
 #include "distributions/rng.hpp"
 
+#include "cpputil/ThreadTools.hpp"
+
 namespace BOOM {
 
   namespace Imputer {
@@ -95,7 +97,7 @@ namespace BOOM {
   {
    public:
     explicit ErrorCorrectionModel(const Vector &atoms);
-
+    ErrorCorrectionModel(const ErrorCorrectionModel &rhs);
     ErrorCorrectionModel * clone() const override;
 
     // The log probability of the observed value.
@@ -172,6 +174,9 @@ namespace BOOM {
     // atom or an 'observed' atom.
     int category_map(double y) const;
 
+    void combine_sufficient_statistics(const ErrorCorrectionModel &other);
+    void copy_parameters(const ErrorCorrectionModel &other);
+
    private:
     // A collection of point mass values from the observed data.  Some of these
     // are likely to represent errors or missing data codes.  Think 0 or 99999
@@ -195,6 +200,9 @@ namespace BOOM {
     mutable bool workspace_is_current_;
     Vector wsp_;
     void ensure_workspace_current() const;
+
+    // To be called during construction.
+    void set_observers();
   };
 
   //===========================================================================
@@ -208,6 +216,10 @@ namespace BOOM {
    public:
     explicit ConditionallyIndependentCategoryModel(
         const std::vector<Vector> &atoms);
+
+    ConditionallyIndependentCategoryModel(
+        const ConditionallyIndependentCategoryModel &rhs);
+
 
     ConditionallyIndependentCategoryModel * clone() const override {
       return new ConditionallyIndependentCategoryModel(*this);
@@ -250,6 +262,10 @@ namespace BOOM {
       }
     }
 
+    void combine_sufficient_statistics(
+        const ConditionallyIndependentCategoryModel &other);
+    void copy_parameters(const ConditionallyIndependentCategoryModel &other);
+
    private:
     // A model for the observed data (just the categorical parts of the numeric
     // parts).
@@ -283,6 +299,10 @@ namespace BOOM {
                            const std::vector<Vector> &atoms,
                            int xdim,
                            RNG &seeding_rng = GlobalRng::rng);
+
+    // The copy constructor is especially important for this model because it is
+    // used to generate workers for multi-threaded runs.
+    MvRegCopulaDataImputer(const MvRegCopulaDataImputer &rhs);
 
     MvRegCopulaDataImputer *clone() const override;
 
@@ -339,6 +359,7 @@ namespace BOOM {
 
     double logpri() const override;
     void sample_posterior() override;
+    void sample_posterior_multithreaded();
 
     int nclusters() const {
       return cluster_mixing_distribution_->dim();
@@ -377,6 +398,14 @@ namespace BOOM {
     void restore_empirical_distributions(
         const std::vector<IqAgentState> &state);
 
+    void setup_worker_pool(int nworkers);
+    void shut_down_worker_pool();
+
+    const ConditionallyIndependentCategoryModel &
+    cluster_mixture_component(int s) const {
+      return *cluster_mixture_components_[s];
+    }
+
    private:
     // Describes the component to which each observation belongs.  This model
     // controls the sharing of information across variables.
@@ -393,26 +422,32 @@ namespace BOOM {
     // unobserved continuous part is to be imputed and used to fit the model.
     Ptr<MultivariateRegressionModel> complete_data_model_;
 
-    // Transformations map y from the observed scale to the hopefully normal
-    // scale.  The archetypal transform is log.
-    std::vector<std::function<double(double)>> transformations_;
-
-    // Inverse transformations map the normal scale back to the observed scale.
-    // The archetypal inverse transformation is exp.
-    std::vector<std::function<double(double)>> inverse_transformations_;
-
     std::vector<IQagent> empirical_distributions_;
     void initialize_empirical_distributions(int ydim);
 
     std::vector<Ptr<Imputer::CompleteData>> complete_data_;
 
-    RNG rng_;
+    mutable RNG rng_;
 
+    // ======================================================================
+    // Mutable workspace
+    // ======================================================================
     mutable SweptVarianceMatrix swept_sigma_;
     mutable bool swept_sigma_current_;
     void ensure_swept_sigma_current() const;
-
     mutable Vector wsp_;
+
+    // ======================================================================
+    // Threading section
+    // ======================================================================
+    std::vector<Ptr<MvRegCopulaDataImputer>> workers_;
+    ThreadWorkerPool thread_pool_;
+
+    // These methods are here to implemente multi-threading.
+    void distribute_data_to_workers();
+    void broadcast_parameters();
+    void reduce_sufficient_statistics();
+    void impute_all_rows();
   };
 
 }  // namespace BOOM

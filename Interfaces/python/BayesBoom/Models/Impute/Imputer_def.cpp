@@ -149,6 +149,10 @@ namespace BayesBoom {
         .def("set_empirical_distributions",
              &MvRegCopulaDataImputer::set_empirical_distributions,
              "Restore the empirical distributions from serialized state.")
+        .def("setup_worker_pool",
+             &MvRegCopulaDataImputer::setup_worker_pool,
+             py::arg("nworkers"),
+             "Set up a worker pool to train with 'nworkers' threads.")
         ;
 
   }  // module boom

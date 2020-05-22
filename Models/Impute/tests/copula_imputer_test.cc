@@ -125,7 +125,7 @@ namespace {
   }
 
   TEST_F(MvRegCopulaDataImputerTest, McmcTest) {
-    int sample_size = 1000;
+    int sample_size = 100;
     int xdim = 4;
     int ydim = 3;
     Matrix coefficients(xdim, ydim);
@@ -177,7 +177,8 @@ namespace {
         SpdMatrix(ydim, 1.0));
     reg->set_method(regression_sampler);
 
-    int niter = 10;
+    int niter = 100;
+    imputer.setup_worker_pool(16);
     for (int i = 0; i < niter; ++i) {
       imputer.sample_posterior();
     }
