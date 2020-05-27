@@ -368,6 +368,11 @@ namespace BOOM {
     }
     if (total == 0) {
       report_error("normalizing constant is zero in Vector::normalize_prob");
+    } else if (!std::isfinite(total)) {
+      std::ostringstream err;
+      err << "Infinite or NaN probabilities in call to 'normalize_prob': "
+          << *this;
+      report_error(err.str());
     }
     operator/=(total);
     return *this;

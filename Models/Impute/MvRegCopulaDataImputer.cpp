@@ -66,7 +66,6 @@ namespace BOOM {
         observed_log_probability_table_(atoms.size() + 2),
         workspace_is_current_(false)
   {
-
     for (int i = 0; i <= atoms.size(); ++i) {
       NEW(MultinomialModel, conditional_model)(atoms.size() + 2);
       conditional_observed_given_true_.push_back(conditional_model);
