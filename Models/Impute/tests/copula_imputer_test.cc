@@ -12,26 +12,6 @@ namespace {
   using std::endl;
   using std::cout;
 
-  class MvRegCopulaDataImputerTest : public ::testing::Test {
-   protected:
-    MvRegCopulaDataImputerTest() {
-      GlobalRng::rng.seed(8675309);
-    }
-  };
-
-  class ErrorCorrectionModelTest : public ::testing::Test {
-   protected:
-    ErrorCorrectionModelTest() {
-      GlobalRng::rng.seed(8675309);
-    }
-  };
-
-  struct SimulatedParameters {
-  };
-
-  SimulatedParameters SimulateParameters(
-                                         );
-
   struct SimulatedData {
     Matrix y_obs;
     Matrix y_true;
@@ -94,14 +74,111 @@ namespace {
     return ans;
   }
 
-  TEST_F(ErrorCorrectionModelTest, WorkspaceUpdates) {
+  //===========================================================================
+  class ErrorCorrectionModelTest : public ::testing::Test {
+   protected:
+    ErrorCorrectionModelTest() {
+      GlobalRng::rng.seed(8675309);
+      atoms_ = {0.0, 9999.0};
+      atom_probs_ = {.05, 0.0, .95};
+      atom_error_probs_ = Matrix(
+        {
+            Vector{.05, 0.0, .85, .10},
+            Vector{.05, 0.0, .85, .10},
+            Vector{.00, .45, .50, .50}
+        }, true);
+    }
+
+    Vector atoms_;
+    Vector atom_probs_;
+    Matrix atom_error_probs_;
+  };
+
     // Check that workspace updates when a model parameter changes.
+  TEST_F(ErrorCorrectionModelTest, WorkspaceUpdates) {
+    ErrorCorrectionModel model(atoms_);
+    model.set_atom_probs(atom_probs_);
+    model.set_atom_error_probs(atom_error_probs_);
+    double logp1 = model.logp(1.0);
+    model.set_atom_probs(Vector{.3, .2, .5});
+    double logp2 = model.logp(1.0);
+    EXPECT_GT(fabs(logp1- logp2), .1);
+  }
+
+  TEST_F(ErrorCorrectionModelTest, CopyParameters) {
+    ErrorCorrectionModel model(atoms_);
+    model.set_atom_probs(atom_probs_);
+    EXPECT_TRUE(VectorEquals(atom_probs_, model.atom_probs()));
+
+    model.set_atom_error_probs(atom_error_probs_);
+    EXPECT_TRUE(MatrixEquals(atom_error_probs_, model.atom_error_probs()));
+
+    ErrorCorrectionModel model2(atoms_);
+    model2.copy_parameters(model);
+    EXPECT_TRUE(VectorEquals(model2.atom_probs(), atom_probs_))
+        << "atom_probs:           " << atom_probs_
+        << "\n"
+        << "model2.atom_probs:    " << model2.atom_probs();
+
+    EXPECT_TRUE(MatrixEquals(model2.atom_error_probs(), atom_error_probs_))
+        << "atom_error_probs:\n"
+        << atom_error_probs_
+        << "model2.atom_error_probs:\n"
+        << model2.atom_error_probs();
+  }
+
+  TEST_F(ErrorCorrectionModelTest, CombineSuf) {
+    ErrorCorrectionModel model(atoms_);
+    model.set_atom_probs(atoms_);
+    model.set_atom_error_probs(atom_error_probs_);
+
+    ErrorCorrectionModel worker1(atoms_);
+    worker1.copy_parameters(model);
+
+    ErrorCorrectionModel worker2(atoms_);
+    worker2.copy_parameters(model);
+
+    worker1.impute_atom(0.0, GlobalRng::rng, true);
+    worker1.impute_atom(0.0, GlobalRng::rng, true);
+    worker1.impute_atom(0.0, GlobalRng::rng, true);
+    worker1.impute_atom(1.0, GlobalRng::rng, true);
+    worker1.impute_atom(atoms_.back(), GlobalRng::rng, true);
+
+    worker2.impute_atom(0.0, GlobalRng::rng, true);
+    worker2.impute_atom(42.0, GlobalRng::rng, true);
+    worker2.impute_atom(42.0, GlobalRng::rng, true);
+    worker2.impute_atom(42.0, GlobalRng::rng, true);
+    worker2.impute_atom(42.0, GlobalRng::rng, true);
+    worker2.impute_atom(8.0, GlobalRng::rng, true);
+    worker2.impute_atom(1.0, GlobalRng::rng, true);
+    worker2.impute_atom(atoms_.back(), GlobalRng::rng, true);
+
+    EXPECT_DOUBLE_EQ(worker2.atom_prob_model().suf()->n().sum(), 8.0);
+    double total =
+        worker2.atom_error_prob_model(0).suf()->n().sum()
+        + worker2.atom_error_prob_model(1).suf()->n().sum()
+        + worker2.atom_error_prob_model(2).suf()->n().sum();
+    EXPECT_DOUBLE_EQ(total, 8.0);
+
+    model.clear_data();
+    model.combine_sufficient_statistics(worker1);
+    model.combine_sufficient_statistics(worker2);
+
+    EXPECT_TRUE(VectorEquals(
+        model.atom_prob_model().suf()->n(),
+        worker1.atom_prob_model().suf()->n()
+        + worker2.atom_prob_model().suf()->n()));
+
+    for (int i = 0; i < atoms_.size() + 1; ++i) {
+      EXPECT_TRUE(VectorEquals(
+          model.atom_error_prob_model(i).suf()->n(),
+          worker1.atom_error_prob_model(i).suf()->n()
+          + worker2.atom_error_prob_model(i).suf()->n()));
+    }
   }
 
   TEST_F(ErrorCorrectionModelTest, ImputeAtomTest) {
-
     Vector atoms = {0.0, 99999.0};
-
     ErrorCorrectionModel model(atoms);
 
     EXPECT_TRUE(std::isnan(model.true_value(2, 0.0)));
@@ -112,6 +189,14 @@ namespace {
     EXPECT_TRUE(std::isnan(model.numeric_value(2, 0.0)));
     EXPECT_TRUE(std::isnan(model.numeric_value(2, 99999.0)));
   }
+
+  //===========================================================================
+  class MvRegCopulaDataImputerTest : public ::testing::Test {
+   protected:
+    MvRegCopulaDataImputerTest() {
+      GlobalRng::rng.seed(8675309);
+    }
+  };
 
   TEST_F(MvRegCopulaDataImputerTest, Construction) {
     std::vector<Vector> atoms;

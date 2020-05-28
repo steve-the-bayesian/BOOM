@@ -239,6 +239,9 @@ namespace BOOM {
 
   void ErrorCorrectionModel::copy_parameters(
       const ErrorCorrectionModel &other) {
+    set_atom_probs(other.atom_probs());
+    set_atom_error_probs(other.atom_error_probs());
+
   }
 
   void ErrorCorrectionModel::set_observers() {

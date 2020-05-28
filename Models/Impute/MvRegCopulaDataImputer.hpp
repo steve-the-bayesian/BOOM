@@ -177,6 +177,15 @@ namespace BOOM {
     void combine_sufficient_statistics(const ErrorCorrectionModel &other);
     void copy_parameters(const ErrorCorrectionModel &other);
 
+    // Methods intended for testing purposes only.
+    const MultinomialModel &atom_prob_model() const {
+      return *marginal_of_true_data_;
+    }
+
+    const MultinomialModel &atom_error_prob_model(int atom) const {
+      return *conditional_observed_given_true_[atom];
+    }
+
    private:
     // A collection of point mass values from the observed data.  Some of these
     // are likely to represent errors or missing data codes.  Think 0 or 99999
