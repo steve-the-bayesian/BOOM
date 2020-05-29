@@ -96,6 +96,10 @@ namespace BOOM {
         public NullPriorPolicy
   {
    public:
+    // Args:
+    //   atoms: A vector of numeric values expected to occur multiple times in
+    //     the observed data.  Some values that appear as atoms in the observed
+    //     data are actually errors.
     explicit ErrorCorrectionModel(const Vector &atoms);
     ErrorCorrectionModel(const ErrorCorrectionModel &rhs);
     ErrorCorrectionModel * clone() const override;
@@ -128,7 +132,6 @@ namespace BOOM {
 
     void sample_posterior() override;
     double logpri() const override;
-
     void clear_data() override;
 
     // Impute the atom responsible for the true value of the given observed
@@ -160,6 +163,10 @@ namespace BOOM {
     const Vector &atoms() const {return atoms_;}
     int number_of_atoms() const {return atoms_.size();}
 
+    // The marginal probability that the true value of an observation will be
+    // one of the atoms.  The atom_probs vector has one extra element (at the
+    // end) indicating the probability that the observation is from the smoothly
+    // varying component.
     const Vector &atom_probs() const {
       return marginal_of_true_data_->pi();
     }
@@ -167,21 +174,30 @@ namespace BOOM {
       marginal_of_true_data_->set_pi(probs);
     }
 
+    // The atom error probs are a matrix.  Rows correspond to entries in
+    // atom_probs.  Columns have number_of_atoms + 2 entries, corresponding to
+    // the smoothly varying numeric component, and "NA".
     Matrix atom_error_probs() const;
     void set_atom_error_probs(const Matrix &probs);
 
-    // Returns the atom to which y corresponds.  This can be either a 'true'
-    // atom or an 'observed' atom.
+    // Returns the atom to which y corresponds.  The return value is between 0
+    // and number_of_atoms + 1.  A value equal to number_of_atoms() indicates
+    // the "smoothly varying" component.  A value equal to number_of_atoms() + 1
+    // indicates NA.
     int category_map(double y) const;
 
+    // Combine the sufficient statistics from 'other' into those from this
+    // model.
     void combine_sufficient_statistics(const ErrorCorrectionModel &other);
+
+    // Replace the current set of model parameters with those from 'other'.
     void copy_parameters(const ErrorCorrectionModel &other);
 
+    //===========================================================================
     // Methods intended for testing purposes only.
     const MultinomialModel &atom_prob_model() const {
       return *marginal_of_true_data_;
     }
-
     const MultinomialModel &atom_error_prob_model(int atom) const {
       return *conditional_observed_given_true_[atom];
     }
@@ -368,7 +384,6 @@ namespace BOOM {
 
     double logpri() const override;
     void sample_posterior() override;
-    void sample_posterior_multithreaded();
 
     int nclusters() const {
       return cluster_mixing_distribution_->dim();
@@ -444,6 +459,11 @@ namespace BOOM {
     mutable SweptVarianceMatrix swept_sigma_;
     mutable bool swept_sigma_current_;
     void ensure_swept_sigma_current() const;
+
+    // Set an observer that will flip swept_sigma_current_ to false when the
+    // Sigma parameter changes.  This function is to be called during
+    // construction.
+    void set_observers();
     mutable Vector wsp_;
 
     // ======================================================================
@@ -453,7 +473,9 @@ namespace BOOM {
     ThreadWorkerPool thread_pool_;
 
     // These methods are here to implemente multi-threading.
+    void impute_latent_data_multithreaded();
     void distribute_data_to_workers();
+    void ensure_data_distribution();
     void broadcast_parameters();
     void reduce_sufficient_statistics();
     void impute_all_rows();

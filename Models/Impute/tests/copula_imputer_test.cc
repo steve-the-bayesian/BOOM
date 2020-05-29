@@ -195,60 +195,67 @@ namespace {
    protected:
     MvRegCopulaDataImputerTest() {
       GlobalRng::rng.seed(8675309);
+
+      sample_size_ = 100;
+      xdim_ = 4;
+      ydim_ = 3;
+      coefficients_ = Matrix(xdim_, ydim_);
+      coefficients_.randomize();
+
+      Sigma_ = SpdMatrix(ydim_);
+      Sigma_.randomize();
+
+      atoms_.push_back({0});
+      atoms_.push_back({0, 99999});
+      atoms_.push_back({8675309});
+
+      atom_probs_.push_back(Vector{.05, .95});
+      atom_probs_.push_back(Vector{.05, 0, .95});
+      atom_probs_.push_back(Vector{.01, .99});
+
+      observed_data_probs_.push_back(Matrix(
+          "0.95 0.00 0.05 | 0.25 0.5 0.25"));
+      observed_data_probs_.push_back(Matrix(
+          "0.80 0.00 0.10 0.05 | 0.25 0.50 0.20 0.05 | 0.25 0.25 0.25 0.25"));
+      observed_data_probs_.push_back(Matrix(
+          "0.95 0.00 0.05 | 0.25 0.5 0.25"));
+      sim_ = SimulateData(sample_size_, Sigma_, coefficients_, atoms_,
+                          atom_probs_, observed_data_probs_);
     }
+
+    int sample_size_;
+    int xdim_;
+    int ydim_;
+    Matrix coefficients_;
+    SpdMatrix Sigma_;
+    std::vector<Vector> atoms_;
+    std::vector<Vector> atom_probs_;
+    std::vector<Matrix> observed_data_probs_;
+    SimulatedData sim_;
   };
 
   TEST_F(MvRegCopulaDataImputerTest, Construction) {
-    std::vector<Vector> atoms;
-    atoms.push_back({0});
-    atoms.push_back({0, 99999});
-    atoms.push_back({8675309});
-
     int num_clusters = 4;
-    int xdim = 3;
-    MvRegCopulaDataImputer model(num_clusters, atoms, xdim);
+    MvRegCopulaDataImputer model(num_clusters, atoms_, xdim_);
+  }
+
+  TEST_F(MvRegCopulaDataImputerTest, ImputationTest) {
+    int num_clusters = 4;
+    MvRegCopulaDataImputer imputer(num_clusters, atoms_, xdim_);
+    for (int i = 0; i < sample_size_; ++i) {
+      NEW(MvRegData, data_point)(sim_.y_obs.row(i), sim_.predictors.row(i));
+      imputer.add_data(data_point);
+    }
+
+    imputer.setup_worker_pool(4);
+
   }
 
   TEST_F(MvRegCopulaDataImputerTest, McmcTest) {
-    int sample_size = 100;
-    int xdim = 4;
-    int ydim = 3;
-    Matrix coefficients(xdim, ydim);
-    coefficients.randomize();
-
-    SpdMatrix Sigma(ydim);
-    Sigma.randomize();
-
-    std::vector<Vector> atoms;
-    atoms.push_back({0});
-    atoms.push_back({0, 99999});
-    atoms.push_back({8675309});
-
-    std::vector<Vector> atom_probs;
-    atom_probs.push_back(Vector{.05, .95});
-    atom_probs.push_back(Vector{.05, 0, .95});
-    atom_probs.push_back(Vector{.01, .99});
-
-    std::vector<Matrix> observed_data_probs;
-    observed_data_probs.push_back(Matrix(
-        "0.95 0.00 0.05 | 0.25 0.5 0.25"));
-    observed_data_probs.push_back(Matrix(
-        "0.80 0.00 0.10 0.05 | 0.25 0.50 0.20 0.05 | 0.25 0.25 0.25 0.25"));
-    observed_data_probs.push_back(Matrix(
-        "0.95 0.00 0.05 | 0.25 0.5 0.25"));
-
-    SimulatedData sim = SimulateData(sample_size,
-                                     Sigma,
-                                     coefficients,
-                                     atoms,
-                                     atom_probs,
-                                     observed_data_probs);
-
     int num_clusters = 4;
-    MvRegCopulaDataImputer imputer(num_clusters, atoms, xdim);
-
-    for (int i = 0; i < sample_size; ++i) {
-      NEW(MvRegData, data_point)(sim.y_obs.row(i), sim.predictors.row(i));
+    MvRegCopulaDataImputer imputer(num_clusters, atoms_, xdim_);
+    for (int i = 0; i < sample_size_; ++i) {
+      NEW(MvRegData, data_point)(sim_.y_obs.row(i), sim_.predictors.row(i));
       imputer.add_data(data_point);
     }
 
@@ -256,14 +263,14 @@ namespace {
     Ptr<MultivariateRegressionModel> reg = imputer.regression();
     NEW(MultivariateRegressionSampler, regression_sampler)(
         reg.get(),
-        Matrix(xdim, ydim, 0.0),
+        Matrix(xdim_, ydim_, 0.0),
         1.0,
-        ydim + 1,
-        SpdMatrix(ydim, 1.0));
+        ydim_ + 1,
+        SpdMatrix(ydim_, 1.0));
     reg->set_method(regression_sampler);
 
     int niter = 100;
-    imputer.setup_worker_pool(16);
+    imputer.setup_worker_pool(4);
     for (int i = 0; i < niter; ++i) {
       imputer.sample_posterior();
     }
