@@ -41,6 +41,10 @@ namespace BOOM {
     quantiles_.resize(probs_.size());
   }
   //-----------------------------------------------------------------------
+  IQagent::IQagent(const IqAgentState &state) {
+    restore_from_state(state);
+  }
+  //-----------------------------------------------------------------------
   void IQagent::set_default_probs() {
     probs_.clear();
     //    for(double x = .01; x<=.99; x+=.005) probs_.push_back(x);
@@ -196,4 +200,29 @@ namespace BOOM {
     nobs_ += sorted_data.size();
     data_buffer_.clear();
   }
+
+  IqAgentState IQagent::save_state() const {
+    IqAgentState ans;
+    ans.max_buffer_size = max_buffer_size_;
+    ans.nobs = nobs_;
+    ans.data_buffer = data_buffer_;
+    ans.probs = probs_;
+    ans.quantiles = quantiles_;
+    ans.ecdf_sorted_data = ecdf_.sorted_data();
+    ans.fplus = Fplus_;
+    ans.fminus = Fminus_;
+    return ans;
+  };
+
+  void IQagent::restore_from_state(const IqAgentState &state) {
+    max_buffer_size_ = state.max_buffer_size;
+    nobs_ = state.nobs;
+    data_buffer_ = std::move(state.data_buffer);
+    probs_ = std::move(state.probs);
+    quantiles_ = std::move(state.quantiles);
+    ecdf_.restore(state.ecdf_sorted_data);
+    Fplus_ = state.fplus;
+    Fminus_ = state.fminus;
+  }
+
 }  // namespace BOOM

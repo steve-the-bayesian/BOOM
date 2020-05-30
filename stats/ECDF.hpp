@@ -71,6 +71,8 @@ namespace BOOM {
 
     const Vector &sorted_data() const { return sorted_data_; }
 
+    void restore(const Vector &sorted_data) {sorted_data_ = sorted_data;}
+
    private:
     Vector sorted_data_;
   };

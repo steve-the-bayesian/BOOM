@@ -101,4 +101,24 @@ namespace {
     EXPECT_TRUE(status.ok) << status;
   }
 
+  // Check that things work with a multinomial model of dimension 1.
+  TEST_F(MultinomialTest, SingletonTest) {
+    MultinomialModel model(1);
+    EXPECT_TRUE(VectorEquals(model.pi(), Vector(1, 1.0)));
+    model.suf()->update_raw(0);
+    model.suf()->update_raw(0);
+    model.suf()->update_raw(0);
+    EXPECT_EQ(3, model.number_of_observations());
+
+    NEW(DirichletModel, prior)(Vector(1, 1.0));
+    NEW(MultinomialDirichletSampler, sampler)(&model, prior);
+    model.set_method(sampler);
+
+    for (int i = 0; i < 10; ++i) {
+      model.sample_posterior();
+      EXPECT_DOUBLE_EQ(1.0, model.pi()[0]);
+      EXPECT_EQ(1, model.pi().size());
+    }
+  }
+
 }  // namespace

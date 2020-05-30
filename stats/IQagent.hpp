@@ -29,14 +29,30 @@
 #include "uint.hpp"
 
 namespace BOOM {
+
+  struct IqAgentState {
+    uint max_buffer_size;
+    uint nobs;
+    Vector data_buffer;
+    Vector probs;
+    Vector quantiles;
+    Vector ecdf_sorted_data;
+    Vector fplus;
+    Vector fminus;
+  };
+
   class IQagent {
    public:
     explicit IQagent(uint BufSize = 20);
     explicit IQagent(const Vector& probs, uint BufSize = 20);
+    explicit IQagent(const IqAgentState &state);
     void add(double x);
     double quantile(double prob) const;
     double cdf(double x) const;
     void update_cdf();
+
+    IqAgentState save_state() const;
+    void restore_from_state(const IqAgentState &state);
 
    private:
     void set_default_probs();

@@ -51,6 +51,14 @@ namespace BOOM {
     //   3 4
     explicit Matrix(const std::string &s, const std::string &row_delim = "|");
 
+    // Build a matrix by stacking rows or columns.
+    // Args:
+    //   rows_or_cols: The rows or columns to be joined.  All elements must be
+    //     the same size.
+    //   rows: If true, treat the first argument as a collection of rows.  If
+    //     false treat it as a collection of columns.
+    explicit Matrix(const std::vector<Vector> &rows_or_cols, bool rows=true);
+
     template <class FwdIt>
     Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc);
 

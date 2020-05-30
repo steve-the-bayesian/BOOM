@@ -4,7 +4,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/numpy.h>
 #include <memory>
-
+#include <cpputil/report_error.hpp>
 #include "LinAlg/Cholesky.hpp"
 #include "LinAlg/EigenMap.hpp"
 #include "LinAlg/Matrix.hpp"
@@ -12,8 +12,6 @@
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
-
-
 
 namespace py = pybind11;
 
@@ -44,6 +42,17 @@ namespace BayesBoom {
         .def("__getitem__", [](const Vector &v, int i) {return v[i];}, py::is_operator())
         .def("__setitem__", [](Vector &v, int i, double value) {return v[i] = value;},
              py::is_operator())
+        .def(py::pickle(
+            [](const Vector &v) {
+              return py::make_tuple(std::vector<double>(v));
+            },
+            [](const py::tuple &tup) {
+              if (tup.size() != 1) {
+                report_error("Invalid state for unpickling a BOOM::Vector");
+              }
+              Vector v(tup[0].cast<std::vector<double>>());
+              return v;
+            }))
         .def(py::self + py::self)
         .def(py::self - py::self)
         .def(py::self * py::self)
@@ -145,6 +154,19 @@ namespace BayesBoom {
         .def("to_numpy",
              [](const Matrix &m) {return Eigen::MatrixXd(EigenMap(m));},
              "Convert the matrix to a numpy array." )
+        .def(py::pickle(
+            [](const Matrix &mat) {
+              int nrow = mat.nrow();
+              int ncol = mat.ncol();
+              return py::make_tuple(
+                  nrow, ncol, std::vector<double>(vec(mat)));
+            },
+            [](const py::tuple &tup) {
+              int nrow = tup[0].cast<int>();
+              int ncol = tup[1].cast<int>();
+              std::vector<double> data = tup[2].cast<std::vector<double>>();
+              return Matrix(nrow, ncol, data.data());
+            }))
         .def("to_numpy", [](const Vector &v) {return Eigen::VectorXd(EigenMap(v));})
         .def(py::self + py::self)
         .def(py::self - py::self)
@@ -188,6 +210,16 @@ namespace BayesBoom {
                       }),
             "Create a symmetric positive definite matrix from a regular "
             "Matrix object")
+        .def(py::pickle(
+            [](const SpdMatrix &mat) {
+              return py::make_tuple(static_cast<int>(mat.nrow()),
+                                    std::vector<double>(vec(mat)));
+            },
+            [](const py::tuple &tup) {
+              int dim = tup[0].cast<int>();
+              std::vector<double> data = tup[1].cast<std::vector<double>>();
+              return SpdMatrix(dim, data.data());
+            }))
         .def("inv",
              &Matrix::inv,
              "Return the inverse of the matrix.  The matrix itself is unchanged.")

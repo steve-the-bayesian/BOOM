@@ -42,6 +42,26 @@ namespace {
     EXPECT_DOUBLE_EQ(from_string(1, 1), 4.0);
   }
 
+  TEST_F(MatrixTest, FromRowsOrCols) {
+    std::vector<Vector> vectors = {
+      Vector{1.0, 2.0},
+      Vector{3.0, 4.0},
+      Vector{5.0, 6.0}
+    };
+
+    Matrix m1(vectors, true);
+    EXPECT_EQ(m1.nrow(), 3);
+    EXPECT_EQ(m1.ncol(), 2);
+    EXPECT_DOUBLE_EQ(m1(0, 1), 2.0);
+    EXPECT_DOUBLE_EQ(m1(1, 0), 3.0);
+
+    Matrix m2(vectors, false);
+    EXPECT_EQ(m2.nrow(), 2);
+    EXPECT_EQ(m2.ncol(), 3);
+    EXPECT_DOUBLE_EQ(m2(0, 1), 3.0);
+    EXPECT_DOUBLE_EQ(m2(1, 0), 2.0);
+  }
+
   TEST_F(MatrixTest, Multiplication) {
     Matrix M(3, 4);
     M.randomize();

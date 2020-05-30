@@ -114,6 +114,31 @@ namespace BOOM {
     for (uint i = 0; i < nr_; ++i) set_row(i, v[i]);
   }
 
+  Matrix::Matrix(const std::vector<Vector> &rows_or_cols, bool rows) {
+    nr_ = nc_ = 0;
+    int dim1 = rows_or_cols.size();
+    if (dim1 > 0) {
+      int dim2 = rows_or_cols[0].size();
+      if (dim2 > 0) {
+        V.resize(dim1 * rows_or_cols[0].size());
+        if (rows) {
+          nr_ = dim1;
+          nc_ = dim2;
+        } else {
+          nr_ = dim2;
+          nc_ = dim1;
+        }
+      }
+    }
+    for (size_t i = 0; i < rows_or_cols.size(); ++i) {
+      if (rows) {
+        set_row(i, rows_or_cols[i]);
+      } else {
+        set_col(i, rows_or_cols[i]);
+      }
+    }
+  }
+
   Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
 
   Matrix::Matrix(const ConstSubMatrix &rhs) { operator=(rhs); }
@@ -348,6 +373,7 @@ namespace BOOM {
   }
 
   void Matrix::set_col(uint j, const Vector &v) {
+    assert(v.size() == nr_);
     std::copy(v.begin(), v.end(), col_begin(j));
   }
 
