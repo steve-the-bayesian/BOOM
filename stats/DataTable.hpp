@@ -74,7 +74,8 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // TODO(steve):  We will need this to
+  // Timestamps are an important data type that are distinct from "numeric" or
+  // "categorical" data.
   class DateTimeVariable {
    public:
    private:
@@ -180,6 +181,59 @@ namespace BOOM {
 
   std::ostream &operator<<(std::ostream &out, const DataTable &dt);
 
+  //
+
+  class VariableSummary : private RefCounted {
+   public:
+    VariableSummary();
+    int number_missing() const {return number_missing_;}
+    int number_observed() const {return number_observed_;}
+    int number_of_distinct_values() const {return number_of_distinct_values_;}
+
+   protected:
+    void set_number_missing(int n) {number_missing_ = n;}
+    void set_number_observed(int n) {number_observed_ = n;]
+    void set_number_of_distinct_values(int n) {number_of_distinct_values_ = n;}
+
+   private:
+    int number_missing_;
+    int number_observed_;
+    int number_of_distinct_values_;
+
+    friend void intrusive_ptr_add_ref(VariableSummary *v) {v->up_count();}
+    friend void intrusive_ptr_release(VariableSummary *v) {
+      v->down_count();
+      if (v->ref_count() == 0) {
+        delete v;
+      }
+    }
+  };
+
+  class NumericVariableSummary : public VariableSummary {
+   public:
+    NumericVariableSummary(const Vector &x);
+    void summarize(const Vector &x);
+    double mean() const {return mean_;}
+    double sd() const {return sd_;}
+    double var() const {return sd_ * sd_;}
+
+   private:
+    double mean_;
+    double sd_;
+    Vector quantiles_;
+    Vector probs_;
+  };
+
+  class CategoricalVariableSummary : public VariableSummary {
+   public:
+    CategoricalVariableSummary(const CategoricalVariable &x);
+    void summarize(const CategoricalVariable &x);
+    void collapse(int max_levels);
+
+   private:
+    FreqDist frequency_distribution_;
+  }
+
   struct VariableSummary {
     DataTable::VariableType type;
     double min;
@@ -189,6 +243,8 @@ namespace BOOM {
     double standard_deviation;
     int number_of_distinct_values;
   };
+
+
 
   std::vector<VariableSummary> summarize(const DataTable &table);
 
