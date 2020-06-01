@@ -4,7 +4,7 @@ import numpy as np
 from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
                 unique_match)
 
-from .bayes import SdPrior
+from .bayes import SdPrior, NormalPrior, Ar1CoefficientPrior
 
 from .mcmc import suggest_burn
 

@@ -13,14 +13,6 @@ _current_graphics_device = None
 _largest_graphics_device_number = 0
 
 
-class AxesWrapper:
-    def __init__(self, ax):
-        self.ax = ax
-
-    def __del__(self):
-        plt.pause(.001)
-
-
 class GraphicsDevice(ABC):
     """
     Manages a plt.figure and a set of axes.
@@ -134,7 +126,7 @@ def dev_set(device_number: int):
     """
     global _active_graphics_devices
     global _current_graphics_device
-    device = _current_graphics_device.get(device_number, None)
+    device = _active_graphics_devices.get(device_number, None)
     if device is None:
         raise Exception(f"Graphics device {device_number} does note exist.")
     else:
@@ -154,8 +146,6 @@ class InteractiveGraphicsDevice(GraphicsDevice):
     def draw_current_axes(self):
         """
         """
-        # TODO(steve):  experiment with this.
-        # self.current_axes.draw()
         plt.pause(.001)
 
 

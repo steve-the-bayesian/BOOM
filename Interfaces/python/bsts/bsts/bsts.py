@@ -238,7 +238,19 @@ class Bsts:
             curves=state_contribution,
             timestamps=time,
             ax=ax,
+            ylim=ylim,
             **kwargs)
+
+    def plot_state_components(self, burn=None, time=None,
+                              same_scale=True, ylim=None, **kwargs):
+        """
+        """
+        device = R.get_current_graphics_device()
+        plot_shape = R.plot_grid_size(len(self._state_models))
+        device._create_subplots(plot_shape[0], plot_shape[1])
+        for state_model in self._state_models:
+            ax = device.next_axes
+            state_model.plot_state_contribution(ax)
 
     def predict(self, horizon, newdata):
         """
