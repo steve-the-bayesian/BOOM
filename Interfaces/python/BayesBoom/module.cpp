@@ -21,6 +21,7 @@ namespace BayesBoom {
   void MvnModel_def(py::module &);
   void GlmModel_def(py::module &);
   void Imputation_def(py::module &);
+  void TimeSeries_def(py::module &);
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
@@ -41,6 +42,7 @@ namespace BayesBoom {
     MvnModel_def(boom);
 
     GlmModel_def(boom);
+    TimeSeries_def(boom);
     StateSpaceModel_def(boom);
     StateModel_def(boom);
 

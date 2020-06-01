@@ -114,6 +114,11 @@ namespace BOOM {
 
     void simulate_initial_state(RNG &rng, VectorView state) const override;
 
+    double level_sd() const {return level_->sigma();}
+    double slope_sd() const {return slope_->sigma();}
+    double slope_mean() const {return slope_->mu();}
+    double slope_ar_coefficient() const {return slope_->phi();}
+
    private:
     void check_dim(const ConstVectorView &) const;
     std::vector<Ptr<UnivParams> > get_variances();

@@ -210,6 +210,7 @@ boom_extension_sources = (
     + glob("pybind11/Models/Impute/*.cpp")
     + glob("pybind11/Models/StateSpace/*.cpp")
     + glob("pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob("pybind11/Models/TimeSeries/*.cpp")
     + glob("pybind11/LinAlg/*.cpp")
     + glob("pybind11/stats/*.cpp")
     + glob("pybind11/distributions/*.cpp")
