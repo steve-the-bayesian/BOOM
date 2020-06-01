@@ -126,8 +126,15 @@ else
 fi
 
 ##----------------------------------------------------------------------
-## Build the package:
+## Build and install the package:
 
 cd python_package
 # CC="ccache clang++" CXX="ccache"
 pip3 --verbose install ./BayesBoom
+
+##----------------------------------------------------------------------
+## Install the pure python packages
+cd ..
+pip3 install Interfaces/python/R
+pip3 install Interfaces/python/bsts
+pip3 install Interfaces/python/spikeslab
