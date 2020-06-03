@@ -51,10 +51,11 @@ namespace BOOM {
     Vector relative_frequencies() const {
       Vector ans(counts_);
       double normalizing_constant = sum(ans);
-      if (normalizing_constant == 0.0)
+      if (normalizing_constant == 0.0) {
         return ans;
-      else
+      } else {
         return ans / normalizing_constant;
+      }
     }
 
     std::ostream &print(std::ostream &out) const;
@@ -74,7 +75,7 @@ namespace BOOM {
     FrequencyDistribution() {}
     void reset(const std::vector<int> &counts,
                const std::vector<std::string> &labels);
-    
+
    private:
     std::vector<std::string> labs_;
     std::vector<int> counts_;

@@ -1,4 +1,4 @@
-#ifndef BOOM_MIXED_DATA_IMPUTER_HPP_
+a#ifndef BOOM_MIXED_DATA_IMPUTER_HPP_
 #define BOOM_MIXED_DATA_IMPUTER_HPP_
 /*
   Copyright (C) 2005-2020 Steven L. Scott
@@ -41,7 +41,19 @@ namespace BOOM {
   //
   //
   class MixedDataImputer {
+   public:
+    void impute_data_table(const DataTable &data);
+    void impute_row(Ptr<> row)
 
+    void sample_posterior
+
+   private:
+
+    Ptr<MultinomialModel> mixing_distribution_;
+    std::vector<Ptr<MultinomialModel>> mixture_components_;
+
+
+    mutable RNG rng_;
   };
 
 

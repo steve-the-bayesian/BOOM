@@ -47,3 +47,10 @@ cc_test(
     copts = COPTS,
     deps = DEPS,
 )
+
+cc_test(
+    name = "summary_test",
+    srcs = ["summary_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)

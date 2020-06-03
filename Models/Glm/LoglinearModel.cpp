@@ -37,7 +37,7 @@ namespace BOOM {
       report_error("The requested row does not exist in the data table.");
     }
     for (int i = 0; i < table.nvars(); ++i) {
-      if (table.variable_type(i) == DataTable::VariableType::categorical) {
+      if (table.variable_type(i) == VariableType::categorical) {
         data_.push_back(table.get_nominal(row_number, i));
       }
     }
@@ -353,7 +353,7 @@ namespace BOOM {
   {
     std::vector<int> categorical_variables;
     for (int j = 0; j < table.nvars(); ++j) {
-      if (table.variable_type(j) == DataTable::VariableType::categorical) {
+      if (table.variable_type(j) == VariableType::categorical) {
         categorical_variables.push_back(j);
       }
     }

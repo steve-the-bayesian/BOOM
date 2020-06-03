@@ -47,6 +47,7 @@ namespace BOOM {
     explicit IQagent(const Vector& probs, uint BufSize = 20);
     explicit IQagent(const IqAgentState &state);
     void add(double x);
+    void add(const Vector &x);
     double quantile(double prob) const;
     double cdf(double x) const;
     void update_cdf();
