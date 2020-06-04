@@ -307,10 +307,12 @@ namespace BOOM {
     std::istream &read(std::istream &);
 
    protected:
-    Vector V;
-    uint nr_, nc_;
     inline uint INDX(uint i, uint j) const;
     inline bool inrange(uint i, uint j) const;
+
+   private:
+    Vector data_;
+    uint nr_, nc_;
   };
 
   //======================================================================
@@ -367,14 +369,14 @@ namespace BOOM {
   // ---- template constructor --
   template <class FwdIt>
   Matrix::Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc)
-      : V(Beg, End), nr_(nr), nc_(nc) {
-    assert(V.size() == nr * nc);
+      : data_(Beg, End), nr_(nr), nc_(nc) {
+    assert(data_.size() == nr * nc);
   }
 
   template <class FwdIt>
   FwdIt Matrix::assign(FwdIt b, FwdIt e) {
     assert(distance(b, e) == size());
-    V.assign(b, e);
+    data_.assign(b, e);
     return e;
   }
 
