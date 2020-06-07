@@ -329,6 +329,8 @@ namespace BOOM {
     // used to generate workers for multi-threaded runs.
     MvRegCopulaDataImputer(const MvRegCopulaDataImputer &rhs);
 
+    ~MvRegCopulaDataImputer();
+
     MvRegCopulaDataImputer *clone() const override;
 
     int xdim() const {return complete_data_model_->xdim();}
@@ -430,6 +432,8 @@ namespace BOOM {
       return *cluster_mixture_components_[s];
     }
 
+    int id() const {return worker_id_;}
+
    private:
     // Describes the component to which each observation belongs.  This model
     // controls the sharing of information across variables.
@@ -469,11 +473,16 @@ namespace BOOM {
     // ======================================================================
     // Threading section
     // ======================================================================
+
+    // If the object is a worker then the workers_ vector is empty and the
+    // thread pool has no threads.
     std::vector<Ptr<MvRegCopulaDataImputer>> workers_;
     ThreadWorkerPool thread_pool_;
+    int worker_id_;
 
     // These methods are here to implemente multi-threading.
     void impute_latent_data_multithreaded();
+
     void distribute_data_to_workers();
     void ensure_data_distribution();
     void broadcast_parameters();

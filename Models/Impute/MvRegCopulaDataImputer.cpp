@@ -324,7 +324,8 @@ namespace BOOM {
         complete_data_model_(new MultivariateRegressionModel(xdim, atoms.size())),
         rng_(seed_rng(seeding_rng)),
         swept_sigma_(SpdMatrix(0)),
-        swept_sigma_current_(false)
+        swept_sigma_current_(false),
+        worker_id_(-1)
   {
     for (int s = 0; s < num_clusters; ++s) {
       NEW(ConditionallyIndependentCategoryModel, component)(atoms);
@@ -346,6 +347,10 @@ namespace BOOM {
           rhs.cluster_mixture_components_[i]->clone());
     }
     set_observers();
+  }
+
+  MvRegCopulaDataImputer::~MvRegCopulaDataImputer() {
+    shut_down_worker_pool();
   }
 
   void MvRegCopulaDataImputer::initialize_empirical_distributions(int ydim) {
@@ -653,6 +658,7 @@ namespace BOOM {
         // Check the copy constructor.  Workers don't sample their own
         // parameters, so no need to set priors on workers.
         workers_.push_back(clone());
+        workers_.back()->worker_id_ = i;
       }
       thread_pool_.set_number_of_threads(nworkers);
     }
