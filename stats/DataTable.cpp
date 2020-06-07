@@ -135,11 +135,15 @@ namespace BOOM {
   inline void unknown_type() { report_error("unknown type"); }
   //-----------------------------------------------------------------
 
-  DataTable::DataTable() {}
+  DataTable::DataTable()
+      : data_organizer_(new MixedDataOrganizer)
+  {}
 
   DataTable::DataTable(const std::string &fname,
                        bool header,
-                       const std::string &sep) {
+                       const std::string &sep)
+      : data_organizer_(new MixedDataOrganizer)
+  {
     ifstream in(fname.c_str());
     if (!in) {
       std::string msg = "bad file name ";
