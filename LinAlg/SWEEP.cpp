@@ -55,7 +55,9 @@ namespace BOOM {
 
   SVM::SweptVarianceMatrix(const SpdMatrix &m, bool inverse)
       : S_(m), swept_(m.nrow(), inverse) {
-    if (inverse) S_ *= -1;
+    if (inverse) {
+      S_ *= -1;
+    }
   }
 
   void SVM::SWP(const Selector &to_sweep) {
