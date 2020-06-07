@@ -135,6 +135,7 @@ namespace BOOM {
         PriorPolicy(rhs),
         LoglikeModel(rhs),
         MixtureComponent(rhs),
+        logp_(rhs.logp_),
         logp_current_(false) {
     set_observer();
   }
