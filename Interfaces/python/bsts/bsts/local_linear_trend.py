@@ -57,6 +57,7 @@ class LocalLinearTrendStateModel(StateModel):
         self._set_initial_distribution(
             y, initial_level_prior, initial_slope_prior,
             sdy, initial_y)
+        self._state_contribution = None
 
     def __repr__(self):
         return (
@@ -76,25 +77,16 @@ class LocalLinearTrendStateModel(StateModel):
     def allocate_space(self, niter, time_dimension):
         self.sigma_level = np.empty(niter)
         self.sigma_slope = np.empty(niter)
-        self.state_contribution = np.empty((niter, time_dimension))
+        self._state_contribution = np.empty((niter, time_dimension))
 
     def record_state(self, i, state_matrix):
         self.sigma_level[i] = self._state_model.sigma_level
         self.sigma_slope[i] = self._state_model.sigma_slope
-        self.state_contribution[i, :] = state_matrix[self._state_index, :]
+        self._state_contribution[i, :] = state_matrix[self._state_index, :]
 
-    def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
-        if burn > 0:
-            curves = self.state_contribution[burn:, :]
-        else:
-            curves = self.state_contribution
-
-        R.plot_dynamic_distribution(
-            curves=curves,
-            timestamps=time,
-            ax=ax,
-            ylim=ylim,
-            **kwargs)
+    @property
+    def state_contribution(self):
+        return self._state_contribution
 
     def _set_posterior_sampler(
             self, y, level_sigma_prior, slope_sigma_prior, sdy):

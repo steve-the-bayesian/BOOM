@@ -241,16 +241,30 @@ class Bsts:
             ylim=ylim,
             **kwargs)
 
-    def plot_state_components(self, burn=None, time=None,
-                              same_scale=True, ylim=None, **kwargs):
+    def plot_state_components(self,
+                              burn=None,
+                              time=None,
+                              same_scale=True,
+                              ylim=None,
+                              **kwargs):
         """
+        TODO: Finish this.  Use fig.add_gridspec instead of plt.subplots, so that
+        each figure can subgrid if needed.
         """
-        device = R.get_current_graphics_device()
-        plot_shape = R.plot_grid_size(len(self._state_models))
-        device._create_subplots(plot_shape[0], plot_shape[1])
-        for state_model in self._state_models:
-            ax = device.next_axes
-            state_model.plot_state_contribution(ax)
+        fig = plt.figure(constrained_layout=True)
+        nr, nc = R.plot_grid_size(len(self._state_models))
+        outer_grid = fig.add_gridspec(nr, nc)
+        plot_index = 0
+        for i in range(nr):
+            for j in range(nc):
+                state_model = self._state_models[plot_index]
+                plot_nr, plot_nc =
+                inner_grid = outer_grid[plot_index].subgridspec(
+
+                plot_index += 1
+
+            state_model.plot_state_contributioan(ax)
+
 
     def predict(self, horizon, newdata):
         """

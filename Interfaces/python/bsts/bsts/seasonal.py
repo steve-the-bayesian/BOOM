@@ -70,6 +70,8 @@ class SeasonalStateModel(StateModel):
             innovation_sd_prior.upper_limit)
         self._state_model.set_method(state_model_sampler)
 
+        self._state_contribution = None
+
     def __repr__(self):
         ans = f"A SeasonalStateModel with {self.nseasons} "
         ans += f"seasonas of duration {self.season_duration}, and "
@@ -90,14 +92,15 @@ class SeasonalStateModel(StateModel):
 
     def allocate_space(self, niter, time_dimension):
         self.sigma_draws = np.zeros(niter)
-        self.state_contribution = np.zeros((niter, time_dimension))
+        self._state_contribution = np.zeros((niter, time_dimension))
 
     def record_state(self, i, state_matrix):
         self.sigma_draws[i] = self._state_model.sigma
-        self.state_contribution[i, :] = state_matrix[self._state_index, :]
+        self._state_contribution[i, :] = state_matrix[self._state_index, :]
 
     def plot_state_contribution(self, ax, **kwargs):
-        pass
+        if self.nseasons > 12:
+            return self.plot_state_contribution_default(ax, **kwargs)
 
     def _default_sigma_prior(self, sdy):
         """
