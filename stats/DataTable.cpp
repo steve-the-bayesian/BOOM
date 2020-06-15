@@ -98,6 +98,141 @@ namespace BOOM {
   }
 
   //===========================================================================
+  MixedMultivariateData::MixedMultivariateData()
+      : data_sorter_(new MixedDataOrganizer)
+  {}
+
+  MixedMultivariateData::MixedMultivariateData(
+      const Ptr<MixedDataOrganizer> &sorter)
+      : data_sorter_(sorter)
+  {}
+
+  MixedMultivariateData::MixedMultivariateData(const MixedMultivariateData &rhs)
+      : data_sorter_(rhs.data_sorter_)
+  {
+    for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
+      numeric_data_.push_back(rhs.numeric_data_[i]->clone());
+    }
+    for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
+      categorical_data_.push_back(rhs.categorical_data_[i]->clone());
+    }
+  }
+
+  MixedMultivariateData &MixedMultivariateData::operator=(
+      const MixedMultivariateData &rhs) {
+    if (&rhs != this) {
+      data_sorter_ = rhs.data_sorter_;
+      numeric_data_.clear();
+      for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
+        numeric_data_.push_back(rhs.numeric_data_[i]->clone());
+      }
+
+      categorical_data_.clear();
+      for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
+        categorical_data_.push_back(rhs.categorical_data_[i]->clone());
+      }
+    }
+    return *this;
+  }
+
+  MixedMultivariateData *MixedMultivariateData::clone() const {
+    return new MixedMultivariateData(*this);
+  }
+
+  std::ostream &MixedMultivariateData::display(std::ostream &out) const {
+    // TODO: consider taking greater care with field widths.
+    for (int i = 0; i < dim(); ++i) {
+      out << variable(i) << " ";
+    }
+    out << std::endl;
+    return out;
+  }
+
+  void MixedMultivariateData::add_numeric(const Ptr<DoubleData> &numeric) {
+    data_sorter_->add_variable(VariableType::numeric);
+    numeric_data_.push_back(numeric);
+  }
+
+  void MixedMultivariateData::add_categorical(
+      const Ptr<CategoricalData> &categorical) {
+    data_sorter_->add_variable(VariableType::categorical);
+    categorical_data_.push_back(categorical);
+  }
+
+  const Data &MixedMultivariateData::variable(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type == VariableType::numeric) {
+      return *numeric_data_[pos];
+    } else if (type == VariableType::categorical) {
+      return *categorical_data_[pos];
+    } else {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is neither categorical "
+          << "nor numeric.";
+      report_error(err.str());
+    }
+    return *numeric_data_[0];
+  }
+
+  const DoubleData &MixedMultivariateData::numeric(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::numeric) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not numeric.";
+      report_error(err.str());
+    }
+    return *numeric_data_[pos];
+  }
+
+  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::numeric) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not numeric.";
+      report_error(err.str());
+    }
+    return numeric_data_[pos];
+  }
+
+  const CategoricalData &MixedMultivariateData::categorical(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::categorical) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not categorical.";
+      report_error(err.str());
+    }
+    return *categorical_data_[pos];
+  }
+
+  Ptr<CategoricalData> MixedMultivariateData::mutable_categorical(int i) {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::categorical) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not categorical.";
+      report_error(err.str());
+    }
+    return categorical_data_[pos];
+  }
+
+  Vector MixedMultivariateData::numeric_data() const {
+    Vector ans(numeric_data_.size());
+    for (int i = 0; i < numeric_data_.size(); ++i) {
+      ans[i] = numeric_data_[i]->value();
+    }
+    return ans;
+  }
+
+  //===========================================================================
   CategoricalVariable::CategoricalVariable(
       const std::vector<std::string> &raw_data)
       : key_(make_catkey(raw_data)) {

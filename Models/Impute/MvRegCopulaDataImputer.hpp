@@ -411,6 +411,7 @@ namespace BOOM {
 
     Matrix impute_data_set(const std::vector<Ptr<MvRegData>> &data);
 
+    //--------------------------------------------------------------------------
     // Code needed to save/restore models.
     const std::vector<IQagent> empirical_distributions() const {
       return empirical_distributions_;
@@ -424,6 +425,7 @@ namespace BOOM {
     void restore_empirical_distributions(
         const std::vector<IqAgentState> &state);
 
+    //--------------------------------------------------------------------------
     void setup_worker_pool(int nworkers);
     void shut_down_worker_pool();
 
