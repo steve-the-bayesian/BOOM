@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/Glm/Encoders.hpp"
+#include "stats/Encoders.hpp"
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -61,6 +61,10 @@ namespace BOOM {
     return encode(table.get_nominal(which_variable()));
   }
 
+  Vector EffectsEncoder::encode_row(const MixedMultivariateData &row) const {
+    return encode(row.categorical(which_variable()));
+  }
+
   //===========================================================================
   InteractionEncoder::InteractionEncoder(
       const Ptr<DataEncoder> &encoder1, const Ptr<DataEncoder> &encoder2)
@@ -73,7 +77,10 @@ namespace BOOM {
   Matrix DatasetEncoder::encode_dataset(const DataTable &table) const {
     int nrow = table.nrow();
     Matrix ans(nrow, dim());
-    int start = 0;
+    if (add_intercept_) {
+      ans.col(0) = 1.0;
+    }
+    int start = add_intercept_;
     for (size_t i = 0; i < encoders_.size(); ++i) {
       int end = start + encoders_[i]->dim();
       SubMatrix(ans, 0, nrow-1, start, end-1) = encoders_[i]->encode_dataset(table);
@@ -82,4 +89,18 @@ namespace BOOM {
     return ans;
   }
 
+
+  Vector DatasetEncoder::encode_row(const MixedMultivariateData &data) const {
+    Vector ans(dim());
+    if (add_intercept_) {
+      ans[0] = 1;
+    }
+    int start = add_intercept_;
+    for (size_t i = 0; i < encoders_.size(); ++i) {
+      VectorView(ans, start, encoders_[i]->dim()) =
+          encoders_[i]->encode_row(data);
+      start += encoders_[i]->dim();
+    }
+    return ans;
+  }
 }  // namespace BOOM

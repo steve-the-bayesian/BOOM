@@ -34,6 +34,7 @@ namespace BOOM {
     virtual ~DataEncoder() {}
     virtual int dim() const = 0;
     virtual Matrix encode_dataset(const DataTable &data) const = 0;
+    virtual Vector encode_row(const MixedMultivariateData &data) const = 0;
 
    private:
     friend void intrusive_ptr_add_ref(DataEncoder *d) {d->up_count();}
@@ -70,7 +71,7 @@ namespace BOOM {
     Vector encode(int level) const;
     Matrix encode(const CategoricalVariable &variable) const;
     Matrix encode_dataset(const DataTable &data) const override;
-
+    Vector encode_row(const MixedMultivariateData &row) const override;
    private:
     Ptr<CatKeyBase> key_;
   };
@@ -99,6 +100,19 @@ namespace BOOM {
       return ans;
     }
 
+    Vector encode_row(const MixedMultivariateData &data) const {
+      Vector v1 = encoder1_->encode_row(data);
+      Vector v2 = encoder2_->encode_row(data);
+      Vector ans(dim());
+      int index = 0;
+      for (int i = 0; i < v1.size(); ++i) {
+        for (int j = 0; j < v2.size(); ++j) {
+          ans[index++] = v1[i] * v2[j];
+        }
+      }
+      return ans;
+    }
+
    private:
     Ptr<DataEncoder> encoder1_;
     Ptr<DataEncoder> encoder2_;
@@ -107,7 +121,10 @@ namespace BOOM {
   //===========================================================================
   class DatasetEncoder : public DataEncoder {
    public:
-    DatasetEncoder() : dim_(0) {}
+    DatasetEncoder(bool add_intercept = true)
+        : dim_(add_intercept),
+          add_intercept_(add_intercept)
+    {}
 
     void add_encoder(const Ptr<DataEncoder> &encoder) {
       encoders_.push_back(encoder);
@@ -117,9 +134,11 @@ namespace BOOM {
     int dim() const override {return dim_;}
 
     Matrix encode_dataset(const DataTable &data) const override;
+    Vector encode_row(const MixedMultivariateData &row) const override;
 
    private:
     int dim_;
+    bool add_intercept_;
     std::vector<Ptr<DataEncoder>> encoders_;
   };
 
