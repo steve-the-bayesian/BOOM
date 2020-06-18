@@ -25,11 +25,12 @@ namespace BOOM {
   //===========================================================================
   namespace MixedImputation {
 
-    CompleteData::CompleteData(const Ptr<MixedMultivariateData> &data)
-        : observed_data_(data),
-          y_true_(data->numeric_dim()),
-          y_numeric_(data->numeric_dim()),
-          true_categories_(data->dim())
+    CompleteData::CompleteData(const Ptr<MixedMultivariateData> &observed)
+        : observed_data_(observed),
+          y_true_(observed->numeric_dim()),
+          y_numeric_(observed->numeric_dim()),
+          true_categories_(observed->categorical_dim(), 0),
+          observed_categories_(observed_data_->categorical_data())
     {}
 
     CompleteData::CompleteData(const CompleteData &rhs)
@@ -37,7 +38,8 @@ namespace BOOM {
           observed_data_(rhs.observed_data_->clone()),
           y_true_(rhs.y_true_),
           y_numeric_(rhs.y_numeric_),
-          true_categories_(rhs.true_categories_)
+          true_categories_(rhs.true_categories_),
+          observed_categories_(observed_data_->categorical_data())
     {}
 
     CompleteData & CompleteData::operator=(const CompleteData &rhs) {
@@ -46,6 +48,7 @@ namespace BOOM {
         y_true_ = rhs.y_true_;
         y_numeric_ = rhs.y_numeric_;
         true_categories_ = rhs.true_categories_;
+        observed_categories_ = observed_data_->categorical_data();
       }
       return *this;
     }
@@ -117,6 +120,8 @@ namespace BOOM {
         obs_models_.push_back(
             new MultinomialModel(levels_->max_levels()));
       }
+      build_atom_index();
+      set_observers();
     }
 
     CECM::CategoricalErrorCorrectionModel(const CECM &rhs)
@@ -128,6 +133,8 @@ namespace BOOM {
       for (int i = 0; i < rhs.obs_models_.size(); ++i) {
         obs_models_.push_back(rhs.obs_models_[i]->clone());
       }
+      build_atom_index();
+      set_observers();
     }
 
     CECM & CECM::operator=(const CECM &rhs) {
@@ -140,6 +147,8 @@ namespace BOOM {
         for (int i = 0; i < rhs.obs_models_.size(); ++i) {
           obs_models_.push_back(rhs.obs_models_[i]->clone());
         }
+        build_atom_index();
+        set_observers();
       }
       return *this;
     }
@@ -186,6 +195,50 @@ namespace BOOM {
       return lse(wsp_);
     }
 
+    Vector CECM::true_level_log_probability(const CategoricalData &value) {
+      ensure_workspace_is_current();
+      return log_joint_distribution_.col(atom_index(value));
+    }
+
+    int CECM::atom_index(const CategoricalData &data) const {
+      if (data.missing() != Data::missing_status::observed) {
+        return number_of_atoms() + 1;
+      } else {
+        return atom_index_[data.value()];
+      }
+    }
+
+    // Ensure that the log joint distribution is up to date.
+    void CECM::ensure_workspace_is_current() {
+      if (workspace_is_current_) return;
+      //
+      report_error("ensure_workspace_is_current is not implemented.");
+      //
+      workspace_is_current_ = true;
+    }
+
+    void CECM::set_observers() {
+      auto observer = [this]() {this->workspace_is_current_ = false;};
+      truth_model_->Pi_prm()->add_observer(observer);
+      for (int i = 0; i < obs_models_.size(); ++i) {
+        obs_models_[i]->Pi_prm()->add_observer(observer);
+      }
+    }
+
+    void CECM::build_atom_index() {
+      atom_index_.resize(levels_->max_levels());
+      for (int i = 0; i < levels_->max_levels(); ++i) {
+        std::string label = levels_->label(i);
+        bool found;
+        int index = atoms_->findstr_safe(label, found);
+        if (found) {
+          atom_index_[i] = index;
+        } else {
+          atom_index_[i] = number_of_atoms();
+        }
+      }
+    }
+
     //===========================================================================
     RowModel::RowModel(const std::vector<InitInfo> &init) {
       for (int i = 0; i < init.size(); ++i) {
@@ -225,12 +278,44 @@ namespace BOOM {
       return ans;
     }
 
-    // For imputation purposes
+    // Impute the categorical data given the numeric data.  Later this can be
+    // improved by marginalizing over the numeric data and imputing given y_obs.
     void RowModel::impute_categorical(
         Ptr<MixedImputation::CompleteData> &row,
         RNG &rng,
-        bool update_complete_data_suf) {
+        bool update_complete_data_suf,
+        const Ptr<DatasetEncoder> &encoder,
+        const std::vector<Ptr<EffectsEncoder>> &encoders,
+        const Ptr<MultivariateRegressionModel> &numeric_model) {
 
+      Vector predictors(encoder->dim(), 0.0);
+      int start = 0;
+      if (encoder->add_intercept()) {
+        predictors[0] = 1;
+        start = 1;
+      }
+      const Vector &y_numeric(row->y_numeric());
+      std::vector<int> imputed_categorical_data = row->true_categories();
+      const std::vector<Ptr<CategoricalData>> observed_categories(
+          row->observed_categories());
+      for (int i = 0; i < encoders.size(); ++i) {
+        // TODO: check that the value of variable i is atomic before attempting to
+        // correct it.
+        Vector logp = categorical_models_[i]->true_level_log_probability(
+            *observed_categories[i]);
+
+        VectorView view(predictors, start, encoders[i]->dim());
+        Vector truth_logp = categorical_models_[i]->true_level_log_probability(
+            *observed_categories[i]);
+        for (int j = 0; j < truth_logp.size(); ++j) {
+          view = encoders[i]->encode(j);
+          Vector yhat = numeric_model->predict(predictors);
+          truth_logp[i] -= 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
+        }
+        truth_logp.normalize_logprob();
+        int true_value = rmulti_mt(rng, truth_logp);
+        /// set the value.
+      }
 
     }
 
@@ -261,8 +346,10 @@ namespace BOOM {
     int component = impute_cluster(row, rng, update_complete_data_suf);
 
     // This step will fill in the "true_categories" data element in *row.
+
     mixture_components_[component]->impute_categorical(
-        row, rng, update_complete_data_suf);
+        row, rng, update_complete_data_suf,
+        encoder_, encoders_, numeric_data_model_);
 
     impute_numeric_given_categorical(row, rng, update_complete_data_suf);
   }

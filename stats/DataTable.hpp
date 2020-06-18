@@ -115,7 +115,8 @@ namespace BOOM {
       return data_sorter_->number_of_numeric_fields();
     }
 
-    // The number of categorical variables.
+    // The number of categorical variables.  This is the number of categorical
+    // columns in the "data frame", not its dummy variable expansion.
     int categorical_dim() const {
       return data_sorter_->number_of_categorical_fields();
     }

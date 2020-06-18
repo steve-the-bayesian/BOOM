@@ -132,9 +132,12 @@ namespace BOOM {
     }
 
     int dim() const override {return dim_;}
+    bool add_intercept() const {return add_intercept_;}
 
     Matrix encode_dataset(const DataTable &data) const override;
     Vector encode_row(const MixedMultivariateData &row) const override;
+
+    const std::vector<Ptr<DataEncoder>> &encoders() const {return encoders_;}
 
    private:
     int dim_;
