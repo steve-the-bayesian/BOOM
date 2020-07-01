@@ -31,6 +31,15 @@ namespace BOOM {
     }
   }
 
+  EffectsEncoder::EffectsEncoder(const EffectsEncoder &rhs)
+      : MainEffectsEncoder(rhs),
+        key_(rhs.key_->clone())
+  {}
+
+  EffectsEncoder *EffectsEncoder::clone() const {
+    return new EffectsEncoder(*this);
+  }
+
   int EffectsEncoder::dim() const {
     return key_->max_levels() - 1;
   }

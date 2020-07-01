@@ -53,7 +53,7 @@ namespace BOOM {
     explicit MainEffectsEncoder(int which_variable):
         which_variable_(which_variable)
     {}
-
+    virtual MainEffectsEncoder * clone() const = 0;
     int which_variable() const {return which_variable_;}
 
    private:
@@ -65,6 +65,12 @@ namespace BOOM {
    public:
     // The reference level is the last listed level in key.
     explicit EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key);
+    EffectsEncoder(const EffectsEncoder &rhs);
+    EffectsEncoder &operator=(const EffectsEncoder &rhs);
+    EffectsEncoder(EffectsEncoder &&rhs) = default;
+    EffectsEncoder & operator=(EffectsEncoder &&rhs) = default;
+
+    EffectsEncoder * clone() const override;
 
     int dim() const override;
     Vector encode(const CategoricalData &data) const;
@@ -72,6 +78,7 @@ namespace BOOM {
     Matrix encode(const CategoricalVariable &variable) const;
     Matrix encode_dataset(const DataTable &data) const override;
     Vector encode_row(const MixedMultivariateData &row) const override;
+
    private:
     Ptr<CatKeyBase> key_;
   };

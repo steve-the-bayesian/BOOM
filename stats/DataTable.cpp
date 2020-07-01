@@ -103,8 +103,12 @@ namespace BOOM {
   {}
 
   MixedMultivariateData::MixedMultivariateData(
-      const Ptr<MixedDataOrganizer> &sorter)
-      : data_sorter_(sorter)
+      const Ptr<MixedDataOrganizer> &sorter,
+      const std::vector<Ptr<DoubleData>> &numerics,
+      const std::vector<Ptr<CategoricalData>> &categoricals)
+      : data_sorter_(sorter),
+        numeric_data_(numerics),
+        categorical_data_(categoricals)
   {}
 
   MixedMultivariateData::MixedMultivariateData(const MixedMultivariateData &rhs)
@@ -238,6 +242,16 @@ namespace BOOM {
       : key_(make_catkey(raw_data)) {
     for (int i = 0; i < raw_data.size(); ++i) {
       Ptr<CategoricalData> dp = new CategoricalData(raw_data[i], key_);
+      data_.push_back(dp);
+    }
+  }
+
+  CategoricalVariable::CategoricalVariable(
+      const std::vector<int> &values,
+      const Ptr<CatKey> &key)
+      : key_(key) {
+    for (const auto &el : values) {
+      NEW(CategoricalData, dp)(el, key_);
       data_.push_back(dp);
     }
   }
@@ -516,6 +530,14 @@ namespace BOOM {
     return categorical_variables_[index][0]->nlevels();
   }
 
+  int DataTable::numeric_dim() const {
+    return data_organizer_->number_of_numeric_fields();
+  }
+
+  int DataTable::categorical_dim() const {
+    return data_organizer_->number_of_categorical_fields();
+  }
+
   int DataTable::nrow() const {
     if (numeric_variables_.empty() && categorical_variables_.empty()) {
       return 0;
@@ -588,6 +610,18 @@ namespace BOOM {
   //   set_order(ans, ord);
   //   return ans;
   // }
+
+  Ptr<MixedMultivariateData> DataTable::row(uint row_index) const {
+    std::vector<Ptr<DoubleData>> numerics;
+    for (int i = 0; i < numeric_variables_.size(); ++i) {
+      numerics.push_back(new DoubleData(numeric_variables_[i][row_index]));
+    }
+    std::vector<Ptr<CategoricalData>> categoricals;
+    for (int i = 0; i < categorical_variables_.size(); ++i) {
+      categoricals.push_back(categorical_variables_[i][row_index]);
+    }
+    return new MixedMultivariateData(data_organizer_, numerics, categoricals);
+  }
 
   //------------------------------------------------------------
   std::ostream &DataTable::print(std::ostream &out, uint from, uint to) const {

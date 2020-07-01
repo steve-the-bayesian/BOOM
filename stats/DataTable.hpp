@@ -48,6 +48,9 @@ namespace BOOM {
     VariableType variable_type(int col) const {
       return variable_types_[col];
     }
+    const std::vector<VariableType> &variable_types() const {
+      return variable_types_;
+    }
 
     bool check_type(int i, const std::string &s) const;
 
@@ -98,7 +101,10 @@ namespace BOOM {
   class MixedMultivariateData : public Data {
    public:
     MixedMultivariateData();
-    MixedMultivariateData(const Ptr<MixedDataOrganizer> &sorter);
+    MixedMultivariateData(
+        const Ptr<MixedDataOrganizer> &sorter,
+        const std::vector<Ptr<DoubleData>> &numerics,
+        const std::vector<Ptr<CategoricalData>> &categoricals);
     MixedMultivariateData(const MixedMultivariateData &rhs);
     MixedMultivariateData &operator=(const MixedMultivariateData &rhs);
     MixedMultivariateData(MixedMultivariateData &&rhs) = default;
@@ -126,6 +132,9 @@ namespace BOOM {
 
     // The type of variable in cell i.
     VariableType vtype(int i) const { return data_sorter_->variable_type(i); }
+    const std::vector<VariableType> & variable_types() const {
+      return data_sorter_->variable_types();
+    }
 
     const Data &variable(int i) const;
 
@@ -158,6 +167,7 @@ namespace BOOM {
    public:
     CategoricalVariable() = default;
     explicit CategoricalVariable(const std::vector<std::string> &raw_data);
+    CategoricalVariable(const std::vector<int> &values, const Ptr<CatKey> &key);
     CategoricalVariable(const std::vector<Ptr<CategoricalData>> &data,
                         const Ptr<CatKey> &key)
         : key_(key), data_(data) {}
@@ -253,6 +263,9 @@ namespace BOOM {
     int nobs() const {return nrow();}  // syntactic sugar.
     uint nlevels(uint i) const;  // 1 for numeric, nlevels for categorical
 
+    int numeric_dim() const;      // number of numeric variables.
+    int categorical_dim() const;  // number of categorical variables.
+
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,
                         uint to = std::numeric_limits<uint>::max()) const;
@@ -266,6 +279,9 @@ namespace BOOM {
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const {
       return data_organizer_->variable_type(which_column);
+    }
+    const std::vector<VariableType> &variable_types() const {
+      return data_organizer_->variable_types();
     }
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;
