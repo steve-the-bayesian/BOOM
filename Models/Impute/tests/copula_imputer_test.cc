@@ -15,7 +15,7 @@ namespace {
   struct SimulatedData {
     Matrix y_obs;
     Matrix y_true;
-    Matrix chi;
+    Matrix y_nu;
     Matrix predictors;
   };
 
@@ -46,8 +46,8 @@ namespace {
     const double NA = std::numeric_limits<double>::quiet_NaN();
 
     Matrix yhat_true = X * coefficients;
-    Matrix chi = yhat_true + rmvn_repeated(sample_size, Sigma);
-    Matrix y_true = chi;
+    Matrix y_nu = yhat_true + rmvn_repeated(sample_size, Sigma);
+    Matrix y_true = y_nu;
     Matrix y_obs = y_true;
 
     for (int i = 0; i < sample_size; ++i) {
@@ -60,7 +60,7 @@ namespace {
         if (obs_atom < atoms[j].size()) {
           y_obs(i, j) = atoms[j][obs_atom];
         } else if (obs_atom == atoms[j].size()) {
-          y_obs(i, j) = chi(i, j);
+          y_obs(i, j) = y_nu(i, j);
         } else {
           y_obs(i, j) = NA;
         }
@@ -69,7 +69,7 @@ namespace {
     SimulatedData ans;
     ans.y_obs = y_obs;
     ans.y_true = y_true;
-    ans.chi = chi;
+    ans.y_nu = y_nu;
     ans.predictors = X;
     return ans;
   }

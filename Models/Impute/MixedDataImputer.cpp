@@ -19,6 +19,7 @@
 #include "Models/Impute/MixedDataImputer.hpp"
 #include "distributions.hpp"
 #include "cpputil/lse.hpp"
+#include "Models/PosteriorSamplers/MultinomialDirichletSampler.hpp"
 
 namespace BOOM {
 
@@ -109,16 +110,15 @@ namespace BOOM {
     }  // namespace
 
     CECM::CategoricalErrorCorrectionModel(int index,
-                                          const Ptr<CatKey> &levels,
-                                          const Ptr<CatKey> &atoms)
+                                          const Ptr<CatKey> &levels)
         : ErrorCorrectionModelBase(index),
           levels_(levels),
-          atoms_(atoms),
-          truth_model_(new MultinomialModel(levels_->max_levels()))
+          truth_model_(new MultinomialModel(levels_->max_levels())),
+          workspace_is_current_(false)
     {
-      for (int i = 0; i < atoms_->max_levels() + 2; ++i) {
+      for (int i = 0; i < levels_->max_levels(); ++i) {
         obs_models_.push_back(
-            new MultinomialModel(levels_->max_levels()));
+            new MultinomialModel(levels_->max_levels() + 1));
       }
       build_atom_index();
       set_observers();
@@ -127,8 +127,8 @@ namespace BOOM {
     CECM::CategoricalErrorCorrectionModel(const CECM &rhs)
         : ErrorCorrectionModelBase(rhs),
           levels_(rhs.levels_),
-          atoms_(rhs.atoms_),
-          truth_model_(rhs.truth_model_->clone())
+          truth_model_(rhs.truth_model_->clone()),
+          workspace_is_current_(false)
     {
       for (int i = 0; i < rhs.obs_models_.size(); ++i) {
         obs_models_.push_back(rhs.obs_models_[i]->clone());
@@ -141,7 +141,6 @@ namespace BOOM {
       if (&rhs != this) {
         ErrorCorrectionModelBase::operator=(rhs);
         levels_ = rhs.levels_;
-        atoms_ = rhs.atoms_;
         truth_model_.reset(rhs.truth_model_->clone());
         obs_models_.clear();
         for (int i = 0; i < rhs.obs_models_.size(); ++i) {
@@ -179,42 +178,79 @@ namespace BOOM {
 
     double CECM::logp(const MixedMultivariateData &data) const {
       const CategoricalData &scalar(data.categorical(index()));
-
-      bool missing = scalar.missing() != Data::missing_status::observed;
-      int value;
-      if (missing) {
-        value = number_of_atoms() + 1;
-      } else {
-        value = scalar.value();
-      }
-
-      wsp_ = truth_model_->logpi();
-      for (int i = 0; i <= number_of_atoms(); ++i) {
-        wsp_[i] += obs_models_[i]->logpi()[value];
-      }
-      return lse(wsp_);
+      ensure_workspace_is_current();
+      return log_marginal_observed_[atom_index(scalar)];
     }
 
-    Vector CECM::true_level_log_probability(const CategoricalData &value) {
+    double CECM::logp(const std::string &label) const {
       ensure_workspace_is_current();
-      return log_joint_distribution_.col(atom_index(value));
+      return log_marginal_observed_[atom_index(label)];
+    }
+
+    Vector CECM::true_level_log_probability(const CategoricalData &observed) {
+      ensure_workspace_is_current();
+      return log_joint_distribution_.col(atom_index(levels_->label(
+          observed.value())));
     }
 
     int CECM::atom_index(const CategoricalData &data) const {
       if (data.missing() != Data::missing_status::observed) {
-        return number_of_atoms() + 1;
+        return levels_->max_levels() + 1;
       } else {
-        return atom_index_[data.value()];
+        return atom_index(levels_->label(data.value()));
+      }
+    }
+
+    int CECM::atom_index(const std::string &label) const {
+      auto it = atom_index_.find(label);
+      if (it == atom_index_.end()) {
+        return levels_->max_levels();
+      } else {
+        return it->second;
+      }
+    }
+
+    void CECM::set_conjugate_prior_for_levels(const Vector &counts) {
+      truth_model_->clear_methods();
+      NEW(ConstrainedMultinomialDirichletSampler, sampler)(
+          truth_model_.get(), counts);
+      truth_model_->set_method(sampler);
+    }
+
+    void CECM::set_conjugate_prior_for_observations(const Matrix &counts) {
+      for (int i = 0; i < obs_models_.size(); ++i) {
+        obs_models_[i]->clear_methods();
+        NEW(ConstrainedMultinomialDirichletSampler, sampler)(
+            obs_models_[i].get(),
+            counts.row(i));
+        obs_models_[i]->set_method(sampler);
       }
     }
 
     // Ensure that the log joint distribution is up to date.
-    void CECM::ensure_workspace_is_current() {
-      if (workspace_is_current_) return;
-      //
-      report_error("ensure_workspace_is_current is not implemented.");
-      //
-      workspace_is_current_ = true;
+    void CECM::ensure_workspace_is_current() const {
+      if (workspace_is_current_) {
+        return;
+      } else {
+        // Update the joint distribution of true values (rows) and observed
+        // values (columns).
+        int nlevels = levels_->max_levels();
+        log_joint_distribution_.resize(nlevels, nlevels + 1);
+        for (int i = 0; i < nlevels + 1; ++i) {
+          log_joint_distribution_.col(i) = truth_model_->logpi();
+        }
+        for (int i = 0; i < nlevels; ++i) {
+          log_joint_distribution_.row(i) += obs_models_[i]->logpi();
+        }
+
+        // Update the marginal distribution of observed values.
+        log_marginal_observed_.resize(nlevels + 1);
+        for (int i = 0; i < nlevels + 1; ++i) {
+          log_marginal_observed_[i] = lse(log_joint_distribution_.col(i));
+        }
+
+        workspace_is_current_ = true;
+      }
     }
 
     void CECM::set_observers() {
@@ -226,31 +262,29 @@ namespace BOOM {
     }
 
     void CECM::build_atom_index() {
-      atom_index_.resize(levels_->max_levels());
+      atom_index_.clear();
       for (int i = 0; i < levels_->max_levels(); ++i) {
         std::string label = levels_->label(i);
-        bool found;
-        int index = atoms_->findstr_safe(label, found);
-        if (found) {
-          atom_index_[i] = index;
-        } else {
-          atom_index_[i] = number_of_atoms();
-        }
+        atom_index_[label] = i;
       }
     }
 
     //===========================================================================
-    RowModel::RowModel(const std::vector<InitInfo> &init) {
-      for (int i = 0; i < init.size(); ++i) {
-        if (!init[i].numeric_atoms.empty()) {
-          scalar_models_.push_back(new NumericErrorCorrectionModel(
-              i, init[i].numeric_atoms));
-        } else {
-          scalar_models_.push_back(new CategoricalErrorCorrectionModel(
-              i, init[i].levels, init[i].categorical_atoms));
-        }
-      }
+    RowModel::RowModel() {
     }
+
+    void RowModel::add_numeric(
+        const Ptr<NumericErrorCorrectionModel> &model) {
+      scalar_models_.push_back(model);
+      numeric_models_.push_back(model);
+    }
+
+    void RowModel::add_categorical(
+        const Ptr<CategoricalErrorCorrectionModel> &model) {
+      scalar_models_.push_back(model);
+      categorical_models_.push_back(model);
+    }
+
 
     RowModel::RowModel(const RowModel &rhs)
         : Model(rhs),
@@ -301,9 +335,6 @@ namespace BOOM {
       for (int i = 0; i < encoders.size(); ++i) {
         // TODO: check that the value of variable i is atomic before attempting to
         // correct it.
-        Vector logp = categorical_models_[i]->true_level_log_probability(
-            *observed_categories[i]);
-
         VectorView view(predictors, start, encoders[i]->dim());
         Vector truth_logp = categorical_models_[i]->true_level_log_probability(
             *observed_categories[i]);
@@ -313,14 +344,87 @@ namespace BOOM {
           truth_logp[i] -= 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
         }
         truth_logp.normalize_logprob();
-        int true_value = rmulti_mt(rng, truth_logp);
-        /// set the value.
+        imputed_categorical_data[i] = rmulti_mt(rng, truth_logp);
       }
-
+      row->set_true_categories(imputed_categorical_data);
     }
 
   }  // namespace MixedImputation
   //===========================================================================
+
+  MixedDataImputer::MixedDataImputer(
+      int num_clusters,
+      const DataTable &data,
+      const std::vector<Vector> &atoms,
+      RNG &seeding_rng)
+      : rng_(seed_rng(seeding_rng)),
+        swept_sigma_(SpdMatrix(1)),
+        swept_sigma_current_(false)
+  {
+    for (size_t i = 0; i < data.nrow(); ++i) {
+      add_data(data.row(i));
+    }
+    create_encoders(data);
+    initialize_empirical_distributions(data, atoms);
+    initialize_regression_component();
+
+    std::vector<Ptr<CatKey>> levels;
+    for (int j = 0; j < data.nvars(); ++j) {
+      if (data.variable_type(j) == VariableType::categorical) {
+        levels.push_back(data.get_nominal(j).key());
+      }
+    }
+    initialize_mixture(num_clusters, atoms, levels, data.variable_types());
+    set_observers();
+  }
+
+  MixedDataImputer::MixedDataImputer(const MixedDataImputer &rhs)
+      : mixing_distribution_(rhs.mixing_distribution_->clone()),
+        numeric_data_model_(rhs.numeric_data_model_->clone()),
+        empirical_distributions_(rhs.empirical_distributions_),
+        rng_(seed_rng(rhs.rng_)),
+        swept_sigma_(rhs.swept_sigma_),
+        swept_sigma_current_(false)
+  {
+    encoder_.reset(new DatasetEncoder(rhs.encoder_->add_intercept()));
+    for (int i = 0; i < rhs.encoders_.size(); ++i) {
+      encoders_.push_back(rhs.encoders_[i]->clone());
+      encoder_->add_encoder(encoders_.back());
+    }
+
+    for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
+      mixture_components_.push_back(rhs.mixture_components_[i]->clone());
+    }
+    set_observers();
+  }
+
+  MixedDataImputer &MixedDataImputer::operator=(const MixedDataImputer &rhs) {
+    if (&rhs != this) {
+      mixing_distribution_.reset(rhs.mixing_distribution_->clone());
+      numeric_data_model_.reset(rhs.numeric_data_model_->clone());
+      empirical_distributions_ = rhs.empirical_distributions_;
+
+      encoder_.reset(new DatasetEncoder(rhs.encoder_->add_intercept()));
+      encoders_.clear();
+      for (int i = 0; i < rhs.encoders_.size(); ++i) {
+        encoders_.push_back(rhs.encoders_[i]->clone());
+        encoder_->add_encoder(encoders_.back());
+      }
+
+      swept_sigma_ = rhs.swept_sigma_;
+      swept_sigma_current_ = false;
+      mixture_components_.clear();
+      for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
+        mixture_components_.push_back(rhs.mixture_components_[i]->clone());
+      }
+      set_observers();
+    }
+    return *this;
+  }
+
+  MixedDataImputer * MixedDataImputer::clone() const {
+    return new MixedDataImputer(*this);
+  }
 
   void MixedDataImputer::add_data(const Ptr<MixedMultivariateData> &data) {
     complete_data_.push_back(new MixedImputation::CompleteData(data));
@@ -351,7 +455,8 @@ namespace BOOM {
         row, rng, update_complete_data_suf,
         encoder_, encoders_, numeric_data_model_);
 
-    impute_numeric_given_categorical(row, rng, update_complete_data_suf);
+    impute_numeric_given_categorical(
+        row, component, rng, update_complete_data_suf);
   }
 
   void MixedDataImputer::impute_all_rows() {
@@ -363,9 +468,11 @@ namespace BOOM {
 
   void MixedDataImputer::impute_numeric_given_categorical(
       Ptr<MixedImputation::CompleteData> &row,
+      int component,
       RNG &rng,
       bool update_complete_data_suf) {
-    report_error("Not implemented.");
+
+    //    report_error("Not implemented.");
   }
 
   int MixedDataImputer::impute_cluster(
@@ -409,5 +516,79 @@ namespace BOOM {
     swept_sigma_current_ = true;
   }
 
+  void MixedDataImputer::create_encoders(const DataTable &table) {
+    encoder_.reset(new DatasetEncoder(true));
+    if (!complete_data_.empty()) {
+      for (int i = 0; i < table.nvars(); ++i) {
+        if (table.variable_type(i) == VariableType::categorical) {
+          NEW(EffectsEncoder, encoder)(i, table.get_nominal(i).key());
+          encoders_.push_back(encoder);
+          encoder_->add_encoder(encoder);
+        }
+      }
+    }
+  }
+
+  void MixedDataImputer::initialize_regression_component() {
+    if (!complete_data_.empty()) {
+      int xdim = encoder_->dim();
+      int ydim = complete_data_[0]->observed_data().numeric_dim();
+      numeric_data_model_.reset(new MultivariateRegressionModel(xdim, ydim));
+    }
+  }
+
+  void MixedDataImputer::initialize_empirical_distributions(
+      const DataTable &data, const std::vector<Vector> &atoms) {
+    Vector probs(99);
+    for (int i = 0; i < probs.size(); ++i) {
+      probs[i] = (i + 1.0) / 100.0;
+    }
+
+    for (int i = 0; i < data.nvars(); ++i) {
+      if (data.variable_type(i) == VariableType::numeric) {
+        empirical_distributions_.push_back(IQagent(probs, uint(1e+6)));
+        empirical_distributions_.back().add(data.getvar(i));
+      }
+    }
+  }
+
+
+  void MixedDataImputer::set_observers() {
+    numeric_data_model_->Sigma_prm()->add_observer(
+        [this]() {this->swept_sigma_current_ = false;});
+  }
+
+
+  void MixedDataImputer::initialize_mixture(
+      int num_clusters,
+      const std::vector<Vector> &atoms,
+      const std::vector<Ptr<CatKey>> &levels,
+      const std::vector<VariableType> &variable_type) {
+    mixing_distribution_.reset(new MultinomialModel(num_clusters));
+    for (int c = 0; c < num_clusters; ++c) {
+      auto num_it = atoms.begin();
+      auto cat_it = levels.begin();
+      Ptr<MixedImputation::RowModel> row_model(new MixedImputation::RowModel);
+      for (int j = 0; j < variable_type.size(); ++j) {
+        switch (variable_type[j]) {
+          case VariableType::numeric:
+            row_model->add_numeric(
+                new MixedImputation::NumericErrorCorrectionModel(j, *num_it));
+            ++num_it;
+            break;
+
+          case VariableType::categorical:
+            row_model->add_categorical(
+                new MixedImputation::CategoricalErrorCorrectionModel(j, *cat_it));
+            ++cat_it;
+            break;
+
+          default:
+            report_error("Only numeric or categorical varaibles are supported.");
+        }
+      }
+      mixture_components_.push_back(row_model);
+    }
+  }
 
 } // namespace BOOM

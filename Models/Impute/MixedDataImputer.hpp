@@ -70,6 +70,9 @@ namespace BOOM {
       // correspond to the levels in the level key of the corresponding
       // categorical variable.
       const std::vector<int> true_categories() const {return true_categories_;}
+      void set_true_categories(const std::vector<int> &truth) {
+        true_categories_ = truth;
+      }
 
       // Observed categorical data.  Missing values are indicated by the
       // "missing" mechanism in the Data base class.
@@ -170,6 +173,9 @@ namespace BOOM {
         return impl_->impute_atom(observed_value, rng, update);
       }
 
+      const Vector &atom_probs() const {return impl_->atom_probs();}
+      Matrix atom_error_probs() const {return impl_->atom_error_probs();}
+
      private:
       Ptr<ErrorCorrectionModel> impl_;
     };
@@ -183,17 +189,13 @@ namespace BOOM {
     {
      public:
       // Args:
-      //   key: The set of potential "true" values.  Blanks and NaN's are not an
-      //     option.  Those values should be used to set the missing status of a
-      //     variable to "missing".
-      //   atoms: The set of labels corresponding to potential errors.
+      //   key: The set of observed levels.  "Missing," as set by the Data base
+      //     class, is an implicit level.
       //
       // The full set of observed values is the union of everything in "key"
       // with everything in "atoms" (there may be some overlap) and the missing
       // data flag in a data element.
-      CategoricalErrorCorrectionModel(int index,
-                                      const Ptr<CatKey> &key,
-                                      const Ptr<CatKey> &atoms);
+      CategoricalErrorCorrectionModel(int index, const Ptr<CatKey> &levels);
 
       CategoricalErrorCorrectionModel(
           const CategoricalErrorCorrectionModel &rhs);
@@ -217,35 +219,58 @@ namespace BOOM {
       double logpri() const override;
       void clear_data() override;
 
-      // The number of explicit atoms in the data.  Explicit atoms do not count
-      // the implicit atoms "not an atom" or "missing".
-      int number_of_atoms() const {return atoms_->max_levels();}
-
       // The log conditional probability distribution of the true value, given
       // the obseved value that each atom is the true value.
-      Vector true_level_log_probability(const CategoricalData &value);
+      Vector true_level_log_probability(const CategoricalData &observed_value);
 
-      // A mapping between the observed value in data and an atom.
+      // A mapping between a label or categorical data value and a column of the
+      // "joint distribution" between the true and observed data.
       int atom_index(const CategoricalData &data) const;
+      int atom_index(const std::string &label) const;
+
+      void set_conjugate_prior_for_levels(const Vector &counts);
+      void set_conjugate_prior_for_observations(const Matrix &counts);
+
+      const Vector &level_probs() const {
+        return truth_model_->pi();
+      }
+
+      Matrix level_observation_probs() const {
+        Matrix ans(obs_models_.size(), obs_models_[0]->dim());
+        for (int i = 0; i < ans.nrow(); ++i) {
+          ans.row(i) = obs_models_[i]->pi();
+        }
+        return ans;
+      }
 
      private:
+      // The set of levels observed in the data.  The "missing" level is
+      // implicitly present as well.  It is not included in the set of levels
+      // contained in the key, but it is notionally tacked onto the end.
       Ptr<CatKey> levels_;
-      Ptr<CatKey> atoms_;
-      std::vector<int> atom_index_;
 
+      // A mapping between level labels and the columns of the joint
+      // distribution between true and observed data.
+      std::map<std::string, int> atom_index_;
+
+      // The marginal distribution of the true value.
       Ptr<MultinomialModel> truth_model_;
 
-      // There are number_of_atoms() + 1 models in obs_models_.  The final model
-      // is the "not_an_atom" category.  Each model describes
+      // The conditional distribution of the observed data, given the true
+      // value.  The index of the vector corresponds to the "true" value's index
+      // in 'levels_'.
       std::vector<Ptr<MultinomialModel>> obs_models_;
 
       mutable Vector wsp_;
 
-      // Rows are levels.  Columns are atoms.
+      // Rows are "true value" levels.  Columns are "observed_value" levels,
+      // with the final column representing an implicit "missing" level.
       mutable Matrix log_joint_distribution_;
+      mutable Vector log_marginal_observed_;
+
       // A flag to be set by observers.
       mutable bool workspace_is_current_;
-      void ensure_workspace_is_current();
+      void ensure_workspace_is_current() const;
 
       // Functions to be called during construction.
       void set_observers();
@@ -264,10 +289,14 @@ namespace BOOM {
                      public NullDataPolicy,
                      public NullPriorPolicy {
      public:
-      RowModel(const std::vector<InitInfo> &init);
+      RowModel();
       RowModel(const RowModel &rhs);
 
       RowModel *clone() const override;
+
+      void add_numeric(const Ptr<NumericErrorCorrectionModel> &model);
+      void add_categorical(const Ptr<CategoricalErrorCorrectionModel> &model);
+
       double logp(const MixedMultivariateData &data) const;
       void clear_data() override;
 
@@ -283,6 +312,20 @@ namespace BOOM {
           const Ptr<DatasetEncoder> &encoder,
           const std::vector<Ptr<EffectsEncoder>> &encoders,
           const Ptr<MultivariateRegressionModel> &numeric_model);
+
+      // Return the requested numeric model.  The index counts only the numeric
+      // variables, regardless of any intervening non-numeric variables.
+      Ptr<NumericErrorCorrectionModel> numeric_model(int numeric_index) {
+        return numeric_models_[numeric_index];
+      }
+
+      // Return the requested categorical model.  The index counts only the
+      // categorical variables, regardless of any intervening non-categorical
+      // variables.
+      Ptr<CategoricalErrorCorrectionModel> categorical_model(
+          int categorical_index) {
+        return categorical_models_[categorical_index];
+      }
 
      private:
       std::vector<Ptr<ErrorCorrectionModelBase>> scalar_models_;
@@ -317,6 +360,17 @@ namespace BOOM {
         public NullPriorPolicy
   {
    public:
+    MixedDataImputer(int num_clusters,
+                     const DataTable &table,
+                     const std::vector<Vector> &atoms,
+                     RNG &seeding_rng = GlobalRng::rng);
+
+    MixedDataImputer(const MixedDataImputer &rhs);
+    MixedDataImputer &operator=(const MixedDataImputer &rhs);
+    MixedDataImputer(MixedDataImputer &&rhs) = default;
+    MixedDataImputer &operator=(MixedDataImputer &&rhs) = default;
+    MixedDataImputer *clone() const override;
+
     // Data management.
     void clear_data() override;
     void clear_client_data();
@@ -331,6 +385,27 @@ namespace BOOM {
 
     void sample_posterior();
 
+    Ptr<MultivariateRegressionModel> numeric_data_model() const {
+      return numeric_data_model_;
+    }
+    int xdim() const { return numeric_data_model_->xdim();}
+    int ydim() const { return numeric_data_model_->ydim();}
+    int nclusters() const {return mixing_distribution_->dim();}
+
+    Ptr<MultinomialModel> mixing_distribution() {
+      return mixing_distribution_;
+    }
+
+    Ptr<MultivariateRegressionModel> numeric_data_model() {
+      return numeric_data_model_;
+    }
+
+    Ptr<MixedImputation::RowModel> row_model(int cluster) {
+      return mixture_components_[cluster];
+    }
+
+    RNG &rng() {return rng_;}
+
    private:
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row,
                        RNG &rng,
@@ -338,10 +413,19 @@ namespace BOOM {
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row, RNG &rng) const;
 
     void impute_numeric_given_categorical(
-        Ptr<MixedImputation::CompleteData> &row, RNG &rng,
+        Ptr<MixedImputation::CompleteData> &row,
+        int component,
+        RNG &rng,
         bool update_complete_data_suf);
 
-    void initialize_empirical_distributions(int ydim);
+    void create_encoders(const DataTable &table);
+    void initialize_empirical_distributions(const DataTable &data,
+                                            const std::vector<Vector> &atoms);
+    void initialize_regression_component();
+    void initialize_mixture(int num_clusters,
+                            const std::vector<Vector> &atoms,
+                            const std::vector<Ptr<CatKey>> &levels,
+                            const std::vector<VariableType> &variable_type);
 
     //===========================================================================
     // Data section
