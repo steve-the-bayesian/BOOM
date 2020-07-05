@@ -23,6 +23,16 @@
 
 namespace BOOM {
 
+  namespace {
+    void check_for_nan(const Vector &v) {
+      for (int i = 0; i < v.size(); ++i) {
+        if (std::isnan(v[i])) {
+          report_error("Found a NaN where it shouldn't exist.");
+        }
+      }
+    }
+  }
+
   //===========================================================================
   namespace MixedImputation {
 
@@ -167,6 +177,11 @@ namespace BOOM {
       for (auto &el : obs_models_) {
         el->clear_data();
       }
+    }
+
+    void CECM::update_complete_data_suf(int true_level, int observed_level) {
+      truth_model_->suf()->update_raw(true_level);
+      obs_models_[true_level]->suf()->update_raw(observed_level);
     }
 
     void CECM::sample_posterior() {
@@ -322,7 +337,8 @@ namespace BOOM {
         const std::vector<Ptr<EffectsEncoder>> &encoders,
         const Ptr<MultivariateRegressionModel> &numeric_model) {
 
-      Vector predictors(encoder->dim(), 0.0);
+      Vector &predictors(row->x());
+      predictors.resize(encoder->dim());
       int start = 0;
       if (encoder->add_intercept()) {
         predictors[0] = 1;
@@ -332,21 +348,55 @@ namespace BOOM {
       std::vector<int> imputed_categorical_data = row->true_categories();
       const std::vector<Ptr<CategoricalData>> observed_categories(
           row->observed_categories());
+
       for (int i = 0; i < encoders.size(); ++i) {
-        // TODO: check that the value of variable i is atomic before attempting to
-        // correct it.
+        // 'i' indexes the set of categorical variables in the row.
+
         VectorView view(predictors, start, encoders[i]->dim());
+
+        // truth_logp is the log probability that each level is the true value.
         Vector truth_logp = categorical_models_[i]->true_level_log_probability(
             *observed_categories[i]);
-        for (int j = 0; j < truth_logp.size(); ++j) {
-          view = encoders[i]->encode(j);
-          Vector yhat = numeric_model->predict(predictors);
-          truth_logp[i] -= 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
+
+        for (int level = 0; level < truth_logp.size(); ++level) {
+          if (std::isfinite(truth_logp[level])) {
+            encoders[i]->encode(level, view);
+            Vector yhat = numeric_model->predict(predictors);
+            truth_logp[level] -= 0.5 * numeric_model->Siginv().Mdist(y_numeric - yhat);
+          }
         }
         truth_logp.normalize_logprob();
         imputed_categorical_data[i] = rmulti_mt(rng, truth_logp);
+        view = encoders[i]->encode(imputed_categorical_data[i]);
+        if (update_complete_data_suf) {
+          categorical_models_[i]->update_complete_data_suf(
+              imputed_categorical_data[i], observed_categories[i]->value());
+        }
       }
       row->set_true_categories(imputed_categorical_data);
+    }
+
+
+    void RowModel::impute_atoms(
+        Ptr<MixedImputation::CompleteData> &row,
+        RNG &rng,
+        bool update_complete_data_suf) {
+      const Vector &observed(row->y_observed());
+      for (int i = 0; i < observed.size(); ++i) {
+        // True atom is the atom responsible for the true value.
+        int true_atom = numeric_models_[i]->impute_atom(
+            observed[i], rng, update_complete_data_suf);
+        row->set_y_true(i, numeric_models_[i]->true_value(
+            true_atom, observed[i]));
+        row->set_y_numeric(i, numeric_models_[i]->numeric_value(
+            true_atom, observed[i]));
+      }
+    }
+
+    void RowModel::sample_posterior() {
+      for (auto &el : scalar_models_) {
+        el->sample_posterior();
+      }
     }
 
   }  // namespace MixedImputation
@@ -450,13 +500,80 @@ namespace BOOM {
     int component = impute_cluster(row, rng, update_complete_data_suf);
 
     // This step will fill in the "true_categories" data element in *row.
-
     mixture_components_[component]->impute_categorical(
-        row, rng, update_complete_data_suf,
-        encoder_, encoders_, numeric_data_model_);
+        row,
+        rng,
+        update_complete_data_suf,
+        encoder_,
+        encoders_,
+        numeric_data_model_);
 
-    impute_numeric_given_categorical(
-        row, component, rng, update_complete_data_suf);
+    mixture_components_[component]->impute_atoms(
+        row, rng, update_complete_data_suf);
+
+    impute_numerics_given_atoms(row, rng, update_complete_data_suf);
+  }
+
+  void MixedDataImputer::impute_numerics_given_atoms(
+      Ptr<MixedImputation::CompleteData> &data,
+      RNG &rng,
+      bool update_complete_data_suf) {
+    ensure_swept_sigma_current();
+    // Determine which numeric values need to be imputed.  As of this point the
+    // numeric values have not been transformed to normality.
+    Vector imputed_numeric = data->y_numeric();
+    Selector observed(imputed_numeric.size(), true);
+    for (int i = 0; i < imputed_numeric.size(); ++i) {
+      if (std::isnan(imputed_numeric[i])) {
+        // Can't transform to normality.
+        observed.drop(i);
+      } else {
+        // imputed_numeric[i] = log1p(imputed_numeric[i]);
+        // Transform to normality.
+         double uniform = empirical_distributions_[i].cdf(imputed_numeric[i]);
+         double shrinkage = .999;
+         uniform = shrinkage * uniform + (1 - shrinkage) / 2.0;
+         if (uniform <= 0.0 || uniform >= 1.0) {
+           report_error("Need to shrink the extremes.");
+         }
+         imputed_numeric[i] = qnorm(uniform);
+      }
+    }
+
+    // Impute those numeric values that need imputing.
+    if (observed.nvars() < observed.nvars_possible()) {
+      Vector mean = numeric_data_model_->predict(data->x());
+      if (observed.nvars() == 0) {
+        imputed_numeric = rmvn_mt(rng, mean, numeric_data_model_->Sigma());
+      } else {
+        swept_sigma_.SWP(observed);
+        Vector conditional_mean = swept_sigma_.conditional_mean(
+            observed.select(imputed_numeric), mean);
+        Vector imputed_values = rmvn_mt(rng, conditional_mean, swept_sigma_.residual_variance());
+        observed.fill_missing_elements(imputed_numeric, imputed_values);
+      }
+
+      // Transform imputed data back to observed scale.
+      Vector y_true = data->y_true();
+      for (int i = 0; i < imputed_numeric.size(); ++i) {
+        if (std::isnan(y_true[i])) {
+          y_true[i] = empirical_distributions_[i].quantile(
+              pnorm(imputed_numeric[i]));
+          // y_true[i] = expm1(imputed_numeric[i]);
+        }
+      }
+      data->set_y_numeric(imputed_numeric);
+      data->set_y_true(y_true);
+    } else {
+      // Handle the fully observed case.
+      data->set_y_numeric(imputed_numeric);
+    }
+
+    if (update_complete_data_suf) {
+      check_for_nan(data->y_numeric());
+      numeric_data_model_->suf()->update_raw_data(
+          data->y_numeric(), data->x(), 1.0);
+    }
   }
 
   void MixedDataImputer::impute_all_rows() {
@@ -464,15 +581,6 @@ namespace BOOM {
     for (size_t i = 0; i < complete_data_.size(); ++i) {
       impute_row(complete_data_[i], rng_, true);
     }
-  }
-
-  void MixedDataImputer::impute_numeric_given_categorical(
-      Ptr<MixedImputation::CompleteData> &row,
-      int component,
-      RNG &rng,
-      bool update_complete_data_suf) {
-
-    //    report_error("Not implemented.");
   }
 
   int MixedDataImputer::impute_cluster(

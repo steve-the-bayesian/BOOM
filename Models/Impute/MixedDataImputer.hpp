@@ -26,7 +26,7 @@ namespace BOOM {
 
   namespace MixedImputation {
 
-    // Represents the true
+    // CompleteData represents the true error-corrected and imputed data values.
     class CompleteData : public Data {
      public:
 
@@ -58,13 +58,15 @@ namespace BOOM {
       // The non-atomic imputations will be inverse-transformed values of
       // y_numeric.
       const Vector &y_true() const {return y_true_;}
-      void set_y_true(const Vector &y_true);
+      void set_y_true(const Vector &y_true) {y_true_ = y_true;}
+      void set_y_true(int i, double true_value) {y_true_[i] = true_value;}
 
       // y_numeric contains imputed values on the TRANSFORMED scale for the
       // non-atomic component of the data mixtuer.  These are the values
       // modeled by the "numeric data model" contained in MixedDataImputer.
       const Vector &y_numeric() const {return y_numeric_;}
-      void set_y_numeric(const Vector &y_numeric);
+      void set_y_numeric(const Vector &y_numeric) {y_numeric_ = y_numeric;}
+      void set_y_numeric(int i, double numeric) {y_numeric_[i] = numeric;}
 
       // Levels of the categorical variables, expressed as integers.  These
       // correspond to the levels in the level key of the corresponding
@@ -79,6 +81,8 @@ namespace BOOM {
       const std::vector<Ptr<CategoricalData>> observed_categories() const {
         return observed_categories_;
       }
+
+      Vector &x() {return predictors_;}
 
      private:
       Ptr<MixedMultivariateData> observed_data_;
@@ -95,9 +99,14 @@ namespace BOOM {
 
       // The categorical data from observed_data_;
       std::vector<Ptr<CategoricalData>> observed_categories_;
+
+      // The vector of predictors formed by encoding the categorical data.
+      Vector predictors_;
     };
 
     //=========================================================================
+    // Interface class describing on element of a collection of conditionally
+    // independent distributions for elements of a mixed category data vector.
     class ErrorCorrectionModelBase : virtual public Model {
      public:
 
@@ -115,6 +124,7 @@ namespace BOOM {
       // the model.
       virtual double logp(const MixedMultivariateData &data) const = 0;
 
+      // The position (column number) of the variable that this model describes.
       int index() const {return index_;}
 
      private:
@@ -151,6 +161,10 @@ namespace BOOM {
 
       NumericErrorCorrectionModel *clone() const override;
 
+      // The marginal log density of the appropriate element of 'data'.  This
+      // density only measures the atom probabilities.  If a data element comes
+      // from the continuous portion of the density then only the fact that it
+      // is continuous contributes to the log probability.
       double logp(const MixedMultivariateData &data) const override;
 
       // The log density of the observed value.  Missing values are indicated by
@@ -175,6 +189,14 @@ namespace BOOM {
 
       const Vector &atom_probs() const {return impl_->atom_probs();}
       Matrix atom_error_probs() const {return impl_->atom_error_probs();}
+
+      double true_value(int true_atom, double observed) const {
+        return impl_->true_value(true_atom, observed);
+      }
+
+      double numeric_value(int true_atom, double observed) const {
+        return impl_->numeric_value(true_atom, observed);
+      }
 
      private:
       Ptr<ErrorCorrectionModel> impl_;
@@ -218,6 +240,8 @@ namespace BOOM {
       void sample_posterior() override;
       double logpri() const override;
       void clear_data() override;
+
+      void update_complete_data_suf(int true_level, int observed_level);
 
       // The log conditional probability distribution of the true value, given
       // the obseved value that each atom is the true value.
@@ -313,6 +337,11 @@ namespace BOOM {
           const std::vector<Ptr<EffectsEncoder>> &encoders,
           const Ptr<MultivariateRegressionModel> &numeric_model);
 
+      void impute_atoms(
+          Ptr<MixedImputation::CompleteData> &row,
+          RNG & rng,
+          bool update_complete_data_suf);
+
       // Return the requested numeric model.  The index counts only the numeric
       // variables, regardless of any intervening non-numeric variables.
       Ptr<NumericErrorCorrectionModel> numeric_model(int numeric_index) {
@@ -326,6 +355,8 @@ namespace BOOM {
           int categorical_index) {
         return categorical_models_[categorical_index];
       }
+
+      void sample_posterior() override;
 
      private:
       std::vector<Ptr<ErrorCorrectionModelBase>> scalar_models_;
@@ -412,11 +443,9 @@ namespace BOOM {
                        bool update_complete_data_suf);
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row, RNG &rng) const;
 
-    void impute_numeric_given_categorical(
-        Ptr<MixedImputation::CompleteData> &row,
-        int component,
-        RNG &rng,
-        bool update_complete_data_suf);
+    void impute_numerics_given_atoms(Ptr<MixedImputation::CompleteData> &data,
+                                     RNG &rng,
+                                     bool update_complete_data_suf);
 
     void create_encoders(const DataTable &table);
     void initialize_empirical_distributions(const DataTable &data,

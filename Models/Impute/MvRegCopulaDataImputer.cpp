@@ -131,6 +131,7 @@ namespace BOOM {
       }
     }
     observed_log_probability_table_ = log(joint_distribution_.col_sums());
+    check_for_nan(observed_log_probability_table_);
     workspace_is_current_ = true;
   }
 
