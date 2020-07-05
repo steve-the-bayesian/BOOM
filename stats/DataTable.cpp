@@ -98,11 +98,160 @@ namespace BOOM {
   }
 
   //===========================================================================
+  MixedMultivariateData::MixedMultivariateData()
+      : data_sorter_(new MixedDataOrganizer)
+  {}
+
+  MixedMultivariateData::MixedMultivariateData(
+      const Ptr<MixedDataOrganizer> &sorter,
+      const std::vector<Ptr<DoubleData>> &numerics,
+      const std::vector<Ptr<CategoricalData>> &categoricals)
+      : data_sorter_(sorter),
+        numeric_data_(numerics),
+        categorical_data_(categoricals)
+  {}
+
+  MixedMultivariateData::MixedMultivariateData(const MixedMultivariateData &rhs)
+      : data_sorter_(rhs.data_sorter_)
+  {
+    for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
+      numeric_data_.push_back(rhs.numeric_data_[i]->clone());
+    }
+    for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
+      categorical_data_.push_back(rhs.categorical_data_[i]->clone());
+    }
+  }
+
+  MixedMultivariateData &MixedMultivariateData::operator=(
+      const MixedMultivariateData &rhs) {
+    if (&rhs != this) {
+      data_sorter_ = rhs.data_sorter_;
+      numeric_data_.clear();
+      for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
+        numeric_data_.push_back(rhs.numeric_data_[i]->clone());
+      }
+
+      categorical_data_.clear();
+      for (int i = 0; i < rhs.categorical_data_.size(); ++i) {
+        categorical_data_.push_back(rhs.categorical_data_[i]->clone());
+      }
+    }
+    return *this;
+  }
+
+  MixedMultivariateData *MixedMultivariateData::clone() const {
+    return new MixedMultivariateData(*this);
+  }
+
+  std::ostream &MixedMultivariateData::display(std::ostream &out) const {
+    // TODO: consider taking greater care with field widths.
+    for (int i = 0; i < dim(); ++i) {
+      out << variable(i) << " ";
+    }
+    out << std::endl;
+    return out;
+  }
+
+  void MixedMultivariateData::add_numeric(const Ptr<DoubleData> &numeric) {
+    data_sorter_->add_variable(VariableType::numeric);
+    numeric_data_.push_back(numeric);
+  }
+
+  void MixedMultivariateData::add_categorical(
+      const Ptr<CategoricalData> &categorical) {
+    data_sorter_->add_variable(VariableType::categorical);
+    categorical_data_.push_back(categorical);
+  }
+
+  const Data &MixedMultivariateData::variable(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type == VariableType::numeric) {
+      return *numeric_data_[pos];
+    } else if (type == VariableType::categorical) {
+      return *categorical_data_[pos];
+    } else {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is neither categorical "
+          << "nor numeric.";
+      report_error(err.str());
+    }
+    return *numeric_data_[0];
+  }
+
+  const DoubleData &MixedMultivariateData::numeric(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::numeric) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not numeric.";
+      report_error(err.str());
+    }
+    return *numeric_data_[pos];
+  }
+
+  Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::numeric) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not numeric.";
+      report_error(err.str());
+    }
+    return numeric_data_[pos];
+  }
+
+  const CategoricalData &MixedMultivariateData::categorical(int i) const {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::categorical) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not categorical.";
+      report_error(err.str());
+    }
+    return *categorical_data_[pos];
+  }
+
+  Ptr<CategoricalData> MixedMultivariateData::mutable_categorical(int i) {
+    VariableType type;
+    int pos;
+    std::tie(type, pos) = data_sorter_->type_map(i);
+    if (type != VariableType::categorical) {
+      std::ostringstream err;
+      err << "Variable in position " << i << " is not categorical.";
+      report_error(err.str());
+    }
+    return categorical_data_[pos];
+  }
+
+  Vector MixedMultivariateData::numeric_data() const {
+    Vector ans(numeric_data_.size());
+    for (int i = 0; i < numeric_data_.size(); ++i) {
+      ans[i] = numeric_data_[i]->value();
+    }
+    return ans;
+  }
+
+  //===========================================================================
   CategoricalVariable::CategoricalVariable(
       const std::vector<std::string> &raw_data)
       : key_(make_catkey(raw_data)) {
     for (int i = 0; i < raw_data.size(); ++i) {
       Ptr<CategoricalData> dp = new CategoricalData(raw_data[i], key_);
+      data_.push_back(dp);
+    }
+  }
+
+  CategoricalVariable::CategoricalVariable(
+      const std::vector<int> &values,
+      const Ptr<CatKey> &key)
+      : key_(key) {
+    for (const auto &el : values) {
+      NEW(CategoricalData, dp)(el, key_);
       data_.push_back(dp);
     }
   }
@@ -381,6 +530,14 @@ namespace BOOM {
     return categorical_variables_[index][0]->nlevels();
   }
 
+  int DataTable::numeric_dim() const {
+    return data_organizer_->number_of_numeric_fields();
+  }
+
+  int DataTable::categorical_dim() const {
+    return data_organizer_->number_of_categorical_fields();
+  }
+
   int DataTable::nrow() const {
     if (numeric_variables_.empty() && categorical_variables_.empty()) {
       return 0;
@@ -453,6 +610,18 @@ namespace BOOM {
   //   set_order(ans, ord);
   //   return ans;
   // }
+
+  Ptr<MixedMultivariateData> DataTable::row(uint row_index) const {
+    std::vector<Ptr<DoubleData>> numerics;
+    for (int i = 0; i < numeric_variables_.size(); ++i) {
+      numerics.push_back(new DoubleData(numeric_variables_[i][row_index]));
+    }
+    std::vector<Ptr<CategoricalData>> categoricals;
+    for (int i = 0; i < categorical_variables_.size(); ++i) {
+      categoricals.push_back(categorical_variables_[i][row_index]);
+    }
+    return new MixedMultivariateData(data_organizer_, numerics, categoricals);
+  }
 
   //------------------------------------------------------------
   std::ostream &DataTable::print(std::ostream &out, uint from, uint to) const {

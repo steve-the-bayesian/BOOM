@@ -15,6 +15,7 @@ namespace BayesBoom {
   void stats_def(py::module &);
 
   void Model_def(py::module &);
+  void Data_def(py::module &);
   void Parameter_def(py::module &);
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
@@ -33,6 +34,10 @@ namespace BayesBoom {
     // Calling these functions here defines the classes in the module.
     distribution_def(boom);
     LinAlg_def(boom);
+
+    Data_def(boom);
+    // stats includes DataTable, which inherits from Data.  Thus it must be
+    // defined after Models, where the Data class is defined.
     stats_def(boom);
 
     Model_def(boom);

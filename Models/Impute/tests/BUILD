@@ -18,3 +18,12 @@ cc_test(
     includes = ["@gtest"],
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "mixed_imputer_test",
+    srcs = ["mixed_imputer_test.cc"],
+    copts = COPTS,
+    linkopts=["-fsanitize=thread"],
+    includes = ["@gtest"],
+    deps = COMMON_DEPS,
+)

@@ -27,12 +27,12 @@
 #include "Models/Policies/SufstatDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
-#include "Models/Glm/Encoders.hpp"
 
 #include "LinAlg/Array.hpp"
 
 #include "distributions/rng.hpp"
 #include "stats/DataTable.hpp"
+#include "stats/Encoders.hpp"
 
 namespace BOOM {
 
