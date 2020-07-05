@@ -1,15 +1,22 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <pybind11/eigen.h>
+
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+
 #include "stats/Spline.hpp"
 #include "stats/Bspline.hpp"
 #include "stats/moments.hpp"
+#include "stats/DataTable.hpp"
 #include "stats/IQagent.hpp"
+
+#include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
+PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 
 namespace BayesBoom {
   using namespace BOOM;
@@ -24,11 +31,11 @@ namespace BayesBoom {
              "Returns the correlation matrix of the data in a boom.Matrix.");
 
     boom.def("mean", [](const Vector &m){return mean(m);},
-             "Returns the mean ofa boom.Vector.");
+             "Returns the mean of a boom.Vector.");
     boom.def("var", [](const Vector &m){return mean(m);},
-             "Returns the variance ofa boom.Vector.");
+             "Returns the variance of a boom.Vector.");
     boom.def("sd", [](const Vector &m){return mean(m);},
-             "Returns the standard deviation ofa boom.Vector.");
+             "Returns the standard deviation of a boom.Vector.");
 
     py::class_<SplineBase> (boom, "SplineBase")
         .def("basis", &SplineBase::basis, py::arg("x: float"),
@@ -122,7 +129,11 @@ namespace BayesBoom {
 
               return IQagent(state);
             }))
-        .def("add", &IQagent::add, py::arg("x"),
+        .def("add",
+             [](IQagent &agent, double x) {
+               agent.add(x);
+             },
+             py::arg("x"),
              "Args:\n"
              "  x: A data point to add to the empirical distribution.")
         .def("quantile", &IQagent::quantile, py::arg("prob"),
@@ -134,6 +145,59 @@ namespace BayesBoom {
         .def("update_cdf", &IQagent::update_cdf,
              "Merge the data buffer into the CDF.  Update the CDF estimate.  "
              "Clear the data buffer.")
+        ;
+
+
+    py::class_<DataTable,
+               Data,
+               Ptr<DataTable>>(boom, "DataTable")
+        .def(py::init(
+            []() {return new DataTable;}),
+             "Default constructor.")
+        .def("add_numeric",
+             [](DataTable &table,
+                const Vector &values,
+                const std::string &name) {
+               table.append_variable(values, name);
+             },
+             py::arg("values"),
+             py::arg("name"),
+             "Args:\n"
+             "  values: The numeric values to append.\n"
+             "  name: The name of the numeric variable.\n")
+        .def("add_categorical",
+             [](DataTable &table,
+                const std::vector<int> &values,
+                const std::vector<std::string> &labels,
+                const std::string &name){
+               NEW(CatKey, key)(labels);
+               table.append_variable(CategoricalVariable(values, key), name);
+             },
+             py::arg("values"),
+             py::arg("labels"),
+             py::arg("name"),
+             "Args:\n"
+             "  values:  The numeric codes of the categorical variables.\n"
+             "  labels:  The labels corresponding to the unique values in "
+             "'values.'\n"
+             "  name:  The name of the categorical variable.")
+        .def("add_categorical_from_labels",
+             [](DataTable &table,
+                const std::vector<std::string> &values,
+                const std::string &name) {
+               table.append_variable(CategoricalVariable(values), name);
+             },
+             py::arg("values"),
+             py::arg("name"),
+             "Args:\n"
+             "  values:  The values (as strings) of the variable to be added.\n"
+             "  name:  The name of the categorical variable.")
+        .def_property_readonly(
+            "nrow", &DataTable::nobs,
+            "Number of rows (observations) in the table.")
+        .def_property_readonly(
+            "ncol", &DataTable::nvars,
+            "Number of columns (variables) in the table.")
         ;
 
   }  // ends the Spline_def function.
