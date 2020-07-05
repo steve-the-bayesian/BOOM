@@ -48,13 +48,22 @@ namespace BOOM {
     return encode(data.value());
   }
 
+  void EffectsEncoder::encode(const CategoricalData &data, VectorView view) const {
+    return encode(data.value(), view);
+  }
+
   Vector EffectsEncoder::encode(int level) const {
+    Vector ans(dim());
+    encode(level, VectorView(ans));
+    return ans;
+  }
+
+  void EffectsEncoder::encode(int level, VectorView view) const {
     if (level == key_->max_levels() - 1) {
-      return Vector(dim(), -1);
+      view = -1;
     } else {
-      Vector ans(dim(), 0.0);
-      ans[level] = 1.0;
-      return ans;
+      view = 0.0;
+      view[level] = 1.0;
     }
   }
 
@@ -74,13 +83,19 @@ namespace BOOM {
     return encode(row.categorical(which_variable()));
   }
 
+  void EffectsEncoder::encode_row(
+      const MixedMultivariateData &row, VectorView view) const {
+    encode(row.categorical(which_variable()), view);
+  }
+
   //===========================================================================
   InteractionEncoder::InteractionEncoder(
       const Ptr<DataEncoder> &encoder1, const Ptr<DataEncoder> &encoder2)
       : encoder1_(encoder1),
-        encoder2_(encoder2)
+        encoder2_(encoder2),
+        wsp1_(encoder1->dim()),
+        wsp2_(encoder2->dim())
   {}
-
 
   //===========================================================================
   Matrix DatasetEncoder::encode_dataset(const DataTable &table) const {
@@ -98,18 +113,22 @@ namespace BOOM {
     return ans;
   }
 
-
-  Vector DatasetEncoder::encode_row(const MixedMultivariateData &data) const {
-    Vector ans(dim());
+  void DatasetEncoder::encode_row(const MixedMultivariateData &data,
+                                  VectorView ans) const {
     if (add_intercept_) {
-      ans[0] = 1;
+      ans[0] = 1.0;
     }
     int start = add_intercept_;
     for (size_t i = 0; i < encoders_.size(); ++i) {
-      VectorView(ans, start, encoders_[i]->dim()) =
-          encoders_[i]->encode_row(data);
+      VectorView view(ans, start, encoders_[i]->dim());
+      encoders_[i]->encode_row(data, view);
       start += encoders_[i]->dim();
     }
+  }
+
+  Vector DatasetEncoder::encode_row(const MixedMultivariateData &data) const {
+    Vector ans(dim());
+    encode_row(data, VectorView(ans));
     return ans;
   }
 }  // namespace BOOM
