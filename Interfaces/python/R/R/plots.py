@@ -494,7 +494,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
     nvars = data.shape[1]
     nr, nc = plot_grid_size(nvars)
-    fig, ax = plt.subplots(nr, nc)
+    _, ax = plt.subplots(nr, nc)
 
     def is_all_missing(y):
         return y.count() == 0
