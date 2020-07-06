@@ -151,7 +151,8 @@ class LocalLinearTrendStateModel(StateModel):
         if not isinstance(initial_slope_prior, boom.GaussianModel):
             raise Exception("Unexpected type for initial_slope_prior.")
 
-    def _compute_sdy(self, sdy, y, which_prior):
+    @staticmethod
+    def _compute_sdy(sdy, y, which_prior):
         """
         Return the standard deviation of y, computing it if and only if needed.
         """

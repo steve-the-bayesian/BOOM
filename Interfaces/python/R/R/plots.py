@@ -239,11 +239,11 @@ def pretty_plot_ticks(low, high, n):
     Taken from StackOverflow:
     https://stackoverflow.com/questions/43075617/python-function-equivalent-to-rs-pretty
     """
-    def nicenumber(x, round):
+    def nicenumber(x, round_result: bool):
         exp = np.floor(np.log10(x))
         f = x / 10**exp
 
-        if round:
+        if round_result:
             if f < 1.5:
                 nf = 1.
             elif f < 3.:
@@ -264,8 +264,8 @@ def pretty_plot_ticks(low, high, n):
 
         return nf * 10.**exp
 
-    range = nicenumber(high - low, False)
-    d = nicenumber(range / (n - 1), True)
+    num_range = nicenumber(high - low, False)
+    d = nicenumber(num_range / (n - 1), True)
     miny = np.floor(low / d) * d
     maxy = np.ceil(high / d) * d
     return np.arange(miny, maxy+0.5*d, d)
