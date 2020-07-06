@@ -78,10 +78,11 @@ class LocalLinearTrendStateModel(StateModel):
         self.sigma_slope = np.empty(niter)
         self.state_contribution = np.empty((niter, time_dimension))
 
-    def record_state(self, i, state_matrix):
-        self.sigma_level[i] = self._state_model.sigma_level
-        self.sigma_slope[i] = self._state_model.sigma_slope
-        self.state_contribution[i, :] = state_matrix[self._state_index, :]
+    def record_state(self, iteration, state_matrix):
+        self.sigma_level[iteration] = self._state_model.sigma_level
+        self.sigma_slope[iteration] = self._state_model.sigma_slope
+        self.state_contribution[iteration, :] = state_matrix[
+            self._state_index, :]
 
     def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
         if burn > 0:

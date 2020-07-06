@@ -79,13 +79,14 @@ class LocalLevelStateModel(StateModel):
         self.sigma_draws = np.zeros(niter)
         self.state_contribution = np.zeros((niter, time_dimension))
 
-    def record_state(self, i, state_matrix):
-        self.sigma_draws[i] = self._state_model.sigma
+    def record_state(self, iteration, state_matrix):
+        self.sigma_draws[iteration] = self._state_model.sigma
         if self._state_index < 0:
             raise Exception("Each state model must be told where its state"
                             "component begins in the global state vector.  "
                             "Try calling set_state_index.")
-        self.state_contribution[i, :] = state_matrix[self._state_index, :]
+        self.state_contribution[iteration, :] = state_matrix[
+            self._state_index, :]
 
     def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
         if burn > 0:

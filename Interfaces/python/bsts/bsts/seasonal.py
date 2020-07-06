@@ -92,9 +92,10 @@ class SeasonalStateModel(StateModel):
         self.sigma_draws = np.zeros(niter)
         self.state_contribution = np.zeros((niter, time_dimension))
 
-    def record_state(self, i, state_matrix):
-        self.sigma_draws[i] = self._state_model.sigma
-        self.state_contribution[i, :] = state_matrix[self._state_index, :]
+    def record_state(self, iteration, state_matrix):
+        self.sigma_draws[iteration] = self._state_model.sigma
+        self.state_contribution[iteration, :] = state_matrix[
+            self._state_index, :]
 
     def plot_state_contribution(self, ax, **kwargs):
         pass
