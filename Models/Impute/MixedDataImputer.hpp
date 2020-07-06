@@ -32,7 +32,7 @@ namespace BOOM {
 
       // Args:
       //   data:  The observed data to be corrected.
-      CompleteData(const Ptr<MixedMultivariateData> &observed);
+      explicit CompleteData(const Ptr<MixedMultivariateData> &observed);
       CompleteData(const CompleteData &rhs);
       CompleteData & operator=(const CompleteData &rhs);
 

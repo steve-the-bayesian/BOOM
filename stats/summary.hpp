@@ -76,9 +76,10 @@ namespace BOOM {
   class NumericSummary : public VariableSummary {
    public:
     NumericSummary();
-    NumericSummary(const Vector &x,
-                   const Vector &probs = {.001, .01, .025, .05, .1, .25, .5,
-                         .75, .9, .975, .99, .999});
+    explicit NumericSummary(
+        const Vector &x,
+        const Vector &probs = {.001, .01, .025, .05, .1, .25, .5, .75, .9,
+              .975, .99, .999});
     void summarize(const Vector &x);
     double mean() const {return mean_;}
     double sd() const {return sd_;}
@@ -107,7 +108,7 @@ namespace BOOM {
   class CategoricalSummary : public VariableSummary {
    public:
     CategoricalSummary();
-    CategoricalSummary(const CategoricalVariable &x);
+    explicit CategoricalSummary(const CategoricalVariable &x);
     void summarize(const CategoricalVariable &x);
     void collapse(int max_levels);
 
