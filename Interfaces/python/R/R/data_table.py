@@ -5,8 +5,8 @@ from pandas.api.types import (
     is_numeric_dtype, is_categorical_dtype, is_object_dtype, is_bool_dtype
 )
 import time
-import pickle
-import pdb
+import pickle  # nosec
+
 
 def create_data_table(data: pd.DataFrame):
     """
@@ -111,7 +111,7 @@ class AutoClean:
         Load a previously fit model from a pickle file.
         """
         with open(filename, "rb") as f:
-            return pickle.load(f)
+            return pickle.load(f)   # nosec
 
     @property
     def nclusters(self):
