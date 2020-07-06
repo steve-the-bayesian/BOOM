@@ -100,7 +100,8 @@ class SeasonalStateModel(StateModel):
     def plot_state_contribution(self, ax, **kwargs):
         pass
 
-    def _default_sigma_prior(self, sdy):
+    @staticmethod
+    def _default_sigma_prior(sdy):
         """
         The default prior to use for the innovation standard deviation.
         """

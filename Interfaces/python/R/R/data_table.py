@@ -331,7 +331,8 @@ class AutoClean:
         counts = np.ones(self.nclusters)
         self._model.set_mixing_weight_prior(boom.Vector(counts))
 
-    def _default_atom_prior(self, atoms):
+    @staticmethod
+    def _default_atom_prior(atoms):
         """
         The default prior on which atom is the 'truth' places 90% probability on
         the continuous atom and splits the remainder equally on the discrete
@@ -342,13 +343,14 @@ class AutoClean:
         if number_of_atoms > 0:
             ans *= 0.1 / number_of_atoms
             ans[-1] = 0.9
-        for i in range(len(atoms)):
-            atom_int = str(int(atoms[i]))
+        for i, atom in enumerate(atoms):
+            atom_int = str(int(atom))
             if atom_int.startswith("999") and atom_int.endswith("999"):
                 ans[i] = -1
         return ans * 100
 
-    def _default_atom_error_prior(self, number_of_atoms):
+    @staticmethod
+    def _default_atom_error_prior(number_of_atoms):
         """
         The default prior on the conditional distribution of which atom is
         observed, given which atom is true.
@@ -367,7 +369,8 @@ class AutoClean:
         ans[number_of_atoms, :] = 1.0
         return ans
 
-    def _default_level_prior(self, levels):
+    @staticmethod
+    def _default_level_prior(levels):
         """
         The default prior is that all levels are equally likely, except for
         all-blank levels which have prior probability 0.
@@ -385,7 +388,8 @@ class AutoClean:
         counts[all_blanks] = -1
         return counts
 
-    def _default_level_observation_prior(self, levels):
+    @staticmethod
+    def _default_level_observation_prior(levels):
         """
         The default prior splits prior probability equally between the current
         label and the implicit "missing" label in the final column.
