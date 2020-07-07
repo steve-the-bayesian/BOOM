@@ -19,7 +19,8 @@ def create_data_table(data: pd.DataFrame):
         dt = dtypes[i]
         vname = data.columns[i]
         if is_numeric_dtype(dt) or is_bool_dtype(dt):
-            ans.add_numeric(boom.Vector(data.iloc[:, i].values), vname)
+            ans.add_numeric(boom.Vector(data.iloc[:, i].values.astype("float")),
+                            vname)
         elif is_categorical_dtype(dt):
             x = data.iloc[:, i]
             values = x.cat.codes
@@ -120,7 +121,7 @@ class AutoClean:
         return self._model.nclusters
 
     def train_model(self, data: pd.DataFrame, nclusters: int, niter: int,
-                    checkpoint_filename: str = ""):
+                    ping: int = 0, checkpoint_filename: str = ""):
         self._start_time = time.time()
         if self._dtypes is None:
             self._dtypes = data.dtypes
@@ -145,8 +146,9 @@ class AutoClean:
 
         print("about to start mcmc")
         for i in range(niter):
-            sep = "=-=-=-=-=-=-=-=-="
-            print(f"{sep} {time.asctime()} Iteration {i} {sep}")
+            if (ping > 0) and (i % ping == 0):
+                sep = "=-=-=-=-=-=-=-=-="
+                print(f"{sep} {time.asctime()} Iteration {i} {sep}")
             self._model.sample_posterior()
             self._record_draws(i)
             if i % niter == 0 and checkpoint_filename != "":

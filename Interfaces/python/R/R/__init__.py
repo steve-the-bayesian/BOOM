@@ -27,6 +27,10 @@ from .plots import (
     points,
     )
 
-from .probability import dnorm, pnorm, qnorm, rmarkov, rnorm
+from .probability import (
+    dnorm, pnorm, qnorm, rnorm,
+    dgamma, pgamma, qgamma, rgamma,
+    rmarkov,
+)
 
 from .stats import density

@@ -85,7 +85,7 @@ namespace BOOM {
 
     Matrix encode_dataset(const DataTable &data) const override;
     Vector encode_row(const MixedMultivariateData &row) const override;
-    void  encode_row(const MixedMultivariateData &row, VectorView view) const override;
+    void encode_row(const MixedMultivariateData &row, VectorView view) const override;
 
    private:
     Ptr<CatKeyBase> key_;

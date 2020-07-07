@@ -11,6 +11,7 @@
 #include "stats/moments.hpp"
 #include "stats/DataTable.hpp"
 #include "stats/IQagent.hpp"
+#include "stats/Encoders.hpp"
 
 #include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
@@ -198,6 +199,63 @@ namespace BayesBoom {
         .def_property_readonly(
             "ncol", &DataTable::nvars,
             "Number of columns (variables) in the table.")
+        ;
+
+    py::class_<DataEncoder, Ptr<DataEncoder>>(boom, "DataEncoder")
+        .def_property_readonly(
+            "dim", &DataEncoder::dim,
+            "The number of columns in the encoded matrix output by the "
+            "encoder.")
+        .def("encode_dataset",
+             &DataEncoder::encode_dataset,
+             py::arg("data"),
+             "Encode the (mixed type) data table into a numeric predictor "
+             "matrix.\n\n"
+             "Args:\n"
+             "  data:  The boom.DataTable object to be encoded.\n")
+        ;
+
+    py::class_<MainEffectsEncoder, DataEncoder, Ptr<MainEffectsEncoder>>(
+        boom, "MainEffectsEncoder")
+        ;
+
+    py::class_<EffectsEncoder, MainEffectsEncoder, Ptr<EffectsEncoder>>(
+        boom, "EffectsEncoder")
+        .def(py::init(
+            [](int which_variable, const std::vector<std::string> &levels) {
+              NEW(CatKey, key)(levels);
+              return new EffectsEncoder(which_variable, key);
+            }),
+             py::arg("which_variable"),
+             py::arg("levels"),
+             "Args:\n"
+             "  which_variable: The position of the input variable in the "
+             "data table.\n"
+             "  levels: The set of levels (as strings) to be encoded.  The \n"
+             "    last level listed will be the reference level.\n")
+        .def("encode", [](const EffectsEncoder &encoder, int level) {
+            return encoder.encode(level);
+          },
+          "Encode a categorical value by its integer code.")
+        ;
+
+    py::class_<DatasetEncoder, DataEncoder, Ptr<DatasetEncoder>>(
+        boom, "DatasetEncoder")
+        .def(py::init(
+            [](std::vector<Ptr<DataEncoder>> &encoders,
+               bool add_intercept) {
+              NEW(DatasetEncoder, encoder)(add_intercept);
+              for (const auto &el : encoders) {
+                encoder->add_encoder(el);
+              }
+              return encoder;
+            }),
+             py::arg("encoders"),
+             py::arg("add_intercept") = true,
+             "Args: \n"
+             "  encoders:  The encoders that produce individual effects.\n"
+             "  add_intercept: If True then a column of 1's is prepended \n"
+             "    to the beginning of the output matrix.\n")
         ;
 
   }  // ends the Spline_def function.
