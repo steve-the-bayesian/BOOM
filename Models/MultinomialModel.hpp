@@ -75,8 +75,6 @@ namespace BOOM {
 
     explicit MultinomialModel(const MultinomialSuf &suf);
 
-    template <class Fwd>  // iterator promotable to uint
-    MultinomialModel(Fwd b, Fwd e);
     MultinomialModel(const MultinomialModel &rhs);
     MultinomialModel *clone() const override;
 
@@ -108,20 +106,5 @@ namespace BOOM {
     void check_logp() const;
   };
 
-  template <class Fwd>  // iterator promotable to uint
-  MultinomialModel::MultinomialModel(Fwd b, Fwd e)
-      : ParamPolicy(new VectorParams(1)),
-        DataPolicy(new MultinomialSuf(1)),
-        PriorPolicy() {
-    std::vector<uint> uivec(b, e);
-    std::vector<Ptr<CategoricalData> > dvec(make_catdat_ptrs(uivec));
-
-    uint nlev = dvec[0]->nlevels();
-    Vector probs(nlev, 1.0 / nlev);
-    set_pi(probs);
-
-    set_data(dvec);
-    mle();
-  }
 }  // namespace BOOM
 #endif  // BOOM_MULTINOMIAL_MODEL_HPP

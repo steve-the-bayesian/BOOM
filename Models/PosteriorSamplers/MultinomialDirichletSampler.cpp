@@ -86,7 +86,11 @@ namespace BOOM {
         total += ans[i];
       }
     }
-    ans /= total;
+    if (total > 0) {
+      ans /= total;
+    } else {
+      report_error("Total was not positive.");
+    }
     model_->set_pi(ans);
   }
 

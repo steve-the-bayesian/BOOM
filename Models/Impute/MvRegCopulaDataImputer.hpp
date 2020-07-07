@@ -329,6 +329,8 @@ namespace BOOM {
     // used to generate workers for multi-threaded runs.
     MvRegCopulaDataImputer(const MvRegCopulaDataImputer &rhs);
 
+    ~MvRegCopulaDataImputer();
+
     MvRegCopulaDataImputer *clone() const override;
 
     int xdim() const {return complete_data_model_->xdim();}
@@ -409,6 +411,7 @@ namespace BOOM {
 
     Matrix impute_data_set(const std::vector<Ptr<MvRegData>> &data);
 
+    //--------------------------------------------------------------------------
     // Code needed to save/restore models.
     const std::vector<IQagent> empirical_distributions() const {
       return empirical_distributions_;
@@ -422,6 +425,7 @@ namespace BOOM {
     void restore_empirical_distributions(
         const std::vector<IqAgentState> &state);
 
+    //--------------------------------------------------------------------------
     void setup_worker_pool(int nworkers);
     void shut_down_worker_pool();
 
@@ -429,6 +433,8 @@ namespace BOOM {
     cluster_mixture_component(int s) const {
       return *cluster_mixture_components_[s];
     }
+
+    int id() const {return worker_id_;}
 
    private:
     // Describes the component to which each observation belongs.  This model
@@ -469,11 +475,16 @@ namespace BOOM {
     // ======================================================================
     // Threading section
     // ======================================================================
+
+    // If the object is a worker then the workers_ vector is empty and the
+    // thread pool has no threads.
     std::vector<Ptr<MvRegCopulaDataImputer>> workers_;
     ThreadWorkerPool thread_pool_;
+    int worker_id_;
 
     // These methods are here to implemente multi-threading.
     void impute_latent_data_multithreaded();
+
     void distribute_data_to_workers();
     void ensure_data_distribution();
     void broadcast_parameters();

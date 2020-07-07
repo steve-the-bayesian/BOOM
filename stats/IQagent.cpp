@@ -30,7 +30,7 @@ typedef vector<double>::const_iterator CIT;
 namespace BOOM {
 
   IQagent::IQagent(uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(Vector(0)) {
+      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(Vector(1, 0.0)) {
     set_default_probs();
     quantiles_.resize(probs_.size());
   }
@@ -64,7 +64,16 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void IQagent::add(double x) {
     data_buffer_.push_back(x);
-    if (data_buffer_.size() > max_buffer_size_) update_cdf();
+    if (data_buffer_.size() > max_buffer_size_) {
+      update_cdf();
+    }
+  }
+  //----------------------------------------------------------------------
+  void IQagent::add(const Vector &x) {
+    std::copy(x.begin(), x.end(), std::back_inserter(data_buffer_));
+    if (data_buffer_.size() > max_buffer_size_) {
+      update_cdf();
+    }
   }
   //----------------------------------------------------------------------
   inline double interp_q(double p, double p0, double p1, double q0, double q1) {

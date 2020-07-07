@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "Models/Glm/Encoders.hpp"
+#include "stats/Encoders.hpp"
 #include "LinAlg/Selector.hpp"
 #include "distributions.hpp"
 

@@ -34,6 +34,9 @@ namespace BOOM {
     virtual ~DataEncoder() {}
     virtual int dim() const = 0;
     virtual Matrix encode_dataset(const DataTable &data) const = 0;
+    virtual Vector encode_row(const MixedMultivariateData &data) const = 0;
+    virtual void encode_row(
+        const MixedMultivariateData &data, VectorView v) const = 0;
 
    private:
     friend void intrusive_ptr_add_ref(DataEncoder *d) {d->up_count();}
@@ -52,7 +55,7 @@ namespace BOOM {
     explicit MainEffectsEncoder(int which_variable):
         which_variable_(which_variable)
     {}
-
+    virtual MainEffectsEncoder * clone() const = 0;
     int which_variable() const {return which_variable_;}
 
    private:
@@ -64,12 +67,25 @@ namespace BOOM {
    public:
     // The reference level is the last listed level in key.
     explicit EffectsEncoder(int which_variable, const Ptr<CatKeyBase> &key);
+    EffectsEncoder(const EffectsEncoder &rhs);
+    EffectsEncoder &operator=(const EffectsEncoder &rhs);
+    EffectsEncoder(EffectsEncoder &&rhs) = default;
+    EffectsEncoder & operator=(EffectsEncoder &&rhs) = default;
+
+    EffectsEncoder * clone() const override;
 
     int dim() const override;
     Vector encode(const CategoricalData &data) const;
+    void encode(const CategoricalData &data, VectorView view) const;
+
     Vector encode(int level) const;
+    void encode(int level, VectorView view) const;
+
     Matrix encode(const CategoricalVariable &variable) const;
+
     Matrix encode_dataset(const DataTable &data) const override;
+    Vector encode_row(const MixedMultivariateData &row) const override;
+    void encode_row(const MixedMultivariateData &row, VectorView view) const override;
 
    private:
     Ptr<CatKeyBase> key_;
@@ -99,15 +115,36 @@ namespace BOOM {
       return ans;
     }
 
+    void encode_row(const MixedMultivariateData &data, VectorView ans) const {
+      encoder1_->encode_row(data, VectorView(wsp1_));
+      encoder2_->encode_row(data, VectorView(wsp2_));
+      int index = 0;
+      for (int i = 0; i < wsp1_.size(); ++i) {
+        for (int j = 0; j < wsp2_.size(); ++j) {
+          ans[index++] = wsp1_[i] * wsp2_[j];
+        }
+      }
+    }
+
+    Vector encode_row(const MixedMultivariateData &data) const {
+      Vector ans(dim());
+      encode_row(data, VectorView(ans));
+      return ans;
+    }
+
    private:
     Ptr<DataEncoder> encoder1_;
     Ptr<DataEncoder> encoder2_;
+    mutable Vector wsp1_, wsp2_;
   };
 
   //===========================================================================
   class DatasetEncoder : public DataEncoder {
    public:
-    DatasetEncoder() : dim_(0) {}
+    DatasetEncoder(bool add_intercept = true)
+        : dim_(add_intercept),
+          add_intercept_(add_intercept)
+    {}
 
     void add_encoder(const Ptr<DataEncoder> &encoder) {
       encoders_.push_back(encoder);
@@ -115,11 +152,18 @@ namespace BOOM {
     }
 
     int dim() const override {return dim_;}
+    bool add_intercept() const {return add_intercept_;}
 
     Matrix encode_dataset(const DataTable &data) const override;
+    Vector encode_row(const MixedMultivariateData &row) const override;
+    void encode_row(
+        const MixedMultivariateData &row, VectorView ans) const override;
+
+    const std::vector<Ptr<DataEncoder>> &encoders() const {return encoders_;}
 
    private:
     int dim_;
+    bool add_intercept_;
     std::vector<Ptr<DataEncoder>> encoders_;
   };
 

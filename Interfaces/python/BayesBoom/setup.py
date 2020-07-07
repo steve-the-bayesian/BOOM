@@ -210,6 +210,7 @@ boom_extension_sources = (
     + glob("pybind11/Models/Impute/*.cpp")
     + glob("pybind11/Models/StateSpace/*.cpp")
     + glob("pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob("pybind11/Models/TimeSeries/*.cpp")
     + glob("pybind11/LinAlg/*.cpp")
     + glob("pybind11/stats/*.cpp")
     + glob("pybind11/distributions/*.cpp")
@@ -326,6 +327,10 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
+
+            # For deubgging purposes only.  Do not submit code with this option
+            # present.
+            # opts.append("-O0")
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())  # noqa
         for ext in self.extensions:

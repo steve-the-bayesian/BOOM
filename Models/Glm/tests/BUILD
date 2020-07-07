@@ -37,17 +37,6 @@ cc_test(
 )
 
 cc_test(
-    name = "encoder_test",
-    srcs = ["encoder_test.cc"],
-    copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
-)
-
-cc_test(
     name = "glm_coefs_test",
     srcs = ["glm_coefs_test.cc"],
     copts = COPTS,

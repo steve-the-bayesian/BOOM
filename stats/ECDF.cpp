@@ -19,6 +19,7 @@
 
 #include "stats/ECDF.hpp"
 #include <algorithm>
+#include <cmath>
 #include "cpputil/report_error.hpp"
 
 namespace BOOM {
@@ -27,6 +28,14 @@ namespace BOOM {
       : sorted_data_(unsorted_data) {
     if (sorted_data_.empty()) {
       report_error("ECDF cannot be built from empty vector.");
+    }
+    // Remove any NaN's from the data.
+    sorted_data_.erase(
+        std::remove_if(sorted_data_.begin(), sorted_data_.end(),
+                       [](double x){return std::isnan(x);}),
+        sorted_data_.end());
+    if (sorted_data_.empty()) {
+      report_error("ECDF passed all NaN's.");
     }
     std::sort(sorted_data_.begin(), sorted_data_.end());
   }

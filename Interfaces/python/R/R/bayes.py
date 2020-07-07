@@ -43,3 +43,76 @@ class SdPrior:
     def create_chisq_model(self):
         import BayesBoom as boom
         return boom.ChisqModel(self.sample_size, self.sigma_guess)
+
+    def boom(self):
+        """
+        Return the boom.ChisqModel corresponding to the input parameters.
+        """
+        import BayesBoom as boom
+        return boom.ChisqModel(self.sample_size, self.sigma_guess)
+
+
+class NormalPrior:
+    def __init__(self,
+                 mu: float = 0.0,
+                 sigma: float = 1.0,
+                 initial_value: float = None):
+        self.mu = mu
+        self.sigma = sigma
+        self.initial_value = initial_value
+        if initial_value is None:
+            self.initial_value = mu
+
+    @property
+    def mean(self):
+        return self.mu
+
+    @property
+    def sd(self):
+        return self.sigma
+
+    def boom(self):
+        """
+        Return the boom.GaussianModel corresponding to the object's parameters.
+        """
+        import BayesBoom as boom
+        return boom.GaussianModel(self.mu, self.sigma)
+
+
+class Ar1CoefficientPrior:
+    """
+    Contains the information needed to create a prior distribution on an AR1
+    coefficient.
+    """
+    def __init__(self,
+                 mu: float = 0.0,
+                 sigma: float = 1.0,
+                 force_stationary: bool = True,
+                 force_positive: bool = False,
+                 initial_value: float = None):
+        """
+        Args:
+          mu: The prior mean of the coefficient.
+          sigma:  The prior standard deviation of the coefficient.
+          force_stationary: If True then the prior support for the AR1
+            coefficient will be truncated to (-1, 1).
+          force_positive: If True then the prior for the AR1 coefficient will
+            be truncated to positive values.
+          initial_value: A suggestion about where to start an MCMC sampling
+            run.  The default is to use mu.
+        """
+        self.mu = mu
+        self.sigma = sigma
+        self.force_stationary = force_stationary
+        self.force_positive = force_positive
+        self.initial_value = initial_value
+        if initial_value is None:
+            self.initial_value = mu
+
+    def boom(self):
+        """
+        Return the boom.GaussianModel corresponding to this object's
+        parameters.
+        """
+        import BayesBoom as boom
+        return boom.GaussianModel(self.mu, self.sigma)

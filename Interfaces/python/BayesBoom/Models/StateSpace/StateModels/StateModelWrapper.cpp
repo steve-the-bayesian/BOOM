@@ -2,6 +2,7 @@
 
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
@@ -179,6 +180,55 @@ namespace BayesBoom {
              "  variance: The variance matrix is this constant times the "
              "identity.\n")
              ;
+
+    py::class_<SemilocalLinearTrendStateModel,
+               StateModel,
+               PriorPolicy,
+               BOOM::Ptr<SemilocalLinearTrendStateModel>>(
+                   boom, "SemilocalLinearTrendStateModel")
+        .def(py::init(
+            [](const Ptr<ZeroMeanGaussianModel> &level,
+               const Ptr<NonzeroMeanAr1Model> &slope) {
+              return new SemilocalLinearTrendStateModel(
+                  level, slope);
+            }))
+        .def_property_readonly(
+            "state_dimension",
+            &SemilocalLinearTrendStateModel::state_dimension,
+            "Dimension of the state vector.")
+        .def_property_readonly(
+            "state_error_dimension",
+            &SemilocalLinearTrendStateModel::state_error_dimension,
+            "Dimension of the error term for this state component.")
+        .def("set_initial_level_mean",
+             &SemilocalLinearTrendStateModel::set_initial_level_mean,
+             "Set the prior mean of the level component at time 0.")
+        .def("set_initial_level_sd",
+             &SemilocalLinearTrendStateModel::set_initial_level_sd,
+             "Set the prior standard deviation of the level component "
+             "at time 0.")
+        .def("set_initial_slope_mean",
+             &SemilocalLinearTrendStateModel::set_initial_slope_mean,
+             "Set the prior mean of the slope component at time 0.")
+        .def("set_initial_slope_sd",
+             &SemilocalLinearTrendStateModel::set_initial_slope_sd,
+             "Set the prior standard deviation of the slope component at "
+             "time 0.")
+        .def_property_readonly(
+            "level_sd", &SemilocalLinearTrendStateModel::level_sd,
+            "Innovation standard deviation for the level component.")
+        .def_property_readonly(
+            "slope_sd", &SemilocalLinearTrendStateModel::slope_sd,
+            "Innovation standard deviation for the slope component.")
+        .def_property_readonly(
+            "slope_ar_coefficient",
+            &SemilocalLinearTrendStateModel::slope_ar_coefficient,
+            "AR1 coefficient for the slope component.")
+        .def_property_readonly(
+            "slope_mean",
+            &SemilocalLinearTrendStateModel::slope_mean,
+            "Long term mean for the slope component.")
+        ;
 
 
   }  // StateSpaceModel_def

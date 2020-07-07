@@ -13,14 +13,6 @@ _current_graphics_device = None
 _largest_graphics_device_number = 0
 
 
-class AxesWrapper:
-    def __init__(self, ax):
-        self.ax = ax
-
-    def __del__(self):
-        plt.pause(.001)
-
-
 class GraphicsDevice(ABC):
     """
     Manages a plt.figure and a set of axes.
@@ -134,7 +126,7 @@ def dev_set(device_number: int):
     """
     global _active_graphics_devices
     global _current_graphics_device
-    device = _current_graphics_device.get(device_number, None)
+    device = _active_graphics_devices.get(device_number, None)
     if device is None:
         raise Exception(f"Graphics device {device_number} does note exist.")
     else:
@@ -154,8 +146,6 @@ class InteractiveGraphicsDevice(GraphicsDevice):
     def draw_current_axes(self):
         """
         """
-        # TODO(steve):  experiment with this.
-        # self.current_axes.draw()
         plt.pause(.001)
 
 
@@ -249,11 +239,11 @@ def pretty_plot_ticks(low, high, n):
     Taken from StackOverflow:
     https://stackoverflow.com/questions/43075617/python-function-equivalent-to-rs-pretty
     """
-    def nicenumber(x, round):
+    def nicenumber(x, round_result: bool):
         exp = np.floor(np.log10(x))
         f = x / 10**exp
 
-        if round:
+        if round_result:
             if f < 1.5:
                 nf = 1.
             elif f < 3.:
@@ -274,8 +264,8 @@ def pretty_plot_ticks(low, high, n):
 
         return nf * 10.**exp
 
-    range = nicenumber(high - low, False)
-    d = nicenumber(range / (n - 1), True)
+    num_range = nicenumber(high - low, False)
+    d = nicenumber(num_range / (n - 1), True)
     miny = np.floor(low / d) * d
     maxy = np.ceil(high / d) * d
     return np.arange(miny, maxy+0.5*d, d)
@@ -504,7 +494,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
     nvars = data.shape[1]
     nr, nc = plot_grid_size(nvars)
-    fig, ax = plt.subplots(nr, nc)
+    _, ax = plt.subplots(nr, nc)
 
     def is_all_missing(y):
         return y.count() == 0

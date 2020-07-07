@@ -48,15 +48,17 @@ namespace BOOM {
     enum missing_status { observed = 0, completely_missing, partly_missing };
 
     Data() : missing_flag(observed) {}
-    Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
+    // When copying Data, the observers should not be copied.
+    Data(const Data &rhs)
+        : missing_flag(rhs.missing_flag),
+          signals_() {}
     virtual Data *clone() const = 0;
-    virtual ~Data() = default;
+    virtual ~Data() {signals_.clear();}
     virtual std::ostream &display(std::ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
     void signal() {
-      uint n = signals_.size();
-      for (uint i = 0; i < n; ++i) {
+      for (size_t i = 0; i < signals_.size(); ++i) {
         signals_[i]();
       }
     }
@@ -71,6 +73,9 @@ namespace BOOM {
     void add_observer(const std::function<void(void)> &f) {
       signals_.push_back(f);
     }
+
+    // Remove all observers.
+    void clear_observers() { signals_.clear(); }
     friend void intrusive_ptr_add_ref(Data *d);
     friend void intrusive_ptr_release(Data *d);
 

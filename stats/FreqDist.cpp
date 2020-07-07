@@ -75,6 +75,10 @@ namespace BOOM {
     counts_ = count_values(y, labs_, contiguous);
   }
 
+  void FrequencyDistribution::set_labels(
+      const std::vector<std::string> &labels) {
+  }
+
   std::ostream &FrequencyDistribution::print(std::ostream &out) const {
     uint N = labs_.size();
     uint labfw = 0;
