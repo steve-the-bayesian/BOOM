@@ -409,7 +409,7 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
             ax = device.next_axes
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
-    ax.hist(x, edgecolor=edgecolor, density=density, color=color, **kwargs)
+    ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density, color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
     device.draw_current_axes()
     return device
