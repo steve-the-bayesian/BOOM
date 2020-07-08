@@ -113,8 +113,8 @@ def ls(*args, hide_underscore=True):
     elif len([*args]) == 1 and isfunction(args[0]):
         print(getsource(args[0]))
     else:
-        for i in range(len(args)):
-            pretty(dir(args[i]), hide_underscore=hide_underscore)
+        for arg in args:
+            pretty(dir(arg), hide_underscore=hide_underscore)
             print("\n")
 
 

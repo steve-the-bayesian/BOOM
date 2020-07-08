@@ -3,7 +3,6 @@ import R
 import numpy as np
 import pandas as pd
 import BayesBoom as boom
-import pdb
 
 
 def char_range(c1, c2):

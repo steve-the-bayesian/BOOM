@@ -1,13 +1,14 @@
 import unittest
 import numpy as np
-import dynreg
+import BayesBoom as boom
+
 
 class TestDynamicRegression(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
 
-    def simulate_data_from_model(self,
-                                 time_dimension: int,
+    @staticmethod
+    def simulate_data_from_model(time_dimension: int,
                                  typical_sample_size: int,
                                  xdim: int,
                                  residual_sd: float,

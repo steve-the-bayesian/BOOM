@@ -32,7 +32,8 @@ class SplineTest(unittest.TestCase):
         self.assertTrue(np.allclose(ra[0, :], expected))
         self.assertTrue(np.allclose(ra[1, :], expected))
 
-    def test_again(self):
+    @staticmethod
+    def test_again():
         knots = np.arange(-3, 4)
         spline = boom.Bspline(boom.Vector(knots))
         spline.basis(1.2)
