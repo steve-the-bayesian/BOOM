@@ -310,6 +310,27 @@ namespace BayesBoom {
         .def("sample_posterior",
              &MixedDataImputer::sample_posterior,
              "Take one MCMC draw from the posterior distribution.")
+        .def("impute_data_set",
+             [](MixedDataImputer &imputer, DataTable &table, int burn) {
+               std::vector<Ptr<MixedImputation::CompleteData>> rows;
+               for (int i = 0; i < table.nrow(); ++i) {
+                 rows.push_back(new MixedImputation::CompleteData(table.row(i)));
+               }
+               for (int i = 0; i < burn; ++i) {
+                 imputer.impute_data_set(rows);
+               }
+               imputer.impute_data_set(rows);
+               for (size_t i = 0; i < rows.size(); ++i) {
+                 rows[i]->fill_data_table_row(table, i);
+               }
+             },
+             py::arg("table"),
+             py::arg("burn"),
+             "Args:\n"
+             "  table: A boom.DataTable object containing the data to be"
+             " imputed.\n"
+             "  burn: The number of burn-in imputations to be discarded \n"
+             "    before the final imputation is drawn.\n")
         .def_property_readonly(
             "nclusters", &MixedDataImputer::nclusters,
             "The number of clusters in the mixture portion of the model.")

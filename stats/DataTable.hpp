@@ -290,6 +290,8 @@ namespace BOOM {
     //    OrdinalVariable get_ordinal(uint which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column, const StringVector
     //    &ord) const;
+    void set_numeric_value(int row, int column, double value);
+    void set_nominal_value(int row, int column, int value);
 
     // Accessing a row of data involves memory allocations and copies.  If you
     // plan to repeatedly iterate through the rows consider saving a std::vector

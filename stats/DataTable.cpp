@@ -593,6 +593,27 @@ namespace BOOM {
     return categorical_variables_[index][row];
   }
 
+  void DataTable::set_numeric_value(int row, int column, double value) {
+    VariableType type;
+    int index;
+    std::tie(type, index) = data_organizer_->type_map(column);
+    if (type != VariableType::numeric) {
+      report_error("Attempt to set numerical value to non-numeric variable.");
+    }
+    numeric_variables_[index][row] = value;
+  }
+
+  void DataTable::set_nominal_value(int row, int column, int value) {
+    VariableType type;
+    int index;
+    std::tie(type, index) = data_organizer_->type_map(column);
+    if (type != VariableType::categorical) {
+      report_error(
+          "Attempt to set categorical value to non-categorical variable.");
+    }
+    categorical_variables_[index][row]->set(value);
+  }
+
   // DataTable::OrdinalVariable DataTable::get_ordinal(uint n)const{
   //   if (variable_types_[n]!=categorical) wrong_type_error(1, n);
   //   std::vector<Ptr<OrdinalData> > ans;

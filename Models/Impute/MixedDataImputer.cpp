@@ -80,6 +80,21 @@ namespace BOOM {
       return out;
     }
 
+    void CompleteData::fill_data_table_row(DataTable &table, int row) {
+      int numeric_counter = 0;
+      int categorical_counter = 0;
+      for (int i = 0; i < table.nvars(); ++i) {
+        VariableType type = table.variable_type(i);
+        if (type == VariableType::numeric) {
+          table.set_numeric_value(row, i, y_true_[numeric_counter++]);
+        } else if (type == VariableType::categorical) {
+          table.set_nominal_value(row, i, true_categories_[categorical_counter++]);
+        } else {
+          report_error("Only numeric and categorical data types are supported.");
+        }
+      }
+    }
+
     //===========================================================================
     namespace {
       using NECM = NumericErrorCorrectionModel;
@@ -490,6 +505,13 @@ namespace BOOM {
     mixing_distribution_->clear_data();
     for (int s = 0;  s < mixture_components_.size(); ++s) {
       mixture_components_[s]->clear_data();
+    }
+  }
+
+  void MixedDataImputer::impute_data_set(
+      std::vector<Ptr<MixedImputation::CompleteData>> &rows) {
+    for (auto &el : rows) {
+      impute_row(el, rng_);
     }
   }
 

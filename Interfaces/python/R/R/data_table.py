@@ -194,6 +194,119 @@ class AutoClean:
 
         return atoms_dict, levels_dict
 
+    def set_atom_prior(self, variable_name: str, prior_counts: np.ndarray):
+        """
+        Set a constrained (0's are allowed) Dirichlet prior distribution for the
+        frequency of "true values" for a numeric variable.
+
+        Args:
+          variable_name: The name of the numeric variable that the prior
+            describes.
+          prior_counts: A 1-d array containing the prior counts.  If the
+            variable has k atoms then the array needs k+1 elements, with the
+            last one corresponding to the continuous portion of the model.
+            Non-positive entries in 'prior_counts' signal that the
+            corresponding element has zero probability of being the true value.
+        """
+        self._atom_prior[variable_name] = prior_counts.ravel()
+        if np.sum(prior_counts > 0) == 0:
+            raise Exception("At least one prior count must be positive.")
+
+    def set_atom_error_prior(self,
+                             variable_name: str,
+                             prior_counts: np.ndarray):
+        """
+        Set a prior distribution on the conditional probability of observing an
+        atom in a numeric field, given the true value.
+
+        Args:
+          variable_name: The name of the numeric varible described by the
+            prior.
+          prior_counts: A 2-d numpy array.  If the variable has k atoms then a
+            k+1 by k+2 array is needed.  See details below.
+
+        Each row of the matrix
+        """
+        self._atom_error_prior[variable_name] = prior_counts.astype("float")
+        if len(prior_counts.shape) != 2:
+            raise Exception("Expected a 2-d array.")
+
+        row_totals = np.sum(prior_counts > 0, axis=1)
+        if not np.all(row_totals > 0):
+            raise Exception("Each row must have at least one positive entry")
+
+    def set_level_prior(self,
+                        variable_name: str,
+                        prior_counts: np.ndarray):
+        """
+        Set a constrained Dirichlet (0 probabilities are allowed) prior
+        distribution on the true levels of a categorical variable.
+
+        Args:
+          variable_name: The name of the categorical variable described by the
+            prior.
+          prior_counts: An array of "prior counts".  Non-positive entries
+            indicate prior certainty that the corresponding element is zero.
+            The array must have dimension matching the number of levels in the
+            variable, and at least one entry must be positive.
+        """
+        self._level_prior[variable_name] = prior_counts.astype(float).ravel()
+        if (np.sum(prior_counts > 0) == 0):
+            raise Exception("At least one entry must be positive.")
+
+    def set_level_observation_prior(self,
+                                    variable_name: str,
+                                    prior_counts: np.ndarray):
+        """
+        Set a collection of independent constrained (0 probabilities are
+        allowed) Dirichlet priors on the conditional probability of the
+        observed value given true level.
+
+        Args:
+          variable_name: The name of the categorical variable described by the
+            prior.
+          prior_counts: A 2-d array of "prior counts".  Non-positive entries
+            indicate prior certainty that the corresponding element is zero.
+            Rows correspond to true level values, and columns correspond to
+            actual observations.  The number of rows must therefore match the
+            number of levels in the variable.  There is one addtional column
+            corresponding to "missing".  Each row of the matrix is treated
+            independently, and each row must have at least one positive
+            element.
+        """
+        self._level_observation_prior[variable_name] = (
+            prior_counts.astype("float")
+        )
+        if len(prior_counts.shape) != 2:
+            raise Exception("A 2-d array is needed.")
+        if prior_counts.shape[1] != prior_counts.shape[0] + 1:
+            raise Exception("The matrix needs one more column than rows.")
+        positive = prior_counts > 0
+        row_ok = positive.sum(axis=1)
+        if not np.all(row_ok):
+            raise Exception("Each row must have at least one positive element.")
+
+    def impute_rows(self, data, iterations):
+        """
+        Args:
+          data:  Data frame containing the rows to impute.
+          iterations:  An array-like collection of iteration numbers to use.
+
+        """
+        imputed = []
+
+        data_table = create_data_table(data)
+
+        for it in iterations:
+            self._restore_parameters(it)
+            imputed_matrix = self._model.impute_data_set(formatted_data)
+            imputed.append(
+                pd.DataFrame(
+                    imputed_matrix.to_numpy(), columns=self._numeric_colnames, index=data.index
+                )
+            )
+        return imputed
+
     def _allocate_space(self, niter: int):
         xdim = self._model.xdim
         ydim = self._model.ydim
@@ -275,47 +388,6 @@ class AutoClean:
                 self._model.set_level_observation_probs(
                     boom.Matrix(self.level_observation_probs[vname][
                         iteration, cluster, :, :]))
-
-    def set_atom_prior(self, variable_name: str, prior_counts: np.ndarray):
-        """
-        Set an extended (0's are allowed) Dirichlet prior distribution for the
-        frequency of "true values" for a numeric variable.
-
-        Args:
-          variable_name: The name of the numeric variable that the prior
-            describes.
-          prior_counts: A 1-d array containing the prior counts.  If the
-            variable has k atoms then the array needs k+1 elements, with the
-            last one corresponding to the continuous portion of the model.
-            Non-positive entries in 'prior_counts' signal that the
-            corresponding element has zero probability of being the true value.
-        """
-        self._atom_prior[variable_name] = prior_counts.ravel()
-        if np.sum(prior_counts > 0) == 0:
-            raise Exception("At least one prior count must be positive.")
-
-    def set_atom_error_prior(self,
-                             variable_name: str,
-                             prior_counts: np.ndarray):
-        """
-        Set a prior distribution on the conditional probability of observing an
-        atom in a numeric field, given the true value.
-
-        Args:
-          variable_name: The name of the numeric varible described by the
-            prior.
-          prior_counts: A 2-d numpy array.  If the variable has k atoms then a
-            k+1 by k+2 array is needed.  See details below.
-
-        Each row of the matrix
-        """
-        self._atom_error_prior[variable_name] = prior_counts
-        if len(prior_counts.shape) != 2:
-            raise Exception("Expected a 2-d array.")
-
-        row_totals = np.sum(prior_counts > 0, axis=1)
-        if not np.all(row_totals > 0):
-            raise Exception("Each row must have at least one positive entry")
 
     def _set_default_regression_prior(self):
         xdim = self._model.xdim

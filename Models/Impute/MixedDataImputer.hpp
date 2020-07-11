@@ -82,7 +82,17 @@ namespace BOOM {
         return observed_categories_;
       }
 
+      // The dummy-variable encoded categorical data used to predict numeric
+      // outcomes from categorical ones.
       Vector &x() {return predictors_;}
+
+      // Fill a specific row of the data table with the imputed values for this
+      // observation.
+      //
+      // Args:
+      //   table:  The table to be filled.
+      //   row:  The index of the row to be filled.
+      void fill_data_table_row(DataTable &table, int row);
 
      private:
       Ptr<MixedMultivariateData> observed_data_;
@@ -406,6 +416,9 @@ namespace BOOM {
     void clear_data() override;
     void clear_client_data();
     void add_data(const Ptr<MixedMultivariateData> &data_point);
+
+    void impute_data_set(
+        std::vector<Ptr<MixedImputation::CompleteData>> &rows);
 
     void impute_row(Ptr<MixedImputation::CompleteData> &row,
                     RNG &rng,
