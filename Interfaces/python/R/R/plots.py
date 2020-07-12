@@ -271,7 +271,7 @@ def pretty_plot_ticks(low, high, n):
     return np.arange(miny, maxy+0.5*d, d)
 
 
-def plot_grid_size(nplots: int):
+def plot_grid_shape(nplots: int):
     """
     Compute the number of rows and columns needed to plot 'nplots'.
 
@@ -493,7 +493,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
     nvars = data.shape[1]
-    nr, nc = plot_grid_size(nvars)
+    nr, nc = plot_grid_shape(nvars)
     _, ax = plt.subplots(nr, nc)
 
     def is_all_missing(y):
@@ -550,7 +550,7 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
     if len(series.shape) == 2:
         nseries = series.shape[1]
-        nr, nc = plot_grid_size(nseries)
+        nr, nc = plot_grid_shape(nseries)
     elif len(series.shape) == 3:
         nr, nc = series.shape[1], series.shape[2]
         nseries = nr * nc

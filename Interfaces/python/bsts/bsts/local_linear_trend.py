@@ -85,19 +85,6 @@ class LocalLinearTrendStateModel(StateModel):
         self.state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
-    def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
-        if burn > 0:
-            curves = self.state_contribution[burn:, :]
-        else:
-            curves = self.state_contribution
-
-        R.plot_dynamic_distribution(
-            curves=curves,
-            timestamps=time,
-            ax=ax,
-            ylim=ylim,
-            **kwargs)
-
     def _set_posterior_sampler(
             self, y, level_sigma_prior, slope_sigma_prior, sdy):
         """

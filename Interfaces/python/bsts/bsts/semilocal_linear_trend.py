@@ -75,9 +75,6 @@ class SemilocalLinearTrendStateModel(StateModel):
             slope_ar1_prior.initial_value,
             slope_sigma_prior.initial_value)
 
-        print("check the slope_ar1_prior")
-        import pdb
-        pdb.set_trace()
         slope_sampler = boom.NonzeroMeanAr1Sampler(
             slope_model,
             slope_mean_prior.boom(),

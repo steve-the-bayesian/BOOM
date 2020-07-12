@@ -75,19 +75,22 @@ class StateModel(ABC):
             state vector associated with the corresponding time point.
         """
 
-    @abstractmethod
     @property
+    @abstractmethod
     def state_contribution(self):
         """
         A niter x time_dimension array giving the contribution of this state
         component to the overall mean of y at each point in time.
         """
 
-    def plot_state_contribution(self, ax, **kwargs):
-        self.plot_state_contribution_default(ax, **kwargs)
+    def plot_state_contribution(
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
+        self.plot_state_contribution_default(
+            fig=fig, gridspec=gridspec, time=time, burn=burn, ylim=ylim,
+            **kwargs)
 
     def plot_state_contribution_default(
-            self, ax, time, burn=None, ylim=None, **kwargs):
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
         """
         A default implementation of plot_state_distribution.
 
@@ -111,6 +114,8 @@ class StateModel(ABC):
             curves = self._state_contribution[burn:, :]
         else:
             curves = self._state_contribution
+
+        ax = fig.add_subplot(gridspec)
 
         R.plot_dynamic_distribution(
             curves=curves,
