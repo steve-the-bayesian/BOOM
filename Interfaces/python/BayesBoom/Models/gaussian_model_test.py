@@ -36,7 +36,8 @@ class GaussianModelTest(unittest.TestCase):
         mu_prm.set(2.0)
         self.assertAlmostEqual(model.mean, 2.0)
 
-    def test_mcmc(self):
+    @staticmethod
+    def test_mcmc():
         model = boom.GaussianModel()
         mu = -16
         sigma = 7
@@ -51,7 +52,7 @@ class GaussianModelTest(unittest.TestCase):
         sampler = boom.GaussianConjugateSampler(
             model, mean_prior, sigsq_prior)
         model.set_method(sampler)
-        for i in range(100):
+        for _ in range(100):
             model.sample_posterior()
 
 

@@ -29,9 +29,8 @@ namespace BOOM {
     Data *operator()() { return 0; }
   };
 
-  // A base class for the Poisson process.  The
-  // HomogeneousPoissonProcess and variaous flavors of inhomogeneous
-  // poisson processes can generalize.
+  // A base class for the Poisson process.  The HomogeneousPoissonProcess and
+  // variaous flavors of inhomogeneous poisson processes can generalize.
   class PoissonProcess : virtual public Model {
    public:
     PoissonProcess *clone() const override = 0;
@@ -43,15 +42,14 @@ namespace BOOM {
     virtual double expected_number_of_events(const DateTime &t0,
                                              const DateTime &t1) const = 0;
 
-    // Adding data
+    // Adding data.
     virtual void add_exposure_window(const DateTime &t0,
                                      const DateTime &t1) = 0;
     virtual void add_event(const DateTime &t) = 0;
 
-    // Simulate a PointProcess between t0 and t1.  If a function-like
-    // object that returns a Data * is passed as the third object then
-    // the process will include marks for those events where the
-    // returned value is non-NULL.
+    // Simulate a PointProcess between t0 and t1.  If a function-like object
+    // that returns a Data * is passed as the third object then the process will
+    // include marks for those events where the returned value is non-NULL.
     virtual PointProcess simulate(
         RNG &rng, const DateTime &t0, const DateTime &t1,
         std::function<Data *()> mark_generator = NullDataGenerator()) const = 0;

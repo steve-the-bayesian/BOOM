@@ -396,7 +396,8 @@ class GaussianStateSpaceModelFactory:
 
         return self._model
 
-    def create_observation_model_manager(self):
+    @staticmethod
+    def create_observation_model_manager():
         return GaussianObservationModelManager(xdim=0)
 
 

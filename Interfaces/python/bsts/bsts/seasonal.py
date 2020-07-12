@@ -94,15 +94,17 @@ class SeasonalStateModel(StateModel):
         self.sigma_draws = np.zeros(niter)
         self._state_contribution = np.zeros((niter, time_dimension))
 
-    def record_state(self, i, state_matrix):
-        self.sigma_draws[i] = self._state_model.sigma
-        self._state_contribution[i, :] = state_matrix[self._state_index, :]
+    def record_state(self, iteration, state_matrix):
+        self.sigma_draws[iteration] = self._state_model.sigma
+        self.state_contribution[iteration, :] = state_matrix[
+            self._state_index, :]
 
     def plot_state_contribution(self, ax, **kwargs):
         if self.nseasons > 12:
             return self.plot_state_contribution_default(ax, **kwargs)
 
-    def _default_sigma_prior(self, sdy):
+    @staticmethod
+    def _default_sigma_prior(sdy):
         """
         The default prior to use for the innovation standard deviation.
         """

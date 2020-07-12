@@ -33,8 +33,6 @@
 #include "cpputil/RefCounted.hpp"
 #include "cpputil/DateTime.hpp"
 
-#include "stats/FreqDist.hpp"
-
 namespace BOOM {
 
   enum class VariableType {unknown = -1, numeric, categorical, datetime};
@@ -49,6 +47,9 @@ namespace BOOM {
     void diagnose_types(const std::vector<std::string> &);
     VariableType variable_type(int col) const {
       return variable_types_[col];
+    }
+    const std::vector<VariableType> &variable_types() const {
+      return variable_types_;
     }
 
     bool check_type(int i, const std::string &s) const;
@@ -93,37 +94,56 @@ namespace BOOM {
     }
   };
 
+  //===========================================================================
   // MixedMultivariateData is a "row" in a data table.  It can have categorical
   // or numeric data in each cell, with possible other types to be added later
   // (ordinal, datetime, ...).
   class MixedMultivariateData : public Data {
    public:
     MixedMultivariateData();
-    MixedMultivariateData(const Ptr<MixedDataOrganizer> &sorter);
+    MixedMultivariateData(
+        const Ptr<MixedDataOrganizer> &sorter,
+        const std::vector<Ptr<DoubleData>> &numerics,
+        const std::vector<Ptr<CategoricalData>> &categoricals);
+    MixedMultivariateData(const MixedMultivariateData &rhs);
+    MixedMultivariateData &operator=(const MixedMultivariateData &rhs);
+    MixedMultivariateData(MixedMultivariateData &&rhs) = default;
+    MixedMultivariateData &operator=(MixedMultivariateData &&rhs) = default;
 
     MixedMultivariateData *clone() const override;
+    std::ostream &display(std::ostream &out) const override;
 
     void add_numeric(const Ptr<DoubleData> &numeric);
     void add_categorical(const Ptr<CategoricalData> &categorical);
 
     // The number of numeric variables.
-    int numeric_dim() const;
+    int numeric_dim() const {
+      return data_sorter_->number_of_numeric_fields();
+    }
 
-    // The number of categorical variables.
-    int categorical_dim() const;
+    // The number of categorical variables.  This is the number of categorical
+    // columns in the "data frame", not its dummy variable expansion.
+    int categorical_dim() const {
+      return data_sorter_->number_of_categorical_fields();
+    }
 
     // The total number of variables.
-    int dim() const;
+    int dim() const {return data_sorter_->total_number_of_fields();}
 
     // The type of variable in cell i.
-    VariableType vtype(int i) const;
+    VariableType vtype(int i) const { return data_sorter_->variable_type(i); }
+    const std::vector<VariableType> & variable_types() const {
+      return data_sorter_->variable_types();
+    }
 
-    Ptr<Data> variable(int i);
+    const Data &variable(int i) const;
 
-    // Return the entry in cell i if it is numeric.  If it is not-numeric this
-    // is an error.
+    // Return the entry in cell i if it is of the requested type.  If it is
+    // not then raise an error.
     const DoubleData &numeric(int i) const;
     Ptr<DoubleData> mutable_numeric(int i);
+    const CategoricalData &categorical(int i) const;
+    Ptr<CategoricalData> mutable_categorical(int i);
 
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;
@@ -138,6 +158,7 @@ namespace BOOM {
     std::vector<Ptr<CategoricalData>> categorical_data_;
   };
 
+  //===========================================================================
   // A CategoricalVariable is a column of CategoricalData.  The data are
   // assumed to come in string format, so a CatKey is used to handle the
   // mapping between the string values and the values of the categorical data
@@ -146,6 +167,7 @@ namespace BOOM {
    public:
     CategoricalVariable() = default;
     explicit CategoricalVariable(const std::vector<std::string> &raw_data);
+    CategoricalVariable(const std::vector<int> &values, const Ptr<CatKey> &key);
     CategoricalVariable(const std::vector<Ptr<CategoricalData>> &data,
                         const Ptr<CatKey> &key)
         : key_(key), data_(data) {}
@@ -197,6 +219,7 @@ namespace BOOM {
   //   std::vector<Ptr<OrdinalData>> data_;
   // };
 
+  //===========================================================================
   // A DataTable is created by reading a plain text file and storing "variables"
   // in a table.  Variables can be extracted from the DataTable either
   // individually (e.g. to get the y variable for a regression/classification
@@ -240,6 +263,9 @@ namespace BOOM {
     int nobs() const {return nrow();}  // syntactic sugar.
     uint nlevels(uint i) const;  // 1 for numeric, nlevels for categorical
 
+    int numeric_dim() const;      // number of numeric variables.
+    int categorical_dim() const;  // number of categorical variables.
+
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,
                         uint to = std::numeric_limits<uint>::max()) const;
@@ -253,6 +279,9 @@ namespace BOOM {
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const {
       return data_organizer_->variable_type(which_column);
+    }
+    const std::vector<VariableType> &variable_types() const {
+      return data_organizer_->variable_types();
     }
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;

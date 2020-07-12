@@ -327,6 +327,10 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
+
+            # For deubgging purposes only.  Do not submit code with this option
+            # present.
+            # opts.append("-O0")
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())  # noqa
         for ext in self.extensions:

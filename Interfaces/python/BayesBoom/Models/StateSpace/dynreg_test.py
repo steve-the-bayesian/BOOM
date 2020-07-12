@@ -14,7 +14,8 @@ class DynregTest(unittest.TestCase):
         self._p00 = np.array([.8, .7, .6])
         self._p11 = np.array([.7, .8, .9])
 
-    def simulate_null_data(self, time_dimension, typical_sample_size, xdim):
+    @staticmethod
+    def simulate_null_data(time_dimension, typical_sample_size, xdim):
         ans = []
         sample_sizes = np.random.poisson(typical_sample_size, time_dimension)
         for i in range(time_dimension):
@@ -22,14 +23,14 @@ class DynregTest(unittest.TestCase):
             sample_size = sample_sizes[i]
             responses = np.random.randn(sample_size)
             predictors = np.random.randn(sample_size, xdim)
-            for j in range(sample_size):
+            for _ in range(sample_size):
                 reg_data = boom.RegressionData(responses[i], predictors[i, :])
                 time_point.add_data(reg_data)
             ans.append(time_point)
         return ans
 
-    def simulate_data_from_model(self,
-                                 time_dimension: int,
+    @staticmethod
+    def simulate_data_from_model(time_dimension: int,
                                  typical_sample_size: int,
                                  xdim: int,
                                  residual_sd: float,
@@ -73,8 +74,8 @@ class DynregTest(unittest.TestCase):
                     unscaled_innovation_sd, p00, p11):
         xdim = len(p00)
         model = boom.DynamicRegressionModel(xdim=xdim)
-        for i in range(len(data)):
-            model.add_data(data[i])
+        for _, dp in enumerate(data):
+            model.add_data(dp)
 
         sampler = boom.DynamicRegressionDirectGibbsSampler(
             model,
@@ -88,7 +89,7 @@ class DynregTest(unittest.TestCase):
             boom.GlobalRng.rng)
         model.set_method(sampler)
         model.set_residual_sd(residual_sd)
-        model.set_unscaled_innovation_sds(unscaled_innovation_sd)
+        model.set_unscaled_innovation_sds(boom.Vector(unscaled_innovation_sd.astype("float")))
         model.set_transition_probabilities(p00, p11)
         model.set_inclusion_indicators(inclusion)
         model.set_coefficients(coefficients)
@@ -120,8 +121,8 @@ class DynregTest(unittest.TestCase):
         data = self.simulate_null_data(
             time_dimension, typical_sample_size, xdim)
 
-        for i in range(len(data)):
-            model.add_data(data[i])
+        for dp in data:
+            model.add_data(dp)
 
         sampler = boom.DynamicRegressionDirectGibbsSampler(
             model,
@@ -136,7 +137,7 @@ class DynregTest(unittest.TestCase):
         )
 
         model.set_method(sampler)
-        for i in range(10):
+        for _ in range(10):
             model.sample_posterior()
 
     # ---------------------------------------------------------------------------
@@ -187,7 +188,7 @@ class DynregTest(unittest.TestCase):
             p00=self._p00,
             p11=self._p11)
 
-        model, sampler = self.setup_model(
+        model, _ = self.setup_model(
             data, coefficients, inclusion, self._residual_sd,
             unscaled_innovation_sd, self._p00, self._p11)
 

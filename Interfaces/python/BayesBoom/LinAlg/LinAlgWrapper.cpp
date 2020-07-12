@@ -10,6 +10,7 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
 #include "LinAlg/SpdMatrix.hpp"
+#include "LinAlg/CorrelationMatrix.hpp"
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/VectorView.hpp"
 
@@ -246,6 +247,17 @@ namespace BayesBoom {
         .def(py::self * float())
         .def(py::self / float())
         ;
+
+    boom.def("random_correlation_matrix",
+             [](int dim, RNG &rng) {
+               return SpdMatrix(random_cor_mt(rng, dim));
+             },
+             py::arg("dim"),
+             py::arg("rng") = GlobalRng::rng,
+             "A marginally uniform correlation matrix.\n"
+             "Args\n:"
+             "  dim:  The number of rows in the matrix.\n"
+             "  rng: The random number generator.\n");
 
     py::implicitly_convertible<py::array, SpdMatrix>();
 

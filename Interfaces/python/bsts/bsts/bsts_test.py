@@ -1,6 +1,5 @@
 import bsts
 import numpy as np
-import pdb
 
 y = np.log(bsts.AirPassengers)
 

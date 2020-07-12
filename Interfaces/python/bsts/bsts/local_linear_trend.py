@@ -79,14 +79,24 @@ class LocalLinearTrendStateModel(StateModel):
         self.sigma_slope = np.empty(niter)
         self._state_contribution = np.empty((niter, time_dimension))
 
-    def record_state(self, i, state_matrix):
-        self.sigma_level[i] = self._state_model.sigma_level
-        self.sigma_slope[i] = self._state_model.sigma_slope
-        self._state_contribution[i, :] = state_matrix[self._state_index, :]
+    def record_state(self, iteration, state_matrix):
+        self.sigma_level[iteration] = self._state_model.sigma_level
+        self.sigma_slope[iteration] = self._state_model.sigma_slope
+        self.state_contribution[iteration, :] = state_matrix[
+            self._state_index, :]
 
-    @property
-    def state_contribution(self):
-        return self._state_contribution
+    def plot_state_contribution(self, ax, time, burn, ylim=None, **kwargs):
+        if burn > 0:
+            curves = self.state_contribution[burn:, :]
+        else:
+            curves = self.state_contribution
+
+        R.plot_dynamic_distribution(
+            curves=curves,
+            timestamps=time,
+            ax=ax,
+            ylim=ylim,
+            **kwargs)
 
     def _set_posterior_sampler(
             self, y, level_sigma_prior, slope_sigma_prior, sdy):
@@ -142,7 +152,8 @@ class LocalLinearTrendStateModel(StateModel):
         if not isinstance(initial_slope_prior, boom.GaussianModel):
             raise Exception("Unexpected type for initial_slope_prior.")
 
-    def _compute_sdy(self, sdy, y, which_prior):
+    @staticmethod
+    def _compute_sdy(sdy, y, which_prior):
         """
         Return the standard deviation of y, computing it if and only if needed.
         """

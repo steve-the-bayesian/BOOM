@@ -219,12 +219,13 @@ namespace BOOM {
 
     int SSSMM::UnpackForecastData(SEXP r_prediction_data) {
       UnpackForecastTimestamps(r_prediction_data);
-      SEXP r_horizon = getListElement(r_prediction_data, "horizon");
-      if (Rf_isNull(r_horizon)) {
-        forecast_predictors_ = ToBoomMatrix(getListElement(
-            r_prediction_data, "predictors"));
+      SEXP r_predictors = getListElement(r_prediction_data, "predictors");
+      if (!Rf_isNull(r_predictors)) {
+        forecast_predictors_ = ToBoomMatrix(r_predictors);
       } else {
-        forecast_predictors_ = Matrix(Rf_asInteger(r_horizon), 1, 1.0);
+        int horizon = Rf_asInteger(getListElement(
+            r_prediction_data, "horizon"));
+        forecast_predictors_ = Matrix(horizon, 1, 1.0);
       }
       return forecast_predictors_.nrow();
     }

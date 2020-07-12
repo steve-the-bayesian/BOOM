@@ -6,6 +6,8 @@ from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
 
 from .bayes import SdPrior, NormalPrior, Ar1CoefficientPrior
 
+from .data_table import create_data_table, AutoClean
+
 from .mcmc import suggest_burn
 
 from .plots import (
@@ -25,6 +27,10 @@ from .plots import (
     points,
     )
 
-from .probability import dnorm, pnorm, qnorm, rmarkov, rnorm
+from .probability import (
+    dnorm, pnorm, qnorm, rnorm,
+    dgamma, pgamma, qgamma, rgamma,
+    rmarkov,
+)
 
 from .stats import density

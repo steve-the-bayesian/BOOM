@@ -65,6 +65,46 @@ def rnorm(n, mean=0, sd=1):
     return np.random.randn(n) * sd + mean
 
 
+def dgamma(y, shape, scale, log=False):
+    from scipy.stats import gamma
+    if log:
+        return gamma.logpdf(y, shape, scale=1.0 / scale)
+    else:
+        return gamma.pdf(y, shape, scale=1.0 / scale)
+
+
+def pgamma(y, shape, scale, lower_tail=True, log=False):
+    from scipy.stats import gamma
+    if lower_tail:
+        if log:
+            return gamma.logcdf(y, shape, scale=1.0 / scale)
+        else:
+            return gamma.cdf(y, shape, scale=1.0 / scale)
+    else:
+        if log:
+            return gamma.logsf(y, shape, scale=1.0 / scale)
+        else:
+            return gamma.sf(y, shape, scale=1.0 / scale)
+
+
+def qgamma(probs, shape, scale, lower_tail=True, log=False):
+    from scipy.stats import gamma
+    if log:
+        probs = np.exp(probs)
+    if lower_tail:
+        return gamma.ppf(probs, shape, scale=1.0 / scale)
+    else:
+        return gamma.isf(probs, shape, scale=1.0 / scale)
+
+
+def rgamma(n, shape, scale):
+    """
+    Random deviates from the gamma distribution with mean shape / scale.
+    """
+    from scipy.stats import gamma
+    return gamma.rvs(shape, size=n, scale=1.0 / scale)
+
+
 def rmarkov(n: int, P: np.ndarray, pi0=None):
     """
     Simulation a Markov chain of length n from transition probability matrix P,

@@ -146,7 +146,8 @@ class SemilocalLinearTrendStateModel(StateModel):
     def state_contribution(self):
         return self._state_contribution
 
-    def _validate_level_sigma_prior(self, level_sigma_prior, sdy):
+    @staticmethod
+    def _validate_level_sigma_prior(level_sigma_prior, sdy):
         if level_sigma_prior is None:
             level_sigma_prior = R.SdPrior(.01 * sdy, upper_limit=sdy)
         if not isinstance(level_sigma_prior, R.SdPrior):
@@ -154,7 +155,8 @@ class SemilocalLinearTrendStateModel(StateModel):
                             "Expected an R.SdPrior")
         return level_sigma_prior
 
-    def _validate_slope_sigma_prior(self, slope_sigma_prior, sdy):
+    @staticmethod
+    def _validate_slope_sigma_prior(slope_sigma_prior, sdy):
         if slope_sigma_prior is None:
             slope_sigma_prior = R.SdPrior(.01 * sdy, upper_limit=sdy)
         if not isinstance(slope_sigma_prior, R.SdPrior):
@@ -162,7 +164,8 @@ class SemilocalLinearTrendStateModel(StateModel):
                             "Expected an R.SdPrior")
         return slope_sigma_prior
 
-    def _validate_slope_ar1_prior(self, slope_ar1_prior, sdy):
+    @staticmethod
+    def _validate_slope_ar1_prior(slope_ar1_prior, sdy):
         if slope_ar1_prior is None:
             slope_ar1_prior = R.Ar1CoefficientPrior()
         if not isinstance(slope_ar1_prior, R.Ar1CoefficientPrior):
@@ -170,7 +173,8 @@ class SemilocalLinearTrendStateModel(StateModel):
                             "Expected an R.Ar1CoefficientPrior")
         return slope_ar1_prior
 
-    def _validate_slope_mean_prior(self, slope_mean_prior, sdy):
+    @staticmethod
+    def _validate_slope_mean_prior(slope_mean_prior, sdy):
         if slope_mean_prior is None:
             slope_mean_prior = R.NormalPrior(0, sdy)
         if not isinstance(slope_mean_prior, R.NormalPrior):
@@ -178,7 +182,8 @@ class SemilocalLinearTrendStateModel(StateModel):
                             "Expected an R.NormalPrior")
         return slope_mean_prior
 
-    def _validate_initial_slope_prior(self, initial_slope_prior, sdy):
+    @staticmethod
+    def _validate_initial_slope_prior(initial_slope_prior, sdy):
         if initial_slope_prior is None:
             initial_slope_prior = R.NormalPrior(0, sdy)
         if not isinstance(initial_slope_prior, R.NormalPrior):
@@ -186,8 +191,8 @@ class SemilocalLinearTrendStateModel(StateModel):
                             "Expected an R.NormalPrior.")
         return initial_slope_prior
 
-    def _validate_initial_level_prior(
-            self, initial_level_prior, initial_y, sdy):
+    @staticmethod
+    def _validate_initial_level_prior(initial_level_prior, initial_y, sdy):
         if initial_level_prior is None:
             initial_level_prior = R.NormalPrior(initial_y, sdy)
         if not isinstance(initial_level_prior, R.NormalPrior):
