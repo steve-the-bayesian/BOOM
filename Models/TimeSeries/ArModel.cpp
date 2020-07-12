@@ -92,6 +92,7 @@ namespace BOOM {
         DataPolicy(new ArSuf(number_of_lags)),
         filter_coefficients_current_(false) {
     Phi_prm()->add_observer([this]() { this->observe_phi(); });
+    Phi_prm()->add_all();
   }
 
   ArModel::ArModel(const Ptr<GlmCoefs> &autoregression_coefficients,
