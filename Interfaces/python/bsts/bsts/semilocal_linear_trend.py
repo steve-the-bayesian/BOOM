@@ -75,9 +75,6 @@ class SemilocalLinearTrendStateModel(StateModel):
             slope_ar1_prior.initial_value,
             slope_sigma_prior.initial_value)
 
-        print("check the slope_ar1_prior")
-        import pdb
-        pdb.set_trace()
         slope_sampler = boom.NonzeroMeanAr1Sampler(
             slope_model,
             slope_mean_prior.boom(),
@@ -108,6 +105,8 @@ class SemilocalLinearTrendStateModel(StateModel):
         self._state_model.set_initial_slope_sd(
             initial_slope_prior.sigma)
 
+        self._state_contribution = None
+
     def __repr__(self):
         return (
             "A SemilocalLinearTrendStateModel with \n"
@@ -131,18 +130,18 @@ class SemilocalLinearTrendStateModel(StateModel):
         self.slope_sigma = np.empty(niter)
         self.slope_ar1 = np.empty(niter)
         self.slope_mean = np.empty(niter)
-        self.state_contribution = np.empty((niter, time_dimension))
+        self._state_contribution = np.empty((niter, time_dimension))
 
     def record_state(self, iteration, state_matrix):
         self.level_sigma[iteration] = self._state_model.level_sd
         self.slope_ar1[iteration] = self._state_model.slope_ar_coefficient
         self.slope_mean[iteration] = self._state_model.slope_mean
-        self.state_contribution[iteration, :] = state_matrix[
+        self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
-    def plot_state_contribution(self, ax, **kwargs):
-        """
-        """
+    @property
+    def state_contribution(self):
+        return self._state_contribution
 
     @staticmethod
     def _validate_level_sigma_prior(level_sigma_prior, sdy):

@@ -15,7 +15,7 @@ class DynregTest(unittest.TestCase):
         self._p11 = np.array([.7, .8, .9])
 
     @staticmethod
-    def simulate_null_data(self, time_dimension, typical_sample_size, xdim):
+    def simulate_null_data(time_dimension, typical_sample_size, xdim):
         ans = []
         sample_sizes = np.random.poisson(typical_sample_size, time_dimension)
         for i in range(time_dimension):
@@ -121,8 +121,8 @@ class DynregTest(unittest.TestCase):
         data = self.simulate_null_data(
             time_dimension, typical_sample_size, xdim)
 
-        for i in range(len(data)):
-            model.add_data(data[i])
+        for dp in data:
+            model.add_data(dp)
 
         sampler = boom.DynamicRegressionDirectGibbsSampler(
             model,
@@ -137,7 +137,7 @@ class DynregTest(unittest.TestCase):
         )
 
         model.set_method(sampler)
-        for i in range(10):
+        for _ in range(10):
             model.sample_posterior()
 
     # ---------------------------------------------------------------------------

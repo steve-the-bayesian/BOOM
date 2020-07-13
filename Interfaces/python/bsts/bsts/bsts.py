@@ -7,6 +7,7 @@ import R
 import scipy.sparse
 from abc import ABC, abstractmethod
 from .state_models import StateModel
+import matplotlib.pyplot as plt
 
 
 class Bsts:
@@ -144,6 +145,9 @@ class Bsts:
 
     @property
     def original_series(self):
+        """
+        The target series in the model training step.
+        """
         if hasattr(self, "_original_series"):
             return self._original_series
         else:
@@ -163,6 +167,19 @@ class Bsts:
             return self._observation_model_manager._log_likelihood
         else:
             return None
+
+    def suggest_burn(self):
+        """
+        Suggest a number of burn-in iterations.  For Gaussian models this will
+        be based on the simulated values of log-likelihood.  For other models
+        it will be a fixed percentage of the draws.
+        """
+        loglike = self.log_likelihood
+        if loglike is None:
+            burn = self.niter / 10
+        else:
+            burn = R.suggest_burn(loglike)
+        return burn
 
     def plot(self, what=None, **kwargs):
         plot_types = ["state", "components", "coefficients", "inclusion",
@@ -221,11 +238,7 @@ class Bsts:
 
         niter = self._niter
         if burn is None:
-            # TODO: this will only work for Guassian models.  DA models will
-            # not have a log_likelihood.
-            burn = R.suggest_burn(self.log_likelihood)
-            if burn is None:
-                burn = niter / 10
+            burn = self.suggest_burn()
 
         if time is None:
             time = self.original_series.index
@@ -241,16 +254,58 @@ class Bsts:
             ylim=ylim,
             **kwargs)
 
-    def plot_state_components(self, burn=None, time=None,
-                              same_scale=True, ylim=None, **kwargs):
+    def plot_state_components(self,
+                              burn: int = None,
+                              time: np.array = None,
+                              same_scale: bool = True,
+                              ylim: tuple = None,
+                              fig=None,
+                              components=None,
+                              **kwargs):
         """
+        Plot the contribution of each state model.
+
+        Args:
+          burn:
+
+        TODO: Finish this.  Use fig.add_gridspec instead of plt.subplots, so
+        that each figure can subgrid if needed.
+
+        See https://matplotlib.org/3.1.1/tutorials/intermediate/gridspec.html
         """
-        device = R.get_current_graphics_device()
-        plot_shape = R.plot_grid_size(len(self._state_models))
-        device._create_subplots(plot_shape[0], plot_shape[1])
-        for state_model in self._state_models:
-            ax = device.next_axes
-            state_model.plot_state_contribution(ax)
+        if fig is None:
+            fig = plt.figure(constrained_layout=True)
+        if components is None:
+            state_models = self._state_models
+        else:
+            state_models = self._state_models[components]
+
+        if burn is None:
+            burn = self.suggest_burn()
+        elif burn < 0:
+            burn = 0
+
+        if time is None:
+            time = self.original_series.index
+
+        if same_scale is True and ylim is None:
+            ylim = _find_ylim(state_models, burn)
+
+        nr, nc = R.plot_grid_shape(len(state_models))
+        outer_grid = fig.add_gridspec(nr, nc)
+        plot_index = 0
+        for i in range(nr):
+            for j in range(nc):
+                if plot_index < len(state_models):
+                    state_model = state_models[plot_index]
+                    state_model.plot_state_contribution(
+                        fig=fig,
+                        gridspec=outer_grid[i, j],
+                        time=time,
+                        burn=burn,
+                        ylim=ylim,
+                        **kwargs)
+                plot_index += 1
 
     def predict(self, horizon, newdata):
         """
@@ -490,3 +545,13 @@ class StateSpaceRegressionModelFactory:
 
     def create_observation_model_manager(self):
         return GaussianObservationModelManager(self._model.xdim)
+
+
+def _find_ylim(state_models, burn):
+    if (burn is None) or (burn < 0):
+        burn = 0
+    mins = [np.min(model.state_contribution[burn:, :])
+            for model in state_models]
+    maxs = [np.max(model.state_contribution[burn:, :])
+            for model in state_models]
+    return (np.min(mins), np.max(maxs))
