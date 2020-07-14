@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import R
 
 
 # ===========================================================================
@@ -74,10 +75,53 @@ class StateModel(ABC):
             state vector associated with the corresponding time point.
         """
 
+    @property
     @abstractmethod
-    def plot_state_contribution(self, ax, **kwargs):
+    def state_contribution(self):
         """
-        Plot the contribution of this state model to the conditional mean at
-        time t on the supplied set of axes.  This is often a dynamic
-        distribution plot.
+        A niter x time_dimension array giving the contribution of this state
+        component to the overall mean of y at each point in time.
         """
+
+    def plot_state_contribution(
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
+        self.plot_state_contribution_default(
+            fig=fig, gridspec=gridspec, time=time, burn=burn, ylim=ylim,
+            **kwargs)
+
+    def plot_state_contribution_default(
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
+        """
+        A default implementation of plot_state_distribution.
+
+        Plots the contribution of this state model to the conditional mean at
+        time t on the supplied set of axes using a dynamic distribution plot.
+
+        Args:
+          ax:  The axes object on which to draw the plot.
+          time:  The time axis.
+          burn:  The number of iterations to discard as burn-in.
+          ylim:  A pair giving the lower and upper limits on the y axis.
+          kwargs:  Extra arguments passed to plot_dynamic_distribution.
+
+        Effects:
+          Creates a dynamic distribution plot on the supplied set of axes.
+
+        Returns:
+          The axes object.
+        """
+        if burn > 0:
+            curves = self._state_contribution[burn:, :]
+        else:
+            curves = self._state_contribution
+
+        ax = fig.add_subplot(gridspec)
+
+        R.plot_dynamic_distribution(
+            curves=curves,
+            timestamps=time,
+            ax=ax,
+            ylim=ylim,
+            **kwargs)
+
+        return ax

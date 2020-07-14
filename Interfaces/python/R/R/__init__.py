@@ -22,7 +22,7 @@ from .plots import (
     plot,
     plot_dynamic_distribution,
     plot_many_ts,
-    plot_grid_size,
+    plot_grid_shape,
     plot_ts,
     points,
     )

@@ -70,6 +70,8 @@ class SeasonalStateModel(StateModel):
             innovation_sd_prior.upper_limit)
         self._state_model.set_method(state_model_sampler)
 
+        self._state_contribution = None
+
     def __repr__(self):
         ans = f"A SeasonalStateModel with {self.nseasons} "
         ans += f"seasonas of duration {self.season_duration}, and "
@@ -88,17 +90,29 @@ class SeasonalStateModel(StateModel):
     def state_dimension(self):
         return self.nseasons - 1
 
+    @property
+    def state_contribution(self):
+        return self._state_contribution
+
     def allocate_space(self, niter, time_dimension):
         self.sigma_draws = np.zeros(niter)
-        self.state_contribution = np.zeros((niter, time_dimension))
+        self._state_contribution = np.zeros((niter, time_dimension))
 
     def record_state(self, iteration, state_matrix):
         self.sigma_draws[iteration] = self._state_model.sigma
-        self.state_contribution[iteration, :] = state_matrix[
+        self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
-    def plot_state_contribution(self, ax, **kwargs):
-        pass
+    def plot_state_contribution(
+            self, fig, gridspec, time, burn, ylim, **kwargs):
+        if self.nseasons == 7 and self.season_duration == 1:
+            return self._plot_day_of_week_cycle(
+                fig=fig, gridspec=gridspec, time=time, burn=burn,
+                ylim=ylim, **kwargs)
+        else:
+            return self.plot_state_contribution_default(
+                fig=fig, gridspec=gridspec, time=time, burn=burn,
+                ylim=ylim, **kwargs)
 
     @staticmethod
     def _default_sigma_prior(sdy):
@@ -115,3 +129,45 @@ class SeasonalStateModel(StateModel):
         return boom.MvnModel(
             boom.Vector(np.zeros(dim).astype(float)),
             boom.SpdMatrix(np.diag(np.full(dim, float(sdy)))))
+
+    def _plot_day_of_week_cycle(
+            self, fig, gridspec, burn, time, ylim, **kwargs):
+        spec = gridspec.subgridspec(3, 3)
+        season = 0
+        for i in range(3):
+            for j in range(3):
+                if (j == 2) and (i < 2):
+                    pass
+                else:
+                    ax = fig.add_subplot(spec)
+                    time_subset = time[season::7]
+                    R.PlotDynamicDistribution(
+                        curves=self.state_contribution[burn:, season::7],
+                        timestamps=time_subset,
+                        ax=ax,
+                        ylim=ylim,
+                        **kwargs)
+                    ax.tick_params(
+                        bottom=False,
+                        top=False,
+                        left=False,
+                        right=False,
+                        labelbottom=False,
+                        labeltop=False,
+                        labelleft=False,
+                        labelright=False,
+                    )
+                    if (i == 2):
+                        ax.tick_params(
+                            bottom=True,
+                            labelbottom=True)
+                    elif (i == 0) and (j == 2):
+                        ax.tick_params(
+                            top=True,
+                            labeltop=True)
+
+                    if j == 0:
+                        ax.tick_params(
+                            left=True,
+                            labelleft=True)
+        return None
