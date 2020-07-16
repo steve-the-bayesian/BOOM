@@ -99,20 +99,20 @@ namespace BOOM {
 
   //===========================================================================
   MixedMultivariateData::MixedMultivariateData()
-      : data_sorter_(new MixedDataOrganizer)
+      : data_organizer_(new MixedDataOrganizer)
   {}
 
   MixedMultivariateData::MixedMultivariateData(
       const Ptr<MixedDataOrganizer> &sorter,
       const std::vector<Ptr<DoubleData>> &numerics,
-      const std::vector<Ptr<CategoricalData>> &categoricals)
-      : data_sorter_(sorter),
+      const std::vector<Ptr<LabeledCategoricalData>> &categoricals)
+      : data_organizer_(sorter),
         numeric_data_(numerics),
         categorical_data_(categoricals)
   {}
 
   MixedMultivariateData::MixedMultivariateData(const MixedMultivariateData &rhs)
-      : data_sorter_(rhs.data_sorter_)
+      : data_organizer_(rhs.data_organizer_)
   {
     for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
       numeric_data_.push_back(rhs.numeric_data_[i]->clone());
@@ -125,7 +125,7 @@ namespace BOOM {
   MixedMultivariateData &MixedMultivariateData::operator=(
       const MixedMultivariateData &rhs) {
     if (&rhs != this) {
-      data_sorter_ = rhs.data_sorter_;
+      data_organizer_ = rhs.data_organizer_;
       numeric_data_.clear();
       for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
         numeric_data_.push_back(rhs.numeric_data_[i]->clone());
@@ -153,20 +153,20 @@ namespace BOOM {
   }
 
   void MixedMultivariateData::add_numeric(const Ptr<DoubleData> &numeric) {
-    data_sorter_->add_variable(VariableType::numeric);
+    data_organizer_->add_variable(VariableType::numeric);
     numeric_data_.push_back(numeric);
   }
 
   void MixedMultivariateData::add_categorical(
-      const Ptr<CategoricalData> &categorical) {
-    data_sorter_->add_variable(VariableType::categorical);
+      const Ptr<LabeledCategoricalData> &categorical) {
+    data_organizer_->add_variable(VariableType::categorical);
     categorical_data_.push_back(categorical);
   }
 
   const Data &MixedMultivariateData::variable(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_sorter_->type_map(i);
+    std::tie(type, pos) = data_organizer_->type_map(i);
     if (type == VariableType::numeric) {
       return *numeric_data_[pos];
     } else if (type == VariableType::categorical) {
@@ -183,7 +183,7 @@ namespace BOOM {
   const DoubleData &MixedMultivariateData::numeric(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_sorter_->type_map(i);
+    std::tie(type, pos) = data_organizer_->type_map(i);
     if (type != VariableType::numeric) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not numeric.";
@@ -195,7 +195,7 @@ namespace BOOM {
   Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_sorter_->type_map(i);
+    std::tie(type, pos) = data_organizer_->type_map(i);
     if (type != VariableType::numeric) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not numeric.";
@@ -204,10 +204,10 @@ namespace BOOM {
     return numeric_data_[pos];
   }
 
-  const CategoricalData &MixedMultivariateData::categorical(int i) const {
+  const LabeledCategoricalData &MixedMultivariateData::categorical(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_sorter_->type_map(i);
+    std::tie(type, pos) = data_organizer_->type_map(i);
     if (type != VariableType::categorical) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not categorical.";
@@ -216,10 +216,11 @@ namespace BOOM {
     return *categorical_data_[pos];
   }
 
-  Ptr<CategoricalData> MixedMultivariateData::mutable_categorical(int i) {
+  Ptr<LabeledCategoricalData>
+  MixedMultivariateData::mutable_categorical(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_sorter_->type_map(i);
+    std::tie(type, pos) = data_organizer_->type_map(i);
     if (type != VariableType::categorical) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not categorical.";
@@ -241,7 +242,7 @@ namespace BOOM {
       const std::vector<std::string> &raw_data)
       : key_(make_catkey(raw_data)) {
     for (int i = 0; i < raw_data.size(); ++i) {
-      Ptr<CategoricalData> dp = new CategoricalData(raw_data[i], key_);
+      Ptr<LabeledCategoricalData> dp(new LabeledCategoricalData(raw_data[i], key_));
       data_.push_back(dp);
     }
   }
@@ -251,7 +252,7 @@ namespace BOOM {
       const Ptr<CatKey> &key)
       : key_(key) {
     for (const auto &el : values) {
-      NEW(CategoricalData, dp)(el, key_);
+      NEW(LabeledCategoricalData, dp)(el, key_);
       data_.push_back(dp);
     }
   }
@@ -417,11 +418,81 @@ namespace BOOM {
     }
   }
 
+  void DataTable::append_row(const MixedMultivariateData &row) {
+    if (nobs() > 0) {
+      if (row.dim() != nvars()) {
+        report_error("The number of fields in the new row must match the "
+                     "number of columns in the DataTable.");
+      }
+
+      int numeric_counter = 0;
+      int categorical_counter = 0;
+      for (int i = 0; i < nvars(); ++i) {
+        VariableType vtype = variable_type(i);
+        if (vtype != row.variable_type(i)) {
+          std::ostringstream err;
+          err << "variable type mismatch in field " << i << ".";
+          report_error(err);
+        }
+
+        switch(vtype) {
+          case VariableType::numeric:
+            {
+              numeric_variables_[numeric_counter++].push_back(
+                  row.numeric(i).value());
+            }
+            break;
+
+          case VariableType::categorical:
+            {
+              categorical_variables_[categorical_counter].push_back(
+                  row.categorical_data()[categorical_counter]);
+              ++categorical_counter;
+            }
+            break;
+
+          default:
+            report_error("Only numeric and categorical types are supported.");
+        }
+      }
+
+
+    } else {
+      data_organizer_ = row.data_organizer_;
+      for (int i = 0; i < row.dim(); ++i) {
+        VariableType vtype = row.variable_type(i);
+        switch (vtype) {
+          case VariableType::numeric :
+            {
+              double value = row.numeric(i).value();
+              numeric_variables_.push_back(Vector(1, value));
+            }
+            break;
+
+          case VariableType::categorical:
+            {
+              categorical_variables_.push_back(
+                  CategoricalVariable(
+                      std::vector<Ptr<LabeledCategoricalData>>(
+                          1, row.mutable_categorical(i))));
+            }
+            break;
+
+          default:
+            report_error("Only numeric and categorical data types are supported.");
+
+        }
+      }
+    }
+  }
+
   std::vector<std::string> &DataTable::vnames() { return vnames_; }
   const std::vector<std::string> &DataTable::vnames() const { return vnames_; }
 
   //------------------------------------------------------------
-  uint DataTable::nvars() const { return vnames_.size(); }
+  uint DataTable::nvars() const {
+    return data_organizer_->total_number_of_fields();
+  }
 
   LabeledMatrix DataTable::design(bool add_int) const {
     std::vector<bool> include(nvars(), true);
@@ -453,7 +524,7 @@ namespace BOOM {
         if (type == VariableType::numeric) {
           X(i, column++) = numeric_variables_[index][i];
         } else if (type == VariableType::categorical) {
-          const Ptr<CategoricalData> x(categorical_variables_[index][i]);
+          const Ptr<LabeledCategoricalData> x(categorical_variables_[index][i]);
           for (uint k = 1; k < x->nlevels(); ++k)
             X(i, column++) = (k == x->value() ? 1 : 0);
         } else {
@@ -474,7 +545,7 @@ namespace BOOM {
       if (type == VariableType::numeric) {
         dimnames.push_back(vnames_[J]);
       } else if (type == VariableType::categorical) {
-        const Ptr<CategoricalData> x(categorical_variables_[index][0]);
+        const Ptr<LabeledCategoricalData> x(categorical_variables_[index][0]);
         std::string stub = vnames_[J];
         std::vector<std::string> labs = categorical_variables_[index].labels();
         for (uint i = 1; i < labs.size(); ++i) {
@@ -515,7 +586,7 @@ namespace BOOM {
       Ptr<CatKey> key = categorical_variables_[i].key();
       for (int j = 0; j < rhs.categorical_variables_[i].size(); ++j) {
         uint value = rhs.categorical_variables_[i][j]->value();
-        categorical_variables_[i].push_back(new CategoricalData(value, key));
+        categorical_variables_[i].push_back(new LabeledCategoricalData(value, key));
       }
     }
     return *this;
@@ -585,7 +656,7 @@ namespace BOOM {
     return categorical_variables_[index];
   }
 
-  Ptr<CategoricalData> DataTable::get_nominal(int row, int col) const {
+  Ptr<LabeledCategoricalData> DataTable::get_nominal(int row, int col) const {
     VariableType type;
     int index;
     std::tie(type, index) = data_organizer_->type_map(col);
@@ -617,7 +688,7 @@ namespace BOOM {
   // DataTable::OrdinalVariable DataTable::get_ordinal(uint n)const{
   //   if (variable_types_[n]!=categorical) wrong_type_error(1, n);
   //   std::vector<Ptr<OrdinalData> > ans;
-  //   const std::vector<Ptr<CategoricalData> > &v(categorical_variables_[n]);
+  //   const std::vector<Ptr<LabeledCategoricalData> > &v(categorical_variables_[n]);
   //   for (uint i=0; i<v.size(); ++i) {
   //     NEW(OrdinalData, dp)(v[i]->value(), v[0]->key());
   //     ans.push_back(dp);}
@@ -637,7 +708,7 @@ namespace BOOM {
     for (int i = 0; i < numeric_variables_.size(); ++i) {
       numerics.push_back(new DoubleData(numeric_variables_[i][row_index]));
     }
-    std::vector<Ptr<CategoricalData>> categoricals;
+    std::vector<Ptr<LabeledCategoricalData>> categoricals;
     for (int i = 0; i < categorical_variables_.size(); ++i) {
       categoricals.push_back(categorical_variables_[i][row_index]);
     }

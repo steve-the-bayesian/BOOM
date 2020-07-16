@@ -78,7 +78,7 @@ namespace BOOM {
 
       // Observed categorical data.  Missing values are indicated by the
       // "missing" mechanism in the Data base class.
-      const std::vector<Ptr<CategoricalData>> observed_categories() const {
+      const std::vector<Ptr<LabeledCategoricalData>> observed_categories() const {
         return observed_categories_;
       }
 
@@ -94,6 +94,9 @@ namespace BOOM {
       //   row:  The index of the row to be filled.
       void fill_data_table_row(DataTable &table, int row);
 
+      // Fill a MixedMultivariateData object with the imputed values.
+      MixedMultivariateData to_mixed_multivariate_data() const;
+
      private:
       Ptr<MixedMultivariateData> observed_data_;
 
@@ -108,7 +111,7 @@ namespace BOOM {
       std::vector<int> true_categories_;
 
       // The categorical data from observed_data_;
-      std::vector<Ptr<CategoricalData>> observed_categories_;
+      std::vector<Ptr<LabeledCategoricalData>> observed_categories_;
 
       // The vector of predictors formed by encoding the categorical data.
       Vector predictors_;
@@ -198,7 +201,14 @@ namespace BOOM {
       }
 
       const Vector &atom_probs() const {return impl_->atom_probs();}
+      void set_atom_probs(const Vector &atom_probs) {
+        impl_->set_atom_probs(atom_probs);
+      }
+
       Matrix atom_error_probs() const {return impl_->atom_error_probs();}
+      void set_atom_error_probs(const Matrix &atom_error_probs) {
+        impl_->set_atom_error_probs(atom_error_probs);
+      }
 
       double true_value(int true_atom, double observed) const {
         return impl_->true_value(true_atom, observed);
@@ -255,11 +265,11 @@ namespace BOOM {
 
       // The log conditional probability distribution of the true value, given
       // the obseved value that each atom is the true value.
-      Vector true_level_log_probability(const CategoricalData &observed_value);
+      Vector true_level_log_probability(const LabeledCategoricalData &observed_value);
 
       // A mapping between a label or categorical data value and a column of the
       // "joint distribution" between the true and observed data.
-      int atom_index(const CategoricalData &data) const;
+      int atom_index(const LabeledCategoricalData &data) const;
       int atom_index(const std::string &label) const;
 
       void set_conjugate_prior_for_levels(const Vector &counts);
@@ -268,6 +278,9 @@ namespace BOOM {
       const Vector &level_probs() const {
         return truth_model_->pi();
       }
+      void set_level_probs(const Vector &level_probs) {
+        truth_model_->set_pi(level_probs);
+      }
 
       Matrix level_observation_probs() const {
         Matrix ans(obs_models_.size(), obs_models_[0]->dim());
@@ -275,6 +288,12 @@ namespace BOOM {
           ans.row(i) = obs_models_[i]->pi();
         }
         return ans;
+      }
+
+      void set_level_observation_probs(const Matrix &level_observation_probs) {
+        for (int i = 0; i < obs_models_.size(); ++i) {
+          obs_models_[i]->set_pi(level_observation_probs.row(i));
+        }
       }
 
      private:
@@ -423,8 +442,6 @@ namespace BOOM {
     void impute_row(Ptr<MixedImputation::CompleteData> &row,
                     RNG &rng,
                     bool update_complete_data_suf);
-    void impute_row(Ptr<MixedImputation::CompleteData> &row,
-                    RNG &rng) const;
     void impute_all_rows();
 
     void sample_posterior();

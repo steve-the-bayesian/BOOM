@@ -27,7 +27,6 @@
 
 namespace BOOM {
   typedef MultinomialSuf MS;
-  typedef CategoricalData CD;
   MS::MultinomialSuf(const uint p) : counts_(p, 0.0) {}
 
   MS::MultinomialSuf(const Vector &counts) : counts_(counts) {
@@ -37,11 +36,14 @@ namespace BOOM {
   }
 
   MS::MultinomialSuf(const MultinomialSuf &rhs)
-      : Sufstat(rhs), SufstatDetails<CD>(rhs), counts_(rhs.counts_) {}
+      : Sufstat(rhs),
+        SufstatDetails<CategoricalData>(rhs),
+        counts_(rhs.counts_)
+  {}
 
   MS *MS::clone() const { return new MS(*this); }
 
-  void MS::Update(const CD &d) {
+  void MS::Update(const CategoricalData &d) {
     uint i = d.value();
     while (i >= counts_.size()) {
       counts_.push_back(0);  // counts_ grows when needed
@@ -108,7 +110,7 @@ namespace BOOM {
         DataPolicy(new MS(1)),
         PriorPolicy(),
         logp_current_(false) {
-    std::vector<Ptr<CD> > dvec(make_catdat_ptrs(names));
+    std::vector<Ptr<CategoricalData>> dvec(make_catdat_ptrs(names));
 
     uint nlev = dvec[0]->nlevels();
     Vector probs(nlev, 1.0 / nlev);
