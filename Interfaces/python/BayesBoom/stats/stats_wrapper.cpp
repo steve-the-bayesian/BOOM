@@ -199,6 +199,62 @@ namespace BayesBoom {
         .def_property_readonly(
             "ncol", &DataTable::nvars,
             "Number of columns (variables) in the table.")
+        .def_property_readonly(
+            "variable_names",
+            [](DataTable &table) {
+              return table.vnames();
+            },
+            "The names of the variables (columns) in the data table.")
+        .def("getvar",
+             [](DataTable &table, int i) {
+               return table.getvar(i);
+             },
+             py::arg("i"),
+             "Return table column 'i'.  "
+             "This is an error if column 'i' is non-numeric.")
+        .def("variable_type",
+             [](DataTable &table, int i) {
+               VariableType vtype = table.variable_type(i);
+               switch (vtype) {
+                 case VariableType::categorical:
+                   return "categorical";
+                   break;
+
+                 case VariableType::numeric:
+                   return "numeric";
+                   break;
+
+                 default:
+                   return "unknown";
+               }
+             },
+             py::arg("i"),
+             "Return the variable type of column 'i' as a string.")
+
+        .def("get_nominal_values",
+             [](DataTable &table, int i) {
+               CategoricalVariable var = table.get_nominal(i);
+               std::vector<int> values;
+               values.reserve(table.nrow());
+               for (int i = 0; i < table.nrow(); ++i) {
+                 values.push_back(var[i]->value());
+               }
+               return values;
+             },
+             py::arg("i"),
+             "Return table column 'i'.  \n"
+             "This is an error if column 'i' is not a nominal categorical "
+             "variable.")
+        .def("get_nominal_levels",
+             [](DataTable &table, int i) {
+               CategoricalVariable var = table.get_nominal(i);
+               return var.labels();
+             },
+             py::arg("i"),
+             "Return the levels associated with variable 'i'.  \n"
+             "This is an error if column 'i' is not a nominal categorical "
+             "variable."
+             )
         ;
 
     py::class_<DataEncoder, Ptr<DataEncoder>>(boom, "DataEncoder")

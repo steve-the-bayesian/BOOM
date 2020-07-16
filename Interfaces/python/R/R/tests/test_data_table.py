@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import BayesBoom as boom
 
+import pdb
 
 def char_range(c1, c2):
     """Generates the characters from `c1` to `c2`, inclusive."""
@@ -74,7 +75,7 @@ class DataTableTest(unittest.TestCase):
 
         errors = (Sigma_root @ np.random.randn(ydim, sample_size)).T
         encoder = boom.DatasetEncoder(encoders)
-        xcat = encoder.encode_dataset(R.create_data_table(
+        xcat = encoder.encode_dataset(R.to_data_table(
             pd.DataFrame(cats)))
         yhat = xcat.to_numpy() @ self._beta
         numerics = yhat + errors
@@ -92,9 +93,13 @@ class DataTableTest(unittest.TestCase):
         pass
 
     def test_data_table(self):
-        table = R.create_data_table(self._data)
+        table = R.to_data_table(self._data)
         self.assertEqual(table.nrow, self._data.shape[0])
         self.assertEqual(table.ncol, self._data.shape[1])
+
+        frame = R.to_data_frame(table)
+        for i in range(5):
+            self.assertTrue(np.all(self._data.iloc[:, i] == frame.iloc[:, i]))
 
     def test_autoclean_construction(self):
         ac = R.AutoClean()
@@ -146,6 +151,13 @@ class DataTableTest(unittest.TestCase):
         self.assertTrue(np.allclose(
             ac.level_observation_probs["cat1"].sum(axis=3),
             np.ones((niter, nclusters, nlevels))))
+
+        to_impute = self._data.iloc[[3, 9, 24], :]
+        iterations = [50, 60, 70, 75, 90]
+
+        imputed = ac.impute_rows(to_impute, iterations)
+        self.assertEqual(len(imputed), len(iterations))
+        self.assertEqual(imputed[0].shape, to_impute.shape)
 
 
 # unittest.main()
