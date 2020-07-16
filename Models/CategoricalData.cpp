@@ -293,7 +293,24 @@ namespace BOOM {
   }
 
   //======================================================================
+  LabeledCategoricalData::LabeledCategoricalData(
+      const std::string &value,
+      const Ptr<CatKey> &key)
+      : CategoricalData(key->findstr(value), key),
+        catkey_(key)
+  {}
 
+  LabeledCategoricalData::LabeledCategoricalData(
+      uint value, const Ptr<CatKey> &key)
+      : CategoricalData(value, key),
+        catkey_(key)
+  {}
+
+  LabeledCategoricalData *LabeledCategoricalData::clone() const {
+    return new LabeledCategoricalData(*this);
+  }
+
+  //======================================================================
   OrdinalData::OrdinalData(uint value, uint Nlevels)
       : CategoricalData(value, Nlevels) {}
 

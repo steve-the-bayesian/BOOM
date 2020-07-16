@@ -235,6 +235,27 @@ namespace BOOM {
     uint val_{};
     Ptr<CatKeyBase> key_;
   };
+
+  //------------------------------------------------------------
+  // LabeledCategoricalData is CategoricalData with labels assigned to the
+  // categories.
+  class LabeledCategoricalData
+      : public CategoricalData {
+   public:
+    LabeledCategoricalData(uint value, const Ptr<CatKey> &key);
+    LabeledCategoricalData(const std::string &value, const Ptr<CatKey> &key);
+    LabeledCategoricalData *clone() const override;
+
+    const std::vector<std::string> &labels() const {
+      return catkey_->labels();
+    }
+
+    Ptr<CatKey> catkey() {return catkey_;}
+
+   private:
+    Ptr<CatKey> catkey_;
+  };
+
   //------------------------------------------------------------
   class OrdinalData : public CategoricalData {
    public:

@@ -8,7 +8,7 @@ import time
 import pickle  # nosec
 
 
-def create_data_table(data: pd.DataFrame):
+def to_data_table(data: pd.DataFrame):
     """
     Create a BOOM DataTable object from a pandas DataFrame.  The categories of
     any categorical variables will be handled as strings.
@@ -35,6 +35,50 @@ def create_data_table(data: pd.DataFrame):
                 f"Column {i} ({data.columns[i]}) has dtype {dt}."
             )
     return ans
+
+
+def to_data_frame(data: boom.DataTable, columns=None, index=None):
+    """
+    Convert a boom.DataTable to a pd.DataFrame.
+
+    Args:
+      data:  The data table to be converted.
+      columns: The column names.  If None then the names of the data table will
+        be used.
+      index:  The index to be applied to the returned data frame.
+
+    Returns:
+      A pandas data frame containing the data from 'data'.
+    """
+    if columns is None:
+        columns = data.variable_names
+
+    if len(columns) == 0:
+        columns = ["V" + str(i) for i in range(data.ncol)]
+
+    if len(columns) != data.ncol:
+        raise Exception("The number of entries in 'columns' must match "
+                        "the number of variables in the data table.")
+
+    if index is None:
+        index = range(data.nrow)
+    if len(index) != data.nrow:
+        raise Exception("The number of entries in 'index' must match "
+                        "the number of rows in the data table.")
+
+    ans_as_dict = {}
+    for i, vname in enumerate(columns):
+        vtype = data.variable_type(i)
+        if vtype == "numeric":
+            ans_as_dict[vname] = data.getvar(i).to_numpy()
+        elif vtype == "categorical":
+            values = data.get_nominal_values(i)
+            levels = data.get_nominal_levels(i)
+            ans_as_dict[vname] = pd.Categorical.from_codes(values, levels)
+        else:
+            raise Exception("Only numeric or categorical values are supported.")
+
+    return pd.DataFrame(ans_as_dict, index=index)
 
 
 class AutoClean:
@@ -133,7 +177,7 @@ class AutoClean:
 
         atoms_arg = [boom.Vector(np.array(self._atoms[vname]))
                      for vname in self._numeric_colnames]
-        table_arg = create_data_table(data)
+        table_arg = to_data_table(data)
         print("creating mdoel object")
         self._model = boom.MixedDataImputer(nclusters, table_arg, atoms_arg,
                                             boom.GlobalRng.rng)
@@ -193,6 +237,121 @@ class AutoClean:
                     "Only categorical or numeric types are supported.")
 
         return atoms_dict, levels_dict
+
+    def set_atom_prior(self, variable_name: str, prior_counts: np.ndarray):
+        """
+        Set a constrained (0's are allowed) Dirichlet prior distribution for the
+        frequency of "true values" for a numeric variable.
+
+        Args:
+          variable_name: The name of the numeric variable that the prior
+            describes.
+          prior_counts: A 1-d array containing the prior counts.  If the
+            variable has k atoms then the array needs k+1 elements, with the
+            last one corresponding to the continuous portion of the model.
+            Non-positive entries in 'prior_counts' signal that the
+            corresponding element has zero probability of being the true value.
+        """
+        self._atom_prior[variable_name] = prior_counts.ravel()
+        if np.sum(prior_counts > 0) == 0:
+            raise Exception("At least one prior count must be positive.")
+
+    def set_atom_error_prior(self,
+                             variable_name: str,
+                             prior_counts: np.ndarray):
+        """
+        Set a prior distribution on the conditional probability of observing an
+        atom in a numeric field, given the true value.
+
+        Args:
+          variable_name: The name of the numeric varible described by the
+            prior.
+          prior_counts: A 2-d numpy array.  If the variable has k atoms then a
+            k+1 by k+2 array is needed.  See details below.
+
+        Each row of the matrix
+        """
+        self._atom_error_prior[variable_name] = prior_counts.astype("float")
+        if len(prior_counts.shape) != 2:
+            raise Exception("Expected a 2-d array.")
+
+        row_totals = np.sum(prior_counts > 0, axis=1)
+        if not np.all(row_totals > 0):
+            raise Exception("Each row must have at least one positive entry")
+
+    def set_level_prior(self,
+                        variable_name: str,
+                        prior_counts: np.ndarray):
+        """
+        Set a constrained Dirichlet (0 probabilities are allowed) prior
+        distribution on the true levels of a categorical variable.
+
+        Args:
+          variable_name: The name of the categorical variable described by the
+            prior.
+          prior_counts: An array of "prior counts".  Non-positive entries
+            indicate prior certainty that the corresponding element is zero.
+            The array must have dimension matching the number of levels in the
+            variable, and at least one entry must be positive.
+        """
+        self._level_prior[variable_name] = prior_counts.astype(float).ravel()
+        if (np.sum(prior_counts > 0) == 0):
+            raise Exception("At least one entry must be positive.")
+
+    def set_level_observation_prior(self,
+                                    variable_name: str,
+                                    prior_counts: np.ndarray):
+        """
+        Set a collection of independent constrained (0 probabilities are
+        allowed) Dirichlet priors on the conditional probability of the
+        observed value given true level.
+
+        Args:
+          variable_name: The name of the categorical variable described by the
+            prior.
+          prior_counts: A 2-d array of "prior counts".  Non-positive entries
+            indicate prior certainty that the corresponding element is zero.
+            Rows correspond to true level values, and columns correspond to
+            actual observations.  The number of rows must therefore match the
+            number of levels in the variable.  There is one addtional column
+            corresponding to "missing".  Each row of the matrix is treated
+            independently, and each row must have at least one positive
+            element.
+        """
+        self._level_observation_prior[variable_name] = (
+            prior_counts.astype("float")
+        )
+        if len(prior_counts.shape) != 2:
+            raise Exception("A 2-d array is needed.")
+        if prior_counts.shape[1] != prior_counts.shape[0] + 1:
+            raise Exception("The matrix needs one more column than rows.")
+        positive = prior_counts > 0
+        row_ok = positive.sum(axis=1)
+        if not np.all(row_ok):
+            raise Exception("Each row must have at least one positive element.")
+
+    def impute_rows(self, data, iterations):
+        """
+        Args:
+          data:  Data frame containing the rows to impute.
+          iterations:  An array-like collection of iteration numbers to use.
+
+        Returns:
+          imputed: A list of imputed data frames.  There is one entry for each
+            element in 'iterations'
+        """
+        imputed = []
+
+        data_table = to_data_table(data)
+
+        for it in iterations:
+            self._restore_parameters(it)
+            imputed_data_table = self._model.impute_data_set(data_table, 10)
+            imputed.append(
+                to_data_frame(imputed_data_table, columns=data.columns,
+                              index=data.index)
+            )
+        return imputed
 
     def _allocate_space(self, niter: int):
         xdim = self._model.xdim
@@ -258,64 +417,27 @@ class AutoClean:
         self._model.set_coefficients(
             boom.Matrix(self.coefficients[iteration, :, :]))
         self._model.set_residual_variance(
-            boom.Matrix(self.residual_variance[iteration, :, :]))
+            boom.SpdMatrix(self.residual_variance[iteration, :, :]))
         for cluster in range(self.nclusters):
             for col in range(len(self._numeric_colnames)):
                 vname = self._numeric_colnames[col]
                 self._model.set_atom_probs(
+                    cluster, col,
                     boom.Vector(self.atom_probs[vname][iteration, cluster, :]))
                 self._model.set_atom_error_probs(
+                    cluster, col,
                     boom.Matrix(self.atom_error_probs[vname][
                         iteration, cluster, :, :]))
 
             for col in range(len(self._categorical_colnames)):
                 vname = self._categorical_colnames[col]
                 self._model.set_level_probs(
+                    cluster, col,
                     boom.Vector(self.level_probs[vname][iteration, cluster, :]))
                 self._model.set_level_observation_probs(
+                    cluster, col,
                     boom.Matrix(self.level_observation_probs[vname][
                         iteration, cluster, :, :]))
-
-    def set_atom_prior(self, variable_name: str, prior_counts: np.ndarray):
-        """
-        Set an extended (0's are allowed) Dirichlet prior distribution for the
-        frequency of "true values" for a numeric variable.
-
-        Args:
-          variable_name: The name of the numeric variable that the prior
-            describes.
-          prior_counts: A 1-d array containing the prior counts.  If the
-            variable has k atoms then the array needs k+1 elements, with the
-            last one corresponding to the continuous portion of the model.
-            Non-positive entries in 'prior_counts' signal that the
-            corresponding element has zero probability of being the true value.
-        """
-        self._atom_prior[variable_name] = prior_counts.ravel()
-        if np.sum(prior_counts > 0) == 0:
-            raise Exception("At least one prior count must be positive.")
-
-    def set_atom_error_prior(self,
-                             variable_name: str,
-                             prior_counts: np.ndarray):
-        """
-        Set a prior distribution on the conditional probability of observing an
-        atom in a numeric field, given the true value.
-
-        Args:
-          variable_name: The name of the numeric varible described by the
-            prior.
-          prior_counts: A 2-d numpy array.  If the variable has k atoms then a
-            k+1 by k+2 array is needed.  See details below.
-
-        Each row of the matrix
-        """
-        self._atom_error_prior[variable_name] = prior_counts
-        if len(prior_counts.shape) != 2:
-            raise Exception("Expected a 2-d array.")
-
-        row_totals = np.sum(prior_counts > 0, axis=1)
-        if not np.all(row_totals > 0):
-            raise Exception("Each row must have at least one positive entry")
 
     def _set_default_regression_prior(self):
         xdim = self._model.xdim

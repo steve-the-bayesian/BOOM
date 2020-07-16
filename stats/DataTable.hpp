@@ -99,12 +99,16 @@ namespace BOOM {
   // or numeric data in each cell, with possible other types to be added later
   // (ordinal, datetime, ...).
   class MixedMultivariateData : public Data {
+    // Friendship is merited here because a MixedMultivariateData is a row in a
+    // data table.
+    friend class DataTable;
+
    public:
     MixedMultivariateData();
     MixedMultivariateData(
         const Ptr<MixedDataOrganizer> &sorter,
         const std::vector<Ptr<DoubleData>> &numerics,
-        const std::vector<Ptr<CategoricalData>> &categoricals);
+        const std::vector<Ptr<LabeledCategoricalData>> &categoricals);
     MixedMultivariateData(const MixedMultivariateData &rhs);
     MixedMultivariateData &operator=(const MixedMultivariateData &rhs);
     MixedMultivariateData(MixedMultivariateData &&rhs) = default;
@@ -114,26 +118,28 @@ namespace BOOM {
     std::ostream &display(std::ostream &out) const override;
 
     void add_numeric(const Ptr<DoubleData> &numeric);
-    void add_categorical(const Ptr<CategoricalData> &categorical);
+    void add_categorical(const Ptr<LabeledCategoricalData> &categorical);
 
     // The number of numeric variables.
     int numeric_dim() const {
-      return data_sorter_->number_of_numeric_fields();
+      return data_organizer_->number_of_numeric_fields();
     }
 
     // The number of categorical variables.  This is the number of categorical
     // columns in the "data frame", not its dummy variable expansion.
     int categorical_dim() const {
-      return data_sorter_->number_of_categorical_fields();
+      return data_organizer_->number_of_categorical_fields();
     }
 
     // The total number of variables.
-    int dim() const {return data_sorter_->total_number_of_fields();}
+    int dim() const {return data_organizer_->total_number_of_fields();}
 
     // The type of variable in cell i.
-    VariableType vtype(int i) const { return data_sorter_->variable_type(i); }
+    VariableType variable_type(int i) const {
+      return data_organizer_->variable_type(i);
+    }
     const std::vector<VariableType> & variable_types() const {
-      return data_sorter_->variable_types();
+      return data_organizer_->variable_types();
     }
 
     const Data &variable(int i) const;
@@ -142,24 +148,28 @@ namespace BOOM {
     // not then raise an error.
     const DoubleData &numeric(int i) const;
     Ptr<DoubleData> mutable_numeric(int i);
-    const CategoricalData &categorical(int i) const;
-    Ptr<CategoricalData> mutable_categorical(int i);
+    const LabeledCategoricalData &categorical(int i) const;
+    Ptr<LabeledCategoricalData> mutable_categorical(int i) const;
 
     // Collapse all the numeric data into a vector.
     Vector numeric_data() const;
 
-    const std::vector<Ptr<CategoricalData>> &categorical_data() const {
+    const std::vector<Ptr<LabeledCategoricalData>> &categorical_data() const {
       return categorical_data_;
     }
 
+    Ptr<MixedDataOrganizer> data_organizer() const {
+      return data_organizer_;
+    }
+
    private:
-    Ptr<MixedDataOrganizer> data_sorter_;
+    Ptr<MixedDataOrganizer> data_organizer_;
     std::vector<Ptr<DoubleData>> numeric_data_;
-    std::vector<Ptr<CategoricalData>> categorical_data_;
+    std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
   };
 
   //===========================================================================
-  // A CategoricalVariable is a column of CategoricalData.  The data are
+  // A CategoricalVariable is a column of LabeledCategoricalData.  The data are
   // assumed to come in string format, so a CatKey is used to handle the
   // mapping between the string values and the values of the categorical data
   // elements.
@@ -168,12 +178,11 @@ namespace BOOM {
     CategoricalVariable() = default;
     explicit CategoricalVariable(const std::vector<std::string> &raw_data);
     CategoricalVariable(const std::vector<int> &values, const Ptr<CatKey> &key);
-    CategoricalVariable(const std::vector<Ptr<CategoricalData>> &data,
-                        const Ptr<CatKey> &key)
-        : key_(key), data_(data) {}
+    CategoricalVariable(const std::vector<Ptr<LabeledCategoricalData>> &data)
+        : key_(data[0]->catkey()), data_(data) {}
 
-    Ptr<CategoricalData> operator[](uint i) { return data_[i]; }
-    const Ptr<CategoricalData> operator[](uint i) const { return data_[i]; }
+    Ptr<LabeledCategoricalData> operator[](uint i) { return data_[i]; }
+    const Ptr<LabeledCategoricalData> operator[](uint i) const { return data_[i]; }
     const std::vector<std::string> &labels() const { return key_->labels(); }
 
     // Return the label of the ith data point.
@@ -183,7 +192,7 @@ namespace BOOM {
 
     int size() const { return data_.size(); }
     bool empty() const { return data_.empty(); }
-    void push_back(const Ptr<CategoricalData> &element) {
+    void push_back(const Ptr<LabeledCategoricalData> &element) {
       data_.push_back(element);
       key_->Register(element.get());
     }
@@ -192,11 +201,11 @@ namespace BOOM {
     }
 
     Ptr<CatKey> key() { return key_; }
-    const std::vector<Ptr<CategoricalData>> &data() const { return data_; }
+    const std::vector<Ptr<LabeledCategoricalData>> &data() const { return data_; }
 
    private:
     Ptr<CatKey> key_;
-    std::vector<Ptr<CategoricalData>> data_;
+    std::vector<Ptr<LabeledCategoricalData>> data_;
   };
 
   //===========================================================================
@@ -229,7 +238,6 @@ namespace BOOM {
   class DataTable : public Data {
    public:
     typedef std::vector<double> dvector;
-    typedef std::vector<std::string> StringVector;
 
     //--- constructors ---
     // Creates an empty data table.
@@ -257,6 +265,10 @@ namespace BOOM {
     virtual void append_variable(const CategoricalVariable &cv,
                                  const std::string &name);
 
+    // If the data table is empty, appending the first row determines the number
+    // and type of columns.
+    void append_row(const MixedMultivariateData &row);
+
     //--- size  ---
     uint nvars() const;          // number of variables stored in the table
     int nrow() const;            // number of rows
@@ -272,8 +284,8 @@ namespace BOOM {
 
     // The names of the variables stored in the table.  These are the "column
     // names."
-    StringVector &vnames();
-    const StringVector &vnames() const;
+    std::vector<std::string> &vnames();
+    const std::vector<std::string> &vnames() const;
 
     //--- extract variables ---
     // Get column 'which_column' from the table.
@@ -286,10 +298,12 @@ namespace BOOM {
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;
     CategoricalVariable get_nominal(uint which_column) const;
-    Ptr<CategoricalData> get_nominal(int which_row, int which_column) const;
+    Ptr<LabeledCategoricalData> get_nominal(int which_row, int which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column) const;
-    //    OrdinalVariable get_ordinal(uint which_column, const StringVector
-    //    &ord) const;
+    //    OrdinalVariable get_ordinal(uint which_column,
+    //           const std::vector<std::string> &ord) const;
+    void set_numeric_value(int row, int column, double value);
+    void set_nominal_value(int row, int column, int value);
 
     // Accessing a row of data involves memory allocations and copies.  If you
     // plan to repeatedly iterate through the rows consider saving a std::vector

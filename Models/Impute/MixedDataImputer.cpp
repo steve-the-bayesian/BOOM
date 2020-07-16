@@ -80,6 +80,50 @@ namespace BOOM {
       return out;
     }
 
+    void CompleteData::fill_data_table_row(DataTable &table, int row) {
+      int numeric_counter = 0;
+      int categorical_counter = 0;
+      for (int i = 0; i < table.nvars(); ++i) {
+        VariableType type = table.variable_type(i);
+        if (type == VariableType::numeric) {
+          table.set_numeric_value(row, i, y_true_[numeric_counter++]);
+        } else if (type == VariableType::categorical) {
+          table.set_nominal_value(row, i, true_categories_[categorical_counter++]);
+        } else {
+          report_error("Only numeric and categorical data types are supported.");
+        }
+      }
+    }
+
+    MixedMultivariateData CompleteData::to_mixed_multivariate_data() const {
+      std::vector<Ptr<DoubleData>> numerics;
+      std::vector<Ptr<LabeledCategoricalData>> categoricals;
+      int numeric_counter = 0;
+      int categorical_counter = 0;
+      for (int i = 0; i < observed_data_->dim(); ++i) {
+        VariableType vtype = observed_data_->variable_type(i);
+        switch (vtype) {
+          case VariableType::numeric:
+            {
+              numerics.push_back(new DoubleData(y_true_[numeric_counter++]));
+            }
+            break;
+
+          case VariableType::categorical:
+            {
+              categoricals.push_back(observed_data_->categorical(i).clone());
+              categoricals.back()->set(true_categories_[categorical_counter++]);
+            }
+            break;
+
+          default:
+            report_error("Only numeric and categorical data types are supported.");
+        }
+      }
+      return MixedMultivariateData(observed_data_->data_organizer(),
+                                   numerics, categoricals);
+    }
+
     //===========================================================================
     namespace {
       using NECM = NumericErrorCorrectionModel;
@@ -192,7 +236,7 @@ namespace BOOM {
     }
 
     double CECM::logp(const MixedMultivariateData &data) const {
-      const CategoricalData &scalar(data.categorical(index()));
+      const LabeledCategoricalData &scalar(data.categorical(index()));
       ensure_workspace_is_current();
       return log_marginal_observed_[atom_index(scalar)];
     }
@@ -202,13 +246,13 @@ namespace BOOM {
       return log_marginal_observed_[atom_index(label)];
     }
 
-    Vector CECM::true_level_log_probability(const CategoricalData &observed) {
+    Vector CECM::true_level_log_probability(const LabeledCategoricalData &observed) {
       ensure_workspace_is_current();
       return log_joint_distribution_.col(atom_index(levels_->label(
           observed.value())));
     }
 
-    int CECM::atom_index(const CategoricalData &data) const {
+    int CECM::atom_index(const LabeledCategoricalData &data) const {
       if (data.missing() != Data::missing_status::observed) {
         return levels_->max_levels() + 1;
       } else {
@@ -346,7 +390,7 @@ namespace BOOM {
       }
       const Vector &y_numeric(row->y_numeric());
       std::vector<int> imputed_categorical_data = row->true_categories();
-      const std::vector<Ptr<CategoricalData>> observed_categories(
+      const std::vector<Ptr<LabeledCategoricalData>> observed_categories(
           row->observed_categories());
 
       for (int i = 0; i < encoders.size(); ++i) {
@@ -493,14 +537,21 @@ namespace BOOM {
     }
   }
 
+  void MixedDataImputer::impute_data_set(
+      std::vector<Ptr<MixedImputation::CompleteData>> &rows) {
+    for (auto &el : rows) {
+      impute_row(el, rng_, false);
+    }
+  }
+
   void MixedDataImputer::impute_row(Ptr<MixedImputation::CompleteData> &row,
                                     RNG &rng,
                                     bool update_complete_data_suf)  {
     ensure_swept_sigma_current();
-    int component = impute_cluster(row, rng, update_complete_data_suf);
+    int cluster = impute_cluster(row, rng, update_complete_data_suf);
 
     // This step will fill in the "true_categories" data element in *row.
-    mixture_components_[component]->impute_categorical(
+    mixture_components_[cluster]->impute_categorical(
         row,
         rng,
         update_complete_data_suf,
@@ -508,7 +559,7 @@ namespace BOOM {
         encoders_,
         numeric_data_model_);
 
-    mixture_components_[component]->impute_atoms(
+    mixture_components_[cluster]->impute_atoms(
         row, rng, update_complete_data_suf);
 
     impute_numerics_given_atoms(row, rng, update_complete_data_suf);
