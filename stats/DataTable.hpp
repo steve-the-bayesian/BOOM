@@ -178,11 +178,14 @@ namespace BOOM {
     CategoricalVariable() = default;
     explicit CategoricalVariable(const std::vector<std::string> &raw_data);
     CategoricalVariable(const std::vector<int> &values, const Ptr<CatKey> &key);
-    CategoricalVariable(const std::vector<Ptr<LabeledCategoricalData>> &data)
+    explicit CategoricalVariable(
+        const std::vector<Ptr<LabeledCategoricalData>> &data)
         : key_(data[0]->catkey()), data_(data) {}
 
     Ptr<LabeledCategoricalData> operator[](uint i) { return data_[i]; }
-    const Ptr<LabeledCategoricalData> operator[](uint i) const { return data_[i]; }
+    const Ptr<LabeledCategoricalData> operator[](uint i) const {
+      return data_[i];
+    }
     const std::vector<std::string> &labels() const { return key_->labels(); }
 
     // Return the label of the ith data point.
@@ -201,7 +204,9 @@ namespace BOOM {
     }
 
     Ptr<CatKey> key() { return key_; }
-    const std::vector<Ptr<LabeledCategoricalData>> &data() const { return data_; }
+    const std::vector<Ptr<LabeledCategoricalData>> &data() const {
+      return data_;
+    }
 
    private:
     Ptr<CatKey> key_;
@@ -298,7 +303,8 @@ namespace BOOM {
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;
     CategoricalVariable get_nominal(uint which_column) const;
-    Ptr<LabeledCategoricalData> get_nominal(int which_row, int which_column) const;
+    Ptr<LabeledCategoricalData> get_nominal(
+        int which_row, int which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column) const;
     //    OrdinalVariable get_ordinal(uint which_column,
     //           const std::vector<std::string> &ord) const;
@@ -331,29 +337,6 @@ namespace BOOM {
   };
 
   std::ostream &operator<<(std::ostream &out, const DataTable &dt);
-
-  //===========================================================================
-  // PartiallyMissingDataTable
-
-  // class PartiallyMissingDataTable : public DataTable {
-  //  public:
-  //   PartiallyMissingDataTable();
-
-  //   // The append_variable functions inherited from DataTable will be
-  //   // implemented by append_potentially_missing_variable.
-  //   void append_variable(const Vector &numeric, const std::string &vname) override;
-  //   void append_variable(const CategoricalVariable &cv,
-  //                        const std::string &name) override;
-
-  //   // Each element of the CategoricalVariable indicates missingness by the
-  //   // missing data flag it inherits from Data.
-  //   //
-  //   //
-  //   void append_potentially_missing_variable(
-  //       const Vector &numeric, const std::string &vname, double missing_value_key);
-
-  //  private:
-  // };
 
 }  // namespace BOOM
 #endif  // BOOM_DATA_TABLE_HPP

@@ -7,6 +7,9 @@ from pandas.api.types import (
 import time
 import pickle  # nosec
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 def to_data_table(data: pd.DataFrame):
     """
@@ -352,6 +355,26 @@ class AutoClean:
                               index=data.index)
             )
         return imputed
+
+    def plot_row_distribution(self, imputations, row, logscale=True, xlim=None):
+
+        imp = pd.concat([frame.iloc[row, :] for frame in imputations])
+        numeric_frame = imp.loc[:, self._numeric_colnames]
+        if logscale and self._numeric_colnames:
+            numeric_frame = np.log1p(numeric_frame)
+
+        fig, ax = plt.subplots(1, figsize=(10, 8))
+        g = sns.boxplot(y="variable", x="value", data=numeric_frame, orient="h")
+        xlab = "Value"
+        if logscale:
+            xlab += " (log1p scale)"
+        g.set_xlabel(xlab)
+        g.set_title(f"Imputation distribution for row {row+1}.")
+        if xlim is not None:
+            g.set_xlim(xlim)
+
+
+
 
     def _allocate_space(self, niter: int):
         xdim = self._model.xdim
