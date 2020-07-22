@@ -434,7 +434,8 @@ namespace BOOM {
     // Data management.
     void clear_data() override;
     void clear_client_data();
-    void add_data(const Ptr<MixedMultivariateData> &data_point);
+    using IID_DataPolicy::add_data;
+    void add_data(const Ptr<MixedMultivariateData> &data_point) override;
 
     void impute_data_set(
         std::vector<Ptr<MixedImputation::CompleteData>> &rows);
@@ -444,7 +445,7 @@ namespace BOOM {
                     bool update_complete_data_suf);
     void impute_all_rows();
 
-    void sample_posterior();
+    void sample_posterior() override;
 
     Ptr<MultivariateRegressionModel> numeric_data_model() const {
       return numeric_data_model_;
