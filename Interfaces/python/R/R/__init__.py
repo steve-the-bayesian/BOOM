@@ -33,4 +33,4 @@ from .probability import (
     rmarkov,
 )
 
-from .stats import density
+from .stats import density, sd
