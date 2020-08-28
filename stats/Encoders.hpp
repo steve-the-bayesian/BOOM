@@ -115,7 +115,8 @@ namespace BOOM {
       return ans;
     }
 
-    void encode_row(const MixedMultivariateData &data, VectorView ans) const {
+    void encode_row(const MixedMultivariateData &data,
+                    VectorView ans) const override {
       encoder1_->encode_row(data, VectorView(wsp1_));
       encoder2_->encode_row(data, VectorView(wsp2_));
       int index = 0;
@@ -126,7 +127,7 @@ namespace BOOM {
       }
     }
 
-    Vector encode_row(const MixedMultivariateData &data) const {
+    Vector encode_row(const MixedMultivariateData &data) const override {
       Vector ans(dim());
       encode_row(data, VectorView(ans));
       return ans;

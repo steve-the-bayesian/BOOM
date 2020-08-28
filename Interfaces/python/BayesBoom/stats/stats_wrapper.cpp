@@ -12,6 +12,7 @@
 #include "stats/DataTable.hpp"
 #include "stats/IQagent.hpp"
 #include "stats/Encoders.hpp"
+#include "stats/hexbin.hpp"
 
 #include "Models/DataTypes.hpp"
 #include "cpputil/Ptr.hpp"
@@ -314,6 +315,33 @@ namespace BayesBoom {
              "    to the beginning of the output matrix.\n")
         ;
 
-  }  // ends the Spline_def function.
+    py::class_<Hexbin>(boom, "Hexbin")
+        .def(py::init<int>(),
+             py::arg("gridsize") = 50,
+             "Create an empty hexbin plot.")
+        .def(py::init<const Vector &, const Vector &, int>(),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("gridsize"),
+             "Create a hexbin plot from x and y.\n\n"
+             "Args:\n"
+             "  x: Vector to plot on the horizontal axis.\n"
+             "  y: Vector to plot on the vertical axis.\n"
+             "  gridsize:  Number of histogram buckets in each direction.\n")
+        .def("add_data",
+             &Hexbin::add_data,
+             py::arg("x"),
+             py::arg("y"),
+             "Add data to an existing hexbin plot.\n\n"
+             "Args:\n"
+             "  x, y: Vectors to be plotted on the x and y axes.\n")
+        .def_property_readonly(
+            "hexagons",
+            [](const Hexbin &obj) {return obj.hexagons();},
+            "A 3 column matrix containing the x and y coordinates of the hexagon centers \n"
+            "(first two columns) and the hexagon counts (frequency, third column).\n")
+        ;
+
+  }  // stats_def
 
 }  // namespace BayesBoom
