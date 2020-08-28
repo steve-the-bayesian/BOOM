@@ -21,6 +21,7 @@
 #define BOOM_STATS_HEXBIN_HPP_
 
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/Matrix.hpp"
 #include <map>
 
 namespace BOOM {
@@ -45,6 +46,11 @@ namespace BOOM {
 
     // Add data to an empty hexbin plot.
     void add_data(const Vector &x, const Vector &y);
+
+    // Return a 3-column matrix containing the (x, y) coordinate of the hexagon
+    // centers (first two columns) and count (frequency, third column) for each
+    // hexagon with a positive count.
+    Matrix hexagons() const;
 
    private:
 

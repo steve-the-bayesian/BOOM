@@ -63,6 +63,18 @@ namespace BOOM {
     }
   }
 
+  Matrix Hexbin::hexagons() const {
+    Matrix ans(counts_.size(), 3);
+    int index = -1;
+    for (const auto &el: counts_) {
+      ++index;
+      ans(index, 0) = el.first.first;
+      ans(index, 1) = el.first.second;
+      ans(index, 2) = el.second;
+    }
+    return ans;
+  }
+
   namespace {
     int find_lower_bound(double x, const Vector &axis) {
       if (x < axis[0]) {
