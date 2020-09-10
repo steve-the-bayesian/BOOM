@@ -181,3 +181,49 @@ def unique_match(value, legal_value_list):
         return None
     else:
         return legal_value_list[first_true(matches)]
+
+def _reduce_concat(x, sep=""):
+    import functools
+    return functools.reduce(lambda x, y: str(x) + sep + str(y), x)
+
+def _deduce_type(*lists):
+    """
+    Return an integer indicating the "most general" type in the variable length
+    argument list *lists.  Return type 2 is pd.Series, return type 1 is
+    np.array, and return type 0 is list.
+
+    Args:
+      *lists: a sequence of vector-like objects.
+    """
+    type_code = 0
+    for obj in lists:
+        if isinstance(obj, pd.Series):
+            type_code = 2
+        elif isinstance(obj, np.ndarray):
+            type_code = max(type_code, 1)
+    return type_code
+
+def paste(*lists, sep=" ", collapse=None):
+    """
+    Paste one or more vector-like objects to gether into a vector of strings.
+
+    Args:
+      *lists:  A sequence of vector-like objects.
+
+    Returns:
+      A vector-like object containing the concatenated string representations
+      of the arguments.  If any of the arguments are a pd.Series then the
+      return type is also pd.Series.  Otherwise if any arguments are numpy
+      arrays the return is a numpy array.  Otherwise the return type is a list.
+    """
+    result = map(lambda x: _reduce_concat(x, sep=sep), zip(*lists))
+    if collapse is not None:
+        return _reduce_concat(result, sep=collapse)
+    type_code = _deduce_type(*lists)
+    result = list(result)
+    if type_code == 0:
+        return result
+    elif type_code == 1:
+        return np.array(result)
+    else:
+        return pd.Series(result)
