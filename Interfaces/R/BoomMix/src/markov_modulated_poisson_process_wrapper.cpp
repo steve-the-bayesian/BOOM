@@ -104,7 +104,7 @@ namespace BOOM {
 
       // Returns the process id of the process named 'process_name'.
       // Returns -1 if the name was not found.
-      int pid(const string & process_name)const;
+      int pid(const std::string & process_name) const;
       std::vector<PoissonProcess *> GetSources(
           const std::vector<std::string> &names);
       std::vector<PoissonProcess *> GetCorrespondingPoissonProcesses(
