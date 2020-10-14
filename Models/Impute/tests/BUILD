@@ -20,8 +20,17 @@ cc_test(
 )
 
 cc_test(
-    name = "mixed_imputer_test",
-    srcs = ["mixed_imputer_test.cc"],
+    name = "mixed_data_imputer_test",
+    srcs = ["mixed_data_imputer_test.cc"],
+    copts = COPTS,
+    linkopts = ["-fsanitize=thread"],
+    includes = ["@gtest"],
+    deps = COMMON_DEPS,
+)
+
+cc_test(
+    name = "mixed_data_imputer_with_error_correction_test",
+    srcs = ["mixed_data_imputer_with_error_correction_test.cc"],
     copts = COPTS,
     linkopts=["-fsanitize=thread"],
     includes = ["@gtest"],
