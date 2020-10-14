@@ -246,11 +246,12 @@ namespace BOOM {
     LabeledCategoricalData(const std::string &value, const Ptr<CatKey> &key);
     LabeledCategoricalData *clone() const override;
 
+    const std::string &label() const {return labels()[value()];}
     const std::vector<std::string> &labels() const {
       return catkey_->labels();
     }
 
-    Ptr<CatKey> catkey() {return catkey_;}
+    Ptr<CatKey> catkey() const {return catkey_;}
 
    private:
     Ptr<CatKey> catkey_;

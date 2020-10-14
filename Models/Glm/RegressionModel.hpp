@@ -316,9 +316,9 @@ namespace BOOM {
     double sigma() const;
 
     //---- simulate regression data  ---
-    virtual RegressionData *simdat(RNG &rng = GlobalRng::rng) const;
-    virtual RegressionData *simdat(const Vector &X,
-                                   RNG &rng = GlobalRng::rng) const;
+    virtual RegressionData *sim(RNG &rng = GlobalRng::rng) const;
+    virtual RegressionData *sim(const Vector &X,
+                                RNG &rng = GlobalRng::rng) const;
     Vector simulate_fake_x(RNG &rng = GlobalRng::rng) const;  // no intercept
 
     //---- estimation ---

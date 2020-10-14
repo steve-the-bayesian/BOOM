@@ -222,8 +222,8 @@ namespace BOOM {
     virtual Vector predict(const Vector &x) const;
 
     //---- simulate MV regression data ---
-    virtual MvRegData *simdat(RNG &rng = GlobalRng::rng) const;
-    virtual MvRegData *simdat(const Vector &X, RNG &rng = GlobalRng::rng) const;
+    virtual MvRegData *sim(RNG &rng = GlobalRng::rng) const;
+    virtual MvRegData *sim(const Vector &X, RNG &rng = GlobalRng::rng) const;
 
     // no intercept
     Vector simulate_fake_x(RNG &rng = GlobalRng::rng) const;

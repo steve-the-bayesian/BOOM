@@ -294,12 +294,12 @@ namespace BOOM {
 
   Vector MvReg::predict(const Vector &x) const { return x * Beta(); }
 
-  MvRegData *MvReg::simdat(RNG &rng) const {
+  MvRegData *MvReg::sim(RNG &rng) const {
     Vector x = simulate_fake_x(rng);
-    return simdat(x, rng);
+    return sim(x, rng);
   }
 
-  MvRegData *MvReg::simdat(const Vector &x, RNG &rng) const {
+  MvRegData *MvReg::sim(const Vector &x, RNG &rng) const {
     Vector mu = predict(x);
     Vector y = rmvn_mt(rng, mu, Sigma());
     return new MvRegData(y, x);

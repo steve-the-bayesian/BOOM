@@ -144,14 +144,12 @@ namespace BOOM {
 
   MM *MM::clone() const { return new MM(*this); }
 
+  uint MM::nlevels() const { return pi().size(); }
+  uint MM::dim() const { return pi().size(); }
+
   Ptr<VectorParams> MM::Pi_prm() { return ParamPolicy::prm(); }
   const Ptr<VectorParams> MM::Pi_prm() const { return ParamPolicy::prm(); }
 
-  void MM::set_observer() {
-    Pi_prm()->add_observer([this]() { this->logp_current_ = false;});
-  }
-
-  uint MM::nlevels() const { return pi().size(); }
   const double &MM::pi(int s) const { return pi()[s]; }
   const Vector &MM::pi() const { return Pi_prm()->value(); }
   const Vector &MM::logpi() const {
@@ -164,7 +162,26 @@ namespace BOOM {
     check_logp();
   }
 
-  uint MM::dim() const { return pi().size(); }
+  double MM::entropy() const {
+    double ans = pi().dot(logpi());
+    if (!std::isnan(ans)) {
+      return ans;
+    } else {
+      Selector inc(dim(), true);
+      const Vector &probs = pi();
+      for (int i = 0; i < probs.size(); ++i) {
+        if (std::isfinite(probs[i])) {
+          inc.add(i);
+        } else {
+          inc.drop(i);
+        }
+      }
+      if (inc.empty()) {
+        report_error("There are no finite elements of pi().");
+      }
+      return inc.select(pi()).dot(inc.select(logpi()));
+    }
+  }
 
   double MM::loglike(const Vector &probs) const {
     double ans(0.0);
@@ -204,7 +221,7 @@ namespace BOOM {
     return logscale ? logp_[i] : pi(i);
   }
 
-  uint MM::simdat(RNG &rng) const { return rmulti_mt(rng, pi()); }
+  uint MM::sim(RNG &rng) const { return rmulti_mt(rng, pi()); }
 
   void MM::add_mixture_data(const Ptr<Data> &dp, double prob) {
     uint i = DAT(dp)->value();
@@ -216,4 +233,10 @@ namespace BOOM {
     logp_ = log(pi());
     logp_current_ = true;
   }
+
+  void MM::set_observer() {
+    Pi_prm()->add_observer([this]() { this->logp_current_ = false;});
+  }
+
+
 }  // namespace BOOM

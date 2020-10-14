@@ -555,14 +555,14 @@ namespace BOOM {
     return x;
   }
 
-  RegressionData *RM::simdat(RNG &rng) const {
+  RegressionData *RM::sim(RNG &rng) const {
     Vector x = simulate_fake_x(rng);
     double yhat = predict(x);
     double y = rnorm_mt(rng, yhat, sigma());
     return new RegressionData(y, x);
   }
 
-  RegressionData *RM::simdat(const Vector &X, RNG &rng) const {
+  RegressionData *RM::sim(const Vector &X, RNG &rng) const {
     double yhat = predict(X);
     double y = rnorm_mt(rng, yhat, sigma());
     return new RegressionData(y, X);

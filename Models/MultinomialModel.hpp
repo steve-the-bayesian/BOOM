@@ -89,6 +89,9 @@ namespace BOOM {
     const Vector &logpi() const;
     void set_pi(const Vector &probs);
 
+    // Return sum(pi * logpi)
+    double entropy() const;
+
     double loglike(const Vector &probs) const override;
     double log_likelihood() const override { return loglike(pi()); }
     void mle() override;
@@ -97,13 +100,14 @@ namespace BOOM {
     void add_mixture_data(const Ptr<Data> &, double prob);
     int number_of_observations() const override { return suf()->n().sum(); }
 
-    uint simdat(RNG &rng = GlobalRng::rng) const;
+    uint sim(RNG &rng = GlobalRng::rng) const;
 
    private:
     mutable Vector logp_;
     mutable bool logp_current_;
     void set_observer();
     void check_logp() const;
+
   };
 
 }  // namespace BOOM
