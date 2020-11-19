@@ -1,5 +1,5 @@
 from .bsts import (
-    Bsts
+    Bsts,
     BstsPrediction
 )
 

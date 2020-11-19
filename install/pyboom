@@ -29,7 +29,7 @@ done
 shift $((OPTIND-1))
 
 PACKAGE_DIR='python_package/BayesBoom'
-BOOM_DIR=$PACKAGE_DIR'/boomcpp'
+BOOM_DIR=$PACKAGE_DIR'/cpp'
 
 echo "PACKAGE_DIR is $PACKAGE_DIR"
 echo "BOOM_DIR is $BOOM_DIR"
@@ -39,19 +39,20 @@ if [ -d "$PACKAGE_DIR" ]; then
     echo "Removing previous directory $PACKAGE_DIR"
     rm -rf $PACKAGE_DIR
 fi
+mkdir -p $PACKAGE_DIR
 
 ## Copy non-cpp packages to the package directory
-cp -r Interfaces/python/R $PACKAGE_DIR
-cp -r Interfaces/python/bsts $PACKAGE_DIR
-cp -r Interfaces/python/dynreg $PACKAGE_DIR
-cp -r Interfaces/python/spikeslab $PACKAGE_DIR
-cp -r Interfaces/python/test_utils $PACKAGE_DIR
+cp -r Interfaces/python/R/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bsts/bsts $PACKAGE_DIR/bsts
+cp -r Interfaces/python/dynreg/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/spikeslab/spikeslab $PACKAGE_DIR/spikeslab
+cp -r Interfaces/python/test_utils/test_utils $PACKAGE_DIR/test_utils
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
 
-cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
+cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR
 
 ##----------------------------------------------------------------------
 ## Source:
@@ -140,9 +141,9 @@ fi
 ##----------------------------------------------------------------------
 ## Build and install the package:
 
-# cd python_package
+cd python_package
 # CC="ccache clang++" CXX="ccache"
-# pip3 --verbose install ./BayesBoom
+pip3 --verbose install ./BayesBoom
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages

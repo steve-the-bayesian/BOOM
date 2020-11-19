@@ -5,7 +5,16 @@ import setuptools
 import os
 from glob import glob
 
-__version__ = '0.0.1'
+# Bump the major version when making backwards incompatible changes.
+MAJOR = 0
+
+# Bump the minor version when adding backwards compatible features.
+MINOR = 0
+
+# Bump the patch version when making bug fixes.
+PATCH = 1
+
+__version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
 # Note that this setup.py is somewhat nonstandard.  In the main BOOM repository
 # stored on github, setup.py and the pybind11 bindings are kept in
@@ -33,150 +42,151 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
-boom_headers = glob("*.hpp")
+BOOM_DIR = "cpp/"
+boom_headers = glob(BOOM_DIR + "*.hpp")
 
-distributions_sources = glob("distributions/*.cpp")
+distributions_sources = glob(BOOM_DIR + "distributions/*.cpp")
 distributions_headers = (
-    ["distributions.hpp"]
-    + glob("distributions/*.hpp")
+    [BOOM_DIR + "distributions.hpp"]
+    + glob(BOOM_DIR + "distributions/*.hpp")
     )
 
-linalg_sources = glob("LinAlg/*.cpp")
-linalg_headers = glob("LinAlg/*.hpp")
+linalg_sources = glob(BOOM_DIR + "LinAlg/*.cpp")
+linalg_headers = glob(BOOM_DIR + "LinAlg/*.hpp")
 
-math_sources = glob("math/*.cpp") + glob("math/cephes/*.cpp")
+math_sources = glob(BOOM_DIR + "math/*.cpp") + glob(BOOM_DIR + "math/cephes/*.cpp")
 
-numopt_sources = glob("numopt/*.cpp")
-numopt_headers = ["{BOOM}/numopt.hpp"] + glob("numopt/*.hpp")
+numopt_sources = glob(BOOM_DIR + "numopt/*.cpp")
+numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
 
-rmath_sources = glob("Bmath/*.cpp")
-rmath_headers = glob("Bmath/*.hpp")
+rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
+rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
 
-samplers_sources = glob("Samplers/*.cpp") + ["Samplers/Gilks/arms.cpp"]
-samplers_headers = glob("Samplers/*.hpp")
+samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp") + [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
+samplers_headers = glob(BOOM_DIR + "Samplers/*.hpp")
 
-stats_sources = glob("stats/*.cpp")
-stats_headers = glob("stats/*.hpp")
+stats_sources = glob(BOOM_DIR + "stats/*.cpp")
+stats_headers = glob(BOOM_DIR + "stats/*.hpp")
 
-targetfun_sources = glob("TargetFun/*.cpp")
-targetfun_headers = glob("TargetFun/*.hpp")
+targetfun_sources = glob(BOOM_DIR + "TargetFun/*.cpp")
+targetfun_headers = glob(BOOM_DIR + "TargetFun/*.hpp")
 
-utils_sources = glob("cpputil/*.cpp")
-utils_headers = glob("cpputil/*.hpp")
+utils_sources = glob(BOOM_DIR + "cpputil/*.cpp")
+utils_headers = glob(BOOM_DIR + "cpputil/*.hpp")
 
 models_sources = (
-    glob("Models/*.cpp")
-    + glob("Models/PosteriorSamplers/*.cpp")
-    + glob("Models/Policies/*.cpp"))
+    glob(BOOM_DIR + "Models/*.cpp")
+    + glob(BOOM_DIR + "Models/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/Policies/*.cpp"))
 models_headers = (
-    glob("Models/*.hpp")
-    + glob("Models/Policies/*.hpp")
-    + glob("Models/PosteriorSamplers/*.hpp"))
+    glob(BOOM_DIR + "Models/*.hpp")
+    + glob(BOOM_DIR + "Models/Policies/*.hpp")
+    + glob(BOOM_DIR + "Models/PosteriorSamplers/*.hpp"))
 
 # Specific model classes to be added later, glm's hmm's, etc.
 bart_sources = (
-    glob("Models/Bart/*.cpp")
-    + glob("Models/Bart/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/Bart/*.cpp")
+    + glob(BOOM_DIR + "Models/Bart/PosteriorSamplers/*.cpp")
     )
 bart_headers = (
-    glob("Models/Bart/*.hpp")
-    + glob("Models/Bart/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Bart/*.hpp")
+    + glob(BOOM_DIR + "Models/Bart/PosteriorSamplers/*.hpp")
     )
 
 glm_sources = (
-    glob("Models/Glm/*.cpp")
-    + glob("Models/Glm/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/Glm/*.cpp")
+    + glob(BOOM_DIR + "Models/Glm/PosteriorSamplers/*.cpp")
     )
 glm_headers = (
-    glob("Models/Glm/*.hpp")
-    + glob("Models/Glm/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Glm/*.hpp")
+    + glob(BOOM_DIR + "Models/Glm/PosteriorSamplers/*.hpp")
     )
 
 hmm_sources = (
-    glob("Models/HMM/*.cpp")
-    + glob("Models/HMM/Clickstream/*.cpp")
-    + glob("Models/HMM/Clickstream/PosteriorSamplers/*.cpp")
-    + glob("Models/HMM/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/HMM/*.cpp")
+    + glob(BOOM_DIR + "Models/HMM/Clickstream/*.cpp")
+    + glob(BOOM_DIR + "Models/HMM/Clickstream/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/HMM/PosteriorSamplers/*.cpp")
     )
 hmm_headers = (
-    glob("Models/HMM/*.hpp")
-    + glob("Models/HMM/Clickstream/*.hpp")
-    + glob("Models/HMM/Clickstream/PosteriorSamplers/*.hpp")
-    + glob("Models/HMM/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/HMM/*.hpp")
+    + glob(BOOM_DIR + "Models/HMM/Clickstream/*.hpp")
+    + glob(BOOM_DIR + "Models/HMM/Clickstream/PosteriorSamplers/*.hpp")
+    + glob(BOOM_DIR + "Models/HMM/PosteriorSamplers/*.hpp")
     )
 
 hierarchical_sources = (
-    glob("Models/Hierarchical/*.cpp")
-    + glob("Models/Hierarchical/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/Hierarchical/*.cpp")
+    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.cpp")
     )
 hierarchical_headers = (
-    glob("Models/Hierarchical/*.hpp")
-    + glob("Models/Hierarchical/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Hierarchical/*.hpp")
+    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.hpp")
     )
 
 impute_sources = (
-    glob("Models/Impute/*.cpp")
+    glob(BOOM_DIR + "Models/Impute/*.cpp")
     )
 impute_headers = (
-    glob("Models/Impute/*.hpp")
+    glob(BOOM_DIR + "Models/Impute/*.hpp")
     )
 
 irt_sources = (
-    glob("Models/IRT/*.cpp")
-    + glob("Models/IRT/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/IRT/*.cpp")
+    + glob(BOOM_DIR + "Models/IRT/PosteriorSamplers/*.cpp")
     )
 irt_headers = (
-    glob("Models/IRT/*.hpp")
-    + glob("Models/IRT/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/IRT/*.hpp")
+    + glob(BOOM_DIR + "Models/IRT/PosteriorSamplers/*.hpp")
     )
 
 mixture_sources = (
-    glob("Models/Mixtures/*.cpp")
-    + glob("Models/Mixtures/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/Mixtures/*.cpp")
+    + glob(BOOM_DIR + "Models/Mixtures/PosteriorSamplers/*.cpp")
     )
 mixture_headers = (
-    glob("Models/Mixtures/*.hpp")
-    + glob("Models/Mixtures/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Mixtures/*.hpp")
+    + glob(BOOM_DIR + "Models/Mixtures/PosteriorSamplers/*.hpp")
     )
 
 nnet_sources = (
-    glob("Models/Nnet/*.cpp")
-    + glob("Models/Nnet/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/Nnet/*.cpp")
+    + glob(BOOM_DIR + "Models/Nnet/PosteriorSamplers/*.cpp")
     )
 nnet_headers = (
-    glob("Models/Nnet/*.hpp")
-    + glob("Models/Nnet/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Nnet/*.hpp")
+    + glob(BOOM_DIR + "Models/Nnet/PosteriorSamplers/*.hpp")
     )
 
 point_process_sources = (
-    glob("Models/PointProcess/*.cpp")
-    + glob("Models/PointProcess/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/PointProcess/*.cpp")
+    + glob(BOOM_DIR + "Models/PointProcess/PosteriorSamplers/*.cpp")
     )
 point_process_headers = (
-    glob("Models/PointProcess/*.hpp")
-    + glob("Models/PointProcess/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/PointProcess/*.hpp")
+    + glob(BOOM_DIR + "Models/PointProcess/PosteriorSamplers/*.hpp")
     )
 
 state_space_sources = (
-    glob("Models/StateSpace/*.cpp")
-    + glob("Models/StateSpace/Filters/*.cpp")
-    + glob("Models/StateSpace/PosteriorSamplers/*.cpp")
-    + glob("Models/StateSpace/StateModels/*.cpp")
+    glob(BOOM_DIR + "Models/StateSpace/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Filters/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.cpp")
 )
 state_space_headers = (
-    glob("Models/StateSpace/*.hpp")
-    + glob("Models/StateSpace/Filters/*.hpp")
-    + glob("Models/StateSpace/PosteriorSamplers/*.hpp")
-    + glob("Models/StateSpace/StateModels/*.hpp")
+    glob(BOOM_DIR + "Models/StateSpace/*.hpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Filters/*.hpp")
+    + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.hpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.hpp")
 )
 
 time_series_sources = (
-    glob("Models/TimeSeries/*.cpp")
-    + glob("Models/TimeSeries/PosteriorSamplers/*.cpp")
+    glob(BOOM_DIR + "Models/TimeSeries/*.cpp")
+    + glob(BOOM_DIR + "Models/TimeSeries/PosteriorSamplers/*.cpp")
     )
 time_series_headers = (
-    glob("Models/TimeSeries/*.hpp")
-    + glob("Models/TimeSeries/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/TimeSeries/*.hpp")
+    + glob(BOOM_DIR + "Models/TimeSeries/PosteriorSamplers/*.hpp")
     )
 
 boom_library_sources = (
@@ -204,16 +214,16 @@ boom_library_sources = (
 )
 
 boom_extension_sources = (
-    ["pybind11/module.cpp"]
-    + glob("pybind11/Models/*.cpp")
-    + glob("pybind11/Models/Glm/*.cpp")
-    + glob("pybind11/Models/Impute/*.cpp")
-    + glob("pybind11/Models/StateSpace/*.cpp")
-    + glob("pybind11/Models/StateSpace/StateModels/*.cpp")
-    + glob("pybind11/Models/TimeSeries/*.cpp")
-    + glob("pybind11/LinAlg/*.cpp")
-    + glob("pybind11/stats/*.cpp")
-    + glob("pybind11/distributions/*.cpp")
+    [BOOM_DIR + "pybind11/module.cpp"]
+    + glob(BOOM_DIR + "pybind11/Models/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
+    + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
+    + glob(BOOM_DIR + "pybind11/stats/*.cpp")
+    + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
 )
 
 boom_sources = boom_extension_sources + boom_library_sources
@@ -257,7 +267,7 @@ ext_modules = [
         'cpp',
         sources=boom_sources,
         include_dirs=[
-            os.getcwd(),
+            os.getcwd() + "/cpp",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -320,6 +330,7 @@ class BuildExt(build_ext):
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
+        print(f"compiler type is: {ct}")
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
         if ct == 'unix':
@@ -340,7 +351,7 @@ class BuildExt(build_ext):
 
 
 setup(
-    name='BoomCpp',
+    name='BayesBoom',
     packages=find_packages(),
     version=__version__,
     author='Steven L. Scott',

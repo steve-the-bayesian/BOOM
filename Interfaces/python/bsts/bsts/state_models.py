@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import R
+import BayesBoom.R as R
 
 
 # ===========================================================================
