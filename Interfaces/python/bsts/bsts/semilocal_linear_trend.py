@@ -1,4 +1,4 @@
-import BayesBoom.cpp as boom
+import BayesBoom.boomcpp as boom
 import numpy as np
 from .state_models import StateModel
 import BayesBoom.R as R

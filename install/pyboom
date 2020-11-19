@@ -29,7 +29,7 @@ done
 shift $((OPTIND-1))
 
 PACKAGE_DIR='python_package/BayesBoom'
-BOOM_DIR=$PACKAGE_DIR'/cpp'
+BOOM_DIR=$PACKAGE_DIR'/boomcpp'
 
 echo "PACKAGE_DIR is $PACKAGE_DIR"
 echo "BOOM_DIR is $BOOM_DIR"

@@ -42,7 +42,7 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
-BOOM_DIR = "cpp/"
+BOOM_DIR = "BayesBoom/"
 boom_headers = glob(BOOM_DIR + "*.hpp")
 
 distributions_sources = glob(BOOM_DIR + "distributions/*.cpp")
@@ -264,10 +264,10 @@ distutils.ccompiler.CCompiler.compile = parallelCCompile
 
 ext_modules = [
     Extension(
-        'cpp',
+        'boomcpp',
         sources=boom_sources,
         include_dirs=[
-            os.getcwd() + "/cpp",
+            os.getcwd() + "/BayesBoom",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)

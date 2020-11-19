@@ -1,4 +1,4 @@
-import BayesBoom.cpp as boom
+import BayesBoom.boomcpp as boom
 import numpy as np
 import patsy
 import BayesBoom.spikeslab as spikeslab
