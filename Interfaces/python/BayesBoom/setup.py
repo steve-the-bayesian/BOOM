@@ -254,7 +254,7 @@ distutils.ccompiler.CCompiler.compile = parallelCCompile
 
 ext_modules = [
     Extension(
-        'BayesBoom',
+        'cpp',
         sources=boom_sources,
         include_dirs=[
             os.getcwd(),
@@ -340,7 +340,7 @@ class BuildExt(build_ext):
 
 
 setup(
-    name='BayesBoom',
+    name='BoomCpp',
     packages=find_packages(),
     version=__version__,
     author='Steven L. Scott',

@@ -28,17 +28,29 @@ while getopts :ci option; do
 done
 shift $((OPTIND-1))
 
-BOOM_DIR='python_package/BayesBoom'
+PACKAGE_DIR='python_package/BayesBoom'
+BOOM_DIR=$PACKAGE_DIR'/boomcpp'
+
+echo "PACKAGE_DIR is $PACKAGE_DIR"
+echo "BOOM_DIR is $BOOM_DIR"
 
 ## If there is already a Boom directory then delete it.
-if [ -d "$BOOM_DIR" ]; then
-    echo "Removing previous directory $BOOM_DIR"
-    rm -rf $BOOM_DIR
+if [ -d "$PACKAGE_DIR" ]; then
+    echo "Removing previous directory $PACKAGE_DIR"
+    rm -rf $PACKAGE_DIR
 fi
+
+## Copy non-cpp packages to the package directory
+cp -r Interfaces/python/R $PACKAGE_DIR
+cp -r Interfaces/python/bsts $PACKAGE_DIR
+cp -r Interfaces/python/dynreg $PACKAGE_DIR
+cp -r Interfaces/python/spikeslab $PACKAGE_DIR
+cp -r Interfaces/python/test_utils $PACKAGE_DIR
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
+
 cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
 
 ##----------------------------------------------------------------------
@@ -128,13 +140,13 @@ fi
 ##----------------------------------------------------------------------
 ## Build and install the package:
 
-cd python_package
+# cd python_package
 # CC="ccache clang++" CXX="ccache"
-pip3 --verbose install ./BayesBoom
+# pip3 --verbose install ./BayesBoom
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages
-cd ..
-pip3 install Interfaces/python/R
-pip3 install Interfaces/python/bsts
-pip3 install Interfaces/python/spikeslab
+# cd ..
+# pip3 install Interfaces/python/R
+# pip3 install Interfaces/python/bsts
+# pip3 install Interfaces/python/spikeslab

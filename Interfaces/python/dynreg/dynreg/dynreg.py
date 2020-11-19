@@ -1,8 +1,8 @@
-import BayesBoom as boom
+import BayesBoom.cpp as boom
 import numpy as np
 import patsy
-import spikeslab
-import R
+import BayesBoom.spikeslab as spikeslab
+import BayesBoom.R as R
 import scipy.sparse
 
 

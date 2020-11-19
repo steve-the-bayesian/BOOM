@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-import BayesBoom as boom
+import BayesBoom.cpp as boom
 
 
 class TestDynamicRegression(unittest.TestCase):

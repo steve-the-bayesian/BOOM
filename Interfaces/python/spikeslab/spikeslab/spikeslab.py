@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 import patsy
-import BayesBoom as boom
+import BayesBoom.cpp as boom
+import BayesBoom.R
 import scipy.sparse
-import R
 
 
 def dot(data_frame, omit=[]):

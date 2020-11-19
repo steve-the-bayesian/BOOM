@@ -1,7 +1,7 @@
-import BayesBoom as boom
+import BayesBoom.cpp as boom
 import numpy as np
 from .state_models import StateModel
-import R
+import BayesBoom.R as R
 
 
 class LocalLinearTrendStateModel(StateModel):
