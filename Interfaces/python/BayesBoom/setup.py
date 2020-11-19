@@ -350,6 +350,11 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
+def FindPackagesAndBlab():
+    packages = find_packages()
+    print(f"Found the following packages: {packages}")
+    return packages
+
 setup(
     name='BayesBoom',
     packages=find_packages(),
