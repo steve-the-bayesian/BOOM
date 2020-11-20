@@ -1,8 +1,8 @@
 import unittest
-import R
+import BayesBoom.R as R
 import numpy as np
 import pandas as pd
-import BayesBoom as boom
+import BayesBoom.boom as boom
 
 import pdb
 

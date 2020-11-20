@@ -1,4 +1,4 @@
-import BayesBoom.boomcpp as boom
+import BayesBoom.boom as boom
 import numpy as np
 import pandas as pd
 import patsy

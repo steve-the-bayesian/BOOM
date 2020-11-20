@@ -1,7 +1,7 @@
 import unittest
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import numpy as np
-import R
+import BayesBoom.R as R
 import test_utils
 
 
@@ -37,7 +37,7 @@ class DynregTest(unittest.TestCase):
                                  unscaled_innovation_sd: np.ndarray,
                                  p00: np.ndarray,
                                  p11: np.ndarray):
-        from R import rmarkov
+        from BayesBoom.R import rmarkov
         inclusion = np.full((xdim, time_dimension), -1)
         p00 = p00.ravel()
         p11 = p11.ravel()

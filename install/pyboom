@@ -29,7 +29,7 @@ done
 shift $((OPTIND-1))
 
 PACKAGE_DIR='python_package/BayesBoom'
-BOOM_DIR=$PACKAGE_DIR'/boomcpp'
+BOOM_DIR=$PACKAGE_DIR'/boom'
 
 echo "PACKAGE_DIR is $PACKAGE_DIR"
 echo "BOOM_DIR is $BOOM_DIR"
@@ -52,7 +52,7 @@ cp -r Interfaces/python/test_utils/test_utils $PACKAGE_DIR/test_utils
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
 
-cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR
+cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR/..
 
 ##----------------------------------------------------------------------
 ## Source:
@@ -93,6 +93,7 @@ elif [[ $OSTYPE =~ "linux" ]]; then
 else
     echo "ERROR copying files.  Could not determine the OS."
 fi
+mv $BOOM_DIR/pybind11/__init__.py $BOOM_DIR
 
 echo "done copying pybind11 bindings"
 
@@ -140,10 +141,11 @@ fi
 
 ##----------------------------------------------------------------------
 ## Build and install the package:
-
+echo "Time to build the package!"
 cd python_package
+python3 setup.py sdist bdist_wheel
 # CC="ccache clang++" CXX="ccache"
-pip3 --verbose install ./BayesBoom
+# pip3 --verbose install ./BayesBoom
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages

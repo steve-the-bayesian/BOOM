@@ -1,4 +1,4 @@
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_packages, find_namespace_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
@@ -12,7 +12,7 @@ MAJOR = 0
 MINOR = 0
 
 # Bump the patch version when making bug fixes.
-PATCH = 1
+PATCH = 2
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -25,7 +25,6 @@ __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 # into a build directory in a way that will make setup.py happy.  This file is
 # intended to be run by that build script, and not directly from the
 # repository.
-
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -42,7 +41,8 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
-BOOM_DIR = "BayesBoom/"
+BOOM_DIR = "BayesBoom/boom"
+BOOM_DIR += "/"
 boom_headers = glob(BOOM_DIR + "*.hpp")
 
 distributions_sources = glob(BOOM_DIR + "distributions/*.cpp")
@@ -262,12 +262,16 @@ distutils.ccompiler.CCompiler.compile = parallelCCompile
 # End of parallel compile "monkey patch"
 # ---------------------------------------------------------------------------
 
+# remove trailing slash from BOOM_DIR
+if BOOM_DIR.endswith("/"):
+    BOOM_DIR = BOOM_DIR[:-1]
+
 ext_modules = [
     Extension(
-        'boomcpp',
+        '_boom',
         sources=boom_sources,
         include_dirs=[
-            os.getcwd() + "/BayesBoom",
+            os.getcwd() + "/" + BOOM_DIR,
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -351,13 +355,15 @@ class BuildExt(build_ext):
 
 
 def FindPackagesAndBlab():
-    packages = find_packages()
-    print(f"Found the following packages: {packages}")
+    # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils", "boom/pybind11"]
+    packages = find_namespace_packages(include=["BayesBoom.*"], exclude=("BayesBoom.boom.*"))
+    # packages = find_packages()
+    print(f"***** HEY!! I found the following packages: {packages} *****")
     return packages
 
 setup(
     name='BayesBoom',
-    packages=find_packages(),
+    packages=FindPackagesAndBlab(),
     version=__version__,
     author='Steven L. Scott',
     author_email='steve.the.bayesian@gmail.com',
