@@ -1,6 +1,6 @@
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import numpy as np
-import R
+import BayesBoom.R as R
 from .state_models import StateModel
 
 

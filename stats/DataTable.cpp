@@ -618,8 +618,6 @@ namespace BOOM {
     } else {
       return numeric_variables_[0].size();
     }
-    report_error("Can't determine size.");
-    return -1;
   }
 
   Vector DataTable::getvar(uint n) const {

@@ -1,5 +1,5 @@
 import unittest
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import numpy as np
 
 

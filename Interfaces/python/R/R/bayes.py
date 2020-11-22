@@ -41,14 +41,14 @@ class SdPrior:
         return self.sigma_guess**2 * self.sample_size
 
     def create_chisq_model(self):
-        import BayesBoom as boom
+        import BayesBoom.boom as boom
         return boom.ChisqModel(self.sample_size, self.sigma_guess)
 
     def boom(self):
         """
         Return the boom.ChisqModel corresponding to the input parameters.
         """
-        import BayesBoom as boom
+        import BayesBoom.boom as boom
         return boom.ChisqModel(self.sample_size, self.sigma_guess)
 
 
@@ -75,7 +75,7 @@ class NormalPrior:
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
         """
-        import BayesBoom as boom
+        import BayesBoom.boom as boom
         return boom.GaussianModel(self.mu, self.sigma)
 
 
@@ -114,5 +114,5 @@ class Ar1CoefficientPrior:
         Return the boom.GaussianModel corresponding to this object's
         parameters.
         """
-        import BayesBoom as boom
+        import BayesBoom.boom as boom
         return boom.GaussianModel(self.mu, self.sigma)

@@ -1,4 +1,4 @@
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import pandas as pd
 import numpy as np
 from pandas.api.types import (

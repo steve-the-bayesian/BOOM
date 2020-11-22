@@ -28,18 +28,31 @@ while getopts :ci option; do
 done
 shift $((OPTIND-1))
 
-BOOM_DIR='python_package/BayesBoom'
+PACKAGE_DIR='python_package/BayesBoom'
+BOOM_DIR=$PACKAGE_DIR'/boom'
+
+echo "PACKAGE_DIR is $PACKAGE_DIR"
+echo "BOOM_DIR is $BOOM_DIR"
 
 ## If there is already a Boom directory then delete it.
-if [ -d "$BOOM_DIR" ]; then
-    echo "Removing previous directory $BOOM_DIR"
-    rm -rf $BOOM_DIR
+if [ -d "$PACKAGE_DIR" ]; then
+    echo "Removing previous directory $PACKAGE_DIR"
+    rm -rf $PACKAGE_DIR
 fi
+mkdir -p $PACKAGE_DIR
+
+## Copy non-cpp packages to the package directory
+cp -r Interfaces/python/R/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bsts/bsts $PACKAGE_DIR/bsts
+cp -r Interfaces/python/dynreg/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/spikeslab/spikeslab $PACKAGE_DIR/spikeslab
+cp -r Interfaces/python/test_utils/test_utils $PACKAGE_DIR/test_utils
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
-cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
+
+cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR/..
 
 ##----------------------------------------------------------------------
 ## Source:
@@ -80,6 +93,7 @@ elif [[ $OSTYPE =~ "linux" ]]; then
 else
     echo "ERROR copying files.  Could not determine the OS."
 fi
+mv $BOOM_DIR/pybind11/__init__.py $BOOM_DIR
 
 echo "done copying pybind11 bindings"
 
@@ -127,14 +141,15 @@ fi
 
 ##----------------------------------------------------------------------
 ## Build and install the package:
-
+echo "Time to build the package!"
 cd python_package
+python3 setup.py sdist bdist_wheel
 # CC="ccache clang++" CXX="ccache"
-pip3 --verbose install ./BayesBoom
+# pip3 --verbose install ./BayesBoom
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages
-cd ..
-pip3 install Interfaces/python/R
-pip3 install Interfaces/python/bsts
-pip3 install Interfaces/python/spikeslab
+# cd ..
+# pip3 install Interfaces/python/R
+# pip3 install Interfaces/python/bsts
+# pip3 install Interfaces/python/spikeslab

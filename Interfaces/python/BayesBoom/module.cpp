@@ -27,7 +27,7 @@ namespace BayesBoom {
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
 
-  PYBIND11_MODULE(BayesBoom, boom) {
+  PYBIND11_MODULE(_boom, boom) {
     boom.doc() = "BOOM stands for 'Bayesian Object Oriented Models'.  "
         "It is also the sound your computer makes when it crashes.";
 

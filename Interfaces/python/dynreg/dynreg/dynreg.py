@@ -1,8 +1,8 @@
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import numpy as np
 import patsy
-import spikeslab
-import R
+import BayesBoom.spikeslab as spikeslab
+import BayesBoom.R as R
 import scipy.sparse
 
 
@@ -146,8 +146,7 @@ class SparseDynamicRegressionModel:
         self._beta_draws[i, :, :] = self._model.all_coefficients()
         self._residual_sd_draws[i] = self._model.residual_sd
         self._innovation_sd_draws[i, :] = self._model.innovation_sds
-        (
-            self._transition_probabilities[i, :, :, :] =
+        self._transition_probabilities[i, :, :, :] = (
             self._model.transition_probability_matrices()
         )
 

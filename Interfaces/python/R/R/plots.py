@@ -6,7 +6,7 @@ from pandas.api.types import is_numeric_dtype
 import numbers
 from abc import ABC, abstractmethod
 
-from R import data_range
+from BayesBoom.R import data_range
 
 _active_graphics_devices = {}
 _current_graphics_device = None

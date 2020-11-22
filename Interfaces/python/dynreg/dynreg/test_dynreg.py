@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-import BayesBoom as boom
+import BayesBoom.boom as boom
 
 
 class TestDynamicRegression(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestDynamicRegression(unittest.TestCase):
                                  unscaled_innovation_sd: np.ndarray,
                                  p00: np.ndarray,
                                  p11: np.ndarray):
-        from R import rmarkov
+        from BayesBoom.R import rmarkov
         inclusion = np.full((xdim, time_dimension), -1)
         p00 = p00.ravel()
         p11 = p11.ravel()

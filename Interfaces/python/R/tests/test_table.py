@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from R import table
+from BayesBoom.R import table
 
 
 class TableTest(unittest.TestCase):

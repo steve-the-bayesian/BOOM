@@ -21,28 +21,31 @@
 #define BOOM_DISTRIBUTIONS_RNG_HPP
 
 #include <random>
+#include <cstdint>
 
 namespace BOOM {
   // A random number generator for simulating real valued U[0, 1) deviates.
   class RNG {
    public:
+    using RngIntType = std::uint_fast64_t;
+
     // Seed with std::random_device.
     RNG();
 
     // Seed with a specified value.
-    explicit RNG(long seed);
+    explicit RNG(RngIntType seed);
 
     // Seed from a C++ standard random device, if one is present.
     void seed();
 
     // Seed using a specified value.
-    void seed(long seed) {generator_.seed(seed);}
+    void seed(RngIntType seed) {generator_.seed(seed);}
 
     // Simulate a U[0, 1) random deviate.
     double operator()() {return dist_(generator_);}
 
     std::mt19937_64 & generator() {return generator_;}
-    
+
    private:
     // TODO(steve): once you can use c++17 in R and elsewhere replace this with
     // a std::variant that will choose the fastest RNG for each implementation.
@@ -56,9 +59,8 @@ namespace BOOM {
     static RNG rng;
   };
 
-  unsigned long seed_rng();  // generates a random seed from the global RNG
-                             // used to seed other RNG's
-  unsigned long seed_rng(RNG &);
+  RNG::RngIntType seed_rng(RNG &rng = GlobalRng::rng);
+  // generate a random seed from the global RNG used to seed other RNG's
 }  // namespace BOOM
 
 #endif  // BOOM_DISTRIBUTIONS_RNG_HPP

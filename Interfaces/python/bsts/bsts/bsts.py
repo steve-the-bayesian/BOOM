@@ -1,9 +1,9 @@
-import BayesBoom as boom
+import BayesBoom.boom as boom
 import numpy as np
 import pandas as pd
 import patsy
-import spikeslab
-import R
+import BayesBoom.spikeslab as spikeslab
+import BayesBoom.R as R
 import scipy.sparse
 from abc import ABC, abstractmethod
 from .state_models import StateModel
