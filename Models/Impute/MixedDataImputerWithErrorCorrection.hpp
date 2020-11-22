@@ -326,14 +326,22 @@ namespace BOOM {
         MixedDataImputerWithErrorCorrection &&rhs) = default;
     MixedDataImputerWithErrorCorrection *clone() const override;
 
-
-    Ptr<MixedImputation::RowModelWithErrorCorrection> row_model(int cluster) {
-      return ec_mixture_components_[cluster];
-    }
-
     // void impute_row(Ptr<MixedImputation::CompleteData> &row,
     //                 RNG &rng,
     //                 bool update_complete_data_suf) override;
+    MixedImputation::RowModelWithErrorCorrection *
+    row_model(int cluster) override {
+      return mixture_components_[cluster].get();
+    }
+
+    const MixedImputation::RowModelWithErrorCorrection *
+    row_model(int cluster) const override {
+      return mixture_components_[cluster].get();
+    }
+
+    int number_of_mixture_components() const override {
+      return mixture_components_.size();
+    }
 
    private:
     void impute_numerics_given_atoms(Ptr<MixedImputation::CompleteData> &data,
@@ -351,7 +359,7 @@ namespace BOOM {
     // Data section
     // ----------------------------------------------------------------------
     std::vector<Ptr<MixedImputation::RowModelWithErrorCorrection>>
-    ec_mixture_components_;
+    mixture_components_;
   };
 
 

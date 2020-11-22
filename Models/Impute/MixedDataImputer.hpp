@@ -207,6 +207,11 @@ namespace BOOM {
       // value.
       virtual double numeric_value(int true_atom, double observed) const;
 
+      const Vector &atom_probs() const {return atom_model_->pi();}
+      void set_atom_probs(const Vector &probs) {
+        atom_model_->set_pi(probs);
+      }
+
      private:
       Ptr<MultinomialModel> atom_model_;
       Vector atoms_;
@@ -245,6 +250,9 @@ namespace BOOM {
 
       void set_conjugate_prior(const Vector &counts);
       const Vector &level_probs() const { return model_->pi(); }
+      void set_level_probs(const Vector &probs) {
+        model_->set_pi(probs);
+      }
 
      private:
       // The set of levels observed in the data.
@@ -390,6 +398,14 @@ namespace BOOM {
                         RNG & rng,
                         bool update_complete_data_suf) override;
 
+      Ptr<NumericScalarModel> numeric_model(int numeric_index) {
+        return numeric_models_[numeric_index];
+      }
+
+      Ptr<CategoricalScalarModel> categorical_model(int categorical_index) {
+        return categorical_models_[categorical_index];
+      }
+
      private:
       std::vector<Ptr<CategoricalScalarModel>> categorical_models_;
       std::vector<Ptr<NumericScalarModel>> numeric_models_;
@@ -469,9 +485,12 @@ namespace BOOM {
       return numeric_data_model_;
     }
 
-    Ptr<MixedImputation::RowModelBase> row_model(int cluster) {
-      return mixture_components_[cluster];
-    }
+    // Child classes will return the correct model.  The stored model will be
+    // stored by a Ptr, but the return value is a raw pointer, which should be
+    // caught by a Ptr unless expected to be ephemeral.
+    virtual MixedImputation::RowModelBase * row_model(int cluster) = 0;
+    virtual const MixedImputation::RowModelBase * row_model(int cluster) const = 0;
+    virtual int number_of_mixture_components() const = 0;
 
     RNG &rng() {return rng_;}
 
@@ -483,18 +502,8 @@ namespace BOOM {
     void ensure_swept_sigma_current() const;
     SweptVarianceMatrix & swept_sigma() {return swept_sigma_;}
 
-    void add_mixture_component(
-        const Ptr<MixedImputation::RowModelBase> &row_model) {
-      mixture_components_.push_back(row_model);
-    }
-
     IQagent & empirical_distribution(int i) {
       return empirical_distributions_[i];
-    }
-
-    const std::vector<Ptr<MixedImputation::RowModelBase>> &
-    mixture_components() {
-      return mixture_components_;
     }
 
    private:
@@ -507,6 +516,8 @@ namespace BOOM {
                                              RNG &rng,
                                              bool update_complete_data_suf) = 0;
 
+    void clear_mixture_component_data();
+
     void create_encoders(const DataTable &table);
     void initialize_empirical_distributions(const DataTable &data,
                                             const std::vector<Vector> &atoms);
@@ -516,7 +527,6 @@ namespace BOOM {
     // Data section
     // -------------------------------------------------------------------------
     Ptr<MultinomialModel> mixing_distribution_;
-    std::vector<Ptr<MixedImputation::RowModelBase>> mixture_components_;
     Ptr<MultivariateRegressionModel> numeric_data_model_;
 
     // The empirical distributions summarize the non-atomic parts of the
@@ -574,8 +584,18 @@ namespace BOOM {
 
     MixedDataImputer * clone() const override;
 
+    MixedImputation::RowModel * row_model(int cluster) override {
+      return mixture_components_[cluster].get();
+    }
+    const MixedImputation::RowModel * row_model(int cluster) const override {
+      return mixture_components_[cluster].get();
+    }
+    int number_of_mixture_components() const override {
+      return mixture_components_.size();
+    }
+
    private:
-    std::vector<Ptr<MixedImputation::RowModel>> mdi_mixture_components_;
+    std::vector<Ptr<MixedImputation::RowModel>> mixture_components_;
 
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row,
                        RNG &rng,
@@ -590,7 +610,6 @@ namespace BOOM {
                             const std::vector<Vector> &atoms,
                             const std::vector<Ptr<CatKey>> &levels,
                             const std::vector<VariableType> &variable_type);
-
   };
 
 }  // namespace BOOM

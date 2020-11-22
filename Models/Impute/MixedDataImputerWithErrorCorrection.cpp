@@ -377,7 +377,9 @@ namespace BOOM {
       const MixedDataImputerWithErrorCorrection &rhs)
       : MixedDataImputerBase(rhs)
   {
-    populate_mixture_components();
+    for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
+      mixture_components_.push_back(rhs.mixture_components_[i]->clone());
+    }
   }
 
   MixedDataImputerWithErrorCorrection &
@@ -385,18 +387,12 @@ namespace BOOM {
       const MixedDataImputerWithErrorCorrection &rhs) {
     if (&rhs != this) {
       MixedDataImputerBase::operator=(rhs);
-      populate_mixture_components();
+      mixture_components_.clear();
+      for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
+        mixture_components_.push_back(rhs.mixture_components_[i]->clone());
+      }
     }
     return *this;
-  }
-
-  void MixedDataImputerWithErrorCorrection::populate_mixture_components() {
-    ec_mixture_components_.clear();
-    auto &mix(MixedDataImputerBase::mixture_components());
-    for (int i = 0; i < mix.size(); ++i) {
-      ec_mixture_components_.push_back(
-          mix[i].dcast<MixedImputation::RowModelWithErrorCorrection>());
-    }
   }
 
   MixedDataImputerWithErrorCorrection *
@@ -497,8 +493,7 @@ namespace BOOM {
                 "Only numeric or categorical varaibles are supported.");
         }
       }
-      add_mixture_component(row_model);
-      ec_mixture_components_.push_back(row_model);
+      mixture_components_.push_back(row_model);
     }
   }
 }  // namespace BOOM

@@ -544,10 +544,6 @@ namespace BOOM {
       encoders_.push_back(rhs.encoders_[i]->clone());
       encoder_->add_encoder(encoders_.back());
     }
-
-    for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
-      mixture_components_.push_back(rhs.mixture_components_[i]->clone());
-    }
     set_observers();
   }
 
@@ -567,10 +563,6 @@ namespace BOOM {
 
       swept_sigma_ = rhs.swept_sigma_;
       swept_sigma_current_ = false;
-      mixture_components_.clear();
-      for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
-        mixture_components_.push_back(rhs.mixture_components_[i]->clone());
-      }
       set_observers();
     }
     return *this;
@@ -588,9 +580,7 @@ namespace BOOM {
   void MixedDataImputerBase::clear_client_data() {
     numeric_data_model_->clear_data();
     mixing_distribution_->clear_data();
-    for (int s = 0;  s < mixture_components_.size(); ++s) {
-      mixture_components_[s]->clear_data();
-    }
+    clear_mixture_component_data();
   }
 
   void MixedDataImputerBase::impute_data_set(
@@ -613,8 +603,8 @@ namespace BOOM {
     }
     impute_all_rows();
     mixing_distribution_->sample_posterior();
-    for (int s = 0; s < mixture_components_.size(); ++s) {
-      mixture_components_[s]->sample_posterior();
+    for (int s = 0; s < number_of_mixture_components(); ++s) {
+      row_model(s)->sample_posterior();
     }
     numeric_data_model()->sample_posterior();
   }
@@ -632,10 +622,10 @@ namespace BOOM {
 
   int MixedDataImputerBase::impute_cluster(
       Ptr<MixedImputation::CompleteData> &row, RNG &rng) const {
-    int S = mixture_components_.size();
+    int S = number_of_mixture_components();
     wsp_ = mixing_distribution_->logpi();
     for (int s = 0; s < S; ++s) {
-      wsp_[s] += mixture_components_[s]->logp(row->observed_data());
+      wsp_[s] += row_model(s)->logp(row->observed_data());
     }
     wsp_.normalize_logprob();
     int component = rmulti_mt(rng, wsp_);
@@ -650,17 +640,14 @@ namespace BOOM {
     int cluster = impute_cluster(row, rng, update_complete_data_suf);
 
     // This step will fill in the "true_categories" data element in *row.
-    mixture_components_[cluster]->impute_categorical(
+    row_model(cluster)->impute_categorical(
         row,
         rng,
         update_complete_data_suf,
         encoder_,
         encoders_,
         numeric_data_model_);
-
-    mixture_components_[cluster]->impute_atoms(
-        row, rng, update_complete_data_suf);
-
+    row_model(cluster)->impute_atoms(row, rng, update_complete_data_suf);
     impute_numerics_given_atoms(row, rng, update_complete_data_suf);
   }
 
@@ -695,6 +682,12 @@ namespace BOOM {
       int xdim = encoder_->dim();
       int ydim = complete_data_[0]->observed_data().numeric_dim();
       numeric_data_model().reset(new MultivariateRegressionModel(xdim, ydim));
+    }
+  }
+
+  void MixedDataImputerBase::clear_mixture_component_data() {
+    for (int s = 0; s < number_of_mixture_components(); ++s) {
+      row_model(s)->clear_data();
     }
   }
 
@@ -733,9 +726,8 @@ namespace BOOM {
   MixedDataImputer::MixedDataImputer(const MixedDataImputer &rhs)
       : MixedDataImputerBase(rhs)
   {
-    for (int i = 0; i < rhs.mdi_mixture_components_.size(); ++i) {
-      mdi_mixture_components_.push_back(rhs.mdi_mixture_components_[i]->clone());
-      add_mixture_component(mdi_mixture_components_.back());
+    for (int i = 0; i < rhs.mixture_components_.size(); ++i) {
+      mixture_components_.push_back(rhs.mixture_components_[i]->clone());
     }
   }
 
@@ -834,8 +826,7 @@ namespace BOOM {
                 "Only numeric or categorical varaibles are supported.");
         }
       }
-      mdi_mixture_components_.push_back(row_model);
-      add_mixture_component(row_model);
+      mixture_components_.push_back(row_model);
     }
   }
 
