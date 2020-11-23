@@ -45,6 +45,7 @@ mkdir -p $PACKAGE_DIR
 cp -r Interfaces/python/R/R $PACKAGE_DIR/R
 cp -r Interfaces/python/bsts/bsts $PACKAGE_DIR/bsts
 cp -r Interfaces/python/dynreg/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/impute/impute $PACKAGE_DIR/impute
 cp -r Interfaces/python/spikeslab/spikeslab $PACKAGE_DIR/spikeslab
 cp -r Interfaces/python/test_utils/test_utils $PACKAGE_DIR/test_utils
 
