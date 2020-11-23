@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: BayesBoom.impute
+Version: 0.0.1
+Summary: Missing data imputation
+Home-page: https://github.com/steve-the-bayesian/BOOM
+Author: Steven L. Scott
+Author-email: steve.the.bayesian@gmail.com
+License: UNKNOWN
+Description: Utilities for imputing missing data in mixed numeric-categorical data frames.
+        
+Platform: UNKNOWN

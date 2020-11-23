@@ -506,6 +506,13 @@ namespace BOOM {
       return empirical_distributions_[i];
     }
 
+    // Re-initialie the numeric_data_model_ using the specified model.
+    void set_numeric_data_model(
+        const Ptr<MultivariateRegressionModel> &model) {
+      numeric_data_model_ = model;
+      set_numeric_data_model_observers();
+    }
+
    private:
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row,
                        RNG &rng,
@@ -549,9 +556,9 @@ namespace BOOM {
     mutable bool swept_sigma_current_;
 
     // Set an observer that will flip swept_sigma_current_ to false when the
-    // Sigma parameter changes.  This function is to be called during
-    // construction.
-    void set_observers();
+    // Sigma parameter changes.  This function is to be called whenever a new
+    // numeric_data_model_ object is constructed.
+    void set_numeric_data_model_observers();
     mutable Vector wsp_;
   };
 

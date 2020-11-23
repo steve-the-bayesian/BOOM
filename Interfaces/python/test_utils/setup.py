@@ -1,7 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 import os
 
-__version__ = '0.0.1'
+MAJOR = 0
+MINOR = 0
+PATCH = 1
+
+__version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
 
 def read(fname):
@@ -16,6 +20,6 @@ setup(
     url='https://github.com/steve-the-bayesian/BOOM',
     description='Utilities for writing unit tests for code involving MCMC',
     long_description=read("README"),
-    packages=["test_utils"],
+    packages=find_namespace_packages(["BayesBoom.*"]),
     zip_safe=True,
 )

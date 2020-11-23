@@ -356,9 +356,16 @@ class BuildExt(build_ext):
 
 def FindPackagesAndBlab():
     # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils", "boom/pybind11"]
-    packages = find_namespace_packages(include=["BayesBoom.*"], exclude=("BayesBoom.boom.*"))
+    packages = find_namespace_packages(include=["BayesBoom.*"],
+                                       exclude=["BayesBoom.*.*"])
     # packages = find_packages()
+    if len(packages) == 0:
+        packages = find_packages()
     print(f"***** HEY!! I found the following packages: {packages} *****")
+
+    if len(packages) == 0:
+        raise Exception("No packages found.")
+
     return packages
 
 setup(

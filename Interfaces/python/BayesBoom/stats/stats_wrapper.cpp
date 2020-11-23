@@ -171,7 +171,7 @@ namespace BayesBoom {
              [](DataTable &table,
                 const std::vector<int> &values,
                 const std::vector<std::string> &labels,
-                const std::string &name){
+                const std::string &name) {
                NEW(CatKey, key)(labels);
                table.append_variable(CategoricalVariable(values, key), name);
              },

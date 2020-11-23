@@ -13,12 +13,12 @@ def read(fname):
 
 
 setup(
-    name='BayesBoom.R',
+    name='BayesBoom.impute',
     version=__version__,
     author='Steven L. Scott',
     author_email='steve.the.bayesian@gmail.com',
     url='https://github.com/steve-the-bayesian/BOOM',
-    description='Make python more like R.',
+    description='Missing data imputation',
     long_description=read("README"),
     packages=find_namespace_packages(include=["BayesBoom.*"]),
     zip_safe=True,

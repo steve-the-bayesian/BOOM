@@ -515,7 +515,7 @@ namespace BOOM {
     create_encoders(data);
     initialize_empirical_distributions(data, atoms);
     initialize_regression_component();
-    set_observers();
+    set_numeric_data_model_observers();
   }
 
   void MixedDataImputerBase::initialize(const std::vector<Vector> &atoms) {
@@ -544,14 +544,15 @@ namespace BOOM {
       encoders_.push_back(rhs.encoders_[i]->clone());
       encoder_->add_encoder(encoders_.back());
     }
-    set_observers();
+    set_numeric_data_model_observers();
   }
 
   MixedDataImputerBase &MixedDataImputerBase::operator=(
       const MixedDataImputerBase &rhs) {
     if (&rhs != this) {
       mixing_distribution_.reset(rhs.mixing_distribution_->clone());
-      numeric_data_model_.reset(rhs.numeric_data_model_->clone());
+      swept_sigma_ = rhs.swept_sigma_;
+      set_numeric_data_model(rhs.numeric_data_model_->clone());
       empirical_distributions_ = rhs.empirical_distributions_;
 
       encoder_.reset(new DatasetEncoder(rhs.encoder_->add_intercept()));
@@ -561,9 +562,6 @@ namespace BOOM {
         encoder_->add_encoder(encoders_.back());
       }
 
-      swept_sigma_ = rhs.swept_sigma_;
-      swept_sigma_current_ = false;
-      set_observers();
     }
     return *this;
   }
@@ -657,7 +655,8 @@ namespace BOOM {
     swept_sigma_current_ = true;
   }
 
-  void MixedDataImputerBase::set_observers() {
+  void MixedDataImputerBase::set_numeric_data_model_observers() {
+    this->swept_sigma_current_ = false;
     numeric_data_model_->Sigma_prm()->add_observer(
         [this]() {this->swept_sigma_current_ = false;});
   }
@@ -681,7 +680,7 @@ namespace BOOM {
     if (!complete_data_.empty()) {
       int xdim = encoder_->dim();
       int ydim = complete_data_[0]->observed_data().numeric_dim();
-      numeric_data_model().reset(new MultivariateRegressionModel(xdim, ydim));
+      set_numeric_data_model(new MultivariateRegressionModel(xdim, ydim));
     }
   }
 

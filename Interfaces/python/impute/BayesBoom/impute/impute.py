@@ -3,6 +3,7 @@
 import BayesBoom.boom as boom
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import pickle
 import time
 
@@ -11,6 +12,8 @@ class MissingDataImputer:
     """
     Imputes missing data in a pd.DataFrame containing a mix of numeric and
     categorical data.
+
+    Example use:
     """
 
     def __init__(self):
@@ -92,9 +95,14 @@ class MissingDataImputer:
           data: The data frame in which to search for atoms.
 
         Effect:
-          self._atoms is filled with a dict containing the atoms in each of the
-          numeric columns.  The dict is keyed by column names of the numeric
-          columns.  A numeric column with no atoms is marked by an empty list.
+          self._numeric_colnames:
+            If already populated then it is left unchanged.  Otherwise, it is
+            filled with a list of strings giving the names of the numeric
+            columns in 'data'.
+          self._atoms: Filled with a dict containing the atoms in each of the
+            numeric columns.  The dict is keyed by column names of the numeric
+            columns.  A numeric column with no atoms is marked by an empty
+            list.
         """
         if self._numeric_colnames is None:
             self._discover_numeric_colnames(data)
@@ -150,10 +158,23 @@ class MissingDataImputer:
             array needs k+1 entries, with the last entry corresponding to the
             continuous atom.  A zero or negative entry indicates a strong prior
             assumption that the corresponding atom is never the true value.
+
+        Effect:
+          An entry is registered in self._atom_prior.  These entries are
+          promoted to posterior samplers when the model is trained.
         """
-        self._atom_prior[variable_name] = prior_counts.ravel()
         if np.sum(prior_counts > 0) == 0:
             raise Exception("At least one prior count must be positive.")
+        if np.any(prior_counts < 0):
+            raise Exception("Prior counts cannot be negative.")
+        if variable_name not in self._atoms.keys():
+            msg = "Attempt to set a prior for unrecognized variable "
+            msg += f"{variable_name}."
+            raise Exception
+        if len(prior_counts) != len(self._atoms[variable_name]) + 1:
+            raise Exception("The dimension of 'prior_counts' must exceed the"
+                            " number of atoms by 1.")
+        self._atom_prior[variable_name] = prior_counts.ravel()
 
     def train_model(self,
                     data: pd.DataFrame,
@@ -166,59 +187,60 @@ class MissingDataImputer:
         distribution given a set of training data.
 
         Args:
-          data:
+          data: The data on which to train the model.  Any non-numeric
+            variables are treated as categorical.  Missing values are expected
+            to be coded as np.NaN.
+          num_clusters: The number of clusters to use for the joint
+            distribution of the categorical data.
+          niter:  The number of MCMC iterations to use during training.
+          checkpoint_filename: The name of a file to use when recording the
+            model's state.  The model will checkpoint its history every so
+            often during training.
+          nthreads: The number of threads to use during training.  This is
+            experimental.
+
+        Effects:
+          self._coefficient_draws: Created and populated by MCMC draws of the
+            linear regression coefficients.
+
         """
         # Import is done here so that BayesBoom code will not be imported into
         # the tensorflow lambda.
         self._start_time = time.time()
         if self._numeric_colnames is None:
             print("discovering numeric columns")
-            self.discover_numeric_colnames(data)
+            self._discover_numeric_colnames(data)
 
         self._cat_cols = [
             col for col in data.columns if col not in self._numeric_colnames
         ]
 
+        # Find the set of atoms for each numeric variable.
         if self._atoms is None:
-            print("finding atoms")
             self.find_atoms(data.loc[:, self._numeric_colnames])
-
         if len(self._atoms) != len(self._numeric_colnames):
             raise Exception(
                 "One atom vector is needed for each numeric variable.")
 
-        print("extracting numerics")
-        numerics = data.loc[:, self._numeric_colnames]
-        ydim = numerics.shape[1]
-
-        print("encoding dummy variables")
-        dummies = self.encode(data.loc[:, self._cat_cols])
-        xdim = dummies.shape[1]
-
-        print("Converting atoms to vector")
+        # Convert the atoms to BOOM::Vector objects.
         atom_vector = []
         for vname in self._numeric_colnames:
             atoms = np.array(self._atoms[vname])
-            atom_vector.append(boom.Vector(atoms.flatten().astype("double")))
+            atom_vector.append(boom.Vector(atoms.flatten().astype("float")))
 
-        print("initializing BOOM model")
+        # The data table as a BOOM object.
+        data_table = boom.to_data_table(data)
+
         self._model = boom.MixedDataImputer(
             num_clusters, data_table, atom_vector, boom.GlobalRng.rng)
 
-        if nthreads > 1:
-            self._model.setup_worker_pool(nthreads)
-
-        print("adding data")
-        for i in range(data.shape[0]):
-            y = boom.Vector(
-                numerics.iloc[i, :].values.flatten().astype("float"))
-            x = boom.Vector(dummies[i, :].flatten().astype("float"))
-            self._model.add_data(boom.MvRegData(y, x))
+        # if nthreads > 1:
+        #     self._model.setup_worker_pool(nthreads)
 
         print("setting prior")
-        self._set_prior(xdim, ydim)
+        self._set_prior()
 
-        self._allocate_space(niter, xdim, ydim)
+        self._allocate_space(niter)
 
         for i in range(niter):
             sep = "=-=-=-=-=-=-=-=-="
@@ -235,6 +257,10 @@ class MissingDataImputer:
           data:  Data frame containing the rows to impute.
           iterations:  An array-like collection of iteration numbers to use.
 
+        Returns:
+          WTF
+
+        Example:
         """
         formatted_data = self._format_imputation_data(data)
         imputed = []
@@ -325,75 +351,54 @@ class MissingDataImputer:
                 self._model.set_atom_error_probs(
                     cluster, col, boom.Matrix(error_probs))
 
-    def _default_atom_prior(self, atoms):
+    def _set_prior(self):
         """
-        The default prior on which atom is the 'truth' places 90% probability
-        on the continuous atom and splits the remainder equally on the discrete
-        atoms.  An atom that is a string of 9's is given prior weight 0.
-        """
-        number_of_atoms = len(atoms)
-        ans = np.ones(number_of_atoms + 1)
-        if number_of_atoms > 0:
-            ans *= .1 / number_of_atoms
-            ans[-1] = .9
-        for i in range(len(atoms)):
-            atom_int = str(int(atoms[i]))
-            if atom_int.startswith("999") and atom_int.endswith("999"):
-                ans[i] = -1
-        return ans * 100
+        Set the prior distribution on the imputation model, and assign a
+        PosteriorSampler.
 
-    def _default_atom_error_prior(self, number_of_atoms):
-        """
-        The default prior on the conditional distribution of which atom is
-        observed, given which atom is true.
-
-        For discrete atoms the prior is that each atom is either observed
-        correctly or marked missing.  For the continuous atom the prior places
-        equal weight on all categories.
-
-        """
-        ans = np.empty((number_of_atoms + 1, number_of_atoms + 2))
-        for k in range(number_of_atoms):
-            ans[k, :] = -1.0
-            ans[k, k] = 1.0
-            ans[k, -1] = 1.0
-            ans[k + 1, :] = 1.0
-        return ans
-
-    def _set_prior(self, xdim, ydim):
-        """
-        Set the prior distribution on the imputation model.  A nearly
-        noninformative prior is chosen for the residual variance matrix and
-        regression coefficients.  Each cell in in the mixture model is assigned
-        an identical prior.
-
-        The default prior for the variables that do not have a prior
-        distribution specified is to put 90% probability on the continuous atom
-        being the true case, with the remaining probability spread across the
-        other atoms.  With all non-continuous atoms, place 50% prior
-        probability on each atom being reported correctly, with the remaining
-        50% probability that it is reported as missing.  For the continuous
-        atom all reporting categories get equal weight.
+        A nearly noninformative prior is chosen for the
+        residual variance matrix and regression coefficients.  Each cell in in
+        the mixture model is assigned an identical prior.
         """
         if self._model is None:
             raise Exception(
                 "_set_prior was called before the model was created.")
 
-        self._model.set_default_regression_prior()
-        self._model.set_default_prior_for_mixing_weights()
+        self._set_regression_prior()
+        self._set_mixing_distribution_prior()
         for i in range(len(self._numeric_colnames)):
-            vname = self._numeric_colnames[i]
-            if vname not in self._atom_prior:
+            if vname not in self._atom_prior.keys():
                 self._atom_prior[vname] = self._default_atom_prior(
                     self._atoms[vname])
-            self._model.set_atom_prior(boom.Vector(self._atom_prior[vname]), i)
+            self._model.set_atom_prior(
+                boom.Vector(self._atom_prior[vname].astype("float")),
+                i)
 
-            if vname not in self._atom_error_prior:
-                self._atom_error_prior[vname] = (
-                    self._default_atom_error_prior(len(self._atoms[vname]))
-                )
-            self._model.set_atom_error_prior(boom.Matrix(
-                self._atom_error_prior[vname]), i)
+        for i, vname in enumerate(self._categorical_colnames):
+            if vname not in self._level_prior.keys():
+                self._level_prior[vname] = self._default_level_prior(
+                    self._levels[vname])
+            self._model.set_level_prior(
+                boom.Vector(self._level_prior[vname].astype("float")),
+                i)
+
+    def _set_mixing_distribution_prior(self):
+        prior_counts = np.ones(self.nclusters)
+        prior_counts /= len(prior_counts)
+        self._model.set_mixing_weight_prior(boom.Vector(
+            prior_counts.astype("float")))
+
+    def _set_regression_prior(self):
+        coefficient_prior_mean = np.zeros((self.xdim, self.ydim))
+        coefficient_prior_mean[:, 0] = 0.0    # TODO replace 0.0 with ybar
+
+        coefficient_weight = 1.0
+        variance_weight = float(self.ydim + 1)
+        self._model.set_regression_prior(
+            boom.Matrix(coefficient_prior_mean.astype("float")),
+            float(coefficient_weight),
+            boom.SpdMatrix(residual_variance_guess.astype("float")),
+            float(variance_weight))
 
     def __getstate__(self):
         """
@@ -403,7 +408,7 @@ class MissingDataImputer:
             "atoms": self._atoms,
             "numeric_colnames": self._numeric_colnames,
             "categorical_colnames": self._categorical_colnames,
-            "atom_prior": self._atom_prior,
+v            "atom_prior": self._atom_prior,
             "dataset_encoder": self._dataset_encoder,
             "coefficient_draws": self.coefficient_draws,
             "residual_variance_draws": self.residual_variance_draws,
@@ -443,3 +448,12 @@ class MissingDataImputer:
             state["num_clusters"], atom_vector, xdim
             self._model.set_empirical_distributions(
                 state["empirical_distributions"])
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:131:33: F821 undefined name 'EffectsEncoder'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:134:25: F821 undefined name 'DatasetEncoder'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:228:33: F821 undefined name 'xdim'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:228:39: F821 undefined name 'ydim'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:230:37: F821 undefined name 'xdim'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:230:43: F821 undefined name 'ydim'
+/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:339:81: E501 line too long (83 > 80 characters)
+
+Process flymake-proc exited abnormally with code 1

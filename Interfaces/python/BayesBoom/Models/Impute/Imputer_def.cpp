@@ -302,6 +302,9 @@ namespace BayesBoom {
             "data after a dummy variable expansion.")
         .def_property_readonly(
             "ydim", &MixedDataImputer::ydim, "Number of numeric columns.")
+        .def("sample_posterior",
+             &MixedDataImputer::sample_posterior,
+             "Take one MCMC draw from the posterior distribution.")
         .def_property_readonly(
             "coefficients",
             [](MixedDataImputer &imputer) {

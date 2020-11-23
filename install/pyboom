@@ -42,16 +42,17 @@ fi
 mkdir -p $PACKAGE_DIR
 
 ## Copy non-cpp packages to the package directory
-cp -r Interfaces/python/R/R $PACKAGE_DIR/R
-cp -r Interfaces/python/bsts/bsts $PACKAGE_DIR/bsts
-cp -r Interfaces/python/dynreg/dynreg $PACKAGE_DIR/dynreg
-cp -r Interfaces/python/impute/impute $PACKAGE_DIR/impute
-cp -r Interfaces/python/spikeslab/spikeslab $PACKAGE_DIR/spikeslab
-cp -r Interfaces/python/test_utils/test_utils $PACKAGE_DIR/test_utils
+cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
+cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
+cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
+cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
+cp Interfaces/python/BayesBoom/*.py $BOOM_DIR
 
 cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR/..
 
@@ -145,6 +146,7 @@ fi
 echo "Time to build the package!"
 cd python_package
 python3 setup.py sdist bdist_wheel
+python3 -m pip install dist/BayesBoom-*.whl
 # CC="ccache clang++" CXX="ccache"
 # pip3 --verbose install ./BayesBoom
 
