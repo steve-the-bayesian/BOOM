@@ -53,8 +53,8 @@ cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
 cp Interfaces/python/BayesBoom/*.py $BOOM_DIR
+mv $BOOM_DIR/setup.py $PACKAGE_DIR/..
 
-cp Interfaces/python/BayesBoom/setup.py $PACKAGE_DIR/..
 
 ##----------------------------------------------------------------------
 ## Source:

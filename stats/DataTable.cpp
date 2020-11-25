@@ -82,6 +82,10 @@ namespace BOOM {
     }
   }
 
+  void DataTypeIndex::set_names(const std::vector<std::string> &variable_names) {
+    vnames_ = variable_names;
+  }
+
   bool DataTypeIndex::check_type(
       int i,
       const std::string &variable_data_as_string) const {

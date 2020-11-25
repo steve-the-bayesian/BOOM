@@ -37,28 +37,28 @@ namespace BayesBoom {
 
     // Calling these functions here defines the classes in the module.
     distribution_def(boom);
-    // LinAlg_def(boom);
+    LinAlg_def(boom);
 
-    // Data_def(boom);
+    Data_def(boom);
     // stats includes DataTable, which inherits from Data.  Thus it must be
     // defined after Models, where the Data class is defined.
 
-    //stats_def(boom);
+    stats_def(boom);
 
-    // Model_def(boom);
-    // Parameter_def(boom);
-    // GaussianModel_def(boom);
-    // GammaModel_def(boom);
-    // MvnModel_def(boom);
+    Model_def(boom);
+    Parameter_def(boom);
+    GaussianModel_def(boom);
+    GammaModel_def(boom);
+    MvnModel_def(boom);
 
-    // GlmModel_def(boom);
-    // TimeSeries_def(boom);
-    // StateSpaceModel_def(boom);
-    // StateModel_def(boom);
+    GlmModel_def(boom);
+    TimeSeries_def(boom);
+    StateSpaceModel_def(boom);
+    StateModel_def(boom);
 
-    //    Imputation_def(boom);
+    Imputation_def(boom);
 
-    // DynamicRegressionModel_def(boom);
+    DynamicRegressionModel_def(boom);
 
   }  // Module BOOM
 
