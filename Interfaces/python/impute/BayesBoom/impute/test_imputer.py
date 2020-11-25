@@ -13,7 +13,8 @@ class ImputerTest(unittest.TestCase):
                 "colors": ["red", "blue", "green"],
                 "states": ["CA", "TX", "NY", "OR", "MA"],
             })
-
+        import pdb
+        pdb.set_trace()
         self.model = impute.MissingDataImputer()
 
     def test_empty_model(self):
@@ -29,6 +30,8 @@ class ImputerTest(unittest.TestCase):
         data = self.data
         data["X1"][:10] = np.NaN
         data["X2"][5:15] = np.NaN
+        import pdb
+        pdb.set_trace()
         self.model.find_atoms(data)
         self.model.train_model(data=data, niter=100, num_clusters=3)
 

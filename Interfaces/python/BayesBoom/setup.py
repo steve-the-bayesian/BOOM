@@ -4,6 +4,7 @@ import sys
 import setuptools
 import os
 from glob import glob
+import distutils.ccompiler
 
 # Bump the major version when making backwards incompatible changes.
 MAJOR = 0
@@ -15,6 +16,7 @@ MINOR = 0
 PATCH = 2
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
+
 
 # Note that this setup.py is somewhat nonstandard.  In the main BOOM repository
 # stored on github, setup.py and the pybind11 bindings are kept in
@@ -54,7 +56,8 @@ distributions_headers = (
 linalg_sources = glob(BOOM_DIR + "LinAlg/*.cpp")
 linalg_headers = glob(BOOM_DIR + "LinAlg/*.hpp")
 
-math_sources = glob(BOOM_DIR + "math/*.cpp") + glob(BOOM_DIR + "math/cephes/*.cpp")
+math_sources = glob(BOOM_DIR + "math/*.cpp")
+math_sources += glob(BOOM_DIR + "math/cephes/*.cpp")
 
 numopt_sources = glob(BOOM_DIR + "numopt/*.cpp")
 numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
@@ -62,7 +65,8 @@ numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
 rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
 rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
 
-samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp") + [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
+samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp")
+samplers_sources += [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
 samplers_headers = glob(BOOM_DIR + "Samplers/*.hpp")
 
 stats_sources = glob(BOOM_DIR + "stats/*.cpp")
@@ -228,6 +232,7 @@ boom_extension_sources = (
 
 boom_sources = boom_extension_sources + boom_library_sources
 
+
 # ---------------------------------------------------------------------------
 # From
 # https://stackoverflow.com/questions/11013851/speeding-up-build-process-with-distutils
@@ -257,7 +262,6 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
     return objects
 
 
-import distutils.ccompiler
 distutils.ccompiler.CCompiler.compile = parallelCCompile
 # End of parallel compile "monkey patch"
 # ---------------------------------------------------------------------------
@@ -355,7 +359,8 @@ class BuildExt(build_ext):
 
 
 def FindPackagesAndBlab():
-    # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils", "boom/pybind11"]
+    # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils",
+    # "boom/pybind11"]
     packages = find_namespace_packages(include=["BayesBoom.*"],
                                        exclude=["BayesBoom.*.*"])
     # packages = find_packages()
@@ -367,6 +372,7 @@ def FindPackagesAndBlab():
         raise Exception("No packages found.")
 
     return packages
+
 
 setup(
     name='BayesBoom',

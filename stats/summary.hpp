@@ -122,7 +122,7 @@ namespace BOOM {
   };
 
   //===========================================================================
-  std::ostream &operator<<(std::ostream &out, const NumericSummary &summary) {
+  inline std::ostream &operator<<(std::ostream &out, const NumericSummary &summary) {
     return summary.print(out);
   }
 

@@ -20,6 +20,8 @@ class MissingDataImputer:
         """
         Create an empty MissingDataImputer.
         """
+        import pdb
+        pdb.set_trace()
         self._model = None
         self._numeric_colnames = None
         self._categorical_colnames = None
@@ -27,6 +29,8 @@ class MissingDataImputer:
         # A dict keyed by variable names of numeric columns.  The values are
         # lists of numeric values to be treated as atoms for that variable.
         self._atoms = {}
+
+        self._levels = {}
 
         # A dict keyed by variable names of numeric columns.  The values are
         # 1-d numpy arrays containing prior counts for the atom values for that
@@ -117,33 +121,24 @@ class MissingDataImputer:
                 self._atoms[vname] = self._atoms[vname][:3]
         print(f"Atoms: {pd.Series(self._atoms)}")
 
-    def set_categorical_encoders(self, data):
-        if self._numeric_colnames is None:
-            self._discover_numeric_colnames(data)
-
-        encoders = []
-
-        for vname in data.columns:
-            if vname not in self._numeric_colnames:
-                counts = data[vname].value_counts().sort_values(
-                    ascending=False)
-                if counts.shape[0] > 20:
-                    counts = counts[:20]
-                levels = counts.index.tolist()
-                encoders.append(EffectsEncoder(
-                    vname, levels=levels, baseline_level=levels[0]))
-
-        self._encoder = DatasetEncoder(encoders, intercept=True)
-
-    def encode(self, data):
+    def set_level_prior(self, variable_name: str, prior_counts: np.ndarray):
         """
-        Return a numpy array created by dummy-variable encoding the
-        provided set of data.
-        """
-        if self._encoder is None:
-            self.set_categorical_encoders(data)
+        Record the prior distribution on the distribution of the level
+        probabilities for the specified variable.  Each cluster will use these
+        prior counts as the prior distribution for this variable.
 
-        return self._encoder.encode_dataset(data)
+        Args:
+          variable_name: A string matching the name of one of the categorical
+            variables.
+          prior_counts: A 1-d numpy array.  All entries must be positive, and
+            the number of entries must match the number of levels for the
+            specified variable.
+        """
+        if not np.all(prior_counts > 0):
+            raise Exception("All prior counts must be positive.")
+        if variable_name not in self._categorical_colnames:
+            raise Exception(f"Could not find {variable_name} in categorical "
+                            f"column names: {self._categorical_colnames}")
 
     def set_atom_prior(self, variable_name: str, prior_counts: np.ndarray):
         """
@@ -204,16 +199,17 @@ class MissingDataImputer:
             linear regression coefficients.
 
         """
-        # Import is done here so that BayesBoom code will not be imported into
-        # the tensorflow lambda.
+        import pdb
+        pdb.set_trace()
         self._start_time = time.time()
         if self._numeric_colnames is None:
             print("discovering numeric columns")
             self._discover_numeric_colnames(data)
 
-        self._cat_cols = [
-            col for col in data.columns if col not in self._numeric_colnames
-        ]
+        if self._categorical_colnames is None:
+            self._categorical_colnames = [
+                col for col in data.columns if col not in self._numeric_colnames
+            ]
 
         # Find the set of atoms for each numeric variable.
         if self._atoms is None:
@@ -221,6 +217,13 @@ class MissingDataImputer:
         if len(self._atoms) != len(self._numeric_colnames):
             raise Exception(
                 "One atom vector is needed for each numeric variable.")
+
+        # Find the set of levels for each categorical variable.
+        if self._levels is not None:
+            self.find_levels(data.loc[:, self._categorical_colnames])
+        if len(self._levels) != len(self._categorical_colnames):
+            raise Exception(
+                "Each categorical column must have its own list of levels.")
 
         # Convert the atoms to BOOM::Vector objects.
         atom_vector = []
@@ -240,6 +243,7 @@ class MissingDataImputer:
         print("setting prior")
         self._set_prior()
 
+        print("Allocating space")
         self._allocate_space(niter)
 
         for i in range(niter):
@@ -258,19 +262,17 @@ class MissingDataImputer:
           iterations:  An array-like collection of iteration numbers to use.
 
         Returns:
-          WTF
+          A list of imputed data frames.
 
         Example:
         """
-        formatted_data = self._format_imputation_data(data)
         imputed = []
-
+        table = boom.to_data_table(data)
         for it in iterations:
             self._restore_parameters(it)
-            imputed_matrix = self._model.impute_data_set(formatted_data)
-            imputed.append(pd.DataFrame(imputed_matrix.to_numpy(),
-                                        columns=self._numeric_colnames,
-                                        index=data.index))
+            imputed.append(
+                boom.to_pandas(
+                    self._model.impute_data_set(table, burn=20)))
         return imputed
 
     def _discover_numeric_colnames(self, data):
@@ -279,6 +281,7 @@ class MissingDataImputer:
         numeric columns in 'data'.
         """
         self._numeric_colnames = []
+        self._categorical_colnames = []
 
         for vname in data.columns:
             maybe_numeric = is_numeric_dtype(data.loc[:, vname])
@@ -286,6 +289,8 @@ class MissingDataImputer:
                 counts = data.loc[:, vname].value_counts()
                 if counts.shape[0] > 20:
                     self._numeric_colnames.append(vname)
+            if self._numeric_colnames[-1] != vname:
+                self._categorical_colnames.append(vname)
 
     def _format_imputation_data(self, data):
         dummies = self.encode(data)
@@ -366,7 +371,7 @@ class MissingDataImputer:
 
         self._set_regression_prior()
         self._set_mixing_distribution_prior()
-        for i in range(len(self._numeric_colnames)):
+        for i, vname in enumerate(self._numeric_colnames):
             if vname not in self._atom_prior.keys():
                 self._atom_prior[vname] = self._default_atom_prior(
                     self._atoms[vname])
@@ -394,6 +399,8 @@ class MissingDataImputer:
 
         coefficient_weight = 1.0
         variance_weight = float(self.ydim + 1)
+        residual_variance_guess = np.eye(self.ydim)
+
         self._model.set_regression_prior(
             boom.Matrix(coefficient_prior_mean.astype("float")),
             float(coefficient_weight),
@@ -408,8 +415,8 @@ class MissingDataImputer:
             "atoms": self._atoms,
             "numeric_colnames": self._numeric_colnames,
             "categorical_colnames": self._categorical_colnames,
-v            "atom_prior": self._atom_prior,
-            "dataset_encoder": self._dataset_encoder,
+            "atom_prior": self._atom_prior,
+            "level_prior": self._level_prior,
             "coefficient_draws": self.coefficient_draws,
             "residual_variance_draws": self.residual_variance_draws,
             "atom_probs": self.atom_probs,
@@ -448,12 +455,3 @@ v            "atom_prior": self._atom_prior,
             state["num_clusters"], atom_vector, xdim
             self._model.set_empirical_distributions(
                 state["empirical_distributions"])
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:131:33: F821 undefined name 'EffectsEncoder'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:134:25: F821 undefined name 'DatasetEncoder'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:228:33: F821 undefined name 'xdim'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:228:39: F821 undefined name 'ydim'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:230:37: F821 undefined name 'xdim'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:230:43: F821 undefined name 'ydim'
-/home/steve/code/BOOM/Interfaces/python/impute/BayesBoom/impute/impute_flymake.py:339:81: E501 line too long (83 > 80 characters)
-
-Process flymake-proc exited abnormally with code 1

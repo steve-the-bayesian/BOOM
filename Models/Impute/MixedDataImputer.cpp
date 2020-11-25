@@ -122,8 +122,8 @@ namespace BOOM {
                 "Only numeric and categorical data types are supported.");
         }
       }
-      return MixedMultivariateData(observed_data_->data_organizer(),
-                                   numerics, categoricals);
+      return MixedMultivariateData(observed_data_->type_index(), numerics,
+                                   categoricals);
     }
 
     //==========================================================================
@@ -504,7 +504,8 @@ namespace BOOM {
       const DataTable &data,
       const std::vector<Vector> &atoms,
       RNG &seeding_rng)
-      : mixing_distribution_(new MultinomialModel(num_clusters)),
+      : data_types_(data.type_index()),
+        mixing_distribution_(new MultinomialModel(num_clusters)),
         rng_(seed_rng(seeding_rng)),
         swept_sigma_(SpdMatrix(1)),
         swept_sigma_current_(false)
@@ -512,6 +513,7 @@ namespace BOOM {
     for (size_t i = 0; i < data.nrow(); ++i) {
       add_data(data.row(i));
     }
+    summarize_data(data);
     create_encoders(data);
     initialize_empirical_distributions(data, atoms);
     initialize_regression_component();
@@ -532,7 +534,8 @@ namespace BOOM {
   }
 
   MixedDataImputerBase::MixedDataImputerBase(const MixedDataImputerBase &rhs)
-      : mixing_distribution_(rhs.mixing_distribution_->clone()),
+      : data_types_(rhs.data_types_),
+        mixing_distribution_(rhs.mixing_distribution_->clone()),
         numeric_data_model_(rhs.numeric_data_model_->clone()),
         empirical_distributions_(rhs.empirical_distributions_),
         rng_(seed_rng(rhs.rng_)),
@@ -550,6 +553,7 @@ namespace BOOM {
   MixedDataImputerBase &MixedDataImputerBase::operator=(
       const MixedDataImputerBase &rhs) {
     if (&rhs != this) {
+      data_types_ = rhs.data_types_;
       mixing_distribution_.reset(rhs.mixing_distribution_->clone());
       swept_sigma_ = rhs.swept_sigma_;
       set_numeric_data_model(rhs.numeric_data_model_->clone());
@@ -607,6 +611,23 @@ namespace BOOM {
     numeric_data_model()->sample_posterior();
   }
 
+  Vector MixedDataImputerBase::ybar() const {
+    Vector ans(data_types_.number_of_numeric_fields());
+    int index = 0;
+    for (int i = 0; i < data_types_.total_number_of_fields(); ++i) {
+      if (data_types_.variable_type(i) == VariableType::numeric) {
+        const std::string &vname = data_types_.variable_names()[i];
+        const auto it = numeric_summaries_.find(vname);
+        if (it == numeric_summaries_.end()) {
+          report_error("Found an un-summarized numeric column.");
+        } else {
+          ans[index++] = it->second.mean();
+        }
+      }
+    }
+    return ans;
+  }
+
   int MixedDataImputerBase::impute_cluster(
       Ptr<MixedImputation::CompleteData> &row,
       RNG &rng,
@@ -628,6 +649,28 @@ namespace BOOM {
     wsp_.normalize_logprob();
     int component = rmulti_mt(rng, wsp_);
     return component;
+  }
+
+  void MixedDataImputerBase::summarize_data(const DataTable &data) {
+    for (int i = 0; i < data.nvars(); ++i) {
+      switch(data.variable_type(i)) {
+        case VariableType::numeric :
+          numeric_summaries_[data.vnames()[i]] = NumericSummary(data.getvar(i));
+          break;
+
+        case VariableType::categorical :
+          categorical_summaries_[data.vnames()[i]] = CategoricalSummary(
+              data.get_nominal(i));
+          break;
+
+        case VariableType::datetime :
+        default:
+          std::ostringstream msg;
+          msg << "Unsupported variable type for variable "
+              << data.vnames()[i] << ".";
+          report_error(msg.str());
+      }
+    }
   }
 
   void MixedDataImputerBase::impute_row(

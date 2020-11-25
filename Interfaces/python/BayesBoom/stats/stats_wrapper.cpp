@@ -39,6 +39,7 @@ namespace BayesBoom {
     boom.def("sd", [](const Vector &m){return mean(m);},
              "Returns the standard deviation of a boom.Vector.");
 
+    //===========================================================================
     py::class_<SplineBase> (boom, "SplineBase")
         .def("basis", &SplineBase::basis, py::arg("x: float"),
              py::return_value_policy::copy,
@@ -59,7 +60,7 @@ namespace BayesBoom {
         .def("number_of_knots", &SplineBase::number_of_knots)
         ;
 
-
+    //===========================================================================
     py::class_<Bspline, SplineBase>(boom, "Bspline")
         .def(py::init<const Vector &, int>(), py::arg("knots"), py::arg("degree") = 3,
              "Create a Bspline basis.\n\n")
@@ -78,6 +79,7 @@ namespace BayesBoom {
              })
         ;
 
+    //===========================================================================
     py::class_<IQagent>(boom, "IQagent")
         .def(py::init(
             [](int bufsize) {
@@ -150,6 +152,7 @@ namespace BayesBoom {
         ;
 
 
+    //===========================================================================
     py::class_<DataTable,
                Data,
                Ptr<DataTable>>(boom, "DataTable")
@@ -258,6 +261,7 @@ namespace BayesBoom {
              )
         ;
 
+    //===========================================================================
     py::class_<DataEncoder, Ptr<DataEncoder>>(boom, "DataEncoder")
         .def_property_readonly(
             "dim", &DataEncoder::dim,
@@ -272,10 +276,12 @@ namespace BayesBoom {
              "  data:  The boom.DataTable object to be encoded.\n")
         ;
 
+    //===========================================================================
     py::class_<MainEffectsEncoder, DataEncoder, Ptr<MainEffectsEncoder>>(
         boom, "MainEffectsEncoder")
         ;
 
+    //===========================================================================
     py::class_<EffectsEncoder, MainEffectsEncoder, Ptr<EffectsEncoder>>(
         boom, "EffectsEncoder")
         .def(py::init(
@@ -296,6 +302,7 @@ namespace BayesBoom {
           "Encode a categorical value by its integer code.")
         ;
 
+    //===========================================================================
     py::class_<DatasetEncoder, DataEncoder, Ptr<DatasetEncoder>>(
         boom, "DatasetEncoder")
         .def(py::init(
@@ -315,6 +322,7 @@ namespace BayesBoom {
              "    to the beginning of the output matrix.\n")
         ;
 
+    //===========================================================================
     py::class_<Hexbin>(boom, "Hexbin")
         .def(py::init<int>(),
              py::arg("gridsize") = 50,

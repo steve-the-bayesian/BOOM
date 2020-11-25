@@ -1,1 +1,1 @@
-from .impute import MissingDataImputer
+from .impute import MixedDataImputer

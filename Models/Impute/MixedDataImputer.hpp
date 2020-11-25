@@ -20,6 +20,7 @@
 
 #include "stats/DataTable.hpp"
 #include "stats/Encoders.hpp"
+#include "stats/summary.hpp"
 #include "Models/Impute/MvRegCopulaDataImputer.hpp"
 
 namespace BOOM {
@@ -498,6 +499,10 @@ namespace BOOM {
       return empirical_distributions_[i];
     }
 
+    // Means of the observed numeric variables.  Missing data are ignored on a
+    // variable-by-variable basis.
+    Vector ybar() const;
+
    protected:
     void ensure_swept_sigma_current() const;
     SweptVarianceMatrix & swept_sigma() {return swept_sigma_;}
@@ -519,6 +524,10 @@ namespace BOOM {
                        bool update_complete_data_suf);
     int impute_cluster(Ptr<MixedImputation::CompleteData> &row, RNG &rng) const;
 
+    // Fill numeric_summaries_ and categorical_summaries_ with summaries of the
+    // supplied data.
+    void summarize_data(const DataTable &data);
+
     virtual void impute_numerics_given_atoms(Ptr<MixedImputation::CompleteData> &data,
                                              RNG &rng,
                                              bool update_complete_data_suf) = 0;
@@ -533,12 +542,17 @@ namespace BOOM {
     // -------------------------------------------------------------------------
     // Data section
     // -------------------------------------------------------------------------
+    DataTypeIndex data_types_;
     Ptr<MultinomialModel> mixing_distribution_;
     Ptr<MultivariateRegressionModel> numeric_data_model_;
 
     // The empirical distributions summarize the non-atomic parts of the
     // marginal distributions of the numeric variables.
     std::vector<IQagent> empirical_distributions_;
+
+    // Summaries of the numeric and categorical training data.
+    std::map<std::string, NumericSummary> numeric_summaries_;
+    std::map<std::string, CategoricalSummary> categorical_summaries_;
 
     // Encoders expand the categorical variables into dummy variables so they
     // can be used in the regression model.

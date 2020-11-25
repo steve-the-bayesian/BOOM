@@ -38,13 +38,19 @@ namespace BOOM {
   enum class VariableType {unknown = -1, numeric, categorical, datetime};
 
   //===========================================================================
-  class MixedDataOrganizer : public RefCounted {
+  // Tracks the data types in a mixed data settting.
+  class DataTypeIndex : public RefCounted {
    public:
-    MixedDataOrganizer();
-    void add_variable(VariableType type);
+    DataTypeIndex();
+    void add_variable(VariableType type, const std::string &name);
     std::pair<VariableType, int> type_map(int i) const;
 
-    void diagnose_types(const std::vector<std::string> &);
+    // Fill the variable_types_ mapping according to whether each element of
+    // 'fields' can be converted to a numeric value.
+    void diagnose_types(const std::vector<std::string> &fields);
+
+    void set_names(const std::vector<std::string> &variable_names);
+
     VariableType variable_type(int col) const {
       return variable_types_[col];
     }
@@ -61,9 +67,13 @@ namespace BOOM {
       return numeric_count_ + categorical_count_ + unknown_count_;
     }
 
-    bool operator==(const MixedDataOrganizer &rhs) const;
-    bool operator!=(const MixedDataOrganizer &rhs) const {
+    bool operator==(const DataTypeIndex &rhs) const;
+    bool operator!=(const DataTypeIndex &rhs) const {
       return !(*this == rhs);
+    }
+
+    const std::vector<std::string> &variable_names() const {
+      return vnames_;
     }
 
    private:
@@ -79,14 +89,17 @@ namespace BOOM {
     // thus index 3) then type_map[7] = {numeric, 3}.
     std::map<int, std::pair<VariableType, int>> type_map_;
 
-    // The names
-    bool check_type(VariableType type, const std::string &s) const;
+    // Names of the stored variables.
+    std::vector<std::string> vnames_;
 
-    friend void intrusive_ptr_add_ref(MixedDataOrganizer *d) {
+    bool check_type(VariableType type,
+                    const std::string &variable_data_as_string) const;
+
+    friend void intrusive_ptr_add_ref(DataTypeIndex *d) {
       d->up_count();
     }
 
-    friend void intrusive_ptr_release(MixedDataOrganizer *d) {
+    friend void intrusive_ptr_release(DataTypeIndex *d) {
       d->down_count();
       if (d->ref_count() == 0) {
         delete d;
@@ -106,7 +119,7 @@ namespace BOOM {
    public:
     MixedMultivariateData();
     MixedMultivariateData(
-        const Ptr<MixedDataOrganizer> &sorter,
+        const Ptr<DataTypeIndex> &type_index,
         const std::vector<Ptr<DoubleData>> &numerics,
         const std::vector<Ptr<LabeledCategoricalData>> &categoricals);
     MixedMultivariateData(const MixedMultivariateData &rhs);
@@ -117,29 +130,31 @@ namespace BOOM {
     MixedMultivariateData *clone() const override;
     std::ostream &display(std::ostream &out) const override;
 
-    void add_numeric(const Ptr<DoubleData> &numeric);
-    void add_categorical(const Ptr<LabeledCategoricalData> &categorical);
+    void add_numeric(const Ptr<DoubleData> &numeric,
+                     const std::string &name = "");
+    void add_categorical(const Ptr<LabeledCategoricalData> &categorical,
+                         const std::string &name = "");
 
     // The number of numeric variables.
     int numeric_dim() const {
-      return data_organizer_->number_of_numeric_fields();
+      return type_index_->number_of_numeric_fields();
     }
 
     // The number of categorical variables.  This is the number of categorical
     // columns in the "data frame", not its dummy variable expansion.
     int categorical_dim() const {
-      return data_organizer_->number_of_categorical_fields();
+      return type_index_->number_of_categorical_fields();
     }
 
     // The total number of variables.
-    int dim() const {return data_organizer_->total_number_of_fields();}
+    int dim() const {return type_index_->total_number_of_fields();}
 
     // The type of variable in cell i.
     VariableType variable_type(int i) const {
-      return data_organizer_->variable_type(i);
+      return type_index_->variable_type(i);
     }
     const std::vector<VariableType> & variable_types() const {
-      return data_organizer_->variable_types();
+      return type_index_->variable_types();
     }
 
     const Data &variable(int i) const;
@@ -158,12 +173,12 @@ namespace BOOM {
       return categorical_data_;
     }
 
-    Ptr<MixedDataOrganizer> data_organizer() const {
-      return data_organizer_;
+    Ptr<DataTypeIndex> type_index() const {
+      return type_index_;
     }
 
    private:
-    Ptr<MixedDataOrganizer> data_organizer_;
+    Ptr<DataTypeIndex> type_index_;
     std::vector<Ptr<DoubleData>> numeric_data_;
     std::vector<Ptr<LabeledCategoricalData>> categorical_data_;
   };
@@ -275,13 +290,20 @@ namespace BOOM {
     void append_row(const MixedMultivariateData &row);
 
     //--- size  ---
-    uint nvars() const;          // number of variables stored in the table
-    int nrow() const;            // number of rows
-    int nobs() const {return nrow();}  // syntactic sugar.
-    uint nlevels(uint i) const;  // 1 for numeric, nlevels for categorical
-
+    // Number of variables stored in the table
+    uint nvars() const;
+    uint ncol() const {return nvars();}
     int numeric_dim() const;      // number of numeric variables.
     int categorical_dim() const;  // number of categorical variables.
+
+    // Number of rows.
+    int nrow() const;            // number of rows
+    int nobs() const {return nrow();}  // syntactic sugar.
+
+    // The number of levels for variable i.  If the variable is numeric then the
+    // answer is 1.  Otherwise the number of levels is returned for categorical
+    // variables.
+    uint nlevels(uint i) const;
 
     //--- look inside ---
     std::ostream &print(std::ostream &out, uint from = 0,
@@ -289,16 +311,15 @@ namespace BOOM {
 
     // The names of the variables stored in the table.  These are the "column
     // names."
-    std::vector<std::string> &vnames();
     const std::vector<std::string> &vnames() const;
 
     //--- extract variables ---
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const {
-      return data_organizer_->variable_type(which_column);
+      return type_index_->variable_type(which_column);
     }
     const std::vector<VariableType> &variable_types() const {
-      return data_organizer_->variable_types();
+      return type_index_->variable_types();
     }
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;
@@ -326,14 +347,17 @@ namespace BOOM {
     // returned.
     DataTable &rbind(const DataTable &rhs);
 
+    const DataTypeIndex &type_index() const {
+      return *type_index_;
+    }
+
    private:
-    // The data are organized as columns.  The data_organizer_ keeps track of
+    // The data are organized as columns.  The type_index_ keeps track of
     // the variable type of column i, and which index in the relevant vector it
     // is stored.
     std::vector<Vector> numeric_variables_;
     std::vector<CategoricalVariable> categorical_variables_;
-    Ptr<MixedDataOrganizer> data_organizer_;
-    std::vector<std::string> vnames_;
+    Ptr<DataTypeIndex> type_index_;
   };
 
   std::ostream &operator<<(std::ostream &out, const DataTable &dt);

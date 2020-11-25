@@ -42,13 +42,14 @@ namespace BOOM {
   //---------------------------------------------------------------------
   // Determine the type of variable stored in vs.
 
-  MixedDataOrganizer::MixedDataOrganizer()
+  DataTypeIndex::DataTypeIndex()
       : numeric_count_(0),
         categorical_count_(0),
-        unknown_count_(0)
+        unknown_count_(0),
+        vnames_(0)
   {}
 
-  void MixedDataOrganizer::add_variable(VariableType type) {
+  void DataTypeIndex::add_variable(VariableType type, const std::string &name) {
     int index = variable_types_.size();
     variable_types_.push_back(type);
     if (type == VariableType::numeric) {
@@ -60,9 +61,10 @@ namespace BOOM {
       report_error("Numeric and categorical the the only currently supported"
                    " types.");
     }
+    vnames_.push_back(name);
   }
 
-  std::pair<VariableType, int> MixedDataOrganizer::type_map(int i) const {
+  std::pair<VariableType, int> DataTypeIndex::type_map(int i) const {
     auto it = type_map_.find(i);
     if (it == type_map_.end()) {
       return std::make_pair(VariableType::unknown, -1);
@@ -71,26 +73,28 @@ namespace BOOM {
     }
   }
 
-  void MixedDataOrganizer::diagnose_types(const std::vector<std::string> &vs) {
-    uint nfields = vs.size();
+  void DataTypeIndex::diagnose_types(const std::vector<std::string> &fields) {
+    uint nfields = fields.size();
     variable_types_ = std::vector<VariableType>(nfields, VariableType::unknown);
-    for (uint i = 0; i < vs.size(); ++i) {
+    for (uint i = 0; i < fields.size(); ++i) {
       variable_types_[i] =
-          is_numeric(vs[i]) ? VariableType::numeric : VariableType::categorical;
+          is_numeric(fields[i]) ? VariableType::numeric : VariableType::categorical;
     }
   }
 
-  bool MixedDataOrganizer::check_type(int i, const std::string &s) const {
+  bool DataTypeIndex::check_type(
+      int i,
+      const std::string &variable_data_as_string) const {
     VariableType type = variable_types_[i];
-    if (is_numeric(s)) {
+    if (is_numeric(variable_data_as_string)) {
       if (type == VariableType::numeric) return true;
-    } else {  // s is not numeric
+    } else {  // data is not numeric
       if (type == VariableType::categorical) return true;
     }
     return false;
   }
 
-  bool MixedDataOrganizer::operator==(const MixedDataOrganizer &rhs) const {
+  bool DataTypeIndex::operator==(const DataTypeIndex &rhs) const {
     return numeric_count_ == rhs.numeric_count_
         && categorical_count_ == rhs.categorical_count_
         && unknown_count_ == rhs.unknown_count_
@@ -99,20 +103,20 @@ namespace BOOM {
 
   //===========================================================================
   MixedMultivariateData::MixedMultivariateData()
-      : data_organizer_(new MixedDataOrganizer)
+      : type_index_(new DataTypeIndex)
   {}
 
   MixedMultivariateData::MixedMultivariateData(
-      const Ptr<MixedDataOrganizer> &sorter,
+      const Ptr<DataTypeIndex> &sorter,
       const std::vector<Ptr<DoubleData>> &numerics,
       const std::vector<Ptr<LabeledCategoricalData>> &categoricals)
-      : data_organizer_(sorter),
+      : type_index_(sorter),
         numeric_data_(numerics),
         categorical_data_(categoricals)
   {}
 
   MixedMultivariateData::MixedMultivariateData(const MixedMultivariateData &rhs)
-      : data_organizer_(rhs.data_organizer_)
+      : type_index_(rhs.type_index_)
   {
     for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
       numeric_data_.push_back(rhs.numeric_data_[i]->clone());
@@ -125,7 +129,7 @@ namespace BOOM {
   MixedMultivariateData &MixedMultivariateData::operator=(
       const MixedMultivariateData &rhs) {
     if (&rhs != this) {
-      data_organizer_ = rhs.data_organizer_;
+      type_index_ = rhs.type_index_;
       numeric_data_.clear();
       for (int i = 0; i < rhs.numeric_data_.size(); ++i) {
         numeric_data_.push_back(rhs.numeric_data_[i]->clone());
@@ -152,21 +156,23 @@ namespace BOOM {
     return out;
   }
 
-  void MixedMultivariateData::add_numeric(const Ptr<DoubleData> &numeric) {
-    data_organizer_->add_variable(VariableType::numeric);
+  void MixedMultivariateData::add_numeric(const Ptr<DoubleData> &numeric,
+                                          const std::string &name) {
+    type_index_->add_variable(VariableType::numeric, name);
     numeric_data_.push_back(numeric);
   }
 
   void MixedMultivariateData::add_categorical(
-      const Ptr<LabeledCategoricalData> &categorical) {
-    data_organizer_->add_variable(VariableType::categorical);
+      const Ptr<LabeledCategoricalData> &categorical,
+      const std::string &name) {
+    type_index_->add_variable(VariableType::categorical, name);
     categorical_data_.push_back(categorical);
   }
 
   const Data &MixedMultivariateData::variable(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_organizer_->type_map(i);
+    std::tie(type, pos) = type_index_->type_map(i);
     if (type == VariableType::numeric) {
       return *numeric_data_[pos];
     } else if (type == VariableType::categorical) {
@@ -183,7 +189,7 @@ namespace BOOM {
   const DoubleData &MixedMultivariateData::numeric(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_organizer_->type_map(i);
+    std::tie(type, pos) = type_index_->type_map(i);
     if (type != VariableType::numeric) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not numeric.";
@@ -195,7 +201,7 @@ namespace BOOM {
   Ptr<DoubleData> MixedMultivariateData::mutable_numeric(int i) {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_organizer_->type_map(i);
+    std::tie(type, pos) = type_index_->type_map(i);
     if (type != VariableType::numeric) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not numeric.";
@@ -207,7 +213,7 @@ namespace BOOM {
   const LabeledCategoricalData &MixedMultivariateData::categorical(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_organizer_->type_map(i);
+    std::tie(type, pos) = type_index_->type_map(i);
     if (type != VariableType::categorical) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not categorical.";
@@ -220,7 +226,7 @@ namespace BOOM {
   MixedMultivariateData::mutable_categorical(int i) const {
     VariableType type;
     int pos;
-    std::tie(type, pos) = data_organizer_->type_map(i);
+    std::tie(type, pos) = type_index_->type_map(i);
     if (type != VariableType::categorical) {
       std::ostringstream err;
       err << "Variable in position " << i << " is not categorical.";
@@ -286,13 +292,13 @@ namespace BOOM {
   //-----------------------------------------------------------------
 
   DataTable::DataTable()
-      : data_organizer_(new MixedDataOrganizer)
+      : type_index_(new DataTypeIndex)
   {}
 
   DataTable::DataTable(const std::string &fname,
                        bool header,
                        const std::string &sep)
-      : data_organizer_(new MixedDataOrganizer)
+      : type_index_(new DataTypeIndex)
   {
     ifstream in(fname.c_str());
     if (!in) {
@@ -307,12 +313,13 @@ namespace BOOM {
 
     std::vector<std::vector<std::string>> categorical_data;
     std::vector<Vector> numeric_data;
+    std::vector<std::string> variable_names;
 
     if (header) {
       ++line_number;
       getline(in, line);
-      vnames_ = split(line);
-      nfields = vnames_.size();
+      variable_names = split(line);
+      nfields = variable_names.size();
     }
 
     while (in) {
@@ -325,9 +332,11 @@ namespace BOOM {
         // No data has yet been read.  Initialize the variable names and data
         // types based off the first row.
         nfields = fields.size();
-        data_organizer_->diagnose_types(fields);
-        numeric_data.resize(data_organizer_->number_of_numeric_fields());
-        categorical_data.resize(data_organizer_->number_of_categorical_fields());
+        variable_names = default_vnames(nfields);
+        type_index_->diagnose_types(fields);
+        type_index_->set_names(variable_names);
+        numeric_data.resize(type_index_->number_of_numeric_fields());
+        categorical_data.resize(type_index_->number_of_categorical_fields());
       }
 
       if (fields.size() != nfields) {  // check number of fields
@@ -335,16 +344,16 @@ namespace BOOM {
       }
 
       for (uint i = 0; i < nfields; ++i) {
-        if (!data_organizer_->check_type(i, fields[i])) {
+        if (!type_index_->check_type(i, fields[i])) {
           wrong_type_error(line_number, i + 1);
         }
 
         if (variable_type(i) == VariableType::numeric) {
           double tmp = std::stod(fields[i], nullptr);
-          int index = data_organizer_->type_map(i).second;
+          int index = type_index_->type_map(i).second;
           numeric_data[index].push_back(tmp);
         } else if (variable_type(i) == VariableType::categorical) {
-          int index = data_organizer_->type_map(i).second;
+          int index = type_index_->type_map(i).second;
           categorical_data[index].push_back(fields[i]);
         } else {
           unknown_type();
@@ -355,7 +364,7 @@ namespace BOOM {
     for (uint i = 0; i < nfields; ++i) {
       VariableType type;
       int index;
-      std::tie(type, index) = data_organizer_->type_map(i);
+      std::tie(type, index) = type_index_->type_map(i);
 
       if (type == VariableType::numeric) {
         numeric_variables_.push_back(numeric_data[index]);
@@ -363,7 +372,6 @@ namespace BOOM {
         categorical_variables_.emplace_back(categorical_data[i]);
       }
     }
-    if (vnames_.empty()) vnames_ = default_vnames(nfields);
   }
 
   DataTable *DataTable::clone() const { return new DataTable(*this); }
@@ -378,8 +386,7 @@ namespace BOOM {
     // first appended vector of obsevations.)
     if (nvars() == 0) {
       numeric_variables_.push_back(v);
-      data_organizer_->add_variable(VariableType::numeric);
-      vnames_.push_back(name);
+      type_index_->add_variable(VariableType::numeric, name);
     } else {
       // If the table is NOT empty, check if the observations for the added
       // variable is same for the previous variables.
@@ -388,8 +395,7 @@ namespace BOOM {
             "Wrong sized include vector in DataTable::append_variable");
       } else {
         numeric_variables_.push_back(v);
-        vnames_.push_back(name);
-        data_organizer_->add_variable(VariableType::numeric);
+        type_index_->add_variable(VariableType::numeric, name);
       }
     }
   }
@@ -402,8 +408,7 @@ namespace BOOM {
     // first appended vector of obsevations.
     if (nvars() == 0) {
       categorical_variables_.push_back(cv);
-      data_organizer_->add_variable(VariableType::categorical);
-      vnames_.push_back(name);
+      type_index_->add_variable(VariableType::categorical, name);
     } else {
       // If the table is NOT empty, check if the number of observations
       // for the added variable is same for the previous variables.
@@ -412,8 +417,7 @@ namespace BOOM {
             "Wrong sized include vector in DataTable::append_variable");
       } else {
         categorical_variables_.push_back(cv);
-        vnames_.push_back(name);
-        data_organizer_->add_variable(VariableType::categorical);
+        type_index_->add_variable(VariableType::categorical, name);
       }
     }
   }
@@ -458,7 +462,7 @@ namespace BOOM {
 
 
     } else {
-      data_organizer_ = row.data_organizer_;
+      type_index_ = row.type_index_;
       for (int i = 0; i < row.dim(); ++i) {
         VariableType vtype = row.variable_type(i);
         switch (vtype) {
@@ -486,12 +490,13 @@ namespace BOOM {
     }
   }
 
-  std::vector<std::string> &DataTable::vnames() { return vnames_; }
-  const std::vector<std::string> &DataTable::vnames() const { return vnames_; }
+  const std::vector<std::string> &DataTable::vnames() const {
+    return type_index_->variable_names();
+  }
 
   //------------------------------------------------------------
   uint DataTable::nvars() const {
-    return data_organizer_->total_number_of_fields();
+    return type_index_->total_number_of_fields();
   }
 
   LabeledMatrix DataTable::design(bool add_int) const {
@@ -520,7 +525,7 @@ namespace BOOM {
         uint J = include.indx(j);
         VariableType type;
         int index;
-        std::tie(type, index) = data_organizer_->type_map(J);
+        std::tie(type, index) = type_index_->type_map(J);
         if (type == VariableType::numeric) {
           X(i, column++) = numeric_variables_[index][i];
         } else if (type == VariableType::categorical) {
@@ -541,12 +546,12 @@ namespace BOOM {
       uint J = include.indx(j);
       int index;
       VariableType type;
-      std::tie(type, index) = data_organizer_->type_map(J);
+      std::tie(type, index) = type_index_->type_map(J);
       if (type == VariableType::numeric) {
-        dimnames.push_back(vnames_[J]);
+        dimnames.push_back(vnames()[J]);
       } else if (type == VariableType::categorical) {
         const Ptr<LabeledCategoricalData> x(categorical_variables_[index][0]);
-        std::string stub = vnames_[J];
+        std::string stub = vnames()[J];
         std::vector<std::string> labs = categorical_variables_[index].labels();
         for (uint i = 1; i < labs.size(); ++i) {
           dimnames.push_back(stub + ":" + labs[i]);
@@ -565,7 +570,7 @@ namespace BOOM {
       *this = rhs;
       return *this;
     }
-    if (*data_organizer_ != *rhs.data_organizer_) {
+    if (*type_index_ != *rhs.type_index_) {
       report_error("Variable type mismatch in rbind(DataTable).");
     }
     for (int i = 0; i < numeric_variables_.size(); ++i) {
@@ -596,17 +601,17 @@ namespace BOOM {
   uint DataTable::nlevels(uint i) const {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(i);
+    std::tie(type, index) = type_index_->type_map(i);
     if (type == VariableType::numeric) return 1;
     return categorical_variables_[index][0]->nlevels();
   }
 
   int DataTable::numeric_dim() const {
-    return data_organizer_->number_of_numeric_fields();
+    return type_index_->number_of_numeric_fields();
   }
 
   int DataTable::categorical_dim() const {
-    return data_organizer_->number_of_categorical_fields();
+    return type_index_->number_of_categorical_fields();
   }
 
   int DataTable::nrow() const {
@@ -623,7 +628,7 @@ namespace BOOM {
   Vector DataTable::getvar(uint n) const {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(n);
+    std::tie(type, index) = type_index_->type_map(n);
     if (type == VariableType::numeric) {
       return numeric_variables_[index];
     } else {
@@ -638,7 +643,7 @@ namespace BOOM {
   double DataTable::getvar(int row, int col) const {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(col);
+    std::tie(type, index) = type_index_->type_map(col);
     if (type == VariableType::numeric) {
       return numeric_variables_[index][row];
     } else {
@@ -649,7 +654,7 @@ namespace BOOM {
   CategoricalVariable DataTable::get_nominal(uint n) const {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(n);
+    std::tie(type, index) = type_index_->type_map(n);
     if (type != VariableType::categorical) wrong_type_error(1, n);
     return categorical_variables_[index];
   }
@@ -657,7 +662,7 @@ namespace BOOM {
   Ptr<LabeledCategoricalData> DataTable::get_nominal(int row, int col) const {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(col);
+    std::tie(type, index) = type_index_->type_map(col);
     if (type != VariableType::categorical) wrong_type_error(1, col);
     return categorical_variables_[index][row];
   }
@@ -665,7 +670,7 @@ namespace BOOM {
   void DataTable::set_numeric_value(int row, int column, double value) {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(column);
+    std::tie(type, index) = type_index_->type_map(column);
     if (type != VariableType::numeric) {
       report_error("Attempt to set numerical value to non-numeric variable.");
     }
@@ -675,7 +680,7 @@ namespace BOOM {
   void DataTable::set_nominal_value(int row, int column, int value) {
     VariableType type;
     int index;
-    std::tie(type, index) = data_organizer_->type_map(column);
+    std::tie(type, index) = type_index_->type_map(column);
     if (type != VariableType::categorical) {
       report_error(
           "Attempt to set categorical value to non-categorical variable.");
@@ -710,7 +715,7 @@ namespace BOOM {
     for (int i = 0; i < categorical_variables_.size(); ++i) {
       categoricals.push_back(categorical_variables_[i][row_index]);
     }
-    return new MixedMultivariateData(data_organizer_, numerics, categoricals);
+    return new MixedMultivariateData(type_index_, numerics, categoricals);
   }
 
   //------------------------------------------------------------
@@ -732,7 +737,7 @@ namespace BOOM {
       v.reserve(nobs());
       VariableType type;
       int index;
-      std::tie(type, index) = data_organizer_->type_map(j);
+      std::tie(type, index) = type_index_->type_map(j);
       for (uint i = 0; i < nobs(); ++i) {
         std::ostringstream sout;
         if (type == VariableType::numeric) {
