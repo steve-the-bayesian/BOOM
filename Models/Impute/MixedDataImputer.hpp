@@ -27,7 +27,10 @@ namespace BOOM {
 
   namespace MixedImputation {
 
-    // CompleteData represents the true error-corrected and imputed data values.
+    // CompleteData represents the true error-corrected and imputed data values
+    // in a data set with missing or erroneous data.
+    //
+    //
     class CompleteData : public Data {
      public:
       // Args:
@@ -499,8 +502,8 @@ namespace BOOM {
       return empirical_distributions_[i];
     }
 
-    // Means of the observed numeric variables.  Missing data are ignored on a
-    // variable-by-variable basis.
+    // Sample means of the observed numeric variables.  Missing data are ignored
+    // on a variable-by-variable basis.
     Vector ybar() const;
 
    protected:
@@ -519,10 +522,20 @@ namespace BOOM {
     }
 
    private:
-    int impute_cluster(Ptr<MixedImputation::CompleteData> &row,
+    // Simulate the cluster (i.e. the mixture component index) responsible for
+    // the observation supplied in the first argument.
+    //
+    // Args:
+    //   row:  The observation.
+    //   rng:  The random number generator to use for the simulation.
+    //   update_complete_data_suf: Indicates whether the complete data
+    //     sufficient statistics should be updated in light of the draw.  True
+    //     for training data, false for imputation after training.
+    int impute_cluster(const Ptr<MixedImputation::CompleteData> &row,
                        RNG &rng,
                        bool update_complete_data_suf);
-    int impute_cluster(Ptr<MixedImputation::CompleteData> &row, RNG &rng) const;
+    int impute_cluster(const Ptr<MixedImputation::CompleteData> &row,
+                       RNG &rng) const;
 
     // Fill numeric_summaries_ and categorical_summaries_ with summaries of the
     // supplied data.
@@ -585,12 +598,17 @@ namespace BOOM {
   // The categorical part is modeled as a mixture of independent multinomial
   // distributions.  Let z be the mixture indicator, which is shared by all
   // variables in the observation.  Let Xj be the j'the variable in x.  Pr(Xj =
-  // xj | z) = pi[z, j, xj], which sums to 1 across xj.
+  // xj | z) = pi[z, j, xj].  This is a collection of distributions that differs
+  // across mixture components z and data columns, j, and which sums to 1 across
+  // xj.
   //
   // The numeric portion of the data is modeled as semicontinuous.  Let Yj be
   // the jth variable in y.  Yj is either one of k 'atoms' (particular numeric
   // values known in advance) or else a transformed version of Yj obeys a
-  // multivariate linear regression with x.
+  // multivariate linear regression with x.  The atomic part of the distribution
+  // is handled in the same way as the categorical variables.  Each variable has
+  // its own "atom list".  The conditional distribution of the atoms is indexed
+  // by the same latent mixture indicator z as the categorical data.
   class MixedDataImputer : public MixedDataImputerBase
   {
    public:

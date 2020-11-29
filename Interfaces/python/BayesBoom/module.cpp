@@ -12,8 +12,7 @@ namespace BayesBoom {
   // That way all the definitions occur within the same module.
   void distribution_def(py::module &);
   void LinAlg_def(py::module &);
-  //  void stats_def(py::module &);
-
+  void stats_def(py::module &);
   void Model_def(py::module &);
   void Data_def(py::module &);
   void Parameter_def(py::module &);
@@ -32,7 +31,9 @@ namespace BayesBoom {
         "It is also the sound your computer makes when it crashes.\n\n"
         "BOOM is a C++ library written by Steven L. Scott.  It is a standalone "
         "C++ library, but also the engine behind a couple of useful R packages "
-        "and (now) some python."
+        "and (now) some python.\n\n"
+        "The BayesBoom.boom package is intended for library writers and should "
+        "probably not be used directly."
         ;
 
     // Calling these functions here defines the classes in the module.

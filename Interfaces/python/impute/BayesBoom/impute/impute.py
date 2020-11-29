@@ -8,7 +8,7 @@ import pickle
 import time
 
 
-class MissingDataImputer:
+class MixedDataImputer:
     """
     Imputes missing data in a pd.DataFrame containing a mix of numeric and
     categorical data.
@@ -18,10 +18,8 @@ class MissingDataImputer:
 
     def __init__(self):
         """
-        Create an empty MissingDataImputer.
+        Create an empty MixedDataImputer.
         """
-        import pdb
-        pdb.set_trace()
         self._model = None
         self._numeric_colnames = None
         self._categorical_colnames = None
@@ -38,6 +36,12 @@ class MissingDataImputer:
         # 'k+1', with the final count corresponding to the implicit continuous
         # atom.
         self._atom_prior = {}
+
+        # A dict keyed by variable names of numeric columns.  The values are
+        # 1-d numpy arrays containing prior counts for the level values for
+        # that variable.  If there are 'k' levels then the vector must be of
+        # length 'k'.
+        self._level_prior = {}
 
         self._dataset_encoder = None
         self.coefficient_draws = np.zeros((0, 0))
@@ -84,6 +88,26 @@ class MissingDataImputer:
             return self._model.nclusters
 
     @property
+    def xdim(self):
+        """
+        The dimension of the dummy variable expansion of the categorical
+        variables.
+        """
+        if self._model is None:
+            return 0
+        else:
+            return self._model.xdim
+
+    @property
+    def ydim(self):
+        """
+        The number of numeric variables.
+        """
+        if self._numeric_colnames is None:
+            return 0
+        return len(self._numeric_colnames)
+
+    @property
     def niter(self):
         """
         The number of iterations in the model.
@@ -92,8 +116,8 @@ class MissingDataImputer:
 
     def find_atoms(self, data: pd.DataFrame):
         """
-        Fill a dict associating each column name in data with a flat numpy
-        array containing the atoms in that variable.
+        Fill a dict associating each numeric column name in data with a flat
+        numpy array containing the atoms in that variable.
 
         Args:
           data: The data frame in which to search for atoms.
@@ -109,7 +133,7 @@ class MissingDataImputer:
             list.
         """
         if self._numeric_colnames is None:
-            self._discover_numeric_colnames(data)
+            self._discover_column_types(data)
 
         for vname in self._numeric_colnames:
             variable = data[vname]
@@ -120,6 +144,27 @@ class MissingDataImputer:
             if len(self._atoms[vname]) > 3:
                 self._atoms[vname] = self._atoms[vname][:3]
         print(f"Atoms: {pd.Series(self._atoms)}")
+
+    def find_levels(self, data: pd.DataFrame):
+        """
+        Fill in a dict associating each categorical column name in a data frame
+        with the levels of the categorical variable contained in the column.
+
+        Effect:
+          self._categorical_colnames: If already populated then it is left
+            unchanged.  Otherwise it is filled with a list of strings giving
+            the names fo the categorical variables in 'data'.
+          self._levels: Filled with a dict containing the levels of each
+            categorical column in 'data'.  The dict is keyed by variable names,
+            and its elements are lists of strings.
+        """
+        if self._categorical_colnames is None:
+            self._discover_column_types(data)
+
+        for vname in self._categorical_colnames:
+            variable = data[vname]
+            levels = variable.unique()
+            self._levels[vname] = levels.tolist()
 
     def set_level_prior(self, variable_name: str, prior_counts: np.ndarray):
         """
@@ -173,7 +218,7 @@ class MissingDataImputer:
 
     def train_model(self,
                     data: pd.DataFrame,
-                    num_clusters: int,
+                    nclusters: int,
                     niter: int = 1000,
                     checkpoint_filename="",
                     nthreads=1):
@@ -185,7 +230,7 @@ class MissingDataImputer:
           data: The data on which to train the model.  Any non-numeric
             variables are treated as categorical.  Missing values are expected
             to be coded as np.NaN.
-          num_clusters: The number of clusters to use for the joint
+          nclusters: The number of clusters to use for the joint
             distribution of the categorical data.
           niter:  The number of MCMC iterations to use during training.
           checkpoint_filename: The name of a file to use when recording the
@@ -199,17 +244,9 @@ class MissingDataImputer:
             linear regression coefficients.
 
         """
-        import pdb
-        pdb.set_trace()
         self._start_time = time.time()
-        if self._numeric_colnames is None:
-            print("discovering numeric columns")
-            self._discover_numeric_colnames(data)
-
-        if self._categorical_colnames is None:
-            self._categorical_colnames = [
-                col for col in data.columns if col not in self._numeric_colnames
-            ]
+        if self._numeric_colnames is None or self._categorical_colnames is None:
+            self._discover_column_types(data)
 
         # Find the set of atoms for each numeric variable.
         if self._atoms is None:
@@ -235,7 +272,7 @@ class MissingDataImputer:
         data_table = boom.to_data_table(data)
 
         self._model = boom.MixedDataImputer(
-            num_clusters, data_table, atom_vector, boom.GlobalRng.rng)
+            nclusters, data_table, atom_vector, boom.GlobalRng.rng)
 
         # if nthreads > 1:
         #     self._model.setup_worker_pool(nthreads)
@@ -247,8 +284,9 @@ class MissingDataImputer:
         self._allocate_space(niter)
 
         for i in range(niter):
-            sep = "=-=-=-=-=-=-=-=-="
-            print(f"{sep} {time.asctime()} Iteration {i} {sep}")
+            if i % 100 == 0:
+                sep = "=-=-=-=-=-=-=-=-="
+                print(f"{sep} {time.asctime()} Iteration {i} {sep}")
             self._model.sample_posterior()
             self._record_draws(i)
             if i % niter == 0 and checkpoint_filename != "":
@@ -275,7 +313,7 @@ class MissingDataImputer:
                     self._model.impute_data_set(table, burn=20)))
         return imputed
 
-    def _discover_numeric_colnames(self, data):
+    def _discover_column_types(self, data):
         """
         Populate self._numeric_colnames with a list containing the names of the
         numeric columns in 'data'.
@@ -303,17 +341,15 @@ class MissingDataImputer:
             formatted_data.append(boom.MvRegData(y, x))
         return formatted_data
 
-    def _allocate_space(self, niter, xdim, ydim):
+    def _allocate_space(self, niter):
         """
         Allocate space to hold MCMC draws.
 
         Args:
           niter:  The desired number of draws.
-          xdim:  The dimension of the predictor variable.
-          ydim:  The dimension of the response variable.
         """
-        self.coefficient_draws = np.empty((niter, xdim, ydim))
-        self.residual_variance_draws = np.empty((niter, ydim, ydim))
+        self.coefficient_draws = np.empty((niter, self.xdim, self.ydim))
+        self.residual_variance_draws = np.empty((niter, self.ydim, self.ydim))
         self.atom_probs = {}
         self.atom_error_probs = {}
 
@@ -336,9 +372,6 @@ class MissingDataImputer:
                 name = self._numeric_colnames[col]
                 self.atom_probs[name][i, cluster, :] = (
                     self._model.atom_probs(cluster, col).to_numpy()
-                )
-                self.atom_error_probs[name][i, cluster, :, :] = (
-                    self._model.atom_error_probs(cluster, col).to_numpy()
                 )
 
     def _restore_parameters(self, i):
@@ -407,6 +440,22 @@ class MissingDataImputer:
             boom.SpdMatrix(residual_variance_guess.astype("float")),
             float(variance_weight))
 
+    def _default_atom_prior(self, atoms):
+        """
+        Return a default prior distribution for the vector of atoms.
+        """
+        prior_counts = np.ones(len(atoms) + 1, dtype="float")
+        prior_counts /= np.sum(prior_counts)
+        return prior_counts
+
+    def _default_level_prior(self, levels):
+        """
+        Return a default prior distribution for the vector of levels.
+        """
+        prior_counts = np.ones(len(levels), dtype="float")
+        prior_counts /= np.sum(prior_counts)
+        return prior_counts
+
     def __getstate__(self):
         """
         Return a dict that can be used to pickle a MixedDataImputer.
@@ -420,7 +469,7 @@ class MissingDataImputer:
             "coefficient_draws": self.coefficient_draws,
             "residual_variance_draws": self.residual_variance_draws,
             "atom_probs": self.atom_probs,
-            "num_clusters": self.nclusters,
+            "nclusters": self.nclusters,
             "empirical_distributions": self._model.empirical_distributions,
         }
         return state
@@ -441,7 +490,7 @@ class MissingDataImputer:
 
         if (
                 self._dataset_encoder is not None
-                and state["num_clusters"] is not None
+                and state["nclusters"] is not None
         ):
             xdim = self._encoder.dim
             atom_vector = []
@@ -452,6 +501,6 @@ class MissingDataImputer:
             self._model = boom.MixedDataImputer(
                 # TODO: this is hosed.
             )
-            state["num_clusters"], atom_vector, xdim
+            state["nclusters"], atom_vector, xdim
             self._model.set_empirical_distributions(
                 state["empirical_distributions"])

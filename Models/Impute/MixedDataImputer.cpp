@@ -175,7 +175,8 @@ namespace BOOM {
 
     double NumericScalarModel::logp(double observed) const {
       if (std::isnan(observed)) {
-        report_error("Argument cannot be NaN.");
+        return 0;
+        // report_error("Argument cannot be NaN.");
       }
       return atom_model_->logpi()[category_map(observed)];
     }
@@ -218,12 +219,17 @@ namespace BOOM {
 
     double NumericScalarModel::true_value(
         int true_atom, double observed_value) const {
-      if (true_atom >= 0 && true_atom < atoms_.size()) {
+      if (atoms_.empty()) {
+        return observed_value;
+      } else if (true_atom >= 0 && true_atom < atoms_.size()) {
         return atoms_[true_atom];
       } else if (category_map(observed_value) == atoms_.size()) {
         return observed_value;
       } else {
-        report_error("illegal value.");
+        std::ostringstream msg;
+        msg << "Illegal value: true_atom = " << true_atom
+            << " observed_value = " << observed_value << ".";
+        report_error(msg.str());
         return -1;
       }
     }
@@ -281,6 +287,7 @@ namespace BOOM {
       if (index >= 0) {
         return model_->logpi()[index];
       } else {
+        return 0;
         std::ostringstream err;
         err << "Illegal level value: " << label << ".";
         report_error(err.str());
@@ -410,13 +417,14 @@ namespace BOOM {
                                 bool update_complete_data_suf) {
       const Vector &observed(row->y_observed());
       for (int i = 0; i < observed.size(); ++i) {
-        // True atom is the atom responsible for the true value.
-        int true_atom = numeric_models_[i]->impute_atom(
+        // Impute the atom responsible for the true value.  If the observed
+        // value contains no missing data this is a quick lookup.
+        int atom = numeric_models_[i]->impute_atom(
             observed[i], rng, update_complete_data_suf);
         row->set_y_true(i, numeric_models_[i]->true_value(
-            true_atom, observed[i]));
+            atom, observed[i]));
         row->set_y_numeric(i, numeric_models_[i]->numeric_value(
-            true_atom, observed[i]));
+            atom, observed[i]));
       }
     }
 
@@ -600,6 +608,9 @@ namespace BOOM {
   }
 
   void MixedDataImputerBase::sample_posterior() {
+    // Ensure that the ECDF's describing the marginal distribution of Y are up
+    // to date.  This only has an impact in the first MCMC draw.  After that it
+    // is a no-op.
     for (int i = 0; i < empirical_distributions_.size(); ++i) {
       empirical_distribution(i).update_cdf();
     }
@@ -629,7 +640,7 @@ namespace BOOM {
   }
 
   int MixedDataImputerBase::impute_cluster(
-      Ptr<MixedImputation::CompleteData> &row,
+      const Ptr<MixedImputation::CompleteData> &row,
       RNG &rng,
       bool update_complete_data_suf) {
     int component = impute_cluster(row, rng);
@@ -640,7 +651,7 @@ namespace BOOM {
   }
 
   int MixedDataImputerBase::impute_cluster(
-      Ptr<MixedImputation::CompleteData> &row, RNG &rng) const {
+      const Ptr<MixedImputation::CompleteData> &row, RNG &rng) const {
     int S = number_of_mixture_components();
     wsp_ = mixing_distribution_->logpi();
     for (int s = 0; s < S; ++s) {
