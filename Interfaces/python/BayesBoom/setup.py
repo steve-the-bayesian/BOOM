@@ -412,6 +412,7 @@ setup(
         sd_draws[i] = model.sigma()
 
     """,
+    long_description_content_type="text/plain",
     ext_modules=ext_modules,
     install_requires=['pybind11>=2.3'],
     setup_requires=['pybind11>=2.3'],
