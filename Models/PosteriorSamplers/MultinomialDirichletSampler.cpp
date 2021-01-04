@@ -21,6 +21,8 @@
 #include "Models/MultinomialModel.hpp"
 #include "distributions.hpp"
 
+#include "cpputil/report_error.hpp"
+
 namespace BOOM {
   typedef MultinomialDirichletSampler MDS;
   typedef MultinomialModel MM;
@@ -54,4 +56,64 @@ namespace BOOM {
 
   double MDS::logpri() const { return pri_->logp(mod_->pi()); }
 
+  namespace {
+    using CMDS = ConstrainedMultinomialDirichletSampler;
+  }
+
+  CMDS::ConstrainedMultinomialDirichletSampler(
+      MultinomialModel *model,
+      const Vector &prior_counts,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        prior_counts_(prior_counts) {
+    if (prior_counts_.size() != model->dim()) {
+      std::ostringstream err;
+      err << "Dimension of model (" << model->dim()
+          << ") does not match dimension of prior counts ("
+          << prior_counts_.size() << ").";
+      report_error(err.str());
+    }
+    check_at_least_one_positive(prior_counts_);
+  }
+
+  void CMDS::draw() {
+    Vector ans(prior_counts_.size(), 0.0);
+    double total = 0;
+    for (int i = 0; i < ans.size(); ++i) {
+      if (prior_counts_[i] > 0) {
+        ans[i] = rgamma_mt(rng(), prior_counts_[i] + model_->suf()->n()[i], 1.0);
+        total += ans[i];
+      }
+    }
+    if (total > 0) {
+      ans /= total;
+    } else {
+      report_error("Total was not positive.");
+    }
+    model_->set_pi(ans);
+  }
+
+  double CMDS::logpri() const {
+    Vector prob;
+    Vector nu;
+    for(int i = 0; i < model_->dim(); ++i) {
+      if (prior_counts_[i] <= 0) {
+        if (model_->pi()[i] > 0) {
+          return negative_infinity();
+        }
+      } else {
+        nu.push_back(prior_counts_[i]);
+        prob.push_back(model_->pi()[i]);
+      }
+    }
+    return ddirichlet(prob, nu, true);
+  }
+
+  void CMDS::check_at_least_one_positive(const Vector &counts) {
+    for (const auto &el : counts) {
+      if (el > 0) return;
+    }
+    report_error("At least one element must be positive.");
+  }
 }  // namespace BOOM

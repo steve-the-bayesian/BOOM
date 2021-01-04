@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This script involves a call to install_headers.py in the same directory.
+# Please make sure that that first line in that file points to an appropriate
+# python interpreter.
+
 usage () { echo "Usage: $0 [-c] [-r] [-C] 1>&2; exit 0";
            echo " -i: Install the package"
            echo " -c: Check the package using R CMD CHECK"
@@ -118,16 +122,23 @@ cp Eigen/* $BOOM_DIR/inst/include/Eigen/
 
 ## Fix warning supression in Eigen, which violates CRAN policy
 fname=$BOOM_DIR/inst/include/Eigen/src/Core/arch/SSE/Complex.h
-gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
-gsed -i 's|#pragma GCC|// #pragma GCC|g' $fname
+
+if [[ $OSTYPE =~ "darwin" ]]; then
+    SED=gsed
+elif [[ $OSTYPE =~ "linux" ]]; then
+    SED=sed
+fi
+
+$SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
+$SED -i 's|#pragma GCC|// #pragma GCC|g' $fname
 
 fname=$BOOM_DIR/inst/include/Eigen/src/Core/util/DisableStupidWarnings.h
 
-gsed -i 's|#pragma clang diagnostic ignored|// #pragma clang diagnostic ignored|g' $fname
-gsed -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fname
+$SED -i 's|#pragma clang diagnostic ignored|// #pragma clang diagnostic ignored|g' $fname
+$SED -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fname
 
-gsed -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
-gsed -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
+$SED -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
+$SED -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
 
 
 ##----------------------------------------------------------------------
@@ -138,15 +149,13 @@ cd rpackage
 R CMD build Boom
 
 if [[ $DO_CHECK = 1 ]]; then
-    MAKEFLAGS=" j 16 " R CMD CHECK Boom_*.tar.gz
+    MAKEFLAGS=" j 16 " R CMD check Boom_*.tar.gz
 fi
 
 if [[ $DO_CHECK_AS_CRAN = 1 ]]; then
-    MAKEFLAGS=" j 16 " R CMD CHECK --as-cran Boom_*.tar.gz
+    MAKEFLAGS=" j 16 " R CMD check --as-cran Boom_*.tar.gz
 fi
 
 if [[ $DO_INSTALL = 1 ]]; then
     MAKEFLAGS=" j 16 " R CMD INSTALL Boom_*.tar.gz
 fi
-
-

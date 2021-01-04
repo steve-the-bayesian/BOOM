@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from R import table
+from BayesBoom.R import table
 
 
 class TableTest(unittest.TestCase):
@@ -15,3 +15,5 @@ class TableTest(unittest.TestCase):
 
     def test_univariate(self):
         tab = table(self.regions)
+        self.assertEqual(len(tab), 4)
+        self.assertEqual(np.sum(tab), 100)

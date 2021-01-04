@@ -53,7 +53,6 @@ namespace BOOM {
     H *= -1;
     H += ivar;  // now H is inverse posterior variance
     bstar = rmvt_ivar(nonzero_beta, H, 3);
-    SpdMatrix Sigma = H.inv();
 
     double logp_new = mlm_->loglike(bstar) + dmvn(bstar, mu, ivar, 0, true);
     double log_alpha = logp_new - logp_old;

@@ -31,7 +31,8 @@ namespace BOOM {
     //   model:  The model that needs posterior sampling.
     //   coefficient_prior_mean: Rows correspond to predictor variables.
     //     Columns to response variables.
-    //   kappa:  Prior sample size for estimating the coefficients.
+    //   coefficient_prior_sample_size: Prior sample size for estimating the
+    //     coefficients.  'kappa' in the formula above.
     //   prior_df:  Prior sample size for estimating the residual variance.
     //   residual_variance_guess:  Prior guess at the residual variance.
     //   rng: Random number generator used to seed this rng() method for this
@@ -39,7 +40,7 @@ namespace BOOM {
     MultivariateRegressionSampler(
         MultivariateRegressionModel *model,
         const Matrix &coefficient_prior_mean,
-        double kappa,
+        double coefficient_prior_sample_size,
         double prior_df,
         const SpdMatrix &residual_variance_guess,
         RNG &seeding_rng = GlobalRng::rng);

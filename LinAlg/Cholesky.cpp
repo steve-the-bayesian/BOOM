@@ -39,8 +39,10 @@ namespace BOOM {
       Eigen::LLT<MatrixXd> eigen_cholesky(EigenMap(A));
       pos_def_ = eigen_cholesky.info() == Eigen::Success;
       if (pos_def_) {
+        // If the fast version of the cholesky decomposition works, we're done!
         EigenMap(lower_cholesky_triangle_) = eigen_cholesky.matrixL();
       } else if (A.is_sym()) {
+        // If the fast Cholesky decomposition failed, try a more robust version.
         Eigen::LDLT<MatrixXd> eigen_cholesky_safe(EigenMap(A));
         Vector D(A.nrow());
         EigenMap(D) = eigen_cholesky_safe.vectorD();
@@ -48,7 +50,7 @@ namespace BOOM {
         for (int i = 0; i < lower_cholesky_triangle_.ncol(); ++i) {
           lower_cholesky_triangle_.col(i) *= sqrt(D[i]);
         }
-        EigenMap(lower_cholesky_triangle_) = 
+        EigenMap(lower_cholesky_triangle_) =
             eigen_cholesky_safe.transpositionsP().transpose() *
             EigenMap(lower_cholesky_triangle_);
       }
@@ -66,6 +68,15 @@ namespace BOOM {
   uint Cholesky::nrow() const { return lower_cholesky_triangle_.nrow(); }
   uint Cholesky::ncol() const { return lower_cholesky_triangle_.ncol(); }
   uint Cholesky::dim() const { return lower_cholesky_triangle_.nrow(); }
+
+  void Cholesky::setL(const Matrix &L) {
+    if (!L.is_square()) {
+      report_error("A Cholesky triangle must be a square, lower triangular "
+                   "matrix.");
+    }
+    lower_cholesky_triangle_ = L;
+    pos_def_ = true;
+  }
 
   Matrix Cholesky::getL(bool perform_check) const {
     if (perform_check) {

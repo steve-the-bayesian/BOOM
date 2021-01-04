@@ -263,7 +263,7 @@ namespace BOOM {
 
   //   double bessel_i(double x, double a, double expo);
   //   double bessel_j(double x, double a);
-  //   double bessel_k(double x, double a, double expo);
+  double bessel_k(double x, double a, double expo);
   //   double bessel_y(double x, double a);
 
   /* General Support Functions */

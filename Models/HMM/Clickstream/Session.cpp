@@ -27,14 +27,15 @@ namespace BOOM {
       typedef TimeSeries<Event> TS;
     }
 
-    Session::Session(const std::vector<Ptr<Event> > &v, bool add_eos_if_missing)
-        : TS(v, true) {
+    Session::Session(const std::vector<Ptr<Event>> &v, bool add_eos_if_missing)
+        : TS(v) {
       Ptr<Event> last = v.back();
       if (last->value() != last->nlevels() - 1 && add_eos_if_missing) {
         NEW(Event, eos)(last->nlevels() - 1, last);
-        add_1(eos);
+        push_back(eos);
       }
       check_eos();
+      set_links();
     }
 
     Session::Session(const Session &rhs) : Data(rhs), TS(rhs) { set_links(); }
@@ -63,6 +64,12 @@ namespace BOOM {
             }
           }
         }
+      }
+    }
+
+    void Session::set_links() {
+      for (int i = 1; i < size(); ++i) {
+        (*this)[i]->set_prev((*this)[i - 1].get());
       }
     }
 

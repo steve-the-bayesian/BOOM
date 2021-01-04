@@ -84,7 +84,7 @@ BayesNnet <- function(formula,
     response = response,
     prior = prior,
     hidden.layers = hidden.layers,
-    expected.model.size = expected.model.size)  
+    expected.model.size = expected.model.size)
 
   check.positive.scalar(niter)
   check.positive.scalar(ping)
@@ -114,7 +114,7 @@ BayesNnet <- function(formula,
     ans$training.data <- frame
   }
 
-  dimnames(ans$hidden.layer.coefficients[[1]]) <- 
+  dimnames(ans$hidden.layer.coefficients[[1]]) <-
     list(NULL, colnames(predictors), NULL)
 
   class(ans) <- c("BayesNnet")
@@ -136,7 +136,7 @@ plot.BayesNnet <- function(x, y = c("predicted", "residual", "structure",
         " or one of the predictor variable names.")
       stop(err)
     }
-  } 
+  }
   if (which.function == "predicted") {
     PlotBayesNnetPredictions(x, ...)
   } else if (which.function == "residual") {
@@ -262,14 +262,14 @@ PlotBayesNnetResiduals <- function(model, burn = SuggestBurn(model), ...) {
   ##
   ## Effects:
   ## Checks that the dimension of the prior matches the number of outputs in the
-  ## final hidden layer.  
+  ## final hidden layer.
   dimension <- tail(hidden.layers, 1)[[1]]$number.of.nodes
   if (is.null(prior)) {
     precision <- diag(rep(1, dimension))
     inclusion.probabilities <- rep(expected.model.size / dimension, dimension)
     inclusion.probabilities[inclusion.probabilities > 1] <- 1
     inclusion.probabilities[inclusion.probabilities < 0] <- 0
-    
+
     prior <- SpikeSlabPriorDirect(
       coefficient.mean = rep(0, dimension),
       coefficient.precision = precision,
@@ -338,6 +338,16 @@ PlotNetworkStructure <- function(model, ...) {
   ## Args:
   ##   model:  A model fit by BayesNnet.
   ##   ...: Extra arguments passed to plot.igraph.
+  ##
+  ## NOTE: This function depends on having igraph installed.  Igraph is a big
+  ## package with lots of dependencies, so it is optional.  If igraph is not
+  ## installed then calling this function prints an error message.
+  ok <- requireNamespace("igraph", quietly = TRUE)
+  if (!ok) {
+    warning("Plotting network structure requires the 'igraph' package.  ",
+      "Please install using 'install.packages'.")
+    return(NULL)
+  }
   input.names <- dimnames(model$hidden.layer.coefficients[[1]])[[2]]
   input.dimension <- length(input.names)
   input.nodes <- data.frame(id = input.names,
@@ -354,7 +364,7 @@ PlotNetworkStructure <- function(model, ...) {
 
   layer <- rep(1:number.of.hidden.layers, times = hidden.node.counts)
   position.in.layer <- c(sapply(hidden.node.counts, function(x) 1:x))
-  
+
   hidden.nodes <- data.frame(
     id = paste("H", layer, position.in.layer, sep = "."),
     layer = rep(1:number.of.hidden.layers, times = hidden.node.counts),
@@ -405,7 +415,7 @@ PlotNetworkStructure <- function(model, ...) {
     to = as.character(terminal.node$id),
     weight = weights
   ))
-  
+
   ##---------------------------------------------------------------------------
   ## Compute the layout for the plot.
   max.nodes <- max(nrow(input.nodes), hidden.node.counts)
@@ -414,7 +424,7 @@ PlotNetworkStructure <- function(model, ...) {
   terminal.layer.offset <- (max.nodes - 1) / 2
 
   input.layer.layout <- cbind("layer" = 0,
-  "position.in.layer" = (1:nrow(input.nodes)) + initial.layer.node.offset)
+    "position.in.layer" = (1:nrow(input.nodes)) + initial.layer.node.offset)
   hidden.layer.layout <- cbind(hidden.nodes[, c("layer", "position.in.layer")])
   hidden.layer.layout[,2] <- hidden.layer.layout[, 2] +
     hidden.layer.node.offsets[hidden.layer.layout[, 1]]
@@ -422,15 +432,15 @@ PlotNetworkStructure <- function(model, ...) {
     "position.in.layer" = 1 + terminal.layer.offset)
   graph.layout <-  rbind(input.layer.layout, hidden.layer.layout,
     terminal.layer.layout)
-  
+
   ##---------------------------------------------------------------------------
   ## Do the plotting.
-  graph <- graph_from_data_frame(edges, vertices = NULL)
+  graph <- igraph::graph_from_data_frame(edges, vertices = NULL)
   plot(graph, layout = as.matrix(graph.layout),
     edge.color = edges$weight > 0,
     edge.width = 5 * abs(edges$weight),
     edge.arrow.size = 0,
     ...)
-  
+
   return(invisible(list(nodes = nodes, input.layer.edges = input.layer.edges)))
 }

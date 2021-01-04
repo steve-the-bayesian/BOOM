@@ -134,7 +134,6 @@ namespace BOOM {
       void clear_data() override {}
       void sample_posterior() override {}
       double logpri() const override { return 0.0; }
-      void set_method(const Ptr<PosteriorSampler> &) override {}
       int number_of_sampling_methods() const override { return 0; }
 
      protected:

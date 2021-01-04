@@ -68,6 +68,18 @@ namespace BOOM {
     yty_.add_outer(y, w);
   }
 
+  void MvRegSuf::clear_y_keep_x() {
+    sumw_ = 0;
+    xty_ = 0;
+    yty_ = 0;
+  }
+
+  void MvRegSuf::update_y_not_x(const Vector &y, const Vector &x, double w) {
+    sumw_ += w;
+    xty_.add_outer(x, y, w);
+    yty_.add_outer(y, w);
+  }
+
   Matrix MvRegSuf::beta_hat() const { return xtx_.solve(xty_); }
   Matrix MvRegSuf::conditional_beta_hat(const SelectorMatrix &included) const {
     Matrix ans(xdim(), ydim());
@@ -78,12 +90,12 @@ namespace BOOM {
       if (it == chol_map.end()) {
         chol_map[it->first] = Cholesky(inc.select(xtx()));
         it = chol_map.find(inc);
-      } 
+      }
       ans.col(i) = inc.expand(it->second.solve(inc.select(xty_.col(i))));
     }
     return ans;
   }
-  
+
   SpdMatrix MvRegSuf::SSE(const Matrix &B) const {
     SpdMatrix ans = yty();
     ans.add_inner2(B, xty(), -1);
@@ -169,7 +181,7 @@ namespace BOOM {
   namespace {
     using MvReg = MultivariateRegressionModel;
   }
-  
+
   MvReg::MultivariateRegressionModel(uint xdim, uint ydim)
       : ParamPolicy(new MatrixGlmCoefs(xdim, ydim), new SpdParams(ydim)),
         DataPolicy(new MvRegSuf(xdim, ydim)),
@@ -201,7 +213,7 @@ namespace BOOM {
   const Matrix &MvReg::Beta() const { return Beta_prm()->value(); }
   const SpdMatrix &MvReg::Sigma() const { return Sigma_prm()->var(); }
   const SpdMatrix &MvReg::Siginv() const { return Sigma_prm()->ivar(); }
-  const Matrix &MvReg::residual_precision_cholesky() const {
+  Matrix MvReg::residual_precision_cholesky() const {
     return Sigma_prm()->ivar_chol();
   }
   double MvReg::ldsi() const { return Sigma_prm()->ldsi(); }
@@ -259,7 +271,7 @@ namespace BOOM {
     double normalizing_constant = -.5 * (n * ydim()) * Constants::log_2pi;
     return normalizing_constant + .5 * n * Siginv.logdet() - .5 * qform;
   }
-        
+
   double MvReg::loglike(const Vector &beta_siginv) const {
     Matrix Beta(xdim(), ydim());
     Vector::const_iterator it = beta_siginv.cbegin();
@@ -273,7 +285,7 @@ namespace BOOM {
   double MvReg::log_likelihood() const {
     return log_likelihood_ivar(Beta(), Siginv());
   }
-  
+
   double MvReg::pdf(const Ptr<Data> &dptr, bool logscale) const {
     Ptr<MvRegData> dp = DAT(dptr);
     Vector mu = predict(dp->x());
@@ -282,12 +294,12 @@ namespace BOOM {
 
   Vector MvReg::predict(const Vector &x) const { return x * Beta(); }
 
-  MvRegData *MvReg::simdat(RNG &rng) const {
+  MvRegData *MvReg::sim(RNG &rng) const {
     Vector x = simulate_fake_x(rng);
-    return simdat(x, rng);
+    return sim(x, rng);
   }
 
-  MvRegData *MvReg::simdat(const Vector &x, RNG &rng) const {
+  MvRegData *MvReg::sim(const Vector &x, RNG &rng) const {
     Vector mu = predict(x);
     Vector y = rmvn_mt(rng, mu, Sigma());
     return new MvRegData(y, x);

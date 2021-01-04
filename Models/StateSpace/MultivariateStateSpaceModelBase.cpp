@@ -63,7 +63,7 @@ namespace BOOM {
       propagate_disturbances(rng);
     }
   }
-    
+
   //----------------------------------------------------------------------
   // Simulate alpha_+ and y_* = y - y_+.  While simulating y_*,
   // feed it into the light (no storage for P) Kalman filter. The
@@ -78,7 +78,6 @@ namespace BOOM {
 
     // Simulate and filter the fake data.
     MultivariateKalmanFilterBase &simulation_filter(get_simulation_filter());
-    Vector simulated_data_state_mean = initial_state_mean();
     SpdMatrix simulated_data_state_variance = initial_state_variance();
     for (int t = 0; t < time_dimension(); ++t) {
       // simulate_state at time t
@@ -129,7 +128,7 @@ namespace BOOM {
       report_error(err.str());
     }
   }
-  
+
   Vector MvBase::initial_state_mean() const {
     Vector ans;
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -149,7 +148,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   // AFTER a call to fast_disturbance_smoother() puts r[t] in
   // filter_[t].scaled_state_error(), this function propagates the r's forward
   // to get E(alpha | y), and add it to the simulated state.
@@ -161,7 +160,7 @@ namespace BOOM {
     simulation_filter.fast_disturbance_smooth();
     MultivariateKalmanFilterBase &filter(get_filter());
     filter.fast_disturbance_smooth();
-    
+
     Vector state_mean_sim = initial_state_mean()
         + P0 * simulation_filter.initial_scaled_state_error();
     Vector state_mean_obs = initial_state_mean()
@@ -171,7 +170,7 @@ namespace BOOM {
     impute_missing_observations(0, rng);
     observe_state(0);
     observe_data_given_state(0);
-    
+
     for (int t = 1; t < time_dimension(); ++t) {
       state_mean_sim = (*state_transition_matrix(t - 1)) * state_mean_sim +
           (*state_variance_matrix(t - 1)) *
@@ -226,7 +225,7 @@ namespace BOOM {
       state_model(s)->observe_time_dimension(time_dimension());
     }
   }
-  
+
   //===========================================================================
 
   namespace {
@@ -237,7 +236,7 @@ namespace BOOM {
       : filter_(this),
         simulation_filter_(this)
   {}
-  
+
   // A precondition is that the state at time t was simulated by the forward
   // portion of the Durbin-Koopman data augmentation algorithm.
   Vector CiidBase::simulate_fake_observation(RNG &rng, int t) {

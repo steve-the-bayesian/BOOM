@@ -49,38 +49,49 @@ namespace BOOM {
     //   minimal: If true, return the number of included coefficients.
     //     Otherwise return the number of available coefficients
     uint size(bool minimal = true) const override;
-    
+
     uint nvars() const;
     uint nvars_possible() const;
     uint nvars_excluded() const;
 
-    //--- the main job of glm's...
+    // GlmCoefs can call predict on a vector of dimension nvars (i.e. the set of
+    // included variables) or nvars_possible (all variables).
     double predict(const Vector &x) const;
     double predict(const VectorView &x) const;
     double predict(const ConstVectorView &x) const;
 
+    //
     Vector predict(const Matrix &design_matrix) const;
     void predict(const Matrix &design_matrix, Vector &result) const;
     void predict(const Matrix &design_matrix, VectorView result) const;
 
     //------ operations for only included variables --------
     Vector included_coefficients() const;
+
+    // Set the included coefficients to b.  The dimension of b must match
+    // nvars().
     void set_included_coefficients(const Vector &b);
-    // Args:
-    //   b:  The nonzero elements of beta.
-    //   inc: Indicates the positions of the nonzero elements.  Must
-    //     satisfy inc.nvars() == beta.size().
-    void set_included_coefficients(const Vector &b, const Selector &inc);
 
     //----- operations for both included and excluded variables ----
     const Vector &Beta() const;  // reports 0 for excluded positions
-    // Consider whether to call infer_sparsity after calling set_Beta.
-    void set_Beta(const Vector &);
-    double &Beta(uint I);       // I indexes possible covariates
-    double Beta(uint I) const;  // I indexes possible covariates
 
-    // Drop all coefficients with value 0.  Add all others.
-    void infer_sparsity();
+    // Set the dense vector of coefficients to beta.  If any elements are
+    // excluded, then those elements will be set to zero.
+    void set_Beta(const Vector &beta);
+
+    // Set the a subset of beta to the requested value.  If any elements of the
+    // subset are excluded, those values will be set to zero, regardless of
+    // their value in beta_subset.
+    //
+    // Args:
+    //   beta_subset:  The vector of values to be assigned.
+    //   start: The position in the dense vector "Beta" where the assignment
+    //     should be made.
+    //   signal:  Should observers be signalled about the assignment.
+    void set_subset(const Vector &beta_subset, int start,
+                    bool signal = true) override;
+
+    double Beta(uint dense_index) const;
 
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
@@ -90,9 +101,14 @@ namespace BOOM {
 
    private:
     Selector inc_;
+
+    // included_coefficients_ is a view into the full coefficient vector.
+    // included_coefficients_current_ is a flag indicating whether or not the
+    // view needs to be refreshed.
     mutable Vector included_coefficients_;
     mutable bool included_coefficients_current_;
 
+    void set_excluded_coefficients_to_zero();
     void inc_from_beta(const Vector &v);
     uint indx(uint i) const { return inc_.indx(i); }
     void wrong_size_beta(const Vector &b) const;
@@ -117,7 +133,7 @@ namespace BOOM {
                             const SelectorMatrix &included);
 
     MatrixGlmCoefs *clone() const override {return new MatrixGlmCoefs(*this);}
-    
+
     int nrow() const {return value().nrow();}
     int ncol() const {return value().ncol();}
 
@@ -125,13 +141,13 @@ namespace BOOM {
     // correspond to different outcomes.
     int xdim() const {return nrow();}
     int ydim() const {return ncol();}
-    
+
     Vector predict(const Vector &predictors) const;
 
     // Args:
     //   values: The full matrix of coefficients, including all 0's for excluded
     //     variables.  Nonzero values for coefficients that have been excluded
-    //     will be 
+    //     will be
     void set(const Matrix &values, bool signal = true) override;
 
     void set_inclusion_pattern(const SelectorMatrix &included);
@@ -143,7 +159,7 @@ namespace BOOM {
     void flip(int i, int j) {included_.flip(i, j);}
 
     const SelectorMatrix &included_coefficients() const { return included_; }
-    
+
    private:
     // Keeps track of which coefficients are included (i.e. not forced to zero).
     SelectorMatrix included_;
@@ -151,10 +167,10 @@ namespace BOOM {
     // Throws an error if the dimension of the selector matrix does not match
     // the dimension of the matrix parameter.
     void check_dimension(const SelectorMatrix &included) const;
-    
+
     // Set all excluded coefficients to zero.
     void set_zeros();
   };
-  
+
 }  // namespace BOOM
 #endif  // BOOM_GLM_COEFS_HPP

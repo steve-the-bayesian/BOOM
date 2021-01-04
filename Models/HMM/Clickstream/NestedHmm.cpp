@@ -32,16 +32,16 @@ namespace BOOM {
 
   void NestedHmm::setup() {
     session_model_ = new MarkovModel(S2_);
-    session_model_->free_pi0();
+    //    session_model_->free_pi0();
     ParamPolicy::add_model(session_model_);
     for (int H = 0; H < S2_; ++H) {
       NEW(MarkovModel, tmp)(S1_);
-      tmp->free_pi0();
+      // tmp->free_pi0();
       event_model_.push_back(tmp);
       ParamPolicy::add_model(tmp);
       for (int h = 0; h < S1_; ++h) {
         NEW(MarkovModel, tmp)(S0_);
-        tmp->free_pi0();
+        // tmp->free_pi0();
         mix_[H].push_back(tmp);
         ParamPolicy::add_model(tmp);
       }

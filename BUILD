@@ -73,11 +73,15 @@ GLM_HDRS = glob([
 
 HMM_SRCS = glob([
     "Models/HMM/*.cpp",
+    "Models/HMM/Clickstream/*.cpp",
+    "Models/HMM/Clickstream/PosteriorSamplers/*.cpp",
     "Models/HMM/PosteriorSamplers/*.cpp",
 ])
 
 HMM_HDRS = glob([
     "Models/HMM/*.hpp",
+    "Models/HMM/Clickstream/*.hpp",
+    "Models/HMM/Clickstream/PosteriorSamplers/*.hpp",
     "Models/HMM/PosteriorSamplers/*.hpp",
 ])
 
@@ -89,6 +93,14 @@ HIERARCHICAL_SRCS = glob([
 HIERARCHICAL_HDRS = glob([
     "Models/Hierarchical/*.hpp",
     "Models/Hierarchical/PosteriorSamplers/*.hpp",
+])
+
+IMPUTE_SRCS = glob([
+    "Models/Impute/*.cpp"
+])
+
+IMPUTE_HDRS = glob([
+    "Models/Impute/*.hpp"
 ])
 
 IRT_SRCS = glob([
@@ -169,6 +181,7 @@ BOOM_SRCS = BMATH_SRCS + \
             GLM_SRCS + \
             HMM_SRCS + \
             HIERARCHICAL_SRCS + \
+            IMPUTE_SRCS + \
             IRT_SRCS + \
             MIXTURE_SRCS + \
             POINT_PROCESS_SRCS + \
@@ -191,6 +204,7 @@ BOOM_HDRS = TOP_HDRS + \
             GLM_HDRS + \
             HMM_HDRS + \
             HIERARCHICAL_HDRS + \
+            IMPUTE_HDRS + \
             IRT_HDRS + \
             MIXTURE_HDRS + \
             POINT_PROCESS_HDRS + \
@@ -203,19 +217,21 @@ cc_library(
     srcs = BOOM_SRCS,
     hdrs = BOOM_HDRS,
     copts = [
-        "-I/usr/local/include",
         "-Wall",
-        "-std=c++11",
+        "-std=c++17",
         "-isystem $(GENDIR)",
         "-Wno-sign-compare",
         #        "-g",
+#        "-fsanitize=address",
     ],
     #    includes = ["."],
     linkopts = [
         "-L/usr/local/lib",
         "-L/usr/lib",
         #        "-lprofiler",
+        "-lpthread",
         "-lm",
+#        "-fsanitize=address"
     ],
     visibility = ["//visibility:public"],
 )
@@ -225,8 +241,8 @@ cc_library(
     srcs = glob(["test_utils/*.cpp"]),
     hdrs = glob(["test_utils/*.hpp"]),
     copts = [
-        "-I/usr/local/include",
-        "-std=c++11",
+        "-std=c++17",
+        "-Wno-sign-compare",
     ],
     visibility = ["//visibility:public"],
     deps = [":boom"],

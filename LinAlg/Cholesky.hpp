@@ -31,7 +31,7 @@ namespace BOOM {
     // responsibility to ensure that the decompose() method is called before any
     // other methods are called.
     Cholesky() : pos_def_(false) {}
-    
+
     // Compute and store the Cholesky factor of the matrix 'A'.
     explicit Cholesky(const Matrix &A) { decompose(A); }
 
@@ -44,6 +44,10 @@ namespace BOOM {
     uint nrow() const;
     uint ncol() const;
     uint dim() const;
+
+    // Set the lower Cholesky triangle.  L must be a square, lower triangular
+    // matrix.
+    void setL(const Matrix &L);
 
     // The lower Cholesky triangle of A.
     // If A is not positive definite then:

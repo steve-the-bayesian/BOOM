@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # This script copies the BOOM library into a format suitable for exporting into
-# python.
+# python.  It puts the 'setup.py' script and package files at the top, copies
+# the C++ library below, and puts the pybind11 bindings in a pybind11 folder.
+#
+# On exit, the .../python_package/BayesBoom directory is suitable for
+# installation with pip.
 
 help_message="\n -p Publish package to PyPi after installing."
 
@@ -22,18 +26,33 @@ while getopts :ci option; do
 done
 shift $((OPTIND-1))
 
-BOOM_DIR='python_package/BayesBoom'
+PACKAGE_DIR='python_package/BayesBoom'
+BOOM_DIR=$PACKAGE_DIR'/boom'
+
+echo "PACKAGE_DIR is $PACKAGE_DIR"
+echo "BOOM_DIR is $BOOM_DIR"
 
 ## If there is already a Boom directory then delete it.
-if [ -d "$BOOM_DIR" ]; then
-    echo "Removing previous directory $BOOM_DIR"
-    rm -rf $BOOM_DIR
+if [ -d "$PACKAGE_DIR" ]; then
+    echo "Removing previous directory $PACKAGE_DIR"
+    rm -rf $PACKAGE_DIR
 fi
+mkdir -p $PACKAGE_DIR
+
+## Copy non-cpp packages to the package directory
+cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
+cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
+cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
+cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
-cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
+cp Interfaces/python/BayesBoom/*.py $BOOM_DIR
+mv $BOOM_DIR/setup.py $PACKAGE_DIR/..
+
 
 ##----------------------------------------------------------------------
 ## Source:
@@ -63,10 +82,19 @@ echo "Done copying source files."
 
 ##----------------------------------------------------------------------
 ## Copy the pybind11 bindings
-
 echo "copying pybind11 bindings"
 mkdir $BOOM_DIR/pybind11
-ditto Interfaces/python/BayesBoom/ $BOOM_DIR/pybind11
+if [[ $OSTYPE =~ "darwin" ]]; then
+    echo "This looks like a mac.  Copying files with ditto."
+    ditto Interfaces/python/BayesBoom/ $BOOM_DIR/pybind11
+elif [[ $OSTYPE =~ "linux" ]]; then
+    echo "This looks like linux.  Copying files with cp -R."
+    cp -R Interfaces/python/BayesBoom/* $BOOM_DIR/pybind11
+else
+    echo "ERROR copying files.  Could not determine the OS."
+fi
+mv $BOOM_DIR/pybind11/__init__.py $BOOM_DIR
+
 echo "done copying pybind11 bindings"
 
 ##----------------------------------------------------------------------
@@ -98,17 +126,35 @@ HDRS="$HDRS `find Eigen -name "*.h"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/
 echo "done copying headers"
 
-# On Linux this would be cp --parents, but that option does
-# not exist on OS X.
-ditto  Eigen/ $BOOM_DIR/Eigen/
-#echo "Ignore the message about not being able to copy Eigen/src."
-
+if [[ $OSTYPE =~ "darwin" ]]; then
+    # On Linux this would be cp --parents, but that option does
+    # not exist on OS X.
+    echo "This looks like a Mac.  Copying Eigen files with ditto."
+    ditto  Eigen/ $BOOM_DIR/Eigen/
+    #echo "Ignore the message about not being able to copy Eigen/src."
+elif [[ $OSTYPE =~ "linux" ]]; then
+    echo "This looks like Linux.  Copying Eigen files with cp --parents."
+    cp -R Eigen/* $BOOM_DIR/Eigen/
+else
+    echo "Unfamiliar OS.  I'm not going to copy Eigen files."
+fi
 
 ##----------------------------------------------------------------------
-## Build the package:
+## Build and install the package:
+echo "Time to build the package!"
 
 cd python_package
-pip3 --verbose install ./BayesBoom
+python3 setup.py sdist bdist_wheel
+# python3 -m pip install dist/BayesBoom-*.whl
+# CC="ccache clang++" CXX="ccache"
+# pip3 --verbose install ./BayesBoom
+
+##----------------------------------------------------------------------
+## Install the pure python packages
+# cd ..
+# pip3 install Interfaces/python/R
+# pip3 install Interfaces/python/bsts
+# pip3 install Interfaces/python/spikeslab
 
 if [[ $DO_PUBLISH == 1 ]]; then
     twine upload dist/*.tar.gz

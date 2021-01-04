@@ -1,8 +1,13 @@
 COPTS = [
-    "-I/usr/local/include",
     "-Iexternal/gtest/googletest-release-1.8.0/googletest/include",
     "-Wno-sign-compare",
 ]
+
+SANITIZERS = [
+        "-fsanitize=address",
+        "-fsanitize=undefined",
+        "-fsanitize=vptr",
+    ]
 
 filegroup(
     name = "testdata",
@@ -16,13 +21,13 @@ cc_library(
         "DynamicInterceptTestFramework.cpp",
         "StateSpaceTestFramework.cpp",
     ],
+    copts = COPTS,
     hdrs = [
         "DynamicInterceptTestFramework.hpp",
         "StateSpaceTestFramework.hpp",
         "TestFrameworkBase.hpp",
         "state_space_test_utils.hpp",
     ],
-    copts = ["-I/usr/local/include"],
     visibility = [
         "//Models/StateSpace/StateModels/tests:__pkg__",
         "//Models/StateSpace/tests:__pkg__",
@@ -36,8 +41,8 @@ cc_library(
 )
 
 cc_test(
-    name = "dynamic_intercept_regression_test",
-    srcs = ["dynamic_intercept_regression_test.cc"],
+    name = "dynamic_regression_test",
+    srcs = ["dynamic_regression_test.cc"],
     copts = COPTS,
     data = [":testdata"],
     deps = [
@@ -48,14 +53,38 @@ cc_test(
     ],
 )
 
-genrule(
-    name = "dynamic_intercept_regression_test_dsym",
-    testonly = True,
-    srcs = [":dynamic_intercept_regression_test"],
-    outs = ["dynamic_intercept_regression_test.dSYM"],
-    cmd = "dsymutil $(location :dynamic_intercept_regression_test) -o $@",
-    output_to_bindir = True,
+cc_test(
+    name = "dynamic_intercept_regression_test",
+    srcs = ["dynamic_intercept_regression_test.cc"],
+    copts = COPTS + SANITIZERS,
+    linkopts = SANITIZERS,
+    data = [":testdata"],
+    deps = [
+        ":test_utils",
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
 )
+
+cc_test(
+    name = "mixed_frequency_test",
+    srcs = ["mixed_frequency_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "@gtest//:gtest_main"
+    ]
+)
+
+# genrule(
+#     name = "dynamic_intercept_regression_test_dsym",
+#     testonly = True,
+#     srcs = [":dynamic_intercept_regression_test"],
+#     outs = ["dynamic_intercept_regression_test.dSYM"],
+#     cmd = "dsymutil $(location :dynamic_intercept_regression_test) -o $@",
+#     output_to_bindir = True,
+# )
 
 cc_test(
     name = "multivariate_state_space_regression_test",

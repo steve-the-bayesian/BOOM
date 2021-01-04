@@ -217,7 +217,7 @@ bsts(formula,
   Durbin and Koopman (2001), "Time series analysis by state space
   methods", Oxford University Press.
 
-  Goerge and McCulloch (1997)
+  George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
 
@@ -356,7 +356,7 @@ model <- bsts(shark$Attacks, ss.level, niter = 500,
 ## Poisson data can have an 'exposure' as the second column of a
 ## two-column matrix.
 model <- bsts(cbind(shark$Attacks, shark$Population / 1000),
-              state.specification = ss.level, niter = 500, 
+              state.specification = ss.level, niter = 500,
               family = "poisson", ping = 250, seed = 8675309)
 
 }

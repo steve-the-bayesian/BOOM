@@ -83,7 +83,7 @@ namespace BOOM {
   int MVT::dim() const { return mu().size(); }
   const Vector &MVT::mu() const { return Mu_prm()->value(); }
   const SpdMatrix &MVT::Sigma() const { return Sigma_prm()->var(); }
-  const Matrix &MVT::Sigma_chol() const { return Sigma_prm()->var_chol(); }
+  Matrix MVT::Sigma_chol() const { return Sigma_prm()->var_chol(); }
   const SpdMatrix &MVT::siginv() const { return Sigma_prm()->ivar(); }
   double MVT::ldsi() const { return Sigma_prm()->ldsi(); }
   double MVT::nu() const { return Nu_prm()->value(); }

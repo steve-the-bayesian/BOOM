@@ -24,6 +24,8 @@
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 
+#include "distributions.hpp"
+
 namespace BOOM {
 
   typedef CorrelationMatrix CM;
@@ -120,6 +122,12 @@ namespace BOOM {
 
   bool CM::operator!=(const CM &rhs) const {
     return !SpdMatrix::operator==(rhs);
+  }
+
+  CM random_cor_mt(RNG &rng, int dim) {
+    SpdMatrix I(dim, 1.0);
+    SpdMatrix Sigma = rWish_mt(rng, dim + 1, I, true);  // inverse wishart
+    return var2cor(Sigma);
   }
 
 }  // namespace BOOM

@@ -37,7 +37,7 @@ namespace BOOM {
 
     void set_prm(const Ptr<P> &p) {
       prm_ = p;
-      set_t();
+      set_parameter_vector();
     }
     Ptr<P> prm() { return prm_; }
     const Ptr<P> prm() const { return prm_; }
@@ -50,48 +50,48 @@ namespace BOOM {
 
    private:
     Ptr<P> prm_;
-    ParamVector t_;
-    void set_t();
+    ParamVector parameter_vector_;
+    void set_parameter_vector();
   };
   //------------------------------------------------------------
 
   template <class P>
-  void ParamPolicy_1<P>::set_t() {
-    t_ = ParamVector(1, prm_);
+  void ParamPolicy_1<P>::set_parameter_vector() {
+    parameter_vector_ = ParamVector(1, prm_);
   }
 
   template <class P>
   ParamPolicy_1<P>::ParamPolicy_1() : prm_() {
-    set_t();
+    set_parameter_vector();
   }
   template <class P>
   ParamPolicy_1<P>::ParamPolicy_1(const Ptr<P> &pPrm) : prm_(pPrm) {
-    set_t();
+    set_parameter_vector();
   }
 
   template <class P>
   ParamPolicy_1<P>::ParamPolicy_1(const ParamPolicy_1 &rhs)
       : Model(rhs), prm_(rhs.prm_->clone()) {
-    set_t();
+    set_parameter_vector();
   }
 
   template <class P>
   ParamPolicy_1<P> &ParamPolicy_1<P>::operator=(const ParamPolicy_1 &rhs) {
     if (&rhs != this) {
       prm_ = rhs.prm_->clone();
-      set_t();
+      set_parameter_vector();
     }
     return *this;
   }
 
   template <class P>
   ParamVector ParamPolicy_1<P>::parameter_vector() {
-    return t_;
+    return parameter_vector_;
   }
 
   template <class P>
   const ParamVector ParamPolicy_1<P>::parameter_vector() const {
-    return t_;
+    return parameter_vector_;
   }
 
 }  // namespace BOOM

@@ -43,7 +43,7 @@ namespace BOOM {
     //   alpha: The content parameter (a real number > 0) of the
     //     Dirichlet process.  Smaller values lead to fewer (larger)
     //     clusters.
-    DirichletProcessMvnModel(int dim, double alpha = 1.0);
+    explicit DirichletProcessMvnModel(int dim, double alpha = 1.0);
 
     DirichletProcessMvnModel(const DirichletProcessMvnModel &rhs);
     DirichletProcessMvnModel *clone() const override;

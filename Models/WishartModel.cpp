@@ -184,7 +184,7 @@ namespace BOOM {
     ParamPolicy::prm2_ref().set(S);
   }
 
-  SpdMatrix WishartModel::simdat(RNG &rng) {
+  SpdMatrix WishartModel::sim(RNG &rng) {
     return rWish_mt(rng, nu(), sumsq());
   }
 

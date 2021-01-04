@@ -233,7 +233,8 @@ namespace BOOM {
     return simulate_forecast(rng, newX, final_state);
   }
 
-  Vector SSRM::simulate_multiplex_forecast(RNG &rng, const Matrix &newX,
+  Vector SSRM::simulate_multiplex_forecast(RNG &rng,
+                                           const Matrix &newX,
                                            const Vector &final_state,
                                            const std::vector<int> &timestamps) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
@@ -244,7 +245,8 @@ namespace BOOM {
     Vector ans(forecast_dimension);
     int t0 = time_dimension();
     Vector state = final_state;
-    int time = 0;
+    // The time stamp of "final state" is t0 - 1.
+    int time = -1;
     for (int i = 0; i < forecast_dimension; ++i) {
       advance_to_timestamp(rng, time, state, timestamps[i], i);
       ans[i] = rnorm_mt(rng, observation_matrix(t0 + time).dot(state),

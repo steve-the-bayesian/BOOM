@@ -1,0 +1,4 @@
+This is the python version of Steve Scott's BoomSpikeSlab R library.  It
+includes utilities for spike and slab regression with various error
+distributions (Gaussian, student T, logistic, probit, etc).  It also includes
+code for a few flavors of hierarchical linear models.

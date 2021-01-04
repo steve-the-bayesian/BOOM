@@ -154,7 +154,7 @@ namespace BOOM {
   // Args:
   //   observation_precision: A vector containing the precisions of the errors
   //     from the observation equation.
-  //   observation_coefficients:  The matrix relating 
+  //   observation_coefficients:  The matrix relating
   SpdMatrix WoodburyInverse(const Vector &observation_precision,
                             const SparseKalmanMatrix &observation_coefficients,
                             const SpdMatrix &state_conditional_variance,
@@ -167,7 +167,7 @@ namespace BOOM {
                             const SparseKalmanMatrix &observation_coefficients,
                             const SpdMatrix &state_conditional_variance,
                             double &log_determinant);
-  
+
   double sparse_conditionally_independent_kalman_update(
       const ConstVectorView &observation,
       Vector &state_conditional_mean,
@@ -181,7 +181,7 @@ namespace BOOM {
       const DiagonalMatrix &observation_variance,
       const SparseKalmanMatrix &transition_matrix,
       const SparseKalmanMatrix &RQR);
-  
+
   // Updates a[t] and P[t] to condition on all Y, and sets up r and N
   // for use in the next recursion.
   void sparse_scalar_kalman_smoother_update(
@@ -245,6 +245,9 @@ namespace BOOM {
       const Matrix &kalman_gain_K,
       const SparseKalmanMatrix &observation_matrix_Z,
       const SpdMatrix &forecast_precision, const Vector &forecast_error);
+
+
+
 
 }  // namespace BOOM
 

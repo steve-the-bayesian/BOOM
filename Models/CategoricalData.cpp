@@ -51,11 +51,19 @@ namespace BOOM {
     return 0;
   }
   //======================================================================
+  UnboundedIntCatKey *UnboundedIntCatKey::clone() const {
+    return new UnboundedIntCatKey(*this);
+  }
+
   std::ostream &UnboundedIntCatKey::print(std::ostream &out) const {
     out << "Numeric data with no upper bound.";
     return out;
   }
   //======================================================================
+  FixedSizeIntCatKey *FixedSizeIntCatKey::clone() const {
+    return new FixedSizeIntCatKey(*this);
+  }
+
   std::ostream &FixedSizeIntCatKey::print(std::ostream &out) const {
     out << "Numeric data with upper bound " << max_levels();
     return out;
@@ -73,6 +81,10 @@ namespace BOOM {
 
   CatKey::CatKey(const std::vector<std::string> &labels)
       : labs_(labels), grow_(false) {}
+
+  CatKey *CatKey::clone() const {
+    return new CatKey(*this);
+  }
 
   void CatKey::allow_growth(bool allow) { grow_ = allow; }
 
@@ -281,7 +293,24 @@ namespace BOOM {
   }
 
   //======================================================================
+  LabeledCategoricalData::LabeledCategoricalData(
+      const std::string &value,
+      const Ptr<CatKey> &key)
+      : CategoricalData(key->findstr(value), key),
+        catkey_(key)
+  {}
 
+  LabeledCategoricalData::LabeledCategoricalData(
+      uint value, const Ptr<CatKey> &key)
+      : CategoricalData(value, key),
+        catkey_(key)
+  {}
+
+  LabeledCategoricalData *LabeledCategoricalData::clone() const {
+    return new LabeledCategoricalData(*this);
+  }
+
+  //======================================================================
   OrdinalData::OrdinalData(uint value, uint Nlevels)
       : CategoricalData(value, Nlevels) {}
 

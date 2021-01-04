@@ -236,15 +236,14 @@ namespace BOOM {
     return pdf(dp.dcast<DataType>(), logscale);
   }
 
-  Ptr<RegressionData> TRegressionModel::simdat(RNG &rng) const {
+  Ptr<RegressionData> TRegressionModel::sim(RNG &rng) const {
     uint p = Beta().size();
     Vector x(p);
     for (uint i = 0; i < p; ++i) x[i] = rnorm_mt(rng);
-    return simdat(x, rng);
+    return sim(x, rng);
   }
 
-  Ptr<RegressionData> TRegressionModel::simdat(const Vector &x,
-                                               RNG &rng) const {
+  Ptr<RegressionData> TRegressionModel::sim(const Vector &x, RNG &rng) const {
     double nu = this->nu();
     double w = rgamma_mt(rng, nu / 2, nu / 2);
     double yhat = predict(x);

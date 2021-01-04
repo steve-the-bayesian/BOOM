@@ -1,0 +1,3 @@
+#!/bin/bash
+
+R -e "install.packages(c('zoo', 'xts', 'MASS'))"

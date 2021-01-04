@@ -27,6 +27,9 @@ namespace BOOM {
   // The empirical cumulative distribution function of a real-valued data set.
   class ECDF {
    public:
+    // An empty ecdf cannot be evaluated.
+    ECDF() {}
+
     // Args:
     //   unsorted:  The data set.
     explicit ECDF(const ConstVectorView &unsorted_data);
@@ -42,6 +45,15 @@ namespace BOOM {
     // The fraction of the data strictly less than x.
     double fminus(double x) const;
 
+    // Args:
+    //   x: potential value of a random variable.  The argument of the
+    //     distribution function.
+    //   equality: If true (the default) then the return is Pr(X <= x).  If
+    //     false then the return is Pr(X < x).
+    //
+    // Returns:
+    //   The empirical probability that a randomly chosen observation is <= x
+    //   (if 'equality' is true), or < x (otherwise).
     double operator()(double x, bool equality = true) const {
       return equality ? fplus(x) : fminus(x);
     }
@@ -56,8 +68,10 @@ namespace BOOM {
     //   The number appearing 'probability' percent of the way through the
     //   distribution.
     double quantile(double probability) const;
-    
+
     const Vector &sorted_data() const { return sorted_data_; }
+
+    void restore(const Vector &sorted_data) {sorted_data_ = sorted_data;}
 
    private:
     Vector sorted_data_;

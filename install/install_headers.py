@@ -1,15 +1,19 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 import shutil
 import os.path
+
 
 def getopts(argv):
     opts = {}  # Empty dictionary to store key-value pairs.
     while argv:  # While there are arguments left to parse...
         if argv[0][0] == '-':  # Found a "-name value" pair.
             opts[argv[0]] = argv[1]  # Add key and value to the dictionary.
-        argv = argv[1:]  # Reduce the argument list by copying it starting from index 1.
+
+        # Reduce the argument list by copying it starting from index 1.
+        argv = argv[1:]
     return opts
+
 
 def copy_many_files(filename_list, dest_dir, verbose=False):
     for fname in filename_list:
@@ -17,7 +21,6 @@ def copy_many_files(filename_list, dest_dir, verbose=False):
         if os.path.isdir(fname):
             if verbose:
                 print(f"Doing nothing for {fname} because it is a directory.")
-            pass
         else:
             if verbose:
                 print('copying ', fname, ' to ', dest)
@@ -25,6 +28,7 @@ def copy_many_files(filename_list, dest_dir, verbose=False):
             if not os.path.exists(target_directory):
                 os.makedirs(target_directory)
             shutil.copy(fname, dest)
+
 
 if __name__ == '__main__':
     from sys import argv

@@ -47,7 +47,7 @@ namespace BOOM {
     // Args:
     //   Mix: The mixture components for the hidden Markov mixture.  These
     //     define the "emission distribution" or the "observation equation" for
-    //     the HMM.  
+    //     the HMM.
     //   Mark: The Markov chain describing the transition distribution for the
     //     hidden states.  The dimension of this model must match the number of
     //     mixture components passed in the first argument.
@@ -98,8 +98,6 @@ namespace BOOM {
     // Options for managing the distribution of the initial state.
     void fix_pi0(const Vector &Pi0);
     void fix_pi0_stationary();
-    void fix_pi0_uniform();
-    void free_pi0();
     bool pi0_fixed() const;
 
    protected:

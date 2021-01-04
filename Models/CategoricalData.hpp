@@ -37,6 +37,8 @@ namespace BOOM {
   // observers, which must be dumb pointers.
   class CatKeyBase : private RefCounted {
    public:
+    virtual CatKeyBase *clone() const = 0;
+
     // Establish a parent child relationship between the key and the
     // CategoricalData.  The argument adopts *this as its key, and the argument
     // is added to the set of observers.
@@ -87,6 +89,7 @@ namespace BOOM {
   class UnboundedIntCatKey : public CatKeyBase {
    public:
     UnboundedIntCatKey() = default;
+    UnboundedIntCatKey *clone() const override;
     std::ostream &print(std::ostream &out) const override;
   };
 
@@ -95,6 +98,7 @@ namespace BOOM {
   class FixedSizeIntCatKey : public CatKeyBase {
    public:
     explicit FixedSizeIntCatKey(int max_levels) : max_levels_(max_levels) {}
+    FixedSizeIntCatKey *clone() const override;
     int max_levels() const override { return max_levels_; }
     std::ostream &print(std::ostream &out) const override;
 
@@ -110,6 +114,8 @@ namespace BOOM {
     explicit CatKey(int number_of_levels);
     explicit CatKey(const std::vector<std::string> &labels);
     CatKey(const CatKey &rhs) = default;
+
+    CatKey *clone() const override;
 
     // Sets the 'grow_' flag.  If true then the max number of levels increases
     // by 1 when a new level is provided using RegisterWithLabel.  If false then
@@ -229,6 +235,28 @@ namespace BOOM {
     uint val_{};
     Ptr<CatKeyBase> key_;
   };
+
+  //------------------------------------------------------------
+  // LabeledCategoricalData is CategoricalData with labels assigned to the
+  // categories.
+  class LabeledCategoricalData
+      : public CategoricalData {
+   public:
+    LabeledCategoricalData(uint value, const Ptr<CatKey> &key);
+    LabeledCategoricalData(const std::string &value, const Ptr<CatKey> &key);
+    LabeledCategoricalData *clone() const override;
+
+    const std::string &label() const {return labels()[value()];}
+    const std::vector<std::string> &labels() const {
+      return catkey_->labels();
+    }
+
+    Ptr<CatKey> catkey() const {return catkey_;}
+
+   private:
+    Ptr<CatKey> catkey_;
+  };
+
   //------------------------------------------------------------
   class OrdinalData : public CategoricalData {
    public:

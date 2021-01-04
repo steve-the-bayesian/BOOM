@@ -49,15 +49,25 @@ namespace {
         new StandardDeviationListElement(model->Sigsq_prm(), "sigma"));
   }
 
-  template <class MODEL>
-  void initialize_model(Ptr<MODEL> model,
-                        const Matrix &design_matrix,
-                        const Vector &response_vector) {
+  void initialize_regression_model_data(Ptr<RegressionModel> model,
+                                        const Matrix &design_matrix,
+                                        const Vector &response_vector) {
+    NEW(NeRegSuf, suf)(design_matrix, response_vector);
+    model->suf()->combine(suf);
+  }
+
+  void initialize_student_model_data(Ptr<TRegressionModel> model,
+                                     const Matrix &design_matrix,
+                                     const Vector &response_vector) {
     size_t n = design_matrix.nrow();
-    for (size_t i = 0; i < n; ++i) {
-      model->add_data(Ptr<RegressionData>(
-          new RegressionData(response_vector[i], design_matrix.row(i))));
-    }
+     for (size_t i = 0; i < n; ++i) {
+       model->add_data(Ptr<RegressionData>(
+           new RegressionData(response_vector[i], design_matrix.row(i))));
+     }
+  }
+
+  template <class MODEL>
+  void initialize_coefficients(Ptr<MODEL> model) {
     model->coef().drop_all();
     model->coef().add(0);  // start with the intercept
   }
@@ -78,7 +88,9 @@ namespace {
       BOOM::RListIoManager *io_manager) {
     Matrix design_matrix(ToBoomMatrix(r_design_matrix));
     Ptr<RegressionModel> model(new RegressionModel(design_matrix.ncol()));
-    initialize_model(model, design_matrix, ToBoomVector(r_response_vector));
+    initialize_regression_model_data(
+        model, design_matrix, ToBoomVector(r_response_vector));
+    initialize_coefficients(model);
 
     if (Rf_inherits(r_model_options, "SsvsOptions")) {
       BOOM::RInterface::RegressionConjugateSpikeSlabPrior prior(
@@ -117,7 +129,7 @@ namespace {
             r_model_options, "target.acceptance.rate"));
         ssvs_sampler->set_step_size(adaptive_step_size);
         ssvs_sampler->set_target_acceptance_rate(target_acceptance_rate);
-        
+
         initialize_sampler(ssvs_sampler, prior);
         model->set_method(ssvs_sampler);
         BOOM::spikeslab::InitializeCoefficients(
@@ -162,7 +174,9 @@ namespace {
       BOOM::RListIoManager *io_manager) {
     Matrix design_matrix(ToBoomMatrix(r_design_matrix));
     NEW(TRegressionModel, model)(design_matrix.ncol());
-    initialize_model(model, design_matrix, ToBoomVector(r_response_vector));
+    initialize_student_model_data(
+        model, design_matrix, ToBoomVector(r_response_vector));
+    initialize_coefficients(model);
     RInterface::StudentRegressionConjugateSpikeSlabPrior prior(
         r_spike_slab_prior, model->Sigsq_prm());
     NEW(TRegressionSpikeSlabSampler, sampler)(

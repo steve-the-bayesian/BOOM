@@ -28,24 +28,22 @@ namespace BOOM {
       : generator_(std::random_device()())
   {}
 
-  RNG::RNG(long seed)
+  RNG::RNG(RngIntType seed)
       : generator_(seed)
   {}
 
   void RNG::seed() {
     generator_.seed(std::random_device()());
   }
-  
-  unsigned long seed_rng(RNG &rng) {
-    long ans = 0;
+
+  RNG::RngIntType seed_rng(RNG &rng) {
+    RNG::RngIntType ans = 0;
     while (ans <= 2) {
-      double u = runif_mt(rng) * std::numeric_limits<long>::max();
+      double u = runif_mt(rng) * std::numeric_limits<RNG::RngIntType>::max();
       ans = lround(u);
     }
     return ans;
   }
-
-  unsigned long seed_rng() { return seed_rng(GlobalRng::rng); }
 
   RNG GlobalRng::rng(8675309);
 

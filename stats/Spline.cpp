@@ -28,6 +28,14 @@ namespace BOOM {
 
   SplineBase::SplineBase(const Vector &knots) : knots_(knots) { knots_.sort(); }
 
+  Matrix SplineBase::basis_matrix(const Vector &x) const {
+    Matrix ans(x.size(), this->basis_dimension());
+    for (int i = 0; i < x.size(); ++i) {
+      ans.row(i) = this->basis(x[i]);
+    }
+    return ans;
+  }
+
   double SplineBase::final_knot() const {
     return knots_.empty() ? negative_infinity() : knots_.back();
   }

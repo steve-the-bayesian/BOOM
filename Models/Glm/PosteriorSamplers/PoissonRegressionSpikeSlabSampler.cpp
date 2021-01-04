@@ -87,7 +87,7 @@ namespace BOOM {
                               Target(logpost), dTarget(logpost),
                               d2Target(logpost), 1e-5, error_message);
     if (ok) {
-      model_->set_included_coefficients(beta, included);
+      model_->set_included_coefficients(beta);
       return;
     } else {
       log_posterior_at_mode_ = negative_infinity();

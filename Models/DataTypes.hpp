@@ -48,15 +48,17 @@ namespace BOOM {
     enum missing_status { observed = 0, completely_missing, partly_missing };
 
     Data() : missing_flag(observed) {}
-    Data(const Data &rhs) : missing_flag(rhs.missing_flag) {}
+    // When copying Data, the observers should not be copied.
+    Data(const Data &rhs)
+        : missing_flag(rhs.missing_flag),
+          signals_() {}
     virtual Data *clone() const = 0;
-    virtual ~Data() = default;
+    virtual ~Data() {signals_.clear();}
     virtual std::ostream &display(std::ostream &) const = 0;
     missing_status missing() const;
     void set_missing_status(missing_status m);
     void signal() {
-      uint n = signals_.size();
-      for (uint i = 0; i < n; ++i) {
+      for (size_t i = 0; i < signals_.size(); ++i) {
         signals_[i]();
       }
     }
@@ -71,6 +73,9 @@ namespace BOOM {
     void add_observer(const std::function<void(void)> &f) {
       signals_.push_back(f);
     }
+
+    // Remove all observers.
+    void clear_observers() { signals_.clear(); }
     friend void intrusive_ptr_add_ref(Data *d);
     friend void intrusive_ptr_release(Data *d);
 
@@ -137,18 +142,23 @@ namespace BOOM {
     VectorData(const VectorData &rhs);
     VectorData *clone() const override;
 
-    uint dim() const { return x.size(); }
+    uint dim() const { return data_.size(); }
     std::ostream &display(std::ostream &out) const override;
 
-    const Vector &value() const override { return x; }
+    const Vector &value() const override { return data_; }
     void set(const Vector &rhs, bool signal_change = true) override;
     virtual void set_element(double value, int position, bool sig = true);
+
+    // Set the contiguous subset of elements from start to start + subset.size()
+    // - 1 with the elements of subset.
+    virtual void set_subset(const Vector &subset, int start,
+                            bool signal = true);
 
     double operator[](uint) const;
     double &operator[](uint);
 
    private:
-    Vector x;
+    Vector data_;
   };
 
   //==========================================================================
@@ -158,14 +168,14 @@ namespace BOOM {
     // Args:
     //   y:  The numeric value of the data vector.
     //   obs:  Indicates which components of y are observed.
-    PartiallyObservedVectorData(const Vector &y,
-                                const Selector &obs = Selector());
+    explicit PartiallyObservedVectorData(const Vector &y,
+                                         const Selector &obs = Selector());
     PartiallyObservedVectorData * clone() const override;
     void set(const Vector &value, bool signal_change = true) override;
 
     Selector &observation_status() { return obs_; }
     const Selector &observation_status() const { return obs_; }
-    
+
    private:
     Selector obs_;
   };
@@ -190,7 +200,7 @@ namespace BOOM {
    private:
     Matrix x;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_MODELS_DATA_TYPES_H

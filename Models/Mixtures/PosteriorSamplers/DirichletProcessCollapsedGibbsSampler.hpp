@@ -35,7 +35,7 @@ namespace BOOM {
   // from the component models.
   class DirichletProcessCollapsedGibbsSampler : public PosteriorSampler {
    public:
-    DirichletProcessCollapsedGibbsSampler(
+    explicit DirichletProcessCollapsedGibbsSampler(
         ConjugateDirichletProcessMixtureModel *model,
         RNG &seeding_rng = GlobalRng::rng);
 

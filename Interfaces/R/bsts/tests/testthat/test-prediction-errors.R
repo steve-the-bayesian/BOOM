@@ -17,3 +17,12 @@ test_that("Scaled prediction errors are reasonable.", {
   expect_gt(cor(se[[1]][30, ], errors[[1]][30, ]), .8)
   expect_lt(cor(se[[1]][30, ], errors[[1]][30, ]), 1.0)
 })
+
+test_that("Prediction errors work for student family", {
+  data(AirPassengers)
+  y <- log(AirPassengers)
+  ss <- AddLocalLinearTrend(list(), y)
+  ss <- AddSeasonal(ss, y, nseasons = 12)
+  model <- bsts(y, state.specification = ss, niter = 500, family="student")
+  errors <- bsts.prediction.errors(model, cutpoints = c(80, 120))
+})

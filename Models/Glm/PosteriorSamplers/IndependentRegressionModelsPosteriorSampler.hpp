@@ -31,7 +31,7 @@ namespace BOOM {
     //     its own posterior samplers assigned.
     //   seeding_rng: The random number generator used to seed the RNG owned by
     //     this posterior sampler.
-    IndependentRegressionModelsPosteriorSampler(
+    explicit IndependentRegressionModelsPosteriorSampler(
         IndependentRegressionModels *model,
         RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
@@ -51,10 +51,10 @@ namespace BOOM {
       }
       return ans;
     }
-    
+
    private:
     IndependentRegressionModels *model_;
   };
 
-  
+
 }  // namespace BOOM

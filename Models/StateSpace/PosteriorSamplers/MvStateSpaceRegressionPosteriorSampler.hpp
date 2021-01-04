@@ -38,7 +38,7 @@ namespace BOOM {
     //     - All state models owned by each proxy model.
     //   seeding_rng: The random number generator used to set the seed
     //     for the RNG owned by this sampler.
-    MultivariateStateSpaceRegressionPosteriorSampler(
+    explicit MultivariateStateSpaceRegressionPosteriorSampler(
         MultivariateStateSpaceRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng);
 
@@ -48,13 +48,11 @@ namespace BOOM {
    private:
     MultivariateStateSpaceRegressionModel *model_;
     bool latent_data_initialized_;
-    
+
     // A stub for when non-gaussian data becomes supported.
     void impute_nonstate_latent_data() {}
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_STATE_SPACE_MULTIVARIATE_REGRESSION_POSTERIOR_SAMPLER_HPP_
-
-

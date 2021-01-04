@@ -68,8 +68,11 @@ namespace BOOM {
         double n = nu(j);
         if (n <= 0) illegal_parameter_value(nu, "rdirichlet", "nu");
         x(j) = rgamma_mt(rng, n, 1);
-        assert(x(j) > 0 || dirichlet_error(nu, j));
         sum += x(j);
+      }
+      if (sum <= 0) {
+        report_error("At least one positive Gamma deviate needed in "
+                     "rdirichlet draw.");
       }
       if (!std::isnormal(sum)) {
         ostringstream err;

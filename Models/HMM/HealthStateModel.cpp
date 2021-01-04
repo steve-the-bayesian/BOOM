@@ -95,7 +95,7 @@ namespace BOOM {
     for (int i = 0; i < nseries(); ++i) {
       ans += compute_loglike(dat(i));
     }
-    return 0.0;
+    return ans;
   }
 
   uint HealthStateModel::state_space_size() const { return mix_.size(); }

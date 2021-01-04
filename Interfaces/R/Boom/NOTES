@@ -1,8 +1,0 @@
-When submitting to CRAN include the note:
-
-BOOM uses RAII (constructors and destructors) to handle PROTECT/UNPROTECT
-issues.  This causes rchk to raise false positive warnings about memory
-protection.  Tomas Kalibera has audited BOOM for rchk issues and confirmed they
-are false positives.
-
-from correspondence with Uwe Ligges on June 7, 2019.

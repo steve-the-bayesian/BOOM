@@ -81,10 +81,6 @@ namespace BOOM {
   void GlmModel::set_included_coefficients(const Vector &b) {
     coef().set_included_coefficients(b);
   }
-  void GlmModel::set_included_coefficients(const Vector &beta,
-                                           const Selector &inc) {
-    coef().set_included_coefficients(beta, inc);
-  }
 
   // reports 0 for excluded positions
   const Vector &GlmModel::Beta() const { return coef().Beta(); }

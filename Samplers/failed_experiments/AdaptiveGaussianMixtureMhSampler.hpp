@@ -35,8 +35,9 @@ namespace BOOM {
   class AdaptiveGaussianMixtureMhSampler : public Sampler {
    public:
     typedef std::function<double(const Vector &)> LogDensity;
-    AdaptiveGaussianMixtureMhSampler(const LogDensity &log_density,
-                                     RNG *rng = nullptr);
+    explicit AdaptiveGaussianMixtureMhSampler(
+        const LogDensity &log_density,
+        RNG *rng = nullptr);
     Vector draw(const Vector &old) override;
 
     double log_proposal_density(const Vector &x) const;

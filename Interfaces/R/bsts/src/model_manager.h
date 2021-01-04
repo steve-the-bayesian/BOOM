@@ -22,86 +22,13 @@
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
 
+#include "timestamp_info.h"
+
 namespace BOOM {
   namespace bsts {
 
-    // A summary of the timestamps accompanying the time series.
-    class TimestampInfo {
-     public:
-      TimestampInfo() : trivial_(true),
-                        number_of_time_points_(-1)
-      {}
-      
-      explicit TimestampInfo(SEXP r_data_list);
-
-      // Args:
-      //   r_data_list: A list containing an object named 'timestamp.info' which
-      //     is an R object of class TimestampInfo.  The list contains the
-      //     following named elements:
-      //     - timestamps.are.trivial: Scalar boolean.
-      //     - number.of.time.points:  Scalar integer.
-      //     - timestamp.mapping: Either R_NilValue (if timestamps are trivial)
-      //         or a numeric vector containing the index of the timestamp to
-      //         which each observation belongs.  These indices are in R's
-      //         unit-offset counting system.  The member function 'mapping'
-      //         handles the conversion to the C++ 0-offset counting system.
-      // 
-      // Effects:
-      //   The timestamp.info object is extracted, and its contents are used to
-      //   populate this object.
-      void Unpack(SEXP r_data_list);
-
-      void UnpackForecastTimestamps(SEXP r_prediction_data);
-
-      void set_time_dimension(int dim) {
-        number_of_time_points_ = dim;
-      }
-      
-      bool trivial() const {return trivial_;}
-      int number_of_time_points() const {return number_of_time_points_;}
-
-      // The index of the time point to which observation i belongs.  The index
-      // is in C's 0-based counting system.
-      //
-      // Args:
-      //   observation_number: The index of an observation (row in the data)
-      //     in C's 0-offset counting system.
-      //
-      // Returns:
-      //   The index of the time point (again, in C's 0-offset counting system)
-      //   to which the specified observation belongs.
-      int mapping(int observation_number) const {
-        return trivial_ ? observation_number
-            : timestamp_mapping_[observation_number] - 1;
-      }
-
-      const std::vector<int> &forecast_timestamps() const {
-        return forecast_timestamps_;
-      }
-      
-     private:
-      // Timestamps are trivial if the time points are uniformly spaced, no time
-      // point is skipped, and there is a single observation per time point.
-      bool trivial_;
-
-      // The number of distinct time points.  Some of these might contain only
-      // missing data.
-      int number_of_time_points_;
-      
-      // timestamp_mapping_[i] gives the index of the time point to which
-      // observation i belongs.  The indices are stored relative to 1 (as is the
-      // custom in R).
-      std::vector<int> timestamp_mapping_;
-
-      // Indicates the number of time points past the end of the training data
-      // for each forecast data point.  For example, if the next three time
-      // points are to be forecast, this will be [1, 2, 3]. If data are not
-      // multiplexed then forecast_timestamps_ will be empty.
-      std::vector<int> forecast_timestamps_;
-    };
-
     class ScalarModelManager;
-    
+
     //===========================================================================
     // The code that computes out of sample one-step prediction errors is
     // designed for multi-threading.  This base class provides the interface for
@@ -131,7 +58,7 @@ namespace BOOM {
       explicit HoldoutErrorSampler(HoldoutErrorSamplerImpl *impl)
           : impl_(impl) {}
       void operator()() {impl_->sample_holdout_prediction_errors();}
-      
+
      private:
       std::unique_ptr<HoldoutErrorSamplerImpl> impl_;
     };
@@ -218,7 +145,7 @@ namespace BOOM {
       virtual int UnpackForecastData(SEXP r_prediction_data) = 0;
 
       Vector &final_state() {return final_state_;}
-      
+
      private:
       RNG rng_;
       Vector final_state_;
@@ -350,7 +277,7 @@ namespace BOOM {
       //   exists.
       void UnpackDynamicRegressionForecastData(
           SEXP r_prediction_data, ScalarStateSpaceModelBase *model);
-      
+
       // Create the specific StateSpaceModel suitable for the given model
       // family.  The posterior sampler for the model is set, and entries for
       // its model parameters are created in io_manager.  This function does not
@@ -413,7 +340,7 @@ namespace BOOM {
       //     additional component should be present giving the number of trials
       //     or the exposure.
       //   r_shared_state_specification: An R list specifying the state models
-      //     shared across multiple series.  
+      //     shared across multiple series.
       //   r_series_state_specification: A list of lists, containing the state
       //     specification for the series-specific portion of state.  The outer
       //     list may be NULL (R_NilValue), to indicate that no series-specic
@@ -445,7 +372,7 @@ namespace BOOM {
 
       // Returns a set of draws from the posterior predictive distribution of
       // the multivariate time series.
-      //      
+      //
       // Args:
       //   r_bsts_object:  The R object created from a previous call to bsts().
       //   r_prediction_data: Data needed to make the prediction.  This might be
@@ -460,7 +387,7 @@ namespace BOOM {
       virtual Array Forecast(SEXP r_mbsts_object,
                              SEXP r_prediction_data,
                              SEXP r_burn) = 0;
-      
+
      private:
       // Create the specific StateSpaceModel suitable for the given model
       // family.  The posterior sampler for the model is set, and entries for
@@ -479,9 +406,9 @@ namespace BOOM {
           SEXP r_prior,
           SEXP r_options,
           RListIoManager *io_manager) = 0;
-      
+
     };
-    
+
   }  // namespace bsts
 }  // namespace BOOM
 

@@ -33,7 +33,7 @@
 #include "distributions.hpp"
 
 namespace BOOM {
-  
+
   namespace {
     template <class V1, class V2>
     double dot_impl(const V1 &v1, const V2 &v2) {
@@ -87,10 +87,21 @@ namespace BOOM {
   }
 
   VV::VectorView(Vector &v, uint first)
-      : V(v.data() + first), nelem_(v.size() - first), stride_(1) {}
+      : V(v.data() + first), nelem_(v.size() - first), stride_( 1) {
+    // Allow first to be zero in the case of empty vectors, so we can can have a
+    // VectorView into an empty.
+    if ( (first > 0) && (first >= v.size())) {
+      report_error("First element in view is past the end of the hosting "
+                   "vector.");
+    }
+  }
 
   VV::VectorView(Vector &v, uint first, uint length)
-      : V(v.data() + first), nelem_(length), stride_(1) {}
+      : V(v.data() + first), nelem_(length), stride_(1) {
+    if (v.size() < first + length) {
+      report_error("Vector is not large enough to host the requested view.");
+    }
+  }
 
   VV::VectorView(VectorView v, uint first)
       : V(v.data() + first * v.stride()),

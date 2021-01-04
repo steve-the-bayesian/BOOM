@@ -92,6 +92,7 @@ namespace BOOM {
         DataPolicy(new ArSuf(number_of_lags)),
         filter_coefficients_current_(false) {
     Phi_prm()->add_observer([this]() { this->observe_phi(); });
+    Phi_prm()->add_all();
   }
 
   ArModel::ArModel(const Ptr<GlmCoefs> &autoregression_coefficients,
@@ -122,7 +123,13 @@ namespace BOOM {
 
   void ArModel::set_sigsq(double sigsq) { Sigsq_prm()->set(sigsq); }
 
-  void ArModel::set_phi(const Vector &phi) { Phi_prm()->set(phi); }
+  void ArModel::set_phi(const Vector &phi) {
+    if (phi.size() == coef().nvars_possible()) {
+      coef().set_Beta(phi);
+    } else {
+      coef().set_included_coefficients(phi);
+    }
+  }
 
   Ptr<GlmCoefs> ArModel::Phi_prm() { return prm1(); }
   const Ptr<GlmCoefs> ArModel::Phi_prm() const { return prm1(); }
