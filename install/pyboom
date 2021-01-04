@@ -3,18 +3,16 @@
 # This script copies the BOOM library into a format suitable for exporting into
 # python.
 
-usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+help_message="\n -p Publish package to PyPi after installing."
 
-DO_INSTALL=0
-DO_CHECK=0
+usage () { echo "Usage: $0 [-p] $help_message 1>&2; exit 0"; }
+
+DO_PUBLISH=0
 
 while getopts :ci option; do
     case "${option}" in
-        i)
-            DO_INSTALL=1
-            ;;
-        c)
-            DO_CHECK=1
+        p)
+            DO_PUBLISH=1
             ;;
         \?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -111,3 +109,7 @@ ditto  Eigen/ $BOOM_DIR/Eigen/
 
 cd python_package
 pip3 --verbose install ./BayesBoom
+
+if [[ $DO_PUBLISH == 1 ]]; then
+    twine upload dist/*.tar.gz
+fi

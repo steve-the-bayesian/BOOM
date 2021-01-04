@@ -4,11 +4,21 @@ import sys
 import setuptools
 import os
 from glob import glob
+import distutils.ccompiler
 
-__version__ = '0.0.1'
+# Bump the major version when making backwards incompatible changes.
+MAJOR = 0
 
-# Note that this setup.py is somewhat nonstandard.  In the main BOOM repository
-# stored on github, setup.py and the pybind11 bindings are kept in
+# Bump the minor version when adding backwards compatible features.
+MINOR = 0
+
+# Bump the patch version when making bug fixes.
+PATCH = 3
+
+__version__ = f'{MAJOR}.{MINOR}.{PATCH}'
+
+# Note the nonstandard file configuration in this setup.py.  In the main BOOM
+# repository stored on github, setup.py and the pybind11 bindings are kept in
 # .../Interfaces/python/BayesBoom/... For setup.py to work the C++ code must be
 # in a subdirectory below setup.py.
 #
@@ -33,45 +43,61 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
-boom_headers = glob("*.hpp")
+BOOM_DIR = "BayesBoom/boom"
+BOOM_DIR += "/"
+boom_headers = glob(BOOM_DIR + "*.hpp")
+boom_library_headers = boom_headers
+
+eigen_headers = glob(BOOM_DIR + "Eigen")
+boom_library_headers += eigen_headers
 
 distributions_sources = glob("distributions/*.cpp")
 distributions_headers = (
     ["distributions.hpp"]
     + glob("distributions/*.hpp")
     )
+boom_library_headers += distributions_headers
 
-linalg_sources = glob("LinAlg/*.cpp")
-linalg_headers = glob("LinAlg/*.hpp")
+linalg_sources = glob(BOOM_DIR + "LinAlg/*.cpp")
+linalg_headers = glob(BOOM_DIR + "LinAlg/*.hpp")
+boom_library_headers += linalg_headers
 
 math_sources = glob("math/*.cpp") + glob("math/cephes/*.cpp")
 
-numopt_sources = glob("numopt/*.cpp")
-numopt_headers = ["{BOOM}/numopt.hpp"] + glob("numopt/*.hpp")
+numopt_sources = glob(BOOM_DIR + "numopt/*.cpp")
+numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
+boom_library_headers += numopt_headers
 
-rmath_sources = glob("Bmath/*.cpp")
-rmath_headers = glob("Bmath/*.hpp")
+rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
+rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
+boom_library_headers += rmath_headers
 
-samplers_sources = glob("Samplers/*.cpp") + ["Samplers/Gilks/arms.cpp"]
-samplers_headers = glob("Samplers/*.hpp")
+samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp")
+samplers_sources += [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
+samplers_headers = glob(BOOM_DIR + "Samplers/*.hpp")
+boom_library_headers += samplers_headers
 
-stats_sources = glob("stats/*.cpp")
-stats_headers = glob("stats/*.hpp")
+stats_sources = glob(BOOM_DIR + "stats/*.cpp")
+stats_headers = glob(BOOM_DIR + "stats/*.hpp")
+boom_library_headers += stats_headers
 
-targetfun_sources = glob("TargetFun/*.cpp")
-targetfun_headers = glob("TargetFun/*.hpp")
+targetfun_sources = glob(BOOM_DIR + "TargetFun/*.cpp")
+targetfun_headers = glob(BOOM_DIR + "TargetFun/*.hpp")
+boom_library_headers += targetfun_headers
 
-utils_sources = glob("cpputil/*.cpp")
-utils_headers = glob("cpputil/*.hpp")
+utils_sources = glob(BOOM_DIR + "cpputil/*.cpp")
+utils_headers = glob(BOOM_DIR + "cpputil/*.hpp")
+boom_library_headers += utils_headers
 
 models_sources = (
     glob("Models/*.cpp")
     + glob("Models/PosteriorSamplers/*.cpp")
     + glob("Models/Policies/*.cpp"))
 models_headers = (
-    glob("Models/*.hpp")
-    + glob("Models/Policies/*.hpp")
-    + glob("Models/PosteriorSamplers/*.hpp"))
+    glob(BOOM_DIR + "Models/*.hpp")
+    + glob(BOOM_DIR + "Models/Policies/*.hpp")
+    + glob(BOOM_DIR + "Models/PosteriorSamplers/*.hpp"))
+boom_library_headers += models_headers
 
 # Specific model classes to be added later, glm's hmm's, etc.
 bart_sources = (
@@ -82,6 +108,7 @@ bart_headers = (
     glob("Models/Bart/*.hpp")
     + glob("Models/Bart/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += bart_headers
 
 glm_sources = (
     glob("Models/Glm/*.cpp")
@@ -91,6 +118,7 @@ glm_headers = (
     glob("Models/Glm/*.hpp")
     + glob("Models/Glm/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += glm_headers
 
 hmm_sources = (
     glob("Models/HMM/*.cpp")
@@ -104,15 +132,25 @@ hmm_headers = (
     + glob("Models/HMM/Clickstream/PosteriorSamplers/*.hpp")
     + glob("Models/HMM/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += hmm_headers
 
 hierarchical_sources = (
     glob("Models/Hierarchical/*.cpp")
     + glob("Models/Hierarchical/PosteriorSamplers/*.cpp")
     )
 hierarchical_headers = (
-    glob("Models/Hierarchical/*.hpp")
-    + glob("Models/Hierarchical/PosteriorSamplers/*.hpp")
+    glob(BOOM_DIR + "Models/Hierarchical/*.hpp")
+    + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += hierarchical_headers
+
+impute_sources = (
+    glob(BOOM_DIR + "Models/Impute/*.cpp")
+    )
+impute_headers = (
+    glob(BOOM_DIR + "Models/Impute/*.hpp")
+    )
+boom_library_headers += impute_headers
 
 irt_sources = (
     glob("Models/IRT/*.cpp")
@@ -122,6 +160,7 @@ irt_headers = (
     glob("Models/IRT/*.hpp")
     + glob("Models/IRT/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += irt_headers
 
 mixture_sources = (
     glob("Models/Mixtures/*.cpp")
@@ -131,6 +170,7 @@ mixture_headers = (
     glob("Models/Mixtures/*.hpp")
     + glob("Models/Mixtures/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += mixture_headers
 
 nnet_sources = (
     glob("Models/Nnet/*.cpp")
@@ -140,6 +180,7 @@ nnet_headers = (
     glob("Models/Nnet/*.hpp")
     + glob("Models/Nnet/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += nnet_headers
 
 point_process_sources = (
     glob("Models/PointProcess/*.cpp")
@@ -149,6 +190,7 @@ point_process_headers = (
     glob("Models/PointProcess/*.hpp")
     + glob("Models/PointProcess/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += point_process_headers
 
 state_space_sources = (
     glob("Models/StateSpace/*.cpp")
@@ -162,6 +204,7 @@ state_space_headers = (
     + glob("Models/StateSpace/PosteriorSamplers/*.hpp")
     + glob("Models/StateSpace/StateModels/*.hpp")
 )
+boom_library_headers += state_space_headers
 
 time_series_sources = (
     glob("Models/TimeSeries/*.cpp")
@@ -171,6 +214,7 @@ time_series_headers = (
     glob("Models/TimeSeries/*.hpp")
     + glob("Models/TimeSeries/PosteriorSamplers/*.hpp")
     )
+boom_library_headers += time_series_headers
 
 boom_library_sources = (
     distributions_sources
@@ -221,7 +265,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
 
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     # parallel code
-    N = 16  # number of parallel compilations
+    nthreads = 16  # number of parallel compilations
     import multiprocessing.pool
 
     def _single_compile(obj):
@@ -232,7 +276,8 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
     # convert to list, imap is evaluated on-demand
-    list(multiprocessing.pool.ThreadPool(N).imap(_single_compile, objects))
+    list(multiprocessing.pool.ThreadPool(nthreads).imap(_single_compile,
+                                                        objects))
     return objects
 
 
@@ -241,12 +286,22 @@ distutils.ccompiler.CCompiler.compile = parallelCCompile
 # End of parallel compile "monkey patch"
 # ---------------------------------------------------------------------------
 
+# remove trailing slash from BOOM_DIR
+if BOOM_DIR.endswith("/"):
+    BOOM_DIR = BOOM_DIR[:-1]
+
+print("boom_library_headers = ", boom_library_headers)
+
 ext_modules = [
     Extension(
         'BayesBoom',
         sources=boom_sources,
+        depends=boom_library_headers,
         include_dirs=[
-            os.getcwd(),
+            "./BayesBoom/boom",
+            "BayesBoom/boom",
+            "./boom",
+            "boom",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -320,6 +375,22 @@ class BuildExt(build_ext):
             ext.extra_compile_args = opts
             ext.extra_link_args = link_opts
         build_ext.build_extensions(self)
+
+
+def FindPackagesAndBlab():
+    # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils",
+    # "boom/pybind11"]
+    packages = find_namespace_packages(include=["BayesBoom.*"],
+                                       exclude=["BayesBoom.*.*"])
+    # packages = find_packages()
+    if len(packages) == 0:
+        packages = find_packages()
+    print(f"***** HEY!! I found the following packages: {packages} *****")
+    print(f"      The BOOM_DIR argument from setup.py is {BOOM_DIR}")
+    if len(packages) == 0:
+        raise Exception("No packages found.")
+
+    return packages
 
 
 setup(
