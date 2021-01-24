@@ -44,33 +44,36 @@ class get_pybind_include(object):
 
 BOOM_DIR = "BayesBoom/boom"
 BOOM_DIR += "/"
+
+# We keep track of the boom headers here just in case setup.py support for
+# header files improves one day.  The MANIFEST.in file instructs the package to
+# include them.
 boom_headers = glob(BOOM_DIR + "*.hpp")
-boom_library_headers = boom_headers
 
 eigen_headers = glob(BOOM_DIR + "Eigen")
-boom_library_headers += eigen_headers
+boom_headers += eigen_headers
 
 distributions_sources = glob(BOOM_DIR + "distributions/*.cpp")
 distributions_headers = (
     [BOOM_DIR + "distributions.hpp"]
     + glob(BOOM_DIR + "distributions/*.hpp")
     )
-boom_library_headers += distributions_headers
+boom_headers += distributions_headers
 
 linalg_sources = glob(BOOM_DIR + "LinAlg/*.cpp")
 linalg_headers = glob(BOOM_DIR + "LinAlg/*.hpp")
-boom_library_headers += linalg_headers
+boom_headers += linalg_headers
 
 math_sources = glob(BOOM_DIR + "math/*.cpp")
 math_sources += glob(BOOM_DIR + "math/cephes/*.cpp")
 
 numopt_sources = glob(BOOM_DIR + "numopt/*.cpp")
 numopt_headers = [BOOM_DIR + "numopt.hpp"] + glob(BOOM_DIR + "numopt/*.hpp")
-boom_library_headers += numopt_headers
+boom_headers += numopt_headers
 
 rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
 rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
-boom_library_headers += rmath_headers
+boom_headers += rmath_headers
 
 rmath_sources = glob(BOOM_DIR + "Bmath/*.cpp")
 rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
@@ -78,19 +81,19 @@ rmath_headers = glob(BOOM_DIR + "Bmath/*.hpp")
 samplers_sources = glob(BOOM_DIR + "Samplers/*.cpp")
 samplers_sources += [BOOM_DIR + "Samplers/Gilks/arms.cpp"]
 samplers_headers = glob(BOOM_DIR + "Samplers/*.hpp")
-boom_library_headers += samplers_headers
+boom_headers += samplers_headers
 
 stats_sources = glob(BOOM_DIR + "stats/*.cpp")
 stats_headers = glob(BOOM_DIR + "stats/*.hpp")
-boom_library_headers += stats_headers
+boom_headers += stats_headers
 
 targetfun_sources = glob(BOOM_DIR + "TargetFun/*.cpp")
 targetfun_headers = glob(BOOM_DIR + "TargetFun/*.hpp")
-boom_library_headers += targetfun_headers
+boom_headers += targetfun_headers
 
 utils_sources = glob(BOOM_DIR + "cpputil/*.cpp")
 utils_headers = glob(BOOM_DIR + "cpputil/*.hpp")
-boom_library_headers += utils_headers
+boom_headers += utils_headers
 
 models_sources = (
     glob(BOOM_DIR + "Models/*.cpp")
@@ -100,7 +103,7 @@ models_headers = (
     glob(BOOM_DIR + "Models/*.hpp")
     + glob(BOOM_DIR + "Models/Policies/*.hpp")
     + glob(BOOM_DIR + "Models/PosteriorSamplers/*.hpp"))
-boom_library_headers += models_headers
+boom_headers += models_headers
 
 # Specific model classes to be added later, glm's hmm's, etc.
 bart_sources = (
@@ -111,7 +114,7 @@ bart_headers = (
     glob(BOOM_DIR + "Models/Bart/*.hpp")
     + glob(BOOM_DIR + "Models/Bart/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += bart_headers
+boom_headers += bart_headers
 
 glm_sources = (
     glob(BOOM_DIR + "Models/Glm/*.cpp")
@@ -121,7 +124,7 @@ glm_headers = (
     glob(BOOM_DIR + "Models/Glm/*.hpp")
     + glob(BOOM_DIR + "Models/Glm/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += glm_headers
+boom_headers += glm_headers
 
 hmm_sources = (
     glob(BOOM_DIR + "Models/HMM/*.cpp")
@@ -135,7 +138,7 @@ hmm_headers = (
     + glob(BOOM_DIR + "Models/HMM/Clickstream/PosteriorSamplers/*.hpp")
     + glob(BOOM_DIR + "Models/HMM/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += hmm_headers
+boom_headers += hmm_headers
 
 hierarchical_sources = (
     glob(BOOM_DIR + "Models/Hierarchical/*.cpp")
@@ -145,7 +148,7 @@ hierarchical_headers = (
     glob(BOOM_DIR + "Models/Hierarchical/*.hpp")
     + glob(BOOM_DIR + "Models/Hierarchical/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += hierarchical_headers
+boom_headers += hierarchical_headers
 
 impute_sources = (
     glob(BOOM_DIR + "Models/Impute/*.cpp")
@@ -153,7 +156,7 @@ impute_sources = (
 impute_headers = (
     glob(BOOM_DIR + "Models/Impute/*.hpp")
     )
-boom_library_headers += impute_headers
+boom_headers += impute_headers
 
 irt_sources = (
     glob(BOOM_DIR + "Models/IRT/*.cpp")
@@ -163,7 +166,7 @@ irt_headers = (
     glob(BOOM_DIR + "Models/IRT/*.hpp")
     + glob(BOOM_DIR + "Models/IRT/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += irt_headers
+boom_headers += irt_headers
 
 mixture_sources = (
     glob(BOOM_DIR + "Models/Mixtures/*.cpp")
@@ -173,7 +176,7 @@ mixture_headers = (
     glob(BOOM_DIR + "Models/Mixtures/*.hpp")
     + glob(BOOM_DIR + "Models/Mixtures/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += mixture_headers
+boom_headers += mixture_headers
 
 nnet_sources = (
     glob(BOOM_DIR + "Models/Nnet/*.cpp")
@@ -183,7 +186,7 @@ nnet_headers = (
     glob(BOOM_DIR + "Models/Nnet/*.hpp")
     + glob(BOOM_DIR + "Models/Nnet/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += nnet_headers
+boom_headers += nnet_headers
 
 point_process_sources = (
     glob(BOOM_DIR + "Models/PointProcess/*.cpp")
@@ -193,7 +196,7 @@ point_process_headers = (
     glob(BOOM_DIR + "Models/PointProcess/*.hpp")
     + glob(BOOM_DIR + "Models/PointProcess/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += point_process_headers
+boom_headers += point_process_headers
 
 state_space_sources = (
     glob(BOOM_DIR + "Models/StateSpace/*.cpp")
@@ -207,7 +210,7 @@ state_space_headers = (
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.hpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.hpp")
 )
-boom_library_headers += state_space_headers
+boom_headers += state_space_headers
 
 time_series_sources = (
     glob(BOOM_DIR + "Models/TimeSeries/*.cpp")
@@ -217,7 +220,7 @@ time_series_headers = (
     glob(BOOM_DIR + "Models/TimeSeries/*.hpp")
     + glob(BOOM_DIR + "Models/TimeSeries/PosteriorSamplers/*.hpp")
     )
-boom_library_headers += time_series_headers
+boom_headers += time_series_headers
 
 boom_library_sources = (
     distributions_sources
@@ -284,8 +287,14 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
     # convert to list, imap is evaluated on-demand
-    list(multiprocessing.pool.ThreadPool(nthreads).imap(_single_compile,
-                                                        objects))
+    multiprocessing.log_to_stderr()
+    with multiprocessing.pool.ThreadPool(nthreads) as pool:
+        it = pool.imap(_single_compile, objects)
+        list(it)
+
+    # list(multiprocessing.pool.ThreadPool(nthreads).imap(
+    #     _single_compile, objects))
+
     return objects
 
 
@@ -297,13 +306,12 @@ distutils.ccompiler.CCompiler.compile = parallelCCompile
 if BOOM_DIR.endswith("/"):
     BOOM_DIR = BOOM_DIR[:-1]
 
-print("boom_library_headers = ", boom_library_headers)
-
 ext_modules = [
     Extension(
         '_boom',
         sources=boom_sources,
-        depends=boom_library_headers,
+        depends=boom_headers,
+        headers=boom_headers,
         include_dirs=[
             "./BayesBoom/boom",
             "BayesBoom/boom",

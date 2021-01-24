@@ -1,0 +1,21 @@
+# This file lists all the header files to include with the distribution.
+# See https://packaging.python.org/guides/using-manifest-in/ for syntax.
+
+include BayesBoom/boom/*.hpp
+include BayesBoom/boom/Bmath/*.hpp
+include BayesBoom/boom/cpputil/*.hpp
+include BayesBoom/boom/distributions/*.hpp
+include BayesBoom/boom/LinAlg/*.hpp
+include BayesBoom/boom/stats/*.hpp
+include BayesBoom/boom/TargetFun/*.hpp
+include BayesBoom/boom/numopt/*.hpp
+
+# The following directories have one or more subdirectories that also need to be
+# included, so we 'recursive-include' them.
+recursive-include BayesBoom/boom/math *.hpp
+recursive-include BayesBoom/boom/Models *.hpp
+recursive-include BayesBoom/boom/Samplers *.hpp
+
+# The Eigen directory has 'include' files with no subscript, so we need to
+# 'graft' the whole subdirectory to catch everything.
+graft BayesBoom/boom/Eigen/

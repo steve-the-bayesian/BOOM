@@ -53,6 +53,7 @@ echo "Copying top level files"
 cp Interfaces/python/BayesBoom/*.py $BOOM_DIR
 mv $BOOM_DIR/setup.py $PACKAGE_DIR/..
 
+cp Interfaces/python/BayesBoom/MANIFEST.in $PACKAGE_DIR/..
 
 ##----------------------------------------------------------------------
 ## Source:
