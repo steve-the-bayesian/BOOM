@@ -1,5 +1,13 @@
 language: C++
 
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - wget
+      - pkg-config
+
 before_install:
   - wget https://github.com/bazelbuild/bazel/releases/download/0.3.1/bazel_0.3.1-linux-x86_64.deb
   - sha256sum -c tools/bazel_0.3.1-linux-x86_64.deb.sha256
