@@ -1,5 +1,8 @@
 language: C++
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install bazel
+
 script:
   - bazel test //Bmath/... //LinAlg/... //Models/... //Samplers/... //TargetFun/... //cpputil/... //distributions/... //numopt/... //stats/...
-	
