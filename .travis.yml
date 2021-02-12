@@ -1,8 +1,9 @@
 language: C++
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install bazel
+  - wget https://github.com/bazelbuild/bazel/releases/download/0.3.1/bazel_0.3.1-linux-x86_64.deb
+  - sha256sum -c tools/bazel_0.3.1-linux-x86_64.deb.sha256
+  - sudo dpkg -i bazel_0.3.1-linux-x86_64.deb
 
 script:
   - bazel test //Bmath/... //LinAlg/... //Models/... //Samplers/... //TargetFun/... //cpputil/... //distributions/... //numopt/... //stats/...
