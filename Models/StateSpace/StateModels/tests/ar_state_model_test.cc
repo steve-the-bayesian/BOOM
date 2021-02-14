@@ -9,7 +9,7 @@ namespace {
   using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
-  
+
   class ArStateModelTest : public ::testing::Test {
    protected:
     ArStateModelTest()
@@ -25,10 +25,10 @@ namespace {
 
   //======================================================================
   TEST_F(ArStateModelTest, StateSpaceModelTest) {
-    int niter = 400;
+    int niter = 1000;
     StateSpaceTestFramework state_space(1.3);
     state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_);
   }
-  
+
 }  // namespace
