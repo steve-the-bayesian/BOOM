@@ -11,6 +11,7 @@ cc_test(
     srcs = ["ascii_distribution_compare_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -18,6 +19,7 @@ cc_test(
     srcs = ["data_table_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -25,6 +27,7 @@ cc_test(
     srcs = ["ecdf_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -32,6 +35,7 @@ cc_test(
     srcs = ["empirical_density_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -46,6 +50,7 @@ cc_test(
     srcs = ["logit_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -53,6 +58,7 @@ cc_test(
     srcs = ["resampler_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -60,6 +66,7 @@ cc_test(
     srcs = ["spline_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -67,4 +74,5 @@ cc_test(
     srcs = ["summary_test.cc"],
     copts = COPTS,
     deps = DEPS,
+    size = "small",
 )

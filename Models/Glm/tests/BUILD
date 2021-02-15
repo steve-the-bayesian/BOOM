@@ -16,6 +16,7 @@ cc_test(
     srcs = ["binomial_logit_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -23,6 +24,7 @@ cc_test(
     srcs = ["binomial_probit_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -34,6 +36,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -45,6 +48,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -52,6 +56,7 @@ cc_test(
     srcs = ["loglinear_model_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS + [":minn38"],
+    size = "small",
 )
 
 cc_library(
@@ -71,6 +76,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -82,6 +88,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -93,6 +100,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -104,6 +112,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -115,6 +124,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -126,6 +136,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -137,4 +148,5 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )

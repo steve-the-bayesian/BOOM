@@ -11,6 +11,7 @@ cc_test(
     srcs = ["array_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -18,6 +19,7 @@ cc_test(
     srcs = ["Cholesky_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -25,6 +27,7 @@ cc_test(
     srcs = ["diagonal_matrix_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -32,6 +35,7 @@ cc_test(
     srcs = ["Eigen_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -39,6 +43,7 @@ cc_test(
     srcs = ["LU_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -46,6 +51,7 @@ cc_test(
     srcs = ["Matrix_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -53,6 +59,7 @@ cc_test(
     srcs = ["SpdMatrix_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -60,6 +67,7 @@ cc_test(
     srcs = ["QR_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -67,19 +75,23 @@ cc_test(
     srcs = ["selector_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
     name = "SVD_test",
     srcs = ["SVD_test.cc"],
     copts = COPTS,
-    deps = COMMON_DEPS,)
+    deps = COMMON_DEPS,
+    size = "small",
+)
 
 cc_test(
     name = "sweep_test",
     srcs = ["sweep_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -87,6 +99,7 @@ cc_test(
     srcs = ["tail_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -94,6 +107,7 @@ cc_test(
     srcs = ["Vector_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -101,4 +115,5 @@ cc_test(
     srcs = ["VectorView_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )

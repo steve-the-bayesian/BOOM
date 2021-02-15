@@ -13,6 +13,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -25,6 +26,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -37,6 +39,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -50,6 +53,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -63,6 +67,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -73,6 +78,7 @@ cc_test(
         "//:boom",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -83,6 +89,7 @@ cc_test(
         "//:boom",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_binary(
@@ -105,6 +112,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -118,6 +126,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -131,6 +140,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -144,6 +154,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -157,6 +168,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -170,6 +182,7 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -184,4 +197,5 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )

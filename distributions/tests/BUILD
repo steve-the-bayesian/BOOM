@@ -10,7 +10,8 @@ cc_test(
     srcs = ["bessel_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
-    )
+    size = "small",
+ )
 
 cc_test(
     name = "chisq_test",
@@ -21,6 +22,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -32,14 +34,16 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
     name = "gig_test",
     srcs = ["gig_test.cc"],
     copts = COPTS,
-    deps = COMMON_DEPS
-    )
+    deps = COMMON_DEPS,
+    size = "small",
+)
 
 cc_test(
     name = "mvn_test",
@@ -50,6 +54,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -61,6 +66,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -72,4 +78,5 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
