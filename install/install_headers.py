@@ -21,7 +21,6 @@ def copy_many_files(filename_list, dest_dir, verbose=False):
         if os.path.isdir(fname):
             if verbose:
                 print(f"Doing nothing for {fname} because it is a directory.")
-            pass
         else:
             if verbose:
                 print('copying ', fname, ' to ', dest)

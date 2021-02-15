@@ -31,8 +31,8 @@ namespace BOOM {
 
   namespace {
     using std::endl;
-  }  // namespace 
-  
+  }  // namespace
+
   SEXP getListElement(SEXP list, const std::string &name, bool expect_answer) {
     SEXP element = R_NilValue;
     SEXP names = Rf_getAttrib(list, R_NamesSymbol);
@@ -213,7 +213,7 @@ namespace BOOM {
     }
     report_error(err.str());
   }
-  
+
   std::pair<int,int> GetMatrixDimensions(SEXP matrix){
     if(!Rf_isMatrix(matrix)){
       ReportBadClass("GetMatrixDimensions called on a non-matrix object",
@@ -254,7 +254,7 @@ namespace BOOM {
     if (dim.size() != dimnames.size()) {
       std::ostringstream err;
       err << "dimnames has length " << dimnames.size()
-          << " which does not match the number of dimension in the array: " 
+          << " which does not match the number of dimension in the array: "
           << dim.size();
       report_error(err.str());
     }
@@ -277,7 +277,7 @@ namespace BOOM {
     Rf_dimnamesgets(r_array, r_dimnames);
     return r_array;
   }
-  
+
   std::vector<int> GetArrayDimensions(SEXP array) {
     if (!Rf_isArray(array)) {
       ReportBadClass("GetArrayDimensions called on a non-array object.",
@@ -324,7 +324,7 @@ namespace BOOM {
   bool isNA(double x) {
     return R_IsNA(x);
   }
-  
+
   Vector ToBoomVector(SEXP v){
     return Vector(ToBoomVectorView(v));
   }
@@ -405,8 +405,7 @@ namespace BOOM {
       SEXP r_variable = VECTOR_ELT(r_data_frame, i);
       if (Rf_isFactor(r_variable)) {
         Factor factor(r_variable);
-        CategoricalVariable variable(factor.vector_of_observations(),
-                                     factor.key());
+        CategoricalVariable variable(factor.vector_of_observations());
         table.append_variable(variable, variable_names[i]);
       } else if (Rf_isString(r_variable)) {
         table.append_variable(CategoricalVariable(StringVector(r_variable)),
@@ -490,7 +489,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   SEXP ToRVector(const Vector &v){
     int n = v.size();
     RMemoryProtector protector;
@@ -581,7 +580,7 @@ namespace BOOM {
     SEXP r_array = protector.protect(Rf_allocArray(REALSXP, r_dims));
     return r_array;
   }
-  
+
   std::string ToString(SEXP r_string) {
     if (TYPEOF(r_string) == CHARSXP) {
       return CHAR(r_string);
@@ -641,11 +640,11 @@ namespace BOOM {
     return CategoricalData(values_[i], levels_);
   }
 
-  std::vector<Ptr<CategoricalData> > Factor::vector_of_observations() const {
-    std::vector<Ptr<CategoricalData> > ans;
+  std::vector<Ptr<LabeledCategoricalData> > Factor::vector_of_observations() const {
+    std::vector<Ptr<LabeledCategoricalData>> ans;
     ans.reserve(this->length());
     for (int i = 0; i < length(); ++i) {
-      ans.push_back(new CategoricalData(values_[i], levels_));
+      ans.push_back(new LabeledCategoricalData(values_[i], levels_));
     }
     return ans;
   }
@@ -691,7 +690,7 @@ namespace BOOM {
     //     ToRString(rm_string), 1, &parse_status, R_NilValue));
     // Rf_eval(VECTOR_ELT(r_call, 0), r_env_);
   }
-  
+
   // Creates an object named argument_name_ in the function's environment, then
   // calls f(argument_name_) on the function.
   double RVectorFunction::evaluate(const Vector &x) {
@@ -728,7 +727,7 @@ namespace BOOM {
 
     return Rf_asReal(protector.protect(Rf_eval(VECTOR_ELT(r_call, 0), r_env_)));
   }
-  
+
   namespace {
     // Wrapper for R_CheckUserInterrupt.
     static void check_interrupt_func(void *dummy) {
@@ -741,5 +740,5 @@ namespace BOOM {
     // longjmp out of the current context, so C++ can clean up correctly.
     return (!R_ToplevelExec(check_interrupt_func, NULL));
   }
-  
+
 }  // namespace BOOM;

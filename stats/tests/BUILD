@@ -1,4 +1,4 @@
-COPTS = []
+COPTS = ["-Wno-sign-compare"]
 
 DEPS = [
     "//:boom",
@@ -14,6 +14,13 @@ cc_test(
 )
 
 cc_test(
+    name = "data_table_test",
+    srcs = ["data_table_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
     name = "ecdf_test",
     srcs = ["ecdf_test.cc"],
     copts = COPTS,
@@ -23,6 +30,13 @@ cc_test(
 cc_test(
     name = "empirical_density_test",
     srcs = ["empirical_density_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "encoder_test",
+    srcs = ["encoder_test.cc"],
     copts = COPTS,
     deps = DEPS,
 )
@@ -44,6 +58,13 @@ cc_test(
 cc_test(
     name = "spline_test",
     srcs = ["spline_test.cc"],
+    copts = COPTS,
+    deps = DEPS,
+)
+
+cc_test(
+    name = "summary_test",
+    srcs = ["summary_test.cc"],
     copts = COPTS,
     deps = DEPS,
 )

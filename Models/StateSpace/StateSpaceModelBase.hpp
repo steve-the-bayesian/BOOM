@@ -24,7 +24,7 @@
 #include "cpputil/math_utils.hpp"
 
 // There is an include order issue here.  ThreadTools.hpp must come before the
-// headers listed below.  Otherwise there is an
+// headers listed below.
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
@@ -88,8 +88,8 @@ namespace BOOM {
 
     // Overrides that would normally be handled by a parameter policy.  These
     // are needed to ensure that parameters are vectorized in the correct order.
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector() const override;
+    std::vector<Ptr<Params>> parameter_vector() override;
+    const std::vector<Ptr<Params>> parameter_vector() const override;
 
     // Return the subset of the vectorized set of model parameters pertaining to
     // the observation model, or to a specific state model.  Can also be used to

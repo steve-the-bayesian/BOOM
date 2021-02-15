@@ -87,7 +87,7 @@ namespace BOOM {
 
     // Returns this->transpose * diag(weights) * this
     virtual SpdMatrix inner(const ConstVectorView &weights) const = 0;
-    
+
     // P += *this
     virtual Matrix &add_to(Matrix &P) const = 0;
     virtual SubMatrix add_to_submatrix(SubMatrix P) const;
@@ -136,7 +136,7 @@ namespace BOOM {
       print(out);
       return out.str();
     }
-    
+
    private:
     friend void intrusive_ptr_add_ref(SparseKalmanMatrix *m) { m->up_count(); }
     friend void intrusive_ptr_release(SparseKalmanMatrix *m) {
@@ -164,7 +164,7 @@ namespace BOOM {
     Vector operator*(const VectorView &v) const override;
     Vector operator*(const ConstVectorView &v) const override;
     Matrix operator*(const Matrix &rhs) const override;
-    
+
     // lhs += this * rhs
     virtual void multiply_and_add(VectorView lhs,
                                   const ConstVectorView &rhs) const = 0;
@@ -173,7 +173,7 @@ namespace BOOM {
     virtual void Tmult(VectorView lhs, const ConstVectorView &rhs) const = 0;
     Vector Tmult(const ConstVectorView &rhs) const override;
     Matrix Tmult(const Matrix &rhs) const override;
-    
+
     // Replace x with this * x.  Assumes *this is square.
     virtual void multiply_inplace(VectorView x) const = 0;
 
@@ -181,14 +181,14 @@ namespace BOOM {
     virtual void matrix_multiply_inplace(SubMatrix m) const;
 
     Matrix dense() const override;
-    
+
     // m = m * this->t();
     virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
 
     // Add *this to block
     virtual void add_to_block(SubMatrix block) const = 0;
     Matrix &add_to(Matrix &P) const override;
-    
+
     // Solve rhs = this * lhs.  Many blocks cannot implement this, so the default
     // is to throw an error.
     virtual void left_inverse(VectorView lhs,
@@ -261,7 +261,7 @@ namespace BOOM {
     void add_to_block(SubMatrix block) const override;
 
     Matrix dense() const override;
-    
+
    private:
     // Each block must have the same number of columns, which are determined by
     // the first block added.
@@ -325,7 +325,7 @@ namespace BOOM {
 
     // Fast access to the underlying matrix without returning a copy.
     const Matrix &matrix() const {return m_;}
-    
+
    private:
     Matrix m_;
   };
@@ -374,7 +374,7 @@ namespace BOOM {
     DenseSpdParamView *clone() const override {
       return new DenseSpdParamView(*this);
     }
-    const SpdMatrix &value() const override { return matrix_->value(); }
+    const SpdMatrix &value() const override { return matrix_->var(); }
     SpdMatrix inner() const override {return value().inner();}
     SpdMatrix inner(const ConstVectorView &weights) const override {
       return value().inner(weights);
@@ -543,7 +543,7 @@ namespace BOOM {
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to_block(SubMatrix block) const override;
-    
+
    private:
     std::vector<Ptr<UnivParams>> elements_;
     std::vector<int> positions_;
@@ -658,7 +658,7 @@ namespace BOOM {
       ans.diag() = weights;
       return ans;
     }
-    
+
    private:
     int dim_;
   };
@@ -728,13 +728,13 @@ namespace BOOM {
     SpdMatrix inner() const override {
       return SpdMatrix(nrow(), square(value()));
     }
-    
+
     SpdMatrix inner(const ConstVectorView &weights) const override {
       SpdMatrix ans(nrow());
       ans.diag() = weights * square(value());
       return ans;
     }
-    
+
     void add_to_block(SubMatrix block) const override { block.diag() += value(); }
 
    private:
@@ -819,7 +819,7 @@ namespace BOOM {
       ans(0, 0) = square(value()) * weights[0];
       return ans;
     }
-    
+
     void add_to_block(SubMatrix block) const override { block(0, 0) += value(); }
 
    private:
@@ -902,7 +902,7 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override {
       return SpdMatrix(1, weights[0]);
     }
-    
+
     void add_to_block(SubMatrix block) const override { block(0, 0) += 1.0; }
 
     Matrix dense() const override {
@@ -910,12 +910,12 @@ namespace BOOM {
       ans(0, 0) = 1.0;
       return ans;
     }
-    
+
     void left_inverse(VectorView lhs,
                       const ConstVectorView &rhs) const override {
       lhs[0] = rhs[0];
     }
-    
+
    private:
     int nrow_;
   };
@@ -989,7 +989,7 @@ namespace BOOM {
       ans.diag() = ConstVectorView(weights, 0, ncol());
       return ans;
     }
-    
+
     void add_to_block(SubMatrix m) const override {
       conforms_to_rows(m.nrow());
       conforms_to_cols(m.ncol());
@@ -1057,7 +1057,7 @@ namespace BOOM {
           square(value()) * weights[which_element_];
       return ans;
     }
-    
+
     void add_to_block(SubMatrix block) const override {
       check_can_add(block);
       block(which_element_, which_element_) += value();
@@ -1216,7 +1216,7 @@ namespace BOOM {
       }
       return ans;
     }
-    
+
     void add_to_block(SubMatrix block) const override {
       conforms_to_rows(block.nrow());
       conforms_to_cols(block.ncol());
@@ -1297,7 +1297,7 @@ namespace BOOM {
       }
       return sum(weights) * outer(dense_row_);
     }
-    
+
     void add_to_block(SubMatrix block) const override {
       conforms_to_cols(block.ncol());
       conforms_to_rows(block.nrow());
@@ -1361,7 +1361,7 @@ namespace BOOM {
       ans.diag() += 1.0;
       return ans;
     }
-    
+
    private:
     int dim_;
   };
@@ -1391,7 +1391,7 @@ namespace BOOM {
         EffectConstrainedMatrixBlock &&rhs) = default;
 
     EffectConstrainedMatrixBlock(EffectConstrainedMatrixBlock &&rhs) = default;
-    
+
     EffectConstrainedMatrixBlock *clone() const override {
       return new EffectConstrainedMatrixBlock(*this);
     }
@@ -1439,15 +1439,15 @@ namespace BOOM {
     Matrix dense() const override {
       return (*this) * SpdMatrix(ncol(), 1.0);
     }
-    
+
     void add_to_block(SubMatrix block) const override {
       block += dense();
     }
-    
+
    private:
     Ptr<SparseMatrixBlock> unconstrained_;
   };
-  
+
   //===========================================================================
   // A sparse matrix whose rows and columns are sparse vectors.  This matrix is
   // somewhat expensive to construct, because a mapping must be constructed
@@ -1536,7 +1536,7 @@ namespace BOOM {
    public:
     const GlmCoefs &coefficients(int i) const { return *coefficients_[i]; }
     void add_row(const Ptr<GlmCoefs> &beta);
-    
+
     int nrow() const override {return coefficients_.size();}
     int ncol() const override {
       if (coefficients_.empty()) {
@@ -1565,7 +1565,7 @@ namespace BOOM {
     // Each coefficient vector is one row in the matrix.
     std::vector<Ptr<GlmCoefs>> coefficients_;
   };
-  
+
   //======================================================================
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will
@@ -1618,7 +1618,7 @@ namespace BOOM {
     // Thus the only blocks that need to implement left_inverse are those used
     // in an error expander somewhere.
     Vector left_inverse(const ConstVectorView &rhs) const override;
-    
+
    private:
     // Replace middle with left * middle * right.transpose()
     void sandwich_inplace_block(const SparseMatrixBlock &left,
@@ -1673,7 +1673,7 @@ namespace BOOM {
     Vector Tmult(const ConstVectorView &v) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    
+
     // P += *this
     Matrix &add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;

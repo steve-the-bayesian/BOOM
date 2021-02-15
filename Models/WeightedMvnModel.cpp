@@ -209,7 +209,6 @@ namespace BOOM {
     double ldsi = siginv.logdet();
 
     double sumlogw = suf()->sumlogw();
-    const SpdMatrix sumsq = suf()->center_sumsq();
     double n = suf()->n();
 
     double ans = n * .5 * (log2pi + ldsi) + dim() * .5 * sumlogw;

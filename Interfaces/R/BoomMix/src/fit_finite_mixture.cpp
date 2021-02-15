@@ -142,7 +142,7 @@ extern "C" {
       int ping = Rf_asInteger(rping);
       SEXP ans;
       PROTECT(ans = io_manager.prepare_to_write(niter));
-      Mat class_membership_probabilities(
+      Matrix class_membership_probabilities(
           model->dat().size(),
           model->number_of_mixture_components(),
           0.0);

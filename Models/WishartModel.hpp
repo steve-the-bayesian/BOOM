@@ -118,7 +118,7 @@ namespace BOOM {
     void set_nu(double);
     void set_sumsq(const SpdMatrix &);
 
-    SpdMatrix simdat(RNG &rng = GlobalRng::rng);
+    SpdMatrix sim(RNG &rng = GlobalRng::rng);
     int dim() const { return sumsq().nrow(); }
 
     // Experimental code for finding the MLE of the Wishart density.

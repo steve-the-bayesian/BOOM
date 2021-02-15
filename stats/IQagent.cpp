@@ -30,15 +30,19 @@ typedef vector<double>::const_iterator CIT;
 namespace BOOM {
 
   IQagent::IQagent(uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(VEC(0)) {
+      : max_buffer_size_(Bufsize), nobs_(0), ecdf_(Vector(1, 0.0)) {
     set_default_probs();
     quantiles_.resize(probs_.size());
   }
   //-----------------------------------------------------------------------
-  IQagent::IQagent(const VEC& probs, uint Bufsize)
-      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs), ecdf_(VEC(0)) {
+  IQagent::IQagent(const Vector& probs, uint Bufsize)
+      : max_buffer_size_(Bufsize), nobs_(0), probs_(probs) {
     std::sort(probs_.begin(), probs_.end());
     quantiles_.resize(probs_.size());
+  }
+  //-----------------------------------------------------------------------
+  IQagent::IQagent(const IqAgentState &state) {
+    restore_from_state(state);
   }
   //-----------------------------------------------------------------------
   void IQagent::set_default_probs() {
@@ -60,7 +64,16 @@ namespace BOOM {
   //----------------------------------------------------------------------
   void IQagent::add(double x) {
     data_buffer_.push_back(x);
-    if (data_buffer_.size() > max_buffer_size_) update_cdf();
+    if (data_buffer_.size() > max_buffer_size_) {
+      update_cdf();
+    }
+  }
+  //----------------------------------------------------------------------
+  void IQagent::add(const Vector &x) {
+    std::copy(x.begin(), x.end(), std::back_inserter(data_buffer_));
+    if (data_buffer_.size() > max_buffer_size_) {
+      update_cdf();
+    }
   }
   //----------------------------------------------------------------------
   inline double interp_q(double p, double p0, double p1, double q0, double q1) {
@@ -158,7 +171,7 @@ namespace BOOM {
   void IQagent::update_cdf() {
     if (data_buffer_.empty()) return;
     ecdf_ = ECDF(data_buffer_);
-    const VEC& sorted_data(ecdf_.sorted_data());
+    const Vector &sorted_data(ecdf_.sorted_data());
     data_buffer_.reserve(sorted_data.size() + quantiles_.size());
     data_buffer_.clear();
     std::merge(sorted_data.begin(), sorted_data.end(), quantiles_.begin(),
@@ -196,4 +209,29 @@ namespace BOOM {
     nobs_ += sorted_data.size();
     data_buffer_.clear();
   }
+
+  IqAgentState IQagent::save_state() const {
+    IqAgentState ans;
+    ans.max_buffer_size = max_buffer_size_;
+    ans.nobs = nobs_;
+    ans.data_buffer = data_buffer_;
+    ans.probs = probs_;
+    ans.quantiles = quantiles_;
+    ans.ecdf_sorted_data = ecdf_.sorted_data();
+    ans.fplus = Fplus_;
+    ans.fminus = Fminus_;
+    return ans;
+  };
+
+  void IQagent::restore_from_state(const IqAgentState &state) {
+    max_buffer_size_ = state.max_buffer_size;
+    nobs_ = state.nobs;
+    data_buffer_ = std::move(state.data_buffer);
+    probs_ = std::move(state.probs);
+    quantiles_ = std::move(state.quantiles);
+    ecdf_.restore(state.ecdf_sorted_data);
+    Fplus_ = state.fplus;
+    Fminus_ = state.fminus;
+  }
+
 }  // namespace BOOM

@@ -103,7 +103,7 @@ namespace BOOM {
 
     virtual ostream & print(ostream &out) const = 0;
     virtual std::string to_string() const = 0;
-    
+
    private:
     std::vector<int> dims_;
     std::vector<int> strides_;
@@ -118,7 +118,7 @@ namespace BOOM {
   inline ostream & operator<<(ostream &out, const ConstArrayBase &array) {
     return array.print(out);
   }
-  
+
   //======================================================================
   class ArrayBase : public ConstArrayBase {
    public:
@@ -212,12 +212,12 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
-    
+
    private:
     const double *data_;
   };
 
-  
+
   //======================================================================
   class ArrayView : public ArrayBase {
    public:
@@ -293,7 +293,7 @@ namespace BOOM {
 
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
-    
+
    private:
     double *data_;
   };
@@ -306,7 +306,7 @@ namespace BOOM {
 
     // Sets data to zero
     Array() {}
-    Array(const std::vector<int> &dims, double initial_value = 0);
+    explicit Array(const std::vector<int> &dims, double initial_value = 0);
     Array(const std::vector<int> &dims, const std::vector<double> &data);
     Array(const std::vector<int> &dims, const double *data);
 
@@ -323,6 +323,11 @@ namespace BOOM {
     Array &operator=(const Vector &a);
     Array &operator=(const VectorView &a);
     Array &operator=(const ConstVectorView &a);
+    Array &operator=(double x);
+
+    Array &operator+=(const Array &rhs);
+    Array &operator+=(const ConstArrayView &rhs);
+
 
     template <class FwdIt>
     Array &assign(FwdIt begin, FwdIt end) {
@@ -385,18 +390,27 @@ namespace BOOM {
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5);
     VectorView vector_slice(int x1, int x2, int x3, int x4, int x5, int x6);
 
+    // The easiest way to iterate over all the array elements is to iterate over
+    // data_.
     iterator begin() { return data_.begin(); }
     iterator end() { return data_.end(); }
     const_iterator begin() const { return data_.begin(); }
     const_iterator end() const { return data_.end(); }
 
+    // The array iterator interface is helpful when you need to iterate over the
+    // elements, but also have access to the vector of position indices.
+    ArrayIterator abegin();
+    ArrayIterator aend();
+    ConstArrayIterator abegin() const;
+    ConstArrayIterator aend() const;
+
     ostream &print(ostream &out) const override;
     std::string to_string() const override;
 
    private:
-    std::vector<double> data_;
+    Vector data_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_ARRAY_HPP

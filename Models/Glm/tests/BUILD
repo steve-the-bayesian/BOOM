@@ -3,26 +3,26 @@ COPTS = [
     "-Wno-sign-compare",
 ]
 
+# All the tests in this file depend on the same set of deps.
+COMMON_DEPS = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+]
+
+
 cc_test(
     name = "binomial_logit_test",
     srcs = ["binomial_logit_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
     name = "binomial_probit_test",
     srcs = ["binomial_probit_test.cc"],
     copts = COPTS,
-    deps = [
-        "//:boom",
-        "//:boom_test_utils",
-        "@gtest//:gtest_main",
-    ],
+    deps = COMMON_DEPS,
 )
 
 cc_test(
@@ -34,6 +34,32 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+)
+
+cc_test(
+    name = "glm_coefs_test",
+    srcs = ["glm_coefs_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "loglinear_model_test",
+    srcs = ["loglinear_model_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS + [":minn38"],
+)
+
+cc_library(
+    name = "minn38",
+    srcs = ["minn38.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+    visibility=["//visibility:private"],
 )
 
 cc_test(

@@ -16,42 +16,141 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "stats/summary.hpp"
-#include "stats/ECDF.hpp"
-#include "stats/moments.hpp"
-
 #include <iomanip>
 #include <sstream>
 
+#include "stats/summary.hpp"
+
+#include "stats/ECDF.hpp"
+#include "stats/moments.hpp"
+#include "stats/DataTable.hpp"
+#include "stats/FreqDist.hpp"
+
+#include "cpputil/report_error.hpp"
+
 namespace BOOM {
 
-  NumericSummary::NumericSummary(const ConstVectorView &data) {
-    ECDF ecdf(data);
-    min_ = ecdf.sorted_data()[0];
-    lower_quartile_ = ecdf.quantile(.25);
-    median_ = ecdf.quantile(.5);
-    mean_ = mean(data);
-    upper_quartile_ = ecdf.quantile(.75);
-    max_ = ecdf.sorted_data().back();
+  NumericSummary empty_numeric_summary;
+  CategoricalSummary empty_categorical_summary;
+
+  void intrusive_ptr_add_ref(VariableSummary *summary) {
+    summary->up_count();
   }
 
-  std::string NumericSummary::to_string() const {
+  void intrusive_ptr_release(VariableSummary *summary) {
+    summary->down_count();
+    if (summary->ref_count() == 0) {
+      delete summary;
+    }
+  }
+
+  std::string VariableSummary::to_string() const {
     std::ostringstream out;
     print(out);
     return out.str();
   }
 
+  const NumericSummary & VariableSummary::as_numeric() const {
+    report_error("Cannot coerce VariableSummary to numeric.");
+    return empty_numeric_summary;
+  }
+
+  const CategoricalSummary & VariableSummary::as_categorical() const {
+    report_error("Cannot coerce VariableSummary to categorical.");
+    return empty_categorical_summary;
+  }
+
+  NumericSummary::NumericSummary()
+      : mean_(0),
+        sd_(0),
+        min_(0),
+        max_(0),
+        empirical_distribution_(100000)
+  {}
+
+  NumericSummary::NumericSummary(const Vector &x, const Vector &probs)
+      : mean_(0),
+        sd_(0),
+        min_(0),
+        max_(0),
+        empirical_distribution_(probs, 1000000)
+  {
+    summarize(x);
+  }
+
+  void NumericSummary::summarize(const Vector &data) {
+    Vector non_nan = data;
+    auto it = std::remove_if(
+        non_nan.begin(), non_nan.end(), [](double x) {return std::isnan(x);});
+    int new_size = it - non_nan.begin();
+    if (new_size < non_nan.size()) {
+      non_nan.resize(new_size);
+    }
+
+    set_number_observed(non_nan.size());
+    set_number_missing(data.size() - number_observed());
+    set_number_distinct(std::set<double>(non_nan.begin(), non_nan.end()).size());
+
+    mean_ = BOOM::mean(non_nan);
+    sd_ = BOOM::sd(non_nan);
+    std::tie(min_, max_) = BOOM::range(non_nan);
+    empirical_distribution_.add(non_nan);
+    empirical_distribution_.update_cdf();
+  }
+
   std::ostream &NumericSummary::print(std::ostream &out) const {
     using std::endl;
     auto precision = out.precision();
-    out <<  "min:            " << std::setprecision(4) << min_ << endl
-        <<  "lower quartile: " << lower_quartile_ << endl
-        <<  "median:         " << median_ << endl
-        <<  "mean:           " << mean_ << endl
-        <<  "upper quartile: " << upper_quartile_ << endl
-        <<  "max:            " << max_ << endl;
+    out << "sample_size:     " << sample_size() << "\n"
+        << "number observed  " << number_observed() << "\n"
+        << "number missing   " << number_missing() << "\n"
+        << "min:             " << std::setprecision(4) << min_ << endl
+        << "lower quartile:  " << empirical_distribution_.quantile(.25) << endl
+        << "median:          " << empirical_distribution_.quantile(.5) << endl
+        << "mean:            " << mean_ << endl
+        << "upper quartile:  " << empirical_distribution_.quantile(.75) << endl
+        << "max:             " << max_ << endl;
     out << std::setprecision(precision);
     return out;
   }
+
+  //===========================================================================
+  CategoricalSummary::CategoricalSummary()
+      : frequency_distribution_(std::vector<int>(0))
+  {}
+
+  CategoricalSummary::CategoricalSummary(const CategoricalVariable &x)
+      : frequency_distribution_(std::vector<int>(0))
+  {
+    summarize(x);
+  }
+
+  void CategoricalSummary::summarize(const CategoricalVariable &x) {
+    std::vector<int> category_codes;
+    for (int i = 0; i < x.size(); ++i) {
+      category_codes.push_back(x[i]->value());
+    }
+    frequency_distribution_ = FrequencyDistribution(category_codes);
+    frequency_distribution_.set_labels(x.labels());
+  }
+
+  ostream &CategoricalSummary::print(ostream &out) const {
+    return frequency_distribution_.print(out);
+  }
+
+  //===========================================================================
+  std::vector<Ptr<VariableSummary>> summarize(const DataTable &table) {
+    std::vector<Ptr<VariableSummary>> ans;
+    for (int i = 0; i < table.nvars(); ++i) {
+      VariableType type = table.variable_type(i);
+      if (type == VariableType::numeric) {
+        ans.push_back(new NumericSummary(table.getvar(i)));
+      } else if (type == VariableType::categorical) {
+        ans.push_back(new CategoricalSummary(table.get_nominal(i)));
+      }
+    }
+    return ans;
+  }
+
 
 } // namespace BOOM

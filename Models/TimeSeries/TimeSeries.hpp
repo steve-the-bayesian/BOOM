@@ -43,47 +43,37 @@ namespace BOOM {
   // A TimeSeries is a type of Data that holds vector of pointers to
   // a specific Data type.
   template <class D>
-  class TimeSeries : virtual public Data, public std::vector<Ptr<D> > {
+  class TimeSeries : virtual public Data, public std::vector<Ptr<D>> {
    public:
-    typedef D data_point_type;
+    typedef D DataPointType;
     typedef TimeSeries<D> ts_type;
 
     TimeSeries();
     explicit TimeSeries(const D &);
-    explicit TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links = true);
+    explicit TimeSeries(const std::vector<Ptr<D>> &v);
 
     TimeSeries(const TimeSeries &);                   // value semantics
     TimeSeries<D> *clone() const override;            // value semantics
     TimeSeries<D> &operator=(const TimeSeries &rhs);  // copies pointers
 
-    TimeSeries<D> &unique_copy(const TimeSeries &rhs);  // clones pointers
-
-    // Copy the pointers in the given sequence without setting links
-    template <class FwdIt>
-    TimeSeries<D> &ref(FwdIt Beg, FwdIt End);
+    // // Copy the pointers in the given sequence without setting links
+    // template <class FwdIt>
+    // TimeSeries<D> &ref(FwdIt Beg, FwdIt End);
 
     // If the data held in the TimeSeries inherit from MarkovLink then
     // reset their links so they point in sequence.
-    void set_links();
+    //    void set_links();
 
     std::ostream &display(std::ostream &) const override;
     uint element_size(bool minimal = true) const;  // size of one data point
     uint length() const;                           // length of the series
     virtual uint size(bool minimal = true) const;
 
-    // Adding data to the time series... add_1 and add_series
-    // assimilate their entries so that the time series is remains
-    // contiguous, with each element pointing to the next and previous
-    // elements.
-    virtual void add_1(const Ptr<D> &);
-    virtual void add_series(const Ptr<TimeSeries<D> > &);
+    // Adding data to the time series.
+    virtual void add_data_point(const Ptr<D> &);
 
-    // Simply add a pointer to the end of the time series, without
-    // bothering to check its links.  The point may or may not refer
-    // to other elements already in the series.
-    void just_add(const Ptr<D> &);
-
-    void clear();
+    // Concatenate series to the end of *this.
+    virtual void add_series(const Ptr<TimeSeries<D>> &series);
 
    private:
     // Makes *this a copy of rhs.  Copies underlying data and sets links
@@ -104,62 +94,6 @@ namespace BOOM {
   }
 
   //======================================================================
-  // The structs defined below are used to implment the TimeSeries
-  // templates using template meta-programming.  The main problem
-  // being solved is whether or not the data elements in the time
-  // series have links back and forth.  If they do then the TimeSeries
-  // will set those links as data elements are added.
-
-  template <class D, class T>
-  struct time_series_data_adder {
-    void operator()(const Ptr<D> &, Ptr<D>) {}
-  };
-
-  template <class D>
-  struct time_series_data_adder<D, std::true_type> {
-    void operator()(const Ptr<D> &last, Ptr<D> d) {
-      if (linked(d)) {
-        // If the links for d are already set, then do nothing.
-        return;
-      }
-      if (!last->next()) last->set_next(d);
-      if (!d->prev()) d->set_prev(last);
-    }
-  };
-
-  template <class D>
-  struct is_linkable : public std::is_base_of<MarkovLink<D>, D> {};
-
-  template <class D, class T = is_linkable<D> >
-  struct time_series_link_clearer {
-    void operator()(const Ptr<D> &) {}
-  };
-
-  template <class D>
-  struct time_series_link_clearer<D, std::true_type> {
-    void operator()(const Ptr<D> &d) { d->clear_links(); }
-  };
-
-  template <class D, class T>
-  struct set_links_impl {
-    void operator()(std::vector<Ptr<D> > &) {}
-  };
-
-  template <class D>
-  struct set_links_impl<D, std::true_type> {
-    void operator()(std::vector<Ptr<D> > &v) {
-      uint n = v.size();
-      if (n == 0) return;
-      for (uint i = 0; i < n; ++i) {
-        if (i > 0) v[i]->set_prev(v[i - 1]);
-        if (i < n - 1) v[i]->set_next(v[i + 1]);
-      }
-      v.front()->unset_prev();
-      v.back()->unset_next();
-    }
-  };
-
-  //======================================================================
 
   template <class D>
   TimeSeries<D>::TimeSeries() : Data(), std::vector<Ptr<D> >() {}
@@ -168,53 +102,28 @@ namespace BOOM {
   TimeSeries<D>::TimeSeries(const D &d) {}
 
   template <class D>
-  void TimeSeries<D>::clone_series(const TimeSeries<D> &rhs) {
-    uint n = rhs.length();
-    std::vector<Ptr<D> >::resize(n);
-    for (uint i = 0; i < n; ++i) (*this)[i] = rhs[i]->clone();
-    set_links();
-  }
-
-  template <class D>
-  void TimeSeries<D>::set_links() {
-    typedef typename is_linkable<D>::type isLinked;
-    set_links_impl<D, isLinked> impl;
-    impl(*this);
-  }
-
-  template <class D>
-  TimeSeries<D>::TimeSeries(const std::vector<Ptr<D> > &v, bool reset_links)
+  TimeSeries<D>::TimeSeries(const std::vector<Ptr<D> > &v)
       : std::vector<Ptr<D> >(v)  // copies pointers
-  {
-    if (reset_links) set_links();
-  }
+  {}
 
   template <class D>
   TimeSeries<D>::TimeSeries(const TimeSeries &rhs)
-      : Data(), std::vector<Ptr<D> >() {
-    clone_series(rhs);
+      : Data(rhs), std::vector<Ptr<D> >() {
+    this->reserve(rhs.size());
+    for (const auto &el : rhs) {
+      this->push_back(el->clone());
+    }
   }
 
   template <class D>
   TimeSeries<D> &TimeSeries<D>::operator=(const TimeSeries<D> &rhs) {
-    if (&rhs == this) return *this;
-    // changed 10/21/2005.  No longer clones underlying data
-    //    clone_series(rhs);
-    std::vector<Ptr<D> >::operator=(rhs);  // now just the pointers are copied
-    return *this;
-  }
-
-  template <class D>
-  TimeSeries<D> &TimeSeries<D>::unique_copy(const TimeSeries<D> &rhs) {
-    if (&rhs == this) return *this;
-    clone_series(rhs);
-    return *this;
-  }
-
-  template <class D>
-  template <class FwdIt>
-  TimeSeries<D> &TimeSeries<D>::ref(FwdIt Beg, FwdIt End) {
-    std::vector<Ptr<D> >::assign(Beg, End);
+    if (&rhs != this) {
+      this->clear();
+      this->reserve(rhs.size());
+      for (const auto &el : rhs) {
+        this->push_back(el->clone());
+      }
+    }
     return *this;
   }
 
@@ -249,29 +158,17 @@ namespace BOOM {
   }
 
   template <class D>
-  void TimeSeries<D>::add_1(const Ptr<D> &d) {
-    if (length() > 0) {
-      Ptr<D> last = std::vector<Ptr<D> >::back();
-      time_series_data_adder<D, is_linkable<D> > adder;
-      adder(last, d);
-    }
-    just_add(d);
+  void TimeSeries<D>::add_data_point(const Ptr<D> &d) {
+    this->push_back(d);
   }
 
   template <class D>
   void TimeSeries<D>::add_series(const Ptr<TimeSeries<D> > &d) {
-    for (uint i = 0; i < d->length(); ++i) add_1((*d)[i]);
+    for (uint i = 0; i < d->length(); ++i) {
+      add_data_point((*d)[i]);
+    }
   }
 
-  template <class D>
-  void TimeSeries<D>::just_add(const Ptr<D> &d) {
-    std::vector<Ptr<D> >::push_back(d);
-  }
-
-  template <class D>
-  void TimeSeries<D>::clear() {
-    std::vector<Ptr<D> >::clear();
-  }
 }  // namespace BOOM
 
 #endif  // BOOM_TIME_SERIES_BASE_CLASS_HPP

@@ -100,16 +100,17 @@ namespace BOOM {
     // following pure virtual functions declared in ModelTypes.hpp need to be
     // overridden with no-ops.
 
-    ParamVector parameter_vector() override { return ParamVector(); }
-    const ParamVector parameter_vector() const override {
-      return ParamVector();
+    std::vector<Ptr<Params>> parameter_vector() override {
+      return std::vector<Ptr<Params>>();
+    }
+    const std::vector<Ptr<Params>> parameter_vector() const override {
+      return std::vector<Ptr<Params>>();
     }
     void add_data(const Ptr<Data> &) override {}
     void clear_data() override {}
     void combine_data(const Model &other, bool just_suf = true) override {}
     void sample_posterior() override {}
     double logpri() const override { return 0; }
-    void set_method(const Ptr<PosteriorSampler> &) override {}
     int number_of_sampling_methods() const override { return 0; }
     PosteriorSampler *sampler(int i) override { return nullptr; }
     PosteriorSampler const *const sampler(int i) const override {

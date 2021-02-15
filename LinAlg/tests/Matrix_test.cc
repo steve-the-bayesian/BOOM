@@ -15,7 +15,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class MatrixTest : public ::testing::Test {
    protected:
     MatrixTest() {
@@ -40,6 +40,26 @@ namespace {
     EXPECT_DOUBLE_EQ(from_string(0, 1), 2.0);
     EXPECT_DOUBLE_EQ(from_string(1, 0), 5.0);
     EXPECT_DOUBLE_EQ(from_string(1, 1), 4.0);
+  }
+
+  TEST_F(MatrixTest, FromRowsOrCols) {
+    std::vector<Vector> vectors = {
+      Vector{1.0, 2.0},
+      Vector{3.0, 4.0},
+      Vector{5.0, 6.0}
+    };
+
+    Matrix m1(vectors, true);
+    EXPECT_EQ(m1.nrow(), 3);
+    EXPECT_EQ(m1.ncol(), 2);
+    EXPECT_DOUBLE_EQ(m1(0, 1), 2.0);
+    EXPECT_DOUBLE_EQ(m1(1, 0), 3.0);
+
+    Matrix m2(vectors, false);
+    EXPECT_EQ(m2.nrow(), 2);
+    EXPECT_EQ(m2.ncol(), 3);
+    EXPECT_DOUBLE_EQ(m2(0, 1), 3.0);
+    EXPECT_DOUBLE_EQ(m2(1, 0), 2.0);
   }
 
   TEST_F(MatrixTest, Multiplication) {
@@ -79,7 +99,7 @@ namespace {
     VectorView v3_view(v3);
     EXPECT_TRUE(VectorEquals(product, M.Tmult(v3_view)));
     EXPECT_TRUE(VectorEquals(product, M.Tmult(ConstVectorView(v3))));
-    
+
     Matrix M2(4, 4);
     M2.randomize();
 
@@ -158,7 +178,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(M * X, M2));
   }
 
-  template <class MAT1, class MAT2> 
+  template <class MAT1, class MAT2>
   void CheckFieldOperators(const MAT1 &x, const MAT2 &y, const std::string &msg) {
     double a = 1.7;
     Matrix z = x + y;
@@ -214,7 +234,7 @@ namespace {
     EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) / a) << msg;
     EXPECT_DOUBLE_EQ(z(1, 0), x(1, 0) / a) << msg;
     EXPECT_DOUBLE_EQ(z(1, 1), x(1, 1) / a) << msg;
-    
+
     z = a * x;
     EXPECT_DOUBLE_EQ(z(0, 0), x(0, 0) * a) << msg;
     EXPECT_DOUBLE_EQ(z(0, 1), x(0, 1) * a) << msg;
@@ -248,14 +268,14 @@ namespace {
     CheckFieldOperators(cxview, yview, "const view, view");
     CheckFieldOperators(cxview, cyview, "const view, const view");
   }
-  
+
   TEST_F(MatrixTest, Trace) {
     Matrix M(4, 4);
     M.randomize();
     EXPECT_DOUBLE_EQ(M.trace(), trace(M));
     EXPECT_DOUBLE_EQ(M.trace(), sum(M.diag()));
   }
-  
+
   TEST_F(MatrixTest, AddOuter) {
     Matrix M(4, 4);
     M.randomize();
@@ -296,7 +316,7 @@ namespace {
 
   //   Matrix X(3, 4);
   //   X.randomize();
-    
+
   //   SpdMatrix original_sigma = Sigma;
   //   EXPECT_TRUE(MatrixEquals(
   //       Sigma.add_inner(X, 1.1),
@@ -355,7 +375,7 @@ namespace {
     Vector v(3);
     EXPECT_TRUE(VectorEquals(Lmult(L, v), L * v));
     EXPECT_TRUE(VectorEquals(LTmult(L, v), L.transpose() * v));
-    
+
     EXPECT_TRUE(VectorEquals(Lsolve(L, v), L.inv() * v));
     Vector original_v = v;
     EXPECT_TRUE(VectorEquals(LTsolve_inplace(L, v),
@@ -399,7 +419,7 @@ namespace {
     EXPECT_NEAR(A.det(), a * d - b * c, epsilon);
     EXPECT_NEAR(A.logdet(), log(fabs(a*d - b*c)), epsilon);
   }
-  
+
   TEST_F(MatrixTest, BlockDiagonal) {
     Matrix A(2, 2);
     A.randomize();
@@ -415,13 +435,13 @@ namespace {
     EXPECT_DOUBLE_EQ(M(0, 2), 0.0);
     EXPECT_DOUBLE_EQ(M(0, 3), 0.0);
     EXPECT_DOUBLE_EQ(M(0, 4), 0.0);
-    
+
     EXPECT_DOUBLE_EQ(M(1, 0), A(1, 0));
     EXPECT_DOUBLE_EQ(M(1, 1), A(1, 1));
     EXPECT_DOUBLE_EQ(M(1, 2), 0.0);
     EXPECT_DOUBLE_EQ(M(1, 3), 0.0);
     EXPECT_DOUBLE_EQ(M(1, 4), 0.0);
-    
+
     EXPECT_DOUBLE_EQ(M(2, 0), 0.0);
     EXPECT_DOUBLE_EQ(M(2, 1), 0.0);
     EXPECT_DOUBLE_EQ(M(2, 2), B(0, 0));
@@ -481,5 +501,19 @@ namespace {
     Matrix A = rbind(Vector{1, 2, 3}, Vector{4, 5, 6});
     EXPECT_TRUE(VectorEquals(vec(A), Vector{1, 4, 2, 5, 3, 6}));
   }
-  
+
+
+  TEST_F(MatrixTest, RowAndColSums) {
+    Matrix A(3, 4);
+    A.randomize();
+
+    Vector row_sums = A.row_sums();
+    EXPECT_DOUBLE_EQ(row_sums[0], A(0, 0) + A(0, 1) + A(0, 2) + A(0, 3));
+    EXPECT_DOUBLE_EQ(row_sums[1], A(1, 0) + A(1, 1) + A(1, 2) + A(1, 3));
+    EXPECT_DOUBLE_EQ(row_sums[2], A(2, 0) + A(2, 1) + A(2, 2) + A(2, 3));
+
+    Vector col_sums = A.col_sums();
+    EXPECT_DOUBLE_EQ(col_sums[0], A(0, 0) + A(1, 0) + A(2, 0));
+  }
+
 }  // namespace

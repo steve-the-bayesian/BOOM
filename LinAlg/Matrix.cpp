@@ -57,24 +57,24 @@ namespace BOOM {
     return (A.nrow() == B.nrow()) && (A.ncol() == B.ncol());
   }
 
-  Matrix::Matrix() : V(), nr_(0), nc_(0) {}
+  Matrix::Matrix() : data_(), nr_(0), nc_(0) {}
 
   Matrix::Matrix(uint nr, uint nc, double x)
-      : V(nr * nc, x), nr_(nr), nc_(nc) {}
+      : data_(nr * nc, x), nr_(nr), nc_(nc) {}
 
   Matrix::Matrix(uint nr, uint nc, const double *m, bool byrow)
-      : V(&m[0], &m[nr * nc]), nr_(nr), nc_(nc) {
+      : data_(&m[0], &m[nr * nc]), nr_(nr), nc_(nc) {
     if (byrow) {
       for (uint i = 0; i < nr; ++i) {
         for (uint j = 0; j < nc; ++j) {
-          V[INDX(i, j)] = *m++;
+          data_[INDX(i, j)] = *m++;
         }
       }
     }
   }
 
   Matrix::Matrix(uint nr, uint nc, const ConstVectorView &v, bool byrow)
-      : V(v), nr_(nr), nc_(nc) {
+      : data_(v), nr_(nr), nc_(nc) {
     if (v.size() != nr * nc) {
       std::ostringstream err;
       err << "Size of vector (" << v.size() << ") does not match dimensions ("
@@ -85,7 +85,7 @@ namespace BOOM {
       const double *d(v.data());
       for (int i = 0; i < nr; ++i) {
         for (int j = 0; j < nc; ++j) {
-          V[INDX(i, j)] = *d++;
+          data_[INDX(i, j)] = *d++;
         }
       }
     }
@@ -110,8 +110,33 @@ namespace BOOM {
         report_error(msg);
       }
     }
-    V.resize(nr_ * nc_);
+    data_.resize(nr_ * nc_);
     for (uint i = 0; i < nr_; ++i) set_row(i, v[i]);
+  }
+
+  Matrix::Matrix(const std::vector<Vector> &rows_or_cols, bool rows) {
+    nr_ = nc_ = 0;
+    int dim1 = rows_or_cols.size();
+    if (dim1 > 0) {
+      int dim2 = rows_or_cols[0].size();
+      if (dim2 > 0) {
+        data_.resize(dim1 * rows_or_cols[0].size());
+        if (rows) {
+          nr_ = dim1;
+          nc_ = dim2;
+        } else {
+          nr_ = dim2;
+          nc_ = dim1;
+        }
+      }
+    }
+    for (size_t i = 0; i < rows_or_cols.size(); ++i) {
+      if (rows) {
+        set_row(i, rows_or_cols[i]);
+      } else {
+        set_col(i, rows_or_cols[i]);
+      }
+    }
   }
 
   Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
@@ -121,7 +146,7 @@ namespace BOOM {
   Matrix &Matrix::operator=(const SubMatrix &rhs) {
     nr_ = rhs.nrow();
     nc_ = rhs.ncol();
-    V.resize(nr_ * nc_);
+    data_.resize(nr_ * nc_);
     for (uint j = 0; j < nc_; ++j) col(j) = rhs.col(j);
     return *this;
   }
@@ -129,17 +154,17 @@ namespace BOOM {
   Matrix &Matrix::operator=(const ConstSubMatrix &rhs) {
     nr_ = rhs.nrow();
     nc_ = rhs.ncol();
-    V.resize(nr_ * nc_);
+    data_.resize(nr_ * nc_);
     for (uint j = 0; j < nc_; ++j) col(j) = rhs.col(j);
     return *this;
   }
 
   Matrix &Matrix::operator=(const double &x) {
-    if (V.empty()) {
-      V.resize(1);
+    if (data_.empty()) {
+      data_.resize(1);
       nr_ = nc_ = 1;
     }
-    V.assign(V.size(), x);  //
+    data_.assign(data_.size(), x);  //
     return *this;
   }
 
@@ -147,19 +172,19 @@ namespace BOOM {
     if (nr_ != rhs.nr_ || nc_ != rhs.nc_)
       return false;
     else
-      return (V == rhs.V);
+      return (data_ == rhs.data_);
   }
 
   void Matrix::swap(Matrix &rhs) {
     std::swap(nr_, rhs.nr_);
     std::swap(nc_, rhs.nc_);
-    std::swap(V, rhs.V);
+    std::swap(data_, rhs.data_);
   }
 
   Matrix &Matrix::randomize() {
     uint n = nr_ * nc_;
     for (uint i = 0; i < n; ++i) {
-      V[i] = runif(0, 1);
+      data_[i] = runif(0, 1);
     }
     return *this;
   }
@@ -167,8 +192,8 @@ namespace BOOM {
   Matrix::~Matrix() {}
 
   bool Matrix::all_finite() const {
-    size_t n = V.size();
-    const double *d(V.data());
+    size_t n = data_.size();
+    const double *d(data_.data());
     for (size_t i = 0; i < n; ++i) {
       if (!std::isfinite(d[i])) {
         return false;
@@ -177,7 +202,7 @@ namespace BOOM {
     return true;
   }
 
-  uint Matrix::size() const { return V.size(); }
+  uint Matrix::size() const { return data_.size(); }
   uint Matrix::nrow() const { return nr_; }
   uint Matrix::ncol() const { return nc_; }
 
@@ -220,7 +245,7 @@ namespace BOOM {
   }
 
   Matrix &Matrix::resize(uint nr, uint nc) {
-    V.resize(nr * nc);
+    data_.resize(nr * nc);
     nr_ = nr;
     nc_ = nc;
     return *this;
@@ -236,12 +261,12 @@ namespace BOOM {
       Matrix B(A);
       return rbind(B);
     }
-    V.reserve(nc_ * (nr_ + A.nrow()));
+    data_.reserve(nc_ * (nr_ + A.nrow()));
     for (int i = 0; i < nc_; ++i) {
       // The call to insert dynamically manages V's size.  It also invalidates
       // iterators, so 'insertion_point' needs to be recomputed each time.
-      auto insertion_point = V.begin() + i * A.nrow() + (i + 1) * nr_;
-      V.insert(insertion_point, A.col_begin(i), A.col_end(i));
+      auto insertion_point = data_.begin() + i * A.nrow() + (i + 1) * nr_;
+      data_.insert(insertion_point, A.col_begin(i), A.col_end(i));
     }
     nr_ += A.nrow();
     return *this;
@@ -255,9 +280,9 @@ namespace BOOM {
     } else if (A.size() != ncol()) {
       report_error("Matrix::rbind called with incompatible vector.");
     }
-    V.reserve((nr_ + 1) * nc_);
+    data_.reserve((nr_ + 1) * nc_);
     for (int i = 0; i < A.size(); ++i) {
-      V.insert(V.begin() + i + (i + 1) * nr_, A[i]);
+      data_.insert(data_.begin() + i + (i + 1) * nr_, A[i]);
     }
     ++nr_;
     return *this;
@@ -296,24 +321,24 @@ namespace BOOM {
     return *this;
   }
 
-  double *Matrix::data() { return V.data(); }
+  double *Matrix::data() { return data_.data(); }
 
-  const double *Matrix::data() const { return V.data(); }
+  const double *Matrix::data() const { return data_.data(); }
 
   double &Matrix::operator()(uint i, uint j) {
     assert(inrange(i, j));
-    return V[INDX(i, j)];
+    return data_[INDX(i, j)];
   }
 
   const double &Matrix::operator()(uint i, uint j) const {
     assert(inrange(i, j));
-    return V[INDX(i, j)];
+    return data_[INDX(i, j)];
   }
 
-  double &Matrix::unchecked(uint i, uint j) { return V[INDX(i, j)]; }
+  double &Matrix::unchecked(uint i, uint j) { return data_[INDX(i, j)]; }
 
   const double &Matrix::unchecked(uint i, uint j) const {
-    return V[INDX(i, j)];
+    return data_[INDX(i, j)];
   }
 
   ConstVectorView Matrix::row(uint i) const {
@@ -348,6 +373,7 @@ namespace BOOM {
   }
 
   void Matrix::set_col(uint j, const Vector &v) {
+    assert(v.size() == nr_);
     std::copy(v.begin(), v.end(), col_begin(j));
   }
 
@@ -442,24 +468,24 @@ namespace BOOM {
     return *this;
   }
 
-  dVector::iterator Matrix::col_begin(uint j) { return V.begin() + j * nr_; }
+  dVector::iterator Matrix::col_begin(uint j) { return data_.begin() + j * nr_; }
   dVector::iterator Matrix::col_end(uint j) {
-    return V.begin() + (j + 1) * nr_;
+    return data_.begin() + (j + 1) * nr_;
   }
   dVector::const_iterator Matrix::col_begin(uint j) const {
-    return V.begin() + j * nr_;
+    return data_.begin() + j * nr_;
   }
   dVector::const_iterator Matrix::col_end(uint j) const {
-    return V.begin() + (j + 1) * nr_;
+    return data_.begin() + (j + 1) * nr_;
   }
 
-  dVector::iterator Matrix::begin() { return V.begin(); }
-  dVector::const_iterator Matrix::begin() const { return V.begin(); }
-  dVector::iterator Matrix::end() { return V.end(); }
-  dVector::const_iterator Matrix::end() const { return V.end(); }
+  dVector::iterator Matrix::begin() { return data_.begin(); }
+  dVector::const_iterator Matrix::begin() const { return data_.begin(); }
+  dVector::iterator Matrix::end() { return data_.end(); }
+  dVector::const_iterator Matrix::end() const { return data_.end(); }
 
   VectorViewIterator Matrix::dbegin() {
-    return VectorViewIterator(&V.front(), &V.front(), ncol() + 1);
+    return VectorViewIterator(&data_.front(), &data_.front(), ncol() + 1);
   }
   VectorViewIterator Matrix::dend() {  // make it right for rectangular matrices
     uint m = std::min(nr_, nc_);
@@ -469,11 +495,11 @@ namespace BOOM {
   }
 
   VectorViewConstIterator Matrix::dbegin() const {
-    return VectorViewConstIterator(&(V.front()), &(V.back()), ncol() + 1);
+    return VectorViewConstIterator(&(data_.front()), &(data_.back()), ncol() + 1);
   }
   VectorViewConstIterator Matrix::dend() const {
     return VectorViewConstIterator(
-        &V.front(), &(V.back()) + ncol() + 1, ncol() + 1);
+        &data_.front(), &(data_.back()) + ncol() + 1, ncol() + 1);
   }
 
   VectorViewIterator Matrix::row_begin(uint i) {
@@ -851,7 +877,7 @@ namespace BOOM {
           << m.ncol() << "]";
       report_error(err.str());
     }
-    V += m.V;
+    data_ += m.data_;
     return *this;
   }
 
@@ -875,7 +901,7 @@ namespace BOOM {
           << m.ncol() << "]";
       report_error(err.str());
     }
-    V -= m.V;
+    data_ -= m.data_;
     return *this;
   }
 
@@ -1030,14 +1056,30 @@ namespace BOOM {
     return traceAtB(A, B);
   }
 
-  double Matrix::sum() const { return accumulate(V.begin(), V.end(), 0.0); }
+  Vector Matrix::row_sums() const {
+    Vector ans(nrow());
+    for (int i = 0; i < nrow(); ++i) {
+      ans[i] = row(i).sum();
+    }
+    return ans;
+  }
+
+  Vector Matrix::col_sums() const {
+    Vector ans(ncol());
+    for (int i = 0; i < ncol(); ++i) {
+      ans[i] = col(i).sum();
+    }
+    return ans;
+  }
+
+  double Matrix::sum() const { return accumulate(data_.begin(), data_.end(), 0.0); }
 
   double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
   double Matrix::sumsq() const { return EigenMap(*this).squaredNorm(); }
 
   double Matrix::prod() const {
-    return accumulate(V.begin(), V.end(), 1.0, mul);
+    return accumulate(data_.begin(), data_.end(), 1.0, mul);
   }
 
   double Matrix::max() const { return *std::max_element(begin(), end()); }

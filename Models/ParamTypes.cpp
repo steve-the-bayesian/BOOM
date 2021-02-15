@@ -25,7 +25,7 @@
 
 namespace BOOM {
 
-  Vector vectorize(const ParamVector &v, bool minimal) {
+  Vector vectorize(const std::vector<Ptr<Params>> &v, bool minimal) {
     uint N = v.size();
     uint vec_size(0);
 
@@ -38,14 +38,17 @@ namespace BOOM {
     }
     return ans;
   }
-  void unvectorize(ParamVector &pvec, const Vector &v, bool minimal) {
+  void unvectorize(std::vector<Ptr<Params>> &pvec,
+                   const Vector &v,
+                   bool minimal) {
     Vector::const_iterator it = v.begin();
     for (uint i = 0; i < pvec.size(); ++i) {
       it = pvec[i]->unvectorize(it, minimal);
     }
   }
 
-  std::ostream &operator<<(std::ostream &out, const ParamVector &v) {
+  std::ostream &operator<<(std::ostream &out,
+                           const std::vector<Ptr<Params>> &v) {
     out << vectorize(v, false);
     return out;
   }

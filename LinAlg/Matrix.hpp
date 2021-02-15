@@ -49,7 +49,15 @@ namespace BOOM {
     // Matrix A("1 2 | 3 4") gives:
     //   1 2
     //   3 4
-    Matrix(const std::string &s, const std::string &row_delim = "|");
+    explicit Matrix(const std::string &s, const std::string &row_delim = "|");
+
+    // Build a matrix by stacking rows or columns.
+    // Args:
+    //   rows_or_cols: The rows or columns to be joined.  All elements must be
+    //     the same size.
+    //   rows: If true, treat the first argument as a collection of rows.  If
+    //     false treat it as a collection of columns.
+    explicit Matrix(const std::vector<Vector> &rows_or_cols, bool rows=true);
 
     template <class FwdIt>
     Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc);
@@ -150,7 +158,7 @@ namespace BOOM {
     dVector::iterator end();
     dVector::const_iterator begin() const;
     dVector::const_iterator end() const;
-    
+
     dVector::iterator col_begin(uint i);
     dVector::iterator col_end(uint i);
     dVector::const_iterator col_begin(uint i) const;
@@ -231,7 +239,7 @@ namespace BOOM {
 
     // The log of the absolute value of the determinant.
     virtual double logdet() const;
-    
+
     Vector singular_values() const;  // sorted largest to smallest
     uint rank(double prop = 1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
@@ -275,9 +283,15 @@ namespace BOOM {
     Matrix &operator/=(const Matrix &m);
     Matrix &operator/=(const SubMatrix &m);
     Matrix &operator/=(const ConstSubMatrix &m);
-    
+
     Matrix &exp();  // in place exponentiation
     Matrix &log();  // in place logarithm
+
+    // The sum of the elements in each column.  The result has size ncol().
+    Vector col_sums() const;
+
+    // The sum of the elements in each row.  The result has size nrow().
+    Vector row_sums() const;
 
     virtual double sum() const;
     virtual double abs_norm() const;
@@ -293,10 +307,12 @@ namespace BOOM {
     std::istream &read(std::istream &);
 
    protected:
-    Vector V;
-    uint nr_, nc_;
     inline uint INDX(uint i, uint j) const;
     inline bool inrange(uint i, uint j) const;
+
+   private:
+    Vector data_;
+    uint nr_, nc_;
   };
 
   //======================================================================
@@ -353,14 +369,14 @@ namespace BOOM {
   // ---- template constructor --
   template <class FwdIt>
   Matrix::Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc)
-      : V(Beg, End), nr_(nr), nc_(nc) {
-    assert(V.size() == nr * nc);
+      : data_(Beg, End), nr_(nr), nc_(nc) {
+    assert(data_.size() == nr * nc);
   }
 
   template <class FwdIt>
   FwdIt Matrix::assign(FwdIt b, FwdIt e) {
     assert(distance(b, e) == size());
-    V.assign(b, e);
+    data_.assign(b, e);
     return e;
   }
 
@@ -399,7 +415,7 @@ namespace BOOM {
     return ans;
   }
 
-  // Matrix - double Field operators 
+  // Matrix - double Field operators
   inline Matrix operator+(const Matrix &m, double a) {
     Matrix ans(m);
     ans += a;
@@ -424,7 +440,7 @@ namespace BOOM {
   inline Matrix operator*(double a, const Matrix &m) {
     return m * a;
   }
-  
+
   Matrix operator/(double a, const Matrix &m);
   inline Matrix operator/(const Matrix &m, double a) {
     Matrix ans(m);
@@ -512,7 +528,7 @@ namespace BOOM {
   Matrix &Lsolve_inplace(const Matrix &L, Matrix &B);   // B = L^{-1} * B
   Matrix &LTsolve_inplace(const Matrix &L, Matrix &B);  // B = L^{T -1}* B
   // Return the inverse of L (which is upper triangluar).
-  Matrix Linv(const Matrix &L);                      
+  Matrix Linv(const Matrix &L);
 
   Vector Umult(const Matrix &U, const Vector &y);
   Matrix Umult(const Matrix &U, const Matrix &m);
@@ -531,7 +547,7 @@ namespace BOOM {
   inline Vector vec(const Matrix &A) {
     return Vector(A.begin(), A.end());
   }
-    
+
 }  // namespace BOOM
 
 #endif  // BOOM_NEWLA_MATRIX_HPP

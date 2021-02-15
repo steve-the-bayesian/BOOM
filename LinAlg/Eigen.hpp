@@ -42,7 +42,7 @@ namespace BOOM {
     //   mat: The (square) matrix for which the eigendecomposition is desired.
     //   vectors: If 'true' then both eigenvalues and eigenvectors are computed.
     //     If 'false' then only eigenvalues are computed.
-    EigenDecomposition(const Matrix &mat, bool vectors = true);
+    explicit EigenDecomposition(const Matrix &mat, bool vectors = true);
 
     // Complex conjugate eigenvalues occur consecutively.  The entry
     // with the positive imaginary part comes first.

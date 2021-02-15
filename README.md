@@ -1,13 +1,13 @@
 # BOOM
-A C++ library for Bayesian modeling, mainly through Markov chain Monte Carlo, but with a few other methods supported.  
+A C++ library for Bayesian modeling, mainly through Markov chain Monte Carlo, but with a few other methods supported.
 BOOM = "Bayesian Object Oriented Modeling".  It is also the sound your computer makes when it crashes.
 
-The BOOM project began around 2005 while I was on the faculty at USC.  It continued during my time at Google.  Google claims 
-copyright on modifications to BOOM files between 2009 and 2017.  Copyright for changes made either before or after that time 
-is claimed by Steven L. Scott.  
+The BOOM project began around 2005 while I was on the faculty at USC.  It continued during my time at Google.  Google claims
+copyright on modifications to BOOM files between 2009 and 2017.  Copyright for changes made either before or after that time
+is claimed by Steven L. Scott.
 
 ## Installing the library
-The primary build system for the BOOM C++ library is bazel.  
+The primary build system for the BOOM C++ library is bazel.
 ```
 bazel build boom
 bazel build -c opt boom
@@ -28,7 +28,7 @@ will install the BoomSpikeSlab and bsts packages.
 These scripts involve lots of copying files around.  Some of that is handled by a python script `install_headers.py`.  Please make sure the hashbang line at the top of that file points to the version of python you want to use.
 
 ## BOOM and Python
-I have played around with pybind11 bindings for BOOM with the intent of exposing the library in Python.  These should be considered experimental, but I'd love help fleshing this bit out.  
+I have played around with pybind11 bindings for BOOM with the intent of exposing the library in Python.  These should be considered experimental, but I'd love help fleshing this bit out.
 ```
 ./install/pyboom
 ```

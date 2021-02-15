@@ -128,8 +128,8 @@ bsts.mixed <- function(target.series,
 
   if (is.null(regression.prior)) {
     fine.frequency <- nrow(predictors) / length(target.series)
-    mean.fine.series <- mean(target.series) / fine.frequency
-    sd.fine.series <- sd(target.series) / sqrt(fine.frequency)
+    mean.fine.series <- mean(target.series, na.rm = TRUE) / fine.frequency
+    sd.fine.series <- sd(target.series, na.rm = TRUE) / sqrt(fine.frequency)
     ## By default, don't accept any draws of the residual standard
     ## deviation that are greater than 20% larger than the empirical
     ## SD.

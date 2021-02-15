@@ -51,14 +51,14 @@ namespace {
 
     double true_sigma_obs = 1.3;
     Vector data = trend + seasonal_effect + rnorm_vector(12, 0, true_sigma_obs);
-    
+
     NEW(LocalLevelStateModel, level)(square(true_sigma_level));
     NEW(SeasonalStateModel, seasonal)(4, 1);
     NEW(StateSpaceModel, model)();
     model->add_state(level);
     model->add_state(seasonal);
     model->observation_model()->set_sigsq(square(true_sigma_obs));
-    
+
     Matrix level_transition(1, 1, 1);
     Matrix transition = block_diagonal(level_transition, seasonal_transition);
 
@@ -66,7 +66,7 @@ namespace {
         transition,
         model->state_transition_matrix(3)->dense()));
 
-    ScalarKalmanFilter &filter(model->get_filter());
+    // ScalarKalmanFilter &filter(model->get_filter());
 
     // TODO(finish this later)
   }

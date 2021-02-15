@@ -49,11 +49,13 @@ namespace BOOM {
     void add_params(const Ptr<Params> &p) {t_.push_back(p);}
     void clear() {t_.clear();}
 
-    ParamVector parameter_vector() override {return t_;}
-    const ParamVector parameter_vector() const override {return t_;}
+    std::vector<Ptr<Params>> parameter_vector() override {return t_;}
+    const std::vector<Ptr<Params>> parameter_vector() const override {
+      return t_;
+    }
 
    private:
-    ParamVector t_;
+    std::vector<Ptr<Params>> t_;
   };
 }  // namespace BOOM
 

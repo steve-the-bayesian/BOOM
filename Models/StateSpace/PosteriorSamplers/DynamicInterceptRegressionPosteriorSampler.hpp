@@ -26,14 +26,14 @@ namespace BOOM {
   class DynamicInterceptRegressionPosteriorSampler
       : public PosteriorSampler {
    public:
-    DynamicInterceptRegressionPosteriorSampler(
+    explicit DynamicInterceptRegressionPosteriorSampler(
         DynamicInterceptRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
           model_(model),
           latent_data_initialized_(false)
     {}
-    
+
     void draw() override {
       if (!latent_data_initialized_) {
         model_->impute_state(rng());
@@ -47,7 +47,7 @@ namespace BOOM {
       impute_nonstate_latent_data();
       model_->impute_state(rng());
     }
-    
+
     double logpri() const override {
       double ans = model_->observation_model()->logpri();
       for (int s = 0; s < model_->number_of_state_models(); ++s) {
@@ -56,15 +56,14 @@ namespace BOOM {
       return ans;
     }
 
-    // For Gaussian models this is a no-op.  
+    // For Gaussian models this is a no-op.
     virtual void impute_nonstate_latent_data() {}
-    
+
    private:
     DynamicInterceptRegressionModel *model_;
     bool latent_data_initialized_;
   };
-  
+
 }  // namespace BOOM
 
 #endif   //  BOOM_DYNAMIC_INTERCEPT_REGRESSION_POSTERIOR_SAMPLER_HPP_
-

@@ -1,0 +1,19 @@
+This is the python version of Steve Scott's "bsts" R library.  bsts stands for
+"Bayesian structural time series" -- any other bs being the fault of the
+analyst.  A structural time series model has the form
+
+        y[t] = Z[t] @ state[t] + error[t]              # Observation equation
+state[t + 1] = T[t] @ state[t] + R[t] * innovation[t]  # Transition equation
+
+The unobserved latent variable state[t] contains components for trend, seasonal
+effects, holiday effects, etc chosen by the analyst to capture salient features
+of the data being modeled.  Each state component appends a vector to state[t],
+appends a similarly sized vector to the coefficient vector Z[t], a block to the
+block diagonal matrix T[t], a block to the rectangular "error expander" matrix
+R[t], and appends a possibly lower dimensional vector to innovation[t].
+
+For a blog post illustrting how this should work see:
+http://www.unofficialgoogledatascience.com/2017/07/fitting-bayesian-structural-time-series.html
+
+For an academic paper see:
+http://people.ischool.berkeley.edu/~hal/Papers/2013/pred-present-with-bsts.pdf

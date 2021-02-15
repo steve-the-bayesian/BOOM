@@ -25,7 +25,7 @@ namespace {
       GlobalRng::rng.seed(8675309);
     }
   };
-  
+
   TEST_F(StateSpaceRegressionModelTest, Forecasting) {
     int sample_size = 500;
     int train = 480;
@@ -89,8 +89,8 @@ namespace {
     for (int i = 0; i < burn; ++i) {
       model->sample_posterior();
     }
-    
-    int niter = 200;
+
+    int niter = 500;
     Matrix coefficient_draws(niter, xdim);
     Vector residual_sd_draws(niter);
     Matrix state_draws(niter, train);
@@ -99,7 +99,7 @@ namespace {
     Matrix test_predictors = ConstSubMatrix(
         predictors, train, nrow(predictors) - 1,
         0, ncol(predictors) - 1).to_matrix();
-    
+
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
       coefficient_draws.row(i) = model->observation_model()->Beta();
@@ -116,5 +116,5 @@ namespace {
                                          ConstVectorView(y, train),
                                          .95, .2));
   }
-  
+
 }  // namespace

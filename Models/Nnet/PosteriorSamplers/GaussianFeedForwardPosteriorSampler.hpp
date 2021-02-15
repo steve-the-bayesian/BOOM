@@ -27,13 +27,13 @@ namespace BOOM {
   class GaussianFeedForwardPosteriorSampler
       : public PosteriorSampler {
    public:
-    GaussianFeedForwardPosteriorSampler(
+    explicit GaussianFeedForwardPosteriorSampler(
         GaussianFeedForwardNeuralNetwork *model,
         RNG &seeding_rng = GlobalRng::rng);
-    
+
     double logpri() const override;
     void draw() override;
-    
+
    private:
     //---------------------------------------------------------------------------
     // This section contains implementation for the 'draw' method.
@@ -74,11 +74,11 @@ namespace BOOM {
     // Ensure that each hidden layer in the model has a HiddenLayerImputer
     // allocated to manage it.
     void ensure_imputers();
-    
+
     // Implementation for impute_hidden_layer_outputs.  Don't call these from
     // elsewhere.
     void impute_terminal_layer_inputs(RNG &rng,
-                                      double response, 
+                                      double response,
                                       std::vector<bool> &inputs,
                                       Vector &wsp1, Vector &wsp2);
 
@@ -93,8 +93,7 @@ namespace BOOM {
     // specified node in the specified hidden layer is 'on' for observation i.
     std::vector<Nnet::HiddenNodeValues> imputed_hidden_layer_outputs_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  //  BOOM_GAUSSIAN_FEEDFORWARD_POSTERIOR_SAMPLER_HPP_
-

@@ -109,7 +109,7 @@ namespace BOOM {
     double mean() const;
     double var() const;
     double sd() const;
-    double simdat(RNG &rng = GlobalRng::rng) const;
+    double sim(RNG &rng = GlobalRng::rng) const;
 
     virtual void add_mixture_data(const Ptr<Data> &, double prob);
   };

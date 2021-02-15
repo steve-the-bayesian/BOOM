@@ -27,7 +27,6 @@
 
 namespace BOOM {
   typedef MultinomialSuf MS;
-  typedef CategoricalData CD;
   MS::MultinomialSuf(const uint p) : counts_(p, 0.0) {}
 
   MS::MultinomialSuf(const Vector &counts) : counts_(counts) {
@@ -37,11 +36,14 @@ namespace BOOM {
   }
 
   MS::MultinomialSuf(const MultinomialSuf &rhs)
-      : Sufstat(rhs), SufstatDetails<CD>(rhs), counts_(rhs.counts_) {}
+      : Sufstat(rhs),
+        SufstatDetails<CategoricalData>(rhs),
+        counts_(rhs.counts_)
+  {}
 
   MS *MS::clone() const { return new MS(*this); }
 
-  void MS::Update(const CD &d) {
+  void MS::Update(const CategoricalData &d) {
     uint i = d.value();
     while (i >= counts_.size()) {
       counts_.push_back(0);  // counts_ grows when needed
@@ -108,7 +110,7 @@ namespace BOOM {
         DataPolicy(new MS(1)),
         PriorPolicy(),
         logp_current_(false) {
-    std::vector<Ptr<CD> > dvec(make_catdat_ptrs(names));
+    std::vector<Ptr<CategoricalData>> dvec(make_catdat_ptrs(names));
 
     uint nlev = dvec[0]->nlevels();
     Vector probs(nlev, 1.0 / nlev);
@@ -135,28 +137,51 @@ namespace BOOM {
         PriorPolicy(rhs),
         LoglikeModel(rhs),
         MixtureComponent(rhs),
+        logp_(rhs.logp_),
         logp_current_(false) {
     set_observer();
   }
 
   MM *MM::clone() const { return new MM(*this); }
 
+  uint MM::nlevels() const { return pi().size(); }
+  uint MM::dim() const { return pi().size(); }
+
   Ptr<VectorParams> MM::Pi_prm() { return ParamPolicy::prm(); }
   const Ptr<VectorParams> MM::Pi_prm() const { return ParamPolicy::prm(); }
 
-  void MM::set_observer() {
-    Pi_prm()->add_observer([this]() { this->observe_logp(); });
-  }
-
-  uint MM::nlevels() const { return pi().size(); }
   const double &MM::pi(int s) const { return pi()[s]; }
   const Vector &MM::pi() const { return Pi_prm()->value(); }
+  const Vector &MM::logpi() const {
+    check_logp();
+    return logp_;
+  }
+
   void MM::set_pi(const Vector &probs) {
     Pi_prm()->set(probs);
     check_logp();
   }
 
-  uint MM::dim() const { return pi().size(); }
+  double MM::entropy() const {
+    double ans = pi().dot(logpi());
+    if (!std::isnan(ans)) {
+      return ans;
+    } else {
+      Selector inc(dim(), true);
+      const Vector &probs = pi();
+      for (int i = 0; i < probs.size(); ++i) {
+        if (std::isfinite(probs[i])) {
+          inc.add(i);
+        } else {
+          inc.drop(i);
+        }
+      }
+      if (inc.empty()) {
+        report_error("There are no finite elements of pi().");
+      }
+      return inc.select(pi()).dot(inc.select(logpi()));
+    }
+  }
 
   double MM::loglike(const Vector &probs) const {
     double ans(0.0);
@@ -196,18 +221,22 @@ namespace BOOM {
     return logscale ? logp_[i] : pi(i);
   }
 
-  uint MM::simdat(RNG &rng) const { return rmulti_mt(rng, pi()); }
+  uint MM::sim(RNG &rng) const { return rmulti_mt(rng, pi()); }
 
   void MM::add_mixture_data(const Ptr<Data> &dp, double prob) {
     uint i = DAT(dp)->value();
     suf()->add_mixture_data(i, prob);
   }
 
-  void MM::observe_logp() { logp_current_ = false; }
-
   void MM::check_logp() const {
     if (logp_current_) return;
     logp_ = log(pi());
     logp_current_ = true;
   }
+
+  void MM::set_observer() {
+    Pi_prm()->add_observer([this]() { this->logp_current_ = false;});
+  }
+
+
 }  // namespace BOOM

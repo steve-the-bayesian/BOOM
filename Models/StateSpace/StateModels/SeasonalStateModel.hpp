@@ -72,6 +72,8 @@ namespace BOOM {
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
+    int nseasons() const {return nseasons_;}
+
    private:
     int nseasons_;
 
@@ -119,6 +121,8 @@ namespace BOOM {
 
     // Returns true if period t is in a different season than period t-1.
     bool new_season(int t) const override;
+
+    int season_duration() const {return duration_;}
 
    private:
     uint duration_;

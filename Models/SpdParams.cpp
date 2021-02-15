@@ -26,10 +26,6 @@ namespace BOOM {
 
   SP::SpdParams(const SpdMatrix &V, bool ivar) : SD(V, ivar) {}
 
-  SP::SpdParams(const SpdParams &rhs) : Data(rhs), Params(rhs), SD(rhs) {}
-
-  SP::SpdParams(const SpdData &rhs) : Data(rhs), SD(rhs) {}
-
   SP *SP::clone() const { return new SP(*this); }
 
   Vector SP::vectorize(bool min) const { return var().vectorize(min); }

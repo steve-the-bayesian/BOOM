@@ -23,8 +23,6 @@
 #include "Models/ModelTypes.hpp"
 
 namespace BOOM {
-  class ParamVectorHolder;
-
   class LoglikeTF {
    public:
     explicit LoglikeTF(LoglikeModel *model) : mod(model) {}

@@ -24,9 +24,11 @@
 namespace BOOM {
 
   NonzeroMeanAr1Sampler::NonzeroMeanAr1Sampler(
-      NonzeroMeanAr1Model *model, const Ptr<GaussianModelBase> &mean_prior,
+      NonzeroMeanAr1Model *model,
+      const Ptr<GaussianModelBase> &mean_prior,
       const Ptr<GaussianModelBase> &phi_prior,
-      const Ptr<GammaModelBase> &siginv_prior, RNG &seeding_rng)
+      const Ptr<GammaModelBase> &siginv_prior,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         m_(model),
         mean_prior_(mean_prior),

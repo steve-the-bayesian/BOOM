@@ -55,6 +55,8 @@ namespace BOOM {
     }
 
    private:
+    // Fill roots_real_ and roots_imag_ with the real and complex parts of the
+    // roots.
     void find_roots();
 
     // coefficients_[0] is the constant term.  coefficients_.back()

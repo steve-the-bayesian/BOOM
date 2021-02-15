@@ -250,12 +250,12 @@ namespace BOOM {
       return beta_;
     }
 
-    ParamVector PCR::parameter_vector() {
+    std::vector<Ptr<Params>> PCR::parameter_vector() {
       sync_params();
       return ParamPolicy::parameter_vector();
     }
 
-    const ParamVector PCR::parameter_vector() const {
+    const std::vector<Ptr<Params>> PCR::parameter_vector() const {
       sync_params();
       return ParamPolicy::parameter_vector();
     }

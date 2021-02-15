@@ -46,7 +46,6 @@ namespace BOOM {
       return ans;
     }
     const char *start = s.data();
-    const char *pos = start;
     const char *end = start + s.size();
     // Test cases
     // 3,
@@ -61,7 +60,7 @@ namespace BOOM {
           return ans;
         }
       }
-      pos = find_field_boundary(start, end);
+      const char *pos = find_field_boundary(start, end);
       std::string field(start, pos);
       ans.push_back(strip_quotes(field));
       if (is_field_delimiter(*pos) && pos + 1 == end) {

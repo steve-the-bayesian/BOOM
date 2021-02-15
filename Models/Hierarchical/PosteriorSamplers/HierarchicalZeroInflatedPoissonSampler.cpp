@@ -42,10 +42,8 @@ namespace BOOM {
                               seeding_rng),
         zero_probability_prior_sampler_(
             model_->prior_for_zero_probability(), zero_probability_mean_prior_,
-            zero_probability_sample_size_prior_, seeding_rng) {
-    Ptr<GammaModel> lambda_prior = model_->prior_for_poisson_mean();
-    Ptr<BetaModel> beta_prior = model_->prior_for_zero_probability();
-  }
+            zero_probability_sample_size_prior_, seeding_rng)
+  {}
 
   //----------------------------------------------------------------------
   void HierarchicalZeroInflatedPoissonSampler::draw() {

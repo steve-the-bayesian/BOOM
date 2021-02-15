@@ -38,10 +38,12 @@ namespace BOOM {
   //------------------------------------------------------------
 
   typedef ParamVectorHolder PVH;
-  PVH::ParamVectorHolder(const ParamVector &held, Vector &Wsp)
+  PVH::ParamVectorHolder(const std::vector<Ptr<Params>> &held, Vector &Wsp)
       : v(Wsp), prm(held) {}
 
-  PVH::ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp)
+  PVH::ParamVectorHolder(const Vector &x,
+                         const std::vector<Ptr<Params>> &held,
+                         Vector &Wsp)
       : v(Wsp), prm(held) {
     v = vectorize(prm, true);
     unvectorize(prm, x, true);

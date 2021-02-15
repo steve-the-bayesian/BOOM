@@ -65,8 +65,8 @@ namespace BOOM {
 
     //----------- parameter interface  ---------------------
     // implemented in ParmPolicy
-    virtual ParamVector parameter_vector() = 0;
-    virtual const ParamVector parameter_vector() const = 0;
+    virtual std::vector<Ptr<Params>> parameter_vector() = 0;
+    virtual const std::vector<Ptr<Params>> parameter_vector() const = 0;
 
     virtual Vector vectorize_params(bool minimal = true) const;
     virtual void unvectorize_params(const Vector &v, bool minimal = true);
@@ -91,7 +91,7 @@ namespace BOOM {
     //------------ functions over-ridden in PriorPolicy ----
     virtual void sample_posterior() = 0;
     virtual double logpri() const = 0;  // evaluates current params
-    virtual void set_method(const Ptr<PosteriorSampler> &) = 0;
+    //    virtual void set_method(const Ptr<PosteriorSampler> &) = 0;
     virtual int number_of_sampling_methods() const = 0;
     virtual PosteriorSampler *sampler(int i) = 0;
     virtual PosteriorSampler const *const sampler(int i) const = 0;
@@ -115,15 +115,15 @@ namespace BOOM {
     MLE_Model(const MLE_Model &rhs) = default;
     MLE_Model(MLE_Model &&rhs);
     MLE_Model & operator=(const MLE_Model &rhs) = default;
-    MLE_Model & operator=(MLE_Model &&rhs); 
-    
+    MLE_Model & operator=(MLE_Model &&rhs);
+
     // Set the paramters to their maximum likelihood estimates.
     virtual void mle() = 0;
 
     // Initialize an MCMC run by setting parameters to their maximum likelihood
     // estimates.
     virtual void initialize_params();
-    
+
     enum MleStatus { NOT_CALLED = -1, FAILURE = 0, SUCCESS = 1 };
     MleStatus mle_status() const { return status_; }
     const std::string &mle_error_message() const { return error_message_; }
@@ -343,9 +343,9 @@ namespace BOOM {
         : original_parameters_(model->vectorize_params()), model_(model) {
       model_->unvectorize_params(parameters);
     }
-    
+
     ~ParameterHolder() { model_->unvectorize_params(original_parameters_); }
-    
+
    private:
     Vector original_parameters_;
     Model *model_;
@@ -353,6 +353,6 @@ namespace BOOM {
 
 
 
-  
+
 }  // namespace BOOM
 #endif  // BOOM_MODEL_TYPES_HPP

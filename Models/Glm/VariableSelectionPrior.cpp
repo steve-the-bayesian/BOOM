@@ -256,7 +256,7 @@ namespace BOOM {
     observe_prior_inclusion_probabilities();
   }
 
-  VSP::VariableSelectionPrior(const Vector &marginal_inclusion_probabilities) 
+  VSP::VariableSelectionPrior(const Vector &marginal_inclusion_probabilities)
       : ParamPolicy(new VectorParams(marginal_inclusion_probabilities)),
         current_(false)
   {
@@ -313,7 +313,7 @@ namespace BOOM {
   std::ostream &VSP::print(std::ostream &out) const {
     return out << prior_inclusion_probabilities() << std::endl;
   }
-  
+
   //===========================================================================
   SVSP::StructuredVariableSelectionPrior()
       : DataPolicy(new VariableSelectionSuf), pi_(new VectorParams(0)) {}
@@ -395,14 +395,14 @@ namespace BOOM {
     pi_->set(tmp);
   }
 
-  ParamVector SVSP::parameter_vector() {
+  std::vector<Ptr<Params>> SVSP::parameter_vector() {
     fill_pi();
-    return ParamVector(1, pi_);
+    return std::vector<Ptr<Params>>(1, pi_);
   }
 
-  const ParamVector SVSP::parameter_vector() const {
+  const std::vector<Ptr<Params>> SVSP::parameter_vector() const {
     fill_pi();
-    return ParamVector(1, pi_);
+    return std::vector<Ptr<Params>>(1, pi_);
   }
 
   void SVSP::unvectorize_params(const Vector &v, bool) {
@@ -577,6 +577,6 @@ namespace BOOM {
           this->current_ = false;
         });
   }
-  
-  
+
+
 }  // namespace BOOM

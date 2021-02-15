@@ -1,0 +1,26 @@
+# ===========================================================================
+BOOM:
+When submitting to CRAN include the note:
+
+BOOM uses RAII (constructors and destructors) to handle PROTECT/UNPROTECT
+issues.  This causes rchk to raise false positive warnings about memory
+protection.  Tomas Kalibera has audited BOOM for rchk issues and confirmed they
+are false positives.
+
+This is from correspondence with Uwe Ligges on June 7, 2019.
+
+# ===========================================================================
+BoomSpikeSlab:
+
+This package uses igraph to plot the network structure of a forward neural net,
+which is not a code path most users will encounter very often.
+
+At least one user has complained that igraph is not available on their system,
+so I would like to make it optional, and simply return an error if it is not
+installed, in the one place where it is used.
+
+I attempted to follow suggestion to use requireNamespace instead of require in
+the package code, but doing so raised an error that 'igraph' was a missing
+global variable.  This was after adding the igraph:: namespace prefix to igraph
+related calls.  My suspicion is that this is related to igraph and there is not
+much I can do about it.

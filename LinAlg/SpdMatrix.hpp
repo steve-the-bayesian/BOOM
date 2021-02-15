@@ -31,8 +31,8 @@ namespace BOOM {
     // (i.e. 0's are stored)
    public:
     SpdMatrix();
-    SpdMatrix(uint dim, double diag = 0.0);
-    SpdMatrix(uint dim, const double *m, bool ColMajor = true);
+    explicit SpdMatrix(uint dim, double diag = 0.0);
+    explicit SpdMatrix(uint dim, const double *m, bool ColMajor = true);
     template <class FwdIt>
     explicit SpdMatrix(FwdIt Beg, FwdIt End);
 
@@ -54,8 +54,12 @@ namespace BOOM {
     //     definite.
     //   check: If true, then throw an exception if m is not
     //     symmetric.  Skip the check if 'check' is false.
+    //
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const Matrix &m, bool check = true);
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const SubMatrix &m, bool check = true);
+    // cppcheck-suppress noExplicitConstructor
     SpdMatrix(const ConstSubMatrix &m, bool check = true);
 
     SpdMatrix &operator=(const Matrix &);

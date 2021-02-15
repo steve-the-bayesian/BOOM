@@ -23,18 +23,50 @@
 namespace BOOM {
   typedef SweptVarianceMatrix SVM;
 
+  namespace {
+    void do_sweep(Matrix &target, int sweep_index, int sign) {
+      double x = target(sweep_index, sweep_index);
+      if (!std::isfinite(1.0 / x)) {
+        report_error(
+            "Zero variance implied by SWEEP operation.  "
+            "Matrix might be less than full rank.");
+      }
+      target(sweep_index, sweep_index) = -1.0 / x;
+      uint dimension = target.nrow();
+      for (uint i = 0; i < dimension; ++i) {
+        if (i != sweep_index) {
+          for (uint j = 0; j < dimension; ++j) {
+            if (j != sweep_index) {
+              target(i, j) -= target(i, sweep_index) * target(sweep_index, j) / x;
+            }
+          }
+        }
+      }
+      x *= sign;
+      for (uint i = 0; i < dimension; ++i) {
+        if (i != sweep_index) {
+          target(i, sweep_index) /= x;
+          target(sweep_index, i) /= x;
+        }
+      }
+    }
+
+  }  // namespace
+
   SVM::SweptVarianceMatrix(const SpdMatrix &m, bool inverse)
       : S_(m), swept_(m.nrow(), inverse) {
-    if (inverse) S_ *= -1;
+    if (inverse) {
+      S_ *= -1;
+    }
   }
 
   void SVM::SWP(const Selector &to_sweep) {
     uint p = to_sweep.nvars_possible();
     assert(p == S_.nrow());
     for (uint i = 0; i < p; ++i) {
-      if (to_sweep[i]) {
+      if (to_sweep[i] && !swept_[i]) {
         SWP(i);
-      } else {
+      } else if (swept_[i] && !to_sweep[i]) {
         RSW(i);
       }
     }
@@ -43,40 +75,15 @@ namespace BOOM {
   void SVM::SWP(uint sweep_index) {
     if (swept_[sweep_index]) return;
     swept_.add(sweep_index);
-    do_sweep(sweep_index);
+    do_sweep(S_, sweep_index, 1);
   }
 
-  void SVM::do_sweep(uint sweep_index) {
-    double x = S_(sweep_index, sweep_index);
-    if (!std::isfinite(1.0 / x)) {
-      report_error(
-          "Zero variance implied by SWEEP operation.  "
-          "Matrix might be less than full rank.");
-    }
-    S_(sweep_index, sweep_index) = -1.0 / x;
-    uint dimension = S_.nrow();
-    for (uint i = 0; i < dimension; ++i) {
-      if (i != sweep_index) {
-        for (uint j = 0; j < dimension; ++j) {
-          if (j != sweep_index) {
-            S_(i, j) -= S_(i, sweep_index) * S_(sweep_index, j) / x;
-          }
-        }
-      }
-    }
-    for (uint i = 0; i < dimension; ++i) {
-      if (i != sweep_index) {
-        S_(i, sweep_index) /= x;
-        S_(sweep_index, i) /= x;
-      }
-    }
-  }
 
   //------------------------------------------------------------
   void SVM::RSW(uint sweep_index) {
     if (!swept_[sweep_index]) return;
     swept_.drop(sweep_index);
-    do_sweep(sweep_index);
+    do_sweep(S_, sweep_index, -1);
   }
 
   uint SVM::xdim() const { return swept_.nvars(); }
@@ -89,7 +96,7 @@ namespace BOOM {
   //------------------------------------------------------------
   Vector SVM::conditional_mean(const Vector &known_subset,
                                const Vector &unconditional_mean) const {
-    return (known_subset - swept_.select(unconditional_mean)) * Beta() +
+    return Beta() * (known_subset - swept_.select(unconditional_mean)) +
            swept_.complement().select(unconditional_mean);
   }
   //------------------------------------------------------------

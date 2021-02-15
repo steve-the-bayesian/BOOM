@@ -75,8 +75,6 @@ namespace BOOM {
 
     explicit MultinomialModel(const MultinomialSuf &suf);
 
-    template <class Fwd>  // iterator promotable to uint
-    MultinomialModel(Fwd b, Fwd e);
     MultinomialModel(const MultinomialModel &rhs);
     MultinomialModel *clone() const override;
 
@@ -88,7 +86,11 @@ namespace BOOM {
 
     const double &pi(int s) const;
     const Vector &pi() const;
+    const Vector &logpi() const;
     void set_pi(const Vector &probs);
+
+    // Return sum(pi * logpi)
+    double entropy() const;
 
     double loglike(const Vector &probs) const override;
     double log_likelihood() const override { return loglike(pi()); }
@@ -96,32 +98,17 @@ namespace BOOM {
     double pdf(const Data *dp, bool logscale) const override;
     double pdf(const Ptr<Data> &dp, bool logscale) const;
     void add_mixture_data(const Ptr<Data> &, double prob);
-    int number_of_observations() const override { return dat().size(); }
+    int number_of_observations() const override { return suf()->n().sum(); }
 
-    uint simdat(RNG &rng = GlobalRng::rng) const;
+    uint sim(RNG &rng = GlobalRng::rng) const;
 
    private:
     mutable Vector logp_;
     mutable bool logp_current_;
-    void observe_logp();
     void set_observer();
     void check_logp() const;
+
   };
 
-  template <class Fwd>  // iterator promotable to uint
-  MultinomialModel::MultinomialModel(Fwd b, Fwd e)
-      : ParamPolicy(new VectorParams(1)),
-        DataPolicy(new MultinomialSuf(1)),
-        PriorPolicy() {
-    std::vector<uint> uivec(b, e);
-    std::vector<Ptr<CategoricalData> > dvec(make_catdat_ptrs(uivec));
-
-    uint nlev = dvec[0]->nlevels();
-    Vector probs(nlev, 1.0 / nlev);
-    set_pi(probs);
-
-    set_data(dvec);
-    mle();
-  }
 }  // namespace BOOM
 #endif  // BOOM_MULTINOMIAL_MODEL_HPP

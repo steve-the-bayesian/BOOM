@@ -70,12 +70,14 @@ namespace BOOM {
 
   //============================================================
   //---- non-member functions for vectorizing lots of params ----
-  typedef std::vector<Ptr<Params> > ParamVector;
+  Vector vectorize(const std::vector<Ptr<Params>> &v,
+                   bool minimal = true);
+  void unvectorize(std::vector<Ptr<Params>> &pvec,
+                   const Vector &v,
+                   bool minimal = true);
 
-  Vector vectorize(const ParamVector &v, bool minimal = true);
-  void unvectorize(ParamVector &pvec, const Vector &v, bool minimal = true);
-
-  std::ostream &operator<<(std::ostream &out, const ParamVector &v);
+  std::ostream &operator<<(std::ostream &out,
+                           const std::vector<Ptr<Params>> &v);
 
   //============================================================
 
@@ -113,12 +115,12 @@ namespace BOOM {
     void observe(Ptr<Data> dp) {
       dp->add_observer([this]() {this->invalidate();});
     }
-    
+
     const double &value() const override {
       if (!current_) retrieve_value();
       return UnivParams::value();
     }
-    
+
    private:
     // Obtain the value from wherever is being watched, call
     // UnivParams::set(value, false), and set current_ to true.
@@ -131,10 +133,10 @@ namespace BOOM {
 
     // The parameter cannot be set using this function.
     void set(const double &rhs, bool Signal) override;
-    
+
     mutable bool current_;
   };
-  
+
   //------------------------------------------------------------
   class VectorParams : public VectorData, virtual public Params {
    public:

@@ -40,6 +40,7 @@ namespace BOOM {
         sigsq_sampler_(residual_precision_prior_),
         suf_(model_->xdim()) {}
 
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::draw() {
     set_sufficient_statistics();
     spike_slab_sampler_.draw_model_indicators(rng(), suf_, model_->sigsq());
@@ -47,6 +48,7 @@ namespace BOOM {
     draw_sigma_full_conditional();
   }
 
+  // ---------------------------------------------------------------------------
   double ArSpikeSlabSampler::logpri() const {
     if (truncate_ && !model_->check_stationary(model_->phi())) {
       return negative_infinity();
@@ -55,29 +57,27 @@ namespace BOOM {
            sigsq_sampler_.log_prior(model_->sigsq());
   }
 
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::truncate_support(bool truncate) {
     if (truncate && !truncate_) {
       Vector phi = model_->phi();
-      int attempts = 0;
-      int max_shrinkage = 100;
-      while (!model_->check_stationary(phi)) {
-        if (attempts++ > max_shrinkage) {
+      if (!shrink_phi(phi)) {
           report_error(
               "Could not shrink AR coefficient vector to "
               "stationary region.");
-        }
-        phi *= .9;
       }
       model_->set_phi(phi);
     }
     truncate_ = truncate;
   }
 
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::draw_phi() {
     Vector original_phi = model_->phi();
     int attempts = 0;
     bool ok = false;
     while (!ok && attempts < max_number_of_regression_proposals_) {
+      ++attempts;
       spike_slab_sampler_.draw_beta(rng(), suf_, model_->sigsq());
       if (truncate_) {
         ok = model_->check_stationary(model_->phi());
@@ -87,18 +87,34 @@ namespace BOOM {
     }
     if (!ok) {
       model_->set_phi(original_phi);
-      draw_phi_univariate();
+      try {
+        draw_phi_univariate();
+      } catch(...) {
+        model_->set_phi(original_phi);
+      }
     }
   }
 
+  // ---------------------------------------------------------------------------
+  bool ArSpikeSlabSampler::shrink_phi(Vector &phi) {
+    int attempts = 0;
+    int max_attempts = 20;
+    while (attempts++ < max_attempts and !model_->check_stationary(phi)) {
+      phi *= .95;
+    }
+    return attempts < max_attempts;
+  }
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::draw_phi_univariate() {
     const Selector &inc(model_->coef().inc());
     int p = inc.nvars();
     Vector phi = model_->included_coefficients();
     if (!model_->check_stationary(model_->phi())) {
-      report_error(
-          "ArSpikeSlabSampler::draw_phi_univariate was called with an "
-          "illegal initial value of phi.  That should never happen.");
+      if (!shrink_phi(phi)) {
+        report_error(
+            "ArSpikeSlabSampler::draw_phi_univariate was called with an "
+            "illegal initial value of phi.  That should never happen.");
+      }
     }
     double sigsq = model_->sigsq();
 
@@ -114,6 +130,10 @@ namespace BOOM {
       swept_precision.RSW(i);
       Selector conditional(p, true);
       conditional.drop(i);
+
+      if (conditional.nvars() == 0) {
+        continue;
+      }
 
       double conditional_mean = swept_precision.conditional_mean(
           conditional.select(phi), posterior_mean)[0];
@@ -148,6 +168,7 @@ namespace BOOM {
     model_->set_phi(phi);
   }
 
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::draw_sigma_full_conditional() {
     double data_df = model_->suf()->n();
     const Selector &inc(model_->coef().inc());
@@ -161,6 +182,7 @@ namespace BOOM {
     model_->set_sigsq(sigsq);
   }
 
+  // ---------------------------------------------------------------------------
   void ArSpikeSlabSampler::set_sufficient_statistics() {
     suf_.set_xtwx(model_->suf()->xtx());
     suf_.set_xtwy(model_->suf()->xty());

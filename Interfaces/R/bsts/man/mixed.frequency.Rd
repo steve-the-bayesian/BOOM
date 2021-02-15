@@ -146,6 +146,7 @@
 }
 
 \examples{
+\dontrun{
   data <- SimulateFakeMixedFrequencyData(nweeks = 104, xdim = 20)
 
   ## Setting an upper limit on the standard deviations can help keep the
@@ -174,7 +175,7 @@
 
   plot(model, "state")
   plot(model, "components")
-
+}
 }
 \keyword{models}
 \keyword{regression}

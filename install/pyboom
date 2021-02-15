@@ -7,18 +7,16 @@
 # On exit, the .../python_package/BayesBoom directory is suitable for
 # installation with pip.
 
-usage () { echo "Usage: $0 [-c] [-i] 1>&2; exit 0"; }
+help_message="\n -p Publish package to PyPi after installing."
 
-DO_INSTALL=0
-DO_CHECK=0
+usage () { echo "Usage: $0 [-p] $help_message 1>&2; exit 0"; }
+
+DO_PUBLISH=0
 
 while getopts :ci option; do
     case "${option}" in
-        i)
-            DO_INSTALL=1
-            ;;
-        c)
-            DO_CHECK=1
+        p)
+            DO_PUBLISH=1
             ;;
         \?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -28,18 +26,34 @@ while getopts :ci option; do
 done
 shift $((OPTIND-1))
 
-BOOM_DIR='python_package/BayesBoom'
+PACKAGE_DIR='python_package/BayesBoom'
+BOOM_DIR=$PACKAGE_DIR'/boom'
+
+echo "PACKAGE_DIR is $PACKAGE_DIR"
+echo "BOOM_DIR is $BOOM_DIR"
 
 ## If there is already a Boom directory then delete it.
-if [ -d "$BOOM_DIR" ]; then
-    echo "Removing previous directory $BOOM_DIR"
-    rm -rf $BOOM_DIR
+if [ -d "$PACKAGE_DIR" ]; then
+    echo "Removing previous directory $PACKAGE_DIR"
+    rm -rf $PACKAGE_DIR
 fi
+mkdir -p $PACKAGE_DIR
+
+## Copy non-cpp packages to the package directory
+cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
+cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
+cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
+cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
+cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils
 
 ## create a Boom subdirectory and copy the relevant files into it.
 mkdir -p $BOOM_DIR
 echo "Copying top level files"
-cp Interfaces/python/BayesBoom/setup.py $BOOM_DIR
+cp Interfaces/python/BayesBoom/*.py $BOOM_DIR
+mv $BOOM_DIR/setup.py $PACKAGE_DIR/..
+
+cp Interfaces/python/BayesBoom/MANIFEST.in $PACKAGE_DIR/..
 
 ##----------------------------------------------------------------------
 ## Source:
@@ -80,6 +94,7 @@ elif [[ $OSTYPE =~ "linux" ]]; then
 else
     echo "ERROR copying files.  Could not determine the OS."
 fi
+mv $BOOM_DIR/pybind11/__init__.py $BOOM_DIR
 
 echo "done copying pybind11 bindings"
 
@@ -126,8 +141,22 @@ else
 fi
 
 ##----------------------------------------------------------------------
-## Build the package:
+## Build and install the package:
+echo "Time to build the package!"
 
 cd python_package
+python3 setup.py sdist bdist_wheel
+# python3 -m pip install dist/BayesBoom-*.whl
 # CC="ccache clang++" CXX="ccache"
-pip3 --verbose install ./BayesBoom
+# pip3 --verbose install ./BayesBoom
+
+##----------------------------------------------------------------------
+## Install the pure python packages
+# cd ..
+# pip3 install Interfaces/python/R
+# pip3 install Interfaces/python/bsts
+# pip3 install Interfaces/python/spikeslab
+
+if [[ $DO_PUBLISH == 1 ]]; then
+    twine upload dist/*.tar.gz
+fi
