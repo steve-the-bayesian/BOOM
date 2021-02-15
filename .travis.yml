@@ -5,7 +5,6 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - apt-get
       - wget
       - curl
       - pkg-config
