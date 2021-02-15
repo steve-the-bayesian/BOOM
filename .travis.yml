@@ -5,15 +5,13 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - wget
       - curl
-      - pkg-config
 
 before_install:
-  - curl --silent https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
-  - sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/bazel.list" \
-      -o Dir::Etc::sourceparts="-" \
-      -o APT::Get::List-Cleanup="0"
+#  - curl --silent https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+#  - sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/bazel.list" \
+#      -o Dir::Etc::sourceparts="-" \
+#      -o APT::Get::List-Cleanup="0"
   - sudo apt-get install openjdk-8-jdk bazel
 
 
