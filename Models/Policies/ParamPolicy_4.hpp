@@ -60,22 +60,22 @@ namespace BOOM {
     }
 
     // over-rides for abstract base Model
-    ParamVector parameter_vector() override { return t_; }
-    const ParamVector parameter_vector() const override { return t_; }
+    std::vector<Ptr<Params>> parameter_vector() override { return t_; }
+    const std::vector<Ptr<Params>> parameter_vector() const override { return t_; }
 
    private:
     Ptr<P1> prm1_;
     Ptr<P2> prm2_;
     Ptr<P3> prm3_;
     Ptr<P4> prm4_;
-    ParamVector t_;
+    std::vector<Ptr<Params>> t_;
     void set_t();
   };
   //------------------------------------------------------------
 
   template <class P1, class P2, class P3, class P4>
   void ParamPolicy_4<P1, P2, P3, P4>::set_t() {
-    t_ = ParamVector(4);
+    t_ = std::vector<Ptr<Params>>(4);
     t_[0] = prm1_;
     t_[1] = prm2_;
     t_[2] = prm3_;

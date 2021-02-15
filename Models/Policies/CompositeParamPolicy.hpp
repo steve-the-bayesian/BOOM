@@ -55,15 +55,15 @@ namespace BOOM {
     template <class Fwd>
     void set_models(Fwd b, Fwd e);
 
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector() const override;
+    std::vector<Ptr<Params>> parameter_vector() override;
+    const std::vector<Ptr<Params>> parameter_vector() const override;
 
     void add_params(const Ptr<Params> &);
 
    private:
     bool have_model(const Ptr<Model> &) const;
     std::vector<Ptr<Model> > models_;
-    ParamVector t_;
+    std::vector<Ptr<Params>> t_;
   };
 
   template <class Fwd>
@@ -72,7 +72,7 @@ namespace BOOM {
     std::copy(b, e, back_inserter(models_));
     t_.clear();
     for (uint i = 0; i < models_.size(); ++i) {
-      ParamVector tmp(models_[i]->parameter_vector());
+      std::vector<Ptr<Params>> tmp(models_[i]->parameter_vector());
       std::copy(tmp.begin(), tmp.end(), back_inserter(t_));
     }
   }

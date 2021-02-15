@@ -80,7 +80,7 @@ namespace BOOM {
     }
   }  // namespace
 
-  ParamVector Base::parameter_vector() {
+  std::vector<Ptr<Params>> Base::parameter_vector() {
     std::vector<Ptr<Params>> ans;
     if (observation_model()) {
       concatenate_parameter_vectors(
@@ -92,7 +92,7 @@ namespace BOOM {
     return ans;
   }
 
-  const ParamVector Base::parameter_vector() const {
+  const std::vector<Ptr<Params>> Base::parameter_vector() const {
     std::vector<Ptr<Params>> ans;
     if (observation_model()) {
       concatenate_parameter_vectors(

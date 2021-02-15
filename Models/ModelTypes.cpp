@@ -34,7 +34,7 @@ namespace BOOM {
   Model::Model(const Model &) : RefCounted() {}
 
   Vector Model::vectorize_params(bool minimal) const {
-    ParamVector prm(parameter_vector());
+    std::vector<Ptr<Params>> prm(parameter_vector());
     uint nprm = prm.size();
     uint N(0), nmax(0);
     for (uint i = 0; i < nprm; ++i) {
@@ -53,7 +53,7 @@ namespace BOOM {
   }
 
   void Model::unvectorize_params(const Vector &v, bool minimal) {
-    ParamVector prm(parameter_vector());
+    std::vector<Ptr<Params>> prm(parameter_vector());
     Vector::const_iterator b = v.begin();
     for (uint i = 0; i < prm.size(); ++i) b = prm[i]->unvectorize(b, minimal);
   }
@@ -139,7 +139,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   //============================================================
   void LoglikeModel::mle() {
     LoglikeTF loglike(this);

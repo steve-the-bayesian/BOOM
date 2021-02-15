@@ -90,8 +90,8 @@ namespace BOOM {
       const Ptr<UnivParams> B_prm(bool check = true) const;
       const Ptr<ConstrainedVectorParams> D_prm(bool check = true) const;
       const Ptr<ConstrainedVectorParams> Beta_prm(bool check = true) const;
-      ParamVector parameter_vector() override;
-      const ParamVector parameter_vector() const override;
+      std::vector<Ptr<Params>> parameter_vector() override;
+      const std::vector<Ptr<Params>> parameter_vector() const override;
 
       double a() const;
       double b() const;

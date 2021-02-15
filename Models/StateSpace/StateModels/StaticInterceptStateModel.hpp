@@ -100,9 +100,11 @@ namespace BOOM {
     // following pure virtual functions declared in ModelTypes.hpp need to be
     // overridden with no-ops.
 
-    ParamVector parameter_vector() override { return ParamVector(); }
-    const ParamVector parameter_vector() const override {
-      return ParamVector();
+    std::vector<Ptr<Params>> parameter_vector() override {
+      return std::vector<Ptr<Params>>();
+    }
+    const std::vector<Ptr<Params>> parameter_vector() const override {
+      return std::vector<Ptr<Params>>();
     }
     void add_data(const Ptr<Data> &) override {}
     void clear_data() override {}

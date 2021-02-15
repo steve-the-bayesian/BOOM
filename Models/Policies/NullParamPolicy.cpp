@@ -26,6 +26,12 @@ namespace BOOM {
 
   NPP &NPP::operator=(const NPP &) { return *this; }
 
-  ParamVector NPP::parameter_vector() { return ParamVector(); }
-  const ParamVector NPP::parameter_vector() const { return ParamVector(); }
+  std::vector<Ptr<Params>> NPP::parameter_vector() {
+    return std::vector<Ptr<Params>>();
+  }
+
+  const std::vector<Ptr<Params>> NPP::parameter_vector() const {
+    return std::vector<Ptr<Params>>();
+  }
+
 }  // namespace BOOM

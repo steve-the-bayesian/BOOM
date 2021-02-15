@@ -66,7 +66,7 @@ namespace BOOM {
       // contains imputed latent data
       mutable Vector tmpbeta;
       mutable double ans;
-      ParamVector t;
+      std::vector<Ptr<Params>> t;
       void logp_sub(const Ptr<Subject> &s) const;
     };
     void ItemDafeTF::logp_sub(const Ptr<Subject> &s) const {
