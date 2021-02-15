@@ -1,5 +1,10 @@
 language: C++
 
+branches:
+  only:
+    - master
+    - dev
+
 addons:
   apt:
     sources:
@@ -15,4 +20,4 @@ before_install:
 
 
 script:
-  - bazel test //Bmath/... //LinAlg/... //Models/... //Samplers/... //TargetFun/... //cpputil/... //distributions/... //numopt/... //stats/...
+  - bazel test //LinAlg/... //Models/... //Samplers/... //cpputil/... //distributions/... //stats/...
