@@ -90,6 +90,7 @@ cc_test(
     name = "multivariate_state_space_regression_test",
     srcs = ["multivariate_state_space_regression_test.cc"],
     copts = COPTS,
+    size = "large",
     deps = [
         "//:boom",
         "//:boom_test_utils",
