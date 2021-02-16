@@ -36,8 +36,8 @@ namespace BOOM {
     NullParamPolicy &operator=(const NullParamPolicy &);
 
     // over-rides for abstract base Model
-    ParamVector parameter_vector() override;
-    const ParamVector parameter_vector() const override;
+    std::vector<Ptr<Params>> parameter_vector() override;
+    const std::vector<Ptr<Params>> parameter_vector() const override;
   };
 
 }  // namespace BOOM

@@ -9,11 +9,11 @@ namespace {
   using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
-  
+
   class StudentLocalLinearTrendStateModelTest : public ::testing::Test {
    protected:
     StudentLocalLinearTrendStateModelTest()
-        : time_dimension_(300)
+        : time_dimension_(600)
     {
       GlobalRng::rng.seed(8675309);
       double initial_level = 0.0;
@@ -38,5 +38,5 @@ namespace {
     state_space.AddState(modules_);
     state_space.Test(niter, time_dimension_, burn);
   }
-  
+
 }  // namespace

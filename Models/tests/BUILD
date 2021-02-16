@@ -16,6 +16,7 @@ cc_test(
     copts = COPTS,
     includes = ["@gtest"],
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -23,6 +24,7 @@ cc_test(
     srcs = ["exponential_increment_model_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -30,6 +32,7 @@ cc_test(
     srcs = ["independent_mvn_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -37,6 +40,7 @@ cc_test(
     srcs = ["matrix_normal_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -44,6 +48,7 @@ cc_test(
     srcs = ["multinomial_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -51,4 +56,5 @@ cc_test(
     srcs = ["spddata_test.cc"],
     copts = COPTS,
     deps = COMMON_DEPS,
+    size = "small",
 )

@@ -65,8 +65,8 @@ namespace BOOM {
 
     //----------- parameter interface  ---------------------
     // implemented in ParmPolicy
-    virtual ParamVector parameter_vector() = 0;
-    virtual const ParamVector parameter_vector() const = 0;
+    virtual std::vector<Ptr<Params>> parameter_vector() = 0;
+    virtual const std::vector<Ptr<Params>> parameter_vector() const = 0;
 
     virtual Vector vectorize_params(bool minimal = true) const;
     virtual void unvectorize_params(const Vector &v, bool minimal = true);

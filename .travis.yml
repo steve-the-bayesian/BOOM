@@ -1,5 +1,24 @@
 language: C++
 
+dist: bionic
+
+branches:
+  only:
+    - master
+    - dev
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - curl
+
+before_install:
+  - sudo apt-get install openjdk-8-jdk
+  - echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
+  - curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+  - sudo apt-get update && sudo apt-get install bazel
+
 script:
-  - bazel test //Bmath/... //LinAlg/... //Models/... //Samplers/... //TargetFun/... //cpputil/... //distributions/... //numopt/... //stats/...
-	
+  - bazel test -c opt --verbose_failures //LinAlg/... //Models/... //Samplers/... //cpputil/... //distributions/... //stats/...

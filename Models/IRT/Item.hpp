@@ -124,9 +124,11 @@ namespace BOOM {
       }
       double pdf(const Ptr<Data> &, bool) const override { return 0.0; }
       double pdf(const Ptr<Subject> &, bool) const override { return 0.0; }
-      ParamVector parameter_vector() override { return ParamVector(); }
-      const ParamVector parameter_vector() const override {
-        return ParamVector();
+      std::vector<Ptr<Params>> parameter_vector() override {
+        return std::vector<Ptr<Params>>();
+      }
+      const std::vector<Ptr<Params>> parameter_vector() const override {
+        return std::vector<Ptr<Params>>();
       }
       void initialize_params() {}
       void add_data(const Ptr<Data> &) override {}

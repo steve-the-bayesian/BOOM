@@ -148,7 +148,7 @@ namespace BOOM{
   //   list of the classes associated with r_object, and an indicator of whether
   //   the object was NULL.
   void ReportBadClass(const std::string &error_message, SEXP r_object);
-  
+
   // Returns a pair, with .first set to the number of rows, and
   // .second set to the number of columns.  If the argument is not a
   // matrix then an exception will be thrown.
@@ -188,7 +188,7 @@ namespace BOOM{
   //   that dimension.
   SEXP SetDimnames(SEXP r_array,
                    const std::vector<std::vector<std::string>> &dimnames);
-  
+
   // Returns a vector of dimensions for an R multi-way array.  If the
   // argument is not an array, then an exception will be thrown.
   std::vector<int> GetArrayDimensions(SEXP array);
@@ -212,7 +212,7 @@ namespace BOOM{
   // elements of v are observed.  This is equivalent to the R expression
   // !is.na(v).
   Selector FindNonNA(const ConstVectorView &v);
-  
+
   // If 'r_matrix' is an R matrix, it is converted to a BOOM::Matrix.
   // Otherwise an exception will be thrown.  ToBoomMatrix makes a copy
   // of the underlying memory.  ToBoomMatrixView accesses the memory
@@ -267,7 +267,7 @@ namespace BOOM{
   // Convert an R Date object (singleton or vector) to a BOOM Date.
   Date ToBoomDate(SEXP r_Date);
   std::vector<Date> ToBoomDateVector(SEXP r_Dates);
-  
+
   // Convert a BOOM vector, matrix, or array to its R equivalent.
   // Less type checking is needed for these functions than in the
   // other direction because we know the type of the input.
@@ -275,7 +275,7 @@ namespace BOOM{
   SEXP ToRMatrix(const Matrix &boom_matrix);
   SEXP ToRArray(const ConstArrayView &boom_array);
   SEXP AllocateArray(const std::vector<int> &array_dimensions);
-  
+
   // Convert a std::vector<int> to an R vector of integers.  A common case is
   // when the first argument contains a vector of positions in the C++
   // zero-offset system for indexing arrays.  In that case you can set add_one =
@@ -325,7 +325,7 @@ namespace BOOM{
     std::vector<std::string> labels() const { return levels_->labels(); }
 
     // Allocates and returns a vector of categorical data objects.
-    std::vector<Ptr<CategoricalData> > vector_of_observations() const;
+    std::vector<Ptr<LabeledCategoricalData>> vector_of_observations() const;
 
     const Ptr<CatKey> & key() const {return levels_;}
 
@@ -403,7 +403,7 @@ namespace BOOM{
   // A functor representing a scalar-valued function of a single Vector valued
   // argument.  The canonical use case for this class is for users to be able to
   // define a log density in R and pass it to a PosteriorSampler in BOOM.  This
-  // approach will be much slower than defining everything in C++, but it is a 
+  // approach will be much slower than defining everything in C++, but it is a
   // helpful tool in exposing C++ libraries to R.
   class RVectorFunction {
    public:
@@ -421,11 +421,11 @@ namespace BOOM{
     // function's environment with an ugly name.  The destructor should remove
     // this object.
     ~RVectorFunction();
-    
+
     // Evaluate the function at x.
     double evaluate(const Vector &x);
     double operator()(const Vector &x) { return evaluate(x); }
-    
+
    private:
     // The name of the function as it exists in R.
     std::string function_name_;
@@ -442,7 +442,7 @@ namespace BOOM{
     std::string call_string_;
   };
 
-  
+
   // Returns true if the user has requested an interrupt.
   bool RCheckInterrupt();
 

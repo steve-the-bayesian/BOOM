@@ -9,6 +9,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -20,6 +21,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -31,6 +33,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -42,6 +45,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -53,6 +57,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -64,6 +69,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -75,6 +81,7 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )
 
 cc_test(
@@ -86,4 +93,5 @@ cc_test(
         "//:boom_test_utils",
         "@gtest//:gtest_main",
     ],
+    size = "small",
 )

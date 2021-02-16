@@ -38,7 +38,7 @@ namespace BOOM {
     double value_;
     double *source_;
   };
-  
+
   class Params;
   class ParamHolder {
    public:
@@ -62,14 +62,13 @@ namespace BOOM {
   // For holding and restoring a vector of parameters.
   class ParamVectorHolder {
    public:
-    typedef std::vector<Ptr<Params> > ParamVector;
-    ParamVectorHolder(const ParamVector &held, Vector &Wsp);
-    ParamVectorHolder(const Vector &x, const ParamVector &held, Vector &Wsp);
+    ParamVectorHolder(const std::vector<Ptr<Params>> &held, Vector &Wsp);
+    ParamVectorHolder(const Vector &x, const std::vector<Ptr<Params>> &held, Vector &Wsp);
     ~ParamVectorHolder();
 
    private:
     Vector &v;
-    ParamVector prm;
+    std::vector<Ptr<Params>> prm;
   };
 }  // namespace BOOM
 #endif  // BOOM_PARAM_HOLDER_HPP
