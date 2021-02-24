@@ -2,3 +2,6 @@ python_package/*
 rpackage/*
 TAGS
 *__pycache__
+*.o
+*~
+bazel-*
