@@ -17,8 +17,8 @@ BstsOptions(save.state.contributions = TRUE,
                 fallback.probability = 0.0,
                 eigenvalue.fudge.factor = 0.01),
             timeout.seconds = Inf,
-            save.full.state = FALSE)
-
+            save.full.state = FALSE,
+            ignore.gaps = FALSE)
 }
 
 \arguments{
@@ -73,6 +73,11 @@ BstsOptions(save.state.contributions = TRUE,
     3-way array with dimenions corresponding to MCMC iteration, state
     dimension, and time.}
 
+  \item{ignore.gaps}{Logical.  If \code{TRUE} then bsts will treat
+    observations in the training data as sequential, even if there are
+    irregular gaps in the observed time stamps.  If \code{FALSE} then
+    bsts will inject missing values in between irregularly spaced time
+    stamps in an attempt to construct a regular time grid.}
 }
 
 \value{

@@ -201,7 +201,8 @@ bsts <- function(formula,
     ## section above.
     data <- NULL
   }
-  timestamp.info <- TimestampInfo(response, data, timestamps)
+  timestamp.info <- TimestampInfo(response, data, timestamps,
+                                  ignore.gaps = model.options$ignore.gaps)
   formatted.data.and.options <- .FormatBstsDataAndOptions(
       family, response, predictors, model.options, timestamp.info)
   data.list <- formatted.data.and.options$data.list
@@ -324,7 +325,8 @@ BstsOptions <- function(save.state.contributions = TRUE,
                             fallback.probability = 0.0,
                             eigenvalue.fudge.factor = 0.01),
                         timeout.seconds = Inf,
-                        save.full.state = FALSE) {
+                        save.full.state = FALSE,
+                        ignore.gaps = FALSE) {
   ## A collection of somewhat more obscure options that can be used to control a
   ## bsts model.
   ##
@@ -374,6 +376,9 @@ BstsOptions <- function(save.state.contributions = TRUE,
   ##     models are used, so the default is to not save the full state.  If
   ##     saved, the state is stored as a 3-way array with indices
   ##     [mcmc.iteration, state.dimension, time.dimension]
+  ##   ignore.gaps: Logical.  If TRUE then the model will not fill in gaps
+  ##     between irregularly space time points.  It will treat time points as
+  ##     sequential.
   bma.method <- match.arg(bma.method)
   stopifnot(is.logical(save.state.contributions),
             length(save.state.contributions) == 1)
@@ -394,7 +399,8 @@ BstsOptions <- function(save.state.contributions = TRUE,
               bma.method = bma.method,
               oda.options = oda.options,
               timeout.seconds = timeout.seconds,
-              save.full.state = save.full.state)
+              save.full.state = save.full.state,
+              ignore.gaps = ignore.gaps)
   class(ans) <- "BstsOptions"
   return(ans)
 }

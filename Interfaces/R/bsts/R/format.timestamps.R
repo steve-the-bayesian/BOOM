@@ -16,7 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
+TimestampInfo <- function(response, data = NULL, timestamps = NULL, ignore.gaps = FALSE) {
   ## Args:
   ##   response: A vector or matrix.  If the response is a zoo object with
   ##     timestamps then the timestamps will be processed.
@@ -26,6 +26,8 @@ TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
   ##     provided otherwise.
   ##   timestamps: A vector of user-supplied timestamps (of the same length as
   ##     'response'), or NULL.
+  ##   ignore.gaps: scalar logical.  If TRUE then the timestamps will be treated
+  ##     as trivial even if there are irregular time gaps between observations.
   ##
   ## Returns:
   ##   An object of class TimestampInfo, which is a list containing the
@@ -39,7 +41,7 @@ TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
   ##   * number.of.time.points: The number of unique time points contained in
   ##       the data, including any skipped time points containing no
   ##       observations.
-  ## 
+  ##
   ##   * timestamps: the time stamps taken from the original response or zoo
   ##       data frame containing the data.  This might be NULL.  It might also
   ##       contain duplicate values.
@@ -71,6 +73,14 @@ TimestampInfo <- function(response, data = NULL, timestamps = NULL) {
                 number.of.time.points = as.integer(number.of.time.points),
                 timestamps = 1:number.of.observations,
                 regular.timestamps = 1:number.of.time.points)
+  } else if (ignore.gaps) {
+    ## If the user explicitly asks us to ignore gaps between data then do so.
+    number.of.time.points <- number.of.observations
+    stopifnot(number.of.time.points > 0)
+    ans <- list(timestamps.are.trivial = TRUE,
+                number.of.time.points = as.integer(number.of.time.points),
+                timestamps = timestamps,
+                regular.timestamps = timestamps)
   } else {
     ## If timestamps were passed then process them.
     stopifnot(number.of.observations == length(timestamps))
