@@ -309,4 +309,11 @@ namespace BOOM {
     return ans;
   }
 
+  Vector StateSpaceLogitModel::simulation_filter_step(
+      const Vector &prior_state, int update_time,
+      int num_mcmc, RNG &rng) const {
+    report_error("Simulation filter step is not implemented for logit models.");
+    return Vector(0);
+  }
+
 }  // namespace BOOM

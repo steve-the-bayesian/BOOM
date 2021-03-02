@@ -286,4 +286,49 @@ namespace BOOM {
     return nu > 2 ? sigsq * nu / (nu - 2) : sigsq * 1e+8;
   }
 
+  // TODO(steve): There are lots of optimization opportunities here.  (1) Handle
+  // the repeated matrix decompositions with woodbury updates.  (2) Analytically
+  // integrate out the normal bit instead of relying on MCMC.
+  //
+  // TODO(steve): This is incorrect if the state transition equation is
+  // non-Gaussian.
+  Vector SSSRM::simulation_filter_step(const Vector &prior_state, int update_time,
+                                       int num_mcmc, RNG &rng) const {
+
+    const Ptr<AugmentedData> &data_point(dat()[update_time]);
+    if (data_point->missing() != Data::observed) {
+      return simulate_next_state(rng, prior_state, update_time);
+    } else {
+      double weight = 1.0;
+      Vector state = prior_state;
+      SpdMatrix state_precision = SpdMatrix(state_variance_matrix(
+          update_time - 1)->dense()).inv();
+      Vector observation_coefficients = observation_matrix(update_time).dense();
+      double y = adjusted_observation(update_time);
+      double sigsq = observation_model()->sigsq();
+      double student_df = observation_model()->nu();
+      Vector weighted_prior_mean =
+          state_precision * (*state_transition_matrix(update_time - 1)
+                             * prior_state);
+
+      for (int iteration = 0; iteration < num_mcmc; ++iteration) {
+        // Step 1: draw the normal part given the weight.
+        SpdMatrix posterior_precision = state_precision;
+        posterior_precision.add_outer(observation_coefficients, weight / sigsq);
+        state = rmvn_suf_mt(
+            rng,
+            posterior_precision,
+            weighted_prior_mean + observation_coefficients * (y * weight / sigsq));
+
+        // Step 2: draw the weight given the normal part.
+        double squared_residual = square(
+            y - observation_coefficients.dot(state)) / sigsq;
+        weight = rgamma_mt(rng,
+                           (student_df + 1) / 2.0,
+                           (student_df + squared_residual) / 2.0);
+      }
+      return state;
+    }
+  }
+
 }  // namespace BOOM

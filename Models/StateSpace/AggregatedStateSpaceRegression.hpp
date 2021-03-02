@@ -319,6 +319,9 @@ namespace BOOM {
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
 
+    Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                  int num_mcmc, RNG &rng) const override;
+
    private:
     Ptr<RegressionModel> regression_;
     Ptr<GaussianModel> observation_model_;

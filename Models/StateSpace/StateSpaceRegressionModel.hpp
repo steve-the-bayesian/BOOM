@@ -169,6 +169,9 @@ namespace BOOM {
     void add_multiplexed_data(
         const Ptr<StateSpace::MultiplexedRegressionData> &dp);
 
+    Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                  int num_mcmc, RNG &rng) const override;
+
    private:
     // The regression model holds the regression coefficients and the
     // observation error variance.

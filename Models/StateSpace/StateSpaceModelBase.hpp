@@ -648,6 +648,18 @@ namespace BOOM {
     // computed as a by-product.
     void kalman_filter() override;
 
+    // Return a draw of the state at time 'update_time' given the state at time
+    // 'update_time - 1' and the data at time 'update_time'.  For Gaussian
+    // models this can be done directly.  For models based on mixtures of
+    // Gaussians it requires Gibbs sampling.  For those models 'num_mcmc' steps
+    // will be taken.
+    //
+    // This function does not change any Filter objects maintained by the model.
+    // A prerequisite of this function is update_time >= 1 and that data up to
+    // 'update_time' have been assigned to the model.
+    virtual Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                          int num_mcmcm, RNG &rng) const = 0;
+
     // Returns the vector of one step ahead prediction errors for the training
     // data.
     Vector one_step_prediction_errors(bool standardize = false);

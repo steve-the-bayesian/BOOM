@@ -86,7 +86,7 @@ namespace BOOM {
 
     // Return the vector of one-step-ahead predictions errors from a
     // holdout sample, following immediately after the training data.
-    // 
+    //
     // Args:
     //   holdout_y: The vector of holdout data, assumed to follow immediately
     //     after the training data.
@@ -131,6 +131,9 @@ namespace BOOM {
     void update_observation_model_gradient(
         VectorView gradient, int t, double observation_error_mean,
         double observation_error_variance) override;
+
+    Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                  int num_mcmc, RNG &rng) const override;
 
    private:
     Ptr<ZeroMeanGaussianModel> observation_model_;

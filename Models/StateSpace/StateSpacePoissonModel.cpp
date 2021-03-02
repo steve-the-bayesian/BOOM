@@ -322,4 +322,11 @@ namespace BOOM {
     return ans;
   }
 
+  Vector SSPM::simulation_filter_step(const Vector &prior_state, int update_time,
+                                      int num_mcmc, RNG &rng) const {
+    report_error("The simulation_filter_step member function is not implemented "
+                 "for Poisson models.");
+    return Vector(0);
+  }
+
 }  // namespace BOOM

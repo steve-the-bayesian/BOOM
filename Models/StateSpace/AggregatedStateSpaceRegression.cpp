@@ -588,4 +588,14 @@ namespace BOOM {
     return ans;
   }
 
+  Vector ASSR::simulation_filter_step(
+      const Vector &prior_state,
+      int update_time,
+      int num_mcmc,
+      RNG &rng) const {
+    report_error("Member function simulation_filter_step is not implemented for"
+                 "AggregatedStateSpaceRegression.");
+    return Vector(0);
+  }
+
 }  // namespace BOOM

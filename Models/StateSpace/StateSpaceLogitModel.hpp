@@ -253,6 +253,10 @@ namespace BOOM {
         const Vector &successes, const Vector &trials, const Matrix &predictors,
         const Vector &final_state);
 
+    Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                  int num_mcmc, RNG &rng) const override;
+
+
    private:
     Ptr<BinomialLogitModel> observation_model_;
   };

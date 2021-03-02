@@ -154,6 +154,9 @@ namespace BOOM {
                                               const Vector &final_state,
                                               bool standardize = false);
 
+    Vector simulation_filter_step(const Vector &prior_state, int update_time,
+                                  int num_mcmc, RNG &rng) const override;
+
    private:
     // Returns the marginal variance of the student error distribution.  If the
     // 'nu' degrees of freedom parameter <= 2 this is technically infinity, but

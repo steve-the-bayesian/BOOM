@@ -300,4 +300,32 @@ namespace BOOM {
     return ans;
   }
 
+  // Simulate the state at time 'update_time' given the preceding state and the
+  // data at 'update_time'.
+  Vector SSRM::simulation_filter_step(const Vector &prior_state, int update_time,
+                                      int num_mcmc, RNG &rng) const {
+    const Ptr<MRD> &data_point(dat()[update_time]);
+    if (data_point->total_sample_size() != 1) {
+      report_error("Simulation filter not implemented for multiplexed data.");
+      return Vector(0);
+    } else if (data_point->observed_sample_size() == 0) {
+      return simulate_next_state(rng, prior_state, update_time);
+    } else {
+      // This is the usual case with one observed value.
+      SpdMatrix state_precision = state_variance_matrix(update_time - 1)->dense().inv();
+
+      // TODO(steve): This can be made faster using the Woodbury formula.
+      Vector observation_coefficients = observation_matrix(update_time).dense();
+      double y = adjusted_observation(update_time);
+      double sigsq = observation_model()->sigsq();
+      SpdMatrix posterior_precision = state_precision;
+      posterior_precision.add_outer(observation_coefficients, 1.0 / sigsq);
+      return rmvn_suf_mt(
+          rng,
+          posterior_precision,
+          state_precision * (*state_transition_matrix(update_time - 1) *prior_state)
+          + observation_coefficients * (y / sigsq));
+    }
+  }
+
 }  // namespace BOOM
