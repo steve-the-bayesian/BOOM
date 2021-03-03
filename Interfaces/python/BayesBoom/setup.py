@@ -2,7 +2,6 @@ from setuptools import setup, Extension, find_packages, find_namespace_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
-import os
 from glob import glob
 import distutils.ccompiler
 
@@ -26,6 +25,7 @@ __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 # into a build directory in a way that will make setup.py happy.  This file is
 # intended to be run by that build script, and not directly from the
 # repository.
+
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -400,6 +400,10 @@ class BuildExt(build_ext):
 
 
 def FindPackagesAndBlab():
+    """
+    Find the sub-packages to be installed, and blab about them in print
+    statements during the build process.
+    """
     # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils",
     # "boom/pybind11"]
     packages = find_namespace_packages(include=["BayesBoom.*"],
