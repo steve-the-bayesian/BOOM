@@ -74,6 +74,10 @@ class LocalLinearTrendStateModel(StateModel):
     def state_error_dimension(self):
         return 2
 
+    @property
+    def state_contribution(self):
+        return self._state_contribution
+
     def allocate_space(self, niter, time_dimension):
         self.sigma_level = np.empty(niter)
         self.sigma_slope = np.empty(niter)
@@ -82,7 +86,7 @@ class LocalLinearTrendStateModel(StateModel):
     def record_state(self, iteration, state_matrix):
         self.sigma_level[iteration] = self._state_model.sigma_level
         self.sigma_slope[iteration] = self._state_model.sigma_slope
-        self.state_contribution[iteration, :] = state_matrix[
+        self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
     def _set_posterior_sampler(
