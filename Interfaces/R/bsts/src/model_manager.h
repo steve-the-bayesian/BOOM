@@ -256,6 +256,19 @@ namespace BOOM {
       virtual Matrix Forecast(SEXP r_bsts_object, SEXP r_prediction_data,
                               SEXP r_burn, SEXP r_observed_data);
 
+      // Update the latent state of a bsts object (without updating the
+      // parameters). The updated state draws are filtered, but not smoothed.
+      // Args:
+      //   r_bsts_object: The R object created from a previous call to bsts().
+      //   r_update_data: The R data structure appropriate to the model type.
+      //     For scalar models this is a vector.  Otherwise it is a data frame.
+      //     For Poisson or binomial models it can be a 2-column matrix.
+      //
+      // Returns:
+      //   An R list containing additional columns for "state contributions",
+      //   and an updated matrix for "final.state"
+      Matrix Update(SEXP r_bsts_object, SEXP r_update_data);
+
      private:
       // If the model contains a dynamic regression component then unpack the
       // predictors and tack them on the end of the dynamic regression state
@@ -296,12 +309,18 @@ namespace BOOM {
           SEXP r_options,
           RListIoManager *io_manager) = 0;
 
-      // This function must not be called before UnpackForecastData.  It takes
-      // the current state of the model held by the child classes, along with
-      // the data obtained by UnpackForecastData(), and simulates one draw from
-      // the posterior predictive forecast distribution.
+      // Args:
+      //   final_state: Simulated state vector as of the last time point to have
+      //     been Kalman filtered.
+      //
+      // Returns:
+      //   A draw from the posterior predictive distribution of the next "k"
+      //   time points, where "k" is determined by a call to
+      //   "UnpackForecastData".
+      //
+      // Prerequisites:
+      //   UnpackForecastData must have been called prior to calling this function.
       virtual Vector SimulateForecast(const Vector &final_state) = 0;
-
     };
 
     //=========================================================================

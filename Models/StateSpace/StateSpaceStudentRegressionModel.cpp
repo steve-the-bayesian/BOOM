@@ -301,28 +301,40 @@ namespace BOOM {
     } else {
       double weight = 1.0;
       Vector state = prior_state;
-      SpdMatrix state_precision = SpdMatrix(state_variance_matrix(
-          update_time - 1)->dense()).inv();
+
       Vector observation_coefficients = observation_matrix(update_time).dense();
       double y = adjusted_observation(update_time);
       double sigsq = observation_model()->sigsq();
+
+      Vector prior_state_mean =
+          *state_transition_matrix(update_time - 1) * prior_state;
+      double prior_predictive_mean = observation_coefficients.dot(
+          prior_state_mean);
+      double prior_residual = y - prior_predictive_mean;
+      const SparseKalmanMatrix *expander = state_error_expander(
+          update_time - 1);
+      Vector kalman_gain = expander->Tmult(observation_coefficients);
+      SpdMatrix innovation_prior_variance = state_error_variance(update_time - 1)->dense();
+      SpdMatrix innovation_prior_precision = SpdMatrix(state_error_variance(
+          update_time - 1)->dense()).inv();
       double student_df = observation_model()->nu();
-      Vector weighted_prior_mean =
-          state_precision * (*state_transition_matrix(update_time - 1)
-                             * prior_state);
 
+      // A = Z * R
       for (int iteration = 0; iteration < num_mcmc; ++iteration) {
-        // Step 1: draw the normal part given the weight.
-        SpdMatrix posterior_precision = state_precision;
-        posterior_precision.add_outer(observation_coefficients, weight / sigsq);
-        state = rmvn_suf_mt(
-            rng,
-            posterior_precision,
-            weighted_prior_mean + observation_coefficients * (y * weight / sigsq));
+        // Step 1, draw state given weight.
+        SpdMatrix innovation_posterior_precision = innovation_prior_precision;
+        innovation_posterior_precision.add_outer(kalman_gain, weight / sigsq);
 
-        // Step 2: draw the weight given the normal part.
-        double squared_residual = square(
-            y - observation_coefficients.dot(state)) / sigsq;
+        Vector innovation_weighted_posterior_mean =
+            kalman_gain * (prior_residual * weight / sigsq);
+        Vector innovation = rmvn_suf_mt(rng,
+                                        innovation_posterior_precision,
+                                        innovation_weighted_posterior_mean);
+        state = prior_state_mean + (*expander) * innovation;
+
+        // Step 2: draw weight given state.
+        double squared_residual =
+            square(y - observation_coefficients.dot(state)) / sigsq;
         weight = rgamma_mt(rng,
                            (student_df + 1) / 2.0,
                            (student_df + squared_residual) / 2.0);

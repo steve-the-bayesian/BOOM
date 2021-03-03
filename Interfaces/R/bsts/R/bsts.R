@@ -559,7 +559,14 @@ BstsOptions <- function(save.state.contributions = TRUE,
   }
   return(bsts.object)
 }
-
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param timestamp.info
+##' @param response
+##' @return
+##' @author Steve
 .ComputeOriginalSeries <- function(timestamp.info, response) {
   ## Computes the original series passed to the bsts function.  This is harder
   ## than it sounds, because the response has been massaged with as.numeric and

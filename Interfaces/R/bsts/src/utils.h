@@ -41,7 +41,7 @@ namespace BOOM {
     // not NA.
     std::vector<bool> IsObserved(SEXP r_vector);
     SelectorMatrix IsObserved(const Matrix &matrix);
-    
+
     //======================================================================
     // Record the state of a DynamicRegressionStateModel in the io_manager.
     // Args:
@@ -117,7 +117,7 @@ namespace BOOM {
           : model_(model),
             nseries_(nseries)
       {}
-      
+
       std::vector<int> dim() const override {
         return {model_->number_of_state_models(),
                 model_->time_dimension(),
@@ -133,12 +133,12 @@ namespace BOOM {
       void read_from_array(const ArrayView &view) override {
         report_error("State contributions should not be streamed.");
       }
-      
+
      private:
       const MultivariateStateSpaceModelBase *model_;
       const int nseries_;
     };
-    
+
     //======================================================================
     class DynamicInterceptStateContributionCallback
         : public MatrixIoCallback {

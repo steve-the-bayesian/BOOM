@@ -42,7 +42,7 @@ extern "C" {
       SEXP r_ping,
       SEXP r_timeout_in_seconds,
       SEXP r_seed);
-  
+
   SEXP analysis_common_r_predict_bsts_model_(
       SEXP r_bsts_object,
       SEXP r_prediction_data,
@@ -92,7 +92,12 @@ extern "C" {
       SEXP r_prediction_data,
       SEXP r_burn,
       SEXP r_seed);
-  
+
+  SEXP analysis_common_r_update_bsts_final_state_(
+      SEXP r_bsts_object,
+      SEXP r_update_data,
+      SEXP r_seed);
+
   static R_CallMethodDef bsts_arg_description[] = {
     CALLDEF(analysis_common_r_fit_bsts_model_, 9),
     CALLDEF(analysis_common_r_fit_dirm_, 7),
@@ -103,6 +108,7 @@ extern "C" {
     CALLDEF(analysis_common_r_get_date_ranges_, 2),
     CALLDEF(analysis_common_r_fit_multivariate_bsts_model_, 8),
     CALLDEF(analysis_common_r_predict_multivariate_bsts_model_, 4),
+    CALLDEF(analysis_common_r_update_bsts_final_state_, 3),
     {NULL, NULL, 0}  // NOLINT
   };
 

@@ -244,6 +244,61 @@ namespace BOOM {
       return ans;
     }
 
+    //===========================================================================
+    Matrix ScalarModelManager::Update(SEXP r_bsts_object, SEXP r_update_data) {
+      RListIoManager io_manager;
+      SEXP r_state_specfication = getListElement(
+          r_bsts_object, "state.specification");
+      ScalarStateSpaceModelBase *model = CreateModel(
+          R_NilValue,
+          r_state_specfication,
+          R_NilValue,
+          R_NilValue,
+          &io_manager);
+      /// NOTE: If this function is to be called successive times, then in R,
+      /// incremental data pased to the update function must be added to the
+      /// model object.
+      AddDataFromBstsObject(r_bsts_object);
+      int final_train_time = model->time_dimension();
+
+      if (Rf_isNull(r_update_data)) {
+        report_error("Update called with NULL update data.");
+      }
+      AddDataFromList(r_update_data);
+      int final_update_time = model->time_dimension();
+      int niter = Rf_asInteger(getListElement(r_bsts_object, "niter"));
+      io_manager.prepare_to_stream(r_bsts_object);
+
+      UnpackDynamicRegressionForecastData(r_update_data, model);
+      for (int s = 0; s < model->number_of_state_models(); ++s) {
+        model->state_model(s)->observe_time_dimension(final_update_time);
+      }
+
+      Matrix updated_final_state(niter, model->state_dimension());
+      for (int i = 0; i < niter; ++i) {
+        // std::cout << "streaming model state for iteration " << "i." << std::endl;
+        io_manager.stream();
+
+        // std::cout << "state error variance at one before final train time: \n"
+        //           << model->state_error_variance(final_train_time - 1);
+        // std::cout << "state error variance at final train time: \n"
+        //           << model->state_error_variance(final_train_time);
+        // std::cout << "state error variance at one after final train time: \n"
+        //           << model->state_error_variance(final_train_time + 1);
+
+        Vector final_state = this->final_state();
+        for (int t = final_train_time + 1; t < final_update_time; ++t) {
+          constexpr int num_mcmc = 5;
+          // Simulate a draw of the state at time t given the state at time t-1
+          // using num_mcmc draws.
+          final_state = model->simulation_filter_step(
+              final_state, t, num_mcmc, GlobalRng::rng);
+        }
+        updated_final_state.row(i) = final_state;
+      }
+      return updated_final_state;
+    }
+
     void ScalarModelManager::UnpackDynamicRegressionForecastData(
         SEXP r_prediction_data, ScalarStateSpaceModelBase *model) {
       SEXP r_dynamic_regression_predictors = getListElement(

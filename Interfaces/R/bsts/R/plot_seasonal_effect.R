@@ -86,28 +86,76 @@ PlotSeasonalEffect <- function(bsts.object,
     }
   }
 
-  opar <- par(mfrow = c(nr, nc))
+  if (nseasons > 12) {
+    opar <- par(mfrow = c(nr, nc), mar = rep(0, 4), oma = rep(4, 4))
+    row.number <- 1
+    col.number <- 1
+  } else {
+    opar <- par(mfrow = c(nr, nc))
+  }
   on.exit(par(opar))
+
   for (season in 1:nseasons) {
     time.index <- seq(from = 1 + (season - 1) * season.duration,
                       to = length(time),
                       by = nseasons * season.duration)
     season.effect <- effect[, time.index]
-    if (vary.ylim) {
-      ylim <- range(season.effect)
-    }
     dates <- time[time.index]
-    PlotDynamicDistribution(season.effect,
-                            dates,
-                            ylim = ylim,
-                            xlim = range(time),
-                            ...)
-    lines(dates, apply(season.effect, 2, median), col = "green")
-    if (inherits(dates, c("Date", "POSIXt")) && !is.null(get.season.name)) {
-      season.name <- get.season.name(dates[1])
-      title(main = season.name)
+    if (nseasons > 12) {
+      is.odd <- function(x) (x - 1)%%2 == 0
+      is.even <- function(x) x%%2 == 0
+      increment.cursor <- function(row, col, nr, nc) {
+        ## For use when moving through a matrix of plots.
+        ##
+        col <- col + 1
+        if (col > nc) {
+          col <- 1
+          row <- row + 1
+        }
+        return(c(row, col))
+      }
+
+      if (season > nseasons) {
+        plot(dates, rep(ylim, len = length(dates)), type="n", axes=FALSE)
+      }
+      PlotDynamicDistribution(season.effect, dates, ylim=ylim,
+                              xlim=range(time), axes=FALSE, ...)
+      lines(dates, apply(season.effect, 2, median), col = "green")
+      text(min(dates), max(ylim), paste("Season", season), pos = 4)
+
+      if (row.number == nr && is.odd(col.number)) {
+        axis.POSIXct(1, x = dates, xpd = NA, ...)
+
+      } else if (row.number == 1 && is.even(col.number)) {
+        axis.POSIXct(3, x = dates, xpd = NA, ...)
+      }
+
+      if (col.number == 1 && is.odd(row.number)) {
+        axis(2, xpd = NA, ...)
+      } else if ((col.number == nc || season == nseasons) && is.even(row.number)) {
+        axis(4, xpd = NA, ...)
+      }
+
+      cursor <- increment.cursor(row.number, col.number, nr, nc)
+      row.number <- cursor[1]
+      col.number <- cursor[2]
+
     } else {
-      title(main = paste("Season", season))
+      if (vary.ylim) {
+        ylim <- range(season.effect)
+      }
+      PlotDynamicDistribution(season.effect,
+                              dates,
+                              ylim = ylim,
+                              xlim = range(time),
+                              ...)
+      lines(dates, apply(season.effect, 2, median), col = "green")
+      if (inherits(dates, c("Date", "POSIXt")) && !is.null(get.season.name)) {
+        season.name <- get.season.name(dates[1])
+        title(main = season.name)
+      } else {
+        title(main = paste("Season", season))
+      }
     }
   }
   return(invisible(NULL))
@@ -129,13 +177,13 @@ PlotSeasonalEffect <- function(bsts.object,
 
 PlotDayOfWeekCycle <- function(bsts.object,
                                burn = SuggestBurn(.1, bsts.object),
-                               time = NULL, 
+                               time = NULL,
                                ylim = NULL,
                                state.specification = NULL,
                                ...) {
   ## Plots the time series of Sunday, Monday, Tuesday, ... effects in a time
   ## series model that was fit to daily data with a day-of-week seasonal
-  ## component.  
+  ## component.
   ##
   ## Args:
   ##   bsts.object: A bsts model that was fit using a Seasonal state component
@@ -175,7 +223,7 @@ PlotDayOfWeekCycle <- function(bsts.object,
   if (is.null(time)) {
     time <- bsts.object$timestamp.info$regular.timestamps
   }
-  
+
   screen.matrix <- .ScreenMatrix(nrow = 3, ncol = 3, top.margin = .12)
   ## Each row of screen.numbers corresponds to the coordinates given
   ## screen.matrix.  However, if split.screen was called before this those

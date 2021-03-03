@@ -231,21 +231,34 @@ namespace BOOM {
     if (data_point->all_missing() || data_point->total_sample_size() == 0) {
       return simulate_next_state(rng, prior_state, update_time);
     } else if (data_point->total_sample_size() == 1) {
-      // This is the usual case with one observed value.
-      SpdMatrix state_precision = SpdMatrix(state_variance_matrix(
-          update_time - 1)->dense()).inv();
+      // This is the usual case with one observed value.  The full state vector
+      // is not generally full rank, so we draw the state by drawing the state
+      // innovation errors at time t-1 and propagating them forward.
 
-      // TODO(steve): This can be made faster using the Woodbury formula.
       Vector observation_coefficients = observation_matrix(update_time).dense();
       double y = adjusted_observation(update_time);
       double sigsq = observation_model()->sigsq();
-      SpdMatrix posterior_precision = state_precision;
-      posterior_precision.add_outer(observation_coefficients, 1.0 / sigsq);
-      return rmvn_suf_mt(
-          rng,
-          posterior_precision,
-          state_precision * (*state_transition_matrix(update_time - 1) *prior_state)
-          + observation_coefficients * (y / sigsq));
+
+      Vector prior_state_mean = *state_transition_matrix(update_time - 1) * prior_state;
+      double prior_predictive_mean = observation_coefficients.dot(prior_state_mean);
+      double residual = y - prior_predictive_mean;
+
+      SpdMatrix innovation_prior_precision = SpdMatrix(state_error_variance(
+          update_time - 1)->dense()).inv();
+
+      // A = Z * R
+      const SparseKalmanMatrix *expander = state_error_expander(update_time - 1);
+      Vector kalman_gain = expander->Tmult(observation_coefficients);
+      SpdMatrix innovation_posterior_precision = innovation_prior_precision;
+      innovation_posterior_precision.add_outer(kalman_gain, 1.0 / sigsq);
+
+      Vector innovation_weighted_posterior_mean =
+          kalman_gain * residual / sigsq;
+      Vector innovation = rmvn_suf_mt(rng,
+                                      innovation_posterior_precision,
+                                      innovation_weighted_posterior_mean);
+      return prior_state_mean + (*expander) * innovation;
+
     } else {
       report_error("Simulation filter not implemented for multiplexed data.");
       return Vector(0);

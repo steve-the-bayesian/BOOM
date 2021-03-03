@@ -31,7 +31,7 @@ namespace BOOM {
       //   xdim:  The number of predictor variables in the regression model.
       DynamicInterceptModelManager(int xdim);
 
-      // Create a DynamicInterceptModelManager from a data list passed by R.  
+      // Create a DynamicInterceptModelManager from a data list passed by R.
       static DynamicInterceptModelManager *Create(SEXP r_data_list);
 
       // Create a new DynamicInterceptRegressionModel.
@@ -59,7 +59,7 @@ namespace BOOM {
           SEXP r_data_list,
           SEXP r_state_specification,
           SEXP r_prior,
-          SEXP r_options,  
+          SEXP r_options,
           RListIoManager *io_manager);
 
       // Args:
@@ -87,7 +87,7 @@ namespace BOOM {
       Matrix Forecast(SEXP r_dirm_object,
                       SEXP r_prediction_data,
                       SEXP r_burn,
-                      SEXP r_observed_data); 
+                      SEXP r_observed_data);
 
       // If the model contains any dynamic regression state components, the
       // model manager needs to know where they are located in the model, so
@@ -103,7 +103,7 @@ namespace BOOM {
           const std::vector<int> &positions) {
         dynamic_regression_state_positions_ = positions;
       }
-      
+
       // TODO(steve): Move dynamic_regression_state_positions to the right model
       // manager for dynamic regression models.
       //
@@ -117,7 +117,7 @@ namespace BOOM {
       int UnpackForecastData(SEXP r_prediction_data) override;
 
       Vector &final_state() {return final_state_;}
-      
+
    private:
       void AddData(const Vector &response, const Matrix &predictors,
                    const Selector &response_is_observed);
@@ -141,7 +141,7 @@ namespace BOOM {
 
       Ptr<DynamicInterceptRegressionModel> model_;
 
-      // The predictor matrix for forecasting.
+      // The predictor matrix for forecasting (or updating).
       Matrix forecast_predictors_;
 
       Vector final_state_;
@@ -151,8 +151,7 @@ namespace BOOM {
       // state models stored in the primary state space model.
       std::vector<int> dynamic_regression_state_positions_;
     };
-    
-  } // namespace bsts
-}  // namespace BOOM 
-#endif //  BSTS_DYNAMIC_INTERCEPT_MODEL_MANAGER_H_
 
+  } // namespace bsts
+}  // namespace BOOM
+#endif //  BSTS_DYNAMIC_INTERCEPT_MODEL_MANAGER_H_

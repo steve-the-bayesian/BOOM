@@ -24,7 +24,7 @@
 
 namespace BOOM {
   namespace bsts {
-    
+
     class StateSpaceStudentHoldoutErrorSampler
         : public HoldoutErrorSamplerImpl {
      public:
@@ -100,7 +100,6 @@ namespace BOOM {
       void AddDataFromList(SEXP r_data_list) override;
       int UnpackForecastData(SEXP r_prediction_data) override;
       Vector SimulateForecast(const Vector &final_state) override;
-
       void SetPredictorDimension(int xdim);
 
      private:
