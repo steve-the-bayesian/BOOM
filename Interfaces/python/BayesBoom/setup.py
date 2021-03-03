@@ -434,7 +434,7 @@ setup(
 
     The archetypal Boom program looks something like this:
 
-    import BoomBayes as Boom
+    import BayesBoom as Boom
 
     some_data = 3 * np.random.randn(100) + 7
     model = Boom.GaussianModel()
