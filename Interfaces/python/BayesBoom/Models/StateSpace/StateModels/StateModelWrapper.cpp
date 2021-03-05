@@ -35,10 +35,28 @@ namespace BayesBoom {
         .def_property_readonly(
             "state_dimension", &LocalLevelStateModel::state_dimension,
             "Dimension of the state vector.")
+        .def("set_sigma",
+             [](LocalLevelStateModel &model, double sigma) {
+               model.set_sigsq(sigma * sigma);
+             })
+        .def("set_sigsq",
+             [](LocalLevelStateModel &model, double sigsq) {
+               model.set_sigsq(sigsq);
+             })
         .def_property_readonly(
             "state_error_dimension",
             &LocalLevelStateModel::state_error_dimension,
             "Dimension of the innovation term.")
+        .def_property_readonly(
+            "initial_state_mean",
+            [](const LocalLevelStateModel &model) {
+              return model.initial_state_mean()[0];
+            })
+        .def_property_readonly(
+            "initial_state_variance",
+            [](const LocalLevelStateModel &model) {
+              return model.initial_state_variance()(0, 0);
+            })
         .def("set_initial_state_mean",
              [] (Ptr<LocalLevelStateModel> model, double mean) {
                model->set_initial_state_mean(mean);
@@ -95,6 +113,14 @@ namespace BayesBoom {
               return sqrt(model.Sigma()(1, 1));
             },
             "Innovation standard deviation for the slope component.")
+        .def("initial_state_mean",
+             [](const LocalLinearTrendStateModel &model) {
+               return model.initial_state_mean();
+             })
+        .def("initial_state_variance",
+             [](const LocalLinearTrendStateModel &model) {
+               return model.initial_state_variance();
+             })
         .def("set_initial_state_mean",
              &LocalLinearTrendStateModel::set_initial_state_mean,
              py::arg("mean"),
@@ -107,6 +133,18 @@ namespace BayesBoom {
              "Args:\n"
              "  variance:  SpdMatrix of dimension 2 giving the prior \n"
              "    variance of the state at time 0.")
+        .def("set_sigma_level",
+             [](LocalLinearTrendStateModel &state_model, double sigma) {
+               SpdMatrix variance(state_model.Sigma());
+               variance(0, 0) = sigma * sigma;
+               state_model.set_Sigma(variance);
+             })
+        .def("set_sigma_slope",
+             [](LocalLinearTrendStateModel &state_model, double sigma) {
+               SpdMatrix variance(state_model.Sigma());
+               variance(1, 1) = sigma * sigma;
+               state_model.set_Sigma(variance);
+             })
         .def("set_posterior_sampler",
              [](LocalLinearTrendStateModel &state_model,
                 GammaModelBase &level_sigma_prior,
@@ -156,6 +194,14 @@ namespace BayesBoom {
             "state_error_dimension",
             &SeasonalStateModel::state_error_dimension,
             "Dimension of the error term for this state component.")
+        .def_property_readonly(
+            "initial_state_mean", [](SeasonalStateModel &model) {
+              return model.initial_state_mean();
+            })
+        .def_property_readonly(
+            "initial_state_variance", [](SeasonalStateModel &model) {
+              return model.initial_state_variance();
+            })
         .def("set_initial_state_mean",
              &SeasonalStateModel::set_initial_state_mean,
              py::arg("mu"),
@@ -200,6 +246,12 @@ namespace BayesBoom {
             "state_error_dimension",
             &SemilocalLinearTrendStateModel::state_error_dimension,
             "Dimension of the error term for this state component.")
+        .def_property_readonly(
+            "initial_state_mean",
+            &SemilocalLinearTrendStateModel::initial_state_mean)
+        .def_property_readonly(
+            "initial_state_variance",
+            &SemilocalLinearTrendStateModel::initial_state_variance)
         .def("set_initial_level_mean",
              &SemilocalLinearTrendStateModel::set_initial_level_mean,
              "Set the prior mean of the level component at time 0.")
@@ -228,6 +280,22 @@ namespace BayesBoom {
             "slope_mean",
             &SemilocalLinearTrendStateModel::slope_mean,
             "Long term mean for the slope component.")
+        .def("set_level_sd",
+             [](SemilocalLinearTrendStateModel &model, double level_sd) {
+               model.set_level_sd(level_sd);
+             })
+        .def("set_level_sd",
+             [](SemilocalLinearTrendStateModel &model, double level_sd) {
+               model.set_level_sd(level_sd);})
+        .def("set_slope_sd",
+             [](SemilocalLinearTrendStateModel &model, double sd) {
+               model.set_slope_sd(sd);})
+        .def("set_slope_mean",
+             [](SemilocalLinearTrendStateModel &model, double slope) {
+               model.set_slope_mean(slope);})
+        .def("set_slope_ar_coefficient",
+             [](SemilocalLinearTrendStateModel &model, double ar) {
+               model.set_slope_ar_coefficient(ar);})
         ;
 
 

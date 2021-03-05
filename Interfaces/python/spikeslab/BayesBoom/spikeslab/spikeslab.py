@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import patsy
 import BayesBoom.boom as boom
-import BayesBoom.R
+import BayesBoom.R as R
 import scipy.sparse
 
 

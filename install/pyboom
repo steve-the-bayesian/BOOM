@@ -150,6 +150,9 @@ python3 setup.py sdist bdist_wheel
 # CC="ccache clang++" CXX="ccache"
 # pip3 --verbose install ./BayesBoom
 
+cd dist
+pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+
 ##----------------------------------------------------------------------
 ## Install the pure python packages
 # cd ..

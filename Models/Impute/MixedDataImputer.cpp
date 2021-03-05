@@ -288,10 +288,10 @@ namespace BOOM {
         return model_->logpi()[index];
       } else {
         return 0;
-        std::ostringstream err;
-        err << "Illegal level value: " << label << ".";
-        report_error(err.str());
-        return negative_infinity();
+        // std::ostringstream err;
+        // err << "Illegal level value: " << label << ".";
+        // report_error(err.str());
+        // return negative_infinity();
       }
     }
 

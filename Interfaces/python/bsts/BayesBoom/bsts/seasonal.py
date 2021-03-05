@@ -58,18 +58,9 @@ class SeasonalStateModel(StateModel):
         self._state_model.set_initial_state_variance(
             initial_state_prior.Sigma)
 
-        innovation_precision_prior = boom.ChisqModel(
-            innovation_sd_prior.sigma_guess,
-            innovation_sd_prior.sample_size)
-        state_model_sampler = boom.ZeroMeanGaussianConjSampler(
-            self._state_model,
-            innovation_precision_prior,
-            seeding_rng=boom.GlobalRng.rng)
-
-        state_model_sampler.set_sigma_upper_limit(
-            innovation_sd_prior.upper_limit)
-        self._state_model.set_method(state_model_sampler)
-
+        # The prior needs to be saved so the object can be serialized.
+        self.innovation_sd_prior = innovation_sd_prior
+        self._assign_posterior_sampler(innovation_sd_prior)
         self._state_contribution = None
 
     def __repr__(self):
@@ -103,6 +94,9 @@ class SeasonalStateModel(StateModel):
         self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
+    def restore_state(self, iteration):
+        self._state_model.set_sigma(self.sigma_draws[iteration])
+
     def plot_state_contribution(
             self, fig, gridspec, time, burn, ylim, **kwargs):
         if self.nseasons == 7 and self.season_duration == 1:
@@ -114,12 +108,61 @@ class SeasonalStateModel(StateModel):
                 fig=fig, gridspec=gridspec, time=time, burn=burn,
                 ylim=ylim, **kwargs)
 
+    def __getstate__(self):
+        payload = {
+            "state_index": self._state_index,
+            "nseasons": self._state_model.nseasons,
+            "season_duration": self._state_model.season_duration,
+            "initial_state_mean": self._state_model.initial_state_mean.to_numpy(),
+            "initial_state_variance":
+            self._state_model.initial_state_variance.to_numpy(),
+            "innovation_sd_prior": self.innovation_sd_prior.__getstate__()
+        }
+
+        if hasattr(self, "sigma_draws"):
+            payload["sigma_draws"] = self.sigma_draws
+        if hasattr(self, "_state_contribution"):
+            payload["state_contribution"] = self._state_contribution
+
+        return payload
+
+    def __setstate__(self, payload):
+        self._state_index = payload["state_index"]
+        self._state_contribution = payload.get("state_contribution", None)
+        self.sigma_draws = payload.get("sigma_draws", None)
+
+        self._state_model = boom.SeasonalStateModel(
+            nseasons=payload["nseasons"],
+            season_duration=payload["season_duration"]
+        )
+        self._state_model.set_initial_state_mean(
+            boom.Vector(payload["initial_state_mean"]))
+        self._state_model.set_initial_state_variance(
+            boom.SpdMatrix(payload["initial_state_variance"]))
+
+        self.innovation_sd_prior = R.SdPrior(1, 1)
+        self.innovation_sd_prior.__setstate__(payload["innovation_sd_prior"])
+        self._assign_posterior_sampler(self.innovation_sd_prior)
+
+
     @staticmethod
     def _default_sigma_prior(sdy):
         """
         The default prior to use for the innovation standard deviation.
         """
         return R.SdPrior(.01 * sdy, upper_limit=sdy)
+
+    def _assign_posterior_sampler(self, innovation_sd_prior: R.SdPrior):
+        innovation_precision_prior = boom.ChisqModel(
+            innovation_sd_prior.sigma_guess,
+            innovation_sd_prior.sample_size)
+        state_model_sampler = boom.ZeroMeanGaussianConjSampler(
+            self._state_model,
+            innovation_precision_prior,
+            seeding_rng=boom.GlobalRng.rng)
+        state_model_sampler.set_sigma_upper_limit(
+            innovation_sd_prior.upper_limit)
+        self._state_model.set_method(state_model_sampler)
 
     def _default_initial_state_prior(self, sdy):
         """

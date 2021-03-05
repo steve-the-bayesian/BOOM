@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import BayesBoom.R as R
+import numpy as np
 
 
 # ===========================================================================
@@ -64,7 +65,7 @@ class StateModel(ABC):
         """
 
     @abstractmethod
-    def record_state(self, iteration, state_matrix):
+    def record_state(self, iteration: int, state_matrix: np.ndarray):
         """
         Record the state of any model parameters, and the subset of the state
         vector associated with this model, so they can be analyzed later.
@@ -73,6 +74,16 @@ class StateModel(ABC):
           iteration:  The (integer) index of the MCMC iteration to be recorded.
           state_matrix: The current matrix containing state.  Each column is a
             state vector associated with the corresponding time point.
+
+        Effect:
+          The current state of the model parameters is stored.
+        """
+
+    @abstractmethod
+    def restore_state(self, iteration: int):
+        """
+        Restore the state of the managed boom state model to the requested
+        iteration.
         """
 
     @property

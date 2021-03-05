@@ -137,17 +137,25 @@ namespace BayesBoom {
              py::arg("sigma") = 1.0,
              "Args:\n"
              "  sigma:  Standard deviation of the distribution.")
-        .def("set_data", [](ZeroMeanGaussianModel &model, const Vector &data) {
-            for (const auto &el: data) {
-              NEW(DoubleData, data_point)(el);
-              model.add_data(data_point);
-            }
-          },
-          py::arg("data"),
-          "Assign the data in the supplied vector to the model.  \n"
-          "Args:\n"
-          "  data: a boom.Vector containing the data values."
-          )
+        .def("set_sigma",
+             [](ZeroMeanGaussianModel &model, double sigma) {
+               model.set_sigsq(sigma * sigma);
+             })
+        .def("set_sigsq",
+             [](ZeroMeanGaussianModel &model, double sigsq) {
+               model.set_sigsq(sigsq);
+             })
+        .def("set_data",
+             [](ZeroMeanGaussianModel &model, const Vector &data) {
+               for (const auto &el: data) {
+                 NEW(DoubleData, data_point)(el);
+                 model.add_data(data_point);
+               }
+             },
+             py::arg("data"),
+             "Assign the data in the supplied vector to the model.  \n"
+             "Args:\n"
+             "  data: a boom.Vector containing the data values.")
         ;
 
     py::class_<ZeroMeanGaussianConjSampler,
@@ -178,6 +186,14 @@ namespace BayesBoom {
              "Truncate the support for the standard deviation, so that it "
              "does not go above 'upper_limit'.\n"
              )
+        .def_property_readonly(
+            "sigma_prior_guess", [](ZeroMeanGaussianConjSampler &sampler) {
+              return sampler.sigma_prior_guess();
+            })
+        .def_property_readonly(
+            "sigma_prior_sample_size", [](ZeroMeanGaussianConjSampler &sampler) {
+              return sampler.sigma_prior_sample_size();
+            })
         ;
 
 

@@ -51,6 +51,18 @@ class SdPrior:
         import BayesBoom.boom as boom
         return boom.ChisqModel(self.sample_size, self.sigma_guess)
 
+    def __repr__(self):
+        ans = f"SdPrior with sigma_guess = {self.sigma_guess}, "
+        ans += f"sample_size = {self.sample_size}, "
+        ans += f"upper_limit = {self.upper_limit}"
+        return ans
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+
 
 class NormalPrior:
     def __init__(self,
@@ -77,6 +89,12 @@ class NormalPrior:
         """
         import BayesBoom.boom as boom
         return boom.GaussianModel(self.mu, self.sigma)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
 
 
 class Ar1CoefficientPrior:
@@ -116,3 +134,9 @@ class Ar1CoefficientPrior:
         """
         import BayesBoom.boom as boom
         return boom.GaussianModel(self.mu, self.sigma)
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload

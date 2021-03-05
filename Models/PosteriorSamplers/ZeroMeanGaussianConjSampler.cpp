@@ -54,6 +54,14 @@ namespace BOOM {
     return variance_sampler_.log_prior(model_->sigsq());
   }
 
+  double ZGS::sigma_prior_guess() const {
+    return variance_sampler_.sigma_prior_guess();
+  }
+
+  double ZGS::sigma_prior_sample_size() const {
+    return variance_sampler_.sigma_prior_sample_size();
+  }
+
   void ZGS::set_sigma_upper_limit(double sigma_upper_limit) {
     variance_sampler_.set_sigma_max(sigma_upper_limit);
   }

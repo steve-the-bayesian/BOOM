@@ -3,6 +3,7 @@ import numpy as np
 import BayesBoom.R as R
 from .state_models import StateModel
 
+
 class LocalLevelStateModel(StateModel):
     """
     The local level model assumes the data move as a noisy random walk.
@@ -64,9 +65,9 @@ class LocalLevelStateModel(StateModel):
         innovation_precision_prior = boom.ChisqModel(
             sigma_prior.sigma_guess,
             sigma_prior.sample_size)
-        state_model_sampler = self._state_model.set_posterior_sampler(
+        self._state_model_sampler = self._state_model.set_posterior_sampler(
             innovation_precision_prior)
-        state_model_sampler.set_sigma_upper_limit(sigma_prior.upper_limit)
+        self._state_model_sampler.set_sigma_upper_limit(sigma_prior.upper_limit)
         self._state_contribution = None
 
     def __repr__(self):
@@ -89,6 +90,42 @@ class LocalLevelStateModel(StateModel):
         self.state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
+    def restore_state(self, iteration):
+        self._state_model.set_sigma(self.sigma_draws[iteration])
+
     @property
     def state_contribution(self):
         return self._state_contribution
+
+    def __getstate__(self):
+        payload = {
+            "state_index": self._state_index,
+            "initial_state_mean": self._state_model.initial_state_mean,
+            "initial_state_variance": self._state_model.initial_state_variance,
+            "sigma_prior_guess": self._state_model_sampler.sigma_prior_guess,
+            "sigma_prior_sample_size": self._state_model_sampler.sigma_prior_sample_size,
+        }
+        if hasattr(self, "sigma_draws"):
+            payload["sigma_draws"] = self.sigma_draws
+        if hasattr(self, "_state_contribution"):
+            payload["state_contribution"] = self._state_contribution
+
+        return payload
+
+    def __setstate__(self, payload):
+        self._state_index = payload["state_index"]
+        if "sigma_draws" in payload.keys():
+            self.sigma_draws = payload["sigma_draws"]
+
+        if "state_contribution" in payload.keys():
+            self._state_contribution = payload["state_contribution"]
+
+        self._state_model = boom.LocalLevelStateModel()
+        self._state_model.set_initial_state_mean(payload["initial_state_mean"])
+        self._state_model.set_initial_state_variance(
+            payload["initial_state_variance"])
+        innovation_precision_prior = boom.ChisqModel(
+            payload["sigma_prior_guess"],
+            payload["sigma_prior_sample_size"])
+        self._state_model_sampler = self._state_model.set_posterior_sampler(
+            innovation_precision_prior)

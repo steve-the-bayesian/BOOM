@@ -136,6 +136,7 @@ class Bsts:
           objects.
         """
         self._create_model(formula, data, prior)
+        self._formula = formula
         self._allocate_space(niter)
         self._niter = niter
 
@@ -307,11 +308,29 @@ class Bsts:
                         **kwargs)
                 plot_index += 1
 
-    def predict(self, horizon, newdata):
+    @property
+    def has_regression(self):
+        return self._model and isinstance(
+            self._model, boom.StateSpaceRegressionModel)
+
+    def predict(self, newdata, burn=None):
         """
+        Args:
+          newdata: For regression models 'newdata' is a DataFrame containing
+            the predictor variables to use in the regression.  The forecast
+            horizon (the number of periods to predict) is the number of rows in
+            'newdata'.  For pure time series models, 'newdata' is the
+            integer-valued forecast horizon.
+
         Returns:
             A BstsPrediction object containing the predictions.
         """
+        if burn is None:
+            burn = self.suggest_burn()
+
+        for i in range(burn, self._niter):
+            self._restore_draw(i)
+            pred = self._model.predict(newdata)
 
     def _record_draws(self, iteration: int):
         """
@@ -326,6 +345,13 @@ class Bsts:
 
         self._observation_model_manager.record_draw(
             iteration, self._model)
+
+    def _restore_draw(self, iteration: int):
+        self._observation_model_manager.restore_draw(
+            iteration, self._model)
+
+        for m in self._state_models:
+            m.restore_state(iteration)
 
     def _allocate_space(self, niter: int):
         """
@@ -366,11 +392,45 @@ class Bsts:
         for state_model in self._state_models:
             self._model.add_state(state_model._state_model)
 
+    def __setstate__(self, obj):
+        pass
+
+    def __getstate__(self):
+        """
+        Return a dict full of picklable entries fully describing the object
+        state.
+        """
+        payload = {}
+
+        ## parameter draws
+        ## model family
+        ## original_series
+        ## observation_model_manager
+
+        ###########################################
+        ## Need to work on a heirarchy for
+        ## state models
+
+
+        ####################
+        # State variables that should get set by inferring them from other state.
+        # self._state_dimension will get built by state models.
+        # self._niter
+        # self._formula
+        return payload
+
 
 class BstsPrediction:
     """
     Posterior predictive distribution produced by the call to Bsts.pred.
     """
+    def __init__(self, distribution, original_series):
+        self.distribution = distribution
+        self.posterior_mean = distribution.mean(axis=0)
+        self.original_series = original_series
+
+    def plot(self, original_series=True, axes=None, **kwargs):
+        pass
 
 
 class ObservationModelManager(ABC):
@@ -487,10 +547,23 @@ class StateSpaceModelFactory(ABC):
 
 
 class GaussianObservationModelManager:
+    """
+    The observation model manager supports the observation model in the boom
+    object. It holds posterior draws of observation model parameters, log
+    likelihood, and metadata about the
+    """
     def __init__(self, xdim):
+        """
+        Args:
+          xdim: The dimension of the predictor variable.  For a pure time
+            series model with no predictors, call with xdim == 0.
+        """
         self._xdim = xdim
 
     def allocate_space(self, niter: int):
+        """
+        Create space to hold 'niter' MCMC draws.
+        """
         self._residual_sd = np.empty(niter)
         self._log_likelihood = np.empty(niter)
 
@@ -499,11 +572,21 @@ class GaussianObservationModelManager:
                 (niter, self._xdim))
 
     def record_draw(self, iteration: int, model):
+        """
+        Record the current state of 'model' as of the specified 'iteration'.
+
+        """
         self._residual_sd[iteration] = model.residual_sd
         self._log_likelihood[iteration] = model.log_likelihood
         if self._xdim > 0:
             self._coefficients[iteration, :] = spikeslab.lm_spike.sparsify(
                 model.coef)
+
+    def restore_draw(self, iteration: int, model):
+        """
+        Set the state of 'model' to the requested iteration.
+        """
+        model.set_
 
 
 class StateSpaceRegressionModelFactory:

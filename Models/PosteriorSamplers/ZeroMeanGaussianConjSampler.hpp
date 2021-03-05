@@ -39,6 +39,8 @@ namespace BOOM {
     void draw() override;
     double logpri() const override;
 
+    double sigma_prior_guess() const;
+    double sigma_prior_sample_size() const;
     void set_sigma_upper_limit(double sigma_upper_limit);
 
     // The posterior mode is with respect to sigma^2, not 1 / sigma^2.
