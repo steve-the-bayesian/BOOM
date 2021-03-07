@@ -151,7 +151,7 @@ class RegressionSpikeSlabPrior:
             if prob < 0:
                 prob = 0
             self._prior_inclusion_probabilities = boom.Vector(
-                potential_nvars, prob)
+                np.full(potential_nvars, prob))
         else:
             self._prior_inclusion_probabilities = boom.Vector(
                 prior_inclusion_probabilities)

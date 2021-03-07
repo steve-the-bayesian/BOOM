@@ -115,6 +115,10 @@ namespace BayesBoom {
               return model.observation_model()->sigma();
             },
             "The residual standard deviation parameter.")
+        .def("simulate_forecast",
+             [](StateSpaceModel &model, RNG &rng, int horizon, const Vector &final_state) {
+               return model.simulate_forecast(rng, horizon, final_state);
+             })
         ;
 
     py::class_<StateSpaceRegressionModel,
@@ -128,6 +132,9 @@ namespace BayesBoom {
              py::arg("xdim"),
              "Args:\n\n"
              "  xdim:  The dimension of the predictor variables.")
+        .def_property_readonly("xdim", [](StateSpaceRegressionModel &model) {
+          return model.observation_model()->xdim();
+        })
         .def(py::init(
             [](const Vector &response,
                const Matrix &predictors,
@@ -163,6 +170,11 @@ namespace BayesBoom {
               return model.observation_model()->coef();
             },
             "The GlmCoefs object describing the regression coefficients.")
+        .def("simulate_forecast",
+             [](StateSpaceRegressionModel &model, RNG &rng, const Matrix &predictors,
+                const Vector &final_state) {
+               return model.simulate_forecast(rng, predictors, final_state);
+             })
         ;
 
     py::class_<StateSpacePosteriorSampler,

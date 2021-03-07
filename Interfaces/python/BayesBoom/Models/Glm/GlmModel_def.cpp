@@ -17,6 +17,7 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 
 namespace BayesBoom {
   using namespace BOOM;
+  using BOOM::uint;
 
   void GlmModel_def(py::module &boom) {
 
@@ -33,6 +34,14 @@ namespace BayesBoom {
             &GlmCoefs::included_coefficients,
             "The vector of coefficients corresponding to the subset of "
             "included variables.")
+        .def("set_sparse_coefficients",
+             [](GlmCoefs &coefs,
+                const Vector &nonzero_values,
+                const std::vector<uint> &nonzero_positions) {
+               coefs.set_sparse_coefficients(nonzero_values, nonzero_positions);
+             },
+             "Set a specific set of coefficients to nonzero values, setting all "
+             "others to zero.")
         ;
 
     // A single data point for a regression model.
@@ -127,6 +136,12 @@ namespace BayesBoom {
               return m.coef();
             },
             "The parameter object representing the model coefficients.  boom.GlmCoefs")
+        .def("set_coefficients", [](RegressionModel &m, const Vector &coefficients) {
+          m.set_Beta(coefficients);
+        })
+        .def("set_sparse_coefficients", [](RegressionModel &m, const GlmCoefs &coefficients) {
+
+        })
         .def_property_readonly(
             "sigma",
             [](const RegressionModel &m){

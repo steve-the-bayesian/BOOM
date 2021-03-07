@@ -87,7 +87,7 @@ class LocalLevelStateModel(StateModel):
             raise Exception("Each state model must be told where its state"
                             "component begins in the global state vector.  "
                             "Try calling set_state_index.")
-        self.state_contribution[iteration, :] = state_matrix[
+        self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
     def restore_state(self, iteration):

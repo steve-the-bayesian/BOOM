@@ -181,7 +181,8 @@ class TestSemilocalLinearTrendStateModel(unittest.TestCase):
         self.assertAlmostEqual(self.model._state_model.level_sd, 2.6)
         self.assertAlmostEqual(self.model._state_model.slope_sd, 1.9)
         self.assertAlmostEqual(self.model._state_model.slope_mean, -7.2)
-        self.assertAlmostEqual(self.model._state_model.slope_ar_coefficient, 0.8)
+        self.assertAlmostEqual(self.model._state_model.slope_ar_coefficient,
+                               0.8)
 
         state_matrix = np.random.randn(3, time_dimension)
         iteration = 7
