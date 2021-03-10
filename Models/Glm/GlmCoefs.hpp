@@ -73,6 +73,8 @@ namespace BOOM {
     // vectors must be the same size.
     void set_sparse_coefficients(const Vector &nonzero_values,
                                  const std::vector<uint> &nonzero_positions);
+    void set_sparse_coefficients(const Vector &nonzero_values,
+                                 const std::vector<int> &nonzero_positions);
 
     // Set the included coefficients to b.  The dimension of b must match
     // nvars().

@@ -209,8 +209,13 @@ namespace BOOM {
     for (auto el : positions) {
       inc_.add(el);
     }
-    included_coefficients_ = values;
-    included_coefficients_current_ = true;
+    set_Beta(inc_.expand(values));
+  }
+
+  void GlmCoefs::set_sparse_coefficients(const Vector &values,
+                                         const std::vector<int> &positions) {
+    set_sparse_coefficients(
+        values, std::vector<uint>(positions.begin(), positions.end()));
   }
 
   //------- operations on all possible variables ------
