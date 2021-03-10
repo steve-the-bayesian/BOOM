@@ -623,7 +623,7 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
 def plot_dynamic_distribution(
         curves,
         timestamps=None,
-        quantile_step=.1,
+        quantile_step=.02,
         xlab="Time",
         ylab="distribution",
         col="black",
@@ -637,23 +637,19 @@ def plot_dynamic_distribution(
       curves:
         A numpy matrix of time series.  Rows correspond to different series,
         and columns correspond to time.
-
       timestamps:
         An array-like collection of increasing time stamps corresponding to the
         time points in 'curves.'
-
       quantile_step:
         The plotted distribution is formed by taking the quantiles of the
         curves at each time point.  The smaller the value of quantile_step the
         finer the approximation, but the larger and slower the plot.
-
       xlim:
         The limits on the horizontal axis.
-
       xlab:
         The label for the horizontal axis.
 
-      **kwargs: Extra arguments passed to .... ???
+      **kwargs: Extra arguments passed to _skim_plot_options.
     """
     redraw = False
     if ax is None:
@@ -673,14 +669,11 @@ def plot_dynamic_distribution(
     for i in range(int(np.floor(len(quantile_points) / 2))):
         lo = curve_quantiles[i, :]
         hi = curve_quantiles[-1-i, :]
-        ax.fill_between(timestamps, lo, hi,
-                        color=col,
-                        facecolor="none",
-                        edgecolor="none",
-                        lw=.0000,
+        ax.fill_between(timestamps, lo, hi, color=col, edgecolor="none",
                         alpha=(i / len(quantile_points)))
 
     _set_plot_options(ax, **plot_options)
+
     if redraw:
         device = get_current_graphics_device()
         device.draw_current_axes()

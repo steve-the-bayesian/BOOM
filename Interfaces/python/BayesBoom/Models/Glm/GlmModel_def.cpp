@@ -139,9 +139,6 @@ namespace BayesBoom {
         .def("set_coefficients", [](RegressionModel &m, const Vector &coefficients) {
           m.set_Beta(coefficients);
         })
-        .def("set_sparse_coefficients", [](RegressionModel &m, const GlmCoefs &coefficients) {
-
-        })
         .def_property_readonly(
             "sigma",
             [](const RegressionModel &m){
