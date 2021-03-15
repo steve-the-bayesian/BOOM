@@ -670,13 +670,23 @@ class BstsPrediction:
         if original is not None:
             ax.plot(plotting_timestamps[:len(original)],
                     original)
-            ax.plot(extended_timestamps,
-                    self.posterior_mean)
-            ax.plot(extended_timestamps,
-                    np.quantile(self.distribution, .025, axis=0))
-            ax.plot(extended_timestamps,
-                    np.quantile(self.distribution, .975, axis=0))
-            ax.set_xlim((plotting_timestamps[0], plotting_timestamps[-1]))
+
+        R.plot_dynamic_distribution(
+            self.distribution,
+            extended_timestamps,
+            ax=ax,
+            **kwargs)
+
+        ax.plot(extended_timestamps,
+                self.posterior_mean,
+                color="green")
+        ax.plot(extended_timestamps,
+                np.quantile(self.distribution, .025, axis=0),
+                color="green", linestyle="dashed")
+        ax.plot(extended_timestamps,
+                np.quantile(self.distribution, .975, axis=0),
+                color="green", linestyle="dashed")
+        ax.set_xlim((plotting_timestamps[0], plotting_timestamps[-1]))
 
         return ax
 
