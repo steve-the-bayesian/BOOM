@@ -5,10 +5,12 @@
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
 #include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/TRegression.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -157,6 +159,68 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<TRegressionModel,
+               GlmModel,
+               PriorPolicy,
+               Ptr<TRegressionModel>>(
+                   boom, "TRegressionModel", py::multiple_inheritance())
+        .def(py::init(
+            [] (int xdim) {
+              return new TRegressionModel(xdim);
+            }),
+             py::arg("xdim"),
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictor vector.\n")
+        .def(py::init(
+            [] (const Vector &coef, double sigma, double nu) {
+              return new TRegressionModel(coef, sigma, nu);
+            }),
+             py::arg("coefficients"),
+             py::arg("residual_sd"),
+             py::arg("residual_df"),
+             "Args:\n\n"
+             "  coefficients:  Coefficient vector\n"
+             "  residual_sd:  residual standard deviation\n"
+             "  residual_df:  tail thickness parameter\n")
+        .def(py::init(
+            [] (const Matrix &predictors, const Vector &response) {
+              return new TRegressionModel(predictors, response);
+            }),
+             py::arg("predictors"),
+             py::arg("response"),
+             "Args:\n\n"
+             "  predictors:  A boom.Matrix containing the predictor variables"
+             ".\n"
+             "  response:  A boom.Vector containing the response variable.\n")
+        .def_property_readonly(
+            "Sigsq_prm",
+            [](TRegressionModel &m) {
+              return m.Sigsq_prm();
+            },
+            "The parameter object representing the residual variance.  boom.UnivParams")
+        .def_property_readonly(
+            "coefficients",
+            [](TRegressionModel &m) {
+              return m.coef();
+            },
+            "The parameter object representing the model coefficients.  boom.GlmCoefs")
+        .def("set_coefficients", [](TRegressionModel &m, const Vector &coefficients) {
+          m.set_Beta(coefficients);
+        })
+        .def_property_readonly(
+            "residual_sd", [] (const TRegressionModel &m) {return m.sigma();
+            })
+        .def("set_residual_sd", [] (TRegressionModel &m, double sigma) {
+          m.set_sigsq(sigma * sigma);
+        })
+        .def_property_readonly("residual_df", [] (const TRegressionModel &m) {
+          return m.nu();
+        })
+        .def("set_residual_df", [] (TRegressionModel &m, double nu) {
+          m.set_nu(nu);
+        })
+        ;
+
     py::class_<LoglinearModel,
                PriorPolicy,
                Ptr<LoglinearModel>>(
@@ -260,6 +324,59 @@ namespace BayesBoom {
              "of the RNG owned by this sampler."
              )
         ;
+
+    py::class_<TRegressionSpikeSlabSampler,
+               PosteriorSampler,
+               Ptr<TRegressionSpikeSlabSampler>>(
+                   boom, "TRegressionSpikeSlabSampler")
+        .def(py::init(
+            [] (TRegressionModel *model,
+                MvnBase *coefficient_slab_prior,
+                VariableSelectionPrior *coefficient_spike_prior,
+                GammaModelBase *siginv_prior,
+                DoubleModel *nu_prior,
+                RNG &seeding_rng) {
+              return new TRegressionSpikeSlabSampler(
+                  model, coefficient_slab_prior, coefficient_spike_prior,
+                  siginv_prior, nu_prior, seeding_rng);
+            }),
+            py::arg("model"),
+            py::arg("slab"),
+            py::arg("spike"),
+            py::arg("residual_precision_prior"),
+            py::arg("tail_thickness_prior"),
+            py::arg("rng"),
+            "Args:\n\n"
+            "  model: The boom.TRegressionModel that the sampler will simulate "
+            "for.\n"
+            "  slab: A boom.MvnBase prior for the conditional distribution of "
+            "the regression coefficients given inclusion.\n"
+            "  spike:  A boom.VariableSelectionPrior describing which variables"
+            " are included in the model.\n"
+            "  residual_precision_prior: A boom.GammaModelBase giving the "
+            "prior distribution on the residual precision parameter (one "
+            "over the residual variance).\n"
+            "  tail_thickness_prior: A boom.DoubleModel with support on "
+            "a subset of the positive real line.\n"
+             "  rng: A boom.RNG random number generator.\n")
+        .def("set_sigma_upper_limit",
+             [](TRegressionSpikeSlabSampler *sampler, double upper_limit) {
+               sampler->set_sigma_upper_limit(upper_limit);
+             },
+             "Args:\n\n"
+             "  upper_limit: The upper truncation point for the residual "
+             "'standard deviation' parameter.  Anything other than a positive "
+             "real is treated as infinity.")
+        .def("limit_model_selection",
+             [](TRegressionSpikeSlabSampler *sampler, int max_flips) {
+               sampler->limit_model_selection(max_flips);
+             },
+             "Args:\n\n"
+             "  max_flips:  At most this many model exploration steps will be "
+             "attempted each iteration.\n"
+             "")
+        ;
+
 
   }  // module definition
 

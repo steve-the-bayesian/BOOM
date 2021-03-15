@@ -1,4 +1,3 @@
-import BayesBoom.boom as boom
 import numpy as np
 import pandas as pd
 import patsy
@@ -6,6 +5,7 @@ import BayesBoom.spikeslab as spikeslab
 import BayesBoom.R as R
 import scipy.sparse
 from abc import ABC, abstractmethod
+import BayesBoom.boom as boom
 
 from .state_models import StateModel
 
@@ -58,18 +58,16 @@ class Bsts:
           seed:
             An integer (or None) containingt the random seed for the C++ random
             number generator.
+
         """
         # The model family.
         supported_families = ["gaussian", "student", "binomial", "poisson"]
         self._family = R.unique_match(family.lower(), supported_families)
 
-        if seed is not None:
-            boom.GlobalRng.rng.seed(seed)
-
         # self._model is the BayesBoom handle to the BOOM C++ state space model
         # object.
-
         self._model = None
+
         # The 'observation model' lives inside self._model.  The job of the
         # observation model manager is to handle specific cases of observation
         # models in terms of housekeeping like recording MCMC draws.
@@ -83,12 +81,36 @@ class Bsts:
         # The dimension of the latent state.
         self._state_dimension = 0
 
+        # For the random number generator to work correctly, a python object
+        # must hold a copy of the BOOM global random number generator.
+        # Otherwise it goes out of scope and gets freshly re-initialized each
+        # time.
+        self._rng = boom.GlobalRng.rng
+        if seed is not None:
+            self._rng.seed(seed)
+
     @property
     def state_dimension(self):
+        """
+        The dimension of the state vector.
+        """
         return self._state_dimension
 
     @property
+    def niter(self):
+        """
+        The number of MCMC iterations that have been run.
+        """
+        if self._observation_model_manager is None:
+            return 0
+        return self._observation_model_manager.niter
+
+    @property
     def time_dimension(self):
+        """
+        The number of time points that have been observed, including any time
+        points where the time series variable was missing.
+        """
         return 0 if self._model is None else self._model.time_dimension
 
     def add_state(self, state_model: StateModel):
@@ -103,16 +125,16 @@ class Bsts:
             describing holiday effects.
 
         Effects:
-          The state model is appended to self._state_models, and the state model
-          is informed about the position of the state it manages in the global
-          state vector.
+          The state model is appended to self._state_models, and the state
+          model being added is is informed about the position of the state it
+          manages in the global state vector.
         """
         self._state_models.append(state_model)
         state_model.set_state_index(self._state_dimension)
         self._state_dimension += state_model.state_dimension
 
     def train(self, data, niter: int, formula=None, prior=None,
-              ping: int = None):
+              ping: int = None, **kwargs):
         """
         Train a bsts model by running a specified number of MCMC iterations.
 
@@ -133,15 +155,26 @@ class Bsts:
           ping: The frequency with which to print status updates in the MCMC
             algorithm.  The default is niter/10.  If ping <= 0 then no status
             updates are printed.
+          **kwargs: Extra arguments are passed to self._create_model, and used
+            to create the prior distribution in the event that the 'prior' arg
+            is None.  Extra arguments must be recognizable to the code that
+            creates the priors, or an exception is raised.
 
         Effects:
-          The model is populated with MCMC draws.  The regression parameters,
-          if any, are stored in the model object itself.  Parameters for any
-          state models are stored in the state model objects.  The
-          contributions of each state model are stored in the state model
-          objects.
+          self._model: created, and populated with MCMC draws.
+          self._state_models: MCMC draws for state model parameters are stored
+            in the state model objects held by self._state_models.  The
+            contribution of each state_model to the overall state are likewise
+            stored in the state_model objects.
+          self._observation_model_manager: Model parameters and summaries
+            relevant to the observation model are stored in
+
+        The following objects are recorded in self.
+          self._original_series: the time series used in the training run.
+          self._prior: the prior used in the training run.
+          self._formula: the fomula used to specify the regression component.
         """
-        self._create_model(self._family, formula, data, prior)
+        self._create_model(self._family, formula, data, prior, **kwargs)
         # One call to sample_posterior is needed prior to allocating space, to
         # set up dynamic memory allocations on the C++ side.
         self._model.sample_posterior()
@@ -152,10 +185,7 @@ class Bsts:
             self._model.sample_posterior()
             self._record_draws(i)
 
-        self._state_contribution = np.zeros(
-            (self._niter, len(self._state_models), self.time_dimension))
-        for i, state_model in enumerate(self._state_models):
-            self._state_contribution[:, i, :] = state_model.state_contribution
+        return None
 
     @property
     def original_series(self):
@@ -367,7 +397,7 @@ class Bsts:
             time = self.original_series.index
 
         if same_scale is True and ylim is None:
-            ylim = _find_ylim(state_models, burn)
+            ylim = _find_state_contribution_ylim(state_models, burn)
 
         # for documentation about how gridspec works see
         # https://matplotlib.org/3.1.1/tutorials/intermediate/gridspec.html
@@ -388,12 +418,7 @@ class Bsts:
                 plot_index += 1
         return fig
 
-    @property
-    def has_regression(self):
-        return self._model and isinstance(
-            self._model, boom.StateSpaceRegressionModel)
-
-    def predict(self, newdata, burn=None):
+    def predict(self, newdata, burn: int = None, seed: int = None, **kwargs):
         """
         Args:
           newdata: For regression models 'newdata' is a DataFrame containing
@@ -401,33 +426,46 @@ class Bsts:
             horizon (the number of periods to predict) is the number of rows in
             'newdata'.  For pure time series models, 'newdata' is the
             integer-valued forecast horizon.
+          burn: The number of MCMC interations to discard as burnin.  If None
+            then an attempt will be made to select a reasonable value.
+          seed: An integer used to seed the C++ random number generator driving
+            the simulations from the posterior predictive distribution.  If
+            None then the current state of the RNG will be used.  The 'seed'
+            argument is mainly useful for reproducibility when testing.
+          **kwargs: Additional named arguments are passed to the 'predict'
+            method of the ObservationModelManager specific to the observation
+            model.  The main use is to supply 'trials' for logit models, and
+            'exposure' for Poisson models.
 
         Returns:
             A BstsPrediction object containing the predictions.
         """
-
-        # TODO Right now this only works for pure time series models.  The
-        # observation_model_manager should handle the prediction.
         if burn is None:
             burn = self.suggest_burn()
+        burn = int(burn)
 
-        ndraws = self._niter - burn
-        if hasattr(newdata, "shape"):
-            forecast_horizon = newdata.shape[0]
-        else:
-            forecast_horizon = int(newdata)
-        # TODO:  patsy.dmatricdes
+        if seed is not None:
+            self._rng.seed(int(seed))
 
-        pred = np.empty((ndraws, forecast_horizon))
+        ndraws = self.niter - burn
+        manager = self._observation_model_manager
+        formatted_prediction_data = manager.format_prediction_data(
+            newdata, **kwargs)
+        horizon = formatted_prediction_data["forecast_horizon"]
+        pred = np.empty((ndraws, horizon))
 
-        for i in range(burn, self._niter):
+        total_time_points = len(self.original_series) + horizon
+        for state_model in self._state_models:
+            state_model.observe_time_dimension(total_time_points)
+
+        for i in range(burn, self.niter):
             self._restore_draw(i)
-            final_state = self._final_state[i, :]
-            draw = self._model.simulate_forecast(
-                boom.GlobalRng.rng,
-                newdata,
-                boom.Vector(final_state)).to_numpy()
-            pred[i - burn, :] = draw
+            pred[i - burn, :] = self._observation_model_manager.predict(
+                self._model,
+                formatted_prediction_data,
+                boom.Vector(self._final_state[i, :]),
+                rng=self._rng,
+            )
 
         return BstsPrediction(pred, self.original_series)
 
@@ -462,8 +500,8 @@ class Bsts:
     def _restore_draw(self, iteration: int):
         self._observation_model_manager.restore_draw(
             iteration, self._model)
-        for m in self._state_models:
-            m.restore_state(iteration)
+        for state_model in self._state_models:
+            state_model.restore_state(iteration)
 
     def _create_model(self, family, formula, data, prior):
         """Create the boom model object.
@@ -486,11 +524,16 @@ class Bsts:
           self._model is created, populated with data and assigned a posterior
             sampler.
           self._original_series is populated with the time series being modeled.
+          The data argument is stored in self._data.
+
+        Return:
+          self._model
         """
         factory = StateSpaceModelFactory.create(family, formula)
         self._formula = formula
-        self._model = factory.create_model(prior, data)
+        self._model = factory.create_model(prior, data, self._rng)
         self._prior = factory._prior
+        self._data = data
         if hasattr(factory, "_original_series"):
             self._original_series = factory._original_series
         self._observation_model_manager = (
@@ -498,6 +541,7 @@ class Bsts:
         )
         for state_model in self._state_models:
             self._model.add_state(state_model._state_model)
+        return self._model
 
     def __setstate__(self, payload):
         """
@@ -510,13 +554,17 @@ class Bsts:
             self.add_state(state)
 
         niter = payload.get("niter", None)
+        data = payload.get("data", None)
+        if isinstance(data, int):
+            data = payload.get("original_series", None)
+
         if niter and niter > 0:
             self._formula = payload.get("formula", None)
             self._prior = payload.get("prior", None)
             self._model = self._create_model(
                 self._family,
                 self._formula,
-                data=None,
+                data=data,
                 prior=payload.get("prior", None))
             self._observation_model_manager = payload[
                 "observation_model_manager"]
@@ -538,10 +586,11 @@ class Bsts:
             payload["formula"] = self._formula
         if hasattr(self, "_prior"):
             payload["prior"] = self._prior
-        if hasattr(self, "_niter"):
-            payload["niter"] = self._niter
+        payload["niter"] = self.niter
         if hasattr(self, "_original_series"):
             payload["original_series"] = self._original_series
+        if hasattr(self, "_data"):
+            payload["data"] = self._data
         if hasattr(self, "_final_state"):
             payload["final_state"] = self._final_state
 
@@ -555,10 +604,109 @@ class BstsPrediction:
     def __init__(self, distribution, original_series):
         self.distribution = distribution
         self.posterior_mean = distribution.mean(axis=0)
-        self.original_series = original_series
+        self._original_series = original_series
 
-    def plot(self, original_series=True, axes=None, **kwargs):
-        pass
+    def plot(self, original_series=True, ax=None, **kwargs):
+        """
+        Plot the predictive distribution on the supplied axes.
+
+        Args:
+          original_series: If True then plot the full original_series along
+            with the prediction.  If False then only plot the prediction.  If
+            an integer, then plot the last 'original_series' observations from
+            the original series.
+          ax: A plt.axes object on which to draw the plot.  If None, then a new
+            figure and axes will be created.
+          **kwargs: Extra arguments will be passed to
+            'plot_dynamic_distribution'.
+
+        Returns:
+          The 'ax' object on which the plot is drawn.
+        """
+        horizon = self.distribution.shape[1]
+
+        if (
+                isinstance(self._original_series, pd.Series)
+                and pd.api.types.is_datetime64_any_dtype(
+                    self._original_series.index.dtype)
+        ):
+            plot_with_dates = True
+            original_timestaps = pd.Series(self._original_series.index,
+                                           dtype="datetime64[ns]")
+            extended_timestamps = extend_timestamps(
+                original_timestaps, num_steps=horizon)
+
+        else:
+            plot_with_dates = False
+            start = len(self._original_series)
+            end = start + self.distribution.shape[1]
+            extended_timestamps = np.arange(start, end)
+
+        if original_series is True:
+            start = original_timestaps[0]
+            plot_periods = len(self._original_series) + horizon
+            original = self._original_series.values
+        elif isinstance(original_series, int):
+            start = original_timestaps.iloc[-original_series]
+            plot_periods = original_series + horizon
+            original = self._original_series.values[-original_series:]
+        elif original_series is False:
+            start = extended_timestamps[0]
+            plot_periods = horizon
+            original = None
+        else:
+            raise Exception(
+                "Unexpected value passed for 'original_series'.  Acceptable "
+                "values are True, False, and int."
+            )
+        end = extended_timestamps[-1]
+
+        if plot_with_dates:
+            plotting_timestamps = pd.date_range(
+                start=start, end=end, periods=plot_periods)
+        else:
+            plotting_timestamps = np.arange(start, end)
+
+        if original is not None:
+            ax.plot(plotting_timestamps[:len(original)],
+                    original)
+            ax.plot(extended_timestamps,
+                    self.posterior_mean)
+            ax.plot(extended_timestamps,
+                    np.quantile(self.distribution, .025, axis=0))
+            ax.plot(extended_timestamps,
+                    np.quantile(self.distribution, .975, axis=0))
+            ax.set_xlim((plotting_timestamps[0], plotting_timestamps[-1]))
+
+        return ax
+
+
+def extend_timestamps(timestamps, num_steps, dt: pd.Timedelta = None):
+    """
+    Extend a sequence of time stamps by a given number of steps.
+
+    Args:
+      timestamps: A collection of timestamps convertible to a pd.Series with
+        dtype 'datetime64[ns]'
+      num_steps: The integer number of time steps that 'timestamps' should be
+        extended.
+      dt: The increment between time steps.  If not given then dt is the
+        smallest positive increment between the values of 'timestamps.'
+
+    Returns:
+      A pd.Series of time stamps starting one unit after the largest timestamp
+      and extending for 'num_steps' beyond, in increments of 'dt'.
+    """
+    if dt is None:
+        # Set 'dt' to the smallest positive time delta.
+        timestamps = pd.Series(np.unique(np.sort(timestamps)),
+                               dtype="datetime64[ns]")
+        dt = timestamps.diff()[1:]
+        dt = np.min(dt[dt > pd.Timedelta(0)])
+
+    start = np.max(timestamps) + dt
+    end = start + (num_steps - 1) * dt
+    return pd.date_range(start=start, end=end, periods=num_steps)
 
 
 # ===========================================================================
@@ -570,6 +718,16 @@ class ObservationModelManager(ABC):
     Manages making space for and recording MCMC draws for specific families of
     observation models.
     """
+
+    @property
+    def niter(self):
+        """
+        The number of MCMC iterations that have been run.
+        """
+        if hasattr(self, "_residual_sd"):
+            return len(self._residual_sd)
+        else:
+            return 0
 
     @abstractmethod
     def allocate_space(self, niter: int, xdim: int):
@@ -586,22 +744,42 @@ class ObservationModelManager(ABC):
 
         Args:
           iteration: The iteration number of the draw to record.
-          model: The state space model object from which to extract the draw.
+          model: The BOOM state space model object from which to extract the
+            draw.
         """
 
     @abstractmethod
-    def predict(self, model, prediction_data, burn):
+    def format_prediction_data(self, prediction_data, **kwargs):
+        """
+        Return a tuple containing the prediction data expected by the predict
+        method.  The formatting is kept as a separate method for efficiency
+        reasons.  The prediction data will be formatted once, while the predict
+        method will be called with the same prediction data once per MCMC draw.
+
+        Args:
+          prediction_data: For regression models this is a data frame
+            containing the predictor variables to be used in the prediction.
+            All the variables mentioned in the model formula used to train the
+            model must be present.  Their order need not be the same.
+
+            For pure time series models this is an integer giving the number of
+            time periods to forecast.
+
+          **kwargs: Extra arguments that may be needed for Poisson or logit
+            models.  Poisson models accept an 'exposure' argument.  Logit
+            models accept a 'trials' argument.
+        """
+
+    @abstractmethod
+    def predict(self, model, formatted_prediction_data, boom_final_state,
+                **kwargs):
         """
         Simulate from the posterior predictive distribution.
         Args:
           model: A BOOM state space model object of the type expected by the
             concrete child class.
-          prediction_data: For regression models, this is a data frame that can
-            be unpacked by the patsy formula created when the model was
-            trained.  For pure time series models this is an integer giving the
-            forecast horizon (the number of time periods to predict).  For
-            regression models the forecast horizon is the number of rows in the
-            data frame.
+
+
 
         Returns:
           A numpy matrix representing the posterior predictive distribution.
@@ -609,19 +787,21 @@ class ObservationModelManager(ABC):
         """
 
 
-class GaussianObservationModelManager:
+# ===========================================================================
+class GaussianObservationModelManager(ObservationModelManager):
     """
     The observation model manager supports the observation model in the boom
     object. It holds posterior draws of observation model parameters, log
     likelihood, and metadata about the
     """
-    def __init__(self, xdim):
+    def __init__(self, xdim, formula):
         """
         Args:
           xdim: The dimension of the predictor variable.  For a pure time
             series model with no predictors, call with xdim == 0.
         """
         self._xdim = xdim
+        self._formula = formula
 
     def allocate_space(self, niter: int):
         """
@@ -631,8 +811,7 @@ class GaussianObservationModelManager:
         self._log_likelihood = np.empty(niter)
 
         if self._xdim > 0:
-            self._coefficients = scipy.sparse.lil_matrix(
-                (niter, self._xdim))
+            self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
 
     def record_draw(self, iteration: int, model):
         """
@@ -642,37 +821,167 @@ class GaussianObservationModelManager:
         self._residual_sd[iteration] = model.residual_sd
         self._log_likelihood[iteration] = model.log_likelihood
         if self._xdim > 0:
-            self._coefficients[iteration, :] = spikeslab.lm_spike.sparsify(
-                model.coef)
+            self._coefficients[iteration, :] = spikeslab.sparsify(model.coef)
 
     def restore_draw(self, iteration: int, model):
         """
         Set the state of 'model' to the requested iteration.
         """
-        if self._xdim == 0:
+        model.observation_model.set_sigma(self._residual_sd[iteration])
+        if self._xdim > 0:
             model.observation_model.set_sigma(self._residual_sd[iteration])
-        elif self._xdim > 0:
-            model.observation_model.set_sigma(self._residual_sd[iteration])
-            coefficients = self._coefficients[iteration, :]
-            nonzero_positions = coefficients.nonzero()[1]
-            nonzero_values = np.array(coefficients.data[0])
-            model.observation_model.coef.set_sparse_coefficients(
-                nonzero_values, nonzero_positions)
+            spikeslab.set_glm_coefs(model.observation_model.coefs,
+                                    self._coefficients[iteration, :])
 
-    def predict(self, model, prediction_data, burn: int):
+    def format_prediction_data(self, prediction_data, **kwargs):
+        if self._xdim > 0:
+            formatted = {
+                "forecast_horizon": prediction_data.shape[0],
+                "predictors": boom.Matrix(patsy.dmatrix(
+                    self._formula, data=prediction_data))
+            }
+        else:
+            formatted = {
+                "forecast_horizon": int(prediction_data)
+            }
+        return formatted
+
+    def predict(self, model, formatted_prediction_data, boom_final_state, rng,
+                **kwargs):
         """
         Args:
           model: Either a boom.StateSpaceModel, or a
             boom.StateSpaceRegressionModel.
-          prediction_data: In the pure time series case this is the integer
-            number of time steps ahead to forecast.  In the time series
-            regression case it is a data frame containing the predictors needed
-            for the forecast period (one row per time step).
-          burn:  The number of MCMC iterations to discard as burn-in.
-
+          formatted_prediction_data: The output of
+            self.format_prediction_data().  A dict containing the prediction
+            data in the form expected by the boom model.
+          burn: The number of MCMC iterations to discard as burn-in.
+          **kwargs: Unused.  Extra arguments will cause an exception to be
+            raised.
         """
+        extra_args = {**kwargs}
+        if extra_args:
+            raise Exception("Unexpected arguments were given to Bsts.predict:"
+                            f"  {extra_args.keys()}.")
+
+        if isinstance(model, boom.StateSpaceRegressionModel):
+            draw = model.simulate_forecast(
+                rng,
+                formatted_prediction_data["predictors"],
+                boom_final_state)
+        elif isinstance(model, boom.StateSpaceModel):
+            draw = model.simulate_forecast(
+                rng,
+                formatted_prediction_data["forecast_horizon"],
+                boom_final_state)
+        else:
+            raise Exception(
+                "Unrecognized boom model passed to "
+                "GaussianObservationModelManager.predict: "
+                f"{model.__class__.__name__}"
+            )
+
+        return draw.to_numpy()
 
 
+class StudentObservationModelManager(ObservationModelManager):
+    def __init__(self, xdim: int, formula: str):
+        """
+        In a pure time series context, xdim == 0.  In a regression context,
+        xdim is the number of predictors in the regression portion of the model.
+        """
+        self._xdim = xdim
+        self._formula = formula
+
+    def allocate_space(self, niter: int):
+        self._residual_sd = np.empty(niter)
+        self._residual_df = np.empty(niter)
+        if self._xdim > 0:
+            self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
+
+    def record_draw(self, iteration: int, model):
+        student_reg = model.observation_model
+        self._residual_sd[iteration] = student_reg.residual_sd
+        self._residual_df[iteration] = student_reg.residual_df
+        if self._xdim > 0:
+            self._coefficients[iteration, :] = spikeslab.sparsify(
+                student_reg.coef)
+
+    def restore_draw(self, iteration: int, model):
+        student_reg = model.observation_model
+        student_reg.set_residual_sd(self._residual_sd[iteration])
+        student_reg.set_residual_df(self._residual_df[iteration])
+        if self._xdim > 0:
+            spikeslab.set_glm_coefs(
+                student_reg.coef,
+                self._coefficients[iteration, :])
+
+    def format_prediction_data(self, prediction_data, **kwargs):
+        if isinstance(prediction_data, int):
+            formatted = {
+                "forecast_horizon": int(prediction_data),
+                "predictors": boom.Matrix((np.ones((int(prediction_data), 1))))
+            }
+        else:
+            formatted = {
+                "forecast_horizon": prediction_data.shape[0],
+                "predictors": boom.Matrix(patsy.dmatrix(
+                    self._formula, data=prediction_data))
+            }
+        return formatted
+
+    def predict(self, model, formatted_prediction_data,
+                boom_final_state, rng, **kwargs):
+        draw = model.simulate_forecast(
+            rng,
+            formatted_prediction_data["predictors"],
+            boom_final_state)
+        return draw.to_numpy()
+
+
+class PoissonObservationModelManager(ObservationModelManager):
+    def __init__(self, xdim: int):
+        pass
+
+    @property
+    def niter(self):
+        pass
+
+    def allocate_space(self, niter: int):
+        pass
+
+    def record_draw(self, iteration: int, model):
+        pass
+
+    def restore_draw(self, iteration: int, model):
+        pass
+
+    def predict(self, model, prediction_data, burn: int):
+        pass
+
+
+class LogitObservationModelManager(ObservationModelManager):
+    def __init__(self, xdim: int):
+        pass
+
+    @property
+    def niter(self):
+        pass
+
+    def allocate_space(self, niter: int):
+        pass
+
+    def record_draw(self, iteration: int, model):
+        pass
+
+    def restore_draw(self, iteration: int, model):
+        pass
+
+    def predict(self, model, prediction_data, burn: int):
+        pass
+
+
+# ===========================================================================
 class StateSpaceModelFactory(ABC):
     @staticmethod
     def create(family, formula):
@@ -694,7 +1003,7 @@ class StateSpaceModelFactory(ABC):
             raise Exception(f"Unrecognized family {family}.")
 
     @abstractmethod
-    def create_model(self, prior, data):
+    def create_model(self, prior, data, rng):
         """
         Create the BOOM model object.  The prior is assigned to the observation
         model, and the data is assigned to the model.  State will be assigned
@@ -707,6 +1016,7 @@ class StateSpaceModelFactory(ABC):
           data: The training data for the model.  In most cases this will be a
             pd.DataFrame (if the model contains a regression component) or a
             pd.Series otherwise.  The index of the data may contain timestamps.
+          rng:  The boom random number generator.
         """
 
     @abstractmethod
@@ -726,12 +1036,13 @@ class GaussianStateSpaceModelFactory:
     def __init__(self):
         self._model = None
 
-    def create_model(self, prior: R.SdPrior, data: pd.Series):
+    def create_model(self, prior: R.SdPrior, data: pd.Series, rng):
         """
         Args:
           prior: an R.SdPrior object describing the prior distribution on the
             residual variance paramter.
           data:  The time series of observations as a Pandas Series.
+          rng: The boom random number generator.
 
         Returns:
           A boom.StateSpaceModel object.
@@ -768,8 +1079,7 @@ class GaussianStateSpaceModelFactory:
             prior.upper_limit)
         self._model.observation_model.set_method(observation_model_sampler)
 
-        sampler = boom.StateSpacePosteriorSampler(
-            self._model, boom.GlobalRng.rng)
+        sampler = boom.StateSpacePosteriorSampler(self._model, rng)
         self._model.set_method(sampler)
 
         if data is not None:
@@ -777,9 +1087,8 @@ class GaussianStateSpaceModelFactory:
 
         return self._model
 
-    @staticmethod
-    def create_observation_model_manager():
-        return GaussianObservationModelManager(xdim=0)
+    def create_observation_model_manager(self):
+        return GaussianObservationModelManager(xdim=0, formula=None)
 
 
 class StateSpaceRegressionModelFactory:
@@ -789,8 +1098,9 @@ class StateSpaceRegressionModelFactory:
             raise Exception("formula must be a string.")
         self._formula = formula
 
-    def create_model(self, prior, data, **kwargs):
-        """Create the boom model object, and store related model artifacts.
+    def create_model(self, prior, data, rng, **kwargs):
+        """
+        Create the boom model object, and store related model artifacts.
 
         Args:
           formula:  A model formula describing the regression component.
@@ -802,7 +1112,6 @@ class StateSpaceRegressionModelFactory:
 
         Effects: self._model is created, and model formula artifacts are stored
           so they will be available for future predictions.
-
         """
         response, predictors = patsy.dmatrices(self._formula, data)
         boom_response = boom.Vector(response)
@@ -831,18 +1140,139 @@ class StateSpaceRegressionModelFactory:
         return self._model
 
     def create_observation_model_manager(self):
-        return GaussianObservationModelManager(self._model.xdim)
+        return GaussianObservationModelManager(self._model.xdim, self._formula)
 
 
 class StateSpaceStudentModelFactory:
-    def __init__(self, formula):
-        pass
+    def __init__(self, formula: str):
+        """
+        Create a StateSpaceStudentModelFactory.
 
-    def create_model(self, prior, data, **kwargs):
-        pass
+        Args:
+          formula: A string describing how the predictor variables are to be
+            constructed from a data frame.  For example "y ~ x1 + x2 + x2*x3".
+            If the formula is None then the model will contain no regression
+            component.
+        """
+        if formula is not None and not isinstance(formula, str):
+            raise Exception("formula must either be None or a string")
+        self._formula = formula
+
+    def create_model(self, prior, data, rng, **kwargs):
+        """
+        Create the boom model object, and store related model artifacts.
+
+        Args:
+          prior: The prior for the observation model.  Either None or a
+            spikeslab.StudentSpikeSlabPrior.
+          data: If self._formula is None then data is the time series to be
+            modeled.  Either a pd.Series or a np.ndarray.  Otherwise data
+            should be a pd.DataFrame containing the variables referenced in
+            'formula'.
+          **kwargs: If prior is None then any remaining arguments are passed to
+            the StudentSpikeSlabPrior constructor.
+
+        Returns:
+          The created model.
+
+        Effects:
+          self._model is populated with the created model.
+          self._prior is populated with the prior distribution for the
+            observation model.
+        """
+
+        if data is not None:
+            if self._formula is None:
+                # Pure time series case.
+                response = data
+                predictors = np.ones((len(response), 1))
+                kwargs["expected_model_size"] = 0
+            else:
+                # Time series regression case.
+                response, predictors = patsy.dmatrices(self._formula, data)
+
+            boom_response = boom.Vector(response)
+            boom_predictors = boom.Matrix(predictors)
+            response_is_observed = np.isfinite(response).ravel()
+
+            self._model = boom.StateSpaceStudentRegressionModel(
+                boom_response, boom_predictors, response_is_observed)
+        elif prior is not None:
+            xdim = len(prior._prior_inclusion_probabilities)
+            self._model = boom.StateSpaceStudentRegressionModel(xdim)
+            response = None
+            predictors = None
+        else:
+            raise Exception("At least one of 'data' or 'prior' is needed.")
+
+        regression = self._model.observation_model
+
+        prior = self._verify_prior(prior, response, predictors)
+
+        self._prior = prior
+
+        observation_model_sampler = boom.TRegressionSpikeSlabSampler(
+            regression,
+            prior.slab(regression.Sigsq_prm),
+            prior.spike,
+            prior.residual_precision,
+            prior.tail_thickness,
+            rng,
+        )
+        observation_model_sampler.set_sigma_upper_limit(prior.sigma_upper_limit)
+        if prior.max_flips > 0:
+            observation_model_sampler.limit_model_selection(prior.max_flips)
+        regression.set_method(observation_model_sampler)
+
+        sampler = boom.StateSpaceStudentPosteriorSampler(
+            self._model,
+            observation_model_sampler)
+        self._model.set_method(sampler)
+
+        self._original_series = response
+        return self._model
 
     def create_observation_model_manager(self):
-        pass
+        return StudentObservationModelManager(
+            self._model.observation_model.xdim,
+            self._formula)
+
+    def _verify_prior(self, prior, response, predictors, **kwargs):
+        """
+        Ensure that the prior is set up right.
+        Args:
+          prior: Either None, or a spikeslab.StudentSpikeSlabPrior object.  If
+            None then a default prior will be created from the supplied data.
+          response: If prior is None, this must either be a vector containing
+            the response variable.  Acceptable types include a boom.Vector,
+            pd.Series, or a np.ndarray.  If prior is None then this value is
+            not used.
+          predictors: If prior is None, this must be a Matrix containing the
+            predictor values.  Acceptable types include a boom.Matrix,
+            pd.DataFrame with all numeric dtypes, or a np.ndarray.
+          **kwargs: If prior is None then any additional named arguments are
+            passed to the StudentSpikeSlabPrior constructor.
+
+        Returns:
+          The validated prior.  This is 'prior' if not None and of the correct
+          type.  Otherwise it is the default prior constructed from the
+          remaining arguments.
+
+        Exceptions:
+          An exception is thrown if 'prior' is not None and it is not a
+          StudentSpikeSlabPrior.
+        """
+        if prior is None:
+            prior = spikeslab.StudentSpikeSlabPrior(
+                predictors,
+                response,
+                **kwargs,
+            )
+
+        if not isinstance(prior, spikeslab.StudentSpikeSlabPrior):
+            raise Exception("Expected a StudentSpikeSlabPrior prior "
+                            "distribution.")
+        return prior
 
 
 class StateSpacePoissonModelFactory:
@@ -867,9 +1297,16 @@ class StateSpaceLogitModelFactory:
         pass
 
 
-def _find_ylim(state_models, burn):
+def _find_state_contribution_ylim(state_models, burn):
     """
     Find the range of the values in the state contributions.
+    Args:
+      state_models:  List of state models.
+      burn:  The number of MCMC iterations to discard as burn-in.
+
+    Returns:
+      A pair (lower, upper) giving the min and max values of state_contribution
+      across models.
     """
     if (burn is None) or (burn < 0):
         burn = 0

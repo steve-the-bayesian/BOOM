@@ -91,6 +91,7 @@ namespace BOOM {
     StateSpaceStudentRegressionModel *clone() const override;
 
     int time_dimension() const override;
+    int xdim() const {return observation_model()->xdim();}
 
     // The total number of observations across all time points.
     int total_sample_size() const;

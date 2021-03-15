@@ -136,3 +136,12 @@ class StateModel(ABC):
             **kwargs)
 
         return ax
+
+    def observe_time_dimension(self, time_dimension):
+        """
+        Args:
+          time_dimension: The number of time points being modeled.  For
+            training, this is the length of the training data.  For prediction
+            it is the length of the training data plus the forecast horizon.
+        """
+        self._state_model.observe_time_dimension(time_dimension)

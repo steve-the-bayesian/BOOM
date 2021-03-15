@@ -41,14 +41,14 @@ namespace BOOM {
     typedef T element_type;
 
     Ptr() : managed_pointer_(nullptr) {}
-        
+
     // NOLINTNEXTLINE  Implicit conversions are intentional.
     Ptr(T *p, bool add_ref = true) : managed_pointer_(p) {
       if (p  && add_ref) {
         intrusive_ptr_add_ref(managed_pointer_);
       }
     }
-    
+
     Ptr(const Ptr &rhs)
         : managed_pointer_(rhs.managed_pointer_)
     {
@@ -70,7 +70,7 @@ namespace BOOM {
 
     ~Ptr() {
       bump_down();
-    }  
+    }
 
     Ptr &operator=(const Ptr &rhs) {
       if (&rhs != this) {
@@ -148,7 +148,7 @@ namespace BOOM {
       // adjustments are needed.
       std::swap(managed_pointer_, b.managed_pointer_);
     }
-    
+
     void reset(T *new_value = nullptr) {
       set(new_value);
     }
@@ -169,13 +169,13 @@ namespace BOOM {
         intrusive_ptr_release(managed_pointer_);
       }
     }
-    
+
     void set(const T *rhs) const {
       bump_down();
       managed_pointer_ = rhs;
       bump_up();
     }
-    
+
     void set(T* rhs) {
       bump_down();
       managed_pointer_ = rhs;

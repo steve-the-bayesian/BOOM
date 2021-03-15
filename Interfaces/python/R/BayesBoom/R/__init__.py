@@ -4,7 +4,7 @@ import numpy as np
 from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
                 unique_match)
 
-from .bayes import SdPrior, NormalPrior, Ar1CoefficientPrior
+from .bayes import SdPrior, NormalPrior, Ar1CoefficientPrior, UniformPrior
 
 from .data_table import to_data_table, to_data_frame, AutoClean
 
@@ -34,3 +34,5 @@ from .probability import (
 )
 
 from .stats import density, sd
+
+from .test_utils import delete_if_present

@@ -18,6 +18,7 @@ namespace BayesBoom {
   void Parameter_def(py::module &);
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
+  void UniformModel_def(py::module &m);
   void MvnModel_def(py::module &);
   void GlmModel_def(py::module &);
   void Imputation_def(py::module &);
@@ -36,7 +37,8 @@ namespace BayesBoom {
         "probably not be used directly."
         ;
 
-    // Calling these functions here defines the classes in the module.
+    // The functions declared above need to be called here to add their contents
+    // to the module.
     distribution_def(boom);
     LinAlg_def(boom);
 
@@ -51,6 +53,7 @@ namespace BayesBoom {
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
+    UniformModel_def(boom);
 
     GlmModel_def(boom);
     TimeSeries_def(boom);

@@ -5,6 +5,33 @@ import BayesBoom.boom as boom
 import BayesBoom.R as R
 import scipy.sparse
 
+from .priors import RegressionSpikeSlabPrior
+
+
+def sparsify(glm_coefs):
+    # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
+    inc = glm_coefs.inc.included_positions
+    zeros = np.zeros(len(inc))
+    return scipy.sparse.csr_matrix(
+        (glm_coefs.included_coefficients.to_numpy(),
+         (zeros, inc)),
+        shape=(1, glm_coefs.inc.nvars_possible))
+
+
+def set_glm_coefs(glm_coefs: boom.GlmCoefs,
+                  sparse_coefs: scipy.sparse.lil_matrix):
+    """
+    Set the internal values of a boom.GlmCoefs to match a 1-row sparse
+    matrix.
+
+    Args:
+      glm_coefs:  The boom object to be set.
+      sparse_coefs: The value to set.
+
+    """
+    nonzero_positions = sparse_coefs.nonzero()[1]
+    nonzero_values = np.array(sparse_coefs.data[0])
+    glm_coefs.set_sparse_coefficients(nonzero_values, nonzero_positions)
 
 def dot(data_frame, omit=[]):
     """
@@ -53,147 +80,12 @@ def dot(data_frame, omit=[]):
     return ans
 
 
-class RegressionSpikeSlabPrior:
-    """Components of spike and slab priors that are shared regardless of the model
-    type.
-
-    """
-    def __init__(self,
-                 x,
-                 y=None,
-                 expected_r2=.5,
-                 prior_df=.01,
-                 expected_model_size=1,
-                 prior_information_weight=.01,
-                 diagonal_shrinkage=.5,
-                 optional_coefficient_estimate=None,
-                 max_flips=-1,
-                 mean_y=None,
-                 sdy=None,
-                 prior_inclusion_probabilities=None,
-                 sigma_upper_limit=np.Inf):
-        """
-        Computes information that is shared by the different implementation of
-        spike and slab priors.  Currently, the only difference between the
-        different priors is the prior variance on the regression coefficients.
-        When that changes, change this class accordingly, and change all the
-        classes that inherit from it.
-
-        Args:
-          number_of_variables: The number of columns in the design matrix for
-            the regression begin modeled.  The maximum size of the coefficient
-            vector.
-
-          expected_r2: The R^2 statistic that the model is expected
-            to achieve.  Used along with 'sdy' to derive a prior distribution
-            for the residual variance.
-
-          prior_df: The number of observations worth of weight to give to the
-            guess at the residual variance.
-
-          expected_model_size: The expected number of nonzero coefficients in
-            the model.  Used to set prior_inclusion_probabilities to
-            expected_model_size / number_of_variables.  If expected_model_size
-            is either negative or larger than number.of.variables then all
-            elements of prior_inclusion_probabilities will be set to 1.0 and
-            the model will be fit with all available coefficients.
-
-          optional_coefficient_estimate: A vector of length number.of.variables
-            to use as the prior mean of the regression coefficients.  This can
-            also be None, in which case the prior mean for the intercept will
-            be set to mean.y, and the prior mean for all slopes will be 0.
-
-          mean.y: The mean of the response variable.  Used to create a sensible
-            default prior mean for the regression coefficients when
-            optional_coefficient_estimate is None.
-
-          sdy: Used along with expected_r2 to create a prior guess at the
-            residual variance.
-
-          prior_inclusion_probabilities: A vector of length number.of.variables
-            giving the prior inclusion probability of each coefficient.  Each
-            element must be between 0 and 1, inclusive.  If left as None then a
-            default value will be created with all elements set to
-            expected_model_size / number_of_variables.
-
-          sigma_upper_limit: The largest acceptable value for the residual
-            standard deviation.
-        """
-        if isinstance(x, np.ndarray):
-            x = boom.Matrix(x)
-        if not isinstance(x, boom.Matrix):
-            raise Exception(
-                "x should either be a 2-dimensional np.array or a boom.Matrix.")
-
-        if mean_y is None:
-            if y is None:
-                raise Exception("Either 'y' or 'mean_y' must be specified.")
-            if isinstance(y, np.ndarray):
-                y = boom.Vector(y)
-            mean_y = boom.mean(y)
-        if optional_coefficient_estimate is None:
-            optional_coefficient_estimate = np.zeros(x.ncol)
-            optional_coefficient_estimate[0] = mean_y
-        self._mean = boom.Vector(optional_coefficient_estimate)
-
-        sample_size = x.nrow
-        ods = 1. - diagonal_shrinkage
-        scale_factor = prior_information_weight * ods / sample_size
-        self._unscaled_prior_precision = x.inner() * scale_factor
-        diag_view = self._unscaled_prior_precision.diag()
-        diag_view /= ods
-
-        if prior_inclusion_probabilities is None:
-            potential_nvars = x.ncol
-            prob = expected_model_size / potential_nvars
-            if prob > 1:
-                prob = 1
-            if prob < 0:
-                prob = 0
-            self._prior_inclusion_probabilities = boom.Vector(
-                np.full(potential_nvars, prob))
-        else:
-            self._prior_inclusion_probabilities = boom.Vector(
-                prior_inclusion_probabilities)
-
-        if sdy is None:
-            sdy = boom.sd(y)
-        sample_variance = sdy**2
-        expected_residual_variance = (1 - expected_r2) * sample_variance
-        self._residual_precision_prior = boom.ChisqModel(
-            prior_df,
-            np.sqrt(expected_residual_variance))
-
-    def slab(self, boom_sigsq_prm):
-        """Return a BayesBoom.MvnGivenScalarSigma model.
-
-        Args:
-          boom_sigsq_prm: A BOOM::Ptr<UnivParams> to the residual variance
-            parameter for the regression model.
-
-        Returns:
-          A BOOM::Ptr<MvnGivenScalarSigma> model that can serve as the slab in
-          a spike and slab regression model.
-
-        """
-        return boom.MvnGivenScalarSigma(
-            self._mean, self._unscaled_prior_precision, boom_sigsq_prm)
-
-    @property
-    def spike(self):
-        return boom.VariableSelectionPrior(self._prior_inclusion_probabilities)
-
-    @property
-    def residual_precision(self):
-        return self._residual_precision_prior
-
-
 class lm_spike:
     """Fit a linear model with a spike and slab prior using MCMC.
 
     Typical use:
 
-    from BayesBoom.spikeslab import lm_spike
+    from boom.spikeslab import lm_spike
     from sklearn.model_selection import train_test_split
 
     data = pd.read_csv("mydata.csv")
@@ -283,7 +175,7 @@ class lm_spike:
             self._model.sample_posterior()
             self._residual_sd[i] = self._model.sigma
             beta = self._model.coef
-            self._coefficient_draws[i, :] = self.sparsify(beta)
+            self._coefficient_draws[i, :] = sparsify(beta)
             self._log_likelihood[i] = self._model.log_likelihood()
 
         # Convert the coefficient draws to sparse column format.  Predictions
@@ -466,16 +358,6 @@ class lm_spike:
         """
         return lm_spike_summary(self)
 
-    @classmethod
-    def sparsify(cls, glm_coefs):
-        # Convert a boom.GlmCoefs objects to a 1-row sparse matrix.
-        inc = glm_coefs.inc.included_positions
-        zeros = np.zeros(len(inc))
-        return scipy.sparse.csr_matrix(
-            (glm_coefs.included_coefficients.to_numpy(),
-             (zeros, inc)),
-            shape=(1, glm_coefs.inc.nvars_possible)
-        )
 
 
 class lm_spike_summary:

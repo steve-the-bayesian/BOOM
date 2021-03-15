@@ -1,6 +1,12 @@
 import numpy as np
 
 
+"""
+Wrapper classes to encapsulate and expand models and prior distributions
+from the Boom library.
+"""
+
+
 class SdPrior:
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
     that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is
@@ -65,6 +71,9 @@ class SdPrior:
 
 
 class NormalPrior:
+    """
+    A scalar normal prior distribution.
+    """
     def __init__(self,
                  mu: float = 0.0,
                  sigma: float = 1.0,
@@ -140,3 +149,21 @@ class Ar1CoefficientPrior:
 
     def __setstate__(self, payload):
         self.__dict__ = payload
+
+
+class UniformPrior:
+    """
+    Univariate uniform distribution.
+    """
+    def __init__(self, lo, hi):
+        if hi < lo:
+            lo, hi = hi, lo
+        self._lo = lo
+        self._hi = hi
+
+    def boom(self):
+        """
+        Return the boom.UniformModel corresponding to this object's parameters.
+        """
+        import BayesBoom.boom as boom
+        return boom.UniformModel(self._lo, self._hi)

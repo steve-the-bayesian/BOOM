@@ -20,7 +20,7 @@ namespace BayesBoom {
   void GaussianModel_def(py::module &boom) {
 
     py::class_<GaussianModelBase,
-               Model,
+               DoubleModel,
                Ptr<GaussianModelBase>>(boom, "GaussianModelBase")
         .def_property_readonly("mean", &GaussianModelBase::mu)
         .def_property_readonly("sd", &GaussianModelBase::sigma)

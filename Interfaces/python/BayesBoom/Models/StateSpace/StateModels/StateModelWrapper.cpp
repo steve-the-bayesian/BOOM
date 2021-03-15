@@ -21,6 +21,13 @@ namespace BayesBoom {
     py::class_<StateModel,
                BOOM::Ptr<StateModel>>(
                    boom, "StateModel", py::multiple_inheritance())
+        .def("observe_time_dimension", [](StateModel &model, int t) {
+          model.observe_time_dimension(t);
+        },
+          py::arg("time_dimension"),
+          "Args:\n\n"
+          "  time_dimension: Make state models that manage their own memory "
+          "aware that there are 'time_dimension' time periods.\n")
         ;
 
     // Base class

@@ -4,7 +4,9 @@
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/StateSpaceStudentRegressionModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpaceStudentPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -177,6 +179,89 @@ namespace BayesBoom {
              })
         ;
 
+
+    py::class_<StateSpaceStudentRegressionModel,
+               ScalarStateSpaceModelBase,
+               PriorPolicy,
+               Ptr<StateSpaceStudentRegressionModel>>(
+                   boom,
+                   "StateSpaceStudentRegressionModel",
+                   py::multiple_inheritance())
+        .def(py::init<int>(),
+             py::arg("xdim"),
+             "Args:\n\n"
+             "  xdim:  The dimension of the predictor variables.  ")
+        .def(py::init(
+            [] (const Vector &response,
+                const Matrix &predictors,
+                const std::vector<bool> &response_is_observed) {
+              return new StateSpaceStudentRegressionModel(
+                  response, predictors, response_is_observed);
+            }),
+             py::arg("response"),
+             py::arg("predictors"),
+             py::arg("response_is_observed"),
+             "Args:\n\n"
+             "  response:  A BayesBoom.Vector containing the time series to be "
+             "modeled.\n"
+             "  predictors:  A BayesBoom.Matrix containing the predictor "
+             "variables.\n"
+             "  response_is_observed:  A numpy array of logical values "
+             "indicating which elements of 'response' are observed.  "
+             "False elements are considered missing values.\n")
+        .def_property_readonly(
+            "observation_model",
+            [](StateSpaceStudentRegressionModel &model) {
+              return model.observation_model();
+            },
+            "A BayesBoom.TRegression model object describing observation errors.")
+        .def_property_readonly(
+            "residual_sd",
+            [] (const StateSpaceStudentRegressionModel &model) {
+              return model.observation_model()->sigma();
+            },
+            "The scale parameter of the observation model describing residual "
+            "errors.  Despite the name, this quantity is not in general the "
+            "standard deviation of the errors, though it does approach the "
+            "standard deviation when the tail parameter ('degrees of freedom')"
+            "approaches infinity.\n")
+        .def("set_residual_sd",
+             [] (StateSpaceStudentRegressionModel &model, double residual_sd) {
+               model.observation_model()->set_sigsq(residual_sd * residual_sd);
+             },
+             py::arg("residual_sd"),
+             "Set the residual_sd parameter.\n"
+             "Args:\n\n"
+             "  residual_sd:  The new parameter value.\n")
+        .def_property_readonly(
+            "residual_df",
+            [] (const StateSpaceStudentRegressionModel &model) {
+              return model.observation_model()->nu();
+            },
+            "The tail thickness parameter of the observation model describing "
+            "residual errors.  This is sometimes called the 'degrees of freedom' "
+            "parameter\n")
+        .def("set_residual_sd",
+             [] (StateSpaceStudentRegressionModel &model, double residual_df) {
+               model.observation_model()->set_nu(residual_df * residual_df);
+             },
+             py::arg("residual_df"),
+             "Set the tail thickness parameter.\n"
+             "Args:\n\n"
+             "  residual_df:  The new parameter value.\n")
+        .def_property_readonly(
+            "coef",
+            [](const StateSpaceStudentRegressionModel &model) {
+              return model.observation_model()->coef();
+            },
+            "The GlmCoefs object describing the regression coefficients.")
+        .def("simulate_forecast",
+             [](StateSpaceStudentRegressionModel &model, RNG &rng, const Matrix &predictors,
+                const Vector &final_state) {
+               return model.simulate_forecast(rng, predictors, final_state);
+             })
+        ;
+
     py::class_<StateSpacePosteriorSampler,
                PosteriorSampler,
                Ptr<StateSpacePosteriorSampler>>(
@@ -194,6 +279,28 @@ namespace BayesBoom {
             "RNG in this sampler.")
           ;
 
+    py::class_<StateSpaceStudentPosteriorSampler,
+               PosteriorSampler,
+               Ptr<StateSpaceStudentPosteriorSampler>>(
+                   boom,
+                   "StateSpaceStudentPosteriorSampler")
+        .def(py::init(
+            [] (StateSpaceStudentRegressionModel *model,
+                TRegressionSpikeSlabSampler *observation_model_sampler,
+                RNG &seeding_rng) {
+              return new StateSpaceStudentPosteriorSampler(
+                  model, observation_model_sampler, seeding_rng);
+            }),
+            py::arg("model"),
+            py::arg("observation_model_sampler"),
+            py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The TRegressionModel to be sampled.\n"
+             "  observation_model_sampler:  TRegressionSpikeSlabSampler for "
+             "sampling the model.\n"
+             "  seeding_rng: The random number generator used to seed the"
+             "RNG in this sampler.\n")
+          ;
 
   }  // StateSpaceModel_def
 

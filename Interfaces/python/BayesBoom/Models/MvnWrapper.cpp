@@ -24,7 +24,7 @@ namespace BayesBoom {
         ;
 
     py::class_<MvnBase,
-               BOOM::Ptr<MvnBase>>(boom, "MvnBase")
+               BOOM::Ptr<MvnBase>>(boom, "MvnBase", py::multiple_inheritance())
         .def_property_readonly(
             "dim",
             &MvnBase::dim,
@@ -45,7 +45,7 @@ namespace BayesBoom {
 
     py::class_<MvnBaseWithParams,
                MvnBase,
-               BOOM::Ptr<MvnBaseWithParams>>(boom, "MvnBaseWithParams")
+               BOOM::Ptr<MvnBaseWithParams>>(boom, "MvnBaseWithParams", py::multiple_inheritance())
         .def_property_readonly(
             "mu",
             &MvnBaseWithParams::mu,
@@ -81,7 +81,7 @@ namespace BayesBoom {
     py::class_<MvnModel,
                MvnBaseWithParams,
                PriorPolicy,
-               BOOM::Ptr<MvnModel>>(boom, "MvnModel")
+               BOOM::Ptr<MvnModel>>(boom, "MvnModel", py::multiple_inheritance())
         .def(py::init<uint, double, double>(),
              py::arg("dim"),
              py::arg("mu") = 0.0,
@@ -160,7 +160,7 @@ namespace BayesBoom {
     py::class_<MvnGivenScalarSigma,
                MvnBase,
                PriorPolicy,
-               Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma")
+               Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma", py::multiple_inheritance())
         .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
              py::arg("ominv"),
              py::arg("sigsq"),

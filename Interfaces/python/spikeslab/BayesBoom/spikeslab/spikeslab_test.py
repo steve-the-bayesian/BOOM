@@ -1,13 +1,20 @@
 import unittest
-from BayesBoom.spikeslab import dot, lm_spike
+
+from BayesBoom.spikeslab import dot, lm_spike, RegressionSpikeSlabPrior, StudentSpikeSlabPrior
+from BayesBoom.R import delete_if_present
+
 import numpy as np
 import pandas as pd
 import scipy.sparse
+import pickle
 
 
 class SpikeSlabTest(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
+
+    def tearDown(self):
+        delete_if_present("prior.pkl")
 
     def test_mcmc(self):
         # Run the test with a big sample size and a small residual SD, so
@@ -72,6 +79,64 @@ class SpikeSlabTest(unittest.TestCase):
         formula = "y ~ " + dot(X, omit=["y", "X2"])
         self.assertEqual(formula, "y ~ (X1+X3)")
 
+    def test_regression_spike_slab_prior(self):
+        n = 10
+        X = pd.DataFrame(np.random.randn(n, 3), columns=["X1", "X2", "X3"])
+        y = np.random.randn(n)
+        prior = RegressionSpikeSlabPrior(X.values, y)
+        self.assertIsInstance(prior, RegressionSpikeSlabPrior)
+
+        fname = "prior.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(prior, pkl)
+
+        with open(fname, "rb") as pkl:
+            p2 = pickle.load(pkl)
+
+        self.assertEqual(set(prior.__dict__.keys()),
+                         set(p2.__dict__.keys()))
+
+    def test_student_spike_slab_prior(self):
+        n = 10
+        X = pd.DataFrame(np.random.randn(n, 3), columns=["X1", "X2", "X3"])
+        y = np.random.randn(n)
+        prior = StudentSpikeSlabPrior(X.values, y)
+
+        fname = "prior.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(prior, pkl)
+
+        with open(fname, "rb") as pkl:
+            p2 = pickle.load(pkl)
+
+        self.assertEqual(set(prior.__dict__.keys()),
+                         set(p2.__dict__.keys()))
+
+
+
+_debug_mode = True
+
+if _debug_mode:
+    import pdb  # noqa
+
+    # Turn warnings into errors.
+    # warnings.simplefilter("error")
+
+    # Run the test you are trying to debug here.  Instantiate the test class,
+    # then call the problematic test.  Call pdb.pm() in the event of an
+    # exception.
+    print("Hello, world!")
+
+    rig = SpikeSlabTest()
+
+    if hasattr(rig, "setUpClass"):
+        rig.setUpClass()
+    if hasattr(rig, "setUp"):
+        rig.setUp()
+
+    rig.test_student_spike_slab_prior()
+
+    print("Goodbye, cruel world!")
 
 if __name__ == "__main__":
     unittest.main()

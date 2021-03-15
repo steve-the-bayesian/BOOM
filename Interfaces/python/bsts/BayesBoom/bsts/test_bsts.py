@@ -4,6 +4,10 @@ import pandas as pd
 import pickle
 import json
 
+import matplotlib.pyplot as plt
+
+from BayesBoom.R import delete_if_present
+
 from BayesBoom.bsts import (
     Bsts,
     AirPassengers,
@@ -20,6 +24,9 @@ class TestGaussianTimeSeries(unittest.TestCase):
         noise = np.random.randn(n)
         self.data = random_walk + noise
 
+    def tearDown(self):
+        delete_if_present("bsts_llt.pkl")
+
     def test_local_level(self):
         model = Bsts()
         model.add_state(LocalLevelStateModel(self.data))
@@ -34,7 +41,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertIsInstance(m2, Bsts)
         np.testing.assert_array_equal(m2._final_state, model._final_state)
 
-    def test_seasonal(self):
+    def test_basic_structural_model(self):
         model = Bsts()
 
         y = np.log(AirPassengers)
@@ -42,15 +49,89 @@ class TestGaussianTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
-        import matplotlib.pyplot as plt
-        model.plot("comp")
-        plt.show()
-
         predictions = model.predict(12)
         target_quantiles = [0.025] + list(np.linspace(.05, 0.95, 19)) + [0.975]
         prediction_quantiles = np.quantile(
             predictions.distribution, target_quantiles, axis=0)
+        self.assertIsInstance(prediction_quantiles, np.ndarray)
 
+        with open("bsm.pkl", "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open("bsm.pkl", "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        pred2 = m2.predict(12)
+
+        np.testing.assert_array_almost_equal(predictions.distribution,
+                                             pred2.distribution)
+
+        fig, ax = plt.subplots(1, 2, figsize=(10,5))
+        predictions.plot(ax=ax[0], original_series=24)
+        pred_plot = pred2.plot(ax=ax[1], original_series=24)
+        fig.show()
+        self.assertIsInstance(pred_plot, plt.Axes)
+
+
+class TestStudentTimeSeries(unittest.TestCase):
+    def setUp(self):
+        n = 100
+        df = 3
+        random_walk = np.cumsum(np.random.randn(n) * .1)
+        noise = np.random.standard_t(df=df, size=n)
+        self.data = random_walk + noise
+
+    def tearDown(self):
+        delete_if_present("bsts_student_llt.pkl")
+
+    def test_local_level(self):
+        model = Bsts(family="student")
+        model.add_state(LocalLevelStateModel(self.data))
+        model.train(data=self.data, niter=1000)
+
+        fname = "bsts_student_llt.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        self.assertEqual(model.time_dimension, m2.time_dimension)
+        self.assertIsInstance(m2, Bsts)
+
+        np.testing.assert_array_almost_equal(
+            model._observation_model_manager._residual_sd,
+            m2._observation_model_manager._residual_sd)
+        np.testing.assert_array_almost_equal(
+            model._observation_model_manager._residual_df,
+            m2._observation_model_manager._residual_df)
+
+        np.testing.assert_array_almost_equal(
+            model._state_models[0].state_contribution,
+            m2._state_models[0].state_contribution)
+        np.testing.assert_array_almost_equal(
+            model._state_models[0].sigma_draws,
+            m2._state_models[0].sigma_draws)
+
+        np.testing.assert_array_almost_equal(
+            model._final_state, m2._final_state)
+
+        seed = 8675309
+        import pdb
+        pdb.set_trace()
+
+        pred1 = model.predict(4, seed=seed)
+        pred2 = m2.predict(4, seed=seed)
+
+        from BayesBoom.R import plot_dynamic_distribution
+        fig, ax = plt.subplots(1,2)
+        plot_dynamic_distribution(pred1.distribution, ax=ax[0], ylim=(-6, 6))
+        plot_dynamic_distribution(pred2.distribution, ax=ax[1], ylim=(-6, 6))
+        fig.show()
+
+        np.testing.assert_array_almost_equal(
+            pred1.distribution,
+            pred2.distribution)
 
 # class TestStateSpaceRegression(unittest.TestCase):
 
@@ -75,7 +156,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
 
 
 
-_debug_mode = False
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -87,13 +168,17 @@ if _debug_mode:
     # then call the problematic test.  Call pdb.pm() in the event of an
     # exception.
     print("Hello, world!")
+
+    # rig = TestStudentTimeSeries()
     rig = TestGaussianTimeSeries()
+
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_seasonal()
+    rig.test_local_level()
+    rig.test_basic_structural_model()
 
     print("Goodbye, cruel world!")
 

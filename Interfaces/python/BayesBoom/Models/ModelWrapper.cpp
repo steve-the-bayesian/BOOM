@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 
 #include "Models/ModelTypes.hpp"
+#include "Models/DoubleModel.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/Ptr.hpp"
@@ -14,6 +15,14 @@ namespace BayesBoom {
   void Model_def(py::module &boom) {
 
     py::class_<Model, Ptr<Model>>(boom, "Model")
+        ;
+
+    py::class_<DoubleModel, Model, Ptr<DoubleModel>>(boom, "DoubleModel", py::multiple_inheritance())
+        .def("logp", [](const DoubleModel &m, double x) {
+          return m.logp(x);
+        },
+          py::arg("x"),
+          "The log density evaluated at 'x'.")
         ;
 
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(
@@ -36,6 +45,8 @@ namespace BayesBoom {
              "performed by any posterior samplers that have been assigned \n"
              "to this model by  'set_method'.\n")
         ;
+
+
   }  // Module
 
 }  // namespace BOOM
