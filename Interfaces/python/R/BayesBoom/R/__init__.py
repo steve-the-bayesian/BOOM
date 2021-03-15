@@ -4,7 +4,13 @@ import numpy as np
 from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
                 unique_match)
 
-from .bayes import SdPrior, NormalPrior, Ar1CoefficientPrior, UniformPrior
+from .bayes import (
+    Ar1CoefficientPrior,
+    MvnPrior,
+    NormalPrior,
+    UniformPrior,
+    SdPrior,
+)
 
 from .data_table import to_data_table, to_data_frame, AutoClean
 

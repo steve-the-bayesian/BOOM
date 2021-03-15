@@ -231,7 +231,7 @@ class Bsts:
             burn = self.niter / 10
         else:
             burn = R.suggest_burn(loglike)
-        return burn
+        return int(burn)
 
     def plot(self, what: str = None, **kwargs):
         """
@@ -640,12 +640,13 @@ class BstsPrediction:
             plot_with_dates = False
             start = len(self._original_series)
             end = start + self.distribution.shape[1]
+            original_timestaps = np.arange(start)
             extended_timestamps = np.arange(start, end)
 
         if original_series is True:
             start = original_timestaps[0]
             plot_periods = len(self._original_series) + horizon
-            original = self._original_series.values
+            original = _get_values(self._original_series)
         elif isinstance(original_series, int):
             start = original_timestaps.iloc[-original_series]
             plot_periods = original_series + horizon
@@ -1071,7 +1072,7 @@ class GaussianStateSpaceModelFactory:
         if prior is None:
             if data is None:
                 raise Exception("One of 'prior' or 'data' must be given")
-            sdy = np.std(data)
+            sdy = np.std(data, ddof=1)
             prior = R.SdPrior(sigma_guess=sdy, upper_limit=sdy * 1.2)
 
         if not isinstance(prior, R.SdPrior):
@@ -1201,8 +1202,8 @@ class StateSpaceStudentModelFactory:
                 # Time series regression case.
                 response, predictors = patsy.dmatrices(self._formula, data)
 
-            boom_response = boom.Vector(response)
-            boom_predictors = boom.Matrix(predictors)
+            boom_response = boom.Vector(_get_values(response))
+            boom_predictors = boom.Matrix(_get_values(predictors))
             response_is_observed = np.isfinite(response).ravel()
 
             self._model = boom.StateSpaceStudentRegressionModel(
@@ -1217,7 +1218,7 @@ class StateSpaceStudentModelFactory:
 
         regression = self._model.observation_model
 
-        prior = self._verify_prior(prior, response, predictors)
+        prior = self._verify_prior(prior, response, predictors, **kwargs)
 
         self._prior = prior
 
@@ -1307,6 +1308,15 @@ class StateSpaceLogitModelFactory:
         pass
 
 
+def _get_values(x):
+    if isinstance(x, np.ndarray):
+        return x
+    elif isinstance(x, pd.Series) or isinstance(x, pd.DataFrame):
+        return x.values
+    else:
+        return np.ndarray(x)
+
+
 def _find_state_contribution_ylim(state_models, burn):
     """
     Find the range of the values in the state contributions.
@@ -1320,6 +1330,7 @@ def _find_state_contribution_ylim(state_models, burn):
     """
     if (burn is None) or (burn < 0):
         burn = 0
+    burn = int(burn)
     mins = [np.min(model._state_contribution[burn:, :])
             for model in state_models]
     maxs = [np.max(model._state_contribution[burn:, :])

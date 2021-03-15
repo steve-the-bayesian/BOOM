@@ -122,7 +122,7 @@ class StateModel(ABC):
           The axes object.
         """
         if burn > 0:
-            curves = self._state_contribution[burn:, :]
+            curves = self._state_contribution[int(burn):, :]
         else:
             curves = self._state_contribution
 

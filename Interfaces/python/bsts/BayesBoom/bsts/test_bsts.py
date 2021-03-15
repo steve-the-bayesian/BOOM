@@ -4,6 +4,8 @@ import pandas as pd
 import pickle
 import json
 
+import pdb
+
 import matplotlib.pyplot as plt
 
 from BayesBoom.R import delete_if_present
@@ -49,6 +51,9 @@ class TestGaussianTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
+        comp_fig = model.plot("comp")
+        # comp_fig.show()
+
         predictions = model.predict(12)
         target_quantiles = [0.025] + list(np.linspace(.05, 0.95, 19)) + [0.975]
         prediction_quantiles = np.quantile(
@@ -66,10 +71,10 @@ class TestGaussianTimeSeries(unittest.TestCase):
         np.testing.assert_array_almost_equal(predictions.distribution,
                                              pred2.distribution)
 
-        fig, ax = plt.subplots(1, 2, figsize=(10,5))
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         predictions.plot(ax=ax[0], original_series=24)
         pred_plot = pred2.plot(ax=ax[1], original_series=24)
-        fig.show()
+        # fig.show()
         self.assertIsInstance(pred_plot, plt.Axes)
 
 
@@ -117,21 +122,53 @@ class TestStudentTimeSeries(unittest.TestCase):
             model._final_state, m2._final_state)
 
         seed = 8675309
-        import pdb
-        pdb.set_trace()
-
         pred1 = model.predict(4, seed=seed)
         pred2 = m2.predict(4, seed=seed)
 
-        from BayesBoom.R import plot_dynamic_distribution
-        fig, ax = plt.subplots(1,2)
-        plot_dynamic_distribution(pred1.distribution, ax=ax[0], ylim=(-6, 6))
-        plot_dynamic_distribution(pred2.distribution, ax=ax[1], ylim=(-6, 6))
-        fig.show()
+        fig, ax = plt.subplots(1, 2)
+        pred1.plot(ax=ax[0])
+        pred2.plot(ax=ax[1])
+        # fig.show()
 
         np.testing.assert_array_almost_equal(
             pred1.distribution,
             pred2.distribution)
+
+    def test_basic_structural_model(self):
+        model = Bsts(family="student")
+
+        y = np.log(AirPassengers)
+        model.add_state(LocalLinearTrendStateModel(y))
+        model.add_state(SeasonalStateModel(y, nseasons=12))
+        model.train(data=y, niter=1000)
+
+        comp_fig = model.plot("comp")
+        # comp_fig.show()
+
+        horizon = 24
+        predictions = model.predict(horizon)
+        target_quantiles = [0.025] + list(np.linspace(.05, 0.95, 19)) + [0.975]
+        prediction_quantiles = np.quantile(
+            predictions.distribution, target_quantiles, axis=0)
+        self.assertIsInstance(prediction_quantiles, np.ndarray)
+
+        with open("bsm.pkl", "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open("bsm.pkl", "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        pred2 = m2.predict(horizon)
+
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        predictions.plot(ax=ax[0], original_series=60)
+        pred_plot = pred2.plot(ax=ax[1], original_series=60)
+        # fig.show()
+        self.assertIsInstance(pred_plot, plt.Axes)
+
+        np.testing.assert_array_almost_equal(predictions.distribution,
+                                             pred2.distribution)
+
 
 # class TestStateSpaceRegression(unittest.TestCase):
 
@@ -155,8 +192,7 @@ class TestStudentTimeSeries(unittest.TestCase):
 #             m2 = pickle.load(pkl)
 
 
-
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa
@@ -169,15 +205,15 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    # rig = TestStudentTimeSeries()
-    rig = TestGaussianTimeSeries()
+    rig = TestStudentTimeSeries()
+    # rig = TestGaussianTimeSeries()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_local_level()
+    # rig.test_local_level()
     rig.test_basic_structural_model()
 
     print("Goodbye, cruel world!")

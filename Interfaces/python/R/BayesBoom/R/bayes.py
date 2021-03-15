@@ -92,6 +92,10 @@ class NormalPrior:
     def sd(self):
         return self.sigma
 
+    @property
+    def variance(self):
+        return self.sigma ** 2
+
     def boom(self):
         """
         Return the boom.GaussianModel corresponding to the object's parameters.
@@ -149,6 +153,39 @@ class Ar1CoefficientPrior:
 
     def __setstate__(self, payload):
         self.__dict__ = payload
+
+
+class MvnPrior:
+    """
+    Encodes a multivariate normal distribution.
+    """
+    def __init__(self, mu, Sigma):
+        if len(mu.shape) != 1:
+            raise Exception("mu must be a vector.")
+        if len(Sigma.shape) != 2:
+            raise Exception("Sigma must be a matrix.")
+        if Sigma.shape[0] != Sigma.shape[1]:
+            raise Exception("Sigma must be symmetric")
+        if Sigma.shape[0] != len(mu):
+            raise Exception("mu and Sigma must be the same dimension.")
+        self._mu = mu
+        self._Sigma = Sigma
+
+    @property
+    def mu(self):
+        return self._mu
+
+    @property
+    def Sigma(self):
+        return self._Sigma
+
+    def boom(self):
+        """
+        Return the boom.MvnModel corresponding to this object's parameters.
+        """
+        import BayesBoom.boom as boom
+        return boom.MvnModel(boom.Vector(self._mu),
+                             boom.SpdMatrix(self._Sigma))
 
 
 class UniformPrior:
