@@ -78,11 +78,12 @@ class NormalPrior:
                  mu: float = 0.0,
                  sigma: float = 1.0,
                  initial_value: float = None):
-        self.mu = mu
-        self.sigma = sigma
-        self.initial_value = initial_value
+        self.mu = float(mu)
+        self.sigma = float(sigma)
         if initial_value is None:
             self.initial_value = mu
+        else:
+            self.initial_value = float(initial_value)
 
     @property
     def mean(self):
