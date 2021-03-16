@@ -606,6 +606,10 @@ class BstsPrediction:
         self.posterior_mean = distribution.mean(axis=0)
         self._original_series = original_series
 
+    @property
+    def original_series(self):
+        return self._original_series
+
     def plot(self, original_series=True, ax=None, **kwargs):
         """
         Plot the predictive distribution on the supplied axes.
