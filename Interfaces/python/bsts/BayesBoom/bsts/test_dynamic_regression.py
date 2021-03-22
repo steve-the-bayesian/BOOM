@@ -42,7 +42,6 @@ class TestDynamicRegression(unittest.TestCase):
     def test_local_level(self):
         model = Bsts()
         model.add_state(LocalLevelStateModel(self._y))
-
         data = pd.DataFrame(
             self._predictors,
             columns=default_colnames(self._predictors.shape[1]))
@@ -53,8 +52,12 @@ class TestDynamicRegression(unittest.TestCase):
 
         model.train(data=data["y"], niter=1000)
 
+        pdb.set_trace()
+        print("foo")
 
-_debug_mode = True
+
+_debug_mode = False
+
 
 if _debug_mode:
     import pdb  # noqa

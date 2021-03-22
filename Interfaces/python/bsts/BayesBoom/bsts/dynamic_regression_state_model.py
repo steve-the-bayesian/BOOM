@@ -35,9 +35,8 @@ class DynamicRegressionStateModel(StateModel):
             modeling language.  For example "y ~ x1 + x3" or "y ~ x1 * x2 + x3".
             The 'dot' operator is not understood, but "y ~ " + dot(
         """
-
-        self._formula = formula
-        response, self._predictors = patsy.dmatrices(formula, data=data)
+        self._formula = formula + "- 1"
+        response, self._predictors = patsy.dmatrices(self._formula, data=data)
         xtx = self._predictors.T @ self._predictors
         xty = self._predictors.T @ response
         sdy = np.nanstd(response)
@@ -64,7 +63,7 @@ class DynamicRegressionStateModel(StateModel):
         if time_dimension != nrows:
             raise Exception(f"time_dimension = {time_dimension}, but "
                             f"self._predictors has {nrows} rows.")
-        self.sigma_draws = np.zeros(niter, self.xdim)
+        self.sigma_draws = np.zeros((niter, self.xdim))
         self._state_contribution = np.zeros((niter, time_dimension))
         self._dynamic_coefficients = np.zeros((
             niter, self.xdim, time_dimension))
@@ -74,7 +73,7 @@ class DynamicRegressionStateModel(StateModel):
             raise Exception("Each state model must be told where its state"
                             "component begins in the global state vector.  "
                             "Try calling set_state_index.")
-        self.sigma_draws[iteration, :] = self._state_model.sigma
+        self.sigma_draws[iteration, :] = self._state_model.sigma.to_numpy()
 
         begin = self._state_index
         end = self._state_index + self.state_dimension
