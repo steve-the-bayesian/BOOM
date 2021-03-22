@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
+#include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
@@ -7,6 +9,7 @@
 
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -305,6 +308,68 @@ namespace BayesBoom {
                model.set_slope_ar_coefficient(ar);})
         ;
 
+    py::class_<DynamicRegressionStateModel,
+               StateModel,
+               PriorPolicy,
+               BOOM::Ptr<DynamicRegressionStateModel>>(
+                   boom, "DynamicRegressionStateModel")
+        .def(py::init(
+            [](Matrix &predictors) {
+              return new DynamicRegressionStateModel(predictors);
+            }))
+        .def_property_readonly(
+            "sigma",
+            [](DynamicRegressionStateModel *model) {
+              Vector ans(model->xdim());
+              for (int i = 0; i < model->xdim(); ++i) {
+                ans[i] = sqrt(model->sigsq(i));
+              }
+              return ans;
+            },
+            "Standard deviation of the innovation term for each coefficient.")
+        .def("set_sigma",
+             [](DynamicRegressionStateModel *model,
+                const Vector &sigma) {
+               for (int i = 0; i < sigma.size(); ++i) {
+                 model->set_sigsq(sigma[i] * sigma[i], i);
+               }
+             },
+             "Set the standard deviations of the innovation terms for each "
+             "coefficient.")
+        .def("set_initial_state_mean",
+             [] (DynamicRegressionStateModel *model,
+                 const Vector &mean) {
+               model->set_initial_state_mean(mean);
+             })
+        .def("set_initial_state_variance",
+             [] (DynamicRegressionStateModel *model,
+                 const SpdMatrix &variance) {
+               model->set_initial_state_variance(variance);
+             })
+        ;
+
+    py::class_<DynamicRegressionIndependentPosteriorSampler,
+               PosteriorSampler,
+               Ptr<DynamicRegressionIndependentPosteriorSampler>>(
+                   boom, "DynamicRegressionIndependentPosteriorSampler")
+        .def(py::init(
+            [] (DynamicRegressionStateModel *model,
+                const std::vector<GammaModelBase *> &priors,
+                RNG &seeding_rng) {
+              return new DynamicRegressionIndependentPosteriorSampler(
+                  model,
+                  std::vector<Ptr<GammaModelBase>>(priors.begin(),
+                                                   priors.end()),
+                  seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("priors"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+            "Args:\n\n"
+             "  model:  The boom.DynamicRegressionStateModel to be sampled.\n"
+             "  priors:  A list of R.SdPrior objects giving the prior "
+             "distributions for each coefficient's innovation errors.")
+        ;
 
   }  // StateSpaceModel_def
 

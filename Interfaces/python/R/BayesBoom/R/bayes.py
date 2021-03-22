@@ -177,8 +177,16 @@ class MvnPrior:
         return self._mu
 
     @property
+    def mean(self):
+        return self.mu
+
+    @property
     def Sigma(self):
         return self._Sigma
+
+    @property
+    def variance(self):
+        return self.Sigma
 
     def boom(self):
         """

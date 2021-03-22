@@ -7,10 +7,14 @@
 #include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/TRegression.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
+#include "Models/Glm/BinomialLogitModel.hpp"
+#include "Models/Glm/PoissonRegressionModel.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -221,6 +225,37 @@ namespace BayesBoom {
         })
         ;
 
+    py::class_<BinomialLogitModel,
+               GlmModel,
+               PriorPolicy,
+               Ptr<BinomialLogitModel>>(
+                   boom, "BinomialLogitModel", py::multiple_inheritance())
+        .def(py::init([](int xdim, bool include_all) {
+          return new BinomialLogitModel(xdim, include_all);
+        }),
+          py::arg("xdim"),
+          py::arg("include_all") = true,
+          "Args:\n\n"
+          "  xdim:  Dimension of the predictor vector.\n"
+          "  include_all:  Include all the predictors initially.  If False "
+          "then only the intercept starts out included.\n"
+          )
+        ;
+
+    py::class_<PoissonRegressionModel,
+               GlmModel,
+               PriorPolicy,
+               Ptr<PoissonRegressionModel>>(
+                   boom, "PoissonRegressionModel", py::multiple_inheritance())
+        .def(py::init([](int xdim) {
+          return new PoissonRegressionModel(xdim);
+        }),
+          py::arg("xdim"),
+          "Args:\n\n"
+          "  xdim:  Dimension of the predictor vector.\n"
+          )
+        ;
+
     py::class_<LoglinearModel,
                PriorPolicy,
                Ptr<LoglinearModel>>(
@@ -369,6 +404,85 @@ namespace BayesBoom {
              "real is treated as infinity.")
         .def("limit_model_selection",
              [](TRegressionSpikeSlabSampler *sampler, int max_flips) {
+               sampler->limit_model_selection(max_flips);
+             },
+             "Args:\n\n"
+             "  max_flips:  At most this many model exploration steps will be "
+             "attempted each iteration.\n"
+             "")
+        ;
+
+    py::class_<BinomialLogitSpikeSlabSampler,
+               PosteriorSampler,
+               Ptr<BinomialLogitSpikeSlabSampler>>(
+                   boom, "BinomialLogitSpikeSlabSampler")
+        .def(py::init([](BinomialLogitModel *model,
+                         MvnBase *slab,
+                         VariableSelectionPrior *spike,
+                         int clt_threshold,
+                         RNG &seeding_rng) {
+          return new BinomialLogitSpikeSlabSampler(
+              model, slab, spike, clt_threshold, seeding_rng);
+        }),
+             py::arg("model"),
+             py::arg("slab"),
+             py::arg("spike"),
+             py::arg("clt_threshold") = 5,
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The boom.BinomialLogitModel to be sampled.\n"
+             "  slab: A boom.MvnBase prior for the conditional distribution of "
+             "the regression coefficients given inclusion.\n"
+             "  spike:  A boom.VariableSelectionPrior describing which variables"
+             " are included in the model.\n"
+             "  clt_threshold:  See below.\n"
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler.\n\n"
+             "When imputing latent data, if the number of trials is below the"
+             " 'clt_threshold' each Bernoulli trial will be imputed separately."
+             "  If the number of trials exceeds 'clt_threshold' then the "
+             "moments of the latent data will be imputed instead. \n"
+             )
+        .def("limit_model_selection",
+             [](BinomialLogitSpikeSlabSampler *sampler, int max_flips) {
+               sampler->limit_model_selection(max_flips);
+             },
+             "Args:\n\n"
+             "  max_flips:  At most this many model exploration steps will be "
+             "attempted each iteration.\n"
+             "")
+        ;
+
+    py::class_<PoissonRegressionSpikeSlabSampler,
+               PosteriorSampler,
+               Ptr<PoissonRegressionSpikeSlabSampler>>(
+                   boom, "PoissonRegressionSpikeSlabSampler")
+        .def(py::init([](PoissonRegressionModel *model,
+                         MvnBase *slab,
+                         VariableSelectionPrior *spike,
+                         int num_threads,
+                         RNG &seeding_rng) {
+          return new PoissonRegressionSpikeSlabSampler(
+              model, slab, spike, num_threads, seeding_rng);
+        }),
+             py::arg("model"),
+             py::arg("slab"),
+             py::arg("spike"),
+             py::arg("num_threads") = 1,
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The boom.PoissonRegressionModel to be sampled.\n"
+             "  slab: A boom.MvnBase prior for the conditional distribution of "
+             "the regression coefficients given inclusion.\n"
+             "  spike:  A boom.VariableSelectionPrior describing which variables"
+             " are included in the model.\n"
+             "  num_threads:  The number of threads to use when imputing "
+             "latent data.\n"
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler.\n"
+             )
+        .def("limit_model_selection",
+             [](PoissonRegressionSpikeSlabSampler *sampler, int max_flips) {
                sampler->limit_model_selection(max_flips);
              },
              "Args:\n\n"

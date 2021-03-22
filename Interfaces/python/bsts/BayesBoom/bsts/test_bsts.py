@@ -51,7 +51,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
-        comp_fig = model.plot("comp")
+        _ = model.plot("comp")
         # comp_fig.show()
 
         predictions = model.predict(12)
@@ -142,7 +142,7 @@ class TestStudentTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
-        comp_fig = model.plot("comp")
+        _ = model.plot("comp")
         # comp_fig.show()
 
         horizon = 24

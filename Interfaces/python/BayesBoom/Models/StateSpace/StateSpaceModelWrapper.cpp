@@ -5,8 +5,12 @@
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/StateSpaceStudentRegressionModel.hpp"
+#include "Models/StateSpace/StateSpaceLogitModel.hpp"
+#include "Models/StateSpace/StateSpacePoissonModel.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpaceStudentPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpaceLogitPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StateSpacePoissonPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -262,6 +266,106 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<StateSpaceLogitModel,
+               ScalarStateSpaceModelBase,
+               Ptr<StateSpaceLogitModel>>(
+                   boom, "StateSpaceLogitModel", py::multiple_inheritance())
+        .def(py::init(
+            [](int xdim) {
+              return new StateSpaceLogitModel(xdim);
+            }),
+             py::arg("xdim"),
+             "Args\n\n"
+             "  xdim: Dimension of the predictor vector.\n")
+        .def(py::init(
+            [](const Vector &successes,
+               const Vector &trials,
+               const Matrix &predictors,
+               const std::vector<bool> &observed) {
+              return new StateSpaceLogitModel(successes, trials, predictors, observed);
+            }),
+            py::arg("successes"),
+            py::arg("trials"),
+            py::arg("predictors"),
+            py::arg("observed"),
+            "Args:\n\n"
+            "  successes:  The response variable.  The number of successes "
+            "observed.  0 <= successes <= trials.\n"
+            "  trials: The number of trials.  \n"
+            "  predictors:  The matrix of predictors.\n"
+            "  observed:  Is the response observed?\n")
+        .def_property_readonly(
+            "observation_model",
+            [] (StateSpaceLogitModel *model) {
+              return model->observation_model();
+            })
+        .def_property_readonly(
+            "coef", [](const StateSpaceLogitModel *model) {
+              return model->observation_model()->coef();
+            })
+        .def("simulate_forecast",
+             [](StateSpaceLogitModel *model,
+                RNG &rng,
+                const Matrix &forecast_predictors,
+                const Vector &trials,
+                const Vector &final_state) {
+               return model->simulate_forecast(
+                   rng, forecast_predictors, trials, final_state);
+             })
+        ;
+
+    py::class_<StateSpacePoissonModel,
+               ScalarStateSpaceModelBase,
+               Ptr<StateSpacePoissonModel>>(
+                   boom, "StateSpacePoissonModel", py::multiple_inheritance())
+        .def(py::init(
+            [](int xdim) {
+              return new StateSpacePoissonModel(xdim);
+            }),
+             py::arg("xdim"),
+             "Args\n\n"
+             "  xdim: Dimension of the predictor vector.\n")
+        .def(py::init(
+            [](const Vector &counts,
+               const Vector &exposure,
+               const Matrix &predictors,
+               const std::vector<bool> &observed) {
+              return new StateSpacePoissonModel(
+                  counts, exposure, predictors, observed);
+            }),
+            py::arg("counts"),
+            py::arg("exposure"),
+            py::arg("predictors"),
+            py::arg("observed"),
+            "Args:\n\n"
+            "  counts:  The response variable. The number of events observed.\n"
+            "  trials: The number of trials.  \n"
+            "  predictors:  The matrix of predictors.\n"
+            "  observed:  Is the response observed?\n")
+        .def_property_readonly(
+            "observation_model",
+            [] (StateSpacePoissonModel *model) {
+              return model->observation_model();
+            })
+        .def_property_readonly(
+            "coef", [](const StateSpacePoissonModel *model) {
+              return model->observation_model()->coef();
+            })
+        .def("simulate_forecast",
+             [](StateSpacePoissonModel *model,
+                RNG &rng,
+                const Matrix &forecast_predictors,
+                const Vector &exposure,
+                const Vector &final_state) {
+               return model->simulate_forecast(
+                   rng, forecast_predictors, exposure, final_state);
+             })
+        ;
+
+
+    //==========================================================================
+    // Posterior Samplers
+    //==========================================================================
     py::class_<StateSpacePosteriorSampler,
                PosteriorSampler,
                Ptr<StateSpacePosteriorSampler>>(
@@ -301,6 +405,51 @@ namespace BayesBoom {
              "  seeding_rng: The random number generator used to seed the"
              "RNG in this sampler.\n")
           ;
+
+    py::class_<StateSpaceLogitPosteriorSampler,
+               PosteriorSampler,
+               Ptr<StateSpaceLogitPosteriorSampler>>(
+                   boom,
+                   "StateSpaceLogitPosteriorSampler")
+        .def(py::init(
+            [] (StateSpaceLogitModel *model,
+                BinomialLogitSpikeSlabSampler *observation_model_sampler,
+                RNG &seeding_rng) {
+              return new StateSpaceLogitPosteriorSampler(
+                  model, observation_model_sampler, seeding_rng);
+            }),
+            py::arg("model"),
+            py::arg("observation_model_sampler"),
+            py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The BinomialLogitModel to be sampled.\n"
+             "  observation_model_sampler:  BinomialLogitSpikeSlabSampler for "
+             "sampling the model.\n"
+             "  seeding_rng: The random number generator used to seed the"
+             "RNG in this sampler.\n")
+          ;
+
+    py::class_<StateSpacePoissonPosteriorSampler,
+               PosteriorSampler,
+               Ptr<StateSpacePoissonPosteriorSampler>>(
+                   boom, "StateSpacePoissonPosteriorSampler")
+        .def(py::init(
+            [] (StateSpacePoissonModel *model,
+                PoissonRegressionSpikeSlabSampler *observation_model_sampler,
+                RNG &seeding_rng) {
+              return new StateSpacePoissonPosteriorSampler(
+                  model, observation_model_sampler, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("observation_model_sampler"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The boom.StateSpacePoissonModel to be sampled.\n"
+             "  observation_model_sampler: A PoissonRegressionSpikeSlabSampler"
+             "    responsible for sampling the observation model.\n"
+             "  seeding_rng:  The random number generator used to seed "
+             "this sampler's RNG.\n")
+        ;
 
   }  // StateSpaceModel_def
 
