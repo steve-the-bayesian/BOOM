@@ -1,5 +1,5 @@
 import numpy as np
-
+from abc import ABC, abstractmethod
 
 """
 Wrapper classes to encapsulate and expand models and prior distributions
@@ -7,7 +7,21 @@ from the Boom library.
 """
 
 
-class SdPrior:
+class DoubleModel(ABC):
+    """
+    A base class that marks its children as being able to produce a
+    boom.DoubleModel, which is simply a model that implements a 'logp' method
+    measuring a real valued random variable.
+    """
+
+    @abstractmethod
+    def boom(self):
+        """
+        Return a boom.DoubleModel with parameters set from this object.
+        """
+
+
+class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
     that 1/sigma**2 ~ Gamma(a, b), where a = df/2 and b = ss/2.  Here 'df' is
     the 'sample_size' and ss is the "sum of squares" equal to the sample size
@@ -47,8 +61,7 @@ class SdPrior:
         return self.sigma_guess**2 * self.sample_size
 
     def create_chisq_model(self):
-        import BayesBoom.boom as boom
-        return boom.ChisqModel(self.sample_size, self.sigma_guess)
+        return self.boom()
 
     def boom(self):
         """
@@ -70,7 +83,7 @@ class SdPrior:
         self.__dict__ = payload
 
 
-class NormalPrior:
+class NormalPrior(DoubleModel):
     """
     A scalar normal prior distribution.
     """
@@ -111,7 +124,7 @@ class NormalPrior:
         self.__dict__ = payload
 
 
-class Ar1CoefficientPrior:
+class Ar1CoefficientPrior(DoubleModel):
     """
     Contains the information needed to create a prior distribution on an AR1
     coefficient.
@@ -197,7 +210,7 @@ class MvnPrior:
                              boom.SpdMatrix(self._Sigma))
 
 
-class UniformPrior:
+class UniformPrior(DoubleModel):
     """
     Univariate uniform distribution.
     """

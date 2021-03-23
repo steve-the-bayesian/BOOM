@@ -6,10 +6,12 @@
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
+#include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
 
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -348,6 +350,65 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<StudentLocalLinearTrendStateModel,
+               StateModel,
+               PriorPolicy,
+               Ptr<StudentLocalLinearTrendStateModel>>(
+                   boom, "StudentLocalLinearTrendStateModel")
+        .def(py::init(
+            [] () {
+              return new StudentLocalLinearTrendStateModel;
+            }))
+        .def_property_readonly(
+            "sigma_level",
+            [] (StudentLocalLinearTrendStateModel *model) {
+              return model->sigma_level();
+            })
+        .def("set_sigma_level",
+             [] (StudentLocalLinearTrendStateModel *model, double sigma_level) {
+               model->set_sigma_level(sigma_level);
+             })
+        .def_property_readonly(
+            "nu_level",
+            [] (StudentLocalLinearTrendStateModel *model) {
+              return model->nu_level();
+            })
+        .def(
+            "set_nu_level",
+            [] (StudentLocalLinearTrendStateModel *model, double nu) {
+              return model->set_nu_level(nu);
+            })
+        .def_property_readonly(
+            "sigma_slope",
+            [] (StudentLocalLinearTrendStateModel *model) {
+              return model->sigma_slope();
+            })
+        .def("set_sigma_slope",
+             [] (StudentLocalLinearTrendStateModel *model, double sigma_slope) {
+               model->set_sigma_slope(sigma_slope);
+             })
+        .def_property_readonly(
+            "nu_slope",
+            [] (StudentLocalLinearTrendStateModel *model) {
+              return model->nu_slope();
+            })
+        .def(
+            "set_nu_slope",
+            [] (StudentLocalLinearTrendStateModel *model, double nu) {
+              return model->set_nu_slope(nu);
+            })
+        .def("set_initial_state_mean",
+             [] (StudentLocalLinearTrendStateModel *model,
+                 const Vector &initial_state_mean) {
+               model->set_initial_state_mean(initial_state_mean);
+             })
+        .def("set_initial_state_variance",
+             [] (StudentLocalLinearTrendStateModel *model,
+                 const SpdMatrix &initial_state_variance) {
+               model->set_initial_state_variance(initial_state_variance);
+             })
+        ;
+
     py::class_<DynamicRegressionIndependentPosteriorSampler,
                PosteriorSampler,
                Ptr<DynamicRegressionIndependentPosteriorSampler>>(
@@ -369,6 +430,50 @@ namespace BayesBoom {
              "  model:  The boom.DynamicRegressionStateModel to be sampled.\n"
              "  priors:  A list of R.SdPrior objects giving the prior "
              "distributions for each coefficient's innovation errors.")
+        ;
+
+    py::class_<StudentLocalLinearTrendPosteriorSampler,
+               PosteriorSampler,
+               Ptr<StudentLocalLinearTrendPosteriorSampler>>(
+                   boom, "StudentLocalLinearTrendPosteriorSampler")
+        .def(py::init(
+            [] (StudentLocalLinearTrendStateModel *model,
+                GammaModelBase *sigsq_level_prior,
+                DoubleModel *nu_level_prior,
+                GammaModelBase *sigsq_slope_prior,
+                DoubleModel *nu_slope_prior,
+                RNG &seeding_rng) {
+              return new StudentLocalLinearTrendPosteriorSampler(
+                  model, sigsq_level_prior, nu_level_prior,
+                  sigsq_slope_prior, nu_slope_prior, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("sigsq_level_prior"),
+             py::arg("nu_level_prior"),
+             py::arg("sigsq_slope_prior"),
+             py::arg("nu_slope_prior"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args: \n\n"
+             "  sigsq_level_prior: an R.SdPrior on the variance of the "
+             "level component.\n"
+             "  nu_level_prior: an R.DoubleModel on the tail thickness"
+             "(degrees of freedom) paramater for the level component.\n"
+             "  sigsq_slope_prior: an R.SdPrior on the variance of the "
+             "slope component.\n"
+             "  nu_slope_prior: an R.DoubleModel on the tail thickness"
+             "(degrees of freedom) paramater for the slope component.\n"
+             "  seeding_rng:  The random number generator used to seed "
+             "the RNG in this sampler.\n")
+        .def("set_sigma_level_upper_limit",
+             [] (StudentLocalLinearTrendPosteriorSampler *sampler,
+                 double upper_limit) {
+               sampler->set_sigma_level_upper_limit(upper_limit);
+             })
+        .def("set_sigma_slope_upper_limit",
+             [] (StudentLocalLinearTrendPosteriorSampler *sampler,
+                 double upper_limit) {
+               sampler->set_sigma_slope_upper_limit(upper_limit);
+             })
         ;
 
   }  // StateSpaceModel_def

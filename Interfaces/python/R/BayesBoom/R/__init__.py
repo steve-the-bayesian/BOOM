@@ -6,6 +6,7 @@ from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
 
 from .bayes import (
     Ar1CoefficientPrior,
+    DoubleModel,
     MvnPrior,
     NormalPrior,
     UniformPrior,

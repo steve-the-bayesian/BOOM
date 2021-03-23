@@ -13,10 +13,8 @@ from BayesBoom.R import delete_if_present
 from BayesBoom.bsts import (
     Bsts,
     AirPassengers,
-    DynamicRegressionStateModel,
-    LocalLevelStateModel,
-    LocalLinearTrendStateModel,
-    SeasonalStateModel,
+    StudentLocalLinearTrendStateModel,
+    simulate_student_local_linear_trend
 )
 
 
@@ -24,16 +22,11 @@ def default_colnames(n):
     return ["X" + str(i + 1) for i in range(n)]
 
 
-class TestDynamicRegression(unittest.TestCase):
+class TestStudentLocalLinearTrend(unittest.TestCase):
     def setUp(self):
-        n = 100
-        xdim = 3
-        coefficients = np.cumsum(np.random.randn(n, xdim) * .1, axis=0)
-        self._predictors = np.random.randn(n, xdim)
-        self._random_walk = np.cumsum(np.random.randn(n) * .1)
-        self._reg = np.sum(coefficients * self._predictors, axis=1)
-        self._noise = np.random.randn(n)
-        self._y = self._random_walk + self._reg + self._noise
+        sample_size = 100
+        self._trend = simulate_student_local_linear_trend(nsteps=sample_size)
+        self._y = self._trend + np.random.randn(sample_size)
 
     def tearDown(self):
         pass
@@ -41,16 +34,8 @@ class TestDynamicRegression(unittest.TestCase):
 
     def test_local_level(self):
         model = Bsts()
-        model.add_state(LocalLevelStateModel(self._y))
-        data = pd.DataFrame(
-            self._predictors,
-            columns=default_colnames(self._predictors.shape[1]))
-        data["y"] = self._y
-
-        model.add_state(DynamicRegressionStateModel(
-            "y ~ X1 + X2 + X3", data=data))
-
-        model.train(data=data["y"], niter=1000)
+        model.add_state(StudentLocalLinearTrendStateModel(self._y))
+        model.train(data=self._y, niter=1000)
 
     def test_plots(self):
         pass
