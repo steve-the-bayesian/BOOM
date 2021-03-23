@@ -20,6 +20,13 @@ class DoubleModel(ABC):
         Return a boom.DoubleModel with parameters set from this object.
         """
 
+    @property
+    @abstractmethod
+    def mean(self):
+        """
+        The mean of the distribution.
+        """
+
 
 class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
@@ -69,6 +76,13 @@ class SdPrior(DoubleModel):
         """
         import BayesBoom.boom as boom
         return boom.ChisqModel(self.sample_size, self.sigma_guess)
+
+    @property
+    def mean(self):
+        """
+        The mean of the distribution on the precision scale.
+        """
+        return self.sample_size / self.sigma_guess**2
 
     def __repr__(self):
         ans = f"SdPrior with sigma_guess = {self.sigma_guess}, "
@@ -162,6 +176,10 @@ class Ar1CoefficientPrior(DoubleModel):
         import BayesBoom.boom as boom
         return boom.GaussianModel(self.mu, self.sigma)
 
+    @property
+    def mean(self):
+        return self.mu
+
     def __getstate__(self):
         return self.__dict__
 
@@ -219,6 +237,10 @@ class UniformPrior(DoubleModel):
             lo, hi = hi, lo
         self._lo = lo
         self._hi = hi
+
+    @property
+    def mean(self):
+        return .5 * (self._lo + self._hi)
 
     def boom(self):
         """

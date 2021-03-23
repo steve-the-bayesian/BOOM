@@ -183,6 +183,10 @@ class StudentLocalLinearTrendStateModel(StateModel):
         self._state_model = boom.StudentLocalLinearTrendStateModel()
         self._set_posterior_sampler()
         self._set_initial_distribution()
+        self._state_model.set_nu_level(self._level_nu_prior.mean)
+        self._state_model.set_nu_slope(self._slope_nu_prior.mean)
+
+
 
     def _set_posterior_sampler(self):
         """
