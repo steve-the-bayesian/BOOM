@@ -45,7 +45,8 @@
 namespace BOOM {
   class ArSpikeSlabSampler : public PosteriorSampler {
    public:
-    ArSpikeSlabSampler(ArModel *model, const Ptr<MvnBase> &slab,
+    ArSpikeSlabSampler(ArModel *model,
+                       const Ptr<MvnBase> &slab,
                        const Ptr<VariableSelectionPrior> &spike,
                        const Ptr<GammaModelBase> &residual_precision_prior,
                        bool truncate_support_to_stationary_region = true,

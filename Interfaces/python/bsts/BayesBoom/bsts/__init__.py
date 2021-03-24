@@ -1,12 +1,14 @@
 from .bsts import Bsts
 
 from .state_models import StateModel
+from .ar import ArStateModel, AutoArStateModel, SpikeSlabArPrior
 from .dynamic_regression_state_model import DynamicRegressionStateModel
 from .local_level import LocalLevelStateModel
 from .local_linear_trend import LocalLinearTrendStateModel
-from .semilocal_linear_trend import SemilocalLinearTrendStateModel
 from .seasonal import SeasonalStateModel
+from .semilocal_linear_trend import SemilocalLinearTrendStateModel
 from .student_local_linear_trend import StudentLocalLinearTrendStateModel
+from .trig import TrigStateModel
 
 from .data import AirPassengers
 
@@ -19,6 +21,7 @@ from .test_utilities import (
 
 __all__ = ["Bsts",
            "StateModel",
+           "ArStateModel",
            "DynamicRegressionStateModel",
            "LocalLevelStateModel",
            "LocalLinearTrendStateModel",

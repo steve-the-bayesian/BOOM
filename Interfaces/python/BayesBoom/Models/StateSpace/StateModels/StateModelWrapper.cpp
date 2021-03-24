@@ -1,17 +1,21 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "Models/StateSpace/StateModels/ArStateModel.hpp"
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 #include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
+
+#include "Models/TimeSeries/ArModel.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -409,6 +413,93 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<TrigStateModel,
+               StateModel,
+               PriorPolicy,
+               Ptr<TrigStateModel>>(boom, "TrigStateModel")
+        .def(py::init(
+            [] (double period, const Vector &frequencies) {
+              return new TrigStateModel(period, frequencies);
+            }),
+             py::arg("period"),
+             py::arg("frequencies"),
+             "Args:\n\n"
+             "  period: The (float) number of time steps in a full cycle.\n"
+             "  frequencies: A vector of positive real numbers, giving the "
+             "number of times a cycle repeats in a period.  One sine and "
+             "one cosine term will be added to the state for each frequency.\n")
+        .def_property_readonly(
+            "error_distribution",
+            [] (TrigStateModel *model) {
+              return model->error_distribution();
+            })
+        .def("compute_state_contribution",
+             [] (TrigStateModel *model, const Matrix &state) {
+               int time_dimension = state.ncol();
+               Vector ans(time_dimension);
+               for (int t = 0; t < time_dimension; ++t) {
+                 ans[t] = model->observation_matrix(t).dot(state.col(t));
+               }
+               return ans;
+             })
+        .def("set_initial_state_mean",
+             [] (TrigStateModel *model, const Vector &initial_state_mean) {
+               model->set_initial_state_mean(initial_state_mean);
+             })
+        .def("set_initial_state_variance",
+             [] (TrigStateModel *model, const SpdMatrix &initial_state_variance) {
+               model->set_initial_state_variance(initial_state_variance);
+             })
+        ;
+
+    py::class_<ArStateModel,
+               StateModel,
+               ArModel,
+               PriorPolicy,
+               Ptr<ArStateModel>>(boom, "ArStateModel")
+        .def(py::init(
+            [] (int lags) {
+              return new ArStateModel(lags);
+            }),
+             py::arg("lags") = 1,
+             "Args:\n\n"
+             "  lags:  The number of lags in the AR process.\n")
+        .def_property_readonly("sigma", [] (ArStateModel *model) {
+          return model->sigma();
+        })
+        .def("set_sigma",
+             [] (ArStateModel *model, double sigma) {
+               model->set_sigma(sigma);
+             })
+        .def_property_readonly(
+            "phi",
+            [](ArStateModel *model) {
+              return model->phi();
+            },
+            "The AR coefficients.")
+        .def_property_readonly(
+            "ar_coefficients",
+            [](ArStateModel *model) {
+              return model->phi();
+            },
+            "The AR coefficients.")
+        .def("set_phi",
+             [](ArStateModel *model, const Vector &phi) {
+               model->set_phi(phi);
+             })
+        .def("set_initial_state_mean",
+             [] (ArStateModel *model, const Vector &mean) {
+               model->set_initial_state_mean(mean);
+             })
+        .def("set_initial_state_variance",
+             [] (ArStateModel *model, const SpdMatrix &variance) {
+               model->set_initial_state_variance(variance);
+             })
+        ;
+
+    //==========================================================================
+    // Posterior samplers
+    //==========================================================================
     py::class_<DynamicRegressionIndependentPosteriorSampler,
                PosteriorSampler,
                Ptr<DynamicRegressionIndependentPosteriorSampler>>(
@@ -475,6 +566,8 @@ namespace BayesBoom {
                sampler->set_sigma_slope_upper_limit(upper_limit);
              })
         ;
+
+
 
   }  // StateSpaceModel_def
 

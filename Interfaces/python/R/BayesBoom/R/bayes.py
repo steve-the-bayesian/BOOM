@@ -204,6 +204,10 @@ class MvnPrior:
         self._Sigma = Sigma
 
     @property
+    def dim(self):
+        return len(self._mu)
+
+    @property
     def mu(self):
         return self._mu
 
