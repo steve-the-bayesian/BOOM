@@ -187,7 +187,7 @@ class AutoArStateModel(ArStateModel):
             prior = SpikeSlabArPrior(
                 lags=self._lags,
                 sdy=sdy,
-o                sigma_upper_limit=sdy)
+                sigma_upper_limit=sdy)
 
         if not isinstance(prior, SpikeSlabArPrior):
             raise Exception("Wrong type for 'prior'.")
