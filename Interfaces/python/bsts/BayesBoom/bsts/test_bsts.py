@@ -88,6 +88,7 @@ class TestStudentTimeSeries(unittest.TestCase):
 
     def tearDown(self):
         delete_if_present("bsts_student_llt.pkl")
+        delete_if_present("bsm.pkl")
 
     def test_local_level(self):
         model = Bsts(family="student")
@@ -213,8 +214,8 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    # rig.test_local_level()
-    rig.test_basic_structural_model()
+    rig.test_local_level()
+    # rig.test_basic_structural_model()
 
     print("Goodbye, cruel world!")
 

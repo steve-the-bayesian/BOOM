@@ -29,13 +29,24 @@ class TestStudentLocalLinearTrend(unittest.TestCase):
         self._y = self._trend + np.random.randn(sample_size)
 
     def tearDown(self):
-        pass
-        # delete_if_present("bsts_llt.pkl")
+        delete_if_present("student_llt.pkl")
 
     def test_local_level(self):
         model = Bsts()
         model.add_state(StudentLocalLinearTrendStateModel(self._y))
         model.train(data=self._y, niter=1000)
+
+        fname = "student_llt.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        self.assertEqual(model.time_dimension, m2.time_dimension)
+        self.assertIsInstance(m2, Bsts)
+
+
 
     def test_plots(self):
         pass

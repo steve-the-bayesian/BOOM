@@ -105,6 +105,15 @@ class ArStateModel(StateModel):
         self._state_model.set_initial_state_variance(
             R.to_boom_spd(self._initial_state_prior.variance))
 
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()
+
 
 class SpikeSlabArPrior:
     def __init__(self,
@@ -209,3 +218,12 @@ class AutoArStateModel(ArStateModel):
             sampler.limit_model_selection(max_flips)
 
         self._state_model.set_method(sampler)
+
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()

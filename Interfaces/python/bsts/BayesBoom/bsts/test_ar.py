@@ -17,14 +17,14 @@ from BayesBoom.bsts import (
     SeasonalStateModel,
 )
 
+from BayesBoom.R import delete_if_present
 
 class TestAr(unittest.TestCase):
     def setUp(self):
         self._y = np.log(AirPassengers)
 
     def tearDown(self):
-        pass
-        # delete_if_present("bsts_llt.pkl")
+        delete_if_present("ar.pkl")
 
     def test_basic_ar(self):
         model = Bsts()
@@ -33,6 +33,17 @@ class TestAr(unittest.TestCase):
         model.add_state(ArStateModel(self._y, lags=1))
         model.train(data=self._y, niter=1000)
 
+        fname = "ar.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        self.assertEqual(model.time_dimension, m2.time_dimension)
+        self.assertIsInstance(m2, Bsts)
+
+
     def test_auto_ar(self):
         model = Bsts()
         model.add_state(LocalLinearTrendStateModel(self._y))
@@ -40,11 +51,19 @@ class TestAr(unittest.TestCase):
         model.add_state(AutoArStateModel(self._y, lags=1))
         model.train(data=self._y, niter=1000)
 
+        fname = "ar.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
+
+        with open(fname, "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        self.assertEqual(model.time_dimension, m2.time_dimension)
+        self.assertIsInstance(m2, Bsts)
+
     def test_predictions(self):
         pass
 
-    def test_serialization(self):
-        pass
 
 
 _debug_mode = False

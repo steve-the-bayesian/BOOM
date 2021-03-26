@@ -58,7 +58,7 @@ class Holiday(ABC):
         return self._boom_holiday.active(R.to_boom_date(arbitrary_date))
 
     def __getstate__(self):
-        payload = self.__dict__
+        payload = self.__dict__.copy()
         del payload["_boom_holiday"]
 
     def __setstate__(self, payload):

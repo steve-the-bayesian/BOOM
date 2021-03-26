@@ -4,7 +4,7 @@ import BayesBoom.boom as boom
 import BayesBoom.R as R
 from numbers import Number
 from .state_models import StateModel
-from .holiday import HolidayFactory
+from .holiday import Holiday, HolidayFactory
 
 
 class RegressionHolidayStateModel(StateModel):
@@ -67,8 +67,7 @@ class RegressionHolidayStateModel(StateModel):
 
     def record_state(self, iteration, state_matrix):
         for i, name in enumerate(self._holiday_names):
-            (
-                self._holiday_patterns[name][iteration, :] =
+            self._holiday_patterns[name][iteration, :] = (
                 self._state_model.holiday_pattern(i).to_numpy()
             )
 
@@ -102,3 +101,12 @@ class RegressionHolidayStateModel(StateModel):
         for holiday in self._holiday_list:
             self._state_model.add_holiday(
                 holiday_factory.create_boom_holiday(holiday))
+
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()

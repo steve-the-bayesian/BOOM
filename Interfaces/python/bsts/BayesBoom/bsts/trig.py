@@ -117,3 +117,12 @@ class TrigStateModel(StateModel):
             R.to_boom_vector(self._initial_state_prior.mean))
         self._state_model.set_initial_state_variance(
             R.to_boom_spd(self._initial_state_prior.variance))
+
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()

@@ -23,8 +23,7 @@ class TestTrig(unittest.TestCase):
         self._y = np.log(AirPassengers)
 
     def tearDown(self):
-        pass
-        # delete_if_present("bsts_llt.pkl")
+        delete_if_present("trig.pkl")
 
     def test_local_level(self):
         model = Bsts()
@@ -32,10 +31,17 @@ class TestTrig(unittest.TestCase):
         model.add_state(TrigStateModel(self._y, period=12, frequencies=[1, 2]))
         model.train(data=self._y, niter=1000)
 
-    def test_predictions(self):
-        pass
+        fname = "trig.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(model, pkl)
 
-    def test_serialization(self):
+        with open(fname, "rb") as pkl:
+            m2 = pickle.load(pkl)
+
+        self.assertEqual(model.time_dimension, m2.time_dimension)
+        self.assertIsInstance(m2, Bsts)
+
+    def test_predictions(self):
         pass
 
 
@@ -53,8 +59,7 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestDynamicRegression()
-    # rig = TestGaussianTimeSeries()
+    rig = TestTrig()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()

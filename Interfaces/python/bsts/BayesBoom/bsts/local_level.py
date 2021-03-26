@@ -69,15 +69,6 @@ class LocalLevelStateModel(StateModel):
     def state_contribution(self):
         return self._state_contribution
 
-    def __getstate__(self):
-        payload = self.__dict__.copy()
-        del payload["_state_model"]
-        return payload
-
-    def __setstate__(self, payload):
-        self.__dict__ = payload
-        self._build_state_model()
-
     def _validate_sigma_prior(self, sigma_prior, y, sdy):
         if sigma_prior is None:
             if sdy is None:
@@ -114,3 +105,12 @@ class LocalLevelStateModel(StateModel):
             innovation_precision_prior)
         state_model_sampler.set_sigma_upper_limit(
             self._sigma_prior.upper_limit)
+
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()
