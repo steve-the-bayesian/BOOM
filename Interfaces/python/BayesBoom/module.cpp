@@ -11,6 +11,7 @@ namespace BayesBoom {
   // files.  Each of these is defined in a local cpp file, but invoked here.
   // That way all the definitions occur within the same module.
   void distribution_def(py::module &);
+  void cpputil_def(py::module &);
   void LinAlg_def(py::module &);
   void stats_def(py::module &);
   void Model_def(py::module &);
@@ -39,6 +40,7 @@ namespace BayesBoom {
 
     // The functions declared above need to be called here to add their contents
     // to the module.
+    cpputil_def(boom);
     distribution_def(boom);
     LinAlg_def(boom);
 

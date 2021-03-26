@@ -10,6 +10,18 @@ from .semilocal_linear_trend import SemilocalLinearTrendStateModel
 from .student_local_linear_trend import StudentLocalLinearTrendStateModel
 from .trig import TrigStateModel
 
+from .holiday import (
+    Holiday,
+    FixedDateHoliday,
+    NthWeekdayInMonthHoliday,
+    LastWeekdayInMonthHoliday,
+    EasterSunday,
+    USDaylightSavingsTimeBegins,
+    USDaylightSavingsTimeEnds,
+)
+
+from .holiday_models import RegressionHolidayStateModel
+
 from .data import AirPassengers
 
 from .test_utilities import (

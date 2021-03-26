@@ -80,12 +80,12 @@ namespace BOOM {
     enum print_order { mdy, dmy, ymd };
     enum date_format { slashes, dashes, script };
 
-    Date();                           // 'today'
+    Date();                                    // 'today'
     explicit Date(int days_after_jan_1_1970);  // Unix time, but in days
-    Date(int m, int dd, int yyyy);    // January 3, 2007 is Date(1, 3, 2007);
-    Date(MonthNames m, int dd, int yyyy);       // Date(Jan, 3, 2007)
-    explicit Date(const std::string &mdy, char delim = '/');  // Date("Jan/3/2007")
-    Date(const std::string &m, int d, int yyyy);     // Date("January", 3, 2007);
+    Date(int m, int dd, int yyyy);       // January 3, 2007 is Date(1, 3, 2007)
+    Date(MonthNames m, int dd, int yyyy);      // Date(Jan, 3, 2007)
+    explicit Date(const std::string &mdy, char delim = '/');  // "Jan/3/2007"
+    Date(const std::string &m, int d, int yyyy);  // Date("January", 3, 2007)
     Date(const Date &rhs);
     explicit Date(const struct tm &time_info);
 

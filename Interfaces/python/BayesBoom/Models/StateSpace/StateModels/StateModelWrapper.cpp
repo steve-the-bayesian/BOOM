@@ -5,6 +5,7 @@
 #include "Models/StateSpace/StateModels/DynamicRegressionStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLinearTrend.hpp"
+#include "Models/StateSpace/StateModels/RegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
 #include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
@@ -17,6 +18,9 @@
 
 #include "Models/TimeSeries/ArModel.hpp"
 
+#include "Models/StateSpace/StateModels/Holiday.hpp"
+
+#include "cpputil/Date.hpp"
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -497,6 +501,43 @@ namespace BayesBoom {
              })
         ;
 
+    py::class_<RegressionHolidayStateModel,
+               StateModel,
+               Ptr<RegressionHolidayStateModel>>(
+                   boom, "RegressionHolidayStateModel")
+        .def(py::init(
+            [] (Date &time0,
+                ScalarStateSpaceModelBase *model,
+                GaussianModel *prior,
+                RNG &seeding_rng) {
+              return new ScalarRegressionHolidayStateModel(
+                  time0, model, prior, seeding_rng);
+            }),
+             py::arg("time0"),
+             py::arg("parent_model"),
+             py::arg("prior"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "")
+        .def("add_holiday",
+             [] (RegressionHolidayStateModel *model,
+                 Holiday *holiday) {
+               model->add_holiday(holiday);
+             })
+        .def_property_readonly(
+            "holiday_pattern",
+            [] (const RegressionHolidayStateModel *model,
+                int holiday_index) {
+              return model->holiday_pattern(holiday_index);
+            })
+        .def("set_holiday_pattern",
+             [] (RegressionHolidayStateModel *model,
+                 int holiday_index,
+                 const Vector &pattern) {
+               model->set_holiday_pattern(holiday_index, pattern);
+             })
+        ;
+
+
     //==========================================================================
     // Posterior samplers
     //==========================================================================
@@ -568,6 +609,163 @@ namespace BayesBoom {
         ;
 
 
+    //======================================================================
+    // Holiday tools
+    //======================================================================
+
+    py::class_<Holiday,
+               Ptr<Holiday>>(boom, "Holiday")
+        .def_property_readonly(
+            "maximum_window_width",
+            [] (Holiday *holiday) {
+              return holiday->maximum_window_width();
+            })
+        ;
+
+    py::class_<OrdinaryAnnualHoliday,
+               Holiday,
+               Ptr<OrdinaryAnnualHoliday>>(boom, "OrdinaryAnnualHoliday")
+        .def("date", [] (OrdinaryAnnualHoliday *holiday, int year) {
+          return holiday->date(year);
+        },
+          py::arg("year"),
+          "The date of the holiday in a give year.\n")
+        ;
+
+    py::class_<FixedDateHoliday,
+               OrdinaryAnnualHoliday,
+               Ptr<FixedDateHoliday>>(boom, "FixedDateHoliday")
+        .def(py::init(
+            [] (int month, int day, int days_before, int days_after) {
+              return new FixedDateHoliday(
+                  MonthNames(month),
+                  day,
+                  days_before,
+                  days_after);
+            }),
+             py::arg("month"),
+             py::arg("day"),
+             py::arg("days_before") = 1,
+             py::arg("days_after") = 1,
+             "Args:\n\n"
+             "  month: Integer month identifier.  January is 1.\n"
+             "  day: Day of the month 1--31.\n"
+             "  days_before: The number of days (>= 0) before the holiday to "
+             "look for influence.\n"
+             "  days_after: The number of days (>= 0) after the holiday to "
+             "look for influence.\n")
+        ;
+
+
+    py::class_<NthWeekdayInMonthHoliday,
+               OrdinaryAnnualHoliday,
+               Ptr<NthWeekdayInMonthHoliday>>(boom, "NthWeekdayInMonthHoliday")
+        .def(py::init(
+            [] (int week, int day, int month, int days_before, int days_after) {
+              return new NthWeekdayInMonthHoliday(
+                  week,
+                  DayNames(day),
+                  MonthNames(month),
+                  days_before,
+                  days_after);
+            }),
+             py::arg("week"),
+             py::arg("day"),
+             py::arg("month"),
+             py::arg("days_before") = 1,
+             py::arg("days_after") = 1,
+             "For example: 2nd Tuesday in November.\n"
+             "Args:\n\n"
+             "  week: Which week (1 <= week <= 4) of the month.\n"
+             "  day: Day of the week: 0--6.  Sunday is 0.\n"
+             "  month: Integer month identifier.  January is 1.\n"
+             "  days_before: The number of days (>= 0) before the holiday to "
+             "look for influence.\n"
+             "  days_after: The number of days (>= 0) after the holiday to "
+             "look for influence.\n")
+        ;
+
+
+    py::class_<LastWeekdayInMonthHoliday,
+               OrdinaryAnnualHoliday,
+               Ptr<LastWeekdayInMonthHoliday>>(boom, "LastWeekdayInMonthHoliday")
+        .def(py::init(
+            [] (int day, int month, int days_before, int days_after) {
+              return new LastWeekdayInMonthHoliday(
+                  DayNames(day),
+                  MonthNames(month),
+                  days_before,
+                  days_after);
+            }),
+             py::arg("day"),
+             py::arg("month"),
+             py::arg("days_before") = 1,
+             py::arg("days_after") = 1,
+             "For example: 2nd Tuesday in November.\n"
+             "Args:\n\n"
+             "  week: Which week (1 <= week <= 4) of the month.\n"
+             "  day: Day of the week: 0--6.  Sunday is 0.\n"
+             "  month: Integer month identifier.  January is 1.\n"
+             "  days_before: The number of days (>= 0) before the holiday to "
+             "look for influence.\n"
+             "  days_after: The number of days (>= 0) after the holiday to "
+             "look for influence.\n")
+        ;
+
+    py::class_<DateRangeHoliday,
+               Holiday,
+               Ptr<DateRangeHoliday>>(boom, "DateRangeHoliday")
+        .def(py::init(
+            [] (const std::vector<Date> &start, const std::vector<Date> &end) {
+              return new DateRangeHoliday(start, end);
+            }))
+        ;
+
+    py::class_<EasterSunday,
+               OrdinaryAnnualHoliday,
+               Ptr<EasterSunday>>(boom, "EasterSunday")
+        .def(py::init(
+            [] (int days_before, int days_after) {
+              return new EasterSunday(days_before, days_after);
+            }))
+        ;
+
+    py::class_<USDaylightSavingsTimeBegins,
+               OrdinaryAnnualHoliday,
+               Ptr<USDaylightSavingsTimeBegins>>(boom, "USDaylightSavingsTimeBegins")
+        .def(py::init(
+            [] (int days_before, int days_after) {
+              return new USDaylightSavingsTimeBegins(days_before, days_after);
+            }))
+        ;
+
+    py::class_<USDaylightSavingsTimeEnds,
+               OrdinaryAnnualHoliday,
+               Ptr<USDaylightSavingsTimeEnds>>(boom, "USDaylightSavingsTimeEnds")
+        .def(py::init(
+            [] (int days_before, int days_after) {
+              return new USDaylightSavingsTimeEnds(days_before, days_after);
+            }))
+        ;
+
+    boom.def("create_named_holiday",
+             [] (const std::string &holiday_name,
+                 int days_before,
+                 int days_after) {
+               Ptr<Holiday> ans = CreateNamedHoliday(
+                   holiday_name, days_before, days_after);
+               return ans;
+             },
+             py::arg("holiday_name"),
+             py::arg("days_before") = 1,
+             py::arg("days_after") = 1,
+             "Args:\n\n"
+             "  holiday_name:  The name of the holiday.  See the C++ code.\n"
+             "  days_before: The number of days (>= 0) before the holiday to "
+             "look for influence.\n"
+             "  days_after: The number of days (>= 0) after the holiday to "
+             "look for influence.\n")
+        ;
 
   }  // StateSpaceModel_def
 

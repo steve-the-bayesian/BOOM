@@ -291,7 +291,6 @@ namespace BOOM {
       report_error("Can't compute USDaylightSavingsTime before 1967.");
     }
     if (year > 2006) {
-      // Second Sunday in March
       return nth_weekday_in_month(1, Sun, Nov, year);
     }
     return last_weekday_in_month(Sun, Oct, year);

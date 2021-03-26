@@ -88,3 +88,17 @@ def to_boom_date(timestamp):
 
     return boom._date(int(timestamp.month), int(timestamp.day),
                       int(timestamp.year))
+
+
+def to_pd_timestamp(boom_date):
+    """
+    Convert a boom.Date or boom.DateTime to a pd.Timestamp.
+    """
+    if isinstance(boom_date, boom.Date):
+        return pd.Timestamp(month=boom_date.month,
+                            day=boom_date.day,
+                            year=boom_date.year)
+    elif isinstance(boom_date, boom.DateTime):
+        pass
+    else:
+        raise Exception("Wrong input type.")
