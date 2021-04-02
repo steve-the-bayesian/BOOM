@@ -22,7 +22,7 @@ namespace {
       GlobalRng::rng.seed(8675309);
     }
   };
-  
+
   void CheckSparseMatrixBlock(
       const Ptr<SparseMatrixBlock> &sparse,
       const Matrix &dense) {
@@ -31,7 +31,7 @@ namespace {
         << sparse->dense() << endl
         << "dense = " << endl
         << dense << endl;
-    
+
     EXPECT_EQ(sparse->nrow(), dense.nrow())
         << endl << sparse->dense() << endl << dense;
     EXPECT_EQ(sparse->ncol(), dense.ncol())
@@ -63,7 +63,7 @@ namespace {
     sparse->Tmult(VectorView(lhs_tmult_vector), rhs_tmult_vector);
     EXPECT_TRUE(VectorEquals(lhs_tmult_vector,
                              rhs_tmult_vector * dense));
-    
+
     // Only check multiply_inplace and friends if the matrix is square.
     if (dense.nrow() == dense.ncol()) {
       Vector original_rhs = rhs_vector;
@@ -122,25 +122,10 @@ namespace {
         << sparse->inner(weights);
   }
 
-  void CheckLeftInverse(const Ptr<SparseMatrixBlock> &block,
-                        const Vector &rhs) {
-    BlockDiagonalMatrix mat;
-    mat.add_block(block);
-    
-    Vector lhs = mat.left_inverse(rhs);
-    Vector rhs_new = mat * lhs;
-
-    EXPECT_TRUE(VectorEquals(rhs, rhs_new))
-        << "Vectors were not equal." << endl
-        << rhs << endl
-        << rhs_new;
-  }
-  
   TEST_F(SparseMatrixTest, LeftInverseIdentity) {
     NEW(IdentityMatrix, mat)(3);
     Vector x(3);
     x.randomize();
-    CheckLeftInverse(mat, x);
   }
 
   TEST_F(SparseMatrixTest, LeftInverseSkinnyColumn) {
@@ -149,7 +134,6 @@ namespace {
     errors.randomize();
     Vector x(12);
     x[0] = errors[0];
-    CheckLeftInverse(column, x);
   }
 
   TEST_F(SparseMatrixTest, IdentityMatrix) {
@@ -179,7 +163,7 @@ namespace {
     EXPECT_TRUE(VectorEquals(dense.row(2), Vector{0, 0, 1}));
     CheckSparseMatrixBlock(T, dense);
   }
-  
+
   TEST_F(SparseMatrixTest, DenseMatrixTest) {
     Matrix square(4, 4);
     square.randomize();
@@ -228,7 +212,7 @@ namespace {
   TEST_F(SparseMatrixTest, Diagonal) {
     Vector values(4);
     values.randomize();
-    
+
     NEW(DiagonalMatrixBlock, diag)(values);
     Matrix D(4, 4, 0.0);
     D.set_diag(values);
@@ -278,7 +262,7 @@ namespace {
     Matrix dense = 1.7 * coefficients.outer();
     CheckSparseMatrixBlock(V, dense);
   }
-  
+
   TEST_F(SparseMatrixTest, EmptyTest) {
     Matrix empty;
     NEW(EmptyMatrix, empty_kalman)();
@@ -407,7 +391,7 @@ namespace {
     NEW(EffectConstraintMatrix, sparse)(7);
     CheckSparseMatrixBlock(sparse, dense);
   }
-  
+
   TEST_F(SparseMatrixTest, EffectConstrainedMatrixBlockTest) {
     NEW(SeasonalStateSpaceMatrix, seasonal)(4);
     NEW(EffectConstrainedMatrixBlock, constrained_seasonal)(
@@ -415,9 +399,9 @@ namespace {
 
     Matrix constraint_matrix(3, 3, -1.0/3);
     constraint_matrix.diag() = (2.0 / 3);
-    
+
     EXPECT_TRUE(MatrixEquals(constraint_matrix, ConstraintMatrix(3)));
-    
+
     CheckSparseMatrixBlock(
         constrained_seasonal, seasonal->dense() * ConstraintMatrix(3));
   }
@@ -453,7 +437,7 @@ namespace {
     EXPECT_TRUE(VectorEquals(sparse * VectorView(v), dense * VectorView(v)));
     EXPECT_TRUE(VectorEquals(sparse * ConstVectorView(v),
                              dense * ConstVectorView(v)));
-    
+
     Vector tv(sparse.nrow());
     EXPECT_TRUE(VectorEquals(sparse.Tmult(tv), dense.Tmult(tv)));
     EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(tv)),
@@ -495,7 +479,7 @@ namespace {
         dense.Tmult(DiagonalMatrix(weights) * dense),
         sparse.inner(weights)));
   }
-  
+
   TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {
     BlockDiagonalMatrix sparse;
     sparse.add_block(new LocalLinearTrendMatrix);
@@ -511,7 +495,7 @@ namespace {
     trend[0] = 1.0;
     sparse.add_block(new IdenticalRowsMatrix(trend, nrows));
     EXPECT_EQ(2, sparse.ncol());
-    
+
     SparseVector seasonal(4);
     seasonal[0] = 1.0;
     sparse.add_block(new IdenticalRowsMatrix(seasonal, nrows));
@@ -552,20 +536,20 @@ namespace {
     EXPECT_EQ(2, tall.ncol());
     CheckSparseKalmanMatrix(tall);
   }
-  
+
   TEST_F(SparseMatrixTest, StackedRegressionCoefficients) {
     std::vector<Ptr<GlmCoefs>> beta;
     for (int i = 0; i < 6; ++i) {
       beta.push_back(new GlmCoefs(rnorm_vector(4, 0.0, 1.0)));
     }
-    
+
     StackedRegressionCoefficients sparse;
     for (int i = 0; i < beta.size(); ++i) {
       sparse.add_row(beta[i]);
     }
     EXPECT_EQ(sparse.nrow(), beta.size());
     EXPECT_EQ(sparse.ncol(), 4);
-    
+
     // Check the matrix when everything is included.
     CheckSparseKalmanMatrix(sparse);
 
@@ -573,7 +557,7 @@ namespace {
     beta[0]->drop(1);
     beta[1]->drop_all();
     Matrix dense = sparse.dense();
-    
+
     // Check that the dense matrix is as expected.
     Matrix manual_dense(sparse.nrow(), sparse.ncol());
     for (int i = 0; i < beta.size(); ++i) {
@@ -582,7 +566,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(manual_dense, dense));
     CheckSparseKalmanMatrix(sparse);
   }
-  
+
   // Test the transition matrix from the Harvey cumulator in
   // AggregatedStateSpaceRegression.
   TEST_F(SparseMatrixTest, AccumulatorTransitionMatrixTest) {
@@ -604,5 +588,22 @@ namespace {
         &RQR, seasonal_model->observation_matrix(7), 1.2);
     CheckSparseKalmanMatrix(V);
   }
-  
+
+  // Test a row expander matrix where some components have null dimension.
+  // E.g. a static regression model, or a seasonal model for a time period that
+  // does not begin a new season.
+  TEST_F(SparseMatrixTest, NullColumns) {
+    NEW(LocalLinearTrendMatrix, m1)();
+    NEW(NullMatrix, m2)(4);
+
+    NEW(ErrorExpanderMatrix, m);
+    m->add_block(m1);
+    m->add_block(m2);
+
+    Matrix dense = rbind(m1->dense(), Matrix(4, 2, 0.0));
+    EXPECT_TRUE(MatrixEquals(dense, m->dense()));
+
+    CheckSparseKalmanMatrix(*m);
+  }
+
 }  // namespace

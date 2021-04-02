@@ -102,22 +102,6 @@ namespace BOOM {
     // Returns this * rhs.transpose().
     Matrix multT(const Matrix &rhs) const;
 
-    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
-    // blocks are non-invertible, in which case calling this function will
-    // report an error.
-    //
-    // The initial reason for this implementing this method is to evaluate the
-    // transition density for state space models when the error distribution is
-    // less than full rank.   In those settings we must be able to evaluate
-    // error_expander->left_inverse( new_state - T * old_state).
-    //
-    // Thus the only blocks that need to implement left_inverse are those used
-    // in an error expander somewhere.
-    virtual Vector left_inverse(const ConstVectorView &rhs) const {
-      report_error("left_inverse is not implemented for this SparseKalmanMatrix.");
-      return Vector(0);
-    }
-
     // Checks that nrow() == i.  Reports an error if it does not.
     void conforms_to_rows(int i) const;
 
@@ -189,11 +173,9 @@ namespace BOOM {
     virtual void add_to_block(SubMatrix block) const = 0;
     Matrix &add_to(Matrix &P) const override;
 
-    // Solve rhs = this * lhs.  Many blocks cannot implement this, so the default
-    // is to throw an error.
-    virtual void left_inverse(VectorView lhs,
-                              const ConstVectorView &rhs) const;
-    using SparseKalmanMatrix::left_inverse;
+    // Returns a solution to y = this * x.  This may raise an error if the
+    // solution is not well defined, which is the default.
+    virtual Vector left_inverse(const ConstVectorView &x) const;
   };
 
   //===========================================================================
@@ -262,6 +244,9 @@ namespace BOOM {
 
     Matrix dense() const override;
 
+    // Returns the "best least squares" solution.
+    Vector left_inverse(const ConstVectorView &x) const override;
+
    private:
     // Each block must have the same number of columns, which are determined by
     // the first block added.
@@ -290,6 +275,11 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override;
     void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
+    Vector left_inverse(const ConstVectorView &x) const override {
+      Vector ans = x;
+      ans[0] -= ans[1];
+      return ans;
+    }
   };
 
   //======================================================================
@@ -325,6 +315,10 @@ namespace BOOM {
 
     // Fast access to the underlying matrix without returning a copy.
     const Matrix &matrix() const {return m_;}
+
+    Vector left_inverse(const ConstVectorView &x) const override {
+      return m_.solve(x);
+    }
 
    private:
     Matrix m_;
@@ -362,6 +356,9 @@ namespace BOOM {
     SpdMatrix inner(const ConstVectorView &weights) const override {
       return m_.inner(weights);
     }
+    Vector left_inverse(const ConstVectorView &v) const override {
+      return m_.solve(v);
+    }
 
    private:
     SpdMatrix m_;
@@ -378,6 +375,10 @@ namespace BOOM {
     SpdMatrix inner() const override {return value().inner();}
     SpdMatrix inner(const ConstVectorView &weights) const override {
       return value().inner(weights);
+    }
+
+    Vector left_inverse(const ConstVectorView &v) const override {
+      return value().solve(v);
     }
 
    private:
@@ -443,6 +444,10 @@ namespace BOOM {
 
     void add_to_block(SubMatrix block) const override {
       block.diag() += diagonal_elements();
+    }
+
+    Vector left_inverse(const ConstVectorView &x) const override {
+      return x / diagonal_elements();
     }
   };
 
@@ -580,6 +585,7 @@ namespace BOOM {
     void add_to_block(SubMatrix block) const override;
     Matrix dense() const override;
 
+    Vector left_inverse(const ConstVectorView &x) const override;
    private:
     int number_of_seasons_;
   };
@@ -618,6 +624,7 @@ namespace BOOM {
     // virtual void matrix_transpose_premultiply_inplace(SubMatrix m) const;
     Matrix dense() const override;
 
+    Vector left_inverse(const ConstVectorView &x) const override;
    private:
     Ptr<GlmCoefs> autoregression_params_;
   };
@@ -648,10 +655,6 @@ namespace BOOM {
     void matrix_multiply_inplace(SubMatrix m) const override {}
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override {}
     void add_to_block(SubMatrix block) const override { block.diag() += 1.0; }
-    void left_inverse(VectorView lhs,
-                      const ConstVectorView &rhs) const override {
-      lhs = rhs;
-    }
     SpdMatrix inner() const override {return SpdMatrix(nrow(), 1.0);}
     SpdMatrix inner(const ConstVectorView &weights) const override {
       SpdMatrix ans(nrow());
@@ -773,6 +776,62 @@ namespace BOOM {
     explicit ZeroMatrix(int dim) : ConstantMatrix(dim, 0.0) {}
     ZeroMatrix *clone() const override { return new ZeroMatrix(*this); }
     void add_to_block(SubMatrix block) const override {}
+  };
+
+  // A 'matrix' with zero columns.  This is not really a 'Matrix' in the
+  // traditional sense.  Including a NullMatrix in a BlockDiagonalMatrix expands
+  // the number of rows (all 0's), but does not expand the number of columns.  A
+  // block diagonal matrix with 'regular' blocks B0 and B1 separated by a
+  // NullMatrix looks like:
+  //
+  // [B0 0]
+  // [0  0]
+  // [0 B1]
+  class NullMatrix: public SparseMatrixBlock {
+   public:
+    // Create a Nullmatrix with 'dim' rows and 0 columns.
+    explicit NullMatrix(int dim): dim_(dim) {}
+    NullMatrix *clone() const override {return new NullMatrix(*this);}
+    int ncol() const override {return 0;}
+    int nrow() const override {return dim_;}
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      conforms_to_rows(lhs.size());
+    }
+
+    void multiply_and_add(
+        VectorView lhs, const ConstVectorView &rhs) const override { }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      conforms_to_rows(rhs.size());
+      lhs = 0.0;
+    }
+
+    void multiply_inplace(VectorView x) const {
+      report_error("Only square matrices can multiply_inplace.");
+    }
+    void matrix_multiply_inplace(SubMatrix x) const override {
+      report_error("Only square matrices can matrix_multiply_inplace.");
+    }
+    void matrix_transpose_premultiply_inplace(SubMatrix x) const override {
+      report_error("Only square matrices can matrix_transpose_"
+                   "premultiply_inplace.");
+    }
+
+    SpdMatrix inner() const override {
+      return SpdMatrix(nrow(), 0.0);
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return this->inner();
+    }
+
+    void add_to_block(SubMatrix block) const override {
+      report_error("A NullMatrix cannot add_to_block.");
+    }
+
+   private:
+    int dim_;
   };
 
   //======================================================================
@@ -909,11 +968,6 @@ namespace BOOM {
       Matrix ans(nrow(), ncol(), 0.0);
       ans(0, 0) = 1.0;
       return ans;
-    }
-
-    void left_inverse(VectorView lhs,
-                      const ConstVectorView &rhs) const override {
-      lhs[0] = rhs[0];
     }
 
    private:
@@ -1606,30 +1660,11 @@ namespace BOOM {
     Matrix &add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;
 
-    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
-    // blocks are non-invertible, in which case calling this function will
-    // report an error.
-    //
-    // The initial reason for this implementing this method is to evaluate the
-    // transition density for state space models when the error distribution is
-    // less than full rank.   In those settings we must be able to evaluate
-    // error_expander->left_inverse( new_state - T * old_state).
-    //
-    // Thus the only blocks that need to implement left_inverse are those used
-    // in an error expander somewhere.
-    Vector left_inverse(const ConstVectorView &rhs) const override;
-
    private:
     // Replace middle with left * middle * right.transpose()
     void sandwich_inplace_block(const SparseMatrixBlock &left,
                                 const SparseMatrixBlock &right,
                                 SubMatrix middle) const;
-
-    // Fills dest with left * source * right.transpose().
-    void sandwich_block(const SparseMatrixBlock &left,
-                        const SparseMatrixBlock &right,
-                        const ConstSubMatrix &source, SubMatrix &dest,
-                        Matrix &workspace) const;
 
     // Returns the (i,j) block of the matrix m, with block sizes
     // determined by the rows and columns of the entries in blocks_.
@@ -1686,7 +1721,74 @@ namespace BOOM {
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
   };
 
-  //======================================================================
+  //===========================================================================
+  // A ErrorExpanderMatrix is a BlockDiagonalMatrix that allows for blocks that
+  // have ncol==0.  The effect of such blocks is to add block->nrow() rows of
+  // 0's to the dense representation of the matrix.
+  class ErrorExpanderMatrix : public SparseKalmanMatrix {
+   public:
+    ErrorExpanderMatrix();
+
+    // Seasonal state models may change their number of columns over time,
+    // because there will be one additional element of "noise" in time periods
+    // when a new season begins.  For this reason we don't assume nrow and ncol
+    // are fixed.  They get recomputed each time.
+    int nrow() const override;
+    int ncol() const override;
+
+    void add_block(const Ptr<SparseMatrixBlock> &block);
+    void replace_block(int block_index,
+                       const Ptr<SparseMatrixBlock> &block);
+
+    // Remove all the blocks, making the matrix empty.
+    void clear();
+
+    Vector operator*(const Vector &v) const override;
+    Vector operator*(const VectorView &v) const override;
+    Vector operator*(const ConstVectorView &v) const override;
+
+    // Use the base class matrix-matrix multiply operations.
+    using SparseKalmanMatrix::operator*;
+    using SparseKalmanMatrix::Tmult;
+
+    Vector Tmult(const ConstVectorView &x) const override;
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    // These operations will raise errors if the ErrorExpanderMatrix is not
+    // square.
+    void sandwich_inplace(SpdMatrix &P) const override;
+    void sandwich_inplace_submatrix(SubMatrix P) const override;
+
+    // sandwich(P) = this * P * this.transpose()
+    SpdMatrix sandwich(const SpdMatrix &P) const override;
+
+    Matrix &add_to(Matrix &P) const override;
+    SubMatrix add_to_submatrix(SubMatrix P) const override;
+
+    // Solve the equation rhs = this * lhs.  It may be the case that some matrix
+    // blocks are non-invertible, in which case calling this function will
+    // report an error.
+    //
+    // The initial reason for this implementing this method is to evaluate the
+    // transition density for state space models when the error distribution is
+    // less than full rank.   In those settings we must be able to evaluate
+    // error_expander->left_inverse( new_state - T * old_state).
+    virtual Vector left_inverse(const ConstVectorView &rhs) const;
+
+   private:
+    std::vector<Ptr<SparseMatrixBlock>> blocks_;
+
+    int nrow_;
+    int ncol_;
+    std::vector<int> row_boundaries_;
+    std::vector<int> col_boundaries_;
+
+    void recompute_sizes();
+    void increment_sizes(const Ptr<SparseMatrixBlock> &block);
+  };
+
+  //===========================================================================
 
   Vector operator*(const SparseMatrixBlock &, const Vector &);
 

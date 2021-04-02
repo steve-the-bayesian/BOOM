@@ -62,14 +62,14 @@ namespace BOOM {
       int size = state_models_[s]->state_dimension();
       return VectorView(state, start, size);
     }
-    
+
     VectorView StateModelVectorBase::state_component(
         VectorView &state, int s) const {
       int start = state_positions_[s];
       int size = state_models_[s]->state_dimension();
       return VectorView(state, start, size);
     }
-    
+
     ConstVectorView StateModelVectorBase::state_component(
         const ConstVectorView &state,
         int s) const {
@@ -114,7 +114,7 @@ namespace BOOM {
       return SubMatrix(state, start, start + size - 1, 0,
                        state.ncol() - 1);
     }
-    
+
     const SparseKalmanMatrix *StateModelVectorBase::state_transition_matrix(
         int t) const {
       // Size comparisons should be made with respect to state_dimension(), not
@@ -147,7 +147,7 @@ namespace BOOM {
       return state_variance_matrix_.get();
     }
 
-    const SparseKalmanMatrix *StateModelVectorBase::state_error_expander(
+    const ErrorExpanderMatrix *StateModelVectorBase::state_error_expander(
         int t) const {
       state_error_expander_->clear();
       for (int s = 0; s < state_models_.size(); ++s) {

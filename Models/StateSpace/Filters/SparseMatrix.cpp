@@ -86,7 +86,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void SparseKalmanMatrix::check_can_add(const SubMatrix &block) const {
     if (block.nrow() != nrow() || block.ncol() != ncol()) {
       std::ostringstream err;
@@ -116,7 +116,7 @@ namespace BOOM {
       return *this * SpdMatrix(ncol(), 1.0);
     }
   }
-  
+
   void SparseMatrixBlock::matrix_transpose_premultiply_inplace(
       SubMatrix m) const {
     for (int i = 0; i < m.nrow(); ++i) {
@@ -124,22 +124,21 @@ namespace BOOM {
     }
   }
 
-  void SparseMatrixBlock::left_inverse(VectorView,
-                                       const ConstVectorView &) const {
-    report_error("left_inverse was called for a sparse matrix type that is "
-                 "either mathematically non-invertible, or the left_inverse "
-                 "function simply has not been implemented.");
-  }
-
   Matrix & SparseMatrixBlock::add_to(Matrix &P) const {
     add_to_block(SubMatrix(P));
     return P;
   }
-  
+
   Matrix SparseKalmanMatrix::dense() const {
     Matrix ans(nrow(), ncol(), 0.0);
     add_to(ans);
     return ans;
+  }
+
+  Vector SparseMatrixBlock::left_inverse(const ConstVectorView &x) const {
+    report_error("'left_inverse' called for a SparseMatrixBlock that didn't "
+                 "define the operation.");
+    return Vector(0);
   }
 
   //======================================================================
@@ -294,7 +293,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void BlockDiagonalMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -334,7 +333,7 @@ namespace BOOM {
     nrow_ = 0;
     ncol_ = 0;
   }
-  
+
   void StackedMatrixBlock::add_block(const Ptr<SparseMatrixBlock> &block) {
     if (nrow_ == 0) {
       nrow_ = block->nrow();
@@ -418,7 +417,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void StackedMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -442,7 +441,14 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
+  Vector StackedMatrixBlock::left_inverse(const ConstVectorView &x) const {
+    SpdMatrix xtx = this->inner();
+    Vector xty(ncol(), 0.0);
+    this->Tmult(VectorView(xty), x);
+    return xtx.solve(xty);
+  }
+
   //======================================================================
   LocalLinearTrendMatrix *LocalLinearTrendMatrix::clone() const {
     return new LocalLinearTrendMatrix(*this);
@@ -488,7 +494,7 @@ namespace BOOM {
 
   SpdMatrix LocalLinearTrendMatrix::inner(const ConstVectorView &weights) const {
     // 1 0 * w1 0  * 1 1  =  w1  w1
-    // 1 1   0  w2   0 1     w1  w1 + w2 
+    // 1 1   0  w2   0 1     w1  w1 + w2
     if (weights.size() != 2) {
       report_error("Wrong size weight vector");
     }
@@ -497,7 +503,7 @@ namespace BOOM {
     ans(1, 1) = weights[0] + weights[1];
     return ans;
   }
-  
+
   void LocalLinearTrendMatrix::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += 1;
@@ -614,7 +620,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void SDMB::add_to_block(SubMatrix block) const {
     conforms_to_cols(block.ncol());
     conforms_to_rows(block.nrow());
@@ -717,7 +723,7 @@ namespace BOOM {
         ConstVectorView(weights, 1, nrow() - 1);
     return ans;
   }
-  
+
   void SSSM::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) -= 1;
@@ -730,6 +736,12 @@ namespace BOOM {
     ans.row(0) = -1;
     ans.subdiag(1) = 1.0;
     return ans;
+  }
+
+  Vector SSSM::left_inverse(const ConstVectorView &x) const {
+    Vector ans = ConstVectorView(x, 1);
+    ans.push_back(-1 * x.sum());
+    return(ans);
   }
   //======================================================================
   AutoRegressionTransitionMatrix::AutoRegressionTransitionMatrix(
@@ -824,7 +836,7 @@ namespace BOOM {
     VectorView(ans.diag(), 0, dim - 1) += shifted_weights;
     return ans;
   }
-  
+
   void AutoRegressionTransitionMatrix::add_to_block(SubMatrix block) const {
     check_can_add(block);
     block.row(0) += autoregression_params_->value();
@@ -839,6 +851,19 @@ namespace BOOM {
     ans.subdiag(1) = 1.0;
     return ans;
   }
+
+  Vector AutoRegressionTransitionMatrix::left_inverse(
+      const ConstVectorView &x) const {
+      // The forward operation turns [x1, x2, x3] into [dot, x1, x2].  To
+      // reverse this operation, we shift everything up by 1, then solve for the missing piece.
+      Vector ans = ConstVectorView(x, 1);
+      ans.push_back(0);
+      double dot = autoregression_params_->predict(ans);
+      int dim = autoregression_params_->nvars_possible();
+      ans.back() = (x[0] - dot) / autoregression_params_->Beta(dim - 1);
+      return ans;
+  }
+
   //======================================================================
   namespace {
     typedef SingleElementInFirstRow SEIFR;
@@ -897,7 +922,7 @@ namespace BOOM {
     ans(position_, position_) = square(value_) * weights[0];
     return ans;
   }
-  
+
   void SEIFR::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -1053,7 +1078,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void GenericSparseMatrixBlock::add_to_block(SubMatrix block) const {
     conforms_to_rows(block.nrow());
     conforms_to_cols(block.ncol());
@@ -1101,7 +1126,7 @@ namespace BOOM {
       return ans;
     }
   }  // namespace
-  
+
   Vector StackedRegressionCoefficients::operator*(
       const Vector &v) const {
     return stacked_regression_vector_mult(v, *this);
@@ -1158,7 +1183,7 @@ namespace BOOM {
     }
     return P;
   }
-  
+
   //======================================================================
   Matrix SparseKalmanMatrix::operator*(const Matrix &rhs) const {
     int nr = nrow();
@@ -1316,7 +1341,8 @@ namespace BOOM {
   int BlockDiagonalMatrix::nrow() const { return nrow_; }
   int BlockDiagonalMatrix::ncol() const { return ncol_; }
 
-  // TODO(user): add a unit test for the case where diagonal
+  //---------------------------------------------------------------------------
+  // TODO(steve): add a unit test for the case where diagonal
   // blocks are not square.
   Vector block_multiply(const ConstVectorView &v, int nrow, int ncol,
                         const std::vector<Ptr<SparseMatrixBlock>> &blocks_) {
@@ -1335,13 +1361,44 @@ namespace BOOM {
       lhs_pos += nr;
 
       int nc = blocks_[b]->ncol();
-      ConstVectorView rhs(v, rhs_pos, nc);
-      rhs_pos += nc;
-      blocks_[b]->multiply(lhs, rhs);
+      if (nc > 0) {
+        ConstVectorView rhs(v, rhs_pos, nc);
+        rhs_pos += nc;
+        blocks_[b]->multiply(lhs, rhs);
+      } else {
+        lhs = 0.0;
+      }
     }
     return ans;
   }
 
+  Vector block_transpose_multiply(
+      const ConstVectorView &v,
+      int nrow,
+      int ncol,
+      const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+
+    if (v.size() != nrow) {
+      report_error("incompatible vector in Tmult");
+    }
+
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    Vector ans(ncol, 0);
+
+    for (int b = 0; b < blocks.size(); ++b) {
+      VectorView lhs(ans, lhs_pos, blocks[b]->ncol());
+      lhs_pos += blocks[b]->ncol();
+      ConstVectorView rhs(v, rhs_pos, blocks[b]->nrow());
+      rhs_pos += blocks[b]->nrow();
+      blocks[b]->Tmult(lhs, rhs);
+    }
+    return ans;
+
+  }
+
+
+  //---------------------------------------------------------------------------
   Vector BlockDiagonalMatrix::operator*(const Vector &v) const {
     return block_multiply(ConstVectorView(v), nrow(), ncol(), blocks_);
   }
@@ -1354,24 +1411,87 @@ namespace BOOM {
   }
 
   Vector BlockDiagonalMatrix::Tmult(const ConstVectorView &x) const {
-    if (x.size() != nrow()) {
-      report_error(
-          "incompatible vector in "
-          "BlockDiagonalMatrix::Tmult");
-    }
-    int lhs_pos = 0;
-    int rhs_pos = 0;
-    Vector ans(ncol(), 0);
-
-    for (int b = 0; b < blocks_.size(); ++b) {
-      VectorView lhs(ans, lhs_pos, blocks_[b]->ncol());
-      lhs_pos += blocks_[b]->ncol();
-      ConstVectorView rhs(x, rhs_pos, blocks_[b]->nrow());
-      rhs_pos += blocks_[b]->nrow();
-      blocks_[b]->Tmult(lhs, rhs);
-    }
-    return ans;
+    return block_transpose_multiply(x, nrow(), ncol(), blocks_);
   }
+
+  namespace {
+    // Fills dest with left * source * right.transpose.
+    void sandwich_block(const SparseMatrixBlock &left,
+                        const SparseMatrixBlock &right,
+                        const ConstSubMatrix &source,
+                        SubMatrix &dest,
+                        Matrix &workspace) {
+      // Workspace will hold the reult of left * source.
+      workspace.resize(left.nrow(), source.ncol());
+      for (int i = 0; i < source.ncol(); ++i) {
+        left.multiply(workspace.col(i), source.col(i));
+      }
+      // Now put the result of workspace * right^T into dest.  We can do this by
+      // putting the result of right * workspace^T into dest^T.
+      for (int i = 0; i < workspace.nrow(); ++i) {
+        // We want workspace * right^T.  The transpose of this is right *
+        // workspace^T.  Multiply right by each row of workspace, and place the
+        // result in the rows of dest.
+        right.multiply(dest.row(i), workspace.row(i));
+      }
+    }
+
+    // The implementation for BlockDiagonalMatrix::sandwich.  It has been
+    // refactored to a free function so that it can be shared with similar
+    // block-structured matrices.
+    SpdMatrix block_sandwich(const SpdMatrix &P, int nrow, int ncol,
+                             const std::vector<Ptr<SparseMatrixBlock>> &blocks,
+                             const std::vector<int> &col_boundaries,
+                             const std::vector<int> &row_boundaries) {
+      // If *this is rectangular then the result will not be the same dimension
+      // as P.  P must be ncol() X ncol().
+      if (ncol != P.nrow()) {
+        report_error("'sandwich' called on a non-conforming matrix.");
+      }
+      SpdMatrix ans(nrow);
+      Matrix workspace;
+      for (int i = 0; i < blocks.size(); ++i) {
+        const SparseMatrixBlock &left(*(blocks[i]));
+        if (left.ncol() == 0) {
+          continue;
+        }
+        for (int j = i; j < blocks.size(); ++j) {
+          const SparseMatrixBlock &right(*(blocks[j]));
+          if (right.ncol() == 0) {
+            continue;
+          }
+          // The source matrix is determined by columns.  The number of columns
+          // in the left block determines the number of rows in the source
+          // block.
+          int rlo = (i == 0) ? 0 : col_boundaries[i - 1];
+          int rhi = col_boundaries[i] - 1;
+          // The number of rows in the transpose of the right block (i.e. the
+          // number of columns in the right block) determines the number of
+          // columns in the source block.
+          int clo = (j == 0) ? 0 : col_boundaries[j - 1];
+          int chi = col_boundaries[j] - 1;
+          ConstSubMatrix source(P, rlo, rhi, clo, chi);
+
+          // The destination block is determined by row boundaries.  The number
+          // of rows in the left block determines the number of rows in the
+          // destination block.
+          rlo = (i == 0) ? 0 : row_boundaries[i - 1];
+          rhi = row_boundaries[i] - 1;
+          // The number of columns in the destination block is the number of
+          // columns in the transpose of the right block (i.e. the number of
+          // rows in the right block).
+          clo = (j == 0) ? 0 : row_boundaries[j - 1];
+          chi = row_boundaries[j] - 1;
+          SubMatrix dest(ans, rlo, rhi, clo, chi);
+          workspace.resize(left.nrow(), right.nrow());
+          sandwich_block(left, right, source, dest, workspace);
+        }
+      }
+      ans.reflect();
+      return ans;
+    }
+
+  }  // namespace
 
   SpdMatrix BlockDiagonalMatrix::inner() const {
     SpdMatrix ans(ncol(), 0.0);
@@ -1406,45 +1526,8 @@ namespace BOOM {
 
   // this * P * this.transpose.
   SpdMatrix BlockDiagonalMatrix::sandwich(const SpdMatrix &P) const {
-    // If *this is rectangular then the result will not be the same dimension as
-    // P.  P must be ncol() X ncol().
-    if (ncol() != P.nrow()) {
-      report_error("'sandwich' called on a non-conforming matrix.");
-    }
-    SpdMatrix ans(nrow());
-    Matrix workspace;
-    for (int i = 0; i < blocks_.size(); ++i) {
-      const SparseMatrixBlock &left(*(blocks_[i]));
-      for (int j = i; j < blocks_.size(); ++j) {
-        const SparseMatrixBlock &right(*(blocks_[j]));
-        // The source matrix is determined by columns.  The number of columns in
-        // the left block determines the number of rows in the source block.
-        int rlo = (i == 0) ? 0 : col_boundaries_[i - 1];
-        int rhi = col_boundaries_[i] - 1;
-        // The number of rows in the transpose of the right block (i.e. the
-        // number of columns in the right block) determines the number of
-        // columns in the source block.
-        int clo = (j == 0) ? 0 : col_boundaries_[j - 1];
-        int chi = col_boundaries_[j] - 1;
-        ConstSubMatrix source(P, rlo, rhi, clo, chi);
-
-        // The destination block is determined by row boundaries.  The number of
-        // rows in the left block determines the number of rows in the
-        // destination block.
-        rlo = (i == 0) ? 0 : row_boundaries_[i - 1];
-        rhi = row_boundaries_[i] - 1;
-        // The number of columns in the destination block is the number of
-        // columns in the transpose of the right block (i.e. the number of rows
-        // in the right block).
-        clo = (j == 0) ? 0 : row_boundaries_[j - 1];
-        chi = row_boundaries_[j] - 1;
-        SubMatrix dest(ans, rlo, rhi, clo, chi);
-        workspace.resize(left.nrow(), right.nrow());
-        sandwich_block(left, right, source, dest, workspace);
-      }
-    }
-    ans.reflect();
-    return ans;
+    return block_sandwich(P, nrow(), ncol(), blocks_,
+                          col_boundaries_, row_boundaries_);
   }
 
   void BlockDiagonalMatrix::sandwich_inplace(SpdMatrix &P) const {
@@ -1483,27 +1566,6 @@ namespace BOOM {
     }
   }
 
-  // Fills dest with left * source * right.transpose.
-  void BlockDiagonalMatrix::sandwich_block(const SparseMatrixBlock &left,
-                                           const SparseMatrixBlock &right,
-                                           const ConstSubMatrix &source,
-                                           SubMatrix &dest,
-                                           Matrix &workspace) const {
-    // Workspace will hold the reult of left * source.
-    workspace.resize(left.nrow(), source.ncol());
-    for (int i = 0; i < source.ncol(); ++i) {
-      left.multiply(workspace.col(i), source.col(i));
-    }
-    // Now put the result of workspace * right^T into dest.  We can do this by
-    // putting the result of right * workspace^T into dest^T.
-    for (int i = 0; i < workspace.nrow(); ++i) {
-      // We want workspace * right^T.  The transpose of this is right *
-      // workspace^T.  Multiply right by each row of workspace, and place the
-      // result in the rows of dest.
-      right.multiply(dest.row(i), workspace.row(i));
-    }
-  }
-
   SubMatrix BlockDiagonalMatrix::get_block(Matrix &m, int i, int j) const {
     int rlo = (i == 0 ? 0 : row_boundaries_[i - 1]);
     int rhi = row_boundaries_[i] - 1;
@@ -1539,21 +1601,6 @@ namespace BOOM {
     return P;
   }
 
-  Vector BlockDiagonalMatrix::left_inverse(const ConstVectorView &rhs) const {
-    if (rhs.size() != nrow()) {
-      report_error("Wrong size argument passed to left_inverse().");
-    }
-    Vector ans(ncol());
-    int lhs_pos = 0;
-    int rhs_pos = 0;
-    for (int b = 0; b < blocks_.size(); ++b) {
-      ConstVectorView rhs_block(rhs, rhs_pos, blocks_[b]->nrow());
-      VectorView lhs(ans, lhs_pos, blocks_[b]->ncol());
-      blocks_[b]->left_inverse(lhs, rhs_block);
-    }
-    return ans;
-  }
-  
   //===========================================================================
   namespace {
     template <class VECTOR>
@@ -1569,6 +1616,7 @@ namespace BOOM {
       }
       return ans;
     }
+
   }  // namespace
 
   void SparseVerticalStripMatrix::add_block(
@@ -1639,7 +1687,7 @@ namespace BOOM {
     for (int b = 0; b < blocks_.size(); ++b) {
       dense_blocks.push_back(weight_block * blocks_[b]->dense());
     }
-    
+
     int row_start = 0;
     for (int b0 = 0; b0 < blocks_.size(); ++b0) {
       BlockDiagonalMatrix row_block;
@@ -1657,7 +1705,7 @@ namespace BOOM {
     ans.reflect();
     return ans;
   }
-  
+
   Matrix &SparseVerticalStripMatrix::add_to(Matrix &P) const {
     check_can_add(P.nrow(), P.ncol());
     int start_column = 0;
@@ -1702,4 +1750,185 @@ namespace BOOM {
       report_error("Incompatible matrix addition.");
     }
   }
+
+  //===========================================================================
+  // LHS = *this * RHS
+
+  ErrorExpanderMatrix::ErrorExpanderMatrix()
+      : nrow_(0),
+        ncol_(0)
+  {}
+
+  int ErrorExpanderMatrix::nrow() const {
+    return nrow_;
+  }
+
+  int ErrorExpanderMatrix::ncol() const {
+    return ncol_;
+  }
+
+  void ErrorExpanderMatrix::add_block(const Ptr<SparseMatrixBlock> &block) {
+    blocks_.push_back(block);
+    increment_sizes(block);
+  }
+
+  void ErrorExpanderMatrix::replace_block(
+      int block_index,
+      const Ptr<SparseMatrixBlock> &block) {
+    const Ptr<SparseMatrixBlock> &old_block(blocks_[block_index]);
+    bool recompute_needed =
+        block->nrow() != old_block->nrow()
+        || block->ncol() != old_block->ncol();
+    blocks_[block_index] = block;
+
+    if (recompute_needed) {
+      recompute_sizes();
+    }
+  }
+
+  void ErrorExpanderMatrix::recompute_sizes() {
+    nrow_ = 0;
+    ncol_ = 0;
+    row_boundaries_.clear();
+    col_boundaries_.clear();
+    for (const auto &block : blocks_) {
+      increment_sizes(block);
+    }
+  }
+
+  void ErrorExpanderMatrix::increment_sizes(
+      const Ptr<SparseMatrixBlock> &block) {
+    nrow_ += block->nrow();
+    ncol_ += block->ncol();
+    row_boundaries_.push_back(nrow_);
+    col_boundaries_.push_back(ncol_);
+  }
+
+  void ErrorExpanderMatrix::clear() {
+    blocks_.clear();
+    recompute_sizes();
+  }
+
+  Vector ErrorExpanderMatrix::operator*(const Vector &v) const {
+    return block_multiply(v, nrow(), ncol(), blocks_);
+  }
+
+  Vector ErrorExpanderMatrix::operator*(const VectorView &v) const {
+    return block_multiply(v, nrow(), ncol(), blocks_);
+  }
+
+  Vector ErrorExpanderMatrix::operator*(const ConstVectorView &v) const {
+    return block_multiply(v, nrow(), ncol(), blocks_);
+  }
+
+  Vector ErrorExpanderMatrix::Tmult(const ConstVectorView &x) const {
+    return block_transpose_multiply(x, nrow(), ncol(), blocks_);
+  }
+
+  SpdMatrix ErrorExpanderMatrix::inner() const {
+    int dim = ncol();
+    SpdMatrix ans(dim, 0.0);
+    int start = 0;
+    for (const auto &block : blocks_) {
+      if (block->ncol() == 0) {
+        continue;
+      }
+      int end = start + block->ncol();
+      SubMatrix(ans, start, end - 1, start, end - 1) = block->inner();
+      start = end;
+    }
+    return ans;
+  }
+
+  SpdMatrix ErrorExpanderMatrix::inner(
+      const ConstVectorView &weights) const {
+    if (weights.size() != nrow()) {
+      report_error("Wrong size weight vector.");
+    }
+    SpdMatrix ans(ncol(), 0.0);
+    int ans_start = 0;
+    int weight_start = 0;
+    for (const auto &block : blocks_) {
+      if (block->ncol() == 0) {
+        weight_start += block->nrow();
+      } else {
+        int ans_end = ans_start + block->ncol();
+        const ConstVectorView local_weights(
+            weights, weight_start, block->nrow());
+        SubMatrix(ans, ans_start, ans_end - 1, ans_start, ans_end - 1)
+            = block->inner(local_weights);
+        ans_start += block->ncol();
+        weight_start += block->nrow();
+      }
+    }
+    return ans;
+  }
+
+  void ErrorExpanderMatrix::sandwich_inplace(SpdMatrix &P) const {
+    report_error("ErrorExpanderMatrix cannot sandwich_inplace.");
+  }
+  void ErrorExpanderMatrix::sandwich_inplace_submatrix(SubMatrix P) const {
+    report_error("ErrorExpanderMatrix cannot sandwich_inplace_submatrix.");
+  }
+
+  SpdMatrix ErrorExpanderMatrix::sandwich(const SpdMatrix &P) const {
+    return block_sandwich(P, nrow(), ncol(), blocks_,
+                          row_boundaries_, col_boundaries_);
+  }
+
+  Matrix &ErrorExpanderMatrix::add_to(Matrix &P) const {
+    int row_start = 0;
+    int col_start = 0;
+    for (const auto &block : blocks_) {
+      if (block->ncol() > 0) {
+        block->add_to_block(
+            SubMatrix(P, row_start, row_start + block->nrow() - 1,
+                      col_start, col_start + block->ncol() - 1));
+        row_start += block->nrow();
+        col_start += block->ncol();
+      } else {
+        row_start += block->ncol();
+      }
+    }
+    return P;
+  }
+
+  SubMatrix ErrorExpanderMatrix::add_to_submatrix(SubMatrix P) const {
+    int row_start = 0;
+    int col_start = 0;
+    for (const auto &block : blocks_) {
+      if (block->ncol() > 0) {
+        block->add_to_block(
+            SubMatrix(P, row_start, row_start + block->nrow() - 1,
+                      col_start, col_start + block->ncol() - 1));
+        row_start += block->nrow();
+        col_start += block->ncol();
+      } else {
+        row_start += block->ncol();
+      }
+    }
+    return P;
+  }
+
+  Vector ErrorExpanderMatrix::left_inverse(const ConstVectorView &rhs) const {
+    if (rhs.size() != nrow()) {
+      report_error("Wrong size argument passed to left_inverse().");
+    }
+    Vector ans(ncol());
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    for (const auto &block : blocks_) {
+      if (block->ncol() > 0) {
+        ConstVectorView rhs_block(rhs, rhs_pos, block->nrow());
+        VectorView lhs(ans, lhs_pos, block->ncol());
+        lhs = block->left_inverse(rhs_block);
+        rhs_pos += block->ncol();
+      }
+      lhs_pos += block->nrow();
+    }
+    return ans;
+  }
+
+
+
 }  // namespace BOOM

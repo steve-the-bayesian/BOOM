@@ -233,7 +233,7 @@ namespace BOOM {
     //
     // This is the matrix that takes the low dimensional state_errors and turns
     // them into error terms for states.
-    virtual const SparseKalmanMatrix *state_error_expander(int t) const {
+    virtual const ErrorExpanderMatrix *state_error_expander(int t) const {
       return state_models_.state_error_expander(t);
     }
 
