@@ -962,8 +962,9 @@ class StudentObservationModelManager(ObservationModelManager):
 
 
 class PoissonObservationModelManager(ObservationModelManager):
-    def __init__(self, xdim: int):
+    def __init__(self, xdim: int, formula: str):
         self._xdim = xdim
+        self._formula = formula
 
     @property
     def niter(self):
@@ -1015,8 +1016,16 @@ class PoissonObservationModelManager(ObservationModelManager):
 
 
 class LogitObservationModelManager(ObservationModelManager):
-    def __init__(self, xdim: int):
-        pass
+    def __init__(self, xdim: int, formula: str):
+        #######
+        #######
+        #######
+        #######  TODO
+        #######
+        #######
+        #######
+        self._xdim = xdim
+        self._formula = formula
 
     @property
     def niter(self):

@@ -64,12 +64,12 @@ class ArStateModel(StateModel):
         self._state_model.set_phi(R.to_boom_vector(
             self._ar_coefficients[iteration, :]))
 
-    def _validate_prior(self, sigma_prior, sdy):
-        if sigma_prior is None:
-            sigma_prior = R.SdPrior(sdy * .01, upper_limit=sdy)
-        if not isinstance(sigma_prior, R.SdPrior):
-            raise Exception("Wrong type for sigma_prior.")
-        self._sigma_prior = sigma_prior
+    def _validate_prior(self, prior, sdy):
+        if prior is None:
+            prior = R.SdPrior(sdy * .01, upper_limit=sdy)
+        if not isinstance(prior, R.SdPrior):
+            raise Exception("Wrong type for prior.")
+        self._sigma_prior = prior
 
     def _validate_initial_distribution(self, initial_state_prior, sdy):
         if initial_state_prior is None:
