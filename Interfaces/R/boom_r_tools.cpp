@@ -563,7 +563,7 @@ namespace BOOM {
     protector.protect(ans = Rf_allocArray(REALSXP, r_dims));
     double *array_data = REAL(ans);
     int i = 0;
-    for (const auto &el : array) {
+    for (const auto el : array) {
       array_data[i++] = el;
     }
     return ans;
