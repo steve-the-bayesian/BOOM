@@ -807,7 +807,7 @@ namespace BOOM {
       lhs = 0.0;
     }
 
-    void multiply_inplace(VectorView x) const {
+    void multiply_inplace(VectorView x) const override {
       report_error("Only square matrices can multiply_inplace.");
     }
     void matrix_multiply_inplace(SubMatrix x) const override {
