@@ -63,6 +63,10 @@ class SemilocalLinearTrendStateModel(StateModel):
         self._set_initial_state_distribution(
             initial_level_prior, initial_slope_prior)
 
+    @property
+    def label(self):
+        return "Trend (semilocal)"
+
     def __repr__(self):
         return (
             "A SemilocalLinearTrendStateModel with \n"

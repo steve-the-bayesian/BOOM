@@ -48,6 +48,14 @@ class StateModel(ABC):
 
     @property
     @abstractmethod
+    def label(self):
+        """
+        A string indicating how this state model should be labelled, e.g. when
+        assessing contributions of mutliple state components.
+        """
+
+    @property
+    @abstractmethod
     def state_dimension(self):
         """
         The dimension of the state subcomponent managed by this model.

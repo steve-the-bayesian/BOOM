@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
-from numbers import Number
 from .state_models import StateModel
 from .holiday import Holiday, HolidayFactory
 
@@ -43,6 +42,16 @@ class RegressionHolidayStateModel(StateModel):
         self._prior = self._validate_prior(prior, sdy)
         self._parent_model = parent_model
         self._build_state_model()
+
+    def __repr__(self):
+        return f"RegressionHolidayStateModel({self._holiday_names})"
+
+    @property
+    def label(self):
+        if len(self._holiday_names) <= 2:
+            return f"{self._holiday_names}"
+        else:
+            return f"Holidays[{len(self._holiday_names)}]"
 
     def add_holiday(self, name: str, holiday: Holiday):
         # The list self._holiday_names is redundant, but it ensures the order

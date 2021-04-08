@@ -51,6 +51,13 @@ class DynamicRegressionStateModel(StateModel):
         return ans
 
     @property
+    def label(self):
+        if len(self._formula) > 40:
+            return "DynReg(long formula)"
+        else:
+            return f"DynReg({self._formula})"
+
+    @property
     def state_dimension(self):
         return self._predictors.shape[1]
 

@@ -43,6 +43,15 @@ class TrigStateModel(StateModel):
         self._build_state_model()
 
     @property
+    def label(self):
+        ans = "Trig["
+        ans += f"{self._period:.2f}" + " | "
+        for freq in self._frequencies:
+            ans += f"{freq:.1f}, "
+        ans = ans[:-2] + "]"
+        return ans
+
+    @property
     def state_dimension(self):
         return 2 * len(self._frequencies)
 

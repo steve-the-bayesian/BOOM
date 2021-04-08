@@ -37,6 +37,14 @@ class ArStateModel(StateModel):
         self._build_state_model()
 
     @property
+    def label(self):
+        return f"AR({self._lags})"
+
+    @property
+    def lags(self):
+        return self._lags
+
+    @property
     def state_dimension(self):
         return self._lags
 
@@ -55,7 +63,7 @@ class ArStateModel(StateModel):
 
     def record_state(self, iteration, state_matrix):
         self._sigma[iteration] = self._state_model.sigma
-        self._ar_coefficients = self._state_model.phi.to_numpy()
+        self._ar_coefficients[iteration, :] = self._state_model.phi.to_numpy()
         self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
 
@@ -191,10 +199,14 @@ class AutoArStateModel(ArStateModel):
             sdy = np.nanstd(y)
         super().__init__(y, lags, prior, initial_state_prior, sdy)
 
+    @property
+    def label(self):
+        return f"AutoAr({self.lags})"
+
     def _validate_prior(self, prior, sdy):
         if prior is None:
             prior = SpikeSlabArPrior(
-                lags=self._lags,
+                lags=self.lags,
                 sdy=sdy,
                 sigma_upper_limit=sdy)
 
