@@ -81,12 +81,38 @@ namespace BOOM {
     Matrix forecast(int n);
 
     // Simulate the next n time periods, given current parameters and
-    // state.
+    // state, from the posterior predictive distribution.
+    //
+    // Args:
+    //   rng:  The random number generator to use in the simulation.
+    //   n:  The number of time steps to forecast.
+    //   final_state: The simulated state value at the final time point in the
+    //     training data.
+    //
+    // Returns:
+    //   A simulated time series future values at time T+1, T+2, ... T+n, where
+    //   T is the final time index in the training data.
     Vector simulate_forecast(RNG &rng, int n, const Vector &final_state);
+
+    // Simulate the next n time periods, given current parameters and
+    // state, from the posterior predictive distribution.
+    //
+    // Args:
+    //   rng:  The random number generator to use in the simulation.
+    //   n:  The number of time steps to forecast.
+    //   final_state: The simulated state value at the final time point in the
+    //     training data.
+    //
+    // Returns:
+    //   A matrix containing the contributions to the simulated forecast.
+    //   Columns of the matrix correspond to time points.  Row s contains the
+    //   contribution of state model s to the forecast.  The final row contains
+    //   the errors.
+    Matrix simulate_forecast_components(RNG &rng, int n, const Vector &final_state);
 
     // Return the vector of one-step-ahead predictions errors from a
     // holdout sample, following immediately after the training data.
-    // 
+    //
     // Args:
     //   holdout_y: The vector of holdout data, assumed to follow immediately
     //     after the training data.

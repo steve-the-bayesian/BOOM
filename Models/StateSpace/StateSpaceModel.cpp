@@ -188,6 +188,23 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix SSM::simulate_forecast_components(
+      RNG &rng, int forecast_horizon, const Vector &final_state) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    Matrix ans(number_of_state_models() + 1, forecast_horizon);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans.last_row()[t] = rnorm_mt(rng, 0, observation_variance(t + t0));
+    }
+    return ans;
+  }
+
   Vector SSM::one_step_holdout_prediction_errors(
       const Vector &newY, const Vector &final_state, bool standardize) const {
     Vector ans(length(newY));

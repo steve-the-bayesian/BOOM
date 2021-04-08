@@ -125,6 +125,10 @@ namespace BayesBoom {
              [](StateSpaceModel &model, RNG &rng, int horizon, const Vector &final_state) {
                return model.simulate_forecast(rng, horizon, final_state);
              })
+        .def("simulate_forecast_components",
+             [](StateSpaceModel &model, RNG &rng, int horizon, const Vector &final_state) {
+               return model.simulate_forecast_components(rng, horizon, final_state);
+             })
         ;
 
     py::class_<StateSpaceRegressionModel,

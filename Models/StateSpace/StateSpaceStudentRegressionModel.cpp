@@ -208,6 +208,28 @@ namespace BOOM {
                                        seq<int>(0, nrow(predictors) - 1));
   }
 
+  Matrix SSSRM::simulate_forecast_components(
+      RNG &rng, const Matrix &predictors, const Vector &final_state) {
+    set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_horizon = nrow(predictors);
+    Matrix ans(number_of_state_models() + 2, forecast_horizon);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    double sigma = observation_model_->sigma();
+    double nu = observation_model_->nu();
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans(number_of_state_models(), t) =
+          observation_model_->predict(predictors.row(t));
+      ans(number_of_state_models() + 1, t) = rstudent_mt(rng, 0, sigma, nu);
+    }
+    return ans;
+  }
+
   Vector SSSRM::simulate_multiplex_forecast(
       RNG &rng, const Matrix &predictors, const Vector &final_state,
       const std::vector<int> &timestamps) {

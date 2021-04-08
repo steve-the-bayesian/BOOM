@@ -128,6 +128,8 @@ namespace BOOM {
 
     Vector simulate_forecast(RNG &rng, const Matrix &predictors,
                              const Vector &final_state);
+    Matrix simulate_forecast_components(
+        RNG &rng, const Matrix &predictors, const Vector &final_state);
 
     // Simulate a forecast based on multiplexed data, where multiple
     // observations can have the same timestamp.

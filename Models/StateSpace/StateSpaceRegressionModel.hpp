@@ -113,11 +113,19 @@ namespace BOOM {
     // of the forecast.  The second column is the standard errors.
     Matrix forecast(const Matrix &newX);
 
-    // Simulate the next nrow(newX) time periods, given current
-    // parameters and state.
+    // Simulate the next nrow(newX) time periods, given current parameters and
+    // state, from the posterior predictive distribution.
     Vector simulate_forecast(RNG &rng, const Matrix &newX,
                              const Vector &final_state);
     Vector simulate_forecast(RNG &rng, const Matrix &newX);
+
+    // Simulate the next nrow(newX) time periods from the posterior predictive
+    // distribution.  The rows of the returned matrix are the contributions of
+    // each state model to the prediction.  The final row contains the
+    // individual errors.  The sum across rows is equivalent to a call to
+    // simulate_forecast.
+    Matrix simulate_forecast_components(RNG &rng, const Matrix &newX,
+                                        const Vector &final_state);
 
     // Simulate a forecast based on multiplexed data, where multiple
     // observations can have the same timestamp.

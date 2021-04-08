@@ -798,8 +798,7 @@ class ObservationModelManager(ABC):
         Args:
           model: A BOOM state space model object of the type expected by the
             concrete child class.
-
-
+          formatted_prediction_data:
 
         Returns:
           A numpy matrix representing the posterior predictive distribution.

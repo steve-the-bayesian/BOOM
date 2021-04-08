@@ -233,6 +233,26 @@ namespace BOOM {
     return simulate_forecast(rng, newX, final_state);
   }
 
+  Matrix SSRM::simulate_forecast_components(RNG &rng, const Matrix &newX,
+                                            const Vector &final_state) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_horizon = newX.nrow();
+    Matrix ans(number_of_state_models() + 2, forecast_horizon);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans(number_of_state_models(), t) = regression_->predict(newX.row(t));
+      ans(number_of_state_models() + 1, t) = rnorm_mt(
+          rng, 0, observation_variance(t + t0));
+    }
+    return ans;
+  }
+
   Vector SSRM::simulate_multiplex_forecast(RNG &rng,
                                            const Matrix &newX,
                                            const Vector &final_state,
