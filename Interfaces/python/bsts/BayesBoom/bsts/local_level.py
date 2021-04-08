@@ -46,6 +46,10 @@ class LocalLevelStateModel(StateModel):
         return f"Local level with sigma = {self._state_model.sigma}"
 
     @property
+    def label(self):
+        return "Trend (local level)"
+
+    @property
     def state_dimension(self):
         return 1
 

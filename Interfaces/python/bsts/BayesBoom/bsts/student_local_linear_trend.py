@@ -77,6 +77,10 @@ class StudentLocalLinearTrendStateModel(StateModel):
         )
 
     @property
+    def label(self):
+        return "Trend (student)"
+
+    @property
     def state_dimension(self):
         return 2
 

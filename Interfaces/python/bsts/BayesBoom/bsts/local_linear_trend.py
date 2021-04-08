@@ -65,6 +65,10 @@ class LocalLinearTrendStateModel(StateModel):
         )
 
     @property
+    def label(self):
+        return "Trend (local linear)"
+
+    @property
     def state_dimension(self):
         return 2
 

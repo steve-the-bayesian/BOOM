@@ -43,6 +43,8 @@ class TestAr(unittest.TestCase):
         self.assertEqual(model.time_dimension, m2.time_dimension)
         self.assertIsInstance(m2, Bsts)
 
+        pred = model.predict(12)
+
 
     def test_auto_ar(self):
         model = Bsts()
@@ -66,7 +68,7 @@ class TestAr(unittest.TestCase):
 
 
 
-_debug_mode = False
+_debug_mode = True
 
 
 if _debug_mode:

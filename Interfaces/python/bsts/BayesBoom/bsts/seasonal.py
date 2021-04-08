@@ -95,6 +95,13 @@ class SeasonalStateModel(StateModel):
         return ans
 
     @property
+    def label(self):
+        ans = f"Seasonal[{self._nseasons}]"
+        if self._season_duration > 1:
+            ans += f"[{self._season_duration}]"
+        return ans
+
+    @property
     def nseasons(self):
         return self._nseasons
 
