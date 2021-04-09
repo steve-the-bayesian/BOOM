@@ -115,6 +115,10 @@ class Bsts:
         """
         return 0 if self._model is None else self._model.time_dimension
 
+    @property
+    def number_of_state_models(self):
+        return len(self._state_models)
+
     def add_state(self, state_model: StateModel):
         """
         Add a component of state to the model.
@@ -460,7 +464,8 @@ class Bsts:
         if separate_components:
             nstate = self._model.number_of_state_models
             pred = np.empty((ndraws, nstate + 2, horizon))
-        pred = np.empty((ndraws, horizon))
+        else:
+            pred = np.empty((ndraws, horizon))
 
         total_time_points = len(self.original_series) + horizon
         for state_model in self._state_models:
@@ -482,7 +487,7 @@ class Bsts:
                     formatted_prediction_data,
                     boom.Vector(self._final_state[i, :]),
                     rng=self._rng,
-                    separate_components = False
+                    separate_components=False
                 )
 
         return BstsPrediction(pred, self.original_series)

@@ -2,8 +2,11 @@ from .bsts import ObservationModelManager
 import numpy as np
 import pandas as pd
 import patsy
+import scipy
 import BayesBoom.boom as boom
 import BayesBoom.R as R
+import BayesBoom.spikeslab as spikeslab
+
 
 class GaussianStateSpaceModelFactory:
     """
@@ -214,6 +217,9 @@ class GaussianObservationModelManager(ObservationModelManager):
                     rng,
                     formatted_prediction_data["forecast_horizon"],
                     boom_final_state)
+                # Insert a row of 0's for the regression component.
+                draw = R.to_numpy(draw)
+                draw = np.insert(draw, -1, np.zeros(draw.shape[1]), axis=0)
             else:
                 draw = model.simulate_forecast(
                     rng,
@@ -226,4 +232,4 @@ class GaussianObservationModelManager(ObservationModelManager):
                 f"{model.__class__.__name__}"
             )
 
-        return draw.to_numpy()
+        return R.to_numpy(draw)

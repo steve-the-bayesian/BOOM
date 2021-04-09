@@ -1,11 +1,11 @@
 from .bsts import ObservationModelManager
 import patsy
 import numpy as np
-import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
 import BayesBoom.spikeslab as spikeslab
 import scipy
+
 
 class StateSpaceStudentModelFactory:
     def __init__(self, formula: str):
@@ -139,7 +139,6 @@ class StateSpaceStudentModelFactory:
         return prior
 
 
-
 class StudentObservationModelManager(ObservationModelManager):
     def __init__(self, xdim: int, formula: str):
         """
@@ -186,7 +185,8 @@ class StudentObservationModelManager(ObservationModelManager):
             }
         return formatted
 
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng, separate_components=False):
+    def predict(self, model, formatted_prediction_data, boom_final_state, rng,
+                separate_components=False):
         """
         Return one draw from the posterior predictive distribution.
         """

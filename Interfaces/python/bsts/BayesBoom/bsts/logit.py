@@ -1,11 +1,10 @@
 from .bsts import ObservationModelManager
 import patsy
 import numpy as np
-import pandas as pd
 import BayesBoom.boom as boom
-import BayesBoom.R as R
 import BayesBoom.spikeslab as spikeslab
 import scipy
+from numbers import Number
 
 
 class StateSpaceLogitModelFactory:
@@ -76,13 +75,7 @@ class StateSpaceLogitModelFactory:
 
 class LogitObservationModelManager(ObservationModelManager):
     def __init__(self, xdim: int, formula: str):
-        #######
-        #######
-        #######
-        #######  TODO
-        #######
-        #######
-        #######
+        #  TODO
         self._xdim = xdim
         self._formula = formula
 
@@ -126,7 +119,8 @@ class LogitObservationModelManager(ObservationModelManager):
 
         return formatted
 
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng, separate_components=False):
+    def predict(self, model, formatted_prediction_data, boom_final_state, rng,
+                separate_components=False):
         if separate_components:
             draw = model.simulate_forecast_components(
                 rng,
