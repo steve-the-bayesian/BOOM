@@ -185,6 +185,11 @@ namespace BayesBoom {
                 const Vector &final_state) {
                return model.simulate_forecast(rng, predictors, final_state);
              })
+        .def("simulate_forecast_components",
+             [](StateSpaceRegressionModel &model, RNG &rng, const Matrix &predictors,
+                const Vector &final_state) {
+               return model.simulate_forecast_components(rng, predictors, final_state);
+             })
         ;
 
 
@@ -268,6 +273,11 @@ namespace BayesBoom {
                 const Vector &final_state) {
                return model.simulate_forecast(rng, predictors, final_state);
              })
+        .def("simulate_forecast_components",
+             [](StateSpaceStudentRegressionModel &model, RNG &rng, const Matrix &predictors,
+                const Vector &final_state) {
+               return model.simulate_forecast_components(rng, predictors, final_state);
+             })
         ;
 
     py::class_<StateSpaceLogitModel,
@@ -316,6 +326,15 @@ namespace BayesBoom {
                return model->simulate_forecast(
                    rng, forecast_predictors, trials, final_state);
              })
+        .def("simulate_forecast_components",
+             [](StateSpaceLogitModel *model,
+                RNG &rng,
+                const Matrix &forecast_predictors,
+                const Vector &trials,
+                const Vector &final_state) {
+               return model->simulate_forecast_components(
+                   rng, forecast_predictors, trials, final_state);
+             })
         ;
 
     py::class_<StateSpacePoissonModel,
@@ -355,13 +374,13 @@ namespace BayesBoom {
             "coef", [](const StateSpacePoissonModel *model) {
               return model->observation_model()->coef();
             })
-        .def("simulate_forecast",
+        .def("simulate_forecast_components",
              [](StateSpacePoissonModel *model,
                 RNG &rng,
                 const Matrix &forecast_predictors,
                 const Vector &exposure,
                 const Vector &final_state) {
-               return model->simulate_forecast(
+               return model->simulate_forecast_components(
                    rng, forecast_predictors, exposure, final_state);
              })
         ;

@@ -247,6 +247,29 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix SSLM::simulate_forecast_components(RNG &rng,
+                                            const Matrix &forecast_predictors,
+                                            const Vector &trials,
+                                            const Vector &final_state) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_horizon = nrow(forecast_predictors);
+    Matrix ans(number_of_state_models() + 2, forecast_horizon, 0.0);
+    Vector state = final_state;
+    int t0 = time_dimension();
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans(number_of_state_models(), t) = observation_model_->predict(
+          forecast_predictors.row(t));
+      double log_odds = sum(ans.col(t));
+      ans.last_row()[t] = rbinom_mt(rng, lround(trials[t]), plogis(log_odds));
+    }
+    return ans;
+  }
+
   Vector StateSpaceLogitModel::one_step_holdout_prediction_errors(
       RNG &rng,
       BinomialLogitDataImputer &data_imputer,

@@ -199,6 +199,10 @@ namespace BOOM {
     Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
                              const Vector &exposure, const Vector &final_state);
 
+    Matrix simulate_forecast_components(
+        RNG &rng, const Matrix &forecast_predictors,
+        const Vector &exposure, const Vector &final_state);
+
     // Returns a vector of draws from the posterior predictive distribution for
     // a multiplexed prediction problem.  That is, a prediction problem where
     // some time periods to be predicted have more than one observation with

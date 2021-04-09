@@ -181,6 +181,7 @@ namespace BOOM {
     // original data (as opposed to the logit scale).
     //
     // Args:
+    //   rng:  Random number generator to use for the simulation.
     //   forecast_predictors: A matrix of predictors to use for the
     //     forecast period.  If no regression component is desired,
     //     then a single column matrix of 1's (an intercept) should be
@@ -195,6 +196,35 @@ namespace BOOM {
                              const Matrix &forecast_predictors,
                              const Vector &trials,
                              const Vector &final_state);
+
+    // Return a draw from the posterior predictive distribution of the
+    // contribution of each state model to the predictive distribuiton, on the
+    // logit scale.
+    //
+    // Args:
+    //   rng:  Random number generator to use for the simulation.
+    //   forecast_predictors: A matrix of predictors to use for the
+    //     forecast period.  If no regression component is desired,
+    //     then a single column matrix of 1's (an intercept) should be
+    //     supplied so that the length of the forecast period can be
+    //     determined.
+    //   trials: A vector of non-negative integers giving the number
+    //     of trials that will take place at each point in the
+    //     forecast period.
+    //   final_state: A draw of the value of the state vector at the
+    //     final time period in the training data.
+    //
+    // Returns:
+    //   A matrix, with rows corresponding to state components, and columns to
+    //   time points, containing the contribution of each state model to the
+    //   forecast distribution, on the logit scale.  The last row of the matrix
+    //   contains a draw from the posterior predictive distribution, equivalent
+    //   to simulate_forecast().
+    Matrix simulate_forecast_components(
+        RNG &rng,
+        const Matrix &forecast_predictors,
+        const Vector &trials,
+        const Vector &final_state);
 
     // Returns a vector of draws from the posterior predictive distribution for
     // a multiplexed prediction problem.  That is, a prediction problem where
