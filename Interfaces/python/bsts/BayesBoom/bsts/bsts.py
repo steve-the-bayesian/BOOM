@@ -420,7 +420,8 @@ class Bsts:
                 plot_index += 1
         return fig
 
-    def predict(self, newdata, burn: int = None, seed: int = None, **kwargs):
+    def predict(self, newdata, burn: int = None, seed: int = None,
+                separate_components=False, **kwargs):
         """
         Args:
           newdata: For regression models 'newdata' is a DataFrame containing
@@ -434,6 +435,8 @@ class Bsts:
             the simulations from the posterior predictive distribution.  If
             None then the current state of the RNG will be used.  The 'seed'
             argument is mainly useful for reproducibility when testing.
+          separate_components: If True then an extra dimension is added to the
+            output, and the contributions of each state component are kept separate.
           **kwargs: Additional named arguments are passed to the 'predict'
             method of the ObservationModelManager specific to the observation
             model.  The main use is to supply 'trials' for logit models, and
@@ -652,7 +655,7 @@ class BstsPrediction:
         if original_series is True:
             start = original_timestaps[0]
             plot_periods = len(self._original_series) + horizon
-            original = _get_values(self._original_series)
+            original = R.to_numpy(self._original_series)
         elif isinstance(original_series, int):
             start = original_timestaps.iloc[-original_series]
             plot_periods = original_series + horizon
@@ -791,297 +794,47 @@ class ObservationModelManager(ABC):
         """
 
     @abstractmethod
-    def predict(self, model, formatted_prediction_data, boom_final_state,
-                **kwargs):
+    def predict(self, model, formatted_prediction_data, boom_final_state, rng,
+                separate_components=False, **kwargs):
         """
         Simulate from the posterior predictive distribution.
         Args:
           model: A BOOM state space model object of the type expected by the
             concrete child class.
           formatted_prediction_data:
+          boom_final_state: A boom.Vector containing the simulated state draw
+            at the final time point in the training data.
+          rng:  A boom.RNG random number generator to use in the simulation.
+          separate_components: If True then separate the contributions of each
+            state component in the output.  See the "Returns:" section for
+            implications.
+          **kwargs: Extra arguments expected by specific model families.
+              Typical examples are 'trials' for logit models or 'exposure' for
+              Poisson models.  It is an error to supply unhandled extra arguments.
 
         Returns:
-          A numpy matrix representing the posterior predictive distribution.
-          Rows are MCMC draws.  Columns are time points.
+          If separate_components is False then the return is a numpy matrix
+          representing the posterior predictive distribution.  Rows are MCMC
+          draws.  Columns are time points.  Otherwise the return is a numpy
+          3-way array representing the posterior predictive distribution.  The
+          first index is MCMC draws, the second is state components, and the
+          thrird is time points.  If there is no link function, then summing
+          over state components yields the same result as a call to 'predict'
+          with the same seed, including observation error.  If the model
+          includes a link function then the state contributions are on the
+          scale of the link function, and no observation error is present.
         """
 
-
-# ===========================================================================
-class GaussianObservationModelManager(ObservationModelManager):
-    """
-    The observation model manager supports the observation model in the boom
-    object. It holds posterior draws of observation model parameters, log
-    likelihood, and metadata about the
-    """
-    def __init__(self, xdim, formula):
-        """
-        Args:
-          xdim: The dimension of the predictor variable.  For a pure time
-            series model with no predictors, call with xdim == 0.
-        """
-        self._xdim = xdim
-        self._formula = formula
-
-    def allocate_space(self, niter: int):
-        """
-        Create space to hold 'niter' MCMC draws.
-        """
-        self._residual_sd = np.empty(niter)
-        self._log_likelihood = np.empty(niter)
-
-        if self._xdim > 0:
-            self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
-
-    def record_draw(self, iteration: int, model):
-        """
-        Record the current state of 'model' as of the specified 'iteration'.
-
-        """
-        self._residual_sd[iteration] = model.residual_sd
-        self._log_likelihood[iteration] = model.log_likelihood
-        if self._xdim > 0:
-            self._coefficients[iteration, :] = spikeslab.sparsify(model.coef)
-
-    def restore_draw(self, iteration: int, model):
-        """
-        Set the state of 'model' to the requested iteration.
-        """
-        model.observation_model.set_sigma(self._residual_sd[iteration])
-        if self._xdim > 0:
-            model.observation_model.set_sigma(self._residual_sd[iteration])
-            spikeslab.set_glm_coefs(model.observation_model.coefs,
-                                    self._coefficients[iteration, :])
-
-    def format_prediction_data(self, prediction_data, **kwargs):
-        if self._xdim > 0:
-            formatted = {
-                "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
-            }
-        else:
-            formatted = {
-                "forecast_horizon": int(prediction_data)
-            }
-        return formatted
-
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng,
-                **kwargs):
-        """
-        Args:
-          model: Either a boom.StateSpaceModel, or a
-            boom.StateSpaceRegressionModel.
-          formatted_prediction_data: The output of
-            self.format_prediction_data().  A dict containing the prediction
-            data in the form expected by the boom model.
-          burn: The number of MCMC iterations to discard as burn-in.
-          **kwargs: Unused.  Extra arguments will cause an exception to be
-            raised.
-        """
-        extra_args = {**kwargs}
-        if extra_args:
-            raise Exception("Unexpected arguments were given to Bsts.predict:"
-                            f"  {extra_args.keys()}.")
-
-        if isinstance(model, boom.StateSpaceRegressionModel):
-            draw = model.simulate_forecast(
-                rng,
-                formatted_prediction_data["predictors"],
-                boom_final_state)
-        elif isinstance(model, boom.StateSpaceModel):
-            draw = model.simulate_forecast(
-                rng,
-                formatted_prediction_data["forecast_horizon"],
-                boom_final_state)
-        else:
-            raise Exception(
-                "Unrecognized boom model passed to "
-                "GaussianObservationModelManager.predict: "
-                f"{model.__class__.__name__}"
-            )
-
-        return draw.to_numpy()
-
-
-class StudentObservationModelManager(ObservationModelManager):
-    def __init__(self, xdim: int, formula: str):
-        """
-        In a pure time series context, xdim == 0.  In a regression context,
-        xdim is the number of predictors in the regression portion of the model.
-        """
-        self._xdim = xdim
-        self._formula = formula
-
-    def allocate_space(self, niter: int):
-        self._residual_sd = np.empty(niter)
-        self._residual_df = np.empty(niter)
-        if self._xdim > 0:
-            self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
-
-    def record_draw(self, iteration: int, model):
-        student_reg = model.observation_model
-        self._residual_sd[iteration] = student_reg.residual_sd
-        self._residual_df[iteration] = student_reg.residual_df
-        if self._xdim > 0:
-            self._coefficients[iteration, :] = spikeslab.sparsify(
-                student_reg.coef)
-
-    def restore_draw(self, iteration: int, model):
-        student_reg = model.observation_model
-        student_reg.set_residual_sd(self._residual_sd[iteration])
-        student_reg.set_residual_df(self._residual_df[iteration])
-        if self._xdim > 0:
-            spikeslab.set_glm_coefs(
-                student_reg.coef,
-                self._coefficients[iteration, :])
-
-    def format_prediction_data(self, prediction_data, **kwargs):
-        if isinstance(prediction_data, int):
-            formatted = {
-                "forecast_horizon": int(prediction_data),
-                "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
-            }
-        else:
-            formatted = {
-                "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
-            }
-        return formatted
-
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng):
-        """
-        Return one draw from the posterior predictive distribution.
-        """
-        draw = model.simulate_forecast(
-            rng,
-            formatted_prediction_data["predictors"],
-            boom_final_state)
-        return draw.to_numpy()
-
-
-class PoissonObservationModelManager(ObservationModelManager):
-    def __init__(self, xdim: int, formula: str):
-        self._xdim = xdim
-        self._formula = formula
-
-    @property
-    def niter(self):
-        if hasattr(self, "_coefficients"):
-            return self._coefficients.shape[0]
-        else:
-            return 0
-
-    def allocate_space(self, niter: int):
-        self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
-
-    def record_draw(self, iteration: int, model):
-        self._coefficients[iteration, :] = spikeslab.sparsify(
-            model.observation_model.coef)
-
-    def restore_draw(self, iteration: int, model):
-        spikeslab.set_glm_coefs(model.observation_model.coef,
-                                self._coefficients[iteration, :])
-
-    def format_prediction_data(self, prediction_data, **kwargs):
-        extra_args = {**kwargs}
-        if isinstance(prediction_data, int):
-            formatted = {
-                "forecast_horizon": prediction_data,
-                "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
-            }
-        else:
-            formatted = {
-                "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
-            }
-        exposure = extra_args.get("exposure", 1)
-        if isinstance(exposure, Number):
-            exposure = np.full(formatted["forecast_horizon"], exposure)
-        else:
-            exposure = np.array(exposure)
-        formatted["exposure"] = boom.Vector(exposure)
-
-        return formatted
-
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng):
-        draw = model.simulate_forecast(
-            rng,
-            formatted_prediction_data["predictors"],
-            formatted_prediction_data["exposure"],
-            boom_final_state)
-        return draw.to_numpy()
-
-
-class LogitObservationModelManager(ObservationModelManager):
-    def __init__(self, xdim: int, formula: str):
-        #######
-        #######
-        #######
-        #######  TODO
-        #######
-        #######
-        #######
-        self._xdim = xdim
-        self._formula = formula
-
-    @property
-    def niter(self):
-        if hasattr(self, "_coefficients"):
-            return self._coefficients.shape[0]
-        else:
-            return 0
-
-    def allocate_space(self, niter: int):
-        self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
-
-    def record_draw(self, iteration: int, model):
-        self._coefficients[iteration, :] = spikeslab.sparsify(
-            model.observation_model.coef)
-
-    def restore_draw(self, iteration: int, model):
-        spikeslab.set_glm_coefs(model.observation_model.coef,
-                                self._coefficients[iteration, :])
-
-    def format_prediction_data(self, prediction_data, **kwargs):
-        if isinstance(prediction_data, int):
-            formatted = {
-                "forecast_horizon": prediction_data,
-                "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
-            }
-        else:
-            formatted = {
-                "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
-            }
-        extra_args = {**kwargs}
-        trials = extra_args.get("trials", 1)
-        if isinstance(trials, Number):
-            trials = np.full(formatted["forecast_horizon"], trials)
-        else:
-            trials = np.array(trials)
-        formatted["trials"] = boom.Vector(trials)
-
-        return formatted
-
-    def predict(self, model, formatted_prediction_data, boom_final_state, rng):
-        draw = model.simulate_forecast(
-            rng,
-            formatted_prediction_data["predictors"],
-            formatted_prediction_data["trials"],
-            boom_final_state)
-        return draw.to_numpy()
-
-
-# ===========================================================================
 class StateSpaceModelFactory(ABC):
     @staticmethod
     def create(family, formula):
         family = R.unique_match(
             family.lower(),
             ["gaussian", "student", "binomial", "poisson"])
+        from .gaussian import GaussianStateSpaceModelFactory, StateSpaceRegressionModelFactory
+        from .logit import StateSpaceLogitModelFactory
+        from .poisson import StateSpacePoissonModelFactory
+        from .student import StateSpaceStudentModelFactory
 
         if family == "gaussian" and formula is None:
             return GaussianStateSpaceModelFactory()
@@ -1119,398 +872,6 @@ class StateSpaceModelFactory(ABC):
         Return an ObservationModelManager object appropriate to the concrete
         observation model.
         """
-
-
-class GaussianStateSpaceModelFactory:
-    """
-    Model factory for models with Gassian observation errors.  Thus the handled
-    models could either be boom.StateSpaceModel or
-    boom.StateSpaceRegressionModel.
-    """
-    def __init__(self):
-        self._model = None
-
-    def create_model(self, prior: R.SdPrior, data: pd.Series, rng):
-        """
-        Args:
-          prior: an R.SdPrior object describing the prior distribution on the
-            residual variance paramter.
-          data:  The time series of observations as a Pandas Series.
-          rng: The boom random number generator.
-
-        Returns:
-          A boom.StateSpaceModel object.
-        """
-        if data is not None:
-            if (isinstance(data, np.ndarray)):
-                boom_data = boom.Vector(data.ravel())
-                is_observed = np.isnan(data)
-            else:
-                boom_data = boom.Vector(data.values)
-                is_observed = ~data.isna()
-            self._model = boom.StateSpaceModel(boom_data, is_observed)
-        else:
-            self._model = boom.StateSpaceModel()
-
-        if prior is None:
-            if data is None:
-                raise Exception("One of 'prior' or 'data' must be given")
-            sdy = np.std(data, ddof=1)
-            prior = R.SdPrior(sigma_guess=sdy, upper_limit=sdy * 1.2)
-
-        if not isinstance(prior, R.SdPrior):
-            raise Exception(
-                "I expected a prior of type R.SdPrior on the residual variance"
-                " parameter."
-            )
-        self._prior = prior
-
-        boom_prior = boom.ChisqModel(prior.sample_size, prior.sigma_guess)
-        observation_model_sampler = boom.ZeroMeanGaussianConjSampler(
-            self._model.observation_model,
-            boom_prior)
-        observation_model_sampler.set_sigma_upper_limit(
-            prior.upper_limit)
-        self._model.observation_model.set_method(observation_model_sampler)
-
-        sampler = boom.StateSpacePosteriorSampler(self._model, rng)
-        self._model.set_method(sampler)
-
-        if data is not None:
-            self._original_series = data
-
-        return self._model
-
-    def create_observation_model_manager(self):
-        return GaussianObservationModelManager(xdim=0, formula=None)
-
-
-class StateSpaceRegressionModelFactory:
-
-    def __init__(self, formula):
-        if not isinstance(formula, str):
-            raise Exception("formula must be a string.")
-        self._formula = formula
-
-    def create_model(self, prior, data, rng, **kwargs):
-        """
-        Create the boom model object, and store related model artifacts.
-
-        Args:
-          formula:  A model formula describing the regression component.
-          data: A pandas DataFrame containing the variables appearing
-            'formula'.
-          prior: A spikeslab.RegressionSpikeSlabPrior describing the prior
-            distribution on the regression coefficients and the residual
-            standard deviation.
-
-        Effects: self._model is created, and model formula artifacts are stored
-          so they will be available for future predictions.
-        """
-        response, predictors = patsy.dmatrices(self._formula, data)
-        boom_response = boom.Vector(response)
-        boom_predictors = boom.Matrix(predictors)
-        if prior is None:
-            prior = spikeslab.RegressionSpikeSlabPrior(
-                boom_predictors, boom_response, **kwargs)
-
-        self._prior = prior
-
-        if not isinstance(prior, spikeslab.RegressionSpikeSlabPrior):
-            raise Exception("Unexpected type for prior.")
-        is_observed = ~np.isnan(response)
-        self._model = boom.StateSpaceRegressionModel(
-            boom_response, boom_predictors, is_observed)
-
-        reg = self._model.observation_model
-        observation_model_sampler = boom.BregVsSampler(
-            reg,
-            prior.slab(reg.Sigsq_prm),
-            prior.residual_precision,
-            prior.spike)
-        reg.set_method(observation_model_sampler)
-        self._original_series = response
-
-        return self._model
-
-    def create_observation_model_manager(self):
-        return GaussianObservationModelManager(self._model.xdim, self._formula)
-
-
-class StateSpaceStudentModelFactory:
-    def __init__(self, formula: str):
-        """
-        Create a StateSpaceStudentModelFactory.
-
-        Args:
-          formula: A string describing how the predictor variables are to be
-            constructed from a data frame.  For example "y ~ x1 + x2 + x2*x3".
-            If the formula is None then the model will contain no regression
-            component.
-        """
-        if formula is not None and not isinstance(formula, str):
-            raise Exception("formula must either be None or a string")
-        self._formula = formula
-
-    def create_model(self, prior, data, rng, **kwargs):
-        """
-        Create the boom model object, and store related model artifacts.
-
-        Args:
-          prior: The prior for the observation model.  Either None or a
-            spikeslab.StudentSpikeSlabPrior.
-          data: If self._formula is None then data is the time series to be
-            modeled.  Either a pd.Series or a np.ndarray.  Otherwise data
-            should be a pd.DataFrame containing the variables referenced in
-            'formula'.
-          **kwargs: If prior is None then any remaining arguments are passed to
-            the StudentSpikeSlabPrior constructor.
-
-        Returns:
-          The created model.
-
-        Effects:
-          self._model is populated with the created model.
-          self._prior is populated with the prior distribution for the
-            observation model.
-        """
-
-        if data is not None:
-            if self._formula is None:
-                # Pure time series case.
-                response = data
-                predictors = np.ones((len(response), 1))
-                kwargs["expected_model_size"] = 0
-            else:
-                # Time series regression case.
-                response, predictors = patsy.dmatrices(self._formula, data)
-
-            boom_response = boom.Vector(_get_values(response))
-            boom_predictors = boom.Matrix(_get_values(predictors))
-            response_is_observed = np.isfinite(response).ravel()
-
-            self._model = boom.StateSpaceStudentRegressionModel(
-                boom_response, boom_predictors, response_is_observed)
-        elif prior is not None:
-            xdim = len(prior._prior_inclusion_probabilities)
-            self._model = boom.StateSpaceStudentRegressionModel(xdim)
-            response = None
-            predictors = None
-        else:
-            raise Exception("At least one of 'data' or 'prior' is needed.")
-
-        regression = self._model.observation_model
-
-        prior = self._verify_prior(prior, response, predictors, **kwargs)
-
-        self._prior = prior
-
-        observation_model_sampler = boom.TRegressionSpikeSlabSampler(
-            regression,
-            prior.slab(regression.Sigsq_prm),
-            prior.spike,
-            prior.residual_precision,
-            prior.tail_thickness,
-            rng,
-        )
-        observation_model_sampler.set_sigma_upper_limit(prior.sigma_upper_limit)
-        if prior.max_flips > 0:
-            observation_model_sampler.limit_model_selection(prior.max_flips)
-        regression.set_method(observation_model_sampler)
-
-        sampler = boom.StateSpaceStudentPosteriorSampler(
-            self._model,
-            observation_model_sampler)
-        self._model.set_method(sampler)
-
-        self._original_series = response
-        return self._model
-
-    def create_observation_model_manager(self):
-        return StudentObservationModelManager(
-            self._model.observation_model.xdim,
-            self._formula)
-
-    def _verify_prior(self, prior, response, predictors, **kwargs):
-        """
-        Ensure that the prior is set up right.
-        Args:
-          prior: Either None, or a spikeslab.StudentSpikeSlabPrior object.  If
-            None then a default prior will be created from the supplied data.
-          response: If prior is None, this must either be a vector containing
-            the response variable.  Acceptable types include a boom.Vector,
-            pd.Series, or a np.ndarray.  If prior is None then this value is
-            not used.
-          predictors: If prior is None, this must be a Matrix containing the
-            predictor values.  Acceptable types include a boom.Matrix,
-            pd.DataFrame with all numeric dtypes, or a np.ndarray.
-          **kwargs: If prior is None then any additional named arguments are
-            passed to the StudentSpikeSlabPrior constructor.
-
-        Returns:
-          The validated prior.  This is 'prior' if not None and of the correct
-          type.  Otherwise it is the default prior constructed from the
-          remaining arguments.
-
-        Exceptions:
-          An exception is thrown if 'prior' is not None and it is not a
-          StudentSpikeSlabPrior.
-        """
-        if prior is None:
-            prior = spikeslab.StudentSpikeSlabPrior(
-                predictors,
-                response,
-                **kwargs,
-            )
-
-        if not isinstance(prior, spikeslab.StudentSpikeSlabPrior):
-            raise Exception("Expected a StudentSpikeSlabPrior prior "
-                            "distribution.")
-        return prior
-
-
-class StateSpacePoissonModelFactory:
-    def __init__(self, formula):
-        """
-        Args:
-          formula: A string describing how the predictor variables are to be
-            constructed from a data frame.  For example "y ~ x1 + x2 + x2*x3".
-            If the formula is None then the model will contain no regression
-            component.
-        """
-        if formula is not None and not isinstance(formula, str):
-            raise Exception("formula must either be None or a string")
-        self._formula = formula
-
-    def create_model(self, prior, data, rng, **kwargs):
-        if data is not None:
-            response, predictors = patsy.dmatrices(self._formula, data)
-            extra_args = {**kwargs}
-            exposure = extra_args.get("exposure", 1)
-            if isinstance(exposure, Number):
-                exposure = np.full(len(response), exposure)
-            observed = np.isfinite(response)
-            self._model = boom.StateSpacePoissonModel(
-                boom.Vector(response),
-                boom.Vector(exposure),
-                boom.Matrix(predictors),
-                observed)
-        elif prior is not None:
-            xdim = len(prior._prior_inclusion_probabilities)
-            self._model = boom.StateSpacePoissonModel(xdim)
-            response = None
-            predictors = None
-            exposure = None
-        else:
-            raise Exception("At least one of 'data' or 'prior' is needed.")
-
-        poisson_reg = self._model.observation_model
-        prior = self._verify_prior(prior, response, predictors, exposure)
-        self._prior = prior
-        observation_model_sampler = prior.create_sampler(
-            poisson_reg, assign=True)
-
-        sampler = boom.StateSpacePoissonPosteriorSampler(
-            self._model, observation_model_sampler)
-        self._model.set_method(sampler)
-        self._original_series = response
-        return self._model
-
-    def create_observation_model_manager(self):
-        return PoissonObservationModelManager(
-            self._model.observation_model.xdim,
-            self._formula)
-
-    def _verify_prior(self, prior, response, predictors, exposure, **kwargs):
-        if prior is None:
-            prior = spikeslab.PoissonZellnerPrior(
-                predictors=predictors,
-                successes=response,
-                exposure=exposure,
-                **kwargs)
-
-        if not isinstance(prior, spikeslab.PoissonZellnerPrior):
-            raise Exception(
-                "Expected 'prior' to be a 'spikeslab.PoissonZellnerPrior'."
-            )
-
-        return prior
-
-
-class StateSpaceLogitModelFactory:
-    def __init__(self, formula):
-        """
-        Args:
-          formula: A string describing how the predictor variables are to be
-            constructed from a data frame.  For example "y ~ x1 + x2 + x2*x3".
-            If the formula is None then the model will contain no regression
-            component.
-        """
-        if formula is not None and not isinstance(formula, str):
-            raise Exception("formula must either be None or a string")
-        self._formula = formula
-
-    def create_model(self, prior, data, **kwargs):
-        if data is not None:
-            response, predictors = patsy.dmatrices(self._formula, data)
-            extra_args = {**kwargs}
-            trials = extra_args.get("trials", 1)
-            if isinstance(trials, Number):
-                trials = np.full(len(response), trials)
-            observed = np.isfinite(response)
-            self._model = boom.StateSpacePoissonModel(
-                boom.Vector(response),
-                boom.Vector(trials),
-                boom.Matrix(predictors),
-                observed)
-        elif prior is not None:
-            xdim = len(prior._prior_inclusion_probabilities)
-            self._model = boom.StateSpaceLogitModel(xdim)
-            response = None
-            predictors = None
-            trials = None
-        else:
-            raise Exception("At least one of 'data' or 'prior' is needed.")
-
-        logit_reg = self._model.observation_model
-        prior = self._verify_prior(prior, response, predictors, trials,
-                                   **kwargs)
-        self._prior = prior
-        observation_model_sampler = prior.create_sampler(logit_reg, assign=True)
-
-        sampler = boom.StateSpacePoissonPosteriorSampler(
-            self._model, observation_model_sampler)
-        self._model.set_method(sampler)
-        self._original_series = response
-        return self._model
-
-    def create_observation_model_manager(self):
-        return LogitObservationModelManager(
-            xdim=self._model.observation_model.xdim,
-            formula=self._formula)
-
-    def _verify_prior(self, prior, response, predictors, trials, **kwargs):
-        if prior is None:
-            prior = spikeslab.LogitZellnerPrior(
-                predictors=predictors,
-                response=response,
-                trials=trials,
-                **kwargs)
-        if not isinstance(prior, spikeslab.LogitZellnerPrior):
-            raise Exception(
-                "Expected 'prior' to be a 'spikeslab.LogitZellnerPrior'."
-            )
-        return prior
-
-
-def _get_values(x):
-    if isinstance(x, np.ndarray):
-        return x
-    elif isinstance(x, pd.Series) or isinstance(x, pd.DataFrame):
-        return x.values
-    else:
-        return np.ndarray(x)
-
 
 def _find_state_contribution_ylim(state_models, burn):
     """

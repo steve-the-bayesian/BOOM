@@ -78,6 +78,18 @@ def to_boom_spd(m):
 
     return boom.SpdMatrix(np.array(m, dtype="float"))
 
+def to_numpy(x):
+    """
+    Convert x to a numpy array.
+    """
+    if isinstance(x, np.ndarray):
+        return x
+    elif isinstance(x, (pd.Series, pd.DataFrame)):
+        return x.values
+    elif isinstance(x, (boom.Vector, boom.Matrix, boom.Spd)):
+        return x.to_numpy()
+    else:
+        return np.array(x)
 
 def to_boom_date(timestamp):
     """

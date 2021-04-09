@@ -51,5 +51,6 @@ from .boom_py_utils import (
     to_boom_vector,
     to_boom_matrix,
     to_boom_spd,
+    to_numpy,
     to_pd_timestamp,
 )
