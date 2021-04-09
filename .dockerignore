@@ -1,0 +1,18 @@
+.git/
+python_package/
+build
+*.egg-info
+*.egg/
+# Ignore generated files
+*.pyc
+**/*.pyc
+*.swp
+.tox
+.coverage
+html/*
+python/*
+__pycache__
+**/__pycache__
+
+# Compiled Documentation
+docs/_build
