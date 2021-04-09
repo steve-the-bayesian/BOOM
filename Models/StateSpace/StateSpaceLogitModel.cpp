@@ -265,7 +265,7 @@ namespace BOOM {
       ans(number_of_state_models(), t) = observation_model_->predict(
           forecast_predictors.row(t));
       double log_odds = sum(ans.col(t));
-      ans.last_row()[t] = rbinom_mt(rng, lround(trials[t]), plogis(log_odds));
+      ans.col(t).back() = rbinom_mt(rng, lround(trials[t]), plogis(log_odds));
     }
     return ans;
   }

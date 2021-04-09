@@ -212,7 +212,7 @@ namespace BOOM {
       RNG &rng, const Matrix &predictors, const Vector &final_state) {
     set_state_model_behavior(StateModel::MARGINAL);
     int forecast_horizon = nrow(predictors);
-    Matrix ans(number_of_state_models() + 2, forecast_horizon);
+    Matrix ans(number_of_state_models() + 2, forecast_horizon, 0.0);
     int t0 = time_dimension();
     Vector state = final_state;
     double sigma = observation_model_->sigma();
@@ -225,7 +225,7 @@ namespace BOOM {
       }
       ans(number_of_state_models(), t) =
           observation_model_->predict(predictors.row(t));
-      ans(number_of_state_models() + 1, t) = rstudent_mt(rng, 0, sigma, nu);
+      ans.col(t).back() = rstudent_mt(rng, ans.col(t).sum(), sigma, nu);
     }
     return ans;
   }

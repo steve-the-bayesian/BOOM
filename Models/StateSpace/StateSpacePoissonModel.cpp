@@ -259,7 +259,7 @@ namespace BOOM {
       ans(number_of_state_models(), t) = observation_model_->predict(
           forecast_predictors.row(t));
       double mu = exp(sum(ans.col(t)));
-      ans.last_row()[t] = rpois_mt(rng, exposure[t] * mu);
+      ans.col(t).back() = rpois_mt(rng, exposure[t] * mu);
     }
     return ans;
   }

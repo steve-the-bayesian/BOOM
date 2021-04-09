@@ -191,7 +191,7 @@ namespace BOOM {
   Matrix SSM::simulate_forecast_components(
       RNG &rng, int forecast_horizon, const Vector &final_state) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
-    Matrix ans(number_of_state_models() + 1, forecast_horizon);
+    Matrix ans(number_of_state_models() + 1, forecast_horizon, 0.0);
     int t0 = time_dimension();
     Vector state = final_state;
     for (int t = 0; t < forecast_horizon; ++t) {
@@ -200,7 +200,9 @@ namespace BOOM {
         ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
             state_component(state, s));
       }
-      ans.last_row()[t] = rnorm_mt(rng, 0, observation_variance(t + t0));
+      ans.col(t).back() = rnorm_mt(rng,
+                                   ans.col(t).sum(),
+                                   observation_variance(t + t0));
     }
     return ans;
   }

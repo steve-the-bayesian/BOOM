@@ -237,7 +237,7 @@ namespace BOOM {
                                             const Vector &final_state) {
     ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
     int forecast_horizon = newX.nrow();
-    Matrix ans(number_of_state_models() + 2, forecast_horizon);
+    Matrix ans(number_of_state_models() + 2, forecast_horizon, 0.0);
     int t0 = time_dimension();
     Vector state = final_state;
     for (int t = 0; t < forecast_horizon; ++t) {
@@ -247,8 +247,9 @@ namespace BOOM {
             state_component(state, s));
       }
       ans(number_of_state_models(), t) = regression_->predict(newX.row(t));
-      ans(number_of_state_models() + 1, t) = rnorm_mt(
-          rng, 0, observation_variance(t + t0));
+      ans.col(t).back() = rnorm_mt(rng,
+                                   ans.col(t).sum(),
+                                   observation_variance(t + t0));
     }
     return ans;
   }
