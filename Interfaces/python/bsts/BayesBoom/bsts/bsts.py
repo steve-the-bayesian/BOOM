@@ -457,6 +457,9 @@ class Bsts:
         formatted_prediction_data = manager.format_prediction_data(
             newdata, **kwargs)
         horizon = formatted_prediction_data["forecast_horizon"]
+        if separate_components:
+            nstate = self._model.number_of_state_models
+            pred = np.empty((ndraws, nstate + 2, horizon))
         pred = np.empty((ndraws, horizon))
 
         total_time_points = len(self.original_series) + horizon
@@ -465,12 +468,22 @@ class Bsts:
 
         for i in range(burn, self.niter):
             self._restore_draw(i)
-            pred[i - burn, :] = self._observation_model_manager.predict(
-                self._model,
-                formatted_prediction_data,
-                boom.Vector(self._final_state[i, :]),
-                rng=self._rng,
-            )
+            if separate_components:
+                pred[i - burn, :, :] = self._observation_model_manager.predict(
+                    self._model,
+                    formatted_prediction_data,
+                    boom.Vector(self._final_state[i, :]),
+                    rng=self._rng,
+                    separate_components=True,
+                )
+            else:
+                pred[i - burn, :] = self._observation_model_manager.predict(
+                    self._model,
+                    formatted_prediction_data,
+                    boom.Vector(self._final_state[i, :]),
+                    rng=self._rng,
+                    separate_components = False
+                )
 
         return BstsPrediction(pred, self.original_series)
 
@@ -607,7 +620,12 @@ class BstsPrediction:
     Posterior predictive distribution produced by the call to Bsts.pred.
     """
     def __init__(self, distribution, original_series):
-        self.distribution = distribution
+        if len(distribution.shape) == 3:
+            self.distribution = distribution[:, -1, :]
+            self.components = distribution[:, :-1, :]
+        else:
+            self.distribution = distribution
+            self.components = None
         self.posterior_mean = distribution.mean(axis=0)
         self._original_series = original_series
 
