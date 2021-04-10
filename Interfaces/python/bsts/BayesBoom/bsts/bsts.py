@@ -747,9 +747,26 @@ def extend_timestamps(timestamps, num_steps, dt: pd.Timedelta = None):
         dt = timestamps.diff()[1:]
         dt = np.min(dt[dt > pd.Timedelta(0)])
 
-    start = np.max(timestamps) + dt
-    end = start + (num_steps - 1) * dt
-    return pd.date_range(start=start, end=end, periods=num_steps)
+    if dt < pd.Timedelta(7, "days"):
+        start = np.max(timestamps) + dt
+        end = start + (num_steps - 1) * dt
+        return pd.date_range(start=start, end=end, periods=num_steps)
+
+    elif dt >= pd.Timedelta(28, "days") and dt <= pd.Timedelta(31, "days"):
+        return pd.date_range(start=np.max(timestamps),
+                             freq="M",
+                             periods=num_steps + 1)[1:]
+
+    elif dt >= pd.Timedelta(90, "days") and dt <= pd.Timedelta(93, "days"):
+        return pd.date_range(start=np.max(timestamps),
+                             freq="3M",
+                             periods=num_steps + 1)[1:]
+    elif dt >= pd.Timedelta(365, "days") and dt <= pd.Timedelta(366, "days"):
+        return pd.date_range(start=np.max(timestamps),
+                             freq="Y",
+                             periods=num_steps + 1)[1:]
+    else:
+        raise Exception(f"Not sure how to extend a time delta of {dt}.")
 
 
 # ===========================================================================
