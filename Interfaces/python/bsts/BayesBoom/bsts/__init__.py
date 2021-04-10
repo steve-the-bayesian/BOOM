@@ -1,4 +1,4 @@
-from .bsts import Bsts, BstsPrediction, extend_timestamps
+from .bsts import Bsts, BstsPrediction, extend_timestamps, CompareBstsModels
 
 from .state_models import StateModel
 from .ar import ArStateModel, AutoArStateModel, SpikeSlabArPrior

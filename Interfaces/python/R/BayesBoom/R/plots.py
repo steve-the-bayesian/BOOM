@@ -471,11 +471,10 @@ def boxplot(x, labels=None, add=False, **kwargs):
 
 def plot_ts(x, timestamps=None, ax=None, **kwargs):
     """ Plot a time series."""
-    # if timestamps is None:
-    #     if isinstance(x, pd.Series):
 
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        device = get_current_graphics_device()
+        ax = device.next_axes
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -484,7 +483,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     ax.plot(x)
     _set_plot_options(ax, **kwargs)
 
-    return device
+    return ax
 
 
 # ===========================================================================

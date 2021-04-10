@@ -170,6 +170,20 @@ def first_true(boolean_array):
     return next((i for i, v in enumerate(boolean_array) if v), None)
 
 
+def recycle(x, output_len):
+    x = list(x)
+    nchoices = len(x)
+    if nchoices >= output_len:
+        return x[:output_len]
+    ans = x
+    len_ans = nchoices
+    while len_ans + nchoices < output_len:
+        ans = ans + x
+        len_ans += nchoices
+    num_remaining = output_len - len_ans
+    return ans + x[:num_remaining]
+
+
 def unique_match(value, legal_value_list):
     """
     If 'value' uniquely matches only one value in legal_value_list, then return
@@ -182,9 +196,11 @@ def unique_match(value, legal_value_list):
     else:
         return legal_value_list[first_true(matches)]
 
+
 def _reduce_concat(x, sep=""):
     import functools
     return functools.reduce(lambda x, y: str(x) + sep + str(y), x)
+
 
 def _deduce_type(*lists):
     """
@@ -202,6 +218,7 @@ def _deduce_type(*lists):
         elif isinstance(obj, np.ndarray):
             type_code = max(type_code, 1)
     return type_code
+
 
 def paste(*lists, sep=" ", collapse=None):
     """

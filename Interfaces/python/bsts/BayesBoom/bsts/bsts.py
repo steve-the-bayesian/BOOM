@@ -1,11 +1,7 @@
 import numpy as np
 import pandas as pd
-import patsy
-import BayesBoom.spikeslab as spikeslab
 import BayesBoom.R as R
-import scipy.sparse
 from abc import ABC, abstractmethod
-from numbers import Number
 
 import BayesBoom.boom as boom
 
@@ -355,6 +351,65 @@ class Bsts:
 
         return ax
 
+    def plot_seasonal(self, nseasons=None, season_duration=None, same_scale=True,
+                      ylim=None, get_season_name=None, burn=None, fig=None, **kwargs):
+        """
+        Plot one or more seasonal state components as "monthplots"
+
+        Args:
+          nseasons: Plot the seasonal state component with this many seasons.
+            If no such model exists then raise an error.  If None, then all
+            seasonal models are plotted.
+          season_duration: If there are multiple seasonal models with the same
+            'nseasons', plot the seasonal model with this season_duration.
+          same_scale: If True then the seasonal effects are plotted with a
+            common Y axis scale.  If False then each plot determines its own Y
+            axis scale.
+          ylim: A pair of values giving the lower and upper limits on the Y
+            axis.  If supplied, this forces same_scale to True.
+          get_season_name: A function or callable object that takes a timestamp
+            and returns a string that can be used as a plot label.  If None and
+            nseasons is one of the special values listed below, then the
+            associated function will be used.
+            - 4  R.quarters
+            - 7  R.weekdays
+            - 12 R.months
+          burn: The nubmer of MCMC iterations to be discarded as burn-in.  If
+            None then a value will be suggested using suggest_burn.
+          fig: The plt.Figure object on which to draw the plot.  If None then
+            an object will be created and returned.
+          **kwargs: Extra arguments will be passed to
+            R.plot_dynamic_distribution.
+
+        Returns:
+          The plt.Figure object on which the plot is drawn.
+        """
+        from .seasonal import SeasonalStateModel
+
+        if fig is None:
+            fig = plt.Figure()
+        state_models = [x for x in self._state_models
+                        if isinstance(x, SeasonalStateModel)]
+        if nseasons is not None:
+            state_models = [x for x in state_models if x.nseasons == nseasons]
+
+        if season_duration is not None and len(state_models) > 1:
+            state_models = [x for x in state_models
+                            if x.season_duration == season_duration]
+
+        if len(state_models) == 0:
+            raise Exception("No suitable SeasonalStateModel objects found.")
+
+        num_plots = len(state_models)
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        return num_plots
+
     def plot_state_components(self,
                               burn: int = None,
                               time: np.array = None,
@@ -440,7 +495,8 @@ class Bsts:
             None then the current state of the RNG will be used.  The 'seed'
             argument is mainly useful for reproducibility when testing.
           separate_components: If True then an extra dimension is added to the
-            output, and the contributions of each state component are kept separate.
+            output, and the contributions of each state component are kept
+            apart.
           **kwargs: Additional named arguments are passed to the 'predict'
             method of the ObservationModelManager specific to the observation
             model.  The main use is to supply 'trials' for logit models, and
@@ -850,7 +906,8 @@ class ObservationModelManager(ABC):
             implications.
           **kwargs: Extra arguments expected by specific model families.
               Typical examples are 'trials' for logit models or 'exposure' for
-              Poisson models.  It is an error to supply unhandled extra arguments.
+              Poisson models.  It is an error to supply unhandled extra
+              arguments.
 
         Returns:
           If separate_components is False then the return is a numpy matrix
@@ -865,13 +922,17 @@ class ObservationModelManager(ABC):
           scale of the link function, and no observation error is present.
         """
 
+
 class StateSpaceModelFactory(ABC):
     @staticmethod
     def create(family, formula):
         family = R.unique_match(
             family.lower(),
             ["gaussian", "student", "binomial", "poisson"])
-        from .gaussian import GaussianStateSpaceModelFactory, StateSpaceRegressionModelFactory
+        from .gaussian import (
+            GaussianStateSpaceModelFactory,
+            StateSpaceRegressionModelFactory,
+        )
         from .logit import StateSpaceLogitModelFactory
         from .poisson import StateSpacePoissonModelFactory
         from .student import StateSpaceStudentModelFactory
@@ -913,6 +974,7 @@ class StateSpaceModelFactory(ABC):
         observation model.
         """
 
+
 def _find_state_contribution_ylim(state_models, burn):
     """
     Find the range of the values in the state contributions.
@@ -932,3 +994,81 @@ def _find_state_contribution_ylim(state_models, burn):
     maxs = [np.max(model._state_contribution[burn:, :])
             for model in state_models]
     return (np.min(mins), np.max(maxs))
+
+
+def CompareBstsModels(models, burn=None, colors=None,
+                      xlab="Time", ylab="Cumulative Absolute Error",
+                      main="Model Comparison", fig=None, **kwargs):
+    """
+    Plot the cumulative absolute one-step prediction errors for a collection of
+    bsts models.  Lower errors are good.  The plot helps you determine the time
+    periods when poorly performing models accumulated the most error.
+
+    Args:
+      models: A collection of models.  If the colletion is a dict the dict keys
+        will be used as labels in the plot.
+      burn:  The number of MCMC iterations to be discarded as burn-in.
+      colors:  The colors to use for the different models.
+      xlab:  Label for the time dimension.
+      main:  Main plot title.
+      fig: A plt.Figure object on which to draw the plot.  If None then a
+        Figure object will be created.
+      **kwargs:  Extra arguments passed to the plotting functions.
+
+    Returns:
+      The 'fig' object on which the plot is drawn.
+    """
+
+    if not R.is_iterable(models):
+        raise Exception("Expected a collection of models.")
+
+    if not isinstance(models, dict):
+        models = {f"Model {i+1}": model for i, model in enumerate(models)}
+
+    model_names = list(models.keys())
+    original_series = models[model_names[0]].original_series
+
+    if fig is None:
+        fig = plt.figure()
+
+    if burn is None:
+        burn = np.max([x.suggest_burn() for x in models.values()])
+
+    num_models = len(models)
+    if colors is None:
+        colors = ["black", "red", "blue", "green"]
+        colors = [x for x in colors for i in range(4)]
+        colors = R.recycle(colors, num_models)
+
+    line_styles = R.recycle(["-", "--", ":" "-."], num_models)
+
+    gridspec = fig.add_gridspec(2, 1, hspace=0)
+    bottom_panel = fig.add_subplot(gridspec[1, 0])
+    bottom_panel.tick_params(bottom=True, right=True, left=False,
+                             labelbottom=True, labelright=True, labelleft=False)
+    bottom_panel.grid(linestyle=":", color="gray", linewidth=0.5)
+    bottom_panel.set_ylabel("Original Series")
+
+    top_panel = fig.add_subplot(gridspec[0, 0], sharex=bottom_panel)
+    top_panel.tick_params(bottom=False, top=False, left=True, right=False,
+                          labelbottom=False)
+    top_panel.grid(linestyle=":", color="gray", linewidth=0.5)
+    top_panel.set_title(main)
+    top_panel.set_ylabel(ylab)
+
+    R.plot_ts(original_series, ax=bottom_panel, xlab=xlab)
+    counter = 0
+    for model_name, model in models.items():
+        errors = model.one_step_prediction_errors[burn:, :].mean(axis=0)
+        cumulative_errors = pd.Series(
+            np.cumsum(np.abs(errors)),
+            index=original_series.index
+        )
+        top_panel.plot(cumulative_errors, color=colors[counter],
+                       linestyle=line_styles[counter],
+                       label=model_name, **kwargs)
+        counter += 1
+
+    top_panel.legend()
+
+    return fig

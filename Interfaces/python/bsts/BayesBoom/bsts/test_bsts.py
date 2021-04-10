@@ -13,6 +13,7 @@ from BayesBoom.R import delete_if_present
 from BayesBoom.bsts import (
     Bsts,
     AirPassengers,
+    CompareBstsModels,
     LocalLevelStateModel,
     LocalLinearTrendStateModel,
     SeasonalStateModel,
@@ -171,6 +172,7 @@ class TestStudentTimeSeries(unittest.TestCase):
                                              pred2.distribution)
 
 
+
 # class TestStateSpaceRegression(unittest.TestCase):
 
 #     def test_bsts_regression(self):
@@ -193,7 +195,46 @@ class TestStudentTimeSeries(unittest.TestCase):
 #             m2 = pickle.load(pkl)
 
 
-_debug_mode = False
+class TestPlots(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        data = np.log(AirPassengers)
+        model = Bsts()
+        model.add_state(LocalLinearTrendStateModel(data))
+        model.add_state(SeasonalStateModel(data, nseasons=12))
+        model.train(data, niter=100)
+        self._model = model
+
+        model = Bsts()
+        model.add_state(LocalLinearTrendStateModel(data))
+        model.train(data, niter=100)
+        self._model2 = model
+
+    def test_plot_state(self):
+        fig, ax = plt.subplots()
+        foo = self._model.plot(ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+
+    def test_plot_components(self):
+        fig = plt.figure()
+        foo = self._model.plot("comp", fig=fig)
+        self.assertIsInstance(foo, plt.Figure)
+
+    def test_plot_seasonal(self):
+        fig = plt.figure()
+        foo = self._model.plot("seas", fig=fig)
+        self.assertIsInstance(foo, plt.Figure)
+
+    def test_compare_bsts_models(self):
+        fig = plt.figure()
+        models = {
+            "bsm": self._model,
+            "trend only": self._model2
+        }
+        ans = CompareBstsModels(models, fig=fig)
+        self.assertIsInstance(ans, plt.Figure)
+
+_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -206,7 +247,7 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestStudentTimeSeries()
+    rig = TestPlots()
     # rig = TestGaussianTimeSeries()
 
     if hasattr(rig, "setUpClass"):
@@ -214,7 +255,10 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_local_level()
+    rig.test_plot_state()
+    rig.test_plot_components()
+    # rig.test_plot_seasonal()
+    rig.test_compare_bsts_models()
     # rig.test_basic_structural_model()
 
     print("Goodbye, cruel world!")
