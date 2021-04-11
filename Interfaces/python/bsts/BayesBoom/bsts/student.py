@@ -21,6 +21,7 @@ class StateSpaceStudentModelFactory:
         if formula is not None and not isinstance(formula, str):
             raise Exception("formula must either be None or a string")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         """
@@ -51,9 +52,11 @@ class StateSpaceStudentModelFactory:
                 response = data
                 predictors = np.ones((len(response), 1))
                 kwargs["expected_model_size"] = 0
+                xnames = None
             else:
                 # Time series regression case.
                 response, predictors = patsy.dmatrices(self._formula, data)
+                self.predictor_names = predictors.design_info.term_names
 
             boom_response = boom.Vector(R.to_numpy(response))
             boom_predictors = boom.Matrix(R.to_numpy(predictors))
@@ -178,10 +181,13 @@ class StudentObservationModelManager(ObservationModelManager):
                 "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
             }
         else:
+            predictor_matrix = patsy.dmatrix(
+                self._formula, data=prediction_data)
+            xnames = predictor_matrix.design_info.term_names
             formatted = {
                 "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
+                "predictors": boom.Matrix(predictor_matrix),
+                "xnames": xnames,
             }
         return formatted
 

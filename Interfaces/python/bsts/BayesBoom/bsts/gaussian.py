@@ -16,6 +16,7 @@ class GaussianStateSpaceModelFactory:
     """
     def __init__(self):
         self._model = None
+        self.predictor_names = None
 
     def create_model(self, prior: R.SdPrior, data: pd.Series, rng):
         """
@@ -78,6 +79,7 @@ class StateSpaceRegressionModelFactory:
         if not isinstance(formula, str):
             raise Exception("formula must be a string.")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         """
@@ -95,6 +97,7 @@ class StateSpaceRegressionModelFactory:
           so they will be available for future predictions.
         """
         response, predictors = patsy.dmatrices(self._formula, data)
+        self.predictor_names = predictors.design_info.term_names
         boom_response = boom.Vector(response)
         boom_predictors = boom.Matrix(predictors)
         if prior is None:
@@ -171,10 +174,11 @@ class GaussianObservationModelManager(ObservationModelManager):
 
     def format_prediction_data(self, prediction_data, **kwargs):
         if self._xdim > 0:
+            predictor_matrix = patsy.dmatrix(
+                self._formula, data=prediction_data)
             formatted = {
                 "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
+                "predictors": boom.Matrix(predictor_matrix),
             }
         else:
             formatted = {

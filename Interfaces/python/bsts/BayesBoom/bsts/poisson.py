@@ -19,10 +19,12 @@ class StateSpacePoissonModelFactory:
         if formula is not None and not isinstance(formula, str):
             raise Exception("formula must either be None or a string")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         if data is not None:
             response, predictors = patsy.dmatrices(self._formula, data)
+            self.predictor_names = predictors.design_info.term_names
             extra_args = {**kwargs}
             exposure = extra_args.get("exposure", 1)
             if isinstance(exposure, Number):

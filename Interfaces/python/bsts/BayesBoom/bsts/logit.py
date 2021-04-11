@@ -19,10 +19,12 @@ class StateSpaceLogitModelFactory:
         if formula is not None and not isinstance(formula, str):
             raise Exception("formula must either be None or a string")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, **kwargs):
         if data is not None:
             response, predictors = patsy.dmatrices(self._formula, data)
+            self.predictor_names = predictors.design_info.term_names
             extra_args = {**kwargs}
             trials = extra_args.get("trials", 1)
             if isinstance(trials, Number):
@@ -104,10 +106,13 @@ class LogitObservationModelManager(ObservationModelManager):
                 "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
             }
         else:
+            predictor_matrix = patsy.dmatrix(self._formula,
+                                             data=prediction_data)
+            xnames = predictor_matrix.design_info.term_names
             formatted = {
                 "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
+                "predictors": boom.Matrix(predictor_matrix),
+                "xnames": xnames,
             }
         extra_args = {**kwargs}
         trials = extra_args.get("trials", 1)
