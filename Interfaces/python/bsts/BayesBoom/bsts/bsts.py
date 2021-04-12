@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import BayesBoom.R as R
 from abc import ABC, abstractmethod
 
 import BayesBoom.boom as boom
+import BayesBoom.spikeslab as spikeslab
+import BayesBoom.R as R
 
 from .state_models import StateModel
 
@@ -199,13 +200,81 @@ class Bsts:
         else:
             return None
 
-    @property
-    def one_step_prediction_errors(self):
-        if hasattr(self, "_one_step_prediction_errors"):
-            return self._one_step_prediction_errors
+    def one_step_prediction_errors(self,
+                                   cutpoints=None,
+                                   burn=None,
+                                   standardize=False):
+        """
+        The posterior distribution of the one-step-ahead prediction errors from
+        the model training.  The errors are computing using the Kalman filter,
+        and are of two types.
+
+        Purely in-sample errors are computed as a by-product of the Kalman
+        filter as a result of fitting the model.  These are stored in the
+        bsts.object assuming the save.prediction.errors argument is TRUE, which
+        is the default.  The in-sample errors are 'in-sample' in the sense that
+        the parameter values used to run the Kalman filter are drawn from their
+        posterior distribution given complete data.  Conditional on the
+        parameters in that MCMC iteration, each 'error' is the difference
+        between the observed y[t] and its expectation given data to t-1.
+
+        Purely out-of-sample errors can be computed by specifying the
+        'cutpoints' argument.  If cutpoints are supplied then a separate MCMC
+        is run using just data up to the cutpoint.  The Kalman filter is then
+        run on the remaining data, again finding the difference between y[t]
+        and its expectation given data to t-1, but conditional on parameters
+        estimated using data up to the cutpoint.
+
+        Args:
+          cutpoints: An increasing sequence of integers between 1 and the
+            number of time points in the training data, or None.  If None then
+            the in-sample one-step prediction errors will be extracted and
+            returned.  Otherwise the model will be re-fit with a separate MCMC
+            run for each entry in 'cutpoints'.  Data up to each cutpoint will
+            be included in the fit, and one-step prediction errors for data
+            after the cutpoint will be computed.
+          burn:  The number of MCMC iterations to discard as burn-in.
+          standardize: (bool)  If True then the prediction errors are divided
+            by the square root of the one-step-ahead forecast variance.  If
+            False the raw errors are returned.
+
+        Returns:
+          A dict, keyed by cutpoint values, with entries giving the
+          distribution of one-step prediction errors corresponding to
+          individual cutpoints.  Each list entry is a matrix, with rows
+          corresponding to MCMC draws, and columns corresponding to time points
+          in the data for bsts.object.  If the in-sample prediction errors were
+          stored in the original model fit, they will be present in the output.
+        """
+        has_errors = hasattr(self, "_one_step_prediction_errors")
+
+        if cutpoints is None and has_errors:
+            if isinstance(self._one_step_prediction_errors, np.ndarray):
+                return self._one_step_prediction_errors[burn:, :]
+            elif isinstance(self._one_step_prediction_errors, dict):
+                return self._one_step_prediction_errors[None]
+
+        elif cutpoints is not None and has_errors:
+            if isinstance(self._one_step_prediction_errors, np.ndarray):
+                errors = {
+                    None: self._one_step_prediction_errors
+                }
+                self._one_step_prediction_errors = errors
+
+            required_cutpoints = [
+                x for x in cutpoints
+                if x not in self._one_step_prediction_errors.keys()
+            ]
+
+            #########
+            # Cut over to C++ here.
+            #########
+
         else:
-            raise Exception("Cannot find one_step_prediction_errors.  Have "
-                            "you trained the model?")
+            raise Exception(
+                "Cannot find one_step_prediction_errors.  The errors are not "
+                "available for logit and Poisson models, and are only "
+                "available for ther models after model training.")
 
     @property
     def log_likelihood(self):
@@ -339,76 +408,30 @@ class Bsts:
         for model in self._state_models:
             state_contribution += model._state_contribution
 
-        R.plot_dynamic_distribution(
-            curves=state_contribution,
-            timestamps=time,
-            ax=ax,
-            ylim=ylim,
-            **kwargs)
+        if style == "dynamic":
+            R.plot_dynamic_distribution(
+                curves=state_contribution,
+                timestamps=time,
+                ax=ax,
+                ylim=ylim,
+                **kwargs)
 
-        if show_actuals:
-            ax.scatter(time, self.original_series, s=.2)
+            if show_actuals:
+                ax.scatter(time, self.original_series, s=.2)
+
+        elif style == "boxplot":
+            R.time_series_boxplot(
+                curves=state_contribution,
+                time=time,
+                ax=ax,
+                ylim=ylim,
+                **kwargs)
+            if show_actuals:
+                ax.scatter(np.arange(len(time)),
+                           self.original_series,
+                           s=.2)
 
         return ax
-
-    def plot_seasonal(self, nseasons=None, season_duration=None, same_scale=True,
-                      ylim=None, get_season_name=None, burn=None, fig=None, **kwargs):
-        """
-        Plot one or more seasonal state components as "monthplots"
-
-        Args:
-          nseasons: Plot the seasonal state component with this many seasons.
-            If no such model exists then raise an error.  If None, then all
-            seasonal models are plotted.
-          season_duration: If there are multiple seasonal models with the same
-            'nseasons', plot the seasonal model with this season_duration.
-          same_scale: If True then the seasonal effects are plotted with a
-            common Y axis scale.  If False then each plot determines its own Y
-            axis scale.
-          ylim: A pair of values giving the lower and upper limits on the Y
-            axis.  If supplied, this forces same_scale to True.
-          get_season_name: A function or callable object that takes a timestamp
-            and returns a string that can be used as a plot label.  If None and
-            nseasons is one of the special values listed below, then the
-            associated function will be used.
-            - 4  R.quarters
-            - 7  R.weekdays
-            - 12 R.months
-          burn: The nubmer of MCMC iterations to be discarded as burn-in.  If
-            None then a value will be suggested using suggest_burn.
-          fig: The plt.Figure object on which to draw the plot.  If None then
-            an object will be created and returned.
-          **kwargs: Extra arguments will be passed to
-            R.plot_dynamic_distribution.
-
-        Returns:
-          The plt.Figure object on which the plot is drawn.
-        """
-        from .seasonal import SeasonalStateModel
-
-        if fig is None:
-            fig = plt.Figure()
-        state_models = [x for x in self._state_models
-                        if isinstance(x, SeasonalStateModel)]
-        if nseasons is not None:
-            state_models = [x for x in state_models if x.nseasons == nseasons]
-
-        if season_duration is not None and len(state_models) > 1:
-            state_models = [x for x in state_models
-                            if x.season_duration == season_duration]
-
-        if len(state_models) == 0:
-            raise Exception("No suitable SeasonalStateModel objects found.")
-
-        num_plots = len(state_models)
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        return num_plots
 
     def plot_state_components(self,
                               burn: int = None,
@@ -479,6 +502,133 @@ class Bsts:
                 plot_index += 1
         return fig
 
+    def plot_coefficients(self, burn=None, inclusion_threshold=0,
+                          unit_scale=True,
+                          number_of_variables=None, ax=None, **kwargs):
+        coef = getattr(self._observation_model_manager,
+                       "_coefficients", None)
+        if coef is None:
+            raise Exception("Model has no coefficients.")
+
+        if burn is None:
+            burn = self.suggest_burn()
+
+        return spikeslab.plot_inclusion_probs(
+            coef, burn=burn, xnames=self._predictor_names,
+            inclusion_threshold=inclusion_threshold,
+            unit_scale=unit_scale, number_of_variables=number_of_variables,
+            ax=ax, **kwargs)
+
+    def plot_inclusion_probs(self, **kwargs):
+        return self.plot_coefficients(**kwargs)
+
+    def plot_residuals(self, **kwargs):
+        pass
+
+    def plot_forecast_distribution(self, **kwargs):
+        pass
+
+    def plot_prediction_errors(self, cutpoints=None, burn=None, xlab="Time",
+                               ylab="", main="", fig=None, **kwargs):
+        prediction_errors = self.one_step_prediction_errors(
+            cutpoints=cutpoints, burn=burn)
+        timestamps = self.original_series.index
+        R.CompareDynamicDistributions(
+            prediction_errors,
+            timestamps=timestamps,
+            xlab=xlab,
+            ylab=ylab,
+            main=main,
+            fig=fig,
+            actuals=None,
+            vertical_cuts=list(cutpoints) + [None],
+            **kwargs)
+        return prediction_errors
+
+    def plot_predictors(self, **kwargs):
+        pass
+
+    def plot_size(self, burn=None, ax=None, **kwargs):
+        coef = getattr(self._observation_model_manager,
+                       "_coefficients", None)
+        if coef is None:
+            raise Exception("Model has no coefficients.")
+        if burn is None:
+            burn = self.suggest_burn()
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, 1)
+        return spikeslab.plot_model_size(
+            coef, burn=burn, ax=ax, **kwargs)
+
+    def plot_dynamic_regression(self, **kwargs):
+        pass
+
+    def plot_seasonal(self, nseasons=None, season_duration=None,
+                      same_scale=True, ylim=None, get_season_name=None,
+                      burn=None, fig=None, **kwargs):
+        """
+        Plot one or more seasonal state components as "monthplots"
+
+        Args:
+          nseasons: Plot the seasonal state component with this many seasons.
+            If no such model exists then raise an error.  If None, then all
+            seasonal models are plotted.
+          season_duration: If there are multiple seasonal models with the same
+            'nseasons', plot the seasonal model with this season_duration.
+          same_scale: If True then the seasonal effects are plotted with a
+            common Y axis scale.  If False then each plot determines its own Y
+            axis scale.
+          ylim: A pair of values giving the lower and upper limits on the Y
+            axis.  If supplied, this forces same_scale to True.
+          get_season_name: A function or callable object that takes a timestamp
+            and returns a string that can be used as a plot label.  If None and
+            nseasons is one of the special values listed below, then the
+            associated function will be used.
+            - 4  R.quarters
+            - 7  R.weekdays
+            - 12 R.months
+          burn: The nubmer of MCMC iterations to be discarded as burn-in.  If
+            None then a value will be suggested using suggest_burn.
+          fig: The plt.Figure object on which to draw the plot.  If None then
+            an object will be created and returned.
+          **kwargs: Extra arguments will be passed to
+            R.plot_dynamic_distribution.
+
+        Returns:
+          The plt.Figure object on which the plot is drawn.
+        """
+        from .seasonal import SeasonalStateModel
+
+        if fig is None:
+            fig = plt.Figure()
+        state_models = [x for x in self._state_models
+                        if isinstance(x, SeasonalStateModel)]
+        if nseasons is not None:
+            state_models = [x for x in state_models if x.nseasons == nseasons]
+
+        if season_duration is not None and len(state_models) > 1:
+            state_models = [x for x in state_models
+                            if x.season_duration == season_duration]
+
+        if len(state_models) == 0:
+            raise Exception("No suitable SeasonalStateModel objects found.")
+
+        num_plots = len(state_models)
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        # TODO
+        return num_plots
+
+    def plot_monthly(self, **kwargs):
+        pass
+
+    def plotting_help(self, **kwargs):
+        pass
+
     def predict(self, newdata, burn: int = None, seed: int = None,
                 separate_components=False, **kwargs):
         """
@@ -516,6 +666,7 @@ class Bsts:
         manager = self._observation_model_manager
         formatted_prediction_data = manager.format_prediction_data(
             newdata, **kwargs)
+        self.predictor_names = formatted_prediction_data.get("xnames", None)
         horizon = formatted_prediction_data["forecast_horizon"]
         if separate_components:
             nstate = self._model.number_of_state_models
@@ -612,9 +763,13 @@ class Bsts:
         self._formula = formula
         self._model = factory.create_model(prior, data, self._rng)
         self._prior = factory._prior
+        self._predictor_names = factory.predictor_names
         self._data = data
         if hasattr(factory, "_original_series"):
             self._original_series = factory._original_series
+            if isinstance(self._original_series, np.ndarray):
+                self._original_series = pd.Series(self._original_series.ravel())
+
         self._observation_model_manager = (
             factory.create_observation_model_manager()
         )

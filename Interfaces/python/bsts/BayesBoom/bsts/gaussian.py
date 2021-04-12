@@ -121,6 +121,10 @@ class StateSpaceRegressionModelFactory:
         reg.set_method(observation_model_sampler)
         self._original_series = response
 
+        sampler = boom.StateSpacePosteriorSampler(
+            self._model)
+        self._model.set_method(sampler)
+
         return self._model
 
     def create_observation_model_manager(self):
