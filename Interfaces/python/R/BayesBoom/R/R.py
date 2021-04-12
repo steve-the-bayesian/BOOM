@@ -244,3 +244,55 @@ def paste(*lists, sep=" ", collapse=None):
         return np.array(result)
     else:
         return pd.Series(result)
+
+def remove_common_prefix(strings):
+    if len(strings) == 0:
+        return strings
+    current = [x for x in strings]
+    while True:
+        try:
+            initial_element = {x[0] for x in current}
+        except IndexError:
+            return current
+        if len(initial_element) > 1:
+            return current
+        current = [x[1:] for x in current]
+
+
+def remove_common_suffix(strings):
+    """
+    If all strings in a collection end in the same character, that character is
+    a 'common suffix."  This function reomves common suffixes from collections
+    of strings.
+
+    Args:
+      strings:  A list, array, or other collection of strings.
+
+    Returns:
+      shortened_strings:  A list of string with common suffixes removed.
+
+    Examples:
+      remove_common_suffix([])
+      []
+
+      remove_common_suffix(["foo", "bar", "baz"])
+      ["foo", "bar", "baz"]
+
+      remove_common_suffix(["fooz", "barz", "baz"])
+      ["foo", "bar", "ba"]
+
+      remove_common_suffix(["zz", "z"])
+      ["z", ""]
+
+    """
+    if len(strings) == 0:
+        return strings
+    current = [x for x in strings]
+    while True:
+        try:
+            final_element = {x[-1] for x in current}
+        except IndexError:
+            return current
+        if len(final_element) > 1:
+            return current
+        current = [x[:-1] for x in current]

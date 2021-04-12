@@ -1,6 +1,17 @@
 import unittest
 import matplotlib.pyplot as plt
-from BayesBoom.R.plots import *
+
+from BayesBoom.R.plots import (
+    plot_dynamic_distribution,
+    #    compare_dynamic_distributions,
+    time_series_boxplot,
+)
+
+import numpy as np
+import pandas as pd
+
+_debug_mode = False
+_show_figs = _debug_mode
 
 
 class TestPlotDynamicDistribution(unittest.TestCase):
@@ -13,7 +24,8 @@ class TestPlotDynamicDistribution(unittest.TestCase):
         y = 3 + .4 * x + np.random.randn(100) * .2
         fig, ax = plt.subplots()
         ax.scatter(x, y)
-        fig.show()
+        if _show_figs:
+            fig.show()
 
     def test_fill_between(self):
         x = np.sort(np.random.randn(100))
@@ -21,7 +33,8 @@ class TestPlotDynamicDistribution(unittest.TestCase):
         negy = -1 * y
         fig, ax = plt.subplots()
         ax.fill_between(x, y, negy, color="black", edgecolor="none")
-        fig.show()
+        if _show_figs:
+            fig.show()
 
     def test_plot_dynamic_distribution(self):
         time_dimension = 50
@@ -32,11 +45,19 @@ class TestPlotDynamicDistribution(unittest.TestCase):
         timestamps = np.arange(0, time_dimension)
         fig, ax = plt.subplots()
 
-        plot_dynamic_distribution(curves=random_walks, timestamps=timestamps, ax=ax, quantile_step=.01)
-        fig.show()
+        plot_dynamic_distribution(curves=random_walks, timestamps=timestamps,
+                                  ax=ax, quantile_step=.01)
+        if _show_figs:
+            fig.show()
 
+    def test_time_series_boxplot(self):
+        x = np.random.randn(100, 8)
+        time = pd.date_range(start="2020-02-1", periods=8, end="2020-02-08")
+        fig, ax = plt.subplots()
+        time_series_boxplot(x, time, ax=ax)
+        if _show_figs:
+            fig.show()
 
-_debug_mode = True
 
 if _debug_mode:
     import pdb  # noqa
@@ -57,7 +78,7 @@ if _debug_mode:
         rig.setUp()
 
     # rig.test_plot_points()
-    rig.test_plot_dynamic_distribution()
+    rig.test_time_series_boxplot()
     # rig.test_fill_between()
 
     print("Goodbye, cruel world!")

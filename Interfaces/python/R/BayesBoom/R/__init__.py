@@ -1,8 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .R import (data_frame, pretty, ls, table, data_range, corr, first_true,
-                recycle, unique_match)
+from .R import (
+    data_frame,
+    pretty,
+    ls,
+    table,
+    data_range,
+    corr,
+    first_true,
+    recycle,
+    remove_common_suffix,
+    unique_match,
+)
 
 from .bayes import (
     Ar1CoefficientPrior,
@@ -32,6 +42,7 @@ from .plots import (
     plot_grid_shape,
     plot_ts,
     points,
+    time_series_boxplot,
     )
 
 from .probability import (
