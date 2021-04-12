@@ -397,7 +397,8 @@ def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
                          **kwargs):
     """
     """
-    inc = compute_inclusion_probabilities(coefficients, burn=burn, xnames=xnames)
+    inc = compute_inclusion_probabilities(
+        coefficients, burn=burn, xnames=xnames)
     pos = coefficient_positive_probability(burn=burn)
     colors = np.array([str(x) for x in pos])
     index = np.argsort(inc.values)[::-1]
@@ -416,3 +417,12 @@ def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
                     ylab="Variable",
                     **kwargs)
     return ans
+
+
+def plot_model_size(coefficients, burn, ax=None, **kwargs):
+    ndraws = coefficients.shape[0]
+    size = np.array([
+        np.sum(coefficients[i, :] != 0)
+        for i in range(burn, ndraws)
+    ])
+    return R.hist(size, ax=ax, **kwargs)
