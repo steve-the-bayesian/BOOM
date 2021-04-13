@@ -24,29 +24,38 @@
 namespace BOOM {
   typedef ExponentialGammaSampler EGS;
 
-  EGS::ExponentialGammaSampler(ExponentialModel *Mod,
-                               const Ptr<GammaModel> &Pri, RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), mod(Mod), pri(Pri) {}
+  EGS::ExponentialGammaSampler(ExponentialModel *model,
+                               const Ptr<GammaModel> &prior,
+                               RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        prior_(prior) {}
+
+  EGS *EGS::clone_to_new_host(Model *new_host) const {
+    return new EGS(dynamic_cast<ExponentialModel *>(new_host),
+                   prior_->clone(),
+                   rng());
+  }
 
   void EGS::draw() {
-    double a = mod->suf()->n() + pri->alpha();
-    double b = mod->suf()->sum() + pri->beta();
-    mod->set_lam(rgamma_mt(rng(), a, b));
+    double a = model_->suf()->n() + prior_->alpha();
+    double b = model_->suf()->sum() + prior_->beta();
+    model_->set_lam(rgamma_mt(rng(), a, b));
   }
 
   void EGS::find_posterior_mode(double) {
-    double a = mod->suf()->n() + pri->alpha();
-    double b = mod->suf()->sum() + pri->beta();
+    double a = model_->suf()->n() + prior_->alpha();
+    double b = model_->suf()->sum() + prior_->beta();
     double mode = (a - 1) / b;
-    mod->set_lam(std::max<double>(mode, 0.0));
+    model_->set_lam(std::max<double>(mode, 0.0));
   }
 
   double EGS::logpri() const {
-    double lam = mod->lam();
+    double lam = model_->lam();
     return dgamma(lam, a(), b(), true);
   }
 
-  double EGS::a() const { return pri->alpha(); }
-  double EGS::b() const { return pri->beta(); }
+  double EGS::a() const { return prior_->alpha(); }
+  double EGS::b() const { return prior_->beta(); }
 
 }  // namespace BOOM

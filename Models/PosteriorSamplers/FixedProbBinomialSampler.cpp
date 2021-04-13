@@ -22,9 +22,16 @@
 namespace BOOM {
 
   typedef FixedProbBinomialSampler FBS;
-  FBS::FixedProbBinomialSampler(BinomialModel *mod, double prob,
+  FBS::FixedProbBinomialSampler(BinomialModel *mod,
+                                double prob,
                                 RNG &seeding_rng)
       : PosteriorSampler(seeding_rng), m_(mod), p_(prob) {}
+
+  FBS *FBS::clone_to_new_host(Model *new_host) const {
+    return new FBS(dynamic_cast<BinomialModel *>(new_host),
+                   p_,
+                   rng());
+  }
 
   void FBS::draw() { m_->set_prob(p_); }
 

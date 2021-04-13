@@ -26,7 +26,8 @@ namespace BOOM {
 
   class MultinomialDirichletSampler : public PosteriorSampler {
    public:
-    MultinomialDirichletSampler(MultinomialModel *mod, const Vector &nu,
+    MultinomialDirichletSampler(MultinomialModel *mod,
+                                const Vector &nu,
                                 RNG &seeding_rng = GlobalRng::rng);
 
     MultinomialDirichletSampler(MultinomialModel *mod,
@@ -34,7 +35,8 @@ namespace BOOM {
                                 RNG &seeding_rng = GlobalRng::rng);
 
     MultinomialDirichletSampler(const MultinomialDirichletSampler &rhs);
-    MultinomialDirichletSampler *clone() const;
+    MultinomialDirichletSampler *clone_to_new_host(
+        Model *new_host) const override;
 
     void draw() override;
     double logpri() const override;
@@ -64,6 +66,8 @@ namespace BOOM {
         const Vector &prior_counts,
         RNG &seeding_rng = GlobalRng::rng);
 
+    ConstrainedMultinomialDirichletSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

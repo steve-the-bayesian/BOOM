@@ -29,6 +29,15 @@ namespace BOOM {
         lambda_prior_(lambda_prior),
         zero_probability_prior_(zero_prob_prior) {}
 
+  ZeroInflatedPoissonSampler *ZeroInflatedPoissonSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new ZeroInflatedPoissonSampler(
+        dynamic_cast<ZeroInflatedPoissonModel *>(new_host),
+        lambda_prior_->clone(),
+        zero_probability_prior_->clone(),
+        rng());
+  }
+
   void ZeroInflatedPoissonSampler::draw() {
     double p = model_->zero_probability();
     double pbinomial = p;

@@ -45,6 +45,8 @@ namespace BOOM {
                                const std::vector<uint> &absorbing_states,
                                RNG &seeding_rng = GlobalRng::rng);
 
+    AbsorbingMarkovConjSampler *clone_to_new_host(Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
     void find_posterior_mode(double epsilon = 1e-5) override;

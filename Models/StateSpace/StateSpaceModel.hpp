@@ -65,6 +65,11 @@ namespace BOOM {
         const std::vector<bool> &y_is_observed = std::vector<bool>());
     StateSpaceModel(const StateSpaceModel &rhs);
     StateSpaceModel *clone() const override;
+    StateSpaceModel *deepclone() const override {
+      StateSpaceModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int time_dimension() const override;
     double observation_variance(int t) const override;

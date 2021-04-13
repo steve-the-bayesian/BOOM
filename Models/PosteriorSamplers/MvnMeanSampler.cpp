@@ -42,6 +42,13 @@ namespace BOOM {
         mu0(new VectorParams(Mu0)),
         kappa(new UnivParams(Kappa)) {}
 
+  MCS * MCS::clone_to_new_host(Model *new_host) const {
+    return new MCS(dynamic_cast<MvnModel *>(new_host),
+                   mu0->clone(),
+                   kappa->clone(),
+                   rng());
+  }
+
   void MCS::draw() {
     Ptr<MvnSuf> s = mvn->suf();
     double n = s->n();
@@ -81,6 +88,13 @@ namespace BOOM {
       : PosteriorSampler(seeding_rng),
         mvn(m),
         mu_prior_(new MvnModel(Mu0, Omega)) {}
+
+  MMS *MMS::clone_to_new_host(Model *new_host) const {
+    return new MMS(
+        dynamic_cast<MvnModel *>(new_host),
+        mu_prior_->clone(),
+        rng());
+  }
 
   double MMS::logpri() const { return mu_prior_->logp(mvn->mu()); }
 

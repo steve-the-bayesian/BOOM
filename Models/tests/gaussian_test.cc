@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 #include "Models/GaussianModel.hpp"
+#include "Models/GaussianModelGivenSigma.hpp"
+#include "Models/PosteriorSamplers/GaussianConjSampler.hpp"
 #include "Models/ChisqModel.hpp"
 #include "distributions.hpp"
 #include "cpputil/lse.hpp"
@@ -52,11 +54,11 @@ namespace {
 
     model.set_mu(3);
     model.set_sigsq(7 * 7);
-    
+
     double loglike_manual = 0;
     for (int j = 0; j < nobs; ++j) {
       loglike_manual += dnorm(y[j], 3, 7, true);
-    } 
+    }
 
     EXPECT_NEAR(loglike_manual,
                 model.loglike(Vector{3, 7*7}),
@@ -108,7 +110,7 @@ namespace {
         return ans;
       });
     double quadrature_ans = log(integral.integrate());
-    
+
     double ans = GaussianModelBase::log_integrated_likelihood(
         suf, mu0, tausq, square(sigma));
     EXPECT_NEAR(quadrature_ans, ans, 1e-4);
@@ -128,7 +130,7 @@ namespace {
     double ss = 2;
 
     // True precision is 1 / 2^2 = 0.25.
-    
+
     Integral integral(
         [suf, mu0, kappa, df, ss](double precision) {
           double sigsq = 1.0 / precision;
@@ -142,7 +144,7 @@ namespace {
     double ans = GaussianModelBase::log_integrated_likelihood(
         suf, mu0, kappa, df, ss);
     EXPECT_NEAR(fabs(quadrature_ans - ans) / fabs(ans), 0, 1e-4);
-  }  
+  }
 
   TEST_F(GaussianTest, LogLikelihood_from_suf) {
     int nobs = 4;
@@ -175,5 +177,23 @@ namespace {
                 GaussianModelBase::log_likelihood(suf, mu_arg, sigsq_arg),
                 1e-8);
   }
-  
+
+  TEST_F(GaussianTest, DeepClone) {
+    NEW(GaussianModel, model)(0, 1);
+    int nobs = 100;
+    for (int i = 0; i < nobs; ++i) {
+      model->add_data(new DoubleData(rnorm(3, 7.0)));
+    }
+
+    NEW(GaussianModelGivenSigma, mean_prior)(model->Sigsq_prm());
+    NEW(ChisqModel, precision_prior)(1, 1.0);
+    NEW(GaussianConjSampler, sampler)(model.get(), mean_prior, precision_prior);
+    model->set_method(sampler);
+    model->sample_posterior();
+
+    Ptr<GaussianModel> copy = deepclone(*model);
+    EXPECT_NEAR(model->mean(), copy->mean(), 1e-8);
+    EXPECT_NEAR(model->sd(), copy->sd(), 1e-8);
+  }
+
 }  // namespace

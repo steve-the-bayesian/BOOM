@@ -50,12 +50,14 @@ namespace BOOM {
                              const std::vector<Ptr<GammaModelBase>> &priors,
                              Vector sd_max_values = Vector(),
                              RNG &seeding_rng = GlobalRng::rng);
+    IndependentMvnVarSampler *clone_to_new_host(Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
 
     // Truncate the support for the standard deviations to [0, sigma_max[i]).
     void set_sigma_max(const Vector &sigma_max);
-    
+
    private:
     IndependentMvnModel *model_;
     std::vector<Ptr<GammaModelBase>> priors_;

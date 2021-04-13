@@ -35,6 +35,13 @@ namespace BOOM {
         siginv_prior_(
             new WishartModel(m->dim(), prior_df, pow(sigma_guess, 2))) {}
 
+  ZMMCS *ZMMCS::clone_to_new_host(Model *new_host) const {
+    return new ZMMCS(
+        dynamic_cast<ZeroMeanMvnModel *>(new_host),
+        siginv_prior_->clone(),
+        rng());
+  }
+
   void ZMMCS::draw() {
     Ptr<MvnSuf> s = m_->suf();
     double df = s->n() + siginv_prior_->nu();

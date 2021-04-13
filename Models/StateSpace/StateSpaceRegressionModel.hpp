@@ -91,6 +91,11 @@ namespace BOOM {
 
     StateSpaceRegressionModel(const StateSpaceRegressionModel &rhs);
     StateSpaceRegressionModel *clone() const override;
+    StateSpaceRegressionModel *deepclone() const override {
+      StateSpaceRegressionModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     // The number of time points in the data.
     int time_dimension() const override { return dat().size(); }

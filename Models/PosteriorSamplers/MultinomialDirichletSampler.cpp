@@ -40,7 +40,13 @@ namespace BOOM {
         mod_(rhs.mod_->clone()),
         pri_(rhs.pri_->clone()) {}
 
-  MDS *MDS::clone() const { return new MDS(*this); }
+
+  MDS *MDS::clone_to_new_host(Model *new_host) const {
+    return new MDS(
+        dynamic_cast<MultinomialModel *>(new_host),
+        pri_->clone(),
+        rng());
+  }
 
   void MDS::draw() {
     Vector counts = pri_->nu() + mod_->suf()->n();
@@ -75,6 +81,12 @@ namespace BOOM {
       report_error(err.str());
     }
     check_at_least_one_positive(prior_counts_);
+  }
+
+  CMDS *CMDS::clone_to_new_host(Model *new_host) const {
+    return new CMDS(dynamic_cast<MultinomialModel *>(new_host),
+                    prior_counts_,
+                    rng());
   }
 
   void CMDS::draw() {

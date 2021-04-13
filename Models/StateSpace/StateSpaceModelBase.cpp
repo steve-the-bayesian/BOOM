@@ -22,6 +22,7 @@
 
 #include "LinAlg/SubMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 #include "numopt.hpp"
@@ -70,6 +71,36 @@ namespace BOOM {
       if (state_is_fixed_) state_ = rhs.state_;
     }
     return *this;
+  }
+
+  // Copy the posterior samplers from rhs.
+  void Base::copy_samplers(const Base &rhs) {
+    clear_methods();
+    observation_model()->clear_methods();
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      state_model(s)->clear_methods();
+    }
+
+    int num_methods = rhs.observation_model()->number_of_sampling_methods();
+    for (int m = 0; m < num_methods; ++m) {
+      observation_model()->set_method(
+          rhs.observation_model()->sampler(m)->clone_to_new_host(
+              observation_model()));
+    }
+
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      num_methods = rhs.state_model(s)->number_of_sampling_methods();
+      for (int m = 0; m < num_methods; ++m) {
+        state_model(s)->set_method(
+            rhs.state_model(s)->sampler(m)->clone_to_new_host(
+                state_model(s).get()));
+      }
+    }
+
+    num_methods =rhs.number_of_sampling_methods();
+    for (int m = 0; m < num_methods; ++m) {
+      set_method(rhs.sampler(m)->clone_to_new_host(this));
+    }
   }
 
   //----------------------------------------------------------------------

@@ -164,6 +164,11 @@ namespace BOOM {
 
     StateSpacePoissonModel(const StateSpacePoissonModel &rhs);
     StateSpacePoissonModel *clone() const override;
+    StateSpacePoissonModel *deepclone() const override {
+      StateSpacePoissonModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();

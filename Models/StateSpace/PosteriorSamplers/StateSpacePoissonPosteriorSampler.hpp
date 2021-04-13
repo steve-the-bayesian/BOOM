@@ -44,6 +44,9 @@ namespace BOOM {
         const Ptr<PoissonRegressionSpikeSlabSampler> &observation_model_sampler,
         RNG &seeding_rng = GlobalRng::rng);
 
+    StateSpacePoissonPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
+
     // Impute the latent Gaussian observations and variances at each
     // data point.
     void impute_nonstate_latent_data() override;

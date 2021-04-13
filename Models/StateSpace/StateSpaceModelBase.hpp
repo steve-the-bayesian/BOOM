@@ -48,6 +48,7 @@ namespace BOOM {
     StateSpaceModelBase(const StateSpaceModelBase &rhs);
     StateSpaceModelBase(StateSpaceModelBase &&rhs) = default;
     StateSpaceModelBase *clone() const override = 0;
+    virtual StateSpaceModelBase *deepclone() const = 0;
     StateSpaceModelBase &operator=(const StateSpaceModelBase &rhs);
     StateSpaceModelBase &operator=(StateSpaceModelBase &&rhs) = default;
 
@@ -474,6 +475,10 @@ namespace BOOM {
     void resize_state();
 
    protected:
+    // Remove any posterior sampling methods from this model and all client
+    // models.  Copy posterior samplers from rhs to *this.
+    void copy_samplers(const StateSpaceModelBase &rhs);
+
     // Update the complete data sufficient statistics for the state models,
     // given the posterior distribution of the state error at time t (for the
     // transition between times t and t+1), given model parameters and all
@@ -624,6 +629,7 @@ namespace BOOM {
    public:
     ScalarStateSpaceModelBase();
     ScalarStateSpaceModelBase *clone() const override = 0;
+    ScalarStateSpaceModelBase *deepclone() const override = 0;
 
     //------------- Parameters for structural equations. --------------
     // Variance of observed data y[t], given state alpha[t].  Durbin and

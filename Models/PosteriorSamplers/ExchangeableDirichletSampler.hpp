@@ -28,8 +28,11 @@ namespace BOOM {
 
   class ExchangeableDirichletSampler : public PosteriorSampler {
    public:
-    ExchangeableDirichletSampler(DirichletModel *m, const Ptr<DoubleModel> &pri,
+    ExchangeableDirichletSampler(DirichletModel *m,
+                                 const Ptr<DoubleModel> &pri,
                                  RNG &seeding_rng = GlobalRng::rng);
+    ExchangeableDirichletSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

@@ -30,11 +30,14 @@ namespace BOOM {
     ZeroMeanGaussianConjSampler(ZeroMeanGaussianModel *model,
                                 const Ptr<GammaModelBase> &siginv_prior,
                                 RNG &seeding_rng = GlobalRng::rng);
-    ZeroMeanGaussianConjSampler(ZeroMeanGaussianModel *model, double df,
+    ZeroMeanGaussianConjSampler(ZeroMeanGaussianModel *model,
+                                double df,
                                 double sigma_guess,
                                 RNG &seeding_rng = GlobalRng::rng);
 
     ZeroMeanGaussianConjSampler *clone() const;
+    ZeroMeanGaussianConjSampler *clone_to_new_host(
+        Model *new_host) const override;
 
     void draw() override;
     double logpri() const override;

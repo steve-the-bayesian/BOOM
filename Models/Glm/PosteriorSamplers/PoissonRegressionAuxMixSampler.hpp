@@ -68,6 +68,7 @@ namespace BOOM {
                                    int number_of_threads = 1,
                                    RNG &seeding_rng = GlobalRng::rng);
 
+    PoissonRegressionAuxMixSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

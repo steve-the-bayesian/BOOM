@@ -34,6 +34,9 @@ namespace BOOM {
                         const Ptr<GaussianModelGivenSigma> &mu,
                         const Ptr<GammaModelBase> &sig,
                         RNG &seeding_rng = GlobalRng::rng);
+
+    GaussianConjSampler *clone_to_new_host(Model *host) const override;
+
     void draw() override;
     double logpri() const override;
 

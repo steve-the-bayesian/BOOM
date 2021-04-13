@@ -32,6 +32,9 @@ namespace BOOM {
                                   int clt_threshold,
                                   RNG &seeding_rng = GlobalRng::rng);
 
+    BinomialLogitSpikeSlabSampler *clone_to_new_host(
+        Model *model) const override;
+
     void draw() override;
     double logpri() const override;
 

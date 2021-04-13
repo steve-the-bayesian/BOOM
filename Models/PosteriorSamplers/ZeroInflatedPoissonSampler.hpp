@@ -31,6 +31,8 @@ namespace BOOM {
                                const Ptr<GammaModel> &lambda_prior,
                                const Ptr<BetaModel> &zero_probability_prior,
                                RNG &seeding_rng = GlobalRng::rng);
+    ZeroInflatedPoissonSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

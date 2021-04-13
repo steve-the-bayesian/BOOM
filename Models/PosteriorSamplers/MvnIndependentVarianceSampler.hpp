@@ -32,8 +32,13 @@ namespace BOOM {
   class MvnIndependentVarianceSampler : public PosteriorSampler {
    public:
     MvnIndependentVarianceSampler(
-        MvnModel *model, const std::vector<Ptr<GammaModelBase> > &siginv_priors,
-        const Vector &sigma_max_values, RNG &seeding_rng = GlobalRng::rng);
+        MvnModel *model,
+        const std::vector<Ptr<GammaModelBase> > &siginv_priors,
+        const Vector &sigma_max_values,
+        RNG &seeding_rng = GlobalRng::rng);
+
+    MvnIndependentVarianceSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

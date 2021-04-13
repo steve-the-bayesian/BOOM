@@ -142,6 +142,13 @@ namespace BOOM {
     return siginv_->logp(model.siginv()) + mu_->logp(model.mu());
   }
 
+  MCS *MCS::clone_to_new_host(Model *new_host) const {
+    return new MCS(dynamic_cast<MvnModel *>(new_host),
+                   mu_->clone(),
+                   siginv_->clone(),
+                   rng());
+  }
+
   void MCS::draw() {
     if (model_) {
       draw_model_parameters(*model_);

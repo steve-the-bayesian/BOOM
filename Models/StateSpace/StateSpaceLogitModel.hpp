@@ -141,7 +141,11 @@ namespace BOOM {
 
     StateSpaceLogitModel(const StateSpaceLogitModel &rhs);
     StateSpaceLogitModel *clone() const override;
-
+    StateSpaceLogitModel *deepclone() const override {
+      StateSpaceLogitModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();
     }

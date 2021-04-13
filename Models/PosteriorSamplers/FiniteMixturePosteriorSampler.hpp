@@ -30,6 +30,13 @@ namespace BOOM {
                                            RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng), model_(model) {}
 
+    FiniteMixturePosteriorSampler *clone_to_new_host(
+        Model *new_host) const override {
+      return new FiniteMixturePosteriorSampler(
+          dynamic_cast<FiniteMixtureModel *>(new_host),
+          rng());
+    }
+
     double logpri() const override {
       double ans = model_->mixing_distribution()->logpri();
       int S = model_->number_of_mixture_components();

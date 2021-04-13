@@ -89,6 +89,11 @@ namespace BOOM {
     StateSpaceStudentRegressionModel(
         const StateSpaceStudentRegressionModel &rhs);
     StateSpaceStudentRegressionModel *clone() const override;
+    StateSpaceStudentRegressionModel *deepclone() const override {
+      StateSpaceStudentRegressionModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int time_dimension() const override;
     int xdim() const {return observation_model()->xdim();}

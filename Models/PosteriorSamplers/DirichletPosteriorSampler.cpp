@@ -40,6 +40,13 @@ namespace BOOM {
                1.0);
   }
 
+  DPS *DPS::clone_to_new_host(Model *new_host) const {
+    return new DPS(dynamic_cast<DirichletModel *>(new_host),
+                   phi_prior_->clone(),
+                   alpha_prior_->clone(),
+                   rng());
+  }
+
   double DPS::logpri() const {
     const Vector &nu(model_->nu());
     double alpha = sum(nu);

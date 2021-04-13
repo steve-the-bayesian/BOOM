@@ -20,25 +20,27 @@
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {
-  typedef PriorPolicy PP;
 
-  void PP::set_method(const Ptr<PosteriorSampler> &sam) {
-    samplers_.push_back(sam);
-  }
-
-  void PP::sample_posterior() {
+  void PriorPolicy::sample_posterior() {
     for (uint i = 0; i < samplers_.size(); ++i) {
       samplers_[i]->draw();
     }
   }
 
-  double PP::logpri() const {
+  double PriorPolicy::logpri() const {
     double ans = 0;
     for (uint i = 0; i < samplers_.size(); ++i) ans += samplers_[i]->logpri();
     return ans;
   }
 
-  void PP::clear_methods() { samplers_.clear(); }
+  void PriorPolicy::set_method(const Ptr<PosteriorSampler> &sampler) {
+    samplers_.push_back(sampler);
+  }
 
-  int PP::number_of_sampling_methods() const { return samplers_.size(); }
+  void PriorPolicy::clear_methods() { samplers_.clear(); }
+
+  int PriorPolicy::number_of_sampling_methods() const {
+    return samplers_.size();
+  }
+
 }  // namespace BOOM

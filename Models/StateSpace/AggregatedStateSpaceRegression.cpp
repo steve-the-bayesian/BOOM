@@ -421,6 +421,19 @@ namespace BOOM {
     return new AggregatedStateSpaceRegression(*this);
   }
 
+  AggregatedStateSpaceRegression *ASSR::deepclone() const {
+    AggregatedStateSpaceRegression *ans = clone();
+    ans->copy_samplers(*this);
+    ans->regression_model()->clear_methods();
+    int num_methods = regression_model()->number_of_sampling_methods();
+    for (int m = 0; m < num_methods; ++m) {
+      ans->regression_model()->set_method(
+          regression_model()->sampler(m)->clone_to_new_host(
+              ans->regression_model()));
+    }
+    return ans;
+  }
+
   void ASSR::add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
 
   void ASSR::add_data(const Ptr<FineNowcastingData> &dp) {

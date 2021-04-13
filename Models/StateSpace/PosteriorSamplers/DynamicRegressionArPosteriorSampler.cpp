@@ -41,6 +41,16 @@ namespace BOOM {
     }
   }
 
+  DRARPS *DRARPS::clone_to_new_host(Model *new_host) const {
+    std::vector<Ptr<GammaModelBase>> siginv_priors;
+    for (const auto &el : samplers_) {
+      siginv_priors.push_back(el->residual_precision_prior());
+    }
+    return new DRARPS(dynamic_cast<DynamicRegressionArStateModel *>(new_host),
+                      siginv_priors,
+                      rng());
+  }
+
   void DRARPS::draw() {
     for (int i = 0; i < model_->xdim(); ++i) {
       samplers_[i]->draw();

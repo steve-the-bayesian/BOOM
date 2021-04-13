@@ -30,6 +30,12 @@ namespace BOOM {
         model_(model),
         prior_(prior) {}
 
+  BBS *BBS::clone_to_new_host(Model *new_host) const {
+    return new BBS(dynamic_cast<BinomialModel *>(new_host),
+                   prior_->clone(),
+                   rng());
+  }
+
   void BBS::draw() { draw_model_parameters(*model_); }
 
   double BBS::logpri() const {

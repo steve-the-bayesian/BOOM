@@ -58,6 +58,24 @@ namespace BOOM {
     observation_model_sampler_->fix_latent_data(true);
   }
 
+  SSPPS *SSPPS::clone_to_new_host(Model *new_host) const {
+    StateSpacePoissonModel *new_model = dynamic_cast<StateSpacePoissonModel *>(
+        new_host);
+    Ptr<PoissonRegressionSpikeSlabSampler> new_observation_model_sampler;
+    if (new_model->observation_model()->number_of_sampling_methods() == 0) {
+      new_observation_model_sampler.reset(
+          observation_model_sampler_->clone_to_new_host(
+              new_model->observation_model()));
+      new_model->observation_model()->set_method(new_observation_model_sampler);
+    } else {
+      new_observation_model_sampler.reset(
+          dynamic_cast<PoissonRegressionSpikeSlabSampler *>(
+              new_model->observation_model()->sampler(0)));
+    }
+    return new SSPPS(new_model, new_observation_model_sampler, rng());
+  }
+
+
   void SSPPS::impute_nonstate_latent_data() {
     const std::vector<Ptr<AugmentedData> > &data(model_->dat());
     for (int t = 0; t < data.size(); ++t) {

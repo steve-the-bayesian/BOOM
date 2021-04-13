@@ -48,7 +48,7 @@ namespace BOOM {
     uint Nmodels() const;
     uint dim() const;
     MarkovConjShrinkageSampler *add_model(MarkovModel *);
-    // the sampler manages a collection of MarkovModels.  Its 'draw'
+    // The sampler manages a collection of MarkovModels.  Its 'draw'
     // method will sample all their initial distributions and transition
     // matrices, and update the sufficient statistics for pri_.  It does
     // not draw the parameters of pri_.

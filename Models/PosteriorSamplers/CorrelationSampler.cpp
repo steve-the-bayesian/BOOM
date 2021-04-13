@@ -26,7 +26,7 @@
 namespace BOOM {
   typedef MvnCorrelationSampler CS;
   CS::MvnCorrelationSampler(MvnModel *model, const Ptr<CorrelationModel> &prior,
-                            bool refresh_suf, RNG &seeding_rng)
+                            RNG &seeding_rng)
       : PosteriorSampler(seeding_rng), mod_(model), pri_(prior) {}
   //----------------------------------------------------------------------
   void CS::draw() {
@@ -52,6 +52,12 @@ namespace BOOM {
       R_.col(i) *= sigma[i];
     }
     mod_->set_Sigma(R_);
+  }
+  //----------------------------------------------------------------------
+  CS *CS::clone_to_new_host(Model *new_host) const {
+    return new CS(dynamic_cast<MvnModel *>(new_host),
+                  pri_->clone(),
+                  rng());
   }
   //----------------------------------------------------------------------
   double CS::logpri() const { return pri_->logp(R_); }

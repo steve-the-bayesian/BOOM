@@ -44,6 +44,19 @@ namespace BOOM {
         mod_(Mod),
         Q_(new ProductDirichletModel(Nu)) {}
 
+  MCS *MCS::clone_to_new_host(Model *new_host) const {
+    Ptr<DirichletModel> pi0(nullptr);
+    if (!!pi0_) {
+      pi0 = pi0_->clone();
+    }
+
+    return new MCS(
+        dynamic_cast<MarkovModel *>(new_host),
+        Q_->clone(),
+        pi0,
+        rng());
+  }
+
   double MCS::logpri() const {
     const Matrix &Nu(this->Nu());
     const Matrix &Q(mod_->Q());
