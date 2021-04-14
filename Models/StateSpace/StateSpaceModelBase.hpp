@@ -797,6 +797,12 @@ namespace BOOM {
       mutable StateSpaceModelBase *model_;
     };
 
+    std::vector<Matrix> compute_prediction_errors(const ScalarStateSpaceModelBase &model,
+                                                  const std::vector<int> &cutpoints,
+                                                  bool standardize,
+                                                  int niter);
+
+
   }  // namespace StateSpaceUtils
 
 }  // namespace BOOM

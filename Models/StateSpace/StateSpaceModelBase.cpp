@@ -883,4 +883,30 @@ namespace BOOM {
     }
   }
 
+  std::vector<Matrix> compute_prediction_errors(
+      const ScalarStateSpaceModelBase &model,
+      const std::vector<int> &cutpoints,
+      bool standardize,
+      int niter) {
+
+    std::vector<Matrix> prediction_errors(cutpoints.size());
+    std::vector<std::future<void>> futures;
+    int desired_threads = std::min<int>(
+        cutpoints.size(), std::thread::hardware_concurrency() - 1);
+    BOOM::ThreadWorkerPool pool;
+    pool.add_threads(desired_threads);
+    for (int i = 0; i < cutpoints.size(); ++i) {
+      std::unique_ptr<ScalarStateSpaceModelBase> worker(model.deepclone());
+      // futures.emplace_back(pool.submit(
+      //     [worker, &prediction_errors[i], cutpoints[i], standardize, niter]() {
+      //       worker->simulate_holdout_prediction_errors(
+      //           prediction_errors[i], cutpoints[i], standardize, niter)
+      //           }));
+    }
+    for (int i = 0; i < futures.size(); ++i) {
+      futures[i].get();
+    }
+    return prediction_errors;
+  }
+
 }  // namespace BOOM
