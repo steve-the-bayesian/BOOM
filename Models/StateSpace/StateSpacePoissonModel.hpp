@@ -173,6 +173,7 @@ namespace BOOM {
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();
     }
+    int xdim() const {return observation_model()->xdim();}
     const PoissonRegressionData &data(int time,
                                       int observation) const override {
       return dat()[time]->poisson_data(observation);
@@ -242,6 +243,9 @@ namespace BOOM {
                                               const Vector &exposure,
                                               const Matrix &predictors,
                                               const Vector &final_state);
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
    private:
     Ptr<PoissonRegressionModel> observation_model_;

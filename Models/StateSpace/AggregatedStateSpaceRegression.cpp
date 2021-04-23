@@ -601,4 +601,9 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix ASSR::simulate_holdout_prediction_errors(int, int, bool) {
+    report_error("Method not implemented.");
+    return Matrix(0, 0);
+  }
+
 }  // namespace BOOM

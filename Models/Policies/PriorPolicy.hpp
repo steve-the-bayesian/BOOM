@@ -55,6 +55,10 @@ namespace BOOM {
       return samplers_[i].get();
     }
 
+    // Return the RNG object from the first sampler.  If samplers_ is empty then
+    // raise an exception.
+    RNG &rng();
+
    private:
     std::vector<Ptr<PosteriorSampler> > samplers_;
   };

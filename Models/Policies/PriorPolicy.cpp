@@ -18,6 +18,7 @@
 */
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -41,6 +42,14 @@ namespace BOOM {
 
   int PriorPolicy::number_of_sampling_methods() const {
     return samplers_.size();
+  }
+
+  RNG &PriorPolicy::rng() {
+    if (samplers_.empty()) {
+      report_error("There are no Samplers from which to obtain a "
+                   "random number generator.");
+    }
+    return samplers_[0]->rng();
   }
 
 }  // namespace BOOM

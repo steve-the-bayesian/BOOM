@@ -53,7 +53,7 @@ namespace BOOM {
       // The time index for the time point described by this marginal
       // distribution.
       int time_index() const { return time_index_; }
-      
+
       // The marginal distribution at time t should be initialized with the
       // state mean from distribution t-1.  After updating, the state_mean()
       // refers to the mean of the state at time t+1 given data to time t.
@@ -68,7 +68,7 @@ namespace BOOM {
       // state_variance() refers to the variance of the state at time t+1 given
       // data to time t.
       const SpdMatrix &state_variance() const {return state_variance_;}
-      void set_state_variance(const SpdMatrix &var); 
+      void set_state_variance(const SpdMatrix &var);
       void increment_state_variance(const SpdMatrix &variance_increment);
 
       // Convert the state mean and variance from forward-looking moments
@@ -79,11 +79,11 @@ namespace BOOM {
       // a[t] + P[t] * Z[t].transpose() * Finv * v;
       virtual Vector contemporaneous_state_mean() const = 0;
       virtual SpdMatrix contemporaneous_state_variance() const = 0;
-      
+
       // Durbin and Koopman's r[t].  Recall that eta[t] is the error term for
       // moving from state t to state t+1.  The conditional mean of eta[t] given
       // all observed data is
-      // 
+      //
       // hat(eta[t]) = Q[t] * R[t]' * r[t],
       //
       // where Q[t] is the error variance at time t (a model paramter), and R[t]
@@ -97,7 +97,7 @@ namespace BOOM {
      protected:
       SpdMatrix & mutable_state_variance() {return state_variance_;}
       void check_variance(const SpdMatrix &v) const;
-      
+
      private:
       // The time point that this marginal distribution describes.
       int time_index_;
@@ -124,7 +124,7 @@ namespace BOOM {
    public:
     KalmanFilterBase();
     virtual ~KalmanFilterBase() {}
-    
+
     //--------------------------------------------------------------------------
     // Accessors and basic status.
     //--------------------------------------------------------------------------
@@ -172,23 +172,23 @@ namespace BOOM {
 
     double compute_log_likelihood() {
       if (status_ == NOT_CURRENT) {
-        clear();
+        clear_loglikelihood();
         update();
       }
       return log_likelihood_;
     }
 
-    // Set log likelihood to zero and status to NOT_CURRENT.
-    void clear();
-
     // Concrete classes hold a pointer to a model object.  Calling update() runs
     // the kalman filter over all the data contained in *model_.
     virtual void update() = 0;
-    
+
     // Run the Durbin and Koopman fast disturbance smoother.
     virtual void fast_disturbance_smooth() = 0;
 
    protected:
+    // Set log likelihood to zero and status to NOT_CURRENT.
+    void clear_loglikelihood();
+
     void increment_log_likelihood(double loglike) {
       log_likelihood_ += loglike;
     }
@@ -196,7 +196,7 @@ namespace BOOM {
     void set_initial_scaled_state_error(const Vector &err) {
       initial_scaled_state_error_ = err;
     }
-    
+
    private:
     KalmanFilterStatus status_;
     double log_likelihood_;
@@ -211,7 +211,7 @@ namespace BOOM {
                                   const KalmanFilterBase &filter) {
     return filter.print(out);
   }
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_KALMAN_FILTER_BASE_HPP_

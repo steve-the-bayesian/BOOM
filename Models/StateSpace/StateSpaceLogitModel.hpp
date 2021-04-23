@@ -150,6 +150,8 @@ namespace BOOM {
       return dat()[time]->total_sample_size();
     }
 
+    int xdim() const { return observation_model()->xdim(); }
+
     const BinomialRegressionData &data(int t, int observation) const override {
       return dat()[t]->binomial_data(observation);
     }
@@ -283,9 +285,15 @@ namespace BOOM {
     //  TODO: consider whether this would make more sense
     //  on the logit scale.
     Vector one_step_holdout_prediction_errors(
-        RNG &rng, BinomialLogitDataImputer &data_imputer,
-        const Vector &successes, const Vector &trials, const Matrix &predictors,
+        RNG &rng,
+        BinomialLogitDataImputer &data_imputer,
+        const Vector &successes,
+        const Vector &trials,
+        const Matrix &predictors,
         const Vector &final_state);
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
    private:
     Ptr<BinomialLogitModel> observation_model_;

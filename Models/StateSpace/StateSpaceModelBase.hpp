@@ -628,6 +628,7 @@ namespace BOOM {
   class ScalarStateSpaceModelBase : public StateSpaceModelBase {
    public:
     ScalarStateSpaceModelBase();
+    ScalarStateSpaceModelBase(const ScalarStateSpaceModelBase &rhs);
     ScalarStateSpaceModelBase *clone() const override = 0;
     ScalarStateSpaceModelBase *deepclone() const override = 0;
 
@@ -657,6 +658,9 @@ namespace BOOM {
     // Returns the vector of one step ahead prediction errors for the training
     // data.
     Vector one_step_prediction_errors(bool standardize = false);
+
+    virtual Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) = 0;
 
     //------- Accessors for getting at state components -----------
     // Returns the contributions of each state model to the overall mean of the
@@ -797,10 +801,38 @@ namespace BOOM {
       mutable StateSpaceModelBase *model_;
     };
 
-    std::vector<Matrix> compute_prediction_errors(const ScalarStateSpaceModelBase &model,
-                                                  const std::vector<int> &cutpoints,
-                                                  bool standardize,
-                                                  int niter);
+    // Compute one-step prediction errors on one or more holdout sets.
+    //
+    // Args:
+    //   model:  The model to be assessed.
+    //   niter:  The number of MCMC iterations.
+    //   cutpoints: A set of integers giving the final time index to use in the
+    //     training set.
+    //   standardize: If true, then prediction errors are to be scaled by
+    //     dividing by the one-step prediction standard error from the Kalman
+    //     filter.  If false, then raw prediction errors are computed.
+    //
+    // Returns:
+    //   A set of Matrices, each representing the posterior predictive
+    //   distribution of the one-step prediction errors.  There is one matrix
+    //   for each entry in 'cutpoints'.  Rows represent MCMC draws.  Columns
+    //   represent time points.  Columns prior to the cutpoint are "in-sample"
+    //   errors in the sense that the parameter estimates for the Kalman filter
+    //   were learned based on that data, but they are still "out-of-sample"
+    //   from the perspective of the Kalman filter (i.e. they are "filtering
+    //   errors" rather than "smoothing errors").  Values after the cutpoint are
+    //   "out of sample" in all senses.
+    //
+    // Example:
+    // Suppose 'model' was fit on 200 data (time) points.
+    // auto errors = compute_prediction_errors(model, 1000, {150, 175, 190}, false);
+    // errors[1] is the posterior distribution of the one-step prediction errors
+    // based on y[0..174].
+    std::vector<Matrix> compute_prediction_errors(
+        const ScalarStateSpaceModelBase &model,
+        int niter,
+        const std::vector<int> &cutpoints,
+        bool standardize);
 
 
   }  // namespace StateSpaceUtils

@@ -332,4 +332,46 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix SSLM::simulate_holdout_prediction_errors(
+      int niter, int cutpoint_number, bool standardize) {
+    Matrix ans(niter, time_dimension());
+    SubMatrix training_prediction_errors(
+        ans, 0, niter - 1, 0, cutpoint_number - 1);
+    SubMatrix holdout_prediction_errors(
+        ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
+    std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
+    std::vector<Ptr<StateSpace::AugmentedBinomialRegressionData>> holdout_data(
+        dat().begin() + cutpoint_number, dat().end());
+    clear_data();
+    for (const auto &data_point : training_data) {
+      add_data(data_point);
+    }
+    Matrix holdout_predictors(holdout_data.size(), xdim());
+    Vector holdout_successes(holdout_data.size());
+    Vector holdout_trials(holdout_data.size());
+    for (int i = 0; i < holdout_data.size(); ++i) {
+      if (holdout_data[i]->total_sample_size() != 1) {
+        report_error("simulate_holdout_prediction_errors does "
+                     "not work with multiplex data.");
+      }
+      holdout_successes[i] = holdout_data[i]->total_successes();
+      holdout_trials[i] = holdout_data[i]->total_trials();
+      holdout_predictors.row(i) = holdout_data[i]->binomial_data(0).x();
+    }
+
+    BinomialLogitCltDataImputer imputer;
+    for (int i = 0; i < niter; ++i) {
+      sample_posterior();
+      training_prediction_errors.row(i) = one_step_prediction_errors(
+          standardize);
+      holdout_prediction_errors.row(i) = one_step_holdout_prediction_errors(
+          PriorPolicy::rng(),
+          imputer,
+          holdout_successes,
+          holdout_trials,
+          holdout_predictors,
+          state().last_col());
+    }
+    return ans;
+  }
 }  // namespace BOOM

@@ -660,6 +660,12 @@ namespace BOOM {
   ScalarBase::ScalarStateSpaceModelBase() :
       filter_(this), simulation_filter_(this) {}
 
+  ScalarBase::ScalarStateSpaceModelBase(const ScalarBase &rhs):
+      Base(rhs),
+      filter_(this),
+      simulation_filter_(this)
+  {}
+
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -883,30 +889,66 @@ namespace BOOM {
     }
   }
 
-  std::vector<Matrix> compute_prediction_errors(
-      const ScalarStateSpaceModelBase &model,
-      const std::vector<int> &cutpoints,
-      bool standardize,
-      int niter) {
+  namespace StateSpaceUtils {
 
-    std::vector<Matrix> prediction_errors(cutpoints.size());
-    std::vector<std::future<void>> futures;
-    int desired_threads = std::min<int>(
-        cutpoints.size(), std::thread::hardware_concurrency() - 1);
-    BOOM::ThreadWorkerPool pool;
-    pool.add_threads(desired_threads);
-    for (int i = 0; i < cutpoints.size(); ++i) {
-      std::unique_ptr<ScalarStateSpaceModelBase> worker(model.deepclone());
-      // futures.emplace_back(pool.submit(
-      //     [worker, &prediction_errors[i], cutpoints[i], standardize, niter]() {
-      //       worker->simulate_holdout_prediction_errors(
-      //           prediction_errors[i], cutpoints[i], standardize, niter)
-      //           }));
+    // Compute one-step prediction errors on one or more holdout sets.
+    std::vector<Matrix> compute_prediction_errors(
+        const ScalarStateSpaceModelBase &model,
+        int niter,
+        const std::vector<int> &cutpoints,
+        bool standardize) {
+
+      std::vector<Matrix> prediction_errors(cutpoints.size(),
+                                            Matrix(niter, model.time_dimension()));
+      std::vector<std::future<void>> futures;
+      int desired_threads = std::min<int>(
+          cutpoints.size(),
+          std::thread::hardware_concurrency() - 1);
+      BOOM::ThreadWorkerPool pool;
+      pool.add_threads(desired_threads);
+      std::vector<Ptr<ScalarStateSpaceModelBase>> workers;
+
+      class WorkWrapper {
+       public:
+        WorkWrapper(const Ptr<ScalarStateSpaceModelBase> worker,
+                    int niter,
+                    int cutpoint,
+                    bool standardize,
+                    Matrix &output)
+            : worker_(worker),
+              niter_(niter),
+              cutpoint_(cutpoint),
+              standardize_(standardize),
+              output_(output)
+        {}
+
+        void operator()() {
+          output_ = worker_->simulate_holdout_prediction_errors(
+              niter_, cutpoint_, standardize_);
+        }
+
+       private:
+        Ptr<ScalarStateSpaceModelBase> worker_;
+        int niter_;
+        int cutpoint_;
+        bool standardize_;
+        Matrix &output_;
+      };
+
+      for (int i = 0; i < cutpoints.size(); ++i) {
+        workers.push_back(model.deepclone());
+        futures.emplace_back(pool.submit(WorkWrapper(
+            workers[i],
+            niter,
+            cutpoints[i],
+            standardize,
+            prediction_errors[i])));
+      }
+      for (int i = 0; i < futures.size(); ++i) {
+        futures[i].get();
+      }
+      return prediction_errors;
     }
-    for (int i = 0; i < futures.size(); ++i) {
-      futures[i].get();
-    }
-    return prediction_errors;
-  }
+  }  // namespace StateSpaceUtils
 
 }  // namespace BOOM

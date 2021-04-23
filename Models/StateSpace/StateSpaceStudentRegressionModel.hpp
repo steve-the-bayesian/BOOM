@@ -179,6 +179,9 @@ namespace BOOM {
                                               const Vector &final_state,
                                               bool standardize = false);
 
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
+
    private:
     // Returns the marginal variance of the student error distribution.  If the
     // 'nu' degrees of freedom parameter <= 2 this is technically infinity, but

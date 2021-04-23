@@ -304,6 +304,44 @@ namespace BOOM {
     return ans;
   }
 
+  Matrix SSRM::simulate_holdout_prediction_errors(
+      int niter, int cutpoint_number, bool standardize) {
+    Matrix ans(niter, time_dimension());
+    SubMatrix training_prediction_errors(
+        ans, 0, niter - 1, 0, cutpoint_number - 1);
+    SubMatrix holdout_prediction_errors(
+        ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
+    std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
+    std::vector<Ptr<StateSpace::MultiplexedRegressionData>> holdout_data(
+        dat().begin() + cutpoint_number, dat().end());
+    clear_data();
+    for (const auto &data_point : training_data) {
+      add_data(data_point);
+    }
+    Matrix holdout_predictors(holdout_data.size(), xdim());
+    Vector holdout_response(holdout_data.size());
+    for (int i = 0; i < holdout_data.size(); ++i) {
+      if (holdout_data[i]->total_sample_size() != 1) {
+        report_error("simulate_holdout_prediction_errors does "
+                     "not work with multiplex data.");
+      }
+      holdout_response[i] = holdout_data[i]->regression_data(0).y();
+      holdout_predictors.row(i) = holdout_data[i]->regression_data(0).x();
+    }
+
+    for (int i = 0; i < niter; ++i) {
+      sample_posterior();
+      training_prediction_errors.row(i) = one_step_prediction_errors(
+          standardize);
+      holdout_prediction_errors.row(i) = one_step_holdout_prediction_errors(
+          holdout_predictors,
+          holdout_response,
+          state().last_col(),
+          standardize);
+    }
+    return ans;
+  }
+
   Vector SSRM::regression_contribution() const {
     const std::vector<Ptr<MRD>> &data(dat());
     Vector ans(data.size());

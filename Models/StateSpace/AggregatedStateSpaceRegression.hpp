@@ -321,6 +321,9 @@ namespace BOOM {
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
 
+
+    Matrix simulate_holdout_prediction_errors(int, int, bool) override;
+
    private:
     Ptr<RegressionModel> regression_;
     Ptr<GaussianModel> observation_model_;

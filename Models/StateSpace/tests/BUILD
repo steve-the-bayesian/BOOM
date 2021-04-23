@@ -4,9 +4,10 @@ COPTS = [
 ]
 
 SANITIZERS = [
-        "-fsanitize=address",
-        "-fsanitize=undefined",
-        "-fsanitize=vptr",
+#        "-fsanitize=address",
+#        "-fsanitize=undefined",
+#        "-fsanitize=vptr",
+#        "-fsanitize=thread"
     ]
 
 filegroup(
@@ -104,7 +105,8 @@ cc_test(
 cc_test(
     name = "state_space_gaussian_model_test",
     srcs = ["state_space_gaussian_model_test.cc"],
-    copts = COPTS,
+    copts = COPTS + SANITIZERS,
+    linkopts = SANITIZERS,
     data = [":testdata"],
     deps = [
         "//:boom",

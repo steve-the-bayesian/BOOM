@@ -99,6 +99,9 @@ namespace BOOM {
 
     // The number of time points in the data.
     int time_dimension() const override { return dat().size(); }
+    int xdim() const  {
+      return observation_model()->xdim();
+    }
 
     // Variance of observed data y[t], given state alpha[t].  Durbin
     // and Koopman's H.
@@ -176,6 +179,9 @@ namespace BOOM {
                                               const Vector &newY,
                                               const Vector &final_state,
                                               bool standardize = false) const;
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
     Ptr<RegressionModel> regression_model() { return regression_; }
     const Ptr<RegressionModel> regression_model() const { return regression_; }

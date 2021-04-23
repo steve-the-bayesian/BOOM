@@ -132,6 +132,9 @@ namespace BOOM {
                                               const Vector &final_state,
                                               bool standardize = false) const;
 
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
+
     // Update the complete data sufficient statistics for the
     // observation model based on the posterior distribution of the
     // observation model error term at time t.
