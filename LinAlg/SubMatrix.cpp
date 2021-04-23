@@ -73,7 +73,7 @@ namespace BOOM {
       : start_(rhs.start_), nr_(rhs.nr_), nc_(rhs.nc_), stride(rhs.stride) {}
 
   SM &SM::operator=(const SM &rhs) {
-    if (rhs.nrow() != nr_ || rhs.ncol() != nc_)
+    if (rhs.nrow() != nr_ || rhs.ncol() != nc_) {
       report_error("Matrix of wrong dimension passed to assignment operator.");
     }
     for (uint i = 0; i < nc_; ++i) {
