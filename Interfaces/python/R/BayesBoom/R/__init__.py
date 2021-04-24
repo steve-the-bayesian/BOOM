@@ -9,6 +9,8 @@ from .R import (
     data_range,
     corr,
     first_true,
+    paste,
+    paste0,
     recycle,
     remove_common_suffix,
     unique_match,

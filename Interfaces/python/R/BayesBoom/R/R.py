@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from inspect import isfunction, getsource
 import time
+from numbers import Number
 
 
 class omit:
@@ -233,17 +234,28 @@ def paste(*lists, sep=" ", collapse=None):
       return type is also pd.Series.  Otherwise if any arguments are numpy
       arrays the return is a numpy array.  Otherwise the return type is a list.
     """
-    result = map(lambda x: _reduce_concat(x, sep=sep), zip(*lists))
+    list_of_inputs = [*lists]
+    max_length = np.max([len(x) for x in list_of_inputs])
+    for i in range(len(list_of_inputs)):
+        if isinstance(list_of_inputs[i], str):
+            string_value = list_of_inputs[i]
+            list_of_inputs[i] = [string_value] * max_length
+        elif isinstance(list_of_inputs[i], Number):
+            value = list_of_inputs[i]
+            list_of_inputs[i] = [value] * max_length
+
+    parallel_data = pd.DataFrame(list_of_inputs).T
+    result = parallel_data.apply(_reduce_concat, sep=sep, axis=1).astype(
+        str).values.tolist()
     if collapse is not None:
         return _reduce_concat(result, sep=collapse)
-    type_code = _deduce_type(*lists)
-    result = list(result)
-    if type_code == 0:
-        return result
-    elif type_code == 1:
-        return np.array(result)
     else:
-        return pd.Series(result)
+        return result
+
+
+def paste0(*lists, sep="", collapse=None):
+    return paste(*lists, sep=sep, collapse=collapse)
+
 
 def remove_common_prefix(strings):
     if len(strings) == 0:
