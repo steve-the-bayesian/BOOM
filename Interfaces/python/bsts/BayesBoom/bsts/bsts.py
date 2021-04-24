@@ -1097,11 +1097,15 @@ class ObservationModelManager(ABC):
             return 0
 
     @abstractmethod
-    def allocate_space(self, niter: int, xdim: int):
+    def allocate_space(self, niter: int, time_dimension: int):
         """
         Create space for 'niter' MCMC draws of the observation model parameters.
         This will include regression coefficients if the observation model has
         been assigned a formula.
+
+        Args:
+          niter:  The number of iterations worth of space to allocate.
+          time_dimension: The number of time points in the training data.
         """
 
     @abstractmethod
