@@ -261,6 +261,11 @@ namespace BOOM {
               state().last_col(),
               standardize);
     }
+
+    // Replace the holdout data.
+    for (const auto &data_point : holdout_data) {
+      add_data(data_point);
+    }
     return ans;
   }
 

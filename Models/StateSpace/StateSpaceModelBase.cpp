@@ -897,7 +897,6 @@ namespace BOOM {
         int niter,
         const std::vector<int> &cutpoints,
         bool standardize) {
-
       std::vector<Matrix> prediction_errors(cutpoints.size(),
                                             Matrix(niter, model.time_dimension()));
       std::vector<std::future<void>> futures;

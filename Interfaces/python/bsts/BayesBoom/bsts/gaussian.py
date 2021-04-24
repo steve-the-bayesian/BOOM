@@ -32,10 +32,10 @@ class GaussianStateSpaceModelFactory:
         if data is not None:
             if (isinstance(data, np.ndarray)):
                 boom_data = boom.Vector(data.ravel())
-                is_observed = np.isnan(data)
+                is_observed = np.isfinite(data)
             else:
                 boom_data = boom.Vector(data.values)
-                is_observed = ~data.isna()
+                is_observed = np.isfinite(data)
             self._model = boom.StateSpaceModel(boom_data, is_observed)
         else:
             self._model = boom.StateSpaceModel()
@@ -108,7 +108,7 @@ class StateSpaceRegressionModelFactory:
 
         if not isinstance(prior, spikeslab.RegressionSpikeSlabPrior):
             raise Exception("Unexpected type for prior.")
-        is_observed = ~np.isnan(response)
+        is_observed = np.isfinite(response)
         self._model = boom.StateSpaceRegressionModel(
             boom_response, boom_predictors, is_observed)
 

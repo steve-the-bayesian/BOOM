@@ -88,37 +88,10 @@ class Bsts:
         if seed is not None:
             self._rng.seed(seed)
 
-    @property
-    def state_dimension(self):
-        """
-        The dimension of the state vector.
-        """
-        return self._state_dimension
-
-    @property
-    def niter(self):
-        """
-        The number of MCMC iterations that have been run.
-        """
-        if self._observation_model_manager is None:
-            return 0
-        return self._observation_model_manager.niter
-
-    @property
-    def time_dimension(self):
-        """
-        The number of time points that have been observed, including any time
-        points where the time series variable was missing.
-        """
-        return 0 if self._model is None else self._model.time_dimension
-
-    @property
-    def number_of_state_models(self):
-        return len(self._state_models)
-
     def add_state(self, state_model: StateModel):
         """
-        Add a component of state to the model.
+        Add a component of state to the model.  This is typically done before
+        training.
 
         Args:
           state_model: A StateModel object describing the state to be added.
@@ -191,6 +164,34 @@ class Bsts:
         return None
 
     @property
+    def state_dimension(self):
+        """
+        The dimension of the state vector.
+        """
+        return self._state_dimension
+
+    @property
+    def niter(self):
+        """
+        The number of MCMC iterations that have been run.
+        """
+        if self._observation_model_manager is None:
+            return 0
+        return self._observation_model_manager.niter
+
+    @property
+    def time_dimension(self):
+        """
+        The number of time points that have been observed, including any time
+        points where the time series variable was missing.
+        """
+        return 0 if self._model is None else self._model.time_dimension
+
+    @property
+    def number_of_state_models(self):
+        return len(self._state_models)
+
+    @property
     def original_series(self):
         """
         The target series in the model training step.
@@ -246,29 +247,31 @@ class Bsts:
           in the data for bsts.object.  If the in-sample prediction errors were
           stored in the original model fit, they will be present in the output.
         """
-        has_errors = hasattr(self, "_one_step_prediction_errors")
+        has_prediction_errors = hasattr(self, "_one_step_prediction_errors")
 
-        if cutpoints is None and has_errors:
-            if isinstance(self._one_step_prediction_errors, np.ndarray):
-                return self._one_step_prediction_errors[burn:, :]
-            elif isinstance(self._one_step_prediction_errors, dict):
-                return self._one_step_prediction_errors[None]
+        if cutpoints is None and has_prediction_errors:
+            return self._one_step_prediction_errors[self.time_dimension]
 
-        elif cutpoints is not None and has_errors:
-            if isinstance(self._one_step_prediction_errors, np.ndarray):
-                errors = {
-                    None: self._one_step_prediction_errors
-                }
-                self._one_step_prediction_errors = errors
-
+        elif cutpoints is not None and has_prediction_errors:
             required_cutpoints = [
                 x for x in cutpoints
                 if x not in self._one_step_prediction_errors.keys()
             ]
 
-            #########
-            # Cut over to C++ here.
-            #########
+            if required_cutpoints:
+                extra_prediction_errors = (
+                    self._model.compute_prediction_errors(
+                        self.niter,
+                        required_cutpoints,
+                        standardize)
+                )
+                for i, cutpoint in enumerate(required_cutpoints):
+                    self._one_step_prediction_errors[cutpoint] = (
+                        extra_prediction_errors[i].to_numpy())
+
+            return {
+                cut: self._one_step_prediction_errors[cut] for cut in cutpoints
+            }
 
         else:
             raise Exception(
@@ -304,6 +307,79 @@ class Bsts:
             burn = R.suggest_burn(loglike)
         return int(burn)
 
+    def predict(self, newdata, burn: int = None, seed: int = None,
+                separate_components=False, **kwargs):
+        """
+        Args:
+          newdata: For regression models 'newdata' is a DataFrame containing
+            the predictor variables to use in the regression.  The forecast
+            horizon (the number of periods to predict) is the number of rows in
+            'newdata'.  For pure time series models, 'newdata' is the
+            integer-valued forecast horizon.
+          burn: The number of MCMC interations to discard as burnin.  If None
+            then an attempt will be made to select a reasonable value.
+          seed: An integer used to seed the C++ random number generator driving
+            the simulations from the posterior predictive distribution.  If
+            None then the current state of the RNG will be used.  The 'seed'
+            argument is mainly useful for reproducibility when testing.
+          separate_components: If True then an extra dimension is added to the
+            output, and the contributions of each state component are kept
+            apart.
+          **kwargs: Additional named arguments are passed to the 'predict'
+            method of the ObservationModelManager specific to the observation
+            model.  The main use is to supply 'trials' for logit models, and
+            'exposure' for Poisson models.
+
+        Returns:
+            A BstsPrediction object containing the predictions.
+        """
+        if burn is None:
+            burn = self.suggest_burn()
+        burn = int(burn)
+
+        if seed is not None:
+            self._rng.seed(int(seed))
+
+        ndraws = self.niter - burn
+        manager = self._observation_model_manager
+        formatted_prediction_data = manager.format_prediction_data(
+            newdata, **kwargs)
+        self.predictor_names = formatted_prediction_data.get("xnames", None)
+        horizon = formatted_prediction_data["forecast_horizon"]
+        if separate_components:
+            nstate = self._model.number_of_state_models
+            pred = np.empty((ndraws, nstate + 2, horizon))
+        else:
+            pred = np.empty((ndraws, horizon))
+
+        total_time_points = len(self.original_series) + horizon
+        for state_model in self._state_models:
+            state_model.observe_time_dimension(total_time_points)
+
+        for i in range(burn, self.niter):
+            self._restore_draw(i)
+            if separate_components:
+                pred[i - burn, :, :] = self._observation_model_manager.predict(
+                    self._model,
+                    formatted_prediction_data,
+                    boom.Vector(self._final_state[i, :]),
+                    rng=self._rng,
+                    separate_components=True,
+                )
+            else:
+                pred[i - burn, :] = self._observation_model_manager.predict(
+                    self._model,
+                    formatted_prediction_data,
+                    boom.Vector(self._final_state[i, :]),
+                    rng=self._rng,
+                    separate_components=False
+                )
+
+        return BstsPrediction(pred, self.original_series)
+
+    # --------------------------------------------------------------------------
+    # The remaining public functions all make plots.
+    # --------------------------------------------------------------------------
     def plot(self, what: str = None, **kwargs):
         """
         Dispatch a plot request to a specific plotting function.
@@ -621,83 +697,13 @@ class Bsts:
         # TODO
         # TODO
         # TODO
-        return num_plots
+        return fig
 
     def plot_monthly(self, **kwargs):
         pass
 
     def plotting_help(self, **kwargs):
         pass
-
-    def predict(self, newdata, burn: int = None, seed: int = None,
-                separate_components=False, **kwargs):
-        """
-        Args:
-          newdata: For regression models 'newdata' is a DataFrame containing
-            the predictor variables to use in the regression.  The forecast
-            horizon (the number of periods to predict) is the number of rows in
-            'newdata'.  For pure time series models, 'newdata' is the
-            integer-valued forecast horizon.
-          burn: The number of MCMC interations to discard as burnin.  If None
-            then an attempt will be made to select a reasonable value.
-          seed: An integer used to seed the C++ random number generator driving
-            the simulations from the posterior predictive distribution.  If
-            None then the current state of the RNG will be used.  The 'seed'
-            argument is mainly useful for reproducibility when testing.
-          separate_components: If True then an extra dimension is added to the
-            output, and the contributions of each state component are kept
-            apart.
-          **kwargs: Additional named arguments are passed to the 'predict'
-            method of the ObservationModelManager specific to the observation
-            model.  The main use is to supply 'trials' for logit models, and
-            'exposure' for Poisson models.
-
-        Returns:
-            A BstsPrediction object containing the predictions.
-        """
-        if burn is None:
-            burn = self.suggest_burn()
-        burn = int(burn)
-
-        if seed is not None:
-            self._rng.seed(int(seed))
-
-        ndraws = self.niter - burn
-        manager = self._observation_model_manager
-        formatted_prediction_data = manager.format_prediction_data(
-            newdata, **kwargs)
-        self.predictor_names = formatted_prediction_data.get("xnames", None)
-        horizon = formatted_prediction_data["forecast_horizon"]
-        if separate_components:
-            nstate = self._model.number_of_state_models
-            pred = np.empty((ndraws, nstate + 2, horizon))
-        else:
-            pred = np.empty((ndraws, horizon))
-
-        total_time_points = len(self.original_series) + horizon
-        for state_model in self._state_models:
-            state_model.observe_time_dimension(total_time_points)
-
-        for i in range(burn, self.niter):
-            self._restore_draw(i)
-            if separate_components:
-                pred[i - burn, :, :] = self._observation_model_manager.predict(
-                    self._model,
-                    formatted_prediction_data,
-                    boom.Vector(self._final_state[i, :]),
-                    rng=self._rng,
-                    separate_components=True,
-                )
-            else:
-                pred[i - burn, :] = self._observation_model_manager.predict(
-                    self._model,
-                    formatted_prediction_data,
-                    boom.Vector(self._final_state[i, :]),
-                    rng=self._rng,
-                    separate_components=False
-                )
-
-        return BstsPrediction(pred, self.original_series)
 
     def _allocate_space(self, niter: int):
         """
@@ -707,8 +713,15 @@ class Bsts:
         for state_model in self._state_models:
             state_model.allocate_space(niter, self.time_dimension)
         self._final_state = np.empty((niter, self.state_dimension))
-        self._one_step_prediction_errors = np.empty((
-            niter, self.time_dimension))
+
+        # self._one_step_prediction_errors is a dict keyed by the index of the
+        # last time point in the in sample trainind data.  During initial model
+        # training errors are computed only the full training data.  If
+        # desired, errors can be computed for other cutpoints later, by calling
+        # self.one_step_prediction_errors().
+        self._one_step_prediction_errors = {
+            self.time_dimension: np.empty((niter, self.time_dimension))
+        }
 
     def _record_draws(self, iteration: int):
         """
@@ -723,7 +736,7 @@ class Bsts:
         self._observation_model_manager.record_draw(
             iteration, self._model)
         self._final_state[iteration, :] = state_matrix[:, -1]
-        self._one_step_prediction_errors[iteration, :] = (
+        self._one_step_prediction_errors[self.time_dimension][iteration, :] = (
             self._model.one_step_prediction_errors(False).to_numpy()
         )
 
@@ -1151,9 +1164,9 @@ def _find_state_contribution_ylim(state_models, burn):
     return (np.min(mins), np.max(maxs))
 
 
-def CompareBstsModels(models, burn=None, colors=None,
-                      xlab="Time", ylab="Cumulative Absolute Error",
-                      main="Model Comparison", fig=None, **kwargs):
+def compare_bsts_models(models, burn=None, colors=None,
+                        xlab="Time", ylab="Cumulative Absolute Error",
+                        main="Model Comparison", fig=None, **kwargs):
     """
     Plot the cumulative absolute one-step prediction errors for a collection of
     bsts models.  Lower errors are good.  The plot helps you determine the time
@@ -1214,7 +1227,7 @@ def CompareBstsModels(models, burn=None, colors=None,
     R.plot_ts(original_series, ax=bottom_panel, xlab=xlab)
     counter = 0
     for model_name, model in models.items():
-        errors = model.one_step_prediction_errors[burn:, :].mean(axis=0)
+        errors = model.one_step_prediction_errors()[burn:, :].mean(axis=0)
         cumulative_errors = pd.Series(
             np.cumsum(np.abs(errors)),
             index=original_series.index
