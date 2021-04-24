@@ -135,7 +135,7 @@ class GaussianObservationModelManager(ObservationModelManager):
     """
     The observation model manager supports the observation model in the boom
     object. It holds posterior draws of observation model parameters, log
-    likelihood, and metadata about the
+    likelihood, and metadata about the predictors, if any.
     """
     def __init__(self, xdim, formula):
         """
@@ -146,7 +146,11 @@ class GaussianObservationModelManager(ObservationModelManager):
         self._xdim = xdim
         self._formula = formula
 
-    def allocate_space(self, niter: int):
+    @property
+    def has_regression(self):
+        return self._xdim > 0
+
+    def allocate_space(self, niter: int, time_dimension: int):
         """
         Create space to hold 'niter' MCMC draws.
         """
@@ -155,6 +159,9 @@ class GaussianObservationModelManager(ObservationModelManager):
 
         if self._xdim > 0:
             self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
+
+        if self.has_regression > 0:
+            self._regression_contribution = np.empty((niter, time_dimension))
 
     def record_draw(self, iteration: int, model):
         """
@@ -165,6 +172,9 @@ class GaussianObservationModelManager(ObservationModelManager):
         self._log_likelihood[iteration] = model.log_likelihood
         if self._xdim > 0:
             self._coefficients[iteration, :] = spikeslab.sparsify(model.coef)
+            self._regression_contribution[iteration, :] = (
+                model.regression_contribution.to_numpy()
+            )
 
     def restore_draw(self, iteration: int, model):
         """

@@ -8,7 +8,7 @@ import pdb
 
 import matplotlib.pyplot as plt
 
-from BayesBoom.R import delete_if_present
+import BayesBoom.R as R
 
 from BayesBoom.spikeslab import dot
 
@@ -21,9 +21,6 @@ from BayesBoom.bsts import (
     SeasonalStateModel,
 )
 
-_debug_mode = True
-_show_figs = _debug_mode
-
 
 class TestGaussianTimeSeries(unittest.TestCase):
     def setUp(self):
@@ -33,7 +30,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.data = random_walk + noise
 
     def tearDown(self):
-        delete_if_present("bsts_llt.pkl")
+        R.delete_if_present("bsts_llt.pkl")
 
     def test_local_level(self):
         model = Bsts()
@@ -104,8 +101,30 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertIsInstance(pred_plot, plt.Axes)
 
 
+class TestGaussianRegression(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+        n = 100
+        p = 10
+        pgood = 3
+        X = np.random.randn(n, p)
+        beta = np.zeros(p)
+        beta[:pgood] = np.random.randn(pgood)
+        yhat = X @ beta
+
+        random_walk = np.cumsum(np.random.randn(n) * .1)
+        noise = np.random.randn(n) * .05
+        y = yhat + random_walk + noise
+        self.data = pd.DataFrame(X, columns=R.paste0("X", np.arange(1, p + 1)))
+        self.data["y"] = y
+
+    def test_state_space_regression(self):
+        pass
+
+
 class TestStudentTimeSeries(unittest.TestCase):
     def setUp(self):
+        np.random.seed(8675309)
         n = 100
         df = 3
         random_walk = np.cumsum(np.random.randn(n) * .1)
@@ -113,8 +132,8 @@ class TestStudentTimeSeries(unittest.TestCase):
         self.data = random_walk + noise
 
     def tearDown(self):
-        delete_if_present("bsts_student_llt.pkl")
-        delete_if_present("bsm.pkl")
+        R.delete_if_present("bsts_student_llt.pkl")
+        R.delete_if_present("bsm.pkl")
 
     def test_local_level(self):
         model = Bsts(family="student")
@@ -273,13 +292,16 @@ class TestPlots(unittest.TestCase):
         self.assertIsInstance(foo, plt.Figure)
 
     def test_plot_residuals(self):
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         foo = self._model.plot_residuals(ax=ax)
-        # self.assertIsInstance(foo, plt.Axes)
+        self.assertIsInstance(foo, plt.Axes)
 
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         foo = self._regression_model.plot_residuals(ax=ax)
-        # self.assertIsInstance(foo, plt.Axes)
+        self.assertIsInstance(foo, plt.Axes)
+
+        if _show_figs:
+            fig.show()
 
     def test_plot_size(self):
         fig, ax = plt.subplots()
@@ -298,6 +320,9 @@ class TestPlots(unittest.TestCase):
         self.assertIsInstance(ans, plt.Figure)
 
 
+_debug_mode = False
+_show_figs = _debug_mode
+
 if _debug_mode:
     import pdb  # noqa
 
@@ -309,14 +334,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = TestGaussianTimeSeries()
+    rig = TestPlots()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_local_level()
+    rig.test_plot_residuals()
 
     print("Goodbye, cruel world!")
 

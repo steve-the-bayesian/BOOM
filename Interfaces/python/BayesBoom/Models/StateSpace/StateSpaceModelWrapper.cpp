@@ -69,6 +69,14 @@ namespace BayesBoom {
                    boom,
                    "ScalarStateSpaceModelBase",
                    py::multiple_inheritance())
+        .def_property_readonly(
+            "regression_contribution",
+            [](const ScalarStateSpaceModelBase &model) {
+              return model.regression_contribution();
+            },
+            "The contribution of the regression component to the mean of y.   "
+            "If no regression component is present, an empty Vector is "
+            "returned.")
         .def("observation_variance",
              &ScalarStateSpaceModelBase::observation_variance,
              py::arg("t"),

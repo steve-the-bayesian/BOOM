@@ -201,6 +201,31 @@ class Bsts:
         else:
             return None
 
+    def residuals(self, burn=None):
+        """
+        The residuals are the smoothing residuals from the model.  I.e. the
+        residuals when you get to look both forward and backward in time.
+        """
+        if burn is None:
+            burn = self.suggest_burn()
+        y = R.to_numpy(self.original_series).reshape((1, -1))
+        yhat = self.state_contribution[burn:, :]
+        if self._observation_model_manager.has_regression:
+            contrib = self._observation_model_manager.regression_contribution
+            yhat += contrib[burn:, :]
+        return y - yhat
+
+    @property
+    def state_contribution(self):
+        """
+        The posterior distribution of the mean at each time point, as determined
+        by the simulated state, without observation noise.
+        """
+        contribution = np.zeros((self.niter, self.time_dimension))
+        for model in self._state_models:
+            contribution += model._state_contribution
+        return contribution
+
     def one_step_prediction_errors(self,
                                    cutpoints=None,
                                    burn=None,
@@ -561,14 +586,25 @@ class Bsts:
 
         # for documentation about how gridspec works see
         # https://matplotlib.org/3.1.1/tutorials/intermediate/gridspec.html
-        nr, nc = R.plot_grid_shape(len(state_models))
+        has_regression = self._observation_model_manager.has_regression
+        number_of_contributions = len(state_models) + has_regression
+        nr, nc = R.plot_grid_shape(number_of_contributions)
         outer_grid = fig.add_gridspec(nr, nc)
         plot_index = 0
+        need_regression = has_regression
         for i in range(nr):
             for j in range(nc):
                 if plot_index < len(state_models):
                     state_model = state_models[plot_index]
                     state_model.plot_state_contribution(
+                        fig=fig,
+                        gridspec=outer_grid[i, j],
+                        time=time,
+                        burn=burn,
+                        ylim=ylim,
+                        **kwargs)
+                elif need_regression:
+                    self._observation_model_manager.plot_regression_contribution( # noqa
                         fig=fig,
                         gridspec=outer_grid[i, j],
                         time=time,
@@ -598,8 +634,51 @@ class Bsts:
     def plot_inclusion_probs(self, **kwargs):
         return self.plot_coefficients(**kwargs)
 
-    def plot_residuals(self, **kwargs):
-        pass
+    def plot_residuals(self, burn=None, time=None, style="dynamic", means=True,
+                       ax=None, **kwargs):
+        """
+        Plots the posterior distribution of the residuals from the bsts
+        model, after subtracting off the state effects (including
+        regression effects).
+
+        Args:
+          burn: The number of MCMC iterations to be discarded as burn-in.  If
+            None then a default value will be used.
+          time: An optional vector of values to plot on the time axis.
+          means: If True then the posterior mean of each residual is plotted as
+            a dot on top of the boxplot or the dynamic distribution plot.
+          style: Either "dynamic", for dynamic distribution plots, or
+            "boxplot", for box plots.  Partial matching is allowed, so
+            "dyn" or "box" would work, for example.
+          ax: The plt.Axes object on which to draw the plot.  If None then a
+            new figure and axes will be created.
+          kwargs:  Extra arguments passed to plot_dynamic_distribution.
+
+        Returns:
+          This function is called for its side effect, which is to
+          produce a plot on the current graphics device.
+        """
+        style = R.unique_match(style.lower(), ["boxplot", "dynamic"])
+        if time is None:
+            time = self.original_series.index
+
+        residuals = self.residuals(burn)
+
+        if style == "dynamic":
+            R.plot_dynamic_distribution(
+                curves=residuals,
+                timestamps=time,
+                ax=ax,
+                **kwargs)
+
+        elif style == "boxplot":
+            R.time_series_boxplot(
+                curves=residuals,
+                time=time,
+                ax=ax,
+                **kwargs)
+
+        return ax
 
     def plot_forecast_distribution(self, **kwargs):
         pass
@@ -709,7 +788,8 @@ class Bsts:
         """
         Allocate space in the model for 'niter' MCMC draws.
         """
-        self._observation_model_manager.allocate_space(niter)
+        self._observation_model_manager.allocate_space(
+            niter, self.time_dimension)
         for state_model in self._state_models:
             state_model.allocate_space(niter, self.time_dimension)
         self._final_state = np.empty((niter, self.state_dimension))
@@ -1034,6 +1114,53 @@ class ObservationModelManager(ABC):
           model: The BOOM state space model object from which to extract the
             draw.
         """
+
+    @property
+    def has_regression(self):
+        """
+        Returns True iff the model has a static regression component.  If it
+        does, the model must allocate space for self._regression_contribution.
+        in the allocate_space method.
+        """
+
+    @property
+    def regression_contribution(self):
+        return getattr(self, "_regression_contribution", None)
+
+    def plot_regression_contribution(self, fig, gridspec, time, burn, ylim,
+                                     **kwargs):
+        """
+        If the model has a regression component, plot it on the supplied figure.
+
+        Args:
+          fig:  The plt.Figure on which to draw the plot.
+          gridspec: The plt.gridspec object describing where on the figure the
+            plot should be drawn.
+          time:  The timestamps to plot on the time axis.
+          burn:  The number of iterations to discard as burn-in.
+          ylim:  A pair giving the lower and upper limits on the y axis.
+          kwargs:  Extra arguments passed to plot_dynamic_distribution.
+
+        Returns:
+          The axes object generated by 'figure' and 'gridspec', if the model
+          has a regression component.  Otherwise, None is returned.
+        """
+        if not self.has_regression:
+            return None
+
+        ax = fig.add_subplot(gridspec)
+
+        if (burn > 0):
+            curves = self._regression_contribution[int(burn):, :]
+        else:
+            curves = self._regression_contribution
+
+        R.plot_dynamic_distribution(
+            curves=curves,
+            timestamps=time,
+            ax=ax,
+            ylim=ylim,
+            **kwargs)
 
     @abstractmethod
     def format_prediction_data(self, prediction_data, **kwargs):
