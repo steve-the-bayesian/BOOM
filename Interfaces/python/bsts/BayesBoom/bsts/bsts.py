@@ -9,6 +9,7 @@ import BayesBoom.R as R
 from .state_models import StateModel
 
 import matplotlib.pyplot as plt
+import copy
 
 
 class Bsts:
@@ -229,7 +230,8 @@ class Bsts:
     def one_step_prediction_errors(self,
                                    cutpoints=None,
                                    burn=None,
-                                   standardize=False):
+                                   standardize=False,
+                                   simplify=True):
         """
         The posterior distribution of the one-step-ahead prediction errors from
         the model training.  The errors are computing using the Kalman filter,
@@ -263,6 +265,8 @@ class Bsts:
           standardize: (bool)  If True then the prediction errors are divided
             by the square root of the one-step-ahead forecast variance.  If
             False the raw errors are returned.
+          simplify: If True, and only one set of prediction errors was
+            requested, then return just that set as a numpy array.
 
         Returns:
           A dict, keyed by cutpoint values, with entries giving the
@@ -273,9 +277,14 @@ class Bsts:
           stored in the original model fit, they will be present in the output.
         """
         has_prediction_errors = hasattr(self, "_one_step_prediction_errors")
-
         if cutpoints is None and has_prediction_errors:
-            return self._one_step_prediction_errors[self.time_dimension]
+            if simplify:
+                return self._one_step_prediction_errors[self.time_dimension]
+            else:
+                return {
+                    self.time_dimension:
+                    self._one_step_prediction_errors[self.time_dimension]
+                }
 
         elif cutpoints is not None and has_prediction_errors:
             required_cutpoints = [
@@ -294,9 +303,10 @@ class Bsts:
                     self._one_step_prediction_errors[cutpoint] = (
                         extra_prediction_errors[i].to_numpy())
 
-            return {
+            ans = {
                 cut: self._one_step_prediction_errors[cut] for cut in cutpoints
             }
+            return copy.deepcopy(ans)
 
         else:
             raise Exception(
@@ -517,9 +527,6 @@ class Bsts:
                 ylim=ylim,
                 **kwargs)
 
-            if show_actuals:
-                ax.scatter(time, self.original_series, s=.2)
-
         elif style == "boxplot":
             R.time_series_boxplot(
                 curves=state_contribution,
@@ -527,11 +534,11 @@ class Bsts:
                 ax=ax,
                 ylim=ylim,
                 **kwargs)
-            if show_actuals:
-                ax.scatter(np.arange(len(time)),
-                           self.original_series,
-                           s=.2)
 
+        if show_actuals:
+            ax.scatter(time,
+                       self.original_series,
+                       s=1 / np.sqrt(self.original_series))
         return ax
 
     def plot_state_components(self,
@@ -680,15 +687,77 @@ class Bsts:
 
         return ax
 
-    def plot_forecast_distribution(self, **kwargs):
-        pass
+    def plot_forecast_distribution(
+            self,
+            cutpoints=None,
+            burn=None,
+            style="dynamic",
+            xlab="Time",
+            ylab="",
+            main="",
+            show_actuals=True,
+            cex_actuals=1,
+            col_actuals="blue", fig=None, **kwargs):
+        """
+        Plots the posterior distribution of the one-step-ahead forecasts
+        for a bsts model.
+
+        Args:
+          cutpoints: A list of integers, or None.
+          burn:  The number of MCMC iterations to be discarded as burn-in.
+          style: "dynamic" or "boxplot" indicating whether dynamic distribution
+            plots or boxplots should be used to draw the evolving distributions.
+          xlab:  Label for the time axis.
+          ylab:  Label for the vertical axis.
+          main:  Main plot title.
+          show_actuals: If True, then the actual response values will be
+            plotted on top of the forecast distributions.
+          col_actuals:  The color to use for the actual values, if shown.
+          fig:  The plt.Figure on which to draw the plot.
+          **kwargs: Extra args passed to either plot_dynamic_distribution, or
+            time_series_boxplot.
+
+        Returns:
+          The plt.Figure on which the plot is drawn.
+        """
+        errors = self.one_step_prediction_errors(
+            cutpoints=cutpoints, burn=burn, simplify=False)
+        if len(errors) == 0:
+            raise Exception("No forecast errors available.")
+        forecast = errors
+        original = self.original_series.values.reshape(1, -1)
+        for key, err in forecast.items():
+            forecast[key] = original - errors[key]
+        timestamps = self.original_series.index
+        actuals = self.original_series if show_actuals is True else None
+
+        implied_cutpoints = list(errors.keys())
+        vertical_cuts = [np.NaN] * len(implied_cutpoints)
+        for i in range(len(vertical_cuts)):
+            if implied_cutpoints[i] < len(timestamps):
+                vertical_cuts[i] = timestamps[implied_cutpoints[i]]
+
+        fig = R.compare_dynamic_distributions(
+            [forecast[key] for key in implied_cutpoints],
+            timestamps=timestamps,
+            style=style,
+            xlab=xlab,
+            ylab=ylab,
+            main=main,
+            fig=fig,
+            actuals=actuals,
+            cex_actuals=cex_actuals,
+            col_actuals=col_actuals,
+            vertical_cuts=vertical_cuts)
+
+        return fig
 
     def plot_prediction_errors(self, cutpoints=None, burn=None, xlab="Time",
                                ylab="", main="", fig=None, **kwargs):
         prediction_errors = self.one_step_prediction_errors(
             cutpoints=cutpoints, burn=burn)
         timestamps = self.original_series.index
-        R.CompareDynamicDistributions(
+        R.compare_dynamic_distributions(
             prediction_errors,
             timestamps=timestamps,
             xlab=xlab,
@@ -696,7 +765,7 @@ class Bsts:
             main=main,
             fig=fig,
             actuals=None,
-            vertical_cuts=list(cutpoints) + [None],
+            vertical_cuts=list(cutpoints) + [self.time_dimension],
             **kwargs)
         return prediction_errors
 
@@ -755,7 +824,7 @@ class Bsts:
         from .seasonal import SeasonalStateModel
 
         if fig is None:
-            fig = plt.Figure()
+            fig = plt.figure()
         state_models = [x for x in self._state_models
                         if isinstance(x, SeasonalStateModel)]
         if nseasons is not None:

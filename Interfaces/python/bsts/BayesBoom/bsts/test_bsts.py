@@ -303,6 +303,17 @@ class TestPlots(unittest.TestCase):
         if _show_figs:
             fig.show()
 
+    def test_plot_forecast_distribution(self):
+        fig = self._model.plot("forecast_distribution", cex_actuals=1)
+        self.assertIsInstance(fig, plt.Figure)
+        if _show_figs:
+            fig.show()
+
+        fig2 = self._model.plot("forecast_distribution",
+                                cutpoints=(50, 80, 100))
+        if _show_figs:
+            fig2.show()
+
     def test_plot_size(self):
         fig, ax = plt.subplots()
         foo = self._regression_model.plot_size(ax=ax)
@@ -341,7 +352,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_residuals()
+    rig.test_plot_forecast_distribution()
 
     print("Goodbye, cruel world!")
 

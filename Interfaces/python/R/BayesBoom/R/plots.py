@@ -725,7 +725,7 @@ def compare_dynamic_distributions(
         actuals=None,
         col_actuals=None,
         pch_actuals="o",
-        cex_actuals=.5,
+        cex_actuals=1,
         vertical_cuts=None,
         fig=None,
         **kwargs):
@@ -750,13 +750,12 @@ def compare_dynamic_distributions(
       main:  Main title for the plot.
       actuals: If non-NULL, actuals should be a numeric vector giving the
         actual "true" value at each time point.
-      col.actuals:  Color to use for the actuals.  See 'par'.
-      pch.actuals:  Plotting character(s) to use for the actuals.  See 'par'.
-      cex.actuals:  Scale factor for actuals.  See 'par'.
-      vertical.cuts: If non-NULL then this must be a vector of the same type as
+      col_actuals:  Color to use for the actuals.
+      cex_actuals:  Scale factor for actuals.
+      vertical.cuts: If not None then this must be a vector of the same type as
         'timestamps' with length matching the number of plots.  A vertical line
         will be drawn at this location for each plot.  Entries with the value
-        NA signal that no vertical line should be drawn for that entry.
+        NaN or NaT signal that no vertical line should be drawn for that entry.
       kwargs: Extra arguments passed to PlotDynamicDistribution or
        TimeSeriesBoxplot.
     """
@@ -765,21 +764,44 @@ def compare_dynamic_distributions(
     nplots = len(list_of_curves)
     ntimes = len(timestamps)
     for i in range(nplots):
-        assert len(list_of_curves[i]) == ntimes
+        assert list_of_curves[i].shape[1] == ntimes
     if frame_labels is None:
         frame_labels = [str(i + 1) for i in range(nplots)]
     assert len(frame_labels) == nplots
     if fig is None:
         fig = plt.figure()
 
-    ax = fig.subplots((nplots, 1))
+    ax = fig.subplots(nplots, 1, sharex=True)
+    if nplots == 1:
+        # If there is only one plot, put ax in a list so we can "iterate" over
+        # it without breaking the multiplot code.
+        ax = [ax]
     for i in range(nplots):
-        plot_dynamic_distribution(list_of_curves[i],
-                                  timestamps=timestamps,
-                                  ylab=frame_labels[i],
-                                  ax=ax[i],
-                                  **kwargs)
+        if style == "dynamic":
+            plot_dynamic_distribution(list_of_curves[i],
+                                      timestamps=timestamps,
+                                      ylab=frame_labels[i],
+                                      ax=ax[i],
+                                      **kwargs)
+        elif style == "boxplot":
+            time_series_boxplot(list_of_curves[i],
+                                timestamps=timestamps,
+                                ylab=frame_labels[i],
+                                ax=ax[i],
+                                **kwargs)
+        else:
+            raise Exception(f"Unrecognized style {style}")
 
+        if actuals is not None:
+            ax[i].scatter(timestamps, actuals,
+                          s=cex_actuals * 100 / np.sqrt(len(actuals)))
+
+        if vertical_cuts is not None:
+            if vertical_cuts[i] == vertical_cuts[i]:
+                ax[i].axvline(vertical_cuts[i])
+
+    if main:
+        fig.suptitle(main)
     return fig
 
 

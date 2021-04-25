@@ -33,6 +33,7 @@ from .plots import (
     abline,
     barplot,
     boxplot,
+    compare_dynamic_distributions,
     get_current_graphics_device,
     hist,
     histabunch,
