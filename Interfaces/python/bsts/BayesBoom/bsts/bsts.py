@@ -600,7 +600,7 @@ class Bsts:
         if show_actuals:
             ax.scatter(time,
                        self.original_series,
-                       s=1 / np.sqrt(self.original_series))
+                       s=1 / np.sqrt(len(self.original_series)))
         return ax
 
     def plot_state_components(self,

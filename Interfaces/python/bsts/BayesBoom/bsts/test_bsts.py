@@ -345,7 +345,8 @@ if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
-    # warnings.simplefilter("error")
+    import warnings
+    warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
@@ -359,7 +360,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_predictors()
+    rig.test_plot_state()
 
     print("Goodbye, cruel world!")
 
