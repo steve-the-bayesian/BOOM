@@ -774,7 +774,8 @@ def compare_dynamic_distributions(
                             f"got {list_of_curves[i].shape[1]}.")
     if frame_labels is None:
         frame_labels = [str(i + 1) for i in range(nplots)]
-    assert len(frame_labels) == nplots
+    if not len(frame_labels) == nplots:
+        raise Exception("frame labels do not match number of curves.")
     if fig is None:
         fig = plt.figure()
 

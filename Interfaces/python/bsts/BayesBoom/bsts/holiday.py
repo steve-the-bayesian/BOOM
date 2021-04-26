@@ -1,8 +1,5 @@
-import numpy as np
-import pandas as pd
 import BayesBoom.boom as boom
 import BayesBoom.R as R
-from numbers import Number
 
 from abc import ABC, abstractmethod
 
@@ -230,9 +227,9 @@ class DateRangeHoliday(Holiday):
         return boom.DateRangeHoliday(start_days, end_days)
 
 
-#======================================================================
+# ======================================================================
 # Some holidays that require smarts from BOOM.
-#======================================================================
+# ======================================================================
 
 class EasterSunday(OrdinaryAnnualHoliday):
     def __init__(self, days_before: int = 1, days_after: int = 1):
@@ -248,6 +245,7 @@ class EasterSunday(OrdinaryAnnualHoliday):
             return self._boom_holiday
         return boom.EasterSunday(
             self._days_before, self._days_after)
+
 
 class USDaylightSavingsTimeBegins(OrdinaryAnnualHoliday):
     def __init__(self, days_before: int = 1, days_after: int = 1):

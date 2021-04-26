@@ -788,7 +788,7 @@ class Bsts:
             raise Exception("No forecast errors available.")
         forecast = errors
         original = self.original_series.values.reshape(1, -1)
-        for key, err in forecast.items():
+        for key in forecast.keys():
             forecast[key] = original - errors[key]
         timestamps = self.original_series.index
         actuals = self.original_series if show_actuals is True else None
