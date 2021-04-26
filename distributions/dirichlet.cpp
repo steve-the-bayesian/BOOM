@@ -100,12 +100,15 @@ namespace BOOM {
       double ans(0), sum(0), xsum(0);
       for (uint i = 0; i < x.size(); ++i) {
         double xi = x(i);
-        if (xi > 1 || xi < 0) return logscale ? BOOM::negative_infinity() : 0;
-        xsum += xi;
-
-        double nui = nu(i);
-        sum += nui;
-        ans += (nui - 1.0) * log(xi) - lgamma(nui);
+        constexpr double eps = std::numeric_limits<double>::min();
+        if (xi > 1 || xi < eps) {
+          return logscale ? BOOM::negative_infinity() : 0;
+        } else {
+          xsum += xi;
+          double nui = nu(i);
+          sum += nui;
+          ans += (nui - 1.0) * log(xi) - lgamma(nui);
+        }
       }
       const double eps = 1e-5;  // std::numeric_limits<double>::epsilon()
       if (fabs(xsum - 1.0) > eps) {
