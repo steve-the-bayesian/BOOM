@@ -26,7 +26,9 @@ from .bayes import (
     SdPrior,
 )
 
-from .data_table import to_data_table, to_data_frame, AutoClean
+from .data_table import to_data_table, to_data_frame
+
+from .autoclean import AutoClean
 
 from .mcmc import suggest_burn
 
