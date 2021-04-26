@@ -130,7 +130,7 @@ class SeasonalStateModel(StateModel):
         self._state_model.set_sigma(self.sigma_draws[iteration])
 
     def plot_state_contribution(
-            self, fig, gridspec, time, burn, ylim, **kwargs):
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
         if self.nseasons == 7 and self.season_duration == 1:
             return self._plot_day_of_week_cycle(
                 fig=fig, gridspec=gridspec, time=time, burn=burn,
@@ -180,6 +180,8 @@ class SeasonalStateModel(StateModel):
             self, fig, gridspec, burn, time, ylim, **kwargs):
         spec = gridspec.subgridspec(3, 3)
         season = 0
+        if burn is None:
+            burn = 0
         for i in range(3):
             for j in range(3):
                 if (j == 2) and (i < 2):

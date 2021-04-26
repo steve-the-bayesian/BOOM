@@ -203,7 +203,7 @@ class StudentObservationModelManager(ObservationModelManager):
         return formatted
 
     def predict(self, model, formatted_prediction_data, boom_final_state, rng,
-                separate_components=False):
+                separate_components=False, **kwargs):
         """
         Return one draw from the posterior predictive distribution.
         """

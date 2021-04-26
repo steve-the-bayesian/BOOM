@@ -397,9 +397,9 @@ def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
                          **kwargs):
     """
     """
-    inc = compute_inclusion_probabilities(
-        coefficients, burn=burn, xnames=xnames)
-    pos = coefficient_positive_probability(burn=burn)
+    coef = coefficients[burn:, :]
+    inc = compute_inclusion_probabilities(coef)
+    pos = coefficient_positive_probability(coef)
     colors = np.array([str(x) for x in pos])
     index = np.argsort(inc.values)[::-1]
 

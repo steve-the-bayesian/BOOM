@@ -133,7 +133,7 @@ class PoissonObservationModelManager(ObservationModelManager):
         return formatted
 
     def predict(self, model, formatted_prediction_data, boom_final_state, rng,
-                separate_components=False):
+                separate_components=False, **kwargs):
         if separate_components:
             draw = model.simulate_forecast_components(
                 rng,
