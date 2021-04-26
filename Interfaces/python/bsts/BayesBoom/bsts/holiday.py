@@ -104,8 +104,10 @@ class OrdinaryAnnualHoliday(SingleDayHoliday):
     two integers: days_before and days_after, that define its influence window.
     """
     def __init__(self, days_before: int = 1, days_after: int = 1):
-        assert days_before >= 0
-        assert days_after >= 0
+        if not days_before >= 0:
+            raise Exception("'days_before' must be non-negative.")
+        if not days_after >= 0:
+            raise Exception("'days_after' must be non-negative.")
         self._days_before = int(days_before)
         self._days_after = int(days_after)
 
@@ -123,8 +125,13 @@ class FixedDateHoliday(OrdinaryAnnualHoliday):
                  days_before: int = 1,
                  days_after: int = 1):
         super().__init__(days_before, days_after)
-        assert month >= 1 and month <= 12
-        assert day >= 1 and day <= days_in_month[month]
+        if month < 1 or month > 12:
+            raise Exception("'month' must be between 1 and 12.")
+        if day < 1 or day > days_in_month[month]:
+            raise Exception(
+                f"For month {month}, the day argument must be between 1 "
+                f"and {days_in_month[month]}."
+            )
         self._month = int(month)
         self._day = int(day)
         self._boom_holiday = self.boom()
@@ -152,9 +159,12 @@ class NthWeekdayInMonthHoliday(OrdinaryAnnualHoliday):
                  days_before: int = 1,
                  days_after: int = 1):
         super().__init__(days_before, days_after)
-        assert which_week >= 1 and which_week <= 5
-        assert month >= 1 and month <= 12
-        assert day_of_week >= 1 and day_of_week <= 7
+        if which_week < 1 or which_week > 5:
+            raise Exception("which_week must be between 1 and 5.")
+        if month < 1 or month > 12:
+            raise Exception("month must be between 1 and 12.")
+        if day_of_week < 1 or day_of_week > 7:
+            raise Exception("day_of_week must be between 1 and 7.")
         self._which_week = which_week
         self._day_of_week = day_of_week
         self._month = month
@@ -183,8 +193,10 @@ class LastWeekdayInMonthHoliday(OrdinaryAnnualHoliday):
                  days_before: int = 1,
                  days_after: int = 1):
         super().__init__(days_before, days_after)
-        assert month >= 1 and month <= 12
-        assert day_of_week >= 1 and day_of_week <= 7
+        if month < 1 or month > 12:
+            raise Exception("month must be between 1 and 12")
+        if day_of_week < 1 or day_of_week > 7:
+            raise Exception("day_of_week must be between 1 and 7")
         self._month = int(month)
         self._day_of_week = int(day_of_week)
         self._boom_holiday = self.boom()

@@ -140,8 +140,12 @@ class DynamicRegressionStateModel(StateModel):
         elif isinstance(sigma_prior, R.SdPrior):
             self._sigma_prior = [sigma_prior] * len(sdx)
 
-        assert R.is_iterable(self._sigma_prior) and all(
-            [isinstance(x, R.SdPrior) for x in self._sigma_prior])
+        if not R.is_iterable(self._sigma_prior) and all(
+            [isinstance(x, R.SdPrior) for x in self._sigma_prior]
+        ):
+            raise Exception(
+                "sigma_prior must be a list-like of R.SdPrior objects."
+            )
 
         return self._sigma_prior
 

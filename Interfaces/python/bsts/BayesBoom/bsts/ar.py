@@ -135,7 +135,8 @@ class SpikeSlabArPrior:
                  sigma_upper_limit=np.Inf,
                  max_flips=np.Inf):
         self._lags = int(lags)
-        assert self._lags >= 0
+        if self._lags < 0:
+            raise Exception("'lags' argument must be non-negative.")
 
         self._max_flips = max_flips
 
@@ -149,7 +150,8 @@ class SpikeSlabArPrior:
             self._prior_mean = np.zeros(self._lags)
         else:
             self._prior_mean = np.array(prior_mean, dtype=float)
-        assert len(self._prior_mean) == self._lags
+        if len(self._prior_mean) != self._lags:
+            raise Exception("prior_mean argument must have length 'lags'.")
 
         if prior_sd is None:
             self._prior_sd = np.geomspace(

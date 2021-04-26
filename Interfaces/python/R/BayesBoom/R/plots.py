@@ -768,7 +768,10 @@ def compare_dynamic_distributions(
     nplots = len(list_of_curves)
     ntimes = len(timestamps)
     for i in range(nplots):
-        assert list_of_curves[i].shape[1] == ntimes
+        if list_of_curves[i].shape[1] != ntimes:
+            raise Exception(f"Entry {i} in 'list_of_curves' did not have the "
+                            f"right number of columns.  Expected {ntimes}, "
+                            f"got {list_of_curves[i].shape[1]}.")
     if frame_labels is None:
         frame_labels = [str(i + 1) for i in range(nplots)]
     assert len(frame_labels) == nplots
