@@ -31,9 +31,9 @@ namespace BOOM {
         permutation_sign_ = dcmp_.permutationP().determinant() *
             dcmp_.permutationQ().determinant();
       }
-      
+
       LU_impl_ * clone() const { return new LU_impl_(*this); }
-      
+
       Vector solve(const ConstVectorView &rhs) const {
         if (rhs.size() != ncol()) {
           std::ostringstream err;
@@ -89,14 +89,14 @@ namespace BOOM {
         }
         return numneg %2 == 0 ? ans : negative_infinity();
       }
-      
-      
+
+
      private:
       Eigen::FullPivLU<Eigen::MatrixXd> dcmp_;
       int permutation_sign_;
-      
+
     };
-    
+
   } // namespace LuImpl
 
   LU::LU() : impl_(nullptr) {}
@@ -115,7 +115,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   LU & LU::operator=(LU &&rhs) {
     if (&rhs != this) {
       impl_ = std::move(rhs.impl_);
@@ -123,7 +123,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   LU::LU(const Matrix &square_matrix) {
     decompose(square_matrix);
   }
@@ -169,7 +169,7 @@ namespace BOOM {
   void LU::clear() {
     impl_.reset(nullptr);
   }
-  
+
   double LU::det() const {
     if (!impl_) {
       report_error("Decompose a matrix before calling LU::det().");
@@ -183,6 +183,6 @@ namespace BOOM {
     }
     return impl_->logdet();
   }
-  
-  
+
+
 }  // namespace BOOM

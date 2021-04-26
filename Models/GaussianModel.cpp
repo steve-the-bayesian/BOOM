@@ -81,7 +81,7 @@ namespace BOOM {
   double GaussianModel::Loglike(const Vector &mu_sigsq, Vector &g, Matrix &h,
                                 uint nd) const {
     double sigsq = mu_sigsq[1];
-    if (sigsq < 0) {
+    if (sigsq < std::numeric_limits<double>::min()) {
       return BOOM::negative_infinity();
     }
 

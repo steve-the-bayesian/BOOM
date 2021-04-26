@@ -160,7 +160,7 @@ namespace BOOM {
       report_error("Wrong size argument.");
     }
     double lam = lambda_vector[0];
-    if (lam < 0) {
+    if (lam < std::numeric_limits<double>::min()) {
       return negative_infinity();
     }
     Ptr<PoissonSuf> s = suf();
