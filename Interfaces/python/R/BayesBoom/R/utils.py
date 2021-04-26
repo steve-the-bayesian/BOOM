@@ -14,12 +14,12 @@ def is_all_numeric(data_frame):
     return np.all(data_frame.dtypes.apply(pd.api.types.is_numeric_dtype))
 
 
-def is_iterable(object):
+def is_iterable(obj):
     """
     Check to see if 'object' is an iterable object.  An iterable object allows
     the idiom 'for x in object:...'.
     """
-    return hasattr(object, "__getitem__") or hasattr(object, "__iter__")
+    return hasattr(obj, "__getitem__") or hasattr(obj, "__iter__")
 
 
 def to_boom_vector(v):

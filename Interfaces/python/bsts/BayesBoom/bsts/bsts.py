@@ -875,7 +875,7 @@ class Bsts:
             coef = coef[burn:, :]
 
         if ax is None:
-            fig, ax = plt.subplots(1, 1, 1)
+            _, ax = plt.subplots(1, 1, 1)
 
         inc = spikeslab.compute_inclusion_probabilities(coef)
 
@@ -938,7 +938,7 @@ class Bsts:
         if burn is None:
             burn = self.suggest_burn()
         if ax is None:
-            fig, ax = plt.subplots(1, 1, 1)
+            _, ax = plt.subplots(1, 1, 1)
         return spikeslab.plot_model_size(
             coef, burn=burn, ax=ax, **kwargs)
 
