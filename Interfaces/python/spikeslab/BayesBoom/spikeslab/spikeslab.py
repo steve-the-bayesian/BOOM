@@ -373,7 +373,7 @@ def compute_inclusion_probabilities(coefficients):
         Rows represent MCMC draws.  Columns represent variables.
 
     Returns:
-      A pd.Series of inclusion probabilities, indexed by variable name.
+      A np.array of inclusion probabilities.
     """
     nvars = coefficients.shape[1]
     return np.array(

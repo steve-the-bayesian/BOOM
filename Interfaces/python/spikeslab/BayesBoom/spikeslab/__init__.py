@@ -1,5 +1,7 @@
 
 from .spikeslab import (
+    compute_inclusion_probabilities,
+    coefficient_positive_probability,
     dot,
     lm_spike,
     sparsify,

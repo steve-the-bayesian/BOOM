@@ -2,7 +2,6 @@ import unittest
 import numpy as np
 import pandas as pd
 import pickle
-import json
 
 import pdb
 
@@ -246,7 +245,7 @@ class TestPlots(unittest.TestCase):
         np.random.seed(8675309)
         np.random.seed(0xDEADBEEF)
         fake_data = np.random.randn(100, 10)
-        fake_coefficients = np.array([5, -4, 3, 1, .5, -.5, -1] + [0] * 3)
+        fake_coefficients = np.array([5, -4, 3] + [0] * 7)
         random_walk = np.cumsum(np.random.randn(100))
         noise = np.random.randn(100) * 1.5
         y = random_walk + fake_data @ fake_coefficients + noise
@@ -321,6 +320,14 @@ class TestPlots(unittest.TestCase):
             fig.show()
         self.assertIsInstance(foo, plt.Axes)
 
+    def test_plot_predictors(self):
+        fig, ax = plt.subplots()
+        foo = self._regression_model.plot(
+            "predictors", ax=ax, short_names=False)
+        if _show_figs:
+            fig.show()
+        self.assertIsInstance(foo, plt.Axes)
+
     def test_compare_bsts_models(self):
         fig = plt.figure()
         models = {
@@ -352,7 +359,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_forecast_distribution()
+    rig.test_plot_predictors()
 
     print("Goodbye, cruel world!")
 

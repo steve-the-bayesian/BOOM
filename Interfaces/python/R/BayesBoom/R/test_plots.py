@@ -7,14 +7,13 @@ from BayesBoom.R.plots import (
     time_series_boxplot,
 )
 
+import BayesBoom.R as R
+
 import numpy as np
 import pandas as pd
 
-_debug_mode = False
-_show_figs = _debug_mode
 
-
-class TestPlotDynamicDistribution(unittest.TestCase):
+class TestPlots(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -58,6 +57,19 @@ class TestPlotDynamicDistribution(unittest.TestCase):
         if _show_figs:
             fig.show()
 
+    def test_lty(self):
+        x = np.linspace(0, 10)
+        fig, ax = plt.subplots()
+        for i in range(10):
+            y = x + i
+            ax.plot(x, y, ls=R.lty(i))
+        if _show_figs:
+            fig.show()
+
+
+_debug_mode = False
+_show_figs = _debug_mode
+
 
 if _debug_mode:
     import pdb  # noqa
@@ -70,15 +82,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    # rig = TestPlotLines()
-    rig = TestPlotDynamicDistribution()
+    rig = TestPlots()
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
     # rig.test_plot_points()
-    rig.test_time_series_boxplot()
+    rig.test_lty()
     # rig.test_fill_between()
 
     print("Goodbye, cruel world!")

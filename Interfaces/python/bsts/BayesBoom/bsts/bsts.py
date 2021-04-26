@@ -10,6 +10,7 @@ from .state_models import StateModel
 
 import matplotlib.pyplot as plt
 import copy
+import patsy
 
 
 class Bsts:
@@ -201,6 +202,62 @@ class Bsts:
             return self._original_series
         else:
             return None
+
+    @property
+    def predictors(self):
+        """
+        The predictors used in the training data.
+        """
+        if (
+                self._formula is None
+                or not hasattr(self, "_data")
+                or self._data is None
+        ):
+            return None
+        if "~" in self._formula:
+            predictor_formula = self._formula.split("~")[1]
+        else:
+            predictor_formula = self._formula
+        return patsy.dmatrix(predictor_formula, self._data)
+
+    def coefficients(self, burn=None):
+        """
+        The posterior distribution of the model coefficients.  If the model
+        contains no regression component, return None.
+
+        Args:
+          burn: The number of MCMC iterations to be discarded as burn-in.  If
+            None then a default value is chosen.  Set burn=0 if no burn-in is
+            desired.
+
+        Returns:
+          A scipy.sparse.lil_matrix containing the draws of the model
+          coefficients.  Rows are MCMC draws.  Columns correspond to predictor
+          variables.
+        """
+        if burn is None:
+            burn = self.suggest_burn()
+        if self._observation_model_manager.has_regression:
+            return self._observation_model_manager._coefficients[burn:, :]
+        else:
+            return None
+
+    def inclusion_probabilities(self, burn=None):
+        """
+        Args:
+          burn: The number of MCMC iterations to be discarded as burn-in.  If
+            None then a default value is chosen.  Set burn=0 if no burn-in is
+            desired.
+
+        Returns:
+          A pd.Series indexed by predictor names, containing the marginal
+          inclusion probabilities of each coefficient.
+        """
+        coef = self.coefficients(burn=burn)
+        if coef is None:
+            return None
+        inc = spikeslab.compute_inclusion_probabilities(coef)
+        return pd.Series(inc, index=self._predictor_names)
 
     def residuals(self, burn=None):
         """
@@ -412,6 +469,11 @@ class Bsts:
 
         return BstsPrediction(pred, self.original_series)
 
+    def help(self):
+        # import webbrowser as web.
+        # web.open("path_to_docs")
+        print("coming soon...")
+
     # --------------------------------------------------------------------------
     # The remaining public functions all make plots.
     # --------------------------------------------------------------------------
@@ -462,7 +524,7 @@ class Bsts:
         elif what == "monthly":
             return self.plot_monthly(**kwargs)
         elif what == "help":
-            pass
+            return self.plotting_help()
         else:
             raise Exception(f"Don't know how to plot {what}.")
 
@@ -769,8 +831,104 @@ class Bsts:
             **kwargs)
         return prediction_errors
 
-    def plot_predictors(self, **kwargs):
-        pass
+    def plot_predictors(self,
+                        burn=None,
+                        inclusion_threshold=.1,
+                        ylim=None,
+                        flip_signs=True,
+                        show_legend=True,
+                        grayscale=True,
+                        short_names=False,
+                        ax=None,
+                        **kwargs):
+        """
+        Plot the predictors with sufficiently high inclusion probability vs
+        time, along with the outcome.
+
+        Args:
+          burn:  The number of MCMC iterations to discard as burn-in.
+          inclusion_threshold: An inclusion probability that coefficients
+            must exceed in order to be displayed.
+          ylim:  Limits on the vertical axis.
+          flip_signs: If True then a predictor with a negative sign will
+            be flipped before being plotted, to better align visually
+            with the target series.
+          show_legend:  Show a legend for the plot.
+          grayscale: If True then the plotted lines are shown with "blackness"
+            corresponding to their inclusion probability.  Certain predictors
+            appear as black lines.  Improbable ones are fainter.
+          short_name: If True then common prefixes and suffixes are removed
+            from variable names in the legend.
+          ax: a plt.Axes object on which to draw the plot.
+          **kwargs:  Extra arguments passed to 'R.plot_ts'.
+
+        Returns:
+          The 'ax' on which the plot was drawn.
+        """
+        coef = getattr(self._observation_model_manager, "_coefficients", None)
+        if coef is None:
+            return ax
+
+        if burn is None:
+            burn = self.suggest_burn()
+        if burn > 0:
+            coef = coef[burn:, :]
+
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, 1)
+
+        inc = spikeslab.compute_inclusion_probabilities(coef)
+
+        keep = inc >= inclusion_threshold
+        if not np.any(keep):
+            ax.set_title("No predictors above inclusion threshold.")
+            return ax
+
+        inc = inc[keep]
+
+        predictors = self.predictors[:, keep]
+        pos = spikeslab.coefficient_positive_probability(predictors)
+        order = np.argsort(inc)[::-1]
+        predictors = predictors[:, order]
+        inc = inc[order]
+        pos = pos[order]
+
+        for i in range(predictors.shape[1]):
+            sd = np.nanstd(predictors[:, i], ddof=1)
+            mean = np.nanmean(predictors[:, i])
+            predictors[:, i] = (predictors[:, i] - mean) / sd
+
+        if grayscale:
+            line_colors = (1 - inc).astype("str")
+        else:
+            line_colors = ["black"] * len(inc)
+
+        number_of_predictors = predictors.shape[1]
+        times = self.original_series.index
+        predictor_names = np.array(self._predictor_names)[keep][order]
+        if short_names:
+            predictor_names = R.remove_common_prefix(predictor_names)
+            predictor_names = R.remove_common_suffix(predictor_names)
+
+        scaled_original = self.original_series - np.nanmean(
+            self._original_series)
+        scaled_original /= np.nanstd(scaled_original, ddof=1)
+        original_name = self._formula.split("~")[0]
+        ax.plot(times, scaled_original, label=original_name)
+
+        for i in range(number_of_predictors):
+            ax.plot(times,
+                    predictors[:, i],
+                    label=predictor_names[i],
+                    linestyle=R.lty(i),
+                    color=line_colors[i],
+                    lw=.5,
+                    **kwargs)
+
+        if show_legend:
+            ax.legend()
+
+        return ax
 
     def plot_size(self, burn=None, ax=None, **kwargs):
         coef = getattr(self._observation_model_manager,
@@ -851,7 +1009,11 @@ class Bsts:
         pass
 
     def plotting_help(self, **kwargs):
-        pass
+        # TODO, once we get documentation up on "readthedocs", uncomment
+        # import webbrowser as web
+        # web.open("path/to/plot/function")
+        #
+        print("coming soon.")
 
     def _allocate_space(self, niter: int):
         """

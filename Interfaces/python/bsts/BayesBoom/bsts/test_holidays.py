@@ -1,24 +1,14 @@
 import unittest
-import numpy as np
 import pandas as pd
-import pickle
-import json
 
 import pdb
 
-import matplotlib.pyplot as plt
-
-from BayesBoom.R import delete_if_present
-
 from BayesBoom.bsts import (
-    Bsts,
-    AirPassengers,
-    LocalLinearTrendStateModel,
-    RegressionHolidayStateModel,
-    Holiday,
+    # Bsts,
+    # RegressionHolidayStateModel,
     FixedDateHoliday,
     LastWeekdayInMonthHoliday,
-    NthWeekdayInMonthHoliday,
+    # NthWeekdayInMonthHoliday,
     EasterSunday,
     USDaylightSavingsTimeBegins,
     USDaylightSavingsTimeEnds,
@@ -63,13 +53,11 @@ class TestHolidays(unittest.TestCase):
             pd.Timestamp(year=2020, month=5, day=25))
 
 
-
 class TestRegressionHolidayStateModel(unittest.TestCase):
     pass
 
 
-_debug_mode = True
-
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

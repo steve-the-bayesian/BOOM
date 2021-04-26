@@ -3,10 +3,15 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-import numbers
+from numbers import Number
 from abc import ABC, abstractmethod
 
-from .R import data_range, remove_common_suffix, remove_common_prefix
+from .R import (
+    data_range,
+    remove_common_suffix,
+    remove_common_prefix,
+    unique_match
+)
 
 _active_graphics_devices = {}
 _current_graphics_device = None
@@ -601,7 +606,7 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
         ylim = data_range(series)
 
     if truth is not None:
-        if isinstance(truth, numbers.Number):
+        if isinstance(truth, Number):
             truth = np.ones((nr, nc)) * truth
         elif len(truth.shape) == 1:
             truth = np.concatenate(
@@ -759,7 +764,6 @@ def compare_dynamic_distributions(
       kwargs: Extra arguments passed to PlotDynamicDistribution or
        TimeSeriesBoxplot.
     """
-    from .R import unique_match
     style = unique_match(style, ["dynamic", "boxplot"])
     nplots = len(list_of_curves)
     ntimes = len(timestamps)
@@ -858,3 +862,34 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
+
+
+def lty(style):
+    """
+    Python linestyle characters from R 'lty' (linetype).
+
+    Args:
+      style:  An int or string.
+
+    """
+    style_names = ["solid", "dashed", "dotted", "dotdash",
+                   "longdash", "twodash"]
+
+    mappings = {
+        "solid": "-",
+        "dashed": "--",
+        "dotted": ":",
+        "dotdash": "-.",
+        "longdash": (5, (8, 1, 8, 1)),
+        "twodash": (5, (6, 1, 3, 1))
+    }
+
+    if isinstance(style, str):
+        if style == "dashdot":
+            style = "dotdash"
+        style = unique_match(style, style_names)
+        return mappings[style]
+
+    elif isinstance(style, Number):
+        style_number = style % len(style_names)
+        return mappings[style_names[style_number]]

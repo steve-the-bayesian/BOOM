@@ -12,6 +12,7 @@ from .R import (
     paste,
     paste0,
     recycle,
+    remove_common_prefix,
     remove_common_suffix,
     unique_match,
 )
@@ -39,6 +40,7 @@ from .plots import (
     histabunch,
     hosmer_lemeshow_plot,
     lines,
+    lty,
     plot,
     plot_dynamic_distribution,
     plot_many_ts,
