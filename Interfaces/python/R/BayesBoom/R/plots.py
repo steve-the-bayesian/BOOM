@@ -491,6 +491,67 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
 # Custom plots
 # ===========================================================================
 
+def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
+    """
+    Args:
+      counts: A pd.DataFrame or equivalent, containing the contingency table
+        describing the relationship between two categorical variables.
+      ax:
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = None
+
+    assert isinstance(ax, plt.Axes)
+
+    # The margininal distribution of the variable described by the rows,
+    # obtained by summing over columns.
+    row_margin = counts.sum(axis=1)
+    nrow = len(row_margin)
+
+    # The margininal distribution of the variable described by the columns,
+    # obtained by summing over rows.
+    col_margin = counts.sum(axis=0)
+    ncol = len(col_margin)
+
+    # The conditional distribution of the row variable, within each column.
+    conditional = counts / col_margin
+
+    col_margin /= np.sum(col_margin)
+    row_margin /= np.sum(row_margin)
+
+    cum_col_margin = np.cumsum(col_margin)
+    lower_col_margin = np.array([0] + cum_col_margin[:-1].tolist())
+    column_positions = (lower_col_margin + cum_col_margin) / 2
+    column_widths = cum_col_margin - lower_col_margin
+
+    lower = np.zeros(ncol)
+    for row_index in range(len(row_margin)):
+        ax.bar(column_positions, conditional.iloc[row_index, :],
+               width=column_widths, bottom=lower, edgecolor="gray",
+               label=counts.index[row_index])
+        lower += conditional.iloc[row_index, :]
+
+    ax.set_xticks(column_positions)
+    ax.set_xticklabels(counts.columns)
+
+    cum_row_margin = np.cumsum(row_margin)
+    row_low = np.array([0] + cum_row_margin[:-1].tolist())
+
+    if np.min(row_margin) < .05:
+        set.yticks(np.linspace(0, 1, nrow))
+    else:
+        row_tick_locations = (cum_row_margin + row_low) / 2
+        ax.set_yticks(row_tick_locations)
+    ax.set_yticklabels(counts.index)
+
+    if fig is not None:
+        fig.show()
+
+    return ax
+
+
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
     nvars = data.shape[1]
     nr, nc = plot_grid_shape(nvars)

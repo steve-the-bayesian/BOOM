@@ -26,6 +26,7 @@ from .plots import (
     histabunch,
     hosmer_lemeshow_plot,
     lines,
+    mosaic_plot,
     plot,
     plot_dynamic_distribution,
     plot_many_ts,

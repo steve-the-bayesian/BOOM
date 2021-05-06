@@ -1,6 +1,26 @@
 import unittest
 import matplotlib.pyplot as plt
-from BayesBoom.R.plots import *
+import numpy as np
+import pandas as pd
+from BayesBoom.R.plots import (
+    mosaic_plot,
+    plot_dynamic_distribution
+)
+
+
+def char_range(c1, c2):
+    """Generates the characters from `c1` to `c2`, inclusive."""
+    for c in range(ord(c1), ord(c2) + 1):
+        yield chr(c)
+
+
+LETTERS = list(char_range("a", "z"))
+
+us_states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
+             "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
+             "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
+             "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
+             "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
 
 class TestPlotDynamicDistribution(unittest.TestCase):
@@ -32,8 +52,23 @@ class TestPlotDynamicDistribution(unittest.TestCase):
         timestamps = np.arange(0, time_dimension)
         fig, ax = plt.subplots()
 
-        plot_dynamic_distribution(curves=random_walks, timestamps=timestamps, ax=ax, quantile_step=.01)
+        plot_dynamic_distribution(curves=random_walks, timestamps=timestamps,
+                                  ax=ax, quantile_step=.01)
         fig.show()
+
+    def test_mosaic_plot(self):
+        counts = np.random.randint(1, 10, (12, 4))
+        counts = pd.DataFrame(counts, index=us_states[:counts.shape[0]],
+                              columns=["red", "blue", "green", "yellow"])
+
+        print(counts)
+        fig, ax = plt.subplots()
+        foo = mosaic_plot(counts, ax=ax)
+
+        if _debug_mode:
+            fig.show()
+
+        self.assertIsInstance(foo, plt.Axes)
 
 
 _debug_mode = True
@@ -57,7 +92,7 @@ if _debug_mode:
         rig.setUp()
 
     # rig.test_plot_points()
-    rig.test_plot_dynamic_distribution()
+    rig.test_mosaic_plot()
     # rig.test_fill_between()
 
     print("Goodbye, cruel world!")
