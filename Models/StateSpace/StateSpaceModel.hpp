@@ -65,6 +65,11 @@ namespace BOOM {
         const std::vector<bool> &y_is_observed = std::vector<bool>());
     StateSpaceModel(const StateSpaceModel &rhs);
     StateSpaceModel *clone() const override;
+    StateSpaceModel *deepclone() const override {
+      StateSpaceModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int time_dimension() const override;
     double observation_variance(int t) const override;
@@ -126,6 +131,9 @@ namespace BOOM {
     Vector one_step_holdout_prediction_errors(const Vector &holdout_y,
                                               const Vector &final_state,
                                               bool standardize = false) const;
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
     // Update the complete data sufficient statistics for the
     // observation model based on the posterior distribution of the

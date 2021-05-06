@@ -124,6 +124,13 @@ namespace BOOM {
            sample_size_prior_->logp(sample_size);
   }
 
+  BBPS *BBPS::clone_to_new_host(Model *new_host) const {
+    return new BBPS(dynamic_cast<BetaBinomialModel *>(new_host),
+                    probability_prior_->clone(),
+                    sample_size_prior_->clone(),
+                    rng());
+  }
+
   void BBPS::draw() {
     switch (sampling_method_) {
       case SLICE:

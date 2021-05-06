@@ -34,12 +34,16 @@ namespace BOOM {
    public:
     explicit MvnConjMeanSampler(MvnModel *Mod,  // improper: mu0 = 0 kappa = 0;
                                 RNG &seeding_rng = GlobalRng::rng);
-    MvnConjMeanSampler(MvnModel *Mod, const Ptr<VectorParams> &Mu0,
+    MvnConjMeanSampler(MvnModel *Mod,
+                       const Ptr<VectorParams> &Mu0,
                        const Ptr<UnivParams> &Kappa,
                        RNG &seeding_rng = GlobalRng::rng);
-    MvnConjMeanSampler(MvnModel *Mod, const Vector &Mu0, double Kappa,
+    MvnConjMeanSampler(MvnModel *Mod,
+                       const Vector &Mu0,
+                       double Kappa,
                        RNG &seeding_rng = GlobalRng::rng);
 
+    MvnConjMeanSampler *clone_to_new_host(Model *new_host) const override;
     double logpri() const override;  // p(mu|Sig)
     void draw() override;
 
@@ -53,15 +57,20 @@ namespace BOOM {
   class MvnMeanSampler : public PosteriorSampler {
     // assumes y~N(mu, Sigma) with mu~N(mu0, Omega)
    public:
-    MvnMeanSampler(MvnModel *Mod, const Ptr<VectorParams> &Mu0,
+    MvnMeanSampler(MvnModel *Mod,
+                   const Ptr<VectorParams> &Mu0,
                    const Ptr<SpdParams> &Omega,
                    RNG &seeding_rng = GlobalRng::rng);
 
-    MvnMeanSampler(MvnModel *Mod, const Ptr<MvnBase> &Pri,
+    MvnMeanSampler(MvnModel *Mod,
+                   const Ptr<MvnBase> &Pri,
                    RNG &seeding_rng = GlobalRng::rng);
 
-    MvnMeanSampler(MvnModel *Mod, const Vector &Mu0, const SpdMatrix &Omega,
+    MvnMeanSampler(MvnModel *Mod,
+                   const Vector &Mu0,
+                   const SpdMatrix &Omega,
                    RNG &seeding_rng = GlobalRng::rng);
+    MvnMeanSampler *clone_to_new_host(Model *new_host) const override;
     double logpri() const override;
     void draw() override;
 

@@ -30,8 +30,8 @@ namespace BOOM {
     // template constructor is needed for polymorphic vectors of models
     template <class VECmodel, class SCALmodel>
     ProductDirichletPosteriorSampler(ProductDirichletModel *m,
-                                     const std::vector<const Ptr<VECmodel> &> &phi,
-                                     const std::vector<const Ptr<SCALmodel> &> &alpha,
+                                     const std::vector<Ptr<VECmodel>> &phi,
+                                     const std::vector<Ptr<SCALmodel>> &alpha,
                                      double min_nu = 0,
                                      RNG &seeding_rng = GlobalRng::rng)
         : PosteriorSampler(seeding_rng),
@@ -39,6 +39,9 @@ namespace BOOM {
           phi_row_prior_(phi.begin(), phi.end()),
           alpha_row_prior_(alpha.begin(), alpha.end()),
           min_nu_(min_nu) {}
+
+    ProductDirichletPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
 
     void draw() override;
     double logpri() const override;

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from inspect import isfunction, getsource
 import time
+from numbers import Number
 
 
 class omit:
@@ -170,6 +171,20 @@ def first_true(boolean_array):
     return next((i for i, v in enumerate(boolean_array) if v), None)
 
 
+def recycle(x, output_len):
+    x = list(x)
+    nchoices = len(x)
+    if nchoices >= output_len:
+        return x[:output_len]
+    ans = x
+    len_ans = nchoices
+    while len_ans + nchoices < output_len:
+        ans = ans + x
+        len_ans += nchoices
+    num_remaining = output_len - len_ans
+    return ans + x[:num_remaining]
+
+
 def unique_match(value, legal_value_list):
     """
     If 'value' uniquely matches only one value in legal_value_list, then return
@@ -182,9 +197,11 @@ def unique_match(value, legal_value_list):
     else:
         return legal_value_list[first_true(matches)]
 
+
 def _reduce_concat(x, sep=""):
     import functools
     return functools.reduce(lambda x, y: str(x) + sep + str(y), x)
+
 
 def _deduce_type(*lists):
     """
@@ -203,6 +220,7 @@ def _deduce_type(*lists):
             type_code = max(type_code, 1)
     return type_code
 
+
 def paste(*lists, sep=" ", collapse=None):
     """
     Paste one or more vector-like objects to gether into a vector of strings.
@@ -216,14 +234,77 @@ def paste(*lists, sep=" ", collapse=None):
       return type is also pd.Series.  Otherwise if any arguments are numpy
       arrays the return is a numpy array.  Otherwise the return type is a list.
     """
-    result = map(lambda x: _reduce_concat(x, sep=sep), zip(*lists))
+    list_of_inputs = [*lists]
+    max_length = np.max([len(x) for x in list_of_inputs])
+    for i in range(len(list_of_inputs)):
+        if isinstance(list_of_inputs[i], str):
+            string_value = list_of_inputs[i]
+            list_of_inputs[i] = [string_value] * max_length
+        elif isinstance(list_of_inputs[i], Number):
+            value = list_of_inputs[i]
+            list_of_inputs[i] = [value] * max_length
+
+    parallel_data = pd.DataFrame(list_of_inputs).T
+    result = parallel_data.apply(_reduce_concat, sep=sep, axis=1).astype(
+        str).values.tolist()
     if collapse is not None:
         return _reduce_concat(result, sep=collapse)
-    type_code = _deduce_type(*lists)
-    result = list(result)
-    if type_code == 0:
-        return result
-    elif type_code == 1:
-        return np.array(result)
     else:
-        return pd.Series(result)
+        return result
+
+
+def paste0(*lists, sep="", collapse=None):
+    return paste(*lists, sep=sep, collapse=collapse)
+
+
+def remove_common_prefix(strings):
+    if len(strings) == 0:
+        return strings
+    current = [x for x in strings]
+    while True:
+        try:
+            initial_element = {x[0] for x in current}
+        except IndexError:
+            return current
+        if len(initial_element) > 1:
+            return current
+        current = [x[1:] for x in current]
+
+
+def remove_common_suffix(strings):
+    """
+    If all strings in a collection end in the same character, that character is
+    a 'common suffix."  This function reomves common suffixes from collections
+    of strings.
+
+    Args:
+      strings:  A list, array, or other collection of strings.
+
+    Returns:
+      shortened_strings:  A list of string with common suffixes removed.
+
+    Examples:
+      remove_common_suffix([])
+      []
+
+      remove_common_suffix(["foo", "bar", "baz"])
+      ["foo", "bar", "baz"]
+
+      remove_common_suffix(["fooz", "barz", "baz"])
+      ["foo", "bar", "ba"]
+
+      remove_common_suffix(["zz", "z"])
+      ["z", ""]
+
+    """
+    if len(strings) == 0:
+        return strings
+    current = [x for x in strings]
+    while True:
+        try:
+            final_element = {x[-1] for x in current}
+        except IndexError:
+            return current
+        if len(final_element) > 1:
+            return current
+        current = [x[:-1] for x in current]

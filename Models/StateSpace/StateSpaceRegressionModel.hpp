@@ -91,9 +91,17 @@ namespace BOOM {
 
     StateSpaceRegressionModel(const StateSpaceRegressionModel &rhs);
     StateSpaceRegressionModel *clone() const override;
+    StateSpaceRegressionModel *deepclone() const override {
+      StateSpaceRegressionModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     // The number of time points in the data.
     int time_dimension() const override { return dat().size(); }
+    int xdim() const  {
+      return observation_model()->xdim();
+    }
 
     // Variance of observed data y[t], given state alpha[t].  Durbin
     // and Koopman's H.
@@ -154,12 +162,26 @@ namespace BOOM {
     Vector regression_contribution() const override;
     bool has_regression() const override { return true; }
 
-    // Returns the vector of one-step-ahead prediction errors from a
-    // holdout sample.
+    // Return the vector of one-step-ahead predictions errors from a
+    // holdout sample, following immediately after the training data.
+    //
+    // Args:
+    //   newX: The predictor variables for the holdout sample.
+    //   newY: The response variable for the holdout data.
+    //   final_state:  The state vector as of the end of the training data.
+    //   standardize: Should the prediction errors be divided by the square root
+    //     of the one step ahead forecast variance?
+    //
+    // Returns:
+    //   The vector of one step ahead prediction errors for the holdout data.
+    //   This is the same length as holdout_y.
     Vector one_step_holdout_prediction_errors(const Matrix &newX,
                                               const Vector &newY,
                                               const Vector &final_state,
                                               bool standardize = false) const;
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
     Ptr<RegressionModel> regression_model() { return regression_; }
     const Ptr<RegressionModel> regression_model() const { return regression_; }

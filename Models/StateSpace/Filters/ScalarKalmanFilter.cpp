@@ -25,8 +25,8 @@ namespace BOOM {
     namespace {
       // Shorten the name.
       using Marginal = ScalarMarginalDistribution;
-    }  // namespace 
-    
+    }  // namespace
+
     Marginal::ScalarMarginalDistribution(
         const ScalarStateSpaceModelBase *model,
         ScalarMarginalDistribution *previous,
@@ -37,7 +37,7 @@ namespace BOOM {
           prediction_error_(0),
           prediction_variance_(0),
           kalman_gain_(model_->state_dimension(), 0) {}
-    
+
     double Marginal::update(double y, bool missing, int t,
                             double observation_variance_scale_factor) {
       const SparseVector observation_coefficients = model_->observation_matrix(t);
@@ -104,12 +104,12 @@ namespace BOOM {
       SparseVector Z(model_->observation_matrix(time_index()));
       return P - (P * Z).outer() / prediction_variance_;
     }
-    
+
   }  // namespace Kalman
 
   ScalarKalmanFilter::ScalarKalmanFilter(ScalarStateSpaceModelBase *model)
       : model_(model)
-  {} 
+  {}
 
   void ScalarKalmanFilter::update() {
     if (!model_) {
@@ -121,7 +121,7 @@ namespace BOOM {
       nodes_.push_back(Kalman::ScalarMarginalDistribution(
           model_, previous, nodes_.size()));
     }
-    clear();
+    clear_loglikelihood();
     nodes_[0].set_state_mean(model_->initial_state_mean());
     nodes_[0].set_state_variance(model_->initial_state_variance());
 
@@ -141,7 +141,7 @@ namespace BOOM {
     }
     set_status(CURRENT);
   }
-  
+
   // Disturbance smoother replaces Durbin and Koopman's K[t] with r[t].  The
   // disturbance smoother is equation (5) in Durbin and Koopman (2002).
   //
@@ -176,7 +176,7 @@ namespace BOOM {
     }
     set_initial_scaled_state_error(r);
   }
-  
+
   void ScalarKalmanFilter::update(double y, int t, bool missing) {
     if (!model_) {
       report_error("Model must be set before calling update().");
@@ -197,7 +197,7 @@ namespace BOOM {
     }
     increment_log_likelihood(nodes_[t].update(y, missing, t));
   }
-  
+
   double ScalarKalmanFilter::prediction_error(int t, bool standardize) const {
     double ans = nodes_[t].prediction_error();
     if (standardize) {
@@ -216,5 +216,5 @@ namespace BOOM {
     }
     return nodes_[n - 1];
   }
-  
+
 }  // namespace BOOM

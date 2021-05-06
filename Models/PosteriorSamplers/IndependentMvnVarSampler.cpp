@@ -26,7 +26,8 @@ namespace BOOM {
 
   IndependentMvnVarSampler::IndependentMvnVarSampler(
       IndependentMvnModel *model,
-      const std::vector<Ptr<GammaModelBase>> &priors, Vector sd_max_values,
+      const std::vector<Ptr<GammaModelBase>> &priors,
+      Vector sd_max_values,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng), model_(model), priors_(priors) {
     if (priors.size() != model->dim()) {
@@ -46,6 +47,21 @@ namespace BOOM {
       samplers_.push_back(
           GenericGaussianVarianceSampler(priors_[i], sd_max_values[i]));
     }
+  }
+
+  IndependentMvnVarSampler *IndependentMvnVarSampler::clone_to_new_host(
+      Model *new_host) const {
+    std::vector<Ptr<GammaModelBase>> priors;
+    Vector sd_max_values;
+    for (int i = 0; i < priors_.size(); ++i) {
+      priors.push_back(priors_[i]->clone());
+      sd_max_values.push_back(samplers_[i].sigma_max());
+    }
+    return new IndependentMvnVarSampler(
+        dynamic_cast<IndependentMvnModel *>(new_host),
+        priors,
+        sd_max_values,
+        rng());
   }
 
   double IndependentMvnVarSampler::logpri() const {
@@ -78,5 +94,5 @@ namespace BOOM {
       samplers_[i].set_sigma_max(sigma_max[i]);
     }
   }
-  
+
 }  // namespace BOOM

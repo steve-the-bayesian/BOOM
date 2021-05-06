@@ -35,6 +35,9 @@ namespace BOOM {
     GaussianVarSampler(GaussianModel *model,
                        const Ptr<GammaModelBase> &precision_prior,
                        RNG &seeding_rng = GlobalRng::rng);
+
+    GaussianVarSampler *clone_to_new_host(Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
     // Call to ensure that sigma (standard deviation) remains below

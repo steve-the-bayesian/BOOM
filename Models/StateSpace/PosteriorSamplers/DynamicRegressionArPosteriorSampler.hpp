@@ -38,6 +38,9 @@ namespace BOOM {
         const std::vector<Ptr<GammaModelBase>> &siginv_priors,
         RNG &seeding_rng = GlobalRng::rng);
 
+    DynamicRegressionArPosteriorSampler * clone_to_new_host(
+        Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
 

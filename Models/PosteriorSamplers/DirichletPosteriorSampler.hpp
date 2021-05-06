@@ -88,6 +88,8 @@ namespace BOOM {
                               const Ptr<VectorModel> &phi_prior,
                               const Ptr<DoubleModel> &alpha_prior,
                               RNG &seeding_rng = GlobalRng::rng);
+    DirichletPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
     uint dim() const;  // Dimension of model_->nu().

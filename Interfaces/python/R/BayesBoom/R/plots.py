@@ -3,10 +3,15 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-import numbers
+from numbers import Number
 from abc import ABC, abstractmethod
 
-from BayesBoom.R import data_range
+from .R import (
+    data_range,
+    remove_common_suffix,
+    remove_common_prefix,
+    unique_match
+)
 
 _active_graphics_devices = {}
 _current_graphics_device = None
@@ -391,18 +396,15 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
-    device = get_current_graphics_device()
     if ax is None:
-        if add:
-            ax = device.current_axes
-        else:
-            ax = device.next_axes
+        _, ax = plt.subplots(1, 1, 1)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
-    ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density, color=color, **kwargs)
+    ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
+            color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
-    device.draw_current_axes()
-    return device
+
+    return ax
 
 
 def barplot(x, labels=None, zero=True, ax=None, **kwargs):
@@ -453,12 +455,13 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
     return device
 
 
-def boxplot(x, labels=None, add=False, **kwargs):
-    device = get_current_graphics_device()
-    if add:
-        ax = device.current_axes
-    else:
-        ax = device.next_axes
+def boxplot(x, labels=None, add=False, ax=None, **kwargs):
+    if ax is None:
+        device = get_current_graphics_device()
+        if add:
+            ax = device.current_axes
+        else:
+            ax = device.next_axes
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
@@ -466,16 +469,53 @@ def boxplot(x, labels=None, add=False, **kwargs):
     ax.boxplot(x, vert=False)
     _set_plot_options(ax, **kwargs)
 
-    return device
+    return ax
+
+
+def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
+    """
+    Plot side-by-side boxplots showing the evolution of a distribution over
+    time.
+
+    Args:
+      curves: A matrix or data frame.  Rows represent different curves or Monte
+        Carlo draws.  Columns represent time.
+
+      time: A collectiond of timestamps corresponding to the column labels of
+        'curves'.  If None then timestamps will be taken as the column labels
+        of 'curves' (if curves is a DataFrame), or else they will be assigned
+        the indices 1, 2, 3, ... .
+
+      ylim: Limits on the vertical axis.
+
+      ax:  The plt.Axes object on which to draw the plot.
+
+      **kwargs:  Extra arguments passed to 'boxplot'.
+    """
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+    _set_plot_options(ax, **plot_options)
+
+    if time is None:
+        if isinstance(curves, pd.DataFrame):
+            time = curves.columns
+        else:
+            time_dim = curves.shape[1]
+            time = np.linspace(
+                1, time_dim, num=time_dim).astype(int).astype(str)
+
+    time = remove_common_prefix(
+        remove_common_suffix(
+            [str(x) for x in time]))
+    ax.boxplot(curves, labels=time, **kwargs)
+    return ax
 
 
 def plot_ts(x, timestamps=None, ax=None, **kwargs):
     """ Plot a time series."""
-    # if timestamps is None:
-    #     if isinstance(x, pd.Series):
 
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        device = get_current_graphics_device()
+        ax = device.next_axes
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -484,7 +524,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     ax.plot(x)
     _set_plot_options(ax, **kwargs)
 
-    return device
+    return ax
 
 
 # ===========================================================================
@@ -627,7 +667,7 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
         ylim = data_range(series)
 
     if truth is not None:
-        if isinstance(truth, numbers.Number):
+        if isinstance(truth, Number):
             truth = np.ones((nr, nc)) * truth
         elif len(truth.shape) == 1:
             truth = np.concatenate(
@@ -740,6 +780,100 @@ def plot_dynamic_distribution(
         device.draw_current_axes()
 
 
+def compare_dynamic_distributions(
+        list_of_curves,
+        timestamps,
+        style="dynamic",
+        xlab="Time",
+        ylab="",
+        frame_labels=None,
+        main="",
+        actuals=None,
+        col_actuals=None,
+        pch_actuals="o",
+        cex_actuals=1,
+        vertical_cuts=None,
+        fig=None,
+        **kwargs):
+    """
+    Produce a plot showing several stacked dynamic distributions over the same
+    horizontal axis.
+
+    Args:
+      list.of.curves: A list of matrices, all having the same number of
+         columns.  Each matrix represents a distribution of curves, with rows
+         corresponding to individual curves, and columns to time points.
+      timestamps: A vector of time stamps, with length matching the number of
+        columns in each element of list.of.curves.
+      style: Should the curves be represented using a dynamic distribution
+        plot, or boxplots.  Boxplots are better for small numbers of time
+        points.  Dynamic distribution plots are better for large numbers of
+        time points.
+      xlab:  Label for the horizontal axis.
+      ylab:  Label for the (outer) vertical axis.
+      frame.labels: Labels for the vertical axis of each subplot. The length
+        must match the number of plot.
+      main:  Main title for the plot.
+      actuals: If non-NULL, actuals should be a numeric vector giving the
+        actual "true" value at each time point.
+      col_actuals:  Color to use for the actuals.
+      cex_actuals:  Scale factor for actuals.
+      vertical.cuts: If not None then this must be a vector of the same type as
+        'timestamps' with length matching the number of plots.  A vertical line
+        will be drawn at this location for each plot.  Entries with the value
+        NaN or NaT signal that no vertical line should be drawn for that entry.
+      kwargs: Extra arguments passed to PlotDynamicDistribution or
+       TimeSeriesBoxplot.
+    """
+    style = unique_match(style, ["dynamic", "boxplot"])
+    nplots = len(list_of_curves)
+    ntimes = len(timestamps)
+    for i in range(nplots):
+        if list_of_curves[i].shape[1] != ntimes:
+            raise Exception(f"Entry {i} in 'list_of_curves' did not have the "
+                            f"right number of columns.  Expected {ntimes}, "
+                            f"got {list_of_curves[i].shape[1]}.")
+    if frame_labels is None:
+        frame_labels = [str(i + 1) for i in range(nplots)]
+    if not len(frame_labels) == nplots:
+        raise Exception("frame labels do not match number of curves.")
+    if fig is None:
+        fig = plt.figure()
+
+    ax = fig.subplots(nplots, 1, sharex=True)
+    if nplots == 1:
+        # If there is only one plot, put ax in a list so we can "iterate" over
+        # it without breaking the multiplot code.
+        ax = [ax]
+    for i in range(nplots):
+        if style == "dynamic":
+            plot_dynamic_distribution(list_of_curves[i],
+                                      timestamps=timestamps,
+                                      ylab=frame_labels[i],
+                                      ax=ax[i],
+                                      **kwargs)
+        elif style == "boxplot":
+            time_series_boxplot(list_of_curves[i],
+                                timestamps=timestamps,
+                                ylab=frame_labels[i],
+                                ax=ax[i],
+                                **kwargs)
+        else:
+            raise Exception(f"Unrecognized style {style}")
+
+        if actuals is not None:
+            ax[i].scatter(timestamps, actuals,
+                          s=cex_actuals * 100 / np.sqrt(len(actuals)))
+
+        if vertical_cuts is not None:
+            if vertical_cuts[i] == vertical_cuts[i]:
+                ax[i].axvline(vertical_cuts[i])
+
+    if main:
+        fig.suptitle(main)
+    return fig
+
+
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
     """
     Construct a Hosmer Lemeshow plot on the supplied axes.  A Hosmer Lemeshow
@@ -793,3 +927,34 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
+
+
+def lty(style):
+    """
+    Python linestyle characters from R 'lty' (linetype).
+
+    Args:
+      style:  An int or string.
+
+    """
+    style_names = ["solid", "dashed", "dotted", "dotdash",
+                   "longdash", "twodash"]
+
+    mappings = {
+        "solid": "-",
+        "dashed": "--",
+        "dotted": ":",
+        "dotdash": "-.",
+        "longdash": (5, (8, 1, 8, 1)),
+        "twodash": (5, (6, 1, 3, 1))
+    }
+
+    if isinstance(style, str):
+        if style == "dashdot":
+            style = "dotdash"
+        style = unique_match(style, style_names)
+        return mappings[style]
+
+    elif isinstance(style, Number):
+        style_number = style % len(style_names)
+        return mappings[style_names[style_number]]

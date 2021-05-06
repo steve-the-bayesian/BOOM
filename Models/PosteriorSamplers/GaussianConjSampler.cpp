@@ -26,12 +26,21 @@ namespace BOOM {
   typedef GaussianConjSampler GCS;
   GCS::GaussianConjSampler(GaussianModel *m,
                            const Ptr<GaussianModelGivenSigma> &mu,
-                           const Ptr<GammaModelBase> &sig, RNG &seeding_rng)
+                           const Ptr<GammaModelBase> &sig,
+                           RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         mod_(m),
         mu_(mu),
         siginv_(sig),
         sigsq_sampler_(siginv_) {}
+
+  GaussianConjSampler *GCS::clone_to_new_host(Model *host) const {
+    return new GaussianConjSampler(
+        dynamic_cast<GaussianModel *>(host),
+        mu_->clone(),
+        siginv_->clone(),
+        rng());
+  }
 
   double GCS::logpri() const {
     return sigsq_sampler_.log_prior(mod_->sigsq()) + mu_->logp(mod_->mu());

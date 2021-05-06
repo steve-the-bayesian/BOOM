@@ -33,6 +33,7 @@ def set_glm_coefs(glm_coefs: boom.GlmCoefs,
     nonzero_values = np.array(sparse_coefs.data[0])
     glm_coefs.set_sparse_coefficients(nonzero_values, nonzero_positions)
 
+
 def dot(data_frame, omit=[]):
     """
     Build a formula string by "summing" all entries except those on an 'omit
@@ -218,12 +219,8 @@ class lm_spike:
         """
         if burn is None:
             burn = R.suggest_burn(self.log_likelihood)
-        draws = self._coefficient_draws
-        probs = np.array(
-            [
-                np.mean(draws[burn:, i] != 0) for i in range(draws.shape[1])
-            ]
-        )
+        probs = compute_inclusion_probabilities(
+            self._coefficient_draws[burn:, ])
         return pd.Series(probs, index=self.xnames)
 
     def coefficient_positive_probability(self, burn=None):
@@ -238,12 +235,8 @@ class lm_spike:
         """
         if burn is None:
             burn = R.suggest_burn(self.log_likelihood)
-        draws = self._coefficient_draws
-        probs = np.array(
-            [
-                np.mean(draws[burn:, i] > 0) for i in range(draws.shape[1])
-            ]
-        )
+        probs = coefficient_positive_probability(
+            self._coefficient_draws[burn:, :])
         return pd.Series(probs, index=self.xnames)
 
     def plot(self, what=None, **kwargs):
@@ -276,8 +269,11 @@ class lm_spike:
     def plot_inclusion(self, burn=None, inclusion_threshold=0,
                        unit_scale=True, number_of_variables=None,
                        ax=None, **kwargs):
-        """A barplot showing the marginal inclusion probability of each variable.
+        """
+        A barplot showing the marginal inclusion probability of each variable.
 
+        Args:
+          burn:
         """
         inc = self.inclusion_probs(burn=burn)
         pos = self.coefficient_positive_probability(burn=burn)
@@ -289,7 +285,7 @@ class lm_spike:
         inc = inc[index[:number_of_variables]]
         pos = pos[index[:number_of_variables]]
         colors = colors[index[:number_of_variables]]
-        foo = R.barplot(inc,
+        ans = R.barplot(inc,
                         ax=ax,
                         color=colors[::-1],
                         linewidth=.25,
@@ -297,7 +293,7 @@ class lm_spike:
                         xlab="Marginal Inclusion Probability",
                         ylab="Variable",
                         **kwargs)
-        return foo
+        return ans
 
     def plot_coefficients(self, **kwargs):
         """A boxplot showing the values of the coefficients.
@@ -359,7 +355,6 @@ class lm_spike:
         return lm_spike_summary(self)
 
 
-
 class lm_spike_summary:
     """
     Summarizes the fit of an lm_spike model.
@@ -369,3 +364,65 @@ class lm_spike_summary:
         return """A spike and slab model summary!
         Put R2, residual_sd, and top 10 coefficients here.
         """
+
+
+def compute_inclusion_probabilities(coefficients):
+    """
+    Args:
+      coefficients:  A (scipy) sparse matrix of regression coefficients.
+        Rows represent MCMC draws.  Columns represent variables.
+
+    Returns:
+      A np.array of inclusion probabilities.
+    """
+    nvars = coefficients.shape[1]
+    return np.array(
+        [
+            np.mean(coefficients[:, i] != 0) for i in range(nvars)
+        ]
+    )
+
+
+def coefficient_positive_probability(coefficients):
+    nvars = coefficients.shape[1]
+    return np.array(
+        [
+            np.mean(coefficients[:, i] > 0) for i in range(nvars)
+        ]
+    )
+
+
+def plot_inclusion_probs(coefficients, burn, xnames, inclusion_threshold=0,
+                         unit_scale=True, number_of_variables=None, ax=None,
+                         **kwargs):
+    """
+    """
+    coef = coefficients[burn:, :]
+    inc = compute_inclusion_probabilities(coef)
+    pos = coefficient_positive_probability(coef)
+    colors = np.array([str(x) for x in pos])
+    index = np.argsort(inc.values)[::-1]
+
+    if number_of_variables is None:
+        number_of_variables = np.sum(inc >= inclusion_threshold)
+    inc = inc[index[:number_of_variables]]
+    pos = pos[index[:number_of_variables]]
+    colors = colors[index[:number_of_variables]]
+    ans = R.barplot(inc,
+                    ax=ax,
+                    color=colors[::-1],
+                    linewidth=.25,
+                    edgecolor="black",
+                    xlab="Marginal Inclusion Probability",
+                    ylab="Variable",
+                    **kwargs)
+    return ans
+
+
+def plot_model_size(coefficients, burn, ax=None, **kwargs):
+    ndraws = coefficients.shape[0]
+    size = np.array([
+        np.sum(coefficients[i, :] != 0)
+        for i in range(burn, ndraws)
+    ])
+    return R.hist(size, ax=ax, **kwargs)

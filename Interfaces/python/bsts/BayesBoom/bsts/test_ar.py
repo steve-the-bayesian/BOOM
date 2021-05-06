@@ -1,12 +1,7 @@
 import unittest
 import numpy as np
-import pandas as pd
 import pickle
-import json
 
-import pdb
-
-import matplotlib.pyplot as plt
 
 from BayesBoom.bsts import (
     Bsts,
@@ -18,6 +13,7 @@ from BayesBoom.bsts import (
 )
 
 from BayesBoom.R import delete_if_present
+
 
 class TestAr(unittest.TestCase):
     def setUp(self):
@@ -45,7 +41,6 @@ class TestAr(unittest.TestCase):
 
         pred = model.predict(12)
 
-
     def test_auto_ar(self):
         model = Bsts()
         model.add_state(LocalLinearTrendStateModel(self._y))
@@ -67,9 +62,7 @@ class TestAr(unittest.TestCase):
         pass
 
 
-
-_debug_mode = True
-
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

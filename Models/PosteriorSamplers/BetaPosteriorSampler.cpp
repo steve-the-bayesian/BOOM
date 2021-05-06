@@ -94,6 +94,14 @@ namespace BOOM {
     sample_size_sampler_.set_lower_limit(0.0);
   }
 
+  BetaPosteriorSampler *BetaPosteriorSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new BetaPosteriorSampler(dynamic_cast<BetaModel *>(new_host),
+                                    mean_prior_->clone(),
+                                    sample_size_prior_->clone(),
+                                    rng());
+  }
+
   void BetaPosteriorSampler::draw() {
     try {
       double sample_size = sample_size_sampler_.draw(model_->sample_size());

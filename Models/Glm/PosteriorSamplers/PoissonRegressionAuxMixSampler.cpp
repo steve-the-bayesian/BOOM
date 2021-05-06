@@ -94,6 +94,15 @@ namespace BOOM {
     set_number_of_workers(number_of_imputation_workers);
   }
 
+  PoissonRegressionAuxMixSampler * PRAMS::clone_to_new_host(
+      Model *new_host) const {
+    return new PoissonRegressionAuxMixSampler(
+        dynamic_cast<PoissonRegressionModel *>(new_host),
+        prior_->clone(),
+        1,
+        rng());
+  }
+
   double PRAMS::logpri() const { return prior_->logp(model_->Beta()); }
 
   void PRAMS::draw() {

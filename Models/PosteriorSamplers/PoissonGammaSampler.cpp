@@ -24,25 +24,35 @@
 
 namespace BOOM {
 
-  PoissonGammaSampler::PoissonGammaSampler(PoissonModel *p,
-                                           const Ptr<GammaModel> &g,
+  PoissonGammaSampler::PoissonGammaSampler(PoissonModel *model,
+                                           const Ptr<GammaModel> &prior,
                                            RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), pois(p), gam(g) {}
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        prior_(prior)
+  {}
 
-  double PoissonGammaSampler::alpha() const { return gam->alpha(); }
+  PoissonGammaSampler *PoissonGammaSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new PoissonGammaSampler(
+        dynamic_cast<PoissonModel *>(new_host),
+        prior_->clone(),
+        rng());
+  }
 
-  double PoissonGammaSampler::beta() const { return gam->beta(); }
+  double PoissonGammaSampler::alpha() const { return prior_->alpha(); }
+
+  double PoissonGammaSampler::beta() const { return prior_->beta(); }
 
   double PoissonGammaSampler::logpri() const {
-    double lam = pois->lam();
-    return dgamma(lam, alpha(), beta(), true);
+    return dgamma(model_->lam(), alpha(), beta(), true);
   }
 
   void PoissonGammaSampler::draw() {
-    double n = pois->suf()->n();
-    double sum = pois->suf()->sum();
-    double a = sum + gam->alpha();
-    double b = n + gam->beta();
+    double n = model_->suf()->n();
+    double sum = model_->suf()->sum();
+    double a = sum + prior_->alpha();
+    double b = n + prior_->beta();
     int number_of_attempts = 0;
     double lambda;
     do {
@@ -53,16 +63,16 @@ namespace BOOM {
       }
       lambda = rgamma_mt(rng(), a, b);
     } while (!std::isfinite(lambda) || lambda <= 0.0);
-    pois->set_lam(lambda);
+    model_->set_lam(lambda);
   }
 
   void PoissonGammaSampler::find_posterior_mode(double) {
-    double n = pois->suf()->n();
-    double sum = pois->suf()->sum();
-    double a = sum + gam->alpha();
-    double b = n + gam->beta();
+    double n = model_->suf()->n();
+    double sum = model_->suf()->sum();
+    double a = sum + prior_->alpha();
+    double b = n + prior_->beta();
     double mode = (a - 1) / b;
     if (mode < 0) mode = 0;
-    pois->set_lam(mode);
+    model_->set_lam(mode);
   }
 }  // namespace BOOM

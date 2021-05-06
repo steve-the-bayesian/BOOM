@@ -31,8 +31,10 @@ namespace BOOM {
   }
 
   PRSS::PoissonRegressionSpikeSlabSampler(
-      PoissonRegressionModel *model, const Ptr<MvnBase> &slab_prior,
-      const Ptr<VariableSelectionPrior> &spike_prior, int number_of_threads,
+      PoissonRegressionModel *model,
+      const Ptr<MvnBase> &slab_prior,
+      const Ptr<VariableSelectionPrior> &spike_prior,
+      int number_of_threads,
       RNG &seeding_rng)
       : PoissonRegressionAuxMixSampler(model, slab_prior, number_of_threads,
                                        seeding_rng),
@@ -41,6 +43,14 @@ namespace BOOM {
         slab_prior_(slab_prior),
         spike_prior_(spike_prior),
         log_posterior_at_mode_(negative_infinity()) {}
+
+  PRSS *PRSS::clone_to_new_host(Model *new_host) const {
+    return new PRSS(dynamic_cast<PoissonRegressionModel *>(new_host),
+                    slab_prior_,
+                    spike_prior_,
+                    1,
+                    rng());
+  }
 
   void PRSS::draw() {
     impute_latent_data();

@@ -125,9 +125,10 @@ namespace BOOM {
           << "with an argument "
           << "that was not coercible to ZeroInflatedLognormalModel." << endl;
       report_error(err.str());
+    } else {
+      gaussian_->combine_data(*(rhsp->gaussian_), true);
+      binomial_->combine_data(*(rhsp->binomial_), true);
     }
-    gaussian_->combine_data(*(rhsp->gaussian_), true);
-    binomial_->combine_data(*(rhsp->binomial_), true);
   }
 
   void ZILM::mle() {

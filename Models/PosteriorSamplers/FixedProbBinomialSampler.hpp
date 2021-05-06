@@ -26,6 +26,7 @@ namespace BOOM {
    public:
     explicit FixedProbBinomialSampler(BinomialModel *mod, double p = 1.0,
                                       RNG &seeding_rng = GlobalRng::rng);
+    FixedProbBinomialSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

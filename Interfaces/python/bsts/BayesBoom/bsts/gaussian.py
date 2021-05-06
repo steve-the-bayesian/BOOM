@@ -16,6 +16,7 @@ class GaussianStateSpaceModelFactory:
     """
     def __init__(self):
         self._model = None
+        self.predictor_names = None
 
     def create_model(self, prior: R.SdPrior, data: pd.Series, rng):
         """
@@ -31,10 +32,10 @@ class GaussianStateSpaceModelFactory:
         if data is not None:
             if (isinstance(data, np.ndarray)):
                 boom_data = boom.Vector(data.ravel())
-                is_observed = np.isnan(data)
+                is_observed = np.isfinite(data)
             else:
                 boom_data = boom.Vector(data.values)
-                is_observed = ~data.isna()
+                is_observed = np.isfinite(data)
             self._model = boom.StateSpaceModel(boom_data, is_observed)
         else:
             self._model = boom.StateSpaceModel()
@@ -78,6 +79,7 @@ class StateSpaceRegressionModelFactory:
         if not isinstance(formula, str):
             raise Exception("formula must be a string.")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         """
@@ -95,6 +97,7 @@ class StateSpaceRegressionModelFactory:
           so they will be available for future predictions.
         """
         response, predictors = patsy.dmatrices(self._formula, data)
+        self.predictor_names = predictors.design_info.term_names
         boom_response = boom.Vector(response)
         boom_predictors = boom.Matrix(predictors)
         if prior is None:
@@ -105,7 +108,7 @@ class StateSpaceRegressionModelFactory:
 
         if not isinstance(prior, spikeslab.RegressionSpikeSlabPrior):
             raise Exception("Unexpected type for prior.")
-        is_observed = ~np.isnan(response)
+        is_observed = np.isfinite(response)
         self._model = boom.StateSpaceRegressionModel(
             boom_response, boom_predictors, is_observed)
 
@@ -118,6 +121,10 @@ class StateSpaceRegressionModelFactory:
         reg.set_method(observation_model_sampler)
         self._original_series = response
 
+        sampler = boom.StateSpacePosteriorSampler(
+            self._model)
+        self._model.set_method(sampler)
+
         return self._model
 
     def create_observation_model_manager(self):
@@ -128,7 +135,7 @@ class GaussianObservationModelManager(ObservationModelManager):
     """
     The observation model manager supports the observation model in the boom
     object. It holds posterior draws of observation model parameters, log
-    likelihood, and metadata about the
+    likelihood, and metadata about the predictors, if any.
     """
     def __init__(self, xdim, formula):
         """
@@ -139,7 +146,11 @@ class GaussianObservationModelManager(ObservationModelManager):
         self._xdim = xdim
         self._formula = formula
 
-    def allocate_space(self, niter: int):
+    @property
+    def has_regression(self):
+        return self._xdim > 0
+
+    def allocate_space(self, niter: int, time_dimension: int):
         """
         Create space to hold 'niter' MCMC draws.
         """
@@ -148,6 +159,9 @@ class GaussianObservationModelManager(ObservationModelManager):
 
         if self._xdim > 0:
             self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
+
+        if self.has_regression > 0:
+            self._regression_contribution = np.empty((niter, time_dimension))
 
     def record_draw(self, iteration: int, model):
         """
@@ -158,6 +172,9 @@ class GaussianObservationModelManager(ObservationModelManager):
         self._log_likelihood[iteration] = model.log_likelihood
         if self._xdim > 0:
             self._coefficients[iteration, :] = spikeslab.sparsify(model.coef)
+            self._regression_contribution[iteration, :] = (
+                model.regression_contribution.to_numpy()
+            )
 
     def restore_draw(self, iteration: int, model):
         """
@@ -171,10 +188,11 @@ class GaussianObservationModelManager(ObservationModelManager):
 
     def format_prediction_data(self, prediction_data, **kwargs):
         if self._xdim > 0:
+            predictor_matrix = patsy.dmatrix(
+                self._formula, data=prediction_data)
             formatted = {
                 "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
+                "predictors": boom.Matrix(predictor_matrix),
             }
         else:
             formatted = {

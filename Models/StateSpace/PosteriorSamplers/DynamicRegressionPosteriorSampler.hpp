@@ -44,6 +44,10 @@ namespace BOOM {
         DynamicRegressionStateModel *model,
         const std::vector<Ptr<GammaModelBase>> &innovation_precision_priors,
         RNG &seeding_rng = GlobalRng::rng);
+
+    DynamicRegressionIndependentPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
 
@@ -83,6 +87,9 @@ namespace BOOM {
     DynamicRegressionPosteriorSampler(DynamicRegressionStateModel *model,
                                       const Ptr<GammaModel> &siginv_prior,
                                       RNG &seeding_rng = GlobalRng::rng);
+
+    DynamicRegressionPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
 
     // By default the class will take control of siginv_prior, updating it when
     // draw() is called, and adding its contribution to logpri().  If you want

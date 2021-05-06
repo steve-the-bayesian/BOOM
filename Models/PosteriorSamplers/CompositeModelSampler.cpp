@@ -25,6 +25,11 @@ namespace BOOM {
   CMS::CompositeModelSampler(CM *model, RNG &seeding_rng)
       : PosteriorSampler(seeding_rng), m_(model) {}
 
+  CMS *CMS::clone_to_new_host(Model *new_host) const {
+    return new CMS(dynamic_cast<CompositeModel *>(new_host),
+                   rng());
+  }
+
   double CMS::logpri() const {
     const std::vector<Ptr<MixtureComponent> > &components(m_->components());
     double ans = 0;

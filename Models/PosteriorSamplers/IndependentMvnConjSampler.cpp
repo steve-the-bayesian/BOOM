@@ -64,6 +64,22 @@ namespace BOOM {
     }
   }
 
+  IndependentMvnConjSampler *IndependentMvnConjSampler::clone_to_new_host(
+      Model *new_host) const {
+    Vector sigma_upper_limit;
+    for (const auto &sampler : sigsq_samplers_) {
+      sigma_upper_limit.push_back(sampler.sigma_max());
+    }
+    return new IndependentMvnConjSampler(
+        dynamic_cast<IndependentMvnModel *>(new_host),
+        mean_prior_guess_,
+        mean_prior_sample_size_,
+        sqrt(prior_ss_ / prior_df_),
+        prior_df_,
+        sigma_upper_limit,
+        rng());
+  }
+
   double IndependentMvnConjSampler::logpri() const {
     int dim = model_->dim();
     const Vector &mu(model_->mu());

@@ -26,7 +26,10 @@
 #include "cpputil/RefCounted.hpp"
 #include "distributions/rng.hpp"
 
+
 namespace BOOM {
+
+  class Model;
 
   // The job of a PosteriorSampler is primarily to simulate a set of
   // model parameters from their posterior distribution.  Concrete
@@ -45,6 +48,12 @@ namespace BOOM {
     //     for the RNG owned by this sampler.
     explicit PosteriorSampler(RNG &seeding_rng);
     PosteriorSampler(const PosteriorSampler &);
+
+    // The base implementation of this function throws an error using
+    // 'report_error'.  Specific instances will implement an overload that does
+    // the cloning.
+    virtual PosteriorSampler *clone_to_new_host(Model *host) const;
+
     virtual void draw() = 0;
     virtual double logpri() const = 0;
     ~PosteriorSampler() override {}

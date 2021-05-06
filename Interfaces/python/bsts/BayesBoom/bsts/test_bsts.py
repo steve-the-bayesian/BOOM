@@ -2,17 +2,19 @@ import unittest
 import numpy as np
 import pandas as pd
 import pickle
-import json
 
 import pdb
 
 import matplotlib.pyplot as plt
 
-from BayesBoom.R import delete_if_present
+import BayesBoom.R as R
+
+from BayesBoom.spikeslab import dot
 
 from BayesBoom.bsts import (
     Bsts,
     AirPassengers,
+    compare_bsts_models,
     LocalLevelStateModel,
     LocalLinearTrendStateModel,
     SeasonalStateModel,
@@ -27,7 +29,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.data = random_walk + noise
 
     def tearDown(self):
-        delete_if_present("bsts_llt.pkl")
+        R.delete_if_present("bsts_llt.pkl")
 
     def test_local_level(self):
         model = Bsts()
@@ -43,6 +45,24 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertIsInstance(m2, Bsts)
         np.testing.assert_array_equal(m2._final_state, model._final_state)
 
+        errors = model.one_step_prediction_errors()
+        self.assertIsInstance(errors, np.ndarray)
+        self.assertEqual(errors.shape, (10, 100))
+
+        foo = model._model.simulate_holdout_prediction_errors(
+            50, 90, False).to_numpy()
+        self.assertEqual(foo.shape, (50, 100))
+        self.assertEqual(100, model.time_dimension)
+
+        cutpoints = [60, 80, 100]
+        errors = model.one_step_prediction_errors(cutpoints=cutpoints)
+        self.assertIsInstance(errors, dict)
+        self.assertEqual(len(errors), len(cutpoints))
+        self.assertEqual(errors[60].shape,  (10, 100))
+        self.assertEqual(errors[80].shape,  (10, 100))
+        self.assertEqual(errors[100].shape,  (10, 100))
+        self.assertEqual(model.time_dimension, 100)
+
     def test_basic_structural_model(self):
         model = Bsts()
 
@@ -51,8 +71,9 @@ class TestGaussianTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
-        _ = model.plot("comp")
-        # comp_fig.show()
+        fig = model.plot("comp")
+        if _show_figs:
+            fig.show()
 
         predictions = model.predict(12)
         target_quantiles = [0.025] + list(np.linspace(.05, 0.95, 19)) + [0.975]
@@ -74,12 +95,35 @@ class TestGaussianTimeSeries(unittest.TestCase):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         predictions.plot(ax=ax[0], original_series=24)
         pred_plot = pred2.plot(ax=ax[1], original_series=24)
-        # fig.show()
+        if _show_figs:
+            fig.show()
         self.assertIsInstance(pred_plot, plt.Axes)
+
+
+class TestGaussianRegression(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+        n = 100
+        p = 10
+        pgood = 3
+        X = np.random.randn(n, p)
+        beta = np.zeros(p)
+        beta[:pgood] = np.random.randn(pgood)
+        yhat = X @ beta
+
+        random_walk = np.cumsum(np.random.randn(n) * .1)
+        noise = np.random.randn(n) * .05
+        y = yhat + random_walk + noise
+        self.data = pd.DataFrame(X, columns=R.paste0("X", np.arange(1, p + 1)))
+        self.data["y"] = y
+
+    def test_state_space_regression(self):
+        pass
 
 
 class TestStudentTimeSeries(unittest.TestCase):
     def setUp(self):
+        np.random.seed(8675309)
         n = 100
         df = 3
         random_walk = np.cumsum(np.random.randn(n) * .1)
@@ -87,8 +131,8 @@ class TestStudentTimeSeries(unittest.TestCase):
         self.data = random_walk + noise
 
     def tearDown(self):
-        delete_if_present("bsts_student_llt.pkl")
-        delete_if_present("bsm.pkl")
+        R.delete_if_present("bsts_student_llt.pkl")
+        R.delete_if_present("bsm.pkl")
 
     def test_local_level(self):
         model = Bsts(family="student")
@@ -129,7 +173,8 @@ class TestStudentTimeSeries(unittest.TestCase):
         fig, ax = plt.subplots(1, 2)
         pred1.plot(ax=ax[0])
         pred2.plot(ax=ax[1])
-        # fig.show()
+        if _show_figs:
+            fig.show()
 
         np.testing.assert_array_almost_equal(
             pred1.distribution,
@@ -143,8 +188,9 @@ class TestStudentTimeSeries(unittest.TestCase):
         model.add_state(SeasonalStateModel(y, nseasons=12))
         model.train(data=y, niter=1000)
 
-        _ = model.plot("comp")
-        # comp_fig.show()
+        fig = model.plot("comp")
+        if _show_figs:
+            fig.show()
 
         horizon = 24
         predictions = model.predict(horizon)
@@ -164,12 +210,12 @@ class TestStudentTimeSeries(unittest.TestCase):
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         predictions.plot(ax=ax[0], original_series=60)
         pred_plot = pred2.plot(ax=ax[1], original_series=60)
-        # fig.show()
+        if _show_figs:
+            fig.show()
         self.assertIsInstance(pred_plot, plt.Axes)
 
         np.testing.assert_array_almost_equal(predictions.distribution,
                                              pred2.distribution)
-
 
 # class TestStateSpaceRegression(unittest.TestCase):
 
@@ -193,29 +239,128 @@ class TestStudentTimeSeries(unittest.TestCase):
 #             m2 = pickle.load(pkl)
 
 
+class TestPlots(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        np.random.seed(8675309)
+        np.random.seed(0xDEADBEEF)
+        fake_data = np.random.randn(100, 10)
+        fake_coefficients = np.array([5, -4, 3] + [0] * 7)
+        random_walk = np.cumsum(np.random.randn(100))
+        noise = np.random.randn(100) * 1.5
+        y = random_walk + fake_data @ fake_coefficients + noise
+        data = pd.DataFrame(
+            fake_data,
+            columns=["V" + str(x+1) for x in range(10)],
+        )
+        data["y"] = y
+        model = Bsts()
+        model.add_state(LocalLevelStateModel(y))
+        model.train(formula=f"y ~ {dot(data, omit='y')}", niter=100, data=data)
+        self._regression_model = model
+
+        data = np.log(AirPassengers)
+        model = Bsts()
+        model.add_state(LocalLinearTrendStateModel(data))
+        model.add_state(SeasonalStateModel(data, nseasons=12))
+        model.train(data, niter=100)
+        self._model = model
+
+        model = Bsts()
+        model.add_state(LocalLinearTrendStateModel(data))
+        model.train(data, niter=100)
+        self._model2 = model
+
+    def test_plot_state(self):
+        _, ax = plt.subplots()
+        foo = self._model.plot(ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+
+        _, ax = plt.subplots()
+        foo = self._regression_model.plot(ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+
+    def test_plot_components(self):
+        fig = plt.figure()
+        foo = self._model.plot("comp", fig=fig)
+        self.assertIsInstance(foo, plt.Figure)
+
+    def test_plot_seasonal(self):
+        fig = plt.figure()
+        foo = self._model.plot("seas", fig=fig)
+        self.assertIsInstance(foo, plt.Figure)
+
+    def test_plot_residuals(self):
+        fig, ax = plt.subplots()
+        foo = self._model.plot_residuals(ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+
+        fig, ax = plt.subplots()
+        foo = self._regression_model.plot_residuals(ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+
+        if _show_figs:
+            fig.show()
+
+    def test_plot_forecast_distribution(self):
+        fig = self._model.plot("forecast_distribution", cex_actuals=1)
+        self.assertIsInstance(fig, plt.Figure)
+        if _show_figs:
+            fig.show()
+
+        fig2 = self._model.plot("forecast_distribution",
+                                cutpoints=(50, 80, 100))
+        if _show_figs:
+            fig2.show()
+
+    def test_plot_size(self):
+        fig, ax = plt.subplots()
+        foo = self._regression_model.plot_size(ax=ax)
+        if _show_figs:
+            fig.show()
+        self.assertIsInstance(foo, plt.Axes)
+
+    def test_plot_predictors(self):
+        fig, ax = plt.subplots()
+        foo = self._regression_model.plot(
+            "predictors", ax=ax, short_names=False)
+        if _show_figs:
+            fig.show()
+        self.assertIsInstance(foo, plt.Axes)
+
+    def test_compare_bsts_models(self):
+        fig = plt.figure()
+        models = {
+            "bsm": self._model,
+            "trend only": self._model2
+        }
+        ans = compare_bsts_models(models, fig=fig)
+        self.assertIsInstance(ans, plt.Figure)
+
+
 _debug_mode = False
+_show_figs = _debug_mode
 
 if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
-    # warnings.simplefilter("error")
+    import warnings
+    warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
     # exception.
     print("Hello, world!")
 
-    rig = TestStudentTimeSeries()
-    # rig = TestGaussianTimeSeries()
+    rig = TestPlots()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_local_level()
-    # rig.test_basic_structural_model()
+    rig.test_plot_state()
 
     print("Goodbye, cruel world!")
 

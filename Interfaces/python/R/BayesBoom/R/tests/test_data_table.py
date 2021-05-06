@@ -160,9 +160,30 @@ class DataTableTest(unittest.TestCase):
         self.assertEqual(imputed[0].shape, to_impute.shape)
 
 
-# unittest.main()
-print("setting up")
-rig = DataTableTest()
-rig.setUp()
-rig.test_mcmc()
-print("all done!")
+
+_debug_mode = True
+
+if _debug_mode:
+    import pdb  # noqa
+
+    # Turn warnings into errors.
+    # warnings.simplefilter("error")
+
+    # Run the test you are trying to debug here.  Instantiate the test class,
+    # then call the problematic test.  Call pdb.pm() in the event of an
+    # exception.
+    print("Hello, world!")
+
+    rig = DataTableTest()
+    if hasattr(rig, "setUpClass"):
+        rig.setUpClass()
+    if hasattr(rig, "setUp"):
+        rig.setUp()
+
+    rig.test_mcmc()
+
+    print("Goodbye, cruel world!")
+
+else:
+    if __name__ == "__main__":
+        unittest.main(verbosity=2)

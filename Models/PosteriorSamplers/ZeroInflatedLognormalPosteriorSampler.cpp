@@ -26,6 +26,14 @@ namespace BOOM {
            model_->Binomial_model()->logpri();
   }
 
+  ZeroInflatedLognormalPosteriorSampler *
+  ZeroInflatedLognormalPosteriorSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new ZeroInflatedLognormalPosteriorSampler(
+        dynamic_cast<ZeroInflatedLognormalModel *>(new_host),
+        rng());
+  }
+
   void ZeroInflatedLognormalPosteriorSampler::draw() {
     model_->Gaussian_model()->sample_posterior();
     model_->Binomial_model()->sample_posterior();

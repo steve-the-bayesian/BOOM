@@ -55,7 +55,8 @@ namespace BOOM {
 
     // Now we know that lo and hi are both finite, with lo < hi.
     double u = 0.0;
-    while (u <= 0 || u >= 1.0) {
+    constexpr double eps = std::numeric_limits<double>::min();
+    while (u < eps || u >= 1.0 - eps) {
       u = runif_mt(rng, 0, 1);
     }
 

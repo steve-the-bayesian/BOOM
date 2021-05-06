@@ -28,7 +28,8 @@ namespace BOOM {
   BLSSS::BinomialLogitSpikeSlabSampler(BinomialLogitModel *model,
                                        const Ptr<MvnBase> &slab,
                                        const Ptr<VariableSelectionPrior> &spike,
-                                       int clt_threshold, RNG &seeding_rng)
+                                       int clt_threshold,
+                                       RNG &seeding_rng)
       : BinomialLogitAuxmixSampler(model, slab, clt_threshold, seeding_rng),
         model_(model),
         slab_(check_slab_dimension(slab)),
@@ -37,6 +38,14 @@ namespace BOOM {
         max_flips_(-1),
         posterior_mode_found_(false),
         log_posterior_at_mode_(negative_infinity()) {}
+
+  BLSSS * BLSSS::clone_to_new_host(Model *new_host) const {
+    return new BLSSS(dynamic_cast<BinomialLogitModel *>(new_host),
+                     slab_->clone(),
+                     spike_->clone(),
+                     clt_threshold(),
+                     rng());
+  }
 
   void BLSSS::draw() {
     impute_latent_data();

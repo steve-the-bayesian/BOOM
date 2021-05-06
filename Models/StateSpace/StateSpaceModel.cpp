@@ -111,7 +111,9 @@ namespace BOOM {
 
   SSM *SSM::clone() const { return new SSM(*this); }
 
-  int SSM::time_dimension() const { return dat().size(); }
+  int SSM::time_dimension() const {
+    return dat().size();
+  }
 
   double SSM::observation_variance(int t) const {
     double sigsq = observation_model_->sigsq();
@@ -221,6 +223,48 @@ namespace BOOM {
       if (standardize) {
         ans[t] /= sqrt(marg.prediction_variance());
       }
+    }
+    return ans;
+  }
+
+  Matrix SSM::simulate_holdout_prediction_errors(
+      int niter, int cutpoint_number, bool standardize) {
+    Matrix ans(niter, time_dimension());
+    SubMatrix training_prediction_errors(
+        ans, 0, niter - 1, 0, cutpoint_number - 1);
+    SubMatrix holdout_prediction_errors(
+        ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
+    std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
+    std::vector<Ptr<StateSpace::MultiplexedDoubleData>> holdout_data(
+        dat().begin() + cutpoint_number, dat().end());
+    clear_data();
+    for (const auto &data_point : training_data) {
+      add_data(data_point);
+    }
+    Vector holdout_data_vector;
+    for (const auto &data_point : holdout_data) {
+      if (data_point->total_sample_size() != 1) {
+        report_error("Can't compute holdout prediction errors for "
+                     "multiplex data.");
+      }
+      holdout_data_vector.push_back(data_point->double_data(0).value());
+    }
+
+    sample_posterior();
+    for (int i = 0; i < niter; ++i) {
+      sample_posterior();
+      training_prediction_errors.row(i) =
+          one_step_prediction_errors(standardize);
+      holdout_prediction_errors.row(i) =
+          one_step_holdout_prediction_errors(
+              holdout_data_vector,
+              state().last_col(),
+              standardize);
+    }
+
+    // Replace the holdout data.
+    for (const auto &data_point : holdout_data) {
+      add_data(data_point);
     }
     return ans;
   }

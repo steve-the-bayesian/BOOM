@@ -30,16 +30,22 @@ namespace BOOM {
   class GaussianMeanSampler : public PosteriorSampler {
    public:
     // mu ~ N(mu_bar, tausq), independent of sigma^2
-    GaussianMeanSampler(GaussianModel *Mod, double expected_mu,
-                        double prior_sd_mu, RNG &seeding_rng = GlobalRng::rng);
-    GaussianMeanSampler(GaussianModel *Mod, const Ptr<GaussianModel> &Pri,
+    GaussianMeanSampler(GaussianModel *model,
+                        double expected_mu,
+                        double prior_sd_mu,
                         RNG &seeding_rng = GlobalRng::rng);
+    GaussianMeanSampler(GaussianModel *model,
+                        const Ptr<GaussianModel> &Pri,
+                        RNG &seeding_rng = GlobalRng::rng);
+
+    GaussianMeanSampler *clone_to_new_host(Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
 
    private:
-    GaussianModel *mod_;
-    Ptr<GaussianModel> pri;
+    GaussianModel *model_;
+    Ptr<GaussianModel> prior_;
   };
 }  // namespace BOOM
 #endif  // BOOM_DRAW_GAUSSIAN_MEAN_HPP

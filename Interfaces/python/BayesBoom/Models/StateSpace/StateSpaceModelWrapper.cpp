@@ -69,6 +69,14 @@ namespace BayesBoom {
                    boom,
                    "ScalarStateSpaceModelBase",
                    py::multiple_inheritance())
+        .def_property_readonly(
+            "regression_contribution",
+            [](const ScalarStateSpaceModelBase &model) {
+              return model.regression_contribution();
+            },
+            "The contribution of the regression component to the mean of y.   "
+            "If no regression component is present, an empty Vector is "
+            "returned.")
         .def("observation_variance",
              &ScalarStateSpaceModelBase::observation_variance,
              py::arg("t"),
@@ -86,6 +94,58 @@ namespace BayesBoom {
              "Returns:\n"
              "  A vector containing the one step prediction errors from the "
              "Kalman filter.")
+        .def("simulate_holdout_prediction_errors",
+             [](ScalarStateSpaceModelBase &model,
+                int niter,
+                int cutpoint,
+                bool standardize) {
+               return model.simulate_holdout_prediction_errors(
+                   niter, cutpoint, standardize);
+             },
+             py::arg("niter"),
+             py::arg("cutpoint"),
+             py::arg("standardize"),
+             "Args:\n"
+             "  niter:  The number of MCMC iterations for the simulation.  "
+             "Controlling for burn-in is the responsibillity of the caller.\n"
+             "  cutpoint:  An integer between 0 and the number "
+             "of time points, giving the number of data in the initial "
+             "training set of a train/test split.\n"
+             "  standardize:  If True then each one step prediction errors "
+             "will be divided by its forecast standard deviation from the "
+             "Kalman filter.\n\n"
+             "Returns:\n"
+             "  A Matrix representing the distribution "
+             "of one-step prediction errors.  The columns before the cutpoint "
+             "are 'in-sample' while those after the cutpoint are "
+             "'true-out-of-sample'.\n")
+        .def("compute_prediction_errors",
+             [] (ScalarStateSpaceModelBase &model,
+                 int niter,
+                 const std::vector<int> &cutpoints,
+                 bool standardize) {
+               return BOOM::StateSpaceUtils::compute_prediction_errors(
+                       model, niter, cutpoints, standardize);
+             },
+             py::arg("niter"),
+             py::arg("cutpoints"),
+             py::arg("standardize"),
+             "Compute the distribution of one step prediction errors for one "
+             "or more holdout samples.\n\n"
+             "Args:\n"
+             "  niter:  The number of MCMC iterations for each simulation.  "
+             "Controlling for burn-in is the responsibillity of the caller.\n"
+             "  cutpoints:  A vector of integers between 0 and the number "
+             "of time points.  Each number is the number of data points in "
+             "the initial training set of a train/test split.\n"
+             "  standardize:  If True then each one step prediction errors "
+             "will be divided by its forecast standard deviation from the "
+             "Kalman filter.\n\n"
+             "Returns:\n"
+             "  One Matrix for each cutpoint, representing the distribution "
+             "of one-step prediction errors.  The columns before the cutpoint "
+             "are 'in-sample' while those after the cutpoint are "
+             "'true-out-of-sample'.\n")
         ;
 
     py::class_<StateSpaceModel,

@@ -19,10 +19,12 @@ class StateSpacePoissonModelFactory:
         if formula is not None and not isinstance(formula, str):
             raise Exception("formula must either be None or a string")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         if data is not None:
             response, predictors = patsy.dmatrices(self._formula, data)
+            self.predictor_names = predictors.design_info.term_names
             extra_args = {**kwargs}
             exposure = extra_args.get("exposure", 1)
             if isinstance(exposure, Number):
@@ -81,18 +83,28 @@ class PoissonObservationModelManager(ObservationModelManager):
         self._formula = formula
 
     @property
+    def has_regression(self):
+        return self._xdim > 1 and self._formula is not None
+
+    @property
     def niter(self):
         if hasattr(self, "_coefficients"):
             return self._coefficients.shape[0]
         else:
             return 0
 
-    def allocate_space(self, niter: int):
+    def allocate_space(self, niter: int, time_dimension: int):
         self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
+        if self.has_regression:
+            self._regression_contribution = np.empty((niter, time_dimension))
 
     def record_draw(self, iteration: int, model):
         self._coefficients[iteration, :] = spikeslab.sparsify(
             model.observation_model.coef)
+        if self.has_regression:
+            self._regression_contribution[iteration, :] = (
+                model.regression_contribution.to_numpy()
+            )
 
     def restore_draw(self, iteration: int, model):
         spikeslab.set_glm_coefs(model.observation_model.coef,
@@ -121,7 +133,7 @@ class PoissonObservationModelManager(ObservationModelManager):
         return formatted
 
     def predict(self, model, formatted_prediction_data, boom_final_state, rng,
-                separate_components=False):
+                separate_components=False, **kwargs):
         if separate_components:
             draw = model.simulate_forecast_components(
                 rng,

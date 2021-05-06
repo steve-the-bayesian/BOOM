@@ -21,6 +21,7 @@ class StateSpaceStudentModelFactory:
         if formula is not None and not isinstance(formula, str):
             raise Exception("formula must either be None or a string")
         self._formula = formula
+        self.predictor_names = None
 
     def create_model(self, prior, data, rng, **kwargs):
         """
@@ -54,6 +55,7 @@ class StateSpaceStudentModelFactory:
             else:
                 # Time series regression case.
                 response, predictors = patsy.dmatrices(self._formula, data)
+                self.predictor_names = predictors.design_info.term_names
 
             boom_response = boom.Vector(R.to_numpy(response))
             boom_predictors = boom.Matrix(R.to_numpy(predictors))
@@ -148,11 +150,18 @@ class StudentObservationModelManager(ObservationModelManager):
         self._xdim = xdim
         self._formula = formula
 
-    def allocate_space(self, niter: int):
+    @property
+    def has_regression(self):
+        return self._xdim > 1 and self._formula is not None
+
+    def allocate_space(self, niter: int, time_dimension: int):
         self._residual_sd = np.empty(niter)
         self._residual_df = np.empty(niter)
         if self._xdim > 0:
             self._coefficients = scipy.sparse.lil_matrix((niter, self._xdim))
+
+        if self.has_regression:
+            self._regression_contribution = np.empty((niter, time_dimension))
 
     def record_draw(self, iteration: int, model):
         student_reg = model.observation_model
@@ -161,6 +170,11 @@ class StudentObservationModelManager(ObservationModelManager):
         if self._xdim > 0:
             self._coefficients[iteration, :] = spikeslab.sparsify(
                 student_reg.coef)
+
+        if self.has_regression:
+            self._regression_contribution[iteration, :] = (
+                model.regression_contribution.to_numpy()
+            )
 
     def restore_draw(self, iteration: int, model):
         student_reg = model.observation_model
@@ -178,15 +192,18 @@ class StudentObservationModelManager(ObservationModelManager):
                 "predictors": boom.Matrix(np.ones((int(prediction_data), 1)))
             }
         else:
+            predictor_matrix = patsy.dmatrix(
+                self._formula, data=prediction_data)
+            xnames = predictor_matrix.design_info.term_names
             formatted = {
                 "forecast_horizon": prediction_data.shape[0],
-                "predictors": boom.Matrix(patsy.dmatrix(
-                    self._formula, data=prediction_data))
+                "predictors": boom.Matrix(predictor_matrix),
+                "xnames": xnames,
             }
         return formatted
 
     def predict(self, model, formatted_prediction_data, boom_final_state, rng,
-                separate_components=False):
+                separate_components=False, **kwargs):
         """
         Return one draw from the posterior predictive distribution.
         """

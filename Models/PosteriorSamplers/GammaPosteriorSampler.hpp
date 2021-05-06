@@ -30,9 +30,13 @@ namespace BOOM {
   // a.
   class GammaPosteriorSampler : public PosteriorSampler {
    public:
-    GammaPosteriorSampler(GammaModel *model, const Ptr<DoubleModel> &mean_prior,
+    GammaPosteriorSampler(GammaModel *model,
+                          const Ptr<DoubleModel> &mean_prior,
                           const Ptr<DoubleModel> &alpha_prior,
                           RNG &seeding_rng = GlobalRng::rng);
+
+    GammaPosteriorSampler *clone_to_new_host(Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
 
@@ -52,6 +56,7 @@ namespace BOOM {
                               const Ptr<DoubleModel> &mean_prior,
                               const Ptr<DoubleModel> &beta_prior,
                               RNG &seeding_rng = GlobalRng::rng);
+    GammaPosteriorSamplerBeta *clone_to_new_host(Model *model) const override;
     void draw() override;
     double logpri() const override;
 

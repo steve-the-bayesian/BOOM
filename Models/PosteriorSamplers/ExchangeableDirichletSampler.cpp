@@ -29,6 +29,13 @@ namespace BOOM {
                                     RNG &seeding_rng)
       : PosteriorSampler(seeding_rng), mod_(m), pri_(pri) {}
 
+  EDS *EDS::clone_to_new_host(Model *new_host) const {
+    return new ExchangeableDirichletSampler(
+        dynamic_cast<DirichletModel *>(new_host),
+        pri_->clone(),
+        rng());
+  }
+
   double EDS::logpri() const {
     const Vector &nu(mod_->nu());
     double ans = 0;
