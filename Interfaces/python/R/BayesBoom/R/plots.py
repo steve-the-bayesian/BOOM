@@ -545,21 +545,27 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
 
     assert isinstance(ax, plt.Axes)
 
+    if isinstance(counts, np.ndarray):
+        counts = pd.DataFrame(counts,
+                              index=np.arange(counts.shape[0]).astype(str),
+                              columns=np.arange(counts.shape[1]).astype(str))
+
     # The margininal distribution of the variable described by the rows,
     # obtained by summing over columns.
-    row_margin = counts.sum(axis=1)
+    row_margin = np.array(counts.sum(axis=1))
     nrow = len(row_margin)
 
     # The margininal distribution of the variable described by the columns,
     # obtained by summing over rows.
-    col_margin = counts.sum(axis=0)
+    col_margin = np.array(counts.sum(axis=0))
     ncol = len(col_margin)
 
     # The conditional distribution of the row variable, within each column.
-    conditional = counts / col_margin
+    conditional = pd.DataFrame(counts / col_margin, index=counts.index,
+                               columns=counts.columns)
 
-    col_margin /= np.sum(col_margin)
-    row_margin /= np.sum(row_margin)
+    col_margin = col_margin / np.sum(col_margin)
+    row_margin = row_margin / np.sum(row_margin)
 
     cum_col_margin = np.cumsum(col_margin)
     lower_col_margin = np.array([0] + cum_col_margin[:-1].tolist())
@@ -580,7 +586,7 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
     row_low = np.array([0] + cum_row_margin[:-1].tolist())
 
     if np.min(row_margin) < .05:
-        set.yticks(np.linspace(0, 1, nrow))
+        ax.set_yticks(np.linspace(0, 1, nrow))
     else:
         row_tick_locations = (cum_row_margin + row_low) / 2
         ax.set_yticks(row_tick_locations)
@@ -888,32 +894,45 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
       **kwargs: Passed to plt.subplots in the event that ax is None.
 
     Return:
-      fig: If a new figure was created then this is the containing object.
-        Otherwise None.
       ax: The axes object containing the plot.
-
+      group_means: The pd.Series containing the group means.  The series is
+        indexed by pd.Interval objects indicating the interval over which the
+        means are averaged.
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        fig, ax = plt.subplots()
+    else:
+        fig = None
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10))["actual"].mean()
     bar_locations = group_means.index.categories.mid.values
+
     lower = np.array([x.left for x in group_means.index.values])
     upper = np.array([x.right for x in group_means.index.values])
-    bar_widths = .8 * (upper - lower)
+    bar_widths = 1.0 * (upper - lower)
 
-    ax.barh(bar_locations, group_means, height=bar_widths)
-    ax.set_xticks(bar_locations)
-    labels = [str(lab) for lab in group_means.index.values]
-    ax.set_yticklabels(labels)
-    ax.set_ylabel("Predicted Proportions")
+    plot_options, kwargs = _skim_plot_options(**kwargs)
 
-    xticks = pretty_plot_ticks(np.min(predicted), np.max(predicted), 5)
-    ax.set_xticks(xticks)
-    ax.set_xlabel("Observed Proportions")
+    ax.bar(bar_locations, group_means, width=bar_widths, edgecolor="black", **kwargs)
+    # ax.set_xlim(0, 1)
+    # ax.set_ylim(0, 1)
 
-    return ax
+    # labels = [str(lab) for lab in group_means.index.values]
+    # ax.set_yticklabels(labels)
+    ax.set_ylabel("Observed Proportions")
+
+    # xticks = pretty_plot_ticks(np.min(predicted), np.max(predicted), 5)
+    # ax.set_xticks(xticks)
+    ax.set_xlabel("Predicted Proportions")
+
+    _set_plot_options(ax, **plot_options)
+
+    abline(a=0, b=1, ax=ax, color="black")
+
+    if fig is not None:
+        fig.show()
+
+    return ax, group_means
 
 
 def lines_gaussian_kde(kde, ax=None, **kwargs):

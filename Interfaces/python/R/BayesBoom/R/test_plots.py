@@ -1,11 +1,16 @@
 import unittest
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
 import numpy as np
 import pandas as pd
+
+import BayesBoom.R as R
+
 from BayesBoom.R.plots import (
     mosaic_plot,
-    plot_dynamic_distribution
+    plot_dynamic_distribution,
+    time_series_boxplot,
+    hosmer_lemeshow_plot,
+    pretty_plot_ticks,
 )
 
 
@@ -22,19 +27,6 @@ us_states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
              "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
              "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
              "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
-=======
->>>>>>> ce1ee6781bdc0cd07a488a5f004e969bc849e1c4
-
-from BayesBoom.R.plots import (
-    plot_dynamic_distribution,
-    #    compare_dynamic_distributions,
-    time_series_boxplot,
-)
-
-import BayesBoom.R as R
-
-import numpy as np
-import pandas as pd
 
 
 class TestPlots(unittest.TestCase):
@@ -107,8 +99,18 @@ class TestPlots(unittest.TestCase):
         if _show_figs:
             fig.show()
 
+    def test_hosmer(self):
+        x = np.random.uniform(.25, .85, 1000)
+        rnd = np.random.uniform(0, 1, 1000)
+        y = rnd < x
+        fig, ax = plt.subplots()
+        foo = hosmer_lemeshow_plot(y, x, main="Hosmer-Lemeshow plot", ax=ax)
+        self.assertIsInstance(foo, plt.Axes)
+        if _show_figs:
+            fig.show()
 
-_debug_mode = False
+
+_debug_mode = True
 _show_figs = _debug_mode
 
 
@@ -130,11 +132,9 @@ if _debug_mode:
         rig.setUp()
 
     # rig.test_plot_points()
-<<<<<<< HEAD
-    rig.test_mosaic_plot()
-=======
-    rig.test_lty()
->>>>>>> ce1ee6781bdc0cd07a488a5f004e969bc849e1c4
+    # rig.test_mosaic_plot()
+    rig.test_hosmer()
+    # rig.test_lty()
     # rig.test_fill_between()
 
     print("Goodbye, cruel world!")
