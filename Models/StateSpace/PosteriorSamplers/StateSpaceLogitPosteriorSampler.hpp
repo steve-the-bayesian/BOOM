@@ -45,7 +45,8 @@ namespace BOOM {
         const Ptr<BinomialLogitSpikeSlabSampler> &observation_model_sampler,
         RNG &seeding_rng = GlobalRng::rng);
 
-    StateSpaceLogitPosteriorSampler *clone_to_new_host(Model *new_host) const;
+    StateSpaceLogitPosteriorSampler *
+    clone_to_new_host(Model *new_host) const override;
 
     // Impute the latent Gaussian observations and variances at each
     // data point, conditional on the state, observed data, and model

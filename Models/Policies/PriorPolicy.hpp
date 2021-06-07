@@ -41,7 +41,7 @@ namespace BOOM {
     double logpri() const override;
 
     // Add a posterior sampler to the current set of sampling methods.
-    void set_method(const Ptr<PosteriorSampler> &sampler);
+    void set_method(const Ptr<PosteriorSampler> &sampler) override;
 
     // Clear all posterior samplers.
     void clear_methods() override;
