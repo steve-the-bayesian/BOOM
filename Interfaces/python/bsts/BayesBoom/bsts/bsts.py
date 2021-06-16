@@ -334,13 +334,15 @@ class Bsts:
           stored in the original model fit, they will be present in the output.
         """
         has_prediction_errors = hasattr(self, "_one_step_prediction_errors")
+        if burn is None:
+            burn = self.suggest_burn()
         if cutpoints is None and has_prediction_errors:
             if simplify:
-                return self._one_step_prediction_errors[self.time_dimension]
+                return self._one_step_prediction_errors[self.time_dimension][burn:, :]
             else:
                 return {
                     self.time_dimension:
-                    self._one_step_prediction_errors[self.time_dimension]
+                    self._one_step_prediction_errors[self.time_dimension][burn:, :]
                 }
 
         elif cutpoints is not None and has_prediction_errors:
@@ -357,11 +359,11 @@ class Bsts:
                         standardize)
                 )
                 for i, cutpoint in enumerate(required_cutpoints):
-                    self._one_step_prediction_errors[cutpoint] = (
-                        extra_prediction_errors[i].to_numpy())
+                    errors = extra_prediction_errors[i].to_numpy()
+                    self._one_step_prediction_errors[cutpoint] = errors
 
             ans = {
-                cut: self._one_step_prediction_errors[cut] for cut in cutpoints
+                cut: self._one_step_prediction_errors[cut][burn:, :] for cut in cutpoints
             }
             return copy.deepcopy(ans)
 

@@ -49,6 +49,9 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertIsInstance(errors, np.ndarray)
         self.assertEqual(errors.shape, (10, 100))
 
+        errors = model.one_step_prediction_errors(burn=7)
+        self.assertEqual(errors.shape, (3, 100))
+
         foo = model._model.simulate_holdout_prediction_errors(
             50, 90, False).to_numpy()
         self.assertEqual(foo.shape, (50, 100))
@@ -62,6 +65,7 @@ class TestGaussianTimeSeries(unittest.TestCase):
         self.assertEqual(errors[80].shape,  (10, 100))
         self.assertEqual(errors[100].shape,  (10, 100))
         self.assertEqual(model.time_dimension, 100)
+
 
     def test_basic_structural_model(self):
         model = Bsts()
@@ -338,15 +342,15 @@ class TestPlots(unittest.TestCase):
         self.assertIsInstance(ans, plt.Figure)
 
 
-_debug_mode = False
+_debug_mode = True
 _show_figs = _debug_mode
 
 if _debug_mode:
     import pdb  # noqa
 
     # Turn warnings into errors.
-    import warnings
-    warnings.simplefilter("error")
+#    import warnings
+#    warnings.simplefilter("error")
 
     # Run the test you are trying to debug here.  Instantiate the test class,
     # then call the problematic test.  Call pdb.pm() in the event of an
@@ -360,7 +364,7 @@ if _debug_mode:
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_plot_state()
+    rig.test_plot_forecast_distribution()
 
     print("Goodbye, cruel world!")
 
