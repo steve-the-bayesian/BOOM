@@ -152,7 +152,12 @@ python3 setup.py sdist bdist_wheel
 # pip3 --verbose install ./BayesBoom
 
 cd dist
-pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+if -v pip3 &> /dev/null
+then
+    pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+else
+    pip install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
+fi
 
 ##----------------------------------------------------------------------
 ## Install the pure python packages
@@ -163,4 +168,10 @@ pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
 
 if [[ $DO_PUBLISH == 1 ]]; then
     twine upload dist/*.tar.gz
+fi
+
+if [[ $BUILD_WHEEL == 1 ]]; then
+    cd ..
+    docker build -t pyboom .
+    docker run -v /tmp:/export --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/.
 fi
