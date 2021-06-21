@@ -1,6 +1,6 @@
 Package: bsts
-Version: 0.9.6
-Date: 2021-04-06
+Version: 0.9.7
+Date: 2021-06-21
 Title: Bayesian Structural Time Series
 Author: Steven L. Scott <steve.the.bayesian@gmail.com>
 Maintainer: Steven L. Scott <steve.the.bayesian@gmail.com>
