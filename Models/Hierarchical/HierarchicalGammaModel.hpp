@@ -53,7 +53,7 @@ namespace BOOM {
     HierarchicalGammaModel(const HierarchicalGammaModel &rhs);
     HierarchicalGammaModel *clone() const override;
 
-    void clear_methods();
+    void clear_methods() override;
 
     // Removes all data_level_models and their associated parameters
     // and data.

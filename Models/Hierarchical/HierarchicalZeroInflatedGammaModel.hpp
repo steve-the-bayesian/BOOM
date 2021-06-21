@@ -135,7 +135,7 @@ namespace BOOM {
     // TODO: Should have a HierarchicalPriorPolicy that
     // implements clear_methods() by calling it on the data-level
     // models.
-    void clear_methods();
+    void clear_methods() override;
 
     // Removes all data_level_models and their associated parameters
     // and data.

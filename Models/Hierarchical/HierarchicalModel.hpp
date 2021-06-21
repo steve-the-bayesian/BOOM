@@ -78,7 +78,7 @@ namespace BOOM {
       }
     }
 
-    void clear_methods() {
+    void clear_methods() override {
       prior_->clear_methods();
       for (int i = 0; i < data_level_models_.size(); ++i) {
         data_level_models_[i]->clear_methods();
