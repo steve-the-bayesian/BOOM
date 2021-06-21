@@ -142,7 +142,7 @@ namespace BOOM {
     void clear_client_data();
 
     // Clear the learning methods for each of the client models.
-    void clear_methods();
+    void clear_methods() override;
 
     // Adds the data_level_models from rhs to this.
     void combine_data(const Model &rhs, bool just_suf = true) override;
