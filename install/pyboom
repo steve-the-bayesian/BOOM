@@ -13,11 +13,15 @@ help_message="\n -p Publish package to PyPi after installing."
 usage () { echo "Usage: $0 [-p] $help_message 1>&2; exit 0"; }
 
 DO_PUBLISH=0
+BUILD_MANYLINUX_WHEEL=0
 
 while getopts :ci option; do
     case "${option}" in
         p)
             DO_PUBLISH=1
+            ;;
+        m)
+            BUILD_MANYLINUX_WHEEL=1
             ;;
         \?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -155,7 +159,8 @@ cd dist
 if -v pip3 &> /dev/null
 then
     pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
-else
+elif -v pip &> /dev/null
+then
     pip install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
 fi
 
@@ -171,13 +176,14 @@ echo "twine upload dist/BayesBoom-VERSION.*"
 
 echo "To build manylinux wheel:"
 echo "docker build -t pyboom ."
-echo "docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/."
+echo "docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-*-cp36-cp36m-manylinux2010_x86_64.whl /export/."
 
 if [[ $DO_PUBLISH == 1 ]]; then
     twine upload dist/BayesBoom-*.tar.gz
 fi
 
-if [[ $BUILD_WHEEL == 1 ]]; then
+
+if [[ $BUILD_MANYLINUX_WHEEL == 1 ]]; then
     cd ..
     docker build -t pyboom .
     docker run -v /tmp:/export --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/.
