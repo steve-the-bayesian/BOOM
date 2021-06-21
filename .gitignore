@@ -5,3 +5,9 @@ TAGS
 *~
 bazel-*
 *pycache*
+.Rhistory
+blah
+foo
+bar
+baz
+qux
