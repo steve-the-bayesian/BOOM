@@ -31,10 +31,10 @@ class GaussianStateSpaceModelFactory:
         """
         if data is not None:
             if (isinstance(data, np.ndarray)):
-                boom_data = boom.Vector(data.ravel())
+                boom_data = boom.Vector(data.ravel().astype(float))
                 is_observed = np.isfinite(data)
             else:
-                boom_data = boom.Vector(data.values)
+                boom_data = boom.Vector(data.values.astype(float))
                 is_observed = np.isfinite(data)
             self._model = boom.StateSpaceModel(boom_data, is_observed)
         else:

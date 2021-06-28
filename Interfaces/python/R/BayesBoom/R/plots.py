@@ -397,7 +397,7 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       density: If True then the area of the histogram bars sums to 1.
     """
     if ax is None:
-        _, ax = plt.subplots(1, 1, 1)
+        _, ax = plt.subplots(1, 1)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
