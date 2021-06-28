@@ -157,7 +157,6 @@ class Bsts:
         # set up dynamic memory allocations on the C++ side.
         self._model.sample_posterior()
         self._allocate_space(niter)
-        self._niter = niter
 
         for i in range(niter):
             self._model.sample_posterior()
@@ -338,11 +337,13 @@ class Bsts:
             burn = self.suggest_burn()
         if cutpoints is None and has_prediction_errors:
             if simplify:
-                return self._one_step_prediction_errors[self.time_dimension][burn:, :]
+                return self._one_step_prediction_errors[
+                    self.time_dimension][burn:, :]
             else:
                 return {
                     self.time_dimension:
-                    self._one_step_prediction_errors[self.time_dimension][burn:, :]
+                    self._one_step_prediction_errors[
+                        self.time_dimension][burn:, :]
                 }
 
         elif cutpoints is not None and has_prediction_errors:
@@ -363,7 +364,8 @@ class Bsts:
                     self._one_step_prediction_errors[cutpoint] = errors
 
             ans = {
-                cut: self._one_step_prediction_errors[cut][burn:, :] for cut in cutpoints
+                cut: self._one_step_prediction_errors[
+                    cut][burn:, :] for cut in cutpoints
             }
             return copy.deepcopy(ans)
 
@@ -572,7 +574,7 @@ class Bsts:
             scale = "linear"
         scale = R.unique_match(scale, ["linear", "mean"])
 
-        niter = self._niter
+        niter = self.niter
         if burn is None:
             burn = self.suggest_burn()
 
@@ -582,6 +584,11 @@ class Bsts:
         state_contribution = np.zeros((niter, len(time)))
         for model in self._state_models:
             state_contribution += model._state_contribution
+
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+        else:
+            fig = None
 
         if style == "dynamic":
             R.plot_dynamic_distribution(
@@ -602,8 +609,8 @@ class Bsts:
         if show_actuals:
             ax.scatter(time,
                        self.original_series,
-                       s=1 / np.sqrt(len(self.original_series)))
-        return ax
+                       s=10 / np.sqrt(len(self.original_series)))
+        return fig, ax
 
     def plot_state_components(self,
                               burn: int = None,
@@ -877,7 +884,7 @@ class Bsts:
             coef = coef[burn:, :]
 
         if ax is None:
-            _, ax = plt.subplots(1, 1, 1)
+            _, ax = plt.subplots(1, 1)
 
         inc = spikeslab.compute_inclusion_probabilities(coef)
 
@@ -940,7 +947,7 @@ class Bsts:
         if burn is None:
             burn = self.suggest_burn()
         if ax is None:
-            _, ax = plt.subplots(1, 1, 1)
+            _, ax = plt.subplots(1, 1)
         return spikeslab.plot_model_size(
             coef, burn=burn, ax=ax, **kwargs)
 
@@ -1162,6 +1169,18 @@ class BstsPrediction:
     Posterior predictive distribution produced by the call to Bsts.pred.
     """
     def __init__(self, distribution, original_series):
+        """
+        Create a BstsPrediction object.
+
+        Args:
+
+          distribution: A numpy array of either 2 or 3 dimensions.  In either
+            case the first dimension represents MCMC draws and the last
+            represents time points.  If three dimensions are present, the
+            middle dimension represents the individual state components.
+
+          original_series: The original time series of response values.
+        """
         if len(distribution.shape) == 3:
             self.distribution = distribution[:, -1, :]
             self.components = distribution[:, :-1, :]
@@ -1174,6 +1193,26 @@ class BstsPrediction:
     @property
     def original_series(self):
         return self._original_series
+
+    @property
+    def posterior_predictive_distribution(self):
+        """
+        The posterior predictive distribution of new outcomes, including any
+        observational noise.
+        """
+        return self.distribution
+
+    @property
+    def posterior_mean_distribution(self):
+        """
+        The distribution of the sum of the latent state contributions to the
+        prediction.  If the model contains a link function, the prediction is
+        on the link scale (e.g. it is the distribution of logit(p_t), not p_t).
+        """
+        if self.components is None:
+            raise Exception("The BstsPrediction was not created with separate "
+                            "components.")
+        return self.components.sum(axis=1)
 
     def plot(self, original_series=True, ax=None, **kwargs):
         """
@@ -1193,6 +1232,11 @@ class BstsPrediction:
           The 'ax' object on which the plot is drawn.
         """
         horizon = self.distribution.shape[1]
+
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+        else:
+            fig = None
 
         if (
                 isinstance(self._original_series, pd.Series)
@@ -1258,7 +1302,7 @@ class BstsPrediction:
                 color="green", linestyle="dashed")
         ax.set_xlim((plotting_timestamps[0], plotting_timestamps[-1]))
 
-        return ax
+        return fig, ax
 
 
 def extend_timestamps(timestamps, num_steps, dt: pd.Timedelta = None):
@@ -1591,7 +1635,7 @@ def compare_bsts_models(models, burn=None, colors=None,
     R.plot_ts(original_series, ax=bottom_panel, xlab=xlab)
     counter = 0
     for model_name, model in models.items():
-        errors = model.one_step_prediction_errors()[burn:, :].mean(axis=0)
+        errors = model.one_step_prediction_errors(burn=burn).mean(axis=0)
         cumulative_errors = pd.Series(
             np.cumsum(np.abs(errors)),
             index=original_series.index

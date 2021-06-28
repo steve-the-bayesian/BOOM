@@ -98,10 +98,10 @@ class TestGaussianTimeSeries(unittest.TestCase):
 
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         predictions.plot(ax=ax[0], original_series=24)
-        pred_plot = pred2.plot(ax=ax[1], original_series=24)
+        pred_plot_fig, pred_plot_ax = pred2.plot(ax=ax[1], original_series=24)
         if _show_figs:
             fig.show()
-        self.assertIsInstance(pred_plot, plt.Axes)
+        self.assertIsInstance(pred_plot_ax, plt.Axes)
 
 
 class TestGaussianRegression(unittest.TestCase):
@@ -213,10 +213,10 @@ class TestStudentTimeSeries(unittest.TestCase):
 
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         predictions.plot(ax=ax[0], original_series=60)
-        pred_plot = pred2.plot(ax=ax[1], original_series=60)
+        pred_plot_fig, pred_plot_ax = pred2.plot(ax=ax[1], original_series=60)
         if _show_figs:
             fig.show()
-        self.assertIsInstance(pred_plot, plt.Axes)
+        self.assertIsInstance(pred_plot_ax, plt.Axes)
 
         np.testing.assert_array_almost_equal(predictions.distribution,
                                              pred2.distribution)
@@ -277,12 +277,12 @@ class TestPlots(unittest.TestCase):
 
     def test_plot_state(self):
         _, ax = plt.subplots()
-        foo = self._model.plot(ax=ax)
-        self.assertIsInstance(foo, plt.Axes)
+        foo, bar = self._model.plot(ax=ax)
+        self.assertIsInstance(bar, plt.Axes)
 
         _, ax = plt.subplots()
-        foo = self._regression_model.plot(ax=ax)
-        self.assertIsInstance(foo, plt.Axes)
+        foo, bar = self._regression_model.plot(ax=ax)
+        self.assertIsInstance(bar, plt.Axes)
 
     def test_plot_components(self):
         fig = plt.figure()
