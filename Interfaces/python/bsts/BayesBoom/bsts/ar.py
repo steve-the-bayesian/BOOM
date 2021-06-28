@@ -167,6 +167,16 @@ class SpikeSlabArPrior:
             sample_size=prior_df,
             upper_limit=sigma_upper_limit)
 
+    def __repr__(self):
+        f"""
+        SpikeSlabArPrior with...
+        inclusion_probabilities: {self._prior_inclusion_probabilities}
+        max flips: {self._max_flips}
+        prior mean: {self._prior_mean}
+        prior sd: {self._prior_sd}
+        residual precision prior: {self._residual_precision}
+        """
+
     @property
     def spike(self):
         return boom.VariableSelectionPrior(
