@@ -177,6 +177,7 @@ echo "twine upload dist/BayesBoom-VERSION.*"
 echo "To build manylinux wheel:"
 echo "docker build -t pyboom ."
 echo "docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-*-cp36-cp36m-manylinux2010_x86_64.whl /export/."
+echo "The built wheel will be in /tmp"
 
 if [[ $DO_PUBLISH == 1 ]]; then
     twine upload dist/BayesBoom-*.tar.gz
@@ -186,5 +187,5 @@ fi
 if [[ $BUILD_MANYLINUX_WHEEL == 1 ]]; then
     cd ..
     docker build -t pyboom .
-    docker run -v /tmp:/export --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/.
+    docker run -v /tmp:/export --rm -it pyboom cp /output/BayesBoom-0.0.7-cp36-cp36m-manylinux2010_x86_64.whl /export/.
 fi
