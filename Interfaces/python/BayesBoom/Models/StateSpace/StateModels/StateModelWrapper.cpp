@@ -8,6 +8,7 @@
 #include "Models/StateSpace/StateModels/RegressionHolidayStateModel.hpp"
 #include "Models/StateSpace/StateModels/SemilocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
+#include "Models/StateSpace/StateModels/GeneralSeasonalStateModel.hpp"
 #include "Models/StateSpace/StateModels/StudentLocalLinearTrend.hpp"
 #include "Models/StateSpace/StateModels/TrigStateModel.hpp"
 
@@ -535,6 +536,24 @@ namespace BayesBoom {
                  const Vector &pattern) {
                model->set_holiday_pattern(holiday_index, pattern);
              })
+        ;
+
+    py::class_<GeneralSeasonalStateModel,
+               StateModel,
+               BOOM::Ptr<GeneralSeasonalStateModel>>(boom, "GeneralSeasonalStateModel")
+        .def(py::init<int>(),
+             py::arg("season_duration") = 1,
+             "Args:\n"
+             "  season_duration:  The number of time periods each season lasts.")
+        .def("add_seasonal_model",
+             [](GeneralSeasonalStateModel *state_model,
+                StateModel *seasonal_state_model) {
+               state_model->add_seasonal_model(seasonal_state_model);
+             },
+             "Args:\n\n"
+             "  seasonal_state_model:  A StateModel describing variation for "
+             "the next unmodeled season.  One such model should be added for "
+             "each season in the cycle.")
         ;
 
 

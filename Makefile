@@ -83,11 +83,13 @@ SAMPLERS_HDRS := $(wildcard Samplers/*.hpp Samplers/Gilks/*.hpp)
 STATESPACE_SRCS := $(wildcard Models/StateSpace/*.cpp) \
 	$(wildcard Models/StateSpace/Filters/*.cpp) \
 	$(wildcard Models/StateSpace/PosteriorSamplers/*.cpp) \
-	$(wildcard Models/StateSpace/StateModels/*.cpp)
+	$(wildcard Models/StateSpace/StateModels/*.cpp) \
+	$(wildcard Models/StateSpace/StateModels/PosteriorSamplers/*.cpp)
 STATESPACE_HDRS := $(wildcard Models/StateSpace/*.hpp) \
 	$(wildcard Models/StateSpace/Filters/*.hpp) \
 	$(wildcard Models/StateSpace/PosteriorSamplers/*.hpp) \
-	$(wildcard Models/StateSpace/StateModels/*.hpp)
+	$(wildcard Models/StateSpace/StateModels/*.hpp) \
+	$(wildcard Models/StateSpace/StateModels/PosteriorSamplers/*.hpp)
 
 STATS_SRCS := $(wildcard stats/*.cpp)
 STATS_HDRS := $(wildcard stats/*.hpp)

@@ -203,12 +203,13 @@ state_space_sources = (
     + glob(BOOM_DIR + "Models/StateSpace/Filters/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp")
 )
 state_space_headers = (
     glob(BOOM_DIR + "Models/StateSpace/*.hpp")
     + glob(BOOM_DIR + "Models/StateSpace/Filters/*.hpp")
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.hpp")
-    + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.hpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.hpp")
 )
 boom_headers += state_space_headers
 

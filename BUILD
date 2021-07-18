@@ -148,6 +148,7 @@ STATE_SPACE_SRCS = glob([
     "Models/StateSpace/Filters/*.cpp",
     "Models/StateSpace/StateModels/*.cpp",
     "Models/StateSpace/PosteriorSamplers/*.cpp",
+    "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp",
 ])
 
 STATE_SPACE_HDRS = glob([
@@ -155,6 +156,7 @@ STATE_SPACE_HDRS = glob([
     "Models/StateSpace/Filters/*.hpp",
     "Models/StateSpace/StateModels/*.hpp",
     "Models/StateSpace/PosteriorSamplers/*.hpp",
+    "Models/StateSpace/StateModels/PosteriorSamplers/*.hpp",
 ])
 
 TIMESERIES_SRCS = glob([

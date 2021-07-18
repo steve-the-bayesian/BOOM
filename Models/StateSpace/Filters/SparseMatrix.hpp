@@ -1367,11 +1367,18 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // I - 11^T / dim.  This matrix removes the mean from a vector.  It is
-  // symmetric and idempotent.
+  // I - 11^T / dim.  This matrix removes the mean from a vector. In other
+  // words, if A is such a matrix, y is a vector, and ybar is the mean of the
+  // vector, then A * y = y - ybar.  It is symmetric and idempotent.
   class EffectConstraintMatrix : public SparseMatrixBlock {
    public:
-    explicit EffectConstraintMatrix(int dim) : dim_(dim) {}
+
+    // Args:
+    //   dim:  The notional number of rows and columns in the (square) matrix.
+    explicit EffectConstraintMatrix(int dim)
+        : dim_(dim)
+    {}
+
     EffectConstraintMatrix *clone() const override {
       return new EffectConstraintMatrix(*this);
     }
@@ -1418,6 +1425,110 @@ namespace BOOM {
 
    private:
     int dim_;
+  };
+
+
+  // A matrix that subtracts off the mean of a regular subset of a vector.
+  class SubsetEffectConstraintMatrix : public SparseMatrixBlock {
+   public:
+
+    // Args:
+    //   dim:  The notional number of rows and columns in the (square) matrix.
+    //   stride:  The number of elements between the elements to be de-meaned.
+    //   offset:  The index of the first element to be de-meaned.
+    explicit SubsetEffectConstraintMatrix(int dim, int stride = 1, int offset = 0)
+        : dim_(dim),
+          stride_(stride),
+          offset_(offset)
+    {}
+
+    SubsetEffectConstraintMatrix *clone() const override {
+      return new SubsetEffectConstraintMatrix(*this);
+    }
+
+    int nrow() const override {return dim_;}
+
+    int ncol() const override {return dim_;}
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs = rhs;
+      VectorView mean_subset = subset(lhs);
+      mean_subset -= mean(mean_subset);
+    }
+
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override {
+      Vector tmp(rhs.size(), 0.0);
+      VectorView tmp2(tmp);
+      multiply(tmp2, rhs);
+      lhs += tmp2;
+    }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      multiply(lhs, rhs);
+    }
+
+    void multiply_inplace(VectorView x) const override {
+      VectorView sub(subset(x));
+      sub -= mean(sub);
+    }
+
+    void add_to_block(SubMatrix block) const override {
+      conforms_to_rows(block.nrow());
+      conforms_to_cols(block.ncol());
+      block.diag() += 1.0;
+      int subset_dim = dim_ / stride_;
+      Vector decrement(dim_, 0.0);
+      subset(decrement) = 1.0 / subset_dim;
+      for (int j = offset_; j < dim_; j += stride_) {
+        block.col(j) -= decrement;
+      }
+    }
+
+    // Let J be the column vector of 0's and 1's picking off the subset to be
+    // demeaned.  Note that J'J = s.
+    //
+    // The inner product matrix is
+    // (I - JJ'/s)' * (I - JJ'/s)
+    // = I - JJ'/s - JJ'/s + JJ' * JJ' / s^2)
+    // = I + (-1/s -1/s + s/s^2)JJ'
+    // = I - JJ'/s
+    //
+    // So the matrix is idempotent.  This must be the matrix is symmetric, and
+    // because subtracting the mean is an idempotent operation.
+    SpdMatrix inner() const override {
+      return dense();
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return dense().inner(weights);
+    }
+
+    Matrix dense() const override {
+      Matrix ans(dim_, dim_, 0.0);
+      ans.diag() += 1.0;
+      int subset_dim = dim_ / stride_;
+      Vector decrement(dim_, 0.0);
+      subset(decrement) = 1.0 / subset_dim;
+      for (int j = offset_; j < dim_; j += stride_) {
+        ans.col(j) -= decrement;
+      }
+      return ans;
+    }
+
+    VectorView subset(Vector &full_vector) const {
+      int subset_dim = dim_ / stride_;
+      return VectorView(full_vector.data() + offset_, subset_dim, stride_);
+    }
+
+    VectorView subset(VectorView &full_vector) const {
+      int subset_dim = dim_ / stride_;
+      return VectorView(full_vector.data() + offset_, subset_dim, stride_ * full_vector.stride());
+    }
+
+   private:
+    int dim_;
+    int stride_;
+    int offset_;
   };
 
   //===========================================================================
@@ -1500,6 +1611,89 @@ namespace BOOM {
 
    private:
     Ptr<SparseMatrixBlock> unconstrained_;
+  };
+
+  //===========================================================================
+  // A SparseMatrixBlock formed by the product of two other SparseMatrixBlock's.
+  class ProductSparseMatrixBlock
+      : public SparseMatrixBlock {
+   public:
+    ProductSparseMatrixBlock(const Ptr<SparseMatrixBlock> left,
+                             const Ptr<SparseMatrixBlock> &right)
+        : left_(left),
+          right_(right)
+    {}
+    ProductSparseMatrixBlock(const ProductSparseMatrixBlock &rhs)
+        : SparseMatrixBlock(rhs),
+          left_(rhs.left_->clone()),
+          right_(rhs.right_->clone())
+    {}
+    ProductSparseMatrixBlock & operator=(const ProductSparseMatrixBlock &rhs) {
+      if (&rhs != this) {
+        SparseMatrixBlock::operator=(rhs);
+        left_ = rhs.left_->clone();
+        right_ = rhs.right_->clone();
+      }
+      return *this;
+    }
+
+    ProductSparseMatrixBlock(ProductSparseMatrixBlock &&rhs) = default;
+    ProductSparseMatrixBlock &operator=(ProductSparseMatrixBlock &&rhs) = default;
+
+    ProductSparseMatrixBlock * clone() const override {
+      return new ProductSparseMatrixBlock(*this);
+    }
+
+    int nrow() const override {return left_->nrow();}
+
+    int ncol() const override {return right_->ncol();}
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      Vector tmp(right_->nrow());
+      right_->multiply(VectorView(tmp), rhs);
+      left_->multiply(lhs, tmp);
+    }
+
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override {
+      Vector tmp(right_->nrow());
+      right_->multiply(VectorView(tmp), rhs);
+      left_->multiply_and_add(lhs, tmp);
+    }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      Vector tmp(left_->ncol());
+      left_->Tmult(VectorView(tmp), rhs);
+      right_->Tmult(lhs, tmp);
+    }
+
+    void multiply_inplace(VectorView x) const {
+      right_->multiply_inplace(x);
+      left_->multiply_inplace(x);
+    }
+
+    SpdMatrix inner() const override {
+      return left_->sandwich_transpose(right_->inner());
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      return left_->sandwich_transpose(right_->inner(weights));
+    }
+
+    void add_to_block(SubMatrix block) const override {
+    }
+
+    Matrix dense() const override {
+      return (*left_) * right_->dense();
+    }
+
+    Vector left_inverse(const ConstVectorView &x) const override {
+      return right_->left_inverse(left_->left_inverse(x));
+    }
+
+   private:
+    Ptr<SparseMatrixBlock> left_;
+    Ptr<SparseMatrixBlock> right_;
   };
 
   //===========================================================================

@@ -386,6 +386,37 @@ namespace {
     return ans;
   }
 
+  Matrix LocalLinearConstraintMatrix(int dim) {
+    Matrix ans(dim, dim, 0.0);
+    int reduced_dim = dim / 2;
+    ans.diag() += 1.0;
+
+    Vector J(dim);
+    for (int i = 0; i < reduced_dim; ++i) {
+      J[2 * i] = 1.0;
+    }
+    ans.add_outer(J, J, -1.0 / reduced_dim);
+    return ans;
+  }
+
+  TEST(LltTestFunction, MatchesDenseMatrix) {
+    Matrix Expected(
+        std::vector<Vector>{
+          Vector{.5, 0, -.5, 0},
+          Vector{0, 1, 0, 0},
+          Vector{-.5, 0, .5, 0},
+          Vector{0, 0, 0, 1}
+        });
+    Matrix observed = LocalLinearConstraintMatrix(4);
+    EXPECT_TRUE(MatrixEquals(Expected, observed));
+  }
+
+  TEST_F(SparseMatrixTest, SubsetEffectConstraintMatrixTest) {
+    Matrix dense = LocalLinearConstraintMatrix(8);
+    NEW(SubsetEffectConstraintMatrix, sparse)(8, 2);
+    CheckSparseMatrixBlock(sparse, dense);
+  }
+
   TEST_F(SparseMatrixTest, ConstraintMatrixTest) {
     Matrix dense = ConstraintMatrix(7);
     NEW(EffectConstraintMatrix, sparse)(7);

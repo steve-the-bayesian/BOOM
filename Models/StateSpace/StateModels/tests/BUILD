@@ -5,6 +5,7 @@ COPTS = [
 
 cc_test(
     name = "ar_state_model_test",
+    size = "small",
     srcs = ["ar_state_model_test.cc"],
     copts = COPTS,
     deps = [
@@ -13,11 +14,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "dynamic_regression_test",
+    size = "small",
     srcs = ["dynamic_regression_test.cc"],
     copts = COPTS,
     deps = [
@@ -26,11 +27,23 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
+)
+
+cc_test(
+    name = "general_seasonal_llt_test",
     size = "small",
+    srcs = ["general_seasonal_llt_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
 )
 
 cc_test(
     name = "local_level_test",
+    size = "small",
     srcs = ["local_level_test.cc"],
     copts = COPTS,
     deps = [
@@ -39,11 +52,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "local_linear_trend_test",
+    size = "small",
     srcs = ["local_linear_trend_test.cc"],
     copts = COPTS,
     deps = [
@@ -53,11 +66,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "HierarchicalRegressionHolidayStateModel_test",
+    size = "small",
     srcs = ["HierarchicalRegressionHolidayStateModel_test.cc"],
     copts = COPTS,
     deps = [
@@ -67,29 +80,28 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "Holiday_test",
+    size = "small",
     srcs = ["Holiday_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "HolidayMcmc_test",
+    size = "small",
     srcs = ["HolidayMcmc_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_binary(
@@ -103,6 +115,7 @@ cc_binary(
 
 cc_test(
     name = "RegressionHolidayStateModel_test",
+    size = "small",
     srcs = ["RegressionHolidayStateModel_test.cc"],
     copts = COPTS,
     deps = [
@@ -112,11 +125,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "random_walk_holiday_test",
+    size = "small",
     srcs = ["random_walk_holiday_test.cc"],
     copts = COPTS,
     deps = [
@@ -126,11 +139,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "SeasonalStateModel_test",
+    size = "small",
     srcs = ["SeasonalStateModel_test.cc"],
     copts = COPTS,
     deps = [
@@ -140,11 +153,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "semilocal_linear_trend_test",
+    size = "small",
     srcs = ["semilocal_linear_trend_test.cc"],
     copts = COPTS,
     deps = [
@@ -154,11 +167,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "static_intercept_test",
+    size = "small",
     srcs = ["static_intercept_test.cc"],
     copts = COPTS,
     deps = [
@@ -168,11 +181,11 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "student_local_linear_trend_test",
+    size = "small",
     srcs = ["student_local_linear_trend_test.cc"],
     copts = COPTS,
     deps = [
@@ -182,14 +195,14 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )
 
 cc_test(
     name = "Trig_test",
+    size = "small",
     srcs = ["Trig_test.cc"],
     copts = COPTS + ["-g"],
-#     linkopts = ["-lprofiler"],
+    #     linkopts = ["-lprofiler"],
     deps = [
         "//:boom",
         "//:boom_test_utils",
@@ -197,5 +210,4 @@ cc_test(
         "//Models/StateSpace/tests:test_utils",
         "@gtest//:gtest_main",
     ],
-    size = "small",
 )

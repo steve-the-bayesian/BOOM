@@ -76,24 +76,6 @@ class SeasonalStateModel(StateModel):
         self._build_model()
         self._state_contribution = None
 
-    def _build_model(self):
-        self._state_model = boom.SeasonalStateModel(
-            nseasons=self._nseasons, season_duration=self._season_duration)
-
-        self._state_model.set_initial_state_mean(
-            boom.Vector(self._initial_state_prior.mu))
-        self._state_model.set_initial_state_variance(
-            boom.SpdMatrix(self._initial_state_prior.Sigma))
-
-        # The prior needs to be saved so the object can be serialized.
-        self._assign_posterior_sampler(self._innovation_sd_prior)
-
-    def __repr__(self):
-        ans = f"A SeasonalStateModel with {self.nseasons} "
-        ans += f"seasonas of duration {self.season_duration}, and "
-        ans += f"residual sd {self._state_model.sigma}."
-        return ans
-
     @property
     def label(self):
         ans = f"Seasonal[{self._nseasons}]"
@@ -139,6 +121,24 @@ class SeasonalStateModel(StateModel):
             return self.plot_state_contribution_default(
                 fig=fig, gridspec=gridspec, time=time, burn=burn,
                 ylim=ylim, **kwargs)
+
+    def _build_model(self):
+        self._state_model = boom.SeasonalStateModel(
+            nseasons=self._nseasons, season_duration=self._season_duration)
+
+        self._state_model.set_initial_state_mean(
+            boom.Vector(self._initial_state_prior.mu))
+        self._state_model.set_initial_state_variance(
+            boom.SpdMatrix(self._initial_state_prior.Sigma))
+
+        # The prior needs to be saved so the object can be serialized.
+        self._assign_posterior_sampler(self._innovation_sd_prior)
+
+    def __repr__(self):
+        ans = f"A SeasonalStateModel with {self.nseasons} "
+        ans += f"seasonas of duration {self.season_duration}, and "
+        ans += f"residual sd {self._state_model.sigma}."
+        return ans
 
     def __getstate__(self):
         payload = self.__dict__.copy()
