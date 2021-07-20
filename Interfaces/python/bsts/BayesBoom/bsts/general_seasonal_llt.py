@@ -17,7 +17,24 @@ class GeneralSeasonalLLT(StateModel):
                  slope_precision_priors=None,
                  sdy: float = None):
         """
-        blah
+        Args:
+          y: The time series to be modeled.  This can be "None" if 'sdy' is
+            supplied.
+          nseasons: The number of seasons in a cycle.
+          initial_state_prior: An R.NormalPrior object describing the initial
+            distribution of the state at time 0.  If None then a default prior
+            will be assumed.
+          level_precision_priors: A list of R.SdPrior objects describing the
+            prior distribution on the innovation standard deviations for the
+            level portion of the model.  There is one such prior for each
+            season in the cycle.
+          slope_precision_priors: A list of R.SdPrior objects describing the
+            prior distribution on the innovation standard deviations for the
+            slope portion of the model.  There is one such prior for each
+            season in the cycle.
+          sdy: The standard deviation of the time series to be modeled.  This
+            is not needed if 'y' is supplied, or if all the prior distributions
+            are explicity supplied.
         """
 
         self._nseasons = int(nseasons)
@@ -69,6 +86,7 @@ class GeneralSeasonalLLT(StateModel):
                 raise Exception(msg)
 
         self._build_model()
+        self._state_contribution = None
 
     @property
     def label(self):
@@ -76,14 +94,24 @@ class GeneralSeasonalLLT(StateModel):
 
     @property
     def nseasons(self):
+        """
+        The number of seasons in a full cycle.
+        """
         return self._nseasons
 
     @property
     def state_dimension(self):
+        """
+        The number of elements in the full state vector.
+        """
         return self._nseasons * 2
 
     @property
     def state_contribution(self):
+        """
+        The posterior distribution of the contribution of this state component
+        to the mean of y.
+        """
         return self._state_contribution
 
     def allocate_space(self, niter, time_dimension):
@@ -107,6 +135,12 @@ class GeneralSeasonalLLT(StateModel):
     def restore_state(self, iteration):
         self._state_model.set_sigma_level(self._sigma_level_draws[iteration, :])
         self._state_model.set_sigma_slope(self._sigma_slope_draws[iteration, :])
+
+    def plot_state_contribution(
+            self, fig, gridspec, time, burn=None, ylim=None, **kwargs):
+        return self.plot_state_contribution_default(
+            fig=fig, gridspec=gridspec, time=time, burn=burn,
+            ylim=ylim, **kwargs)
 
     def _build_model(self):
         self._state_model = boom.GeneralSeasonalLLT(self._nseasons)

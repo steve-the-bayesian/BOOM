@@ -565,6 +565,19 @@ namespace BayesBoom {
               }
               return ans;
             })
+        .def("set_sigma_level",
+             [] (GeneralSeasonalLLT &model, const Vector &sigma_values) {
+               for (int i = 0; i < model.nseasons(); ++i) {
+                 SpdMatrix Sigma = model.subordinate_model(i)->Sigma();
+                 Sigma(0, 0) = square(sigma_values[i]);
+                 model.subordinate_model(i)->set_Sigma(Sigma);
+               }
+             },
+             py::arg("sigma_values"),
+             "Args:\n\n"
+             "  sigma_values:  A Vector containing the innovation standard "
+             "deviations for the level portion of the model.  There is one "
+             "entry for each season.\n")
         .def_property_readonly(
             "sigma_slope",
             [] (GeneralSeasonalLLT &model) {
@@ -574,6 +587,19 @@ namespace BayesBoom {
               }
               return ans;
             })
+        .def("set_sigma_slope",
+             [] (GeneralSeasonalLLT &model, const Vector &sigma_values) {
+               for (int i = 0; i < model.nseasons(); ++i) {
+                 SpdMatrix Sigma = model.subordinate_model(i)->Sigma();
+                 Sigma(1, 1) = square(sigma_values[i]);
+                 model.subordinate_model(i)->set_Sigma(Sigma);
+               }
+             },
+             py::arg("sigma_values"),
+             "Args:\n\n"
+             "  sigma_values:  A Vector containing the innovation standard "
+             "deviations for the slope portion of the model.  There is one "
+             "entry for each season.\n")
         .def_property_readonly(
             "initial_state_mean",
             [](GeneralSeasonalLLT &model) {return model.initial_state_mean();},

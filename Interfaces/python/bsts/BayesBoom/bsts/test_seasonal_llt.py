@@ -46,17 +46,15 @@ class TestSeasonalLLT(unittest.TestCase):
         self.assertEqual(model.time_dimension, m2.time_dimension)
         self.assertIsInstance(m2, Bsts)
 
-    def test_plots(self):
-        pass
+        # fig = model.plot("comp")
+        # fig.show()
 
-    def test_predictions(self):
-        pass
-
-    def test_serialization(self):
-        pass
+        # pred = model.predict(12)
+        # fig2, ax = pred.plot()
+        # fig2.show()
 
 
-_debug_mode = True
+_debug_mode = False
 
 
 if _debug_mode:
