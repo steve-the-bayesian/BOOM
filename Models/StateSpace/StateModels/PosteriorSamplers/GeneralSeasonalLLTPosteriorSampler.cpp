@@ -62,4 +62,57 @@ namespace BOOM {
   }
 
 
+  namespace {
+    using GSLLTIS = GeneralSeasonalLLTIndependenceSampler;
+  }  // namespace
+
+  GSLLTIS::GeneralSeasonalLLTIndependenceSampler(
+      GeneralSeasonalLLT *model,
+      const std::vector<Ptr<GammaModelBase>> &level_innovation_priors,
+      const std::vector<Ptr<GammaModelBase>> &slope_innovation_priors,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        level_innovation_priors_(level_innovation_priors),
+        slope_innovation_priors_(slope_innovation_priors)
+  {
+    if (level_innovation_priors_.size() != model_->nseasons()) {
+      report_error("One prior is needed for each season.");
+    }
+    if (slope_innovation_priors_.size() != model_->nseasons()) {
+      report_error("One prior is needed for each season.");
+    }
+
+    for (int i = 0; i < model_->nseasons(); ++i) {
+      level_innovation_samplers_.push_back(
+          new ZeroMeanMvnIndependenceSampler(
+              model_->subordinate_model(i),
+              level_innovation_priors_[i],
+              0,
+              rng()));
+      slope_innovation_samplers_.push_back(
+          new ZeroMeanMvnIndependenceSampler(
+              model_->subordinate_model(i),
+              slope_innovation_priors_[i],
+              1,
+              rng()));
+    }
+  }
+
+  void GSLLTIS::draw() {
+    for (int i = 0; i < model_->nseasons(); ++i) {
+      level_innovation_samplers_[i]->draw();
+      slope_innovation_samplers_[i]->draw();
+    }
+  }
+
+  double GSLLTIS::logpri() const {
+    double ans = 0;
+    for (int i = 0; i < model_->nseasons(); ++i) {
+      ans += level_innovation_samplers_[i]->logpri();
+      ans += slope_innovation_samplers_[i]->logpri();
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

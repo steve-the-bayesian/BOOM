@@ -166,8 +166,8 @@ namespace BOOM {
           << ". Expected size " << state_dimension()
           << ".";
       report_error(err.str());
-      initial_state_variance_ = initial_state_variance;
     }
+    initial_state_variance_ = initial_state_variance;
   }
 
   SpdMatrix GSLLT::initial_state_variance() const {

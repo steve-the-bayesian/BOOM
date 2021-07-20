@@ -27,7 +27,6 @@ namespace {
     EXPECT_EQ(transition->ncol(), 6);
     Matrix base_dense_transition(6, 6, 0.0);
     Matrix LLT("1 1|0 1");
-
   }
 
 }  // namespace
