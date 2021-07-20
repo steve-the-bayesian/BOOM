@@ -21,6 +21,7 @@ namespace BayesBoom {
   void GammaModel_def(py::module &);
   void UniformModel_def(py::module &m);
   void MvnModel_def(py::module &);
+  void WishartModel_def(py::module &);
   void GlmModel_def(py::module &);
   void Imputation_def(py::module &);
   void TimeSeries_def(py::module &);
@@ -56,6 +57,7 @@ namespace BayesBoom {
     GammaModel_def(boom);
     MvnModel_def(boom);
     UniformModel_def(boom);
+    WishartModel_def(boom);
 
     GlmModel_def(boom);
     TimeSeries_def(boom);

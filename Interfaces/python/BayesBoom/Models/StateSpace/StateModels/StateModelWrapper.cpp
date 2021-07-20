@@ -16,6 +16,7 @@
 #include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
+#include "Models/StateSpace/StateModels/PosteriorSamplers/GeneralSeasonalLLTPosteriorSampler.hpp"
 
 #include "Models/TimeSeries/ArModel.hpp"
 
@@ -538,22 +539,61 @@ namespace BayesBoom {
              })
         ;
 
-    py::class_<GeneralSeasonalStateModel,
+    py::class_<GeneralSeasonalLLT,
                StateModel,
-               BOOM::Ptr<GeneralSeasonalStateModel>>(boom, "GeneralSeasonalStateModel")
+               PriorPolicy,
+               BOOM::Ptr<GeneralSeasonalLLT>>(boom, "GeneralSeasonalLLT")
         .def(py::init<int>(),
-             py::arg("season_duration") = 1,
+             py::arg("nseasons"),
              "Args:\n"
-             "  season_duration:  The number of time periods each season lasts.")
-        .def("add_seasonal_model",
-             [](GeneralSeasonalStateModel *state_model,
-                StateModel *seasonal_state_model) {
-               state_model->add_seasonal_model(seasonal_state_model);
+             "  nseasons:  The number of seasons in a full cycle.")
+        .def_property_readonly("nseasons", &GeneralSeasonalLLT::nseasons)
+        .def_property_readonly(
+            "state_dimension",
+            &GeneralSeasonalLLT::state_dimension,
+            "Dimension of the state vector.")
+        .def_property_readonly(
+            "state_error_dimension",
+            &GeneralSeasonalLLT::state_error_dimension,
+            "Dimension of the error_term for this state component.")
+        .def_property_readonly(
+            "sigma_level",
+            [] (GeneralSeasonalLLT &model) {
+              Vector ans(model.nseasons());
+              for (int i = 0; i < model.nseasons(); ++i) {
+                ans[i] = sqrt(model.subordinate_model(i)->Sigma()(0, 0));
+              }
+              return ans;
+            })
+        .def_property_readonly(
+            "sigma_slope",
+            [] (GeneralSeasonalLLT &model) {
+              Vector ans(model.nseasons());
+              for (int i = 0; i < model.nseasons(); ++i) {
+                ans[i] = sqrt(model.subordinate_model(i)->Sigma()(1, 1));
+              }
+              return ans;
+            })
+        .def_property_readonly(
+            "initial_state_mean",
+            [](GeneralSeasonalLLT &model) {return model.initial_state_mean();},
+            "Mean of the state at time 0.")
+        .def_property_readonly(
+            "initial_state_variance",
+            [](GeneralSeasonalLLT &model) {return model.initial_state_variance();},
+            "Variance of the state at time 0.")
+        .def("set_initial_state_mean",
+             [](GeneralSeasonalLLT &model, const Vector &mean) {
+               model.set_initial_state_mean(mean);
              },
-             "Args:\n\n"
-             "  seasonal_state_model:  A StateModel describing variation for "
-             "the next unmodeled season.  One such model should be added for "
-             "each season in the cycle.")
+             "Set the mean of the initial state distribution to the "
+             "specified Vector.")
+        .def("set_initial_state_variance",
+             [](GeneralSeasonalLLT &model, const SpdMatrix &variance) {
+               model.set_initial_state_variance(variance);
+             },
+             "Set the variance of the initial state distribution to the "
+             "specified value.")
         ;
 
 
@@ -625,6 +665,55 @@ namespace BayesBoom {
                  double upper_limit) {
                sampler->set_sigma_slope_upper_limit(upper_limit);
              })
+        ;
+
+    py::class_<GeneralSeasonalLLTPosteriorSampler,
+               PosteriorSampler,
+               Ptr<GeneralSeasonalLLTPosteriorSampler>>(
+                   boom, "GeneralSeasonalLLTPosteriorSampler")
+        .def(py::init(
+            [] (GeneralSeasonalLLT *model,
+                const std::vector<Ptr<WishartModel>> &priors,
+                RNG &seeding_rng) {
+              return new GeneralSeasonalLLTPosteriorSampler(model, priors, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("priors"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The boom.SeasonalLLT model to be sampled.\n"
+             "  priors:  The priors on the precision matrices of the "
+             "individual local linear trend models for each season in "
+             "the cycle. \n.")
+        ;
+
+    py::class_<GeneralSeasonalLLTIndependenceSampler,
+               PosteriorSampler,
+               Ptr<GeneralSeasonalLLTIndependenceSampler>>(
+                   boom, "GeneralSeasonalLLTIndependenceSampler")
+        .def(py::init(
+            [] (GeneralSeasonalLLT *model,
+                const std::vector<Ptr<GammaModelBase>> &level_precision_priors,
+                const std::vector<Ptr<GammaModelBase>> &slope_precision_priors,
+                RNG &seeding_rng) {
+              return new GeneralSeasonalLLTIndependenceSampler(
+                  model,
+                  level_precision_priors,
+                  slope_precision_priors,
+                  seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("level_precision_priors"),
+             py::arg("slope_precision_priors"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "  model: The boom.SeasonalLLT model to be sampled.\n"
+             "  level_precision_priors:  Independent priors on the precision "
+             "parameters (reciprocal variances) for the level components of the"
+             " individual local linear trend models.\n"
+             "  slope_precision_priors:  Independent priors on the precision "
+             "parameters (reciprocal variances) for the slope components of the"
+             " individual local linear trend models.\n")
         ;
 
 

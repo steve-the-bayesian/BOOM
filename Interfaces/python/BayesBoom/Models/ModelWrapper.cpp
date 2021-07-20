@@ -2,6 +2,7 @@
 
 #include "Models/ModelTypes.hpp"
 #include "Models/DoubleModel.hpp"
+#include "Models/SpdModel.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/Ptr.hpp"
@@ -23,6 +24,16 @@ namespace BayesBoom {
         },
           py::arg("x"),
           "The log density evaluated at 'x'.")
+        ;
+
+    py::class_<SpdModel, Model, Ptr<SpdModel>>(
+        boom, "SpdModel", py::multiple_inheritance())
+        .def("logp",
+             [](const SpdModel &model, const SpdMatrix &x) {
+               return model.logp(x);
+             },
+             py::arg("x"),
+             "The log density evaluated at 'x'.")
         ;
 
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(

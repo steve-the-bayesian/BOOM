@@ -252,3 +252,46 @@ class UniformPrior(DoubleModel):
         """
         import BayesBoom.boom as boom
         return boom.UniformModel(self._lo, self._hi)
+
+
+class WisharPrior:
+    def __init__(self, df: float, variance_estimate: np.ndarray):
+        """
+        Args:
+          df: The prior sample size.  For the distribution to be proper df must
+            be larger than the number of rows in 'variance_estimate'.
+          variance_estimate: A symmetric positive definite matrix defining the
+            center of the distribution.
+
+        Let X_i ~ Mvn(0, V).  Then the Wishart(nu, V) distribution describes
+        the sum of 'nu' draws X_i * X_i'.  If the draws are placed as rows in a
+        matrix X then X'X ~ Wishart(nu, V).  The mean of this distribution is
+        nu * V.
+
+        The Wishart distribution is the conjugate prior for the precision
+        parameter (inverse variance) of the multivariate normal distribution.
+        """
+        sumsq = df * variance_estimate
+        if len(sumsq.shape) != 2:
+            raise Exception("sumsq must be a matrix")
+
+        if sumsq.shape[0] != sumsq.shape[1]:
+            raise Exception("sumsq must be square")
+
+        sym_sumsq = (sumsq + sumsq.T) * .5
+        sumabs = np.sum(np.aps(sumsq - sym_sumsq))
+        relative = np.sum(np.aps(sumsq))
+        if sumabs / relative > 1e-8:
+            raise Exception("sumsq must be symmetric")
+
+        if df <= sumsq.shape[0]:
+            raise Exception(
+                "df must be largern than nrow(sumsq) for the prior to be "
+                "proper.")
+
+        self._df = df
+        self._sumsq = sumsq
+
+    def boom(self):
+        import BayesBoom as boom
+        return boom.WishartModel(self._df, self._sumsq)
