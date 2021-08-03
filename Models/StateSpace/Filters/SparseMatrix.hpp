@@ -1667,7 +1667,7 @@ namespace BOOM {
       right_->Tmult(lhs, tmp);
     }
 
-    void multiply_inplace(VectorView x) const {
+    void multiply_inplace(VectorView x) const override {
       right_->multiply_inplace(x);
       left_->multiply_inplace(x);
     }
