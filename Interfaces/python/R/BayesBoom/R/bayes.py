@@ -299,7 +299,16 @@ class WisharPrior:
 
 
 class GaussianSuf:
+    """
+    Sufficient statistics for a scalar normal model.
+    """
+
     def __init__(self, data=None):
+        """
+        Args:
+          data: If None (the default) then an empty GaussianSuf is created.
+            Otherwise create a new GaussianSuf summarizing 'data'.
+        """
         self._sum = 0
         self._sumsq = 0
         self._n = 0
@@ -309,6 +318,12 @@ class GaussianSuf:
     def update(self, incremental_data):
         """
         Add summaries of the incremental data to the data already summarized.
+
+        Args:
+          data:  A 1-d numpy array, or equivalent.
+
+        Effects:
+          The sufficient statistics in the object are updated to describe data.
         """
         y = np.array(incremental_data)
         self._sum += np.nansum(y)
@@ -318,7 +333,7 @@ class GaussianSuf:
     def combine(self, other):
         """
         Add the sufficient statistics from 'other' to 'self'.  This operation is
-        done inplace.
+        done inplace.  The 'other' object is unaffected.
         """
         self._n += other._n
         self._sum += other._sum
@@ -335,6 +350,9 @@ class GaussianSuf:
         return self
 
     def __add__(self, other):
+        """
+        Implements operator+.  Other can either be a GaussianSuf or raw data.
+        """
         ans = copy.copy(self)
         ans += other
         return ans
