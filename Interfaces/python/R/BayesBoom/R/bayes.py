@@ -1,5 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
+import copy
 
 """
 Wrapper classes to encapsulate and expand models and prior distributions
@@ -295,3 +296,83 @@ class WisharPrior:
     def boom(self):
         import BayesBoom as boom
         return boom.WishartModel(self._df, self._sumsq)
+
+
+class GaussianSuf:
+    def __init__(self, data=None):
+        self._sum = 0
+        self._sumsq = 0
+        self._n = 0
+        if data is not None:
+            self.update(data)
+
+    def update(self, incremental_data):
+        """
+        Add summaries of the incremental data to the data already summarized.
+        """
+        y = np.array(incremental_data)
+        self._sum += np.nansum(y)
+        self._sumsq += np.nansum(y * y)
+        self._n += np.sum(~np.isnan(incremental_data))
+
+    def combine(self, other):
+        """
+        Add the sufficient statistics from 'other' to 'self'.  This operation is
+        done inplace.
+        """
+        self._n += other._n
+        self._sum += other._sum
+        self._sumsq += other._sumsq
+
+    def __iadd__(self, other):
+        """
+        Implements operator +=.  Other can either be a GaussianSuf or raw data.
+        """
+        if isinstance(other, GaussianSuf):
+            self.combine(other)
+        else:
+            self.update(other)
+        return self
+
+    def __add__(self, other):
+        ans = copy.copy(self)
+        ans += other
+        return ans
+
+    @property
+    def sample_size(self):
+        return self._n
+
+    @property
+    def sum(self):
+        return self._sum
+
+    @property
+    def mean(self):
+        if self.sample_size > 0:
+            return self._sum / self.sample_size
+        else:
+            return 0.0
+
+    @property
+    def sumsq(self):
+        return self._sumsq
+
+    def centered_sumsq(self, center=None):
+        if self.sample_size <= 0:
+            return 0
+        if center is None:
+            center = self.mean
+        n = self.sample_size
+        return self.sumsq - 2 * center * self.sum + n * center ** 2
+
+    @property
+    def sample_sd(self):
+        return np.sqrt(self.sample_variance)
+
+    @property
+    def sample_variance(self):
+        n = self.sample_size
+        if n < 2:
+            return 0
+        return self.centered_sumsq() / (n - 1)

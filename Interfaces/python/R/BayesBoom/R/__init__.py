@@ -20,6 +20,7 @@ from .R import (
 from .bayes import (
     Ar1CoefficientPrior,
     DoubleModel,
+    GaussianSuf,
     MvnPrior,
     NormalPrior,
     UniformPrior,
