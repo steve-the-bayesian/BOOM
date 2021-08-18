@@ -275,11 +275,11 @@ namespace BOOM {
     }
 
     double p11 = 1.0 - 1.0 / expected_time;
-    if (p11 <= 0 || p11 >= 1) {
+    if (p11 <= 0.0 || p11 >= 1.0) {
       report_error("expected_time must be greater than 1.");
     }
 
-    if (sample_size <= 0) {
+    if (sample_size <= 0.0) {
       report_error("sample_size must be positive.");
     }
 
