@@ -1,3 +1,3 @@
 from .dynreg import SparseDynamicRegressionModel
 
-__all__ = [SparseDynamicRegressionModel]
+__all__ = ["SparseDynamicRegressionModel"]
