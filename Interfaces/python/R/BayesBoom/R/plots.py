@@ -4,7 +4,6 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from numbers import Number
-from abc import ABC, abstractmethod
 
 from .R import (
     data_range,
@@ -12,180 +11,6 @@ from .R import (
     remove_common_prefix,
     unique_match
 )
-
-_active_graphics_devices = {}
-_current_graphics_device = None
-_largest_graphics_device_number = 0
-
-
-class GraphicsDevice(ABC):
-    """
-    Manages a plt.figure and a set of axes.
-    """
-
-    def __init__(self):
-        """
-        Creating a new graphics device updates the global set of devices
-        """
-        global _largest_graphics_device_number
-        global _current_graphics_device
-        global _active_graphics_devices
-        self._number = _largest_graphics_device_number + 1
-        _largest_graphics_device_number = self._number
-        _active_graphics_devices[self._number] = self
-        _current_graphics_device = self
-
-        self._figure, self._axes = plt.subplots(1, 1)
-        self._axes_cursor = None
-        self._nrow = 1
-        self._ncol = 1
-
-    def __del__(self):
-        plt.close(self._figure)
-        global _active_graphics_devices
-        del _active_graphics_devices[self._number]
-
-    @property
-    def next_axes(self):
-        """
-        The next set of axes on which a plot is to be drawn.  If the last set of
-        available axes has been exhausted, the stored Figure is refreshed with
-        new axes of the same dimension.
-        """
-        if hasattr(self._axes, "shape"):
-            shape = self._axes.shape
-            if min(shape) == 1:
-                self._increment_1d_cursor()
-            else:
-                self._increment_2d_cursor()
-        else:
-            self._axes = self._figure.subplots(1, 1)
-        return self.current_axes
-
-    @property
-    def current_axes(self):
-        """
-        The current set of axes.
-        """
-        if self._nrow > 1 or self._ncol > 1:
-            return self._axes[self._axes_cursor]
-        else:
-            return self._axes
-
-    @abstractmethod
-    def draw_current_axes(self):
-        """
-        A hook to be called after the graphics device is updated.
-        """
-
-    def _create_subplots(self, nrow, ncol):
-        """
-        Set the graphics device to use multiple rows and/or columns of plots.
-        """
-        self._axes = self._figure.subplots(nrow, ncol)
-        self._nrow = nrow
-        self._ncol = ncol
-        if min(nrow, ncol) > 1:
-            self._axes_cursor = (0, 0)
-        elif max(nrow, ncol) > 1:
-            self._axes_cursor = 0
-        else:
-            self._axes_cursor = None
-
-    def _increment_1d_cursor(self):
-        """
-        Increment the self._axes cursor when self._axes is a 1-d array.
-        """
-        dim = max(self._nrow, self._ncol)
-        self._axes_cursor += 1
-        if self._axes_cursor >= dim:
-            self._axes_cursor = 0
-            # We need nrow and ncol here because a 1-d axes might be a row, or
-            # a column.
-            self._axes = self._figure.subplots(self._nrow, self._ncol)
-
-    def _increment_2d_cursor(self):
-        """
-        Increment self._axes_cursor when self._axes is two-dimensional.
-        """
-        i, j = self._axes_cursor
-        j += 1
-        if j >= self._axes.shape[1]:
-            j = 0
-            i += 1
-            if i >= self._axes.shape[0]:
-                self._axes = self._figure.subplots(
-                    self._axes.shape[0], self._axes.shape[1])
-                i, j = 0, 0
-        self._axes_cursor = (i, j)
-
-
-def dev_new():
-    return InteractiveGraphicsDevice()
-
-
-def dev_set(device_number: int):
-    """
-    Set the current graphics device to the device with the given number.
-
-    """
-    global _active_graphics_devices
-    global _current_graphics_device
-    device = _active_graphics_devices.get(device_number, None)
-    if device is None:
-        raise Exception(f"Graphics device {device_number} does note exist.")
-    else:
-        _current_graphics_device = device
-
-
-class InteractiveGraphicsDevice(GraphicsDevice):
-    """
-    A private stack manages the set of active graphics devices.
-    """
-
-    def __init__(self):
-        super().__init__()
-        plt.show(block=False)
-        plt.pause(.001)
-
-    def draw_current_axes(self):
-        """
-        """
-        plt.pause(.001)
-
-
-class PdfGraphicsDevice(GraphicsDevice):
-    """
-    Destructor generates a PDF file that gets generated when the graphics
-    device is deleted.
-    """
-
-    def __init__(self, filename, width=5, height=5):
-        self._filename = filename
-
-    def __del__(self):
-        """
-        Create the pdf file upon deletion.
-        """
-        if self._figure is not None:
-            self._figure.save(self._filename)
-
-    def draw_current_axes(self):
-        """
-        """
-        pass
-
-
-def get_current_graphics_device():
-    """
-    Returns the current graphics device, if one exists.  Otherwise create and
-    return an interactive graphics device.
-    """
-    global _current_graphics_device
-    if _current_graphics_device is not None:
-        return _current_graphics_device
-    else:
-        return InteractiveGraphicsDevice()
 
 
 # ===========================================================================
@@ -295,27 +120,23 @@ def plot_grid_shape(nplots: int):
 # Low level plot functions.  These interact with the current axes object in the
 # current graphics device.  They do not advance to the next axes.
 # ===========================================================================
-def points(x, y, s=None, **kwargs):
+def points(x, y, ax, s=None, **kwargs):
     """
     Add points to the plot showing on the current graphics device.
     """
-    device = get_current_graphics_device()
-    ax = device.current_axes()
     if s is None:
         s = 20 / np.sqrt(len(y))
     ax.scatter(x, y, **kwargs)
 
 
-def lines(x, y, **kwargs):
+def lines(x, y, ax, **kwargs):
     """
     Add lines to the most recent plot.
     """
-    device = get_current_graphics_device()
-    ax = device.current_axes()
     ax.plot(x, y, **kwargs)
 
 
-def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
+def abline(ax, a=0, b=1, h=None, v=None, **kwargs):
     """
     Add a line with specified slope and intercept to a plot.
 
@@ -332,10 +153,6 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
     Effect:
       The requested line is plotted on 'ax'.
     """
-    if ax is None:
-        device = get_current_graphics_device()
-        ax = device.current_axes
-
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     if h is not None:
@@ -359,13 +176,17 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
 # axes, the plot resets.
 # ===========================================================================
 
-def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
+def plot(x, y=None, s=None, hexbin_threshold=1e+5, ax=None, **kwargs):
     """
     For now, a 'plot' is a scatterplot.  At some point I will make 'plot'
     generic as with R.
     """
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+        draw = True
+    else:
+        draw = False
+
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
     if y is None:
@@ -382,9 +203,10 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
         ax.hexbin(x, y, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    device.draw_current_axes()
+    if draw:
+        fig.show()
 
-    return device
+    return ax
 
 
 def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
@@ -423,10 +245,10 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
 
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
+        draw = True
     else:
-        device = None
+        draw = False
 
     x = x[::-1]
     if labels is not None:
@@ -452,22 +274,28 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
 
     ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
     _set_plot_options(ax, **plot_options)
-    return device
+
+    if draw:
+        fig.show()
+
+    return ax
 
 
-def boxplot(x, labels=None, add=False, ax=None, **kwargs):
+def boxplot(x, labels=None, ax=None, **kwargs):
     if ax is None:
-        device = get_current_graphics_device()
-        if add:
-            ax = device.current_axes
-        else:
-            ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
+        draw = True
+    else:
+        draw = False
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
 
     ax.boxplot(x, vert=False)
     _set_plot_options(ax, **kwargs)
+
+    if draw:
+        fig.show()
 
     return ax
 
@@ -514,8 +342,7 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     """ Plot a time series."""
 
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -760,8 +587,9 @@ def plot_dynamic_distribution(
     """
     redraw = False
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        # device = get_current_graphics_device()
+        # ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
         redraw = True
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
@@ -782,8 +610,11 @@ def plot_dynamic_distribution(
     _set_plot_options(ax, **plot_options)
 
     if redraw:
-        device = get_current_graphics_device()
-        device.draw_current_axes()
+        # device = get_current_graphics_device()
+        # device.draw_current_axes()
+        fig.show()
+
+    return ax
 
 
 def compare_dynamic_distributions(
@@ -913,7 +744,8 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
-    ax.bar(bar_locations, group_means, width=bar_widths, edgecolor="black", **kwargs)
+    ax.bar(bar_locations, group_means, width=bar_widths, edgecolor="black",
+           **kwargs)
     # ax.set_xlim(0, 1)
     # ax.set_ylim(0, 1)
 
@@ -940,12 +772,12 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     Add a kernel density estimate to the plot.
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.current_axes
+        fig, ax = plt.subplots(1, 1)
     xlim = ax.get_xlim()
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
+    return ax
 
 
 def lty(style):

@@ -31,6 +31,8 @@ from .data_table import to_data_table, to_data_frame
 
 from .autoclean import AutoClean
 
+from .graphics_device import get_current_graphics_device
+
 from .mcmc import suggest_burn
 
 from .plots import (
@@ -38,7 +40,6 @@ from .plots import (
     barplot,
     boxplot,
     compare_dynamic_distributions,
-    get_current_graphics_device,
     hist,
     histabunch,
     hosmer_lemeshow_plot,
