@@ -180,9 +180,7 @@ namespace BOOM {
   }
 
   std::ostream &MarkovSuf::print(std::ostream &out) const {
-    trans_.write(out, false);
-    out << " ";
-    init_.write(out, true);
+    out << "Init: \n" << init_ << "\nTrans: \n" << trans_;
     return out;
   }
 

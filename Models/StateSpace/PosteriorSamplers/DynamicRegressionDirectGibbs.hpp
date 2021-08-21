@@ -144,7 +144,6 @@ namespace BOOM {
     Vector compute_unscaled_prior_variance(
         const Selector &inc, int time_index) const;
 
-
     // The transition probability matrix of a 2-state Markov chain can be
     // deduced from the stationary distribution and the expected duration of a
     // visit to state 1.  The transition probability matrix times a prior sample

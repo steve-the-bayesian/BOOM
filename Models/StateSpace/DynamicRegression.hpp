@@ -102,8 +102,9 @@ namespace BOOM {
     };
 
     //=========================================================================
-    // A SelectorMatrix is formed by taking the columns of the identity
-    // matrix chosen by a Selector.
+    // A SelectorMatrix is formed by taking the columns of the identity matrix
+    // chosen by a Selector.  If G is a selector matrix describing the Selector
+    // g, and if y is a Vector, then G*y == g.select(y).
     //
     // If G1 and G2 are selector matrices, the ProductSelectorMatrix is G2' *
     // G1.
@@ -199,9 +200,34 @@ namespace BOOM {
 
       // Simulate the coefficients for the given time index, conditional on
       // inclusion indicators, model parameters and the simulated value at time
-      // t+1.
+      // t+1.  This is the "backward sampling" step of the
+      // forward-filtering/backward-sampling algorithm, used to implement the
+      // "simulate_coefficients" method of the DynamicRegressionKalmanFilter.
+      //
+      // Args:
+      //   model:  The model to be simulated.
+      //   time_index:  The time point to be simulated.
+      //   rng:  The random number generator to use for ths simulation.
+      //
+      // Preconditions: It is expected that 'update' has been run, so that
+      //   'state_mean_' and 'state_variance_' have been set.
+      //
+      // Returns:
+      //   The simulated coefficients at time 'time_index'.
       Vector simulate_coefficients(
-          const DynamicRegressionModel &model, int time_index, RNG &rng);
+          const DynamicRegressionModel &model, int time_index, RNG &rng) const;
+
+      // Implementation for simulate_coefficients.  This interface is primarily
+      // here to enable testing.
+      Vector simulate_coefficients_impl(
+        double sigma,
+        int time_index,
+        int max_time_dimension,
+        const Selector &inc_now,
+        const Selector &inc_next,
+        const Vector &beta_next,
+        const Vector &unscaled_innovation_variances,
+        RNG &rng) const;
 
       // The conditional mean of the included regression coefficients at time t,
       // given inclusion indicators, model parameters, and data up to and
@@ -218,6 +244,16 @@ namespace BOOM {
       }
       const SpdMatrix &unscaled_state_precision() const {
         return state_variance_->ivar();
+      }
+
+      // ---------------------------------------------------------------------------
+      // Member functions supplied solely for testing.
+      void set_state_mean(const Vector &mean) {
+        state_mean_ = mean;
+      }
+
+      void set_unscaled_state_variance(const SpdMatrix &unscaled_state_variance) {
+        state_variance_->set_var(unscaled_state_variance);
       }
 
      private:
@@ -353,12 +389,13 @@ namespace BOOM {
     std::vector<Ptr<StateSpace::RegressionDataTimePoint>> data_;
   };
 
-  //==========================================================================
+  //===========================================================================
   // A DynamicRegressionModel is a time series regression model where the
-  // coefficients obey a classic state space model.  Note that the number of
-  // observations at each time point might differ.  The model is implemented as
-  // a multivariate state space model.  Through data augmentation one can extend
-  // this model to most GLM's.
+  // coefficients obey a classic state space model.  It is different than a
+  // traditional state space model because the number of observations at each
+  // time point might differ.  The model is implemented as a multivariate state
+  // space model.  Through data augmentation one can extend this model to most
+  // GLM's.
   //
   // Define the set of responses at time t as Y'_t = [y_1t, y_2t, ... y_n_tt],
   // where Y_t = X[t] * beta[t] + error[t], with temporally IID error term
@@ -426,10 +463,12 @@ namespace BOOM {
 
     // ----------------------------------------------------------------------
     // Regression coefficients and inclusion indicators.
+
     // Args:
     //   time_index:  The index of a time point.
-    //   predictor_index:  The index of a predictor variable.
-
+    //   predictor_index: The index of a predictor variable (its position in the
+    //     vector of predictors).
+    //
     // Returns:
     //   Whether the specified predictor is included at the specified time.
     bool inclusion_indicator(int time_index, int predictor_index) const {
@@ -489,6 +528,7 @@ namespace BOOM {
     // Prior distribution of the initial state vector, conditional on all
     // variables being included.
     Vector initial_state_mean_;
+
     // The variance is unscaled.  sigsq * unscaled is the actual variance.
     Ptr<SpdParams> unscaled_initial_state_variance_;
 
