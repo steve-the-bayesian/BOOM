@@ -223,6 +223,9 @@ time_series_headers = (
     )
 boom_headers += time_series_headers
 
+test_utils_sources = glob(BOOM_DIR + "test_utils/*.cpp")
+
+
 boom_library_sources = (
     distributions_sources
     + linalg_sources
@@ -245,6 +248,7 @@ boom_library_sources = (
     + point_process_sources
     + state_space_sources
     + time_series_sources
+    + test_utils_sources
 )
 
 boom_extension_sources = (
@@ -259,6 +263,7 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")
     + glob(BOOM_DIR + "pybind11/cpputil/*.cpp")
     + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
+    + glob(BOOM_DIR + "pybind11/test_utils/*.cpp")
 )
 
 boom_sources = boom_extension_sources + boom_library_sources

@@ -82,6 +82,8 @@ SRCS="$SRCS `find numopt -name "*.cpp"`"
 SRCS="$SRCS `find Samplers -name "*.cpp"`"
 SRCS="$SRCS `find stats -name "*.cpp"`"
 SRCS="$SRCS `find TargetFun -name "*.cpp"`"
+SRCS="$SRCS `find test_utils -name "*.cpp"`"
+
 ./install/install_headers.py $SRCS $BOOM_DIR/
 
 echo "Done copying source files."
@@ -128,6 +130,7 @@ HDRS="$HDRS `find numopt -name "*.hpp"`"
 HDRS="$HDRS `find Samplers -name "*.hpp"`"
 HDRS="$HDRS `find stats -name "*.hpp"`"
 HDRS="$HDRS `find TargetFun -name "*.hpp"`"
+HDRS="$HDRS `find test_utils -name "*.hpp"`"
 HDRS="$HDRS `find Eigen -name "*.h"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/
 echo "done copying headers"
