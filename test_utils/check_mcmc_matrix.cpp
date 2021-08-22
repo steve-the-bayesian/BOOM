@@ -40,7 +40,7 @@ namespace BOOM {
       return value >= lower && value <= upper;
     }
   }  // namespace
-  
+
   CheckMatrixStatus CheckMcmcMatrix(
       const Matrix &draws,
       const Vector &truth,
@@ -75,7 +75,7 @@ namespace BOOM {
       std::ofstream error_file(filename);
       error_file << truth << std::endl << draws;
     }
-    
+
     return status;
   }
 
@@ -96,7 +96,7 @@ namespace BOOM {
       err << "fewer than half the intervals covered the true value."
           << std::endl;
     }
-    
+
     Vector means = mean(centered_draws);
     double truth_sd = sd(truth);
     double residual_sd = sd(means);
@@ -119,7 +119,7 @@ namespace BOOM {
     return ans;
   }
 
-  
+
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
                                     const Vector &hi) {
     if (draws.ncol() != lo.size()
@@ -162,7 +162,7 @@ namespace BOOM {
     }
     return "";
   }
-  
+
   bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
                        const std::string &filename) {
     if (confidence <= 0 || confidence >= 1) {
@@ -178,8 +178,8 @@ namespace BOOM {
     if (!ok && filename != "") {
       std::ofstream error_file(filename);
       error_file << truth << " " << draws;
-    }      
+    }
     return ok;
   }
-  
+
 }  // namespace BOOM
