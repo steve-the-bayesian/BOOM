@@ -561,6 +561,7 @@ def plot_dynamic_distribution(
         xlab="Time",
         ylab="distribution",
         col="black",
+        highlight_median="",
         ax=None,
         **kwargs):
     """
@@ -582,6 +583,9 @@ def plot_dynamic_distribution(
         The limits on the horizontal axis.
       xlab:
         The label for the horizontal axis.
+      highlight_median:
+        The name of the color used to highlight the median.  The empty string
+        means not to add extra highlighting.
 
       **kwargs: Extra arguments passed to _skim_plot_options.
     """
@@ -606,6 +610,10 @@ def plot_dynamic_distribution(
         hi = curve_quantiles[-1-i, :]
         ax.fill_between(timestamps, lo, hi, color=col, edgecolor="none",
                         alpha=(i / len(quantile_points)))
+
+    if highlight_median != "":
+        ax.plot(timestamps, np.nanmedian(curves, axis=0),
+                color=highlight_median)
 
     _set_plot_options(ax, **plot_options)
 

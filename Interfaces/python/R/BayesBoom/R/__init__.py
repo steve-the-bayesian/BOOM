@@ -27,6 +27,8 @@ from .bayes import (
     SdPrior,
 )
 
+from .density import Density
+
 from .data_table import to_data_table, to_data_frame
 
 from .autoclean import AutoClean

@@ -5,9 +5,9 @@ import BayesBoom.boom as boom
 import BayesBoom.dynreg as dynreg
 import BayesBoom.spikeslab as ss
 import BayesBoom.R as R
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-# import pdb
+import pdb
 
 
 class TestDynamicRegression(unittest.TestCase):
@@ -81,6 +81,7 @@ class TestDynamicRegression(unittest.TestCase):
             residual_precision_prior=R.SdPrior(true_residual_sd, 1),
             seed=8675309)
 
+        model.plot()
         for i in range(4):
             self.assertEqual("", boom.check_stochastic_process(
                 boom.Matrix(model._beta_draws[:, i, :]),
@@ -92,6 +93,15 @@ class TestDynamicRegression(unittest.TestCase):
         posterior_mean_residual_sd = np.mean(model._residual_sd_draws[10:])
         self.assertGreater(posterior_mean_residual_sd, true_residual_sd - .02)
         self.assertLess(posterior_mean_residual_sd, true_residual_sd + .02)
+
+        sd_fig, sd_ax = plt.subplots(1, 2)
+        model.plot_residual_sd(ax=sd_ax[0])
+        model.plot_residual_sd(ax=sd_ax[1], type="ts")
+        # sd_fig.show()
+
+        size_fig, size_ax = plt.subplots(1, 1)
+        model.plot_size(ax=size_ax)
+        # size_fig.show()
 
         # fig, ax = plt.subplots(2, 2)
         # which = 0

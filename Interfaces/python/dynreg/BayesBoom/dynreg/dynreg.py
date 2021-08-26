@@ -3,6 +3,7 @@ import numpy as np
 import patsy
 import BayesBoom.R as R
 from numbers import Number
+import matplotlib.pyplot as plt
 # import BayesBoom.spikeslab as spikeslab
 # import scipy.sparse
 
@@ -67,10 +68,20 @@ class SparseDynamicRegressionModel:
 
 
         """
+        from pandas import unique
+
+        # self._timestamps indicates the timestamp corresponding each element
+        # in the input data.  If there are many observations per time point
+        # then self._timestamps will contain many repeat values.
         if isinstance(timestamps, str):
             self._timestamps = data[timestamps]
         else:
             self._timestamps = timestamps
+
+        # self._unique_timestamps is the sorted set of timestamps covered by
+        # the training data.
+        self._unique_timestamps = unique(self._timestamps)
+        self._unique_timestamps.sort()
 
         self._formula = formula
         self._data = data
@@ -132,6 +143,189 @@ class SparseDynamicRegressionModel:
         for i in range(niter):
             self._model.sample_posterior()
             self._record_state(i)
+
+    def suggest_burn(self):
+        return R.suggest_burn(-1 * self._residual_sd_draws)
+
+    def plot(self, what="coefficients", **kwargs):
+
+        plot_types = [
+            "coefficients", "size", "residual_sd"
+        ]
+        what = R.unique_match(what.lower(), plot_types)
+        if what == "coefficients":
+            return self.plot_coefficients(**kwargs)
+        elif what == "residual_sd":
+            return self.plot_residual_sd(**kwargs)
+        elif what == "size":
+            return self.plot_model_size(**kwargs)
+        else:
+            raise Exception(
+                f"Supplied plot_type {what} is not in the set "
+                f"of supported {plot_types}."
+            )
+
+    def plot_residual_sd(self,
+                         burn: int = None,
+                         type: str = "density",
+                         ax=None,
+                         **kwargs):
+        """
+        Args:
+          burn: The number of MCMC iterations to discard as burn-in.  "None"
+            indicates that an estimated default number should be used.
+          type: The type of plot.  "density" shows a kernel density estimate of
+            the residual SD draws.  "ts" shows a time series plot of the draws.
+          ax: A plt.Axes object on which to draw the plot.  If None new Figure
+            and Axes objects are created and drawn on function exit.
+          kwargs:  Further keyword arguments are ignored.
+
+        Effects:
+          A plot is added to the relevant Axes object.
+
+        Returns:
+          The Axes object on which the plot is drawn.
+        """
+        plot_types = ["density", "ts"]
+        type = R.unique_match(type, plot_types)
+
+        if burn is None:
+            burn = self.suggest_burn()
+
+        if burn < 0:
+            burn = 0
+        sd = self._residual_sd_draws[burn:]
+
+        show_plot = False
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+            show_plot = True
+
+        if type == "density":
+            density = R.Density(sd)
+            density.plot(ax=ax, xlab="Residual SD", ylab="Density")
+        elif type == "ts":
+            iteration = np.arange(len(self._residual_sd_draws))
+            if burn > 0:
+                iteration = iteration[burn:]
+            ax.plot(iteration, sd)
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel("Residual SD")
+
+        if show_plot:
+            fig.show()
+        return ax
+
+    def plot_size(self, ax=None, burn: int = None, **kwargs):
+        fig = None
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+
+        size = np.sum(self._beta_draws != 0, axis=1)
+        R.plot_dynamic_distribution(
+            size,
+            timestamps=self._unique_timestamps,
+            ax=ax,
+            xlab="Time",
+            ylab="Number Included Predictors",
+        )
+
+        if fig is not None:
+            fig.show()
+        return ax
+
+    def plot_coefficients(self, subset=None, fig=None, ylim=None,
+                          same_scale: bool = True,
+                          burn: int = None,
+                          **kwargs):
+        """
+        Plot some or all of the model coefficients on the same figure.
+
+        Args:
+          subset: Identifies the subset of coefficients to be plotted. 'None'
+            means plot all coefficients.  Otherwise 'subset' must be an object
+            that can be used to index a numpy array, such as a vector of
+            integers or booleans.
+          fig: The plt.Figure object on which to draw the plots.  If None a new
+            Figure will be created and drawn upon function exit.
+          ylim: A pair of numbers giving the lower and upper limits of the Y
+            axes.  If specified then all plots will be drawn with the same
+            values.
+          same_scale: This is ignored if ylim is specified.  Otherwise, True
+            indicates that the Y axes should all be drawn on the same scale.
+            False means each coefficient is plotted on its own scale.
+          kw_args:  Additional keyword arguments are ignored.
+          burn: The number of MCMC iteration to discard as burn-in.
+        Returns:
+          The Figure object on which the plots are drawn.
+        """
+        if subset is None:
+            coef = self._beta_draws
+        else:
+            coef = self._beta_draws[:, subset, :]
+
+        if burn is None:
+            burn = self.suggest_burn()
+
+        if burn > 0:
+            coef = coef[burn:, :, :]
+
+        call_show = fig is None
+        if fig is None:
+            fig = plt.figure()
+
+        nr, nc = R.plot_grid_shape(coef.shape[1])
+        sharey = same_scale or (ylim is not None)
+        ax = fig.subplots(nr, nc, sharex=True, sharey=sharey)
+        index = 0
+
+        if same_scale and (ylim is None):
+            ylim = R.data_range(self._beta_draws)
+
+        for col in range(nc):
+            for row in range(nr):
+                if index < coef.shape[1]:
+                    self.plot_single_coefficient(
+                        coef[:, index, :],
+                        ax=ax[row][col],
+                        ylim=ylim)
+                index += 1
+        if call_show:
+            fig.set_tight_layout(True)
+            fig.show()
+        return fig
+
+    def plot_single_coefficient(self, beta, ylim=None, ax=None,
+                                highlight_median="green"):
+        """
+        Plot the dynamic distribution of a single model coefficient.
+
+        Args:
+          beta: The coefficient to be plotted.  A matrix.  Rows are Monte Carlo
+            draws, and columns are time points.
+          ylim: A pair of numbers giving the lower and upper limits of the Y
+            axis.  If 'None' then 'ylim' will be inferred from the range of the
+            data.
+          ax: A plt.Axes object on which to draw.  If None then a new
+            plt.Figure and Axes will be created and drawn on function exit.
+          highlight_median: The name of a color used to draw the meadian of the
+            curves at each time point.  The empty string signals not to add the
+            extra highlighting.
+
+        Returns:
+          The axes object containing the plot.
+        """
+        fig = None
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+        R.plot_dynamic_distribution(beta,
+                                    timestamps=self._unique_timestamps,
+                                    ax=ax,
+                                    ylim=ylim,
+                                    highlight_median=highlight_median)
+        if fig is not None:
+            fig.show()
+        return ax
 
     def _create_model(self):
         """
