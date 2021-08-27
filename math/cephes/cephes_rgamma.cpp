@@ -23,7 +23,7 @@
 namespace BOOM {
   namespace Cephes {
 
-  /*                                            rgamma.c
+  /*                                            cephes_rgamma.c
    *
    *    Reciprocal gamma function
    *
