@@ -113,7 +113,7 @@ namespace BOOM {
     // The observed value need not be held in a Data object, but it often will
     // be, so this function is provided as a convenience.
     void observe(Ptr<Data> dp) {
-      dp->add_observer([this]() {this->invalidate();});
+      dp->add_observer(this, [this]() {this->invalidate();});
     }
 
     const double &value() const override {

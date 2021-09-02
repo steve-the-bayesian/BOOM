@@ -247,12 +247,14 @@ namespace BOOM {
 
   void ErrorCorrectionModel::set_observers() {
     marginal_of_true_data_->Pi_prm()->add_observer(
+        this,
         [this]() {
           this->workspace_is_current_ = false;
         });
 
     for (int i = 0; i < conditional_observed_given_true_.size(); ++i) {
       conditional_observed_given_true_[i]->Pi_prm()->add_observer(
+          this,
           [this]() {
             this->workspace_is_current_ = false;
           });
@@ -786,6 +788,7 @@ namespace BOOM {
 
   void MvRegCopulaDataImputer::set_observers() {
     complete_data_model_->Sigma_prm()->add_observer(
+        this,
         [this]() {this->swept_sigma_current_ = false;} );
   }
 

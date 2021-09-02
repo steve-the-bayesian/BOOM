@@ -37,7 +37,7 @@ namespace BOOM {
         log_probabilities_are_current_(false) {
     ParamPolicy::add_model(gaussian_);
     ParamPolicy::add_model(binomial_);
-    binomial_->Prob_prm()->add_observer(create_binomial_observer());
+    binomial_->Prob_prm()->add_observer(this, create_binomial_observer());
   }
 
   ZILM::ZeroInflatedLognormalModel(const ZeroInflatedLognormalModel &rhs)
@@ -50,7 +50,7 @@ namespace BOOM {
         precision_(rhs.precision_) {
     ParamPolicy::add_model(gaussian_);
     ParamPolicy::add_model(binomial_);
-    binomial_->Prob_prm()->add_observer(create_binomial_observer());
+    binomial_->Prob_prm()->add_observer(this, create_binomial_observer());
   }
 
   ZeroInflatedLognormalModel *ZILM::clone() const {

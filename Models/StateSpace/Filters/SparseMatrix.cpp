@@ -537,7 +537,7 @@ namespace BOOM {
   }
 
   void DMPV::set_observer(const Ptr<UnivParams> &variance) {
-    variance->add_observer([this]() { current_ = false; });
+    variance->add_observer(this, [this]() { current_ = false; });
   }
 
   //======================================================================

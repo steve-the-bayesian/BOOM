@@ -59,7 +59,7 @@ namespace BOOM {
     void set_missing_status(missing_status m);
     void signal() {
       for (auto &it : signals_) {
-        it->second();
+        it.second();
       }
     }
     // TODO: This implementation of the observer pattern is broken by

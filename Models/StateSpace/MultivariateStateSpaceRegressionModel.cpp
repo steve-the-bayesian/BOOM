@@ -41,7 +41,7 @@ namespace BOOM {
         which_series_(series),
         timestamp_index_(timestamp)
   {}
-  
+
   //===========================================================================
   PSSSM::ProxyScalarStateSpaceModel(
       MultivariateStateSpaceRegressionModel *model,
@@ -50,29 +50,29 @@ namespace BOOM {
         which_series_(which_series)
   {}
 
-  int PSSSM::time_dimension() const { return host_->time_dimension();}      
+  int PSSSM::time_dimension() const { return host_->time_dimension();}
 
   double PSSSM::adjusted_observation(int t) const {
     return host_->adjusted_observation(which_series_, t);
   }
 
   bool PSSSM::is_missing_observation(int t) const {
-    return !host_->is_observed(which_series_, t);      
+    return !host_->is_observed(which_series_, t);
   }
 
   double PSSSM::observation_variance(int t) const {
     return host_->single_observation_variance(t, which_series_);
   }
-  
+
   void PSSSM::add_data(
       const Ptr<StateSpace::MultiplexedDoubleData> &data_point) {
     report_error("add_data is disabled.");
   }
-  
+
   void PSSSM::add_data(const Ptr<Data> &data_point) {
     report_error("add_data is disabled.");
   }
-  
+
   // This is StateSpaceModel::simulate_forecast, but with a zero residual
   // variance.
   Vector PSSSM::simulate_state_contribution_forecast(
@@ -88,7 +88,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   //===========================================================================
   MSSRM::MultivariateStateSpaceRegressionModel(int xdim, int nseries)
       : nseries_(nseries),
@@ -148,7 +148,7 @@ namespace BOOM {
     }
     return forecast;
   }
-  
+
   void MSSRM::add_state(const Ptr<SharedStateModel> &state_model) {
     shared_state_models_.add_state(state_model);
   }
@@ -161,7 +161,7 @@ namespace BOOM {
     }
     return false;
   }
-  
+
   void MSSRM::impute_state(RNG &rng) {
     impute_shared_state_given_series_state(rng);
     impute_series_state_given_shared_state(rng);
@@ -203,7 +203,7 @@ namespace BOOM {
     }
     return observation_coefficients_.get();
   }
-  
+
   DiagonalMatrix MSSRM::observation_variance(int t) const {
     update_observation_variance();
     return observation_variance_;
@@ -256,10 +256,11 @@ namespace BOOM {
   void MSSRM::set_observation_variance_observers() {
     for (int i = 0; i < observation_model_->ydim(); ++i) {
       observation_model_->model(i)->Sigsq_prm()->add_observer(
+          this,
           [this]() {this->observation_variance_current_ = false;});
     }
   }
-  
+
   void MSSRM::update_observation_variance() const {
     if (observation_variance_current_) return;
     VectorView elements(observation_variance_.diag());
@@ -274,7 +275,7 @@ namespace BOOM {
       proxy_models_[series]->resize_state();
     }
   }
-  
+
   void MSSRM::observe_state(int t) {
     if (t == 0) {
       observe_initial_state();
@@ -338,16 +339,16 @@ namespace BOOM {
                                  + series_effect
                                  + regression_effect
                                  + error);
-        
+
         switch (workspace_status_) {
           case UNSET:
             // Do nothing.
           break;
-          
+
           case SHOWS_SHARED_EFFECTS:
             adjusted_data_workspace_(series, t) = shared_effect + error;
             break;
-            
+
           case SHOWS_SERIES_EFFECTS:
             adjusted_data_workspace_(series, t) = series_effect + error;
             break;
@@ -358,7 +359,7 @@ namespace BOOM {
       }
     }
   }
-  
+
   void MSSRM::impute_shared_state_given_series_state(RNG &rng) {
     resize_subordinate_state();
     isolate_shared_state();
@@ -426,5 +427,5 @@ namespace BOOM {
       return proxy.observation_matrix(time).dot(proxy.state(time));
     }
   }
-  
+
 }  // namespace BOOM

@@ -235,7 +235,7 @@ namespace BOOM {
   }
 
   void MM::set_observer() {
-    Pi_prm()->add_observer([this]() { this->logp_current_ = false;});
+    Pi_prm()->add_observer(this, [this]() { this->logp_current_ = false;});
   }
 
 

@@ -209,6 +209,7 @@ namespace BOOM {
     state_variance_matrix_current_ = false;
     for (int i = 0; i < subordinate_models_.size(); ++i ) {
       subordinate_models_[i]->Sigma_prm()->add_observer(
+          this,
           [this]() {
             this->state_variance_matrix_current_ = false;
           });
