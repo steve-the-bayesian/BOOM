@@ -154,7 +154,7 @@ namespace BOOM {
   double FMM::last_loglike() const { return last_loglike_; }
 
   void FMM::set_observers() {
-    mixing_dist_->Pi_prm()->add_observer([this]() { this->observe_pi(); });
+    mixing_dist_->Pi_prm()->add_observer(this, [this]() { this->observe_pi(); });
     logpi_current_ = false;
     ParamPolicy::set_models(mixture_components_.begin(),
                             mixture_components_.end());

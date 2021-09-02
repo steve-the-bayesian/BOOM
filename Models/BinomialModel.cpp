@@ -199,7 +199,7 @@ namespace BOOM {
   }
 
   void BM::observe_prob() {
-    Prob_prm()->add_observer([this]() {
+    Prob_prm()->add_observer(this, [this]() {
       log_prob_ = log(prob());
       log_failure_prob_ = ::std::log1p(-prob());
     });

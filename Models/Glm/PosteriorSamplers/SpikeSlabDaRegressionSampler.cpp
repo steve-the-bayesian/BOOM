@@ -64,8 +64,10 @@ namespace BOOM {
         complete_data_information_matrix_fudge_factor);
     compute_leverage_of_missing_design_points();
     beta_prior_->prm1()->add_observer(
+        this,
         [this]() { this->observe_changes_in_prior(); });
     beta_prior_->prm2()->add_observer(
+        this,
         [this]() { this->observe_changes_in_prior(); });
     check_prior();
   }
