@@ -141,7 +141,7 @@ namespace BOOM {
       this->observe_parameter_changes();
     };
     for (int i = 0; i < parameter_vector.size(); ++i) {
-      parameter_vector[i]->add_observer(observer);
+      parameter_vector[i]->add_observer(this, observer);
     }
     PVM::add_model(model);
   }

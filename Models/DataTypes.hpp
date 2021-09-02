@@ -58,8 +58,8 @@ namespace BOOM {
     missing_status missing() const;
     void set_missing_status(missing_status m);
     void signal() {
-      for (size_t i = 0; i < signals_.size(); ++i) {
-        signals_[i]();
+      for (auto &it : signals_) {
+        it.second();
       }
     }
     // TODO: This implementation of the observer pattern is broken by
@@ -70,8 +70,12 @@ namespace BOOM {
     // that the observer is active when calling, and remove inactive observers
     // from the set of signals.  This fix will require making changes to all the
     // classes that use the current observer scheme.
-    void add_observer(const std::function<void(void)> &f) {
-      signals_.push_back(f);
+    void add_observer(void *owner, const std::function<void(void)> &f) {
+      signals_.insert(std::make_pair(owner, f));
+    }
+
+    void remove_observer(void *owner) {
+      signals_.erase(owner);
     }
 
     // Remove all observers.
@@ -81,7 +85,7 @@ namespace BOOM {
 
    private:
     missing_status missing_flag;
-    std::vector<std::function<void(void)> > signals_;
+    std::multimap<void *, std::function<void(void)>>  signals_;
   };
   //======================================================================
   std::ostream &operator<<(std::ostream &out, const Data &d);

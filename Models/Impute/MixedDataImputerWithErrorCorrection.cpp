@@ -227,9 +227,9 @@ namespace BOOM {
 
     void CECM::set_observers() {
       auto observer = [this]() {this->workspace_is_current_ = false;};
-      truth_model_->Pi_prm()->add_observer(observer);
+      truth_model_->Pi_prm()->add_observer(this, observer);
       for (int i = 0; i < obs_models_.size(); ++i) {
-        obs_models_[i]->Pi_prm()->add_observer(observer);
+        obs_models_[i]->Pi_prm()->add_observer(this, observer);
       }
     }
 

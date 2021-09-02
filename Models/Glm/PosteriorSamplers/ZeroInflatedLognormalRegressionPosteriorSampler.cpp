@@ -98,7 +98,7 @@ namespace BOOM {
       for (int i = 0; i < model_->dat().size(); ++i) {
         Ptr<RegressionData> data_point = model_->dat()[i];
         if (observed_data_.count(data_point) == 0) {
-          data_point->add_observer(observer);
+          data_point->add_observer(this, observer);
           observed_data_.insert(data_point);
         }
         NEW(BinomialRegressionData, nonzero_data)

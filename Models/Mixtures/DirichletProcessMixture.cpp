@@ -343,9 +343,11 @@ namespace BOOM {
   }
 
   void DPMM::observe_concentration_parameter() {
-    concentration_parameter_->add_observer([this]() {
-      this->log_concentration_parameter_ = log(this->concentration_parameter());
-    });
+    concentration_parameter_->add_observer(
+        this,
+        [this]() {
+          this->log_concentration_parameter_ = log(this->concentration_parameter());
+        });
     concentration_parameter_->set(concentration_parameter());
   }
 

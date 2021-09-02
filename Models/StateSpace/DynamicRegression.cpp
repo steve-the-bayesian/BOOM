@@ -475,6 +475,7 @@ namespace BOOM {
     for (int i = 0; i < xdim; ++i) {
       NEW(ZeroMeanGaussianModel, innovation_model)(1.0);
       innovation_model->Sigsq_prm()->add_observer(
+          this,
           [this]() {this->observe_innovation_variances();});
       innovation_error_models_.push_back(innovation_model);
       ManyParamPolicy::add_params(innovation_model->Sigsq_prm());

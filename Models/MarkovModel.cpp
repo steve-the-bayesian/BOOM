@@ -429,6 +429,7 @@ namespace BOOM {
 
   void MarkovModel::fix_pi0_stationary() {
     Q_prm()->add_observer(
+        this,
         [this]() {
           this->set_pi0(this->stat_dist());
         });

@@ -230,6 +230,6 @@ namespace BOOM {
   void ZIGM::setup() {
     ParamPolicy::add_model(gamma_);
     ParamPolicy::add_model(binomial_);
-    binomial_->Prob_prm()->add_observer(create_binomial_observer());
+    binomial_->Prob_prm()->add_observer(this, create_binomial_observer());
   }
 }  // namespace BOOM

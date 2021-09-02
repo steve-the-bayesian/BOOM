@@ -712,6 +712,7 @@ namespace BOOM {
   void MixedDataImputerBase::set_numeric_data_model_observers() {
     this->swept_sigma_current_ = false;
     numeric_data_model_->Sigma_prm()->add_observer(
+        this,
         [this]() {this->swept_sigma_current_ = false;});
   }
 

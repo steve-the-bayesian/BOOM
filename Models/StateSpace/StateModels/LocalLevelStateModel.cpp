@@ -397,7 +397,7 @@ namespace BOOM {
     std::function<void(void)> observer = [this]() {
       this->sync_observation_coefficients();
     };
-    coefficient_model_->Beta_prm()->add_observer(observer);
+    coefficient_model_->Beta_prm()->add_observer(this, observer);
   }
 
 }  // namespace BOOM
