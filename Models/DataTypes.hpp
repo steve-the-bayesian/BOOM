@@ -71,7 +71,7 @@ namespace BOOM {
     // from the set of signals.  This fix will require making changes to all the
     // classes that use the current observer scheme.
     void add_observer(void *owner, const std::function<void(void)> &f) {
-      signals_[owner] = f;
+      signals_.insert(std::make_pair(owner, f));
     }
 
     void remove_observer(void *owner) {
