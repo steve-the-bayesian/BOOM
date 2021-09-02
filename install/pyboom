@@ -132,7 +132,6 @@ HDRS="$HDRS `find stats -name "*.hpp"`"
 HDRS="$HDRS `find TargetFun -name "*.hpp"`"
 HDRS="$HDRS `find test_utils -name "*.hpp"`"
 HDRS="$HDRS `find Eigen -name "*.h"`"
-HDRS="$HDRS `find test_utils -name "*.hpp"`"
 ./install/install_headers.py $HDRS $BOOM_DIR/
 echo "done copying headers"
 

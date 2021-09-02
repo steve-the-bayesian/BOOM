@@ -12,7 +12,7 @@ MAJOR = 0
 MINOR = 0
 
 # Bump the patch version when making bug fixes.
-PATCH = 9
+PATCH = 10
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -321,9 +321,6 @@ ext_modules = [
         headers=boom_headers,
         include_dirs=[
             "./BayesBoom/boom",
-            "BayesBoom/boom",
-            "./boom",
-            "boom",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
