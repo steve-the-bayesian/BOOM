@@ -414,6 +414,53 @@ namespace BOOM {
     AnovaTable anova() const { return suf()->anova(); }
   };
 
+
+  // A BigRegresionModel is a regression model where the number of predictors is
+  // too large to use the sufficient statistics in the ordinary RegressionModel.
+  class BigRegresionModel
+      : public GlmModel,
+        public ParamPolicy_2<GlmCoefs, UnivParams>,
+        public IID_DataPolicy<RegressionData>,
+        public PriorPolicy
+  {
+    friend class BigAssSpikeSlabSampler;
+   public:
+    // Args:
+    //   subordinate_model_max_dim:  The largest predictor dimension for each model.
+    BigRegresionModel(int subordinate_model_max_dim = 500,
+                      bool force_intercept = true);
+
+    BigRegresionModel * clone() const override;
+
+    // Pass data to the subordinate models.  The data are not kept, but are
+    // added to the subordinate model's sufficient statistics.
+    void stream_data_for_initial_screen(const RegressionData &data_point);
+
+    // Pass data to the primary model.  The set of candidate values are
+    void stream_data_for_combined_model(const RegressionData &data_point);
+
+    double predict(const Vector &x) const override;
+
+    // Set the subset of variables to use in the final spike-and-slab run.
+    void set_candidates(const Selector &candidates);
+
+    // To handle predictors of very high dimension, the model maintains several
+    // smaller regression models, each of moderate dimension.  The data in each
+    // of the smaller models is independent
+    int number_of_subordinate_models() const;
+    RegressionModel *subordinate_model(int i);
+
+    int worker_dim_upper_limit() const;
+
+   private:
+    // Something determines the actual subset of predictors that can be used.
+    Selector predictor_candidates_;
+
+    // Each subordinate model handles a chunk of the predictors.
+    std::vector<Ptr<RegressionModel>> subordinate_models_;
+  };
+
+
 }  // namespace BOOM
 
 #endif  // BOOM_REGRESSION_MODEL_H
