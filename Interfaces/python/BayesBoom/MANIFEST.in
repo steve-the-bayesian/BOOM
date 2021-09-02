@@ -9,6 +9,7 @@ include BayesBoom/boom/LinAlg/*.hpp
 include BayesBoom/boom/stats/*.hpp
 include BayesBoom/boom/TargetFun/*.hpp
 include BayesBoom/boom/numopt/*.hpp
+include BayesBoom/boom/test_utils/*.hpp
 
 # The following directories have one or more subdirectories that also need to be
 # included, so we 'recursive-include' them.
