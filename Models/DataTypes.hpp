@@ -85,7 +85,7 @@ namespace BOOM {
 
    private:
     missing_status missing_flag;
-    std::map<void *, std::function<void(void)>>  signals_;
+    std::multimap<void *, std::function<void(void)>>  signals_;
   };
   //======================================================================
   std::ostream &operator<<(std::ostream &out, const Data &d);
