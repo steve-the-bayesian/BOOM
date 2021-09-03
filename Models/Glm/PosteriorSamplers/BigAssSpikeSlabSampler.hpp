@@ -32,9 +32,9 @@ namespace BOOM {
 
   class BigAssSpikeSlabSampler : public PosteriorSampler {
    public:
-    BigAssSpikeSlabSampler(BigRegresionModel *model,
+    BigAssSpikeSlabSampler(BigRegressionModel *model,
                            const Ptr<VariableSelectionPrior> &spike,
-                           const Ptr<RegressionSlabGivenXandSigma> &slab,
+                           const Ptr<RegressionSlabPrior> &slab,
                            const Ptr<GammaModelBase> &residual_precision_prior,
                            RNG &seeding_rng = GlobalRng::rng);
 
@@ -47,9 +47,9 @@ namespace BOOM {
     int max_worker_dim() const;
 
    private:
-    BigRegresionModel *model_;
+    BigRegressionModel *model_;
     Ptr<VariableSelectionPrior> spike_;
-    Ptr<RegressionSlabGivenXandSigma> slab_;
+    Ptr<RegressionSlabPrior> slab_;
     Ptr<GammaModelBase> residual_precision_prior_;
 
     std::vector<Ptr<BregVsSampler>> subordinate_samplers_;

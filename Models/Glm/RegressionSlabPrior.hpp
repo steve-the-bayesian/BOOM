@@ -65,6 +65,7 @@ namespace BOOM {
                         double prior_sample_size,
                         double diagonal_shrinkage = 0.0);
 
+    ~RegressionSlabPrior();
     RegressionSlabPrior(const RegressionSlabPrior &rhs);
     RegressionSlabPrior * clone() const override;
 
@@ -72,7 +73,7 @@ namespace BOOM {
       return prm1();
     }
 
-    Ptr<VectorParams> SampleSize_prm() {
+    Ptr<UnivParams> SampleSize_prm() {
       return prm2();
     }
 
@@ -124,6 +125,7 @@ namespace BOOM {
                           double diagonal_shrinkage);
 
     void set_observers();
+    void remove_observers();
   };
 }  // namespace BOOM
 

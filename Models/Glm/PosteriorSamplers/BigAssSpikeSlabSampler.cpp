@@ -24,9 +24,9 @@
 namespace BOOM {
 
   BigAssSpikeSlabSampler::BigAssSpikeSlabSampler(
-      BigRegresionModel *model,
+      BigRegressionModel *model,
       const Ptr<VariableSelectionPrior> &spike,
-      const Ptr<RegressionSlabGivenXandSigma> &slab,
+      const Ptr<RegressionSlabPrior> &slab,
       const Ptr<GammaModelBase> &residual_precision_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
@@ -35,6 +35,14 @@ namespace BOOM {
         slab_(slab),
         residual_precision_prior_(residual_precision_prior)
   {}
+
+  void BigAssSpikeSlabSampler::draw() {
+    // model_->restricted_model()->draw();
+  }
+
+  double BigAssSpikeSlabSampler::logpri() const {
+    return negative_infinity();
+  }
 
   void BigAssSpikeSlabSampler::initial_screen(int niter, double threshold) {
     assign_subordinate_samplers();
@@ -52,6 +60,10 @@ namespace BOOM {
         NEW(RegressionModel, worker)(model_->worker_dim_upper_limit());
       }
     }
+  }
+
+  void BigAssSpikeSlabSampler::gather_candidate_predictors_from_workers(double threshold) {
+    ////////////////////
   }
 
   void BigAssSpikeSlabSampler::run_parallel_initial_screen(int niter) {

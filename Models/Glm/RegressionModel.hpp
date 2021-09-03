@@ -21,6 +21,8 @@
 #define BOOM_REGRESSION_MODEL_H
 
 #include "uint.hpp"
+#include <cstdint>
+
 #include "LinAlg/QR.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/Glm/Glm.hpp"
@@ -263,7 +265,7 @@ namespace BOOM {
                           public NumOptModel,
                           public EmMixtureComponent {
    public:
-    explicit RegressionModel(uint p);
+    explicit RegressionModel(uint xdim);
 
     // Args:
     //   coefficients: The vector of regression coefficients.  All are included.
@@ -415,9 +417,9 @@ namespace BOOM {
   };
 
 
-  // A BigRegresionModel is a regression model where the number of predictors is
+  // A BigRegressionModel is a regression model where the number of predictors is
   // too large to use the sufficient statistics in the ordinary RegressionModel.
-  class BigRegresionModel
+  class BigRegressionModel
       : public GlmModel,
         public ParamPolicy_2<GlmCoefs, UnivParams>,
         public IID_DataPolicy<RegressionData>,
@@ -426,11 +428,24 @@ namespace BOOM {
     friend class BigAssSpikeSlabSampler;
    public:
     // Args:
+    //
     //   subordinate_model_max_dim:  The largest predictor dimension for each model.
-    BigRegresionModel(int subordinate_model_max_dim = 500,
+    BigRegressionModel(uint xdim,
+                      int subordinate_model_max_dim = 500,
                       bool force_intercept = true);
 
-    BigRegresionModel * clone() const override;
+    BigRegressionModel * clone() const override;
+
+    uint xdim() const {return coef().nvars_possible();}
+
+    GlmCoefs &coef() {return prm1_ref();}
+    const GlmCoefs &coef() const {return prm1_ref();}
+    Ptr<GlmCoefs> coef_prm() {return prm1();}
+    const Ptr<GlmCoefs> coef_prm() const {return prm1();}
+
+    double predict(const Vector &x) const {
+      return coef().predict(x);
+    }
 
     // Pass data to the subordinate models.  The data are not kept, but are
     // added to the subordinate model's sufficient statistics.
@@ -439,25 +454,40 @@ namespace BOOM {
     // Pass data to the primary model.  The set of candidate values are
     void stream_data_for_combined_model(const RegressionData &data_point);
 
-    double predict(const Vector &x) const override;
-
     // Set the subset of variables to use in the final spike-and-slab run.
     void set_candidates(const Selector &candidates);
 
     // To handle predictors of very high dimension, the model maintains several
     // smaller regression models, each of moderate dimension.  The data in each
     // of the smaller models is independent
-    int number_of_subordinate_models() const;
-    RegressionModel *subordinate_model(int i);
+    int number_of_subordinate_models() const {
+      return subordinate_models_.size();
+    }
 
-    int worker_dim_upper_limit() const;
+    RegressionModel *subordinate_model(int i) {
+      return subordinate_models_[i].get();
+    }
+
+    // The dimension of the largest subordinate model (which is always the first
+    // one).
+    int worker_dim_upper_limit() const {
+      return subordinate_models_[0]->xdim();
+    }
+
 
    private:
+
+    // Indicates whether an intercept term is added to each of the subordinate
+    // models.
+    bool force_intercept_;
+
     // Something determines the actual subset of predictors that can be used.
     Selector predictor_candidates_;
 
     // Each subordinate model handles a chunk of the predictors.
     std::vector<Ptr<RegressionModel>> subordinate_models_;
+
+    void create_subordinate_models(uint xdim, int max_worker_dim, bool force_intercept);
   };
 
 

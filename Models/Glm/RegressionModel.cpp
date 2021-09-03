@@ -503,10 +503,10 @@ namespace BOOM {
   //======================================================================
   typedef RegressionModel RM;
 
-  RM::RegressionModel(uint p)
+  RM::RegressionModel(uint xdim)
       : GlmModel(),
-        ParamPolicy(new GlmCoefs(p), new UnivParams(1.0)),
-        DataPolicy(new NeRegSuf(p)) {}
+        ParamPolicy(new GlmCoefs(xdim), new UnivParams(1.0)),
+        DataPolicy(new NeRegSuf(xdim)) {}
 
   RM::RegressionModel(const Vector &b, double Sigma)
       : GlmModel(),
@@ -728,5 +728,47 @@ namespace BOOM {
      b = xtx-1xty = (rt qt q r)^{-1} rt qt y
      = r^[-1] qt y
   */
+
+  //===========================================================================
+
+  BigRegressionModel::BigRegressionModel(uint xdim,
+                                         int subordinate_model_max_dim,
+                                         bool force_intercept)
+      : GlmModel(),
+        ParamPolicy(new GlmCoefs(xdim), new UnivParams(1.0)),
+        force_intercept_(force_intercept),
+        predictor_candidates_(xdim, false)
+  {
+    create_subordinate_models(xdim, subordinate_model_max_dim, force_intercept);
+  }
+
+  BigRegressionModel * BigRegressionModel::clone() const {
+    return new BigRegressionModel(*this);
+  }
+
+  void BigRegressionModel::create_subordinate_models(
+      uint xdim,
+      int subordinate_model_max_dim,
+      bool force_intercept) {
+
+    long nsub = std::lround(std::ceil(
+        double(xdim) / subordinate_model_max_dim));
+
+    int model_dim = lround(std::ceil(double(xdim) / nsub)) + force_intercept;
+    long remaining_xdim = xdim;
+    for (long i = 0; i < nsub; ++i) {
+      if (remaining_xdim > model_dim) {
+        NEW(RegressionModel, subordinate_model)(model_dim);
+        subordinate_models_.push_back(subordinate_model);
+        remaining_xdim -= (model_dim - force_intercept);
+      } else {
+        NEW(RegressionModel, subordinate_model)(remaining_xdim + force_intercept);
+        subordinate_models_.push_back(subordinate_model);
+        remaining_xdim = 0;
+      }
+    }
+  }
+
+
 
 }  // namespace BOOM

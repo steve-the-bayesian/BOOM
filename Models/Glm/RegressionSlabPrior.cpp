@@ -26,7 +26,7 @@ namespace BOOM {
                                            double sample_mean,
                                            double data_sample_size,
                                            double prior_sample_size,
-                                           dobule diagonal_shrinkage)
+                                           double diagonal_shrinkage)
       : ParamPolicy(new VectorParams(xtx.nrow(), 0.0),
                     new UnivParams(prior_sample_size)),
         sigsq_(sigsq),
@@ -37,9 +37,35 @@ namespace BOOM {
     set_observers();
   }
 
+  RegressionSlabPrior::~RegressionSlabPrior() {
+    remove_observers();
+  }
+
+  RegressionSlabPrior::RegressionSlabPrior(const RegressionSlabPrior &rhs)
+      : Model(rhs),
+        MvnBase(rhs),
+        ParamPolicy(rhs),
+        NullDataPolicy(rhs),
+        NullPriorPolicy(rhs),
+        modified_xtx_(rhs.modified_xtx_),
+        wsp_current_(false),
+        var_wsp_(rhs.var_wsp_->clone())
+  {
+    set_observers();
+  }
+
+  RegressionSlabPrior * RegressionSlabPrior::clone() const {
+    return new RegressionSlabPrior(*this);
+  }
+
   void RegressionSlabPrior::set_observers() {
-    sigsq_->add_observer([this]() { this->wsp_current_ = false; });
-    SampleSize_prm()->add_observer([this]() { this->wsp_current_ = false; });
+    sigsq_->add_observer(this, [this]() { this->wsp_current_ = false; });
+    SampleSize_prm()->add_observer(this, [this]() { this->wsp_current_ = false; });
+  }
+
+  void RegressionSlabPrior::remove_observers() {
+    sigsq_->remove_observer(this);
+    SampleSize_prm()->remove_observer(this);
   }
 
   void RegressionSlabPrior::set_modified_xtx(
