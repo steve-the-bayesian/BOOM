@@ -100,10 +100,33 @@ namespace BOOM {
       return prm2_ref().value();
     }
 
+    double diagonal_shrinkage() const {
+      return diagonal_shrinkage_;
+    }
+
+    double data_sample_size() const {
+      return data_sample_size_;
+    }
+
+    // Return  ((1-alpha) * xtx + alpha * diag(xtx)) / n
+    // Args:
+    //   xtx:  The base matrix to be modified.
+    //   sample_size:  The 'n' parameter above.  n > 0
+    //   diagonal_shrinkage:  The 'alpha' parameter above (0 <= alpha <= 1)
+    static SpdMatrix scale_xtx(
+        const SpdMatrix &xtx,
+        double sample_size,
+        double diagonal_shrinkage);
+
    private:
     // modified_xtx_ holds the xtx parameter supplied by the constructor, after
     // scaling by the data sample size and applying diagonal shrinkage.
     SpdMatrix modified_xtx_;
+
+    // These aren't used after construction, but we keep them around so we can
+    // recover the original construction parameters.
+    double data_sample_size_;
+    double diagonal_shrinkage_;
 
     // The residual variance parameter from the regression model described by
     // this prior.
@@ -119,10 +142,6 @@ namespace BOOM {
       var_wsp_->set_ivar(modified_xtx_ * (prior_sample_size() / sigsq_->value()));
       wsp_current_ = true;
     }
-
-    void set_modified_xtx(const SpdMatrix &xtx,
-                          double data_sample_size,
-                          double diagonal_shrinkage);
 
     void set_observers();
     void remove_observers();

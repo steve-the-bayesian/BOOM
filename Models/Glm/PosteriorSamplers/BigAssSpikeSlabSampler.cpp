@@ -26,18 +26,20 @@ namespace BOOM {
   BigAssSpikeSlabSampler::BigAssSpikeSlabSampler(
       BigRegressionModel *model,
       const Ptr<VariableSelectionPrior> &spike,
-      const Ptr<RegressionSlabPrior> &slab,
+      const Ptr<RegressionSlabPrior> &slab_prototype,
       const Ptr<GammaModelBase> &residual_precision_prior,
       RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         spike_(spike),
-        slab_(slab),
+        slab_prototype_(slab_prototype),
         residual_precision_prior_(residual_precision_prior)
   {}
 
   void BigAssSpikeSlabSampler::draw() {
-    // model_->restricted_model()->draw();
+    ensure_restricted_model_sampler();
+    model_->restricted_model()->sample_posterior();
+    model_->expand_restricted_model_parameters();
   }
 
   double BigAssSpikeSlabSampler::logpri() const {
@@ -47,41 +49,135 @@ namespace BOOM {
   void BigAssSpikeSlabSampler::initial_screen(int niter, double threshold) {
     assign_subordinate_samplers();
     run_parallel_initial_screen(niter);
-    gather_candidate_predictors_from_workers(threshold);
+    set_candidate_variables(threshold);
   }
 
   void BigAssSpikeSlabSampler::assign_subordinate_samplers() {
-    int number_of_workers = std::lround(std::ceil(
-        double(model_->xdim()) / model_->worker_dim_upper_limit()));
+    int number_of_workers = model_->number_of_subordinate_models();
+    double sigma_guess = 1.0 / std::sqrt(residual_precision_prior_->mean());
+    double sigma_df = residual_precision_prior_->alpha() / 2.0;
+
     for (int w = 0; w < number_of_workers; ++w) {
-      int this_worker_dim = -1;  //////////////
-      if (w + 1 == number_of_workers) {
-      } else {
-        NEW(RegressionModel, worker)(model_->worker_dim_upper_limit());
+      RegressionModel *worker = model_->subordinate_model(w);
+      Vector prior_mean(worker->xdim(), 0.0);
+      prior_mean[0] = worker->suf()->ybar();
+      SpdMatrix xtx = slab_prototype_->scale_xtx(
+          worker->suf()->xtx(),
+          worker->suf()->n(),
+          slab_prototype_->diagonal_shrinkage());
+
+      Vector prior_inclusion_probabilities = select_chunk(
+          spike_->prior_inclusion_probabilities(), w);
+      if (w > 0 and model_->force_intercept()) {
+        prior_inclusion_probabilities = concat(
+            1.0, prior_inclusion_probabilities);
       }
+
+      NEW(BregVsSampler, worker_sampler)(
+          worker,
+          prior_mean,
+          xtx,
+          sigma_guess,
+          sigma_df,
+          prior_inclusion_probabilities,
+          rng());
+      worker->set_method(worker_sampler);
     }
   }
 
-  void BigAssSpikeSlabSampler::gather_candidate_predictors_from_workers(double threshold) {
-    ////////////////////
+  ConstVectorView BigAssSpikeSlabSampler::select_chunk(
+      const Vector &v, int chunk) const {
+    int start = 0;
+    if (chunk < 0 || chunk >= model_->number_of_subordinate_models()) {
+      report_error("Chunk out of bounds.");
+    }
+    for (int m = 0; m < chunk; ++m) {
+      const RegressionModel *worker = model_->subordinate_model(m);
+      int end = start + worker->xdim();
+      if (m > 0 and model_->force_intercept()) {
+        --end;
+      }
+      start = end;
+    }
+    const RegressionModel *worker = model_->subordinate_model(chunk);
+    int dim = worker->xdim();
+    if (chunk > 0 and model_->force_intercept()) {
+      --dim;
+    }
+    return ConstVectorView(v, start, dim);
+  }
+
+  void BigAssSpikeSlabSampler::set_candidate_variables(double threshold) {
+    Selector inc(model_->xdim(), false);
+    long counter = 0;
+    bool force_intercept = model_->force_intercept();
+    for (int m = 0; m < model_->number_of_subordinate_models(); ++m) {
+      const RegressionModel &sub(*model_->subordinate_model(m));
+      const Selector &sub_inc(sub.coef().inc());
+
+      for (int j = 0; j < sub_inc.nvars(); ++j) {
+        long index = sub_inc.dense_index(j) + counter;
+        if (m > 0 && force_intercept) {
+          --index;
+        }
+        inc.add(index);
+      }
+      long increment = sub_inc.nvars_possible();
+      if (m > 0 && force_intercept) {
+        --increment;
+      }
+      counter += increment;
+    }
+    model_->set_candidates(inc);
+  }
+
+  void BigAssSpikeSlabSampler::ensure_restricted_model_sampler() {
+    RegressionModel *restricted_model = model_->restricted_model();
+    if (!restricted_model) {
+      report_error("Restricted model was not set.");
+    }
+    if (restricted_model->number_of_sampling_methods() == 0) {
+      Vector prior_mean(restricted_model->xdim(), 0.0);
+      prior_mean[0] = restricted_model->suf()->ybar();
+
+      SpdMatrix modified_xtx = slab_prototype_->scale_xtx(
+          restricted_model->xtx(),
+          restricted_model->suf()->n(),
+          slab_prototype_->diagonal_shrinkage());
+      double sigma_guess = 1.0 / std::sqrt(residual_precision_prior_->mean());
+      double sigma_df = residual_precision_prior_->alpha() / 2.0;
+      Vector prior_inclusion_probabilities = model_->candidate_selector().select(
+          spike_->prior_inclusion_probabilities());
+
+      NEW(BregVsSampler, restricted_sampler)(
+          restricted_model,
+          prior_mean,
+          modified_xtx,
+          sigma_guess,
+          sigma_df,
+          prior_inclusion_probabilities,
+          rng());
+
+      restricted_model->set_method(restricted_sampler);
+    }
   }
 
   void BigAssSpikeSlabSampler::run_parallel_initial_screen(int niter) {
 
+    int num_models = model_->number_of_subordinate_models();
     int num_threads = std::min<int>(std::thread::hardware_concurrency(),
-                                    model_->number_of_subordinate_models());
+                                    num_models);
     ThreadWorkerPool pool(num_threads);
     std::vector<std::future<void>> futures;
-    std::vector<std::vector<Selector>> draws;
+    std::vector<std::vector<Selector>> draws(num_models);
 
-    for (int i = 0; i < model_->number_of_subordinate_models(); ++i) {
-      draws.push_back(std::vector<Selector>());
-      std::vector<Selector> &worker_model_draws(draws.back());
+    for (int i = 0; i < num_models; ++i) {
+      std::vector<Selector> &worker_model_draws(draws[i]);
       RegressionModel *worker_model = model_->subordinate_model(i);
       futures.emplace_back(
           pool.submit(
               [worker_model, niter, &worker_model_draws]() {
-                for (int i = 0; i < niter; ++i) {
+                for (int iter = 0; iter < niter; ++iter) {
                   worker_model->sample_posterior();
                   worker_model_draws.push_back(worker_model->inc());
                 }

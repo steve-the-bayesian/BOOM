@@ -32,9 +32,24 @@ namespace BOOM {
 
   class BigAssSpikeSlabSampler : public PosteriorSampler {
    public:
+    // Args:
+    //   model: The model to be sampled.
+    //   global_spike: A prior over the inclusion/exclusion decisions for the
+    //     global model.  This prior will be subdivided into smaller priors for
+    //     the initial screen models.  Because of this subdivision, the prior
+    //     must be independent across variables.
+    //   slab_prototype: An EMPTY regression slab prior.  This serves as the
+    //     prototype prior for the sub-models and for the global model once the
+    //     relevant candidate predictor variables have been identified by the
+    //     initial screen.
+    //   residual_precision_prior: The prior distribution on the residual
+    //     precision parameter.  This will be cloned across the initial screen
+    //     models.
+    //   seeding_rng: The random number used to seed the RNG held by the Sampler
+    //     base class to this object.
     BigAssSpikeSlabSampler(BigRegressionModel *model,
-                           const Ptr<VariableSelectionPrior> &spike,
-                           const Ptr<RegressionSlabPrior> &slab,
+                           const Ptr<VariableSelectionPrior> &global_spike,
+                           const Ptr<RegressionSlabPrior> &slab_prototype,
                            const Ptr<GammaModelBase> &residual_precision_prior,
                            RNG &seeding_rng = GlobalRng::rng);
 
@@ -43,23 +58,36 @@ namespace BOOM {
 
     void initial_screen(int niter, double threshold);
 
-    // The largest number of predictors in a worker model.
-    int max_worker_dim() const;
+    ConstVectorView select_chunk(const Vector &v, int chunk) const;
 
    private:
+    // The basic objects provided to the constructor.
     BigRegressionModel *model_;
     Ptr<VariableSelectionPrior> spike_;
-    Ptr<RegressionSlabPrior> slab_;
+    Ptr<RegressionSlabPrior> slab_prototype_;
     Ptr<GammaModelBase> residual_precision_prior_;
 
-    std::vector<Ptr<BregVsSampler>> subordinate_samplers_;
+    // The posterior samplers assigned to the subordinate models held by model_.
+    std::vector<Ptr<BregVsSampler>> intial_screen_samplers_;
+
+    // Objects used to implement the MCMC for the restricted set of variables
+    // identified by the initial screen.
+    Ptr<RegressionSlabPrior> candidate_slab_;
+    Ptr<BregVsSampler> candidate_sampler_;
 
     // Assigns posterior samplers to the subordinate models contained in model_.
     void assign_subordinate_samplers();
 
+    // Assign data to workers in different threads.
     void run_parallel_initial_screen(int niter);
 
-    void gather_candidate_predictors_from_workers(double threshold);
+    // After the initial screen is completed, identify the candidate variables
+    // to be sampled in the primary MCMC phase.
+    void set_candidate_variables(double threshold);
+
+    // Set up the posterior sampler for the restricted model (held in model_) if
+    // it has not already been set.
+    void ensure_restricted_model_sampler();
   };
 
 }  // namespace BOOM

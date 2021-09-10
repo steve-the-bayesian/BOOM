@@ -11,6 +11,15 @@ COMMON_DEPS = [
 ]
 
 cc_test(
+    name = "big_regression_test",
+    size = "small",
+    timeout = "long",
+    srcs = ["big_regression_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "binomial_logit_test",
     size = "small",
     srcs = ["binomial_logit_test.cc"],

@@ -29,11 +29,13 @@ namespace BOOM {
                                            double diagonal_shrinkage)
       : ParamPolicy(new VectorParams(xtx.nrow(), 0.0),
                     new UnivParams(prior_sample_size)),
+        modified_xtx_(scale_xtx(xtx, data_sample_size, diagonal_shrinkage)),
+        data_sample_size_(data_sample_size),
+        diagonal_shrinkage_(diagonal_shrinkage),
         sigsq_(sigsq),
         wsp_current_(false),
         var_wsp_(new SpdParams(xtx))
   {
-    set_modified_xtx(xtx, data_sample_size, diagonal_shrinkage);
     set_observers();
   }
 
@@ -68,24 +70,25 @@ namespace BOOM {
     SampleSize_prm()->remove_observer(this);
   }
 
-  void RegressionSlabPrior::set_modified_xtx(
+  SpdMatrix RegressionSlabPrior::scale_xtx(
       const SpdMatrix &xtx,
       double data_sample_size,
       double diagonal_shrinkage) {
-    modified_xtx_ = xtx / data_sample_size;
+    SpdMatrix ans = xtx / data_sample_size;
     if (diagonal_shrinkage > 1.0 or diagonal_shrinkage < 0.0) {
       report_error("diagonal_shrinkage must be between 0 and 1");
     } else if (diagonal_shrinkage >= 1.0) {
       // This branch handles the case where diagonal_shrinkage == 1.0.
-      Vector diagonal_elements = modified_xtx_.diag();
-      modified_xtx_ = 0.0;
-      modified_xtx_.diag() = diagonal_elements;
+      Vector diagonal_elements = ans.diag();
+      ans = 0.0;
+      ans.diag() = diagonal_elements;
     } else if (diagonal_shrinkage > 0.0) {
-      modified_xtx_ *= (1 - diagonal_shrinkage);
-      modified_xtx_.diag() /= (1 - diagonal_shrinkage);
+      ans *= (1 - diagonal_shrinkage);
+      ans.diag() /= (1 - diagonal_shrinkage);
     } else {
       // In this branch the diagonal_shrinkage is zero, so do nothing.
     }
+    return ans;
   }
 
 

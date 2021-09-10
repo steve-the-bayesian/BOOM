@@ -438,12 +438,17 @@ namespace BOOM {
 
     uint xdim() const {return coef().nvars_possible();}
 
-    GlmCoefs &coef() {return prm1_ref();}
-    const GlmCoefs &coef() const {return prm1_ref();}
-    Ptr<GlmCoefs> coef_prm() {return prm1();}
-    const Ptr<GlmCoefs> coef_prm() const {return prm1();}
+    GlmCoefs &coef() override {return prm1_ref();}
+    const GlmCoefs &coef() const override {return prm1_ref();}
+    Ptr<GlmCoefs> coef_prm() override {return prm1();}
+    const Ptr<GlmCoefs> coef_prm() const override {return prm1();}
 
-    double predict(const Vector &x) const {
+    double sigsq() const {return prm2_ref().value();}
+    double sigma() const {return std::sqrt(sigsq());}
+    void set_sigsq(double sigsq) {prm2_ref().set(sigsq);}
+    Ptr<UnivParams> Sigsq_prm() { return prm2(); }
+
+    double predict(const Vector &x) const override {
       return coef().predict(x);
     }
 
@@ -452,10 +457,14 @@ namespace BOOM {
     void stream_data_for_initial_screen(const RegressionData &data_point);
 
     // Pass data to the primary model.  The set of candidate values are
-    void stream_data_for_combined_model(const RegressionData &data_point);
+    void stream_data_for_restricted_model(const RegressionData &data_point);
 
     // Set the subset of variables to use in the final spike-and-slab run.
     void set_candidates(const Selector &candidates);
+
+    const Selector & candidate_selector() const {
+      return predictor_candidates_;
+    }
 
     // To handle predictors of very high dimension, the model maintains several
     // smaller regression models, each of moderate dimension.  The data in each
@@ -474,9 +483,21 @@ namespace BOOM {
       return subordinate_models_[0]->xdim();
     }
 
+    RegressionModel *restricted_model() {
+      if (!!restricted_model_) {
+        return restricted_model_.get();
+      } else {
+        return nullptr;
+      }
+    }
+
+    // Write the parameters from the restricted model to the corresponding
+    // positions in the full model.
+    void expand_restricted_model_parameters();
+
+    bool force_intercept() const {return force_intercept_;}
 
    private:
-
     // Indicates whether an intercept term is added to each of the subordinate
     // models.
     bool force_intercept_;
@@ -486,6 +507,11 @@ namespace BOOM {
 
     // Each subordinate model handles a chunk of the predictors.
     std::vector<Ptr<RegressionModel>> subordinate_models_;
+
+    // The restricted model is created when the user calls
+    // set_predictor_candidates.  It contains the candidate values selected by
+    // the subordinate models.
+    Ptr<RegressionModel> restricted_model_;
 
     void create_subordinate_models(uint xdim, int max_worker_dim, bool force_intercept);
   };
