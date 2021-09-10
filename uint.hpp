@@ -19,10 +19,14 @@
 #ifndef BOOM_UINT_HPP
 #define BOOM_UINT_HPP
 
+#include <cstdint>
+
 namespace BOOM{
   // TODO: Remove all instances of uint and replace them with int64_t.
   //  typedef unsigned int uint;
   typedef long uint;
+
+  typedef int64_t Int;
 }  // namespace BOOM
 
 #endif
