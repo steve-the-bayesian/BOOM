@@ -28,6 +28,9 @@
 #include <queue>
 #include <thread>
 
+// The main object defined here is the ThreadWorkerPool.  Before defining that
+// object, we must first define some building blocks.
+
 namespace BOOM {
 
   // A std::vector<std::thread> that calls join() on all joinable
