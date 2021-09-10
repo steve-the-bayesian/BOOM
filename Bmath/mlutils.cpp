@@ -153,10 +153,10 @@ double R_log(double x) {
 
 double R_pow(double x, double y) /* = x ^ y */
 {
-    if(x == 1. || y == 0.)
+    if (x == 1. || y == 0.)
         return(1.);
-    if(x == 0.) {
-        if(y > 0.) return(0.);
+    if (x == 0.) {
+        if (y > 0.) return(0.);
         /* y < 0 */return(BOOM::infinity());
     }
     if (R_FINITE(x) && R_FINITE(y))
@@ -165,20 +165,20 @@ double R_pow(double x, double y) /* = x ^ y */
 #ifdef IEEE_754
         return(x + y);
 #else
-        return std::numeric_limits<double>::quiet_NaN(); 
+        return std::numeric_limits<double>::quiet_NaN();
 #endif
     }
-    if(!R_FINITE(x)) {
-        if(x > 0)               /* Inf ^ y */
+    if (!R_FINITE(x)) {
+        if (x > 0)               /* Inf ^ y */
             return((y < 0.)? 0. : BOOM::infinity());
         else {                  /* (-Inf) ^ y */
-            if(R_FINITE(y) && y == FLOOR(y)) /* (-Inf) ^ n */
+            if (R_FINITE(y) && y == FLOOR(y)) /* (-Inf) ^ n */
                 return((y < 0.) ? 0. : (myfmod(y,2.) ? x  : -x));
         }
     }
-    if(!R_FINITE(y)) {
-        if(x >= 0) {
-            if(y > 0)           /* y == +Inf */
+    if (!R_FINITE(y)) {
+        if (x >= 0) {
+            if (y > 0)           /* y == +Inf */
                 return((x >= 1)? BOOM::infinity() : 0.);
             else                /* y == -Inf */
                 return((x < 1) ? BOOM::infinity() : 0.);
@@ -198,8 +198,8 @@ double R_pow_di(double x, int n)
         if (!R_FINITE(x)) return R_pow(x, (double)n);
         if (n < 0) { n = -n; x = 1/x; }
         for(;;) {
-            if(n & 01) pow *= x;
-            if(n >>= 1) x *= x; else break;
+            if (n & 01) pow *= x;
+            if (n >>= 1) x *= x; else break;
         }
     }
     return pow;
