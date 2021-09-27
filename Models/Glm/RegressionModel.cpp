@@ -751,20 +751,17 @@ namespace BOOM {
       const RegressionData &data_point) {
     double y = data_point.y();
     const Vector &x(data_point.x());
-    long start = 0;
+    long cursor = 0;
     for (uint m = 0; m < subordinate_models_.size(); ++m) {
       auto &model(*subordinate_models_[m]);
       long chunk_size = model.xdim();
-      if (m > 0 and force_intercept_) {
-        // account for the
-        --chunk_size;
+      Vector chunk(chunk_size);
+      bool add_intercept = force_intercept_ && m > 0;
+      if (add_intercept) {
+        chunk[0] = 1.0;
       }
-      Vector chunk;
-      if (force_intercept_ and m > 0) {
-        chunk = concat(Vector(1, 1.0),
-                       ConstVectorView(x, start, chunk_size));
-      } else {
-        chunk = ConstVectorView(x, start, chunk_size);
+      for (int i = add_intercept; i < chunk_size; ++i) {
+        chunk[i] = x[cursor++];
       }
       subordinate_models_[m]->suf()->add_mixture_data(y, chunk, 1.0);
     }
@@ -819,8 +816,8 @@ namespace BOOM {
     full_coefs.drop_all();
 
     for (uint i = 0; i < restricted_inc.nvars(); ++i) {
-      uint I = restricted_inc.dense_index(i);
-      full_coefs.add(I);
+      uint I = restricted_inc.sparse_index(i);
+      full_coefs.add(predictor_candidates_.sparse_index(I));
     }
 
     full_coefs.set_included_coefficients(

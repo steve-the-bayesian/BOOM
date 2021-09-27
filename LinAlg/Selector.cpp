@@ -454,8 +454,16 @@ namespace BOOM {
   }
 
   namespace {
-    template <class V>
-    Vector inc_expand(const V &x, const Selector &inc) {
+    // Args:
+    //   x: A vector-like object with dimension matching the number of included
+    //     variables.
+    //   inc:  A Selector indicating which variables are included.
+    //
+    // Returns:
+    //   A full-dimension vector mostly filled with 0's.  The nonzero elements
+    //   are filled with the elements in x at the positions indicated by inc.
+    template <class VECTOR>
+    Vector inc_expand(const VECTOR &x, const Selector &inc) {
       uint n = inc.nvars();
       uint nx = x.size();
       if (nx != n) {

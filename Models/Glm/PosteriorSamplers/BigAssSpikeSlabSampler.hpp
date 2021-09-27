@@ -53,11 +53,40 @@ namespace BOOM {
                            const Ptr<GammaModelBase> &residual_precision_prior,
                            RNG &seeding_rng = GlobalRng::rng);
 
+    // Take one MCMC step for the restricted model, and map the draw to the
+    // overall model.
+    //
+    // Preconditions:
+    //   - This call will fail if "initial_screen" has not been called.
+    //   - This call will fail if the data has not passed through
+    //     "stream_data_for_restricted_model".
     void draw() override;
+
     double logpri() const override;
 
-    void initial_screen(int niter, double threshold);
+    // Run an MCMC algorithm over each sub-model to identify candidate predictor
+    // variables.
+    //
+    // Args:
+    //   niter:  The number of MCMC iterations to use.
+    //   threshold: The variables whose 'marginal inclusion probabilities'
+    //     exceed 'threshold' become candidates in the next round.
+    //   use_threads: If 'true' then C++11 threads will be used to run the MCMC
+    //     algorithms for the subordinate models.  If 'false' then the code path
+    //     for doing the MCMC will not use threads.
+    //
+    // Preconditions:
+    //   It is expected that the model being screened has passed the data
+    //   through "stream_data_for_initial_screen".
+    //
+    // Postconditions:
+    //   The "restricted_model_" and "predictor_candidates_" members of the
+    //   managed model are set.
+    void initial_screen(int niter, double threshold, bool use_threads);
 
+    // Args:
+    //   v: A Vector of objects to be selected.  The elements of v correspond to
+    //     columns in the global predictor matrix.
     ConstVectorView select_chunk(const Vector &v, int chunk) const;
 
    private:
@@ -79,11 +108,26 @@ namespace BOOM {
     void assign_subordinate_samplers();
 
     // Assign data to workers in different threads.
-    void run_parallel_initial_screen(int niter);
+    // Args:
+    //   niter: The number of MCMC iterations to use in the initial screen on
+    //     each worker.
+    //   threshold: The inclusion probability that must be exceeded on a worker
+    //     run for a predictor variable to be promomted to a candidate for the
+    //     next round.
+    //   use_threads: A debugging flag.  If false then a code path will be used
+    //     that does not invoke threading tools.  This will be slow, but it
+    //     makes gdb easy.
+    //
+    // Effects:
+    //   The inclusion flags for each worker model are set according to whether
+    //   each variables's marginal inclusion probability exceeds the specified
+    //   threshold.
+    void run_parallel_initial_screen(int niter, double threshold,
+                                     bool use_threads);
 
     // After the initial screen is completed, identify the candidate variables
     // to be sampled in the primary MCMC phase.
-    void set_candidate_variables(double threshold);
+    void set_candidate_variables();
 
     // Set up the posterior sampler for the restricted model (held in model_) if
     // it has not already been set.
