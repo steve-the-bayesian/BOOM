@@ -9,6 +9,7 @@
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/Glm/BinomialLogitModel.hpp"
 #include "Models/Glm/PoissonRegressionModel.hpp"
+#include "Models/Glm/RegressionSlabPrior.hpp"
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
@@ -161,6 +162,65 @@ namespace BayesBoom {
              [](const RegressionModel& m) {
                return m.log_likelihood();
              })
+        ;
+
+    py::class_<RegressionSlabPrior,
+               MvnBase,
+               Ptr<RegressionSlabPrior>>(
+                   boom, "RegressionSlabPrior", py::multiple_inheritance())
+        .def(py::init(
+            [] (const SpdMatrix &xtx,
+                const Ptr<UnivParams> &sigsq_param,
+                double sample_mean,
+                double sample_size,
+                double prior_sample_size,
+                double diagonal_shrinkage) {
+              return new RegressionSlabPrior(
+                  xtx, sigsq_param, sample_size, sample_size,
+                  prior_sample_size, diagonal_shrinkage);
+            }),
+             py::arg("xtx"),
+             py::arg("sigsq_param"),
+             py::arg("sample_mean"),
+             py::arg("sample_size"),
+             py::arg("prior_sample_size"),
+             py::arg("diagonal_shrinkage"),
+             "Args:\n\n"
+             "  xtx:  The cross product matrix from the regression model.\n"
+             "  sigsq_param:  The residual variance parameter object from "
+             "the regression model.\n"
+             "  sample_mean:  The mean of the response variable.\n"
+             "  sample_size:  The number of observations in the regression "
+             "problem.\n"
+             "  prior_sample_size:  The number of observations worth of weight "
+             "to assign the prior.\n"
+             "  diagonal_shrinkage:  The xtx matrix is averaged with its own "
+             "diagonal to protect against the possibility that xtx is less "
+             "than full rank.  The diagonal_shrinkage parameter is the weight "
+             "(between 0 and 1) assigned to the diagonal in this averaging "
+             "procedure.\n" )
+        ;
+
+    py::class_<BigRegressionModel,
+               GlmModel,
+               PriorPolicy,
+               Ptr<BigRegressionModel>>(
+                   boom, "BigRegressionModel", py::multiple_inheritance())
+        .def(py::init(
+            [](uint xdim, int subordinate_model_max_dim, bool force_intercept) {
+              return new BigRegressionModel(
+                  xdim, subordinate_model_max_dim, force_intercept);
+                  }),
+             py::arg("xdim"),
+             py::arg("subordinate_model_max_dim") = 500,
+             py::arg("use_threads") = true,
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictor vector.\n"
+             "  subordinate_model_max_dim:  The largest dimension of each "
+             "subordinate model (the model used to do the initial screen).\n"
+             "  use_threads:  If True then C++11 threads are used to implement"
+             " the initial screen.  If False then no threads are used.  This "
+             "argument is primarily used for debugging.")
         ;
 
     py::class_<TRegressionModel,

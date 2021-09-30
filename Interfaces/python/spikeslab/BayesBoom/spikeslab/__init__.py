@@ -1,5 +1,6 @@
 
 from .spikeslab import (
+    BigAssSpikeSlab,
     compute_inclusion_probabilities,
     coefficient_positive_probability,
     dot,

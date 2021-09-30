@@ -1,6 +1,12 @@
 import unittest
 
-from BayesBoom.spikeslab import dot, lm_spike, RegressionSpikeSlabPrior, StudentSpikeSlabPrior
+from BayesBoom.spikeslab import (
+    dot,
+    lm_spike,
+    RegressionSpikeSlabPrior,
+    StudentSpikeSlabPrior,
+    BigAssSpikeSlab
+)
 from BayesBoom.R import delete_if_present
 
 import numpy as np
@@ -113,6 +119,34 @@ class SpikeSlabTest(unittest.TestCase):
                          set(p2.__dict__.keys()))
 
 
+class BigAssSpikeSlabTest(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_mcmc(self):
+        nobs = 100000
+        dim = 1000
+        X = np.random.randn(nobs, dim)
+        X[:, 0] = 1.0
+        coefficients = np.zeros(dim)
+        coefficients[0] = 28
+        coefficients[3] = -72
+        coefficients[84] = 54
+        coefficients[93] = 180
+
+        residual_sd = .3
+        yhat = X @ coefficients
+        y = yhat + np.random.randn(nobs) * residual_sd
+
+        model = BigAssSpikeSlab(dim, subordinate_model_max_dim=50)
+        i = 0
+        chunk_size = 1000
+        while (i < nobs):
+            chunk = range(i, np.min(i + chunk_size, nobs))
+            model.stream_data_for_initial_screen(X[chunk, :], y[chunk])
+            i += chunk_size
+        model.initial_screen()
+
 
 _debug_mode = True
 
@@ -127,14 +161,14 @@ if _debug_mode:
     # exception.
     print("Hello, world!")
 
-    rig = SpikeSlabTest()
+    rig = BigAssSpikeSlabTest()
 
     if hasattr(rig, "setUpClass"):
         rig.setUpClass()
     if hasattr(rig, "setUp"):
         rig.setUp()
 
-    rig.test_student_spike_slab_prior()
+    rig.test_mcmc()
 
     print("Goodbye, cruel world!")
 

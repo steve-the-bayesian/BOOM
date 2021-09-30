@@ -82,7 +82,8 @@ def dot(data_frame, omit=[]):
 
 
 class lm_spike:
-    """Fit a linear model with a spike and slab prior using MCMC.
+    """
+    Fit a linear model with a spike and slab prior using MCMC.
 
     Typical use:
 
@@ -426,3 +427,221 @@ def plot_model_size(coefficients, burn, ax=None, **kwargs):
         for i in range(burn, ndraws)
     ])
     return R.hist(size, ax=ax, **kwargs)
+
+
+class RegressionSlabPrior:
+    """
+    A multivariate normal distribution intended to be the prior in a multiple
+    regression problem.  The prior is
+
+    beta ~ N(b, V)
+
+    where b = (ybar, 0, 0, 0, ....)
+    and V^{-1} = kappa * [(1 - alpha) * xtx + alpha * diag(xtx)] / n
+
+    The mean parameter shrinks the intercept towards the sample mean, and all
+    other coefficients towards zero.  In the literature it is more standard to
+    shrink all coefficients towards zero, but in practice this can inflate
+    estimates of the residual standard deviation.
+
+    The prior precision is defined in terms of xtx: the cross product matrix
+    from the regression problem.  We average xtx with its diagonal (with weight
+    alpha on the diagonal) to ensure that the overall matrix is full rank.  xtx
+    is the information matrix for the regression coefficients in a standard
+    regression problem, so dividing by 'n' (the sample size) turns the whole
+    thing into the "average information from a single observation."
+    Multiplying by 'kappa' means that the information content of the prior is
+    equivalent to 'kappa' prior observations.
+    """
+
+    def __init__(self, xtx, sample_mean, data_sample_size,
+                 prior_sample_size=1.0, diagonal_shrinkage=0.05):
+        """
+        Args:
+          Please see the class comments, above.
+          xtx:  The cross product matrix from the regression.
+          sample_mean: The mean of the response variable in the regression
+            problem ('ybar' above).
+          data_sample_size: The number of observations in the regression ('n'
+            above).
+          prior_sample_size: The number of observations of prior weight to
+            assign the prior.  ('kappa' above).
+          diagonal_shrinkage: The weight to assign the diagonal of xtx in the
+            full rank adjustment.  ('alpha' above).
+        """
+        self._xtx = xtx
+        self._sample_mean = sample_mean
+        self._data_sample_size = data_sample_size
+        self._prior_sample_size = prior_sample_size
+        self._diagonal_shrinkage = diagonal_shrinkage
+
+    def set_xtx(self, xtx: np.ndarray):
+        self._xtx = xtx
+
+    def boom(self, sigsq_param: boom.UnivParams):
+        return boom.RegressionSlabPrior(
+            boom.SpdMatrix(self._xtx),
+            sigsq_param,
+            self._sample_mean,
+            self._data_sample_size,
+            self._prior_sample_size,
+            self._diagonal_shrinkage)
+
+
+class BigAssSpikeSlab:
+    """
+    A regression trained using a spike and slab regression.  This class differs
+    from lm_spike in that we don't expect the full data set to be stored in
+    memory.
+
+    The BigAssSpikeSlab requires the data to be streamed through the model
+    twice.  The first stream is an initial screen used to identify candidate
+    variables.
+
+    Because the model is based on streaming data, encoding data frames into
+    numeric matrices of predictors needs to happen outside the model object.
+    """
+
+    def __init__(self,
+                 xdim: int,
+                 subordinate_model_max_dim: int = 500,
+                 force_intercept: bool = True,
+                 spike=None,
+                 slab: RegressionSlabPrior = None,
+                 residual_sd_prior: R.SdPrior = None,
+                 expected_model_size=1.0,
+                 expected_Rsqure=0.5,
+                 prior_sample_size=1.0,
+                 seed: int = None,
+                 **kwargs):
+        """
+        Args:
+          xdim:  The dimension of the large sparse vector of predictors.
+          subordinate_model_max_dim: Each subordinate model will manage at most
+            this many predictors.
+          force_intercept: Should each subordinate model be required to have an
+            intercept term?
+
+        """
+        self._xdim = xdim
+        self._subordinate_model_max_dim = subordinate_model_max_dim
+        self._force_intercept = force_intercept
+
+        self._model = boom.BigRegressionModel(
+            xdim, subordinate_model_max_dim, force_intercept)
+
+        if slab is None:
+            self._slab = RegressionSlabPrior(None, np.nan, -1)
+        else:
+            self._slab = slab
+        assert isinstance(self._slab, RegressionSlabPrior)
+
+        if spike is None:
+            self._spike = np.full(xdim, expected_model_size / xdim)
+        else:
+            self._spike = np.array(spike)
+
+        self._residual_sd_prior = residual_sd_prior
+        if residual_sd_prior is not None:
+            assert isinstance(residual_sd_prior, R.SdPrior)
+
+        self._response_suf = boom.GaussianSuf()
+
+        self._sampler = None
+
+    @property
+    def xdim(self):
+        return self._xdim
+
+    def stream_data_for_initial_screen(self, x: np.ndarray, y: np.ndarray):
+        """
+        Pass the data to the underlying C++ model object for the purpose of
+        running an initial screen.
+
+        Arg:
+          x: Matrix of predictor variables.  If an intercept term is desired it
+            should be present in the first column.  Any dummy variables and
+            basis expansions (e.g. splines) should already be included.
+          y:  The response vector.
+        """
+        for i, yi in enumerate(y):
+            data_point = boom.RegressionData(yi, boom.Vector(x[i, :]))
+            self._sampler.stream_data_for_initial_screen(data_point)
+            self._response_suf.increment(boom.Vector(y))
+
+    def initial_screen(self,
+                       niter=1000,
+                       threshold: float = .05,
+                       max_candidates_per_model: int = 1000,
+                       use_threads: bool = True):
+        """
+        Run an initial screen to identify candidate variables.  Under the covers
+        there are multiple models running independent spike and slab samplers
+        to identify sets of candidate variables.
+
+        Args:
+          niter: The number of MCMC iterations that should be used in the
+            initial screen by each subordinate model.
+          threshold: A probability.  Predictors with marginal inclusion
+            probabilities above this threshold in their subordinate models will
+            be promoted as candidates for inclusion in the second round.
+          max_candidates_per_model: If the number of predictor variable
+            candidates in a subordinate model exceeds this number then the
+            candidate list will be truncated to this number.
+          use_threads: If True then the underlying C++ code will run the screen
+            in parallel using C++11 threads.  Set this to True unless you've
+            got a really good reason not to.
+        """
+        self._ensure_priors()
+
+        self._sampler.initial_screen(
+            niter, threshold, max_candidates_per_model, use_threads)
+
+    def _ensure_priors(self):
+        if self._residual_sd_prior is None:
+            sample_var = self._response_suf.sample_var
+            residual_var = (1 - self._expected_Rsqure) * sample_var
+            self._residual_sd_prior = R.SdPrior(
+                np.sqrt(residual_var, self._prior_sample_size))
+
+        if self._sampler is None:
+            self._sampler = boom.BigAssSpikeSlabSampler(
+                self._model,
+                boom.VariableSelectionPrior(self._spike),
+                self._slab.boom(self._model.Sigsq_prm),
+                self._residual_sd_prior.boom())
+            self._model.set_method(self._sampler)
+
+    def stream_data_for_restricted_model(self, x: np.ndarray, y: np.ndarray):
+        """
+        After the initial_screen has been run, the data will need to be
+        streamed a second time.  The arguments here are identical to
+        'stream_data_for_initial_screen'.
+        """
+        for i, yi in enumerate(y):
+            data_point = boom.RegressionData(yi, boom.Vector(x[i, :]))
+            self._sampler.stream_data_for_restricted_model(data_point)
+
+    def train(self, niter):
+        """
+        This function should only be called after 'initial_screen' and
+        'stream_data_for_restricted_model' have completed.
+
+        Run the MCMC algorithm on the potential candidates identified by the
+        initial screen.
+        """
+        self._allocate_space(niter)
+        for i in range(niter):
+            self._sampler.draw()
+            self._residual_sd[i] = self._model.sigma
+            beta = self._model.coef
+            self._coefficient_draws[i, :] = sparsify(beta)
+            self._log_likelihood[i] = self._model.log_likelihood()
+
+    def _allocate_space(self, niter):
+        # A lil matrix is a "linked list" matrix.  This is an efficient method
+        # for constructing matrices.  It should be converted to a different
+        # matrix type before doing anything with it.
+        self._coefficient_draws = scipy.sparse.lil_matrix((niter, self.xdim))
+        self._residual_sd = np.zeros(niter)
+        self._log_likelihood = np.zeros(niter)

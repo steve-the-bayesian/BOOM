@@ -428,8 +428,9 @@ namespace BOOM {
     friend class BigAssSpikeSlabSampler;
    public:
     // Args:
-    //
+    //   xdim:  The dimension of the full (very large) predictor vector.
     //   subordinate_model_max_dim:  The largest predictor dimension for each model.
+    //   force_intercept:  If true then the intercep
     BigRegressionModel(uint xdim,
                       int subordinate_model_max_dim = 500,
                       bool force_intercept = true);
