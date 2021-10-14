@@ -161,9 +161,11 @@ python3 setup.py sdist bdist_wheel
 cd dist
 if -v pip3 &> /dev/null
 then
+    echo "Installing the package with pip3"
     pip3 install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
 elif -v pip &> /dev/null
 then
+    echo "Installing the package with pip"
     pip install `ls -t BayesBoom-*.whl | head -1` --force-reinstall
 fi
 

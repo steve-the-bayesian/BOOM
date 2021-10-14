@@ -255,6 +255,22 @@ class UniformPrior(DoubleModel):
         return boom.UniformModel(self._lo, self._hi)
 
 
+class DirichletPrior:
+    """
+    A Dirichlet prior distribution over discrete probability distributions.
+    """
+
+    def __init__(self, counts):
+        counts = np.array(counts)
+        if not np.all(counts > 0):
+            raise Exception("All elements of 'counts' must be positive.")
+        self._counts = counts
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.DirichletModel(boom.Vector(self._counts))
+
+
 class WisharPrior:
     def __init__(self, df: float, variance_estimate: np.ndarray):
         """
