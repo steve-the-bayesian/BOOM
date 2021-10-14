@@ -16,6 +16,7 @@
 #include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/BigAssSpikeSlabSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -221,6 +222,12 @@ namespace BayesBoom {
              "  use_threads:  If True then C++11 threads are used to implement"
              " the initial screen.  If False then no threads are used.  This "
              "argument is primarily used for debugging.")
+             .def_property_readonly(
+                   "Sigsq_prm",
+                   [](BigRegressionModel &m) {
+                       return m.Sigsq_prm();
+                   },
+                   "The parameter object representing the residual variance.  boom.UnivParams")
         ;
 
     py::class_<TRegressionModel,
@@ -551,6 +558,33 @@ namespace BayesBoom {
              "")
         ;
 
+    py::class_<BigAssSpikeSlabSampler,
+               PosteriorSampler,
+               Ptr<BigAssSpikeSlabSampler>>(
+                       boom, "BigAssSpikeSlabSampler")
+        .def(py::init([](BigRegressionModel *model,
+                        VariableSelectionPrior *global_spike,
+                        RegressionSlabPrior *slab_prototype,
+                        GammaModelBase *residual_precision_prior,
+                        RNG &seeding_rng){
+         return new BigAssSpikeSlabSampler(
+                 model, global_spike, slab_prototype, residual_precision_prior, seeding_rng);
+        }),
+            py::arg("model"),
+            py::arg("global_spike"),
+            py::arg("slab_prototype"),
+            py::arg("residual_precision_prior"),
+            py::arg("seeding_rng_") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The boom.BigRegressionModel to be sampled.\n"
+             "  global_spike:  A boom.VariableSelectionPrior describing which variables"
+             " are included in the model.\n"
+             "  slab_prototype: A boom.RegressionSlabPrior prior for the conditional distribution of "
+             "the regression coefficients given inclusion.\n"
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler.\n"
+            );
+//        .def("")
 
   }  // module definition
 
