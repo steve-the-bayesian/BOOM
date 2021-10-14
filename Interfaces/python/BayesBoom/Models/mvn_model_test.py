@@ -35,7 +35,7 @@ class MvnModelTest(unittest.TestCase):
         """When parameters are modified outside the object, the object properties
          should change.  This is testing that pointers are being stored.
          """
-        zeros = boom.Vector(np.array([0, 0, 0]))
+        zeros = boom.Vector(np.array([0.0, 0.0, 0.0]))
         model = boom.MvnModel(zeros, self.Sigma)
         mu_prm = model.mean_parameter
         new_mu = boom.Vector(np.array([3.0, 2.0, 1.0]))
