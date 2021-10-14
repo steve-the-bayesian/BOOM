@@ -91,6 +91,11 @@ namespace BayesBoom {
             "coef",
             [](const GlmModel &m) {return m.coef();},
             "The object containing the model coefficients.")
+        .def_property_readonly(
+            "Beta",
+            [](const GlmModel &m) {return m.Beta();},
+            "A BayesBoom.Vector containing the model coefficients, including "
+            "any 0's if sparse modeling is being used.")
         ;
 
     py::class_<RegSuf,
