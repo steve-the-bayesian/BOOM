@@ -257,6 +257,18 @@ class LogitZellnerPrior:
                  optional_coefficient_estimate=None,
                  max_flips=-1,
                  prior_inclusion_probabilities=None):
+        """
+        Args:
+          predictors: A matrix of predictor variables, denoted X below.
+          successes:  A vector of success counts.
+          trials: A vector of trial counts.  If successes and trials are given,
+            they must satisfy 0 <= successes <= trials.  If successes is given
+            and trials is None, then successes must only contain 0's and 1's.
+
+          prior_success_probability: If 'successes' is not given,
+            then prior_success_probability is used to scale the prior mean of
+            the intercept term.  Otherwise
+        """
 
         self._max_flips = max_flips
         sample_size = predictors.shape[0]
@@ -276,7 +288,7 @@ class LogitZellnerPrior:
                 trials = np.ones(sample_size)
             p_hat = np.nanmean(successes / trials)
             self._mean[0] = logit(p_hat)
-        if not np.finite(self._mean[0]):
+        if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
         if prior_inclusion_probabilities is None:
@@ -322,7 +334,7 @@ class LogitZellnerPrior:
             spike=self.spike,
             clt_threshold=5,
             seeding_rng=boom.GlobalRng.rng)
-        if self._max_flips > 0 and np.finite(self._max_flips):
+        if self._max_flips > 0 and np.isfinite(self._max_flips):
             sampler.limit_model_selection(self._max_flips)
         if assign:
             model.set_method(sampler)
@@ -359,7 +371,7 @@ class PoissonZellnerPrior:
                 exposure = np.ones(sample_size)
             p_hat = np.nanmean(counts / exposure)
             self._mean[0] = logit(p_hat)
-        if not np.finite(self._mean[0]):
+        if not np.isfinite(self._mean[0]):
             self._mean[0] = 0.0
 
         if prior_inclusion_probabilities is None:
@@ -406,7 +418,7 @@ class PoissonZellnerPrior:
             spike=self.spike,
             clt_threshold=5,
             seeding_rng=boom.GlobalRng.rng)
-        if self._max_flips > 0 and np.finite(self._max_flips):
+        if self._max_flips > 0 and np.isfinite(self._max_flips):
             sampler.limit_model_selection(self._max_flips)
         if assign:
             model.set_method(sampler)

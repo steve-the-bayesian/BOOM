@@ -11,11 +11,16 @@ from .spikeslab import (
     plot_model_size,
 )
 
-from .priors import RegressionSpikeSlabPrior, StudentSpikeSlabPrior
+from .priors import (
+    LogitZellnerPrior,
+    RegressionSpikeSlabPrior,
+    StudentSpikeSlabPrior,
+)
 
 __all__ = [
     "dot",
     "lm_spike",
+    "LogitZellnerPrior",
     "RegressionSpikeSlabPrior",
     "StudentSpikeSlabPrior",
     "sparsify",
