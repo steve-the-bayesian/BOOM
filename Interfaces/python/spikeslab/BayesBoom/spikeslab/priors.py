@@ -279,7 +279,7 @@ class LogitZellnerPrior:
         xtx *= 1 - diagonal_shrinkage
         np.fill_diagonal(xtx, xtx_diagonal)
 
-        self._prior_precision = xtx
+        self._precision = xtx
         self._mean = np.zeros(xdim)
         if successes is None:
             self._mean[0] = logit(prior_success_probability)
@@ -305,15 +305,15 @@ class LogitZellnerPrior:
         trials = np.ones(xdim)
         ans = LogitZellnerPrior(predictors, y, trials, max_flips=max_flips)
         ans._prior_inclusion_probabilities = prior_inclusion_probabilities
-        ans._prior_mean = mean
-        ans._prior_precision = precision
+        ans._mean = mean
+        ans._precision = precision
         return ans
 
     @property
     def slab(self):
         return boom.MvnModel(
-            boom.Vector(self._prior_mean),
-            boom.SpdMatrix(self._prior_precision),
+            boom.Vector(self._mean),
+            boom.SpdMatrix(self._precision),
             True)
 
     @property
@@ -362,7 +362,7 @@ class PoissonZellnerPrior:
         xtx *= 1 - diagonal_shrinkage
         np.fill_diagonal(xtx, xtx_diagonal)
 
-        self._prior_precision = xtx
+        self._precision = xtx
         self._mean = np.zeros(xdim)
         if counts is None:
             self._mean[0] = np.log(prior_event_rate)
@@ -388,15 +388,15 @@ class PoissonZellnerPrior:
         trials = np.ones(xdim)
         ans = LogitZellnerPrior(predictors, y, trials, max_flips=max_flips)
         ans._prior_inclusion_probabilities = prior_inclusion_probabilities
-        ans._prior_mean = mean
-        ans._prior_precision = precision
+        ans._mean = mean
+        ans._precision = precision
         return ans
 
     @property
     def slab(self):
         return boom.MvnModel(
-            boom.Vector(self._prior_mean),
-            boom.SpdMatrix(self._prior_precision),
+            boom.Vector(self._mean),
+            boom.SpdMatrix(self._precision),
             True)
 
     @property

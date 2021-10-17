@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <sstream>
+
 #include "Models/ModelTypes.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
@@ -61,6 +63,33 @@ namespace BayesBoom {
              "Args:\n\n"
              "  y: Response"
              "  x: BOOM::Vector of predictors.")
+        .def("__repr__",
+             [](const RegressionData &dp) {
+               std::ostringstream out;
+               out << dp;
+               return out.str();
+             })
+        ;
+
+    py::class_<BinomialRegressionData,
+               Ptr<BinomialRegressionData>>(boom, "BinomialRegressionData")
+        .def(py::init(
+            [](double y, double n, const Vector &x) {
+              return new BinomialRegressionData(y, n, x);
+            }),
+             py::arg("y"),
+             py::arg("n"),
+             py::arg("x"),
+             "Args:\n\n"
+             "  y: Success count.  0 <= y <= n\n"
+             "  n: Trial count.  n >= 0\n"
+             "  x: Vector of predictors\n")
+        .def("__repr__",
+             [](const BinomialRegressionData &dp) {
+               std::ostringstream out;
+               out << dp;
+               return out.str();
+             })
         ;
 
     py::class_<MvRegData, Ptr<MvRegData>>(boom, "MvRegData")
@@ -312,6 +341,15 @@ namespace BayesBoom {
           "  include_all:  Include all the predictors initially.  If False "
           "then only the intercept starts out included.\n"
           )
+        .def("add_data",
+             [](BinomialLogitModel &model,
+                const Ptr<BinomialRegressionData> &data_point) {
+               model.add_data(data_point);
+             },
+             py::arg("data_point"),
+             "Args:\n\n"
+             "  data_point: An object of class BinomialRegressionData "
+             "containing the data for a single observation.\n")
         ;
 
     py::class_<PoissonRegressionModel,
