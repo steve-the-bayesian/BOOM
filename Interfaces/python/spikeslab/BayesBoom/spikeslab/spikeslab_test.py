@@ -142,7 +142,7 @@ class BigAssSpikeSlabTest(unittest.TestCase):
         i = 0
         chunk_size = 1000
         while (i < nobs):
-            chunk = range(i, np.min(i + chunk_size, nobs))
+            chunk = range(i, min(i + chunk_size, nobs))
             model.stream_data_for_initial_screen(X[chunk, :], y[chunk])
             i += chunk_size
         model.initial_screen()

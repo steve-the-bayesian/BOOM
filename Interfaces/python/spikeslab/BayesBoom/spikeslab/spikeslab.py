@@ -479,8 +479,9 @@ class RegressionSlabPrior:
         self._xtx = xtx
 
     def boom(self, sigsq_param: boom.UnivParams):
+        xtx = self._xtx if self._xtx is not None else np.ones((1, 1))
         return boom.RegressionSlabPrior(
-            boom.SpdMatrix(self._xtx),
+            boom.SpdMatrix(xtx),
             sigsq_param,
             self._sample_mean,
             self._data_sample_size,
@@ -548,6 +549,8 @@ class BigAssSpikeSlab:
         self._response_suf = boom.GaussianSuf()
 
         self._sampler = None
+        self._expected_Rsqure = expected_Rsqure
+        self._prior_sample_size = prior_sample_size
 
     @property
     def xdim(self):
@@ -566,7 +569,7 @@ class BigAssSpikeSlab:
         """
         for i, yi in enumerate(y):
             data_point = boom.RegressionData(yi, boom.Vector(x[i, :]))
-            self._sampler.stream_data_for_initial_screen(data_point)
+            self._model.stream_data_for_initial_screen(data_point)
             self._response_suf.increment(boom.Vector(y))
 
     def initial_screen(self,
@@ -593,16 +596,15 @@ class BigAssSpikeSlab:
             got a really good reason not to.
         """
         self._ensure_priors()
-
         self._sampler.initial_screen(
-            niter, threshold, max_candidates_per_model, use_threads)
+            niter, threshold, use_threads)
 
     def _ensure_priors(self):
         if self._residual_sd_prior is None:
             sample_var = self._response_suf.sample_var
             residual_var = (1 - self._expected_Rsqure) * sample_var
             self._residual_sd_prior = R.SdPrior(
-                np.sqrt(residual_var, self._prior_sample_size))
+                np.sqrt(residual_var), self._prior_sample_size)
 
         if self._sampler is None:
             self._sampler = boom.BigAssSpikeSlabSampler(
@@ -620,7 +622,7 @@ class BigAssSpikeSlab:
         """
         for i, yi in enumerate(y):
             data_point = boom.RegressionData(yi, boom.Vector(x[i, :]))
-            self._sampler.stream_data_for_restricted_model(data_point)
+            self._model.stream_data_for_restricted_model(data_point)
 
     def train(self, niter):
         """

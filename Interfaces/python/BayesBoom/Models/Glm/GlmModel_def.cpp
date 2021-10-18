@@ -256,12 +256,35 @@ namespace BayesBoom {
              "  use_threads:  If True then C++11 threads are used to implement"
              " the initial screen.  If False then no threads are used.  This "
              "argument is primarily used for debugging.")
-             .def_property_readonly(
-                   "Sigsq_prm",
-                   [](BigRegressionModel &m) {
-                       return m.Sigsq_prm();
-                   },
-                   "The parameter object representing the residual variance.  boom.UnivParams")
+        .def("stream_data_for_initial_screen",
+             [](BigRegressionModel &model,
+                const RegressionData &data_point) {
+               model.stream_data_for_initial_screen(data_point);
+             },
+             py::arg("data_point"),
+             "Args:\n\n"
+             "   data_point:  A data point (of class boom.RegressionData).\n"
+             "\n"
+             "Pass the data to the subordinate models stored inside the "
+             "BigRegressionModel. The data are not stored in raw form, but "
+             "added to the subordinate models's sufficient statistics.\n")
+        .def("stream_data_for_restricted_model",
+             [](BigRegressionModel &model, const RegressionData &data_point) {
+               model.stream_data_for_restricted_model(data_point);
+             },
+             py::arg("data_point"),
+             "Args:\n\n"
+             "   data_point:  A data point (of class boom.RegressionData).\n"
+             "\n"
+             "Pass the data to the restricted model stored inside the  "
+             "BigRegressionModel. The data are not stored in raw form, but "
+             "added to the restricted models's sufficient statistics.\n")
+        .def_property_readonly(
+            "Sigsq_prm",
+            [](BigRegressionModel &m) {
+              return m.Sigsq_prm();
+            },
+            "The parameter object representing the residual variance.  boom.UnivParams")
         ;
 
     py::class_<TRegressionModel,
@@ -606,18 +629,18 @@ namespace BayesBoom {
                Ptr<BigAssSpikeSlabSampler>>(
                        boom, "BigAssSpikeSlabSampler")
         .def(py::init([](BigRegressionModel *model,
-                        VariableSelectionPrior *global_spike,
-                        RegressionSlabPrior *slab_prototype,
-                        GammaModelBase *residual_precision_prior,
-                        RNG &seeding_rng){
-         return new BigAssSpikeSlabSampler(
-                 model, global_spike, slab_prototype, residual_precision_prior, seeding_rng);
-        }),
-            py::arg("model"),
-            py::arg("global_spike"),
-            py::arg("slab_prototype"),
-            py::arg("residual_precision_prior"),
-            py::arg("seeding_rng_") = BOOM::GlobalRng::rng,
+                         VariableSelectionPrior *global_spike,
+                         RegressionSlabPrior *slab_prototype,
+                         GammaModelBase *residual_precision_prior,
+                         RNG &seeding_rng){
+                        return new BigAssSpikeSlabSampler(
+                            model, global_spike, slab_prototype, residual_precision_prior, seeding_rng);
+                      }),
+             py::arg("model"),
+             py::arg("global_spike"),
+             py::arg("slab_prototype"),
+             py::arg("residual_precision_prior"),
+             py::arg("seeding_rng_") = BOOM::GlobalRng::rng,
              "Args:\n\n"
              "  model:  The boom.BigRegressionModel to be sampled.\n"
              "  global_spike:  A boom.VariableSelectionPrior describing which variables"
@@ -626,8 +649,25 @@ namespace BayesBoom {
              "the regression coefficients given inclusion.\n"
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler.\n"
-            );
-//        .def("")
+             )
+        .def("initial_screen",
+             [](BigAssSpikeSlabSampler &sampler, int niter, double threshold,
+                bool use_threads) {
+               sampler.initial_screen(niter, threshold, use_threads);
+             },
+             py::arg("niter"),
+             py::arg("threshold"),
+             py::arg("use_threads") = true,
+             "Args:\n\n"
+             "  niter:  The number of MCMC iterations to use in the initial "
+             "screen.\n"
+             "  threshold: The variables whose 'marginal inclusion probabilities'"
+             "exceed 'threshold' become candidates in the next round.\n"
+             "  use_threads: If 'True' then C++11 threads will be used to run "
+             "the MCMC algorithms for the subordinate models.  If 'False' then "
+             "the code path for doing the MCMC will not use threads.\n")
+        .def("draw", [](BigAssSpikeSlabSampler &sampler) {sampler.draw();})
+        ;
 
   }  // module definition
 
