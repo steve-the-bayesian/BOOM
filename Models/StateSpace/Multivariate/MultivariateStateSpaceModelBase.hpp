@@ -36,8 +36,8 @@
 
 namespace BOOM {
   //===========================================================================
-  // The general state space model is 
-  //        y[t] = Z[t] * alpha[t] + epsilon[t] 
+  // The general state space model is
+  //        y[t] = Z[t] * alpha[t] + epsilon[t]
   //  alpha[t+1] = T[t] * alpha[t] + eta[t]
   //
   // The distinguishing feature of this class (and its children) is that y[t] is
@@ -58,7 +58,7 @@ namespace BOOM {
     MultivariateStateSpaceModelBase()
         : state_is_fixed_(false)
     {}
-    
+
     MultivariateStateSpaceModelBase *clone() const override = 0;
     MultivariateStateSpaceModelBase & operator=(
         const MultivariateStateSpaceModelBase &rhs);
@@ -76,7 +76,7 @@ namespace BOOM {
     // virtual bool is_missing_observation(int t) const = 0;
     virtual Model *observation_model() = 0;
     virtual const Model *observation_model() const = 0;
-    
+
     virtual void kalman_filter() = 0;
     virtual void observe_state(int t) = 0;
     virtual void observe_data_given_state(int t) = 0;
@@ -87,7 +87,7 @@ namespace BOOM {
     void set_state_model_behavior(StateModel::Behavior behavior);
 
     virtual void impute_state(RNG &rng);
-    
+
     //---------------- Parameters for structural equations. -------------------
     // Durbin and Koopman's Z[t].  Defined as Y[t] = Z[t] * state[t] + error.
     // Note the lack of transpose on Z[t], so in the case of a single time
@@ -167,7 +167,7 @@ namespace BOOM {
 
     //---------------- Access to state ---------------------------------------
     // A cast will be necessary in the child classes.
-    
+
     virtual StateModelBase *state_model(int s) = 0;
     virtual const StateModelBase *state_model(int s) const = 0;
 
@@ -177,7 +177,7 @@ namespace BOOM {
       }
       return shared_state(time_dimension() - 1);
     }
-    
+
     VectorView state_component(Vector &full_state, int s) const {
       return state_model_vector().state_component(full_state, s);
     }
@@ -197,12 +197,12 @@ namespace BOOM {
       return state_model_vector().full_state_subcomponent(
           shared_state_, state_model_index);
     }
-    
+
     SubMatrix mutable_full_state_subcomponent(int state_model_index) {
       return state_model_vector().mutable_full_state_subcomponent(
           shared_state_, state_model_index);
     }
-    
+
     Vector initial_state_mean() const;
     SpdMatrix initial_state_variance() const;
 
@@ -219,7 +219,7 @@ namespace BOOM {
     // from time point to time point.  For this reason the default
     // implementation is to return -1.
     virtual int nseries() const { return -1; }
-    
+
    protected:
     // Access to the state model vector owned by descendents.
     using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
@@ -252,10 +252,10 @@ namespace BOOM {
     void observe_fixed_state();
 
    private:
-    // Implementation for impute_state.  
+    // Implementation for impute_state.
     void simulate_initial_state(RNG &rng, VectorView initial_state) const;
     Vector simulate_state_error(RNG &rng, int t) const;
-    
+
     void simulate_forward(RNG &rng);
     void propagate_disturbances(RNG &rng);
 
@@ -263,9 +263,9 @@ namespace BOOM {
     // is a full imputation, including regression and series-level state model
     // effects.
     virtual void impute_missing_observations(int t, RNG &rng) = 0;
-    
+
     void resize_state();
-    
+
     // Simulate a fake observation to use as part of the Durbin-Koopman state
     // simulation algorithm.  If observed_status(t) is less than fully observed,
     // only the observed parts should be simulated.
@@ -276,6 +276,10 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // A GeneralMultivariateStateSpaceModelBase is a
+  // MultivariateStateSpaceModelBase with an observation error variance that is
+  // a SpdMatrix.  This setting provides a general form for fitting models, but
+  // does not scale to large numbers of series very well.
   class GeneralMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
@@ -288,6 +292,11 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // A ConditionallyIndependentMultivariateStateSpaceModelBase is a
+  // MultivariateStateSpaceModelBase where, conditional on latent factors, the
+  // various series in the model are independent of one another.  The assumption
+  // is that the factor structure captures any structural dependence, so the
+  // observation errors are independent.
   class ConditionallyIndependentMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
@@ -300,7 +309,7 @@ namespace BOOM {
     virtual DiagonalMatrix observation_variance(int t) const = 0;
 
     virtual double single_observation_variance(int t, int dim) const = 0;
-    
+
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
@@ -313,9 +322,9 @@ namespace BOOM {
     const Filter & get_simulation_filter() const override {
       return simulation_filter_;
     }
-    
+
    private:
-    // This function is 
+    // This function is
     Vector simulate_fake_observation(RNG &rng, int t) override;
 
     ConditionallyIndependentKalmanFilter filter_;
@@ -323,6 +332,9 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // ConditionalIidMultivariateStateSpaceModelBase is a
+  // MultivariateStateSpaceModelBase where, conditional on latent factors the
+  // observed series all have the same scalar variance.
   class ConditionalIidMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
@@ -355,10 +367,9 @@ namespace BOOM {
     ConditionalIidKalmanFilter filter_;
     ConditionalIidKalmanFilter simulation_filter_;
   };
-  
+
 } // namespace BOOM
 
 
 
 #endif //  BOOM_MULTIVARIATE_STATE_SPACE_MODEL_BASE_HPP_
-

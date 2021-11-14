@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -44,7 +44,7 @@ namespace BOOM {
         report_error("At least one spike prior expects the wrong state size.");
       }
     }
-    
+
     if (slabs.size() != model_->nseries()) {
       report_error("Number of slab priors does not match number of series.");
     }
@@ -71,7 +71,7 @@ namespace BOOM {
     for (int i = 0; i < model_->state_dimension(); ++i) {
       model_->innovation_model(i)->set_sigsq(1.0);
     }
-    
+
     // Build the samplers.
     for (int i = 0; i < spikes_.size(); ++i) {
       samplers_.push_back(SpikeSlabSampler(nullptr, slabs_[i], spikes_[i]));
@@ -83,7 +83,7 @@ namespace BOOM {
     double ans = 0;
     const Matrix &transposed_coefficients(
         model_->coefficient_model()->Beta());
-    
+
     for (int i = 0; i < inclusion_indicators_.size(); ++i) {
       ans += spikes_[i]->logp(inclusion_indicators_[i]);
       if (!std::isfinite(ans)) {
@@ -110,7 +110,7 @@ namespace BOOM {
                 mvsuf.n(),
                 mvsuf.n(),
                 0.0);
-      
+
       samplers_[i].draw_inclusion_indicators(
           rng(), inclusion_indicators_[i], suf);
       Vector row = coefficients.row(i);
@@ -127,5 +127,5 @@ namespace BOOM {
       samplers_[i].limit_model_selection(max_flips);
     }
   }
-  
+
 }  // namespace BOOM

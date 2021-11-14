@@ -18,8 +18,8 @@
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
 #include "Models/StateSpace/StateModels/SeasonalStateModel.hpp"
-#include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 
 #include "distributions.hpp"
@@ -74,7 +74,7 @@ namespace {
   }
 
   TEST_F(MultivariateStateSpaceRegressionModelTest, DataTest) {
-    TimeSeriesRegressionData data_point(3.2, Vector{1, 2, 3}, 0, 4);
+    MultivariateTimeSeriesRegressionData data_point(3.2, Vector{1, 2, 3}, 0, 4);
     EXPECT_DOUBLE_EQ(3.2, data_point.y());
     EXPECT_TRUE(VectorEquals(Vector{1, 2, 3}, data_point.x()));
     EXPECT_EQ(0, data_point.series());
@@ -96,11 +96,11 @@ namespace {
     EXPECT_EQ(ydim, model.nseries());
     EXPECT_EQ(xdim, model.xdim());
 
-    std::vector<Ptr<TimeSeriesRegressionData>> data;
+    std::vector<Ptr<MultivariateTimeSeriesRegressionData>> data;
     Matrix response_data(ydim, 12);
     for (int time = 0; time < 12; ++time) {
       for (int series = 0; series < ydim; ++series){
-        NEW(TimeSeriesRegressionData, data_point)(
+        NEW(MultivariateTimeSeriesRegressionData, data_point)(
             rnorm(0, 1), rnorm_vector(xdim, 0, 1), series, time);
         data.push_back(data_point);
         model.add_data(data_point);
@@ -171,7 +171,7 @@ namespace {
     NEW(MultivariateStateSpaceRegressionModel, model)(xdim, nseries);
     for (int time = 0; time < sample_size; ++time) {
       for (int series = 0; series < nseries; ++series) {
-        NEW(TimeSeriesRegressionData, data_point)(
+        NEW(MultivariateTimeSeriesRegressionData, data_point)(
             response(time, series), predictors.row(time), series, time);
         model->add_data(data_point);
       }
@@ -425,7 +425,7 @@ namespace {
             regression_coefficients.row(series));
         double y = regression + errors[index]
             + observation_coefficients.row(series).dot(state.col(time));
-        NEW(TimeSeriesRegressionData, data_point)(
+        NEW(MultivariateTimeSeriesRegressionData, data_point)(
             y, predictors.row(index), series, time);
         model->add_data(data_point);
       }

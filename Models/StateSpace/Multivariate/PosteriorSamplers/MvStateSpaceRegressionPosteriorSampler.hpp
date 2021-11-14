@@ -20,7 +20,7 @@
 
 // The name of this file is abbreviated to stay below the 100 character limit
 // in ancient, archaic tar formats.
-#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
 namespace BOOM {

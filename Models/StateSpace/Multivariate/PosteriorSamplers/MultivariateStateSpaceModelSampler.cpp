@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
 
 namespace BOOM {
   namespace {
@@ -38,7 +38,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   void MVSSMS::draw() {
     if (!latent_data_initialized_) {
       model_->impute_state(rng());
@@ -65,5 +65,5 @@ namespace BOOM {
       model_->state_model(i)->impose_identifiability_constraint();
     }
   }
-  
+
 }  // namespace BOOM

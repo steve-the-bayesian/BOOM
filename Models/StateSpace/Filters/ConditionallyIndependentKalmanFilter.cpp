@@ -17,20 +17,20 @@
 */
 
 #include "Models/StateSpace/Filters/ConditionallyIndependentKalmanFilter.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/LU.hpp"
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {
-  
+
   namespace Kalman {
     namespace {
       using Marginal = ConditionallyIndependentMarginalDistribution;
-    } // namespace 
+    } // namespace
 
     double Marginal::high_dimensional_threshold_factor_(1.0);
-    
+
     Marginal::ConditionallyIndependentMarginalDistribution(
         ModelType *model, MarginalType *previous, int time_index)
         : MultivariateMarginalDistributionBase(
@@ -60,11 +60,11 @@ namespace BOOM {
     //---------------------------------------------------------------------------
     SpdMatrix Marginal::forecast_precision() const {
       const Selector &observed(model_->observed_status(time_index()));
-      
+
       DiagonalMatrix observation_precision =
           model_->observation_variance(time_index()).inv();
 
-      
+
       const SparseKalmanMatrix *observation_coefficients(
           model_->observation_coefficients(time_index(), observed));
 
@@ -83,7 +83,7 @@ namespace BOOM {
           observation_coefficients->sandwich(outer));
       ans *= -1;
       ans.diag() += observation_precision.diag();
-      return ans;      
+      return ans;
     }
 
     // Effects:
@@ -122,7 +122,7 @@ namespace BOOM {
       //
       // This helps because H is diagonal.  The only matrix that needs to be
       // inverted is (I + PZ'HinvZ), which is a state x state matrix.
-      // 
+      //
       // We don't compute Finv directly, we compute Finv * prediction_error.
 
       // observation_precision refers to the precision of the observed subset.
@@ -136,17 +136,17 @@ namespace BOOM {
       Matrix inner_matrix = state_variance() * ZTZ;
       inner_matrix.diag() += 1.0;
       LU inner_lu(inner_matrix);
-      
+
       // inner_inv_P is inner.inv() * state_variance.  This matrix need not be
       // symmetric.
       Matrix inner_inv_P = inner_lu.solve(state_variance());
-      
+
       Matrix HinvZ = observation_precision *
           observation_coefficient_subset.dense();
       set_scaled_prediction_error(
           observation_precision * prediction_error()
           - HinvZ * inner_inv_P * HinvZ.Tmult(prediction_error()));
-      
+
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
@@ -187,6 +187,6 @@ namespace BOOM {
       set_kalman_gain(transition * state_variance() *
                       observation_coefficient_subset.Tmult(forecast_precision));
     }
-    
+
   }  // namespace Kalman
 }  // namespace BOOM
