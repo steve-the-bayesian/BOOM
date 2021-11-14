@@ -22,14 +22,14 @@
 #include "r_interface/boom_r_tools.hpp"
 
 #include "LinAlg/Selector.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 
 namespace BOOM {
   namespace bsts {
 
     class MultivariateGaussianModelManager
         : public MultivariateModelManagerBase {
-      
+
      public:
       // When you create the observation model add the state contributions to
       // the io_manager.
@@ -69,7 +69,7 @@ namespace BOOM {
       Array Forecast(SEXP r_mbsts_object,
                      SEXP r_prediction_data,
                      SEXP r_burn) override;
-      
+
      private:
       // Args:
       //   r_data_list:  A list that contains the following elements:
@@ -103,7 +103,7 @@ namespace BOOM {
       void ConfigureIo(RListIoManager *io_manager);
       void SaveFinalState(RListIoManager *io_manager);
       void SetModelOptions(SEXP r_options);
-      
+
       Ptr<MultivariateStateSpaceRegressionModel> model_;
       int nseries_;
       int predictor_dimension_;
@@ -111,14 +111,14 @@ namespace BOOM {
 
       // A matrix of predictor variables for the forecast.  The first nseries_
       // rows are for the 1-step forecast.  The next nseries_ rows are for the
-      // 2-step forecast, etc.  
+      // 2-step forecast, etc.
       Matrix forecast_predictors_;
 
       std::vector<BOOM::Vector> series_specific_final_state_;
     };
-    
+
   }  // namespace bsts
-  
+
 }  // namespace BOOM
 
 

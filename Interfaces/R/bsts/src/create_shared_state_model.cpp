@@ -28,10 +28,10 @@
 
 #include "Models/ChisqModel.hpp"
 #include "Models/Glm/MvnGivenX.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
-#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/StateModels/SharedLocalLevel.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/SharedLocalLevelPosteriorSampler.hpp"
 
 #include <R_ext/Print.h>
 
@@ -76,7 +76,7 @@ namespace BOOM {
               list_element_name,
               final_state));
     }
-    
+
     Ptr<SharedStateModel>
     SharedStateModelFactory::CreateSharedStateModel(
         MultivariateStateSpaceModelBase *model,
@@ -99,7 +99,7 @@ namespace BOOM {
           SharedLocalLevelStateModel *model)
           : model_(model)
       {}
-      
+
       int dim() const override { return model_->number_of_factors(); }
 
       Vector get_vector() const override {
@@ -115,15 +115,15 @@ namespace BOOM {
           model_->innovation_model(i)->set_sigsq(square(view[i]));
         }
       }
-      
+
      private:
       SharedLocalLevelStateModel *model_;
     };
     // ---------------------------------------------------------------------------
-    
+
     Ptr<SharedStateModel> SharedStateModelFactory::CreateSharedLocalLevel(
         SEXP r_state_component,
-        MultivariateStateSpaceModelBase *model, 
+        MultivariateStateSpaceModelBase *model,
         const std::string &prefix) {
       int nfactors = lround(Rf_asReal(getListElement(r_state_component, "size")));
       NEW(SharedLocalLevelStateModel, state_model)(nfactors, model, nseries_);
@@ -133,7 +133,7 @@ namespace BOOM {
           r_state_component, "initial.state.prior", true));
       state_model->set_initial_state_mean(initial_state_prior.mu());
       state_model->set_initial_state_variance(initial_state_prior.Sigma());
-      
+
       // Set the prior on the observation coefficients.
       std::vector<Ptr<VariableSelectionPrior>> spikes;
       std::vector<Ptr<MvnBase>> slabs;
@@ -160,7 +160,7 @@ namespace BOOM {
       // Set the posterior sampler for the overall state model.
       NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
           state_model.get(), slabs, spikes);
-      
+
       state_model->set_method(state_model_sampler);
 
       // Set the io manager, if there is one.
@@ -171,7 +171,6 @@ namespace BOOM {
       }
       return state_model;
     }
-    
+
   }  // namespace bsts
 }  // namespace BOOM
-    

@@ -27,7 +27,7 @@
 #include "Models/Glm/PosteriorSamplers/IndependentRegressionModelsPosteriorSampler.hpp"
 
 #include "Models/PosteriorSamplers/IndependentMvnVarSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "cpputil/math_utils.hpp"
 
 #include "r_interface/prior_specification.hpp"
@@ -37,7 +37,7 @@
 namespace BOOM {
   namespace bsts {
     using Manager = MultivariateGaussianModelManager;
-    
+
     Manager::MultivariateGaussianModelManager(
         int ydim, int xdim)
         : nseries_(ydim),
@@ -69,7 +69,7 @@ namespace BOOM {
       // A no-op, as state contributions are a model summary, not stored by the
       // model.
       void read_from_array(const ArrayView &view) override {}
-      
+
      private:
       MultivariateStateSpaceRegressionModel *model_;
     };
@@ -84,12 +84,12 @@ namespace BOOM {
       int nrow() const override { return model_->state_dimension(); }
       int ncol() const override { return model_->time_dimension(); }
       Matrix get_matrix() const override {return model_->shared_state();}
-      
+
      private:
       MultivariateStateSpaceRegressionModel *model_;
     };
     //---------------------------------------------------------------------------
-    
+
     MultivariateStateSpaceRegressionModel *Manager::CreateModel(
         SEXP r_data_list_or_model_object,
         SEXP r_shared_state_specification,
@@ -121,7 +121,7 @@ namespace BOOM {
         // call push_back on series_specific_final_state_, or it can invalidate
         // those pointers.
         series_specific_final_state_.resize(nseries_);
-        
+
         NEW(SubordinateModelIoElement, subordinate_model_io)("series.specific");
         io_manager->add_list_element(subordinate_model_io);
         for (int i = 0; i < nseries_; ++i) {
@@ -133,7 +133,7 @@ namespace BOOM {
           if (!Rf_isNull(r_subordinate_state_specification)) {
             // Make the io list element aware that there is state to be stored
             // for series i.
-            RListIoManager *subordinate_io_manager = 
+            RListIoManager *subordinate_io_manager =
                 subordinate_model_io->subordinate_io_manager(i);
             StateModelFactory series_state_factory(subordinate_io_manager);
             ProxyScalarStateSpaceModel *subordinate_model =
@@ -160,7 +160,7 @@ namespace BOOM {
           new MultivariateStateContributionsCallback(model_.get()),
           "shared.state.contributions",
           false));
-      
+
       // TODO: save prediction errors.
 
       // Save full state draws.
@@ -169,7 +169,7 @@ namespace BOOM {
           "shared.state", nullptr));
 
       SetModelOptions(r_options);
-      
+
       return model_.get();
     }
 
@@ -216,7 +216,7 @@ namespace BOOM {
 
       Array ans(std::vector<int>{iterations_after_burnin,
               model_->nseries(), forecast_horizon});
-      
+
       for (int i = 0; i < iterations_after_burnin; ++i) {
         io_manager.stream();
         ans.slice(i, -1, -1) = model_->simulate_forecast(
@@ -227,7 +227,7 @@ namespace BOOM {
       }
       return ans;
     }
-    
+
     MultivariateStateSpaceRegressionModel * Manager::CreateBareModel(
         SEXP r_data_list_or_model_object,
         SEXP r_prior,
@@ -247,7 +247,7 @@ namespace BOOM {
       if (Rf_isNull(r_options)) {
         return;
       }
-      
+
       SEXP r_shared_state = getListElement(r_options, "fixed.shared.state");
       if (!Rf_isNull(r_shared_state)) {
         Matrix state = ToBoomMatrix(r_shared_state);
@@ -255,7 +255,7 @@ namespace BOOM {
           state = state.transpose();
         }
         model_->permanently_set_state(state);
-      } 
+      }
     }
 
     //---------------------------------------------------------------------------
@@ -267,7 +267,7 @@ namespace BOOM {
         ConstVectorView responses = ToBoomVectorView(
             getListElement(r_data_list, "response"));
         int sample_size = responses.size();
-        
+
         // If no predictors were supplied then create an intercept term.
         SEXP r_predictors = getListElement(r_data_list, "predictors");
         bool has_regression = !Rf_isNull(r_predictors);
@@ -367,7 +367,7 @@ namespace BOOM {
               observation_model_sampler)(model_->observation_model());
           model_->observation_model()->set_method(observation_model_sampler);
         }
-        
+
         // model sampler
         NEW(MultivariateStateSpaceRegressionPosteriorSampler, sampler)(
             model_.get());
@@ -404,7 +404,7 @@ namespace BOOM {
         MatrixValuedRListIoElement::prepare_to_stream(object);
         wsp.resize(ncol());
       }
-      
+
       void stream() override {
         ArrayView view(array_view().slice(next_position(), -1, -1));
         for (int i = 0; i < nrow(); ++i) {
@@ -414,7 +414,7 @@ namespace BOOM {
           model_->model(i)->set_Beta(wsp);
         }
       }
-      
+
      private:
       IndependentRegressionModels *model_;
       Vector wsp;
@@ -445,7 +445,7 @@ namespace BOOM {
           model_->model(i)->set_sigsq(square(sd[i]));
         }
       }
-      
+
      private:
       IndependentRegressionModels *model_;
     };
@@ -475,7 +475,7 @@ namespace BOOM {
                           const Matrix &predictors,
                           const Factor &series) {
       for (int i = 0; i < responses.size(); ++i) {
-        NEW(TimeSeriesRegressionData, data_point)(
+        NEW(MultivariateTimeSeriesRegressionData, data_point)(
             responses[i],
             predictors.row(i),
             series[i],
@@ -495,6 +495,6 @@ namespace BOOM {
       UnpackForecastTimestamps(r_prediction_data);
       return forecast_predictors_.nrow() / nseries_;
     }
-    
+
   }  // namespace bsts
 }  // namespace BOOM
