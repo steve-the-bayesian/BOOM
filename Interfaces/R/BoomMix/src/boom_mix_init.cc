@@ -22,6 +22,15 @@ extern "C" {
       SEXP rknown_source,
       SEXP rseed);
 
+  SEXP boom_rinterface_fit_dirichlet_process_mvn_(
+      SEXP r_data,
+      SEXP r_mean_base_measure,
+      SEXP r_variance_base_measure,
+      SEXP r_concentration_parameter,
+      SEXP rniter,
+      SEXP rping,
+      SEXP rseed);
+
   SEXP composite_hmm_wrapper_(SEXP rmixture_components,
                               SEXP rmarkov_model_prior,
                               SEXP rniter,
@@ -51,6 +60,7 @@ extern "C" {
   static R_CallMethodDef boom_mix_arg_description[] = {
     CALLDEF(boom_rinterface_fit_finite_mixture_, 6),
     CALLDEF(boom_rinterface_fit_conditional_mixture_, 7),
+    CALLDEF(boom_rinterface_fit_dirichlet_process_mvn_, 7),
     CALLDEF(composite_hmm_wrapper_, 5),
     CALLDEF(nested_hmm_wrapper_, 9),
     CALLDEF(markov_modulated_poisson_process_wrapper_, 8),

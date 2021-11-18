@@ -2,6 +2,7 @@ export(
   CheckMixtureComponent,
   CheckProcessSpecification,
   ConditionalMixture,
+  DirichletProcessMvn,
   FiniteMixture,
   HiddenMarkovModel,
   IndependentMvnMixtureComponent,

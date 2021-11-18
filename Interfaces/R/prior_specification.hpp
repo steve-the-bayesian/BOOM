@@ -32,7 +32,9 @@ namespace BOOM{
 
   class MarkovModel;
   class RegressionModel;
-  
+  class MvnGivenSigma;
+  class WishartModel;
+
   namespace RInterface{
     // Convenience classes for communicating commonly used R objects
     // to BOOM.  Each object has a corresponding R function that will
@@ -218,11 +220,31 @@ namespace BOOM{
     };
 
     //----------------------------------------------------------------------
+    class MvnGivenSigmaMatrixPrior {
+     public:
+      explicit MvnGivenSigmaMatrixPrior(SEXP r_prior);
+      const Vector &mu() const {return mu_;}
+      const Vector &mean() const {return mu_;}
+      double sample_size() const {return sample_size_;}
+      double kappa() const {return sample_size_;}
+
+      // The returned BOOM model needs the Sigma parameter set before it can be
+      // used for anything.
+      MvnGivenSigma *boom() const;
+
+     private:
+      Vector mu_;
+      double sample_size_;
+    };
+
+    //----------------------------------------------------------------------
     class InverseWishartPrior {
      public:
       explicit InverseWishartPrior(SEXP r_prior);
       double variance_guess_weight() const {return variance_guess_weight_;}
       const SpdMatrix & variance_guess() const {return variance_guess_;}
+      WishartModel *boom() const;
+
      private:
       double variance_guess_weight_;
       SpdMatrix variance_guess_;
@@ -342,7 +364,7 @@ namespace BOOM{
       Ptr<MvnBase> slab_;
       int max_flips_;
     };
-    
+
     //----------------------------------------------------------------------
     // beta | X, sigsq ~ N(b, sigsq * V), where
     //   V^{-1} = kappa * (a * Diag(X'X/n) + (1 - a) * X'X/n)
@@ -371,16 +393,16 @@ namespace BOOM{
         return prior_information_weight_;
       }
       int max_flips() const {return max_flips_;}
-      
+
      private:
       Ptr<VariableSelectionPrior> spike_;
-      
+
       Vector prior_mean_;
       double diagonal_shrinkage_;
       double prior_information_weight_;
       int max_flips_;
     };
-    
+
     //----------------------------------------------------------------------
     // This is for the standard Zellner G prior in the regression
     // setting.  See the R help files for SpikeSlabPrior.
@@ -469,7 +491,7 @@ namespace BOOM{
     // Effects:
     //   A posterior sampler is extracted from r_prior and assigned to model.
     void SetRegressionSampler(RegressionModel *model, SEXP r_prior);
-    
+
     //----------------------------------------------------------------------
     class ArSpikeSlabPrior
         : public RegressionNonconjugateSpikeSlabPrior {

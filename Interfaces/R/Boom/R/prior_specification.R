@@ -379,6 +379,16 @@ MvnPrior <- function(mean, variance) {
   return(ans)
 }
 
+MvnGivenSigmaMatrixPrior <- function(mean.guess, prior.sample.size) {
+  stopifnot(is.numeric(mean.guess))
+  stopifnot(is.numeric(prior.sample.size),
+    length(prior.sample.size) == 1,
+    prior.sample.size > 0)
+  ans <- list("mean" = mean.guess, "sample.size" = prior.sample.size)
+  class(ans) <- c("MvnGivenSigmaMatrixPrior", "Prior")
+  return(ans)
+}
+
 InverseWishartPrior <- function(variance.guess,
                                 variance.guess.weight) {
   ## Conjugate prior distribution for the variance matrix in a multivariate
@@ -497,7 +507,7 @@ ScaledMatrixNormalPrior <- function(mean, nu) {
   class(ans) <- c("ScaledMatrixNormalPrior", "Prior")
   return(ans)
 }
-                                    
+
 MultivariateRegressionConjugatePrior <-function(coefficient.prior,
                                                 variance.prior) {
   ## A conjguate prior for a multivariate regression model.
@@ -518,7 +528,7 @@ MultivariateRegressionConjugatePrior <-function(coefficient.prior,
   class(ans) <- c("MultivariateRegressionConjugatePrior", "Prior")
   return(ans)
 }
-                                                 
+
 RegressionCoefficientConjugatePrior <- function(
     mean,
     sample.size,
