@@ -12,3 +12,5 @@ bar
 baz
 qux
 .python-version
+*.egg-info
+Interfaces/python/*build*
