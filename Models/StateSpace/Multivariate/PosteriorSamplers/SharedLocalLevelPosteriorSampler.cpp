@@ -21,6 +21,8 @@
 
 namespace BOOM {
 
+  const bool enforce_triangular_coefficients = true;
+
   namespace {
     using SLLPS = SharedLocalLevelPosteriorSampler;
   }  // namespace
@@ -55,17 +57,24 @@ namespace BOOM {
     }
 
     // Use the spikes to enforce the constraint on the coefficients.
-    Matrix coefficients = model_->coefficient_model()->Beta().transpose();
-    for (int i = 0; i < spikes_.size(); ++i) {
-      Selector inclusion_indicator(model_->state_dimension(), true);
-      for (int j = i + 1; j < model_->state_dimension(); ++j) {
-        spikes_[i]->set_prior_inclusion_probability(j, 0.0);
-        coefficients(i, j) = 0.0;
-        inclusion_indicator.drop(j);
+    if (enforce_triangular_coefficients) {
+      Matrix coefficients = model_->coefficient_model()->Beta().transpose();
+      for (int i = 0; i < spikes_.size(); ++i) {
+        Selector inclusion_indicator(model_->state_dimension(), true);
+        for (int j = i + 1; j < model_->state_dimension(); ++j) {
+          spikes_[i]->set_prior_inclusion_probability(j, 0.0);
+          coefficients(i, j) = 0.0;
+          inclusion_indicator.drop(j);
+        }
+        inclusion_indicators_.push_back(inclusion_indicator);
       }
-      inclusion_indicators_.push_back(inclusion_indicator);
+      model_->coefficient_model()->set_Beta(coefficients.transpose());
+    } else {
+      for (int i = 0; i < spikes_.size(); ++i) {
+        Selector inclusion_indicator(model_->state_dimension(), true);
+        inclusion_indicators_.push_back(inclusion_indicator);
+      }
     }
-    model_->coefficient_model()->set_Beta(coefficients.transpose());
 
     // Set the innovation variances to 1, for identifiability.
     for (int i = 0; i < model_->state_dimension(); ++i) {
