@@ -13,4 +13,4 @@ baz
 qux
 .python-version
 *.egg-info
-*/build/
+build
