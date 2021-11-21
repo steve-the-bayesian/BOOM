@@ -16,8 +16,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
-#include <iostream>
-
 #include <Models/Mixtures/DirichletProcessMvnModel.hpp>
 #include <Models/Mixtures/PosteriorSamplers/DirichletProcessMvnCollapsedGibbsSampler.hpp>
 
@@ -35,7 +33,6 @@
 
 namespace {
   using namespace BOOM;
-  using std::cout;
 
   Ptr<DirichletProcessMvnModel> create_model(
       SEXP r_data,
@@ -54,10 +51,25 @@ namespace {
         variance_prior_spec.boom(),
         GlobalRng::rng);
 
+    model->set_method(sampler);
     for (long i = 0; i < data.nrow(); ++i) {
       model->add_data(new VectorData(data.row(i)));
     }
     return model;
+  }
+
+  std::string print_int_vector(const std::vector<int> &dims) {
+    std::ostringstream s;
+    s << "[";
+    for (int i = 0; i < dims.size(); ++i) {
+      s << dims[i];
+      if (i + 1 == dims.size()) {
+        s << "]";
+      } else {
+        s << ", ";
+      }
+    }
+    return s.str();
   }
 
   // A container to hold DirichletProcessMvn parameter draws and other other
@@ -79,25 +91,27 @@ namespace {
       }
       means_.push_back(model_means);
       variances_.push_back(model_variances);
+      loglike_.push_back(model.log_likelihood());
     }
 
     // Create R instances of the objects created during the MCMC run, and return
     // these in an R list.
-    SEXP package() {
+    SEXP package_parameters() const {
       RMemoryProtector protector;
-      // The draws of means and variances
+
+      // The draws of means and variances, arranged by cluster size.  If the
+      // model produced draws with 4, 7, and 9 clusters, then sorted_means[4],
+      // [7], and [9] will be populated with arrays of dimension [4, dim], [7,
+      // dim] and [9, dim].
       std::map<int, std::vector<Matrix>> sorted_means;
       std::map<int, std::vector<Array>> sorted_variances;
       std::map<int, std::vector<int>> iteration_numbers;
 
-
       long niter = means_.size();
       int dim = means_[0].ncol();
 
-      cout << "sorting stuff by number of clusters\n";
       for (long i = 0; i < niter; ++i) {
         int iteration_dim = means_[i].nrow();
-
         sorted_means[iteration_dim].push_back(means_[i]);
         sorted_variances[iteration_dim].push_back(variances_[i]);
         iteration_numbers[iteration_dim].push_back(i);
@@ -107,34 +121,24 @@ namespace {
       std::vector<SEXP> per_cluster_size_results;
       std::vector<std::string> result_names;
 
-      cout << "packaging things up for R row\n";
       for (const auto &el : sorted_means) {
         int nclusters = el.first;
         const std::vector<Matrix> &means(el.second);
         int ndraws = means.size();
 
-        cout << "working on nclusters = " << nclusters << "\n";
-
         Array means_array(std::vector<int>{ndraws, nclusters, dim});
         Array variance_array(std::vector<int>{ndraws, nclusters, dim, dim});
-        cout << "means array has dims: ndraws = " << ndraws
-             << "nclusters = " << nclusters
-             << " dim = " << dim
-             << "\n";
-
         for (size_t draw = 0; draw < means.size(); ++draw) {
+          auto dims = means_array.slice(draw, -1, -1).dim();
           means_array.slice(draw, -1, -1) = sorted_means[nclusters][draw];
-          variance_array.slice(draw, -1, -1, -1) = sorted_means[nclusters][draw];
+          variance_array.slice(draw, -1, -1, -1) = sorted_variances[nclusters][draw];
         }
 
-        cout << "filling loading dock\n";
         std::vector<SEXP> loading_dock = {
           protector.protect(ToRArray(means_array)),
           protector.protect(ToRArray(variance_array)),
           protector.protect(ToRIntVector(iteration_numbers[nclusters]))
         };
-
-        cout << "appending to per_cluster_size_results\n";
 
         per_cluster_size_results.push_back(
             protector.protect(CreateList(
@@ -149,9 +153,19 @@ namespace {
       return CreateList(per_cluster_size_results, result_names);
     }
 
+    SEXP package() const {
+      RMemoryProtector protector;
+      std::vector<SEXP> elements;
+      elements.push_back(protector.protect(package_parameters()));
+      elements.push_back(protector.protect(ToRVector(Vector(loglike_))));
+      std::vector<std::string> names = {"parameters", "log.likelihood"};
+      return CreateList(elements, names);
+    }
+
    private:
     std::vector<Matrix> means_;
     std::vector<Array> variances_;
+    std::vector<double> loglike_;
   };
 
 }  // namespace

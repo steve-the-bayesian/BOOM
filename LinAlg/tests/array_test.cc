@@ -58,7 +58,20 @@ namespace {
   }
 
   // TODO
-  TEST_F(ArrayTest, ArrayViewTest) { }
+  TEST_F(ArrayTest, ArrayViewTest) {
+    std::vector<int> dim = {2, 4, 3};
+    Array array(dim, 0.0);
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        for (int k = 0; k < 3; ++k) {
+          array(i, j, k) = rnorm();
+        }
+      }
+    }
+    EXPECT_EQ(array.slice(0, -1, -1).ndim(), 2);
+    EXPECT_EQ(array.slice(-1, 0, -1).ndim(), 2);
+    EXPECT_EQ(array.slice(-1, -1, 0).ndim(), 2);
+  }
 
   // TODO
   TEST_F(ArrayTest, ConstArrayViewTest) { }

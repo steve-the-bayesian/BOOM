@@ -65,3 +65,31 @@ DirichletProcessMvn <- function(data,
   class(ans) <- "DirichletProcessMvn"
   return(ans)
 }
+
+summary.DirichletProcessMvn <- function(object, burn = NULL, ...) {
+  ans <- list()
+  ans$cluster.size.distribution  <- sapply(ans, function(x) nrow(x$parameters$mean))
+}
+
+DpMvnClusterSizeDistribution <- function(object, burn = NULL, ...) {
+  if (is.null(burn)) {
+    burn <- SuggestBurnLogLikelihood(object$log.likelihood)
+  }
+
+  cluster.size.distribution  <- sapply(
+    object$parameters, function(x) {
+      indx <- x$iteration >= burn
+      if (any(indx)) {
+        return(nrow(x$mean[indx, , ]))
+      } else {
+        return(0)
+      }
+    })
+  cluster.size.distribution <- cluster.size.distribution[
+    cluster.size.distribution > 0]
+  return(cluster.size.distribution / sum(cluster.size.distribution))
+}
+
+
+PlotDpMvnMeans <- function(object, nclusters, ...) {
+}
