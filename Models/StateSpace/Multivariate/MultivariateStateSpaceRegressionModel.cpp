@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -24,19 +24,21 @@ namespace BOOM {
   namespace {
     using MSSRM = MultivariateStateSpaceRegressionModel;
     using PSSSM = ProxyScalarStateSpaceModel;
-    using TSRD = TimeSeriesRegressionData;
+    using TSRD = MultivariateTimeSeriesRegressionData;
   }  // namespace
 
-  TSRD::TimeSeriesRegressionData(double y, const Vector &x, int series, int timestamp)
+  TSRD::MultivariateTimeSeriesRegressionData(
+      double y, const Vector &x, int series, int timestamp)
       : RegressionData(y, x),
         which_series_(series),
         timestamp_index_(timestamp)
   {}
 
-  TSRD::TimeSeriesRegressionData(const Ptr<DoubleData> &y,
-                                 const Ptr<VectorData> &x,
-                                 int series,
-                                 int timestamp)
+  TSRD::MultivariateTimeSeriesRegressionData(
+      const Ptr<DoubleData> &y,
+      const Ptr<VectorData> &x,
+      int series,
+      int timestamp)
       : RegressionData(y, x),
         which_series_(series),
         timestamp_index_(timestamp)
@@ -167,22 +169,22 @@ namespace BOOM {
     impute_series_state_given_shared_state(rng);
   }
 
-  void MSSRM::add_data(const Ptr<TimeSeriesRegressionData> &dp) {
+  void MSSRM::add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp) {
     if (dp->series() >= nseries()) {
       report_error("Series ID too large.");
     }
     data_is_finalized_ = false;
     time_dimension_ = std::max<int>(time_dimension_, 1 + dp->timestamp());
     data_indices_[dp->series()][dp->timestamp()] = dat().size();
-    IID_DataPolicy<TimeSeriesRegressionData>::add_data(dp);
+    IID_DataPolicy<MultivariateTimeSeriesRegressionData>::add_data(dp);
   }
 
   void MSSRM::add_data(const Ptr<Data> &dp) {
-    this->add_data(dp.dcast<TimeSeriesRegressionData>());
+    this->add_data(dp.dcast<MultivariateTimeSeriesRegressionData>());
   }
 
-  void MSSRM::add_data(TimeSeriesRegressionData *dp) {
-    this->add_data(Ptr<TimeSeriesRegressionData>(dp));
+  void MSSRM::add_data(MultivariateTimeSeriesRegressionData *dp) {
+    this->add_data(Ptr<MultivariateTimeSeriesRegressionData>(dp));
   }
 
   void MSSRM::clear_data() {
@@ -191,7 +193,7 @@ namespace BOOM {
     observed_ = SelectorMatrix(0, 0);
     data_is_finalized_ = false;
     data_indices_.clear();
-    IID_DataPolicy<TimeSeriesRegressionData>::clear_data();
+    IID_DataPolicy<MultivariateTimeSeriesRegressionData>::clear_data();
   }
 
   const SparseKalmanMatrix *MSSRM::observation_coefficients(
@@ -233,7 +235,7 @@ namespace BOOM {
       response_matrix_ = negative_infinity();
       observed_ = SelectorMatrix(nseries(), time_dimension_, false);
       for (int i = 0; i < dat().size(); ++i) {
-        const Ptr<TimeSeriesRegressionData> &dp(dat()[i]);
+        const Ptr<MultivariateTimeSeriesRegressionData> &dp(dat()[i]);
         int time = dp->timestamp();
         int series = dp->series();
         if (dp->missing() == Data::observed) {
@@ -304,7 +306,7 @@ namespace BOOM {
           *observation_coefficients(time, dummy_selector_) * shared_state(time);
       if (is_observed(series, time)) {
         int index = data_indices_[series][time];
-        Ptr<TimeSeriesRegressionData> dp = dat()[index];
+        Ptr<MultivariateTimeSeriesRegressionData> dp = dat()[index];
         double regression_contribution = observed_data(series, time)
             - shared_state_contribution[series]
             - series_specific_state_contribution(series, time);
@@ -390,9 +392,10 @@ namespace BOOM {
 
           // Now subtract off the regression component.
           int index = data_indices_[series][time];
-          Ptr<TimeSeriesRegressionData> data_point = dat()[index];
-          adjusted_data_workspace_(series, time) -=
-              observation_model_->model(series)->predict(data_point->x());
+          Ptr<MultivariateTimeSeriesRegressionData> data_point = dat()[index];
+          double regression_contribution = observation_model_->model(
+              series)->predict(data_point->x());
+          adjusted_data_workspace_(series, time) -= regression_contribution;
         }
       }
     }

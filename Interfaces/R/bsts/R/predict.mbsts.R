@@ -148,5 +148,3 @@ predict.mbsts <- function(object,
   ## .ExtractDynamicRegressionPredictors.  See the example in predict.bsts.R.
   return(ans)
 }
-
-

@@ -17,7 +17,7 @@
 */
 
 #include "Models/StateSpace/Filters/MultivariateKalmanFilterBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/Constants.hpp"
 

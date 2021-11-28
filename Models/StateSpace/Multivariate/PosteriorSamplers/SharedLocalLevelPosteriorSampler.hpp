@@ -18,7 +18,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
+#include "Models/StateSpace/Multivariate/StateModels/SharedLocalLevel.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/GenericGaussianVarianceSampler.hpp"
 #include "Models/MvnBase.hpp"
@@ -57,7 +57,7 @@ namespace BOOM {
   // coefficients can be zero...., so let's give this a try.
   //
   // The prior on the coefficients is a row-wise spike and slab prior.  The
-  // spikes are modified to enforce zeros on the 
+  // spikes are modified to enforce zeros on the
   class SharedLocalLevelPosteriorSampler
       : public PosteriorSampler {
    public:
@@ -75,16 +75,16 @@ namespace BOOM {
         const std::vector<Ptr<MvnBase>> &slabs,
         const std::vector<Ptr<VariableSelectionPrior>> &spikes,
         RNG &seeding_rng = GlobalRng::rng);
-                                     
+
     void draw() override;
     double logpri() const override;
 
     void limit_model_selection(int max_flips);
-    
+
    private:
     void draw_inclusion_indicators(int which_series);
     void draw_coefficients_given_inclusion(int which_series);
-    
+
     SharedLocalLevelStateModel *model_;
     std::vector<Ptr<MvnBase>> slabs_;
     std::vector<Ptr<VariableSelectionPrior>> spikes_;
@@ -94,11 +94,10 @@ namespace BOOM {
     // case the coefficients are rows or columns in a matrix, so the inclusion
     // indicators have to be stored externally.
     std::vector<Selector> inclusion_indicators_;
-    
+
     std::vector<SpikeSlabSampler> samplers_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_SHARED_LOCAL_LEVEL_POSTERIOR_SAMPLER_HPP_
-

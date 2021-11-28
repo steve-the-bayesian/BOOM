@@ -27,13 +27,12 @@
 
 namespace BOOM {
 
-  class ScalarStateSpaceModelBase;
   class DynamicInterceptRegressionModel;
 
   namespace StateSpace {
     class TimeSeriesRegressionData;
   }  // StateSpace
-  
+
   // A StateModel describes the propogation rules for one component of state in
   // a StateSpaceModel.  A StateModel has a transition matrix T, which can be
   // time dependent, an error variance Q, which may be of smaller dimension than
@@ -176,7 +175,7 @@ namespace BOOM {
     //   made to the state.  The resulting model will be equivalent to before
     //   this call, but for the constraints being satisfied.
     virtual void impose_identifiability_constraint() {}
-    
+
    private:
     int index_;
   };
@@ -211,27 +210,7 @@ namespace BOOM {
     // second argument, or the dependence is only based on the sample size.
     virtual bool is_pure_function_of_time() const = 0;
   };
-  
-  //===========================================================================
-  // State models for dynamic factor models and similar multivariate time series
-  // with fixed dimension.
-  class SharedStateModel : virtual public StateModelBase {
-   public:
-    SharedStateModel * clone() const override = 0;
-    
-    // The coefficients (Z) in the observation equation.  The coefficients are
-    // arranged so that y = Z * state + error.  Thus columns of the observation
-    // coefficients Z correspond to the state dimension.
-    //
-    // Args:
-    //   t:  The time index of the observation.
-    //   observed: Indicates which elements of the outcome variable are observed
-    //     at time t.  Rows of Z corresponding to unobserved variables are
-    //     omitted.
-    virtual Ptr<SparseMatrixBlock> observation_coefficients(
-        int t, const Selector &observed) const = 0;
-  };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_STATE_MODEL_HPP

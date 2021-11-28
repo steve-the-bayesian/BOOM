@@ -26,7 +26,7 @@
 #include "Models/StateSpace/StateModels/RegressionStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/StateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
 

@@ -16,9 +16,9 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/StateSpace/Filters/ConditionalIidKalmanFilter.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+
 #include "LinAlg/DiagonalMatrix.hpp"
 #include "LinAlg/QR.hpp"
 #include "cpputil/Constants.hpp"
@@ -28,10 +28,10 @@ namespace BOOM {
   namespace Kalman {
     namespace {
       using CIMD = ConditionalIidMarginalDistribution;
-    }  // namespace 
+    }  // namespace
 
     double CIMD::high_dimensional_threshold_factor_(1.0);
-    
+
     CIMD::ConditionalIidMarginalDistribution(
         ConditionalIidMultivariateStateSpaceModelBase *model,
         CIMD *previous,
@@ -41,7 +41,7 @@ namespace BOOM {
           model_(model),
           previous_(previous)
     {}
-    
+
     //---------------------------------------------------------------------------
     void CIMD::low_dimensional_update(
         const Vector &observation,
@@ -97,7 +97,7 @@ namespace BOOM {
       Matrix inner_matrix = state_variance() * Z_inner / observation_variance;
       inner_matrix.diag() += 1.0;
       QR inner_qr(inner_matrix);
-      
+
       Vector scaled_error =
           state_variance() * (observation_coefficients.Tmult(prediction_error()));
       scaled_error = inner_qr.solve(scaled_error);
@@ -106,7 +106,7 @@ namespace BOOM {
       scaled_error -= prediction_error();
       scaled_error /= -1 * observation_variance;
       set_scaled_prediction_error(scaled_error);
-      
+
       // The log determinant of F.inverse is the negative log of det(H + ZPZ').
       // That determinant can be computed using the "matrix determinant lemma,"
       // which says det(A + UV') = det(I + V' * A.inv * U) * det(A)
@@ -116,11 +116,11 @@ namespace BOOM {
           -1 * (inner_qr.logdet()
                 + observed.nvars() * log(observation_variance)));
 
-      // Kalman gain = TPZ'Finv = 
+      // Kalman gain = TPZ'Finv =
       //
-      // TPZ' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv) = 
+      // TPZ' * (Hinv - Hinv * Z * (I + P Z' Hinv Z).inv * P * Z' * Hinv) =
       //
-      // T * PZ'Hinv * (I - Z * (I + P Z' Hinv Z).inv * PZ'Hinv) = 
+      // T * PZ'Hinv * (I - Z * (I + P Z' Hinv Z).inv * PZ'Hinv) =
       Matrix PZprimeHinv = (observation_coefficients * state_variance()).transpose()
           / observation_variance;
       Matrix gain = -1 * (observation_coefficients * inner_qr.solve(PZprimeHinv));
@@ -139,7 +139,7 @@ namespace BOOM {
         return direct_forecast_precision();
       }
     }
-    
+
     SpdMatrix CIMD::direct_forecast_precision() const {
       SpdMatrix ans = model_->observation_coefficients(
           time_index(), model_->observed_status(time_index()))->sandwich(
@@ -164,6 +164,5 @@ namespace BOOM {
       return ans;
     }
   }  // namespace Kalman
-  
-}  // namespace BOOM
 
+}  // namespace BOOM
