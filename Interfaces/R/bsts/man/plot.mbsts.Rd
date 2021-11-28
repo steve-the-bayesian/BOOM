@@ -31,10 +31,11 @@ PlotMbstsSeriesMeans(mbsts.object,
                      series.id = NULL,
                      same.scale = TRUE,
                      burn = SuggestBurn(.1, mbsts.object),
-                     time, 
+                     time,
                      show.actuals = TRUE,
                      ylim = NULL,
-                     gap = 0, 
+                     gap = 0,
+                     cex.actuals = 0.2,
                      ...)
 }
 
@@ -62,7 +63,7 @@ PlotMbstsSeriesMeans(mbsts.object,
 
   \item{show.actuals}{Logical.  If \code{TRUE} then actual values from
     the fitted series will be shown on the plot.}
-  
+
   \item{ylim}{Limits for the vertical axis.  If \code{NULL} these will
     be inferred from the state components and the \code{same.scale}
     argument.  Otherwise all plots will be created with the same
@@ -70,7 +71,9 @@ PlotMbstsSeriesMeans(mbsts.object,
 
   \item{gap}{The number of lines to leave between plots.  This need not
     be an integer.}
-  
+
+  \item{cex.actuals}{Scale factor to use for plotting the raw data.}
+
   \item{...}{Additional arguments passed to
     \code{\link[Boom]{PlotDynamicDistribution}}.}
 

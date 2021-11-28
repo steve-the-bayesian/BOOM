@@ -179,20 +179,21 @@ namespace BOOM {
         return model_->one_step_prediction_errors();
       }
 
-   private:
+     private:
       ScalarStateSpaceModelBase *model_;
     };
 
     // A callback class for saving log likelihood values.
+    template<class STATE_SPACE_MODEL>
     class LogLikelihoodCallback : public ScalarIoCallback {
-   public:
-      explicit LogLikelihoodCallback(ScalarStateSpaceModelBase *model)
+     public:
+      explicit LogLikelihoodCallback(STATE_SPACE_MODEL *model)
           : model_(model) {}
       double get_value() const override {
         return model_->log_likelihood();
       }
-   private:
-      ScalarStateSpaceModelBase *model_;
+     private:
+      STATE_SPACE_MODEL *model_;
     };
 
   }  // namespace bsts

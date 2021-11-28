@@ -168,6 +168,13 @@ namespace BOOM {
           new MultivariateSaveFullStateCallback(model_.get()),
           "shared.state", nullptr));
 
+      io_manager->add_list_element(
+          new BOOM::NativeUnivariateListElement(
+              new LogLikelihoodCallback<MultivariateStateSpaceModelBase>(
+                  model_.get()),
+              "log.likelihood",
+              nullptr));
+
       SetModelOptions(r_options);
 
       return model_.get();
