@@ -218,15 +218,19 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
+    fig = None
     if ax is None:
-        _, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
     ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
             color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    return ax
+    if fig is not None:
+        fig.show()
+
+    return fig, ax
 
 
 def barplot(x, labels=None, zero=True, ax=None, **kwargs):
