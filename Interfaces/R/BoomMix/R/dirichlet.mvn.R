@@ -91,5 +91,89 @@ DpMvnClusterSizeDistribution <- function(object, burn = NULL, ...) {
 }
 
 
-PlotDpMvnMeans <- function(object, nclusters, ...) {
+PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...) {
+  ## nclusters must be an integer-convertible thing of length 1.
+  stopifnot(length(nclusters) == 1)
+  nclusters <- as.character(as.integer(nclusters))
+
+  if (is.null(burn)) {
+    burn <- SuggestBurnLogLikelihood(model$log.likelihood)
+  }
+  stopifnot(is.numeric(burn), length(burn) == 1)
+
+  if (!(nclusters %in% names(model$parameters))) {
+    warning(paste0(
+      "A parameter plot was requested for ", nclusters, " clusters, but the ",
+      "MCMC run produced no draws with that many clusters."))
+    return(NULL)
+  }
+
+  means <- model$parameters[[nclusters]]$mean
+  iterations <- model$parameters[[nclusters]]$iteration
+  ## means is a ndraws x nclusters x dims array.
+
+  means <- means[iterations > burn, , ]
+  if (length(means) == 0 || dim(means)[1] < 1) {
+    warning(paste0("There were no iterations for ", nclusters,
+      " clusters after burn-in."))
+    return(NULL)
+  }
+
+  if (is.null(dims)) {
+    dims <- 1:(dim(means)[3])
+  }
+  means <- means[, , dims]
+  if (dim(means)[3] < 0) {
+    error("The requested dimensions could not be provided.")
+  }
+
+  means.dim <- dim(means)[3]
+  input.par <- par()
+  original.par <- par(mfrow = c(means.dim, means.dim),
+    mar = rep.int(gap / 2, 4), oma = rep(5.1, 4))
+  on.exit(par(original.par))
+
+  xrange <- t(apply(means, 3, range))
+  nclusters <- as.integer(nclusters)
+  for (i in 1:means.dim) {
+    for (j in 1:means.dim) {
+      if (i == j) {
+        plot(means[, 1, i], means[, 1, i], axes=FALSE, xlim = xrange[i, ], ylim = xrange[i, ],
+          type = "n")
+        box()
+      } else {
+        plot(
+          means[, 1, i],
+          means[, 1, j],
+          axes=FALSE,
+          xlim = xrange[i, ],
+          ylim = xrange[j, ])
+        box()
+        if (nclusters > 1) {
+          for (cluster_number in 2:nclusters) {
+            points(
+              means[, cluster_number, i],
+              means[, cluster_number, j],
+              pch = cluster_number,
+              col=cluster_number,
+              ...)
+          }
+        }
+      }
+
+      if (i == 1 && IsOdd(j)) {
+        axis(3)
+      } else if (i == means.dim && IsEven(j)) {
+        axis(1)
+      }
+
+      if (j == 1 && IsOdd(i)) {
+        axis(2)
+      } else if (j == means.dim && IsEven(i)) {
+        axis(4)
+      }
+    }
+  }
+
+  return(invisible(NULL))
 }
