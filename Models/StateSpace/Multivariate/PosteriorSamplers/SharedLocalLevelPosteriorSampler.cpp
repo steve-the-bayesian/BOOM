@@ -46,7 +46,6 @@ namespace BOOM {
         report_error("At least one spike prior expects the wrong state size.");
       }
     }
-
     if (slabs.size() != model_->nseries()) {
       report_error("Number of slab priors does not match number of series.");
     }

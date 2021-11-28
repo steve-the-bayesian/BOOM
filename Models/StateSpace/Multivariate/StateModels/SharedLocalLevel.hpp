@@ -54,7 +54,6 @@ namespace BOOM {
     // Args:
     //   number_of_factors: The number of independent random walks to use in
     //     this state model.  The number of factors is the state dimension.
-    //   ydim:  The dimension of the outcome variable at time t.
     //   host:  The model in which this object is a component of state.
     //   nseries:  The number of observed time series being modeled.
     SharedLocalLevelStateModel(int number_of_factors,
@@ -71,7 +70,8 @@ namespace BOOM {
                        int time_now) override;
 
     //----------------------------------------------------------------------
-    // Sizes of things.
+    // Sizes of things.  The state dimension and the state_error_dimension are
+    // both just the number of factors.
     uint state_dimension() const override {return innovation_models_.size();}
     uint state_error_dimension() const override {return state_dimension();}
     int nseries() const {return coefficient_model_->ydim();}
@@ -90,14 +90,17 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> state_transition_matrix(int t) const override {
       return state_transition_matrix_;
     }
+
     Ptr<SparseMatrixBlock> state_variance_matrix(int t) const override {
       return state_variance_matrix_;
     }
+
     // The state error expander matrix is an identity matrix of the same
     // dimension as the state_transition_matrix, so we just return that matrix.
     Ptr<SparseMatrixBlock> state_error_expander(int t) const override {
       return state_transition_matrix_;
     }
+
     // Because the error expander is the identity, the state variance matrix and
     // the state error variance are the same thing.
     Ptr<SparseMatrixBlock> state_error_variance(int t) const override {
@@ -170,8 +173,8 @@ namespace BOOM {
     // The coefficient model describes the contribution of this state model to
     // the observation equation.  The multivariate regression model is organized
     // as (xdim, ydim).  The 'X' in our case is the state, where we want y = Z *
-    // state, so we need the transpose of the coefficient matrix from the
-    // regression.
+    // state.  In the regression model things are set up so Y = X * beta.  So
+    // our 'Z' is the transpose of the coefficient matrix from the regression.
     Ptr<MultivariateRegressionModel> coefficient_model_;
     mutable Ptr<DenseMatrix> observation_coefficients_;
     Ptr<SparseMatrixBlock> empty_;

@@ -138,6 +138,14 @@ namespace BOOM {
       return state_model_vector().state_error_variance(t);
     }
 
+    // Returns the log likelihood under the current set of model parameters.  If
+    // the Kalman filter is current (i.e. no parameters or data have changed
+    // since the last time it was run) then this function does no actual work.
+    // Otherwise it sparks a fresh Kalman filter run.
+    double log_likelihood() {
+      return get_filter().compute_log_likelihood();
+    }
+
     //----------------- Access to data -----------------
     // Returns the value of y observed at time t.
     virtual ConstVectorView observation(int t) const = 0;

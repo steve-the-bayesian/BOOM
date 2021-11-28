@@ -115,6 +115,16 @@ namespace {
                          model.observed_data(series, time));
       }
     }
+
+    int time = 27;
+    int series = 2;
+    NEW(MultivariateTimeSeriesRegressionData, data_point)(
+        3.8, rnorm_vector(xdim, 0, 1), series, time);
+    model.add_data(data_point);
+    // The time dimension is one more than the largest time stamp on a data
+    // point.  I.e. if times 0, 1, 2, 4 are observed then there are 5 time
+    // points (with timestamp 3 being missing).
+    EXPECT_EQ(model.time_dimension(), time + 1);
   }
 
   TEST_F(MultivariateStateSpaceRegressionModelTest, McmcTest) {

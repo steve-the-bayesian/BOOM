@@ -393,8 +393,9 @@ namespace BOOM {
           // Now subtract off the regression component.
           int index = data_indices_[series][time];
           Ptr<MultivariateTimeSeriesRegressionData> data_point = dat()[index];
-          adjusted_data_workspace_(series, time) -=
-              observation_model_->model(series)->predict(data_point->x());
+          double regression_contribution = observation_model_->model(
+              series)->predict(data_point->x());
+          adjusted_data_workspace_(series, time) -= regression_contribution;
         }
       }
     }

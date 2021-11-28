@@ -41,6 +41,15 @@ namespace BOOM {
     set_param_policy();
     initialize_model_matrices();
     set_observation_coefficients_observer();
+
+    // Initialize the coefficient matrix to all 1's.
+    Matrix Z(nseries, number_of_factors, 1.0);
+    for (int i = 1; i < nseries; ++i) {
+      for (int j = 0; j < std::min<int>(i, number_of_factors); ++j) {
+        Z(i, j) = 0.0;
+      }
+    }
+    coefficient_model_->set_Beta(Z.transpose());
   }
 
   SLLSM::SharedLocalLevelStateModel(const SLLSM &rhs) {
