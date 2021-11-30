@@ -76,16 +76,10 @@ namespace BOOM {
   }
 
   void MarkovData::unset_prev() {
-    if (!!prev_) {
-      prev_->unset_next();
-    }
     prev_ = nullptr;
   }
 
   void MarkovData::unset_next() {
-    if (!!next_) {
-      next_->unset_prev();
-    }
     next_ = nullptr;
   }
 
