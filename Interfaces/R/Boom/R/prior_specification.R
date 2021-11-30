@@ -379,12 +379,12 @@ MvnPrior <- function(mean, variance) {
   return(ans)
 }
 
-MvnGivenSigmaMatrixPrior <- function(mean.guess, prior.sample.size) {
-  stopifnot(is.numeric(mean.guess))
-  stopifnot(is.numeric(prior.sample.size),
-    length(prior.sample.size) == 1,
-    prior.sample.size > 0)
-  ans <- list("mean" = mean.guess, "sample.size" = prior.sample.size)
+MvnGivenSigmaMatrixPrior <- function(mean, sample.size) {
+  stopifnot(is.numeric(mean))
+  stopifnot(is.numeric(sample.size),
+            length(sample.size) == 1,
+            sample.size > 0)
+  ans <- list("mean" = mean, "sample.size" = sample.size)
   class(ans) <- c("MvnGivenSigmaMatrixPrior", "Prior")
   return(ans)
 }
