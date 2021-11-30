@@ -46,7 +46,22 @@ DirichletProcessMvn <- function(data,
   ##     clock.
   ##
   ## Returns:
-  ##   (TBD)
+  ##   The returned object is a list imbued wtih class "DirichletProcessMvn".
+  ##   There are two list elements.
+  ##   - log likelihood gives the log likelihood associated with each MCMC draw.
+  ##       This is primarily used as a convergence diagnostic.
+  ##   - parameters is a list of the drawn parameter values.  The list elements
+  ##       are named according to the number of clusters that were used in each
+  ##       draw.  The cluster sizes are arranged in increasing order, but need
+  ##       not be congiguous.  The elements of the 'parameters' list are:
+  ##     + mean - A 3-way array of draws of cluster means.  The array dimensions
+  ##         are [Monte Carlo index, cluster number, data dimension].
+  ##     + variance - A 4-way array of draws of cluster variances.  The array
+  ##         dimensions are [Monte Carlo index, cluster number, data dimension,
+  ##         data dimension].
+  ##     + iteration - A vector containing the draw number of each draw in the
+  ##         overall Monte Carlo sequence.  This information is needed so that
+  ##         burn-in iterations can be discarded.
   data <- as.matrix(data)
 
   if (is.null(mean.base.measure)) {

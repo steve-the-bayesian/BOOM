@@ -47,14 +47,30 @@ DirichletProcessMvn(data,
 }
 
 \value{
+  The returned object is a list imbued wtih class "DirichletProcessMvn".
+  There are two list elements.
 
-  An object of class \code{FiniteMixture}, which is a list with
-  components for mixing weights, and for the parameters of the mixture
-  components.  Each paramter is stored in an array matching the
-  dimension of the parameter, plus 1.  Thus scalars are stored in
-  vectors.  Vectors are stored in matrices, and matrices are stored in
-  3-way arrays.  The extra dimension (always the first in each array)
-  corresponds to MCMC iteration.  }
+  \itemize{
+    \item{\code{log likelihood} gives the log likelihood associated with each MCMC draw.
+      This is primarily used as a convergence diagnostic.
+    }
+    \item {parameters is a list of the drawn parameter values.  The list elements
+      are named according to the number of clusters that were used in each
+      draw.  The cluster sizes are arranged in increasing order, but need
+      not be congiguous.  The elements of the 'parameters' list are:
+      \itemize{
+	\item{mean: A 3-way array of draws of cluster means.  The array dimensions
+	  are [Monte Carlo index, cluster number, data dimension].}
+	\item{variance: A 4-way array of draws of cluster variances.  The array
+	  dimensions are [Monte Carlo index, cluster number, data dimension,
+	  data dimension].}
+	\item{iteration: A vector containing the draw number of each draw in the
+	  overall Monte Carlo sequence.  This information is needed so that
+	  burn-in iterations can be discarded.}
+      }
+    }
+  }
+}
 
 \references{
 
@@ -73,16 +89,13 @@ DirichletProcessMvn(data,
 }
 
 \examples{
-y1 <- rnorm(100, 0, 1)
-y2 <- rnorm(50, 3, 1)
-z1 <- rpois(100, 3)
-z2 <- rpois(50, 6)
-norm.mix <- NormalMixtureComponent(c(y1, y2))
-pois.mix <- PoissonMixtureComponent(c(z1, z2))
-model <- FiniteMixture(list(norm.mix, pois.mix),
-                       weight.prior = DirichletPrior(rep(1, 2)),
-                       niter = 100,
-                       ping = 10)
+y0 <- rmvn(n=100, mu = 1:3)
+y1 <- rmvn(n = 200, mu = 3:1)
+y2 <- rmvn(n = 150, mu = rep(3, 3))
+y <- rbind(y0, y1, y2)
+model <- DirichletProcessMvn(y, niter=1000, seed=8675309)
+plot(model, "nclusters")
+plot(model, nclusters=3)
 }
 \keyword{models}
 \keyword{regression}
