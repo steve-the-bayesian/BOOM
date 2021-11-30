@@ -18,7 +18,7 @@ DirichletProcessMvn <- function(data,
   ##     mean of the distribution (i.e. a prior guess at the variance) and
   ##     'weight' is the degrees of freedom parameter.
   ##   concentration.parameter: A positive scalar.  The concentration parameter
-  ##     of the Dirichlet process.  Smaller values lead to more mixture
+  ##     of the Dirichlet process.  Larger values lead to more mixture
   ##     components.
   ##   niter:  The desired number of MCMC iterations.
   ##   ping: The frequency of status updates during the MCMC.
@@ -71,7 +71,7 @@ summary.DirichletProcessMvn <- function(object, burn = NULL, ...) {
   ans$cluster.size.distribution  <- sapply(ans, function(x) nrow(x$parameters$mean))
 }
 
-DpMvnClusterSizeDistribution <- function(object, burn = NULL, ...) {
+DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
   if (is.null(burn)) {
     burn <- SuggestBurnLogLikelihood(object$log.likelihood)
   }
@@ -90,6 +90,16 @@ DpMvnClusterSizeDistribution <- function(object, burn = NULL, ...) {
   return(cluster.size.distribution / sum(cluster.size.distribution))
 }
 
+plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "help"), ...) {
+  y <- match.arg(y)
+  if (y == "means") {
+    PlotDpMvnMeans(x, ...)
+  } else if(y == "nclusters") {
+    PlotDpMvnNclusters(x, ...)
+  } else if (y == "help") {
+    help("plot.DirichletProcessMvn", package = "BoomMix", help_type = "html")
+  }
+}
 
 PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...) {
   ## nclusters must be an integer-convertible thing of length 1.
@@ -124,7 +134,7 @@ PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, 
   }
   means <- means[, , dims]
   if (dim(means)[3] < 0) {
-    error("The requested dimensions could not be provided.")
+    stop("The requested dimensions could not be provided.")
   }
 
   means.dim <- dim(means)[3]
@@ -176,4 +186,9 @@ PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, 
   }
 
   return(invisible(NULL))
+}
+
+PlotDpMvnNclusters <- function(object, burn = NULL, ...) {
+  distribution <- DpMvnClusterSizeDistribution(object, burn=burn)
+  barplot(distribution, names.arg = names(distribution), ...)
 }
