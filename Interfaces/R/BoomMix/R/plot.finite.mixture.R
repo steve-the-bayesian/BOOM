@@ -20,7 +20,8 @@ plot.FiniteMixture <- function(x,
                                  "loglikelihood",
                                  "log.likelihood",
                                  "logprior",
-                                 "log.prior"),
+                                 "log.prior",
+                                 "density"),
                                burn = 0,
                                ...) {
   ## S3 method for plotting the output of a finite mixture model.
@@ -48,6 +49,8 @@ plot.FiniteMixture <- function(x,
     PlotMixingWeights(x, burn = burn, ...)
   } else if (target == "state.probabilities") {
     PlotStateProbabilities(x, ...)
+  } else if (target == "density") {
+    return(PlotDensityDistribution(x, burn=burn, ...))
   } else {
     stop("PlotFiniteMixture could not figure out what to plot.")
   }

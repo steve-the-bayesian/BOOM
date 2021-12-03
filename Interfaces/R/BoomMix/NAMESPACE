@@ -13,6 +13,7 @@ export(
   MultinomialMixtureComponent,
   MvnMixtureComponent,
   NormalMixtureComponent,
+  PlotDensityDistribution,
   PlotInitialStateDistribution,
   PlotMixingWeights,
   PlotMixtureParams,

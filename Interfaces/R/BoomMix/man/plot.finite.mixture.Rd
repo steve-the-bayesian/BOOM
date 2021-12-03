@@ -55,6 +55,7 @@ plot(model, "mixing.weights")
 }
 
 \seealso{
+  \code{\link{PlotDensityDistribution}}
   \code{\link{PlotMixtureParams}}
   \code{\link{PlotMixingWeights}}
   \code{\link{PlotStateProbabilities}}

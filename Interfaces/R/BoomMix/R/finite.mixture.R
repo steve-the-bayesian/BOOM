@@ -99,6 +99,8 @@ FiniteMixture <- function(mixture.component.specification,
                seed,
                PACKAGE = "BoomMix")
 
+  ans$mixture.component.specification <- mixture.component.specification
+
   class(ans) <- "FiniteMixture"
   return(ans)
 }
