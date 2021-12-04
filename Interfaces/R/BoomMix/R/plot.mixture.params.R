@@ -82,7 +82,6 @@ PlotMixtureParams <- function(model, stem, style = c("density", "ts", "box"),
   if (length(colors) > number.of.components) {
     colors <- colors[1:number.of.components]
   }
-
   for (i in 1:nvars) {
     current.pos <- pos[variable.names == unique.variable.names[i]]
     if (is.matrix(model[[current.pos[1]]])) {

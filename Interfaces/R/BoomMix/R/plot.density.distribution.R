@@ -89,7 +89,8 @@ PlotDensityDistribution <- function(model, burn = NULL, xlim = NULL, xlab=NULL, 
 
   density.distribution <- apply(density.values, c(1, 2), sum)
 
-  PlotDynamicDistribution(density.distribution, time = x.arg, xlab = xlab, ...)
+  PlotDynamicDistribution(density.distribution, timestamps = x.arg,
+    xlab = xlab, ...)
   abline(h=0, lty=3, col="lightgray")
 
   ans <- list(density = density.distribution, x = x.arg)

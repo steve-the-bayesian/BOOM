@@ -2,6 +2,7 @@
 
 \alias{plot.DirichletProcessMvn}
 \alias{PlotDpMvnMeans}
+\alias{PlotDpMvnMeanPairs}
 \alias{PlotDpMvnNclusters}
 
 \title{Plot Method for DP Mixtures of Multivariate Normals}
@@ -16,8 +17,8 @@
    y = c("means", "nclusters", "help"),
    ...)
 
-PlotDpMvnMeans(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...)
-
+PlotDpMvnMeanPairs(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...)
+PlotDpMvnMeans(model, nclusters, burn = NULL, dims = NULL, ...)
 PlotDpMvnNclusters(object, burn = NULL, ...)
 
 }

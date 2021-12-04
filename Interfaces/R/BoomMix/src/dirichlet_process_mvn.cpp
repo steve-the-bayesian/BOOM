@@ -58,20 +58,6 @@ namespace {
     return model;
   }
 
-  std::string print_int_vector(const std::vector<int> &dims) {
-    std::ostringstream s;
-    s << "[";
-    for (int i = 0; i < dims.size(); ++i) {
-      s << dims[i];
-      if (i + 1 == dims.size()) {
-        s << "]";
-      } else {
-        s << ", ";
-      }
-    }
-    return s.str();
-  }
-
   // A container to hold DirichletProcessMvn parameter draws and other other
   // model artifacts as they are drawn, and which can package them up for return
   // values later.

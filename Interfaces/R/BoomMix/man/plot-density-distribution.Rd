@@ -31,7 +31,7 @@ PlotDensityDistribution(model,
 
 \item{xlab}{Llabel for the horizontal axis.}
 
-\item{\dots}{Extra arguments passed to \code{\link[Boom]{PlotDensityDistribution}}.}
+\item{\dots}{Extra arguments passed to \code{\link[Boom]{PlotDynamicDistribution}}.}
 
 }
 

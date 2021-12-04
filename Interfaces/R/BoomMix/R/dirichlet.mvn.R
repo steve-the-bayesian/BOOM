@@ -99,11 +99,26 @@ DirichletProcessMvn <- function(data,
 }
 
 summary.DirichletProcessMvn <- function(object, burn = NULL, ...) {
+  ## Args:
+  ##   object:  A DirichletProcessMvn model object.
+  ##   burn: The number of MCMC iterations to discard as burn-in.  If NULL then
+  ##     SuggestBurnLogLikelihood will be called to suggest a burn-in period.
+  ##
+  ## A summary describing the model.
   ans <- list()
   ans$cluster.size.distribution  <- sapply(ans, function(x) nrow(x$parameters$mean))
 }
 
 DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
+  ## Args:
+  ##   object:  A DirichletProcessMvn model object.
+  ##   burn: The number of MCMC iterations to discard as burn-in.  If NULL then
+  ##     SuggestBurnLogLikelihood will be called to suggest a burn-in period.
+  ##
+  ## Returns:
+  ##   A discrete probability distribution describing the number of clusters.
+  ##   The distribution may skip values with zero counts, so it may not be
+  ##   contiguous.
   if (is.null(burn)) {
     burn <- SuggestBurnLogLikelihood(object$log.likelihood)
   }
@@ -123,9 +138,15 @@ DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
 }
 
 plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "help"), ...) {
+  ## Args:
+  ##   x: The DirichletProcessMvn model object to be plotted.
+  ##   y: The type of plot desired.
+  ##   ...: Extra arguments passed to the implementing function.
   y <- match.arg(y)
   if (y == "means") {
     PlotDpMvnMeans(x, ...)
+  } else if (y == "pairs") {
+    PlotDpMvnMeanPairs(x, ...)
   } else if(y == "nclusters") {
     PlotDpMvnNclusters(x, ...)
   } else if (y == "help") {
@@ -133,7 +154,54 @@ plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "help"), ...
   }
 }
 
-PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...) {
+PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, ...) {
+  ## Args:
+  ##   model:  The DirichletProcessMvn model object to be plotted.
+  ##   nclusters:  The number of clusters of the submodel to be plotted.
+  ##   burn: The number of MCMC iteration to discard as burn-in.  If NULL then
+  ##     SuggestBurnLogLikelihood is called to suggest a number of burn-in
+  ##     iterations.
+  ##   dims: The subset of data dimensions to plot.  If NULL then everything is
+  ##     plotted.
+  ##   ...:  Extra arguments passed to PlotMixtureParams.
+  param.list <- list()
+  mu <- model$parameters[[as.character(nclusters)]]$mean
+  iterations <- model$parameters[[as.character(nclusters)]]$iteration
+
+  if (is.null(burn)) {
+    burn <- SuggestBurnLogLikelihood(model$log.likelihood)
+  }
+  if (burn < 0) {
+    burn <- 0
+  }
+
+  if (is.null(dims)) {
+    ydim <- dim(mu)[3]
+    dims <- 1:dim(mu)[3]
+  }
+
+  for (i in 1:nclusters) {
+    mu.name <- paste0("mu.", i-1)
+    param.list[[mu.name]] <- mu[iterations >= burn, i, dims]
+  }
+  return(PlotMixtureParams(param.list, "mu", burn = 0, ...))
+}
+
+PlotDpMvnMeanPairs <- function(model, nclusters, burn = NULL, dims = NULL,
+                               gap = 0, ...) {
+  ## A pairs plot showing the posterior distribution of the mean parameters.
+  ##
+  ## Args:
+  ##   model:  The DirichletProcessMvn model object to be plotted.
+  ##   nclusters:  The number of clusters of the submodel to be plotted.
+  ##   burn: The number of MCMC iteration to discard as burn-in.  If NULL then
+  ##     SuggestBurnLogLikelihood is called to suggest a number of burn-in
+  ##     iterations.
+  ##   dims: The subset of data dimensions to plot.  If NULL then everything is
+  ##     plotted.
+  ##   gap:  The amount of space to leave between plots, in lines of text.
+  ##   ...: Extra arguments passed to 'points.'
+
   ## nclusters must be an integer-convertible thing of length 1.
   stopifnot(length(nclusters) == 1)
   nclusters <- as.character(as.integer(nclusters))
@@ -180,7 +248,11 @@ PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, 
   for (i in 1:means.dim) {
     for (j in 1:means.dim) {
       if (i == j) {
-        plot(means[, 1, i], means[, 1, i], axes=FALSE, xlim = xrange[i, ], ylim = xrange[i, ],
+        plot(means[, 1, i],
+          means[, 1, i],
+          axes=FALSE,
+          xlim = xrange[i, ],
+          ylim = xrange[i, ],
           type = "n")
         box()
       } else {
@@ -221,6 +293,14 @@ PlotDpMvnMeans <- function(model, nclusters, burn = NULL, dims = NULL, gap = 0, 
 }
 
 PlotDpMvnNclusters <- function(object, burn = NULL, ...) {
+  ## A bar graph showing the distribution of the number of clusters.
+  ##
+  ## Args:
+  ##   object:  The DirichletProcessMvn object to plot.
+  ##   burn: The number of MCMC iteration to discard as burn-in.  If NULL then
+  ##     SuggestBurnLogLikelihood is called to suggest a number of burn-in
+  ##     iterations.
+  ##  ...: Extra arguments passed to 'barplot'.
   distribution <- DpMvnClusterSizeDistribution(object, burn=burn)
   barplot(distribution, names.arg = names(distribution), ...)
 }
