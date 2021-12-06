@@ -14,7 +14,7 @@
 \usage{
 \method{plot}{DirichletProcessMvn}(
    x,
-   y = c("means", "nclusters", "help"),
+   y = c("means", "nclusters", "pairs", "help"),
    ...)
 
 PlotDpMvnMeanPairs(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...)

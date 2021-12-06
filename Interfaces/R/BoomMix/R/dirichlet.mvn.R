@@ -137,7 +137,7 @@ DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
   return(cluster.size.distribution / sum(cluster.size.distribution))
 }
 
-plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "help"), ...) {
+plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "pairs", "help"), ...) {
   ## Args:
   ##   x: The DirichletProcessMvn model object to be plotted.
   ##   y: The type of plot desired.
