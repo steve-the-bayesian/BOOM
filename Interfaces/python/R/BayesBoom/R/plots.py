@@ -486,6 +486,21 @@ def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
 
 def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
+    """
+    Args:
+
+      series: A numpy array of data to be plotted.  The first dimension of the
+        array is time.
+      same_scale:  If True then all series are plotted on the same scale.
+      ylim:  lower and upper limits of the Y axis.
+      gap:  Amount of space to leave beween panels of the plot.
+      truth: Values at which reference lines should be drawn.  Either a single
+        numeric value, or an array of values that matches the shape of 'series'
+        (without the time dimension).
+      **kwargs:  Other keyword arguments are ignored.
+    """
+    series = np.array(series)
+
     if len(series.shape) == 2:
         nseries = series.shape[1]
         nr, nc = plot_grid_shape(nseries)
