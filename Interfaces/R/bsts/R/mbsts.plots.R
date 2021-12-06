@@ -28,7 +28,7 @@ plot.mbsts <- function(x,
     PlotMbstsSeriesMeans(x, ...)
   } else if (y == "help") {
     help("plot.mbsts", package = "bsts", help_type = "html")
-  } 
+  }
 }
 
 ###---------------------------------------------------------------------------
@@ -36,15 +36,16 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
                                  series.id = NULL,
                                  same.scale = TRUE,
                                  burn = SuggestBurn(.1, mbsts.object),
-                                 time, 
+                                 time,
                                  show.actuals = TRUE,
                                  ylim = NULL,
-                                 gap = 0, 
+                                 gap = 0,
+                                 cex.actuals = 0.2,
                                  ...) {
   ## Plot the conditional mean of each series given all observed data.  The
   ## conditional mean includes contributions from shared latent state,
   ## regression effects, and series-specific latent state, if present.
-  ## 
+  ##
   ## Args:
   ##   mbsts.object:  The model object to be plotted.
   ##   series.id: Which series should be plotted?  An integer, logical, or
@@ -58,6 +59,8 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   ##   ylim: Limits on the vertical axis.  If ylim is supplied same.scale is
   ##     automatically set to TRUE.
   ##   gap:  The number of lines of space to leave between plots.
+  ##   cex.actuals: The character expansion factor to use when plotting the
+  ##     original data.
   ##   ...:  Extra arguments passed to PlotDynamicDistribution.
   stopifnot(inherits(mbsts.object, "mbsts"))
   original <- LongToWide(mbsts.object$original,
@@ -107,12 +110,12 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
       }
     }
   }
-  
+
   series.specific.effects <-
     series.specific.effects[, series.id, , drop = FALSE]
 
   state.means <- state.means + regression.effects + series.specific.effects
-  
+
   nplots <- ncol(original)
   plot.rows <- max(1, floor(sqrt(nplots)))
   plot.cols <- ceiling(nplots / plot.rows)
@@ -120,7 +123,7 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   opar <- par(mfrow = c(plot.rows, plot.cols), mar = rep(gap / 2, 4),
     oma = c(4, 4, 4, 4))
   on.exit(par(opar))
-  
+
   m <- 0
   scale.individually <- !same.scale && is.null(ylim)
   if (!is.null(ylim)) {
@@ -128,13 +131,13 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
   }
   if (is.null(ylim)) {
     ylim <- range(original, state.means, na.rm = TRUE)
-  } 
+  }
 
   for (j in 1:plot.rows) {
     for (k in 1:plot.cols) {
       m <- m + 1
       if (m > nplots) {
-        
+
       } else {
         if (scale.individually) {
           ylim <- range(original[, m], state.means[, m, ], na.rm = TRUE)
@@ -163,7 +166,7 @@ PlotMbstsSeriesMeans <- function(mbsts.object,
         }
 
         if (show.actuals) {
-          points(time, original[, m], pch = 20, col = "blue", cex = .2)
+          points(time, original[, m], pch = 20, col = "blue", cex = cex.actuals)
         }
       }
     }
@@ -184,9 +187,9 @@ plot.mbsts.prediction <- function(x,
                                   interval.width = 2,
                                   style = c("dynamic", "boxplot"),
                                   ylim = NULL,
-                                  series.id = NULL, 
+                                  series.id = NULL,
                                   same.scale = TRUE,
-                                  gap = 0, 
+                                  gap = 0,
                                   ...) {
   ## Plot the results of an mbsts prediction.
   ##
@@ -234,7 +237,7 @@ plot.mbsts.prediction <- function(x,
     y <- series.id
   }
   series.id <- y
-  
+
   if (is.null(series.id)) {
     series.id <- 1:nseries
   } else {
@@ -249,7 +252,7 @@ plot.mbsts.prediction <- function(x,
         stop("Some series names did not match.")
       }
     }
-    
+
     prediction$mean <- prediction$mean[series.id, , drop = FALSE]
     prediction$median <- prediction$median[series.id, , drop = FALSE]
     prediction$distribution <- prediction$distribution[, series.id, ,
@@ -302,7 +305,7 @@ plot.mbsts.prediction <- function(x,
     original.ylim <- ylim
   }
 
-  series <- 0  
+  series <- 0
   pred.time <- tail(time, 1) + (1:n1) * deltat
   for (row in 1:plot.rows) {
     for (col in 1:plot.cols) {
@@ -329,7 +332,7 @@ plot.mbsts.prediction <- function(x,
         } else {
           pred.time <- tail(time, 1) + (1:n1) * deltat
         }
-        
+
         style <- match.arg(style)
         if (style == "dynamic") {
           PlotDynamicDistribution(curves = prediction$distribution[, series, ],
@@ -375,4 +378,3 @@ plot.mbsts.prediction <- function(x,
     }
   }
 }
-  

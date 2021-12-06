@@ -20,7 +20,7 @@
 #include "r_interface/boom_r_tools.hpp"
 #include "r_interface/list_io.hpp"
 #include "Models/StateSpace/StateSpaceModelBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 
 #include "timestamp_info.h"
 

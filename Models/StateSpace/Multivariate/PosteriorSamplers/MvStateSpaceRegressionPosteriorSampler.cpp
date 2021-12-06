@@ -16,7 +16,7 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "Models/StateSpace/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 
@@ -55,7 +55,7 @@ namespace BOOM {
 
     // Sample regression parameters and residual variance parameters.
     model_->observation_model()->sample_posterior();
-      
+
     // Sample parameters for the shared state models.
     for (int s = 0; s < model_->number_of_state_models(); ++s) {
       model_->state_model(s)->sample_posterior();
@@ -71,13 +71,13 @@ namespace BOOM {
         }
       }
     }
-    
+
     // The complete data sufficient statistics for the observation model and the
     // state models are updated when calling impute_state.  The non-state latent
     // data should be imputed immediately before that, so the complete data
     // sufficient statistics reflect all the latent data correctly.
     impute_nonstate_latent_data();
-    
+
     // End with a call to impute_state() so that the internal state of
     // the Kalman filter matches up with the parameter draws.
     model_->impute_state(rng());
@@ -99,5 +99,5 @@ namespace BOOM {
     }
     return ans;
   }
-    
+
 }  // namespace BOOM

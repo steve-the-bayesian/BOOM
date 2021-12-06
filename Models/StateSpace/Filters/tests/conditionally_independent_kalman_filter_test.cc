@@ -3,7 +3,8 @@
 
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModels/LocalLevelStateModel.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Multivariate/StateModels/SharedLocalLevel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 
 
 #include "LinAlg/DiagonalMatrix.hpp"
@@ -23,7 +24,7 @@ namespace {
     Cholesky chol(v);
     return chol.is_pos_def();
   }
-  
+
   class ConditionallyIndependentKalmanFilterTest : public ::testing::Test {
    protected:
     ConditionallyIndependentKalmanFilterTest() {
@@ -39,7 +40,7 @@ namespace {
     // The notation used here follows Durbin and Koopman.
     int ydim = 4;
     int state_dim = 2;
-    
+
     // Residual variance matrix for observed data given state.
     SpdMatrix H(ydim, 0.0);
     H.diag() = pow(rnorm_vector(ydim, 0, 1), 2);
@@ -51,7 +52,7 @@ namespace {
     P.randomize();
 
     // Observation coefficients.
-    Matrix Z(ydim, state_dim);  
+    Matrix Z(ydim, state_dim);
     Z.randomize();
 
     // F is the forecast variance: F = H + ZPZ'
@@ -67,7 +68,7 @@ namespace {
 
     // This is the check we've been building towards.
     EXPECT_TRUE(MatrixEquals(Finv, Finv_direct));
-    
+
     //-------------------------------------------------------------------------
     // Now verify the "Matrix determinant lemma", used to compute log det(Finv).
     // Check the intermediate calculations used to implement the binomial
@@ -92,7 +93,7 @@ namespace {
 
     // Make sure DiagonalMatrix computeds logdet correctly.
     EXPECT_NEAR(Hinv.logdet(), sum(log(Hinv.diag())), 1e-8);
-    
+
     // Check the log determinant of Finv.  This completes the check of the
     // matrix determinant lemma.
     EXPECT_NEAR(
@@ -126,7 +127,8 @@ namespace {
     NEW(MultivariateStateSpaceRegressionModel, model)(0, ydim);
     for (int i = 0; i < sample_size; ++i) {
       for (int j = 0; j < ydim; ++j) {
-        NEW(TimeSeriesRegressionData, data_point)(data(i, j), Vector(1, 1.0), j, i);
+        NEW(MultivariateTimeSeriesRegressionData, data_point)(
+            data(i, j), Vector(1, 1.0), j, i);
         model->add_data(data_point);
       }
     }
@@ -139,7 +141,7 @@ namespace {
     state_model->coefficient_model()->set_Beta(Beta);
     state_model->innovation_model(0)->set_sigsq(20.1);
     state_model->innovation_model(1)->set_sigsq(1.8);
-    
+
     model->add_state(state_model);
     Vector sigma_obs(ydim);
     sigma_obs.randomize();
@@ -152,7 +154,7 @@ namespace {
     state_mean.randomize();
 
     Selector observed(ydim, true);
-    
+
     // marg0_lo will use the low_dimensional update.
     Kalman::ConditionallyIndependentMarginalDistribution marg0_lo(
         model.get(), nullptr, 0);
@@ -178,7 +180,7 @@ namespace {
         << marg0_lo.scaled_prediction_error() << endl
         << "high dimensional scaled_prediction_error at time 0: " << endl
         << marg0_hi.scaled_prediction_error() << endl;
-        
+
     EXPECT_NEAR(marg0_hi.forecast_precision_log_determinant(),
                 marg0_lo.forecast_precision_log_determinant(),
                 1e-4);
@@ -189,15 +191,15 @@ namespace {
     EXPECT_TRUE(is_pos_def(marg0_hi.state_variance()));
 
     //--------------------------------------------------------------------------
-    // 
-    
+    //
+
     Kalman::ConditionallyIndependentMarginalDistribution marg1_lo(
         model.get(), &marg0_lo, 1);
     marg1_lo.set_high_dimensional_threshold_factor(1000);
     marg1_lo.set_state_mean(marg0_lo.state_mean());
     marg1_lo.set_state_variance(marg0_lo.state_variance());
     marg1_lo.update(data.row(1), observed);
-    
+
     Kalman::ConditionallyIndependentMarginalDistribution marg1_hi(
         model.get(), &marg0_hi, 1);
     marg1_hi.set_high_dimensional_threshold_factor(1000);
@@ -230,7 +232,7 @@ namespace {
                 1e-7);
     EXPECT_TRUE(MatrixEquals(marg0_hi.kalman_gain(),
                              marg0_lo.kalman_gain()));
-    
+
   }
 
 }  // namespace

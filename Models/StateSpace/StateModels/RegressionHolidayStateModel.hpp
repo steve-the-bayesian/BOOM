@@ -26,6 +26,9 @@
 #include "Models/Policies/ManyParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/NullPriorPolicy.hpp"
+
+#include "Models/StateSpace/StateSpaceModelBase.hpp"
+
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseVector.hpp"
 #include "Models/StateSpace/StateModels/Holiday.hpp"
@@ -313,7 +316,7 @@ namespace BOOM {
     }
 
     const RegressionHolidayBaseImpl &impl() const {return impl_;}
-    
+
    private:
     RegressionHolidayBaseImpl impl_;
     std::vector<Ptr<VectorParams>> holiday_mean_contributions_;
@@ -333,13 +336,13 @@ namespace BOOM {
                                       ScalarStateSpaceModelBase *model,
                                       const Ptr<GaussianModel> &prior,
                                       RNG &seeding_rng = GlobalRng::rng);
-    
+
     ScalarRegressionHolidayStateModel *clone()const override {
       return new ScalarRegressionHolidayStateModel(*this);
     }
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
-   
+
    private:
     const ScalarStateSpaceModelBase *model_;
   };
@@ -355,7 +358,7 @@ namespace BOOM {
         DynamicInterceptRegressionModel *model,
         const Ptr<GaussianModel> &prior,
         RNG &seeding_rng = GlobalRng::rng);
-    
+
     DynamicInterceptRegressionHolidayStateModel *clone() const override {
       return new DynamicInterceptRegressionHolidayStateModel(*this);
     }
@@ -363,7 +366,7 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> observation_coefficients(
         int t,
         const StateSpace::TimeSeriesRegressionData &data_point) const override;
-    
+
     void observe_state(const ConstVectorView &then, const ConstVectorView &now,
                        int time_now) override;
     bool is_pure_function_of_time() const override {
@@ -373,7 +376,7 @@ namespace BOOM {
    private:
     DynamicInterceptRegressionModel *model_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_REGRESSION_HOLIDAY_STATE_MODEL_HPP_

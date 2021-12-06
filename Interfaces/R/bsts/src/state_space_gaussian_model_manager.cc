@@ -40,7 +40,7 @@ ScalarStateSpaceModelBase * GaussianModelManagerBase::CreateModel(
   // It is only possible to compute log likelihood for Gaussian models.
   io_manager->add_list_element(
       new BOOM::NativeUnivariateListElement(
-          new LogLikelihoodCallback(model),
+          new LogLikelihoodCallback<ScalarStateSpaceModelBase>(model),
           "log.likelihood",
           nullptr));
   return model;
@@ -129,7 +129,7 @@ void StateSpaceModelManager::AddData(
   if (response.empty()) {
     report_error("Empty response vector.");
   }
-  
+
   if (!response_is_observed.empty()
       && (response.size() != response_is_observed.size())) {
     report_error("Vectors do not match in StateSpaceModelManager::AddData.");
