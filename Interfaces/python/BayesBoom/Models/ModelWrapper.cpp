@@ -43,7 +43,10 @@ namespace BayesBoom {
 
 
     py::class_<PriorPolicy, Model, Ptr<PriorPolicy>>(boom, "PriorPolicy")
-        .def("set_method", &PriorPolicy::set_method,
+        .def("set_method",
+             [](PriorPolicy &model, PosteriorSampler *sampler) {
+               model.set_method(sampler);
+             },
              py::arg("sampler"),
              "Set 'sampler' as a posteriors sampling method.  More than one\n"
              "sampler can be set for the model (e.g. one for the mean and one \n"

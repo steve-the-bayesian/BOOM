@@ -23,12 +23,14 @@ namespace BayesBoom {
   void UniformModel_def(py::module &m);
   void MvnModel_def(py::module &);
   void WishartModel_def(py::module &);
+
   void GlmModel_def(py::module &);
   void Imputation_def(py::module &);
   void TimeSeries_def(py::module &);
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
+  void DirichletProcessMvn_def(py::module &);
 
   void test_utils_def(py::module &);
 
@@ -71,6 +73,8 @@ namespace BayesBoom {
     Imputation_def(boom);
 
     DynamicRegressionModel_def(boom);
+
+    DirichletProcessMvn_def(boom);
 
     test_utils_def(boom);
   }  // Module BOOM

@@ -21,7 +21,7 @@ namespace BayesBoom {
              py::arg("variance_estimate"),
              "Args:\n\n"
              "  df: The sample size parameter.  This must be larger than the "
-             "dimension of 'sumsq'.\n"
+             "dimension of 'variance_estimate'.\n"
              "  variance_estimate:  A symmetric positive definite matrix "
              "representing a variance estimate.\n")
         .def("__repr__",

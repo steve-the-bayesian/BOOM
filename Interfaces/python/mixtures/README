@@ -1,0 +1,3 @@
+This is the python version of Steve Scott's "BoomMix" R library. It uses the
+BOOM C++ library to implement finite mixture models, dirichlet process mixture
+models, hidden Markov models, and Markov modulated Poisson processes.

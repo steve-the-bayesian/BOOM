@@ -48,6 +48,7 @@ mkdir -p $PACKAGE_DIR
 cp -r Interfaces/python/R/BayesBoom/R $PACKAGE_DIR/R
 cp -r Interfaces/python/bsts/BayesBoom/bsts $PACKAGE_DIR/bsts
 cp -r Interfaces/python/dynreg/BayesBoom/dynreg $PACKAGE_DIR/dynreg
+cp -r Interfaces/python/mixtures/BayesBoom/mixtures $PACKAGE_DIR/mixtures
 cp -r Interfaces/python/impute/BayesBoom/impute $PACKAGE_DIR/impute
 cp -r Interfaces/python/spikeslab/BayesBoom/spikeslab $PACKAGE_DIR/spikeslab
 cp -r Interfaces/python/test_utils/BayesBoom/test_utils $PACKAGE_DIR/test_utils

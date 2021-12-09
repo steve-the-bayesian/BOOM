@@ -11,6 +11,7 @@ from .R import (
     first_true,
     paste,
     paste0,
+    print_timestamp,
     recycle,
     remove_common_prefix,
     remove_common_suffix,
@@ -22,8 +23,10 @@ from .bayes import (
     DoubleModel,
     GaussianSuf,
     MvnPrior,
+    MvnGivenSigma,
     NormalPrior,
     UniformPrior,
+    WishartPrior,
     SdPrior,
 )
 
