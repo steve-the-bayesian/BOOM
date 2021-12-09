@@ -94,6 +94,10 @@ DirichletProcessMvn <- function(data,
     seed,
     PACKAGE = "BoomMix")
 
+  ans$concentration.parameter <- concentration.parameter
+  ans$mean.base.measure <- mean.base.measure
+  ans$variance.base.measure <- variance.base.measure
+
   class(ans) <- "DirichletProcessMvn"
   return(ans)
 }
@@ -106,7 +110,8 @@ summary.DirichletProcessMvn <- function(object, burn = NULL, ...) {
   ##
   ## A summary describing the model.
   ans <- list()
-  ans$cluster.size.distribution  <- sapply(ans, function(x) nrow(x$parameters$mean))
+  ans$cluster.size.distribution  <- DpMvnClusterSizeDistribution(object, burn)
+  return(ans)
 }
 
 DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
