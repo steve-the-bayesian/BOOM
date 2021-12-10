@@ -12,7 +12,7 @@ MAJOR = 0
 MINOR = 0
 
 # Bump the patch version when making bug fixes.
-PATCH = 12
+PATCH = 13
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
