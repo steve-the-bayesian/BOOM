@@ -91,4 +91,28 @@ namespace {
     EXPECT_DOUBLE_EQ(*it, arr[it.position()]);
   }
 
+  TEST_F(ArrayTest, MatrixConstructor) {
+    Matrix m1(2, 3);
+    Matrix m2(2, 3);
+    m1.randomize();
+    m2.randomize();
+
+    std::cout << "building the array ...\n";
+
+    Array array(std::vector<Matrix>{m1, m2});
+    std::cout << "checking stuff ...\n";
+    EXPECT_EQ(array.ndim(), 3);
+    EXPECT_EQ(array.dim(0), 2);
+    EXPECT_EQ(array.dim(1), 2);
+    EXPECT_EQ(array.dim(2), 3);
+
+    std::cout << "checking array entries\n";
+    for (int j = 0; j < 2; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        EXPECT_DOUBLE_EQ(array(0, j, k), m1(j, k));
+        EXPECT_DOUBLE_EQ(array(1, j, k), m2(j, k));
+      }
+    }
+  }
+
 }  // namespace
