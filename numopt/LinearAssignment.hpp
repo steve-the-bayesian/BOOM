@@ -1,3 +1,5 @@
+#ifndef BOOM_NUMOPT_LINEAR_ASSIGNMENT_HPP_
+#define BOOM_NUMOPT_LINEAR_ASSIGNMENT_HPP_
 /*
   Copyright (C) 2005-2021 Steven L. Scott
 
@@ -33,9 +35,9 @@ namespace BOOM {
 
     // Args:
     //   cost_matrix: Element (i, j) is the cost if row i performs task j.
-    LinearAssignment(const Matrix &cost_matrix) {
-      cost_matrix_ = cost_matrix;
-    }
+    explicit LinearAssignment(const Matrix &cost_matrix)
+        : cost_matrix_(cost_matrix)
+    {}
 
     // Args:
     //   assignment: The total cost of assigning task assignment[i] to worker i
@@ -82,3 +84,4 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
+#endif // BOOM_NUMOPT_LINEAR_ASSIGNMENT_HPP_
