@@ -32,9 +32,10 @@ SOFTWARE.
 
 #include <limits>
 #include <memory>
+#include <vector>
 
 inline std::tuple<double, double, long, long>
-find_umins_regular(long dim, long i, const double *assign_cost,
+find_umins(long dim, long i, const double *assign_cost,
                    const double *v) {
   const double *local_cost = &assign_cost[i * dim];
   double umin = local_cost[0] - v[0];
@@ -58,11 +59,6 @@ find_umins_regular(long dim, long i, const double *assign_cost,
   return std::make_tuple(umin, usubmin, j1, j2);
 }
 
-inline std::tuple<double, double, long, long>
-find_umins(long dim, long i, const double *assign_cost, const double *v) {
-    return find_umins_regular(dim, i, assign_cost, v);
-}
-
 /// @brief Exact Jonker-Volgenant algorithm.
 /// @param dim in problem size
 /// @param assign_cost in cost matrix
@@ -78,11 +74,15 @@ double lap(int dim,
            long *colsol,
            double *u,
            double *v) {
-  auto free = std::unique_ptr<long[]>(new long[dim]);     // list of unassigned rows.
-  auto collist = std::unique_ptr<long[]>(new long[dim]);  // list of columns to be scanned in various ways.
-  auto matches = std::unique_ptr<long[]>(new long[dim]);  // counts how many times a row could be assigned.
-  auto d = std::unique_ptr<double[]>(new double[dim]);      // 'cost-distance' in augmenting path calculation.
-  auto pred = std::unique_ptr<long[]>(new long[dim]);     // row-predecessor of column in augmenting/alternating path.
+
+  // SLS: Replaced unique_ptr arrays with std::vector.
+  //      Renamed 'free' with free_rows to avoid masking C's 'free', which might
+  //      be expressed as a macro.
+  std::vector<long> free_rows(dim);    // list of unassigned rows.
+  std::vector<long> collist(dim);      // list of columns to be scanned in various ways.
+  std::vector<long> matches(dim);      // counts how many times a row could be assigned.
+  std::vector<double> d(dim);          // 'cost-distance' in augmenting path calculation.
+  std::vector<long> pred(dim);         // row-predecessor of column in augmenting/alternating path.
 
   // init how many times a row will be assigned in the column reduction.
   #if _OPENMP >= 201307
@@ -120,7 +120,7 @@ double lap(int dim,
   for (long i = 0; i < dim; i++) {
     const double *local_cost = &assign_cost[i * dim];
     if (matches[i] == 0) {  // fill list of unassigned 'free' rows.
-      free[numfree++] = i;
+      free_rows[numfree++] = i;
     } else if (matches[i] == 1) {  // transfer reduction from rows that are assigned once.
       long j1 = rowsol[i];
       double min = std::numeric_limits<double>::max();
@@ -143,7 +143,7 @@ double lap(int dim,
     long prevnumfree = numfree;
     numfree = 0;  // start list of rows still free after augmenting row reduction.
     while (k < prevnumfree) {
-      long i = free[k++];
+      long i = free_rows[k++];
 
       // find minimum and second minimum reduced cost over columns.
       double umin, usubmin;
@@ -172,11 +172,11 @@ double lap(int dim,
         if (vj1_lowers) {
           // put in current k, and go back to that k.
           // continue augmenting path i - j1 with i0.
-          free[--k] = i0;
+          free_rows[--k] = i0;
         } else {
           // no further augmenting reduction possible.
           // store i0 in list of free rows for next phase.
-          free[numfree++] = i0;
+          free_rows[numfree++] = i0;
         }
       }
     }
@@ -185,7 +185,7 @@ double lap(int dim,
   // AUGMENT SOLUTION for each free row.
   for (long f = 0; f < numfree; f++) {
     long endofpath;
-    long freerow = free[f];       // start row of augmenting path.
+    long freerow = free_rows[f];       // start row of augmenting path.
 
     // Dijkstra shortest path algorithm.
     // runs until unassigned column added to shortest path tree.

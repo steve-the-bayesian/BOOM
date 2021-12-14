@@ -57,7 +57,7 @@ NUMOPT_SRCS = glob(["numopt/*.cpp"])
 
 NUMOPT_HDRS = glob([
     "numopt/*.hpp",
-    "numopt/linear_assignment/*.h",
+    "numopt/linear_assignment/*.hpp",
 ])
 
 STATS_SRCS = glob(["stats/*.cpp"])

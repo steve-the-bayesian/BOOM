@@ -18,8 +18,6 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "numopt/linear_assignment/lap.h"
-
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Vector.hpp"
 
@@ -51,31 +49,15 @@ namespace BOOM {
     }
 
     // Find the optimal solution.
-    double solve() {
-      int dim = cost_matrix_.nrow();
-      row_solution_.resize(dim);
-      col_solution_.resize(dim);
-      Vector row_dual_variables(dim);
-      Vector col_dual_variables(dim);
-
-      Matrix cost = cost_matrix_.transpose();
-
-      return lap(
-          cost.nrow(),
-          cost.data(),
-          row_solution_.data(),
-          col_solution_.data(),
-          row_dual_variables.data(),
-          col_dual_variables.data());
-    }
+    double solve();
 
     // The optimal assignment of tasks to workers.  Assigning task
     // row_solution[j] to worker j minimizes cost.
-    const std::vector<long> &row_solution() {return row_solution_;}
+    const std::vector<long> &row_solution() const {return row_solution_;}
 
     // The optimal assignment of workers to tasks.  Assigning task j to
     // col_solution[j] minimizes costs.
-    const std::vector<long> &col_solution() {return col_solution_;}
+    const std::vector<long> &col_solution() const {return col_solution_;}
 
    private:
     Matrix cost_matrix_;
