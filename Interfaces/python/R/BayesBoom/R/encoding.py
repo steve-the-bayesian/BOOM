@@ -3,6 +3,15 @@ import pandas as pd
 from abc import ABC, abstractmethod
 
 
+def _unique_levels(levels):
+    ans = []
+    used = set()
+    for level in levels:
+        if level not in used:
+            ans.append(level)
+            used.add(level)
+    return ans
+
 # ===========================================================================
 class Encoder(ABC):
     """
@@ -142,8 +151,18 @@ class EffectEncoder(MainEffectEncoder):
     """
 
     def __init__(self, variable_name, levels, baseline_level=None):
+        """
+        Args:
+          variable_name: The name of the data column from which to take the
+            data when encoding a data set.
+          levels: The values of data to expect in the input data.  Unrecognized
+            levels are encoded as a vector of all 0's.
+          baseline_level: The entry in 'levels' to use as the baseline.  This
+            level will be encoded as all -1's.  The default (None) is to take
+            levels[-1] as the baseline.
+        """
         super().__init__(variable_name)
-        self._levels = self._unique_levels(levels)
+        self._levels = _unique_levels(levels)
         assert isinstance(self._levels, list)
 
         if baseline_level is None:
@@ -173,16 +192,45 @@ class EffectEncoder(MainEffectEncoder):
     def encoded_variable_names(self):
         return [self.variable_name + "." + str(x) for x in self._levels]
 
-    @staticmethod
-    def _unique_levels(levels):
-        ans = []
-        used = set()
-        for level in levels:
-            if level not in used:
-                ans.append(level)
-                used.add(level)
+
+# ===========================================================================
+class OneHotEncoder(MainEffectEncoder):
+    """
+    An encoder that produces dummy variables
+    """
+    def __init__(self, variable_name, levels, baseline):
+        super().__init__(variable_name)
+        self._levels = _unique_levels(levels)
+        self._baseline = baseline
+        if self._baseline is not None:
+            if self._baseline not in self._levels:
+                raise Exception("Baseline value must be included in 'levels'.")
+
+    @property
+    def dim(self):
+        if self._baseline is not None:
+            return len(self._levels) - 1
+        else:
+            return len(self._levels)
+
+    def encode(self, factor):
+        if not isinstance(factor, (np.ndarray, pd.Series)):
+            factor = np.array(factor)
+        nobs = len(factor)
+        levels = [x for x in self._levels if x != self._baseline]
+        dim = self.dim
+        assert dim == len(levels)
+
+        ans = np.zeros((nobs, dim), dtype=float)
+        for i in range(dim):
+            ans[:, i] = (factor == levels[i]).astype(float)
+
         return ans
 
+    @property
+    def encoded_variable_names(self):
+        return [self.variable_name + "." + str(x)
+                for x in self._levels if x != self._baseline]
 
 # ===========================================================================
 class IdentityEncoder(MainEffectEncoder):

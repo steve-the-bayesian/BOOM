@@ -38,6 +38,7 @@ from .autoclean import AutoClean
 
 from .encoding import (
     EffectEncoder,
+    OneHotEncoder,
     IdentityEncoder,
     InteractionEncoder,
     DatasetEncoder,

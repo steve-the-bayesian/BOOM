@@ -54,6 +54,19 @@ class TestEffectEncoder(unittest.TestCase):
         self.assertTrue(np.allclose(enc, expected))
 
 
+class TestOneHotEncoder(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_encoding(self):
+        levels = ["Red", "Blue", "Green"]
+        encoder = R.OneHotEncoder("blah", levels, baseline="Green")
+        self.assertEqual(2, encoder.dim)
+        x = ["Red", "Red", "Green", "Blue"]
+        X = encoder.encode(x)
+        self.assertEqual((4, 2), X.shape)
+
+
 class TestDatasetEncoder(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
