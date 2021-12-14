@@ -265,6 +265,7 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
     + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")
+    + glob(BOOM_DIR + "pybind11/numopt/*.cpp")
     + glob(BOOM_DIR + "pybind11/cpputil/*.cpp")
     + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
     + glob(BOOM_DIR + "pybind11/test_utils/*.cpp")

@@ -14,6 +14,7 @@ namespace BayesBoom {
   void cpputil_def(py::module &);
   void LinAlg_def(py::module &);
   void stats_def(py::module &);
+  void numopt_def(py::module &);
   void Model_def(py::module &);
   void Data_def(py::module &);
   void Parameter_def(py::module &);
@@ -55,6 +56,7 @@ namespace BayesBoom {
     // defined after Models, where the Data class is defined.
 
     stats_def(boom);
+    numopt_def(boom);
 
     Model_def(boom);
     Parameter_def(boom);
