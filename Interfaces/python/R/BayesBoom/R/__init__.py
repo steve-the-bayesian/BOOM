@@ -69,6 +69,7 @@ from .plots import (
     )
 
 from .probability import (
+    dmvn,
     dnorm, pnorm, qnorm, rnorm,
     dgamma, pgamma, qgamma, rgamma,
     rmarkov,

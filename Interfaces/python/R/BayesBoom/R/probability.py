@@ -138,3 +138,89 @@ def rmarkov(n: int, P: np.ndarray, pi0=None):
     for i in range(1, n):
         ans[i] = np.random.choice(range(S), p=P[ans[i-1], :])
     return(ans)
+
+
+def dmvn(y, mu, Sigma, inv=False, logscale=False):
+    """
+    Multivariate normal density.
+
+    Args:
+      y: Either a vector or a 2-D array.  If a vector is passed then the output
+        is a scalar density value.  If a matrix is passed, the return value is
+        a vector with each element giving the density for the corresponding row
+        of y.
+      mu: If y is a vector, mu must be a vector of the same dimension.  If y is
+       a matrix, then mu is either a vector with lenght matching the number of
+       columns in y, or a matrix with the same shape as y.
+      Sigma: If y is a vector Sigma is a symmetric positive definite matrix
+        matching the length of y.  If y is a matrix then either Sigma is a
+        single matrix matching the length of y, or a 3-way array with first
+        dimension matching the first dimension of y, and Sigma[i, :, :] giving
+        the variance of y[i, :].
+      inv: If True then Sigma represents the precision of y (the inverse
+        variance).  If False then Sigma represents the variance.
+      logscale: If True then the log of the density is returned.  If False then
+        the regular density value is returned.
+    """
+
+    y = np.array(y)
+    if len(y.shape) > 2:
+        raise Exception("dmvn requires either a vector or matrix input for y.")
+    elif len(y.shape) == 1:
+        y = y.reshape((1, -1))
+    nobs = y.shape[0]
+    dim = y.shape[1]
+
+    mu = np.array(mu)
+    if len(mu.shape) > 2:
+        raise Exception("dmvn requires either a vector or matrix input for mu.")
+    if len(mu.shape) == 1:
+        mu = mu.reshape((1, -1))
+    if mu.shape[0] == 1 and nobs > 1:
+        mu = np.array([mu.ravel()] * nobs)
+    if mu.shape[0] != nobs:
+        raise Exception("The shapes of mu and y must match.")
+
+    if len(Sigma.shape) > 4:
+        raise Exception(
+            "dmvn requires either a matrix or 3-way array for Sigma")
+    if len(Sigma.shape) < 2:
+        raise Exception("Sigma can't be a vector in dmvn.")
+    if len(Sigma.shape) == 2:
+        if not np.allclose(Sigma, Sigma.T):
+            raise Exception(
+                "Sigma must be a symmetric positive definite matrix.")
+        if not inv:
+            Sigma = np.linalg.inv(Sigma)
+            inv = True
+        ldsi = np.array([np.linalg.slogdet(Sigma)[1]] * nobs)
+        Sigma = np.array([Sigma] * nobs)
+    if len(Sigma.shape) != 3:
+        raise Exception("Something with wrong with Sigma")
+    if Sigma.shape[0] == 1 and nobs > 1:
+        if not inv:
+            Sigma = np.linalg.inverse(Sigma[0, :, :])
+            inv = True
+        else:
+            Sigma = Sigma[0, :, :]
+        ldsi = np.array([np.linalg.slogdet(Sigma)] * nobs)[1]
+        Sigma = np.array([Sigma] * nobs)
+    if Sigma.shape[0] != nobs or Sigma.shape[1] != dim or Sigma.shape[2] != dim:
+        raise Exception("The shapes of y and Sigma must match.")
+    if not inv:
+        Sigma = np.linalg.inv(Sigma)
+        ldsi = np.linalg.slogdet(Sigma)[1]
+
+    log2pi = 1.83787706641
+    residual = y - mu
+
+    qform = np.empty(nobs)
+    for i in range(nobs):
+        qform[i] = residual[i, :] @ Sigma[i, :, :] @ residual[i, :].ravel()
+
+    ans = 0.5 * (-dim * log2pi + ldsi - qform)
+    if nobs == 1:
+        ans = float(ans)
+    if logscale:
+        return ans
+    return np.exp(ans)

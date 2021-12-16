@@ -65,6 +65,13 @@ class TestOneHotEncoder(unittest.TestCase):
         x = ["Red", "Red", "Green", "Blue"]
         X = encoder.encode(x)
         self.assertEqual((4, 2), X.shape)
+        expected = np.array([
+            [1.0, 0.0],
+            [1.0, 0.0],
+            [0.0, 0.0],
+            [0.0, 1.0]
+        ])
+        self.assertTrue(np.allclose(X, expected))
 
 
 class TestDatasetEncoder(unittest.TestCase):
