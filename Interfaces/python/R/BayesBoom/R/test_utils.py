@@ -28,7 +28,7 @@ class TestUtilities(unittest.TestCase):
         self.assertFalse(R.is_all_numeric(non_numeric))
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

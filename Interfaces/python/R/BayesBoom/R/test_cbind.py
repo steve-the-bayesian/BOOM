@@ -55,7 +55,7 @@ class TestCbind(unittest.TestCase):
         self.assertTrue(np.allclose(qux.iloc[:, 7], d.iloc[:, 0]))
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

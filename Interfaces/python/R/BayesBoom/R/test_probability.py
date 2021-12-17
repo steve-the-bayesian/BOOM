@@ -1,5 +1,5 @@
 import unittest
-# from BayesBoom.R import dmvn
+from BayesBoom.R import dmvn
 import numpy as np
 import scipy.stats as ss
 
@@ -41,7 +41,7 @@ class TestDmvn(unittest.TestCase):
         self.assertAlmostEqual(prob[1], dmvn(y[1, :], mu, Sigma_array[1, :, :]))
         self.assertAlmostEqual(prob[2], dmvn(y[2, :], mu, Sigma_array[2, :, :]))
 
-        mu_array = np.random.randn(4,3)
+        mu_array = np.random.randn(4, 3)
         prob = dmvn(y[:4, :], mu_array, Sigma)
         self.assertAlmostEqual(prob[0], dmvn(y[0, :], mu_array[0, :], Sigma))
         self.assertAlmostEqual(prob[1], dmvn(y[1, :], mu_array[1, :], Sigma))
@@ -49,7 +49,7 @@ class TestDmvn(unittest.TestCase):
         self.assertAlmostEqual(prob[3], dmvn(y[3, :], mu_array[3, :], Sigma))
 
 
-_debug_mode = True
+_debug_mode = False
 
 if _debug_mode:
     import pdb  # noqa

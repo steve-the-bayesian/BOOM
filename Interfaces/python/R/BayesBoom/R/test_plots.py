@@ -110,7 +110,7 @@ class TestPlots(unittest.TestCase):
             fig.show()
 
 
-_debug_mode = True
+_debug_mode = False
 _show_figs = _debug_mode
 
 
