@@ -1,5 +1,5 @@
 import unittest
-from BayesBoom.R import dmvn
+# from BayesBoom.R import dmvn
 import numpy as np
 import scipy.stats as ss
 

@@ -30,6 +30,8 @@ from .bayes import (
     SdPrior,
 )
 
+from .cbind import cbind
+
 from .density import Density
 
 from .data_table import to_data_table, to_data_frame

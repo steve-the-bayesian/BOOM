@@ -59,7 +59,6 @@ def qnorm(x, mean=0, sd=1, lower=True, log=False):
 def rnorm(n, mean=0, sd=1):
     """
     Random deviates from the normal distribution.
-
     """
 
     return np.random.randn(n) * sd + mean
@@ -214,9 +213,7 @@ def dmvn(y, mu, Sigma, inv=False, logscale=False):
     log2pi = 1.83787706641
     residual = y - mu
 
-    qform = np.empty(nobs)
-    for i in range(nobs):
-        qform[i] = residual[i, :] @ Sigma[i, :, :] @ residual[i, :].ravel()
+    qform = np.einsum('ij,ijk,ik -> i', residual, Sigma, residual)
 
     ans = 0.5 * (-dim * log2pi + ldsi - qform)
     if nobs == 1:
