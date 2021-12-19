@@ -1,6 +1,29 @@
 import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
+import json
+
+# JSON_ENCODER_REGISTRY associates the name of the (statistical Encoder class
+# with the class object of its JSONEncoder.  This allows an encoder to be
+# instantiated by the name of the statistical class.  For example:
+#     enc = JSON_ENCODER_REGISTRY["EffectEncoder"]()
+JSON_ENCODER_REGISTRY = {}
+JSON_DECODER_REGISTRY = {}
+
+
+def register_encoding_json_encoder(statistical_encoder_name,
+                                   json_encoder_class,
+                                   json_decoder_class):
+    """
+    Add a JSONEncoder/JSONDeocder pair to the registry.
+    """
+    global JSON_ENCODER_REGISTRY
+    global JSON_DECODER_REGISTRY
+    assert issubclass(json_encoder_class, json.JSONEncoder)
+    assert issubclass(json_decoder_class, json.JSONDecoder)
+
+    JSON_ENCODER_REGISTRY[statistical_encoder_name] = json_encoder_class
+    JSON_DECODER_REGISTRY[statistical_encoder_name] = json_decoder_class
 
 
 def _unique_levels(levels):
@@ -11,6 +34,7 @@ def _unique_levels(levels):
             ans.append(level)
             used.add(level)
     return ans
+
 
 # ===========================================================================
 class Encoder(ABC):
@@ -36,7 +60,7 @@ class Encoder(ABC):
     @abstractmethod
     def encoded_variable_names(self):
         """
-        The column names of the predictor matrix produced by 'encode_dataset..
+        The column names of the predictor matrix produced by 'encode_dataset.
         """
 
     @abstractmethod
@@ -103,6 +127,37 @@ class MainEffectEncoder:
 
     def __repr__(self):
         return str(self.__class__.__name__) + " for " + self.variable_name
+
+
+class MainEffectEncoderJsonEncoder(json.JSONEncoder):
+    """
+    A JSONEncoder for a generic MainEffectEncoder object.  The JSONEncoder for
+    the specific object to be decoded must have been registered with
+    register_encoding_json_encoder.
+    """
+    def default(self, obj):
+        if not isinstance(obj, MainEffectEncoder):
+            raise Exception(f"{obj} is not a MainEffectEncoder.")
+        encoder_type = obj.__class__.__name__
+        global JSON_ENCODER_REGISTRY
+        enc = JSON_ENCODER_REGISTRY[encoder_type]()
+        payload = {
+            "type": encoder_type,
+            "encoder": enc.default(obj)
+        }
+        return payload
+
+
+class MainEffectEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        encoder_type = payload["type"]
+        global JSON_DECODER_REGISTRY
+        decoder = JSON_DECODER_REGISTRY[encoder_type]()
+        return decoder.decode_from_dict(payload["encoder"])
 
 
 # ===========================================================================
@@ -193,15 +248,40 @@ class EffectEncoder(MainEffectEncoder):
         return [self.variable_name + "." + str(x) for x in self._levels]
 
 
+class EffectEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        payload = {
+            "variable_name": obj.variable_name,
+            "levels": obj._levels,
+            "baseline": obj._baseline,
+        }
+        return json.loads(json.dumps(payload))
+
+
+class EffectEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        return EffectEncoder(variable_name=payload["variable_name"],
+                             levels=payload["levels"],
+                             baseline_level=payload["baseline"])
+
+
+register_encoding_json_encoder(
+    "EffectEncoder", EffectEncoderJsonEncoder, EffectEncoderJsonDecoder)
+
+
 # ===========================================================================
 class OneHotEncoder(MainEffectEncoder):
     """
     An encoder that produces dummy variables
     """
-    def __init__(self, variable_name, levels, baseline):
+    def __init__(self, variable_name, levels, baseline_level):
         super().__init__(variable_name)
         self._levels = _unique_levels(levels)
-        self._baseline = baseline
+        self._baseline = baseline_level
         if self._baseline is not None:
             if self._baseline not in self._levels:
                 raise Exception("Baseline value must be included in 'levels'.")
@@ -232,6 +312,34 @@ class OneHotEncoder(MainEffectEncoder):
         return [self.variable_name + "." + str(x)
                 for x in self._levels if x != self._baseline]
 
+
+class OneHotEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        payload = {
+            "variable_name": obj.variable_name,
+            "levels": obj._levels,
+            "baseline": obj._baseline
+        }
+        return json.loads(json.dumps(payload))
+
+
+class OneHotEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        payload = json.loads(json_string)
+        return self.decode_from_dict(payload)
+
+    def decode_from_dict(self, payload):
+        return OneHotEncoder(
+            variable_name=payload["variable_name"],
+            levels=payload["levels"],
+            baseline_level=payload["baseline"]
+        )
+
+
+register_encoding_json_encoder(
+    "OneHotEncoder", OneHotEncoderJsonEncoder, OneHotEncoderJsonDecoder)
+
+
 # ===========================================================================
 class IdentityEncoder(MainEffectEncoder):
     """
@@ -250,8 +358,77 @@ class IdentityEncoder(MainEffectEncoder):
 
     @property
     def encoded_variable_names(self):
-        return self.variable_name
+        return [self.variable_name]
 
+
+class IdentityEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        return {"variable_name": obj.variable_name}
+
+
+class IdentityEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+
+    def decode_from_dict(self, payload):
+        return IdentityEncoder(payload["variable_name"])
+
+
+register_encoding_json_encoder(
+    "IdentityEncoder", IdentityEncoderJsonEncoder, IdentityEncoderJsonDecoder)
+
+
+# ===========================================================================
+class SuccessEncoder(MainEffectEncoder):
+    def __init__(self, variable_name, success_values):
+        """
+        Args:
+          variable_name: The name of the column from which to obtain
+            success/failure values.
+          success_values: A list or similar collection of values to match
+            against.  Any entry that matches one of these values is labelled a
+            "success".  Otherwise the entry is labelled a "failure."
+        """
+        super().__init__(variable_name)
+        self._success_values = success_values
+
+    def encode(self, y):
+        output = np.isin(y, self._success_values)
+        return output.astype(float).reshape((-1, 1))
+
+    @property
+    def dim(self):
+        return 1
+
+    @property
+    def encoded_variable_names(self):
+        return ["Success({self.variable_name})"]
+
+
+class SuccessEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        payload = {
+            "variable_name": obj.variable_name,
+            "success_values": obj._success_values
+        }
+        return payload
+
+
+class SuccessEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+
+    def decode_from_dict(self, payload):
+        return SuccessEncoder(
+            payload["variable_name"],
+            payload["success_values"],
+        )
+
+
+register_encoding_json_encoder(
+    "SuccessEncoder",
+    SuccessEncoderJsonEncoder,
+    SuccessEncoderJsonDecoder)
 
 # ===========================================================================
 class InteractionEncoder(Encoder):
@@ -318,6 +495,41 @@ class InteractionEncoder(Encoder):
 
     def encodes(self, vname):
         return self._encoder1.encodes(vname) or self._encoder2.encodes(vname)
+
+
+class InteractionEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        global JSON_ENCODER_REGISTRY
+        encoder1_name = obj._encoder1.__class__.__name__
+        enc1 = JSON_ENCODER_REGISTRY[encoder1_name]()
+
+        encoder2_name = obj._encoder2.__class__.__name__
+        enc2 = JSON_ENCODER_REGISTRY[encoder2_name]()
+        return {
+            "encoder1_type": encoder1_name,
+            "encoder1": enc1.default(obj._encoder1),
+            "encoder2_type": encoder2_name,
+            "encoder2": enc2.default(obj._encoder2),
+        }
+
+
+class InteractionEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+
+    def decode_from_dict(self, payload):
+        global JSON_DECODER_REGISTRY
+        enc1 = JSON_DECODER_REGISTRY[payload["encoder1_type"]]()
+        enc2 = JSON_DECODER_REGISTRY[payload["encoder2_type"]]()
+        return InteractionEncoder(
+            enc1.decode_from_dict(payload["encoder1"]),
+            enc2.decode_from_dict(payload["encoder2"]))
+
+
+register_encoding_json_encoder(
+    "InteractionEncoder",
+    InteractionEncoderJsonEncoder,
+    InteractionEncoderJsonDecoder)
 
 
 # ===========================================================================
@@ -415,6 +627,38 @@ class DatasetEncoder(Encoder):
                     main_effect_indices = list(range(start, start + enc.dim))
             start += enc.dim
         return affected_indices, main_effect_indices
+
+
+class DatasetEncoderJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        global JSON_ENCODER_REGISTRY
+        encoder_types = []
+        encoders = []
+        for enc in obj._encoders:
+            etype = enc.__class__.__name__
+            encoder_types.append(etype)
+            json_encoder = JSON_ENCODER_REGISTRY[etype]()
+            encoders.append(json_encoder.default(enc))
+        return {
+            "encoder_types": encoder_types,
+            "encoders": encoders,
+            "intercept": obj._force_intercept
+        }
+
+
+class DatasetEncoderJsonDecoder(json.JSONDecoder):
+    def decode(self, json_string):
+        return self.decode_from_dict(json.loads(json_string))
+
+    def decode_from_dict(self, payload):
+        global JSON_DECODER_REGISTRY
+        intercept = bool(payload["intercept"])
+        encoders = []
+        for i, enc in enumerate(payload["encoders"]):
+            encoder_type = payload["encoder_types"][i]
+            json_decoder = JSON_DECODER_REGISTRY[encoder_type]()
+            encoders.append(json_decoder.decode_from_dict(enc))
+        return DatasetEncoder(encoders, intercept)
 
 
 # ===========================================================================

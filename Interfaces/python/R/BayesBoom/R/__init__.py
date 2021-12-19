@@ -43,7 +43,14 @@ from .encoding import (
     OneHotEncoder,
     IdentityEncoder,
     InteractionEncoder,
+    SuccessEncoder,
+    SuccessEncoderJsonEncoder,
+    SuccessEncoderJsonDecoder,
     DatasetEncoder,
+    DatasetEncoderJsonEncoder,
+    DatasetEncoderJsonDecoder,
+    MainEffectEncoderJsonEncoder,
+    MainEffectEncoderJsonDecoder,
 )
 
 from .graphics_device import get_current_graphics_device
@@ -61,6 +68,7 @@ from .plots import (
     lines,
     lty,
     mosaic_plot,
+    pairs,
     plot,
     plot_dynamic_distribution,
     plot_many_ts,
