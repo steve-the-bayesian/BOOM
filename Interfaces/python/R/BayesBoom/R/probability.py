@@ -221,3 +221,51 @@ def dmvn(y, mu, Sigma, inv=False, logscale=False):
     if logscale:
         return ans
     return np.exp(ans)
+
+
+def rmvn(n, mu, Sigma, drop=True):
+    """
+    Draws from the multivariate normal distribution with mean mu and variance
+    matrix Sigma.
+
+    Args:
+
+      n: The number of desired draws.
+
+      mu: A numpy vector or matrix giving the mean of the draws.  If a vector
+        then mu is the mean for all .  If a matrix then mu[i, :] is the mean
+        vector for draw i.
+
+      Sigma: Either a 2D or a 3D numpy array.  If a 2D array is passed then
+        Sigma is the common variance matrix used for all draws.  If a 3D array
+        is passed, then Sigma[i, :, :] is the variance matrix for draw i.
+    """
+    mu = np.array(mu)
+    if len(mu.shape) > 2:
+        raise Exception("dmvn requires either a vector or matrix input for mu.")
+    if len(mu.shape) == 1:
+        mu = mu.reshape((1, -1))
+    if mu.shape[0] == 1 and n > 1:
+        mu = np.array([mu.ravel()] * n)
+    if mu.shape[0] != n:
+        raise Exception(f"Requested {n} draws but passed a 'mu' argument with"
+                        f" {mu.shape[0]} rows.")
+
+    dim = mu.shape[1]
+    Z = np.random.randn(n, dim)
+
+    if len(Sigma.shape) == 2:
+        L = np.linalg.cholesky(Sigma)
+        draws = (L @ Z.T).T + mu
+    elif len(Sigma.shape) != 3:
+        raise Exception(
+            "Either a matrix or a 3-way array is required for Sigma")
+    else:
+        draws = np.array([
+            np.linalg.cholesky(Sigma[i, :, :]) @ Z[i, :] + mu[i, :]
+            for i in range(n)])
+
+    if n == 1 and drop:
+        return draws[0, :]
+    else:
+        return draws

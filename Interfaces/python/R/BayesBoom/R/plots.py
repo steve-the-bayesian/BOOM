@@ -358,6 +358,24 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     return ax
 
 
+def pairs(x, **kwargs):
+    """
+    Return a pairs plot of the data in x.
+
+    Args:
+      x: A pd.DataFrame or numpy matrix.
+
+    Returns:
+      The seaborn.axisgrid.PairGrid object containing the plots.
+    """
+    import seaborn as sns
+    if isinstance(x, np.ndarray):
+        x = pd.DataFrame(x)
+    ans = sns.pairplot(x, **kwargs)
+    ans.fig.show()
+    return ans
+
+
 # ===========================================================================
 # Custom plots
 # ===========================================================================

@@ -145,6 +145,20 @@ def data_range(x):
     return np.quantile(x, q=[0, 1])
 
 
+def var(x):
+    """
+    Compute the variance of the input x.  If x is a vector then return the
+    scalar valued variance.  If x is a matrix return the variance matrix,
+    assuming each row of x is an observation.
+    """
+    if isinstance(x, Number):
+        return 0
+    elif len(x.shape) == 1:
+        return np.var(x, ddof=1)
+    else:
+        return np.cov(x, rowvar=False, ddof=1)
+
+
 def corr(*args):
     """
     Compute the correlation among one or more objects.  If a single matrix or
@@ -169,6 +183,15 @@ def first_true(boolean_array):
     Returns None if no True values are found.
     """
     return next((i for i, v in enumerate(boolean_array) if v), None)
+
+
+def which(boolean_array):
+    """
+    Return the integer indices at which 'boolean_array' is True.
+    """
+    n = len(boolean_array)
+    indices = np.arange(n)
+    return indices[boolean_array.astype(bool)]
 
 
 def recycle(x, output_len):

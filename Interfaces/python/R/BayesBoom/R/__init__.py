@@ -16,6 +16,8 @@ from .R import (
     remove_common_prefix,
     remove_common_suffix,
     unique_match,
+    var,
+    which,
 )
 
 from .bayes import (
@@ -79,7 +81,7 @@ from .plots import (
     )
 
 from .probability import (
-    dmvn,
+    dmvn, rmvn,
     dnorm, pnorm, qnorm, rnorm,
     dgamma, pgamma, qgamma, rgamma,
     rmarkov,
