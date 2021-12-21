@@ -129,6 +129,10 @@ def table(*args):
     if len(args) == 1:
         if isinstance(args[0], pd.DataFrame):
             return args[0].crosstab(margins=True)
+        elif isinstance(args[0], np.ndarray):
+            values, counts = np.unique(args[0], return_counts=True)
+            ans = pd.Series(counts, index=values)
+            return ans.sort_index()
         else:
             x = pd.Series(args[0])
             return x.value_counts()

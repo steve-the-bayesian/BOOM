@@ -1,1 +1,1 @@
-from .dirichlet_process import DirichletProcessMvn
+from .dirichlet_process import DirichletProcessMvn, identify_permutation_from_labels
