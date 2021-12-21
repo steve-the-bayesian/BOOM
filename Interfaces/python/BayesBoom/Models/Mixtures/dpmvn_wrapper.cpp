@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "Models/Mixtures/DirichletProcessMvnModel.hpp"
 #include "Models/Mixtures/PosteriorSamplers/DirichletProcessMvnCollapsedGibbsSampler.hpp"
@@ -65,6 +66,10 @@ namespace BayesBoom {
             "  cluster:  The index of the cluster to return.\n\n"
             "Returns:\n"
             "  A boom.MvnModel describing the requested cluster.\n")
+        .def_property_readonly("cluster_labels",
+             [](const DirichletProcessMvnModel &model) {
+               return model.cluster_indicators();
+             })
         .def_property_readonly(
             "log_likelihood",
             [](const DirichletProcessMvnModel &model) {
