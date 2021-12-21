@@ -280,33 +280,6 @@ def _compute_mean_cluster_probs(cluster_indicators, permutations):
     return probs
 
 
-def _binomial_log_likelihood(success, log_prob, log_prob_complement):
-    """
-    The log likelihood of observing a 0/1 vector of successes and failures
-    'success' in a sequence of trials with log probability log_prob.
-
-    Args:
-      success:  A vector of 0/1 Bernoulli trials.
-      log_prob:  The log of the probability of success in each trial.
-      log_prob_complement: The log of the probability of failure in each trial.
-
-    Note that all three arguments are the same length.
-
-    Returns:
-      The (scalar) log likelihood of the data.
-    """
-    return np.sum(success * log_prob + (1 - success) * log_prob_complement)
-
-
-def _negative_multinomial_log_likelihood_contribution(
-        cluster_indicators, log_probs):
-    """
-    Args:
-      cluster_indicators:  Per-observation counts (0/1)
-    """
-    return -1 * cluster_indicators.dot(log_probs)
-
-
 def _solve_linear_assignment_problem(cluster_indicators: np.ndarray,
                                      mean_probs: np.ndarray):
     """
@@ -326,8 +299,8 @@ def _solve_linear_assignment_problem(cluster_indicators: np.ndarray,
 
     for i in range(nclusters):
         for j in range(nclusters):
-            # cost[i, j] is the negative binomial log likelihood of cluster
-            # labels == j under probability column i.
+            # cost[i, j] is -1 times the contribution to multinomial log
+            # likelihood of cluster labels == j under probability column i.
             cost[i, j] = -1 * cluster_indicators[:, i].dot(log_probs[:, j])
 
     lap = boom.LinearAssignment(boom.Matrix(cost))
