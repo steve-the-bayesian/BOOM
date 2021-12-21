@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "LinAlg/Array.hpp"
+#include "LinAlg/Matrix.hpp"
 #include "numopt/LinearAssignment.hpp"
 
 namespace BOOM {
@@ -34,11 +35,25 @@ namespace BOOM {
   //
   // Returns:
   //   Return element (i j) is the new cluster label for the cluster that had
-  //   been labelled 'j' in Monte Carlo iteration i.
-  std::vector<std::vector<int>> identify_permutation(
+  //   been labeled 'j' in Monte Carlo iteration i.
+  std::vector<std::vector<int>> identify_permutation_from_probs(
       const Array &cluster_probs);
-  std::vector<std::vector<int>> identify_permutation(
+  std::vector<std::vector<int>> identify_permutation_from_probs(
       const std::vector<Matrix> &cluster_probs);
+
+  // Given a set of MCMC draws of cluster indicators, return a permutation of
+  // state labels for each MCMC draw that attempts to remove label switching.
+  //
+  // Args:
+  //   cluster_labels: Element (i, j) is the cluster label for observation j in
+  //     Monte Carlo iteration i.  Each iteration should contain the labels
+  //     0..K-1, and K should not change from iteration to iteration.
+  //
+  // Returns:
+  //   Return element (i j) is the new cluster label for the cluster that had
+  //   been labeled 'j' in Monte Carlo iteration i.
+  std::vector<std::vector<int>> identify_permutation_from_labels(
+      const std::vector<std::vector<int>> &cluster_labels);
 }
 
 #endif //  BOOM_MODELS_MIXTURES_IDENTIFY_PERMUTATION_HPP_

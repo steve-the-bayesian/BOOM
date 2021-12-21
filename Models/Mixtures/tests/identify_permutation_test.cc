@@ -23,7 +23,7 @@ namespace {
     return false;
   }
 
-  TEST_F(IdentifyPermutationTest, SmallExample) {
+  TEST_F(IdentifyPermutationTest, IdentifyProbs) {
     Matrix draws(
         "1.349097e-01 2.828971e-03 8.622613e-01 |"
         "3.555298e-08 9.999983e-01 1.633781e-06 |"
@@ -64,7 +64,7 @@ namespace {
       draws, more_draws, even_more_draws};
 
     std::vector<std::vector<int>> permutation =
-        identify_permutation(cluster_probs);
+        identify_permutation_from_probs(cluster_probs);
 
     EXPECT_EQ(3, permutation.size());
     EXPECT_EQ(3, permutation[0].size());
@@ -73,7 +73,36 @@ namespace {
       EXPECT_TRUE(isin(1, permutation[i]));
       EXPECT_TRUE(isin(2, permutation[i]));
     }
+  }
 
+  TEST_F(IdentifyPermutationTest, identify_labels) {
+    std::vector<std::vector<int>> draws;
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 1, 1, 1, 1, 1});
+    draws.push_back(std::vector<int>{0, 0, 0, 0, 0, 1, 1, 1});
+    draws.push_back(std::vector<int>{1, 1, 1, 1, 0, 0, 0, 0});
+    draws.push_back(std::vector<int>{1, 1, 1, 0, 0, 0, 0, 0});
+    draws.push_back(std::vector<int>{1, 1, 1, 1, 1, 0, 0, 0});
+
+    std::vector<std::vector<int>> permutation =
+        identify_permutation_from_labels(draws);
+    EXPECT_EQ(draws.size(), permutation.size());
+    EXPECT_EQ(2, permutation[0].size());
+    for (int i = 0; i < permutation.size(); ++i) {
+      EXPECT_EQ(permutation[i][0], 1 - permutation[i][1]);
+    }
+
+    int perm1 = permutation[0][0];
+    for (int i = 0; i < 7; ++i) {
+      EXPECT_EQ(permutation[i][0], perm1);
+    }
+    for (int i = 7; i < permutation.size(); ++i) {
+      EXPECT_EQ(permutation[i][0], 1 - perm1);
+    }
   }
 
 }  // namespace
