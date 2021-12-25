@@ -41,6 +41,11 @@ from .data_table import to_data_table, to_data_frame
 from .autoclean import AutoClean
 
 from .encoding import (
+    register_encoding_json_encoder,
+    Encoder,
+    MainEffectEncoder,
+    MainEffectEncoderJsonEncoder,
+    MainEffectEncoderJsonDecoder,
     EffectEncoder,
     OneHotEncoder,
     IdentityEncoder,
@@ -51,8 +56,6 @@ from .encoding import (
     DatasetEncoder,
     DatasetEncoderJsonEncoder,
     DatasetEncoderJsonDecoder,
-    MainEffectEncoderJsonEncoder,
-    MainEffectEncoderJsonDecoder,
 )
 
 from .graphics_device import get_current_graphics_device
