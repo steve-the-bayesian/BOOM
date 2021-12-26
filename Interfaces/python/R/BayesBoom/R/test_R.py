@@ -25,6 +25,16 @@ class TestRfuns(unittest.TestCase):
         f = R.paste("X", [1, 2, 3], sep="", collapse=" ")
         self.assertEqual(f, "X1 X2 X3")
 
+    def test_order(self):
+
+        y = np.array([8, 6, 7, 5, 3, 0, 9])
+        ord = R.order(y)
+        self.assertTrue(np.allclose(
+            y[ord], np.array([0, 3, 5, 6, 7, 8, 9])))
+
+        iord = R.invert_order(ord)
+        self.assertTrue(np.allclose(y, y[ord][iord]))
+
 
 _debug_mode = False
 

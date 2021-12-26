@@ -141,6 +141,32 @@ def table(*args):
         return x.crosstab(margins=True)
 
 
+def order(input, decreasing=False):
+    """
+    Given an input sequence, return a vector of integers that will put the
+    sequence in order.
+
+    """
+    x = pd.Series(input).reset_index(drop=True).sort_values(
+        ascending=(not decreasing))
+    return x.index
+
+
+def invert_order(ord):
+    """
+    Put entries that have been sorted by a call to 'order' back in their
+    original order.
+
+    Args:
+      ord: A permutation of the numbers 0, ... n.
+
+    Returns:
+      ans: A permutation of the numbers 0..n such that ans[ord] = 0...n.
+    """
+    n = len(ord)
+    return pd.Series(range(n), index=ord).sort_index().values
+
+
 def data_range(x):
     """
     Return the smallest and largest entries in x.  The name distinguishes this

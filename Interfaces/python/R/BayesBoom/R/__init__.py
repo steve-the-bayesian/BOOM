@@ -9,6 +9,8 @@ from .R import (
     data_range,
     corr,
     first_true,
+    invert_order,
+    order,
     paste,
     paste0,
     print_timestamp,
