@@ -75,6 +75,28 @@ cc_library(
     deps = COMMON_DEPS,
 )
 
+filegroup(
+    name = "test_data",
+    srcs = [
+        "Car89.csv",
+        "autopref.txt",
+        "minn38.csv",
+    ],
+)
+
+cc_test(
+    name = "mlogit_test",
+    size = "small",
+    srcs = ["mlogit_test.cc"],
+    copts = COPTS,
+    data = [":test_data"],
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
 cc_test(
     name = "multivariate_regression_test",
     size = "small",
