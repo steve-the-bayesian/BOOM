@@ -28,4 +28,35 @@ namespace {
     MixedMultivariateData data;
   }
 
+  TEST_F(MixedMultivariateDataTest, Blah) {
+    bool header = false;
+    std::string full_path = "/home/steve/code/BOOM/stats/tests/autopref.txt";
+    std::string path = "stats/tests/autopref.txt";
+    DataTable autopref(full_path, header, "\t");
+    /*
+      American	34	Male	Married	Large	Family	No
+      Japanese	36	Male	Single	Small	Sporty	No
+      Japanese	23	Male	Married	Small	Family	No
+    */
+    EXPECT_EQ(autopref.nobs(), 263);
+    EXPECT_EQ(autopref.nvars(), 7);
+    EXPECT_EQ(autopref.variable_type(0), VariableType::categorical);
+    EXPECT_EQ(autopref.variable_type(1), VariableType::numeric);
+    EXPECT_EQ(autopref.variable_type(2), VariableType::categorical);
+    EXPECT_EQ(autopref.variable_type(3), VariableType::categorical);
+    EXPECT_EQ(autopref.variable_type(4), VariableType::categorical);
+    EXPECT_EQ(autopref.variable_type(5), VariableType::categorical);
+    EXPECT_EQ(autopref.variable_type(6), VariableType::categorical);
+    EXPECT_EQ(autopref.vnames()[0], "V.0");
+    EXPECT_EQ(autopref.vnames()[1], "V.1");
+
+    header=true;
+    full_path = "/home/steve/code/BOOM/stats/tests/CarsClean.csv";
+    DataTable cars(full_path, header, ",");
+    EXPECT_EQ(cars.nobs(), 94);
+    EXPECT_EQ(cars.nvars(), 22);
+    EXPECT_EQ(cars.vnames()[0], "Make/Model");
+    EXPECT_EQ(cars.vnames()[1], "MPGCity");
+    EXPECT_EQ(cars.vnames()[21], "GP1000MCity");
+  }
 }  // namespace
