@@ -52,12 +52,13 @@ namespace {
     EXPECT_EQ(state_model->observation_coefficients(3, observed)->ncol(),
               nfactors);
     Matrix Z = state_model->observation_coefficients(3, observed)->dense();
+    std::cerr << "Z = \n" << Z;
     EXPECT_DOUBLE_EQ(Z(0, 0), 1.0);
     EXPECT_DOUBLE_EQ(Z(1, 1), 1.0);
     EXPECT_DOUBLE_EQ(Z(2, 2), 1.0);
-    EXPECT_DOUBLE_EQ(Z(0, 1), 0.0);
-    EXPECT_DOUBLE_EQ(Z(0, 2), 0.0);
-    EXPECT_DOUBLE_EQ(Z(1, 2), 0.0);
+    EXPECT_DOUBLE_EQ(Z(0, 1), 1.0);
+    EXPECT_DOUBLE_EQ(Z(0, 2), 1.0);
+    EXPECT_DOUBLE_EQ(Z(1, 2), 1.0);
   }
 
 }  // namespace
