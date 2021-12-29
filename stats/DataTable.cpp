@@ -315,6 +315,10 @@ namespace BOOM {
                        const std::string &sep)
       : type_index_(new DataTypeIndex)
   {
+    read_file(fname, header, sep);
+  }
+
+  void DataTable::read_file(const std::string &fname, bool header, const std::string &sep) {
     ifstream in(fname.c_str());
     if (!in) {
       std::ostringstream err;

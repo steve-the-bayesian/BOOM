@@ -272,6 +272,10 @@ namespace BOOM {
     DataTable *clone() const override;
     std::ostream &display(std::ostream &out) const override;
 
+    void read_file(const std::string &filename,
+                   bool header = false,
+                   const std::string &sep = "");
+
     //--- build a DataTable by appending variables ---
     //
     // If the data table is empty, appending the first variable determines the
