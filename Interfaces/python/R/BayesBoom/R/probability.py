@@ -269,3 +269,11 @@ def rmvn(n, mu, Sigma, drop=True):
         return draws[0, :]
     else:
         return draws
+
+
+def rmulti(probs, n=1):
+    """
+    Simulate one or more draws from the given discrete probability
+    distribution.
+    """
+    return np.random.choice(range(len(probs)), size=n, replace=True, p=probs)
