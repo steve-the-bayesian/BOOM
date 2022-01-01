@@ -142,7 +142,8 @@ DpMvnClusterSizeDistribution <- function(object, burn = NULL) {
   return(cluster.size.distribution / sum(cluster.size.distribution))
 }
 
-plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "pairs", "help"), ...) {
+plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "pairs",
+                                              "log.likelihood", "help"), ...) {
   ## Args:
   ##   x: The DirichletProcessMvn model object to be plotted.
   ##   y: The type of plot desired.
@@ -154,6 +155,8 @@ plot.DirichletProcessMvn <- function(x, y = c("means", "nclusters", "pairs", "he
     PlotDpMvnMeanPairs(x, ...)
   } else if(y == "nclusters") {
     PlotDpMvnNclusters(x, ...)
+  } else if (y == "log.likelihood") {
+    PlotDpMvnLoglike(x, ...)
   } else if (y == "help") {
     help("plot.DirichletProcessMvn", package = "BoomMix", help_type = "html")
   }
@@ -308,4 +311,18 @@ PlotDpMvnNclusters <- function(object, burn = NULL, ...) {
   ##  ...: Extra arguments passed to 'barplot'.
   distribution <- DpMvnClusterSizeDistribution(object, burn=burn)
   barplot(distribution, names.arg = names(distribution), ...)
+}
+
+PlotDpMvnLoglike <- function(object, burn = 0, xlab="Iteration",
+                             ylab = "Log Likelihood", ...) {
+  ## Produce a time series plot of the log likelihood values achieved by the
+  ## DirichletProcessMvn object.
+  loglike <- object$log.likelihood
+  if (is.null(burn)) {
+    burn <- SuggestBurnLogLikelihood(loglike)
+  }
+  if (burn > 0) {
+    loglike <- loglike[-(1:burn)]
+  }
+  plot.ts(loglike, xlab = xlab, ylab = ylab, ...)
 }

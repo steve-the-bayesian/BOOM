@@ -4,6 +4,7 @@
 \alias{PlotDpMvnMeans}
 \alias{PlotDpMvnMeanPairs}
 \alias{PlotDpMvnNclusters}
+\alias{PlotDpMvnLoglike}
 
 \title{Plot Method for DP Mixtures of Multivariate Normals}
 \Rdversion{1.0}
@@ -14,13 +15,14 @@
 \usage{
 \method{plot}{DirichletProcessMvn}(
    x,
-   y = c("means", "nclusters", "pairs", "help"),
+   y = c("means", "nclusters", "pairs", "log.likelihood", "help"),
    ...)
 
 PlotDpMvnMeanPairs(model, nclusters, burn = NULL, dims = NULL, gap = 0, ...)
 PlotDpMvnMeans(model, nclusters, burn = NULL, dims = NULL, ...)
 PlotDpMvnNclusters(object, burn = NULL, ...)
-
+PlotDpMvnLoglike(object, burn = 0, xlab = "Iteration", ylab =
+"Log Likelihood", ...)
 }
 
 \arguments{
@@ -40,6 +42,10 @@ PlotDpMvnNclusters(object, burn = NULL, ...)
 
   \item{gap}{The amount of space between frames.  Expressed in terms of
     lines of text. }
+
+  \item{xlab}{Label for the horizontal axis.}
+
+  \item{ylab}{Label for the vertical axis.}
 
   \item{...}{Additional arguments to specific plotting functions.}
 

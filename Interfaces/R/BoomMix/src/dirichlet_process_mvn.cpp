@@ -18,6 +18,7 @@
 
 #include <Models/Mixtures/DirichletProcessMvnModel.hpp>
 #include <Models/Mixtures/PosteriorSamplers/DirichletProcessMvnCollapsedGibbsSampler.hpp>
+#include <Models/Mixtures/identify_permutation.hpp>
 
 #include <distributions/rng.hpp>
 #include <cpputil/report_error.hpp>
@@ -63,73 +64,66 @@ namespace {
   // values later.
   class DpMvnParamStorage {
    public:
-    DpMvnParamStorage() {}
+    DpMvnParamStorage()
+        : iteration_counter_(0)
+    {}
 
+    // Store the the current state of the model.
     void store(const DirichletProcessMvnModel &model) {
       int nclusters = model.number_of_clusters();
       int dim = model.dim();
       Matrix model_means(nclusters, dim);
       Array model_variances(std::vector<int>{nclusters, dim, dim});
-
       for (int s = 0; s < nclusters; ++s) {
         model_means.row(s) = model.cluster(s).mu();
         model_variances.slice(s, -1, -1) = model.cluster(s).Sigma();
       }
-      means_.push_back(model_means);
-      variances_.push_back(model_variances);
+
+      means_[nclusters].push_back(model_means);
+      variances_[nclusters].push_back(model_variances);
+      cluster_labels_[nclusters].push_back(model.cluster_indicators());
+      iterations_[nclusters].push_back(iteration_counter_++);
       loglike_.push_back(model.log_likelihood());
     }
 
     // Create R instances of the objects created during the MCMC run, and return
     // these in an R list.
-    SEXP package_parameters() const {
+    SEXP package_parameters() {
+
+      remove_label_switching();
+
       RMemoryProtector protector;
-
-      // The draws of means and variances, arranged by cluster size.  If the
-      // model produced draws with 4, 7, and 9 clusters, then sorted_means[4],
-      // [7], and [9] will be populated with arrays of dimension [4, dim], [7,
-      // dim] and [9, dim].
-      std::map<int, std::vector<Matrix>> sorted_means;
-      std::map<int, std::vector<Array>> sorted_variances;
-      std::map<int, std::vector<int>> iteration_numbers;
-
-      long niter = means_.size();
-      int dim = means_[0].ncol();
-
-      for (long i = 0; i < niter; ++i) {
-        int iteration_dim = means_[i].nrow();
-        sorted_means[iteration_dim].push_back(means_[i]);
-        sorted_variances[iteration_dim].push_back(variances_[i]);
-        iteration_numbers[iteration_dim].push_back(i);
-      }
-      // The output format is means[[cluster_size]]
+      int dim = means_.begin()->second[0].ncol();
+      int nobs = cluster_labels_.begin()->second[0].size();
 
       std::vector<SEXP> per_cluster_size_results;
       std::vector<std::string> result_names;
 
-      for (const auto &el : sorted_means) {
+      for (const auto &el : means_) {
         int nclusters = el.first;
         const std::vector<Matrix> &means(el.second);
         int ndraws = means.size();
 
         Array means_array(std::vector<int>{ndraws, nclusters, dim});
         Array variance_array(std::vector<int>{ndraws, nclusters, dim, dim});
-        for (size_t draw = 0; draw < means.size(); ++draw) {
-          auto dims = means_array.slice(draw, -1, -1).dim();
-          means_array.slice(draw, -1, -1) = sorted_means[nclusters][draw];
-          variance_array.slice(draw, -1, -1, -1) = sorted_variances[nclusters][draw];
+        Matrix cluster_labels_matrix(ndraws, nobs);
+        for (size_t draw = 0; draw < ndraws; ++draw) {
+          means_array.slice(draw, -1, -1) = means_[nclusters][draw];
+          variance_array.slice(draw, -1, -1, -1) = variances_[nclusters][draw];
+          cluster_labels_matrix.row(draw) = Vector(cluster_labels_[nclusters][draw]);
         }
 
         std::vector<SEXP> loading_dock = {
           protector.protect(ToRArray(means_array)),
           protector.protect(ToRArray(variance_array)),
-          protector.protect(ToRIntVector(iteration_numbers[nclusters]))
+          protector.protect(ToRMatrix(cluster_labels_matrix)),
+          protector.protect(ToRIntVector(iterations_[nclusters]))
         };
 
         per_cluster_size_results.push_back(
             protector.protect(CreateList(
                 loading_dock, std::vector<std::string>{
-                  "mean", "variance", "iteration"})));
+                  "mean", "variance", "cluster.labels", "iteration"})));
 
         std::ostringstream name_translator;
         name_translator << nclusters;
@@ -139,18 +133,66 @@ namespace {
       return CreateList(per_cluster_size_results, result_names);
     }
 
-    SEXP package() const {
+    // Package the state of the MCMC run for return to R.
+    SEXP package() {
       RMemoryProtector protector;
       std::vector<SEXP> elements;
       elements.push_back(protector.protect(package_parameters()));
       elements.push_back(protector.protect(ToRVector(Vector(loglike_))));
+
       std::vector<std::string> names = {"parameters", "log.likelihood"};
       return CreateList(elements, names);
     }
 
+    // Choose a permutation of the state labels at each MCMC iteration and apply
+    // the chosen permutation to the model parameters and state labels.
+    void remove_label_switching() {
+      for (const auto &it : cluster_labels_) {
+        int nclusters = it.first;
+        std::vector<std::vector<int>> permutation =
+            identify_permutation_from_labels(
+                cluster_labels_[nclusters]);
+        int niter = permutation.size();
+        for (int i = 0; i < niter; ++i) {
+          const std::vector<int> &perm(permutation[i]);
+
+          Matrix means = means_[nclusters][i];
+          for (int j = 0; j < nclusters; ++j) {
+            means.row(perm[j]) = means_[nclusters][i].row(j);
+          }
+          means_[nclusters][i] = means;
+
+          Array variances = variances_[nclusters][i];
+          for (int j = 0; j < nclusters; ++j) {
+            variances.slice(perm[j], -1, -1) = variances_[nclusters][i].slice(j, -1, -1);
+          }
+          variances_[nclusters][i] = variances;
+
+          int nobs = cluster_labels_[nclusters][i].size();
+          for (int j = 0; j < nobs; ++j) {
+            cluster_labels_[nclusters][i][j] = perm[cluster_labels_[nclusters][i][j]];
+          }
+        }
+      }
+    }
+
    private:
-    std::vector<Matrix> means_;
-    std::vector<Array> variances_;
+    int iteration_counter_;
+
+    // means_[nclusters][iteration][cluster][dim]
+    std::map<int, std::vector<Matrix>> means_;
+
+    // variances_[nclusters][iteration][cluster][dim1][dim2]
+    std::map<int, std::vector<Array>> variances_;
+
+    // cluster_labels_[nclusters][iteration][observation]
+    std::map<int, std::vector<std::vector<int>>> cluster_labels_;
+
+    // iterations_[nclusters][draw_number_within_cluster]
+    std::map<int, std::vector<int>> iterations_;
+
+    // log likelihood of each iteration, regardless of the number of clusters to
+    // which it corresponds.
     std::vector<double> loglike_;
   };
 
