@@ -13,3 +13,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "mdp_test",
+    size = "small",
+    srcs = ["mdp_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
