@@ -106,6 +106,4 @@ namespace BOOM {
     }
   }
 
-
-
 }  // namespace BOOM

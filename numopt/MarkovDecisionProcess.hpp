@@ -25,6 +25,7 @@
 
 namespace BOOM {
 
+  // A finite state, stationary Markov decsision process.
   class MarkovDecisionProcess {
    public:
     // transition_probabilities: A 3-way array.  Element (r, a, s) is the
