@@ -22,7 +22,8 @@
 
 #include <cctype>
 #include <fstream>
-#include <filesystem>
+// TODO: add this back when c++17 support is widely available.
+// #include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -323,7 +324,9 @@ namespace BOOM {
     if (!in) {
       std::ostringstream err;
       err << "Could not open file: " << fname << "\n"
-          << "Program running from " << std::filesystem::current_path() << "\n";
+          // TODO add this line when C++17 support is widely available.
+          // << "Program running from " << std::filesystem::current_path() << "\n"
+      ;
       report_error(err.str());
     }
 
