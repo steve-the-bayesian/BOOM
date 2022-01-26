@@ -1,2 +1,25 @@
+#!/bin/bash
+
+# This script builds a manylinux wheel of the BayesBoom python package.  It
+# relies on the `Dockerfile` in the BOOM root directory and the 'pyboom' script
+# in the BOOM/install directory.
+
+# Move up to the BOOM directory.
+while [[ "$PWD" = *"BOOM"* && ! "$PWD" = *"BOOM" ]]
+      do
+      cd ..
+done
+
+# Extract the version number from the package setup.py file.
+MAJOR=`grep "MAJOR = " python_package/setup.py | cut -c 9-`
+MINOR=`grep "MINOR = " python_package/setup.py | cut -c 9-`
+PATCH=`grep "PATCH = " python_package/setup.py | cut -c 9-`
+version="${MAJOR}.${MINOR}.${PATCH}"
+echo "BayesBoom version = [${version}]"
+
+# Get the python version from the dockerfile
+python_version=`grep "RUN ln" Dockerfile | sed 's|RUN ln -sf /opt/python/||' | sed 's|/bin/python /usr/local/bin/python3||'`
+
 docker build -t pyboom .
-docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-0.0.3-cp36-cp36m-manylinux2010_x86_64.whl /export/.
+docker run -v /tmp:/export -it --rm pyboom cp /output/BayesBoom-${version}-${python_version}-manylinux2010_x86_64.whl /export
+cp /tmp/*manylinux*.whl .
