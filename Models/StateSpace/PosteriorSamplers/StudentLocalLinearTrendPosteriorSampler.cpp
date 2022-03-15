@@ -174,7 +174,7 @@ namespace BOOM {
 
   void SLLTPS::draw_nu_level() {
     std::function<double(double)> logpost;
-    if (model_->nu_level() > 20) {
+    if (model_->nu_level() > 10) {
       logpost = NuPosteriorRobust(nu_level_prior_.get(),
                                   model_->level_residuals(),
                                   model_->sigma_level());
@@ -190,19 +190,24 @@ namespace BOOM {
   }
 
   void SLLTPS::draw_nu_slope() {
-    NuPosteriorFast logpost(nu_slope_prior_.get(),
-                            &model_->nu_slope_complete_data_suf());
+    std::function<double(double)> logpost;
+    if (model_->nu_slope() > 10) {
+      logpost = NuPosteriorRobust(
+          nu_slope_prior_.get(),
+          model_->slope_residuals(),
+          model_->sigma_slope());
+    } else {
+      logpost = NuPosteriorFast(
+          nu_slope_prior_.get(),
+          &model_->nu_slope_complete_data_suf());
+    }
     ScalarSliceSampler sampler(logpost, true);
     sampler.set_lower_limit(0.0);
     double nu = sampler.draw(model_->nu_slope());
     model_->set_nu_slope(nu);
   }
 
-  // void SLTTPS::draw_slope_params() {
-
-  // }
-
-  // void SLTTPS::draw_level_params() {
-  // }
+  // TODO(steve): Investigate functions that can draw the tail thickness and the
+  // slope parameters jointly.
 
 }  // namespace BOOM
