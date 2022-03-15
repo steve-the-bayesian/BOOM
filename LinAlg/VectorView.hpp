@@ -280,7 +280,7 @@ namespace BOOM {
   template <class VEC>
   double sumlog(const VEC &v) {
     double ans = 0;
-    for (int i = 0; i < v.size(); ++i) {
+    for (size_t i = 0; i < v.size(); ++i) {
       ans += log(v[i]);
     }
     return ans;

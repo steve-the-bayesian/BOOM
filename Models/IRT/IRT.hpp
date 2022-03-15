@@ -37,8 +37,7 @@ namespace BOOM {
     class IrtModel;
     class Item;
 
-    struct SubjectLess
-        : public std::binary_function<bool, Ptr<Subject>, Ptr<Subject> > {
+    struct SubjectLess {
       bool operator()(const Ptr<Subject> &s1, const Ptr<Subject> &s2) const;
     };
 
