@@ -90,6 +90,14 @@ namespace BOOM {
     return ans;
   }
 
+  AMCS *AMCS::clone_to_new_host(Model *new_host) const {
+    return new AMCS(dynamic_cast<MarkovModel *>(new_host),
+                    Nu(),
+                    nu(),
+                    abs_.included_positions(),
+                    rng());
+  }
+
   void AMCS::draw() {
     uint S = mod_->state_space_size();
     Matrix Q(mod_->Q());

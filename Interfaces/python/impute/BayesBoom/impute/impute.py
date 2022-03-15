@@ -492,7 +492,6 @@ class MixedDataImputer:
                 self._dataset_encoder is not None
                 and state["nclusters"] is not None
         ):
-            xdim = self._encoder.dim
             atom_vector = []
             for vname in self._numeric_colnames:
                 atoms = np.array(self._atoms[vname])
@@ -501,6 +500,6 @@ class MixedDataImputer:
             self._model = boom.MixedDataImputer(
                 # TODO: this is hosed.
             )
-            state["nclusters"], atom_vector, xdim
+            # state["nclusters"], atom_vector, xdim
             self._model.set_empirical_distributions(
                 state["empirical_distributions"])

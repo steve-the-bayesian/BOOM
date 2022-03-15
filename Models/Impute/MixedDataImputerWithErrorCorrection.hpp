@@ -247,7 +247,7 @@ namespace BOOM {
           bool update_complete_data_suf,
           const Ptr<DatasetEncoder> &encoder,
           const std::vector<Ptr<EffectsEncoder>> &encoders,
-          const Ptr<MultivariateRegressionModel> &numeric_model);
+          const Ptr<MultivariateRegressionModel> &numeric_model) override;
 
       // For numeric variables, impute the indicator variables describing which
       // atom is responsible for each variable.

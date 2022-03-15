@@ -141,18 +141,10 @@ namespace BOOM {
     }
     double ans = 0;
     double probability_below = plogis(truncation_point);
-    if (above) {
-      ans = second_moment_antiderivative(BOOM::infinity()) -
-            second_moment_antiderivative(truncation_point);
-      ans /= (1 - probability_below);
-    } else {
-      ans = second_moment_antiderivative(truncation_point) -
-            second_moment_antiderivative(BOOM::negative_infinity());
-      ans /= probability_below;
-    }
-
+    ans = second_moment_antiderivative(BOOM::infinity()) -
+        second_moment_antiderivative(truncation_point);
+    ans /= (1 - probability_below);
     ans -= square(trun_logit_mean(truncation_point, above));
-
     return ans;
   }
 

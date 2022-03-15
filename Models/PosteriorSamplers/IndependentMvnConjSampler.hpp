@@ -40,11 +40,16 @@ namespace BOOM {
                               const Vector &sigma_upper_limit,
                               RNG &seeding_rng = GlobalRng::rng);
 
-    IndependentMvnConjSampler(IndependentMvnModel *model, double mean_guess,
-                              double mean_sample_size, double sd_guess,
+    IndependentMvnConjSampler(IndependentMvnModel *model,
+                              double mean_guess,
+                              double mean_sample_size,
+                              double sd_guess,
                               double sd_sample_size,
                               double sigma_upper_limit = infinity(),
                               RNG &seeding_rng = GlobalRng::rng);
+
+    IndependentMvnConjSampler *clone_to_new_host(
+        Model *new_host) const override;
 
     void draw() override;
     double logpri() const override;

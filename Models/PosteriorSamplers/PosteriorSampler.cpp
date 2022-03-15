@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 
+#include "Models/ModelTypes.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/math_utils.hpp"
 #include "cpputil/report_error.hpp"
@@ -36,6 +37,11 @@ namespace BOOM {
   PosteriorSampler::PosteriorSampler(const PosteriorSampler &rhs)
       : RefCounted(rhs) {
     rng_.seed(seed_rng(rhs.rng()));
+  }
+
+  PosteriorSampler *PosteriorSampler::clone_to_new_host(Model *host) const {
+    report_error("Concrete class needs to define clone_to_new_host.");
+    return nullptr;
   }
 
   void PosteriorSampler::set_seed(unsigned long s) { rng_.seed(s); }

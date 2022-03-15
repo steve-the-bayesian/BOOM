@@ -161,6 +161,17 @@ namespace BOOM {
     return counts;
   }
 
+  void DPMM::initialize_cluster_membership_probabilities() {
+    cluster_membership_probabilities_.resize(
+        sample_size(), number_of_clusters() + 1);
+    cluster_membership_probabilities_ = negative_infinity();
+  }
+
+  void DPMM::set_cluster_membership_probabilities(
+      int observation_index, const Vector &probs) {
+    cluster_membership_probabilities_.row(observation_index) = probs;
+  }
+
   void DPMM::register_models() {
     ParamPolicy::clear();
     ParamPolicy::add_params(alpha_);

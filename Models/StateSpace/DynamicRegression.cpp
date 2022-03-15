@@ -225,7 +225,8 @@ namespace BOOM {
     }
 
     // Set the mean and variance of this distribution (at time t) to match
-    // p(beta[t, inc] | Y_t).
+    // p(beta[t, inc] | Y_t), where Y_t = y_0, ... y_t and 'inc' is the set of
+    // all inclusion indicators at all times.
     //
     // Args:
     //   previous:  describes p(beta[t-1, inc] | Y_t-1)
@@ -235,7 +236,12 @@ namespace BOOM {
     //
     // Effects:
     //   The mean and variance are set to match the conditional mean and
-    //   variance of the regression coefficients given data to time t.
+    //   variance of the regression coefficients given data to time t.  The
+    //   update is done conditional on the inclusion indicators stored in
+    //   'model'.
+    //
+    // Returns:
+    //   The increment to the marginal log likelihood from y_t.
     double DynamicRegressionKalmanFilterNode::update(
         const DynamicRegressionKalmanFilterNode &previous,
         const RegressionDataTimePoint &data,
@@ -272,32 +278,67 @@ namespace BOOM {
       return ans;
     }
 
-
     Vector DynamicRegressionKalmanFilterNode::simulate_coefficients(
-        const DynamicRegressionModel &model, int time_index, RNG &rng) {
-      double sigma = std::sqrt(model.residual_variance());
+        const DynamicRegressionModel &model, int time_index, RNG &rng) const {
+
       if (time_index < 0 || time_index >= model.time_dimension()) {
         std::ostringstream err;
         err << "time_index of " << time_index << " out of bounds for model with"
             << " time_dimension = " << model.time_dimension() << ".";
         report_error(err.str());
-      } else if (time_index + 1 == model.time_dimension()) {
+      }
+
+      if (time_index + 1 == model.time_dimension()) {
+        Selector fake_selector;
+        Vector fake_vector;
+        return simulate_coefficients_impl(
+          std::sqrt(model.residual_variance()),
+          time_index,
+          model.time_dimension(),
+          model.inclusion_indicators(time_index),
+          fake_selector,
+          fake_vector,
+          model.unscaled_innovation_variances(),
+          rng);
+      } else {
+        return simulate_coefficients_impl(
+            std::sqrt(model.residual_variance()),
+            time_index,
+            model.time_dimension(),
+            model.inclusion_indicators(time_index),
+            model.inclusion_indicators(time_index + 1),  // check before calling.
+            model.included_coefficients(time_index + 1),
+            model.unscaled_innovation_variances(),
+            rng);
+      }
+    }
+
+    Vector DynamicRegressionKalmanFilterNode::simulate_coefficients_impl(
+        double sigma,
+        int time_index,
+        int max_time_dimension,
+        const Selector &inc_now,
+        const Selector &inc_next,
+        const Vector &beta_next,
+        const Vector &unscaled_innovation_variances,
+        RNG &rng) const {
+      if (time_index < 0 || time_index >= max_time_dimension) {
+        std::ostringstream err;
+        err << "time_index of " << time_index << " out of bounds for model with"
+            << " time_dimension = " << max_time_dimension << ".";
+        report_error(err.str());
+      } else if (time_index + 1 == max_time_dimension) {
         return rmvn_L_mt(rng, state_mean(),
                          sigma * state_variance_->var_chol());
       } else {
-        // If x ~ N(mu, Omega) and y~ N(Ax, Sigma) then
+        // If x ~ N(mu, Omega) and y ~ N(Ax, Sigma) then
         // x | y ~ N(mu1, V1), with
         // V1^{-1} = omega^{-1} + A' Siginv A, and
         // mu = V1 * (Omega^{-1} mu + A' Siginv y)
-
-        const Selector &inc_next(model.inclusion_indicators(time_index + 1));
-        const Selector &inc_now(model.inclusion_indicators(time_index));
-        Vector beta_next = model.included_coefficients(time_index + 1);
-
         ProductSelectorMatrix A_transpose(inc_next, inc_now);
 
         DiagonalMatrix siginv(
-            1.0 / inc_next.select(model.unscaled_innovation_variances()));
+            1.0 / inc_next.select(unscaled_innovation_variances));
 
         SpdMatrix unscaled_precision =
             unscaled_state_precision() + A_transpose.sandwich(siginv);
@@ -434,6 +475,7 @@ namespace BOOM {
     for (int i = 0; i < xdim; ++i) {
       NEW(ZeroMeanGaussianModel, innovation_model)(1.0);
       innovation_model->Sigsq_prm()->add_observer(
+          this,
           [this]() {this->observe_innovation_variances();});
       innovation_error_models_.push_back(innovation_model);
       ManyParamPolicy::add_params(innovation_model->Sigsq_prm());

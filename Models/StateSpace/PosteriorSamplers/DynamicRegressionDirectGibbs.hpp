@@ -30,9 +30,57 @@ namespace BOOM {
   // spirirt of Nakajima and West.  This sampler could be improved (as shown in
   // Scott(2002)) using FB sampling for the inclusion indicators after
   // integrating out the coefficients.
+  //
+  // The dynamic regression model is y[t] = X[t] * beta[t] + epsilon[t], with
+  // X[t] fully observed, epsilon[t] ~ MVN(0, sigma^2 I), independent across t,
+  // where the dimension of I is n[t] X n[t], and with state dynamics on beta as
+  // follows.
+  //
+  // Deonte the scalar elements of beta[t] as beta[j, t], and let gamma[j, t] =
+  // 1 if beta[j, t] is nonzero and gamma[j, t] = 0 if beta[j, t] == 0.  The
+  // model assumes gamma[j, t] evolves independently across j with gamma[j, t] ~
+  // Bernoulli(pi_j[gamma[j, t-1]]).  That is, gamma[j, t] evolves according to
+  // a 2-state discrete time Markov chain.
+  //
+  // The prior parameters of the Markov chain are supplied by the user in the
+  // form of three quantities:
+  //
+  //   - An expected duration (number of time periods) of a visit to state 1.
+  //   - The stationary probability of being in state 1.
+  //   - A sample size.
+  //
+  // When these three numbers are passed through a function infer_Markov_prior
+  // they are converted into a 2x2 matrix of positive counts for a product
+  // Dirichlet prior.
   class DynamicRegressionDirectGibbsSampler
       : public PosteriorSampler {
    public:
+
+    // Args:
+    //   model:  The model whose unknowns are to be sampled.
+    //   residual_sd_prior_guess: A prior estimate at the residual standard
+    //     deviation.
+    //   residual_sd_prior_sample_size: A prior sample size.  The number of
+    //     observations worth of weight given to 'residual_sd_prior_guess'.
+    //   innovation_sd_prior_guess: A prior guess at the typical amount by which
+    //     an active coefficient's value might change in a typical time period.
+    //     This is a Vector with one entry per coefficient.
+    //   innovation_sd_prior_sample_size: A prior sample size associated with
+    //     innovation_sd_prior_guess.  It is the number of observations worth of
+    //     weight to place on innovation_sd_prior_guess.
+    //   prior_inclusion_probabilities: A Vector of probabilities, one per each
+    //     predictor, describing a prior guess at the stationary probability of
+    //     that predictor being included.
+    //   expected_inclusion_duration: A Vector with one element per predictor
+    //     representing the expected durations (number of time periods).  This
+    //     is a guess at how many time periods an "inclusion event" would
+    //     typically last.
+    //   transition_probability_prior_sample_size: The prior inclusion
+    //     probability and expected inclusion duration combine to give an
+    //     estimated transition probability matrix.  This argument is the number
+    //     of observations worth of weight to assign to that matrix.  This is a
+    //     Vector with one element per predictor.
+    //   seeding_rng:  The RNG used to set the seed for the RNG in this sampler.
     DynamicRegressionDirectGibbsSampler(
         DynamicRegressionModel *model,
         double residual_sd_prior_guess,
@@ -95,7 +143,6 @@ namespace BOOM {
     // the unscaled variance times the residual variance (sigsq).
     Vector compute_unscaled_prior_variance(
         const Selector &inc, int time_index) const;
-
 
     // The transition probability matrix of a 2-state Markov chain can be
     // deduced from the stationary distribution and the expected duration of a

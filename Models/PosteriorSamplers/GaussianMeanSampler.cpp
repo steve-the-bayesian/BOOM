@@ -24,34 +24,40 @@
 namespace BOOM {
   typedef GaussianMeanSampler GMS;
 
-  GMS::GaussianMeanSampler(GaussianModel *Mod, double mu, double tau,
+  GMS::GaussianMeanSampler(GaussianModel *model, double mu, double tau,
                            RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
-        mod_(Mod),
-        pri(new GaussianModel(mu, tau)) {}
+        model_(model),
+        prior_(new GaussianModel(mu, tau)) {}
 
-  GMS::GaussianMeanSampler(GaussianModel *Mod, const Ptr<GaussianModel> &Pri,
+  GMS::GaussianMeanSampler(GaussianModel *model, const Ptr<GaussianModel> &prior,
                            RNG &seeding_rng)
-      : PosteriorSampler(seeding_rng), mod_(Mod), pri(Pri) {}
+      : PosteriorSampler(seeding_rng), model_(model), prior_(prior) {}
 
-  double GMS::logpri() const { return pri->logp(mod_->mu()); }
+  GMS *GMS::clone_to_new_host(Model *new_host) const {
+    return new GMS(dynamic_cast<GaussianModel *>(new_host),
+                   prior_->clone(),
+                   rng());
+  }
+
+  double GMS::logpri() const { return prior_->logp(model_->mu()); }
 
   void GMS::draw() {
-    Ptr<GaussianSuf> s = mod_->suf();
+    Ptr<GaussianSuf> s = model_->suf();
 
     double ybar = s->ybar();
     double n = s->n();
 
-    double sigsq = mod_->sigsq();
+    double sigsq = model_->sigsq();
 
-    double mu0 = pri->mu();
-    double tausq = pri->sigsq();
+    double mu0 = prior_->mu();
+    double tausq = prior_->sigsq();
 
     double ivar = (n / sigsq) + (1.0 / tausq);
     double mean = (n * ybar / sigsq + mu0 / tausq) / ivar;
     double sd = sqrt(1.0 / ivar);
 
     double ans = rnorm_mt(rng(), mean, sd);
-    mod_->set_mu(ans);
+    model_->set_mu(ans);
   }
 }  // namespace BOOM

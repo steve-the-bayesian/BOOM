@@ -17,7 +17,7 @@
 */
 
 #include "Models/StateSpace/Filters/MultivariateKalmanFilterBase.hpp"
-#include "Models/StateSpace/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/Constants.hpp"
 
@@ -52,7 +52,7 @@ namespace BOOM {
       // 'observation' which are actually observed.
       const SparseKalmanMatrix &observation_coefficient_subset(
           *model()->observation_coefficients(time_index(), observed));
-      
+
       if (high_dimensional(observed)) {
         high_dimensional_update(observation, observed, transition,
                                 observation_coefficient_subset);
@@ -64,7 +64,7 @@ namespace BOOM {
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(scaled_prediction_error());
 
-      // Update the state mean from a[t]   = E(state_t    | Y[t-1]) to 
+      // Update the state mean from a[t]   = E(state_t    | Y[t-1]) to
       //                            a[t+1] = E(state[t+1] | Y[t]).
       set_state_mean(transition * state_mean()
                      + kalman_gain() * prediction_error());
@@ -86,8 +86,8 @@ namespace BOOM {
 
       // Step 1:  Set P = T * P * T.transpose()
       transition.sandwich_inplace(mutable_state_variance());
-      
-      // Step 2: 
+
+      // Step 2:
       // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
       // skipped if y is missing, because K is zero.
       mutable_state_variance() -= TPZprime.multT(kalman_gain());
@@ -95,7 +95,7 @@ namespace BOOM {
       // Step 3: P += RQR
       model()->state_variance_matrix(time_index())->add_to(
           mutable_state_variance());
-      
+
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
     }
@@ -105,7 +105,7 @@ namespace BOOM {
       return observed.nvars() > high_dimensional_threshold_factor()
           * model()->state_dimension();
     }
-  
+
     //----------------------------------------------------------------------
     Vector Marginal::contemporaneous_state_mean() const {
       const Selector &observed(model()->observed_status(time_index()));
@@ -159,19 +159,19 @@ namespace BOOM {
       mutable_state_variance().fix_near_symmetry();
       return log_likelihood;
     }
-    
+
   }  // namespace Kalman
 
   //===========================================================================
   MultivariateKalmanFilterBase::MultivariateKalmanFilterBase(
       MultivariateStateSpaceModelBase *model)
       : model_(model) {}
-  
+
   void MultivariateKalmanFilterBase::update() {
     if (!model_) {
       report_error("Model must be set before calling update().");
     }
-    clear();
+    clear_loglikelihood();
     for (int t = 0; t < model_->time_dimension(); ++t) {
       update_single_observation(
           model_->adjusted_observation(t),
@@ -184,7 +184,7 @@ namespace BOOM {
     }
     set_status(CURRENT);
   }
-  
+
   void MultivariateKalmanFilterBase::update_single_observation(
       const Vector &y,
       const Selector &observed,
@@ -218,7 +218,7 @@ namespace BOOM {
     Vector r(model_->state_dimension(), 0.0);
     for (int t = n - 1; t >= 0; --t) {
       // Currently r is r[t].  This step of the loop turns it into r[t-1].
-      // 
+      //
       // The disturbance smoother is defined by the following formula:
       // r[t-1] = Z' * Finv * v   +   (T' - Z' * K') * r[t]
       //        = T' * r[t]       -   Z' * (K' * r[t] - Finv * v)
@@ -257,5 +257,5 @@ namespace BOOM {
       return (*this)[t].prediction_error();
     }
   }
-  
+
 }  // namespace BOOM

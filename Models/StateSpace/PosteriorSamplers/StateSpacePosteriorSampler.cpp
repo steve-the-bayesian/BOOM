@@ -34,6 +34,11 @@ namespace BOOM {
         latent_data_initialized_(false)
   {}
 
+  SSPS *SSPS::clone_to_new_host(Model *new_host) const {
+    return new SSPS(dynamic_cast<StateSpaceModelBase *>(new_host),
+                    rng());
+  }
+
   void SSPS::draw() {
     if (!latent_data_initialized_) {
       model_->impute_state(rng());

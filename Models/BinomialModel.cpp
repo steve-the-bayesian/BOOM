@@ -199,7 +199,7 @@ namespace BOOM {
   }
 
   void BM::observe_prob() {
-    Prob_prm()->add_observer([this]() {
+    Prob_prm()->add_observer(this, [this]() {
       log_prob_ = log(prob());
       log_failure_prob_ = ::std::log1p(-prob());
     });
@@ -234,7 +234,8 @@ namespace BOOM {
       report_error("Wrong size argument.");
     }
     double p = probvec[0];
-    if (p < 0 || p > 1) {
+    if (p < std::numeric_limits<double>::min()
+        || (1-p) < std::numeric_limits<double>::min()) {
       return negative_infinity();
     }
     double logp = log(p);

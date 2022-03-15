@@ -3,184 +3,14 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-import numbers
-from abc import ABC, abstractmethod
+from numbers import Number
 
-from BayesBoom.R import data_range
-
-_active_graphics_devices = {}
-_current_graphics_device = None
-_largest_graphics_device_number = 0
-
-
-class GraphicsDevice(ABC):
-    """
-    Manages a plt.figure and a set of axes.
-    """
-
-    def __init__(self):
-        """
-        Creating a new graphics device updates the global set of devices
-        """
-        global _largest_graphics_device_number
-        global _current_graphics_device
-        global _active_graphics_devices
-        self._number = _largest_graphics_device_number + 1
-        _largest_graphics_device_number = self._number
-        _active_graphics_devices[self._number] = self
-        _current_graphics_device = self
-
-        self._figure, self._axes = plt.subplots(1, 1)
-        self._axes_cursor = None
-        self._nrow = 1
-        self._ncol = 1
-
-    def __del__(self):
-        plt.close(self._figure)
-        global _active_graphics_devices
-        del _active_graphics_devices[self._number]
-
-    @property
-    def next_axes(self):
-        """
-        The next set of axes on which a plot is to be drawn.  If the last set of
-        available axes has been exhausted, the stored Figure is refreshed with
-        new axes of the same dimension.
-        """
-        if hasattr(self._axes, "shape"):
-            shape = self._axes.shape
-            if min(shape) == 1:
-                self._increment_1d_cursor()
-            else:
-                self._increment_2d_cursor()
-        else:
-            self._axes = self._figure.subplots(1, 1)
-        return self.current_axes
-
-    @property
-    def current_axes(self):
-        """
-        The current set of axes.
-        """
-        if self._nrow > 1 or self._ncol > 1:
-            return self._axes[self._axes_cursor]
-        else:
-            return self._axes
-
-    @abstractmethod
-    def draw_current_axes(self):
-        """
-        A hook to be called after the graphics device is updated.
-        """
-
-    def _create_subplots(self, nrow, ncol):
-        """
-        Set the graphics device to use multiple rows and/or columns of plots.
-        """
-        self._axes = self._figure.subplots(nrow, ncol)
-        self._nrow = nrow
-        self._ncol = ncol
-        if min(nrow, ncol) > 1:
-            self._axes_cursor = (0, 0)
-        elif max(nrow, ncol) > 1:
-            self._axes_cursor = 0
-        else:
-            self._axes_cursor = None
-
-    def _increment_1d_cursor(self):
-        """
-        Increment the self._axes cursor when self._axes is a 1-d array.
-        """
-        dim = max(self._nrow, self._ncol)
-        self._axes_cursor += 1
-        if self._axes_cursor >= dim:
-            self._axes_cursor = 0
-            # We need nrow and ncol here because a 1-d axes might be a row, or
-            # a column.
-            self._axes = self._figure.subplots(self._nrow, self._ncol)
-
-    def _increment_2d_cursor(self):
-        """
-        Increment self._axes_cursor when self._axes is two-dimensional.
-        """
-        i, j = self._axes_cursor
-        j += 1
-        if j >= self._axes.shape[1]:
-            j = 0
-            i += 1
-            if i >= self._axes.shape[0]:
-                self._axes = self._figure.subplots(
-                    self._axes.shape[0], self._axes.shape[1])
-                i, j = 0, 0
-        self._axes_cursor = (i, j)
-
-
-def dev_new():
-    return InteractiveGraphicsDevice()
-
-
-def dev_set(device_number: int):
-    """
-    Set the current graphics device to the device with the given number.
-
-    """
-    global _active_graphics_devices
-    global _current_graphics_device
-    device = _active_graphics_devices.get(device_number, None)
-    if device is None:
-        raise Exception(f"Graphics device {device_number} does note exist.")
-    else:
-        _current_graphics_device = device
-
-
-class InteractiveGraphicsDevice(GraphicsDevice):
-    """
-    A private stack manages the set of active graphics devices.
-    """
-
-    def __init__(self):
-        super().__init__()
-        plt.show(block=False)
-        plt.pause(.001)
-
-    def draw_current_axes(self):
-        """
-        """
-        plt.pause(.001)
-
-
-class PdfGraphicsDevice(GraphicsDevice):
-    """
-    Destructor generates a PDF file that gets generated when the graphics
-    device is deleted.
-    """
-
-    def __init__(self, filename, width=5, height=5):
-        self._filename = filename
-
-    def __del__(self):
-        """
-        Create the pdf file upon deletion.
-        """
-        if self._figure is not None:
-            self._figure.save(self._filename)
-
-    def draw_current_axes(self):
-        """
-        """
-        pass
-
-
-def get_current_graphics_device():
-    """
-    Returns the current graphics device, if one exists.  Otherwise create and
-    return an interactive graphics device.
-    """
-    global _current_graphics_device
-    if _current_graphics_device is not None:
-        return _current_graphics_device
-    else:
-        return InteractiveGraphicsDevice()
+from .R import (
+    data_range,
+    remove_common_suffix,
+    remove_common_prefix,
+    unique_match
+)
 
 
 # ===========================================================================
@@ -290,27 +120,23 @@ def plot_grid_shape(nplots: int):
 # Low level plot functions.  These interact with the current axes object in the
 # current graphics device.  They do not advance to the next axes.
 # ===========================================================================
-def points(x, y, s=None, **kwargs):
+def points(x, y, ax, s=None, **kwargs):
     """
     Add points to the plot showing on the current graphics device.
     """
-    device = get_current_graphics_device()
-    ax = device.current_axes()
     if s is None:
         s = 20 / np.sqrt(len(y))
     ax.scatter(x, y, **kwargs)
 
 
-def lines(x, y, **kwargs):
+def lines(x, y, ax, **kwargs):
     """
     Add lines to the most recent plot.
     """
-    device = get_current_graphics_device()
-    ax = device.current_axes()
     ax.plot(x, y, **kwargs)
 
 
-def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
+def abline(ax, a=0, b=1, h=None, v=None, **kwargs):
     """
     Add a line with specified slope and intercept to a plot.
 
@@ -327,10 +153,6 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
     Effect:
       The requested line is plotted on 'ax'.
     """
-    if ax is None:
-        device = get_current_graphics_device()
-        ax = device.current_axes
-
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     if h is not None:
@@ -354,13 +176,17 @@ def abline(a=0, b=1, h=None, v=None, ax=None, **kwargs):
 # axes, the plot resets.
 # ===========================================================================
 
-def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
+def plot(x, y=None, s=None, hexbin_threshold=1e+5, ax=None, **kwargs):
     """
     For now, a 'plot' is a scatterplot.  At some point I will make 'plot'
     generic as with R.
     """
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+        draw = True
+    else:
+        draw = False
+
     plot_options, kwargs = _skim_plot_options(**kwargs)
 
     if y is None:
@@ -377,9 +203,10 @@ def plot(x, y=None, s=None, hexbin_threshold=1e+5, **kwargs):
         ax.hexbin(x, y, **kwargs)
     _set_plot_options(ax, **plot_options)
 
-    device.draw_current_axes()
+    if draw:
+        fig.show()
 
-    return device
+    return ax
 
 
 def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
@@ -391,18 +218,19 @@ def hist(x, density: bool = False, edgecolor="black", color=".75", add=False,
       x: The variable to be plotted.
       density: If True then the area of the histogram bars sums to 1.
     """
-    device = get_current_graphics_device()
+    fig = None
     if ax is None:
-        if add:
-            ax = device.current_axes
-        else:
-            ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
-    ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density, color=color, **kwargs)
+    ax.hist(x[np.isfinite(x)], edgecolor=edgecolor, density=density,
+            color=color, **kwargs)
     _set_plot_options(ax, **plot_options)
-    device.draw_current_axes()
-    return device
+
+    if fig is not None:
+        fig.show()
+
+    return fig, ax
 
 
 def barplot(x, labels=None, zero=True, ax=None, **kwargs):
@@ -421,10 +249,10 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
 
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
+        draw = True
     else:
-        device = None
+        draw = False
 
     x = x[::-1]
     if labels is not None:
@@ -450,15 +278,19 @@ def barplot(x, labels=None, zero=True, ax=None, **kwargs):
 
     ax.set_xticks(pretty_plot_ticks(lo, hi, 5))
     _set_plot_options(ax, **plot_options)
-    return device
+
+    if draw:
+        fig.show()
+
+    return ax
 
 
-def boxplot(x, labels=None, add=False, **kwargs):
-    device = get_current_graphics_device()
-    if add:
-        ax = device.current_axes
+def boxplot(x, labels=None, ax=None, **kwargs):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+        draw = True
     else:
-        ax = device.next_axes
+        draw = False
 
     if labels is None and isinstance(x, pd.DataFrame):
         labels = x.columns
@@ -466,16 +298,55 @@ def boxplot(x, labels=None, add=False, **kwargs):
     ax.boxplot(x, vert=False)
     _set_plot_options(ax, **kwargs)
 
-    return device
+    if draw:
+        fig.show()
+
+    return ax
+
+
+def time_series_boxplot(curves, time=None, ylim=None, ax=None, **kwargs):
+    """
+    Plot side-by-side boxplots showing the evolution of a distribution over
+    time.
+
+    Args:
+      curves: A matrix or data frame.  Rows represent different curves or Monte
+        Carlo draws.  Columns represent time.
+
+      time: A collectiond of timestamps corresponding to the column labels of
+        'curves'.  If None then timestamps will be taken as the column labels
+        of 'curves' (if curves is a DataFrame), or else they will be assigned
+        the indices 1, 2, 3, ... .
+
+      ylim: Limits on the vertical axis.
+
+      ax:  The plt.Axes object on which to draw the plot.
+
+      **kwargs:  Extra arguments passed to 'boxplot'.
+    """
+    plot_options, kwargs = _skim_plot_options(**kwargs)
+    _set_plot_options(ax, **plot_options)
+
+    if time is None:
+        if isinstance(curves, pd.DataFrame):
+            time = curves.columns
+        else:
+            time_dim = curves.shape[1]
+            time = np.linspace(
+                1, time_dim, num=time_dim).astype(int).astype(str)
+
+    time = remove_common_prefix(
+        remove_common_suffix(
+            [str(x) for x in time]))
+    ax.boxplot(curves, labels=time, **kwargs)
+    return ax
 
 
 def plot_ts(x, timestamps=None, ax=None, **kwargs):
     """ Plot a time series."""
-    # if timestamps is None:
-    #     if isinstance(x, pd.Series):
 
-    device = get_current_graphics_device()
-    ax = device.next_axes
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
 
     if timestamps is None:
         if isinstance(x, pd.Series):
@@ -484,12 +355,97 @@ def plot_ts(x, timestamps=None, ax=None, **kwargs):
     ax.plot(x)
     _set_plot_options(ax, **kwargs)
 
-    return device
+    return ax
+
+
+def pairs(x, **kwargs):
+    """
+    Return a pairs plot of the data in x.
+
+    Args:
+      x: A pd.DataFrame or numpy matrix.
+
+    Returns:
+      The seaborn.axisgrid.PairGrid object containing the plots.
+    """
+    import seaborn as sns
+    if isinstance(x, np.ndarray):
+        x = pd.DataFrame(x)
+    ans = sns.pairplot(x, **kwargs)
+    ans.fig.show()
+    return ans
 
 
 # ===========================================================================
 # Custom plots
 # ===========================================================================
+
+def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
+    """
+    Args:
+      counts: A pd.DataFrame or equivalent, containing the contingency table
+        describing the relationship between two categorical variables.
+      ax:
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = None
+
+    assert isinstance(ax, plt.Axes)
+
+    if isinstance(counts, np.ndarray):
+        counts = pd.DataFrame(counts,
+                              index=np.arange(counts.shape[0]).astype(str),
+                              columns=np.arange(counts.shape[1]).astype(str))
+
+    # The margininal distribution of the variable described by the rows,
+    # obtained by summing over columns.
+    row_margin = np.array(counts.sum(axis=1))
+    nrow = len(row_margin)
+
+    # The margininal distribution of the variable described by the columns,
+    # obtained by summing over rows.
+    col_margin = np.array(counts.sum(axis=0))
+    ncol = len(col_margin)
+
+    # The conditional distribution of the row variable, within each column.
+    conditional = pd.DataFrame(counts / col_margin, index=counts.index,
+                               columns=counts.columns)
+
+    col_margin = col_margin / np.sum(col_margin)
+    row_margin = row_margin / np.sum(row_margin)
+
+    cum_col_margin = np.cumsum(col_margin)
+    lower_col_margin = np.array([0] + cum_col_margin[:-1].tolist())
+    column_positions = (lower_col_margin + cum_col_margin) / 2
+    column_widths = cum_col_margin - lower_col_margin
+
+    lower = np.zeros(ncol)
+    for row_index in range(len(row_margin)):
+        ax.bar(column_positions, conditional.iloc[row_index, :],
+               width=column_widths, bottom=lower, edgecolor="gray",
+               label=counts.index[row_index])
+        lower += conditional.iloc[row_index, :]
+
+    ax.set_xticks(column_positions)
+    ax.set_xticklabels(counts.columns)
+
+    cum_row_margin = np.cumsum(row_margin)
+    row_low = np.array([0] + cum_row_margin[:-1].tolist())
+
+    if np.min(row_margin) < .05:
+        ax.set_yticks(np.linspace(0, 1, nrow))
+    else:
+        row_tick_locations = (cum_row_margin + row_low) / 2
+        ax.set_yticks(row_tick_locations)
+    ax.set_yticklabels(counts.index)
+
+    if fig is not None:
+        fig.show()
+
+    return ax
+
 
 def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
     nvars = data.shape[1]
@@ -548,6 +504,21 @@ def histabunch(data, min_continuous=12, max_levels=40, same_scale=False):
 
 def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
                  **kwargs):
+    """
+    Args:
+
+      series: A numpy array of data to be plotted.  The first dimension of the
+        array is time.
+      same_scale:  If True then all series are plotted on the same scale.
+      ylim:  lower and upper limits of the Y axis.
+      gap:  Amount of space to leave beween panels of the plot.
+      truth: Values at which reference lines should be drawn.  Either a single
+        numeric value, or an array of values that matches the shape of 'series'
+        (without the time dimension).
+      **kwargs:  Other keyword arguments are ignored.
+    """
+    series = np.array(series)
+
     if len(series.shape) == 2:
         nseries = series.shape[1]
         nr, nc = plot_grid_shape(nseries)
@@ -566,7 +537,7 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
         ylim = data_range(series)
 
     if truth is not None:
-        if isinstance(truth, numbers.Number):
+        if isinstance(truth, Number):
             truth = np.ones((nr, nc)) * truth
         elif len(truth.shape) == 1:
             truth = np.concatenate(
@@ -623,10 +594,11 @@ def plot_many_ts(series, same_scale=True, ylim=None, gap=0, truth=None,
 def plot_dynamic_distribution(
         curves,
         timestamps=None,
-        quantile_step=.1,
+        quantile_step=.02,
         xlab="Time",
         ylab="distribution",
         col="black",
+        highlight_median="",
         ax=None,
         **kwargs):
     """
@@ -637,28 +609,28 @@ def plot_dynamic_distribution(
       curves:
         A numpy matrix of time series.  Rows correspond to different series,
         and columns correspond to time.
-
       timestamps:
         An array-like collection of increasing time stamps corresponding to the
         time points in 'curves.'
-
       quantile_step:
         The plotted distribution is formed by taking the quantiles of the
         curves at each time point.  The smaller the value of quantile_step the
         finer the approximation, but the larger and slower the plot.
-
       xlim:
         The limits on the horizontal axis.
-
       xlab:
         The label for the horizontal axis.
+      highlight_median:
+        The name of the color used to highlight the median.  The empty string
+        means not to add extra highlighting.
 
-      **kwargs: Extra arguments passed to .... ???
+      **kwargs: Extra arguments passed to _skim_plot_options.
     """
     redraw = False
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        # device = get_current_graphics_device()
+        # ax = device.next_axes
+        fig, ax = plt.subplots(1, 1)
         redraw = True
 
     plot_options, kwargs = _skim_plot_options(**kwargs)
@@ -673,17 +645,115 @@ def plot_dynamic_distribution(
     for i in range(int(np.floor(len(quantile_points) / 2))):
         lo = curve_quantiles[i, :]
         hi = curve_quantiles[-1-i, :]
-        ax.fill_between(timestamps, lo, hi,
-                        color=col,
-                        facecolor="none",
-                        edgecolor="none",
-                        lw=.0000,
+        ax.fill_between(timestamps, lo, hi, color=col, edgecolor="none",
                         alpha=(i / len(quantile_points)))
 
+    if highlight_median != "":
+        ax.plot(timestamps, np.nanmedian(curves, axis=0),
+                color=highlight_median)
+
     _set_plot_options(ax, **plot_options)
+
     if redraw:
-        device = get_current_graphics_device()
-        device.draw_current_axes()
+        # device = get_current_graphics_device()
+        # device.draw_current_axes()
+        fig.show()
+
+    return ax
+
+
+def compare_dynamic_distributions(
+        list_of_curves,
+        timestamps,
+        style="dynamic",
+        xlab="Time",
+        ylab="",
+        frame_labels=None,
+        main="",
+        actuals=None,
+        col_actuals=None,
+        pch_actuals="o",
+        cex_actuals=1,
+        vertical_cuts=None,
+        fig=None,
+        **kwargs):
+    """
+    Produce a plot showing several stacked dynamic distributions over the same
+    horizontal axis.
+
+    Args:
+      list.of.curves: A list of matrices, all having the same number of
+         columns.  Each matrix represents a distribution of curves, with rows
+         corresponding to individual curves, and columns to time points.
+      timestamps: A vector of time stamps, with length matching the number of
+        columns in each element of list.of.curves.
+      style: Should the curves be represented using a dynamic distribution
+        plot, or boxplots.  Boxplots are better for small numbers of time
+        points.  Dynamic distribution plots are better for large numbers of
+        time points.
+      xlab:  Label for the horizontal axis.
+      ylab:  Label for the (outer) vertical axis.
+      frame.labels: Labels for the vertical axis of each subplot. The length
+        must match the number of plot.
+      main:  Main title for the plot.
+      actuals: If non-NULL, actuals should be a numeric vector giving the
+        actual "true" value at each time point.
+      col_actuals:  Color to use for the actuals.
+      cex_actuals:  Scale factor for actuals.
+      vertical.cuts: If not None then this must be a vector of the same type as
+        'timestamps' with length matching the number of plots.  A vertical line
+        will be drawn at this location for each plot.  Entries with the value
+        NaN or NaT signal that no vertical line should be drawn for that entry.
+      kwargs: Extra arguments passed to PlotDynamicDistribution or
+       TimeSeriesBoxplot.
+    """
+    style = unique_match(style, ["dynamic", "boxplot"])
+    nplots = len(list_of_curves)
+    ntimes = len(timestamps)
+    for i in range(nplots):
+        if list_of_curves[i].shape[1] != ntimes:
+            raise Exception(f"Entry {i} in 'list_of_curves' did not have the "
+                            f"right number of columns.  Expected {ntimes}, "
+                            f"got {list_of_curves[i].shape[1]}.")
+    if frame_labels is None:
+        frame_labels = [str(i + 1) for i in range(nplots)]
+    if not len(frame_labels) == nplots:
+        raise Exception("frame labels do not match number of curves.")
+    if fig is None:
+        fig = plt.figure()
+
+    ax = fig.subplots(nplots, 1, sharex=True)
+    if nplots == 1:
+        # If there is only one plot, put ax in a list so we can "iterate" over
+        # it without breaking the multiplot code.
+        ax = [ax]
+    for i in range(nplots):
+        if style == "dynamic":
+            plot_dynamic_distribution(list_of_curves[i],
+                                      timestamps=timestamps,
+                                      ylab=frame_labels[i],
+                                      ax=ax[i],
+                                      **kwargs)
+        elif style == "boxplot":
+            time_series_boxplot(list_of_curves[i],
+                                timestamps=timestamps,
+                                ylab=frame_labels[i],
+                                ax=ax[i],
+                                **kwargs)
+        else:
+            raise Exception(f"Unrecognized style {style}")
+
+        if actuals is not None:
+            ax[i].scatter(timestamps, actuals,
+                          s=cex_actuals * 100 / np.sqrt(len(actuals)))
+
+        if vertical_cuts is not None:
+            if vertical_cuts[i] == vertical_cuts[i]:
+                ax[i].axvline(vertical_cuts[i])
+
+    if main:
+        fig.suptitle(main)
+    return fig
 
 
 def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
@@ -700,32 +770,46 @@ def hosmer_lemeshow_plot(actual, predicted, ax=None, **kwargs):
       **kwargs: Passed to plt.subplots in the event that ax is None.
 
     Return:
-      fig: If a new figure was created then this is the containing object.
-        Otherwise None.
       ax: The axes object containing the plot.
-
+      group_means: The pd.Series containing the group means.  The series is
+        indexed by pd.Interval objects indicating the interval over which the
+        means are averaged.
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.next_axes
+        fig, ax = plt.subplots()
+    else:
+        fig = None
     group_means = pd.DataFrame({"pred": predicted, "actual": actual}).groupby(
         pd.qcut(predicted, 10))["actual"].mean()
     bar_locations = group_means.index.categories.mid.values
+
     lower = np.array([x.left for x in group_means.index.values])
     upper = np.array([x.right for x in group_means.index.values])
-    bar_widths = .8 * (upper - lower)
+    bar_widths = 1.0 * (upper - lower)
 
-    ax.barh(bar_locations, group_means, height=bar_widths)
-    ax.set_xticks(bar_locations)
-    labels = [str(lab) for lab in group_means.index.values]
-    ax.set_yticklabels(labels)
-    ax.set_ylabel("Predicted Proportions")
+    plot_options, kwargs = _skim_plot_options(**kwargs)
 
-    xticks = pretty_plot_ticks(np.min(predicted), np.max(predicted), 5)
-    ax.set_xticks(xticks)
-    ax.set_xlabel("Observed Proportions")
+    ax.bar(bar_locations, group_means, width=bar_widths, edgecolor="black",
+           **kwargs)
+    # ax.set_xlim(0, 1)
+    # ax.set_ylim(0, 1)
 
-    return ax
+    # labels = [str(lab) for lab in group_means.index.values]
+    # ax.set_yticklabels(labels)
+    ax.set_ylabel("Observed Proportions")
+
+    # xticks = pretty_plot_ticks(np.min(predicted), np.max(predicted), 5)
+    # ax.set_xticks(xticks)
+    ax.set_xlabel("Predicted Proportions")
+
+    _set_plot_options(ax, **plot_options)
+
+    abline(a=0, b=1, ax=ax, color="black")
+
+    if fig is not None:
+        fig.show()
+
+    return ax, group_means
 
 
 def lines_gaussian_kde(kde, ax=None, **kwargs):
@@ -733,9 +817,40 @@ def lines_gaussian_kde(kde, ax=None, **kwargs):
     Add a kernel density estimate to the plot.
     """
     if ax is None:
-        device = get_current_graphics_device()
-        ax = device.current_axes
+        fig, ax = plt.subplots(1, 1)
     xlim = ax.get_xlim()
     x = np.linspace(xlim[0], xlim[1])
     y = kde.pdf(x)
     ax.plot(x, y, **kwargs)
+    return ax
+
+
+def lty(style):
+    """
+    Python linestyle characters from R 'lty' (linetype).
+
+    Args:
+      style:  An int or string.
+
+    """
+    style_names = ["solid", "dashed", "dotted", "dotdash",
+                   "longdash", "twodash"]
+
+    mappings = {
+        "solid": "-",
+        "dashed": "--",
+        "dotted": ":",
+        "dotdash": "-.",
+        "longdash": (5, (8, 1, 8, 1)),
+        "twodash": (5, (6, 1, 3, 1))
+    }
+
+    if isinstance(style, str):
+        if style == "dashdot":
+            style = "dotdash"
+        style = unique_match(style, style_names)
+        return mappings[style]
+
+    elif isinstance(style, Number):
+        style_number = style % len(style_names)
+        return mappings[style_names[style_number]]

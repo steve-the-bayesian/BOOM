@@ -119,6 +119,11 @@ namespace BOOM {
     double slope_mean() const {return slope_->mu();}
     double slope_ar_coefficient() const {return slope_->phi();}
 
+    void set_level_sd(double sd) {level_->set_sigsq(sd * sd);}
+    void set_slope_sd(double sd) {slope_->set_sigsq(sd * sd);}
+    void set_slope_mean(double mean) {slope_->set_mu(mean);}
+    void set_slope_ar_coefficient(double ar) {slope_->set_phi(ar);}
+
    private:
     void check_dim(const ConstVectorView &) const;
     std::vector<Ptr<UnivParams> > get_variances();

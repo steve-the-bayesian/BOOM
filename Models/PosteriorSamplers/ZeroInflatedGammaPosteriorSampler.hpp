@@ -31,14 +31,21 @@ namespace BOOM {
    public:
     ZeroInflatedGammaPosteriorSampler(
         ZeroInflatedGammaModel *model,
-        const Ptr<BetaModel> &prior_for_positive_probability,
+        const Ptr<BetaModel> &prior_for_nonzero_probability,
         const Ptr<DoubleModel> &prior_for_gamma_mean,
         const Ptr<DoubleModel> &prior_for_gamma_shape,
         RNG &seeding_rng = GlobalRng::rng);
+
+    ZeroInflatedGammaPosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
 
    private:
+    Ptr<BetaModel> prior_for_nonzero_probability_;
+    Ptr<DoubleModel> prior_for_gamma_mean_;
+    Ptr<DoubleModel> prior_for_gamma_shape_;
     Ptr<BetaBinomialSampler> binomial_sampler_;
     Ptr<GammaPosteriorSampler> gamma_sampler_;
   };

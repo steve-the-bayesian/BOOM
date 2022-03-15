@@ -38,6 +38,13 @@ namespace BOOM {
     return prior_->logp(model_->siginv());
   }
 
+  MvnVarSampler *MvnVarSampler::clone_to_new_host(Model *new_host) const {
+    return new MvnVarSampler(
+        dynamic_cast<MvnModel*>(new_host),
+        prior_->clone(),
+        rng());
+  }
+
   void MvnVarSampler::draw() {
     Ptr<MvnSuf> suf = model_->suf();
     model_->set_siginv(draw_precision(
@@ -72,6 +79,14 @@ namespace BOOM {
                                        const Ptr<WishartModel> &prior,
                                        RNG &seeding_rng)
       : MvnVarSampler(m, prior, seeding_rng) {}
+
+  MvnConjVarSampler *MvnConjVarSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new MvnConjVarSampler(
+        dynamic_cast<MvnModel *>(new_host),
+        prior()->clone(),
+        rng());
+  }
 
   void MvnConjVarSampler::draw() {
     Ptr<MvnSuf> suf = model()->suf();

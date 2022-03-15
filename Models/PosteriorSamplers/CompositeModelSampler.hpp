@@ -29,6 +29,7 @@ namespace BOOM {
    public:
     explicit CompositeModelSampler(CompositeModel *model,
                                    RNG &seeding_rng = GlobalRng::rng);
+    CompositeModelSampler *clone_to_new_host(Model *new_host) const override;
     double logpri() const override;
     void draw() override;
 

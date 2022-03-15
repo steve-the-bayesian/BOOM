@@ -39,7 +39,8 @@ namespace BOOM {
   RNG::RngIntType seed_rng(RNG &rng) {
     RNG::RngIntType ans = 0;
     while (ans <= 2) {
-      double u = runif_mt(rng) * std::numeric_limits<RNG::RngIntType>::max();
+      double u = runif_mt(rng) * static_cast<double>(
+          std::numeric_limits<RNG::RngIntType>::max());
       ans = lround(u);
     }
     return ans;

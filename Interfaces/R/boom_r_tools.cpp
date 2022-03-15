@@ -359,7 +359,7 @@ namespace BOOM {
       // dropped an dimension because of a singleton index.
       ConstVectorView v = ToBoomVectorView(r_array);
       int n = v.size();
-      Array ans({n});
+      Array ans(std::vector<int>{n});
       ans.assign(v.begin(), v.end());
       return ans;
     } else {
@@ -563,7 +563,7 @@ namespace BOOM {
     protector.protect(ans = Rf_allocArray(REALSXP, r_dims));
     double *array_data = REAL(ans);
     int i = 0;
-    for (const auto &el : array) {
+    for (const auto el : array) {
       array_data[i++] = el;
     }
     return ans;

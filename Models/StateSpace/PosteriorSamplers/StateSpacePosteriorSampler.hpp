@@ -31,6 +31,10 @@ namespace BOOM {
     //     for the RNG owned by this sampler.
     explicit StateSpacePosteriorSampler(StateSpaceModelBase *model,
                                         RNG &seeding_rng = GlobalRng::rng);
+
+    StateSpacePosteriorSampler *clone_to_new_host(
+        Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
 

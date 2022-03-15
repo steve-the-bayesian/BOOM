@@ -48,6 +48,21 @@ namespace BOOM {
     }
   }
 
+  DRIPS *DRIPS::clone_to_new_host(Model *new_host) const {
+    std::vector<Ptr<GammaModelBase>> new_priors;
+    for (const auto &el : priors_) {
+      new_priors.push_back(el->clone());
+    }
+    DRIPS *ans = new DRIPS(
+        dynamic_cast<DynamicRegressionStateModel *>(new_host),
+        new_priors,
+        rng());
+    for (int i = 0; i < samplers_.size(); ++i) {
+      ans->set_sigma_max(i, samplers_[i].sigma_max());
+    }
+    return ans;
+  }
+
   void DRIPS::draw() {
     for (int i = 0; i < samplers_.size(); ++i) {
       double sigsq = samplers_[i].draw(rng(), model_->suf(i)->n(),
@@ -76,6 +91,20 @@ namespace BOOM {
         siginv_prior_(siginv_prior),
         sigsq_sampler_(siginv_prior_),
         handle_siginv_prior_separately_(false) {}
+
+  DynamicRegressionPosteriorSampler *
+  DynamicRegressionPosteriorSampler::clone_to_new_host(Model *model) const {
+    DynamicRegressionPosteriorSampler *ans =
+        new DynamicRegressionPosteriorSampler(
+            dynamic_cast<DynamicRegressionStateModel *>(model),
+            siginv_prior_,
+            rng());
+    if (handle_siginv_prior_separately_) {
+      ans->handle_siginv_prior_separately();
+    }
+    ans->set_sigma_max(sigsq_sampler_.sigma_max());
+    return ans;
+  }
 
   void DynamicRegressionPosteriorSampler::handle_siginv_prior_separately() {
     handle_siginv_prior_separately_ = true;

@@ -54,7 +54,7 @@ namespace BOOM {
     class NuPosteriorRobust {
      public:
       // Args:
-      //   nu_prior_: A prior distribution for the tail thickness parameter of
+      //   nu_prior: A prior distribution for the tail thickness parameter of
       //     the student T distribution.
       //   residuals: A set of zero-mean data drawn from the T_nu(0, sigma)
       //     distribution.
@@ -83,7 +83,42 @@ namespace BOOM {
       const BOOM::Vector &residuals_;
       double sigma_;
     };
-    
+
+    class JointPosterior {
+     public:
+      // Args:
+      //   sigma_prior: A prior distribution on the value of scale parameter
+      //     sigma.  Be sure to inclue any Jacobian terms if the prior is on a
+      //     scale other than sigma (i.e. sigma^2 or 1 / sigma^2).
+      //   nu_prior: A prior distribution on the tail thickness parameter (df
+      //     parameter) nu.
+      JointPosterior(const DoubleModel *nu_prior,
+                     const DoubleModel *sigma_prior,
+                     const Vector &residuals)
+          : nu_prior_(nu_prior),
+            sigma_prior_(sigma_prior),
+            residuals_(residuals)
+      {}
+
+      double operator()(const Vector &sigma_nu) const {
+        double sigma = sigma_nu[0];
+        double nu = sigma_nu[1];
+        double ans = nu_prior_->logp(nu) + sigma_prior_->logp(sigma);
+        if (!std::isfinite(ans)) {
+          return ans;
+        }
+        for (double r : residuals_) {
+          ans += dstudent(r, 0, sigma, nu, true);
+        }
+        return ans;
+      }
+
+     private:
+      const BOOM::DoubleModel *nu_prior_;
+      const BOOM::DoubleModel *sigma_prior_;
+      const BOOM::Vector &residuals_;
+    };
+
     typedef StudentLocalLinearTrendPosteriorSampler SLLTPS;
 
   }  // namespace
@@ -162,5 +197,12 @@ namespace BOOM {
     double nu = sampler.draw(model_->nu_slope());
     model_->set_nu_slope(nu);
   }
+
+  // void SLTTPS::draw_slope_params() {
+
+  // }
+
+  // void SLTTPS::draw_level_params() {
+  // }
 
 }  // namespace BOOM

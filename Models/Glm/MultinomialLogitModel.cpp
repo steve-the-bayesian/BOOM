@@ -369,7 +369,7 @@ namespace BOOM {
   void MLM::setup_observers() {
     GlmCoefs &b(coef());
     try {
-      b.add_observer([this]() { this->watch_beta(); });
+      b.add_observer(this, [this]() { this->watch_beta(); });
     } catch (const std::exception &e) {
       report_error(e.what());
     } catch (...) {

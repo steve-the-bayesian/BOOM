@@ -66,7 +66,11 @@ SAMPLERS_SRCS := $(wildcard Samplers/*.cpp Samplers/Gilks/*.cpp)
 STATESPACE_SRCS := $(wildcard Models/StateSpace/*.cpp) \
 	$(wildcard Models/StateSpace/Filters/*.cpp) \
 	$(wildcard Models/StateSpace/PosteriorSamplers/*.cpp) \
-	$(wildcard Models/StateSpace/StateModels/*.cpp)
+	$(wildcard Models/StateSpace/StateModels/*.cpp) \
+	$(wildcard Models/StateSpace/StateModels/PosteriorSamplers/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp) \
+	$(wildcard Models/StateSpace/Multivariate/StateModels/*.cpp)
 
 STATS_SRCS := $(wildcard stats/*.cpp)
 

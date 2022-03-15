@@ -51,6 +51,8 @@ namespace BOOM {
     virtual void add_data(const Ptr<DataType> &dp);
     virtual void remove_data(const Ptr<Data> &dp);
 
+    long sample_size() const {return dat_.size();}
+
     std::vector<Ptr<DataType>> &dat() { return dat_; }
     const std::vector<Ptr<DataType>> &dat() const { return dat_; }
 

@@ -101,10 +101,9 @@ namespace BOOM {
       }
 
       // A NULL r_prior signals that no posterior sampler is needed.  This
-      // differes from the logit and Poisson cases, where a NULL prior
-      // might signal the absence of predictors, because the T model still
-      // needs a prior for the residual "variance" and tail thickness
-      // parameters.
+      // differs from the logit and Poisson cases, where a NULL prior might
+      // signal the absence of predictors, because the T model still needs a
+      // prior for the residual "variance" and tail thickness parameters.
       if (!Rf_isNull(r_prior)) {
         TRegressionModel *regression = model_->observation_model();
         BOOM::RInterface::StudentRegressionConjugateSpikeSlabPrior prior_spec(

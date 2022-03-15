@@ -76,16 +76,10 @@ namespace BOOM {
   }
 
   void MarkovData::unset_prev() {
-    if (!!prev_) {
-      prev_->unset_next();
-    }
     prev_ = nullptr;
   }
 
   void MarkovData::unset_next() {
-    if (!!next_) {
-      next_->unset_prev();
-    }
     next_ = nullptr;
   }
 
@@ -180,9 +174,7 @@ namespace BOOM {
   }
 
   std::ostream &MarkovSuf::print(std::ostream &out) const {
-    trans_.write(out, false);
-    out << " ";
-    init_.write(out, true);
+    out << "Init: \n" << init_ << "\nTrans: \n" << trans_;
     return out;
   }
 
@@ -431,6 +423,7 @@ namespace BOOM {
 
   void MarkovModel::fix_pi0_stationary() {
     Q_prm()->add_observer(
+        this,
         [this]() {
           this->set_pi0(this->stat_dist());
         });

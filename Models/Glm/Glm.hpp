@@ -190,6 +190,9 @@ namespace BOOM {
     // The I'th coefficient from the full coefficient vector.
     double Beta(uint I) const;
 
+    void set_sparse_coefficients(const Vector &nonzero_values,
+                                 const std::vector<uint> &nonzero_positions);
+
     // Return the dot product of x and coefs().  The dimension of x must either
     // be the number of included predictor variables, or the number of available
     // predictor variables.

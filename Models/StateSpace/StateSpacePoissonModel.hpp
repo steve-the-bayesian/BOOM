@@ -164,10 +164,16 @@ namespace BOOM {
 
     StateSpacePoissonModel(const StateSpacePoissonModel &rhs);
     StateSpacePoissonModel *clone() const override;
+    StateSpacePoissonModel *deepclone() const override {
+      StateSpacePoissonModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int total_sample_size(int time) const override {
       return dat()[time]->total_sample_size();
     }
+    int xdim() const {return observation_model()->xdim();}
     const PoissonRegressionData &data(int time,
                                       int observation) const override {
       return dat()[time]->poisson_data(observation);
@@ -198,6 +204,10 @@ namespace BOOM {
 
     Vector simulate_forecast(RNG &rng, const Matrix &forecast_predictors,
                              const Vector &exposure, const Vector &final_state);
+
+    Matrix simulate_forecast_components(
+        RNG &rng, const Matrix &forecast_predictors,
+        const Vector &exposure, const Vector &final_state);
 
     // Returns a vector of draws from the posterior predictive distribution for
     // a multiplexed prediction problem.  That is, a prediction problem where
@@ -233,6 +243,9 @@ namespace BOOM {
                                               const Vector &exposure,
                                               const Matrix &predictors,
                                               const Vector &final_state);
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
    private:
     Ptr<PoissonRegressionModel> observation_model_;

@@ -46,7 +46,9 @@ namespace BOOM {
     return task_queue_.empty();
   }
 
-  ThreadWorkerPool::ThreadWorkerPool(int number_of_threads) : done_(false) {
+  ThreadWorkerPool::ThreadWorkerPool(int number_of_threads)
+      : done_(false)
+  {
     if (number_of_threads > 0) {
       add_threads(number_of_threads);
     }

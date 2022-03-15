@@ -34,9 +34,11 @@ namespace BOOM {
           << "Data value was: " << endl
           << *dp << endl;
       report_error(err.str());
+      return negative_infinity();
+    } else {
+      double ans = logp(d->value());
+      return logscale ? ans : exp(ans);
     }
-    double ans = logp(d->value());
-    return logscale ? ans : exp(ans);
   }
 
 }  // namespace BOOM

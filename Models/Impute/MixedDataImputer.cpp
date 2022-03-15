@@ -288,10 +288,10 @@ namespace BOOM {
         return model_->logpi()[index];
       } else {
         return 0;
-        std::ostringstream err;
-        err << "Illegal level value: " << label << ".";
-        report_error(err.str());
-        return negative_infinity();
+        // std::ostringstream err;
+        // err << "Illegal level value: " << label << ".";
+        // report_error(err.str());
+        // return negative_infinity();
       }
     }
 
@@ -531,10 +531,9 @@ namespace BOOM {
   void MixedDataImputerBase::initialize(const std::vector<Vector> &atoms) {
     // int num_clusters = mixing_distribution_->dim();
     auto data_point = dat()[0];
-    auto variable_types = data_point->variable_types();
     std::vector<Ptr<CatKey>> levels;
     for (int j = 0; j < data_point->dim(); ++j) {
-      if (variable_types[j] == VariableType::categorical) {
+      if (data_point->variable_type(j) == VariableType::categorical) {
         levels.push_back(data_point->categorical(j).catkey());
       }
     }
@@ -712,6 +711,7 @@ namespace BOOM {
   void MixedDataImputerBase::set_numeric_data_model_observers() {
     this->swept_sigma_current_ = false;
     numeric_data_model_->Sigma_prm()->add_observer(
+        this,
         [this]() {this->swept_sigma_current_ = false;});
   }
 

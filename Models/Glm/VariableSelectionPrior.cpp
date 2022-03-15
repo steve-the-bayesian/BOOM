@@ -298,7 +298,7 @@ namespace BOOM {
   }
 
   void VSP::observe_prior_inclusion_probabilities() {
-    prm()->add_observer([this]() { this->current_ = false;});
+    prm()->add_observer(this, [this]() { this->current_ = false;});
   }
 
   void VSP::ensure_log_probabilities() const {
@@ -573,6 +573,7 @@ namespace BOOM {
 
   void MVSP::observe_prior_inclusion_probabilities() {
     prm()->add_observer(
+        this,
         [this]() {
           this->current_ = false;
         });

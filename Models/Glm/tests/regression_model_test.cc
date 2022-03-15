@@ -151,4 +151,5 @@ namespace {
     EXPECT_NEAR(marginal_loglike, monte_carlo_marginal_loglike, 3.0);
   }
 
+
 }  // namespace

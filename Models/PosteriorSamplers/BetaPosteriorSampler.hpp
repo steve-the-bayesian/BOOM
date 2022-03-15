@@ -33,9 +33,11 @@ namespace BOOM {
   // given, then support is truncated to those intervals.
   class BetaPosteriorSampler : public PosteriorSampler {
    public:
-    BetaPosteriorSampler(BetaModel *model, const Ptr<DoubleModel> &mean_prior,
+    BetaPosteriorSampler(BetaModel *model,
+                         const Ptr<DoubleModel> &mean_prior,
                          const Ptr<DoubleModel> &sample_size_prior,
                          RNG &seeding_rng = GlobalRng::rng);
+    BetaPosteriorSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

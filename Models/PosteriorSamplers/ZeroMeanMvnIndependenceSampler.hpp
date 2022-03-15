@@ -38,9 +38,13 @@ namespace BOOM {
                                    const Ptr<GammaModelBase> &prior,
                                    int which_variable,
                                    RNG &seeding_rng = GlobalRng::rng);
-    ZeroMeanMvnIndependenceSampler(ZeroMeanMvnModel *model, double prior_df,
-                                   double sigma_guess, int which_variable,
+    ZeroMeanMvnIndependenceSampler(ZeroMeanMvnModel *model,
+                                   double prior_df,
+                                   double sigma_guess,
+                                   int which_variable,
                                    RNG &seeding_rng = GlobalRng::rng);
+    ZeroMeanMvnIndependenceSampler *clone_to_new_host(
+        Model *new_host) const override;
     void draw() override;
     double logpri() const override;
     void set_sigma_upper_limit(double max_sigma);

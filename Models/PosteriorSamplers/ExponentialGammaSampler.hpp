@@ -27,8 +27,10 @@ namespace BOOM {
 
   class ExponentialGammaSampler : public PosteriorSampler {
    public:
-    ExponentialGammaSampler(ExponentialModel *Mod, const Ptr<GammaModel> &Pri,
+    ExponentialGammaSampler(ExponentialModel *model,
+                            const Ptr<GammaModel> &prior,
                             RNG &seeding_rng = GlobalRng::rng);
+    ExponentialGammaSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
     double a() const;
@@ -36,8 +38,8 @@ namespace BOOM {
     void find_posterior_mode(double epsilon = 1e-5) override;
 
    private:
-    ExponentialModel *mod;
-    Ptr<GammaModel> pri;
+    ExponentialModel *model_;
+    Ptr<GammaModel> prior_;
   };
 }  // namespace BOOM
 #endif  // BOOM_EXPONENTIAL_GAMMA_SAMPLER_HPP

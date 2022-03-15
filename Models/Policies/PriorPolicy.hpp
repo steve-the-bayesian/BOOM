@@ -35,17 +35,29 @@ namespace BOOM {
     // Invoke each of the sampling methods that have been set, in the
     // order they were set.
     void sample_posterior() override;
+
+    // The log of the prior density function evaluated at the current
+    // parameters.
     double logpri() const override;
-    void set_method(const Ptr<PosteriorSampler> &);
-    void clear_methods();
+
+    // Add a posterior sampler to the current set of sampling methods.
+    void set_method(const Ptr<PosteriorSampler> &sampler) override;
+
+    // Clear all posterior samplers.
+    void clear_methods() override;
 
     // Returns the number of sampling methods that have been set.
     int number_of_sampling_methods() const override;
 
+    // Return a specific sampler.
     PosteriorSampler *sampler(int i) override { return samplers_[i].get(); }
     PosteriorSampler const *const sampler(int i) const override {
       return samplers_[i].get();
     }
+
+    // Return the RNG object from the first sampler.  If samplers_ is empty then
+    // raise an exception.
+    RNG &rng();
 
    private:
     std::vector<Ptr<PosteriorSampler> > samplers_;

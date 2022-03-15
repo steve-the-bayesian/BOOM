@@ -160,9 +160,10 @@ namespace BOOM {
           << "with an argument "
           << "that was not coercible to ZeroInflatedGammaModel." << endl;
       report_error(err.str());
+    } else {
+      gamma_->combine_data(*(rhsp->gamma_), true);
+      binomial_->combine_data(*(rhsp->binomial_), true);
     }
-    gamma_->combine_data(*(rhsp->gamma_), true);
-    binomial_->combine_data(*(rhsp->binomial_), true);
   }
 
   void ZIGM::mle() {
@@ -229,6 +230,6 @@ namespace BOOM {
   void ZIGM::setup() {
     ParamPolicy::add_model(gamma_);
     ParamPolicy::add_model(binomial_);
-    binomial_->Prob_prm()->add_observer(create_binomial_observer());
+    binomial_->Prob_prm()->add_observer(this, create_binomial_observer());
   }
 }  // namespace BOOM

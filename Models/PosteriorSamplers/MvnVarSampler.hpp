@@ -49,6 +49,8 @@ namespace BOOM {
     MvnVarSampler(MvnModel *model, const Ptr<WishartModel> &precision_prior,
                   RNG &seeding_rng = GlobalRng::rng);
 
+    MvnVarSampler *clone_to_new_host(Model *new_host) const override;
+
     double logpri() const override;
     void draw() override;
 
@@ -100,10 +102,14 @@ namespace BOOM {
     // assumes y~N(mu, Sigma), with mu|Sigma \norm(mu0, Sigma/kappa)
     // and Sigma^-1~W(df, SS)
    public:
-    MvnConjVarSampler(MvnModel *, double df, const SpdMatrix &SS,
+    MvnConjVarSampler(MvnModel *,
+                      double df,
+                      const SpdMatrix &SS,
                       RNG &seeding_rng = GlobalRng::rng);
-    MvnConjVarSampler(MvnModel *, const Ptr<WishartModel> &siginv_prior,
+    MvnConjVarSampler(MvnModel *,
+                      const Ptr<WishartModel> &siginv_prior,
                       RNG &seeding_rng = GlobalRng::rng);
+    MvnConjVarSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
   };
 

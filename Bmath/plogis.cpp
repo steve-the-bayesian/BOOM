@@ -39,7 +39,7 @@
 #include "dpq.hpp"
 
 namespace Rmath {
-  
+
   double plogis(double x, double location, double scale,
                 int lower_tail, int log_p)
   {
@@ -53,11 +53,10 @@ namespace Rmath {
     if (ISNAN(x))       ML_ERR_return_NAN;
     if(!R_FINITE(x)) {
       if (x > 0) return R_DT_1;
-      /* x < 0 */return R_DT_0;
+      /* x < 0 */ return R_DT_0;
     }
     x = exp(lower_tail ? -x : x);
     return (log_p ? -log1p(x) : 1 / (1 + x));
   }
 
 }  // namespace Rmath
-

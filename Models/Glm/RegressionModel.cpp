@@ -503,10 +503,10 @@ namespace BOOM {
   //======================================================================
   typedef RegressionModel RM;
 
-  RM::RegressionModel(uint p)
+  RM::RegressionModel(uint xdim)
       : GlmModel(),
-        ParamPolicy(new GlmCoefs(p), new UnivParams(1.0)),
-        DataPolicy(new NeRegSuf(p)) {}
+        ParamPolicy(new GlmCoefs(xdim), new UnivParams(1.0)),
+        DataPolicy(new NeRegSuf(xdim)) {}
 
   RM::RegressionModel(const Vector &b, double Sigma)
       : GlmModel(),
@@ -728,5 +728,101 @@ namespace BOOM {
      b = xtx-1xty = (rt qt q r)^{-1} rt qt y
      = r^[-1] qt y
   */
+
+  //===========================================================================
+
+  BigRegressionModel::BigRegressionModel(uint xdim,
+                                         int subordinate_model_max_dim,
+                                         bool force_intercept)
+      : GlmModel(),
+        ParamPolicy(new GlmCoefs(xdim), new UnivParams(1.0)),
+        force_intercept_(force_intercept),
+        predictor_candidates_(xdim, false),
+        restricted_model_(nullptr)
+  {
+    create_subordinate_models(xdim, subordinate_model_max_dim, force_intercept);
+  }
+
+  BigRegressionModel * BigRegressionModel::clone() const {
+    return new BigRegressionModel(*this);
+  }
+
+  void BigRegressionModel::stream_data_for_initial_screen(
+      const RegressionData &data_point) {
+    double y = data_point.y();
+    const Vector &x(data_point.x());
+    long cursor = 0;
+    for (uint m = 0; m < subordinate_models_.size(); ++m) {
+      auto &model(*subordinate_models_[m]);
+      long chunk_size = model.xdim();
+      Vector chunk(chunk_size);
+      bool add_intercept = force_intercept_ && m > 0;
+      if (add_intercept) {
+        chunk[0] = 1.0;
+      }
+      for (int i = add_intercept; i < chunk_size; ++i) {
+        chunk[i] = x[cursor++];
+      }
+      subordinate_models_[m]->suf()->add_mixture_data(y, chunk, 1.0);
+    }
+  }
+
+  void BigRegressionModel::set_candidates(const Selector &include) {
+    predictor_candidates_ = include;
+    restricted_model_.reset(new RegressionModel(
+        predictor_candidates_.nvars()));
+  }
+
+  void BigRegressionModel::stream_data_for_restricted_model(
+      const RegressionData &data_point) {
+    if (!restricted_model_) {
+      report_error("You must call 'set_candidates' before streaming data "
+                   "to the restricted model.");
+    }
+    restricted_model_->suf()->add_mixture_data(
+        data_point.y(),
+        predictor_candidates_.select(data_point.x()),
+        1.0);
+  }
+
+  void BigRegressionModel::create_subordinate_models(
+      uint xdim,
+      int subordinate_model_max_dim,
+      bool force_intercept) {
+
+    long nsub = std::lround(std::ceil(
+        double(xdim) / subordinate_model_max_dim));
+
+    int model_dim = lround(std::ceil(double(xdim) / nsub)) + force_intercept;
+    long remaining_xdim = xdim;
+    for (long i = 0; i < nsub; ++i) {
+      if (remaining_xdim + force_intercept > model_dim) {
+        NEW(RegressionModel, subordinate_model)(model_dim);
+        subordinate_models_.push_back(subordinate_model);
+        remaining_xdim -= (model_dim - force_intercept);
+      } else {
+        NEW(RegressionModel, subordinate_model)(remaining_xdim);
+        subordinate_models_.push_back(subordinate_model);
+        remaining_xdim = 0;
+      }
+    }
+  }
+
+  void BigRegressionModel::expand_restricted_model_parameters() {
+    const GlmCoefs &restricted_coefs(restricted_model_->coef());
+    const Selector &restricted_inc(restricted_coefs.inc());
+
+    GlmCoefs &full_coefs(coef());
+    full_coefs.drop_all();
+
+    for (uint i = 0; i < restricted_inc.nvars(); ++i) {
+      uint I = restricted_inc.sparse_index(i);
+      full_coefs.add(predictor_candidates_.sparse_index(I));
+    }
+
+    full_coefs.set_included_coefficients(
+        restricted_coefs.included_coefficients());
+  }
+
 
 }  // namespace BOOM

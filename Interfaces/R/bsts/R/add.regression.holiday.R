@@ -89,7 +89,7 @@ AddRegressionHoliday <- function(state.specification = NULL,
   variable.names <- colnames(coefficients)
   old.mai <- par("mai")
   old.mai[1] <- max(strheight(variable.names, units = "inches"))
-  old.mai[2] <- max(strwidth(variable.names, units = "inches")) + 
+  old.mai[2] <- max(strwidth(variable.names, units = "inches")) +
     strwidth("        -- ", units = "inches")
   oldpar <- par(mai = old.mai)
   on.exit(par(oldpar))
@@ -99,7 +99,7 @@ AddRegressionHoliday <- function(state.specification = NULL,
   new.holiday.index <- (1:ncol(coefficients))[colnames(coefficients) != ""][-1]
   coefficients <- coefficients[, ncol(coefficients):1]
   new.holiday.index <- 1 + ncol(coefficients) - new.holiday.index
-  
+
   boxplot(coefficients, horizontal = TRUE, ylim = ylim, las = 1, cex = .6, ...)
   abline(v = 0, lty = 3)
   abline(h = new.holiday.index + .5, lty = 3)
@@ -190,7 +190,7 @@ plot.HierarchicalRegressionHolidayStateModel <- function(x,
   if (is.null(.FindStateSpecification(state.specification, bsts.object))) {
     stop("The state specification is not part of the bsts object.")
   }
-  
+
   coefficient.array <- bsts.object$holiday.coefficients
   if (is.null(burn)) {
     burn <- 0
@@ -205,13 +205,13 @@ plot.HierarchicalRegressionHolidayStateModel <- function(x,
   colnames(coefficients) <- rep("", ncol(coefficients))
   colnames(coefficients)[seq(from = 1, by = holiday.window.size,
     len = number.of.holidays)] <- dimnames(coefficient.array)[[2]]
-  
+
   start <- 0
   for (i in 1:number.of.holidays) {
     coefficients[, start + (1:holiday.window.size)] <- coefficient.array[, i, ]
     start <- start + holiday.window.size
   }
-  
+
   .PlotHolidayRegressionCoefficients(coefficients, ylim, ...)
   title("Hierarchical Regression\nHoliday Effects")
   return(invisible(NULL))
@@ -257,7 +257,7 @@ AddHierarchicalRegressionHoliday <- function(
   if (length(holiday.list) < 3) {
     stop("You need 3 or more holidays to fit the hierarchical model in ",
          "AddHierarchicalRegressionHolidayModel.")
-  } 
+  }
   if (missing(state.specification)) {
     state.specification <- list()
   }
@@ -299,4 +299,3 @@ AddHierarchicalRegressionHoliday <- function(
   state.specification[[length(state.specification) + 1]] <- spec
   return(state.specification)
 }
-                                               

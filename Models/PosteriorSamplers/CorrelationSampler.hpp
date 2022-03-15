@@ -31,9 +31,15 @@ namespace BOOM {
   // CorrelationModel prior distribution on the correlation matrix
   class MvnCorrelationSampler : public PosteriorSampler {
    public:
-    MvnCorrelationSampler(MvnModel *model, const Ptr<CorrelationModel> &prior,
-                          bool refresh_suf = false,
+    // Args:
+    //   model:  The model to be sampled.
+    //   prior: Prior distribution for the correlation matrix in 'model.'
+    //   seeding_rng: A random number generator used to seed the RNG stored by
+    //     this sampler.
+    MvnCorrelationSampler(MvnModel *model,
+                          const Ptr<CorrelationModel> &prior,
                           RNG &seeding_rng = GlobalRng::rng);
+    MvnCorrelationSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

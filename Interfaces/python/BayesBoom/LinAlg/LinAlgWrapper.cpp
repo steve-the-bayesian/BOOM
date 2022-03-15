@@ -35,6 +35,10 @@ namespace BayesBoom {
              "The distance between consecutive elements.  "
              "For a dense vector this is always 1.")
         .def("__len__", &Vector::length)
+        .def_property_readonly(
+            "empty",
+            &Vector::empty,
+            "True iff the Vector has no elements.")
         .def_property_readonly("length", &Vector::length,
                                "The number of elements in the vector.")
         .def_property_readonly("size", &Vector::length,

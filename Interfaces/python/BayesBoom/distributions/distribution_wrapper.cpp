@@ -30,6 +30,10 @@ namespace BayesBoom {
             "The BOOM global random number generator.")
         ;
 
+    boom.def("seed_global_rng", [](int seed) {
+      BOOM::GlobalRng::rng.seed(seed);
+    });
+
   }  // ends the distribution_def function.
 
 }  // namespace BayesBoom

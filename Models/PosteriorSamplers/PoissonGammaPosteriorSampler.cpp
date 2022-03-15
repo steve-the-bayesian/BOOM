@@ -23,8 +23,10 @@
 namespace BOOM {
 
   PoissonGammaPosteriorSampler::PoissonGammaPosteriorSampler(
-      PoissonGammaModel *model, const Ptr<DoubleModel> &mean_prior_distribution,
-      const Ptr<DoubleModel> &sample_size_prior, RNG &seeding_rng)
+      PoissonGammaModel *model,
+      const Ptr<DoubleModel> &mean_prior_distribution,
+      const Ptr<DoubleModel> &sample_size_prior,
+      RNG &seeding_rng)
       : PosteriorSampler(seeding_rng),
         model_(model),
         prior_mean_prior_distribution_(mean_prior_distribution),
@@ -41,6 +43,15 @@ namespace BOOM {
             false) {
     prior_mean_sampler_.set_lower_limit(0.0);
     prior_sample_size_sampler_.set_lower_limit(0.0);
+  }
+
+  PoissonGammaPosteriorSampler *PoissonGammaPosteriorSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new PoissonGammaPosteriorSampler(
+        dynamic_cast<PoissonGammaModel *>(new_host),
+        prior_mean_prior_distribution_->clone(),
+        prior_sample_size_prior_distribution_->clone(),
+        rng());
   }
 
   void PoissonGammaPosteriorSampler::draw() {

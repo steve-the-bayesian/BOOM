@@ -194,6 +194,7 @@ namespace {
     double residual_variance_;
   };
 
+  // Basic functionality testing for the 'initialize' method.
   TEST_F(DynamicRegressionKalmanFilterNodeTest, InitializeTest) {
     Node node;
     EXPECT_TRUE(VectorEquals(node.state_mean(), Vector(1, 0.0)));
@@ -220,6 +221,7 @@ namespace {
     EXPECT_EQ(2, node.unscaled_state_precision().nrow());
   }
 
+  // This is a smoke test to see if the 'update' method runs without crashing.
   TEST_F(DynamicRegressionKalmanFilterNodeTest, UpdateTest) {
     Node now;
     Node prev;
@@ -241,6 +243,7 @@ namespace {
   }
 
   TEST_F(DynamicRegressionKalmanFilterNodeTest, SimulateTest) {
+    // test the simulate_coefficients method.
   }
 
   //===========================================================================
@@ -252,6 +255,8 @@ namespace {
 
   };
 
+  // Check the getters and setters for initial_state_mean and the various
+  // variance parameters.
   TEST_F(DynamicRegressionModelTest, InitialStateDistributionTest) {
     DynamicRegressionModel model(4);
 
@@ -276,6 +281,7 @@ namespace {
     EXPECT_DOUBLE_EQ(model.residual_variance(), sd * sd);
   }
 
+  // Checks set_inclusion_indicators and set_included_coefficients.
   TEST_F(DynamicRegressionModelTest, CoefficientTest) {
     DynamicRegressionModel model(3);
     EXPECT_EQ(0, model.time_dimension());
@@ -306,7 +312,7 @@ namespace {
                              Vector{1.2, 2.3}));
   }
 
-  // Test that the coefficietns change after imputation.
+  // Test that the coefficients change after imputation.
   TEST_F(DynamicRegressionModelTest, ImputationTest) {
   }
 

@@ -79,7 +79,7 @@ namespace BOOM {
       int64_t y = data[i]->y();
       double lambda = 1.0;
       if (nvars > 0) {
-        double eta = nvars > 0 ? beta.dot(x) : 0.0;
+        double eta = beta.dot(x);
         lambda = exp(eta);
       }
       double exposure = data[i]->exposure();

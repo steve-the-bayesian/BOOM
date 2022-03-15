@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import BayesBoom.R as R
+import numpy as np
 
 
 # ===========================================================================
@@ -47,6 +48,14 @@ class StateModel(ABC):
 
     @property
     @abstractmethod
+    def label(self):
+        """
+        A string indicating how this state model should be labelled, e.g. when
+        assessing contributions of mutliple state components.
+        """
+
+    @property
+    @abstractmethod
     def state_dimension(self):
         """
         The dimension of the state subcomponent managed by this model.
@@ -64,7 +73,7 @@ class StateModel(ABC):
         """
 
     @abstractmethod
-    def record_state(self, iteration, state_matrix):
+    def record_state(self, iteration: int, state_matrix: np.ndarray):
         """
         Record the state of any model parameters, and the subset of the state
         vector associated with this model, so they can be analyzed later.
@@ -73,6 +82,16 @@ class StateModel(ABC):
           iteration:  The (integer) index of the MCMC iteration to be recorded.
           state_matrix: The current matrix containing state.  Each column is a
             state vector associated with the corresponding time point.
+
+        Effect:
+          The current state of the model parameters is stored.
+        """
+
+    @abstractmethod
+    def restore_state(self, iteration: int):
+        """
+        Restore the state of the managed boom state model to the requested
+        iteration.
         """
 
     @property
@@ -111,7 +130,7 @@ class StateModel(ABC):
           The axes object.
         """
         if burn > 0:
-            curves = self._state_contribution[burn:, :]
+            curves = self._state_contribution[int(burn):, :]
         else:
             curves = self._state_contribution
 
@@ -125,3 +144,12 @@ class StateModel(ABC):
             **kwargs)
 
         return ax
+
+    def observe_time_dimension(self, time_dimension):
+        """
+        Args:
+          time_dimension: The number of time points being modeled.  For
+            training, this is the length of the training data.  For prediction
+            it is the length of the training data plus the forecast horizon.
+        """
+        self._state_model.observe_time_dimension(time_dimension)

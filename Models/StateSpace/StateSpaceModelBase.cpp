@@ -22,6 +22,7 @@
 
 #include "LinAlg/SubMatrix.hpp"
 #include "Models/StateSpace/Filters/SparseKalmanTools.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
 #include "cpputil/report_error.hpp"
 #include "distributions.hpp"
 #include "numopt.hpp"
@@ -70,6 +71,36 @@ namespace BOOM {
       if (state_is_fixed_) state_ = rhs.state_;
     }
     return *this;
+  }
+
+  // Copy the posterior samplers from rhs.
+  void Base::copy_samplers(const Base &rhs) {
+    clear_methods();
+    observation_model()->clear_methods();
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      state_model(s)->clear_methods();
+    }
+
+    int num_methods = rhs.observation_model()->number_of_sampling_methods();
+    for (int m = 0; m < num_methods; ++m) {
+      observation_model()->set_method(
+          rhs.observation_model()->sampler(m)->clone_to_new_host(
+              observation_model()));
+    }
+
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      num_methods = rhs.state_model(s)->number_of_sampling_methods();
+      for (int m = 0; m < num_methods; ++m) {
+        state_model(s)->set_method(
+            rhs.state_model(s)->sampler(m)->clone_to_new_host(
+                state_model(s).get()));
+      }
+    }
+
+    num_methods =rhs.number_of_sampling_methods();
+    for (int m = 0; m < num_methods; ++m) {
+      set_method(rhs.sampler(m)->clone_to_new_host(this));
+    }
   }
 
   //----------------------------------------------------------------------
@@ -629,6 +660,12 @@ namespace BOOM {
   ScalarBase::ScalarStateSpaceModelBase() :
       filter_(this), simulation_filter_(this) {}
 
+  ScalarBase::ScalarStateSpaceModelBase(const ScalarBase &rhs):
+      Base(rhs),
+      filter_(this),
+      simulation_filter_(this)
+  {}
+
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
     for (int s = 0; s < number_of_state_models(); ++s) {
@@ -851,5 +888,66 @@ namespace BOOM {
       observe_data_given_state(t);
     }
   }
+
+  namespace StateSpaceUtils {
+
+    // Compute one-step prediction errors on one or more holdout sets.
+    std::vector<Matrix> compute_prediction_errors(
+        const ScalarStateSpaceModelBase &model,
+        int niter,
+        const std::vector<int> &cutpoints,
+        bool standardize) {
+      std::vector<Matrix> prediction_errors(cutpoints.size(),
+                                            Matrix(niter, model.time_dimension()));
+      std::vector<std::future<void>> futures;
+      int desired_threads = std::min<int>(
+          cutpoints.size(),
+          std::thread::hardware_concurrency() - 1);
+      BOOM::ThreadWorkerPool pool;
+      pool.add_threads(desired_threads);
+      std::vector<Ptr<ScalarStateSpaceModelBase>> workers;
+
+      class WorkWrapper {
+       public:
+        WorkWrapper(const Ptr<ScalarStateSpaceModelBase> worker,
+                    int niter,
+                    int cutpoint,
+                    bool standardize,
+                    Matrix &output)
+            : worker_(worker),
+              niter_(niter),
+              cutpoint_(cutpoint),
+              standardize_(standardize),
+              output_(output)
+        {}
+
+        void operator()() {
+          output_ = worker_->simulate_holdout_prediction_errors(
+              niter_, cutpoint_, standardize_);
+        }
+
+       private:
+        Ptr<ScalarStateSpaceModelBase> worker_;
+        int niter_;
+        int cutpoint_;
+        bool standardize_;
+        Matrix &output_;
+      };
+
+      for (int i = 0; i < cutpoints.size(); ++i) {
+        workers.push_back(model.deepclone());
+        futures.emplace_back(pool.submit(WorkWrapper(
+            workers[i],
+            niter,
+            cutpoints[i],
+            standardize,
+            prediction_errors[i])));
+      }
+      for (int i = 0; i < futures.size(); ++i) {
+        futures[i].get();
+      }
+      return prediction_errors;
+    }
+  }  // namespace StateSpaceUtils
 
 }  // namespace BOOM

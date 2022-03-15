@@ -25,7 +25,7 @@ namespace {
   using namespace BOOM::StateSpaceTesting;
   using std::endl;
   using std::cout;
-  
+
   class SeasonalTest : public ::testing::Test {
    protected:
     SeasonalTest()
@@ -52,14 +52,14 @@ namespace {
       weekly_annual_cycle_->set_initial_state_variance(
           SpdMatrix(weekly_annual_cycle_->state_dimension(), square(2.0)));
     }
-    
+
     void SimulateData() {
       nobs_ = 500;
       int state_dimension = day_of_week_cycle_->state_dimension() +
           weekly_annual_cycle_->state_dimension();
       true_state_ = Matrix(state_dimension, nobs_);
       series_ = Vector(nobs_);
-      
+
       Vector state(state_dimension);
       day_of_week_cycle_->simulate_initial_state(
           GlobalRng::rng, VectorView(state, 0, day_of_week_cycle_->state_dimension()));
@@ -67,7 +67,7 @@ namespace {
           GlobalRng::rng, VectorView(state, day_of_week_cycle_->state_dimension(),
                                      weekly_annual_cycle_->state_dimension()));
       true_state_.col(0) = state;
-      
+
       for (int i = 0; i < nobs_; ++i) {
         true_state_.col(i) = state;
         series_[i] = state[0] + state[6] + rnorm(0, sigma_obs_);
@@ -77,7 +77,7 @@ namespace {
           transition.add_block(day_of_week_cycle_->state_transition_matrix(i));
           transition.add_block(weekly_annual_cycle_->state_transition_matrix(i));
           state = transition * state;
-          
+
           Vector state_error(state_dimension);
           day_of_week_cycle_->simulate_state_error(
               GlobalRng::rng,
@@ -109,7 +109,7 @@ namespace {
     EXPECT_EQ(1, day_of_week_cycle_->state_error_dimension());
     EXPECT_EQ(weeks_per_year_ - 1, weekly_annual_cycle_->state_dimension());
     EXPECT_EQ(1, weekly_annual_cycle_->state_error_dimension());
-    
+
     EXPECT_TRUE(day_of_week_cycle_->new_season(0));
     EXPECT_TRUE(day_of_week_cycle_->new_season(1));
     EXPECT_TRUE(day_of_week_cycle_->new_season(2));
@@ -185,7 +185,7 @@ namespace {
 
     Vector training_data(ConstVectorView(data, 0, 275));
     Vector holdout_data(ConstVectorView(data, 275, 25));
-    
+
     //-----------  Build the model ------------------
 
     NEW(StateSpaceModel, model)(training_data);
@@ -236,7 +236,7 @@ namespace {
     Vector level_sd_draws(niter);
     Vector seasonal_sd_draws(niter);
     Matrix posterior_predictive(niter, horizon);
-    
+
     for (int i = 0; i < niter; ++i) {
       model->sample_posterior();
       level_draws.row(i) = model->state().row(0);
@@ -303,11 +303,11 @@ namespace {
     modules_.AddModule(new SeasonalTestModule(.8, 7));
     modules_.AddModule(new SeasonalTestModule(1.1, weeks_per_year_, 7));
     state_space.AddState(modules_);
-    int niter = 500;
+    int niter = 600;
     int time_dimension = 400;
     state_space.Test(niter, time_dimension);
   }
-    
+
   //===========================================================================
   TEST_F(SeasonalTest, Mcmc) {
     NEW(StateSpaceModel, model)(series_);
@@ -344,7 +344,7 @@ namespace {
     model->set_method(sampler);
 
     model->sample_posterior();
-    
+
     int niter = 500;
     Matrix day_of_week_draws(niter, series_.size());
     Matrix weekly_draws(niter, series_.size());
@@ -361,7 +361,7 @@ namespace {
         << "Day of week pattern failed to cover." << endl
         << status.error_message();
     both_ok &= status.ok;
-    
+
     std::string error_message = CheckStochasticProcess(weekly_draws, true_state_.row(6));
     EXPECT_EQ(error_message, "")
         << "Weekly annual cycle failed to cover." << endl
@@ -378,5 +378,5 @@ namespace {
     }
   }
 
-  
+
 }  // namespace

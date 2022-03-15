@@ -28,15 +28,22 @@
 namespace BOOM {
   class MarkovConjSampler : public PosteriorSampler {
    public:
-    MarkovConjSampler(MarkovModel *Mod, const Ptr<ProductDirichletModel> &Q,
+    MarkovConjSampler(MarkovModel *Mod,
+                      const Ptr<ProductDirichletModel> &Q,
                       const Ptr<DirichletModel> &pi0,
                       RNG &seeding_rng = GlobalRng::rng);
-    MarkovConjSampler(MarkovModel *Mod, const Ptr<ProductDirichletModel> &Q,
+    MarkovConjSampler(MarkovModel *Mod,
+                      const Ptr<ProductDirichletModel> &Q,
                       RNG &seeding_rng = GlobalRng::rng);
-    MarkovConjSampler(MarkovModel *Mod, const Matrix &Nu,
+    MarkovConjSampler(MarkovModel *Mod,
+                      const Matrix &Nu,
                       RNG &seeding_rng = GlobalRng::rng);
-    MarkovConjSampler(MarkovModel *Mod, const Matrix &Nu, const Vector &nu,
+    MarkovConjSampler(MarkovModel *Mod,
+                      const Matrix &Nu,
+                      const Vector &nu,
                       RNG &seeding_rng = GlobalRng::rng);
+
+    MarkovConjSampler *clone_to_new_host(Model *new_host) const override;
 
     double logpri() const override;
     void draw() override;

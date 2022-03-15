@@ -65,7 +65,7 @@ namespace BOOM {
     // A human readable error message that should be examined in case 'ok' is
     // false.
     std::string error_message() const;
-    
+
     // The primary return type.  True iff 'draws' cover 'truth' acceptably well.
     bool ok;
 
@@ -83,7 +83,7 @@ namespace BOOM {
     out << status.error_message();
     return(out);
   }
-  
+
   //===========================================================================
   // Check to see if a matrix of Monte Carlo draws covers a known set of true
   // values acceptably well.
@@ -145,19 +145,19 @@ namespace BOOM {
   std::string CheckStochasticProcess(const Matrix &draws,
                                      const Vector &truth,
                                      double confidence = .95,
-                                     double sd_ratio_threshold = .1, 
+                                     double sd_ratio_threshold = .1,
                                      const std::string &filename = "");
-  
+
   //===========================================================================
   // A non-empty return value is an error message indicating the first column of
   // 'draws' to fall outside the range [lo, hi].
   std::string CheckWithinRage(const Matrix &draws, const Vector &lo,
                               const Vector &hi);
-  
+
   // A non-empty return value is an error message indicating the first column of
   // 'draws' to fall outside the range [lo, hi].
   std::string CheckWithinRage(const Vector &draws, double lo, double hi);
-  
+
   //===========================================================================
   // Check to see if a vector of Monte Carlo draws covers a known value.
   //
@@ -213,7 +213,7 @@ namespace BOOM {
   bool TwoSampleKs(const ConstVectorView &data1,
                    const ConstVectorView &data2,
                    double significance = .05);
-  
+
   //===========================================================================
   // Checks that two sets of Monte Carlo draws have roughly the same center and
   // spread.  The check is done by computing the .2 - .8 credible interval from

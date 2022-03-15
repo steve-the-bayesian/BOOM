@@ -255,6 +255,7 @@ namespace BOOM {
     explicit AggregatedStateSpaceRegression(int number_of_predictors);
     AggregatedStateSpaceRegression(const AggregatedStateSpaceRegression &rhs);
     AggregatedStateSpaceRegression *clone() const override;
+    AggregatedStateSpaceRegression *deepclone() const override;
 
     // Need to override add_data so that x's can be shared with the
     // regression model.
@@ -301,6 +302,7 @@ namespace BOOM {
     // Returns a pointer to the RegressionModel that manages the linear
     // prediction based on contemporaneous covariates.
     RegressionModel *regression_model() { return regression_.get(); }
+    const RegressionModel *regression_model() const {return regression_.get(); }
 
     // This function updates the regression portion of the model.
     void observe_data_given_state(int t) override;
@@ -318,6 +320,9 @@ namespace BOOM {
 
     Vector initial_state_mean() const override;
     SpdMatrix initial_state_variance() const override;
+
+
+    Matrix simulate_holdout_prediction_errors(int, int, bool) override;
 
    private:
     Ptr<RegressionModel> regression_;

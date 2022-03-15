@@ -45,17 +45,14 @@ namespace BOOM {
     void add_variable(VariableType type, const std::string &name);
     std::pair<VariableType, int> type_map(int i) const;
 
-    // Fill the variable_types_ mapping according to whether each element of
-    // 'fields' can be converted to a numeric value.
+    // Fill the type_map_ mapping according to whether each element of 'fields'
+    // can be converted to a numeric value.
     void diagnose_types(const std::vector<std::string> &fields);
 
     void set_names(const std::vector<std::string> &variable_names);
 
     VariableType variable_type(int col) const {
-      return variable_types_[col];
-    }
-    const std::vector<VariableType> &variable_types() const {
-      return variable_types_;
+      return type_map_.find(col)->second.first;
     }
 
     bool check_type(int i, const std::string &s) const;
@@ -81,9 +78,6 @@ namespace BOOM {
     int categorical_count_;
     int unknown_count_;
 
-    // The type of variable in each slot.
-    std::vector<VariableType> variable_types_;
-
     // To find the variable in slot i, get its type and its index in private
     // storage.  For example, if variable 7 is the 4th numeric variable (and
     // thus index 3) then type_map[7] = {numeric, 3}.
@@ -94,6 +88,9 @@ namespace BOOM {
 
     bool check_type(VariableType type,
                     const std::string &variable_data_as_string) const;
+
+    // Add a type to the type map.
+    void add_type(VariableType type);
 
     friend void intrusive_ptr_add_ref(DataTypeIndex *d) {
       d->up_count();
@@ -152,9 +149,6 @@ namespace BOOM {
     // The type of variable in cell i.
     VariableType variable_type(int i) const {
       return type_index_->variable_type(i);
-    }
-    const std::vector<VariableType> & variable_types() const {
-      return type_index_->variable_types();
     }
 
     const Data &variable(int i) const;
@@ -271,11 +265,16 @@ namespace BOOM {
     //     is the first observation, and variable names will be
     //     automatically generated.
     //   sep: The separator between fields in the data file.
-    explicit DataTable(const std::string &fname, bool header = false,
+    explicit DataTable(const std::string &fname,
+                       bool header = false,
                        const std::string &sep = "");
 
     DataTable *clone() const override;
     std::ostream &display(std::ostream &out) const override;
+
+    void read_file(const std::string &filename,
+                   bool header = false,
+                   const std::string &sep = "");
 
     //--- build a DataTable by appending variables ---
     //
@@ -309,6 +308,11 @@ namespace BOOM {
     std::ostream &print(std::ostream &out, uint from = 0,
                         uint to = std::numeric_limits<uint>::max()) const;
 
+    // Set the variable names.
+    void set_vnames(const std::vector<std::string> &names) {
+      type_index_->set_names(names);
+    }
+
     // The names of the variables stored in the table.  These are the "column
     // names."
     const std::vector<std::string> &vnames() const;
@@ -317,9 +321,6 @@ namespace BOOM {
     // Get column 'which_column' from the table.
     VariableType variable_type(uint which_column) const {
       return type_index_->variable_type(which_column);
-    }
-    const std::vector<VariableType> &variable_types() const {
-      return type_index_->variable_types();
     }
     Vector getvar(uint which_column) const;
     double getvar(int which_row, int which_column) const;

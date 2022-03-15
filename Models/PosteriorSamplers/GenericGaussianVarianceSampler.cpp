@@ -90,4 +90,12 @@ namespace BOOM {
     return prior_->logp(1.0 / sigsq) - 2 * log(sigsq);
   }
 
+  double GenericGaussianVarianceSampler::sigma_prior_guess() const {
+    return sqrt(prior_->beta() / prior_->alpha());
+  }
+
+  double GenericGaussianVarianceSampler::sigma_prior_sample_size() const {
+    return 2.0 * prior_->alpha();
+  }
+
 }  // namespace BOOM

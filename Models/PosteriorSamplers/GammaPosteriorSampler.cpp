@@ -138,6 +138,16 @@ namespace BOOM {
     alpha_sampler_.set_lower_limit(0);
   }
 
+  GammaPosteriorSampler *GammaPosteriorSampler::clone_to_new_host(
+      Model *new_host) const {
+    return new GammaPosteriorSampler(
+        dynamic_cast<GammaModel *>(new_host),
+        mean_prior_->clone(),
+        alpha_prior_->clone(),
+        rng());
+  }
+
+
   void GammaPosteriorSampler::draw() {
     // Draw alpha with the mean fixed.
     double mean = model_->mean();
@@ -168,6 +178,15 @@ namespace BOOM {
                       1.0, &rng()),
         beta_sampler_(GammaBetaLogPosterior(model, beta_prior.get()), false,
                       1.0, &rng()) {}
+
+  GammaPosteriorSamplerBeta *GammaPosteriorSamplerBeta::clone_to_new_host(
+      Model *new_host) const {
+    return new GammaPosteriorSamplerBeta(
+        dynamic_cast<GammaModel *>(new_host),
+        mean_prior_->clone(),
+        beta_prior_->clone(),
+        rng());
+  }
 
   void GammaPosteriorSamplerBeta::draw() {
     // Draw beta given mean.

@@ -58,6 +58,7 @@ namespace BOOM {
 
   void DPMCGS::draw_cluster_membership_indicators() {
     const std::vector<Ptr<VectorData> > &data(model_->dat());
+    model_->initialize_cluster_membership_probabilities();
     if (model_->cluster_indicators().empty()) {
       // If this is the first time we've been down this code path then
       // cluster_indicators_ will be empty.  Fill it with -1's which
@@ -78,6 +79,12 @@ namespace BOOM {
       int cluster_number = rmulti_mt(rng(), prob);
       model_->assign_data_to_cluster(y, cluster_number);
       model_->set_cluster_indicator(i, cluster_number);
+    }
+
+    model_->initialize_cluster_membership_probabilities();
+    for (int i = 0; i < data.size(); ++i) {
+      Vector prob = cluster_membership_probability(data[i]->value());
+      model_->set_cluster_membership_probabilities(i, prob);
     }
   }
 

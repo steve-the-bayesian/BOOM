@@ -3,6 +3,7 @@ import numpy as np
 import BayesBoom.R as R
 from .state_models import StateModel
 
+
 class LocalLevelStateModel(StateModel):
     """
     The local level model assumes the data move as a noisy random walk.
@@ -35,42 +36,18 @@ class LocalLevelStateModel(StateModel):
         Returns:
           A StateModel object representing a local level model.
         """
-        if sigma_prior is None:
-            if sdy is None:
-                sdy = np.std(y)
-            sigma_prior = R.SdPrior(sigma_guess=.01 * sdy,
-                                    sample_size=.01,
-                                    upper_limit=sdy)
-            if not isinstance(sigma_prior, R.SdPrior):
-                raise Exception("sigma_prior should be an R.SdPrior.")
-
-        if initial_state_prior is None:
-            if initial_y is None:
-                initial_y = y[0]
-            if sdy is None:
-                sdy = np.std(y)
-            initial_y = float(initial_y)
-            sdy = float(sdy)
-            initial_state_prior = boom.GaussianModel(initial_y, sdy**2)
-        if not isinstance(initial_state_prior, boom.GaussianModel):
-            raise Exception(
-                "initial_state_prior should be a boom.GaussianModel.")
-
-        self._state_model = boom.LocalLevelStateModel()
-        self._state_model.set_initial_state_mean(initial_state_prior.mu)
-        self._state_model.set_initial_state_variance(
-            initial_state_prior.sigsq)
-
-        innovation_precision_prior = boom.ChisqModel(
-            sigma_prior.sigma_guess,
-            sigma_prior.sample_size)
-        state_model_sampler = self._state_model.set_posterior_sampler(
-            innovation_precision_prior)
-        state_model_sampler.set_sigma_upper_limit(sigma_prior.upper_limit)
+        self._validate_sigma_prior(sigma_prior, y, sdy)
+        self._validate_initial_distributions(initial_state_prior, y, sdy,
+                                             initial_y)
+        self._build_state_model()
         self._state_contribution = None
 
     def __repr__(self):
         return f"Local level with sigma = {self._state_model.sigma}"
+
+    @property
+    def label(self):
+        return "Trend (local level)"
 
     @property
     def state_dimension(self):
@@ -86,9 +63,58 @@ class LocalLevelStateModel(StateModel):
             raise Exception("Each state model must be told where its state"
                             "component begins in the global state vector.  "
                             "Try calling set_state_index.")
-        self.state_contribution[iteration, :] = state_matrix[
+        self._state_contribution[iteration, :] = state_matrix[
             self._state_index, :]
+
+    def restore_state(self, iteration):
+        self._state_model.set_sigma(self.sigma_draws[iteration])
 
     @property
     def state_contribution(self):
         return self._state_contribution
+
+    def _validate_sigma_prior(self, sigma_prior, y, sdy):
+        if sigma_prior is None:
+            if sdy is None:
+                sdy = np.nanstd(y, ddof=1)
+            sigma_prior = R.SdPrior(sigma_guess=.01 * sdy,
+                                    sample_size=.01,
+                                    upper_limit=sdy)
+            if not isinstance(sigma_prior, R.SdPrior):
+                raise Exception("sigma_prior should be an R.SdPrior.")
+        self._sigma_prior = sigma_prior
+
+    def _validate_initial_distributions(self, initial_state_prior, y, sdy,
+                                        initial_y):
+        if initial_state_prior is None:
+            if initial_y is None:
+                initial_y = y[0]
+            if sdy is None:
+                sdy = np.nanstd(y, ddof=1)
+            initial_state_prior = R.NormalPrior(float(initial_y), float(sdy))
+        if not isinstance(initial_state_prior, R.NormalPrior):
+            raise Exception(
+                "initial_state_prior should be an R.NormalPrior.")
+        self._initial_state_prior = initial_state_prior
+
+    def _build_state_model(self):
+        self._state_model = boom.LocalLevelStateModel()
+        self._state_model.set_initial_state_mean(self._initial_state_prior.mean)
+        self._state_model.set_initial_state_variance(
+            self._initial_state_prior.variance)
+        innovation_precision_prior = boom.ChisqModel(
+            self._sigma_prior.sigma_guess,
+            self._sigma_prior.sample_size)
+        state_model_sampler = self._state_model.set_posterior_sampler(
+            innovation_precision_prior)
+        state_model_sampler.set_sigma_upper_limit(
+            self._sigma_prior.upper_limit)
+
+    def __getstate__(self):
+        payload = self.__dict__.copy()
+        del payload["_state_model"]
+        return payload
+
+    def __setstate__(self, payload):
+        self.__dict__ = payload
+        self._build_state_model()

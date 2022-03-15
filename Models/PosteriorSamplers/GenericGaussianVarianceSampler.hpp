@@ -79,6 +79,9 @@ namespace BOOM {
 
     void set_prior(const Ptr<GammaModelBase> &new_prior) { prior_ = new_prior; }
 
+    double sigma_prior_guess() const;
+    double sigma_prior_sample_size() const;
+
    private:
     Ptr<GammaModelBase> prior_;
     double sigma_max_;

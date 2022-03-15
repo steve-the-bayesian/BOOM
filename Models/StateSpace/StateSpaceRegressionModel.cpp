@@ -233,6 +233,27 @@ namespace BOOM {
     return simulate_forecast(rng, newX, final_state);
   }
 
+  Matrix SSRM::simulate_forecast_components(RNG &rng, const Matrix &newX,
+                                            const Vector &final_state) {
+    ScalarStateSpaceModelBase::set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_horizon = newX.nrow();
+    Matrix ans(number_of_state_models() + 2, forecast_horizon, 0.0);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans(number_of_state_models(), t) = regression_->predict(newX.row(t));
+      ans.col(t).back() = rnorm_mt(rng,
+                                   ans.col(t).sum(),
+                                   observation_variance(t + t0));
+    }
+    return ans;
+  }
+
   Vector SSRM::simulate_multiplex_forecast(RNG &rng,
                                            const Matrix &newX,
                                            const Vector &final_state,
@@ -279,6 +300,44 @@ namespace BOOM {
       if (standardize) {
         ans[t] /= sqrt(marg.prediction_variance());
       }
+    }
+    return ans;
+  }
+
+  Matrix SSRM::simulate_holdout_prediction_errors(
+      int niter, int cutpoint_number, bool standardize) {
+    Matrix ans(niter, time_dimension());
+    SubMatrix training_prediction_errors(
+        ans, 0, niter - 1, 0, cutpoint_number - 1);
+    SubMatrix holdout_prediction_errors(
+        ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
+    std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
+    std::vector<Ptr<StateSpace::MultiplexedRegressionData>> holdout_data(
+        dat().begin() + cutpoint_number, dat().end());
+    clear_data();
+    for (const auto &data_point : training_data) {
+      add_data(data_point);
+    }
+    Matrix holdout_predictors(holdout_data.size(), xdim());
+    Vector holdout_response(holdout_data.size());
+    for (int i = 0; i < holdout_data.size(); ++i) {
+      if (holdout_data[i]->total_sample_size() != 1) {
+        report_error("simulate_holdout_prediction_errors does "
+                     "not work with multiplex data.");
+      }
+      holdout_response[i] = holdout_data[i]->regression_data(0).y();
+      holdout_predictors.row(i) = holdout_data[i]->regression_data(0).x();
+    }
+
+    for (int i = 0; i < niter; ++i) {
+      sample_posterior();
+      training_prediction_errors.row(i) = one_step_prediction_errors(
+          standardize);
+      holdout_prediction_errors.row(i) = one_step_holdout_prediction_errors(
+          holdout_predictors,
+          holdout_response,
+          state().last_col(),
+          standardize);
     }
     return ans;
   }

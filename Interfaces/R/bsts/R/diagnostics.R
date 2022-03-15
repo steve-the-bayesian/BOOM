@@ -125,7 +125,7 @@ bsts.prediction.errors <- function(bsts.object,
       cutpoints <- max(bsts.object$timestamp.info$timestamp.mapping)
     }
   }
-  
+
   if (!is.null(cutpoints) && length(cutpoints) > 0) {
     stopifnot(length(cutpoints) <= bsts.object$number.of.time.points,
               all(cutpoints > 0),

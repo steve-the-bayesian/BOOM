@@ -91,7 +91,7 @@ namespace BOOM {
                     new UnivParams(1.0)),
         DataPolicy(new ArSuf(number_of_lags)),
         filter_coefficients_current_(false) {
-    Phi_prm()->add_observer([this]() { this->observe_phi(); });
+    Phi_prm()->add_observer(this, [this]() { this->observe_phi(); });
     Phi_prm()->add_all();
   }
 
@@ -106,7 +106,7 @@ namespace BOOM {
           "Attempt to initialize ArModel with an illegal value "
           "of the autoregression coefficients.");
     }
-    Phi_prm()->add_observer([this]() { this->observe_phi(); });
+    Phi_prm()->add_observer(this, [this]() { this->observe_phi(); });
   }
 
   ArModel *ArModel::clone() const { return new ArModel(*this); }

@@ -2,10 +2,10 @@ export(
   AddExternalLegend,
   AddSegments,
   Ar1CoefficientPrior,
-  BetaPrior, 
-  BoxplotMcmcMatrix, 
-  BoxplotTrue, 
-  CheckMcmcMatrix, 
+  BetaPrior,
+  BoxplotMcmcMatrix,
+  BoxplotTrue,
+  CheckMcmcMatrix,
   CheckMcmcVector,
   CompareDensities,
   CompareDynamicDistributions,
@@ -27,6 +27,7 @@ export(
   MatchDataFrame,
   McmcMatrixReport,
   MvnDiagonalPrior,
+  MvnGivenSigmaMatrixPrior,
   MvnIndependentSigmaPrior,
   MvnPrior,
   NormalInverseGammaPrior,
@@ -71,10 +72,11 @@ export(
   mscan,
   pinvgamma,
   qinvgamma,
+  rdirichlet,
   rWishart,
   rinvgamma,
   rmvn,
-  thin 
+  thin
 )
 
 importFrom(MASS, kde2d)

@@ -30,6 +30,7 @@ namespace BOOM {
    public:
     BetaBinomialSampler(BinomialModel *model, const Ptr<BetaModel> &prior,
                         RNG &seeding_rng = GlobalRng::rng);
+    BetaBinomialSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

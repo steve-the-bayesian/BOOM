@@ -69,6 +69,10 @@ namespace BOOM {
 
     void set_sigma_upper_limit(double max_sigma);
 
+    const Ptr<GammaModelBase> &residual_precision_prior() const {
+      return siginv_prior_;
+    }
+
    private:
     ArModel *model_;
     Ptr<GammaModelBase> siginv_prior_;

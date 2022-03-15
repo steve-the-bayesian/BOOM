@@ -1,13 +1,26 @@
 import unittest
-from BayesBoom.spikeslab import dot, lm_spike
+
+from BayesBoom.spikeslab import (
+    dot,
+    lm_spike,
+    RegressionSpikeSlabPrior,
+    StudentSpikeSlabPrior,
+    BigAssSpikeSlab
+)
+from BayesBoom.R import delete_if_present
+
 import numpy as np
 import pandas as pd
 import scipy.sparse
+import pickle
 
 
 class SpikeSlabTest(unittest.TestCase):
     def setUp(self):
         np.random.seed(8675309)
+
+    def tearDown(self):
+        delete_if_present("prior.pkl")
 
     def test_mcmc(self):
         # Run the test with a big sample size and a small residual SD, so
@@ -72,6 +85,92 @@ class SpikeSlabTest(unittest.TestCase):
         formula = "y ~ " + dot(X, omit=["y", "X2"])
         self.assertEqual(formula, "y ~ (X1+X3)")
 
+    def test_regression_spike_slab_prior(self):
+        n = 10
+        X = pd.DataFrame(np.random.randn(n, 3), columns=["X1", "X2", "X3"])
+        y = np.random.randn(n)
+        prior = RegressionSpikeSlabPrior(X.values, y)
+        self.assertIsInstance(prior, RegressionSpikeSlabPrior)
+
+        fname = "prior.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(prior, pkl)
+
+        with open(fname, "rb") as pkl:
+            p2 = pickle.load(pkl)
+
+        self.assertEqual(set(prior.__dict__.keys()),
+                         set(p2.__dict__.keys()))
+
+    def test_student_spike_slab_prior(self):
+        n = 10
+        X = pd.DataFrame(np.random.randn(n, 3), columns=["X1", "X2", "X3"])
+        y = np.random.randn(n)
+        prior = StudentSpikeSlabPrior(X.values, y)
+
+        fname = "prior.pkl"
+        with open(fname, "wb") as pkl:
+            pickle.dump(prior, pkl)
+
+        with open(fname, "rb") as pkl:
+            p2 = pickle.load(pkl)
+
+        self.assertEqual(set(prior.__dict__.keys()),
+                         set(p2.__dict__.keys()))
+
+
+class BigAssSpikeSlabTest(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(8675309)
+
+    def test_mcmc(self):
+        nobs = 100000
+        dim = 1000
+        X = np.random.randn(nobs, dim)
+        X[:, 0] = 1.0
+        coefficients = np.zeros(dim)
+        coefficients[0] = 28
+        coefficients[3] = -72
+        coefficients[84] = 54
+        coefficients[93] = 180
+
+        residual_sd = .3
+        yhat = X @ coefficients
+        y = yhat + np.random.randn(nobs) * residual_sd
+
+        model = BigAssSpikeSlab(dim, subordinate_model_max_dim=50)
+        i = 0
+        chunk_size = 1000
+        while (i < nobs):
+            chunk = range(i, min(i + chunk_size, nobs))
+            model.stream_data_for_initial_screen(X[chunk, :], y[chunk])
+            i += chunk_size
+        model.initial_screen()
+
+
+_debug_mode = True
+
+if _debug_mode:
+    import pdb  # noqa
+
+    # Turn warnings into errors.
+    # warnings.simplefilter("error")
+
+    # Run the test you are trying to debug here.  Instantiate the test class,
+    # then call the problematic test.  Call pdb.pm() in the event of an
+    # exception.
+    print("Hello, world!")
+
+    rig = BigAssSpikeSlabTest()
+
+    if hasattr(rig, "setUpClass"):
+        rig.setUpClass()
+    if hasattr(rig, "setUp"):
+        rig.setUp()
+
+    rig.test_mcmc()
+
+    print("Goodbye, cruel world!")
 
 if __name__ == "__main__":
     unittest.main()

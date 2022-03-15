@@ -26,13 +26,19 @@ namespace BOOM {
   class ZeroMeanMvnModel;
   class ZeroMeanMvnConjSampler : public PosteriorSampler {
    public:
-    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m, const Ptr<WishartModel> &prior,
+    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m,
+                           const Ptr<WishartModel> &prior,
                            RNG &seeding_rng = GlobalRng::rng);
+
     // creates a WishartModel with nu = prior_df and a diagonal scale
     // matrix with prior_df * sigma_guess^2
-    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m, double prior_df,
+    ZeroMeanMvnConjSampler(ZeroMeanMvnModel *m,
+                           double prior_df,
                            double sigma_guess,
                            RNG &seeding_rng = GlobalRng::rng);
+    ZeroMeanMvnConjSampler *clone_to_new_host(
+        Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
     void find_posterior_mode(double epsilon = 1e-5) override;

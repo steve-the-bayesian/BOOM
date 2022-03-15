@@ -27,11 +27,14 @@ namespace BOOM {
 
   class SepStratSampler : public PosteriorSampler {
    public:
-    SepStratSampler(MvnModel *mod, const std::vector<Ptr<GammaModel> > &ivar,
+    SepStratSampler(MvnModel *mod,
+                    const std::vector<Ptr<GammaModel>> &ivar,
                     RNG &seeding_rng = GlobalRng::rng);
-    SepStratSampler(MvnModel *mod, const Ptr<CorrelationModel> &Rprior,
-                    const std::vector<Ptr<GammaModel> > &ivar,
+    SepStratSampler(MvnModel *mod,
+                    const Ptr<CorrelationModel> &Rprior,
+                    const std::vector<Ptr<GammaModel>> &ivar,
                     RNG &seeding_rng = GlobalRng::rng);
+    SepStratSampler *clone_to_new_host(Model *new_host) const override;
     void draw() override;
     double logpri() const override;
 

@@ -89,8 +89,14 @@ namespace BOOM {
     StateSpaceStudentRegressionModel(
         const StateSpaceStudentRegressionModel &rhs);
     StateSpaceStudentRegressionModel *clone() const override;
+    StateSpaceStudentRegressionModel *deepclone() const override {
+      StateSpaceStudentRegressionModel *ans = clone();
+      ans->copy_samplers(*this);
+      return ans;
+    }
 
     int time_dimension() const override;
+    int xdim() const {return observation_model()->xdim();}
 
     // The total number of observations across all time points.
     int total_sample_size() const;
@@ -127,6 +133,8 @@ namespace BOOM {
 
     Vector simulate_forecast(RNG &rng, const Matrix &predictors,
                              const Vector &final_state);
+    Matrix simulate_forecast_components(
+        RNG &rng, const Matrix &predictors, const Vector &final_state);
 
     // Simulate a forecast based on multiplexed data, where multiple
     // observations can have the same timestamp.
@@ -149,10 +157,30 @@ namespace BOOM {
                                        const Vector &final_state,
                                        const std::vector<int> &timestamps);
 
-    Vector one_step_holdout_prediction_errors(RNG &rng, const Vector &response,
+
+    // Return the vector of one-step-ahead predictions errors from a
+    // holdout sample, following immediately after the training data.
+    //
+    // Args:
+    //   rng: The random number generator used to simulate the latent "weight"
+    //     variable in the student T distribution.
+    //   response: The response variable for the holdout data.
+    //   predictors: The predictor variables for the holdout sample.
+    //   final_state:  The state vector as of the end of the training data.
+    //   standardize: Should the prediction errors be divided by the square root
+    //     of the one step ahead forecast variance?
+    //
+    // Returns:
+    //   The vector of one step ahead prediction errors for the holdout data.
+    //   This is the same length as holdout_y.
+    Vector one_step_holdout_prediction_errors(RNG &rng,
+                                              const Vector &response,
                                               const Matrix &predictors,
                                               const Vector &final_state,
                                               bool standardize = false);
+
+    Matrix simulate_holdout_prediction_errors(
+        int niter, int cutpoint_number, bool standardize) override;
 
    private:
     // Returns the marginal variance of the student error distribution.  If the

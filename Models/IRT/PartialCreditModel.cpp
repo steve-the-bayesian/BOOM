@@ -134,11 +134,10 @@ namespace BOOM {
     }
 
     void PCR::set_observers() {
-      A_prm()->add_observer([this]() { this->observe_a(); });
-      B_prm()->add_observer([this]() { this->observe_b(); });
-      D_prm()->add_observer([this]() { this->observe_d(); });
-
-      beta_->add_observer([this]() { this->observe_beta(); });
+      A_prm()->add_observer(this, [this]() { this->observe_a(); });
+      B_prm()->add_observer(this, [this]() { this->observe_b(); });
+      D_prm()->add_observer(this, [this]() { this->observe_d(); });
+      beta_->add_observer(this, [this]() { this->observe_beta(); });
     }
 
     //______________________________________________________________________

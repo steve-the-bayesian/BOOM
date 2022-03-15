@@ -58,6 +58,27 @@ namespace BOOM {
     observation_model_sampler_->fix_latent_data(true);
   }
 
+  SSLPS *SSLPS::clone_to_new_host(Model *new_host) const {
+    StateSpaceLogitModel *new_model =
+        dynamic_cast<StateSpaceLogitModel *>(new_host);
+    Ptr<BinomialLogitSpikeSlabSampler> new_observation_model_sampler;
+    if (new_model->observation_model()->number_of_sampling_methods() == 0) {
+      // If the observation model has not been assigned a new posterior sampler,
+      // then assign it a clone of the one in this object.
+      new_observation_model_sampler.reset(
+          observation_model_sampler_->clone_to_new_host(
+              new_model->observation_model()));
+      new_model->observation_model()->set_method(new_observation_model_sampler);
+    } else {
+      // If the observation_model already has a posterior sampler, then cast it
+      // to the form we need and use it.
+      new_observation_model_sampler.reset(
+          dynamic_cast<BinomialLogitSpikeSlabSampler *>(
+              new_model->observation_model()->sampler(0)));
+    }
+    return new SSLPS(new_model, new_observation_model_sampler, rng());
+  }
+
   void SSLPS::impute_nonstate_latent_data() {
     const std::vector<Ptr<AugmentedData> > &data(model_->dat());
     for (int t = 0; t < data.size(); ++t) {

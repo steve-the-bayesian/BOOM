@@ -2,7 +2,6 @@ from setuptools import setup, Extension, find_packages, find_namespace_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
-import os
 from glob import glob
 import distutils.ccompiler
 
@@ -13,7 +12,7 @@ MAJOR = 0
 MINOR = 0
 
 # Bump the patch version when making bug fixes.
-PATCH = 3
+PATCH = 18
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 
@@ -26,6 +25,7 @@ __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 # into a build directory in a way that will make setup.py happy.  This file is
 # intended to be run by that build script, and not directly from the
 # repository.
+
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -203,12 +203,16 @@ state_space_sources = (
     + glob(BOOM_DIR + "Models/StateSpace/Filters/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.cpp")
     + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/StateModels/*.cpp")
+    + glob(BOOM_DIR + "Models/StateSpace/Multivariate/PosteriorSamplers/*.cpp")
 )
 state_space_headers = (
     glob(BOOM_DIR + "Models/StateSpace/*.hpp")
     + glob(BOOM_DIR + "Models/StateSpace/Filters/*.hpp")
     + glob(BOOM_DIR + "Models/StateSpace/PosteriorSamplers/*.hpp")
-    + glob(BOOM_DIR + "Models/StateSpace/StateModels/*.hpp")
+    + glob(BOOM_DIR + "Models/StateSpace/StateModels/PosteriorSamplers/*.hpp")
 )
 boom_headers += state_space_headers
 
@@ -221,6 +225,9 @@ time_series_headers = (
     + glob(BOOM_DIR + "Models/TimeSeries/PosteriorSamplers/*.hpp")
     )
 boom_headers += time_series_headers
+
+test_utils_sources = glob(BOOM_DIR + "test_utils/*.cpp")
+
 
 boom_library_sources = (
     distributions_sources
@@ -244,6 +251,7 @@ boom_library_sources = (
     + point_process_sources
     + state_space_sources
     + time_series_sources
+    + test_utils_sources
 )
 
 boom_extension_sources = (
@@ -251,12 +259,16 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
     + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")
+    + glob(BOOM_DIR + "pybind11/numopt/*.cpp")
+    + glob(BOOM_DIR + "pybind11/cpputil/*.cpp")
     + glob(BOOM_DIR + "pybind11/distributions/*.cpp")
+    + glob(BOOM_DIR + "pybind11/test_utils/*.cpp")
 )
 
 boom_sources = boom_extension_sources + boom_library_sources
@@ -314,9 +326,6 @@ ext_modules = [
         headers=boom_headers,
         include_dirs=[
             "./BayesBoom/boom",
-            "BayesBoom/boom",
-            "./boom",
-            "boom",
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -400,6 +409,10 @@ class BuildExt(build_ext):
 
 
 def FindPackagesAndBlab():
+    """
+    Find the sub-packages to be installed, and blab about them in print
+    statements during the build process.
+    """
     # packages = ["R", "bsts", "spikeslab", "dynreg", "test_utils",
     # "boom/pybind11"]
     packages = find_namespace_packages(include=["BayesBoom.*"],
@@ -434,7 +447,7 @@ setup(
 
     The archetypal Boom program looks something like this:
 
-    import BoomBayes as Boom
+    import BayesBoom as Boom
 
     some_data = 3 * np.random.randn(100) + 7
     model = Boom.GaussianModel()

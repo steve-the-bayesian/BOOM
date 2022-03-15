@@ -41,10 +41,10 @@ extern "C" {
   using BOOM::Ptr;
   using BOOM::bsts::ModelManager;
   using BOOM::RCheckInterrupt;
-  using std::endl;
   using BOOM::bsts::MultivariateGaussianModelManager;
   using BOOM::getListElement;
   using BOOM::ConstSubMatrix;
+  using std::endl;
 
   // Args:
   //   r_data_list: A list containing the following entries:
@@ -66,7 +66,7 @@ extern "C" {
   //     will be repeated for each series.  In the future hierarchical priors
   //     will be allowed.  If no regression is present then either an SdPrior or
   //     a list of SdPrior objects will be used: each giving the prior
-  //     distribution on the residual variance for a given series.  
+  //     distribution on the residual variance for a given series.
   //   r_options: Model options.  This is currently unused, but that will change
   //     in the future as more multivariate models are considered.
   //   r_niter: An R integer giving the number of desired MCMC iterations.
@@ -174,7 +174,7 @@ extern "C" {
       int ydim = series.number_of_levels();
       int xdim = BOOM::ToBoomMatrixView(BOOM::getListElement(
           r_mbsts_object, "predictors", true)).ncol();
-      
+
       std::unique_ptr<MultivariateGaussianModelManager> model_manager(
           new MultivariateGaussianModelManager(ydim, xdim));
       return BOOM::ToRArray(model_manager->Forecast(
@@ -188,5 +188,5 @@ extern "C" {
     }
     return R_NilValue;
   }
-  
+
 }  // extern "C"

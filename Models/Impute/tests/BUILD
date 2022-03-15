@@ -17,6 +17,7 @@ cc_test(
 #    linkopts=["-fsanitize=thread"],
     includes = ["@gtest"],
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -26,6 +27,7 @@ cc_test(
     linkopts = ["-fsanitize=thread"],
     includes = ["@gtest"],
     deps = COMMON_DEPS,
+    size = "small",
 )
 
 cc_test(
@@ -35,4 +37,5 @@ cc_test(
     linkopts=["-fsanitize=thread"],
     includes = ["@gtest"],
     deps = COMMON_DEPS,
+    size = "small",
 )

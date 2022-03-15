@@ -31,16 +31,37 @@ namespace BOOM {
         nr_(rhi - rlo + 1),
         nc_(chi - clo + 1),
         stride(m.nrow()) {
-    assert(nr_ >= 0);
-    assert(nc_ >= 0);
-    assert(rhi < m.nrow() && chi < m.ncol());
+    if (nr_ < 0) {
+      report_error("SubMatrix number of rows can't be negative.");
+    }
+    if (nc_ < 0) {
+      report_error("SubMatrix number of columns can't be negative.");
+    }
+    if (rhi >= m.nrow()) {
+      std::ostringstream err;
+      err << "Submatrix final row index " << rhi << " must be less than "
+          << "the number of rows in the host matrix " << m.nrow() << ".";
+      report_error(err.str());
+    }
+    if (chi >= m.ncol()) {
+      std::ostringstream err;
+      err << "Submatrix final column index " << chi << " must be less than "
+          << "the number of columns in the host matrix " << m.ncol() << ".";
+      report_error(err.str());
+    }
   }
 
   SM::SubMatrix(Matrix &m)
-      : start_(m.data()), nr_(m.nrow()), nc_(m.ncol()), stride(m.nrow()) {}
+      : start_(m.data()),
+        nr_(m.nrow()),
+        nc_(m.ncol()),
+        stride(m.nrow()) {}
 
   SM::SubMatrix(double *v, int nrow, int ncol)
-      : start_(v), nr_(nrow), nc_(ncol), stride(nrow) {}
+      : start_(v),
+        nr_(nrow),
+        nc_(ncol),
+        stride(nrow) {}
 
   SM::SubMatrix(SM &m, uint rlo, uint rhi, uint clo, uint chi)
       : start_(m.start_ + rlo + clo * m.stride),
@@ -52,7 +73,9 @@ namespace BOOM {
       : start_(rhs.start_), nr_(rhs.nr_), nc_(rhs.nc_), stride(rhs.stride) {}
 
   SM &SM::operator=(const SM &rhs) {
-    assert(rhs.nrow() == nr_ && rhs.ncol() == nc_);
+    if (rhs.nrow() != nr_ || rhs.ncol() != nc_) {
+      report_error("Matrix of wrong dimension passed to assignment operator.");
+    }
     for (uint i = 0; i < nc_; ++i) {
       std::copy(rhs.col_begin(i), rhs.col_end(i), cols(i));
     }
@@ -74,12 +97,23 @@ namespace BOOM {
     nr_ = (rhi - rlo + 1);
     nc_ = (chi - clo + 1);
     stride = (rhs.nrow());
-    assert(nr_ >= 0);
-    assert(nc_ >= 0);
-    assert(rhi < rhs.nrow() && chi < rhs.ncol());
+    if (nr_ < 0) {
+      report_error("rlo must be nonnegative and no larger than rhi.");
+    }
+    if (nc_ < 0) {
+      report_error("clo must be nonnegative and no larger than chi.");
+    }
+    if (rhi >= rhs.nrow()) {
+      report_error("rhi must be smaller than the number of rows in "
+                   "the host matrix.");
+    }
+    if (chi >= rhs.ncol()) {
+      report_error("chi must be smaller than the number of column in "
+                   "the host matrix.");
+    }
     return *this;
   }
-  
+
   SM &SM::reset(double *data, int nrow, int ncol, int new_stride) {
     start_ = data;
     nr_ = nrow;
@@ -89,7 +123,9 @@ namespace BOOM {
   }
 
   SM &SM::operator=(const Matrix &rhs) {
-    assert(rhs.nrow() == nr_ && rhs.ncol() == nc_);
+    if (rhs.nrow() != nr_ || rhs.ncol() != nc_) {
+      report_error("Matrix of wrong dimension passed to assignment operator.");
+    }
     for (uint i = 0; i < nc_; ++i) {
       std::copy(rhs.col_begin(i), rhs.col_end(i), cols(i));
     }
@@ -102,7 +138,7 @@ namespace BOOM {
     }
     return *this;
   }
-  
+
   //------------------------------------------------------------
   uint SM::nrow() const { return nr_; }
   uint SM::ncol() const { return nc_; }
@@ -190,14 +226,20 @@ namespace BOOM {
   //------------------------------------------------------------
 
   double &SM::operator()(uint i, uint j) {
-    assert(i < nr_ && j < nc_);
-    //      return cols(i)[j];
+    # ifndef NDEBUG
+    if (i >= nr_ || j >= nc_) {
+      report_error("Index out of bounds.");
+    }
+    # endif
     return cols(j)[i];
   }
   //------------------------------------------------------------
   const double &SM::operator()(uint i, uint j) const {
-    assert(i < nr_ && j < nc_);
-    //      return cols(i)[j];
+    # ifndef NDEBUG
+    if (i >= nr_ || j >= nc_) {
+      report_error("Index out of bounds.");
+    }
+    # endif
     return cols(j)[i];
   }
   //------------------------------------------------------------
@@ -341,7 +383,7 @@ namespace BOOM {
     return *this;
   }
 
-  
+
   uint CSM::nrow() const { return nr_; }
   uint CSM::ncol() const { return nc_; }
   const double &CSM::operator()(uint i, uint j) const {
@@ -572,7 +614,7 @@ namespace BOOM {
       ans *= y;
       return ans;
     }
-    
+
     template <class MAT1, class MAT2>
     Matrix MatrixElementDivide(const MAT1 &x, const MAT2 &y) {
       Matrix ans(x);
@@ -586,8 +628,8 @@ namespace BOOM {
       ans /= m;
       return ans;
     }
-    
-  }  // namespace 
+
+  }  // namespace
 
   Matrix operator*(const ConstSubMatrix &x, double y) {
     return MatrixScalarMultiply(x, y);
@@ -601,7 +643,7 @@ namespace BOOM {
   Matrix operator*(double x, const SubMatrix &y) {
     return MatrixScalarMultiply(y, x);
   }
-  
+
   Matrix operator/(const ConstSubMatrix &x, const ConstSubMatrix &y) {
     return MatrixElementDivide(x, y);
   }
@@ -638,7 +680,7 @@ namespace BOOM {
   Matrix operator/(double x, const SubMatrix &y) {
     return ScalarDivideMatrix(x, y);
   }
-  
+
   SubMatrix block(Matrix &m, int block_row, int block_col,
                   int block_row_size, int block_col_size) {
     int first_row = block_row_size * block_row;
@@ -656,5 +698,5 @@ namespace BOOM {
     int last_col = first_col + block_col_size - 1;
     return ConstSubMatrix(m, first_row, last_row, first_col, last_col);
   }
-  
+
 }  // namespace BOOM

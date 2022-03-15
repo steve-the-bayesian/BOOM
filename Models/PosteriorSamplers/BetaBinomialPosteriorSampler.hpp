@@ -186,6 +186,9 @@ namespace BOOM {
                                  const Ptr<DiffDoubleModel> &sample_size_prior,
                                  RNG &seeding_rng = GlobalRng::rng);
 
+    BetaBinomialPosteriorSampler * clone_to_new_host(
+        Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
 

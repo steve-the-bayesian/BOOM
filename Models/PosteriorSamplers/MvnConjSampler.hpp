@@ -111,6 +111,8 @@ namespace BOOM {
                    const Ptr<WishartModel> &Siginv,
                    RNG &seeding_rng = GlobalRng::rng);
 
+    MvnConjSampler *clone_to_new_host(Model *new_host) const override;
+
     void draw() override;
     double logpri() const override;
 
@@ -138,7 +140,7 @@ namespace BOOM {
     MvnModel *model_;
     Ptr<MvnGivenSigma> mu_;
     Ptr<WishartModel> siginv_;
-    
+
     mutable NormalInverseWishart::NormalInverseWishartParameters prior_;
     mutable NormalInverseWishart::NormalInverseWishartParameters posterior_;
   };

@@ -25,7 +25,8 @@
 namespace BOOM {
 
   inline unsigned long getseed() {
-    double u = runif() * std::numeric_limits<unsigned long>::max();
+    double u = runif() * static_cast<double>(
+        std::numeric_limits<unsigned long>::max());
     unsigned long ans(lround(u));
     return ans;
   }

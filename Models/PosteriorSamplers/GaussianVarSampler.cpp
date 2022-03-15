@@ -45,6 +45,14 @@ namespace BOOM {
         model_(model),
         sampler_(prior_) {}
 
+  GVS *GVS::clone_to_new_host(Model *new_host) const {
+    GVS *ans = new GVS(dynamic_cast<GaussianModel *>(new_host),
+                       prior_->clone(),
+                       rng());
+    ans->set_sigma_upper_limit(sampler_.sigma_max());
+    return ans;
+  }
+
   void GVS::draw() {
     double n = model_->suf()->n();
     double sumsq = model_->suf()->centered_sumsq(model_->mu());

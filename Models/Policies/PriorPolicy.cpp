@@ -18,27 +18,38 @@
 */
 #include "Models/Policies/PriorPolicy.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
-  typedef PriorPolicy PP;
 
-  void PP::set_method(const Ptr<PosteriorSampler> &sam) {
-    samplers_.push_back(sam);
-  }
-
-  void PP::sample_posterior() {
+  void PriorPolicy::sample_posterior() {
     for (uint i = 0; i < samplers_.size(); ++i) {
       samplers_[i]->draw();
     }
   }
 
-  double PP::logpri() const {
+  double PriorPolicy::logpri() const {
     double ans = 0;
     for (uint i = 0; i < samplers_.size(); ++i) ans += samplers_[i]->logpri();
     return ans;
   }
 
-  void PP::clear_methods() { samplers_.clear(); }
+  void PriorPolicy::set_method(const Ptr<PosteriorSampler> &sampler) {
+    samplers_.push_back(sampler);
+  }
 
-  int PP::number_of_sampling_methods() const { return samplers_.size(); }
+  void PriorPolicy::clear_methods() { samplers_.clear(); }
+
+  int PriorPolicy::number_of_sampling_methods() const {
+    return samplers_.size();
+  }
+
+  RNG &PriorPolicy::rng() {
+    if (samplers_.empty()) {
+      report_error("There are no Samplers from which to obtain a "
+                   "random number generator.");
+    }
+    return samplers_[0]->rng();
+  }
+
 }  // namespace BOOM

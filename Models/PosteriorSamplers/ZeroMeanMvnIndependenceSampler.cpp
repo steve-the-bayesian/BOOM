@@ -45,6 +45,16 @@ namespace BOOM {
         which_variable_(which_variable),
         sampler_(prior_) {}
 
+  ZMMI *ZMMI::clone_to_new_host(Model *new_host) const {
+    ZMMI *ans = new ZMMI(
+        dynamic_cast<ZeroMeanMvnModel *>(new_host),
+        prior_->clone(),
+        which_variable_,
+        rng());
+    ans->set_sigma_upper_limit(sampler_.sigma_max());
+    return ans;
+  }
+
   void ZMMI::set_sigma_upper_limit(double max_sigma) {
     sampler_.set_sigma_max(max_sigma);
   }

@@ -30,10 +30,12 @@ namespace BOOM {
   class TRegressionSpikeSlabSampler : public TRegressionSampler {
    public:
     TRegressionSpikeSlabSampler(
-        TRegressionModel *model, const Ptr<MvnBase> &coefficient_slab_prior,
+        TRegressionModel *model,
+        const Ptr<MvnBase> &coefficient_slab_prior,
         const Ptr<VariableSelectionPrior> &coefficient_spike_prior,
         const Ptr<GammaModelBase> &siginv_prior,
-        const Ptr<DoubleModel> &nu_prior, RNG &seeding_rng = GlobalRng::rng);
+        const Ptr<DoubleModel> &nu_prior,
+        RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
     double logpri() const override;

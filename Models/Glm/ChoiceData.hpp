@@ -38,7 +38,8 @@ namespace BOOM {
     //   choice_x: A vector of vectors describing characteristics of
     //     the object being chosen.  May be empty if all data is
     //     subject-level data.
-    ChoiceData(const CategoricalData &y, const Ptr<VectorData> &subject_x,
+    ChoiceData(const CategoricalData &y,
+               const Ptr<VectorData> &subject_x,
                const std::vector<Ptr<VectorData> > &choice_x);
 
     ChoiceData(const ChoiceData &rhs);

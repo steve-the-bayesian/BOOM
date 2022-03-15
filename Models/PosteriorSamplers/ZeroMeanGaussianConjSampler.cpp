@@ -45,6 +45,15 @@ namespace BOOM {
 
   ZGS *ZGS::clone() const { return new ZGS(*this); }
 
+  ZGS *ZGS::clone_to_new_host(Model *new_host) const {
+    ZGS *ans = new ZGS(
+        dynamic_cast<ZeroMeanGaussianModel *>(new_host),
+        precision_prior_->clone(),
+        rng());
+    ans->set_sigma_upper_limit(variance_sampler_.sigma_max());
+    return ans;
+  }
+
   void ZGS::draw() {
     model_->set_sigsq(variance_sampler_.draw(rng(), model_->suf()->n(),
                                              model_->suf()->sumsq()));
@@ -52,6 +61,14 @@ namespace BOOM {
 
   double ZGS::logpri() const {
     return variance_sampler_.log_prior(model_->sigsq());
+  }
+
+  double ZGS::sigma_prior_guess() const {
+    return variance_sampler_.sigma_prior_guess();
+  }
+
+  double ZGS::sigma_prior_sample_size() const {
+    return variance_sampler_.sigma_prior_sample_size();
   }
 
   void ZGS::set_sigma_upper_limit(double sigma_upper_limit) {

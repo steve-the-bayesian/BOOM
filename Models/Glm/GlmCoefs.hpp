@@ -68,6 +68,14 @@ namespace BOOM {
     //------ operations for only included variables --------
     Vector included_coefficients() const;
 
+    // Set all coefficients to zero except the subset given by
+    // 'nonzero_positions', which are set to 'nonzero_values'.  These two
+    // vectors must be the same size.
+    void set_sparse_coefficients(const Vector &nonzero_values,
+                                 const std::vector<uint> &nonzero_positions);
+    void set_sparse_coefficients(const Vector &nonzero_values,
+                                 const std::vector<int> &nonzero_positions);
+
     // Set the included coefficients to b.  The dimension of b must match
     // nvars().
     void set_included_coefficients(const Vector &b);

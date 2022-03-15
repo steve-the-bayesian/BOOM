@@ -53,6 +53,24 @@ namespace BOOM {
     setup();
   }
 
+  SepStratSampler *SepStratSampler::clone_to_new_host(Model *new_host) const {
+    std::vector<Ptr<GammaModel>> marginal_precision_priors;
+    for (const auto &el : sinv_pri_) {
+      marginal_precision_priors.push_back(el->clone());
+    }
+
+    SepStratSampler *ans = new SepStratSampler(
+        dynamic_cast<MvnModel *>(new_host),
+        Rpri_->clone(),
+        marginal_precision_priors,
+        rng());
+
+    ans->set_max_tries(max_tries_);
+    ans->set_polar_frac(polar_frac_);
+    ans->set_alpha(alpha_);
+    return ans;
+  }
+
   void SepStratSampler::setup() {
     max_tries_ = square(mod_->dim());
     alpha_ = .25;

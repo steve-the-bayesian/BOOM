@@ -22,6 +22,8 @@
 
 #include <cctype>
 #include <fstream>
+// TODO: add this back when c++17 support is widely available.
+// #include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -50,8 +52,12 @@ namespace BOOM {
   {}
 
   void DataTypeIndex::add_variable(VariableType type, const std::string &name) {
-    int index = variable_types_.size();
-    variable_types_.push_back(type);
+    vnames_.push_back(name);
+    add_type(type);
+  }
+
+  void DataTypeIndex::add_type(VariableType type) {
+    int index = type_map_.size();
     if (type == VariableType::numeric) {
       type_map_[index] = std::make_pair(type, numeric_count_++);
     } else if (type == VariableType::categorical) {
@@ -61,7 +67,6 @@ namespace BOOM {
       report_error("Numeric and categorical the the only currently supported"
                    " types.");
     }
-    vnames_.push_back(name);
   }
 
   std::pair<VariableType, int> DataTypeIndex::type_map(int i) const {
@@ -74,22 +79,29 @@ namespace BOOM {
   }
 
   void DataTypeIndex::diagnose_types(const std::vector<std::string> &fields) {
-    uint nfields = fields.size();
-    variable_types_ = std::vector<VariableType>(nfields, VariableType::unknown);
     for (uint i = 0; i < fields.size(); ++i) {
-      variable_types_[i] =
+      VariableType type =
           is_numeric(fields[i]) ? VariableType::numeric : VariableType::categorical;
+      add_type(type);
     }
   }
 
   void DataTypeIndex::set_names(const std::vector<std::string> &variable_names) {
+    if (!type_map_.empty()) {
+      if (variable_names.size() != type_map_.size()) {
+        std::ostringstream err;
+        err << variable_names.size() << " names were given to a data set with "
+            << type_map_.size() << " variables.";
+        report_error(err.str());
+      }
+    }
     vnames_ = variable_names;
   }
 
   bool DataTypeIndex::check_type(
       int i,
       const std::string &variable_data_as_string) const {
-    VariableType type = variable_types_[i];
+    VariableType type = variable_type(i);
     if (is_numeric(variable_data_as_string)) {
       if (type == VariableType::numeric) return true;
     } else {  // data is not numeric
@@ -102,7 +114,7 @@ namespace BOOM {
     return numeric_count_ == rhs.numeric_count_
         && categorical_count_ == rhs.categorical_count_
         && unknown_count_ == rhs.unknown_count_
-        && variable_types_ == rhs.variable_types_;
+        && type_map_ == rhs.type_map_;
   }
 
   //===========================================================================
@@ -304,10 +316,18 @@ namespace BOOM {
                        const std::string &sep)
       : type_index_(new DataTypeIndex)
   {
+    read_file(fname, header, sep);
+  }
+
+  void DataTable::read_file(const std::string &fname, bool header, const std::string &sep) {
     ifstream in(fname.c_str());
     if (!in) {
-      std::string msg = "bad file name ";
-      report_error(msg + fname);
+      std::ostringstream err;
+      err << "Could not open file: " << fname << "\n"
+          // TODO add this line when C++17 support is widely available.
+          // << "Program running from " << std::filesystem::current_path() << "\n"
+      ;
+      report_error(err.str());
     }
 
     StringSplitter split(sep);
@@ -337,6 +357,9 @@ namespace BOOM {
         // types based off the first row.
         nfields = fields.size();
         variable_names = default_vnames(nfields);
+      }
+
+      if (type_index_->total_number_of_fields() == 0) {
         type_index_->diagnose_types(fields);
         type_index_->set_names(variable_names);
         numeric_data.resize(type_index_->number_of_numeric_fields());
@@ -348,11 +371,15 @@ namespace BOOM {
       }
 
       for (uint i = 0; i < nfields; ++i) {
-        if (!type_index_->check_type(i, fields[i])) {
-          wrong_type_error(line_number, i + 1);
-        }
-
         if (variable_type(i) == VariableType::numeric) {
+          if (!type_index_->check_type(i, fields[i])) {
+            std::ostringstream err;
+            err << "Expected a numeric value on line number " << line_number
+                << " in field number " << i + 1
+                << " (" << variable_names[i] << ").  Got "
+                << fields[i] << ".";
+            report_error(err.str());
+          }
           double tmp = std::stod(fields[i], nullptr);
           int index = type_index_->type_map(i).second;
           numeric_data[index].push_back(tmp);
@@ -369,11 +396,10 @@ namespace BOOM {
       VariableType type;
       int index;
       std::tie(type, index) = type_index_->type_map(i);
-
       if (type == VariableType::numeric) {
         numeric_variables_.push_back(numeric_data[index]);
       } else if (type == VariableType::categorical) {
-        categorical_variables_.emplace_back(categorical_data[i]);
+        categorical_variables_.emplace_back(categorical_data[index]);
       }
     }
   }

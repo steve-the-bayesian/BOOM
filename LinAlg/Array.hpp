@@ -310,6 +310,13 @@ namespace BOOM {
     Array(const std::vector<int> &dims, const std::vector<double> &data);
     Array(const std::vector<int> &dims, const double *data);
 
+    // Convenience constructor for a 3-way array.  The first array dimension is
+    // the index of the vector.  The second and third dimensions are the rows
+    // and columns of the elements of 'matrices.'  If 'matrices' is empty then
+    // all three dimensions are zero.  Otherwise, an error will be reported if
+    // the matrices are not all the same size.
+    explicit Array(const std::vector<Matrix> &matrices);
+
     Array(const Array &rhs) = default;
     Array(Array &&rhs) = default;
     Array &operator=(const Array &rhs) = default;

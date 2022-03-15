@@ -30,7 +30,11 @@ namespace BOOM {
   StringSplitter::StringSplitter(const string &delimiters, bool allow_quotes)
       : delim_(delimiters),
         quotes_(allow_quotes ? "\"'" : ""),
-        delimited_(!is_all_white(delimiters)) {}
+        delimited_(!is_all_white(delimiters)) {
+    if (delimiters == "\t") {
+      delimited_ = true;
+    }
+  }
 
   std::vector<std::string> StringSplitter::operator()(const std::string &s) const {
     if (delimited_) {
@@ -62,7 +66,7 @@ namespace BOOM {
       }
       const char *pos = find_field_boundary(start, end);
       std::string field(start, pos);
-      ans.push_back(strip_quotes(field));
+      ans.push_back(trim_white_space(strip_quotes(field)));
       if (is_field_delimiter(*pos) && pos + 1 == end) {
         ans.push_back("");
       }

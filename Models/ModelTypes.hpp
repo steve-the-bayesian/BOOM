@@ -53,6 +53,7 @@ namespace BOOM {
 
     //------ constructors, destructors, operator=/== -----------
     Model();
+
     Model(const Model &rhs);  // ref count is not copied
 
     // The result of clone() (and copies generally) should have
@@ -93,9 +94,25 @@ namespace BOOM {
     virtual double logpri() const = 0;  // evaluates current params
     //    virtual void set_method(const Ptr<PosteriorSampler> &) = 0;
     virtual int number_of_sampling_methods() const = 0;
+    virtual void clear_methods() {}
+    virtual void set_method(const Ptr<PosteriorSampler> &sampler) {}
     virtual PosteriorSampler *sampler(int i) = 0;
     virtual PosteriorSampler const *const sampler(int i) const = 0;
   };
+
+  // The result of deepclone will have identical parameters in distinct
+  // memory.  It will contain pointers to the same data.  It will contain
+  // equivalent posterior samplers (but pointing to the new data structures).
+  //
+  // A collection of 'deepclone' models is suitable for a thread worker pool.
+  template <class MODEL>
+  Ptr<MODEL> deepclone(const MODEL &model) {
+    Ptr<MODEL> ans = model.clone();
+    for (int s = 0; s < model.number_of_sampling_methods(); ++s) {
+      ans->set_method(model.sampler(s)->clone_to_new_host(ans.get()));
+    }
+    return ans;
+  }
 
   //============= mix-in classes =========================================
 
@@ -259,6 +276,7 @@ namespace BOOM {
   class CorrelationModel : virtual public Model {
    public:
     virtual double logp(const CorrelationMatrix &) const = 0;
+    CorrelationModel *clone() const override = 0;
   };
   //======================================================================
   class MixtureComponent : virtual public Model {

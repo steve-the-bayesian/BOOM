@@ -25,6 +25,22 @@ namespace BOOM {
 
   typedef ProductDirichletPosteriorSampler PDPS;
 
+  PDPS *PDPS::clone_to_new_host(Model *new_host) const {
+    std::vector<Ptr<VectorModel>> phi;
+    std::vector<Ptr<DoubleModel>> alpha;
+    for (int i = 0; i < phi_row_prior_.size(); ++i) {
+      phi.push_back(phi_row_prior_[i]->clone());
+      alpha.push_back(alpha_row_prior_[i]->clone());
+    }
+
+    return new PDPS(
+        dynamic_cast<ProductDirichletModel *>(new_host),
+        phi,
+        alpha,
+        min_nu_,
+        rng());
+  }
+
   void PDPS::draw() {
     const Matrix& sumlog(m_->suf()->sumlog());
     double nobs(m_->suf()->n());

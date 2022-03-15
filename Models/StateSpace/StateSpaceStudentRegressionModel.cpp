@@ -208,6 +208,28 @@ namespace BOOM {
                                        seq<int>(0, nrow(predictors) - 1));
   }
 
+  Matrix SSSRM::simulate_forecast_components(
+      RNG &rng, const Matrix &predictors, const Vector &final_state) {
+    set_state_model_behavior(StateModel::MARGINAL);
+    int forecast_horizon = nrow(predictors);
+    Matrix ans(number_of_state_models() + 2, forecast_horizon, 0.0);
+    int t0 = time_dimension();
+    Vector state = final_state;
+    double sigma = observation_model_->sigma();
+    double nu = observation_model_->nu();
+    for (int t = 0; t < forecast_horizon; ++t) {
+      state = simulate_next_state(rng, state, t + t0);
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        ans(s, t) = state_model(s)->observation_matrix(t + t0).dot(
+            state_component(state, s));
+      }
+      ans(number_of_state_models(), t) =
+          observation_model_->predict(predictors.row(t));
+      ans.col(t).back() = rstudent_mt(rng, ans.col(t).sum(), sigma, nu);
+    }
+    return ans;
+  }
+
   Vector SSSRM::simulate_multiplex_forecast(
       RNG &rng, const Matrix &predictors, const Vector &final_state,
       const std::vector<int> &timestamps) {
@@ -284,6 +306,45 @@ namespace BOOM {
     double nu = observation_model_->nu();
     double sigsq = observation_model_->sigsq();
     return nu > 2 ? sigsq * nu / (nu - 2) : sigsq * 1e+8;
+  }
+
+  Matrix SSSRM::simulate_holdout_prediction_errors(
+      int niter, int cutpoint_number, bool standardize) {
+    Matrix ans(niter, time_dimension());
+    SubMatrix training_prediction_errors(
+        ans, 0, niter - 1, 0, cutpoint_number - 1);
+    SubMatrix holdout_prediction_errors(
+        ans, 0, niter - 1, cutpoint_number, ncol(ans) - 1);
+    std::vector<Ptr<Data>> training_data(dat().begin(), dat().begin() + cutpoint_number);
+    std::vector<Ptr<StateSpace::AugmentedStudentRegressionData>> holdout_data(
+        dat().begin() + cutpoint_number, dat().end());
+    clear_data();
+    for (const auto &data_point : training_data) {
+      add_data(data_point);
+    }
+    Matrix holdout_predictors(holdout_data.size(), xdim());
+    Vector holdout_response(holdout_data.size());
+    for (int i = 0; i < holdout_data.size(); ++i) {
+      if (holdout_data[i]->total_sample_size() != 1) {
+        report_error("simulate_holdout_prediction_errors does "
+                     "not work with multiplex data.");
+      }
+      holdout_response[i] = holdout_data[i]->regression_data(0).y();
+      holdout_predictors.row(i) = holdout_data[i]->regression_data(0).x();
+    }
+
+    for (int i = 0; i < niter; ++i) {
+      sample_posterior();
+      training_prediction_errors.row(i) = one_step_prediction_errors(
+          standardize);
+      holdout_prediction_errors.row(i) = one_step_holdout_prediction_errors(
+          PriorPolicy::rng(),
+          holdout_response,
+          holdout_predictors,
+          state().last_col(),
+          standardize);
+    }
+    return ans;
   }
 
 }  // namespace BOOM

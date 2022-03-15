@@ -21,6 +21,8 @@
 #define BOOM_REGRESSION_MODEL_H
 
 #include "uint.hpp"
+#include <cstdint>
+
 #include "LinAlg/QR.hpp"
 #include "Models/EmMixtureComponent.hpp"
 #include "Models/Glm/Glm.hpp"
@@ -263,7 +265,7 @@ namespace BOOM {
                           public NumOptModel,
                           public EmMixtureComponent {
    public:
-    explicit RegressionModel(uint p);
+    explicit RegressionModel(uint xdim);
 
     // Args:
     //   coefficients: The vector of regression coefficients.  All are included.
@@ -413,6 +415,108 @@ namespace BOOM {
     //--- diagnostics ---
     AnovaTable anova() const { return suf()->anova(); }
   };
+
+
+  // A BigRegressionModel is a regression model where the number of predictors is
+  // too large to use the sufficient statistics in the ordinary RegressionModel.
+  class BigRegressionModel
+      : public GlmModel,
+        public ParamPolicy_2<GlmCoefs, UnivParams>,
+        public IID_DataPolicy<RegressionData>,
+        public PriorPolicy
+  {
+    friend class BigAssSpikeSlabSampler;
+   public:
+    // Args:
+    //   xdim:  The dimension of the full (very large) predictor vector.
+    //   subordinate_model_max_dim:  The largest predictor dimension for each model.
+    //   force_intercept:  If true then the intercep
+    BigRegressionModel(uint xdim,
+                      int subordinate_model_max_dim = 500,
+                      bool force_intercept = true);
+
+    BigRegressionModel * clone() const override;
+
+    uint xdim() const {return coef().nvars_possible();}
+
+    GlmCoefs &coef() override {return prm1_ref();}
+    const GlmCoefs &coef() const override {return prm1_ref();}
+    Ptr<GlmCoefs> coef_prm() override {return prm1();}
+    const Ptr<GlmCoefs> coef_prm() const override {return prm1();}
+
+    double sigsq() const {return prm2_ref().value();}
+    double sigma() const {return std::sqrt(sigsq());}
+    void set_sigsq(double sigsq) {prm2_ref().set(sigsq);}
+    Ptr<UnivParams> Sigsq_prm() { return prm2(); }
+
+    double predict(const Vector &x) const override {
+      return coef().predict(x);
+    }
+
+    // Pass data to the subordinate models.  The data are not kept, but are
+    // added to the subordinate model's sufficient statistics.
+    void stream_data_for_initial_screen(const RegressionData &data_point);
+
+    // Pass data to the primary model.  The set of candidate values are
+    void stream_data_for_restricted_model(const RegressionData &data_point);
+
+    // Set the subset of variables to use in the final spike-and-slab run.
+    void set_candidates(const Selector &candidates);
+
+    const Selector & candidate_selector() const {
+      return predictor_candidates_;
+    }
+
+    // To handle predictors of very high dimension, the model maintains several
+    // smaller regression models, each of moderate dimension.  The data in each
+    // of the smaller models is independent
+    int number_of_subordinate_models() const {
+      return subordinate_models_.size();
+    }
+
+    RegressionModel *subordinate_model(int i) {
+      return subordinate_models_[i].get();
+    }
+
+    // The dimension of the largest subordinate model (which is always the first
+    // one).
+    int worker_dim_upper_limit() const {
+      return subordinate_models_[0]->xdim();
+    }
+
+    RegressionModel *restricted_model() {
+      if (!!restricted_model_) {
+        return restricted_model_.get();
+      } else {
+        return nullptr;
+      }
+    }
+
+    // Write the parameters from the restricted model to the corresponding
+    // positions in the full model.
+    void expand_restricted_model_parameters();
+
+    bool force_intercept() const {return force_intercept_;}
+
+   private:
+    // Indicates whether an intercept term is added to each of the subordinate
+    // models.
+    bool force_intercept_;
+
+    // Something determines the actual subset of predictors that can be used.
+    Selector predictor_candidates_;
+
+    // Each subordinate model handles a chunk of the predictors.
+    std::vector<Ptr<RegressionModel>> subordinate_models_;
+
+    // The restricted model is created when the user calls
+    // set_predictor_candidates.  It contains the candidate values selected by
+    // the subordinate models.
+    Ptr<RegressionModel> restricted_model_;
+
+    void create_subordinate_models(uint xdim, int max_worker_dim, bool force_intercept);
+  };
+
 
 }  // namespace BOOM
 

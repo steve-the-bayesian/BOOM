@@ -200,6 +200,24 @@ namespace BOOM {
     set_Beta(inc_.expand(b));
   }
 
+  void GlmCoefs::set_sparse_coefficients(const Vector &values,
+                                         const std::vector<uint> &positions) {
+    if (positions.size() != values.size()) {
+      report_error("Sizes must match in set_sparse_coefficients.");
+    }
+    inc_.drop_all();
+    for (auto el : positions) {
+      inc_.add(el);
+    }
+    set_Beta(inc_.expand(values));
+  }
+
+  void GlmCoefs::set_sparse_coefficients(const Vector &values,
+                                         const std::vector<int> &positions) {
+    set_sparse_coefficients(
+        values, std::vector<uint>(positions.begin(), positions.end()));
+  }
+
   //------- operations on all possible variables ------
 
   const Vector &GlmCoefs::Beta() const { return VectorParams::value(); }

@@ -82,9 +82,12 @@ namespace BOOM {
     // prior distribution, but you don't want to supply actual model objects.
     // You won't be able to modify the values of the prior parameters
     // afterwards.
-    BregVsSampler(RegressionModel *model, const Vector &prior_mean,
-                  const SpdMatrix &unscaled_prior_precision, double sigma_guess,
-                  double df, const Vector &prior_inclusion_probs,
+    BregVsSampler(RegressionModel *model,
+                  const Vector &prior_mean,
+                  const SpdMatrix &unscaled_prior_precision,
+                  double sigma_guess,
+                  double df,
+                  const Vector &prior_inclusion_probs,
                   RNG &seeding_rng = GlobalRng::rng);
 
     // Equivalent to the preceding constructor, but the prior parameters are
@@ -156,7 +159,7 @@ namespace BOOM {
     void set_correlation_swap_threshold(double threshold) {
       correlation_map_.set_threshold(threshold);
     }
-    
+
     // Sets the model parameters to their posterior mode, conditional on the
     // current include / exclude status of the regression coefficients.  Any
     // coefficient that is included will be optimized.  Any coefficient that is
@@ -175,7 +178,7 @@ namespace BOOM {
     // among the excluded coefficients with probability proportional to the
     // square of the correlation between the included and excluded variables.
     void attempt_swap();
-    
+
    protected:
     double draw_sigsq_given_sufficient_statistics(double df, double ss) {
       return sigsq_sampler_.draw(rng(), df, ss);
@@ -243,7 +246,7 @@ namespace BOOM {
     // Keeps track of the number of times within the current draw that algorithm
     // had to restart because of a degenerate information matrix.
     int failure_count_;
-    
+
     double set_reg_post_params(const Selector &inclusion_indicators,
                                bool do_ldoi) const;
 
@@ -256,7 +259,7 @@ namespace BOOM {
     const Ptr<VariableSelectionPrior> &check_spike_dimension(
         const Ptr<VariableSelectionPrior> &spike);
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_BREG_VS_SAMPLER_HPP

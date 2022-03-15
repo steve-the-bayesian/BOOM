@@ -151,6 +151,29 @@ namespace {
     c1.set_Beta(Vector{1, 2, 3, 4, 5});
     c1.set_subset(Vector{10, 9, 8}, 1);
     EXPECT_TRUE(VectorEquals(c1.Beta(), Vector{1, 10, 0, 8, 5}));
+
+    //
+    c1.set_sparse_coefficients(Vector{8.6, 7.5, 3.09},
+                               std::vector<BOOM::uint>{1, 2, 4});
+
+    EXPECT_EQ(c1.size(false), 5);
+    EXPECT_EQ(c1.size(true), 3);
+    EXPECT_EQ(c1.nvars(), 3);
+    EXPECT_EQ(c1.nvars_possible(), 5);
+
+    EXPECT_FALSE(c1.inc(0));
+    EXPECT_TRUE(c1.inc(1));
+    EXPECT_TRUE(c1.inc(2));
+    EXPECT_FALSE(c1.inc(3));
+    EXPECT_TRUE(c1.inc(4));
+
+    EXPECT_DOUBLE_EQ(c1.Beta(0), 0.0);
+    EXPECT_DOUBLE_EQ(c1.Beta(1), 8.6);
+    EXPECT_DOUBLE_EQ(c1.Beta(2), 7.5);
+    EXPECT_DOUBLE_EQ(c1.Beta(3), 0.0);
+    EXPECT_DOUBLE_EQ(c1.Beta(4), 3.09);
+
   }
+
 
 }  // namespace

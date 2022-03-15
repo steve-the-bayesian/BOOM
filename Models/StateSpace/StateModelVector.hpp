@@ -44,7 +44,7 @@ namespace BOOM {
       StateModelVectorBase()
           : state_transition_matrix_(new BlockDiagonalMatrix),
             state_variance_matrix_(new BlockDiagonalMatrix),
-            state_error_expander_(new BlockDiagonalMatrix),
+            state_error_expander_(new ErrorExpanderMatrix),
             state_error_variance_(new BlockDiagonalMatrix)
       {
         clear_state_models();
@@ -181,7 +181,7 @@ namespace BOOM {
       // Structural matrices for Kalman filtering.
       const SparseKalmanMatrix *state_transition_matrix(int t) const;
       const SparseKalmanMatrix *state_variance_matrix(int t) const;
-      const SparseKalmanMatrix *state_error_expander(int t) const;
+      const ErrorExpanderMatrix *state_error_expander(int t) const;
       const SparseKalmanMatrix *state_error_variance(int t) const;
 
      protected:
@@ -221,7 +221,7 @@ namespace BOOM {
       // Model matrices for Kalman filtering.
       mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
       mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_error_expander_;
+      mutable std::unique_ptr<ErrorExpanderMatrix> state_error_expander_;
       mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
     };
 

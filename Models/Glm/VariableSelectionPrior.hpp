@@ -86,6 +86,9 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // A prior that assumes each variable is independently present or absent.  The
+  // parameters are a list of prior inclusion probabilities, one for each
+  // variable.
   class VariableSelectionPrior
       : public VariableSelectionPriorBase,
         public ParamPolicy_1<VectorParams>,

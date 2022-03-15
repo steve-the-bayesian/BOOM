@@ -11,20 +11,31 @@ namespace BayesBoom {
   // files.  Each of these is defined in a local cpp file, but invoked here.
   // That way all the definitions occur within the same module.
   void distribution_def(py::module &);
+  void cpputil_def(py::module &);
   void LinAlg_def(py::module &);
   void stats_def(py::module &);
+  void numopt_def(py::module &);
   void Model_def(py::module &);
   void Data_def(py::module &);
   void Parameter_def(py::module &);
+  void DirichletModel_def(py::module &);
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
+  void UniformModel_def(py::module &m);
   void MvnModel_def(py::module &);
+  void WishartModel_def(py::module &);
+
   void GlmModel_def(py::module &);
+  void MultinomialLogitModel_def(py::module &);
+
   void Imputation_def(py::module &);
   void TimeSeries_def(py::module &);
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
+  void DirichletProcessMvn_def(py::module &);
+
+  void test_utils_def(py::module &);
 
   PYBIND11_MODULE(_boom, boom) {
     boom.doc() = "BOOM stands for 'Bayesian Object Oriented Models'.  "
@@ -36,7 +47,9 @@ namespace BayesBoom {
         "probably not be used directly."
         ;
 
-    // Calling these functions here defines the classes in the module.
+    // The functions declared above need to be called here to add their contents
+    // to the module.
+    cpputil_def(boom);
     distribution_def(boom);
     LinAlg_def(boom);
 
@@ -45,14 +58,19 @@ namespace BayesBoom {
     // defined after Models, where the Data class is defined.
 
     stats_def(boom);
+    numopt_def(boom);
 
     Model_def(boom);
     Parameter_def(boom);
+    DirichletModel_def(boom);
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
+    UniformModel_def(boom);
+    WishartModel_def(boom);
 
     GlmModel_def(boom);
+    MultinomialLogitModel_def(boom);
     TimeSeries_def(boom);
     StateSpaceModel_def(boom);
     StateModel_def(boom);
@@ -61,6 +79,9 @@ namespace BayesBoom {
 
     DynamicRegressionModel_def(boom);
 
+    DirichletProcessMvn_def(boom);
+
+    test_utils_def(boom);
   }  // Module BOOM
 
 }  // namespace BayesBoom
