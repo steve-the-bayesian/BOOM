@@ -110,5 +110,8 @@ OBJECTS = ${CXX_SRCS:.cpp=.o}
 # End list of BOOM source files
 ############################################################################
 
+# To remove debug symbols from the library (reducing its size by about a factor
+# of 100), uncomment the "strip" command below.
 libboom.a: ${OBJECTS}
 	   ${AR} rc $@ $^
+#	   strip $@

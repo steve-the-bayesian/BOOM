@@ -50,6 +50,7 @@ if [ -d "$PACKAGEDIR" ]; then
    rm -rf $PACKAGEDIR
 fi
 
+## Copy the package to the package directory.
 cp -r ./Interfaces/R/$PACKAGE rpackage
 cd rpackage
 if [ -d $PACKAGE/tests ]; then
@@ -61,6 +62,7 @@ fi
 
 echo "PACKAGE = $PACKAGE"
 
+## Remove any previously built package tarballs.
 PACKAGE_LIST=`ls ${PACKAGE}_*.tar.gz`
 
 echo $PACKAGE_LIST
@@ -68,6 +70,40 @@ echo $PACKAGE_LIST
 if [ ${#PACKAGE_LIST} > 0 ]; then
     rm $PACKAGE_LIST
 fi
+
+# ===========================================================================
+# Find the names of any header files that were forcibly truncated by CRAN's
+# prohibition on file names longer than 100 characters.
+#
+# This code must be kept in sync with 'create_boom_rpackage'
+
+# We need to pass the source code through sed, which on the mac is called gsed.
+if [[ $OSTYPE =~ "darwin" ]]; then
+    SED=gsed
+elif [[ $OSTYPE =~ "linux" ]]; then
+    SED=sed
+fi
+
+# The directory containing the header to be renamed.
+dbase="Models/StateSpace/Multivariate/PosteriorSamplers"
+# The specific header value, and its replacement.
+hdr="MultivariateStateSpaceModelSampler.hpp"
+new_hdr="MVSSMS.hpp"
+grep -rl "$dbase/$hdr" "$PACKAGE/src" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+hdr="MvStateSpaceRegressionPosteriorSampler.hpp"
+new_hdr="MVSSRPS.hpp"
+grep -rl "$dbase/$hdr" "$PACKAGE/src" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+hdr="SharedLocalLevelPosteriorSampler.hpp"
+new_hdr="SLLPS.hpp"
+grep -rl "$dbase/$hdr" "$PACKAGE/src" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+dbase="Models/StateSpace/StateModels/PosteriorSamplers"
+hdr="GeneralSeasonalLLTPosteriorSampler.hpp"
+new_hdr="GSLLTPS.hpp"
+grep -rl "$dbase/$hdr" "$PACKAGE/src" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+# ===========================================================================
 
 echo "Building $PACKAGE"
 R CMD build $PACKAGE
