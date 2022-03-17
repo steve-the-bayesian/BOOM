@@ -297,6 +297,9 @@ namespace BOOM {
   // matrix A to produce W = A * Lambda^{1/2} * Q, which preserves the
   // relationship W^T * W = X.
   Matrix eigen_root(const SpdMatrix &X);
+
+  SpdMatrix block_diagonal_spd(const std::vector<SpdMatrix> &blocks);
+
 }  // namespace BOOM
 
 #endif  // NEW_LA_SPD_MATRIX_H

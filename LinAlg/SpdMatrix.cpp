@@ -744,4 +744,20 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix block_diagonal_spd(const std::vector<SpdMatrix> &blocks) {
+    size_t total_dim = 0;
+    for (const auto &el : blocks) {
+      total_dim += el.nrow();
+    }
+    SpdMatrix ans(total_dim, 0.0);
+
+    size_t start = 0;
+    for (const auto &el : blocks) {
+      SubMatrix view(ans, start, start + el.nrow() - 1, start, start + el.ncol() - 1);
+      view = el;
+      start += el.nrow();
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

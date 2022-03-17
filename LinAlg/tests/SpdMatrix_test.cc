@@ -15,7 +15,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class SpdMatrixTest : public ::testing::Test {
    protected:
     SpdMatrixTest() {
@@ -46,7 +46,7 @@ namespace {
     EXPECT_DOUBLE_EQ(V.row(0).dot(v), Vv[0]);
     EXPECT_DOUBLE_EQ(V.row(1).dot(v), Vv[1]);
     EXPECT_DOUBLE_EQ(V.row(2).dot(v), Vv[2]);
-    
+
     SpdMatrix Sigma(3);
     Sigma.randomize();
     EXPECT_TRUE(Sigma.is_sym());
@@ -82,7 +82,7 @@ namespace {
                      log(Sigma.det()));
   }
 
-  
+
   TEST_F(SpdMatrixTest, Inv) {
     SpdMatrix Sigma(4);
     Sigma.randomize();
@@ -155,7 +155,7 @@ namespace {
     // Check third column
     EXPECT_DOUBLE_EQ(Sigma(3, 2), Sigma(2, 3));
   }
-  
+
   TEST_F(SpdMatrixTest, AddOuter) {
     SpdMatrix Sigma(4);
     Sigma.randomize();
@@ -173,7 +173,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer(v, inc, 1.7),
         original_sigma + 1.7 * inc.expand(inc.select(v.outer()))));
-    
+
     Sigma = original_sigma;
     VectorView view(v);
     EXPECT_TRUE(MatrixEquals(
@@ -199,7 +199,7 @@ namespace {
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_outer(X, 1.2),
         original_sigma + 1.2 * X * X.transpose()));
-    
+
     Matrix Y(4, 2);
     Y.randomize();
     Sigma = original_sigma;
@@ -221,7 +221,7 @@ namespace {
 
     Matrix X(3, 4);
     X.randomize();
-    
+
     SpdMatrix original_sigma = Sigma;
     EXPECT_TRUE(MatrixEquals(
         Sigma.add_inner(X, 1.1),
@@ -279,7 +279,7 @@ namespace {
         << "product: " << endl
         << original_sigma * Sigma;
   }
-  
+
   TEST_F(SpdMatrixTest, Sandwich) {
     SpdMatrix Sigma(4);
     Sigma.randomize();
@@ -308,7 +308,7 @@ namespace {
     EXPECT_DOUBLE_EQ(K(2, 0), A(0, 0) * B(2, 0));
     EXPECT_DOUBLE_EQ(K(2, 1), A(0, 0) * B(2, 1));
     EXPECT_DOUBLE_EQ(K(2, 2), A(0, 0) * B(2, 2));
-    
+
     EXPECT_DOUBLE_EQ(K(0, 3), A(0, 1) * B(0, 0));
     EXPECT_DOUBLE_EQ(K(0, 4), A(0, 1) * B(0, 1));
     EXPECT_DOUBLE_EQ(K(0, 5), A(0, 1) * B(0, 2));
@@ -318,7 +318,7 @@ namespace {
     EXPECT_DOUBLE_EQ(K(2, 3), A(0, 1) * B(2, 0));
     EXPECT_DOUBLE_EQ(K(2, 4), A(0, 1) * B(2, 1));
     EXPECT_DOUBLE_EQ(K(2, 5), A(0, 1) * B(2, 2));
-    
+
     EXPECT_DOUBLE_EQ(K(3, 0), A(1, 0) * B(0, 0));
     EXPECT_DOUBLE_EQ(K(3, 1), A(1, 0) * B(0, 1));
     EXPECT_DOUBLE_EQ(K(3, 2), A(1, 0) * B(0, 2));
@@ -328,7 +328,7 @@ namespace {
     EXPECT_DOUBLE_EQ(K(5, 0), A(1, 0) * B(2, 0));
     EXPECT_DOUBLE_EQ(K(5, 1), A(1, 0) * B(2, 1));
     EXPECT_DOUBLE_EQ(K(5, 2), A(1, 0) * B(2, 2));
-    
+
     EXPECT_DOUBLE_EQ(K(3, 3), A(1, 1) * B(0, 0));
     EXPECT_DOUBLE_EQ(K(3, 4), A(1, 1) * B(0, 1));
     EXPECT_DOUBLE_EQ(K(3, 5), A(1, 1) * B(0, 2));
@@ -339,5 +339,24 @@ namespace {
     EXPECT_DOUBLE_EQ(K(5, 4), A(1, 1) * B(2, 1));
     EXPECT_DOUBLE_EQ(K(5, 5), A(1, 1) * B(2, 2));
   }
-  
+
+  TEST_F(SpdMatrixTest, TestBlockDiagonal) {
+    SpdMatrix m1(2);
+    m1.randomize();
+    SpdMatrix m2(3);
+    m2.randomize();
+
+    SpdMatrix bd = block_diagonal_spd({m1, m2});
+    EXPECT_EQ(bd.nrow(), 5);
+    EXPECT_DOUBLE_EQ(bd(0, 0), m1(0, 0));
+    EXPECT_DOUBLE_EQ(bd(0, 1), m1(0, 1));
+    EXPECT_DOUBLE_EQ(bd(1, 0), m1(1, 0));
+    EXPECT_DOUBLE_EQ(bd(1, 1), m1(1, 1));
+
+    for (int i = 2; i <= 4; ++i) {
+      for (int j = 2; j <= 4; ++j) {
+        EXPECT_DOUBLE_EQ(bd(i, j), m2(i-2, j-2));
+      }
+    }
+  }
 }  // namespace
