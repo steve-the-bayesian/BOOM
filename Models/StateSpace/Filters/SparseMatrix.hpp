@@ -199,6 +199,7 @@ namespace BOOM {
     void multiply_and_add(VectorView lhs,
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+
     void multiply_inplace(VectorView x) const override;
     void matrix_multiply_inplace(SubMatrix m) const override;
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
@@ -1818,11 +1819,18 @@ namespace BOOM {
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will
   // typically be:  SeasonalStateSpaceMatrix, IdentityMatrix, etc.
-  class BlockDiagonalMatrix : public SparseKalmanMatrix {
+  class BlockDiagonalMatrix : public SparseMatrixBlock {
    public:
     // Start off with an empty matrix.  Use add_block() to add blocks
     // Adds a block to the block diagonal matrix
     BlockDiagonalMatrix();
+    BlockDiagonalMatrix(const BlockDiagonalMatrix &rhs);
+    BlockDiagonalMatrix & operator=(const BlockDiagonalMatrix &rhs);
+
+    BlockDiagonalMatrix(BlockDiagonalMatrix &&rhs) = default;
+    BlockDiagonalMatrix & operator=(BlockDiagonalMatrix &&rhs) = default;
+
+    BlockDiagonalMatrix * clone() const override;
 
     void add_block(const Ptr<SparseMatrixBlock> &m);
     void replace_block(int which_block, const Ptr<SparseMatrixBlock> &b);
@@ -1830,6 +1838,15 @@ namespace BOOM {
 
     int nrow() const override;
     int ncol() const override;
+
+    void multiply(VectorView lhs,
+                  const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void add_to_block(SubMatrix block) const override {
+      add_to_submatrix(block);
+    }
 
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
@@ -1840,6 +1857,7 @@ namespace BOOM {
     using SparseKalmanMatrix::operator*;
 
     using SparseKalmanMatrix::Tmult;
+    void Tmult(VectorView lhs, const ConstVectorView &x) const override;
     Vector Tmult(const ConstVectorView &x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
@@ -1919,9 +1937,17 @@ namespace BOOM {
   // A ErrorExpanderMatrix is a BlockDiagonalMatrix that allows for blocks that
   // have ncol==0.  The effect of such blocks is to add block->nrow() rows of
   // 0's to the dense representation of the matrix.
-  class ErrorExpanderMatrix : public SparseKalmanMatrix {
+  class ErrorExpanderMatrix : public SparseMatrixBlock {
    public:
     ErrorExpanderMatrix();
+
+    ErrorExpanderMatrix(const ErrorExpanderMatrix &rhs);
+    ErrorExpanderMatrix & operator=(const ErrorExpanderMatrix &rhs);
+
+    ErrorExpanderMatrix(ErrorExpanderMatrix &&rhs) = default;
+    ErrorExpanderMatrix & operator=(ErrorExpanderMatrix &&rhs) = default;
+
+    ErrorExpanderMatrix * clone() const override;
 
     // Seasonal state models may change their number of columns over time,
     // because there will be one additional element of "noise" in time periods
@@ -1931,11 +1957,19 @@ namespace BOOM {
     int ncol() const override;
 
     void add_block(const Ptr<SparseMatrixBlock> &block);
+    //     void add_block(const Ptr<ErrorExpanderMatrix> &blocks);
     void replace_block(int block_index,
                        const Ptr<SparseMatrixBlock> &block);
 
     // Remove all the blocks, making the matrix empty.
     void clear();
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const;
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const;
+    void add_to_block(SubMatrix block) const;
+
+    // Will throw an exception if any blocks are non-square.
+    void multiply_inplace(VectorView x) const;
 
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
@@ -1946,6 +1980,8 @@ namespace BOOM {
     using SparseKalmanMatrix::Tmult;
 
     Vector Tmult(const ConstVectorView &x) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
 

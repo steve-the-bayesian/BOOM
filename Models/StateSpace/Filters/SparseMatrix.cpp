@@ -1314,6 +1314,29 @@ namespace BOOM {
   //======================================================================
   BlockDiagonalMatrix::BlockDiagonalMatrix() : nrow_(0), ncol_(0) {}
 
+  BlockDiagonalMatrix::BlockDiagonalMatrix(const BlockDiagonalMatrix &rhs)
+      : nrow_(0),
+        ncol_(0)
+  {
+    for (const auto &block : rhs.blocks_) {
+      add_block(block->clone());
+    }
+  }
+
+  BlockDiagonalMatrix & BlockDiagonalMatrix::operator=(const BlockDiagonalMatrix &rhs) {
+    if (&rhs != this) {
+      clear();
+      for (const auto &block : rhs.blocks_) {
+        add_block(block->clone());
+      }
+    }
+    return *this;
+  }
+
+  BlockDiagonalMatrix * BlockDiagonalMatrix::clone() const {
+    return new BlockDiagonalMatrix(*this);
+  }
+
   void BlockDiagonalMatrix::add_block(const Ptr<SparseMatrixBlock> &m) {
     blocks_.push_back(m);
     nrow_ += m->nrow();
@@ -1344,35 +1367,63 @@ namespace BOOM {
   //---------------------------------------------------------------------------
   // TODO(steve): add a unit test for the case where diagonal
   // blocks are not square.
-  Vector block_multiply(const ConstVectorView &v, int nrow, int ncol,
-                        const std::vector<Ptr<SparseMatrixBlock>> &blocks_) {
+  void block_multiply_view(VectorView ans, const ConstVectorView &v, int nrow, int ncol,
+                           const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
     if (v.size() != ncol) {
-      report_error(
-          "incompatible vector in "
-          "BlockDiagonalMatrix::operator*");
+      report_error("incompatible vector in BlockDiagonalMatrix::operator*");
     }
-    Vector ans(nrow);
-
     int lhs_pos = 0;
     int rhs_pos = 0;
-    for (int b = 0; b < blocks_.size(); ++b) {
-      int nr = blocks_[b]->nrow();
+    for (int b = 0; b < blocks.size(); ++b) {
+      int nr = blocks[b]->nrow();
       VectorView lhs(ans, lhs_pos, nr);
       lhs_pos += nr;
 
-      int nc = blocks_[b]->ncol();
+      int nc = blocks[b]->ncol();
       if (nc > 0) {
         ConstVectorView rhs(v, rhs_pos, nc);
         rhs_pos += nc;
-        blocks_[b]->multiply(lhs, rhs);
+        blocks[b]->multiply(lhs, rhs);
       } else {
         lhs = 0.0;
       }
     }
+  }
+
+  Vector block_multiply(const ConstVectorView &v, int nrow, int ncol,
+                        const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+    Vector ans(nrow);
+    block_multiply_view(VectorView(ans), v, nrow, ncol, blocks);
     return ans;
   }
 
-  Vector block_transpose_multiply(
+  void block_multiply_and_add(
+      VectorView ans,
+      const ConstVectorView &v,
+      int nrow,
+      int ncol,
+      const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+    if (v.size() != ncol) {
+      report_error("incompatible vector in BlockDiagonalMatrix::operator*");
+    }
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    for (int b = 0; b < blocks.size(); ++b) {
+      int nr = blocks[b]->nrow();
+      VectorView lhs(ans, lhs_pos, nr);
+      lhs_pos += nr;
+
+      int nc = blocks[b]->ncol();
+      if (nc > 0) {
+        ConstVectorView rhs(v, rhs_pos, nc);
+        rhs_pos += nc;
+        blocks[b]->multiply_and_add(lhs, rhs);
+      }
+    }
+  }
+
+  void block_transpose_multiply_view(
+      VectorView lhs,
       const ConstVectorView &v,
       int nrow,
       int ncol,
@@ -1381,24 +1432,62 @@ namespace BOOM {
     if (v.size() != nrow) {
       report_error("incompatible vector in Tmult");
     }
+    if (lhs.size() != ncol) {
+      report_error("Incompatible LHS in block_transpose_multiply.");
+    }
 
     int lhs_pos = 0;
     int rhs_pos = 0;
-    Vector ans(ncol, 0);
 
     for (int b = 0; b < blocks.size(); ++b) {
-      VectorView lhs(ans, lhs_pos, blocks[b]->ncol());
+      VectorView lhs_chunk(lhs, lhs_pos, blocks[b]->ncol());
       lhs_pos += blocks[b]->ncol();
-      ConstVectorView rhs(v, rhs_pos, blocks[b]->nrow());
+      ConstVectorView rhs_chunk(v, rhs_pos, blocks[b]->nrow());
       rhs_pos += blocks[b]->nrow();
-      blocks[b]->Tmult(lhs, rhs);
+      blocks[b]->Tmult(lhs_chunk, rhs_chunk);
     }
-    return ans;
-
   }
 
+  Vector block_transpose_multiply(
+      const ConstVectorView &v,
+      int nrow,
+      int ncol,
+      const std::vector<Ptr<SparseMatrixBlock>> &blocks) {
+    Vector ans(ncol, 0);
+    block_transpose_multiply_view(VectorView(ans), v, nrow, ncol, blocks);
+    return ans;
+  }
+
+  void block_multiply_inplace(VectorView x, int nrow, int ncol,
+                              const std::vector<Ptr<SparseMatrixBlock>> & blocks) {
+    if (nrow != ncol) {
+      report_error("multiply_inplace only works for square matrices.");
+    }
+    int start = 0;
+    for (const auto &block : blocks) {
+      if (block->nrow() != block->ncol()) {
+        report_error("All individual blocks must be square for multiply_inplace.");
+      }
+      VectorView chunk(x, start, block->ncol());
+      block->multiply_inplace(chunk);
+      start += block->nrow();
+    }
+  }
 
   //---------------------------------------------------------------------------
+  void BlockDiagonalMatrix::multiply(VectorView lhs, const ConstVectorView &rhs) const {
+    block_multiply_view(lhs, rhs, nrow(), ncol(), blocks_);
+  }
+
+  void BlockDiagonalMatrix::multiply_and_add(VectorView lhs,
+                                             const ConstVectorView &rhs) const {
+    block_multiply_and_add(lhs, rhs, nrow(), ncol(), blocks_);
+  }
+
+  void BlockDiagonalMatrix::multiply_inplace(VectorView v) const {
+    block_multiply_inplace(v, nrow(), ncol(), blocks_);
+  }
+
   Vector BlockDiagonalMatrix::operator*(const Vector &v) const {
     return block_multiply(ConstVectorView(v), nrow(), ncol(), blocks_);
   }
@@ -1408,6 +1497,10 @@ namespace BOOM {
   }
   Vector BlockDiagonalMatrix::operator*(const ConstVectorView &v) const {
     return block_multiply(v, nrow(), ncol(), blocks_);
+  }
+
+  void BlockDiagonalMatrix::Tmult(VectorView lhs, const ConstVectorView &rhs) const {
+    block_transpose_multiply_view(lhs, rhs, nrow(), ncol(), blocks_);
   }
 
   Vector BlockDiagonalMatrix::Tmult(const ConstVectorView &x) const {
@@ -1759,6 +1852,30 @@ namespace BOOM {
         ncol_(0)
   {}
 
+  ErrorExpanderMatrix::ErrorExpanderMatrix(const ErrorExpanderMatrix &rhs)
+      : nrow_(0),
+        ncol_(0)
+  {
+    for (const auto &b : rhs.blocks_) {
+      add_block(b->clone());
+    }
+  }
+
+  ErrorExpanderMatrix & ErrorExpanderMatrix::operator=(
+      const ErrorExpanderMatrix &rhs) {
+    if (&rhs != this) {
+      clear();
+      for (const auto &b : rhs.blocks_) {
+        add_block(b->clone());
+      }
+    }
+    return *this;
+  }
+
+  ErrorExpanderMatrix * ErrorExpanderMatrix::clone() const {
+    return new ErrorExpanderMatrix(*this);
+  }
+
   int ErrorExpanderMatrix::nrow() const {
     return nrow_;
   }
@@ -1771,6 +1888,12 @@ namespace BOOM {
     blocks_.push_back(block);
     increment_sizes(block);
   }
+
+  // void ErrorExpanderMatrix::add_block(const Ptr<ErrorExpanderMatrix> &blocks) {
+  //   for (const auto &block : blocks->blocks_) {
+  //     add_block(block);
+  //   }
+  // }
 
   void ErrorExpanderMatrix::replace_block(
       int block_index,
@@ -1809,6 +1932,45 @@ namespace BOOM {
     recompute_sizes();
   }
 
+  // This logic is almost the same as the 'block_multiply' function above.
+  void ErrorExpanderMatrix::multiply(VectorView lhs,
+                                     const ConstVectorView &rhs) const {
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    for (const auto &block : blocks_) {
+      int nr = block->nrow();
+      VectorView left_block(lhs, lhs_pos, nr);
+
+      int nc = block->ncol();
+      if (nc > 0) {
+        const ConstVectorView right_block(rhs, rhs_pos, nc);
+        block->multiply(left_block, right_block);
+      } else {
+        left_block = 0;
+      }
+      lhs_pos += nr;
+      rhs_pos += nc;
+    }
+  }
+
+  void ErrorExpanderMatrix::multiply_and_add(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    int lhs_pos = 0;
+    int rhs_pos = 0;
+    for (const auto &block : blocks_) {
+      int nr = block->nrow();
+      VectorView left_block(lhs, lhs_pos, nr);
+
+      int nc = block->ncol();
+      if (nc > 0) {
+        const ConstVectorView right_block(rhs, rhs_pos, nc);
+        block->multiply_and_add(left_block, right_block);
+      }
+      lhs_pos += nr;
+      rhs_pos += nc;
+    }
+  }
+
   Vector ErrorExpanderMatrix::operator*(const Vector &v) const {
     return block_multiply(v, nrow(), ncol(), blocks_);
   }
@@ -1823,6 +1985,36 @@ namespace BOOM {
 
   Vector ErrorExpanderMatrix::Tmult(const ConstVectorView &x) const {
     return block_transpose_multiply(x, nrow(), ncol(), blocks_);
+  }
+
+  void ErrorExpanderMatrix::Tmult(VectorView lhs,
+                                  const ConstVectorView &rhs) const {
+    block_transpose_multiply_view(lhs, rhs, nrow(), ncol(), blocks_);
+  }
+
+  void ErrorExpanderMatrix::multiply_inplace(VectorView x) const {
+    block_multiply_inplace(x, nrow(), ncol(), blocks_);
+  }
+
+  void ErrorExpanderMatrix::add_to_block(SubMatrix block) const {
+    if (block.nrow() != nrow()) {
+      report_error("Block must have the same number of rows as the "
+                   "ErrorExpanderMatrix.");
+    }
+    if (block.ncol() != ncol()) {
+      report_error("Block must have the same number of columns as the "
+                   "ErrorExpanderMatrix.");
+    }
+
+    size_t row_start = 0;
+    size_t col_start = 0;
+    for (const auto &b : blocks_) {
+      b->add_to_block(SubMatrix(
+          block, row_start, row_start + b->nrow() - 1,
+          col_start, col_start + b->ncol() - 1));
+      row_start += b->nrow();
+      col_start += b->ncol();
+    }
   }
 
   SpdMatrix ErrorExpanderMatrix::inner() const {
