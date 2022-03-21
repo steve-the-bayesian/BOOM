@@ -47,12 +47,12 @@ namespace BOOM {
             state_error_expander_(new ErrorExpanderMatrix),
             state_error_variance_(new BlockDiagonalMatrix)
       {
-        clear_state_models();
+        clear_state_model_metadata();
       }
 
       StateModelVectorBase(const StateModelVectorBase &rhs)
       {
-        clear_state_models();
+        clear_state_model_metadata();
         for (int m = 0; m < rhs.state_models_.size(); ++m) {
           add_state_model(rhs.state_models_[m]);
         }
@@ -72,7 +72,7 @@ namespace BOOM {
 
       StateModelVectorBase & operator=(const StateModelVectorBase &rhs) {
         if (&rhs != this) {
-          clear_state_models();
+          clear_state_model_metadata();
           for (int m = 0; m < rhs.state_models_.size(); ++m) {
             add_state_model(rhs.state_models_[m]);
           }
@@ -82,7 +82,7 @@ namespace BOOM {
 
       StateModelVectorBase &operator=(StateModelVectorBase &&rhs) {
         if (&rhs != this) {
-          clear_state_models();
+          clear_state_model_metadata();
           state_models_ = std::move(rhs.state_models_);
           state_dimension_ = rhs.state_dimension_;
           state_error_dimension_ = rhs.state_error_dimension_;
@@ -101,8 +101,13 @@ namespace BOOM {
       // The dimension of the state vector associated with the stored models.
       int state_dimension() const { return state_dimension_; }
 
+      // The dimension of the state innovation vector (from the transition
+      // equation), which can be of lower dimension than the state itself.
+      int state_error_dimension() const {return state_error_dimension_;}
+
       // The number of state models stored by this object.
       int size() const { return state_models_.size(); }
+      int number_of_state_models() const { return state_models_.size(); }
 
       // Clear the vector of models and restore the state of the object to that
       // produced by the default constructor.
@@ -179,19 +184,18 @@ namespace BOOM {
           Matrix &state, int state_model_index) const;
 
       // Structural matrices for Kalman filtering.
-      const SparseKalmanMatrix *state_transition_matrix(int t) const;
-      const SparseKalmanMatrix *state_variance_matrix(int t) const;
-      const ErrorExpanderMatrix *state_error_expander(int t) const;
-      const SparseKalmanMatrix *state_error_variance(int t) const;
+      BlockDiagonalMatrix * state_transition_matrix(int t) const;
+      BlockDiagonalMatrix * state_variance_matrix(int t) const;
+      ErrorExpanderMatrix * state_error_expander(int t) const;
+      BlockDiagonalMatrix * state_error_variance(int t) const;
 
      protected:
       // Child classes should call this method when implementing add_state.
       void add_state_model(Ptr<StateModelBase> state_model);
 
-      // Child classes should call this method when implementing clear().
-      // Clears the vector of state model pointers, and resets all metadata
-      // accordingly.
-      void clear_state_models();
+      // Child classes should call this method when implementing clear() to
+      // reset all metadata around state dimensions, positions, etc.
+      void clear_state_model_metadata();
 
      private:
       std::vector<Ptr<StateModelBase>> state_models_;
@@ -219,10 +223,10 @@ namespace BOOM {
       std::vector<int> state_error_positions_;
 
       // Model matrices for Kalman filtering.
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
-      mutable std::unique_ptr<ErrorExpanderMatrix> state_error_expander_;
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
+      mutable Ptr<BlockDiagonalMatrix> state_transition_matrix_;
+      mutable Ptr<BlockDiagonalMatrix> state_variance_matrix_;
+      mutable Ptr<ErrorExpanderMatrix> state_error_expander_;
+      mutable Ptr<BlockDiagonalMatrix> state_error_variance_;
     };
 
     // Concrete StateModelVector objects are parameterized by the type of the
@@ -239,11 +243,14 @@ namespace BOOM {
       // produced by the default constructor.
       void clear() override {
         state_models_.clear();
-        clear_state_models();
+        clear_state_model_metadata();
       }
 
       Ptr<STATE_MODEL> operator[](int s) {return state_models_[s];}
       const Ptr<STATE_MODEL> operator[](int s) const {return state_models_[s];}
+
+      STATE_MODEL *state_model(int s) {return state_models_[s].get();}
+      const STATE_MODEL *state_model(int s) const {return state_models_[s].get();}
 
      private:
       std::vector<Ptr<STATE_MODEL>> state_models_;

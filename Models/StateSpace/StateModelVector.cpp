@@ -36,7 +36,7 @@ namespace BOOM {
         state_error_positions_.push_back(next_position);
     }
 
-    void StateModelVectorBase::clear_state_models() {
+    void StateModelVectorBase::clear_state_model_metadata() {
       state_dimension_ = 0;
       state_error_dimension_ = 0;
       state_positions_.clear();
@@ -115,7 +115,7 @@ namespace BOOM {
                        state.ncol() - 1);
     }
 
-    const SparseKalmanMatrix *StateModelVectorBase::state_transition_matrix(
+    BlockDiagonalMatrix *StateModelVectorBase::state_transition_matrix(
         int t) const {
       // Size comparisons should be made with respect to state_dimension(), not
       // state_dimension() which is virtual.
@@ -137,7 +137,7 @@ namespace BOOM {
       return state_transition_matrix_.get();
     }
 
-    const SparseKalmanMatrix *StateModelVectorBase::state_variance_matrix(
+    BlockDiagonalMatrix *StateModelVectorBase::state_variance_matrix(
         int t) const {
       state_variance_matrix_->clear();
       for (int s = 0; s < state_models_.size(); ++s) {
@@ -147,7 +147,7 @@ namespace BOOM {
       return state_variance_matrix_.get();
     }
 
-    const ErrorExpanderMatrix *StateModelVectorBase::state_error_expander(
+    ErrorExpanderMatrix *StateModelVectorBase::state_error_expander(
         int t) const {
       state_error_expander_->clear();
       for (int s = 0; s < state_models_.size(); ++s) {
@@ -156,7 +156,7 @@ namespace BOOM {
       return state_error_expander_.get();
     }
 
-    const SparseKalmanMatrix *StateModelVectorBase::state_error_variance(
+    BlockDiagonalMatrix *StateModelVectorBase::state_error_variance(
         int t) const {
       state_error_variance_->clear();
       for (int s = 0; s < state_models_.size(); ++s) {
