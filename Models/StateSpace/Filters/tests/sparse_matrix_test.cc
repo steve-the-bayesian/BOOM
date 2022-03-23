@@ -637,4 +637,16 @@ namespace {
     CheckSparseKalmanMatrix(*m);
   }
 
+  TEST_F(SparseMatrixTest, DenseSparseRankOneTest) {
+    Vector dense(4);
+    dense.randomize();
+
+    SparseVector sv(8);
+    sv[0] = 1.8;
+    sv[5] = 4.2;
+
+    DenseSparseRankOneMatrixBlock sparse(dense, sv);
+    CheckSparseKalmanMatrix(sparse);
+  }
+
 }  // namespace

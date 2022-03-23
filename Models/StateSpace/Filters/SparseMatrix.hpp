@@ -1698,6 +1698,102 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // The product d * s of a dense "column vector" d and a sparse "row vector" s.
+  class DenseSparseRankOneMatrixBlock : public SparseMatrixBlock {
+   public:
+    DenseSparseRankOneMatrixBlock(const Vector &left, const SparseVector &right)
+        : left_(left),
+          right_(right),
+          dense_right_(0)
+    {}
+
+    DenseSparseRankOneMatrixBlock * clone() const override {
+      return new DenseSparseRankOneMatrixBlock(*this);
+    }
+
+    void set_left(const Vector &left) {
+      left_ = left;
+    }
+
+    void set_right(const SparseVector &right) {
+      right_ = right;
+      dense_right_ = Vector(0);
+    }
+
+    void update(const Vector &left, const SparseVector &right) {
+      set_left(left);
+      set_right(right);
+    }
+
+    int nrow() const override {return left_.size();}
+    int ncol() const override {return right_.size();}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const {
+      lhs = left_ * right_.dot(rhs);
+    }
+
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const {
+      lhs += left_ * right_.dot(rhs);
+    }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const {
+      lhs = left_.dot(rhs) * dense_right();
+    }
+
+    void multiply_inplace(VectorView x) const {
+      if (nrow() != ncol()) {
+        report_error("multiply_inplace only works for square matrices.");
+      }
+      if (ncol() != x.size()) {
+        report_error("Vector does not conform to matrix in multiply_inplace.");
+      }
+      x = left_ * right_.dot(x);
+    }
+
+    SpdMatrix inner() const {
+      double weight = left_.dot(left_);
+      return outer(dense_right() * sqrt(weight));
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const {
+      //  R' L' W L R
+      double weight = left_.dot(weights * left_);
+      return outer(dense_right() * sqrt(weight));
+    }
+
+    Matrix &add_to(Matrix &P) const {
+      P += right_.outer_product_transpose(left_);
+      return P;
+    }
+
+    SubMatrix add_to_submatrix(SubMatrix P) const {
+      P += right_.outer_product_transpose(left_);
+      return P;
+    }
+
+    void add_to_block(SubMatrix block) const {
+      add_to_submatrix(block);
+    }
+
+    Matrix dense() const {
+      Matrix ans(nrow(), ncol(), 0.0);
+      ans.add_outer(left_, dense_right());
+      return ans;
+    }
+
+    const Vector & dense_right() const {
+      if (dense_right_.size() != right_.size()) {
+        dense_right_ = right_.dense();
+      }
+      return dense_right_;
+    }
+
+   private:
+    Vector left_;
+    SparseVector right_;
+    mutable Vector dense_right_;
+  };
+
+  //===========================================================================
   // A sparse matrix whose rows and columns are sparse vectors.  This matrix is
   // somewhat expensive to construct, because a mapping must be constructed
   // between its row and column representations.
