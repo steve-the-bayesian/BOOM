@@ -22,9 +22,8 @@ namespace BOOM {
   namespace StateSpaceUtils {
 
     void StateModelVectorBase::add_state_model(
-        Ptr<StateModelBase> state_model) {
-        state_model->set_index(state_models_.size());
-        state_models_.push_back(state_model);
+        StateModelBase * state_model) {
+        state_model->set_index(size());
         state_dimension_ += state_model->state_dimension();
         int next_position = state_positions_.back()
             + state_model->state_dimension();
@@ -51,22 +50,22 @@ namespace BOOM {
     }
 
     void StateModelVectorBase::clear_data() {
-      for (int s = 0; s < state_models_.size(); ++s) {
-        state_models_[s]->clear_data();
+      for (int s = 0; s < size(); ++s) {
+        state_model(s)->clear_data();
       }
     }
 
     VectorView StateModelVectorBase::state_component(
         Vector &state, int s) const {
       int start = state_positions_[s];
-      int size = state_models_[s]->state_dimension();
+      int size = state_model(s)->state_dimension();
       return VectorView(state, start, size);
     }
 
     VectorView StateModelVectorBase::state_component(
         VectorView &state, int s) const {
       int start = state_positions_[s];
-      int size = state_models_[s]->state_dimension();
+      int size = state_model(s)->state_dimension();
       return VectorView(state, start, size);
     }
 
@@ -74,7 +73,7 @@ namespace BOOM {
         const ConstVectorView &state,
         int s) const {
       int start = state_positions_[s];
-      int size = state_models_[s]->state_dimension();
+      int size = state_model(s)->state_dimension();
       return ConstVectorView(state, start, size);
     }
 
@@ -82,20 +81,20 @@ namespace BOOM {
         const Vector &full_state_error,
         int state_model_number) const {
       int start = state_error_positions_[state_model_number];
-      int size = state_models_[state_model_number]->state_error_dimension();
+      int size = state_model(state_model_number)->state_error_dimension();
       return ConstVectorView(full_state_error, start, size);
     }
     VectorView StateModelVectorBase::state_error_component(
         Vector &full_state_error, int state_model_number) const {
       int start = state_error_positions_[state_model_number];
-      int size = state_models_[state_model_number]->state_error_dimension();
+      int size = state_model(state_model_number)->state_error_dimension();
       return VectorView(full_state_error, start, size);
     }
 
     ConstSubMatrix StateModelVectorBase::state_error_variance_component(
         const SpdMatrix &full_error_variance, int state) const {
       int start = state_error_positions_[state];
-      int size = state_models_[state]->state_error_dimension();
+      int size = state_model(state)->state_error_dimension();
       return ConstSubMatrix(full_error_variance, start, start + size - 1, start,
                             start + size - 1);
     }
@@ -103,14 +102,14 @@ namespace BOOM {
     ConstSubMatrix StateModelVectorBase::full_state_subcomponent(
         const Matrix &state, int state_model_index) const {
       int start = state_positions_[state_model_index];
-      int size = state_models_[state_model_index]->state_dimension();
+      int size = state_model(state_model_index)->state_dimension();
       return ConstSubMatrix(state, start, start + size - 1, 0,
                             state.ncol() - 1);
     }
     SubMatrix StateModelVectorBase::mutable_full_state_subcomponent(
         Matrix &state, int state_model_index) const {
       int start = state_positions_[state_model_index];
-      int size = state_models_[state_model_index]->state_dimension();
+      int size = state_model(state_model_index)->state_dimension();
       return SubMatrix(state, start, start + size - 1, 0,
                        state.ncol() - 1);
     }
@@ -122,16 +121,16 @@ namespace BOOM {
       if (state_transition_matrix_->nrow() != state_dimension() ||
           state_transition_matrix_->ncol() != state_dimension()) {
         state_transition_matrix_->clear();
-        for (int s = 0; s < state_models_.size(); ++s) {
+        for (int s = 0; s < size(); ++s) {
           state_transition_matrix_->add_block(
-              state_models_[s]->state_transition_matrix(t));
+              state_model(s)->state_transition_matrix(t));
         }
       } else {
         // If we're in this block, then the matrix must have been created already,
         // and we just need to update the blocks.
-        for (int s = 0; s < state_models_.size(); ++s) {
+        for (int s = 0; s < size(); ++s) {
           state_transition_matrix_->replace_block(
-              s, state_models_[s]->state_transition_matrix(t));
+              s, state_model(s)->state_transition_matrix(t));
         }
       }
       return state_transition_matrix_.get();
@@ -140,9 +139,9 @@ namespace BOOM {
     BlockDiagonalMatrix *StateModelVectorBase::state_variance_matrix(
         int t) const {
       state_variance_matrix_->clear();
-      for (int s = 0; s < state_models_.size(); ++s) {
+      for (int s = 0; s < size(); ++s) {
         state_variance_matrix_->add_block(
-            state_models_[s]->state_variance_matrix(t));
+            state_model(s)->state_variance_matrix(t));
       }
       return state_variance_matrix_.get();
     }
@@ -150,8 +149,8 @@ namespace BOOM {
     ErrorExpanderMatrix *StateModelVectorBase::state_error_expander(
         int t) const {
       state_error_expander_->clear();
-      for (int s = 0; s < state_models_.size(); ++s) {
-        state_error_expander_->add_block(state_models_[s]->state_error_expander(t));
+      for (int s = 0; s < size(); ++s) {
+        state_error_expander_->add_block(state_model(s)->state_error_expander(t));
       }
       return state_error_expander_.get();
     }
@@ -159,9 +158,9 @@ namespace BOOM {
     BlockDiagonalMatrix *StateModelVectorBase::state_error_variance(
         int t) const {
       state_error_variance_->clear();
-      for (int s = 0; s < state_models_.size(); ++s) {
+      for (int s = 0; s < size(); ++s) {
         state_error_variance_->add_block(
-            state_models_[s]->state_error_variance(t));
+            state_model(s)->state_error_variance(t));
       }
       return state_error_variance_.get();
     }
