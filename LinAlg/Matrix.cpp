@@ -139,6 +139,31 @@ namespace BOOM {
     }
   }
 
+  Matrix::Matrix(const std::initializer_list<std::initializer_list<double>> &rows) {
+    nr_ = rows.size();
+    nc_ = -1;
+    std::vector<Vector> row_vectors;
+    for (const auto &el : rows) {
+      row_vectors.push_back(Vector(el));
+      if (nc_ < 0) {
+        nc_ = row_vectors.back().size();
+      } else {
+        if (row_vectors.back().size() != nc_) {
+          std::ostringstream err;
+          err << "All rows must be the same size.  "
+              << "Row " << row_vectors.size() << " was size "
+              << row_vectors.back().size()
+              << " but previous rows were " << nc_;
+          report_error(err.str());
+        }
+      }
+    }
+    data_.resize(nr_ * nc_);
+    for (size_t r = 0; r < nr_; ++r) {
+      set_row(r, row_vectors[r]);
+    }
+  }
+
   Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
 
   Matrix::Matrix(const ConstSubMatrix &rhs) { operator=(rhs); }
