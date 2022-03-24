@@ -52,6 +52,21 @@ namespace BOOM {
       return ans;
     }
 
+    bool can_find_posterior_mode() const override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        if (!model_->model(i)->can_find_posterior_mode()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    void find_posterior_mode(double epsilon = 1e-5) override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        model_->model(i)->find_posterior_mode(epsilon);
+      }
+    }
+
    private:
     IndependentRegressionModels *model_;
   };
