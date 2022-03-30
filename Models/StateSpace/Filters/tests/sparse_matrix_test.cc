@@ -649,4 +649,41 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  Matrix random_dense_matrix(int nrow, int ncol) {
+    Matrix ans(nrow, ncol);
+    ans.randomize();
+    return ans;
+  }
+
+  TEST_F(SparseMatrixTest, MatrixProductTest) {
+    SparseMatrixProduct sparse;
+    NEW(DenseMatrix, m1)(random_dense_matrix(3,4));
+    NEW(DenseMatrix, m2)(random_dense_matrix(4, 2));
+    NEW(DenseMatrix, m3)(random_dense_matrix(3, 2));
+
+    sparse.add_term(m1);
+    sparse.add_term(m2);
+    sparse.add_term(m3, true);
+    CheckSparseKalmanMatrix(sparse);
+  }
+
+  TEST_F(SparseMatrixTest, SparseMatrixSumTest) {
+    SparseMatrixSum sparse;
+
+    NEW(DenseMatrix, m1)(random_dense_matrix(3, 4));
+    NEW(DenseMatrix, m2)(random_dense_matrix(3, 4));
+    NEW(DenseMatrix, m3)(random_dense_matrix(3, 4));
+
+    sparse.add_term(m1);
+    sparse.add_term(m2);
+    sparse.add_term(m3, -1);
+
+    Matrix dense = m1->dense() + m2->dense() - m3->dense();
+    EXPECT_TRUE(MatrixEquals(dense, sparse.dense()))
+        << "dense = \n" << dense
+        << "dense() = \n" << sparse.dense();
+
+    CheckSparseKalmanMatrix(sparse);
+  }
+
 }  // namespace

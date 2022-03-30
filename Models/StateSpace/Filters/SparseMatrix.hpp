@@ -135,6 +135,85 @@ namespace BOOM {
   Matrix multT(const SpdMatrix &lhs, const SparseKalmanMatrix &rhs);
 
   //======================================================================
+  // The product of several SparseKalmanMatrix objects.  The terms in the
+  // product are stored, and matrix multiplications are evalutated term-by-term.
+  // Terms or their transposes may be stored.
+  class SparseMatrixProduct : public SparseKalmanMatrix {
+   public:
+    SparseMatrixProduct();
+
+    // Args:
+
+    //   term: Add 'term' to the terms in the product.  Terms are added left to
+    //     right in the order they appear.  So if A, B, and C are added in that
+    //     order, the result is A * B * C.
+    //   transpose: If true then the transpose of the matrix is added to the
+    //     product, so products like A * B' * C can be represented.
+    void add_term(const Ptr<SparseKalmanMatrix> &term, bool transpose = false);
+
+    int nrow() const override;
+    int ncol() const override;
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix dense() const override;
+
+    // This' * N * This, as a SparseProductMatrix.
+    Ptr<SparseMatrixProduct> sparse_sandwich(const SpdMatrix &N) const;
+
+    // The diagonal elements of the sparse matrix.  // how to get these??
+    Vector diag() const;
+
+    // The following functions are implemented, but calling them may result in
+    // very large matrices being created.  Call with care.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+    Matrix &add_to(Matrix &rhs) const;
+
+   private:
+    void check_term(const Ptr<SparseKalmanMatrix> &term, bool transpose);
+
+    std::vector<Ptr<SparseKalmanMatrix>> terms_;
+    std::vector<bool> transposed_;
+  };
+
+  // A sum of sparse matrices. The terms of the sum are stored in the object,
+  // and matrix products are evaluated term by term.
+  class SparseMatrixSum : public SparseKalmanMatrix {
+   public:
+    SparseMatrixSum();
+    void add_term(const Ptr<SparseKalmanMatrix> &term, double coefficient = 1.0);
+
+    int nrow() const override;
+    int ncol() const override;
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix &add_to(Matrix &rhs) const;
+
+    // Calling 'inner' on a SparseMatrixSum can result in very large matrices
+    // being created.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+   private:
+    std::vector<Ptr<SparseKalmanMatrix>> terms_;
+    Vector coefficients_;
+  };
+
+  //======================================================================
   // The SparseMatrixBlock classes are SparseKalmanMatrices that can be used as
   // elements in a BlockDiagonalMatrix.
   class SparseMatrixBlock : public SparseKalmanMatrix {

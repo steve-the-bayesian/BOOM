@@ -43,6 +43,257 @@ namespace BOOM {
     report_error(err.str());
   }
 
+  SparseMatrixProduct::SparseMatrixProduct() {}
+
+  void SparseMatrixProduct::add_term(const Ptr<SparseKalmanMatrix> &term,
+                                     bool transpose) {
+    check_term(term, transpose);
+    terms_.push_back(term);
+    transposed_.push_back(transpose);
+  }
+
+  int SparseMatrixProduct::nrow() const {
+    if (terms_.empty()) {
+      return 0;
+    }
+    return transposed_[0] ? terms_[0]->ncol() : terms_[0]->nrow();
+  }
+
+  int SparseMatrixProduct::ncol() const {
+    if (terms_.empty()) {
+      return 0;
+    }
+    return transposed_.back() ? terms_.back()->nrow() : terms_.back()->ncol();
+  }
+
+  Vector SparseMatrixProduct::operator*(const ConstVectorView &v) const {
+    Vector ans = v;
+    for (int i = terms_.size() - 1; i >= 0; --i) {
+      if (transposed_[i]) {
+        ans = terms_[i]->Tmult(ans);
+      } else {
+        ans = (*terms_[i]) * ans;
+      }
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixProduct::operator*(const Vector &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Vector SparseMatrixProduct::operator*(const VectorView &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Matrix SparseMatrixProduct::operator*(const Matrix &rhs) const {
+    Matrix ans(rhs);
+    for (int i = terms_.size() - 1; i >= 0; --i) {
+      if (transposed_[i]) {
+        ans = terms_[i]->Tmult(ans);
+      } else {
+        ans = (*terms_[i]) * ans;
+      }
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixProduct::Tmult(const ConstVectorView &rhs) const {
+    Vector ans(rhs);
+    for (int i = 0; i < terms_.size(); ++i) {
+      if (transposed_[i]) {
+        ans = *terms_[i] * ans;
+      } else {
+        ans = terms_[i]->Tmult(ans);
+      }
+    }
+    return ans;
+  }
+
+  Matrix SparseMatrixProduct::Tmult(const Matrix &rhs) const {
+    Matrix ans(rhs);
+    for (int i = terms_.size() - 1; i >= 0; --i) {
+      if (transposed_[i]) {
+        ans = *terms_[i] * ans;
+      } else {
+        ans = terms_[i]->Tmult(ans);
+      }
+    }
+    return ans;
+  }
+
+  Ptr<SparseMatrixProduct> SparseMatrixProduct::sparse_sandwich(const SpdMatrix &N) const {
+    NEW(DenseMatrix, SparseN)(N);
+    NEW(SparseMatrixProduct, ans)();
+    for (int i = terms_.size() - 1; i >= 0; --i) {
+      ans->add_term(terms_[i], !transposed_[i]);
+    }
+    ans->add_term(SparseN);
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans->add_term(terms_[i], transposed_[i]);
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixProduct::diag() const {
+    int m = std::min(nrow(), ncol());
+    Vector ans(m);
+    for (int i = 0; i < m; ++i) {
+      Vector one(ncol(), 0.0);
+      one[i] = 1.0;
+      ans[i] = ((*this) * one)[i];
+    }
+    return ans;
+  }
+
+  SpdMatrix SparseMatrixProduct::inner() const {
+    SpdMatrix ans(nrow(), 1.0);
+    for (int i = 0; i < terms_.size(); ++i) {
+      if (transposed_[i]) {
+        ans = terms_[i]->sandwich(ans);
+      } else {
+        ans = terms_[i]->sandwich_transpose(ans);
+      }
+    }
+    return ans;
+  }
+
+  SpdMatrix SparseMatrixProduct::inner(const ConstVectorView &weights) const {
+    SpdMatrix ans(weights.size());
+    ans.diag() = weights;
+
+    for (int i = 0; i < terms_.size(); ++i) {
+      if (transposed_[i]) {
+        ans = terms_[i]->sandwich(ans);
+      } else {
+        ans = terms_[i]->sandwich_transpose(ans);
+      }
+    }
+    return ans;
+  }
+
+  Matrix &SparseMatrixProduct::add_to(Matrix &P) const {
+    P += this->dense();
+    return P;
+  }
+
+  Matrix SparseMatrixProduct::dense() const {
+    SpdMatrix Id(ncol(), 1.0);
+    return (*this) * Id;
+  }
+
+  void SparseMatrixProduct::check_term(const Ptr<SparseKalmanMatrix> &term,
+                                       bool transpose) {
+    if (terms_.empty()) {
+      return;
+    }
+    bool final_transpose = transposed_.back();
+    const Ptr<SparseKalmanMatrix>& final_term(terms_.back());
+    size_t final_dim =
+        final_transpose ? final_term->nrow() : final_term->ncol();
+    size_t leading_dim = transpose ? term->ncol() : term-> nrow();
+    if (final_dim != leading_dim) {
+      std::ostringstream err;
+      err << "Incompatible matrix following term " << terms_.size()
+          << ".  Final dimension of previous term: "
+          << final_dim
+          << ".  Leading dimension of new term: " << leading_dim
+          << ".";
+      report_error(err.str());
+    }
+  }
+
+  //===========================================================================
+
+  SparseMatrixSum::SparseMatrixSum() {}
+
+  void SparseMatrixSum::add_term(
+      const Ptr<SparseKalmanMatrix> &term, double coefficient) {
+    if (!terms_.empty()) {
+      if (term->nrow() != terms_.back()->nrow()
+          || term->ncol() != terms_.back()->ncol()) {
+        report_error("Incompatible sparse matrices in sum.");
+      }
+    }
+    terms_.push_back(term);
+    coefficients_.push_back(coefficient);
+  }
+
+  int SparseMatrixSum::nrow() const {
+    if (terms_.empty()) {
+      return 0;
+    }
+    return terms_.back()->nrow();
+  }
+
+  int SparseMatrixSum::ncol() const {
+    if (terms_.empty()) {
+      return 0;
+    }
+    return terms_.back()->ncol();
+  }
+
+  Vector SparseMatrixSum::operator*(const ConstVectorView &rhs) const {
+    Vector ans(nrow(), 0.0);
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans += coefficients_[i] * ((*terms_[i]) * rhs);
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixSum::operator*(const Vector &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Vector SparseMatrixSum::operator*(const VectorView &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Matrix SparseMatrixSum::operator*(const Matrix &rhs) const {
+    Matrix ans(nrow(), rhs.ncol(), 0.0);
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans += coefficients_[i] * ((*terms_[i]) * rhs);
+    }
+    return ans;
+  }
+
+  Vector SparseMatrixSum::Tmult(const ConstVectorView &rhs) const {
+    Vector ans(ncol());
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans += coefficients_[i] * terms_[i]->Tmult(rhs);
+    }
+    return ans;
+  }
+
+  Matrix SparseMatrixSum::Tmult(const Matrix &rhs) const {
+    Matrix ans(ncol(), rhs.ncol());
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans += coefficients_[i] * terms_[i]->Tmult(rhs);
+    }
+    return ans;
+  }
+
+  SpdMatrix SparseMatrixSum::inner() const {
+    return dense().inner();
+  }
+
+  SpdMatrix SparseMatrixSum::inner(const ConstVectorView &weights) const {
+    return dense().inner(weights);
+  }
+
+  Matrix &SparseMatrixSum::add_to(Matrix &rhs) const {
+    for (int i = 0; i < terms_.size(); ++i) {
+      if (coefficients_[i] != 0.0) {
+        rhs /= coefficients_[i];
+        terms_[i]->add_to(rhs);
+        rhs *= coefficients_[i];
+      }
+    }
+    return rhs;
+  }
+
+  //===========================================================================
+
   namespace {
     template <class VECTOR>
     Vector sparse_multiply_impl(const SparseMatrixBlock &m, const VECTOR &v) {
