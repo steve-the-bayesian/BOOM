@@ -493,13 +493,13 @@ namespace BOOM {
 
   // TODO: This and other code involving model matrices is an optimization
   // opportunity.  Test it out to see if precomputation makes sense.
-  const AccumulatorTransitionMatrix *ASSR::state_transition_matrix(
+  AccumulatorTransitionMatrix *ASSR::state_transition_matrix(
       int t) const {
     Ptr<FineNowcastingData> fine_data(this->fine_data(t));
     return fill_state_transition_matrix(t, *fine_data, transition_matrix_);
   }
 
-  const AccumulatorTransitionMatrix *ASSR::fill_state_transition_matrix(
+  AccumulatorTransitionMatrix *ASSR::fill_state_transition_matrix(
       int t, const FineNowcastingData &fine_data,
       std::unique_ptr<AccumulatorTransitionMatrix> &transition_matrix) const {
     if (!transition_matrix) {
@@ -524,12 +524,11 @@ namespace BOOM {
     return ans;
   }
 
-  const AccumulatorStateVarianceMatrix *ASSR::state_variance_matrix(
-      int t) const {
+  AccumulatorStateVarianceMatrix *ASSR::state_variance_matrix(int t) const {
     return fill_state_variance_matrix(t, variance_matrix_);
   }
 
-  const AccumulatorStateVarianceMatrix *ASSR::fill_state_variance_matrix(
+  AccumulatorStateVarianceMatrix *ASSR::fill_state_variance_matrix(
       int t,
       std::unique_ptr<AccumulatorStateVarianceMatrix> &variance_matrix) const {
     if (!variance_matrix) {

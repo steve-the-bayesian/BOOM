@@ -307,12 +307,12 @@ namespace BOOM {
     // This function updates the regression portion of the model.
     void observe_data_given_state(int t) override;
 
-    const AccumulatorTransitionMatrix *state_transition_matrix(
+    AccumulatorTransitionMatrix *state_transition_matrix(
         int t) const override;
 
     SparseVector observation_matrix(int t) const override;
 
-    const AccumulatorStateVarianceMatrix *state_variance_matrix(
+    AccumulatorStateVarianceMatrix *state_variance_matrix(
         int t) const override;
 
     void simulate_initial_state(RNG &rng, VectorView state0) const override;
@@ -331,10 +331,10 @@ namespace BOOM {
     mutable std::unique_ptr<AccumulatorStateVarianceMatrix> variance_matrix_;
     mutable std::unique_ptr<AccumulatorTransitionMatrix> transition_matrix_;
 
-    const AccumulatorStateVarianceMatrix *fill_state_variance_matrix(
+    AccumulatorStateVarianceMatrix *fill_state_variance_matrix(
         int t,
         std::unique_ptr<AccumulatorStateVarianceMatrix> &variance_matrix) const;
-    const AccumulatorTransitionMatrix *fill_state_transition_matrix(
+    AccumulatorTransitionMatrix *fill_state_transition_matrix(
         int t, const FineNowcastingData &fine_data,
         std::unique_ptr<AccumulatorTransitionMatrix> &transition_matrix) const;
   };
