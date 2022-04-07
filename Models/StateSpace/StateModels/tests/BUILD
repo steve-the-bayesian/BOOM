@@ -142,10 +142,13 @@ cc_test(
 )
 
 cc_test(
-    name = "SeasonalStateModel_test",
+    name = "seasonal_state_model_test",
     size = "small",
     srcs = ["SeasonalStateModel_test.cc"],
     copts = COPTS,
+    # linkopts = [
+    #     "-lprofiler",  # to get the profiler on ubuntu I had to sudo apt install libgoogle-perftools-dev
+    # ],
     deps = [
         "//:boom",
         "//:boom_test_utils",
