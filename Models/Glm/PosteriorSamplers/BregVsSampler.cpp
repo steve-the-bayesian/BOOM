@@ -426,6 +426,7 @@ namespace BOOM {
     }
 
     // Add in the sum of squared errors around posterior_mean_
+    // (y - XB)' (y -XB) = y'y - 2 * B' X'y + B' X'X B.
     double likelihood_ss =
         s->yty() - 2 * posterior_mean_.dot(xty) + xtx.Mdist(posterior_mean_);
     SS_ += likelihood_ss;
@@ -435,6 +436,7 @@ namespace BOOM {
 
     // Add in the sum of squares component arising from the discrepancy between
     // the prior and posterior means.
+    // (B - b)' Ominv (B - b)
     SS_ += unscaled_prior_precision.Mdist(posterior_mean_, prior_mean);
     if (SS_ < 0) {
       report_error(
