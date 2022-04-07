@@ -686,4 +686,31 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  TEST_F(SparseMatrixTest, SparseBinomialInverseTest) {
+    SpdMatrix A(4);
+    A.randomize();
+    SpdMatrix B(2);
+    B.randomize();
+    Matrix U(4, 2);
+    U.randomize();
+
+    NEW(DenseSpd, Ainv)(A.inv());
+    NEW(DenseSpd, SparseB)(B);
+    NEW(DenseMatrix, SparseU)(U);
+
+    SpdMatrix M = A + U * B * U.transpose();
+    SpdMatrix dense = M.inv();
+    SpdMatrix Ainv_dense = Ainv->value();
+    double Ainv_logdet = Ainv_dense.logdet();
+    SparseBinomialInverse sparse(Ainv, SparseU, B, Ainv_logdet);
+
+    EXPECT_NEAR(dense.logdet(), sparse.logdet(), 1e-5);
+
+    EXPECT_TRUE(MatrixEquals(dense, sparse.dense()))
+        << "dense = \n" << dense
+        << "dense() = \n" << sparse.dense();
+
+    CheckSparseKalmanMatrix(sparse);
+  }
+
 }  // namespace

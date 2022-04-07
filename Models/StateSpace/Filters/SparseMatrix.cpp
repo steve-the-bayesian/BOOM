@@ -112,7 +112,7 @@ namespace BOOM {
 
   Matrix SparseMatrixProduct::Tmult(const Matrix &rhs) const {
     Matrix ans(rhs);
-    for (int i = terms_.size() - 1; i >= 0; --i) {
+    for (int i = 0; i < terms_.size(); ++i) {
       if (transposed_[i]) {
         ans = *terms_[i] * ans;
       } else {
@@ -122,8 +122,9 @@ namespace BOOM {
     return ans;
   }
 
-  Ptr<SparseMatrixProduct> SparseMatrixProduct::sparse_sandwich(const SpdMatrix &N) const {
-    NEW(DenseMatrix, SparseN)(N);
+  Ptr<SparseMatrixProduct>
+  SparseMatrixProduct::sparse_sandwich(const SpdMatrix &N) const {
+    NEW(DenseSpd, SparseN)(N);
     NEW(SparseMatrixProduct, ans)();
     for (int i = terms_.size() - 1; i >= 0; --i) {
       ans->add_term(terms_[i], !transposed_[i]);
@@ -131,6 +132,20 @@ namespace BOOM {
     ans->add_term(SparseN);
     for (int i = 0; i < terms_.size(); ++i) {
       ans->add_term(terms_[i], transposed_[i]);
+    }
+    return ans;
+  }
+
+  Ptr<SparseMatrixProduct>
+  SparseMatrixProduct::sparse_sandwich_transpose(const SpdMatrix &N) const {
+    NEW(DenseSpd, SparseN)(N);
+    NEW(SparseMatrixProduct, ans)();
+    for (int i = 0; i < terms_.size(); ++i) {
+      ans->add_term(terms_[i], transposed_[i]);
+    }
+    ans->add_term(SparseN);
+    for(int i = terms_.size() - 1; i >= 0; --i) {
+      ans->add_term(terms_[i], !transposed_[i]);
     }
     return ans;
   }
@@ -292,6 +307,77 @@ namespace BOOM {
     return rhs;
   }
 
+  //===========================================================================
+
+  SparseBinomialInverse::SparseBinomialInverse(
+      const Ptr<SparseKalmanMatrix> &Ainv,
+      const Ptr<SparseKalmanMatrix> &U,
+      const SpdMatrix &B,
+      double Ainv_logdet)
+      : Ainv_(Ainv),
+        U_(U),
+        B_(B)
+  {
+    SparseMatrixProduct tmp;
+    tmp.add_term(U, true);
+    tmp.add_term(Ainv);
+    tmp.add_term(U);
+
+    inner_matrix_ = SpdMatrix(B.nrow(), 1.0);
+    inner_matrix_ += B * tmp.dense();
+    inner_matrix_ = inner_matrix_.inv();
+
+    logdet_ = Ainv_logdet + inner_matrix_.logdet();
+  }
+
+  Vector SparseBinomialInverse::operator*(const ConstVectorView &rhs) const {
+    Vector ans = (*Ainv_) * rhs;
+    ans -= (*Ainv_) * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
+    return ans;
+  }
+
+  Vector SparseBinomialInverse::operator*(const Vector &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Vector SparseBinomialInverse::operator*(const VectorView &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Matrix SparseBinomialInverse::operator*(const Matrix &rhs) const {
+    Matrix ans = *Ainv_ * rhs;
+    ans -= *Ainv_ * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
+    return ans;
+  }
+
+  Vector SparseBinomialInverse::Tmult(const ConstVectorView &rhs) const {
+    return (*this) * rhs;
+  }
+
+  Matrix SparseBinomialInverse::Tmult(const Matrix &rhs) const {
+    return (*this) * rhs;
+  }
+
+  Matrix SparseBinomialInverse::dense() const {
+    SpdMatrix I(ncol(), 1.0);
+    return (*this) * I;
+  }
+
+  Matrix & SparseBinomialInverse::add_to(Matrix &rhs) const {
+    rhs += this->dense();
+    return rhs;
+  }
+
+  SpdMatrix SparseBinomialInverse::inner() const {
+    return this->dense().inner();
+  }
+  SpdMatrix SparseBinomialInverse::inner(const ConstVectorView &weights) const {
+    return this->dense().inner(weights);
+  }
+
+  double SparseBinomialInverse::logdet() const {
+    return logdet_;
+  }
   //===========================================================================
 
   namespace {

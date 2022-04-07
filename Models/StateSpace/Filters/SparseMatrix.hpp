@@ -164,8 +164,11 @@ namespace BOOM {
 
     Matrix dense() const override;
 
-    // This' * N * This, as a SparseProductMatrix.
+    // this' * N * this, as a SparseMatrixProduct.
     Ptr<SparseMatrixProduct> sparse_sandwich(const SpdMatrix &N) const;
+
+    // this * N * this' as a SparseMatrixProduct.
+    Ptr<SparseMatrixProduct> sparse_sandwich_transpose(const SpdMatrix &N) const;
 
     // The diagonal elements of the sparse matrix.  // how to get these??
     Vector diag() const;
@@ -211,6 +214,94 @@ namespace BOOM {
    private:
     std::vector<Ptr<SparseKalmanMatrix>> terms_;
     Vector coefficients_;
+  };
+
+  //===========================================================================
+  // Let M = A + UCV.  The Woodbury identity states that Minv = Ainv - Ainv U
+  // (Cinv + V Ainv U) V Ainv.  Note that to use the Woodbury identity both A
+  // and C must be invertible.
+  class WoodburyInverse : public SparseKalmanMatrix {
+   public:
+
+    // This constructor assumes V is U->transpose().
+    WoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                    const Ptr<SparseKalmanMatrix> &U,
+                    const SpdMatrix &C)
+        : Ainv_(Ainv),
+          U_(U),
+          C_(C)
+    {}
+
+   private:
+    Ptr<SparseKalmanMatrix> Ainv_;
+    Ptr<SparseKalmanMatrix> U_;
+    SpdMatrix C_;
+  };
+  //===========================================================================
+
+  // The binomial inverse theorem is a generalization of the Woodbury
+  // identity. The generalization works around an assumption in the Woodbury
+  // identity that the middle matrix in the update term is invertible.  That
+  // need not be the case.  Let M = A + UBV.  The binomial inverse theorem says
+  // Minv = Ainv - Ainv * U * (I + B V Ainv U).inv * B * V * Ainv.
+  //
+  // This class assumes V is U.transpose, and that B is symmetric.  In the
+  // general case these assumptions need not be true.
+  class SparseBinomialInverse : public SparseKalmanMatrix {
+   public:
+
+    // Args:
+
+    //   Ainv: The matrix inverse of the "A" matrix in the formula.  This matrix
+    //     is typically highly structured and easy to invert (like a diagonal
+    //     matrix).
+    //   U: The leading term in the product of three matrices comprising the
+    //     update term.
+    //   B: The middle matrix in the update term.  Note that this is a dense
+    //     matrix, while the others are sparse.
+    //   Ainv_logdet: The log determinant of Ainv.  This can be omitted if
+    //     object's "logdet" method will not be called.
+    SparseBinomialInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &B,
+                          double Ainv_logdet = negative_infinity());
+
+    int nrow() const override {return Ainv_->nrow();}
+    int ncol() const override {return Ainv_->ncol();}
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    // Implementation assumes the matrix is symmetric.
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix &add_to(Matrix &rhs) const;
+
+    // Calling 'inner' on a SparseMatrixSum can result in very large matrices
+    // being created.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    Matrix dense() const override;
+
+    // If Ainv_logdet was passed to the constructor, then this returns the log
+    // determinant of the stored matrix.  Otherwise it returns
+    // negative_infinity.
+    double logdet() const;
+
+   private:
+    Ptr<SparseKalmanMatrix> Ainv_;
+    Ptr<SparseKalmanMatrix> U_;
+    SpdMatrix B_;
+
+    // The inner matrix is (I + B * U' * Ainv * U).inv
+    // In the usual case A = H, B = P, U = Z, so
+    // inner = (I + P * Z' Hinv Z).inv
+    Matrix inner_matrix_;
+    double logdet_;
   };
 
   //======================================================================
