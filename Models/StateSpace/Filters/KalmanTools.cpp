@@ -48,6 +48,37 @@ namespace BOOM {
     return ans;
   }
 
+  double vector_kalman_update(const Vector &y,
+                              Vector &a,
+                              SpdMatrix &P,
+                              Matrix &K,
+                              SpdMatrix &F,
+                              Vector &v,
+                              const Selector &observed,
+                              Matrix Z,
+                              SpdMatrix H,
+                              const Matrix &T,
+                              Matrix &L,
+                              const SpdMatrix &RQR) {
+    Vector Y = observed.select(y);
+    Z = observed.select_rows(Z);
+    H = observed.select(H);
+
+    v = Y - Z * a;
+    F = Z * P * Z.transpose() + H;
+    SpdMatrix Finv = F.inv();
+    K = T * P * Z.transpose() * Finv;
+    Vector a_contemp = a + P * Z.Tmult(Finv * v);
+    a = T * a_contemp;
+
+    SpdMatrix Pcontemp = P - P * (Z.Tmult(Finv * Z)) * P;
+    P = T * Pcontemp * T.transpose() + RQR;
+
+    L = T - K * Z;
+
+    return dmvn(v, Vector(v.size(), 0.0), Finv, Finv.logdet(), true);
+  }
+
   void make_contemporaneous(Vector &a, SpdMatrix &P, double F, double v,
                             const Vector &Z) {
     Vector M = P * Z;

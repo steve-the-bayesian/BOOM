@@ -39,9 +39,10 @@ namespace BOOM {
     }
 
     void MarginalDistributionBase::check_variance(const SpdMatrix &v) const {
-      for (int i = 0; i < v.ncol(); ++i) {
+      for (int i = 0; i < v.nrow(); ++i) {
         if (v(i, i) < 0.0) {
-          // Some models with deterministic state can have zero variance.
+          // The check is for < 0 and not <= 0, because some models with
+          // deterministic state can have zero variance.
           std::ostringstream err;
           err << "Variance can't be negative." << std::endl << v;
           report_error(err.str());
