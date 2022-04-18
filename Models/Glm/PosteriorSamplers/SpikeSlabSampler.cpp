@@ -43,6 +43,8 @@ namespace BOOM {
       const WeightedRegSuf &suf,
       double sigsq) const {
     if (!allow_model_selection_) return;
+
+    // Randomize the order in which the inclusion indicators are to be drawn.
     std::vector<int> indx =
         seq<int>(0, inclusion_indicators.nvars_possible() - 1);
     // I'd like to rely on std::random_shuffle for this, but I want
