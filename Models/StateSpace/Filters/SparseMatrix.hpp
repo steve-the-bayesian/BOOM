@@ -177,7 +177,7 @@ namespace BOOM {
     // very large matrices being created.  Call with care.
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
-    Matrix &add_to(Matrix &rhs) const;
+    Matrix &add_to(Matrix &rhs) const override;
 
    private:
     void check_term(const Ptr<SparseKalmanMatrix> &term, bool transpose);
@@ -204,7 +204,7 @@ namespace BOOM {
     Vector Tmult(const ConstVectorView &rhs) const override;
     Matrix Tmult(const Matrix &rhs) const override;
 
-    Matrix &add_to(Matrix &rhs) const;
+    Matrix &add_to(Matrix &rhs) const override;
 
     // Calling 'inner' on a SparseMatrixSum can result in very large matrices
     // being created.
@@ -278,7 +278,7 @@ namespace BOOM {
     Vector Tmult(const ConstVectorView &rhs) const override;
     Matrix Tmult(const Matrix &rhs) const override;
 
-    Matrix &add_to(Matrix &rhs) const;
+    Matrix &add_to(Matrix &rhs) const override;
 
     // Calling 'inner' on a SparseMatrixSum can result in very large matrices
     // being created.
@@ -1897,19 +1897,19 @@ namespace BOOM {
 
     int nrow() const override {return left_.size();}
     int ncol() const override {return right_.size();}
-    void multiply(VectorView lhs, const ConstVectorView &rhs) const {
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = left_ * right_.dot(rhs);
     }
 
-    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const {
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs += left_ * right_.dot(rhs);
     }
 
-    void Tmult(VectorView lhs, const ConstVectorView &rhs) const {
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = left_.dot(rhs) * dense_right();
     }
 
-    void multiply_inplace(VectorView x) const {
+    void multiply_inplace(VectorView x) const override {
       if (nrow() != ncol()) {
         report_error("multiply_inplace only works for square matrices.");
       }
@@ -1919,32 +1919,32 @@ namespace BOOM {
       x = left_ * right_.dot(x);
     }
 
-    SpdMatrix inner() const {
+    SpdMatrix inner() const override {
       double weight = left_.dot(left_);
       return outer(dense_right() * sqrt(weight));
     }
 
-    SpdMatrix inner(const ConstVectorView &weights) const {
+    SpdMatrix inner(const ConstVectorView &weights) const override {
       //  R' L' W L R
       double weight = left_.dot(weights * left_);
       return outer(dense_right() * sqrt(weight));
     }
 
-    Matrix &add_to(Matrix &P) const {
+    Matrix &add_to(Matrix &P) const override {
       P += right_.outer_product_transpose(left_);
       return P;
     }
 
-    SubMatrix add_to_submatrix(SubMatrix P) const {
+    SubMatrix add_to_submatrix(SubMatrix P) const override {
       P += right_.outer_product_transpose(left_);
       return P;
     }
 
-    void add_to_block(SubMatrix block) const {
+    void add_to_block(SubMatrix block) const override{
       add_to_submatrix(block);
     }
 
-    Matrix dense() const {
+    Matrix dense() const override {
       Matrix ans(nrow(), ncol(), 0.0);
       ans.add_outer(left_, dense_right());
       return ans;
@@ -2230,12 +2230,12 @@ namespace BOOM {
     // Remove all the blocks, making the matrix empty.
     void clear();
 
-    void multiply(VectorView lhs, const ConstVectorView &rhs) const;
-    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const;
-    void add_to_block(SubMatrix block) const;
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
+    void add_to_block(SubMatrix block) const override;
 
     // Will throw an exception if any blocks are non-square.
-    void multiply_inplace(VectorView x) const;
+    void multiply_inplace(VectorView x) const override;
 
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
@@ -2270,7 +2270,7 @@ namespace BOOM {
     // transition density for state space models when the error distribution is
     // less than full rank.   In those settings we must be able to evaluate
     // error_expander->left_inverse( new_state - T * old_state).
-    virtual Vector left_inverse(const ConstVectorView &rhs) const;
+    Vector left_inverse(const ConstVectorView &rhs) const override;
 
    private:
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
