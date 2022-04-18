@@ -59,7 +59,8 @@ namespace BOOM {
         : ok(true),
           fails_to_cover(0),
           fraction_failing_to_cover(0),
-          failure_rate_limit(0)
+          failure_rate_limit(0),
+          dimension_mismatch(false)
     {}
 
     // A human readable error message that should be examined in case 'ok' is
@@ -75,6 +76,10 @@ namespace BOOM {
 
     double fraction_failing_to_cover;
     double failure_rate_limit;
+
+    // Indicates that the "truth" value passed into CheckMcmcMatrix did not
+    // conform.
+    bool dimension_mismatch;
   };
 
   // Printing a status object prints its error message.
