@@ -152,6 +152,18 @@ namespace BOOM {
     return ans;
   }
 
+  double SSS::log_prior(const GlmCoefs &beta) const {
+    const Selector &inclusion_indicators(beta.inc());
+    double ans = spike_prior_->logp(inclusion_indicators);  // p(gamma)
+    if (ans == BOOM::negative_infinity()) return ans;
+    if (inclusion_indicators.nvars() > 0) {
+      ans += dmvn(beta.included_coefficients(),
+                  inclusion_indicators.select(slab_prior_->mu()),
+                  inclusion_indicators.select(slab_prior_->siginv()), true);
+    }
+    return ans;
+  }
+
   void SSS::allow_model_selection(bool tf) { allow_model_selection_ = tf; }
 
   void SSS::limit_model_selection(int max_flips) { max_flips_ = max_flips; }

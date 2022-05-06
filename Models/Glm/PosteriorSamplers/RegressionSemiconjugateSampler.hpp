@@ -38,6 +38,8 @@ namespace BOOM {
         const Ptr<GammaModelBase> &residual_precision_prior,
         RNG &seeding_rng = GlobalRng::rng);
 
+    void set_sigma_max(double sigma_max);
+
     void draw() override;
     double logpri() const override;
 
