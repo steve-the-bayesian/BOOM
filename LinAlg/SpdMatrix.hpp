@@ -72,7 +72,12 @@ namespace BOOM {
     // Fill entries with U(0,1) random variables, then multiply by
     // self-transpose.
     // Returns *this;
-    SpdMatrix &randomize() override;
+    SpdMatrix &randomize(RNG &rng = GlobalRng::rng) override;
+
+    // This function does not really make sense for SpdMatrix.  Its override
+    // reports an error.
+    SpdMatrix &randomize_gaussian(double mean, double sd,
+                                  RNG &rng = GlobalRng::rng) override;
 
     //-------- size and shape info ----------
     virtual uint nelem() const;  // number of distinct elements

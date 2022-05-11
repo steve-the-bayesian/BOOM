@@ -83,7 +83,8 @@ namespace BOOM {
 
     // Fill matrix entries with U(0,1) random variables.
     // Returns *this.
-    virtual Matrix &randomize();
+    virtual Matrix &randomize(RNG &rng = GlobalRng::rng);
+    virtual Matrix &randomize_gaussian(double mean, double sd, RNG &rng = GlobalRng::rng);
     virtual ~Matrix();
 
     // Returns true if empty, or if std::isfinite returns 'true' on

@@ -146,13 +146,19 @@ namespace BOOM {
 
   void SpdMatrix::swap(SpdMatrix &rhs) { Matrix::swap(rhs); }
 
-  SpdMatrix &SpdMatrix::randomize() {
+  SpdMatrix &SpdMatrix::randomize(RNG &rng) {
     *this = 0.0;
     SpdMatrix tmp(nrow());
-    tmp.Matrix::randomize();
+    tmp.Matrix::randomize(rng);
     EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(
         EigenMap(tmp).transpose(), 1.0);
     reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    report_error("randomize_gaussian doesn't make sense for an SpdMatrix.  "
+                 "Consider just calling randomize() instead.");
     return *this;
   }
 

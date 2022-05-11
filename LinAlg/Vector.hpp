@@ -113,6 +113,8 @@ namespace BOOM {
 
     // Fill the Vector with U(0,1) random numbers.
     Vector &randomize(RNG &rng = GlobalRng::rng);
+    Vector &randomize_gaussian(
+        double mean, double sd, RNG &rng = GlobalRng::rng);
 
     //-------------- STL vector stuff ---------------------
     double *data();
@@ -234,7 +236,7 @@ namespace BOOM {
   Vector operator-(const Vector &a, const Vector &b);
   Vector operator*(const Vector &a, const Vector &b);
   Vector operator/(const Vector &a, const Vector &b);
-  
+
   // Field operators for Vector x double.
   Vector operator+(const Vector &x, double a);
   Vector operator+(double a, const Vector &x);

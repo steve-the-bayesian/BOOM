@@ -206,10 +206,17 @@ namespace BOOM {
     std::swap(data_, rhs.data_);
   }
 
-  Matrix &Matrix::randomize() {
+  Matrix &Matrix::randomize(RNG &rng) {
     uint n = nr_ * nc_;
     for (uint i = 0; i < n; ++i) {
-      data_[i] = runif(0, 1);
+      data_[i] = runif_mt(rng, 0, 1);
+    }
+    return *this;
+  }
+
+  Matrix & Matrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    for (auto &el : data_) {
+      el = rnorm_mt(rng, mean, sd);
     }
     return *this;
   }
