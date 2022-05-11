@@ -23,16 +23,24 @@ namespace BOOM {
 
     void StateModelVectorBase::add_state_model(
         StateModelBase * state_model) {
-        state_model->set_index(size());
-        state_dimension_ += state_model->state_dimension();
-        int next_position = state_positions_.back()
-            + state_model->state_dimension();
-        state_positions_.push_back(next_position);
+      state_parameter_sizes_.push_back(state_model->vectorize_params().size());
+      if (state_parameter_positions_.empty()) {
+        state_parameter_positions_.push_back(0);
+      } else {
+        state_parameter_positions_.push_back(
+            state_parameter_positions_.back() + state_parameter_sizes_.back());
+      }
 
-        state_error_dimension_ += state_model->state_error_dimension();
-        next_position = state_error_positions_.back()
-            + state_model->state_error_dimension();
-        state_error_positions_.push_back(next_position);
+      state_model->set_index(size());
+      state_dimension_ += state_model->state_dimension();
+      int next_position = state_positions_.back()
+          + state_model->state_dimension();
+      state_positions_.push_back(next_position);
+
+      state_error_dimension_ += state_model->state_error_dimension();
+      next_position = state_error_positions_.back()
+          + state_model->state_error_dimension();
+      state_error_positions_.push_back(next_position);
     }
 
     void StateModelVectorBase::clear_state_model_metadata() {
@@ -42,6 +50,7 @@ namespace BOOM {
       state_positions_.push_back(0);
       state_error_positions_.clear();
       state_error_positions_.push_back(0);
+      state_parameter_positions_.clear();
 
       state_transition_matrix_->clear();
       state_variance_matrix_->clear();

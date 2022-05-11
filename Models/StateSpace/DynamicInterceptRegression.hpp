@@ -167,7 +167,7 @@ namespace BOOM {
     //   observed: Indicates which elements of the observation are observed.
     //     NOTE: 'observed is not currently used for this model.  It is needed
     //     to match the signature from the base class.
-    SparseKalmanMatrix *observation_coefficients(
+    Ptr<SparseKalmanMatrix> observation_coefficients(
         int t, const Selector &observed) const override;
 
     ConstVectorView observation(int t) const override;
@@ -242,15 +242,13 @@ namespace BOOM {
     // The regression component of the model is the first state component.
     Ptr<RegressionDynamicInterceptStateModel> regression_;
 
-    // This set of state parallels the state_models_ vector in the base class.
-    // These are needed to provide the right version of observation_coefficients().
+    // Manages the state models.
     StateSpaceUtils::StateModelVector<DynamicInterceptStateModel> state_models_;
 
     // The observation coefficients are a set of horizontal blocks
     // (i.e. vertical strips?).  Each state component contributes a block.  The
     // number of rows is the number of elements in y[t].
-    mutable SparseVerticalStripMatrix observation_coefficients_;
-
+    // mutable SparseVerticalStripMatrix observation_coefficients_;
   };
 
 }  // namespace BOOM

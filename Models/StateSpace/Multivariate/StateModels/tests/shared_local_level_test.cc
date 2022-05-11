@@ -39,7 +39,7 @@ namespace {
     int nseries = 12;
     int nfactors = 3;
     MultivariateStateSpaceRegressionModel model(1, nseries);
-    NEW(SharedLocalLevelStateModel, state_model)(nfactors, &model, nseries);
+    NEW(ConditionallyIndependentSharedLocalLevelStateModel, state_model)(&model, nfactors, nseries);
     model.add_state(state_model);
 
     EXPECT_TRUE(MatrixEquals(
@@ -53,6 +53,8 @@ namespace {
               nfactors);
     Matrix Z = state_model->observation_coefficients(3, observed)->dense();
     std::cerr << "Z = \n" << Z;
+    // The observation coefficients should start off as an upper triangular
+    // matrix of 1's.
     EXPECT_DOUBLE_EQ(Z(0, 0), 1.0);
     EXPECT_DOUBLE_EQ(Z(1, 1), 1.0);
     EXPECT_DOUBLE_EQ(Z(2, 2), 1.0);

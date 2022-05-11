@@ -51,14 +51,8 @@ namespace BoomStateSpaceTesting {
           response(sample_size + test_size, nseries),
           model(new MultivariateStateSpaceRegressionModel(xdim, nseries))
     {
-      //----------------------------------------------------------------------
-      // Simulate the state.
-      for (int factor = 0; factor < nfactors; ++factor) {
-        state(factor, 0) = rnorm() - 35;
-        for (int time = 1; time < sample_size + test_size; ++time) {
-          state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
-        }
-      }
+      //-----------------------------------------------------------------------
+      // Simulate some fake model parameters.
 
       // Set up the observation coefficients, which are zero above the diagonal
       // and 1 on the diagonal.
@@ -74,8 +68,22 @@ namespace BoomStateSpaceTesting {
 
       // Set up the regression coefficients and the predictors.
       regression_coefficients.randomize();
+      if (regression_coefficients.nrow() >= 4) {
+        regression_coefficients(2, 0) = 50;
+        regression_coefficients(3, 0) = -20;
+      }
       predictors.randomize();
 
+      //----------------------------------------------------------------------
+      // Simulate the state.
+      for (int factor = 0; factor < nfactors; ++factor) {
+        state(factor, 0) = rnorm() - 35;
+        for (int time = 1; time < sample_size + test_size; ++time) {
+          state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
+        }
+      }
+
+      //----------------------------------------------------------------------
       // Simulate the response.
       for (int i = 0; i < sample_size + test_size; ++i) {
         Vector yhat = observation_coefficients * state.col(i)
@@ -213,6 +221,12 @@ namespace BoomStateSpaceTesting {
       return -1 * F_.logdet();
     }
 
+    const Matrix &state_transition_matrix() const {return T_;}
+    const Matrix &observation_coefficients() const {return Z_;}
+
+    void set_scaled_state_error(const Vector &r) {r_ = r;}
+    const Vector &scaled_state_error() const {return r_;}
+
    private:
     Matrix T_;
     Matrix Z_;
@@ -226,6 +240,8 @@ namespace BoomStateSpaceTesting {
     Matrix K_;
     Vector v_;
     Matrix L_;
+
+    Vector r_;
   };
 
   //===========================================================================
@@ -251,6 +267,21 @@ namespace BoomStateSpaceTesting {
         Vector y = model_->adjusted_observation(t);
         const Selector &observed(model_->observed_status(t));
         nodes_[t].update(y, observed);
+      }
+    }
+
+    void fast_disturbance_smooth() {
+      int n = model_->time_dimension();
+      Vector r(model_->state_dimension(), 0.0);
+      for (int t = n-1; t >= 0; --t) {
+        nodes_[t].set_scaled_state_error(r);
+        const Selector &observed(model_->observed_status(t));
+        Vector v = nodes_[t].prediction_error();
+        SpdMatrix Finv = nodes_[t].forecast_precision();
+        Matrix K = nodes_[t].kalman_gain(observed);
+        Vector u = Finv * v - K.Tmult(r);
+        r = nodes_[t].observation_coefficients().Tmult(u)
+            + nodes_[t].state_transition_matrix().Tmult(r);
       }
     }
 
@@ -281,6 +312,8 @@ namespace BoomStateSpaceTesting {
       initial_state_variance_ = variance;
     }
 
+    DenseKalmanMarginal & node(int i) {return nodes_[i];}
+    const DenseKalmanMarginal & node(int i) const {return nodes_[i];}
     DenseKalmanMarginal & operator[](int i) { return nodes_[i]; }
     const DenseKalmanMarginal & operator[](int i) const { return nodes_[i]; }
 

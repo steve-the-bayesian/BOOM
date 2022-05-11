@@ -286,7 +286,7 @@ namespace BOOM {
       resize_state();
       clear_client_data();
       simulate_forward(rng);
-      propagate_disturbances();
+      propagate_disturbances(rng);
     }
   }
 
@@ -658,7 +658,13 @@ namespace BOOM {
       Base(rhs),
       filter_(this),
       simulation_filter_(this)
-  {}
+  {
+    // TODO: Need to make sure that the individual state models don't need a
+    // copy of 'this'.
+    for (int s = 0; s < rhs.number_of_state_models(); ++s) {
+      add_state(rhs.state_model(s)->clone());
+    }
+  }
 
   SparseVector ScalarBase::observation_matrix(int t) const {
     SparseVector ans;
@@ -849,7 +855,7 @@ namespace BOOM {
   // The call to simulate_forward fills the state matrix with simulated state
   // values that have the right variance but the wrong mean.  This function
   // subtracts off the wrong mean and adds in the correct one.
-  void Base::propagate_disturbances() {
+  void Base::propagate_disturbances(RNG &rng) {
     if (time_dimension() <= 0) return;
     // Calling fast_disturbance_smoother() puts r[t] in
     // filter_[t].scaled_state_error().

@@ -138,6 +138,15 @@ namespace BOOM {
       SubMatrix mutable_full_state_subcomponent(
           Matrix &state, int state_model_index) const;
 
+      // The starting point and size (dimension) of the model parameter for
+      // state model s.
+      int state_parameter_position(int s) const {
+        return state_parameter_positions_[s];
+      }
+      int state_parameter_size(int s) const {
+        return state_parameter_sizes_[s];
+      }
+
       // Structural matrices for Kalman filtering.
       BlockDiagonalMatrix * state_transition_matrix(int t) const;
       BlockDiagonalMatrix * state_variance_matrix(int t) const;
@@ -174,6 +183,13 @@ namespace BOOM {
       // different because state errors can be lower dimensional than the states
       // themselves.
       std::vector<int> state_error_positions_;
+
+      // state_parameter_positions_[s] is the index in the vector of state model
+      // parameters where the parameter for state model s begins.
+      std::vector<int> state_parameter_positions_;
+
+      // The dimension of the state model parameter for each state model.
+      std::vector<int> state_parameter_sizes_;
 
       // Model matrices for Kalman filtering.
       mutable Ptr<BlockDiagonalMatrix> state_transition_matrix_;

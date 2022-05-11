@@ -248,12 +248,15 @@ namespace {
     }
 
     //-------------------- Check the results --------------------
-    CheckMatrixStatus level_status = CheckMcmcMatrix(level_draws, trend);
+    CheckMatrixStatus level_status = CheckMcmcMatrix(
+        level_draws, ConstVectorView(trend, 0, 275), .95, true,
+        "level_draws.out");
     EXPECT_TRUE(level_status.ok)
         << "Level failed to cover: " << endl << level_status.error_message();
 
     std::string error_message = CheckStochasticProcess(
-        seasonal_draws, seasonal, .95, .1, "seasonal_draws.txt");
+        seasonal_draws, ConstVectorView(seasonal, 0, 275),
+        .95, .1, "seasonal_draws.txt");
     EXPECT_EQ("", error_message) << "Seasonal pattern failed to cover.";
 
     if (!(level_status.ok && error_message == "")) {

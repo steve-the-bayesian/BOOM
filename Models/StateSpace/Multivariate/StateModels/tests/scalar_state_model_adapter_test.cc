@@ -47,9 +47,10 @@ namespace {
     Z = state.observation_coefficients(0, some);
     Z = state.observation_coefficients(0, none);
 
-    // Matrix transition{{1, 0, 0, 0}, {0, -1, -1, -1}, {0, 0, 1, 1}, {0, 0, 0, 1}};
-    //    std::cout << transition;
-
+    Matrix transition{{1, 0, 0, 0}, {0, -1, -1, -1}, {0, 1, 0, 0}, {0, 0, 1, 0}};
+    EXPECT_TRUE(MatrixEquals(state.state_transition_matrix(0)->dense(),
+                             transition))
+        << state.state_transition_matrix(0)->dense();
   }
 
 }  // namespace

@@ -581,7 +581,7 @@ namespace BOOM {
     //
     // As the state is finalized, the state models and the observation model are
     // updated to reflect the new state values.
-    virtual void propagate_disturbances();
+    virtual void propagate_disturbances(RNG &rhg);
 
     // Send a signal to all data observers (typically just 1) that the
     // complete data sufficient statistics should be reset.

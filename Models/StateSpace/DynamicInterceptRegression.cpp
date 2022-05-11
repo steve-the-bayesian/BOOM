@@ -144,15 +144,14 @@ namespace BOOM {
     DataPolicy::add_data(dp);
   }
 
-  SparseKalmanMatrix *DIRM::observation_coefficients(
+  Ptr<SparseKalmanMatrix> DIRM::observation_coefficients(
       int t, const Selector &) const {
-    observation_coefficients_.clear();
+    NEW(SparseVerticalStripMatrix, ans)();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
     for (int s = 0; s < number_of_state_models(); ++s) {
-      observation_coefficients_.add_block(
-          state_models_[s]->observation_coefficients(t, data_point));
+      ans->add_block(state_models_[s]->observation_coefficients(t, data_point));
     }
-    return &observation_coefficients_;
+    return ans;
   }
 
   double DIRM::observation_variance(int t) const {
