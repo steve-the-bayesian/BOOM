@@ -59,6 +59,10 @@ namespace BOOM {
     //     false treat it as a collection of columns.
     explicit Matrix(const std::vector<Vector> &rows_or_cols, bool rows=true);
 
+    // Build a Matrix using a set of initializer lists.
+    //
+    // Matrix mat{{0, 1},
+    //            {2, 3}};
     explicit Matrix(const std::initializer_list<std::initializer_list<double>> &rows);
 
     template <class FwdIt>
