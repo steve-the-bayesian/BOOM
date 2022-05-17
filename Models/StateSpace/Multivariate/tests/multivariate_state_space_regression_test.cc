@@ -89,6 +89,7 @@ namespace BoomStateSpaceTesting {
   }
 
   //===========================================================================
+  // Check that data objects contained in the model are the right size.
   TEST_F(MultivariateStateSpaceRegressionModelTest, ModelTest) {
     int ydim = 4;
     int xdim = 3;
@@ -136,7 +137,38 @@ namespace BoomStateSpaceTesting {
   }
 
   //===========================================================================
+  // Check that adjusted_observation produces the expected result.  The
+  // adjusted_observation should be the original observation minus the
+  // regression effect.
+  TEST_F(MultivariateStateSpaceRegressionModelTest, AdjustedObservationTest) {
+    int xdim = 3;
+    int nseries = 6;
+    int nfactors = 1;
+    int sample_size = 20;
+    int test_size = 2;
+    double residual_sd = .1;
 
+    McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
+                          test_size, residual_sd);
+
+    for (int i = 0; i < nseries; ++i) {
+      sim.model->observation_model()->model(i)->set_Beta(sim.regression_coefficients.row(i));
+      sim.model->observation_model()->model(i)->set_sigsq(residual_sd * residual_sd);
+    }
+    sim.model->isolate_shared_state();
+    Vector adjusted = sim.model->adjusted_observation(3);
+    Vector regression_effect = sim.regression_coefficients * sim.predictors.row(3);
+    Vector observed = sim.response.row(3);
+
+    EXPECT_TRUE(VectorEquals(observed, adjusted + regression_effect))
+        << "observed data at time 3: \n" << observed
+        << "\nadjusted_observation: \n" << adjusted
+        << "\nregression_effect:  \n" << regression_effect
+        << "\ndifference: \n"
+        << observed - adjusted - regression_effect;
+  }
+
+  //===========================================================================
   void set_observation_coefficients(
       const Matrix &coefficients,
       ConditionallyIndependentSharedLocalLevelStateModel &model) {
@@ -154,10 +186,9 @@ namespace BoomStateSpaceTesting {
   //   int nfactors = 1;
   //   int sample_size = 200;
   //   int test_size = 20;
-  //   double factor_sd = 1.0;
   //   double residual_sd = .1;
   //   McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
-  //                         test_size, factor_sd, residual_sd);
+  //                         test_size, residual_sd);
 
   //   sim.model->observation_model()->clear_methods();
 
@@ -204,11 +235,10 @@ namespace BoomStateSpaceTesting {
     int nfactors = 1;
     int sample_size = 200;
     int test_size = 20;
-    double factor_sd = 1.0;
     double residual_sd = .1;
 
     McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
-                          test_size, factor_sd, residual_sd);
+                          test_size, residual_sd);
     int niter = 100;
     int burn = 10;
     sim.model->observation_model()->clear_methods();
@@ -253,13 +283,12 @@ namespace BoomStateSpaceTesting {
     int xdim = 3;
     int nseries = 2;
     int nfactors = 1;
-    int sample_size = 200;
-    int test_size = 20;
-    double factor_sd = 1.0;
+    int sample_size = 500;
+    int test_size = 2;
     double residual_sd = .1;
 
     McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
-                          test_size, factor_sd, residual_sd);
+                          test_size, residual_sd);
     int niter = 100;
     int burn = 10;
     sim.state_model->clear_methods();
@@ -269,10 +298,10 @@ namespace BoomStateSpaceTesting {
     sim.model->permanently_set_state(SubMatrix(
         sim.state, 0, nfactors - 1, 0, sample_size - 1).to_matrix());
 
-    std::vector<Matrix> regresssion_coefficient_draws;
+    std::vector<Matrix> regression_coefficient_draws;
     for (int series = 0; series < nseries; ++series) {
       Matrix draws(niter, xdim);
-      regresssion_coefficient_draws.push_back(draws);
+      regression_coefficient_draws.push_back(draws);
     }
     Matrix residual_sd_draws(niter, nseries);
 
@@ -283,8 +312,10 @@ namespace BoomStateSpaceTesting {
     for (int i = 0; i < niter; ++i) {
       sim.model->sample_posterior();
       for (int series = 0; series < nseries; ++series) {
-        regresssion_coefficient_draws[series].row(i) = sim.model->observation_model()->model(series)->Beta();
-        residual_sd_draws(i, series) = sim.model->observation_model()->model(series)->sigma();
+        regression_coefficient_draws[series].row(i) =
+            sim.model->observation_model()->model(series)->Beta();
+        residual_sd_draws(i, series) =
+            sim.model->observation_model()->model(series)->sigma();
       }
     }
 
@@ -294,17 +325,19 @@ namespace BoomStateSpaceTesting {
     rsd_draws << Vector(nseries, residual_sd) << "\n" << residual_sd_draws;
 
     for (int series = 0; series < nseries; ++series) {
-      status = CheckMcmcMatrix(regresssion_coefficient_draws[series],
+      status = CheckMcmcMatrix(regression_coefficient_draws[series],
                                sim.regression_coefficients.row(series));
-      EXPECT_TRUE(status.ok) << "Coefficients did not cover for series "
-                             << series << status;
-
       std::ostringstream fname;
       fname << "reg_coef_full_conditional_" << series << ".out";
       std::ofstream reg_coef_full_conditional(fname.str());
       reg_coef_full_conditional
           << sim.regression_coefficients.row(series) << "\n"
-          << regresssion_coefficient_draws[series];
+          << regression_coefficient_draws[series];
+
+      EXPECT_TRUE(status.ok) << "Coefficients did not cover for series "
+                             << series << ".  " << status
+                             << "\n"
+                             << "Check in " << fname.str() << "\n\n";
     }
   }
 
@@ -314,12 +347,10 @@ namespace BoomStateSpaceTesting {
     int nfactors = 1;
     int sample_size = 80;
     int test_size = 20;
-    double factor_sd = 1.0;  // The model assumes factor_sd is 1.
     double residual_sd = .1;
 
     McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
-                          test_size, factor_sd, residual_sd);
-    Ptr<MultivariateStateSpaceRegressionModel> model = sim.model;
+                          test_size, residual_sd);
 
     sim.model->observation_model()->clear_methods();
     for (int i = 0; i < nseries; ++i) {
@@ -434,30 +465,40 @@ namespace BoomStateSpaceTesting {
   }
 
   //===========================================================================
-  // Test the full MCMC experience.
-  TEST_F(MultivariateStateSpaceRegressionModelTest, McmcTest) {
-    // Simulate fake data from the model: shared local level and a regression
-    // effect.
+  // See how the multivariate results stack up vs an equivalent scalar model.
+  TEST_F(MultivariateStateSpaceRegressionModelTest, ScalarComparisonTest) {
     int xdim = 3;
-    int nseries = 10;
+    int nseries = 1;
     int nfactors = 1;
-    int sample_size = 800;
-    int test_size = 20;
-    double factor_sd = 1.0;  // The model assumes factor_sd is 1.
+    int sample_size = 100;
+    int test_size = 2;
     double residual_sd = .1;
 
     McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
-                          test_size, factor_sd, residual_sd);
-    Ptr<MultivariateStateSpaceRegressionModel> model = sim.model;
+                          test_size, residual_sd);
+    sim.regression_coefficients(0, 1) = 100.0;
+    sim.build(residual_sd);
 
-    ofstream("mcmc_raw_data.out") << sim.response;
-    ofstream("mcmc_predictors.out") << sim.predictors;
+    // ---------------------------------------------------------------------------
+    // Build the scalar model
+    // ---------------------------------------------------------------------------
+    NEW(StateSpaceRegressionModel, scalar_model)(xdim);
+    for (int i = 0; i < sim.response.nrow(); ++i) {
+      NEW(RegressionData, scalar_dp)(sim.response(i, 0), sim.predictors.row(i));
+      scalar_model->add_regression_data(scalar_dp);
+    }
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // This is the code block that sets parameters to their true values, so we
-    // can isolate the MCMC to find the bug.
+    scalar_model->observation_model()->set_Beta(sim.regression_coefficients.row(0));
+    scalar_model->observation_model()->set_sigsq(square(residual_sd));
+
+    // TODO: multiply factor_sd by the first observation coefficient.
+    NEW(LocalLevelStateModel, scalar_trend)(1.0);
+    // set initial state distribution.
+    scalar_model->add_state(scalar_trend);
+
+    // ---------------------------------------------------------------------------
+    // Build the multivariate model
+    // ---------------------------------------------------------------------------
     sim.model->observation_model()->clear_methods();
     for (int i = 0; i < nseries; ++i) {
       sim.model->observation_model()->model(i)->set_Beta(sim.regression_coefficients.row(i));
@@ -468,18 +509,81 @@ namespace BoomStateSpaceTesting {
                                  *sim.state_model);
     sim.state_model->clear_methods();
 
+    int niter = 100;
+
+    Matrix scalar_state_draws(niter, sample_size);
+    Matrix mv_state_draws(niter, sample_size);
+    for (int i = 0; i < niter; ++i) {
+      scalar_model->impute_state(GlobalRng::rng);
+      // sim.model->impute_state(GlobalRng::rng);
+      sim.model->sample_posterior();
+      scalar_state_draws.row(i) = ConstVectorView(
+          scalar_model->state_contribution(0), 0, sample_size);
+      mv_state_draws.row(i) = ConstVectorView(
+          sim.model->state_contributions(0).row(0),
+          0, sample_size);
+    }
+
+    std::ofstream scalar_draws_file("scalar_state_draws.out");
+    scalar_draws_file << ConstVectorView(sim.state.row(0), 0, sample_size) << "\n"
+                      << scalar_state_draws;
+
+    std::ofstream mv_state_draws_file("mv_state_draws.out");
+    mv_state_draws_file << ConstVectorView(sim.state.row(0), 0, sample_size)
+                        << "\n" << mv_state_draws;
+  }
+
+  //===========================================================================
+  // Test the full MCMC experience.
+  TEST_F(MultivariateStateSpaceRegressionModelTest, McmcTest) {
+    // Simulate fake data from the model: shared local level and a regression
+    // effect.
+    int xdim = 3;
+    int nseries = 10;
+    int nfactors = 1;
+    int sample_size = 100;
+    int test_size = 20;
+    double residual_sd = .1;
+
+    McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
+                          test_size, residual_sd);
+    sim.regression_coefficients(0, 1) = 100.0;
+    sim.build(residual_sd);
+
+    EXPECT_EQ(sim.xdim(), xdim);
+    EXPECT_EQ(sim.nseries(), nseries);
+    EXPECT_EQ(sim.regression_coefficients.nrow(), nseries);
+    EXPECT_EQ(sim.regression_coefficients.ncol(), xdim);
+
+    ofstream("mcmc_raw_data.out") << sim.response;
+    ofstream("mcmc_predictors.out") << sim.predictors;
+    ofstream("true_state_contributions.out") << sim.observation_coefficients * sim.state;
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Set parameters to their true values so we can isolate the MCMC to find
+    // the bug.
+
+    //    sim.model->observation_model()->clear_methods();
+    for (int i = 0; i < nseries; ++i) {
+      sim.model->observation_model()->model(i)->set_Beta(sim.regression_coefficients.row(i));
+      sim.model->observation_model()->model(i)->set_sigsq(residual_sd * residual_sd);
+    }
+
+    set_observation_coefficients(sim.observation_coefficients,
+                                 *sim.state_model);
+    //    sim.state_model->clear_methods();
+
     // sim.model->permanently_set_state(SubMatrix(
     //     sim.state, 0, nfactors - 1, 0, sample_size - 1).to_matrix());
 
     // sim.state_model->clear_methods();
-    // sim.state_model->coefficient_model()->set_Beta(
-    //     sim.observation_coefficients.transpose());
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    int niter = 100;
-    int burn = 10;
+    int niter = 10000;
+    int burn = 300;
 
     //---------------------------------------------------------------------------
     // Create space to store various different kinds of MCMC draws.
@@ -494,17 +598,14 @@ namespace BoomStateSpaceTesting {
 
     // The state contribution is the observation coefficients times the factor
     // values.
-    Array state_contribution_draws(
-        std::vector<int>{niter, nseries, sample_size});
-    // Put the true state contribution in the first row.
-    state_contribution_draws.slice(0, -1, -1) =
-        sim.observation_coefficients * ConstSubMatrix(
-            sim.state, 0, sim.state.nrow() - 1,
-            0, sample_size - 1).to_matrix();
+
+    // stored on a series by series basis.
+    std::vector<Matrix> state_contribution_draws(
+        nseries, Matrix(niter, sample_size));
 
     // Store the output of calls to predict().
     Array prediction_draws(std::vector<int>{
-        niter, model->nseries(), test_size});
+        niter, sim.model->nseries(), test_size});
 
     // Store the observation coefficients.
     Array observation_coefficient_draws(
@@ -524,67 +625,80 @@ namespace BoomStateSpaceTesting {
     // ---------------------------------------------------------------------------
 
     // Predictor variables for the test set.
-    Matrix test_predictors = ConstSubMatrix(
-        sim.predictors,
-        sample_size, sample_size + test_size - 1,
-        0, ncol(sim.predictors) - 1).to_matrix();
-    test_predictors = repeat_rows(test_predictors, nseries);
+    Matrix test_predictors;
+    if (test_size > 0) {
+      test_predictors = ConstSubMatrix(
+          sim.predictors,
+          sample_size, sample_size + test_size - 1,
+          0, ncol(sim.predictors) - 1).to_matrix();
+      test_predictors = repeat_rows(test_predictors, nseries);
+    }
 
-    // ofstream prediction_out("prediction.draws");
-    // prediction_out << ConstSubMatrix(response, sample_size, sample_size + test_size - 1,
-    //                                  0, nseries - 1).transpose();
+    ofstream prediction_out("prediction.draws");
+    prediction_out << ConstSubMatrix(sim.response, sample_size, sample_size + test_size - 1,
+                                     0, nseries - 1).transpose();
 
     //---------------------------------------------------------------------------
     // Run the MCMC -- burn-in
     //---------------------------------------------------------------------------
-    Selector fully_observed(2, true);
-    model->observe_time_dimension(sample_size + test_size);
+    Selector fully_observed(test_size, true);
+    sim.model->observe_time_dimension(sample_size + test_size);
+    EXPECT_EQ(sim.model->time_dimension(), sample_size);
     for (int i = 0; i < burn; ++i) {
-      model->sample_posterior();
+      sim.model->sample_posterior();
     }
 
     //---------------------------------------------------------------------------
     // Run the MCMC -- main algorithm
     //---------------------------------------------------------------------------
     for (int i = 0; i < niter; ++i) {
-      // if (i % (niter / 10) == 0) {
-      //   cout << "------ draw " << i << " ---------\n";
-      // }
-      //      << model->state_model(0)->observation_coefficients(0, fully_observed)->dense();
-      model->sample_posterior();
-
-      state_contribution_draws.slice(i, -1, -1) = model->state_contributions(0);
-      for (int factor = 0; factor < nfactors; ++factor) {
-        factor_draws[factor].row(i) = model->shared_state().row(factor);
+      if (i % (100) == 0) {
+        cout << "------ draw " << i << " of " << niter << " ---------\n";
       }
-      Matrix Z = model->observation_coefficients(0, fully_observed)->dense();
+      sim.model->sample_posterior();
+
+      Matrix local_state_contribution_draw = sim.model->state_contributions(0);
+      for (int series = 0; series < nseries; ++series) {
+        state_contribution_draws[series].row(i) =
+            local_state_contribution_draw.row(series);
+      }
+
+      for (int factor = 0; factor < nfactors; ++factor) {
+        factor_draws[factor].row(i) = sim.model->shared_state().row(factor);
+      }
+      Matrix Z = sim.model->observation_coefficients(0, fully_observed)->dense();
       observation_coefficient_draws.slice(i, -1, -1) = Z;
       for (int series = 0; series < nseries; ++series) {
         residual_sd_draws(i, series) =
-            model->observation_model()->model(series)->sigma();
+            sim.model->observation_model()->model(series)->sigma();
         regression_coefficient_draws.slice(i, series, -1) =
-            model->observation_model()->model(series)->Beta();
+            sim.model->observation_model()->model(series)->Beta();
       }
 
-      innovation_sd_draws.row(i) = sqrt(model->state_error_variance(2)->dense().diag());
+      innovation_sd_draws.row(i) =
+          sqrt(sim.model->state_error_variance(2)->dense().diag());
 
-      prediction_draws.slice(i, -1, -1) = model->simulate_forecast(
+      if (test_size > 0) {
+      prediction_draws.slice(i, -1, -1) = sim.model->simulate_forecast(
           GlobalRng::rng,
           test_predictors,
-          model->shared_state().last_col(),
-          gather_state_specific_final_state(*model));
-      //      prediction_out << prediction_draws.slice(i, -1, -1).to_matrix();
-
+          sim.model->shared_state().last_col(),
+          gather_state_specific_final_state(*sim.model));
+      prediction_out << prediction_draws.slice(i, -1, -1).to_matrix();
+      }
     }
 
     Vector residual_sd_vector(nseries, residual_sd);
     ofstream("residual_sd.draws") << residual_sd_vector << "\n"
                                   << residual_sd_draws;
     auto status = CheckMcmcMatrix(residual_sd_draws, residual_sd_vector);
-    EXPECT_TRUE(status.ok) << "Problem with residual sd drawss." << status;
+    EXPECT_TRUE(status.ok) << "Problem with residual sd draws." << status;
 
     // Factor draws are not identified.  Factors * observation coefficients is
     // identified.
+    //
+    // This section prints out the (maybe unidentified) factor and observation
+    // coefficient levels.
     for (int factor = 0; factor < nfactors; ++factor) {
       ConstVectorView true_factor(sim.state.row(factor), 0, sample_size);
       status = CheckMcmcMatrix(factor_draws[factor], true_factor);
@@ -594,20 +708,34 @@ namespace BoomStateSpaceTesting {
       factor_draws_out << true_factor << "\n" << factor_draws[factor];
 
       std::ostringstream observation_coefficient_fname;
-      observation_coefficient_fname << "observation_coefficient_draws_factor_" << factor;
+      observation_coefficient_fname
+          << "observation_coefficient_draws_factor_" << factor;
       std::ofstream obs_coef_out(observation_coefficient_fname.str());
       obs_coef_out << sim.observation_coefficients.col(0) << "\n"
                    << observation_coefficient_draws.slice(-1, -1, 0);
 
-      EXPECT_TRUE(status.ok) << "Error in factor " << factor << ".  " << status;
+      //      EXPECT_TRUE(status.ok) << "Error in factor " << factor << ".  " << status;
     }
 
+    // Print out the state contribution to each series.  These should be
+    // identified.
+    //
+    // Also print the regression coefficients for each series.
+
+    Matrix true_state_contributions = sim.observation_coefficients * sim.state;
     for (int series = 0; series < nseries; ++series) {
       std::ostringstream fname;
       fname << "state_contribution_series_" << series;
       std::ofstream state_contribution_out(fname.str());
-      state_contribution_out << ConstVectorView(sim.response.col(series), 0, sample_size) << "\n";
-      state_contribution_out << state_contribution_draws.slice(-1, series, -1);
+      ConstVectorView truth(true_state_contributions.row(series),
+                            0, sample_size);
+      state_contribution_out << truth << "\n"
+                             << state_contribution_draws[series];
+      status = CheckMcmcMatrix(state_contribution_draws[series], truth);
+      EXPECT_TRUE(status.ok) << "Error in state contribution draws for series "
+                             << series << ".  " << status << "\n"
+                             << "See the draws in file " << fname.str()
+                             << "\n\n";
 
       std::ostringstream reg_fname;
       reg_fname << "regression_coefficient_mcmc_draws_series_" << series;
@@ -616,48 +744,70 @@ namespace BoomStateSpaceTesting {
               << regression_coefficient_draws.slice(-1, series, -1);
     }
 
-    std::ofstream("state_error_sd_mcmc_draws.out") << Vector(nfactors, 1.0) << "\n"
-                                                   << innovation_sd_draws;
-
+    std::ofstream("state_error_sd_mcmc_draws.out")
+        << Vector(nfactors, 1.0) << "\n" << innovation_sd_draws;
     std::cerr << "Low confidence in tests.  Some commented out.\n";
   }
 
-  // /*
-  //   // R code for viewing the results.
+  /*
+    library(Boom)
 
-  //   plot.predictions <- function(fname, nseries, burn = 0) {
-  //     library(Boom)
-  //     draws.mat <- mscan(fname)
-  //     truth <- draws.mat[1:nseries, ]
-  //     draws.mat <- draws.mat[-(1:nseries), ]
-  //     niter <- nrow(draws.mat) / nseries
-  //     ntimes <- ncol(draws.mat)
-  //     draws <- aperm(array(draws.mat, dim = c(nseries, niter, ntimes)), c(2, 1, 3))
-  //     if (burn > 0) {
-  //       draws <- draws[-(1:burn), , ]
-  //     }
+    PlotDrawsTs <- function(fname, ...) {
+      x <- mscan(fname)
+      truth <- x[1, ]
+      draws <- x[-1, ]
+      PlotManyTs(draws, truth=truth, ylim = range(draws, truth), ...)
+      return(invisible(x))
+    }
 
-  //     nr <- max(1, floor(sqrt(nseries)))
-  //     nc <- ceiling(nseries / nr)
-  //     opar <- par(mfrow = c(nr, nc))
-  //     for (i in 1:nseries) {
-  //     PlotDynamicDistribution(draws[, i, ], ylim = range(draws, truth))
-  //     lines(truth[i, ], lty = 2, col = "green")
-  //     }
-  //   }
+    PlotDrawsDist <- function(fname, relative = FALSE, ...) {
+      x <- mscan(fname)
+      truth <- x[1, ]
+      draws <- x[-1, ]
+      if (relative) {
+        draws <- t(t(draws) - truth)
+          truth <- rep(0, length(truth))
+      }
 
-  //   plot.observation.coefs <- function() {
-  //     library(Boom)
-  //     coefs <- mscan("observation_coefficient.draws")
-  //     BoxplotTrue(coefs[-1, ], truth = coefs[1, ])
-  //   }
+      PlotDynamicDistribution(draws, ylim = range(draws, truth), ...)
+      lines(truth, col="green", lwd=3)
+      return(invisible(x))
+    }
 
-  //   f1 <- mscan("factor1.draws")
-  //   PlotDynamicDistribution(f1[-1, ])
-  //   lines(f1[1, ], col = "green")
-  //  */
+    // R code for viewing the results.
+    plot.predictions <- function(fname, nseries, burn = 0) {
+      library(Boom)
+      draws.mat <- mscan(fname)
+      truth <- draws.mat[1:nseries, ]
+      draws.mat <- draws.mat[-(1:nseries), ]
+      niter <- nrow(draws.mat) / nseries
+      ntimes <- ncol(draws.mat)
+      draws <- aperm(array(draws.mat, dim = c(nseries, niter, ntimes)), c(2, 1, 3))
+      if (burn > 0) {
+        draws <- draws[-(1:burn), , ]
+      }
 
-  // //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+      nr <- max(1, floor(sqrt(nseries)))
+      nc <- ceiling(nseries / nr)
+      opar <- par(mfrow = c(nr, nc))
+      for (i in 1:nseries) {
+      PlotDynamicDistribution(draws[, i, ], ylim = range(draws, truth))
+      lines(truth[i, ], lty = 2, col = "green")
+      }
+    }
+
+    plot.observation.coefs <- function() {
+      library(Boom)
+      coefs <- mscan("observation_coefficient.draws")
+      BoxplotTrue(coefs[-1, ], truth = coefs[1, ])
+    }
+
+    f1 <- mscan("factor1.draws")
+    PlotDynamicDistribution(f1[-1, ])
+    lines(f1[1, ], col = "green")
+  */
+
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
   // //===========================================================================
   // // A test case with both shared state and a single series that has series
@@ -670,7 +820,6 @@ namespace BoomStateSpaceTesting {
 
   //   int special_series = 4;
   //   int nseasons = 7;
-  //   double factor_sd = 1.0;
   //   double seasonal_innovation_sd = .2;
   //   double residual_sd = .1;
 
@@ -681,7 +830,7 @@ namespace BoomStateSpaceTesting {
   //   for (int factor = 0; factor < nfactors; ++factor) {
   //     state(factor, 0) = rnorm();
   //     for (int time = 1; time < sample_size; ++time) {
-  //       state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
+  //       state(factor, time) = state(factor, time - 1) + rnorm(0, 1.0);
   //     }
   //   }
 

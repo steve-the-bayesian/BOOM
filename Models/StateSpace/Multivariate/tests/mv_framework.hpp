@@ -8,6 +8,7 @@
 #include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
 
 #include "Models/Glm/MvnGivenX.hpp"
+#include "Models/Glm/RegressionModel.hpp"
 #include "Models/Glm/PosteriorSamplers/RegressionSemiconjugateSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/IndependentRegressionModelsPosteriorSampler.hpp"
 
@@ -20,6 +21,7 @@
 #include "Models/StateSpace/Filters/KalmanTools.hpp"
 
 #include "distributions.hpp"
+#include "cpputil/math_utils.hpp"
 
 namespace BoomStateSpaceTesting {
   using namespace BOOM;
@@ -42,9 +44,10 @@ namespace BoomStateSpaceTesting {
                       int nfactors,
                       int sample_size,
                       int test_size,
-                      double factor_sd,
                       double residual_sd)
-        : state(nfactors, sample_size + test_size),
+        : sample_size_(sample_size),
+          test_size_(test_size),
+          state(nfactors, sample_size + test_size),
           observation_coefficients(nseries, nfactors),
           regression_coefficients(nseries, xdim),
           predictors(sample_size + test_size, xdim),
@@ -68,74 +71,90 @@ namespace BoomStateSpaceTesting {
 
       // Set up the regression coefficients and the predictors.
       regression_coefficients.randomize();
-      if (regression_coefficients.nrow() >= 4) {
-        regression_coefficients(2, 0) = 50;
-        regression_coefficients(3, 0) = -20;
-      }
       predictors.randomize();
 
-      //----------------------------------------------------------------------
-      // Simulate the state.
-      for (int factor = 0; factor < nfactors; ++factor) {
+      build(residual_sd);
+    }
+
+    int nfactors() const {
+      return observation_coefficients.ncol();
+    }
+
+    int nseries() const {
+      return regression_coefficients.nrow();
+    }
+
+    int xdim() const {
+      return regression_coefficients.ncol();
+    }
+
+    void build(double residual_sd) {
+      simulate_state();
+      simulate_response(residual_sd);
+      build_model(residual_sd);
+    }
+
+    void simulate_state() {
+      double factor_sd = 1.0;
+      for (int factor = 0; factor < nfactors(); ++factor) {
         state(factor, 0) = rnorm() - 35;
-        for (int time = 1; time < sample_size + test_size; ++time) {
+        for (int time = 1; time < sample_size_ + test_size_; ++time) {
           state(factor, time) = state(factor, time - 1) + rnorm(0, factor_sd);
         }
       }
+    }
 
-      //----------------------------------------------------------------------
-      // Simulate the response.
-      for (int i = 0; i < sample_size + test_size; ++i) {
+    void simulate_response(double residual_sd) {
+      for (int i = 0; i < sample_size_ + test_size_; ++i) {
         Vector yhat = observation_coefficients * state.col(i)
             + regression_coefficients * predictors.row(i);
-        for (int j = 0; j < nseries; ++j) {
+        for (int j = 0; j < nseries(); ++j) {
           response(i, j) = yhat[j] + rnorm(0, residual_sd);
         }
       }
+    }
 
-      //----------------------------------------------------------------------
-      // Define the model.
-      for (int time = 0; time < sample_size; ++time) {
-        for (int series = 0; series < nseries; ++series) {
+    void build_model(double residual_sd) {
+      model.reset(new MultivariateStateSpaceRegressionModel(xdim(), nseries()));
+      for (int time = 0; time < sample_size_; ++time) {
+        for (int series = 0; series < nseries(); ++series) {
           NEW(MultivariateTimeSeriesRegressionData, data_point)(
               response(time, series), predictors.row(time), series, time);
           model->add_data(data_point);
         }
       }
-      EXPECT_EQ(sample_size, model->time_dimension());
-
       //---------------------------------------------------------------------------
       // Define the state model.
       state_model.reset(new ConditionallyIndependentSharedLocalLevelStateModel(
-          model.get(), nfactors, nseries));
+          model.get(), nfactors(), nseries()));
       std::vector<Ptr<GammaModelBase>> innovation_precision_priors;
-      for (int factor = 0; factor < nfactors; ++factor) {
+      for (int factor = 0; factor < nfactors(); ++factor) {
         innovation_precision_priors.push_back(new ChisqModel(1.0, .10));
       }
-      Matrix observation_coefficient_prior_mean(nseries, nfactors, 0.0);
+      Matrix observation_coefficient_prior_mean(nseries(), nfactors(), 0.0);
 
-      NEW(MvnModel, slab)(Vector(nfactors, 0.0), SpdMatrix(nfactors, 1.0));
-      NEW(VariableSelectionPrior, spike)(nfactors, 1.0);
+      NEW(MvnModel, slab)(Vector(nfactors(), 0.0), SpdMatrix(nfactors(), 1.0));
+      NEW(VariableSelectionPrior, spike)(nfactors(), 1.0);
       std::vector<Ptr<VariableSelectionPrior>> spikes;
-      for (int i = 0; i < nseries; ++i) {
+      for (int i = 0; i < nseries(); ++i) {
         spikes.push_back(spike->clone());
       }
 
       NEW(ConditionallyIndependentSharedLocalLevelPosteriorSampler,
           state_model_sampler)(
               state_model.get(),
-              std::vector<Ptr<MvnBase>>(nseries, slab),
+              std::vector<Ptr<MvnBase>>(nseries(), slab),
               spikes);
       state_model->set_method(state_model_sampler);
       state_model->set_initial_state_mean(state.col(0));
-      state_model->set_initial_state_variance(SpdMatrix(nfactors, 1.0));
+      state_model->set_initial_state_variance(SpdMatrix(nfactors(), 1.0));
       model->add_state(state_model);
 
       //---------------------------------------------------------------------------
       // Set the prior and sampler for the regression model.
-      for (int i = 0; i < nseries; ++i) {
-        Vector beta_prior_mean(xdim, 0.0);
-        SpdMatrix beta_precision(xdim, 1.0);
+      for (int i = 0; i < nseries(); ++i) {
+        Vector beta_prior_mean(xdim(), 0.0);
+        SpdMatrix beta_precision(xdim(), 1.0);
         NEW(MvnModel, beta_prior)(beta_prior_mean, beta_precision, true);
         NEW(ChisqModel, residual_precision_prior)(1.0, square(residual_sd));
         NEW(RegressionSemiconjugateSampler, regression_sampler)(
@@ -154,6 +173,8 @@ namespace BoomStateSpaceTesting {
     }
 
     // Data section
+    int sample_size_;
+    int test_size_;
     Matrix state;
     Matrix observation_coefficients;
     Matrix regression_coefficients;
