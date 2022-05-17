@@ -74,6 +74,6 @@ namespace BOOM {
     IndependentRegressionModels *model_;
   };
 
-
 }  // namespace BOOM
+
 #endif  //  BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_
