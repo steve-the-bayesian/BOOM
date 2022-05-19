@@ -239,12 +239,18 @@ namespace BOOM {
       const Vector &kalman_gain_K, const SparseVector &observation_matrix_Z,
       double forecast_variance, double forecast_error);
 
+
+  // This code is mainly for testing.  In real applications the relevant
+  // matrices won't scale particularly well, and sparse matrices should be used
+  // instead.
   void sparse_multivariate_kalman_disturbance_smoother_update(
-      Vector &scaled_residual_r, SpdMatrix &scaled_residual_variance_N,
+      Vector &scaled_residual_r,
+      SpdMatrix &scaled_residual_variance_N,
       const SparseKalmanMatrix &transition_matrix_T,
       const Matrix &kalman_gain_K,
       const SparseKalmanMatrix &observation_matrix_Z,
-      const SpdMatrix &forecast_precision, const Vector &forecast_error);
+      const SpdMatrix &forecast_precision,
+      const Vector &forecast_error);
 
 
 

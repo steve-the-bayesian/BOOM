@@ -165,7 +165,7 @@ namespace BOOM {
   //
   // Thus the determinant of F is
   //     det(H) * det(P) * det(P.inv + Z'HZ)
-  
+
   // SpdMatrix WoodburyInverse(const Vector &observation_precision,
   //                           const SparseKalmanMatrix &observation_coefficients,
   //                           const SpdMatrix &state_conditional_variance,
@@ -177,14 +177,14 @@ namespace BOOM {
   //   for (int i = 0; i < Z.nrow(); ++i) {
   //     Z.row(i) *= sqrt(observation_precision[i]);
   //   }
-      
+
   //   SpdMatrix inner = rootP.inv() + Z.inner();
   //   Cholesky inner_chol(inner);
-    
+
   //   double logdet_state_variance = rootP.logdet();
   //   log_determinant =
   //       -logdet_observation_precision - inner_chol.logdet() - rootP.logdet();
-        
+
   //   inner = inner_chol.inv();
   //   for (int i = 0; i < Z.nrow(); ++i) {
   //     Z.row(i) *= sqrt(observation_precision[i]);
@@ -324,6 +324,7 @@ namespace BOOM {
     scaled_residual_variance_N = previousN;
   }
 
+  // For use in testing code.  Do not use in actual library code.
   void sparse_multivariate_kalman_disturbance_smoother_update(
       Vector &scaled_residual_r, SpdMatrix &scaled_residual_variance_N,
       const SparseKalmanMatrix &transition_matrix_T,
