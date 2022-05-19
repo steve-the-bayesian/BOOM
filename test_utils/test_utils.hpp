@@ -136,6 +136,9 @@ namespace BOOM {
   //     deviation of the centered draws to the standard deviation of the true
   //     function.  If that ratio is less than this threshold the diagnostic is
   //     passed.
+  //   coverage_fraction: The fraction of marginal posterior intervals that must
+  //     cover their true values at the specified confidence level in order for
+  //     the check to pass.
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
@@ -151,6 +154,7 @@ namespace BOOM {
                                      const Vector &truth,
                                      double confidence = .95,
                                      double sd_ratio_threshold = .1,
+                                     double coverage_fraction = 0.5,
                                      const std::string &filename = "");
 
   //===========================================================================

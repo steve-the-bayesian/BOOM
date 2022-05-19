@@ -94,6 +94,7 @@ namespace BOOM {
                                      const Vector &truth,
                                      double confidence,
                                      double sd_ratio_threshold,
+                                     double coverage_fraction,
                                      const std::string &filename) {
     ostringstream err;
     Matrix centered_draws = draws;
@@ -103,8 +104,9 @@ namespace BOOM {
       number_covering += covers(draws.col(i), truth[i], confidence);
     }
     number_covering /=  ncol(draws);
-    if (number_covering < .5) {
-      err << "fewer than half the intervals covered the true value."
+    if (number_covering < coverage_fraction) {
+      err << "fewer than half the intervals covered the true value.  "
+          << "Coverage fraction = " << number_covering << "."
           << std::endl;
     }
 
