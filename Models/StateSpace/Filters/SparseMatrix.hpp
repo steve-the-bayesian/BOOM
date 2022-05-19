@@ -250,8 +250,9 @@ namespace BOOM {
   class SparseBinomialInverse : public SparseKalmanMatrix {
    public:
 
+    // Build a SparseBinomialInverse from raw inputs.
+    //
     // Args:
-
     //   Ainv: The matrix inverse of the "A" matrix in the formula.  This matrix
     //     is typically highly structured and easy to invert (like a diagonal
     //     matrix).
@@ -266,6 +267,28 @@ namespace BOOM {
                           const SpdMatrix &B,
                           double Ainv_logdet = negative_infinity());
 
+    // Reconstitute a SparseBinomialInverse from a previously constructed
+    // matrix.
+    //
+    // Args:
+    //   Ainv: The matrix inverse of the "A" matrix in the formula.  This matrix
+    //     is typically highly structured and easy to invert (like a diagonal
+    //     matrix).
+    //   U: The leading term in the product of three matrices comprising the
+    //     update term.
+    //   B: The middle matrix in the update term.  Note that this is a dense
+    //     matrix, while the others are sparse.
+    //   inner: The "inner matrix" from a previously built
+    //     SparseBinomialInverse.
+    //   logdet: The log determinant from a previously built
+    //     SparseBinomialInverse.
+    SparseBinomialInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &B,
+                          const Matrix &inner,
+                          double logdet);
+
+    // The number of rows and columns in the matrix.
     int nrow() const override {return Ainv_->nrow();}
     int ncol() const override {return Ainv_->ncol();}
 
@@ -291,6 +314,8 @@ namespace BOOM {
     // determinant of the stored matrix.  Otherwise it returns
     // negative_infinity.
     double logdet() const;
+
+    const Matrix & inner_matrix() const {return inner_matrix_;}
 
    private:
     Ptr<SparseKalmanMatrix> Ainv_;

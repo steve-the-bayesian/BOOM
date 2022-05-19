@@ -407,19 +407,20 @@ namespace BoomStateSpaceTesting {
 
     Selector fully_observed(nseries, true);
     EXPECT_TRUE(MatrixEquals(
-        sim.model->get_filter()[5].kalman_gain(fully_observed),
+        sim.model->get_filter()[5].sparse_kalman_gain(fully_observed)->dense(),
         dense_filter[5].kalman_gain(fully_observed)));
 
     EXPECT_TRUE(MatrixEquals(
-        sim.model->get_filter()[sample_size - 1].kalman_gain(fully_observed),
+        sim.model->get_filter()[sample_size - 1].sparse_kalman_gain(
+            fully_observed)->dense(),
         dense_filter[sample_size - 1].kalman_gain(fully_observed)));
 
     EXPECT_TRUE(MatrixEquals(
-        sim.model->get_filter()[5].forecast_precision(),
+        sim.model->get_filter()[5].sparse_forecast_precision()->dense(),
         dense_filter[5].forecast_precision()));
 
     EXPECT_TRUE(MatrixEquals(
-        sim.model->get_filter()[sample_size - 1].forecast_precision(),
+        sim.model->get_filter()[sample_size - 1].sparse_forecast_precision()->dense(),
         dense_filter[sample_size - 1].forecast_precision()));
 
     //-------------------------------------------------------------------------
@@ -582,7 +583,7 @@ namespace BoomStateSpaceTesting {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    int niter = 10000;
+    int niter = 1000;
     int burn = 300;
 
     //---------------------------------------------------------------------------
@@ -731,9 +732,14 @@ namespace BoomStateSpaceTesting {
                             0, sample_size);
       state_contribution_out << truth << "\n"
                              << state_contribution_draws[series];
-      status = CheckMcmcMatrix(state_contribution_draws[series], truth);
-      EXPECT_TRUE(status.ok) << "Error in state contribution draws for series "
-                             << series << ".  " << status << "\n"
+      double confidence = .99;
+      double sd_ratio_threshold = 0.1;
+      double coverage_fraction = .25;
+      std::string error_message = CheckStochasticProcess(
+          state_contribution_draws[series], truth, confidence,
+          sd_ratio_threshold, coverage_fraction);
+      EXPECT_EQ(error_message, "") << "Error in state contribution draws for series "
+                             << series << ".  " << "\n"
                              << "See the draws in file " << fname.str()
                              << "\n\n";
 

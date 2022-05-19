@@ -43,15 +43,27 @@ namespace BOOM {
 
     //---------------------------------------------------------------------------
     Vector Marginal::scaled_prediction_error() const {
-      return *sparse_forecast_precision_ * prediction_error();
+      return *sparse_forecast_precision() * prediction_error();
     }
 
     Ptr<SparseBinomialInverse> Marginal::sparse_forecast_precision() const {
-      return sparse_forecast_precision_;
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      const Selector &observed(model_->observed_status(time_index()));
+      NEW(DiagonalMatrixBlock, observation_precision)(
+          1.0 / model_->observation_variance(time_index(), observed).diag());
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(time_index(), observed);
+      return new SparseBinomialInverse(
+          observation_precision,
+          observation_coefficients,
+          variance,
+          forecast_precision_inner_matrix_,
+          forecast_precision_log_determinant_);
     }
 
     double Marginal::forecast_precision_log_determinant() const {
-      return sparse_forecast_precision_->logdet();
+      return forecast_precision_log_determinant_;
     }
 
     Marginal *Marginal::previous() {
@@ -70,25 +82,24 @@ namespace BOOM {
       }
     }
 
-    Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
-        const Selector &observed) const {
-      return sparse_kalman_gain_;
-    }
+    // Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
+    //     const Selector &observed) const {
+    //   // K = T P Z' Finv
+    //   SpdMatrix variance = previous() ? previous()->state_variance() :
+    //       model_->initial_state_variance();
+    //   NEW(SparseMatrixProduct, sparse_kalman_gain)();
+    //   sparse_kalman_gain->add_term(
+    //       model_->state_transition_matrix(time_index()));
+    //   sparse_kalman_gain->add_term(new DenseMatrix(variance));
+    //   sparse_kalman_gain->add_term(
+    //       model_->observation_coefficients(time_index(), observed),
+    //       true);
+    //   sparse_kalman_gain->add_term(sparse_forecast_precision());
+    //   return sparse_kalman_gain;
+    // }
 
-    void Marginal::update_sparse_kalman_gain(const Selector &observed) {
-      // K = T P Z' Finv
-      SpdMatrix variance = previous() ? previous()->state_variance() :
-          model_->initial_state_variance();
-      sparse_kalman_gain_.reset(new SparseMatrixProduct);
-      int t = time_index();
-      sparse_kalman_gain_->add_term(model_->state_transition_matrix(t));
-      sparse_kalman_gain_->add_term(new DenseMatrix(variance));
-      sparse_kalman_gain_->add_term(
-          model_->observation_coefficients(t, observed),
-          true);
-      sparse_kalman_gain_->add_term(sparse_forecast_precision_);
-    }
-
+    // To be called by the base class during the forward update portion of the
+    // Kalman filter.
     void Marginal::update_sparse_forecast_precision(
         const Selector &observed) {
       // Ensure the the 'state_variance' we're using is P[t] and not P[t+1].  In
@@ -105,13 +116,13 @@ namespace BOOM {
       for (double scalar_precision : observation_precision->diagonal_elements()) {
         sumlog_precision += log(scalar_precision);
       }
-      sparse_forecast_precision_.reset(new SparseBinomialInverse(
+      SparseBinomialInverse forecast_precision(
           observation_precision,
           observation_coefficients,
           variance,
-          sumlog_precision));
-
-      update_sparse_kalman_gain(observed);
+          sumlog_precision);
+      forecast_precision_inner_matrix_ = forecast_precision.inner_matrix();
+      forecast_precision_log_determinant_ = forecast_precision.logdet();
     }
 
     //---------------------------------------------------------------------------

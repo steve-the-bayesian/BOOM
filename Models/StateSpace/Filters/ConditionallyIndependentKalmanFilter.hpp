@@ -51,14 +51,13 @@ namespace BOOM {
           int time_index);
 
       Vector scaled_prediction_error() const override;
-      Ptr<SparseMatrixProduct> sparse_kalman_gain(
-          const Selector &observed) const override;
 
       // The precision matrix (inverse of the variance matrix) describing the
       // conditional distribution of the prediction error at this time point,
       // given all past data.  Be careful calling this function if the dimension
       // of Y is large.  The resulting matrix will be large^2.
       SpdMatrix direct_forecast_precision() const;
+
       Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
       double forecast_precision_log_determinant() const override;
 
@@ -73,22 +72,15 @@ namespace BOOM {
       const MultivariateStateSpaceModelBase *model() const override;
 
      private:
+      // Called as part of the 'update' method in the base class.
       void update_sparse_forecast_precision(const Selector &observed) override;
-      void update_sparse_kalman_gain(const Selector &observed);
 
       ModelType *model_;
       FilterType *filter_;
 
-      // This won't be as large as storing the forecast precision, but it may
-      // wind up being very large.  The diagonal variance matrix at each time
-      // point is on the order of the size of the data, and the matrix of
-      // observation coefficients could (if dense) be data x state.
-      Ptr<SparseBinomialInverse> sparse_forecast_precision_;
-
-      // DO NOT SUBMIT!!!!!!!!!!!!!!
-      // Don't store this.
-      Ptr<SparseMatrixProduct> sparse_kalman_gain_;
-
+      // Implementation details for sparse_forecast_precision().
+      Matrix forecast_precision_inner_matrix_;
+      double forecast_precision_log_determinant_;
     };
   }  // namespace Kalman
 

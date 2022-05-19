@@ -99,7 +99,6 @@ namespace BOOM {
       // prediction_error, conditional on all past data.  Calling
       // forecast_precision() can be expensive for high dimensional data.
       // Prefer working with sparse_forecast_precision() instead.
-      virtual SpdMatrix forecast_precision() const;
       virtual Ptr<SparseBinomialInverse> sparse_forecast_precision() const = 0;
 
       // The log of the determinant of forecast_precision().
@@ -109,7 +108,6 @@ namespace BOOM {
       // the state given the prediction error.  The dimension is state_dim x
       // ydim.  This can be an expensive matrix to compute, so prefer working
       // with sparse_kalman_gain instead.
-      virtual Matrix kalman_gain(const Selector &observed) const;
       virtual Ptr<SparseMatrixProduct> sparse_kalman_gain(
           const Selector &observed) const;
 

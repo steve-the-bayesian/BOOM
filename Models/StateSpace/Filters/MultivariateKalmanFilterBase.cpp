@@ -120,22 +120,15 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    SpdMatrix Marginal::forecast_precision() const {
-      return SpdMatrix(sparse_forecast_precision()->dense());
-    }
-
-    //----------------------------------------------------------------------
-    Matrix Marginal::kalman_gain(const Selector &observed) const {
-      return sparse_kalman_gain(observed)->dense();
-    }
-
-    //----------------------------------------------------------------------
     Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
         const Selector &observed) const {
       NEW(SparseMatrixProduct, ans)();
       int t = time_index();
       ans->add_term(model()->state_transition_matrix(t));
-      NEW(DenseSpd, P)(state_variance());
+      // Going forward, previos()->state_variance() and state_variance() will be
+      // the same.  Going backward they may be different.
+      NEW(DenseSpd, P)(previous() ? previous()->state_variance()
+                       : model()->initial_state_variance());
       ans->add_term(P);
       ans->add_term(model()->observation_coefficients(t, observed), true);
       ans->add_term(sparse_forecast_precision());
@@ -164,8 +157,11 @@ namespace BOOM {
       const Selector &observed(model()->observed_status(time_index()));
       Ptr<SparseKalmanMatrix> observation_coefficients(
           model()->observation_coefficients(time_index(), observed));
-      return P - sandwich(
-          P, observation_coefficients->sandwich_transpose(forecast_precision()));
+      NEW(SparseMatrixProduct, ZFZ)();
+      ZFZ->add_term(observation_coefficients, true);
+      ZFZ->add_term(sparse_forecast_precision(), false);
+      ZFZ->add_term(observation_coefficients, false);
+      return P - sandwich(P, SpdMatrix(ZFZ->dense()));
     }
 
     //----------------------------------------------------------------------
@@ -302,10 +298,12 @@ namespace BOOM {
     set_initial_scaled_state_error(r);
   }
 
-  Vector MultivariateKalmanFilterBase::prediction_error(int t, bool standardize) const {
+  Vector MultivariateKalmanFilterBase::prediction_error(
+      int t, bool standardize) const {
     const auto &marginal((*this)[t]);
     if (standardize) {
-      return marginal.forecast_precision() * marginal.prediction_error();
+      return *marginal.sparse_forecast_precision()
+          * marginal.prediction_error();
     } else {
       return marginal.prediction_error();
     }

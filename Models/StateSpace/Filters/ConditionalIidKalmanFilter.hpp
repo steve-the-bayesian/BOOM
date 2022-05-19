@@ -54,8 +54,7 @@ namespace BOOM {
       // create a cycle in the include graph.
       const MultivariateStateSpaceModelBase *model() const override;
 
-      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override {
-        return sparse_forecast_precision_;}
+      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
       double forecast_precision_log_determinant() const override;
 
      private:
@@ -63,11 +62,15 @@ namespace BOOM {
       SpdMatrix direct_forecast_precision() const;
 
       void update_sparse_forecast_precision(const Selector &observed) override;
+
       //---------------------------------------------------------------------------
       // Data section
       ModelType *model_;
       FilterType *filter_;
-      Ptr<SparseBinomialInverse> sparse_forecast_precision_;
+
+      // Implementation details for sparse_forecast_precision().
+      Matrix forecast_precision_inner_matrix_;
+      double forecast_precision_log_determinant_;
     };
 
   }  // namespace Kalman

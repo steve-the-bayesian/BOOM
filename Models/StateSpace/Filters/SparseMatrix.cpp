@@ -330,6 +330,19 @@ namespace BOOM {
     logdet_ = Ainv_logdet + inner_matrix_.logdet();
   }
 
+  SparseBinomialInverse::SparseBinomialInverse(
+      const Ptr<SparseKalmanMatrix> &Ainv,
+      const Ptr<SparseKalmanMatrix> &U,
+      const SpdMatrix &B,
+      const Matrix &inner,
+      double logdet)
+      : Ainv_(Ainv),
+        U_(U),
+        B_(B),
+        inner_matrix_(inner),
+        logdet_(logdet)
+  {}
+
   Vector SparseBinomialInverse::operator*(const ConstVectorView &rhs) const {
     Vector ans = (*Ainv_) * rhs;
     ans -= (*Ainv_) * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));

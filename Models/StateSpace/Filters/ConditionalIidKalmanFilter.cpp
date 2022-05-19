@@ -37,8 +37,7 @@ namespace BOOM {
         : MultivariateMarginalDistributionBase(
               model->state_dimension(), time_index),
           model_(model),
-          filter_(filter),
-          sparse_forecast_precision_(nullptr)
+          filter_(filter)
     {}
 
     CIMD * CIMD::previous() {
@@ -63,8 +62,26 @@ namespace BOOM {
     }
 
     double CIMD::forecast_precision_log_determinant() const {
-      return sparse_forecast_precision_->logdet();
+      return forecast_precision_log_determinant_;
     }
+
+    Ptr<SparseBinomialInverse> CIMD::sparse_forecast_precision() const {
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      const Selector &observed(model_->observed_status(time_index()));
+      NEW(ConstantMatrix, observation_precision)(
+          observed.nvars(),
+          1.0 / model_->observation_variance(time_index()));
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(time_index(), observed);
+      return new SparseBinomialInverse(
+          observation_precision,
+          observation_coefficients,
+          variance,
+          forecast_precision_inner_matrix_,
+          forecast_precision_log_determinant_);
+    }
+
     SpdMatrix CIMD::direct_forecast_precision() const {
       SpdMatrix ans = model_->observation_coefficients(
           time_index(), model_->observed_status(time_index()))->sandwich(
@@ -75,17 +92,22 @@ namespace BOOM {
 
     void CIMD::update_sparse_forecast_precision(const Selector &observed) {
       int t = time_index();
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
       NEW(ConstantMatrix, observation_precision)(
-          observed.nvars(), 1.0 / model_->observation_variance(t));
+          observed.nvars(),
+          1.0 / model_->observation_variance(t));
       Ptr<SparseKalmanMatrix> observation_coefficients =
           model_->observation_coefficients(t, observed);
-
-      double base_precision_logdet = sparse_forecast_precision_->nrow()
-          * log(1.0 / model_->observation_variance(time_index()));
-
-      sparse_forecast_precision_.reset(new SparseBinomialInverse(
-          observation_precision, observation_coefficients, state_variance(),
-          base_precision_logdet));
+      double sumlog_precision =
+          observed.nvars() * log(observation_precision->value());
+      SparseBinomialInverse forecast_precision(
+          observation_precision,
+          observation_coefficients,
+          variance,
+          sumlog_precision);
+      forecast_precision_log_determinant_ = forecast_precision.logdet();
+      forecast_precision_inner_matrix_ = forecast_precision.inner_matrix();
     }
   }  // namespace Kalman
 
