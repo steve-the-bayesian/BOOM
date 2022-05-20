@@ -53,17 +53,46 @@ namespace BOOM {
   // just drew all state simultaneously, but the variable-specific portion can
   // be multi-threaded, and each Kalman filter based simulation draws a much
   // smaller state, so it has the potential to be fast.
-  class MultivariateStateSpaceModelBase : virtual public Model {
+  //
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // NOTE: This class is VERY, VERY similar to StateSpaceModelBase, but there
+  // are some important differences.  The structuring of state() into
+  // shared_state and series specific state is one example.  At some point in
+  // the future, we should consider merging MultivariateStateSpaceModelBase and
+  // StateSpaceModelBase, but that will require substantial effort, and should
+  // not be undertaken lightly.
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  class MultivariateStateSpaceModelBase
+      : virtual public Model {
    public:
     MultivariateStateSpaceModelBase()
-        : state_is_fixed_(false)
+        : state_is_fixed_(false),
+          observation_model_parameter_size_(-1)
     {}
 
     MultivariateStateSpaceModelBase *clone() const override = 0;
+    virtual MultivariateStateSpaceModelBase *deepclone() const = 0;
     MultivariateStateSpaceModelBase & operator=(
         const MultivariateStateSpaceModelBase &rhs);
 
+    // The model does not use a parameter policy, so we need to override the
+    // parameter_vector() members here.
+    //
+    // The order of the parameter vectors is (a) observation model, (b) shared
+    // state_models.
+    //
+    // Child classes need to overload this method if they include series
+    // specific state models.
+    std::vector<Ptr<Params>> parameter_vector() override;
+    const std::vector<Ptr<Params>> parameter_vector() const override;
+
     virtual int time_dimension() const = 0;
+
+    // The number of time series being modeled.  Not all model types know this.
+    // For example the number of series in a dynamic intercept model changes
+    // from time point to time point.  For this reason the default
+    // implementation is to return -1.
+    virtual int nseries() const { return -1; }
 
     // The 'state' component of this model refers to the components of state
     // shared across all time series.
@@ -96,12 +125,16 @@ namespace BOOM {
     // Args:
     //   t: The time index for which observation coefficients are desired.
     //   observed: Indicates which components of the observation at time t are
-    //     observed (as opposed to missing).
+    //     observed (i.e. not missing).
     //
     // Returns:
     //   A subset of the observation coefficients at time t.  Row j of Z[t] is
     //   included if and only if observed[j] == true.
-    virtual const SparseKalmanMatrix *observation_coefficients(
+    virtual Ptr<SparseKalmanMatrix> observation_coefficients(
+        int t, const Selector &observed) const = 0;
+
+    // For testing.
+    virtual SpdMatrix dense_observation_variance(
         int t, const Selector &observed) const = 0;
 
     // Return the KalmanFilter object responsible for filtering the data.
@@ -110,15 +143,24 @@ namespace BOOM {
     virtual MultivariateKalmanFilterBase & get_simulation_filter() = 0;
     virtual const MultivariateKalmanFilterBase & get_simulation_filter() const = 0;
 
+    // Returns the log likelihood under the current set of model parameters.  If
+    // the Kalman filter is current (i.e. no parameters or data have changed
+    // since the last time it was run) then this function does no actual work.
+    // Otherwise it sparks a fresh Kalman filter run.
+    double log_likelihood() {
+      return get_filter().compute_log_likelihood();
+    }
+
+    //------------- Model matrices for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
-    virtual const SparseKalmanMatrix *state_transition_matrix(int t) const {
-      return state_model_vector().state_transition_matrix(t);
+    virtual SparseKalmanMatrix *state_transition_matrix(int t) const {
+      return state_models().state_transition_matrix(t);
     }
 
     // Durbin and Koopman's RQR^T.  Built from state models, often less than
     // full rank.
-    virtual const SparseKalmanMatrix *state_variance_matrix(int t) const {
-      return state_model_vector().state_variance_matrix(t);
+    virtual SparseKalmanMatrix *state_variance_matrix(int t) const {
+      return state_models().state_variance_matrix(t);
     }
 
     // Durbin and Koopman's R matrix from the transition equation:
@@ -126,24 +168,16 @@ namespace BOOM {
     //
     // This is the matrix that takes the low dimensional state_errors and turns
     // them into error terms for states.
-    virtual const SparseKalmanMatrix *state_error_expander(int t) const {
-      return state_model_vector().state_error_expander(t);
+    virtual ErrorExpanderMatrix *state_error_expander(int t) const {
+      return state_models().state_error_expander(t);
     }
 
     // The full rank variance matrix for the errors in the transition equation.
     // This is Durbin and Koopman's Q[t].  The errors with this variance are
     // multiplied by state_error_expander(t) to produce the errors described by
     // state_variance_matrix(t).
-    virtual const SparseKalmanMatrix *state_error_variance(int t) const {
-      return state_model_vector().state_error_variance(t);
-    }
-
-    // Returns the log likelihood under the current set of model parameters.  If
-    // the Kalman filter is current (i.e. no parameters or data have changed
-    // since the last time it was run) then this function does no actual work.
-    // Otherwise it sparks a fresh Kalman filter run.
-    double log_likelihood() {
-      return get_filter().compute_log_likelihood();
+    virtual SparseKalmanMatrix *state_error_variance(int t) const {
+      return state_models().state_error_variance(t);
     }
 
     //----------------- Access to data -----------------
@@ -157,6 +191,9 @@ namespace BOOM {
     //
     // Returns the residual observation obtained after subtracting off
     // components other than shared state components.
+    //
+    // Only the elements with observed_status == true are returned.  The
+    // dimension of the return value is thus observed_status(time).nvars().
     virtual ConstVectorView adjusted_observation(int time) const = 0;
 
     // Elements of the returned value indicate which elements of observation(t)
@@ -186,30 +223,14 @@ namespace BOOM {
       return shared_state(time_dimension() - 1);
     }
 
-    VectorView state_component(Vector &full_state, int s) const {
-      return state_model_vector().state_component(full_state, s);
-    }
-    VectorView state_component(VectorView &full_state, int s) const {
-      return state_model_vector().state_component(full_state, s);
-    }
-    ConstVectorView state_component(
-        const ConstVectorView &full_state, int s) const {
-      return state_model_vector().state_component(full_state, s);
-    }
-
     const Matrix &shared_state() const { return shared_state_; }
 
     ConstVectorView shared_state(int t) const {return shared_state().col(t);}
 
-    ConstSubMatrix full_state_subcomponent(int state_model_index) const {
-      return state_model_vector().full_state_subcomponent(
-          shared_state_, state_model_index);
-    }
-
-    SubMatrix mutable_full_state_subcomponent(int state_model_index) {
-      return state_model_vector().mutable_full_state_subcomponent(
-          shared_state_, state_model_index);
-    }
+    // Control the type of state the 'adjusted_observation' refers to.  Not all
+    // models support this distinction, so default implementations are no-ops.
+    virtual void isolate_shared_state() {};
+    virtual void isolate_series_specific_state() {};
 
     Vector initial_state_mean() const;
     SpdMatrix initial_state_variance() const;
@@ -222,17 +243,107 @@ namespace BOOM {
     //   state:  The state matrix.  Columns are time. Rows are state elements.
     void permanently_set_state(const Matrix &state);
 
-    // The number of time series being modeled.  Not all model types know this.
-    // For example the number of series in a dynamic intercept model changes
-    // from time point to time point.  For this reason the default
-    // implementation is to return -1.
-    virtual int nseries() const { return -1; }
+    // Takes the full state vector as input, and returns the component of the
+    // state vector belonging to state model s.
+    //
+    // Args:
+    //   state:  The full state vector.
+    //   s:  The index of the state model whose state component is desired.
+    //
+    // Returns:
+    //   The subset of the 'state' argument corresponding to state model 's'.
+    VectorView state_component(Vector &state, int s) const {
+      return state_models().state_component(state, s);
+    }
+    VectorView state_component(VectorView &state, int s) const {
+      return state_models().state_component(state, s);
+    }
+    ConstVectorView state_component(const ConstVectorView &state, int s) const {
+      return state_models().state_component(state, s);
+    }
+
+    // Return the component of the full state error vector corresponding to a
+    // given state model.
+    //
+    // Args:
+    //   full_state_error: The error for the full state vector (i.e. all state
+    //     models).
+    //   state_model_number:  The index of the desired state model.
+    //
+    // Returns:
+    //   The error vector for just the specified state model.
+    ConstVectorView const_state_error_component(
+        const Vector &full_state_error, int state_model_number) const {
+      return state_models().const_state_error_component(
+          full_state_error, state_model_number);
+    }
+    VectorView state_error_component(
+        Vector &full_state_error, int state_model_number) const {
+      return state_models().state_error_component(
+          full_state_error, state_model_number);
+    }
+
+    // Returns the subcomponent of the (block diagonal) error variance matrix
+    // corresponding to a specific state model.
+    //
+    // Args:
+    //   full_error_variance:  The full state error variance matrix.
+    //   state: The index of the state model defining the desired sub-component.
+    ConstSubMatrix state_error_variance_component(
+        const SpdMatrix &full_error_variance, int state) const {
+      return state_models().state_error_variance_component(
+          full_error_variance, state);
+    }
+
+    // Returns the complete state vector (across time, so the return value is a
+    // matrix) for a specified state component.
+    //
+    // Args:
+    //   state_model_index:  The index of the desired state model.
+    //
+    // Returns:
+    //   A matrix giving the imputed value of the state vector for the specified
+    //   state model.  The matrix has S rows and T columns, where S is the
+    //   dimension of the state vector for the specified state model, and T is
+    //   the number of time points.
+    ConstSubMatrix full_state_subcomponent(int state_model_index) const {
+      return state_models().full_state_subcomponent(shared_state(), state_model_index);
+    }
+    SubMatrix mutable_full_state_subcomponent(int state_model_index) {
+      return state_models().mutable_full_state_subcomponent(
+          shared_state_, state_model_index);
+    }
+
+    // Return the subset of the vectorized set of model parameters pertaining to
+    // the observation model, or to a specific state model.  Can also be used to
+    // take subsets of gradients of functions of model parameters.
+    //
+    // Args:
+    //   model_parameters: A vector of model parameters, ordered in the same way
+    //     as model->vectorize_params(true).
+    //   s: The index of the state model for which a parameter subset is
+    //     desired.
+    //
+    // Returns:
+    //   The subset of the parameter vector corresponding to the specified
+    //   model.
+    VectorView state_parameter_component(Vector &model_parameters, int s) const;
+    ConstVectorView state_parameter_component(const Vector &model_parameters,
+                                              int s) const;
+    VectorView observation_parameter_component(Vector &model_parameters) const;
+    ConstVectorView observation_parameter_component(
+        const Vector &model_parameters) const;
 
    protected:
     // Access to the state model vector owned by descendents.
     using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
-    virtual StateModelVectorBase & state_model_vector() = 0;
-    virtual const StateModelVectorBase & state_model_vector() const = 0;
+
+    virtual StateModelVectorBase & state_models() = 0;
+    virtual const StateModelVectorBase & state_models() const = 0;
+
+    // Remove any posterior sampling methods from this model and all client
+    // models.  Copy posterior samplers from rhs to *this.
+    void copy_samplers(const MultivariateStateSpaceModelBase &rhs);
 
     // Advance the state vector to a future time stamp.  This method is used to
     // implement simulations from the posterior predictive distribution.
@@ -256,7 +367,7 @@ namespace BOOM {
     Vector simulate_next_state(RNG &rng, const ConstVectorView &last,
                                int t) const;
 
-    virtual void clear_client_data();
+    void clear_client_data();
     void observe_fixed_state();
 
    private:
@@ -281,22 +392,35 @@ namespace BOOM {
 
     Matrix shared_state_;
     bool state_is_fixed_;
+
+    mutable int observation_model_parameter_size_;
   };
 
   //===========================================================================
   // A GeneralMultivariateStateSpaceModelBase is a
   // MultivariateStateSpaceModelBase with an observation error variance that is
   // a SpdMatrix.  This setting provides a general form for fitting models, but
-  // does not scale to large numbers of series very well.
+  // does not scale to large numbers of series.
   class GeneralMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
     virtual SpdMatrix observation_variance(int t) const = 0;
+    virtual SpdMatrix observation_variance(
+        int t, const Selector &observed) const = 0;
+    SpdMatrix dense_observation_variance(
+        int t, const Selector &observed) const override {
+      return observed.select(observation_variance(t));
+    }
 
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
     void kalman_filter() override;
+
+    void update_observation_model(Vector &r, SpdMatrix &N, int t,
+                                  bool save_state_distributions,
+                                  bool update_sufficient_statistics,
+                                  Vector *gradient);
   };
 
   //===========================================================================
@@ -314,7 +438,29 @@ namespace BOOM {
     {}
 
     // Variance of the observation error at time t.  Durbin and Koopman's H[t].
+    // This matrix includes elements for both missing and observed data.  If you
+    // just want the matrix for observed data, use the interface with the
+    // Selector as a second argument.
     virtual DiagonalMatrix observation_variance(int t) const = 0;
+
+    // Args:
+    //   t:   The time index.
+    //   observed:  The subset of time series for which variances are desired.
+    //
+    // Returns:
+    //   A DiagonalMatrix containing the variance of the observation error at
+    //   time t for the observed subset of of the data.
+    virtual DiagonalMatrix observation_variance(
+        int t, const Selector &observed) const = 0;
+
+    // The observation variance, for the requested subset of the data, at a
+    // given time point, as an SpdMatrix.
+    SpdMatrix dense_observation_variance(
+        int t, const Selector &observed) const override {
+      SpdMatrix ans(observed.nvars(), 1.0);
+      ans.diag() = observation_variance(t, observed).diag();
+      return ans;
+    }
 
     virtual double single_observation_variance(int t, int dim) const = 0;
 
@@ -330,6 +476,32 @@ namespace BOOM {
     const Filter & get_simulation_filter() const override {
       return simulation_filter_;
     }
+
+    void update_observation_model(Vector &r, SpdMatrix &N, int t,
+                                  bool save_state_distributions,
+                                  bool update_sufficient_statistics,
+                                  Vector *gradient);
+
+
+    // Update the complete data sufficient statistics for the observation model
+    // based on the posterior distribution of the observation model error term
+    // at time t.
+    //
+    // Args:
+    //   t: The time of the observation.
+    //   observation_error_mean: Mean of the observation error given model
+    //     parameters and all observed y's.
+    //   observation_error_variance: Variance of the observation error given
+    //     model parameters and all observed y's.
+    virtual void update_observation_model_complete_data_sufficient_statistics(
+        int t, const Vector &observation_error_mean,
+        const Vector &observation_error_variances) = 0;
+
+    virtual void update_observation_model_gradient(
+        VectorView gradient,
+        int t,
+        const Vector &observation_error_mean,
+        const Vector &observation_error_variances) = 0;
 
    private:
     // This function is
@@ -350,6 +522,10 @@ namespace BOOM {
 
     // All observations at time t have this variance.
     virtual double observation_variance(int t) const = 0;
+    SpdMatrix dense_observation_variance(
+        int t, const Selector &observed) const override {
+      return SpdMatrix(observed.nvars(), observation_variance(t));
+    }
 
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
@@ -361,6 +537,11 @@ namespace BOOM {
     const ConditionalIidKalmanFilter &get_filter() const override;
     ConditionalIidKalmanFilter &get_simulation_filter() override;
     const ConditionalIidKalmanFilter &get_simulation_filter() const override;
+
+    void update_observation_model(Vector &r, SpdMatrix &N, int t,
+                                  bool save_state_distributions,
+                                  bool update_sufficient_statistics,
+                                  Vector *gradient);
 
    private:
     // Simulate a fake observation at time t to use as part of the Durbin and

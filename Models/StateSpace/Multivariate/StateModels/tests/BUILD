@@ -15,3 +15,16 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "scalar_state_model_adapter_test",
+    size = "small",
+    srcs = ["scalar_state_model_adapter_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "//Models/StateSpace/tests:test_utils",
+        "@gtest//:gtest_main",
+    ],
+)

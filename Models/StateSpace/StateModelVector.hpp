@@ -47,53 +47,7 @@ namespace BOOM {
             state_error_expander_(new ErrorExpanderMatrix),
             state_error_variance_(new BlockDiagonalMatrix)
       {
-        clear_state_models();
-      }
-
-      StateModelVectorBase(const StateModelVectorBase &rhs)
-      {
-        clear_state_models();
-        for (int m = 0; m < rhs.state_models_.size(); ++m) {
-          add_state_model(rhs.state_models_[m]);
-        }
-      }
-
-      StateModelVectorBase(StateModelVectorBase &&rhs):
-          state_models_(std::move(rhs.state_models_)),
-          state_dimension_(rhs.state_dimension_),
-          state_error_dimension_(rhs.state_error_dimension_),
-          state_positions_(std::move(rhs.state_positions_)),
-          state_error_positions_(std::move(rhs.state_error_positions_)),
-          state_transition_matrix_(std::move(rhs.state_transition_matrix_)),
-          state_variance_matrix_(std::move(rhs.state_variance_matrix_)),
-          state_error_expander_(std::move(rhs.state_error_expander_)),
-          state_error_variance_(std::move(rhs.state_error_variance_))
-      {}
-
-      StateModelVectorBase & operator=(const StateModelVectorBase &rhs) {
-        if (&rhs != this) {
-          clear_state_models();
-          for (int m = 0; m < rhs.state_models_.size(); ++m) {
-            add_state_model(rhs.state_models_[m]);
-          }
-        }
-        return *this;
-      }
-
-      StateModelVectorBase &operator=(StateModelVectorBase &&rhs) {
-        if (&rhs != this) {
-          clear_state_models();
-          state_models_ = std::move(rhs.state_models_);
-          state_dimension_ = rhs.state_dimension_;
-          state_error_dimension_ = rhs.state_error_dimension_;
-          state_positions_ = std::move(rhs.state_positions_);
-          state_error_positions_ = std::move(rhs.state_error_positions_);
-          state_transition_matrix_ = std::move(rhs.state_transition_matrix_);
-          state_variance_matrix_ = std::move(rhs.state_variance_matrix_);
-          state_error_expander_ = std::move(rhs.state_error_expander_);
-          state_error_variance_ = std::move(rhs.state_error_variance_);
-        }
-        return *this;
+        clear_state_model_metadata();
       }
 
       virtual ~StateModelVectorBase() {}
@@ -101,19 +55,25 @@ namespace BOOM {
       // The dimension of the state vector associated with the stored models.
       int state_dimension() const { return state_dimension_; }
 
+      // The dimension of the state innovation vector (from the transition
+      // equation), which can be of lower dimension than the state itself.
+      int state_error_dimension() const {return state_error_dimension_;}
+
       // The number of state models stored by this object.
-      int size() const { return state_models_.size(); }
+      virtual int size() const = 0;
+      int number_of_state_models() const { return size(); }
 
       // Clear the vector of models and restore the state of the object to that
       // produced by the default constructor.
       virtual void clear() = 0;
 
-      // Clear the data from the stored models.
+      // Clear the data from the stored models, but don't destroy the actual the
+      // model objects .
       void clear_data();
 
       // Access to individual state models.
-      StateModelBase *state_model(int s);
-      const StateModelBase *state_model(int s) const;
+      virtual StateModelBase *state_model(int s) = 0;
+      virtual const StateModelBase *state_model(int s) const = 0;
 
       //----------------------------------------------------------------------
       // The subset of the full state vector belonging to state model s.
@@ -178,24 +138,30 @@ namespace BOOM {
       SubMatrix mutable_full_state_subcomponent(
           Matrix &state, int state_model_index) const;
 
+      // The starting point and size (dimension) of the model parameter for
+      // state model s.
+      int state_parameter_position(int s) const {
+        return state_parameter_positions_[s];
+      }
+      int state_parameter_size(int s) const {
+        return state_parameter_sizes_[s];
+      }
+
       // Structural matrices for Kalman filtering.
-      const SparseKalmanMatrix *state_transition_matrix(int t) const;
-      const SparseKalmanMatrix *state_variance_matrix(int t) const;
-      const ErrorExpanderMatrix *state_error_expander(int t) const;
-      const SparseKalmanMatrix *state_error_variance(int t) const;
+      BlockDiagonalMatrix * state_transition_matrix(int t) const;
+      BlockDiagonalMatrix * state_variance_matrix(int t) const;
+      ErrorExpanderMatrix * state_error_expander(int t) const;
+      BlockDiagonalMatrix * state_error_variance(int t) const;
 
      protected:
       // Child classes should call this method when implementing add_state.
-      void add_state_model(Ptr<StateModelBase> state_model);
+      void add_state_model(StateModelBase *state_model);
 
-      // Child classes should call this method when implementing clear().
-      // Clears the vector of state model pointers, and resets all metadata
-      // accordingly.
-      void clear_state_models();
+      // Child classes should call this method when implementing clear() to
+      // reset all metadata around state dimensions, positions, etc.
+      void clear_state_model_metadata();
 
      private:
-      std::vector<Ptr<StateModelBase>> state_models_;
-
       // Dimension of the latent state vector.  Constructors set state_dimension
       // to zero.  It is incremented during calls to add_state.
       int state_dimension_;
@@ -218,11 +184,18 @@ namespace BOOM {
       // themselves.
       std::vector<int> state_error_positions_;
 
+      // state_parameter_positions_[s] is the index in the vector of state model
+      // parameters where the parameter for state model s begins.
+      std::vector<int> state_parameter_positions_;
+
+      // The dimension of the state model parameter for each state model.
+      std::vector<int> state_parameter_sizes_;
+
       // Model matrices for Kalman filtering.
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_transition_matrix_;
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_variance_matrix_;
-      mutable std::unique_ptr<ErrorExpanderMatrix> state_error_expander_;
-      mutable std::unique_ptr<BlockDiagonalMatrix> state_error_variance_;
+      mutable Ptr<BlockDiagonalMatrix> state_transition_matrix_;
+      mutable Ptr<BlockDiagonalMatrix> state_variance_matrix_;
+      mutable Ptr<ErrorExpanderMatrix> state_error_expander_;
+      mutable Ptr<BlockDiagonalMatrix> state_error_variance_;
     };
 
     // Concrete StateModelVector objects are parameterized by the type of the
@@ -231,7 +204,7 @@ namespace BOOM {
     class StateModelVector : public StateModelVectorBase{
      public:
       void add_state(Ptr<STATE_MODEL> state_model) {
-        add_state_model(state_model);
+        add_state_model(state_model.get());
         state_models_.push_back(state_model);
       }
 
@@ -239,11 +212,42 @@ namespace BOOM {
       // produced by the default constructor.
       void clear() override {
         state_models_.clear();
-        clear_state_models();
+        clear_state_model_metadata();
       }
 
-      Ptr<STATE_MODEL> operator[](int s) {return state_models_[s];}
-      const Ptr<STATE_MODEL> operator[](int s) const {return state_models_[s];}
+      int size() const override {return state_models_.size();}
+
+      Ptr<STATE_MODEL> operator[](int s) {
+        return state_models_[s];
+      }
+
+      const Ptr<STATE_MODEL> operator[](int s) const {
+        return state_models_[s];
+      }
+
+      STATE_MODEL *state_model(int s) override {
+        return state_models_[s].get();
+      }
+
+      const STATE_MODEL *state_model(int s) const override {
+        return state_models_[s].get();
+      }
+
+      typename std::vector<Ptr<STATE_MODEL>>::iterator begin() {
+        return state_models_.begin();
+      }
+
+      typename std::vector<Ptr<STATE_MODEL>>::iterator end() {
+        return state_models_.end();
+      }
+
+      typename std::vector<Ptr<STATE_MODEL>>::const_iterator begin() const {
+        return state_models_.cbegin();
+      }
+
+      typename std::vector<Ptr<STATE_MODEL>>::const_iterator end() const {
+        return state_models_.cend();
+      }
 
      private:
       std::vector<Ptr<STATE_MODEL>> state_models_;

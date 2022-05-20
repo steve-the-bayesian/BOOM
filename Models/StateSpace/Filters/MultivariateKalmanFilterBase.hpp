@@ -2,7 +2,7 @@
 #define BOOM_STATE_SPACE_MULTIVARIATE_KALMAN_FILTER_BASE_HPP_
 
 /*
-  Copyright (C) 2005-2018 Steven L. Scott
+  Copyright (C) 2005-2022 Steven L. Scott
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@
 #include "LinAlg/Vector.hpp"
 #include "LinAlg/SpdMatrix.hpp"
 #include "Models/StateSpace/Filters/KalmanFilterBase.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {
@@ -41,60 +42,21 @@ namespace BOOM {
     //   not identically distributed.
     // - The response variables have an unspecified correlation matrix.
     // - Others are possible.
+    //
+    // Each marginal distribution describes a time point, and there is one
+    // marginal distribution for each time point in the time series.  The time
+    // indices of the marginal distributions are sequential integers: 0, 1, 2,
+    // ... .
     class MultivariateMarginalDistributionBase
         : public MarginalDistributionBase {
      public:
       // Args:
       //   state_dim:  The dimension of the latent state vector.
       //   time_index: The index of the time point described by this marginal
-      //     distribution.
+      //     distribution.  I.e. time 0, time 1, time 2...
       MultivariateMarginalDistributionBase(int state_dim, int time_index)
-          : MarginalDistributionBase(state_dim, time_index),
-            forecast_precision_log_determinant_(negative_infinity()) {}
-
-      // The difference between the observed data at this time point and its
-      // expected value given past data.  If any data elements are missing, they
-      // are omitted from the prediction error.  To get a prediction error of
-      // the same dimension as the original observation call
-      // observed.expand(prediction_error) where observed is the Selector
-      // associated with the observation.
-      const Vector &prediction_error() const {return prediction_error_;}
-      void set_prediction_error(const Vector &err) {prediction_error_ = err;}
-
-      // The precision matrix (inverse of the variance matrix) for the
-      // prediction_error, conditional on all past data.  Calling
-      // forecast_precision() can be expensive for high dimensional data.
-      //
-      // The forecast precision shows up in the Kalman filter in two forms.
-      //   (1) It multiplies the state error in some formulas, and
-      //   (2) its log determinant is needed in order to compute log likelihood.
-      //
-      // Thus, most problems can be reworked so that forecast_precision() is not
-      // called, with scaled_prediction_error() (for case 1) and
-      // forecast_precision_log_determinant() (for case 2) being called instead.
-      virtual SpdMatrix forecast_precision() const = 0;
-
-      // The prediction error is y[t] - E(y[t] | Y[t-1]), where y[t] is the
-      // observation at time t, and Y[t-1] is the set of all preceding
-      // observations. The scaled prediction error is forecast_precision() *
-      // prediction_error().
-      const Vector &scaled_prediction_error() const {
-        return scaled_prediction_error_;
-      }
-      void set_scaled_prediction_error(const Vector &err) {
-        scaled_prediction_error_ = err;
-      }
-
-      // The log of the determinant of forecast_precision().
-      double forecast_precision_log_determinant() const {
-        return forecast_precision_log_determinant_;
-      }
-      void set_forecast_precision_log_determinant(double logdet);
-
-      // The set of regression coefficients used to adjust the expected value of
-      // the state given the prediction error.
-      const Matrix &kalman_gain() const {return kalman_gain_;}
-      void set_kalman_gain(const Matrix &gain) {kalman_gain_ = gain;}
+          : MarginalDistributionBase(state_dim, time_index)
+      {}
 
       // Update this marginal distribution to reflect the observed data at this
       // time point, and the marginal information from the preceding time point.
@@ -116,23 +78,38 @@ namespace BOOM {
       //
       // Returns:
       //   The log likelihood log p(y_t | Y_{t-1}).
-      virtual double update(const Vector &observation,
-                            const Selector &observed);
+      double update(const Vector &observation, const Selector &observed);
 
-      // An observation is considered high dimensional if the number of observed
-      // series at a given time point exceeds the state dimension by a specified
-      // factor.  Different child classes can have different thresholds for what
-      // it means to be high dimensional.
-      virtual bool high_dimensional(const Selector &observed) const;
-      virtual double high_dimensional_threshold_factor() const = 0;
-      
-      // The marginal distribution of the state at the preceding time point.
-      virtual MultivariateMarginalDistributionBase *previous() = 0;
-      virtual const MultivariateMarginalDistributionBase *previous() const = 0;
+      // The difference between the observed data at this time point and its
+      // expected value given past data.  If any data elements are missing, they
+      // are omitted from the prediction error.  To get a prediction error of
+      // the same dimension as the original observation, call
+      // observed.expand(prediction_error) where observed is the Selector
+      // associated with the observation.
+      const Vector &prediction_error() const {return prediction_error_;}
+      void set_prediction_error(const Vector &err) {prediction_error_ = err;}
 
-      // The model describing the time series containing this marginal
-      // distribution.
-      virtual const MultivariateStateSpaceModelBase *model() const = 0;
+      // The prediction error is y[t] - E(y[t] | Y[t-1]), where y[t] is the
+      // observation at time t, and Y[t-1] is the set of all preceding
+      // observations. The scaled prediction error is forecast_precision() *
+      // prediction_error().
+      virtual Vector scaled_prediction_error() const;
+
+      // The precision matrix (inverse of the variance matrix) for the
+      // prediction_error, conditional on all past data.  Calling
+      // forecast_precision() can be expensive for high dimensional data.
+      // Prefer working with sparse_forecast_precision() instead.
+      virtual Ptr<SparseBinomialInverse> sparse_forecast_precision() const = 0;
+
+      // The log of the determinant of forecast_precision().
+      virtual double forecast_precision_log_determinant() const = 0;
+
+      // The set of regression coefficients used to adjust the expected value of
+      // the state given the prediction error.  The dimension is state_dim x
+      // ydim.  This can be an expensive matrix to compute, so prefer working
+      // with sparse_kalman_gain instead.
+      virtual Ptr<SparseMatrixProduct> sparse_kalman_gain(
+          const Selector &observed) const;
 
       // After the call to update(), state_mean() and state_variance() refer to
       // the predictive mean and variance of the state at time_dimension() + 1
@@ -143,59 +120,43 @@ namespace BOOM {
       Vector contemporaneous_state_mean() const override;
       SpdMatrix contemporaneous_state_variance() const override;
 
-     private:
-      // Update the prediction error, scaled prediction error, forecast variance
-      // (if computed) and kalman gain, while trying to take advantage of
-      // sparsity using tricks like the binomial inverse theorem and the
-      // woodbury formula.
-      virtual void high_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) = 0;
+      // The marginal distribution of the state at the preceding time point.
+      // Return 'nullptr' if there is no previous time point.
+      virtual MultivariateMarginalDistributionBase *previous() = 0;
+      virtual const MultivariateMarginalDistributionBase *previous() const = 0;
 
-      // Update the prediction error, scaled prediction error, forecast variance
-      // (if computed) and Kalman gain, using the textbook formulas for the
-      // Kalman filter updates.
-      virtual void low_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) = 0;
+      // The model describing the time series containing this marginal
+      // distribution.  Access to the model is necessary because it carries the
+      // structural matrices defining the state space model.
+      virtual const MultivariateStateSpaceModelBase *model() const = 0;
+
+     private:
+      // Child classes need special abilities to compute their forecast
+      // precision.
+      virtual void update_sparse_forecast_precision(
+          const Selector &observed) = 0;
 
       // Implement update() in the case where y[t] is fully missing (i.e. no
       // part of it is observed.
       double fully_missing_update();
-      
+
       // y[t] - E(y[t] | Y[t-1]).  The dimension matches y[t], which might vary
       // across t.
       Vector prediction_error_;
 
-      // The scaled prediction_error_ is Finv * prediction_error_, where Finv is
-      // the forecast error precision matrix: the inverse of Var(y[t] | data to
-      // t-1).
-      Vector scaled_prediction_error_;
-
-      // The log determinant of the forecast precision matrix Finv (see above).
-      double forecast_precision_log_determinant_;
-      
-      // The Kalman gain K[t] shows up in the updating equation:
-      //       a[t+1] = T[t] * a[t] + K[t] * v[t].
-      // Rows correspond to states and columns to observation elements, so the
-      // dimension is S x m.
-      Matrix kalman_gain_;
     };
   }  // namespace Kalman
 
   //===========================================================================
   // An intermediate base class for handling the parts of the multivariate
-  // Kalman filter that don't depend on the observation variance.  
+  // Kalman filter that don't depend on the observation variance.
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
-    // Args:
-    //   model:  The model to be filtered.
-    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model);
-    
+    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model)
+        : model_(model)
+    {}
+
+    // Run the Kalman filter algorithm with the current data.
     void update() override;
 
     // Update the marginal distribution at a single time point.  The simulation
@@ -209,7 +170,7 @@ namespace BOOM {
     void update_single_observation(
         const Vector &observation, const Selector &observed, int t);
 
-    // Run Durbin and Koopman's fast disturbance smoother.  
+    // Run Durbin and Koopman's fast disturbance smoother.
     void fast_disturbance_smooth() override;
 
     // The prediction error at time t.
@@ -224,16 +185,18 @@ namespace BOOM {
     // enough to hold t elements.
     virtual void ensure_size(int t) = 0;
 
-    // The model describing the data being filtered.
+    // The model describing the data being filtered.  It is tempting to make
+    // this a virtual function, but doing so confuses the template that creates
+    // the concrete filters.
     const MultivariateStateSpaceModelBase *model() const {
       return model_;
     }
-    
+
    protected:
     virtual Kalman::MultivariateMarginalDistributionBase &node(size_t t) = 0;
     virtual const Kalman::MultivariateMarginalDistributionBase &node(
         size_t t) const = 0;
-    
+
    private:
     MultivariateStateSpaceModelBase *model_;
   };
@@ -241,7 +204,8 @@ namespace BOOM {
   //===========================================================================
   // The various multivariate Kalman filters are parameterized by the types of
   // the marginal distributions comprising them.  Each marginal distribution
-  // must define a type ModelType.
+  // must define a type ModelType, which must be a type that inherits from
+  // MultivariateStateSpaceModelBase.
   template <class MARGINAL>
   class MultivariateKalmanFilter
       : public MultivariateKalmanFilterBase {
@@ -249,15 +213,19 @@ namespace BOOM {
     typedef typename MARGINAL::ModelType ModelType;
     typedef MARGINAL MarginalType;
 
+    // Args:
+    //   model: A pointer to the model that owns this filter.  The model
+    //     provides the model matrices to the nodes of the filter.
     explicit MultivariateKalmanFilter(ModelType *model)
         : MultivariateKalmanFilterBase(model),
           model_(model) {}
 
-    MarginalType &operator[](size_t pos) override {
-      return nodes_[pos];
+    // Return filter node 't'.
+    MarginalType &operator[](size_t t) override {
+      return nodes_[t];
     }
-    const MarginalType &operator[](size_t pos) const override {
-      return nodes_[pos];
+    const MarginalType &operator[](size_t t) const override {
+      return nodes_[t];
     }
 
     // The number of time points described by the filter.
@@ -267,8 +235,7 @@ namespace BOOM {
     // least 't'.
     void ensure_size(int t) override {
       while(nodes_.size() <=  t) {
-        MarginalType *previous = nodes_.empty() ? nullptr : &nodes_.back();
-        nodes_.push_back(MarginalType(model_, previous, nodes_.size()));
+        nodes_.push_back(MarginalType(model_, this, nodes_.size()));
       }
     }
 
@@ -278,12 +245,12 @@ namespace BOOM {
    protected:
     MarginalType &node(size_t pos) override {return nodes_[pos];}
     const MarginalType &node(size_t pos) const override {return nodes_[pos];}
-    
+
    private:
     ModelType *model_;
     std::vector<MarginalType> nodes_;
   };
-  
+
 }  // namespace BOOM
 
 #endif  // BOOM_STATE_SPACE_MULTIVARIATE_KALMAN_FILTER_BASE_HPP_

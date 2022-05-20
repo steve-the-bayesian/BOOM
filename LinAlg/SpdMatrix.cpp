@@ -146,13 +146,19 @@ namespace BOOM {
 
   void SpdMatrix::swap(SpdMatrix &rhs) { Matrix::swap(rhs); }
 
-  SpdMatrix &SpdMatrix::randomize() {
+  SpdMatrix &SpdMatrix::randomize(RNG &rng) {
     *this = 0.0;
     SpdMatrix tmp(nrow());
-    tmp.Matrix::randomize();
+    tmp.Matrix::randomize(rng);
     EigenMap(*this).selfadjointView<Eigen::Upper>().rankUpdate(
         EigenMap(tmp).transpose(), 1.0);
     reflect();
+    return *this;
+  }
+
+  SpdMatrix &SpdMatrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    report_error("randomize_gaussian doesn't make sense for an SpdMatrix.  "
+                 "Consider just calling randomize() instead.");
     return *this;
   }
 
@@ -741,6 +747,24 @@ namespace BOOM {
       }
     }
     ans.reflect();
+    return ans;
+  }
+
+  SpdMatrix block_diagonal_spd(const std::vector<SpdMatrix> &blocks) {
+    size_t total_dim = 0;
+    for (const auto &el : blocks) {
+      total_dim += el.nrow();
+    }
+    SpdMatrix ans(total_dim, 0.0);
+
+    size_t start = 0;
+    for (const auto &el : blocks) {
+      SubMatrix view(ans,
+                     start, start + el.nrow() - 1,
+                     start, start + el.ncol() - 1);
+      view = el;
+      start += el.nrow();
+    }
     return ans;
   }
 

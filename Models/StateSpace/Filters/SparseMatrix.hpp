@@ -135,6 +135,201 @@ namespace BOOM {
   Matrix multT(const SpdMatrix &lhs, const SparseKalmanMatrix &rhs);
 
   //======================================================================
+  // The product of several SparseKalmanMatrix objects.  The terms in the
+  // product are stored, and matrix multiplications are evalutated term-by-term.
+  // Terms or their transposes may be stored.
+  class SparseMatrixProduct : public SparseKalmanMatrix {
+   public:
+    SparseMatrixProduct();
+
+    // Args:
+
+    //   term: Add 'term' to the terms in the product.  Terms are added left to
+    //     right in the order they appear.  So if A, B, and C are added in that
+    //     order, the result is A * B * C.
+    //   transpose: If true then the transpose of the matrix is added to the
+    //     product, so products like A * B' * C can be represented.
+    void add_term(const Ptr<SparseKalmanMatrix> &term, bool transpose = false);
+
+    int nrow() const override;
+    int ncol() const override;
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix dense() const override;
+
+    // this' * N * this, as a SparseMatrixProduct.
+    Ptr<SparseMatrixProduct> sparse_sandwich(const SpdMatrix &N) const;
+
+    // this * N * this' as a SparseMatrixProduct.
+    Ptr<SparseMatrixProduct> sparse_sandwich_transpose(const SpdMatrix &N) const;
+
+    // The diagonal elements of the sparse matrix.  // how to get these??
+    Vector diag() const;
+
+    // The following functions are implemented, but calling them may result in
+    // very large matrices being created.  Call with care.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+    Matrix &add_to(Matrix &rhs) const override;
+
+   private:
+    void check_term(const Ptr<SparseKalmanMatrix> &term, bool transpose);
+
+    std::vector<Ptr<SparseKalmanMatrix>> terms_;
+    std::vector<bool> transposed_;
+  };
+
+  // A sum of sparse matrices. The terms of the sum are stored in the object,
+  // and matrix products are evaluated term by term.
+  class SparseMatrixSum : public SparseKalmanMatrix {
+   public:
+    SparseMatrixSum();
+    void add_term(const Ptr<SparseKalmanMatrix> &term, double coefficient = 1.0);
+
+    int nrow() const override;
+    int ncol() const override;
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix &add_to(Matrix &rhs) const override;
+
+    // Calling 'inner' on a SparseMatrixSum can result in very large matrices
+    // being created.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+   private:
+    std::vector<Ptr<SparseKalmanMatrix>> terms_;
+    Vector coefficients_;
+  };
+
+  //===========================================================================
+  // Let M = A + UCV.  The Woodbury identity states that Minv = Ainv - Ainv U
+  // (Cinv + V Ainv U) V Ainv.  Note that to use the Woodbury identity both A
+  // and C must be invertible.
+  class WoodburyInverse : public SparseKalmanMatrix {
+   public:
+
+    // This constructor assumes V is U->transpose().
+    WoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                    const Ptr<SparseKalmanMatrix> &U,
+                    const SpdMatrix &C)
+        : Ainv_(Ainv),
+          U_(U),
+          C_(C)
+    {}
+
+   private:
+    Ptr<SparseKalmanMatrix> Ainv_;
+    Ptr<SparseKalmanMatrix> U_;
+    SpdMatrix C_;
+  };
+  //===========================================================================
+
+  // The binomial inverse theorem is a generalization of the Woodbury
+  // identity. The generalization works around an assumption in the Woodbury
+  // identity that the middle matrix in the update term is invertible.  That
+  // need not be the case.  Let M = A + UBV.  The binomial inverse theorem says
+  // Minv = Ainv - Ainv * U * (I + B V Ainv U).inv * B * V * Ainv.
+  //
+  // This class assumes V is U.transpose, and that B is symmetric.  In the
+  // general case these assumptions need not be true.
+  class SparseBinomialInverse : public SparseKalmanMatrix {
+   public:
+
+    // Build a SparseBinomialInverse from raw inputs.
+    //
+    // Args:
+    //   Ainv: The matrix inverse of the "A" matrix in the formula.  This matrix
+    //     is typically highly structured and easy to invert (like a diagonal
+    //     matrix).
+    //   U: The leading term in the product of three matrices comprising the
+    //     update term.
+    //   B: The middle matrix in the update term.  Note that this is a dense
+    //     matrix, while the others are sparse.
+    //   Ainv_logdet: The log determinant of Ainv.  This can be omitted if
+    //     object's "logdet" method will not be called.
+    SparseBinomialInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &B,
+                          double Ainv_logdet = negative_infinity());
+
+    // Reconstitute a SparseBinomialInverse from a previously constructed
+    // matrix.
+    //
+    // Args:
+    //   Ainv: The matrix inverse of the "A" matrix in the formula.  This matrix
+    //     is typically highly structured and easy to invert (like a diagonal
+    //     matrix).
+    //   U: The leading term in the product of three matrices comprising the
+    //     update term.
+    //   B: The middle matrix in the update term.  Note that this is a dense
+    //     matrix, while the others are sparse.
+    //   inner: The "inner matrix" from a previously built
+    //     SparseBinomialInverse.
+    //   logdet: The log determinant from a previously built
+    //     SparseBinomialInverse.
+    SparseBinomialInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &B,
+                          const Matrix &inner,
+                          double logdet);
+
+    // The number of rows and columns in the matrix.
+    int nrow() const override {return Ainv_->nrow();}
+    int ncol() const override {return Ainv_->ncol();}
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    // Implementation assumes the matrix is symmetric.
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix &add_to(Matrix &rhs) const override;
+
+    // Calling 'inner' on a SparseMatrixSum can result in very large matrices
+    // being created.
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    Matrix dense() const override;
+
+    // If Ainv_logdet was passed to the constructor, then this returns the log
+    // determinant of the stored matrix.  Otherwise it returns
+    // negative_infinity.
+    double logdet() const;
+
+    const Matrix & inner_matrix() const {return inner_matrix_;}
+
+   private:
+    Ptr<SparseKalmanMatrix> Ainv_;
+    Ptr<SparseKalmanMatrix> U_;
+    SpdMatrix B_;
+
+    // The inner matrix is (I + B * U' * Ainv * U).inv
+    // In the usual case A = H, B = P, U = Z, so
+    // inner = (I + P * Z' Hinv Z).inv
+    Matrix inner_matrix_;
+    double logdet_;
+  };
+
+  //======================================================================
   // The SparseMatrixBlock classes are SparseKalmanMatrices that can be used as
   // elements in a BlockDiagonalMatrix.
   class SparseMatrixBlock : public SparseKalmanMatrix {
@@ -199,6 +394,7 @@ namespace BOOM {
     void multiply_and_add(VectorView lhs,
                           const ConstVectorView &rhs) const override;
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+
     void multiply_inplace(VectorView x) const override;
     void matrix_multiply_inplace(SubMatrix m) const override;
     void matrix_transpose_premultiply_inplace(SubMatrix m) const override;
@@ -1697,6 +1893,102 @@ namespace BOOM {
   };
 
   //===========================================================================
+  // The product d * s of a dense "column vector" d and a sparse "row vector" s.
+  class DenseSparseRankOneMatrixBlock : public SparseMatrixBlock {
+   public:
+    DenseSparseRankOneMatrixBlock(const Vector &left, const SparseVector &right)
+        : left_(left),
+          right_(right),
+          dense_right_(0)
+    {}
+
+    DenseSparseRankOneMatrixBlock * clone() const override {
+      return new DenseSparseRankOneMatrixBlock(*this);
+    }
+
+    void set_left(const Vector &left) {
+      left_ = left;
+    }
+
+    void set_right(const SparseVector &right) {
+      right_ = right;
+      dense_right_ = Vector(0);
+    }
+
+    void update(const Vector &left, const SparseVector &right) {
+      set_left(left);
+      set_right(right);
+    }
+
+    int nrow() const override {return left_.size();}
+    int ncol() const override {return right_.size();}
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs = left_ * right_.dot(rhs);
+    }
+
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs += left_ * right_.dot(rhs);
+    }
+
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
+      lhs = left_.dot(rhs) * dense_right();
+    }
+
+    void multiply_inplace(VectorView x) const override {
+      if (nrow() != ncol()) {
+        report_error("multiply_inplace only works for square matrices.");
+      }
+      if (ncol() != x.size()) {
+        report_error("Vector does not conform to matrix in multiply_inplace.");
+      }
+      x = left_ * right_.dot(x);
+    }
+
+    SpdMatrix inner() const override {
+      double weight = left_.dot(left_);
+      return outer(dense_right() * sqrt(weight));
+    }
+
+    SpdMatrix inner(const ConstVectorView &weights) const override {
+      //  R' L' W L R
+      double weight = left_.dot(weights * left_);
+      return outer(dense_right() * sqrt(weight));
+    }
+
+    Matrix &add_to(Matrix &P) const override {
+      P += right_.outer_product_transpose(left_);
+      return P;
+    }
+
+    SubMatrix add_to_submatrix(SubMatrix P) const override {
+      P += right_.outer_product_transpose(left_);
+      return P;
+    }
+
+    void add_to_block(SubMatrix block) const override{
+      add_to_submatrix(block);
+    }
+
+    Matrix dense() const override {
+      Matrix ans(nrow(), ncol(), 0.0);
+      ans.add_outer(left_, dense_right());
+      return ans;
+    }
+
+    const Vector & dense_right() const {
+      if (dense_right_.size() != right_.size()) {
+        dense_right_ = right_.dense();
+      }
+      return dense_right_;
+    }
+
+   private:
+    Vector left_;
+    SparseVector right_;
+    mutable Vector dense_right_;
+  };
+
+  //===========================================================================
   // A sparse matrix whose rows and columns are sparse vectors.  This matrix is
   // somewhat expensive to construct, because a mapping must be constructed
   // between its row and column representations.
@@ -1818,11 +2110,18 @@ namespace BOOM {
   // The state transition equation for a dynamic linear model will
   // typically involve a block diagonal matrix.  The blocks will
   // typically be:  SeasonalStateSpaceMatrix, IdentityMatrix, etc.
-  class BlockDiagonalMatrix : public SparseKalmanMatrix {
+  class BlockDiagonalMatrix : public SparseMatrixBlock {
    public:
     // Start off with an empty matrix.  Use add_block() to add blocks
     // Adds a block to the block diagonal matrix
     BlockDiagonalMatrix();
+    BlockDiagonalMatrix(const BlockDiagonalMatrix &rhs);
+    BlockDiagonalMatrix & operator=(const BlockDiagonalMatrix &rhs);
+
+    BlockDiagonalMatrix(BlockDiagonalMatrix &&rhs) = default;
+    BlockDiagonalMatrix & operator=(BlockDiagonalMatrix &&rhs) = default;
+
+    BlockDiagonalMatrix * clone() const override;
 
     void add_block(const Ptr<SparseMatrixBlock> &m);
     void replace_block(int which_block, const Ptr<SparseMatrixBlock> &b);
@@ -1830,6 +2129,15 @@ namespace BOOM {
 
     int nrow() const override;
     int ncol() const override;
+
+    void multiply(VectorView lhs,
+                  const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs,
+                          const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
+    void add_to_block(SubMatrix block) const override {
+      add_to_submatrix(block);
+    }
 
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
@@ -1840,6 +2148,7 @@ namespace BOOM {
     using SparseKalmanMatrix::operator*;
 
     using SparseKalmanMatrix::Tmult;
+    void Tmult(VectorView lhs, const ConstVectorView &x) const override;
     Vector Tmult(const ConstVectorView &x) const override;
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
@@ -1919,9 +2228,17 @@ namespace BOOM {
   // A ErrorExpanderMatrix is a BlockDiagonalMatrix that allows for blocks that
   // have ncol==0.  The effect of such blocks is to add block->nrow() rows of
   // 0's to the dense representation of the matrix.
-  class ErrorExpanderMatrix : public SparseKalmanMatrix {
+  class ErrorExpanderMatrix : public SparseMatrixBlock {
    public:
     ErrorExpanderMatrix();
+
+    ErrorExpanderMatrix(const ErrorExpanderMatrix &rhs);
+    ErrorExpanderMatrix & operator=(const ErrorExpanderMatrix &rhs);
+
+    ErrorExpanderMatrix(ErrorExpanderMatrix &&rhs) = default;
+    ErrorExpanderMatrix & operator=(ErrorExpanderMatrix &&rhs) = default;
+
+    ErrorExpanderMatrix * clone() const override;
 
     // Seasonal state models may change their number of columns over time,
     // because there will be one additional element of "noise" in time periods
@@ -1931,11 +2248,19 @@ namespace BOOM {
     int ncol() const override;
 
     void add_block(const Ptr<SparseMatrixBlock> &block);
+    //     void add_block(const Ptr<ErrorExpanderMatrix> &blocks);
     void replace_block(int block_index,
                        const Ptr<SparseMatrixBlock> &block);
 
     // Remove all the blocks, making the matrix empty.
     void clear();
+
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
+    void add_to_block(SubMatrix block) const override;
+
+    // Will throw an exception if any blocks are non-square.
+    void multiply_inplace(VectorView x) const override;
 
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
@@ -1946,6 +2271,8 @@ namespace BOOM {
     using SparseKalmanMatrix::Tmult;
 
     Vector Tmult(const ConstVectorView &x) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
 
@@ -1968,7 +2295,7 @@ namespace BOOM {
     // transition density for state space models when the error distribution is
     // less than full rank.   In those settings we must be able to evaluate
     // error_expander->left_inverse( new_state - T * old_state).
-    virtual Vector left_inverse(const ConstVectorView &rhs) const;
+    Vector left_inverse(const ConstVectorView &rhs) const override;
 
    private:
     std::vector<Ptr<SparseMatrixBlock>> blocks_;

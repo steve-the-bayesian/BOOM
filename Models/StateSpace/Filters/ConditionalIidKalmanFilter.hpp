@@ -27,7 +27,7 @@
 namespace BOOM {
 
   class ConditionalIidMultivariateStateSpaceModelBase;
-  
+
   namespace Kalman {
     // Marginal distribution for a multivariate state space model with
     // observation error variance equal to a constant times the identity matrix.
@@ -37,76 +37,47 @@ namespace BOOM {
         : public MultivariateMarginalDistributionBase {
      public:
       using ModelType = ConditionalIidMultivariateStateSpaceModelBase;
-      
+      using MarginalType = ConditionalIidMarginalDistribution;
+      using FilterType = MultivariateKalmanFilter<MarginalType>;
+
       explicit ConditionalIidMarginalDistribution(
           ConditionalIidMultivariateStateSpaceModelBase *model,
-          ConditionalIidMarginalDistribution *previous,
+          FilterType *filter,
           int time_index);
-      
-      ConditionalIidMarginalDistribution * previous() override {
-        return previous_;
-      }
-      const ConditionalIidMarginalDistribution * previous() const override {
-        return previous_;
-      }
+
+      ConditionalIidMarginalDistribution * previous() override;
+      const ConditionalIidMarginalDistribution * previous() const override;
 
       // It would be preferable to return the exact type of model_ here, but
       // doing so requires a covariant return, which we can't have without
       // declaring the full model type.  That can't happen because it would
       // create a cycle in the include graph.
       const MultivariateStateSpaceModelBase *model() const override;
-      
-      SpdMatrix forecast_precision() const override;
-      
-      // This class uses dense matrix algebra if the number of observations in
-      // this time period is less than some multiple times the dimension of the
-      // state.  By default the multiple is 1, but it can be changed using this
-      // function.
-      static void set_high_dimensional_threshold_factor(double value) {
-        high_dimensional_threshold_factor_ = value;
-      }
-      double high_dimensional_threshold_factor() const override {
-        return high_dimensional_threshold_factor_;
-      }
-      
+
+      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
+      double forecast_precision_log_determinant() const override;
+
      private:
-      // Compute prediction_error, scaled_prediction_error_,
-      // forecast_precision_log_determinant_, and kalman gain using the dense
-      // forecast variance matrix.
-      void low_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) override;
-
-      // Compute prediction_error, scaled_prediction_error_,
-      // forecast_precision_log_determinant_, and kalman gain _WITHOUT_
-      // computing the dense forecast variance matrix.
-      void high_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficients) override;
-
       // Compute the forecast precision matrix using the definition.
       SpdMatrix direct_forecast_precision() const;
 
-      // Compute the forecast precision matrix using the binomial inverse
-      // theorem.
-      SpdMatrix large_scale_forecast_precision() const;
+      void update_sparse_forecast_precision(const Selector &observed) override;
 
       //---------------------------------------------------------------------------
       // Data section
       ModelType *model_;
-      ConditionalIidMarginalDistribution *previous_;
-      static double high_dimensional_threshold_factor_;
+      FilterType *filter_;
+
+      // Implementation details for sparse_forecast_precision().
+      Matrix forecast_precision_inner_matrix_;
+      double forecast_precision_log_determinant_;
     };
-   
+
   }  // namespace Kalman
 
   using ConditionalIidKalmanFilter =
       MultivariateKalmanFilter<Kalman::ConditionalIidMarginalDistribution>;
-  
+
 }  // namespace BOOM
 
 

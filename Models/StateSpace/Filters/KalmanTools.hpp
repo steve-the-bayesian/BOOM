@@ -40,6 +40,32 @@ namespace BOOM {
                               bool missing, const Vector &Z, double H,
                               const Matrix &T, Matrix &L, const SpdMatrix &RQR);
 
+  // Kalman filter update for vector valued response.  This function is written
+  // for simplicity, not speed.  Please consider MultivariateKalmanFilterBase
+  // and its children for efficient filtering, especially in high dimensional
+  // problems.
+  //
+  // ******  This function exists for testing purposes.  Don't use in actual
+  // ******  library code.
+  //
+  // Args:
+  //   All the args are the model matrices using the notation from Durbin and
+  //   Koopman.
+  // returns:
+  //   The contribution to log likelihood from this observation.
+  double vector_kalman_update(const Vector &y,
+                              Vector &a,
+                              SpdMatrix &P,
+                              Matrix &K,
+                              SpdMatrix &F,
+                              Vector &v,
+                              const Selector &observed,
+                              Matrix Z,
+                              SpdMatrix H,
+                              const Matrix &T,
+                              Matrix &L,
+                              const SpdMatrix &RQR);
+
   // The Kalman filter as implemented above computes the predictive
   // distribution of the state at time t+1 given data up to time t.
   // This function takes the outputs of scalar_kalman_update and

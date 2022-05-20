@@ -166,6 +166,15 @@ namespace BOOM {
     return *this;
   }
 
+  Vector &Vector::randomize_gaussian(double mean, double sd, RNG &rng) {
+    size_t n = size();
+    double *d(data());
+    for (size_t i = 0; i < n; ++i) {
+      d[i] = rnorm_mt(rng, mean, sd);
+    }
+    return *this;
+  }
+
   double *Vector::data() {
     if (empty()) return 0;
     return &((*this)[0]);

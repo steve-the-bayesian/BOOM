@@ -198,7 +198,11 @@ namespace BOOM {
     }
 
    private:
+    // For explanation, please see the comments for the enum definition ofr
+    // KalmanFilterStatus.
     KalmanFilterStatus status_;
+
+    // The log likelihood of the data as computed by the last forward update.
     double log_likelihood_;
 
     // Durbin and Koopman's r0 from the fast disturbance smoother (see equation
