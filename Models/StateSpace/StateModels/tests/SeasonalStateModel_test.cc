@@ -256,7 +256,7 @@ namespace {
 
     std::string error_message = CheckStochasticProcess(
         seasonal_draws, ConstVectorView(seasonal, 0, 275),
-        .95, .1, "seasonal_draws.txt");
+        .95, .1, 0.5, "seasonal_draws.txt");
     EXPECT_EQ("", error_message) << "Seasonal pattern failed to cover.";
 
     if (!(level_status.ok && error_message == "")) {
