@@ -533,7 +533,7 @@ namespace BOOM {
   }
 
   bool ContextualEffect::is_valid() const {
-    return experiment_effect_.is_valid() & context_effect_.is_valid();
+    return experiment_effect_.is_valid() && context_effect_.is_valid();
   }
 
   const FactorDummy &ContextualEffect::experiment_factor(
