@@ -139,7 +139,8 @@ namespace BOOM {
     }
   }
 
-  Matrix::Matrix(const std::initializer_list<std::initializer_list<double>> &rows) {
+  Matrix::Matrix(
+      const std::initializer_list<std::initializer_list<double>> &rows) {
     nr_ = rows.size();
     nc_ = -1;
     std::vector<Vector> row_vectors;
@@ -500,13 +501,18 @@ namespace BOOM {
     return *this;
   }
 
-  dVector::iterator Matrix::col_begin(uint j) { return data_.begin() + j * nr_; }
+  dVector::iterator Matrix::col_begin(uint j) {
+    return data_.begin() + j * nr_;
+  }
+
   dVector::iterator Matrix::col_end(uint j) {
     return data_.begin() + (j + 1) * nr_;
   }
+
   dVector::const_iterator Matrix::col_begin(uint j) const {
     return data_.begin() + j * nr_;
   }
+
   dVector::const_iterator Matrix::col_end(uint j) const {
     return data_.begin() + (j + 1) * nr_;
   }
@@ -527,7 +533,10 @@ namespace BOOM {
   }
 
   VectorViewConstIterator Matrix::dbegin() const {
-    return VectorViewConstIterator(&(data_.front()), &(data_.back()), ncol() + 1);
+    return VectorViewConstIterator(
+        &(data_.front()),
+        &(data_.back()),
+        ncol() + 1);
   }
   VectorViewConstIterator Matrix::dend() const {
     return VectorViewConstIterator(
@@ -1104,7 +1113,9 @@ namespace BOOM {
     return ans;
   }
 
-  double Matrix::sum() const { return accumulate(data_.begin(), data_.end(), 0.0); }
+  double Matrix::sum() const {
+    return accumulate(data_.begin(), data_.end(), 0.0);
+  }
 
   double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
@@ -1434,7 +1445,8 @@ namespace BOOM {
   Vector LTmult(const Matrix &L, const Vector &y) {
     assert(L.is_square() && L.nrow() == y.size());
     Vector ans(y);
-    EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
+    EigenMap(ans) =
+        EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
     return ans;
   }
 

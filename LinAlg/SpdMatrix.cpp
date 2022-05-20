@@ -759,7 +759,9 @@ namespace BOOM {
 
     size_t start = 0;
     for (const auto &el : blocks) {
-      SubMatrix view(ans, start, start + el.nrow() - 1, start, start + el.ncol() - 1);
+      SubMatrix view(ans,
+                     start, start + el.nrow() - 1,
+                     start, start + el.ncol() - 1);
       view = el;
       start += el.nrow();
     }

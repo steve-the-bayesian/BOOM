@@ -59,11 +59,13 @@ namespace BOOM {
     //     false treat it as a collection of columns.
     explicit Matrix(const std::vector<Vector> &rows_or_cols, bool rows=true);
 
-    // Build a Matrix using a set of initializer lists.
+    // Build a Matrix using a set of initializer lists containing the matrix
+    // rows.
     //
     // Matrix mat{{0, 1},
     //            {2, 3}};
-    explicit Matrix(const std::initializer_list<std::initializer_list<double>> &rows);
+    explicit Matrix(
+        const std::initializer_list<std::initializer_list<double>> &rows);
 
     template <class FwdIt>
     Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc);
@@ -88,7 +90,8 @@ namespace BOOM {
     // Fill matrix entries with U(0,1) random variables.
     // Returns *this.
     virtual Matrix &randomize(RNG &rng = GlobalRng::rng);
-    virtual Matrix &randomize_gaussian(double mean, double sd, RNG &rng = GlobalRng::rng);
+    virtual Matrix &randomize_gaussian(
+        double mean, double sd, RNG &rng = GlobalRng::rng);
     virtual ~Matrix();
 
     // Returns true if empty, or if std::isfinite returns 'true' on
