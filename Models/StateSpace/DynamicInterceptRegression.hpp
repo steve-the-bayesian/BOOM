@@ -99,7 +99,6 @@ namespace BOOM {
   //
   class DynamicInterceptRegressionModel
       : public ConditionalIidMultivariateStateSpaceModelBase,
-        //        public CompositeParamPolicy,
         public IID_DataPolicy<StateSpace::TimeSeriesRegressionData>,
         public PriorPolicy {
    public:
@@ -118,7 +117,6 @@ namespace BOOM {
 
     void add_state(const Ptr<DynamicInterceptStateModel> &state_model) {
       state_models_.add_state(state_model);
-      // ParamPolicy::add_model(state_model);
     }
 
     int state_dimension() const override {
@@ -244,11 +242,6 @@ namespace BOOM {
 
     // Manages the state models.
     StateSpaceUtils::StateModelVector<DynamicInterceptStateModel> state_models_;
-
-    // The observation coefficients are a set of horizontal blocks
-    // (i.e. vertical strips?).  Each state component contributes a block.  The
-    // number of rows is the number of elements in y[t].
-    // mutable SparseVerticalStripMatrix observation_coefficients_;
   };
 
 }  // namespace BOOM

@@ -35,6 +35,8 @@ namespace BOOM {
     typedef std::vector<double> dVector;
 
     Matrix();
+    virtual ~Matrix();
+
     Matrix(const Matrix &rhs) = default;
     Matrix(Matrix &&rhs) = default;
 
@@ -90,9 +92,10 @@ namespace BOOM {
     // Fill matrix entries with U(0,1) random variables.
     // Returns *this.
     virtual Matrix &randomize(RNG &rng = GlobalRng::rng);
+
+    // Fill the matrix with N(mu, sd^2) random numbers.
     virtual Matrix &randomize_gaussian(
         double mean, double sd, RNG &rng = GlobalRng::rng);
-    virtual ~Matrix();
 
     // Returns true if empty, or if std::isfinite returns 'true' on
     // all elements.  Returns false otherwise.

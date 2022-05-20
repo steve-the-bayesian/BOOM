@@ -400,7 +400,7 @@ namespace BOOM {
   // A GeneralMultivariateStateSpaceModelBase is a
   // MultivariateStateSpaceModelBase with an observation error variance that is
   // a SpdMatrix.  This setting provides a general form for fitting models, but
-  // does not scale to large numbers of series very well.
+  // does not scale to large numbers of series.
   class GeneralMultivariateStateSpaceModelBase
       : public MultivariateStateSpaceModelBase {
    public:
@@ -438,10 +438,23 @@ namespace BOOM {
     {}
 
     // Variance of the observation error at time t.  Durbin and Koopman's H[t].
-    // This matrix includes all the
+    // This matrix includes elements for both missing and observed data.  If you
+    // just want the matrix for observed data, use the interface with the
+    // Selector as a second argument.
     virtual DiagonalMatrix observation_variance(int t) const = 0;
+
+    // Args:
+    //   t:   The time index.
+    //   observed:  The subset of time series for which variances are desired.
+    //
+    // Returns:
+    //   A DiagonalMatrix containing the variance of the observation error at
+    //   time t for the observed subset of of the data.
     virtual DiagonalMatrix observation_variance(
         int t, const Selector &observed) const = 0;
+
+    // The observation variance, for the requested subset of the data, at a
+    // given time point, as an SpdMatrix.
     SpdMatrix dense_observation_variance(
         int t, const Selector &observed) const override {
       SpdMatrix ans(observed.nvars(), 1.0);

@@ -154,8 +154,6 @@ namespace BOOM {
         shared_state_.col(t) = simulate_next_state(
             rng, ConstVectorView(shared_state_.col(t - 1)), t);
       }
-      // Vector simulated_observation = observed_status(t).expand(
-      //     simulate_fake_observation(rng, t));
       Vector simulated_observation = simulate_fake_observation(rng, t);
       simulation_filter.update_single_observation(
           simulated_observation, observed_status(t), t);
@@ -235,7 +233,6 @@ namespace BOOM {
         + P0 * filter.initial_scaled_state_error();
 
     shared_state_.col(0) += state_mean_obs - state_mean_sim;
-    //    impute_missing_observations(0, rng);
     observe_state(0);
     observe_data_given_state(0);
 
@@ -248,7 +245,6 @@ namespace BOOM {
           (*state_variance_matrix(t - 1)) * filter[t - 1].scaled_state_error();
 
       shared_state_.col(t).axpy(state_mean_obs - state_mean_sim);
-      //      impute_missing_observations(t, rng);
       observe_state(t);
       observe_data_given_state(t);
     }

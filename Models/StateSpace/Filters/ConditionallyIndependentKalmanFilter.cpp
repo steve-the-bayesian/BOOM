@@ -82,22 +82,6 @@ namespace BOOM {
       }
     }
 
-    // Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
-    //     const Selector &observed) const {
-    //   // K = T P Z' Finv
-    //   SpdMatrix variance = previous() ? previous()->state_variance() :
-    //       model_->initial_state_variance();
-    //   NEW(SparseMatrixProduct, sparse_kalman_gain)();
-    //   sparse_kalman_gain->add_term(
-    //       model_->state_transition_matrix(time_index()));
-    //   sparse_kalman_gain->add_term(new DenseMatrix(variance));
-    //   sparse_kalman_gain->add_term(
-    //       model_->observation_coefficients(time_index(), observed),
-    //       true);
-    //   sparse_kalman_gain->add_term(sparse_forecast_precision());
-    //   return sparse_kalman_gain;
-    // }
-
     // To be called by the base class during the forward update portion of the
     // Kalman filter.
     void Marginal::update_sparse_forecast_precision(

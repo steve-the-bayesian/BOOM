@@ -131,22 +131,6 @@ namespace BOOM {
     //----------------------------------------------------------------------
     // Methods intended for use with the posterior samplers managing this model.
 
-
-    // A setter helps prevent the user from forgetting to transpose the
-    // observation coefficients.
-    //
-    // Args:
-    //   Z: The matrix of observation coefficients.  nseries rows by
-    //     number_of_factors columns.
-    // void set_observation_coefficients(const Matrix &Z) {
-    //   coefficient_model_->set_Beta(Z.transpose());
-    // }
-
-    // Copy the observation coefficients from the regression model to the state
-    // matrix.  Note that the state coefficient matrix is the transpose of the
-    // regression coefficient matrix.
-    //     void sync_observation_coefficients();
-
     Ptr<ZeroMeanGaussianModel> innovation_model(int i) {
       return innovation_models_[i];
     }
@@ -216,7 +200,6 @@ namespace BOOM {
     Ptr<SparseMatrixBlock> observation_coefficients(
         int t, const Selector &observed) const override;
     int nseries() const override;
-    int nfactors() const;
 
     ConditionallyIndependentMultivariateStateSpaceModelBase *
     host() override {

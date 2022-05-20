@@ -113,6 +113,8 @@ namespace BOOM {
 
     // Fill the Vector with U(0,1) random numbers.
     Vector &randomize(RNG &rng = GlobalRng::rng);
+
+    // Fill the Vector with N(mu, sd^2) random numbers.
     Vector &randomize_gaussian(
         double mean, double sd, RNG &rng = GlobalRng::rng);
 

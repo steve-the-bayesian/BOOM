@@ -47,16 +47,6 @@ namespace BOOM {
         return fully_missing_update();
       }
 
-      // SpdMatrix previous_state_variance =
-      //     previous() ? previous()->state_variance() : model()->initial_state_variance();
-      // std::cout
-      //     << "============================================================\n"
-      //     << " In MarginalBase::update for time " << time_index() << "\n"
-      //     << " state_variance = \n"
-      //     << state_variance()
-      //     << "previous state variance = \n"
-      //     << previous_state_variance;
-
       const SparseKalmanMatrix &transition(
           *model()->state_transition_matrix(time_index()));
 
@@ -86,8 +76,12 @@ namespace BOOM {
       set_state_mean(transition * state_mean()
                      + kalman_gain * prediction_error());
 
+      // Update the state variance.  This implementation is the result of some
+      // debugging.  If profiling shows too much time is spent in this function,
+      // this section is a good place to look for optimizations.  We probably
+      // don't need to allocate quite so many SpdMatrix objects.
+      //
       // Pt|t = Pt - Pt * Z' Finv Z Pt
-      //            DO NOT SUBMIT LIKE THIS!!!!!!!                         BEGIN
       SpdMatrix new_state_variance = state_variance();
 
       SpdMatrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
@@ -104,13 +98,12 @@ namespace BOOM {
       new_state_variance = contemp_variance;
       transition.sandwich_inplace(new_state_variance);
       new_state_variance += increment2;
+#ifndef NDEBUG
+      // Only check the variance in debug mode.
       Kalman::check_variance(new_state_variance);
-      //            DO NOT SUBMIT LIKE THIS!!!!!!!                        END
+#endif
+
       set_state_variance(new_state_variance);
-
-      // std::cout << "Done with update: state_variance = \n"
-      //           << new_state_variance;
-
       return log_likelihood;
     }
 

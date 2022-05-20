@@ -377,10 +377,6 @@ namespace BOOM {
     return host_->nseries();
   }
 
-  int CindSLLM::nfactors() const {
-    return raw_observation_coefficients_[0]->nvars_possible();
-  }
-
   Ptr<SparseMatrixBlock> CindSLLM::observation_coefficients(
       int time, const Selector &observed) const {
     ensure_observation_coefficients_current();
@@ -394,7 +390,7 @@ namespace BOOM {
 
   void CindSLLM::ensure_observation_coefficients_current() const {
     if (!observation_coefficients_current_) {
-      Matrix coefficients(nseries(), nfactors());
+      Matrix coefficients(nseries(), number_of_factors());
       for (int i = 0; i < nseries(); ++i) {
         coefficients.row(i) = raw_observation_coefficients_[i]->Beta();
       }

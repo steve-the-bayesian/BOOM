@@ -45,7 +45,8 @@ namespace BOOM {
   // and its children for efficient filtering, especially in high dimensional
   // problems.
   //
-  // ******  This function exists mainly for testing purposes.  ********
+  // ******  This function exists for testing purposes.  Don't use in actual
+  // ******  library code.
   //
   // Args:
   //   All the args are the model matrices using the notation from Durbin and
