@@ -201,6 +201,7 @@ namespace BOOM {
       double diff = now[i] - then[i];
       innovation_models_[i]->suf()->update_raw(diff);
     }
+
     // Residual y is the residual remaining after the other state components
     // have made their contributions.
     //
@@ -212,9 +213,9 @@ namespace BOOM {
     //     Selector fully_observed(host()->state_dimension(), true);
     const Selector &observed(host()->observed_status(time_now));
 
-    // Subtract off the effect of other state models, and add in the effect of
-    // this one, so that the only effect present is from this state model and
-    // random error.
+    // Subtract off the effect of other state models (or regression models), and
+    // add in the effect of this one, so that the only effect present is from
+    // this state model and random error.
     //
     // The first "state" calculation below uses the full state vector.  The
     // second uses 'now' which is a subset.
@@ -340,7 +341,7 @@ namespace BOOM {
       // The observation coefficents for series i.
       NEW(GlmCoefs, series_observation_coefficients)(all_ones, true);
       raw_observation_coefficients_.push_back(series_observation_coefficients);
-      sufficient_statistics_.push_back(WeightedRegSuf(number_of_factors));
+      sufficient_statistics_.push_back(new WeightedRegSuf(number_of_factors));
     }
     set_observation_coefficients_observer();
   }
@@ -358,7 +359,7 @@ namespace BOOM {
     }
 
     for (const auto &el : rhs.sufficient_statistics_) {
-      sufficient_statistics_.push_back(WeightedRegSuf(el));
+      sufficient_statistics_.push_back(el->clone());
     }
     set_observation_coefficients_observer();
   }
@@ -369,7 +370,7 @@ namespace BOOM {
   void CindSLLM::clear_data() {
     clear_state_transition_data();
     for (auto &el : sufficient_statistics_) {
-      el.clear();
+      el->clear();
     }
   }
 
@@ -405,7 +406,7 @@ namespace BOOM {
     const Selector &observed(host_->observed_status(time_now));
     for (int i = 0; i < residual_y.size(); ++i) {
       int I = observed.dense_index(i);
-      sufficient_statistics_[I].add_data(now, residual_y[i], 1.0);
+      sufficient_statistics_[I]->add_data(now, residual_y[i], 1.0);
     }
   }
 

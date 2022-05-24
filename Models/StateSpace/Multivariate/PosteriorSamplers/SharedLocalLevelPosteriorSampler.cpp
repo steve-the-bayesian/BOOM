@@ -196,12 +196,12 @@ namespace BOOM {
       double sigsq = model_->host()->single_observation_variance(0, i);
       Selector inc = model_->raw_observation_coefficients(i)->inc();
       samplers_[i].draw_inclusion_indicators(
-          rng(), inc, model_->suf(i), sigsq);
+          rng(), inc, *model_->suf(i), sigsq);
       model_->raw_observation_coefficients(i)->set_inc(inc);
 
       Vector full_beta = model_->raw_observation_coefficients(i)->Beta();
       samplers_[i].draw_coefficients_given_inclusion(
-          rng(), full_beta, inc, model_->suf(i), sigsq);
+          rng(), full_beta, inc, *model_->suf(i), sigsq);
       model_->raw_observation_coefficients(i)->set_Beta(full_beta);
     }
   }

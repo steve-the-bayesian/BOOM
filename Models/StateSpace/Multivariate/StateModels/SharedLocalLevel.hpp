@@ -219,7 +219,7 @@ namespace BOOM {
       return raw_observation_coefficients_[i];
     }
 
-    const WeightedRegSuf& suf(int i) const {
+    const Ptr<WeightedRegSuf>& suf(int i) const {
       return sufficient_statistics_[i];
     }
 
@@ -246,7 +246,7 @@ namespace BOOM {
     // then all the X'X entries will be the same, but if some series are
     // partially observed then they will have different X'X entries, so we need
     // a series-by-series
-    std::vector<WeightedRegSuf> sufficient_statistics_;
+    std::vector<Ptr<WeightedRegSuf>> sufficient_statistics_;
 
     mutable Ptr<DenseMatrix> observation_coefficients_;
     mutable bool observation_coefficients_current_;
