@@ -133,7 +133,6 @@ mbsts(formula,
     If ping > 0 then the program will print a status message to the
     screen every \code{ping} MCMC iterations.}
 
-
   \item{data.format}{Whether the data are store in wide (each row is a
     time point, and columns are values from different series) or long
     (each row is the value of a particular series at a particular point
@@ -177,7 +176,6 @@ mbsts(formula,
   the design matrix when a new prediction is made.
 }
 
-
 \references{
   Harvey (1990), "Forecasting, structural time series, and the Kalman
   filter", Cambridge University Press.
@@ -188,7 +186,6 @@ mbsts(formula,
   George and McCulloch (1997)
   "Approaches for Bayesian variable selection", Statistica Sinica pp
   339--374.
-
 }
 
 \author{
@@ -228,7 +225,6 @@ for (i in 1:ncol(state)) {
 ## Simulate "observed" data from state.
 ##---------------------------------------------------------------------------
 observation.coefficients <- matrix(rnorm(nseries * nfactors), nrow = nseries)
-print("observation.coefficients =\n", observation.coefficients)
 diag(observation.coefficients) <- 1.0
 observation.coefficients[upper.tri(observation.coefficients)] <- 0
 
@@ -236,8 +232,6 @@ errors <- matrix(rnorm(nseries * ntimes, 0, residual.sd), ncol = ntimes)
 y <- t(observation.coefficients \%*\% t(state) + errors)
 
 \dontrun{
-cat("simulated y (first 10 rows): \n")
-print(y[1:10, ])
 
 ##---------------------------------------------------------------------------
 ## Plot the data.
