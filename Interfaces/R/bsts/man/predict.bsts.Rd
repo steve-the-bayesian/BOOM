@@ -17,9 +17,9 @@
 \alias{predict.bsts}
 \alias{bsts.prediction}
 \name{predict.bsts}
-\title{Prediction for bayesian structural time series}
+\title{Prediction for Bayesian Structural Time Series}
 \Rdversion{1.1}
-\description{Generated draws from the posterior predictive distribution
+\description{Generate draws from the posterior predictive distribution
   of a \code{\link{bsts}} object.}
 \usage{
 \method{predict}{bsts}(object,
@@ -121,7 +121,7 @@
 
   \item{seed}{An integer to use as the C++ random seed.  If \code{NULL}
   then the C++ seed will be set using the clock.}
-  
+
   \item{\dots}{This is a dummy argument included to match the signature
     of the generic \code{\link{predict}} function.  It is not used.}
 
@@ -209,7 +209,7 @@
   plot(updated.pred, ylim = c(4, 7))
 
   ## Examples including a regression component.
-  ## 
+  ##
   data(iclaims)
   training <- initial.claims[1:402, ]
   holdout1 <- initial.claims[403:450, ]

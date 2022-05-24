@@ -16,7 +16,7 @@
 
 AddSharedLocalLevel <- function(state.specification,
                                 response,
-                                nfactors, 
+                                nfactors,
                                 coefficient.prior = NULL,
                                 initial.state.prior = NULL,
                                 timestamps = NULL,
@@ -31,8 +31,8 @@ AddSharedLocalLevel <- function(state.specification,
   ##
   ## For identification purposes, the variance of eta[t] is the identity matrix,
   ## and the coefficient matrix Z It is zero above the diagonal.  This means
-  ## that the first time series is only affected by the first factor.  The
-  ## second is affected by the first and second factors, etc.  
+  ## that the first factor affects all time series, the second affects all but
+  ## the first series, the third affects all but the first two, etc.
   ##
   ## Args:
   ##   state.specification: A list of state components to which a shared local
@@ -44,12 +44,11 @@ AddSharedLocalLevel <- function(state.specification,
   ##   coefficient.prior: An object (or a list of objects) inheriting from
   ##     SpikeSlabPriorBase.  If a list is passed it must have 'nseries'
   ##     elements, where 'nseries' is the number of time series being modeled.
-  ##     If a single object is passed it will be copied into a list of 'nseries'
-  ##     identical prior objects.  List element i specifies the prior
-  ##     distribution on the set of observation coefficients for time series i.
-  ##     Note that identifiability constriants will be imposed by underlying
-  ##     code, so that if series k < 'nfactors', only the first 'k' factors will
-  ##     have positive prior probability for series k.
+  ##     List element i specifies the prior distribution on the set of
+  ##     observation coefficients for time series i (i.e. the i'th column of the
+  ##     observation coefficients.  If a single list element is passed it will
+  ##     be copied 'nseries' times, and the spike component will be modified to
+  ##     impose the lower triangular constrint.
   ##   initial.state.prior: An object created by MvnPrior giving the prior
   ##     distribution on the values of the initial state (i.e. the state as of
   ##     the first observation).
@@ -70,7 +69,7 @@ AddSharedLocalLevel <- function(state.specification,
   if (missing(state.specification)) state.specification <- list()
   stopifnot(is.list(state.specification))
   stopifnot(is.numeric(nfactors), length(nfactors) == 1, nfactors >= 1)
-  
+
   if (!missing(response)) {
     stopifnot(is.numeric(response))
     if (is.matrix(response)) {
@@ -90,12 +89,13 @@ AddSharedLocalLevel <- function(state.specification,
 
   nfactors <- as.integer(nfactors)
   stopifnot(length(nfactors) == 1)
-  
+
   ##----------------------------------------------------------------------
-  # Set the prior on the observation coefficients.
+  ## Set the prior on the observation coefficients.
   ##----------------------------------------------------------------------
   # The coefficients Z satisfy Y[t] = Z * alpha, so the coefficients have
-  # 'nseries' rows and 'nfactors' columns.
+  # 'nseries' rows and 'nfactors' columns.  Each list element describes the
+  # coefficients for a column.
   if (is.null(coefficient.prior)) {
     coefficient.prior <- list()
     for (i in 1:nseries) {
@@ -114,7 +114,7 @@ AddSharedLocalLevel <- function(state.specification,
   }
   stopifnot(is.list(coefficient.prior),
     all(sapply(coefficient.prior, inherits, "ConditionalZellnerPrior")))
-  
+
   ##----------------------------------------------------------------------
   ## Set the prior on the initial state.
   ##----------------------------------------------------------------------

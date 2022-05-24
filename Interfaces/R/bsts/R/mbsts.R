@@ -241,6 +241,7 @@ mbsts <- function(formula,
   ans$series.state.specification <- series.state.specification
   ans$prior <- prior
   ans$niter <- niter
+
   ans$timestamp.info <- data.list$timestamp.info
   ans$series.id <- series.id
   ans$original.series <- response
