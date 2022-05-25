@@ -117,8 +117,14 @@ namespace BOOM {
 
     SpdMatrix Marginal::contemporaneous_state_variance() const {
       const Marginal *prev = previous();
-      SpdMatrix P = prev ? model_->initial_state_variance() :
-          prev->state_variance();
+      SpdMatrix P;
+      if (prev) {
+        P = model_->initial_state_variance();
+      } else {
+        P = prev->state_variance();
+      }
+      // = prev ? model_->initial_state_variance() :
+      //     prev->state_variance();
       SparseVector Z(model_->observation_matrix(time_index()));
       return P - (P * Z).outer() / prediction_variance_;
     }
