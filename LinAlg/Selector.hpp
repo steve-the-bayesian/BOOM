@@ -173,10 +173,13 @@ namespace BOOM {
     Vector expand(const ConstVectorView &x) const;
 
     // Fill the missing elements of a vector with specfic values.
+    //
     // Args:
     //   v: The vector to be partially filled.
-    //   value/values:  The values to be filled in for v[i] where *this[i] is false.
-    //     In the vector version, values must have size nvars_excluded().
+    //   value/values: The values to be filled in for v[i] where *this[i] is
+    //     false.  In the vector version, values must have size
+    //     nvars_excluded().
+    //
     // Returns:
     //   The excluded elements of v are filled with the supplied values, and the
     //   modified v is returned.

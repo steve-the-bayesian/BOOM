@@ -122,6 +122,8 @@ S3method(residuals, bsts)
 
 S3method(plot, bsts.prediction)
 
+S3method(plot, bsts.mixed)
+
 S3method(plot, mbsts)
 S3method(predict, mbsts)
 S3method(plot, mbsts.prediction)

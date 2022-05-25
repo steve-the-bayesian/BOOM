@@ -31,23 +31,24 @@ namespace BOOM {
   class IndependentRegressionModels
       : public CompositeParamPolicy,
         public NullDataPolicy,
-        public PriorPolicy {
+        public PriorPolicy,
+        public PosteriorModeModel {
    public:
     IndependentRegressionModels(int xdim, int ydim);
     IndependentRegressionModels(const IndependentRegressionModels &rhs);
-    
+
     IndependentRegressionModels *clone() const override {
       return new IndependentRegressionModels(*this);
     }
-    
+
     int xdim() const {return models_[0]->xdim();}
     int ydim() const {return models_.size();}
 
     void clear_data() override;
-    
+
     Ptr<RegressionModel> model(int i) {return models_[i];}
     const Ptr<RegressionModel> model(int i) const {return models_[i];}
-    
+
    private:
     std::vector<Ptr<RegressionModel>> models_;
   };

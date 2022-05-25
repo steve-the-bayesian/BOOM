@@ -162,6 +162,8 @@ namespace BOOM {
 
   double dstudent(double y, double mu, double sigma, double df,
                   bool log = false);
+  double pstudent(double y, double mu, double sigma, double df, bool lower_tail = true, bool logscale = false);
+  double qstudent(double y, double mu, double sigma, double df, bool lower_tail = true, bool logscale = false);
   double rstudent(double mu, double sigma, double df);
   double rstudent_mt(RNG &rng, double mu, double sigma, double df);
 

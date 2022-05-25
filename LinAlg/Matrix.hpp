@@ -35,6 +35,8 @@ namespace BOOM {
     typedef std::vector<double> dVector;
 
     Matrix();
+    virtual ~Matrix();
+
     Matrix(const Matrix &rhs) = default;
     Matrix(Matrix &&rhs) = default;
 
@@ -59,6 +61,14 @@ namespace BOOM {
     //     false treat it as a collection of columns.
     explicit Matrix(const std::vector<Vector> &rows_or_cols, bool rows=true);
 
+    // Build a Matrix using a set of initializer lists containing the matrix
+    // rows.
+    //
+    // Matrix mat{{0, 1},
+    //            {2, 3}};
+    explicit Matrix(
+        const std::initializer_list<std::initializer_list<double>> &rows);
+
     template <class FwdIt>
     Matrix(FwdIt Beg, FwdIt End, uint nr, uint nc);
 
@@ -81,8 +91,11 @@ namespace BOOM {
 
     // Fill matrix entries with U(0,1) random variables.
     // Returns *this.
-    virtual Matrix &randomize();
-    virtual ~Matrix();
+    virtual Matrix &randomize(RNG &rng = GlobalRng::rng);
+
+    // Fill the matrix with N(mu, sd^2) random numbers.
+    virtual Matrix &randomize_gaussian(
+        double mean, double sd, RNG &rng = GlobalRng::rng);
 
     // Returns true if empty, or if std::isfinite returns 'true' on
     // all elements.  Returns false otherwise.
@@ -393,6 +406,7 @@ namespace BOOM {
 
   // Print the matrix to stdout.
   void print(const Matrix &m);
+  inline void print_matrix(const Matrix &m) {print(m);}
   std::istream &operator>>(std::istream &in, Matrix &m);
   // reads until a blank line is found or the end of a line
 

@@ -254,7 +254,7 @@ namespace BOOM {
       for (int s = 0; s < model->number_of_state_models(); ++s) {
         DynamicRegressionStateModel *dreg =
             dynamic_cast<DynamicRegressionStateModel *>(
-                model->state_model(s).get());
+                model->state_model(s));
         if (dreg) {
           dreg->add_forecast_data(ToBoomMatrix(
               r_dynamic_regression_predictors));
@@ -263,7 +263,7 @@ namespace BOOM {
 
         DynamicRegressionArStateModel *dregar =
             dynamic_cast<DynamicRegressionArStateModel *>(
-                model->state_model(s).get());
+                model->state_model(s));
         if (dregar) {
           dregar->add_forecast_data(ToBoomMatrix(
               r_dynamic_regression_predictors));

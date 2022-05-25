@@ -29,7 +29,7 @@ namespace BOOM {
     namespace {
       using Manager = DynamicInterceptModelManager;
     }
-    
+
     Manager::DynamicInterceptModelManager(int xdim)
         : model_(new DynamicInterceptRegressionModel(xdim)) {}
 
@@ -38,7 +38,7 @@ namespace BOOM {
       int xdim = Rf_ncols(r_predictors);
       return new DynamicInterceptModelManager(xdim);
     }
-    
+
     DynamicInterceptRegressionModel *Manager::CreateModel(
         SEXP r_data_list,
         SEXP r_state_specification,
@@ -51,11 +51,11 @@ namespace BOOM {
       state_model_factory.AddState(model_.get(), r_state_specification);
       SetDynamicRegressionStateComponentPositions(
           state_model_factory.DynamicRegressionStateModelPositions());
-      using Marginal = Kalman::ConditionalIidMarginalDistribution;
-      Marginal::set_high_dimensional_threshold_factor(
-          Rf_asReal(getListElement(
-              r_options, "high.dimensional.threshold.factor", true)));
-      
+      // using Marginal = Kalman::ConditionalIidMarginalDistribution;
+      // Marginal::set_high_dimensional_threshold_factor(
+      //     Rf_asReal(getListElement(
+      //         r_options, "high.dimensional.threshold.factor", true)));
+
       //---------------------------------------------------------------------------
       // Set the posterior samplers.
       RegressionModel *regression(model_->observation_model());
@@ -74,7 +74,7 @@ namespace BOOM {
 
       NEW(DynamicInterceptRegressionPosteriorSampler, sampler)(model_.get());
       model_->set_method(sampler);
-      
+
       //---------------------------------------------------------------------------
       // Set the io_manager.
       io_manager->add_list_element(
@@ -91,7 +91,7 @@ namespace BOOM {
               new DynamicInterceptStateContributionCallback(model_.get()),
               "state.contributions",
               nullptr));
-      
+
       return model_.get();
     }
 
@@ -187,7 +187,7 @@ namespace BOOM {
         }
       }
     }
-    
+
     void Manager::AddData(const Vector &response,
                           const Matrix &predictors,
                           const Selector &response_is_observed) {
@@ -200,7 +200,7 @@ namespace BOOM {
       }
       model_->add_data(data_point);
     }
-    
+
     void Manager::AddDataFromList(SEXP r_data_list) {
       Matrix predictors = ToBoomMatrix(getListElement(r_data_list, "predictors"));
       Vector response = ToBoomVector(getListElement(r_data_list, "response"));

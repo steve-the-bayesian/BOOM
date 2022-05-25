@@ -58,11 +58,11 @@ namespace BOOM {
       out << cbind(response_, predictors_);
       return out;
     }
-    
+
   }  // namespace StateSpace
 
   //===========================================================================
-  
+
   DIRM::DynamicInterceptRegressionModel(int xdim) {
     initialize_regression_component(xdim);
   }
@@ -97,7 +97,7 @@ namespace BOOM {
       Ptr<TimeSeriesRegressionData> data(dat()[t]);
       Vector state_contribution = (*observation_coefficients(
           t, observed_status(t))) * shared_state(t);
-      
+
       RegressionModel *regression = regression_->regression();
       for (int i = 0; i < data->sample_size(); ++i) {
         const Ptr<RegressionData> &data_point(data->regression_data(i));
@@ -127,12 +127,12 @@ namespace BOOM {
       }
     }
   }
-  
+
   void DIRM::impute_state(RNG &rng) {
     MultivariateStateSpaceModelBase::impute_state(rng);
     observation_model()->suf()->fix_xtx();
   }
-  
+
   void DIRM::add_data(const Ptr<Data> &dp) { add_data(DAT(dp)); }
   void DIRM::add_data(TimeSeriesRegressionData *dp) {
     add_data(Ptr<TimeSeriesRegressionData>(dp));
@@ -144,15 +144,14 @@ namespace BOOM {
     DataPolicy::add_data(dp);
   }
 
-  const SparseKalmanMatrix *DIRM::observation_coefficients(
+  Ptr<SparseKalmanMatrix> DIRM::observation_coefficients(
       int t, const Selector &) const {
-    observation_coefficients_.clear();
+    NEW(SparseVerticalStripMatrix, ans)();
     const StateSpace::TimeSeriesRegressionData &data_point(*dat()[t]);
     for (int s = 0; s < number_of_state_models(); ++s) {
-      observation_coefficients_.add_block(
-          state_models_[s]->observation_coefficients(t, data_point));
+      ans->add_block(state_models_[s]->observation_coefficients(t, data_point));
     }
-    return &observation_coefficients_;
+    return ans;
   }
 
   double DIRM::observation_variance(int t) const {
@@ -170,7 +169,7 @@ namespace BOOM {
   const Selector &DIRM::observed_status(int t) const {
     return dat()[t]->observed();
   }
-  
+
   Vector DIRM::conditional_mean(int time) const {
     return (*observation_coefficients(
         time, observed_status(time)) * shared_state().col(time));
@@ -245,7 +244,7 @@ namespace BOOM {
     }
     return ans;
   }
-  
+
   //===========================================================================
   // private:
   Vector DIRM::simulate_fake_observation(RNG &rng, int t) {
@@ -265,9 +264,6 @@ namespace BOOM {
     regression_.reset(new RegressionDynamicInterceptStateModel(
         new RegressionModel(xdim)));
     add_state(regression_);
-    ParamPolicy::add_model(regression_);
   }
 
-
-  
 }  // namespace BOOM

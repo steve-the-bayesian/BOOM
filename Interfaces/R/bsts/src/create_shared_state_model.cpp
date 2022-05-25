@@ -37,10 +37,11 @@
 
 namespace BOOM {
   namespace bsts {
+    using CISSMF = ConditionallyIndependentSharedStateModelFactory;
 
-    void SharedStateModelFactory::AddState(
+    void CISSMF::AddState(
         SharedStateModelVector &state_models,
-        MultivariateStateSpaceModelBase *model,
+        CIMSSMB *model,
         SEXP r_shared_state_specification,
         const std::string &prefix) {
       if (!model) return;
@@ -56,16 +57,16 @@ namespace BOOM {
 
     class SharedFinalStateCallback : public VectorIoCallback {
      public:
-      explicit SharedFinalStateCallback(MultivariateStateSpaceModelBase *model)
+      explicit SharedFinalStateCallback(CIMSSMB *model)
           : model_(model) {}
       int dim() const override {return model_->state_dimension();}
       Vector get_vector() const override {return model_->final_state();}
      private:
-      MultivariateStateSpaceModelBase *model_;
+      CIMSSMB *model_;
     };
 
-    void SharedStateModelFactory::SaveFinalState(
-        MultivariateStateSpaceModelBase *model,
+    void CISSMF::SaveFinalState(
+        CIMSSMB *model,
         BOOM::Vector *final_state,
         const std::string &list_element_name) {
       if (!(model && final_state && io_manager())) return;
@@ -78,8 +79,8 @@ namespace BOOM {
     }
 
     Ptr<SharedStateModel>
-    SharedStateModelFactory::CreateSharedStateModel(
-        MultivariateStateSpaceModelBase *model,
+    CISSMF::CreateSharedStateModel(
+        CIMSSMB *model,
         SEXP r_state_component,
         const std::string &prefix) {
       if (Rf_inherits(r_state_component, "SharedLocalLevel")) {
@@ -96,7 +97,7 @@ namespace BOOM {
         : public StreamableVectorIoCallback {
      public:
       explicit SharedLocalLevelVarianceManager(
-          SharedLocalLevelStateModel *model)
+          ConditionallyIndependentSharedLocalLevelStateModel *model)
           : model_(model)
       {}
 
@@ -117,16 +118,17 @@ namespace BOOM {
       }
 
      private:
-      SharedLocalLevelStateModel *model_;
+      ConditionallyIndependentSharedLocalLevelStateModel *model_;
     };
     // ---------------------------------------------------------------------------
 
-    Ptr<SharedStateModel> SharedStateModelFactory::CreateSharedLocalLevel(
+    Ptr<SharedStateModel> CISSMF::CreateSharedLocalLevel(
         SEXP r_state_component,
-        MultivariateStateSpaceModelBase *model,
+        CIMSSMB *model,
         const std::string &prefix) {
       int nfactors = lround(Rf_asReal(getListElement(r_state_component, "size")));
-      NEW(SharedLocalLevelStateModel, state_model)(nfactors, model, nseries_);
+      NEW(ConditionallyIndependentSharedLocalLevelStateModel, state_model)(
+          model, nfactors, nseries_);
 
       // Set the initial state distribution.
       RInterface::MvnPrior initial_state_prior(getListElement(
@@ -148,26 +150,30 @@ namespace BOOM {
         RInterface::ConditionalZellnerPrior this_series_prior(VECTOR_ELT(
             r_coefficient_priors, i));
         spikes.push_back(this_series_prior.spike());
-        NEW(MvnGivenXMvRegSuf, slab)(
+        NEW(MvnGivenXWeightedRegSuf, slab)(
             new VectorParams(this_series_prior.mean()),
             new UnivParams(this_series_prior.prior_information_weight()),
             Vector(),
             this_series_prior.diagonal_shrinkage(),
-            state_model->coefficient_model()->suf());
+            state_model->suf(i));
         slabs.push_back(slab);
       }
 
       // Set the posterior sampler for the overall state model.
-      NEW(SharedLocalLevelPosteriorSampler, state_model_sampler)(
-          state_model.get(), slabs, spikes);
+      NEW(ConditionallyIndependentSharedLocalLevelPosteriorSampler,
+          state_model_sampler)(state_model.get(), slabs, spikes);
 
       state_model->set_method(state_model_sampler);
 
       // Set the io manager, if there is one.
       if (io_manager()) {
-        io_manager()->add_list_element(new MatrixListElement(
-            state_model->coefficient_model()->Beta_prm(),
-            prefix + "shared.local.level.coefficients"));
+        NEW(HierarchicalVectorListElement, coefficient_manager)(
+            prefix + "shared.local.level.coefficients");
+        for (int i = 0; i < nseries_; ++i) {
+          coefficient_manager->add_vector(
+              state_model->raw_observation_coefficients(i));
+        }
+        io_manager()->add_list_element(coefficient_manager);
       }
       return state_model;
     }

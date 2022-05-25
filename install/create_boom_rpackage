@@ -140,6 +140,44 @@ $SED -i 's|#pragma clang diagnostic push|// #pragma clang diagnostic push|g' $fn
 $SED -i 's|#pragma GCC diagnostic ignored|// #pragma GCC diagnostic ignored|g' $fname
 $SED -i 's|#pragma GCC diagnostic push|// #pragma GCC diagnostic push|g' $fname
 
+##----------------------------------------------------------------------
+# Rename files with long names.  If the files are include files, then we need to
+# find the files that include them, and rename the includes in the source.
+
+echo "renaming long file names"
+
+# The base install path.
+ibase="$BOOM_DIR/inst/include"
+
+# The directory containing the header to be renamed.
+dbase="Models/StateSpace/Multivariate/PosteriorSamplers"
+
+# The specific header value, and its replacement.
+hdr="MultivariateStateSpaceModelSampler.hpp"
+new_hdr="MVSSMS.hpp"
+
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+hdr="MvStateSpaceRegressionPosteriorSampler.hpp"
+new_hdr="MVSSRPS.hpp"
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+hdr="SharedLocalLevelPosteriorSampler.hpp"
+new_hdr="SLLPS.hpp"
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+dbase="Models/StateSpace/StateModels/PosteriorSamplers"
+hdr="GeneralSeasonalLLTPosteriorSampler.hpp"
+new_hdr="GSLLTPS.hpp"
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 
 ##----------------------------------------------------------------------
 ## Build the package:

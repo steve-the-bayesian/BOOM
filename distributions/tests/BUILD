@@ -1,4 +1,5 @@
-COPTS = ["--std=c++17"]
+COPTS = ["-std=c++17"]
+
 COMMON_DEPS = [
         "//:boom",
         "//:boom_test_utils",
@@ -60,6 +61,18 @@ cc_test(
 cc_test(
     name = "matrix_normal_test",
     srcs = ["matrix_normal_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+    size = "small",
+)
+
+cc_test(
+    name = "student_test",
+    srcs = ["student_test.cc"],
     copts = COPTS,
     deps = [
         "//:boom",

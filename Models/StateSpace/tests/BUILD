@@ -93,6 +93,18 @@ cc_test(
 # )
 
 cc_test(
+    name = "state_model_vector_test",
+    size = "small",
+    srcs = ["state_model_vector_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "state_space_gaussian_model_test",
     size = "small",
     srcs = ["state_space_gaussian_model_test.cc"],

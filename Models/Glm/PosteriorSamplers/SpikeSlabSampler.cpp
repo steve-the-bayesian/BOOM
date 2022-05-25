@@ -43,6 +43,8 @@ namespace BOOM {
       const WeightedRegSuf &suf,
       double sigsq) const {
     if (!allow_model_selection_) return;
+
+    // Randomize the order in which the inclusion indicators are drawn.
     std::vector<int> indx =
         seq<int>(0, inclusion_indicators.nvars_possible() - 1);
     // I'd like to rely on std::random_shuffle for this, but I want
@@ -144,6 +146,18 @@ namespace BOOM {
     if (ans == BOOM::negative_infinity()) return ans;
     if (inclusion_indicators.nvars() > 0) {
       ans += dmvn(model_->included_coefficients(),
+                  inclusion_indicators.select(slab_prior_->mu()),
+                  inclusion_indicators.select(slab_prior_->siginv()), true);
+    }
+    return ans;
+  }
+
+  double SSS::log_prior(const GlmCoefs &beta) const {
+    const Selector &inclusion_indicators(beta.inc());
+    double ans = spike_prior_->logp(inclusion_indicators);  // p(gamma)
+    if (ans == BOOM::negative_infinity()) return ans;
+    if (inclusion_indicators.nvars() > 0) {
+      ans += dmvn(beta.included_coefficients(),
                   inclusion_indicators.select(slab_prior_->mu()),
                   inclusion_indicators.select(slab_prior_->siginv()), true);
     }

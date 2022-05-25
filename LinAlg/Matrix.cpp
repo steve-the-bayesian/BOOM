@@ -139,6 +139,32 @@ namespace BOOM {
     }
   }
 
+  Matrix::Matrix(
+      const std::initializer_list<std::initializer_list<double>> &rows) {
+    nr_ = rows.size();
+    nc_ = -1;
+    std::vector<Vector> row_vectors;
+    for (const auto &el : rows) {
+      row_vectors.push_back(Vector(el));
+      if (nc_ < 0) {
+        nc_ = row_vectors.back().size();
+      } else {
+        if (row_vectors.back().size() != nc_) {
+          std::ostringstream err;
+          err << "All rows must be the same size.  "
+              << "Row " << row_vectors.size() << " was size "
+              << row_vectors.back().size()
+              << " but previous rows were " << nc_;
+          report_error(err.str());
+        }
+      }
+    }
+    data_.resize(nr_ * nc_);
+    for (size_t r = 0; r < nr_; ++r) {
+      set_row(r, row_vectors[r]);
+    }
+  }
+
   Matrix::Matrix(const SubMatrix &rhs) { operator=(rhs); }
 
   Matrix::Matrix(const ConstSubMatrix &rhs) { operator=(rhs); }
@@ -181,10 +207,17 @@ namespace BOOM {
     std::swap(data_, rhs.data_);
   }
 
-  Matrix &Matrix::randomize() {
+  Matrix &Matrix::randomize(RNG &rng) {
     uint n = nr_ * nc_;
     for (uint i = 0; i < n; ++i) {
-      data_[i] = runif(0, 1);
+      data_[i] = runif_mt(rng, 0, 1);
+    }
+    return *this;
+  }
+
+  Matrix & Matrix::randomize_gaussian(double mean, double sd, RNG &rng) {
+    for (auto &el : data_) {
+      el = rnorm_mt(rng, mean, sd);
     }
     return *this;
   }
@@ -468,13 +501,18 @@ namespace BOOM {
     return *this;
   }
 
-  dVector::iterator Matrix::col_begin(uint j) { return data_.begin() + j * nr_; }
+  dVector::iterator Matrix::col_begin(uint j) {
+    return data_.begin() + j * nr_;
+  }
+
   dVector::iterator Matrix::col_end(uint j) {
     return data_.begin() + (j + 1) * nr_;
   }
+
   dVector::const_iterator Matrix::col_begin(uint j) const {
     return data_.begin() + j * nr_;
   }
+
   dVector::const_iterator Matrix::col_end(uint j) const {
     return data_.begin() + (j + 1) * nr_;
   }
@@ -495,7 +533,10 @@ namespace BOOM {
   }
 
   VectorViewConstIterator Matrix::dbegin() const {
-    return VectorViewConstIterator(&(data_.front()), &(data_.back()), ncol() + 1);
+    return VectorViewConstIterator(
+        &(data_.front()),
+        &(data_.back()),
+        ncol() + 1);
   }
   VectorViewConstIterator Matrix::dend() const {
     return VectorViewConstIterator(
@@ -1072,7 +1113,9 @@ namespace BOOM {
     return ans;
   }
 
-  double Matrix::sum() const { return accumulate(data_.begin(), data_.end(), 0.0); }
+  double Matrix::sum() const {
+    return accumulate(data_.begin(), data_.end(), 0.0);
+  }
 
   double Matrix::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
@@ -1402,7 +1445,8 @@ namespace BOOM {
   Vector LTmult(const Matrix &L, const Vector &y) {
     assert(L.is_square() && L.nrow() == y.size());
     Vector ans(y);
-    EigenMap(ans) = EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
+    EigenMap(ans) =
+        EigenMap(L).triangularView<Eigen::Lower>().transpose() * EigenMap(y);
     return ans;
   }
 

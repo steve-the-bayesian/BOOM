@@ -25,8 +25,7 @@
 #include "uint.hpp"
 
 namespace BOOM {
-  class VectorViewIterator
-      : public std::iterator<std::random_access_iterator_tag, double> {
+  class VectorViewIterator {
     double *pos;
     double *beg;
     int stride;
@@ -104,8 +103,8 @@ namespace BOOM {
   }
 
   //----------------------------
-  class VectorViewConstIterator
-      : public std::iterator<std::random_access_iterator_tag, double> {
+  class VectorViewConstIterator {
+
     const double *pos;  // pos data values will not change
     const double *beg;  // beg pointer will not change
     int stride;
@@ -179,4 +178,22 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
+
+
+template<> struct std::iterator_traits<BOOM::VectorViewIterator> {
+  using iterator_category = std::random_access_iterator_tag;
+  using difference_type   = std::ptrdiff_t;
+  using value_type        = double;
+  using pointer           = double*;
+  using reference         = double&;
+};
+
+template <> struct std::iterator_traits<BOOM::VectorViewConstIterator> {
+  using iterator_category = std::random_access_iterator_tag;
+  using difference_type   = std::ptrdiff_t;
+  using value_type        = const double;
+  using pointer           = const double*;
+  using reference         = const double&;
+};
+
 #endif  // BOOM_VECTOR_VIEW_ITERATOR_HPP

@@ -253,7 +253,7 @@ namespace {
         << "Level failed to cover: " << endl << level_status.error_message();
 
     std::string error_message = CheckStochasticProcess(
-        seasonal_draws, seasonal, .95, .1, "seasonal_draws.txt");
+        seasonal_draws, seasonal, .95, .1, 0.5, "seasonal_draws.txt");
     EXPECT_EQ("", error_message) << "Seasonal pattern failed to cover.";
 
     if (!(level_status.ok && error_message == "")) {
@@ -362,7 +362,8 @@ namespace {
         << status.error_message();
     both_ok &= status.ok;
 
-    std::string error_message = CheckStochasticProcess(weekly_draws, true_state_.row(6));
+    std::string error_message = CheckStochasticProcess(
+        weekly_draws, true_state_.row(6));
     EXPECT_EQ(error_message, "")
         << "Weekly annual cycle failed to cover." << endl
         << status.error_message();

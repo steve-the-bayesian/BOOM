@@ -59,22 +59,23 @@ test_that("NestedRegression works", {
   ## Check that things work with default priors.
   d <- SimulateNestedRegressionData()
   xdim <- length(d$beta.hyperprior.mean)
+
   model <- NestedRegression(
-      suf = d$suf,
-      niter = 1000,
-      seed = seed)
+    suf = d$suf,
+    niter = 5000,
+    seed = seed)
 
   expect_true(CheckMcmcMatrix(model$prior.mean, truth = d$beta.hyperprior.mean),
-    info = McmcMatrixReport(model$prior.mean, truth = d$beta.hyperprior.mean))
+              info = McmcMatrixReport(model$prior.mean, truth = d$beta.hyperprior.mean))
   CheckMcmcVector(model$residual.sd, truth = d$residual.sd)
   xdim <- length(d$beta.hyperprior.mean)
   number.of.groups <- nrow(d$beta)
   for (v in 1:xdim) {
     expect_true(
       CheckMcmcMatrix(model$prior.variance[, v, ],
-        truth = d$beta.hyperprior.variance[v, ]),
+                      truth = d$beta.hyperprior.variance[v, ]),
       info = McmcMatrixReport(model$prior.variance[, v, ],
-        truth = d$beta.hyperprior.variance[v, ]))
+                              truth = d$beta.hyperprior.variance[v, ]))
   }
   for (g in 1:number.of.groups) {
     expect_true(
@@ -85,8 +86,8 @@ test_that("NestedRegression works", {
   expect_true(is.list(model$priors))
   expect_equal(length(model$priors), 4)
   expect_equal(names(model$priors), c("coefficient.prior",
-    "coefficient.mean.hyperprior", "coefficient.variance.hyperprior",
-    "residual.precision.prior"))
+                                      "coefficient.mean.hyperprior", "coefficient.variance.hyperprior",
+                                      "residual.precision.prior"))
 })
 
 test_that("NestedRegression works with a fixed prior", {

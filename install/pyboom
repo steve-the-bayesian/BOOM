@@ -12,17 +12,8 @@ help_message="\n -p Publish package to PyPi after installing."
 
 usage () { echo "Usage: $0 [-p] $help_message 1>&2; exit 0"; }
 
-DO_PUBLISH=0
-BUILD_MANYLINUX_WHEEL=0
-
 while getopts :ci option; do
     case "${option}" in
-        p)
-            DO_PUBLISH=1
-            ;;
-        m)
-            BUILD_MANYLINUX_WHEEL=1
-            ;;
         \?)
 	    echo "Invalid option: -$OPTARG" >&2
             usage
@@ -182,19 +173,3 @@ fi
 echo "======================================================================"
 echo "To publish to pypi:"
 echo "twine upload dist/BayesBoom-VERSION.*"
-echo "======================================================================"
-echo "To build manylinux wheel:"
-echo "docker build -t pyboom ."
-echo "docker run -v /tmp:/export  --rm -it pyboom cp /output/BayesBoom-*-cp36-cp36m-manylinux2010_x86_64.whl /export/."
-echo "The built wheel will be in /tmp"
-
-if [[ $DO_PUBLISH == 1 ]]; then
-    twine upload dist/BayesBoom-*.tar.gz
-fi
-
-
-if [[ $BUILD_MANYLINUX_WHEEL == 1 ]]; then
-    cd ..
-    docker build -t pyboom .
-    docker run -v /tmp:/export --rm -it pyboom cp /output/BayesBoom-0.0.7-cp36-cp36m-manylinux2010_x86_64.whl /export/.
-fi

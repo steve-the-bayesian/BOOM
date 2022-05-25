@@ -1,3 +1,6 @@
+#ifndef BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_
+#define BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_
+
 /*
   Copyright (C) 2019 Steven L. Scott
 
@@ -52,9 +55,25 @@ namespace BOOM {
       return ans;
     }
 
+    bool can_find_posterior_mode() const override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        if (!model_->model(i)->can_find_posterior_mode()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    void find_posterior_mode(double epsilon = 1e-5) override {
+      for (int i = 0; i < model_->ydim(); ++i) {
+        model_->model(i)->find_posterior_mode(epsilon);
+      }
+    }
+
    private:
     IndependentRegressionModels *model_;
   };
 
-
 }  // namespace BOOM
+
+#endif  //  BOOM_MODELS_GLM_INDEPENDENT_REGRESSION_MODELS_POSTERIOR_SAMPLER_HPP_

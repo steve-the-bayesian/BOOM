@@ -61,8 +61,8 @@ namespace {
   TEST(StringSplitTest, Comma) {
     StringSplitter split(",");
     string test = "8, 6, 7, 5,,3,   0, 9";
-    std::vector<string> expected{"8", " 6", " 7", " 5", "", "3",
-                                 "   0", " 9"};
+    std::vector<string> expected{
+      "8", "6", "7", "5", "", "3", "0", "9"};
     EXPECT_EQ(expected, split(test));
 
     test = ",3";
@@ -82,7 +82,7 @@ namespace {
     EXPECT_EQ(expected, split(test));
 
     test = "8, 6, 7,\"53   09\"";
-    expected = {"8", " 6", " 7", "53   09"};
+    expected = {"8", "6", "7", "53   09"};
     EXPECT_EQ(expected, split(test));
   }
 

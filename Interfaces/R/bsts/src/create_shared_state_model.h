@@ -22,6 +22,7 @@
 #include "r_interface/list_io.hpp"
 #include <Models/StateSpace/StateSpaceModelBase.hpp>
 #include <Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp>
+#include <Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp>
 
 //==============================================================================
 // The functions declared here throw exceptions.  Code that uses them should be
@@ -38,15 +39,18 @@ namespace BOOM {
 
   // Host model.
   class MultivariateStateSpaceModelBase;
+  class ConditionallyIndependentMultivariateStateSpaceModelBase;
+  using CIMSSMB = ConditionallyIndependentMultivariateStateSpaceModelBase;
 
   // State models.  This list will grow over time as more models are added.
-  class SharedLocalLevelStateModel;
+  //   class ConditionallyIndependentSharedLocalLevelStateModel;
 
   namespace bsts {
 
     // A factory for creating state components that are shared across multiple
     // time series.
-    class SharedStateModelFactory : public StateModelFactoryBase {
+    class ConditionallyIndependentSharedStateModelFactory
+        : public StateModelFactoryBase {
      public:
 
       // Args:
@@ -54,8 +58,8 @@ namespace BOOM {
       //   io_manager: A pointer to the object manaaging the R list that will
       //     record (or has already recorded) the MCMC output.  If a nullptr is
       //     passed then states will be created without IoManager support.
-      explicit SharedStateModelFactory(int nseries,
-                                       RListIoManager *io_manager)
+      explicit ConditionallyIndependentSharedStateModelFactory(
+          int nseries, RListIoManager *io_manager)
           : StateModelFactoryBase(io_manager),
             nseries_(nseries)
       {}
@@ -74,7 +78,7 @@ namespace BOOM {
       //     specification argument in bsts.
       //   prefix: An optional prefix added to the name of each state component.
       void AddState(SharedStateModelVector &state_models,
-                    MultivariateStateSpaceModelBase *model,
+                    CIMSSMB *model,
                     SEXP r_shared_state_specification,
                     const std::string &prefix = "");
 
@@ -90,7 +94,7 @@ namespace BOOM {
       //   list_element_name: The name of the final state vector in the R list
       //     holding the MCMC output.
       void SaveFinalState(
-          MultivariateStateSpaceModelBase *model,
+          CIMSSMB *model,
           BOOM::Vector *final_state = nullptr,
           const std::string &list_element_name = "final.shared.state");
 
@@ -112,7 +116,7 @@ namespace BOOM {
       // Returns:
       //   A BOOM smart pointer to the appropriately typed MultivariateStateModel.
       Ptr<SharedStateModel> CreateSharedStateModel(
-          MultivariateStateSpaceModelBase *model,
+          CIMSSMB *model,
           SEXP r_state_component,
           const std::string &prefix);
 
@@ -120,7 +124,7 @@ namespace BOOM {
       // Specific functions to create specific state models.
       Ptr<SharedStateModel> CreateSharedLocalLevel(
           SEXP r_state_component,
-          MultivariateStateSpaceModelBase *model,
+          CIMSSMB *model,
           const std::string &prefix);
     };
 

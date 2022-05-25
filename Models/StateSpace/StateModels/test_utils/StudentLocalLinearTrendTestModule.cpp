@@ -85,7 +85,7 @@ namespace BOOM {
 
     void StudentLocalLinearTrendTestModule::Check() {
       EXPECT_EQ("", CheckStochasticProcess(
-          trend_draws_, trend_, .95, .1, "trend.txt"))
+          trend_draws_, trend_, .95, .1, 0.5, "trend.txt"))
           <<  "Student local linear trend failed to cover.";
 
       EXPECT_GT(var(sigma_level_draws_), 0)
@@ -105,7 +105,7 @@ namespace BOOM {
           << "did not cover the true value of " << nu_level_ <<"." << std::endl
           << AsciiDistributionCompare(nu_level_draws_, nu_level_);
 
-      
+
       EXPECT_GT(var(sigma_slope_draws_), 0)
           << "sigma slop draws had zero variance";
       EXPECT_TRUE(CheckMcmcVector(sigma_slope_draws_, slope_sd_, .95,
@@ -124,6 +124,6 @@ namespace BOOM {
           << "." << std::endl
           << AsciiDistributionCompare(nu_slope_draws_, nu_slope_);
     }
-    
+
   }  // namespace StateSpaceTesting
 }  // namespace BOOM

@@ -19,10 +19,11 @@
 */
 
 #include "Models/StateSpace/Filters/MultivariateKalmanFilterBase.hpp"
+#include "Models/StateSpace/Filters/SparseMatrix.hpp"
 
 namespace BOOM {
   class ConditionallyIndependentMultivariateStateSpaceModelBase;
-  
+
   namespace Kalman {
 
     // Models the marginal distribution of the state variables and related
@@ -35,66 +36,57 @@ namespace BOOM {
      public:
       using ModelType = ConditionallyIndependentMultivariateStateSpaceModelBase;
       using MarginalType = ConditionallyIndependentMarginalDistribution;
+      using FilterType = MultivariateKalmanFilter<MarginalType>;
 
       // Args:
       //   model: The model describing the time series containing this
       //     marginal distribution.
-      //   previous: The marginal distribution for the previous time period.
-      //     Use nullptr if this is time period 0.
+      //   filter: The filter object managing this node.  Note that the model
+      //     has two filters - the primary filter and the simulation filter.
       //   time_index: The index of the time period described by this marginal
       //     distribution.
       ConditionallyIndependentMarginalDistribution(
-          ModelType *model, MarginalType *previous, int time_index);
+          ModelType *model,
+          FilterType *filter,
+          int time_index);
+
+      Vector scaled_prediction_error() const override;
 
       // The precision matrix (inverse of the variance matrix) describing the
       // conditional distribution of the prediction error at this time point,
-      // given all past data.
-      SpdMatrix forecast_precision() const override;
+      // given all past data.  Be careful calling this function if the dimension
+      // of Y is large.  The resulting matrix will be large^2.
       SpdMatrix direct_forecast_precision() const;
-      
-      // An observation is considered to be high dimensional if its dimension is
-      // at least 'threshold' * state_dimension.  This function sets
-      // 'threshold'.
-      static void set_high_dimensional_threshold_factor(double threshold = 1.0) {
-        high_dimensional_threshold_factor_ = threshold;
-      }
-      double high_dimensional_threshold_factor() const override {
-        return high_dimensional_threshold_factor_;
-      }
-      
+
+      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
+      double forecast_precision_log_determinant() const override;
+
       // The marginal distribution describing the previous time point, or
       // nullptr if this is time point zero.
-      MarginalType *previous() override {return previous_;}
-      const MarginalType *previous() const override {return previous_;}
+      MarginalType *previous() override;
+      const MarginalType *previous() const override;
 
       // The model() method must be handled in the .cpp file, because we can't
       // know here that ModelType is derived from
-      // MultivariateMarginalDistributionBase.
+      // MultivariateStateSpaceModelBase.
       const MultivariateStateSpaceModelBase *model() const override;
 
      private:
-      void high_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficient_subset) override;
-
-      void low_dimensional_update(
-          const Vector &observation,
-          const Selector &observed,
-          const SparseKalmanMatrix &transition,
-          const SparseKalmanMatrix &observation_coefficient_subset) override;
+      // Called as part of the 'update' method in the base class.
+      void update_sparse_forecast_precision(const Selector &observed) override;
 
       ModelType *model_;
-      MarginalType *previous_;
+      FilterType *filter_;
 
-      static double high_dimensional_threshold_factor_;
+      // Implementation details for sparse_forecast_precision().
+      Matrix forecast_precision_inner_matrix_;
+      double forecast_precision_log_determinant_;
     };
   }  // namespace Kalman
 
   using ConditionallyIndependentKalmanFilter = MultivariateKalmanFilter<
     Kalman::ConditionallyIndependentMarginalDistribution>;
-  
+
 }  // namespace BOOM
 
 #endif //  BOOM_STATE_SPACE_CONDITIONALLY_INDEPENDENT_KALMAN_FILTER_HPP_

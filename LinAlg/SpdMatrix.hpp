@@ -72,7 +72,7 @@ namespace BOOM {
     // Fill entries with U(0,1) random variables, then multiply by
     // self-transpose.
     // Returns *this;
-    SpdMatrix &randomize() override;
+    SpdMatrix &randomize(RNG &rng = GlobalRng::rng) override;
 
     //-------- size and shape info ----------
     virtual uint nelem() const;  // number of distinct elements
@@ -201,6 +201,12 @@ namespace BOOM {
     ConstVectorView::const_iterator unvectorize(
         ConstVectorView::const_iterator b, bool minimal = true);
     void make_symmetric(bool have_upper_triangle = true);
+
+   private:
+    // This function does not really make sense for SpdMatrix.  Its override
+    // reports an error.
+    SpdMatrix &randomize_gaussian(double mean, double sd,
+                                  RNG &rng = GlobalRng::rng) override;
   };
 
   typedef SpdMatrix Spd;
@@ -297,6 +303,10 @@ namespace BOOM {
   // matrix A to produce W = A * Lambda^{1/2} * Q, which preserves the
   // relationship W^T * W = X.
   Matrix eigen_root(const SpdMatrix &X);
+
+  // Produce a dense SpdMatrix with 'blocks' as the block diagonal elements.
+  SpdMatrix block_diagonal_spd(const std::vector<SpdMatrix> &blocks);
+
 }  // namespace BOOM
 
 #endif  // NEW_LA_SPD_MATRIX_H

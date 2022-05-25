@@ -24,11 +24,52 @@ namespace BOOM {
   const bool enforce_triangular_coefficients = true;
 
   namespace {
-    using SLLPS = SharedLocalLevelPosteriorSampler;
+    using GSLLPS = GeneralSharedLocalLevelPosteriorSampler;
+
+    void check_slabs(const std::vector<Ptr<MvnBase>> &slabs,
+                     int nseries,
+                     int state_dimension) {
+      if (slabs.size() != nseries) {
+        report_error("Number of slab priors does not match number of series.");
+      }
+      for (int i = 0; i < slabs.size(); ++i) {
+        if (slabs[i]->dim() != state_dimension) {
+          report_error("At least one slab prior expects the wrong state size.");
+        }
+      }
+    }
+
+    void check_spikes(const std::vector<Ptr<VariableSelectionPrior>> &spikes,
+                      int nseries,
+                      int state_dimension) {
+      if (spikes.size() != nseries) {
+        report_error("Number of spike priors does not match number of series.");
+      }
+      for (int i = 0; i < spikes.size(); ++i) {
+        if (spikes[i]->potential_nvars() != state_dimension) {
+          report_error("At least one spike prior expects the wrong state size.");
+        }
+      }
+    }
+
+    void set_unit_innovation_variances(SharedLocalLevelStateModelBase *model) {
+      for (int i = 0; i < model->state_dimension(); ++i) {
+        model->innovation_model(i)->set_sigsq(1.0);
+      }
+    }
+
+    void build_samplers(std::vector<SpikeSlabSampler> &samplers,
+                        const std::vector<Ptr<MvnBase>> &slabs,
+                        const std::vector<Ptr<VariableSelectionPrior>> &spikes) {
+      for (int i = 0; i < spikes.size(); ++i) {
+        samplers.push_back(SpikeSlabSampler(nullptr, slabs[i], spikes[i]));
+      }
+    }
+
   }  // namespace
 
-  SLLPS::SharedLocalLevelPosteriorSampler(
-      SharedLocalLevelStateModel *model,
+  GSLLPS::GeneralSharedLocalLevelPosteriorSampler(
+      GeneralSharedLocalLevelStateModel *model,
       const std::vector<Ptr<MvnBase>> &slabs,
       const std::vector<Ptr<VariableSelectionPrior>> &spikes,
       RNG &seeding_rng)
@@ -38,22 +79,8 @@ namespace BOOM {
         spikes_(spikes)
   {
     // Check that spikes and slabs are the right size.
-    if (spikes.size() != model_->nseries()) {
-      report_error("Number of spike priors does not match number of series.");
-    }
-    for (int i = 0; i < spikes.size(); ++i) {
-      if (spikes[i]->potential_nvars() != model_->state_dimension()) {
-        report_error("At least one spike prior expects the wrong state size.");
-      }
-    }
-    if (slabs.size() != model_->nseries()) {
-      report_error("Number of slab priors does not match number of series.");
-    }
-    for (int i = 0; i < slabs.size(); ++i) {
-      if (slabs[i]->dim() != model_->state_dimension()) {
-        report_error("At least one slab prior expects the wrong state size.");
-      }
-    }
+    check_slabs(slabs, model->nseries(), model->state_dimension());
+    check_spikes(spikes, model->nseries(), model->state_dimension());
 
     // Use the spikes to enforce the constraint on the coefficients.
     if (enforce_triangular_coefficients) {
@@ -76,23 +103,18 @@ namespace BOOM {
     }
 
     // Set the innovation variances to 1, for identifiability.
-    for (int i = 0; i < model_->state_dimension(); ++i) {
-      model_->innovation_model(i)->set_sigsq(1.0);
-    }
-
+    set_unit_innovation_variances(model_);
     // Build the samplers.
-    for (int i = 0; i < spikes_.size(); ++i) {
-      samplers_.push_back(SpikeSlabSampler(nullptr, slabs_[i], spikes_[i]));
-    }
+    build_samplers(samplers_, slabs_, spikes_);
   }
 
-  //===========================================================================
-  double SLLPS::logpri() const {
+  //---------------------------------------------------------------------------
+  double GSLLPS::logpri() const {
     double ans = 0;
     const Matrix &transposed_coefficients(
         model_->coefficient_model()->Beta());
 
-    for (int i = 0; i < inclusion_indicators_.size(); ++i) {
+    for (int i = 0; i < spikes_.size(); ++i) {
       ans += spikes_[i]->logp(inclusion_indicators_[i]);
       if (!std::isfinite(ans)) {
         return ans;
@@ -106,11 +128,15 @@ namespace BOOM {
     return ans;
   }
 
-  //===========================================================================
-  void SLLPS::draw() {
+  //---------------------------------------------------------------------------
+  void GSLLPS::draw() {
     Matrix coefficients = model_->coefficient_model()->Beta().transpose();
     WeightedRegSuf suf(model_->number_of_factors());
     const MvRegSuf &mvsuf(*model_->coefficient_model()->suf());
+    // Each time series corresponds to a row in 'coefficients'.  The elements of
+    // that row describe the sensitivity of that series to the latent factors.
+    //
+    // There is one element of slabs_ for each time series.
     for (int i = 0; i < slabs_.size(); ++i) {
       suf.reset(mvsuf.xtx(),
                 mvsuf.xty().col(i),
@@ -129,11 +155,64 @@ namespace BOOM {
     model_->coefficient_model()->set_Beta(coefficients.transpose());
   }
 
-  //===========================================================================
-  void SharedLocalLevelPosteriorSampler::limit_model_selection(int max_flips) {
+  //---------------------------------------------------------------------------
+  void GSLLPS::limit_model_selection(int max_flips) {
     for (int i = 0; i < samplers_.size(); ++i) {
       samplers_[i].limit_model_selection(max_flips);
     }
   }
+
+  //===========================================================================
+  namespace {
+    using CindSLLPS = ConditionallyIndependentSharedLocalLevelPosteriorSampler;
+  }  // namespace
+
+  CindSLLPS::ConditionallyIndependentSharedLocalLevelPosteriorSampler(
+      ConditionallyIndependentSharedLocalLevelStateModel *model,
+      const std::vector<Ptr<MvnBase>> &slabs,
+      const std::vector<Ptr<VariableSelectionPrior>> &spikes,
+      RNG &seeding_rng)
+      : PosteriorSampler(seeding_rng),
+        model_(model),
+        slabs_(slabs),
+        spikes_(spikes)
+  {
+    check_spikes(spikes, model->nseries(), model->state_dimension());
+    check_slabs(slabs, model->nseries(), model->state_dimension());
+
+    if (enforce_triangular_coefficients) {
+      for (int i = 0; i < spikes_.size(); ++i) {
+        /////////
+      }
+    }
+
+    // Set the innovation variances to 1.0, for identifiability.
+    set_unit_innovation_variances(model_);
+    build_samplers(samplers_, slabs_, spikes_);
+  }
+
+  void CindSLLPS::draw() {
+    for (int i = 0; i < model_->nseries(); ++i) {
+      double sigsq = model_->host()->single_observation_variance(0, i);
+      Selector inc = model_->raw_observation_coefficients(i)->inc();
+      samplers_[i].draw_inclusion_indicators(
+          rng(), inc, *model_->suf(i), sigsq);
+      model_->raw_observation_coefficients(i)->set_inc(inc);
+
+      Vector full_beta = model_->raw_observation_coefficients(i)->Beta();
+      samplers_[i].draw_coefficients_given_inclusion(
+          rng(), full_beta, inc, *model_->suf(i), sigsq);
+      model_->raw_observation_coefficients(i)->set_Beta(full_beta);
+    }
+  }
+
+  double CindSLLPS::logpri() const {
+    double ans = 0;
+    for (int i = 0; i < samplers_.size(); ++i) {
+      ans += samplers_[i].log_prior(*model_->raw_observation_coefficients(i));
+    }
+    return ans;
+  }
+
 
 }  // namespace BOOM

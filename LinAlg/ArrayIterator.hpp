@@ -55,8 +55,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class ArrayIterator
-      : public std::iterator<std::forward_iterator_tag, double> {
+  class ArrayIterator {
    public:
     ArrayIterator(ArrayBase *host, const std::vector<int> &starting_position);
     explicit ArrayIterator(ArrayBase *host);
@@ -91,8 +90,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class ConstArrayIterator
-      : public std::iterator<std::forward_iterator_tag, double> {
+  class ConstArrayIterator {
    public:
     // Iterator begins at the beginning of the array.
     ConstArrayIterator(const ConstArrayBase *host);
@@ -133,5 +131,23 @@ namespace BOOM {
   };
 
 }  // namespace BOOM
+
+template <> struct std::iterator_traits<BOOM::ArrayIterator> {
+  using iterator_category = std::forward_iterator_tag;
+  //  using difference_type   = std::ptrdiff_t;
+  using difference_type   = void;
+  using value_type        = double;
+  using pointer           = double*;
+  using reference         = double&;
+};
+
+template<> struct std::iterator_traits<BOOM::ConstArrayIterator> {
+  using iterator_category = std::forward_iterator_tag;
+  //  using difference_type   = std::ptrdiff_t;
+  using difference_type   = void;
+  using value_type        = double;
+  using pointer           = double*;
+  using reference         = double&;
+};
 
 #endif  //  BOOM_ARRAY_ITERATOR_HPP_

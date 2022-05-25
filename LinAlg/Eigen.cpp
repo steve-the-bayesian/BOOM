@@ -100,7 +100,8 @@ namespace BOOM {
   {
     ::Eigen::SelfAdjointEigenSolver<::Eigen::MatrixXd> solver(
         EigenMap(matrix),
-        compute_vectors ? ::Eigen::ComputeEigenvectors : ::Eigen::EigenvaluesOnly);
+        compute_vectors ? ::Eigen::ComputeEigenvectors :
+        ::Eigen::EigenvaluesOnly);
     EigenMap(eigenvalues_) = solver.eigenvalues();
     if (compute_vectors) {
       right_vectors_.resize(matrix.nrow(), matrix.ncol());

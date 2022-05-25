@@ -307,7 +307,7 @@ namespace BOOM {
   }
 
   double VV::min() const {
-    const_iterator it = min_element(begin(), end());
+    const_iterator it = std::min_element(begin(), end());
     return *it;
   }
 
@@ -322,15 +322,15 @@ namespace BOOM {
   }
 
   uint VV::imin() const {
-    const_iterator it = min_element(begin(), end());
+    const_iterator it = std::min_element(begin(), end());
     return it - begin();
   }
 
-  double VV::sum() const { return accumulate(begin(), end(), 0.0); }
+  double VV::sum() const { return std::accumulate(begin(), end(), 0.0); }
 
   double VV::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
-  double VV::prod() const { return accumulate(begin(), end(), 1.0, mul); }
+  double VV::prod() const { return std::accumulate(begin(), end(), 1.0, mul); }
 
   double VV::dot(const Vector &y) const { return dot_impl(*this, y); }
   double VV::dot(const VectorView &y) const { return dot_impl(*this, y); }
@@ -443,7 +443,7 @@ namespace BOOM {
   double CVV::normsq() const { return EigenMap(*this).squaredNorm(); }
 
   double CVV::min() const {
-    const_iterator it = min_element(begin(), end());
+    const_iterator it = std::min_element(begin(), end());
     return *it;
   }
 
@@ -458,15 +458,15 @@ namespace BOOM {
   }
 
   uint CVV::imin() const {
-    const_iterator it = min_element(begin(), end());
+    const_iterator it = std::min_element(begin(), end());
     return it - begin();
   }
 
-  double CVV::sum() const { return accumulate(begin(), end(), 0.0); }
+  double CVV::sum() const { return std::accumulate(begin(), end(), 0.0); }
 
   double CVV::abs_norm() const { return EigenMap(*this).lpNorm<1>(); }
 
-  double CVV::prod() const { return accumulate(begin(), end(), 1.0, mul); }
+  double CVV::prod() const { return std::accumulate(begin(), end(), 1.0, mul); }
 
   double CVV::dot(const Vector &y) const { return dot_impl(*this, y); }
   double CVV::dot(const VectorView &y) const { return dot_impl(*this, y); }

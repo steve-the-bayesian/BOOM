@@ -98,9 +98,10 @@ namespace BOOM {
         SEXP r_options,
         RListIoManager *io_manager) {
       CreateBareModel(r_data_list_or_model_object, r_prior, r_options, io_manager);
-      SharedStateModelFactory shared_state_model_factory(nseries_, io_manager);
+      ConditionallyIndependentSharedStateModelFactory
+          shared_state_model_factory(nseries_, io_manager);
       shared_state_model_factory.AddState(
-          model_->state_model_vector(),
+          model_->state_models(),
           model_.get(),
           r_shared_state_specification,
           "");

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2018 Steven L. Scott
+  Copyright (C) 2005-2022 Steven L. Scott
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -24,15 +24,16 @@
 namespace BOOM {
 
   namespace Kalman {
-    namespace {
-      using Marginal = MultivariateMarginalDistributionBase;
+    void check_variance(const SpdMatrix &v) {
+      for (auto x : v.diag()) {
+        if (x < -.10) {
+          report_error("Can't have a negative variance.");
+        }
+      }
     }
 
-    void Marginal::set_forecast_precision_log_determinant(double logdet) {
-      if (!std::isfinite(logdet)) {
-        report_error("forecast precision is not finite.");
-      }
-      forecast_precision_log_determinant_ = logdet;
+    namespace {
+      using Marginal = MultivariateMarginalDistributionBase;
     }
 
     //--------------------------------------------------------------------------
@@ -45,65 +46,86 @@ namespace BOOM {
       if (observed.nvars() == 0) {
         return fully_missing_update();
       }
+
       const SparseKalmanMatrix &transition(
           *model()->state_transition_matrix(time_index()));
 
       // The subset of observation coefficients corresponding to elements of
       // 'observation' which are actually observed.
+      Ptr<SparseKalmanMatrix> observation_coefficient_pointer(
+          model()->observation_coefficients(time_index(), observed));
       const SparseKalmanMatrix &observation_coefficient_subset(
-          *model()->observation_coefficients(time_index(), observed));
+          *observation_coefficient_pointer);
 
-      if (high_dimensional(observed)) {
-        high_dimensional_update(observation, observed, transition,
-                                observation_coefficient_subset);
-      } else {
-        low_dimensional_update(observation, observed, transition,
-                               observation_coefficient_subset);
-      }
+      Vector observed_data = observed.select(observation);
+      set_prediction_error(
+          observed_data - observation_coefficient_subset * state_mean());
+      update_sparse_forecast_precision(observed);
+
+      const SparseBinomialInverse &Finv(*sparse_forecast_precision());
+
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(scaled_prediction_error());
 
+      Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed);
+      const SparseMatrixProduct &kalman_gain(*gain);
+
       // Update the state mean from a[t]   = E(state_t    | Y[t-1]) to
       //                            a[t+1] = E(state[t+1] | Y[t]).
       set_state_mean(transition * state_mean()
-                     + kalman_gain() * prediction_error());
+                     + kalman_gain * prediction_error());
 
-      // Update the state variance from P[t] = Var(state_t | Y[t-1]) to P[t+1] =
-      // Var(state[t+1] | Y[t]).
+      // Update the state variance.  This implementation is the result of some
+      // debugging.  If profiling shows too much time is spent in this function,
+      // this section is a good place to look for optimizations.  We probably
+      // don't need to allocate quite so many SpdMatrix objects.
       //
-      // The update formula is
-      //
-      // P[t+1] =   T[t] * P[t] * T[t]'
-      //          - T[t] * P[t] * Z[t]' * K[t]'
-      //          + R[t] * Q[t] * R[t]'
-      //
-      // Need to define TPZprime before modifying P (known here as
-      // state_variance).
-      Matrix TPZprime = (
-          observation_coefficient_subset *
-          (transition * state_variance()).transpose()).transpose();
+      // Pt|t = Pt - Pt * Z' Finv Z Pt
+      SpdMatrix new_state_variance = state_variance();
 
-      // Step 1:  Set P = T * P * T.transpose()
-      transition.sandwich_inplace(mutable_state_variance());
+      SpdMatrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
+          Finv * (observation_coefficient_subset * state_variance()));
 
-      // Step 2:
-      // Decrement P by T*P*Z.transpose()*K.transpose().  This step can be
-      // skipped if y is missing, because K is zero.
-      mutable_state_variance() -= TPZprime.multT(kalman_gain());
+      transition.sandwich_inplace(new_state_variance);
+      model()->state_variance_matrix(time_index())->add_to(new_state_variance);
 
-      // Step 3: P += RQR
-      model()->state_variance_matrix(time_index())->add_to(
-          mutable_state_variance());
+      SpdMatrix contemp_variance(state_variance() - increment1);
+      Kalman::check_variance(contemp_variance);
 
-      mutable_state_variance().fix_near_symmetry();
+      SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
+
+      new_state_variance = contemp_variance;
+      transition.sandwich_inplace(new_state_variance);
+      new_state_variance += increment2;
+#ifndef NDEBUG
+      // Only check the variance in debug mode.
+      Kalman::check_variance(new_state_variance);
+#endif
+
+      set_state_variance(new_state_variance);
       return log_likelihood;
     }
 
     //----------------------------------------------------------------------
-    bool Marginal::high_dimensional(const Selector &observed) const {
-      return observed.nvars() > high_dimensional_threshold_factor()
-          * model()->state_dimension();
+    Vector Marginal::scaled_prediction_error() const {
+      return (*sparse_forecast_precision()) * prediction_error();
+    }
+
+    //----------------------------------------------------------------------
+    Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
+        const Selector &observed) const {
+      NEW(SparseMatrixProduct, ans)();
+      int t = time_index();
+      ans->add_term(model()->state_transition_matrix(t));
+      // Going forward, previos()->state_variance() and state_variance() will be
+      // the same.  Going backward they may be different.
+      NEW(DenseSpd, P)(previous() ? previous()->state_variance()
+                       : model()->initial_state_variance());
+      ans->add_term(P);
+      ans->add_term(model()->observation_coefficients(t, observed), true);
+      ans->add_term(sparse_forecast_precision());
+      return ans;
     }
 
     //----------------------------------------------------------------------
@@ -126,10 +148,13 @@ namespace BOOM {
       SpdMatrix P = previous() ? model()->initial_state_variance()
           : previous()->state_variance();
       const Selector &observed(model()->observed_status(time_index()));
-      const SparseKalmanMatrix *observation_coefficients(
+      Ptr<SparseKalmanMatrix> observation_coefficients(
           model()->observation_coefficients(time_index(), observed));
-      return P - sandwich(
-          P, observation_coefficients->sandwich_transpose(forecast_precision()));
+      NEW(SparseMatrixProduct, ZFZ)();
+      ZFZ->add_term(observation_coefficients, true);
+      ZFZ->add_term(sparse_forecast_precision(), false);
+      ZFZ->add_term(observation_coefficients, false);
+      return P - sandwich(P, SpdMatrix(ZFZ->dense()));
     }
 
     //----------------------------------------------------------------------
@@ -163,20 +188,22 @@ namespace BOOM {
   }  // namespace Kalman
 
   //===========================================================================
-  MultivariateKalmanFilterBase::MultivariateKalmanFilterBase(
-      MultivariateStateSpaceModelBase *model)
-      : model_(model) {}
-
   void MultivariateKalmanFilterBase::update() {
-    if (!model_) {
+    if (!model()) {
       report_error("Model must be set before calling update().");
     }
     clear_loglikelihood();
-    for (int t = 0; t < model_->time_dimension(); ++t) {
+    // std::cout << "model->observation_coefficients() = \n";
+    // model()->observation_coefficients(0, model()->observed_status(0))->print(std::cout);
+
+    // TODO: Verify that the isolate_shared_state line doesn't break anything
+    // when the model has series-specific state.
+    model_->isolate_shared_state();
+    for (int time = 0; time < model_->time_dimension(); ++time) {
       update_single_observation(
-          model_->adjusted_observation(t),
-          model_->observed_status(t),
-          t);
+          model_->adjusted_observation(time),
+          model_->observed_status(time),
+          time);
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
         return;
@@ -227,9 +254,6 @@ namespace BOOM {
       // their equation (5).  The transpose is required to get the dimensions to
       // match.
       //
-      // If we stored (Z' * K') that would only be SxS.  Maybe put some smarts
-      // in depending on whether m or S is larger.
-      //
       // K = TPZ'Finv
       // Z' K' = Z' Finv Z P T'
       //
@@ -241,20 +265,40 @@ namespace BOOM {
       //   v:    m x 1
       //   r:    S x 1
       //
-      node(t).set_scaled_state_error(r);
+      Kalman::MultivariateMarginalDistributionBase &marg(node(t));
+      marg.set_scaled_state_error(r);
+
+      // All implicit subsctipts are [t].
+      //  r[t-1] = Z' * Finv * v - L' r
+      //  where
+      //  L[t] = T[t] - K[t] Z[t]
+      // so
+      // r[t-1] = Z' * Finv * v - T'r + Z'K'r
+      //
+      // u = Finv * v - K'r
+      // r = T'r + Z'u
       const Selector &observed(model_->observed_status(t));
-      r = model_->state_transition_matrix(t)->Tmult(r)
-          - model_->observation_coefficients(t, observed)->Tmult(
-              node(t).kalman_gain().Tmult(r) - node(t).scaled_prediction_error());
+      Ptr<SparseKalmanMatrix> observation_coefficients(
+          model_->observation_coefficients(t, observed));
+      Ptr<SparseKalmanMatrix> transition(
+          model_->state_transition_matrix(t));
+      const SparseBinomialInverse &forecast_precision(
+          *marg.sparse_forecast_precision());
+      Vector u = forecast_precision * marg.prediction_error()
+          - marg.sparse_kalman_gain(observed)->Tmult(r);
+      r = transition->Tmult(r) + observation_coefficients->Tmult(u);
     }
     set_initial_scaled_state_error(r);
   }
 
-  Vector MultivariateKalmanFilterBase::prediction_error(int t, bool standardize) const {
+  Vector MultivariateKalmanFilterBase::prediction_error(
+      int t, bool standardize) const {
+    const auto &marginal((*this)[t]);
     if (standardize) {
-      return (*this)[t].scaled_prediction_error();
+      return *marginal.sparse_forecast_precision()
+          * marginal.prediction_error();
     } else {
-      return (*this)[t].prediction_error();
+      return marginal.prediction_error();
     }
   }
 
