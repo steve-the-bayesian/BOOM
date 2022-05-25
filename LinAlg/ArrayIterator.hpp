@@ -90,8 +90,7 @@ namespace BOOM {
   };
 
   //======================================================================
-  class ConstArrayIterator
-      : public std::iterator<std::forward_iterator_tag, double> {
+  class ConstArrayIterator {
    public:
     // Iterator begins at the beginning of the array.
     ConstArrayIterator(const ConstArrayBase *host);
