@@ -42,18 +42,6 @@ namespace BayesBoom {
             "state",
             [] (const StateSpaceModelBase &model) {return model.state();},
             "The state matrix. Rows are state variables, columns are time.")
-        .def("add_state",
-             [](StateSpaceModelBase &model, StateModel &state_model) {
-               // TODO: This is a hack around pybind11 struggling to convert Ptr
-               // from concrete to base classes.  It works only because BOOM's
-               // pointers are intrusive.
-               model.add_state(Ptr<StateModel>(&state_model));
-             },
-             "Expand the state definition by adding a state model to "
-             "describe trend, seasonal, etc.\n\n"
-             "Args:\n"
-             "  state: state model to be added.   Posterior samplers and initial "
-             "state priors should be set before adding.")
         .def_property_readonly(
             "log_likelihood",
             [](StateSpaceModelBase &model) { return model.log_likelihood(); },
@@ -69,6 +57,18 @@ namespace BayesBoom {
                    boom,
                    "ScalarStateSpaceModelBase",
                    py::multiple_inheritance())
+        .def("add_state",
+             [](ScalarStateSpaceModelBase &model, StateModel &state_model) {
+               // TODO: This is a hack around pybind11 struggling to convert Ptr
+               // from concrete to base classes.  It works only because BOOM's
+               // pointers are intrusive.
+               model.add_state(Ptr<StateModel>(&state_model));
+             },
+             "Expand the state definition by adding a state model to "
+             "describe trend, seasonal, etc.\n\n"
+             "Args:\n"
+             "  state: state model to be added.   Posterior samplers and initial "
+             "state priors should be set before adding.")
         .def_property_readonly(
             "regression_contribution",
             [](const ScalarStateSpaceModelBase &model) {
