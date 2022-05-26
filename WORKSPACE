@@ -9,5 +9,5 @@ git_repository(
     name = "gtest",
     commit = "40dfd4b775a66979ad1bd19321cdfd0feadfea27",
     remote = "https://github.com/google/googletest",
-    shallow_since = "1631811621 -0400",
+#    shallow_since = "1631811621 -0400",
 )
