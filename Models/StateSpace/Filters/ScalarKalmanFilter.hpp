@@ -24,6 +24,8 @@
 
 namespace BOOM {
   class ScalarStateSpaceModelBase;
+  class ScalarKalmanFilter;
+
   namespace Kalman {
     // A marginal distribution for the case of univariate data.
     class ScalarMarginalDistribution
@@ -34,10 +36,11 @@ namespace BOOM {
       //
       // Args:
       //   model:  The model describing the data for this marginal distribution.
-      //   previous:  The marginal distribution for the preceding time point.
+      //   filter: The Kalman filter object in which this marginal distribution
+      //     resides.
       //   time_index:  The time index associated with this time period.
       explicit ScalarMarginalDistribution(const ScalarStateSpaceModelBase *model,
-                                          ScalarMarginalDistribution *previous,
+                                          ScalarKalmanFilter *filter,
                                           int time_index);
 
       // Update this marginal distribution to reflect the observed data at this
@@ -74,10 +77,14 @@ namespace BOOM {
 
       const Vector &kalman_gain() const {return kalman_gain_;}
       void set_kalman_gain(const Vector &gain) {kalman_gain_ = gain;}
-      
+
+      // Return the previous node if time_dimension > 1, else nullptr.
+      ScalarMarginalDistribution *previous();
+      const ScalarMarginalDistribution *previous() const;
+
      private:
       const ScalarStateSpaceModelBase *model_;
-      ScalarMarginalDistribution *previous_;
+      ScalarKalmanFilter *filter_;
       double prediction_error_;
       double prediction_variance_;
       Vector kalman_gain_;
@@ -112,10 +119,10 @@ namespace BOOM {
         size_t pos) const override {
       return nodes_[pos];
     }
-      
+
     const Kalman::ScalarMarginalDistribution &back() const;
     int size() const override {return nodes_.size();}
-    
+
    private:
     ScalarStateSpaceModelBase *model_;
     std::vector<Kalman::ScalarMarginalDistribution> nodes_;
