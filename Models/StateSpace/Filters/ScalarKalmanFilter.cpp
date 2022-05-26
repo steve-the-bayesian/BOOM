@@ -83,7 +83,7 @@ namespace BOOM {
     }
 
     const Marginal *Marginal::previous() const {
-      if (time_index() <= 1) {
+      if (time_index() < 1) {
         return nullptr;
       } else {
         return &((*filter_)[time_index() - 1]);
@@ -91,7 +91,7 @@ namespace BOOM {
     }
 
     Marginal *Marginal::previous() {
-      if (time_index() <= 1) {
+      if (time_index() < 1) {
         return nullptr;
       } else {
         return &((*filter_)[time_index() - 1]);

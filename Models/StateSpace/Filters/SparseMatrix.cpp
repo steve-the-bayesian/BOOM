@@ -100,7 +100,7 @@ namespace BOOM {
 
   Vector SparseMatrixProduct::Tmult(const ConstVectorView &rhs) const {
     Vector ans(rhs);
-    for (int i = 0; i < terms_.size(); ++i) {
+    for (size_t i = 0; i < terms_.size(); ++i) {
       if (transposed_[i]) {
         ans = *terms_[i] * ans;
       } else {
@@ -112,7 +112,7 @@ namespace BOOM {
 
   Matrix SparseMatrixProduct::Tmult(const Matrix &rhs) const {
     Matrix ans(rhs);
-    for (int i = 0; i < terms_.size(); ++i) {
+    for (size_t i = 0; i < terms_.size(); ++i) {
       if (transposed_[i]) {
         ans = *terms_[i] * ans;
       } else {
