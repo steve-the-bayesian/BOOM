@@ -118,9 +118,10 @@ namespace BOOM {
       NEW(SparseMatrixProduct, ans)();
       int t = time_index();
       ans->add_term(model()->state_transition_matrix(t));
-      // Going forward, previos()->state_variance() and state_variance() will be
+      // Going forward, previous()->state_variance() and state_variance() will be
       // the same.  Going backward they may be different.
-      NEW(DenseSpd, P)(previous() ? previous()->state_variance()
+      const Marginal *prev = previous();
+      NEW(DenseSpd, P)(prev ? previous()->state_variance()
                        : model()->initial_state_variance());
       ans->add_term(P);
       ans->add_term(model()->observation_coefficients(t, observed), true);
@@ -131,22 +132,24 @@ namespace BOOM {
     //----------------------------------------------------------------------
     Vector Marginal::contemporaneous_state_mean() const {
       const Selector &observed(model()->observed_status(time_index()));
-      if (!previous()) {
+      const Marginal *prev = previous();
+      if (!prev) {
         return model()->initial_state_mean()
             + model()->initial_state_variance()
             * model()->observation_coefficients(0, observed)->Tmult(
                 scaled_state_error());
+      } else{
+        return prev->state_mean()
+            + prev->state_variance() * model()->observation_coefficients(
+                time_index(), observed)->Tmult(scaled_state_error());
       }
-      return previous()->state_mean()
-          + previous()->state_variance()
-          * model()->observation_coefficients(time_index(), observed)->Tmult(
-              scaled_state_error());
     }
 
     //----------------------------------------------------------------------
     SpdMatrix Marginal::contemporaneous_state_variance() const {
-      SpdMatrix P = previous() ? model()->initial_state_variance()
-          : previous()->state_variance();
+      const Marginal *prev = previous();
+      SpdMatrix P = prev ? prev->state_variance() :
+          model()->initial_state_variance();
       const Selector &observed(model()->observed_status(time_index()));
       Ptr<SparseKalmanMatrix> observation_coefficients(
           model()->observation_coefficients(time_index(), observed));
