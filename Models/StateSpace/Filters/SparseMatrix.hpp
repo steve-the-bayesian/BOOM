@@ -1193,7 +1193,7 @@ namespace BOOM {
       for (int i = 0; i < ncol_; ++i) {
         lhs[i] = rhs[i];
       }
-      for (int i = ncol_; i < lhs.size(); ++i) {
+      for (size_t i = ncol_; i < lhs.size(); ++i) {
         lhs[i] = 0.0;
       }
     }

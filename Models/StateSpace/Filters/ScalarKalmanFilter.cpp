@@ -83,7 +83,7 @@ namespace BOOM {
     }
 
     const Marginal *Marginal::previous() const {
-      if (time_index() <= 1) {
+      if (time_index() < 1) {
         return nullptr;
       } else {
         return &((*filter_)[time_index() - 1]);
@@ -91,7 +91,7 @@ namespace BOOM {
     }
 
     Marginal *Marginal::previous() {
-      if (time_index() <= 1) {
+      if (time_index() < 1) {
         return nullptr;
       } else {
         return &((*filter_)[time_index() - 1]);
@@ -117,8 +117,14 @@ namespace BOOM {
 
     SpdMatrix Marginal::contemporaneous_state_variance() const {
       const Marginal *prev = previous();
-      SpdMatrix P = prev ? model_->initial_state_variance() :
-          prev->state_variance();
+      SpdMatrix P;
+      if (prev) {
+        P = model_->initial_state_variance();
+      } else {
+        P = prev->state_variance();
+      }
+      // = prev ? model_->initial_state_variance() :
+      //     prev->state_variance();
       SparseVector Z(model_->observation_matrix(time_index()));
       return P - (P * Z).outer() / prediction_variance_;
     }
