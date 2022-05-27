@@ -62,7 +62,8 @@ namespace BOOM {
           observed_data - observation_coefficient_subset * state_mean());
       update_sparse_forecast_precision(observed);
 
-      const SparseBinomialInverse &Finv(*sparse_forecast_precision());
+      Ptr<SparseBinomialInverse> Finv_ptr(sparse_forecast_precision());
+      const SparseBinomialInverse &Finv(*Finv_ptr);
 
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
@@ -285,8 +286,10 @@ namespace BOOM {
           model_->observation_coefficients(t, observed));
       Ptr<SparseKalmanMatrix> transition(
           model_->state_transition_matrix(t));
+      Ptr<SparseBinomialInverse> forecast_precision_ptr(
+          marg.sparse_forecast_precision());
       const SparseBinomialInverse &forecast_precision(
-          *marg.sparse_forecast_precision());
+          *forecast_precision_ptr);
       Vector u = forecast_precision * marg.prediction_error()
           - marg.sparse_kalman_gain(observed)->Tmult(r);
       r = transition->Tmult(r) + observation_coefficients->Tmult(u);
