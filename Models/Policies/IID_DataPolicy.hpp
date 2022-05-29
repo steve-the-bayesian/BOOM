@@ -116,7 +116,7 @@ namespace BOOM {
   template <class D>
   void IID_DataPolicy<D>::set_data(const std::vector<Ptr<DataType>> &d) {
     clear_data();
-    for (auto i = 0; i < d.size(); ++i) add_data(d[i]);
+    for (size_t i = 0; i < d.size(); ++i) add_data(d[i]);
   }
 
   template <class D>
