@@ -204,6 +204,12 @@ mbsts(formula,
 }
 
 \examples{
+\dontrun{
+
+# This example takes 12s on Windows, which is longer than CRAN's 10s
+# limit.  Marking code as 'dontrun' to prevent CRAN auto checks from
+# timing out.
+
 seed <- 8675309
 set.seed(seed)
 
@@ -231,15 +237,12 @@ observation.coefficients[upper.tri(observation.coefficients)] <- 0
 errors <- matrix(rnorm(nseries * ntimes, 0, residual.sd), ncol = ntimes)
 y <- t(observation.coefficients \%*\% t(state) + errors)
 
-\dontrun{
-
 ##---------------------------------------------------------------------------
 ## Plot the data.
 ##---------------------------------------------------------------------------
 par(mfrow=c(1,2))
 plot.ts(y, plot.type="single", col = rainbow(nseries), main = "observed data")
 plot.ts(state, plot.type = "single", col = 1:nfactors, main = "latent state")
-}
 
 ##---------------------------------------------------------------------------
 ## Fit the model
@@ -266,7 +269,6 @@ for (j in 1:nfactors) {
 ##---------------------------------------------------------------------------
 ## Plot the factor loadings.
 ##---------------------------------------------------------------------------
-\dontrun{
 opar <- par(mfrow=c(nfactors,1), mar=c(0, 4, 0, 4), omi=rep(.25, 4))
 burn <- 10
 for(j in 1:nfactors) {
@@ -278,7 +280,6 @@ for(j in 1:nfactors) {
 }
 axis(1)
 par(opar)
-}
 
 ##---------------------------------------------------------------------------
 ## Plot the predicted values of the series.
@@ -295,6 +296,9 @@ for (i in index) {
   points(y[, i], col="blue", pch = ".", cex = .2)
 }
 par(opar)
+# next line closes 'dontrun'
+}
+# next line closes 'examples'
 }
 \keyword{models}
 \keyword{regression}
