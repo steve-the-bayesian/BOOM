@@ -36,6 +36,25 @@ namespace BayesBoom {
              "The log density evaluated at 'x'.")
         ;
 
+    py::class_<PosteriorModeModel,
+               Model,
+               Ptr<PosteriorModeModel>>(
+                   boom, "PosteriorModeModel", py::multiple_inheritance())
+        .def("find_posterior_mode",
+             [](PosteriorModeModel &model, double epsilon) {
+               model.find_posterior_mode(epsilon);
+             },
+             py::arg("epsilon") = 1e-5,
+             "Args:\n"
+             "  epsilon:  If the mode finding algorithm is iterative, use "
+             "epsilon as its convergence criterion.")
+        .def_property_readonly(
+            "can_find_posterior_mode",
+            [](const PosteriorModeModel &model) {return model.can_find_posterior_mode();},
+            "True iff the model has been assigned a PosteriorSampmler capable of "
+            "finding its posterior mode.")
+        ;
+
     py::class_<PosteriorSampler, Ptr<PosteriorSampler>>(
         boom, "PosteriorSampler")
         .def("draw", &PosteriorSampler::draw)

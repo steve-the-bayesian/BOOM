@@ -39,12 +39,12 @@ namespace BoomStateSpaceTesting {
     //     walk models describing the state.
     //   residual_sd: The standard deviation of the residuals in the observation
     //     equation.  Each of the 'nseries' responses has the same SD.
-    McmcTestFramework(int xdim,
-                      int nseries,
-                      int nfactors,
-                      int sample_size,
-                      int test_size,
-                      double residual_sd)
+    explicit McmcTestFramework(int xdim,
+                               int nseries,
+                               int nfactors,
+                               int sample_size,
+                               int test_size,
+                               double residual_sd)
         : sample_size_(sample_size),
           test_size_(test_size),
           state(nfactors, sample_size + test_size),
@@ -269,10 +269,10 @@ namespace BoomStateSpaceTesting {
   //
   class MockKalmanFilter {
    public:
-    MockKalmanFilter(MultivariateStateSpaceRegressionModel *model)
-        : model_(model),
-          initial_state_mean_(model_->state_dimension(), 0.0),
-          initial_state_variance_(model_->state_dimension(), 1.0)
+   explicit MockKalmanFilter(MultivariateStateSpaceRegressionModel *model)
+       : model_(model),
+         initial_state_mean_(model_->state_dimension(), 0.0),
+         initial_state_variance_(model_->state_dimension(), 1.0)
     {}
 
     void filter() {

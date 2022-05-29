@@ -33,7 +33,8 @@ namespace BayesBoom {
   void StateSpaceModel_def(py::module &);
   void StateModel_def(py::module &);
   void DynamicRegressionModel_def(py::module &);
-  void MultivaritateStateSpaceModel_def(py::module &);
+
+  void MultivariateStateSpaceModel_def(py::module &);
   void MultivariateStateModel_def(py::module &);
   void DirichletProcessMvn_def(py::module &);
 
@@ -77,7 +78,7 @@ namespace BayesBoom {
     StateSpaceModel_def(boom);
     StateModel_def(boom);
 
-    MultivaritateStateSpaceModel_def(boom);
+    MultivariateStateSpaceModel_def(boom);
     MultivariateStateModel_def(boom);
 
     Imputation_def(boom);

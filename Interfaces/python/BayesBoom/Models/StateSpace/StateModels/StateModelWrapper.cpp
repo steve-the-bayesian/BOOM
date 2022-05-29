@@ -33,7 +33,27 @@ namespace BayesBoom {
 
   void StateModel_def(py::module &boom) {
 
+    py::class_<StateModelBase,
+               PosteriorModeModel,
+               BOOM::Ptr<StateModelBase>>(
+                   boom, "StateModelBase", py::multiple_inheritance())
+        .def_property_readonly(
+            "state_dimension",
+            [](const StateModelBase &state_model) {
+              return state_model.state_dimension();
+            },
+            "The number of dimensions that this state model adds to the state vector.")
+        .def_property_readonly(
+            "state_error_dimension",
+            [](const StateModelBase &state_model) {
+              return state_model.state_error_dimension();
+            },
+            "The dimension of the error component of this state model.  "
+            "This may be smaller than 'state_dimension'.")
+        ;
+
     py::class_<StateModel,
+               StateModelBase,
                BOOM::Ptr<StateModel>>(
                    boom, "StateModel", py::multiple_inheritance())
         .def("observe_time_dimension", [](StateModel &model, int t) {

@@ -69,7 +69,7 @@ namespace BOOM {
 
         (*g)[0] += g0_coefficient * ratio;
         (*g)[1] += (half_nu_plus1 / nu) * ratio;
-        (*g)[1] -= .5 * log( 1+ rsq / (sigsq * nu));
+        (*g)[1] -= .5 * log1p(rsq / (sigsq * nu));
 
         if (h) {
           (*h)(0, 0) -= (nu + 1) * ratio / sigsq;

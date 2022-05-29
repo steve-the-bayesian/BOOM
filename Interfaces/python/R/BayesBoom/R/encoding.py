@@ -19,8 +19,10 @@ def register_encoding_json_encoder(statistical_encoder_name,
     """
     global JSON_ENCODER_REGISTRY
     global JSON_DECODER_REGISTRY
-    assert issubclass(json_encoder_class, json.JSONEncoder)
-    assert issubclass(json_decoder_class, json.JSONDecoder)
+    if not issubclass(json_encoder_class, json.JSONEncoder):
+        raise Exception("Class must be a subclass of json.JSONEncoder")
+    if not issubclass(json_decoder_class, json.JSONDecoder):
+        raise Exception("Class must be a subclass of json.JSONDecoder")
 
     JSON_ENCODER_REGISTRY[statistical_encoder_name] = json_encoder_class
     JSON_DECODER_REGISTRY[statistical_encoder_name] = json_decoder_class
@@ -218,7 +220,8 @@ class EffectEncoder(MainEffectEncoder):
         """
         super().__init__(variable_name)
         self._levels = _unique_levels(levels)
-        assert isinstance(self._levels, list)
+        if not isinstance(self._levels, list):
+            raise Exception("self._levels should be a list")
 
         if baseline_level is None:
             self._baseline = levels[-1]
@@ -299,7 +302,8 @@ class OneHotEncoder(MainEffectEncoder):
         nobs = len(factor)
         levels = [x for x in self._levels if x != self._baseline]
         dim = self.dim
-        assert dim == len(levels)
+        if dim != len(levels):
+            raise Exception("dimension mismatch.")
 
         ans = np.zeros((nobs, dim), dtype=float)
         for i in range(dim):

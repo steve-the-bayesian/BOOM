@@ -78,7 +78,7 @@ namespace BOOM {
     //   nseasons:  The number of seasons in a full cycle.
     //   season_duration: The number of time periods each season lasts.  This
     //     argument is currently ignored.
-    GeneralSeasonalLLT(int nseasons, int season_duration = 1);
+    explicit GeneralSeasonalLLT(int nseasons, int season_duration = 1);
     GeneralSeasonalLLT(const GeneralSeasonalLLT &rhs);
     GeneralSeasonalLLT & operator=(const GeneralSeasonalLLT &rhs);
     GeneralSeasonalLLT(GeneralSeasonalLLT &&rhs);

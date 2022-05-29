@@ -300,7 +300,8 @@ namespace BOOM {
   namespace {
     class MultivariateStateSpaceTargetFun {
      public:
-      MultivariateStateSpaceTargetFun(MultivariateStateSpaceModelBase *model)
+      explicit MultivariateStateSpaceTargetFun(
+          MultivariateStateSpaceModelBase *model)
           : model_(model)
       {}
 

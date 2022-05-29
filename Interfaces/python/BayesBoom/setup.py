@@ -262,6 +262,7 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/StateSpace/Multivariate/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/TimeSeries/*.cpp")
     + glob(BOOM_DIR + "pybind11/LinAlg/*.cpp")
     + glob(BOOM_DIR + "pybind11/stats/*.cpp")

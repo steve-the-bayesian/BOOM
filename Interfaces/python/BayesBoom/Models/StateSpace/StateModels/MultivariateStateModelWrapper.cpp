@@ -24,6 +24,11 @@ namespace BayesBoom {
 
   void MultivariateStateModel_def(py::module &boom) {
 
+    py::class_<SharedStateModel,
+               StateModelBase,
+               BOOM::Ptr<SharedStateModel>>(
+                   boom, "SharedStateModel", py::multiple_inheritance())
+        ;
 
     py::class_<SharedLocalLevelStateModelBase,
                SharedStateModel,
@@ -35,13 +40,13 @@ namespace BayesBoom {
               return state_model.number_of_factors();
             },
             "The number of factors in the model.")
-        .def_property_readonly(
-            "state_dimension",
-            [](const SharedLocalLevelStateModelBase &state_model) {
-              return state_model.state_dimension();
-            },
-            "The number of dimensions this component adds to the shared "
-            "state vector.")
+        // .def_property_readonly(
+        //     "state_dimension",
+        //     [](const SharedLocalLevelStateModelBase &state_model) {
+        //       return state_model.state_dimension();
+        //     },
+        //     "The number of dimensions this component adds to the shared "
+        //     "state vector.")
         ;
 
   }  // MultivariateStateModel_def

@@ -32,7 +32,7 @@ namespace BOOM {
 
   class ZeroMeanStudentLogLikelihood {
    public:
-    ZeroMeanStudentLogLikelihood(const Vector &residuals)
+    explicit ZeroMeanStudentLogLikelihood(const Vector &residuals)
         : residuals_(residuals)
     {}
 
