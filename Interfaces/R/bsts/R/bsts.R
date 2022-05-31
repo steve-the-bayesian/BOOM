@@ -634,4 +634,21 @@ BstsOptions <- function(save.state.contributions = TRUE,
   if (!data.list$timestamp.info$timestamps.are.trivial && dynamic.regression) {
     stop("Dynamic regression models are only supported with trivial time stamps.")
   }
+
+  is.state.model <- sapply(state.specification, inherits, "StateModel")
+  if (!all(is.state.model)) {
+    error.message <- paste0(
+      "The state.specification should be a list of StateModel objects.  ")
+    if (sum(!is.state.model) == 1) {
+      error.message <- paste0(
+        error.message,
+        "The list element in position: ", which(is.state.model),
+        " is not a StateModel object.")
+    } else {
+      error.message <- paste0(
+        "The list elements in positions: ", which(is.state.model),
+        " are not StateModel objects.")
+    }
+    stop(error.message)
+  }
 }
