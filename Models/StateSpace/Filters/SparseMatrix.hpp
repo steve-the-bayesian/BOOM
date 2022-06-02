@@ -108,6 +108,9 @@ namespace BOOM {
     // Checks that ncol() == i.  Reports an error if it does not.
     void conforms_to_cols(int i) const;
 
+    void check_can_add(int rows, int cols) const;
+    void check_can_multiply(int vector_size) const;
+    void check_can_Tmult(int vector_size) const;
     void check_can_add(const SubMatrix &block) const;
 
     std::ostream & print(std::ostream &out = std::cout) const {
@@ -371,6 +374,13 @@ namespace BOOM {
     // Returns a solution to y = this * x.  This may raise an error if the
     // solution is not well defined, which is the default.
     virtual Vector left_inverse(const ConstVectorView &x) const;
+
+    using SparseKalmanMatrix::check_can_multiply;
+
+    // Checks that this can multiply rhs, and that lhs is correctly sized to
+    // receive the result.  An error is reported if either check fails.
+    void check_can_multiply(const VectorView &lhs,
+                            const ConstVectorView &rhs) const;
   };
 
   //===========================================================================
@@ -403,10 +413,6 @@ namespace BOOM {
     void add_to_block(SubMatrix block) const override;
 
    private:
-    // Checks that this can multiply rhs, and that lhs is correctly sized to
-    // receive the result.  An error is reported if either check fails.
-    void check_can_multiply(const VectorView &lhs,
-                            const ConstVectorView &rhs) const;
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
     int dim_;
   };
@@ -2072,10 +2078,14 @@ namespace BOOM {
 
   //======================================================================
   // A matrix formed by stacking a set of GlmCoefs.
-  class StackedRegressionCoefficients : public SparseKalmanMatrix {
+  class StackedRegressionCoefficients : public SparseMatrixBlock {
    public:
-    const GlmCoefs &coefficients(int i) const { return *coefficients_[i]; }
+    StackedRegressionCoefficients *clone() const override;
+
     void add_row(const Ptr<GlmCoefs> &beta);
+    const GlmCoefs &coefficients(int i) const { return *coefficients_[i]; }
+    Ptr<GlmCoefs> coef_ptr(int i) {return coefficients_[i];}
+    const Ptr<GlmCoefs> coef_ptr(int i) const {return coefficients_[i];}
 
     int nrow() const override {return coefficients_.size();}
     int ncol() const override {
@@ -2086,6 +2096,9 @@ namespace BOOM {
       }
     }
 
+    void multiply(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_and_add(VectorView lhs, const ConstVectorView &rhs) const override;
+    void multiply_inplace(VectorView x) const override;
     Vector operator*(const Vector &v) const override;
     Vector operator*(const VectorView &v) const override;
     Vector operator*(const ConstVectorView &v) const override;
@@ -2095,11 +2108,14 @@ namespace BOOM {
 
     using SparseKalmanMatrix::Tmult;
     Vector Tmult(const ConstVectorView &x) const override;
+    void Tmult(VectorView lhs, const ConstVectorView &rhs) const override;
+
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
 
     Matrix &add_to(Matrix &P) const override;
     SubMatrix add_to_submatrix(SubMatrix P) const override;
+    void add_to_block(SubMatrix block) const override;
 
    private:
     // Each coefficient vector is one row in the matrix.
@@ -2217,9 +2233,6 @@ namespace BOOM {
     SubMatrix add_to_submatrix(SubMatrix P) const override;
 
    private:
-    void check_can_multiply(int vector_size) const;
-    void check_can_Tmult(int vector_size) const;
-    void check_can_add(int rows, int cols) const;
     int ncol_;
     std::vector<Ptr<SparseMatrixBlock>> blocks_;
   };

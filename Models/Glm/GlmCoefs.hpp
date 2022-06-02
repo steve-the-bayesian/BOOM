@@ -107,6 +107,10 @@ namespace BOOM {
     Vector::const_iterator unvectorize(const Vector &v,
                                        bool minimal = true) override;
 
+    // Add *this to vec.
+    void add_to(VectorView vec) const;
+    void add_to(Vector &vec) const;
+
    private:
     Selector inc_;
 

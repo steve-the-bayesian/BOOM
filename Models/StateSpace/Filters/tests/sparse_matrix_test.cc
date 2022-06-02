@@ -122,6 +122,60 @@ namespace {
         << sparse->inner(weights);
   }
 
+  void CheckSparseKalmanMatrix(const SparseKalmanMatrix &sparse) {
+    Matrix dense = sparse.dense();
+    EXPECT_EQ(dense.nrow(), sparse.nrow());
+    EXPECT_EQ(dense.ncol(), sparse.ncol());
+
+    Vector v(sparse.ncol());
+    v.randomize();
+    EXPECT_TRUE(VectorEquals(sparse * v, dense * v));
+    EXPECT_TRUE(VectorEquals(sparse * VectorView(v), dense * VectorView(v)));
+    EXPECT_TRUE(VectorEquals(sparse * ConstVectorView(v),
+                             dense * ConstVectorView(v)));
+
+    Vector tv(sparse.nrow());
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(tv), dense.Tmult(tv)));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(tv)),
+                             dense.Tmult(VectorView(tv))));
+    EXPECT_TRUE(VectorEquals(sparse.Tmult(ConstVectorView(tv)),
+                             dense.Tmult(ConstVectorView(tv))));
+
+    SpdMatrix V(sparse.ncol());
+    V.randomize();
+    SpdMatrix originalV = V;
+    if (sparse.nrow() == sparse.ncol()) {
+      sparse.sandwich_inplace(V);
+      EXPECT_TRUE(MatrixEquals(V, dense * originalV * dense.transpose()));
+
+      SpdMatrix tV(sparse.nrow());
+      tV.randomize();
+      SpdMatrix original_tV = tV;
+      sparse.sandwich_inplace_transpose(tV);
+      EXPECT_TRUE(MatrixEquals(tV, dense.transpose() * original_tV * dense));
+    }
+
+    EXPECT_TRUE(MatrixEquals(sparse.sandwich(V), dense * V * dense.transpose()));
+
+    Matrix summand(sparse.nrow(), sparse.ncol());
+    summand.randomize();
+    Matrix original_summand = summand;
+    EXPECT_TRUE(MatrixEquals(sparse.add_to(summand), original_summand + dense));
+
+
+    EXPECT_TRUE(MatrixEquals(dense.inner(), sparse.inner()))
+        << "Dense inner product: " << endl
+        << dense.inner() << endl
+        << "Sparse inner product: " << endl
+        << sparse.inner() << endl;
+
+    Vector weights(dense.nrow());
+    weights.randomize();
+    EXPECT_TRUE(MatrixEquals(
+        dense.Tmult(DiagonalMatrix(weights) * dense),
+        sparse.inner(weights)));
+  }
+
   TEST_F(SparseMatrixTest, LeftInverseIdentity) {
     NEW(IdentityMatrix, mat)(3);
     Vector x(3);
@@ -457,58 +511,24 @@ namespace {
     CheckSparseMatrixBlock(sparse_square, square_dense);
   }
 
-  void CheckSparseKalmanMatrix(const SparseKalmanMatrix &sparse) {
-    Matrix dense = sparse.dense();
-    EXPECT_EQ(dense.nrow(), sparse.nrow());
-    EXPECT_EQ(dense.ncol(), sparse.ncol());
-
-    Vector v(sparse.ncol());
-    v.randomize();
-    EXPECT_TRUE(VectorEquals(sparse * v, dense * v));
-    EXPECT_TRUE(VectorEquals(sparse * VectorView(v), dense * VectorView(v)));
-    EXPECT_TRUE(VectorEquals(sparse * ConstVectorView(v),
-                             dense * ConstVectorView(v)));
-
-    Vector tv(sparse.nrow());
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(tv), dense.Tmult(tv)));
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(VectorView(tv)),
-                             dense.Tmult(VectorView(tv))));
-    EXPECT_TRUE(VectorEquals(sparse.Tmult(ConstVectorView(tv)),
-                             dense.Tmult(ConstVectorView(tv))));
-
-    SpdMatrix V(sparse.ncol());
-    V.randomize();
-    SpdMatrix originalV = V;
-    if (sparse.nrow() == sparse.ncol()) {
-      sparse.sandwich_inplace(V);
-      EXPECT_TRUE(MatrixEquals(V, dense * originalV * dense.transpose()));
-
-      SpdMatrix tV(sparse.nrow());
-      tV.randomize();
-      SpdMatrix original_tV = tV;
-      sparse.sandwich_inplace_transpose(tV);
-      EXPECT_TRUE(MatrixEquals(tV, dense.transpose() * original_tV * dense));
+  TEST_F(SparseMatrixTest, StackedRegressionCoefficientsTest) {
+    NEW(StackedRegressionCoefficients, sparse)();
+    std::vector<Ptr<GlmCoefs>> coefficients;
+    for (int i = 0; i < 3; ++i) {
+      NEW(GlmCoefs, row)(rnorm_vector(5, 3.0, 1.0));
+      coefficients.push_back(row);
+      sparse->add_row(row);
     }
-
-    EXPECT_TRUE(MatrixEquals(sparse.sandwich(V), dense * V * dense.transpose()));
-
-    Matrix summand(sparse.nrow(), sparse.ncol());
-    summand.randomize();
-    Matrix original_summand = summand;
-    EXPECT_TRUE(MatrixEquals(sparse.add_to(summand), original_summand + dense));
-
-
-    EXPECT_TRUE(MatrixEquals(dense.inner(), sparse.inner()))
-        << "Dense inner product: " << endl
-        << dense.inner() << endl
-        << "Sparse inner product: " << endl
-        << sparse.inner() << endl;
-
-    Vector weights(dense.nrow());
-    weights.randomize();
-    EXPECT_TRUE(MatrixEquals(
-        dense.Tmult(DiagonalMatrix(weights) * dense),
-        sparse.inner(weights)));
+    Matrix dense = sparse->dense();
+    EXPECT_EQ(dense.nrow(), 3);
+    EXPECT_EQ(dense.ncol(), 5);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 5; ++j) {
+        EXPECT_DOUBLE_EQ(dense(i, j), coefficients[i]->value()[j]);
+      }
+    }
+    CheckSparseKalmanMatrix(*sparse);
+    CheckSparseMatrixBlock(sparse, dense);
   }
 
   TEST_F(SparseMatrixTest, BlockDiagonalMatrixTest) {

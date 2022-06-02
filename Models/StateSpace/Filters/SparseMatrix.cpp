@@ -43,6 +43,19 @@ namespace BOOM {
     report_error(err.str());
   }
 
+  void SparseKalmanMatrix::check_can_multiply(int vector_size) const {
+    conforms_to_cols(vector_size);
+  }
+
+  void SparseKalmanMatrix::check_can_Tmult(int vector_size) const {
+    conforms_to_rows(vector_size);
+  }
+
+  void SparseKalmanMatrix::check_can_add(int rows, int cols) const {
+    conforms_to_rows(rows);
+    conforms_to_cols(cols);
+  }
+
   SparseMatrixProduct::SparseMatrixProduct() {}
 
   void SparseMatrixProduct::add_term(const Ptr<SparseKalmanMatrix> &term,
@@ -403,6 +416,16 @@ namespace BOOM {
     }
   }  // namespace
 
+  void SparseMatrixBlock::check_can_multiply(
+      const VectorView &lhs, const ConstVectorView &rhs) const {
+    if (lhs.size() != nrow()) {
+      report_error("Left hand side is the wrong dimension.");
+    }
+    if (rhs.size() != ncol()) {
+      report_error("Right hand side is the wrong dimension.");
+    }
+  }
+
   Vector SparseMatrixBlock::operator*(const Vector &v) const {
     return sparse_multiply_impl(*this, v);
   }
@@ -526,16 +549,6 @@ namespace BOOM {
     }
     dim_ += block->nrow();
     blocks_.push_back(block);
-  }
-
-  void BlockDiagonalMatrixBlock::check_can_multiply(
-      const VectorView &lhs, const ConstVectorView &rhs) const {
-    if (lhs.size() != dim_) {
-      report_error("Left hand side is the wrong dimension.");
-    }
-    if (rhs.size() != dim_) {
-      report_error("Right hand side is the wrong dimension.");
-    }
   }
 
   void BlockDiagonalMatrixBlock::multiply(VectorView lhs,
@@ -1456,6 +1469,11 @@ namespace BOOM {
   }
 
   //======================================================================
+
+  StackedRegressionCoefficients *StackedRegressionCoefficients::clone() const {
+    return new StackedRegressionCoefficients(*this);
+  }
+
   void StackedRegressionCoefficients::add_row(const Ptr<GlmCoefs> &beta) {
     if (!coefficients_.empty()) {
       if (beta->nvars_possible() != coefficients_[0]->nvars_possible()) {
@@ -1477,6 +1495,56 @@ namespace BOOM {
     }
   }  // namespace
 
+  void StackedRegressionCoefficients::multiply(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    check_can_multiply(lhs, rhs);
+    for (int i = 0; i < lhs.size(); ++i) {
+      lhs[i] = coefficients_[i]->predict(rhs);
+    }
+  }
+
+  void StackedRegressionCoefficients::multiply_and_add(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    check_can_multiply(rhs.size());
+    if (lhs.size() != nrow()) {
+      report_error("lhs argument is the wrong size in "
+                   "StackedRegressionCoefficients::multiply_and_add.");
+    }
+    for (int i = 0; i < lhs.size(); ++i) {
+      lhs[i] += coefficients_[i]->predict(rhs);
+    }
+  }
+
+  void StackedRegressionCoefficients::add_to_block(SubMatrix block) const {
+    for (int i = 0; i < block.nrow(); ++i) {
+      coefficients_[i]->add_to(block.row(i));
+    }
+  }
+
+  void StackedRegressionCoefficients::Tmult(
+      VectorView lhs, const ConstVectorView &rhs) const {
+    check_can_Tmult(rhs.size());
+    if (lhs.size() != ncol()) {
+      report_error("lhs argument is the wrong size in "
+                   "StackedRegressionCoefficients::Tmult.");
+    }
+    for (size_t i = 0; i < lhs.size(); ++i) {
+      lhs[i] = 0;
+      for (size_t j = 0; j < rhs.size(); ++j) {
+        lhs[i] += coefficients_[j]->value()[i] * rhs[j];
+      }
+    }
+  }
+
+  void StackedRegressionCoefficients::multiply_inplace(
+      VectorView x) const {
+    check_can_multiply(x.size());
+    if (nrow() != ncol()) {
+      report_error("multiply_inplace only applies to square matrices.");
+    }
+    x = *this * x;
+  }
+
   Vector StackedRegressionCoefficients::operator*(
       const Vector &v) const {
     return stacked_regression_vector_mult(v, *this);
@@ -1493,12 +1561,7 @@ namespace BOOM {
   Vector StackedRegressionCoefficients::Tmult(
       const ConstVectorView &x) const {
     Vector ans(ncol());
-    for (int i = 0; i < ncol(); ++i) {
-      ans[i] = 0;
-      for (int j = 0; j < nrow(); ++j) {
-        ans[i] += coefficients_[j]->value()[i] * x[i];
-      }
-    }
+    this->Tmult(VectorView(ans), x);
     return ans;
   }
 
@@ -2173,26 +2236,6 @@ namespace BOOM {
     return P;
   }
 
-  void SparseVerticalStripMatrix::check_can_multiply(int vector_size) const {
-    if (ncol() != vector_size) {
-      report_error("Incompatible vector multiplication.");
-    }
-  }
-  void SparseVerticalStripMatrix::check_can_Tmult(int vector_size) const {
-    if (nrow() != vector_size) {
-      std::ostringstream err;
-      err << "Incompatible vector (transpose-)multiplication.  "
-          << "This matrix has " << nrow() << " rows.  The target vector has "
-          << vector_size << " elements." << std::endl;
-      report_error(err.str());
-    }
-  }
-
-  void SparseVerticalStripMatrix::check_can_add(int rows, int cols) const {
-    if (nrow() != rows || ncol() != cols) {
-      report_error("Incompatible matrix addition.");
-    }
-  }
 
   //===========================================================================
   // LHS = *this * RHS
