@@ -318,36 +318,12 @@ namespace BOOM {
     };
   }  // namespace
 
-  double MSSRM::mle(double epsilon) {
-    // If the model can be estimated using an EM algorithm, then do a
-    // few steps of EM, and then switch to BFGS.
-    Vector original_parameters = vectorize_params(true);
-    if (check_that_em_is_legal()) {
-      clear_client_data();
-      double old_loglikelihood = Estep(false);
-      double crit = 1 + epsilon;
-      while (crit > std::min<double>(1.0, 100 * epsilon)) {
-        Mstep(epsilon);
-        clear_client_data();
-        double log_likelihood = Estep(false);
-        crit = log_likelihood - old_loglikelihood;
-        old_loglikelihood = log_likelihood;
-      }
+  double MSSRM::mle(double epsilon, int ntries) {
+    if (has_series_specific_state()) {
+      report_error("Maximum likelihood estimation has not been implemented "
+                   "in models with series-specific state.");
     }
-
-    MultivariateStateSpaceTargetFun target(this);
-    Negate min_target(target);
-    PowellMinimizer minimizer(min_target);
-    minimizer.set_evaluation_limit(500);
-    Vector parameters = vectorize_params(true);
-    if (parameters != original_parameters) {
-      double stepsize = fabs(mean(parameters - original_parameters));
-      minimizer.set_initial_stepsize(stepsize);
-    }
-    minimizer.set_precision(epsilon);
-    minimizer.minimize(parameters);
-    unvectorize_params(minimizer.minimizing_value());
-    return log_likelihood();
+    return MultivariateStateSpaceModelBase::mle(epsilon, ntries);
   }
 
   double MSSRM::Estep(bool save_state_distributions) {

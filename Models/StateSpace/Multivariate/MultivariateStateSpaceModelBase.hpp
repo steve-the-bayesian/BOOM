@@ -151,6 +151,24 @@ namespace BOOM {
       return get_filter().compute_log_likelihood();
     }
 
+    // Set model parameters to their maximum likelihood estimates.
+    //
+    // Args:
+    //   epsilon: A small positive number.  Absolute changes to log likelihood
+    //     less than this value indicate that the algorithm has converged.
+    //   max_tries:  Stop trying to optimzize after this many iterations.
+    //
+    // Returns:
+    //   The log likelihood value at the maximum.
+    //
+    // Effects:
+    //   Model parameters are set to the maximum likelihood estimates.
+    //
+    // This function is virtual so that child classes are free to handle edge
+    // cases in the optimization.  One such case is the potential presence of
+    // series-specific effects.
+    virtual double mle(double epsilon, int max_tries=500);
+
     //------------- Model matrices for structural equations. --------------
     // Durbin and Koopman's T[t] built from state models.
     virtual SparseKalmanMatrix *state_transition_matrix(int t) const {
@@ -559,6 +577,4 @@ namespace BOOM {
 
 } // namespace BOOM
 
-
-
-#endif //  BOOM_MULTIVARIATE_STATE_SPACE_MODEL_BASE_HPP_
+#endif  //  BOOM_MULTIVARIATE_STATE_SPACE_MODEL_BASE_HPP_

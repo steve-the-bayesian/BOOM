@@ -30,8 +30,28 @@
 
 namespace BOOM {
 
+
   namespace {
     using MvBase = MultivariateStateSpaceModelBase;
+
+    // A functor that computes the log likelihood of a MvBase under a candidate
+    // set of parameters.
+    class MultivariateStateSpaceTargetFun {
+     public:
+      explicit MultivariateStateSpaceTargetFun(MvBase *model)
+          : model_(model) {}
+
+      double operator()(const Vector &parameters) {
+        Vector old_parameters(model_->vectorize_params());
+        model_->unvectorize_params(parameters);
+        double ans = model_->log_likelihood();
+        model_->unvectorize_params(old_parameters);
+        return ans;
+      }
+
+     private:
+      MvBase *model_;
+    };
   }  // namespace
 
   MvBase &MvBase::operator=(const MvBase &rhs) {
@@ -313,6 +333,21 @@ namespace BOOM {
     int size = state_models().state_parameter_size(s);
     return ConstVectorView(model_parameters, start, size);
   }
+
+  double MvBase::mle(double epsilon, int max_tries) {
+    // If the model can be estimated using an EM algorithm, then do a
+    // few steps of EM, and then switch to BFGS.
+    MultivariateStateSpaceTargetFun target(this);
+    Negate min_target(target);
+    PowellMinimizer minimizer(min_target);
+    minimizer.set_evaluation_limit(max_tries);
+    Vector parameters = vectorize_params(true);
+    minimizer.set_precision(epsilon);
+    minimizer.minimize(parameters);
+    unvectorize_params(minimizer.minimizing_value());
+    return log_likelihood();
+  }
+
 
   //===========================================================================
 

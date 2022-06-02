@@ -461,7 +461,7 @@ namespace BOOM {
     //
     // Returns:
     //   The value of the log-likelihood at the MLE.
-    double mle(double epsilon = 1e-5);
+    double mle(double epsilon = 1e-5, int ntries = 500) override;
 
     // Returns true if all the state models have been assigned priors that
     // implement find_posterior_mode.
