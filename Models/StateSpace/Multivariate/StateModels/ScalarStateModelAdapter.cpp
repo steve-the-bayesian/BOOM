@@ -24,87 +24,9 @@ namespace BOOM {
     using SSMMA = ScalarStateModelMultivariateAdapter;
   }
 
-  SSMMA::ScalarStateModelMultivariateAdapter(
-      MultivariateStateSpaceModelBase *host, int nseries)
-      : host_(host),
-        regression_coefficients_current_(false),
-        regression_coefficients_(nseries),
-        observation_coefficients_(
-            new DenseSparseRankOneMatrixBlock(
-                regression_coefficients_,
-                SparseVector(1)))
-  {
-    int regression_dim = 1;
-    for (int i = 0; i < nseries; ++i) {
-      observation_models_.push_back(
-          new RegressionModel(regression_dim));
-      observation_models_.back()->coef_prm()->add_observer(
-          this, [this]() {
-                  this->regression_coefficients_current_ = false;
-                });
-    }
-  }
-
-  SSMMA::~ScalarStateModelMultivariateAdapter() {
-    remove_observers();
-  }
-
-  SSMMA::ScalarStateModelMultivariateAdapter(const SSMMA &rhs)
-      : SharedStateModel(rhs),
-        ParamPolicy(rhs),
-        NullDataPolicy(rhs),
-        PriorPolicy(rhs),
-        host_(rhs.host_),
-        regression_coefficients_current_(false),
-        regression_coefficients_(rhs.regression_coefficients_),
-        observation_coefficients_(new DenseSparseRankOneMatrixBlock(
-            regression_coefficients_,
-            SparseVector(1)))
-
-  {
-    for (const auto &el : rhs.observation_models_) {
-      observation_models_.push_back(el->clone());
-      observation_models_.back()->coef_prm()->add_observer(
-          this, [this]() {
-                  this->regression_coefficients_current_ = false;
-                });
-    }
-    for (const auto &el : rhs.component_models_) {
-      add_state(el->clone());
-    }
-  }
-
-  SSMMA & SSMMA::operator=(const SSMMA &rhs) {
-    if (&rhs != this) {
-      remove_observers();
-      SharedStateModel::operator=(rhs);
-      ParamPolicy::operator=(rhs);
-      NullDataPolicy::operator=(rhs);
-      PriorPolicy::operator=(rhs);
-      host_ = rhs.host_;
-      regression_coefficients_current_ = false;
-      regression_coefficients_ = rhs.regression_coefficients_;
-      observation_coefficients_ = new DenseSparseRankOneMatrixBlock(
-          regression_coefficients_, SparseVector(1));
-
-      observation_models_.clear();
-      for (const auto &el : rhs.observation_models_) {
-        observation_models_.push_back(el->clone());
-        observation_models_.back()->coef_prm()->add_observer(
-            this, [this]() {
-                    this->regression_coefficients_current_ = false;
-                  });
-      }
-
-      component_models_.clear();
-      for (const auto &el : rhs.component_models_) {
-        add_state(el->clone());
-      }
-    }
-    return *this;
-  }
-
-  SSMMA * SSMMA::clone() const {return new SSMMA(*this);}
+  SSMMA::ScalarStateModelMultivariateAdapter(int nseries)
+      : nseries_(nseries)
+  {}
 
   void SSMMA::observe_state(const ConstVectorView &then,
                             const ConstVectorView &now,
@@ -137,19 +59,6 @@ namespace BOOM {
     }
   }
 
-  // The observation coefficients are Beta * Z[t], where Z[t] is the set of
-  // observation coefficients from the component state models and Beta is the
-  // set of regression coefficients.  If the dimension of y[t] is m x 1 and the
-  // dimension of the managed state is p x 1, then Beta is m x 1, Z[t] is 1 x p,
-  // and so Beta * Z[t] is m x p, but it is a product of two rank 1 matrices.
-  Ptr<SparseMatrixBlock> SSMMA::observation_coefficients(
-      int t, const Selector &observed) const {
-    observation_coefficients_->update(
-        regression_coefficients(),
-        component_observation_coefficients(t));
-    return observation_coefficients_;
-  }
-
   Vector SSMMA::initial_state_mean() const {
     Vector ans;
     for (const auto &mod : component_models_) {
@@ -178,27 +87,57 @@ namespace BOOM {
     report_error("not implemented");
   }
 
-  const Vector &SSMMA::regression_coefficients() const {
-    if (!regression_coefficients_current_) {
-      for (size_t i = 0; i < observation_models_.size(); ++i) {
-        regression_coefficients_[i] = observation_models_[i]->Beta()[0];
-      }
-      regression_coefficients_current_ = true;
-    }
-    return regression_coefficients_;
+  namespace {
+    using Adapter =
+        ConditionallyIndependentScalarStateModelMultivariateAdapter;
+
+    using Host = ConditionallyIndependentMultivariateStateSpaceModelBase;
+  }  // namespace
+
+  Adapter::ConditionallyIndependentScalarStateModelMultivariateAdapter(
+      Host *host,
+      int nseries)
+      : Base(nseries),
+        host_(host),
+        empty_(new EmptyMatrix)
+  {
+
   }
 
-  SparseVector SSMMA::component_observation_coefficients(int t) const {
-    SparseVector ans;
-    for (const auto &mod : component_models_) {
-      ans.concatenate(mod->observation_matrix(t));
-    }
-    return ans;
+  Adapter *Adapter::clone() const {
+    return new Adapter(*this);
   }
 
-  void SSMMA::remove_observers() {
-    for (const auto &reg : observation_models_) {
-      reg->coef_prm()->remove_observer(this);
+  void Adapter::clear_data() {
+    for (auto &el : sufficient_statistics_) {
+      el->clear();
+    }
+    Base::clear_data();
+  }
+
+  void Adapter::observe_state(const ConstVectorView &then,
+                              const ConstVectorView &now,
+                              int time_now) {
+    report_error("Adapter::observe_state is Not implemented");
+  }
+
+  // The observation coefficients are Beta * Z[t], where Z[t] is the set of
+  // observation coefficients from the component state models and Beta is the
+  // set of regression coefficients.  If the dimension of y[t] is m x 1 and the
+  // dimension of the managed state is p x 1, then Beta is m x 1, Z[t] is 1 x p,
+  // and so Beta * Z[t] is m x p, but it is a product of two rank 1 matrices.
+  Ptr<SparseMatrixBlock> Adapter::observation_coefficients(
+      int t, const Selector &observed) const {
+    if (observed.nvars() == 0) {
+      return empty_;
+    } else if (observed.nvars() == observed.nvars_possible()) {
+      return new DenseSparseRankOneMatrixBlock(
+          observation_coefficient_slopes_,
+          component_observation_coefficients(t));
+    } else {
+      return new DenseSparseRankOneMatrixBlock(
+          observed.select(observation_coefficient_slopes_),
+          component_observation_coefficients(t));
     }
   }
 

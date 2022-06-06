@@ -31,7 +31,8 @@ namespace {
     int xdim = 1;
     int nseries = 12;
     MultivariateStateSpaceRegressionModel host(xdim, nseries);
-    ScalarStateModelMultivariateAdapter state(&host, nseries);
+    ConditionallyIndependentScalarStateModelMultivariateAdapter state(
+        &host, nseries);
     state.add_state(trend);
     state.add_state(seasonal);
 

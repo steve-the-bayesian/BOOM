@@ -83,6 +83,26 @@ namespace BayesBoom {
              "Args:\n"
              "  xdim:  The dimension of the predictor variables.\n"
              "  nseries: The number of time series being modeled.\n")
+        .def("mle",
+             [](MultivariateStateSpaceRegressionModel &model,
+                double epsilon,
+                int max_tries) {
+               return model.mle(epsilon, max_tries);
+             },
+             py::arg("epsilon"),
+             py::arg("max_tries") = 500,
+             "Set model parameters to their maximum likelihood estimates.\n"
+             "\n"
+             "Args:\n"
+             "  epsilon: A small positive number.  Absolute changes to log likelihood\n"
+             "    less than this value indicate that the algorithm has converged.\n"
+             "  max_tries:  Stop trying to optimzize after this many iterations.\n"
+             "\n"
+             "Returns:\n"
+             "  The log likelihood value at the maximum.\n"
+             "\n"
+             "Effects:\n"
+             "  Model parameters are set to the maximum likelihood estimates.\n")
         ;
   }
 }  // namespace BayesBoom

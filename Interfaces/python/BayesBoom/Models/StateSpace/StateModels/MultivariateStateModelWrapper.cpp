@@ -2,18 +2,8 @@
 #include <pybind11/stl.h>
 
 #include "Models/StateSpace/Multivariate/StateModels/SharedLocalLevel.hpp"
+#include "Models/StateSpace/Multivariate/StateModels/ScalarStateModelAdapter.hpp"
 
-#include "Models/PosteriorSamplers/ZeroMeanGaussianConjSampler.hpp"
-#include "Models/PosteriorSamplers/ZeroMeanMvnIndependenceSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/DynamicRegressionPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StudentLocalLinearTrendPosteriorSampler.hpp"
-#include "Models/StateSpace/StateModels/PosteriorSamplers/GeneralSeasonalLLTPosteriorSampler.hpp"
-
-#include "Models/TimeSeries/ArModel.hpp"
-
-#include "Models/StateSpace/StateModels/Holiday.hpp"
-
-#include "cpputil/Date.hpp"
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -48,6 +38,40 @@ namespace BayesBoom {
         //     "The number of dimensions this component adds to the shared "
         //     "state vector.")
         ;
+
+
+    py::class_<ScalarStateModelMultivariateAdapterBase,
+               SharedStateModelBase,
+               Ptr<ScalarStateModelMultivariateAdapterBase>>(
+                   boom, "ScalarStateModelMultivariateAdapterBase")
+        .def("add_state",
+             [](ScalarStateModelMultivariateAdapterBase *base,
+                cont Ptr<StateModel> &state_model) {
+               base->add_state(state_model);
+             },
+             "Add 'state_model' to the "
+        ;
+
+    py::class_<ConditionallyIndependentScalarStateModelMultivariateAdapter,
+               ScalarStateModelMultivariateAdapterBase,
+               Ptr<ConditionallyIndependentScalarStateModelMultivariateAdapter>>(
+                   boom,
+                   "ConditionallyIndependentScalarStateModelMultivariateAdapter")
+        .def(py::init(
+            [](ConditionallyIndependentMultivariateStateSpaceModelBase *host,
+               int nseries) {
+              using Adapter =
+                  ConditionallyIndependentScalarStateModelMultivariateAdapter;
+              return new Adapter(host, nseries);
+            }),
+             py::arg("host"),
+             py::arg("nseries")
+             "Args:\n\n"
+             "  host:  The multivariate state space model in which this object "
+             "is a component of state.\n"
+             "  nseries:  The number of series being modeled.\n")
+        ;
+
 
   }  // MultivariateStateModel_def
 
