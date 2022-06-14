@@ -2324,8 +2324,6 @@ namespace BOOM {
 
   //===========================================================================
 
-  Vector operator*(const SparseMatrixBlock &, const Vector &);
-
   // P += TPK * K.transpose * w
   void add_outer_product(SpdMatrix &P, const Vector &TPK, const Vector &K,
                          double w);
