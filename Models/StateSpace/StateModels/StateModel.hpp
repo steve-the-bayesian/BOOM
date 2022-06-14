@@ -176,6 +176,8 @@ namespace BOOM {
     //   this call, but for the constraints being satisfied.
     virtual void impose_identifiability_constraint() {}
 
+    Matrix simulate(int ntimes, RNG &rng = GlobalRng::rng) const;
+
    private:
     int index_;
   };

@@ -27,7 +27,7 @@ namespace BOOM {
   StateModelBase::StateModelBase()
       : index_(-1)
   {}
-  
+
   void StateModelBase::update_complete_data_sufficient_statistics(
       int t, const ConstVectorView &state_error_mean,
       const ConstSubMatrix &state_error_variance) {
@@ -57,5 +57,17 @@ namespace BOOM {
 
   void StateModelBase::observe_initial_state(const ConstVectorView &state) {}
 
-  
+  Matrix StateModelBase::simulate(int ntimes, RNG &rng) const {
+    Matrix ans(ntimes, state_dimension());
+    simulate_initial_state(rng, ans.row(0));
+    for (int t = 1; t < ntimes; ++t) {
+      Vector error(state_error_dimension());
+      simulate_state_error(rng, VectorView(error), t);
+      Ptr<SparseMatrixBlock> T = state_transition_matrix(t);
+      Ptr<SparseMatrixBlock> R = state_error_expander(t);
+      ans.row(t) = (*T) * ans.row(t-1) + (*R) * error;
+    }
+    return ans;
+  }
+
 }  // namespace BOOM
