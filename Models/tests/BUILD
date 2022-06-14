@@ -10,6 +10,15 @@ COMMON_DEPS = [
 ]
 
 cc_test(
+    name = "constrained_vector_params_test",
+    size = "small",
+    srcs = ["constrained_vector_params_test.cc"],
+    copts = COPTS,
+    includes = ["@gtest"],
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "gaussian_test",
     size = "small",
     srcs = ["gaussian_test.cc"],

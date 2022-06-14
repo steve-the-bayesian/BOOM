@@ -33,32 +33,38 @@ namespace BOOM {
 
     ~VectorConstraint() override = default;
 
+    // Return true iff the constraint is satisfied.
     virtual bool check(const Vector &v) const = 0;
-    // returns true if constraint satisfied
 
-    virtual void impose(Vector &v) const = 0;
-    // forces constraint to hold
+    // Modify 'v' so that the constraint is true.  Return a reference to the
+    // modified value.
+    virtual Vector & impose(Vector &v) const = 0;
 
+    // Return the constrained vector from a minimal information vector.
+    // reduce() and expand() are inverse operations, so the form of the
+    // expansion depends on the form of the reduction.
     virtual Vector expand(const Vector &small) const = 0;
-    // returns constrained vector from minimal information vector
 
+    // Return a minimal information vector from constrained vector.
     virtual Vector reduce(const Vector &large) const = 0;
-    // returns minimal information vector from constrained vector
   };
-  //------------------------------------------------------------
+  //---------------------------------------------------------------------------
   class NoConstraint : public VectorConstraint {
    public:
     bool check(const Vector &) const override { return true; }
-    void impose(Vector &) const override {}
+    Vector &impose(Vector &v) const override {return v;}
     Vector expand(const Vector &v) const override { return v; }
     Vector reduce(const Vector &v) const override { return v; }
   };
-  //------------------------------------------------------------
+
+  //---------------------------------------------------------------------------
+  // Constrain a particular element to be a particular value.  E.g. element 3
+  // must be -1.
   class ElementConstraint : public VectorConstraint {
    public:
     explicit ElementConstraint(uint el = 0, double val = 0.0);
     bool check(const Vector &v) const override;
-    void impose(Vector &v) const override;
+    Vector &impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;
     Vector reduce(const Vector &v) const override;
 
@@ -66,20 +72,41 @@ namespace BOOM {
     uint element_;
     double value_;
   };
-  //------------------------------------------------------------
+
+  //---------------------------------------------------------------------------
+  // Constrain the elemets to sum to a particular value.  Impose the constraint
+  // by subtracting a value to the final element.
   class SumConstraint : public VectorConstraint {
    public:
     explicit SumConstraint(double x);
     bool check(const Vector &v) const override;
-    void impose(Vector &v) const override;
+    Vector &impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;  // adds final element to
     Vector reduce(const Vector &v) const override;  // eliminates last element
+
+   private:
+    double sum_;
+  };
+
+  //---------------------------------------------------------------------------
+  // The vector elements must sum to a (nonzero) value. If they don't then the
+  // vector elements will all be jointly scaled to satisfy the constraint.
+  class ProportionalSumConstraint : public VectorConstraint {
+   public:
+    explicit ProportionalSumConstraint(double value)
+        : sum_(value)
+    {}
+
+    bool check(const Vector &v) const override;
+    Vector &impose(Vector &v) const override;
+    Vector expand(const Vector &constrained) const override;
+    Vector reduce(const Vector &full) const override;
+
    private:
     double sum_;
   };
 
   //======================================================================
-
   class ConstrainedVectorParams : public VectorParams {
    public:
     explicit ConstrainedVectorParams(uint p, double x = 0.0,
@@ -91,6 +118,8 @@ namespace BOOM {
     ConstrainedVectorParams(const ConstrainedVectorParams &rhs);
     ConstrainedVectorParams *clone() const override;
 
+    void set(const Vector &value, bool signal_change = true) override;
+
     Vector vectorize(bool minimal = true) const override;
     Vector::const_iterator unvectorize(Vector::const_iterator &v,
                                        bool minimal = true) override;
@@ -100,7 +129,7 @@ namespace BOOM {
     bool check_constraint() const;
 
    private:
-    Ptr<VectorConstraint> c_;
+    Ptr<VectorConstraint> constraint_;
   };
   //------------------------------------------------------------
 
