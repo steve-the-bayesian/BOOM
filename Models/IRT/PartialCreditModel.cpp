@@ -43,7 +43,7 @@ namespace BOOM {
       return bM == (M + 1) * b0;  // factor of 'a' cancels
     }
 
-    void PBC::impose(Vector &b) const {
+    Vector & PBC::impose(Vector &b) const {
       uint b_sz = b.size();
       assert(b_sz >= 2);
       uint M = b_sz - 2;
@@ -56,6 +56,7 @@ namespace BOOM {
         b -= ad0;
         b.back() += ad0;
       }
+      return b;
     }
 
     Vector PBC::reduce(const Vector &b) const {
@@ -82,10 +83,11 @@ namespace BOOM {
       return (d[0] == 0.0 && d.sum() == 0.0);
     }
 
-    void PDC::impose(Vector &d) const {
+    Vector &PDC::impose(Vector &d) const {
       double d0 = d[0];
       d -= d0;
       d.back() -= d.sum();
+      return d;
     }
 
     Vector PDC::reduce(const Vector &d_full) const {

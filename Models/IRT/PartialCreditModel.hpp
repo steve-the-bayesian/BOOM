@@ -32,7 +32,7 @@ namespace BOOM {
       // Constrains the first and next_to_last elements of b so that (M+1)*b[0]
       // = b[M]. This class is used when PartialCreditModel is kept identified.
       bool check(const Vector &b) const override;
-      void impose(Vector &b) const override;
+      Vector &impose(Vector &b) const override;
       Vector expand(const Vector &b_min) const override;   // adds in b0
       Vector reduce(const Vector &b_full) const override;  // omits b0
     };
@@ -40,7 +40,7 @@ namespace BOOM {
     class PcrDConstraint : public VectorConstraint {
      public:
       bool check(const Vector &d) const override;
-      void impose(Vector &d) const override;
+      Vector &impose(Vector &d) const override;
       Vector expand(const Vector &d_min) const override;
       Vector reduce(const Vector &d_full) const override;
     };
