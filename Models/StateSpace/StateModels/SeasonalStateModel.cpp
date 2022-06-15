@@ -121,10 +121,10 @@ namespace BOOM {
           << "nrow(variance)    : " << nrow(initial_state_variance_) << endl;
       report_error(err.str());
     }
-    if (state_error.size() != state_error_dimension()) {
+    if (state_error.size() != state_dimension()) {
       std::ostringstream err;
       err << "State error size is " << state_error.size()
-          << " but state_error_dimension() == " << state_error_dimension()
+          << " but state_dimension() == " << state_dimension()
           << "." << endl;
       report_error(err.str());
     }

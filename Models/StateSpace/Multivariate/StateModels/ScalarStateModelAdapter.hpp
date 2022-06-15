@@ -19,14 +19,12 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/ConstrainedVectorParams.hpp"
 #include "Models/ZeroMeanGaussianModel.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
-
-#include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/WeightedRegressionModel.hpp"
 
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
 
@@ -54,16 +52,35 @@ namespace BOOM {
         public PriorPolicy
   {
    public:
-    // Args:
-    //   nseries:  The number of observed time series being modeled.
-    ScalarStateModelMultivariateAdapter(int nseries);
+
+    ScalarStateModelMultivariateAdapter();
     ScalarStateModelMultivariateAdapter *clone() const override = 0;
 
     // The number of time series being modeled.
-    int nseries() const;
+    virtual int nseries() const = 0;
+
+    int number_of_state_models() const {
+      return component_models_.number_of_state_models();
+    }
 
     virtual void add_state(const Ptr<StateModel> &state) {
       component_models_.add_state(state);
+      ParamPolicy::add_model(state);
+    }
+
+    Ptr<StateModel> state_model(int s) {
+      return component_models_[s];
+    }
+
+    VectorView state_component(Vector &state, int state_model_index) const {
+      return component_models_.state_component(state, state_model_index);
+    }
+    VectorView state_component(VectorView &state, int state_model_index) const {
+      return component_models_.state_component(state, state_model_index);
+    }
+    ConstVectorView state_component(const ConstVectorView &state,
+                                    int state_model_index) const {
+      return component_models_.state_component(state, state_model_index);
     }
 
     void clear_data() override {
@@ -127,13 +144,11 @@ namespace BOOM {
         VectorView gradient, int t, const ConstVectorView &state_error_mean,
         const ConstSubMatrix &state_error_variance) override;
 
-    const Vector &regression_coefficients() const;
-
-   protected:
     // The observation coefficients that would be produced by the
     // component_models_ if they were being used in a scalar model.
     SparseVector component_observation_coefficients(int t) const;
 
+   protected:
     // Remove any parameter observers that were set by the constructor.
     void remove_observers();
 
@@ -141,8 +156,6 @@ namespace BOOM {
     //-------------------------------------------------------------------------
     // Data section
     //-------------------------------------------------------------------------
-    int nseries_;
-
     // The individual elements of state (e.g. local linear trend, seasonality,
     // etc).
     StateSpaceUtils::StateModelVector<StateModel> component_models_;
@@ -150,7 +163,37 @@ namespace BOOM {
   };
 
   //===========================================================================
-  //
+  class ScalarRegressionSuf {
+   public:
+    ScalarRegressionSuf()
+        : count_(0.0), xtx_(0.0), xty_(0.0), yty_(0.0)
+    {}
+
+    void increment(double x, double y) {
+      ++count_;
+      xtx_ += x * x;
+      xty_ += x * y;
+      yty_ += y * y;
+    }
+
+    void clear() {
+      count_ = 0;
+      xtx_ = 0;
+      xty_ = 0;
+      yty_ = 0;
+    }
+
+    double xtx() const {return xtx_;}
+    double xty() const {return xty_;}
+
+   private:
+    double count_;
+    double xtx_;
+    double xty_;
+    double yty_;
+  };
+
+  //===========================================================================
   class ConditionallyIndependentScalarStateModelMultivariateAdapter
       : public ScalarStateModelMultivariateAdapter {
    public:
@@ -164,9 +207,11 @@ namespace BOOM {
 
     Adapter * clone() const override;
 
-    void clear_data() override;
+    int nseries() const override {
+      return observation_coefficient_slopes_->dim();
+    }
 
-    void add_state(const Ptr<StateModel> &state_model) override;
+    void clear_data() override;
 
     Ptr<SparseMatrixBlock> observation_coefficients(
         int t,
@@ -179,6 +224,20 @@ namespace BOOM {
                        int time_now) override;
 
 
+    const Vector &observation_coefficient_slopes() const {
+      return observation_coefficient_slopes_->value();
+    }
+
+    void set_observation_coefficient_slopes(const Vector &value) {
+        observation_coefficient_slopes_->set(value);
+    }
+
+    const Host *host() const {return host_;}
+
+    const ScalarRegressionSuf &sufficient_statistics(int series) const {
+      return sufficient_statistics_[series];
+    }
+
    private:
     // The host is the model object in which *this is a state component.  The
     // host is needed for this model to properly implement observe_state,
@@ -186,12 +245,10 @@ namespace BOOM {
     // from other state models.
     Host *host_;
 
-    // raw_observation_coefficients_ contains one element per series.  Each
-    // element is a set of regression coefficients giving weight
+    // The sufficient statistics for each
+    std::vector<ScalarRegressionSuf> sufficient_statistics_;
 
-    std::vector<Ptr<WeightedRegSuf>> sufficient_statistics_;
-
-    Vector observation_coefficient_slopes_;
+    Ptr<ConstrainedVectorParams> observation_coefficient_slopes_;
 
     Ptr<DenseSparseRankOneMatrixBlock> observation_coefficients_;
     Ptr<EmptyMatrix> empty_;

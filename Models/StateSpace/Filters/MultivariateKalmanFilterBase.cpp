@@ -203,6 +203,7 @@ namespace BOOM {
     // TODO: Verify that the isolate_shared_state line doesn't break anything
     // when the model has series-specific state.
     model_->isolate_shared_state();
+    ensure_size(model_->time_dimension());
     for (int time = 0; time < model_->time_dimension(); ++time) {
       update_single_observation(
           model_->adjusted_observation(time),

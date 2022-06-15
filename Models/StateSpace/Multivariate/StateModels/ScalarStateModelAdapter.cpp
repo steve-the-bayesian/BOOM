@@ -24,8 +24,7 @@ namespace BOOM {
     using SSMMA = ScalarStateModelMultivariateAdapter;
   }
 
-  SSMMA::ScalarStateModelMultivariateAdapter(int nseries)
-      : nseries_(nseries)
+  SSMMA::ScalarStateModelMultivariateAdapter()
   {}
 
   void SSMMA::observe_state(const ConstVectorView &then,
@@ -45,7 +44,7 @@ namespace BOOM {
     int start = 0;
     for (size_t s = 0; s < component_models_.size(); ++s) {
       const StateModelBase *state = component_models_.state_model(s);
-      VectorView error_component(eta, start, state->state_error_dimension());
+      VectorView error_component(eta, start, state->state_dimension());
       state->simulate_state_error(rng, error_component, t);
     }
   }
@@ -87,6 +86,14 @@ namespace BOOM {
     report_error("not implemented");
   }
 
+  SparseVector SSMMA::component_observation_coefficients(int t) const {
+    SparseVector ans;
+    for (int s = 0; s < component_models_.size(); ++s) {
+      ans.concatenate(component_models_.state_model(s)->observation_matrix(t));
+    }
+    return ans;
+  }
+
   namespace {
     using Adapter =
         ConditionallyIndependentScalarStateModelMultivariateAdapter;
@@ -97,11 +104,15 @@ namespace BOOM {
   Adapter::ConditionallyIndependentScalarStateModelMultivariateAdapter(
       Host *host,
       int nseries)
-      : Base(nseries),
+      : Base(),
         host_(host),
+        sufficient_statistics_(nseries),
+        observation_coefficient_slopes_(new ConstrainedVectorParams(
+            Vector(nseries, 1.0),
+            new ProportionalSumConstraint(nseries))),
         empty_(new EmptyMatrix)
   {
-
+    ParamPolicy::add_params(observation_coefficient_slopes_);
   }
 
   Adapter *Adapter::clone() const {
@@ -110,7 +121,7 @@ namespace BOOM {
 
   void Adapter::clear_data() {
     for (auto &el : sufficient_statistics_) {
-      el->clear();
+      el.clear();
     }
     Base::clear_data();
   }
@@ -118,7 +129,27 @@ namespace BOOM {
   void Adapter::observe_state(const ConstVectorView &then,
                               const ConstVectorView &now,
                               int time_now) {
-    report_error("Adapter::observe_state is Not implemented");
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      state_model(s)->observe_state(
+          state_component(then, s),
+          state_component(now, s),
+          time_now);
+    }
+
+    const Selector &observed(host_->observed_status(time_now));
+    Vector residual_y =
+        host_->adjusted_observation(time_now)
+        - (*host_->observation_coefficients(time_now, observed)
+           * host_->shared_state(time_now))
+        + (*observation_coefficients(time_now, observed)) * now;
+
+    double predictive_state = component_observation_coefficients(
+        time_now).dot(now);
+
+    for (int i = 0; i < observed.nvars(); ++i) {
+      int I = observed.sparse_index(i);
+      sufficient_statistics_[I].increment(predictive_state, residual_y[i]);
+    }
   }
 
   // The observation coefficients are Beta * Z[t], where Z[t] is the set of
@@ -132,11 +163,11 @@ namespace BOOM {
       return empty_;
     } else if (observed.nvars() == observed.nvars_possible()) {
       return new DenseSparseRankOneMatrixBlock(
-          observation_coefficient_slopes_,
+          observation_coefficient_slopes_->value(),
           component_observation_coefficients(t));
     } else {
       return new DenseSparseRankOneMatrixBlock(
-          observed.select(observation_coefficient_slopes_),
+          observed.select(observation_coefficient_slopes_->value()),
           component_observation_coefficients(t));
     }
   }

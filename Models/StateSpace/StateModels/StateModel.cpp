@@ -61,11 +61,10 @@ namespace BOOM {
     Matrix ans(ntimes, state_dimension());
     simulate_initial_state(rng, ans.row(0));
     for (int t = 1; t < ntimes; ++t) {
-      Vector error(state_error_dimension());
+      Vector error(state_dimension());
       simulate_state_error(rng, VectorView(error), t);
       Ptr<SparseMatrixBlock> T = state_transition_matrix(t);
-      Ptr<SparseMatrixBlock> R = state_error_expander(t);
-      ans.row(t) = (*T) * ans.row(t-1) + (*R) * error;
+      ans.row(t) = (*T) * ans.row(t-1) + error;
     }
     return ans;
   }

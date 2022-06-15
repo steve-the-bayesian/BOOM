@@ -243,8 +243,12 @@ namespace BOOM {
     const MarginalType &back() const {return nodes_.back();}
 
    protected:
-    MarginalType &node(size_t pos) override {return nodes_[pos];}
-    const MarginalType &node(size_t pos) const override {return nodes_[pos];}
+    MarginalType &node(size_t pos) override {
+      return nodes_[pos];
+    }
+    const MarginalType &node(size_t pos) const override {
+      return nodes_[pos];
+    }
 
    private:
     ModelType *model_;
