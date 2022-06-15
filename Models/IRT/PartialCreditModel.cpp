@@ -105,8 +105,6 @@ namespace BOOM {
       return ans;
     }
     //______________________________________________________________________
-    typedef UnivParams UP;
-    typedef ConstrainedVectorParams CVP;
 
     void PCR::setup() {
       set_abd_current();
@@ -124,7 +122,7 @@ namespace BOOM {
 
     void PCR::setup_beta() {
       uint M = maxscore();
-      if (d0_is_fixed) beta_ = new ConstrainedVectorParams(M + 2);
+      if (d0_is_fixed) beta_ = new ConstrainedVectorParams(Vector(M + 2));
       fill_beta(true);
       b_ = beta_->value();
     }
@@ -145,17 +143,17 @@ namespace BOOM {
     //______________________________________________________________________
     // constructors
 
-    Ptr<CVP> make_d_uint(uint Maxscore, bool id_d0);
-    Ptr<CVP> make_d_vec(const Vector &d, bool id_d0);
+    Ptr<ConstrainedVectorParams> make_d_uint(uint Maxscore, bool id_d0);
+    Ptr<ConstrainedVectorParams> make_d_vec(const Vector &d, bool id_d0);
 
-    Ptr<CVP> make_d_uint(uint Maxscore, bool id_d0) {
+    Ptr<ConstrainedVectorParams> make_d_uint(uint Maxscore, bool id_d0) {
       Vector d(Maxscore + 1, 0.0);
       return make_d_vec(d, id_d0);
     }
 
-    Ptr<CVP> make_d_vec(const Vector &d, bool id_d0) {
-      if (id_d0) return new CVP(d, new PcrDConstraint);
-      return new CVP(d, new SumConstraint(0.0));
+    Ptr<ConstrainedVectorParams> make_d_vec(const Vector &d, bool id_d0) {
+      if (id_d0) return new ConstrainedVectorParams(d, new PcrDConstraint);
+      return new ConstrainedVectorParams(d, new SumConstraint(0.0));
     }
 
     PCR::PartialCreditModel(const std::string &Id, uint Mscore, uint which_sub,

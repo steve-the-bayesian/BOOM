@@ -109,12 +109,13 @@ namespace BOOM {
   //======================================================================
   class ConstrainedVectorParams : public VectorParams {
    public:
-    explicit ConstrainedVectorParams(uint p, double x = 0.0,
-                                     const Ptr<VectorConstraint> &vc = nullptr);
-    // copies v's data
-    explicit ConstrainedVectorParams(const Vector &v,
-                                     const Ptr<VectorConstraint> &vc = nullptr);
-    // copies data
+    // Args:
+    //   v: Vector containing the initial values of the parameter.
+    //   constraint:  A constraint on v that must be maintained.
+    explicit ConstrainedVectorParams(
+        const Vector &v,
+        const Ptr<VectorConstraint> &constraint = nullptr);
+
     ConstrainedVectorParams(const ConstrainedVectorParams &rhs);
     ConstrainedVectorParams *clone() const override;
 

@@ -108,15 +108,6 @@ namespace BOOM {
 
   //===========================================================================
   ConstrainedVectorParams::ConstrainedVectorParams(
-      uint p, double x, const Ptr<VectorConstraint> &constraint)
-      : VectorParams(p, x), constraint_(constraint)
-  {
-    if (!constraint) {
-      constraint_ = new NoConstraint;
-    }
-  }
-
-  ConstrainedVectorParams::ConstrainedVectorParams(
       const Vector &v, const Ptr<VectorConstraint> &constraint)
       : VectorParams(v), constraint_(constraint)
   {
