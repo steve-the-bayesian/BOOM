@@ -36,21 +36,13 @@ namespace BOOM {
 
   SpdData *SpdData::clone() const { return new SpdData(*this); }
 
-  uint SpdData::size(bool min) const {
-    if (var_current_) {
-      return var_.size();
-    } else if (ivar_current_) {
-      return ivar_.size();
-    } else if (ivar_chol_current_) {
-      int dim = ivar_chol_.dim();
-      return dim * dim;
-    } else if (var_chol_current_) {
-      int dim = var_chol_.dim();
-      return dim * dim;
+  uint SpdData::size(bool minimal) const {
+    uint nrow = dim();
+    if (minimal) {
+      return nrow * (nrow + 1) / 2;
     } else {
-      nothing_current();
+      return nrow * nrow;
     }
-    return 0;
   }
 
   uint SpdData::dim() const {
@@ -69,7 +61,7 @@ namespace BOOM {
   }
 
   std::ostream &SpdData::display(std::ostream &out) const {
-    out << var() << endl;
+    out << var();
     return out;
   }
 

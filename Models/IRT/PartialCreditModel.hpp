@@ -35,6 +35,7 @@ namespace BOOM {
       Vector &impose(Vector &b) const override;
       Vector expand(const Vector &b_min) const override;   // adds in b0
       Vector reduce(const Vector &b_full) const override;  // omits b0
+      int minimal_size_reduction() const override {return 1;}
     };
 
     class PcrDConstraint : public VectorConstraint {
@@ -43,6 +44,7 @@ namespace BOOM {
       Vector &impose(Vector &d) const override;
       Vector expand(const Vector &d_min) const override;
       Vector reduce(const Vector &d_full) const override;
+      int minimal_size_reduction() const override {return 1;}
     };
 
     class PartialCreditModel

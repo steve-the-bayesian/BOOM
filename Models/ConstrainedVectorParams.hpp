@@ -47,6 +47,10 @@ namespace BOOM {
 
     // Return a minimal information vector from constrained vector.
     virtual Vector reduce(const Vector &large) const = 0;
+
+    // The number of elements in a vector that are made redundant by the
+    // constraint.
+    virtual int minimal_size_reduction() const = 0;
   };
   //---------------------------------------------------------------------------
   class NoConstraint : public VectorConstraint {
@@ -55,6 +59,7 @@ namespace BOOM {
     Vector &impose(Vector &v) const override {return v;}
     Vector expand(const Vector &v) const override { return v; }
     Vector reduce(const Vector &v) const override { return v; }
+    int minimal_size_reduction() const override {return 0;}
   };
 
   //---------------------------------------------------------------------------
@@ -67,6 +72,7 @@ namespace BOOM {
     Vector &impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;
     Vector reduce(const Vector &v) const override;
+    int minimal_size_reduction() const override {return 1;}
 
    private:
     uint element_;
@@ -83,6 +89,7 @@ namespace BOOM {
     Vector &impose(Vector &v) const override;
     Vector expand(const Vector &v) const override;  // adds final element to
     Vector reduce(const Vector &v) const override;  // eliminates last element
+    int minimal_size_reduction() const override {return 1;}
 
    private:
     double sum_;
@@ -101,6 +108,7 @@ namespace BOOM {
     Vector &impose(Vector &v) const override;
     Vector expand(const Vector &constrained) const override;
     Vector reduce(const Vector &full) const override;
+    int minimal_size_reduction() const override {return 1;}
 
    private:
     double sum_;
@@ -118,6 +126,8 @@ namespace BOOM {
 
     ConstrainedVectorParams(const ConstrainedVectorParams &rhs);
     ConstrainedVectorParams *clone() const override;
+
+    uint size(bool minimal = true) const override;
 
     void set(const Vector &value, bool signal_change = true) override;
 

@@ -80,8 +80,6 @@ namespace BOOM {
     return ans;
   }
 
-  //============================================================
-
   //===========================================================================
 
   bool ProportionalSumConstraint::check(const Vector &v) const {
@@ -132,6 +130,14 @@ namespace BOOM {
     return new ConstrainedVectorParams(*this);
   }
 
+  uint ConstrainedVectorParams::size(bool minimal) const {
+    uint ans = VectorParams::size();
+    if (minimal) {
+      ans -= constraint_->minimal_size_reduction();
+    }
+    return ans;
+  }
+
   Vector ConstrainedVectorParams::vectorize(bool minimal) const {
     if (minimal) {
       return constraint_->reduce(value());
@@ -160,9 +166,9 @@ namespace BOOM {
 
   void ConstrainedVectorParams::set(const Vector &value, bool signal_change) {
     int n = value.size();
-    if (n + 1 == size()) {
+    if (n == size(true)) {
       VectorParams::set(constraint_->expand(value), signal_change);
-    } else if (n == size()) {
+    } else if (n == size(false)) {
       Vector val = value;
       VectorParams::set(constraint_->impose(val), signal_change);
     } else {
