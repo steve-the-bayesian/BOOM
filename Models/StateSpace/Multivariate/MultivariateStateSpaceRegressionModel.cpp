@@ -17,6 +17,7 @@
 */
 
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
+#include "Models/StateSpace/Filters/KalmanFilterBase.hpp"
 #include "distributions.hpp"
 #include "numopt.hpp"
 #include "numopt/Powell.hpp"
@@ -107,7 +108,8 @@ namespace BOOM {
   {
     initialize_proxy_models();
     set_observation_variance_observers();
-    set_workspace_observers();  // TODO
+    set_workspace_observers();
+    set_parameter_observers(observation_model_.get());
   }
 
   MSSRM * MSSRM::clone() const {
@@ -170,6 +172,7 @@ namespace BOOM {
 
   void MSSRM::add_state(const Ptr<SharedStateModel> &state_model) {
     shared_state_models_.add_state(state_model);
+    set_parameter_observers(state_model.get());
   }
 
   bool MSSRM::has_series_specific_state() const {
@@ -684,25 +687,6 @@ namespace BOOM {
     workspace_status_ = ISOLATE_SHARED_STATE;
   }
 
-  // Remove regression effects and the effects of shared state.
-  // void MSSRM::isolate_series_specific_state() {
-  //   adjusted_data_workspace_.resize(nseries(), time_dimension());
-  //   for (int time = 0; time < time_dimension(); ++time) {
-  //     ConstVectorView state(shared_state(time));
-  //     Vector shared_state_contribution =
-  //         *observation_coefficients(time, dummy_selector_) * state;
-  //     for (int series = 0; series < nseries(); ++series) {
-  //       int index = data_indices_[series][time];
-  //       const Vector &predictors(dat()[index]->x());
-  //       adjusted_data_workspace_(series, time)
-  //           = observed_data(series, time)
-  //           - shared_state_contribution[series]
-  //           - observation_model_->model(series)->predict(predictors);
-  //     }
-  //   }
-  //   workspace_status_ = SHOWS_SERIES_EFFECTS;
-  // }
-
   void MSSRM::isolate_series_specific_state(int time) const {
     if (workspace_status_ == ISOLATE_SERIES_SPECIFIC_STATE
         && workspace_time_index_ == time
@@ -733,6 +717,18 @@ namespace BOOM {
       return 0;
     } else {
       return proxy.observation_matrix(time).dot(proxy.state(time));
+    }
+  }
+
+  void MSSRM::set_parameter_observers(Model *model) {
+    std::vector<Ptr<Params>> parameters = model->parameter_vector();
+    for (auto &el : parameters) {
+      el->add_observer(
+          el.get(),
+          [this](void) {
+            this->get_filter().set_status(
+                KalmanFilterBase::KalmanFilterStatus::NOT_CURRENT);
+          });
     }
   }
 

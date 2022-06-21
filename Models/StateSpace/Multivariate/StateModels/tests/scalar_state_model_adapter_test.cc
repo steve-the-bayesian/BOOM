@@ -221,6 +221,57 @@ namespace {
 
   };
 
+  //===========================================================================
+  TEST_F(ScalarStateModelAdapterTest, Serialization) {
+    int nseries = 6;
+    int ntimes = 100;
+
+    AdapterTestFramework framework(nseries, ntimes, 1, .1, .1);
+
+    // Set some parameter values so we can tell all the parameters apart.
+    for (int i = 0; i < nseries; ++i) {
+      Vector beta = framework.model_->observation_model()->model(i)->Beta();
+      beta.randomize();
+      framework.model_->observation_model()->model(i)->set_Beta(beta);
+      framework.model_->observation_model()->model(i)->set_sigsq(rgamma(3, 7));
+    }
+
+    SpdMatrix trend_Sigma = framework.trend_model_->Sigma();
+    trend_Sigma.randomize();
+    framework.trend_model_->set_Sigma(trend_Sigma);
+
+
+    Ptr<MultivariateStateSpaceRegressionModel> model = framework.model_;
+
+    Vector parameters = model->vectorize_params(true);
+    Vector random_parameters = parameters;
+    random_parameters.randomize();
+
+    model->unvectorize_params(random_parameters);
+    Vector p2 = model->vectorize_params(true);
+    EXPECT_TRUE(VectorEquals(random_parameters, p2))
+        << "original parameters: \n" << parameters << "\n"
+        << "random parameters: \n" << random_parameters << "\n"
+        << "restored parameters: \n" << p2 << "\n";
+  }
+
+
+  //===========================================================================
+  TEST_F(ScalarStateModelAdapterTest, TestMle) {
+    int nseries = 6;
+    int ntimes = 100;
+
+    AdapterTestFramework framework(nseries, ntimes, 1, .1, .1);
+
+    framework.trend_model_->set_Sigma(SpdMatrix(2, 1.0));
+    framework.seasonal_model_->set_sigsq(1.0);
+
+    double original_loglike = framework.model_->log_likelihood();
+    double loglike = framework.model_->mle();
+
+    EXPECT_GT(loglike, original_loglike);
+  }
+
   //======================================================================
   TEST_F(ScalarStateModelAdapterTest, TestMcmc) {
     int nseries = 6;
@@ -228,9 +279,7 @@ namespace {
 
     AdapterTestFramework framework(nseries, ntimes, 1, .1, .1);
 
-    //    framework.model_->permanently_set_state(framework.state().transpose());
-
-    int burn = 500;
+    int burn = 50;
     int niter = 200;
 
     Vector log_likelihood(niter + burn);
