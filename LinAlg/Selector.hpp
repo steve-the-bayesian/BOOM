@@ -264,7 +264,7 @@ namespace BOOM {
 
   template <class T>
   std::vector<T> Selector::select(const std::vector<T> &v) const {
-    assert(v.size() == nvars_possible());
+    assert(long(v.size()) == nvars_possible());
     if (include_all_ || nvars() == nvars_possible()) return v;
     std::vector<T> ans;
     ans.reserve(nvars());
