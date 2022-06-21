@@ -68,6 +68,15 @@ namespace BOOM {
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(scaled_prediction_error());
+      if (std::isnan(log_likelihood)) {
+        // This line is important when the model is being fit by optimization.
+        // If a variance becomes negative (or negative definite) during part of
+        // the optimization algorithm, then the function value should be set to
+        // negative infinity so that the optimization algorithm will know it
+        // took a bad step.  NaN cannot be less-than compared, so NaN values
+        // will just confuse an optimizer.
+        log_likelihood = negative_infinity();
+      }
 
       Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed);
       const SparseMatrixProduct &kalman_gain(*gain);
@@ -197,9 +206,6 @@ namespace BOOM {
       report_error("Model must be set before calling update().");
     }
     clear_loglikelihood();
-    // std::cout << "model->observation_coefficients() = \n";
-    // model()->observation_coefficients(0, model()->observed_status(0))->print(std::cout);
-
     // TODO: Verify that the isolate_shared_state line doesn't break anything
     // when the model has series-specific state.
     model_->isolate_shared_state();
