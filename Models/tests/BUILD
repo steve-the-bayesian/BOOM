@@ -76,6 +76,14 @@ cc_test(
 )
 
 cc_test(
+    name = "spd_params_test",
+    size = "small",
+    srcs = ["spd_params_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "student_test",
     size = "small",
     srcs = ["student_test.cc"],
