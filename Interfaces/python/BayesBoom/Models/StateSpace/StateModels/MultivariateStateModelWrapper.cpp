@@ -40,20 +40,20 @@ namespace BayesBoom {
         ;
 
 
-    py::class_<ScalarStateModelMultivariateAdapterBase,
-               SharedStateModelBase,
-               Ptr<ScalarStateModelMultivariateAdapterBase>>(
-                   boom, "ScalarStateModelMultivariateAdapterBase")
+    py::class_<ScalarStateModelMultivariateAdapter,
+               SharedStateModel,
+               Ptr<ScalarStateModelMultivariateAdapter>>(
+                   boom, "ScalarStateModelMultivariateAdapter")
         .def("add_state",
-             [](ScalarStateModelMultivariateAdapterBase *base,
-                cont Ptr<StateModel> &state_model) {
+             [](ScalarStateModelMultivariateAdapter *base,
+                const Ptr<StateModel> &state_model) {
                base->add_state(state_model);
              },
-             "Add 'state_model' to the "
+             "Add 'state_model' to the ")
         ;
 
     py::class_<ConditionallyIndependentScalarStateModelMultivariateAdapter,
-               ScalarStateModelMultivariateAdapterBase,
+               ScalarStateModelMultivariateAdapter,
                Ptr<ConditionallyIndependentScalarStateModelMultivariateAdapter>>(
                    boom,
                    "ConditionallyIndependentScalarStateModelMultivariateAdapter")
@@ -65,7 +65,7 @@ namespace BayesBoom {
               return new Adapter(host, nseries);
             }),
              py::arg("host"),
-             py::arg("nseries")
+             py::arg("nseries"),
              "Args:\n\n"
              "  host:  The multivariate state space model in which this object "
              "is a component of state.\n"

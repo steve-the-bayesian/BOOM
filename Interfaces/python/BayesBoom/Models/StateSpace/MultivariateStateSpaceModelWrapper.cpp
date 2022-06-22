@@ -16,6 +16,7 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, BOOM::Ptr<T>, true);
 namespace BayesBoom {
   using namespace BOOM;
   void MultivariateStateSpaceModel_def(py::module &boom) {
+
     py::class_<MultivariateStateSpaceModelBase,
                Model,
                BOOM::Ptr<MultivariateStateSpaceModelBase>>(
@@ -67,6 +68,30 @@ namespace BayesBoom {
                    py::multiple_inheritance())
         ;
 
+    py::class_<MultivariateTimeSeriesRegressionData,
+               RegressionData,
+               BOOM::Ptr<MultivariateTimeSeriesRegressionData>>(
+                   boom,
+                   "MultivariateTimeSeriesRegressionData")
+        .def(py::init(
+            [](double y, const Vector &x, int series, int timestamp) {
+              return new MultivariateTimeSeriesRegressionData(
+                  y, x, series, timestamp);
+            }),
+             py::arg("y"),
+             py::arg("x"),
+             py::arg("series"),
+             py::arg("timestamp"),
+             "Args:\n"
+             "  y: The response variable.\n"
+             "  x: A vector of predictors.\n"
+             "  series: The identifier of the time series (0.. number of series - 1) to\n"
+             "    which this observation belongs.\n"
+             "  timestamp: The time-index of the time series (0.. sample_size - 1)\n"
+             "    containing this observation.\n")
+        ;
+
+
     py::class_<MultivariateStateSpaceRegressionModel,
                ConditionallyIndependentMultivariateStateSpaceModelBase,
                BOOM::Ptr<MultivariateStateSpaceRegressionModel>>(
@@ -83,6 +108,23 @@ namespace BayesBoom {
              "Args:\n"
              "  xdim:  The dimension of the predictor variables.\n"
              "  nseries: The number of time series being modeled.\n")
+        .def("add_add_data",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const Ptr<MultivariateTimeSeriesRegressionData> &data_point) {
+               model.add_data(data_point);
+             },
+             py::arg("data_point"),
+             "Args:\n"
+             "  data_point: A MultivariateTimeSeriesRegressionData object\n"
+             "    containing information for a single data point.\n")
+        .def("add_state",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const Ptr<SharedStateModel> &state_model) {
+               model.add_state(state_model);
+             },
+             "Args:\n"
+             "  state_model:  A SharedStateModel object defining an element of"
+             " state.\n")
         .def("mle",
              [](MultivariateStateSpaceRegressionModel &model,
                 double epsilon,
