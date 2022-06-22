@@ -30,9 +30,8 @@ namespace {
 
   TEST_F(MixedMultivariateDataTest, Blah) {
     bool header = false;
-    std::string full_path = "/home/steve/code/BOOM/stats/tests/autopref.txt";
     std::string path = "stats/tests/autopref.txt";
-    DataTable autopref(full_path, header, "\t");
+    DataTable autopref(path, header, "\t");
     /*
       American	34	Male	Married	Large	Family	No
       Japanese	36	Male	Single	Small	Sporty	No
@@ -51,8 +50,8 @@ namespace {
     EXPECT_EQ(autopref.vnames()[1], "V.1");
 
     header=true;
-    full_path = "/home/steve/code/BOOM/stats/tests/CarsClean.csv";
-    DataTable cars(full_path, header, ",");
+    path = "stats/tests/CarsClean.csv";
+    DataTable cars(path, header, ",");
     EXPECT_EQ(cars.nobs(), 94);
     EXPECT_EQ(cars.nvars(), 22);
     EXPECT_EQ(cars.vnames()[0], "Make/Model");
