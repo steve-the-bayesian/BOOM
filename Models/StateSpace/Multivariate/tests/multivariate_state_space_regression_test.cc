@@ -289,7 +289,7 @@ namespace BoomStateSpaceTesting {
 
     McmcTestFramework sim(xdim, nseries, nfactors, sample_size,
                           test_size, residual_sd);
-    int niter = 100;
+    int niter = 200;
     int burn = 10;
     sim.state_model->clear_methods();
     set_observation_coefficients(sim.observation_coefficients,
@@ -319,7 +319,7 @@ namespace BoomStateSpaceTesting {
       }
     }
 
-    auto status = CheckMcmcMatrix(residual_sd_draws, Vector(nseries, residual_sd));
+    auto status = CheckMcmcMatrix(residual_sd_draws, Vector(nseries, residual_sd), 0.99);
     EXPECT_TRUE(status.ok) << "Residual SD did not cover true values " << status;
     std::ofstream rsd_draws("residual_sd_full_conditional.out");
     rsd_draws << Vector(nseries, residual_sd) << "\n" << residual_sd_draws;
