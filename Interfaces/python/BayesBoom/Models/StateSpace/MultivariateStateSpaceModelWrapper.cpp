@@ -119,8 +119,8 @@ namespace BayesBoom {
              "    containing information for a single data point.\n")
         .def("add_state",
              [](MultivariateStateSpaceRegressionModel &model,
-                const Ptr<SharedStateModel> &state_model) {
-               model.add_state(state_model);
+                SharedStateModel &state_model) {
+               model.add_state(Ptr<SharedStateModel>(&state_model));
              },
              "Args:\n"
              "  state_model:  A SharedStateModel object defining an element of"
