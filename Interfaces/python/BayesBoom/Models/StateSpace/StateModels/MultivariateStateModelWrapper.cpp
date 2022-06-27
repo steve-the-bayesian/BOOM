@@ -46,10 +46,10 @@ namespace BayesBoom {
                    boom, "ScalarStateModelMultivariateAdapter")
         .def("add_state",
              [](ScalarStateModelMultivariateAdapter *base,
-                const Ptr<StateModel> &state_model) {
-               base->add_state(state_model);
+                StateModel &state_model) {
+               base->add_state(Ptr<StateModel>(&state_model));
              },
-             "Add 'state_model' to the ")
+             "Add 'state_model' to the state tracked by the adapter.")
         ;
 
     py::class_<ConditionallyIndependentScalarStateModelMultivariateAdapter,
