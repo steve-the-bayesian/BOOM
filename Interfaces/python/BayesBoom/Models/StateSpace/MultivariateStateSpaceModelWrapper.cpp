@@ -108,7 +108,7 @@ namespace BayesBoom {
              "Args:\n"
              "  xdim:  The dimension of the predictor variables.\n"
              "  nseries: The number of time series being modeled.\n")
-        .def("add_add_data",
+        .def("add_data",
              [](MultivariateStateSpaceRegressionModel &model,
                 const Ptr<MultivariateTimeSeriesRegressionData> &data_point) {
                model.add_data(data_point);
