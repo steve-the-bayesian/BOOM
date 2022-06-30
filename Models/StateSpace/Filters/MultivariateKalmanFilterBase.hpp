@@ -62,8 +62,9 @@ namespace BOOM {
       // time point, and the marginal information from the preceding time point.
       //
       // Args:
-      //    observation: The full vector of responses at this time point,
-      //      including dummy values for those which are unobserved.
+      //    observation: The vector of responses at this time point.  Missing
+      //      values may either be excluded or filled with dummy values, so the
+      //      vector may be smaller than 'nseries' in size.
       //    observed: Indicates which elements of observation are actually
       //      observed.
       //
@@ -96,9 +97,7 @@ namespace BOOM {
       virtual Vector scaled_prediction_error() const;
 
       // The precision matrix (inverse of the variance matrix) for the
-      // prediction_error, conditional on all past data.  Calling
-      // forecast_precision() can be expensive for high dimensional data.
-      // Prefer working with sparse_forecast_precision() instead.
+      // prediction_error, conditional on all past data.
       virtual Ptr<SparseBinomialInverse> sparse_forecast_precision() const = 0;
 
       // The log of the determinant of forecast_precision().
@@ -106,8 +105,7 @@ namespace BOOM {
 
       // The set of regression coefficients used to adjust the expected value of
       // the state given the prediction error.  The dimension is state_dim x
-      // ydim.  This can be an expensive matrix to compute, so prefer working
-      // with sparse_kalman_gain instead.
+      // ydim.
       virtual Ptr<SparseMatrixProduct> sparse_kalman_gain(
           const Selector &observed) const;
 
@@ -131,8 +129,8 @@ namespace BOOM {
       virtual const MultivariateStateSpaceModelBase *model() const = 0;
 
      private:
-      // Child classes need special abilities to compute their forecast
-      // precision.
+      // Store a minimial set of information to allow sparse_forecast_precision
+      // to be quickly computed.
       virtual void update_sparse_forecast_precision(
           const Selector &observed) = 0;
 
@@ -143,7 +141,6 @@ namespace BOOM {
       // y[t] - E(y[t] | Y[t-1]).  The dimension matches y[t], which might vary
       // across t.
       Vector prediction_error_;
-
     };
   }  // namespace Kalman
 
@@ -152,10 +149,6 @@ namespace BOOM {
   // Kalman filter that don't depend on the observation variance.
   class MultivariateKalmanFilterBase : public KalmanFilterBase {
    public:
-    MultivariateKalmanFilterBase(MultivariateStateSpaceModelBase *model)
-        : model_(model)
-    {}
-
     // Run the Kalman filter algorithm with the current data.
     void update() override;
 
@@ -164,11 +157,12 @@ namespace BOOM {
     // stored model object to supply the data in all cases.
     //
     // Args:
-    //   observation:  The observed data at time t.
+    //   observation: The observed data at time t.  Missing values may either be
+    //     excluded or filled with dummy values.
     //   observed:  Indicates which elements of observation were actually observed.
-    //   t: The time point at which observation was observed.
+    //   time: The time point at which observation was observed.
     void update_single_observation(
-        const Vector &observation, const Selector &observed, int t);
+        const Vector &observation, const Selector &observed, int time);
 
     // Run Durbin and Koopman's fast disturbance smoother.
     void fast_disturbance_smooth() override;
@@ -182,29 +176,23 @@ namespace BOOM {
         const override = 0;
 
     // Add nodes to the collection of marginal distributions until it is large
-    // enough to hold t elements.
-    virtual void ensure_size(int t) = 0;
-
-    // The model describing the data being filtered.  It is tempting to make
-    // this a virtual function, but doing so confuses the template that creates
-    // the concrete filters.
-    const MultivariateStateSpaceModelBase *model() const {
-      return model_;
-    }
+    // enough to hold 'time' elements.
+    virtual void ensure_size(int time) = 0;
 
    protected:
-    virtual Kalman::MultivariateMarginalDistributionBase &node(size_t t) = 0;
+    virtual Kalman::MultivariateMarginalDistributionBase &node(size_t time) = 0;
     virtual const Kalman::MultivariateMarginalDistributionBase &node(
-        size_t t) const = 0;
+        size_t time) const = 0;
 
-   private:
-    MultivariateStateSpaceModelBase *model_;
+    // The model describing the data being filtered.
+    virtual const MultivariateStateSpaceModelBase *model() const = 0;
+    virtual MultivariateStateSpaceModelBase *model() = 0;
   };
 
   //===========================================================================
   // The various multivariate Kalman filters are parameterized by the types of
   // the marginal distributions comprising them.  Each marginal distribution
-  // must define a type ModelType, which must be a type that inherits from
+  // defines a type 'ModelType', that inherits from
   // MultivariateStateSpaceModelBase.
   template <class MARGINAL>
   class MultivariateKalmanFilter
@@ -215,10 +203,10 @@ namespace BOOM {
 
     // Args:
     //   model: A pointer to the model that owns this filter.  The model
-    //     provides the model matrices to the nodes of the filter.
+    //     provides the model matrices to the nodes of the filter, and controls
+    //     the observation status at each time point.
     explicit MultivariateKalmanFilter(ModelType *model)
-        : MultivariateKalmanFilterBase(model),
-          model_(model) {}
+        : model_(model) {}
 
     // Return filter node 't'.
     MarginalType &operator[](size_t t) override {
@@ -233,8 +221,8 @@ namespace BOOM {
 
     // Add nodes (marginal distributions) to the filter until its size is at
     // least 't'.
-    void ensure_size(int t) override {
-      while(nodes_.size() <=  t) {
+    void ensure_size(int time) override {
+      while(nodes_.size() <=  time) {
         nodes_.push_back(MarginalType(model_, this, nodes_.size()));
       }
     }
@@ -249,6 +237,9 @@ namespace BOOM {
     const MarginalType &node(size_t pos) const override {
       return nodes_[pos];
     }
+
+    ModelType * model() override {return model_;}
+    const ModelType * model() const override {return model_;}
 
    private:
     ModelType *model_;

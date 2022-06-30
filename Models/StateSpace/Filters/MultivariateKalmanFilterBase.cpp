@@ -47,8 +47,9 @@ namespace BOOM {
         return fully_missing_update();
       }
 
-      const SparseKalmanMatrix &transition(
-          *model()->state_transition_matrix(time_index()));
+      Ptr<SparseKalmanMatrix> transition_ptr(
+          model()->state_transition_matrix(time_index()));
+      const SparseKalmanMatrix &transition(*transition_ptr);
 
       // The subset of observation coefficients corresponding to elements of
       // 'observation' which are actually observed.
@@ -57,7 +58,7 @@ namespace BOOM {
       const SparseKalmanMatrix &observation_coefficient_subset(
           *observation_coefficient_pointer);
 
-      Vector observed_data = observed.select(observation);
+      Vector observed_data = observed.select_if_needed(observation);
       set_prediction_error(
           observed_data - observation_coefficient_subset * state_mean());
       update_sparse_forecast_precision(observed);
@@ -119,7 +120,9 @@ namespace BOOM {
 
     //----------------------------------------------------------------------
     Vector Marginal::scaled_prediction_error() const {
-      return (*sparse_forecast_precision()) * prediction_error();
+      Ptr<SparseBinomialInverse> precision_ptr = sparse_forecast_precision();
+      const SparseBinomialInverse &precision(*precision_ptr);
+      return precision * prediction_error();
     }
 
     //----------------------------------------------------------------------
@@ -208,12 +211,12 @@ namespace BOOM {
     clear_loglikelihood();
     // TODO: Verify that the isolate_shared_state line doesn't break anything
     // when the model has series-specific state.
-    model_->isolate_shared_state();
-    ensure_size(model_->time_dimension());
-    for (int time = 0; time < model_->time_dimension(); ++time) {
+    model()->isolate_shared_state();
+    ensure_size(model()->time_dimension());
+    for (int time = 0; time < model()->time_dimension(); ++time) {
       update_single_observation(
-          model_->adjusted_observation(time),
-          model_->observed_status(time),
+          model()->adjusted_observation(time),
+          model()->observed_status(time),
           time);
       if (!std::isfinite(log_likelihood())) {
         set_status(NOT_CURRENT);
@@ -227,16 +230,20 @@ namespace BOOM {
       const Vector &y,
       const Selector &observed,
       int t) {
-    if (!model_) {
+    if (!model()) {
       report_error("Model must be set before calling update().");
     }
     ensure_size(t);
     if (t == 0) {
-      node(t).set_state_mean(model_->initial_state_mean());
-      node(t).set_state_variance(model_->initial_state_variance());
+      node(t).set_state_mean(model()->initial_state_mean());
+      node(t).set_state_variance(model()->initial_state_variance());
+      std::cout << "Setting initial state variance: \n"
+                << model()->initial_state_variance();
     } else {
       node(t).set_state_mean(node(t - 1).state_mean());
       node(t).set_state_variance(node(t - 1).state_variance());
+      std::cout << "Setting variance for time " << t << "\n"
+                << node(t).state_variance();
     }
     increment_log_likelihood(node(t).update(y, observed));
   }
@@ -248,12 +255,12 @@ namespace BOOM {
   // Returns:
   //   Durbin and Koopman's r0.  Saves r[t] in node(t).scaled_state_error().
   void MultivariateKalmanFilterBase::fast_disturbance_smooth() {
-    if (!model_) {
+    if (!model()) {
       report_error("Model must be set before calling fast_disturbance_smooth().");
     }
 
-    int n = model_->time_dimension();
-    Vector r(model_->state_dimension(), 0.0);
+    int n = model()->time_dimension();
+    Vector r(model()->state_dimension(), 0.0);
     for (int t = n - 1; t >= 0; --t) {
       // Currently r is r[t].  This step of the loop turns it into r[t-1].
       //
@@ -288,11 +295,11 @@ namespace BOOM {
       //
       // u = Finv * v - K'r
       // r = T'r + Z'u
-      const Selector &observed(model_->observed_status(t));
+      const Selector &observed(model()->observed_status(t));
       Ptr<SparseKalmanMatrix> observation_coefficients(
-          model_->observation_coefficients(t, observed));
+          model()->observation_coefficients(t, observed));
       Ptr<SparseKalmanMatrix> transition(
-          model_->state_transition_matrix(t));
+          model()->state_transition_matrix(t));
       Ptr<SparseBinomialInverse> forecast_precision_ptr(
           marg.sparse_forecast_precision());
       const SparseBinomialInverse &forecast_precision(
