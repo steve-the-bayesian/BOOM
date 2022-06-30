@@ -23,12 +23,10 @@ class SeasonalStateModel(StateModel):
             and initial_y are passed.
           nseasons: The number of seasons in a cycle.
           season_duration:  The number of time periods each season.  See below.
-
           initial_state_prior: A multivariate normal distribution of dimension
             nseasons - 1.  This is a distribution on the seasonal value at time
             0 and on the nseasons-2 previous values.  If None is passed then a
             default prior will be assumed.
-
           innovation_sd_prior: Prior distribution on the standard deviation of
             the innovation terms.  If None, then a default prior will be
             assumed.
