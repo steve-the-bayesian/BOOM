@@ -27,7 +27,7 @@ namespace {
     EXPECT_NE(s1, s2);
     EXPECT_TRUE(s1 != s2);
     EXPECT_FALSE(s1 == s2);
-    
+
     s2.flip(0); // now 001
     EXPECT_EQ(s1, s2);
     EXPECT_TRUE(s1 == s2);
@@ -52,7 +52,7 @@ namespace {
     }
   }
 
-  
+
   TEST_F(SelectorTest, Indexing) {
     Selector s1("101001101");
     EXPECT_EQ(s1.nvars(), 5);
@@ -69,9 +69,9 @@ namespace {
     EXPECT_EQ(1, s1.INDX(2));
     EXPECT_EQ(2, s1.INDX(5));
     EXPECT_EQ(3, s1.INDX(6));
-    EXPECT_EQ(4, s1.INDX(8));    
+    EXPECT_EQ(4, s1.INDX(8));
   }
-  
+
   TEST_F(SelectorTest, Append) {
     Selector s1("010");
     EXPECT_EQ(s1.nvars(), 1);
@@ -103,7 +103,7 @@ namespace {
     EXPECT_DOUBLE_EQ(v[3], 1);
     EXPECT_DOUBLE_EQ(v[4], 0);
   }
-  
+
   TEST_F(SelectorTest, SelectRowsTest) {
     Matrix big(10, 4);
     big.randomize();
@@ -131,7 +131,7 @@ namespace {
     EXPECT_EQ(4, small.ncol());
     EXPECT_TRUE(VectorEquals(small.row(0), big.row(2)));
   }
-  
+
   TEST_F(SelectorTest, SparseSum) {
     Vector v(100);
     v.randomize();
@@ -139,7 +139,7 @@ namespace {
     Selector inc(100);
     inc.drop_all();
     EXPECT_DOUBLE_EQ(0.0, inc.sparse_sum(v));
-    
+
     inc.add(3);
     inc.add(17);
     inc.add(12);
@@ -173,7 +173,7 @@ namespace {
     EXPECT_TRUE(inc(2, 1));
 
     EXPECT_EQ(inc_vec, inc.vectorize());
-    
+
     inc.drop(0, 1);
     EXPECT_FALSE(inc(0, 1));
     inc.add(0, 1);
@@ -223,7 +223,7 @@ namespace {
     EXPECT_FALSE(row2[0]);
     EXPECT_FALSE(row2[1]);
     EXPECT_TRUE(row2[2]);
-    
+
     Matrix selectable(4, 3);
     selectable.randomize();
     Vector selected = wide.vector_select(selectable);
@@ -244,6 +244,12 @@ namespace {
     EXPECT_FALSE(all[0]);
     EXPECT_FALSE(all[0]);
     EXPECT_TRUE(all[3]);
+  }
+
+  TEST_F(SelectorTest, EmptySelectorTest) {
+    Selector empty(4, false);
+    EXPECT_EQ(0, empty.nvars());
+    EXPECT_EQ(4, empty.nvars_possible());
   }
 
   TEST_F(SelectorTest, DiagonalMatrixTest) {
@@ -299,5 +305,5 @@ namespace {
     y[4] = 2.4;
     EXPECT_TRUE(VectorEquals(x, y));
   }
-  
+
 }  // namespace

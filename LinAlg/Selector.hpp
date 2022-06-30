@@ -148,9 +148,16 @@ namespace BOOM {
     // no elements in this position or lower are included, then return -1.
     int first_included_at_or_before(uint position) const;
 
-    Vector select(const Vector &x) const;          // x includes intercept
+    // Return the subset of 'x' modeled by the Selector object.
+    Vector select(const Vector &x) const;
     Vector select(const VectorView &x) const;
     Vector select(const ConstVectorView &x) const;
+
+    // If x.size() == nvars() then assume it is already 'selected' and return
+    // x. Otherwise return select(x).
+    Vector select_if_needed(const Vector &x) const;
+    Vector select_if_needed(const VectorView &x) const;
+    Vector select_if_needed(const ConstVectorView &x) const;
 
     SpdMatrix select(const SpdMatrix &) const;
     Matrix select_cols(const Matrix &M) const;
