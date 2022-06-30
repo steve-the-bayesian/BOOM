@@ -115,10 +115,10 @@ namespace BayesBoom {
              "specified value.")
         .def("set_posterior_sampler",
              [] (LocalLevelStateModel &model,
-                 const Ptr<GammaModelBase> &prior,
+                 GammaModelBase *prior,
                  RNG &seeding_rng) {
                NEW(ZeroMeanGaussianConjSampler, sampler)(
-                   &model, prior, seeding_rng);
+                   &model, Ptr<GammaModelBase>(prior), seeding_rng);
                model.set_method(sampler);
                return sampler; },
              py::arg("prior"),

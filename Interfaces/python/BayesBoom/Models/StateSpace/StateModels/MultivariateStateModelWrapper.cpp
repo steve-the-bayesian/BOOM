@@ -1,8 +1,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
+#include "Models/Policies/PriorPolicy.hpp"
 #include "Models/StateSpace/Multivariate/StateModels/SharedLocalLevel.hpp"
 #include "Models/StateSpace/Multivariate/StateModels/ScalarStateModelAdapter.hpp"
+
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/ScalarStateModelAdapterPosteriorSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -70,6 +72,23 @@ namespace BayesBoom {
              "  host:  The multivariate state space model in which this object "
              "is a component of state.\n"
              "  nseries:  The number of series being modeled.\n")
+        .def("set_method",
+             [](ConditionallyIndependentScalarStateModelMultivariateAdapter &model,
+                PosteriorSampler *sampler) {
+               model.set_method(Ptr<PosteriorSampler>(sampler));
+             })
+        ;
+
+    py::class_<CiScalarStateAdapterPosteriorSampler,
+               PosteriorSampler,
+               Ptr<CiScalarStateAdapterPosteriorSampler>>(
+                   boom,
+                   "CiScalarStateAdapterPosteriorSampler")
+        .def(py::init(
+            [](ConditionallyIndependentScalarStateModelMultivariateAdapter *model,
+               RNG &seeding_rng=GlobalRng::rng) {
+              return new CiScalarStateAdapterPosteriorSampler(model, seeding_rng);
+            }))
         ;
 
 

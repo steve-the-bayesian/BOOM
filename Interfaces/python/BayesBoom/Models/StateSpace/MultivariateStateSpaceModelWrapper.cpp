@@ -2,11 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
-
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpaceStudentPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpaceLogitPosteriorSampler.hpp"
-#include "Models/StateSpace/PosteriorSamplers/StateSpacePoissonPosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
 
 #include "cpputil/Ptr.hpp"
 
@@ -94,6 +90,7 @@ namespace BayesBoom {
 
     py::class_<MultivariateStateSpaceRegressionModel,
                ConditionallyIndependentMultivariateStateSpaceModelBase,
+               PriorPolicy,
                BOOM::Ptr<MultivariateStateSpaceRegressionModel>>(
                    boom,
                    "MultivariateStateSpaceRegressionModel",
@@ -125,6 +122,11 @@ namespace BayesBoom {
              "Args:\n"
              "  state_model:  A SharedStateModel object defining an element of"
              " state.\n")
+        .def("set_method",
+             [](MultivariateStateSpaceRegressionModel &model,
+                PosteriorSampler *sampler) {
+               model.set_method(Ptr<PosteriorSampler>(sampler));
+             })
         .def("mle",
              [](MultivariateStateSpaceRegressionModel &model,
                 double epsilon,
@@ -145,6 +147,18 @@ namespace BayesBoom {
              "\n"
              "Effects:\n"
              "  Model parameters are set to the maximum likelihood estimates.\n")
+        ;
+
+    py::class_<MultivariateStateSpaceModelSampler,
+               PosteriorSampler,
+               Ptr<MultivariateStateSpaceModelSampler>>(
+                   boom,
+                   "MultivariateStateSpaceModelSampler")
+        .def(py::init(
+            [](MultivariateStateSpaceModelBase *model,
+               RNG &seeding_rng = BOOM::GlobalRng::rng) {
+              return new MultivariateStateSpaceModelSampler(model, seeding_rng);
+            }))
         ;
   }
 }  // namespace BayesBoom
