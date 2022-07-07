@@ -132,22 +132,28 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-template <> struct std::iterator_traits<BOOM::ArrayIterator> {
-  using iterator_category = std::forward_iterator_tag;
-  //  using difference_type   = std::ptrdiff_t;
-  using difference_type   = void;
-  using value_type        = double;
-  using pointer           = double*;
-  using reference         = double&;
-};
 
-template<> struct std::iterator_traits<BOOM::ConstArrayIterator> {
-  using iterator_category = std::forward_iterator_tag;
-  //  using difference_type   = std::ptrdiff_t;
-  using difference_type   = void;
-  using value_type        = double;
-  using pointer           = double*;
-  using reference         = double&;
-};
+// To make the iterator a 'first class' iterator we need to specialize
+// std::iterator_traits.  This should be done inside namespace std.
+namespace std {
+  template <> struct iterator_traits<BOOM::ArrayIterator> {
+    using iterator_category = forward_iterator_tag;
+    //  using difference_type   = ptrdiff_t;
+    using difference_type   = void;
+    using value_type        = double;
+    using pointer           = double*;
+    using reference         = double&;
+  };
+
+  template<> struct iterator_traits<BOOM::ConstArrayIterator> {
+    using iterator_category = forward_iterator_tag;
+    //  using difference_type   = ptrdiff_t;
+    using difference_type   = void;
+    using value_type        = double;
+    using pointer           = double*;
+    using reference         = double&;
+  };
+}  // namespace std
+
 
 #endif  //  BOOM_ARRAY_ITERATOR_HPP_
