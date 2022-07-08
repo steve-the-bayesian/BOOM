@@ -78,6 +78,7 @@ from .plots import (
     pairs,
     plot,
     plot_dynamic_distribution,
+    PlotDynamicDistribution,
     plot_many_ts,
     plot_grid_shape,
     plot_ts,

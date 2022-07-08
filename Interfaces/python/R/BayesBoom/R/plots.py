@@ -662,6 +662,10 @@ def plot_dynamic_distribution(
     return ax
 
 
+# Allow the same function name as R.
+PlotDynamicDistribution = plot_dynamic_distribution
+
+
 def compare_dynamic_distributions(
         list_of_curves,
         timestamps,
