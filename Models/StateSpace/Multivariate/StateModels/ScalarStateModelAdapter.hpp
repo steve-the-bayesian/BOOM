@@ -224,10 +224,17 @@ namespace BOOM {
                        int time_now) override;
 
 
+    // A vector with one element per series, giving the weight that series
+    // places on the overall state contribution.
     const Vector &observation_coefficient_slopes() const {
       return observation_coefficient_slopes_->value();
     }
 
+    // Set the slope component of the observation coefficients.
+    //
+    // Args:
+    //   value: A vector with one element per series, giving the weight that
+    //     series places on the overall state contribution.
     void set_observation_coefficient_slopes(const Vector &value) {
         observation_coefficient_slopes_->set(value);
     }
