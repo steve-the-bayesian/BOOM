@@ -148,6 +148,7 @@ echo "renaming long file names"
 
 # The base install path.
 ibase="$BOOM_DIR/inst/include"
+src_base="$BOOM_DIR/src"
 
 # The directory containing the header to be renamed.
 dbase="Models/StateSpace/Multivariate/PosteriorSamplers"
@@ -173,11 +174,23 @@ echo "replacing $dbase/$hdr with $dbase/$new_hdr"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
 
 dbase="Models/StateSpace/StateModels/PosteriorSamplers"
+
 hdr="GeneralSeasonalLLTPosteriorSampler.hpp"
 new_hdr="GSLLTPS.hpp"
 mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
 echo "replacing $dbase/$hdr with $dbase/$new_hdr"
 grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+dbase="Models/StateSpace/Multivariate/PosteriorSamplers"
+hdr="ScalarStateModelAdapterPosteriorSampler.hpp"
+new_hdr="SADSampler.hpp"
+mv "$ibase/$dbase/$hdr" "$ibase/$dbase/$new_hdr"
+echo "replacing $dbase/$hdr with $dbase/$new_hdr"
+grep -rl "$dbase/$hdr" "$BOOM_DIR/src/Models" | xargs $SED -i "s|$dbase/$hdr|$dbase/$new_hdr|g"
+
+source="ScalarStateModelAdapterPosteriorSampler.cpp"
+new_source="SADSampler.cpp"
+mv "$src_base/$dbase/$source" "$src_base/$dbase/$new_source"
 
 ##----------------------------------------------------------------------
 ## Build the package:
