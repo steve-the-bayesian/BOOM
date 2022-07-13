@@ -25,11 +25,13 @@ namespace BOOM {
 
   namespace Kalman {
     void check_variance(const SpdMatrix &v) {
+#ifndef NDEBUG
       for (auto x : v.diag()) {
         if (x < -.10) {
           report_error("Can't have a negative variance.");
         }
       }
+# endif
     }
 
     namespace {
@@ -108,11 +110,9 @@ namespace BOOM {
 
       new_state_variance = contemp_variance;
       transition.sandwich_inplace(new_state_variance);
+
       new_state_variance += increment2;
-#ifndef NDEBUG
-      // Only check the variance in debug mode.
       Kalman::check_variance(new_state_variance);
-#endif
 
       set_state_variance(new_state_variance);
       return log_likelihood;
@@ -237,13 +237,9 @@ namespace BOOM {
     if (t == 0) {
       node(t).set_state_mean(model()->initial_state_mean());
       node(t).set_state_variance(model()->initial_state_variance());
-      std::cout << "Setting initial state variance: \n"
-                << model()->initial_state_variance();
     } else {
       node(t).set_state_mean(node(t - 1).state_mean());
       node(t).set_state_variance(node(t - 1).state_variance());
-      std::cout << "Setting variance for time " << t << "\n"
-                << node(t).state_variance();
     }
     increment_log_likelihood(node(t).update(y, observed));
   }

@@ -102,11 +102,9 @@ class LocalLevelStateModel(StateModel):
         self._state_model.set_initial_state_mean(self._initial_state_prior.mean)
         self._state_model.set_initial_state_variance(
             self._initial_state_prior.variance)
-        innovation_precision_prior = boom.ChisqModel(
-            self._sigma_prior.sigma_guess,
-            self._sigma_prior.sample_size)
+        self._state_model.set_sigma(self._sigma_prior.initial_value)
         state_model_sampler = self._state_model.set_posterior_sampler(
-            innovation_precision_prior)
+            self._sigma_prior.boom())
         state_model_sampler.set_sigma_upper_limit(
             self._sigma_prior.upper_limit)
 

@@ -4,6 +4,8 @@
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 #include "Models/StateSpace/Multivariate/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
 
+#include "cpputil/math_utils.hpp"
+
 #include "cpputil/Ptr.hpp"
 
 namespace py = pybind11;
@@ -19,6 +21,12 @@ namespace BayesBoom {
                    boom,
                    "MultivariateStateSpaceModelBase",
                    py::multiple_inheritance())
+        .def_property_readonly(
+            "nseries",
+            [](const MultivariateStateSpaceModelBase &model) {
+              return model.nseries();
+            },
+            "The number of time series described by the model.")
         .def_property_readonly(
             "time_dimension",
             [](const MultivariateStateSpaceModelBase &model) {
@@ -105,6 +113,12 @@ namespace BayesBoom {
              "Args:\n"
              "  xdim:  The dimension of the predictor variables.\n"
              "  nseries: The number of time series being modeled.\n")
+        .def_property_readonly(
+            "xdim",
+            [](const MultivariateStateSpaceRegressionModel &model) {
+              return model.xdim();
+            },
+            "Dimension of the vector of predictor variables.")
         .def("add_data",
              [](MultivariateStateSpaceRegressionModel &model,
                 const Ptr<MultivariateTimeSeriesRegressionData> &data_point) {
@@ -127,6 +141,71 @@ namespace BayesBoom {
                 PosteriorSampler *sampler) {
                model.set_method(Ptr<PosteriorSampler>(sampler));
              })
+        .def("set_regression_coefficients",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const Matrix &coefficients) {
+               if (coefficients.nrow() != model.nseries()) {
+                 std::ostringstream err;
+                 err << "The model describes " << model.nseries()
+                     << " series but the input matrix has "
+                     << coefficients.nrow() << " rows.";
+                 report_error(err.str());
+               }
+               if (coefficients.ncol() != model.xdim()) {
+                 std::ostringstream err;
+                 err << "The model has predictor dimension "
+                     << model.xdim() << " but the input matrix has "
+                     << coefficients.ncol() << "columns.";
+                 report_error(err.str());
+               }
+               for (int i = 0; i < coefficients.nrow(); ++i) {
+                 model.observation_model()->model(i)->set_Beta(
+                     coefficients.row(i));
+               }
+             },
+             "Args:\n\n"
+             "  coefficients:  A boom.Matrix with model.nseries rows and "
+             "model.xdim columns.  Each row contains the regression "
+             "coefficients for a specific series.\n")
+        .def("set_regression_coefficients",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const Vector &coefficients,
+                int which_model) {
+               model.observation_model()->model(which_model)->set_Beta(coefficients);
+             },
+             "Args:\n\n"
+             "  coefficients:  The boom.Vector of regression coefficients for "
+             "the regression model describing a single series.\n"
+             "  which_model: The (integer) index of the model to update.\n")
+        .def("set_residual_sd",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const Vector &residual_sd) {
+               if (residual_sd.size() != model.nseries()) {
+                 std::ostringstream err;
+                 err << "The model describes " << model.nseries()
+                     << " series but the input vector has "
+                     << residual_sd.size() << " entries.";
+                 report_error(err.str());
+               }
+               for (int i = 0; i < model.nseries(); ++i) {
+                 model.observation_model()->model(i)->set_sigsq(
+                     square(residual_sd[i]));
+               }
+             },
+             "Args:\n\n"
+             "  residual_sd: A boom.Vector containing the residual standard "
+             "deviation for each series.\n")
+        .def("set_residual_sd",
+             [](MultivariateStateSpaceRegressionModel &model,
+                double residual_sd,
+                int which_model) {
+               model.observation_model()->model(which_model)->set_sigsq(
+                   square(residual_sd));
+             },
+             "Args:\n\n"
+             "  residual_sd:  The scalar valued residual standard deviation "
+             "for a single model.\n"
+             "  which_model: The (integer) index of the model to update.\n")
         .def("mle",
              [](MultivariateStateSpaceRegressionModel &model,
                 double epsilon,

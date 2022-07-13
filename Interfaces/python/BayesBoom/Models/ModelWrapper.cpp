@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "Models/ModelTypes.hpp"
 #include "Models/DoubleModel.hpp"
@@ -16,6 +17,22 @@ namespace BayesBoom {
   void Model_def(py::module &boom) {
 
     py::class_<Model, Ptr<Model>>(boom, "Model")
+        .def_property_readonly(
+            "parameter_vector",
+            [](const Model &m) {
+              return m.parameter_vector();
+            },
+            "The collection of boom.Params objects defining "
+            "the model parameters.")
+        ;
+
+    py::class_<MixtureComponent, Model, Ptr<MixtureComponent>>(
+        boom, "MixtureComponent", py::multiple_inheritance())
+        .def_property_readonly(
+            "mixture_component_index",
+            [](const MixtureComponent &model) {
+              return model.mixture_component_index();
+            })
         ;
 
     py::class_<DoubleModel, Model, Ptr<DoubleModel>>(boom, "DoubleModel", py::multiple_inheritance())

@@ -54,17 +54,18 @@ namespace BayesBoom {
              "Add 'state_model' to the state tracked by the adapter.")
         ;
 
-    py::class_<ConditionallyIndependentScalarStateModelMultivariateAdapter,
+    using CiAdapter =
+        ConditionallyIndependentScalarStateModelMultivariateAdapter;
+
+    py::class_<CiAdapter,
                ScalarStateModelMultivariateAdapter,
-               Ptr<ConditionallyIndependentScalarStateModelMultivariateAdapter>>(
+               Ptr<CiAdapter>>(
                    boom,
                    "ConditionallyIndependentScalarStateModelMultivariateAdapter")
         .def(py::init(
             [](ConditionallyIndependentMultivariateStateSpaceModelBase *host,
                int nseries) {
-              using Adapter =
-                  ConditionallyIndependentScalarStateModelMultivariateAdapter;
-              return new Adapter(host, nseries);
+              return new CiAdapter(host, nseries);
             }),
              py::arg("host"),
              py::arg("nseries"),
@@ -73,10 +74,23 @@ namespace BayesBoom {
              "is a component of state.\n"
              "  nseries:  The number of series being modeled.\n")
         .def("set_method",
-             [](ConditionallyIndependentScalarStateModelMultivariateAdapter &model,
-                PosteriorSampler *sampler) {
+             [](CiAdapter &model, PosteriorSampler *sampler) {
                model.set_method(Ptr<PosteriorSampler>(sampler));
              })
+        .def_property_readonly(
+            "observation_coefficient_slopes",
+            [](const CiAdapter &adapter) {
+              return adapter.observation_coefficient_slopes();
+            },
+            "A boom.Vector containing the weight that each time "
+             "series puts on the scalar state contribution.\n")
+        .def("set_observation_coefficient_slopes",
+             [](CiAdapter &adapter, const Vector &slopes) {
+               adapter.set_observation_coefficient_slopes(slopes);
+             },
+             "Args:\n\n"
+             "  slopes:  A boom.Vector containing the weight that each time "
+             "series puts on the scalar state contribution.\n")
         ;
 
     py::class_<CiScalarStateAdapterPosteriorSampler,
