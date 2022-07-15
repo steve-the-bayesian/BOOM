@@ -75,6 +75,17 @@ namespace BOOM {
     counts_ = count_values(y, labs_, contiguous);
   }
 
+  FrequencyDistribution::FrequencyDistribution(
+      const std::vector<int> &y, int lo, int hi) {
+    counts_ = std::vector<int>(hi - lo + 1, 0);
+    for (int yi : y) {
+      ++counts_[yi - lo];
+    }
+    for (int i = lo; i <= hi; ++i) {
+      labs_.push_back(std::to_string(i));
+    }
+  }
+
   void FrequencyDistribution::set_labels(
       const std::vector<std::string> &labels) {
   }
