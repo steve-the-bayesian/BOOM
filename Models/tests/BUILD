@@ -10,6 +10,14 @@ COMMON_DEPS = [
 ]
 
 cc_test(
+    name = "beta_binomial_test",
+    size = "small",
+    srcs = ["beta_binomial_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "constrained_vector_params_test",
     size = "small",
     srcs = ["constrained_vector_params_test.cc"],
