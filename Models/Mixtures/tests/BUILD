@@ -10,6 +10,14 @@ COMMON_DEPS = [
 ]
 
 cc_test(
+    name = "beta_binomial_mixture_test",
+    size = "small",
+    srcs = ["beta_binomial_mixture_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
+
+cc_test(
     name = "dp_mvn_collapsed_gibbs_test",
     size = "small",
     srcs = ["dp_mvn_collapsed_gibbs_test.cc"],

@@ -17,6 +17,8 @@
 */
 
 #include "Models/Mixtures/BetaBinomialMixture.hpp"
+#include "distributions.hpp"
+
 namespace BOOM {
 
   AggregatedBinomialData::AggregatedBinomialData(
@@ -25,29 +27,78 @@ namespace BOOM {
         count_(count)
   {}
 
+  AggregatedBinomialData * AggregatedBinomialData::clone() const {
+    return new AggregatedBinomialData(*this);
+  }
+
   BetaBinomialMixtureModel::BetaBinomialMixtureModel(
       const std::vector<Ptr<BetaBinomialModel>> &components,
       const Ptr<MultinomialModel> &mixing_weight_model)
       : components_(components),
         mixing_weight_model_(mixing_weight_model)
-  {}
+  {
+    add_models_to_param_policy();
+  }
+
+  void BetaBinomialMixtureModel::add_models_to_param_policy() {
+    ParamPolicy::clear();
+    ParamPolicy::add_model(mixing_weight_model_);
+    for (const auto &el : components_) {
+      ParamPolicy::add_model(el);
+    }
+  }
+
+  BetaBinomialMixtureModel::BetaBinomialMixtureModel(const BetaBinomialMixtureModel &rhs)
+      : Model(rhs),
+        LatentVariableModel(rhs),
+        ParamPolicy(rhs),
+        DataPolicy(rhs),
+        mixing_weight_model_(rhs.mixing_weight_model_->clone())
+  {
+    for (auto &el : rhs.components_) {
+      components_.push_back(el->clone());
+    }
+    add_models_to_param_policy();
+  }
+
+
+  BetaBinomialMixtureModel * BetaBinomialMixtureModel::clone() const {
+    return new BetaBinomialMixtureModel(*this);
+  }
 
   void BetaBinomialMixtureModel::impute_latent_data(RNG &rng) {
     clear_component_data();
     const auto &data(dat());
     for (const Ptr<AggregatedBinomialData> &data_point : data) {
-      Vector log_probs = mixing_weight_model_->logpi();
-      for (size_t s = 0; s < components_.size(); ++s) {
-        log_probs[s] += components_[s]->logp(data_point->trials(),
-                                             data_point->successes());
-      }
-      Vector probs = log_probs.normalize_logprob();
-
+      impute_data_point(rng, data_point);
     }
-
   }
 
-  void BetaBinomialnomialMixtureModel::clear_component_data() {
+  void BetaBinomialMixtureModel::impute_data_point(
+      RNG &rng,
+      const Ptr<AggregatedBinomialData> &data_point) {
+
+    Vector log_probs = mixing_weight_model_->logpi();
+    for (size_t s = 0; s < components_.size(); ++s) {
+      log_probs[s] += components_[s]->logp(data_point->trials(),
+                                           data_point->successes());
+    }
+    Vector probs = log_probs.normalize_logprob();
+
+    // Apportionment contains the number of observations allocated to each
+    // mixture component.
+    std::vector<int> apportionment(probs.size(), 0);
+    rmultinom_mt(rng, data_point->count(), probs, apportionment);
+    mixing_weight_model_->suf()->add_mixture_data(Vector(apportionment));
+    for (int s = 0; s < apportionment.size(); ++s) {
+      if (apportionment[s] > 0) {
+        components_[s]->suf()->add_data(
+            data_point->trials(), data_point->successes(), apportionment[s]);
+      }
+    }
+  }
+
+  void BetaBinomialMixtureModel::clear_component_data() {
     for (auto &component : components_) {
       component->clear_data();
     }
