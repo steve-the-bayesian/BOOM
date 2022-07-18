@@ -199,8 +199,26 @@ namespace BOOM {
 
     bool can_find_posterior_mode() const override { return true; }
 
+    // Execute one MCMC posterior sample using slice sampling.
     void draw_slice();
+
+    // DEPRECATED.  In the past we offered a data augmentation option here.
+    // Each data point would impute its corresponding success probability 'p'.
+    // Then a posterior draw for the parameters of the beta distribution would
+    // be taken using slice sampling (using the imputed p's as data).
+    //
+    // The only real benefit to this strategy is that the Beta distribution
+    // involves sufficient statistics, while the BetaBinomial technically does
+    // not.  However, there is a computational cost to pay in terms of mixing
+    // rate, and the BetaBinomial distribution _sort_of_ has sufficient
+    // statistics if you tabulate the (N, y) pairs.
+    //
+    // Calling draw_data_augmentation currently forwards to draw_slice.
     void draw_data_augmentation();
+
+    // Execute one MCMC poster sample using "tailored Indepedence Metropolis"
+    // proposing from a Gaussian approximation to the posterior on the
+    // (logit(a/(a+b)), log(a+b)) scale.
     void draw_tim();
 
     // Full conditional distributions of the probability and sample
@@ -239,7 +257,6 @@ namespace BOOM {
     ScalarSliceSampler sample_size_sampler_;
 
     SamplingMethod sampling_method_;
-    BetaSuf complete_data_suf_;
 
     // These start off as nullptr. They're set the first time there's
     // a call to draw_tim().

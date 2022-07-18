@@ -129,6 +129,7 @@ namespace BOOM {
     void set_b(double b);
 
     double prior_mean() const;  // a / a+b
+    double mean() const {return prior_mean();}
     void set_prior_mean(double prob);
 
     double prior_sample_size() const;  // a+b

@@ -1,5 +1,9 @@
 #include "gtest/gtest.h"
 #include "Models/BetaBinomialModel.hpp"
+#include "Models/BetaModel.hpp"
+#include "Models/UniformModel.hpp"
+
+#include "Models/PosteriorSamplers/BetaBinomialPosteriorSampler.hpp"
 
 #include "stats/FreqDist.hpp"
 #include "stats/ChiSquareTest.hpp"
@@ -129,11 +133,36 @@ namespace {
   TEST_F(BetaBinomialTest, McmcTest) {
     double a = 3.8;
     double b = 15.7;
-    NEW(BetaBinomialModel, model)(a, b);
-
     int sample_size = 1000;
+    int niter=2500;
+
+    NEW(BetaBinomialModel, model)(1.0, 1.0);
+
     for (int i = 0; i < sample_size; ++i) {
+      int N = rpois(10);
+      double p  = rbeta(a, b);
+      int y = rbinom(N, p);
+      model->suf()->add_data(N, y, 1);
     }
+
+    NEW(BetaModel, mean_prior)(1, 1);
+    NEW(UniformModel, sample_size_prior)(.1, 100);
+    NEW(BetaBinomialPosteriorSampler, sampler)(
+        model.get(), mean_prior, sample_size_prior);
+    sampler->set_sampling_method(BetaBinomialPosteriorSampler::SLICE);
+    model->set_method(sampler);
+
+    Vector a_draws(niter);
+    Vector b_draws(niter);
+
+    for (int i = 0; i < niter; ++i) {
+      model->sample_posterior();
+      a_draws[i] = model->a();
+      b_draws[i] = model->b();
+    }
+
+    EXPECT_TRUE(CheckMcmcVector(a_draws, -1, .95, "a.draws"));
+    EXPECT_TRUE(CheckMcmcVector(b_draws, -1, .95, "b.draws"));
   }
 
 }  // namespace

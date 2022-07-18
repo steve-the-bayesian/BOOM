@@ -300,7 +300,7 @@ namespace BOOM {
       p_hat.push_back(successes / trials);
       counts.push_back(static_cast<double>(el.second));
     }
-    double sample_mean = mean(p_hat);
+    double sample_mean = BOOM::mean(p_hat);
     double sample_variance = var(p_hat);
     if (sample_variance == 0.0 || sample_mean == 0.0 || sample_mean == 1.0) {
       return;

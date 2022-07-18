@@ -108,7 +108,7 @@ namespace BOOM {
         sample_size_sampler_([this](double sample_size) {
           return this->logp_sample_size(sample_size);
         }),
-        sampling_method_(DATA_AUGMENTATION),
+        sampling_method_(SLICE),
         trouble_locating_mode_(false) {
     probability_sampler_.set_limits(0, 1);
     probability_sampler_.set_rng(&rng(), false);
@@ -138,7 +138,7 @@ namespace BOOM {
         return;
 
       case DATA_AUGMENTATION:
-        draw_data_augmentation();
+        draw_slice();
         return;
 
       case TIM:
@@ -146,37 +146,12 @@ namespace BOOM {
         return;
 
       default:
-        draw_data_augmentation();
+        draw_slice();
         return;
     }
   }
 
   void BBPS::draw_data_augmentation() {
-    double a = model_->a();
-    double b = model_->b();
-    complete_data_suf_.clear();
-
-    const std::vector<Ptr<BinomialData> > &data(model_->dat());
-    int nobs = data.size();
-    for (int i = 0; i < nobs; ++i) {
-      int y = data[i]->y();
-      int n = data[i]->n();
-      double theta;
-      int failure_count = 0;
-      do {
-        // In obscure corner cases where either a or b is very close
-        // to zero you can get theta == 0.0 or theta == 1.0
-        // numerically.  In that case just keep trying.  If it takes
-        // more than 100 tries then something is really wrong.
-        theta = rbeta_mt(rng(), y + a, n - y + b);
-        if (++failure_count > 100) {
-          report_error(
-              "Too many attempts at rbeta in "
-              "BetaBinomialPosteriorSampler::draw_data_augmentation");
-        }
-      } while (theta == 0.0 || theta == 1.0 || !std::isfinite(theta));
-      complete_data_suf_.update_raw(theta);
-    }
     draw_slice();
   }
 
@@ -193,13 +168,9 @@ namespace BOOM {
   double BBPS::logp(double prob, double sample_size) const {
     double a = prob * sample_size;
     double b = sample_size - a;
-    double ans =
-        probability_prior_->logp(prob) + sample_size_prior_->logp(sample_size);
-    if (sampling_method_ == DATA_AUGMENTATION) {
-      ans += beta_log_likelihood(a, b, complete_data_suf_);
-    } else {
-      ans += model_->loglike(a, b);
-    }
+    double ans = probability_prior_->logp(prob)
+        + sample_size_prior_->logp(sample_size);
+    ans += model_->loglike(a, b);
     return ans;
   }
 
@@ -268,7 +239,7 @@ namespace BOOM {
 
   void BBPS::draw_tim() {
     if (trouble_locating_mode_) {
-      draw_data_augmentation();
+      draw_slice();
     } else {
       try {
         if (!tim_sampler_) {
@@ -285,7 +256,7 @@ namespace BOOM {
         }
       } catch (...) {
         trouble_locating_mode_ = true;
-        draw_data_augmentation();
+        draw_slice();
       }
     }
   }

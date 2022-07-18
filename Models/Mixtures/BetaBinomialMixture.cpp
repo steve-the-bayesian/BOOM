@@ -61,7 +61,6 @@ namespace BOOM {
     add_models_to_param_policy();
   }
 
-
   BetaBinomialMixtureModel * BetaBinomialMixtureModel::clone() const {
     return new BetaBinomialMixtureModel(*this);
   }
