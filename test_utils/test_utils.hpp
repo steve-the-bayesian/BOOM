@@ -178,6 +178,8 @@ namespace BOOM {
   //   filename: The name of a file to which the matrix will be printed if the
   //     check fails.  The first row of the file will be the true value.  If the
   //     file name is the empty string no file will be created.
+  //   force_file_output: If true then print output to a file even of the check
+  //     succeeds.
   //
   // Returns:
   //   A central credibility interval with probability content 'confidence' is
@@ -186,7 +188,8 @@ namespace BOOM {
   bool CheckMcmcVector(const Vector &draws,
                        double truth,
                        double confidence = .95,
-                       const std::string &filename = "");
+                       const std::string &filename = "",
+                       bool force_file_output = false);
 
   //===========================================================================
   // Returns true if the empirical CDF of the vector of data matches the

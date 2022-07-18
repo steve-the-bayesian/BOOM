@@ -177,7 +177,8 @@ namespace BOOM {
   }
 
   bool CheckMcmcVector(const Vector &draws, double truth, double confidence,
-                       const std::string &filename) {
+                       const std::string &filename,
+                       bool force_file_output) {
     if (confidence <= 0 || confidence >= 1) {
       report_error("Confidence must be strictly between 0 and 1.");
     }
@@ -188,7 +189,7 @@ namespace BOOM {
     double lo = sorted_vector_quantile(v, alpha_2);
     double hi = sorted_vector_quantile(v, 1 - alpha_2);
     bool ok = lo <= truth && hi >= truth;
-    if (!ok && filename != "") {
+    if (force_file_output || (!ok && filename != "")) {
       std::ofstream error_file(filename);
       error_file << truth << " " << draws;
     }
