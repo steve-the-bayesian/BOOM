@@ -7,7 +7,6 @@ import numpy as np
 def as_numeric(x):
     return np.array(x)
 
-
 def dnorm(x, mean=0, sd=1, log=False):
     """Normal density function.
 
@@ -62,6 +61,21 @@ def rnorm(n, mean=0, sd=1):
     """
 
     return np.random.randn(n) * sd + mean
+
+
+def rbeta(n, a=1, b=1):
+    from scipy.stats import beta
+    return beta.rvs(a, b, size=n)
+
+
+def rpois(n, lam):
+    from scipy.stats import poisson
+    return poisson.rvs(lam, size=n)
+
+
+def rbinom(n, size, prob):
+    from scipy.stats import binom
+    return binom.rvs(size, prob, size=n)
 
 
 def dgamma(y, shape, scale, log=False):

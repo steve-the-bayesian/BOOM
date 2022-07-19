@@ -273,6 +273,19 @@ class UniformPrior(DoubleModel):
         return boom.UniformModel(self._lo, self._hi)
 
 
+class BetaPrior:
+    """
+    A distribution, typically used as the prior over a scalar probability.
+    """
+    def __init__(self, a=1.0, b=1.0):
+        self._a = float(a)
+        self._b = float(b)
+
+    def boom(self):
+        import BayesBoom.boom as boom
+        return boom.BetaModel(self._a, self._b)
+
+
 class DirichletPrior:
     """
     A Dirichlet prior distribution over discrete probability distributions.

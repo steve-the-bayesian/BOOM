@@ -24,14 +24,15 @@ from .R import (
 
 from .bayes import (
     Ar1CoefficientPrior,
+    BetaPrior,
     DoubleModel,
     GaussianSuf,
     MvnPrior,
     MvnGivenSigma,
     NormalPrior,
+    SdPrior,
     UniformPrior,
     WishartPrior,
-    SdPrior,
 )
 
 from .cbind import cbind
@@ -62,7 +63,7 @@ from .encoding import (
 
 from .graphics_device import get_current_graphics_device
 
-from .mcmc import suggest_burn
+from .mcmc import suggest_burn, report_progress
 
 from .plots import (
     abline,
@@ -90,6 +91,8 @@ from .probability import (
     dmvn, rmvn,
     dnorm, pnorm, qnorm, rnorm,
     dgamma, pgamma, qgamma, rgamma,
+    rbeta,
+    rpois,
     rmarkov,
 )
 
