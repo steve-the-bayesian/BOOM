@@ -73,8 +73,7 @@ class BetaBinomialMixture:
             self._boom_model = self._build_boom_model()
         if isinstance(data, pd.DataFrame):
             data = data.values
-        data = data.astype(int)
-        self._boom_model.add_data(data[:, 0], data[:, 1], data[:, 2])
+        self._boom_model.add_data(R.to_boom_matrix(data.astype(float)))
 
     def mcmc(self, niter, ping=None, seed=None):
         """

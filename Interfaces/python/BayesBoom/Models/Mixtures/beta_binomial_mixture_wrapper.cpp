@@ -60,6 +60,22 @@ namespace BayesBoom {
              "  counts:  The number of observations with the given number "
              "of trials and successes.\n"
              )
+        .def("add_data",
+             [](BetaBinomialMixtureModel &model, const Matrix &data) {
+               for (int i = 0; i < data.nrow(); ++i) {
+                 NEW(AggregatedBinomialData, data_point)(
+                     lround(data(i, 0)),
+                     lround(data(i, 1)),
+                     lround(data(i, 2)));
+                 model.add_data(data_point);
+               }
+             },
+             py::arg("data"),
+             "Args:\n\n"
+             "  data:  A 3-column boom.Matrix.  Each row contains the number "
+             "of binomial trials (first entry), the number of successes "
+             "(second entry), and the number of observations with this many "
+             "trials and successes.\n")
         .def_property_readonly(
             "mixing_distribution",
             [](BetaBinomialMixtureModel &model) {
