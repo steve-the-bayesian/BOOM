@@ -35,12 +35,25 @@ namespace BayesBoom {
             })
         ;
 
-    py::class_<DoubleModel, Model, Ptr<DoubleModel>>(boom, "DoubleModel", py::multiple_inheritance())
+    py::class_<DoubleModel, Model, Ptr<DoubleModel>>(
+        boom, "DoubleModel", py::multiple_inheritance())
         .def("logp", [](const DoubleModel &m, double x) {
           return m.logp(x);
         },
           py::arg("x"),
           "The log density evaluated at 'x'.")
+        ;
+
+    py::class_<DiffDoubleModel, DoubleModel, Ptr<DiffDoubleModel>>(
+        boom, "DiffDoubleModel", py::multiple_inheritance())
+        .def("dlogp", [](const DiffDoubleModel &m, double x) {
+                        double ans, g;
+                        ans = m.dlogp(x, g);
+                        return std::make_pair(ans, g);
+                      },
+          py::arg("x"),
+          "Returns a pair.  The first elmennt is the log density evaluated at "
+          "'x'. The second is the derivative of the log density.\n")
         ;
 
     py::class_<SpdModel, Model, Ptr<SpdModel>>(

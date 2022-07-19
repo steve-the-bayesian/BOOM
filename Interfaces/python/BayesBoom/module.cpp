@@ -19,6 +19,12 @@ namespace BayesBoom {
   void Data_def(py::module &);
   void Parameter_def(py::module &);
   void DirichletModel_def(py::module &);
+  void BetaModel_def(py::module &);
+
+  //   void BinomialModel_def(py::module &);
+  void BetaBinomialModel_def(py::module &);
+  void MultinomialModel_def(py::module &);
+
   void GaussianModel_def(py::module &);
   void GammaModel_def(py::module &);
   void UniformModel_def(py::module &m);
@@ -37,6 +43,7 @@ namespace BayesBoom {
   void MultivariateStateSpaceModel_def(py::module &);
   void MultivariateStateModel_def(py::module &);
   void DirichletProcessMvn_def(py::module &);
+  void BetaBinomialMixture_def(py::module &);
 
   void test_utils_def(py::module &);
 
@@ -65,7 +72,13 @@ namespace BayesBoom {
 
     Model_def(boom);
     Parameter_def(boom);
+    BetaModel_def(boom);
     DirichletModel_def(boom);
+
+    //    BinomialModel_def(boom);
+    BetaBinomialModel_def(boom);
+    MultinomialModel_def(boom);
+
     GaussianModel_def(boom);
     GammaModel_def(boom);
     MvnModel_def(boom);
@@ -86,6 +99,7 @@ namespace BayesBoom {
     DynamicRegressionModel_def(boom);
 
     DirichletProcessMvn_def(boom);
+    BetaBinomialMixture_def(boom);
 
     test_utils_def(boom);
   }  // Module BOOM
