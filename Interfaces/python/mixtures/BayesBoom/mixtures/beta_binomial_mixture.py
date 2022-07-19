@@ -129,7 +129,7 @@ class BetaBinomialMixture:
         """
         ans = np.empty((self.niter, self.number_of_mixture_components))
         for i in range(self.number_of_mixture_components):
-            ans[:, i] = self._components["draws"][:, 0]
+            ans[:, i] = self._components[i]["draws"][:, 0]
         return ans
 
     @property
@@ -141,7 +141,7 @@ class BetaBinomialMixture:
         """
         ans = np.empty((self.niter, self.number_of_mixture_components))
         for i in range(self.number_of_mixture_components):
-            ans[:, i] = self._components["draws"][:, 1]
+            ans[:, i] = self._components[i]["draws"][:, 1]
         return ans
 
     @property
