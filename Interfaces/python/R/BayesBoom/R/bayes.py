@@ -281,12 +281,13 @@ class BetaPrior(DoubleModel):
         self._a = float(a)
         self._b = float(b)
 
+    @property
+    def mean(self):
+        return self._a / (self._a + self._b)
+
     def boom(self):
         import BayesBoom.boom as boom
         return boom.BetaModel(self._a, self._b)
-
-    def mean(self):
-        return self._a / (self._a + self._b)
 
 
 class DirichletPrior:
