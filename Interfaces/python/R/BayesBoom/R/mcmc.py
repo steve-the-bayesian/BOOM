@@ -47,4 +47,4 @@ def report_progress(iteration: int, ping: int):
     if iteration % ping == 0:
         timestamp = dt.now().strftime("%Y-%m-%d %H:%M:%S")
         sep = "=-=-=-=-="
-        print(f"{sep} Iteration {iteration} {sep} {timestamp}\n")
+        print(f"{sep} Iteration {iteration} {sep} {timestamp}")
