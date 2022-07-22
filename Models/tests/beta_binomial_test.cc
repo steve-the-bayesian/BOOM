@@ -161,8 +161,8 @@ namespace {
       b_draws[i] = model->b();
     }
 
-    EXPECT_TRUE(CheckMcmcVector(a_draws, -1, .95, "a.draws"));
-    EXPECT_TRUE(CheckMcmcVector(b_draws, -1, .95, "b.draws"));
+    EXPECT_TRUE(CheckMcmcVector(a_draws, a, .95, "a.draws"));
+    EXPECT_TRUE(CheckMcmcVector(b_draws, b, .95, "b.draws"));
   }
 
 }  // namespace
