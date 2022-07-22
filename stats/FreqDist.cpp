@@ -18,7 +18,6 @@
 */
 #include "stats/FreqDist.hpp"
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 #include "Models/CategoricalData.hpp"
 #include "cpputil/report_error.hpp"

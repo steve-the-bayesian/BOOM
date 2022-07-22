@@ -17,24 +17,20 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 */
 #include "cpputil/LongString.hpp"
-#include <iostream>
+#include <ostream>
 
 namespace BOOM {
 
-  using std::endl;
-  using std::ostream;
-  using std::string;
-
-  LongString::LongString(const string &str, unsigned w, unsigned p,
+  LongString::LongString(const std::string &str, unsigned w, unsigned p,
                          bool pad_first_line)
       : s(str), width(w), pad(p), pad_first(pad_first_line) {
     width -= pad;
   }
 
-  ostream &LongString::print(ostream &out) const {
+  std::ostream &LongString::print(std::ostream &out) const {
     unsigned start = 0;
     unsigned back = s.size();
-    string blanks(pad, ' ');
+    std::string blanks(pad, ' ');
     while (back - start > width) {
       unsigned pos = start + width;
       while (pos > start) {
@@ -43,13 +39,13 @@ namespace BOOM {
       }
       if (pos == start) pos = start + width;
       if (start > 0 || (start == 0 && pad_first)) out << blanks;
-      out << s.substr(start, pos - start) << endl;
+      out << s.substr(start, pos - start) << "\n";
       start = pos + 1;
       while (start < back && s[start] == ' ') ++start;
     }
     if (back - start > 0) {
       if (start > 0 || (start == 0 && pad_first)) out << blanks;
-      out << s.substr(start, back - start) << endl;
+      out << s.substr(start, back - start) << "\n";
     }
     return out;
   }
