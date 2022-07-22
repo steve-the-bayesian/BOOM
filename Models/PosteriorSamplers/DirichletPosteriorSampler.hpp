@@ -29,7 +29,9 @@
 #include "Samplers/TIM.hpp"
 #include "Samplers/UnivariateLangevinSampler.hpp"
 #include "Samplers/UnivariateSliceSampler.hpp"
+
 #include "TargetFun/TargetFun.hpp"
+#include "TargetFun/MultinomialLogitTransform.hpp"
 
 namespace BOOM {
 
@@ -48,7 +50,8 @@ namespace BOOM {
       //     Dirichlet distribution.
       DirichletSamplerImpl(DirichletModel *model,
                            const Ptr<VectorModel> &phi_prior,
-                           const Ptr<DoubleModel> &alpha_prior, RNG *rng);
+                           const Ptr<DoubleModel> &alpha_prior,
+                           RNG *rng);
       virtual ~DirichletSamplerImpl() {}
 
       virtual void draw() = 0;
@@ -78,13 +81,14 @@ namespace BOOM {
   class DirichletPosteriorSampler : public PosteriorSampler {
    public:
     // Args:
-    //   m:  The model being managed.
+    //   model:  The model being managed.
     //   phi_prior: A prior for the discrete probability distribution
     //     parameter phi.  This should assign logp = negative_infinity
     //     if phi is not a discrete probability distribution.
     //   alpha_prior: A prior for the "sample size" parameter alpha.
     //     This should assign logp = negative_infinity if alpha <= 0.
-    DirichletPosteriorSampler(DirichletModel *m,
+    //   seeding_rng:  The random number generator used to seed the sampler.
+    DirichletPosteriorSampler(DirichletModel *model,
                               const Ptr<VectorModel> &phi_prior,
                               const Ptr<DoubleModel> &alpha_prior,
                               RNG &seeding_rng = GlobalRng::rng);
@@ -188,77 +192,6 @@ namespace BOOM {
     class MultinomialLogitLogPosterior : public d2TargetFun,
                                          public dScalarEnabledTargetFun {
      public:
-      // A class for handling the Jacobian of the multinomial logit
-      // transformation.
-      class Jacobian {
-       public:
-        // This is a lightweight helper class.  It stores truncated_phi by
-        // reference.  The caller must ensure that truncated_phi
-        // exists throughout the lifetime of this object.
-        explicit Jacobian(const Vector &truncated_phi);
-
-        // Returns element (r,s) of the Jacobian matrix, which is the
-        // derivative of phi[s] with respect to eta[r].
-        double element(int r, int s) const {
-          double ans = -truncated_phi_[r] * truncated_phi_[s];
-          if (r == s) ans += truncated_phi_[r];
-          return ans;
-        }
-
-        // Returns the Jacobian matrix.  If g is the gradient with
-        // respect to truncated_phi, then matrix() * g is the gradient
-        // with respect to eta.
-        //
-        SpdMatrix matrix() const;
-
-        // The log determinant of the Jacobian matrix.  The
-        // determinant of the Jacobian matrix is the product of the
-        // elements in full_phi, so logdet is the sum of their logs.
-        double logdet() const;
-
-        // Returns the inverse Jacobian matrix, which is both the
-        // inverse of matrix() and the Jacobian of the inverse
-        // transform.
-        //
-        // The determinant of the inverse matrix is the product of the
-        // elements in 1.0 / full_phi.
-        SpdMatrix inverse_matrix() const;
-
-        // Returns the second derivative of phi[t] with
-        // respect to eta[r] and eta[s].
-        // The math:
-        //   We start with d_phi[t] / d_eta[s]
-        //        = delta(s,t) * phi[s] - phi[s] * phi[t]
-        //        = J(s, t)
-        // where delta(s,t) is the Kronecker delta, and J is the
-        // Jacobian matrix.  Then the second derivative is
-        //    d2_phi[t] / d_eta[r] d_eta[s] =
-        //       delta(s,t) * d_phi[s] / d_eta[r]
-        //          -( d_phi[s] / d_eta[r]  * phi[t]
-        //            + phi[s] * d_phi[t] / d_eta[r] )
-        //       = delta(s,t) * J(r,s)
-        //          - (J(r,s) * phi[t] + J(r,t) * phi[s])
-        double second_order_element(int r, int s, int t) const {
-          double ans = (s == t) ? element(r, s) : 0;
-          ans -= (element(r, s) * truncated_phi_[t] +
-                  truncated_phi_[s] * element(r, t));
-          return ans;
-        }
-
-        // Sets gradient += the gradient of |log(J)| with repect to
-        // eta.
-        void add_eta_gradient(Vector &gradient,
-                              const SpdMatrix &jacobian_matrix) const;
-
-        // Sets hessian += the hessian of |log(J)| with respect to
-        // eta.
-        void add_eta_hessian(Matrix &hessian,
-                             const SpdMatrix &jacobian_matrix) const;
-
-       private:
-        const Vector truncated_phi_;
-      };  // class Jacobian
-
       MultinomialLogitLogPosterior(DirichletModel *model,
                                    const Ptr<DiffVectorModel> &phi_prior);
 
