@@ -19,7 +19,6 @@
 
 #include "Models/MarkovModel.hpp"
 #include <cmath>
-#include <iostream>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/VectorView.hpp"
 #include "Models/DirichletModel.hpp"

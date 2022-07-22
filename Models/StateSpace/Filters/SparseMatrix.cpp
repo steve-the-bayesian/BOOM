@@ -18,7 +18,6 @@
 */
 
 #include "Models/StateSpace/Filters/SparseMatrix.hpp"
-#include <iostream>
 #include <utility>
 #include "LinAlg/SpdMatrix.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"

@@ -21,6 +21,7 @@
 #define BOOM_SPARSE_MATRIX_HPP_
 
 #include <map>
+#include <iostream>
 
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/SpdMatrix.hpp"
