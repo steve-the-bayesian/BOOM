@@ -41,7 +41,6 @@ namespace BOOM {
         new_parameterization);
 
     Matrix numeric_matrix = numeric_jacobian_.matrix(new_parameterization);
-
     Matrix analytic_matrix = analytic_jacobian_->matrix(original_parameterization);
     Matrix difference = analytic_matrix - numeric_matrix;
     return difference.max_abs() < epsilon_;
@@ -49,8 +48,8 @@ namespace BOOM {
 
   bool JacobianChecker::check_logdet(const Vector &new_parameterization) {
     Vector original_params = inverse_transformation_(new_parameterization);
-    Matrix numeric_matrix = numeric_jacobian_.matrix(original_params);
-    return fabs(log(fabs(det(numeric_matrix))) -
+    Matrix jake = analytic_jacobian_->matrix(original_params);
+    return fabs(log(fabs(det(jake))) -
                 analytic_jacobian_->logdet(original_params)) < epsilon_;
   }
 

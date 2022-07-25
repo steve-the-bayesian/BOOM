@@ -13,3 +13,11 @@ cc_test(
     copts = COPTS,
     deps = COMMON_DEPS,
 )
+
+cc_test(
+    name = "logit_transform_test",
+    size = "small",
+    srcs = ["logit_transform_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+)
