@@ -135,7 +135,8 @@ namespace BOOM {
         // Derivative of prob * (1 - prob) with respect to eta.  Using
         // the chain rule to get the derivative, where d_prob / d_eta
         // is the 0,0 element of the Jacobian matrix.
-        return (1 - 2 * prob_) * prob_ * (1 - prob_);
+        double prob = ab[0] / ab.sum();
+        return (1 - 2 * prob) * prob * (1 - prob);
       } else if (r == 1 && s == 1 && t == 1) {
         // Derivative of size = exp(nu) with respect to nu.
         double sample_size = ab[0] + ab[1];
@@ -154,9 +155,6 @@ namespace BOOM {
     void add_logdet_gradient(Vector &gradient, const Vector &ab) override;
     void add_logdet_Hessian(Matrix &hessian, const Vector &ab) override;
 
-   private:
-    double prob_;
-    double sample_size_;
   };
 
   //======================================================================
