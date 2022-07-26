@@ -39,7 +39,7 @@ namespace BOOM {
     //     mixture components managed by the model must be assigned their own
     //     PosteriorSampler's.
     //   seeding_rng:  The random number generator used to seed this object.
-    explicict BetaBinomialMixturePosteriorSampler(
+    explicit BetaBinomialMixturePosteriorSampler(
         BetaBinomialMixtureModel *model,
         RNG &seeding_rng = GlobalRng::rng);
 
