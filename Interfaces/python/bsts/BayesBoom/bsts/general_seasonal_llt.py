@@ -56,7 +56,7 @@ class GeneralSeasonalLLT(StateModel):
             self._initial_state_prior = initial_state_prior
 
         if not isinstance(self._initial_state_prior, R.MvnPrior):
-            raise Exception("intial_state_prior must be an R.MvnPrior"
+            raise Exception("intial_state_prior must be an R.MvnPrior")
 
         if level_precision_priors is None:
             if sdy is None:
