@@ -50,7 +50,7 @@ namespace BOOM {
     // If y' = y * (1 - y) then y'' can be found by implicit differentiation and
     // the product rule.  y'' = y' * (1 - y) + y * (-y') = y' * (1 - 2y)
     double second_order_element(int r, int s, int t,
-                                const Vector &probs) const {
+                                const Vector &probs) const override {
       if (r == s && s == t) {
         double pq = probs[t] * (1 - probs[t]);
         return pq * (1.0 - 2.0 * probs[t]);

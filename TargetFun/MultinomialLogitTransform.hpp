@@ -43,12 +43,12 @@ namespace BOOM {
     // Returns the Jacobian matrix.  If g is the gradient with
     // respect to truncated_probs, then matrix() * g is the gradient
     // with respect to logits.
-    Matrix matrix(const Vector &truncated_probs) const;
+    Matrix matrix(const Vector &truncated_probs) const override;
 
     // The log determinant of the Jacobian matrix.  The
     // determinant of the Jacobian matrix is the product of the
     // elements in full_probs, so logdet is the sum of their logs.
-    double logdet(const Vector &truncated_probs) const;
+    double logdet(const Vector &truncated_probs) const override;
 
     // Returns the inverse Jacobian matrix, which is both the
     // inverse of matrix() and the Jacobian of the inverse
@@ -72,8 +72,8 @@ namespace BOOM {
     //            + tprobs[s] * d_tprobs[t] / d_logits[r] )
     //       = delta(s,t) * J(r,s)
     //          - (J(r,s) * tprobs[t] + J(r,t) * tprobs[s])
-    double second_order_element(int r, int s, int t,
-                                const Vector &truncated_probs) const {
+    double second_order_element(
+        int r, int s, int t, const Vector &truncated_probs) const override {
       double ans = (s == t) ? element(r, s, truncated_probs) : 0;
       ans -= (element(r, s, truncated_probs) * truncated_probs[t] +
               truncated_probs[s] * element(r, t, truncated_probs));

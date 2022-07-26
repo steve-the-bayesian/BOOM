@@ -53,7 +53,7 @@ namespace BOOM {
     // logs[s].  This is zero unless r == s == t.  The derivative of y with
     // respect to log(y) is y, no matter how many derivatives you take.
     double second_order_element(int r, int s, int t,
-                                const Vector &raw) const {
+                                const Vector &raw) const override {
       if (r == s && s == t) {
         return raw[t];
       } else {
