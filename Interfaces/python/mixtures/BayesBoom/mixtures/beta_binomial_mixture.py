@@ -4,6 +4,7 @@ import numpy as np
 import BayesBoom.R as R
 from scipy.stats import betabinom
 
+
 class BetaBinomialMixture:
     """
     A finite mixture of BetaBinomial distributions.
@@ -26,10 +27,11 @@ class BetaBinomialMixture:
 
     """
 
-    def __init__(self):
+    def __init__(self, use_data_augmentation=False):
         self._components = list()
         self._mixing_distribution_prior_counts = list()
         self._boom_model = None
+        self._use_data_augmentation = use_data_augmentation
 
     def add_component(self,
                       mean_prior: R.BetaPrior,
@@ -232,19 +234,32 @@ class BetaBinomialMixture:
         mixing_distribution.set_method(mixing_distribution_sampler)
 
         boom_components = list()
+        mean_priors = list()
+        sample_size_priors = list()
         for component in self._components:
             mean_prior = component["mean_prior"]
             sample_size_prior = component["sample_size_prior"]
             initial_a = mean_prior.mean * sample_size_prior.mean
             initial_b = sample_size_prior.mean - initial_a
             component_model = boom.BetaBinomialModel(initial_a, initial_b)
-            component_sampler = boom.BetaBinomialPosteriorSampler(
-                component_model, mean_prior.boom(), sample_size_prior.boom())
-            component_model.set_method(component_sampler)
+            if self._use_data_augmentation:
+                component_sampler = boom.BetaBinomialPosteriorSampler(
+                    component_model,
+                    mean_prior.boom(),
+                    sample_size_prior.boom())
+                component_model.set_method(component_sampler)
+            else:
+                mean_priors.append(mean_prior.boom())
+                sample_size_priors.append(sample_size_prior.boom())
+
             boom_components.append(component_model)
 
         boom_model = boom.BetaBinomialMixtureModel(
             boom_components, mixing_distribution)
-        sampler = boom.BetaBinomialMixturePosteriorSampler(boom_model)
+        if self._use_data_augmentation:
+            sampler = boom.BetaBinomialMixturePosteriorSampler(boom_model)
+        else:
+            sampler = boom.BetaBinomialMixtureDirectPosteriorSampler(
+                boom_model, dirichlet_prior, mean_priors, sample_size_priors)
         boom_model.set_method(sampler)
         return boom_model

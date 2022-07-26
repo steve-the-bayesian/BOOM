@@ -119,6 +119,56 @@ namespace BayesBoom {
              "RNG of this sampler object.\n")
         ;
 
+    py::class_<BetaBinomialMixtureDirectPosteriorSampler,
+               PosteriorSampler,
+               BOOM::Ptr<BetaBinomialMixtureDirectPosteriorSampler>>(
+                   boom, "BetaBinomialMixtureDirectPosteriorSampler",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](BetaBinomialMixtureModel *model,
+               DirichletModel *mixing_weight_prior,
+               const std::vector<BetaModel *> &raw_component_mean_priors,
+               const std::vector<DoubleModel *> &raw_sample_size_priors,
+               RNG &seeding_rng) {
+              std::vector<Ptr<BetaModel>> component_mean_priors;
+              for (auto &el : raw_component_mean_priors) {
+                component_mean_priors.push_back(Ptr<BetaModel>(el));
+              }
+
+              std::vector<Ptr<DoubleModel>> sample_size_priors;
+              for (auto &el : raw_sample_size_priors) {
+                sample_size_priors.push_back(Ptr<DoubleModel>(el));
+              }
+
+              return new BetaBinomialMixtureDirectPosteriorSampler(
+                  model,
+                  Ptr<DirichletModel>(mixing_weight_prior),
+                  component_mean_priors,
+                  sample_size_priors,
+                  seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("mixing_weight_prior"),
+             py::arg("component_mean_priors"),
+             py::arg("sample_size_priors"),
+             py::arg("seeding_rng") = GlobalRng::rng,
+             "Args:\n\n"
+             "  model: the model to be managed.\n"
+             "  mixing_weight_prior:  A DirichletModel describing the prior "
+             "distribution on the mixing weights.\n"
+             "  component_mean_priors:  A list of boom.BetaModel objects "
+             "giving the prior distribution on the mean of each mixing "
+             "component.  The mean of the BetaBinomial(a, b) distribution "
+             "is a/(a+b).\n"
+             "  sample_size_priors: Alist of boom.DoubleModel objects giving "
+             "the prior distribution of the sample_size parameter for each "
+             "mixing component.  The sample_size parameter of the "
+             "BetaBinomial(a, b) distribution is a+b.\n"
+             "  seeding_rng:  The random number generator used to seed "
+             "this sampler.\n")
+        ;
+
+
   }  // Module
 
 }  // namespace BayesBoom
