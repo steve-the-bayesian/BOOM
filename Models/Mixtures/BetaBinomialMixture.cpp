@@ -17,6 +17,7 @@
 */
 
 #include "Models/Mixtures/BetaBinomialMixture.hpp"
+#include "cpputil/lse.hpp"
 #include "distributions.hpp"
 
 namespace BOOM {
@@ -38,14 +39,6 @@ namespace BOOM {
         mixing_weight_model_(mixing_weight_model)
   {
     add_models_to_param_policy();
-  }
-
-  void BetaBinomialMixtureModel::add_models_to_param_policy() {
-    ParamPolicy::clear();
-    ParamPolicy::add_model(mixing_weight_model_);
-    for (const auto &el : components_) {
-      ParamPolicy::add_model(el);
-    }
   }
 
   BetaBinomialMixtureModel::BetaBinomialMixtureModel(const BetaBinomialMixtureModel &rhs)
@@ -104,5 +97,33 @@ namespace BOOM {
     mixing_weight_model_->clear_data();
   }
 
+  double BetaBinomialMixtureModel::log_likelihood(
+      const Vector &weights, const Matrix &ab) const {
+    Vector log_weights = log(weights);
+    int num_components = weights.size();
+
+    double ans = 0;
+    for (int i = 0; i < dat().size(); ++i) {
+      auto data_point = dat()[i];
+      Vector log_weighted_densities = log_weights;
+      for (int s = 0; s < num_components; ++s) {
+        log_weighted_densities[s] += BetaBinomialModel::logp(
+            data_point->trials(),
+            data_point->successes(),
+            ab(s, 0),
+            ab(s, 1));
+      }
+      ans += lse(log_weighted_densities) * data_point->count();
+    }
+    return ans;
+  }
+
+  void BetaBinomialMixtureModel::add_models_to_param_policy() {
+    ParamPolicy::clear();
+    ParamPolicy::add_model(mixing_weight_model_);
+    for (const auto &el : components_) {
+      ParamPolicy::add_model(el);
+    }
+  }
 
 }  // namespace BOOM

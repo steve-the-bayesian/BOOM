@@ -52,14 +52,13 @@ namespace BOOM {
     double ans = model_->Loglike(ab, gradient, Hessian, nderiv);
 
     ProbSamplesizeJacobian jacobian;
-    jacobian.evaluate_new_parameterization(prob_samplesize);
     if (nderiv > 0) {
       Vector original_gradient = gradient;
       // Transform the gradient from the (a,b) scale to the
       // (prob,size) scale.
-      gradient = jacobian.transform_gradient(original_gradient, false);
+      gradient = jacobian.transform_gradient(original_gradient, false, ab);
       if (nderiv > 1) {
-        Hessian = jacobian.transform_Hessian(original_gradient, Hessian, false);
+        Hessian = jacobian.transform_Hessian(original_gradient, Hessian, false, ab);
       }
     }
 
@@ -276,95 +275,78 @@ namespace BOOM {
     typedef ProbSamplesizeJacobian PSJ;
   }
 
-  PSJ::ProbSamplesizeJacobian() { prefer_new_parameterization(); }
-
-  void PSJ::evaluate_original_parameterization(const Vector &ab) {
-    sample_size_ = ab[0] + ab[1];
-    prob_ = ab[0] / sample_size_;
-    matrix_is_current_ = false;
-  }
-
-  void PSJ::evaluate_new_parameterization(const Vector &prob_samplesize) {
-    prob_ = prob_samplesize[0];
-    sample_size_ = prob_samplesize[1];
-    matrix_is_current_ = false;
-  }
-
-  Matrix &PSJ::matrix() {
-    if (matrix_is_current_) {
-      return matrix_;
-    }
-    matrix_.resize(2, 2);
-    matrix_(0, 0) = sample_size_;
-    matrix_(0, 1) = -sample_size_;
-    matrix_(1, 0) = prob_;
-    matrix_(1, 1) = 1 - prob_;
-    matrix_is_current_ = true;
-    return matrix_;
+  Matrix PSJ::matrix(const Vector &ab) const {
+    double sample_size = ab[0] + ab[1];
+    double prob = ab[0] / sample_size;
+    Matrix ans(2, 2);
+    ans(0, 0) = sample_size;
+    ans(0, 1) = -sample_size;
+    ans(1, 0) = prob;
+    ans(1, 1) = 1 - prob;
+    return ans;
   }
 
   void PSJ::transform_second_order_gradient(SpdMatrix &working_hessian,
-                                            const Vector &original_gradient) {
+                                            const Vector &original_gradient,
+                                            const Vector &ab) {
     working_hessian(0, 1) +=
-        second_order_element(0, 1, 0) * original_gradient[0] +
-        second_order_element(0, 1, 1) * original_gradient[1];
+        second_order_element(0, 1, 0, ab) * original_gradient[0] +
+        second_order_element(0, 1, 1, ab) * original_gradient[1];
     working_hessian(1, 0) +=
-        second_order_element(1, 0, 0) * original_gradient[0] +
-        second_order_element(1, 0, 1) * original_gradient[1];
+        second_order_element(1, 0, 0, ab) * original_gradient[0] +
+        second_order_element(1, 0, 1, ab) * original_gradient[1];
   }
 
-  void PSJ::add_logdet_gradient(Vector &gradient) {
-    gradient[1] += 1.0 / sample_size_;
+  void PSJ::add_logdet_gradient(Vector &gradient, const Vector &ab) {
+    double sample_size = ab[0] + ab[1];
+    gradient[1] += 1.0 / sample_size;
   }
 
-  void PSJ::add_logdet_Hessian(Matrix &Hessian) {
-    Hessian(1, 1) -= 1.0 / square(sample_size_);
+  void PSJ::add_logdet_Hessian(Matrix &Hessian, const Vector &ab) {
+    double sample_size = ab[0] + ab[1];
+    Hessian(1, 1) -= 1.0 / square(sample_size);
   }
   //======================================================================
   namespace {
     typedef LogitLogJacobian LLJ;
   }
 
-  LLJ::LogitLogJacobian() { prefer_original_parameterization(); }
-
-  void LLJ::evaluate_original_parameterization(const Vector &prob_size) {
-    prob_ = prob_size[0];
-    sample_size_ = prob_size[1];
-    matrix_is_current_ = false;
+  double LLJ::logdet(const Vector &ab) const {
+    double sample_size = ab[0] + ab[1];
+    double prob = ab[0] / sample_size;
+    return log(prob * (1 - prob) * sample_size);
   }
 
-  void LLJ::evaluate_new_parameterization(const Vector &eta_nu) {
-    prob_ = plogis(eta_nu[0]);
-    sample_size_ = exp(eta_nu[1]);
-    matrix_is_current_ = false;
-  }
-
-  double LLJ::logdet() { return log(prob_ * (1 - prob_) * sample_size_); }
-
-  Matrix &LLJ::matrix() {
-    matrix_.resize(2, 2);
-    matrix_(0, 0) = prob_ * (1 - prob_);
-    matrix_(1, 1) = sample_size_;
-    matrix_(1, 0) = matrix_(0, 1) = 0.0;
-    matrix_is_current_ = true;
-    return matrix_;
+  Matrix LLJ::matrix(const Vector &ab) const {
+    double sample_size = ab[0] + ab[1];
+    double prob = ab[0] / sample_size;
+    Matrix ans(2, 2);
+    ans.resize(2, 2);
+    ans(0, 0) = prob * (1 - prob);
+    ans(1, 1) = sample_size;
+    ans(1, 0) = ans(0, 1) = 0.0;
+    return ans;
   }
 
   void LLJ::transform_second_order_gradient(SpdMatrix &working_hessian,
-                                            const Vector &original_gradient) {
+                                            const Vector &original_gradient,
+                                            const Vector &ab) {
     working_hessian(0, 0) +=
-        second_order_element(0, 0, 0) * original_gradient[0];
+        second_order_element(0, 0, 0, ab) * original_gradient[0];
     working_hessian(1, 1) +=
-        second_order_element(1, 1, 1) * original_gradient[1];
+        second_order_element(1, 1, 1, ab) * original_gradient[1];
   }
 
-  void LLJ::add_logdet_gradient(Vector &gradient) {
+  void LLJ::add_logdet_gradient(Vector &gradient, const Vector &ab) {
+    double sample_size = ab[0] + ab[1];
+    double prob = ab[0] / sample_size;
+
     // Derivative of log(p(1-p)) / d eta
     //   = (1/pq) * d(pq) / d eta
     //   = (1/pq) * (1 - 2p) * dp / d eta
     //   = (1/pq) * (1 - 2p) * pq
     //   = 1-2p
-    gradient[0] += 1.0 - 2.0 * prob_;
+    gradient[0] += 1.0 - 2.0 * prob;
 
     // Derivative of log(sample_size) / d nu
     //   = 1/sample_size * dsample_size / d nu
@@ -373,13 +355,16 @@ namespace BOOM {
     gradient[1] += 1.0;
   }
 
-  void LLJ::add_logdet_Hessian(Matrix &hessian) {
+  void LLJ::add_logdet_Hessian(Matrix &hessian, const Vector &ab) {
+    double sample_size = ab[0] + ab[1];
+    double prob = ab[0] / sample_size;
+
     // Cross derivatives are zero, and the second component of the
     // gradient is a constant, so there is only one nonzero component
     // of the Hessian.
     //
     // d (1-2p) / d_eta = -2 d_p/d_eta = -2pq
-    hessian(0, 0) -= 2.0 * prob_ * (1 - prob_);
+    hessian(0, 0) -= 2.0 * prob * (1 - prob);
   }
 
 }  // namespace BOOM

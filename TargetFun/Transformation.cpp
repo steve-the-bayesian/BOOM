@@ -23,53 +23,50 @@
 
 namespace BOOM {
 
-  Jacobian::Jacobian() : original_parameterization_preferred_(true) {}
+  Jacobian::Jacobian() {}
 
-  void Jacobian::prefer_new_parameterization() {
-    original_parameterization_preferred_ = false;
-  }
-
-  void Jacobian::prefer_original_parameterization() {
-    original_parameterization_preferred_ = true;
-  }
-
-  double Jacobian::logdet() {
-    const Matrix &J(matrix());
+  double Jacobian::logdet(const Vector &original_params) const {
+    const Matrix &J(matrix(original_params));
     double det = fabs(J.det());
     if (det <= 0.0) {
       report_error("Jacobian matrix had zero determinant.");
     }
-    return std::log(fabs(J.det()));
+    return std::log(det);
   }
 
   Vector Jacobian::transform_gradient(const Vector &original_gradient,
-                                      bool add_self_gradient) {
-    Vector ans = matrix() * original_gradient;
+                                      bool add_self_gradient,
+                                      const Vector &original_params) {
+    Vector ans = matrix(original_params) * original_gradient;
     if (add_self_gradient) {
-      add_logdet_gradient(ans);
+      add_logdet_gradient(ans, original_params);
     }
     return ans;
   }
 
   Matrix Jacobian::transform_Hessian(const Vector &original_gradient,
                                      const Matrix &original_Hessian,
-                                     bool add_self_Hessian) {
-    SpdMatrix ans = sandwich(matrix(), SpdMatrix(original_Hessian));
-    transform_second_order_gradient(ans, original_gradient);
+                                     bool add_self_Hessian,
+                                     const Vector &original_params) {
+    SpdMatrix ans = sandwich(matrix(original_params),
+                             SpdMatrix(original_Hessian));
+    transform_second_order_gradient(ans, original_gradient, original_params);
     if (add_self_Hessian) {
-      add_logdet_Hessian(ans);
+      add_logdet_Hessian(ans, original_params);
     }
     return std::move(ans);
   }
 
   void Jacobian::transform_second_order_gradient(
-      SpdMatrix &working_hessian, const Vector &original_gradient) {
+      SpdMatrix &working_hessian,
+      const Vector &original_gradient,
+      const Vector &original_params) {
     int dim = original_gradient.size();
     for (int r = 0; r < dim; ++r) {
       for (int s = r; s < dim; ++s) {
         for (int i = 0; i < dim; ++i) {
           working_hessian(r, s) +=
-              original_gradient[i] * second_order_element(r, s, i);
+              original_gradient[i] * second_order_element(r, s, i, original_params);
         }
       }
     }
@@ -109,20 +106,17 @@ namespace BOOM {
       report_error("Illegal values in original Hessian.");
     }
 
-    if (jacobian_->original_parameterization_preferred()) {
-      jacobian_->evaluate_original_parameterization(original_parameterization);
-    } else {
-      jacobian_->evaluate_new_parameterization(new_parameterization);
-    }
-    ans += jacobian_->logdet();
+    ans += jacobian_->logdet(original_parameterization);
     if (nderiv > 0) {
-      gradient = jacobian_->transform_gradient(original_gradient, true);
+      gradient = jacobian_->transform_gradient(
+          original_gradient, true, original_parameterization);
       if (!gradient.all_finite()) {
         report_error("Illegal values in transformed gradient.");
       }
       if (nderiv > 1) {
         Hessian = jacobian_->transform_Hessian(original_gradient,
-                                               original_Hessian, true);
+                                               original_Hessian, true,
+                                               original_parameterization);
         if (!Hessian.all_finite()) {
           report_error("Illegal values in transformed Hessian.");
         }

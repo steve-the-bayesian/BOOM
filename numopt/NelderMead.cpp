@@ -26,7 +26,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
-#include <iostream>
 
 #include "LinAlg/Vector.hpp"
 #include "cpputil/report_error.hpp"

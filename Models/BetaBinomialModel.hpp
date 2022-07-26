@@ -40,7 +40,7 @@ namespace BOOM {
 
     BetaBinomialSuf * clone() const override;
 
-    void Update(const BinomialData &dp);
+    void Update(const BinomialData &dp) override;
     void add_data(int64_t trials, int64_t successes, int64_t counts);
 
     void clear() override;

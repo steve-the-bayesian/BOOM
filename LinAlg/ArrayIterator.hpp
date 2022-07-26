@@ -19,7 +19,6 @@
 #ifndef BOOM_ARRAY_ITERATOR_HPP_
 #define BOOM_ARRAY_ITERATOR_HPP_
 
-#include <iostream>
 #include <iterator>
 #include <vector>
 

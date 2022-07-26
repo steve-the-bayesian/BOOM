@@ -2,6 +2,7 @@ import BayesBoom.boom as boom
 import pandas as pd
 import numpy as np
 import BayesBoom.R as R
+from scipy.stats import betabinom
 
 
 class BetaBinomialMixture:
@@ -26,10 +27,11 @@ class BetaBinomialMixture:
 
     """
 
-    def __init__(self):
+    def __init__(self, use_data_augmentation=False):
         self._components = list()
         self._mixing_distribution_prior_counts = list()
         self._boom_model = None
+        self._use_data_augmentation = use_data_augmentation
 
     def add_component(self,
                       mean_prior: R.BetaPrior,
@@ -167,6 +169,36 @@ class BetaBinomialMixture:
         """
         return self._mixing_weights
 
+    def cluster_membership_probabilities(
+            self, trials: int, successes: int, burn: int = 0):
+        """
+        Return the cluster membership probabilities for a user with the given
+        number of successes and trials.
+
+        Args:
+          trials:  A number of binomial trials.
+          successes:  A success count 0 <= successes <= trials.
+          burn:  The number of MCMC iterations to discard as burn-in.
+
+        Returns:
+          A vector of cluster membership probabilities.
+        """
+        from .utils import normalize_logprob
+
+        log_probs = np.log(self._mixing_weights)
+        a = self.a
+        b = self.b
+        if burn is not None and burn > 0:
+            a = a[burn:, :]
+            b = b[burn:, :]
+            log_probs = log_probs[burn:, :]
+
+        for component in range(log_probs.shape[1]):
+            log_probs[:, component] += betabinom.logpmf(
+                successes, trials, a[:, component], b[:, component])
+
+        return normalize_logprob(log_probs)
+
     def _create_storage(self, niter: int):
         """
         Create storage for 'niter' MCMC draws.
@@ -191,24 +223,43 @@ class BetaBinomialMixture:
         Build a boom_model from
         """
         prior_counts = np.array(self._mixing_distribution_prior_counts)
-        mixing_distribution = boom.MultinomialModel(prior_counts.shape[0])
+        prior_mixing_distribution = prior_counts / np.sum(prior_counts)
+
+        mixing_distribution = boom.MultinomialModel(
+            R.to_boom_vector(prior_mixing_distribution))
         dirichlet_prior = boom.DirichletModel(R.to_boom_vector(prior_counts))
+
         mixing_distribution_sampler = boom.MultinomialDirichletSampler(
             mixing_distribution, dirichlet_prior)
         mixing_distribution.set_method(mixing_distribution_sampler)
 
         boom_components = list()
+        mean_priors = list()
+        sample_size_priors = list()
         for component in self._components:
-            mean_prior = component["mean_prior"].boom()
-            sample_size_prior = component["sample_size_prior"].boom()
-            component_model = boom.BetaBinomialModel(1.0, 1.0)
-            component_sampler = boom.BetaBinomialPosteriorSampler(
-                component_model, mean_prior, sample_size_prior)
-            component_model.set_method(component_sampler)
+            mean_prior = component["mean_prior"]
+            sample_size_prior = component["sample_size_prior"]
+            initial_a = mean_prior.mean * sample_size_prior.mean
+            initial_b = sample_size_prior.mean - initial_a
+            component_model = boom.BetaBinomialModel(initial_a, initial_b)
+            if self._use_data_augmentation:
+                component_sampler = boom.BetaBinomialPosteriorSampler(
+                    component_model,
+                    mean_prior.boom(),
+                    sample_size_prior.boom())
+                component_model.set_method(component_sampler)
+            else:
+                mean_priors.append(mean_prior.boom())
+                sample_size_priors.append(sample_size_prior.boom())
+
             boom_components.append(component_model)
 
         boom_model = boom.BetaBinomialMixtureModel(
             boom_components, mixing_distribution)
-        sampler = boom.BetaBinomialMixturePosteriorSampler(boom_model)
+        if self._use_data_augmentation:
+            sampler = boom.BetaBinomialMixturePosteriorSampler(boom_model)
+        else:
+            sampler = boom.BetaBinomialMixtureDirectPosteriorSampler(
+                boom_model, dirichlet_prior, mean_priors, sample_size_priors)
         boom_model.set_method(sampler)
         return boom_model

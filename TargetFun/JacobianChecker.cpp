@@ -21,34 +21,41 @@
 #include <sstream>
 #include <string>
 
+namespace {
+  typedef std::function<BOOM::Vector(const BOOM::Vector &)> Mapping;
+}
+
 namespace BOOM {
   JacobianChecker::JacobianChecker(
+      const std::function<Vector(const Vector &)> &transformation,
       const std::function<Vector(const Vector &)> &inverse_transformation,
       const std::shared_ptr<Jacobian> &analytic_jacobian, double epsilon)
-      : inverse_transformation_(inverse_transformation),
+      : transformation_(transformation),
+        inverse_transformation_(inverse_transformation),
         numeric_jacobian_(inverse_transformation_),
         analytic_jacobian_(analytic_jacobian),
         epsilon_(epsilon) {}
 
   bool JacobianChecker::check_matrix(const Vector &new_parameterization) {
+    Vector original_parameterization = inverse_transformation_(
+        new_parameterization);
+
     Matrix numeric_matrix = numeric_jacobian_.matrix(new_parameterization);
-    analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
-    Matrix analytic_matrix = analytic_jacobian_->matrix();
+    Matrix analytic_matrix = analytic_jacobian_->matrix(original_parameterization);
     Matrix difference = analytic_matrix - numeric_matrix;
     return difference.max_abs() < epsilon_;
   }
 
   bool JacobianChecker::check_logdet(const Vector &new_parameterization) {
-    Matrix numeric_matrix = numeric_jacobian_.matrix(new_parameterization);
-    analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
-    return fabs(log(fabs(det(numeric_matrix))) - analytic_jacobian_->logdet()) <
-           epsilon_;
+    Vector original_params = inverse_transformation_(new_parameterization);
+    Matrix jake = analytic_jacobian_->matrix(original_params);
+    return fabs(log(fabs(det(jake))) -
+                analytic_jacobian_->logdet(original_params)) < epsilon_;
   }
 
   namespace {
     class SubFunction {
      public:
-      typedef std::function<Vector(const Vector &)> Mapping;
       SubFunction(const Mapping &inverse_mapping, int position)
           : inverse_mapping_(inverse_mapping), position_(position) {}
 
@@ -67,17 +74,18 @@ namespace BOOM {
       std::vector<std::string> *error_messages) {
     int dim = new_parameterization.size();
     std::vector<Matrix> numeric_hessians;
+    Vector original_params = inverse_transformation_(new_parameterization);
     for (int t = 0; t < dim; ++t) {
       SubFunction ft(inverse_transformation_, t);
       NumericalDerivatives derivatives(ft);
-      numeric_hessians.push_back(derivatives.Hessian(new_parameterization));
+      numeric_hessians.push_back(derivatives.Hessian(original_params));
     }
 
     for (int r = 0; r < dim; ++r) {
       for (int s = 0; s < dim; ++s) {
         for (int t = 0; t < dim; ++t) {
           double analytic_second_derivative =
-              analytic_jacobian_->second_order_element(r, s, t);
+              analytic_jacobian_->second_order_element(r, s, t, original_params);
           if (fabs(analytic_second_derivative - numeric_hessians[t](r, s)) >
               epsilon_) {
             if (error_messages) {
@@ -105,7 +113,7 @@ namespace BOOM {
   bool JacobianChecker::check_transform_second_order_gradient(
       const Vector &new_parameterization, std::string *error_message) {
     int dim = new_parameterization.size();
-    analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
+    Vector original_params = inverse_transformation_(new_parameterization);
     Vector original_gradient(dim);
     original_gradient.randomize();
     SpdMatrix working_hessian(dim);
@@ -114,10 +122,10 @@ namespace BOOM {
     Vector original_gradient_copy(original_gradient);
     SpdMatrix working_hessian_copy(working_hessian);
 
-    analytic_jacobian_->transform_second_order_gradient(working_hessian,
-                                                        original_gradient);
+    analytic_jacobian_->transform_second_order_gradient(
+        working_hessian, original_gradient, original_params);
     analytic_jacobian_->Jacobian::transform_second_order_gradient(
-        working_hessian_copy, original_gradient_copy);
+        working_hessian_copy, original_gradient_copy, original_params);
 
     if ((working_hessian_copy - working_hessian).max_abs() > epsilon_) {
       if (error_message) {
@@ -136,26 +144,30 @@ namespace BOOM {
   namespace {
     class LogDet {
      public:
-      explicit LogDet(const std::shared_ptr<Jacobian> &analytic_jacobian)
-          : analytic_jacobian_(analytic_jacobian) {}
+      explicit LogDet(const std::shared_ptr<Jacobian> &analytic_jacobian,
+                      const Mapping &inverse_transformation)
+          : analytic_jacobian_(analytic_jacobian),
+            inverse_transformation_(inverse_transformation)
+      {}
 
       double operator()(const Vector &new_parameterization) {
-        analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
-        return analytic_jacobian_->logdet();
+        Vector original_params = inverse_transformation_(new_parameterization);
+        return analytic_jacobian_->logdet(original_params);
       }
 
      private:
       std::shared_ptr<Jacobian> analytic_jacobian_;
+      Mapping inverse_transformation_;
     };
   }  // namespace
 
   bool JacobianChecker::check_logdet_gradient(
       const Vector &new_parameterization) {
-    analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
+    Vector original_params = inverse_transformation_(new_parameterization);
     Vector analytic_gradient = new_parameterization * 0;
-    analytic_jacobian_->add_logdet_gradient(analytic_gradient);
+    analytic_jacobian_->add_logdet_gradient(analytic_gradient, original_params);
 
-    LogDet analytic_logdet(analytic_jacobian_);
+    LogDet analytic_logdet(analytic_jacobian_, inverse_transformation_);
     NumericalDerivatives derivatives(analytic_logdet);
     Vector numeric_gradient = derivatives.gradient(new_parameterization);
     return (numeric_gradient - analytic_gradient).max_abs() < epsilon_;
@@ -163,12 +175,12 @@ namespace BOOM {
 
   bool JacobianChecker::check_logdet_Hessian(
       const Vector &new_parameterization) {
-    analytic_jacobian_->evaluate_new_parameterization(new_parameterization);
+    Vector original_params = inverse_transformation_(new_parameterization);
     int dim = new_parameterization.size();
     Matrix analytic_hessian(dim, dim, 0.0);
-    analytic_jacobian_->add_logdet_Hessian(analytic_hessian);
+    analytic_jacobian_->add_logdet_Hessian(analytic_hessian, original_params);
 
-    LogDet analytic_logdet(analytic_jacobian_);
+    LogDet analytic_logdet(analytic_jacobian_, inverse_transformation_);
     NumericalDerivatives derivatives(analytic_logdet);
     Matrix numeric_hessian = derivatives.Hessian(new_parameterization);
     return (numeric_hessian - analytic_hessian).max_abs() < epsilon_;

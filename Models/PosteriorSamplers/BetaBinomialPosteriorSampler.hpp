@@ -64,23 +64,13 @@ namespace BOOM {
    public:
     // Default constructor says to prefer the new (prob, sample_size)
     // parameterization.
-    ProbSamplesizeJacobian();
+    ProbSamplesizeJacobian(){}
 
-    // Args:
-    //   ab: A two-element vector containing the parameters of the
-    //     beta distribution, with the prior success count 'a' in the
-    //     first position and the prior failure count 'b' in the
-    //     second.
-    void evaluate_original_parameterization(const Vector &ab) override;
+    double logdet(const Vector &ab) const override {
+      return log(ab[0] + ab[1]);
+    }
 
-    // Args:
-    //   prob_size: A two-element vector with prob in the first
-    //     position and sample_size in the second.
-    void evaluate_new_parameterization(const Vector &prob_size) override;
-
-    double logdet() override { return log(sample_size_); }
-
-    Matrix &matrix() override;
+    Matrix matrix(const Vector &ab) const override;
 
     // second_order_element(r,s,t) is the derivative with respect to
     // new_parameterization[r] of the (s,t) element of the Jacobian
@@ -91,7 +81,7 @@ namespace BOOM {
     // is a cross derivative.  If it is a derivative of a (t==0) then
     // the cross derivative is 1, otherwise it is a cross derivative
     // of b, and thus -1.
-    double second_order_element(int r, int s, int t) override {
+    double second_order_element(int r, int s, int t, const Vector &ab) const override {
       if (r == s) return 0;
       return t == 0 ? 1 : -1;
     }
@@ -100,18 +90,14 @@ namespace BOOM {
     // second_order_element.  It omits calls where the elements are
     // known to be zero.
     void transform_second_order_gradient(
-        SpdMatrix &working_hessian, const Vector &original_gradient) override;
+        SpdMatrix &working_hessian,
+        const Vector &original_gradient,
+        const Vector &ab) override;
 
     // Derivatives of logdet() with respect to prob are all zero, so
     // the gradient and Hessian are easy.
-    void add_logdet_gradient(Vector &gradient) override;
-    void add_logdet_Hessian(Matrix &Hessian) override;
-
-   private:
-    double prob_;
-    double sample_size_;
-    Matrix matrix_;
-    bool matrix_is_current_;
+    void add_logdet_gradient(Vector &gradient, const Vector &ab) override;
+    void add_logdet_Hessian(Matrix &Hessian, const Vector &ab) override;
   };
 
   //======================================================================
@@ -135,14 +121,12 @@ namespace BOOM {
   //
   class LogitLogJacobian : public Jacobian {
    public:
-    LogitLogJacobian();
-    void evaluate_original_parameterization(const Vector &prob_size) override;
-    void evaluate_new_parameterization(const Vector &eta_nu) override;
-    double logdet() override;
+    LogitLogJacobian() {}
+    double logdet(const Vector &ab) const override;
 
-    Matrix &matrix() override;
+    Matrix matrix(const Vector &ab) const override;
 
-    double second_order_element(int r, int s, int t) override {
+    double second_order_element(int r, int s, int t, const Vector &ab) const override {
       // Becaue the Jacobian matrix is diagonal, if s !=t the Jacobian
       // matrix element is zero, so its derivative is zero too.  If r
       // != s then the derivative is a cross derivative, and so the
@@ -154,7 +138,8 @@ namespace BOOM {
         return (1 - 2 * prob_) * prob_ * (1 - prob_);
       } else if (r == 1 && s == 1 && t == 1) {
         // Derivative of size = exp(nu) with respect to nu.
-        return sample_size_;
+        double sample_size = ab[0] + ab[1];
+        return sample_size;
       } else
         return 0;
     }
@@ -162,16 +147,16 @@ namespace BOOM {
     // Overrides the default implementation because only two calls to
     // second_order_element are needed.
     void transform_second_order_gradient(
-        SpdMatrix &working_hessian, const Vector &original_gradient) override;
+        SpdMatrix &working_hessian,
+        const Vector &original_gradient,
+        const Vector &ab) override;
 
-    void add_logdet_gradient(Vector &gradient) override;
-    void add_logdet_Hessian(Matrix &hessian) override;
+    void add_logdet_gradient(Vector &gradient, const Vector &ab) override;
+    void add_logdet_Hessian(Matrix &hessian, const Vector &ab) override;
 
    private:
     double prob_;
     double sample_size_;
-    bool matrix_is_current_;
-    Matrix matrix_;
   };
 
   //======================================================================

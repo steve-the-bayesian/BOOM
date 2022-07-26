@@ -43,34 +43,12 @@ namespace BOOM {
 
     virtual ~Jacobian() {}
 
-    // Typically a concrete Jacobian class will store a copy of the
-    // vector at which it is currently being evaluated.  This can be
-    // done either using the original or the new parameterization.
-    virtual void evaluate_original_parameterization(
-        const Vector &original_parameterization) = 0;
-    virtual void evaluate_new_parameterization(
-        const Vector &new_parameterization) = 0;
-
-    // Instruct the Jacobian to prefer evaluating based on the
-    // original parameterization.
-    void prefer_original_parameterization();
-
-    // Instruct the Jacobian to prefer evaluating based on the new
-    // parameterization.
-    void prefer_new_parameterization();
-
-    // Check whether the Jacobian prefers to evaluate based on the
-    // original parameterization.
-    bool original_parameterization_preferred() const {
-      return original_parameterization_preferred_;
-    }
-
     // The log determinant of the Jacobian matrix.  Note the default
     // implementation of this function simply evaluates the
     // determinant of the Jacobian matrix, and then takes the log.
     // This is inefficient and imprecise.  Child classes should
     // overload it if possible.
-    virtual double logdet();
+    virtual double logdet(const Vector &original_params) const;
 
     // Compute the gradient of the log posterior density with respect
     // to the new parameterization (including the gradient of the log
@@ -85,7 +63,8 @@ namespace BOOM {
     // Returns:
     //   The gradient with respect to the new parameterization.
     virtual Vector transform_gradient(const Vector &original_gradient,
-                                      bool add_self_gradient);
+                                      bool add_self_gradient,
+                                      const Vector &original_params);
 
     // Transforms the Hessian with respect to the original
     // parameterization into the Hessian with respect to the new
@@ -103,7 +82,8 @@ namespace BOOM {
     //   The Hessian with respect to the new parameterization.
     virtual Matrix transform_Hessian(const Vector &original_gradient,
                                      const Matrix &original_Hessian,
-                                     bool add_self_Hessian);
+                                     bool add_self_Hessian,
+                                     const Vector &original_params);
 
     // Returns the Jacobian matrix.  If g is the gradient with respect
     // to the original parameterization, then matrix() * g is the
@@ -119,7 +99,7 @@ namespace BOOM {
     // way matrix() * gradient transforms the gradient with respect to
     // the old parameterization into the gradient with respect to the
     // new one.
-    virtual Matrix &matrix() = 0;
+    virtual Matrix matrix(const Vector &original_params) const = 0;
 
     // Returns the second derivative of original_parameterization[t] with
     // respect to new_parameterization[r] and new_parameterization[s].
@@ -131,7 +111,9 @@ namespace BOOM {
     // transform_second_order_gradient).  If either of those functions
     // is overloaded in such as way as to not need this one, then this
     // one can be a no-op.
-    virtual double second_order_element(int r, int s, int t) = 0;
+    virtual double second_order_element(
+        int r, int s, int t,
+        const Vector &original_params) const = 0;
 
     // Take the working_hessian, and add the second order gradient
     // term to element (r,s).  That is,
@@ -145,18 +127,20 @@ namespace BOOM {
     // of sparsity.  It is cubic in the dimension of the
     // transformation, and very expensive.
     virtual void transform_second_order_gradient(
-        SpdMatrix &working_hessian, const Vector &original_gradient);
+        SpdMatrix &working_hessian,
+        const Vector &original_gradient,
+        const Vector &original_params);
 
     // Sets gradient += the gradient of |log(J)| with respect to
     // new_parameterization.
-    virtual void add_logdet_gradient(Vector &gradient) = 0;
+    virtual void add_logdet_gradient(Vector &gradient,
+                                     const Vector &original_params) = 0;
 
     // Sets hessian += the hessian of |log(J)| with respect to
     // new_parameterization.
-    virtual void add_logdet_Hessian(Matrix &hessian) = 0;
+    virtual void add_logdet_Hessian(Matrix &hessian,
+                                    const Vector &original_params) = 0;
 
-   private:
-    bool original_parameterization_preferred_;
   };  // class Jacobian
 
   // A Transformation is a twice differentiable mapping from an

@@ -18,7 +18,6 @@
 */
 
 #include "Models/StateSpace/Filters/SparseVector.hpp"
-#include <iostream>
 #include "LinAlg/SpdMatrix.hpp"
 #include "cpputil/report_error.hpp"
 

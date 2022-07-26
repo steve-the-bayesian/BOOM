@@ -60,6 +60,7 @@ namespace BOOM {
     const MultinomialModel *mixing_distribution() const {
       return mixing_weight_model_.get();
     }
+    const Vector &mixing_weights() const {return mixing_weight_model_->pi();}
 
     int number_of_mixture_components() const {return components_.size();}
     Ptr<BetaBinomialModel> mixture_component(int s) {return components_[s];}
@@ -67,9 +68,56 @@ namespace BOOM {
       return components_[s].get();
     }
 
+    // Clear the data from all component models and recompute the latent mixture
+    // indicators.
+    //
+    // Args:
+    //   rng: The random number generator used to sample the missing cluster
+    //     indicators.
+    //
+    // Effects:
+    //   The sufficient statistics for the mixing distribution and the managed
+    //   mixture components are updated
     void impute_latent_data(RNG &rng) override;
+
+    // Assign the values in the given fully observed data to one or more of the
+    // managed mixture components.
+    //
+    // Args:
+    //   rng: The random number generator used to sample the missing cluster
+    //     indicators.
+    //   data_point: The data point containing the data to be apportioned among
+    //     the components.
+    //
+    // Effects:
+    //   The sufficient statistics for the mixing distribution and the managed
+    //   mixture components are updated
     void impute_data_point(RNG &rng, const Ptr<AggregatedBinomialData> &data_point);
+
+    // Remove data from all submodels.  Data assigned to directly to this model
+    // is unaffected.
     void clear_component_data();
+
+    // Args:
+    //   weights: A discrete probability distribution giving the mixing weights
+    //     of each mixture component.
+    //   ab: A two column matrix with one row for each mixture component.  The
+    //     'a' parameter for each component is in column 0.  The 'b' parameter
+    //     is in column 1.
+    //
+    // Returns:
+    //   The observed data log likelihood, averaging over the missing mixture
+    //   indicators.
+    double log_likelihood(const Vector &weights, const Matrix &ab) const;
+
+    // Args:
+    //   packed_parameters: A vector of parameters packed as if by a call to
+    //     parameter_vector().
+    //
+    // Returns:
+    //   The observed data log likelihood, averaging over the missing mixture
+    //   indicators.
+    // double log_likelihood(const Vector &packed_parameters) const;
 
    private:
     // A utility to call during construction.
