@@ -26,7 +26,7 @@ namespace BOOM {
       : public PosteriorSampler {
    public:
 
-    CiScalarStateAdapterPosteriorSampler(
+    explicit CiScalarStateAdapterPosteriorSampler(
         ConditionallyIndependentScalarStateModelMultivariateAdapter *model,
         RNG &seeding_rng = GlobalRng::rng);
 

@@ -9,10 +9,10 @@ import distutils.ccompiler
 MAJOR = 0
 
 # Bump the minor version when adding backwards compatible features.
-MINOR = 0
+MINOR = 1
 
 # Bump the patch version when making bug fixes.
-PATCH = 18
+PATCH = 0
 
 __version__ = f'{MAJOR}.{MINOR}.{PATCH}'
 

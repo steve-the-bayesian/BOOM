@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Install and run bsts under the docker images with sanitizers installed.
 
 # See https://github.com/wch/r-debug
@@ -15,7 +17,7 @@ cd /home/steve/code/BOOM
 # Next time you run these, be sure to update the version numbers.
 
 ./install/create_boom_rpackage
-BOOM=`ls rpackage/Boom_*tar.gz | sort -n`
+# BOOM=`ls rpackage/Boom_*tar.gz | sort -n`
 
 MAKEVARS="-j 16" RD CMD INSTALL rpackage/Boom_0.9.9.tar.gz
 
