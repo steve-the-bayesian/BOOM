@@ -392,7 +392,8 @@ def mosaic_plot(counts, ax=None, col_vname=None, row_vname=None):
     else:
         fig = None
 
-    assert isinstance(ax, plt.Axes)
+    if not isinstance(ax, plt.Axes):
+        raise Exception("ax must be a plt.Axes object")
 
     if isinstance(counts, np.ndarray):
         counts = pd.DataFrame(counts,

@@ -268,7 +268,8 @@ def _compute_mean_cluster_probs(cluster_indicators, permutations):
         arrangement of the nubmers 0..nclusters-1.
     """
     niter, nobs, nclusters = cluster_indicators.shape
-    assert permutations.shape[0] == niter
+    if permutations.shape[0] != niter:
+        raise Exception("permutations has the wrong leading dimension.")
     permuted_indicators = cluster_indicators.copy()
     for i in range(niter):
         permuted_indicators[i, :, :] = cluster_indicators[

@@ -535,7 +535,8 @@ class BigAssSpikeSlab:
             self._slab = RegressionSlabPrior(None, np.nan, -1)
         else:
             self._slab = slab
-        assert isinstance(self._slab, RegressionSlabPrior)
+        if not isinstance(self._slab, RegressionSlabPrior):
+            raise Exception("slab must be a RegressionSlabPrior")
 
         if spike is None:
             self._spike = np.full(xdim, expected_model_size / xdim)
@@ -544,7 +545,8 @@ class BigAssSpikeSlab:
 
         self._residual_sd_prior = residual_sd_prior
         if residual_sd_prior is not None:
-            assert isinstance(residual_sd_prior, R.SdPrior)
+            if not isinstance(residual_sd_prior, R.SdPrior):
+                raise Exception("residual_sd_prior must be an R.SdPrior")
 
         self._response_suf = boom.GaussianSuf()
 
