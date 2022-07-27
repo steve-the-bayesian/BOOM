@@ -1026,13 +1026,30 @@ namespace BOOM {
   }
 
   ostream &Matrix::display(ostream &out, int precision) const {
+    int col_width = std::max<int>(8, max_char_width(precision) + 1);
     out << std::setprecision(precision);
     for (uint i = 0; i < nrow(); ++i) {
       for (uint j = 0; j < ncol(); ++j)
-        out << std::setw(8) << unchecked(i, j) << " ";
+        out << std::setw(col_width) << unchecked(i, j) << " ";
       out << endl;
     }
     return out;
+  }
+
+  int Matrix::max_char_width(int precision) const {
+    double min_value, max_value;
+    std::tie(min_value, max_value) = minmax();
+    if (precision > 40) {
+      report_error("max precision exceeded.");
+    }
+    std::ostringstream max_char;
+    max_char << std::setprecision(precision) << max_value;
+
+    std::ostringstream min_char;
+    min_char << std::setprecision(precision) << min_value;
+
+    return std::max<int>(max_char.str().size(),
+                         min_char.str().size());
   }
 
   ostream &operator<<(ostream &out, const Matrix &x) {

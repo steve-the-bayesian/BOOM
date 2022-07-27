@@ -13,7 +13,7 @@ namespace {
   using namespace BOOM;
   using std::endl;
   using std::cout;
-  
+
   class EigenTest : public ::testing::Test {
    protected:
     EigenTest() {
@@ -33,7 +33,7 @@ namespace {
     EXPECT_EQ(values.size(), dim);
     EXPECT_EQ(dim, eigen_a.real_eigenvalues().size());
     EXPECT_EQ(dim, eigen_a.imaginary_eigenvalues().size());
-    
+
     for (int i = 0; i < dim; ++i) {
       std::complex<double> lambda = values[i];
       Vector re = eigen_a.real_eigenvector(i);
@@ -57,7 +57,7 @@ namespace {
     V0(1, 1) = 2;
     V0(0, 1) = 1;
     V0(1, 0) = 1;
-    SpdEigen eigen0(V0, true);
+    SymmetricEigen eigen0(V0, true);
     EXPECT_EQ(2, eigen0.eigenvalues().size());
     EXPECT_DOUBLE_EQ(1.0, eigen0.eigenvalues().min());
     EXPECT_DOUBLE_EQ(3.0, eigen0.eigenvalues().max());
@@ -66,11 +66,11 @@ namespace {
     SpdMatrix V(dim);
     V.randomize();
 
-    SpdEigen values_only(V, false);
+    SymmetricEigen values_only(V, false);
     EXPECT_EQ(0, values_only.eigenvectors().nrow());
     EXPECT_EQ(0, values_only.eigenvectors().ncol());
-    
-    SpdEigen both(V, true);
+
+    SymmetricEigen both(V, true);
     EXPECT_TRUE(VectorEquals(values_only.eigenvalues(), both.eigenvalues()));
 
     DiagonalMatrix D(both.eigenvalues());
@@ -90,5 +90,20 @@ namespace {
         << "eigenvectors * D: " << endl
         << both.eigenvectors() * D;
   }
-  
+
+  TEST_F(EigenTest, SymmetricEigenTest) {
+    SpdMatrix blah(3);
+    blah.randomize();
+
+    SymmetricEigen eigen(blah, true);
+    EXPECT_TRUE(MatrixEquals(blah, eigen.original_matrix()));
+
+    blah(2, 2) = -1.0;
+    SymmetricEigen eigen2(blah, true);
+    SpdMatrix fixed = eigen2.closest_positive_definite();
+    EXPECT_TRUE(fixed.is_pos_def())
+        << "matrix should be positive definite:\n"
+        << fixed;
+  }
+
 }  // namespace

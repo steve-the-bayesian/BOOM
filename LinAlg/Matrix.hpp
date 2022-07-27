@@ -312,6 +312,10 @@ namespace BOOM {
     virtual double prod() const;
     virtual double max() const;
     virtual double min() const;
+
+    // The smallest and largest values in the matrix.
+    std::pair<double, double> minmax() const {return min_max(data_);}
+
     // The value of the entry with the largest absolute value.
     double max_abs() const;
 
@@ -319,9 +323,22 @@ namespace BOOM {
     std::ostream &write(std::ostream &, bool nl = true) const;
     std::istream &read(std::istream &);
 
+    // Args:
+    //   precision: The precision parameter as understood by std::ostream.  This
+    //     is roughly the number of significant figures desired in the output.
+    //     Scientific notation or negative values may add to this number.
+    //
+    // Returns:
+    //   The number of characters required to print the largest and smallest
+    //   elements of the Matrix.  The larger of these two widths is the returned
+    //   value.  In most cases all other matrix elements can be printed in a
+    //   character field this wide.
+    int max_char_width(int precision) const;
+
    protected:
     inline uint INDX(uint i, uint j) const;
     inline bool inrange(uint i, uint j) const;
+
 
    private:
     Vector data_;

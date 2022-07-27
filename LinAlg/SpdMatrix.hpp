@@ -250,6 +250,7 @@ namespace BOOM {
   // Returns:
   //   A * V * A^T
   SpdMatrix sandwich(const Matrix &A, const SpdMatrix &V);
+  SpdMatrix sandwich(const Matrix &A, const Vector &V);
 
   // Args:
   //   A: the outer matrix doing the sandwiching.
@@ -259,6 +260,7 @@ namespace BOOM {
   inline SpdMatrix sandwich_transpose(const Matrix &A, const SpdMatrix &V) {
     return A.Tmult(V * A);
   }
+  SpdMatrix sandwich_transpose(const Matrix &A, const Vector &V);
 
   SpdMatrix as_symmetric(const Matrix &A);
 

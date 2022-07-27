@@ -674,6 +674,16 @@ namespace BOOM {
     return ans;
   }
 
+  SpdMatrix sandwich(const Matrix &A, const Vector &diagonal) {
+    DiagonalMatrix d(diagonal);
+    return A.Tmult(d * A);
+  }
+
+  SpdMatrix sandwich_transpose(const Matrix &A, const Vector &diagonal) {
+    Matrix tmp(A * DiagonalMatrix(diagonal));
+    return(tmp.multT(A));
+  }
+
   SpdMatrix as_symmetric(const Matrix &A) {
     assert(A.is_square());
     Matrix ans = A.transpose();
@@ -695,12 +705,12 @@ namespace BOOM {
   }
 
   Vector eigenvalues(const SpdMatrix &X) {
-    SpdEigen eigen(X, false);
+    SymmetricEigen eigen(X, false);
     return eigen.eigenvalues();
   }
 
   Vector eigen(const SpdMatrix &X, Matrix &Z) {
-    SpdEigen eigen(X, true);
+    SymmetricEigen eigen(X, true);
     Z = eigen.eigenvectors();
     return eigen.eigenvalues();
   }

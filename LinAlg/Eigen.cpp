@@ -94,7 +94,7 @@ namespace BOOM {
   }
 
   //======================================================================
-  SpdEigen::SpdEigen(const SpdMatrix &matrix, bool compute_vectors)
+  SymmetricEigen::SymmetricEigen(const SpdMatrix &matrix, bool compute_vectors)
       : eigenvalues_(matrix.nrow()),
         right_vectors_(0, 0)
   {
@@ -107,6 +107,37 @@ namespace BOOM {
       right_vectors_.resize(matrix.nrow(), matrix.ncol());
       EigenMap(right_vectors_) = solver.eigenvectors();
     }
+  }
+
+  SpdMatrix SymmetricEigen::original_matrix() const {
+    if (right_vectors_.nrow() == 0) {
+      report_error("Eigenvectors are required to find the closest matrix, but "
+                   "eigenvectors were not computed as part of the "
+                   "decomposition.");
+    }
+    return sandwich_transpose(right_vectors_, eigenvalues_);
+  }
+
+  SpdMatrix SymmetricEigen::closest_positive_definite() const {
+    if (right_vectors_.nrow() == 0) {
+      report_error("Eigenvectors are required to find the closest matrix, but "
+                   "eigenvectors were not computed as part of the "
+                   "decomposition.");
+    }
+    Vector new_values = eigenvalues_;
+    double smallest_positive_eigenvalue = infinity();
+    for (auto x : eigenvalues_) {
+      if (x > 0) {
+        smallest_positive_eigenvalue = std::min<double>(
+            smallest_positive_eigenvalue, x);
+      }
+    }
+    for (size_t i = 0; i < new_values.size(); ++i) {
+      if (new_values[i] <= 0) {
+        new_values[i] = smallest_positive_eigenvalue;
+      }
+    }
+    return sandwich_transpose(right_vectors_, new_values);
   }
 
 }  // namespace BOOM
