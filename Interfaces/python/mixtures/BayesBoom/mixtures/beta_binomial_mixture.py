@@ -197,7 +197,8 @@ class BetaBinomialMixture:
             log_probs[:, component] += betabinom.logpmf(
                 successes, trials, a[:, component], b[:, component])
 
-        return normalize_logprob(log_probs)
+        probs = normalize_logprob(log_probs)
+        return probs.mean(axis=0)
 
     def _create_storage(self, niter: int):
         """
