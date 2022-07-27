@@ -20,6 +20,7 @@
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "cpputil/report_error.hpp"
 #include "cpputil/Constants.hpp"
+#include "LinAlg/Eigen.hpp"
 
 namespace BOOM {
 
@@ -27,7 +28,7 @@ namespace BOOM {
     void check_variance(const SpdMatrix &v) {
 #ifndef NDEBUG
       for (auto x : v.diag()) {
-        if (x < -.10) {
+        if (x < .00) {
           report_error("Can't have a negative variance.");
         }
       }
@@ -100,21 +101,19 @@ namespace BOOM {
       SpdMatrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
           Finv * (observation_coefficient_subset * state_variance()));
 
-      transition.sandwich_inplace(new_state_variance);
-      model()->state_variance_matrix(time_index())->add_to(new_state_variance);
-
       SpdMatrix contemp_variance(state_variance() - increment1);
-      Kalman::check_variance(contemp_variance);
+      if (!contemp_variance.is_pos_def()) {
+        report_warning("Modifying a variance to enforce positive definiteness.");
+        SymmetricEigen contemp_eigen(contemp_variance, true);
+        contemp_variance = contemp_eigen.closest_positive_definite();
+      }
 
       SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
-
       new_state_variance = contemp_variance;
       transition.sandwich_inplace(new_state_variance);
-
       new_state_variance += increment2;
-      Kalman::check_variance(new_state_variance);
-
       set_state_variance(new_state_variance);
+
       return log_likelihood;
     }
 
