@@ -98,12 +98,21 @@ namespace BOOM {
       // Pt|t = Pt - Pt * Z' Finv Z Pt
       SpdMatrix new_state_variance = state_variance();
 
-      SpdMatrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
+      // The temporary value 'tmp' is needed because the long string of
+      // multiplications can produce temporaries that are not symmetric.  The
+      // system is free to try to optimize this multiplication using different
+      // associations.  If we try to define an SpdMatrix to receive the outcome,
+      // non-symmetric temporaries can blow up the SpdMatrix constructor.
+      Matrix tmp = observation_coefficient_subset.Tmult(
           Finv * (observation_coefficient_subset * state_variance()));
+      SpdMatrix increment1 = state_variance() * tmp;
 
       SpdMatrix contemp_variance(state_variance() - increment1);
       if (!contemp_variance.is_pos_def()) {
-        report_warning("Modifying a variance to enforce positive definiteness.");
+        std::ostringstream warn;
+        warn << "Modifying variance at time " << time_index()
+             << " to enforce positive definiteness.";
+        report_warning(warn.str());
         SymmetricEigen contemp_eigen(contemp_variance, true);
         contemp_variance = contemp_eigen.closest_positive_definite();
       }
