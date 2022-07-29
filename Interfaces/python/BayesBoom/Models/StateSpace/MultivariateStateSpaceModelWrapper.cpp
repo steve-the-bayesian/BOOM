@@ -62,6 +62,10 @@ namespace BayesBoom {
              "Returns:\n"
              "  A Matrix.  Element (t, d) is the contrubtion of the specified "
              "state model to series d at time t.")
+        .def_property_readonly(
+            "shared_state",
+            [](const MultivariateStateSpaceModelBase &model) {return model.shared_state();},
+            "The full state matrix for the model")
         ;
 
     py::class_<ConditionallyIndependentMultivariateStateSpaceModelBase,
@@ -125,9 +129,54 @@ namespace BayesBoom {
                model.add_data(data_point);
              },
              py::arg("data_point"),
+             "Add a single data point to the model.\n\n"
              "Args:\n"
              "  data_point: A MultivariateTimeSeriesRegressionData object\n"
              "    containing information for a single data point.\n")
+        .def("add_data",
+             [](MultivariateStateSpaceRegressionModel &model,
+                const std::vector<int> &time_index,
+                const std::vector<int> &series_index,
+                const Vector &response,
+                const Matrix &predictors) {
+               size_t nobs = time_index.size();
+               if (series_index.size() != nobs) {
+                 report_error("The series_index and time_index must have "
+                              "the same number of elements.");
+               }
+               if (response.size() != nobs) {
+                 report_error("The response must have the same number of "
+                              "elements as the time_index.");
+               }
+               if (predictors.nrow() != nobs) {
+                 report_error("The matrix of predictors must have the same "
+                              "number of rows as the time_index.");
+               }
+               for (size_t i = 0; i < nobs; ++i) {
+                 NEW(MultivariateTimeSeriesRegressionData, data_point)(
+                     response[i],
+                     predictors.row(i),
+                     series_index[i],
+                     time_index[i]);
+                 model.add_data(data_point);
+               }
+             },
+             py::arg("time_index"),
+             py::arg("series_index"),
+             py::arg("response"),
+             py::arg("predictors"),
+             "Add a full data set to the model.\n\n"
+             "Args:\n"
+             "  time_index:  A list of integers indicating the time stamp "
+             "(0, 1, 2...) associated with the observation.\n"
+             "  series_index:  A list of integers indicating which series the "
+             "observation describes.\n"
+             "  response:  A boom.Vector giving the values of each series at "
+             "the specified times.\n"
+             "  predictors:  A boom.Matrix giving the row of predictor "
+             "variables to use for each observation.\n\n"
+             "Effect:\n"
+             "  The model object is populated with the supplied data.\n")
         .def("add_state",
              [](MultivariateStateSpaceRegressionModel &model,
                 SharedStateModel &state_model) {
