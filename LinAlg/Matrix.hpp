@@ -254,6 +254,12 @@ namespace BOOM {
     virtual double logdet() const;
 
     Vector singular_values() const;  // sorted largest to smallest
+
+    // The condition_number of a matrix is the ratio of its largest singular
+    // value to its smallest.  This might be infinite if the smallest one is
+    // zero.
+    double condition_number() const;
+
     uint rank(double prop = 1e-12) const;
     // 'rank' is the number of singular values at least 'prop' times
     // the largest

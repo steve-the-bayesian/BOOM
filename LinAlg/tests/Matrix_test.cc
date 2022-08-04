@@ -420,6 +420,18 @@ namespace {
     EXPECT_NEAR(A.logdet(), log(fabs(a*d - b*c)), epsilon);
   }
 
+  TEST_F(MatrixTest, ConditionNumberTest) {
+    Matrix A(2, 2);
+    A = 1.0;
+    EXPECT_FALSE(std::isfinite(A.condition_number()));
+
+    for (int i = 0; i < 1000; ++i) {
+      A.randomize();
+      EXPECT_GT(A.condition_number(), 0.0);
+      EXPECT_LT(A.condition_number(), 10000.0);
+    }
+  }
+
   TEST_F(MatrixTest, BlockDiagonal) {
     Matrix A(2, 2);
     A.randomize();

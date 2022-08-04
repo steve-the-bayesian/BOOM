@@ -802,6 +802,15 @@ namespace BOOM {
     return values;
   }
 
+  double Matrix::condition_number() const {
+    Vector sv = singular_values();
+    if (sv.back() > 0.0) {
+      return sv[0] / sv.back();
+    } else {
+      return negative_infinity();
+    }
+  }
+
   struct greater {
     bool operator()(double a, double b) const { return a > b; }
   };
