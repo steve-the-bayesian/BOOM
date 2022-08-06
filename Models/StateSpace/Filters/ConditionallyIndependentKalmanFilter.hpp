@@ -50,15 +50,13 @@ namespace BOOM {
           FilterType *filter,
           int time_index);
 
-      Vector scaled_prediction_error() const override;
-
       // The precision matrix (inverse of the variance matrix) describing the
       // conditional distribution of the prediction error at this time point,
       // given all past data.  Be careful calling this function if the dimension
       // of Y is large.  The resulting matrix will be large^2.
       SpdMatrix direct_forecast_precision() const;
 
-      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
+      Ptr<SparseKalmanMatrix> sparse_forecast_precision() const override;
       double forecast_precision_log_determinant() const override;
 
       // The marginal distribution describing the previous time point, or
@@ -75,12 +73,18 @@ namespace BOOM {
       // Called as part of the 'update' method in the base class.
       void update_sparse_forecast_precision(const Selector &observed) override;
 
+      Ptr<SparseBinomialInverse> bi_sparse_forecast_precision() const;
+      Ptr<SparseWoodburyInverse> woodbury_sparse_forecast_precision() const;
+
       ModelType *model_;
       FilterType *filter_;
 
       // Implementation details for sparse_forecast_precision().
       Matrix forecast_precision_inner_matrix_;
       double forecast_precision_log_determinant_;
+      double forecast_precision_inner_condition_number_;
+      enum ForecastPrecisionImplementation {BinomialInverse, Woodbury, Dense};
+      ForecastPrecisionImplementation forecast_precision_implementation_;
     };
   }  // namespace Kalman
 

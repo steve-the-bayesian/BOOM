@@ -54,7 +54,7 @@ namespace BOOM {
       // create a cycle in the include graph.
       const MultivariateStateSpaceModelBase *model() const override;
 
-      Ptr<SparseBinomialInverse> sparse_forecast_precision() const override;
+      Ptr<SparseKalmanMatrix> sparse_forecast_precision() const override;
       double forecast_precision_log_determinant() const override;
 
      private:
@@ -62,6 +62,9 @@ namespace BOOM {
       SpdMatrix direct_forecast_precision() const;
 
       void update_sparse_forecast_precision(const Selector &observed) override;
+
+      Ptr<SparseBinomialInverse> bi_sparse_forecast_precision() const;
+      Ptr<SparseWoodburyInverse> woodbury_sparse_forecast_precision() const;
 
       //---------------------------------------------------------------------------
       // Data section
@@ -71,6 +74,9 @@ namespace BOOM {
       // Implementation details for sparse_forecast_precision().
       Matrix forecast_precision_inner_matrix_;
       double forecast_precision_log_determinant_;
+      double forecast_precision_inner_condition_number_;
+      enum ForecastPrecisionImplementation {BinomialInverse, Woodbury, Dense};
+      ForecastPrecisionImplementation forecast_precision_implementation_;
     };
 
   }  // namespace Kalman

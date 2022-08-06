@@ -19,7 +19,7 @@
 #include "Models/StateSpace/Filters/ConditionallyIndependentKalmanFilter.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
 #include "LinAlg/DiagonalMatrix.hpp"
-#include "LinAlg/LU.hpp"
+#include "LinAlg/Cholesky.hpp"
 #include "cpputil/math_utils.hpp"
 
 namespace BOOM {
@@ -34,7 +34,10 @@ namespace BOOM {
         : MultivariateMarginalDistributionBase(
               model->state_dimension(), time_index),
           model_(model),
-          filter_(filter)
+          filter_(filter),
+          forecast_precision_log_determinant_(negative_infinity()),
+          forecast_precision_inner_condition_number_(negative_infinity()),
+          forecast_precision_implementation_(Woodbury)
     {}
 
     const MultivariateStateSpaceModelBase * Marginal::model() const {
@@ -42,11 +45,7 @@ namespace BOOM {
     }
 
     //---------------------------------------------------------------------------
-    Vector Marginal::scaled_prediction_error() const {
-      return *sparse_forecast_precision() * prediction_error();
-    }
-
-    Ptr<SparseBinomialInverse> Marginal::sparse_forecast_precision() const {
+    Ptr<SparseBinomialInverse> Marginal::bi_sparse_forecast_precision() const {
       SpdMatrix variance = previous() ? previous()->state_variance() :
           model_->initial_state_variance();
       const Selector &observed(model_->observed_status(time_index()));
@@ -54,12 +53,57 @@ namespace BOOM {
           1.0 / model_->observation_variance(time_index(), observed).diag());
       Ptr<SparseKalmanMatrix> observation_coefficients =
           model_->observation_coefficients(time_index(), observed);
+
       return new SparseBinomialInverse(
           observation_precision,
           observation_coefficients,
           variance,
           forecast_precision_inner_matrix_,
-          forecast_precision_log_determinant_);
+          forecast_precision_log_determinant_,
+          forecast_precision_inner_condition_number_);
+    }
+
+    // Return the inverse of F = H + ZPZ'.  Here H is a diagonal residual
+    // variance matrix.  We decompose P = LL', so F =H + ZLL'Z'.  Note taht P
+    // may not be full rank if there are deterministic components.  That's okay,
+    // because the Cholesky algorihm can handle positive semidefinite matrices.
+    Ptr<SparseWoodburyInverse>
+    Marginal::woodbury_sparse_forecast_precision() const {
+      SpdMatrix variance = previous() ? previous()->state_variance() :
+          model_->initial_state_variance();
+      Cholesky state_variance_chol(variance);
+      Matrix lower_triangle = state_variance_chol.getL(false);
+
+      const Selector &observed(model_->observed_status(time_index()));
+      NEW(DiagonalMatrixBlock, observation_precision)(
+          1.0 / model_->observation_variance(time_index(), observed).diag());
+      Ptr<SparseKalmanMatrix> observation_coefficients =
+          model_->observation_coefficients(time_index(), observed);
+      NEW(SparseMatrixProduct, U)();
+      U->add_term(observation_coefficients);
+      U->add_term(new DenseMatrix(lower_triangle));
+
+      return new SparseWoodburyInverse(
+          observation_precision, U, forecast_precision_inner_matrix_,
+          forecast_precision_log_determinant_,
+          forecast_precision_inner_condition_number_);
+    }
+
+    Ptr<SparseKalmanMatrix> Marginal::sparse_forecast_precision() const {
+      switch (forecast_precision_implementation_) {
+        case Woodbury:
+          return woodbury_sparse_forecast_precision();
+          break;
+        case BinomialInverse:
+          return bi_sparse_forecast_precision();
+          break;
+        case Dense:
+          return new DenseSpd(direct_forecast_precision());
+          break;
+        default:
+          report_error("Unrecognized value of forecast_precision_implementation_");
+          return new NullMatrix(0);
+      }
     }
 
     double Marginal::forecast_precision_log_determinant() const {
@@ -91,6 +135,11 @@ namespace BOOM {
       // they are not the same.
       SpdMatrix variance = previous() ? previous()->state_variance() :
           model_->initial_state_variance();
+
+      // Determine the strategy to use for implmementing the forecast precision
+      // matrix.  The default, sure but slow, strategy is to use dense matrices.
+      forecast_precision_implementation_ = ForecastPrecisionImplementation::Dense;
+
       int t = time_index();
       NEW(DiagonalMatrixBlock, observation_precision)(
           1.0 / model_->observation_variance(time_index(), observed).diag());
@@ -100,13 +149,44 @@ namespace BOOM {
       for (double scalar_precision : observation_precision->diagonal_elements()) {
         sumlog_precision += log(scalar_precision);
       }
-      SparseBinomialInverse forecast_precision(
-          observation_precision,
-          observation_coefficients,
-          variance,
-          sumlog_precision);
-      forecast_precision_inner_matrix_ = forecast_precision.inner_matrix();
-      forecast_precision_log_determinant_ = forecast_precision.logdet();
+      Cholesky state_variance_chol(variance);
+      Matrix state_variance_lower_triangle(state_variance_chol.getL(false));
+      NEW(SparseMatrixProduct, U)();
+      U->add_term(observation_coefficients);
+      U->add_term(new DenseMatrix(state_variance_lower_triangle));
+
+      SparseWoodburyInverse woodbury_precision(
+          observation_precision, sumlog_precision, U);
+
+      double max_condition_number = 1e+8;
+
+      if (woodbury_precision.inner_matrix_condition_number() <
+          max_condition_number) {
+        forecast_precision_inner_matrix_ = woodbury_precision.inner_matrix();
+        forecast_precision_inner_condition_number_ =
+            woodbury_precision.inner_matrix_condition_number();
+        forecast_precision_log_determinant_ = woodbury_precision.logdet();
+        forecast_precision_implementation_ = ForecastPrecisionImplementation::Woodbury;
+      } else {
+        SparseBinomialInverse forecast_precision(
+            observation_precision,
+            observation_coefficients,
+            variance,
+            sumlog_precision);
+        if (forecast_precision.inner_matrix_condition_number() < max_condition_number) {
+          forecast_precision_inner_matrix_ = forecast_precision.inner_matrix();
+          forecast_precision_log_determinant_ = forecast_precision.logdet();
+          forecast_precision_inner_condition_number_ =
+              forecast_precision.inner_matrix_condition_number();
+          forecast_precision_implementation_ =
+              ForecastPrecisionImplementation::BinomialInverse;
+        } else {
+          forecast_precision_inner_matrix_ = SpdMatrix();
+          forecast_precision_inner_condition_number_ = negative_infinity();
+          SpdMatrix Finv = direct_forecast_precision();
+          forecast_precision_log_determinant_ = Finv.logdet();
+        }
+      }
     }
 
     //---------------------------------------------------------------------------
