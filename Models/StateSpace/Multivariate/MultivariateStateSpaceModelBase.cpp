@@ -429,7 +429,8 @@ namespace BOOM {
     const Vector &v(marg.prediction_error());
 
     Ptr<SparseKalmanMatrix> Finv = marg.sparse_forecast_precision();
-    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(observed_status(t)));
+    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(
+        observed_status(t), Finv));
 
     Vector observation_error_mean = H * (*Finv * v - *K * r);
     Vector observation_error_variance =

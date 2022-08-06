@@ -406,13 +406,18 @@ namespace BoomStateSpaceTesting {
                              dense_filter[5].state_variance()));
 
     Selector fully_observed(nseries, true);
+    Ptr<SparseKalmanMatrix> forecast_precision =
+        sim.model->get_filter()[5].sparse_forecast_precision();
     EXPECT_TRUE(MatrixEquals(
-        sim.model->get_filter()[5].sparse_kalman_gain(fully_observed)->dense(),
+        sim.model->get_filter()[5].sparse_kalman_gain(
+            fully_observed, forecast_precision)->dense(),
         dense_filter[5].kalman_gain(fully_observed)));
 
+    forecast_precision = sim.model->get_filter()[
+        sample_size - 1].sparse_forecast_precision();
     EXPECT_TRUE(MatrixEquals(
         sim.model->get_filter()[sample_size - 1].sparse_kalman_gain(
-            fully_observed)->dense(),
+            fully_observed, forecast_precision)->dense(),
         dense_filter[sample_size - 1].kalman_gain(fully_observed)));
 
     EXPECT_TRUE(MatrixEquals(
