@@ -51,3 +51,15 @@ cc_test(
         "@gtest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "sparse_binomial_inverse_test",
+    size = "small",
+    srcs = ["sparse_binomial_inverse_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//:boom",
+        "//:boom_test_utils",
+        "@gtest//:gtest_main",
+    ],
+)
