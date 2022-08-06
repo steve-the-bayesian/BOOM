@@ -66,12 +66,12 @@ namespace BOOM {
           observed_data - observation_coefficient_subset * state_mean());
       update_sparse_forecast_precision(observed);
 
-      Ptr<SparseBinomialInverse> Finv_ptr(sparse_forecast_precision());
-      const SparseBinomialInverse &Finv(*Finv_ptr);
+      Ptr<SparseKalmanMatrix> Finv_ptr(sparse_forecast_precision());
+      const SparseKalmanMatrix &Finv(*Finv_ptr);
 
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
-          - .5 * prediction_error().dot(scaled_prediction_error());
+          - .5 * prediction_error().dot(Finv * prediction_error());
       if (std::isnan(log_likelihood)) {
         // This line is important when the model is being fit by optimization.
         // If a variance becomes negative (or negative definite) during part of
@@ -82,7 +82,7 @@ namespace BOOM {
         log_likelihood = negative_infinity();
       }
 
-      Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed);
+      Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed, Finv_ptr);
       const SparseMatrixProduct &kalman_gain(*gain);
 
       // Update the state mean from a[t]   = E(state_t    | Y[t-1]) to
@@ -127,15 +127,9 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    Vector Marginal::scaled_prediction_error() const {
-      Ptr<SparseBinomialInverse> precision_ptr = sparse_forecast_precision();
-      const SparseBinomialInverse &precision(*precision_ptr);
-      return precision * prediction_error();
-    }
-
-    //----------------------------------------------------------------------
     Ptr<SparseMatrixProduct> Marginal::sparse_kalman_gain(
-        const Selector &observed) const {
+        const Selector &observed,
+        const Ptr<SparseKalmanMatrix> &forecast_precision) const {
       NEW(SparseMatrixProduct, ans)();
       int t = time_index();
       ans->add_term(model()->state_transition_matrix(t));
@@ -146,7 +140,7 @@ namespace BOOM {
                        : model()->initial_state_variance());
       ans->add_term(P);
       ans->add_term(model()->observation_coefficients(t, observed), true);
-      ans->add_term(sparse_forecast_precision());
+      ans->add_term(forecast_precision);
       return ans;
     }
 
@@ -167,7 +161,8 @@ namespace BOOM {
     }
 
     //----------------------------------------------------------------------
-    SpdMatrix Marginal::contemporaneous_state_variance() const {
+    SpdMatrix Marginal::contemporaneous_state_variance(
+        const Ptr<SparseKalmanMatrix> &forecast_precision) const {
       const Marginal *prev = previous();
       SpdMatrix P = prev ? prev->state_variance() :
           model()->initial_state_variance();
@@ -176,7 +171,7 @@ namespace BOOM {
           model()->observation_coefficients(time_index(), observed));
       NEW(SparseMatrixProduct, ZFZ)();
       ZFZ->add_term(observation_coefficients, true);
-      ZFZ->add_term(sparse_forecast_precision(), false);
+      ZFZ->add_term(forecast_precision, false);
       ZFZ->add_term(observation_coefficients, false);
       return P - sandwich(P, SpdMatrix(ZFZ->dense()));
     }
@@ -304,12 +299,12 @@ namespace BOOM {
           model()->observation_coefficients(t, observed));
       Ptr<SparseKalmanMatrix> transition(
           model()->state_transition_matrix(t));
-      Ptr<SparseBinomialInverse> forecast_precision_ptr(
+      Ptr<SparseKalmanMatrix> forecast_precision_ptr(
           marg.sparse_forecast_precision());
-      const SparseBinomialInverse &forecast_precision(
+      const SparseKalmanMatrix &forecast_precision(
           *forecast_precision_ptr);
       Vector u = forecast_precision * marg.prediction_error()
-          - marg.sparse_kalman_gain(observed)->Tmult(r);
+          - marg.sparse_kalman_gain(observed, forecast_precision_ptr)->Tmult(r);
       r = transition->Tmult(r) + observation_coefficients->Tmult(u);
     }
     set_initial_scaled_state_error(r);

@@ -90,15 +90,9 @@ namespace BOOM {
       const Vector &prediction_error() const {return prediction_error_;}
       void set_prediction_error(const Vector &err) {prediction_error_ = err;}
 
-      // The prediction error is y[t] - E(y[t] | Y[t-1]), where y[t] is the
-      // observation at time t, and Y[t-1] is the set of all preceding
-      // observations. The scaled prediction error is forecast_precision() *
-      // prediction_error().
-      virtual Vector scaled_prediction_error() const;
-
       // The precision matrix (inverse of the variance matrix) for the
       // prediction_error, conditional on all past data.
-      virtual Ptr<SparseBinomialInverse> sparse_forecast_precision() const = 0;
+      virtual Ptr<SparseKalmanMatrix> sparse_forecast_precision() const = 0;
 
       // The log of the determinant of forecast_precision().
       virtual double forecast_precision_log_determinant() const = 0;
@@ -107,7 +101,8 @@ namespace BOOM {
       // the state given the prediction error.  The dimension is state_dim x
       // ydim.
       virtual Ptr<SparseMatrixProduct> sparse_kalman_gain(
-          const Selector &observed) const;
+          const Selector &observed,
+          const Ptr<SparseKalmanMatrix> &forecast_precision) const;
 
       // After the call to update(), state_mean() and state_variance() refer to
       // the predictive mean and variance of the state at time_dimension() + 1
@@ -116,7 +111,8 @@ namespace BOOM {
       // contemporaneous_state_XXX refers to the moments at the current time,
       // given data to the current time.
       Vector contemporaneous_state_mean() const override;
-      SpdMatrix contemporaneous_state_variance() const override;
+      SpdMatrix contemporaneous_state_variance(
+          const Ptr<SparseKalmanMatrix> &forecast_precision) const;
 
       // The marginal distribution of the state at the preceding time point.
       // Return 'nullptr' if there is no previous time point.

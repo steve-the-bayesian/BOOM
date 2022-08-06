@@ -64,7 +64,7 @@ namespace BOOM {
       // contemporaneous_state_XXX refers to the moments at the current time,
       // given data to the current time.
       Vector contemporaneous_state_mean() const override;
-      SpdMatrix contemporaneous_state_variance() const override;
+      SpdMatrix contemporaneous_state_variance() const;
 
       // The difference between the observed data at this time point, and the
       // expected value given previous data.

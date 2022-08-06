@@ -186,14 +186,9 @@ namespace {
     EXPECT_TRUE(VectorEquals(marg0_hi.prediction_error(),
                              marg0_lo.prediction_error()));
 
-    EXPECT_TRUE(VectorEquals(marg0_hi.scaled_prediction_error(),
-                             marg0_lo.scaled_prediction_error(),
-                             1e-4))
-        << "low dimensional scaled prediction error at time 0: " << endl
-        << marg0_lo.scaled_prediction_error() << endl
-        << "high dimensional scaled_prediction_error at time 0: " << endl
-        << marg0_hi.scaled_prediction_error() << endl;
-
+    Ptr<SparseKalmanMatrix> forecast_precision0_hi =
+        marg0_hi.sparse_forecast_precision();
+    SpdMatrix forecast_precision0_lo = marg0_lo.forecast_precision();
     EXPECT_NEAR(marg0_hi.forecast_precision_log_determinant(),
                 marg0_lo.forecast_precision_log_determinant(),
                 1e-4);
@@ -210,13 +205,15 @@ namespace {
                              marg0_lo.state_variance(),
                              1e-4));
 
-    EXPECT_TRUE(MatrixEquals(marg0_hi.sparse_kalman_gain(observed)->dense(),
-                             marg0_lo.kalman_gain(observed)))
+    EXPECT_TRUE(MatrixEquals(
+        marg0_hi.sparse_kalman_gain(observed, forecast_precision0_hi)->dense(),
+        marg0_lo.kalman_gain(observed)))
         << "Direct Kalman gain:\n"
         << marg0_lo.kalman_gain(observed)
         << "\n"
         << "Sparse matrix Kalman gain:\n"
-        << marg0_hi.sparse_kalman_gain(observed)->dense();
+        << marg0_hi.sparse_kalman_gain(
+            observed, forecast_precision0_hi)->dense();
 
     EXPECT_TRUE(is_pos_def(marg0_lo.state_variance()));
     EXPECT_TRUE(is_pos_def(marg0_hi.state_variance()));
@@ -241,21 +238,23 @@ namespace {
     marg1_hi.update(data.row(1), observed);
     EXPECT_TRUE(marg1_hi.state_variance().is_pos_def());
 
+
+    Ptr<SparseKalmanMatrix> forecast_precision1_hi =
+        marg1_hi.sparse_forecast_precision();
     EXPECT_TRUE(VectorEquals(marg1_hi.prediction_error(),
                              marg1_lo.prediction_error()));
-    EXPECT_TRUE(VectorEquals(marg1_hi.scaled_prediction_error(),
-                             marg1_lo.scaled_prediction_error()));
     EXPECT_NEAR(marg1_hi.forecast_precision_log_determinant(),
                 marg1_lo.forecast_precision_log_determinant(),
                 1e-7);
-    EXPECT_TRUE(MatrixEquals(marg1_hi.sparse_kalman_gain(observed)->dense(),
-                             marg1_lo.kalman_gain(observed)))
+    EXPECT_TRUE(MatrixEquals(
+        marg1_hi.sparse_kalman_gain(observed, forecast_precision1_hi)->dense(),
+        marg1_lo.kalman_gain(observed)))
         << "Direct Kalman gain:\n"
         << marg1_lo.kalman_gain(observed)
         << "\n"
         << "Sparse matrix Kalman gain:\n"
-        << marg1_hi.sparse_kalman_gain(observed)->dense();
-
+        << marg1_hi.sparse_kalman_gain(
+            observed, forecast_precision1_hi)->dense();
 
     //--------------------------------------------------------------------------
     // Now try again with one missing observation.
@@ -276,21 +275,23 @@ namespace {
     std::cout << "marg_hi.update with one missing obs.\n";
     marg0_hi.update(data.row(0), observed);
     EXPECT_TRUE(marg0_hi.state_variance().is_pos_def());
+    forecast_precision0_hi = marg0_hi.sparse_forecast_precision();
 
     EXPECT_TRUE(VectorEquals(marg0_hi.prediction_error(),
                              marg0_lo.prediction_error()));
-    EXPECT_TRUE(VectorEquals(marg0_hi.scaled_prediction_error(),
-                             marg0_lo.scaled_prediction_error()));
     EXPECT_NEAR(marg0_hi.forecast_precision_log_determinant(),
                 marg0_lo.forecast_precision_log_determinant(),
                 1e-7);
-    EXPECT_TRUE(MatrixEquals(marg0_hi.sparse_kalman_gain(observed)->dense(),
-                             marg0_lo.kalman_gain(observed)))
+    EXPECT_TRUE(MatrixEquals(
+        marg0_hi.sparse_kalman_gain(
+            observed, forecast_precision0_hi)->dense(),
+        marg0_lo.kalman_gain(observed)))
         << "Direct Kalman gain:\n"
         << marg0_lo.kalman_gain(observed)
         << "\n"
         << "Sparse matrix Kalman gain:\n"
-        << marg0_hi.sparse_kalman_gain(observed)->dense();
+        << marg0_hi.sparse_kalman_gain(observed,
+                                       forecast_precision0_hi)->dense();
   }
 
   // Check that kalman_gain(t) and forecast_precision(t) are the same when going
