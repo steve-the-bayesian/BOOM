@@ -222,18 +222,32 @@ namespace BOOM {
 
   //===========================================================================
   // Let M = A + UCV.  The Woodbury identity states that Minv = Ainv - Ainv U
-  // (Cinv + V Ainv U) V Ainv.  Note that to use the Woodbury identity both A
+  // (Cinv + V Ainv U).inv V Ainv.  Note that to use the Woodbury identity both A
   // and C must be invertible.
   //
+  // This class assumes V = U'.
   class SparseWoodburyInverse : public SparseKalmanMatrix {
    public:
-    // This constructor assumes V is U->transpose().
-
+    // Args:
+    //   Ainv:  The inverse of the matrix A in the class definition.
+    //   logdet_Ainv:  The log determinant of Ainv.
+    //   U:  The matrix U in the class definition;
+    //   Cinv: Either the matrix C in the class definition, or an empty
+    //     SpdMatrix.  An empty C is assumed to be the identity matrix.  This
+    //     setting allows the update (A + UU') to be updated quickly.
     SparseWoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
                           double logdet_Ainv,
                           const Ptr<SparseKalmanMatrix> &U,
                           const SpdMatrix &Cinv = SpdMatrix());
 
+    // Construct an inverse using previously constructed elements.
+    //
+    // Args:
+    //   Ainv:  The inverse of the matrix A in the class definition.
+    //   U:  The matrix U in the class definition;
+    //   inner_matrix:  The matrix (Cinv + V Ainv U).inv()
+    //   inner_matrix_condition_number: The condition number of inner_matrix.
+    //   logdet:  The log determinant of the full inverse matrix.
     SparseWoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
                           const Ptr<SparseKalmanMatrix> &U,
                           const SpdMatrix &inner_matrix,
@@ -257,6 +271,7 @@ namespace BOOM {
 
     Matrix dense() const override;
 
+    // The log determinant of the inverse matrix.
     double logdet() const;
 
     const SpdMatrix &inner_matrix() {return inner_matrix_;}
@@ -360,7 +375,7 @@ namespace BOOM {
     // for the operation to be numerically stable.  If okay() is false then most
     // operations will result in error reports (typically through thrown
     // exceptions except on platforms where exception reporting is disabled).
-    bool okay() const {return okay_;}
+    bool okay() const;
 
    private:
     Ptr<SparseKalmanMatrix> Ainv_;
@@ -376,11 +391,10 @@ namespace BOOM {
     // If the inner_matrix condition number is below a threshold then the okay_
     // flag is set to true.  If not then okay_ is false and most operations will
     // resort in errors.
-    bool okay_;
     double inner_matrix_condition_number_;
 
     // Throws an exception with an appropriate error message if okay_ is false.
-    void check_okay() const;
+    void throw_if_not_okay() const;
   };
 
   //======================================================================

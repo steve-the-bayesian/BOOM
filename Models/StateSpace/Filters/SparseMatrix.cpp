@@ -433,15 +433,12 @@ namespace BOOM {
     inner_matrix_condition_number_ =
         inner_matrix_.condition_number();
 
-    if (std::isfinite(inner_matrix_condition_number_)
-        && inner_matrix_condition_number_ < 1e+8) {
+    if (okay()) {
       inner_matrix_ = inner_matrix_.inv();
       logdet_ = Ainv_logdet + inner_matrix_.logdet();
-      okay_ = true;
     } else {
       logdet_ = negative_infinity();
       inner_matrix_ = SpdMatrix();
-      okay_ = false;
     }
   }
 
@@ -457,73 +454,76 @@ namespace BOOM {
         B_(B),
         inner_matrix_(inner),
         logdet_(logdet),
-        okay_(true),
         inner_matrix_condition_number_(inner_matrix_condition_number)
   {}
 
   Vector SparseBinomialInverse::operator*(const ConstVectorView &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     Vector ans = (*Ainv_) * rhs;
     ans -= (*Ainv_) * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
     return ans;
   }
 
   Vector SparseBinomialInverse::operator*(const Vector &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     return (*this) * ConstVectorView(rhs);
   }
 
   Vector SparseBinomialInverse::operator*(const VectorView &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     return (*this) * ConstVectorView(rhs);
   }
 
   Matrix SparseBinomialInverse::operator*(const Matrix &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     Matrix ans = *Ainv_ * rhs;
     ans -= *Ainv_ * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
     return ans;
   }
 
   Vector SparseBinomialInverse::Tmult(const ConstVectorView &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     return (*this) * rhs;
   }
 
   Matrix SparseBinomialInverse::Tmult(const Matrix &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     return (*this) * rhs;
   }
 
   Matrix SparseBinomialInverse::dense() const {
-    check_okay();
+    throw_if_not_okay();
     SpdMatrix I(ncol(), 1.0);
     return (*this) * I;
   }
 
   Matrix & SparseBinomialInverse::add_to(Matrix &rhs) const {
-    check_okay();
+    throw_if_not_okay();
     rhs += this->dense();
     return rhs;
   }
 
   SpdMatrix SparseBinomialInverse::inner() const {
-    check_okay();
+    throw_if_not_okay();
     return this->dense().inner();
   }
 
   SpdMatrix SparseBinomialInverse::inner(const ConstVectorView &weights) const {
-    check_okay();
+    throw_if_not_okay();
     return this->dense().inner(weights);
   }
 
   double SparseBinomialInverse::logdet() const {
-    check_okay();
+    throw_if_not_okay();
     return logdet_;
   }
 
-  void SparseBinomialInverse::check_okay() const {
-    if (!okay_) {
+  bool SparseBinomialInverse::okay() const {
+    return inner_matrix_condition_number_ < 1e+8;
+  }
+
+  void SparseBinomialInverse::throw_if_not_okay() const {
+    if (!okay()) {
       report_error("The condition number of the 'inner matrix' used by "
                    "SparseBinomialInverse was too large.  The caluclation is "
                    "likely invalid.  Please use another method.");
