@@ -138,36 +138,6 @@ namespace BOOM {
       const SparseKalmanMatrix &transition_matrix,
       const SparseKalmanMatrix &RQR);
 
-  // For computing the forecast error precision in the case of highly
-  // multivariate conditionally independent data.
-  //
-  // The observation variance of such data is diagonal, and the dimension of
-  // the state is (potentially) much smaller than the dimension of the data.
-  //
-  // The forecast error variance is F = H + ZPZ', where H is diagonal and P is
-  // low dimensional.
-  //
-  // The Woodbury formula tells us that F.inverse is
-  //
-  // H.inv - H.inv * Z * (P.inv + Z' * H.inv * Z).inv * Z' * H.inv
-  //
-  // Args:
-  //   observation_precision: A vector containing the precisions of the errors
-  //     from the observation equation.
-  //   observation_coefficients:  The matrix relating
-  SpdMatrix WoodburyInverse(const Vector &observation_precision,
-                            const SparseKalmanMatrix &observation_coefficients,
-                            const SpdMatrix &state_conditional_variance,
-                            double logdet_observation_precision,
-                            double &log_determinant);
-
-  // A WoodburyInverse formula for constant observation variances (i.e. a scalar
-  // times the identity.
-  SpdMatrix WoodburyInverse(double observation_precision,
-                            const SparseKalmanMatrix &observation_coefficients,
-                            const SpdMatrix &state_conditional_variance,
-                            double &log_determinant);
-
   double sparse_conditionally_independent_kalman_update(
       const ConstVectorView &observation,
       Vector &state_conditional_mean,
