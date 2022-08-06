@@ -320,6 +320,98 @@ namespace BOOM {
   }
 
   //===========================================================================
+  SparseWoodburyInverse::SparseWoodburyInverse(
+      const Ptr<SparseKalmanMatrix> &Ainv,
+      double logdet_Ainv,
+      const Ptr<SparseKalmanMatrix> &U,
+      const SpdMatrix &Cinv)
+      : Ainv_(Ainv),
+        U_(U)
+  {
+    inner_matrix_ = U_->Tmult(*Ainv_ * U_->dense());
+    if (Cinv.nrow() > 0) {
+      inner_matrix_ += Cinv;
+    } else {
+      // If Cinv is empty then it is assumed to be the identity.
+      inner_matrix_.diag() += 1.0;
+    }
+    inner_matrix_condition_number_ = inner_matrix_.condition_number();
+
+    inner_matrix_ = inner_matrix_.inv();
+
+    // From the Matrix Determinant lemma det(A + UCU') = det(Cinv + U'AinvU) *
+    // det(C) * det(A).  The determinant of the inverse is the reciprocal of the
+    // determinant.  Now take logs.
+    logdet_ = inner_matrix_.logdet() + logdet_Ainv;
+    if (Cinv.nrow() > 0) {
+      logdet_ += Cinv.logdet();
+    }
+    // If Cinv is empty (and thus implicitly the identity) then its log
+    // determinant is zero.
+  }
+
+  SparseWoodburyInverse::SparseWoodburyInverse(
+      const Ptr<SparseKalmanMatrix> &Ainv,
+      const Ptr<SparseKalmanMatrix> &U,
+      const SpdMatrix &inner_matrix,
+      double logdet,
+      double condition_number)
+      : Ainv_(Ainv),
+        U_(U),
+        inner_matrix_(inner_matrix),
+        logdet_(logdet),
+        inner_matrix_condition_number_(condition_number)
+  {}
+
+  Vector SparseWoodburyInverse::operator*(const ConstVectorView &rhs) const {
+    Vector Ar = *Ainv_ * rhs;
+    return Ar - *Ainv_ * (*U_ * (inner_matrix_ * (U_->Tmult(Ar))));
+  }
+
+  Vector SparseWoodburyInverse::operator*(const Vector &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Vector SparseWoodburyInverse::operator*(const VectorView &rhs) const {
+    return (*this) * ConstVectorView(rhs);
+  }
+
+  Matrix SparseWoodburyInverse::operator*(const Matrix &rhs) const {
+    Matrix Ar = *Ainv_ * rhs;
+    return Ar - *Ainv_ * (*U_ * (inner_matrix_ * (U_->Tmult(Ar))));
+  }
+
+  Vector SparseWoodburyInverse::Tmult(const ConstVectorView &rhs) const {
+    return (*this) * rhs;
+  }
+
+  Matrix SparseWoodburyInverse::Tmult(const Matrix &rhs) const {
+    return (*this) * rhs;
+  }
+
+  Matrix &SparseWoodburyInverse::add_to(Matrix &rhs) const {
+    rhs += this->dense();
+    return rhs;
+  }
+
+  SpdMatrix SparseWoodburyInverse::inner() const {
+    return this->dense().inner();
+  }
+
+  SpdMatrix SparseWoodburyInverse::inner(const ConstVectorView &weights) const {
+    return this->dense().inner(weights);
+  }
+
+  double SparseWoodburyInverse::logdet() const {
+    return logdet_;
+  }
+
+  Matrix SparseWoodburyInverse::dense() const {
+    SpdMatrix I(ncol(), 1.0);
+    return (*this) * I;
+  }
+
+  //===========================================================================
 
   SparseBinomialInverse::SparseBinomialInverse(
       const Ptr<SparseKalmanMatrix> &Ainv,
@@ -337,9 +429,20 @@ namespace BOOM {
 
     inner_matrix_ = SpdMatrix(B.nrow(), 1.0);
     inner_matrix_ += B * tmp.dense();
-    inner_matrix_ = inner_matrix_.inv();
 
-    logdet_ = Ainv_logdet + inner_matrix_.logdet();
+    inner_matrix_condition_number_ =
+        inner_matrix_.condition_number();
+
+    if (std::isfinite(inner_matrix_condition_number_)
+        && inner_matrix_condition_number_ < 1e+8) {
+      inner_matrix_ = inner_matrix_.inv();
+      logdet_ = Ainv_logdet + inner_matrix_.logdet();
+      okay_ = true;
+    } else {
+      logdet_ = negative_infinity();
+      inner_matrix_ = SpdMatrix();
+      okay_ = false;
+    }
   }
 
   SparseBinomialInverse::SparseBinomialInverse(
@@ -347,61 +450,84 @@ namespace BOOM {
       const Ptr<SparseKalmanMatrix> &U,
       const SpdMatrix &B,
       const Matrix &inner,
-      double logdet)
+      double logdet,
+      double inner_matrix_condition_number)
       : Ainv_(Ainv),
         U_(U),
         B_(B),
         inner_matrix_(inner),
-        logdet_(logdet)
+        logdet_(logdet),
+        okay_(true),
+        inner_matrix_condition_number_(inner_matrix_condition_number)
   {}
 
   Vector SparseBinomialInverse::operator*(const ConstVectorView &rhs) const {
+    check_okay();
     Vector ans = (*Ainv_) * rhs;
     ans -= (*Ainv_) * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
     return ans;
   }
 
   Vector SparseBinomialInverse::operator*(const Vector &rhs) const {
+    check_okay();
     return (*this) * ConstVectorView(rhs);
   }
 
   Vector SparseBinomialInverse::operator*(const VectorView &rhs) const {
+    check_okay();
     return (*this) * ConstVectorView(rhs);
   }
 
   Matrix SparseBinomialInverse::operator*(const Matrix &rhs) const {
+    check_okay();
     Matrix ans = *Ainv_ * rhs;
     ans -= *Ainv_ * (*U_ * (inner_matrix_ * (B_ * (U_->Tmult(*Ainv_ * rhs)))));
     return ans;
   }
 
   Vector SparseBinomialInverse::Tmult(const ConstVectorView &rhs) const {
+    check_okay();
     return (*this) * rhs;
   }
 
   Matrix SparseBinomialInverse::Tmult(const Matrix &rhs) const {
+    check_okay();
     return (*this) * rhs;
   }
 
   Matrix SparseBinomialInverse::dense() const {
+    check_okay();
     SpdMatrix I(ncol(), 1.0);
     return (*this) * I;
   }
 
   Matrix & SparseBinomialInverse::add_to(Matrix &rhs) const {
+    check_okay();
     rhs += this->dense();
     return rhs;
   }
 
   SpdMatrix SparseBinomialInverse::inner() const {
+    check_okay();
     return this->dense().inner();
   }
+
   SpdMatrix SparseBinomialInverse::inner(const ConstVectorView &weights) const {
+    check_okay();
     return this->dense().inner(weights);
   }
 
   double SparseBinomialInverse::logdet() const {
+    check_okay();
     return logdet_;
+  }
+
+  void SparseBinomialInverse::check_okay() const {
+    if (!okay_) {
+      report_error("The condition number of the 'inner matrix' used by "
+                   "SparseBinomialInverse was too large.  The caluclation is "
+                   "likely invalid.  Please use another method.");
+    }
   }
   //===========================================================================
 

@@ -224,22 +224,53 @@ namespace BOOM {
   // Let M = A + UCV.  The Woodbury identity states that Minv = Ainv - Ainv U
   // (Cinv + V Ainv U) V Ainv.  Note that to use the Woodbury identity both A
   // and C must be invertible.
-  class WoodburyInverse : public SparseKalmanMatrix {
+  //
+  class SparseWoodburyInverse : public SparseKalmanMatrix {
    public:
-
     // This constructor assumes V is U->transpose().
-    WoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
-                    const Ptr<SparseKalmanMatrix> &U,
-                    const SpdMatrix &C)
-        : Ainv_(Ainv),
-          U_(U),
-          C_(C)
-    {}
+
+    SparseWoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          double logdet_Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &Cinv = SpdMatrix());
+
+    SparseWoodburyInverse(const Ptr<SparseKalmanMatrix> &Ainv,
+                          const Ptr<SparseKalmanMatrix> &U,
+                          const SpdMatrix &inner_matrix,
+                          double inner_matrix_condition_number,
+                          double logdet);
+
+    int nrow() const override {return Ainv_->nrow();}
+    int ncol() const override {return Ainv_->ncol();}
+
+    Vector operator*(const Vector &rhs) const override;
+    Vector operator*(const VectorView &rhs) const override;
+    Vector operator*(const ConstVectorView &rhs) const override;
+    Matrix operator*(const Matrix &rhs) const override;
+
+    Vector Tmult(const ConstVectorView &rhs) const override;
+    Matrix Tmult(const Matrix &rhs) const override;
+
+    Matrix &add_to(Matrix &rhs) const override;
+    SpdMatrix inner() const override;
+    SpdMatrix inner(const ConstVectorView &weights) const override;
+
+    Matrix dense() const override;
+
+    double logdet() const;
+
+    const SpdMatrix &inner_matrix() {return inner_matrix_;}
+    double inner_matrix_condition_number() const {
+      return inner_matrix_condition_number_;}
 
    private:
     Ptr<SparseKalmanMatrix> Ainv_;
     Ptr<SparseKalmanMatrix> U_;
-    SpdMatrix C_;
+
+    // The inner matrix is (Cinv + U' Ainv U).inverse
+    SpdMatrix inner_matrix_;
+    double logdet_;
+    double inner_matrix_condition_number_;
   };
   //===========================================================================
 
@@ -290,7 +321,8 @@ namespace BOOM {
                           const Ptr<SparseKalmanMatrix> &U,
                           const SpdMatrix &B,
                           const Matrix &inner,
-                          double logdet);
+                          double logdet,
+                          double condition_number);
 
     // The number of rows and columns in the matrix.
     int nrow() const override {return Ainv_->nrow();}
@@ -307,8 +339,6 @@ namespace BOOM {
 
     Matrix &add_to(Matrix &rhs) const override;
 
-    // Calling 'inner' on a SparseMatrixSum can result in very large matrices
-    // being created.
     SpdMatrix inner() const override;
     SpdMatrix inner(const ConstVectorView &weights) const override;
 
@@ -321,6 +351,17 @@ namespace BOOM {
 
     const Matrix & inner_matrix() const {return inner_matrix_;}
 
+    // The condition number of the computed inner_matrix.
+    double inner_matrix_condition_number() const {
+      return inner_matrix_condition_number_;
+    }
+
+    // Returns true if the condition number of the inner_matrix is small enough
+    // for the operation to be numerically stable.  If okay() is false then most
+    // operations will result in error reports (typically through thrown
+    // exceptions except on platforms where exception reporting is disabled).
+    bool okay() const {return okay_;}
+
    private:
     Ptr<SparseKalmanMatrix> Ainv_;
     Ptr<SparseKalmanMatrix> U_;
@@ -331,6 +372,15 @@ namespace BOOM {
     // inner = (I + P * Z' Hinv Z).inv
     Matrix inner_matrix_;
     double logdet_;
+
+    // If the inner_matrix condition number is below a threshold then the okay_
+    // flag is set to true.  If not then okay_ is false and most operations will
+    // resort in errors.
+    bool okay_;
+    double inner_matrix_condition_number_;
+
+    // Throws an exception with an appropriate error message if okay_ is false.
+    void check_okay() const;
   };
 
   //======================================================================

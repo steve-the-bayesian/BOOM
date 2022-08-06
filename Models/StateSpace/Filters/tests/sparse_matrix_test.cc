@@ -733,4 +733,30 @@ namespace {
     CheckSparseKalmanMatrix(sparse);
   }
 
+  TEST_F(SparseMatrixTest, WoodburyTest) {
+    SpdMatrix A(4);
+    A.randomize();
+    SpdMatrix B(2);
+    B.randomize();
+    Matrix U(4, 2);
+    U.randomize();
+
+    SpdMatrix Ainv_dense = A.inv();
+    double Ainv_logdet = Ainv_dense.logdet();
+    NEW(DenseSpd, Ainv)(Ainv_dense);
+    Ptr<DenseMatrix> SparseU(new DenseMatrix(U));
+
+    SparseWoodburyInverse woody(Ainv, Ainv_logdet, SparseU, B.inv());
+
+    SpdMatrix M1 = A + U * B * U.transpose();
+    SpdMatrix dense = M1.inv();
+
+    EXPECT_TRUE(MatrixEquals(woody.dense(), dense));
+    EXPECT_NEAR(dense.logdet(), woody.logdet(), 1e-6);
+    SpdMatrix Id(4, 1.0);
+    EXPECT_TRUE(MatrixEquals(woody * M1, Id));
+    EXPECT_TRUE(MatrixEquals(dense * M1, Id));
+    CheckSparseKalmanMatrix(woody);
+  }
+
 }  // namespace
