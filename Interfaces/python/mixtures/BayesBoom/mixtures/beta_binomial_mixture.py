@@ -200,6 +200,112 @@ class BetaBinomialMixture:
         probs = normalize_logprob(log_probs)
         return probs.mean(axis=0)
 
+    def density_distribution(self,
+                             trials: int,
+                             burn: int = 0):
+        """
+        Args:
+          trials: The number of trials ("N") on which to condition the
+            distribution.
+          burn:  The number of MCMC interations to discard as burn-in.
+
+
+        Returns:
+          A dict with the following keys:
+          - "density": A matrix containing density values.  Rows correspond to
+              MCMC iteration, and columns correspond to the numbers 0, 1, 2,
+              ..., trials.
+          - "weighted_components": A 3-way array of weighted density values.
+            Element [i, j, k] contains MCMC draw i of the weighted density value
+            of component j evaluated at k.
+          - "unweighted_components": Same dimension as 'weighted_components' but
+            the mixture components are not multiplied by the mixing weights.
+        """
+        a = self.a
+        b = self.b
+        w = self._mixing_weights
+        if burn > 0:
+            a = a[burn:, :]
+            b = b[burn:, :]
+            w = w[burn:, :]
+
+        niter = a.shape[0]
+
+        weighted_components = np.empty(
+            (niter, self.number_of_mixture_components, trials + 1))
+        unweighted_components = np.empty(
+            (niter, self.number_of_mixture_components, trials + 1))
+
+        for y in range(trials+1):
+            for s in range(self.number_of_mixture_components):
+                component = betabinom.pmf(y, trials, a[:, s], b[:, s])
+                weighted_components[:, s, y] = w[:, s] * component
+                unweighted_components[:, s, y] = component.copy()
+
+        return {
+            "density": np.sum(weighted_components, axis=1),
+            "weighted_components": weighted_components,
+            "unweighted_components": unweighted_components,
+        }
+
+    def plot_components(self,
+                        trials: int,
+                        burn: int = 0,
+                        weighted: bool = True,
+                        ax=None):
+        """
+        Plot the mixture components on a matplotlib.Axes object.
+
+        Args:
+          trials:  The number of trials on which to condition the distribution.
+          burn:  The number of MCMC iterations to discard as burn-in.
+          weighted: Should the weighted (True) or unweighted (False) mixture
+            components be plotted.
+          ax: The Axes object on which to draw the plot.  If None then a new
+            Axes object will be created, and plt.show() will be called.
+
+        Returns:
+          The Axes object containing the graph, and the posterior means of the
+          component densities being plotted.
+        """
+
+        import matplotlib.pyplot as plt
+
+        component_distribution = self.density_distribution(
+            trials=trials, burn=burn)
+
+        if weighted:
+            component_means = np.mean(component_distribution[
+                "weighted_components"], axis=0)
+        else:
+            component_means = np.mean(component_distribution[
+                "unweighted_components"], axis=0)
+
+        if ax is None:
+            _, ax = plt.subplots(1, 1)
+            call_show = True
+        else:
+            call_show = False
+
+        x = np.arange(trials + 1)
+        colors = ['#377eb8', '#ff7f00', '#4daf4a',
+                  '#f781bf', '#a65628', '#984ea3',
+                  '#999999', '#e41a1c', '#dede00']
+
+        dx = 0.5 / self.number_of_mixture_components
+        for s in range(self.number_of_mixture_components):
+            ax.bar(x - .25 + s*dx,
+                   component_means[s, :],
+                   color=colors[s % len(colors)],
+                   width=dx,
+                   label="Component " + str(s))
+        ax.legend()
+
+        if call_show:
+            plt.show()
+
+        return ax, component_means
+
     def _create_storage(self, niter: int):
         """
         Create storage for 'niter' MCMC draws.
