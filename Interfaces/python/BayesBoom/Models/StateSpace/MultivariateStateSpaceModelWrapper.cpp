@@ -66,6 +66,28 @@ namespace BayesBoom {
             "shared_state",
             [](const MultivariateStateSpaceModelBase &model) {return model.shared_state();},
             "The full state matrix for the model")
+        .def_property_readonly(
+            "final_state_mean",
+            [](const MultivariateStateSpaceModelBase &model) {
+              int t = model.time_dimension() - 1;
+              if (t < 0) {
+                report_error("Time dimension was zero.");
+              }
+              return model.get_filter()[t].state_mean();
+            },
+            "The mean of the state vector for the final node in the Kalman "
+            "filter.")
+        .def_property_readonly(
+            "final_state_variance",
+            [](const MultivariateStateSpaceModelBase &model) {
+              int t = model.time_dimension() - 1;
+              if (t < 0) {
+                report_error("Time dimension was zero.");
+              }
+              return model.get_filter()[t].state_variance();
+            },
+            "The variance of the state vector for the final node in the Kalman "
+            "filter.")
         ;
 
     py::class_<ConditionallyIndependentMultivariateStateSpaceModelBase,
@@ -99,7 +121,7 @@ namespace BayesBoom {
              "    containing this observation.\n")
         ;
 
-
+    //==========================================================================
     py::class_<MultivariateStateSpaceRegressionModel,
                ConditionallyIndependentMultivariateStateSpaceModelBase,
                PriorPolicy,
@@ -190,6 +212,38 @@ namespace BayesBoom {
                 PosteriorSampler *sampler) {
                model.set_method(Ptr<PosteriorSampler>(sampler));
              })
+        .def_property_readonly(
+            "regression_coefficients",
+            [](const MultivariateStateSpaceRegressionModel &model) {
+              const IndependentRegressionModels *reg(model.observation_model());
+              Matrix ans(reg->ydim(), reg->xdim());
+              for (int i = 0; i < reg->ydim(); ++i) {
+                ans.row(i) = reg->model(i)->Beta();
+              }
+              return ans;
+            },
+            "The matrix of regression coefficients.  Each row corresponds "
+            "to a different time series.  The columns are the regression "
+            "coefficients for that time series.")
+        .def_property_readonly(
+            "residual_sd",
+            [](const MultivariateStateSpaceRegressionModel &model) {
+              const IndependentRegressionModels *reg(model.observation_model());
+              Vector ans(reg->ydim());
+              for (int i = 0; i < reg->ydim(); ++i) {
+                ans[i] = reg->model(i)->sigma();
+              }
+              return ans;
+            },
+            "The Vector of reisidual standard deviation parameters.")
+        .def("observation_coefficients",
+             [](const MultivariateStateSpaceRegressionModel &model, int t) {
+               Selector all_series(model.nseries(), true);
+               return model.observation_coefficients(t, all_series)->dense();
+             },
+             "The matrix of coefficients linking the observed time series to "
+             "the shared state.  Each row corresponds to a time series.  Each "
+             "column to an element in the state vector.")
         .def("set_regression_coefficients",
              [](MultivariateStateSpaceRegressionModel &model,
                 const Matrix &coefficients) {
@@ -275,6 +329,109 @@ namespace BayesBoom {
              "\n"
              "Effects:\n"
              "  Model parameters are set to the maximum likelihood estimates.\n")
+        .def("update_state_distribution",
+             [](MultivariateStateSpaceRegressionModel &model,
+                int time,
+                const Vector &response,
+                const Matrix &predictors,
+                const Selector &which_series,
+                Vector &state_mean,
+                SpdMatrix &state_variance) {
+
+               if (response.size() != which_series.nvars()) {
+                 report_error("The size of the response Vector does not match "
+                              "the inclusion number of the 'which_series' "
+                              "Selector.");
+               }
+               if (response.size() != predictors.nrow()) {
+                 report_error("The number of rows in 'predictors' does not "
+                              "match the inclusion number of the "
+                              "'which_series' Selector.");
+
+               }
+               if (predictors.ncol() != model.xdim()) {
+                 std::ostringstream err;
+                 err << "The number of columns in 'predictors' ("
+                     << predictors.ncol()
+                     << ") does not match the predictor dimension of the "
+                     << "model ("
+                     << model.xdim() << ").";
+                 report_error(err.str());
+               }
+               if (model.has_series_specific_state()) {
+                 report_error("Updates are not implmented for models with "
+                              "series specific state.");
+               }
+
+               // 1) subtract off the regression and any series-specific effects
+               //    from 'data'
+               Vector adjusted_observation(response.size());
+               for (int i = 0; i < which_series.nvars(); ++i) {
+                 int I = which_series.expanded_index(i);
+                 const RegressionModel *reg(model.observation_model()->model(I).get());
+                 adjusted_observation[i] =
+                     response[i] - reg->predict(predictors.row(i));
+
+               }
+
+               // 2) Convert state_mean and state_variance from contemporaneous
+               //    moments to forward moments.
+               Ptr<SparseKalmanMatrix> transition =
+                   model.state_transition_matrix(time - 1);
+               Vector forward_state_mean = *transition * state_mean;
+               SpdMatrix forward_state_variance =
+                   transition->sandwich(state_variance);
+               forward_state_variance +=
+                   model.state_variance_matrix(time - 1)->dense();
+
+               // 3) Update
+               using Filter = ConditionallyIndependentKalmanFilter;
+               Filter &filter(model.get_filter());
+               filter.ensure_size(time + 1);
+               filter[time - 1].set_state_mean(forward_state_mean);
+               filter[time].set_state_mean(forward_state_mean);
+               filter[time - 1].set_state_variance(forward_state_variance);
+               filter[time].set_state_variance(forward_state_variance);
+
+               filter[time].update(adjusted_observation, which_series);
+
+               // 4) Copy contemporaneous moments back into state_mean and
+               //    state_variance.
+               state_mean = filter[time].contemporaneous_state_mean();
+               Ptr<SparseKalmanMatrix> forecast_precision = filter[
+                   time].sparse_forecast_precision();
+               state_variance = filter[time].contemporaneous_state_variance(
+                   forecast_precision);
+
+
+             },
+             py::arg("time"),
+             py::arg("response"),
+             py::arg("predictors"),
+             py::arg("which_series"),
+             py::arg("state_mean"),
+             py::arg("state_variance"),
+             "Perform one Kalman filtering step to compute the contemporaneous"
+             " mean and variance of the model state given new data.\n\n"
+             "Args:\n"
+             "  time:  The integer-valued timestamp of the new data point.\n"
+             "  response:  A Vector of observed data values at the new time "
+             "point.\n"
+             "  predictors:  A boom.Matrix containing the predictor values "
+             "for the new data.  The number of rows must match the size of "
+             "'response'.\n"
+             "  which_series:  A Selector indicating which of the multivariate "
+             "time series are observed in 'data'.\n"
+             "  state_mean:  On input this is the contemporaneous state mean "
+             "of the Kalman filter node at time 'time'-1 (i.e. the time point "
+             "before the new data was observed).  On output it his the "
+             "contemporaneous state mean of the time point corresponding to "
+             "the new data.\n"
+             "  state_variance:  On input this is the contemporaneous state "
+             "variance of the Kalman filter node at time 'time'-1 (i.e. the "
+             "time point before the new data was observed).  On output it "
+             "is the contemporaneous state mean of the time point "
+             "corresponding to the new data.\n")
         ;
 
     py::class_<MultivariateStateSpaceModelSampler,
