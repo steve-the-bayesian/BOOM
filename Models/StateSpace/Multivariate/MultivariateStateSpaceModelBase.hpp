@@ -500,7 +500,6 @@ namespace BOOM {
                                   bool update_sufficient_statistics,
                                   Vector *gradient);
 
-
     // Update the complete data sufficient statistics for the observation model
     // based on the posterior distribution of the observation model error term
     // at time t.

@@ -37,6 +37,13 @@ namespace BOOM {
 
     namespace {
       using Marginal = MultivariateMarginalDistributionBase;
+
+#ifndef NDEBUG
+#include <iostream>
+      const bool debug = true;
+#else
+      const bool debug = false;
+#endif
     }
 
     //--------------------------------------------------------------------------
@@ -69,6 +76,9 @@ namespace BOOM {
       Ptr<SparseKalmanMatrix> Finv_ptr(sparse_forecast_precision());
       const SparseKalmanMatrix &Finv(*Finv_ptr);
 
+      if (debug) {
+        std::cout << "computing log likelihood\n";
+      }
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(Finv * prediction_error());
@@ -82,6 +92,9 @@ namespace BOOM {
         log_likelihood = negative_infinity();
       }
 
+      if (debug) {
+        std::cout << "computing kalman gain\n";
+      }
       Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed, Finv_ptr);
       const SparseMatrixProduct &kalman_gain(*gain);
 
@@ -103,10 +116,15 @@ namespace BOOM {
       // system is free to try to optimize this multiplication using different
       // associations.  If we try to define an SpdMatrix to receive the outcome,
       // non-symmetric temporaries can blow up the SpdMatrix constructor.
-      Matrix tmp = observation_coefficient_subset.Tmult(
+      if (debug) {
+        std::cout << "computing increment1\n";
+      }
+      Matrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
           Finv * (observation_coefficient_subset * state_variance()));
-      SpdMatrix increment1 = state_variance() * tmp;
 
+      if (debug) {
+        std::cout << "computing contemp_variance\n";
+      }
       SpdMatrix contemp_variance(state_variance() - increment1);
       if (!contemp_variance.is_pos_def()) {
         std::ostringstream warn;
@@ -117,9 +135,16 @@ namespace BOOM {
         contemp_variance = contemp_eigen.closest_positive_definite();
       }
 
+      if (debug) {
+        std::cout << "computing increment2\n";
+      }
       SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
       new_state_variance = contemp_variance;
       transition.sandwich_inplace(new_state_variance);
+
+      if (debug) {
+        std::cout << "computing new_state_variance\n";
+      }
       new_state_variance += increment2;
       set_state_variance(new_state_variance);
 
