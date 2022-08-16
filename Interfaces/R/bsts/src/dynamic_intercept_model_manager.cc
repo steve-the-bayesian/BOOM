@@ -134,10 +134,11 @@ namespace BOOM {
         io_manager.stream();
         if (refilter) {
           model_->kalman_filter();
-          const Kalman::MarginalDistributionBase &marg(
+          const Kalman::MultivariateMarginalDistributionBase &marg(
               model_->get_filter().back());
+          Ptr<SparseKalmanMatrix> forecast_precision = marg.sparse_forecast_precision();
           final_state() = rmvn(marg.contemporaneous_state_mean(),
-                             marg.contemporaneous_state_variance());
+                               marg.contemporaneous_state_variance(forecast_precision));
         }
         ans.row(i) = model_->simulate_forecast(
             rng(),

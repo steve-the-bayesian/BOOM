@@ -424,7 +424,13 @@ BstsOptions <- function(save.state.contributions = TRUE,
     ## deviation that are greater than 20% larger than the empirical
     ## SD.
     sdy <- sqrt(var(data.list$response, na.rm = TRUE))
-    sigma.upper.limit <- sdy * 1.2
+    dots <- list(...)
+    if ("sigma.upper.limit" %in% names(dots)) {
+      sigma.upper.limit <- dots $sigma.upper.limit
+    } else {
+      sigma.upper.limit <- sdy * 1.2
+    }
+
     if (!has.regression) {
       prior <- SdPrior(sigma.guess = sdy,
                        sample.size = .01,
@@ -434,6 +440,16 @@ BstsOptions <- function(save.state.contributions = TRUE,
       zero <- rep(0, ncol(data.list$predictors))
       if (bma.method == "SSVS") {
         ## If using SSVS then the default prior is Zellner's g-prior.
+
+        ### TODO(steve):
+        ##   replace the raw function call with do.call.  You need to name each
+        ##   of the function parameters as they're named in SpikeSlabPrior, and
+        ##   pass the list of arguments.  When you do this pass
+        ##   sigma.upper.limit as part of 'dots' and not as a separate argument.
+
+        # The call looks like prior <- do.call(SpikeSlabPrior, dots) you'll need
+        #   to put dots$x = data.list$predictors, dots$y = data.list$response,
+        #   dots$optional.coefficient.estimate = zero, etc.
         prior <- SpikeSlabPrior(data.list$predictors,
                                 data.list$response,
                                 optional.coefficient.estimate = zero,
@@ -475,13 +491,19 @@ BstsOptions <- function(save.state.contributions = TRUE,
     }
   } else if (family == "student") {
     sdy <- sqrt(var(data.list$response, na.rm = TRUE))
-    sigma.upper.limit <- sdy * 1.2
+    dots = list(...)
+    if ("sigma.upper.limit" %in% names(dots)) {
+      sigma.upper.limit = dots$sigma.upper.limit
+    } else {
+      sigma.upper.limit <- sdy * 1.2
+    }
     if (!has.regression) {
       y <- data.list$response
       prior <- StudentSpikeSlabPrior(
           matrix(1.0, nrow = length(y), ncol = 1),
           y,
           prior.inclusion.probabilities = 0,
+          sigma.upper.limit = sigma.upper.limit,
           ...)
     } else {
       zero <- rep(0, ncol(data.list$predictors))
