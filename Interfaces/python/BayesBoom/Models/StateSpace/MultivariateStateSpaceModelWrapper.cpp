@@ -64,8 +64,20 @@ namespace BayesBoom {
              "state model to series d at time t.")
         .def_property_readonly(
             "shared_state",
-            [](const MultivariateStateSpaceModelBase &model) {return model.shared_state();},
-            "The full state matrix for the model")
+            [](const MultivariateStateSpaceModelBase &model) {
+              return model.shared_state();
+            },
+            "The full state matrix for the model, as drawn by the most recent "
+            "MCMC iteration.")
+        .def_property_readonly(
+            "smoothed_state_mean",
+            [](MultivariateStateSpaceModelBase &model) {
+              model.kalman_filter();
+              model.kalman_smoother();
+              return model.state_mean();
+            },
+            "The smoothed state mean as computed using the non-stochastic "
+            "Kalman filter and smoother.")
         .def_property_readonly(
             "final_state_mean",
             [](const MultivariateStateSpaceModelBase &model) {
