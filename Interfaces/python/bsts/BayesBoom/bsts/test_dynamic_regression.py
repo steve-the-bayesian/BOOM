@@ -1,22 +1,20 @@
 import unittest
 import numpy as np
 import pandas as pd
-import pickle
-import json
+import pickle       # noqa
+import json         # noqa
 
-import pdb
+# pylint: disable=unused-import
+import pdb          # noqa
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa
 
-from BayesBoom.R import delete_if_present
+# from BayesBoom.R import delete_if_present
 
 from BayesBoom.bsts import (
     Bsts,
-    AirPassengers,
     DynamicRegressionStateModel,
     LocalLevelStateModel,
-    LocalLinearTrendStateModel,
-    SeasonalStateModel,
 )
 
 
@@ -66,8 +64,6 @@ _debug_mode = False
 
 
 if _debug_mode:
-    import pdb  # noqa
-
     # Turn warnings into errors.
     # warnings.simplefilter("error")
 

@@ -1,7 +1,8 @@
 import unittest
 import pandas as pd
 
-import pdb
+# pylint: disable=unused-import
+import pdb # noqa
 
 from BayesBoom.bsts import (
     # Bsts,
@@ -60,8 +61,6 @@ class TestRegressionHolidayStateModel(unittest.TestCase):
 _debug_mode = False
 
 if _debug_mode:
-    import pdb  # noqa
-
     # Turn warnings into errors.
     # warnings.simplefilter("error")
 

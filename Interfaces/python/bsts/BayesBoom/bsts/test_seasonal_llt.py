@@ -1,12 +1,11 @@
 import unittest
 import numpy as np
-import pandas as pd
 import pickle
-import json
 
+# pylint: disable=unused-import
 import pdb
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa
 
 from BayesBoom.R import delete_if_present
 

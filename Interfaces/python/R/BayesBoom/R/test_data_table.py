@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import BayesBoom.boom as boom
 
+# pylint: disable=unused-import
 import pdb
+
 
 def char_range(c1, c2):
     """Generates the characters from `c1` to `c2`, inclusive."""
@@ -160,12 +162,9 @@ class DataTableTest(unittest.TestCase):
         self.assertEqual(imputed[0].shape, to_impute.shape)
 
 
-
 _debug_mode = False
 
 if _debug_mode:
-    import pdb  # noqa
-
     # Turn warnings into errors.
     # warnings.simplefilter("error")
 
