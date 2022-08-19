@@ -83,7 +83,7 @@ namespace BOOM {
     //   matrix:  The matrix whose eigendecomposition is desired.
     //   compute_vectors: If true then eigenvalues and eigenvectors are both
     //     computed.  If false only the eigenvalues are computed.
-    SymmetricEigen(const SpdMatrix &matrix, bool compute_vectors = true);
+    explicit SymmetricEigen(const SpdMatrix &matrix, bool compute_vectors = true);
 
     const Vector &eigenvalues() const { return eigenvalues_; }
 
