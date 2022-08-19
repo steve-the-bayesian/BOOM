@@ -412,15 +412,23 @@ namespace BOOM {
 
       Vector smoothed_state_mean =
           filtered_state_mean + filtered_state_variance * r;
+
+      if (t == 0 && !N.is_sym()) {
+        // TODO:
+        //   Sometimes N is not symmetric at t==0.  The right way to fix this is
+        //   to have the initial distribution be a Marg object that can get
+        //   updated.  The following line is a stop-gap for now.
+        N = .5 * (N + N.transpose());
+      }
       SpdMatrix SpdN(N);
       if (!SpdN.is_pos_def()) {
         SymmetricEigen eigenN(SpdN);
-        N = eigenN.closest_positive_definite();
+        SpdN = eigenN.closest_positive_definite();
       }
 
       SpdMatrix smoothed_state_variance =
           filtered_state_variance - sandwich(
-              filtered_state_variance, SpdMatrix(N));
+              filtered_state_variance, SpdN);
 
       if (!smoothed_state_variance.is_pos_def()) {
         SymmetricEigen variance_eigen(smoothed_state_variance);
@@ -429,7 +437,7 @@ namespace BOOM {
 
       marg.set_state_mean(smoothed_state_mean);
       marg.set_state_variance(smoothed_state_variance);
-
+      N = SpdN;
     }
     set_initial_scaled_state_error(r);
   }
