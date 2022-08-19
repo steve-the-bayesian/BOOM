@@ -459,4 +459,13 @@ namespace BOOM {
     report_error("CindBase::update_observation_model isn't done.");
   }
 
+  Matrix MvBase::state_mean() const {
+    const auto &kalman_filter(get_filter());
+    Matrix ans(state_dimension(), time_dimension());
+    for (size_t i = 0; i < time_dimension(); ++i) {
+      ans.col(i) = kalman_filter[i].state_mean();
+    }
+    return ans;
+  }
+
 }  // namespace BOOM

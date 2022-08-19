@@ -106,7 +106,14 @@ namespace BOOM {
     virtual Model *observation_model() = 0;
     virtual const Model *observation_model() const = 0;
 
-    virtual void kalman_filter() = 0;
+    void kalman_filter() {get_filter().update();}
+    void kalman_smoother() {get_filter().smooth();}
+
+    // Return the state mean from the Kalman filter/smoother.  This function
+    // does no filtering or smoothing itself.  It just returns the state_mean()
+    // value for each node in the kalman filter.
+    Matrix state_mean() const;
+
     virtual void observe_state(int t) = 0;
     virtual void observe_data_given_state(int t) = 0;
 
@@ -433,7 +440,7 @@ namespace BOOM {
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override;
+    // void kalman_filter() override;
 
     void update_observation_model(Vector &r, SpdMatrix &N, int t,
                                   bool save_state_distributions,
@@ -485,7 +492,7 @@ namespace BOOM {
     //---------------- Prediction, filtering, smoothing ---------------
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override { filter_.update(); }
+    // void kalman_filter() override { filter_.update(); }
 
     using Filter = ConditionallyIndependentKalmanFilter;
     Filter &get_filter() override {return filter_;}
@@ -546,9 +553,7 @@ namespace BOOM {
 
     // Run the full Kalman filter over the observed data, saving the information
     // in the filter_ object.  The log likelihood is computed as a by-product.
-    void kalman_filter() override {
-      filter_.update();
-    }
+    // void kalman_filter() override { filter_.update(); }
 
     ConditionalIidKalmanFilter &get_filter() override;
     const ConditionalIidKalmanFilter &get_filter() const override;

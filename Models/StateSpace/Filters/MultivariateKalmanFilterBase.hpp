@@ -148,6 +148,13 @@ namespace BOOM {
     // Run the Kalman filter algorithm with the current data.
     void update() override;
 
+    // Run the Kalman state smoother.  This replaces state_mean() and
+    // state_variance() at each time point with the contemporaneous state mean
+    // and variance given all observed data.  It invalidates other filter
+    // computations, such as the forecast precision and the Kalman gain
+    // coefficients.
+    void smooth();
+
     // Update the marginal distribution at a single time point.  The simulation
     // filter calls this method based on simulated data, so we can't rely on the
     // stored model object to supply the data in all cases.

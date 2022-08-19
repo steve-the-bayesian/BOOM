@@ -37,13 +37,6 @@ namespace BOOM {
 
     namespace {
       using Marginal = MultivariateMarginalDistributionBase;
-
-#ifndef NDEBUG
-#include <iostream>
-      const bool debug = true;
-#else
-      const bool debug = false;
-#endif
     }
 
     //--------------------------------------------------------------------------
@@ -76,9 +69,6 @@ namespace BOOM {
       Ptr<SparseKalmanMatrix> Finv_ptr(sparse_forecast_precision());
       const SparseKalmanMatrix &Finv(*Finv_ptr);
 
-      if (debug) {
-        std::cout << "computing log likelihood\n";
-      }
       double log_likelihood = -.5 * observed.nvars() * Constants::log_root_2pi
           + .5 * forecast_precision_log_determinant()
           - .5 * prediction_error().dot(Finv * prediction_error());
@@ -92,9 +82,6 @@ namespace BOOM {
         log_likelihood = negative_infinity();
       }
 
-      if (debug) {
-        std::cout << "computing kalman gain\n";
-      }
       Ptr<SparseMatrixProduct> gain = sparse_kalman_gain(observed, Finv_ptr);
       const SparseMatrixProduct &kalman_gain(*gain);
 
@@ -116,15 +103,9 @@ namespace BOOM {
       // system is free to try to optimize this multiplication using different
       // associations.  If we try to define an SpdMatrix to receive the outcome,
       // non-symmetric temporaries can blow up the SpdMatrix constructor.
-      if (debug) {
-        std::cout << "computing increment1\n";
-      }
       Matrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
           Finv * (observation_coefficient_subset * state_variance()));
 
-      if (debug) {
-        std::cout << "computing contemp_variance\n";
-      }
       SpdMatrix contemp_variance(state_variance() - increment1);
       if (!contemp_variance.is_pos_def()) {
         std::ostringstream warn;
@@ -135,16 +116,10 @@ namespace BOOM {
         contemp_variance = contemp_eigen.closest_positive_definite();
       }
 
-      if (debug) {
-        std::cout << "computing increment2\n";
-      }
       SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
       new_state_variance = contemp_variance;
       transition.sandwich_inplace(new_state_variance);
 
-      if (debug) {
-        std::cout << "computing new_state_variance\n";
-      }
       new_state_variance += increment2;
       set_state_variance(new_state_variance);
 
@@ -331,6 +306,130 @@ namespace BOOM {
       Vector u = forecast_precision * marg.prediction_error()
           - marg.sparse_kalman_gain(observed, forecast_precision_ptr)->Tmult(r);
       r = transition->Tmult(r) + observation_coefficients->Tmult(u);
+    }
+    set_initial_scaled_state_error(r);
+  }
+
+  //===========================================================================
+  void MultivariateKalmanFilterBase::smooth() {
+    // All implicit subsctipts are [t].
+    //  r[t-1] = Z' * Finv * v - L' r
+    //  where
+    //  L[t] = T[t] - K[t] Z[t]
+    // so
+    // r[t-1] = Z' * Finv * v - T'r + Z'K'r
+    //
+    // N[t-1] = Z' Finv Z + L' N L
+    //
+    // smoothed_state_mean[t] = a[t] + P[t] * r[t-1]
+    // smoothed_state_variance[t] = P[t] - P[t] N[t-1] P[t]
+    //
+    // The algorithm is initialized by r[T] = 0, and N[T] = 0.
+
+    if (!model()) {
+      report_error("Model must be set before calling fast_disturbance_smooth().");
+    }
+
+    int n = model()->time_dimension();
+    int state_dimension = model()->state_dimension();
+    Vector r(state_dimension, 0.0);
+    Matrix N(state_dimension, state_dimension, 0.0);
+    for (int t = n - 1; t >= 0; --t) {
+      // Currently r is r[t].  This step of the loop turns it into r[t-1].
+      //
+      // The disturbance smoother is defined by the following formula:
+      // r[t-1] = Z' * Finv * v   +   (T' - Z' * K') * r[t]
+      //        = T' * r[t]       -   Z' * (K' * r[t] - Finv * v)
+      //
+      // Note that Durbin and Koopman (2002) is missing the transpose on Z in
+      // their equation (5).  The transpose is required to get the dimensions to
+      // match.
+      //
+      // K = TPZ'Finv
+      // Z' K' = Z' Finv Z P T'
+      //
+      // Dimensions:
+      //   T:    S x S
+      //   K:    S x m
+      //   Z:    m x S
+      //   Finv: m x m
+      //   v:    m x 1
+      //   r:    S x 1
+      //
+      Kalman::MultivariateMarginalDistributionBase &marg(node(t));
+
+      // All implicit subsctipts are [t].
+      //  r[t-1] = Z' * Finv * v - L' r
+      //  where
+      //  L[t] = T[t] - K[t] Z[t]
+      // so
+      // r[t-1] = Z' * Finv * v - T'r + Z'K'r
+      //
+      // u = Finv * v - K'r
+      // r = T'r + Z'u
+      const Selector &observed(model()->observed_status(t));
+      Ptr<SparseKalmanMatrix> observation_coefficients(
+          model()->observation_coefficients(t, observed));
+      Ptr<SparseKalmanMatrix> transition(
+          model()->state_transition_matrix(t));
+      Ptr<SparseKalmanMatrix> forecast_precision_ptr(
+          marg.sparse_forecast_precision());
+      const SparseKalmanMatrix &forecast_precision(
+          *forecast_precision_ptr);
+      Ptr<SparseKalmanMatrix> kalman_gain(marg.sparse_kalman_gain(
+          observed, forecast_precision_ptr));
+
+
+      NEW(SparseMatrixProduct, KZ)();
+      KZ->add_term(kalman_gain);
+      KZ->add_term(observation_coefficients);
+      NEW(SparseMatrixSum, L)();
+      L->add_term(transition);
+      L->add_term(KZ, -1);
+
+      Vector u = forecast_precision * marg.prediction_error()
+          - kalman_gain->Tmult(r);
+
+      // Turn r[t] into r[t-1]
+      r = transition->Tmult(r) + observation_coefficients->Tmult(u);
+
+      // Turn N[t] into N[t-1]
+      Matrix tmp = observation_coefficients->Tmult(
+          forecast_precision * observation_coefficients->dense())
+          + L->sandwich_transpose(N);
+      N = tmp;
+
+      Vector filtered_state_mean;
+      SpdMatrix filtered_state_variance;
+      if (t > 0) {
+        Kalman::MultivariateMarginalDistributionBase &prev(node(t-1));
+        filtered_state_mean = prev.state_mean();
+        filtered_state_variance = prev.state_variance();
+      } else {
+        filtered_state_mean = model()->initial_state_mean();
+        filtered_state_variance = model()->initial_state_variance();
+      }
+
+      Vector smoothed_state_mean =
+          filtered_state_mean + filtered_state_variance * r;
+      SpdMatrix SpdN(N);
+      if (!SpdN.is_pos_def()) {
+        SymmetricEigen eigenN(SpdN);
+        N = eigenN.closest_positive_definite();
+      }
+
+      SpdMatrix smoothed_state_variance =
+          filtered_state_variance - sandwich(
+              filtered_state_variance, SpdMatrix(N));
+
+      if (!smoothed_state_variance.is_pos_def()) {
+        SymmetricEigen variance_eigen(smoothed_state_variance);
+        smoothed_state_variance = variance_eigen.closest_positive_definite();
+      }
+
+      marg.set_state_mean(smoothed_state_mean);
+      marg.set_state_variance(smoothed_state_variance);
+
     }
     set_initial_scaled_state_error(r);
   }
