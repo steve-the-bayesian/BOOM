@@ -56,6 +56,10 @@ namespace BayesBoom {
             [](const MultinomialModel &model) {
               return model.pi();
             })
+        .def("set_probs",
+             [](MultinomialModel &model, const Vector &probs) {
+               model.set_pi(probs);
+             })
         .def("__repr__",
              [](const MultinomialModel &model) {
                std::ostringstream out;

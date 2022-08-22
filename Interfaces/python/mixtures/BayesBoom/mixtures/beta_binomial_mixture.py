@@ -169,6 +169,22 @@ class BetaBinomialMixture:
         """
         return self._mixing_weights
 
+    def restore_params(self, i: int):
+        """
+        Restore the parameters of the underlying boom model to iteration i.
+
+        Note that i can be any legal python index.  The value -1 is particularly
+        useful because it restores the parameters to the most recent draw.
+        """
+        mixing_weights = self._mixing_weights[i, :]
+        self._boom_model.mixing_distribution.set_probs(
+            R.to_boom_vector(mixing_weights))
+
+        for comp in range(self.number_of_mixture_components):
+            ab = self._components[comp]["draws"][i, :]
+            self._boom_model.mixture_component(comp).set_a(ab[0])
+            self._boom_model.mixture_component(comp).set_b(ab[1])
+
     def cluster_membership_probabilities(
             self, trials: int, successes: int, burn: int = 0):
         """
@@ -389,3 +405,4 @@ class BetaBinomialMixture:
         data = np.array(state["data"]).copy()
         del self.__dict__["data"]
         self._boom_model.add_data(data)
+        self.restore_params(-1)

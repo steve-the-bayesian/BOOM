@@ -34,6 +34,16 @@ namespace BayesBoom {
                                       return model.a(); })
         .def_property_readonly("b", [](const BetaBinomialModel &model) {
                                       return model.b(); })
+        .def("set_a",
+             [](BetaBinomialModel &model, double a) {
+               model.set_a(a);
+             },
+             "Set the 'a' parameter ('prior successes') to the given value.")
+        .def("set_b",
+             [](BetaBinomialModel &model, double b) {
+               model.set_b(b );
+             },
+             "Set the 'b' parameter ('prior failures') to the given value.")
         .def("__repr__",
              [](const BetaBinomialModel &model) {
                std::ostringstream out;
