@@ -96,7 +96,6 @@ namespace BOOM {
       // don't need to allocate quite so many SpdMatrix objects.
       //
       // Pt|t = Pt - Pt * Z' Finv Z Pt
-      SpdMatrix new_state_variance = state_variance();
 
       // The temporary value 'tmp' is needed because the long string of
       // multiplications can produce temporaries that are not symmetric.  The
@@ -117,7 +116,7 @@ namespace BOOM {
       }
 
       SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
-      new_state_variance = contemp_variance;
+      SpdMatrix new_state_variance(contemp_variance);
       transition.sandwich_inplace(new_state_variance);
 
       new_state_variance += increment2;
