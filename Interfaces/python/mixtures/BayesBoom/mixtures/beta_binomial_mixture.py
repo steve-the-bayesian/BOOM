@@ -370,3 +370,22 @@ class BetaBinomialMixture:
                 boom_model, dirichlet_prior, mean_priors, sample_size_priors)
         boom_model.set_method(sampler)
         return boom_model
+
+    def __getstate__(self):
+        """
+        Make the object pickle-able.
+        """
+        ans = self.__dict__.copy()
+        ans["data"] = self._boom_model.data.to_numpy()
+        ans["_boom_model"] = None
+        return ans
+
+    def __setstate__(self, state):
+        """
+        Restore the object from a pickle.
+        """
+        self.__dict__ = state.copy()
+        self._boom_model = self._build_boom_model()
+        data = np.array(state["data"]).copy()
+        del self.__dict__["data"]
+        self._boom_model.add_data(data)

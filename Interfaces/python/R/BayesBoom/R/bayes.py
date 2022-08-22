@@ -28,6 +28,9 @@ class DoubleModel(ABC):
         The mean of the distribution.
         """
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class SdPrior(DoubleModel):
     """A prior distribution for a standard deviation 'sigma'.  This prior assumes
@@ -250,6 +253,9 @@ class MvnGivenSigma:
         import BayesBoom.boom as boom
         return boom.MvnGivenSigma(self._mu, self._sample_size)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class UniformPrior(DoubleModel):
     """
@@ -289,6 +295,9 @@ class BetaPrior(DoubleModel):
         import BayesBoom.boom as boom
         return boom.BetaModel(self._a, self._b)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class DirichletPrior:
     """
@@ -304,6 +313,9 @@ class DirichletPrior:
     def boom(self):
         import BayesBoom.boom as boom
         return boom.DirichletModel(boom.Vector(self._counts))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 class WishartPrior:
@@ -453,3 +465,6 @@ class GaussianSuf:
         if n < 2:
             return 0
         return self.centered_sumsq() / (n - 1)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__

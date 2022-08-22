@@ -77,6 +77,21 @@ namespace BayesBoom {
              "(second entry), and the number of observations with this many "
              "trials and successes.\n")
         .def_property_readonly(
+            "data",
+            [](const BetaBinomialMixtureModel &model) {
+              int n = model.sample_size();
+              Matrix ans(n, 3);
+              for (int i = 0; i < n; ++i) {
+                const Ptr<AggregatedBinomialData> &data_point(model.dat()[i]);
+                ans(i, 0) = data_point->trials();
+                ans(i, 1) = data_point->successes();
+                ans(i, 2) = data_point->count();
+              }
+              return ans;
+            },
+            "The data for the model as a 3-column boom.Matrix.  The columns "
+            "are trials, successes, count.")
+        .def_property_readonly(
             "mixing_distribution",
             [](BetaBinomialMixtureModel &model) {
               return model.mixing_distribution();
