@@ -47,6 +47,14 @@ cc_test(
 )
 
 cc_test(
+    name = "markov_test",
+    srcs = ["markov_test.cc"],
+    copts = COPTS,
+    deps = COMMON_DEPS,
+    size = "small",
+)
+
+cc_test(
     name = "mvn_test",
     srcs = ["mvn_test.cc"],
     copts = COPTS,

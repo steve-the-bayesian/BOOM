@@ -20,17 +20,26 @@
 #include <vector>
 #include "LinAlg/Matrix.hpp"
 #include "LinAlg/Selector.hpp"
+#include "LinAlg/SubMatrix.hpp"
 #include "LinAlg/Vector.hpp"
+#include "LinAlg/QR.hpp"
 
 namespace BOOM {
 
   Vector get_stat_dist(const Matrix &Q) {
-    Matrix P = Q.transpose();  // transpose
+    int S = Q.nrow();
+    Matrix P = Q.transpose();
     P.diag() -= 1.0;
-    P.row(0) = 1.0;
-    Vector ans(Q.nrow(), 0.0);
-    ans[0] = 1.0;
-    return P.solve(ans);
+    Matrix A = rbind(P, 1.0);
+
+    Vector y(S + 1, 0.0);
+    y.back() = 1.0;
+
+    QR qr(A);
+    Vector qty = qr.Qty(y);
+    Matrix R = qr.getR();
+    return Usolve(SubMatrix(R, 0, S-1, 0, S-1).to_matrix(),
+                  ConstVectorView(qty, 0, S));
   }
 
   Matrix compute_conditional_absorption_probs(const Matrix &P,
