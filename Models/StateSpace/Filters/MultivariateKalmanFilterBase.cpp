@@ -37,6 +37,19 @@ namespace BOOM {
 
     namespace {
       using Marginal = MultivariateMarginalDistributionBase;
+
+      // Convert a Matrix to an SpdMatrix.  If the matrix is non-symmetric then
+      // force symmetry and issue a warning.
+      SpdMatrix robust_spd(const Matrix &m) {
+        if (m.is_sym()) {
+          return SpdMatrix(m);
+        } else {
+          std::ostringstream msg;
+          msg << "Coercing a non-symmetric matrix to symmetry.";
+          report_warning(msg.str());
+          return SpdMatrix(.5 * (m + m.transpose()));
+        }
+      }
     }
 
     //--------------------------------------------------------------------------
@@ -105,7 +118,7 @@ namespace BOOM {
       Matrix increment1 = state_variance() * observation_coefficient_subset.Tmult(
           Finv * (observation_coefficient_subset * state_variance()));
 
-      SpdMatrix contemp_variance(state_variance() - increment1);
+      SpdMatrix contemp_variance(robust_spd(state_variance() - increment1));
       if (!contemp_variance.is_pos_def()) {
         std::ostringstream warn;
         warn << "Modifying variance at time " << time_index()
@@ -115,8 +128,10 @@ namespace BOOM {
         contemp_variance = contemp_eigen.closest_positive_definite();
       }
 
-      SpdMatrix increment2(model()->state_variance_matrix(time_index())->dense());
-      SpdMatrix new_state_variance(contemp_variance);
+      SpdMatrix increment2(robust_spd(model()->state_variance_matrix(
+          time_index())->dense()));
+      SpdMatrix new_state_variance(robust_spd(contemp_variance));
+
       transition.sandwich_inplace(new_state_variance);
 
       new_state_variance += increment2;
