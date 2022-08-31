@@ -34,7 +34,7 @@ namespace BOOM {
 #ifdef RLANGUAGE
     Rf_warning("%s\n", msg.c_str());
 #else
-    std::cerr << msg << std::endl;
+    std::cerr << "Warning:  " << msg << std::endl;
 #endif
   }
 
