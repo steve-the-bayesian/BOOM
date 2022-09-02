@@ -18,15 +18,35 @@
   Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include "Models/FactorModels/PoissonFactorModel.hpp"
+#include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "distributions/rng.hpp"
+
 namespace BOOM {
 
   class PoissonFactorModelPosteriorSampler
       : public PosteriorSampler
   {
    public:
+    PoissonFactorModelPosteriorSampler(
+        PoissonFactorModel *model,
+        const Vector &prior_class_membership_probabilities,
+        RNG &seeding_rng = GlobalRng::rng);
+
+    void draw() override;
+    double logpri() const override;
+
+    void impute_visitors();
+    void draw_site_parameters();
+
+    Vector prior_class_membership_probabilities() const {
+      return prior_class_membership_probabilities_;
+    }
 
    private:
     PoissonFactorModel *model_;
+
+    Vector prior_class_membership_probabilities_;
   };
 
 }

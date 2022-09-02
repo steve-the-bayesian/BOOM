@@ -126,6 +126,16 @@ glm_headers = (
     )
 boom_headers += glm_headers
 
+factor_sources = (
+    glob(BOOM_DIR + "Models/FactorModels/*.cpp")
+    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.cpp")
+)
+factor_headers = (
+    glob(BOOM_DIR + "Models/FactorModels/*.hpp")
+    + glob(BOOM_DIR + "Models/FactorModels/PosteriorSamplers/*.hpp")
+)
+boom_headers += factor_headers
+
 hmm_sources = (
     glob(BOOM_DIR + "Models/HMM/*.cpp")
     + glob(BOOM_DIR + "Models/HMM/Clickstream/*.cpp")
@@ -241,6 +251,7 @@ boom_library_sources = (
     + utils_sources
     + models_sources
     + bart_sources
+    + factor_sources
     + glm_sources
     + hmm_sources
     + hierarchical_sources
