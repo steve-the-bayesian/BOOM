@@ -428,6 +428,17 @@ namespace BOOM {
   int rmulti(int, int);
   int rmulti_mt(RNG &, int, int);
 
+  // Args:
+  //   rng:  The random number generator.
+  //   sample_size:  The desired number of draws.
+  //   probs:  The distribution from which to sample.
+  //
+  // Returns:
+  //   A vector of length 'sample_size' containing random draws from 'probs'.
+  std::vector<int> rmulti_vector_mt(RNG &rng,
+                                    int sample_size,
+                                    const Vector &probs);
+
   // See also rmultinom in Rmath_dist.hpp
 
   //===========================================================================

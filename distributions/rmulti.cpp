@@ -74,6 +74,7 @@ namespace BOOM {
       report_error(msg.str());
       return 0;
     }
+
   }  // namespace
 
   uint rmulti_mt(RNG &rng, const Vector &prob) {
@@ -94,6 +95,43 @@ namespace BOOM {
   }
   uint rmulti(const ConstVectorView &prob) {
     return rmulti_mt_impl(GlobalRng::rng, prob);
+  }
+
+  std::vector<int> rmulti_vector_mt(RNG &rng, int sample_size, const Vector &probs) {
+    Vector cumsum_probs(probs.size());
+    double total = probs[0];
+    cumsum_probs[0] = total;
+    if (total < 0) {
+      report_error("Negative probability in position 0.");
+    }
+    for (int i = 1; i < probs.size(); ++i) {
+      double increment = probs[i];
+      if (increment < 0) {
+        std::ostringstream err;
+        err << "Negative probability in position " << i << ".";
+        report_error(err.str());
+      }
+      total += increment;
+      cumsum_probs[i] = total;
+    }
+    if (total <= 0.0) {
+      report_error("Probabilities must sum to a positive number.");
+    }
+    cumsum_probs /= total;
+
+    std::vector<int> ans;
+    ans.reserve(sample_size);
+
+    for (int i = 0; i < sample_size; ++i) {
+      double u = runif_mt(rng, 0.0, 1.0);
+      for (int j = 0; j < probs.size(); ++j) {
+        if (u <= cumsum_probs[j]) {
+          ans.push_back(j);
+          break;
+        }
+      }
+    }
+    return ans;
   }
 
 }  // namespace BOOM
