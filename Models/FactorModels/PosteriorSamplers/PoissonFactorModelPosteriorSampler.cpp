@@ -18,6 +18,7 @@
 
 #include "Models/FactorModels/PosteriorSamplers/PoissonFactorModelPosteriorSampler.hpp"
 #include "distributions.hpp"
+#include "cpputil/report_error.hpp"
 
 namespace BOOM {
 
@@ -50,7 +51,12 @@ namespace BOOM {
       for (const auto it : visitor->sites_visited()) {
         int site_visits = it.second;
         const Ptr<Site> &site(it.first);
-        logprob += site_visits * log(site->log_lambda());
+        logprob += site_visits * site->log_lambda();
+        for (double el : logprob) {
+          if (!std::isfinite(el)) {
+            report_error("inf in logprob");
+          }
+        }
       }
       Vector prob = logprob.normalize_logprob();
       visitor->set_class_probabilities(prob);
@@ -59,6 +65,7 @@ namespace BOOM {
   }
 
   void PoissonFactorModelPosteriorSampler::draw_site_parameters() {
+    Vector sum_of_lambdas(model_->number_of_classes());
     for (auto &site : model_->sites()) {
       Vector counts = site->prior_a();
       Vector exposures = site->prior_b();
@@ -75,7 +82,9 @@ namespace BOOM {
         lambdas[k] = rgamma_mt(rng(), counts[k], exposures[k]);
       }
       site->set_lambda(lambdas);
+      sum_of_lambdas += lambdas;
     }
+    model_->set_sum_of_lambdas(sum_of_lambdas);
   }
 
 

@@ -34,7 +34,10 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
 
     void draw() override;
-    double logpri() const override;
+    double logpri() const override {
+      // Just to get things compiled.
+      return negative_infinity();
+    }
 
     void impute_visitors();
     void draw_site_parameters();

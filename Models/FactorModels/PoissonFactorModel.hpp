@@ -53,6 +53,9 @@ namespace BOOM {
           nvisits_(nvisits)
     {}
 
+    PoissonFactorData * clone() const override;
+    std::ostream & display(std::ostream &out) const override;
+
     int64_t site_id() const {return site_id_;}
     int64_t visitor_id() const {return visitor_id_;}
     int nvisits() const {return nvisits_;}
@@ -128,26 +131,21 @@ namespace BOOM {
     //----------------------------------------------------------------------
     class Site : public RefCounted {
      public:
-      Site(int64_t id, int num_classes)
-          : id_(id)
-      {}
+      Site(int64_t id, int num_classes);
 
       // Record one or more visits by
       void observe_visitor(const Ptr<Visitor> &visitor, int ntimes);
 
       int64_t id() const {return id_;}
 
-      bool operator<(const Site &rhs) const {
-        return id_ < rhs.id();
-      }
-
       // The vector of
       const Vector &lambda() const {return visitation_rates_->value();}
       Vector log_lambda() const {return log_lambda_;}
       void set_lambda(const Vector &lambda);
 
-      const Vector &prior_a() const;
-      const Vector &prior_b() const;
+      const Vector &prior_a() const {return prior_a_->value();}
+      const Vector &prior_b() const {return prior_b_->value();}
+      void set_prior(const Vector &prior_a, const Vector &prior_b);
 
       const std::map<Ptr<Visitor>, int> observed_visitors() const {
         return observed_visitors_;
@@ -181,6 +179,13 @@ namespace BOOM {
 
     PoissonFactorModel(int num_classes);
 
+    PoissonFactorModel(const PoissonFactorModel &rhs);
+    PoissonFactorModel(PoissonFactorModel &&rhs);
+    PoissonFactorModel & operator=(const PoissonFactorModel &rhs);
+    PoissonFactorModel & operator=(PoissonFactorModel &&rhs);
+
+    PoissonFactorModel * clone() const override;
+
     void record_visit(int64_t visitor_id, int64_t site_id, int ntimes = 1);
     void add_data(const Ptr<PoissonFactorData> &data_point);
 
@@ -190,19 +195,22 @@ namespace BOOM {
     std::vector<Ptr<Site>> & sites() {return sites_;}
     std::vector<Ptr<Visitor>> & visitors() {return visitors_;}
 
-    const Vector &sum_of_lambdas() const {
-      return sum_of_lambdas_;
-    }
+    // Return nullptr if the requested id is not available.
+    Ptr<Site> get_site(int64_t id) const;
+    Ptr<Visitor> get_visitor(int64_t id) const;
+
+    const Vector &sum_of_lambdas() const;
 
     void set_sum_of_lambdas(const Vector &sum_of_lambdas) {
       sum_of_lambdas_ = sum_of_lambdas;
     }
 
    private:
+    // Both visitors_ and sites_ are stored in the order of their ID's.
     std::vector<Ptr<Visitor>> visitors_;
     std::vector<Ptr<Site>> sites_;
 
-    Vector sum_of_lambdas_;
+    mutable Vector sum_of_lambdas_;
   };
 
 
