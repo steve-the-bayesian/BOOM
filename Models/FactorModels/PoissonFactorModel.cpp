@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <iomanip>
 
+#include "cpputil/report_error.hpp"
+
 namespace BOOM {
 
   namespace {
@@ -46,7 +48,7 @@ namespace BOOM {
 
     template <class OBJ>
     Ptr<OBJ> get_by_id(int64_t id, const std::vector<Ptr<OBJ>> &things) {
-      auto it = std::lower_bound(
+      const auto it = std::lower_bound(
           things.begin(), things.end(), id, IdLess<OBJ>());
       if (it == things.end() || (*it)->id() != id) {
         return nullptr;
@@ -128,7 +130,7 @@ namespace BOOM {
   PoissonFactorModel & PoissonFactorModel::operator=(const PoissonFactorModel &rhs) {
     if (&rhs != this) {
       for (const auto &visitor : rhs.visitors_) {
-        for (auto it : visitor->sites_visited()) {
+        for (const auto &it : visitor->sites_visited()) {
           int64_t site_id = it.first->id();
           int ntimes = it.second;
           record_visit(visitor->id(), site_id, ntimes);
@@ -168,8 +170,13 @@ namespace BOOM {
                  data_point->nvisits());
   }
 
-
-
+  void PoissonFactorModel::add_data(const Ptr<Data> &data_point) {
+    Ptr<PoissonFactorData> native_data_point = data_point.dcast<PoissonFactorData>();
+    if (!native_data_point) {
+      report_error("Data point could not be cast to the native data type.");
+    }
+    add_data(native_data_point);
+  }
 
   void PoissonFactorModel::record_visit(
       int64_t visitor_id, int64_t site_id, int nvisits) {

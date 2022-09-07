@@ -187,7 +187,8 @@ namespace BOOM {
     PoissonFactorModel * clone() const override;
 
     void record_visit(int64_t visitor_id, int64_t site_id, int ntimes = 1);
-    void add_data(const Ptr<PoissonFactorData> &data_point);
+    void add_data(const Ptr<PoissonFactorData> &data_point) override;
+    void add_data(const Ptr<Data> &data_point) override;
 
     // The number of latent classes being modeled.
     int number_of_classes() const {return sum_of_lambdas_.size();}
