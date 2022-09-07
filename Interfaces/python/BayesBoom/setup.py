@@ -271,6 +271,7 @@ boom_extension_sources = (
     + glob(BOOM_DIR + "pybind11/Models/Glm/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Impute/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/Mixtures/*.cpp")
+    + glob(BOOM_DIR + "pybind11/Models/FactorModels/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/StateModels/*.cpp")
     + glob(BOOM_DIR + "pybind11/Models/StateSpace/Multivariate/*.cpp")

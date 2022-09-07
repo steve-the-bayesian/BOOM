@@ -45,6 +45,8 @@ namespace BayesBoom {
   void DirichletProcessMvn_def(py::module &);
   void BetaBinomialMixture_def(py::module &);
 
+  void PoissonFactorModel_def(py::module &);
+
   void test_utils_def(py::module &);
 
   PYBIND11_MODULE(_boom, boom) {
@@ -100,6 +102,8 @@ namespace BayesBoom {
 
     DirichletProcessMvn_def(boom);
     BetaBinomialMixture_def(boom);
+
+    PoissonFactorModel_def(boom);
 
     test_utils_def(boom);
   }  // Module BOOM
