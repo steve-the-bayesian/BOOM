@@ -48,7 +48,7 @@ namespace BOOM {
 
     template <class OBJ>
     Ptr<OBJ> get_by_id(int64_t id, const std::vector<Ptr<OBJ>> &things) {
-      const auto it = std::lower_bound(
+      auto it = std::lower_bound(
           things.begin(), things.end(), id, IdLess<OBJ>());
       if (it == things.end() || (*it)->id() != id) {
         return nullptr;

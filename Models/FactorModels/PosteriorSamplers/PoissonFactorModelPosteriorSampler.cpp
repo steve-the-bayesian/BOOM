@@ -48,7 +48,7 @@ namespace BOOM {
     for (Ptr<Visitor> &visitor : model_->visitors()) {
       Vector logprob = log_prior;
       logprob -= model_->sum_of_lambdas();
-      for (const auto it : visitor->sites_visited()) {
+      for (const auto &it : visitor->sites_visited()) {
         int site_visits = it.second;
         const Ptr<Site> &site(it.first);
         logprob += site_visits * site->log_lambda();
@@ -69,7 +69,7 @@ namespace BOOM {
     for (auto &site : model_->sites()) {
       Vector counts = site->prior_a();
       Vector exposures = site->prior_b();
-      for (const auto it : site->observed_visitors()) {
+      for (const auto &it : site->observed_visitors()) {
         const Ptr<Visitor> &visitor(it.first);
         int visit_count = it.second;
         int mix = visitor->imputed_class_membership();
