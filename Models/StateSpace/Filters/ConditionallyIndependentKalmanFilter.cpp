@@ -69,6 +69,13 @@ namespace BOOM {
     // because the Cholesky algorihm can handle positive semidefinite matrices.
     Ptr<SparseWoodburyInverse>
     Marginal::woodbury_sparse_forecast_precision() const {
+
+      if (forecast_precision_inner_matrix_.nrow() == 0
+          || forecast_precision_inner_matrix_.ncol() == 0) {
+        report_error("Error rebuilding woodbury matrix.  "
+                     "inner_matrix must have positive dimension.");
+      }
+
       SpdMatrix variance = previous() ? previous()->state_variance() :
           model_->initial_state_variance();
       Cholesky state_variance_chol(variance);
@@ -127,7 +134,8 @@ namespace BOOM {
     }
 
     // To be called by the base class during the forward update portion of the
-    // Kalman filter.
+    // Kalman filter.  Determine the strategy to be used when implementing
+    // sparse_forecast_precision(), and precompute some relevant quantities.
     void Marginal::update_sparse_forecast_precision(
         const Selector &observed) {
       // Ensure the the 'state_variance' we're using is P[t] and not P[t+1].  In
@@ -186,6 +194,11 @@ namespace BOOM {
           SpdMatrix Finv = direct_forecast_precision();
           forecast_precision_log_determinant_ = Finv.logdet();
         }
+      }
+
+      if (!forecast_precision_inner_matrix_.all_finite()) {
+        report_error("Some infinite values or nan's found when computing "
+                     "sparse_forecast_precision.");
       }
     }
 

@@ -46,6 +46,23 @@ namespace BOOM {
         } else {
           std::ostringstream msg;
           msg << "Coercing a non-symmetric matrix to symmetry.";
+          if (m.nrow() < 10) {
+            msg << "\n"
+                << "original matrix: \n"
+                << m
+                << "\n"
+                << "symmetric matrix: \n"
+                << .5 * (m + m.transpose())
+                ;
+          } else {
+            Matrix m_view = ConstSubMatrix(m, 0, 9, 0, 9).to_matrix();
+            msg << "\n"
+                << "First 10 rows/cols of original matrix:\n"
+                << m_view
+                << "\n"
+                << "symmetric matrix:\n"
+                << .5 * (m_view + m_view.transpose());
+          }
           report_warning(msg.str());
           return SpdMatrix(.5 * (m + m.transpose()));
         }
