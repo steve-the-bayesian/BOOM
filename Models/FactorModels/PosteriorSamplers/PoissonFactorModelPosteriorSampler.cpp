@@ -45,6 +45,9 @@ namespace BOOM {
   void PoissonFactorModelPosteriorSampler::impute_visitors() {
     Vector log_prior = log(prior_class_membership_probabilities());
 
+    std::cout << "Imputing values for "
+              << model_->visitors().size()
+              << " visitors.\n";
     for (Ptr<Visitor> &visitor : model_->visitors()) {
       Vector logprob = log_prior;
       logprob -= model_->sum_of_lambdas();
@@ -66,6 +69,10 @@ namespace BOOM {
 
   void PoissonFactorModelPosteriorSampler::draw_site_parameters() {
     Vector sum_of_lambdas(model_->number_of_classes());
+    std::cout << "Drawing values for "
+              << model_->sites().size()
+              << " sites.\n";
+
     for (auto &site : model_->sites()) {
       Vector counts = site->prior_a();
       Vector exposures = site->prior_b();

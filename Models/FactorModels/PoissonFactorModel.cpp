@@ -180,7 +180,6 @@ namespace BOOM {
 
   void PoissonFactorModel::record_visit(
       int64_t visitor_id, int64_t site_id, int nvisits) {
-
     // Get the Visitor pointer, or make a new one.
     auto visitor_it = std::lower_bound(
         visitors_.begin(), visitors_.end(), visitor_id, IdLess<Visitor>());

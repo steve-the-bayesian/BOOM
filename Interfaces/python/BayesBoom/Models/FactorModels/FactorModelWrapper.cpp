@@ -39,6 +39,8 @@ namespace BayesBoom {
                  report_error("visitor_id, site_id, and num_visits must "
                               "all have the same length.");
                }
+               std::cout << "calling add_data in glue code for "
+                         << visitor_id.size() << " data points.\n";
                for (size_t i = 0; i < visitor_id.size(); ++i) {
                  model.record_visit(visitor_id[i], site_id[i], num_visits[i]);
                }
