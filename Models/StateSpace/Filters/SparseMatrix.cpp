@@ -361,7 +361,11 @@ namespace BOOM {
         inner_matrix_(inner_matrix),
         logdet_(logdet),
         inner_matrix_condition_number_(condition_number)
-  {}
+  {
+    if (inner_matrix_.nrow() == 0 || inner_matrix_.ncol() == 0) {
+      report_error("inner_matrix_ must have positive dimension.");
+    }
+  }
 
   Vector SparseWoodburyInverse::operator*(const ConstVectorView &rhs) const {
     Vector Ar = *Ainv_ * rhs;
