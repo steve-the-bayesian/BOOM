@@ -137,18 +137,20 @@ namespace BOOM {
     }
 
     const Selector &observed(host_->observed_status(time_now));
-    Vector residual_y =
-        host_->adjusted_observation(time_now)
-        - (*host_->observation_coefficients(time_now, observed)
-           * host_->shared_state(time_now))
-        + (*observation_coefficients(time_now, observed)) * now;
+    if (observed.nvars() > 0) {
+      Vector residual_y =
+          host_->adjusted_observation(time_now)
+          - (*host_->observation_coefficients(time_now, observed)
+             * host_->shared_state(time_now))
+          + (*observation_coefficients(time_now, observed)) * now;
 
-    double predictive_state = component_observation_coefficients(
-        time_now).dot(now);
+      double predictive_state = component_observation_coefficients(
+          time_now).dot(now);
 
-    for (int i = 0; i < observed.nvars(); ++i) {
-      int I = observed.sparse_index(i);
-      sufficient_statistics_[I].increment(predictive_state, residual_y[i]);
+      for (int i = 0; i < observed.nvars(); ++i) {
+        int I = observed.sparse_index(i);
+        sufficient_statistics_[I].increment(predictive_state, residual_y[i]);
+      }
     }
   }
 

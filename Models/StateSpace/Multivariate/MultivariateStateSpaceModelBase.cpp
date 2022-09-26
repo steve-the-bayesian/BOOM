@@ -363,13 +363,17 @@ namespace BOOM {
   // A precondition is that the state at time t was simulated by the forward
   // portion of the Durbin-Koopman data augmentation algorithm.
   Vector CiidBase::simulate_fake_observation(RNG &rng, int t) {
-     Vector ans = (*observation_coefficients(
-         t, observed_status(t))) * shared_state().col(t);
-     double sigma = sqrt(observation_variance(t));
-     for (int i = 0; i < ans.size(); ++i) {
-       ans[i] += rnorm_mt(rng, 0, sigma);
-     }
-     return ans;
+    const Selector &obs(observed_status(t));
+    if (obs.nvars() == 0) {
+      return Vector(0);
+    } else {
+      Vector ans = (*observation_coefficients(t, obs) * shared_state().col(t));
+      double sigma = sqrt(observation_variance(t));
+      for (int i = 0; i < ans.size(); ++i) {
+        ans[i] += rnorm_mt(rng, 0, sigma);
+      }
+      return ans;
+    }
    }
 
   ConditionalIidKalmanFilter & CiidBase::get_filter() {
@@ -405,13 +409,17 @@ namespace BOOM {
   }  // namespace
 
   Vector CindBase::simulate_fake_observation(RNG &rng, int t) {
-    Vector ans = (*observation_coefficients(t, observed_status(t)))
-        * shared_state().col(t);
-    for (int i = 0; i < ans.size(); ++i) {
-      double sigma = sqrt(single_observation_variance(t, i));
-      ans[i] += rnorm_mt(rng, 0, sigma);
+    const Selector &obs(observed_status(t));
+    if (obs.nvars() == 0) {
+      return Vector(0);
+    } else {
+      Vector ans = (*observation_coefficients(t, obs)) * shared_state().col(t);
+      for (int i = 0; i < ans.size(); ++i) {
+        double sigma = sqrt(single_observation_variance(t, i));
+        ans[i] += rnorm_mt(rng, 0, sigma);
+      }
+      return ans;
     }
-    return ans;
   }
 
   void CindBase::update_observation_model(

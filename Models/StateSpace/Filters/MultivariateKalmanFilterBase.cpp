@@ -326,17 +326,21 @@ namespace BOOM {
       // u = Finv * v - K'r
       // r = T'r + Z'u
       const Selector &observed(model()->observed_status(t));
-      Ptr<SparseKalmanMatrix> observation_coefficients(
-          model()->observation_coefficients(t, observed));
       Ptr<SparseKalmanMatrix> transition(
           model()->state_transition_matrix(t));
-      Ptr<SparseKalmanMatrix> forecast_precision_ptr(
-          marg.sparse_forecast_precision());
-      const SparseKalmanMatrix &forecast_precision(
-          *forecast_precision_ptr);
-      Vector u = forecast_precision * marg.prediction_error()
-          - marg.sparse_kalman_gain(observed, forecast_precision_ptr)->Tmult(r);
-      r = transition->Tmult(r) + observation_coefficients->Tmult(u);
+      if (observed.nvars() > 0) {
+        Ptr<SparseKalmanMatrix> observation_coefficients(
+            model()->observation_coefficients(t, observed));
+        Ptr<SparseKalmanMatrix> forecast_precision_ptr(
+            marg.sparse_forecast_precision());
+        const SparseKalmanMatrix &forecast_precision(
+            *forecast_precision_ptr);
+        Vector u = forecast_precision * marg.prediction_error()
+            - marg.sparse_kalman_gain(observed, forecast_precision_ptr)->Tmult(r);
+        r = transition->Tmult(r) + observation_coefficients->Tmult(u);
+      } else {
+        r = transition->Tmult(r);
+      }
     }
     set_initial_scaled_state_error(r);
   }
@@ -398,37 +402,38 @@ namespace BOOM {
       //
       // u = Finv * v - K'r
       // r = T'r + Z'u
-      const Selector &observed(model()->observed_status(t));
-      Ptr<SparseKalmanMatrix> observation_coefficients(
-          model()->observation_coefficients(t, observed));
       Ptr<SparseKalmanMatrix> transition(
           model()->state_transition_matrix(t));
-      Ptr<SparseKalmanMatrix> forecast_precision_ptr(
-          marg.sparse_forecast_precision());
-      const SparseKalmanMatrix &forecast_precision(
-          *forecast_precision_ptr);
-      Ptr<SparseKalmanMatrix> kalman_gain(marg.sparse_kalman_gain(
-          observed, forecast_precision_ptr));
+      const Selector &observed(model()->observed_status(t));
+      if (observed.nvars() > 0) {
+        Ptr<SparseKalmanMatrix> observation_coefficients(
+            model()->observation_coefficients(t, observed));
+        Ptr<SparseKalmanMatrix> forecast_precision_ptr(
+            marg.sparse_forecast_precision());
+        const SparseKalmanMatrix &forecast_precision(
+            *forecast_precision_ptr);
+        Ptr<SparseKalmanMatrix> kalman_gain(marg.sparse_kalman_gain(
+            observed, forecast_precision_ptr));
+        NEW(SparseMatrixProduct, KZ)();
+        KZ->add_term(kalman_gain);
+        KZ->add_term(observation_coefficients);
+        NEW(SparseMatrixSum, L)();
+        L->add_term(transition);
+        L->add_term(KZ, -1);
+        Vector u = forecast_precision * marg.prediction_error()
+            - kalman_gain->Tmult(r);
 
-
-      NEW(SparseMatrixProduct, KZ)();
-      KZ->add_term(kalman_gain);
-      KZ->add_term(observation_coefficients);
-      NEW(SparseMatrixSum, L)();
-      L->add_term(transition);
-      L->add_term(KZ, -1);
-
-      Vector u = forecast_precision * marg.prediction_error()
-          - kalman_gain->Tmult(r);
-
-      // Turn r[t] into r[t-1]
-      r = transition->Tmult(r) + observation_coefficients->Tmult(u);
-
-      // Turn N[t] into N[t-1]
-      Matrix tmp = observation_coefficients->Tmult(
-          forecast_precision * observation_coefficients->dense())
-          + L->sandwich_transpose(N);
-      N = tmp;
+        // Turn r[t] into r[t-1]
+        r = transition->Tmult(r) + observation_coefficients->Tmult(u);
+        // Turn N[t] into N[t-1]
+        Matrix tmp = observation_coefficients->Tmult(
+            forecast_precision * observation_coefficients->dense())
+            + L->sandwich_transpose(N);
+        N = tmp;
+      } else {
+        r = transition->Tmult(r);
+        N = transition->sandwich_transpose(N);
+      }
 
       Vector filtered_state_mean;
       SpdMatrix filtered_state_variance;
