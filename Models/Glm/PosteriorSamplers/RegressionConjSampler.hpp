@@ -55,5 +55,8 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_sampler_;
     void set_posterior_suf();
   };
+
+  typedef RegressionConjSampler RegressionConjugateSampler;
+
 }  // namespace BOOM
 #endif  // BOOM_REGRESSION_CONJUGATE_SAMPLER_HPP
