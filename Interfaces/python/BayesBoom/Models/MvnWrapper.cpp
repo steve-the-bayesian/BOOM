@@ -157,9 +157,13 @@ namespace BayesBoom {
         ;
 
     //=========================================================================
+    py::class_<MvnGivenScalarSigmaBase,
+               MvnBase,
+               Ptr<MvnGivenScalarSigmaBase>>(boom, "MvnGivenScalarSigmaBase", py::multiple_inheritance())
+        ;
 
     py::class_<MvnGivenScalarSigma,
-               MvnBase,
+               MvnGivenScalarSigmaBase,
                PriorPolicy,
                Ptr<MvnGivenScalarSigma>>(boom, "MvnGivenScalarSigma", py::multiple_inheritance())
         .def(py::init<const SpdMatrix&, const Ptr<UnivParams> &>(),
