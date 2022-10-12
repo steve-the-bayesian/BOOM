@@ -7,6 +7,7 @@
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/GlmCoefs.hpp"
 #include "Models/Glm/RegressionModel.hpp"
+#include "Models/Glm/IndependentRegressionModels.hpp"
 #include "Models/Glm/TRegression.hpp"
 #include "Models/Glm/LoglinearModel.hpp"
 #include "Models/Glm/BinomialLogitModel.hpp"
@@ -15,6 +16,8 @@
 #include "Models/Glm/VariableSelectionPrior.hpp"
 
 #include "Models/Glm/PosteriorSamplers/BregVsSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/RegressionConjSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/IndependentRegressionModelsPosteriorSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/TRegressionSpikeSlabSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/BinomialLogitSpikeSlabSampler.hpp"
 #include "Models/Glm/PosteriorSamplers/PoissonRegressionSpikeSlabSampler.hpp"
@@ -197,6 +200,31 @@ namespace BayesBoom {
              [](const RegressionModel& m) {
                return m.log_likelihood();
              })
+        ;
+
+    py::class_<IndependentRegressionModels,
+               PriorPolicy,
+               PosteriorModeModel,
+               Ptr<IndependentRegressionModels>>(
+                   boom,
+                   "IndependentRegressionModels",
+                   py::multiple_inheritance())
+        .def(py::init(
+            [](int xdim, int ydim) {
+              return new IndependentRegressionModels(xdim, ydim);
+            }),
+             py::arg("xdim"),
+             py::arg("ydim"),
+             "Args:\n\n"
+             "  xdim:  Dimension of the predictors (X).\n"
+             "  ydim:  Dimension of the output/response (Y).\n")
+        .def("model",
+             [](IndependentRegressionModels *model, int which_model) {
+               return model->model(which_model);
+             },
+             py::arg("which_model"),
+             "Args:\n\n"
+             "  which_model:  The index (0, ... ydim-1) of the component model.\n")
         ;
 
     py::class_<RegressionSlabPrior,
@@ -461,6 +489,53 @@ namespace BayesBoom {
              )
         ;
 
+    py::class_<RegressionConjugateSampler,
+               PosteriorSampler,
+               Ptr<RegressionConjugateSampler>>(
+                   boom, "RegressionConjugateSampler")
+        .def(py::init(
+            [](RegressionModel *model,
+               MvnGivenScalarSigmaBase *coefficient_prior,
+               GammaModelBase *residual_precision_prior,
+               RNG &seeding_rng) {
+              return new RegressionConjugateSampler(
+                  model,
+                  coefficient_prior,
+                  residual_precision_prior,
+                  seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("coefficient_prior"),
+             py::arg("residual_precision_prior"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The regression model to be sampled.\n"
+             "  coefficient_prior:  A conditionally Gaussian prior for the "
+             "regression coefficients.\n"
+             "  residual_precision_prior:  Prior distribution for the "
+             "residual precision parameter.\n"
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler."
+             )
+        ;
+
+    py::class_<IndependentRegressionModelsPosteriorSampler,
+               PosteriorSampler,
+               Ptr<IndependentRegressionModelsPosteriorSampler>>(
+                   boom, "IndependentRegressionModelsPosteriorSampler")
+        .def(py::init(
+            [](IndependentRegressionModels *model,
+               RNG &seeding_rng) {
+              return new IndependentRegressionModelsPosteriorSampler(model, seeding_rng);
+            }),
+             py::arg("model"),
+             py::arg("seeding_rng") = BOOM::GlobalRng::rng,
+             "Args:\n\n"
+             "  model:  The model to be sampled.\n"
+             "  seeding_rng:  The RNG used to initialize the RNG owned by "
+             "this object.\n")
+        ;
+
     py::class_<BregVsSampler,
                PosteriorSampler,
                Ptr<BregVsSampler>>(boom, "BregVsSampler")
@@ -513,7 +588,7 @@ namespace BayesBoom {
             py::arg("spike"),
             py::arg("residual_precision_prior"),
             py::arg("tail_thickness_prior"),
-            py::arg("rng"),
+            py::arg("seeding_rng"),
             "Args:\n\n"
             "  model: The boom.TRegressionModel that the sampler will simulate "
             "for.\n"
@@ -526,7 +601,9 @@ namespace BayesBoom {
             "over the residual variance).\n"
             "  tail_thickness_prior: A boom.DoubleModel with support on "
             "a subset of the positive real line.\n"
-             "  rng: A boom.RNG random number generator.\n")
+             "  seeding_rng:  The random number generator used to set the seed "
+             "of the RNG owned by this sampler."
+             )
         .def("set_sigma_upper_limit",
              [](TRegressionSpikeSlabSampler *sampler, double upper_limit) {
                sampler->set_sigma_upper_limit(upper_limit);
@@ -634,7 +711,8 @@ namespace BayesBoom {
                          GammaModelBase *residual_precision_prior,
                          RNG &seeding_rng){
                         return new BigAssSpikeSlabSampler(
-                            model, global_spike, slab_prototype, residual_precision_prior, seeding_rng);
+                            model, global_spike, slab_prototype,
+                            residual_precision_prior, seeding_rng);
                       }),
              py::arg("model"),
              py::arg("global_spike"),
@@ -643,9 +721,10 @@ namespace BayesBoom {
              py::arg("seeding_rng_") = BOOM::GlobalRng::rng,
              "Args:\n\n"
              "  model:  The boom.BigRegressionModel to be sampled.\n"
-             "  global_spike:  A boom.VariableSelectionPrior describing which variables"
-             " are included in the model.\n"
-             "  slab_prototype: A boom.RegressionSlabPrior prior for the conditional distribution of "
+             "  global_spike:  A boom.VariableSelectionPrior describing which "
+             "variables are included in the model.\n"
+             "  slab_prototype: A boom.RegressionSlabPrior prior for the "
+             "conditional distribution of "
              "the regression coefficients given inclusion.\n"
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler.\n"

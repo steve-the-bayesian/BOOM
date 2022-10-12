@@ -248,6 +248,12 @@ namespace BayesBoom {
               return ans;
             },
             "The Vector of reisidual standard deviation parameters.")
+        .def_property_readonly(
+            "observation_model",
+            [](const MultivariateStateSpaceRegressionModel &model) {
+              return model.observation_model();
+            },
+            "Returns a boom.IndependentRegressionModels object.")
         .def("observation_coefficients",
              [](const MultivariateStateSpaceRegressionModel &model, int t) {
                Selector all_series(model.nseries(), true);
