@@ -456,15 +456,15 @@ namespace BOOM {
         //   updated.  The following line is a stop-gap for now.
         N = .5 * (N + N.transpose());
       }
-      SpdMatrix SpdN(N);
+      SpdMatrix SpdN(Kalman::robust_spd(N));
       if (!SpdN.is_pos_def()) {
         SymmetricEigen eigenN(SpdN);
         SpdN = eigenN.closest_positive_definite();
       }
 
-      SpdMatrix smoothed_state_variance =
+      SpdMatrix smoothed_state_variance = Kalman::robust_spd(
           filtered_state_variance - sandwich(
-              filtered_state_variance, SpdN);
+              filtered_state_variance, SpdN));
 
       if (!smoothed_state_variance.is_pos_def()) {
         SymmetricEigen variance_eigen(smoothed_state_variance);
