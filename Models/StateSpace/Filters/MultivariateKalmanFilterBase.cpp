@@ -45,7 +45,13 @@ namespace BOOM {
           return SpdMatrix(m);
         } else {
           std::ostringstream msg;
-          msg << "Coercing a non-symmetric matrix to symmetry.";
+          double distance;
+          uint imax, jmax;
+          std::tie(distance, imax, jmax) = m.distance_from_symmetry();
+          msg << "Coercing a non-symmetric matrix to symmetry.\n"
+              << "Distance from symmetry = " << distance << " with maximum "
+              "relative distance at (" << imax
+              << ", " << jmax << ").\n";
           if (m.nrow() < 10) {
             msg << "\n"
                 << "original matrix: \n"

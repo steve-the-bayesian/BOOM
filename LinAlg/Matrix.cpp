@@ -239,12 +239,20 @@ namespace BOOM {
   uint Matrix::nrow() const { return nr_; }
   uint Matrix::ncol() const { return nc_; }
 
-  double Matrix::distance_from_symmetry() const {
-    if (nr_ != nc_) return infinity();
+  std::tuple<double, uint, uint> Matrix::distance_from_symmetry() const {
+    if (nr_ != nc_) {
+      return std::tuple<double, uint, uint>(infinity(), 0, 0);
+    }
     double num = 0, denom = 0;
+    uint imax = 0, jmax = 0;
     for (uint i = 0; i < nr_; ++i) {
       for (uint j = 0; j < i; ++j) {
-        num = std::max<double>(num, fabs(unchecked(i, j) - unchecked(j, i)));
+        double crit = fabs(unchecked(i, j) - unchecked(j, i));
+        if (crit > num) {
+          num = crit;
+          imax = i;
+          jmax = j;
+        }
         denom += fabs(unchecked(i, j)) + fabs(unchecked(j, i));
       }
       // Include the diagonal when figuring the average size of the matrix
@@ -256,13 +264,16 @@ namespace BOOM {
     // The denominator can't be less than zero, but I don't want actual equality
     // here.
     if (denom <= 0.0) {
-      return 0;
+      return std::tuple<double, uint, uint>(0.0, 0, 0);
     }
-    return num / denom;
+    return std::tuple<double, uint, uint>(num / denom, imax, jmax);
   }
 
   bool Matrix::is_sym(double tol) const {
-    return distance_from_symmetry() < tol;
+    double dist;
+    uint imax, jmax;
+    std::tie(dist, imax, jmax) = distance_from_symmetry();
+    return dist < tol;
   }
 
   bool Matrix::same_dim(const Matrix &A) const {
