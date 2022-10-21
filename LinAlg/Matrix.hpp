@@ -503,6 +503,13 @@ namespace BOOM {
   Vector matmult(const Vector &v, const Matrix &m);   // v^T m
   Vector matmult(const Matrix &m, const Vector &v);   // m * v
 
+  // The distance from A to B defined as |a-b| /2(|a| + |b|), element-wise, max
+  // over elements.
+  double relative_distance(const Matrix &A, const Matrix &B);
+
+  // As above, but i, j return the indices of the max element.
+  double relative_distance(const Matrix &A, const Matrix &B, int &i, int &j);
+
   //    Vector operator*(const Vector &v, const Matrix &m);
   Vector operator*(const Vector &v, const Matrix &m);
   Vector operator*(const Matrix &m, const Vector &v);

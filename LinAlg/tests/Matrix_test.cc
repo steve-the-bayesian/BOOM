@@ -528,4 +528,23 @@ namespace {
     EXPECT_DOUBLE_EQ(col_sums[0], A(0, 0) + A(1, 0) + A(2, 0));
   }
 
+  TEST_F(MatrixTest, RelativeDistance) {
+    Matrix A(3, 4);
+    A.randomize();
+
+    Matrix B = A;
+    double d = relative_distance(A, B);
+    EXPECT_NEAR(d, 0.0, 1e-8);
+
+    B(1, 2) += .10;
+    int i, j;
+    d = relative_distance(A, B, i, j);
+    EXPECT_EQ(i, 1);
+    EXPECT_EQ(j, 2);
+    EXPECT_NEAR(d,
+                .5 * .1 / (A(1, 2) + B(1,2)),
+                1e-8);
+
+  }
+
 }  // namespace

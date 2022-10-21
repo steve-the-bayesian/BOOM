@@ -269,6 +269,32 @@ namespace BOOM {
     return std::tuple<double, uint, uint>(num / denom, imax, jmax);
   }
 
+  double relative_distance(const Matrix &A, const Matrix &B, int &imax, int &jmax) {
+    if (A.nrow() != B.nrow() || A.ncol() != B.ncol()) {
+      return infinity();
+    }
+    imax = jmax = -1;
+    double max_distance = negative_infinity();
+    for (int i = 0; i < A.nrow(); ++i) {
+      for (int j = 0; j < A.ncol(); ++j) {
+        double num = fabs(A(i, j) - B(i, j));
+        double denom = fabs(A(i, j)) + fabs(B(i, j));
+        double crit = denom <= 0 ? 0.0 : .5 * num / denom;
+        if (crit > max_distance) {
+          imax = i;
+          jmax = j;
+          max_distance = crit;
+        }
+      }
+    }
+    return max_distance;
+  }
+
+  double relative_distance(const Matrix &A, const Matrix &B) {
+    int imax = -1, jmax = -1;
+    return relative_distance(A, B, imax, jmax);
+  }
+
   bool Matrix::is_sym(double tol) const {
     double dist;
     uint imax, jmax;
