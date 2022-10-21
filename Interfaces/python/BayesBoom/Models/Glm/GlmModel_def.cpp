@@ -517,6 +517,14 @@ namespace BayesBoom {
              "  seeding_rng:  The random number generator used to set the seed "
              "of the RNG owned by this sampler."
              )
+        .def("set_sigma_upper_limit",
+             [](RegressionConjugateSampler *sampler,
+                double sigma_max) {
+               sampler->set_sigma_upper_limit(sigma_max);
+             },
+             py::arg("sigma_max"),
+             "Truncate the support of the residual standard deviation "
+             "parameter to (0, sigma_max).\n")
         ;
 
     py::class_<IndependentRegressionModelsPosteriorSampler,

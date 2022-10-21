@@ -69,6 +69,15 @@ namespace BayesBoom {
             },
             "The full state matrix for the model, as drawn by the most recent "
             "MCMC iteration.")
+        .def("set_shared_state",
+             [](MultivariateStateSpaceModelBase &model, const Matrix &shared_state) {
+               model.set_shared_state(shared_state);
+             },
+             py::arg("shared_state"),
+             "Args:\n\n"
+             "  shared_state: A boom.Matrix containing the state values.  Rows "
+             "are different components of the state vector.  Columns are "
+             "different time points.")
         .def_property_readonly(
             "smoothed_state_mean",
             [](MultivariateStateSpaceModelBase &model) {
