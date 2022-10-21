@@ -249,6 +249,9 @@ namespace BOOM {
     }
 
     const Matrix &shared_state() const { return shared_state_; }
+    void set_shared_state(const Matrix &shared_state) {
+      shared_state_ = shared_state;
+    }
 
     ConstVectorView shared_state(int t) const {return shared_state().col(t);}
 
