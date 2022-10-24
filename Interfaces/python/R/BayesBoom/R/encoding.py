@@ -500,6 +500,8 @@ class InteractionEncoder(Encoder):
     def encodes(self, vname):
         return self._encoder1.encodes(vname) or self._encoder2.encodes(vname)
 
+    def __repr__(self):
+        return f"Interaction between {self._encoder1} and {self._encoder2}."
 
 class InteractionEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -632,6 +634,11 @@ class DatasetEncoder(Encoder):
             start += enc.dim
         return affected_indices, main_effect_indices
 
+    def __repr__(self):
+        ans = "A DatasetEncoder managing: \n"
+        for enc in self._encoders:
+            ans += str(enc) + "\n"
+        return ans
 
 class DatasetEncoderJsonEncoder(json.JSONEncoder):
     def default(self, obj):
