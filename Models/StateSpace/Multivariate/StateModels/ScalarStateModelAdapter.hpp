@@ -186,12 +186,17 @@ namespace BOOM {
     double xtx() const {return xtx_;}
     double xty() const {return xty_;}
 
+    std::string print() const;
+    std::ostream &print(std::ostream &out) const;
+
    private:
     double count_;
     double xtx_;
     double xty_;
     double yty_;
   };
+
+  std::ostream & operator<<(std::ostream &out, const ScalarRegressionSuf &suf);
 
   //===========================================================================
   class ConditionallyIndependentScalarStateModelMultivariateAdapter
