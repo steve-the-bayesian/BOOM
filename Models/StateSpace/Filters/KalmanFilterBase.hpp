@@ -170,13 +170,10 @@ namespace BOOM {
     // Filtering operations
     //--------------------------------------------------------------------------
 
-    double compute_log_likelihood() {
-      if (status_ == NOT_CURRENT) {
-        clear_loglikelihood();
-        update();
-      }
-      return log_likelihood_;
-    }
+    // If the filter status is current then return the pre-computed log
+    // likelihood.  If not current the compute and store the log likelihood and
+    // return the saved value.
+    double compute_log_likelihood();
 
     // Concrete classes hold a pointer to a model object.  Calling update() runs
     // the kalman filter over all the data contained in *model_.
