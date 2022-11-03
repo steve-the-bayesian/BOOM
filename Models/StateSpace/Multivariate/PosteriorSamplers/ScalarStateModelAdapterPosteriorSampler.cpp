@@ -52,9 +52,21 @@ namespace BOOM {
     Vector slopes(model_->nseries());
     for (int i = 0; i < model_->nseries(); ++i) {
       const ScalarRegressionSuf &suf(model_->sufficient_statistics(i));
-      double posterior_mean = suf.xty() / suf.xtx();
-      double posterior_variance = sigsq[i] / suf.xtx();
-      slopes[i] = rnorm_mt(rng(), posterior_mean, sqrt(posterior_variance));
+      double prior_precision = 1;
+      double posterior_precision = (prior_precision + suf.xtx()) / sigsq[i];
+      double posterior_mean = (suf.xty() / sigsq[i]) / posterior_precision;
+      double posterior_sd = sqrt(1.0 / posterior_precision);
+      double slope = rnorm_mt(rng(), posterior_mean, posterior_sd);
+      slopes[i] = slope;
+
+      if (slope > 1000 || slope < -1000) {
+        std::cout << "Extreme value of model adapter slope for series " << i
+                  << " with suf: \n" << suf
+                  << " posterior mean      = " << posterior_mean << "\n"
+                  << " posterior_precision = " << posterior_precision << "\n"
+                  << " posterior_sd        = " << posterior_sd << "\n"
+                  << " slope               = " << slope << "\n";
+      }
     }
     model_->set_observation_coefficient_slopes(slopes);
   }

@@ -91,20 +91,28 @@ namespace {
                          double slope_sd = .01,
                          double seasonal_sd = .1,
                          double residual_sd = .5,
-                         double observation_percent = 1.0)
+                         double observation_percent = 1.0,
+                         bool include_trend = true,
+                         bool include_seasonal = true)
         : model_(new MultivariateStateSpaceRegressionModel(xdim, nseries)),
           trend_model_(new LocalLinearTrendStateModel),
           seasonal_model_(new SeasonalStateModel(4, 1)),
           observation_coefficients_(nseries)
     {
+
+      for (int series = 0; series < nseries; ++series) {
+        Vector regression_coefficients = rnorm_vector(xdim, 0, 1);
+        model_->observation_model()->model(series)->set_Beta(
+            regression_coefficients);
+      }
       observation_coefficients_.randomize();
       double total = observation_coefficients_.sum();
       observation_coefficients_ = observation_coefficients_ * nseries / total;
 
       initialize_trend_model(level_sd, slope_sd, ntimes);
       initialize_seasonal_model(seasonal_sd, ntimes);
-      initialize_adapter();
-      simulate_data(nseries, ntimes);
+      initialize_adapter(include_trend, include_seasonal);
+      simulate_data(nseries, ntimes, include_trend, include_seasonal);
       set_posterior_sampler();
     }
 
@@ -121,7 +129,7 @@ namespace {
       trend_state_ = trend_model_->simulate(ntimes);
       trend_ = trend_state_.col(0);
 
-      double prior_df = 1.0;
+      double prior_df = 100000000000000.0;
       int position = 0;
       NEW(ZeroMeanMvnIndependenceSampler, level_sampler)(
           trend_model_.get(),
@@ -130,6 +138,7 @@ namespace {
           position);
       trend_model_->set_method(level_sampler);
 
+      position = 1;
       NEW(ZeroMeanMvnIndependenceSampler, slope_sampler)(
           trend_model_.get(),
           prior_df,
@@ -141,12 +150,14 @@ namespace {
     void initialize_seasonal_model(double seasonal_sd, int ntimes) {
       int nseasons = 4;
       seasonal_model_->set_initial_state_mean(Vector(nseasons - 1, 0.0));
-      seasonal_model_->set_initial_state_variance(SpdMatrix(nseasons - 1, 1.0));
+      // The initial state variance needs to be wide enough to produce initial
+      // seasonal effects that will be detectable next to the residual variance.
+      seasonal_model_->set_initial_state_variance(SpdMatrix(nseasons - 1, 4.0));
       seasonal_model_->set_sigsq(square(seasonal_sd));
       seasonal_state_ = seasonal_model_->simulate(ntimes);
       seasonal_ = seasonal_state_.col(0);
 
-      double prior_df = 1.0;
+      double prior_df = 1000000000000000.0;
       NEW(ZeroMeanGaussianConjSampler, sampler)(
           seasonal_model_.get(),
           prior_df,
@@ -154,36 +165,59 @@ namespace {
       seasonal_model_->set_method(sampler);
     }
 
-    void simulate_data(int nseries, int ntimes) {
-      Vector total_state = trend_ + seasonal_;
+    // Simulate a fake data set, and assign it to the model.
+    void simulate_data(int nseries, int ntimes, bool include_trend,
+                       bool include_seasonal) {
+      Vector total_state(ntimes);
+      if (include_trend) {
+        total_state += trend_;
+      }
+      if (include_seasonal) {
+        total_state += seasonal_;
+      }
+
       simulated_data_ = Matrix(nseries, ntimes);
 
+      Matrix regression_predictors(ntimes, model_->xdim());
+      regression_predictors.col(0) = 1.0;
+      for (int i = 1; i < regression_predictors.ncol(); ++i) {
+        regression_predictors.col(i) = rnorm_vector(ntimes, 0, 1);
+      }
+
       for (int series = 0; series < nseries; ++series) {
-        simulated_data_.row(series) = total_state * observation_coefficients_[series];
-        for (int t = 0; t < ntimes; ++t) {
-          simulated_data_(series, t) +=
-              sqrt(model_->single_observation_variance(t, series)) * rnorm(0, 1);
+        simulated_data_.row(series) =
+            total_state * observation_coefficients_[series];
+        for (int time = 0; time < ntimes; ++time) {
+          double regression_effect = model_->observation_model()->model(
+              series)->predict(regression_predictors.row(time));
+          double observation_error = sqrt(model_->single_observation_variance(
+              time, series)) * rnorm(0, 1);
+          simulated_data_(series, time) += regression_effect + observation_error;
         }
       }
 
       // Assign the data.
       model_->clear_data();
-      NEW(VectorData, intercept)(Vector(1, 1.0));
       for (int time = 0; time < ntimes; ++time) {
+        NEW(VectorData, predictors)(regression_predictors.row(time));
         for (int series = 0; series < nseries; ++series) {
           NEW(DoubleData, y)(simulated_data_(series, time));
           NEW(MultivariateTimeSeriesRegressionData, data_point)(
-              y, intercept, series, time);
+              y, predictors, series, time);
           model_->add_data(data_point);
         }
       }
     }
 
-    void initialize_adapter() {
+    void initialize_adapter(bool include_trend, bool include_seasonal) {
       int nseries = model_->nseries();
       scalar_adapter_.reset(new Adapter(model_.get(), nseries));
-      scalar_adapter_->add_state(trend_model_);
-      scalar_adapter_->add_state(seasonal_model_);
+      if (include_trend) {
+        scalar_adapter_->add_state(trend_model_);
+      }
+      if (include_seasonal) {
+        scalar_adapter_->add_state(seasonal_model_);
+      }
 
       NEW(CiScalarStateAdapterPosteriorSampler, sampler)(scalar_adapter_.get());
       scalar_adapter_->set_method(sampler);
@@ -204,13 +238,23 @@ namespace {
     Ptr<LocalLinearTrendStateModel> trend_model_;
     double trend_level_sd_;
     double trend_slope_sd_;
+
+    // The state for the local linear trend model.  The first column is the
+    // level component.  Second column is the slope component.  Each row is a
+    // time point.
     Matrix trend_state_;
+    // First column (level component) of trend_state_.
     Vector trend_;
 
     // seasonal model with 4 seasons.
     Ptr<SeasonalStateModel> seasonal_model_;
     double sesonal_sd_;
+    // The state for the seasonal state model.  First column is the current
+    // seasonal contribution.  Columns 2 and 3 are lags of the first column.
+    // Rows are time points.
     Matrix seasonal_state_;
+    // The initial column of seasonal_state_, containing the seasonal
+    // contribution at each time point.
     Vector seasonal_;
 
     using Adapter = ConditionallyIndependentScalarStateModelMultivariateAdapter;
@@ -220,6 +264,24 @@ namespace {
     Matrix simulated_data_;
 
   };
+
+  //===========================================================================
+  //  Check that 'observe_state' does the right thing when adjusting data for
+  //  regression coefficients and such.
+  TEST_F(ScalarStateModelAdapterTest, TestObserveState) {
+    int nseries = 6;
+    int ntimes = 10;
+
+    AdapterTestFramework framework(nseries, ntimes);
+
+    using Adapter = AdapterTestFramework::Adapter;
+    Ptr<Adapter> adapter = framework.scalar_adapter_;
+
+    adapter->clear_data();
+    // The state of the model is
+
+  }
+
 
   //===========================================================================
   TEST_F(ScalarStateModelAdapterTest, Serialization) {
@@ -273,12 +335,61 @@ namespace {
   }
 
   //======================================================================
+
+  // Below is some R code for visually validating the results of the MCMC test.
+  // The test produces output files in the top level project directory, so run
+  // the test by
+  //
+  // bazel build -c opt path/to/test
+  // ./bazel-bin/path/to/test
+  //
+  // Then call the following from R:
+  /*
+library(Boom)
+
+myplot <- function(x, center = FALSE, ...) {
+  truth <- x[1, ]
+  x <- x[-1, ]
+
+  if (center) {
+    x <- t(t(x) - truth)
+    truth  <- truth * 0
+  }
+
+  PlotDynamicDistribution(x, ...)
+  lines(truth, col="green")
+}
+
+
+trend <- mscan("trend_draws.out")
+seas <- mscan("seasonal_draws.out")
+obs <- mscan("observation_coefficients.out")
+
+par(mfrow=c(2,2))
+myplot(trend, F)
+myplot(trend, T)
+myplot(seas, F, ylim = range(seas))
+myplot(seas, T, ylim = range(seas))
+abline(v = 4 * (1:25), lty=3)
+
+BoxplotTrue(obs[-1, ], truth = obs[1, ])
+   */
+
   TEST_F(ScalarStateModelAdapterTest, TestMcmc) {
     int nseries = 6;
     int ntimes = 100;
 
-    AdapterTestFramework framework(nseries, ntimes, 1, .1, .1);
-
+    int xdim = 1;
+    double level_sd = .1;
+    double slope_sd = 0.01;
+    double seasonal_sd = 0.1;
+    double residual_sd = .001;
+    double observation_percent = 1.0;
+    bool include_trend = true;
+    bool include_seasonal = true;
+    AdapterTestFramework framework(nseries, ntimes, xdim, level_sd,
+                                   slope_sd, seasonal_sd, residual_sd,
+                                   observation_percent, include_trend, include_seasonal);
     int burn = 50;
     int niter = 200;
 
@@ -298,32 +409,44 @@ namespace {
       log_likelihood[i + burn] = framework.model_->log_likelihood();
 
       const Matrix &state(framework.model_->shared_state());
-      EXPECT_EQ(state.nrow(), 5);
-      trend_draws.row(i) = state.row(0);
+      EXPECT_EQ(state.nrow(), 2 * include_trend + 3 * include_seasonal);
+      if (include_trend) {
+        trend_draws.row(i) = state.row(0);
+      }
 
-      EXPECT_EQ(state.ncol(), ntimes);
-      seasonal_draws.row(i) = state.row(2);
+      if (include_trend && include_seasonal) {
+        EXPECT_EQ(state.ncol(), ntimes);
+        seasonal_draws.row(i) = state.row(2);
+      }
 
       observation_coefficient_draws.row(i) =
           framework.scalar_adapter_->observation_coefficient_slopes();
     }
 
-    EXPECT_EQ(
-        "",
-        CheckStochasticProcess(trend_draws,framework.trend_, .95, .1, 0.5,
-                               "trend_draws.out"));
+    if (include_trend) {
+      EXPECT_EQ(
+          "",
+          CheckStochasticProcess(trend_draws,framework.trend_, .95, .1, 0.5,
+                                 "trend_draws.out"));
+    }
 
     // TODO(steve): We don't do a great job with seasonal in this test.  Try
     // better to understand why.
     //
-    // EXPECT_EQ(
-    //     "",
-    //     CheckStochasticProcess(seasonal_draws,framework.seasonal_, .95, .1, 0.2,
-    //                            "seasonal_draws.out"));
+    if (include_seasonal) {
+      EXPECT_EQ(
+          "",
+          CheckStochasticProcess(seasonal_draws,framework.seasonal_, .95, .1, 0.2,
+                                 "seasonal_draws.out"));
+    }
 
     std::ofstream("log_likelihood.out") << log_likelihood;
-    std::ofstream("trend_draws.out") << framework.trend_ << "\n" << trend_draws;
-    std::ofstream("seasonal_draws.out") << framework.seasonal_ << "\n" << seasonal_draws;
+    if (include_trend) {
+      std::ofstream("trend_draws.out") << framework.trend_ << "\n" << trend_draws;
+    }
+    if (include_seasonal) {
+      std::ofstream("seasonal_draws.out") << framework.seasonal_ << "\n" << seasonal_draws;
+    }
 
     auto status = CheckMcmcMatrix(observation_coefficient_draws,
                                   framework.observation_coefficients_);

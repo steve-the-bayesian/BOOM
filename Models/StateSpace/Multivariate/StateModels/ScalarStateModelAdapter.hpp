@@ -32,12 +32,13 @@ namespace BOOM {
 
   //===========================================================================
   // Adapts a collection of one or more StateModel objects (designed for use
-  // with scalar time series) for use as a SharedStateModel.
+  // with scalar time series) for use as a SharedStateModel in a multivariate
+  // state space model.
   //
   // The model matrices that are specific to the state are all determined by the
-  // base StateModel.  The observation coefficients are determined by a
-  // collection of linear regressions, with one regression model assigned to
-  // each element of the response vector.
+  // component StateModel objects.  The observation coefficients are determined
+  // by a collection of linear regressions, with one regression model assigned
+  // to each element of the response vector.
   //
   // In notation, the observation equation is
   //   y[t, j] = beta[j] * [Z[t] * alpha[j]] + error[t, j].
@@ -199,6 +200,8 @@ namespace BOOM {
   std::ostream & operator<<(std::ostream &out, const ScalarRegressionSuf &suf);
 
   //===========================================================================
+  // A ScalarStateModelAdapter for multivariate state models with conditionally
+  // (on state) independent observation errors.
   class ConditionallyIndependentScalarStateModelMultivariateAdapter
       : public ScalarStateModelMultivariateAdapter {
    public:
@@ -227,7 +230,6 @@ namespace BOOM {
     void observe_state(const ConstVectorView &then,
                        const ConstVectorView &now,
                        int time_now) override;
-
 
     // A vector with one element per series, giving the weight that series
     // places on the overall state contribution.
