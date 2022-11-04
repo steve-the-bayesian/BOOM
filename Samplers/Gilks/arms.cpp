@@ -25,7 +25,7 @@ namespace GilksArms {
     const double XEPS(0.00001);
     const double YEPS(0.1);
     const double EYEPS(0.001);
-  }  // namespace 
+  }  // namespace
 
   using BOOM::report_error;
 
@@ -253,7 +253,7 @@ namespace GilksArms {
 
   /* *********************************************************************** */
 
-  
+
   GilksErrorCode initial(double *xinit, int ninit, double xl, double xr, int npoint,
                          FUNBAG *lpdf, ENVELOPE *env, double *convex, int *neval,
                          METROPOLIS *metrop)
@@ -867,57 +867,4 @@ namespace GilksArms {
     return y;
   }
 
-  /* *********************************************************************** */
-
-  // SS removed the following function to avoid compiler errors
-  // void display(FILE *f, ENVELOPE *env)
-
-  // /* to display envelope - for debugging only */
-  // {
-  //   POINT *q;
-
-  //   /* print envelope attributes */
-  //   fprintf(f,"========================================================\n");
-  //   fprintf(f,"envelope attributes:\n");
-  //   fprintf(f,"points in use = %d, points available = %d\n",
-  //           env->cpoint,env->npoint);
-  //   fprintf(f,"function evaluations = %d\n",*(env->neval));
-  //   fprintf(f,"ymax = %f, p = %x\n",env->ymax,env->p);
-  //   fprintf(f,"convexity adjustment = %f\n",*(env->convex));
-  //   fprintf(f,"--------------------------------------------------------\n");
-
-  //   /* find leftmost POINT */
-  //   q = env->p;
-  //   while(q->pl != NULL)q = q->pl;
-
-  //   /* now print each POINT from left to right */
-  //   for(q = env->p; q != NULL; q = q->pr){
-  //     fprintf(f,"point at %x, left at %x, right at %x\n",q,q->pl,q->pr);
-  //     fprintf(f,"x = %f, y = %f, ey = %f, cum = %f, f = %d\n",
-  //             q->x,q->y,q->ey,q->cum,q->f);
-  //   }
-  //   fprintf(f,"========================================================\n");
-
-  //   return;
-  // }
-
-  /* *********************************************************************** */
-  // use BOOM's uniform generator
 }  // namespace GilksArms
-
-// namespace BOOM{
-//   double runif(double, double);
-// }
-
-// namespace GilksArms{
-//   double u_random()
-
-//     /* to return a standard uniform random number */
-//   {
-//     //  return ((double)rand() + 0.5)/((double)RAND_MAX + 1.0);
-//     return BOOM::runif(0.0, 1.0);
-//   }
-
-//   /* ***********************************************************************
-//   */
-// }

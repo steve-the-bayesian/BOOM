@@ -40,7 +40,7 @@ namespace BOOM {
 
   void report_message(const std::string &msg) {
 #ifdef RLANGUAGE
-    REprintf("%s\n", msg.c_str());
+    Rprintf("%s\n", msg.c_str());
 #else
     std::cout << msg << std::endl;
 #endif
