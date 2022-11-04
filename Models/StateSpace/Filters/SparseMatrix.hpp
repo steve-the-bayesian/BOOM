@@ -572,6 +572,8 @@ namespace BOOM {
     void Tmult(VectorView lhs, const ConstVectorView &rhs) const override {
       lhs = m_.Tmult(rhs);
     }
+    using SparseMatrixBlock::Tmult;
+
     void multiply_inplace(VectorView x) const override { x = m_ * x; }
     SpdMatrix inner() const override {return m_.inner();}
     SpdMatrix inner(const ConstVectorView &weights) const override {

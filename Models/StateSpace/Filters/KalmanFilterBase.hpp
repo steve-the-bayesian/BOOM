@@ -173,7 +173,12 @@ namespace BOOM {
     double compute_log_likelihood() {
       if (status_ == NOT_CURRENT) {
         clear_loglikelihood();
-        update();
+        try {
+          update();
+        } catch (...) {
+          log_likelihood_ = negative_infinity();
+          status_ = NOT_CURRENT;
+        }
       }
       return log_likelihood_;
     }
