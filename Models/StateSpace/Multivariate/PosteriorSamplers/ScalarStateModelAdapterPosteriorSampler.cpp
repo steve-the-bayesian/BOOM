@@ -58,15 +58,6 @@ namespace BOOM {
       double posterior_sd = sqrt(1.0 / posterior_precision);
       double slope = rnorm_mt(rng(), posterior_mean, posterior_sd);
       slopes[i] = slope;
-
-      if (slope > 1000 || slope < -1000) {
-        std::cout << "Extreme value of model adapter slope for series " << i
-                  << " with suf: \n" << suf
-                  << " posterior mean      = " << posterior_mean << "\n"
-                  << " posterior_precision = " << posterior_precision << "\n"
-                  << " posterior_sd        = " << posterior_sd << "\n"
-                  << " slope               = " << slope << "\n";
-      }
     }
     model_->set_observation_coefficient_slopes(slopes);
   }
