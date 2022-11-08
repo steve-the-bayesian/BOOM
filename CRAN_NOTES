@@ -24,3 +24,13 @@ the package code, but doing so raised an error that 'igraph' was a missing
 global variable.  This was after adding the igraph:: namespace prefix to igraph
 related calls.  My suspicion is that this is related to igraph and there is not
 much I can do about it.
+
+# ===========================================================================
+bsts:
+
+CRAN checks generate an ASAN error on bsts.  This is a longstanding error which
+I am unable to replicate.  I have investigated this error numerous times, and
+believe it to be a false alarm (which ASAN admits is possible).  The code path
+for this error is such that if it were a true error, we would see many ASAN
+errors, not just one.  Pure C++ unit tests run with the code elements called out
+by the warning do not generate ASAN warnings.
