@@ -53,6 +53,17 @@ namespace BOOM {
     std::vector<Ptr<RegressionModel>> models_;
   };
 
+
+  class IndependentStudentRegressionModels
+      : public CompositeParamPolicy,
+        public NullDataPolicy,
+        public PriorPolicy,
+        public PosteriorModeModel {
+   public:
+   private:
+    std::vector<Ptr<TRegressionModel>> models_;
+  };
+
 }  // namespace BOOM
 
 #endif  // BOOM_GLM_INDEPENDENT_REGRESSION_MODELS_HPP_
