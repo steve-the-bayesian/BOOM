@@ -548,13 +548,16 @@ namespace BayesBoom {
                PosteriorSampler,
                Ptr<BregVsSampler>>(boom, "BregVsSampler")
         .def(py::init(
-            [](Ptr<RegressionModel> model,
-               const Ptr<MvnGivenScalarSigma> &slab,
-               const Ptr<GammaModelBase> &residual_precision_prior,
-               const Ptr<VariableSelectionPrior> &spike,
+            [](RegressionModel *model,
+               MvnGivenScalarSigma *slab,
+               GammaModelBase *residual_precision_prior,
+               VariableSelectionPrior *spike,
                RNG &seeding_rng) {
-              return new BregVsSampler(model.get(), slab, residual_precision_prior,
-                                       spike, seeding_rng);
+              return new BregVsSampler(model,
+                                       Ptr<MvnGivenScalarSigma>(slab),
+                                       Ptr<GammaModelBase>(residual_precision_prior),
+                                       Ptr<VariableSelectionPrior>(spike),
+                                       seeding_rng);
             }),
              py::arg("model"),
              py::arg("slab"),

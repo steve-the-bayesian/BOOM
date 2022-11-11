@@ -12,7 +12,7 @@ def find_project_root(dir=None):
     if os.path.exists(os.path.join(str(dir), "setup.py")):
         return dir
     else:
-        current_path = pathlib.path(dir)
+        current_path = pathlib.Path(dir)
         parent = current_path.parent.absolute()
         if parent == current_path:
             return current_path
