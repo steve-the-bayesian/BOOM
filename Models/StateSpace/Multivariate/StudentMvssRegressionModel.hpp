@@ -35,7 +35,8 @@ namespace BOOM {
   //===========================================================================
   // A scalar response value, paired with a set of predictor variables, at a
   // given point in time.
-  class MultivariateTimeSeriesRegressionData : public RegressionData {
+  class StudentMultivariateTimeSeriesRegressionData
+      : public MultivariateTimeSeriesRegressionData {
    public:
     // Args:
     //   y: The response variable.
@@ -44,43 +45,36 @@ namespace BOOM {
     //     which this observation belongs.
     //   timestamp: The time-index of the time series (0.. sample_size - 1)
     //     containing this observation.
-    MultivariateTimeSeriesRegressionData(double y,
-                                         const Vector &x,
-                                         int series,
-                                         int timestamp);
+    StudentMultivariateTimeSeriesRegressionData(double y,
+                                                const Vector &x,
+                                                int series,
+                                                int timestamp);
 
     // As above, but y and x are Ptr's.  If Y and X are matrices, with the same
     // X's applying to each time series in Y, then this constructor is more
     // space efficient than the one above, because multiple Ptr's can point the
     // the same predictor vector.
-    MultivariateTimeSeriesRegressionData(const Ptr<DoubleData> &y,
-                                         const Ptr<VectorData> &x,
-                                         int series,
-                                         int timestamp);
+    StudentMultivariateTimeSeriesRegressionData(
+        const Ptr<DoubleData> &y,
+        const Ptr<VectorData> &x,
+        int series,
+        int timestamp);
 
     MultivariateTimeSeriesRegressionData *clone() const override {
-      return new MultivariateTimeSeriesRegressionData(*this);
+      return new StudentMultivariateTimeSeriesRegressionData(*this);
     }
 
-    // The index of the time series to which this data point corresponds.  If
-    // you think about a multivariate time series as a matrix, with rows
-    // representing time, this is the column identifier.
-    int series() const {return which_series_;}
-
-    // The time-index of the time series to which this data point belongs.  If
-    // you think about a multivariate time series as a matrix, with rows
-    // representing time, this is the run number.
-    int timestamp() const {return timestamp_index_;}
+    double weight() const {return weight_;}
+    void set_weight(double weight) {weight_ = weight;}
 
     std::ostream &display(std::ostream &out) const override {
-      out << "series " << which_series_ << "\n"
-          << "time   " << timestamp_index_ << "\n";
-      return RegressionData::display(out);
+      MultivariateTimeSeriesRegressionData::display(out)
+          << "weight " << weight_ << "\n";
+      return out;
     }
 
    private:
-    int which_series_;
-    int timestamp_index_;
+    double weight_;
   };
 
   //===========================================================================
@@ -91,7 +85,7 @@ namespace BOOM {
   // filling that role.  The proxy model keeps a pointer to the host model from
   // which it draws data and parameters.  The proxy also assumes ownership of
   // any series-specific state.
-  class MultivariateStateSpaceRegressionModel;
+  class StudentMvssRegressionModel;
   class ProxyScalarStateSpaceModel : public StateSpaceModel {
    public:
     // Args:
@@ -198,7 +192,7 @@ namespace BOOM {
   // separately.  Likewise for the samplers for the regression models.  If
   // (e.g.) a hierarchical regression is desired then that is a new posterior
   // sampler class for IndependentRegressionModels.
-  class MultivariateStateSpaceRegressionModel
+  class StudentMvssRegressionModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
         public IID_DataPolicy<MultivariateTimeSeriesRegressionData>,
         public PriorPolicy
