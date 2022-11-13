@@ -22,9 +22,11 @@
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/IndependentRegressionModels.hpp"
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionDataPolicy.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/ProxyScalarStateSpaceModel.hpp"
 
 namespace BoomStateSpaceTesting{
   class MultivariateStateSpaceRegressionModelTest;
@@ -84,74 +86,6 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // That MultivariateStateSpaceRegressionModel maintains a set of
-  // ScalarKalmanFilter objects to handle simulating from series-specific state.
-  // Each of these series-specific filters needs a "state space model" to supply
-  // the kalman matrices and data.  This class is a proxy state space model
-  // filling that role.  The proxy model keeps a pointer to the host model from
-  // which it draws data and parameters.  The proxy also assumes ownership of
-  // any series-specific state.
-  class MultivariateStateSpaceRegressionModel;
-  class ProxyScalarStateSpaceModel : public StateSpaceModel {
-   public:
-    // Args:
-    //   model:  The host model.
-    //   which_series: The index of the time series that this object describes.
-    ProxyScalarStateSpaceModel(MultivariateStateSpaceRegressionModel *model,
-                               int which_series);
-
-    // The number of distinct time points in the host model.
-    int time_dimension() const override;
-
-    // The value of the time series specific to this proxy.  The host should
-    // have subtracted any regression effects or shared state before this
-    // function is called.
-    double adjusted_observation(int t) const override;
-
-    bool is_missing_observation(int t) const override;
-
-    ZeroMeanGaussianModel *observation_model() override { return nullptr; }
-    const ZeroMeanGaussianModel *observation_model() const override {
-      return nullptr;
-    }
-
-    double observation_variance(int t) const override;
-
-    // Because the proxy model has no observation model,
-    // observe_data_given_state is a no-op.
-    void observe_data_given_state(int t) override {}
-
-    // Simulate 'horizon' time periods beyond time_dimension().
-    //
-    // Args:
-    //   rng: The [0, 1) random number generator to use for the simulation.
-    //   horizon: The number of periods beyond 'time_dimension()' to simulate.
-    //   final_state:  The value of the state at time time_dimension() - 1.
-    //
-    // Returns:
-    //   A draw from the predictive distribution of the state contribution over
-    //   the next 'horizon' time periods.
-    Vector simulate_state_contribution_forecast(
-        RNG &rng, int horizon, const Vector &final_state);
-
-    // Ensure all state models are capable of handling times up to t-1.
-    void observe_time_dimension(int t) {
-      for (int s = 0; s < number_of_state_models(); ++s) {
-        state_model(s)->observe_time_dimension(t);
-      }
-    }
-
-   private:
-    // The add_data method is disabled.
-    void add_data(const Ptr<StateSpace::MultiplexedDoubleData>
-                  &data_point) override;
-    void add_data(const Ptr<Data> &data_point) override;
-
-    MultivariateStateSpaceRegressionModel *host_;
-    int which_series_;
-  };
-
-  //===========================================================================
   // A multivariate state space regression model describes a fixed dimensional
   // vector Y[t] as it moves throughout time.  The model is a state space model
   // of the form
@@ -200,11 +134,14 @@ namespace BOOM {
   // sampler class for IndependentRegressionModels.
   class MultivariateStateSpaceRegressionModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
-        public IID_DataPolicy<MultivariateTimeSeriesRegressionData>,
         public PriorPolicy
   {
     friend class BoomStateSpaceTesting::MultivariateStateSpaceRegressionModelTest;
    public:
+
+    using Proxy = ProxyScalarStateSpaceModel<
+     MultivariateStateSpaceRegressionModel>;
+
     // Args:
     //   xdim:  The dimension of the static regression component.
     //   nseries:  The number of time series being modeled.
@@ -312,10 +249,12 @@ namespace BOOM {
     //-----------------------------------------------------------------------
 
     // The number of time points that have been observed.
-    int time_dimension() const override {return time_dimension_;}
+    int time_dimension() const override {
+      return data_policy_.time_dimension();
+    }
 
     // The number of time series being modeled.
-    int nseries() const override {return nseries_;}
+    int nseries() const override {return data_policy_.nseries();}
 
     // The dimension of the predictors.
     int xdim() const {return observation_model_->xdim();}
@@ -323,8 +262,8 @@ namespace BOOM {
     // Adding data to this model adjusts time_dimension_, data_indices_, and
     // observed_.
     void add_data(const Ptr<Data> &dp) override;
-    void add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp) override;
-    void add_data(MultivariateTimeSeriesRegressionData *dp) override;
+    void add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp);
+    void add_data(MultivariateTimeSeriesRegressionData *dp);
 
     // Return the position in the data vector containing the Y value for the
     // given series at the given time.  If no data point exists for the
@@ -340,18 +279,18 @@ namespace BOOM {
       if (index < 0) {
         return negative_infinity();
       } else {
-        return dat()[index]->y();
+        return data_policy_.data_point(series, time)->y();
       }
     }
 
     // A flag indicating whether a specific series was observed at time t.
     bool is_observed(int series, int time) const {
-      return observed_[time][series];
+      return data_policy_.observed(time)[series];
     }
 
     // Vector data access.
     ConstVectorView observation(int t) const override {
-      const Selector &observed(observed_[t]);
+      const Selector &observed(data_policy_.observed(t));
       response_workspace_.resize(observed.nvars());
       for (int i = 0; i < observed.nvars(); ++i) {
         int series = observed.sparse_index(i);
@@ -361,7 +300,7 @@ namespace BOOM {
     }
 
     const Selector &observed_status(int t) const override {
-      return observed_[t];
+      return data_policy_.observed(t);
     }
 
     // Set the observation status for the data at time t.
@@ -402,12 +341,11 @@ namespace BOOM {
       return observation_model_->model(dim)->sigsq();
     }
 
-    Ptr<ProxyScalarStateSpaceModel> series_specific_model(int index) {
+    Ptr<Proxy> series_specific_model(int index) {
       return proxy_models_[index];
     }
 
-    const Ptr<ProxyScalarStateSpaceModel>
-    series_specific_model(int index) const {
+    const Ptr<Proxy> series_specific_model(int index) const {
       return proxy_models_[index];
     }
 
@@ -635,11 +573,15 @@ namespace BOOM {
     // Data section.
     //--------------------------------------------------------------------------
 
+    MultivariateStateSpaceRegressionDataPolicy<
+      MultivariateTimeSeriesRegressionData> data_policy_;
+
+
     // The number of series being modeled.
-    int nseries_;
+    // int nseries_;
 
     // The time dimension is the number of distinct time points.
-    int time_dimension_;
+    // int time_dimension_;
 
     // The shared state models are stored in this container.  The series
     // specific state models are stored in proxy_models_.
@@ -647,11 +589,11 @@ namespace BOOM {
 
     // The proxy models hold components of state that are specific to individual
     // data series.
-    std::vector<Ptr<ProxyScalarStateSpaceModel>> proxy_models_;
+    std::vector<Ptr<Proxy>> proxy_models_;
 
     // data_indices_[series][time] gives the index of the corresponding element
     // of dat().
-    std::map<int, std::map<int, int>> data_indices_;
+    //     std::map<int, std::map<int, int>> data_indices_;
 
     // The observation model.
     Ptr<IndependentRegressionModels> observation_model_;
@@ -664,7 +606,7 @@ namespace BOOM {
     //     mutable SelectorMatrix observed_;
 
     // observed_[t] indicates which time series are observed at time t.
-    std::vector<Selector> observed_;
+    // std::vector<Selector> observed_;
 
     // A workspace where observed data can be modified by subtracting off
     // components on which we wish to condition.

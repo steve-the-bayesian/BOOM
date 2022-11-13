@@ -26,7 +26,6 @@ namespace BOOM {
 
   namespace {
     using MSSRM = MultivariateStateSpaceRegressionModel;
-    using PSSSM = ProxyScalarStateSpaceModel;
     using TSRD = MultivariateTimeSeriesRegressionData;
   }  // namespace
 
@@ -48,56 +47,8 @@ namespace BOOM {
   {}
 
   //===========================================================================
-  PSSSM::ProxyScalarStateSpaceModel(
-      MultivariateStateSpaceRegressionModel *model,
-      int which_series)
-      : host_(model),
-        which_series_(which_series)
-  {}
-
-  int PSSSM::time_dimension() const { return host_->time_dimension();}
-
-  double PSSSM::adjusted_observation(int t) const {
-    return host_->adjusted_observation(which_series_, t);
-  }
-
-  bool PSSSM::is_missing_observation(int t) const {
-    return !host_->is_observed(which_series_, t);
-  }
-
-  double PSSSM::observation_variance(int t) const {
-    return host_->single_observation_variance(t, which_series_);
-  }
-
-  void PSSSM::add_data(
-      const Ptr<StateSpace::MultiplexedDoubleData> &data_point) {
-    report_error("add_data is disabled.");
-  }
-
-  void PSSSM::add_data(const Ptr<Data> &data_point) {
-    report_error("add_data is disabled.");
-  }
-
-  // This is StateSpaceModel::simulate_forecast, but with a zero residual
-  // variance.
-  Vector PSSSM::simulate_state_contribution_forecast(
-      RNG &rng, int horizon, const Vector &final_state) {
-    Vector ans(horizon, 0.0);
-    if (state_dimension() > 0) {
-      Vector state = final_state;
-      int t0 = time_dimension();
-      for (int t = 0; t < horizon; ++t) {
-        state = simulate_next_state(rng, state, t + t0);
-        ans[t] = observation_matrix(t + t0).dot(state);
-      }
-    }
-    return ans;
-  }
-
-  //===========================================================================
   MSSRM::MultivariateStateSpaceRegressionModel(int xdim, int nseries)
-      : nseries_(nseries),
-        time_dimension_(0),
+      : data_policy_(nseries),
         observation_model_(new IndependentRegressionModels(xdim, nseries)),
         adjusted_data_workspace_(nseries),
         workspace_time_index_(-1),
@@ -192,18 +143,20 @@ namespace BOOM {
   }
 
   void MSSRM::add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp) {
-    if (dp->series() >= nseries()) {
-      report_error("Series ID too large.");
-    }
+    data_policy_.add_data(dp);
 
-    time_dimension_ = std::max<int>(time_dimension_, 1 + dp->timestamp());
-    data_indices_[dp->series()][dp->timestamp()] = dat().size();
-    IID_DataPolicy<MultivariateTimeSeriesRegressionData>::add_data(dp);
-    while (observed_.size() <= dp->timestamp()) {
-      Selector all_missing(nseries(), false);
-      observed_.push_back(all_missing);
-    }
-    observed_[dp->timestamp()].add(dp->series());
+    // if (dp->series() >= nseries()) {
+    //   report_error("Series ID too large.");
+    // }
+
+    // time_dimension_ = std::max<int>(time_dimension_, 1 + dp->timestamp());
+    // data_indices_[dp->series()][dp->timestamp()] = dat().size();
+    // IID_DataPolicy<MultivariateTimeSeriesRegressionData>::add_data(dp);
+    // while (observed_.size() <= dp->timestamp()) {
+    //   Selector all_missing(nseries(), false);
+    //   observed_.push_back(all_missing);
+    // }
+    // observed_[dp->timestamp()].add(dp->series());
   }
 
   void MSSRM::add_data(const Ptr<Data> &dp) {
@@ -214,30 +167,28 @@ namespace BOOM {
     this->add_data(Ptr<MultivariateTimeSeriesRegressionData>(dp));
   }
 
-  int MSSRM::data_index(int series, int time) const {
-    const auto &series_it = data_indices_.find(series);
-    if (series_it == data_indices_.end()) {
-      return -1;
-    }
-    const auto & time_it(series_it->second.find(time));
-    if (time_it == series_it->second.end()) {
-      return -1;
-    }
-    return time_it->second;
-  }
+  // int MSSRM::data_index(int series, int time) const {
+  //   const auto &series_it = data_indices_.find(series);
+  //   if (series_it == data_indices_.end()) {
+  //     return -1;
+  //   }
+  //   const auto & time_it(series_it->second.find(time));
+  //   if (time_it == series_it->second.end()) {
+  //     return -1;
+  //   }
+  //   return time_it->second;
+  // }
 
   void MSSRM::clear_data() {
-    time_dimension_ = 0;
-    observed_.clear();
-    data_indices_.clear();
-    IID_DataPolicy<MultivariateTimeSeriesRegressionData>::clear_data();
+    data_policy_.clear_data();
+    // time_dimension_ = 0;
+    // observed_.clear();
+    // data_indices_.clear();
+    // IID_DataPolicy<MultivariateTimeSeriesRegressionData>::clear_data();
   }
 
   void MSSRM::set_observed_status(int t, const Selector &observed) {
-    if (observed.nvars_possible() != observed_[0].nvars_possible()) {
-      report_error("Wrong size Selector passed to set_observed_status.");
-    }
-    observed_[t] = observed;
+    data_policy_.set_observed_status(t, observed);
   }
 
   double MSSRM::adjusted_observation(int series, int time) const {
@@ -469,7 +420,8 @@ namespace BOOM {
       int t,
       const Vector &observation_error_mean,
       const Vector &observation_error_variances) {
-    report_error("MSSRM::update_observation_model_complete_data_sufficient_statistics is not fully implemented.");
+    report_error("MSSRM::update_observation_model_complete_data_sufficient_"
+                 "statistics is not fully implemented.");
   }
 
   void MSSRM::update_observation_model_gradient(
@@ -477,7 +429,8 @@ namespace BOOM {
       int t,
       const Vector &observation_error_mean,
       const Vector &observation_error_variances) {
-    report_error("MSSRM::update_observation_model_gradient is not fully implemented.");
+    report_error("MSSRM::update_observation_model_gradient is not fully "
+                 "implemented.");
   }
 
   //---------------------------------------------------------------------------
@@ -486,9 +439,9 @@ namespace BOOM {
 
   void MSSRM::initialize_proxy_models() {
     proxy_models_.clear();
-    proxy_models_.reserve(nseries_);
-    for (int i = 0; i < nseries_; ++i) {
-      proxy_models_.push_back(new ProxyScalarStateSpaceModel(this, i));
+    proxy_models_.reserve(nseries());
+    for (int i = 0; i < nseries(); ++i) {
+      proxy_models_.push_back(new Proxy(this, i));
     }
   }
 
@@ -551,13 +504,13 @@ namespace BOOM {
       Vector shared_state_contribution =
           *observation_coefficients(time, dummy_selector_) * shared_state(time);
       if (is_observed(series, time)) {
-        int index = data_indices_[series][time];
-        Ptr<MultivariateTimeSeriesRegressionData> dp = dat()[index];
+        const Ptr<MultivariateTimeSeriesRegressionData> &data_point(
+            data_policy_.data_point(series, time));
         double regression_contribution = observed_data(series, time)
             - shared_state_contribution[series]
             - series_specific_state_contribution(series, time);
         observation_model_->model(series)->suf()->add_mixture_data(
-            regression_contribution, dp->x(), 1.0);
+            regression_contribution, data_point->x(), 1.0);
       }
     }
   }
@@ -675,8 +628,8 @@ namespace BOOM {
             observed_data(series, time)
             - series_specific_state_contribution(series, time);
 
-        int index = data_index(series, time);
-        Ptr<MultivariateTimeSeriesRegressionData> data_point = dat()[index];
+        Ptr<MultivariateTimeSeriesRegressionData> data_point =
+            data_policy_.data_point(series, time);
         double regression_contribution = observation_model_->model(
             series)->predict(data_point->x());
         adjusted_data_workspace_[s] -= regression_contribution;
@@ -699,8 +652,7 @@ namespace BOOM {
         *observation_coefficients(time, observed) * shared_state(time);
     for (int s = 0; s < observed.nvars(); ++s) {
       int series = observed.sparse_index(s);
-      int index = data_index(series, time);
-      const Vector &predictors(dat()[index]->x());
+      const Vector &predictors(data_policy_.data_point(series, time)->x());
       adjusted_data_workspace_[s] = observed_data(series, time)
           - shared_state_contribution[s]
           - observation_model_->model(series)->predict(predictors);
@@ -712,7 +664,7 @@ namespace BOOM {
 
   double MSSRM::series_specific_state_contribution(int series, int time) const {
     if (proxy_models_.empty()) return 0;
-    const ProxyScalarStateSpaceModel &proxy(*proxy_models_[series]);
+    const Proxy &proxy(*proxy_models_[series]);
     if (proxy.state_dimension() == 0) {
       return 0;
     } else {

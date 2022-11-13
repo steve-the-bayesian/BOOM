@@ -19,6 +19,7 @@
 #include "Models/StateSpace/Multivariate/PosteriorSamplers/MvStateSpaceRegressionPosteriorSampler.hpp"
 #include "Models/StateSpace/PosteriorSamplers/StateSpacePosteriorSampler.hpp"
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/StateSpace/Multivariate/ProxyScalarStateSpaceModel.hpp"
 
 namespace BOOM {
 
@@ -33,10 +34,10 @@ namespace BOOM {
         model_(model),
         latent_data_initialized_(false)
   {
+    using Proxy = ProxyScalarStateSpaceModel<MultivariateStateSpaceRegressionModel>;
     if (model_->has_series_specific_state()) {
       for (int i = 0; i < model_->nseries(); ++i) {
-        Ptr<ProxyScalarStateSpaceModel> proxy =
-            model_->series_specific_model(i);
+        Ptr<Proxy> proxy = model_->series_specific_model(i);
         NEW(StateSpacePosteriorSampler, proxy_sampler)(
             proxy.get());
         proxy->set_method(proxy_sampler);
@@ -63,9 +64,10 @@ namespace BOOM {
 
     // Sample parameters for proxy models if any series specific state is
     // present.
+    using Proxy = ProxyScalarStateSpaceModel<MultivariateStateSpaceRegressionModel>;
     if (model_->has_series_specific_state()) {
       for (int j = 0; j < model_->nseries(); ++j) {
-        ProxyScalarStateSpaceModel &proxy(*model_->series_specific_model(j));
+        Proxy &proxy(*model_->series_specific_model(j));
         for (int s = 0; s < proxy.number_of_state_models(); ++s) {
           proxy.state_model(s)->sample_posterior();
         }
@@ -89,9 +91,9 @@ namespace BOOM {
       ans += model_->state_model(s)->logpri();
     }
     if (model_->has_series_specific_state()) {
+      using Proxy = ProxyScalarStateSpaceModel<MultivariateStateSpaceRegressionModel>;
       for (int p = 0; p < model_->nseries(); ++p) {
-        const ProxyScalarStateSpaceModel &proxy(
-            *model_->series_specific_model(p));
+        const Proxy &proxy(*model_->series_specific_model(p));
         for (int s = 0; s < proxy.number_of_state_models(); ++s) {
           ans += proxy.state_model(s)->logpri();
         }
