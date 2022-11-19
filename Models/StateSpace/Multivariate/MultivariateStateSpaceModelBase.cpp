@@ -59,6 +59,7 @@ namespace BOOM {
       report_error("Still need top implement MultivariateStateSpaceModelBase::operator=");
       shared_state_ = rhs.shared_state_;
       state_is_fixed_ = rhs.state_is_fixed_;
+      show_warnings_ = rhs.show_warnings_;
     }
     return *this;
   }

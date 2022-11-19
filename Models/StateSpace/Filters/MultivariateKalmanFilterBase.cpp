@@ -39,41 +39,51 @@ namespace BOOM {
       using Marginal = MultivariateMarginalDistributionBase;
 
       // Convert a Matrix to an SpdMatrix.  If the matrix is non-symmetric then
-      // force symmetry and issue a warning.
-      SpdMatrix robust_spd(const Matrix &m, int time) {
-        if (m.is_sym()) {
-          return SpdMatrix(m);
+      // force symmetry and optionally issue a warning.
+      //
+      // Args:
+      //   input_matrix:  The Matrix to convert to an SpdMatrix.
+      //   time:  The time point at which the conversion was attempted.
+      //   warn: Should a warning be printed if mitigating steps were needed to
+      //     make the conversion?
+      SpdMatrix robust_spd(const Matrix &input_matrix, int time, bool show_warnings) {
+        if (input_matrix.is_sym()) {
+          return SpdMatrix(input_matrix);
         } else {
-          std::ostringstream msg;
-          double distance;
-          uint imax, jmax;
-          std::tie(distance, imax, jmax) = m.distance_from_symmetry();
-          msg << "Coercing a non-symmetric matrix to symmetry at time "
-              << time << ".\n"
-              << "Distance from symmetry = " << distance << " with maximum "
-              "relative distance at (" << imax
-              << ", " << jmax << ").\n";
-          if (distance > .01) {
-            if (m.nrow() < 10) {
-              msg << "\n"
-                  << "original matrix: \n"
-                  << m
-                  << "\n"
-                  << "symmetric matrix: \n"
-                  << .5 * (m + m.transpose())
-                  ;
-            } else {
-              Matrix m_view = ConstSubMatrix(m, 0, 9, 0, 9).to_matrix();
-              msg << "\n"
-                  << "First 10 rows/cols of original matrix:\n"
-                  << m_view
-                  << "\n"
-                  << "symmetric matrix:\n"
-                  << .5 * (m_view + m_view.transpose());
+          if (show_warnings) {
+            std::ostringstream msg;
+            double distance;
+            uint imax, jmax;
+            std::tie(distance, imax, jmax) =
+                input_matrix.distance_from_symmetry();
+            msg << "Coercing a non-symmetric matrix to symmetry at time "
+                << time << ".\n"
+                << "Distance from symmetry = " << distance << " with maximum "
+                "relative distance at (" << imax
+                << ", " << jmax << ").\n";
+            if (distance > .01) {
+              if (input_matrix.nrow() < 10) {
+                msg << "\n"
+                    << "original matrix: \n"
+                    << input_matrix
+                    << "\n"
+                    << "symmetric matrix: \n"
+                    << .5 * (input_matrix + input_matrix.transpose())
+                    ;
+              } else {
+                Matrix m_view = ConstSubMatrix(
+                    input_matrix, 0, 9, 0, 9).to_matrix();
+                msg << "\n"
+                    << "First 10 rows/cols of original matrix:\n"
+                    << m_view
+                    << "\n"
+                    << "symmetric matrix:\n"
+                    << .5 * (m_view + m_view.transpose());
+              }
             }
+            report_warning(msg.str());
           }
-          report_warning(msg.str());
-          return SpdMatrix(.5 * (m + m.transpose()));
+          return SpdMatrix(.5 * (input_matrix + input_matrix.transpose()));
         }
       }
     }
@@ -145,30 +155,39 @@ namespace BOOM {
           Finv * (observation_coefficient_subset * state_variance()));
 
       SpdMatrix contemp_variance(
-          robust_spd(state_variance() - increment1, time_index()));
+          robust_spd(state_variance() - increment1,
+                     time_index(),
+                     model()->show_warnings()));
       if (!contemp_variance.is_pos_def()) {
-        std::ostringstream warn;
-        warn << "Modifying variance at time " << time_index()
-             << " to enforce positive definiteness.\n";
         SymmetricEigen contemp_eigen(contemp_variance, true);
         SpdMatrix updated = contemp_eigen.closest_positive_definite();
-        int imax, jmax;
-        double distance = relative_distance(
-            contemp_variance, updated, imax, jmax);
-        if (distance > .001) {
-          warn << "Original matrix:\n" << contemp_variance
-               << "Updated matrix: \n" << updated;
+        if (model()->show_warnings()) {
+          std::ostringstream warn;
+          warn << "Modifying variance at time " << time_index()
+               << " to enforce positive definiteness.\n";
+          int imax, jmax;
+          double distance = relative_distance(
+              contemp_variance, updated, imax, jmax);
+          if (distance > .001) {
+            warn << "Original matrix:\n" << contemp_variance
+                 << "Updated matrix: \n" << updated;
+          }
+          warn << "Distance = " << distance
+               << ".  Maximum relative deviation in position ("
+               << imax << ", " << jmax << ").\n";
+          report_warning(warn.str());
         }
-        warn << "Distance = " << distance
-             << ".  Maximum relative deviation in position ("
-             << imax << ", " << jmax << ").\n";
         contemp_variance = updated;
-        report_warning(warn.str());
       }
 
-      SpdMatrix increment2(robust_spd(model()->state_variance_matrix(
-          time_index())->dense(), time_index()));
-      SpdMatrix new_state_variance(robust_spd(contemp_variance, time_index()));
+      SpdMatrix increment2(
+          robust_spd(model()->state_variance_matrix(time_index())->dense(),
+                     time_index(),
+                     model()->show_warnings()));
+      SpdMatrix new_state_variance(
+          robust_spd(contemp_variance,
+                     time_index(),
+                     model()->show_warnings()));
 
       transition.sandwich_inplace(new_state_variance);
 
@@ -477,15 +496,16 @@ namespace BOOM {
         //   updated.  The following line is a stop-gap for now.
         N = .5 * (N + N.transpose());
       }
-      SpdMatrix SpdN(Kalman::robust_spd(N, t));
+      SpdMatrix SpdN(Kalman::robust_spd(N, t, model()->show_warnings()));
       if (!SpdN.is_pos_def()) {
         SymmetricEigen eigenN(SpdN);
         SpdN = eigenN.closest_positive_definite();
       }
 
       SpdMatrix smoothed_state_variance = Kalman::robust_spd(
-          filtered_state_variance - sandwich(
-              filtered_state_variance, SpdN), t);
+          filtered_state_variance - sandwich(filtered_state_variance, SpdN),
+          t,
+          model()->show_warnings());
 
       if (!smoothed_state_variance.is_pos_def()) {
         SymmetricEigen variance_eigen(smoothed_state_variance);

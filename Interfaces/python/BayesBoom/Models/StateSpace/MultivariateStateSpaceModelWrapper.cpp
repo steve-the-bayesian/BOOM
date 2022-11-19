@@ -51,6 +51,17 @@ namespace BayesBoom {
               return model.log_likelihood();
             },
             "The log likelihood under the current set of model parameters.")
+        .def("show_warnings",
+             [](MultivariateStateSpaceModelBase &model, bool show) {
+               model.show_warnings(show);
+             },
+             py::arg("show"),
+             "Set whether warnings about non-positive definite matrices "
+             "encountered during Kalman filtering should be shown to the "
+             "user.\n\n"
+             "Args:  \n"
+             "  show:  True if warnings should be shown to the user. False "
+             "otherwise.")
         .def("state_contributions",
              [](const MultivariateStateSpaceModelBase &model, int which_state_model) {
                return model.state_contributions(which_state_model);
