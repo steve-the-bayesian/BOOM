@@ -1,5 +1,5 @@
-#ifndef BOOM_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_
-#define BOOM_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_
+#ifndef BOOM_STUDENT_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_
+#define BOOM_STUDENT_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_
 /*
   Copyright (C) 2022 Steven L. Scott
 
@@ -25,6 +25,7 @@
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
+#include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionModel.hpp"
 
 namespace BoomStateSpaceTesting{
   class MultivariateStateSpaceRegressionModelTest;
@@ -78,80 +79,21 @@ namespace BOOM {
   };
 
   //===========================================================================
-  // That MultivariateStateSpaceRegressionModel maintains a set of
-  // ScalarKalmanFilter objects to handle simulating from series-specific state.
-  // Each of these series-specific filters needs a "state space model" to supply
-  // the kalman matrices and data.  This class is a proxy state space model
-  // filling that role.  The proxy model keeps a pointer to the host model from
-  // which it draws data and parameters.  The proxy also assumes ownership of
-  // any series-specific state.
-  class StudentMvssRegressionModel;
-  class ProxyScalarStateSpaceModel : public StateSpaceModel {
-   public:
-    // Args:
-    //   model:  The host model.
-    //   which_series: The index of the time series that this object describes.
-    ProxyScalarStateSpaceModel(MultivariateStateSpaceRegressionModel *model,
-                               int which_series);
-
-    // The number of distinct time points in the host model.
-    int time_dimension() const override;
-
-    // The value of the time series specific to this proxy.  The host should
-    // have subtracted any regression effects or shared state before this
-    // function is called.
-    double adjusted_observation(int t) const override;
-
-    bool is_missing_observation(int t) const override;
-
-    ZeroMeanGaussianModel *observation_model() override { return nullptr; }
-    const ZeroMeanGaussianModel *observation_model() const override {
-      return nullptr;
-    }
-
-    double observation_variance(int t) const override;
-
-    // Because the proxy model has no observation model,
-    // observe_data_given_state is a no-op.
-    void observe_data_given_state(int t) override {}
-
-    // Simulate 'horizon' time periods beyond time_dimension().
-    //
-    // Args:
-    //   rng: The [0, 1) random number generator to use for the simulation.
-    //   horizon: The number of periods beyond 'time_dimension()' to simulate.
-    //   final_state:  The value of the state at time time_dimension() - 1.
-    //
-    // Returns:
-    //   A draw from the predictive distribution of the state contribution over
-    //   the next 'horizon' time periods.
-    Vector simulate_state_contribution_forecast(
-        RNG &rng, int horizon, const Vector &final_state);
-
-    // Ensure all state models are capable of handling times up to t-1.
-    void observe_time_dimension(int t) {
-      for (int s = 0; s < number_of_state_models(); ++s) {
-        state_model(s)->observe_time_dimension(t);
-      }
-    }
-
-   private:
-    // The add_data method is disabled.
-    void add_data(const Ptr<StateSpace::MultiplexedDoubleData>
-                  &data_point) override;
-    void add_data(const Ptr<Data> &data_point) override;
-
-    MultivariateStateSpaceRegressionModel *host_;
-    int which_series_;
-  };
-
-  //===========================================================================
   // A multivariate state space regression model describes a fixed dimensional
   // vector Y[t] as it moves throughout time.  The model is a state space model
   // of the form
   //
   //        Y[t] = Z[t] * alpha[t] + B * X[t] + epsilon[t]
   //  alpha[t+1] = T[t] * alpha[t] + R[t] * eta[t].
+  //
+  // The elements of epsilon[t] follow independent student T distributions where
+  // element j has degrees of freedom nu[j] and scatter parameter (analogous to
+  // a standard deviation, and equal to standard deviation as nu->infinity)
+  // sigma[j].
+  //
+  // The student T distributions are defined in terms of a latent variable w[j,
+  // t] with marginal distribuiton Gamma(nu[j], nu[j]).  This weight is to be
+  // stored in data structure managing the data point for time t, series j.
   //
   // The state alpha[t] consists of two types: shared and series-specific.  A
   // shared state component is a regular state component from a dynamic factor
@@ -165,16 +107,13 @@ namespace BOOM {
   // The model assumes that errors from each state component are independent of
   // other state components (given model parameters), and that the observation
   // errors epsilon[t] are conditionally independent of everything else given
-  // state and model parameters.  Both eta[t] and epsilon[t] are Gaussian.  This
-  // model makes the further simplifying assumption that Var(epsilon[t]) is
-  // diagonal, so that any cross sectional correlations between elements of Y[t]
-  // are captured by shared state.
+  // state and model parameters.  The state disturbance eta[t] is either
+  // Gaussian or conditionally Gaussian.
   //
-  // Thus epsilon[t] ~ N(0, diag(sigma^2)).  There is a different sigma^2 for
-  // each series, but the off-diagonal elements are all zero.  Internally this
-  // means the regression is handled by nseries() separate regression models.
-  // Each can have its own prior, which can be linked by a hierarchy.  If there
-  // is a model hierarchy, it is to be maintained by the PosteriorSampler.
+  // The independence assumptions outlined above mean the regression is handled
+  // by nseries() separate student regression models.  Each can have its own
+  // prior, which can be linked by a hierarchy.  If there is a model hierarchy,
+  // it is to be maintained by the PosteriorSampler.
   //
   //---------------------------------------------------------------------------
   // The basic usage idiom is
@@ -194,30 +133,32 @@ namespace BOOM {
   // sampler class for IndependentRegressionModels.
   class StudentMvssRegressionModel
       : public ConditionallyIndependentMultivariateStateSpaceModelBase,
-        public IID_DataPolicy<MultivariateTimeSeriesRegressionData>,
         public PriorPolicy
   {
     friend class BoomStateSpaceTesting::MultivariateStateSpaceRegressionModelTest;
    public:
+
+    using Proxy = ProxyScalarStateSpaceModel<StudentMvssRegressionModel>;
+
     // Args:
     //   xdim:  The dimension of the static regression component.
     //   nseries:  The number of time series being modeled.
-    explicit MultivariateStateSpaceRegressionModel(int xdim, int nseries);
+    explicit StudentMvssRegressionModel(int xdim, int nseries);
 
     // This is a complex model with lots of subordinate parts.  Copying it
     // correctly would be really hard, so copying is disallowed.
-    MultivariateStateSpaceRegressionModel(
-        const MultivariateStateSpaceRegressionModel &rhs) = delete;
-    MultivariateStateSpaceRegressionModel &operator=(
-        const MultivariateStateSpaceRegressionModel &rhs) = delete;
-    MultivariateStateSpaceRegressionModel(
-        MultivariateStateSpaceRegressionModel &&rhs) = delete;
-    MultivariateStateSpaceRegressionModel &operator=(
-        MultivariateStateSpaceRegressionModel &&rhs) = delete;
+    StudentMvssRegressionModel(
+        const StudentMvssRegressionModel &rhs) = delete;
+    StudentMvssRegressionModel &operator=(
+        const StudentMvssRegressionModel &rhs) = delete;
+    StudentMvssRegressionModel(
+        StudentMvssRegressionModel &&rhs) = delete;
+    StudentMvssRegressionModel &operator=(
+        StudentMvssRegressionModel &&rhs) = delete;
 
     // An error will be reported if someone attempts to clone this model.
-    MultivariateStateSpaceRegressionModel *clone() const override;
-    MultivariateStateSpaceRegressionModel *deepclone() const override;
+    StudentMvssRegressionModel *clone() const override;
+    StudentMvssRegressionModel *deepclone() const override;
 
     // Simulate a multi-period forecast.
     // Args:
@@ -250,9 +191,11 @@ namespace BOOM {
     // MultivariateStateSpaceModelBase "grandparent" base class.
     // ------------------------------------------------------------------------
 
+    ///////////// BASE CLASS
     // Add state to the "shared-state" portion of the state space.
     void add_state(const Ptr<SharedStateModel> &state_model);
 
+    ///////////// BASE CLASS
     // Add state to the state model for an individual time series.
     //
     // Args:
@@ -263,14 +206,17 @@ namespace BOOM {
       proxy_models_[series]->add_state(state_model);
     }
 
+    ///////////// BASE CLASS
     // Indicates whether any of the proxy models have had state assigned.
     bool has_series_specific_state() const;
 
+    ///////////// BASE CLASS
     // Dimension of shared state.
     int state_dimension() const override {
       return shared_state_models_.state_dimension();
     }
 
+    ///////////// BASE CLASS
     // The dimension of the series-specific state associated with a particular
     // time series.
     int series_state_dimension(int which_series) const {
@@ -306,10 +252,10 @@ namespace BOOM {
     //-----------------------------------------------------------------------
 
     // The number of time points that have been observed.
-    int time_dimension() const override {return time_dimension_;}
+    int time_dimension() const override {return data_policy_.time_dimension();}
 
     // The number of time series being modeled.
-    int nseries() const override {return nseries_;}
+    int nseries() const override {return data_policy_.nseries();}
 
     // The dimension of the predictors.
     int xdim() const {return observation_model_->xdim();}
@@ -317,8 +263,8 @@ namespace BOOM {
     // Adding data to this model adjusts time_dimension_, data_indices_, and
     // observed_.
     void add_data(const Ptr<Data> &dp) override;
-    void add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp) override;
-    void add_data(MultivariateTimeSeriesRegressionData *dp) override;
+    void add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp);
+    void add_data(MultivariateTimeSeriesRegressionData *dp);
 
     // Return the position in the data vector containing the Y value for the
     // given series at the given time.  If no data point exists for the
@@ -396,11 +342,11 @@ namespace BOOM {
       return observation_model_->model(dim)->sigsq();
     }
 
-    Ptr<ProxyScalarStateSpaceModel> series_specific_model(int index) {
+    Ptr<Proxy> series_specific_model(int index) {
       return proxy_models_[index];
     }
 
-    const Ptr<ProxyScalarStateSpaceModel>
+    const Ptr<Proxy>
     series_specific_model(int index) const {
       return proxy_models_[index];
     }
@@ -579,6 +525,8 @@ namespace BOOM {
 
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
+    void impute_student_weights(RNG &rng);
+
    private:
     // Populate the vector of proxy models with 'nseries_' empty models.
     void initialize_proxy_models();
@@ -629,6 +577,9 @@ namespace BOOM {
     // Data section.
     //--------------------------------------------------------------------------
 
+    MultivariateStateSpaceRegressionDataPolicy<
+      StudentMultivariateTimeSeriesRegressionData> data_policy_;
+
     // The number of series being modeled.
     int nseries_;
 
@@ -641,7 +592,7 @@ namespace BOOM {
 
     // The proxy models hold components of state that are specific to individual
     // data series.
-    std::vector<Ptr<ProxyScalarStateSpaceModel>> proxy_models_;
+    std::vector<Ptr<Proxy>> proxy_models_;
 
     // data_indices_[series][time] gives the index of the corresponding element
     // of dat().
@@ -704,4 +655,4 @@ namespace BOOM {
 
 }  // namespace BOOM
 
-#endif  // BOOM_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_
+#endif  // BOOM_STUDENT_MULTIVARIATE_STATE_SPACE_REGRESSION_HPP_

@@ -32,7 +32,6 @@ namespace BOOM {
   template <class DATA_TYPE>
   class MultivariateStateSpaceRegressionDataPolicy {
    public:
-
     MultivariateStateSpaceRegressionDataPolicy(int nseries)
         : nseries_(nseries),
           time_dimension_(0),
@@ -125,6 +124,10 @@ namespace BOOM {
         report_error("Wrong size Selector passed to set_observed_status.");
       }
       observed_[t] = observed;
+    }
+
+    size_t total_sample_size() const {
+      return raw_data_.size();
     }
 
    private:

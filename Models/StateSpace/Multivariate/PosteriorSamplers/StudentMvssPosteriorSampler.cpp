@@ -21,12 +21,5 @@
 
 namespace BOOM {
 
-  void StudentMvssPosteriorSampler::impute_nonstate_latent_data() {
-    for (std::size_t t = 0; t < model_->time_dimension(); ++t) {
-
-      Ptr<StudentMultivariateTimeSeriesRegressionData> data_point(
-          model_->
-    }
-  }
 
 }

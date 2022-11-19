@@ -210,7 +210,7 @@ namespace BOOM {
       const Selector &observed(model_->observed_status(time_index()));
       SpdMatrix ans = model_->observation_coefficients(
           time_index(), observed)->sandwich(variance);
-      ans.diag() += model_->observation_variance(time_index()).diag();
+      ans.diag() += model_->observation_variance(time_index(), observed).diag();
       return ans.inv();
     }
 

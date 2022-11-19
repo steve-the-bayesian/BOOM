@@ -21,6 +21,7 @@
 #define BOOM_T_REGRESSION_HPP
 
 #include "Models/Glm/Glm.hpp"
+#include "Models/Glm/WeightedRegressionModel.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/IID_DataPolicy.hpp"
 #include "Models/Policies/ParamPolicy_3.hpp"
@@ -37,7 +38,7 @@ namespace BOOM {
         public PriorPolicy,
         public NumOptModel {
    public:
-    explicit TRegressionModel(uint p);  // dimension of beta
+    explicit TRegressionModel(uint xdim);  // dimension of beta
     TRegressionModel(const Vector &b, double Sigma, double nu = 30);
     TRegressionModel(const Matrix &X, const Vector &y);
     TRegressionModel *clone() const override;
@@ -97,6 +98,47 @@ namespace BOOM {
     // Return the observed data log likelihood given the new
     // parameters.
     double MStep(const WeightedRegSuf &suf);
+  };
+
+  class CompleteDataStudentRegressionModel
+      : public TRegressionModel {
+   public:
+    CompleteDataStudentRegressionModel(int xdim)
+        : TRegressionModel(xdim),
+          suf_(xdim)
+    {}
+
+    CompleteDataStudentRegressionModel(
+        const CompleteDataStudentRegressionModel &rhs);
+    CompleteDataStudentRegressionModel(
+        CompleteDataStudentRegressionModel &&rhs) = default;
+    CompleteDataStudentRegressionModel &operator=(
+        CompleteDataStudentRegressionModel &&rhs) = default;
+
+    CompleteDataStudentRegressionModel * clone() const override;
+
+    void clear_data() override {
+      TRegressionModel::clear_data();
+      suf_.clear();
+      weights_.clear();
+    }
+
+    void add_data(const Ptr<RegressionData> &dp) override {
+      TRegressionModel::add_data(dp);
+      weights_.push_back(1.0);
+      suf_.add_data(dp->x(), dp->y(), weights_.back());
+    }
+
+    using TRegressionModel::add_data;
+
+    void set_weight(size_t i, double value) {
+      weights_[i] = value;
+    }
+    double weight(size_t i) const {return weights_[i];}
+
+   private:
+    WeightedRegSuf suf_;
+    Vector weights_;
   };
 
 }  // namespace BOOM

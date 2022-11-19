@@ -433,12 +433,12 @@ namespace BOOM {
     Kalman::ConditionallyIndependentMarginalDistribution &marg(get_filter()[t]);
     // Some syntactic sugar to make later formulas easier to read.  These are
     // bad variable names, but they match the math in Durbin and Koopman.
-    const DiagonalMatrix H = observation_variance(t);
+    const Selector &observed(observed_status(t));
+    const DiagonalMatrix H = observation_variance(t, observed);
     const Vector &v(marg.prediction_error());
 
     Ptr<SparseKalmanMatrix> Finv = marg.sparse_forecast_precision();
-    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(
-        observed_status(t), Finv));
+    Ptr<SparseMatrixProduct> K(marg.sparse_kalman_gain(observed, Finv));
 
     Vector observation_error_mean = H * (*Finv * v - *K * r);
     Vector observation_error_variance =

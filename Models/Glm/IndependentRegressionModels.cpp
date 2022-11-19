@@ -20,6 +20,13 @@
 
 namespace BOOM {
 
+  void IndependentGlms::clear_client_data() {
+    int num_models = ydim();
+    for (int i = 0; i < num_models; ++i) {
+      model(i)->clear_data();
+    }
+  }
+
   IndependentRegressionModels::IndependentRegressionModels(int xdim, int ydim)
   {
     models_.reserve(ydim);
@@ -46,9 +53,39 @@ namespace BOOM {
 
   void IndependentRegressionModels::clear_data() {
     DataPolicy::clear_data();
-    for (int i = 0; i < models_.size(); ++i) {
-      models_[i]->clear_data();
+    clear_client_data();
+  }
+
+  //===========================================================================
+  IndependentStudentRegressionModels::IndependentStudentRegressionModels(
+      int xdim, int ydim)
+  {
+    models_.reserve(ydim);
+    for (int i = 0; i < ydim; ++i) {
+      NEW(TRegressionModel, model)(xdim);
+      ParamPolicy::add_model(model);
+      models_.push_back(model);
     }
   }
-  
+
+  IndependentStudentRegressionModels::IndependentStudentRegressionModels(
+      const IndependentStudentRegressionModels &rhs)
+      : Model(rhs),
+        IndependentGlms(rhs),
+        CompositeParamPolicy(rhs),
+        NullDataPolicy(rhs),
+        PriorPolicy(rhs)
+  {
+    models_.reserve(rhs.ydim());
+    for (int i = 0; i < rhs.models_.size(); ++i) {
+      models_.push_back(rhs.models_[i]->clone());
+      ParamPolicy::add_model(models_.back());
+    }
+  }
+
+  void IndependentStudentRegressionModels::clear_data() {
+    DataPolicy::clear_data();
+    clear_client_data();
+  }
+
 }  // namespace BOOM

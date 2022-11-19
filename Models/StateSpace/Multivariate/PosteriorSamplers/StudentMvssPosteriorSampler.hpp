@@ -19,8 +19,9 @@
 */
 
 #include "Models/PosteriorSamplers/PosteriorSampler.hpp"
+#include "Models/Glm/PosteriorSamplers/TDataImputer.hpp"
 #include "Models/StateSpace/Multivariate/StudentMvssRegressionModel.hpp"
-
+#include "Models/StateSpace/Multivariate/PosteriorSamplers/MultivariateStateSpaceModelSampler.hpp"
 
 namespace BOOM {
 
@@ -32,9 +33,11 @@ namespace BOOM {
         RNG &seeding_rng = GlobalRng::rng);
 
     StudentMvssPosteriorSampler * clone_to_new_host(
-        StudentMvssRegressionModel *new_host) const override;
+        StudentMvssRegressionModel *new_host) const;
 
-    void impute_nonstate_latent_data() override;
+    void impute_nonstate_latent_data() override {
+      model_->impute_student_weights(rng());
+    }
 
     void clear_complete_data_sufficient_statistics();
 

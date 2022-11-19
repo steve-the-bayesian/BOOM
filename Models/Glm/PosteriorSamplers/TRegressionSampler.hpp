@@ -105,10 +105,11 @@ namespace BOOM {
     GenericGaussianVarianceSampler sigsq_sampler_;
     TDataImputer data_imputer_;
 
-    // nu_sampler_ draws a value of nu given beta and sigma, but not
-    // given the latent data.
+    // Draws a value of nu given beta and sigma, but not given the latent data.
     ScalarSliceSampler nu_observed_data_sampler_;
 
+    // Draws a value of nu given beta, sigma, and complete data.  This is mainly
+    // kept for education purposes, to show how slow this approach can be.
     ScalarSliceSampler nu_complete_data_sampler_;
 
     bool latent_data_is_fixed_;
