@@ -83,6 +83,10 @@ namespace BOOM {
     }
   }
 
+  IndependentStudentRegressionModels * IndependentStudentRegressionModels::clone() const {
+    return new IndependentStudentRegressionModels(*this);
+  }
+
   void IndependentStudentRegressionModels::clear_data() {
     DataPolicy::clear_data();
     clear_client_data();

@@ -32,8 +32,7 @@ namespace BOOM {
         StudentMvssRegressionModel *model,
         RNG &seeding_rng = GlobalRng::rng);
 
-    StudentMvssPosteriorSampler * clone_to_new_host(
-        StudentMvssRegressionModel *new_host) const;
+    StudentMvssPosteriorSampler * clone_to_new_host(Model *new_host) const override;
 
     void impute_nonstate_latent_data() override {
       model_->impute_student_weights(rng());

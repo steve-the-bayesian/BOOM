@@ -79,7 +79,6 @@ namespace BOOM {
         public NullDataPolicy,
         public PriorPolicy {
    public:
-    IndependentStudentRegressionModels() {}
     IndependentStudentRegressionModels(int xdim, int ydim);
     IndependentStudentRegressionModels(
         const IndependentStudentRegressionModels &rhs);
@@ -89,8 +88,13 @@ namespace BOOM {
     int ydim() const override {return models_.size();}
     void clear_data() override;
 
-    TRegressionModel *model(int i) {return models_[i].get();}
-    const TRegressionModel *model(int i) const {return models_[i].get();}
+    TRegressionModel *model(int i) override {
+      return models_[i].get();
+    }
+
+    const TRegressionModel *model(int i) const override {
+      return models_[i].get();
+    }
 
    private:
     std::vector<Ptr<TRegressionModel>> models_;

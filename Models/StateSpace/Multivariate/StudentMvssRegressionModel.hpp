@@ -65,7 +65,7 @@ namespace BOOM {
       return new StudentMultivariateTimeSeriesRegressionData(*this);
     }
 
-    double weight() const {return weight_;}
+    double weight() const override {return weight_;}
     void set_weight(double weight) {weight_ = weight;}
 
     std::ostream &display(std::ostream &out) const override {

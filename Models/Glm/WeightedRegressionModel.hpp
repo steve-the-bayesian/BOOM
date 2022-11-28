@@ -50,6 +50,8 @@ namespace BOOM {
 
     WeightedRegSuf(const WeightedRegSuf &rhs) = default;
     WeightedRegSuf(WeightedRegSuf &&rhs) = default;
+    WeightedRegSuf & operator=(const WeightedRegSuf &rhs) = default;
+    WeightedRegSuf & operator=(WeightedRegSuf &&rhs) = default;
 
     WeightedRegSuf *clone() const override;
 

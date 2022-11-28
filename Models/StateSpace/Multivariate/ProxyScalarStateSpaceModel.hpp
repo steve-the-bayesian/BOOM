@@ -104,8 +104,8 @@ namespace BOOM {
    private:
     // The add_data method is disabled.
     void add_data(const Ptr<StateSpace::MultiplexedDoubleData>
-                  &data_point) override;
-    void add_data(const Ptr<Data> &data_point) override;
+                  &data_point) override {}
+    void add_data(const Ptr<Data> &data_point) override {}
 
     HOST_TYPE *host_;
     int which_series_;

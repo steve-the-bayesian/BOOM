@@ -121,7 +121,7 @@ namespace BOOM {
     }
 
     for (size_t i = 0; i < data_policy_.total_sample_size(); ++i) {
-      StudentData *data_point = data_policy_.data_point(i).get();
+      // StudentData *data_point = data_policy_.data_point(i).get();
     }
 
   }
