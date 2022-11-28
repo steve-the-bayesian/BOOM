@@ -108,6 +108,15 @@ namespace BOOM {
         }
       }
 
+      template <class HOST>
+      void initialize_proxy_models(HOST *host) {
+        proxy_models_.clear();
+        proxy_models_.reserve(host->nseries());
+        for (int i = 0; i < host->nseries(); ++i) {
+          proxy_models_.push_back(new PROXY(host, i));
+        }
+      }
+
      private:
       StateModelVector<SharedStateModel> shared_state_models_;
       std::vector<Ptr<PROXY>> proxy_models_;

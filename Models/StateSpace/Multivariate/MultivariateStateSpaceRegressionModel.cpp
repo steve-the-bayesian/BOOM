@@ -94,7 +94,7 @@ namespace BOOM {
     if (has_series_specific_state()) {
       for (int j = 0; j < nseries(); ++j) {
         forecast.row(j) +=
-            proxy_models_[j]->simulate_state_contribution_forecast(
+            state_manager_.series_specific_model(j)->simulate_state_contribution_forecast(
                 rng, horizon, series_specific_final_state[j]);
       }
     }
@@ -158,6 +158,10 @@ namespace BOOM {
     this->add_data(Ptr<MultivariateTimeSeriesRegressionData>(dp));
   }
 
+  void MSSRM::combine_data(const Model &, bool) {
+    report_error("'combine_data' cannot be called for time series models.");
+  }
+
   void MSSRM::clear_data() {
     data_policy_.clear_data();
     // time_dimension_ = 0;
@@ -194,8 +198,7 @@ namespace BOOM {
       int t, const Selector &observed) const {
     NEW(StackedMatrixBlock, ans)();
     for (int s = 0; s < number_of_state_models(); ++s) {
-      ans->add_block(shared_state_models_[s]->observation_coefficients(
-          t, observed));
+      ans->add_block(state_model(s)->observation_coefficients(t, observed));
     }
     return ans;
   }
@@ -417,11 +420,7 @@ namespace BOOM {
   //---------------------------------------------------------------------------
 
   void MSSRM::initialize_proxy_models() {
-    proxy_models_.clear();
-    proxy_models_.reserve(nseries());
-    for (int i = 0; i < nseries(); ++i) {
-      proxy_models_.push_back(new Proxy(this, i));
-    }
+    state_manager_.initialize_proxy_models(this);
   }
 
   void MSSRM::set_observation_variance_observers() {
@@ -452,7 +451,7 @@ namespace BOOM {
 
   void MSSRM::resize_subordinate_state() {
     for (int series = 0; series < nseries(); ++series) {
-      proxy_models_[series]->resize_state();
+      state_manager_.series_specific_model(series)->resize_state();
     }
   }
 
@@ -645,11 +644,11 @@ namespace BOOM {
     if (!has_series_specific_state()) {
       return 0;
     }
-    const Proxy &proxy(*proxy_models_[series]);
-    if (proxy.state_dimension() == 0) {
+    const Proxy *proxy(state_manager_.series_specific_model(series));
+    if (!proxy || proxy->state_dimension() == 0) {
       return 0;
     } else {
-      return proxy.observation_matrix(time).dot(proxy.state(time));
+      return proxy->observation_matrix(time).dot(proxy->state(time));
     }
   }
 

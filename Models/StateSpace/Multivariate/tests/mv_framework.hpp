@@ -158,7 +158,7 @@ namespace BoomStateSpaceTesting {
         NEW(MvnModel, beta_prior)(beta_prior_mean, beta_precision, true);
         NEW(ChisqModel, residual_precision_prior)(1.0, square(residual_sd));
         NEW(RegressionSemiconjugateSampler, regression_sampler)(
-            model->observation_model()->model(i).get(),
+            model->observation_model()->model(i),
             beta_prior, residual_precision_prior);
         regression_sampler->set_sigma_max(1.0);
         model->observation_model()->model(i)->set_method(regression_sampler);

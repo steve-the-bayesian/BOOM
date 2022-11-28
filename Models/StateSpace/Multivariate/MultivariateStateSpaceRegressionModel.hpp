@@ -262,6 +262,8 @@ namespace BOOM {
     void add_data(const Ptr<MultivariateTimeSeriesRegressionData> &dp);
     void add_data(MultivariateTimeSeriesRegressionData *dp);
 
+    void combine_data(const Model &rhs, bool just_suf = true) override;
+
     // Return the position in the data vector containing the Y value for the
     // given series at the given time.  If no data point exists for the
     // requested (series, time) pair then -1 is returned.
