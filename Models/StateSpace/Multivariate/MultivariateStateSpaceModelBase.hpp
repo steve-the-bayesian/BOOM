@@ -67,6 +67,7 @@ namespace BOOM {
    public:
     MultivariateStateSpaceModelBase()
         : state_is_fixed_(false),
+          show_warnings_(true),
           observation_model_parameter_size_(-1)
     {}
 
@@ -362,6 +363,11 @@ namespace BOOM {
     ConstVectorView observation_parameter_component(
         const Vector &model_parameters) const;
 
+    bool show_warnings() const {return show_warnings_;}
+    void show_warnings(bool should_warnings_be_shown) {
+      show_warnings_ = should_warnings_be_shown;
+    }
+
    protected:
     // Access to the state model vector owned by descendents.
     using StateModelVectorBase = StateSpaceUtils::StateModelVectorBase;
@@ -420,6 +426,8 @@ namespace BOOM {
 
     Matrix shared_state_;
     bool state_is_fixed_;
+
+    bool show_warnings_;
 
     mutable int observation_model_parameter_size_;
   };
