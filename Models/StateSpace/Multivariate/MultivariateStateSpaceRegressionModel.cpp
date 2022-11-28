@@ -122,17 +122,8 @@ namespace BOOM {
   }
 
   void MSSRM::add_state(const Ptr<SharedStateModel> &state_model) {
-    shared_state_models_.add_state(state_model);
+    state_manager_.add_shared_state(state_model);
     set_parameter_observers(state_model.get());
-  }
-
-  bool MSSRM::has_series_specific_state() const {
-    for (int i = 0; i < proxy_models_.size(); ++i) {
-      if (proxy_models_[i]->state_dimension() > 0) {
-        return true;
-      }
-    }
-    return false;
   }
 
   void MSSRM::impute_state(RNG &rng) {
@@ -166,18 +157,6 @@ namespace BOOM {
   void MSSRM::add_data(MultivariateTimeSeriesRegressionData *dp) {
     this->add_data(Ptr<MultivariateTimeSeriesRegressionData>(dp));
   }
-
-  // int MSSRM::data_index(int series, int time) const {
-  //   const auto &series_it = data_indices_.find(series);
-  //   if (series_it == data_indices_.end()) {
-  //     return -1;
-  //   }
-  //   const auto & time_it(series_it->second.find(time));
-  //   if (time_it == series_it->second.end()) {
-  //     return -1;
-  //   }
-  //   return time_it->second;
-  // }
 
   void MSSRM::clear_data() {
     data_policy_.clear_data();
@@ -574,8 +553,8 @@ namespace BOOM {
     if (has_series_specific_state()) {
       workspace_status_ = ISOLATE_SERIES_SPECIFIC_STATE;
       for (int s = 0; s < nseries(); ++s) {
-        if (proxy_models_[s]->state_dimension() > 0) {
-          proxy_models_[s]->impute_state(rng);
+        if (state_manager_.series_specific_model(s)->state_dimension() > 0) {
+          state_manager_.series_specific_model(s)->impute_state(rng);
         }
       }
       workspace_status_ = UNSET;
@@ -663,7 +642,9 @@ namespace BOOM {
   }
 
   double MSSRM::series_specific_state_contribution(int series, int time) const {
-    if (proxy_models_.empty()) return 0;
+    if (!has_series_specific_state()) {
+      return 0;
+    }
     const Proxy &proxy(*proxy_models_[series]);
     if (proxy.state_dimension() == 0) {
       return 0;

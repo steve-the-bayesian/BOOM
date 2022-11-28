@@ -23,6 +23,8 @@
 #include "Models/Glm/IndependentRegressionModels.hpp"
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceRegressionDataPolicy.hpp"
+#include "Models/StateSpace/Multivariate/SharedStateModelManager.hpp"
+
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
 #include "Models/StateSpace/Multivariate/MultivariateStateSpaceModelBase.hpp"
@@ -203,41 +205,36 @@ namespace BOOM {
     //   series:  The index of the scalar time series described by the state.
     void add_series_specific_state(const Ptr<StateModel> &state_model,
                                    int series) {
-      proxy_models_[series]->add_state(state_model);
+      state_manager_.add_series_specific_state(state_model, series);
+      // proxy_models_[series]->add_state(state_model);
     }
 
     // Indicates whether any of the proxy models have had state assigned.
-    bool has_series_specific_state() const;
+    bool has_series_specific_state() const {
+      return state_manager_.has_series_specific_state();
+    }
 
     // Dimension of shared state.
     int state_dimension() const override {
-      return shared_state_models_.state_dimension();
+      return state_manager_.shared_state_dimension();
     }
 
     // The dimension of the series-specific state associated with a particular
     // time series.
     int series_state_dimension(int which_series) const {
-      if (proxy_models_.empty()) {
-        return 0;
-      } else {
-        return proxy_models_[which_series]->state_dimension();
-      }
+      return state_manager_.series_state_dimension(which_series);
     }
 
     int number_of_state_models() const override {
-      return shared_state_models_.size();
+      return state_manager_.number_of_shared_state_models();
     }
 
     SharedStateModel *state_model(int s) override {
-      if (s < 0 || s >= shared_state_models_.size()) {
-        return nullptr;
-      } else {
-        return shared_state_models_[s].get();
-      }
+      return state_manager_.shared_state_model(s);
     }
 
     const SharedStateModel *state_model(int s) const override {
-      return shared_state_models_[s].get();
+      return state_manager_.shared_state_model(s);
     }
 
     // Impute both the shared and series-specific state, each conditional on the
@@ -268,7 +265,9 @@ namespace BOOM {
     // Return the position in the data vector containing the Y value for the
     // given series at the given time.  If no data point exists for the
     // requested (series, time) pair then -1 is returned.
-    int data_index(int series, int time) const;
+    int64_t data_index(int series, int time) const {
+      return data_policy_.data_index(series, time);
+    }
 
     // An override is needed so model-specific meta-data can be cleared as well.
     void clear_data() override;
@@ -341,12 +340,12 @@ namespace BOOM {
       return observation_model_->model(dim)->sigsq();
     }
 
-    Ptr<Proxy> series_specific_model(int index) {
-      return proxy_models_[index];
+    Proxy *series_specific_model(int index) {
+      return state_manager_.series_specific_model(index);
     }
 
-    const Ptr<Proxy> series_specific_model(int index) const {
-      return proxy_models_[index];
+    const Proxy *series_specific_model(int index) const {
+      return state_manager_.series_specific_model(index);
     }
 
     IndependentRegressionModels *observation_model() override {
@@ -368,21 +367,14 @@ namespace BOOM {
     Matrix state_contributions(int which_state_model) const override;
 
     StateSpaceUtils::StateModelVector<SharedStateModel>
-    &state_models() override { return shared_state_models_; }
+    &state_models() override { return state_manager_.shared_state_models(); }
 
     const StateSpaceUtils::StateModelVector<SharedStateModel>
-    &state_models() const override { return shared_state_models_; }
+    &state_models() const override { return state_manager_.shared_state_models(); }
 
     // Ensure that all state and proxy models are aware of times up to time 't'.
     void observe_time_dimension(int t) {
-      for (int s = 0; s < number_of_state_models(); ++s) {
-        state_model(s)->observe_time_dimension(t);
-      }
-      for (int m = 0; m < proxy_models_.size(); ++m) {
-        if (!!proxy_models_[m]) {
-          proxy_models_[m]->observe_time_dimension(t);
-        }
-      }
+      state_manager_.observe_time_dimension(t);
     }
 
     //------------- Parameter estimation by MLE and MAP --------------------
@@ -576,37 +568,14 @@ namespace BOOM {
     MultivariateStateSpaceRegressionDataPolicy<
       MultivariateTimeSeriesRegressionData> data_policy_;
 
-
-    // The number of series being modeled.
-    // int nseries_;
-
-    // The time dimension is the number of distinct time points.
-    // int time_dimension_;
-
-    // The shared state models are stored in this container.  The series
-    // specific state models are stored in proxy_models_.
-    StateSpaceUtils::StateModelVector<SharedStateModel> shared_state_models_;
-
-    // The proxy models hold components of state that are specific to individual
-    // data series.
-    std::vector<Ptr<Proxy>> proxy_models_;
-
-    // data_indices_[series][time] gives the index of the corresponding element
-    // of dat().
-    //     std::map<int, std::map<int, int>> data_indices_;
+    StateSpaceUtils::SharedStateModelManager<Proxy> state_manager_;
 
     // The observation model.
     Ptr<IndependentRegressionModels> observation_model_;
 
-    // mutable Ptr<StackedMatrixBlock> observation_coefficients_;
-
     // The response matrix organizes all the scalar responses from each data
     // point.  Time flows horizontally, so each column is a single time point.
     mutable Vector response_workspace_;
-    //     mutable SelectorMatrix observed_;
-
-    // observed_[t] indicates which time series are observed at time t.
-    // std::vector<Selector> observed_;
 
     // A workspace where observed data can be modified by subtracting off
     // components on which we wish to condition.
