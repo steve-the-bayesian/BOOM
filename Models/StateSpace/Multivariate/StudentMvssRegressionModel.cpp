@@ -40,19 +40,17 @@ namespace BOOM {
   {}
 
   StudentMvssRegressionModel::StudentMvssRegressionModel(int xdim, int nseries)
-      : data_policy_(nseries)
+      : data_policy_(nseries),
+        observation_model_(new IndependentStudentRegressionModels(
+            xdim, nseries)),
+        observation_variance_(nseries),
+        observation_variance_current_(false),
+        dummy_selector_(nseries, true)
   {
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    // TBD
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
+    state_manager_.initialize_proxy_models(this);
+    set_observation_variance_observers();
+    set_workspace_observers();
+    set_parameter_observers(observation_model_.get());
   }
 
   StudentMvssRegressionModel * StudentMvssRegressionModel::clone() const {
@@ -122,8 +120,54 @@ namespace BOOM {
 
     for (size_t i = 0; i < data_policy_.total_sample_size(); ++i) {
       // StudentData *data_point = data_policy_.data_point(i).get();
+      ////////////////////////////////////
+      ////////////////////////////////////
+      ////////////////////////////////////
+      ////////////////////////////////////
+      ////////////////////////////////////
+      ////////////////////////////////////
     }
-
   }
+
+  double StudentMvssRegressionModel::adjusted_observation(
+      int series, int time) const {
+    return adjusted_observation(time)[series];
+  }
+
+  ConstVectorView StudentMvssRegressionModel::adjusted_observation(
+      int time) const {
+    const Selector &observed(observed_status(time));
+    Ptr<SparseKalmanMatrix> coefficients(
+        observation_coefficients(time, observed));
+    return data_policy_.adjusted_observation(
+        time, state_manager_, observation_model_.get(), *coefficients,
+        shared_state());
+  }
+
+  void StudentMvssRegressionModel::set_observation_variance_observers() {
+    for (int i = 0; i < observation_model_->ydim(); ++i) {
+      auto observer = [this]() {this->observation_variance_current_ = false;};
+      observation_model_->model(i)->Sigsq_prm()->add_observer(this, observer);
+      observation_model_->model(i)->Nu_prm()->add_observer(this, observer);
+    }
+  }
+
+  void StudentMvssRegressionModel::set_workspace_observers() {
+    std::vector<Ptr<Params>> params = parameter_vector();
+    data_policy_.set_observers(params);
+  }
+
+  void StudentMvssRegressionModel::set_parameter_observers(Model *model) {
+    std::vector<Ptr<Params>> parameters = model->parameter_vector();
+    for (auto &el : parameters) {
+      el->add_observer(
+          el.get(),
+          [this](void) {
+            this->get_filter().set_status(
+                KalmanFilterBase::KalmanFilterStatus::NOT_CURRENT);
+          });
+    }
+  }
+
 
 }  // namespace BOOM

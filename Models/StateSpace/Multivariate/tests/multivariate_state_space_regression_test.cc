@@ -155,7 +155,7 @@ namespace BoomStateSpaceTesting {
       sim.model->observation_model()->model(i)->set_Beta(sim.regression_coefficients.row(i));
       sim.model->observation_model()->model(i)->set_sigsq(residual_sd * residual_sd);
     }
-    sim.model->isolate_shared_state();
+    //    sim.model->isolate_shared_state();
     Vector adjusted = sim.model->adjusted_observation(3);
     Vector regression_effect = sim.regression_coefficients * sim.predictors.row(3);
     Vector observed = sim.response.row(3);

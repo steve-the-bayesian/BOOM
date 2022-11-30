@@ -22,6 +22,8 @@
 #include <functional>
 #include <vector>
 
+#include "Models/StateSpace/Multivariate/AdjustedDataWorkspace.hpp"
+
 namespace BOOM {
 
   // Multivariate state space regression models hold regression data of various
@@ -32,6 +34,8 @@ namespace BOOM {
   template <class DATA_TYPE>
   class MultivariateStateSpaceRegressionDataPolicy {
    public:
+    typedef DATA_TYPE DataType;
+
     MultivariateStateSpaceRegressionDataPolicy(int nseries)
         : nseries_(nseries),
           time_dimension_(0),
@@ -130,6 +134,46 @@ namespace BOOM {
       return raw_data_.size();
     }
 
+    ConstVectorView observation(int t) const {
+      const Selector &observed(observed_[t]);
+      response_workspace_.resize(observed.nvars());
+      for (int i = 0; i < observed.nvars(); ++i) {
+        int series = observed.sparse_index(i);
+        response_workspace_[i] = data_point(series, t)->y();
+      }
+      return ConstVectorView(response_workspace_);
+    }
+
+    template <class STATE_MANAGER, class OBSERVATION_MODEL>
+    ConstVectorView adjusted_observation(
+        int time,
+        const STATE_MANAGER &state_manager,
+        const OBSERVATION_MODEL *observation_model,
+        const SparseKalmanMatrix &observation_coefficients,
+        const Matrix &shared_state) const {
+      adjusted_data_workspace_.isolate_state(
+          time, *this, state_manager, observation_model,
+          observation_coefficients,
+          shared_state);
+      return adjusted_data_workspace_.adjusted_data_workspace();
+    }
+
+    void set_observers(std::vector<Ptr<Params>> &params) {
+      adjusted_data_workspace_.set_observers(params);
+    }
+
+    void isolate_shared_state() {
+      adjusted_data_workspace_.isolate_shared_state();
+    }
+
+    void isolate_series_specific_state() {
+      adjusted_data_workspace_.isolate_series_specific_state();
+    }
+
+    void unset_workspace() {
+      adjusted_data_workspace_.unset();
+    }
+
    private:
     int nseries_;
     int time_dimension_;
@@ -139,12 +183,18 @@ namespace BOOM {
     std::map<int, std::map<int, int64_t>> data_indices_;
 
     std::vector<Ptr<DATA_TYPE>> raw_data_;
+
+    // observed_[t] indicates which time series are observed at time t.
     std::vector<Selector> observed_;
 
     Ptr<DATA_TYPE> missing_;
     // Every funtion in this vector will be called whenever data is added or
     // cleared.
     std::vector<std::function<void(void)>> data_change_observers_;
+
+    mutable Vector response_workspace_;
+
+    mutable StateSpaceUtilities::AdjustedDataWorkspace adjusted_data_workspace_;
   };
 
 

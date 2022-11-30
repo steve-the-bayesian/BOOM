@@ -291,13 +291,7 @@ namespace BOOM {
 
     // Vector data access.
     ConstVectorView observation(int t) const override {
-      const Selector &observed(data_policy_.observed(t));
-      response_workspace_.resize(observed.nvars());
-      for (int i = 0; i < observed.nvars(); ++i) {
-        int series = observed.sparse_index(i);
-        response_workspace_[i] = response(series, t);
-      }
-      return ConstVectorView(response_workspace_);
+      return data_policy_.observation(t);
     }
 
     const Selector &observed_status(int t) const override {
@@ -321,12 +315,17 @@ namespace BOOM {
     // The vector of adjusted observations across all time series at time t.
     ConstVectorView adjusted_observation(int time) const override;
 
-    void isolate_shared_state() override;
-    void isolate_series_specific_state() override;
-
     //--------------------------------------------------------------------------
     // Kalman filter parameters.
     //--------------------------------------------------------------------------
+
+    void isolate_shared_state() override {
+      data_policy_.isolate_shared_state();
+    }
+
+    void isolate_series_specific_state() override {
+      data_policy_.isolate_series_specific_state();
+    }
 
     // The observation coefficients from the shared state portion of the model.
     // This does not include the regression coefficients from the regression
@@ -518,9 +517,6 @@ namespace BOOM {
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 
    private:
-    // Populate the vector of proxy models with 'nseries_' empty models.
-    void initialize_proxy_models();
-
     // Set observers on the variance parameters of the regression models, so
     // that the diagonal variance matrix can be updated when it gets out of
     // sync.
@@ -543,25 +539,8 @@ namespace BOOM {
     void observe_initial_state();
     void observe_data_given_state(int t) override;
 
-    //
-    void impute_missing_observations(int t, RNG &rng) override;
-
     void impute_shared_state_given_series_state(RNG &rng);
     void impute_series_state_given_shared_state(RNG &rng);
-
-    // Sets adjusted_data_workspace_ to observed_data minus contributions from
-    // series specific state.
-    // void isolate_shared_state();
-    void isolate_shared_state(int time) const;
-
-    // Sets adjusted_data_workspace_ to observed_data minus contributions from
-    // shared state.
-    //    void isolate_series_specific_state();
-    void isolate_series_specific_state(int time) const;
-
-    // The contribution of the series_specific state to the given series at the
-    // given time.
-    double series_specific_state_contribution(int series, int time) const;
 
     //--------------------------------------------------------------------------
     // Data section.
@@ -574,39 +553,6 @@ namespace BOOM {
 
     // The observation model.
     Ptr<IndependentRegressionModels> observation_model_;
-
-    // The response matrix organizes all the scalar responses from each data
-    // point.  Time flows horizontally, so each column is a single time point.
-    mutable Vector response_workspace_;
-
-    // A workspace where observed data can be modified by subtracting off
-    // components on which we wish to condition.
-    //
-    // The point of having this workspace, as opposed to simply making the
-    // adjustments on demand, is that the adjustments are best performed on a
-    // time-by-time basis, but the model also supports a (series, time)
-    // interface.  To make the latter more efficient we make adjustments on the
-    // time basis, store the results, and then look up the (series, time)
-    // answer.
-    mutable Vector adjusted_data_workspace_;
-
-    // Metadata about the adjusted_data_workspace_.
-    //
-    // A flag indicating that the workspace holds current values.  This is set
-    // to false whenever new parameters are assigned or new state is drawn.
-    mutable bool workspace_current_;
-
-    // The time index that the workspace currently describes.
-    mutable int workspace_time_index_;
-
-    // The type of information currently stored in the workspace.
-    enum WorkspaceStatus {
-      UNSET,
-      ISOLATE_SHARED_STATE,
-      ISOLATE_SERIES_SPECIFIC_STATE,
-      ISOLATE_REGRESSION_EFFECTS
-    };
-    mutable WorkspaceStatus workspace_status_;
 
     // A workspace to copy the residual variances stored in observation_model_
     // in the data structure expected by the model.

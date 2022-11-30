@@ -412,11 +412,6 @@ namespace BOOM {
     void simulate_forward(RNG &rng);
     void propagate_disturbances(RNG &rng);
 
-    // If observation t is not fully observed, impute its missing values.  This
-    // is a full imputation, including regression and series-level state model
-    // effects.
-    virtual void impute_missing_observations(int t, RNG &rng) = 0;
-
     void resize_state();
 
     // Simulate a fake observation to use as part of the Durbin-Koopman state

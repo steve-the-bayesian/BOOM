@@ -34,7 +34,6 @@ namespace BOOM {
     template <class PROXY>
     class SharedStateModelManager {
      public:
-
       void add_series_specific_state(const Ptr<StateModel> &state_model,
                                      int series) {
         proxy_models_[series]->add_state(state_model);
@@ -117,10 +116,21 @@ namespace BOOM {
         }
       }
 
+      double series_specific_state_contribution(int series, int time) const {
+        if (!has_series_specific_state()) {
+          return 0;
+        }
+        const PROXY *proxy(series_specific_model(series));
+        if (!proxy || proxy->state_dimension() == 0) {
+          return 0;
+        } else {
+          return proxy->observation_matrix(time).dot(proxy->state(time));
+        }
+      }
+
      private:
       StateModelVector<SharedStateModel> shared_state_models_;
       std::vector<Ptr<PROXY>> proxy_models_;
-
     };
 
   }  // namespace StateSpaceUtils
