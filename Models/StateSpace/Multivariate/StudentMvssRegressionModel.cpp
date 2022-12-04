@@ -169,5 +169,45 @@ namespace BOOM {
     }
   }
 
+  // If an observation is observed, subtract off the time series contribution
+  // and add the residual bit to the regression model.
+  void StudentMvssRegressionModel::observe_data_given_state(int time) {
+    for (int series = 0; series < nseries(); ++series) {
+      Vector shared_state_contribution =
+          *observation_coefficients(time, dummy_selector_) * shared_state(time);
+      if (is_observed(series, time)) {
+        const Ptr<StudentMultivariateTimeSeriesRegressionData> &data_point(
+            data_policy_.data_point(series, time));
+        double regression_contribution = observed_data(series, time)
+            - shared_state_contribution[series]
+            - state_manager_.series_specific_state_contribution(series, time);
+        observation_model_->model(series)->suf()->add_mixture_data(
+            regression_contribution, data_point->x(), 1.0);
+      }
+    }
+  }
+
+  void StudentMvssRegressionModel::impute_shared_state_given_series_state(
+      RNG &rng) {
+    resize_subordinate_state();
+    data_policy_.isolate_shared_state();
+    MultivariateStateSpaceModelBase::impute_state(rng);
+    data_policy_.unset_workspace();
+  }
+
+  void StudentMvssRegressionModel::impute_series_state_given_shared_state(
+      RNG &rng) {
+    if (has_series_specific_state()) {
+      data_policy_.isolate_series_specific_state();
+      for (int s = 0; s < nseries(); ++s) {
+        if (state_manager_.series_specific_model(s)->state_dimension() > 0) {
+          state_manager_.series_specific_model(s)->impute_state(rng);
+        }
+      }
+      data_policy_.unset_workspace();
+    }
+  }
+
+
 
 }  // namespace BOOM

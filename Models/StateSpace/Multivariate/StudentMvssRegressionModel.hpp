@@ -397,14 +397,14 @@ namespace BOOM {
     //
     // Returns:
     //   The value of the log-likelihood at the MLE.
-    double mle(double epsilon = 1e-5, int ntries = 500) override;
+    // double mle(double epsilon = 1e-5, int ntries = 500) override;
 
     // Returns true if all the state models have been assigned priors that
     // implement find_posterior_mode.
-    bool check_that_em_is_legal() const;
+    // bool check_that_em_is_legal() const;
 
-    double Estep(bool save_state_distributions);
-    void Mstep(double epsilon);
+    // double Estep(bool save_state_distributions);
+    // void Mstep(double epsilon);
 
     // Implements part of a single step of the E-step in the EM algorithm or
     // gradient computation for the gradient of the observed data log
@@ -449,9 +449,9 @@ namespace BOOM {
     //
     // Returns:
     //   The log likelihood value computed by the Kalman filter.
-    double average_over_latent_data(bool update_sufficient_statistics,
-                                    bool save_state_distributions,
-                                    Vector *gradient);
+    // double average_over_latent_data(bool update_sufficient_statistics,
+    //                                 bool save_state_distributions,
+    //                                 Vector *gradient);
 
     // A helper function used to implement average_over_latent_data().
     // Increments the gradient of log likelihood contribution of the state
@@ -466,9 +466,9 @@ namespace BOOM {
     //     time t (for the transition to time t+1).
     //   state_error_mean: The posterior variance of the state errors
     //     at time t (for the transition to time t+1).
-    void update_state_model_gradient(Vector *gradient, int t,
-                                     const Vector &state_error_mean,
-                                     const SpdMatrix &state_error_variance);
+    // void update_state_model_gradient(Vector *gradient, int t,
+    //                                  const Vector &state_error_mean,
+    //                                  const SpdMatrix &state_error_variance);
 
 
     // Increment the portion of the log-likelihood gradient pertaining to the
@@ -484,11 +484,11 @@ namespace BOOM {
     //     time t.
     //   observation_error_variances: The posterior variance of the observation
     //     error at time t.
-    void update_observation_model_gradient(
-        VectorView gradient,
-        int t,
-        const Vector &observation_error_mean,
-        const Vector &observation_error_variances) override;
+    // void update_observation_model_gradient(
+    //     VectorView gradient,
+    //     int t,
+    //     const Vector &observation_error_mean,
+    //     const Vector &observation_error_variances) override;
 
     // Update the complete data sufficient statistics for the state models,
     // given the posterior distribution of the state error at time t (for the
@@ -500,9 +500,9 @@ namespace BOOM {
     //     data and model parameters.
     //   state_error_variance: The variance of the state error at time t given
     //     observed data and model parameters.
-    void update_state_level_complete_data_sufficient_statistics(
-        int t, const Vector &state_error_mean,
-        const SpdMatrix &state_error_variance);
+    // void update_state_level_complete_data_sufficient_statistics(
+    //     int t, const Vector &state_error_mean,
+    //     const SpdMatrix &state_error_variance);
 
     // Update the complete data sufficient statistics for the observation model
     // based on the posterior distribution of the observation model error term
@@ -514,10 +514,10 @@ namespace BOOM {
     //     parameters and all observed y's.
     //   observation_error_variance: Variance of the observation error given
     //     model parameters and all observed y's.
-    void update_observation_model_complete_data_sufficient_statistics(
-        int t,
-        const Vector &observation_error_mean,
-        const Vector &observation_error_variances) override;
+    // void update_observation_model_complete_data_sufficient_statistics(
+    //     int t,
+    //     const Vector &observation_error_mean,
+    //     const Vector &observation_error_variances) override;
 
     using ConditionallyIndependentMultivariateStateSpaceModelBase::get_filter;
 

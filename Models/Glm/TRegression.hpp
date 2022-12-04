@@ -102,47 +102,47 @@ namespace BOOM {
 
   //===========================================================================
   // A TRegressionModel that is an explicit mixture of normals.
-  //
-  // class CompleteDataStudentRegressionModel
-  //     : public TRegressionModel {
-  //  public:
-  //   CompleteDataStudentRegressionModel(int xdim)
-  //       : TRegressionModel(xdim),
-  //         suf_(xdim)
-  //   {}
 
-  //   CompleteDataStudentRegressionModel(
-  //       const CompleteDataStudentRegressionModel &rhs);
-  //   CompleteDataStudentRegressionModel(
-  //       CompleteDataStudentRegressionModel &&rhs) = default;
-  //   CompleteDataStudentRegressionModel &operator=(
-  //       CompleteDataStudentRegressionModel &&rhs) = default;
+  class CompleteDataStudentRegressionModel
+      : public TRegressionModel {
+   public:
+    CompleteDataStudentRegressionModel(int xdim)
+        : TRegressionModel(xdim),
+          suf_(xdim)
+    {}
 
-  //   CompleteDataStudentRegressionModel * clone() const override;
+    CompleteDataStudentRegressionModel(
+        const CompleteDataStudentRegressionModel &rhs);
+    CompleteDataStudentRegressionModel(
+        CompleteDataStudentRegressionModel &&rhs) = default;
+    CompleteDataStudentRegressionModel &operator=(
+        CompleteDataStudentRegressionModel &&rhs) = default;
 
-  //   void clear_data() override {
-  //     TRegressionModel::clear_data();
-  //     suf_.clear();
-  //     weights_.clear();
-  //   }
+    CompleteDataStudentRegressionModel * clone() const override;
 
-  //   void add_data(const Ptr<RegressionData> &dp) override {
-  //     TRegressionModel::add_data(dp);
-  //     weights_.push_back(1.0);
-  //     suf_.add_data(dp->x(), dp->y(), weights_.back());
-  //   }
+    void clear_data() override {
+      TRegressionModel::clear_data();
+      suf_.clear();
+      weights_.clear();
+    }
 
-  //   using TRegressionModel::add_data;
+    void add_data(const Ptr<RegressionData> &dp) override {
+      TRegressionModel::add_data(dp);
+      weights_.push_back(1.0);
+      suf_.add_data(dp->x(), dp->y(), weights_.back());
+    }
 
-  //   void set_weight(size_t i, double value) {
-  //     weights_[i] = value;
-  //   }
-  //   double weight(size_t i) const {return weights_[i];}
+    using TRegressionModel::add_data;
 
-  //  private:
-  //   WeightedRegSuf suf_;
-  //   Vector weights_;
-  // };
+    void set_weight(size_t i, double value) {
+      weights_[i] = value;
+    }
+    double weight(size_t i) const {return weights_[i];}
+
+   private:
+    WeightedRegSuf suf_;
+    Vector weights_;
+  };
 
 }  // namespace BOOM
 
