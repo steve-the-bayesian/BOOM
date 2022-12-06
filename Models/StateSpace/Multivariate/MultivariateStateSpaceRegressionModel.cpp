@@ -173,11 +173,7 @@ namespace BOOM {
   // model, nor does it include the series-specific state.
   Ptr<SparseKalmanMatrix> MSSRM::observation_coefficients(
       int t, const Selector &observed) const {
-    NEW(StackedMatrixBlock, ans)();
-    for (int s = 0; s < number_of_state_models(); ++s) {
-      ans->add_block(state_model(s)->observation_coefficients(t, observed));
-    }
-    return ans;
+    return state_manager_.observation_coefficients(t, observed);
   }
 
   DiagonalMatrix MSSRM::observation_variance(int t) const {
@@ -196,14 +192,7 @@ namespace BOOM {
   }
 
   Matrix MSSRM::state_contributions(int which_state_model) const {
-    const SharedStateModel* model = state_model(which_state_model);
-    Matrix ans(nseries(), time_dimension());
-    for (int t = 0; t < time_dimension(); ++t) {
-      ConstVectorView state(state_component(
-          shared_state(t), which_state_model));
-      ans.col(t) = *model->observation_coefficients(t, dummy_selector_) * state;
-    }
-    return ans;
+    return state_manager_.state_contributions(which_state_model, this);
   }
 
   //---------------------------------------------------------------------------

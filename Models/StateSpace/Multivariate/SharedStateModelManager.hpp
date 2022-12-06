@@ -107,6 +107,16 @@ namespace BOOM {
         }
       }
 
+      Ptr<SparseKalmanMatrix> observation_coefficients(
+          int t, const Selector &observed) const {
+        NEW(StackedMatrixBlock, ans)();
+        for (int s = 0; s < shared_state_models_.size(); ++s) {
+          ans->add_block(shared_state_models_[s]->observation_coefficients(
+              t, observed));
+        }
+        return ans;
+      }
+
       template <class HOST>
       void initialize_proxy_models(HOST *host) {
         proxy_models_.clear();
@@ -126,6 +136,20 @@ namespace BOOM {
         } else {
           return proxy->observation_matrix(time).dot(proxy->state(time));
         }
+      }
+
+      template <class HOST>
+      Matrix state_contributions(int which_state_model, const HOST *host) const {
+        const SharedStateModel* model =
+            shared_state_models_[which_state_model].get();
+        Matrix ans(host->nseries(), host->time_dimension());
+        for (int t = 0; t < host->time_dimension(); ++t) {
+          ConstVectorView state(host->state_component(
+              host->shared_state(t), which_state_model));
+          ans.col(t) = *model->observation_coefficients(
+              t, host->observed_status(t)) * state;
+        }
+        return ans;
       }
 
      private:

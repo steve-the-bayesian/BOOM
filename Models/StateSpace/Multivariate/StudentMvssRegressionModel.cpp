@@ -41,8 +41,7 @@ namespace BOOM {
 
   StudentMvssRegressionModel::StudentMvssRegressionModel(int xdim, int nseries)
       : data_policy_(nseries),
-        observation_model_(new IndependentStudentRegressionModels(
-            xdim, nseries)),
+        observation_model_(new ObservationModel(xdim, nseries)),
         observation_variance_(nseries),
         observation_variance_current_(false),
         dummy_selector_(nseries, true)
@@ -77,6 +76,10 @@ namespace BOOM {
     /////////////////////////
     /////////////////////////
     return Matrix(0, 0);
+  }
+
+  DiagonalMatrix StudentMvssRegressionModel::observation_variance(int t) const {
+    return observation_variance(t, dummy_selector_);
   }
 
   DiagonalMatrix StudentMvssRegressionModel::observation_variance(
@@ -144,6 +147,27 @@ namespace BOOM {
         shared_state());
   }
 
+
+  void StudentMvssRegressionModel::observe_state(int t) {
+    if (t == 0) {
+      observe_initial_state();
+    } else {
+      const ConstVectorView now(shared_state(t));
+      const ConstVectorView then(shared_state(t - 1));
+      for (int s = 0; s < number_of_state_models(); ++s) {
+        state_model(s)->observe_state(state_component(then, s),
+                                      state_component(now, s), t);
+      }
+    }
+  }
+
+  void StudentMvssRegressionModel::observe_initial_state() {
+    for (int s = 0; s < number_of_state_models(); ++s) {
+      ConstVectorView state(state_component(shared_state(0), s));
+      state_model(s)->observe_initial_state(state);
+    }
+  }
+
   void StudentMvssRegressionModel::set_observation_variance_observers() {
     for (int i = 0; i < observation_model_->ydim(); ++i) {
       auto observer = [this]() {this->observation_variance_current_ = false;};
@@ -181,8 +205,15 @@ namespace BOOM {
         double regression_contribution = observed_data(series, time)
             - shared_state_contribution[series]
             - state_manager_.series_specific_state_contribution(series, time);
-        observation_model_->model(series)->suf()->add_mixture_data(
-            regression_contribution, data_point->x(), 1.0);
+        ////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
+        //
+        // The model won't work until the following bug gets fixed.  TRegression
+        // does not have sufficient statistics
+        //
+        // observation_model_->model(series)->suf()->add_mixture_data(
+        //     regression_contribution, data_point->x(), 1.0);
       }
     }
   }
@@ -208,6 +239,11 @@ namespace BOOM {
     }
   }
 
+  void StudentMvssRegressionModel::resize_subordinate_state() {
+    for (int series = 0; series < nseries(); ++series) {
+      state_manager_.series_specific_model(series)->resize_state();
+    }
+  }
 
 
 }  // namespace BOOM

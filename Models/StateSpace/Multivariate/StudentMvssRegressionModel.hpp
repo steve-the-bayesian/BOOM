@@ -21,6 +21,7 @@
 #include "Models/IndependentMvnModel.hpp"
 #include "Models/Glm/Glm.hpp"
 #include "Models/Glm/IndependentRegressionModels.hpp"
+#include "Models/Glm/TRegression.hpp"
 #include "Models/StateSpace/Multivariate/StateModels/SharedStateModel.hpp"
 #include "Models/StateSpace/StateSpaceModel.hpp"
 #include "Models/StateSpace/StateModelVector.hpp"
@@ -138,6 +139,7 @@ namespace BOOM {
    public:
     friend class BoomStateSpaceTesting::StudentMvssRegressionModelTest;
     using Proxy = ProxyScalarStateSpaceModel<StudentMvssRegressionModel>;
+    using ObservationModel = IndependentGlms<CompleteDataStudentRegressionModel>;
 
     // Args:
     //   xdim:  The dimension of the static regression component.
@@ -331,7 +333,9 @@ namespace BOOM {
     // This does not include the regression coefficients from the regression
     // model, nor does it include the series-specific state.
     Ptr<SparseKalmanMatrix> observation_coefficients(
-        int t, const Selector &observed) const override;
+        int t, const Selector &observed) const override {
+      return state_manager_.observation_coefficients(t, observed);
+    }
 
     DiagonalMatrix observation_variance(int t) const override;
     DiagonalMatrix observation_variance(
@@ -349,12 +353,11 @@ namespace BOOM {
       return state_manager_.series_specific_model(index);
     }
 
-    IndependentStudentRegressionModels *observation_model() override {
+    ObservationModel *observation_model() override {
       return observation_model_.get();
     }
 
-    const IndependentStudentRegressionModels
-    *observation_model() const override {
+    const ObservationModel *observation_model() const override {
       return observation_model_.get();
     }
 
@@ -366,7 +369,9 @@ namespace BOOM {
     // Returns:
     //   A matrix with rows corresponding to dimension of Y, and columns
     //   corresponding to time.
-    Matrix state_contributions(int which_state_model) const override;
+    Matrix state_contributions(int which_state_model) const override {
+      return state_manager_.state_contributions(which_state_model, this);
+    }
 
     StateSpaceUtils::StateModelVector<SharedStateModel>
     &state_models() override {
@@ -551,7 +556,9 @@ namespace BOOM {
 
     // The contribution of the series_specific state to the given series at the
     // given time.
-    double series_specific_state_contribution(int series, int time) const;
+    double series_specific_state_contribution(int series, int time) const {
+      return state_manager_.series_specific_state_contribution(series, time);
+    }
 
     //--------------------------------------------------------------------------
     // Data section.
@@ -583,8 +590,7 @@ namespace BOOM {
     // std::map<int, std::map<int, int>> data_indices_;
 
     // The observation model.
-    Ptr<IndependentStudentRegressionModels> observation_model_;
-
+    Ptr<ObservationModel> observation_model_;
 
     // A workspace to copy the residual variances stored in observation_model_
     // in the data structure expected by the model.
