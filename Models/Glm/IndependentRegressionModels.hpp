@@ -19,86 +19,99 @@
 */
 
 #include "Models/Glm/RegressionModel.hpp"
-#include "Models/Glm/TRegression.hpp"
 #include "Models/Policies/NullDataPolicy.hpp"
 #include "Models/Policies/CompositeParamPolicy.hpp"
 #include "Models/Policies/PriorPolicy.hpp"
 
 namespace BOOM {
 
-  // An abstract base class for a "multivariate" generalized linear model formed
-  // by stacking 'k' independent GLM's.
-  class IndependentGlms
-      : public PosteriorModeModel {
-   public:
-    virtual int xdim() const = 0;
-    virtual int ydim() const = 0;
-    virtual PosteriorModeModel *model(int which) = 0;
-    virtual const PosteriorModeModel *model(int which) const = 0;
-
-   protected:
-    void clear_client_data();
-  };
-
+  //===========================================================================
   // A "multivariate regression" formed by a sequence of independent scalar
   // regression models.  The models must all have the same predictor dimension,
   // but are otherwise unconstrained.
-  class IndependentRegressionModels
-      : public IndependentGlms,
-        public CompositeParamPolicy,
-        public NullDataPolicy,
-        public PriorPolicy {
-   public:
-    IndependentRegressionModels(int xdim, int ydim);
-    IndependentRegressionModels(const IndependentRegressionModels &rhs);
-
-    IndependentRegressionModels *clone() const override {
-      return new IndependentRegressionModels(*this);
-    }
-
-    int xdim() const override {return models_[0]->xdim();}
-    int ydim() const override {return models_.size();}
-
-    void clear_data() override;
-
-    RegressionModel * model(int i) override {return models_[i].get();}
-    const RegressionModel * model(int i) const override {
-      return models_[i].get();
-    }
-
-   private:
-    std::vector<Ptr<RegressionModel>> models_;
-  };
 
   //===========================================================================
   // A "multivariate Student T" regression formed by stacking independent scalar
   // Student T regressions.
-  class IndependentStudentRegressionModels
-      : public IndependentGlms,
-        public CompositeParamPolicy,
+  template <class GLM>
+  class IndependentGlms
+      : public CompositeParamPolicy,
         public NullDataPolicy,
-        public PriorPolicy {
+        public PriorPolicy,
+        public PosteriorModeModel {
    public:
-    IndependentStudentRegressionModels(int xdim, int ydim);
-    IndependentStudentRegressionModels(
-        const IndependentStudentRegressionModels &rhs);
-    IndependentStudentRegressionModels * clone() const override;
-
-    int xdim() const override {return models_.empty() ? 0 : models_[0]->xdim();}
-    int ydim() const override {return models_.size();}
-    void clear_data() override;
-
-    TRegressionModel *model(int i) override {
-      return models_[i].get();
+    IndependentGlms(int xdim, int ydim)
+    {
+      models_.reserve(ydim);
+      for (int i = 0; i < ydim; ++i) {
+        NEW(GLM, model)(xdim);
+        ParamPolicy::add_model(model);
+        models_.push_back(model);
+      }
     }
 
-    const TRegressionModel *model(int i) const override {
-      return models_[i].get();
+    IndependentGlms(const IndependentGlms &rhs)
+        : Model(rhs),
+          CompositeParamPolicy(rhs),
+          NullDataPolicy(rhs),
+          PriorPolicy(rhs)
+    {
+      models_.reserve(rhs.ydim());
+      for (int i = 0; i < rhs.models_.size(); ++i) {
+        models_.push_back(rhs.models_[i]->clone());
+        ParamPolicy::add_model(models_.back());
+      }
     }
+
+    IndependentGlms * clone() const override {
+      return new IndependentGlms(*this);
+    }
+
+    int xdim() const {return models_.empty() ? 0 : models_[0]->xdim();}
+    int ydim() const {return models_.size();}
+
+    void clear_data() override {
+      DataPolicy::clear_data();
+      for (auto &el : models_) {
+        el->clear_data();
+      }
+    }
+
+    GLM *model(int i) { return models_[i].get(); }
+    const GLM *model(int i) const { return models_[i].get(); }
 
    private:
-    std::vector<Ptr<TRegressionModel>> models_;
+    std::vector<Ptr<GLM>> models_;
   };
+
+  using IndependentRegressionModels = IndependentGlms<RegressionModel>;
+  // class IndependentRegressionModels
+  //     : public IndependentGlmsBase,
+  //       public CompositeParamPolicy,
+  //       public NullDataPolicy,
+  //       public PriorPolicy {
+  //  public:
+  //   IndependentRegressionModels(int xdim, int ydim);
+  //   IndependentRegressionModels(const IndependentRegressionModels &rhs);
+
+  //   IndependentRegressionModels *clone() const override {
+  //     return new IndependentRegressionModels(*this);
+  //   }
+
+  //   int xdim() const override {return models_[0]->xdim();}
+  //   int ydim() const override {return models_.size();}
+
+  //   void clear_data() override;
+
+  //   RegressionModel * model(int i) override {return models_[i].get();}
+  //   const RegressionModel * model(int i) const override {
+  //     return models_[i].get();
+  //   }
+
+  //  private:
+  //   std::vector<Ptr<RegressionModel>> models_;
+  // };
+
 
 }  // namespace BOOM
 
