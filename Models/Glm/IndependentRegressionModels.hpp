@@ -26,13 +26,9 @@
 namespace BOOM {
 
   //===========================================================================
-  // A "multivariate regression" formed by a sequence of independent scalar
-  // regression models.  The models must all have the same predictor dimension,
-  // but are otherwise unconstrained.
-
-  //===========================================================================
-  // A "multivariate Student T" regression formed by stacking independent scalar
-  // Student T regressions.
+  // A "multivariate GLM" formed by a sequence of independent generalized linear
+  // models.  The models must all have the same predictor dimension, but are
+  // otherwise unconstrained.
   template <class GLM>
   class IndependentGlms
       : public CompositeParamPolicy,
@@ -84,34 +80,8 @@ namespace BOOM {
     std::vector<Ptr<GLM>> models_;
   };
 
+  // IndependentRegressionModels needs to be kept here for legacy reasons.
   using IndependentRegressionModels = IndependentGlms<RegressionModel>;
-  // class IndependentRegressionModels
-  //     : public IndependentGlmsBase,
-  //       public CompositeParamPolicy,
-  //       public NullDataPolicy,
-  //       public PriorPolicy {
-  //  public:
-  //   IndependentRegressionModels(int xdim, int ydim);
-  //   IndependentRegressionModels(const IndependentRegressionModels &rhs);
-
-  //   IndependentRegressionModels *clone() const override {
-  //     return new IndependentRegressionModels(*this);
-  //   }
-
-  //   int xdim() const override {return models_[0]->xdim();}
-  //   int ydim() const override {return models_.size();}
-
-  //   void clear_data() override;
-
-  //   RegressionModel * model(int i) override {return models_[i].get();}
-  //   const RegressionModel * model(int i) const override {
-  //     return models_[i].get();
-  //   }
-
-  //  private:
-  //   std::vector<Ptr<RegressionModel>> models_;
-  // };
-
 
 }  // namespace BOOM
 
