@@ -36,7 +36,8 @@ namespace BOOM {
         public ParamPolicy_3<GlmCoefs, UnivParams, UnivParams>,
         public IID_DataPolicy<RegressionData>,
         public PriorPolicy,
-        public NumOptModel {
+        public NumOptModel
+  {
    public:
     explicit TRegressionModel(uint xdim);  // dimension of beta
     TRegressionModel(const Vector &b, double Sigma, double nu = 30);
@@ -108,7 +109,7 @@ namespace BOOM {
    public:
     CompleteDataStudentRegressionModel(int xdim)
         : TRegressionModel(xdim),
-          suf_(xdim)
+          suf_(new WeightedRegSuf(xdim))
     {}
 
     CompleteDataStudentRegressionModel(
@@ -122,14 +123,14 @@ namespace BOOM {
 
     void clear_data() override {
       TRegressionModel::clear_data();
-      suf_.clear();
+      suf_->clear();
       weights_.clear();
     }
 
     void add_data(const Ptr<RegressionData> &dp) override {
       TRegressionModel::add_data(dp);
       weights_.push_back(1.0);
-      suf_.add_data(dp->x(), dp->y(), weights_.back());
+      suf_->add_data(dp->x(), dp->y(), weights_.back());
     }
 
     using TRegressionModel::add_data;
@@ -139,8 +140,11 @@ namespace BOOM {
     }
     double weight(size_t i) const {return weights_[i];}
 
+    WeightedRegSuf *suf() {return suf_.get();}
+    const Ptr<WeightedRegSuf> &suf() const {return suf_;}
+
    private:
-    WeightedRegSuf suf_;
+    Ptr<WeightedRegSuf> suf_;
     Vector weights_;
   };
 
