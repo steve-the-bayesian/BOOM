@@ -22,6 +22,7 @@
 
 #include <string>
 #include "uint.hpp"
+#include <ctime>
 
 namespace BOOM {
 
